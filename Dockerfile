@@ -12,9 +12,9 @@ ARG HASH
 WORKDIR /home/builder
 
 USER builder
-COPY ./packages/${PACKAGE}/* .
-COPY ./packages/rpmmacros .rpmmacros
+COPY ./packages/rpmmacros ./packages/${PACKAGE}/* .
 RUN rpmdev-setuptree \
+   && mv rpmmacros .rpmmacros \
    && mv *.spec rpmbuild/SPECS \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
    && echo ${HASH}
@@ -23,7 +23,7 @@ USER root
 RUN dnf -y builddep rpmbuild/SPECS/${PACKAGE}.spec
 
 USER builder
-RUN rpmbuild -ba rpmbuild/SPECS/${PACKAGE}.spec
+RUN rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
 FROM scratch AS rpm
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /
