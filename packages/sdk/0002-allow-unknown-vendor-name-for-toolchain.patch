@@ -1,0 +1,31 @@
+From 9de3c4af683702c88f92300dc9b3de041a49d4aa Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sun, 6 Aug 2017 23:22:40 +0000
+Subject: [PATCH 2/5] allow unknown vendor name for toolchain
+
+As we do not have a native toolchain for our targets, there is no risk
+of confusion, so we can safely use unknown as our vendor name.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ package/Makefile.in | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/package/Makefile.in b/package/Makefile.in
+index f24abdd703..767a6bea96 100644
+--- a/package/Makefile.in
++++ b/package/Makefile.in
+@@ -31,10 +31,6 @@ endif
+ ifeq ($(TARGET_VENDOR),)
+ $(error BR2_TOOLCHAIN_BUILDROOT_VENDOR is not allowed to be empty)
+ endif
+-ifeq ($(TARGET_VENDOR),unknown)
+-$(error BR2_TOOLCHAIN_BUILDROOT_VENDOR cannot be 'unknown'. \
+-	It might be confused with the native toolchain)
+-endif
+ 
+ # Compute GNU_TARGET_NAME
+ GNU_TARGET_NAME = $(ARCH)-$(TARGET_VENDOR)-$(TARGET_OS)-$(LIBC)$(ABI)
+-- 
+2.17.2
+

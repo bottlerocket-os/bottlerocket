@@ -1,0 +1,31 @@
+#!/bin/bash
+
+SPEC="${1:?}"
+PKG="${SPEC##*/}"
+PKG="${PKG%.*}"
+
+# Collect file-based targets for the outputs of a package build.
+RPMS="$(rpmspec --query --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
+RPMS="${RPMS%"${RPMS##*[![:space:]]}"}"
+
+# Collect file-based targets needed as inputs of a package build.
+SOURCES="$(rpmspec --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
+SOURCES="${SOURCES%"${SOURCES##*[![:space:]]}"}"
+PATCHES="$(rpmspec --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
+PATCHES="${PATCHES%"${PATCHES##*[![:space:]]}"}"
+
+# Collect package-level dependencies needed as inputs of a package build.
+BUILDREQUIRES="$(rpmspec --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
+BUILDREQUIRES="${BUILDREQUIRES%"${BUILDREQUIRES##*[![:space:]]}"}"
+
+cat <<EOF
+${RPMS} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}
+	\$(eval HASH:= \$(shell sha1sum \$^ | sha1sum - | awk '{printf \$\$1}'))
+	@\$(BUILDCTL) build \\
+		--frontend-opt target=rpm \\
+		--frontend-opt build-arg:PACKAGE=${PKG} \\
+		--frontend-opt build-arg:HASH=\$(HASH) \\
+		--exporter=local \\
+		--exporter-opt output=\$(OUTPUT) \\
+		\$(BUILDCTL_ARGS)
+EOF

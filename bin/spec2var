@@ -1,0 +1,6 @@
+#!/bin/bash
+
+SPEC="${1:?}"
+
+# Populate variables for the capabilities provided by package names.
+rpmspec --query --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm\n" "${SPEC}"

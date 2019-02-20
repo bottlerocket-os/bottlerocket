@@ -1,0 +1,212 @@
+From 7198c5eb9fd0830c108e6c03c01db07d36b4c70e Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sun, 6 Aug 2017 23:58:27 +0000
+Subject: [PATCH 5/5] build gcc with TOOLS_DIR and SYSROOT_DIR
+
+Most of the changes here are to the second and final stage of our GCC
+build, so that the binaries are written to the new output path, and
+so that it can find the interim headers and libraries needed to build
+its C++ standard library for our target.
+
+Because GCC contains logic to find its configured sysroot relative to
+either its installed path or the overall filesystem root, we can rely
+on that logic and do not need wrappers that hardcode the path. Those
+wrappers would otherwise prevent us from relocating these tools into
+a different location from that of the build host.
+
+We build GCC with the linker build ID option so that all binaries get
+the unique ID that allows core dumps to be matched to debug symbols
+directly, rather than relying on filesystem layout.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ package/gcc/gcc-final/gcc-final.mk     | 54 +++++++++++++++++++-------
+ package/gcc/gcc-initial/gcc-initial.mk |  3 ++
+ package/gcc/gcc.mk                     |  2 +-
+ 3 files changed, 44 insertions(+), 15 deletions(-)
+
+diff --git a/package/gcc/gcc-final/gcc-final.mk b/package/gcc/gcc-final/gcc-final.mk
+index cbde56ce1c..c8616f8128 100644
+--- a/package/gcc/gcc-final/gcc-final.mk
++++ b/package/gcc/gcc-final/gcc-final.mk
+@@ -46,9 +46,14 @@ define  HOST_GCC_FINAL_CONFIGURE_CMDS
+ 		LDFLAGS="$(HOST_LDFLAGS)" \
+ 		$(HOST_GCC_FINAL_CONF_ENV) \
+ 		./configure \
+-		--prefix="$(HOST_DIR)" \
+-		--sysconfdir="$(HOST_DIR)/etc" \
++		--prefix="/usr" \
++		--libdir="/usr/lib" \
++		--sysconfdir="/etc" \
+ 		--enable-static \
++		--disable-libcc1 \
++		--with-sysroot=/usr$(SYSROOT_DIR) \
++		--with-build-sysroot=$(STAGING_DIR) \
++		--with-gcc-major-version-only \
+ 		$(QUIET) $(HOST_GCC_FINAL_CONF_OPTS) \
+ 	)
+ endef
+@@ -64,16 +69,16 @@ HOST_GCC_FINAL_CONF_OPTS = \
+ 	--enable-languages=$(GCC_FINAL_CROSS_LANGUAGES) \
+ 	--with-build-time-tools=$(HOST_DIR)/$(GNU_TARGET_NAME)/bin
+ 
+-HOST_GCC_FINAL_GCC_LIB_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/lib*
++HOST_GCC_FINAL_GCC_LIB_DIR = $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib*
+ # The kernel wants to use the -m4-nofpu option to make sure that it
+ # doesn't use floating point operations.
+ ifeq ($(BR2_sh4)$(BR2_sh4eb),y)
+ HOST_GCC_FINAL_CONF_OPTS += "--with-multilib-list=m4,m4-nofpu"
+-HOST_GCC_FINAL_GCC_LIB_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/lib/!m4*
++HOST_GCC_FINAL_GCC_LIB_DIR = $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib/!m4*
+ endif
+ ifeq ($(BR2_sh4a)$(BR2_sh4aeb),y)
+ HOST_GCC_FINAL_CONF_OPTS += "--with-multilib-list=m4a,m4a-nofpu"
+-HOST_GCC_FINAL_GCC_LIB_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/lib/!m4*
++HOST_GCC_FINAL_GCC_LIB_DIR = $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib/!m4*
+ endif
+ 
+ ifeq ($(BR2_GCC_SUPPORTS_LIBCILKRTS),y)
+@@ -88,7 +93,7 @@ ifeq ($(BR2_PTHREADS_NONE),y)
+ HOST_GCC_FINAL_CONF_OPTS += --disable-libcilkrts
+ endif
+ 
+-ifeq ($(BR2_STATIC_LIBS),y)
++ifeq (y,y)
+ # disable libcilkrts as there is no static version
+ HOST_GCC_FINAL_CONF_OPTS += --disable-libcilkrts
+ endif
+@@ -96,10 +101,8 @@ endif
+ endif # BR2_GCC_SUPPORTS_LIBCILKRTS
+ 
+ # Disable shared libs like libstdc++ if we do static since it confuses linking
+-ifeq ($(BR2_STATIC_LIBS),y)
+-HOST_GCC_FINAL_CONF_OPTS += --disable-shared
+-else
+-HOST_GCC_FINAL_CONF_OPTS += --enable-shared
++ifeq (y,y)
++HOST_GCC_FINAL_CONF_OPTS += --enable-shared=libgcc
+ endif
+ 
+ ifeq ($(BR2_GCC_ENABLE_OPENMP),y)
+@@ -118,22 +121,27 @@ HOST_GCC_FINAL_CONF_ENV = \
+ 
+ HOST_GCC_FINAL_MAKE_OPTS += $(HOST_GCC_COMMON_MAKE_OPTS)
+ 
++HOST_GCC_FINAL_INSTALL_OPTS = install
++HOST_GCC_FINAL_INSTALL_OPTS += DESTDIR=$(TOOLS_DIR)
++
+ # Make sure we have 'cc'
+ define HOST_GCC_FINAL_CREATE_CC_SYMLINKS
+-	if [ ! -e $(HOST_DIR)/bin/$(GNU_TARGET_NAME)-cc ]; then \
+-		ln -f $(HOST_DIR)/bin/$(GNU_TARGET_NAME)-gcc \
+-			$(HOST_DIR)/bin/$(GNU_TARGET_NAME)-cc; \
++	if [ ! -e $(TOOLS_DIR)/usr/bin/$(GNU_TARGET_NAME)-cc ]; then \
++		ln -f $(TOOLS_DIR)/usr/bin/$(GNU_TARGET_NAME)-gcc \
++			$(TOOLS_DIR)/usr/bin/$(GNU_TARGET_NAME)-cc; \
+ 	fi
+ endef
+ 
+ HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_CREATE_CC_SYMLINKS
+ 
++ifeq ($(BR2_GCC_ENABLE_TOOLCHAIN_WRAPPER),y)
+ HOST_GCC_FINAL_TOOLCHAIN_WRAPPER_ARGS += $(HOST_GCC_COMMON_TOOLCHAIN_WRAPPER_ARGS)
+ HOST_GCC_FINAL_POST_BUILD_HOOKS += TOOLCHAIN_WRAPPER_BUILD
+ HOST_GCC_FINAL_POST_INSTALL_HOOKS += TOOLCHAIN_WRAPPER_INSTALL
+ # Note: this must be done after CREATE_CC_SYMLINKS, otherwise the
+ # -cc symlink to the wrapper is not created.
+ HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_INSTALL_WRAPPER_AND_SIMPLE_SYMLINKS
++endif
+ 
+ # coldfire is not working without removing these object files from libgcc.a
+ ifeq ($(BR2_m68k_cf),y)
+@@ -146,6 +154,7 @@ endif
+ 
+ # Cannot use the HOST_GCC_FINAL_USR_LIBS mechanism below, because we want
+ # libgcc_s to be installed in /lib and not /usr/lib.
++ifeq (y,)
+ define HOST_GCC_FINAL_INSTALL_LIBGCC
+ 	-cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/libgcc_s* \
+ 		$(STAGING_DIR)/lib/
+@@ -154,6 +163,7 @@ define HOST_GCC_FINAL_INSTALL_LIBGCC
+ endef
+ 
+ HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_INSTALL_LIBGCC
++endif
+ 
+ define HOST_GCC_FINAL_INSTALL_LIBATOMIC
+ 	-cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/libatomic* \
+@@ -199,7 +209,7 @@ define HOST_GCC_FINAL_INSTALL_STATIC_LIBS
+ 	done
+ endef
+ 
+-ifeq ($(BR2_STATIC_LIBS),)
++ifeq (y,)
+ define HOST_GCC_FINAL_INSTALL_SHARED_LIBS
+ 	for i in $(HOST_GCC_FINAL_USR_LIBS) ; do \
+ 		cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/$${i}.so* \
+@@ -218,4 +228,20 @@ endef
+ HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_INSTALL_USR_LIBS
+ endif
+ 
++define HOST_GCC_FINAL_TOOLS_DIR_CLEANUP
++	rm -rf $(TOOLS_DIR)/usr/share
++	find $(TOOLS_DIR) -name '*.la' -delete
++	find $(TOOLS_DIR) -name '*.py' -delete
++endef
++
++define HOST_GCC_FINAL_TOOLS_DIR_SYSROOT
++	mkdir -p $(TOOLS_DIR)/usr/$(SYSROOT_DIR)/usr
++	test -d $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib64 \
++		&& mv $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib64 $(TOOLS_DIR)/usr/$(SYSROOT_DIR)/usr/lib \
++		|| mv $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib $(TOOLS_DIR)/usr/$(SYSROOT_DIR)/usr/lib
++endef
++
++HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_TOOLS_DIR_CLEANUP
++HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_TOOLS_DIR_SYSROOT
++
+ $(eval $(host-autotools-package))
+diff --git a/package/gcc/gcc-initial/gcc-initial.mk b/package/gcc/gcc-initial/gcc-initial.mk
+index d5d925a3d9..8a4a24be8f 100644
+--- a/package/gcc/gcc-initial/gcc-initial.mk
++++ b/package/gcc/gcc-initial/gcc-initial.mk
+@@ -35,6 +35,7 @@ HOST_GCC_INITIAL_CONF_OPTS = \
+ 	$(HOST_GCC_COMMON_CONF_OPTS) \
+ 	--enable-languages=c \
+ 	--disable-shared \
++	--with-sysroot=$(STAGING_DIR) \
+ 	--without-headers \
+ 	--disable-threads \
+ 	--with-newlib \
+@@ -48,9 +49,11 @@ HOST_GCC_INITIAL_CONF_ENV = \
+ HOST_GCC_INITIAL_MAKE_OPTS = $(HOST_GCC_COMMON_MAKE_OPTS) all-gcc all-target-libgcc
+ HOST_GCC_INITIAL_INSTALL_OPTS = install-gcc install-target-libgcc
+ 
++ifeq ($(BR2_GCC_ENABLE_TOOLCHAIN_WRAPPER),y)
+ HOST_GCC_INITIAL_TOOLCHAIN_WRAPPER_ARGS += $(HOST_GCC_COMMON_TOOLCHAIN_WRAPPER_ARGS)
+ HOST_GCC_INITIAL_POST_BUILD_HOOKS += TOOLCHAIN_WRAPPER_BUILD
+ HOST_GCC_INITIAL_POST_INSTALL_HOOKS += TOOLCHAIN_WRAPPER_INSTALL
+ HOST_GCC_INITIAL_POST_INSTALL_HOOKS += HOST_GCC_INSTALL_WRAPPER_AND_SIMPLE_SYMLINKS
++endif
+ 
+ $(eval $(host-autotools-package))
+diff --git a/package/gcc/gcc.mk b/package/gcc/gcc.mk
+index e47435677e..7a9edecacd 100644
+--- a/package/gcc/gcc.mk
++++ b/package/gcc/gcc.mk
+@@ -86,12 +86,12 @@ HOST_GCC_COMMON_DEPENDENCIES = \
+ 
+ HOST_GCC_COMMON_CONF_OPTS = \
+ 	--target=$(GNU_TARGET_NAME) \
+-	--with-sysroot=$(STAGING_DIR) \
+ 	--disable-__cxa_atexit \
+ 	--with-gnu-ld \
+ 	--disable-libssp \
+ 	--disable-multilib \
+ 	--disable-decimal-float \
++	--enable-linker-build-id \
+ 	--with-gmp=$(HOST_DIR) \
+ 	--with-mpc=$(HOST_DIR) \
+ 	--with-mpfr=$(HOST_DIR) \
+-- 
+2.17.2
+
