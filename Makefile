@@ -11,25 +11,33 @@ PKGS = $(SPECS:.spec=.makepkg)
 OUTPUT ?= $(TOPDIR)/build
 OUTVAR := $(shell mkdir -p $(OUTPUT))
 
+ARCHS := x86_64 aarch64
+
 BUILDCTL ?= buildctl --addr tcp://127.0.0.1:1234
 BUILDCTL_ARGS := --progress=plain
 BUILDCTL_ARGS += --frontend=dockerfile.v0
 BUILDCTL_ARGS += --local context=.
 BUILDCTL_ARGS += --local dockerfile=.
 
+empty :=
+space := $(empty) $(empty)
+comma := ,
+list = $(subst $(space),$(comma),$(1))
+
 %.makevar : %.spec $(SPEC2VAR)
-	@$(SPEC2VAR) $< > $@
+	@set -e; $(SPEC2VAR) --spec=$< --archs=$(call list,$(ARCHS)) > $@
 
 %.makepkg : %.spec $(SPEC2PKG)
-	@$(SPEC2PKG) $< > $@
+	@set -e; $(SPEC2PKG) --spec=$< --archs=$(call list,$(ARCHS)) > $@
 
 -include $(VARS)
 -include $(PKGS)
 
 .PHONY: all
-all: $(thar-sdk)
+all: $(thar-x86_64-sdk) $(thar-aarch64-sdk)
 	@echo BUILT IT ALL
 
 .PHONY: clean
 clean:
-	@rm -r $(OUTPUT)/*.rpm
+	@rm -f $(OUTPUT)/*.rpm
+	@find $(TOPDIR) -name '*.makevar' -name '*.makepkg' -delete

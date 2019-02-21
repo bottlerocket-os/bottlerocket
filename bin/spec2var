@@ -1,6 +1,16 @@
 #!/bin/bash
 
-SPEC="${1:?}"
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --spec=*) SPEC="${optarg}" ;;
+      --archs=*) ARCHS="${optarg}" ;;
+   esac
+done
 
-# Populate variables for the capabilities provided by package names.
-rpmspec --query --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm\n" "${SPEC}"
+for arch in ${ARCHS//,/ } ; do
+   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared"
+
+   # Populate variables for the capabilities provided by package names.
+   rpmspec --macros "${macros}" --query --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm\n" "${SPEC}"
+done

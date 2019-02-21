@@ -8,13 +8,15 @@ RUN dnf -y install rpmdevtools dnf-plugins-core \
 
 FROM base AS rpmbuild
 ARG PACKAGE
+ARG ARCH
 ARG HASH
 WORKDIR /home/builder
 
 USER builder
-COPY ./packages/rpmmacros ./packages/${PACKAGE}/* .
+COPY ./macros/${ARCH} ./macros/shared ./packages/${PACKAGE}/* .
 RUN rpmdev-setuptree \
-   && mv rpmmacros .rpmmacros \
+   && cat ${ARCH} shared > .rpmmacros \
+   && rm ${ARCH} shared \
    && mv *.spec rpmbuild/SPECS \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
    && echo ${HASH}

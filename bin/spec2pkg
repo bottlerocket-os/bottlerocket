@@ -1,31 +1,44 @@
 #!/bin/bash
 
-SPEC="${1:?}"
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --spec=*) SPEC="${optarg}" ;;
+      --archs=*) ARCHS="${optarg}" ;;
+   esac
+done
+
 PKG="${SPEC##*/}"
 PKG="${PKG%.*}"
 
-# Collect file-based targets for the outputs of a package build.
-RPMS="$(rpmspec --query --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
-RPMS="${RPMS%"${RPMS##*[![:space:]]}"}"
+for arch in ${ARCHS//,/ } ; do
+   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared"
 
-# Collect file-based targets needed as inputs of a package build.
-SOURCES="$(rpmspec --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
-SOURCES="${SOURCES%"${SOURCES##*[![:space:]]}"}"
-PATCHES="$(rpmspec --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
-PATCHES="${PATCHES%"${PATCHES##*[![:space:]]}"}"
+   # Collect file-based targets for the outputs of a package build.
+   rpms="$(rpmspec --macros "${macros}" --query --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
+   rpms="${rpms%"${rpms##*[![:space:]]}"}"
 
-# Collect package-level dependencies needed as inputs of a package build.
-BUILDREQUIRES="$(rpmspec --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
-BUILDREQUIRES="${BUILDREQUIRES%"${BUILDREQUIRES##*[![:space:]]}"}"
+   # Collect file-based targets needed as inputs of a package build.
+   sources="$(rpmspec --macros "${macros}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
+   sources="${sources%"${sources##*[![:space:]]}"}"
+   patches="$(rpmspec --macros "${macros}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
+   patches="${patches%"${patches##*[![:space:]]}"}"
+
+   # Collect package-level dependencies needed as inputs of a package build.
+   buildrequires="$(rpmspec --macros "${macros}" --query --buildrequires "${SPEC}" | awk '/^thar/ {printf "$(%s) ",$0} END {print ""}')"
+   buildrequires="${buildrequires%"${buildrequires##*[![:space:]]}"}"
 
 cat <<EOF
-${RPMS} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}
+${rpms} : ${SPEC} ${sources} ${patches} ${buildrequires}
 	\$(eval HASH:= \$(shell sha1sum \$^ | sha1sum - | awk '{printf \$\$1}'))
 	@\$(BUILDCTL) build \\
 		--frontend-opt target=rpm \\
 		--frontend-opt build-arg:PACKAGE=${PKG} \\
+		--frontend-opt build-arg:ARCH=${arch} \\
 		--frontend-opt build-arg:HASH=\$(HASH) \\
 		--exporter=local \\
 		--exporter-opt output=\$(OUTPUT) \\
 		\$(BUILDCTL_ARGS)
+
 EOF
+done
