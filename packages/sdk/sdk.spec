@@ -8,13 +8,12 @@
 %global gccver 8.2.0
 %global gccmaj 8
 
-Name:    %{_cross_os}sdk
+Name: %{_cross_os}sdk
 Version: %{brver}
-Release: 1%{?_cross_dist}
+Release: 1%{?dist}
 Summary: Thar SDK
-Group:   Development/Tools
 License: GPLv2+ and GPLv3+ and LGPLv3+ and GFDL and MIT
-URL:     https://github.com/buildroot/buildroot
+URL: https://github.com/buildroot/buildroot
 Source0: https://github.com/buildroot/buildroot/archive/%{brver}/buildroot-%{brver}.tar.gz
 Source1: https://ftp.gnu.org/gnu/binutils/binutils-%{binver}.tar.xz
 Source2: https://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.xz
@@ -29,13 +28,12 @@ Source10: https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz
 Source11: https://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz
 Source12: https://ftp.gnu.org/gnu/mpfr/mpfr-3.1.6.tar.xz
 Source13: https://ftp.gnu.org/gnu/tar/tar-1.29.cpio.gz
-Source100: thar_sdk_%{_cross_arch}_defconfig
+Source100: sdk-%{_cross_arch}-defconfig
 Patch1: 0001-disable-shared-for-host-builds-of-gmp-isl-mpc-mpfr.patch
 Patch2: 0002-allow-unknown-vendor-name-for-toolchain.patch
 Patch3: 0003-add-TOOLS_DIR-and-SYSROOT_DIR-to-control-output.patch
 Patch4: 0004-build-binutils-with-TOOLS_DIR-and-SYSROOT_DIR.patch
 Patch5: 0005-build-gcc-with-TOOLS_DIR-and-SYSROOT_DIR.patch
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: bc
 BuildRequires: perl-ExtUtils-MakeMaker
 BuildRequires: python
@@ -75,7 +73,10 @@ Version: %{gccver}
 Requires: gcc-%{_cross_target}%{?_isa} = %{gccver}
 Requires: libatomic-%{_cross_target} = %{gccver}
 Requires: libitm-%{_cross_target} = %{gccver}
+%if "%{_cross_arch}" == "x86_64"
 Requires: libquadmath-%{_cross_target} = %{gccver}
+Requires: libmpx-%{_cross_target} = %{gccver}
+%endif
 Requires: libstdc++-%{_cross_target} = %{gccver}
 License: GPLv3+
 
@@ -177,19 +178,12 @@ cp -a %{SOURCE100} configs
 %build
 mkdir output
 output="output/%{_cross_arch}"
-config="configs/thar_sdk_%{_cross_arch}_defconfig"
+config="configs/sdk-%{_cross_arch}-defconfig"
 make O=${output} defconfig BR2_DEFCONFIG=${config}
 make O=${output} toolchain
 
 %install
-rm -rf %{buildroot}
-mkdir -p %{buildroot}
 rsync -av output/%{_cross_arch}/toolchain/ %{buildroot}
-
-%check
-
-%clean
-rm -rf %{buildroot}
 
 %files
 

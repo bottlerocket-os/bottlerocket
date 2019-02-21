@@ -11,6 +11,10 @@ done
 for arch in ${ARCHS//,/ } ; do
    macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared"
 
-   # Populate variables for the capabilities provided by package names.
-   rpmspec --macros "${macros}" --query --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm\n" "${SPEC}"
+   # Build-time dependencies are associated with all subpackages.
+   buildrequires="$(rpmspec --macros "${macros}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
+   buildrequires="${buildrequires%"${buildrequires##*[![:space:]]}"}"
+
+   # Emit variables for package names that resolve to all their dependencies.
+   rpmspec --macros "${macros}" --query --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm[ \$(%{REQUIRES})] ${buildrequires}\n" "${SPEC}"
 done

@@ -40,4 +40,3 @@ all: $(thar-x86_64-sdk) $(thar-aarch64-sdk)
 .PHONY: clean
 clean:
 	@rm -f $(OUTPUT)/*.rpm
-	@find $(TOPDIR) -name '*.makevar' -name '*.makepkg' -delete
