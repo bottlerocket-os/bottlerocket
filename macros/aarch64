@@ -1,1 +1,2 @@
 %_cross_arch aarch64
+%_cross_karch arm64

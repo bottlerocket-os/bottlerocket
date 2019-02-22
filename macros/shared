@@ -2,7 +2,8 @@
 %_cross_libc gnu
 %_cross_os %{_cross_vendor}-%{_cross_arch}-
 %_cross_target %{_cross_arch}-%{_cross_vendor}-linux-%{_cross_libc}
-%_cross_prefix %{_prefix}/%{_cross_target}/sys-root/usr
+%_cross_prefix %{_prefix}/%{_cross_target}/sys-root%{_prefix}
+%_cross_includedir %{_cross_prefix}/include
 %dist %{nil}
 
 # Prevent RPM from erroring out the build when it detects our cross-compiled

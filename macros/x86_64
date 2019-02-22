@@ -1,1 +1,2 @@
 %_cross_arch x86_64
+%_cross_karch x86
