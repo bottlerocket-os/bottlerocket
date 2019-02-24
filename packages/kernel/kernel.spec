@@ -4,12 +4,10 @@ Name: %{_cross_os}kernel
 Version: 4.14.102
 Release: 1%{?dist}
 Summary: The Linux kernel
-Group: System Environment/Kernel
 License: GPLv2 and Redistributable, no modification permitted
 URL: https://www.kernel.org/
 Source0: https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{version}.tar.xz
 Source100: config-%{_cross_arch}
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gcc-%{_cross_target}
 
 %description
@@ -17,7 +15,6 @@ BuildRequires: gcc-%{_cross_target}
 
 %package headers
 Summary: Header files for the Linux kernel for use by glibc
-Group: Development/System
 
 %description headers
 %{summary}.

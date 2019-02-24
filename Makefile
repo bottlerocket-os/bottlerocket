@@ -34,7 +34,7 @@ list = $(subst $(space),$(comma),$(1))
 -include $(PKGS)
 
 .PHONY: all
-all: $(thar-x86_64-kernel) $(thar-aarch64-kernel)
+all: $(thar-x86_64-glibc) $(thar-aarch64-glibc)
 	@echo BUILT IT ALL
 
 .PHONY: clean

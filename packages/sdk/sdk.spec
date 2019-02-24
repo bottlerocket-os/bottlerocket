@@ -185,6 +185,13 @@ make O=${output} toolchain
 %install
 rsync -av output/%{_cross_arch}/toolchain/ %{buildroot}
 
+# Add helpers to $PATH to override programs used to extract debuginfo.
+mkdir -p %{buildroot}%{_prefix}/local/bin
+ln -s ../../bin/%{_cross_target}-nm %{buildroot}%{_prefix}/local/bin/nm
+ln -s ../../bin/%{_cross_target}-objcopy %{buildroot}%{_prefix}/local/bin/objcopy
+ln -s ../../bin/%{_cross_target}-objdump %{buildroot}%{_prefix}/local/bin/objdump
+ln -s ../../bin/%{_cross_target}-strip %{buildroot}%{_prefix}/local/bin/strip
+
 %files
 
 %files -n binutils-%{_cross_target}
@@ -220,6 +227,10 @@ rsync -av output/%{_cross_arch}/toolchain/ %{buildroot}
 %dir %{_prefix}/%{_cross_target}/sys-root
 %dir %{_cross_prefix}
 %dir %{_cross_prefix}/lib
+%{_prefix}/local/bin/nm
+%{_prefix}/local/bin/objcopy
+%{_prefix}/local/bin/objdump
+%{_prefix}/local/bin/strip
 
 %files -n gcc-%{_cross_target}
 %{_bindir}/%{_cross_target}-cc
@@ -252,8 +263,13 @@ rsync -av output/%{_cross_arch}/toolchain/ %{buildroot}
 %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/include/*
 %dir %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/include-fixed
 %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/include-fixed/README
+%if "%{_cross_libc}" == "gnu"
+%{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/include-fixed/syslimits.h
+%{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/include-fixed/limits.h
+%else
 %exclude %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/include-fixed/syslimits.h
 %exclude %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/include-fixed/limits.h
+%endif
 %dir %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/install-tools
 %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/install-tools/fixinc_list
 %{_prefix}/lib/gcc/%{_cross_target}/%{gccmaj}/install-tools/gsyslimits.h
