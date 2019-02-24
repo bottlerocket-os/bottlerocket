@@ -1,0 +1,28 @@
+diff -up ncurses-6.1-20180714/misc/ncurses-config.in.config ncurses-6.1-20180714/misc/ncurses-config.in
+--- ncurses-6.1-20180714/misc/ncurses-config.in.config	2018-06-10 00:29:01.000000000 +0200
++++ ncurses-6.1-20180714/misc/ncurses-config.in	2018-07-16 16:23:22.202581815 +0200
+@@ -40,7 +40,6 @@ exec_prefix="@exec_prefix@"
+ 
+ bindir="@bindir@"
+ includedir="@includedir@"
+-libdir="@libdir@"
+ datarootdir="@datarootdir@"
+ datadir="@datadir@"
+ mandir="@mandir@"
+@@ -111,7 +110,7 @@ while test $# -gt 0; do
+ ENDECHO
+ 		;;
+ 	--libs)
+-		if test "$libdir" = /usr/lib
++		if true
+ 		then
+ 			LIBDIR=
+ 		else
+@@ -155,7 +154,6 @@ ENDECHO
+ 		echo $INCS
+ 		;;
+ 	--libdir)
+-		echo "${libdir}"
+ 		;;
+ 	--mandir)
+ 		echo "${mandir}"

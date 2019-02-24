@@ -1,0 +1,58 @@
+diff -up ncurses-6.0-20150810/c++/Makefile.in.libs ncurses-6.0-20150810/c++/Makefile.in
+--- ncurses-6.0-20150810/c++/Makefile.in.libs	2015-08-06 01:15:41.000000000 +0200
++++ ncurses-6.0-20150810/c++/Makefile.in	2015-08-12 17:07:35.573822650 +0200
+@@ -112,7 +112,7 @@ LOCAL_LIBDIR	= @top_builddir@/lib
+ 
+ LINK		= @LINK_PROGS@ $(LIBTOOL_LINK) @CXXLDFLAGS@
+ SHLIB_DIRS	= -L../lib
+-SHLIB_LIST	= $(SHLIB_DIRS) -lform@USE_LIB_SUFFIX@ -lmenu@USE_LIB_SUFFIX@ -lpanel@USE_LIB_SUFFIX@ -lncurses@USE_LIB_SUFFIX@ @SHLIB_LIST@
++SHLIB_LIST	= $(SHLIB_DIRS) -lform@USE_LIB_SUFFIX@ -lmenu@USE_LIB_SUFFIX@ -lpanel@USE_LIB_SUFFIX@ -lncurses@USE_LIB_SUFFIX@ #@SHLIB_LIST@
+ 
+ LIBROOT		= ncurses++
+ 
+@@ -147,8 +147,7 @@ LDFLAGS_SHARED	= $(TEST_LDFLAGS) $(CFLAG
+ LDFLAGS_DEFAULT	= $(LINK_@DFT_UPR_MODEL@) $(LDFLAGS_@DFT_UPR_MODEL@)
+ 
+ # flags for library built by this makefile
+-LDFLAGS		= $(TEST_ARGS) @LDFLAGS@ \
+-	@LD_MODEL@ $(TEST_LIBS) @LIBS@ $(CXXLIBS)
++LDFLAGS		= @LDFLAGS@ @LD_MODEL@ @LIBS@ $(CXXLIBS)
+ 
+ AUTO_SRC	= \
+ 		etip.h
+diff -up ncurses-6.0-20150810/form/Makefile.in.libs ncurses-6.0-20150810/form/Makefile.in
+--- ncurses-6.0-20150810/form/Makefile.in.libs	2015-08-12 17:06:49.072684924 +0200
++++ ncurses-6.0-20150810/form/Makefile.in	2015-08-12 17:08:14.945939259 +0200
+@@ -107,7 +107,7 @@ LINK		= $(LIBTOOL_LINK)
+ LDFLAGS		= @LDFLAGS@ @LD_MODEL@ @LIBS@
+ 
+ SHLIB_DIRS	= -L../lib
+-SHLIB_LIST	= $(SHLIB_DIRS) -lncurses@USE_LIB_SUFFIX@ @SHLIB_LIST@
++SHLIB_LIST	= $(SHLIB_DIRS) -lncurses@USE_LIB_SUFFIX@ #@SHLIB_LIST@
+ 
+ RPATH_LIST	= @RPATH_LIST@
+ RESULTING_SYMS	= @RESULTING_SYMS@
+diff -up ncurses-6.0-20150810/menu/Makefile.in.libs ncurses-6.0-20150810/menu/Makefile.in
+--- ncurses-6.0-20150810/menu/Makefile.in.libs	2015-08-12 17:06:49.072684924 +0200
++++ ncurses-6.0-20150810/menu/Makefile.in	2015-08-12 17:09:10.135102716 +0200
+@@ -107,7 +107,7 @@ LINK		= $(LIBTOOL_LINK)
+ LDFLAGS		= @LDFLAGS@ @LD_MODEL@ @LIBS@
+ 
+ SHLIB_DIRS	= -L../lib
+-SHLIB_LIST	= $(SHLIB_DIRS) -lncurses@USE_LIB_SUFFIX@ @SHLIB_LIST@
++SHLIB_LIST	= $(SHLIB_DIRS) -lncurses@USE_LIB_SUFFIX@ #@SHLIB_LIST@
+ 
+ RPATH_LIST	= @RPATH_LIST@
+ RESULTING_SYMS	= @RESULTING_SYMS@
+diff -up ncurses-6.0-20150810/panel/Makefile.in.libs ncurses-6.0-20150810/panel/Makefile.in
+--- ncurses-6.0-20150810/panel/Makefile.in.libs	2015-08-12 17:06:49.072684924 +0200
++++ ncurses-6.0-20150810/panel/Makefile.in	2015-08-12 17:09:33.324171396 +0200
+@@ -109,7 +109,7 @@ LINK		= $(LIBTOOL_LINK)
+ LDFLAGS		= @LDFLAGS@ @LD_MODEL@ @LIBS@
+ 
+ SHLIB_DIRS	= -L../lib
+-SHLIB_LIST	= $(SHLIB_DIRS) -lncurses@USE_LIB_SUFFIX@ @SHLIB_LIST@
++SHLIB_LIST	= $(SHLIB_DIRS) -lncurses@USE_LIB_SUFFIX@ #@SHLIB_LIST@
+ 
+ RPATH_LIST	= @RPATH_LIST@
+ RESULTING_SYMS	= @RESULTING_SYMS@
