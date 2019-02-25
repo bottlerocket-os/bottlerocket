@@ -20,6 +20,7 @@ Requires: %{_cross_os}glibc
 %package devel
 Summary: Files for development using the ncurses libraries.
 Requires: %{name}
+Requires: %{_cross_os}glibc-devel
 
 %description devel
 %{summary}.
