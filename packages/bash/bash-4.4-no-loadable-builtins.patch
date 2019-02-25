@@ -1,0 +1,15 @@
+diff --git a/Makefile.in b/Makefile.in
+index a1f9483..24c646a 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -800,7 +800,6 @@ install:	.made installdirs
+ 		infodir=$(infodir) htmldir=$(htmldir) DESTDIR=$(DESTDIR) $@ )
+ 	-( cd $(DEFDIR) ; $(MAKE) $(MFLAGS) DESTDIR=$(DESTDIR) $@ )
+ 	-( cd $(PO_DIR) ; $(MAKE) $(MFLAGS) DESTDIR=$(DESTDIR) $@ )
+-	-( cd $(LOADABLES_DIR) && $(MAKE) $(MFLAGS) DESTDIR=$(DESTDIR) $@ )
+ 
+ install-strip:
+ 	$(MAKE) $(MFLAGS) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
+-- 
+2.9.3
+

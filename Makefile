@@ -34,7 +34,7 @@ list = $(subst $(space),$(comma),$(1))
 -include $(PKGS)
 
 .PHONY: all
-all: $(thar-x86_64-readline) $(thar-aarch64-readline)
+all: $(thar-x86_64-bash) $(thar-aarch64-bash)
 	@echo BUILT IT ALL
 
 .PHONY: clean

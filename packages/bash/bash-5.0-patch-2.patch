@@ -1,0 +1,96 @@
+From ddf3f643cb9b9a2ca8e6d996c605e4332204874c Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Fri, 18 Jan 2019 15:13:57 -0500
+Subject: [PATCH] Bash-5.0 patch 2: fix expansion of aliases whose value ends
+ with an unquoted tab
+
+---
+ parse.y      | 5 ++++-
+ parser.h     | 1 +
+ patchlevel.h | 2 +-
+ y.tab.c      | 5 ++++-
+ 4 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/parse.y b/parse.y
+index 3ff87bcc..07e6e3e4 100644
+--- a/parse.y
++++ b/parse.y
+@@ -2557,12 +2557,14 @@ next_alias_char:
+   if (uc == 0 && pushed_string_list && pushed_string_list->flags != PSH_SOURCE &&
+       pushed_string_list->flags != PSH_DPAREN &&
+       (parser_state & PST_COMMENT) == 0 &&
++      (parser_state & PST_ENDALIAS) == 0 &&	/* only once */
+       shell_input_line_index > 0 &&
+-      shell_input_line[shell_input_line_index-1] != ' ' &&
++      shellblank (shell_input_line[shell_input_line_index-1]) == 0 &&
+       shell_input_line[shell_input_line_index-1] != '\n' &&
+       shellmeta (shell_input_line[shell_input_line_index-1]) == 0 &&
+       (current_delimiter (dstack) != '\'' && current_delimiter (dstack) != '"'))
+     {
++      parser_state |= PST_ENDALIAS;
+       return ' ';	/* END_ALIAS */
+     }
+ #endif
+@@ -2571,6 +2573,7 @@ pop_alias:
+   /* This case works for PSH_DPAREN as well */
+   if (uc == 0 && pushed_string_list && pushed_string_list->flags != PSH_SOURCE)
+     {
++      parser_state &= ~PST_ENDALIAS;
+       pop_string ();
+       uc = shell_input_line[shell_input_line_index];
+       if (uc)
+diff --git a/parser.h b/parser.h
+index 54dd2c88..6d08915d 100644
+--- a/parser.h
++++ b/parser.h
+@@ -47,6 +47,7 @@
+ #define PST_REPARSE	0x040000	/* re-parsing in parse_string_to_word_list */
+ #define PST_REDIRLIST	0x080000	/* parsing a list of redirections preceding a simple command name */
+ #define PST_COMMENT	0x100000	/* parsing a shell comment; used by aliases */
++#define PST_ENDALIAS	0x200000	/* just finished expanding and consuming an alias */
+ 
+ /* Definition of the delimiter stack.  Needed by parse.y and bashhist.c. */
+ struct dstack {
+diff --git a/patchlevel.h b/patchlevel.h
+index 40db1a32..a988d852 100644
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 1
++#define PATCHLEVEL 2
+ 
+ #endif /* _PATCHLEVEL_H_ */
+diff --git a/y.tab.c b/y.tab.c
+index 1abe2c50..7efce3c8 100644
+--- a/y.tab.c
++++ b/y.tab.c
+@@ -4873,12 +4873,14 @@ next_alias_char:
+   if (uc == 0 && pushed_string_list && pushed_string_list->flags != PSH_SOURCE &&
+       pushed_string_list->flags != PSH_DPAREN &&
+       (parser_state & PST_COMMENT) == 0 &&
++      (parser_state & PST_ENDALIAS) == 0 &&	/* only once */
+       shell_input_line_index > 0 &&
+-      shell_input_line[shell_input_line_index-1] != ' ' &&
++      shellblank (shell_input_line[shell_input_line_index-1]) == 0 &&
+       shell_input_line[shell_input_line_index-1] != '\n' &&
+       shellmeta (shell_input_line[shell_input_line_index-1]) == 0 &&
+       (current_delimiter (dstack) != '\'' && current_delimiter (dstack) != '"'))
+     {
++      parser_state |= PST_ENDALIAS;
+       return ' ';	/* END_ALIAS */
+     }
+ #endif
+@@ -4887,6 +4889,7 @@ pop_alias:
+   /* This case works for PSH_DPAREN as well */
+   if (uc == 0 && pushed_string_list && pushed_string_list->flags != PSH_SOURCE)
+     {
++      parser_state &= ~PST_ENDALIAS;
+       pop_string ();
+       uc = shell_input_line[shell_input_line_index];
+       if (uc)
+-- 
+2.17.2
+

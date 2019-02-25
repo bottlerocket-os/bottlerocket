@@ -1,0 +1,150 @@
+From 4d2e315490b778707b3a3afdfc514d5083a97a11 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Fri, 18 Jan 2019 15:12:37 -0500
+Subject: [PATCH] Bash-5.0 patch 1: fix pathname expansion of directory names
+ containing backslashes
+
+---
+ bashline.c           | 62 +++++++++++++++++++++++++++++++++++++++++---
+ lib/glob/glob_loop.c |  6 -----
+ patchlevel.h         |  2 +-
+ 3 files changed, 60 insertions(+), 10 deletions(-)
+
+diff --git a/bashline.c b/bashline.c
+index 2846aabf..75e79f1a 100644
+--- a/bashline.c
++++ b/bashline.c
+@@ -231,6 +231,7 @@ static int bash_possible_variable_completions __P((int, int));
+ static int bash_complete_command __P((int, int));
+ static int bash_possible_command_completions __P((int, int));
+ 
++static int completion_glob_pattern __P((char *));
+ static char *glob_complete_word __P((const char *, int));
+ static int bash_glob_completion_internal __P((int));
+ static int bash_glob_complete_word __P((int, int));
+@@ -1741,7 +1742,7 @@ bash_default_completion (text, start, end, qc, compflags)
+ 
+   /* This could be a globbing pattern, so try to expand it using pathname
+      expansion. */
+-  if (!matches && glob_pattern_p (text))
++  if (!matches && completion_glob_pattern ((char *)text))
+     {
+       matches = rl_completion_matches (text, glob_complete_word);
+       /* A glob expression that matches more than one filename is problematic.
+@@ -1850,7 +1851,7 @@ command_word_completion_function (hint_text, state)
+ 	  glob_matches = (char **)NULL;
+ 	}
+ 
+-      globpat = glob_pattern_p (hint_text);
++      globpat = completion_glob_pattern ((char *)hint_text);
+ 
+       /* If this is an absolute program name, do not check it against
+ 	 aliases, reserved words, functions or builtins.  We must check
+@@ -3713,6 +3714,61 @@ bash_complete_command_internal (what_to_do)
+   return bash_specific_completion (what_to_do, command_word_completion_function);
+ }
+ 
++static int
++completion_glob_pattern (string)
++     char *string;
++{
++  register int c;
++  char *send;
++  int open;
++
++  DECLARE_MBSTATE;
++
++  open = 0;
++  send = string + strlen (string);
++
++  while (c = *string++)
++    {
++      switch (c)
++	{
++	case '?':
++	case '*':
++	  return (1);
++
++	case '[':
++	  open++;
++	  continue;
++
++	case ']':
++	  if (open)
++	    return (1);
++	  continue;
++
++	case '+':
++	case '@':
++	case '!':
++	  if (*string == '(')	/*)*/
++	    return (1);
++	  continue;
++
++	case '\\':
++	  if (*string == 0)
++	    return (0);	 	  
++	}
++
++      /* Advance one fewer byte than an entire multibyte character to
++	 account for the auto-increment in the loop above. */
++#ifdef HANDLE_MULTIBYTE
++      string--;
++      ADVANCE_CHAR_P (string, send - string);
++      string++;
++#else
++      ADVANCE_CHAR_P (string, send - string);
++#endif
++    }
++  return (0);
++}
++
+ static char *globtext;
+ static char *globorig;
+ 
+@@ -3877,7 +3933,7 @@ bash_vi_complete (count, key)
+       t = substring (rl_line_buffer, p, rl_point);
+     }      
+ 
+-  if (t && glob_pattern_p (t) == 0)
++  if (t && completion_glob_pattern (t) == 0)
+     rl_explicit_arg = 1;	/* XXX - force glob_complete_word to append `*' */
+   FREE (t);
+ 
+diff --git a/lib/glob/glob_loop.c b/lib/glob/glob_loop.c
+index 5f319cc2..7d6ae211 100644
+--- a/lib/glob/glob_loop.c
++++ b/lib/glob/glob_loop.c
+@@ -54,17 +54,11 @@ INTERNAL_GLOB_PATTERN_P (pattern)
+ 	continue;
+ 
+       case L('\\'):
+-#if 0
+ 	/* Don't let the pattern end in a backslash (GMATCH returns no match
+ 	   if the pattern ends in a backslash anyway), but otherwise return 1,
+ 	   since the matching engine uses backslash as an escape character
+ 	   and it can be removed. */
+ 	return (*p != L('\0'));
+-#else
+-	/* The pattern may not end with a backslash. */
+-	if (*p++ == L('\0'))
+-	  return 0;
+-#endif
+       }
+ 
+   return 0;
+diff --git a/patchlevel.h b/patchlevel.h
+index 1cd7c96c..40db1a32 100644
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 0
++#define PATCHLEVEL 1
+ 
+ #endif /* _PATCHLEVEL_H_ */
+-- 
+2.17.2
+
