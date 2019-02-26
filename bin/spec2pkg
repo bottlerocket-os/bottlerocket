@@ -28,19 +28,6 @@ for arch in ${ARCHS//,/ } ; do
    buildrequires="$(rpmspec --macros "${macros}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
    buildrequires="${buildrequires%"${buildrequires##*[![:space:]]}"}"
 
-cat <<EOF
-${rpms} : ${SPEC} ${sources} ${patches} ${buildrequires}
-	\$(eval HASH:= \$(shell sha1sum \$^ | sha1sum - | awk '{printf \$\$1}'))
-	\$(eval RPMS:= \$(shell echo \$^ | tr ' ' '\\n' | awk '/.rpm\$\$/' | tr '\\n' ' '))
-	@\$(BUILDCTL) build \\
-		--frontend-opt target=rpm \\
-		--frontend-opt build-arg:PACKAGE=${PKG} \\
-		--frontend-opt build-arg:ARCH=${arch} \\
-		--frontend-opt build-arg:HASH=\$(HASH) \\
-		--frontend-opt build-arg:RPMS="\$(RPMS)" \\
-		--exporter=local \\
-		--exporter-opt output=\$(OUTPUT) \\
-		\$(BUILDCTL_ARGS)
-
-EOF
+   echo "${rpms} : ${SPEC} ${sources} ${patches} ${buildrequires}"
+   echo -e "\t\$(call build_rpm,$PKG,${arch},\$^)\n"
 done

@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:experimental
 
 FROM fedora:latest AS origin
-RUN dnf makecache && dnf -y update
+ARG DATE
+RUN dnf makecache && dnf -y update && echo ${DATE}
 
 FROM origin AS base
 RUN dnf -y install rpmdevtools dnf-plugins-core createrepo_c \
@@ -38,3 +39,27 @@ RUN rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
 FROM scratch AS rpm
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /
+
+FROM base AS fsbuild
+ARG PACKAGE
+ARG ARCH
+ARG HASH
+WORKDIR /root
+
+USER root
+RUN --mount=target=/host \
+    mkdir rpms fs \
+    && cp /host/build/*-${ARCH}-*.rpm rpms \
+    && createrepo_c rpms \
+    && dnf -y \
+        --repofrompath repo,rpms \
+        --repo repo --nogpgcheck \
+        --downloadonly \
+        --downloaddir . \
+        install ${PACKAGE} \
+    && rpm -i --root /root/fs *.rpm \
+    && rm -rf fs/var/ \
+    && echo ${HASH}
+
+FROM scratch AS fs
+COPY --from=fsbuild /root/fs/ /

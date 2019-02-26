@@ -54,7 +54,6 @@
 # artifacts.
 %_binaries_in_noarch_packages_terminate_build 0
 
-# Prevent RPM from detecting provides or requires in any directories.
-# These are not suitable dependencies for most other packages.
-%__requires_exclude_from ^/%{_prefix}/.*$
-%__provides_exclude_from ^/%{_prefix}/.*$
+# Prevent RPM from detecting provides or requires for any files.
+%__requires_exclude ^.*$
+%__provides_exclude ^.*$
