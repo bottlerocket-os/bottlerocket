@@ -1,7 +1,7 @@
-From 7198c5eb9fd0830c108e6c03c01db07d36b4c70e Mon Sep 17 00:00:00 2001
+From 02432f15c393073fcdd039de408055dae9dbe27a Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:58:27 +0000
-Subject: [PATCH 5/5] build gcc with TOOLS_DIR and SYSROOT_DIR
+Subject: [PATCH 4/4] build gcc with TOOLS_DIR and SYSROOT_DIR
 
 Most of the changes here are to the second and final stage of our GCC
 build, so that the binaries are written to the new output path, and
@@ -26,7 +26,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  3 files changed, 44 insertions(+), 15 deletions(-)
 
 diff --git a/package/gcc/gcc-final/gcc-final.mk b/package/gcc/gcc-final/gcc-final.mk
-index cbde56ce1c..c8616f8128 100644
+index cbde56ce1c..e03738cc75 100644
 --- a/package/gcc/gcc-final/gcc-final.mk
 +++ b/package/gcc/gcc-final/gcc-final.mk
 @@ -46,9 +46,14 @@ define  HOST_GCC_FINAL_CONFIGURE_CMDS
@@ -40,7 +40,7 @@ index cbde56ce1c..c8616f8128 100644
 +		--sysconfdir="/etc" \
  		--enable-static \
 +		--disable-libcc1 \
-+		--with-sysroot=/usr$(SYSROOT_DIR) \
++		--with-sysroot=$(SYSROOT_DIR) \
 +		--with-build-sysroot=$(STAGING_DIR) \
 +		--with-gcc-major-version-only \
  		$(QUIET) $(HOST_GCC_FINAL_CONF_OPTS) \
@@ -155,10 +155,10 @@ index cbde56ce1c..c8616f8128 100644
 +endef
 +
 +define HOST_GCC_FINAL_TOOLS_DIR_SYSROOT
-+	mkdir -p $(TOOLS_DIR)/usr/$(SYSROOT_DIR)/usr
++	mkdir -p $(TOOLS_DIR)$(SYSROOT_DIR)/usr
 +	test -d $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib64 \
-+		&& mv $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib64 $(TOOLS_DIR)/usr/$(SYSROOT_DIR)/usr/lib \
-+		|| mv $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib $(TOOLS_DIR)/usr/$(SYSROOT_DIR)/usr/lib
++		&& mv $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib64 $(TOOLS_DIR)$(SYSROOT_DIR)/usr/lib \
++		|| mv $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib $(TOOLS_DIR)$(SYSROOT_DIR)/usr/lib
 +endef
 +
 +HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_TOOLS_DIR_CLEANUP

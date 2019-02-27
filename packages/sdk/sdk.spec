@@ -30,10 +30,9 @@ Source12: https://ftp.gnu.org/gnu/mpfr/mpfr-3.1.6.tar.xz
 Source13: https://ftp.gnu.org/gnu/tar/tar-1.29.cpio.gz
 Source100: sdk-%{_cross_arch}-defconfig
 Patch1: 0001-disable-shared-for-host-builds-of-gmp-isl-mpc-mpfr.patch
-Patch2: 0002-allow-unknown-vendor-name-for-toolchain.patch
-Patch3: 0003-add-TOOLS_DIR-and-SYSROOT_DIR-to-control-output.patch
-Patch4: 0004-build-binutils-with-TOOLS_DIR-and-SYSROOT_DIR.patch
-Patch5: 0005-build-gcc-with-TOOLS_DIR-and-SYSROOT_DIR.patch
+Patch2: 0002-add-TOOLS_DIR-and-SYSROOT_DIR-to-control-output.patch
+Patch3: 0003-build-binutils-with-TOOLS_DIR-and-SYSROOT_DIR.patch
+Patch4: 0004-build-gcc-with-TOOLS_DIR-and-SYSROOT_DIR.patch
 BuildRequires: bc
 BuildRequires: perl-ExtUtils-MakeMaker
 BuildRequires: python
@@ -153,7 +152,6 @@ License: GPLv3+
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch5 -p1
 
 # move sources into place
 mkdir -p dl/{binutils,bison,gawk,gcc,glibc,gmp,isl,linux,lzip,m4,mpc,mpfr,tar}
@@ -224,9 +222,9 @@ ln -s ../../bin/%{_cross_target}-strip %{buildroot}%{_prefix}/local/bin/strip
 %{_prefix}/%{_cross_target}/bin/ar
 %dir %{_prefix}/%{_cross_target}/include
 %dir %{_prefix}/%{_cross_target}/lib
-%dir %{_prefix}/%{_cross_target}/sys-root
+%dir %{_cross_rootdir}
 %dir %{_cross_prefix}
-%dir %{_cross_prefix}/lib
+%dir %{_cross_libdir}
 %{_prefix}/local/bin/nm
 %{_prefix}/local/bin/objcopy
 %{_prefix}/local/bin/objdump

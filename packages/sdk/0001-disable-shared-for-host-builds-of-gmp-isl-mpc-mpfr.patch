@@ -1,7 +1,7 @@
 From 91f8bfc0fd5eff9066f0371c44fd7c8a5e986d02 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:15:02 +0000
-Subject: [PATCH 1/5] disable shared for host builds of gmp, isl, mpc, mpfr
+Subject: [PATCH 1/4] disable shared for host builds of gmp, isl, mpc, mpfr
 
 Building these GCC dependencies as static libraries avoids the need to
 provide the shared library paths at runtime, using either rpath entries

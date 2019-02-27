@@ -1,7 +1,7 @@
-From bf601db682c654ee7e03e01fc9aad87c6d605d20 Mon Sep 17 00:00:00 2001
+From 81c6b12d0bfc2ff91f41f46bfd3ba94eadcf9ca8 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:40:50 +0000
-Subject: [PATCH 4/5] build binutils with TOOLS_DIR and SYSROOT_DIR
+Subject: [PATCH 3/4] build binutils with TOOLS_DIR and SYSROOT_DIR
 
 The binutils build only needs one stage, so we can write the binaries
 directly to the new output path.
@@ -16,7 +16,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/package/binutils/binutils.mk b/package/binutils/binutils.mk
-index 090065a3e4..d4031ecf66 100644
+index 090065a3e4..e3feea73c4 100644
 --- a/package/binutils/binutils.mk
 +++ b/package/binutils/binutils.mk
 @@ -61,9 +61,10 @@ endif
@@ -37,7 +37,7 @@ index 090065a3e4..d4031ecf66 100644
  	--enable-static \
 -	--with-sysroot=$(STAGING_DIR) \
 -	--enable-poison-system-directories \
-+	--with-sysroot=/usr$(SYSROOT_DIR) \
++	--with-sysroot=$(SYSROOT_DIR) \
  	$(BINUTILS_DISABLE_GDB_CONF_OPTS) \
  	$(BINUTILS_EXTRA_CONFIG_OPTIONS)
  

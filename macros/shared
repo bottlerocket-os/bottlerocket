@@ -6,7 +6,7 @@
 
 %_cross_cflags -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -fstack-clash-protection
 
-%_cross_rootdir %{_prefix}/%{_cross_target}/sys-root
+%_cross_rootdir /%{_cross_target}/sys-root
 %_cross_prefix %{_cross_rootdir}%{_prefix}
 %_cross_exec_prefix %{_cross_rootdir}%{_exec_prefix}
 %_cross_bindir %{_cross_rootdir}%{_bindir}
@@ -57,3 +57,6 @@
 # Prevent RPM from detecting provides or requires for any files.
 %__requires_exclude ^.*$
 %__provides_exclude ^.*$
+
+# Do not generate build ID links in main packages.
+%_build_id_links alldebug

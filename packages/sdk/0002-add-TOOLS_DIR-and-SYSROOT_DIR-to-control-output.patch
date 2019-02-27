@@ -1,7 +1,7 @@
-From 8daab7e68590436321c8c665c6f15cb839c24da4 Mon Sep 17 00:00:00 2001
+From f9e37a4ae1184489f79fa8e34c8b08b1640b059d Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:35:06 +0000
-Subject: [PATCH 3/5] add TOOLS_DIR and SYSROOT_DIR to control output
+Subject: [PATCH 2/4] add TOOLS_DIR and SYSROOT_DIR to control output
 
 The sysroot directory is essential to our purpose of building a
 relocatable toolchain, as GCC will look for it relative to the
@@ -74,10 +74,10 @@ index dd8cc7a9ae..2570bf118e 100644
  .PHONY: distclean
  distclean: clean
 diff --git a/package/Makefile.in b/package/Makefile.in
-index 767a6bea96..e984c00c85 100644
+index f24abdd703..3f0810e38e 100644
 --- a/package/Makefile.in
 +++ b/package/Makefile.in
-@@ -103,8 +103,9 @@ ifeq ($(BR2_arc)$(BR2_ARC_ATOMIC_EXT),yy)
+@@ -107,8 +107,9 @@ ifeq ($(BR2_arc)$(BR2_ARC_ATOMIC_EXT),yy)
  TARGET_ABI += -matomic
  endif
  
