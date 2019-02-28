@@ -24,7 +24,7 @@ Requires: %{name}
 
 %build
 %cross_configure
-make %{?_smp_mflags}
+%make_build
 
 %install
 %make_install
