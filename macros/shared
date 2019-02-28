@@ -6,12 +6,13 @@
 
 %_cross_cflags -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -fstack-clash-protection
 
+%_cross_lib lib
 %_cross_rootdir /%{_cross_target}/sys-root
 %_cross_prefix %{_cross_rootdir}%{_prefix}
 %_cross_exec_prefix %{_cross_rootdir}%{_exec_prefix}
 %_cross_bindir %{_cross_rootdir}%{_bindir}
 %_cross_sbindir %{_cross_rootdir}%{_sbindir}
-%_cross_libdir %{_cross_prefix}/lib
+%_cross_libdir %{_cross_prefix}/%{_cross_lib}
 %_cross_libexecdir %{_cross_rootdir}%{_libexecdir}
 %_cross_includedir %{_cross_rootdir}%{_includedir}
 %_cross_sysconfdir %{_cross_rootdir}%{_sysconfdir}
