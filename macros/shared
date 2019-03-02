@@ -24,6 +24,7 @@
 %_cross_mandir %{_cross_rootdir}%{_mandir}
 %_cross_sharedstatedir %{_cross_rootdir}%{_sharedstatedir}
 %_cross_localstatedir %{_cross_rootdir}%{_localstatedir}
+%_cross_bashdir %{_cross_datadir}/bash-completion
 
 %cross_configure \
   CFLAGS="${CFLAGS:-%_cross_cflags}" ; export CFLAGS ; \
