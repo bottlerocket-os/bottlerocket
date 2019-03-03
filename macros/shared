@@ -5,6 +5,10 @@
 %dist %{nil}
 
 %_cross_cflags -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -fstack-clash-protection
+%_cross_c_args '-O2', '-g', '-pipe', '-Wall', '-Werror=format-security', '-Wp,-D_FORTIFY_SOURCE=2', '-Wp,-D_GLIBCXX_ASSERTIONS', '-fexceptions', '-fstack-protector-strong', '-fstack-clash-protection'
+%_cross_cxxflags %_cross_cflags
+%_cross_ldflags -Wl,-z,relro -Wl,-z,now
+%_cross_c_link_args '-Wl,-z,relro', '-Wl,-z,now'
 
 %_cross_lib lib
 %_cross_rootdir /%{_cross_target}/sys-root
@@ -25,11 +29,16 @@
 %_cross_sharedstatedir %{_cross_rootdir}%{_sharedstatedir}
 %_cross_localstatedir %{_cross_rootdir}%{_localstatedir}
 %_cross_bashdir %{_cross_datadir}/bash-completion
+%_cross_pkgconfigdir %{_cross_libdir}/pkgconfig
+
+%set_cross_build_flags \
+  CFLAGS="${CFLAGS:-%{_cross_cflags}}" ; export CFLAGS ; \
+  CXXFLAGS="${CXXFLAGS:-%{_cross_cxxflags}}" ; export CXXFLAGS ; \
+  LDFLAGS="${LDFLAGS:-%{_cross_ldflags}}" ; export LDFLAGS ; \
+  PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
 
 %cross_configure \
-  CFLAGS="${CFLAGS:-%_cross_cflags}" ; export CFLAGS ; \
-  CXXFLAGS="${CXXFLAGS:-%_cross_cflags}" ; export CXXFLAGS ; \
-  FFLAGS="${FFLAGS:-%_cross_cflags}" ; export FFLAGS ; \
+  %set_cross_build_flags \
   %{_configure} \\\
     --host=%{_cross_target} \\\
     --target=%{_cross_target} \\\
@@ -48,6 +57,60 @@
     --sharedstatedir=%{_cross_sharedstatedir} \\\
     --mandir=%{_cross_mandir} \\\
     --infodir=%{_cross_infodir}
+
+%_cross_vpath_srcdir .
+%_cross_vpath_builddir %_cross_target
+%_cross_compilation_conf %{_cross_vpath_srcdir}/cross-compilation.conf
+
+%write_cross_compilation_conf \
+cat <<CROSS_COMPILATION_CONF_EOF >%_cross_compilation_conf 2>/dev/null || :\
+[binaries]\
+c = '%{_cross_target}-gcc'\
+cpp = '%{_cross_target}-g++'\
+ar = '%{_cross_target}-ar'\
+strip = '%{_cross_target}-strip'\
+pkgconfig = '/usr/bin/pkg-config'\
+[properties]\
+c_args = [%{_cross_c_args}]\
+c_link_args = [%{_cross_c_link_args}]\
+[host_machine]\
+system = 'linux'\
+cpu_family ='%{_cross_cpu_family}'\
+cpu = '%{_cross_arch}'\
+endian = '%{_cross_endian}'\
+CROSS_COMPILATION_CONF_EOF\
+%{nil}
+
+%cross_meson \
+  %write_cross_compilation_conf \
+  %set_cross_build_flags \
+  %{shrink:%{__meson} \
+    --buildtype=plain \
+    --default-library=shared \
+    --cross-file=%{_cross_compilation_conf} \
+    --prefix=%{_cross_prefix} \
+    --libdir=%{_cross_libdir} \
+    --libexecdir=%{_cross_libexecdir} \
+    --bindir=%{_cross_bindir} \
+    --sbindir=%{_cross_sbindir} \
+    --includedir=%{_cross_includedir} \
+    --datadir=%{_cross_datadir} \
+    --mandir=%{_cross_mandir} \
+    --infodir=%{_cross_infodir} \
+    --localedir=%{_cross_localedir} \
+    --sysconfdir=%{_cross_sysconfdir} \
+    --localstatedir=%{_cross_localstatedir} \
+    --sharedstatedir=%{_cross_sharedstatedir} \
+    --wrap-mode=%{__meson_wrap_mode} \
+    --auto-features=%{__meson_auto_features} \
+    %{_cross_vpath_srcdir} %{_cross_vpath_builddir} \
+    %{nil}}
+
+%cross_meson_build \
+  %ninja_build -C %{_cross_vpath_builddir}
+
+%cross_meson_install \
+  %ninja_install -C %{_cross_vpath_builddir}
 
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy

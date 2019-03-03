@@ -1,2 +1,4 @@
 %_cross_arch aarch64
 %_cross_karch arm64
+%_cross_cpu_family arm
+%_cross_endian little

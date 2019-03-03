@@ -6,6 +6,8 @@ License: Public Domain
 BuildArch: noarch
 Requires: %{_cross_os}bash
 Requires: %{_cross_os}filesystem
+Requires: %{_cross_os}util-linux
+Requires: %{_cross_os}systemd
 
 %description
 %{summary}.
