@@ -7,10 +7,12 @@ URL: https://www.gnu.org/software/coreutils/
 Source0: https://ftp.gnu.org/gnu/coreutils/coreutils-%{version}.tar.xz
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
+BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libattr-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
 Requires: %{_cross_os}glibc
+Requires: %{_cross_os}libacl
 Requires: %{_cross_os}libattr
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libxcrypt

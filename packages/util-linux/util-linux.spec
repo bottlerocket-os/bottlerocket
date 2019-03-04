@@ -7,9 +7,11 @@ URL: http://en.wikipedia.org/wiki/Util-linux
 Source0: https://www.kernel.org/pub/linux/utils/util-linux/v2.33/util-linux-%{version}.tar.xz
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
+BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
 BuildRequires: %{_cross_os}ncurses-devel
 Requires: %{_cross_os}glibc
+Requires: %{_cross_os}libacl
 Requires: %{_cross_os}libxcrypt
 Requires: %{_cross_os}ncurses
 Requires: %{_cross_os}libblkid
