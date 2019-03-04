@@ -61,9 +61,18 @@ License: GPLv3+
 Summary: GNU C compiler for %{_cross_target}
 Version: %{gccver}
 Requires: binutils-%{_cross_target}%{?_isa} = %{binver}
+Requires: libgcc-%{_cross_target} = %{gccver}
 License: GPLv3+
 
 %description -n gcc-%{_cross_target}
+%{summary}.
+
+%package -n libgcc-%{_cross_target}
+Summary: GNU C compiler shared library support for %{_cross_target}
+Version: %{gccver}
+License: GPLv3+
+
+%description -n libgcc-%{_cross_target}
 %{summary}.
 
 %package -n gcc-c++-%{_cross_target}
@@ -296,6 +305,8 @@ ln -s ../../bin/%{_cross_target}-strip %{buildroot}%{_prefix}/local/bin/strip
 %dir %{_libexecdir}/gcc/%{_cross_target}/%{gccmaj}/plugin
 %{_libexecdir}/gcc/%{_cross_target}/%{gccmaj}/plugin/gengtype
 %{_cross_prefix}/lib/libgcc_s.so
+
+%files -n libgcc-%{_cross_target}
 %{_cross_prefix}/lib/libgcc_s.so.1
 
 %files -n gcc-c++-%{_cross_target}

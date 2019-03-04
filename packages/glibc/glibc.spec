@@ -10,6 +10,7 @@ Patch2: glibc-c-utf8-locale.patch
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: gcc-c++-%{_cross_target}
 BuildRequires: %{_cross_os}kernel-headers
+Requires: libgcc-%{_cross_target}
 
 %description
 %{summary}.
