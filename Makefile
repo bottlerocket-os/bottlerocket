@@ -15,7 +15,8 @@ DATE := $(shell date --rfc-3339=date)
 
 ARCHS := x86_64 aarch64
 
-BUILDCTL ?= buildctl --addr tcp://127.0.0.1:1234
+BUILDKITD_ADDR ?= tcp://127.0.0.1:1234
+BUILDCTL ?= buildctl --addr $(BUILDKITD_ADDR)
 BUILDCTL_ARGS := --progress=plain
 BUILDCTL_ARGS += --frontend=dockerfile.v0
 BUILDCTL_ARGS += --local context=.
@@ -79,3 +80,5 @@ all: $(ARCHS)
 .PHONY: clean
 clean:
 	@rm -f $(OUTPUT)/*.rpm
+
+include $(TOPDIR)/hack/rules.mk
