@@ -15,14 +15,16 @@ DATE := $(shell date --rfc-3339=date)
 
 ARCHS := x86_64 aarch64
 
+DOCKER ?= docker
+
+BUILDKIT_VER = v0.3.3
 BUILDKITD_ADDR ?= tcp://127.0.0.1:1234
-BUILDCTL ?= buildctl --addr $(BUILDKITD_ADDR)
+BUILDCTL_DOCKER_RUN = $(DOCKER) run --rm -ti --entrypoint /usr/bin/buildctl --user $(shell id -u):$(shell id -g) --volume $(TOPDIR):$(TOPDIR) --workdir $(TOPDIR) --network host moby/buildkit:$(BUILDKIT_VER)
+BUILDCTL ?= $(BUILDCTL_DOCKER_RUN) --addr $(BUILDKITD_ADDR)
 BUILDCTL_ARGS := --progress=plain
 BUILDCTL_ARGS += --frontend=dockerfile.v0
 BUILDCTL_ARGS += --local context=.
 BUILDCTL_ARGS += --local dockerfile=.
-
-DOCKER ?= docker
 
 define build_rpm
 	$(eval HASH:= $(shell sha1sum $3 /dev/null | sha1sum - | awk '{printf $$1}'))
