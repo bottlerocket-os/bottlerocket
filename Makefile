@@ -13,7 +13,7 @@ OUTPUT ?= $(TOPDIR)/build
 OUTVAR := $(shell mkdir -p $(OUTPUT))
 DATE := $(shell date --rfc-3339=date)
 
-ARCHS := x86_64 aarch64
+ARCHES := x86_64 aarch64
 
 DOCKER ?= docker
 
@@ -62,22 +62,22 @@ comma := ,
 list = $(subst $(space),$(comma),$(1))
 
 %.makevar : %.spec $(SPEC2VAR)
-	@set -e; $(SPEC2VAR) --spec=$< --archs=$(call list,$(ARCHS)) > $@
+	@set -e; $(SPEC2VAR) --spec=$< --arches=$(call list,$(ARCHES)) > $@
 
 %.makepkg : %.spec $(SPEC2PKG)
-	@set -e; $(SPEC2PKG) --spec=$< --archs=$(call list,$(ARCHS)) > $@
+	@set -e; $(SPEC2PKG) --spec=$< --arches=$(call list,$(ARCHES)) > $@
 
 -include $(VARS)
 -include $(PKGS)
 
-.PHONY: all $(ARCHS)
+.PHONY: all $(ARCHES)
 
 .SECONDEXPANSION:
-$(ARCHS): $$($(OS)-$$(@)-release)
+$(ARCHES): $$($(OS)-$$(@)-release)
 	$(eval PKGS:= $(wildcard $(OUTPUT)/$(OS)-$(@)-*.rpm))
 	$(call build_fs,$@,$(PKGS))
 
-all: $(ARCHS)
+all: $(ARCHES)
 
 .PHONY: clean
 clean:

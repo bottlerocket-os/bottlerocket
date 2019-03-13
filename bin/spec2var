@@ -4,11 +4,11 @@ for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
       --spec=*) SPEC="${optarg}" ;;
-      --archs=*) ARCHS="${optarg}" ;;
+      --arches=*) ARCHES="${optarg}" ;;
    esac
 done
 
-for arch in ${ARCHS//,/ } ; do
+for arch in ${ARCHES//,/ } ; do
    macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared"
 
    # Build-time dependencies are associated with all subpackages.
