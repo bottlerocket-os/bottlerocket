@@ -1,7 +1,7 @@
 From f9e37a4ae1184489f79fa8e34c8b08b1640b059d Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:35:06 +0000
-Subject: [PATCH 2/4] add TOOLS_DIR and SYSROOT_DIR to control output
+Subject: [PATCH 2/6] add TOOLS_DIR and SYSROOT_DIR to control output
 
 The sysroot directory is essential to our purpose of building a
 relocatable toolchain, as GCC will look for it relative to the

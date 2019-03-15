@@ -1,7 +1,7 @@
 From 81c6b12d0bfc2ff91f41f46bfd3ba94eadcf9ca8 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:40:50 +0000
-Subject: [PATCH 3/4] build binutils with TOOLS_DIR and SYSROOT_DIR
+Subject: [PATCH 3/6] build binutils with TOOLS_DIR and SYSROOT_DIR
 
 The binutils build only needs one stage, so we can write the binaries
 directly to the new output path.

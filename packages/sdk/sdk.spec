@@ -4,7 +4,7 @@
 %global _build_id_links none
 
 %global brver 2018.11.1
-%global binver 2.31.1
+%global binver 2.32
 %global gccver 8.2.0
 %global gccmaj 8
 
@@ -33,6 +33,8 @@ Patch1: 0001-disable-shared-for-host-builds-of-gmp-isl-mpc-mpfr.patch
 Patch2: 0002-add-TOOLS_DIR-and-SYSROOT_DIR-to-control-output.patch
 Patch3: 0003-build-binutils-with-TOOLS_DIR-and-SYSROOT_DIR.patch
 Patch4: 0004-build-gcc-with-TOOLS_DIR-and-SYSROOT_DIR.patch
+Patch5: 0005-package-binutils-add-support-for-binutils-2.32.patch
+Patch6: 0006-package-binutils-bring-back-sysroot-fix-for-2.32.patch
 BuildRequires: bc
 BuildRequires: perl-ExtUtils-MakeMaker
 BuildRequires: python
@@ -161,6 +163,8 @@ License: GPLv3+
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
+%patch6 -p1
 
 # move sources into place
 mkdir -p dl/{binutils,bison,gawk,gcc,glibc,gmp,isl,linux,lzip,m4,mpc,mpfr,tar}
@@ -238,6 +242,7 @@ ln -s ../../bin/%{_cross_target}-strip %{buildroot}%{_prefix}/local/bin/strip
 %{_prefix}/local/bin/objcopy
 %{_prefix}/local/bin/objdump
 %{_prefix}/local/bin/strip
+%exclude %{_prefix}/%{_cross_target}/lib/ldscripts
 
 %files -n gcc-%{_cross_target}
 %{_bindir}/%{_cross_target}-cc

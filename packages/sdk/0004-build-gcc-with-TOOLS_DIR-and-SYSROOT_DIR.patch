@@ -1,7 +1,7 @@
 From 02432f15c393073fcdd039de408055dae9dbe27a Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:58:27 +0000
-Subject: [PATCH 4/4] build gcc with TOOLS_DIR and SYSROOT_DIR
+Subject: [PATCH 4/6] build gcc with TOOLS_DIR and SYSROOT_DIR
 
 Most of the changes here are to the second and final stage of our GCC
 build, so that the binaries are written to the new output path, and
