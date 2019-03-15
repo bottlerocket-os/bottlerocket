@@ -1,4 +1,5 @@
 %_cross_arch x86_64
 %_cross_karch x86
+%_cross_kimage bzImage
 %_cross_cpu_family x86
 %_cross_endian little

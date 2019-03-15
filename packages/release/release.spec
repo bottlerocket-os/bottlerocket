@@ -7,6 +7,7 @@ BuildArch: noarch
 Requires: %{_cross_os}bash
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}filesystem
+Requires: %{_cross_os}kernel
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}util-linux
 

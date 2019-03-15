@@ -8,9 +8,19 @@ License: GPLv2 and Redistributable, no modification permitted
 URL: https://www.kernel.org/
 Source0: https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{version}.tar.xz
 Source100: config-%{_cross_arch}
+BuildRequires: bc
+BuildRequires: elfutils-devel
 BuildRequires: gcc-%{_cross_target}
+BuildRequires: hostname
+BuildRequires: openssl-devel
 
 %description
+%{summary}.
+
+%package modules
+Summary: Modules for the Linux kernel
+
+%description modules
 %{summary}.
 
 %package headers
@@ -23,24 +33,42 @@ Summary: Header files for the Linux kernel for use by glibc
 %setup -q -n linux-%{version}
 cp %{SOURCE100} "arch/%{_cross_karch}/configs/%{_cross_vendor}_defconfig"
 
+%global kmake \
+make -s\\\
+  ARCH="%{_cross_karch}"\\\
+  CROSS_COMPILE="%{_cross_target}-"\\\
+  INSTALL_HDR_PATH="%{buildroot}%{_cross_prefix}"\\\
+  INSTALL_MOD_PATH="%{buildroot}%{_cross_prefix}"\\\
+  INSTALL_MOD_STRIP=1\\\
+%{nil}
+
 %build
-make -s \
-  ARCH="%{_cross_karch}" \
-  CROSS_COMPILE="%{_cross_target}-" \
-  %{_cross_vendor}_defconfig
+%kmake mrproper
+%kmake %{_cross_vendor}_defconfig
+%kmake %{?_smp_mflags} %{_cross_kimage}
+%kmake %{?_smp_mflags} modules
 
 %install
-make -s \
-  ARCH="%{_cross_karch}" \
-  CROSS_COMPILE="%{_cross_target}-" \
-  INSTALL_HDR_PATH="%{buildroot}%{_cross_prefix}" \
-  headers_install
+%kmake headers_install
+%kmake modules_install
+
+install -d %{buildroot}/boot
+install -T -m 0755 arch/%{_cross_karch}/boot/%{_cross_kimage} %{buildroot}/boot/vmlinuz
+install -m 0644 .config %{buildroot}/boot/config
+install -m 0644 System.map %{buildroot}/boot/System.map
 
 find %{buildroot}%{_cross_prefix} \
    \( -name .install -o -name .check -o \
       -name ..install.cmd -o -name ..check.cmd \) -delete
 
 %files
+/boot/vmlinuz
+/boot/config
+/boot/System.map
+
+%files modules
+%dir %{_cross_libdir}/modules
+%{_cross_libdir}/modules/*
 
 %files headers
 %dir %{_cross_includedir}/asm
