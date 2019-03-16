@@ -3,3 +3,10 @@
 %_cross_kimage bzImage
 %_cross_cpu_family x86
 %_cross_endian little
+
+%_cross_grub_target i386
+%_cross_grub_platform pc
+%_cross_grub_tuple i386-pc
+%_cross_grub_image core.img
+%_cross_grub_prefix (hd0,gpt2)/boot/grub
+%_cross_grubdir /boot/grub

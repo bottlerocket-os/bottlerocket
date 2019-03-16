@@ -3,3 +3,10 @@
 %_cross_kimage Image
 %_cross_cpu_family arm
 %_cross_endian little
+
+%_cross_grub_target aarch64
+%_cross_grub_platform efi
+%_cross_grub_tuple arm64-efi
+%_cross_grub_image bootaa64.efi
+%_cross_grub_prefix /EFI/BOOT
+%_cross_grubdir /boot/efi/EFI/BOOT/
