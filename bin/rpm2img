@@ -1,0 +1,83 @@
+#!/bin/bash
+
+set -eu -o pipefail
+shopt -qs failglob
+
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --image-name=*) IMAGE_NAME="${optarg}" ;;
+      --package-dir=*) PACKAGE_DIR="${optarg}" ;;
+      --output-dir=*) OUTPUT_DIR="${optarg}" ;;
+   esac
+done
+
+DISK_IMAGE="$(mktemp)"
+ROOT_MOUNT="/mnt/root"
+BOOT_MOUNT="${ROOT_MOUNT}/boot"
+
+mkdir -p "${OUTPUT_DIR}"
+rm -f "${OUTPUT_DIR}/${IMAGE_NAME}"
+
+cleanup() {
+   set +e
+   umount "${BOOT_MOUNT}" "${ROOT_MOUNT}"
+   rmdir "${ROOT_MOUNT}"
+   kpartx -ds "${DISK_IMAGE}"
+}
+
+failure() {
+   cleanup
+   rm -f "${DISK_IMAGE}"
+}
+
+trap failure EXIT
+
+PART1_UUID="$(uuidgen)"
+PART2_UUID="2415fbea-3fdc-4260-9560-28418ee80c45"
+PART3_UUID="501efeae-456a-4162-8784-01209628c6ae"
+
+truncate -s 100M "${DISK_IMAGE}"
+sgdisk --clear \
+   -n 1:2048:4095 -t 1:ef02 \
+   -u 1:"${PART1_UUID}" \
+   -n 2:4096:36863 -t 2:8300 \
+   -u 2:"${PART2_UUID}" \
+   -n 3:36864:0 -t 3:8300 \
+   -u 3:"${PART3_UUID}" \
+   --print "${DISK_IMAGE}"
+
+kpartx -avs "${DISK_IMAGE}"
+mkfs.ext4 /dev/mapper/loop0p2
+mkfs.ext4 /dev/mapper/loop0p3
+
+mkdir -p "${ROOT_MOUNT}"
+mount /dev/mapper/loop0p3 "${ROOT_MOUNT}"
+mkdir -p "${BOOT_MOUNT}"
+mount /dev/mapper/loop0p2 "${BOOT_MOUNT}"
+
+rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
+rm -rf "${ROOT_MOUNT}"/var/lib/rpm
+
+cat <<'EOF' > ${BOOT_MOUNT}/grub/grub.cfg
+set default="0"
+set timeout="0"
+
+menuentry "Thar" {
+   linux ($root)/vmlinuz root=PARTUUID=$root_uuid ro console=tty0 console=ttyS0 systemd.log_target=console
+}
+EOF
+
+echo "(hd0) /dev/loop0" > ${BOOT_MOUNT}/grub/device.map
+grub2-bios-setup \
+   --directory="${BOOT_MOUNT}/grub" \
+   --device-map="${BOOT_MOUNT}/grub/device.map" \
+   --skip-fs-probe \
+   /dev/loop0
+rm -f ${BOOT_MOUNT}/grub/device.map
+
+trap - EXIT
+cleanup
+
+mv "${DISK_IMAGE}" "${OUTPUT_DIR}/${IMAGE_NAME}"
+chown 1000:1000 "${OUTPUT_DIR}/${IMAGE_NAME}"

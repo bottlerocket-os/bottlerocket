@@ -5,9 +5,12 @@ ARG DATE
 RUN dnf makecache && dnf -y update && echo ${DATE}
 
 FROM origin AS base
-RUN dnf -y install rpmdevtools dnf-plugins-core createrepo_c \
-   && dnf -y groupinstall "C Development Tools and Libraries" \
+RUN dnf -y groupinstall "C Development Tools and Libraries" \
+   && dnf -y install rpmdevtools dnf-plugins-core createrepo_c \
    && useradd builder
+
+FROM origin AS util
+RUN dnf -y install e2fsprogs gdisk grub2-tools kpartx
 
 FROM base AS rpmbuild
 ARG PACKAGE
@@ -40,7 +43,7 @@ RUN rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 FROM scratch AS rpm
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /
 
-FROM base AS fsbuild
+FROM base AS imgbuild
 ARG PACKAGE
 ARG ARCH
 ARG HASH
@@ -48,7 +51,7 @@ WORKDIR /root
 
 USER root
 RUN --mount=target=/host \
-    mkdir rpms fs \
+    mkdir -p {/local/,}rpms \
     && cp /host/build/*-${ARCH}-*.rpm rpms \
     && createrepo_c rpms \
     && dnf -y \
@@ -57,9 +60,12 @@ RUN --mount=target=/host \
         --downloadonly \
         --downloaddir . \
         install ${PACKAGE} \
-    && rpm -i --root /root/fs *.rpm \
-    && rm -rf fs/var/ \
+    && mv *.rpm /local/rpms \
+    && createrepo_c /local/rpms \
+    && cp /host/bin/rpm2img /local \
     && echo ${HASH}
 
-FROM scratch AS fs
-COPY --from=fsbuild /root/fs/ /
+FROM util AS builder
+COPY --from=imgbuild /local/ /local/
+ENTRYPOINT ["/local/rpm2img"]
+CMD []

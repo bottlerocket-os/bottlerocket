@@ -41,19 +41,24 @@ define build_rpm
 		$(BUILDCTL_ARGS)
 endef
 
-define build_fs
+define build_image
 	$(eval HASH:= $(shell sha1sum $(2) /dev/null | sha1sum - | awk '{print $$1}'))
 	@$(BUILDCTL) build \
-		--frontend-opt target=fs \
+		--frontend-opt target=builder \
 		--frontend-opt build-arg:PACKAGE=$(OS)-$(1)-release \
 		--frontend-opt build-arg:ARCH=$(1) \
 		--frontend-opt build-arg:HASH=$(HASH) \
 		--frontend-opt build-arg:DATE=$(DATE) \
 		--exporter=docker \
-		--exporter-opt name=$(OS):$(1) \
-		--exporter-opt output=build/$(OS)-$(1).tar \
-		$(BUILDCTL_ARGS) ; \
-	$(DOCKER) load < build/$(OS)-$(1).tar
+		--exporter-opt name=$(OS)-builder:$(1) \
+		--exporter-opt output=build/$(OS)-$(1)-builder.tar \
+		$(BUILDCTL_ARGS)
+	@$(DOCKER) load < build/$(OS)-$(1)-builder.tar
+	@$(DOCKER) run -t -v /dev:/dev -v $(OUTPUT):/local/output --privileged \
+		$(OS)-builder:$(1) \
+			--image-name=$(OS)-$(1).img \
+			--package-dir=/local/rpms \
+			--output-dir=/local/output
 endef
 
 empty :=
@@ -75,7 +80,7 @@ list = $(subst $(space),$(comma),$(1))
 .SECONDEXPANSION:
 $(ARCHES): $$($(OS)-$$(@)-release)
 	$(eval PKGS:= $(wildcard $(OUTPUT)/$(OS)-$(@)-*.rpm))
-	$(call build_fs,$@,$(PKGS))
+	$(call build_image,$@,$(PKGS))
 
 all: $(ARCHES)
 
