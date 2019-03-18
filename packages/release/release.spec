@@ -23,7 +23,16 @@ Requires: %{_cross_os}util-linux
 mkdir -p %{buildroot}%{_cross_sysconfdir}
 touch %{buildroot}%{_cross_sysconfdir}/machine-id
 
+# FIXME: build login from shadow-utils ?
+mkdir -p %{buildroot}%{_cross_bindir}
+cat <<'EOF' > %{buildroot}%{_cross_bindir}/login
+#!/bin/bash
+exec bash --login
+EOF
+chmod +x %{buildroot}%{_cross_bindir}/login
+
 %files
 %{_cross_sysconfdir}/machine-id
+%{_cross_bindir}/login
 
 %changelog
