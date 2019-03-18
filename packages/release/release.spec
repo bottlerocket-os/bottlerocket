@@ -20,7 +20,10 @@ Requires: %{_cross_os}util-linux
 %build
 
 %install
+mkdir -p %{buildroot}%{_cross_sysconfdir}
+touch %{buildroot}%{_cross_sysconfdir}/machine-id
 
 %files
+%{_cross_sysconfdir}/machine-id
 
 %changelog
