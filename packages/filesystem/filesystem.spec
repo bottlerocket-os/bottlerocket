@@ -26,7 +26,7 @@ mkdir -p %{buildroot}%{_cross_infodir}
 mkdir -p %{buildroot}%{_cross_mandir}
 mkdir -p %{buildroot}%{_cross_localstatedir}
 mkdir -p %{buildroot}%{_cross_sharedstatedir}
-mkdir -p %{buildroot}/boot
+mkdir -p %{buildroot}/{boot,dev,proc,root,run,sys,tmp,var}
 
 ln -s .%{_cross_prefix} %{buildroot}%{_prefix}
 ln -s .%{_cross_sysconfdir} %{buildroot}%{_sysconfdir}
@@ -35,16 +35,29 @@ ln -s .%{_cross_sbindir} %{buildroot}/sbin
 ln -s .%{_cross_libdir} %{buildroot}/lib
 ln -s .%{_cross_libdir} %{buildroot}/lib64
 ln -s lib %{buildroot}%{_cross_prefix}/lib64
+ln -s ../../../run %{buildroot}%{_cross_localstatedir}/run
+ln -s ../../../tmp %{buildroot}%{_cross_localstatedir}/tmp
+ln -s ../run %{buildroot}%{_localstatedir}/run
+ln -s ../tmp %{buildroot}%{_localstatedir}/tmp
 
 %files
 %dir %{_cross_rootdir}
 %{_cross_rootdir}/*
 %{_prefix}
+%{_localstatedir}
 %{_sysconfdir}
-/boot
 /bin
 /sbin
 /lib
 /lib64
+
+/boot
+/dev
+/proc
+/root
+/run
+/sys
+/tmp
+/var
 
 %changelog
