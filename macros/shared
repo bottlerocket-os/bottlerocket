@@ -19,15 +19,17 @@
 %_cross_libdir %{_cross_prefix}/%{_cross_lib}
 %_cross_libexecdir %{_cross_rootdir}%{_libexecdir}
 %_cross_includedir %{_cross_rootdir}%{_includedir}
-%_cross_sysconfdir %{_cross_rootdir}%{_sysconfdir}
+%_cross_sysconfdir %{_sysconfdir}
+%_cross_tmpfilesdir %{_cross_rootdir}%{_tmpfilesdir}
 %_cross_datadir %{_cross_rootdir}%{_datadir}
 %_cross_datarootdir %{_cross_rootdir}%{_datarootdir}
-%_cross_docdir %{_cross_rootdir}%{_datarootdir}/doc
-%_cross_localedir %{_cross_rootdir}%{_datarootdir}/locale
+%_cross_docdir %{_cross_datarootdir}/doc
+%_cross_factorydir %{_cross_datarootdir}/factory
+%_cross_localedir %{_cross_datarootdir}/locale
 %_cross_infodir %{_cross_rootdir}%{_infodir}
 %_cross_mandir %{_cross_rootdir}%{_mandir}
-%_cross_sharedstatedir %{_cross_rootdir}%{_sharedstatedir}
-%_cross_localstatedir %{_cross_rootdir}%{_localstatedir}
+%_cross_sharedstatedir %{_sharedstatedir}
+%_cross_localstatedir %{_localstatedir}
 %_cross_bashdir %{_cross_datadir}/bash-completion
 %_cross_pkgconfigdir %{_cross_libdir}/pkgconfig
 

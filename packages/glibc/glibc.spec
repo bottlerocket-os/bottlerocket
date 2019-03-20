@@ -63,17 +63,25 @@ make %{?_smp_mflags} -O -r
 %install
 make -j1 install_root=%{buildroot} install -C build
 
-mkdir -p %{buildroot}%{_cross_sysconfdir}/ld.so.conf.d
-mkdir -p %{buildroot}%{_cross_localstatedir}/cache/ldconfig
+mkdir -p %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d
+echo 'include ld.so.conf.d/*.conf' > %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
+chmod 644 %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
+truncate -s 0 %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.cache
+chmod 644 %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.cache
 
-echo 'include ld.so.conf.d/*.conf' > %{buildroot}%{_cross_sysconfdir}/ld.so.conf
-chmod 644 %{buildroot}%{_cross_sysconfdir}/ld.so.conf
+mkdir -p %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig
+chmod 700 %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig
+truncate -s 0 %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig/aux-cache
+chmod 600 %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig/aux-cache
 
-truncate -s 0 %{buildroot}%{_cross_sysconfdir}/ld.so.cache
-chmod 644 %{buildroot}%{_cross_sysconfdir}/ld.so.cache
-
-truncate -s 0 %{buildroot}%{_cross_localstatedir}/cache/ldconfig/aux-cache
-chmod 600 %{buildroot}%{_cross_sysconfdir}/ld.so.cache
+mkdir -p %{buildroot}%{_cross_tmpfilesdir}
+cat <<'EOF' > %{buildroot}%{_cross_tmpfilesdir}/glibc.conf
+C %{_cross_sysconfdir}/ld.so.cache - - - -
+C %{_cross_sysconfdir}/ld.so.conf - - - -
+C %{_cross_sysconfdir}/ld.so.conf.d - - - -
+C %{_cross_localstatedir}/cache/ldconfig - - - -
+C %{_cross_localstatedir}/cache/ldconfig/aux-cache - - - -
+EOF
 
 truncate -s 0 %{buildroot}%{_cross_libdir}/gconv/gconv-modules
 chmod 644 %{buildroot}%{_cross_libdir}/gconv/gconv-modules
@@ -84,9 +92,10 @@ truncate -s 0 %{buildroot}%{_cross_datadir}/locale/locale.alias
 chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 
 %files
-%{_cross_sysconfdir}/ld.so.conf
-%{_cross_sysconfdir}/ld.so.cache
-%dir %{_cross_sysconfdir}/ld.so.conf.d
+%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
+%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.cache
+%dir %{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d
+%{_cross_tmpfilesdir}/glibc.conf
 %exclude %{_cross_sysconfdir}/rpc
 
 %{_cross_bindir}/getconf
@@ -168,8 +177,8 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %exclude %{_cross_datadir}/i18n/charmaps/*
 %exclude %{_cross_datadir}/i18n/locales/*
 
-%dir %attr(0700,root,root) %{_cross_localstatedir}/cache/ldconfig
-%attr(0600,root,root) %{_cross_localstatedir}/cache/ldconfig/aux-cache
+%dir %attr(0700,root,root) %{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig
+%attr(0600,root,root) %{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig/aux-cache
 %exclude %{_cross_localstatedir}/db/Makefile
 
 %files devel

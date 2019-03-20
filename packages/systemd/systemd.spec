@@ -198,10 +198,8 @@ CONFIGURE_OPTS=(
 %{_cross_libdir}/udev/*
 %exclude %{_cross_libdir}/kernel/install.d
 
-%dir %{_cross_sysconfdir}/systemd
-%dir %{_cross_sysconfdir}/udev
-%{_cross_sysconfdir}/systemd/*
-%{_cross_sysconfdir}/udev/*
+%exclude %{_cross_sysconfdir}/systemd/
+%exclude %{_cross_sysconfdir}/udev/
 %exclude %{_cross_sysconfdir}/X11
 %exclude %{_cross_sysconfdir}/init.d
 %exclude %{_cross_sysconfdir}/xdg

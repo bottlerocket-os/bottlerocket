@@ -31,7 +31,7 @@ Requires: %{name}
 
 %files
 %{_cross_libdir}/*.so.*
-%{_cross_sysconfdir}/xattr.conf
+%exclude %{_cross_sysconfdir}/xattr.conf
 %exclude %{_cross_bindir}
 %exclude %{_cross_docdir}
 %exclude %{_cross_infodir}
