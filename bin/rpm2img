@@ -64,7 +64,7 @@ set default="0"
 set timeout="0"
 
 menuentry "Thar" {
-   linux ($root)/vmlinuz root=PARTUUID=$root_uuid ro console=tty0 console=ttyS0 systemd.log_target=console
+   linux ($root)/vmlinuz root=PARTUUID=$root_uuid ro console=tty0 console=ttyS0 systemd.log_target=console audit=0
 }
 EOF
 
