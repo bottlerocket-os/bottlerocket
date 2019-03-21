@@ -17,7 +17,7 @@ ARCHES := x86_64 aarch64
 
 DOCKER ?= docker
 
-BUILDKIT_VER = v0.3.3
+BUILDKIT_VER = v0.4.0
 BUILDKITD_ADDR ?= tcp://127.0.0.1:1234
 BUILDCTL_DOCKER_RUN = $(DOCKER) run --rm -ti --entrypoint /usr/bin/buildctl --user $(shell id -u):$(shell id -g) --volume $(TOPDIR):$(TOPDIR) --workdir $(TOPDIR) --network host moby/buildkit:$(BUILDKIT_VER)
 BUILDCTL ?= $(BUILDCTL_DOCKER_RUN) --addr $(BUILDKITD_ADDR)
