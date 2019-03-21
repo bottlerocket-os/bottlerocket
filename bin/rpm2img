@@ -58,6 +58,7 @@ mount /dev/mapper/loop0p2 "${BOOT_MOUNT}"
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib/rpm
+ldconfig -r "${ROOT_MOUNT}" -X
 
 cat <<'EOF' > ${BOOT_MOUNT}/grub/grub.cfg
 set default="0"
