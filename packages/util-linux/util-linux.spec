@@ -128,6 +128,7 @@ Requires: %{_cross_os}libuuid
 %{_cross_bindir}/lslocks
 %{_cross_bindir}/lsmem
 %{_cross_bindir}/lsns
+%{_cross_bindir}/more
 %{_cross_bindir}/mount
 %{_cross_bindir}/newgrp
 %{_cross_bindir}/nsenter
@@ -160,7 +161,6 @@ Requires: %{_cross_os}libuuid
 %exclude %{_cross_bindir}/lslogins
 %exclude %{_cross_bindir}/mcookie
 %exclude %{_cross_bindir}/mesg
-%exclude %{_cross_bindir}/more
 %exclude %{_cross_bindir}/mountpoint
 %exclude %{_cross_bindir}/namei
 %exclude %{_cross_bindir}/pg
