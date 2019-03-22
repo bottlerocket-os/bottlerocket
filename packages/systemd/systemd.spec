@@ -204,14 +204,14 @@ CONFIGURE_OPTS=(
 %exclude %{_cross_sysconfdir}/init.d
 %exclude %{_cross_sysconfdir}/xdg
 
-%dir %{_cross_datadir}/dbus-1/system-services
-%dir %{_cross_datadir}/dbus-1/system.d
-%dir %{_cross_datadir}/factory
-%{_cross_datadir}/dbus-1/system-services/org.freedesktop.systemd1.service
-%{_cross_datadir}/dbus-1/system.d/org.freedesktop.systemd1.conf
-%{_cross_datadir}/dbus-1/services/org.freedesktop.systemd1.service
-%{_cross_datadir}/polkit-1/actions/org.freedesktop.systemd1.policy
-%exclude %{_cross_datadir}/factory/*
+%exclude %{_cross_datadir}/dbus-1
+%exclude %{_cross_datadir}/polkit-1
+
+%dir %{_cross_factorydir}
+%exclude %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
+%exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d
+%exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/other
+%exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/system-auth
 
 %exclude %{_cross_docdir}
 %exclude %{_cross_localedir}
