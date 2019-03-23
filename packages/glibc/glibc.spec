@@ -135,6 +135,10 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %{_cross_libdir}/libdl-*.so
 %{_cross_libdir}/libm.so.*
 %{_cross_libdir}/libm-*.so
+%{_cross_libdir}/libnss_dns-*.so
+%{_cross_libdir}/libnss_dns.so.*
+%{_cross_libdir}/libnss_files-*.so
+%{_cross_libdir}/libnss_files.so.*
 %{_cross_libdir}/libpthread.so.*
 %{_cross_libdir}/libpthread-*.so
 %{_cross_libdir}/libresolv.so.*
@@ -158,10 +162,6 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %exclude %{_cross_libdir}/libnss_compat.so.*
 %exclude %{_cross_libdir}/libnss_db-*.so
 %exclude %{_cross_libdir}/libnss_db.so.*
-%exclude %{_cross_libdir}/libnss_dns-*.so
-%exclude %{_cross_libdir}/libnss_dns.so.*
-%exclude %{_cross_libdir}/libnss_files-*.so
-%exclude %{_cross_libdir}/libnss_files.so.*
 %exclude %{_cross_libdir}/libnss_hesiod-*.so
 %exclude %{_cross_libdir}/libnss_hesiod.so.*
 
@@ -189,6 +189,8 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %{_cross_libdir}/libc.so
 %{_cross_libdir}/libdl.so
 %{_cross_libdir}/libm.so
+%{_cross_libdir}/libnss_dns.so
+%{_cross_libdir}/libnss_files.so
 %{_cross_libdir}/libpthread.so
 %{_cross_libdir}/libresolv.so
 %{_cross_libdir}/librt.so
@@ -199,8 +201,6 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %endif
 %exclude %{_cross_libdir}/libnss_compat.so
 %exclude %{_cross_libdir}/libnss_db.so
-%exclude %{_cross_libdir}/libnss_dns.so
-%exclude %{_cross_libdir}/libnss_files.so
 %exclude %{_cross_libdir}/libnss_hesiod.so
 
 %dir %{_cross_includedir}/arpa
