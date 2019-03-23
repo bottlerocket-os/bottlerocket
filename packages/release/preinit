@@ -1,0 +1,6 @@
+#!/bin/bash
+mount -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=0755 tmpfs /etc
+mount -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=0755 tmpfs /var
+touch -d @0 /etc
+touch -d @0 /var
+exec /sbin/init

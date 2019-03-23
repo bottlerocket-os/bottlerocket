@@ -35,16 +35,10 @@ ln -s .%{_cross_libdir} %{buildroot}/lib
 ln -s .%{_cross_libdir} %{buildroot}/lib64
 ln -s lib %{buildroot}%{_cross_prefix}/lib64
 
-cat <<'EOF' > %{buildroot}%{_cross_sysconfdir}/fstab
-tmpfs /etc tmpfs defaults,noatime,nosuid,nodev,noexec,mode=0755 0 0
-tmpfs /var tmpfs defaults,noatime,nosuid,nodev,noexec,mode=0755 0 0
-EOF
-
 %files
 %dir %{_cross_rootdir}
 %{_cross_rootdir}/*
 %dir %{_cross_sysconfdir}
-%{_cross_sysconfdir}/fstab
 %dir %{_cross_localstatedir}
 
 %{_prefix}

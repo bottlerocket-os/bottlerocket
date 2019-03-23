@@ -3,6 +3,14 @@ Version: 1.0
 Release: 1%{?dist}
 Summary: Thar release
 License: Public Domain
+
+Source0: preinit
+Source1: login
+
+Source10: hosts
+Source11: nsswitch.conf
+Source99: release.conf
+
 BuildArch: noarch
 Requires: %{_cross_os}bash
 Requires: %{_cross_os}coreutils
@@ -20,43 +28,24 @@ Requires: %{_cross_os}util-linux
 %build
 
 %install
-mkdir -p %{buildroot}%{_cross_sysconfdir}
-touch %{buildroot}%{_cross_sysconfdir}/machine-id
+mkdir -p %{buildroot}%{_cross_sbindir}
+install -m0755 %{SOURCE0} %{buildroot}%{_cross_sbindir}
+
+mkdir -p %{buildroot}%{_cross_bindir}
+install -m0755 %{SOURCE1} %{buildroot}%{_cross_bindir}
 
 mkdir -p %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
-cat <<'EOF' > %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/hosts
-127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4
-::1 localhost localhost.localdomain localhost6 localhost6.localdomain6
-EOF
-
-mkdir -p %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
-cat <<'EOF' > %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
-passwd: files
-group: files
-shadow: files
-hosts: files dns
-EOF
+install -m0644 %{SOURCE10} %{SOURCE11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
 mkdir -p %{buildroot}%{_cross_tmpfilesdir}
-cat <<'EOF' > %{buildroot}%{_cross_tmpfilesdir}/release.conf
-L+ %{_cross_sysconfdir}/machine-id - - - - ../run/machine-id
-C %{_cross_sysconfdir}/hosts - - - -
-C %{_cross_sysconfdir}/nsswitch.conf - - - -
-EOF
+install -m0644 %{SOURCE99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
-# FIXME: build login from shadow-utils ?
-mkdir -p %{buildroot}%{_cross_bindir}
-cat <<'EOF' > %{buildroot}%{_cross_bindir}/login
-#!/bin/bash
-exec bash --login
-EOF
-chmod +x %{buildroot}%{_cross_bindir}/login
 
 %files
-%{_cross_sysconfdir}/machine-id
+%{_cross_bindir}/login
+%{_cross_sbindir}/preinit
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_tmpfilesdir}/release.conf
-%{_cross_bindir}/login
 
 %changelog
