@@ -69,7 +69,7 @@ CONFIGURE_OPTS=(
  -Dlocaled=false
  -Dmachined=false
  -Dportabled=false
- -Dnetworkd=false
+ -Dnetworkd=true
  -Dtimedated=false
  -Dtimesyncd=false
  -Dremote=false
@@ -149,6 +149,7 @@ CONFIGURE_OPTS=(
 %files
 %{_cross_bindir}/busctl
 %{_cross_bindir}/journalctl
+%{_cross_bindir}/networkctl
 %{_cross_bindir}/systemctl
 %{_cross_bindir}/systemd-analyze
 %{_cross_bindir}/systemd-ask-password

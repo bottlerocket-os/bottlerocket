@@ -11,6 +11,8 @@ Source10: hosts
 Source11: nsswitch.conf
 Source99: release.conf
 
+Source1000: 00-any.network
+
 BuildArch: noarch
 Requires: %{_cross_os}bash
 Requires: %{_cross_os}coreutils
@@ -40,6 +42,11 @@ install -m0644 %{SOURCE10} %{SOURCE11} %{buildroot}%{_cross_factorydir}%{_cross_
 mkdir -p %{buildroot}%{_cross_tmpfilesdir}
 install -m0644 %{SOURCE99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
+mkdir -p %{buildroot}%{_cross_libdir}/systemd/network
+install -m0644 %{SOURCE1000} %{buildroot}%{_cross_libdir}/systemd/network
+
+mkdir -p %{buildroot}%{_cross_libdir}/systemd/system/multi-user.target.wants
+ln -s ../systemd-networkd.service %{buildroot}%{_cross_libdir}/systemd/system/multi-user.target.wants
 
 %files
 %{_cross_bindir}/login
@@ -47,5 +54,7 @@ install -m0644 %{SOURCE99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_tmpfilesdir}/release.conf
+%{_cross_libdir}/systemd/network/00-any.network
+%{_cross_libdir}/systemd/system/multi-user.target.wants/systemd-networkd.service
 
 %changelog
