@@ -146,4 +146,3 @@ Requires: %{_cross_os}libxcrypt
 %exclude %{_cross_mandir}
 
 %changelog
-

@@ -273,4 +273,3 @@ Requires: %{_cross_os}libuuid
 %exclude %{_cross_libdir}/libuuid.la
 
 %changelog
-
