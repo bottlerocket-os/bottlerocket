@@ -19,7 +19,7 @@ DOCKER ?= docker
 
 BUILDKIT_VER = v0.4.0
 BUILDKITD_ADDR ?= tcp://127.0.0.1:1234
-BUILDCTL_DOCKER_RUN = $(DOCKER) run --rm -ti --entrypoint /usr/bin/buildctl --user $(shell id -u):$(shell id -g) --volume $(TOPDIR):$(TOPDIR) --workdir $(TOPDIR) --network host moby/buildkit:$(BUILDKIT_VER)
+BUILDCTL_DOCKER_RUN = $(DOCKER) run --rm -t --entrypoint /usr/bin/buildctl --user $(shell id -u):$(shell id -g) --volume $(TOPDIR):$(TOPDIR) --workdir $(TOPDIR) --network host moby/buildkit:$(BUILDKIT_VER)
 BUILDCTL ?= $(BUILDCTL_DOCKER_RUN) --addr $(BUILDKITD_ADDR)
 BUILDCTL_ARGS := --progress=plain
 BUILDCTL_ARGS += --frontend=dockerfile.v0
