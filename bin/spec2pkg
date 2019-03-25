@@ -28,6 +28,9 @@ for arch in ${ARCHES//,/ } ; do
    buildrequires="$(rpmspec --macros "${macros}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
    buildrequires="${buildrequires%"${buildrequires##*[![:space:]]}"}"
 
-   echo "${rpms} : ${SPEC} ${sources} ${patches} ${buildrequires}"
+   echo "${rpms} : build-${PKG}-${arch}"
+   echo -e "\t@:\n"
+   echo -e ".INTERMEDIATE: build-${PKG}-${arch}\n"
+   echo "build-${PKG}-${arch} : ${SPEC} ${sources} ${patches} ${buildrequires}"
    echo -e "\t\$(call build_rpm,$PKG,${arch},\$^)\n"
 done
