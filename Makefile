@@ -30,28 +30,25 @@ define build_rpm
 	$(eval HASH:= $(shell sha1sum $3 /dev/null | sha1sum - | awk '{printf $$1}'))
 	$(eval RPMS:= $(shell echo $3 | tr ' ' '\n' | awk '/.rpm$$/' | tr '\n' ' '))
 	@$(BUILDCTL) build \
-		--frontend-opt target=rpm \
-		--frontend-opt build-arg:PACKAGE=$(1) \
-		--frontend-opt build-arg:ARCH=$(2) \
-		--frontend-opt build-arg:HASH=$(HASH) \
-		--frontend-opt build-arg:RPMS="$(RPMS)" \
-		--frontend-opt build-arg:DATE=$(DATE) \
-		--exporter=local \
-		--exporter-opt output=$(OUTPUT) \
+		--opt target=rpm \
+		--opt build-arg:PACKAGE=$(1) \
+		--opt build-arg:ARCH=$(2) \
+		--opt build-arg:HASH=$(HASH) \
+		--opt build-arg:RPMS="$(RPMS)" \
+		--opt build-arg:DATE=$(DATE) \
+		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
 endef
 
 define build_image
 	$(eval HASH:= $(shell sha1sum $(2) /dev/null | sha1sum - | awk '{print $$1}'))
 	@$(BUILDCTL) build \
-		--frontend-opt target=builder \
-		--frontend-opt build-arg:PACKAGE=$(OS)-$(1)-release \
-		--frontend-opt build-arg:ARCH=$(1) \
-		--frontend-opt build-arg:HASH=$(HASH) \
-		--frontend-opt build-arg:DATE=$(DATE) \
-		--exporter=docker \
-		--exporter-opt name=$(OS)-builder:$(1) \
-		--exporter-opt output=build/$(OS)-$(1)-builder.tar \
+		--opt target=builder \
+		--opt build-arg:PACKAGE=$(OS)-$(1)-release \
+		--opt build-arg:ARCH=$(1) \
+		--opt build-arg:HASH=$(HASH) \
+		--opt build-arg:DATE=$(DATE) \
+		--output type=docker,name=$(OS)-builder:$(1),dest=build/$(OS)-$(1)-builder.tar \
 		$(BUILDCTL_ARGS)
 	@$(DOCKER) load < build/$(OS)-$(1)-builder.tar
 	@$(DOCKER) run -t -v /dev:/dev -v $(OUTPUT):/local/output --privileged \
