@@ -116,6 +116,7 @@ Requires: %{_cross_os}libuuid
 %{_cross_bindir}/chrt
 %{_cross_bindir}/dmesg
 %{_cross_bindir}/fallocate
+%{_cross_bindir}/findmnt
 %{_cross_bindir}/flock
 %{_cross_bindir}/ionice
 %{_cross_bindir}/ipcmk
@@ -147,7 +148,6 @@ Requires: %{_cross_os}libuuid
 %exclude %{_cross_bindir}/column
 %exclude %{_cross_bindir}/eject
 %exclude %{_cross_bindir}/fincore
-%exclude %{_cross_bindir}/findmnt
 %exclude %{_cross_bindir}/getopt
 %exclude %{_cross_bindir}/hexdump
 %exclude %{_cross_bindir}/isosize

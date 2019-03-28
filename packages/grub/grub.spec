@@ -9,7 +9,9 @@ URL: https://www.gnu.org/software/grub/
 Source0: https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
 Source1: core.cfg
 Patch1: 0001-x86-64-Treat-R_X86_64_PLT32-as-R_X86_64_PC32.patch
+Patch2: gpt.patch
 
+BuildRequires: automake
 BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gcc-%{_cross_target}
@@ -39,8 +41,6 @@ Summary: Tools for the bootloader with support for Linux and more
 %global grub_ldflags -static
 
 %build
-install -T -m0644 %{SOURCE1} core.cfg
-
 export \
   CPP="%{_cross_target}-gcc -E" \
   TARGET_CC="%{_cross_target}-gcc" \
@@ -50,7 +50,9 @@ export \
   TARGET_NM="%{_cross_target}-nm" \
   TARGET_OBJCOPY="%{_cross_target}-objcopy" \
   TARGET_STRIP="%{_cross_target}-strip" \
+  PYTHON="python3" \
 
+./autogen.sh
 %cross_configure \
   CFLAGS="" \
   LDFLAGS="" \
@@ -70,12 +72,12 @@ export \
 mkdir -p %{buildroot}%{_cross_grubdir}
 
 grub2-mkimage \
-  -c core.cfg \
+  -c %{SOURCE1} \
   -d ./grub-core/ \
   -O "%{_cross_grub_tuple}" \
   -o "%{buildroot}%{_cross_grubdir}/%{_cross_grub_image}" \
   -p "%{_cross_grub_prefix}" \
-  biosdisk configfile ext2 linux normal part_gpt search_fs_uuid
+  biosdisk configfile ext2 gptprio linux normal part_gpt search_fs_uuid
 
 install -m 0644 ./grub-core/boot.img \
   %{buildroot}%{_cross_grubdir}/boot.img

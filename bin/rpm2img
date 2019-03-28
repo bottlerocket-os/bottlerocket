@@ -33,23 +33,27 @@ failure() {
 
 trap failure EXIT
 
-PART1_UUID="$(uuidgen)"
-PART2_UUID="2415fbea-3fdc-4260-9560-28418ee80c45"
-PART3_UUID="501efeae-456a-4162-8784-01209628c6ae"
+# Define a partition type GUID for the Thar boot partition. GPT specifies
+# use of the "GUID specific use" bits (where gptprio works) depend on the
+# partition type GUID.
+THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
+THAR_DATA_PARTUUID="b9be5c1d-18f9-4f76-afe0-1119a3b1bbf6"
 
-truncate -s 100M "${DISK_IMAGE}"
+truncate -s 2G "${DISK_IMAGE}"
+# partition 2 attributes: 48 = gptprio priority bit; 56 = gptprio successful bit
 sgdisk --clear \
-   -n 1:2048:4095 -t 1:ef02 \
-   -u 1:"${PART1_UUID}" \
-   -n 2:4096:36863 -t 2:8300 \
-   -u 2:"${PART2_UUID}" \
-   -n 3:36864:0 -t 3:8300 \
-   -u 3:"${PART3_UUID}" \
+   -n 1:2048:4095 -c 1:"BIOS-BOOT" -t 1:ef02 \
+   -n 2:4096:45055 -c 2:"THAR-BOOT-A" -t 2:"${THAR_BOOT_TYPECODE}" -A 2:set:48 -A 2:set:56 \
+   -n 3:45056:1050623 -c 3:"THAR-ROOT-A" -t 3:8300 \
+   -n 4:1050624:1091583 -c 4:"THAR-BOOT-B" -t 4:"${THAR_BOOT_TYPECODE}" -A 4:clear:48 -A 4:clear:56 \
+   -n 5:1091584:2097151 -c 5:"THAR-ROOT-B" -t 5:8300 \
+   -n 6:2097152:0 -c 6:"THAR-DATA" -t 6:8300 -u 6:"${THAR_DATA_PARTUUID}" \
    --print "${DISK_IMAGE}"
 
 kpartx -avs "${DISK_IMAGE}"
 mkfs.ext4 /dev/mapper/loop0p2
 mkfs.ext4 /dev/mapper/loop0p3
+mkfs.ext4 /dev/mapper/loop0p6
 
 mkdir -p "${ROOT_MOUNT}"
 mount /dev/mapper/loop0p3 "${ROOT_MOUNT}"
@@ -59,19 +63,17 @@ mount /dev/mapper/loop0p2 "${BOOT_MOUNT}"
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
-cat <<'EOF' > ${BOOT_MOUNT}/grub/grub.cfg
+cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
 set default="0"
 set timeout="0"
 
 menuentry "Thar" {
-   linux ($root)/vmlinuz root=PARTUUID=$root_uuid ro console=tty0 console=ttyS0 systemd.log_target=console audit=0 init=/sbin/preinit
+   linux (\$root)/vmlinuz root=PARTUUID=\$boot_uuid/PARTNROFF=1 ro console=tty0 console=ttyS0 systemd.log_target=console audit=0 init=/sbin/preinit
 }
 EOF
 
-echo "(hd0) /dev/loop0" > ${BOOT_MOUNT}/grub/device.map
 grub2-bios-setup \
    --directory="${BOOT_MOUNT}/grub" \
-   --device-map="${BOOT_MOUNT}/grub/device.map" \
    --skip-fs-probe \
    /dev/loop0
 rm -f ${BOOT_MOUNT}/grub/device.map
