@@ -6,22 +6,26 @@ shopt -qs failglob
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
-      --image-name=*) IMAGE_NAME="${optarg}" ;;
+      --disk-image-name=*) DISK_IMAGE_NAME="${optarg}" ;;
+      --boot-image-name=*) BOOT_IMAGE_NAME="${optarg}" ;;
+      --root-image-name=*) ROOT_IMAGE_NAME="${optarg}" ;;
       --package-dir=*) PACKAGE_DIR="${optarg}" ;;
       --output-dir=*) OUTPUT_DIR="${optarg}" ;;
    esac
 done
 
 DISK_IMAGE="$(mktemp)"
+BOOT_IMAGE="$(mktemp)"
+ROOT_IMAGE="$(mktemp)"
 ROOT_MOUNT="/mnt/root"
 BOOT_MOUNT="${ROOT_MOUNT}/boot"
 
 mkdir -p "${OUTPUT_DIR}"
-rm -f "${OUTPUT_DIR}/${IMAGE_NAME}"
+rm -f "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
 
 cleanup() {
    set +e
-   umount "${BOOT_MOUNT}" "${ROOT_MOUNT}"
+   [[ -d "${BOOT_MOUNT}" ]] && umount "${BOOT_MOUNT}" "${ROOT_MOUNT}"
    rmdir "${ROOT_MOUNT}"
    kpartx -ds "${DISK_IMAGE}"
 }
@@ -32,6 +36,33 @@ failure() {
 }
 
 trap failure EXIT
+
+# Build the filesystem images and minimize them first. These get uploaded to the update service
+truncate -s 20M "${BOOT_IMAGE}"
+truncate -s 491M "${ROOT_IMAGE}"
+mkfs.ext4 "${BOOT_IMAGE}"
+mkfs.ext4 "${ROOT_IMAGE}"
+
+mkdir -p "${ROOT_MOUNT}"
+mount "${ROOT_IMAGE}" "${ROOT_MOUNT}"
+mkdir -p "${BOOT_MOUNT}"
+mount "${BOOT_IMAGE}" "${BOOT_MOUNT}"
+
+rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
+rm -rf "${ROOT_MOUNT}"/var/lib
+
+cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
+set default="0"
+set timeout="0"
+
+menuentry "Thar" {
+   linux (\$root)/vmlinuz root=PARTUUID=\$boot_uuid/PARTNROFF=1 ro console=tty0 console=ttyS0 systemd.log_target=console audit=0 init=/sbin/preinit
+}
+EOF
+
+# Remount as read-only (keep the mount around because we need to run grub2-bios-setup still...)
+mount -o remount,ro "${BOOT_MOUNT}"
+mount -o remount,ro "${ROOT_MOUNT}"
 
 # Define a partition type GUID for the Thar boot partition. GPT specifies
 # use of the "GUID specific use" bits (where gptprio works) depend on the
@@ -50,36 +81,25 @@ sgdisk --clear \
    -n 6:2097152:0 -c 6:"THAR-DATA" -t 6:8300 -u 6:"${THAR_DATA_PARTUUID}" \
    --print "${DISK_IMAGE}"
 
-kpartx -avs "${DISK_IMAGE}"
-mkfs.ext4 /dev/mapper/loop0p2
-mkfs.ext4 /dev/mapper/loop0p3
-mkfs.ext4 /dev/mapper/loop0p6
-
-mkdir -p "${ROOT_MOUNT}"
-mount /dev/mapper/loop0p3 "${ROOT_MOUNT}"
-mkdir -p "${BOOT_MOUNT}"
-mount /dev/mapper/loop0p2 "${BOOT_MOUNT}"
-
-rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
-rm -rf "${ROOT_MOUNT}"/var/lib
-
-cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
-set default="0"
-set timeout="0"
-
-menuentry "Thar" {
-   linux (\$root)/vmlinuz root=PARTUUID=\$boot_uuid/PARTNROFF=1 ro console=tty0 console=ttyS0 systemd.log_target=console audit=0 init=/sbin/preinit
-}
-EOF
+LOOP_NAME="$(kpartx -avs "${DISK_IMAGE}" | tee /dev/stderr | head -n 1 | awk '{ print $3 }' | sed -rn 's@^.*(loop[0-9]+).*$@\1@p')"
+mkfs.ext4 "/dev/mapper/${LOOP_NAME}p6"
 
 grub2-bios-setup \
    --directory="${BOOT_MOUNT}/grub" \
    --skip-fs-probe \
-   /dev/loop0
-rm -f ${BOOT_MOUNT}/grub/device.map
+   "/dev/${LOOP_NAME}"
+
+umount "${BOOT_MOUNT}" "${ROOT_MOUNT}"
+
+resize2fs -M "${BOOT_IMAGE}"
+dd if="${BOOT_IMAGE}" of="/dev/mapper/${LOOP_NAME}p2" conv=sparse
+resize2fs -M "${ROOT_IMAGE}"
+dd if="${ROOT_IMAGE}" of="/dev/mapper/${LOOP_NAME}p3" conv=sparse
 
 trap - EXIT
 cleanup
 
-mv "${DISK_IMAGE}" "${OUTPUT_DIR}/${IMAGE_NAME}"
-chown 1000:1000 "${OUTPUT_DIR}/${IMAGE_NAME}"
+mv "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
+mv "${BOOT_IMAGE}" "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
+mv "${ROOT_IMAGE}" "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
+chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
