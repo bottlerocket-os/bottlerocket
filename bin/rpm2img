@@ -46,6 +46,17 @@ mkdir -p "${ROOT_MOUNT}"
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
+# MBR and BIOS-BOOT
+echo "(hd0) ${DISK_IMAGE}" > ${BOOT_MOUNT}/grub/device.map
+"${ROOT_MOUNT}/sbin/grub-bios-setup" \
+  --directory="${BOOT_MOUNT}/grub" \
+  --device-map="${BOOT_MOUNT}/grub/device.map" \
+  --root="hd0" \
+  --skip-fs-probe \
+  ${DISK_IMAGE}
+
+rm -f "${BOOT_MOUNT}/grub/*" "${ROOT_MOUNT}/sbin/grub*"
+
 cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
 set default="0"
 set timeout="0"
@@ -55,12 +66,6 @@ menuentry "Thar" {
 }
 EOF
 
-# MBR
-dd if="${BOOT_MOUNT}/grub/boot.img" of="${DISK_IMAGE}" conv=notrunc bs=1 count=440
-rm "${BOOT_MOUNT}/grub/boot.img"
-# BIOS-BOOT
-dd if="${BOOT_MOUNT}/grub/core.img" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=2048
-rm "${BOOT_MOUNT}/grub/core.img"
 # THAR-BOOT-A
 mkfs.ext2 -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 20M
 resize2fs -M "${BOOT_IMAGE}"

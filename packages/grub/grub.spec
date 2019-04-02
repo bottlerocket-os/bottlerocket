@@ -10,6 +10,7 @@ Source0: https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
 Source1: core.cfg
 Patch1: 0001-x86-64-Treat-R_X86_64_PLT32-as-R_X86_64_PC32.patch
 Patch2: gpt.patch
+Patch3: 100-grub_setup_root.patch
 
 BuildRequires: automake
 BuildRequires: bison
@@ -86,6 +87,7 @@ install -m 0644 ./grub-core/boot.img \
 %dir %{_cross_grubdir}
 %{_cross_grubdir}/boot.img
 %{_cross_grubdir}/%{_cross_grub_image}
+%{_cross_sbindir}/grub-bios-setup
 %exclude %{_cross_infodir}
 %exclude %{_cross_localedir}
 %exclude %{_cross_sysconfdir}
@@ -112,7 +114,6 @@ install -m 0644 ./grub-core/boot.img \
 %{_cross_bindir}/grub-render-label
 %{_cross_bindir}/grub-script-check
 %{_cross_bindir}/grub-syslinux2cfg
-%{_cross_sbindir}/grub-bios-setup
 %{_cross_sbindir}/grub-install
 %{_cross_sbindir}/grub-macbless
 %{_cross_sbindir}/grub-mkconfig
