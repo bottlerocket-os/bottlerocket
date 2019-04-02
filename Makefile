@@ -51,7 +51,7 @@ define build_image
 		--output type=docker,name=$(OS)-builder:$(1),dest=build/$(OS)-$(1)-builder.tar \
 		$(BUILDCTL_ARGS)
 	@$(DOCKER) load < build/$(OS)-$(1)-builder.tar
-	@$(DOCKER) run -t -v /dev:/dev -v $(OUTPUT):/local/output --privileged \
+	@$(DOCKER) run -t -v /dev:/dev -v $(OUTPUT):/local/output \
 		$(OS)-builder:$(1) \
 			--disk-image-name=$(OS)-$(1).img \
 			--boot-image-name=$(OS)-$(1)-boot.ext4 \

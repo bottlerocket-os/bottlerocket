@@ -14,40 +14,35 @@ for opt in "$@"; do
    esac
 done
 
-DISK_IMAGE="$(mktemp)"
-BOOT_IMAGE="$(mktemp)"
-ROOT_IMAGE="$(mktemp)"
-ROOT_MOUNT="/mnt/root"
-BOOT_MOUNT="${ROOT_MOUNT}/boot"
-
 mkdir -p "${OUTPUT_DIR}"
 rm -f "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
 
-cleanup() {
-   set +e
-   [[ -d "${BOOT_MOUNT}" ]] && umount "${BOOT_MOUNT}" "${ROOT_MOUNT}"
-   rmdir "${ROOT_MOUNT}"
-   kpartx -ds "${DISK_IMAGE}"
-}
+DISK_IMAGE="$(mktemp)"
+BOOT_IMAGE="$(mktemp)"
+ROOT_IMAGE="$(mktemp)"
+DATA_IMAGE="$(mktemp)"
+ROOT_MOUNT="/mnt/root"
+BOOT_MOUNT="${ROOT_MOUNT}/boot"
 
-failure() {
-   cleanup
-   rm -f "${DISK_IMAGE}"
-}
+# Define a partition type GUID for the Thar boot partition. GPT specifies
+# use of the "GUID specific use" bits (where gptprio works) depend on the
+# partition type GUID.
+THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
+# This partition UUID is referenced in var-lib-thar.mount
+THAR_DATA_PARTUUID="b9be5c1d-18f9-4f76-afe0-1119a3b1bbf6"
 
-trap failure EXIT
-
-# Build the filesystem images and minimize them first. These get uploaded to the update service
-truncate -s 20M "${BOOT_IMAGE}"
-truncate -s 491M "${ROOT_IMAGE}"
-mkfs.ext4 "${BOOT_IMAGE}"
-mkfs.ext4 "${ROOT_IMAGE}"
+truncate -s 2G "${DISK_IMAGE}"
+# partition 2 attributes: 48 = gptprio priority bit; 56 = gptprio successful bit
+sgdisk --clear \
+   -n 1:2048:4095 -c 1:"BIOS-BOOT" -t 1:ef02 \
+   -n 2:4096:45055 -c 2:"THAR-BOOT-A" -t 2:"${THAR_BOOT_TYPECODE}" -A 2:set:48 -A 2:set:56 \
+   -n 3:45056:1050623 -c 3:"THAR-ROOT-A" -t 3:8300 \
+   -n 4:1050624:1091583 -c 4:"THAR-BOOT-B" -t 4:"${THAR_BOOT_TYPECODE}" -A 4:clear:48 -A 4:clear:56 \
+   -n 5:1091584:2097151 -c 5:"THAR-ROOT-B" -t 5:8300 \
+   -n 6:2097152:4194270 -c 6:"THAR-DATA" -t 6:8300 -u 6:"${THAR_DATA_PARTUUID}" \
+   --print "${DISK_IMAGE}"
 
 mkdir -p "${ROOT_MOUNT}"
-mount "${ROOT_IMAGE}" "${ROOT_MOUNT}"
-mkdir -p "${BOOT_MOUNT}"
-mount "${BOOT_IMAGE}" "${BOOT_MOUNT}"
-
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
@@ -60,44 +55,25 @@ menuentry "Thar" {
 }
 EOF
 
-# Remount as read-only (keep the mount around because we need to run grub2-bios-setup still...)
-mount -o remount,ro "${BOOT_MOUNT}"
-mount -o remount,ro "${ROOT_MOUNT}"
-
-# Define a partition type GUID for the Thar boot partition. GPT specifies
-# use of the "GUID specific use" bits (where gptprio works) depend on the
-# partition type GUID.
-THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
-THAR_DATA_PARTUUID="b9be5c1d-18f9-4f76-afe0-1119a3b1bbf6"
-
-truncate -s 2G "${DISK_IMAGE}"
-# partition 2 attributes: 48 = gptprio priority bit; 56 = gptprio successful bit
-sgdisk --clear \
-   -n 1:2048:4095 -c 1:"BIOS-BOOT" -t 1:ef02 \
-   -n 2:4096:45055 -c 2:"THAR-BOOT-A" -t 2:"${THAR_BOOT_TYPECODE}" -A 2:set:48 -A 2:set:56 \
-   -n 3:45056:1050623 -c 3:"THAR-ROOT-A" -t 3:8300 \
-   -n 4:1050624:1091583 -c 4:"THAR-BOOT-B" -t 4:"${THAR_BOOT_TYPECODE}" -A 4:clear:48 -A 4:clear:56 \
-   -n 5:1091584:2097151 -c 5:"THAR-ROOT-B" -t 5:8300 \
-   -n 6:2097152:0 -c 6:"THAR-DATA" -t 6:8300 -u 6:"${THAR_DATA_PARTUUID}" \
-   --print "${DISK_IMAGE}"
-
-LOOP_NAME="$(kpartx -avs "${DISK_IMAGE}" | tee /dev/stderr | head -n 1 | awk '{ print $3 }' | sed -rn 's@^.*(loop[0-9]+).*$@\1@p')"
-mkfs.ext4 "/dev/mapper/${LOOP_NAME}p6"
-
-grub2-bios-setup \
-   --directory="${BOOT_MOUNT}/grub" \
-   --skip-fs-probe \
-   "/dev/${LOOP_NAME}"
-
-umount "${BOOT_MOUNT}" "${ROOT_MOUNT}"
-
+# MBR
+dd if="${BOOT_MOUNT}/grub/boot.img" of="${DISK_IMAGE}" conv=notrunc bs=1 count=440
+rm "${BOOT_MOUNT}/grub/boot.img"
+# BIOS-BOOT
+dd if="${BOOT_MOUNT}/grub/core.img" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=2048
+rm "${BOOT_MOUNT}/grub/core.img"
+# THAR-BOOT-A
+mkfs.ext2 -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 20M
 resize2fs -M "${BOOT_IMAGE}"
-dd if="${BOOT_IMAGE}" of="/dev/mapper/${LOOP_NAME}p2" conv=sparse
+dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=4096
+# THAR-ROOT-A
+mkfs.ext2 -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 491M
 resize2fs -M "${ROOT_IMAGE}"
-dd if="${ROOT_IMAGE}" of="/dev/mapper/${LOOP_NAME}p3" conv=sparse
+dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=45056
+# THAR-DATA
+mkfs.ext2 "${DATA_IMAGE}" 1024M
+dd if="${DATA_IMAGE}" of="${DISK_IMAGE}" conv=notrunc,sparse bs=512 seek=2097152
 
-trap - EXIT
-cleanup
+sgdisk -v "${DISK_IMAGE}"
 
 mv "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
 mv "${BOOT_IMAGE}" "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
