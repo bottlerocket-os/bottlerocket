@@ -22,7 +22,6 @@ BOOT_IMAGE="$(mktemp)"
 ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
 ROOT_MOUNT="/mnt/root"
-BOOT_MOUNT="${ROOT_MOUNT}/boot"
 
 # Define a partition type GUID for the Thar boot partition. GPT specifies
 # use of the "GUID specific use" bits (where gptprio works) depend on the
@@ -47,16 +46,26 @@ rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
 # MBR and BIOS-BOOT
-echo "(hd0) ${DISK_IMAGE}" > ${BOOT_MOUNT}/grub/device.map
+echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
 "${ROOT_MOUNT}/sbin/grub-bios-setup" \
-  --directory="${BOOT_MOUNT}/grub" \
-  --device-map="${BOOT_MOUNT}/grub/device.map" \
+  --directory="${ROOT_MOUNT}/boot/grub" \
+  --device-map="${ROOT_MOUNT}/boot/grub/device.map" \
   --root="hd0" \
   --skip-fs-probe \
   ${DISK_IMAGE}
 
-rm -f "${BOOT_MOUNT}/grub/*" "${ROOT_MOUNT}/sbin/grub*"
+rm -f "${ROOT_MOUNT}/boot/grub/*" "${ROOT_MOUNT}/sbin/grub*"
 
+# Now that we're done messing with /, move /boot out of it
+BOOT_MOUNT="/mnt/boot"
+mkdir "${BOOT_MOUNT}"
+mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
+
+# THAR-ROOT-A
+mkfs.ext4 -O ^has_journal -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 491M
+dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=45056
+
+# write GRUB config
 cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
 set default="0"
 set timeout="0"
@@ -69,9 +78,7 @@ EOF
 # THAR-BOOT-A
 mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 20M
 dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=4096
-# THAR-ROOT-A
-mkfs.ext4 -O ^has_journal -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 491M
-dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=45056
+
 # THAR-DATA
 mkfs.ext4 "${DATA_IMAGE}" 1023M
 dd if="${DATA_IMAGE}" of="${DISK_IMAGE}" conv=notrunc,sparse bs=512 seek=2097152
