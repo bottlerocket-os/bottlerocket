@@ -39,7 +39,7 @@ sgdisk --clear \
    -n 3:45056:1050623 -c 3:"THAR-ROOT-A" -t 3:8300 \
    -n 4:1050624:1091583 -c 4:"THAR-BOOT-B" -t 4:"${THAR_BOOT_TYPECODE}" -A 4:clear:48 -A 4:clear:56 \
    -n 5:1091584:2097151 -c 5:"THAR-ROOT-B" -t 5:8300 \
-   -n 6:2097152:4194270 -c 6:"THAR-DATA" -t 6:8300 -u 6:"${THAR_DATA_PARTUUID}" \
+   -n 6:2097152:$((2048*2048-2048)) -c 6:"THAR-DATA" -t 6:8300 -u 6:"${THAR_DATA_PARTUUID}" \
    --print "${DISK_IMAGE}"
 
 mkdir -p "${ROOT_MOUNT}"
@@ -75,7 +75,7 @@ mkfs.ext2 -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 491M
 resize2fs -M "${ROOT_IMAGE}"
 dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=45056
 # THAR-DATA
-mkfs.ext2 "${DATA_IMAGE}" 1024M
+mkfs.ext2 "${DATA_IMAGE}" 1023M
 dd if="${DATA_IMAGE}" of="${DISK_IMAGE}" conv=notrunc,sparse bs=512 seek=2097152
 
 sgdisk -v "${DISK_IMAGE}"
