@@ -67,20 +67,18 @@ menuentry "Thar" {
 EOF
 
 # THAR-BOOT-A
-mkfs.ext2 -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 20M
-resize2fs -M "${BOOT_IMAGE}"
+mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 20M
 dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=4096
 # THAR-ROOT-A
-mkfs.ext2 -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 491M
-resize2fs -M "${ROOT_IMAGE}"
+mkfs.ext4 -O ^has_journal -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 491M
 dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=45056
 # THAR-DATA
-mkfs.ext2 "${DATA_IMAGE}" 1023M
+mkfs.ext4 "${DATA_IMAGE}" 1023M
 dd if="${DATA_IMAGE}" of="${DISK_IMAGE}" conv=notrunc,sparse bs=512 seek=2097152
 
 sgdisk -v "${DISK_IMAGE}"
 
 mv "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
-mv "${BOOT_IMAGE}" "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
-mv "${ROOT_IMAGE}" "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
+lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
+lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
 chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"

@@ -54,8 +54,8 @@ define build_image
 	@$(DOCKER) run -t -v /dev:/dev -v $(OUTPUT):/local/output \
 		$(OS)-builder:$(1) \
 			--disk-image-name=$(OS)-$(1).img \
-			--boot-image-name=$(OS)-$(1)-boot.ext4 \
-			--root-image-name=$(OS)-$(1)-root.ext4 \
+			--boot-image-name=$(OS)-$(1)-boot.ext4.lz4 \
+			--root-image-name=$(OS)-$(1)-root.ext4.lz4 \
 			--package-dir=/local/rpms \
 			--output-dir=/local/output
 endef
