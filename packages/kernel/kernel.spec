@@ -8,6 +8,7 @@ License: GPLv2 and Redistributable, no modification permitted
 URL: https://www.kernel.org/
 Source0: https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{version}.tar.xz
 Source100: config-%{_cross_arch}
+Patch1000: dm-add-support-to-directly-boot-to-a-mapped-device.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: gcc-%{_cross_target}
@@ -30,7 +31,7 @@ Summary: Header files for the Linux kernel for use by glibc
 %{summary}.
 
 %prep
-%setup -q -n linux-%{version}
+%autosetup -n linux-%{version} -p1
 cp %{SOURCE100} "arch/%{_cross_karch}/configs/%{_cross_vendor}_defconfig"
 
 %global kmake \
