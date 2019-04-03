@@ -27,6 +27,9 @@ ROOT_MOUNT="/mnt/root"
 # use of the "GUID specific use" bits (where gptprio works) depend on the
 # partition type GUID.
 THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
+# Define a type GUID for the dm-verity hashes because nobody's really settled
+# on a standard one.
+THAR_VERITY_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 # This partition UUID is referenced in var-lib-thar.mount
 THAR_DATA_PARTUUID="b9be5c1d-18f9-4f76-afe0-1119a3b1bbf6"
 
@@ -35,10 +38,12 @@ truncate -s 2G "${DISK_IMAGE}"
 sgdisk --clear \
    -n 1:2048:4095 -c 1:"BIOS-BOOT" -t 1:ef02 \
    -n 2:4096:45055 -c 2:"THAR-BOOT-A" -t 2:"${THAR_BOOT_TYPECODE}" -A 2:set:48 -A 2:set:56 \
-   -n 3:45056:1050623 -c 3:"THAR-ROOT-A" -t 3:8300 \
-   -n 4:1050624:1091583 -c 4:"THAR-BOOT-B" -t 4:"${THAR_BOOT_TYPECODE}" -A 4:clear:48 -A 4:clear:56 \
-   -n 5:1091584:2097151 -c 5:"THAR-ROOT-B" -t 5:8300 \
-   -n 6:2097152:$((2048*2048-2048)) -c 6:"THAR-DATA" -t 6:8300 -u 6:"${THAR_DATA_PARTUUID}" \
+   -n 3:45056:53247 -c 3:"THAR-VERITY-A" -t 3:"${THAR_VERITY_TYPECODE}" \
+   -n 4:53248:1050623 -c 4:"THAR-ROOT-A" -t 4:8300 \
+   -n 5:1050624:1091583 -c 5:"THAR-BOOT-B" -t 5:"${THAR_BOOT_TYPECODE}" -A 5:clear:48 -A 5:clear:56 \
+   -n 6:1091584:1099775 -c 6:"THAR-VERITY-B" -t 6:"${THAR_VERITY_TYPECODE}" \
+   -n 7:1099776:2097151 -c 7:"THAR-ROOT-B" -t 7:8300 \
+   -n 8:2097152:$((2048*2048-2048)) -c 8:"THAR-DATA" -t 8:8300 -u 8:"${THAR_DATA_PARTUUID}" \
    --print "${DISK_IMAGE}"
 
 mkdir -p "${ROOT_MOUNT}"
@@ -62,8 +67,8 @@ mkdir "${BOOT_MOUNT}"
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # THAR-ROOT-A
-mkfs.ext4 -O ^has_journal -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 491M
-dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=45056
+mkfs.ext4 -O ^has_journal -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 487M
+dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=53248
 
 # write GRUB config
 cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
@@ -71,7 +76,7 @@ set default="0"
 set timeout="0"
 
 menuentry "Thar" {
-   linux (\$root)/vmlinuz root=PARTUUID=\$boot_uuid/PARTNROFF=1 ro console=tty0 console=ttyS0 systemd.log_target=console audit=0 init=/sbin/preinit
+   linux (\$root)/vmlinuz root=PARTUUID=\$boot_uuid/PARTNROFF=2 ro console=tty0 console=ttyS0 systemd.log_target=console audit=0 init=/sbin/preinit
 }
 EOF
 
