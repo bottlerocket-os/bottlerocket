@@ -23,27 +23,30 @@ ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
 ROOT_MOUNT="/mnt/root"
 
-# Define a partition type GUID for the Thar boot partition. GPT specifies
-# use of the "GUID specific use" bits (where gptprio works) depend on the
-# partition type GUID.
+# Define partition type GUIDs for all OS-managed partitions. This is required
+# for the boot partition, where we set gptprio bits in the GUID-specific use
+# field, but we might as well do it for all of them.
 THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
-# Define a type GUID for the dm-verity hashes because nobody's really settled
-# on a standard one.
-THAR_VERITY_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
+THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
+THAR_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
+THAR_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
 # This partition UUID is referenced in var-lib-thar.mount
 THAR_DATA_PARTUUID="b9be5c1d-18f9-4f76-afe0-1119a3b1bbf6"
 
 truncate -s 2G "${DISK_IMAGE}"
-# partition 2 attributes: 48 = gptprio priority bit; 56 = gptprio successful bit
+# boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
+# partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
 sgdisk --clear \
-   -n 1:2048:4095 -c 1:"BIOS-BOOT" -t 1:ef02 \
-   -n 2:4096:45055 -c 2:"THAR-BOOT-A" -t 2:"${THAR_BOOT_TYPECODE}" -A 2:set:48 -A 2:set:56 \
-   -n 3:45056:53247 -c 3:"THAR-VERITY-A" -t 3:"${THAR_VERITY_TYPECODE}" \
-   -n 4:53248:1050623 -c 4:"THAR-ROOT-A" -t 4:8300 \
-   -n 5:1050624:1091583 -c 5:"THAR-BOOT-B" -t 5:"${THAR_BOOT_TYPECODE}" -A 5:clear:48 -A 5:clear:56 \
-   -n 6:1091584:1099775 -c 6:"THAR-VERITY-B" -t 6:"${THAR_VERITY_TYPECODE}" \
-   -n 7:1099776:2097151 -c 7:"THAR-ROOT-B" -t 7:8300 \
-   -n 8:2097152:$((2048*2048-2048)) -c 8:"THAR-DATA" -t 8:8300 -u 8:"${THAR_DATA_PARTUUID}" \
+   -n 10:1024M:2047M -c 10:"THAR-DATA" -t 10:8300 -u 10:"${THAR_DATA_PARTUUID}" \
+   -n 9:937M:0 -c 9:"THAR-RESERVED-B" -t 9:"${THAR_RESERVED_TYPECODE}" \
+   -n 8:537M:0 -c 8:"THAR-ROOT-B" -t 8:"${THAR_ROOT_TYPECODE}" \
+   -n 7:533M:0 -c 7:"THAR-HASH-B" -t 7:"${THAR_HASH_TYPECODE}" \
+   -n 6:513M:0 -c 6:"THAR-BOOT-B" -t 6:"${THAR_BOOT_TYPECODE}" -A 6:"clear":48 -A 6:"clear":56 \
+   -n 5:426M:0 -c 5:"THAR-RESERVED-A" -t 5:"${THAR_RESERVED_TYPECODE}" \
+   -n 4:26M:0 -c 4:"THAR-ROOT-A" -t 4:"${THAR_ROOT_TYPECODE}" \
+   -n 3:22M:0 -c 3:"THAR-HASH-A" -t 3:"${THAR_HASH_TYPECODE}" \
+   -n 2:2M:0 -c 2:"THAR-BOOT-A" -t 2:"${THAR_BOOT_TYPECODE}" -A 2:"set":48 -A 2:"set":56 \
+   -n 1:1M:0 -c 1:"BIOS-BOOT" -t 1:ef02 \
    --print "${DISK_IMAGE}"
 
 mkdir -p "${ROOT_MOUNT}"
@@ -67,7 +70,7 @@ mkdir "${BOOT_MOUNT}"
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # THAR-ROOT-A
-mkfs.ext4 -O ^has_journal -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 487M
+mkfs.ext4 -O ^has_journal -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 400M
 dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=53248
 
 # write GRUB config
