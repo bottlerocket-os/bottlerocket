@@ -30,14 +30,12 @@ THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
 THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 THAR_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
 THAR_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
-# This partition UUID is referenced in var-lib-thar.mount
-THAR_DATA_PARTUUID="b9be5c1d-18f9-4f76-afe0-1119a3b1bbf6"
 
 truncate -s 2G "${DISK_IMAGE}"
 # boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
 # partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
 sgdisk --clear \
-   -n 10:1024M:2047M -c 10:"THAR-DATA" -t 10:8300 -u 10:"${THAR_DATA_PARTUUID}" \
+   -n 10:1024M:2047M -c 10:"THAR-DATA" -t 10:8300 \
    -n 9:937M:0 -c 9:"THAR-RESERVED-B" -t 9:"${THAR_RESERVED_TYPECODE}" \
    -n 8:537M:0 -c 8:"THAR-ROOT-B" -t 8:"${THAR_ROOT_TYPECODE}" \
    -n 7:533M:0 -c 7:"THAR-HASH-B" -t 7:"${THAR_HASH_TYPECODE}" \

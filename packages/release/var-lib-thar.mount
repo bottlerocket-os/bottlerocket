@@ -1,5 +1,5 @@
 [Mount]
-What=/dev/disk/by-partuuid/b9be5c1d-18f9-4f76-afe0-1119a3b1bbf6
+What=/dev/disk/by-partlabel/THAR-DATA
 Where=/var/lib/thar
 Type=ext4
 Options=defaults
