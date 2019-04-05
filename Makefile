@@ -55,6 +55,7 @@ define build_image
 		$(OS)-builder:$(1) \
 			--disk-image-name=$(OS)-$(1).img \
 			--boot-image-name=$(OS)-$(1)-boot.ext4.lz4 \
+			--verity-image-name=$(OS)-$(1)-root.verity.lz4 \
 			--root-image-name=$(OS)-$(1)-root.ext4.lz4 \
 			--package-dir=/local/rpms \
 			--output-dir=/local/output

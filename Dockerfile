@@ -10,7 +10,7 @@ RUN dnf -y groupinstall "C Development Tools and Libraries" \
    && useradd builder
 
 FROM origin AS util
-RUN dnf -y install e2fsprogs gdisk grub2-tools kpartx lz4
+RUN dnf -y install e2fsprogs gdisk grub2-tools kpartx lz4 veritysetup
 
 FROM base AS rpmbuild
 ARG PACKAGE
