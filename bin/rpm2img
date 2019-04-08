@@ -70,7 +70,7 @@ echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
   --skip-fs-probe \
   ${DISK_IMAGE}
 
-rm -vf "${ROOT_MOUNT}/boot/grub/*" "${ROOT_MOUNT}/sbin/grub*"
+rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
 
 # Now that we're done messing with /, move /boot out of it
 BOOT_MOUNT="/mnt/boot"
