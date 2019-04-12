@@ -12,7 +12,7 @@ PKG="${SPEC##*/}"
 PKG="${PKG%.*}"
 
 for arch in ${ARCHES//,/ } ; do
-   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared"
+   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared:macros/rust:macros/cargo-external"
 
    # Collect file-based targets for the outputs of a package build.
    rpms="$(rpmspec --macros "${macros}" --query --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
@@ -34,3 +34,10 @@ for arch in ${ARCHES//,/ } ; do
    echo "build-${PKG}-${arch} : ${SPEC} ${sources} ${patches} ${buildrequires}"
    echo -e "\t\$(call build_rpm,$PKG,${arch},\$^)\n"
 done
+
+if [[ -d "packages/${PKG}/cargo-project" ]]; then
+    echo "packages/${PKG}/cargo-project/Cargo.lock : packages/${PKG}/cargo-project/Cargo.toml"
+    echo -e "\tcd packages/${PKG}/cargo-project && cargo generate-lockfile\n"
+    echo "packages/${PKG}/${PKG}.tar.gz : $(git ls-files "packages/${PKG}/cargo-project" | tr '\n' ' ') packages/${PKG}/cargo-project/Cargo.lock"
+    echo -e "\ttar --transform 's!^packages/${PKG}/cargo-project!${PKG}!' -czf \$@ \$^\n"
+fi

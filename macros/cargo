@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: MIT
+# https://github.com/amazonlinux/rust-bundled-packaging/blob/master/macros.cargo
+
+# Changes for Thar:
+# - s/_prefix/_cross_prefix
+# - Remove _cargometadir, no automatic bundled() provides
+
+%__cargo %{_bindir}/cargo
+%__cargo_common_opts %{?_smp_mflags}
+
+%cargo_prep (\
+set -eu \
+%{__mkdir} -p .registry \
+REGISTRY="$(realpath .registry)" \
+%{__mkdir} -p .cargo \
+cat > .cargo/config << EOF \
+[build]\
+rustc = "%{__rustc}"\
+rustdoc = "%{__rustdoc}"\
+rustflags = %{__global_rustflags_toml}\
+\
+[target.%{_cross_arch}-unknown-linux-gnu]\
+linker = "%{_bindir}/%{_cross_target}-gcc"\
+ar = "%{_bindir}/%{_cross_target}-gcc-ar"\
+\
+[term]\
+verbose = true\
+\
+[source]\
+\
+[source.local-registry]\
+directory = "$REGISTRY"\
+\
+[source.crates-io]\
+registry = "https://crates.io"\
+replace-with = "local-registry"\
+EOF\
+do_cargo_build_registry() { \
+true\
+%__cargo_build_registry \
+} \
+do_cargo_build_registry $REGISTRY \
+)
+
+%cargo_build CARGO_HOME="$PWD" RUSTFLAGS=-g %{__cargo} build %{__cargo_common_opts} --release %{?cargo_args}
+
+%cargo_test CARGO_HOME="$PWD" RUSTFLAGS=-g %{__cargo} test %{__cargo_common_opts} --release --no-fail-fast %{?cargo_args}
+
+%cargo_install \
+CARGO_HOME="$PWD" RUSTFLAGS=-g %{__cargo} install %{__cargo_common_opts} --path . --root %{buildroot}%{_cross_rootdir}%{_prefix} %{?cargo_args} \
+%{__rm} %{buildroot}%{_cross_rootdir}%{_prefix}/.crates.toml
+
+%__cargo_crate_source_url() https://crates.io/api/v1/crates/%1/%2/download#/%1-%2.crate
+%__cargo_crate_source_urls grep '^"checksum' | awk '{ print "Source" NR+9999 ": %%{__cargo_crate_source_url " $2 " " $3 "}" } END { print "%%global __cargo_first_crate 10000\\n%%global __cargo_last_crate " NR+9999 }'
+
+%__cargo_build_registry %{lua:for i = math.floor(rpm.expand("%__cargo_first_crate")),math.floor(rpm.expand("%__cargo_last_crate")) do \
+  uncompress = rpm.expand("%{uncompress:%{S:" .. i .. "}}") \
+  print(uncompress .. " | tar -x -C $1\\n") \
+  template = '{"files":{},"package":"%s"}' \
+  print("printf '" .. template .. "' $(sha256sum " .. rpm.expand("%{S:" .. i .. "}") .. " | awk '{ print $1 }') > $1/$(" .. uncompress .. " | tar -t | head -n 1 | cut -d / -f 1)/.cargo-checksum.json\\n") \
+end}
+
+%cargo_bundle_crates(n:t:l:) \
+%{-t:%{-l:%{error:cargo_bundle_crates: Can't specify both -t and -l}}} \
+%{!-t:%{!-l:%{error:cargo_bundle_crates: Must specify one of -t or -l}}} \
+%{-t:%{expand:%(%{uncompress:%{S:%{-t*}}} | tar -xO %{-n:%{-n*}}%{!-n:%{name}-%{version}}/Cargo.lock | %__cargo_crate_source_urls)}} \
+%{-l:%{expand:%(cat %{S:%{-l*}} | %__cargo_crate_source_urls)}}

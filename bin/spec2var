@@ -9,7 +9,7 @@ for opt in "$@"; do
 done
 
 for arch in ${ARCHES//,/ } ; do
-   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared"
+   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared:macros/rust:macros/cargo-external"
 
    # Build-time dependencies are associated with all subpackages.
    buildrequires="$(rpmspec --macros "${macros}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
