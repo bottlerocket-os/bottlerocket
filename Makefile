@@ -17,7 +17,7 @@ OUTPUT ?= $(TOPDIR)/build
 OUTVAR := $(shell mkdir -p $(OUTPUT))
 DATE := $(shell date --rfc-3339=date)
 
-ARCHES := x86_64 aarch64
+ARCH := x86_64
 
 DOCKER ?= docker
 
@@ -65,11 +65,6 @@ define build_image
 			--output-dir=/local/output
 endef
 
-empty :=
-space := $(empty) $(empty)
-comma := ,
-list = $(subst $(space),$(comma),$(1))
-
 # `makedep` files are a hook to provide additional dependencies when
 # building `makevar` and `makepkg` files. The intended use case is
 # to generate source files that must be in place before parsing the
@@ -82,27 +77,27 @@ list = $(subst $(space),$(comma),$(1))
 # before any `makepkg` files, or else empty values could be added to
 # the dependency list.
 %.makevar : %.spec $(SPEC2VAR)
-	@$(SPEC2VAR) --spec=$< --arches=$(call list,$(ARCHES)) > $@
+	@$(SPEC2VAR) --spec=$< --arch=$(ARCH) > $@
 
 # `makepkg` files define the package outputs obtained by building
 # the spec file, as well as the dependencies needed to build that
 # package.
 %.makepkg : %.spec $(SPEC2PKG)
-	@$(SPEC2PKG) --spec=$< --arches=$(call list,$(ARCHES)) > $@
+	@$(SPEC2PKG) --spec=$< --arch=$(ARCH) > $@
 
 # Order is important here.
 -include $(DEPS)
 -include $(VARS)
 -include $(PKGS)
 
-.PHONY: all $(ARCHES)
+.PHONY: all $(ARCH)
 
 .SECONDEXPANSION:
-$(ARCHES): $$($(OS)-$$(@)-release)
-	$(eval PKGS:= $(wildcard $(OUTPUT)/$(OS)-$(@)-*.rpm))
+$(ARCH): $$($(OS)-$(ARCH)-release)
+	$(eval PKGS:= $(wildcard $(OUTPUT)/$(OS)-$(ARCH)-*.rpm))
 	$(call build_image,$@,$(PKGS))
 
-all: $(ARCHES)
+all: $(ARCH)
 
 .PHONY: clean
 clean:

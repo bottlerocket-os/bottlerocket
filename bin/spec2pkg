@@ -4,33 +4,37 @@ for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
       --spec=*) SPEC="${optarg}" ;;
-      --arches=*) ARCHES="${optarg}" ;;
+      --arch=*) ARCH="${optarg}" ;;
    esac
 done
 
 PKG="${SPEC##*/}"
 PKG="${PKG%.*}"
 
-for arch in ${ARCHES//,/ } ; do
-   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared:macros/rust:macros/cargo"
+MACROS="/usr/lib/rpm/macros:macros/${ARCH}:macros/shared:macros/rust:macros/cargo"
+RPMSPEC=("rpmspec" "--macros" "${MACROS}" "--define" "_sourcedir packages/${PKG}")
 
-   # Collect file-based targets for the outputs of a package build.
-   rpms="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --query --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
-   rpms="${rpms%"${rpms##*[![:space:]]}"}"
+# Collect file-based targets for the outputs of a package build.
+RPMS="$("${RPMSPEC[@]}" --query \
+           --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
+RPMS="${RPMS%"${RPMS##*[![:space:]]}"}"
 
-   # Collect file-based targets needed as inputs of a package build.
-   sources="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
-   sources="${sources%"${sources##*[![:space:]]}"}"
-   patches="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
-   patches="${patches%"${patches##*[![:space:]]}"}"
+# Collect file-based targets needed as inputs of a package build.
+SOURCES="$("${RPMSPEC[@]}" --parse "${SPEC}" \
+              | awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
+SOURCES="${SOURCES%"${SOURCES##*[![:space:]]}"}"
 
-   # Collect package-level dependencies needed as inputs of a package build.
-   buildrequires="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
-   buildrequires="${buildrequires%"${buildrequires##*[![:space:]]}"}"
+PATCHES="$("${RPMSPEC[@]}" --parse "${SPEC}" \
+              | awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
+PATCHES="${PATCHES%"${PATCHES##*[![:space:]]}"}"
 
-   echo "${rpms} : build-${PKG}-${arch}"
-   echo -e "\t@:\n"
-   echo -e ".INTERMEDIATE: build-${PKG}-${arch}\n"
-   echo "build-${PKG}-${arch} : ${SPEC} ${sources} ${patches} ${buildrequires}"
-   echo -e "\t\$(call build_rpm,$PKG,${arch},\$^)\n"
-done
+# Collect package-level dependencies needed as inputs of a package build.
+BUILDREQUIRES="$("${RPMSPEC[@]}" --query --buildrequires "${SPEC}" \
+                    | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
+BUILDREQUIRES="${BUILDREQUIRES%"${BUILDREQUIRES##*[![:space:]]}"}"
+
+echo "${RPMS} : build-${PKG}-${ARCH}"
+echo -e "\t@:\n"
+echo -e ".INTERMEDIATE: build-${PKG}-${ARCH}\n"
+echo "build-${PKG}-${ARCH} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}"
+echo -e "\t\$(call build_rpm,$PKG,${ARCH},\$^)\n"

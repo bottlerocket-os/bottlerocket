@@ -4,20 +4,22 @@ for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
       --spec=*) SPEC="${optarg}" ;;
-      --arches=*) ARCHES="${optarg}" ;;
+      --arch=*) ARCH="${optarg}" ;;
    esac
 done
 
 PKG="${SPEC##*/}"
 PKG="${PKG%.*}"
 
-for arch in ${ARCHES//,/ } ; do
-   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared:macros/rust:macros/cargo"
+MACROS="/usr/lib/rpm/macros:macros/${ARCH}:macros/shared:macros/rust:macros/cargo"
+RPMSPEC=("rpmspec" "--macros" "${MACROS}" "--define" "_sourcedir packages/${PKG}")
 
-   # Build-time dependencies are associated with all subpackages.
-   buildrequires="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
-   buildrequires="${buildrequires%"${buildrequires##*[![:space:]]}"}"
+# Build-time dependencies are associated with all subpackages.
+BUILDREQUIRES="$("${RPMSPEC[@]}" --query --buildrequires "${SPEC}" \
+                    | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
+BUILDREQUIRES="${BUILDREQUIRES%"${BUILDREQUIRES##*[![:space:]]}"}"
 
-   # Emit variables for package names that resolve to all their dependencies.
-   rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --query --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm[ \$(%{REQUIRES})] ${buildrequires}\n" "${SPEC}"
-done
+# Emit variables for package names that resolve to all their dependencies.
+"${RPMSPEC[@]}" --query \
+   --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm[ \$(%{REQUIRES})] ${BUILDREQUIRES}\n" \
+   "${SPEC}"
