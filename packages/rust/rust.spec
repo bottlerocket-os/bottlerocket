@@ -13,8 +13,7 @@ URL: https://www.rust-lang.org
 
 Source0: https://static.rust-lang.org/dist/rustc-%{version}-x86_64-unknown-linux-gnu.tar.xz
 Source1: https://static.rust-lang.org/dist/cargo-%{cargo_version}-x86_64-unknown-linux-gnu.tar.xz
-Source2: https://static.rust-lang.org/dist/rust-std-%{version}-x86_64-unknown-linux-gnu.tar.xz
-Source3: https://static.rust-lang.org/dist/rust-std-%{version}-aarch64-unknown-linux-gnu.tar.xz
+Source2: https://static.rust-lang.org/dist/rust-std-%{version}-%{_cross_arch}-unknown-linux-%{_cross_libc}.tar.xz
 
 %description
 🦀⚙️
@@ -30,12 +29,7 @@ Source3: https://static.rust-lang.org/dist/rust-std-%{version}-aarch64-unknown-l
 %autosetup -c -T
 xz -dc %{SOURCE0} | tar -xof -
 xz -dc %{SOURCE1} | tar -xof -
-%if %{_cross_arch} == "x86_64"
 xz -dc %{SOURCE2} | tar -xof -
-%endif
-%if %{_cross_arch} == "aarch64"
-xz -dc %{SOURCE3} | tar -xof -
-%endif
 
 %build
 # whole lot of nothin'
@@ -44,7 +38,7 @@ xz -dc %{SOURCE3} | tar -xof -
 for dir in \
     rustc-%{version}-x86_64-unknown-linux-gnu \
     cargo-%{cargo_version}-x86_64-unknown-linux-gnu \
-    rust-std-%{version}-%{_cross_arch}-unknown-linux-gnu \
+    rust-std-%{version}-%{_cross_arch}-unknown-linux-%{_cross_libc} \
 ; do
     pushd $dir
     ./install.sh --destdir=%{buildroot} --disable-ldconfig \
@@ -65,7 +59,7 @@ rm %{buildroot}%{_prefix}/lib/rustlib/manifest-*
 %exclude %{_bindir}/rust-lldb
 %exclude %{_bindir}/rustdoc
 %{_prefix}/lib/*.so
-%{_prefix}/lib/rustlib/%{_cross_arch}-unknown-linux-gnu
+%{_prefix}/lib/rustlib/%{_cross_arch}-unknown-linux-%{_cross_libc}
 %exclude %{_prefix}/lib/rustlib/etc
 %exclude %{_docdir}
 %exclude %{_mandir}

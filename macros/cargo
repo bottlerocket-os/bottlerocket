@@ -19,7 +19,7 @@ rustc = "%{__rustc}"\
 rustdoc = "%{__rustdoc}"\
 rustflags = %{__global_rustflags_toml}\
 \
-[target.%{_cross_arch}-unknown-linux-gnu]\
+[target.%{_cross_arch}-unknown-linux-%{_cross_libc}]\
 linker = "%{_bindir}/%{_cross_target}-gcc"\
 ar = "%{_bindir}/%{_cross_target}-gcc-ar"\
 \
