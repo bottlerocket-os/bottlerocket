@@ -8,3 +8,6 @@ license = "Apache-2.0"
 
 [dependencies]
 gpt = "0.6.1"
+
+[profile.release]
+debug = true
