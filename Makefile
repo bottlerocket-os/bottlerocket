@@ -2,10 +2,14 @@
 
 OS := thar
 TOPDIR := $(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+DEP4SPEC ?= $(TOPDIR)/bin/dep4spec
 SPEC2VAR ?= $(TOPDIR)/bin/spec2var
 SPEC2PKG ?= $(TOPDIR)/bin/spec2pkg
 
 SPECS = $(wildcard packages/*/*.spec)
+TOMLS = $(wildcard workspaces/*/Cargo.toml)
+
+DEPS = $(shell echo $(TOMLS)|awk -F '/' '{print "packages/"$$2"/"$$2".makedep"}')
 VARS = $(SPECS:.spec=.makevar)
 PKGS = $(SPECS:.spec=.makepkg)
 
@@ -66,12 +70,28 @@ space := $(empty) $(empty)
 comma := ,
 list = $(subst $(space),$(comma),$(1))
 
+# `makedep` files are a hook to provide additional dependencies when
+# building `makevar` and `makepkg` files. The intended use case is
+# to generate source files that must be in place before parsing the
+# spec file.
+%.makedep : %.spec $(DEP4SPEC)
+	@$(DEP4SPEC) --spec=$< > $@
+
+# `makevar` files generate variables that the `makepkg` files for
+# other packages can refer to. All `makevar` files must be evaluated
+# before any `makepkg` files, or else empty values could be added to
+# the dependency list.
 %.makevar : %.spec $(SPEC2VAR)
-	@set -e; $(SPEC2VAR) --spec=$< --arches=$(call list,$(ARCHES)) > $@
+	@$(SPEC2VAR) --spec=$< --arches=$(call list,$(ARCHES)) > $@
 
+# `makepkg` files define the package outputs obtained by building
+# the spec file, as well as the dependencies needed to build that
+# package.
 %.makepkg : %.spec $(SPEC2PKG)
-	@set -e; $(SPEC2PKG) --spec=$< --arches=$(call list,$(ARCHES)) > $@
+	@$(SPEC2PKG) --spec=$< --arches=$(call list,$(ARCHES)) > $@
 
+# Order is important here.
+-include $(DEPS)
 -include $(VARS)
 -include $(PKGS)
 

@@ -1,8 +1,0 @@
-# Redefine the cargo macros for outside of a build environment
-# (as the tarball probably doesn't exist yet)
-
-%cargo_prep %nil
-%cargo_build %nil
-%cargo_test %nil
-%cargo_install %nil
-%cargo_bundle_crates(n:t:l:) %nil

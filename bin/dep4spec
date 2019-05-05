@@ -1,0 +1,41 @@
+#!/bin/bash
+
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --spec=*) SPEC="${optarg}" ;;
+   esac
+done
+
+DIR="${SPEC%/*}"
+PKG="${SPEC##*/}"
+PKG="${PKG%.*}"
+
+PROJECT="workspaces/${PKG}"
+NAMEVER="$(cargo metadata \
+              --manifest-path "${PROJECT}/Cargo.toml" \
+              --format-version 1 \
+              | jq -r '.workspace_members[]/" "|.[0]+"-"+.[1]')"
+CRATE="${NAMEVER}.crate"
+FILES="$(git ls-files ${PROJECT} | tr '\n' ' ')"
+
+cat <<EOF
+${DIR}/${PKG}.makevar : ${DIR}/${CRATE}
+
+${DIR}/${PKG}.makepkg : ${DIR}/${CRATE}
+
+${DIR}/${CRATE} : ${FILES}
+	@cargo package \\
+		--manifest-path ${PROJECT}/Cargo.toml \\
+		--allow-dirty \\
+		--color never \\
+		--no-metadata \\
+		--no-verify \\
+		--quiet
+	@zcat ${PROJECT}/target/package/${CRATE} \\
+		> ${PROJECT}/target/package/.${CRATE}
+	@tar rf ${PROJECT}/target/package/.${CRATE} \\
+		--transform='s,${PROJECT},${NAMEVER},' \\
+		${PROJECT}/Cargo.lock
+	@mv ${PROJECT}/target/package/.${CRATE} \$@
+EOF

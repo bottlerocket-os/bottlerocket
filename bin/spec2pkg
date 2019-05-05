@@ -12,20 +12,20 @@ PKG="${SPEC##*/}"
 PKG="${PKG%.*}"
 
 for arch in ${ARCHES//,/ } ; do
-   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared:macros/rust:macros/cargo-external"
+   macros="/usr/lib/rpm/macros:macros/${arch}:macros/shared:macros/rust:macros/cargo"
 
    # Collect file-based targets for the outputs of a package build.
-   rpms="$(rpmspec --macros "${macros}" --query --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
+   rpms="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --query --queryformat="\$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm " "${SPEC}")"
    rpms="${rpms%"${rpms##*[![:space:]]}"}"
 
    # Collect file-based targets needed as inputs of a package build.
-   sources="$(rpmspec --macros "${macros}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
+   sources="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
    sources="${sources%"${sources##*[![:space:]]}"}"
-   patches="$(rpmspec --macros "${macros}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
+   patches="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --parse "${SPEC}"|awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
    patches="${patches%"${patches##*[![:space:]]}"}"
 
    # Collect package-level dependencies needed as inputs of a package build.
-   buildrequires="$(rpmspec --macros "${macros}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
+   buildrequires="$(rpmspec --macros "${macros}" --define "_sourcedir packages/${PKG}" --query --buildrequires "${SPEC}" | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
    buildrequires="${buildrequires%"${buildrequires##*[![:space:]]}"}"
 
    echo "${rpms} : build-${PKG}-${arch}"
@@ -34,10 +34,3 @@ for arch in ${ARCHES//,/ } ; do
    echo "build-${PKG}-${arch} : ${SPEC} ${sources} ${patches} ${buildrequires}"
    echo -e "\t\$(call build_rpm,$PKG,${arch},\$^)\n"
 done
-
-if [[ -d "packages/${PKG}/cargo-project" ]]; then
-    echo "packages/${PKG}/cargo-project/Cargo.lock : packages/${PKG}/cargo-project/Cargo.toml"
-    echo -e "\tcd packages/${PKG}/cargo-project && cargo generate-lockfile\n"
-    echo "packages/${PKG}/${PKG}.tar.gz : $(git ls-files "packages/${PKG}/cargo-project" | tr '\n' ' ') packages/${PKG}/cargo-project/Cargo.lock"
-    echo -e "\ttar --transform 's!^packages/${PKG}/cargo-project!${PKG}!' -czf \$@ \$^\n"
-fi
