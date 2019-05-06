@@ -17,7 +17,7 @@ Summary: Search tool
 #
 # fuchsia-cprng is BSD: https://fuchsia.googlesource.com/fuchsia/+/master/LICENSE
 License: ASL 2.0 and (ASL 2.0 or BSL 1.0) and MIT and Unlicense and BSD and ISC
-Source0: %{crate_name}-%{version}.tar.gz
+Source0: https://github.com/BurntSushi/%{crate_name}/archive/%{version}.tar.gz
 %cargo_bundle_crates -n %{crate_name}-%{version} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
