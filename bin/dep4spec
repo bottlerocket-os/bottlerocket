@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
@@ -12,6 +14,7 @@ PKG="${SPEC##*/}"
 PKG="${PKG%.*}"
 
 PROJECT="workspaces/${PKG}"
+[ -s "${PROJECT}/Cargo.toml" ] || exit 0
 NAMEVER="$(cargo metadata \
               --manifest-path "${PROJECT}/Cargo.toml" \
               --format-version 1 \
@@ -19,11 +22,11 @@ NAMEVER="$(cargo metadata \
 CRATE="${NAMEVER}.crate"
 FILES="$(git ls-files ${PROJECT} | tr '\n' ' ')"
 
+# Build the initial crate to satisfy the other dependency generators.
+tar czf ${DIR}/${CRATE} --transform="s,${PROJECT},${NAMEVER}," ${FILES}
+
+# Emit a rule to rebuild the crate if its dependencies change.
 cat <<EOF
-${DIR}/${PKG}.makevar : ${DIR}/${CRATE}
-
-${DIR}/${PKG}.makepkg : ${DIR}/${CRATE}
-
 ${DIR}/${CRATE} : ${FILES}
 	@tar czf \$@ --transform='s,${PROJECT},${NAMEVER},' ${FILES}
 EOF

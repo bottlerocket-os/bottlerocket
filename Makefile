@@ -7,9 +7,7 @@ SPEC2VAR ?= $(TOPDIR)/bin/spec2var
 SPEC2PKG ?= $(TOPDIR)/bin/spec2pkg
 
 SPECS = $(wildcard packages/*/*.spec)
-TOMLS = $(wildcard workspaces/*/Cargo.toml)
-
-DEPS = $(shell echo $(TOMLS)|awk -F '/' '{print "packages/"$$2"/"$$2".makedep"}')
+DEPS = $(SPECS:.spec=.makedep)
 VARS = $(SPECS:.spec=.makevar)
 PKGS = $(SPECS:.spec=.makepkg)
 
@@ -70,25 +68,27 @@ endef
 # to generate source files that must be in place before parsing the
 # spec file.
 %.makedep : %.spec $(DEP4SPEC)
-	@$(DEP4SPEC) --spec=$< > $@
+	@$(DEP4SPEC) --spec=$< > $@.tmp
+	@mv $@.tmp $@
 
 # `makevar` files generate variables that the `makepkg` files for
 # other packages can refer to. All `makevar` files must be evaluated
 # before any `makepkg` files, or else empty values could be added to
 # the dependency list.
-%.makevar : %.spec $(SPEC2VAR)
-	@$(SPEC2VAR) --spec=$< --arch=$(ARCH) > $@
+%.makevar : %.spec %.makedep $(SPEC2VAR)
+	@$(SPEC2VAR) --spec=$< --arch=$(ARCH) > $@.tmp
+	@mv $@.tmp $@
 
 # `makepkg` files define the package outputs obtained by building
 # the spec file, as well as the dependencies needed to build that
 # package.
-%.makepkg : %.spec $(SPEC2PKG)
-	@$(SPEC2PKG) --spec=$< --arch=$(ARCH) > $@
+%.makepkg : %.spec %.makedep %.makevar $(SPEC2PKG)
+	@$(SPEC2PKG) --spec=$< --arch=$(ARCH) > $@.tmp
+	@mv $@.tmp $@
 
-# Order is important here.
--include $(DEPS)
--include $(VARS)
--include $(PKGS)
+include $(DEPS)
+include $(VARS)
+include $(PKGS)
 
 .PHONY: all $(ARCH)
 

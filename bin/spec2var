@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
