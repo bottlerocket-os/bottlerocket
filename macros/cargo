@@ -46,8 +46,8 @@ do_cargo_build_registry $REGISTRY \
 
 %cargo_test CARGO_HOME="$PWD" %{__cargo} test %{__cargo_common_opts} --release --no-fail-fast %{?cargo_args}
 
-%cargo_install \
-CARGO_HOME="$PWD" %{__cargo} install %{__cargo_common_opts} --path . --root %{buildroot}%{_cross_rootdir}%{_prefix} %{?cargo_args} \
+%cargo_install(p:) \
+CARGO_HOME="$PWD" %{__cargo} install %{__cargo_common_opts} --root %{buildroot}%{_cross_rootdir}%{_prefix} %{-p:--path %{-p*}}%{!-p:--path .} %{?cargo_args} \
 %{__rm} %{buildroot}%{_cross_rootdir}%{_prefix}/.crates.toml
 
 %__cargo_crate_source_url() https://crates.io/api/v1/crates/%1/%2/download#/%1-%2.crate
