@@ -22,8 +22,9 @@ RPMS="$("${RPMSPEC[@]}" --query \
 RPMS="${RPMS%"${RPMS##*[![:space:]]}"}"
 
 # Collect file-based targets needed as inputs of a package build.
-SOURCES="$("${RPMSPEC[@]}" --parse "${SPEC}" \
-              | awk -v pkg="${PKG}" -F '[/ ]' '/^Source/ {printf "packages/"pkg"/"$NF" "}')"
+SOURCE_LINES="$("${RPMSPEC[@]}" --parse "${SPEC}" | awk '/^Source/ {print $NF}')"
+SOURCE_URLS="$(awk '$0 ~ "^https?://" {print $0}' <<<$SOURCE_LINES)"
+SOURCES="$(awk -v pkg="${PKG}" -F / '{printf "packages/"pkg"/"$NF" "}' <<<$SOURCE_LINES)"
 SOURCES="${SOURCES%"${SOURCES##*[![:space:]]}"}"
 
 PATCHES="$("${RPMSPEC[@]}" --parse "${SPEC}" \
@@ -40,3 +41,10 @@ echo -e "\t@:\n"
 echo -e ".INTERMEDIATE: build-${PKG}-${ARCH}\n"
 echo "build-${PKG}-${ARCH} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}"
 echo -e "\t\$(call build_rpm,$PKG,${ARCH},\$^)\n"
+
+for URL in ${SOURCE_URLS}; do
+    FILENAME="${URL##*/}"
+    SHA512SUM="$(awk -v pattern="^[(]${FILENAME}[)]$" '$2 ~ pattern {print $4}' "packages/${PKG}/sources")"
+    echo "packages/${PKG}/${FILENAME} :"
+    echo -e "\t\$(call fetch_upstream,${PKG},${URL},${FILENAME},${SHA512SUM})\n"
+done

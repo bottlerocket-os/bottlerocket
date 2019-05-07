@@ -5,6 +5,7 @@ TOPDIR := $(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 DEP4SPEC ?= $(TOPDIR)/bin/dep4spec
 SPEC2VAR ?= $(TOPDIR)/bin/spec2var
 SPEC2PKG ?= $(TOPDIR)/bin/spec2pkg
+ALLOW_ARBITRARY_SOURCE_URL ?= true
 
 SPECS = $(wildcard packages/*/*.spec)
 DEPS = $(SPECS:.spec=.makedep)
@@ -61,6 +62,14 @@ define build_image
 			--root-image-name=$(OS)-$(1)-root.ext4.lz4 \
 			--package-dir=/local/rpms \
 			--output-dir=/local/output
+endef
+
+define fetch_upstream
+	curl -fsSL "https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com/$(3)/$(4)/$(3)" -o "packages/$(1)/$(3)" \
+		|| { [[ "z$(ALLOW_ARBITRARY_SOURCE_URL)" = "ztrue" ]] && curl -fsSL "$(2)" -o "packages/$(1)/$(3)"; }
+	if ! echo "SHA512 (packages/$(1)/$(3)) = $(4)" | sha512sum -c; then \
+		rm -f "packages/$(1)/$(3)"; false; \
+	fi
 endef
 
 # `makedep` files are a hook to provide additional dependencies when
