@@ -27,7 +27,5 @@ CRATE="${PKG}.crate"
 tar czf ${DIR}/${CRATE} --transform="s,${PROJECT},${PKG}," ${FILES}
 
 # Emit a rule to rebuild the crate if its dependencies change.
-cat <<EOF
-${DIR}/${CRATE} : ${FILES}
-	@tar czf \$@ --transform='s,${PROJECT},${PKG},' ${FILES}
-EOF
+echo "${DIR}/${CRATE} : ${FILES}"
+echo -e "\t@tar czf \$@ --transform='s,${PROJECT},${PKG},' ${FILES}"
