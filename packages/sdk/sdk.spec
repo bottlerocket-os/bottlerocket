@@ -203,8 +203,6 @@ ln -s ../../bin/%{_cross_target}-objcopy %{buildroot}%{_prefix}/local/bin/objcop
 ln -s ../../bin/%{_cross_target}-objdump %{buildroot}%{_prefix}/local/bin/objdump
 ln -s ../../bin/%{_cross_target}-strip %{buildroot}%{_prefix}/local/bin/strip
 
-%files
-
 %files -n binutils-%{_cross_target}
 %{_bindir}/%{_cross_target}-addr2line
 %{_bindir}/%{_cross_target}-ar
