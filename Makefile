@@ -15,7 +15,7 @@ OUTPUT ?= $(TOPDIR)/build
 OUTVAR := $(shell mkdir -p $(OUTPUT))
 DATE := $(shell date --rfc-3339=date)
 
-ARCH := x86_64
+ARCH ?= $(shell uname -m)
 
 DOCKER ?= docker
 
