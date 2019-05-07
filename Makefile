@@ -101,6 +101,7 @@ all: $(ARCH)
 
 .PHONY: clean
 clean:
-	@rm -f $(OUTPUT)/*.rpm
+	@rm -f $(OUTPUT)/*.rpm $(OUTPUT)/*.tar $(OUTPUT)/*.lz4 $(OUTPUT)/*.img
+	@find $(TOPDIR) -name '*.make*' -delete
 
 include $(TOPDIR)/hack/rules.mk
