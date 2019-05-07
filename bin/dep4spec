@@ -13,8 +13,13 @@ DIR="${SPEC%/*}"
 PKG="${SPEC##*/}"
 PKG="${PKG%.*}"
 
+# For now we only support putting source-level dependencies in place.
+# TODO: extend this to also deal with moving blobs around for third-party
+# packages, since that's super painful right now.
+
 PROJECT="workspaces/${PKG}"
 [ -s "${PROJECT}/Cargo.toml" ] || exit 0
+
 FILES="$(git ls-files ${PROJECT} | tr '\n' ' ')"
 CRATE="${PKG}.crate"
 
