@@ -15,18 +15,14 @@ PKG="${PKG%.*}"
 
 PROJECT="workspaces/${PKG}"
 [ -s "${PROJECT}/Cargo.toml" ] || exit 0
-NAMEVER="$(cargo metadata \
-              --manifest-path "${PROJECT}/Cargo.toml" \
-              --format-version 1 \
-              | jq -r '.workspace_members[]/" "|.[0]+"-"+.[1]')"
-CRATE="${NAMEVER}.crate"
 FILES="$(git ls-files ${PROJECT} | tr '\n' ' ')"
+CRATE="${PKG}.crate"
 
 # Build the initial crate to satisfy the other dependency generators.
-tar czf ${DIR}/${CRATE} --transform="s,${PROJECT},${NAMEVER}," ${FILES}
+tar czf ${DIR}/${CRATE} --transform="s,${PROJECT},${PKG}," ${FILES}
 
 # Emit a rule to rebuild the crate if its dependencies change.
 cat <<EOF
 ${DIR}/${CRATE} : ${FILES}
-	@tar czf \$@ --transform='s,${PROJECT},${NAMEVER},' ${FILES}
+	@tar czf \$@ --transform='s,${PROJECT},${PKG},' ${FILES}
 EOF

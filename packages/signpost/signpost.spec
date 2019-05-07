@@ -1,8 +1,8 @@
 %global crate_name signpost
 
 Name: %{_cross_os}%{crate_name}
-Version: 0.1.0
-Release: 1%{?dist}
+Version: 0.0
+Release: 0%{?dist}
 Summary: Thar GPT priority querier/switcher
 # cargo-license output:
 # Apache-2.0 (1): signpost
@@ -16,8 +16,8 @@ Summary: Thar GPT priority querier/switcher
 #
 # fuchsia-cprng is BSD: https://fuchsia.googlesource.com/fuchsia/+/master/LICENSE
 License: ASL 2.0 and (ASL 2.0 or MIT) and BSD and ISC
-Source0: %{crate_name}-%{version}.crate
-%cargo_bundle_crates -n %{crate_name}-%{version} -t 0
+Source0: %{crate_name}.crate
+%cargo_bundle_crates -n %{crate_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}rust
@@ -27,7 +27,7 @@ Requires: %{_cross_os}glibc
 %{summary}.
 
 %prep
-%setup -qn %{crate_name}-%{version}
+%setup -qn %{crate_name}
 %cargo_prep
 
 %build
