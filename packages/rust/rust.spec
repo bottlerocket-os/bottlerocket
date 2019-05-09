@@ -4,8 +4,8 @@
 %global _build_id_links none
 
 Name: %{_cross_os}rust
-Version: 1.33.0
-%global cargo_version 0.34.0
+Version: 1.34.1
+%global cargo_version 0.35.0
 Release: 1%{?dist}
 Summary: The Rust Progamming Language
 License: ASL 2.0 or MIT
@@ -56,6 +56,7 @@ rm %{buildroot}%{_prefix}/lib/rustlib/manifest-*
 %{_bindir}/cargo
 %{_bindir}/rustc
 %exclude %{_bindir}/rust-gdb
+%exclude %{_bindir}/rust-gdbgui
 %exclude %{_bindir}/rust-lldb
 %exclude %{_bindir}/rustdoc
 %{_prefix}/lib/*.so
