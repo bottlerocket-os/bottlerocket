@@ -10,3 +10,5 @@
 %_cross_grub_image core.img
 %_cross_grub_prefix (hd0,gpt2)/boot/grub
 %_cross_grubdir /boot/grub
+
+%_cross_go_arch amd64
