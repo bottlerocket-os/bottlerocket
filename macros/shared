@@ -32,6 +32,7 @@
 %_cross_localstatedir %{_localstatedir}
 %_cross_bashdir %{_cross_datadir}/bash-completion
 %_cross_pkgconfigdir %{_cross_libdir}/pkgconfig
+%_cross_unitdir %{_cross_rootdir}%{_unitdir}
 
 %set_cross_build_flags \
   CFLAGS="${CFLAGS:-%{_cross_cflags}}" ; export CFLAGS ; \
