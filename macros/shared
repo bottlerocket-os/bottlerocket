@@ -129,3 +129,6 @@ CROSS_COMPILATION_CONF_EOF\
 
 # Do not generate build ID links in main packages.
 %_build_id_links alldebug
+
+# Do not run ldconfig after build.
+%__brp_ldconfig %{nil}
