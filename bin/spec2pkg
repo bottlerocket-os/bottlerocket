@@ -48,6 +48,9 @@ for URL in ${SOURCE_URLS}; do
         CHECKSUM="$(awk -F / '{print $1}' <<<"${URL##*#}")"
     elif [[ -f "packages/${PKG}/sources" ]]; then
         CHECKSUM="$(awk -v filename="(${FILENAME})" '$2 == filename {print $4}' "packages/${PKG}/sources")"
+    else
+        echo -e "# download rule for packages/${PKG}/${FILENAME} couldn't be generated\n"
+        continue
     fi
     echo "packages/${PKG}/${FILENAME} :"
     echo -e "\t@bin/fetch-upstream \"${URL}\" \"packages/${PKG}/${FILENAME}\" \"${CHECKSUM}\"\n"
