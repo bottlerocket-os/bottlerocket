@@ -64,20 +64,12 @@ define build_image
 			--output-dir=/local/output
 endef
 
-define fetch_upstream
-	curl -fsSL "https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com/$(3)/$(4)/$(3)" -o "packages/$(1)/$(3)" \
-		|| { [[ "z$(ALLOW_ARBITRARY_SOURCE_URL)" = "ztrue" ]] && curl -fsSL "$(2)" -o "packages/$(1)/$(3)"; }
-	if ! echo "SHA512 (packages/$(1)/$(3)) = $(4)" | sha512sum -c; then \
-		rm -f "packages/$(1)/$(3)"; false; \
-	fi
-endef
-
 # `makedep` files are a hook to provide additional dependencies when
 # building `makevar` and `makepkg` files. The intended use case is
 # to generate source files that must be in place before parsing the
 # spec file.
 %.makedep : %.spec $(DEP4SPEC)
-	@$(DEP4SPEC) --spec=$< > $@.tmp
+	@$(DEP4SPEC) --spec=$< --arch=$(ARCH) > $@.tmp
 	@mv $@.tmp $@
 
 # `makevar` files generate variables that the `makepkg` files for

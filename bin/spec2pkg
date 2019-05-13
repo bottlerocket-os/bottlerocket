@@ -44,7 +44,13 @@ echo -e "\t\$(call build_rpm,$PKG,${ARCH},\$^)\n"
 
 for URL in ${SOURCE_URLS}; do
     FILENAME="${URL##*/}"
-    SHA512SUM="$(awk -v pattern="^[(]${FILENAME}[)]$" '$2 ~ pattern {print $4}' "packages/${PKG}/sources")"
+    if grep -q '^https://crates.io/api/v1/crates/[^/]\+/[^/]\+/download' <<<"$URL"; then
+        CRATE="$(awk -F / '{print $7}' <<<"${URL}")"
+        VERSION="$(awk -F / '{print $8}' <<<"${URL}")"
+        CHECKSUM="$(awk -F / '{print $10}' <<<"${URL}")"
+    elif [[ -f "packages/${PKG}/sources" ]]; then
+        CHECKSUM="$(awk -v pattern="^[(]${FILENAME}[)]$" '$2 ~ pattern {print $4}' "packages/${PKG}/sources")"
+    fi
     echo "packages/${PKG}/${FILENAME} :"
-    echo -e "\t\$(call fetch_upstream,${PKG},${URL},${FILENAME},${SHA512SUM})\n"
+    echo -e "\t@bin/fetch-upstream \"${URL}\" \"packages/${PKG}/${FILENAME}\" \"${CHECKSUM}\"\n"
 done
