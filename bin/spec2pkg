@@ -23,12 +23,12 @@ RPMS="${RPMS%"${RPMS##*[![:space:]]}"}"
 
 # Collect file-based targets needed as inputs of a package build.
 SOURCE_LINES="$("${RPMSPEC[@]}" --parse "${SPEC}" | awk '/^Source/ {print $NF}')"
-SOURCE_URLS="$(awk '$0 ~ "^https?://" {print $0}' <<<$SOURCE_LINES)"
-SOURCES="$(awk -v pkg="${PKG}" -F / '{printf "packages/"pkg"/"$NF" "}' <<<$SOURCE_LINES)"
+SOURCE_URLS="$(awk '$0 ~ "^https?://" {print}' <<<"$SOURCE_LINES")"
+SOURCES="$(awk -v pkg="${PKG}" -F / '{printf "packages/%s/%s ",pkg,$NF}' <<<"$SOURCE_LINES")"
 SOURCES="${SOURCES%"${SOURCES##*[![:space:]]}"}"
 
 PATCHES="$("${RPMSPEC[@]}" --parse "${SPEC}" \
-              | awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/"pkg"/"$NF" "}')"
+              | awk -v pkg="${PKG}" -F '[/ ]' '/^Patch/ {printf "packages/%s/%s ",pkg,$NF}')"
 PATCHES="${PATCHES%"${PATCHES##*[![:space:]]}"}"
 
 # Collect package-level dependencies needed as inputs of a package build.
@@ -45,11 +45,9 @@ echo -e "\t\$(call build_rpm,$PKG,${ARCH},\$^)\n"
 for URL in ${SOURCE_URLS}; do
     FILENAME="${URL##*/}"
     if grep -q '^https://crates.io/api/v1/crates/[^/]\+/[^/]\+/download' <<<"$URL"; then
-        CRATE="$(awk -F / '{print $7}' <<<"${URL}")"
-        VERSION="$(awk -F / '{print $8}' <<<"${URL}")"
-        CHECKSUM="$(awk -F / '{print $10}' <<<"${URL}")"
+        CHECKSUM="$(awk -F / '{print $1}' <<<"${URL##*#}")"
     elif [[ -f "packages/${PKG}/sources" ]]; then
-        CHECKSUM="$(awk -v pattern="^[(]${FILENAME}[)]$" '$2 ~ pattern {print $4}' "packages/${PKG}/sources")"
+        CHECKSUM="$(awk -v filename="(${FILENAME})" '$2 == filename {print $4}' "packages/${PKG}/sources")"
     fi
     echo "packages/${PKG}/${FILENAME} :"
     echo -e "\t@bin/fetch-upstream \"${URL}\" \"packages/${PKG}/${FILENAME}\" \"${CHECKSUM}\"\n"

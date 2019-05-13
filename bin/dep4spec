@@ -42,7 +42,7 @@ if [[ -f "packages/${PKG}/sources" ]]; then
         URL="$("${RPMSPEC[@]}" --parse "${SPEC}" | awk "/^Source${source_num}:/ {print \$NF}")"
         if [[ "$URL" =~ ^https?:// ]]; then
             FILENAME="${URL##*/}"
-            CHECKSUM="$(awk -v pattern="^[(]${FILENAME}[)]$" '$2 ~ pattern {print $4}' "packages/${PKG}/sources")"
+            CHECKSUM="$(awk -v filename="(${FILENAME})" '$2 == filename {print $4}' "packages/${PKG}/sources")"
             bin/fetch-upstream "${URL}" "packages/${PKG}/${FILENAME}" "${CHECKSUM}" 1>&2
         fi
     done
