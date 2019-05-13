@@ -1,0 +1,80 @@
+%global goproject github.com/containerd
+%global gorepo containerd
+%global goimport %{goproject}/%{gorepo}
+
+%global gover 1.2.6
+%global rpmver %{gover}
+
+%global _dwz_low_mem_die_limit 0
+
+Name: %{_cross_os}%{gorepo}
+Version: %{rpmver}
+Release: 1%{?dist}
+Summary: An industry-standard container runtime
+License: ASL 2.0
+URL: https://%{goimport}
+Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
+Source1: containerd.service
+Source2: containerd.toml
+Source3: containerd-tmpfiles.conf
+BuildRequires: git
+BuildRequires: gcc-%{_cross_target}
+BuildRequires: %{_cross_os}glibc-devel
+BuildRequires: %{_cross_os}golang
+BuildRequires: %{_cross_os}libseccomp-devel
+Requires: %{_cross_os}cni-plugins
+Requires: %{_cross_os}glibc
+Requires: %{_cross_os}libseccomp
+Requires: %{_cross_os}runc
+Requires: %{_cross_os}socat
+Requires: %{_cross_os}systemd
+
+%description
+%{summary}.
+
+%prep
+%autosetup -Sgit -n %{gorepo}-%{gover} -p1
+mkdir -p GOPATH/src/%{goproject}
+ln -s %{_builddir}/%{gorepo}-%{gover} GOPATH/src/%{goimport}
+
+%build
+cd GOPATH/src/%{goimport}
+export CC="%{_cross_target}-gcc"
+export GOPATH="${PWD}/GOPATH"
+export GOARCH="%{_cross_go_arch}"
+export LDFLAGS="-X %{goimport}/version.Version=%{gover}"
+export PKG_CONFIG_PATH="%{_cross_pkgconfigdir}"
+export BUILDTAGS="no_btrfs rpm_crashtraceback seccomp selinux"
+for bin in containerd containerd-shim ctr ; do
+  go build -buildmode pie -tags="${BUILDTAGS}" -o ${bin} %{goimport}/cmd/${bin}
+done
+
+%install
+install -d %{buildroot}%{_cross_bindir}
+install -p -m 0755 containerd %{buildroot}%{_cross_bindir}
+install -p -m 0755 containerd-shim %{buildroot}%{_cross_bindir}
+install -p -m 0755 ctr %{buildroot}%{_cross_bindir}
+
+install -d %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/containerd.service
+
+install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
+ln -s ../containerd.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
+
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd/config.toml
+
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:3} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
+
+%files
+%{_cross_bindir}/containerd
+%{_cross_bindir}/containerd-shim
+%{_cross_bindir}/ctr
+%{_cross_unitdir}/containerd.service
+%{_cross_unitdir}/multi-user.target.wants/containerd.service
+%dir %{_cross_factorydir}%{_cross_sysconfdir}/containerd
+%{_cross_factorydir}%{_cross_sysconfdir}/containerd/config.toml
+%{_cross_tmpfilesdir}/containerd.conf
+
+%changelog

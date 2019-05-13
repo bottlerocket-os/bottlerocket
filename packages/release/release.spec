@@ -42,30 +42,30 @@ Requires: %{_cross_os}util-linux
 %build
 
 %install
-mkdir -p %{buildroot}%{_cross_sbindir}
-install -m0755 %{SOURCE0} %{buildroot}%{_cross_sbindir}
+install -d %{buildroot}%{_cross_sbindir}
+install -p -m 0755 %{S:0} %{buildroot}%{_cross_sbindir}
 
-mkdir -p %{buildroot}%{_cross_bindir}
-install -m0755 %{SOURCE1} %{buildroot}%{_cross_bindir}
+install -d %{buildroot}%{_cross_bindir}
+install -p -m 0755 %{S:1} %{buildroot}%{_cross_bindir}
 
-mkdir -p %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
-install -m0644 %{SOURCE10} %{SOURCE11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
+install -p -m 0644 %{S:10} %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
-mkdir -p %{buildroot}%{_cross_tmpfilesdir}
-install -m0644 %{SOURCE99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
-mkdir -p %{buildroot}%{_cross_libdir}/systemd/system/multi-user.target.wants
+install -d %{buildroot}%{_cross_libdir}/systemd/network
+install -p -m 0644 %{S:1000} %{buildroot}%{_cross_libdir}/systemd/network
 
-mkdir -p %{buildroot}%{_cross_libdir}/systemd/network
-install -m0644 %{SOURCE1000} %{buildroot}%{_cross_libdir}/systemd/network
-ln -s ../systemd-networkd.service %{buildroot}%{_cross_libdir}/systemd/system/multi-user.target.wants
+install -d %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1001} %{buildroot}%{_cross_unitdir}
 
-mkdir -p %{buildroot}%{_cross_libdir}/systemd/system
-install -m0644 %{SOURCE1001} %{buildroot}%{_cross_libdir}/systemd/system
-ln -s ../var-lib-thar.mount %{buildroot}%{_cross_libdir}/systemd/system/multi-user.target.wants
+install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
+ln -s ../systemd-networkd.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
+ln -s ../var-lib-thar.mount %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 
 mkdir -p %{buildroot}%{templatedir}
-install -m 0644 %{SOURCE200} %{buildroot}%{templatedir}/hostname
+install -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 
 %files
 %{_cross_bindir}/login
@@ -74,9 +74,9 @@ install -m 0644 %{SOURCE200} %{buildroot}%{templatedir}/hostname
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/systemd/network/00-any.network
-%{_cross_libdir}/systemd/system/var-lib-thar.mount
-%{_cross_libdir}/systemd/system/multi-user.target.wants/systemd-networkd.service
-%{_cross_libdir}/systemd/system/multi-user.target.wants/var-lib-thar.mount
+%{_cross_unitdir}/var-lib-thar.mount
+%{_cross_unitdir}/multi-user.target.wants/systemd-networkd.service
+%{_cross_unitdir}/multi-user.target.wants/var-lib-thar.mount
 %dir %{templatedir}
 %{templatedir}/hostname
 
