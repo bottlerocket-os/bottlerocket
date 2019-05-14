@@ -55,10 +55,10 @@ rm %{buildroot}%{_prefix}/lib/rustlib/manifest-*
 %files
 %{_bindir}/cargo
 %{_bindir}/rustc
+%{_bindir}/rustdoc
 %exclude %{_bindir}/rust-gdb
 %exclude %{_bindir}/rust-gdbgui
 %exclude %{_bindir}/rust-lldb
-%exclude %{_bindir}/rustdoc
 %{_prefix}/lib/*.so
 %{_prefix}/lib/rustlib/%{_cross_arch}-unknown-linux-%{_cross_libc}
 %exclude %{_prefix}/lib/rustlib/etc
