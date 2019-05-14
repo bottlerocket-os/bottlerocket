@@ -4,7 +4,7 @@
 %global _build_id_links none
 
 Name: %{_cross_os}rust
-Version: 1.34.1
+Version: 1.34.2
 %global cargo_version 0.35.0
 Release: 1%{?dist}
 Summary: The Rust Progamming Language
