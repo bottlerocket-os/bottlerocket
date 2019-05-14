@@ -79,6 +79,7 @@ mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # THAR-ROOT-A
 mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 400M
+resize2fs -M "${ROOT_IMAGE}"
 dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((22*2048))
 
 # THAR-VERITY-A
@@ -94,7 +95,8 @@ if ! stat -c %s "${VERITY_IMAGE}" | grep -q '^4194304$'; then
     "verity partition is larger than expected (4M)"
     exit 1
 fi
-VERITY_DATA_BLOCKS="$(grep '^Data blocks:' <<<$veritysetup_output | awk '{ print $NF }')"
+VERITY_DATA_4K_BLOCKS="$(grep '^Data blocks:' <<<$veritysetup_output | awk '{ print $NF }')"
+VERITY_DATA_512B_BLOCKS="$(($VERITY_DATA_4K_BLOCKS * 8))"
 VERITY_ROOT_HASH="$(grep '^Root hash:' <<<$veritysetup_output | awk '{ print $NF }')"
 VERITY_SALT="$(grep '^Salt:' <<<$veritysetup_output | awk '{ print $NF }')"
 veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
@@ -108,13 +110,14 @@ set timeout="0"
 menuentry "Thar" {
    linux (\$root)/vmlinuz root=/dev/dm-0 rootwait ro console=tty0 console=ttyS0 systemd.log_target=console audit=0 init=/sbin/preinit \\
        dm_verity.error_behavior=3 dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\
-       dm-mod.create="root,,,ro,0 819200 verity $VERITY_VERSION PARTUUID=\$boot_uuid/PARTNROFF=1 PARTUUID=\$boot_uuid/PARTNROFF=2 \\
-       $VERITY_DATA_BLOCK_SIZE $VERITY_HASH_BLOCK_SIZE $VERITY_DATA_BLOCKS 1 $VERITY_HASH_ALGORITHM $VERITY_ROOT_HASH $VERITY_SALT"
+       dm-mod.create="root,,,ro,0 $VERITY_DATA_512B_BLOCKS verity $VERITY_VERSION PARTUUID=\$boot_uuid/PARTNROFF=1 PARTUUID=\$boot_uuid/PARTNROFF=2 \\
+       $VERITY_DATA_BLOCK_SIZE $VERITY_HASH_BLOCK_SIZE $VERITY_DATA_4K_BLOCKS 1 $VERITY_HASH_ALGORITHM $VERITY_ROOT_HASH $VERITY_SALT"
 }
 EOF
 
 # THAR-BOOT-A
 mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 20M
+resize2fs -M "${BOOT_IMAGE}"
 dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((2*2048))
 
 # THAR-DATA
