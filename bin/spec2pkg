@@ -52,6 +52,7 @@ for url in ${SOURCE_URLS}; do
         echo -e "# download rule for packages/${PKG}/${FILENAME} couldn't be generated\n" 1>&2
         exit 1
     fi
+    echo "SOURCES += packages/${PKG}/${FILENAME}"
     echo "packages/${PKG}/${FILENAME} :"
     echo -e "\t@\$(FETCH_UPSTREAM) \"${url}\" \"packages/${PKG}/${FILENAME}\" \"${CHECKSUM}\"\n"
 done

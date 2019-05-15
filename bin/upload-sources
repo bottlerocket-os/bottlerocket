@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+for path in "$@"; do
+    filename="${path##*/}"
+    sources_file="${path%/*}/sources"
+    # a bit of a hack: if a source isn't listed explicitly in the sources file, it must come from a Cargo.lock, so use a sha256sum.
+    if [ -f "${sources_file}" ] && grep -q "${filename}" "${sources_file}"; then
+        checksum_tool=sha512sum
+    else
+        checksum_tool=sha256sum
+    fi
+    checksum="$("${checksum_tool}" "${path}" | awk '{print $1}')"
+
+    if ! curl -fsIo /dev/null "https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com/${filename}/${checksum}/${filename}"; then
+        aws s3 cp "${path}" "s3://thar-upstream-lookaside-cache/${filename}/${checksum}/${filename}"
+    fi
+done

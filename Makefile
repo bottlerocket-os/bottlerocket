@@ -6,6 +6,7 @@ DEP4SPEC ?= $(TOPDIR)/bin/dep4spec
 SPEC2VAR ?= $(TOPDIR)/bin/spec2var
 SPEC2PKG ?= $(TOPDIR)/bin/spec2pkg
 FETCH_UPSTREAM ?= $(TOPDIR)/bin/fetch-upstream
+UPLOAD_SOURCES ?= $(TOPDIR)/bin/upload-sources
 export ALLOW_ARBITRARY_SOURCE_URL ?= true
 
 SPECS = $(wildcard packages/*/*.spec)
@@ -105,5 +106,12 @@ all: $(ARCH)
 clean:
 	@rm -f $(OUTPUT)/*.rpm $(OUTPUT)/*.tar $(OUTPUT)/*.lz4 $(OUTPUT)/*.img
 	@find $(TOPDIR) -name '*.make*' -delete
+
+.PHONY: sources
+sources: $(SOURCES)
+
+.PHONY: upload-sources
+upload-sources: $(SOURCES)
+	@$(UPLOAD_SOURCES) $^
 
 include $(TOPDIR)/hack/rules.mk
