@@ -58,7 +58,7 @@ CONFIGURE_OPTS=(
  -Dutmp=false
  -Dhibernate=false
  -Dldconfig=true
- -Dresolve=false
+ -Dresolve=true
  -Defi=false
  -Dtpm=false
  -Denvironment-d=false
@@ -150,6 +150,7 @@ CONFIGURE_OPTS=(
 %{_cross_bindir}/busctl
 %{_cross_bindir}/journalctl
 %{_cross_bindir}/networkctl
+%{_cross_bindir}/resolvectl
 %{_cross_bindir}/systemctl
 %{_cross_bindir}/systemd-analyze
 %{_cross_bindir}/systemd-ask-password
@@ -165,6 +166,7 @@ CONFIGURE_OPTS=(
 %{_cross_bindir}/systemd-notify
 %{_cross_bindir}/systemd-nspawn
 %{_cross_bindir}/systemd-path
+%{_cross_bindir}/systemd-resolve
 %{_cross_bindir}/systemd-run
 %{_cross_bindir}/systemd-socket-activate
 %{_cross_bindir}/systemd-stdio-bridge
@@ -182,6 +184,7 @@ CONFIGURE_OPTS=(
 %{_cross_sbindir}/runlevel
 %{_cross_sbindir}/shutdown
 %{_cross_sbindir}/telinit
+%{_cross_sbindir}/resolvconf
 
 %{_cross_libdir}/libsystemd.so.*
 %{_cross_libdir}/libudev.so.*
