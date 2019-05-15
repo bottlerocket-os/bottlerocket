@@ -5,7 +5,8 @@ TOPDIR := $(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 DEP4SPEC ?= $(TOPDIR)/bin/dep4spec
 SPEC2VAR ?= $(TOPDIR)/bin/spec2var
 SPEC2PKG ?= $(TOPDIR)/bin/spec2pkg
-ALLOW_ARBITRARY_SOURCE_URL ?= true
+FETCH_UPSTREAM ?= $(TOPDIR)/bin/fetch-upstream
+export ALLOW_ARBITRARY_SOURCE_URL ?= true
 
 SPECS = $(wildcard packages/*/*.spec)
 DEPS = $(SPECS:.spec=.makedep)

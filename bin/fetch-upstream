@@ -11,21 +11,12 @@ CHECKSUM="$3"
 case "$(tr -dc '[:xdigit:]' <<<"$CHECKSUM" | wc -c)" in
     64) ALG=SHA256; VERIFY_COMMAND=sha256sum ;;
     128) ALG=SHA512; VERIFY_COMMAND=sha512sum ;;
-    *) echo "unrecognized checksum type (checksum was \"${CHECKSUM}\")"; exit 1 ;;
+    *) echo "unrecognized checksum type (checksum was \"${CHECKSUM}\")" 1>&2; exit 1 ;;
 esac
 
 verify_file() {
-    echo "${ALG} (${1}) = ${CHECKSUM}" | "${VERIFY_COMMAND}" -c
+    echo "${ALG} (${1}) = ${CHECKSUM}" | "${VERIFY_COMMAND}" -c 1>&2
 }
-
-if [[ -f "${PATHNAME}" ]]; then
-    if verify_file "${PATHNAME}"; then
-        exit 0
-    else
-        echo "warning: redownloading ${PATHNAME}"
-        rm -f "${PATHNAME}"
-    fi
-fi
 
 curl -fsSL "https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com/${FILENAME}/${CHECKSUM}/${FILENAME}" -o "${PATHNAME}.tmp" \
     || { [[ "${ALLOW_ARBITRARY_SOURCE_URL}" = "true" ]] && curl -fsSL "${URL}" -o "${PATHNAME}.tmp"; }
