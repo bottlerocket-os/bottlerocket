@@ -5,6 +5,9 @@ TOPDIR := $(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 DEP4SPEC ?= $(TOPDIR)/bin/dep4spec
 SPEC2VAR ?= $(TOPDIR)/bin/spec2var
 SPEC2PKG ?= $(TOPDIR)/bin/spec2pkg
+FETCH_UPSTREAM ?= $(TOPDIR)/bin/fetch-upstream
+UPLOAD_SOURCES ?= $(TOPDIR)/bin/upload-sources
+export ALLOW_ARBITRARY_SOURCE_URL ?= true
 
 SPECS = $(wildcard packages/*/*.spec)
 DEPS = $(SPECS:.spec=.makedep)
@@ -68,7 +71,7 @@ endef
 # to generate source files that must be in place before parsing the
 # spec file.
 %.makedep : %.spec $(DEP4SPEC)
-	@$(DEP4SPEC) --spec=$< > $@.tmp
+	@$(DEP4SPEC) --spec=$< --arch=$(ARCH) > $@.tmp
 	@mv $@.tmp $@
 
 # `makevar` files generate variables that the `makepkg` files for
@@ -103,5 +106,12 @@ all: $(ARCH)
 clean:
 	@rm -f $(OUTPUT)/*.rpm $(OUTPUT)/*.tar $(OUTPUT)/*.lz4 $(OUTPUT)/*.img
 	@find $(TOPDIR) -name '*.make*' -delete
+
+.PHONY: sources
+sources: $(SOURCES)
+
+.PHONY: upload-sources
+upload-sources: $(SOURCES)
+	@$(UPLOAD_SOURCES) $^
 
 include $(TOPDIR)/hack/rules.mk

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ALLOW_ARBITRARY_SOURCE_URL="${ALLOW_ARBITRARY_SOURCE_URL:-true}"
+URL="$1"
+PATHNAME="$2"
+FILENAME="${PATHNAME##*/}"
+CHECKSUM="$3"
+
+case "$(tr -dc '[:xdigit:]' <<<"$CHECKSUM" | wc -c)" in
+    64) ALG=SHA256; VERIFY_COMMAND=sha256sum ;;
+    128) ALG=SHA512; VERIFY_COMMAND=sha512sum ;;
+    *) echo "unrecognized checksum type (checksum was \"${CHECKSUM}\")" 1>&2; exit 1 ;;
+esac
+
+verify_file() {
+    echo "${ALG} (${1}) = ${CHECKSUM}" | "${VERIFY_COMMAND}" -c 1>&2
+}
+
+curl -fsSL "https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com/${FILENAME}/${CHECKSUM}/${FILENAME}" -o "${PATHNAME}.tmp" \
+    || { [[ "${ALLOW_ARBITRARY_SOURCE_URL}" = "true" ]] && curl -fsSL "${URL}" -o "${PATHNAME}.tmp"; }
+if verify_file "${PATHNAME}.tmp"; then
+    mv "${PATHNAME}.tmp" "${PATHNAME}"
+else
+    rm -f "${PATHNAME}.tmp"; exit 1
+fi
