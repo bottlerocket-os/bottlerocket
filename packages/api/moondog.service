@@ -1,0 +1,11 @@
+[Unit]
+Description=Thar userdata configuration system
+After=apiserver.service
+Wants=apiserver.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/moondog
+
+[Install]
+WantedBy=multi-user.target

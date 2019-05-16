@@ -1,0 +1,11 @@
+[Unit]
+Description=Thar API server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/apiserver --datastore-path /var/lib/thar/datastore/v1 -v -v -v
+
+[Install]
+WantedBy=multi-user.target

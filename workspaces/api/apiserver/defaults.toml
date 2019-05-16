@@ -1,0 +1,22 @@
+# OS-level defaults.
+# Should match the structures in src/model.rs and fill every field.
+
+[settings]
+timezone = "America/Los_Angeles"
+hostname = "localhost"
+
+[settings.docker]
+bridge-ip = "240.10.0.1/24"
+
+[services.hostname]
+configuration-files = ["hostname"]
+restart-commands = []
+
+[configuration-files.hostname]
+path = "/etc/hostname"
+template-path = "/usr/share/templates/hostname"
+
+[[metadata]]
+key = "settings.hostname"
+md = "affected-services"
+val = ["hostname"]

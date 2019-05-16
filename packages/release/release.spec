@@ -1,3 +1,5 @@
+%global templatedir %{_cross_datadir}/templates
+
 Name: %{_cross_os}release
 Version: 1.0
 Release: 1%{?dist}
@@ -11,18 +13,24 @@ Source10: hosts
 Source11: nsswitch.conf
 Source99: release.conf
 
+# FIXME What should own system-level file templates?
+Source200: hostname.template
+
 Source1000: 00-any.network
 Source1001: var-lib-thar.mount
 
 BuildArch: noarch
+Requires: %{_cross_os}apiserver
 Requires: %{_cross_os}bash
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}filesystem
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}kernel
+Requires: %{_cross_os}moondog
 Requires: %{_cross_os}ripgrep
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}systemd
+Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}util-linux
 
 %description
@@ -55,6 +63,9 @@ mkdir -p %{buildroot}%{_cross_libdir}/systemd/system
 install -m0644 %{SOURCE1001} %{buildroot}%{_cross_libdir}/systemd/system
 ln -s ../var-lib-thar.mount %{buildroot}%{_cross_libdir}/systemd/system/multi-user.target.wants
 
+mkdir -p %{buildroot}%{templatedir}
+install -m 0644 %{SOURCE200} %{buildroot}%{templatedir}/hostname
+
 %files
 %{_cross_bindir}/login
 %{_cross_sbindir}/preinit
@@ -65,5 +76,7 @@ ln -s ../var-lib-thar.mount %{buildroot}%{_cross_libdir}/systemd/system/multi-us
 %{_cross_libdir}/systemd/system/var-lib-thar.mount
 %{_cross_libdir}/systemd/system/multi-user.target.wants/systemd-networkd.service
 %{_cross_libdir}/systemd/system/multi-user.target.wants/var-lib-thar.mount
+%dir %{templatedir}
+%{templatedir}/hostname
 
 %changelog
