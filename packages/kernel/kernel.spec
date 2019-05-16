@@ -13,6 +13,7 @@ BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: hostname
+BuildRequires: kmod
 BuildRequires: openssl-devel
 
 %description
