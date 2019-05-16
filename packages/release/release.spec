@@ -26,7 +26,9 @@ Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}filesystem
 Requires: %{_cross_os}grub
+Requires: %{_cross_os}iproute
 Requires: %{_cross_os}kernel
+Requires: %{_cross_os}kernel-modules
 Requires: %{_cross_os}moondog
 Requires: %{_cross_os}ripgrep
 Requires: %{_cross_os}signpost
