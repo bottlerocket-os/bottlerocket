@@ -34,21 +34,21 @@ type Result<T> = std::result::Result<T, MoondogError>;
 /// Potential errors during user data management.
 #[derive(Debug, Error)]
 enum MoondogError {
-    // Error making network call with reqwest
+    /// Error making network call with reqwest
     NetworkRequest(reqwest::Error),
-    // Logger setup error
+    /// Logger setup error
     Logger(log::SetLoggerError),
-    // Error parsing TOML user data
+    /// Error parsing TOML user data
     TOMLUserDataParse(toml::de::Error),
-    // Error serializing TOML to JSON
+    /// Error serializing TOML to JSON
     TOMLtoJSON(serde_json::error::Error),
-    // Unable to read user data input file
+    /// Unable to read user data input file
     InputFileRead(std::io::Error),
     #[error(msg_embedded, no_from, non_std)]
-    // No user data found
+    /// No user data found
     UserDataNotFound(String),
     #[error(msg_embedded, no_from, non_std)]
-    // Unknown error requesting data from IMDS
+    /// Unknown error requesting data from IMDS
     IMDSRequest(String),
 }
 
