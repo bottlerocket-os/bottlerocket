@@ -57,10 +57,10 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE2}
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{systemd_systemdir}/apiserver.service
-%{systemd_systemdir}/moondog.service
 
 %files -n %{_cross_os}moondog
 %{_cross_bindir}/moondog
+%{systemd_systemdir}/moondog.service
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
