@@ -4,7 +4,7 @@
 moondog is a minimal userdata agent.
 
 It accepts TOML-formatted settings from a userdata provider such as an instance metadata service.
-These are sent to a known Thar-API-server endpoint, then committed.
+These are sent to a known Thar API server endpoint, then committed.
 
 Currently, AWS userdata support is implemented.
 Userdata can also be retrieved from a file for testing.
@@ -117,7 +117,7 @@ impl UserDataProvider for FileUserDataProvider {
     }
 }
 
-/// This function determina which provider we're currently running on.
+/// This function determines which provider we're currently running on.
 fn find_provider() -> Result<Box<dyn UserDataProvider>> {
     // FIXME We need to decide what we're going to do with this
     // in the future. If the userdata file exists at a location on disk,

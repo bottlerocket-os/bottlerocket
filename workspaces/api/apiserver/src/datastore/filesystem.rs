@@ -71,7 +71,7 @@ impl FilesystemDataStore {
         Ok(())
     }
 
-    /// Returns the appropriate filesystem paath for pending or live data.
+    /// Returns the appropriate filesystem path for pending or live data.
     fn base_path(&self, committed: Committed) -> &PathBuf {
         match committed {
             Committed::Pending => &self.pending_path,

@@ -53,7 +53,7 @@ The `datastore::deserialization` module provides code to deserialize datastore-a
 
 ## Example usage
 
-You can start the API server from the development workspce with a command like:
+You can start the API server from the development workspace with a command like:
 
 `cargo run -- --datastore-path /tmp/thar/be/data`
 
