@@ -5,7 +5,7 @@ Name: %{_cross_os}%{workspace_name}
 Version: 0.0
 Release: 0%{?dist}
 Summary: Thar API packages
-License: (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR MIT) AND (MIT OR Apache-2.0) AND (Unlicense OR MIT) AND APSL-2.0/MIT AND Apache-2.0 AND Apache-2.0/MIT AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND ISC AND MIT AND MIT/Unlicense AND N/A AND Zlib
+License: Apache-2.0 AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR MIT) AND Apache-2.0/MIT AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND ISC AND MIT AND (MIT OR Apache-2.0) AND MIT/Unlicense AND N/A AND (Unlicense OR MIT) AND Zlib
 Source0: %{workspace_name}.crate
 Source1: apiserver.service
 Source2: moondog.service
