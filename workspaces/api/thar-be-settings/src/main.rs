@@ -44,6 +44,9 @@ type Result<T> = std::result::Result<T, TBSError>;
 enum TBSError {
     /// Restart command failure
     RestartCommand(std::io::Error),
+    #[error(msg_embedded, no_from, non_std)]
+    /// Restart command is invalid or malformed (empty, starts with spaces, etc.)
+    InvalidRestartCommand(String),
     /// Configuration file template fails to render
     TemplateRender(handlebars::RenderError),
     /// Failure to read template file from path
@@ -52,10 +55,6 @@ enum TBSError {
     APIRequest(reqwest::Error),
     /// JSON ser/deserialize error
     JSON(serde_json::error::Error),
-    #[error(msg_embedded, no_from, non_std)]
-    /// Value from the datastore is invalid or unable to be operated
-    /// on; i.e. a path that cannot exist
-    DatastoreValue(String),
     /// Deserialization error coming from API code
     DeserializationError(deserialization::DeserializationError),
     /// Logger setup error
@@ -75,17 +74,22 @@ impl ServiceRestart for model::Service {
             // Split on space, assume the first item is the command
             // and the rest are args.
             debug!("Restart command: {:?}", &restart_command);
-            let command_strings: Vec<&str> = restart_command.split(' ').collect();
-            let command = command_strings[0];
-            let args = command_strings[1..].to_vec();
+            let mut command_strings = restart_command.split(' ');
+            let command = command_strings.next().ok_or_else(|| {
+                TBSError::InvalidRestartCommand("Invalid or malformed restart command".to_string())
+            })?;
             trace!("Command: {}", &command);
-            trace!("Args: {:?}", &args);
+            trace!("Args: {:?}", &command_strings);
 
             // Go execute the restart command
-            let _fixme = process::Command::new(command)
-                .args(args)
+            // FIXME The output of the command should probably be logged
+            // to a file once we figure out our logging strategy
+            let output = process::Command::new(command)
+                .args(command_strings)
                 .output()
                 .map_err(TBSError::RestartCommand)?;
+            trace!("Command stdout: {:?}", &output.stdout);
+            trace!("Command stderr: {:?}", &output.stderr);
         }
         Ok(())
     }
@@ -109,11 +113,9 @@ impl RenderedConfigFile {
 
     /// Writes the rendered template at the proper location
     fn write_to_disk(&self) -> Result<()> {
-        let dirname = self.path.parent().ok_or_else(|| {
-            TBSError::DatastoreValue("Config file path does not have proper prefix".to_string())
-        })?;
-
-        fs::create_dir_all(dirname).map_err(TBSError::from)?;
+        if let Some(dirname) = self.path.parent() {
+            fs::create_dir_all(dirname).map_err(TBSError::from)?;
+        };
 
         fs::write(&self.path, self.rendered.as_bytes()).map_err(TBSError::from)
     }
