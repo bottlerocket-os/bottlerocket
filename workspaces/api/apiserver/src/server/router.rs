@@ -64,6 +64,10 @@ pub fn handle_request<P: AsRef<Path>>(request: &Request, datastore_path: P) -> R
                 let keys: HashSet<&str> = keys_str.split(',').collect();
                 try_or!(500, get_settings_keys(&datastore, &keys, Committed::Live)
                              .map(|ref s| Response::json(s)))
+            } else if let Ok(prefix_str) = get_param(&request, "prefix") {
+                // Note: the prefix should not include "settings."
+                try_or!(500, get_settings_prefix(&datastore, prefix_str, Committed::Live)
+                             .map(|ref s| Response::json(s)))
             } else {
                 try_or!(500, get_settings(&datastore, Committed::Live)
                              .map(|ref s| Response::json(s)))
@@ -78,15 +82,9 @@ pub fn handle_request<P: AsRef<Path>>(request: &Request, datastore_path: P) -> R
                          .map(|_| Response::empty_204()))
         },
 
-        // Subsets of settings
+        // Special subsets of settings
         (GET) (/settings/pending) => {
             try_or!(500, get_settings(&datastore, Committed::Pending)
-                         .map(|ref s| Response::json(s)))
-        },
-        (GET) (/settings/prefix) => {
-            // Note: the prefix should not include "settings." because you've already said that
-            let prefix = try_or!(400, get_param(&request, "prefix"));
-            try_or!(500, get_settings_prefix(&datastore, prefix, Committed::Live)
                          .map(|ref s| Response::json(s)))
         },
 
