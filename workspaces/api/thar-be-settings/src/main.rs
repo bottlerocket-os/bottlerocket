@@ -342,7 +342,6 @@ fn main() -> Result<()> {
     if !affected_config_files.is_empty() {
         // Create a vec of ConfigFile structs from the list of changed services
         info!("Requesting configuration file data for affected services");
-        //let affected_config_files = get_affected_config_files(&client, &affected_services)?;
         debug!("Building API query for configuration file metadata");
         let config_query = affected_config_files
             .into_iter()
@@ -401,7 +400,6 @@ fn main() -> Result<()> {
             .send()?
             .error_for_status()?
             .json()?;
-        //let affected_settings = get_affected_settings_values(&client, &template_registry)?;
 
         // The following is simply to satisfy the Handlebars templating library.
         // The variables in the templates are prefixed with "settings"
@@ -515,9 +513,6 @@ mod test {
         let mut registry = Handlebars::new();
         registry.register_template_string(name1, tmpl1).unwrap();
         registry.register_template_string(name2, tmpl2).unwrap();
-
-        // Get the template from the registry
-        //let template = registry.get_template(template_name).unwrap();
 
         assert!(registry.get_all_template_keys().is_ok());
         assert_eq!(registry.get_all_template_keys().unwrap(), expected_keys)
