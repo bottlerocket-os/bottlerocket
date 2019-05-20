@@ -25,6 +25,7 @@ use std::process;
 use handlebars::template;
 use handlebars::Handlebars;
 
+use apiserver::datastore::deserialization;
 use apiserver::model;
 
 // TODO
@@ -56,7 +57,7 @@ enum TBSError {
     /// on; i.e. a path that cannot exist
     DatastoreValue(String),
     /// Deserialization error coming from API code
-    DeserializationError(apiserver::datastore::deserialization::DeserializationError),
+    DeserializationError(deserialization::DeserializationError),
     /// Logger setup error
     Logger(log::SetLoggerError),
 }
