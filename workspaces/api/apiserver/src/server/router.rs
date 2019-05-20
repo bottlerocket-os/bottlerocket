@@ -16,7 +16,10 @@ fn get_param(request: &Request, name: &str) -> Result<String> {
         .get_param(name)
         .ok_or_else(|| ServerError::MissingInput(name.to_string()));
     match res {
-        Ok(ref s) if s.is_empty() => Err(ServerError::MissingInput(name.to_string())),
+        Ok(ref s) if s.is_empty() => Err(ServerError::MissingInput(format!(
+            "Parameter cannot be empty: {}",
+            name
+        ))),
         x => x,
     }
 }
