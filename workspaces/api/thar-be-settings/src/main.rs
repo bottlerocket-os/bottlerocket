@@ -1,11 +1,11 @@
 /*!
 # Background
 
-thar-be-settings is a simple configuration applyer.
+thar-be-settings is a simple configuration applier.
 
-It is intended to be called from, and work directly with, the API server in Thar, the OS. After a settings change, this program queries the API to determine which services and configuration files are affected by that change.  Once it has done so, it renders and rewrites the affected configuration files and restarts any affected services.
-
-Currently all HTTP queries are done by hand, once a client exists the amount of code here will drastically decrease.
+It is intended to be called from, and work directly with, the API server in Thar, the OS.
+After a settings change, this program queries the API to determine which services and configuration files are affected by that change.
+Once it has done so, it renders and rewrites the affected configuration files and restarts any affected services.
 */
 
 #[macro_use]
