@@ -137,7 +137,10 @@ mod test {
         let mdkey = Key::new(KeyType::Meta, "testmd").unwrap();
         let md = "mdval";
         m.set_metadata(&mdkey, &k, md).unwrap();
-        assert_eq!(m.get_metadata_raw(&mdkey, &k).unwrap(), Some(md.to_string()));
+        assert_eq!(
+            m.get_metadata_raw(&mdkey, &k).unwrap(),
+            Some(md.to_string())
+        );
     }
 
     #[test]

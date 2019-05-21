@@ -189,8 +189,8 @@ impl From<io::Error> for DataStoreError {
 
 #[cfg(test)]
 mod test {
-    use super::{Committed, DataStore, Key, KeyType};
     use super::memory::MemoryDataStore;
+    use super::{Committed, DataStore, Key, KeyType};
     use maplit::hashmap;
 
     #[test]
@@ -223,7 +223,10 @@ mod test {
         // Set metadata on parent
         m.set_metadata(&meta, &parent, "value").unwrap();
         // Metadata shows up on grandchild...
-        assert_eq!(m.get_metadata(&meta, &grandchild).unwrap(), Some("value".to_string()));
+        assert_eq!(
+            m.get_metadata(&meta, &grandchild).unwrap(),
+            Some("value".to_string())
+        );
         // ...but only through inheritance, not directly.
         assert_eq!(m.get_metadata_raw(&meta, &grandchild).unwrap(), None);
     }
