@@ -161,3 +161,29 @@ impl From<io::Error> for DataStoreError {
         DataStoreError::Io(IoErrorDetail::new("".to_string(), err))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::{Committed, DataStore, Key, KeyType};
+    use super::memory::MemoryDataStore;
+    use maplit::hashmap;
+
+    #[test]
+    fn set_keys() {
+        let mut m = MemoryDataStore::new();
+
+        let k1 = Key::new(KeyType::Data, "memtest1").unwrap();
+        let k2 = Key::new(KeyType::Data, "memtest2").unwrap();
+        let v1 = "memvalue1".to_string();
+        let v2 = "memvalue2".to_string();
+        let data = hashmap!(
+            &k1 => &v1,
+            &k2 => &v2,
+        );
+
+        m.set_keys(&data, Committed::Pending).unwrap();
+
+        assert_eq!(m.get_key(&k1, Committed::Pending).unwrap(), Some(v1));
+        assert_eq!(m.get_key(&k2, Committed::Pending).unwrap(), Some(v2));
+    }
+}
