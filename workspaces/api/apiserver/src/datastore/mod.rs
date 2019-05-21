@@ -50,8 +50,33 @@ pub trait DataStore {
     /// Set the value of a single data key in the datastore.
     fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: Committed) -> Result<()>;
 
-    /// Retrieve the value for a single metadata key from the datastore.
-    fn get_metadata(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>>;
+    /// Retrieve the value for a single metadata key from the datastore.  Values will inherit from
+    /// earlier in the tree, if more specific values are not found later.
+    fn get_metadata(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
+        let mut result = Ok(None);
+        let mut current_path = String::with_capacity(data_key.len());
+
+        // Walk through segments of the data key in order, returning the last metadata we find
+        for component in data_key.split(KEY_SEPARATOR) {
+            if !current_path.is_empty() {
+                current_path.push_str(KEY_SEPARATOR);
+            }
+            current_path.push_str(component);
+
+            let data_key = Key::new(KeyType::Data, &current_path).unwrap_or_else(|_| {
+                unreachable!("Prefix of Key failed to make Key: {}", current_path)
+            });
+
+            if let Some(md) = self.get_metadata_raw(metadata_key, &data_key)? {
+                result = Ok(Some(md));
+            }
+        }
+        result
+    }
+
+    /// Retrieve the value for a single metadata key from the datastore, without taking into
+    /// account inheritance of metadata from earlier in the tree.
+    fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>>;
     /// Set the value of a single metadata key in the datastore.
     fn set_metadata<S: AsRef<str>>(
         &mut self,
@@ -185,5 +210,21 @@ mod test {
 
         assert_eq!(m.get_key(&k1, Committed::Pending).unwrap(), Some(v1));
         assert_eq!(m.get_key(&k2, Committed::Pending).unwrap(), Some(v2));
+    }
+
+    #[test]
+    fn get_metadata_inheritance() {
+        let mut m = MemoryDataStore::new();
+
+        let meta = Key::new(KeyType::Meta, "mymeta").unwrap();
+        let parent = Key::new(KeyType::Data, "a").unwrap();
+        let grandchild = Key::new(KeyType::Data, "a.b.c").unwrap();
+
+        // Set metadata on parent
+        m.set_metadata(&meta, &parent, "value").unwrap();
+        // Metadata shows up on grandchild...
+        assert_eq!(m.get_metadata(&meta, &grandchild).unwrap(), Some("value".to_string()));
+        // ...but only through inheritance, not directly.
+        assert_eq!(m.get_metadata_raw(&meta, &grandchild).unwrap(), None);
     }
 }

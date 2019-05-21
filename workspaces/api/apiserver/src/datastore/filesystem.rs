@@ -275,7 +275,7 @@ impl DataStore for FilesystemDataStore {
         write_file_mkdir(path, value)
     }
 
-    fn get_metadata(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
+    fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
         let path = self.metadata_path(metadata_key, data_key, Committed::Live)?;
         read_file_for_key(&metadata_key, &path)
     }

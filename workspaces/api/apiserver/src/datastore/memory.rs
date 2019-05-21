@@ -77,7 +77,7 @@ impl DataStore for MemoryDataStore {
         Ok(self.dataset(committed).contains_key(map_key))
     }
 
-    fn get_metadata(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
+    fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
         let map_key = self.metadata_map_key(metadata_key, data_key);
         Ok(self.metadata.get(&map_key).cloned())
     }
@@ -137,7 +137,7 @@ mod test {
         let mdkey = Key::new(KeyType::Meta, "testmd").unwrap();
         let md = "mdval";
         m.set_metadata(&mdkey, &k, md).unwrap();
-        assert_eq!(m.get_metadata(&mdkey, &k).unwrap(), Some(md.to_string()));
+        assert_eq!(m.get_metadata_raw(&mdkey, &k).unwrap(), Some(md.to_string()));
     }
 
     #[test]
