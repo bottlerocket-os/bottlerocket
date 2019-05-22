@@ -63,18 +63,16 @@ pub fn handle_request<P: AsRef<Path>>(request: &Request, datastore_path: P) -> R
 
         // Bulk settings
         (GET) (/settings) => {
-            if let Ok(keys_str) = get_param(&request, "keys") {
+            let try_settings = if let Ok(keys_str) = get_param(&request, "keys") {
                 let keys: HashSet<&str> = keys_str.split(',').collect();
-                try_or!(500, get_settings_keys(&datastore, &keys, Committed::Live)
-                             .map(|ref s| Response::json(s)))
+                get_settings_keys(&datastore, &keys, Committed::Live)
             } else if let Ok(prefix_str) = get_param(&request, "prefix") {
                 // Note: the prefix should not include "settings."
-                try_or!(500, get_settings_prefix(&datastore, prefix_str, Committed::Live)
-                             .map(|ref s| Response::json(s)))
+                get_settings_prefix(&datastore, prefix_str, Committed::Live)
             } else {
-                try_or!(500, get_settings(&datastore, Committed::Live)
-                             .map(|ref s| Response::json(s)))
-            }
+                get_settings(&datastore, Committed::Live)
+            };
+            try_or!(500, try_settings.map(|ref s| Response::json(s)))
         },
         (PATCH) (/settings) => {
             let maybe_body = try_or!(500, get_body(&request));
@@ -107,26 +105,24 @@ pub fn handle_request<P: AsRef<Path>>(request: &Request, datastore_path: P) -> R
 
         // Services
         (GET) (/services) => {
-            if let Ok(names_str) = get_param(&request, "names") {
+            let try_services = if let Ok(names_str) = get_param(&request, "names") {
                 let names: HashSet<&str> = names_str.split(',').collect();
-                try_or!(500, get_services_names(&datastore, &names, Committed::Live)
-                             .map(|ref s| Response::json(s)))
+                get_services_names(&datastore, &names, Committed::Live)
             } else {
-                try_or!(500, get_services(&datastore)
-                             .map(|ref s| Response::json(s)))
-            }
+                get_services(&datastore)
+            };
+            try_or!(500, try_services.map(|ref s| Response::json(s)))
         },
 
         // Configuration files
         (GET) (/configuration-files) => {
-            if let Ok(names_str) = get_param(&request, "names") {
+            let try_conf = if let Ok(names_str) = get_param(&request, "names") {
                 let names: HashSet<&str> = names_str.split(',').collect();
-                try_or!(500, get_configuration_files_names(&datastore, &names, Committed::Live)
-                             .map(|ref s| Response::json(s)))
+                get_configuration_files_names(&datastore, &names, Committed::Live)
             } else {
-                try_or!(500, get_configuration_files(&datastore)
-                             .map(|ref s| Response::json(s)))
-            }
+                get_configuration_files(&datastore)
+            };
+            try_or!(500, try_conf.map(|ref s| Response::json(s)))
         },
 
         _ => Response::empty_404()

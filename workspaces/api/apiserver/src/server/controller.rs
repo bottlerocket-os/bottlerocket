@@ -9,7 +9,7 @@ use std::process::{Command, Stdio};
 use crate::datastore::deserialization::{from_map, from_map_with_prefix};
 use crate::datastore::serialization::to_pairs;
 use crate::datastore::{deserialize_scalar, Committed, DataStore, Key, KeyType, Value};
-use crate::model::{ConfigurationFile, ConfigurationFiles, Service, Services, Settings};
+use crate::model::{ConfigurationFiles, Services, Settings};
 use crate::server::{Result, ServerError};
 
 /// Build a Settings based on the data in the datastore.
@@ -154,17 +154,17 @@ pub(crate) fn get_services_names<'a, D: DataStore>(
     datastore: &D,
     names: &'a HashSet<&str>,
     committed: Committed,
-) -> Result<HashMap<&'a str, Service>> {
+) -> Result<Services> {
     get_map_from_prefix(datastore, "services.".to_string(), names, committed)
 }
 
 /// Build a collection of ConfigurationFile items with the given names using data from the
 /// datastore.
-pub(crate) fn get_configuration_files_names<'a, D: DataStore>(
+pub(crate) fn get_configuration_files_names<D: DataStore>(
     datastore: &D,
-    names: &'a HashSet<&str>,
+    names: &HashSet<&str>,
     committed: Committed,
-) -> Result<HashMap<&'a str, ConfigurationFile>> {
+) -> Result<ConfigurationFiles> {
     get_map_from_prefix(
         datastore,
         "configuration-files.".to_string(),
@@ -177,12 +177,12 @@ pub(crate) fn get_configuration_files_names<'a, D: DataStore>(
 /// example, a collection of Service items under "services" that have the requested names.
 /// Returns Err if we couldn't pull expected data, including the case where a name was specified
 /// for which we have no data.
-fn get_map_from_prefix<'a, D: DataStore, T>(
+fn get_map_from_prefix<D: DataStore, T>(
     datastore: &D,
     prefix: String,
-    names: &'a HashSet<&str>,
+    names: &HashSet<&str>,
     committed: Committed,
-) -> Result<HashMap<&'a str, T>>
+) -> Result<HashMap<String, T>>
 where
     T: DeserializeOwned,
 {
@@ -208,7 +208,7 @@ where
             item_data.insert(key, value);
         }
         let item = from_map_with_prefix(Some(item_prefix), &item_data)?;
-        result.insert(name, item);
+        result.insert(name.to_string(), item);
     }
 
     Ok(result)
@@ -322,6 +322,7 @@ mod test {
     use super::*;
     use crate::datastore::memory::MemoryDataStore;
     use crate::datastore::{Committed, DataStore, Key, KeyType};
+    use crate::model::Service;
     use maplit::{hashmap, hashset};
 
     #[test]
@@ -409,7 +410,7 @@ mod test {
         let services = get_services_names(&ds, &names, Committed::Pending).unwrap();
         assert_eq!(
             services,
-            hashmap!("foo" => Service {
+            hashmap!("foo".to_string() => Service {
                 configuration_files: vec!["file1".to_string()],
                 restart_commands: vec!["echo hi".to_string()]
             })
