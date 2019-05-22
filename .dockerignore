@@ -1,0 +1,5 @@
+/build/*.img
+/build/*.lz4
+/build/*.tar
+/build/*-debuginfo-*.rpm
+/build/*-debugsource-*.rpm
