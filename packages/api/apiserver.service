@@ -1,7 +1,7 @@
 [Unit]
 Description=Thar API server
 After=network.target
-Wants=network.target
+Requires=network.target
 
 [Service]
 Type=simple
