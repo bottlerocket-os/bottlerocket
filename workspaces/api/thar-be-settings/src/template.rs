@@ -62,6 +62,14 @@ impl TemplateKeys for template::Template {
                             keys.insert(key);
                         }
                     }
+
+                    // Params are keys inside conditional expressions.
+                    for param in &block.params {
+                        if let handlebars::template::Parameter::Name(key) = param {
+                            trace!("Found key: {}", &key);
+                            keys.insert(key.to_string());
+                        }
+                    }
                 }
 
                 // Not an expression
@@ -128,14 +136,74 @@ mod test {
         let name2 = "test_tmpl2";
         let tmpl2 = "This is a cool {{frob}}. Here is a conditional: {{#if frobnicate }}{{frobnicate}}{{/if}}";
 
-        let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string(), "frob".to_string(), "frobnicate".to_string() };
+        // This template has a different key in the conditional expression, ensure we catch that
+        let name3 = "test_tmpl3";
+        let tmpl3 =
+            "This is a cool {{frob}}. Here is a conditional: {{#if thar }}{{frobnicate}}{{/if}}";
+
+        let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string(), "frob".to_string(), "frobnicate".to_string(), "thar".to_string() };
 
         // Register the templates so the registry creates Template objects
         let mut registry = Handlebars::new();
         registry.register_template_string(name1, tmpl1).unwrap();
         registry.register_template_string(name2, tmpl2).unwrap();
+        registry.register_template_string(name3, tmpl3).unwrap();
 
         assert!(registry.get_all_template_keys().is_ok());
         assert_eq!(registry.get_all_template_keys().unwrap(), expected_keys)
+    }
+
+    #[test]
+    fn get_keys_with_boolean_in_conditional() {
+        let name1 = "test_tmpl1";
+        let tmpl1 =
+            "This is a cool {{template}}. Here is a conditional: {{#if true }}{{bridge-ip}}{{/if}}";
+
+        let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string() };
+
+        // Register the template so the registry creates a Template object
+        let mut registry = Handlebars::new();
+        registry.register_template_string(name1, tmpl1).unwrap();
+
+        // Get the template from the registry
+        let template = registry.get_template(name1).unwrap();
+
+        assert!(template.get_all_template_keys().is_ok());
+        assert_eq!(template.get_all_template_keys().unwrap(), expected_keys)
+    }
+
+    #[test]
+    fn get_keys_with_nested_conditional() {
+        let name1 = "test_tmpl1";
+        let tmpl1 =
+            "This is a cool {{template}}. Here is a conditional: {{#if true }}{{bridge-ip}}{{#if thar}}{{baz}}{{/if}}{{/if}}";
+
+        let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string(), "thar".to_string(), "baz".to_string() };
+
+        // Register the template so the registry creates a Template object
+        let mut registry = Handlebars::new();
+        registry.register_template_string(name1, tmpl1).unwrap();
+
+        // Get the template from the registry
+        let template = registry.get_template(name1).unwrap();
+
+        assert!(template.get_all_template_keys().is_ok());
+        assert_eq!(template.get_all_template_keys().unwrap(), expected_keys)
+    }
+
+    #[test]
+    fn empty_template_returns_empty_hashset() {
+        let name1 = "test_tmpl1";
+        let tmpl1 = "";
+
+        // Register the template so the registry creates a Template object
+        let mut registry = Handlebars::new();
+        registry.register_template_string(name1, tmpl1).unwrap();
+
+        // Get the template from the registry
+        let template = registry.get_template(name1).unwrap();
+
+        assert!(template.get_all_template_keys().is_ok());
+        assert_eq!(template.get_all_template_keys().unwrap(), HashSet::new())
     }
 }
