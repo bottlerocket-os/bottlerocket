@@ -15,6 +15,7 @@ derive-error = "0.0"
 apiserver = { path = "../apiserver" }
 log = "0.4"
 stderrlog = "0.4"
+itertools = "0.8"
 
 [build-dependencies]
 cargo-readme = "3.1"

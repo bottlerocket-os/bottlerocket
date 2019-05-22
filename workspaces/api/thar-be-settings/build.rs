@@ -5,7 +5,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
-    let mut source = File::open("src/main.rs").unwrap();
+    let mut source = File::open("src/lib.rs").unwrap();
     let mut template = File::open("README.tpl").unwrap();
 
     let content = cargo_readme::generate_readme(
