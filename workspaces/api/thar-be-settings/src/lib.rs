@@ -34,17 +34,17 @@ const API_SETTINGS_URI: &str = "http://localhost:4242/settings";
 const API_SERVICES_URI: &str = "http://localhost:4242/services";
 
 /// Read stdin and parse into JSON
-pub fn parse_stdin() -> Result<HashSet<String>> {
+pub fn get_changed_settings() -> Result<HashSet<String>> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
     trace!("Raw input from stdin: {}", &input);
 
     // Settings should be a vec of strings
-    debug!("Parsing stdin into JSON");
+    debug!("Parsing stdin as JSON");
     let changed_settings: HashSet<String> = serde_json::from_str(&input).map_err(|_| {
         TBSError::InvalidInput(format!(
             "Input must be a JSON array of strings; received '{}'",
-            &input
+            &input[0..50]
         ))
     })?;
     trace!("Parsed input: {:?}", &changed_settings);

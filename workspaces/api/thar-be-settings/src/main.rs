@@ -5,7 +5,7 @@ use std::env;
 use std::error::Error;
 use std::process;
 
-use thar_be_settings::{config, parse_stdin, service, settings, template};
+use thar_be_settings::{config, get_changed_settings, service, settings, template};
 
 // TODO
 // Use a client rather than building queries and making HTTP calls
@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<Error>> {
 
     // Get the settings that changed via stdin
     info!("Parsing stdin for updated settings");
-    let changed_settings = parse_stdin()?;
+    let changed_settings = get_changed_settings()?;
 
     // Create a client for all our API calls
     let client = reqwest::Client::new();

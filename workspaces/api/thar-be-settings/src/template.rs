@@ -9,13 +9,12 @@ use apiserver::model;
 
 /// Build the template registry using the ConfigFile structs
 /// and let handlebars parse the templates
-///
-/// Strict mode will panic if a key exists in the template
-/// but isn't provided in the data given to the renderer
 pub fn build_template_registry(
     files: &model::ConfigurationFiles,
 ) -> Result<handlebars::Handlebars> {
     let mut template_registry = Handlebars::new();
+    // Strict mode will panic if a key exists in the template
+    // but isn't provided in the data given to the renderer
     template_registry.set_strict_mode(true);
 
     debug!("Building template registry of configuration files");
