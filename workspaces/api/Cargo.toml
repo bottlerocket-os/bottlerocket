@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "apiserver",
+    "moondog",
+    "thar-be-settings",
+]
+
+[profile.release]
+debug = true
