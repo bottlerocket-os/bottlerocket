@@ -196,7 +196,7 @@ fn main() -> Result<()> {
     trace!("API request body: {:?}", request_body);
 
     // Create an HTTP client and PATCH the JSON
-    info!("POST-ing user data to the API");
+    info!("Sending user data to the API");
     let client = reqwest::Client::new();
     client
         .patch(API_SETTINGS_URI)
