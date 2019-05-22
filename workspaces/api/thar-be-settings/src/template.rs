@@ -126,7 +126,7 @@ mod test {
         let tmpl1 = "This is a cool {{template}}. Here is a conditional: {{#if bridge-ip }}{{bridge-ip}}{{/if}}";
 
         let name2 = "test_tmpl2";
-        let tmpl2 = "This is a cool {{frob}}. Here is an conditional: {{#if frobnicate }}{{frobnicate}}{{/if}}";
+        let tmpl2 = "This is a cool {{frob}}. Here is a conditional: {{#if frobnicate }}{{frobnicate}}{{/if}}";
 
         let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string(), "frob".to_string(), "frobnicate".to_string() };
 
