@@ -1,4 +1,4 @@
-cargo-0.35.0-x86_64-unknown-linux-gnu.tar.xz
-rustc-1.34.2-x86_64-unknown-linux-gnu.tar.xz
-rust-std-1.34.2-aarch64-unknown-linux-gnu.tar.xz
-rust-std-1.34.2-x86_64-unknown-linux-gnu.tar.xz
+rustc-1.35.0-x86_64-unknown-linux-gnu.tar.xz
+cargo-0.36.0-x86_64-unknown-linux-gnu.tar.xz
+rust-std-1.35.0-aarch64-unknown-linux-gnu.tar.xz
+rust-std-1.35.0-x86_64-unknown-linux-gnu.tar.xz
