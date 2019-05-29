@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use crate::Result;
 
 use handlebars::template;
+use handlebars::template::{Parameter, TemplateElement};
 use handlebars::Handlebars;
 
 use apiserver::model;
@@ -48,18 +49,26 @@ impl TemplateKeys for template::Template {
             // and ignore everything else. Our templates are simple so far and this
             // match should capture all the template keys.
             match element {
-                handlebars::template::TemplateElement::Expression(name) => {
-                    if let handlebars::template::Parameter::Name(key) = name {
+                TemplateElement::Expression(name) => {
+                    if let Parameter::Name(key) = name {
                         trace!("Found key: {}", &key);
                         keys.insert(key.to_string());
                     }
                 }
 
-                handlebars::template::TemplateElement::HelperBlock(block) => {
+                TemplateElement::HelperBlock(block) => {
                     if let Some(ref tmpl) = block.template {
                         for key in tmpl.get_all_template_keys()?.into_iter() {
                             trace!("Found key: {}", &key);
                             keys.insert(key);
+                        }
+                    }
+
+                    // Params are keys inside conditional expressions.
+                    for param in &block.params {
+                        if let Parameter::Name(key) = param {
+                            trace!("Found key in a conditional: {}", &key);
+                            keys.insert(key.to_string());
                         }
                     }
                 }
@@ -99,43 +108,82 @@ mod test {
     use super::*;
     use maplit::hashset;
 
+    fn assert_keys_in_template(template: &str, expected_keys: HashSet<String>) {
+        let mut registry = Handlebars::new();
+        registry.register_template_string("x", template).unwrap();
+
+        // Get the template from the registry, then get the template's keys
+        let template = registry.get_template("x").unwrap();
+        let actual_keys = template.get_all_template_keys().unwrap();
+        assert_eq!(actual_keys, expected_keys)
+    }
+
+    fn assert_keys_in_registry(templates: &[&str], expected_keys: HashSet<String>) {
+        let mut registry = Handlebars::new();
+        // Don't care about template name, just use an integer
+        for (i, template) in templates.iter().enumerate() {
+            registry
+                .register_template_string(&i.to_string(), template)
+                .unwrap();
+        }
+
+        // Get the keys from the registry directly
+        let actual_keys = registry.get_all_template_keys().unwrap();
+        assert_eq!(actual_keys, expected_keys)
+    }
+
     #[test]
     // Ensure that we get all the keys out of a single template
     fn get_template_keys_from_single_template() {
-        let template_name = "test_tmpl";
-        let template_string = "This is a cool {{template}}. Here is a conditional: {{#if bridge-ip }}{{bridge-ip}}{{/if}}";
-        let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string() };
-
-        // Register the template so the registry creates a Template object
-        let mut registry = Handlebars::new();
-        registry
-            .register_template_string(template_name, template_string)
-            .unwrap();
-
-        // Get the template from the registry
-        let template = registry.get_template(template_name).unwrap();
-
-        assert!(template.get_all_template_keys().is_ok());
-        assert_eq!(template.get_all_template_keys().unwrap(), expected_keys)
+        assert_keys_in_template(
+            "This is a cool {{template}}. Here is a conditional: {{#if bridge-ip }}{{bridge-ip}}{{/if}}",
+            hashset! {"template".to_string(), "bridge-ip".to_string() },
+        );
     }
 
     #[test]
     // Ensure that we get all the keys out of a the entire registry
     fn get_template_keys_from_registry() {
-        let name1 = "test_tmpl1";
         let tmpl1 = "This is a cool {{template}}. Here is a conditional: {{#if bridge-ip }}{{bridge-ip}}{{/if}}";
-
-        let name2 = "test_tmpl2";
         let tmpl2 = "This is a cool {{frob}}. Here is a conditional: {{#if frobnicate }}{{frobnicate}}{{/if}}";
 
-        let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string(), "frob".to_string(), "frobnicate".to_string() };
-
-        // Register the templates so the registry creates Template objects
-        let mut registry = Handlebars::new();
-        registry.register_template_string(name1, tmpl1).unwrap();
-        registry.register_template_string(name2, tmpl2).unwrap();
-
-        assert!(registry.get_all_template_keys().is_ok());
-        assert_eq!(registry.get_all_template_keys().unwrap(), expected_keys)
+        assert_keys_in_registry(
+            &[tmpl1, tmpl2],
+            hashset! {"template".to_string(), "bridge-ip".to_string(), "frob".to_string(), "frobnicate".to_string() },
+        );
     }
+
+    #[test]
+    // This template has a different key in the conditional expression, ensure we catch that
+    fn get_keys_from_conditional() {
+        let tmpl3 =
+            "This is a cool {{frob}}. Here is a conditional: {{#if thar }}{{frobnicate}}{{/if}}";
+
+        assert_keys_in_registry(
+            &[tmpl3],
+            hashset! {"frob".to_string(), "thar".to_string(), "frobnicate".to_string() },
+        );
+    }
+
+    #[test]
+    fn get_keys_with_boolean_in_conditional() {
+        assert_keys_in_registry(
+            &["This is a cool {{template}}. Here is a conditional: {{#if true }}{{bridge-ip}}{{/if}}"],
+            hashset! {"template".to_string(), "bridge-ip".to_string() },
+        );
+    }
+
+    #[test]
+    fn get_keys_with_nested_conditional() {
+        assert_keys_in_registry(
+            &["This is a cool {{template}}. Here is a conditional: {{#if true }}{{bridge-ip}}{{#if thar}}{{baz}}{{/if}}{{/if}}"],
+            hashset! {"template".to_string(), "bridge-ip".to_string(), "thar".to_string(), "baz".to_string() },
+        );
+    }
+
+    #[test]
+    fn empty_template_returns_empty_hashset() {
+        assert_keys_in_registry(&[""], hashset! {});
+    }
+
 }
