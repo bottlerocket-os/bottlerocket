@@ -37,8 +37,8 @@ VERITY_HASH_BLOCK_SIZE=4096
 # for the boot partition, where we set gptprio bits in the GUID-specific use
 # field, but we might as well do it for all of them.
 THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
-THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 THAR_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
+THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 THAR_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
 
 truncate -s 4G "${DISK_IMAGE}"
