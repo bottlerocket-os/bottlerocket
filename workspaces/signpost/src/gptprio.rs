@@ -41,7 +41,7 @@ impl GptPrio {
     }
 
     pub(crate) fn will_boot(self) -> bool {
-        self.priority() > 0 || self.successful()
+        (self.priority() > 0 && self.tries_left() > 0) || self.successful()
     }
 }
 
