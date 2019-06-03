@@ -14,6 +14,7 @@ use serde::Deserialize;
 enum Command {
     Status,
     MarkSuccessfulBoot,
+    ClearInactive,
     UpgradeToInactive,
     RollbackToInactive,
     RewriteTable,
@@ -26,9 +27,10 @@ USAGE:
 
 SUBCOMMANDS:
     status                  Show partition sets and priority status
-    mark-successful-boot    Mark the active partition as successfully booted
-    upgrade-to-inactive     Sets the inactive partition as a new upgrade partition
-    rollback-to-inactive    Deprioritizes the inactive partition
+    mark-successful-boot    Mark the active partitions as successfully booted
+    clear-inactive          Clears inactive priority information to prepare writing images to disk
+    upgrade-to-inactive     Sets the inactive partitions as new upgrade partitions
+    rollback-to-inactive    Deprioritizes the inactive partitions
     rewrite-table           Rewrite the partition table with no changes to disk (used for testing this code)");
     std::process::exit(1)
 }
@@ -40,6 +42,10 @@ fn main() {
     if let Err(err) = State::load().and_then(|mut state| {
         match command {
             Command::Status => println!("{}", state),
+            Command::ClearInactive => {
+                state.clear_inactive();
+                state.write()?;
+            }
             Command::MarkSuccessfulBoot => {
                 state.mark_successful_boot();
                 state.write()?;
