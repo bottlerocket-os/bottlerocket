@@ -12,6 +12,8 @@ pub(crate) enum Error {
     GPTFind { device: PathBuf, source: GPTError },
     #[snafu(display("Failed to write GPT onto device {}: {}", device.display(), source))]
     GPTWrite { device: PathBuf, source: GPTError },
+    #[snafu(display("Inactive partition is not valid to roll back to"))]
+    InactiveInvalidRollback,
     #[snafu(display(
         "Path {} is a link to {} which does not have a final component (expected {})",
         path.display(),
