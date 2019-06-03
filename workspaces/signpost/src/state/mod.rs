@@ -157,6 +157,16 @@ impl State {
         self.set_gptprio(self.active(), flags);
     }
 
+    /// Clears priority bits of the inactive partition in preparation to write new images, but
+    /// **does not write to the disk**.
+    pub(crate) fn clear_inactive(&mut self) {
+        let mut inactive_flags = self.gptprio(self.inactive());
+        inactive_flags.set_priority(0);
+        inactive_flags.set_tries_left(0);
+        inactive_flags.set_successful(false);
+        self.set_gptprio(self.inactive(), inactive_flags);
+    }
+
     /// Sets the inactive partition as a new upgrade partition, but **does not write to the disk**.
     ///
     /// * Sets the inactive partition's priority to 2 and the active partition's priority to 1.
