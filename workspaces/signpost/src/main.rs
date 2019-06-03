@@ -55,7 +55,7 @@ fn main() {
                 state.write()?;
             }
             Command::RollbackToInactive => {
-                state.rollback_to_inactive();
+                state.rollback_to_inactive()?;
                 state.write()?;
             }
             Command::RewriteTable => state.write()?,

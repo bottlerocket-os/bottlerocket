@@ -189,14 +189,19 @@ impl State {
     /// * Sets the inactive partition's priority to 2 and the active partition's priority to 1.
     /// * Does not modify the inactive partition's tries left.
     /// * Does not modify whether the inactive partition successfully booted.
-    pub(crate) fn rollback_to_inactive(&mut self) {
+    pub(crate) fn rollback_to_inactive(&mut self) -> Result<(), Error> {
         let mut inactive_flags = self.gptprio(self.inactive());
+        if inactive_flags.priority() == 0 {
+            return error::InactiveInvalidRollback.fail();
+        }
         inactive_flags.set_priority(2);
         self.set_gptprio(self.inactive(), inactive_flags);
 
         let mut active_flags = self.gptprio(self.active());
         active_flags.set_priority(1);
         self.set_gptprio(self.active(), active_flags);
+
+        Ok(())
     }
 
     /// Writes the partition table to the OS disk.
