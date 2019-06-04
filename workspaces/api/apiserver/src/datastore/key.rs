@@ -6,7 +6,7 @@ use std::borrow::Borrow;
 use std::fmt;
 use std::ops::Deref;
 
-use super::{DataStoreError, Result};
+use super::{error, Result};
 
 pub const KEY_SEPARATOR: &str = ".";
 
@@ -49,11 +49,11 @@ impl Key {
     pub fn new<S: AsRef<str>>(key_type: KeyType, name: S) -> Result<Key> {
         let name = name.as_ref();
         if name.len() > MAX_KEY_NAME_LENGTH {
-            return Err(DataStoreError::InvalidKey(format!(
-                "Key name beyond maximum length {}: {}...",
-                MAX_KEY_NAME_LENGTH,
-                &name[0..50]
-            )));
+            return error::KeyTooLong {
+                name,
+                max: MAX_KEY_NAME_LENGTH,
+            }
+            .fail();
         }
 
         let name_pattern = match key_type {
@@ -62,11 +62,7 @@ impl Key {
         };
 
         if !name_pattern.is_match(name) {
-            // Showing the real regex is ugly because of ?x and its formatting
-            return Err(DataStoreError::InvalidKey(format!(
-                "Key name '{}' has invalid format, should be 1 or more dot-separated [a-zA-Z0-9_-]+",
-                name
-            )));
+            return error::InvalidKey { name }.fail();
         }
 
         let copy = name.to_string();

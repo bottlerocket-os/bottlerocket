@@ -1,16 +1,21 @@
 //! The controller module maps between the datastore and the API interface, similar to the
 //! controller in the MVC model.
 
+mod error;
+
 use serde::de::DeserializeOwned;
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
 use std::process::{Command, Stdio};
 
 use crate::datastore::deserialization::{from_map, from_map_with_prefix};
 use crate::datastore::serialization::to_pairs;
-use crate::datastore::{deserialize_scalar, Committed, DataStore, Key, KeyType, Value};
+use crate::datastore::{
+    deserialize_scalar, Committed, DataStore, Key, KeyType, ScalarError, Value,
+};
 use crate::model::{ConfigurationFiles, Services, Settings};
-use crate::server::{Result, ServerError};
+use error::Result;
 
 /// Build a Settings based on the data in the datastore.
 pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: Committed) -> Result<Settings> {
@@ -23,11 +28,7 @@ pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: Committed) ->
     )
     .transpose()
     // None is not OK here - we always have *some* settings
-    .unwrap_or_else(|| {
-        Err(ServerError::Internal(
-            "Found no settings in datastore".to_string(),
-        ))
-    })
+    .context(error::MissingData { prefix: "settings" })?
 }
 
 /// Build a Settings based on the data in the datastore that begins with the given prefix.
@@ -54,11 +55,7 @@ pub(crate) fn get_services<D: DataStore>(datastore: &D) -> Result<Services> {
     )
     .transpose()
     // None is not OK here - we always have services
-    .unwrap_or_else(|| {
-        Err(ServerError::Internal(
-            "Found no services in datastore".to_string(),
-        ))
-    })
+    .context(error::MissingData { prefix: "services" })?
 }
 
 /// Build a ConfigurationFiles based on the data in the datastore.
@@ -72,11 +69,9 @@ pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<Con
     )
     .transpose()
     // None is not OK here - we always have configuration files
-    .unwrap_or_else(|| {
-        Err(ServerError::Internal(
-            "Found no configuration files in datastore".to_string(),
-        ))
-    })
+    .context(error::MissingData {
+        prefix: "configuration-files",
+    })?
 }
 
 /// Helper to get data from the datastore, starting with the given find_prefix, and deserialize it
@@ -97,7 +92,11 @@ where
     S1: AsRef<str>,
     S2: AsRef<str>,
 {
-    let keys = datastore.list_populated_keys(&find_prefix, committed)?;
+    let keys = datastore
+        .list_populated_keys(&find_prefix, committed)
+        .with_context(|| error::DataStore {
+            op: format!("list '{}'", find_prefix.as_ref()),
+        })?;
     trace!("Found populated keys: {:?}", keys);
     if keys.is_empty() {
         return Ok(None);
@@ -107,9 +106,10 @@ where
     for mut key in keys {
         // Already confirmed key via listing keys, so an error is more serious.
         trace!("Pulling value from datastore for key: {}", key);
-        let value = datastore.get_key(&key, committed)?.ok_or_else(|| {
-            ServerError::Internal(format!("Listed key not found on disk: {}", key))
-        })?;
+        let value = datastore
+            .get_key(&key, committed)
+            .context(error::DataStore { op: "get_key" })?
+            .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
 
         if let Some(ref strip_prefix) = strip_prefix {
             let strip_prefix = strip_prefix.as_ref();
@@ -124,7 +124,9 @@ where
         data.insert(key, value);
     }
 
-    from_map_with_prefix(map_prefix, &data).map_err(Into::into)
+    from_map_with_prefix(map_prefix, &data).context(error::Deserialization {
+        given: find_prefix.as_ref(),
+    })
 }
 
 /// Build a Settings based on the data in the datastore for the given keys.
@@ -136,8 +138,14 @@ pub(crate) fn get_settings_keys<D: DataStore>(
     let mut data = HashMap::new();
     for key_str in keys {
         trace!("Pulling value from datastore for key: {}", key_str);
-        let key = Key::new(KeyType::Data, &key_str)?;
-        let value = match datastore.get_key(&key, committed)? {
+        let key = Key::new(KeyType::Data, &key_str).context(error::NewKey {
+            key_type: "data",
+            name: *key_str,
+        })?;
+        let value = match datastore
+            .get_key(&key, committed)
+            .context(error::DataStore { op: "get_key" })?
+        {
             Some(v) => v,
             // TODO: confirm we want to skip requested keys if not populated, or error
             None => continue,
@@ -145,7 +153,9 @@ pub(crate) fn get_settings_keys<D: DataStore>(
         data.insert(key_str.to_string(), value);
     }
 
-    let settings = from_map(&data)?;
+    let settings = from_map(&data).context(error::Deserialization {
+        given: "given keys",
+    })?;
     Ok(settings)
 }
 
@@ -191,23 +201,29 @@ where
         let mut item_data = HashMap::new();
         let item_prefix = prefix.clone() + name;
 
-        let keys = datastore.list_populated_keys(&item_prefix, committed)?;
-        if keys.is_empty() {
-            return Err(ServerError::InvalidInput(format!(
-                "Did not find data for {}",
-                name
-            )));
-        }
+        let keys = datastore
+            .list_populated_keys(&item_prefix, committed)
+            .with_context(|| error::DataStore {
+                op: format!("list '{}'", &item_prefix),
+            })?;
+        ensure!(
+            !keys.is_empty(),
+            error::ListKeys {
+                requested: item_prefix
+            }
+        );
 
         for key in keys {
             // Already confirmed key via listing keys, so an error is more serious.
             trace!("Pulling value from datastore for key: {}", key);
-            let value = datastore.get_key(&key, committed)?.ok_or_else(|| {
-                ServerError::Internal(format!("Listed key not found on disk: {}", key))
-            })?;
+            let value = datastore
+                .get_key(&key, committed)
+                .context(error::DataStore { op: "get_key" })?
+                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
             item_data.insert(key, value);
         }
-        let item = from_map_with_prefix(Some(item_prefix), &item_data)?;
+        let item = from_map_with_prefix(Some(item_prefix.clone()), &item_data)
+            .context(error::Deserialization { given: item_prefix })?;
         result.insert(name.to_string(), item);
     }
 
@@ -220,24 +236,19 @@ pub(crate) fn settings_input<S: AsRef<str>>(input: S) -> Result<Settings> {
     let input = input.as_ref();
     match serde_json::from_str(&input) {
         // If we get a valid Settings at the start, return it.
-        ok @ Ok(_) => {
+        Ok(x) => {
             trace!("Valid Settings from input, not stripping");
-            ok.map_err(Into::into)
+            Ok(x)
         }
         Err(_) => {
             // Try stripping off an outer 'settings' mapping.
             trace!("Invalid Settings from input, trying to strip 'settings'");
-            let mut val: serde_json::Value = serde_json::from_str(&input)?;
-            let object = val.as_object_mut().ok_or_else(|| {
-                ServerError::InvalidInput("Settings input must be a JSON object".to_string())
-            })?;
-            let inner = object.get_mut("settings")
-                .ok_or_else(|| {
-                    debug!("Invalid Settings from input, did not have 'settings' layer");
-                    ServerError::InvalidInput(r#"Settings input must either be formatted like {"settings": {"a": "b"}} or {"a": "b"}, where the {"a": "b"} mapping corresponds to valid settings."#.to_string())
-                })?;
+            let mut val: serde_json::Value =
+                serde_json::from_str(&input).context(error::InvalidJson)?;
+            let object = val.as_object_mut().context(error::NotJsonObject)?;
+            let inner = object.get_mut("settings").context(error::NoSettings)?;
             trace!("Stripped 'settings' layer OK, trying to make Settings from result");
-            serde_json::from_value(inner.take()).map_err(Into::into)
+            serde_json::from_value(inner.take()).context(error::InvalidSettings)
         }
     }
 }
@@ -245,10 +256,10 @@ pub(crate) fn settings_input<S: AsRef<str>>(input: S) -> Result<Settings> {
 /// Given a Settings, takes any Some values and updates them in the datastore.
 pub(crate) fn set_settings<D: DataStore>(datastore: &mut D, settings: &Settings) -> Result<()> {
     trace!("Serializing Settings to write to data store");
-    let pairs = to_pairs(settings)?;
+    let pairs = to_pairs(settings).context(error::Serialization { given: "Settings" })?;
     datastore
         .set_keys(&pairs, Committed::Pending)
-        .map_err(Into::into)
+        .context(error::DataStore { op: "set_keys" })
 }
 
 // This is not as nice as get_settings, which uses Serializer/Deserializer to properly use the
@@ -260,12 +271,18 @@ pub(crate) fn get_metadata<D: DataStore, S: AsRef<str>>(
     data_key_strs: &HashSet<&str>,
 ) -> Result<HashMap<String, Value>> {
     trace!("Getting metadata '{}'", md_key_str.as_ref());
-    let md_key = Key::new(KeyType::Meta, md_key_str)?;
+    let md_key = Key::new(KeyType::Meta, md_key_str.as_ref()).context(error::NewKey {
+        key_type: "meta",
+        name: md_key_str.as_ref(),
+    })?;
 
     let mut data: HashMap<String, Value> = HashMap::new();
     for data_key_str in data_key_strs {
         trace!("Pulling metadata from datastore for key: {}", data_key_str);
-        let data_key = Key::new(KeyType::Data, data_key_str)?;
+        let data_key = Key::new(KeyType::Data, data_key_str).context(error::NewKey {
+            key_type: "data",
+            name: *data_key_str,
+        })?;
         let value_str = match datastore.get_metadata(&md_key, &data_key) {
             Ok(Some(v)) => v,
             // TODO: confirm we want to skip requested keys if not populated, or error
@@ -275,9 +292,11 @@ pub(crate) fn get_metadata<D: DataStore, S: AsRef<str>>(
             // of them will necessarily have the metadata.
             Err(_) => continue,
         };
-        // FIXME Probably want a clear error showing which keys are invalid?
         trace!("Deserializing scalar from metadata");
-        let value: Value = deserialize_scalar::<_, ServerError>(&value_str)?;
+        let value: Value =
+            deserialize_scalar::<_, ScalarError>(&value_str).context(error::InvalidMetadata {
+                key: md_key.as_ref(),
+            })?;
         data.insert(data_key_str.to_string(), value);
     }
 
@@ -286,7 +305,9 @@ pub(crate) fn get_metadata<D: DataStore, S: AsRef<str>>(
 
 /// Makes live any pending settings in the datastore, returning the changed keys.
 pub(crate) fn commit<D: DataStore>(datastore: &mut D) -> Result<HashSet<Key>> {
-    datastore.commit().map_err(Into::into)
+    datastore
+        .commit()
+        .context(error::DataStore { op: "commit" })
 }
 
 /// Given a list of changed keys, launches the config applier to make appropriate changes to the
@@ -295,7 +316,9 @@ pub(crate) fn apply_changes(changed_keys: &HashSet<Key>) -> Result<()> {
     // Prepare input to config applier; it uses the changed keys to update the right config
     let key_strs: Vec<&str> = changed_keys.iter().map(AsRef::as_ref).collect();
     trace!("Serializing the commit's changed keys: {:?}", key_strs);
-    let cmd_input = serde_json::to_string(&key_strs)?;
+    let cmd_input = serde_json::to_string(&key_strs).context(error::Json {
+        given: "commit's changed keys",
+    })?;
 
     // Start config applier
     debug!("Launching thar-be-settings to apply changes");
@@ -304,14 +327,16 @@ pub(crate) fn apply_changes(changed_keys: &HashSet<Key>) -> Result<()> {
         // FIXME where to send output?
         //.stdout()
         //.stderr()
-        .spawn()?;
+        .spawn()
+        .context(error::ConfigApplierStart)?;
 
     // Send changed keys to config applier
     trace!("Sending changed keys");
     cmd.stdin
         .as_mut()
-        .ok_or_else(|| ServerError::Internal("Unable to send keys to applier".to_string()))?
-        .write_all(cmd_input.as_bytes())?;
+        .context(error::ConfigApplierStdin)?
+        .write_all(cmd_input.as_bytes())
+        .context(error::ConfigApplierWrite)?;
 
     // Leave config applier to run in the background; we can't wait for it
     Ok(())

@@ -1,27 +1,42 @@
 //! This module defines the accepted API methods and routes them to appropriate controller code.
 
 use rouille::{Request, Response};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashSet;
 use std::io::Read;
 use std::path::Path;
 
+use super::controller::*;
 use crate::datastore::{Committed, FilesystemDataStore};
 use crate::model::Settings;
-use crate::server::controller::*;
-use crate::server::{Result, ServerError};
 
-/// Helper to get a required parameter from the Request.
+mod error {
+    use snafu::Snafu;
+    use std::io;
+
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility = "pub(super)")]
+    pub(super) enum Error {
+        #[snafu(display("Missing required input '{}'", input))]
+        MissingInput { input: String },
+
+        #[snafu(display("Input '{}' cannot be empty", input))]
+        EmptyInput { input: String },
+
+        #[snafu(display("Error reading from request: {}", source))]
+        RequestRead { source: io::Error },
+    }
+}
+type Result<T> = std::result::Result<T, error::Error>;
+
+/// Helper to get a required input from the Request.
 fn get_param(request: &Request, name: &str) -> Result<String> {
     let res = request
         .get_param(name)
-        .ok_or_else(|| ServerError::MissingInput(name.to_string()));
-    match res {
-        Ok(ref s) if s.is_empty() => Err(ServerError::MissingInput(format!(
-            "Parameter cannot be empty: {}",
-            name
-        ))),
-        x => x,
-    }
+        .context(error::MissingInput { input: name })?;
+
+    ensure!(!res.is_empty(), error::EmptyInput { input: name });
+    Ok(res)
 }
 
 /// Helper to get the body of a Request.  Returns Err if we couldn't read the body; returns
@@ -29,10 +44,12 @@ fn get_param(request: &Request, name: &str) -> Result<String> {
 /// the Option.)
 fn get_body(request: &Request) -> Result<Option<String>> {
     let mut body_str = String::new();
-    let mut request_body = request
-        .data()
-        .ok_or_else(|| ServerError::MissingInput("request body".to_string()))?;
-    request_body.read_to_string(&mut body_str)?;
+    let mut request_body = request.data().context(error::MissingInput {
+        input: "request body",
+    })?;
+    request_body
+        .read_to_string(&mut body_str)
+        .context(error::RequestRead)?;
 
     if body_str.is_empty() {
         return Ok(None);
@@ -43,7 +60,7 @@ fn get_body(request: &Request) -> Result<Option<String>> {
 
 /// Helper to make an error when a required body is empty.
 fn expect_body(maybe_body: Option<String>) -> Result<String> {
-    maybe_body.ok_or_else(|| ServerError::InvalidInput("Empty body".to_string()))
+    maybe_body.context(error::MissingInput { input: "request body" })
 }
 
 /// This is the primary interface of the module, intended to be spawned by rouille when it

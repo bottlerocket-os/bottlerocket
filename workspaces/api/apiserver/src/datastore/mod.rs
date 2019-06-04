@@ -10,21 +10,19 @@
 //! be easily swapped out if needed.)
 
 pub mod deserialization;
+pub mod error;
 pub mod filesystem;
 pub mod key;
 #[cfg(test)]
 pub(crate) mod memory;
 pub mod serialization;
 
+pub use error::{Error, Result};
 pub use filesystem::FilesystemDataStore;
 pub use key::{Key, KeyType, KEY_SEPARATOR};
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::io;
-
-use crate::IoErrorDetail;
-use serialization::SerializationError;
 
 /// Committed represents whether we want to look at pending (uncommitted) or live (committed) data
 /// in the datastore.
@@ -111,11 +109,14 @@ pub trait DataStore {
 // This section ties together serialization and deserialization of scalar values, so it's in the
 // parent module of serialization and deserialization.
 
+/// Concrete error type for scalar ser/de.
+pub(crate) type ScalarError = serde_json::Error;
+
 /// Serialize a given scalar value to the module-standard serialization format.
 pub(crate) fn serialize_scalar<S, E>(scalar: &S) -> std::result::Result<String, E>
 where
     S: Serialize,
-    E: From<serde_json::error::Error>,
+    E: From<ScalarError>,
 {
     serde_json::to_string(scalar).map_err(Into::into)
 }
@@ -124,7 +125,7 @@ where
 pub(crate) fn deserialize_scalar<'de, D, E>(scalar: &'de str) -> std::result::Result<D, E>
 where
     D: Deserialize<'de>,
-    E: From<serde_json::error::Error>,
+    E: From<ScalarError>,
 {
     serde_json::from_str(scalar).map_err(Into::into)
 }
@@ -140,52 +141,6 @@ fn deserializer_for_scalar(scalar: &str) -> ScalarDeserializer {
 /// Serde generic "Value" type representing a tree of deserialized values.  Should be able to hold
 /// anything returned by the deserialization bits above.
 pub(crate) type Value = serde_json::Value;
-
-/////
-
-/// Possible errors from datastore operations.
-#[derive(Debug, Error)]
-pub enum DataStoreError {
-    #[error(msg_embedded, no_from, non_std)]
-    /// User asked for a key with an invalid format
-    InvalidKey(String),
-
-    #[error(msg_embedded, no_from, non_std)]
-    /// User asked for a key with an invalid format
-    InvalidInput(String),
-
-    #[error(msg_embedded, no_from, non_std)]
-    /// Integrity violation inside datastore
-    Corruption(String),
-
-    #[error(msg_embedded, no_from, non_std)]
-    /// Datastore invariant violation
-    Internal(String),
-
-    #[error(msg_embedded, no_from, non_std)]
-    /// Read/write error in data store
-    Io(IoErrorDetail),
-
-    /// Error serializing key list from settings
-    Serialization(SerializationError),
-
-    /// Error building JSON for config applier
-    Json(serde_json::error::Error),
-
-    /// Error reading default datastore values
-    Toml(toml::de::Error),
-
-    /// Error listing datastore keys
-    ListKeys(walkdir::Error),
-}
-
-type Result<T> = std::result::Result<T, DataStoreError>;
-
-impl From<io::Error> for DataStoreError {
-    fn from(err: io::Error) -> Self {
-        DataStoreError::Io(IoErrorDetail::new("".to_string(), err))
-    }
-}
 
 #[cfg(test)]
 mod test {

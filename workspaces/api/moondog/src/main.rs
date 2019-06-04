@@ -11,8 +11,6 @@ User data can also be retrieved from a file for testing.
 */
 
 #[macro_use]
-extern crate derive_error;
-#[macro_use]
 extern crate log;
 
 use std::fs;
@@ -21,6 +19,7 @@ use std::process;
 
 use reqwest::StatusCode;
 use serde::Serialize;
+use snafu::ResultExt;
 
 // TODO
 // Tests!
@@ -31,26 +30,62 @@ const API_COMMIT_URI: &str = "http://localhost:4242/settings/commit";
 
 type Result<T> = std::result::Result<T, MoondogError>;
 
-/// Potential errors during user data management.
-#[derive(Debug, Error)]
-enum MoondogError {
-    /// Error making network call with reqwest
-    NetworkRequest(reqwest::Error),
-    /// Logger setup error
-    Logger(log::SetLoggerError),
-    /// Error parsing TOML user data
-    TOMLUserDataParse(toml::de::Error),
-    /// Error serializing TOML to JSON
-    TOMLtoJSON(serde_json::error::Error),
-    /// Unable to read user data input file
-    InputFileRead(std::io::Error),
-    #[error(msg_embedded, no_from, non_std)]
-    /// No user data found
-    UserDataNotFound(String),
-    #[error(msg_embedded, no_from, non_std)]
-    /// Unknown error requesting data from IMDS
-    IMDSRequest(String),
+mod error {
+    use reqwest::StatusCode;
+    use snafu::Snafu;
+    use std::io;
+    use std::path::PathBuf;
+
+    /// Potential errors during user data management.
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility = "pub(super)")]
+    pub(super) enum MoondogError {
+        #[snafu(display("Error requesting '{}': {}", uri, source))]
+        UserDataRequest { uri: String, source: reqwest::Error },
+
+        #[snafu(display("Error requesting '{}': {}", uri, source))]
+        UserDataResponse {
+            code: StatusCode,
+            uri: String,
+            source: reqwest::Error,
+        },
+
+        #[snafu(display("Error sending {} to '{}': {}", method, uri, source))]
+        APIRequest {
+            method: &'static str,
+            uri: String,
+            source: reqwest::Error,
+        },
+
+        #[snafu(display("Error updating settings through '{}': {}", uri, source))]
+        UpdatingAPISettings { uri: String, source: reqwest::Error },
+
+        #[snafu(display("Error committing changes to '{}': {}", uri, source))]
+        CommittingAPISettings { uri: String, source: reqwest::Error },
+
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: log::SetLoggerError },
+
+        #[snafu(display("Error parsing TOML user data: {}", source))]
+        TOMLUserDataParse { source: toml::de::Error },
+
+        #[snafu(display("Error serializing TOML to JSON: {}", source))]
+        TOMLtoJSON { source: serde_json::error::Error },
+
+        #[snafu(display("Unable to read user data input file '{}': {}", path.display(), source))]
+        InputFileRead { path: PathBuf, source: io::Error },
+
+        #[snafu(display("No user data found from provider '{}'", provider))]
+        UserDataNotFound {
+            provider: &'static str,
+            location: String,
+        },
+
+        #[snafu(display("Error {} requesting data from IMDS: {}", code, response))]
+        IMDSRequest { code: StatusCode, response: String },
+    }
 }
+use error::MoondogError;
 
 /// UserDataProviders must implement this trait. It retrieves the user data (leaving the complexity
 /// of this to each different provider) and returns an unparsed and not validated "raw" user data.
@@ -71,26 +106,39 @@ impl AwsUserDataProvider {
 impl UserDataProvider for AwsUserDataProvider {
     fn retrieve_user_data(&self) -> Result<RawUserData> {
         debug!("Requesting user data from IMDS");
-        let mut response = reqwest::get(Self::USER_DATA_ENDPOINT)?;
+        let mut response =
+            reqwest::get(Self::USER_DATA_ENDPOINT).context(error::UserDataRequest {
+                uri: Self::USER_DATA_ENDPOINT,
+            })?;
         trace!("IMDS response: {:?}", &response);
 
         match response.status() {
             StatusCode::OK => {
                 info!("User data found");
-                let raw_data = response.text()?;
+                let raw_data = response.text().context(error::UserDataRequest {
+                    uri: Self::USER_DATA_ENDPOINT,
+                })?;
                 trace!("IMDS response text: {:?}", &raw_data);
 
                 Ok(RawUserData::new(raw_data))
             }
+
             // IMDS doesn't even include a user data endpoint
             // if no user data is given, so we get a 404
-            StatusCode::NOT_FOUND => Err(MoondogError::UserDataNotFound(
-                "User data not found in IMDS".to_string(),
-            )),
-            _ => Err(MoondogError::IMDSRequest(format!(
-                "Unknown err: {:?}",
-                response.text()
-            ))),
+            StatusCode::NOT_FOUND => error::UserDataNotFound {
+                provider: "IMDS",
+                location: Self::USER_DATA_ENDPOINT,
+            }
+            .fail(),
+
+            code @ _ => error::IMDSRequest {
+                code: code,
+                response: response.text().context(error::UserDataResponse {
+                    code: code,
+                    uri: Self::USER_DATA_ENDPOINT,
+                })?,
+            }
+            .fail(),
         }
     }
 }
@@ -106,7 +154,10 @@ impl FileUserDataProvider {
 impl UserDataProvider for FileUserDataProvider {
     fn retrieve_user_data(&self) -> Result<RawUserData> {
         debug!("Reading user data input file");
-        let contents = fs::read_to_string(Self::USER_DATA_INPUT_FILE)?;
+        let contents =
+            fs::read_to_string(Self::USER_DATA_INPUT_FILE).context(error::InputFileRead {
+                path: Self::USER_DATA_INPUT_FILE,
+            })?;
         trace!("Raw file contents: {:?}", &contents);
 
         Ok(RawUserData::new(contents))
@@ -146,7 +197,8 @@ impl RawUserData {
     /// values are valid to send to the API.
     fn decode(&self) -> Result<impl Serialize> {
         debug!("Parsing TOML from raw user data");
-        let user_data: toml::Value = toml::from_str(&self.raw_data)?;
+        let user_data: toml::Value =
+            toml::from_str(&self.raw_data).context(error::TOMLUserDataParse)?;
         trace!("TOML user data: {:?}", &user_data);
 
         Ok(user_data)
@@ -161,7 +213,8 @@ fn main() -> Result<()> {
         .timestamp(stderrlog::Timestamp::Millisecond)
         .verbosity(2)
         .color(stderrlog::ColorChoice::Never)
-        .init()?;
+        .init()
+        .context(error::Logger)?;
 
     info!("Moondog started");
 
@@ -175,8 +228,8 @@ fn main() -> Result<()> {
     let raw_user_data = match user_data_provider.retrieve_user_data() {
         Ok(raw_ud) => raw_ud,
         Err(err) => match err {
-            MoondogError::UserDataNotFound(msg) => {
-                warn!("No user data found: {}", &msg);
+            error::MoondogError::UserDataNotFound { .. } => {
+                warn!("{}", err);
                 process::exit(0)
             }
             _ => {
@@ -192,7 +245,7 @@ fn main() -> Result<()> {
 
     // Serialize the TOML Value into JSON
     info!("Serializing user data to JSON for API request");
-    let request_body = serde_json::to_string(&user_data)?;
+    let request_body = serde_json::to_string(&user_data).context(error::TOMLtoJSON)?;
     trace!("API request body: {:?}", request_body);
 
     // Create an HTTP client and PATCH the JSON
@@ -201,16 +254,30 @@ fn main() -> Result<()> {
     client
         .patch(API_SETTINGS_URI)
         .body(request_body)
-        .send()?
-        .error_for_status()?;
+        .send()
+        .context(error::APIRequest {
+            method: "PATCH",
+            uri: API_SETTINGS_URI,
+        })?
+        .error_for_status()
+        .context(error::UpdatingAPISettings {
+            uri: API_SETTINGS_URI,
+        })?;
 
     // POST to /commit to actually make the changes
     info!("POST-ing to /commit to finalize the changes");
     client
         .post(API_COMMIT_URI)
         .body("")
-        .send()?
-        .error_for_status()?;
+        .send()
+        .context(error::APIRequest {
+            method: "POST",
+            uri: API_COMMIT_URI,
+        })?
+        .error_for_status()
+        .context(error::CommittingAPISettings {
+            uri: API_COMMIT_URI,
+        })?;
 
     Ok(())
 }

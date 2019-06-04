@@ -1,3 +1,4 @@
+use snafu::ResultExt;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
@@ -6,7 +7,7 @@ use std::path::PathBuf;
 use itertools::join;
 
 use crate::client::ReqwestClientExt;
-use crate::{Result, TBSError, API_CONFIGURATION_URI};
+use crate::{error, Result, API_CONFIGURATION_URI};
 
 use apiserver::model;
 
@@ -61,7 +62,9 @@ pub fn render_config_files(
     for (name, metadata) in config_files {
         debug!("Rendering {}", &name);
 
-        let rendered = registry.render(&name, &wrapped_template_keys)?;
+        let rendered = registry
+            .render(&name, &wrapped_template_keys)
+            .context(error::TemplateRender { template: name })?;
         rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
     }
     trace!("Rendered configs: {:?}", &rendered_configs);
@@ -96,10 +99,16 @@ impl RenderedConfigFile {
     /// Writes the rendered template at the proper location
     fn write_to_disk(&self) -> Result<()> {
         if let Some(dirname) = self.path.parent() {
-            fs::create_dir_all(dirname).map_err(TBSError::from)?;
+            fs::create_dir_all(dirname).context(error::TemplateWrite {
+                path: dirname,
+                pathtype: "directory",
+            })?;
         };
 
-        fs::write(&self.path, self.rendered.as_bytes()).map_err(TBSError::from)
+        fs::write(&self.path, self.rendered.as_bytes()).context(error::TemplateWrite {
+            path: &self.path,
+            pathtype: "file",
+        })
     }
 }
 
