@@ -1,0 +1,176 @@
+openapi: "3.0.2"
+info:
+  version: "0.1.0"
+  title: "Thar, the Client"
+  description: "Client for Thar, the API"
+  # TODO Get the right license in here
+  license:
+    name: ""
+    url: ""
+
+servers:
+- url: http://localhost:{port}
+  description: The production API server
+  variables:
+    port:
+      default: '4242'
+
+paths:
+  /settings:
+    get:
+      summary: "Get current settings"
+      operationId: "get_settings"
+      parameters:
+        - in: query
+          name: keys
+          description: "Specific keys to query. Takes precedent over 'prefix' if both query parameters are supplied"
+          schema:
+            type: array
+            items:
+              type: string
+          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          style: form
+          explode: false
+          required: false
+        - in: query
+          name: prefix
+          description: "Specific key prefix to query. This parameter will be ignored if 'keys' is also supplied"
+          schema:
+            type: string
+          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          style: form
+          explode: false
+          required: false
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                $ref: "Settings"
+        500:
+          description: "Server error"
+    patch:
+      summary: "Update settings"
+      operationId: "set_settings"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "Settings"
+      responses:
+        204:
+          description: "Settings successfully staged for update"
+        400:
+          description: "Invalid body"
+        500:
+          description: "Server error"
+
+  /settings/pending:
+    get:
+      summary: "Get pending settings"
+      operationId: "get_pending_settings"
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                $ref: "Settings"
+        500:
+          description: "Server error"
+
+  /settings/commit:
+    post:
+      summary: "Commit pending settings"
+      operationId: "commit_settings"
+      responses:
+        204:
+          description: "Successful settings update"
+        500:
+          description: "Server error"
+
+  /metadata/affected-services:
+    get:
+      summary: "Get affected services"
+      operationId: "get_affected_services"
+      parameters:
+        - in: query
+          name: keys
+          description: "Specific keys to query"
+          schema:
+            type: array
+            items:
+              type: string
+          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          style: form
+          explode: false
+          required: true
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+        400:
+          description: "Missing required query parameter: 'keys'"
+        500:
+          description: "Server error"
+
+  /services:
+    get:
+      summary: "Get service data"
+      operationId: "get_services"
+      parameters:
+        - in: query
+          name: names
+          description: "Specific services to query"
+          schema:
+            type: array
+            items:
+              type: string
+          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          style: form
+          explode: false
+          required: false
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                $ref: "Services"
+        500:
+          description: "Server error"
+
+  /configuration-files:
+    get:
+      summary: "Get configuration file data"
+      operationId: "get_config_files"
+      parameters:
+        - in: query
+          name: names
+          description: "Specific configuration files to query"
+          schema:
+            type: array
+            items:
+              type: string
+          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          style: form
+          explode: false
+          required: false
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                $ref: "ConfigurationFiles"
+        500:
+          description: "Server error"
