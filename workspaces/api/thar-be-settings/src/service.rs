@@ -1,3 +1,4 @@
+use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::process;
@@ -5,7 +6,7 @@ use std::process;
 use itertools::join;
 
 use crate::client::ReqwestClientExt;
-use crate::{Result, TBSError, API_METADATA_URI, API_SERVICES_URI};
+use crate::{error, Result, API_METADATA_URI, API_SERVICES_URI};
 use apiserver::model;
 
 /// Wrapper for the multiple functions needed to go from
@@ -102,9 +103,11 @@ impl ServiceRestart for model::Service {
             // and the rest are args.
             debug!("Restart command: {:?}", &restart_command);
             let mut command_strings = restart_command.split(' ');
-            let command = command_strings.next().ok_or_else(|| {
-                TBSError::InvalidRestartCommand("Invalid or malformed restart command".to_string())
-            })?;
+            let command = command_strings
+                .next()
+                .context(error::InvalidRestartCommand {
+                    command: restart_command.as_str(),
+                })?;
             trace!("Command: {}", &command);
             trace!("Args: {:?}", &command_strings);
 
@@ -112,7 +115,9 @@ impl ServiceRestart for model::Service {
             let output = process::Command::new(command)
                 .args(command_strings)
                 .output()
-                .map_err(TBSError::RestartCommand)?;
+                .context(error::FailedRestartCommand {
+                    command: restart_command.as_str(),
+                })?;
             trace!("Command stdout: {:?}", &output.stdout);
             trace!("Command stderr: {:?}", &output.stderr);
         }

@@ -67,8 +67,6 @@ Here are some examples:
 */
 
 #[macro_use]
-extern crate derive_error;
-#[macro_use]
 extern crate log;
 #[macro_use]
 extern crate rouille;
@@ -78,28 +76,3 @@ pub mod model;
 pub(crate) mod server;
 
 pub use server::handle_request;
-
-use std::io;
-
-/// IoErrorDetail gives us more control over the user-visible message when an io error occurs.
-/// For example, instead of just "No such file or directory", we can add a prefix that describes
-/// the key that we couldn't retrieve.
-#[derive(Debug)]
-pub struct IoErrorDetail {
-    msg: String,
-}
-
-impl IoErrorDetail {
-    fn new(msg: String, err: io::Error) -> IoErrorDetail {
-        let msg = if msg.is_empty() {
-            format!("{}", err)
-        } else {
-            format!("{} - {}", msg, err)
-        };
-        IoErrorDetail { msg }
-    }
-
-    fn as_str(&self) -> &str {
-        &self.msg
-    }
-}

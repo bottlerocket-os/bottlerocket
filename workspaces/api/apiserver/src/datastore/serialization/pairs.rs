@@ -8,10 +8,11 @@
 //! to be sure we support the various forms of input/output we care about.
 
 use serde::{ser, Serialize};
+use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
 
-use super::{MapKeySerializer, Result, SerializationError};
-use crate::datastore::{serialize_scalar, KEY_SEPARATOR};
+use super::{error, Error, MapKeySerializer, Result};
+use crate::datastore::{serialize_scalar, ScalarError, KEY_SEPARATOR};
 
 /// This is the primary interface to our serialization.  We turn anything implementing Serialize
 /// into pairs of datastore keys and serialized values.  For example, a nested struct like this:
@@ -70,19 +71,17 @@ impl<'a> Serializer<'a> {
 /// This helps us handle the cases where we have to have an existing prefix in order to output a
 /// value.  It creates an explanatory error if the given prefix is None.
 fn expect_prefix(maybe_prefix: Option<String>, value: &str) -> Result<String> {
-    maybe_prefix.ok_or_else(|| {
-        SerializationError::Internal(format!(
-            "Tried to output concrete value without prefix - '{}'",
-            value
-        ))
-    })
+    maybe_prefix.context(error::MissingPrefix { value })
 }
 
 /// Serializes a concrete value and saves it to the output, assuming we have a prefix.
 macro_rules! concrete_output {
     ($self:expr, $value:expr) => {
         trace!("Serializing scalar at prefix {:?}", $self.prefix);
-        let value = serialize_scalar::<_, SerializationError>(&$value)?;
+        let value =
+            serialize_scalar::<_, ScalarError>(&$value).with_context(|| error::Serialization {
+                given: format!("concrete value '{}'", $value),
+            })?;
         let prefix = expect_prefix($self.prefix, &value)?;
         $self.output.insert(prefix, value);
         return Ok(());
@@ -91,23 +90,21 @@ macro_rules! concrete_output {
 
 /// Several types are invalid for our serialization so we commonly need to return an error.  This
 /// simplifies the creation of that error, with a customizable message for the type.
-fn bad_value(msg: &str) -> Result<()> {
-    Err(SerializationError::InvalidValue(
-        msg.to_string() + "s not allowed by Serializer",
-    ))
+fn bad_type<T>(typename: &str) -> Result<T> {
+    error::InvalidType { typename }.fail()
 }
 
 #[rustfmt::skip]
 impl<'a> ser::Serializer for Serializer<'a> {
     type Ok = ();
-    type Error = SerializationError;
+    type Error = Error;
 
     // See the docs on Serializer for reasoning about this.
     type SerializeSeq = FlatSerializer<'a>;
-    type SerializeTuple = ser::Impossible<(), SerializationError>;
-    type SerializeTupleStruct = ser::Impossible<(), SerializationError>;
-    type SerializeTupleVariant = ser::Impossible<(), SerializationError>;
-    type SerializeStructVariant = ser::Impossible<(), SerializationError>;
+    type SerializeTuple = ser::Impossible<(), Error>;
+    type SerializeTupleStruct = ser::Impossible<(), Error>;
+    type SerializeTupleVariant = ser::Impossible<(), Error>;
+    type SerializeStructVariant = ser::Impossible<(), Error>;
     type SerializeMap = Self;
     type SerializeStruct = Self;
 
@@ -151,33 +148,39 @@ impl<'a> ser::Serializer for Serializer<'a> {
 
     // Types we can't (or don't want to) represent.
     // Can't fit u64 into signed 64-bit range.
-    fn serialize_u64(self, _v: u64) -> Result<()> { bad_value("u64") }
+    fn serialize_u64(self, _v: u64) -> Result<()> { bad_type("u64") }
     // No char type, and using String would lose the distinction you were trying to make by
     // using a char.
-    fn serialize_char(self, _v: char) -> Result<()> { bad_value("char") }
+    fn serialize_char(self, _v: char) -> Result<()> { bad_type("char") }
     // No binary type; could use base64 or similar if we implement our own deserialization
     // that understands it.
-    fn serialize_bytes(self, _v: &[u8]) -> Result<()> { bad_value("bytes") }
+    fn serialize_bytes(self, _v: &[u8]) -> Result<()> { bad_type("bytes") }
     // We just don't expect to need these, and we doesn't have a great way to represent them.
-    fn serialize_unit(self) -> Result<()> { bad_value("unit") }
-    fn serialize_unit_struct(self, _name: &'static str) -> Result<()> { bad_value("unit struct") }
-    fn serialize_unit_variant(self, _name: &'static str, _variant_index: u32, _variant: &'static str) -> Result<()> { bad_value("unit variant") }
-    fn serialize_newtype_struct<T>(self, _name: &'static str, _value: &T) -> Result<()> where T: ?Sized + Serialize { bad_value("newtype struct") }
-    fn serialize_newtype_variant<T>(self, _name: &'static str, _variant_index: u32, _variant: &'static str, _value: &T) -> Result<()> where T: ?Sized + Serialize { bad_value("newtype variant") }
+    fn serialize_unit(self) -> Result<()> { bad_type("unit") }
+    fn serialize_unit_struct(self, _name: &'static str) -> Result<()> { bad_type("unit struct") }
+    fn serialize_unit_variant(self, _name: &'static str, _variant_index: u32, _variant: &'static str) -> Result<()> {
+        bad_type("unit variant")
+    }
+    fn serialize_newtype_struct<T>(self, _name: &'static str, _value: &T) -> Result<()> where T: ?Sized + Serialize {
+        bad_type("newtype struct")
+    }
+    fn serialize_newtype_variant<T>(self, _name: &'static str, _variant_index: u32, _variant: &'static str, _value: &T) -> Result<()> where T: ?Sized + Serialize {
+        bad_type("newtype variant")
+    }
 
     // We don't expect to need tuples, and we don't have a great way to represent them,
     // distinct from lists.
     fn serialize_tuple(self, _len: usize) -> Result<Self::SerializeTuple> {
-        Err(SerializationError::InvalidValue("tuples not allowed".to_string()))
+        bad_type("tuple")
     }
     fn serialize_tuple_struct(self, _name: &'static str, _len: usize) -> Result<Self::SerializeTupleStruct> {
-        Err(SerializationError::InvalidValue("tuple structs not allowed".to_string()))
+        bad_type("tuple struct")
     }
     fn serialize_tuple_variant(self, _name: &'static str, _variant_index: u32, _variant: &'static str, _len: usize) -> Result<Self::SerializeTupleVariant> {
-        Err(SerializationError::InvalidValue("tuple variants not allowed".to_string()))
+        bad_type("tuple variant")
     }
     fn serialize_struct_variant(self, _name: &'static str, _variant_index: u32, _variant: &'static str, _len: usize) -> Result<Self::SerializeStructVariant> {
-        Err(SerializationError::InvalidValue("struct variants not allowed".to_string()))
+        bad_type("struct variant")
     }
 
 }
@@ -205,7 +208,7 @@ fn dotted_prefix(old_prefix: Option<String>, key: String) -> String {
 /// knowing that serde will serialize keys and values in that order.
 impl<'a> ser::SerializeMap for Serializer<'a> {
     type Ok = ();
-    type Error = SerializationError;
+    type Error = Error;
 
     fn serialize_key<T>(&mut self, key: &T) -> Result<()>
     where
@@ -232,9 +235,10 @@ impl<'a> ser::SerializeMap for Serializer<'a> {
                 );
                 value.serialize(Serializer::new(self.output, Some(key)))
             }
-            None => Err(SerializationError::Internal(
-                "Attempted to serialize value without key".to_string(),
-            )),
+            None => error::Internal {
+                msg: "Attempted to serialize value without key",
+            }
+            .fail(),
         }
     }
 
@@ -249,7 +253,7 @@ impl<'a> ser::SerializeMap for Serializer<'a> {
 /// already pointed to by some name.)
 impl<'a> ser::SerializeStruct for Serializer<'a> {
     type Ok = ();
-    type Error = SerializationError;
+    type Error = Error;
 
     fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<()>
     where
@@ -300,14 +304,17 @@ impl<'a> FlatSerializer<'a> {
 
 impl<'a> ser::SerializeSeq for FlatSerializer<'a> {
     type Ok = ();
-    type Error = SerializationError;
+    type Error = Error;
 
     fn serialize_element<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
         trace!("Serializing element of list");
-        self.list.push(serde_json::to_string(value)?);
+        self.list
+            .push(serde_json::to_string(value).context(error::Serialization {
+                given: "list element",
+            })?);
         Ok(())
     }
 
@@ -315,12 +322,16 @@ impl<'a> ser::SerializeSeq for FlatSerializer<'a> {
         let mut originals: Vec<serde_json::Value> = Vec::new();
         trace!("Deserializing elements of list");
         for original in self.list {
-            originals.push(original.parse()?);
+            originals.push(original.parse().context(error::Deserialization {
+                given: "list element",
+            })?);
         }
 
         trace!("Serializing list");
-        self.output
-            .insert(self.prefix, serde_json::to_string(&originals)?);
+        self.output.insert(
+            self.prefix,
+            serde_json::to_string(&originals).context(error::Serialization { given: "list" })?,
+        );
 
         Ok(())
     }

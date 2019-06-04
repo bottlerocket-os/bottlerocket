@@ -3,21 +3,19 @@
 use serde::Serialize;
 use std::error::Error;
 
-/// This is rouille's ErrJson, except with err.description replaced with a Display of err;
-/// description() is deprecated and produces unhelpful strings.  (It still uses the deprecated
-/// cause() because its replacement, source(), doesn't return the underlying error properly.)
+/// This is like rouille's ErrJson, in that we use it to serialize errors for a rouille Response,
+/// but has these changes:
+/// * err.description replaced with a Display of err - description() is deprecated and produces
+/// unhelpful strings
+/// * 'cause' removed, because we include source error information in the description, via snafu.
 #[derive(Serialize)]
 pub(crate) struct ErrJson {
     description: String,
-    cause: Option<Box<ErrJson>>,
 }
 impl<'a> ErrJson {
     pub(crate) fn from_err<E: ?Sized + Error>(err: &'a E) -> ErrJson {
-        #[allow(deprecated)] // cause(); source returns nothing?
-        let cause = err.cause().map(ErrJson::from_err).map(Box::new);
         ErrJson {
             description: format!("{}", err),
-            cause,
         }
     }
 }

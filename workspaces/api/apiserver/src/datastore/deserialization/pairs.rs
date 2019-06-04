@@ -33,11 +33,12 @@
 
 use serde::de::{value::MapDeserializer, IntoDeserializer, Visitor};
 use serde::{forward_to_deserialize_any, Deserialize};
+use snafu::ResultExt;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
-use super::{DeserializationError, Result};
+use super::{error, Error, Result};
 use crate::datastore::{deserializer_for_scalar, ScalarDeserializer, KEY_SEPARATOR};
 
 /// This is the primary interface to deserialization.  We turn the input map into the requested
@@ -115,7 +116,7 @@ where
     S2: AsRef<str>,
     BH: std::hash::BuildHasher,
 {
-    type Error = DeserializationError;
+    type Error = Error;
 
     /// Here we either pass off a scalar value to actually turn into a Rust data type, or
     /// recursively call our CompoundDeserializer to handle nested structure.
@@ -128,7 +129,7 @@ where
                 trace!("Handing off to scalar deserializer for deserialize_any");
                 scalar_deserializer
                     .deserialize_any(visitor)
-                    .map_err(Into::into)
+                    .context(error::DeserializeScalar)
             }
             ValueDeserializer::Compound(compound_deserializer) => {
                 compound_deserializer.deserialize_map(visitor)
@@ -147,7 +148,7 @@ where
                 trace!("Handing off to scalar deserializer for deserialize_option");
                 scalar_deserializer
                     .deserialize_option(visitor)
-                    .map_err(Into::into)
+                    .context(error::DeserializeScalar)
             }
             ValueDeserializer::Compound(compound_deserializer) => {
                 compound_deserializer.deserialize_option(visitor)
@@ -162,7 +163,7 @@ where
     }
 }
 
-impl<'de, S1, S2, BH> IntoDeserializer<'de, DeserializationError>
+impl<'de, S1, S2, BH> IntoDeserializer<'de, Error>
     for ValueDeserializer<'de, S1, S2, BH>
 where
     S1: Borrow<str> + Eq + Hash,
@@ -203,9 +204,7 @@ where
 }
 
 fn bad_root<T>() -> Result<T> {
-    Err(DeserializationError::Message(
-        "Datastore deserializer must be used on a struct, or you must give a prefix".to_string(),
-    ))
+    error::BadRoot.fail()
 }
 
 impl<'de, S1, S2, BH> serde::de::Deserializer<'de> for CompoundDeserializer<'de, S1, S2, BH>
@@ -214,7 +213,7 @@ where
     S2: AsRef<str>,
     BH: std::hash::BuildHasher,
 {
-    type Error = DeserializationError;
+    type Error = Error;
 
     fn deserialize_struct<V>(
         mut self,
@@ -366,7 +365,7 @@ where
 #[cfg(test)]
 mod test {
     use super::{from_map, from_map_with_prefix};
-    use crate::datastore::deserialization::DeserializationError;
+    use crate::datastore::deserialization::Error;
 
     use maplit::hashmap;
     use serde::Deserialize;
@@ -437,7 +436,7 @@ mod test {
 
     #[test]
     fn map_doesnt_work_at_root() {
-        let a: Result<HashMap<String, String>, DeserializationError> = from_map(&hashmap! {
+        let a: Result<HashMap<String, String>, Error> = from_map(&hashmap! {
             "a".to_string() => "\"it's a\"".to_string(),
             "b".to_string() => "\"it's b\"".to_string(),
         });
@@ -465,7 +464,7 @@ mod test {
 
     #[test]
     fn disallowed_data_type() {
-        let bad: Result<Bad, DeserializationError> = from_map(&hashmap! {
+        let bad: Result<Bad, Error> = from_map(&hashmap! {
             "id".to_string() => "42".to_string(),
         });
         bad.unwrap_err();

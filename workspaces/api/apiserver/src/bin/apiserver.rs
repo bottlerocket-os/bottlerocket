@@ -4,6 +4,7 @@
 extern crate log;
 
 use log::Level::Info;
+use snafu::ResultExt;
 use std::env;
 use std::error::Error;
 use std::path::Path;
@@ -14,6 +15,17 @@ use apiserver::handle_request;
 
 // FIXME temporary port
 const DEFAULT_BIND_ADDR: &str = "localhost:4242";
+
+mod error {
+    use snafu::Snafu;
+
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility = "pub(crate)")]
+    pub(crate) enum Error {
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: log::SetLoggerError },
+    }
+}
 
 /// Stores user-supplied arguments.
 struct Args {
@@ -95,7 +107,8 @@ fn main() -> Result<(), Box<Error>> {
         .timestamp(stderrlog::Timestamp::Millisecond)
         .verbosity(args.verbosity)
         .color(args.color)
-        .init()?;
+        .init()
+        .context(error::Logger)?;
 
     // Create default datastore if it doesn't exist
     if !Path::new(&args.datastore_path).exists() {
