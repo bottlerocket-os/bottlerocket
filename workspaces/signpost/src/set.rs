@@ -1,24 +1,24 @@
 use std::fmt;
 use std::ops::Not;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
-pub(crate) struct PartitionSet<T> {
+pub(crate) struct PartitionSet {
     /// The partition containing the kernel and GRUB configuration for this partition set.
-    pub(crate) boot: T,
+    pub(crate) boot: PathBuf,
     /// The partition containing the root filesystem for this partition set.
-    pub(crate) root: T,
+    pub(crate) root: PathBuf,
     /// The partition containing the dm-verity hashes for this partition set.
-    pub(crate) hash: T,
+    pub(crate) hash: PathBuf,
 }
 
-impl<T: PartialEq> PartitionSet<T> {
-    pub(crate) fn contains(&self, device: &T) -> bool {
-        &self.boot == device || &self.root == device || &self.hash == device
+impl PartitionSet {
+    pub(crate) fn contains<P: AsRef<Path>>(&self, device: P) -> bool {
+        self.boot == device.as_ref() || self.root == device.as_ref() || self.hash == device.as_ref()
     }
 }
 
-impl fmt::Display for PartitionSet<&Path> {
+impl fmt::Display for PartitionSet {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
