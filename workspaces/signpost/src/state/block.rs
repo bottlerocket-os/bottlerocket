@@ -58,6 +58,8 @@ impl BlockDevice {
     }
 
     /// If this device is a partition, get the disk it belongs to.
+    ///
+    /// This fails if the device is not a partition.
     #[allow(clippy::identity_conversion)] // https://github.com/rust-lang/rust-clippy/issues/4133
     pub(crate) fn disk(&self) -> Result<Self, Error> {
         for entry in fs::read_dir("/sys/block").context(error::ReadDir { path: "/sys/block" })? {
@@ -74,6 +76,9 @@ impl BlockDevice {
     }
 
     /// If this device is a disk, get one of its partitions by number.
+    ///
+    /// This fails if the device is not a disk, and returns `Ok(None)` if this device is a disk,
+    /// but there is no partition of that number.
     #[allow(clippy::identity_conversion)] // https://github.com/rust-lang/rust-clippy/issues/4133
     pub(crate) fn partition(&self, part_num: u32) -> Result<Option<Self>, Error> {
         let sys_path = self.sys_path();
