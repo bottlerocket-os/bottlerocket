@@ -14,14 +14,19 @@ pub enum Error {
     #[snafu(display("Error deserializing scalar value: {}", source))]
     DeserializeScalar { source: ScalarError },
 
-    #[snafu(display("Data store deserializer must be used on a struct, or you must give a prefix"))]
-    BadRoot { },
+    #[snafu(display(
+        "Data store deserializer must be used on a struct, or you must give a prefix"
+    ))]
+    BadRoot {},
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl de::Error for Error {
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
-        Message { msg: msg.to_string() }.into_error(NoSource)
+        Message {
+            msg: msg.to_string(),
+        }
+        .into_error(NoSource)
     }
 }

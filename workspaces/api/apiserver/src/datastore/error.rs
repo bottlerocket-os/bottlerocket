@@ -24,10 +24,7 @@ pub enum Error {
     },
 
     #[snafu(display("Error serializing scalar {}: {} ", given, source))]
-    SerializeScalar {
-        given: String,
-        source: ScalarError,
-    },
+    SerializeScalar { given: String, source: ScalarError },
 
     #[snafu(display("Key would traverse outside data store: {}", name))]
     PathTraversal { name: String },
@@ -51,13 +48,14 @@ pub enum Error {
     ListKeys { source: walkdir::Error },
 
     #[snafu(display("Listed key '{}' not found on disk", key))]
-    ListedKeyNotPresent {
-        key: String,
-    },
+    ListedKeyNotPresent { key: String },
 
     // Showing the full regex in an error is ugly because of ?x and the regex's formatting;
     // see datastore::key::{DATA_KEY,METADATA_KEY}
-    #[snafu(display("Key name '{}' has invalid format, should be 1 or more dot-separated [a-zA-Z0-9_-]+", name))]
+    #[snafu(display(
+        "Key name '{}' has invalid format, should be 1 or more dot-separated [a-zA-Z0-9_-]+",
+        name
+    ))]
     InvalidKey { name: String },
 
     #[snafu(display("Key name beyond maximum length {}: {}", name, max))]

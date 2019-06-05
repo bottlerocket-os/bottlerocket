@@ -60,7 +60,9 @@ fn get_body(request: &Request) -> Result<Option<String>> {
 
 /// Helper to make an error when a required body is empty.
 fn expect_body(maybe_body: Option<String>) -> Result<String> {
-    maybe_body.context(error::MissingInput { input: "request body" })
+    maybe_body.context(error::MissingInput {
+        input: "request body",
+    })
 }
 
 /// This is the primary interface of the module, intended to be spawned by rouille when it

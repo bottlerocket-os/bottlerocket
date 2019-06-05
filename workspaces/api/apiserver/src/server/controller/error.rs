@@ -9,14 +9,10 @@ pub(crate) enum Error {
     MissingData { prefix: String },
 
     #[snafu(display("Found no '{}' in datastore", requested))]
-    ListKeys {
-        requested: String,
-    },
+    ListKeys { requested: String },
 
     #[snafu(display("Listed key '{}' not found on disk", key))]
-    ListedKeyNotPresent {
-        key: String,
-    },
+    ListedKeyNotPresent { key: String },
 
     #[snafu(display("Data store error during {}: {}", op, source))]
     DataStore {
