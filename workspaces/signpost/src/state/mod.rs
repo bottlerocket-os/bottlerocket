@@ -129,6 +129,7 @@ impl State {
     }
 
     pub(crate) fn inactive(&self) -> SetSelect {
+        // resolve opposing set member
         !self.active
     }
 
