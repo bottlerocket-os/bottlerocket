@@ -1,3 +1,4 @@
+use crate::gptprio::GptPrio;
 use crate::set::PartitionSet;
 use snafu::Snafu;
 use std::ffi::OsString;
@@ -23,8 +24,8 @@ pub(crate) enum Error {
     #[snafu(display("Failed to write GPT onto device {}: {}", device.display(), source))]
     GPTWrite { device: PathBuf, source: GPTError },
 
-    #[snafu(display("Inactive partition is not valid to roll back to"))]
-    InactiveInvalidRollback,
+    #[snafu(display("Inactive partition is not valid to roll back to ({})", flags))]
+    InactiveInvalidRollback { flags: GptPrio },
 
     #[snafu(display(
         "Path {} is a link to {} which does not have a final component (expected {})",

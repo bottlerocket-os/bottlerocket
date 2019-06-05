@@ -192,7 +192,10 @@ impl State {
     pub(crate) fn rollback_to_inactive(&mut self) -> Result<(), Error> {
         let mut inactive_flags = self.gptprio(self.inactive());
         if inactive_flags.priority() == 0 {
-            return error::InactiveInvalidRollback.fail();
+            return error::InactiveInvalidRollback {
+                flags: inactive_flags,
+            }
+            .fail();
         }
         inactive_flags.set_priority(2);
         self.set_gptprio(self.inactive(), inactive_flags);
