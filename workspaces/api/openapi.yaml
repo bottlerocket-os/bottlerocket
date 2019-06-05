@@ -1,8 +1,8 @@
 openapi: "3.0.2"
 info:
   version: "0.1.0"
-  title: "Thar, the Client"
-  description: "Client for Thar, the API"
+  title: "Thar, the API"
+  description: "The API for Thar, the OS"
   # TODO Get the right license in here
   license:
     name: ""
@@ -23,7 +23,7 @@ paths:
       parameters:
         - in: query
           name: keys
-          description: "Specific keys to query. Takes precedent over 'prefix' if both query parameters are supplied"
+          description: "Specific keys to query. Takes precedence over 'prefix' if both query parameters are supplied"
           schema:
             type: array
             items:
@@ -37,9 +37,6 @@ paths:
           description: "Specific key prefix to query. This parameter will be ignored if 'keys' is also supplied"
           schema:
             type: string
-          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
-          style: form
-          explode: false
           required: false
       responses:
         200:
@@ -103,7 +100,7 @@ paths:
             type: array
             items:
               type: string
-          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          # `style: form` and `explode: false` format parameters as such:  /metadata/affected-services?keys=foo,bar,baz
           style: form
           explode: false
           required: true
@@ -112,6 +109,8 @@ paths:
           description: "Successful request"
           content:
             application/json:
+              # The response is a hashmap of string to array of strings. Example:
+              # { "foo": [ "bar", "baz" ] }
               schema:
                 type: object
                 additionalProperties:
@@ -135,7 +134,7 @@ paths:
             type: array
             items:
               type: string
-          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          # `style: form` and `explode: false` format parameters as such:  /services?names=foo,bar,baz
           style: form
           explode: false
           required: false
