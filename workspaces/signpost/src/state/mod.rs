@@ -201,14 +201,16 @@ impl State {
         self.set_gptprio(self.active(), active_flags);
     }
 
-    /// Deprioritizes the active partition, but **does not write to the disk**.
+    /// Prioritizes the inactive partition, but **does not write to the disk**.
     ///
-    /// * Sets the inactive partition's priority to 2 and the active partition's priority to 1.
-    /// * Does not modify the inactive partition's tries left.
-    /// * Does not modify whether the inactive partition successfully booted.
+    /// Returns an error if the inactive partition is not bootable (it doesn't have a prior
+    /// successful boot and doesn't have the priority/tries_left that would make it safe to try).
+    ///
+    /// Only modifies partition priorities, not priority/tries_left, because we're not claiming to
+    /// know anything about whether the inactive partition will boot.
     pub(crate) fn rollback_to_inactive(&mut self) -> Result<(), Error> {
         let mut inactive_flags = self.gptprio(self.inactive());
-        if inactive_flags.priority() == 0 {
+        if !inactive_flags.will_boot() {
             return error::InactiveInvalidRollback {
                 flags: inactive_flags,
             }
