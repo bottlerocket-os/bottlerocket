@@ -1,6 +1,6 @@
 # signpost
 
-si**g**n**p**os**t** is Thar's utility for modifying GPT priority bits on its OS disk.
+si**g**n**p**os**t** is a utility for modifying Chrome OS-style GPT priority bits on an OS disk.
 
 ```plain
 USAGE:
@@ -19,19 +19,19 @@ SUBCOMMANDS:
 
 The Thar OS disk has two partition sets, each containing three partitions:
 
-* the *boot* partition, containing the `vmlinuz` Linux kernel image and the GRUB configuration. The kernel command line contains the root of the dm-verity hash tree.
-* the *root* partition, containing the read-only `/` filesystem.
-* the *hash* partition, containing the full dm-verity hash tree for the root partition.
+* the *boot* partition, containing the `vmlinuz` Linux kernel image and the GRUB configuration;
+* the *root* partition, containing the read-only `/` filesystem; and
+* the *hash* partition, containing the full dm-verity hash tree for the root partition;
 
-The Thar boot partition uses the same GPT partition attribute flags as Chrome OS, which are [used by GRUB to select the partition to read a grub.cfg from](../../packages/grub/gpt.patch):
+The Thar boot partition uses the same GPT partition attribute flags as Chrome OS, which are used by GRUB to select the partition from which to read a `grub.cfg`:
 
-| Bits | Content |
-|-|-|
-| 63-57 | Unused |
-| 56 | Successful boot flag |
-| 55-52 | Tries remaining |
-| 51-48 | Priority |
-| 47-0 | Reserved by GPT specification |
+| Bits  | Content                       |
+|-------|-------------------------------|
+| 63-57 | Unused                        |
+| 56    | Successful boot flag          |
+| 55-52 | Tries remaining               |
+| 51-48 | Priority                      |
+| 47-0  | Reserved by GPT specification |
 
 The boot partition GRUB selects contains a grub.cfg which references the root and hash partitions by offset, thus selecting all three partitions of a set.
 
