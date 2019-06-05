@@ -92,7 +92,11 @@ impl State {
         } else if sets[1].contains(&active_partition) {
             SetSelect::B
         } else {
-            return error::ActiveNotInSet.fail();
+            return error::ActiveNotInSet {
+                active_partition,
+                sets,
+            }
+            .fail();
         };
 
         Ok(Self {
