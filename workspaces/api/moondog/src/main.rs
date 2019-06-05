@@ -43,7 +43,7 @@ mod error {
         #[snafu(display("Error requesting '{}': {}", uri, source))]
         UserDataRequest { uri: String, source: reqwest::Error },
 
-        #[snafu(display("Error requesting '{}': {}", uri, source))]
+        #[snafu(display("Error {} requesting '{}': {}", code, uri, source))]
         UserDataResponse {
             code: StatusCode,
             uri: String,
