@@ -212,7 +212,6 @@ impl State {
         self.table
             .write_into(
                 &mut OpenOptions::new()
-                    .read(true)
                     .write(true)
                     .open(self.os_disk())
                     .context(error::Open {
