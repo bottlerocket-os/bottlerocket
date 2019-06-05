@@ -20,7 +20,7 @@ const THAR_HASH: [u8; 16] = uuid_to_guid(hex!("598f10af c955 4456 6a99 7720068a6
 #[derive(Debug, Clone)]
 pub(crate) struct State {
     os_disk: PathBuf,
-    sets: [PartitionSet<PathBuf>; 2],
+    sets: [PartitionSet; 2],
     boot_nums: [u32; 2],
     table: GPT,
     active: SetSelect,
@@ -108,13 +108,8 @@ impl State {
         &self.os_disk
     }
 
-    pub(crate) fn set(&self, select: SetSelect) -> PartitionSet<&Path> {
-        let set = &self.sets[select.idx()];
-        PartitionSet {
-            boot: &set.boot,
-            root: &set.root,
-            hash: &set.hash,
-        }
+    pub(crate) fn set(&self, select: SetSelect) -> &PartitionSet {
+        &self.sets[select.idx()]
     }
 
     fn gptprio(&self, select: SetSelect) -> GptPrio {
