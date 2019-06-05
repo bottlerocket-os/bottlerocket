@@ -62,6 +62,7 @@ impl BlockDevice {
     /// This fails if the device is not a partition.
     #[allow(clippy::identity_conversion)] // https://github.com/rust-lang/rust-clippy/issues/4133
     pub(crate) fn disk(&self) -> Result<Self, Error> {
+        // Globbing for /sys/block/*/{self.device_name}/dev
         for entry in fs::read_dir("/sys/block").context(error::ReadDir { path: "/sys/block" })? {
             let entry = entry.context(error::ReadDir { path: "/sys/block" })?;
             if entry.path().join(&self.device_name).exists() {
@@ -82,6 +83,7 @@ impl BlockDevice {
     #[allow(clippy::identity_conversion)] // https://github.com/rust-lang/rust-clippy/issues/4133
     pub(crate) fn partition(&self, part_num: u32) -> Result<Option<Self>, Error> {
         let sys_path = self.sys_path();
+        // Globbing for /sys/dev/block/{major}:{minor}/*/partition
         for entry in fs::read_dir(&sys_path).context(error::ReadDir { path: &sys_path })? {
             let entry = entry.context(error::ReadDir { path: &sys_path })?;
             if entry.path().is_dir() {
