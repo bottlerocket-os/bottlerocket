@@ -1,0 +1,46 @@
+{{>partial_header}}
+{{#models}}
+{{#model}}
+{{#description}}
+/// {{{classname}}} : {{{description}}}
+{{/description}}
+
+#[allow(unused_imports)]
+use serde_json::Value;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct {{{classname}}} {
+{{#vars}}
+    {{#description}}
+    /// {{{description}}}
+    {{/description}}
+    #[serde(rename = "{{{baseName}}}")]
+    pub {{{name}}}: {{#required}}{{#isNullable}}Option<{{/isNullable}}{{/required}}{{^required}}Option<{{/required}}{{{dataType}}}{{#required}}{{#isNullable}}>{{/isNullable}}{{/required}}{{^required}}>{{/required}},
+{{/vars}}
+}
+
+impl {{{classname}}} {
+    {{#description}}
+    /// {{{description}}}
+    {{/description}}
+    pub fn new({{#requiredVars}}{{{name}}}: {{#isNullable}}Option<{{/isNullable}}{{{dataType}}}{{#isNullable}}>{{/isNullable}}{{^-last}}, {{/-last}}{{/requiredVars}}) -> {{{classname}}} {
+        {{{classname}}} {
+            {{#vars}}
+            {{{name}}}: {{#required}}{{{name}}}{{/required}}{{^required}}{{#isListContainer}}None{{/isListContainer}}{{#isMapContainer}}None{{/isMapContainer}}{{^isContainer}}None{{/isContainer}}{{/required}},
+            {{/vars}}
+        }
+    }
+}
+{{#isEnum}}
+// TODO enum
+// List of {{{name}}}
+//const (
+//    {{#allowableValues}}
+//    {{#enumVars}}
+//    {{{name}}} {{{classname}}} = "{{{value}}}"
+//    {{/enumVars}}
+//    {{/allowableValues}}
+//)
+{{/isEnum}}
+{{/model}}
+{{/models}}
