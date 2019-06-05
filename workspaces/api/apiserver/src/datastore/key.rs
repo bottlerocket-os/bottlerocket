@@ -14,6 +14,8 @@ pub const KEY_SEPARATOR: &str = ".";
 /// keys (up to 4096) we could make prefixes not count against this limit.
 const MAX_KEY_NAME_LENGTH: usize = 255;
 
+// If changing these regexes, make sure the error message in datastore::error::Error::InvalidKey is
+// still correct.
 #[rustfmt::skip]
 lazy_static! {
     /// Pattern to validate a data key.

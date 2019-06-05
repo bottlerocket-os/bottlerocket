@@ -55,7 +55,8 @@ pub enum Error {
         key: String,
     },
 
-    // Showing the real regex is ugly because of ?x and its formatting
+    // Showing the full regex in an error is ugly because of ?x and the regex's formatting;
+    // see datastore::key::{DATA_KEY,METADATA_KEY}
     #[snafu(display("Key name '{}' has invalid format, should be 1 or more dot-separated [a-zA-Z0-9_-]+", name))]
     InvalidKey { name: String },
 
