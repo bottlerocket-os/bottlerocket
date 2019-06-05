@@ -1,3 +1,4 @@
+use crate::set::PartitionSet;
 use snafu::Snafu;
 use std::ffi::OsString;
 use std::fmt;
@@ -6,8 +7,15 @@ use std::path::PathBuf;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
-    #[snafu(display("Active partition not in either detected partition set"))]
-    ActiveNotInSet,
+    #[snafu(display(
+        "Active partition {} not in either detected partition set ({:?})",
+        active_partition.display(),
+        sets
+    ))]
+    ActiveNotInSet {
+        active_partition: PathBuf,
+        sets: [PartitionSet; 2],
+    },
     #[snafu(display("Failed to find GPT on device {}: {}", device.display(), source))]
     GPTFind { device: PathBuf, source: GPTError },
     #[snafu(display("Failed to write GPT onto device {}: {}", device.display(), source))]
