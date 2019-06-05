@@ -163,8 +163,7 @@ where
     }
 }
 
-impl<'de, S1, S2, BH> IntoDeserializer<'de, Error>
-    for ValueDeserializer<'de, S1, S2, BH>
+impl<'de, S1, S2, BH> IntoDeserializer<'de, Error> for ValueDeserializer<'de, S1, S2, BH>
 where
     S1: Borrow<str> + Eq + Hash,
     S2: AsRef<str>,

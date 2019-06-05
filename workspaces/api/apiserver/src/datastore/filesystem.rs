@@ -150,7 +150,10 @@ fn read_file_for_key(key: &Key, path: &Path) -> Result<Option<String>> {
 fn write_file_mkdir<S: AsRef<str>>(path: PathBuf, data: S) -> Result<()> {
     // create key prefix directory if necessary
     let dirname = path.parent().with_context(|| error::Internal {
-        msg: format!("Given path to write without proper prefix: {}", path.display()),
+        msg: format!(
+            "Given path to write without proper prefix: {}",
+            path.display()
+        ),
     })?;
     fs::create_dir_all(dirname).context(error::Io { path: dirname })?;
 
