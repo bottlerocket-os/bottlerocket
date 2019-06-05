@@ -1,43 +1,34 @@
+use bit_field::BitField;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct GptPrio(u64);
 
 impl GptPrio {
-    #[allow(clippy::cast_possible_truncation)]
-    pub(crate) fn priority(self) -> u8 {
-        (self.0 >> 48) as u8 & 0xf
+    pub(crate) fn priority(self) -> u64 {
+        self.0.get_bits(48..52)
     }
 
     /// Panics if `priority > 15`.
-    pub(crate) fn set_priority(&mut self, priority: u8) {
-        if priority > 0xf {
-            panic!("priority cannot be greater than 15");
-        }
-
-        self.0 = (self.0 & !(0xf_u64 << 48)) | (u64::from(priority) << 48);
+    pub(crate) fn set_priority(&mut self, priority: u64) {
+        self.0.set_bits(48..52, priority);
     }
 
-    #[allow(clippy::cast_possible_truncation)]
-    pub(crate) fn tries_left(self) -> u8 {
-        (self.0 >> 52) as u8 & 0xf
+    pub(crate) fn tries_left(self) -> u64 {
+        self.0.get_bits(52..56)
     }
 
     /// Panics if `tries_left > 15`.
-    pub(crate) fn set_tries_left(&mut self, tries_left: u8) {
-        if tries_left > 15 {
-            panic!("tries_left cannot be greater than 15");
-        }
-
-        self.0 = (self.0 & !(0xf_u64 << 52)) | (u64::from(tries_left) << 52);
+    pub(crate) fn set_tries_left(&mut self, tries_left: u64) {
+        self.0.set_bits(52..56, tries_left);
     }
 
     pub(crate) fn successful(self) -> bool {
-        (self.0 >> 56) & 1 == 1
+        self.0.get_bit(56)
     }
 
     pub(crate) fn set_successful(&mut self, successful: bool) {
-        self.0 = (self.0 & !(1_u64 << 56)) | (if successful { 1 } else { 0 } << 56);
+        self.0.set_bit(56, successful);
     }
 
     pub(crate) fn will_boot(self) -> bool {

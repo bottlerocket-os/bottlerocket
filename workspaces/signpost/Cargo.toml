@@ -10,6 +10,7 @@ debug = true
 lto = true
 
 [dependencies]
+bit_field = "0.10.0"
 gptman = { version = "0.3.0", default-features = false }
 hex-literal = "0.2.0"
 serde = { version = "1.0.91", features = ["derive"] }
