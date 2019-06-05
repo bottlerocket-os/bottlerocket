@@ -8,9 +8,8 @@ use crate::state::block::BlockDevice;
 use gptman::GPT;
 use hex_literal::hex;
 use snafu::{OptionExt, ResultExt};
-use std::convert::TryFrom;
 use std::fmt;
-use std::fs::{self, File, OpenOptions};
+use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 
 const THAR_BOOT: [u8; 16] = uuid_to_guid(hex!("6b636168 7420 6568 2070 6c616e657421"));
@@ -30,7 +29,7 @@ impl State {
     pub(crate) fn load() -> Result<Self, Error> {
         // The root filesystem is a dm-verity device. We want to determine what disk and partition
         // the backing data is part of. Look up the device major and minor via stat(2):
-        let root_fs = BlockDevice::try_from(fs::metadata("/").context(error::Stat { path: "/" })?)?;
+        let root_fs = BlockDevice::from_resident("/")?;
         // Get the first lower device from this one, and determine what disk it belongs to.
         let active_partition =
             root_fs
