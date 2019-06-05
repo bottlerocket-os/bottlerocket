@@ -129,10 +129,6 @@ impl State {
         &self.os_disk
     }
 
-    pub(crate) fn set(&self, select: SetSelect) -> &PartitionSet {
-        &self.sets[select.idx()]
-    }
-
     fn gptprio(&self, select: SetSelect) -> GptPrio {
         GptPrio::from(self.table[self.boot_partition_nums[select.idx()]].attribute_bits)
     }
@@ -252,13 +248,13 @@ impl fmt::Display for State {
         writeln!(
             f,
             "Set A:   {} {}",
-            self.set(SetSelect::A),
+            self.sets[0],
             self.gptprio(SetSelect::A)
         )?;
         writeln!(
             f,
             "Set B:   {} {}",
-            self.set(SetSelect::B),
+            self.sets[1],
             self.gptprio(SetSelect::B)
         )?;
         writeln!(f, "Active:  Set {}", self.active())?;
