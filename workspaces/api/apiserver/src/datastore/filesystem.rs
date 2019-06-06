@@ -4,6 +4,7 @@
 //! Data is kept in files with paths resembling the keys, e.g. a/b/c for a.b.c, and metadata is
 //! kept in a suffixed file next to the data, e.g. a/b/c.meta for metadata "meta" about a.b.c
 
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io;
@@ -12,8 +13,7 @@ use walkdir::{DirEntry, WalkDir};
 
 use super::serialization::to_pairs;
 use super::{
-    serialize_scalar, Committed, DataStore, DataStoreError, IoErrorDetail, Key, KeyType, Result,
-    KEY_SEPARATOR,
+    error, serialize_scalar, Committed, DataStore, Key, KeyType, Result, ScalarError, KEY_SEPARATOR,
 };
 use crate::model::Metadata;
 
@@ -38,32 +38,38 @@ impl FilesystemDataStore {
     pub fn populate_default<P: AsRef<Path>>(base_path: P) -> Result<()> {
         // Read and parse defaults
         let defaults_str = include_str!("../../defaults.toml");
-        let mut defaults_val: toml::Value = toml::from_str(defaults_str)?;
+        let mut defaults_val: toml::Value =
+            toml::from_str(defaults_str).context(error::DefaultsFormatting)?;
 
         // Check if we have metadata
-        let table = defaults_val.as_table_mut().ok_or_else(|| {
-            DataStoreError::Internal(
-                "defaults.toml not a Table but TOML only allows tables at top level - ???"
-                    .to_string(),
-            )
-        })?;
+        let table = defaults_val
+            .as_table_mut()
+            .context(error::DefaultsNotTable)?;
         let maybe_metadata_val = table.remove("metadata");
 
         // Write defaults to datastore
         trace!("Serializing defaults and writing to datastore");
-        let defaults = to_pairs(&defaults_val)?;
+        let defaults =
+            to_pairs(&defaults_val).context(error::Serialization { given: "defaults" })?;
         let mut datastore = FilesystemDataStore::new(base_path);
         datastore.set_keys(&defaults, Committed::Live)?;
 
         // If we had metadata, write it out
         if let Some(metadata_val) = maybe_metadata_val {
             trace!("Serializing metadata and writing to datastore");
-            let metadatas: Vec<Metadata> = metadata_val.try_into()?;
+            let metadatas: Vec<Metadata> = metadata_val
+                .try_into()
+                .context(error::DefaultsMetadataNotTable)?;
             for metadata in metadatas {
                 let Metadata { key, md, val } = metadata;
                 let data_key = Key::new(KeyType::Data, key)?;
                 let md_key = Key::new(KeyType::Data, md)?;
-                let value = serialize_scalar::<_, DataStoreError>(&val)?;
+                let value = serialize_scalar::<_, ScalarError>(&val).with_context(|| {
+                    error::SerializeScalar {
+                        given: format!("metadata value '{}'", val),
+                    }
+                })?;
+
                 datastore.set_metadata(&md_key, &data_key, value)?;
             }
         }
@@ -93,9 +99,10 @@ impl FilesystemDataStore {
         let path = base_path.join(path_suffix);
 
         // Confirm no path traversal outside of base
-        if path == *base_path || !path.starts_with(base_path) {
-            return Err(DataStoreError::Internal("Invalid key path".to_string()));
-        }
+        ensure!(
+            path != *base_path && path.starts_with(base_path),
+            error::PathTraversal { name: key.as_ref() }
+        );
 
         Ok(path)
     }
@@ -133,10 +140,7 @@ fn read_file_for_key(key: &Key, path: &Path) -> Result<Option<String>> {
                 return Ok(None);
             }
 
-            Err(DataStoreError::Io(IoErrorDetail::new(
-                format!("Failed reading key '{}'", key),
-                e,
-            )))
+            Err(e).context(error::KeyRead { key: key.as_ref() })
         }
     }
 }
@@ -145,12 +149,15 @@ fn read_file_for_key(key: &Key, path: &Path) -> Result<Option<String>> {
 /// arbitrarily dotted keys without needing to create fixed structure first.
 fn write_file_mkdir<S: AsRef<str>>(path: PathBuf, data: S) -> Result<()> {
     // create key prefix directory if necessary
-    let dirname = path.parent().ok_or_else(|| {
-        DataStoreError::Internal("Given path to write without proper prefix".to_string())
+    let dirname = path.parent().with_context(|| error::Internal {
+        msg: format!(
+            "Given path to write without proper prefix: {}",
+            path.display()
+        ),
     })?;
-    fs::create_dir_all(dirname).map_err(DataStoreError::from)?;
+    fs::create_dir_all(dirname).context(error::Io { path: dirname })?;
 
-    fs::write(path, data.as_ref().as_bytes()).map_err(DataStoreError::from)
+    fs::write(&path, data.as_ref().as_bytes()).context(error::Io { path: &path })
 }
 
 /// Given a DirEntry, returns Ok(Some(Key)) if it seems like a datastore key.  Returns Ok(None) if
@@ -163,8 +170,9 @@ fn data_key_for_entry<P: AsRef<Path>>(entry: &DirEntry, base: P) -> Result<Optio
     }
 
     let check_path = |p: Option<_>| -> Result<_> {
-        p.ok_or_else(|| {
-            DataStoreError::Corruption(format!("Non-UTF8 path: {}", entry.path().display()))
+        p.context(error::Corruption {
+            msg: "Non-UTF8 path",
+            path: entry.path(),
         })
     };
 
@@ -180,12 +188,7 @@ fn data_key_for_entry<P: AsRef<Path>>(entry: &DirEntry, base: P) -> Result<Optio
     }
 
     let path = entry.path();
-    let key_path = path.strip_prefix(base).map_err(|_| {
-        DataStoreError::Internal(format!(
-            "Failed stripping datastore path from {}",
-            path.display()
-        ))
-    })?;
+    let key_path = path.strip_prefix(base).context(error::Path)?;
     let key_path_str = check_path(key_path.to_str())?;
 
     let key_name = key_path_str.replace("/", KEY_SEPARATOR);
@@ -225,10 +228,11 @@ impl DataStore for FilesystemDataStore {
             match committed {
                 // No live keys; something must be wrong because we create a default datastore.
                 Committed::Live => {
-                    return Err(DataStoreError::Corruption(format!(
-                        "Live datastore missing from {}",
-                        base.display()
-                    )))
+                    return error::Corruption {
+                        msg: "Live datastore missing",
+                        path: base,
+                    }
+                    .fail()
                 }
                 // No pending keys, OK, return empty set.
                 Committed::Pending => {
@@ -251,7 +255,7 @@ impl DataStore for FilesystemDataStore {
             base.display()
         );
         for entry in walker {
-            let entry = entry?;
+            let entry = entry.context(error::ListKeys)?;
             if let Some(key) = data_key_for_entry(&entry, &base)? {
                 keys.insert(key);
             }
@@ -301,9 +305,9 @@ impl DataStore for FilesystemDataStore {
         for key_str in pending_keys.iter() {
             // We just listed keys, so the keys should be valid and data should exist.
             let key = Key::new(KeyType::Data, key_str)?;
-            let data = self.get_key(&key, Committed::Pending)?.ok_or_else(|| {
-                DataStoreError::Internal(format!("Listed key not found on disk: {}", key))
-            })?;
+            let data = self
+                .get_key(&key, Committed::Pending)?
+                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
             pending_data.insert(key_str, data);
         }
 
@@ -313,7 +317,9 @@ impl DataStore for FilesystemDataStore {
 
         // Remove pending
         debug!("Removing old pending keys");
-        fs::remove_dir_all(&self.pending_path)?;
+        fs::remove_dir_all(&self.pending_path).context(error::Io {
+            path: &self.pending_path,
+        })?;
 
         Ok(pending_keys)
     }

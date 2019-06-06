@@ -3,9 +3,11 @@
 //! Mimics some of the decisions made for FilesystemDataStore, e.g. metadata being committed
 //! immediately.
 
-use super::{Committed, DataStore, DataStoreError, Key, KeyType, Result};
+use snafu::OptionExt;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
+
+use super::{error, Committed, DataStore, Key, KeyType, Result};
 
 #[derive(Debug)]
 pub(crate) struct MemoryDataStore {
@@ -103,10 +105,7 @@ impl DataStore for MemoryDataStore {
             let key = Key::new(KeyType::Data, key_str)?;
             let data = self
                 .get_key(&key, Committed::Pending)?
-                .ok_or(DataStoreError::Internal(format!(
-                    "Listed key not found on disk: {}",
-                    key
-                )))?;
+                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
             pending.insert(key_str, data);
         }
 

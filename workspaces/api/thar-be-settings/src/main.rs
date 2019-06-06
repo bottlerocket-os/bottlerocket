@@ -1,14 +1,25 @@
 #[macro_use]
 extern crate log;
 
+use snafu::ResultExt;
 use std::env;
-use std::error::Error;
 use std::process;
 
 use thar_be_settings::{config, get_changed_settings, service, settings, template};
 
 // TODO
 // Use a client rather than building queries and making HTTP calls
+
+mod error {
+    use snafu::Snafu;
+
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility = "pub(super)")]
+    pub(super) enum Error {
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: log::SetLoggerError },
+    }
+}
 
 /// Store the args we receive on the command line
 struct Args {
@@ -41,7 +52,7 @@ fn parse_args(args: env::Args) -> Args {
     Args { verbosity }
 }
 
-fn main() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<std::error::Error>> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -53,7 +64,8 @@ fn main() -> Result<(), Box<Error>> {
         .timestamp(stderrlog::Timestamp::Millisecond)
         .verbosity(args.verbosity)
         .color(stderrlog::ColorChoice::Never)
-        .init()?;
+        .init()
+        .context(error::Logger)?;
 
     info!("thar-be-settings started");
 

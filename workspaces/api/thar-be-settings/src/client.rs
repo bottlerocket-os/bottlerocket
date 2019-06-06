@@ -1,6 +1,7 @@
 use serde::de::DeserializeOwned;
+use snafu::ResultExt;
 
-use crate::Result;
+use crate::{error, Result};
 
 /// This trait extends the client from reqwest, abstracting the repeated
 /// request logic and returning JSON or an error if there was one.
@@ -22,9 +23,19 @@ impl ReqwestClientExt for reqwest::Client {
     ) -> Result<T> {
         self.get(&uri)
             .query(&[(query_param, query)])
-            .send()?
-            .error_for_status()?
+            .send().context(error::APIRequest {
+                method: "GET",
+                uri: uri.as_str(),
+            })?
+            .error_for_status()
+            .context(error::APIResponse {
+                method: "GET",
+                uri: uri.as_str(),
+            })?
             .json()
-            .map_err(Into::into)
+            .context(error::ResponseJson {
+                method: "GET",
+                uri: uri.as_str(),
+            })
     }
 }

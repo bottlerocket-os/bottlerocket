@@ -1,10 +1,10 @@
-use std::collections::HashSet;
-
-use crate::Result;
-
 use handlebars::template;
 use handlebars::template::{Parameter, TemplateElement};
 use handlebars::Handlebars;
+use snafu::ResultExt;
+use std::collections::HashSet;
+
+use crate::{error, Result};
 
 use apiserver::model;
 
@@ -24,7 +24,12 @@ pub fn build_template_registry(
             "Registering {} at path '{}'",
             &name, &metadata.template_path
         );
-        template_registry.register_template_file(&name, &metadata.template_path)?;
+        template_registry
+            .register_template_file(&name, &metadata.template_path)
+            .context(error::TemplateRegister {
+                name: name.as_str(),
+                path: &metadata.template_path,
+            })?;
     }
 
     Ok(template_registry)

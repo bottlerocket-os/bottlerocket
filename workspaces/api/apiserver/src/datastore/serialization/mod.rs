@@ -1,45 +1,16 @@
 //! The serialization module implements generic serialization techniques that are particularly
 //! useful for turning Rust structures into simpler types that are easy to write to a datastore.
 
+mod error;
 mod pairs;
 
+pub use error::{Error, Result};
 pub use pairs::{to_pairs, to_pairs_with_prefix};
 
 use serde::{ser, Serialize};
+use snafu::{IntoError, NoneError as NoSource};
 
 use crate::datastore::{Key, KeyType};
-
-/// Potential errors from serialization.
-#[derive(Debug, Error)]
-pub enum SerializationError {
-    // This error variant is required to implement ser::Error for serde.
-    #[error(msg_embedded, no_from, non_std)]
-    /// Error during serialization
-    Message(String),
-
-    #[error(msg_embedded, no_from, non_std)]
-    /// Serialization invariant violation
-    Internal(String),
-
-    #[error(msg_embedded, no_from, non_std)]
-    /// Error creating valid datastore key
-    InvalidKey(String),
-
-    #[error(msg_embedded, no_from, non_std)]
-    /// Type of given value cannot be serialized
-    InvalidValue(String),
-
-    /// Error serializing scalar value
-    Json(serde_json::error::Error),
-}
-
-type Result<T> = std::result::Result<T, SerializationError>;
-
-impl ser::Error for SerializationError {
-    fn custom<T: std::fmt::Display>(msg: T) -> Self {
-        SerializationError::Message(msg.to_string())
-    }
-}
 
 // Below are serializers not specific to the pairs module that could be used for other serializers.
 // For example, a 'keys' serializer that just returns a set of keys, without associated data.
@@ -58,24 +29,22 @@ impl MapKeySerializer {
 
 /// Most types are invalid map keys (only strings are OK) so we need to return an error in most
 /// cases.  This simplifies the creation of that error, with a customizable message for the type.
-fn bad_key(msg: &str) -> Result<String> {
-    Err(SerializationError::InvalidValue(
-        msg.to_string() + "s not allowed as map key",
-    ))
+fn bad_key<T>(typename: &str) -> Result<T> {
+    error::BadMapKey { typename }.fail()
 }
 
 #[rustfmt::skip]
 impl ser::Serializer for &MapKeySerializer {
     type Ok = String;
-    type Error = SerializationError;
+    type Error = Error;
 
-    type SerializeSeq = ser::Impossible<String, SerializationError>;
-    type SerializeTuple = ser::Impossible<String, SerializationError>;
-    type SerializeTupleStruct = ser::Impossible<String, SerializationError>;
-    type SerializeTupleVariant = ser::Impossible<String, SerializationError>;
-    type SerializeMap = ser::Impossible<String, SerializationError>;
-    type SerializeStruct = ser::Impossible<String, SerializationError>;
-    type SerializeStructVariant = ser::Impossible<String, SerializationError>;
+    type SerializeSeq = ser::Impossible<String, Error>;
+    type SerializeTuple = ser::Impossible<String, Error>;
+    type SerializeTupleStruct = ser::Impossible<String, Error>;
+    type SerializeTupleVariant = ser::Impossible<String, Error>;
+    type SerializeMap = ser::Impossible<String, Error>;
+    type SerializeStruct = ser::Impossible<String, Error>;
+    type SerializeStructVariant = ser::Impossible<String, Error>;
 
     // Allow serialization of strings for map keys, but nothing else.
 
@@ -87,7 +56,7 @@ impl ser::Serializer for &MapKeySerializer {
         let key = Key::new(KeyType::Meta, value)
             .map_err(|e| {
                 debug!("MapKeySerializer got invalid key name: {}", value);
-                SerializationError::InvalidKey(format!("Invalid datastore key: {}", e))
+                error::InvalidKey { msg: format!("{}", e) }.into_error(NoSource)
             })?;
         trace!("MapKeySerializer got OK key: {}", key);
         Ok(key.to_string())
@@ -107,32 +76,44 @@ impl ser::Serializer for &MapKeySerializer {
     fn serialize_char(self, _value: char) -> Result<String> { bad_key("char") }
     fn serialize_bytes(self, _value: &[u8]) -> Result<String> { bad_key("bytes") }
     fn serialize_unit(self) -> Result<String> { bad_key("unit") }
-    fn serialize_unit_struct(self, _name: &'static str) -> Result<String> { bad_key("unit_struct") }
-    fn serialize_unit_variant( self, _name: &'static str, _variant_index: u32, _variant: &'static str) -> Result<String> { bad_key("unit_variant") }
-    fn serialize_newtype_struct<T: ?Sized>(self, _name: &'static str, _value: &T) -> Result<String> where T: Serialize { bad_key("newtype_struct") }
-    fn serialize_newtype_variant<T: ?Sized>( self, _name: &'static str, _variant_index: u32, _variant: &'static str, _value: &T) -> Result<String> where T: Serialize { bad_key("newtype_variant") }
-    fn serialize_none(self) -> Result<String> { bad_key("none") }
-    fn serialize_some<T: ?Sized>(self, _value: &T) -> Result<String> where T: Serialize { bad_key("some") }
+    fn serialize_unit_struct(self, _name: &'static str) -> Result<String> {
+        bad_key("unit_struct")
+    }
+    fn serialize_unit_variant( self, _name: &'static str, _variant_index: u32, _variant: &'static str) -> Result<String> {
+        bad_key("unit_variant")
+    }
+    fn serialize_newtype_struct<T: ?Sized>(self, _name: &'static str, _value: &T) -> Result<String> where T: Serialize {
+        bad_key("newtype_struct")
+    }
+    fn serialize_newtype_variant<T: ?Sized>( self, _name: &'static str, _variant_index: u32, _variant: &'static str, _value: &T) -> Result<String> where T: Serialize {
+        bad_key("newtype_variant")
+    }
+    fn serialize_none(self) -> Result<String> {
+        bad_key("none")
+    }
+    fn serialize_some<T: ?Sized>(self, _value: &T) -> Result<String> where T: Serialize {
+        bad_key("some")
+    }
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq> {
-        Err(SerializationError::InvalidValue("seqs not allowed as map key".to_string()))
+        bad_key("seq")
     }
     fn serialize_tuple(self, _len: usize) -> Result<Self::SerializeTuple> {
-        Err(SerializationError::InvalidValue("tuples not allowed as map key".to_string()))
+        bad_key("tuple")
     }
     fn serialize_tuple_struct(self, _name: &'static str, _len: usize) -> Result<Self::SerializeTupleStruct> {
-        Err(SerializationError::InvalidValue("tuple structs not allowed as map key".to_string()))
+        bad_key("tuple struct")
     }
     fn serialize_tuple_variant( self, _name: &'static str, _variant_index: u32, _variant: &'static str, _len: usize) -> Result<Self::SerializeTupleVariant> {
-        Err(SerializationError::InvalidValue("tuple variants not allowed as map key".to_string()))
+        bad_key("tuple variant")
     }
     fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap> {
-        Err(SerializationError::InvalidValue("maps not allowed as map key".to_string()))
+        bad_key("map")
     }
     fn serialize_struct(self, _name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
-        Err(SerializationError::InvalidValue("structs not allowed as map key".to_string()))
+        bad_key("struct")
     }
     fn serialize_struct_variant( self, _name: &'static str, _variant_index: u32, _variant: &'static str, _len: usize) -> Result<Self::SerializeStructVariant> {
-        Err(SerializationError::InvalidValue("struct variants not allowed as map key".to_string()))
+        bad_key("struct variant")
     }
 }
 
