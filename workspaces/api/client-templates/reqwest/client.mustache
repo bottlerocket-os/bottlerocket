@@ -1,6 +1,9 @@
+{{>partial_header}}
 use std::rc::Rc;
 
 use super::configuration::Configuration;
+
+use super::default_api;
 
 pub struct APIClient {
     configuration: Rc<Configuration>,
@@ -9,7 +12,7 @@ pub struct APIClient {
 {{#operations}}
 {{#operation}}
     {{#-last}}
-    {{{classFilename}}}: Box<::apis::{{{classname}}}>,
+    {{{classFilename}}}: Box<default_api::{{{classname}}}>,
     {{/-last}}
 {{/operation}}
 {{/operations}}
@@ -28,7 +31,7 @@ impl APIClient {
 {{#operations}}
 {{#operation}}
             {{#-last}}
-            {{{classFilename}}}: Box::new(::apis::{{{classname}}}Client::new(rc.clone())),
+            {{{classFilename}}}: Box::new(default_api::{{{classname}}}Client::new(rc.clone())),
             {{/-last}}
 {{/operation}}
 {{/operations}}
@@ -42,7 +45,7 @@ impl APIClient {
 {{#operations}}
 {{#operation}}
 {{#-last}}
-    pub fn {{{classFilename}}}(&self) -> &::apis::{{{classname}}}{
+    pub fn {{{classFilename}}}(&self) -> &default_api::{{{classname}}}{
         self.{{{classFilename}}}.as_ref()
     }
 

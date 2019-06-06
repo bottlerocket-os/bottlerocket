@@ -1,6 +1,4 @@
-use reqwest;
-use serde_json;
-
+{{>partial_header}}
 #[derive(Debug)]
 pub enum Error {
     Reqwest(reqwest::Error),
@@ -27,10 +25,8 @@ impl From<std::io::Error> for Error {
 }
 
 pub fn urlencode<T: AsRef<str>>(s: T) -> String {
-    ::url::form_urlencoded::byte_serialize(s.as_ref().as_bytes()).collect()
+    url::form_urlencoded::byte_serialize(s.as_ref().as_bytes()).collect()
 }
-
-use super::models::*;
 
 {{#apiInfo}}
 {{#apis}}

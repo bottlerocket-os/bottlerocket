@@ -11,7 +11,7 @@
 use std::rc::Rc;
 use std::borrow::Borrow;
 
-use reqwest;
+use apiserver::model;
 
 use super::{Error, configuration, urlencode};
 
@@ -30,10 +30,10 @@ impl DefaultApiClient {
 pub trait DefaultApi {
     fn commit_settings(&self, ) -> Result<(), Error>;
     fn get_affected_services(&self, keys: Vec<String>) -> Result<::std::collections::HashMap<String, Vec<String>>, Error>;
-    fn get_config_files(&self, names: Vec<String>) -> Result<model::ConfigurationFiles, Error>;
+    fn get_config_files(&self, names: Option<Vec<String>>) -> Result<model::ConfigurationFiles, Error>;
     fn get_pending_settings(&self, ) -> Result<model::Settings, Error>;
-    fn get_services(&self, names: Vec<String>) -> Result<model::Services, Error>;
-    fn get_settings(&self, keys: Vec<String>, prefix: &str) -> Result<model::Settings, Error>;
+    fn get_services(&self, names: Option<Vec<String>>) -> Result<model::Services, Error>;
+    fn get_settings(&self, keys: Option<Vec<String>>, prefix: Option<&str>) -> Result<model::Settings, Error>;
     fn set_settings(&self, body: model::Settings) -> Result<(), Error>;
 }
 
@@ -45,11 +45,8 @@ impl DefaultApi for DefaultApiClient {
         let uri_str = format!("{}/settings/commit", configuration.base_path);
         let mut req_builder = client.post(uri_str.as_str());
 
-        if let Some(ref user_agent) = configuration.user_agent {
-            req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-        }
 
-        // send request
+        // build request
         let req = req_builder.build()?;
 
         client.execute(req)?.error_for_status()?;
@@ -63,30 +60,28 @@ impl DefaultApi for DefaultApiClient {
         let uri_str = format!("{}/metadata/affected-services", configuration.base_path);
         let mut req_builder = client.get(uri_str.as_str());
 
+        // The `query` method appends and does NOT overwrite so we can call this multiple times
         req_builder = req_builder.query(&[("keys", &keys.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
-        if let Some(ref user_agent) = configuration.user_agent {
-            req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-        }
 
-        // send request
+        // build request
         let req = req_builder.build()?;
 
         Ok(client.execute(req)?.error_for_status()?.json()?)
     }
 
-    fn get_config_files(&self, names: Vec<String>) -> Result<model::ConfigurationFiles, Error> {
+    fn get_config_files(&self, names: Option<Vec<String>>) -> Result<model::ConfigurationFiles, Error> {
         let configuration: &configuration::Configuration = self.configuration.borrow();
         let client = &configuration.client;
 
         let uri_str = format!("{}/configuration-files", configuration.base_path);
         let mut req_builder = client.get(uri_str.as_str());
 
-        req_builder = req_builder.query(&[("names", &names.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
-        if let Some(ref user_agent) = configuration.user_agent {
-            req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+        if let Some(params) = names {
+            // The `query` method appends and does NOT overwrite so we can call this multiple times
+            req_builder = req_builder.query(&[("names", &params.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
         }
 
-        // send request
+        // build request
         let req = req_builder.build()?;
 
         Ok(client.execute(req)?.error_for_status()?.json()?)
@@ -99,48 +94,48 @@ impl DefaultApi for DefaultApiClient {
         let uri_str = format!("{}/settings/pending", configuration.base_path);
         let mut req_builder = client.get(uri_str.as_str());
 
-        if let Some(ref user_agent) = configuration.user_agent {
-            req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-        }
 
-        // send request
+        // build request
         let req = req_builder.build()?;
 
         Ok(client.execute(req)?.error_for_status()?.json()?)
     }
 
-    fn get_services(&self, names: Vec<String>) -> Result<model::Services, Error> {
+    fn get_services(&self, names: Option<Vec<String>>) -> Result<model::Services, Error> {
         let configuration: &configuration::Configuration = self.configuration.borrow();
         let client = &configuration.client;
 
         let uri_str = format!("{}/services", configuration.base_path);
         let mut req_builder = client.get(uri_str.as_str());
 
-        req_builder = req_builder.query(&[("names", &names.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
-        if let Some(ref user_agent) = configuration.user_agent {
-            req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+        if let Some(params) = names {
+            // The `query` method appends and does NOT overwrite so we can call this multiple times
+            req_builder = req_builder.query(&[("names", &params.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
         }
 
-        // send request
+        // build request
         let req = req_builder.build()?;
 
         Ok(client.execute(req)?.error_for_status()?.json()?)
     }
 
-    fn get_settings(&self, keys: Vec<String>, prefix: &str) -> Result<model::Settings, Error> {
+    fn get_settings(&self, keys: Option<Vec<String>>, prefix: Option<&str>) -> Result<model::Settings, Error> {
         let configuration: &configuration::Configuration = self.configuration.borrow();
         let client = &configuration.client;
 
         let uri_str = format!("{}/settings", configuration.base_path);
         let mut req_builder = client.get(uri_str.as_str());
 
-        req_builder = req_builder.query(&[("keys", &keys.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
-        req_builder = req_builder.query(&[("prefix", &prefix.to_string())]);
-        if let Some(ref user_agent) = configuration.user_agent {
-            req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+        if let Some(params) = keys {
+            // The `query` method appends and does NOT overwrite so we can call this multiple times
+            req_builder = req_builder.query(&[("keys", &params.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]);
+        }
+        if let Some(params) = prefix {
+            // The `query` method appends and does NOT overwrite so we can call this multiple times
+            req_builder = req_builder.query(&[("prefix", &params.to_string())]);
         }
 
-        // send request
+        // build request
         let req = req_builder.build()?;
 
         Ok(client.execute(req)?.error_for_status()?.json()?)
@@ -153,12 +148,9 @@ impl DefaultApi for DefaultApiClient {
         let uri_str = format!("{}/settings", configuration.base_path);
         let mut req_builder = client.patch(uri_str.as_str());
 
-        if let Some(ref user_agent) = configuration.user_agent {
-            req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-        }
         req_builder = req_builder.json(&body);
 
-        // send request
+        // build request
         let req = req_builder.build()?;
 
         client.execute(req)?.error_for_status()?;

@@ -21,7 +21,9 @@ Commit pending settings
 
 ### Required Parameters
 
-This endpoint does not need any parameter.
+This endpoint does not require any parameters.
+
+
 
 ### Return type
 
@@ -31,12 +33,7 @@ This endpoint does not need any parameter.
 
 No authorization required
 
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
 
 ## get_affected_services
@@ -51,6 +48,8 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
   **keys** | [**Vec<String>**](String.md)| Specific keys to query | 
 
+
+
 ### Return type
 
 [**::std::collections::HashMap<String, Vec<String>>**](array.md)
@@ -59,12 +58,7 @@ Name | Type | Description  | Notes
 
 No authorization required
 
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
 
 ## get_config_files
@@ -74,14 +68,11 @@ Get configuration file data
 
 ### Required Parameters
 
-
+This endpoint does not require any parameters.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **optional** | **map[string]interface{}** | optional parameters | nil if no parameters
 
 ### Optional Parameters
-
-Optional parameters are passed through a map[string]interface{}.
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
@@ -95,12 +86,7 @@ Name | Type | Description  | Notes
 
 No authorization required
 
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
 
 ## get_pending_settings
@@ -110,7 +96,9 @@ Get pending settings
 
 ### Required Parameters
 
-This endpoint does not need any parameter.
+This endpoint does not require any parameters.
+
+
 
 ### Return type
 
@@ -120,12 +108,7 @@ This endpoint does not need any parameter.
 
 No authorization required
 
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
 
 ## get_services
@@ -135,14 +118,11 @@ Get service data
 
 ### Required Parameters
 
-
+This endpoint does not require any parameters.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **optional** | **map[string]interface{}** | optional parameters | nil if no parameters
 
 ### Optional Parameters
-
-Optional parameters are passed through a map[string]interface{}.
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
@@ -156,12 +136,7 @@ Name | Type | Description  | Notes
 
 No authorization required
 
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
 
 ## get_settings
@@ -171,14 +146,11 @@ Get current settings
 
 ### Required Parameters
 
-
+This endpoint does not require any parameters.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **optional** | **map[string]interface{}** | optional parameters | nil if no parameters
 
 ### Optional Parameters
-
-Optional parameters are passed through a map[string]interface{}.
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
@@ -193,12 +165,7 @@ Name | Type | Description  | Notes
 
 No authorization required
 
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
 
 ## set_settings
@@ -213,6 +180,8 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
   **body** | **model::Settings**|  | 
 
+
+
 ### Return type
 
  (empty response body)
@@ -221,10 +190,5 @@ Name | Type | Description  | Notes
 
 No authorization required
 
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: Not defined
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
