@@ -17,7 +17,20 @@ use crate::datastore::{
 use crate::model::{ConfigurationFiles, Services, Settings};
 use error::Result;
 
-/// Build a Settings based on the data in the datastore.
+/// Build a Settings based on pending data in the datastore; the Settings will be empty if there
+/// are no pending settings.
+pub(crate) fn get_pending_settings<D: DataStore>(datastore: &D) -> Result<Settings> {
+    get_prefix(
+        datastore,
+        Committed::Pending,
+        "settings.",
+        None as Option<&str>,
+        None,
+    )
+    .map(|maybe_settings| maybe_settings.unwrap_or_else(|| Settings::default()))
+}
+
+/// Build a Settings based on the data in the datastore.  Errors if no settings are found.
 pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: Committed) -> Result<Settings> {
     get_prefix(
         datastore,

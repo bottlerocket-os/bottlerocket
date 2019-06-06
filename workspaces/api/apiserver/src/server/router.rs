@@ -104,7 +104,7 @@ pub fn handle_request<P: AsRef<Path>>(request: &Request, datastore_path: P) -> R
 
         // Special subsets of settings
         (GET) (/settings/pending) => {
-            try_or!(500, get_settings(&datastore, Committed::Pending)
+            try_or!(500, get_pending_settings(&datastore)
                          .map(|ref s| Response::json(s)))
         },
 
