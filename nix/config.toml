@@ -1,0 +1,8 @@
+[deps.nixpkgs]
+commit = "f8c12edfdf2e163768fa5380af3cf99fdd29866d"
+sha256 = "1kjbrv26mpgagy4dp30qq81wlk0iplzhqsq5hpdclhnvk5cpwysr"
+
+[builder.rpm.container-image]
+image = "fedora"
+ref = "latest"
+

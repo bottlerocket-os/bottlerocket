@@ -2,3 +2,5 @@
 *.makevar
 *.makepkg
 *.makedep
+result
+result-*
