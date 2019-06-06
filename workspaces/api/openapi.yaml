@@ -100,7 +100,7 @@ paths:
             type: array
             items:
               type: string
-          # `style: form` and `explode: false` format parameters as such:  /metadata/affected-services?keys=foo,bar,baz
+          # `style: form` and `explode: false` format parameters as such:  /metadata/affected-services?keys=settings.foo,settings.bar
           style: form
           explode: false
           required: true
@@ -110,7 +110,7 @@ paths:
           content:
             application/json:
               # The response is a hashmap of string to array of strings. Example:
-              # { "foo": [ "bar", "baz" ] }
+              # { "settings.foo": [ "service1", "service2" ] }
               schema:
                 type: object
                 additionalProperties:
@@ -160,7 +160,7 @@ paths:
             type: array
             items:
               type: string
-          # `style: form` and `explode: false` format parameters as such:  /settings?keys=foo,bar,baz
+          # `style: form` and `explode: false` format parameters as such:  /configuration-files?names=docker-daemon,bar,baz
           style: form
           explode: false
           required: false
