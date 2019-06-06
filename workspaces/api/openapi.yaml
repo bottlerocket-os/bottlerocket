@@ -160,7 +160,7 @@ paths:
             type: array
             items:
               type: string
-          # `style: form` and `explode: false` format parameters as such:  /configuration-files?names=docker-daemon,bar,baz
+          # `style: form` and `explode: false` format parameters as such:  /configuration-files?names=file1,file2
           style: form
           explode: false
           required: false
