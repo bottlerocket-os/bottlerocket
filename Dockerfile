@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:experimental
 
-FROM fedora:latest AS origin
+FROM fedora:30 AS origin
 ARG DATE
 RUN dnf makecache && dnf -y update && echo ${DATE}
 
 FROM origin AS base
 RUN dnf -y groupinstall "C Development Tools and Libraries" \
-   && dnf -y install rpmdevtools dnf-plugins-core createrepo_c \
+   && dnf -y install rpmdevtools dnf-plugins-core createrepo_c git rsync which \
    && useradd builder
 
 FROM origin AS util
