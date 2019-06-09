@@ -176,6 +176,7 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %{_cross_datadir}/locale/locale.alias
 %exclude %{_cross_datadir}/i18n/charmaps/*
 %exclude %{_cross_datadir}/i18n/locales/*
+%exclude %{_cross_datadir}/locale/*
 
 %dir %attr(0700,root,root) %{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig
 %attr(0600,root,root) %{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig/aux-cache

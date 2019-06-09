@@ -9,6 +9,7 @@ URL: https://www.kernel.org/
 Source0: https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{version}.tar.xz
 Source100: config-%{_cross_arch}
 Patch1000: dm-add-support-to-directly-boot-to-a-mapped-device.patch
+Patch1001: selinux-use-kernel-linux-socket.h-for-genheaders-and.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: gcc-%{_cross_target}
