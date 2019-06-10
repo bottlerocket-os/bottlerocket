@@ -26,7 +26,11 @@ stdenv.mkDerivation rec {
   mkdir -p $out
   rpmspec "--macros=${macroPath}" --define "_sourcedir ${specSources}" --parse ${specFile} > $out/parsed.spec
   cat $out/parsed.spec
-  grep -o -E '^Source[0-9]+:.*http.*$' $out/parsed.spec | sed 's/Source.*:.*http/http/' | grep -v '^$' |tee remote-source-urls
+  if grep -o -E '^Source[0-9]+:.*http.*$' $out/parsed.spec | sed 's/Source.*:.*http/http/' | grep -v -e '^$' -e '.crate$' | tee remote-source-urls; then
+    echo "Collecting sources for package"
+  else
+    echo "Package has no sources"
+  fi
   set +x
   '';
   
@@ -43,15 +47,16 @@ stdenv.mkDerivation rec {
   done < remote-source-urls
   
   json_entries=""
-  for url in "''${!source_hash_entries}"; do
-    if [[ -n "$json_entries" ]]; then json_entries="$json_entries,"; fi
-    urlHash="''${source_hash_entries["$url"]}"
+  for url in "''${!source_hash_entry[@]}"; do
+    echo "Adding source entry for $url"
+    if [[ -n "$json_entries" ]]; then json_entries="$json_entries, "; fi
+    urlHash="''${source_hash_entry[$url]}"
     # SRI prefixed with algo
     urlHashAlgo="''${urlHash%%-*}"
     # Stripped hash
     urlAlgoHash="''${urlHash##*-}"
-    entry="$(printf '{"url": "%s", "hash": "%s", "%s": "%s"}' "$url" "$urlHash" "$urlHashAlgo" "$urlAlgoHash")"
-    json_entries="$json_entries $entry"
+    entry="$(printf '{"url": "%s", "%s": "%s"}' "$url" "$urlHashAlgo" "$urlAlgoHash")"
+    json_entries+="$entry"
   done
   printf '{"sources": [%s]}' "$json_entries" | tee "$out/sources.json"
   set +x

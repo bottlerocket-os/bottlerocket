@@ -18,4 +18,5 @@ rec {
   docker-cli = nixpkgs.callPackage ./container/docker-cli.nix {};
   package-list = nixpkgs.callPackage ./thar/closure.nix {};
   rpm-metadata = nixpkgs.callPackage ./thar/rpm-metadata.nix { inherit platform nixpkgs; };
+  source-fetcher = import ./source-fetcher.nix;
 }
