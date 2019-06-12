@@ -1,37 +1,34 @@
-{ stdenv, lib, nixpkgs, config, rpm, ... }:
+{ stdenv, lib, config, rpm, rpm-macros, mkMacroPath, ... }:
 let
   cfg = config.builder.rpm;
   image = cfg.container-image;
-  
-  thar-rpm-macros = nixpkgs.callPackage ./rpm-macros.nix {};
-  
-  arch-macros = "${thar-rpm-macros.arch}/x86_64";
-  thar-macros = "${thar-rpm-macros.out}/*";
+
+  # TODO: use cross arch here
+  # Architecture specific macros
+  arch-macros = "${rpm-macros.arch}/x86_64";
+  # The base set of thar macros
+  thar-macros = "${rpm-macros.out}/*";
+  # RPM distributed macros
   rpm-macros = "${rpm}/lib/rpm/macros";
-  macroPath = builtins.concatStringsSep ":" [ arch-macros thar-macros rpm-macros ];
+  
+  macroPath = mkMacroPath [ arch-macros thar-macros rpm-macros ];
 in
-{ specFile, specSources, ... }:
+{ rpm-spec, rpm-sources, ... }:
 stdenv.mkDerivation rec {
-  name = "rpm-metadata-${baseNameOf specFile}";
-  src = specFile;
+  name = "rpm-metadata-${baseNameOf rpm-spec}";
+  src = rpm-spec;
   buildInputs = [ rpm ];
   phases = ["parsePhase" "generatePhase"];
 
-  # TODO: don't reference the source dir to avoid making its changes
-  # part of the invalidation of this drv.
-
-  # Parse the rpmspec for further extraction.
+  # Parse the rpm spec to extract metadata.
   parsePhase = ''
-  set -x
   mkdir -p $out
-  rpmspec "--macros=${macroPath}" --define "_sourcedir ${specSources}" --parse ${specFile} > $out/parsed.spec
-  cat $out/parsed.spec
+  rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --parse ${rpm-spec} > $out/parsed.spec
   if grep -o -E '^Source[0-9]+:.*http.*$' $out/parsed.spec | sed 's/Source.*:.*http/http/' | grep -v -e '^$' -e '.crate$' | tee remote-source-urls; then
     echo "Collecting sources for package"
   else
     echo "Package has no sources"
   fi
-  set +x
   '';
   
   generatePhase = ''
@@ -41,7 +38,7 @@ stdenv.mkDerivation rec {
     echo "Generating source entry for $SOURCE_URL"
     FILENAME="''${SOURCE_URL##*/}"
     # ALGO-HASH_CONTENT - https://www.w3.org/TR/SRI/ 
-    SRI="$(awk -v filename="($FILENAME)" '$2 == filename {print tolower($1)"-"$4}' "${specSources}/sources")"
+    SRI="$(awk -v filename="($FILENAME)" '$2 == filename {print tolower($1)"-"$4}' ${rpm-sources})"
     test -n "$SRI" || exit 1
     source_hash_entry["$SOURCE_URL"]="$SRI"
   done < remote-source-urls

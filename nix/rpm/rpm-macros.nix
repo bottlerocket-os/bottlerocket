@@ -1,6 +1,12 @@
 { stdenv, ... }:
+
+# Make a singleton derivation that captures the shared macros used in
+# rpm building needed at expansion and build time.
+#
+# At invocation time, the set of macros on disk are collected and
+# added to the nix store for use.
 stdenv.mkDerivation rec {
-  name = "thar-rpm-macros";
+  name = "rpm-macros";
   outputs = ["out" "arch"];
   src = ../../macros;
   phases = [ "installPhase" ];
