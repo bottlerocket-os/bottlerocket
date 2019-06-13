@@ -4,10 +4,15 @@ version = "0.1.0"
 authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
 edition = "2018"
 publish = false
-license = "Apache-2.0"
-
-[dependencies]
-gpt = "0.6.1"
 
 [profile.release]
 debug = true
+lto = true
+
+[dependencies]
+bit_field = "0.10.0"
+gptman = { version = "0.3.0", default-features = false }
+hex-literal = "0.2.0"
+serde = { version = "1.0.91", features = ["derive"] }
+serde_plain = "0.3.0"
+snafu = { version = "0.4.1", default-features = false, features = ["rust_1_30"] }
