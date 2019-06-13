@@ -1,4 +1,4 @@
-mod conv;
+mod decoded;
 mod key;
 mod root;
 mod snapshot;
@@ -11,7 +11,7 @@ pub(crate) use targets::{Target, Targets};
 pub(crate) use timestamp::Timestamp;
 
 use crate::error::{self, Result};
-use crate::serde::conv::{Conv, Hex};
+use crate::serde::decoded::{Decoded, Hex};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_plain::forward_display_to_serde;
@@ -86,8 +86,8 @@ impl<T: Metadata + Serialize> Signed<T> {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct Signature {
-    pub(crate) keyid: Conv<Hex>,
-    pub(crate) sig: Conv<Hex>,
+    pub(crate) keyid: Decoded<Hex>,
+    pub(crate) sig: Decoded<Hex>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -99,5 +99,5 @@ pub(crate) struct Meta {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct Hashes {
-    pub(crate) sha256: Conv<Hex>,
+    pub(crate) sha256: Decoded<Hex>,
 }
