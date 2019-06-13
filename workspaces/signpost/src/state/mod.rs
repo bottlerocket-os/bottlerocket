@@ -248,13 +248,13 @@ impl fmt::Display for State {
         writeln!(
             f,
             "Set A:   {} {}",
-            self.sets[0],
+            self.sets[SetSelect::A.idx()],
             self.gptprio(SetSelect::A)
         )?;
         writeln!(
             f,
             "Set B:   {} {}",
-            self.sets[1],
+            self.sets[SetSelect::B.idx()],
             self.gptprio(SetSelect::B)
         )?;
         writeln!(f, "Active:  Set {}", self.active())?;
