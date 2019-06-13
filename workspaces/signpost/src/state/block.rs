@@ -89,7 +89,7 @@ impl BlockDevice {
 
     /// If this device is a disk, get one of its partitions by number.
     ///
-    /// This fails if the device is not a disk, and returns `Ok(None)` if this device is a disk,
+    /// This fails if the device is not a disk, and returns `Ok(None)` if this device is a disk
     /// but there is no partition of that number.
     #[allow(clippy::identity_conversion)] // https://github.com/rust-lang/rust-clippy/issues/4133
     pub(crate) fn partition(&self, part_num: u32) -> Result<Option<Self>, Error> {
