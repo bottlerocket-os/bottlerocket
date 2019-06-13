@@ -227,6 +227,7 @@ impl<T: Display> Display for Compat<T> {
 
 impl<T: Debug + Display> std::error::Error for Compat<T> {}
 
+// used in `std::io::Read` implementations
 impl From<Error> for std::io::Error {
     fn from(err: Error) -> Self {
         Self::new(std::io::ErrorKind::Other, err)
