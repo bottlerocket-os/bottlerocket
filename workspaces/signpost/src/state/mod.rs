@@ -30,7 +30,8 @@ pub(crate) struct State {
 }
 
 impl State {
-    /// Loads the state of the universe:
+    /// Finds the partition sets available on disk, and determines which is active under the root
+    /// filesystem.
     ///
     /// * Finds the device corresponding to the root filesystem mount (`/`), which is assumed to be
     ///   a dm-verity device.
