@@ -53,7 +53,7 @@ impl BlockDevice {
     }
 
     /// Creates a `BlockDevice` from the major:minor string from the file at `path`.
-    fn from_major_minor<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
+    fn from_major_minor_in_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         Self::from_str(&fs::read_to_string(path.as_ref()).context(error::ReadFile {
             path: path.as_ref(),
         })?)
@@ -77,7 +77,7 @@ impl BlockDevice {
         for entry in fs::read_dir("/sys/block").context(error::ReadDir { path: "/sys/block" })? {
             let entry = entry.context(error::ReadDir { path: "/sys/block" })?;
             if entry.path().join(&self.device_name).exists() {
-                return Self::from_major_minor(entry.path().join("dev"));
+                return Self::from_major_minor_in_file(entry.path().join("dev"));
             }
         }
 
@@ -112,7 +112,7 @@ impl BlockDevice {
                 let partition = u32::from_str(partition_str)
                     .context(error::PartitionParseInt { s: partition_str })?;
                 if partition == part_num {
-                    return Self::from_major_minor(entry.path().join("dev")).map(Some);
+                    return Self::from_major_minor_in_file(entry.path().join("dev")).map(Some);
                 }
             }
         }
@@ -128,7 +128,7 @@ impl BlockDevice {
         match fs::read_dir(&lower_path).context(error::ReadDir { path: &lower_path }) {
             Ok(iter) => Box::new(iter.map(move |entry_result| {
                 let entry = entry_result.context(error::ReadDir { path: &lower_path })?;
-                Self::from_major_minor(entry.path().join("dev"))
+                Self::from_major_minor_in_file(entry.path().join("dev"))
             })) as Box<dyn Iterator<Item = Result<Self, Error>>>,
             Err(err) => Box::new(vec![Err(err)].into_iter())
                 as Box<dyn Iterator<Item = Result<Self, Error>>>,
