@@ -6,7 +6,9 @@ RUN dnf makecache && dnf -y update && echo ${DATE}
 
 FROM origin AS base
 RUN dnf -y groupinstall "C Development Tools and Libraries" \
-   && dnf -y install rpmdevtools dnf-plugins-core createrepo_c git rsync which \
+   && dnf -y install \
+        rpmdevtools dnf-plugins-core createrepo_c \
+        git rsync which cmake meson \
    && useradd builder
 
 FROM origin AS util

@@ -118,6 +118,24 @@ CROSS_COMPILATION_CONF_EOF\
 %cross_meson_install \
   %ninja_install -C %{_cross_vpath_builddir}
 
+%cross_cmake \
+  %set_cross_build_flags \
+  %{shrink:%{__cmake} \
+    -DCMAKE_C_SYSTEM_NAME:STRING="Linux" \
+    -DCMAKE_C_COMPILER:STRING="%{_cross_target}-gcc" \
+    -DCMAKE_C_FLAGS_RELEASE:STRING="-DNDEBUG" \
+    -DCMAKE_CXX_FLAGS_RELEASE:STRING="-DNDEBUG" \
+    -DCMAKE_BUILD_TYPE="Release" \
+    -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+    -DCMAKE_INSTALL_PREFIX:PATH=%{_cross_prefix} \
+    -DINCLUDE_INSTALL_DIR:PATH=%{_cross_includedir} \
+    -DLIB_INSTALL_DIR:PATH=%{_cross_libdir} \
+    -DSYSCONF_INSTALL_DIR:PATH=%{_cross_sysconfdir} \
+    -DSHARE_INSTALL_PREFIX:PATH=%{_cross_datadir} \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DCMAKE_SKIP_RPATH:BOOL=ON \
+    %{nil}}
+
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy
 %__objdump %{_bindir}/%{_cross_target}-objdump
