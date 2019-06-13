@@ -58,7 +58,7 @@ impl<T: Metadata + Serialize> Signed<T> {
         for signature in &self.signatures {
             if role_keys.keyids.contains(&signature.keyid) {
                 if let Some(key) = root.signed.keys.get(&signature.keyid) {
-                    if key.verify(&data, signature.sig.as_slice()) {
+                    if key.verify(&data, &signature.sig) {
                         valid += 1;
                     }
                 }

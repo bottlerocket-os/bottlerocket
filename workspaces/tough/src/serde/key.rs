@@ -64,21 +64,18 @@ impl Key {
                 keyval,
             } => (
                 &ring::signature::ECDSA_P256_SHA256_ASN1,
-                Input::from(keyval.public.as_slice()),
+                Input::from(&keyval.public),
             ),
             Key::Ed25519 {
                 scheme: Ed25519Scheme::Ed25519,
                 keyval,
-            } => (
-                &ring::signature::ED25519,
-                Input::from(keyval.public.as_slice()),
-            ),
+            } => (&ring::signature::ED25519, Input::from(&keyval.public)),
             Key::Rsa {
                 scheme: RsaScheme::RsassaPssSha256,
                 keyval,
             } => (
                 &ring::signature::RSA_PSS_2048_8192_SHA256,
-                Input::from(keyval.public.as_slice()),
+                Input::from(&keyval.public),
             ),
         };
 

@@ -439,7 +439,7 @@ fn load_snapshot(
             url: metadata_base_url.to_owned(),
         })?,
         snapshot_meta.length,
-        snapshot_meta.hashes.sha256.as_slice(),
+        &snapshot_meta.hashes.sha256,
     )?;
     let snapshot: Signed<Snapshot> =
         serde_json::from_reader(reader).context(error::ParseMetadata {
@@ -565,7 +565,7 @@ fn load_targets(
             url: metadata_base_url.to_owned(),
         })?,
         targets_meta.length,
-        targets_meta.hashes.sha256.as_slice(),
+        &targets_meta.hashes.sha256,
     )?;
     let targets: Signed<crate::serde::Targets> =
         serde_json::from_reader(reader).context(error::ParseMetadata {
