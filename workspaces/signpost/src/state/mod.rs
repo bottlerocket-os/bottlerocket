@@ -201,9 +201,6 @@ impl State {
     ///
     /// Returns an error if the inactive partition is not bootable (it doesn't have a prior
     /// successful boot and doesn't have the priority/tries_left that would make it safe to try).
-    ///
-    /// Only modifies partition priorities, not priority/tries_left, because we're not claiming to
-    /// know anything about whether the inactive partition will boot.
     pub(crate) fn rollback_to_inactive(&mut self) -> Result<(), Error> {
         let mut inactive_flags = self.gptprio(self.inactive());
         if !inactive_flags.will_boot() {
