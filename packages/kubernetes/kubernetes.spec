@@ -14,6 +14,11 @@ Summary: Container cluster management
 License: ASL 2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
+Source1: kubelet.service
+Source2: kubelet-config
+Source3: kubelet-kubeconfig
+Source4: cluster-ca.crt
+Source5: kubelet-tmpfiles.conf
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
 
@@ -52,6 +57,22 @@ do
   ln -s hyperkube  %{buildroot}%{_cross_bindir}/${bin}
 done
 
+install -d %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/kubelet.service
+
+install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
+ln -s ../kubelet.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
+
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/config
+install -p -m 0644 %{S:3} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/kubeconfig
+
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki
+install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki/ca.crt
+
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/kubelet.conf
+
 %files
 %{_cross_bindir}/hyperkube
 %{_cross_bindir}/kube-apiserver
@@ -60,5 +81,14 @@ done
 %{_cross_bindir}/kube-scheduler
 %{_cross_bindir}/kubectl
 %{_cross_bindir}/kubelet
+%{_cross_unitdir}/kubelet.service
+%{_cross_unitdir}/multi-user.target.wants/kubelet.service
+%dir %{_cross_factorydir}%{_cross_sysconfdir}/kubernetes
+%dir %{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet
+%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/config
+%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/kubeconfig
+%dir %{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki
+%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki/ca.crt
+%{_cross_tmpfilesdir}/kubelet.conf
 
 %changelog

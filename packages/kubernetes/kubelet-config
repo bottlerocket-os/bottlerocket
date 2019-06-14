@@ -1,0 +1,31 @@
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+address: 0.0.0.0
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 2m0s
+    enabled: true
+  x509:
+    clientCAFile: "/etc/kubernetes/pki/ca.crt"
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 5m0s
+    cacheUnauthorizedTTL: 30s
+clusterDomain: cluster.local
+clusterDNS:
+- @_CLUSTER_DNS_@
+resolvConf: "/run/systemd/resolve/resolv.conf"
+hairpinMode: hairpin-veth
+cgroupDriver: systemd
+cgroupRoot: "/"
+featureGates:
+  RotateKubeletServerCertificate: true
+serializeImagePulls: false
+serverTLSBootstrap: true
+configMapAndSecretChangeDetectionStrategy: Cache
+tlsCipherSuites:
+- TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
