@@ -3,11 +3,10 @@
 //! Mimics some of the decisions made for FilesystemDataStore, e.g. metadata being committed
 //! immediately.
 
-use snafu::OptionExt;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 
-use super::{error, Committed, DataStore, Key, KeyType, Result};
+use super::{Committed, DataStore, Key, KeyType, Result};
 
 #[derive(Debug)]
 pub(crate) struct MemoryDataStore {
@@ -96,21 +95,18 @@ impl DataStore for MemoryDataStore {
     }
 
     fn commit(&mut self) -> Result<HashSet<Key>> {
-        // Find keys that have been changed
-        let pending_keys = self.list_populated_keys("settings.", Committed::Pending)?;
+        // Get data for changed keys
+        let pending_data = self.get_prefix("settings.", Committed::Pending)?;
 
-        let mut pending = HashMap::new();
-        for key_str in pending_keys.iter() {
-            // We just listed keys, so the keys should be valid and data should exist.
-            let key = Key::new(KeyType::Data, key_str)?;
-            let data = self
-                .get_key(&key, Committed::Pending)?
-                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
-            pending.insert(key_str, data);
-        }
+        // Turn String keys of pending data into Key keys, for return
+        let try_pending_keys: Result<HashSet<Key>> = pending_data
+            .keys()
+            .map(|s| Key::new(KeyType::Data, s))
+            .collect();
+        let pending_keys = try_pending_keys?;
 
         // Apply changes to live
-        self.set_keys(&pending, Committed::Live)?;
+        self.set_keys(&pending_data, Committed::Live)?;
 
         // Remove pending
         self.pending = HashMap::new();

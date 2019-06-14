@@ -22,6 +22,7 @@ pub use filesystem::FilesystemDataStore;
 pub use key::{Key, KeyType, KEY_SEPARATOR};
 
 use serde::{Deserialize, Serialize};
+use snafu::OptionExt;
 use std::collections::{HashMap, HashSet};
 
 /// Committed represents whether we want to look at pending (uncommitted) or live (committed) data
@@ -101,6 +102,33 @@ pub trait DataStore {
             self.set_key(&key, value, committed)?;
         }
         Ok(())
+    }
+
+    /// Retrieves all keys starting with the given prefix, returning them in a Key -> value map.
+    ///
+    /// Can be followed up by a deserialize::from_map call to build a structure.
+    fn get_prefix<S: AsRef<str>>(
+        &self,
+        find_prefix: S,
+        committed: Committed,
+    ) -> Result<HashMap<Key, String>> {
+        let keys = self.list_populated_keys(&find_prefix, committed)?;
+        trace!("Found populated keys: {:?}", keys);
+        if keys.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let mut result = HashMap::new();
+        for key in keys {
+            // Already confirmed key via listing keys, so an error is more serious.
+            trace!("Pulling value from datastore for key: {}", key);
+            let value = self
+                .get_key(&key, committed)?
+                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
+
+            result.insert(key, value);
+        }
+        Ok(result)
     }
 }
 
@@ -184,5 +212,22 @@ mod test {
         );
         // ...but only through inheritance, not directly.
         assert_eq!(m.get_metadata_raw(&meta, &grandchild).unwrap(), None);
+    }
+
+    #[test]
+    fn get_prefix() {
+        let mut m = MemoryDataStore::new();
+        let data = hashmap!(
+            Key::new(KeyType::Data, "x.1").unwrap() => "x1".to_string(),
+            Key::new(KeyType::Data, "x.2").unwrap() => "x2".to_string(),
+            Key::new(KeyType::Data, "y.3").unwrap() => "y2".to_string(),
+        );
+        m.set_keys(&data, Committed::Pending).unwrap();
+
+        assert_eq!(
+            m.get_prefix("x.", Committed::Pending).unwrap(),
+            hashmap!(Key::new(KeyType::Data, "x.1").unwrap() => "x1".to_string(),
+                     Key::new(KeyType::Data, "x.2").unwrap() => "x2".to_string())
+        );
     }
 }

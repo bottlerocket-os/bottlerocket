@@ -105,41 +105,35 @@ where
     S1: AsRef<str>,
     S2: AsRef<str>,
 {
-    let keys = datastore
-        .list_populated_keys(&find_prefix, committed)
+    let find_prefix = find_prefix.as_ref();
+
+    let mut data = datastore
+        .get_prefix(find_prefix, committed)
         .with_context(|| error::DataStore {
-            op: format!("list '{}'", find_prefix.as_ref()),
+            op: format!("get_prefix '{}' for {:?}", find_prefix, committed),
         })?;
-    trace!("Found populated keys: {:?}", keys);
-    if keys.is_empty() {
+    if data.is_empty() {
         return Ok(None);
     }
 
-    let mut data = HashMap::new();
-    for mut key in keys {
-        // Already confirmed key via listing keys, so an error is more serious.
-        trace!("Pulling value from datastore for key: {}", key);
-        let value = datastore
-            .get_key(&key, committed)
-            .context(error::DataStore { op: "get_key" })?
-            .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
-
-        if let Some(ref strip_prefix) = strip_prefix {
-            let strip_prefix = strip_prefix.as_ref();
-            if key.starts_with(strip_prefix) {
-                let stripped = &key[strip_prefix.len()..];
-                trace!("Stripped prefix of key, result: {}", stripped);
-                key = Key::new(KeyType::Data, &stripped).unwrap_or_else(|_| {
-                    unreachable!("Stripping prefix of Key failed to make Key: {}", stripped)
-                });
-            }
-        }
-        data.insert(key, value);
+    if let Some(ref strip_prefix) = strip_prefix {
+        data = data
+            .into_iter()
+            .map(|(mut key, value)| {
+                let strip_prefix = strip_prefix.as_ref();
+                if key.starts_with(strip_prefix) {
+                    let stripped = &key[strip_prefix.len()..];
+                    trace!("Stripped prefix of key, result: {}", stripped);
+                    key = Key::new(KeyType::Data, &stripped).unwrap_or_else(|_| {
+                        unreachable!("Stripping prefix of Key failed to make Key: {}", stripped)
+                    });
+                }
+                (key, value)
+            })
+            .collect();
     }
 
-    from_map_with_prefix(map_prefix, &data).context(error::Deserialization {
-        given: find_prefix.as_ref(),
-    })
+    from_map_with_prefix(map_prefix, &data).context(error::Deserialization { given: find_prefix })
 }
 
 /// Build a Settings based on the data in the datastore for the given keys.
@@ -211,30 +205,21 @@ where
 {
     let mut result = HashMap::new();
     for &name in names {
-        let mut item_data = HashMap::new();
         let item_prefix = prefix.clone() + name;
 
-        let keys = datastore
-            .list_populated_keys(&item_prefix, committed)
+        let item_data = datastore
+            .get_prefix(&item_prefix, committed)
             .with_context(|| error::DataStore {
-                op: format!("list '{}'", &item_prefix),
+                op: format!("get_prefix '{}' for {:?}", &item_prefix, committed),
             })?;
+
         ensure!(
-            !keys.is_empty(),
+            !item_data.is_empty(),
             error::ListKeys {
                 requested: item_prefix
             }
         );
 
-        for key in keys {
-            // Already confirmed key via listing keys, so an error is more serious.
-            trace!("Pulling value from datastore for key: {}", key);
-            let value = datastore
-                .get_key(&key, committed)
-                .context(error::DataStore { op: "get_key" })?
-                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
-            item_data.insert(key, value);
-        }
         let item = from_map_with_prefix(Some(item_prefix.clone()), &item_data)
             .context(error::Deserialization { given: item_prefix })?;
         result.insert(name.to_string(), item);

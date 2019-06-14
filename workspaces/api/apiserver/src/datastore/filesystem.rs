@@ -5,7 +5,7 @@
 //! kept in a suffixed file next to the data, e.g. a/b/c.meta for metadata "meta" about a.b.c
 
 use snafu::{ensure, OptionExt, ResultExt};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::{self, Path, PathBuf};
@@ -297,19 +297,15 @@ impl DataStore for FilesystemDataStore {
     /// We commit by copying pending keys to live, then removing pending.  Something smarter (lock,
     /// atomic flip, etc.) will be required to make the server concurrent.
     fn commit(&mut self) -> Result<HashSet<Key>> {
-        // Find keys that have been changed
-        let pending_keys = self.list_populated_keys("settings.", Committed::Pending)?;
-
         // Get data for changed keys
-        let mut pending_data = HashMap::new();
-        for key_str in pending_keys.iter() {
-            // We just listed keys, so the keys should be valid and data should exist.
-            let key = Key::new(KeyType::Data, key_str)?;
-            let data = self
-                .get_key(&key, Committed::Pending)?
-                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
-            pending_data.insert(key_str, data);
-        }
+        let pending_data = self.get_prefix("settings.", Committed::Pending)?;
+
+        // Turn String keys of pending data into Key keys, for return
+        let try_pending_keys: Result<HashSet<Key>> = pending_data
+            .keys()
+            .map(|s| Key::new(KeyType::Data, s))
+            .collect();
+        let pending_keys = try_pending_keys?;
 
         // Apply changes to live
         debug!("Writing pending keys to live");
