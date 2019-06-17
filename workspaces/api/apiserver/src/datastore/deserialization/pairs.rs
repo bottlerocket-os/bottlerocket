@@ -309,8 +309,9 @@ where
             } else {
                 // No dot, so we have a scalar; hand the data to a scalar deserializer.
                 trace!(
-                    "Key '{}' is scalar, getting value from input to deserialize",
-                    key
+                    "Key '{}' is scalar, getting '{}' from input to deserialize",
+                    key,
+                    new_path
                 );
                 let val = self.map.get(&new_path)?;
                 Some((

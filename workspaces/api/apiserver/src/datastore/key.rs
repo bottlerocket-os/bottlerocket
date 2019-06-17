@@ -33,7 +33,7 @@ lazy_static! {
 }
 
 /// KeyType represents whether we want to check a Key as a data key or metadata key.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum KeyType {
     Data,
     Meta,
@@ -42,7 +42,13 @@ pub enum KeyType {
 /// A Key is a pointer into the datastore with a convenient name.  Their names are simply dotted
 /// strings ("a.b.c") with the dots implying hierarchy, so "a.b.c" and "a.b.d" are probably
 /// related.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+// Note: it's important that Key only has the name String, or that it otherwise hashes the same as
+// the name String, so that deserializing with from_map behaves the same whether we have a map
+// whose keys are Strings or Keys containing those Strings.  If we wanted to store KeyType in the
+// Key, for example, we'd probably want to ensure we always deserialize with String or Key maps,
+// rather than allowing both, so we don't have subtle error conditions involving missing data.
+// (We probably don't want Data and Meta keys hashing the same, so customizing Hash is bad.)
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Key {
     name: String,
 }
