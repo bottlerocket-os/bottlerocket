@@ -1,0 +1,36 @@
+From c00ded3f3eba8acee467d2b301be6ef7c00e0b5d Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Mon, 17 Jun 2019 22:40:54 +0000
+Subject: [PATCH] disable RPC helper
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/helpers/Makefile.am | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/src/helpers/Makefile.am b/src/helpers/Makefile.am
+index 05801bc..adb6154 100644
+--- a/src/helpers/Makefile.am
++++ b/src/helpers/Makefile.am
+@@ -4,7 +4,6 @@ pkglib_LTLIBRARIES = ct_helper_amanda.la \
+ 		     ct_helper_dhcpv6.la \
+ 		     ct_helper_ftp.la	\
+ 		     ct_helper_mdns.la	\
+-		     ct_helper_rpc.la	\
+ 		     ct_helper_tftp.la	\
+ 		     ct_helper_tns.la	\
+ 		     ct_helper_sane.la	\
+@@ -29,10 +28,6 @@ ct_helper_mdns_la_SOURCES = mdns.c
+ ct_helper_mdns_la_LDFLAGS = $(HELPER_LDFLAGS)
+ ct_helper_mdns_la_CFLAGS = $(HELPER_CFLAGS)
+ 
+-ct_helper_rpc_la_SOURCES = rpc.c
+-ct_helper_rpc_la_LDFLAGS = $(HELPER_LDFLAGS)
+-ct_helper_rpc_la_CFLAGS = $(HELPER_CFLAGS)
+-
+ ct_helper_tftp_la_SOURCES = tftp.c
+ ct_helper_tftp_la_LDFLAGS = $(HELPER_LDFLAGS)
+ ct_helper_tftp_la_CFLAGS = $(HELPER_CFLAGS)
+-- 
+2.21.0
+
