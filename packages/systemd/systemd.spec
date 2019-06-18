@@ -65,7 +65,7 @@ CONFIGURE_OPTS=(
  -Dbinfmt=false
  -Dcoredump=false
  -Dlogind=false
- -Dhostnamed=false
+ -Dhostnamed=true
  -Dlocaled=false
  -Dmachined=false
  -Dportabled=false
@@ -148,6 +148,7 @@ CONFIGURE_OPTS=(
 
 %files
 %{_cross_bindir}/busctl
+%{_cross_bindir}/hostnamectl
 %{_cross_bindir}/journalctl
 %{_cross_bindir}/networkctl
 %{_cross_bindir}/resolvectl
