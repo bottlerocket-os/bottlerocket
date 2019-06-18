@@ -16,7 +16,7 @@ Source99: release.conf
 # FIXME What should own system-level file templates?
 Source200: hostname.template
 
-Source1000: 00-any.network
+Source1000: 00-eth0.network
 Source1001: var-lib-thar.mount
 
 BuildArch: noarch
@@ -74,7 +74,7 @@ install -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_tmpfilesdir}/release.conf
-%{_cross_libdir}/systemd/network/00-any.network
+%{_cross_libdir}/systemd/network/00-eth0.network
 %{_cross_unitdir}/var-lib-thar.mount
 %{_cross_unitdir}/multi-user.target.wants/systemd-networkd.service
 %{_cross_unitdir}/multi-user.target.wants/var-lib-thar.mount
