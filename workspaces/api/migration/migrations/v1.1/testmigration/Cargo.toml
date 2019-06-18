@@ -1,0 +1,9 @@
+[package]
+name = "testmigration"
+version = "0.1.0"
+authors = ["Tom Kirchner <tjk@amazon.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers" }

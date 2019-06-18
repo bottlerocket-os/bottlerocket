@@ -1,0 +1,11 @@
+[package]
+name = "migration-helpers"
+version = "0.1.0"
+authors = ["Tom Kirchner <tjk@amazon.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+apiserver = { path = "../../apiserver" }
+snafu = "0.4"
+toml = "0.5"

@@ -203,10 +203,10 @@ pub trait DataStore {
 // parent module of serialization and deserialization.
 
 /// Concrete error type for scalar ser/de.
-pub(crate) type ScalarError = serde_json::Error;
+pub type ScalarError = serde_json::Error;
 
 /// Serialize a given scalar value to the module-standard serialization format.
-pub(crate) fn serialize_scalar<S, E>(scalar: &S) -> std::result::Result<String, E>
+pub fn serialize_scalar<S, E>(scalar: &S) -> std::result::Result<String, E>
 where
     S: Serialize,
     E: From<ScalarError>,
@@ -215,7 +215,7 @@ where
 }
 
 /// Deserialize a given scalar value from the module-standard serialization format.
-pub(crate) fn deserialize_scalar<'de, D, E>(scalar: &'de str) -> std::result::Result<D, E>
+pub fn deserialize_scalar<'de, D, E>(scalar: &'de str) -> std::result::Result<D, E>
 where
     D: Deserialize<'de>,
     E: From<ScalarError>,
@@ -233,7 +233,7 @@ fn deserializer_for_scalar(scalar: &str) -> ScalarDeserializer {
 
 /// Serde generic "Value" type representing a tree of deserialized values.  Should be able to hold
 /// anything returned by the deserialization bits above.
-pub(crate) type Value = serde_json::Value;
+pub type Value = serde_json::Value;
 
 #[cfg(test)]
 mod test {
