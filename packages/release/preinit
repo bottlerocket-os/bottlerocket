@@ -1,6 +1,12 @@
 #!/bin/bash
 mount -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=0755 tmpfs /etc
 mount -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=0755 tmpfs /var
+mount -t tmpfs -o defaults,noatime,nosuid,nodev,mode=0755 tmpfs /opt
+
+mkdir -p /opt/{cni,upper,work}
+mount -t overlay overlay -o lowerdir=/usr/libexec/cni,upperdir=/opt/upper,workdir=/opt/work /opt/cni
+
 touch -d @0 /etc
 touch -d @0 /var
+touch -d @0 /opt
 exec /sbin/init
