@@ -2,7 +2,7 @@ use bit_field::BitField;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct GptPrio(u64);
+pub struct GptPrio(u64);
 
 impl GptPrio {
     pub(crate) fn priority(self) -> u64 {

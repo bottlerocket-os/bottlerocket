@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
-pub(crate) enum Error {
+pub enum Error {
     #[snafu(display(
         "Active partition {} not in either detected partition set ({:?})",
         active_partition.display(),
@@ -105,7 +105,7 @@ pub(crate) enum Error {
 }
 
 #[derive(Debug)]
-pub(crate) struct GPTError(pub gptman::Error);
+pub struct GPTError(pub gptman::Error);
 
 impl fmt::Display for GPTError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

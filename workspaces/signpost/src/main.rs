@@ -1,13 +1,7 @@
 #![warn(clippy::pedantic)]
 
-mod error;
-mod gptprio;
-mod guid;
-mod set;
-mod state;
-
-use crate::state::State;
 use serde::Deserialize;
+use signpost::state::State;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
