@@ -1,27 +1,39 @@
 { stdenv, docker-cli }:
-{ name, dockerfile, ... }:
-stdenv.mkDerivation {
-  inherit name;
+let
+  mkImage = { name, dockerfile, ... }:
+    let
+      dockerfileFile = if builtins.isString dockerfile
+                       then
+                         builtins.toFile "Dockerfile" dockerfile
+                       else
+                         dockerfile;
+    in
+    stdenv.mkDerivation {
+      inherit name;
 
-  outputs = ["out" "containerRef"];
-  buildInputs = [ docker-cli ];
-  phases = [ "buildPhase" "installPhase" ];
+      outputs = ["out" "containerRef"];
+      buildInputs = [ docker-cli ];
+      phases = [ "buildPhase" "installPhase" ];
 
-  buildPhase = ''
+      buildPhase = ''
   mkdir empty-context
-  docker build --build-arg containerImage \
+  ref="''${containerRef##*/}"
+  ref="''${ref,,}:containerRef"
+  docker build --build-arg name \
                --build-arg containerRef \
                --label containerImage=$containerImage \
                --network host \
-               --file ${dockerfile} ./empty-context
+               --tag "$ref" \
+               --file ${dockerfileFile} ./empty-context
   '';
-  
-  installPhase = ''
-  ref="''${containerRef##*/}"
-  ref="''${ref,,}"
+      
+      installPhase = ''
   image_id="$(docker images --filter "label=containerImage=$containerImage" --format "{{.ID}}" --no-trunc)"
-  docker tag "$image_id" "$ref"
   docker save "$ref" > $out
   echo "$ref" > $containerRef
   '';
+    };
+in
+{
+  inherit mkImage;
 }

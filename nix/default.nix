@@ -1,40 +1,63 @@
+{ config ? import ./config.nix {}, nixpkgs ? import ./nixpkgs.nix }:
 let
-# Load build config.
-config = import ./config.nix {};
+  tharNixpkgs = (nixpkgs { inherit config; }); # setup the nixpkgs closure for use with thar.
+  nixpkgs' = tharNixpkgs {}; # configure nixpkgs for use (upstream config).
 
-# Use a pinned copy of nixpkgs for build.
-nixpkgs = (import ./nixpkgs.nix { inherit config; })
-            { config = {}; overlays = [ ]; };
-thar = self: let
-  callPackage = self.newScope packages;
-  packages = rec {
-    inherit config callPackage;
+  overlaidPkgs = tharNixpkgs { overlays = [ (self: super: tharClosure self) ]; };
   
-    # External dependencies can be pulled in using `pkgs'.
-    pkgs = self;
-    lib = pkgs.lib;
+  tharClosure = self: let
+    # thar closure's callPackage for resolving attributes from the
+    # final set of attributes in `packages'.
+    callPackage = (self.newScope packages);
     
-    # Explicit inclusion of common external dependency in scope, others
-    # are provided directly as needed.
-    inherit (pkgs)
-      # The nixpkgs conventional derivation constructor.
-      stdenv;
-    
-    docker-cli = callPackage ./docker/docker-cli.nix { inherit (pkgs) docker; };
-    docker-run = callPackage ./docker/docker-run.nix {};
-    docker-load = callPackage ./docker/docker-load.nix {};
-    docker-image = callPackage ./docker/docker-image.nix {};
+    buildSupport = rec {
+      # External dependencies can be pulled in using `pkgs'.
+      pkgs = self;
+      lib = pkgs.lib;
+      overlaid = overlaidPkgs;
       
-    rpm-metadata = pkgs.callPackage ./rpm/rpm-metadata.nix { inherit (pkgs) rpm; };
-    rpm-macros = pkgs.callPackage ./rpm/rpm-macros.nix { inherit (pkgs) rpm; };
-    rpm-builder = pkgs.callPackage ./rpm/rpm-builder.nix {};
-    fetchRpmSources = import ./rpm/fetch-rpm-sources.nix;
-    mkMacroPath = paths: builtins.concatStringsSep ":" paths;
-  
-    example = callPackage ./example/default.nix {};
-    
-  };
-  in packages;
+      # Explicit inclusion of common external dependency in scope, others
+      # are provided directly as needed.
+      inherit (pkgs)
+        # The nixpkgs conventional derivation constructor -
+        # specifically its non-gcc including alternative, which should
+        # be folk's default.
+        stdenvNoCC;
 
+      inherit config callPackage;
+
+      inherit (config) base-container-image;
+
+
+      # Docker CLI is the Nix pure docker derivation, but only the
+      # docker cli to avoid having to copy down the entirety of the
+      # docker closure (which requires containerd, dockerd, runc,
+      # et. al). Bootstrapping or no-cache builds will still download
+      # them, but those paths can be garbage collected.
+      docker-cli = pkgs.callPackage ./docker/docker-cli.nix {};
+      docker-run = callPackage ./docker/docker-run.nix {};
+      docker-load = callPackage ./docker/docker-load.nix { inherit docker-cli; };
+      docker-image = callPackage ./docker/docker-image.nix {};
+      docker-container = {
+        setup = pkgs.callPackage ./docker/container-setup.nix {};
+        teardown = pkgs.callPackage ./docker/container-teardown.nix {};
+      };
+      docker-sanity = callPackage ./docker/sanity-check.nix { inherit (pkgs) writeScript; };
+      
+      rpm-metadata = callPackage ./rpm/rpm-metadata.nix { inherit (pkgs) rpm; };
+      rpm-macros = callPackage ./rpm/rpm-macros.nix { inherit (pkgs) rpm; };
+      rpm-container = callPackage ./rpm/rpm-container.nix { };
+      rpmBuilder = callPackage ./rpm/rpm-builder.nix { inherit (pkgs) writeScript; };
+      fetchRpmSources = import ./rpm/fetch-rpm-sources.nix;
+      mkMacroPath = paths: builtins.concatStringsSep ":" paths;
+
+      example = callPackage ./example/default.nix {};
+    };
+
+    buildPackages =  import ../packages { inherit callPackage; };
+
+    packages = buildSupport // buildPackages;
+    
+  in packages;
 in
-thar nixpkgs
+tharClosure nixpkgs'

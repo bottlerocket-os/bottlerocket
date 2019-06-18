@@ -6,3 +6,5 @@ sha256 = "1kjbrv26mpgagy4dp30qq81wlk0iplzhqsq5hpdclhnvk5cpwysr"
 image = "fedora"
 ref = "latest"
 
+[base-container-image]
+ref = "sha256:d09302f77cfcc3e867829d80ff47f9e7738ffef69730d54ec44341a9fb1d359b"
