@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := all
 
 OS := thar
+RECIPE ?= aws-eks-ami
 TOPDIR := $(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 DEP4SPEC ?= $(TOPDIR)/bin/dep4spec
 SPEC2VAR ?= $(TOPDIR)/bin/spec2var
@@ -49,7 +50,7 @@ define build_image
 	$(eval HASH:= $(shell sha1sum $(2) /dev/null | sha1sum - | awk '{print $$1}'))
 	@$(BUILDCTL) build \
 		--opt target=builder \
-		--opt build-arg:PACKAGE=$(OS)-$(1)-release \
+		--opt build-arg:PACKAGE=$(OS)-$(1)-$(RECIPE) \
 		--opt build-arg:ARCH=$(1) \
 		--opt build-arg:HASH=$(HASH) \
 		--opt build-arg:DATE=$(DATE) \
@@ -96,7 +97,7 @@ include $(PKGS)
 .PHONY: all $(ARCH)
 
 .SECONDEXPANSION:
-$(ARCH): $$($(OS)-$(ARCH)-release)
+$(ARCH): $$($(OS)-$(ARCH)-$(RECIPE))
 	$(eval PKGS:= $(wildcard $(OUTPUT)/$(OS)-$(ARCH)-*.rpm))
 	$(call build_image,$@,$(PKGS))
 
