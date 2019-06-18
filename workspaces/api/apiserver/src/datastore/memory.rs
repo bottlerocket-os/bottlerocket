@@ -10,9 +10,13 @@ use super::{Committed, DataStore, Key, KeyType, Result};
 
 #[derive(Debug)]
 pub(crate) struct MemoryDataStore {
-    pending: HashMap<String, String>,
-    live: HashMap<String, String>,
-    metadata: HashMap<String, String>,
+    // Uncommitted (pending) data.
+    pending: HashMap<Key, String>,
+    // Committed (live) data.
+    live: HashMap<Key, String>,
+    // Map of data keys to their metadata, which in turn is a mapping of metadata keys to
+    // arbitrary (string/serialized) values.
+    metadata: HashMap<Key, HashMap<Key, String>>,
 }
 
 impl MemoryDataStore {
@@ -24,24 +28,18 @@ impl MemoryDataStore {
         }
     }
 
-    fn dataset(&self, committed: Committed) -> &HashMap<String, String> {
+    fn dataset(&self, committed: Committed) -> &HashMap<Key, String> {
         match committed {
             Committed::Live => &self.live,
             Committed::Pending => &self.pending,
         }
     }
 
-    fn dataset_mut(&mut self, committed: Committed) -> &mut HashMap<String, String> {
+    fn dataset_mut(&mut self, committed: Committed) -> &mut HashMap<Key, String> {
         match committed {
             Committed::Live => &mut self.live,
             Committed::Pending => &mut self.pending,
         }
-    }
-}
-
-impl MemoryDataStore {
-    fn metadata_map_key(&self, metadata_key: &Key, data_key: &Key) -> String {
-        data_key.to_string() + "/" + metadata_key
     }
 }
 
@@ -52,14 +50,12 @@ impl DataStore for MemoryDataStore {
         committed: Committed,
     ) -> Result<HashSet<Key>> {
         let dataset = self.dataset(committed);
-        let key_strs = dataset.keys().filter(|k| k.starts_with(prefix.as_ref()));
-        let keys = key_strs.map(|s| {
-            Key::new(KeyType::Data, s).expect(&format!(
-                "Failed to make Key from key already in datastore: {}",
-                s
-            ))
-        });
-        Ok(keys.collect())
+        Ok(dataset
+            .keys()
+            // Make sure the data keys start with the given prefix.
+            .filter(|k| k.starts_with(prefix.as_ref()))
+            .cloned()
+            .collect())
     }
 
     fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>> {
@@ -69,7 +65,7 @@ impl DataStore for MemoryDataStore {
 
     fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: Committed) -> Result<()> {
         self.dataset_mut(committed)
-            .insert(key.to_string(), value.as_ref().to_owned());
+            .insert(key.clone(), value.as_ref().to_owned());
         Ok(())
     }
 
@@ -79,8 +75,11 @@ impl DataStore for MemoryDataStore {
     }
 
     fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
-        let map_key = self.metadata_map_key(metadata_key, data_key);
-        Ok(self.metadata.get(&map_key).cloned())
+        let metadata_for_data = self.metadata.get(data_key.as_ref());
+        // If we have a metadata entry for this data key, then we can try fetching the requested
+        // metadata key, otherwise we'll return early with Ok(None).
+        let result = metadata_for_data.and_then(|m| m.get(metadata_key.as_ref()));
+        Ok(result.cloned())
     }
 
     fn set_metadata<S: AsRef<str>>(
@@ -89,8 +88,15 @@ impl DataStore for MemoryDataStore {
         data_key: &Key,
         value: S,
     ) -> Result<()> {
-        let map_key = self.metadata_map_key(metadata_key, data_key);
-        self.metadata.insert(map_key, value.as_ref().to_owned());
+        // If we don't already have a metadata entry for this data key, insert one.
+        let metadata_for_data = self
+            .metadata
+            // Clone data key because we want the HashMap key type to be Key, not &Key, and we
+            // can't pass ownership because we only have a reference from our parameters.
+            .entry(data_key.clone())
+            .or_insert_with(HashMap::new);
+
+        metadata_for_data.insert(metadata_key.clone(), value.as_ref().to_owned());
         Ok(())
     }
 
