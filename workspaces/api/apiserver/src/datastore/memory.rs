@@ -6,7 +6,7 @@
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 
-use super::{Committed, DataStore, Key, KeyType, Result};
+use super::{Committed, DataStore, Key, Result};
 
 #[derive(Debug)]
 pub(crate) struct MemoryDataStore {
@@ -101,23 +101,18 @@ impl DataStore for MemoryDataStore {
     }
 
     fn commit(&mut self) -> Result<HashSet<Key>> {
-        // Get data for changed keys
-        let pending_data = self.get_prefix("settings.", Committed::Pending)?;
+        // We need a clone of the pending keys so we can set_keys (which holds &mut self) and we
+        // have to clone the keys anyway for the return value.
+        let pending = self.pending.clone();
 
-        // Turn String keys of pending data into Key keys, for return
-        let try_pending_keys: Result<HashSet<Key>> = pending_data
-            .keys()
-            .map(|s| Key::new(KeyType::Data, s))
-            .collect();
-        let pending_keys = try_pending_keys?;
-
-        // Apply changes to live
-        self.set_keys(&pending_data, Committed::Live)?;
+        // Apply pending changes to live
+        self.set_keys(&pending, Committed::Live)?;
 
         // Remove pending
         self.pending = HashMap::new();
 
-        Ok(pending_keys)
+        // Return keys (using into_iter to avoid further clone)
+        Ok(pending.into_iter().map(|(k, _v)| k).collect())
     }
 }
 
