@@ -128,6 +128,12 @@ impl<T: Decode> Serialize for Decoded<T> {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+impl<T: Decode> AsRef<[u8]> for Decoded<T> {
+    fn as_ref(&self) -> &[u8] {
+        &self.bytes
+    }
+}
+
 impl<T: Decode> Deref for Decoded<T> {
     type Target = [u8];
 
@@ -169,5 +175,11 @@ impl<T: Decode> PartialOrd for Decoded<T> {
 impl<T: Decode> Ord for Decoded<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.bytes.cmp(&other.bytes)
+    }
+}
+
+impl<T: Decode> PartialEq<[u8]> for Decoded<T> {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.bytes.eq(&other)
     }
 }
