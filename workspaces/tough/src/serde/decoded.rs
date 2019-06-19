@@ -1,4 +1,5 @@
 use crate::error::{self, Compat, Error};
+use ring::io::der;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use snafu::ResultExt;
 use std::cmp::Ordering;
@@ -58,6 +59,45 @@ impl Decode for Pem {
             .map(|pem| pem.contents)
             .map_err(Compat)
             .context(error::PemDecode)
+    }
+}
+
+pub(crate) struct RsaPem;
+
+impl Decode for RsaPem {
+    fn parse(s: &str) -> Result<Vec<u8>, Error> {
+        let pem = pem::parse(s).map_err(Compat).context(error::PemDecode)?;
+        // All TUF says about RSA keys is that they are "in PEM format and a string", but tests in
+        // TUF's source code repository [1] imply that they are the sort of output you expect from
+        // `openssl genrsa`. This is the SubjectPublicKeyInfo format, and ring wants the
+        // RSAPublicKey format [2].
+        //
+        // If you run the public key from [1] through `openssl asn1parse -i`, you get:
+        //
+        // ```
+        //    0:d=0  hl=4 l= 418 cons: SEQUENCE
+        //    4:d=1  hl=2 l=  13 cons:  SEQUENCE
+        //    6:d=2  hl=2 l=   9 prim:   OBJECT            :rsaEncryption
+        //   17:d=2  hl=2 l=   0 prim:   NULL
+        //   19:d=1  hl=4 l= 399 prim:  BIT STRING
+        // ```
+        //
+        // The BIT STRING (here, at offset 19) happens to be the RSAPublicKey format. Here, we use
+        // ring's (undocumented but public?!) DER-parsing methods to get there.
+        //
+        // [1]: https://github.com/theupdateframework/tuf/blob/49e75ffe5adfc1f883f53f658ace596d14dc0879/tests/repository_data/repository/metadata/root.json#L20
+        // [2]: https://docs.rs/ring/0.14.6/ring/signature/index.html#signing-and-verifying-with-rsa-pkcs1-15-padding
+        match untrusted::Input::from(&pem.contents).read_all(ring::error::Unspecified, |input| {
+            der::expect_tag_and_get_value(input, der::Tag::Sequence).and_then(|spki_inner| {
+                spki_inner.read_all(ring::error::Unspecified, |input| {
+                    der::expect_tag_and_get_value(input, der::Tag::Sequence)?;
+                    der::bit_string_with_no_unused_bits(input)
+                })
+            })
+        }) {
+            Ok(key_value) => Ok(key_value.as_slice_less_safe().to_owned()),
+            Err(_) => error::RsaDecode.fail(),
+        }
     }
 }
 

@@ -101,3 +101,15 @@ pub(crate) struct Meta {
 pub(crate) struct Hashes {
     pub(crate) sha256: Decoded<Hex>,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::serde::{root::Root, Signed};
+
+    #[test]
+    fn simple_rsa() {
+        let root: Signed<Root> =
+            serde_json::from_str(include_str!("../../tests/data/simple-rsa/root.json")).unwrap();
+        root.verify(&root).unwrap();
+    }
+}

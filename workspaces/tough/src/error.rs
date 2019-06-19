@@ -166,6 +166,10 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    /// Failed to decode a `SubjectPublicKeyInfo` formatted RSA public key.
+    #[snafu(display("Invalid SubjectPublicKeyInfo-formatted RSA public key"))]
+    RsaDecode { backtrace: Backtrace },
+
     /// A signature threshold specified in root.json was not met when verifying a signature.
     #[snafu(display(
         "Signature threshold of {} not met ({} valid signatures)",
