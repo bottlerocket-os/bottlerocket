@@ -1,9 +1,8 @@
 { rpmBuilder, fetchRpmSources }:
-rpmBuilder.mkDerivation {
+rpmBuilder.mkDerivation rec {
   name = "sdk";
-  srcs = [
-    ./.
-  ];
-
+  
+  src = ./.;
+  
   rpmInputs = [];
 }

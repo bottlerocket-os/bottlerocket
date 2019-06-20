@@ -1,16 +1,39 @@
-{ stdenvNoCC, system, lib, writeScript, docker-cli, docker-container, docker-load, rpm-container, rpm-macros }:
+{ stdenvNoCC, system, lib, writeScript, linkFarm, docker-cli, docker-container,
+  docker-load, rpm-container, rpm-macros, fetchRpmSources }:
 let
   mkDockerDerivation =
     { name,
       entrypoint ? "/bin/sh", image ? rpm-container,
-      src ? null, srcs ? null, rpmInputs ? [],
+      src ? null, srcs ? [],
+      rpmInputs ? [], rpmSources ? [],
       preBuildPhase ? "", postBuildPhase ? "",
       useHostNetwork ? false, ... }@args:
     let
       # Load the rpm builder container and use its ref for running.
       imageRef = lib.fileContents (docker-load { inherit image; });
+      # Networking mode for the building container.
+      netMode = if useHostNetwork then "host" else "none";
 
-      su = "su --preserve-environment builder";
+      spec = builtins.head (lib.sourceByRegex src ["${name}.spec"]);
+      sources = builtins.head (lib.sourceByRegex src ["sources"]);
+
+      rpmbuildFarm = let
+        linkInDir = dir: elems:
+          map (s: { name = "${dir}/${s.name}"; path = "${s}"; }) elems;
+        linkInRoot = elems:
+          map (s: { name = "."; path = "${s}"; }) elems;
+
+        rpmSources = fetchRpmSources { inherit spec sources; };
+
+        rpms = linkInDir "RPMS" rpmInputs;
+        sources = linkInDir "SOURCES" rpmSources;
+        packageSrc = linkInDir "SOURCES" ([src] ++ srcs);
+        
+        links = rpms ++ sources ++ packageSrc;
+      in
+        linkFarm "rpmbuildFarm" links;
+
+      # Build script executed in the container.
       containerBuildScript = writeScript "container-build-script" ''
       set -e
       # Catch early exit and run teardown to allow host user to
@@ -29,35 +52,29 @@ let
       export HOME=/home/builder
       su --preserve-environment builder rpmdev-setuptree
       # And build.
+      su --preserve-environment builder ${rpmTreeScript}
       su --preserve-environment builder ${rpmBuildScript}
 
       ${postBuildPhase}
       '';
 
-      rpmBuildScript = writeScript "container-rpm-build-script" ''
-      # Link required macros in.
-      find ${rpm-macros} ${rpm-macros.arch} -type f > ~/.rpmmacros
+      # RPM tree setup for build
+      rpmTreeScript = writeScript "rpmbuild-setup" ''
+      # Setup required macros
+      find ${rpm-macros} ${rpm-macros.arches} -type f > ~/.rpmmacros
       
       rpmdev-setuptree
-
-      set -x
-
-      # Symlink input rpms that are used in the build and make them available for use.
-      ${lib.concatMapStringsSep "\n"
-        (p: "find ${p} -name '*.rpm' -exec ln -sv {} ./rpmbuild/RPMS/") rpmInputs}
-      # Symlink sources (that are files)
-      find -L "''${srcs[@]}" -type f -maxdepth 0 \
-            -exec ln -vs {} ./rpmbuild/SOURCES/ \;
-      # Symlink sources' children (from those that are directories)
-      find -L "''${srcs[@]}" -type d -maxdepth 0 -print0  | xargs -0 -L1 -I DIR -- find DIR -mindepth 1 -maxdepth 1 \
-           -exec ln -sv {} ./rpmbuild/SOURCES/ \;
-      find -L "''${srcs[@]}" -maxdepth 1 -type f -name '*.spec' -exec ln -sv {} ./rpmbuild/SPECS \;
-      set +x
-      
-      rpmbuild -ba --clean ./rpmbuild/SPECS/${name}.spec
       '';
 
-      netMode = if useHostNetwork then "host" else "none";
+      rpmBuildScript = writeScript "rpmbuild-build" ''
+      pushd rpmbuild
+
+      rpmbuild -ba --clean 
+               --define '_sourcedir ${rpmbuildFarm}/SOURCES' \
+               --define '_specdir ${rpmbuildFarm}/SOURCES' \
+                /${name}.spec
+      popd
+      '';
     in
       stdenvNoCC.mkDerivation ({
         inherit name;

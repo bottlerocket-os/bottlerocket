@@ -1,6 +1,9 @@
-{ sources ? null, useFile ? false }:
+{ rpm-metadata }:
+{ sources, spec }:
 let
-  sources' = if useFile then (builtins.fromJSON (builtins.readFile sources)).sources else sources;
+  metadata = rpm-metadata { inherit spec sources; };
+  sourcesJSON = "${metadata}/sources.json";
+  sourcesList = (builtins.fromJSON (builtins.readFile sourcesJSON)).sources;
   fetchurl = import <nix/fetchurl.nix>;
 in
-map fetchurl sources'
+map fetchurl sourcesList

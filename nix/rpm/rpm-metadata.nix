@@ -1,30 +1,35 @@
-{ stdenv, lib, config, rpm, rpm-macros, mkMacroPath, ... }:
+{ stdenvNoCC, lib, config, rpm, rpm-macros, mkMacroPath, ... }:
 let
-  cfg = config.builder.rpm;
-  image = cfg.container-image;
-
   # TODO: use cross arch here
+  
   # Architecture specific macros
-  arch-macros = "${rpm-macros.arch}/x86_64";
+  arch-macros = "${rpm-macros.arches}/x86_64";
   # The base set of thar macros
-  thar-macros = "${rpm-macros.out}/*";
+  thar-macros = "${rpm-macros}/*";
   # RPM distributed macros
   rpm-macros = "${rpm}/lib/rpm/macros";
-  
-  macroPath = mkMacroPath [ arch-macros thar-macros rpm-macros ];
+  # Macro path for rpm tools
+  macroPath = lib.concatStringsSep ":" [ thar-macros rpm-macros ];
 in
-{ rpm-spec, rpm-sources, ... }:
-stdenv.mkDerivation rec {
-  name = "rpm-metadata-${baseNameOf rpm-spec}";
-  src = rpm-spec;
+{ spec, sources, ... }:
+stdenvNoCC.mkDerivation {
+  name = "${baseNameOf spec}-metadata";
+  
+  phases = [ "parsePhase" "generatePhase" ];
+
   buildInputs = [ rpm ];
-  phases = ["parsePhase" "generatePhase"];
 
   # Parse the rpm spec to extract metadata.
   parsePhase = ''
+  echo "$macroPath"
   mkdir -p $out
-  rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --parse ${rpm-spec} > $out/parsed.spec
-  if grep -o -E '^Source[0-9]+:.*http.*$' $out/parsed.spec | sed 's/Source.*:.*http/http/' | grep -v -e '^$' -e '.crate$' | tee remote-source-urls; then
+
+  rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --parse "${spec}" > $out/parsed.spec
+
+  if grep -o -E '^Source[0-9]+:.*http.*$' "$out/parsed.spec" \
+     | sed 's/Source.*:.*http/http/' \
+     | grep -v -e '^$' -e '.crate$' \
+     | tee remote-source-urls; then
     echo "Collecting sources for package"
   else
     echo "Package has no sources"
@@ -32,15 +37,18 @@ stdenv.mkDerivation rec {
   '';
   
   generatePhase = ''
-  set -x
   declare -A source_hash_entry
-  while read SOURCE_URL; do
-    echo "Generating source entry for $SOURCE_URL"
-    FILENAME="''${SOURCE_URL##*/}"
-    # ALGO-HASH_CONTENT - https://www.w3.org/TR/SRI/ 
-    SRI="$(awk -v filename="($FILENAME)" '$2 == filename {print tolower($1)"-"$4}' ${rpm-sources})"
+  
+  # Ugh, sort the damn thing.
+  tac remote-source-urls | sort | tee remote-sources-urls  
+
+  while read source_url; do
+    echo "Generating source entry for $source_url"
+    FILENAME="''${source_url##*/}"
+    # ALGO-HASH_CONTENT - https://www.w3.org/TR/SRI/
+    SRI="$(awk -v filename="($FILENAME)" '$2 == filename {print tolower($1)"-"$4}' ${sources})"
     test -n "$SRI" || exit 1
-    source_hash_entry["$SOURCE_URL"]="$SRI"
+    source_hash_entry["$source_url"]="$SRI"
   done < remote-source-urls
   
   json_entries=""
@@ -56,6 +64,5 @@ stdenv.mkDerivation rec {
     json_entries+="$entry"
   done
   printf '{"sources": [%s]}' "$json_entries" | tee "$out/sources.json"
-  set +x
   '';
 }
