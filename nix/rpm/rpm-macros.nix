@@ -19,8 +19,8 @@ stdenvNoCC.mkDerivation rec {
   
   installPhase = ''
   set | grep -e 'per.arch'
-  mkdir -p $out $per_arch
-  grep --null --files-with-match    -r '${archMacroRegex}' $src | xargs -0 -t -L1 -I SRC -- cp --no-clobber SRC $arches
-  grep --null --files-without-match -r '${archMacroRegex}' $src | xargs -0 -t -L1 -I SRC -- cp --no-clobber SRC $out
+  mkdir -p $out $arches
+  grep --null --files-with-match    -E -r '${archMacroRegex}' $src | xargs -0 -t -L1 -I SRC -- cp --no-clobber SRC $arches
+  grep --null --files-without-match -E -r '${archMacroRegex}' $src | xargs -0 -t -L1 -I SRC -- cp --no-clobber SRC $out
   '';
 }
