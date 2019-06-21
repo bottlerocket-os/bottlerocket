@@ -55,6 +55,8 @@ let
       fetchRpmSources = callPackage ./rpm/fetch-rpm-sources.nix {};
       mkMacroPath = paths: builtins.concatStringsSep ":" paths;
 
+      fetchcargo = callPackage ./rust/fetchcargo.nix {};
+
       example = callPackage ./example/default.nix {};
     };
     buildPackages =  import ../packages { inherit callPackage; };
