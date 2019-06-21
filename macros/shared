@@ -33,6 +33,9 @@
 %_cross_bashdir %{_cross_datadir}/bash-completion
 %_cross_pkgconfigdir %{_cross_libdir}/pkgconfig
 %_cross_unitdir %{_cross_rootdir}%{_unitdir}
+%_cross_userunitdir %{_cross_rootdir}%{_userunitdir}
+%_cross_journalcatalogdir %{_cross_rootdir}%{_journalcatalogdir}
+%_cross_sysusersdir %{_cross_rootdir}%{_sysusersdir}
 
 %set_cross_build_flags \
   CFLAGS="${CFLAGS:-%{_cross_cflags}}" ; export CFLAGS ; \
