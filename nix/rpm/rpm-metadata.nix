@@ -5,11 +5,11 @@ let
   # Architecture specific macros
   arch-macros = "${rpm-macros.arches}/x86_64";
   # The base set of thar macros
-  thar-macros = "${rpm-macros}/*";
+  thar-macros = map (n: "${rpm-macros.out}/${n}") [ "shared" "rust" "cargo" ];
   # RPM distributed macros
-  rpm-macros = "${rpm}/lib/rpm/macros";
+  rpm-dist-macros = "${rpm}/lib/rpm/macros";
   # Macro path for rpm tools
-  macroPath = lib.concatStringsSep ":" [ thar-macros rpm-macros ];
+  macroPath = lib.concatStringsSep ":" (lib.flatten [ arch-macros thar-macros rpm-dist-macros ]);
 in
 { name, spec, sources, ... }:
 stdenvNoCC.mkDerivation {
