@@ -11,9 +11,9 @@ let
   # Macro path for rpm tools
   macroPath = lib.concatStringsSep ":" [ thar-macros rpm-macros ];
 in
-{ spec, sources, ... }:
+{ name, spec, sources, ... }:
 stdenvNoCC.mkDerivation {
-  name = "${baseNameOf spec}-metadata";
+  name = "${name}-metadata";
   
   phases = [ "parsePhase" "generatePhase" ];
 
