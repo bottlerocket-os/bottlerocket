@@ -1,5 +1,5 @@
 { stdenvNoCC, system, lib, writeScript,
-  docker-cli, docker-container, docker-load, rpm-container,
+  docker-cli, docker-container, docker-load, rpm-container, rpm-metadata,
   rpm-macros, fetchRpmSources }:
 let
   mkDockerDerivation =
@@ -17,9 +17,14 @@ let
       # rpmInputs are the rpms that are provided as input to this
       # build as a repository.
       rpmInputs ? [],
+      # rpmHostInputs are the BuildRequires needed on the "host"
+      # building the package.
+      rpmHostInputs ? [],
       # rpmSources provided directly to control the used sources
       # instead of automatically parsing and loading them.
-      rpmSources ? null,
+      rpmSources ? null, doFetchRpmSources ? true,
+      # rpmbuildExtraFlags are provided to the rpmbuild command used.
+      rpmbuildExtraFlags ? "",
       # builddepExtraFlags are provided to the command used to install
       # dependencies prior to build in addition to the existing
       # set. This may be used, for example, to set additional options
@@ -64,6 +69,10 @@ let
       spec = "${src}/${name}.spec";
       sources = "${src}/sources";
 
+      rpmMetadata = rpm-metadata { inherit name spec sources; };
+      providedRpmHostInputs = rpmHostInputs;
+      rpmHostInputs' = providedRpmHostInputs ++ rpmMetadata.hostBuildRequires;
+
       # Upstream sources referenced in spec.
       rpmSources' = if rpmSources == null
                     then (fetchRpmSources { inherit name spec sources; })
@@ -72,6 +81,10 @@ let
       srcs' = if src == null
               then srcs
               else [ src ] ++ srcs;
+
+      passthru = { inherit rpmMetadata; rpmHostInputs = rpmHostInputs'; };
+
+
 
       # Snippet printing combined macros used by rpmbuild and dnf.
       macrosContent = "find -L ${rpm-macros} ${rpm-macros.arches}/x86_64 -type f -exec cat {} \\;";
@@ -138,9 +151,10 @@ let
       '';
 
       rpmBuildScript = writeScript "rpmbuild-build" ''
+      set -e
       pushd rpmbuild
       ${preRpmbuildCommands}
-      time rpmbuild -ba --clean SPECS/${name}.spec
+      time rpmbuild ${rpmbuildExtraFlags} -ba SPECS/${name}.spec
       ${postRpmbuildCommands}
 
       mkdir -p $out/srpms $out/rpms
@@ -153,7 +167,7 @@ let
       '';
     in
       stdenvNoCC.mkDerivation ({
-        inherit name;
+        inherit name passthru;
 
         phases = [ "setupPhase" "buildPhase" ];
         outputs = [ "rpms" "srpms" ];

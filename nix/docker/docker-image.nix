@@ -1,6 +1,6 @@
 { stdenv, docker-cli }:
 let
-  mkImage = { name, dockerfile, ... }:
+  mkImage = { name, dockerfile, ... }@args:
     let
       dockerfileFile = if builtins.isString dockerfile
                        then
@@ -8,34 +8,34 @@ let
                        else
                          dockerfile;
     in
-    stdenv.mkDerivation {
-      inherit name;
+      stdenv.mkDerivation ({
+        inherit name;
 
-      outputs = ["out" "containerRef"];
-      buildInputs = [ docker-cli ];
-      phases = [ "buildPhase" "installPhase" ];
+        outputs = ["out" "containerRef"];
+        buildInputs = [ docker-cli ];
+        phases = [ "buildPhase" "installPhase" ];
 
-      buildPhase = ''
-      mkdir empty-context
-      ref="''${containerRef##*/}"
-      ref="''${ref,,}:containerRef"
+        buildPhase = ''
+        mkdir empty-context
+        ref="''${containerRef##*/}"
+        ref="''${ref,,}:containerRef"
 
-      awk '/FROM/ { $1=""; print; }' ${dockerfileFile} | xargs --no-run-if-empty -L1 -t docker pull
-      docker build --build-arg name \
-                   --build-arg containerRef \
-                   --label containerRef=$containerRef \
-                   --network host \
-                   --tag "$ref" \
-                    --file ${dockerfileFile} \
-                   ./empty-context
-      '';
+        awk '/FROM/ { $1=""; print; }' ${dockerfileFile} | xargs --no-run-if-empty -L1 -t docker pull
+        docker build --build-arg name \
+                     --build-arg containerRef \
+                     --label containerRef=$containerRef \
+                     --network host \
+                     --tag "$ref" \
+                      --file ${dockerfileFile} \
+                     ./empty-context
+        '';
 
-      installPhase = ''
-      image_id="$(docker images --filter "label=containerImage=$containerImage" --format "{{.ID}}" --no-trunc)"
-      docker save "$ref" > $out
-      echo "$ref" > $containerRef
-      '';
-    };
+        installPhase = ''
+        image_id="$(docker images --filter "label=containerImage=$containerImage" --format "{{.ID}}" --no-trunc)"
+        docker save "$ref" > $out
+        echo "$ref" > $containerRef
+        '';
+      } // args);
 in
 {
   inherit mkImage;

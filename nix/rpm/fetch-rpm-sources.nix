@@ -1,9 +1,7 @@
 { rpm-metadata }:
 { name, sources, spec }:
 let
-  metadata = rpm-metadata { inherit spec sources name; };
-  sourcesJSON = "${metadata}/sources.json";
-  sourcesList = (builtins.fromJSON (builtins.readFile sourcesJSON)).sources;
+  packageMetadata = rpm-metadata { inherit spec sources name; };
   fetchurl = import <nix/fetchurl.nix>;
 in
-map fetchurl sourcesList
+map fetchurl packageMetadata.sources
