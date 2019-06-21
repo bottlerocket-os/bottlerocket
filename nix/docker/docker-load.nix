@@ -4,9 +4,8 @@ stdenvNoCC.mkDerivation {
   name = "docker-load-${image.name}";
 
   buildInputs = [ docker-cli ];
-  # The loader is impure and causes the local system to "do"
-  # something.
-  allowSubstities = false;
+  allowSubstitutes = false;
+  preferLocalBuild = false;
   phases = ["buildPhase"];
   buildPhase = ''
   docker load < ${image}
