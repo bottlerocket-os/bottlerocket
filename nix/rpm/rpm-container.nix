@@ -1,6 +1,16 @@
-{ lib, docker-image, base-container-image }:
+{ lib, docker-image, base-container-image, tharPackages }:
 let
   baseImage = base-container-image.ref;
+
+  # buildDeps are the dependencies identified by packages that need to
+  # be installed and available in the build environment.
+  buildDeps = with lib; let
+    # Find packages with dependencies declared.
+    havingDeps = attrValues (filterAttrs (n: v: hasAttr "rpmHostInputs" v) tharPackages);
+    # Collate and make a list of them.
+    packages = unique (naturalSort (flatten (map (d: d.rpmHostInputs) havingDeps)));
+  in
+    escapeShellArgs packages;
 
   # Dependencies for the base image and building
   essentialDeps = lib.escapeShellArgs [ "rpmdevtools" "dnf-plugins-core" "createrepo_c" ];
@@ -17,5 +27,6 @@ docker-image.mkImage {
   RUN dnf groupinstall -y "C Development Tools and Libraries"
   RUN dnf install -y ${essentialDeps}
   RUN dnf install -y ${bootstrapDeps}
+  RUN dnf install -y ${buildDeps}
   '';
 }
