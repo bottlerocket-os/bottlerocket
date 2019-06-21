@@ -1,6 +1,6 @@
-{ rpmBuilder, sdk, kernel }:
+{ rpmBuilder, sdk, kernel-headers }:
 rpmBuilder.mkDerivation rec {
   name = "glibc";
   src = ./.;
-  rpmInputs = [ sdk kernel ];
+  rpmInputs = [ sdk kernel-headers ];
 }

@@ -22,7 +22,7 @@ let
         # The nixpkgs conventional derivation constructor -
         # specifically its non-gcc including alternative, which should
         # be folk's default.
-        stdenvNoCC symlinkJoin writeScript;
+        stdenvNoCC symlinkJoin writeScript fetchFromGitHub runCommand;
 
 
       # Provide config and the scope's callPackage for nested
