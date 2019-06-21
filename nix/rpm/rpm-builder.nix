@@ -1,5 +1,6 @@
-{ stdenvNoCC, system, lib, writeScript, linkFarm, docker-cli, docker-container,
-  docker-load, rpm-container, rpm-macros, fetchRpmSources }:
+{ stdenvNoCC, system, lib, writeScript,
+  docker-cli, docker-container, docker-load, rpm-container,
+  rpm-macros, fetchRpmSources }:
 let
   mkDockerDerivation =
     { name,
@@ -13,25 +14,13 @@ let
       imageRef = lib.fileContents (docker-load { inherit image; });
       # Networking mode for the building container.
       netMode = if useHostNetwork then "host" else "none";
+      spec = "${src}/${name}.spec";
+      sources = "${src}/sources";
+      rpmSources' = if rpmSources == []
+                    then (fetchRpmSources { inherit name spec sources; })
+                    else rpmSources;
 
-      spec = builtins.head (lib.sourceByRegex src ["${name}.spec"]);
-      sources = builtins.head (lib.sourceByRegex src ["sources"]);
-
-      rpmbuildFarm = let
-        linkInDir = dir: elems:
-          map (s: { name = "${dir}/${s.name}"; path = "${s}"; }) elems;
-        linkInRoot = elems:
-          map (s: { name = "."; path = "${s}"; }) elems;
-
-        rpmSources = fetchRpmSources { inherit spec sources; };
-
-        rpms = linkInDir "RPMS" rpmInputs;
-        sources = linkInDir "SOURCES" rpmSources;
-        packageSrc = linkInDir "SOURCES" ([src] ++ srcs);
-        
-        links = rpms ++ sources ++ packageSrc;
-      in
-        linkFarm "rpmbuildFarm" links;
+      macrosContent = "find -L ${rpm-macros} ${rpm-macros.arches}/x86_64 -type f -exec cat {} \\;";
 
       # Build script executed in the container.
       containerBuildScript = writeScript "container-build-script" ''
@@ -46,13 +35,20 @@ let
       # uid/gid on the building host.
       groupadd builder -g $egid
       useradd builder --uid $euid --gid $egid --create-home --no-user-group
-      
-      # Setup the builder user
+
+      # Setup the builder user and build
       cd /home/builder
       export HOME=/home/builder
-      su --preserve-environment builder rpmdev-setuptree
-      # And build.
+      # Prepare rpmbuild dir and provide repository for dependencies.
       su --preserve-environment builder ${rpmTreeScript}
+
+      echo "Installing RPM macros for dnf"
+      mkdir -p /etc/rpm
+      ${macrosContent} | tee /etc/rpm/macros
+
+      dnf builddep --assumeyes --cacheonly \
+                   --repofrompath build-inputs,/home/builder/rpmbuild/rpmInputs \
+                   ${spec}
       su --preserve-environment builder ${rpmBuildScript}
 
       ${postBuildPhase}
@@ -61,25 +57,42 @@ let
       # RPM tree setup for build
       rpmTreeScript = writeScript "rpmbuild-setup" ''
       # Setup required macros
-      find ${rpm-macros} ${rpm-macros.arches} -type f > ~/.rpmmacros
-      
+      ${macrosContent} | tee ~/.rpmmacros
+      mkdir -p /build/rpmbuild
+      ln -sv /build/rpmbuild rpmbuild
+
       rpmdev-setuptree
+
+      mkdir ./rpmbuild/rpmInputs
+      ${lib.concatMapStringsSep "\n" (s: "ln -s ${s}/*.rpm ./rpmbuild/rpmInputs/") rpmInputs}
+      createrepo_c ./rpmbuild/rpmInputs
+
+      ${lib.concatMapStringsSep "\n" (s: "ln -s ${s} ./rpmbuild/SOURCES/${s.name}") rpmSources'}
+      ln -sv ${src}/* ./rpmbuild/SOURCES/
+      ln -s ${spec} ./rpmbuild/SPECS/
       '';
 
       rpmBuildScript = writeScript "rpmbuild-build" ''
       pushd rpmbuild
 
-      rpmbuild -ba --clean 
-               --define '_sourcedir ${rpmbuildFarm}/SOURCES' \
-               --define '_specdir ${rpmbuildFarm}/SOURCES' \
-                /${name}.spec
+      time rpmbuild -ba --clean SPECS/${name}.spec
+
+      mkdir -p $out/srpms $out/rpms
+
+      echo "Copying SRPMS and RPMS from successful build"
+      find SRPMS -type f -exec cp -v {} $out/srpms \;
+      find RPMS -type f -exec cp -v {} $out/rpms  \;
+
       popd
       '';
     in
       stdenvNoCC.mkDerivation ({
         inherit name;
-        
+
         phases = [ "setupPhase" "buildPhase" ];
+        outputs = [ "rpms" "srpms" ];
+        setOutputFlags = false;
+        out = "rpms";
         buildInputs = [ docker-cli ];
 
         setupPhase = ''
@@ -90,16 +103,18 @@ let
         containerOut="$sandboxBuild/containerOut"
         mkdir -p containerOut
         '';
-        
+
         buildPhase = ''
         docker run --rm --entrypoint "/bin/sh" --userns=host --net=${netMode} \
                                          --volume "$NIX_STORE:$NIX_STORE:ro" \
                                          --volume "$containerOut:$containerOut" \
-                                         --env "out=$containerOut/out" \
+                                         --env "out=$containerOut" \
+                                         --tmpfs /build:rw,size=8G,mode=1777,exec \
                                          $containerSetupArgs \
                                          -e src -e srcs -e outputs \
                                          ${imageRef} "${containerBuildScript}"
-        mv containerOut/out $out
+        mv containerOut/srpms $srpms
+        mv containerOut/rpms $rpms
         '';
       } // args);
 in
