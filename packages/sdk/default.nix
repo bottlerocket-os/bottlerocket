@@ -1,8 +1,5 @@
-{ rpmBuilder, fetchRpmSources }:
+{ rpmBuilder }:
 rpmBuilder.mkDerivation rec {
   name = "sdk";
-  
   src = ./.;
-  
-  rpmInputs = [];
 }

@@ -1,8 +1,6 @@
-{ stdenvNoCC }:
-stdenvNoCC.mkDerivation {
+{ rpmBuilder, sdk }:
+rpmBuilder.mkDerivation {
   name = "bash";
-  phases = [ "buildPhase" ];
-  buildPhase = ''
-  touch $out
-  '';
+  src = ./.;
+  rpmInputs = [ sdk ];
 }

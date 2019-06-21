@@ -7,4 +7,4 @@ image = "fedora"
 ref = "latest"
 
 [base-container-image]
-ref = "sha256:d09302f77cfcc3e867829d80ff47f9e7738ffef69730d54ec44341a9fb1d359b"
+ref = "library/fedora@sha256:9c78c69f748953ba8fdb6eb9982e1abefe281d9b931a13f251eb8aec988353de"
