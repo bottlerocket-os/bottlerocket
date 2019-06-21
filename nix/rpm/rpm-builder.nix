@@ -48,9 +48,12 @@ let
 
     # Downloading builddeps requires networking - and we're only
     # allowing via host networking.
-    assert (lib.assertMsg
-      (allowBuilddepDownload -> useHostNetwork)
-      "useHostNetwork is required to download dependencies.");
+    assert with lib; assertMsg (allowBuilddepDownload -> useHostNetwork)
+      "useHostNetwork is required to download dependencies.";
+    assert with lib; assertMsg (all (x: hasAttr "rpms" x) rpmInputs)
+      "rpmInputs provided must have an 'rpms' output";
+    assert with lib; assertMsg (src != null)
+      "src must be provided and contain the packaging source";
 
     let
       # Load the rpm builder container and use its ref for running.
@@ -65,6 +68,10 @@ let
       rpmSources' = if rpmSources == null
                     then (fetchRpmSources { inherit name spec sources; })
                     else lib.optionals (rpmSources != null -> rpmSources != []) rpmSources;
+
+      srcs' = if src == null
+              then srcs
+              else [ src ] ++ srcs;
 
       # Snippet printing combined macros used by rpmbuild and dnf.
       macrosContent = "find -L ${rpm-macros} ${rpm-macros.arches}/x86_64 -type f -exec cat {} \\;";
@@ -122,11 +129,11 @@ let
       rpmdev-setuptree
 
       mkdir ./rpmbuild/rpmInputs
-      ${lib.concatMapStringsSep "\n" (s: "ln -sv ${s}/*.rpm ./rpmbuild/rpmInputs/") rpmInputs}
+      ${lib.concatMapStringsSep "\n" (s: "ln -sv ${s.rpms}/*.rpm ./rpmbuild/rpmInputs/") rpmInputs}
       createrepo_c ./rpmbuild/rpmInputs
 
       ${lib.concatMapStringsSep "\n" (s: "ln -s ${s} ./rpmbuild/SOURCES/${s.name}") rpmSources'}
-      ln -sv ${src}/* ./rpmbuild/SOURCES/
+      ${lib.concatMapStringsSep "\n" (s: "ln -sv ${s}/* ./rpmbuild/SOURCES/") srcs'}
       ln -s ${spec} ./rpmbuild/SPECS/
       '';
 
