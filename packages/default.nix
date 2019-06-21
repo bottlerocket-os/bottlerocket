@@ -1,5 +1,8 @@
 { callPackage }:
-{
-  bash = callPackage ./bash/default.nix {};
-  sdk = callPackage ./sdk/default.nix {};  
+rec {
+  sdk = callPackage ./sdk {};
+  gcc = sdk;
+  kernel = callPackage ./kernel {};
+  kernel-headers = kernel;
+  bash = callPackage ./bash {};
 }

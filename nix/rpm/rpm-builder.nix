@@ -3,31 +3,85 @@
   rpm-macros, fetchRpmSources }:
 let
   mkDockerDerivation =
-    { name,
-      entrypoint ? "/bin/sh", image ? rpm-container,
-      src ? null, srcs ? [],
-      rpmInputs ? [], rpmSources ? [],
+    { # name of the package
+      name,
+      # entrypoint of the container
+      entrypoint ? "/bin/sh",
+      # docker image to use for the build
+      image ? rpm-container,
+      # src of the package
+      src ? null,
+      # srcs (multiple) of the package if needed from multiple sources
+      # - should not be the sources from the file named "sources".
+      srcs ? [],
+      # rpmInputs are the rpms that are provided as input to this
+      # build as a repository.
+      rpmInputs ? [],
+      # rpmSources provided directly to control the used sources
+      # instead of automatically parsing and loading them.
+      rpmSources ? null,
+      # builddepExtraFlags are provided to the command used to install
+      # dependencies prior to build in addition to the existing
+      # set. This may be used, for example, to set additional options
+      # for dnf or to restrict operations to a specific repository.
+      builddepExtraFlags ? "",
+      # pre and postRpmbuildCommands are executed just before and
+      # after the rpmbuild command is run allowing for additional
+      # steps to be taken prior to starting or concluding the build.
+      preRpmbuildCommands ? "", postRpmbuildCommands ? "",
+      # pre and postBuildPhase are executed just before and after the
+      # container builder is executed allowing for additional fork on
+      # the build.
       preBuildPhase ? "", postBuildPhase ? "",
-      useHostNetwork ? false, ... }@args:
+      # allowBuilddepDownload enables the container to fetch new
+      # dependencies as needed. This option introduces many unknowns
+      # but is useful for developmental purposes where a base-level
+      # change (here) or in the base container would result in a wider
+      # rebuild.
+      allowBuilddepDownload ? false,
+      # useHostNetwork enables the container's network stack to reach
+      # the internet rather than be isolated on its own.
+      useHostNetwork ? false,
+      # Reflexivity (varargs like); allows for unhandled arguments to
+      # be provided at call sites.
+      ... }@args:
+
+    # Downloading builddeps requires networking - and we're only
+    # allowing via host networking.
+    assert (lib.assertMsg
+      (allowBuilddepDownload -> useHostNetwork)
+      "useHostNetwork is required to download dependencies.");
+
     let
       # Load the rpm builder container and use its ref for running.
       imageRef = lib.fileContents (docker-load { inherit image; });
       # Networking mode for the building container.
       netMode = if useHostNetwork then "host" else "none";
+
       spec = "${src}/${name}.spec";
       sources = "${src}/sources";
-      rpmSources' = if rpmSources == []
-                    then (fetchRpmSources { inherit name spec sources; })
-                    else rpmSources;
 
+      # Upstream sources referenced in spec.
+      rpmSources' = if rpmSources == null
+                    then (fetchRpmSources { inherit name spec sources; })
+                    else lib.optionals (rpmSources != null -> rpmSources != []) rpmSources;
+
+      # Snippet printing combined macros used by rpmbuild and dnf.
       macrosContent = "find -L ${rpm-macros} ${rpm-macros.arches}/x86_64 -type f -exec cat {} \\;";
 
-      # Build script executed in the container.
+      # Build script executed in the container managing the full run
+      # of the build.
+      #
+      # 1. Setup the build user to match executing user
+      # 2. Setup a rpmbuild tree in that user's home
+      # 3. Build!
+      # 4. Export results for nix
+      #
       containerBuildScript = writeScript "container-build-script" ''
       set -e
       # Catch early exit and run teardown to allow host user to
       # manipulate $out if used.
-      trap ${docker-container.teardown} EXIT
+      trap "originalExit=$?; ${docker-container.teardown}; exit $originalExit;" EXIT
 
       ${preBuildPhase}
 
@@ -42,12 +96,16 @@ let
       # Prepare rpmbuild dir and provide repository for dependencies.
       su --preserve-environment builder ${rpmTreeScript}
 
-      echo "Installing RPM macros for dnf"
+      echo "Setup thar macros for dnf builddep to parse"
       mkdir -p /etc/rpm
-      ${macrosContent} | tee /etc/rpm/macros
+      ${macrosContent} > /etc/rpm/macros
 
-      dnf builddep --assumeyes --cacheonly \
+      # Install the build dependencies allowing ONLY the inputs as installable.
+      dnf builddep --assumeyes ${lib.optionalString  (!allowBuilddepDownload) "--disablerepo '*'"} \
+                   --enablerepo build-inputs \
                    --repofrompath build-inputs,/home/builder/rpmbuild/rpmInputs \
+                   --setopt build-inputs.gpgcheck=False \
+                   ${builddepExtraFlags} \
                    ${spec}
       su --preserve-environment builder ${rpmBuildScript}
 
@@ -56,15 +114,15 @@ let
 
       # RPM tree setup for build
       rpmTreeScript = writeScript "rpmbuild-setup" ''
-      # Setup required macros
-      ${macrosContent} | tee ~/.rpmmacros
+      # Setup thar macros for build
+      ${macrosContent} > ~/.rpmmacros
       mkdir -p /build/rpmbuild
       ln -sv /build/rpmbuild rpmbuild
 
       rpmdev-setuptree
 
       mkdir ./rpmbuild/rpmInputs
-      ${lib.concatMapStringsSep "\n" (s: "ln -s ${s}/*.rpm ./rpmbuild/rpmInputs/") rpmInputs}
+      ${lib.concatMapStringsSep "\n" (s: "ln -sv ${s}/*.rpm ./rpmbuild/rpmInputs/") rpmInputs}
       createrepo_c ./rpmbuild/rpmInputs
 
       ${lib.concatMapStringsSep "\n" (s: "ln -s ${s} ./rpmbuild/SOURCES/${s.name}") rpmSources'}
@@ -74,8 +132,9 @@ let
 
       rpmBuildScript = writeScript "rpmbuild-build" ''
       pushd rpmbuild
-
+      ${preRpmbuildCommands}
       time rpmbuild -ba --clean SPECS/${name}.spec
+      ${postRpmbuildCommands}
 
       mkdir -p $out/srpms $out/rpms
 
