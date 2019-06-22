@@ -24,6 +24,7 @@ Requires: %{_cross_os}apiserver
 Requires: %{_cross_os}bash
 Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}coreutils
+Requires: %{_cross_os}dbus-broker
 Requires: %{_cross_os}filesystem
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
