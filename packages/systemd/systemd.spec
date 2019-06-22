@@ -209,7 +209,7 @@ CONFIGURE_OPTS=(
 %exclude %{_cross_sysconfdir}/init.d
 %exclude %{_cross_sysconfdir}/xdg
 
-%exclude %{_cross_datadir}/dbus-1
+%{_cross_datadir}/dbus-1/*
 %exclude %{_cross_datadir}/polkit-1
 
 %dir %{_cross_factorydir}
