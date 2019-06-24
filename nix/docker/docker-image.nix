@@ -2,8 +2,13 @@
 let
   mkLoader = { image }: writeScript "loader-${image.name}" ''
   exec 1>&2
-  ${docker-cli}/bin/docker inspect ${lib.fileContents image.containerRef} || \
-  ${docker-cli}/bin/docker load ${image}
+    {
+      ${docker-cli}/bin/docker inspect --format 'using loaded image: {{.ID}}' \
+                                ${lib.fileContents image.containerRef} 2>/dev/null
+    } || {
+      ${docker-cli}/bin/docker load < ${image}
+      echo 'loaded image from file'
+    }
   '';
   mkImage = { name, dockerfile, ... }@args:
     let
