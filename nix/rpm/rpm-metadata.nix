@@ -89,7 +89,6 @@ let
 
     json_entries=""
     for url in "''${!source_hash_entry[@]}"; do
-      echo "Adding source entry for $url"
       if [[ -n "$json_entries" ]]; then json_entries="$json_entries, "; fi
       urlHash="''${source_hash_entry[$url]}"
       # SRI prefixed with algo
@@ -99,7 +98,7 @@ let
       entry="$(printf '{"url": "%s", "%s": "%s"}' "$url" "$urlHashAlgo" "$urlAlgoHash")"
       json_entries+="$entry"
     done
-    printf '{"sources": [%s]}' "$json_entries" | tee "$out/sources.json"
+    printf '{"sources": [%s]}' "$json_entries" > "$out/sources.json"
     '';
   };
 in
