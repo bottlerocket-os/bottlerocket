@@ -1,21 +1,20 @@
-{ rpmBuilder, fetchcargo, glibc, rust }:
+{ rpmBuilder, lib, fetchCargo, glibc, rust }:
 let
+  name = "signpost";
   project = ../../workspaces/signpost;
-  # TODO: need to copy this in the build and setup the .cargo/config
-  # with the appropriate contents. See:
-  #
-  # - https://github.com/NixOS/nixpkgs/blob/master/pkgs/build-support/rust/fetchcargo-default-config.toml
-  # - https://github.com/NixOS/nixpkgs/blob/f3282c8d1e0ce6ba5d9f6aeddcfad51d879c7a4a/pkgs/build-support/rust/default.nix#L33-L41
-  #
-  cargoDeps = fetchcargo {
-    name = "signpost-deps";
-    src = project;
-    # TODO: make this not needed and based on Cargo.lock
-    sha256 = "1mip2jbhyr14l3qsk2n9mcazrdd9sj9m6f6saccr5937h5i934id";
-  };
+  cargo-toml = /. + project + /Cargo.toml;
+  cargo-lock = /. + project + /Cargo.lock;
+  cargo-vendor = (fetchCargo { inherit name cargo-toml cargo-lock; });
 in
 rpmBuilder.mkDerivation rec {
-  name = "signpost";
-  src = ./.;
-  srcs = [ project cargoDeps ];
+  inherit name;
+  src = lib.cleanSourceWith { filter = (name: type: let baseName = baseNameOf (toString name); in
+                                                    name != "default.nix");
+                              src = ./.; };
+  preRpmbuildCommands = ''
+  tar -C ${project} -cf SOURCES/signpost.crate ./
+  for d in ${cargo-vendor}/*; do
+    tar -C $d -cf SOURCES/$(basename d).crate ./
+  done
+  '';
 }
