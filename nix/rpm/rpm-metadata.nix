@@ -45,13 +45,16 @@ let
     name = "${name}-metadata";
 
     phases = [ "parsePhase" "generatePhase" ];
+    preferLocalBuild = true;
+    allowSubstitutes = false;
 
     buildInputs = [ rpm ];
 
     # Parse the rpm spec to extract metadata.
     parsePhase = ''
-    echo "$macroPath"
     mkdir -p $out
+
+    touch $out/{buildRequires,hostBuildRequires,requires,provides}
 
     # Write out fully rendered spec file
     rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --parse "${spec}" > $out/parsed.spec
@@ -65,8 +68,8 @@ let
     if grep -o -E '^Source[0-9]+:.*http.*$' "$out/parsed.spec" \
        | sed 's/Source.*:.*http/http/' \
        | grep -v -e '^$' -e '.crate$' \
-       | tee remote-source-urls; then
-      echo "Collecting sources for package"
+       > remote-source-urls; then
+      :
     else
       echo "Package has no sources"
     fi
@@ -76,14 +79,26 @@ let
     declare -A source_hash_entry
 
     # Ugh, sort the damn thing.
-    tac remote-source-urls | sort | tee remote-sources-urls
+    tac remote-source-urls | sort > remote-sources-urls
 
     while read source_url; do
-      echo "Generating source entry for $source_url"
       FILENAME="''${source_url##*/}"
+      if ! grep -q -w "$FILENAME" ${sources}; then
+        echo "Source entry in ${sources} is missing for $FILENAME."
+        exit 1
+      fi
+
       # ALGO-HASH_CONTENT - https://www.w3.org/TR/SRI/
-      SRI="$(awk -v filename="($FILENAME)" '$2 == filename {print tolower($1)"-"$4}' ${sources})"
-      test -n "$SRI" || exit 1
+      SRI="$( sed 's/[()]/ /g; s/\s+/ /g' ${sources} | awk -v filename="$FILENAME" '$2 == filename {print tolower($1)"-"$4}')"
+
+      if [[ -z "$SRI" ]]; then
+        echo "Could not parse source entry for $FILENAME from ${sources}"
+
+        echo "Check the formatting of the source entry in ${sources}, suspected entry:"
+        awk '{ print "Line "NR":", $0 }' ${sources} | grep "$FILENAME"
+
+        exit 1
+      fi
       source_hash_entry["$source_url"]="$SRI"
     done < remote-source-urls
 
@@ -95,6 +110,11 @@ let
       urlHashAlgo="''${urlHash%%-*}"
       # Stripped hash
       urlAlgoHash="''${urlHash##*-}"
+
+      if [[ -z "$urlHashAlgo" ]] || [[ -z "$urlAlgoHash" ]]; then
+        echo "Invalid parsed entry for $url (processing as: '$urlHash')."
+      fi
+
       entry="$(printf '{"url": "%s", "%s": "%s"}' "$url" "$urlHashAlgo" "$urlAlgoHash")"
       json_entries+="$entry"
     done

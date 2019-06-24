@@ -74,7 +74,7 @@ let
       # Upstream sources referenced in spec.
       rpmSources' = if rpmSources == null
                     then (fetchRpmSources { inherit name spec sources; })
-                    else lib.optionals (rpmSources != null -> rpmSources != []) rpmSources;
+                    else lib.optionals (rpmSources != []) rpmSources;
 
       srcs' = if src == null
               then srcs
