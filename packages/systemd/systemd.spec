@@ -1,10 +1,13 @@
 Name: %{_cross_os}systemd
-Version: 241
+Version: 242
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: LGPLv2+ and MIT and GPLv2+
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
+Patch1: networkd-fix-link_up-12505.patch
+Patch2: network-do-not-send-ipv6-token-to-kernel.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
@@ -95,6 +98,8 @@ CONFIGURE_OPTS=(
  -Dcertificate-root='%{_cross_sysconfdir}/ssl'
  -Dpkgconfigdatadir='%{_cross_pkgconfigdir}'
  -Dpkgconfiglibdir='%{_cross_pkgconfigdir}'
+
+ -Ddefault-hierarchy=hybrid
 
  -Dseccomp=auto
  -Dselinux=auto
