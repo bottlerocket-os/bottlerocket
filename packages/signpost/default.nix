@@ -8,14 +8,14 @@ let
   # - https://github.com/NixOS/nixpkgs/blob/f3282c8d1e0ce6ba5d9f6aeddcfad51d879c7a4a/pkgs/build-support/rust/default.nix#L33-L41
   #
   cargoDeps = fetchcargo {
+    name = "signpost-deps";
     src = project;
+    # TODO: make this not needed and based on Cargo.lock
     sha256 = "1mip2jbhyr14l3qsk2n9mcazrdd9sj9m6f6saccr5937h5i934id";
   };
 in
-# rpmBuilder.mkDerivation rec {
-#   name = "signpost";
-#   src = ./.;
-#   srcs = [ project cargo ];
-#   rpmInputs = [  ];
-# }
-cargoDeps
+rpmBuilder.mkDerivation rec {
+  name = "signpost";
+  src = ./.;
+  srcs = [ project cargoDeps ];
+}
