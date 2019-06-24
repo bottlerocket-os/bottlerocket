@@ -1,6 +1,5 @@
-{ rpmBuilder, sdk }:
+{ rpmBuilder }:
 rpmBuilder.mkDerivation rec {
   name = "kernel";
   src = ./.;
-  rpmInputs = [ sdk ];
 }

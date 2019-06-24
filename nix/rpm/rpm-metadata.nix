@@ -1,4 +1,4 @@
-{ stdenvNoCC, lib, config, rpm, rpm-macros, mkMacroPath, ... }:
+{ stdenvNoCC, lib, config, rpm, rpm-macros, rpm-dependencies, mkMacroPath, tharPackages, ... }:
 let
   # TODO: use cross arch here
 
@@ -17,14 +17,25 @@ let
   # derivation to build, which is somewhat uncharacteristic of
   # typical passthru usage.
   passthru = with lib; let
+    fileList = file: remove "" (splitString "\n" (fileContents "${drv}/${file}"));
     # List of BuildRequires (all, including thar) stated from parsed spec.
-    buildRequires =  remove "" (splitString "\n" (fileContents "${drv}/buildRequires"));
+    buildRequires =  fileList "buildRequires";
     # List of BuildRequires depending on host system stated from parsed spec.
-    hostBuildRequires = remove "" (splitString "\n" (fileContents "${drv}/hostBuildRequires"));
-    # List of sources that are referenced in parsed spec.
+    hostBuildRequires = fileList "hostBuildRequires";
+    # List of provided capabilities.
+    provides = fileList "provides";
+    # List of packages required at runtime.
+    requires = fileList "requires";
+    # List of sources that are referenced in parsed spec along with
+    # their hashes.
     sources = with builtins; (fromJSON (fileContents "${drv}/sources.json")).sources;
+    # Handle processing of rpm metadata to find dependencies as needed.
+    dependentPackages = rpm-dependencies { requires = buildRequires; };
   in {
-    inherit spec sources buildRequires hostBuildRequires macroPath;
+    inherit spec sources
+      buildRequires hostBuildRequires
+      requires provides
+      macroPath dependentPackages;
     macros = thar-macros ++ [ arch-macros ];
   };
 
@@ -42,9 +53,14 @@ let
     echo "$macroPath"
     mkdir -p $out
 
+    # Write out fully rendered spec file
     rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --parse "${spec}" > $out/parsed.spec
+
+    # Write out BuildRequires Requires and Provides
     rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --query --buildrequires "${spec}" > $out/buildRequires
     grep --word-regexp "thar" --invert-match $out/buildRequires > $out/hostBuildRequires || : ignore no matches
+    rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --query --requires "${spec}" > $out/requires
+    rpmspec "--macros=${macroPath}" --define "_sourcedir ./" --query --provides "${spec}" > $out/provides
 
     if grep -o -E '^Source[0-9]+:.*http.*$' "$out/parsed.spec" \
        | sed 's/Source.*:.*http/http/' \

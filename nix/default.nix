@@ -50,7 +50,8 @@ let
 
       rpm-metadata = callPackage ./rpm/rpm-metadata.nix { inherit (pkgs) rpm; };
       rpm-macros = callPackage ./rpm/rpm-macros.nix { inherit (pkgs) rpm; };
-      rpm-container = callPackage ./rpm/rpm-container.nix { };
+      rpm-container = callPackage ./rpm/rpm-container.nix {};
+      rpm-dependencies = callPackage ./rpm/rpm-dependency-resolver.nix {};
       rpmBuilder = callPackage ./rpm/rpm-builder.nix { inherit (pkgs) writeScript; };
       fetchRpmSources = callPackage ./rpm/fetch-rpm-sources.nix {};
       mkMacroPath = paths: builtins.concatStringsSep ":" paths;

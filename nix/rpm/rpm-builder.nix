@@ -1,5 +1,5 @@
 { stdenvNoCC, system, lib, writeScript,
-  docker-cli, docker-container, docker-load, rpm-container, rpm-metadata,
+  docker-cli, docker-image, docker-container, docker-load, rpm-container, rpm-metadata,
   rpm-macros, fetchRpmSources }:
 let
   mkDockerDerivation =
@@ -16,7 +16,7 @@ let
       srcs ? [],
       # rpmInputs are the rpms that are provided as input to this
       # build as a repository.
-      rpmInputs ? [],
+      rpmInputs ? [], rpmInputsFn ? (metadata: metadata.dependentPackages),
       # rpmHostInputs are the BuildRequires needed on the "host"
       # building the package.
       rpmHostInputs ? [],
@@ -61,8 +61,6 @@ let
       "src must be provided and contain the packaging source";
 
     let
-      # Load the rpm builder container and use its ref for running.
-      imageRef = lib.fileContents (docker-load { inherit image; });
       # Networking mode for the building container.
       netMode = if useHostNetwork then "host" else "none";
 
@@ -70,8 +68,8 @@ let
       sources = "${src}/sources";
 
       rpmMetadata = rpm-metadata { inherit name spec sources; };
-      providedRpmHostInputs = rpmHostInputs;
-      rpmHostInputs' = providedRpmHostInputs ++ rpmMetadata.hostBuildRequires;
+      rpmHostInputs' = rpmHostInputs ++ rpmMetadata.hostBuildRequires;
+      rpmInputs' = rpmInputs ++ (rpmInputsFn rpmMetadata);
 
       # Upstream sources referenced in spec.
       rpmSources' = if rpmSources == null
@@ -83,8 +81,6 @@ let
               else [ src ] ++ srcs;
 
       passthru = { inherit rpmMetadata; rpmHostInputs = rpmHostInputs'; };
-
-
 
       # Snippet printing combined macros used by rpmbuild and dnf.
       macrosContent = "find -L ${rpm-macros} ${rpm-macros.arches}/x86_64 -type f -exec cat {} \\;";
@@ -142,7 +138,7 @@ let
       rpmdev-setuptree
 
       mkdir ./rpmbuild/rpmInputs
-      ${lib.concatMapStringsSep "\n" (s: "ln -sv ${s.rpms}/*.rpm ./rpmbuild/rpmInputs/") rpmInputs}
+      ${lib.concatMapStringsSep "\n" (s: "ln -sv ${s.rpms}/*.rpm ./rpmbuild/rpmInputs/") rpmInputs'}
       createrepo_c ./rpmbuild/rpmInputs
 
       ${lib.concatMapStringsSep "\n" (s: "ln -s ${s} ./rpmbuild/SOURCES/${s.name}") rpmSources'}
@@ -182,6 +178,9 @@ let
         # Setup a space for the container to write out to us with the appropriate permissions.
         containerOut="$sandboxBuild/containerOut"
         mkdir -p containerOut
+
+        # Ensure the docker image is loaded
+        ${rpm-container.docker.loader}
         '';
 
         buildPhase = ''
@@ -192,7 +191,7 @@ let
                                          --tmpfs /build:rw,size=8G,mode=1777,exec \
                                          $containerSetupArgs \
                                          -e src -e srcs -e outputs \
-                                         ${imageRef} "${containerBuildScript}"
+                                         ${rpm-container.docker.ref} "${containerBuildScript}"
         mv containerOut/srpms $srpms
         mv containerOut/rpms $rpms
         '';

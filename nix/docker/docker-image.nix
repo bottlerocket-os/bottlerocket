@@ -1,15 +1,29 @@
-{ stdenv, docker-cli }:
+{ stdenv, lib, writeScript, docker-cli }:
 let
+  mkLoader = { image }: writeScript "loader-${image.name}" ''
+  exec 1>&2
+  ${docker-cli}/bin/docker inspect ${lib.fileContents image.containerRef} || \
+  ${docker-cli}/bin/docker load ${image}
+  '';
   mkImage = { name, dockerfile, ... }@args:
     let
+      cleanArgs = removeAttrs args ["name" "passthru" "dockerfile"];
+      pthru = if args ? pthru then pthru else {};
       dockerfileFile = if builtins.isString dockerfile
                        then
                          builtins.toFile "Dockerfile" dockerfile
                        else
                          dockerfile;
-    in
-      stdenv.mkDerivation ({
-        inherit name;
+      passthru = let
+        image = drv;
+        docker = {
+          loader = mkLoader { inherit image; };
+          ref = lib.fileContents drv.containerRef;
+        }; in {
+          inherit docker;
+        };
+      drv = stdenv.mkDerivation ({
+        inherit name passthru;
 
         outputs = ["out" "containerRef"];
         buildInputs = [ docker-cli ];
@@ -35,8 +49,10 @@ let
         docker save "$ref" > $out
         echo "$ref" > $containerRef
         '';
-      } // args);
-in
+      } // cleanArgs);
+    in
+      drv;
+  in
 {
-  inherit mkImage;
+  inherit mkImage mkLoader;
 }
