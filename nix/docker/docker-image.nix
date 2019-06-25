@@ -1,4 +1,4 @@
-{ stdenv, lib, writeScript, docker-cli }:
+{ stdenvNoCC, lib, writeScript, docker-cli }:
 let
   mkLoader = { image }: writeScript "loader-${image.name}" ''
   exec 1>&2
@@ -6,46 +6,43 @@ let
       ${docker-cli}/bin/docker inspect --format 'using loaded image: {{.ID}}' \
                                 ${lib.fileContents image.containerRef} 2>/dev/null
     } || {
-      ${docker-cli}/bin/docker load < ${image}
+      ${docker-cli}/bin/docker load < ${image.out}
       echo 'loaded image from file'
     }
   '';
+
   mkImage = { name, dockerfile, ... }@args:
     let
-      cleanArgs = removeAttrs args ["name" "passthru" "dockerfile"];
-      pthru = if args ? pthru then pthru else {};
-      dockerfileFile = if builtins.isString dockerfile
-                       then
-                         builtins.toFile "Dockerfile" dockerfile
-                       else
-                         dockerfile;
-      passthru = let
-        image = drv;
+      cleanArgs = removeAttrs args ["name" "buildInputs" "passthru" "propagatedBuildInputs" ];
+
+      passthru = lib.recursiveUpdate {
         docker = {
-          loader = mkLoader { inherit image; };
+          loader = mkLoader { image = drv; };
           ref = lib.fileContents drv.containerRef;
-        }; in {
-          inherit docker;
         };
-      drv = stdenv.mkDerivation ({
-        inherit name passthru;
+      }
+        (if args ? passthru then args.passthru else {});
+
+      drv = stdenvNoCC.mkDerivation ({
+        inherit name passthru dockerfile;
 
         outputs = ["out" "containerRef"];
         buildInputs = [ docker-cli ];
         phases = [ "buildPhase" "installPhase" ];
+        passAsFile = [ "dockerfile" ];
 
         buildPhase = ''
         mkdir empty-context
         ref="''${containerRef##*/}"
         ref="''${ref,,}:containerRef"
 
-        awk '/FROM/ { $1=""; print; }' ${dockerfileFile} | xargs --no-run-if-empty -L1 -t docker pull
+        awk '/FROM/ { $1=""; print; }' $dockerfile | xargs --no-run-if-empty -L1 -t docker pull
         docker build --build-arg name \
                      --build-arg containerRef \
                      --label containerRef=$containerRef \
                      --network host \
                      --tag "$ref" \
-                      --file ${dockerfileFile} \
+                      --file $dockerfilePath \
                      ./empty-context
         '';
 

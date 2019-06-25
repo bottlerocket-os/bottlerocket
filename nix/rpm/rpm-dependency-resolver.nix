@@ -16,7 +16,7 @@ let
   # Find attributes that satisfies the requirements in the list.
   satisfyReq = attrs: req:
     let
-      candidates = filterAttrs (n: v: v ? rpmMetadata) attrs;
+      candidates = filterAttrs (n: v: v ? rpmMetadata && v ? rpms) attrs;
       matcher = n: v: any (hasReq req) v.rpmMetadata.provides;
       matched = filterAttrs matcher candidates;
     in

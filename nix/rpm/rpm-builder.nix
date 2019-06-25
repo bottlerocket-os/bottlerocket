@@ -55,7 +55,7 @@ let
     # allowing via host networking.
     assert with lib; assertMsg (allowBuilddepDownload -> useHostNetwork)
       "useHostNetwork is required to download dependencies.";
-    assert with lib; assertMsg (all (x: hasAttr "rpms" x) rpmInputs)
+    assert with lib; assertMsg (all (hasAttr "rpms") rpmInputs)
       "rpmInputs provided must have an 'rpms' output";
     assert with lib; assertMsg (src != null)
       "src must be provided and contain the packaging source";

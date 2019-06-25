@@ -17,7 +17,7 @@ let
   # derivation to build, which is somewhat uncharacteristic of
   # typical passthru usage.
   passthru = with lib; let
-    fileList = file: remove "" (splitString "\n" (fileContents "${drv}/${file}"));
+    fileList = file: remove "" (splitString "\n" (fileContents "${drv.out}/${file}"));
     # List of BuildRequires (all, including thar) stated from parsed spec.
     buildRequires =  fileList "buildRequires";
     # List of BuildRequires depending on host system stated from parsed spec.
@@ -30,7 +30,8 @@ let
     # their hashes.
     sources = with builtins; (fromJSON (fileContents "${drv}/sources.json")).sources;
     # Handle processing of rpm metadata to find dependencies as needed.
-    dependentPackages = rpm-dependencies { requires = buildRequires; };
+    dependentPackages = let deps = rpm-dependencies { requires = buildRequires; }; in
+                        (traceSeqN 1 deps deps);
   in {
     inherit spec sources
       buildRequires hostBuildRequires

@@ -6,7 +6,7 @@ let
   # be installed and available in the build environment.
   buildDeps = with lib; let
     # Find packages with dependencies declared.
-    havingDeps = attrValues (filterAttrs (n: v: hasAttr "rpmHostInputs" v) tharPackages);
+    havingDeps = attrValues (filterAttrs (n: v: v ? rpmHostInputs) tharPackages);
     # Collate and make a list of them.
     packages = unique (naturalSort (flatten (map (d: d.rpmHostInputs) havingDeps)));
   in
