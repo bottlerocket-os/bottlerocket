@@ -58,6 +58,20 @@ impl DataStore for MemoryDataStore {
             .collect())
     }
 
+    fn list_populated_metadata<S: AsRef<str>>(
+        &self,
+        prefix: S,
+    ) -> Result<HashMap<Key, HashSet<Key>>> {
+        Ok(self
+            .metadata
+            .iter()
+            // Make sure the data keys start with the given prefix.
+            .filter(|(k, _v)| k.starts_with(prefix.as_ref()))
+            // We only want the inner keys, so we use 'map' to throw away the values.
+            .map(|(k, v)| (k.clone(), v.keys().cloned().collect()))
+            .collect())
+    }
+
     fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>> {
         let map_key: &str = key.borrow();
         Ok(self.dataset(committed).get(map_key).cloned())

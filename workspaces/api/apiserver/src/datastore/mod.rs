@@ -36,13 +36,20 @@ pub enum Committed {
 pub trait DataStore {
     /// Returns whether a key is present (has a value) in the datastore.
     fn key_populated(&self, key: &Key, committed: Committed) -> Result<bool>;
-    /// Returns a list of the populated keys in the datastore whose names start with the given
+    /// Returns a list of the populated data keys in the datastore whose names start with the given
     /// prefix.
     fn list_populated_keys<S: AsRef<str>>(
         &self,
         prefix: S,
         committed: Committed,
     ) -> Result<HashSet<Key>>;
+    /// Returns a list of the populated metadata in the datastore whose data key's names start
+    /// with the given prefix.  (Metadata is only associated with populated, committed data
+    /// keys.)
+    fn list_populated_metadata<S: AsRef<str>>(
+        &self,
+        prefix: S,
+    ) -> Result<HashMap<Key, HashSet<Key>>>;
 
     /// Retrieve the value for a single data key from the datastore.
     fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>>;
@@ -127,6 +134,44 @@ pub trait DataStore {
                 .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
 
             result.insert(key, value);
+        }
+        Ok(result)
+    }
+
+    /// Retrieves all metadata for data keys starting with the given prefix.
+    /// Returns a mapping of each data key to its metadata, where metadata is a mapping of
+    /// metadata Key to string value.
+    fn get_metadata_prefix<S: AsRef<str>>(
+        &self,
+        find_prefix: S,
+    ) -> Result<HashMap<Key, HashMap<Key, String>>> {
+        let meta_map = self.list_populated_metadata(&find_prefix)?;
+        trace!("Found populated metadata: {:?}", meta_map);
+        if meta_map.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let mut result = HashMap::new();
+        for (data_key, meta_keys) in meta_map {
+            let data_entry = result
+                .entry(data_key.clone())
+                .or_insert_with(HashMap::new);
+            for meta_key in meta_keys {
+                // Already confirmed key via listing keys, so an error is more serious.
+                trace!(
+                    "Pulling metadata '{}' from datastore for key: {}",
+                    meta_key,
+                    &data_key
+                );
+                let value = self.get_metadata(&meta_key, &data_key)?.context(
+                    error::ListedMetaNotPresent {
+                        meta_key: meta_key.as_ref(),
+                        data_key: data_key.as_ref(),
+                    },
+                )?;
+
+                data_entry.insert(meta_key, value);
+            }
         }
         Ok(result)
     }
@@ -220,7 +265,7 @@ mod test {
         let data = hashmap!(
             Key::new(KeyType::Data, "x.1").unwrap() => "x1".to_string(),
             Key::new(KeyType::Data, "x.2").unwrap() => "x2".to_string(),
-            Key::new(KeyType::Data, "y.3").unwrap() => "y2".to_string(),
+            Key::new(KeyType::Data, "y.3").unwrap() => "y3".to_string(),
         );
         m.set_keys(&data, Committed::Pending).unwrap();
 
@@ -228,6 +273,36 @@ mod test {
             m.get_prefix("x.", Committed::Pending).unwrap(),
             hashmap!(Key::new(KeyType::Data, "x.1").unwrap() => "x1".to_string(),
                      Key::new(KeyType::Data, "x.2").unwrap() => "x2".to_string())
+        );
+    }
+
+    #[test]
+    fn get_metadata_prefix() {
+        let mut m = MemoryDataStore::new();
+
+        // Set some data to which we can attach metadata
+        let k1 = Key::new(KeyType::Data, "x.1").unwrap();
+        let k2 = Key::new(KeyType::Data, "x.2").unwrap();
+        let k3 = Key::new(KeyType::Data, "y.3").unwrap();
+        let data = hashmap!(
+            k1.clone() => "x1".to_string(),
+            k2.clone() => "x2".to_string(),
+            k3.clone() => "y3".to_string(),
+        );
+        m.set_keys(&data, Committed::Live).unwrap();
+
+        // Set some metadata to check
+        let mk1 = Key::new(KeyType::Meta, "metatest1").unwrap();
+        let mk2 = Key::new(KeyType::Meta, "metatest2").unwrap();
+        let mk3 = Key::new(KeyType::Meta, "metatest3").unwrap();
+        m.set_metadata(&mk1, &k1, "41").unwrap();
+        m.set_metadata(&mk2, &k2, "42").unwrap();
+        m.set_metadata(&mk3, &k3, "43").unwrap();
+
+        assert_eq!(
+            m.get_metadata_prefix("x.").unwrap(),
+            hashmap!(k1 => hashmap!(mk1 => "41".to_string()),
+                     k2 => hashmap!(mk2 => "42".to_string()))
         );
     }
 }

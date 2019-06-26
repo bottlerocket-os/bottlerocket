@@ -35,6 +35,9 @@ pub enum Error {
     #[snafu(display("IO error on '{}': {}", path.display(), source))]
     Io { path: PathBuf, source: io::Error },
 
+    #[snafu(display("Can't handle non-Unicode file for {}: {}", context, file))]
+    NonUnicodeFile { file: String, context: String },
+
     #[snafu(display("Data store logic error: {}", msg))]
     Internal { msg: String },
 
@@ -51,6 +54,13 @@ pub enum Error {
     ListedKeyNotPresent { key: String },
 
     #[snafu(display(
+        "Listed metadata '{}' for key '{}' not found on disk",
+        meta_key,
+        data_key
+    ))]
+    ListedMetaNotPresent { meta_key: String, data_key: String },
+
+    #[snafu(display(
         "Key name '{}' has invalid format, should match regex: {}",
         name,
         pattern
@@ -59,6 +69,18 @@ pub enum Error {
 
     #[snafu(display("Key name beyond maximum length {}: {}", name, max))]
     KeyTooLong { name: String, max: usize },
+
+    #[snafu(display("Invalid glob '{}': {}", glob, source))]
+    GlobPattern {
+        glob: String,
+        source: glob::PatternError,
+    },
+
+    #[snafu(display("Error reading file for glob '{}': {}", glob, source))]
+    GlobIo {
+        glob: String,
+        source: glob::GlobError,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
