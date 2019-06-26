@@ -1,0 +1,12 @@
+[Unit]
+Description=FQDN Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/bin/bash -c 'hostname -f > /proc/sys/kernel/hostname'
+
+[Install]
+WantedBy=sys-subsystem-net-devices-eth0.device
