@@ -7,6 +7,7 @@ URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
 Patch1: networkd-fix-link_up-12505.patch
 Patch2: network-do-not-send-ipv6-token-to-kernel.patch
+Patch1000: adjust-permissions-for-hostnamed.patch
 
 BuildRequires: gperf
 BuildRequires: intltool

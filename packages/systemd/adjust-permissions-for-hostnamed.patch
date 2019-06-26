@@ -1,0 +1,96 @@
+From b754c0c9f6d94c8c8bacd7062d9ff12aaf5ba84f Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 25 Jun 2019 22:56:19 +0000
+Subject: [PATCH] adjust permissions for hostnamed
+
+This replaces the PolicyKit check with a D-Bus policy that allows
+systemd-network to call the two methods it needs, and denies access
+to all other users.
+
+We would like to avoid the PolicyKit dependency for now, given the
+size, complexity, history of security vulnerabilities, and absence
+of other use cases for that software.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/hostname/hostnamed.c                    | 28 ---------------------
+ src/hostname/org.freedesktop.hostname1.conf | 16 +++++++++++-
+ 2 files changed, 15 insertions(+), 29 deletions(-)
+
+diff --git a/src/hostname/hostnamed.c b/src/hostname/hostnamed.c
+index c35ef55..2d5983a 100644
+--- a/src/hostname/hostnamed.c
++++ b/src/hostname/hostnamed.c
+@@ -433,20 +433,6 @@ static int method_set_hostname(sd_bus_message *m, void *userdata, sd_bus_error *
+         if (streq_ptr(name, c->data[PROP_HOSTNAME]))
+                 return sd_bus_reply_method_return(m, NULL);
+ 
+-        r = bus_verify_polkit_async(
+-                        m,
+-                        CAP_SYS_ADMIN,
+-                        "org.freedesktop.hostname1.set-hostname",
+-                        NULL,
+-                        interactive,
+-                        UID_INVALID,
+-                        &c->polkit_registry,
+-                        error);
+-        if (r < 0)
+-                return r;
+-        if (r == 0)
+-                return 1; /* No authorization for now, but the async polkit stuff will call us again when it has it */
+-
+         r = free_and_strdup(&c->data[PROP_HOSTNAME], name);
+         if (r < 0)
+                 return r;
+@@ -636,20 +622,6 @@ static int method_get_product_uuid(sd_bus_message *m, void *userdata, sd_bus_err
+         if (r < 0)
+                 return r;
+ 
+-        r = bus_verify_polkit_async(
+-                        m,
+-                        CAP_SYS_ADMIN,
+-                        "org.freedesktop.hostname1.get-product-uuid",
+-                        NULL,
+-                        interactive,
+-                        UID_INVALID,
+-                        &c->polkit_registry,
+-                        error);
+-        if (r < 0)
+-                return r;
+-        if (r == 0)
+-                return 1; /* No authorization for now, but the async polkit stuff will call us again when it has it */
+-
+         r = sd_bus_message_new_method_return(m, &reply);
+         if (r < 0)
+                 return r;
+diff --git a/src/hostname/org.freedesktop.hostname1.conf b/src/hostname/org.freedesktop.hostname1.conf
+index e2658c6..937ea69 100644
+--- a/src/hostname/org.freedesktop.hostname1.conf
++++ b/src/hostname/org.freedesktop.hostname1.conf
+@@ -21,8 +21,22 @@
+                 <allow receive_sender="org.freedesktop.hostname1"/>
+         </policy>
+ 
++        <policy user="systemd-network">
++                <deny send_destination="org.freedesktop.hostname1"/>
++
++                <allow send_destination="org.freedesktop.hostname1"
++                       send_interface="org.freedesktop.hostname1"
++                       send_member="SetHostname"/>
++
++                <allow send_destination="org.freedesktop.hostname1"
++                       send_interface="org.freedesktop.hostname1"
++                       send_member="GetProductUUID"/>
++
++                <allow receive_sender="org.freedesktop.hostname1"/>
++        </policy>
++
+         <policy context="default">
+-                <allow send_destination="org.freedesktop.hostname1"/>
++                <deny send_destination="org.freedesktop.hostname1"/>
+                 <allow receive_sender="org.freedesktop.hostname1"/>
+         </policy>
+ 
+-- 
+2.21.0
+
