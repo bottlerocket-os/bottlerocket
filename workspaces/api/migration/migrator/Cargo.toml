@@ -1,0 +1,16 @@
+[package]
+name = "migrator"
+version = "0.1.0"
+authors = ["Tom Kirchner <tjk@amazon.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+fs_extra = "1.1"
+lazy_static = "1.2"
+log = "0.4"
+nix = "0.14"
+rand = { version = "0.7", default-features = false, features = ["std"] }
+regex = "1.1"
+snafu = "0.4"
+stderrlog = "0.4"

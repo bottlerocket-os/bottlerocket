@@ -5,6 +5,7 @@ members = [
     "sundog",
     "thar-be-settings",
 
+    "migration/migrator",
     "migration/migration-helpers",
 
     # Migrations will be listed here.  They won't need to be listed as a
