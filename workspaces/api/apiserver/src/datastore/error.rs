@@ -50,13 +50,12 @@ pub enum Error {
     #[snafu(display("Listed key '{}' not found on disk", key))]
     ListedKeyNotPresent { key: String },
 
-    // Showing the full regex in an error is ugly because of ?x and the regex's formatting;
-    // see datastore::key::{DATA_KEY,METADATA_KEY}
     #[snafu(display(
-        "Key name '{}' has invalid format, should be 1 or more dot-separated [a-zA-Z0-9_-]+",
-        name
+        "Key name '{}' has invalid format, should match regex: {}",
+        name,
+        pattern
     ))]
-    InvalidKey { name: String },
+    InvalidKey { name: String, pattern: regex::Regex },
 
     #[snafu(display("Key name beyond maximum length {}: {}", name, max))]
     KeyTooLong { name: String, max: usize },
