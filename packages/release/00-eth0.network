@@ -3,3 +3,7 @@ Name=eth0
 
 [Network]
 DHCP=yes
+
+[DHCP]
+UseDNS=true
+UseDomains=true
