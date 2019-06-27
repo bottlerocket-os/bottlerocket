@@ -7,7 +7,6 @@ publish = false
 build = "build.rs"
 
 [dependencies]
-glob = "0.3"
 lazy_static = "1.2"
 log = "0.4"
 regex = "1.1"

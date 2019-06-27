@@ -69,18 +69,6 @@ pub enum Error {
 
     #[snafu(display("Key name beyond maximum length {}: {}", name, max))]
     KeyTooLong { name: String, max: usize },
-
-    #[snafu(display("Invalid glob '{}': {}", glob, source))]
-    GlobPattern {
-        glob: String,
-        source: glob::PatternError,
-    },
-
-    #[snafu(display("Error reading file for glob '{}': {}", glob, source))]
-    GlobIo {
-        glob: String,
-        source: glob::GlobError,
-    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

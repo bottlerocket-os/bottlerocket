@@ -58,18 +58,39 @@ impl DataStore for MemoryDataStore {
             .collect())
     }
 
-    fn list_populated_metadata<S: AsRef<str>>(
+    fn list_populated_metadata<S1, S2>(
         &self,
-        prefix: S,
-    ) -> Result<HashMap<Key, HashSet<Key>>> {
-        Ok(self
-            .metadata
-            .iter()
-            // Make sure the data keys start with the given prefix.
-            .filter(|(k, _v)| k.starts_with(prefix.as_ref()))
-            // We only want the inner keys, so we use 'map' to throw away the values.
-            .map(|(k, v)| (k.clone(), v.keys().cloned().collect()))
-            .collect())
+        prefix: S1,
+        metadata_key_name: &Option<S2>,
+    ) -> Result<HashMap<Key, HashSet<Key>>>
+    where
+        S1: AsRef<str>,
+        S2: AsRef<str>,
+    {
+        let mut result = HashMap::new();
+        for (data_key, meta_map) in self.metadata.iter() {
+            // Confirm data key matches requested prefix.
+            if !data_key.starts_with(prefix.as_ref()) {
+                continue;
+            }
+
+            let mut meta_for_data = HashSet::new();
+            for (meta_key, _value) in meta_map {
+                // Confirm metadata key matches requested name, if any.
+                if let Some(name) = metadata_key_name {
+                    if name.as_ref() != meta_key.as_ref() {
+                        continue;
+                    }
+                }
+                meta_for_data.insert(meta_key.clone());
+            }
+            // Only add an entry for the data key if we found metadata.
+            if !meta_for_data.is_empty() {
+                result.insert(data_key.clone(), meta_for_data);
+            }
+        }
+
+        Ok(result)
     }
 
     fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>> {

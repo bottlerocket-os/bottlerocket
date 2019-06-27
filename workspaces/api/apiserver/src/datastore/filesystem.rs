@@ -4,9 +4,6 @@
 //! Data is kept in files with paths resembling the keys, e.g. a/b/c for a.b.c, and metadata is
 //! kept in a suffixed file next to the data, e.g. a/b/c.meta for metadata "meta" about a.b.c
 
-use glob::glob;
-use lazy_static::lazy_static;
-use regex::Regex;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -14,20 +11,12 @@ use std::io;
 use std::path::{self, Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
 
-use super::key::{Key, KeyType, KEY_SEGMENT, KEY_SEGMENT_STR, KEY_SEPARATOR};
+use super::key::{Key, KeyType, KEY_SEPARATOR};
 use super::serialization::to_pairs;
 use super::{error, serialize_scalar, Committed, DataStore, Result, ScalarError};
 use crate::model::Metadata;
 
 const METADATA_KEY_PREFIX: char = '.';
-
-lazy_static! {
-    /// Pattern to validate the filename for a metadata key.
-    // One data segment, a dot, and one metadata segment.
-    static ref METADATA_FILENAME: Regex = Regex::new(
-        &format!(r"^(?P<data>{segment}).(?P<metadata>{segment})$", segment=KEY_SEGMENT_STR)
-    ).unwrap();
-}
 
 #[derive(Debug)]
 pub struct FilesystemDataStore {
@@ -138,7 +127,7 @@ impl FilesystemDataStore {
     }
 }
 
-// Filesystem read/write/copy helpers
+// Filesystem helpers
 
 /// Helper for reading a key from the filesystem.  Returns Ok(None) if the file doesn't exist
 /// rather than erroring.
@@ -170,55 +159,150 @@ fn write_file_mkdir<S: AsRef<str>>(path: PathBuf, data: S) -> Result<()> {
     fs::write(&path, data.as_ref().as_bytes()).context(error::Io { path: &path })
 }
 
-/// Given a DirEntry, returns Ok(Some(Key)) if it seems like a datastore key of the given
-/// key_type.  Returns Ok(None) if it doesn't seem like a datastore key, e.g. a directory, or is
-/// the wrong key_type.  Returns Err if we weren't able to check or if it doesn't seem like
-/// something that should be in the datastore directory at all.
-fn key_for_entry<P: AsRef<Path>>(
+/// KeyPath represents the filesystem path to a data or metadata key, relative to the base path of
+/// the live or pending data store.  For example, the data key "settings.a.b" would be
+/// "settings/a/b" and the metadata key "meta1" for "settings.a.b" would be "settings/a/b.meta1".
+///
+/// It allows access to the data_key and (if it's a metadata key) the metadata_key based on the
+/// path.
+///
+/// This structure can be useful when it doesn't matter where the key is physically stored, but
+/// you still need to deal with the interaction between key name and filename, e.g. when
+/// abstracting over data and metadata keys during a search.
+// Note: this may be useful in other parts of the FilesystemDataStore code too.  It may also be
+// useful enough to use its ideas to extend the Key type directly, instead.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct KeyPath {
+    data_key: Key,
+    metadata_key: Option<Key>,
+}
+
+impl KeyPath {
+    fn new(path: &Path) -> Result<KeyPath> {
+        let path_str = path.to_str().context(error::Corruption {
+            msg: "Non-UTF8 path",
+            path,
+        })?;
+
+        let mut segments = path_str.splitn(2, '.');
+
+        // Split the data and metadata parts
+        let data_key_raw = segments.next().context(error::Internal {
+            msg: "KeyPath given empty path",
+        })?;
+        // Turn the data path into a dotted key
+        let data_key_str = data_key_raw.replace("/", KEY_SEPARATOR);
+        let data_key = Key::new(KeyType::Data, data_key_str)?;
+
+        // If we have a metadata portion, make that a Key too
+        let metadata_key = match segments.next() {
+            Some(meta_key_str) => Some(Key::new(KeyType::Meta, meta_key_str)?),
+            None => None,
+        };
+
+        Ok(KeyPath {
+            data_key,
+            metadata_key,
+        })
+    }
+
+    fn key_type(&self) -> KeyType {
+        match self.metadata_key {
+            Some(_) => KeyType::Meta,
+            None => KeyType::Data,
+        }
+    }
+}
+
+/// Given a DirEntry, gives you a KeyPath if it's a valid path to a key.  Specifically, we return
+/// Ok(Some(Key)) if it seems like a datastore key.  Returns Ok(None) if it doesn't seem like a
+/// datastore key, e.g. a directory, or if it's a file otherwise invalid as a key.  Returns Err if
+/// we weren't able to check.
+fn key_path_for_entry<P: AsRef<Path>>(
     entry: &DirEntry,
-    key_type: KeyType,
     strip_path_prefix: P,
-) -> Result<Option<Key>> {
+) -> Result<Option<KeyPath>> {
     if !entry.file_type().is_file() {
         trace!("Skipping non-file entry: {}", entry.path().display());
         return Ok(None);
     }
 
-    let check_path = |p: Option<_>| -> Result<_> {
-        p.context(error::Corruption {
-            msg: "Non-UTF8 path",
-            path: entry.path(),
-        })
-    };
+    let path = entry.path();
+    let key_path_raw = path.strip_prefix(strip_path_prefix).context(error::Path)?;
+    // If KeyPath doesn't think this is an OK key, we'll return Ok(None), otherwise the KeyPath
+    Ok(KeyPath::new(key_path_raw).ok())
+}
 
-    // Check if the filename is valid as the requested key_type; if not, we return Ok(None) to
-    // represent that we successfully figured out that it's not the requested type.
-    let filename = check_path(entry.file_name().to_str())?;
-    let name_pattern = match key_type {
-        KeyType::Data => &*KEY_SEGMENT,
-        KeyType::Meta => &*METADATA_FILENAME,
-    };
-    if !name_pattern.is_match(filename) {
-        trace!(
-            "Skipping file not valid as {:?}: {}",
-            key_type,
-            entry.path().display()
-        );
-        return Ok(None);
+/// Helper to walk through the filesystem to find populated keys of the given type, starting with
+/// the given prefix.  Each item in the returned set is a KeyPath representing a data or metadata
+/// key.
+// Note: if we needed to list all possible keys, a walk would only work if we had empty files to
+// represent unset values, which could be ugly.
+// Another option would be to use a procedural macro to step through a structure to list possible
+// keys; this would be similar to serde, but would need to step through Option fields.
+fn find_populated_key_paths<S: AsRef<str>>(
+    datastore: &FilesystemDataStore,
+    key_type: KeyType,
+    prefix: S,
+    committed: Committed,
+) -> Result<HashSet<KeyPath>> {
+    // Find the base path for our search, and confirm it exists.
+    let base = datastore.base_path(committed);
+    if !base.exists() {
+        match committed {
+            // No live keys; something must be wrong because we create a default datastore.
+            Committed::Live => {
+                return error::Corruption {
+                    msg: "Live datastore missing",
+                    path: base,
+                }
+                .fail()
+            }
+            // No pending keys, OK, return empty set.
+            Committed::Pending => {
+                trace!(
+                    "Returning empty list because pending path doesn't exist: {}",
+                    base.display()
+                );
+                return Ok(HashSet::new());
+            }
+        }
     }
 
-    let path = entry.path();
-    let key_path = path.strip_prefix(strip_path_prefix).context(error::Path)?;
-    let key_path_str = check_path(key_path.to_str())?;
+    // Walk through the filesystem.
+    let walker = WalkDir::new(base)
+        .follow_links(false) // shouldn't be links...
+        .same_file_system(true); // shouldn't be filesystems to cross...
 
-    let key_name = key_path_str.replace("/", KEY_SEPARATOR);
+    let mut key_paths = HashSet::new();
     trace!(
-        "Made key name '{}' from path: {}",
-        key_name,
-        entry.path().display()
+        "Starting walk of filesystem to list {:?} key paths under {}",
+        key_type,
+        base.display()
     );
-    let key = Key::new(key_type, key_name)?;
-    Ok(Some(key))
+
+    // For anything we find, confirm it matches the user's filters, and add it to results.
+    for entry in walker {
+        let entry = entry.context(error::ListKeys)?;
+        if let Some(kp) = key_path_for_entry(&entry, &base)? {
+            if !kp.data_key.as_ref().starts_with(prefix.as_ref()) {
+                trace!(
+                    "Discarded {:?} key whose data_key '{}' doesn't start with prefix '{}'",
+                    kp.key_type(),
+                    kp.data_key,
+                    prefix.as_ref()
+                );
+                continue;
+            } else if kp.key_type() != key_type {
+                continue;
+            }
+
+            trace!("Found {:?} key at {}", key_type, entry.path().display());
+            key_paths.insert(kp);
+        }
+    }
+
+    Ok(key_paths)
 }
 
 // TODO: maybe add/strip single newline at end, so file is easier to read
@@ -229,128 +313,58 @@ impl DataStore for FilesystemDataStore {
         Ok(path.exists())
     }
 
-    /// We walk the filesystem to list populated keys.
-    ///
-    /// If we were to need to list all possible keys, a walk would only work if we had empty files
-    /// to represent unset values, which could be ugly.
-    ///
-    /// Another option would be to use a procedural macro to step through a structure to list
-    /// possible keys; this would be similar to serde, but would need to step through Option fields.
+    /// Returns the set of all data keys that are currently populated in the datastore, that
+    /// start with the given prefix.
     fn list_populated_keys<S: AsRef<str>>(
         &self,
         prefix: S,
         committed: Committed,
     ) -> Result<HashSet<Key>> {
-        let prefix = prefix.as_ref();
-
-        let base = self.base_path(committed);
-        if !base.exists() {
-            match committed {
-                // No live keys; something must be wrong because we create a default datastore.
-                Committed::Live => {
-                    return error::Corruption {
-                        msg: "Live datastore missing",
-                        path: base,
-                    }
-                    .fail()
-                }
-                // No pending keys, OK, return empty set.
-                Committed::Pending => {
-                    trace!(
-                        "Returning empty list because pending path doesn't exist: {}",
-                        base.display()
-                    );
-                    return Ok(HashSet::new());
-                }
-            }
-        }
-
-        let walker = WalkDir::new(base)
-            .follow_links(false) // shouldn't be links...
-            .same_file_system(true); // shouldn't be filesystems to cross...
-
-        let mut keys: HashSet<Key> = HashSet::new();
-        trace!(
-            "Starting walk of filesystem to list keys, path: {}",
-            base.display()
-        );
-        for entry in walker {
-            let entry = entry.context(error::ListKeys)?;
-            if let Some(key) = key_for_entry(&entry, KeyType::Data, &base)? {
-                keys.insert(key);
-            }
-        }
-
-        trace!("Removing keys not beginning with '{}'", prefix);
-        // Note: Can't start walk at prefix because it may not be a valid path - e.g. could ask for
-        // prefix of "sett" to get settings.  Could reconsider that behavior to optimize here.
-        keys.retain(|k| k.starts_with(&prefix));
-
+        let key_paths = find_populated_key_paths(self, KeyType::Data, prefix, committed)?;
+        let keys = key_paths.into_iter().map(|kp| kp.data_key).collect();
         Ok(keys)
     }
 
-    /// To find populated metadata, we first find populated data with the given prefix, since
-    /// metadata must be attached to data.  For each found data key, we list files starting with
-    /// the same path but with a metadata extension.  We return a mapping of data keys to the
-    /// metadata keys we found for each.
-    fn list_populated_metadata<S: AsRef<str>>(
+    /// Finds all metadata keys that are currently populated in the datastore whose data keys
+    /// start with the given prefix.  If you specify metadata_key_name, only metadata keys with
+    /// that name will be returned.
+    ///
+    /// Returns a mapping of the data keys to the set of populated metadata keys for each.
+    ///
+    /// Note: The data keys do not need to be populated themselves; sometimes metadata is used
+    /// to help generate the data, for example.  (Committed status is then irrelevant, too.)
+    fn list_populated_metadata<S1, S2>(
         &self,
-        prefix: S,
-    ) -> Result<HashMap<Key, HashSet<Key>>> {
-        // Metadata can only be attached to populated data, so first we find data keys.
-        let data_keys = self.list_populated_keys(prefix, Committed::Live)?;
+        prefix: S1,
+        metadata_key_name: &Option<S2>,
+    ) -> Result<HashMap<Key, HashSet<Key>>>
+    where
+        S1: AsRef<str>,
+        S2: AsRef<str>,
+    {
+        // Find metadata key paths on disk
+        let key_paths = find_populated_key_paths(self, KeyType::Meta, prefix, Committed::Live)?;
 
+        // For each file on disk, check the user's conditions, and add it to our output
         let mut result = HashMap::new();
-        for data_key in data_keys {
-            // For each found data key, we find the metadata keys next to it on disk.
-            let mut result_for_key = HashSet::new();
-            let data_path = self.data_path(&data_key, Committed::Live)?;
-            let meta_path_glob = format!("{}.*", data_path.display());
-            for meta_path in glob(&meta_path_glob).with_context(|| error::GlobPattern {
-                glob: meta_path_glob.clone(),
-            })? {
-                // For each found metadata file, we insert a Key into the result.
-                // We have the full path, so we need to pull out the filename, then the metadata
-                // key portion of the filename using the structure of the key naming regex.
-                let meta_path = meta_path.with_context(|| error::GlobIo {
-                    glob: meta_path_glob.clone(),
-                })?;
-                let meta_file = meta_path.file_name().context(error::Internal {
-                    msg: format!("Metadata path has no file name: {}", meta_path.display()),
-                })?;
-                let meta_file_str = meta_file.to_str().context(error::NonUnicodeFile {
-                    file: meta_file.to_string_lossy(),
-                    context: "listing populated metadata",
-                })?;
-                let meta_file_captures =
-                    METADATA_FILENAME
-                        .captures(meta_file_str)
-                        .context(error::Internal {
-                            msg: format!(
-                                "Unable to capture metadata name from filename '{}'",
-                                meta_file_str
-                            ),
-                        })?;
-                let meta_name = meta_file_captures
-                    .name("metadata")
-                    .context(error::Internal {
-                        msg: format!("Did not find metadata name in filename '{}'", meta_file_str),
-                    })?.as_str();
+        for key_path in key_paths {
+            let data_key = key_path.data_key;
+            let meta_key = key_path.metadata_key.context(error::Internal {
+                msg: format!("Found meta key path with no dot: {}", data_key),
+            })?;
 
-                let meta_key = Key::new(KeyType::Meta, meta_name)
-                    .ok()
-                    .with_context(|| error::Internal {
-                        msg: format!("Couldn't build Key from listed metadata: {}", meta_file_str),
-                    })?;
-                result_for_key.insert(meta_key);
+            // If the user requested specific metadata, move to the next key unless it matches.
+            if let Some(name) = metadata_key_name {
+                if name.as_ref() != meta_key.as_ref() {
+                    continue;
+                }
             }
 
-            // Only want to return data keys for which we found metadata
-            if !result_for_key.is_empty() {
-                result.insert(data_key, result_for_key);
-            }
+            // Insert into output if we met the requested conditions; don't add an entry for
+            // the data key unless we did find some metadata.
+            let data_entry = result.entry(data_key).or_insert_with(HashSet::new);
+            data_entry.insert(meta_key);
         }
-
         Ok(result)
     }
 
