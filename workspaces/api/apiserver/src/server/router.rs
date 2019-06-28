@@ -114,13 +114,19 @@ pub fn handle_request<P: AsRef<Path>>(request: &Request, datastore_path: P) -> R
             try_or!(500, apply_changes(&changes).map(|_| Response::empty_204()))
         },
 
-        // Get the value of a metadata key for a list of data keys
+        // Get the affected services for a list of data keys
         (GET) (/metadata/affected-services) => {
             let data_keys_str = try_or!(400, get_param(&request, "keys"));
             let data_keys: HashSet<&str> = data_keys_str.split(',').collect();
-            try_or!(500, get_metadata(&datastore, "affected-services", &data_keys)
+            try_or!(500, get_metadata_for_data_keys(&datastore, "affected-services", &data_keys)
                          .map(|ref s| Response::json(s)))
         },
+        // Get all settings that have setting-generator metadata
+        (GET) (/metadata/setting-generators) => {
+            try_or!(500, get_metadata_for_all_data_keys(&datastore, "setting-generator")
+                         .map(|ref s| Response::json(s)))
+        },
+
 
         // Services
         (GET) (/services) => {

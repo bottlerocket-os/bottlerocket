@@ -263,7 +263,7 @@ pub(crate) fn set_settings<D: DataStore>(datastore: &mut D, settings: &Settings)
 // This is not as nice as get_settings, which uses Serializer/Deserializer to properly use the
 // data model and check types.
 /// Gets the value of a metadata key for the requested list of data keys.
-pub(crate) fn get_metadata<D: DataStore, S: AsRef<str>>(
+pub(crate) fn get_metadata_for_data_keys<D: DataStore, S: AsRef<str>>(
     datastore: &D,
     md_key_str: S,
     data_key_strs: &HashSet<&str>,
@@ -274,7 +274,7 @@ pub(crate) fn get_metadata<D: DataStore, S: AsRef<str>>(
         name: md_key_str.as_ref(),
     })?;
 
-    let mut data: HashMap<String, Value> = HashMap::new();
+    let mut result = HashMap::new();
     for data_key_str in data_key_strs {
         trace!("Pulling metadata from datastore for key: {}", data_key_str);
         let data_key = Key::new(KeyType::Data, data_key_str).context(error::NewKey {
@@ -295,10 +295,38 @@ pub(crate) fn get_metadata<D: DataStore, S: AsRef<str>>(
             deserialize_scalar::<_, ScalarError>(&value_str).context(error::InvalidMetadata {
                 key: md_key.as_ref(),
             })?;
-        data.insert(data_key_str.to_string(), value);
+        result.insert(data_key.to_string(), value);
     }
 
-    Ok(data)
+    Ok(result)
+}
+
+/// Gets the value of a metadata key everywhere it's found in the data store.  Returns a mapping
+/// of data key to the metadata value associated with the requested key.
+pub(crate) fn get_metadata_for_all_data_keys<D: DataStore, S: AsRef<str>>(
+    datastore: &D,
+    md_key_str: S,
+) -> Result<HashMap<String, Value>> {
+    trace!("Getting metadata '{}'", md_key_str.as_ref());
+    let meta_map = datastore
+        .get_metadata_prefix("", &Some(md_key_str))
+        .context(error::DataStore {
+            op: "get_metadata_prefix",
+        })?;
+
+    let mut result = HashMap::new();
+    for (data_key, metadata) in meta_map {
+        for (meta_key, value_str) in metadata {
+            trace!("Deserializing scalar from metadata");
+            let value: Value = deserialize_scalar::<_, ScalarError>(&value_str).context(
+                error::InvalidMetadata {
+                    key: meta_key.as_ref(),
+                },
+            )?;
+            result.insert(data_key.to_string(), value);
+        }
+    }
+    Ok(result)
 }
 
 /// Makes live any pending settings in the datastore, returning the changed keys.
@@ -469,7 +497,31 @@ mod test {
     }
 
     #[test]
-    fn get_metadata_works() {
+    fn get_metadata_keys_works() {
+        let mut ds = MemoryDataStore::new();
+        // Set directly with data store
+        for data_key in &["abc", "def", "ghi"] {
+            ds.set_metadata(
+                &Key::new(KeyType::Meta, "my-meta").unwrap(),
+                &Key::new(KeyType::Data, data_key).unwrap(),
+                "\"json string\"",
+            )
+            .unwrap();
+        }
+
+        // We'll check a subset by specifying 2 of the 3 keys
+        let expected = hashmap!(
+            "abc".to_string() => "json string".into(),
+            "def".to_string() => "json string".into(),
+        );
+        // Retrieve with helper
+        let actual = get_metadata_for_data_keys(&ds, "my-meta", &hashset!("abc", "def")).unwrap();
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn get_metadata_all_works() {
         let mut ds = MemoryDataStore::new();
         // Set directly with data store
         for data_key in &["abc", "def"] {
@@ -486,7 +538,7 @@ mod test {
             "def".to_string() => "json string".into(),
         );
         // Retrieve with helper
-        let actual = get_metadata(&ds, "my-meta", &hashset!("abc", "def")).unwrap();
+        let actual = get_metadata_for_all_data_keys(&ds, "my-meta").unwrap();
 
         assert_eq!(expected, actual);
     }

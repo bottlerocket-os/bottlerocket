@@ -43,13 +43,19 @@ pub trait DataStore {
         prefix: S,
         committed: Committed,
     ) -> Result<HashSet<Key>>;
-    /// Returns a list of the populated metadata in the datastore whose data key's names start
-    /// with the given prefix.  (Metadata is only associated with populated, committed data
-    /// keys.)
-    fn list_populated_metadata<S: AsRef<str>>(
+    /// Finds all metadata keys that are currently populated in the datastore whose data keys
+    /// start with the given prefix.  If you specify metadata_key_name, only metadata keys with
+    /// that name will be returned.
+    ///
+    /// Returns a mapping of the data keys to the set of populated metadata keys for each.
+    fn list_populated_metadata<S1, S2>(
         &self,
-        prefix: S,
-    ) -> Result<HashMap<Key, HashSet<Key>>>;
+        prefix: S1,
+        metadata_key_name: &Option<S2>,
+    ) -> Result<HashMap<Key, HashSet<Key>>>
+    where
+        S1: AsRef<str>,
+        S2: AsRef<str>;
 
     /// Retrieve the value for a single data key from the datastore.
     fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>>;
@@ -138,14 +144,20 @@ pub trait DataStore {
         Ok(result)
     }
 
-    /// Retrieves all metadata for data keys starting with the given prefix.
-    /// Returns a mapping of each data key to its metadata, where metadata is a mapping of
-    /// metadata Key to string value.
-    fn get_metadata_prefix<S: AsRef<str>>(
+    /// Retrieves all metadata for data keys starting with the given prefix.  If you specify
+    /// metadata_key_name, only metadata keys with that name will be returned.  Returns a
+    /// mapping of each data key to its metadata, where metadata is a mapping of metadata Key to
+    /// string value.
+    fn get_metadata_prefix<S1, S2>(
         &self,
-        find_prefix: S,
-    ) -> Result<HashMap<Key, HashMap<Key, String>>> {
-        let meta_map = self.list_populated_metadata(&find_prefix)?;
+        find_prefix: S1,
+        metadata_key_name: &Option<S2>,
+    ) -> Result<HashMap<Key, HashMap<Key, String>>>
+    where
+        S1: AsRef<str>,
+        S2: AsRef<str>,
+    {
+        let meta_map = self.list_populated_metadata(&find_prefix, metadata_key_name)?;
         trace!("Found populated metadata: {:?}", meta_map);
         if meta_map.is_empty() {
             return Ok(HashMap::new());
@@ -153,10 +165,15 @@ pub trait DataStore {
 
         let mut result = HashMap::new();
         for (data_key, meta_keys) in meta_map {
-            let data_entry = result
-                .entry(data_key.clone())
-                .or_insert_with(HashMap::new);
             for meta_key in meta_keys {
+                // If the user requested specific metadata, move to the next key unless it
+                // matches.
+                if let Some(name) = metadata_key_name {
+                    if name.as_ref() != meta_key.as_ref() {
+                        continue;
+                    }
+                }
+
                 // Already confirmed key via listing keys, so an error is more serious.
                 trace!(
                     "Pulling metadata '{}' from datastore for key: {}",
@@ -169,6 +186,9 @@ pub trait DataStore {
                         data_key: data_key.as_ref(),
                     },
                 )?;
+
+                // Insert a top-level map entry for the data key if we've found metadata.
+                let data_entry = result.entry(data_key.clone()).or_insert_with(HashMap::new);
 
                 data_entry.insert(meta_key, value);
             }
@@ -280,16 +300,11 @@ mod test {
     fn get_metadata_prefix() {
         let mut m = MemoryDataStore::new();
 
-        // Set some data to which we can attach metadata
+        // Build some data keys to which we can attach metadata; they don't actually have to be
+        // set in the data store.
         let k1 = Key::new(KeyType::Data, "x.1").unwrap();
         let k2 = Key::new(KeyType::Data, "x.2").unwrap();
         let k3 = Key::new(KeyType::Data, "y.3").unwrap();
-        let data = hashmap!(
-            k1.clone() => "x1".to_string(),
-            k2.clone() => "x2".to_string(),
-            k3.clone() => "y3".to_string(),
-        );
-        m.set_keys(&data, Committed::Live).unwrap();
 
         // Set some metadata to check
         let mk1 = Key::new(KeyType::Meta, "metatest1").unwrap();
@@ -299,10 +314,17 @@ mod test {
         m.set_metadata(&mk2, &k2, "42").unwrap();
         m.set_metadata(&mk3, &k3, "43").unwrap();
 
+        // Check all metadata
         assert_eq!(
-            m.get_metadata_prefix("x.").unwrap(),
+            m.get_metadata_prefix("x.", &None as &Option<&str>).unwrap(),
             hashmap!(k1 => hashmap!(mk1 => "41".to_string()),
-                     k2 => hashmap!(mk2 => "42".to_string()))
+                     k2.clone() => hashmap!(mk2.clone() => "42".to_string()))
+        );
+
+        // Check metadata matching a given name
+        assert_eq!(
+            m.get_metadata_prefix("x.", &Some("metatest2")).unwrap(),
+            hashmap!(k2 => hashmap!(mk2 => "42".to_string()))
         );
     }
 }
