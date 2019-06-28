@@ -33,14 +33,14 @@ mod error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
-        #[snafu(display("Command failure - '{}': {}", program, source))]
+        #[snafu(display("Failed to start generator '{}': {}", program, source))]
         CommandFailure {
             program: String,
             source: std::io::Error,
         },
 
         #[snafu(display(
-            "Setting generator '{}' failed with exit code {}: {}",
+            "Setting generator '{}' failed with exit code {} - stderr: {}",
             program,
             code,
             stderr
@@ -51,7 +51,7 @@ mod error {
             stderr: String,
         },
 
-        #[snafu(display("Invalid (non-utf8) generator output - '{}': {}", program, source))]
+        #[snafu(display("Invalid (non-utf8) output from generator '{}': {}", program, source))]
         GeneratorOutput {
             program: String,
             source: std::str::Utf8Error,
