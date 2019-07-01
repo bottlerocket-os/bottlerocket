@@ -1,7 +1,7 @@
 #![warn(clippy::pedantic)]
 
 use serde::Deserialize;
-use signpost::state::State;
+use signpost::State;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
