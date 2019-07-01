@@ -206,7 +206,9 @@ impl State {
         let mut inactive_flags = self.gptprio(self.inactive());
         if !inactive_flags.will_boot() {
             return error::InactiveInvalidRollback {
-                flags: inactive_flags,
+                priority: inactive_flags.priority(),
+                tries_left: inactive_flags.tries_left(),
+                successful: inactive_flags.successful(),
             }
             .fail();
         }
