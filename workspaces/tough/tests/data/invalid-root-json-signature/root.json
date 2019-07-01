@@ -1,0 +1,40 @@
+{
+    "signed": {
+        "_type": "root",
+        "spec_version": "1.0",
+        "consistent_snapshot": true,
+        "version": 1,
+        "expires": "3000-03-30T03:30:30Z",
+        "keys": {
+            "6a5c2f8c5f9392b1d19a62e6f593201edc2a80ecec066b1bc4bd2c973fdee99b": {
+                "keytype": "rsa",
+                "scheme": "rsassa-pss-sha256",
+                "keyval": {"public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAlYWXrzGUQFX2F8+3kevc\nCMFdQfDJNw5Gi4B1v/LaQjmSnl8/KlyAsHKuJ/M65LN3E2RSdsFZCXcA3h0oA/mI\n5zGBB4x+8itejTAZS0+HkE5ySLpAaOPYiqNvlZroJYuprFfh2TygI+cnVJYbBWcT\nkq9Gw38ZJYzGxeO0ayZInD5DaXxBbKWA/exnVKkINtid+UtiaOciy7sxMvRUgw03\n8bdxVnruzWGkSTDcR15/02r6dSoT/stNyj/rFezWO3XnBjUFR3Vfm76HYcNxNTVh\n2QHZlsxwGemROL1eSUdwDYFpdxsIIvyHeDz8a0exyG/ZXmznFtMS/b8+YSrIXNER\npqHJJL/5f9H3aqB4gNLE59jpJaTFWAGqftKqw7ju3vcjKAFJ8fzNdWSaCRDAmToo\ny2x7BXdxCENYhbNXRvR794JVw3G/CQj53wk51QJvQHb3ZvHP2a4L5Gu2EZOLrtof\nqjXBx4cmCzDbkC92jGcl+55arZhgSyIQRSFcrL+hwosJAgMBAAE=\n-----END PUBLIC KEY-----\n"}
+            }
+        },
+        "roles": {
+            "root": {
+                "keyids": ["6a5c2f8c5f9392b1d19a62e6f593201edc2a80ecec066b1bc4bd2c973fdee99b"],
+                "threshold": 1
+            },
+            "snapshot": {
+                "keyids": ["6a5c2f8c5f9392b1d19a62e6f593201edc2a80ecec066b1bc4bd2c973fdee99b"],
+                "threshold": 1
+            },
+            "targets": {
+                "keyids": ["6a5c2f8c5f9392b1d19a62e6f593201edc2a80ecec066b1bc4bd2c973fdee99b"],
+                "threshold": 1
+            },
+            "timestamp": {
+                "keyids": ["6a5c2f8c5f9392b1d19a62e6f593201edc2a80ecec066b1bc4bd2c973fdee99b"],
+                "threshold": 1
+            }
+        }
+    },
+    "signatures": [
+        {
+            "keyid": "6a5c2f8c5f9392b1d19a62e6f593201edc2a80ecec066b1bc4bd2c973fdee99b",
+            "sig": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        }
+    ]
+}
