@@ -1,4 +1,3 @@
-use crate::gptprio::GptPrio;
 use crate::set::PartitionSet;
 use snafu::Snafu;
 use std::ffi::OsString;
@@ -7,7 +6,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
-pub(crate) enum Error {
+pub enum Error {
     #[snafu(display(
         "Active partition {} not in either detected partition set ({:?})",
         active_partition.display(),
@@ -24,8 +23,17 @@ pub(crate) enum Error {
     #[snafu(display("Failed to write GPT onto device {}: {}", device.display(), source))]
     GPTWrite { device: PathBuf, source: GPTError },
 
-    #[snafu(display("Inactive partition is not valid to roll back to ({})", flags))]
-    InactiveInvalidRollback { flags: GptPrio },
+    #[snafu(display(
+        "Inactive partition is not valid to roll back to (priority={} tries_left={} successful={})",
+        priority,
+        tries_left,
+        successful
+    ))]
+    InactiveInvalidRollback {
+        priority: u64,
+        tries_left: u64,
+        successful: bool,
+    },
 
     #[snafu(display(
         "Path {} is a link to {} which does not have a final component (expected {})",
@@ -105,7 +113,7 @@ pub(crate) enum Error {
 }
 
 #[derive(Debug)]
-pub(crate) struct GPTError(pub gptman::Error);
+pub struct GPTError(pub gptman::Error);
 
 impl fmt::Display for GPTError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

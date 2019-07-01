@@ -17,7 +17,7 @@ const THAR_ROOT: [u8; 16] = uuid_to_guid(hex!("5526016a 1a97 4ea4 b39a b7c8c6ca4
 const THAR_HASH: [u8; 16] = uuid_to_guid(hex!("598f10af c955 4456 6a99 7720068a6cea"));
 
 #[derive(Debug, Clone)]
-pub(crate) struct State {
+pub struct State {
     os_disk: PathBuf,
     sets: [PartitionSet; 2],
     /// The partition numbers that correspond to the boot partitions in each partition set,
@@ -41,7 +41,7 @@ impl State {
     ///   type GUIDs. The first partitions are set A and the second partitions are set B.
     /// * Determine which partition set is active by finding which one contains the partition we
     ///   found from our root filesystem earlier.
-    pub(crate) fn load() -> Result<Self, Error> {
+    pub fn load() -> Result<Self, Error> {
         // The root filesystem is a dm-verity device. We want to determine what disk and partition
         // the backing data is part of. Look up the device major and minor via stat(2):
         let root_fs = BlockDevice::from_resident("/")?;
@@ -165,7 +165,7 @@ impl State {
     }
 
     /// Sets the active partition as successfully booted, but **does not write to the disk**.
-    pub(crate) fn mark_successful_boot(&mut self) {
+    pub fn mark_successful_boot(&mut self) {
         let mut flags = self.gptprio(self.active());
         flags.set_successful(true);
         self.set_gptprio(self.active(), flags);
@@ -173,7 +173,7 @@ impl State {
 
     /// Clears priority bits of the inactive partition in preparation to write new images, but
     /// **does not write to the disk**.
-    pub(crate) fn clear_inactive(&mut self) {
+    pub fn clear_inactive(&mut self) {
         let mut inactive_flags = self.gptprio(self.inactive());
         inactive_flags.set_priority(0);
         inactive_flags.set_tries_left(0);
@@ -186,7 +186,7 @@ impl State {
     /// * Sets the inactive partition's priority to 2 and the active partition's priority to 1.
     /// * Sets the inactive partition's tries left to 1.
     /// * Sets the inactive partition as not successfully booted.
-    pub(crate) fn upgrade_to_inactive(&mut self) {
+    pub fn upgrade_to_inactive(&mut self) {
         let mut inactive_flags = self.gptprio(self.inactive());
         inactive_flags.set_priority(2);
         inactive_flags.set_tries_left(1);
@@ -202,11 +202,13 @@ impl State {
     ///
     /// Returns an error if the inactive partition is not bootable (it doesn't have a prior
     /// successful boot and doesn't have the priority/tries_left that would make it safe to try).
-    pub(crate) fn rollback_to_inactive(&mut self) -> Result<(), Error> {
+    pub fn rollback_to_inactive(&mut self) -> Result<(), Error> {
         let mut inactive_flags = self.gptprio(self.inactive());
         if !inactive_flags.will_boot() {
             return error::InactiveInvalidRollback {
-                flags: inactive_flags,
+                priority: inactive_flags.priority(),
+                tries_left: inactive_flags.tries_left(),
+                successful: inactive_flags.successful(),
             }
             .fail();
         }
@@ -221,7 +223,7 @@ impl State {
     }
 
     /// Writes the partition table to the OS disk.
-    pub(crate) fn write(&mut self) -> Result<(), Error> {
+    pub fn write(&mut self) -> Result<(), Error> {
         self.table
             .write_into(
                 &mut OpenOptions::new()

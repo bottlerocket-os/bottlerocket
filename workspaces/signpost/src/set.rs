@@ -3,7 +3,7 @@ use std::ops::Not;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
-pub(crate) struct PartitionSet {
+pub struct PartitionSet {
     /// The partition containing the kernel and GRUB configuration for this partition set.
     pub(crate) boot: PathBuf,
     /// The partition containing the root filesystem for this partition set.
