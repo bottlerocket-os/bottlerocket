@@ -112,4 +112,12 @@ mod tests {
             serde_json::from_str(include_str!("../../tests/data/simple-rsa/root.json")).unwrap();
         root.verify(&root).unwrap();
     }
+
+    #[test]
+    fn duplicate_keyid() {
+        assert!(serde_json::from_str::<Signed<Root>>(include_str!(
+            "../../tests/data/duplicate-keyid/root.json"
+        ))
+        .is_err());
+    }
 }
