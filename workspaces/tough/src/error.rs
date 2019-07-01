@@ -60,6 +60,10 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    /// A duplicate key ID was present in the root metadata.
+    #[snafu(display("Duplicate key ID: {}", keyid))]
+    DuplicateKeyId { keyid: String },
+
     /// A metadata file has expired.
     #[snafu(display("{} metadata is expired", role))]
     ExpiredMetadata { role: Role, backtrace: Backtrace },

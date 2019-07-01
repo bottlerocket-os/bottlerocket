@@ -5,8 +5,9 @@ use crate::serde::{Metadata, Role};
 use chrono::{DateTime, Utc};
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha256};
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use std::collections::BTreeMap;
+use std::fmt;
 use std::num::NonZeroU64;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -54,21 +55,51 @@ fn deserialize_keys<'de, D>(deserializer: D) -> Result<BTreeMap<Decoded<Hex>, Ke
 where
     D: Deserializer<'de>,
 {
-    let keys: BTreeMap<Decoded<Hex>, Key> = BTreeMap::deserialize(deserializer)?;
-    for (keyid, key) in &keys {
-        let digest = Sha256::digest(
-            &serde_json::to_vec(key)
-                .context(error::JsonSerialization)
-                .map_err(D::Error::custom)?,
-        );
-        if keyid != digest.as_slice() {
+    // An inner function that does actual key ID validation:
+    // * fails if a key ID doesn't match its contents
+    // * fails if there is a duplicate key ID
+    fn visit_entry(
+        keyid: Decoded<Hex>,
+        key: Key,
+        map: &mut BTreeMap<Decoded<Hex>, Key>,
+    ) -> Result<(), error::Error> {
+        let digest = Sha256::digest(&serde_json::to_vec(&key).context(error::JsonSerialization)?);
+        ensure!(
+            &keyid == digest.as_slice(),
             error::HashMismatch {
                 calculated: hex::encode(digest),
-                expected: hex::encode(keyid),
+                expected: hex::encode(&keyid),
             }
-            .fail()
-            .map_err(D::Error::custom)?;
+        );
+        let keyid_hex = hex::encode(&keyid); // appease borrowck
+        ensure!(
+            map.insert(keyid, key).is_none(),
+            error::DuplicateKeyId { keyid: keyid_hex }
+        );
+        Ok(())
+    }
+
+    // The rest of this is fitting the above function into serde and doing error type conversion.
+    struct Visitor;
+
+    impl<'de> serde::de::Visitor<'de> for Visitor {
+        type Value = BTreeMap<Decoded<Hex>, Key>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a map")
+        }
+
+        fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
+        where
+            M: serde::de::MapAccess<'de>,
+        {
+            let mut map = BTreeMap::new();
+            while let Some((keyid, key)) = access.next_entry()? {
+                visit_entry(keyid, key, &mut map).map_err(M::Error::custom)?;
+            }
+            Ok(map)
         }
     }
-    Ok(keys)
+
+    deserializer.deserialize_map(Visitor)
 }
