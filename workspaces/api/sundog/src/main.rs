@@ -7,10 +7,13 @@ It requests settings generators from the API and runs them.
 The output is collected and sent to a known Thar API server endpoint and committed.
 */
 
-use snafu::{ensure, ResultExt};
+use snafu::ResultExt;
 use std::collections::HashMap;
 use std::process;
 use std::str;
+
+use apiserver::datastore::deserialization;
+use apiserver::model;
 
 #[macro_use]
 extern crate log;
@@ -20,11 +23,19 @@ const API_METADATA_URI: &str = "http://localhost:4242/metadata";
 const API_SETTINGS_URI: &str = "http://localhost:4242/settings";
 const API_COMMIT_URI: &str = "http://localhost:4242/settings/commit";
 
-type Result<T> = std::result::Result<T, SundogError>;
-
 /// Potential errors during Sundog execution
 mod error {
     use snafu::Snafu;
+
+    // Get the HTTP status code out of a reqwest::Error
+    fn code(source: &reqwest::Error) -> String {
+        source
+            .status()
+            .as_ref()
+            .map(|i| i.as_str())
+            .unwrap_or("Unknown")
+            .to_string()
+    }
 
     /// Potential errors during dynamic settings retrieval
     #[derive(Debug, Snafu)]
@@ -51,20 +62,38 @@ mod error {
             stderr: String,
         },
 
+        #[snafu(display(
+            "Setting generator '{}' returned unexpected exit code {} - stderr: {}",
+            program,
+            code,
+            stderr
+        ))]
+        UnexpectedReturnCode {
+            program: String,
+            code: String,
+            stderr: String,
+        },
+
         #[snafu(display("Invalid (non-utf8) output from generator '{}': {}", program, source))]
         GeneratorOutput {
             program: String,
             source: std::str::Utf8Error,
         },
 
-        #[snafu(display("Error sending {} to '{}': {}", method, uri, source))]
+        #[snafu(display("Error '{}' sending {} to '{}': {}", code(&source), method, uri, source))]
         APIRequest {
             method: &'static str,
             uri: String,
             source: reqwest::Error,
         },
 
-        #[snafu(display("Error response from {} to '{}': {}", method, uri, source))]
+        #[snafu(display(
+            "Error '{}' from {} to '{}': {}",
+            code(&source),
+            method,
+            uri,
+            source
+        ))]
         APIResponse {
             method: &'static str,
             uri: String,
@@ -83,8 +112,13 @@ mod error {
             source: reqwest::Error,
         },
 
-        #[snafu(display("Error deserializing HashMap to struct: {}", source))]
-        MaptoJSON { source: serde_json::error::Error },
+        #[snafu(display("Error deserializing HashMap to Settings: {}", source))]
+        DeserializeError {
+            source: apiserver::datastore::deserialization::Error,
+        },
+
+        #[snafu(display("Error serializing Settings to JSON: {}", source))]
+        SettingstoJSON { source: serde_json::error::Error },
 
         #[snafu(display("Error updating settings through '{}': {}", uri, source))]
         UpdatingAPISettings { uri: String, source: reqwest::Error },
@@ -95,6 +129,8 @@ mod error {
 }
 
 use error::SundogError;
+
+type Result<T> = std::result::Result<T, SundogError>;
 
 /// Request the setting generators from the API.
 fn get_setting_generators(client: &reqwest::Client) -> Result<HashMap<String, String>> {
@@ -136,19 +172,41 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<S
                 program: generator.as_str(),
             })?;
 
-        // If the generator exits nonzero, bomb out here
-        ensure!(
-            result.status.success(),
-            error::FailedSettingGenerator {
-                code: result
-                    .status
-                    .code()
-                    .map(|i| i.to_string())
-                    .unwrap_or("signal".to_string()),
-                program: generator.as_str(),
-                stderr: String::from_utf8_lossy(&result.stderr)
+        // Match on the generator's exit code. This code lays the foundation
+        // for handling alternative exit codes from generators. For now,
+        // handle 0 and 1
+        match result.status.code() {
+            Some(code) => match code {
+                0 => {}
+                1 => {
+                    return error::FailedSettingGenerator {
+                        program: generator.as_str(),
+                        code: code.to_string(),
+                        stderr: String::from_utf8_lossy(&result.stderr),
+                    }
+                    .fail()
+                }
+                _ => {
+                    return error::UnexpectedReturnCode {
+                        program: generator.as_str(),
+                        code: code.to_string(),
+                        stderr: String::from_utf8_lossy(&result.stderr),
+                    }
+                    .fail()
+                }
+            },
+
+            // A process will return None if terminated by a signal, regard this as
+            // a failure since it should probably never happen
+            None => {
+                return error::FailedSettingGenerator {
+                    program: generator.as_str(),
+                    code: "signal",
+                    stderr: String::from_utf8_lossy(&result.stderr),
+                }
+                .fail()
             }
-        );
+        }
 
         // Build a valid utf8 string from the stdout and trim any whitespace
         let output = str::from_utf8(&result.stdout)
@@ -167,13 +225,18 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<S
 
 /// Send and commit the settings to the datastore through the API
 fn set_settings(client: &reqwest::Client, setting_map: HashMap<String, String>) -> Result<()> {
-    // Serialize our map of { setting: value } into JSON
-    let settings = serde_json::to_string(&setting_map).context(error::MaptoJSON)?;
-    trace!("Settings to PATCH: {}", &settings);
+    // The API takes a Settings struct so deserialize our map to a Settings
+    // and ensure it is correct
+    let settings_struct: model::Settings =
+        deserialization::from_map(&setting_map).context(error::DeserializeError)?;
+
+    // Serialize our settings struct to JSON
+    let settings_json = serde_json::to_string(&settings_struct).context(error::SettingstoJSON)?;
+    trace!("Settings to PATCH: {}", &settings_json);
 
     client
         .patch(API_SETTINGS_URI)
-        .body(settings)
+        .body(settings_json)
         .send()
         .context(error::APIRequest {
             method: "PATCH",
@@ -227,10 +290,6 @@ fn main() -> Result<()> {
 
     info!("Retrieving settings values");
     let settings = get_dynamic_settings(generators)?;
-    if settings.is_empty() {
-        error!("No settings values were retrieved!");
-        process::exit(1)
-    }
 
     info!("Sending settings values to the API");
     set_settings(&client, settings)?;
