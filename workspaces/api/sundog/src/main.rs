@@ -63,7 +63,7 @@ mod error {
         },
 
         #[snafu(display(
-            "Setting generator '{}' returned unexpected exit code {} - stderr: {}",
+            "Setting generator '{}' returned unexpected exit code '{}' - stderr: {}",
             program,
             code,
             stderr
