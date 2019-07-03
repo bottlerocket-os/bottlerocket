@@ -176,26 +176,23 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<S
         // for handling alternative exit codes from generators. For now,
         // handle 0 and 1
         match result.status.code() {
-            Some(code) => match code {
-                0 => {}
-                1 => {
-                    return error::FailedSettingGenerator {
-                        program: generator.as_str(),
-                        code: code.to_string(),
-                        stderr: String::from_utf8_lossy(&result.stderr),
-                    }
-                    .fail()
+            Some(0) => {}
+            Some(1) => {
+                return error::FailedSettingGenerator {
+                    program: generator.as_str(),
+                    code: 1.to_string(),
+                    stderr: String::from_utf8_lossy(&result.stderr),
                 }
-                _ => {
-                    return error::UnexpectedReturnCode {
-                        program: generator.as_str(),
-                        code: code.to_string(),
-                        stderr: String::from_utf8_lossy(&result.stderr),
-                    }
-                    .fail()
+                .fail()
+            }
+            Some(x) => {
+                return error::UnexpectedReturnCode {
+                    program: generator.as_str(),
+                    code: x.to_string(),
+                    stderr: String::from_utf8_lossy(&result.stderr),
                 }
-            },
-
+                .fail()
+            }
             // A process will return None if terminated by a signal, regard this as
             // a failure since we could have incomplete data
             None => {
