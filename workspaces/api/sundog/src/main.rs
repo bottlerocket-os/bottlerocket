@@ -113,12 +113,12 @@ mod error {
         },
 
         #[snafu(display("Error deserializing HashMap to Settings: {}", source))]
-        DeserializeError {
+        Deserialize {
             source: apiserver::datastore::deserialization::Error,
         },
 
         #[snafu(display("Error serializing Settings to JSON: {}", source))]
-        SettingstoJSON { source: serde_json::error::Error },
+        Serialize { source: serde_json::error::Error },
 
         #[snafu(display("Error updating settings through '{}': {}", uri, source))]
         UpdatingAPISettings { uri: String, source: reqwest::Error },
@@ -228,10 +228,10 @@ fn set_settings(client: &reqwest::Client, setting_map: HashMap<String, String>) 
     // The API takes a properly nested Settings struct, so deserialize our map to a Settings
     // and ensure it is correct
     let settings_struct: model::Settings =
-        deserialization::from_map(&setting_map).context(error::DeserializeError)?;
+        deserialization::from_map(&setting_map).context(error::Deserialize)?;
 
     // Serialize our Settings struct to the JSON wire format
-    let settings_json = serde_json::to_string(&settings_struct).context(error::SettingstoJSON)?;
+    let settings_json = serde_json::to_string(&settings_struct).context(error::Serialize)?;
     trace!("Settings to PATCH: {}", &settings_json);
 
     client
