@@ -655,6 +655,15 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "migration-helpers"
+version = "0.1.0"
+dependencies = [
+ "apiserver 0.1.0",
+ "snafu 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "mime"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1424,6 +1433,13 @@ dependencies = [
  "numtoa 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "redox_syscall 0.1.54 (registry+https://github.com/rust-lang/crates.io-index)",
  "redox_termios 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "testmigration"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
 ]
 
 [[package]]
