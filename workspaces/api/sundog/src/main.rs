@@ -27,6 +27,8 @@ const API_COMMIT_URI: &str = "http://localhost:4242/settings/commit";
 mod error {
     use snafu::Snafu;
 
+    use apiserver::datastore::deserialization;
+
     // Get the HTTP status code out of a reqwest::Error
     fn code(source: &reqwest::Error) -> String {
         source
@@ -113,9 +115,7 @@ mod error {
         },
 
         #[snafu(display("Error deserializing HashMap to Settings: {}", source))]
-        Deserialize {
-            source: apiserver::datastore::deserialization::Error,
-        },
+        Deserialize { source: deserialization::Error },
 
         #[snafu(display("Error serializing Settings to JSON: {}", source))]
         Serialize { source: serde_json::error::Error },
