@@ -58,7 +58,8 @@ where
     // An inner function that does actual key ID validation:
     // * fails if a key ID doesn't match its contents
     // * fails if there is a duplicate key ID
-    fn visit_entry(
+    // If this passes we insert the entry.
+    fn validate_and_insert_entry(
         keyid: Decoded<Hex>,
         key: Key,
         map: &mut BTreeMap<Decoded<Hex>, Key>,
@@ -95,7 +96,7 @@ where
         {
             let mut map = BTreeMap::new();
             while let Some((keyid, key)) = access.next_entry()? {
-                visit_entry(keyid, key, &mut map).map_err(M::Error::custom)?;
+                validate_and_insert_entry(keyid, key, &mut map).map_err(M::Error::custom)?;
             }
             Ok(map)
         }
