@@ -197,7 +197,7 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<S
             },
 
             // A process will return None if terminated by a signal, regard this as
-            // a failure since it should probably never happen
+            // a failure since we could have incomplete data
             None => {
                 return error::FailedSettingGenerator {
                     program: generator.as_str(),
@@ -225,12 +225,12 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<S
 
 /// Send and commit the settings to the datastore through the API
 fn set_settings(client: &reqwest::Client, setting_map: HashMap<String, String>) -> Result<()> {
-    // The API takes a Settings struct so deserialize our map to a Settings
+    // The API takes a properly nested Settings struct, so deserialize our map to a Settings
     // and ensure it is correct
     let settings_struct: model::Settings =
         deserialization::from_map(&setting_map).context(error::DeserializeError)?;
 
-    // Serialize our settings struct to JSON
+    // Serialize our Settings struct to the JSON wire format
     let settings_json = serde_json::to_string(&settings_struct).context(error::SettingstoJSON)?;
     trace!("Settings to PATCH: {}", &settings_json);
 
