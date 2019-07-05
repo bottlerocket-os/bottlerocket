@@ -4,8 +4,8 @@
 %global _build_id_links none
 
 Name: %{_cross_os}rust
-Version: 1.35.0
-%global cargo_version 0.36.0
+Version: 1.36.0
+%global cargo_version 0.37.0
 Release: 1%{?dist}
 Summary: The Rust Progamming Language
 License: ASL 2.0 or MIT
