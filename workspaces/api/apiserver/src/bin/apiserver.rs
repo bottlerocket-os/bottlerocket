@@ -67,7 +67,7 @@ fn parse_args(args: env::Args) -> Args {
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbosity" => verbosity += 1,
+            "-v" | "--verbose" => verbosity += 1,
 
             "--no-color" => color = stderrlog::ColorChoice::Never,
 
