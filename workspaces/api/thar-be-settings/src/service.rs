@@ -118,8 +118,6 @@ impl ServiceRestart for model::Service {
                 .context(error::CommandExecutionFailure {
                     command: restart_command.as_str(),
                 })?;
-            trace!("Command stdout: {:?}", &output.stdout);
-            trace!("Command stderr: {:?}", &output.stderr);
 
             // If the restart command exited nonzero, call it a failure
             ensure!(
@@ -128,6 +126,14 @@ impl ServiceRestart for model::Service {
                     command: restart_command.as_str(),
                     stderr: String::from_utf8_lossy(&result.stderr),
                 }
+            );
+            trace!(
+                "Command stdout: {}",
+                String::from_utf8_lossy(&result.stdout)
+            );
+            trace!(
+                "Command stderr: {}",
+                String::from_utf8_lossy(&result.stderr)
             );
         }
         Ok(())
