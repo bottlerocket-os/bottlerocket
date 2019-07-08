@@ -13,6 +13,7 @@ use std::env;
 use std::process;
 use std::str;
 
+use apiserver::datastore;
 use apiserver::datastore::deserialization;
 use apiserver::model;
 
@@ -28,6 +29,7 @@ const API_COMMIT_URI: &str = "http://localhost:4242/settings/commit";
 mod error {
     use snafu::Snafu;
 
+    use apiserver::datastore;
     use apiserver::datastore::deserialization;
 
     // Get the HTTP status code out of a reqwest::Error
@@ -120,6 +122,12 @@ mod error {
 
         #[snafu(display("Error serializing Settings to JSON: {}", source))]
         Serialize { source: serde_json::error::Error },
+
+        #[snafu(display("Error serializing command output '{}': {}", output, source))]
+        SerializeScalar {
+            output: String,
+            source: datastore::ScalarError,
+        },
 
         #[snafu(display("Error updating settings through '{}': {}", uri, source))]
         UpdatingAPISettings { uri: String, source: reqwest::Error },
@@ -215,7 +223,14 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<S
             .to_string();
         trace!("Generator '{}' output: {}", &generator, &output);
 
-        settings.insert(setting, output);
+        // The command output must be serialized since we intend to call the
+        // datastore-level construct `from_map` on it. `from_map` treats
+        // strings as a serialized structure.
+        let serialized_output = datastore::serialize_scalar(&output)
+            .context(error::SerializeScalar { output: output })?;
+        trace!("Serialized output: {}", &serialized_output);
+
+        settings.insert(setting, serialized_output);
     }
 
     Ok(settings)
