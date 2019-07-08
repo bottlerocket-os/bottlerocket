@@ -1,4 +1,4 @@
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::process;
@@ -112,14 +112,29 @@ impl ServiceRestart for model::Service {
             trace!("Args: {:?}", &command_strings);
 
             // Go execute the restart command
-            let output = process::Command::new(command)
+            let result = process::Command::new(command)
                 .args(command_strings)
                 .output()
-                .context(error::FailedRestartCommand {
+                .context(error::CommandExecutionFailure {
                     command: restart_command.as_str(),
                 })?;
-            trace!("Command stdout: {:?}", &output.stdout);
-            trace!("Command stderr: {:?}", &output.stderr);
+
+            // If the restart command exited nonzero, call it a failure
+            ensure!(
+                result.status.success(),
+                error::FailedRestartCommand {
+                    command: restart_command.as_str(),
+                    stderr: String::from_utf8_lossy(&result.stderr),
+                }
+            );
+            trace!(
+                "Command stdout: {}",
+                String::from_utf8_lossy(&result.stdout)
+            );
+            trace!(
+                "Command stderr: {}",
+                String::from_utf8_lossy(&result.stderr)
+            );
         }
         Ok(())
     }

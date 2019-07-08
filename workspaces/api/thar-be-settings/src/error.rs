@@ -26,8 +26,11 @@ pub enum TBSError {
         source: io::Error,
     },
 
-    #[snafu(display("Restart command failed - '{}': {}", command, source))]
-    FailedRestartCommand { command: String, source: io::Error },
+    #[snafu(display("Failed to run restart command - '{}': {}", command, source))]
+    CommandExecutionFailure { command: String, source: io::Error },
+
+    #[snafu(display("Restart command failed - '{}': {}", command, stderr))]
+    FailedRestartCommand { command: String, stderr: String },
 
     #[snafu(display("Restart command is invalid (empty, space prefix, etc.) - {}", command))]
     InvalidRestartCommand { command: String },
