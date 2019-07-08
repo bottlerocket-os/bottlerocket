@@ -9,6 +9,7 @@ The output is collected and sent to a known Thar API server endpoint and committ
 
 use snafu::ResultExt;
 use std::collections::HashMap;
+use std::env;
 use std::process;
 use std::str;
 
@@ -262,13 +263,47 @@ fn set_settings(client: &reqwest::Client, setting_map: HashMap<String, String>) 
     Ok(())
 }
 
+/// Store the args we receive on the command line
+struct Args {
+    verbosity: usize,
+}
+
+/// Print a usage message in the event a bad arg is passed
+fn usage() -> ! {
+    let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
+    eprintln!(
+        r"Usage: {}
+            [ --verbose --verbose ... ]
+        ",
+        program_name
+    );
+    process::exit(2);
+}
+
+/// Parse the args to the program and return an Args struct
+fn parse_args(args: env::Args) -> Args {
+    let mut verbosity = 2;
+
+    for arg in args.skip(1) {
+        match arg.as_ref() {
+            "-v" | "--verbosity" => verbosity += 1,
+            _ => usage(),
+        }
+    }
+
+    Args { verbosity }
+}
+
 fn main() -> Result<()> {
+    // Parse and store the args passed to the program
+    let args = parse_args(env::args());
+
     // TODO Fix this later when we decide our logging story
     // Start the logger
     stderrlog::new()
         .module(module_path!())
         .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(2)
+        .verbosity(args.verbosity)
         .color(stderrlog::ColorChoice::Never)
         .init()
         .context(error::Logger)?;
