@@ -169,7 +169,7 @@ fn get_setting_generators(client: &reqwest::Client) -> Result<HashMap<String, St
 }
 
 /// Run the setting generators and collect the output
-fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<String, String>> {
+fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<model::Settings> {
     let mut settings = HashMap::new();
 
     // For each generator, run it and capture the output
@@ -233,18 +233,18 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<HashMap<S
         settings.insert(setting, serialized_output);
     }
 
-    Ok(settings)
-}
-
-/// Send and commit the settings to the datastore through the API
-fn set_settings(client: &reqwest::Client, setting_map: HashMap<String, String>) -> Result<()> {
     // The API takes a properly nested Settings struct, so deserialize our map to a Settings
     // and ensure it is correct
     let settings_struct: model::Settings =
-        deserialization::from_map(&setting_map).context(error::Deserialize)?;
+        deserialization::from_map(&settings).context(error::Deserialize)?;
 
+    Ok(settings_struct)
+}
+
+/// Send and commit the settings to the datastore through the API
+fn set_settings(client: &reqwest::Client, settings: model::Settings) -> Result<()> {
     // Serialize our Settings struct to the JSON wire format
-    let settings_json = serde_json::to_string(&settings_struct).context(error::Serialize)?;
+    let settings_json = serde_json::to_string(&settings).context(error::Serialize)?;
     trace!("Settings to PATCH: {}", &settings_json);
 
     client
