@@ -57,7 +57,6 @@ pub struct RsaKey {
 
 impl Key {
     /// Verify a signature of an object made with this key.
-    #[allow(unused)]
     pub(crate) fn verify(&self, msg: &[u8], signature: &[u8]) -> bool {
         let (alg, public_key): (&dyn VerificationAlgorithm, untrusted::Input) = match self {
             Key::Ecdsa {
