@@ -138,10 +138,10 @@ impl Repository {
     ///
     /// If the requested target is not listed in the repository metadata, `Ok(None)` is returned.
     ///
-    /// Otherwise, a reader is returned, which provides access to the full target contents before
-    /// its checksum is validated. If the maximum size is reached or there is a checksum mismatch,
-    /// the reader returns a [`std::io::Error`]. **Consumers of this library must not use data from
-    /// the reader if it returns an error.**
+    /// Otherwise, a reader is returned, which provides streaming access to the target contents
+    /// before its checksum is validated. If the maximum size is reached or there is a checksum
+    /// mismatch, the reader returns a [`std::io::Error`]. **Consumers of this library must not use
+    /// data from the reader if it returns an error.**
     pub fn read_target(&self, name: &str) -> Result<Option<impl Read>> {
         // 5. Verify the desired target against its targets metadata.
         //
