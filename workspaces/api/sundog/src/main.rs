@@ -13,8 +13,7 @@ use std::env;
 use std::process;
 use std::str;
 
-use apiserver::datastore;
-use apiserver::datastore::deserialization;
+use apiserver::datastore::{self, deserialization};
 use apiserver::model;
 
 #[macro_use]
