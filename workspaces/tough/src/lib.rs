@@ -301,7 +301,9 @@ fn load_root<R: Read>(
                 // Off-spec: 1.4 specifies that the version number of the trusted root metadata
                 // file must be less than or equal to the version number of the new root metadata
                 // file. If they are equal, this will create an infinite loop, so we ignore the new
-                // root metadata file but do not report an error.
+                // root metadata file but do not report an error. This could only happen if the
+                // path we built above, referencing N+1, has a filename that doesn't match its
+                // contents, which would have to list version N.
                 if root.signed.version == new_root.signed.version {
                     break;
                 }
