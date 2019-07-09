@@ -148,7 +148,9 @@ pub enum Error {
     },
 
     /// The library failed to parse the trusted root metadata file, either because it was not valid
-    /// JSON or it did not conform to the expected schema.
+    /// JSON or it did not conform to the expected schema. The *trusted* root metadata file is the
+    /// file is either the `root` argument passed to `Repository::load`, or the most recently
+    /// cached and validated root metadata file.
     #[snafu(display("Failed to parse trusted root metadata: {}", source))]
     ParseTrustedMetadata {
         source: serde_json::Error,
