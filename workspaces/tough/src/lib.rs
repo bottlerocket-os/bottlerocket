@@ -378,8 +378,6 @@ fn load_timestamp(
     //   if any, must be less than or equal to the version number of the new timestamp metadata
     //   file. If the new timestamp metadata file is older than the trusted timestamp metadata
     //   file, discard it, abort the update cycle, and report the potential rollback attack.
-    //
-    // (Unless it's corrupt.)
     if let Some(Ok(old_timestamp)) = datastore
         .reader("timestamp.json")?
         .map(serde_json::from_reader::<_, Signed<Timestamp>>)
