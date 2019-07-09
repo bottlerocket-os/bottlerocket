@@ -98,10 +98,8 @@ impl Repository {
             (snapshot.signed.expires, Role::Snapshot),
             (targets.signed.expires, Role::Targets),
         ];
-        let (earliest_expiration, earliest_expiration_role) = expires_iter
-            .iter()
-            .min_by(|(a, _), (b, _)| a.cmp(b))
-            .unwrap();
+        let (earliest_expiration, earliest_expiration_role) =
+            expires_iter.iter().min_by_key(|tup| tup.0).unwrap();
 
         Ok(Self {
             client,
