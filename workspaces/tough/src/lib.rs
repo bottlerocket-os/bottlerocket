@@ -545,6 +545,9 @@ fn load_targets(
     //    VERSION_NUMBER is the version number of the targets metadata file listed in the snapshot
     //    metadata file. In either case, the client MUST write the file to non-volatile storage as
     //    FILENAME.EXT.
+    //
+    // ("... or some Z number of bytes" isn't relevant here, since we require snapshot.json to list
+    // the size.)
     let targets_meta = snapshot
         .signed
         .meta
