@@ -1,0 +1,14 @@
+[Unit]
+Description=User-specified setting generators
+After=network-online.target
+After=apiserver.service
+After=moondog.service
+Requires=network-online.target
+Requires=apiserver.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sundog
+
+[Install]
+WantedBy=multi-user.target

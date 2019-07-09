@@ -9,6 +9,7 @@ License: Apache-2.0 AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR MIT) AND Apac
 Source0: %{workspace_name}.crate
 Source1: apiserver.service
 Source2: moondog.service
+Source3: sundog.service
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -27,6 +28,12 @@ Summary: Thar API server
 Summary: Thar userdata configuration system
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}moondog
+%{summary}.
+
+%package -n %{_cross_os}sundog
+Summary: Updates settings dynamically based on user-specified generators
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}sundog
 %{summary}.
 
 %package -n %{_cross_os}thar-be-settings
@@ -49,9 +56,11 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 mkdir -p %{buildroot}/%{systemd_systemdir}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE1}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE2}
+install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 
 %cargo_install -p apiserver
 %cargo_install -p moondog
+%cargo_install -p sundog
 %cargo_install -p thar-be-settings
 
 %files -n %{_cross_os}apiserver
@@ -61,6 +70,10 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE2}
 %files -n %{_cross_os}moondog
 %{_cross_bindir}/moondog
 %{systemd_systemdir}/moondog.service
+
+%files -n %{_cross_os}sundog
+%{_cross_bindir}/sundog
+%{systemd_systemdir}/sundog.service
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings

@@ -2,6 +2,7 @@
 members = [
     "apiserver",
     "moondog",
+    "sundog",
     "thar-be-settings",
 
     "migration/migration-helpers",
