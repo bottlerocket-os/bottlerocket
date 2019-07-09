@@ -30,7 +30,7 @@ impl<T: Decode> Decoded<T> {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// A type that represents how data can be converted from a string to bytes.
+/// A trait that represents how data can be converted from a string to bytes.
 ///
 /// Generally structs that implement `Decode` will be unit-like structs that just implement the one
 /// required method.
