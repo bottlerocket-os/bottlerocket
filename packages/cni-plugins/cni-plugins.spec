@@ -26,15 +26,10 @@ Requires: %{_cross_os}iptables
 
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
-mkdir -p GOPATH/src/%{goproject}
-ln -s %{_builddir}/%{gorepo}-%{gover} GOPATH/src/%{goimport}
+%cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
 
 %build
-cd GOPATH/src/%{goimport}
-export CC="%{_cross_target}-gcc"
-export GOPATH="${PWD}/GOPATH"
-export GOARCH="%{_cross_go_arch}"
-export PKG_CONFIG_PATH="%{_cross_pkgconfigdir}"
+%cross_go_configure %{goimport}
 export BUILDTAGS="rpm_crashtraceback"
 for d in $(find plugins -mindepth 2 -maxdepth 2 -type d ! -name windows) ; do
   go build -buildmode pie -tags="${BUILDTAGS}" -o "bin/${d##*/}" %{goimport}/${d}

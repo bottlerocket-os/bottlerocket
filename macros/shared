@@ -136,6 +136,21 @@ CROSS_COMPILATION_CONF_EOF\
     -DCMAKE_SKIP_RPATH:BOOL=ON \
     %{nil}}
 
+%_cross_go_os linux
+
+%cross_go_setup() \
+  mkdir -p GOPATH/src/%2 ; \
+  ln -s %{_builddir}/%1 GOPATH/src/%3 ; \
+
+%cross_go_configure() \
+  cd GOPATH/src/%1 ; \
+  GOPATH="${PWD}/GOPATH" ; export GOPATH ; \
+  GOOS="%{_cross_go_os}" ; export GOOS ; \
+  GOARCH="%{_cross_go_arch}" ; export GOARCH ; \
+  CC_FOR_%{_cross_go_os}_%{_cross_go_arch}="%{_cross_target}-gcc" ; export CC_FOR_%{_cross_go_os}_%{_cross_go_arch} ; \
+  CGO_ENABLED=1 ; export CGO_ENABLED ; \
+  PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
+
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy
 %__objdump %{_bindir}/%{_cross_target}-objdump

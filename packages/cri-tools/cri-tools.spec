@@ -27,15 +27,10 @@ Requires: %{_cross_os}libseccomp
 
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
-mkdir -p GOPATH/src/%{goproject}
-ln -s %{_builddir}/%{gorepo}-%{gover} GOPATH/src/%{goimport}
+%cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
 
 %build
-cd GOPATH/src/%{goimport}
-export CC="%{_cross_target}-gcc"
-export GOPATH="${PWD}/GOPATH"
-export GOARCH="%{_cross_go_arch}"
-export PKG_CONFIG_PATH="%{_cross_pkgconfigdir}"
+%cross_go_configure %{goimport}
 export BUILDTAGS="rpm_crashtraceback seccomp selinux"
 go build -buildmode pie -tags="${BUILDTAGS}" -o crictl %{goimport}/cmd/crictl
 go test -c -buildmode pie -tags="${BUILDTAGS}" -o critest %{goimport}/cmd/critest

@@ -36,12 +36,10 @@ Requires: %{_cross_os}glibc
 
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
-mkdir -p GOPATH/src/%{goproject}
-ln -s %{_builddir}/%{gorepo}-%{gover} GOPATH/src/%{goimport}
+%cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
 
 %build
-cd GOPATH/src/%{goimport}
-export GOPATH="${PWD}/GOPATH"
+%cross_go_configure %{goimport}
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
 make WHAT="cmd/hyperkube"
 

@@ -34,16 +34,10 @@ Requires: %{_cross_os}systemd
 
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
-mkdir -p GOPATH/src/%{goproject}
-ln -s %{_builddir}/%{gorepo}-%{gover} GOPATH/src/%{goimport}
+%cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
 
 %build
-cd GOPATH/src/%{goimport}
-export CC="%{_cross_target}-gcc"
-export GOPATH="${PWD}/GOPATH"
-export GOARCH="%{_cross_go_arch}"
-export LDFLAGS="-X %{goimport}/version.Version=%{gover}"
-export PKG_CONFIG_PATH="%{_cross_pkgconfigdir}"
+%cross_go_configure %{goimport}
 export BUILDTAGS="no_btrfs rpm_crashtraceback seccomp selinux"
 for bin in containerd containerd-shim ctr ; do
   go build -buildmode pie -tags="${BUILDTAGS}" -o ${bin} %{goimport}/cmd/${bin}

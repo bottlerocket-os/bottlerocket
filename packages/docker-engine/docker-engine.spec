@@ -42,15 +42,10 @@ Requires: %{_cross_os}systemd
 
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
-mkdir -p GOPATH/src/%{goproject}
-ln -s %{_builddir}/%{gorepo}-%{gover} GOPATH/src/%{doimport}
+%cross_go_setup %{gorepo}-%{gover} %{goproject} %{doimport}
 
 %build
-cd GOPATH/src/%{doimport}
-export CC="%{_cross_target}-gcc"
-export GOPATH="${PWD}/GOPATH"
-export GOARCH="%{_cross_go_arch}"
-export PKG_CONFIG_PATH="%{_cross_pkgconfigdir}"
+%cross_go_configure %{doimport}
 BUILDTAGS="journald rpm_crashtraceback selinux seccomp"
 BUILDTAGS+=" exclude_graphdriver_btrfs"
 BUILDTAGS+=" exclude_graphdriver_devicemapper"
