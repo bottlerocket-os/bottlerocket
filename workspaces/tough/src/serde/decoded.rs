@@ -3,7 +3,7 @@ use ring::io::der;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use snafu::ResultExt;
 use std::cmp::Ordering;
-use std::fmt::{self, Debug};
+use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -14,6 +14,7 @@ use std::ops::Deref;
 ///
 /// The original string is stored so that it can be re-`Serialize`d for the purposes of verifying
 /// signatures.
+#[derive(Debug)]
 pub(crate) struct Decoded<T: Decode> {
     bytes: Vec<u8>,
     original: String,
@@ -33,7 +34,7 @@ impl<T: Decode> Decoded<T> {
 ///
 /// Generally structs that implement `Decode` will be unit-like structs that just implement the one
 /// required method.
-pub(crate) trait Decode {
+pub(crate) trait Decode: Debug {
     /// Convert a string to bytes.
     ///
     /// The "error" string returned from this method will immediately be wrapped into a
@@ -42,6 +43,7 @@ pub(crate) trait Decode {
 }
 
 /// [`Decode`] implementation for hex-encoded strings.
+#[derive(Debug)]
 pub(crate) struct Hex;
 
 impl Decode for Hex {
@@ -51,6 +53,7 @@ impl Decode for Hex {
 }
 
 /// [`Decode`] implementation for PEM-encoded keys.
+#[derive(Debug)]
 pub(crate) struct Pem;
 
 impl Decode for Pem {
@@ -62,6 +65,7 @@ impl Decode for Pem {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct RsaPem;
 
 impl Decode for RsaPem {
@@ -139,12 +143,6 @@ impl<T: Decode> Deref for Decoded<T> {
 
     fn deref(&self) -> &[u8] {
         &self.bytes
-    }
-}
-
-impl<T: Decode> Debug for Decoded<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Debug::fmt(&self.original, f)
     }
 }
 
