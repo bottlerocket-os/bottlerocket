@@ -22,7 +22,7 @@ pub(crate) struct Decoded<T: Decode> {
 }
 
 impl<T: Decode> Decoded<T> {
-    /// Consume this object and return its bytes.
+    /// Consume this object and return its decoded bytes.
     pub(crate) fn into_vec(self) -> Vec<u8> {
         self.bytes
     }
