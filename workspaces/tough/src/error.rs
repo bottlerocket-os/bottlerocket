@@ -186,11 +186,13 @@ pub enum Error {
 
     /// A signature threshold specified in root.json was not met when verifying a signature.
     #[snafu(display(
-        "Signature threshold of {} not met ({} valid signatures)",
+        "Signature threshold of {} not met for role {} ({} valid signatures)",
         threshold,
-        valid
+        role,
+        valid,
     ))]
     SignatureThreshold {
+        role: Role,
         threshold: u64,
         valid: u64,
         backtrace: Backtrace,

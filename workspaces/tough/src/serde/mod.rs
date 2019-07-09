@@ -68,6 +68,7 @@ impl<T: Metadata + Serialize> Signed<T> {
         ensure!(
             valid >= u64::from(role_keys.threshold),
             error::SignatureThreshold {
+                role: T::ROLE,
                 threshold: role_keys.threshold,
                 valid,
             }
