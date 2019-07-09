@@ -14,8 +14,11 @@ use std::num::NonZeroU64;
 #[serde(tag = "_type")]
 #[serde(rename = "root")]
 pub(crate) struct Root {
+    // Field ordering must be alphabetical so that it is sorted for Canonical JSON.
     pub(crate) consistent_snapshot: bool,
     pub(crate) expires: DateTime<Utc>,
+    // BTreeMaps are used on purpose, because we re-serialize these fields as Canonical JSON to
+    // verify the signature.
     #[serde(deserialize_with = "deserialize_keys")]
     pub(crate) keys: BTreeMap<Decoded<Hex>, Key>,
     pub(crate) roles: BTreeMap<Role, RoleKeys>,
