@@ -109,8 +109,11 @@ pub enum Error {
     },
 
     /// A file's maximum size exceeded a limit set by the consumer of this library or the metadata.
-    #[snafu(display("Maximum size {} exceeded", size))]
-    MaxSizeExceeded { size: usize, backtrace: Backtrace },
+    #[snafu(display("Maximum size {} exceeded", max_size))]
+    MaxSizeExceeded {
+        max_size: usize,
+        backtrace: Backtrace,
+    },
 
     /// A required reference to a metadata file is missing from a metadata file.
     #[snafu(display("Meta for {:?} missing from {} metadata", file, role))]

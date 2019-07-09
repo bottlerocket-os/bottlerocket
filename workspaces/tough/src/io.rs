@@ -47,15 +47,15 @@ impl<T: Read, D: Digest> Read for DigestAdapter<T, D> {
 
 pub(crate) struct MaxSizeAdapter<T> {
     reader: T,
-    size: usize,
+    max_size: usize,
     counter: usize,
 }
 
 impl<T> MaxSizeAdapter<T> {
-    pub(crate) fn new(reader: T, size: usize) -> Self {
+    pub(crate) fn new(reader: T, max_size: usize) -> Self {
         Self {
             reader,
-            size,
+            max_size,
             counter: 0,
         }
     }
@@ -65,8 +65,11 @@ impl<T: Read> Read for MaxSizeAdapter<T> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let size = self.reader.read(buf)?;
         self.counter += size;
-        if self.counter > self.size {
-            error::MaxSizeExceeded { size: self.size }.fail()?;
+        if self.counter > self.max_size {
+            error::MaxSizeExceeded {
+                max_size: self.max_size,
+            }
+            .fail()?;
         }
         Ok(size)
     }
