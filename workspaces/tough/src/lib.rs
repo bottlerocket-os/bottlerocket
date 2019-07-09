@@ -234,7 +234,7 @@ fn load_root<R: Read>(
     // If a cached root.json is present in the datastore, prefer that over the `root` reader
     // provided to this function (unless it's corrupt).
     let mut root: Signed<Root> =
-        if let Some(Ok(root)) = datastore.read("root.json")?.map(serde_json::from_reader) {
+        if let Some(Ok(root)) = datastore.reader("root.json")?.map(serde_json::from_reader) {
             root
         } else {
             serde_json::from_reader(root).context(error::ParseTrustedMetadata)?
@@ -379,7 +379,7 @@ fn load_timestamp(
     //
     // (Unless it's corrupt.)
     if let Some(Ok(old_timestamp)) = datastore
-        .read("timestamp.json")?
+        .reader("timestamp.json")?
         .map(serde_json::from_reader::<_, Signed<Timestamp>>)
     {
         ensure!(
@@ -472,7 +472,7 @@ fn load_snapshot(
     // 3.3.1. Note that the trusted snapshot metadata file may be checked for authenticity, but its
     //   expiration does not matter for the following purposes.
     if let Some(Ok(old_snapshot)) = datastore
-        .read("snapshot.json")?
+        .reader("snapshot.json")?
         .map(serde_json::from_reader::<_, Signed<Snapshot>>)
     {
         // 3.3.2. The version number of the trusted snapshot metadata file, if any, MUST be less
@@ -598,7 +598,7 @@ fn load_targets(
     //   If the new targets metadata file is older than the trusted targets metadata file, discard
     //   it, abort the update cycle, and report the potential rollback attack.
     if let Some(Ok(old_targets)) = datastore
-        .read("targets.json")?
+        .reader("targets.json")?
         .map(serde_json::from_reader::<_, Signed<crate::serde::Targets>>)
     {
         ensure!(

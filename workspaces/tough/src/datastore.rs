@@ -36,7 +36,7 @@ impl Datastore {
         Ok(Self(path.as_ref().to_owned()))
     }
 
-    pub(crate) fn read(&self, file: &str) -> Result<Option<impl Read>> {
+    pub(crate) fn reader(&self, file: &str) -> Result<Option<impl Read>> {
         let path = self.0.join(file);
         check_permissions(&path)?;
         match File::open(&path) {
