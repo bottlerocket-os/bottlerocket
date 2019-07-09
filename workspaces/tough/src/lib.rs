@@ -30,8 +30,8 @@ use std::path::Path;
 pub struct Repository {
     client: Client,
     consistent_snapshot: bool,
-    expires: DateTime<Utc>,
-    expires_role: Role,
+    earliest_expiration: DateTime<Utc>,
+    earliest_expiration_role: Role,
     target_base_url: Url,
     targets: BTreeMap<String, Target>,
 }
@@ -98,7 +98,7 @@ impl Repository {
             (snapshot.signed.expires, Role::Snapshot),
             (targets.signed.expires, Role::Targets),
         ];
-        let (expires, expires_role) = expires_iter
+        let (earliest_expiration, earliest_expiration_role) = expires_iter
             .iter()
             .min_by(|(a, _), (b, _)| a.cmp(b))
             .unwrap();
@@ -106,8 +106,8 @@ impl Repository {
         Ok(Self {
             client,
             consistent_snapshot: root.signed.consistent_snapshot,
-            expires: expires.to_owned(),
-            expires_role: *expires_role,
+            earliest_expiration: earliest_expiration.to_owned(),
+            earliest_expiration_role: *earliest_expiration_role,
             target_base_url,
             targets: targets
                 .signed
@@ -120,9 +120,9 @@ impl Repository {
 
     fn check_expired(&self) -> Result<()> {
         ensure!(
-            Utc::now() < self.expires,
+            Utc::now() < self.earliest_expiration,
             error::ExpiredMetadata {
-                role: self.expires_role
+                role: self.earliest_expiration_role
             }
         );
         Ok(())
