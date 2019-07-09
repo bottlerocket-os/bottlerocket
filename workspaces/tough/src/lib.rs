@@ -267,6 +267,7 @@ fn load_root<R: Read>(
             })?,
             max_root_size,
         ) {
+            Err(_) => break, // If this file is not available, then go to step 1.8.
             Ok(reader) => {
                 let new_root: Signed<Root> = serde_json::from_reader(reader)
                     .context(error::ParseMetadata { role: Role::Root })?;
@@ -314,7 +315,6 @@ fn load_root<R: Read>(
                 // 1.7. Repeat steps 1.1 to 1.7.
                 continue;
             }
-            Err(_) => break, // If this file is not available, then go to step 1.8.
         }
     }
 
