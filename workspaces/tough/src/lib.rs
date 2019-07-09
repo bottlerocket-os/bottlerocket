@@ -335,8 +335,9 @@ fn load_root<R: Read>(
     if original_timestamp_keys != root.signed.keys(Role::Timestamp)
         || original_snapshot_keys != root.signed.keys(Role::Snapshot)
     {
-        datastore.remove("timestamp.json")?;
-        datastore.remove("snapshot.json")?;
+        let r1 = datastore.remove("timestamp.json");
+        let r2 = datastore.remove("snapshot.json");
+        r1.and(r2)?;
     }
 
     Ok(root)
