@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::num::NonZeroU64;
 
+// We do not handle delegation in this library.
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "_type")]
 #[serde(rename = "targets")]
