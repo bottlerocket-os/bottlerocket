@@ -25,7 +25,7 @@ use std::path::Path;
 
 /// A TUF repository.
 ///
-/// Create a `Repository` with the `load` method.
+/// You can create a `Repository` using the `load` method.
 #[derive(Debug, Clone)]
 pub struct Repository {
     client: Client,
