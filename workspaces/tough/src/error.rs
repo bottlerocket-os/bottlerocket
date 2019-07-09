@@ -202,6 +202,7 @@ pub enum Error {
     #[snafu(display("Failed to verify {} metadata: {}", role, source))]
     VerifyMetadata {
         role: Role,
+        #[snafu(source(from(Error, Box::new)))]
         source: Box<Error>,
         backtrace: Backtrace,
     },
@@ -209,6 +210,7 @@ pub enum Error {
     /// The trusted root metadata file could not be verified.
     #[snafu(display("Failed to verify trusted root metadata: {}", source))]
     VerifyTrustedMetadata {
+        #[snafu(source(from(Error, Box::new)))]
         source: Box<Error>,
         backtrace: Backtrace,
     },

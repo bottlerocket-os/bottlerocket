@@ -239,9 +239,7 @@ fn load_root<R: Read>(
         } else {
             serde_json::from_reader(root).context(error::ParseTrustedMetadata)?
         };
-    root.verify(&root)
-        .map_err(Box::new)
-        .context(error::VerifyTrustedMetadata)?;
+    root.verify(&root).context(error::VerifyTrustedMetadata)?;
 
     // Used in step 1.9
     let original_timestamp_keys = root.signed.keys(Role::Timestamp);
