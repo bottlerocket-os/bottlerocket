@@ -1,6 +1,9 @@
 //! Tough is a client library for [TUF repositories].
 //!
+//! This client adheres to [the 1.0 *draft*, dated 2018-06-19 and last updated 2019-05-24][spec].
+//!
 //! [TUF repositories]: https://theupdateframework.github.io/
+//! [spec]: https://github.com/theupdateframework/specification/blob/091e1160e68f5bff1c74cf217f595b1a71eec092/tuf-spec.md
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
