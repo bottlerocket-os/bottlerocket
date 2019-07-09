@@ -39,7 +39,7 @@ pub(crate) trait Decode: Debug {
     ///
     /// The "error" string returned from this method will immediately be wrapped into a
     /// [`serde::de::Error`].
-    fn parse(s: &str) -> Result<Vec<u8>, Error>;
+    fn decode(s: &str) -> Result<Vec<u8>, Error>;
 }
 
 /// [`Decode`] implementation for hex-encoded strings.
@@ -47,7 +47,7 @@ pub(crate) trait Decode: Debug {
 pub(crate) struct Hex;
 
 impl Decode for Hex {
-    fn parse(s: &str) -> Result<Vec<u8>, Error> {
+    fn decode(s: &str) -> Result<Vec<u8>, Error> {
         hex::decode(s).context(error::HexDecode)
     }
 }
@@ -57,7 +57,7 @@ impl Decode for Hex {
 pub(crate) struct Pem;
 
 impl Decode for Pem {
-    fn parse(s: &str) -> Result<Vec<u8>, Error> {
+    fn decode(s: &str) -> Result<Vec<u8>, Error> {
         pem::parse(s)
             .map(|pem| pem.contents)
             .map_err(Compat)
@@ -69,7 +69,7 @@ impl Decode for Pem {
 pub(crate) struct RsaPem;
 
 impl Decode for RsaPem {
-    fn parse(s: &str) -> Result<Vec<u8>, Error> {
+    fn decode(s: &str) -> Result<Vec<u8>, Error> {
         let pem = pem::parse(s).map_err(Compat).context(error::PemDecode)?;
         // All TUF says about RSA keys is that they are "in PEM format and a string", but tests in
         // TUF's source code repository [1] imply that they are the sort of output you expect from
@@ -114,7 +114,7 @@ impl<'de, T: Decode> Deserialize<'de> for Decoded<T> {
     {
         let original = String::deserialize(deserializer)?;
         Ok(Self {
-            bytes: T::parse(&original).map_err(D::Error::custom)?,
+            bytes: T::decode(&original).map_err(D::Error::custom)?,
             original,
             spooky: PhantomData,
         })
