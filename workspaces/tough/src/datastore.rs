@@ -51,11 +51,13 @@ impl Datastore {
     pub(crate) fn create<T: Serialize>(&self, file: &str, value: &T) -> Result<()> {
         let path = self.0.join(file);
         check_permissions(&path)?;
-        serde_json::to_writer_pretty(
-            File::create(&path).context(error::DatastoreCreate { path: &path })?,
-            value,
-        )
-        .context(error::JsonSerialization)
+        let mut f = File::create(&path).context(error::DatastoreCreate { path: &path })?;
+        f.metadata()
+            .context(error::DatastoreMetadata { path: &path })?
+            .permissions()
+            .set_mode(0o644);
+        serde_json::to_writer_pretty(&mut f, value).context(error::JsonSerialization)?;
+        Ok(())
     }
 
     pub(crate) fn remove(&self, file: &str) -> Result<()> {
