@@ -3,7 +3,7 @@ use ring::io::der;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use snafu::ResultExt;
 use std::cmp::Ordering;
-use std::fmt::{self, Debug, Display};
+use std::fmt::{self, Display};
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -14,7 +14,7 @@ use std::ops::Deref;
 ///
 /// The original string is stored so that it can be re-`Serialize`d for the purposes of verifying
 /// signatures.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Decoded<T: Decode> {
     bytes: Vec<u8>,
     original: String,
@@ -34,7 +34,7 @@ impl<T: Decode> Decoded<T> {
 ///
 /// Generally structs that implement `Decode` will be unit-like structs that just implement the one
 /// required method.
-pub(crate) trait Decode: Debug {
+pub(crate) trait Decode {
     /// Convert a string to bytes.
     ///
     /// The "error" string returned from this method will immediately be wrapped into a
@@ -43,7 +43,7 @@ pub(crate) trait Decode: Debug {
 }
 
 /// [`Decode`] implementation for hex-encoded strings.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Hex;
 
 impl Decode for Hex {
@@ -53,7 +53,7 @@ impl Decode for Hex {
 }
 
 /// [`Decode`] implementation for PEM-encoded keys.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Pem;
 
 impl Decode for Pem {
@@ -65,7 +65,7 @@ impl Decode for Pem {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct RsaPem;
 
 impl Decode for RsaPem {
@@ -149,16 +149,6 @@ impl<T: Decode> Deref for Decoded<T> {
 impl<T: Decode> Display for Decoded<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         Display::fmt(&self.original, f)
-    }
-}
-
-impl<T: Decode> Clone for Decoded<T> {
-    fn clone(&self) -> Self {
-        Self {
-            bytes: self.bytes.clone(),
-            original: self.original.clone(),
-            spooky: PhantomData,
-        }
     }
 }
 
