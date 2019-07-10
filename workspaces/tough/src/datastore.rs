@@ -62,7 +62,6 @@ impl Datastore {
 
     pub(crate) fn remove(&self, file: &str) -> Result<()> {
         let path = self.0.join(file);
-        check_permissions(&path)?;
         match fs::remove_file(&path) {
             Ok(()) => Ok(()),
             Err(err) => match err.kind() {
