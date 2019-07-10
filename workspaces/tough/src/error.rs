@@ -27,28 +27,11 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    /// The library failed to get metadata for a file in the datastore.
-    #[snafu(display("Failed to get file metadata from datastore path {}: {}", path.display(), source))]
-    DatastoreMetadata {
-        path: PathBuf,
-        source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
     /// The library failed to open a file in the datastore.
     #[snafu(display("Failed to open file from datastore path {}: {}", path.display(), source))]
     DatastoreOpen {
         path: PathBuf,
         source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
-    /// A file in the datastore has insecure permissions (writable by group or others). This
-    /// library does not attempt to correct insecure files.
-    #[snafu(display("Datastore path {} is writable by its group or others (mode {:o})", path.display(), mode))]
-    DatastorePermissions {
-        path: PathBuf,
-        mode: u32,
         backtrace: Backtrace,
     },
 

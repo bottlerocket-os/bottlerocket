@@ -48,9 +48,8 @@ impl Repository {
     /// trust up to the most recent root.json file.)
     ///
     /// `datastore` is a [`Path`] to a directory on a persistent filesystem. This directory's
-    /// contents store the most recently fetched root, timestamp, and snapshot metadata files. The
-    /// directory must exist prior to calling this method, and **the directory and its contents
-    /// must only be writable by your software.**
+    /// contents store the most recently fetched timestamp, snapshot, and targets metadata files.
+    /// The directory must exist prior to calling this method.
     ///
     /// `max_root_size` and `max_timestamp_size` are the maximum size for the root.json and
     /// timestamp.json files, respectively, downloaded from the repository. These must be
@@ -222,7 +221,7 @@ pub(crate) fn parse_url(url: &str) -> Result<Url> {
 /// trusted root metadata file.
 fn load_root<R: Read>(
     client: &Client,
-    input_root: R,
+    root: R,
     datastore: &Datastore,
     max_root_size: usize,
     metadata_base_url: &Url,
@@ -231,23 +230,13 @@ fn load_root<R: Read>(
     //    shipped with the package manager or software updater using an out-of-band process. Note
     //    that the expiration of the trusted root metadata file does not matter, because we will
     //    attempt to update it in the next step.
-    //
-    // If a cached root.json is present in the datastore, prefer that over the `root` reader
-    // provided to this function (unless it's corrupt).
-    let mut trusted_root: Signed<Root> = if let Some(Ok(cached_root)) =
-        datastore.reader("root.json")?.map(serde_json::from_reader)
-    {
-        cached_root
-    } else {
-        serde_json::from_reader(input_root).context(error::ParseTrustedMetadata)?
-    };
-    trusted_root
-        .verify(&trusted_root)
-        .context(error::VerifyTrustedMetadata)?;
+    let mut root: Signed<Root> =
+        serde_json::from_reader(root).context(error::ParseTrustedMetadata)?;
+    root.verify(&root).context(error::VerifyTrustedMetadata)?;
 
     // Used in step 1.9
-    let original_timestamp_keys = trusted_root.signed.keys(Role::Timestamp);
-    let original_snapshot_keys = trusted_root.signed.keys(Role::Snapshot);
+    let original_timestamp_keys = root.signed.keys(Role::Timestamp);
+    let original_snapshot_keys = root.signed.keys(Role::Snapshot);
 
     // 1. Update the root metadata file. Since it may now be signed using entirely different keys,
     //    the client must somehow be able to establish a trusted line of continuity to the latest
@@ -261,7 +250,7 @@ fn load_root<R: Read>(
         //   application using TUF. For example, X may be tens of kilobytes. The filename used to
         //   download the root metadata file is of the fixed form VERSION_NUMBER.FILENAME.EXT
         //   (e.g., 42.root.json). If this file is not available, then go to step 1.8.
-        let path = format!("{}.root.json", u64::from(trusted_root.signed.version) + 1);
+        let path = format!("{}.root.json", u64::from(root.signed.version) + 1);
         match fetch_max_size(
             client,
             metadata_base_url.join(&path).context(error::JoinUrl {
@@ -281,7 +270,7 @@ fn load_root<R: Read>(
                 //   file being validated (version N+1). If version N+1 is not signed as required,
                 //   discard it, abort the update cycle, and report the signature failure. On the
                 //   next update cycle, begin at step 0 and version N of the root metadata file.
-                new_root.verify(&trusted_root)?;
+                new_root.verify(&root)?;
                 new_root.verify(&new_root)?;
 
                 // 1.4. Check for a rollback attack. The version number of the trusted root
@@ -293,10 +282,10 @@ fn load_root<R: Read>(
                 //   the next update cycle, begin at step 0 and version N of the root metadata
                 //   file.
                 ensure!(
-                    trusted_root.signed.version <= new_root.signed.version,
+                    root.signed.version <= new_root.signed.version,
                     error::OlderMetadata {
                         role: Role::Root,
-                        current_version: trusted_root.signed.version,
+                        current_version: root.signed.version,
                         new_version: new_root.signed.version
                     }
                 );
@@ -307,7 +296,7 @@ fn load_root<R: Read>(
                 // root metadata file but do not report an error. This could only happen if the
                 // path we built above, referencing N+1, has a filename that doesn't match its
                 // contents, which would have to list version N.
-                if trusted_root.signed.version == new_root.signed.version {
+                if root.signed.version == new_root.signed.version {
                     break;
                 }
 
@@ -315,7 +304,7 @@ fn load_root<R: Read>(
                 //   not matter yet, because we will check for it in step 1.8.
                 //
                 // 1.6. Set the trusted root metadata file to the new root metadata file.
-                trusted_root = new_root;
+                root = new_root;
 
                 // 1.7. Repeat steps 1.1 to 1.7.
                 continue;
@@ -327,7 +316,7 @@ fn load_root<R: Read>(
     //   timestamp in the trusted root metadata file (version N). If the trusted root metadata file
     //   has expired, abort the update cycle, report the potential freeze attack. On the next
     //   update cycle, begin at step 0 and version N of the root metadata file.
-    trusted_root.check_expired()?;
+    root.check_expired()?;
 
     // 1.9. If the timestamp and / or snapshot keys have been rotated, then delete the trusted
     //   timestamp and snapshot metadata files. This is done in order to recover from fast-forward
@@ -335,15 +324,15 @@ fn load_root<R: Read>(
     //   happens when attackers arbitrarily increase the version numbers of: (1) the timestamp
     //   metadata, (2) the snapshot metadata, and / or (3) the targets, or a delegated targets,
     //   metadata file in the snapshot metadata.
-    if original_timestamp_keys != trusted_root.signed.keys(Role::Timestamp)
-        || original_snapshot_keys != trusted_root.signed.keys(Role::Snapshot)
+    if original_timestamp_keys != root.signed.keys(Role::Timestamp)
+        || original_snapshot_keys != root.signed.keys(Role::Snapshot)
     {
         let r1 = datastore.remove("timestamp.json");
         let r2 = datastore.remove("snapshot.json");
         r1.and(r2)?;
     }
 
-    Ok(trusted_root)
+    Ok(root)
 }
 
 /// Step 2 of the client application, which loads the timestamp metadata file.
@@ -385,14 +374,16 @@ fn load_timestamp(
         .reader("timestamp.json")?
         .map(serde_json::from_reader::<_, Signed<Timestamp>>)
     {
-        ensure!(
-            old_timestamp.signed.version <= timestamp.signed.version,
-            error::OlderMetadata {
-                role: Role::Timestamp,
-                current_version: old_timestamp.signed.version,
-                new_version: timestamp.signed.version
-            }
-        );
+        if old_timestamp.verify(root).is_ok() {
+            ensure!(
+                old_timestamp.signed.version <= timestamp.signed.version,
+                error::OlderMetadata {
+                    role: Role::Timestamp,
+                    current_version: old_timestamp.signed.version,
+                    new_version: timestamp.signed.version
+                }
+            );
+        }
     }
 
     // 2.3. Check for a freeze attack. The latest known time should be lower than the expiration
@@ -482,40 +473,42 @@ fn load_snapshot(
         //   than or equal to the version number of the new snapshot metadata file. If the new
         //   snapshot metadata file is older than the trusted metadata file, discard it, abort the
         //   update cycle, and report the potential rollback attack.
-        ensure!(
-            old_snapshot.signed.version <= snapshot.signed.version,
-            error::OlderMetadata {
-                role: Role::Snapshot,
-                current_version: old_snapshot.signed.version,
-                new_version: snapshot.signed.version
-            }
-        );
-
-        // 3.3.3. The version number of the targets metadata file, and all delegated targets
-        //   metadata files (if any), in the trusted snapshot metadata file, if any, MUST be less
-        //   than or equal to its version number in the new snapshot metadata file. Furthermore,
-        //   any targets metadata filename that was listed in the trusted snapshot metadata file,
-        //   if any, MUST continue to be listed in the new snapshot metadata file. If any of these
-        //   conditions are not met, discard the new snaphot metadadata file, abort the update
-        //   cycle, and report the failure.
-        if let Some(old_targets_meta) = old_snapshot.signed.meta.get("targets.json") {
-            let targets_meta =
-                snapshot
-                    .signed
-                    .meta
-                    .get("targets.json")
-                    .context(error::MetaMissing {
-                        file: "targets.json",
-                        role: Role::Snapshot,
-                    })?;
+        if old_snapshot.verify(&root).is_ok() {
             ensure!(
-                old_targets_meta.version <= targets_meta.version,
+                old_snapshot.signed.version <= snapshot.signed.version,
                 error::OlderMetadata {
-                    role: Role::Targets,
-                    current_version: old_targets_meta.version,
-                    new_version: targets_meta.version,
+                    role: Role::Snapshot,
+                    current_version: old_snapshot.signed.version,
+                    new_version: snapshot.signed.version
                 }
             );
+
+            // 3.3.3. The version number of the targets metadata file, and all delegated targets
+            //   metadata files (if any), in the trusted snapshot metadata file, if any, MUST be
+            //   less than or equal to its version number in the new snapshot metadata file.
+            //   Furthermore, any targets metadata filename that was listed in the trusted snapshot
+            //   metadata file, if any, MUST continue to be listed in the new snapshot metadata
+            //   file. If any of these conditions are not met, discard the new snaphot metadadata
+            //   file, abort the update cycle, and report the failure.
+            if let Some(old_targets_meta) = old_snapshot.signed.meta.get("targets.json") {
+                let targets_meta =
+                    snapshot
+                        .signed
+                        .meta
+                        .get("targets.json")
+                        .context(error::MetaMissing {
+                            file: "targets.json",
+                            role: Role::Snapshot,
+                        })?;
+                ensure!(
+                    old_targets_meta.version <= targets_meta.version,
+                    error::OlderMetadata {
+                        role: Role::Targets,
+                        current_version: old_targets_meta.version,
+                        new_version: targets_meta.version,
+                    }
+                );
+            }
         }
     }
 
@@ -607,14 +600,16 @@ fn load_targets(
         .reader("targets.json")?
         .map(serde_json::from_reader::<_, Signed<crate::serde::Targets>>)
     {
-        ensure!(
-            old_targets.signed.version <= targets.signed.version,
-            error::OlderMetadata {
-                role: Role::Targets,
-                current_version: old_targets.signed.version,
-                new_version: targets.signed.version
-            }
-        );
+        if old_targets.verify(&root).is_ok() {
+            ensure!(
+                old_targets.signed.version <= targets.signed.version,
+                error::OlderMetadata {
+                    role: Role::Targets,
+                    current_version: old_targets.signed.version,
+                    new_version: targets.signed.version
+                }
+            );
+        }
     }
 
     // 4.4. Check for a freeze attack. The latest known time should be lower than the expiration
@@ -628,6 +623,9 @@ fn load_targets(
     //
     // (This library does not yet handle delegated roles, so we just use the parsed targets from
     // targets.json.)
+
+    // Now that everything seems okay, write the timestamp file to the datastore.
+    datastore.create("targets.json", &targets)?;
 
     Ok(targets)
 }
