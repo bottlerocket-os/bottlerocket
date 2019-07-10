@@ -70,8 +70,14 @@ pub enum Error {
 
     /// A downloaded target's checksum does not match the checksum listed in the repository
     /// metadata.
-    #[snafu(display("Hash mismatch: calculated {}, expected {}", calculated, expected))]
+    #[snafu(display(
+        "Hash mismatch for {}: calculated {}, expected {}",
+        context,
+        calculated,
+        expected,
+    ))]
     HashMismatch {
+        context: String,
         calculated: String,
         expected: String,
         backtrace: Backtrace,

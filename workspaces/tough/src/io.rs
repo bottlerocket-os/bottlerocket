@@ -1,16 +1,19 @@
 use crate::error;
+use reqwest::Url;
 use sha2::{Digest, Sha256};
 use std::io::{self, Read};
 
 pub(crate) struct DigestAdapter<T, D> {
+    url: Url,
     reader: T,
     hash: Vec<u8>,
     digest: Option<D>,
 }
 
 impl<T: Read> DigestAdapter<T, Sha256> {
-    pub(crate) fn sha256(reader: T, hash: &[u8]) -> Self {
+    pub(crate) fn sha256(reader: T, hash: &[u8], url: Url) -> Self {
         Self {
+            url,
             reader,
             hash: hash.to_owned(),
             digest: Some(Sha256::new()),
@@ -30,6 +33,7 @@ impl<T: Read, D: Digest> Read for DigestAdapter<T, D> {
             let result = std::mem::replace(&mut self.digest, None).unwrap().result();
             if result.as_slice() != self.hash.as_slice() {
                 error::HashMismatch {
+                    context: self.url.to_string(),
                     calculated: hex::encode(result),
                     expected: hex::encode(&self.hash),
                 }
@@ -79,6 +83,7 @@ impl<T: Read> Read for MaxSizeAdapter<T> {
 mod tests {
     use crate::io::{DigestAdapter, MaxSizeAdapter};
     use hex_literal::hex;
+    use reqwest::Url;
     use std::io::{Cursor, Read};
 
     #[test]
@@ -98,6 +103,7 @@ mod tests {
         let mut reader = DigestAdapter::sha256(
             Cursor::new(b"hello".to_vec()),
             &hex!("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"),
+            Url::parse("file:///").unwrap(),
         );
         let mut buf = Vec::new();
         assert!(reader.read_to_end(&mut buf).is_ok());
@@ -106,6 +112,7 @@ mod tests {
         let mut reader = DigestAdapter::sha256(
             Cursor::new(b"hello".to_vec()),
             &hex!("0ebdc3317b75839f643387d783535adc360ca01f33c75f7c1e7373adcd675c0b"),
+            Url::parse("file:///").unwrap(),
         );
         let mut buf = Vec::new();
         assert!(reader.read_to_end(&mut buf).is_err());

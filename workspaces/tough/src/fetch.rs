@@ -39,7 +39,8 @@ pub(crate) fn fetch_sha256(
     sha256: &[u8],
 ) -> Result<impl Read> {
     Ok(DigestAdapter::sha256(
-        MaxSizeAdapter::new(fetch(client, url)?, size),
+        MaxSizeAdapter::new(fetch(client, url.clone())?, size),
         sha256,
+        url,
     ))
 }
