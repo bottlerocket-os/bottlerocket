@@ -7,7 +7,7 @@ It requests settings generators from the API and runs them.
 The output is collected and sent to a known Thar API server endpoint and committed.
 */
 
-use snafu::ResultExt;
+use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::env;
 use std::process;
@@ -53,6 +53,9 @@ mod error {
             program: String,
             source: std::io::Error,
         },
+
+        #[snafu(display("Generator command is invalid (empty, etc.) - {}", command))]
+        InvalidCommand { command: String },
 
         #[snafu(display(
             "Setting generator '{}' failed with exit code {} - stderr: {}",
@@ -173,8 +176,17 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<model::Se
 
     // For each generator, run it and capture the output
     for (setting, generator) in generators {
-        debug!("Running generator {}", &generator);
-        let result = process::Command::new(&generator)
+        debug!("Running generator: '{}'", &generator);
+
+        // Split on space, assume the first item is the command
+        // and the rest are args.
+        let mut command_strings = generator.split_whitespace();
+        let command = command_strings.next().context(error::InvalidCommand {
+            command: generator.as_str(),
+        })?;
+
+        let result = process::Command::new(command)
+            .args(command_strings)
             .output()
             .context(error::CommandFailure {
                 program: generator.as_str(),
