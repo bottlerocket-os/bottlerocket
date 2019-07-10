@@ -222,7 +222,7 @@ pub(crate) fn parse_url(url: &str) -> Result<Url> {
 /// trusted root metadata file.
 fn load_root<R: Read>(
     client: &Client,
-    root: R,
+    input_root: R,
     datastore: &Datastore,
     max_root_size: usize,
     metadata_base_url: &Url,
@@ -234,17 +234,20 @@ fn load_root<R: Read>(
     //
     // If a cached root.json is present in the datastore, prefer that over the `root` reader
     // provided to this function (unless it's corrupt).
-    let mut root: Signed<Root> =
-        if let Some(Ok(root)) = datastore.reader("root.json")?.map(serde_json::from_reader) {
-            root
-        } else {
-            serde_json::from_reader(root).context(error::ParseTrustedMetadata)?
-        };
-    root.verify(&root).context(error::VerifyTrustedMetadata)?;
+    let mut trusted_root: Signed<Root> = if let Some(Ok(cached_root)) =
+        datastore.reader("root.json")?.map(serde_json::from_reader)
+    {
+        cached_root
+    } else {
+        serde_json::from_reader(input_root).context(error::ParseTrustedMetadata)?
+    };
+    trusted_root
+        .verify(&trusted_root)
+        .context(error::VerifyTrustedMetadata)?;
 
     // Used in step 1.9
-    let original_timestamp_keys = root.signed.keys(Role::Timestamp);
-    let original_snapshot_keys = root.signed.keys(Role::Snapshot);
+    let original_timestamp_keys = trusted_root.signed.keys(Role::Timestamp);
+    let original_snapshot_keys = trusted_root.signed.keys(Role::Snapshot);
 
     // 1. Update the root metadata file. Since it may now be signed using entirely different keys,
     //    the client must somehow be able to establish a trusted line of continuity to the latest
@@ -258,7 +261,7 @@ fn load_root<R: Read>(
         //   application using TUF. For example, X may be tens of kilobytes. The filename used to
         //   download the root metadata file is of the fixed form VERSION_NUMBER.FILENAME.EXT
         //   (e.g., 42.root.json). If this file is not available, then go to step 1.8.
-        let path = format!("{}.root.json", u64::from(root.signed.version) + 1);
+        let path = format!("{}.root.json", u64::from(trusted_root.signed.version) + 1);
         match fetch_max_size(
             client,
             metadata_base_url.join(&path).context(error::JoinUrl {
@@ -278,7 +281,7 @@ fn load_root<R: Read>(
                 //   file being validated (version N+1). If version N+1 is not signed as required,
                 //   discard it, abort the update cycle, and report the signature failure. On the
                 //   next update cycle, begin at step 0 and version N of the root metadata file.
-                new_root.verify(&root)?;
+                new_root.verify(&trusted_root)?;
                 new_root.verify(&new_root)?;
 
                 // 1.4. Check for a rollback attack. The version number of the trusted root
@@ -290,10 +293,10 @@ fn load_root<R: Read>(
                 //   the next update cycle, begin at step 0 and version N of the root metadata
                 //   file.
                 ensure!(
-                    root.signed.version <= new_root.signed.version,
+                    trusted_root.signed.version <= new_root.signed.version,
                     error::OlderMetadata {
                         role: Role::Root,
-                        current_version: root.signed.version,
+                        current_version: trusted_root.signed.version,
                         new_version: new_root.signed.version
                     }
                 );
@@ -304,7 +307,7 @@ fn load_root<R: Read>(
                 // root metadata file but do not report an error. This could only happen if the
                 // path we built above, referencing N+1, has a filename that doesn't match its
                 // contents, which would have to list version N.
-                if root.signed.version == new_root.signed.version {
+                if trusted_root.signed.version == new_root.signed.version {
                     break;
                 }
 
@@ -312,7 +315,7 @@ fn load_root<R: Read>(
                 //   not matter yet, because we will check for it in step 1.8.
                 //
                 // 1.6. Set the trusted root metadata file to the new root metadata file.
-                root = new_root;
+                trusted_root = new_root;
 
                 // 1.7. Repeat steps 1.1 to 1.7.
                 continue;
@@ -324,7 +327,7 @@ fn load_root<R: Read>(
     //   timestamp in the trusted root metadata file (version N). If the trusted root metadata file
     //   has expired, abort the update cycle, report the potential freeze attack. On the next
     //   update cycle, begin at step 0 and version N of the root metadata file.
-    root.check_expired()?;
+    trusted_root.check_expired()?;
 
     // 1.9. If the timestamp and / or snapshot keys have been rotated, then delete the trusted
     //   timestamp and snapshot metadata files. This is done in order to recover from fast-forward
@@ -332,15 +335,15 @@ fn load_root<R: Read>(
     //   happens when attackers arbitrarily increase the version numbers of: (1) the timestamp
     //   metadata, (2) the snapshot metadata, and / or (3) the targets, or a delegated targets,
     //   metadata file in the snapshot metadata.
-    if original_timestamp_keys != root.signed.keys(Role::Timestamp)
-        || original_snapshot_keys != root.signed.keys(Role::Snapshot)
+    if original_timestamp_keys != trusted_root.signed.keys(Role::Timestamp)
+        || original_snapshot_keys != trusted_root.signed.keys(Role::Snapshot)
     {
         let r1 = datastore.remove("timestamp.json");
         let r2 = datastore.remove("snapshot.json");
         r1.and(r2)?;
     }
 
-    Ok(root)
+    Ok(trusted_root)
 }
 
 /// Step 2 of the client application, which loads the timestamp metadata file.
