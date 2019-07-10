@@ -54,7 +54,7 @@ mod error {
             source: std::io::Error,
         },
 
-        #[snafu(display("Generator command is invalid (empty, etc.) - {}", command))]
+        #[snafu(display("Generator command is invalid (empty, etc.) - '{}'", command))]
         InvalidCommand { command: String },
 
         #[snafu(display(
