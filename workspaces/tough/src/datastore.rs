@@ -56,7 +56,9 @@ impl Datastore {
             .context(error::DatastoreMetadata { path: &path })?
             .permissions()
             .set_mode(0o644);
-        serde_json::to_writer_pretty(&mut f, value).context(error::JsonSerialization)?;
+        serde_json::to_writer_pretty(&mut f, value).context(error::JsonSerialization {
+            what: format!("{} in datastore", file),
+        })?;
         Ok(())
     }
 

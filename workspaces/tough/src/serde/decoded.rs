@@ -3,7 +3,7 @@ use ring::io::der;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use snafu::ResultExt;
 use std::cmp::Ordering;
-use std::fmt::Debug;
+use std::fmt::{self, Debug, Display};
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -143,6 +143,12 @@ impl<T: Decode> Deref for Decoded<T> {
 
     fn deref(&self) -> &[u8] {
         &self.bytes
+    }
+}
+
+impl<T: Decode> Display for Decoded<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Display::fmt(&self.original, f)
     }
 }
 

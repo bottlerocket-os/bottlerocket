@@ -53,7 +53,9 @@ impl<T: Metadata + Serialize> Signed<T> {
 
         // TODO(iliana): actually implement Canonical JSON instead of just hoping that what we get
         // out of serde_json is Canonical JSON
-        let data = serde_json::to_vec(&self.signed).context(error::JsonSerialization)?;
+        let data = serde_json::to_vec(&self.signed).context(error::JsonSerialization {
+            what: format!("{} role", T::ROLE),
+        })?;
 
         for signature in &self.signatures {
             if role_keys.keyids.contains(&signature.keyid) {

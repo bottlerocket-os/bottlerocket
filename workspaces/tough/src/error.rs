@@ -94,8 +94,9 @@ pub enum Error {
     },
 
     /// The library failed to serialize an object to JSON.
-    #[snafu(display("Failed to serialize object to JSON: {}", source))]
+    #[snafu(display("Failed to serialize {} to JSON: {}", what, source))]
     JsonSerialization {
+        what: String,
         source: serde_json::Error,
         backtrace: Backtrace,
     },

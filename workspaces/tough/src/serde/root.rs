@@ -67,7 +67,10 @@ where
         key: Key,
         map: &mut BTreeMap<Decoded<Hex>, Key>,
     ) -> Result<(), error::Error> {
-        let digest = Sha256::digest(&serde_json::to_vec(&key).context(error::JsonSerialization)?);
+        let digest =
+            Sha256::digest(&serde_json::to_vec(&key).context(error::JsonSerialization {
+                what: format!("key {}", keyid),
+            })?);
         ensure!(
             &keyid == digest.as_slice(),
             error::HashMismatch {
