@@ -73,6 +73,7 @@ extern crate rouille;
 
 pub mod datastore;
 pub mod model;
+pub mod modeled_types;
 pub(crate) mod server;
 
 pub use server::handle_request;
