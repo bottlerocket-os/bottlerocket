@@ -28,18 +28,28 @@ fn fetch(client: &Client, url: Url) -> Result<impl Read> {
         .context(error::Request { url })
 }
 
-pub(crate) fn fetch_max_size(client: &Client, url: Url, max_size: usize) -> Result<impl Read> {
-    Ok(MaxSizeAdapter::new(fetch(client, url)?, max_size))
+pub(crate) fn fetch_max_size(
+    client: &Client,
+    url: Url,
+    max_size: usize,
+    specifier: &'static str,
+) -> Result<impl Read> {
+    Ok(MaxSizeAdapter::new(
+        fetch(client, url)?,
+        specifier,
+        max_size,
+    ))
 }
 
 pub(crate) fn fetch_sha256(
     client: &Client,
     url: Url,
     size: usize,
+    specifier: &'static str,
     sha256: &[u8],
 ) -> Result<impl Read> {
     Ok(DigestAdapter::sha256(
-        MaxSizeAdapter::new(fetch(client, url.clone())?, size),
+        MaxSizeAdapter::new(fetch(client, url.clone())?, specifier, size),
         sha256,
         url,
     ))

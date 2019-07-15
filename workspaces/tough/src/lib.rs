@@ -180,6 +180,7 @@ impl Repository {
                     url: self.target_base_url.to_owned(),
                 })?,
                 target.length,
+                "targets.json",
                 &target.sha256,
             )?)
         } else {
@@ -258,6 +259,7 @@ fn load_root<R: Read>(
                 url: metadata_base_url.to_owned(),
             })?,
             max_root_size,
+            "max_root_size argument",
         ) {
             Err(_) => break, // If this file is not available, then go to step 1.8.
             Ok(reader) => {
@@ -355,6 +357,7 @@ fn load_timestamp(
             url: metadata_base_url.to_owned(),
         })?,
         max_timestamp_size,
+        "max_timestamp_size argument",
     )?;
     let timestamp: Signed<Timestamp> =
         serde_json::from_reader(reader).context(error::ParseMetadata {
@@ -433,6 +436,7 @@ fn load_snapshot(
             url: metadata_base_url.to_owned(),
         })?,
         snapshot_meta.length,
+        "timestamp.json",
         &snapshot_meta.hashes.sha256,
     )?;
     let snapshot: Signed<Snapshot> =
@@ -564,6 +568,7 @@ fn load_targets(
             url: metadata_base_url.to_owned(),
         })?,
         targets_meta.length,
+        "snapshot.json",
         &targets_meta.hashes.sha256,
     )?;
     let targets: Signed<crate::serde::Targets> =

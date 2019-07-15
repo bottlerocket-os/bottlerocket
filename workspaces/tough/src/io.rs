@@ -51,14 +51,16 @@ impl<T: Read, D: Digest> Read for DigestAdapter<T, D> {
 
 pub(crate) struct MaxSizeAdapter<T> {
     reader: T,
+    specifier: &'static str,
     max_size: usize,
     counter: usize,
 }
 
 impl<T> MaxSizeAdapter<T> {
-    pub(crate) fn new(reader: T, max_size: usize) -> Self {
+    pub(crate) fn new(reader: T, specifier: &'static str, max_size: usize) -> Self {
         Self {
             reader,
+            specifier,
             max_size,
             counter: 0,
         }
@@ -72,6 +74,7 @@ impl<T: Read> Read for MaxSizeAdapter<T> {
         if self.counter > self.max_size {
             error::MaxSizeExceeded {
                 max_size: self.max_size,
+                specifier: self.specifier,
             }
             .fail()?;
         }
@@ -88,12 +91,12 @@ mod tests {
 
     #[test]
     fn test_max_size_adapter() {
-        let mut reader = MaxSizeAdapter::new(Cursor::new(b"hello".to_vec()), 5);
+        let mut reader = MaxSizeAdapter::new(Cursor::new(b"hello".to_vec()), "test", 5);
         let mut buf = Vec::new();
         assert!(reader.read_to_end(&mut buf).is_ok());
         assert_eq!(buf, b"hello");
 
-        let mut reader = MaxSizeAdapter::new(Cursor::new(b"hello".to_vec()), 4);
+        let mut reader = MaxSizeAdapter::new(Cursor::new(b"hello".to_vec()), "test", 4);
         let mut buf = Vec::new();
         assert!(reader.read_to_end(&mut buf).is_err());
     }

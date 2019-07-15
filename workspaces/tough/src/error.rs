@@ -99,9 +99,10 @@ pub enum Error {
     },
 
     /// A file's maximum size exceeded a limit set by the consumer of this library or the metadata.
-    #[snafu(display("Maximum size {} exceeded", max_size))]
+    #[snafu(display("Maximum size {} (specified by {}) exceeded", max_size, specifier))]
     MaxSizeExceeded {
         max_size: usize,
+        specifier: &'static str,
         backtrace: Backtrace,
     },
 
