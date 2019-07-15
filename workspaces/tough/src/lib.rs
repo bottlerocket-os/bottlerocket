@@ -193,7 +193,8 @@ pub struct Target {
     pub custom: BTreeMap<String, serde_json::Value>,
     /// The SHA-256 checksum for this target.
     pub sha256: Vec<u8>,
-    /// The maximum size in bytes for this target. This is not necessarily the exact size.
+    /// The maximum size in bytes for this target. This is an upper bound on size, and not
+    /// necessarily the actual size.
     pub length: usize,
 }
 
@@ -310,6 +311,8 @@ fn load_root<R: Read>(
                 //   not matter yet, because we will check for it in step 1.8.
                 //
                 // 1.6. Set the trusted root metadata file to the new root metadata file.
+                //
+                // (This is where version N+1 becomes version N.)
                 root = new_root;
 
                 // 1.7. Repeat steps 1.1 to 1.7.
