@@ -152,9 +152,18 @@ impl<T: Decode> Display for Decoded<T> {
     }
 }
 
+impl<T: Decode> PartialEq<[u8]> for Decoded<T> {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.bytes.eq(&other)
+    }
+}
+
+// The Eq/Ord implementations compare `original` first, then `bytes`. This is because, primarily,
+// we want to sort on the string that is encoded in the file to correctly implement Canonical JSON.
+
 impl<T: Decode> PartialEq for Decoded<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.bytes.eq(&other.bytes)
+        self.original.eq(&other.original) && self.bytes.eq(&other.bytes)
     }
 }
 
@@ -162,18 +171,14 @@ impl<T: Decode> Eq for Decoded<T> {}
 
 impl<T: Decode> PartialOrd for Decoded<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.bytes.partial_cmp(&other.bytes)
+        Some(self.cmp(&other))
     }
 }
 
 impl<T: Decode> Ord for Decoded<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.bytes.cmp(&other.bytes)
-    }
-}
-
-impl<T: Decode> PartialEq<[u8]> for Decoded<T> {
-    fn eq(&self, other: &[u8]) -> bool {
-        self.bytes.eq(&other)
+        self.original
+            .cmp(&other.original)
+            .then(self.bytes.cmp(&other.bytes))
     }
 }
