@@ -1470,6 +1470,7 @@ name = "thar-be-settings"
 version = "0.1.0"
 dependencies = [
  "apiserver 0.1.0",
+ "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cargo-readme 3.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "handlebars 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
