@@ -272,8 +272,12 @@ fn load_root<R: Read>(
                 //   file being validated (version N+1). If version N+1 is not signed as required,
                 //   discard it, abort the update cycle, and report the signature failure. On the
                 //   next update cycle, begin at step 0 and version N of the root metadata file.
-                new_root.verify(&root)?;
-                new_root.verify(&new_root)?;
+                new_root
+                    .verify(&root)
+                    .context(error::VerifyMetadata { role: Role::Root })?;
+                new_root
+                    .verify(&new_root)
+                    .context(error::VerifyMetadata { role: Role::Root })?;
 
                 // 1.4. Check for a rollback attack. The version number of the trusted root
                 //   metadata file (version N) must be less than or equal to the version number of
@@ -367,7 +371,9 @@ fn load_timestamp(
     // 2.1. Check signatures. The new timestamp metadata file must have been signed by a threshold
     //   of keys specified in the trusted root metadata file. If the new timestamp metadata file is
     //   not properly signed, discard it, abort the update cycle, and report the signature failure.
-    timestamp.verify(root)?;
+    timestamp.verify(root).context(error::VerifyMetadata {
+        role: Role::Timestamp,
+    })?;
 
     // 2.2. Check for a rollback attack. The version number of the trusted timestamp metadata file,
     //   if any, must be less than or equal to the version number of the new timestamp metadata
@@ -463,7 +469,9 @@ fn load_snapshot(
     //   of keys specified in the trusted root metadata file. If the new snapshot metadata file is
     //   not signed as required, discard it, abort the update cycle, and report the signature
     //   failure.
-    snapshot.verify(&root)?;
+    snapshot.verify(&root).context(error::VerifyMetadata {
+        role: Role::Snapshot,
+    })?;
 
     // 3.3. Check for a rollback attack.
     //
@@ -595,7 +603,9 @@ fn load_targets(
     //   signed by a threshold of keys specified in the trusted root metadata file. If the new
     //   targets metadata file is not signed as required, discard it, abort the update cycle, and
     //   report the failure.
-    targets.verify(&root)?;
+    targets.verify(&root).context(error::VerifyMetadata {
+        role: Role::Targets,
+    })?;
 
     // 4.3. Check for a rollback attack. The version number of the trusted targets metadata file,
     //   if any, MUST be less than or equal to the version number of the new targets metadata file.
