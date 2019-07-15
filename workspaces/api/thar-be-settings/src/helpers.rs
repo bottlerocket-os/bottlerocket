@@ -84,7 +84,7 @@ pub fn base64_decode(
     let template_name = renderctx
         .get_root_template_name()
         .map(|i| i.to_string())
-        .unwrap_or("dynamic template".to_string());
+        .unwrap_or_else(|| "dynamic template".to_string());
 
     // Get the resolved key out of the template (param(0)). value() returns
     // a serde_json::Value
