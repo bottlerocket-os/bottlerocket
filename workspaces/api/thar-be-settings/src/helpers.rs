@@ -41,11 +41,13 @@ mod error {
         },
 
         #[snafu(display(
-            "Invalid (non-utf8) output from decoded base64 in template '{}': '{}'",
+            "Invalid (non-utf8) output from base64 string '{}' in template '{}': '{}'",
+            base64_string,
             template,
             source
         ))]
         InvalidUTF8 {
+            base64_string: String,
             template: String,
             source: std::str::Utf8Error,
         },
@@ -110,6 +112,7 @@ pub fn base64_decode(
 
     // Create a valid utf8 str
     let decoded = std::str::from_utf8(&decoded_bytes).context(error::InvalidUTF8 {
+        base64_string: base64_str.to_string(),
         template: template_name.to_owned(),
     })?;
 
