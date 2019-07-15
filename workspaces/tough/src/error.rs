@@ -90,14 +90,6 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    /// A key ID in the root metadata file did not match its contents.
-    #[snafu(display("Key ID mismatch: calculated {}, expected {}", calculated, expected))]
-    KeyIdMismatch {
-        calculated: String,
-        expected: String,
-        backtrace: Backtrace,
-    },
-
     /// A file's maximum size exceeded a limit set by the consumer of this library or the metadata.
     #[snafu(display("Maximum size {} (specified by {}) exceeded", max_size, specifier))]
     MaxSizeExceeded {
