@@ -50,7 +50,7 @@ mod error {
             source: std::str::Utf8Error,
         },
 
-        #[snafu(display("Unable to write template: '{}': '{}'", template, source))]
+        #[snafu(display("Unable to write template '{}': '{}'", template, source))]
         TemplateWrite {
             template: String,
             source: std::io::Error,
