@@ -1,11 +1,11 @@
 use crate::error;
 use crate::serde::decoded::{Decoded, Hex};
 use crate::serde::key::Key;
-use crate::serde::{Metadata, Role};
+use crate::serde::{Metadata, Role, Signed};
 use chrono::{DateTime, Utc};
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha256};
-use snafu::{ensure, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::fmt;
 use std::num::NonZeroU64;
@@ -36,6 +36,43 @@ impl Root {
             .iter()
             .filter_map(|keyid| self.keys.get(keyid).cloned())
             .collect()
+    }
+
+    pub(crate) fn verify_role<T: Metadata + Serialize>(
+        &self,
+        role: &Signed<T>,
+    ) -> error::Result<()> {
+        let role_keys = self
+            .roles
+            .get(&T::ROLE)
+            .context(error::MissingRole { role: T::ROLE })?;
+        let mut valid = 0;
+
+        // TODO(iliana): actually implement Canonical JSON instead of just hoping that what we get
+        // out of serde_json is Canonical JSON
+        let data = serde_json::to_vec(&role.signed).context(error::JsonSerialization {
+            what: format!("{} role", T::ROLE),
+        })?;
+
+        for signature in &role.signatures {
+            if role_keys.keyids.contains(&signature.keyid) {
+                if let Some(key) = self.keys.get(&signature.keyid) {
+                    if key.verify(&data, &signature.sig) {
+                        valid += 1;
+                    }
+                }
+            }
+        }
+
+        ensure!(
+            valid >= u64::from(role_keys.threshold),
+            error::SignatureThreshold {
+                role: T::ROLE,
+                threshold: role_keys.threshold,
+                valid,
+            }
+        );
+        Ok(())
     }
 }
 
@@ -110,4 +147,68 @@ where
     }
 
     deserializer.deserialize_map(Visitor)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::serde::{root::Root, Signed};
+
+    #[test]
+    fn simple_rsa() {
+        let root: Signed<Root> =
+            serde_json::from_str(include_str!("../../tests/data/simple-rsa/root.json")).unwrap();
+        root.signed.verify_role(&root).unwrap();
+    }
+
+    #[test]
+    fn duplicate_keyid() {
+        assert!(serde_json::from_str::<Signed<Root>>(include_str!(
+            "../../tests/data/duplicate-keyid/root.json"
+        ))
+        .is_err());
+    }
+
+    #[test]
+    fn no_root_json_signatures_is_err() {
+        let root: Signed<Root> = serde_json::from_str(include_str!(
+            "../../tests/data/no-root-json-signatures/root.json"
+        ))
+        .expect("should be parsable root.json");
+        root.signed
+            .verify_role(&root)
+            .expect_err("missing signature should not verify");
+    }
+
+    #[test]
+    fn invalid_root_json_signatures_is_err() {
+        let root: Signed<Root> = serde_json::from_str(include_str!(
+            "../../tests/data/invalid-root-json-signature/root.json"
+        ))
+        .expect("should be parsable root.json");
+        root.signed
+            .verify_role(&root)
+            .expect_err("invalid (unauthentic) root signature should not verify");
+    }
+
+    #[test]
+    fn expired_root_json_signature_is_err() {
+        let root: Signed<Root> = serde_json::from_str(include_str!(
+            "../../tests/data/expired-root-json-signature/root.json"
+        ))
+        .expect("should be parsable root.json");
+        root.signed
+            .verify_role(&root)
+            .expect_err("expired root signature should not verify");
+    }
+
+    #[test]
+    fn mismatched_root_json_keyids_is_err() {
+        let root: Signed<Root> = serde_json::from_str(include_str!(
+            "../../tests/data/mismatched-root-json-keyids/root.json"
+        ))
+        .expect("should be parsable root.json");
+        root.signed
+            .verify_role(&root)
+            .expect_err("mismatched root role keyids (provided and signed) should not verify");
+    }
 }

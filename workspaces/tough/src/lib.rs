@@ -233,7 +233,9 @@ fn load_root<R: Read>(
     //    attempt to update it in the next step.
     let mut root: Signed<Root> =
         serde_json::from_reader(root).context(error::ParseTrustedMetadata)?;
-    root.verify(&root).context(error::VerifyTrustedMetadata)?;
+    root.signed
+        .verify_role(&root)
+        .context(error::VerifyTrustedMetadata)?;
 
     // Used in step 1.9
     let original_timestamp_keys = root.signed.keys(Role::Timestamp);
@@ -272,11 +274,12 @@ fn load_root<R: Read>(
                 //   file being validated (version N+1). If version N+1 is not signed as required,
                 //   discard it, abort the update cycle, and report the signature failure. On the
                 //   next update cycle, begin at step 0 and version N of the root metadata file.
-                new_root
-                    .verify(&root)
+                root.signed
+                    .verify_role(&new_root)
                     .context(error::VerifyMetadata { role: Role::Root })?;
                 new_root
-                    .verify(&new_root)
+                    .signed
+                    .verify_role(&new_root)
                     .context(error::VerifyMetadata { role: Role::Root })?;
 
                 // 1.4. Check for a rollback attack. The version number of the trusted root
@@ -371,9 +374,11 @@ fn load_timestamp(
     // 2.1. Check signatures. The new timestamp metadata file must have been signed by a threshold
     //   of keys specified in the trusted root metadata file. If the new timestamp metadata file is
     //   not properly signed, discard it, abort the update cycle, and report the signature failure.
-    timestamp.verify(root).context(error::VerifyMetadata {
-        role: Role::Timestamp,
-    })?;
+    root.signed
+        .verify_role(&timestamp)
+        .context(error::VerifyMetadata {
+            role: Role::Timestamp,
+        })?;
 
     // 2.2. Check for a rollback attack. The version number of the trusted timestamp metadata file,
     //   if any, must be less than or equal to the version number of the new timestamp metadata
@@ -383,7 +388,7 @@ fn load_timestamp(
         .reader("timestamp.json")?
         .map(serde_json::from_reader::<_, Signed<Timestamp>>)
     {
-        if old_timestamp.verify(root).is_ok() {
+        if root.signed.verify_role(&old_timestamp).is_ok() {
             ensure!(
                 old_timestamp.signed.version <= timestamp.signed.version,
                 error::OlderMetadata {
@@ -469,9 +474,11 @@ fn load_snapshot(
     //   of keys specified in the trusted root metadata file. If the new snapshot metadata file is
     //   not signed as required, discard it, abort the update cycle, and report the signature
     //   failure.
-    snapshot.verify(&root).context(error::VerifyMetadata {
-        role: Role::Snapshot,
-    })?;
+    root.signed
+        .verify_role(&snapshot)
+        .context(error::VerifyMetadata {
+            role: Role::Snapshot,
+        })?;
 
     // 3.3. Check for a rollback attack.
     //
@@ -485,7 +492,7 @@ fn load_snapshot(
         //   than or equal to the version number of the new snapshot metadata file. If the new
         //   snapshot metadata file is older than the trusted metadata file, discard it, abort the
         //   update cycle, and report the potential rollback attack.
-        if old_snapshot.verify(&root).is_ok() {
+        if root.signed.verify_role(&old_snapshot).is_ok() {
             ensure!(
                 old_snapshot.signed.version <= snapshot.signed.version,
                 error::OlderMetadata {
@@ -603,9 +610,11 @@ fn load_targets(
     //   signed by a threshold of keys specified in the trusted root metadata file. If the new
     //   targets metadata file is not signed as required, discard it, abort the update cycle, and
     //   report the failure.
-    targets.verify(&root).context(error::VerifyMetadata {
-        role: Role::Targets,
-    })?;
+    root.signed
+        .verify_role(&targets)
+        .context(error::VerifyMetadata {
+            role: Role::Targets,
+        })?;
 
     // 4.3. Check for a rollback attack. The version number of the trusted targets metadata file,
     //   if any, MUST be less than or equal to the version number of the new targets metadata file.
@@ -615,7 +624,7 @@ fn load_targets(
         .reader("targets.json")?
         .map(serde_json::from_reader::<_, Signed<crate::serde::Targets>>)
     {
-        if old_targets.verify(&root).is_ok() {
+        if root.signed.verify_role(&old_targets).is_ok() {
             ensure!(
                 old_targets.signed.version <= targets.signed.version,
                 error::OlderMetadata {
