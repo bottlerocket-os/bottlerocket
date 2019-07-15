@@ -162,9 +162,6 @@ impl Repository {
         //   HASH is one of the hashes of the targets file listed in the targets metadata file
         //   found earlier in step 4. In either case, the client MUST write the file to
         //   non-volatile storage as FILENAME.EXT.
-        //
-        // (This implementation currently assumes that the exact number of bytes a target contains
-        // is known. This implementation does not download
         self.check_expired()?;
         Ok(if let Some(target) = self.targets.get(name) {
             let file = if self.consistent_snapshot {
