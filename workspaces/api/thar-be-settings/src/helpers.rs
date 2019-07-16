@@ -160,4 +160,9 @@ mod test {
             setup_and_render_template("{{base64_decode var}}", &json!({"var": "wygK"})).is_err()
         )
     }
+
+    #[test]
+    fn base64_helper_with_missing_param() {
+        assert!(setup_and_render_template("{{base64_decode}}", &json!({"var": "foo"})).is_err());
+    }
 }
