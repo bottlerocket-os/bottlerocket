@@ -126,37 +126,38 @@ pub fn base64_decode(
 #[cfg(test)]
 mod test {
     use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
 
-    #[test]
-    fn renders_decoded_base64() {
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
         let mut registry = Handlebars::new();
         registry.register_helper("base64_decode", Box::new(base64_decode));
 
-        let result = registry
-            .render_template("{{base64_decode var}}", &json!({"var": "SGk="}))
-            .unwrap();
+        registry.render_template(tmpl, data)
+    }
 
+    #[test]
+    fn renders_decoded_base64() {
+        let result =
+            setup_and_render_template("{{base64_decode var}}", &json!({"var": "SGk="})).unwrap();
         assert_eq!(result, "Hi")
     }
 
     #[test]
     fn does_not_render_invalid_base64() {
-        let mut registry = Handlebars::new();
-        registry.register_helper("base64_decode", Box::new(base64_decode));
-
-        assert!(registry
-            .render_template("{{base64_decode var}}", &json!({"var": "hi"}))
-            .is_err());
+        assert!(setup_and_render_template("{{base64_decode var}}", &json!({"var": "hi"})).is_err())
     }
 
     #[test]
     fn does_not_render_invalid_utf8() {
-        let mut registry = Handlebars::new();
-        registry.register_helper("base64_decode", Box::new(base64_decode));
-
         // "wygk" is the invalid UTF8 string "\xc3\x28" base64 encoded
-        assert!(registry
-            .render_template("{{base64_decode var}}", &json!({"var": "wygK"}))
-            .is_err());
+        assert!(
+            setup_and_render_template("{{base64_decode var}}", &json!({"var": "wygK"})).is_err()
+        )
     }
 }
