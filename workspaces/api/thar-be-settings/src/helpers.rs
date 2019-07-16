@@ -148,4 +148,15 @@ mod test {
             .render_template("{{base64_decode var}}", &json!({"var": "invalid_"}))
             .is_err());
     }
+
+    #[test]
+    fn does_not_render_invalid_utf8() {
+        let mut registry = Handlebars::new();
+        registry.register_helper("base64_decode", Box::new(base64_decode));
+
+        // "wygk" is the invalid UTF8 string "\xc3\x28" base64 encoded
+        assert!(registry
+            .render_template("{{base64_decode var}}", &json!({"var": "wygK"}))
+            .is_err());
+    }
 }
