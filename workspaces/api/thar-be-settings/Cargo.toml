@@ -9,7 +9,7 @@ build = "build.rs"
 [dependencies]
 apiserver = { path = "../apiserver" }
 base64 = "0.10"
-handlebars = "1.1"
+handlebars = "2.0"
 itertools = "0.8"
 log = "0.4"
 reqwest = { version = "0.9", default-features = false, features = [] }

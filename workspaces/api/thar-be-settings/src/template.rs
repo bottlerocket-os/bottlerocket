@@ -59,8 +59,8 @@ impl TemplateKeys for template::Template {
             // and ignore everything else. Our templates are simple so far and this
             // match should capture all the template keys.
             match element {
-                TemplateElement::Expression(name) => {
-                    if let Parameter::Name(key) = name {
+                TemplateElement::Expression(helper_template) => {
+                    if let Parameter::Name(key) = &helper_template.name {
                         trace!("Found key: {}", &key);
                         keys.insert(key.to_string());
                     }
