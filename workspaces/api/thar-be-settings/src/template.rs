@@ -4,7 +4,7 @@ use handlebars::Handlebars;
 use snafu::ResultExt;
 use std::collections::HashSet;
 
-use crate::{error, Result};
+use crate::{error, helpers, Result};
 
 use apiserver::model;
 
@@ -31,6 +31,11 @@ pub fn build_template_registry(
                 path: &metadata.template_path,
             })?;
     }
+
+    // TODO if we start writing lots of helpers, registering them
+    // should probably exist in a "setup" function of its own
+    // that we can call from here. For now, KISS.
+    template_registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
 
     Ok(template_registry)
 }
