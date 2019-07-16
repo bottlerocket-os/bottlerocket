@@ -145,7 +145,7 @@ mod test {
         registry.register_helper("base64_decode", Box::new(base64_decode));
 
         assert!(registry
-            .render_template("{{base64_decode var}}", &json!({"var": "invalid_"}))
+            .render_template("{{base64_decode var}}", &json!({"var": "hi"}))
             .is_err());
     }
 
