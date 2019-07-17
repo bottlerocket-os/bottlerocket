@@ -133,6 +133,7 @@ mod test {
     use super::*;
     use handlebars::TemplateRenderError;
     use serde::Serialize;
+    use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
