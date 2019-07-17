@@ -60,7 +60,17 @@ impl TemplateKeys for template::Template {
             // match should capture all the template keys.
             match element {
                 TemplateElement::Expression(helper_template) => {
-                    if let Parameter::Name(key) = &helper_template.name {
+                    // Blocks with helpers have the same data structure as
+                    // those that don't.  However, blocks with helpers have a
+                    // non-empty params vec. Assume this vec contains the keys.
+                    if !helper_template.params.is_empty() {
+                        for param in &helper_template.params {
+                            if let Parameter::Name(key) = param {
+                                trace!("Found key: {}", &key);
+                                keys.insert(key.to_string());
+                            }
+                        }
+                    } else if let Parameter::Name(key) = &helper_template.name {
                         trace!("Found key: {}", &key);
                         keys.insert(key.to_string());
                     }
@@ -196,4 +206,20 @@ mod test {
         assert_keys_in_registry(&[""], hashset! {});
     }
 
+    #[test]
+    fn template_with_helper_returns_correct_keys() {
+        let mut registry = Handlebars::new();
+        registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
+
+        // Register a template with the base64 helper
+        let tmpl1 = "This is a cool {{base64_decode template}}. Here is a conditional: {{#if bridge-ip }}{{bridge-ip}}{{/if}}";
+        let tmpl2 = "This is a cool {{frob}}. Here is a conditional: {{#if frobnicate }}{{frobnicate}}{{/if}}";
+        registry.register_template_string("tmpl1", tmpl1).unwrap();
+        registry.register_template_string("tmpl2", tmpl2).unwrap();
+
+        let expected_keys = hashset! {"template".to_string(), "bridge-ip".to_string(), "frob".to_string(), "frobnicate".to_string() };
+        let actual_keys = registry.get_all_template_keys().unwrap();
+
+        assert_eq!(actual_keys, expected_keys)
+    }
 }
