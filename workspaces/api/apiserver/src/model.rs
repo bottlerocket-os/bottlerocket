@@ -5,17 +5,41 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::net::Ipv4Addr;
+
+use crate::modeled_types::ValidBase64;
 
 ///// Primary user-visible settings
 
 // Note: fields are marked with skip_serializing_if=Option::is_none so that settings GETs don't
 // show field=null for everything that isn't set in the relevant group of settings.
 
+// Kubernetes related settings. The dynamic settings are retrieved from
+// IMDS via Sundog's child "Pluto".
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct DockerSettings {
+pub struct KubernetesSettings {
+    // Settings we require the user to specify, likely via user data.
+
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bridge_ip: Option<String>,
+    pub cluster_name: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cluster_certificate: Option<ValidBase64>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_server: Option<String>,
+
+    // Dynamic settings.
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cluster_dns_ip: Option<Ipv4Addr>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node_ip: Option<Ipv4Addr>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pod_infra_container_image: Option<String>,
 }
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
@@ -30,7 +54,7 @@ pub struct Settings {
     pub hostname: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub docker: Option<DockerSettings>,
+    pub kubernetes: Option<KubernetesSettings>,
 }
 
 ///// Internal services
