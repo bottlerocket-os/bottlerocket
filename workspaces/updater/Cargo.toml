@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "signpost",
+    "tough",
+]
+
+[profile.release]
+debug = true
+lto = true
