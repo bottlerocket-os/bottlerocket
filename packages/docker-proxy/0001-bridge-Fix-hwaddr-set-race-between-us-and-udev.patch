@@ -1,0 +1,97 @@
+From 8710ffea0b06b2eeb66fd231b5a27fbf538377ac Mon Sep 17 00:00:00 2001
+From: Tomas Janousek <tomi@nomi.cz>
+Date: Sun, 19 May 2019 18:22:39 +0200
+Subject: [PATCH] bridge: Fix hwaddr set race between us and udev
+
+systemd and udev in their default configuration attempt to set a
+persistent MAC address for network interfaces that don't have one
+already [systemd-def-link]. We set the address only after creating the
+interface, so there is a race between us and udev. There are several
+outcomes (that actually occur, this race is very much not a theoretical
+one):
+
+* We set the address before udev gets to the networking rules, so udev
+  sees `/sys/devices/virtual/net/docker0/addr_assign_type = 3`
+  (NET_ADDR_SET). This means there's no need to assign a different
+  address and everything is fine.
+
+* udev reads `/sys/devices/virtual/net/docker0/addr_assign_type` before
+  we set the address, gets `1` (NET_ADDR_RANDOM), and proceeds to
+  generate and set a persistent address.
+
+  Old versions of udev (pre-v242, i.e. without [udev-patch]) would then
+  fail to generate an address, spit out "Could not generate persistent
+  MAC address for docker0: No such file or directory" (see [udev-issue],
+  and everything would be probably fine as well.
+
+  Current version of udev (with [udev-patch]) will generate an address
+  just fine and then race us setting it. As udev does more work than we,
+  the most probable outcome is that udev will overwrite the address we
+  set and possibly cause some trouble later on.
+
+On a clean Debian Buster (from Vagrant) VM with systemd/udev 242 from
+Debian Experimental, `docker network create net1` up to `net7` resulted
+in 3 bridges having a 02:42: address and 4 bridges having a seemingly
+random (actually generated from interface name) address. With systemd
+241, the result would be all bridges having a 02:42:, but some "Could
+not generate persistent MAC address for" messages in the log.
+
+The fix is to revert the MAC address setting fix from 79b3e7761d249a6f,
+as it is no longer necessary with current netlink [netlink-addr-add],
+and set the address atomically when creating the bridge interface, not
+after that.
+
+[systemd-def-link]: https://github.com/systemd/systemd/blob/a166cd3aacdbfd4df196bb4ca9f43cff19cf9fec/network/99-default.link
+[udev-patch]: https://github.com/systemd/systemd/commit/6d36464065601f79a352367cf099be8907d8f9aa
+[udev-issue]: https://github.com/systemd/systemd/issues/3374
+[netlink-addr-add]: https://github.com/vishvananda/netlink/commit/7d9b424492b5319e5993c5d6e8bef48e583aabd6
+
+...
+
+Do note that a similar race happens when creating veth devices as well.
+I wasn't able to reproduce getting a wrong (non-02:42:) address,
+possibly because the address is set by docker later, maybe only after
+the interface is moved to another network namespace (but I'm just
+guessing here). Still, different timings result in various error
+messages being logged ("link_config: could not get ethtool features for
+vethd9c938e" and the like) depending on when the interface disappears
+from the primary network namespace. I'm not sure how to fix this and I
+don't intend to dig deeper into this.
+
+Signed-off-by: Tomas Janousek <tomi@nomi.cz>
+---
+ drivers/bridge/setup_device.go | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/bridge/setup_device.go b/drivers/bridge/setup_device.go
+index a9dfd067..548ad951 100644
+--- a/drivers/bridge/setup_device.go
++++ b/drivers/bridge/setup_device.go
+@@ -35,18 +35,17 @@ func setupDevice(config *networkConfiguration, i *bridgeInterface) error {
+ 		setMac = kv.Kernel > 3 || (kv.Kernel == 3 && kv.Major >= 3)
+ 	}
+ 
++	if setMac {
++		hwAddr := netutils.GenerateRandomMAC()
++		i.Link.Attrs().HardwareAddr = hwAddr
++		logrus.Debugf("Setting bridge mac address to %s", hwAddr)
++	}
++
+ 	if err = i.nlh.LinkAdd(i.Link); err != nil {
+ 		logrus.Debugf("Failed to create bridge %s via netlink. Trying ioctl", config.BridgeName)
+ 		return ioctlCreateBridge(config.BridgeName, setMac)
+ 	}
+ 
+-	if setMac {
+-		hwAddr := netutils.GenerateRandomMAC()
+-		if err = i.nlh.LinkSetHardwareAddr(i.Link, hwAddr); err != nil {
+-			return fmt.Errorf("failed to set bridge mac-address %s : %s", hwAddr, err.Error())
+-		}
+-		logrus.Debugf("Setting bridge mac address to %s", hwAddr)
+-	}
+ 	return err
+ }
+ 
+-- 
+2.21.0
+

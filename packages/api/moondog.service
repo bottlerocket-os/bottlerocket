@@ -8,6 +8,7 @@ Requires=apiserver.service
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/moondog
+RemainAfterExit=true
 
 [Install]
 WantedBy=multi-user.target

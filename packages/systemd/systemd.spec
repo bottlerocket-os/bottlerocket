@@ -1,30 +1,37 @@
 Name: %{_cross_os}systemd
-Version: 241
+Version: 242
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: LGPLv2+ and MIT and GPLv2+
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
+Patch1: networkd-fix-link_up-12505.patch
+Patch2: network-do-not-send-ipv6-token-to-kernel.patch
+Patch3: network-do-not-use-ordered_set_printf-for-DOMAINS-or.patch
+Patch1000: adjust-permissions-for-hostnamed.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
+BuildRequires: %{_cross_os}kmod-devel
 BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libattr-devel
 BuildRequires: %{_cross_os}libblkid-devel
 BuildRequires: %{_cross_os}libcap-devel
-BuildRequires: %{_cross_os}libkmod-devel
 BuildRequires: %{_cross_os}libmount-devel
+BuildRequires: %{_cross_os}libseccomp-devel
 BuildRequires: %{_cross_os}libuuid-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
 Requires: %{_cross_os}glibc
+Requires: %{_cross_os}kmod
 Requires: %{_cross_os}libacl
 Requires: %{_cross_os}libattr
 Requires: %{_cross_os}libblkid
 Requires: %{_cross_os}libcap
-Requires: %{_cross_os}libkmod
 Requires: %{_cross_os}libmount
+Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}libuuid
 Requires: %{_cross_os}libxcrypt
 
@@ -58,14 +65,14 @@ CONFIGURE_OPTS=(
  -Dutmp=false
  -Dhibernate=false
  -Dldconfig=true
- -Dresolve=false
+ -Dresolve=true
  -Defi=false
  -Dtpm=false
  -Denvironment-d=false
  -Dbinfmt=false
  -Dcoredump=false
  -Dlogind=false
- -Dhostnamed=false
+ -Dhostnamed=true
  -Dlocaled=false
  -Dmachined=false
  -Dportabled=false
@@ -93,6 +100,8 @@ CONFIGURE_OPTS=(
  -Dcertificate-root='%{_cross_sysconfdir}/ssl'
  -Dpkgconfigdatadir='%{_cross_pkgconfigdir}'
  -Dpkgconfiglibdir='%{_cross_pkgconfigdir}'
+
+ -Ddefault-hierarchy=hybrid
 
  -Dseccomp=auto
  -Dselinux=auto
@@ -146,10 +155,16 @@ CONFIGURE_OPTS=(
 %install
 %cross_meson_install
 
+# Remove all stock networkd configurations, as they can interfere
+# with container networking by attempting to manage veth devices.
+rm %{buildroot}%{_cross_libdir}/systemd/network/*
+
 %files
 %{_cross_bindir}/busctl
+%{_cross_bindir}/hostnamectl
 %{_cross_bindir}/journalctl
 %{_cross_bindir}/networkctl
+%{_cross_bindir}/resolvectl
 %{_cross_bindir}/systemctl
 %{_cross_bindir}/systemd-analyze
 %{_cross_bindir}/systemd-ask-password
@@ -165,6 +180,7 @@ CONFIGURE_OPTS=(
 %{_cross_bindir}/systemd-notify
 %{_cross_bindir}/systemd-nspawn
 %{_cross_bindir}/systemd-path
+%{_cross_bindir}/systemd-resolve
 %{_cross_bindir}/systemd-run
 %{_cross_bindir}/systemd-socket-activate
 %{_cross_bindir}/systemd-stdio-bridge
@@ -182,6 +198,7 @@ CONFIGURE_OPTS=(
 %{_cross_sbindir}/runlevel
 %{_cross_sbindir}/shutdown
 %{_cross_sbindir}/telinit
+%{_cross_sbindir}/resolvconf
 
 %{_cross_libdir}/libsystemd.so.*
 %{_cross_libdir}/libudev.so.*
@@ -205,7 +222,7 @@ CONFIGURE_OPTS=(
 %exclude %{_cross_sysconfdir}/init.d
 %exclude %{_cross_sysconfdir}/xdg
 
-%exclude %{_cross_datadir}/dbus-1
+%{_cross_datadir}/dbus-1/*
 %exclude %{_cross_datadir}/polkit-1
 
 %dir %{_cross_factorydir}
