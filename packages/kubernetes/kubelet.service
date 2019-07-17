@@ -5,6 +5,7 @@ After=docker.service
 Requires=docker.service
 
 [Service]
+Environment=/etc/kubernetes/kubelet/env
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
 ExecStart=/usr/bin/kubelet \
     --cloud-provider aws \
@@ -14,8 +15,8 @@ ExecStart=/usr/bin/kubelet \
     --container-runtime docker \
     --network-plugin cni \
     --volume-plugin-dir /var/lib/thar/kubernetes/kubelet-plugins/volume/exec/ \
-    --node-ip @_NODE_IP_@ \
-    --pod-infra-container-image @_PAUSE_CONTAINER_IMAGE_@
+    --node-ip ${NODE_IP} \
+    --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}
 
 Restart=on-failure
 RestartForceExitStatus=SIGPIPE
