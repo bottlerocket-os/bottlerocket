@@ -212,6 +212,21 @@ mod test {
         registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
 
         // Register a template with the base64 helper
+        let tmpl1 = "This is a cool {{base64_decode template}}.";
+        registry.register_template_string("tmpl1", tmpl1).unwrap();
+
+        let expected_keys = hashset! {"template".to_string()};
+        let actual_keys = registry.get_all_template_keys().unwrap();
+
+        assert_eq!(actual_keys, expected_keys)
+    }
+
+    #[test]
+    fn template_with_mixed_helpers_and_conditionals() {
+        let mut registry = Handlebars::new();
+        registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
+
+        // Register a template with the base64 helper
         let tmpl1 = "This is a cool {{base64_decode template}}. Here is a conditional: {{#if bridge-ip }}{{bridge-ip}}{{/if}}";
         let tmpl2 = "This is a cool {{frob}}. Here is a conditional: {{#if frobnicate }}{{frobnicate}}{{/if}}";
         registry.register_template_string("tmpl1", tmpl1).unwrap();
