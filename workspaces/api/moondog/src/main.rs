@@ -227,7 +227,7 @@ fn parse_args(args: env::Args) -> Args {
 
     for arg in args.skip(1) {
         match arg.as_ref() {
-            "-v" | "--verbosity" => verbosity += 1,
+            "-v" | "--verbose" => verbosity += 1,
             _ => usage(),
         }
     }
