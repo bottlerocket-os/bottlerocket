@@ -11,9 +11,6 @@ Once it has done so, it renders and rewrites the affected configuration files an
 #[macro_use]
 extern crate log;
 
-#[macro_use]
-extern crate serde_json;
-
 use snafu::ResultExt;
 use std::collections::HashSet;
 use std::io::{self, Read};

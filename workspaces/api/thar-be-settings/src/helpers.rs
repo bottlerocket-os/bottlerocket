@@ -83,10 +83,12 @@ pub fn base64_decode(
     // call should return an intelligible and valid name.
     // To protect us in the unlikely event a template was registered
     // without a name, we return the text "dynamic template"
+    trace!("Starting base64_decode helper");
     let template_name = renderctx
         .get_root_template_name()
         .map(|i| i.to_string())
         .unwrap_or_else(|| "dynamic template".to_string());
+    trace!("Template name: {}", &template_name);
 
     // Get the resolved key out of the template (param(0)). value() returns
     // a serde_json::Value
@@ -97,12 +99,14 @@ pub fn base64_decode(
             helper: helper.name().to_string(),
             template: template_name.to_owned(),
         })?;
+    trace!("Base64 value from template: {}", base64_value);
 
     // Create an &str from the serde_json::Value
     let base64_str = base64_value.as_str().context(error::InvalidTemplateValue {
         value: base64_value.to_owned(),
         template: template_name.to_owned(),
     })?;
+    trace!("Base64 string from template: {}", base64_str);
 
     // Base64 decode the &str
     let decoded_bytes = base64::decode(&base64_str).context(error::Base64Decode {
@@ -115,6 +119,7 @@ pub fn base64_decode(
         base64_string: base64_str.to_string(),
         template: template_name.to_owned(),
     })?;
+    trace!("Decoded base64: {}", decoded);
 
     // Write the string out to the template
     out.write(decoded).context(error::TemplateWrite {
@@ -128,6 +133,7 @@ mod test {
     use super::*;
     use handlebars::TemplateRenderError;
     use serde::Serialize;
+    use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
