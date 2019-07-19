@@ -1,6 +1,8 @@
 use crate::error::Result;
 use crate::io::{DigestAdapter, MaxSizeAdapter};
 use reqwest::{Client, Url};
+#[cfg(not(test))]
+use snafu::ensure;
 use std::io::Read;
 
 // Test mock that allows fetching from file:/// URLs relative to crate root
@@ -22,10 +24,18 @@ fn fetch(client: &Client, url: Url) -> Result<impl Read> {
     use crate::error;
     use snafu::ResultExt;
 
-    client
+    let response = client
         .get(url.clone())
         .send()
-        .context(error::Request { url })
+        .context(error::Request { url: url.clone() })?;
+    ensure!(
+        !response.status().is_client_error() && !response.status().is_server_error(),
+        error::ResponseStatus {
+            code: response.status(),
+            url
+        }
+    );
+    Ok(response)
 }
 
 pub(crate) fn fetch_max_size(
