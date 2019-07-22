@@ -416,8 +416,6 @@ while true; do
       "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_IMAGE} of=${DEVICE}"
    check_return ${?} "Writing image to disk failed!" || continue
 
-   # FIXME: do we need to udevadm settle here?
-
    # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
    echo -e "\n* Phase 3: snapshot the volume"
