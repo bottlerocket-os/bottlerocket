@@ -169,3 +169,7 @@ CROSS_COMPILATION_CONF_EOF\
 
 # Do not run ldconfig after build.
 %__brp_ldconfig %{nil}
+
+%__arch_install_post \
+/usr/lib/rpm/check-rpaths \
+/usr/lib/rpm/check-buildroot
