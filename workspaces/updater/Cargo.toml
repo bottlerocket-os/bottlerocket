@@ -2,6 +2,7 @@
 members = [
     "signpost",
     "tough",
+    "updog",
 ]
 
 [profile.release]

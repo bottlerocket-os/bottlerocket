@@ -40,6 +40,7 @@ Requires: %{_cross_os}sundog
 Requires: %{_cross_os}pluto
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}thar-be-settings
+Requires: %{_cross_os}updog
 Requires: %{_cross_os}util-linux
 
 %description

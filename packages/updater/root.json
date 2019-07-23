@@ -1,0 +1,40 @@
+{
+    "signed": {
+        "_type": "root",
+        "spec_version": "1.0",
+        "consistent_snapshot": true,
+        "version": 1,
+        "expires": "2020-07-18T00:00:00Z",
+        "keys": {
+            "d5973d61ccf22c6254c2bf7ebef134c3defefce501eb82603521dcb44d6ba479": {
+                "keytype": "rsa",
+                "scheme": "rsassa-pss-sha256",
+                "keyval": {"public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmtZB6zAsLHx/xhaigjZW\nwUqmObDt3dnwKCSt63gYh5kh1h9M7wFH+K/uuHq+vJvlI42UoFnW+Z6eHrbb9fjg\ns7pfZDmliM8sqVq610fQKlZTUeTODlKVNDvFw4ag2eqKMCGMPyCvHbJVB/bRi0Br\n4iKy4MEHYCQJG8Cli9bEhC0BQY+VxymbRBDly7M6CYWfCurBJKu45LkmEAphHZxz\nvyhE/vmDpVW+uFVQnKqCWHT9mwPbDSEPxISKRkCvmnPAqCrFChXL89fFkSHQ0L+u\neuTYiIOkcoYQr0Q87dZf5u1MRSychbizwW+blYLDIbKRyOZAF2m29Mv/9qNPBNOE\nY7xihqkWXjww5zifLmdAQ6thGRmOWvZ6WjK2m/se2MvO1C0KzHcB4moWsvsKdF3L\nojzpRijve2aV6SFH4BBzfNXjEvMxOnv8xADmZ0oDUryE9g4qfaBwvkcRZpf58/1q\njVktXTPPt6usX3QGDTfMLGdRjb6KTcx9eKJKXJcIb5hrAgMBAAE=\n-----END PUBLIC KEY-----\n"}
+            }
+        },
+        "roles": {
+            "root": {
+                "keyids": ["d5973d61ccf22c6254c2bf7ebef134c3defefce501eb82603521dcb44d6ba479"],
+                "threshold": 1
+            },
+            "snapshot": {
+                "keyids": ["d5973d61ccf22c6254c2bf7ebef134c3defefce501eb82603521dcb44d6ba479"],
+                "threshold": 1
+            },
+            "targets": {
+                "keyids": ["d5973d61ccf22c6254c2bf7ebef134c3defefce501eb82603521dcb44d6ba479"],
+                "threshold": 1
+            },
+            "timestamp": {
+                "keyids": ["d5973d61ccf22c6254c2bf7ebef134c3defefce501eb82603521dcb44d6ba479"],
+                "threshold": 1
+            }
+        }
+    },
+    "signatures": [
+        {
+            "keyid": "d5973d61ccf22c6254c2bf7ebef134c3defefce501eb82603521dcb44d6ba479",
+            "sig": "228c51a6b9c04f5be7d661d79dc8c743fb9e6e1f0d15e765b393894def709bf065e65f3a1e275abe4f0e083d187f3d51745a80d04ffaf068e2b24a04475dd7f85259389efb9d734338eb16ea1eac348061dbd12fb5bd28920829242353c673668ce7213d2b841d3ac71541cf3b8d5ad5b6ce1aa93a189851167729e44985292281d2d2b8d57511650718d6ff04f35b8e1c89c5994bcec61b56111e8dcde893d65da07063a0b119a2ac580b5dea32b7a834adc9157da2fdaa5ba6fe763a90e92791017b64f32e99b6d76030f252e13d0a843b8c17328bcbe7a0d228a253e55d29a81c8a032959fec6579e061357eb808517ff8df9549c883759b945805c42a1941b7f0631c36c2ea0304df00752c8c5df7ca5699896aede79e0301e8078cf356f8f9b4d8b2a060db9a0ef9bcf39e4d7b054560429a2738191166e3b2c6071e21c4c6c359e13afc2d4a386de89cb915ac0d39eed9748a6abc8f92aa9b038001ca38c9f465712c54700d3e7fb1799368463d608e81f581960b801657fddce025b88"
+        }
+    ]
+}
