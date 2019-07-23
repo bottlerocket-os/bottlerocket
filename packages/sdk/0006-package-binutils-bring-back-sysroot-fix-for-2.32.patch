@@ -1,4 +1,4 @@
-From 41090c5737bc9bc8cac9a08f5f776c5bc3be21e3 Mon Sep 17 00:00:00 2001
+From 8f76070833c5e7d0bbcc75b61a7e44160b509442 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Fri, 15 Mar 2019 18:32:49 +0000
 Subject: [PATCH 6/6] package/binutils: bring back sysroot fix for 2.32
@@ -67,5 +67,5 @@ index 0000000000..6a8d8f2867
 +2.17.2
 +
 -- 
-2.17.2
+2.21.0
 
