@@ -9,6 +9,7 @@ Requires=apiserver.service
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/sundog
+RemainAfterExit=true
 
 [Install]
 WantedBy=multi-user.target

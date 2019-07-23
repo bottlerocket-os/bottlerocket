@@ -1,0 +1,5 @@
+[Unit]
+Description=Thar be configuration - user and dynamic configuration complete
+After=moondog.service sundog.service
+Requires=moondog.service sundog.service
+AllowIsolate=yes

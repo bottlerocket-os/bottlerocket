@@ -1,7 +1,8 @@
 [Unit]
 Description=kubernetes kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=docker.service
+After=docker.service configured.target
+Wants=configured.target
 Requires=docker.service
 
 [Service]
