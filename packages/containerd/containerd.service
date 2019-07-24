@@ -1,7 +1,8 @@
 [Unit]
 Description=containerd container runtime
 Documentation=https://containerd.io
-After=network.target
+After=network-online.target configured.target
+Wants=network-online.target configured.target
 
 [Service]
 ExecStart=/usr/bin/containerd

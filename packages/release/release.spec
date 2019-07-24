@@ -19,6 +19,7 @@ Source200: hostname.template
 Source1000: 00-eth0.network
 Source1001: var-lib-thar.mount
 Source1002: fqdn.service
+Source1003: configured.target
 
 BuildArch: noarch
 Requires: %{_cross_os}apiserver
@@ -64,15 +65,16 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 install -d %{buildroot}%{_cross_libdir}/systemd/network
 install -p -m 0644 %{S:1000} %{buildroot}%{_cross_libdir}/systemd/network
 
+
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1001} %{S:1002} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1001} %{S:1002} %{S:1003} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../systemd-networkd.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../var-lib-thar.mount %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 
-mkdir -p %{buildroot}%{templatedir}
-install -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
+install -d %{buildroot}%{templatedir}
+install -p -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 
 %files
 %{_cross_bindir}/login
@@ -81,6 +83,7 @@ install -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/systemd/network/00-eth0.network
+%{_cross_unitdir}/configured.target
 %{_cross_unitdir}/fqdn.service
 %{_cross_unitdir}/var-lib-thar.mount
 %{_cross_unitdir}/multi-user.target.wants/systemd-networkd.service

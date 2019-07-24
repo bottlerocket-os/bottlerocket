@@ -2,8 +2,8 @@
 Description=docker engine
 Documentation=https://docs.docker.com
 BindsTo=containerd.service
-After=network-online.target containerd.service
-Wants=network-online.target
+After=network-online.target containerd.service configured.target
+Wants=network-online.target configured.target
 Requires=docker.socket
 StartLimitBurst=3
 StartLimitIntervalSec=60s
