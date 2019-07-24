@@ -7,6 +7,8 @@
 
 %global _dwz_low_mem_die_limit 0
 
+%global templatedir %{_cross_datadir}/templates
+
 Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
@@ -15,10 +17,10 @@ License: ASL 2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: kubelet.service
-Source2: kubelet-config
-Source3: kubelet-kubeconfig
-Source4: cluster-ca.crt
-Source5: kubelet-tmpfiles.conf
+Source2: kubelet-env
+Source3: kubelet-config
+Source4: kubelet-kubeconfig
+Source5: kubernetes-ca-crt
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
 
@@ -61,15 +63,11 @@ install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/kubelet.service
 install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../kubelet.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 
-install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet
-install -p -m 0644 %{S:2} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/config
-install -p -m 0644 %{S:3} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/kubeconfig
-
-install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki
-install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki/ca.crt
-
-install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/kubelet.conf
+mkdir -p %{buildroot}%{templatedir}
+install -m 0644 %{S:2} %{buildroot}%{templatedir}/kubelet-env
+install -m 0644 %{S:3} %{buildroot}%{templatedir}/kubelet-config
+install -m 0644 %{S:4} %{buildroot}%{templatedir}/kubelet-kubeconfig
+install -m 0644 %{S:5} %{buildroot}%{templatedir}/kubernetes-ca-crt
 
 %files
 %{_cross_bindir}/hyperkube
@@ -81,12 +79,10 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/kubelet.conf
 %{_cross_bindir}/kubelet
 %{_cross_unitdir}/kubelet.service
 %{_cross_unitdir}/multi-user.target.wants/kubelet.service
-%dir %{_cross_factorydir}%{_cross_sysconfdir}/kubernetes
-%dir %{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet
-%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/config
-%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/kubelet/kubeconfig
-%dir %{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki
-%{_cross_factorydir}%{_cross_sysconfdir}/kubernetes/pki/ca.crt
-%{_cross_tmpfilesdir}/kubelet.conf
+%dir %{templatedir}
+%{templatedir}/kubelet-env
+%{templatedir}/kubelet-config
+%{templatedir}/kubelet-kubeconfig
+%{templatedir}/kubernetes-ca-crt
 
 %changelog

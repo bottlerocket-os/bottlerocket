@@ -33,7 +33,13 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %package -n %{_cross_os}sundog
 Summary: Updates settings dynamically based on user-specified generators
 Requires: %{_cross_os}apiserver = %{version}-%{release}
+Requires: %{_cross_os}pluto = %{version}-%{release}
 %description -n %{_cross_os}sundog
+%{summary}.
+
+%package -n %{_cross_os}pluto
+Summary: Dynamic setting generator for kubernetes
+%description -n %{_cross_os}pluto
 %{summary}.
 
 %package -n %{_cross_os}thar-be-settings
@@ -61,6 +67,7 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 %cargo_install -p apiserver
 %cargo_install -p moondog
 %cargo_install -p sundog
+%cargo_install -p pluto
 %cargo_install -p thar-be-settings
 
 %files -n %{_cross_os}apiserver
@@ -74,6 +81,9 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 %files -n %{_cross_os}sundog
 %{_cross_bindir}/sundog
 %{systemd_systemdir}/sundog.service
+
+%files -n %{_cross_os}pluto
+%{_cross_bindir}/pluto
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings

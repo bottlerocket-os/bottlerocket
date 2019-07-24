@@ -3,6 +3,7 @@ members = [
     "apiserver",
     "moondog",
     "sundog",
+    "pluto",
     "thar-be-settings",
 
     "migration/migrator",

@@ -17,7 +17,7 @@ authorization:
     cacheUnauthorizedTTL: 30s
 clusterDomain: cluster.local
 clusterDNS:
-- @_CLUSTER_DNS_@
+- {{settings.kubernetes.cluster-dns-ip}}
 resolvConf: "/run/systemd/resolve/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd

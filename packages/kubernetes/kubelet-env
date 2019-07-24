@@ -1,0 +1,2 @@
+NODE_IP={{settings.kubernetes.node-ip}}
+POD_INFRA_CONTAINER_IMAGE={{settings.kubernetes.pod-infra-container-image}}

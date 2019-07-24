@@ -17,3 +17,46 @@ template-path = "/usr/share/templates/hostname"
 key = "settings.hostname"
 md = "affected-services"
 val = ["hostname"]
+
+# Kubernetes.
+
+[services.kubernetes]
+configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt"]
+restart-commands = []
+
+[configuration-files.kubelet-env]
+path = "/etc/kubernetes/kubelet/env"
+template-path = "/usr/share/templates/kubelet-env"
+
+[configuration-files.kubelet-config]
+path = "/etc/kubernetes/kubelet/config"
+template-path = "/usr/share/templates/kubelet-config"
+
+[configuration-files.kubelet-kubeconfig]
+path = "/etc/kubernetes/kubelet/kubeconfig"
+template-path = "/usr/share/templates/kubelet-kubeconfig"
+
+[configuration-files.kubernetes-ca-crt]
+path = "/etc/kubernetes/pki/ca.crt"
+template-path = "/usr/share/templates/kubernetes-ca-crt"
+
+[[metadata]]
+key = "settings.kubernetes.cluster-dns-ip"
+md = "setting-generator"
+val = "pluto cluster-dns-ip"
+
+[[metadata]]
+key = "settings.kubernetes.node-ip"
+md = "setting-generator"
+val = "pluto node-ip"
+
+[[metadata]]
+key = "settings.kubernetes.pod-infra-container-image"
+md = "setting-generator"
+val = "pluto pod-infra-container-image"
+
+[[metadata]]
+key = "settings.kubernetes"
+md = "affected-services"
+val = ["kubernetes"]
+
