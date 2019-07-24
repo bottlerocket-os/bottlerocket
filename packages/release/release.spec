@@ -73,8 +73,8 @@ install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../systemd-networkd.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../var-lib-thar.mount %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 
-mkdir -p %{buildroot}%{templatedir}
-install -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
+install -d %{buildroot}%{templatedir}
+install -p -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 
 %files
 %{_cross_bindir}/login
