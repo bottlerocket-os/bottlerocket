@@ -14,11 +14,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub enum Error {
-    /// A repository base URL provided to [`Repository::load`][crate::Repository::load] is missing
-    /// a trailing slash.
-    #[snafu(display("Base URL {:?} is missing trailing slash", url))]
-    BaseUrlMissingTrailingSlash { url: String, backtrace: Backtrace },
-
     /// The library failed to create a file in the datastore.
     #[snafu(display("Failed to create file at datastore path {}: {}", path.display(), source))]
     DatastoreCreate {

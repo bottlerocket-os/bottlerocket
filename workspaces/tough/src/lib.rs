@@ -22,6 +22,7 @@ use chrono::{DateTime, Utc};
 use reqwest::Client;
 use reqwest::Url;
 use snafu::{ensure, OptionExt, ResultExt};
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::io::Read;
 use std::path::Path;
@@ -59,8 +60,7 @@ impl Repository {
     /// large files that interfere with the client's system).
     ///
     /// `metadata_base_url` and `target_base_url` are the HTTP(S) base URLs for where the client
-    /// can find metadata (such as root.json) and targets (as listed in targets.json). This method
-    /// returns an error if the URLs do not end in slashes.
+    /// can find metadata (such as root.json) and targets (as listed in targets.json).
     pub fn load<R: Read, P: AsRef<Path>>(
         root: R,
         datastore: P,
@@ -208,12 +208,16 @@ impl From<crate::serde::Target> for Target {
     }
 }
 
+fn ensure_trailing_slash(url: &mut Cow<str>) {
+    if !url.ends_with('/') {
+        url.to_mut().push('/');
+    }
+}
+
 pub(crate) fn parse_url(url: &str) -> Result<Url> {
-    ensure!(
-        url.ends_with('/'),
-        error::BaseUrlMissingTrailingSlash { url }
-    );
-    Url::parse(url).context(error::ParseUrl { url })
+    let mut url = Cow::from(url);
+    ensure_trailing_slash(&mut url);
+    Url::parse(&url).context(error::ParseUrl { url })
 }
 
 /// Steps 0 and 1 of the client application, which load the current root metadata file based on a
@@ -652,4 +656,17 @@ fn load_targets(
     datastore.create("targets.json", &targets)?;
 
     Ok(targets)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Check if a url with a trailing slash and one without trailing slash can both be parsed
+    #[test]
+    fn url_missing_trailing_slash() {
+        let parsed_url_without_trailing_slash = parse_url("https://example.org/a/b/c").unwrap();
+        let parsed_url_with_trailing_slash = parse_url("https://example.org/a/b/c/").unwrap();
+        assert_eq!(parsed_url_without_trailing_slash, parsed_url_with_trailing_slash)
+    }
 }
