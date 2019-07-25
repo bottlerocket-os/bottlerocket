@@ -13,8 +13,22 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum TemplateHelperError {
-        #[snafu(display("No params provided to helper '{}' in template '{}'", helper, template))]
-        NoParams { helper: String, template: String },
+        #[snafu(display(
+            "Incorrect number of params provided to helper '{}' in template '{}' - {} expected, {} received",
+            helper,
+            template,
+            expected,
+            received,
+        ))]
+        IncorrectNumberOfParams {
+            expected: u8,
+            received: usize,
+            helper: String,
+            template: String,
+        },
+
+        #[snafu(display("Internal error: {}", msg))]
+        Internal { msg: String },
 
         // handlebars::JsonValue is a serde_json::Value, which implements
         // the 'Display' trait and should provide valuable context
@@ -90,14 +104,27 @@ pub fn base64_decode(
         .unwrap_or_else(|| "dynamic template".to_string());
     trace!("Template name: {}", &template_name);
 
+    // Check number of parameters, must be exactly one
+    trace!("Number of params: {}", helper.params().len());
+
+    if helper.params().len() != 1 {
+        return Err(RenderError::from(
+            error::TemplateHelperError::IncorrectNumberOfParams {
+                expected: 1,
+                received: helper.params().len(),
+                helper: helper.name().to_string(),
+                template: template_name,
+            },
+        ));
+    }
+
     // Get the resolved key out of the template (param(0)). value() returns
     // a serde_json::Value
     let base64_value = helper
         .param(0)
         .map(|v| v.value())
-        .context(error::NoParams {
-            helper: helper.name().to_string(),
-            template: template_name.to_owned(),
+        .context(error::Internal {
+            msg: "Found no params after confirming there is one param",
         })?;
     trace!("Base64 value from template: {}", base64_value);
 
@@ -170,5 +197,14 @@ mod test {
     #[test]
     fn base64_helper_with_missing_param() {
         assert!(setup_and_render_template("{{base64_decode}}", &json!({"var": "foo"})).is_err());
+    }
+
+    #[test]
+    fn base64_helper_with_extra_param() {
+        assert!(setup_and_render_template(
+            "{{base64_decode var1 var2}}",
+            &json!({"var1": "Zm9v", "var2": "YmFy"})
+        )
+        .is_err());
     }
 }
