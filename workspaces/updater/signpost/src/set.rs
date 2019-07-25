@@ -5,11 +5,11 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone)]
 pub struct PartitionSet {
     /// The partition containing the kernel and GRUB configuration for this partition set.
-    pub(crate) boot: PathBuf,
+    pub boot: PathBuf,
     /// The partition containing the root filesystem for this partition set.
-    pub(crate) root: PathBuf,
+    pub root: PathBuf,
     /// The partition containing the dm-verity hashes for this partition set.
-    pub(crate) hash: PathBuf,
+    pub hash: PathBuf,
 }
 
 impl PartitionSet {

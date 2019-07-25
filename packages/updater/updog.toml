@@ -1,0 +1,2 @@
+metadata_base_url = "https://cdn.thar.amazonlinux.a2z.com/updates/metadata/"
+target_base_url = "https://cdn.thar.amazonlinux.a2z.com/updates/targets/"

@@ -168,6 +168,14 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    /// A response to an HTTP request was in the 4xx or 5xx range.
+    #[snafu(display("Status {} {} in response for \"{}\"", code.as_u16(), code.as_str(), url))]
+    ResponseStatus {
+        code: reqwest::StatusCode,
+        url: reqwest::Url,
+        backtrace: Backtrace,
+    },
+
     /// Failed to decode a `SubjectPublicKeyInfo` formatted RSA public key.
     #[snafu(display("Invalid SubjectPublicKeyInfo-formatted RSA public key"))]
     RsaDecode { backtrace: Backtrace },

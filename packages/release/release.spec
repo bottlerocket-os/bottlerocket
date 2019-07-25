@@ -1,7 +1,7 @@
 %global templatedir %{_cross_datadir}/templates
 
 Name: %{_cross_os}release
-Version: 1.0
+Version: 1
 Release: 1%{?dist}
 Summary: Thar release
 License: Public Domain
@@ -40,6 +40,7 @@ Requires: %{_cross_os}sundog
 Requires: %{_cross_os}pluto
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}thar-be-settings
+Requires: %{_cross_os}updog
 Requires: %{_cross_os}util-linux
 
 %description
@@ -65,6 +66,12 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 install -d %{buildroot}%{_cross_libdir}/systemd/network
 install -p -m 0644 %{S:1000} %{buildroot}%{_cross_libdir}/systemd/network
 
+cat >%{buildroot}%{_cross_libdir}/os-release <<EOF
+NAME=Thar
+PRETTY_NAME="Thar, The Operating System"
+ID=thar
+VERSION_ID=%{version}
+EOF
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1001} %{S:1002} %{S:1003} %{buildroot}%{_cross_unitdir}
@@ -83,6 +90,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/systemd/network/00-eth0.network
+%{_cross_libdir}/os-release
 %{_cross_unitdir}/configured.target
 %{_cross_unitdir}/fqdn.service
 %{_cross_unitdir}/var-lib-thar.mount

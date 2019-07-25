@@ -147,6 +147,14 @@ impl State {
         !self.active
     }
 
+    pub fn active_set(&self) -> &PartitionSet {
+        &self.sets[self.active().idx()]
+    }
+
+    pub fn inactive_set(&self) -> &PartitionSet {
+        &self.sets[self.inactive().idx()]
+    }
+
     pub(crate) fn next(&self) -> Option<SetSelect> {
         let gptprio_a = self.gptprio(SetSelect::A);
         let gptprio_b = self.gptprio(SetSelect::B);
