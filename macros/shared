@@ -4,8 +4,8 @@
 %_cross_target %{_cross_arch}-%{_cross_vendor}-linux-%{_cross_libc}
 %dist %{nil}
 
-%_cross_cflags -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -fstack-clash-protection
-%_cross_c_args '-O2', '-g', '-pipe', '-Wall', '-Werror=format-security', '-Wp,-D_FORTIFY_SOURCE=2', '-Wp,-D_GLIBCXX_ASSERTIONS', '-fexceptions', '-fstack-protector-strong', '-fstack-clash-protection'
+%_cross_cflags -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-clash-protection
+%_cross_c_args '-O2', '-g', '-pipe', '-Wall', '-Werror=format-security', '-Wp,-D_FORTIFY_SOURCE=2', '-Wp,-D_GLIBCXX_ASSERTIONS', '-fexceptions', '-fstack-clash-protection'
 %_cross_cxxflags %_cross_cflags
 %_cross_ldflags -Wl,-z,relro -Wl,-z,now
 %_cross_c_link_args '-Wl,-z,relro', '-Wl,-z,now'
@@ -169,3 +169,7 @@ CROSS_COMPILATION_CONF_EOF\
 
 # Do not run ldconfig after build.
 %__brp_ldconfig %{nil}
+
+%__arch_install_post \
+/usr/lib/rpm/check-rpaths \
+/usr/lib/rpm/check-buildroot

@@ -1,4 +1,4 @@
-From 02432f15c393073fcdd039de408055dae9dbe27a Mon Sep 17 00:00:00 2001
+From 17d2577b888f364e299c093c25e7eb88ee160955 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:58:27 +0000
 Subject: [PATCH 4/6] build gcc with TOOLS_DIR and SYSROOT_DIR
@@ -18,18 +18,20 @@ We build GCC with the linker build ID option so that all binaries get
 the unique ID that allows core dumps to be matched to debug symbols
 directly, rather than relying on filesystem layout.
 
+We also enable pie and ssp by default.
+
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
- package/gcc/gcc-final/gcc-final.mk     | 54 +++++++++++++++++++-------
+ package/gcc/gcc-final/gcc-final.mk     | 56 +++++++++++++++++++-------
  package/gcc/gcc-initial/gcc-initial.mk |  3 ++
  package/gcc/gcc.mk                     |  2 +-
- 3 files changed, 44 insertions(+), 15 deletions(-)
+ 3 files changed, 46 insertions(+), 15 deletions(-)
 
 diff --git a/package/gcc/gcc-final/gcc-final.mk b/package/gcc/gcc-final/gcc-final.mk
-index cbde56ce1c..e03738cc75 100644
+index cbde56ce1c..a5a90f41c1 100644
 --- a/package/gcc/gcc-final/gcc-final.mk
 +++ b/package/gcc/gcc-final/gcc-final.mk
-@@ -46,9 +46,14 @@ define  HOST_GCC_FINAL_CONFIGURE_CMDS
+@@ -46,9 +46,16 @@ define  HOST_GCC_FINAL_CONFIGURE_CMDS
  		LDFLAGS="$(HOST_LDFLAGS)" \
  		$(HOST_GCC_FINAL_CONF_ENV) \
  		./configure \
@@ -43,10 +45,12 @@ index cbde56ce1c..e03738cc75 100644
 +		--with-sysroot=$(SYSROOT_DIR) \
 +		--with-build-sysroot=$(STAGING_DIR) \
 +		--with-gcc-major-version-only \
++		--enable-default-pie \
++		--enable-default-ssp \
  		$(QUIET) $(HOST_GCC_FINAL_CONF_OPTS) \
  	)
  endef
-@@ -64,16 +69,16 @@ HOST_GCC_FINAL_CONF_OPTS = \
+@@ -64,16 +71,16 @@ HOST_GCC_FINAL_CONF_OPTS = \
  	--enable-languages=$(GCC_FINAL_CROSS_LANGUAGES) \
  	--with-build-time-tools=$(HOST_DIR)/$(GNU_TARGET_NAME)/bin
  
@@ -66,7 +70,7 @@ index cbde56ce1c..e03738cc75 100644
  endif
  
  ifeq ($(BR2_GCC_SUPPORTS_LIBCILKRTS),y)
-@@ -88,7 +93,7 @@ ifeq ($(BR2_PTHREADS_NONE),y)
+@@ -88,7 +95,7 @@ ifeq ($(BR2_PTHREADS_NONE),y)
  HOST_GCC_FINAL_CONF_OPTS += --disable-libcilkrts
  endif
  
@@ -75,7 +79,7 @@ index cbde56ce1c..e03738cc75 100644
  # disable libcilkrts as there is no static version
  HOST_GCC_FINAL_CONF_OPTS += --disable-libcilkrts
  endif
-@@ -96,10 +101,8 @@ endif
+@@ -96,10 +103,8 @@ endif
  endif # BR2_GCC_SUPPORTS_LIBCILKRTS
  
  # Disable shared libs like libstdc++ if we do static since it confuses linking
@@ -88,7 +92,7 @@ index cbde56ce1c..e03738cc75 100644
  endif
  
  ifeq ($(BR2_GCC_ENABLE_OPENMP),y)
-@@ -118,22 +121,27 @@ HOST_GCC_FINAL_CONF_ENV = \
+@@ -118,22 +123,27 @@ HOST_GCC_FINAL_CONF_ENV = \
  
  HOST_GCC_FINAL_MAKE_OPTS += $(HOST_GCC_COMMON_MAKE_OPTS)
  
@@ -119,7 +123,7 @@ index cbde56ce1c..e03738cc75 100644
  
  # coldfire is not working without removing these object files from libgcc.a
  ifeq ($(BR2_m68k_cf),y)
-@@ -146,6 +154,7 @@ endif
+@@ -146,6 +156,7 @@ endif
  
  # Cannot use the HOST_GCC_FINAL_USR_LIBS mechanism below, because we want
  # libgcc_s to be installed in /lib and not /usr/lib.
@@ -127,7 +131,7 @@ index cbde56ce1c..e03738cc75 100644
  define HOST_GCC_FINAL_INSTALL_LIBGCC
  	-cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/libgcc_s* \
  		$(STAGING_DIR)/lib/
-@@ -154,6 +163,7 @@ define HOST_GCC_FINAL_INSTALL_LIBGCC
+@@ -154,6 +165,7 @@ define HOST_GCC_FINAL_INSTALL_LIBGCC
  endef
  
  HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_INSTALL_LIBGCC
@@ -135,7 +139,7 @@ index cbde56ce1c..e03738cc75 100644
  
  define HOST_GCC_FINAL_INSTALL_LIBATOMIC
  	-cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/libatomic* \
-@@ -199,7 +209,7 @@ define HOST_GCC_FINAL_INSTALL_STATIC_LIBS
+@@ -199,7 +211,7 @@ define HOST_GCC_FINAL_INSTALL_STATIC_LIBS
  	done
  endef
  
@@ -144,7 +148,7 @@ index cbde56ce1c..e03738cc75 100644
  define HOST_GCC_FINAL_INSTALL_SHARED_LIBS
  	for i in $(HOST_GCC_FINAL_USR_LIBS) ; do \
  		cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/$${i}.so* \
-@@ -218,4 +228,20 @@ endef
+@@ -218,4 +230,20 @@ endef
  HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_INSTALL_USR_LIBS
  endif
  
@@ -208,5 +212,5 @@ index e47435677e..7a9edecacd 100644
  	--with-mpc=$(HOST_DIR) \
  	--with-mpfr=$(HOST_DIR) \
 -- 
-2.17.2
+2.21.0
 

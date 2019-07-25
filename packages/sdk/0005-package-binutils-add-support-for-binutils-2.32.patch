@@ -1,4 +1,4 @@
-From caeab60e2861f870c90f486c99869d4412edad38 Mon Sep 17 00:00:00 2001
+From 7cd296bff4704b9af6675f886dc9008e208045fd Mon Sep 17 00:00:00 2001
 From: Romain Naour <romain.naour@gmail.com>
 Date: Sun, 10 Mar 2019 11:44:28 +0100
 Subject: [PATCH 5/6] package/binutils: add support for binutils 2.32
@@ -436,5 +436,5 @@ index d97f55da8a..c5e8fc8e83 100644
  # Locally calculated (fetched from Github)
  sha512  bea88164ed48733bad63393fe702e12e651efd113aa4f3fe2e253e05c4c1e5da20b5a99333f0b5528df6d32ce806f799211c568e1916845a87999901dde28817  binutils-arc-2018.03.tar.gz
 -- 
-2.17.2
+2.21.0
 

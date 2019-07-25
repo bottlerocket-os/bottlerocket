@@ -68,5 +68,5 @@ index 090065a3e4..e3feea73c4 100644
  $(eval $(autotools-package))
  $(eval $(host-autotools-package))
 -- 
-2.17.2
+2.21.0
 

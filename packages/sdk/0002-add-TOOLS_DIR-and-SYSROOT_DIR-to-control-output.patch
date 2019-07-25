@@ -89,5 +89,5 @@ index f24abdd703..3f0810e38e 100644
  ifeq ($(BR2_OPTIMIZE_0),y)
  TARGET_OPTIMIZATION = -O0
 -- 
-2.17.2
+2.21.0
 
