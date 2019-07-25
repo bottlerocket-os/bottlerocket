@@ -1,3 +1,6 @@
+# Skip check-rpaths since we expect them for systemd.
+%global __arch_install_post /usr/lib/rpm/check-buildroot
+
 Name: %{_cross_os}systemd
 Version: 242
 Release: 1%{?dist}
