@@ -1,0 +1,82 @@
+From 8438d10a15a63e3ebe7f73b134423c988712eec8 Mon Sep 17 00:00:00 2001
+From: Kees Cook <keescook@chromium.org>
+Date: Mon, 27 Aug 2018 14:51:54 -0700
+Subject: [PATCH 2/2] random: make CPU trust a boot parameter
+
+Instead of forcing a distro or other system builder to choose
+at build time whether the CPU is trusted for CRNG seeding via
+CONFIG_RANDOM_TRUST_CPU, provide a boot-time parameter for end users to
+control the choice. The CONFIG will set the default state instead.
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ Documentation/admin-guide/kernel-parameters.txt |  6 ++++++
+ drivers/char/Kconfig                            |  4 ++--
+ drivers/char/random.c                           | 11 ++++++++---
+ 3 files changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index 05496622b4ef..915013dab0bf 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -3267,6 +3267,12 @@
+ 	ramdisk_size=	[RAM] Sizes of RAM disks in kilobytes
+ 			See Documentation/blockdev/ramdisk.txt.
+ 
++	random.trust_cpu={on,off}
++			[KNL] Enable or disable trusting the use of the
++			CPU's random number generator (if available) to
++			fully seed the kernel's CRNG. Default is controlled
++			by CONFIG_RANDOM_TRUST_CPU.
++
+ 	ras=option[,option,...]	[KNL] RAS-specific options
+ 
+ 		cec_disable	[X86]
+diff --git a/drivers/char/Kconfig b/drivers/char/Kconfig
+index b732016921a2..6328b571b4b8 100644
+--- a/drivers/char/Kconfig
++++ b/drivers/char/Kconfig
+@@ -602,5 +602,5 @@ config RANDOM_TRUST_CPU
+ 	that CPU manufacturer (perhaps with the insistence or mandate
+ 	of a Nation State's intelligence or law enforcement agencies)
+ 	has not installed a hidden back door to compromise the CPU's
+-	random number generation facilities.
+-
++	random number generation facilities. This can also be configured
++	at boot with "random.trust_cpu=on/off".
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index efdb37fa18ed..5f3955220487 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -767,6 +767,13 @@ static struct crng_state **crng_node_pool __read_mostly;
+ 
+ static void invalidate_batched_entropy(void);
+ 
++static bool trust_cpu __ro_after_init = IS_ENABLED(CONFIG_RANDOM_TRUST_CPU);
++static int __init parse_trust_cpu(char *arg)
++{
++	return kstrtobool(arg, &trust_cpu);
++}
++early_param("random.trust_cpu", parse_trust_cpu);
++
+ static void crng_initialize(struct crng_state *crng)
+ {
+ 	int		i;
+@@ -787,12 +794,10 @@ static void crng_initialize(struct crng_state *crng)
+ 		}
+ 		crng->state[i] ^= rv;
+ 	}
+-#ifdef CONFIG_RANDOM_TRUST_CPU
+-	if (arch_init) {
++	if (trust_cpu && arch_init) {
+ 		crng_init = 2;
+ 		pr_notice("random: crng done (trusting CPU's manufacturer)\n");
+ 	}
+-#endif
+ 	crng->init_time = jiffies - CRNG_RESEED_INTERVAL - 1;
+ }
+ 
+-- 
+2.21.0
+

@@ -10,6 +10,8 @@ Source0: https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{version}.tar.xz
 Source100: config-%{_cross_arch}
 Patch1000: dm-add-support-to-directly-boot-to-a-mapped-device.patch
 Patch1001: selinux-use-kernel-linux-socket.h-for-genheaders-and.patch
+Patch1002: random-add-a-config-option-to-trust-the-CPU-s-hwrng.patch
+Patch1003: random-make-CPU-trust-a-boot-parameter.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: gcc-%{_cross_target}
