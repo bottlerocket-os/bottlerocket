@@ -52,9 +52,6 @@ install -p -m 0755 ctr %{buildroot}%{_cross_bindir}
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/containerd.service
 
-install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
-ln -s ../containerd.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
-
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd/config.toml
 
@@ -66,7 +63,6 @@ install -p -m 0644 %{S:3} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %{_cross_bindir}/containerd-shim
 %{_cross_bindir}/ctr
 %{_cross_unitdir}/containerd.service
-%{_cross_unitdir}/multi-user.target.wants/containerd.service
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/containerd
 %{_cross_factorydir}%{_cross_sysconfdir}/containerd/config.toml
 %{_cross_tmpfilesdir}/containerd.conf
