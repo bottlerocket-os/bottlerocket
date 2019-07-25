@@ -46,8 +46,8 @@ SUBCOMMANDS:
 
 fn load_config() -> Result<Config> {
     let path = "/etc/updog.toml";
-    toml::from_str(&fs::read_to_string("/etc/updog.toml").context(error::ConfigRead { path })?)
-        .context(error::ConfigParse { path })
+    let s = fs::read_to_string(path).context(error::ConfigRead { path })?;
+    toml::from_str(&s).context(error::ConfigParse { path })
 }
 
 fn load_repository(config: &Config) -> Result<Repository> {
@@ -77,8 +77,8 @@ fn load_manifest(repository: &Repository) -> Result<Manifest> {
 }
 
 fn running_version() -> Result<u64> {
-    for line in BufReader::new(File::open("/etc/os-release").context(error::VersionIdRead)?).lines()
-    {
+    let reader = BufReader::new(File::open("/etc/os-release").context(error::VersionIdRead)?);
+    for line in reader.lines() {
         let line = line.context(error::VersionIdRead)?;
         let line = line.trim();
         let key = "VERSION_ID=";
@@ -95,23 +95,21 @@ fn update_required(manifest: &Manifest) -> Result<bool> {
     Ok(
         // If the current running version is less than the current published version, update.
         version < manifest.version ||
-        // If the current version is greater than the max version ever published, update.
+        // If the current running version is greater than the max version ever published, update.
         version > manifest.max_version,
     )
 }
 
-fn target_to_disk<P: AsRef<Path>>(
+fn write_target_to_disk<P: AsRef<Path>>(
     repository: &Repository,
     target: &str,
     disk_path: P,
 ) -> Result<()> {
-    let mut reader = lz4::Decoder::new(
-        repository
-            .read_target(target)
-            .context(error::Metadata)?
-            .context(error::TargetNotFound { target })?,
-    )
-    .context(error::Lz4Decode { target })?;
+    let reader = repository
+        .read_target(target)
+        .context(error::Metadata)?
+        .context(error::TargetNotFound { target })?;
+    let mut reader = lz4::Decoder::new(reader).context(error::Lz4Decode { target })?;
     let mut f = OpenOptions::new()
         .write(true)
         .open(disk_path.as_ref())
@@ -159,9 +157,9 @@ fn main_inner() -> Result<()> {
             gpt_state.write().context(error::PartitionTableWrite)?;
 
             let inactive = gpt_state.inactive_set();
-            target_to_disk(&repository, "thar-x86_64-boot.ext4.lz4", &inactive.boot)?;
-            target_to_disk(&repository, "thar-x86_64-root.ext4.lz4", &inactive.root)?;
-            target_to_disk(&repository, "thar-x86_64-root.verity.lz4", &inactive.hash)?;
+            write_target_to_disk(&repository, "thar-x86_64-boot.ext4.lz4", &inactive.boot)?;
+            write_target_to_disk(&repository, "thar-x86_64-root.ext4.lz4", &inactive.root)?;
+            write_target_to_disk(&repository, "thar-x86_64-root.verity.lz4", &inactive.hash)?;
 
             gpt_state.upgrade_to_inactive();
             gpt_state.write().context(error::PartitionTableWrite)?;
