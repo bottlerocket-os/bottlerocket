@@ -18,7 +18,8 @@
 # Environment assumptions:
 # * aws-cli is set up (via environment or config) to operate EC2 in the given region.
 # * The SSH key associated with --ssh-keypair is loaded in ssh-agent.
-# * Some required tools are available; look just below the constants.
+# * Some required tools are available locally; look just below the constants.
+# * The worker AMI has rsync, which we use because it can copy/write sparse files.
 # * The --security-group-name you specify (or "default") has TCP port 22 open,
 #      and you can access EC2 from your location
 
@@ -95,7 +96,7 @@ $(basename "${0}") --image <image_file>
                  [ --subnet-id subnet-abcdef1234 ]
                  [ --user-data base64 ]
                  [ --volume-size 1234 ]
-                 [ --security-group-name default ]
+                 [ --security-group-name default | --security-group-id sg-abcdef1234 ]
 
 Registers the given image in the given EC2 region.
 
@@ -110,10 +111,14 @@ Required:
 
 Optional:
    --description              The description attached to the registered AMI (defaults to name)
-   --subnet-id                If the given instance type requires VPC, and you have no default VPC, specify a subnet in which to launch
+   --subnet-id                Specify a subnet in which to launch the worker instance
+                              (required if the given instance type requires VPC and you have no default VPC)
+                              (must specify security group by ID and not by name if specifying subnet)
    --user-data                EC2 user data for worker instance, in base64 form with no line wrapping
    --volume-size              AMI root volume size in GB (defaults to size of disk image)
-   --security-group-name      A security group name that allows SSH access from this host (defaults to "default")
+   --security-group-id        The ID of a security group name that allows SSH access from this host
+   --security-group-name      The name of a security group name that allows SSH access from this host
+                              (defaults to "default" if neither name nor ID are specified)
 EOF
 }
 
@@ -141,7 +146,8 @@ parse_args() {
          --subnet-id ) shift; SUBNET_ID="${1}" ;;
          --user-data ) shift; USER_DATA="${1}" ;;
          --volume-size ) shift; VOLUME_SIZE="${1}" ;;
-         --security-group-name ) shift; SECURITY_GROUP="${1}" ;;
+         --security-group-name ) shift; SECURITY_GROUP_NAME="${1}" ;;
+         --security-group-id ) shift; SECURITY_GROUP_ID="${1}" ;;
 
          --help ) usage; exit 0 ;;
          *)
@@ -162,16 +168,27 @@ parse_args() {
    required_arg "--name" "${NAME}"
    required_arg "--arch" "${ARCH}"
 
+   # Other argument checks
    if [ ! -r "${IMAGE}" ] ; then
       echo "ERROR: cannot read ${IMAGE}" >&2
       exit 2
    fi
 
-   # Defaults
-
-   if [ -z "${SECURITY_GROUP}" ] ; then
-      SECURITY_GROUP="default"
+   if [ -n "${SECURITY_GROUP_NAME}" ] && [ -n "${SECURITY_GROUP_ID}" ]; then
+      echo "ERROR: --security-group-name and --security-group-id are incompatible" >&2
+      usage
+      exit 2
+   elif [ -n "${SECURITY_GROUP_NAME}" ] && [ -n "${SUBNET_ID}" ]; then
+      echo "ERROR: If specifying --subnet-id, must use --security-group-id instead of --security-group-name" >&2
+      usage
+      exit 2
    fi
+
+   # Defaults
+   if [ -z "${SECURITY_GROUP_NAME}" ] && [ -z "${SECURITY_GROUP_ID}" ]; then
+      SECURITY_GROUP_NAME="default"
+   fi
+
    if [ -z "${DESCRIPTION}" ] ; then
       DESCRIPTION="${NAME}"
    fi
@@ -185,6 +202,7 @@ cleanup() {
    if [ -n "${instance}" ]; then
       echo "Cleaning up worker instance"
       aws ec2 terminate-instances \
+         --output text \
          --region "${REGION}" \
          --instance-ids "${instance}"
    # Clean up volume if we have it, but *not* if we have an instance - the
@@ -194,6 +212,7 @@ cleanup() {
    elif [ -n "${volume}" ]; then
       echo "Cleaning up working volume"
       aws ec2 delete-volume \
+         --output text \
          --region "${REGION}" \
          --volume-id "${volume}"
    fi
@@ -325,7 +344,8 @@ while true; do
       --instance-type "${INSTANCE_TYPE}" \
       ${SUBNET_ID:+--subnet-id "${SUBNET_ID}"} \
       ${USER_DATA:+--user-data "${USER_DATA}"} \
-      --security-groups "${SECURITY_GROUP}" \
+      ${SECURITY_GROUP_NAME:+--security-groups "${SECURITY_GROUP_NAME}"} \
+      ${SECURITY_GROUP_ID:+--security-group-ids "${SECURITY_GROUP_ID}"} \
       --key "${SSH_KEYPAIR}" \
       --block-device-mapping "${worker_block_device_mapping}" \
       | jq --raw-output '.Instances[].InstanceId')
@@ -344,6 +364,7 @@ while true; do
          echo "* Instance didn't start running in allotted time!" >&2
          # Don't leave it hanging
          if aws ec2 terminate-instances \
+            --output text \
             --region "${REGION}" \
             --instance-ids "${instance}"
          then
@@ -422,12 +443,14 @@ while true; do
 
    echo "Detaching the volume so we can snapshot it"
    aws ec2 detach-volume \
+      --output text \
       --region "${REGION}" \
       --volume-id "${volume}"
    check_return ${?} "detach of new volume failed!" || continue
 
    echo "Terminating the instance"
    if aws ec2 terminate-instances \
+      --output text \
       --region "${REGION}" \
       --instance-ids "${instance}"
    then
@@ -491,6 +514,7 @@ while true; do
 
    echo "Deleting volume"
    if aws ec2 delete-volume \
+      --output text \
       --region "${REGION}" \
       --volume-id "${volume}"
    then
@@ -508,6 +532,7 @@ while true; do
    echo "Registering an AMI from the snapshot"
    # shellcheck disable=SC2086
    registered_ami=$(aws --region "${REGION}" ec2 register-image \
+      --output text \
       --root-device-name "${ROOT_DEVICE_NAME}" \
       --architecture "${ARCH}" \
       ${SRIOV_FLAG} \
