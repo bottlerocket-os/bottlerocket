@@ -667,6 +667,9 @@ mod tests {
     fn url_missing_trailing_slash() {
         let parsed_url_without_trailing_slash = parse_url("https://example.org/a/b/c").unwrap();
         let parsed_url_with_trailing_slash = parse_url("https://example.org/a/b/c/").unwrap();
-        assert_eq!(parsed_url_without_trailing_slash, parsed_url_with_trailing_slash)
+        assert_eq!(
+            parsed_url_without_trailing_slash,
+            parsed_url_with_trailing_slash
+        )
     }
 }
