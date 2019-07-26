@@ -185,6 +185,7 @@ cleanup() {
    if [ -n "${instance}" ]; then
       echo "Cleaning up worker instance"
       aws ec2 terminate-instances \
+         --output text \
          --region "${REGION}" \
          --instance-ids "${instance}"
    # Clean up volume if we have it, but *not* if we have an instance - the
@@ -194,6 +195,7 @@ cleanup() {
    elif [ -n "${volume}" ]; then
       echo "Cleaning up working volume"
       aws ec2 delete-volume \
+         --output text \
          --region "${REGION}" \
          --volume-id "${volume}"
    fi
@@ -344,6 +346,7 @@ while true; do
          echo "* Instance didn't start running in allotted time!" >&2
          # Don't leave it hanging
          if aws ec2 terminate-instances \
+            --output text \
             --region "${REGION}" \
             --instance-ids "${instance}"
          then
@@ -422,12 +425,14 @@ while true; do
 
    echo "Detaching the volume so we can snapshot it"
    aws ec2 detach-volume \
+      --output text \
       --region "${REGION}" \
       --volume-id "${volume}"
    check_return ${?} "detach of new volume failed!" || continue
 
    echo "Terminating the instance"
    if aws ec2 terminate-instances \
+      --output text \
       --region "${REGION}" \
       --instance-ids "${instance}"
    then
@@ -491,6 +496,7 @@ while true; do
 
    echo "Deleting volume"
    if aws ec2 delete-volume \
+      --output text \
       --region "${REGION}" \
       --volume-id "${volume}"
    then
@@ -508,6 +514,7 @@ while true; do
    echo "Registering an AMI from the snapshot"
    # shellcheck disable=SC2086
    registered_ami=$(aws --region "${REGION}" ec2 register-image \
+      --output text \
       --root-device-name "${ROOT_DEVICE_NAME}" \
       --architecture "${ARCH}" \
       ${SRIOV_FLAG} \
