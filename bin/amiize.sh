@@ -18,7 +18,8 @@
 # Environment assumptions:
 # * aws-cli is set up (via environment or config) to operate EC2 in the given region.
 # * The SSH key associated with --ssh-keypair is loaded in ssh-agent.
-# * Some required tools are available; look just below the constants.
+# * Some required tools are available locally; look just below the constants.
+# * The worker AMI has rsync, which we use because it can copy/write sparse files.
 # * The --security-group-name you specify (or "default") has TCP port 22 open,
 #      and you can access EC2 from your location
 
