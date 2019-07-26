@@ -42,6 +42,7 @@ Requires: %{_cross_os}systemd
 Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}updog
 Requires: %{_cross_os}util-linux
+Requires: %{_cross_os}amazon-ssm-agent
 
 %description
 %{summary}.

@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Samuel Mendoza-Jonas <samjonas@amazon.com>
+Date: Wed, 24 Jul 2019 16:23:29 -0700
+Subject: [PATCH 1/2] Use absolute path to launch shell
+
+Signed-off-by: Samuel Mendoza-Jonas <samjonas@amazon.com>
+---
+ agent/session/shell/shell_unix.go | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/agent/session/shell/shell_unix.go b/agent/session/shell/shell_unix.go
+index 425b1f56..97a542aa 100644
+--- a/agent/session/shell/shell_unix.go
++++ b/agent/session/shell/shell_unix.go
+@@ -59,10 +59,10 @@ func StartPty(
+ 	//Start the command with a pty
+ 	var cmd *exec.Cmd
+ 	if strings.TrimSpace(shellProps.Linux.Commands) == "" || isSessionLogger {
+-		cmd = exec.Command("sh")
++		cmd = exec.Command("/bin/sh")
+ 	} else {
+ 		commandArgs := append(utility.ShellPluginCommandArgs, shellProps.Linux.Commands)
+-		cmd = exec.Command("sh", commandArgs...)
++		cmd = exec.Command("/bin/sh", commandArgs...)
+ 	}
+ 
+ 	//TERM is set as linux by pty which has an issue where vi editor screen does not get cleared.
+-- 
+2.17.1
+
