@@ -36,11 +36,13 @@ fn usage() -> ! {
     #[rustfmt::skip]
     eprintln!("\
 USAGE:
-    updog <SUBCOMMAND>
+    updog <SUBCOMMAND> <OPTIONS>
 
 SUBCOMMANDS:
     check-update            Show if an update is available
-    update                  Perform an update if available");
+    update                  Perform an update if available
+OPTIONS:
+    [ --verbose --verbose ... ]   Increase log verbosity");
     std::process::exit(1)
 }
 
@@ -120,18 +122,54 @@ fn write_target_to_disk<P: AsRef<Path>>(
     Ok(())
 }
 
+/// Struct to hold the specified command line argument values
+struct Arguments {
+    subcommand: String,
+    verbosity: usize,
+}
+
+/// Parse the command line arguments to get the user-specified values
+fn parse_args(args: std::env::Args) -> Arguments {
+    let mut subcommand = None;
+    let mut verbosity: usize = 3; // Default log level to 3 (Info)
+
+    for arg in args.skip(1) {
+        match arg.as_ref() {
+            "-v" | "--verbose" => {
+                verbosity += 1;
+            }
+            // Assume any arguments not prefixed with '-' is a subcommand
+            s if !s.starts_with('-') => {
+                if subcommand.is_some() {
+                    usage();
+                }
+                subcommand = Some(s.to_string());
+            }
+            _ => usage(),
+        }
+    }
+
+    Arguments {
+        subcommand: subcommand.unwrap_or_else(|| usage()),
+        verbosity,
+    }
+}
+
 fn main_inner() -> Result<()> {
+    // Parse and store the arguments passed to the program
+    let arguments = parse_args(std::env::args());
+
     // TODO Fix this later when we decide our logging story
     // Start the logger
     stderrlog::new()
         .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(3)
+        .verbosity(arguments.verbosity)
         .color(stderrlog::ColorChoice::Never)
         .init()
         .unwrap();
 
-    let command_str = std::env::args().nth(1).unwrap_or_else(|| usage());
-    let command = serde_plain::from_str::<Command>(&command_str).unwrap_or_else(|_| usage());
+    let command =
+        serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
     match command {
         Command::CheckUpdate => {
