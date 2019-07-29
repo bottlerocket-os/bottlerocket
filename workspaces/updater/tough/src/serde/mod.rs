@@ -10,6 +10,7 @@ pub(crate) use snapshot::Snapshot;
 pub(crate) use targets::{Target, Targets};
 pub(crate) use timestamp::Timestamp;
 
+use crate::datastore::Datastore;
 use crate::error::{self, Result};
 use crate::serde::decoded::{Decoded, Hex};
 use chrono::{DateTime, Utc};
@@ -43,9 +44,33 @@ pub(crate) struct Signed<T> {
 
 #[allow(clippy::use_self)] // false positive
 impl<T: Metadata + Serialize> Signed<T> {
-    pub(crate) fn check_expired(&self) -> Result<()> {
+    pub(crate) fn check_expired(&self, datastore: &Datastore) -> Result<()> {
+        // Get 'current' system time
+        let sys_time = Utc::now();
+        // Load the latest known system time, if it exists
+        match datastore
+            .reader("latest_known_time.json")?
+            .map(serde_json::from_reader::<_, DateTime<Utc>>)
+        {
+            Some(Ok(latest_known_time)) => {
+                // Make sure the sampled system time did not go back in time
+                ensure!(
+                    sys_time > latest_known_time,
+                    error::IrrationalSystemTime {
+                        sys_time,
+                        latest_known_time
+                    }
+                );
+            }
+            // If the file doesn't exist, create it and store the latest known time to it
+            _ => {
+                // Serializes RFC3339 time string and store to datastore
+                datastore.create("latest_known_time.json", &sys_time)?;
+            }
+        }
+        // Check for expiration
         ensure!(
-            Utc::now() < *self.signed.expires(),
+            sys_time < *self.signed.expires(),
             error::ExpiredMetadata { role: T::ROLE }
         );
         Ok(())
