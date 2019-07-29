@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "olpc-cjson",
     "signpost",
     "tough",
     "updog",
