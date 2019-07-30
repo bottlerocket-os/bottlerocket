@@ -5,6 +5,10 @@
 timezone = "America/Los_Angeles"
 hostname = "localhost"
 
+[settings.updates]
+metadata-base-url = "https://cdn.thar.amazonlinux.a2z.com/updates/metadata/"
+target-base-url = "https://cdn.thar.amazonlinux.a2z.com/updates/targets/"
+
 [services.hostname]
 configuration-files = ["hostname"]
 restart-commands = []
@@ -59,4 +63,19 @@ val = "pluto pod-infra-container-image"
 key = "settings.kubernetes"
 md = "affected-services"
 val = ["kubernetes"]
+
+# Updog.
+
+[services.updog]
+configuration-files = ["updog-toml"]
+restart-commands = []
+
+[configuration-files.updog-toml]
+path = "/etc/updog.toml"
+template-path = "/usr/share/templates/updog-toml"
+
+[[metadata]]
+key = "settings.updates"
+md = "affected-services"
+val = ["updog"]
 
