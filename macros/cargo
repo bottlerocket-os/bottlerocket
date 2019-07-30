@@ -46,9 +46,9 @@ do_cargo_build_registry $REGISTRY \
 
 %cargo_test CARGO_HOME="$PWD" %{__cargo} test %{__cargo_common_opts} --release --no-fail-fast %{?cargo_args}
 
-%cargo_install(p:) \
-CARGO_HOME="$PWD" %{__cargo} install %{__cargo_common_opts} --root %{buildroot}%{_cross_rootdir}%{_prefix} %{-p:--path %{-p*}}%{!-p:--path .} %{?cargo_args} \
-%{__rm} %{buildroot}%{_cross_rootdir}%{_prefix}/.crates.toml
+%cargo_install(p:d:) \
+CARGO_HOME="$PWD" %{__cargo} install %{__cargo_common_opts} %{-d:--root %{-d*}}%{!-d:--root %{buildroot}%{_cross_rootdir}%{_prefix}} %{-p:--path %{-p*}}%{!-p:--path .} %{?cargo_args} \
+%{__rm} %{-d:%{-d*}}%{!-d:%{buildroot}%{_cross_rootdir}%{_prefix}}/.crates.toml
 
 %__cargo_crate_source_url() https://crates.io/api/v1/crates/%1/%2/download#%3/%1-%2.crate
 %__cargo_crate_source_urls grep '^"checksum' | tr -d '"' | awk '{ print "Source" NR+9999 ": %%{__cargo_crate_source_url " $2 " " $3 " " $6 "}" } END { print "%%global __cargo_first_crate 10000\\n%%global __cargo_last_crate " NR+9999 }'
