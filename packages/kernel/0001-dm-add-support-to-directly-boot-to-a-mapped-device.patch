@@ -1,7 +1,9 @@
-From 4e6a7ccc14989c2c859b302c070363ddf691dff9 Mon Sep 17 00:00:00 2001
+From ee8d4f136ea11e6b0a1488eccc154f30387ef231 Mon Sep 17 00:00:00 2001
 From: Helen Koike <helen.koike@collabora.com>
 Date: Thu, 21 Feb 2019 17:33:34 -0300
 Subject: [PATCH] dm: add support to directly boot to a mapped device
+
+commit 6bbc923dfcf57d6b97388819a7393835664c7a8e upstream.
 
 Add a "create" module parameter, which allows device-mapper targets to
 be configured at boot time. This enables early use of DM targets in the
@@ -48,11 +50,11 @@ Signed-off-by: Helen Koike <helen.koike@collabora.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- Documentation/device-mapper/dm-init.txt | 114 ++++++++++++
- drivers/md/Kconfig                      |  12 ++
+ Documentation/device-mapper/dm-init.txt | 114 +++++++++
+ drivers/md/Kconfig                      |  12 +
  drivers/md/Makefile                     |   4 +
- drivers/md/dm-init.c                    | 303 ++++++++++++++++++++++++++++++++
- drivers/md/dm-ioctl.c                   | 103 +++++++++++
+ drivers/md/dm-init.c                    | 303 ++++++++++++++++++++++++
+ drivers/md/dm-ioctl.c                   | 103 ++++++++
  include/linux/device-mapper.h           |   9 +
  6 files changed, 545 insertions(+)
  create mode 100644 Documentation/device-mapper/dm-init.txt
@@ -179,10 +181,10 @@ index 000000000000..8464ee7c01b8
 +    fb1a5a0f00deb908d8b53cb270858975e76cf64105d412ce764225d53b8f3cfd
 +    51934789604d1b92399c52e7cb149d1b3a1b74bbbcb103b2a0aaacbed5c08584
 diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 4a249ee86364..4ea706f7790b 100644
+index 8b8c123cae66..9949fd9d8a5e 100644
 --- a/drivers/md/Kconfig
 +++ b/drivers/md/Kconfig
-@@ -428,6 +428,18 @@ config DM_DELAY
+@@ -447,6 +447,18 @@ config DM_DELAY
  
  	If unsure, say N.
  
@@ -202,12 +204,12 @@ index 4a249ee86364..4ea706f7790b 100644
  	bool "DM uevents"
  	depends on BLK_DEV_DM
 diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index e94b6f9be941..d56331fbd895 100644
+index 822f4e8753bc..a52b703e588e 100644
 --- a/drivers/md/Makefile
 +++ b/drivers/md/Makefile
-@@ -64,6 +64,10 @@ obj-$(CONFIG_DM_LOG_WRITES)	+= dm-log-writes.o
- obj-$(CONFIG_DM_INTEGRITY)	+= dm-integrity.o
+@@ -69,6 +69,10 @@ obj-$(CONFIG_DM_INTEGRITY)	+= dm-integrity.o
  obj-$(CONFIG_DM_ZONED)		+= dm-zoned.o
+ obj-$(CONFIG_DM_WRITECACHE)	+= dm-writecache.o
  
 +ifeq ($(CONFIG_DM_INIT),y)
 +dm-mod-objs			+= dm-init.o
@@ -526,10 +528,10 @@ index 000000000000..b53f30f16b4d
 +module_param(create, charp, 0);
 +MODULE_PARM_DESC(create, "Create a mapped device in early boot");
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index ca948155191a..b7e6c7311a93 100644
+index f666778ad237..c740153b4e52 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -2017,3 +2017,106 @@ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
+@@ -2018,3 +2018,106 @@ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
  
  	return r;
  }
@@ -637,7 +639,7 @@ index ca948155191a..b7e6c7311a93 100644
 +	return r;
 +}
 diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index a5538433c927..990e7c2f84b1 100644
+index bef2e36c01b4..6f20e62cfd92 100644
 --- a/include/linux/device-mapper.h
 +++ b/include/linux/device-mapper.h
 @@ -10,6 +10,7 @@
@@ -648,7 +650,7 @@ index a5538433c927..990e7c2f84b1 100644
  #include <linux/math64.h>
  #include <linux/ratelimit.h>
  
-@@ -457,6 +458,14 @@ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
+@@ -424,6 +425,14 @@ void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
  			  sector_t start);
  union map_info *dm_get_rq_mapinfo(struct request *rq);
  

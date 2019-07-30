@@ -1,0 +1,30 @@
+From cacedd0b9539f80107be153f6c76bfc910c40c2e Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Thu, 21 Mar 2019 15:00:09 -0700
+Subject: [PATCH] dm init: fix const confusion for dm_allowed_targets array
+
+commit 93fc91675a6c84d6ab355188aea398bda2cc51f8 upstream.
+
+A non const pointer to const cannot be marked initconst.
+Mark the array actually const.
+
+Fixes: 6bbc923dfcf5 dm: add support to directly boot to a mapped device
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-init.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index b53f30f16b4d..4b76f84424c3 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -36,7 +36,7 @@ struct dm_device {
+ 	struct list_head list;
+ };
+ 
+-const char *dm_allowed_targets[] __initconst = {
++const char * const dm_allowed_targets[] __initconst = {
+ 	"crypt",
+ 	"delay",
+ 	"linear",
