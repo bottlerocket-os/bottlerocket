@@ -1,17 +1,21 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel
-Version: 4.14.102
+Version: 4.19.58
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPLv2 and Redistributable, no modification permitted
 URL: https://www.kernel.org/
-Source0: https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{version}.tar.xz
-Source100: config-%{_cross_arch}
-Patch1000: dm-add-support-to-directly-boot-to-a-mapped-device.patch
-Patch1001: selinux-use-kernel-linux-socket.h-for-genheaders-and.patch
-Patch1002: random-add-a-config-option-to-trust-the-CPU-s-hwrng.patch
-Patch1003: random-make-CPU-trust-a-boot-parameter.patch
+# Use latest-srpm-url.sh to get this.
+Source0: https://cdn.amazonlinux.com/blobstore/f768a50d6e52a712310bc97ddb087e19df240972cc99a59c7921b90901874521/kernel-4.19.58-21.57.amzn2.src.rpm
+Source100: config-thar
+Patch0001: 0001-dm-add-support-to-directly-boot-to-a-mapped-device.patch
+Patch0002: 0002-dm-init-fix-const-confusion-for-dm_allowed_targets-a.patch
+Patch0003: 0003-dm-init-fix-max-devices-targets-checks.patch
+Patch0004: 0004-dm-ioctl-fix-hang-in-early-create-error-condition.patch
+Patch0005: 0005-dm-init-fix-incorrect-uses-of-kstrndup.patch
+Patch0006: 0006-dm-init-remove-trailing-newline-from-calls-to-DMERR-.patch
+Patch0007: 0007-lustrefsx-Disable-Werror-stringop-overflow.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: gcc-%{_cross_target}
@@ -35,8 +39,18 @@ Summary: Header files for the Linux kernel for use by glibc
 %{summary}.
 
 %prep
-%autosetup -n linux-%{version} -p1
-cp %{SOURCE100} "arch/%{_cross_karch}/configs/%{_cross_vendor}_defconfig"
+rpm2cpio %{SOURCE0} | cpio -iu linux-%{version}.tar config-%{_cross_arch} "*.patch"
+tar -xof linux-%{version}.tar; rm linux-%{version}.tar
+%setup -TDn linux-%{version}
+# Patches from the Source0 SRPM
+for patch in ../*.patch; do
+    patch -p1 <"$patch"
+done
+# Patches listed in this spec (Patch0001...)
+%autopatch -p1
+KCONFIG_CONFIG="arch/%{_cross_karch}/configs/%{_cross_vendor}_defconfig" \
+    scripts/kconfig/merge_config.sh ../config-%{_cross_arch} %{SOURCE100}
+rm -f ../config-%{_cross_arch} ../*.patch
 
 %global kmake \
 make -s\\\

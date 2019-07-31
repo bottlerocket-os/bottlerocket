@@ -1,0 +1,23 @@
+# Because Thar does not have an initramfs, modules required to mount the root
+# filesystem must be set to y.
+
+# The root filesystem is ext4
+CONFIG_EXT4_FS=y
+
+# NVMe for EC2 Nitro platforms (C5, M5, and later)
+CONFIG_BLK_DEV_NVME=y
+CONFIG_NVME_CORE=y
+
+# Xen blkfront for Xen-based EC2 platforms
+CONFIG_XEN_BLKDEV_FRONTEND=y
+
+# virtio for local testing with QEMU
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_PCI=y
+
+# dm-verity and enabling it on the kernel command line
+CONFIG_BLK_DEV_DM=y
+CONFIG_DAX=y
+CONFIG_DM_INIT=y
+CONFIG_DM_VERITY=y
