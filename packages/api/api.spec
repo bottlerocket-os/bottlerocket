@@ -10,6 +10,7 @@ Source0: %{workspace_name}.crate
 Source1: apiserver.service
 Source2: moondog.service
 Source3: sundog.service
+Source4: storewolf.service
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -48,6 +49,12 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}thar-be-settings
 %{summary}.
 
+%package -n %{_cross_os}storewolf
+Summary: Data store creator
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}storewolf
+%{summary}.
+
 %prep
 %setup -qn %{workspace_name}
 %cargo_prep
@@ -63,12 +70,14 @@ mkdir -p %{buildroot}/%{systemd_systemdir}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE1}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE2}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
+install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 
 %cargo_install -p apiserver
 %cargo_install -p moondog
 %cargo_install -p sundog
 %cargo_install -p pluto
 %cargo_install -p thar-be-settings
+%cargo_install -p storewolf
 
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
@@ -87,5 +96,9 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
+
+%files -n %{_cross_os}storewolf
+%{_cross_bindir}/storewolf
+%{systemd_systemdir}/storewolf.service
 
 %changelog

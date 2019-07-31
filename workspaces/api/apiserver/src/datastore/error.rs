@@ -8,15 +8,6 @@ use super::{serialization, ScalarError};
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
 pub enum Error {
-    #[snafu(display("defaults.toml is not valid TOML: {}", source))]
-    DefaultsFormatting { source: toml::de::Error },
-
-    #[snafu(display("defaults.toml is not a TOML table"))]
-    DefaultsNotTable {},
-
-    #[snafu(display("defaults.toml's metadata is not a TOML list of Metadata"))]
-    DefaultsMetadataNotTable { source: toml::de::Error },
-
     #[snafu(display("Error serializing {}: {} ", given, source))]
     Serialization {
         given: String,

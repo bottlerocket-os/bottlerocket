@@ -1,7 +1,9 @@
 [Unit]
 Description=Thar API server
 After=network.target
+After=storewolf.service
 Requires=network.target
+Requires=storewolf.service
 
 [Service]
 Type=simple

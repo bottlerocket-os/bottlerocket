@@ -12,9 +12,7 @@ use std::path::{self, Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
 
 use super::key::{Key, KeyType, KEY_SEPARATOR};
-use super::serialization::to_pairs;
-use super::{error, serialize_scalar, Committed, DataStore, Result, ScalarError};
-use crate::model::Metadata;
+use super::{error, Committed, DataStore, Result};
 
 const METADATA_KEY_PREFIX: char = '.';
 
@@ -30,50 +28,6 @@ impl FilesystemDataStore {
             live_path: base_path.as_ref().join("live"),
             pending_path: base_path.as_ref().join("pending"),
         }
-    }
-
-    /// Creates a new FilesystemDataStore at the given path, with data and metadata coming from
-    /// defaults.toml at compile time.
-    pub fn populate_default<P: AsRef<Path>>(base_path: P) -> Result<()> {
-        // Read and parse defaults
-        let defaults_str = include_str!("../../defaults.toml");
-        let mut defaults_val: toml::Value =
-            toml::from_str(defaults_str).context(error::DefaultsFormatting)?;
-
-        // Check if we have metadata
-        let table = defaults_val
-            .as_table_mut()
-            .context(error::DefaultsNotTable)?;
-        let maybe_metadata_val = table.remove("metadata");
-
-        // Write defaults to datastore
-        trace!("Serializing defaults and writing to datastore");
-        let defaults =
-            to_pairs(&defaults_val).context(error::Serialization { given: "defaults" })?;
-        let mut datastore = FilesystemDataStore::new(base_path);
-        datastore.set_keys(&defaults, Committed::Live)?;
-
-        // If we had metadata, write it out
-        if let Some(metadata_val) = maybe_metadata_val {
-            trace!("Serializing metadata and writing to datastore");
-            let metadatas: Vec<Metadata> = metadata_val
-                .try_into()
-                .context(error::DefaultsMetadataNotTable)?;
-            for metadata in metadatas {
-                let Metadata { key, md, val } = metadata;
-                let data_key = Key::new(KeyType::Data, key)?;
-                let md_key = Key::new(KeyType::Data, md)?;
-                let value = serialize_scalar::<_, ScalarError>(&val).with_context(|| {
-                    error::SerializeScalar {
-                        given: format!("metadata value '{}'", val),
-                    }
-                })?;
-
-                datastore.set_metadata(&md_key, &data_key, value)?;
-            }
-        }
-
-        Ok(())
     }
 
     /// Returns the appropriate filesystem path for pending or live data.
