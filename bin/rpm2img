@@ -26,6 +26,7 @@ BOOT_IMAGE="$(mktemp)"
 VERITY_IMAGE="$(mktemp)"
 ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
+EFI_IMAGE="$(mktemp)"
 ROOT_MOUNT="/mnt/root"
 
 VERITY_VERSION=1
@@ -37,9 +38,18 @@ VERITY_HASH_BLOCK_SIZE=4096
 # for the boot partition, where we set gptprio bits in the GUID-specific use
 # field, but we might as well do it for all of them.
 THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
+EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 THAR_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
 THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 THAR_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
+
+if [[ "$(uname -m)" == "x86_64" ]]; then
+  FIRM_NAME="BIOS-BOOT"
+  THAR_FIRM_TYPECODE="ef02"
+else
+  FIRM_NAME="EFI_BOOT"
+  THAR_FIRM_TYPECODE="${EFI_SYSTEM_TYPECODE}"
+fi
 
 truncate -s 4G "${DISK_IMAGE}"
 # boot: 20M + root: 900M + hash: 8M + reserved: 95M = 1023M
@@ -55,23 +65,44 @@ sgdisk --clear \
    -n 0:922M:0      -c 0:"THAR-HASH-A"     -t 0:"${THAR_HASH_TYPECODE}" \
    -n 0:22M:0       -c 0:"THAR-ROOT-A"     -t 0:"${THAR_ROOT_TYPECODE}" \
    -n 0:2M:0        -c 0:"THAR-BOOT-A"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
-   -n 0:1M:0        -c 0:"BIOS-BOOT"          -t 0:ef02 \
+   -n 0:1M:0        -c 0:"${FIRM_NAME}"    -t 0:"${THAR_FIRM_TYPECODE}" \
    --sort --print "${DISK_IMAGE}"
 
 mkdir -p "${ROOT_MOUNT}"
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
-# MBR and BIOS-BOOT
-echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
-"${ROOT_MOUNT}/sbin/grub-bios-setup" \
-  --directory="${ROOT_MOUNT}/boot/grub" \
-  --device-map="${ROOT_MOUNT}/boot/grub/device.map" \
-  --root="hd0" \
-  --skip-fs-probe \
-  ${DISK_IMAGE}
+if [[ "$(uname -m)" == "x86_64" ]]; then
+  # MBR and BIOS-BOOT
+  echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
+  "${ROOT_MOUNT}/sbin/grub-bios-setup" \
+     --directory="${ROOT_MOUNT}/boot/grub" \
+     --device-map="${ROOT_MOUNT}/boot/grub/device.map" \
+     --root="hd0" \
+     --skip-fs-probe \
+     ${DISK_IMAGE}
 
-rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
+  rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
+else
+  # For aarch64 we need an EFI partition instead, formatted
+  # FAT32 with the .efi binary at the correct path, eg /efi/boot.
+  # grub-mkimage has put bootaa64.efi at /boot/efi/EFI/BOOT
+  EFI_MOUNT="/mnt/efi"
+  mkdir "${EFI_MOUNT}"
+  mv ${ROOT_MOUNT}/boot/efi/* "${EFI_MOUNT}"
+
+  # The 'recommended' size for the EFI partition is 100MB but our aarch64.efi
+  # only takes up around 700KB. Use just 1MB to match the x86_64 case.
+  dd if=/dev/zero of=${EFI_IMAGE} bs=512 count=$((1*2048))
+  mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((1*2048))
+  mmd -i ${EFI_IMAGE} ::/EFI
+  mmd -i ${EFI_IMAGE} ::/EFI/BOOT
+  mcopy -i ${EFI_IMAGE} ${EFI_MOUNT}/EFI/BOOT/bootaa64.efi ::/EFI/BOOT
+  dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((1*2048))
+
+  # Create the grub directory which grub-bios-setup would have otherwise done.
+  mkdir -p ${ROOT_MOUNT}/boot/grub
+fi
 
 # Now that we're done messing with /, move /boot out of it
 BOOT_MOUNT="/mnt/boot"
