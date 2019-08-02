@@ -4,17 +4,17 @@
 extern crate log;
 
 use log::Level::Info;
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use std::env;
-use std::error::Error;
 use std::path::Path;
 use std::process;
 
-use apiserver::datastore::FilesystemDataStore;
 use apiserver::handle_request;
 
 // FIXME temporary port
 const DEFAULT_BIND_ADDR: &str = "localhost:4242";
+
+type Result<T> = std::result::Result<T, error::Error>;
 
 mod error {
     use snafu::Snafu;
@@ -24,6 +24,9 @@ mod error {
     pub(crate) enum Error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
+
+        #[snafu(display("Datastore does not exist, did storewolf run?"))]
+        NonexistentDatastore,
     }
 }
 
@@ -98,7 +101,7 @@ fn parse_args(args: env::Args) -> Args {
 }
 
 /// Starts a web server to accept user requests, dispatching those requests to the controller.
-fn main() -> Result<(), Box<Error>> {
+fn main() -> Result<()> {
     let args = parse_args(env::args());
 
     // TODO: starting with simple stderr logging, replace when we have a better idea.
@@ -110,11 +113,11 @@ fn main() -> Result<(), Box<Error>> {
         .init()
         .context(error::Logger)?;
 
-    // Create default datastore if it doesn't exist
-    if !Path::new(&args.datastore_path).exists() {
-        info!("Creating datastore at: {}", &args.datastore_path);
-        FilesystemDataStore::populate_default(&args.datastore_path)?;
-    }
+    // Make sure the datastore exists
+    ensure!(
+        Path::new(&args.datastore_path).exists(),
+        error::NonexistentDatastore
+    );
 
     // Each request makes its own handle to the datastore; there's no locking or
     // synchronization yet.  Therefore, only use 1 thread for safety.

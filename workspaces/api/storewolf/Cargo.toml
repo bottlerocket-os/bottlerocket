@@ -1,0 +1,17 @@
+[package]
+name = "storewolf"
+version = "0.1.0"
+authors = ["Zac Mrowicki <mrowicki@amazon.com>"]
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[dependencies]
+apiserver = { path = "../apiserver" }
+log = "0.4"
+snafu = "0.4"
+stderrlog = "0.4"
+toml = "0.5"
+
+[build-dependencies]
+cargo-readme = "3.1"

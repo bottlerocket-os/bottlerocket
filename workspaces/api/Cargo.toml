@@ -4,6 +4,7 @@ members = [
     "moondog",
     "sundog",
     "pluto",
+    "storewolf",
     "thar-be-settings",
 
     "migration/migrator",

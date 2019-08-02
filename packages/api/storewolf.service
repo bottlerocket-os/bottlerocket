@@ -1,0 +1,10 @@
+[Unit]
+Description=Datastore creator
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/storewolf --datastore-path /var/lib/thar/datastore/v1
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
