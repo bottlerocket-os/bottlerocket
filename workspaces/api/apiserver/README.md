@@ -55,18 +55,18 @@ The `datastore::deserialization` module provides code to deserialize datastore-a
 
 You can start the API server from the development workspace with a command like:
 
-`cargo run -- --datastore-path /tmp/thar/be/data`
+`cargo run -- --datastore-path /tmp/thar/be/data --socket-path /tmp/thar/api.sock -v -v -v -v`
 
 (Add a few -v options to increase logging.)
 
 Then, from another shell, you can query or modify data.
 Here are some examples:
 
-* `curl 'localhost:4242/settings'`
-* `curl -X PATCH 'localhost:4242/settings' -d '{"settings": {"timezone": "NewLosAngeles"}}';`
-* `curl 'localhost:4242/settings/pending'`
-* `curl -X POST 'localhost:4242/settings/commit`
-* `curl 'localhost:4242/services?names=hostname`
+* `curl --unix-socket /tmp/thar/api.sock 'localhost/settings'`
+* `curl --unix-socket /tmp/thar/api.sock 'localhost/settings' -X PATCH -H "Content-Type: application/json" -d '{"settings": {"timezone": "NewLosAngeles"}}'`
+* `curl --unix-socket /tmp/thar/api.sock 'localhost/settings/pending'`
+* `curl --unix-socket /tmp/thar/api.sock 'localhost/settings/commit` -X POST
+* `curl --unix-socket /tmp/thar/api.sock 'localhost/services?names=hostname`
 
 ## Colophon
 

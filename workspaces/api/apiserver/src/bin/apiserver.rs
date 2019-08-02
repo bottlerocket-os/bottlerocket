@@ -3,16 +3,14 @@
 #[macro_use]
 extern crate log;
 
-use log::Level::Info;
 use snafu::{ensure, ResultExt};
 use std::env;
 use std::path::Path;
 use std::process;
 
-use apiserver::handle_request;
+use apiserver::serve;
 
-// FIXME temporary port
-const DEFAULT_BIND_ADDR: &str = "localhost:4242";
+const DEFAULT_BIND_PATH: &str = "/var/lib/thar/api.sock";
 
 type Result<T> = std::result::Result<T, error::Error>;
 
@@ -27,6 +25,9 @@ mod error {
 
         #[snafu(display("Datastore does not exist, did storewolf run?"))]
         NonexistentDatastore,
+
+        #[snafu(display("{}", source))]
+        Server { source: apiserver::server::Error },
     }
 }
 
@@ -35,7 +36,7 @@ struct Args {
     verbosity: usize,
     color: stderrlog::ColorChoice,
     datastore_path: String,
-    socket_address: String,
+    socket_path: String,
 }
 
 /// Informs the user about proper usage of the program and exits.
@@ -44,12 +45,12 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             --datastore-path PATH
-            [ --socket-address ADDR:PORT ]
+            [ --socket-path PATH ]
             [ --no-color ]
             [ --verbose --verbose ... ]
 
-    Socket address defaults to {}",
-        program_name, DEFAULT_BIND_ADDR
+    Socket path defaults to {}",
+        program_name, DEFAULT_BIND_PATH
     );
     process::exit(2);
 }
@@ -63,7 +64,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parses user arguments into an Args structure.
 fn parse_args(args: env::Args) -> Args {
     let mut datastore_path = None;
-    let mut socket_address = None;
+    let mut socket_path = None;
     let mut verbosity = 0;
     let mut color = stderrlog::ColorChoice::Auto;
 
@@ -81,10 +82,10 @@ fn parse_args(args: env::Args) -> Args {
                 )
             }
 
-            "--socket-address" => {
-                socket_address = Some(
+            "--socket-path" => {
+                socket_path = Some(
                     iter.next()
-                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-address")),
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
                 )
             }
 
@@ -96,7 +97,7 @@ fn parse_args(args: env::Args) -> Args {
         verbosity,
         color,
         datastore_path: datastore_path.unwrap_or_else(|| usage()),
-        socket_address: socket_address.unwrap_or_else(|| DEFAULT_BIND_ADDR.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| DEFAULT_BIND_PATH.to_string()),
     }
 }
 
@@ -121,25 +122,16 @@ fn main() -> Result<()> {
 
     // Each request makes its own handle to the datastore; there's no locking or
     // synchronization yet.  Therefore, only use 1 thread for safety.
-    let threads = Some(1);
+    let threads = 1;
 
-    if log_enabled!(Info) {
-        let threads_str = match threads {
-            Some(n) => format!("{}", n),
-            None => "DEFAULT".to_string(),
-        };
-        let threads_suffix = match threads {
-            Some(n) if n > 1 => "s",
-            Some(_) => "",
-            None => "s",
-        };
-        info!(
-            "Starting server at {} with {} thread{} and datastore at {}",
-            &args.socket_address, threads_str, threads_suffix, &args.datastore_path,
-        );
-    }
+    let threads_suffix = match threads {
+        n if n > 1 => "s",
+        _ => "",
+    };
+    info!(
+        "Starting server at {} with {} thread{} and datastore at {}",
+        &args.socket_path, threads, threads_suffix, &args.datastore_path,
+    );
 
-    rouille::start_server_with_pool(args.socket_address.clone(), threads, move |request| {
-        handle_request(request, &args.datastore_path)
-    })
+    serve(&args.socket_path, &args.datastore_path, threads).context(error::Server)
 }

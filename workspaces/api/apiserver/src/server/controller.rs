@@ -1,8 +1,6 @@
 //! The controller module maps between the datastore and the API interface, similar to the
 //! controller in the MVC model.
 
-mod error;
-
 use serde::de::DeserializeOwned;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -15,7 +13,7 @@ use crate::datastore::{
     deserialize_scalar, Committed, DataStore, Key, KeyType, ScalarError, Value,
 };
 use crate::model::{ConfigurationFiles, Services, Settings};
-use error::Result;
+use crate::server::error::{self, Result};
 
 /// Build a Settings based on pending data in the datastore; the Settings will be empty if there
 /// are no pending settings.
@@ -27,7 +25,7 @@ pub(crate) fn get_pending_settings<D: DataStore>(datastore: &D) -> Result<Settin
         None as Option<&str>,
         None,
     )
-    .map(|maybe_settings| maybe_settings.unwrap_or_else(|| Settings::default()))
+    .map(|maybe_settings| maybe_settings.unwrap_or_else(Settings::default))
 }
 
 /// Build a Settings based on the data in the datastore.  Errors if no settings are found.
@@ -228,33 +226,10 @@ where
     Ok(result)
 }
 
-/// Allows us to take JSON from the user formatted like {settings: {...}} or {...} where a
-/// Settings is needed, by stripping off the outer {settings} layer if found.
-pub(crate) fn settings_input<S: AsRef<str>>(input: S) -> Result<Settings> {
-    let input = input.as_ref();
-    match serde_json::from_str(&input) {
-        // If we get a valid Settings at the start, return it.
-        Ok(x) => {
-            trace!("Valid Settings from input, not stripping");
-            Ok(x)
-        }
-        Err(_) => {
-            // Try stripping off an outer 'settings' mapping.
-            trace!("Invalid Settings from input, trying to strip 'settings'");
-            let mut val: serde_json::Value =
-                serde_json::from_str(&input).context(error::InvalidJson)?;
-            let object = val.as_object_mut().context(error::NotJsonObject)?;
-            let inner = object.get_mut("settings").context(error::NoSettings)?;
-            trace!("Stripped 'settings' layer OK, trying to make Settings from result");
-            serde_json::from_value(inner.take()).context(error::InvalidSettings)
-        }
-    }
-}
-
 /// Given a Settings, takes any Some values and updates them in the datastore.
 pub(crate) fn set_settings<D: DataStore>(datastore: &mut D, settings: &Settings) -> Result<()> {
     trace!("Serializing Settings to write to data store");
-    let pairs = to_pairs(settings).context(error::Serialization { given: "Settings" })?;
+    let pairs = to_pairs(settings).context(error::DataStoreSerialization { given: "Settings" })?;
     datastore
         .set_keys(&pairs, Committed::Pending)
         .context(error::DataStore { op: "set_keys" })
@@ -342,7 +317,7 @@ pub(crate) fn apply_changes(changed_keys: &HashSet<Key>) -> Result<()> {
     // Prepare input to config applier; it uses the changed keys to update the right config
     let key_strs: Vec<&str> = changed_keys.iter().map(AsRef::as_ref).collect();
     trace!("Serializing the commit's changed keys: {:?}", key_strs);
-    let cmd_input = serde_json::to_string(&key_strs).context(error::Json {
+    let cmd_input = serde_json::to_string(&key_strs).context(error::CommandSerialization {
         given: "commit's changed keys",
     })?;
 
@@ -465,17 +440,6 @@ mod test {
                 configuration_files: vec!["file1".to_string()],
                 restart_commands: vec!["echo hi".to_string()]
             })
-        );
-    }
-
-    #[test]
-    fn settings_input_works() {
-        let mut settings = Settings::default();
-        settings.timezone = Some("tz".to_string());
-        assert_eq!(settings, settings_input(r#"{"timezone": "tz"}"#).unwrap());
-        assert_eq!(
-            settings,
-            settings_input(r#"{"settings": {"timezone": "tz"}}"#).unwrap()
         );
     }
 

@@ -1,10 +1,37 @@
 use crate::datastore::{self, deserialization, serialization};
-use snafu::Snafu;
 use std::io;
+use std::path::PathBuf;
+use snafu::Snafu;
 
+// We want server (router/handler) and controller errors together so it's easy to define response
+// error codes for all the high-level types of errors that could happen during a request.
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
-pub(crate) enum Error {
+#[snafu(visibility = "pub(super)")]
+pub enum Error {
+    // Server errors
+
+    #[snafu(display("Missing required input '{}'", input))]
+    MissingInput { input: String },
+
+    #[snafu(display("Input '{}' cannot be empty", input))]
+    EmptyInput { input: String },
+
+    #[snafu(display("Another thread poisoned the data store lock by panicking"))]
+    DataStoreLock,
+
+    #[snafu(display("Unable to serialize response: {}", source))]
+    ResponseSerialization { source: serde_json::Error },
+
+    #[snafu(display("Unable to bind to {}: {}", path.display(), source))]
+    BindSocket { path: PathBuf, source: io::Error },
+
+    #[snafu(display("Unable to start server: {}", source))]
+    ServerStart { source: io::Error },
+
+    // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+    // Controller errors
+
     #[snafu(display("Found no '{}' in datastore", prefix))]
     MissingData { prefix: String },
 
@@ -27,13 +54,13 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Error serializing {}: {} ", given, source))]
-    Serialization {
+    DataStoreSerialization {
         given: String,
         source: serialization::Error,
     },
 
-    #[snafu(display("Error serializing {} to JSON: {} ", given, source))]
-    Json {
+    #[snafu(display("Error serializing {}: {} ", given, source))]
+    CommandSerialization {
         given: String,
         source: serde_json::Error,
     },
@@ -45,26 +72,11 @@ pub(crate) enum Error {
         source: datastore::Error,
     },
 
-    #[snafu(display("Input is not valid JSON: {}", source))]
-    InvalidJson { source: serde_json::Error },
-
     #[snafu(display("Metadata '{}' is not valid JSON: {}", key, source))]
     InvalidMetadata {
         key: String,
         source: serde_json::Error,
     },
-
-    #[snafu(display("Input is not a JSON object"))]
-    NotJsonObject {},
-
-    #[snafu(display(r#"Settings input must either be formatted like {{"settings": {{"a": "b"}}}} or {{"a": "b"}}, where the {{"a": "b"}} mapping corresponds to valid settings."#))]
-    NoSettings {},
-
-    #[snafu(display(
-        r#"Value inside {{"settings": x}} is not a valid Settings: {}"#,
-        source
-    ))]
-    InvalidSettings { source: serde_json::Error },
 
     #[snafu(display("Unable to start config applier: {} ", source))]
     ConfigApplierStart { source: io::Error },
@@ -76,4 +88,4 @@ pub(crate) enum Error {
     ConfigApplierWrite { source: io::Error },
 }
 
-pub(crate) type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
