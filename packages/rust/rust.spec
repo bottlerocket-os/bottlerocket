@@ -3,6 +3,10 @@
 %global __strip /bin/true
 %global _build_id_links none
 
+# Skip check-rpaths since rust needs them to find its libs, and this package
+# doesn't end up on final systems.
+%global __arch_install_post /usr/lib/rpm/check-buildroot
+
 Name: %{_cross_os}rust
 Version: 1.36.0
 %global cargo_version 0.37.0
