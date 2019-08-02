@@ -3,6 +3,7 @@
 #![allow(clippy::default_trait_access)]
 
 use crate::serde::Role;
+use chrono::{DateTime, Utc};
 use snafu::{Backtrace, Snafu};
 use std::fmt::{self, Debug, Display};
 use std::path::PathBuf;
@@ -45,6 +46,17 @@ pub enum Error {
     /// A metadata file has expired.
     #[snafu(display("{} metadata is expired", role))]
     ExpiredMetadata { role: Role, backtrace: Backtrace },
+
+    /// System time is behaving irrationally, went back in time
+    #[snafu(display(
+        "System time stepped backward: system time '{}', last known time '{}'",
+        sys_time,
+        latest_known_time,
+    ))]
+    SystemTimeSteppedBackward {
+        sys_time: DateTime<Utc>,
+        latest_known_time: DateTime<Utc>,
+    },
 
     /// A downloaded target's checksum does not match the checksum listed in the repository
     /// metadata.

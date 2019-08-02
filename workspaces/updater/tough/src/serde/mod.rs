@@ -10,8 +10,10 @@ pub(crate) use snapshot::Snapshot;
 pub(crate) use targets::{Target, Targets};
 pub(crate) use timestamp::Timestamp;
 
+use crate::datastore::Datastore;
 use crate::error::{self, Result};
 use crate::serde::decoded::{Decoded, Hex};
+use crate::system_time;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_plain::forward_display_to_serde;
@@ -43,9 +45,11 @@ pub(crate) struct Signed<T> {
 
 #[allow(clippy::use_self)] // false positive
 impl<T: Metadata + Serialize> Signed<T> {
-    pub(crate) fn check_expired(&self) -> Result<()> {
+    pub(crate) fn check_expired(&self, datastore: &Datastore) -> Result<()> {
+        let sys_time = system_time(datastore)?;
+        // Check for expiration
         ensure!(
-            Utc::now() < *self.signed.expires(),
+            sys_time < *self.signed.expires(),
             error::ExpiredMetadata { role: T::ROLE }
         );
         Ok(())

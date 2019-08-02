@@ -34,6 +34,7 @@ use std::path::Path;
 pub struct Repository {
     client: Client,
     consistent_snapshot: bool,
+    datastore: Datastore,
     earliest_expiration: DateTime<Utc>,
     earliest_expiration_role: Role,
     target_base_url: Url,
@@ -106,6 +107,7 @@ impl Repository {
         Ok(Self {
             client,
             consistent_snapshot: root.signed.consistent_snapshot,
+            datastore,
             earliest_expiration: earliest_expiration.to_owned(),
             earliest_expiration_role: *earliest_expiration_role,
             target_base_url,
@@ -118,9 +120,11 @@ impl Repository {
         })
     }
 
+    /// Ensures the repository data has not expired since load
     fn check_expired(&self) -> Result<()> {
+        let sys_time = system_time(&self.datastore)?;
         ensure!(
-            Utc::now() < self.earliest_expiration,
+            sys_time < self.earliest_expiration,
             error::ExpiredMetadata {
                 role: self.earliest_expiration_role
             }
@@ -206,6 +210,31 @@ impl From<crate::serde::Target> for Target {
             length: target.length,
         }
     }
+}
+
+/// Ensures that system time has not stepped backward since it was last sampled
+pub(crate) fn system_time(datastore: &Datastore) -> Result<DateTime<Utc>> {
+    let file = "latest_known_time.json";
+    // Get 'current' system time
+    let sys_time = Utc::now();
+    // Load the latest known system time, if it exists
+    if let Some(Ok(latest_known_time)) = datastore
+        .reader(file)?
+        .map(serde_json::from_reader::<_, DateTime<Utc>>)
+    {
+        // Make sure the sampled system time did not go back in time
+        ensure!(
+            sys_time >= latest_known_time,
+            error::SystemTimeSteppedBackward {
+                sys_time,
+                latest_known_time
+            }
+        );
+    }
+    // Store the latest known time
+    // Serializes RFC3339 time string and store to datastore
+    datastore.create(file, &sys_time)?;
+    Ok(sys_time)
 }
 
 fn ensure_trailing_slash(url: &mut Cow<str>) {
@@ -329,7 +358,7 @@ fn load_root<R: Read>(
     //   timestamp in the trusted root metadata file (version N). If the trusted root metadata file
     //   has expired, abort the update cycle, report the potential freeze attack. On the next
     //   update cycle, begin at step 0 and version N of the root metadata file.
-    root.check_expired()?;
+    root.check_expired(datastore)?;
 
     // 1.9. If the timestamp and / or snapshot keys have been rotated, then delete the trusted
     //   timestamp and snapshot metadata files. This is done in order to recover from fast-forward
@@ -408,7 +437,7 @@ fn load_timestamp(
     //   timestamp in the new timestamp metadata file. If so, the new timestamp metadata file
     //   becomes the trusted timestamp metadata file. If the new timestamp metadata file has
     //   expired, discard it, abort the update cycle, and report the potential freeze attack.
-    timestamp.check_expired()?;
+    timestamp.check_expired(datastore)?;
 
     // Now that everything seems okay, write the timestamp file to the datastore.
     datastore.create("timestamp.json", &timestamp)?;
@@ -539,7 +568,7 @@ fn load_snapshot(
     //   timestamp in the new snapshot metadata file. If so, the new snapshot metadata file becomes
     //   the trusted snapshot metadata file. If the new snapshot metadata file is expired, discard
     //   it, abort the update cycle, and report the potential freeze attack.
-    snapshot.check_expired()?;
+    snapshot.check_expired(datastore)?;
 
     // Now that everything seems okay, write the timestamp file to the datastore.
     datastore.create("snapshot.json", &snapshot)?;
@@ -644,7 +673,7 @@ fn load_targets(
     //   timestamp in the new targets metadata file. If so, the new targets metadata file becomes
     //   the trusted targets metadata file. If the new targets metadata file is expired, discard
     //   it, abort the update cycle, and report the potential freeze attack.
-    targets.check_expired()?;
+    targets.check_expired(datastore)?;
 
     // 4.5. Perform a preorder depth-first search for metadata about the desired target, beginning
     //   with the top-level targets role.
