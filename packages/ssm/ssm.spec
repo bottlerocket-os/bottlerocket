@@ -5,7 +5,11 @@
 %global gover 2.3.672.0
 %global rpmver %{gover}
 
+%global ssmdir  %{buildroot}%{_cross_factorydir}/%{_cross_sharedstatedir}/amazon/ssm
+%global ssmdir_installed  %{_cross_factorydir}/%{_cross_sharedstatedir}/amazon/ssm
+
 %global _dwz_low_mem_die_limit 0
+%global debug_package %{nil}
 
 Name: %{_cross_os}%{gorepo}
 Version: %{gover}
@@ -16,6 +20,7 @@ URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: ssm-tmpfiles.conf
 Source2: amazon-ssm-agent.service
+Source3: Dockerfile
 Patch1: 0001-Use-absolute-path-to-launch-shell.patch
 Patch2: 0002-shell-Allow-root-user.patch
 BuildRequires: gcc-%{_cross_target}
@@ -42,16 +47,21 @@ go build -ldflags "-linkmode=external" -o bin/ssm-session-logger -v %{goimport}/
 go build -ldflags "-linkmode=external" -o bin/ssm-cli -v %{goimport}/agent/cli-main
 
 %install
-install -d %{buildroot}%{_cross_bindir}
-install -p -m 0755 bin/amazon-ssm-agent %{buildroot}%{_cross_bindir}
-install -p -m 0755 bin/ssm-cli %{buildroot}%{_cross_bindir}
-install -p -m 0755 bin/ssm-document-worker %{buildroot}%{_cross_bindir}
-install -p -m 0755 bin/ssm-session-logger %{buildroot}%{_cross_bindir}
-install -p -m 0755 bin/ssm-session-worker %{buildroot}%{_cross_bindir}
+# Create a pretend tree under /var/lib/amazon/ssm and remove executable
+# permissions; these will only be used from within the SSM container.
+install -d %{ssmdir}%{_bindir}
+install -p -m 0644 bin/amazon-ssm-agent %{ssmdir}%{_bindir}
+install -p -m 0644 bin/ssm-cli %{ssmdir}%{_bindir}
+install -p -m 0644 bin/ssm-document-worker %{ssmdir}%{_bindir}
+install -p -m 0644 bin/ssm-session-logger %{ssmdir}%{_bindir}
+install -p -m 0644 bin/ssm-session-worker %{ssmdir}%{_bindir}
 
-install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/amazon/ssm
-install -p -m 0755 seelog_unix.xml %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/amazon/ssm/seelog.xml
-install -p -m 0755 amazon-ssm-agent.json.template %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/amazon/ssm/amazon-ssm-agent.json
+install -d %{ssmdir}%{_sysconfdir}/amazon/ssm
+install -p -m 0644 seelog_unix.xml %{ssmdir}%{_sysconfdir}/amazon/ssm/seelog.xml
+install -p -m 0644 amazon-ssm-agent.json.template %{ssmdir}%{_sysconfdir}/amazon/ssm/amazon-ssm-agent.json
+
+# Install the Dockerfile at the top of this tree
+install -p -m 0644 %{S:3} %{ssmdir}/Dockerfile
 
 mkdir -p %{buildroot}/%{_cross_unitdir}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_unitdir}/amazon-ssm-agent.service
@@ -60,15 +70,17 @@ install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/ssm.conf
 
 %files
-%{_cross_bindir}/amazon-ssm-agent
-%{_cross_bindir}/ssm-cli
-%{_cross_bindir}/ssm-document-worker
-%{_cross_bindir}/ssm-session-logger
-%{_cross_bindir}/ssm-session-worker
-%dir %{_cross_factorydir}%{_cross_sysconfdir}/amazon
-%dir %{_cross_factorydir}%{_cross_sysconfdir}/amazon/ssm
-%{_cross_factorydir}%{_cross_sysconfdir}/amazon/ssm/seelog.xml
-%{_cross_factorydir}%{_cross_sysconfdir}/amazon/ssm/amazon-ssm-agent.json
+%dir %{ssmdir_installed}%{_sysconfdir}/amazon/ssm
+%dir %{ssmdir_installed}%{_bindir}
+%{ssmdir_installed}%{_bindir}/amazon-ssm-agent
+%{ssmdir_installed}%{_bindir}/ssm-cli
+%{ssmdir_installed}%{_bindir}/ssm-document-worker
+%{ssmdir_installed}%{_bindir}/ssm-session-logger
+%{ssmdir_installed}%{_bindir}/ssm-session-worker
+%{ssmdir_installed}%{_sysconfdir}/amazon/ssm/seelog.xml
+%{ssmdir_installed}%{_sysconfdir}/amazon/ssm/amazon-ssm-agent.json
+%dir %{_cross_factorydir}%{_cross_sharedstatedir}/amazon/ssm
+%{_cross_factorydir}%{_cross_sharedstatedir}/amazon/ssm/Dockerfile
 %{_cross_unitdir}/amazon-ssm-agent.service
 %{_cross_tmpfilesdir}/ssm.conf
 

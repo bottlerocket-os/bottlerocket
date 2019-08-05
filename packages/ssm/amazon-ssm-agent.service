@@ -7,7 +7,8 @@ StartLimitIntervalSec=60
 [Service]
 Type=simple
 WorkingDirectory=/
-ExecStart=/usr/bin/amazon-ssm-agent
+ExecStartPre=/usr/bin/docker build -t ssm /var/lib/amazon/ssm/
+ExecStart=/usr/bin/docker run --net=host -v "/var/lib/thar/api.sock:/var/lib/thar/api.sock" ssm /usr/bin/amazon-ssm-agent
 KillMode=process
 Restart=always
 RestartSec=5
