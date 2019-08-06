@@ -1,0 +1,42 @@
+From 1c073b3844ef82f73df06659a533dbb276514420 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Tue, 20 Sep 2016 13:40:11 -0700
+Subject: [PATCH] gpt: allow repair function to noop
+
+Simplifies usage a little.
+---
+ grub-core/commands/gptprio.c | 5 ++---
+ grub-core/lib/gpt.c          | 4 ++++
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
+index 59bc4fd09..b799faa37 100644
+--- a/grub-core/commands/gptprio.c
++++ b/grub-core/commands/gptprio.c
+@@ -91,9 +91,8 @@ grub_find_next (const char *disk_name,
+   if (!gpt)
+     goto done;
+ 
+-  if (!grub_gpt_both_valid(gpt))
+-    if (grub_gpt_repair (dev->disk, gpt))
+-      goto done;
++  if (grub_gpt_repair (dev->disk, gpt))
++    goto done;
+ 
+   for (i = 0; (part = grub_gpt_get_partentry (gpt, i)) != NULL; i++)
+     {
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 3e077c497..9bb19678d 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -586,6 +586,10 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+ {
+   grub_uint64_t backup_header, backup_entries;
+ 
++  /* Skip if there is nothing to do.  */
++  if (grub_gpt_both_valid (gpt))
++    return GRUB_ERR_NONE;
++
+   grub_dprintf ("gpt", "repairing GPT for %s\n", disk->name);
+ 
+   if (disk->log_sector_size != gpt->log_sector_size)

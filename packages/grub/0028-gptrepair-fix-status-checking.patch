@@ -1,0 +1,64 @@
+From 1edd283385b1c07a0fd88e7db46d89490de0648d Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Tue, 20 Sep 2016 13:06:05 -0700
+Subject: [PATCH] gptrepair: fix status checking
+
+None of these status bit checks were correct. Fix and simplify.
+---
+ grub-core/commands/gptrepair.c | 28 +++++++++++-----------------
+ 1 file changed, 11 insertions(+), 17 deletions(-)
+
+diff --git a/grub-core/commands/gptrepair.c b/grub-core/commands/gptrepair.c
+index 38392fd8f..66ac3f7c7 100644
+--- a/grub-core/commands/gptrepair.c
++++ b/grub-core/commands/gptrepair.c
+@@ -46,8 +46,6 @@ grub_cmd_gptrepair (grub_command_t cmd __attribute__ ((unused)),
+   grub_device_t dev = NULL;
+   grub_gpt_t gpt = NULL;
+   char *dev_name;
+-  grub_uint32_t primary_crc, backup_crc;
+-  enum grub_gpt_status old_status;
+ 
+   if (argc != 1 || !grub_strlen(args[0]))
+     return grub_error (GRUB_ERR_BAD_ARGUMENT, "device name required");
+@@ -67,29 +65,25 @@ grub_cmd_gptrepair (grub_command_t cmd __attribute__ ((unused)),
+   if (!gpt)
+     goto done;
+ 
+-  primary_crc = gpt->primary.crc32;
+-  backup_crc = gpt->backup.crc32;
+-  old_status = gpt->status;
+-
+-  if (grub_gpt_repair (dev->disk, gpt))
+-    goto done;
+-
+-  if (primary_crc == gpt->primary.crc32 &&
+-      backup_crc == gpt->backup.crc32 &&
+-      old_status && gpt->status)
++  if ((gpt->status & GRUB_GPT_BOTH_VALID) == GRUB_GPT_BOTH_VALID)
+     {
+       grub_printf_ (N_("GPT already valid, %s unmodified.\n"), dev_name);
+       goto done;
+     }
+ 
+-  if (grub_gpt_write (dev->disk, gpt))
++  if ((gpt->status & GRUB_GPT_PRIMARY_VALID) != GRUB_GPT_PRIMARY_VALID)
++    grub_printf_ (N_("Found invalid primary GPT on %s\n"), dev_name);
++
++  if ((gpt->status & GRUB_GPT_BACKUP_VALID) != GRUB_GPT_BACKUP_VALID)
++    grub_printf_ (N_("Found invalid backup GPT on %s\n"), dev_name);
++
++  if (grub_gpt_repair (dev->disk, gpt))
+     goto done;
+ 
+-  if (!(old_status & GRUB_GPT_PRIMARY_VALID))
+-    grub_printf_ (N_("Primary GPT for %s repaired.\n"), dev_name);
++  if (grub_gpt_write (dev->disk, gpt))
++    goto done;
+ 
+-  if (!(old_status & GRUB_GPT_BACKUP_VALID))
+-    grub_printf_ (N_("Backup GPT for %s repaired.\n"), dev_name);
++  grub_printf_ (N_("Repaired GPT on %s\n"), dev_name);
+ 
+ done:
+   if (gpt)

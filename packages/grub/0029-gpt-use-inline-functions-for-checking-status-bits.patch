@@ -1,0 +1,133 @@
+From babffa21b389bdb7cca50df69ac94d623890a70e Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Tue, 20 Sep 2016 12:43:01 -0700
+Subject: [PATCH] gpt: use inline functions for checking status bits
+
+This should prevent bugs like 6078f836 and 4268f3da.
+---
+ grub-core/commands/gptprio.c   |  2 +-
+ grub-core/commands/gptrepair.c |  6 +++---
+ grub-core/lib/gpt.c            |  9 +++++++--
+ include/grub/gpt_partition.h   | 35 +++++++++++++++++++++++++++-------
+ 4 files changed, 39 insertions(+), 13 deletions(-)
+
+diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
+index eebca7a09..59bc4fd09 100644
+--- a/grub-core/commands/gptprio.c
++++ b/grub-core/commands/gptprio.c
+@@ -91,7 +91,7 @@ grub_find_next (const char *disk_name,
+   if (!gpt)
+     goto done;
+ 
+-  if ((gpt->status & GRUB_GPT_BOTH_VALID) != GRUB_GPT_BOTH_VALID)
++  if (!grub_gpt_both_valid(gpt))
+     if (grub_gpt_repair (dev->disk, gpt))
+       goto done;
+ 
+diff --git a/grub-core/commands/gptrepair.c b/grub-core/commands/gptrepair.c
+index 66ac3f7c7..c17c7346c 100644
+--- a/grub-core/commands/gptrepair.c
++++ b/grub-core/commands/gptrepair.c
+@@ -65,16 +65,16 @@ grub_cmd_gptrepair (grub_command_t cmd __attribute__ ((unused)),
+   if (!gpt)
+     goto done;
+ 
+-  if ((gpt->status & GRUB_GPT_BOTH_VALID) == GRUB_GPT_BOTH_VALID)
++  if (grub_gpt_both_valid (gpt))
+     {
+       grub_printf_ (N_("GPT already valid, %s unmodified.\n"), dev_name);
+       goto done;
+     }
+ 
+-  if ((gpt->status & GRUB_GPT_PRIMARY_VALID) != GRUB_GPT_PRIMARY_VALID)
++  if (!grub_gpt_primary_valid (gpt))
+     grub_printf_ (N_("Found invalid primary GPT on %s\n"), dev_name);
+ 
+-  if ((gpt->status & GRUB_GPT_BACKUP_VALID) != GRUB_GPT_BACKUP_VALID)
++  if (!grub_gpt_backup_valid (gpt))
+     grub_printf_ (N_("Found invalid backup GPT on %s\n"), dev_name);
+ 
+   if (grub_gpt_repair (dev->disk, gpt))
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 2550ed87c..3e077c497 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -638,10 +638,15 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   if (grub_gpt_check_primary (gpt))
+     return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
+ 
++  gpt->status |= (GRUB_GPT_PRIMARY_HEADER_VALID |
++		  GRUB_GPT_PRIMARY_ENTRIES_VALID);
++
+   if (grub_gpt_check_backup (gpt))
+     return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
+ 
+-  gpt->status |= GRUB_GPT_BOTH_VALID;
++  gpt->status |= (GRUB_GPT_BACKUP_HEADER_VALID |
++		  GRUB_GPT_BACKUP_ENTRIES_VALID);
++
+   grub_dprintf ("gpt", "repairing GPT for %s successful\n", disk->name);
+ 
+   return GRUB_ERR_NONE;
+@@ -703,7 +708,7 @@ grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt)
+ {
+   /* TODO: update/repair protective MBRs too.  */
+ 
+-  if ((gpt->status & GRUB_GPT_BOTH_VALID) != GRUB_GPT_BOTH_VALID)
++  if (!grub_gpt_both_valid (gpt))
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "Invalid GPT data");
+ 
+   grub_dprintf ("gpt", "writing primary GPT to %s\n", disk->name);
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index b354fd5f4..226e09978 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -161,13 +161,6 @@ typedef enum grub_gpt_status
+     GRUB_GPT_BACKUP_ENTRIES_VALID   = 0x20,
+   } grub_gpt_status_t;
+ 
+-#define GRUB_GPT_MBR_VALID (GRUB_GPT_PROTECTIVE_MBR|GRUB_GPT_HYBRID_MBR)
+-#define GRUB_GPT_PRIMARY_VALID \
+-  (GRUB_GPT_PRIMARY_HEADER_VALID|GRUB_GPT_PRIMARY_ENTRIES_VALID)
+-#define GRUB_GPT_BACKUP_VALID \
+-  (GRUB_GPT_BACKUP_HEADER_VALID|GRUB_GPT_BACKUP_ENTRIES_VALID)
+-#define GRUB_GPT_BOTH_VALID (GRUB_GPT_PRIMARY_VALID|GRUB_GPT_BACKUP_VALID)
+-
+ /* UEFI requires the entries table to be at least 16384 bytes for a
+  * total of 128 entries given the standard 128 byte entry size.  */
+ #define GRUB_GPT_DEFAULT_ENTRIES_SIZE	16384
+@@ -197,6 +190,34 @@ struct grub_gpt
+ };
+ typedef struct grub_gpt *grub_gpt_t;
+ 
++/* Helpers for checking the gpt status field.  */
++static inline int
++grub_gpt_mbr_valid (grub_gpt_t gpt)
++{
++  return ((gpt->status & GRUB_GPT_PROTECTIVE_MBR) ||
++	  (gpt->status & GRUB_GPT_HYBRID_MBR));
++}
++
++static inline int
++grub_gpt_primary_valid (grub_gpt_t gpt)
++{
++  return ((gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID) &&
++	  (gpt->status & GRUB_GPT_PRIMARY_ENTRIES_VALID));
++}
++
++static inline int
++grub_gpt_backup_valid (grub_gpt_t gpt)
++{
++  return ((gpt->status & GRUB_GPT_BACKUP_HEADER_VALID) &&
++	  (gpt->status & GRUB_GPT_BACKUP_ENTRIES_VALID));
++}
++
++static inline int
++grub_gpt_both_valid (grub_gpt_t gpt)
++{
++  return grub_gpt_primary_valid (gpt) && grub_gpt_backup_valid (gpt);
++}
++
+ /* Translate GPT sectors to GRUB's 512 byte block addresses.  */
+ static inline grub_disk_addr_t
+ grub_gpt_sector_to_addr (grub_gpt_t gpt, grub_uint64_t sector)

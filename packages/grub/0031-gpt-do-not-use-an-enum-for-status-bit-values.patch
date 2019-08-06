@@ -1,0 +1,46 @@
+From 603feacb39091f9f4e01fe4a4160f0f320b03fe5 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Wed, 21 Sep 2016 13:22:06 -0700
+Subject: [PATCH] gpt: do not use an enum for status bit values
+
+---
+ include/grub/gpt_partition.h | 19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index 226e09978..92b606cd9 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -151,15 +151,14 @@ grub_gpt_partition_map_iterate (grub_disk_t disk,
+ 				void *hook_data);
+ 
+ /* Advanced GPT library.  */
+-typedef enum grub_gpt_status
+-  {
+-    GRUB_GPT_PROTECTIVE_MBR         = 0x01,
+-    GRUB_GPT_HYBRID_MBR             = 0x02,
+-    GRUB_GPT_PRIMARY_HEADER_VALID   = 0x04,
+-    GRUB_GPT_PRIMARY_ENTRIES_VALID  = 0x08,
+-    GRUB_GPT_BACKUP_HEADER_VALID    = 0x10,
+-    GRUB_GPT_BACKUP_ENTRIES_VALID   = 0x20,
+-  } grub_gpt_status_t;
++
++/* Status bits for the grub_gpt.status field.  */
++#define GRUB_GPT_PROTECTIVE_MBR		0x01
++#define GRUB_GPT_HYBRID_MBR		0x02
++#define GRUB_GPT_PRIMARY_HEADER_VALID	0x04
++#define GRUB_GPT_PRIMARY_ENTRIES_VALID	0x08
++#define GRUB_GPT_BACKUP_HEADER_VALID	0x10
++#define GRUB_GPT_BACKUP_ENTRIES_VALID	0x20
+ 
+ /* UEFI requires the entries table to be at least 16384 bytes for a
+  * total of 128 entries given the standard 128 byte entry size.  */
+@@ -170,7 +169,7 @@ typedef enum grub_gpt_status
+ struct grub_gpt
+ {
+   /* Bit field indicating which structures on disk are valid.  */
+-  grub_gpt_status_t status;
++  unsigned status;
+ 
+   /* Protective or hybrid MBR.  */
+   struct grub_msdos_partition_mbr mbr;

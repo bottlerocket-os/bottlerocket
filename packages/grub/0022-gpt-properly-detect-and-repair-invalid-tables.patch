@@ -1,0 +1,39 @@
+From 6ca9e261944a004668f9416f0ce9dad19846155e Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Sat, 20 Aug 2016 17:42:12 -0700
+Subject: [PATCH] gpt: properly detect and repair invalid tables
+
+GPT_BOTH_VALID is 4 bits so simple a boolean check is not sufficient.
+This broken condition allowed gptprio to trust bogus disk locations in
+headers that were marked invalid causing arbitrary disk corruption.
+---
+ grub-core/commands/gptprio.c | 2 +-
+ grub-core/lib/gpt.c          | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
+index 24157477c..2021cb200 100644
+--- a/grub-core/commands/gptprio.c
++++ b/grub-core/commands/gptprio.c
+@@ -91,7 +91,7 @@ grub_find_next (const char *disk_name,
+   if (!gpt)
+     goto done;
+ 
+-  if (!(gpt->status & GRUB_GPT_BOTH_VALID))
++  if ((gpt->status & GRUB_GPT_BOTH_VALID) != GRUB_GPT_BOTH_VALID)
+     if (grub_gpt_repair (dev->disk, gpt))
+       goto done;
+ 
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index b7449911a..0daf3f8de 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -648,7 +648,7 @@ grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt)
+ {
+   /* TODO: update/repair protective MBRs too.  */
+ 
+-  if (!(gpt->status & GRUB_GPT_BOTH_VALID))
++  if ((gpt->status & GRUB_GPT_BOTH_VALID) != GRUB_GPT_BOTH_VALID)
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "Invalid GPT data");
+ 
+   grub_dprintf ("gpt", "writing primary GPT to %s\n", disk->name);

@@ -1,0 +1,66 @@
+From 025b3591c95200132256b44d15048a26bf558c40 Mon Sep 17 00:00:00 2001
+From: Alex Crawford <alex.crawford@coreos.com>
+Date: Mon, 31 Aug 2015 15:23:39 -0700
+Subject: [PATCH] gpt: minor cleanup
+
+---
+ include/grub/gpt_partition.h |  2 +-
+ tests/gpt_unit_test.c        | 12 ++++++------
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index dc2dec43a..ae72b026c 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -229,7 +229,7 @@ grub_err_t grub_gpt_header_check (struct grub_gpt_header *gpt,
+ grub_err_t grub_gpt_part_label (grub_device_t device, char **label);
+ 
+ /* Return the partition uuid of the device DEVICE in UUID.
+- * The label is in a new buffer and should be freed by the caller.  */
++ * The uuid is in a new buffer and should be freed by the caller.  */
+ grub_err_t grub_gpt_part_uuid (grub_device_t device, char **uuid);
+ 
+ #endif /* ! GRUB_GPT_PARTITION_HEADER */
+diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
+index deb55a926..7a1af46e1 100644
+--- a/tests/gpt_unit_test.c
++++ b/tests/gpt_unit_test.c
+@@ -538,7 +538,7 @@ repair_test (void)
+ }
+ 
+ static void
+-search_label_test (void)
++search_part_label_test (void)
+ {
+   struct test_data data;
+   const char *test_result;
+@@ -575,7 +575,7 @@ search_label_test (void)
+ }
+ 
+ static void
+-search_uuid_test (void)
++search_part_uuid_test (void)
+ {
+   struct test_data data;
+   const char gpt1_uuid[] = "A0F1792E-B4CE-4136-BCF2-1AFC133C2828";
+@@ -626,8 +626,8 @@ grub_unit_test_init (void)
+   grub_test_register ("gpt_read_invalid_test", read_invalid_entries_test);
+   grub_test_register ("gpt_read_fallback_test", read_fallback_test);
+   grub_test_register ("gpt_repair_test", repair_test);
+-  grub_test_register ("gpt_search_label_test", search_label_test);
+-  grub_test_register ("gpt_search_uuid_test", search_uuid_test);
++  grub_test_register ("gpt_search_part_label_test", search_part_label_test);
++  grub_test_register ("gpt_search_uuid_test", search_part_uuid_test);
+ }
+ 
+ void
+@@ -639,7 +639,7 @@ grub_unit_test_fini (void)
+   grub_test_unregister ("gpt_read_invalid_test");
+   grub_test_unregister ("gpt_read_fallback_test");
+   grub_test_unregister ("gpt_repair_test");
+-  grub_test_unregister ("gpt_search_label_test");
+-  grub_test_unregister ("gpt_search_uuid_test");
++  grub_test_unregister ("gpt_search_part_label_test");
++  grub_test_unregister ("gpt_search_part_uuid_test");
+   grub_fini_all ();
+ }

@@ -1,0 +1,134 @@
+From b78d543b0ab493f6bd20f2e5d101fc11c9357faf Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Sat, 18 Oct 2014 16:46:17 -0700
+Subject: [PATCH] gpt: record size of of the entries table
+
+The size of the entries table will be needed later when writing it back
+to disk. Restructure the entries reading code to flow a little better.
+---
+ grub-core/lib/gpt.c          | 53 ++++++++++++++++--------------------
+ include/grub/gpt_partition.h |  5 +++-
+ 2 files changed, 27 insertions(+), 31 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 705bd77f9..01df7f3e8 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -153,7 +153,7 @@ grub_gpt_read_backup (grub_disk_t disk, grub_gpt_t gpt)
+   return GRUB_ERR_NONE;
+ }
+ 
+-static struct grub_gpt_partentry *
++static grub_err_t
+ grub_gpt_read_entries (grub_disk_t disk, grub_gpt_t gpt,
+ 		       struct grub_gpt_header *header)
+ {
+@@ -173,6 +173,10 @@ grub_gpt_read_entries (grub_disk_t disk, grub_gpt_t gpt,
+       goto fail;
+     }
+ 
++  /* Double check that the header was validated properly.  */
++  if (entries_size < GRUB_GPT_DEFAULT_ENTRIES_SIZE)
++    return grub_error (GRUB_ERR_BUG, "invalid GPT entries table size");
++
+   entries = grub_malloc (entries_size);
+   if (!entries)
+     goto fail;
+@@ -197,19 +201,21 @@ grub_gpt_read_entries (grub_disk_t disk, grub_gpt_t gpt,
+     }
+ 
+   grub_free (crc32_context);
+-  return entries;
++  grub_free (gpt->entries);
++  gpt->entries = entries;
++  gpt->entries_size = entries_size;
++  return GRUB_ERR_NONE;
+ 
+ fail:
+   grub_free (entries);
+   grub_free (crc32_context);
+-  return NULL;
++  return grub_errno;
+ }
+ 
+ grub_gpt_t
+ grub_gpt_read (grub_disk_t disk)
+ {
+   grub_gpt_t gpt;
+-  struct grub_gpt_partentry *backup_entries;
+ 
+   gpt = grub_zalloc (sizeof (*gpt));
+   if (!gpt)
+@@ -241,36 +247,23 @@ grub_gpt_read (grub_disk_t disk)
+   else
+     goto fail;
+ 
+-  /* Same error handling scheme for the entry tables.  */
+-  gpt->entries = grub_gpt_read_entries (disk, gpt, &gpt->primary);
+-  if (!gpt->entries)
+-    {
+-      grub_error_push ();
+-      backup_entries = grub_gpt_read_entries (disk, gpt, &gpt->backup);
+-      grub_error_pop ();
+-    }
+-  else
+-    {
+-      gpt->status |= GRUB_GPT_PRIMARY_ENTRIES_VALID;
+-      backup_entries = grub_gpt_read_entries (disk, gpt, &gpt->backup);
+-    }
++  /* Similarly, favor the value or error from the primary table.  */
++  if (gpt->status & GRUB_GPT_BACKUP_HEADER_VALID &&
++      !grub_gpt_read_entries (disk, gpt, &gpt->backup))
++    gpt->status |= GRUB_GPT_BACKUP_ENTRIES_VALID;
+ 
+-  if (backup_entries)
+-    {
+-      gpt->status |= GRUB_GPT_BACKUP_ENTRIES_VALID;
+-
+-      if (gpt->status & GRUB_GPT_PRIMARY_ENTRIES_VALID)
+-	grub_free (backup_entries);
+-      else
+-	gpt->entries = backup_entries;
+-    }
++  grub_errno = GRUB_ERR_NONE;
++  if (gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID &&
++      !grub_gpt_read_entries (disk, gpt, &gpt->primary))
++    gpt->status |= GRUB_GPT_PRIMARY_ENTRIES_VALID;
+ 
+   if (gpt->status & GRUB_GPT_PRIMARY_ENTRIES_VALID ||
+       gpt->status & GRUB_GPT_BACKUP_ENTRIES_VALID)
+-    {
+-      grub_errno = GRUB_ERR_NONE;
+-      return gpt;
+-    }
++    grub_errno = GRUB_ERR_NONE;
++  else
++    goto fail;
++
++  return gpt;
+ 
+ fail:
+   grub_gpt_free (gpt);
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index 6d678fae2..451b02a89 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -106,7 +106,9 @@ typedef enum grub_gpt_status
+ 
+ /* UEFI requires the entries table to be at least 16384 bytes for a
+  * total of 128 entries given the standard 128 byte entry size.  */
+-#define GRUB_GPT_DEFAULT_ENTRIES_LENGTH	128
++#define GRUB_GPT_DEFAULT_ENTRIES_SIZE	16384
++#define GRUB_GPT_DEFAULT_ENTRIES_LENGTH	\
++  (GRUB_GPT_DEFAULT_ENTRIES_SIZE / sizeof (struct grub_gpt_partentry))
+ 
+ struct grub_gpt
+ {
+@@ -122,6 +124,7 @@ struct grub_gpt
+ 
+   /* Only need one entries table, on disk both copies are identical.  */
+   struct grub_gpt_partentry *entries;
++  grub_size_t entries_size;
+ 
+   /* Logarithm of sector size, in case GPT and disk driver disagree.  */
+   unsigned int log_sector_size;

@@ -1,0 +1,101 @@
+From 3670a0019adb31fd9f849b5128a629e0e89a9bba Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Wed, 10 Aug 2016 18:26:03 -0700
+Subject: [PATCH] gpt: improve validation of GPT headers
+
+Adds basic validation of all the disk locations in the headers, reducing
+the chance of corrupting weird locations on disk.
+---
+ grub-core/lib/gpt.c | 48 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index c2821b563..f83fe29ac 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -224,6 +224,7 @@ grub_gpt_header_check (struct grub_gpt_header *gpt,
+ 		       unsigned int log_sector_size)
+ {
+   grub_uint32_t crc = 0, size;
++  grub_uint64_t start, end;
+ 
+   if (grub_memcmp (gpt->magic, grub_gpt_magic, sizeof (grub_gpt_magic)) != 0)
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid GPT signature");
+@@ -245,9 +246,35 @@ grub_gpt_header_check (struct grub_gpt_header *gpt,
+   if (size < 128 || size % 128)
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid GPT entry size");
+ 
++  /* And of course there better be some space for partitions!  */
++  start = grub_le_to_cpu64 (gpt->start);
++  end = grub_le_to_cpu64 (gpt->end);
++  if (start > end)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid usable sectors");
++
+   return GRUB_ERR_NONE;
+ }
+ 
++static int
++grub_gpt_headers_equal (grub_gpt_t gpt)
++{
++  /* Assume headers passed grub_gpt_header_check so skip magic and version.
++   * Individual fields must be checked instead of just using memcmp because
++   * crc32, header, alternate, and partitions will all normally differ.  */
++
++  if (gpt->primary.headersize != gpt->backup.headersize ||
++      gpt->primary.header_lba != gpt->backup.alternate_lba ||
++      gpt->primary.start != gpt->backup.start ||
++      gpt->primary.end != gpt->backup.end ||
++      gpt->primary.maxpart != gpt->backup.maxpart ||
++      gpt->primary.partentry_size != gpt->backup.partentry_size ||
++      gpt->primary.partentry_crc32 != gpt->backup.partentry_crc32)
++    return 0;
++
++  return grub_memcmp(&gpt->primary.guid, &gpt->backup.guid,
++                     sizeof(grub_gpt_guid_t)) == 0;
++}
++
+ static grub_err_t
+ grub_gpt_check_primary (grub_gpt_t gpt)
+ {
+@@ -273,6 +300,12 @@ grub_gpt_check_primary (grub_gpt_t gpt)
+ 
+   if (grub_gpt_header_check (&gpt->primary, gpt->log_sector_size))
+     return grub_errno;
++  if (primary != 1)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid primary GPT LBA");
++  if (entries <= 1 || entries+entries_len > start)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid entries location");
++  if (backup <= end)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid backup GPT LBA");
+ 
+   return GRUB_ERR_NONE;
+ }
+@@ -302,6 +335,12 @@ grub_gpt_check_backup (grub_gpt_t gpt)
+ 
+   if (grub_gpt_header_check (&gpt->backup, gpt->log_sector_size))
+     return grub_errno;
++  if (primary != 1)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid primary GPT LBA");
++  if (entries <= end || entries+entries_len > backup)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid entries location");
++  if (backup <= end)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid backup GPT LBA");
+ 
+   return GRUB_ERR_NONE;
+ }
+@@ -354,6 +393,15 @@ grub_gpt_read_backup (grub_disk_t disk, grub_gpt_t gpt)
+   if (grub_gpt_check_backup (gpt))
+     return grub_errno;
+ 
++  /* Ensure the backup header thinks it is located where we found it.  */
++  if (grub_le_to_cpu64 (gpt->backup.header_lba) != sector)
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid backup GPT LBA");
++
++  /* If both primary and backup are valid but differ prefer the primary.  */
++  if ((gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID) &&
++      !grub_gpt_headers_equal(gpt))
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "backup GPT of of sync");
++
+   gpt->status |= GRUB_GPT_BACKUP_HEADER_VALID;
+   return GRUB_ERR_NONE;
+ }

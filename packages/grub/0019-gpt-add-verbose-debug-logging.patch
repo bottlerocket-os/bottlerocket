@@ -1,0 +1,251 @@
+From 8fb347e03236e927e3a2a1134923854a39a03c4b Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Wed, 10 Aug 2016 18:26:03 -0700
+Subject: [PATCH] gpt: add verbose debug logging
+
+---
+ grub-core/lib/gpt.c | 117 +++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 109 insertions(+), 8 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 3e17f2771..c2821b563 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -207,6 +207,18 @@ grub_gpt_pmbr_check (struct grub_msdos_partition_mbr *mbr)
+   return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid protective MBR");
+ }
+ 
++static grub_uint64_t
++grub_gpt_entries_sectors (struct grub_gpt_header *gpt,
++			  unsigned int log_sector_size)
++{
++  grub_uint64_t sector_bytes, entries_bytes;
++
++  sector_bytes = 1ULL << log_sector_size;
++  entries_bytes = (grub_uint64_t) grub_le_to_cpu32 (gpt->maxpart) *
++		  (grub_uint64_t) grub_le_to_cpu32 (gpt->partentry_size);
++  return grub_divmod64(entries_bytes + sector_bytes - 1, sector_bytes, NULL);
++}
++
+ grub_err_t
+ grub_gpt_header_check (struct grub_gpt_header *gpt,
+ 		       unsigned int log_sector_size)
+@@ -236,6 +248,64 @@ grub_gpt_header_check (struct grub_gpt_header *gpt,
+   return GRUB_ERR_NONE;
+ }
+ 
++static grub_err_t
++grub_gpt_check_primary (grub_gpt_t gpt)
++{
++  grub_uint64_t backup, primary, entries, entries_len, start, end;
++
++  primary = grub_le_to_cpu64 (gpt->primary.header_lba);
++  backup = grub_le_to_cpu64 (gpt->primary.alternate_lba);
++  entries = grub_le_to_cpu64 (gpt->primary.partitions);
++  entries_len = grub_gpt_entries_sectors(&gpt->primary, gpt->log_sector_size);
++  start = grub_le_to_cpu64 (gpt->primary.start);
++  end = grub_le_to_cpu64 (gpt->primary.end);
++
++  grub_dprintf ("gpt", "Primary GPT layout:\n"
++		"primary header = 0x%llx backup header = 0x%llx\n"
++		"entries location = 0x%llx length = 0x%llx\n"
++		"first usable = 0x%llx last usable = 0x%llx\n",
++		(unsigned long long) primary,
++		(unsigned long long) backup,
++		(unsigned long long) entries,
++		(unsigned long long) entries_len,
++		(unsigned long long) start,
++		(unsigned long long) end);
++
++  if (grub_gpt_header_check (&gpt->primary, gpt->log_sector_size))
++    return grub_errno;
++
++  return GRUB_ERR_NONE;
++}
++
++static grub_err_t
++grub_gpt_check_backup (grub_gpt_t gpt)
++{
++  grub_uint64_t backup, primary, entries, entries_len, start, end;
++
++  backup = grub_le_to_cpu64 (gpt->backup.header_lba);
++  primary = grub_le_to_cpu64 (gpt->backup.alternate_lba);
++  entries = grub_le_to_cpu64 (gpt->backup.partitions);
++  entries_len = grub_gpt_entries_sectors(&gpt->backup, gpt->log_sector_size);
++  start = grub_le_to_cpu64 (gpt->backup.start);
++  end = grub_le_to_cpu64 (gpt->backup.end);
++
++  grub_dprintf ("gpt", "Backup GPT layout:\n"
++		"primary header = 0x%llx backup header = 0x%llx\n"
++		"entries location = 0x%llx length = 0x%llx\n"
++		"first usable = 0x%llx last usable = 0x%llx\n",
++		(unsigned long long) primary,
++		(unsigned long long) backup,
++		(unsigned long long) entries,
++		(unsigned long long) entries_len,
++		(unsigned long long) start,
++		(unsigned long long) end);
++
++  if (grub_gpt_header_check (&gpt->backup, gpt->log_sector_size))
++    return grub_errno;
++
++  return GRUB_ERR_NONE;
++}
++
+ static grub_err_t
+ grub_gpt_read_primary (grub_disk_t disk, grub_gpt_t gpt)
+ {
+@@ -246,11 +316,13 @@ grub_gpt_read_primary (grub_disk_t disk, grub_gpt_t gpt)
+    * but eventually this code should match the existing behavior.  */
+   gpt->log_sector_size = disk->log_sector_size;
+ 
++  grub_dprintf ("gpt", "reading primary GPT from sector 0x1\n");
++
+   addr = grub_gpt_sector_to_addr (gpt, 1);
+   if (grub_disk_read (disk, addr, 0, sizeof (gpt->primary), &gpt->primary))
+     return grub_errno;
+ 
+-  if (grub_gpt_header_check (&gpt->primary, gpt->log_sector_size))
++  if (grub_gpt_check_primary (gpt))
+     return grub_errno;
+ 
+   gpt->status |= GRUB_GPT_PRIMARY_HEADER_VALID;
+@@ -272,11 +344,14 @@ grub_gpt_read_backup (grub_disk_t disk, grub_gpt_t gpt)
+     return grub_error (GRUB_ERR_NOT_IMPLEMENTED_YET,
+ 		       "Unable to locate backup GPT");
+ 
++  grub_dprintf ("gpt", "reading backup GPT from sector 0x%llx\n",
++		(unsigned long long) sector);
++
+   addr = grub_gpt_sector_to_addr (gpt, sector);
+   if (grub_disk_read (disk, addr, 0, sizeof (gpt->backup), &gpt->backup))
+     return grub_errno;
+ 
+-  if (grub_gpt_header_check (&gpt->backup, gpt->log_sector_size))
++  if (grub_gpt_check_backup (gpt))
+     return grub_errno;
+ 
+   gpt->status |= GRUB_GPT_BACKUP_HEADER_VALID;
+@@ -289,6 +364,7 @@ grub_gpt_read_entries (grub_disk_t disk, grub_gpt_t gpt,
+ {
+   struct grub_gpt_partentry *entries = NULL;
+   grub_uint32_t count, size, crc;
++  grub_uint64_t sector;
+   grub_disk_addr_t addr;
+   grub_size_t entries_size;
+ 
+@@ -310,7 +386,12 @@ grub_gpt_read_entries (grub_disk_t disk, grub_gpt_t gpt,
+   if (!entries)
+     goto fail;
+ 
+-  addr = grub_gpt_sector_to_addr (gpt, grub_le_to_cpu64 (header->partitions));
++  sector = grub_le_to_cpu64 (header->partitions);
++  grub_dprintf ("gpt", "reading GPT %lu entries from sector 0x%llx\n",
++		(unsigned long) count,
++		(unsigned long long) sector);
++
++  addr = grub_gpt_sector_to_addr (gpt, sector);
+   if (grub_disk_read (disk, addr, 0, entries_size, entries))
+     goto fail;
+ 
+@@ -336,6 +417,8 @@ grub_gpt_read (grub_disk_t disk)
+ {
+   grub_gpt_t gpt;
+ 
++  grub_dprintf ("gpt", "reading GPT from %s\n", disk->name);
++
+   gpt = grub_zalloc (sizeof (*gpt));
+   if (!gpt)
+     goto fail;
+@@ -369,12 +452,18 @@ grub_gpt_read (grub_disk_t disk)
+   /* Similarly, favor the value or error from the primary table.  */
+   if (gpt->status & GRUB_GPT_BACKUP_HEADER_VALID &&
+       !grub_gpt_read_entries (disk, gpt, &gpt->backup))
+-    gpt->status |= GRUB_GPT_BACKUP_ENTRIES_VALID;
++    {
++      grub_dprintf ("gpt", "read valid backup GPT from %s\n", disk->name);
++      gpt->status |= GRUB_GPT_BACKUP_ENTRIES_VALID;
++    }
+ 
+   grub_errno = GRUB_ERR_NONE;
+   if (gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID &&
+       !grub_gpt_read_entries (disk, gpt, &gpt->primary))
+-    gpt->status |= GRUB_GPT_PRIMARY_ENTRIES_VALID;
++    {
++      grub_dprintf ("gpt", "read valid primary GPT from %s\n", disk->name);
++      gpt->status |= GRUB_GPT_PRIMARY_ENTRIES_VALID;
++    }
+ 
+   if (gpt->status & GRUB_GPT_PRIMARY_ENTRIES_VALID ||
+       gpt->status & GRUB_GPT_BACKUP_ENTRIES_VALID)
+@@ -394,21 +483,25 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+ {
+   grub_uint64_t backup_header, backup_entries;
+ 
++  grub_dprintf ("gpt", "repairing GPT for %s\n", disk->name);
++
+   if (disk->log_sector_size != gpt->log_sector_size)
+     return grub_error (GRUB_ERR_NOT_IMPLEMENTED_YET,
+ 		       "GPT sector size must match disk sector size");
+ 
+   if (!(gpt->status & GRUB_GPT_PRIMARY_ENTRIES_VALID ||
+-        gpt->status & GRUB_GPT_BACKUP_ENTRIES_VALID))
++	gpt->status & GRUB_GPT_BACKUP_ENTRIES_VALID))
+     return grub_error (GRUB_ERR_BUG, "No valid GPT entries");
+ 
+   if (gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID)
+     {
++      grub_dprintf ("gpt", "primary GPT header is valid\n");
+       backup_header = grub_le_to_cpu64 (gpt->primary.alternate_lba);
+       grub_memcpy (&gpt->backup, &gpt->primary, sizeof (gpt->backup));
+     }
+   else if (gpt->status & GRUB_GPT_BACKUP_HEADER_VALID)
+     {
++      grub_dprintf ("gpt", "backup GPT header is valid\n");
+       backup_header = grub_le_to_cpu64 (gpt->backup.header_lba);
+       grub_memcpy (&gpt->primary, &gpt->backup, sizeof (gpt->primary));
+     }
+@@ -418,9 +511,13 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   /* Relocate backup to end if disk whenever possible.  */
+   if (grub_gpt_disk_size_valid(disk))
+     backup_header = disk->total_sectors - 1;
++  grub_dprintf ("gpt", "backup GPT header will be located at 0x%llx\n",
++		(unsigned long long) backup_header);
+ 
+   backup_entries = backup_header -
+     grub_gpt_size_to_sectors (gpt, gpt->entries_size);
++  grub_dprintf ("gpt", "backup GPT entries will be located at 0x%llx\n",
++		(unsigned long long) backup_entries);
+ 
+   /* Update/fixup header and partition table locations.  */
+   gpt->primary.header_lba = grub_cpu_to_le64_compile_time (1);
+@@ -435,13 +532,15 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+     return grub_errno;
+ 
+   /* Sanity check.  */
+-  if (grub_gpt_header_check (&gpt->primary, gpt->log_sector_size))
++  if (grub_gpt_check_primary (gpt))
+     return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
+ 
+-  if (grub_gpt_header_check (&gpt->backup, gpt->log_sector_size))
++  if (grub_gpt_check_backup (gpt))
+     return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
+ 
+   gpt->status |= GRUB_GPT_BOTH_VALID;
++  grub_dprintf ("gpt", "repairing GPT for %s successful\n", disk->name);
++
+   return GRUB_ERR_NONE;
+ }
+ 
+@@ -497,9 +596,11 @@ grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt)
+   if (!(gpt->status & GRUB_GPT_BOTH_VALID))
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "Invalid GPT data");
+ 
++  grub_dprintf ("gpt", "writing primary GPT to %s\n", disk->name);
+   if (grub_gpt_write_table (disk, gpt, &gpt->primary))
+     return grub_errno;
+ 
++  grub_dprintf ("gpt", "writing backup GPT to %s\n", disk->name);
+   if (grub_gpt_write_table (disk, gpt, &gpt->backup))
+     return grub_errno;
+ 

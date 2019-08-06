@@ -1,0 +1,107 @@
+From 999e6bc69145e936a5172d4f3f64374c8087d43e Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Mon, 22 Aug 2016 16:45:10 -0700
+Subject: [PATCH] gptprio_test: check GPT is repaired when appropriate
+
+---
+ tests/gptprio_test.in | 63 ++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 60 insertions(+), 3 deletions(-)
+
+diff --git a/tests/gptprio_test.in b/tests/gptprio_test.in
+index f4aea0dc9..c5cf0f3b7 100644
+--- a/tests/gptprio_test.in
++++ b/tests/gptprio_test.in
+@@ -66,8 +66,9 @@ prio_uuid[3]="1aa5a658-5b02-414d-9b71-f7e6c151f0cd"
+ prio_uuid[4]="8aa0240d-98af-42b0-b32a-ccbe0572d62b"
+ 
+ create_disk_image () {
++    size=$1
+     rm -f "${img1}"
+-    dd if=/dev/zero of="${img1}" bs=512 count=1 seek=100 status=none
++    dd if=/dev/zero of="${img1}" bs=512 count=1 seek=$((size - 1)) status=none
+     ${sgdisk} \
+         -n 1:0:+1 -c 1:ESP -t 1:ef00 \
+         -n 2:0:+1 -c 2:A -t 2:"${prio_type}" -u 2:"${prio_uuid[2]}" \
+@@ -76,6 +77,35 @@ create_disk_image () {
+         "${img1}" >/dev/null
+ }
+ 
++wipe_disk_area () {
++    sector=$1
++    size=$2
++    dd if=/dev/zero of="${img1}" bs=512 count=${size} seek=${sector} conv=notrunc status=none
++}
++
++is_zero () {
++    sector=$1
++    size=$2
++    cmp -s -i $((sector * 512)) -n $((size * 512)) /dev/zero "${img1}"
++}
++
++check_is_zero () {
++    sector=$1
++    size=$2
++    if ! is_zero "$@"; then
++        echo "$size sector(s) starting at $sector should be all zero"
++        exit 1
++    fi
++}
++
++check_not_zero () {
++    sector=$1
++    size=$2
++    if is_zero "$@"; then
++        echo "$size sector(s) starting at $sector should not be all zero"
++        exit 1
++    fi
++}
+ 
+ fmt_prio () {
+     priority=$(( ( $1 & 15 ) << 48 ))
+@@ -93,10 +123,10 @@ set_prio () {
+ check_prio () {
+     part="$1"
+     expect=$(fmt_prio $2 $3 $4)
+-    result=$(LANG=C ${sgdisk} -i "${part}" "${img1}" \
++    result=$(LANG=C ${sgdisk} -i "${part}" "${img1}" 2>&1 \
+             | awk '/^Attribute flags: / {print $3}')
+     if [[ "${expect}" != "${result}" ]]; then
+-        echo "Partition ${part} has attributes ${result}, not ${expect}" >&2
++        echo "Partition ${part} has attributes ${result:-??}, not ${expect}"
+         exit 1
+     fi
+ }
+@@ -133,6 +163,33 @@ create_disk_image 100
+ set_prio 2 3 2 1
+ check_prio 2 3 2 1
+ 
++# Check gptprio works without modifying the disk when no update is required.
++# Leaves any existing corruption as is, repairing in the OS is better.
++create_disk_image 100
++set_prio 2 1 0 1
++wipe_disk_area 99 1
++check_next 2 1 0 1
++check_is_zero 99 1
++
++create_disk_image 100
++set_prio 2 1 0 1
++wipe_disk_area 1 1
++check_next 2 1 0 1
++check_is_zero 1 1
++
++# When writes do need to be made go ahead and perform the repair.
++create_disk_image 100
++set_prio 2 1 1 0
++wipe_disk_area 99 1
++check_next 2 1 0 0
++check_not_zero 99 1
++
++create_disk_image 100
++set_prio 2 1 1 0
++wipe_disk_area 1 1
++check_next 2 1 0 0
++check_not_zero 1 1
++
+ # Try two partitions before falling before falling back to a third
+ create_disk_image 100
+ set_prio 2 3 3 0

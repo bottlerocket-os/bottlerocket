@@ -1,0 +1,113 @@
+From ea2059a5db3f2c74216d30e4d509f477edaf0a42 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Fri, 31 Jul 2015 15:03:11 -0700
+Subject: [PATCH] gpt: clean up little-endian crc32 computation
+
+ - Remove problematic cast from *uint8_t to *uint32_t (alignment issue).
+ - Remove dynamic allocation and associated error handling paths.
+ - Match parameter ordering to existing grub_crypto_hash function.
+---
+ grub-core/lib/gpt.c | 51 ++++++++++++---------------------------------
+ 1 file changed, 13 insertions(+), 38 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 10a4b852d..aedc4f7a1 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -122,45 +122,29 @@ grub_gpt_size_to_sectors (grub_gpt_t gpt, grub_size_t size)
+   return sectors;
+ }
+ 
+-static grub_err_t
+-grub_gpt_lecrc32 (void *data, grub_size_t len, grub_uint32_t *crc)
++static void
++grub_gpt_lecrc32 (grub_uint32_t *crc, const void *data, grub_size_t len)
+ {
+-  grub_uint8_t *crc32_context;
+-
+-  crc32_context = grub_zalloc (GRUB_MD_CRC32->contextsize);
+-  if (!crc32_context)
+-    return grub_errno;
++  grub_uint32_t crc32_val;
+ 
+-  GRUB_MD_CRC32->init (crc32_context);
+-  GRUB_MD_CRC32->write (crc32_context, data, len);
+-  GRUB_MD_CRC32->final (crc32_context);
++  grub_crypto_hash (GRUB_MD_CRC32, &crc32_val, data, len);
+ 
+   /* GRUB_MD_CRC32 always uses big endian, gpt is always little.  */
+-  *crc = grub_swap_bytes32 (*(grub_uint32_t *)
+-			    GRUB_MD_CRC32->read (crc32_context));
+-
+-  grub_free (crc32_context);
+-
+-  return GRUB_ERR_NONE;
++  *crc = grub_swap_bytes32 (crc32_val);
+ }
+ 
+-static grub_err_t
+-grub_gpt_header_lecrc32 (struct grub_gpt_header *header, grub_uint32_t *crc)
++static void
++grub_gpt_header_lecrc32 (grub_uint32_t *crc, struct grub_gpt_header *header)
+ {
+   grub_uint32_t old, new;
+-  grub_err_t err;
+ 
+   /* crc32 must be computed with the field cleared.  */
+   old = header->crc32;
+   header->crc32 = 0;
+-  err = grub_gpt_lecrc32 (header, sizeof (*header), &new);
++  grub_gpt_lecrc32 (&new, header, sizeof (*header));
+   header->crc32 = old;
+ 
+-  if (err)
+-    return err;
+-
+   *crc = new;
+-  return GRUB_ERR_NONE;
+ }
+ 
+ /* Make sure the MBR is a protective MBR and not a normal MBR.  */
+@@ -192,9 +176,7 @@ grub_gpt_header_check (struct grub_gpt_header *gpt,
+   if (gpt->version != GRUB_GPT_HEADER_VERSION)
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "unknown GPT version");
+ 
+-  if (grub_gpt_header_lecrc32 (gpt, &crc))
+-    return grub_errno;
+-
++  grub_gpt_header_lecrc32 (&crc, gpt);
+   if (gpt->crc32 != crc)
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid GPT header crc32");
+ 
+@@ -289,9 +271,7 @@ grub_gpt_read_entries (grub_disk_t disk, grub_gpt_t gpt,
+   if (grub_disk_read (disk, addr, 0, entries_size, entries))
+     goto fail;
+ 
+-  if (grub_gpt_lecrc32 (entries, entries_size, &crc))
+-    goto fail;
+-
++  grub_gpt_lecrc32 (&crc, entries, entries_size);
+   if (crc != header->partentry_crc32)
+     {
+       grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid GPT entry crc32");
+@@ -433,17 +413,12 @@ grub_gpt_update_checksums (grub_gpt_t gpt)
+   gpt->backup.headersize =
+     grub_cpu_to_le32_compile_time (sizeof (gpt->backup));
+ 
+-  if (grub_gpt_lecrc32 (gpt->entries, gpt->entries_size, &crc))
+-    return grub_errno;
+-
++  grub_gpt_lecrc32 (&crc, gpt->entries, gpt->entries_size);
+   gpt->primary.partentry_crc32 = crc;
+   gpt->backup.partentry_crc32 = crc;
+ 
+-  if (grub_gpt_header_lecrc32 (&gpt->primary, &gpt->primary.crc32))
+-    return grub_errno;
+-
+-  if (grub_gpt_header_lecrc32 (&gpt->backup, &gpt->backup.crc32))
+-    return grub_errno;
++  grub_gpt_header_lecrc32 (&gpt->primary.crc32, &gpt->primary);
++  grub_gpt_header_lecrc32 (&gpt->backup.crc32, &gpt->backup);
+ 
+   return GRUB_ERR_NONE;
+ }

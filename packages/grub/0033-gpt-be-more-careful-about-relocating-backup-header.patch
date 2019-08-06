@@ -1,0 +1,51 @@
+From 527a976a1f18bf536d460b6c7e6b3704ad52ecac Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Wed, 21 Sep 2016 13:52:52 -0700
+Subject: [PATCH] gpt: be more careful about relocating backup header
+
+The header was being relocated without checking the new location is
+actually safe. If the BIOS thinks the disk is smaller than the OS then
+repair may relocate the header into allocated space, failing the final
+validation check. So only move it if the disk has grown.
+
+Additionally, if the backup is valid then we can assume its current
+location is good enough and leave it as-is.
+---
+ grub-core/lib/gpt.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 3c6ff3540..35e65d8d9 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -599,7 +599,17 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   if (grub_gpt_primary_valid (gpt))
+     {
+       grub_dprintf ("gpt", "primary GPT is valid\n");
++
++      /* Relocate backup to end if disk if the disk has grown.  */
+       backup_header = grub_le_to_cpu64 (gpt->primary.alternate_lba);
++      if (grub_gpt_disk_size_valid (disk) &&
++	  disk->total_sectors - 1 > backup_header)
++	{
++	  backup_header = disk->total_sectors - 1;
++	  grub_dprintf ("gpt", "backup GPT header relocated to 0x%llx\n",
++			(unsigned long long) backup_header);
++	}
++
+       grub_memcpy (&gpt->backup, &gpt->primary, sizeof (gpt->backup));
+     }
+   else if (grub_gpt_backup_valid (gpt))
+@@ -611,12 +621,6 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   else
+     return grub_error (GRUB_ERR_BUG, "No valid GPT");
+ 
+-  /* Relocate backup to end if disk whenever possible.  */
+-  if (grub_gpt_disk_size_valid(disk))
+-    backup_header = disk->total_sectors - 1;
+-  grub_dprintf ("gpt", "backup GPT header will be located at 0x%llx\n",
+-		(unsigned long long) backup_header);
+-
+   backup_entries = backup_header -
+     grub_gpt_size_to_sectors (gpt, gpt->entries_size);
+   grub_dprintf ("gpt", "backup GPT entries will be located at 0x%llx\n",
