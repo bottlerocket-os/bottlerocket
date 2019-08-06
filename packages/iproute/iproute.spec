@@ -1,5 +1,5 @@
 Name: %{_cross_os}iproute
-Version: 4.15.0
+Version: 4.19.0
 Release: 1%{?dist}
 Summary: Tools for advanced IP routing and network device configuration
 License: GPLv2+ and Public Domain
