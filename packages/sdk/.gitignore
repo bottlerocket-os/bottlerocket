@@ -1,15 +1,1 @@
-binutils-2.31.1.tar.xz
-binutils-2.32.tar.xz
-bison-3.0.4.tar.xz
-buildroot-2018.11.1.tar.gz
-gawk-4.2.1.tar.xz
-gcc-8.2.0.tar.xz
-glibc-glibc-2.28-50-gb8dd0f42780a3133c02f064a2c0c5c4e7ab61aaa.tar.gz
-gmp-6.1.2.tar.xz
-isl-0.18.tar.xz
-linux-4.14.86.tar.xz
-lzip-1.20.tar.gz
-m4-1.4.18.tar.xz
-mpc-1.0.3.tar.gz
-mpfr-3.1.6.tar.xz
-tar-1.29.cpio.gz
+tar-*.cpio.gz

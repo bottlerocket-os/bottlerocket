@@ -2,3 +2,5 @@
 *.makevar
 *.makepkg
 *.makedep
+*.tar.*
+/packages/*/*.crate
