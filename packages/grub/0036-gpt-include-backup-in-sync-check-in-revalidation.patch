@@ -1,0 +1,37 @@
+From a17e4e799fbcb64ea2379a8886a97de74a521bf6 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Wed, 21 Sep 2016 15:01:09 -0700
+Subject: [PATCH] gpt: include backup-in-sync check in revalidation
+
+---
+ grub-core/lib/gpt.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 3ac2987c6..c27bcc510 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -372,6 +372,11 @@ grub_gpt_check_backup (grub_gpt_t gpt)
+   if (backup <= end)
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid backup GPT LBA");
+ 
++  /* If both primary and backup are valid but differ prefer the primary.  */
++  if ((gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID) &&
++      !grub_gpt_headers_equal (gpt))
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "backup GPT out of sync");
++
+   return GRUB_ERR_NONE;
+ }
+ 
+@@ -435,11 +440,6 @@ grub_gpt_read_backup (grub_disk_t disk, grub_gpt_t gpt)
+   if (grub_le_to_cpu64 (gpt->backup.header_lba) != sector)
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "invalid backup GPT LBA");
+ 
+-  /* If both primary and backup are valid but differ prefer the primary.  */
+-  if ((gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID) &&
+-      !grub_gpt_headers_equal(gpt))
+-    return grub_error (GRUB_ERR_BAD_PART_TABLE, "backup GPT of of sync");
+-
+   gpt->status |= GRUB_GPT_BACKUP_HEADER_VALID;
+   return GRUB_ERR_NONE;
+ }

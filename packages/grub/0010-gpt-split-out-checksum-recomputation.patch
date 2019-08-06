@@ -1,0 +1,86 @@
+From 344f0a5304c6962bbafaf218380d6d00cc18a252 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Sat, 15 Nov 2014 13:27:13 -0800
+Subject: [PATCH] gpt: split out checksum recomputation
+
+For basic data modifications the full repair function is overkill.
+---
+ grub-core/lib/gpt.c          | 30 ++++++++++++++++++++----------
+ include/grub/gpt_partition.h |  3 +++
+ 2 files changed, 23 insertions(+), 10 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 67ffdf703..198234071 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -293,7 +293,6 @@ grub_err_t
+ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+ {
+   grub_uint64_t backup_header, backup_entries;
+-  grub_uint32_t crc;
+ 
+   if (disk->log_sector_size != gpt->log_sector_size)
+     return grub_error (GRUB_ERR_NOT_IMPLEMENTED_YET,
+@@ -331,13 +330,32 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   gpt->backup.alternate_lba = gpt->primary.header_lba;
+   gpt->backup.partitions = grub_cpu_to_le64 (backup_entries);
+ 
++  /* Recompute checksums.  */
++  if (grub_gpt_update_checksums (gpt))
++    return grub_errno;
++
++  /* Sanity check.  */
++  if (grub_gpt_header_check (&gpt->primary, gpt->log_sector_size))
++    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
++
++  if (grub_gpt_header_check (&gpt->backup, gpt->log_sector_size))
++    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
++
++  gpt->status |= GRUB_GPT_BOTH_VALID;
++  return GRUB_ERR_NONE;
++}
++
++grub_err_t
++grub_gpt_update_checksums (grub_gpt_t gpt)
++{
++  grub_uint32_t crc;
++
+   /* Writing headers larger than our header structure are unsupported.  */
+   gpt->primary.headersize =
+     grub_cpu_to_le32_compile_time (sizeof (gpt->primary));
+   gpt->backup.headersize =
+     grub_cpu_to_le32_compile_time (sizeof (gpt->backup));
+ 
+-  /* Recompute checksums.  */
+   if (grub_gpt_lecrc32 (gpt->entries, gpt->entries_size, &crc))
+     return grub_errno;
+ 
+@@ -350,14 +368,6 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   if (grub_gpt_header_lecrc32 (&gpt->backup, &gpt->backup.crc32))
+     return grub_errno;
+ 
+-  /* Sanity check.  */
+-  if (grub_gpt_header_check (&gpt->primary, gpt->log_sector_size))
+-    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
+-
+-  if (grub_gpt_header_check (&gpt->backup, gpt->log_sector_size))
+-    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
+-
+-  gpt->status |= GRUB_GPT_BOTH_VALID;
+   return GRUB_ERR_NONE;
+ }
+ 
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index 8a6e56af4..f5197b8ae 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -200,6 +200,9 @@ grub_gpt_t grub_gpt_read (grub_disk_t disk);
+ /* Sync up primary and backup headers, recompute checksums.  */
+ grub_err_t grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt);
+ 
++/* Recompute checksums, must be called after modifying GPT data.  */
++grub_err_t grub_gpt_update_checksums (grub_gpt_t gpt);
++
+ /* Write headers and entry tables back to disk.  */
+ grub_err_t grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt);
+ 

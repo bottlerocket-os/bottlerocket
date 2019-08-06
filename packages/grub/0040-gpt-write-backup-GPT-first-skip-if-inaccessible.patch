@@ -1,0 +1,69 @@
+From a789bc5ac9133b0c25dfbfa6d39c7c35a1115dfd Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Thu, 22 Sep 2016 11:18:42 -0700
+Subject: [PATCH] gpt: write backup GPT first, skip if inaccessible.
+
+Writing the primary GPT before the backup may lead to a confusing
+situation: booting a freshly updated system could consistently fail and
+next boot will fall back to the old system if writing the primary works
+but writing the backup fails. If the backup is written first and fails
+the primary is left in the old state so the next boot will re-try and
+possibly fail in the exact same way. Making that repeatable should make
+it easier for users to identify the error.
+
+Additionally if the firmware and OS disagree on the disk size, making
+the backup inaccessible to GRUB, then just skip writing the backup.
+When this happens the automatic call to `coreos-setgoodroot` after boot
+will take care of repairing the backup.
+---
+ grub-core/lib/gpt.c | 28 ++++++++++++++++++++++++----
+ 1 file changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 430404848..c3e3a25f9 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -729,19 +729,39 @@ grub_gpt_write_table (grub_disk_t disk, grub_gpt_t gpt,
+ grub_err_t
+ grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt)
+ {
++  grub_uint64_t backup_header;
++
+   /* TODO: update/repair protective MBRs too.  */
+ 
+   if (!grub_gpt_both_valid (gpt))
+     return grub_error (GRUB_ERR_BAD_PART_TABLE, "Invalid GPT data");
+ 
++  /* Write the backup GPT first so if writing fails the update is aborted
++   * and the primary is left intact.  However if the backup location is
++   * inaccessible we have to just skip and hope for the best, the backup
++   * will need to be repaired in the OS.  */
++  backup_header = grub_le_to_cpu64 (gpt->backup.header_lba);
++  if (grub_gpt_disk_size_valid (disk) &&
++      backup_header >= disk->total_sectors)
++    {
++      grub_printf ("warning: backup GPT located at 0x%llx, "
++		   "beyond last disk sector at 0x%llx\n",
++		   (unsigned long long) backup_header,
++		   (unsigned long long) disk->total_sectors - 1);
++      grub_printf ("warning: only writing primary GPT, "
++	           "the backup GPT must be repaired from the OS\n");
++    }
++  else
++    {
++      grub_dprintf ("gpt", "writing backup GPT to %s\n", disk->name);
++      if (grub_gpt_write_table (disk, gpt, &gpt->backup))
++	return grub_errno;
++    }
++
+   grub_dprintf ("gpt", "writing primary GPT to %s\n", disk->name);
+   if (grub_gpt_write_table (disk, gpt, &gpt->primary))
+     return grub_errno;
+ 
+-  grub_dprintf ("gpt", "writing backup GPT to %s\n", disk->name);
+-  if (grub_gpt_write_table (disk, gpt, &gpt->backup))
+-    return grub_errno;
+-
+   return GRUB_ERR_NONE;
+ }
+ 

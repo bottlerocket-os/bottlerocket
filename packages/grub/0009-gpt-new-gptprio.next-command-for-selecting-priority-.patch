@@ -1,0 +1,526 @@
+From 821cdddd98bdc3879fb7580c225c3a89282873e7 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Mon, 3 Nov 2014 17:14:37 -0800
+Subject: [PATCH] gpt: new gptprio.next command for selecting priority based
+ partitions
+
+Basic usage would look something like this:
+
+    gptprio.next -d usr_dev -u usr_uuid
+    linuxefi ($usr_dev)/boot/vmlinuz mount.usr=PARTUUID=$usr_uuid
+
+After booting the system should set the 'successful' bit on the
+partition that was used.
+
+[iweller: use new type name from a16f4a822]
+Signed-off-by: iliana destroyer of worlds <iweller@amazon.com>
+---
+ Makefile.util.def            |   6 +
+ grub-core/Makefile.core.def  |   5 +
+ grub-core/commands/gptprio.c | 238 +++++++++++++++++++++++++++++++++++
+ include/grub/gpt_partition.h |  49 ++++++++
+ tests/gptprio_test.in        | 150 ++++++++++++++++++++++
+ 5 files changed, 448 insertions(+)
+ create mode 100644 grub-core/commands/gptprio.c
+ create mode 100644 tests/gptprio_test.in
+
+diff --git a/Makefile.util.def b/Makefile.util.def
+index 6ed541c1c..a2b84ec4b 100644
+--- a/Makefile.util.def
++++ b/Makefile.util.def
+@@ -1181,6 +1181,12 @@ script = {
+   common = tests/gptrepair_test.in;
+ };
+ 
++script = {
++  testcase;
++  name = gptprio_test;
++  common = tests/gptprio_test.in;
++};
++
+ script = {
+   testcase;
+   name = file_filter_test;
+diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
+index 43ce166db..615b00226 100644
+--- a/grub-core/Makefile.core.def
++++ b/grub-core/Makefile.core.def
+@@ -898,6 +898,11 @@ module = {
+   common = commands/gptrepair.c;
+ };
+ 
++module = {
++  name = gptprio;
++  common = commands/gptprio.c;
++};
++
+ module = {
+   name = gpt;
+   common = lib/gpt.c;
+diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
+new file mode 100644
+index 000000000..1e2e06cef
+--- /dev/null
++++ b/grub-core/commands/gptprio.c
+@@ -0,0 +1,238 @@
++/* gptprio.c - manage priority based partition selection.  */
++/*
++ *  GRUB  --  GRand Unified Bootloader
++ *  Copyright (C) 2009  Free Software Foundation, Inc.
++ *  Copyright (C) 2014  CoreOS, Inc.
++ *
++ *  GRUB is free software: you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License as published by
++ *  the Free Software Foundation, either version 3 of the License, or
++ *  (at your option) any later version.
++ *
++ *  GRUB is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include <grub/device.h>
++#include <grub/env.h>
++#include <grub/err.h>
++#include <grub/extcmd.h>
++#include <grub/gpt_partition.h>
++#include <grub/i18n.h>
++#include <grub/misc.h>
++
++GRUB_MOD_LICENSE ("GPLv3+");
++
++static const struct grub_arg_option options_next[] = {
++  {"set-device", 'd', 0,
++   N_("Set a variable to the name of selected partition."),
++   N_("VARNAME"), ARG_TYPE_STRING},
++  {"set-uuid", 'u', 0,
++   N_("Set a variable to the GPT UUID of selected partition."),
++   N_("VARNAME"), ARG_TYPE_STRING},
++  {0, 0, 0, 0, 0, 0}
++};
++
++enum options_next
++{
++  NEXT_SET_DEVICE,
++  NEXT_SET_UUID,
++};
++
++static unsigned int
++grub_gptprio_priority (struct grub_gpt_partentry *entry)
++{
++  return (unsigned int) grub_gpt_entry_attribute
++    (entry, GRUB_GPT_PART_ATTR_OFFSET_GPTPRIO_PRIORITY, 4);
++}
++
++static unsigned int
++grub_gptprio_tries_left (struct grub_gpt_partentry *entry)
++{
++  return (unsigned int) grub_gpt_entry_attribute
++    (entry, GRUB_GPT_PART_ATTR_OFFSET_GPTPRIO_TRIES_LEFT, 4);
++}
++
++static void
++grub_gptprio_set_tries_left (struct grub_gpt_partentry *entry,
++			     unsigned int tries_left)
++{
++  grub_gpt_entry_set_attribute
++    (entry, tries_left, GRUB_GPT_PART_ATTR_OFFSET_GPTPRIO_TRIES_LEFT, 4);
++}
++
++static unsigned int
++grub_gptprio_successful (struct grub_gpt_partentry *entry)
++{
++  return (unsigned int) grub_gpt_entry_attribute
++    (entry, GRUB_GPT_PART_ATTR_OFFSET_GPTPRIO_SUCCESSFUL, 1);
++}
++
++static grub_err_t
++grub_find_next (const char *disk_name,
++		const grub_gpt_part_guid_t *part_type,
++		char **part_name, char **part_guid)
++{
++  struct grub_gpt_partentry *part_found = NULL;
++  grub_device_t dev = NULL;
++  grub_gpt_t gpt = NULL;
++  grub_uint32_t i, part_index;
++
++  dev = grub_device_open (disk_name);
++  if (!dev)
++    goto done;
++
++  gpt = grub_gpt_read (dev->disk);
++  if (!gpt)
++    goto done;
++
++  if (!(gpt->status & GRUB_GPT_BOTH_VALID))
++    if (grub_gpt_repair (dev->disk, gpt))
++      goto done;
++
++  for (i = 0; i < grub_le_to_cpu32 (gpt->primary.maxpart); i++)
++    {
++      struct grub_gpt_partentry *part = &gpt->entries[i];
++
++      if (grub_memcmp (part_type, &part->type, sizeof (*part_type)) == 0)
++	{
++	  unsigned int priority, tries_left, successful, old_priority = 0;
++
++	  priority = grub_gptprio_priority (part);
++	  tries_left = grub_gptprio_tries_left (part);
++	  successful = grub_gptprio_successful (part);
++
++	  if (part_found)
++	    old_priority = grub_gptprio_priority (part_found);
++
++	  if ((tries_left || successful) && priority > old_priority)
++	    {
++	      part_index = i;
++	      part_found = part;
++	    }
++	}
++    }
++
++  if (!part_found)
++    {
++      grub_error (GRUB_ERR_UNKNOWN_DEVICE, N_("no such partition"));
++      goto done;
++    }
++
++  if (grub_gptprio_tries_left (part_found))
++    {
++      unsigned int tries_left = grub_gptprio_tries_left (part_found);
++
++      grub_gptprio_set_tries_left (part_found, tries_left - 1);
++
++      if (grub_gpt_update_checksums (gpt))
++	goto done;
++
++      if (grub_gpt_write (dev->disk, gpt))
++	goto done;
++    }
++
++  *part_name = grub_xasprintf ("%s,gpt%u", disk_name, part_index + 1);
++  if (!*part_name)
++    goto done;
++
++  *part_guid =
++    grub_xasprintf ("%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
++		    grub_le_to_cpu32 (part_found->guid.data1),
++		    grub_le_to_cpu16 (part_found->guid.data2),
++		    grub_le_to_cpu16 (part_found->guid.data3),
++		    part_found->guid.data4[0],
++		    part_found->guid.data4[1],
++		    part_found->guid.data4[2],
++		    part_found->guid.data4[3],
++		    part_found->guid.data4[4],
++		    part_found->guid.data4[5],
++		    part_found->guid.data4[6],
++		    part_found->guid.data4[7]);
++  if (!*part_name)
++    goto done;
++
++  grub_errno = GRUB_ERR_NONE;
++
++done:
++  grub_gpt_free (gpt);
++
++  if (dev)
++    grub_device_close (dev);
++
++  return grub_errno;
++}
++
++
++
++static grub_err_t
++grub_cmd_next (grub_extcmd_context_t ctxt, int argc, char **args)
++{
++  struct grub_arg_list *state = ctxt->state;
++  char *p, *root = NULL, *part_name = NULL, *part_guid = NULL;
++
++  /* TODO: Add a uuid parser and a command line flag for providing type.  */
++  grub_gpt_part_guid_t part_type = GRUB_GPT_PARTITION_TYPE_USR_X86_64;
++
++  if (!state[NEXT_SET_DEVICE].set || !state[NEXT_SET_UUID].set)
++    {
++      grub_error (GRUB_ERR_INVALID_COMMAND, N_("-d and -u are required"));
++      goto done;
++    }
++
++  if (argc == 0)
++    root = grub_strdup (grub_env_get ("root"));
++  else if (argc == 1)
++    root = grub_strdup (args[0]);
++  else
++    {
++      grub_error (GRUB_ERR_BAD_ARGUMENT, N_("unexpected arguments"));
++      goto done;
++    }
++
++  if (!root)
++    goto done;
++
++  /* To make using $root practical strip off the partition name.  */
++  p = grub_strchr (root, ',');
++  if (p)
++    *p = '\0';
++
++  if (grub_find_next (root, &part_type, &part_name, &part_guid))
++    goto done;
++
++  if (grub_env_set (state[NEXT_SET_DEVICE].arg, part_name))
++    goto done;
++
++  if (grub_env_set (state[NEXT_SET_UUID].arg, part_guid))
++    goto done;
++
++  grub_errno = GRUB_ERR_NONE;
++
++done:
++  grub_free (root);
++  grub_free (part_name);
++  grub_free (part_guid);
++
++  return grub_errno;
++}
++
++static grub_extcmd_t cmd_next;
++
++GRUB_MOD_INIT(gptprio)
++{
++  cmd_next = grub_register_extcmd ("gptprio.next", grub_cmd_next, 0,
++				   N_("-d VARNAME -u VARNAME [DEVICE]"),
++				   N_("Select next partition to boot."),
++				   options_next);
++}
++
++GRUB_MOD_FINI(gptprio)
++{
++  grub_unregister_extcmd (cmd_next);
++}
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index 8183a1f30..8a6e56af4 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -53,6 +53,10 @@ typedef struct grub_gpt_guid grub_gpt_part_guid_t;
+   GRUB_GPT_GUID_INIT (0x5808c8aa, 0x7e8f, 0x42e0, \
+       0x85, 0xd2, 0xe1, 0xe9, 0x04, 0x34, 0xcf, 0xb3)
+ 
++#define GRUB_GPT_PARTITION_TYPE_USR_X86_64 \
++  GRUB_GPT_GUID_INIT (0x5dfbf5f4, 0x2848, 0x4bac, \
++      0xaa, 0x5e, 0x0d, 0x9a, 0x20, 0xb7, 0x45, 0xa6)
++
+ #define GRUB_GPT_HEADER_MAGIC \
+   { 0x45, 0x46, 0x49, 0x20, 0x50, 0x41, 0x52, 0x54 }
+ 
+@@ -87,6 +91,51 @@ struct grub_gpt_partentry
+   char name[72];
+ } GRUB_PACKED;
+ 
++enum grub_gpt_part_attr_offset
++{
++  /* Standard partition attribute bits defined by UEFI.  */
++  GRUB_GPT_PART_ATTR_OFFSET_REQUIRED			= 0,
++  GRUB_GPT_PART_ATTR_OFFSET_NO_BLOCK_IO_PROTOCOL	= 1,
++  GRUB_GPT_PART_ATTR_OFFSET_LEGACY_BIOS_BOOTABLE	= 2,
++
++  /* De facto standard attribute bits defined by Microsoft and reused by
++   * http://www.freedesktop.org/wiki/Specifications/DiscoverablePartitionsSpec */
++  GRUB_GPT_PART_ATTR_OFFSET_READ_ONLY			= 60,
++  GRUB_GPT_PART_ATTR_OFFSET_NO_AUTO			= 63,
++
++  /* Partition attributes for priority based selection,
++   * Currently only valid for PARTITION_TYPE_USR_X86_64.
++   * TRIES_LEFT and PRIORITY are 4 bit wide fields.  */
++  GRUB_GPT_PART_ATTR_OFFSET_GPTPRIO_PRIORITY		= 48,
++  GRUB_GPT_PART_ATTR_OFFSET_GPTPRIO_TRIES_LEFT		= 52,
++  GRUB_GPT_PART_ATTR_OFFSET_GPTPRIO_SUCCESSFUL		= 56,
++};
++
++/* Helpers for reading/writing partition attributes.  */
++static inline grub_uint64_t
++grub_gpt_entry_attribute (struct grub_gpt_partentry *entry,
++			  enum grub_gpt_part_attr_offset offset,
++			  unsigned int bits)
++{
++  grub_uint64_t attrib = grub_le_to_cpu64 (entry->attrib);
++
++  return (attrib >> offset) & ((1ULL << bits) - 1);
++}
++
++static inline void
++grub_gpt_entry_set_attribute (struct grub_gpt_partentry *entry,
++			      grub_uint64_t value,
++			      enum grub_gpt_part_attr_offset offset,
++			      unsigned int bits)
++{
++  grub_uint64_t attrib, mask;
++
++  mask = (((1ULL << bits) - 1) << offset);
++  attrib = grub_le_to_cpu64 (entry->attrib) & ~mask;
++  attrib |= ((value << offset) & mask);
++  entry->attrib = grub_cpu_to_le64 (attrib);
++}
++
+ /* Basic GPT partmap module.  */
+ grub_err_t
+ grub_gpt_partition_map_iterate (grub_disk_t disk,
+diff --git a/tests/gptprio_test.in b/tests/gptprio_test.in
+new file mode 100644
+index 000000000..f4aea0dc9
+--- /dev/null
++++ b/tests/gptprio_test.in
+@@ -0,0 +1,150 @@
++#! /bin/bash
++set -e
++
++# Copyright (C) 2010  Free Software Foundation, Inc.
++# Copyright (C) 2014  CoreOS, Inc.
++#
++# GRUB is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# GRUB is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
++
++sgdisk=sgdisk
++grubshell=@builddir@/grub-shell
++
++if ! which "${sgdisk}" >/dev/null 2>&1; then
++   echo "sgdisk not installed; cannot test gptprio."
++   exit 77
++fi
++
++. "@builddir@/grub-core/modinfo.sh"
++
++case "${grub_modinfo_target_cpu}-${grub_modinfo_platform}" in
++    mips-qemu_mips | mipsel-qemu_mips | i386-qemu | i386-multiboot | i386-coreboot | mipsel-loongson)
++	disk=ata0
++	;;
++    powerpc-ieee1275)
++	disk=ieee1275//pci@80000000/mac-io@4/ata-3@20000/disk@0
++	# FIXME: QEMU firmware has bugs which prevent it from accessing hard disk w/o recognised label.
++	exit 0
++	;;
++    sparc64-ieee1275)
++	disk=ieee1275//pci@1fe\,0/pci-ata@5/ide0@500/disk@0
++	# FIXME: QEMU firmware has bugs which prevent it from accessing hard disk w/o recognised label.
++	exit 0
++	;;
++    i386-ieee1275)
++	disk=ieee1275/d
++	# FIXME: QEMU firmware has bugs which prevent it from accessing hard disk w/o recognised label.
++	exit 0
++	;;
++    mips-arc)
++	# FIXME: ARC firmware has bugs which prevent it from accessing hard disk w/o dvh disklabel.
++	exit 0 ;;
++    mipsel-arc)
++	disk=arc/scsi0/disk0/rdisk0
++	;;
++    *)
++	disk=hd0
++	;;
++esac
++img1="`mktemp "${TMPDIR:-/tmp}/tmp.XXXXXXXXXX"`" || exit 1
++trap "rm -f '${img1}'" EXIT
++
++prio_type="5dfbf5f4-2848-4bac-aa5e-0d9a20b745a6"
++declare -a prio_uuid
++prio_uuid[2]="9b003904-d006-4ab3-97f1-73f547b7af1a"
++prio_uuid[3]="1aa5a658-5b02-414d-9b71-f7e6c151f0cd"
++prio_uuid[4]="8aa0240d-98af-42b0-b32a-ccbe0572d62b"
++
++create_disk_image () {
++    rm -f "${img1}"
++    dd if=/dev/zero of="${img1}" bs=512 count=1 seek=100 status=none
++    ${sgdisk} \
++        -n 1:0:+1 -c 1:ESP -t 1:ef00 \
++        -n 2:0:+1 -c 2:A -t 2:"${prio_type}" -u 2:"${prio_uuid[2]}" \
++        -n 3:0:+1 -c 3:B -t 3:"${prio_type}" -u 3:"${prio_uuid[3]}" \
++        -n 4:0:+1 -c 4:C -t 4:"${prio_type}" -u 4:"${prio_uuid[4]}" \
++        "${img1}" >/dev/null
++}
++
++
++fmt_prio () {
++    priority=$(( ( $1 & 15 ) << 48 ))
++    tries=$(( ( $2 & 15 ) << 52 ))
++    success=$(( ( $3 & 1 ) << 56 ))
++    printf %016x $(( priority | tries | success ))
++}
++
++set_prio () {
++    part="$1"
++    attr=$(fmt_prio $2 $3 $4)
++    ${sgdisk} -A "${part}:=:${attr}" "${img1}" >/dev/null
++}
++
++check_prio () {
++    part="$1"
++    expect=$(fmt_prio $2 $3 $4)
++    result=$(LANG=C ${sgdisk} -i "${part}" "${img1}" \
++            | awk '/^Attribute flags: / {print $3}')
++    if [[ "${expect}" != "${result}" ]]; then
++        echo "Partition ${part} has attributes ${result}, not ${expect}" >&2
++        exit 1
++    fi
++}
++
++run_next() {
++    "${grubshell}" --disk="${img1}" --modules=gptprio <<EOF
++gptprio.next -d next_dev -u next_uuid "${disk}"
++echo next_dev=\$next_dev
++echo next_uuid=\$next_uuid
++EOF
++}
++
++check_next () {
++    part="$1"
++    output=$(run_next)
++    if grep ^error <<<"${output}"; then
++        exit 1
++    fi
++    if ! grep -q "^next_dev=${disk},gpt${part}$" <<<"${output}"; then
++        echo "Unexpected next_dev: (expected ${disk},gpt${part})"
++        echo "${output}"
++        exit 1
++    fi
++    if ! grep -q "^next_uuid=${prio_uuid[$part]}$" <<<"${output}"; then
++        echo "Unexpected next_uuid: (expected ${prio_uuid[$part]})"
++        echo "${output}"
++        exit 1
++    fi
++    check_prio "$@"
++}
++
++# Basic sanity check
++create_disk_image 100
++set_prio 2 3 2 1
++check_prio 2 3 2 1
++
++# Try two partitions before falling before falling back to a third
++create_disk_image 100
++set_prio 2 3 3 0
++set_prio 3 2 2 0
++set_prio 4 1 0 1
++check_next 2 3 2 0
++check_next 2 3 1 0
++check_next 2 3 0 0
++check_next 3 2 1 0
++check_next 3 2 0 0
++check_next 4 1 0 1
++check_next 4 1 0 1
++check_next 4 1 0 1
++check_prio 2 3 0 0
++check_prio 3 2 0 0

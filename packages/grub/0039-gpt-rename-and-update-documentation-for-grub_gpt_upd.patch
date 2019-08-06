@@ -1,0 +1,68 @@
+From 6bd9c7881cc30773f7d89506bfe131764ffd1cb1 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Thu, 22 Sep 2016 10:00:27 -0700
+Subject: [PATCH] gpt: rename and update documentation for grub_gpt_update
+
+The function now does more than just recompute checksums so give it a
+more general name to reflect that.
+---
+ grub-core/commands/gptprio.c | 2 +-
+ grub-core/lib/gpt.c          | 4 ++--
+ include/grub/gpt_partition.h | 7 ++++---
+ 3 files changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
+index b799faa37..8908d8bed 100644
+--- a/grub-core/commands/gptprio.c
++++ b/grub-core/commands/gptprio.c
+@@ -127,7 +127,7 @@ grub_find_next (const char *disk_name,
+ 
+       grub_gptprio_set_tries_left (part_found, tries_left - 1);
+ 
+-      if (grub_gpt_update_checksums (gpt))
++      if (grub_gpt_update (gpt))
+ 	goto done;
+ 
+       if (grub_gpt_write (dev->disk, gpt))
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index f6f853309..430404848 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -643,7 +643,7 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   else
+     return grub_error (GRUB_ERR_BUG, "No valid GPT");
+ 
+-  if (grub_gpt_update_checksums (gpt))
++  if (grub_gpt_update (gpt))
+     return grub_errno;
+ 
+   grub_dprintf ("gpt", "repairing GPT for %s successful\n", disk->name);
+@@ -652,7 +652,7 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+ }
+ 
+ grub_err_t
+-grub_gpt_update_checksums (grub_gpt_t gpt)
++grub_gpt_update (grub_gpt_t gpt)
+ {
+   grub_uint32_t crc;
+ 
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index 92b606cd9..726b98c00 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -232,11 +232,12 @@ grub_gpt_t grub_gpt_read (grub_disk_t disk);
+ struct grub_gpt_partentry * grub_gpt_get_partentry (grub_gpt_t gpt,
+ 						    grub_uint32_t n);
+ 
+-/* Sync up primary and backup headers, recompute checksums.  */
++/* Sync and update primary and backup headers if either are invalid.  */
+ grub_err_t grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt);
+ 
+-/* Recompute checksums, must be called after modifying GPT data.  */
+-grub_err_t grub_gpt_update_checksums (grub_gpt_t gpt);
++/* Recompute checksums and revalidate everything, must be called after
++ * modifying any GPT data.  */
++grub_err_t grub_gpt_update (grub_gpt_t gpt);
+ 
+ /* Write headers and entry tables back to disk.  */
+ grub_err_t grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt);

@@ -1,0 +1,122 @@
+From 14d7fb113f2c89b3df8b6ed7b0fa001084704d6b Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Thu, 30 Oct 2014 20:55:21 -0700
+Subject: [PATCH] gpt: add a new generic GUID type
+
+In order to do anything with partition GUIDs they need to be stored in a
+proper structure like the partition type GUIDs. Additionally add an
+initializer macro to simplify defining both GUID types.
+
+[iweller: use new type name from a16f4a822]
+Signed-off-by: iliana destroyer of worlds <iweller@amazon.com>
+---
+ include/grub/gpt_partition.h | 34 ++++++++++++++++++----------------
+ tests/gpt_unit_test.c        | 12 ++++++------
+ 2 files changed, 24 insertions(+), 22 deletions(-)
+
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index a483f710a..8183a1f30 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -23,33 +23,35 @@
+ #include <grub/partition.h>
+ #include <grub/msdos_partition.h>
+ 
+-struct grub_gpt_part_guid
++struct grub_gpt_guid
+ {
+   grub_uint32_t data1;
+   grub_uint16_t data2;
+   grub_uint16_t data3;
+   grub_uint8_t data4[8];
+ } GRUB_PACKED;
+-typedef struct grub_gpt_part_guid grub_gpt_part_guid_t;
++typedef struct grub_gpt_guid grub_gpt_guid_t;
++typedef struct grub_gpt_guid grub_gpt_part_guid_t;
++
++#define GRUB_GPT_GUID_INIT(a, b, c, d1, d2, d3, d4, d5, d6, d7, d8)  \
++  {					\
++    grub_cpu_to_le32_compile_time (a),	\
++    grub_cpu_to_le16_compile_time (b),	\
++    grub_cpu_to_le16_compile_time (c),	\
++    { d1, d2, d3, d4, d5, d6, d7, d8 }	\
++  }
+ 
+ #define GRUB_GPT_PARTITION_TYPE_EMPTY \
+-  { 0x0, 0x0, 0x0, \
+-    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 } \
+-  }
++  GRUB_GPT_GUID_INIT (0x0, 0x0, 0x0,  \
++      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
+ 
+ #define GRUB_GPT_PARTITION_TYPE_BIOS_BOOT \
+-  { grub_cpu_to_le32_compile_time (0x21686148), \
+-      grub_cpu_to_le16_compile_time (0x6449), \
+-      grub_cpu_to_le16_compile_time (0x6e6f),	       \
+-    { 0x74, 0x4e, 0x65, 0x65, 0x64, 0x45, 0x46, 0x49 } \
+-  }
++  GRUB_GPT_GUID_INIT (0x21686148, 0x6449, 0x6e6f, \
++      0x74, 0x4e, 0x65, 0x65, 0x64, 0x45, 0x46, 0x49)
+ 
+ #define GRUB_GPT_PARTITION_TYPE_LDM \
+-  { grub_cpu_to_le32_compile_time (0x5808C8AAU),\
+-      grub_cpu_to_le16_compile_time (0x7E8F), \
+-      grub_cpu_to_le16_compile_time (0x42E0),	       \
+-	{ 0x85, 0xD2, 0xE1, 0xE9, 0x04, 0x34, 0xCF, 0xB3 }	\
+-  }
++  GRUB_GPT_GUID_INIT (0x5808c8aa, 0x7e8f, 0x42e0, \
++      0x85, 0xd2, 0xe1, 0xe9, 0x04, 0x34, 0xcf, 0xb3)
+ 
+ #define GRUB_GPT_HEADER_MAGIC \
+   { 0x45, 0x46, 0x49, 0x20, 0x50, 0x41, 0x52, 0x54 }
+@@ -68,7 +70,7 @@ struct grub_gpt_header
+   grub_uint64_t alternate_lba;
+   grub_uint64_t start;
+   grub_uint64_t end;
+-  grub_uint8_t guid[16];
++  grub_gpt_guid_t guid;
+   grub_uint64_t partitions;
+   grub_uint32_t maxpart;
+   grub_uint32_t partentry_size;
+diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
+index 83198bebf..86e4364a5 100644
+--- a/tests/gpt_unit_test.c
++++ b/tests/gpt_unit_test.c
+@@ -99,8 +99,8 @@ static const struct grub_gpt_header example_primary = {
+   .alternate_lba = grub_cpu_to_le64_compile_time (BACKUP_HEADER_SECTOR),
+   .start = grub_cpu_to_le64_compile_time (DATA_START_SECTOR),
+   .end = grub_cpu_to_le64_compile_time (DATA_END_SECTOR),
+-  .guid = {0xad, 0x31, 0xc1, 0x69, 0xd6, 0x67, 0xc6, 0x46,
+-	   0x93, 0xc4, 0x12, 0x4c, 0x75, 0x52, 0x56, 0xac},
++  .guid = GRUB_GPT_GUID_INIT(0x69c131ad, 0x67d6, 0x46c6,
++			     0x93, 0xc4, 0x12, 0x4c, 0x75, 0x52, 0x56, 0xac),
+   .partitions = grub_cpu_to_le64_compile_time (PRIMARY_TABLE_SECTOR),
+   .maxpart = grub_cpu_to_le32_compile_time (TABLE_ENTRIES),
+   .partentry_size = grub_cpu_to_le32_compile_time (ENTRY_SIZE),
+@@ -117,8 +117,8 @@ static const struct grub_gpt_header example_backup = {
+   .alternate_lba = grub_cpu_to_le64_compile_time (PRIMARY_HEADER_SECTOR),
+   .start = grub_cpu_to_le64_compile_time (DATA_START_SECTOR),
+   .end = grub_cpu_to_le64_compile_time (DATA_END_SECTOR),
+-  .guid = {0xad, 0x31, 0xc1, 0x69, 0xd6, 0x67, 0xc6, 0x46,
+-	   0x93, 0xc4, 0x12, 0x4c, 0x75, 0x52, 0x56, 0xac},
++  .guid = GRUB_GPT_GUID_INIT(0x69c131ad, 0x67d6, 0x46c6,
++			     0x93, 0xc4, 0x12, 0x4c, 0x75, 0x52, 0x56, 0xac),
+   .partitions = grub_cpu_to_le64_compile_time (BACKUP_TABLE_SECTOR),
+   .maxpart = grub_cpu_to_le32_compile_time (TABLE_ENTRIES),
+   .partentry_size = grub_cpu_to_le32_compile_time (ENTRY_SIZE),
+@@ -326,13 +326,13 @@ header_test (void)
+   grub_errno = GRUB_ERR_NONE;
+ 
+   /* Twiddle the GUID to invalidate the CRC. */
+-  primary.guid[0] = 0;
++  primary.guid.data1 = 0;
+   grub_gpt_header_check (&primary, GRUB_DISK_SECTOR_BITS);
+   grub_test_assert (grub_errno == GRUB_ERR_BAD_PART_TABLE,
+ 		    "unexpected error: %s", grub_errmsg);
+   grub_errno = GRUB_ERR_NONE;
+ 
+-  backup.guid[0] = 0;
++  backup.guid.data1 = 0;
+   grub_gpt_header_check (&backup, GRUB_DISK_SECTOR_BITS);
+   grub_test_assert (grub_errno == GRUB_ERR_BAD_PART_TABLE,
+ 		    "unexpected error: %s", grub_errmsg);

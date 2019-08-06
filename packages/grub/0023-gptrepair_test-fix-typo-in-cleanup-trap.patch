@@ -1,0 +1,22 @@
+From b2fabac1e1c8eb2beb83b5cafb45daed9a3eef64 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Mon, 22 Aug 2016 16:44:30 -0700
+Subject: [PATCH] gptrepair_test: fix typo in cleanup trap
+
+---
+ tests/gptrepair_test.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/gptrepair_test.in b/tests/gptrepair_test.in
+index 80b2de633..805dc171a 100644
+--- a/tests/gptrepair_test.in
++++ b/tests/gptrepair_test.in
+@@ -53,7 +53,7 @@ case "${grub_modinfo_target_cpu}-${grub_modinfo_platform}" in
+ esac
+ img1="`mktemp "${TMPDIR:-/tmp}/tmp.XXXXXXXXXX"`" || exit 1
+ img2="`mktemp "${TMPDIR:-/tmp}/tmp.XXXXXXXXXX"`" || exit 1
+-trap "rm -f '${img1}' '${ing2}'" EXIT
++trap "rm -f '${img1}' '${img2}'" EXIT
+ 
+ create_disk_image () {
+     size=$1

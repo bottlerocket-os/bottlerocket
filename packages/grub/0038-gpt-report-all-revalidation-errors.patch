@@ -1,0 +1,37 @@
+From 6c9c0a2011b748d239e6f8f8426426323920f50a Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Wed, 21 Sep 2016 16:02:53 -0700
+Subject: [PATCH] gpt: report all revalidation errors
+
+Before returning an error that the primary or backup GPT is invalid push
+the existing error onto the stack so the user will be told what is bad.
+---
+ grub-core/lib/gpt.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index b93cedea1..f6f853309 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -676,13 +676,19 @@ grub_gpt_update_checksums (grub_gpt_t gpt)
+   grub_gpt_header_lecrc32 (&gpt->backup.crc32, &gpt->backup);
+ 
+   if (grub_gpt_check_primary (gpt))
+-    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
++    {
++      grub_error_push ();
++      return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
++    }
+ 
+   gpt->status |= (GRUB_GPT_PRIMARY_HEADER_VALID |
+ 		  GRUB_GPT_PRIMARY_ENTRIES_VALID);
+ 
+   if (grub_gpt_check_backup (gpt))
+-    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
++    {
++      grub_error_push ();
++      return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
++    }
+ 
+   gpt->status |= (GRUB_GPT_BACKUP_HEADER_VALID |
+ 		  GRUB_GPT_BACKUP_ENTRIES_VALID);

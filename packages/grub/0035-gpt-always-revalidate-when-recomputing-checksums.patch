@@ -1,0 +1,72 @@
+From 04deacdc8d85855b3bb85bcd7c02f71b05ee2bec Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Wed, 21 Sep 2016 14:55:19 -0700
+Subject: [PATCH] gpt: always revalidate when recomputing checksums
+
+This ensures all code modifying GPT data include the same sanity check
+that repair does. If revalidation fails the status flags are left in the
+appropriate state.
+---
+ grub-core/lib/gpt.c | 32 ++++++++++++++++++--------------
+ 1 file changed, 18 insertions(+), 14 deletions(-)
+
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 03e807b25..3ac2987c6 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -630,23 +630,9 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   else
+     return grub_error (GRUB_ERR_BUG, "No valid GPT");
+ 
+-  /* Recompute checksums.  */
+   if (grub_gpt_update_checksums (gpt))
+     return grub_errno;
+ 
+-  /* Sanity check.  */
+-  if (grub_gpt_check_primary (gpt))
+-    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
+-
+-  gpt->status |= (GRUB_GPT_PRIMARY_HEADER_VALID |
+-		  GRUB_GPT_PRIMARY_ENTRIES_VALID);
+-
+-  if (grub_gpt_check_backup (gpt))
+-    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
+-
+-  gpt->status |= (GRUB_GPT_BACKUP_HEADER_VALID |
+-		  GRUB_GPT_BACKUP_ENTRIES_VALID);
+-
+   grub_dprintf ("gpt", "repairing GPT for %s successful\n", disk->name);
+ 
+   return GRUB_ERR_NONE;
+@@ -657,6 +643,12 @@ grub_gpt_update_checksums (grub_gpt_t gpt)
+ {
+   grub_uint32_t crc;
+ 
++  /* Clear status bits, require revalidation of everything.  */
++  gpt->status &= ~(GRUB_GPT_PRIMARY_HEADER_VALID |
++		   GRUB_GPT_PRIMARY_ENTRIES_VALID |
++		   GRUB_GPT_BACKUP_HEADER_VALID |
++		   GRUB_GPT_BACKUP_ENTRIES_VALID);
++
+   /* Writing headers larger than our header structure are unsupported.  */
+   gpt->primary.headersize =
+     grub_cpu_to_le32_compile_time (sizeof (gpt->primary));
+@@ -670,6 +662,18 @@ grub_gpt_update_checksums (grub_gpt_t gpt)
+   grub_gpt_header_lecrc32 (&gpt->primary.crc32, &gpt->primary);
+   grub_gpt_header_lecrc32 (&gpt->backup.crc32, &gpt->backup);
+ 
++  if (grub_gpt_check_primary (gpt))
++    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT primary header");
++
++  gpt->status |= (GRUB_GPT_PRIMARY_HEADER_VALID |
++		  GRUB_GPT_PRIMARY_ENTRIES_VALID);
++
++  if (grub_gpt_check_backup (gpt))
++    return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
++
++  gpt->status |= (GRUB_GPT_BACKUP_HEADER_VALID |
++		  GRUB_GPT_BACKUP_ENTRIES_VALID);
++
+   return GRUB_ERR_NONE;
+ }
+ 

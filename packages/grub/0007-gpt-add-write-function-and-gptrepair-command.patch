@@ -1,0 +1,364 @@
+From cb285d07b1b20c2ae081913cd3002cd97c8dd385 Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Sun, 19 Oct 2014 14:21:29 -0700
+Subject: [PATCH] gpt: add write function and gptrepair command
+
+The first hint of something practical, a command that can restore any of
+the GPT structures from the alternate location. New test case must run
+under QEMU because the loopback device used by the other unit tests does
+not support writing.
+---
+ Makefile.util.def              |   6 ++
+ grub-core/Makefile.core.def    |   5 ++
+ grub-core/commands/gptrepair.c | 116 +++++++++++++++++++++++++++++++++
+ grub-core/lib/gpt.c            |  44 +++++++++++--
+ include/grub/gpt_partition.h   |   8 +++
+ tests/gptrepair_test.in        | 102 +++++++++++++++++++++++++++++
+ 6 files changed, 277 insertions(+), 4 deletions(-)
+ create mode 100644 grub-core/commands/gptrepair.c
+ create mode 100644 tests/gptrepair_test.in
+
+diff --git a/Makefile.util.def b/Makefile.util.def
+index af8a008e2..6ed541c1c 100644
+--- a/Makefile.util.def
++++ b/Makefile.util.def
+@@ -1175,6 +1175,12 @@ script = {
+   common = tests/grub_cmd_tr.in;
+ };
+ 
++script = {
++  testcase;
++  name = gptrepair_test;
++  common = tests/gptrepair_test.in;
++};
++
+ script = {
+   testcase;
+   name = file_filter_test;
+diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
+index 95dba2d26..43ce166db 100644
+--- a/grub-core/Makefile.core.def
++++ b/grub-core/Makefile.core.def
+@@ -893,6 +893,11 @@ module = {
+   common = commands/gptsync.c;
+ };
+ 
++module = {
++  name = gptrepair;
++  common = commands/gptrepair.c;
++};
++
+ module = {
+   name = gpt;
+   common = lib/gpt.c;
+diff --git a/grub-core/commands/gptrepair.c b/grub-core/commands/gptrepair.c
+new file mode 100644
+index 000000000..38392fd8f
+--- /dev/null
++++ b/grub-core/commands/gptrepair.c
+@@ -0,0 +1,116 @@
++/* gptrepair.c - verify and restore GPT info from alternate location.  */
++/*
++ *  GRUB  --  GRand Unified Bootloader
++ *  Copyright (C) 2009  Free Software Foundation, Inc.
++ *  Copyright (C) 2014  CoreOS, Inc.
++ *
++ *  GRUB is free software: you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License as published by
++ *  the Free Software Foundation, either version 3 of the License, or
++ *  (at your option) any later version.
++ *
++ *  GRUB is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include <grub/command.h>
++#include <grub/device.h>
++#include <grub/err.h>
++#include <grub/gpt_partition.h>
++#include <grub/i18n.h>
++#include <grub/misc.h>
++
++GRUB_MOD_LICENSE ("GPLv3+");
++
++static char *
++trim_dev_name (char *name)
++{
++  grub_size_t len = grub_strlen (name);
++  if (len && name[0] == '(' && name[len - 1] == ')')
++    {
++      name[len - 1] = '\0';
++      name = name + 1;
++    }
++  return name;
++}
++
++static grub_err_t
++grub_cmd_gptrepair (grub_command_t cmd __attribute__ ((unused)),
++		    int argc, char **args)
++{
++  grub_device_t dev = NULL;
++  grub_gpt_t gpt = NULL;
++  char *dev_name;
++  grub_uint32_t primary_crc, backup_crc;
++  enum grub_gpt_status old_status;
++
++  if (argc != 1 || !grub_strlen(args[0]))
++    return grub_error (GRUB_ERR_BAD_ARGUMENT, "device name required");
++
++  dev_name = trim_dev_name (args[0]);
++  dev = grub_device_open (dev_name);
++  if (!dev)
++    goto done;
++
++  if (!dev->disk)
++    {
++      grub_error (GRUB_ERR_BAD_ARGUMENT, "not a disk");
++      goto done;
++    }
++
++  gpt = grub_gpt_read (dev->disk);
++  if (!gpt)
++    goto done;
++
++  primary_crc = gpt->primary.crc32;
++  backup_crc = gpt->backup.crc32;
++  old_status = gpt->status;
++
++  if (grub_gpt_repair (dev->disk, gpt))
++    goto done;
++
++  if (primary_crc == gpt->primary.crc32 &&
++      backup_crc == gpt->backup.crc32 &&
++      old_status && gpt->status)
++    {
++      grub_printf_ (N_("GPT already valid, %s unmodified.\n"), dev_name);
++      goto done;
++    }
++
++  if (grub_gpt_write (dev->disk, gpt))
++    goto done;
++
++  if (!(old_status & GRUB_GPT_PRIMARY_VALID))
++    grub_printf_ (N_("Primary GPT for %s repaired.\n"), dev_name);
++
++  if (!(old_status & GRUB_GPT_BACKUP_VALID))
++    grub_printf_ (N_("Backup GPT for %s repaired.\n"), dev_name);
++
++done:
++  if (gpt)
++    grub_gpt_free (gpt);
++
++  if (dev)
++    grub_device_close (dev);
++
++  return grub_errno;
++}
++
++static grub_command_t cmd;
++
++GRUB_MOD_INIT(gptrepair)
++{
++  cmd = grub_register_command ("gptrepair", grub_cmd_gptrepair,
++			       N_("DEVICE"),
++			       N_("Verify and repair GPT on drive DEVICE."));
++}
++
++GRUB_MOD_FINI(gptrepair)
++{
++  grub_unregister_command (cmd);
++}
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index 2d61df488..67ffdf703 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -357,10 +357,46 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
+   if (grub_gpt_header_check (&gpt->backup, gpt->log_sector_size))
+     return grub_error (GRUB_ERR_BUG, "Generated invalid GPT backup header");
+ 
+-  gpt->status |= (GRUB_GPT_PRIMARY_HEADER_VALID |
+-		  GRUB_GPT_PRIMARY_ENTRIES_VALID |
+-		  GRUB_GPT_BACKUP_HEADER_VALID |
+-		  GRUB_GPT_BACKUP_ENTRIES_VALID);
++  gpt->status |= GRUB_GPT_BOTH_VALID;
++  return GRUB_ERR_NONE;
++}
++
++static grub_err_t
++grub_gpt_write_table (grub_disk_t disk, grub_gpt_t gpt,
++		      struct grub_gpt_header *header)
++{
++  grub_disk_addr_t addr;
++
++  if (grub_le_to_cpu32 (header->headersize) != sizeof (*header))
++    return grub_error (GRUB_ERR_NOT_IMPLEMENTED_YET,
++		       "Header size is %u, must be %u",
++		       grub_le_to_cpu32 (header->headersize),
++		       sizeof (*header));
++
++  addr = grub_gpt_sector_to_addr (gpt, grub_le_to_cpu64 (header->header_lba));
++  if (grub_disk_write (disk, addr, 0, sizeof (*header), header))
++    return grub_errno;
++
++  addr = grub_gpt_sector_to_addr (gpt, grub_le_to_cpu64 (header->partitions));
++  if (grub_disk_write (disk, addr, 0, gpt->entries_size, gpt->entries))
++    return grub_errno;
++
++  return GRUB_ERR_NONE;
++}
++
++grub_err_t
++grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt)
++{
++  /* TODO: update/repair protective MBRs too.  */
++
++  if (!(gpt->status & GRUB_GPT_BOTH_VALID))
++    return grub_error (GRUB_ERR_BAD_PART_TABLE, "Invalid GPT data");
++
++  if (grub_gpt_write_table (disk, gpt, &gpt->primary))
++    return grub_errno;
++
++  if (grub_gpt_write_table (disk, gpt, &gpt->backup))
++    return grub_errno;
+ 
+   return GRUB_ERR_NONE;
+ }
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index f367fe50d..a483f710a 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -103,6 +103,11 @@ typedef enum grub_gpt_status
+   } grub_gpt_status_t;
+ 
+ #define GRUB_GPT_MBR_VALID (GRUB_GPT_PROTECTIVE_MBR|GRUB_GPT_HYBRID_MBR)
++#define GRUB_GPT_PRIMARY_VALID \
++  (GRUB_GPT_PRIMARY_HEADER_VALID|GRUB_GPT_PRIMARY_ENTRIES_VALID)
++#define GRUB_GPT_BACKUP_VALID \
++  (GRUB_GPT_BACKUP_HEADER_VALID|GRUB_GPT_BACKUP_ENTRIES_VALID)
++#define GRUB_GPT_BOTH_VALID (GRUB_GPT_PRIMARY_VALID|GRUB_GPT_BACKUP_VALID)
+ 
+ /* UEFI requires the entries table to be at least 16384 bytes for a
+  * total of 128 entries given the standard 128 byte entry size.  */
+@@ -144,6 +149,9 @@ grub_gpt_t grub_gpt_read (grub_disk_t disk);
+ /* Sync up primary and backup headers, recompute checksums.  */
+ grub_err_t grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt);
+ 
++/* Write headers and entry tables back to disk.  */
++grub_err_t grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt);
++
+ void grub_gpt_free (grub_gpt_t gpt);
+ 
+ grub_err_t grub_gpt_pmbr_check (struct grub_msdos_partition_mbr *mbr);
+diff --git a/tests/gptrepair_test.in b/tests/gptrepair_test.in
+new file mode 100644
+index 000000000..80b2de633
+--- /dev/null
++++ b/tests/gptrepair_test.in
+@@ -0,0 +1,102 @@
++#! /bin/sh
++set -e
++
++# Copyright (C) 2010  Free Software Foundation, Inc.
++# Copyright (C) 2014  CoreOS, Inc.
++#
++# GRUB is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation, either version 3 of the License, or
++# (at your option) any later version.
++#
++# GRUB is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
++
++parted=parted
++grubshell=@builddir@/grub-shell
++
++. "@builddir@/grub-core/modinfo.sh"
++
++case "${grub_modinfo_target_cpu}-${grub_modinfo_platform}" in
++    mips-qemu_mips | mipsel-qemu_mips | i386-qemu | i386-multiboot | i386-coreboot | mipsel-loongson)
++	disk=ata0
++	;;
++    powerpc-ieee1275)
++	disk=ieee1275//pci@80000000/mac-io@4/ata-3@20000/disk@0
++	# FIXME: QEMU firmware has bugs which prevent it from accessing hard disk w/o recognised label.
++	exit 0
++	;;
++    sparc64-ieee1275)
++	disk=ieee1275//pci@1fe\,0/pci-ata@5/ide0@500/disk@0
++	# FIXME: QEMU firmware has bugs which prevent it from accessing hard disk w/o recognised label.
++	exit 0
++	;;
++    i386-ieee1275)
++	disk=ieee1275/d
++	# FIXME: QEMU firmware has bugs which prevent it from accessing hard disk w/o recognised label.
++	exit 0
++	;;
++    mips-arc)
++	# FIXME: ARC firmware has bugs which prevent it from accessing hard disk w/o dvh disklabel.
++	exit 0 ;;
++    mipsel-arc)
++	disk=arc/scsi0/disk0/rdisk0
++	;;
++    *)
++	disk=hd0
++	;;
++esac
++img1="`mktemp "${TMPDIR:-/tmp}/tmp.XXXXXXXXXX"`" || exit 1
++img2="`mktemp "${TMPDIR:-/tmp}/tmp.XXXXXXXXXX"`" || exit 1
++trap "rm -f '${img1}' '${ing2}'" EXIT
++
++create_disk_image () {
++    size=$1
++    rm -f "${img1}"
++    dd if=/dev/zero of="${img1}" bs=512 count=1 seek=$((size - 1)) status=none
++    ${parted} -a none -s "${img1}" mklabel gpt
++    cp "${img1}" "${img2}"
++}
++
++wipe_disk_area () {
++    sector=$1
++    size=$2
++    dd if=/dev/zero of="${img2}" bs=512 count=${size} seek=${sector} conv=notrunc status=none
++}
++
++do_repair () {
++    output="`echo "gptrepair ($disk)" | "${grubshell}" --disk="${img2}"`"
++    if echo "${output}" | grep ^error; then
++        return 1
++    fi
++    if echo "${output}" | grep -v GPT; then
++        echo "Unexpected output ${output}"
++        return 1
++    fi
++    echo "${output}"
++}
++
++echo "Nothing to repair:"
++create_disk_image 100
++do_repair
++cmp "${img1}" "${img2}"
++echo
++
++echo "Repair primary (MBR left intact)"
++create_disk_image 100
++wipe_disk_area 1 1
++do_repair
++cmp "${img1}" "${img2}"
++echo
++
++echo "Repair backup"
++create_disk_image 100
++wipe_disk_area 99 1
++do_repair
++cmp "${img1}" "${img2}"
++echo

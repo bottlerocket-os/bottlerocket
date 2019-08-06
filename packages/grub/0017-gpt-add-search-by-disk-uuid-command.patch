@@ -1,0 +1,269 @@
+From aa6b435ee13658a7eced13ebbe9be25567ee019a Mon Sep 17 00:00:00 2001
+From: Alex Crawford <alex.crawford@coreos.com>
+Date: Mon, 31 Aug 2015 15:15:48 -0700
+Subject: [PATCH] gpt: add search by disk uuid command
+
+---
+ Makefile.util.def                     |  1 +
+ grub-core/Makefile.core.def           |  5 ++++
+ grub-core/commands/search.c           | 28 +++++++++++++++++++++--
+ grub-core/commands/search_disk_uuid.c |  5 ++++
+ grub-core/commands/search_wrap.c      |  6 +++++
+ grub-core/lib/gpt.c                   | 21 +++++++++++++++++
+ include/grub/gpt_partition.h          |  4 ++++
+ include/grub/search.h                 |  2 ++
+ tests/gpt_unit_test.c                 | 33 +++++++++++++++++++++++++++
+ 9 files changed, 103 insertions(+), 2 deletions(-)
+ create mode 100644 grub-core/commands/search_disk_uuid.c
+
+diff --git a/Makefile.util.def b/Makefile.util.def
+index b63a2963c..65cbfc081 100644
+--- a/Makefile.util.def
++++ b/Makefile.util.def
+@@ -1289,6 +1289,7 @@ program = {
+   common = tests/lib/unit_test.c;
+   common = grub-core/commands/search_part_label.c;
+   common = grub-core/commands/search_part_uuid.c;
++  common = grub-core/commands/search_disk_uuid.c;
+   common = grub-core/disk/host.c;
+   common = grub-core/kern/emu/hostfs.c;
+   common = grub-core/lib/gpt.c;
+diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
+index 9964d42fe..79b24c187 100644
+--- a/grub-core/Makefile.core.def
++++ b/grub-core/Makefile.core.def
+@@ -1105,6 +1105,11 @@ module = {
+   common = commands/search_part_label.c;
+ };
+ 
++module = {
++  name = search_disk_uuid;
++  common = commands/search_disk_uuid.c;
++};
++
+ module = {
+   name = setpci;
+   common = commands/setpci.c;
+diff --git a/grub-core/commands/search.c b/grub-core/commands/search.c
+index 4ad72c5b4..fd411ce3e 100644
+--- a/grub-core/commands/search.c
++++ b/grub-core/commands/search.c
+@@ -30,7 +30,8 @@
+ #include <grub/i18n.h>
+ #include <grub/disk.h>
+ #include <grub/partition.h>
+-#if defined(DO_SEARCH_PART_UUID) || defined(DO_SEARCH_PART_LABEL)
++#if defined(DO_SEARCH_PART_UUID) || defined(DO_SEARCH_PART_LABEL) || \
++    defined(DO_SEARCH_DISK_UUID)
+ #include <grub/gpt_partition.h>
+ #endif
+ 
+@@ -69,7 +70,7 @@ iterate_device (const char *name, void *data)
+       name[0] == 'f' && name[1] == 'd' && name[2] >= '0' && name[2] <= '9')
+     return 1;
+ 
+-#ifdef DO_SEARCH_FS_UUID
++#if defined(DO_SEARCH_FS_UUID) || defined(DO_SEARCH_DISK_UUID)
+ #define compare_fn grub_strcasecmp
+ #else
+ #define compare_fn grub_strcmp
+@@ -128,6 +129,25 @@ iterate_device (const char *name, void *data)
+ 	      grub_free (quid);
+ 	    }
+ 
++	  grub_device_close (dev);
++	}
++    }
++#elif defined(DO_SEARCH_DISK_UUID)
++    {
++      grub_device_t dev;
++      char *quid;
++
++      dev = grub_device_open (name);
++      if (dev)
++	{
++	  if (grub_gpt_disk_uuid (dev, &quid) == GRUB_ERR_NONE)
++	    {
++	      if (grub_strcmp (quid, ctx->key) == 0)
++		found = 1;
++
++	      grub_free (quid);
++	    }
++
+ 	  grub_device_close (dev);
+ 	}
+     }
+@@ -360,6 +380,8 @@ GRUB_MOD_INIT(search_part_uuid)
+ GRUB_MOD_INIT(search_part_label)
+ #elif defined (DO_SEARCH_FS_UUID)
+ GRUB_MOD_INIT(search_fs_uuid)
++#elif defined (DO_SEARCH_DISK_UUID)
++GRUB_MOD_INIT(search_disk_uuid)
+ #else
+ GRUB_MOD_INIT(search_label)
+ #endif
+@@ -378,6 +400,8 @@ GRUB_MOD_FINI(search_part_uuid)
+ GRUB_MOD_FINI(search_part_label)
+ #elif defined (DO_SEARCH_FS_UUID)
+ GRUB_MOD_FINI(search_fs_uuid)
++#elif defined (DO_SEARCH_DISK_UUID)
++GRUB_MOD_FINI(search_disk_uuid)
+ #else
+ GRUB_MOD_FINI(search_label)
+ #endif
+diff --git a/grub-core/commands/search_disk_uuid.c b/grub-core/commands/search_disk_uuid.c
+new file mode 100644
+index 000000000..fba96f6b8
+--- /dev/null
++++ b/grub-core/commands/search_disk_uuid.c
+@@ -0,0 +1,5 @@
++#define DO_SEARCH_DISK_UUID 1
++#define FUNC_NAME grub_search_disk_uuid
++#define COMMAND_NAME "search.disk_uuid"
++#define HELP_MESSAGE N_("Search devices by disk UUID. If VARIABLE is specified, the first device found is set to a variable.")
++#include "search.c"
+diff --git a/grub-core/commands/search_wrap.c b/grub-core/commands/search_wrap.c
+index e3ff756df..d931c56c5 100644
+--- a/grub-core/commands/search_wrap.c
++++ b/grub-core/commands/search_wrap.c
+@@ -40,6 +40,8 @@ static const struct grub_arg_option options[] =
+      0, 0},
+     {"part-uuid",	'U', 0, N_("Search devices by a partition UUID."),
+      0, 0},
++    {"disk-uuid",	'U', 0, N_("Search devices by a disk UUID."),
++     0, 0},
+     {"set",		's', GRUB_ARG_OPTION_OPTIONAL,
+      N_("Set a variable to the first device found."), N_("VARNAME"),
+      ARG_TYPE_STRING},
+@@ -77,6 +79,7 @@ enum options
+     SEARCH_FS_UUID,
+     SEARCH_PART_LABEL,
+     SEARCH_PART_UUID,
++    SEARCH_DISK_UUID,
+     SEARCH_SET,
+     SEARCH_NO_FLOPPY,
+     SEARCH_HINT,
+@@ -198,6 +201,9 @@ grub_cmd_search (grub_extcmd_context_t ctxt, int argc, char **args)
+   else if (state[SEARCH_PART_UUID].set)
+     grub_search_part_uuid (id, var, state[SEARCH_NO_FLOPPY].set,
+ 			   hints, nhints);
++  else if (state[SEARCH_DISK_UUID].set)
++    grub_search_disk_uuid (id, var, state[SEARCH_NO_FLOPPY].set,
++			   hints, nhints);
+   else if (state[SEARCH_FILE].set)
+     grub_search_fs_file (id, var, state[SEARCH_NO_FLOPPY].set, 
+ 			 hints, nhints);
+diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
+index aedc4f7a1..e162bafd3 100644
+--- a/grub-core/lib/gpt.c
++++ b/grub-core/lib/gpt.c
+@@ -108,6 +108,27 @@ grub_gpt_part_uuid (grub_device_t device, char **uuid)
+   return GRUB_ERR_NONE;
+ }
+ 
++grub_err_t
++grub_gpt_disk_uuid (grub_device_t device, char **uuid)
++{
++  grub_gpt_t gpt = grub_gpt_read (device->disk);
++  if (!gpt)
++    goto done;
++
++  grub_errno = GRUB_ERR_NONE;
++
++  if (gpt->status & GRUB_GPT_PRIMARY_HEADER_VALID)
++    *uuid = grub_gpt_guid_to_str (&gpt->primary.guid);
++  else if (gpt->status & GRUB_GPT_BACKUP_HEADER_VALID)
++    *uuid = grub_gpt_guid_to_str (&gpt->backup.guid);
++  else
++    grub_errno = grub_error (GRUB_ERR_BUG, "No valid GPT header");
++
++done:
++  grub_gpt_free (gpt);
++  return grub_errno;
++}
++
+ static grub_uint64_t
+ grub_gpt_size_to_sectors (grub_gpt_t gpt, grub_size_t size)
+ {
+diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
+index ae72b026c..2ca063ad9 100644
+--- a/include/grub/gpt_partition.h
++++ b/include/grub/gpt_partition.h
+@@ -232,4 +232,8 @@ grub_err_t grub_gpt_part_label (grub_device_t device, char **label);
+  * The uuid is in a new buffer and should be freed by the caller.  */
+ grub_err_t grub_gpt_part_uuid (grub_device_t device, char **uuid);
+ 
++/* Return the disk uuid of the device DEVICE in UUID.
++ * The uuid is in a new buffer and should be freed by the caller.  */
++grub_err_t grub_gpt_disk_uuid (grub_device_t device, char **uuid);
++
+ #endif /* ! GRUB_GPT_PARTITION_HEADER */
+diff --git a/include/grub/search.h b/include/grub/search.h
+index c2f40abe9..7f69d25d1 100644
+--- a/include/grub/search.h
++++ b/include/grub/search.h
+@@ -29,5 +29,7 @@ void grub_search_part_uuid (const char *key, const char *var, int no_floppy,
+ 			    char **hints, unsigned nhints);
+ void grub_search_part_label (const char *key, const char *var, int no_floppy,
+ 			     char **hints, unsigned nhints);
++void grub_search_disk_uuid (const char *key, const char *var, int no_floppy,
++			    char **hints, unsigned nhints);
+ 
+ #endif
+diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
+index 7a1af46e1..60f601729 100644
+--- a/tests/gpt_unit_test.c
++++ b/tests/gpt_unit_test.c
+@@ -614,6 +614,37 @@ search_part_uuid_test (void)
+   close_disk (&data);
+ }
+ 
++static void
++search_disk_uuid_test (void)
++{
++  struct test_data data;
++  const char disk_uuid[] = "69c131ad-67d6-46c6-93c4-124c755256ac";
++  const char bogus_uuid[] = "1534c928-c50e-4866-9daf-6a9fd7918a76";
++  const char *test_result;
++  char *expected_result;
++
++  open_disk (&data);
++
++  expected_result = grub_xasprintf ("%s", data.dev->disk->name);
++  grub_env_unset ("test_result");
++  grub_search_disk_uuid (disk_uuid, "test_result", 0, NULL, 0);
++  test_result = grub_env_get ("test_result");
++  grub_test_assert (test_result && strcmp (test_result, expected_result) == 0,
++		    "wrong device: %s (%s)", test_result, expected_result);
++  grub_free (expected_result);
++
++  grub_env_unset ("test_result");
++  grub_search_disk_uuid (bogus_uuid, "test_result", 0, NULL, 0);
++  test_result = grub_env_get ("test_result");
++  grub_test_assert (test_result == NULL,
++		    "unexpected device: %s", test_result);
++  grub_test_assert (grub_errno == GRUB_ERR_FILE_NOT_FOUND,
++		    "unexpected error: %s", grub_errmsg);
++  grub_errno = GRUB_ERR_NONE;
++
++  close_disk (&data);
++}
++
+ void
+ grub_unit_test_init (void)
+ {
+@@ -628,6 +659,7 @@ grub_unit_test_init (void)
+   grub_test_register ("gpt_repair_test", repair_test);
+   grub_test_register ("gpt_search_part_label_test", search_part_label_test);
+   grub_test_register ("gpt_search_uuid_test", search_part_uuid_test);
++  grub_test_register ("gpt_search_disk_uuid_test", search_disk_uuid_test);
+ }
+ 
+ void
+@@ -641,5 +673,6 @@ grub_unit_test_fini (void)
+   grub_test_unregister ("gpt_repair_test");
+   grub_test_unregister ("gpt_search_part_label_test");
+   grub_test_unregister ("gpt_search_part_uuid_test");
++  grub_test_unregister ("gpt_search_disk_uuid_test");
+   grub_fini_all ();
+ }

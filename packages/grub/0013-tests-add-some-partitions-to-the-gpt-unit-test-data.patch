@@ -1,0 +1,124 @@
+From 19f4319c4f68b416433265a104e49520486419cc Mon Sep 17 00:00:00 2001
+From: Michael Marineau <michael.marineau@coreos.com>
+Date: Thu, 27 Nov 2014 15:49:57 -0800
+Subject: [PATCH] tests: add some partitions to the gpt unit test data
+
+---
+ tests/gpt_unit_test.c | 65 ++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 55 insertions(+), 10 deletions(-)
+
+diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
+index 86e4364a5..5692a5a52 100644
+--- a/tests/gpt_unit_test.c
++++ b/tests/gpt_unit_test.c
+@@ -89,12 +89,12 @@ struct test_data
+ };
+ 
+ 
+-/* Sample primary GPT header for an empty 1MB disk.  */
++/* Sample primary GPT header for a 1MB disk.  */
+ static const struct grub_gpt_header example_primary = {
+   .magic = GRUB_GPT_HEADER_MAGIC,
+   .version = GRUB_GPT_HEADER_VERSION,
+   .headersize = sizeof (struct grub_gpt_header),
+-  .crc32 = grub_cpu_to_le32_compile_time (0x7cd8642c),
++  .crc32 = grub_cpu_to_le32_compile_time (0xb985abe0),
+   .header_lba = grub_cpu_to_le64_compile_time (PRIMARY_HEADER_SECTOR),
+   .alternate_lba = grub_cpu_to_le64_compile_time (BACKUP_HEADER_SECTOR),
+   .start = grub_cpu_to_le64_compile_time (DATA_START_SECTOR),
+@@ -104,7 +104,52 @@ static const struct grub_gpt_header example_primary = {
+   .partitions = grub_cpu_to_le64_compile_time (PRIMARY_TABLE_SECTOR),
+   .maxpart = grub_cpu_to_le32_compile_time (TABLE_ENTRIES),
+   .partentry_size = grub_cpu_to_le32_compile_time (ENTRY_SIZE),
+-  .partentry_crc32 = grub_cpu_to_le32_compile_time (0xab54d286),
++  .partentry_crc32 = grub_cpu_to_le32_compile_time (0x074e052c),
++};
++
++static const struct grub_gpt_partentry example_entries[TABLE_ENTRIES] = {
++  {
++    .type = GRUB_GPT_PARTITION_TYPE_EFI_SYSTEM,
++    .guid = GRUB_GPT_GUID_INIT (0xa0f1792e, 0xb4ce, 0x4136, 0xbc, 0xf2,
++				0x1a, 0xfc, 0x13, 0x3c, 0x28, 0x28),
++    .start = grub_cpu_to_le64_compile_time (DATA_START_SECTOR),
++    .end = grub_cpu_to_le64_compile_time (0x3f),
++    .attrib = 0x0,
++    .name = {
++      grub_cpu_to_le16_compile_time ('E'),
++      grub_cpu_to_le16_compile_time ('F'),
++      grub_cpu_to_le16_compile_time ('I'),
++      grub_cpu_to_le16_compile_time (' '),
++      grub_cpu_to_le16_compile_time ('S'),
++      grub_cpu_to_le16_compile_time ('Y'),
++      grub_cpu_to_le16_compile_time ('S'),
++      grub_cpu_to_le16_compile_time ('T'),
++      grub_cpu_to_le16_compile_time ('E'),
++      grub_cpu_to_le16_compile_time ('M'),
++      0x0,
++    }
++  },
++  {
++    .type = GRUB_GPT_PARTITION_TYPE_BIOS_BOOT,
++    .guid = GRUB_GPT_GUID_INIT (0x876c898d, 0x1b40, 0x4727, 0xa1, 0x61,
++				0xed, 0xf9, 0xb5, 0x48, 0x66, 0x74),
++    .start = grub_cpu_to_le64_compile_time (0x40),
++    .end = grub_cpu_to_le64_compile_time (0x7f),
++    .attrib = grub_cpu_to_le64_compile_time (
++	1ULL << GRUB_GPT_PART_ATTR_OFFSET_LEGACY_BIOS_BOOTABLE),
++    .name = {
++      grub_cpu_to_le16_compile_time ('B'),
++      grub_cpu_to_le16_compile_time ('I'),
++      grub_cpu_to_le16_compile_time ('O'),
++      grub_cpu_to_le16_compile_time ('S'),
++      grub_cpu_to_le16_compile_time (' '),
++      grub_cpu_to_le16_compile_time ('B'),
++      grub_cpu_to_le16_compile_time ('O'),
++      grub_cpu_to_le16_compile_time ('O'),
++      grub_cpu_to_le16_compile_time ('T'),
++      0x0,
++    }
++  },
+ };
+ 
+ /* And the backup header.  */
+@@ -112,7 +157,7 @@ static const struct grub_gpt_header example_backup = {
+   .magic = GRUB_GPT_HEADER_MAGIC,
+   .version = GRUB_GPT_HEADER_VERSION,
+   .headersize = sizeof (struct grub_gpt_header),
+-  .crc32 = grub_cpu_to_le32_compile_time (0xcfaa4a27),
++  .crc32 = grub_cpu_to_le32_compile_time (0x0af785eb),
+   .header_lba = grub_cpu_to_le64_compile_time (BACKUP_HEADER_SECTOR),
+   .alternate_lba = grub_cpu_to_le64_compile_time (PRIMARY_HEADER_SECTOR),
+   .start = grub_cpu_to_le64_compile_time (DATA_START_SECTOR),
+@@ -122,7 +167,7 @@ static const struct grub_gpt_header example_backup = {
+   .partitions = grub_cpu_to_le64_compile_time (BACKUP_TABLE_SECTOR),
+   .maxpart = grub_cpu_to_le32_compile_time (TABLE_ENTRIES),
+   .partentry_size = grub_cpu_to_le32_compile_time (ENTRY_SIZE),
+-  .partentry_crc32 = grub_cpu_to_le32_compile_time (0xab54d286),
++  .partentry_crc32 = grub_cpu_to_le32_compile_time (0x074e052c),
+ };
+ 
+ /* Sample protective MBR for the same 1MB disk. Note, this matches
+@@ -192,6 +237,10 @@ reset_disk (struct test_data *data)
+   memcpy (&data->raw->mbr, &example_pmbr, sizeof (data->raw->mbr));
+   memcpy (&data->raw->primary_header, &example_primary,
+ 	  sizeof (data->raw->primary_header));
++  memcpy (&data->raw->primary_entries, &example_entries,
++	  sizeof (data->raw->primary_entries));
++  memcpy (&data->raw->backup_entries, &example_entries,
++	  sizeof (data->raw->backup_entries));
+   memcpy (&data->raw->backup_header, &example_backup,
+ 	  sizeof (data->raw->backup_header));
+ 
+@@ -270,11 +319,7 @@ read_disk (struct test_data *data)
+ 
+   gpt = grub_gpt_read (data->dev->disk);
+   if (gpt == NULL)
+-    {
+-      grub_print_error ();
+-      grub_fatal ("grub_gpt_read failed");
+-    }
+-
++    grub_fatal ("grub_gpt_read failed: %s", grub_errmsg);
+ 
+   return gpt;
+ }
