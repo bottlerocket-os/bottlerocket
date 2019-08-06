@@ -4,7 +4,7 @@
 sundog is a small program to handle settings that must be generated at OS runtime.
 
 It requests settings generators from the API and runs them.
-The output is collected and sent to a known Thar API server endpoint and committed.
+The output is collected and sent to a known Thar API server endpoint.
 */
 
 use snafu::{ensure, OptionExt, ResultExt};
@@ -22,7 +22,6 @@ extern crate log;
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
-const API_COMMIT_URI: &str = "/settings/commit";
 const API_SETTING_GENERATORS_URI: &str = "/metadata/setting-generators";
 
 /// Potential errors during Sundog execution
@@ -233,7 +232,7 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<model::Se
     Ok(settings_struct)
 }
 
-/// Send and commit the settings to the datastore through the API
+/// Send the settings to the datastore through the API
 fn set_settings<S>(socket_path: S, settings: model::Settings) -> Result<()>
 where
     S: AsRef<str>,
@@ -247,22 +246,6 @@ where
     let (code, response_body) =
         apiclient::raw_request(socket_path.as_ref(), uri, method, Some(request_body))
             .context(error::APIRequest { method, uri })?;
-    ensure!(
-        code.is_success(),
-        error::APIResponse {
-            method,
-            uri,
-            code,
-            response_body,
-        }
-    );
-
-    // Request a commit to actually make the changes
-    let uri = API_COMMIT_URI;
-    let method = "POST";
-    debug!("{}-ing to {} to finalize the changes", method, uri);
-    let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, method, None)
-        .context(error::APIRequest { method, uri })?;
     ensure!(
         code.is_success(),
         error::APIResponse {

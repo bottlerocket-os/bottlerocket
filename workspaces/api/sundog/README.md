@@ -7,7 +7,7 @@ Current version: 0.1.0
 sundog is a small program to handle settings that must be generated at OS runtime.
 
 It requests settings generators from the API and runs them.
-The output is collected and sent to a known Thar API server endpoint and committed.
+The output is collected and sent to a known Thar API server endpoint.
 
 ## Colophon
 

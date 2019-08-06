@@ -4,7 +4,7 @@
 moondog is a minimal user data agent.
 
 It accepts TOML-formatted settings from a user data provider such as an instance metadata service.
-These are sent to a known Thar API server endpoint, then committed.
+These are sent to a known Thar API server endpoint.
 
 Currently, Amazon EC2 user data support is implemented.
 User data can also be retrieved from a file for testing.
@@ -25,7 +25,6 @@ use std::{env, fs, process};
 // FIXME Get these from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
-const API_COMMIT_URI: &str = "/settings/commit";
 
 // We only want to run moondog once, at first boot.  Our systemd unit file has a
 // ConditionPathExists that will prevent it from running again if this file exists.
@@ -331,24 +330,6 @@ fn main() -> Result<()> {
         error::APIResponse {
             method: "PATCH",
             uri: API_SETTINGS_URI,
-            code,
-            response_body,
-        }
-    );
-
-    // POST to /commit to actually make the changes
-    let (code, response_body) =
-        apiclient::raw_request(&args.socket_path, API_COMMIT_URI, "POST", None).context(
-            error::APIRequest {
-                method: "POST",
-                uri: API_COMMIT_URI,
-            },
-        )?;
-    ensure!(
-        code.is_success(),
-        error::APIResponse {
-            method: "POST",
-            uri: API_COMMIT_URI,
             code,
             response_body,
         }

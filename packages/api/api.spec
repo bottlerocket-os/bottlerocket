@@ -16,7 +16,8 @@ Source1: apiserver.service
 Source2: moondog.service
 Source3: sundog.service
 Source4: storewolf.service
-Source5: migration-tmpfiles.conf
+Source5: settings-committer.service
+Source6: migration-tmpfiles.conf
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -70,6 +71,10 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 Summary: Tools to migrate version formats
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}migration
+
+%package -n %{_cross_os}settings-committer
+Summary: Commits settings from user data, defaults, and generators at boot
+%description -n %{_cross_os}settings-committer
 %{summary}.
 
 %prep
@@ -88,6 +93,7 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE1}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE2}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
+install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE5}
 
 %cargo_install -p apiserver
 %cargo_install -p apiclient
@@ -96,6 +102,7 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 %cargo_install -p pluto
 %cargo_install -p thar-be-settings
 %cargo_install -p storewolf
+%cargo_install -p settings-committer
 %cargo_install -p migration/migrator
 
 install -d %{buildroot}%{migrationdir}
@@ -143,5 +150,9 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 %files -n %{_cross_os}migration -f migration-binaries
 %dir %{migrationdir}
 %{_cross_tmpfilesdir}/migration.conf
+
+%files -n %{_cross_os}settings-committer
+%{_cross_bindir}/settings-committer
+%{systemd_systemdir}/settings-committer.service
 
 %changelog
