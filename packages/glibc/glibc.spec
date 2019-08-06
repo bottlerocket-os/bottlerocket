@@ -1,5 +1,5 @@
 Name: %{_cross_os}glibc
-Version: 2.29
+Version: 2.30
 Release: 1%{?dist}
 Summary: The GNU libc libraries
 License: LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and GPLv2+ with exceptions and BSD and Inner-Net and ISC and Public Domain and GFDL
@@ -40,7 +40,7 @@ CFLAGS="${BUILDFLAGS}" CPPFLAGS="" CXXFLAGS="${BUILDFLAGS}" \
   --build="%{_build}" \
   --with-headers="%{_cross_includedir}" \
   --enable-bind-now \
-  --enable-kernel="4.14" \
+  --enable-kernel="4.19" \
   --enable-shared \
   --enable-stack-protector=strong \
 %if "_cross_arch" == "x86_64"
