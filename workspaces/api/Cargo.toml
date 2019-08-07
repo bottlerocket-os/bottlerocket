@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "apiserver",
+    "apiclient",
     "moondog",
     "sundog",
     "pluto",

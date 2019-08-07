@@ -1,3 +1,4 @@
+use http::StatusCode;
 use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
@@ -48,18 +49,19 @@ pub enum TBSError {
         source: handlebars::TemplateFileError,
     },
 
-    #[snafu(display("Error sending {} to '{}': {}", method, uri, source))]
+    #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
     APIRequest {
-        method: &'static str,
+        method: String,
         uri: String,
-        source: reqwest::Error,
+        source: apiclient::Error,
     },
 
-    #[snafu(display("Error response from {} to '{}': {}", method, uri, source))]
+    #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
     APIResponse {
-        method: &'static str,
+        method: String,
         uri: String,
-        source: reqwest::Error,
+        code: StatusCode,
+        response_body: String,
     },
 
     #[snafu(display(
@@ -71,6 +73,6 @@ pub enum TBSError {
     ResponseJson {
         method: &'static str,
         uri: String,
-        source: reqwest::Error,
+        source: serde_json::Error,
     },
 }

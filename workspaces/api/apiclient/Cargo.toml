@@ -1,0 +1,15 @@
+[package]
+name = "apiclient"
+version = "0.1.0"
+authors = ["Tom Kirchner <tjk@amazon.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+# TODO: move to futures 0.3 / stdlib futures when it's ready
+futures = "0.1"
+http = "0.1"
+hyper = "0.12"
+hyperlocal = "0.6"
+snafu = "0.4"
+tokio = "0.1"

@@ -1,17 +1,21 @@
 use itertools::join;
+use std::path::Path;
 
-use crate::client::ReqwestClientExt;
+use crate::client;
 use crate::template::TemplateKeys;
-use crate::{Result, API_SETTINGS_URI};
+use crate::Result;
 
 use apiserver::model;
 
 /// Using the template registry, gather all keys and request
 /// their values from the API
-pub fn get_settings_from_template(
-    client: &reqwest::Client,
+pub fn get_settings_from_template<P>(
+    socket_path: P,
     registry: &handlebars::Handlebars,
-) -> Result<model::Settings> {
+) -> Result<model::Settings>
+where
+    P: AsRef<Path>,
+{
     // Using the template registry, pull the keys out of the templates
     // and query the API to get a structure of Settings which we can
     // use to render the templates
@@ -24,7 +28,7 @@ pub fn get_settings_from_template(
     // Query the settings
     debug!("Querying API for settings data");
     let settings: model::Settings =
-        client.get_json(API_SETTINGS_URI.to_string(), "keys".to_string(), query)?;
+        client::get_json(socket_path, "/settings", Some(("keys", query)))?;
 
     trace!("Settings values: {:?}", settings);
     Ok(settings)

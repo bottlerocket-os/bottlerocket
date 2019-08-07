@@ -26,12 +26,6 @@ pub mod template;
 pub use error::TBSError;
 type Result<T> = std::result::Result<T, TBSError>;
 
-// FIXME Get these from configuration in the future
-const API_CONFIGURATION_URI: &str = "http://localhost:4242/configuration-files";
-const API_METADATA_URI: &str = "http://localhost:4242/metadata";
-const API_SETTINGS_URI: &str = "http://localhost:4242/settings";
-const API_SERVICES_URI: &str = "http://localhost:4242/services";
-
 /// Read stdin and parse into JSON
 pub fn get_changed_settings() -> Result<HashSet<String>> {
     let mut input = String::new();
@@ -45,7 +39,7 @@ pub fn get_changed_settings() -> Result<HashSet<String>> {
     let changed_settings: HashSet<String> =
         serde_json::from_str(&input).context(error::InvalidInput {
             reason: "Input must be a JSON array of strings",
-            input: input,
+            input,
         })?;
     trace!("Parsed input: {:?}", &changed_settings);
 

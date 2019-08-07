@@ -7,8 +7,8 @@ use std::process;
 
 use thar_be_settings::{config, get_changed_settings, service, settings, template};
 
-// TODO
-// Use a client rather than building queries and making HTTP calls
+// FIXME Get from configuration in the future
+const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
 
 mod error {
     use snafu::Snafu;
@@ -24,6 +24,7 @@ mod error {
 /// Store the args we receive on the command line
 struct Args {
     verbosity: usize,
+    socket_path: String,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -31,25 +32,46 @@ fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
         r"Usage: {}
+            [ --socket-path PATH ]
             [ --verbose --verbose ... ]
-        ",
-        program_name
+
+    Socket path defaults to {}",
+        program_name, DEFAULT_API_SOCKET,
     );
     process::exit(2);
 }
 
+/// Prints a more specific message before exiting through usage().
+fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
+    eprintln!("{}\n", msg.as_ref());
+    usage();
+}
+
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut socket_path = None;
     let mut verbosity = 2;
 
-    for arg in args.skip(1) {
+    let mut iter = args.skip(1);
+    while let Some(arg) = iter.next() {
         match arg.as_ref() {
             "-v" | "--verbose" => verbosity += 1,
+
+            "--socket-path" => {
+                socket_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
+                )
+            }
+
             _ => usage(),
         }
     }
 
-    Args { verbosity }
+    Args {
+        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        verbosity,
+    }
 }
 
 fn main() -> Result<(), Box<std::error::Error>> {
@@ -73,15 +95,12 @@ fn main() -> Result<(), Box<std::error::Error>> {
     info!("Parsing stdin for updated settings");
     let changed_settings = get_changed_settings()?;
 
-    // Create a client for all our API calls
-    let client = reqwest::Client::new();
-
     // Create a HashSet of affected services
     info!(
         "Requesting affected services for settings: {:?}",
         &changed_settings
     );
-    let services = service::get_affected_services(&client, changed_settings)?;
+    let services = service::get_affected_services(&args.socket_path, changed_settings)?;
     if services.is_empty() {
         info!("No services are affected, exiting...");
         process::exit(0)
@@ -92,7 +111,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     if !config_file_names.is_empty() {
         // Create a vec of ConfigFile structs from the list of changed services
         info!("Requesting configuration file data for affected services");
-        let config_files = config::get_affected_config_files(&client, config_file_names)?;
+        let config_files = config::get_affected_config_files(&args.socket_path, config_file_names)?;
 
         // Build the template registry from config file metadata
         debug!("Building template registry");
@@ -100,7 +119,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
 
         // Get all settings values for config file templates
         debug!("Requesting settings values");
-        let settings = settings::get_settings_from_template(&client, &template_registry)?;
+        let settings = settings::get_settings_from_template(&args.socket_path, &template_registry)?;
 
         // Ensure all files render properly
         info!("Rendering config files...");

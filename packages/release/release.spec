@@ -22,6 +22,7 @@ Source1002: fqdn.service
 Source1003: configured.target
 
 BuildArch: noarch
+Requires: %{_cross_os}apiclient
 Requires: %{_cross_os}apiserver
 Requires: %{_cross_os}bash
 Requires: %{_cross_os}ca-certificates

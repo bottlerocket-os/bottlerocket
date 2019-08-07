@@ -7,7 +7,7 @@ It requests settings generators from the API and runs them.
 The output is collected and sent to a known Thar API server endpoint and committed.
 */
 
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::env;
 use std::process;
@@ -19,27 +19,19 @@ use apiserver::model;
 #[macro_use]
 extern crate log;
 
-// FIXME Get these from configuration in the future
-const API_METADATA_URI: &str = "http://localhost:4242/metadata";
-const API_SETTINGS_URI: &str = "http://localhost:4242/settings";
-const API_COMMIT_URI: &str = "http://localhost:4242/settings/commit";
+// FIXME Get from configuration in the future
+const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
+const API_SETTINGS_URI: &str = "/settings";
+const API_COMMIT_URI: &str = "/settings/commit";
+const API_SETTING_GENERATORS_URI: &str = "/metadata/setting-generators";
 
 /// Potential errors during Sundog execution
 mod error {
+    use http::StatusCode;
     use snafu::Snafu;
 
     use apiserver::datastore;
     use apiserver::datastore::deserialization;
-
-    // Get the HTTP status code out of a reqwest::Error
-    fn code(source: &reqwest::Error) -> String {
-        source
-            .status()
-            .as_ref()
-            .map(|i| i.as_str())
-            .unwrap_or("Unknown")
-            .to_string()
-    }
 
     /// Potential errors during dynamic settings retrieval
     #[derive(Debug, Snafu)]
@@ -87,24 +79,19 @@ mod error {
             source: std::str::Utf8Error,
         },
 
-        #[snafu(display("Error '{}' sending {} to '{}': {}", code(&source), method, uri, source))]
+        #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {
-            method: &'static str,
+            method: String,
             uri: String,
-            source: reqwest::Error,
+            source: apiclient::Error,
         },
 
-        #[snafu(display(
-            "Error '{}' from {} to '{}': {}",
-            code(&source),
-            method,
-            uri,
-            source
-        ))]
+        #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
         APIResponse {
-            method: &'static str,
+            method: String,
             uri: String,
-            source: reqwest::Error,
+            code: StatusCode,
+            response_body: String,
         },
 
         #[snafu(display(
@@ -116,7 +103,7 @@ mod error {
         ResponseJson {
             method: &'static str,
             uri: String,
-            source: reqwest::Error,
+            source: serde_json::Error,
         },
 
         #[snafu(display("Error deserializing HashMap to Settings: {}", source))]
@@ -130,12 +117,6 @@ mod error {
             output: String,
             source: datastore::ScalarError,
         },
-
-        #[snafu(display("Error updating settings through '{}': {}", uri, source))]
-        UpdatingAPISettings { uri: String, source: reqwest::Error },
-
-        #[snafu(display("Error committing changes to '{}': {}", uri, source))]
-        CommittingAPISettings { uri: String, source: reqwest::Error },
     }
 }
 
@@ -144,27 +125,27 @@ use error::SundogError;
 type Result<T> = std::result::Result<T, SundogError>;
 
 /// Request the setting generators from the API.
-fn get_setting_generators(client: &reqwest::Client) -> Result<HashMap<String, String>> {
-    let uri = API_METADATA_URI.to_string() + "/setting-generators";
+fn get_setting_generators<S>(socket_path: S) -> Result<HashMap<String, String>>
+where
+    S: AsRef<str>,
+{
+    let uri = API_SETTING_GENERATORS_URI;
 
     debug!("Requesting setting generators from API");
-    let generators: HashMap<String, String> = client
-        .get(&uri)
-        .send()
-        .context(error::APIRequest {
+    let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
+        .context(error::APIRequest { method: "GET", uri })?;
+    ensure!(
+        code.is_success(),
+        error::APIResponse {
             method: "GET",
-            uri: uri.as_str(),
-        })?
-        .error_for_status()
-        .context(error::APIResponse {
-            method: "GET",
-            uri: uri.as_str(),
-        })?
-        .json()
-        .context(error::ResponseJson {
-            method: "GET",
-            uri: uri.as_str(),
-        })?;
+            uri,
+            code,
+            response_body,
+        }
+    );
+
+    let generators: HashMap<String, String> =
+        serde_json::from_str(&response_body).context(error::ResponseJson { method: "GET", uri })?;
     trace!("Generators: {:?}", &generators);
 
     Ok(generators)
@@ -253,38 +234,44 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<model::Se
 }
 
 /// Send and commit the settings to the datastore through the API
-fn set_settings(client: &reqwest::Client, settings: model::Settings) -> Result<()> {
+fn set_settings<S>(socket_path: S, settings: model::Settings) -> Result<()>
+where
+    S: AsRef<str>,
+{
     // Serialize our Settings struct to the JSON wire format
-    let settings_json = serde_json::to_string(&settings).context(error::Serialize)?;
-    trace!("Settings to PATCH: {}", &settings_json);
+    let request_body = serde_json::to_string(&settings).context(error::Serialize)?;
 
-    client
-        .patch(API_SETTINGS_URI)
-        .body(settings_json)
-        .send()
-        .context(error::APIRequest {
-            method: "PATCH",
-            uri: API_SETTINGS_URI,
-        })?
-        .error_for_status()
-        .context(error::UpdatingAPISettings {
-            uri: API_SETTINGS_URI,
-        })?;
+    let uri = API_SETTINGS_URI;
+    let method = "PATCH";
+    trace!("Settings to {} to {}: {}", method, uri, &request_body);
+    let (code, response_body) =
+        apiclient::raw_request(socket_path.as_ref(), uri, method, Some(request_body))
+            .context(error::APIRequest { method, uri })?;
+    ensure!(
+        code.is_success(),
+        error::APIResponse {
+            method,
+            uri,
+            code,
+            response_body,
+        }
+    );
 
-    // POST to /commit to actually make the changes
-    debug!("POST-ing to /commit to finalize the changes");
-    client
-        .post(API_COMMIT_URI)
-        .body("")
-        .send()
-        .context(error::APIRequest {
-            method: "POST",
-            uri: API_COMMIT_URI,
-        })?
-        .error_for_status()
-        .context(error::CommittingAPISettings {
-            uri: API_COMMIT_URI,
-        })?;
+    // Request a commit to actually make the changes
+    let uri = API_COMMIT_URI;
+    let method = "POST";
+    debug!("{}-ing to {} to finalize the changes", method, uri);
+    let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, method, None)
+        .context(error::APIRequest { method, uri })?;
+    ensure!(
+        code.is_success(),
+        error::APIResponse {
+            method,
+            uri,
+            code,
+            response_body,
+        }
+    );
 
     Ok(())
 }
@@ -292,6 +279,7 @@ fn set_settings(client: &reqwest::Client, settings: model::Settings) -> Result<(
 /// Store the args we receive on the command line
 struct Args {
     verbosity: usize,
+    socket_path: String,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -299,25 +287,46 @@ fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
         r"Usage: {}
+            [ --socket-path PATH ]
             [ --verbose --verbose ... ]
-        ",
-        program_name
+
+    Socket path defaults to {}",
+        program_name, DEFAULT_API_SOCKET,
     );
     process::exit(2);
 }
 
+/// Prints a more specific message before exiting through usage().
+fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
+    eprintln!("{}\n", msg.as_ref());
+    usage();
+}
+
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut socket_path = None;
     let mut verbosity = 2;
 
-    for arg in args.skip(1) {
+    let mut iter = args.skip(1);
+    while let Some(arg) = iter.next() {
         match arg.as_ref() {
             "-v" | "--verbose" => verbosity += 1,
+
+            "--socket-path" => {
+                socket_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
+                )
+            }
+
             _ => usage(),
         }
     }
 
-    Args { verbosity }
+    Args {
+        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        verbosity,
+    }
 }
 
 fn main() -> Result<()> {
@@ -336,11 +345,8 @@ fn main() -> Result<()> {
 
     info!("Sundog started");
 
-    // Create a client for all our API calls
-    let client = reqwest::Client::new();
-
     info!("Retrieving setting generators");
-    let generators = get_setting_generators(&client)?;
+    let generators = get_setting_generators(&args.socket_path)?;
     if generators.is_empty() {
         info!("No settings to generate, exiting");
         process::exit(0)
@@ -350,7 +356,7 @@ fn main() -> Result<()> {
     let settings = get_dynamic_settings(generators)?;
 
     info!("Sending settings values to the API");
-    set_settings(&client, settings)?;
+    set_settings(&args.socket_path, settings)?;
 
     Ok(())
 }
