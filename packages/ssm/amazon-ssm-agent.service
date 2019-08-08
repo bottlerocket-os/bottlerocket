@@ -1,0 +1,16 @@
+[Unit]
+Description=amazon-ssm-agent
+After=network-online.target
+StartLimitBurst=10
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+WorkingDirectory=/
+ExecStart=/usr/bin/amazon-ssm-agent
+KillMode=process
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

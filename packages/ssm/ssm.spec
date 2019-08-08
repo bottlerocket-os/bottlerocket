@@ -15,6 +15,7 @@ License: ASL 2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: ssm-tmpfiles.conf
+Source2: amazon-ssm-agent.service
 Patch1: 0001-Use-absolute-path-to-launch-shell.patch
 Patch2: 0002-shell-Allow-root-user.patch
 BuildRequires: gcc-%{_cross_target}
@@ -53,7 +54,7 @@ install -p -m 0755 seelog_unix.xml %{buildroot}%{_cross_factorydir}%{_cross_sysc
 install -p -m 0755 amazon-ssm-agent.json.template %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/amazon/ssm/amazon-ssm-agent.json
 
 mkdir -p %{buildroot}/%{_cross_unitdir}
-install -p -m 0755 packaging/linux/amazon-ssm-agent.service %{buildroot}/%{_cross_unitdir}
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_unitdir}/amazon-ssm-agent.service
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/ssm.conf
