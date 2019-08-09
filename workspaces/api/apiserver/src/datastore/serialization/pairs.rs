@@ -372,6 +372,13 @@ mod test {
     }
 
     #[test]
+    fn empty_value() {
+        let val: toml::Value = toml::from_str("").unwrap();
+        let keys = to_pairs(&val).unwrap();
+        assert_eq!(keys, hashmap!())
+    }
+
+    #[test]
     fn nested_struct_keys() {
         let b = B {
             list: vec![5, 6, 7],

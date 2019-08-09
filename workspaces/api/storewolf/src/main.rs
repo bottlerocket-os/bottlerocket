@@ -8,6 +8,7 @@ settings given in the defaults.toml file.
 */
 
 use snafu::{OptionExt, ResultExt};
+use std::collections::HashMap;
 use std::path::Path;
 use std::{env, process};
 
@@ -36,6 +37,9 @@ mod error {
 
         #[snafu(display("defaults.toml is not a TOML table"))]
         DefaultsNotTable {},
+
+        #[snafu(display("defaults.toml's settings is not a TOML table"))]
+        DefaultSettingsNotTable {},
 
         #[snafu(display("defaults.toml's metadata is not a TOML list of Metadata"))]
         DefaultsMetadataNotTable { source: toml::de::Error },
@@ -71,26 +75,48 @@ type Result<T> = std::result::Result<T, StorewolfError>;
 /// Creates a new FilesystemDataStore at the given path, with data and metadata coming from
 /// defaults.toml at compile time.
 fn populate_default_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
+    let mut datastore = FilesystemDataStore::new(base_path);
+
     // Read and parse defaults
     let defaults_str = include_str!("../defaults.toml");
     let mut defaults_val: toml::Value =
         toml::from_str(defaults_str).context(error::DefaultsFormatting)?;
 
-    // Check if we have metadata
+    // Check if we have metadata and settings. If so, pull them out
+    // of `defaults_val`
     let table = defaults_val
         .as_table_mut()
         .context(error::DefaultsNotTable)?;
     let maybe_metadata_val = table.remove("metadata");
+    let maybe_settings_val = table.remove("settings");
 
-    // Write defaults to datastore
-    debug!("Serializing defaults and writing to datastore");
-    let defaults = to_pairs(&defaults_val).context(error::Serialization { given: "defaults" })?;
-    let mut datastore = FilesystemDataStore::new(base_path);
-    datastore
-        .set_keys(&defaults, datastore::Committed::Live)
-        .context(error::WriteKeys)?;
+    // If there are default settings, write them to the datastore in Pending
+    // state. This ensures the settings will go through a commit cycle when
+    // first-boot services run, which will create config files for default
+    // keys that require them.
+    if let Some(settings_val) = maybe_settings_val {
+        debug!("Serializing default settings and writing to datastore");
+        let settings_table = settings_val
+            .as_table()
+            .context(error::DefaultSettingsNotTable)?;
 
-    // If we had metadata, write it out
+        // The default settings were removed from the "settings" key of the
+        // defaults table above. We still need them under a "settings" key
+        // before serializing so we have full dotted keys like
+        // "settings.foo.bar" and not just "foo.bar". We use a HashMap
+        // to rebuild the nested structure.
+        let mut temp = HashMap::new();
+        temp.insert("settings", settings_table);
+        let settings = to_pairs(&temp).context(error::Serialization {
+            given: "default settings",
+        })?;
+
+        datastore
+            .set_keys(&settings, datastore::Committed::Pending)
+            .context(error::WriteKeys)?;
+    }
+
+    // If we have metadata, write it out to the datastore in Live state
     if let Some(metadata_val) = maybe_metadata_val {
         debug!("Serializing metadata and writing to datastore");
         let metadatas: Vec<model::Metadata> = metadata_val
@@ -117,6 +143,18 @@ fn populate_default_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
                 .set_metadata(&md_key, &data_key, value)
                 .context(error::WriteMetadata)?;
         }
+    }
+
+    // If any other defaults remain (configuration files, services, etc),
+    // write them to the datastore in Live state
+    let defaults = to_pairs(&defaults_val).context(error::Serialization {
+        given: "other defaults",
+    })?;
+    if !defaults.is_empty() {
+        debug!("Serializing other defaults and writing to datastore");
+        datastore
+            .set_keys(&defaults, datastore::Committed::Live)
+            .context(error::WriteKeys)?;
     }
 
     Ok(())
