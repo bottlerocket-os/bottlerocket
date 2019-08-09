@@ -13,7 +13,7 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             --datastore-path PATH
-            --migrate-to-version x.y
+            (--migrate-to-version x.y | --migrate-to-version-from-file PATH)
             [ --no-color ]
             [ --verbose --verbose ... ]",
         program_name
@@ -70,6 +70,23 @@ impl Args {
                     trace!("Given --migrate-to-version: {}", version_str);
                     let version = Version::from_str(&version_str).unwrap_or_else(|e| {
                         usage_msg(format!("Invalid argument to --migrate-to-version: {}", e))
+                    });
+                    migrate_to_version = Some(version)
+                }
+
+                "--migrate-to-version-from-file" => {
+                    let path_str = iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --migrate-to-version-from-file")
+                    });
+                    trace!("Given --migrate-to-version-from-file: {}", path_str);
+
+                    let version_str = fs::read_to_string(&path_str).unwrap_or_else(|e| {
+                        usage_msg(format!("Could not read version from {}: {}", path_str, e))
+                    });
+                    trace!("Read version string from file: {}", version_str);
+
+                    let version = Version::from_str(&version_str).unwrap_or_else(|e| {
+                        usage_msg(format!("Invalid version in {}: {}", path_str, e))
                     });
                     migrate_to_version = Some(version)
                 }
