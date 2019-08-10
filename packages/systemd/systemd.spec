@@ -8,10 +8,6 @@ Summary: System and Service Manager
 License: LGPLv2+ and MIT and GPLv2+
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
-Patch1: networkd-fix-link_up-12505.patch
-Patch2: network-do-not-send-ipv6-token-to-kernel.patch
-Patch3: network-do-not-use-ordered_set_printf-for-DOMAINS-or.patch
-Patch1000: adjust-permissions-for-hostnamed.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -68,18 +64,18 @@ CONFIGURE_OPTS=(
  -Dutmp=false
  -Dhibernate=false
  -Dldconfig=true
- -Dresolve=true
+ -Dresolve=false
  -Defi=false
  -Dtpm=false
  -Denvironment-d=false
  -Dbinfmt=false
  -Dcoredump=false
  -Dlogind=false
- -Dhostnamed=true
+ -Dhostnamed=false
  -Dlocaled=false
  -Dmachined=false
  -Dportabled=false
- -Dnetworkd=true
+ -Dnetworkd=false
  -Dtimedated=false
  -Dtimesyncd=false
  -Dremote=false
@@ -158,16 +154,9 @@ CONFIGURE_OPTS=(
 %install
 %cross_meson_install
 
-# Remove all stock networkd configurations, as they can interfere
-# with container networking by attempting to manage veth devices.
-rm %{buildroot}%{_cross_libdir}/systemd/network/*
-
 %files
 %{_cross_bindir}/busctl
-%{_cross_bindir}/hostnamectl
 %{_cross_bindir}/journalctl
-%{_cross_bindir}/networkctl
-%{_cross_bindir}/resolvectl
 %{_cross_bindir}/systemctl
 %{_cross_bindir}/systemd-analyze
 %{_cross_bindir}/systemd-ask-password
@@ -183,7 +172,6 @@ rm %{buildroot}%{_cross_libdir}/systemd/network/*
 %{_cross_bindir}/systemd-notify
 %{_cross_bindir}/systemd-nspawn
 %{_cross_bindir}/systemd-path
-%{_cross_bindir}/systemd-resolve
 %{_cross_bindir}/systemd-run
 %{_cross_bindir}/systemd-socket-activate
 %{_cross_bindir}/systemd-stdio-bridge
@@ -201,7 +189,6 @@ rm %{buildroot}%{_cross_libdir}/systemd/network/*
 %{_cross_sbindir}/runlevel
 %{_cross_sbindir}/shutdown
 %{_cross_sbindir}/telinit
-%{_cross_sbindir}/resolvconf
 
 %{_cross_libdir}/libsystemd.so.*
 %{_cross_libdir}/libudev.so.*

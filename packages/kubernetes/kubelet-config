@@ -18,7 +18,7 @@ authorization:
 clusterDomain: cluster.local
 clusterDNS:
 - {{settings.kubernetes.cluster-dns-ip}}
-resolvConf: "/run/systemd/resolve/resolv.conf"
+resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd
 cgroupRoot: "/"
