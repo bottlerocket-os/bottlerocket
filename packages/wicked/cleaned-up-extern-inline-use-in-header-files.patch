@@ -1,0 +1,93 @@
+From 5edcd4efafb05d8cb7de3bf90a4538d10fa65703 Mon Sep 17 00:00:00 2001
+From: Marius Tomaschewski <mt@suse.de>
+Date: Fri, 21 Jun 2019 12:00:27 +0200
+Subject: [PATCH] cleaned up (extern) inline use in header files
+
+---
+ include/wicked/fsm.h | 2 +-
+ include/wicked/xml.h | 8 ++++----
+ src/xml-reader.c     | 8 ++++----
+ 3 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/include/wicked/fsm.h b/include/wicked/fsm.h
+index 28f0031f..2a24d6c6 100644
+--- a/include/wicked/fsm.h
++++ b/include/wicked/fsm.h
+@@ -330,7 +330,7 @@ extern void			ni_fsm_wait_tentative_addrs(ni_fsm_t *);
+ extern ni_ifworker_type_t	ni_ifworker_type_from_string(const char *);
+ extern const char *		ni_ifworker_type_to_string(ni_ifworker_type_t);
+ extern ni_ifworker_type_t	ni_ifworker_type_from_object_path(const char *, const char **);
+-extern inline ni_bool_t	ni_ifworker_state_in_range(const ni_uint_range_t *, const unsigned int);
++extern ni_bool_t		ni_ifworker_state_in_range(const ni_uint_range_t *, const unsigned int);
+ extern const char *		ni_ifworker_state_name(ni_fsm_state_t state);
+ extern ni_bool_t		ni_ifworker_state_from_name(const char *, unsigned int *);
+ extern ni_fsm_require_t *	ni_ifworker_reachability_check_new(xml_node_t *);
+diff --git a/include/wicked/xml.h b/include/wicked/xml.h
+index ef34f5e5..51cd5133 100644
+--- a/include/wicked/xml.h
++++ b/include/wicked/xml.h
+@@ -129,7 +129,7 @@ extern const ni_var_t *	xml_node_get_attr_var(const xml_node_t *, const char *);
+ extern ni_bool_t	xml_node_get_attr_uint(const xml_node_t *, const char *, unsigned int *);
+ extern ni_bool_t	xml_node_get_attr_ulong(const xml_node_t *, const char *, unsigned long *);
+ extern ni_bool_t	xml_node_get_attr_double(const xml_node_t *, const char *, double *);
+-extern inline xml_node_t *	xml_node_get_child(const xml_node_t *, const char *);
++extern xml_node_t *	xml_node_get_child(const xml_node_t *, const char *);
+ extern xml_node_t *	xml_node_get_next_child(const xml_node_t *, const char *, const xml_node_t *);
+ extern xml_node_t *	xml_node_get_child_with_attrs(const xml_node_t *, const char *,
+ 					const ni_var_array_t *);
+@@ -148,9 +148,9 @@ extern const char *	xml_node_get_path(ni_stringbuf_t *, const xml_node_t *, cons
+ 
+ extern void		xml_location_free(xml_location_t *);
+ extern xml_location_t *	xml_location_clone(const xml_location_t *);
+-inline xml_location_t *	xml_location_create(const char *, unsigned int);
+-inline const char *	xml_node_location_filename(const xml_node_t *);
+-inline unsigned int	xml_node_location_line(const xml_node_t *);
++extern xml_location_t *	xml_location_create(const char *, unsigned int);
++extern const char *	xml_node_location_filename(const xml_node_t *);
++extern unsigned int	xml_node_location_line(const xml_node_t *);
+ extern const char *	xml_node_location(const xml_node_t *);
+ extern void		xml_node_location_set(xml_node_t *, xml_location_t *);
+ extern void		xml_node_location_modify(xml_node_t *, const char *);
+diff --git a/src/xml-reader.c b/src/xml-reader.c
+index 489bfa67..cec61d46 100644
+--- a/src/xml-reader.c
++++ b/src/xml-reader.c
+@@ -920,7 +920,7 @@ xml_location_new(struct xml_location_shared *shared_location, unsigned int line)
+ 	return location;
+ }
+ 
+-inline xml_location_t *
++xml_location_t *
+ xml_location_create(const char *filename, unsigned int line)
+ {
+ 	xml_location_t *location;
+@@ -951,7 +951,7 @@ xml_node_location_modify(xml_node_t *node, const char *filename)
+ }
+ 
+ static void
+-__xml_node_location_relocate(xml_node_t *node, struct xml_location_shared *shared)
++xml_node_location_shared_relocate(xml_node_t *node, struct xml_location_shared *shared)
+ {
+ 	xml_node_t *child;
+ 
+@@ -964,7 +964,7 @@ __xml_node_location_relocate(xml_node_t *node, struct xml_location_shared *share
+ 	}
+ 
+ 	for (child = node->children; child; child = child->next)
+-		__xml_node_location_relocate(child, shared);
++		xml_node_location_shared_relocate(child, shared);
+ }
+ 
+ void
+@@ -974,7 +974,7 @@ xml_node_location_relocate(xml_node_t *node, const char *filename)
+ 
+ 	if (node && !ni_string_empty(filename)) {
+ 		if ((shared = xml_location_shared_new(filename))) {
+-			__xml_node_location_relocate(node, shared);
++			xml_node_location_shared_relocate(node, shared);
+ 			xml_location_shared_release(shared);
+ 		}
+ 	}
+-- 
+2.21.0
+

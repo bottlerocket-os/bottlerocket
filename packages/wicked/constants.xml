@@ -1,0 +1,601 @@
+<!-- Built-in internal interface types -->
+<define name="builtin-iftype" type="uint32" constraint="enum">
+  <unknown value="0"/>
+  <loopback value="1"/>
+  <ethernet value="2"/>
+  <bridge value="3"/>
+  <bond value="4"/>
+  <vlan value="5"/>
+  <macvlan value="6"/>
+  <macvtap value="7"/>
+  <wireless value="8"/>
+  <infiniband value="9"/>
+  <infiniband-child value="10"/>
+  <ppp value="11"/>
+  <slip value="12"/>
+  <sit value="13"/>
+  <gre value="14"/>
+  <isdn value="15"/>
+  <ipip value="16"/>
+  <tunnel6 value="17"/>
+  <tun value="20"/>
+  <tap value="21"/>
+  <dummy value="22"/>
+  <ctcm value="23"/>
+  <iucv value="24"/>
+  <team value="25"/>
+  <ovs-system value="26"/>
+  <ovs-bridge value="27"/>
+  <ovs value="28"/>
+  <vxlan value="29"/>
+</define>
+
+<!-- Built-in interface hardware types -->
+<define name="builtin-hwtype" type="uint16" constraint="enum">
+  <netrom value="0"/>
+  <ether value="1"/>
+  <eether value="2"/>
+  <ax25 value="3"/>
+  <pronet value="4"/>
+  <chaos value="5"/>
+  <ieee802 value="6"/>
+  <arcnet value="7"/>
+  <appletlk value="8"/>
+  <dlci value="15"/>
+  <atm value="19"/>
+  <metricom value="23"/>
+  <ieee1394 value="24"/>
+  <eui64 value="27"/>
+  <infiniband value="32"/>
+  <slip value="256"/>
+  <cslip value="257"/>
+  <slip6 value="258"/>
+  <cslip6 value="259"/>
+  <rsrvd value="260"/>
+  <adapt value="264"/>
+  <rose value="270"/>
+  <x25 value="271"/>
+  <hwx25 value="272"/>
+  <can value="280"/>
+  <ppp value="512"/>
+  <hdlc value="513"/>
+  <lapb value="516"/>
+  <ddcmp value="517"/>
+  <rawhdlc value="518"/>
+  <tunnel value="768"/>
+  <tunnel6 value="769"/>
+  <frad value="770"/>
+  <skip value="771"/>
+  <loopback value="772"/>
+  <localtalk value="773"/>
+  <fddi value="774"/>
+  <bif value="775"/>
+  <sit value="776"/>
+  <ipddp value="777"/>
+  <ipgre value="778"/>
+  <pimreg value="779"/>
+  <hippi value="780"/>
+  <ash value="781"/>
+  <econet value="782"/>
+  <irda value="783"/>
+  <fcpp value="784"/>
+  <fcal value="785"/>
+  <fcpl value="786"/>
+  <fcfabric value="787"/>
+  <ieee802-tr value="800"/>
+  <ieee80211 value="801"/>
+  <ieee80211-prism value="802"/>
+  <ieee80211-radiotap value="803"/>
+  <ieee802154 value="804"/>
+  <ieee802154-monitor value="805"/>
+  <phonet value="820"/>
+  <phonet-pipe value="821"/>
+  <caif value="822"/>
+  <ip6gre value="823"/>
+  <netlink value="824"/>
+  <none value="65534"/>
+</define>
+
+<!-- Built-in address families -->
+<define name="builtin-address-family" type="uint32" constraint="enum">
+  <ipv4 value="2"/>
+  <ipv6 value="10"/>
+</define>
+
+<!-- Built-in address configuration classes -->
+<define name="builtin-addrconf" type="uint32" constraint="enum">
+  <dhcp value="1"/>
+  <static value="2"/>
+  <auto value="3"/>
+  <intrinsic value="4"/>
+</define>
+
+<!-- Built-in addrconf states (used in addrconf leases) -->
+<define name="builtin-addrconf-state" type="uint32" constraint="enum">
+  <none value="0"/>
+  <requesting value="1"/>
+  <applying value="2"/>
+  <granted value="3"/>
+  <releasing value="4"/>
+  <released value="5"/>
+  <failed value="6"/>
+</define>
+
+<!-- Built-in addrconf flags (lease handling flags) -->
+<define name="builtin-addrconf-flags" type="uint32" constraint="bitmap">
+  <group bit="0"/>
+  <primary bit="1"/>
+  <fallback bit="2"/>
+  <optional bit="3"/>
+</define>
+
+<!-- Built-in update flag bit mask names -->
+<define name="builtin-addrconf-update-mask" type="uint32" constraint="bitmap">
+  <default-route bit="0"/>
+  <hostname bit="1"/>
+  <dns bit="2"/>
+  <nis bit="3"/>
+  <ntp bit="4"/>
+  <smb bit="5"/>
+  <nds bit="6"/>
+  <slp bit="7"/>
+  <log bit="8"/>
+  <mtu bit="9"/>
+  <sip bit="10"/>
+  <tz bit="12"/>
+  <boot bit="13"/>
+</define>
+
+<!-- Built-in dhcp6 run/configuration mode types -->
+<define name="builtin-dhcp6-mode" type="uint32" constraint="enum">
+  <auto value="0"/>
+  <info value="1"/>
+  <managed value="2"/>
+</define>
+
+<!-- Built-in interface status flags -->
+<define name="builtin-ifflags" type="uint32" constraint="bitmap">
+  <ready bit="0"/>
+  <device-up bit="1"/>
+  <link-up bit="2"/>
+  <powersave bit="3"/>
+  <network-up bit="4"/>
+  <point-to-point bit="5"/>
+  <arp bit="6"/>
+  <broadcast bit="7"/>
+  <multicast bit="8"/>
+</define>
+
+<!-- Built-in wireless types -->
+<define name="builtin-wireless-mode" type="uint32" constraint="enum">
+  <unknown value="0"/>
+  <auto value="1"/>
+  <ad-hoc value="2"/>
+  <infrastructure value="3"/>
+  <ap value="4"/>
+  <repeater value="5"/>
+  <secondary value="6"/>
+  <monitor value="7"/>
+</define>
+<define name="builtin-wireless-security" type="uint32" constraint="enum">
+  <default value="0"/>
+  <restricted value="1"/>
+  <open value="2"/>
+</define>
+<define name="builtin-wireless-auth" type="uint32" constraint="enum">
+  <default value="0"/>
+  <wpa1 value="1"/>
+  <wpa2 value="2"/>
+</define>
+<define name="builtin-wireless-auth-algo" type="uint32" constraint="enum">
+  <open value="1"/>
+  <shared value="2"/>
+  <leap value="3"/>
+</define>
+<define name="builtin-wireless-cipher" type="uint32" constraint="enum">
+  <none value="0"/>
+  <proprietary value="1"/>
+  <wep40 value="2"/>
+  <tkip value="3"/>
+  <wrap value="4"/>
+  <ccmp value="5"/>
+  <wep104 value="6"/>
+</define>
+<define name="builtin-key-mgmt" type="uint32" constraint="enum">
+  <none value="0"/>
+  <wpa-eap value="1"/>
+  <wpa-psk value="2"/>
+  <ieee802-1x value="3"/>
+  <proprietary value="4"/>
+</define>
+<define name="builtin-eap-method" type="uint32" constraint="enum">
+  <none value="0"/>
+  <md5 value="1"/>
+  <tls value="2"/>
+  <pap value="3"/>
+  <chap value="4"/>
+  <mschap value="5"/>
+  <mschapv2 value="6"/>
+  <peap value="7"/>
+  <ttls value="8"/>
+  <gtc value="9"/>
+  <otp value="10"/>
+  <leap value="11"/>
+  <psk value="12"/>
+  <pax value="13"/>
+  <sake value="14"/>
+  <gpsk value="15"/>
+  <wsc value="16"/>
+  <ikev2 value="17"/>
+  <tnc value="18"/>
+  <fast value="19"/>
+  <aka value="20"/>
+  <aka_prime value="21"/>
+  <sim value="22"/>
+</define>
+
+
+<!-- The same as above, except as a bitmask (to express the list of supported modes) -->
+<define name="builtin-wireless-security-mask" type="uint32" constraint="bitmap">
+  <default bit="0"/>
+  <restricted bit="1"/>
+  <open bit="2"/>
+</define>
+<define name="builtin-wireless-auth-mask" type="uint32" constraint="bitmap">
+  <default bit="0"/>
+  <wpa1 bit="1"/>
+  <wpa2 bit="2"/>
+</define>
+<define name="builtin-wireless-auth-algo-mask" type="uint32" constraint="bitmap">
+  <open bit="1"/>
+  <shared bit="2"/>
+  <leap bit="3"/>
+</define>
+<define name="builtin-wireless-cipher-mask" type="uint32" constraint="bitmap">
+  <none bit="0"/>
+  <proprietary bit="1"/>
+  <wep40 bit="2"/>
+  <tkip bit="3"/>
+  <wrap bit="4"/>
+  <ccmp bit="5"/>
+  <wep104 bit="6"/>
+</define>
+<define name="builtin-key-mgmt-mask" type="uint32" constraint="bitmap">
+  <none bit="0"/>
+  <wpa-eap bit="1"/>
+  <wpa-psk bit="2"/>
+  <ieee802-1x bit="3"/>
+  <proprietary bit="4"/>
+</define>
+<define name="builtin-eap-method-mask" type="uint32" constraint="bitmap">
+  <none bit="0"/>
+  <md5 bit="1"/>
+  <tls bit="2"/>
+  <pap bit="3"/>
+  <chap bit="4"/>
+  <mschap bit="5"/>
+  <mschapv2 bit="6"/>
+  <peap bit="7"/>
+  <ttls bit="8"/>
+  <gtc bit="9"/>
+  <otp bit="10"/>
+  <leap bit="11"/>
+  <psk bit="12"/>
+  <pax bit="13"/>
+  <sake bit="14"/>
+  <gpsk bit="15"/>
+  <wsc bit="16"/>
+  <ikev2 bit="17"/>
+  <tnc bit="18"/>
+  <fast bit="19"/>
+  <aka bit="20"/>
+  <aka_prime bit="21"/>
+  <sim bit="22"/>
+</define>
+
+
+<!-- Built-in bonding modes -->
+<define name="builtin-bonding-mode" type="uint32" constraint="enum">
+  <balance-rr value="0"/>
+  <active-backup value="1"/>
+  <balance-xor value="2"/>
+  <broadcast value="3"/>
+  <ieee802-3ad value="4"/>
+  <balance-tlb value="5"/>
+  <balance-alb value="6"/>
+</define>
+<define name="builtin-bonding-arp-validate" type="uint32" constraint="enum">
+  <description>
+    Specifies whether or not ARP probes and replies should be validated in the
+    active-backup mode.
+  </description>
+  <none value="0"/>
+  <active value="1"/>
+  <backup value="2"/>
+  <all value="3"/>
+  <filter value="4"/>
+  <filter_active value="5"/>
+  <filter_backup value="6"/>
+</define>
+<define name="builtin-bonding-mii-carrier-detect" type="uint32" constraint="enum">
+  <description>
+    Specifies whether the MII monitor will use the netif network interface carrier
+    or the deprecated MII / ETHTOOL ioctls to determine the status of the slaves.
+    Default is to query netif carrier, but when the MII monitor fails to detect
+    carrier loss (e.g. disconnected cable) of a slave or it appears that the MII
+    monitor is very slow in detecting link failures, try specifying ioctl.
+  </description>
+  <ioctl value="0"/>
+  <netif value="1"/>
+</define>
+<define name="builtin-bonding-xmit-hash-policy" type="uint32" constraint="enum">
+  <description>
+    Selects the transmit hash policy to use for slave selection in balance-xor
+    and 802.3ad modes. The policies layer2 and layer23 are ieee802-3ad compliant.
+  </description>
+  <layer2 value="0"/>
+  <layer34 value="1"/>
+  <layer23 value="2"/>
+  <encap23 value="3"/>
+  <encap34 value="4"/>
+</define>
+<define name="builtin-bonding-lacp-rate" type="uint32" constraint="enum">
+  <description>
+    Option specifying the rate in which the bond interface will ask the link
+    partner to transmit LACPDU packets in 802.3ad mode.
+  </description>
+  <slow value="0"/>
+  <fast value="1"/>
+</define>
+<define name="builtin-bonding-ad-select" type="uint32" constraint="enum">
+  <description>
+    Specifies the 802.3ad aggregation selection logic to use.
+  </description>
+  <stable value="0"/>
+  <bandwidth value="1"/>
+  <count value="2"/>
+</define>
+<define name="builtin-bonding-fail-over-mac" type="uint32" constraint="enum">
+  <description>
+    Specifies whether active-backup mode should set all slaves to the same
+    MAC address at enslavement, or perform special handling of the bond's
+    MAC address in accordance with the selected policy.
+  </description>
+  <none value="0"/>
+  <active value="1"/>
+  <follow value="2"/>
+</define>
+<define name="builtin-bonding-primary-reselect" type="uint32" constraint="enum">
+  <description>
+    Specifies the reselection policy for the primary slave. This affects how
+    the primary slave is chosen to become the active slave when failure of
+    the active slave or recovery of the primary slave occurs. This option
+    is designed to prevent flip-flopping between the primary slave and other
+    slaves.
+  </description>
+  <always value="0"/>
+  <better value="1"/>
+  <failure value="2"/>
+</define>
+<define name="builtin-bonding-slave-state" type="uint32" constraint="enum">
+  <active value="0"/>
+  <backup value="1"/>
+</define>
+<define name="builtin-bonding-slave-mii-status" type="uint32" constraint="enum">
+  <up value="0"/>
+  <fail value="1"/>
+  <down value="2"/>
+  <back value="3"/>
+</define>
+
+<!-- Built-in route type/scope/table/protocol -->
+<define name="builtin-route-type" type="uint32" constraint="enum">
+  <unicast value="1"/>
+  <local value="2"/>
+  <broadcast value="3"/>
+  <anycast value="4"/>
+  <multicast value="5"/>
+  <blackhole value="6"/>
+  <unreachable value="7"/>
+  <prohibit value="8"/>
+  <throw value="9"/>
+  <nat value="10"/>
+  <xresolve value="11"/>
+</define>
+<define name="builtin-route-scope" type="uint32" constraint="enum">
+  <universe value="0"/>
+  <site value="200"/>
+  <link value="253"/>
+  <host value="254"/>
+  <nowhere value="255"/>
+</define>
+<define name="builtin-route-protocol" type="uint32" constraint="enum">
+  <redirect value="1"/>
+  <kernel value="2"/>
+  <boot value="3"/>
+  <static value="4"/>
+  <gated value="8"/>
+  <ra value="9"/>
+  <mrt value="10"/>
+  <zebra value="11"/>
+  <bird value="12"/>
+  <dnrouted value="13"/>
+  <xorp value="14"/>
+  <ntk value="15"/>
+  <dhcp value="16"/>
+</define>
+<define name="builtin-route-flag-mask" type="uint32" constraint="bitmap">
+  <notify bit="8"/>
+  <cloned bit="9"/>
+  <equalize bit="10"/>
+  <prefix bit="11"/>
+</define>
+<define name="builtin-route-nh-flag-mask" type="uint32" constraint="bitmap">
+  <dead bit="0"/>
+  <pervasive bit="1"/>
+  <online bit="2"/>
+</define>
+<define name="builtin-route-metrics-lock-mask" type="uint32" constraint="bitmap">
+  <mtu bit="2"/>
+  <window bit="3"/>
+  <rtt bit="4"/>
+  <rttvar bit="5"/>
+  <ssthresh bit="6"/>
+  <cwnd bit="7"/>
+  <advmss bit="8"/>
+  <reordering bit="9"/>
+  <hoplimit bit="10"/>
+  <initcwnd bit="11"/>
+  <features bit="12"/>
+  <rto_min bit="13"/>
+  <initrwnd bit="14"/>
+</define>
+
+<!-- Built-in routing rule action names, ... -->
+<define name="builtin-rule-action-type" type="uint32" constraint="enum">
+  <lookup value="1"/>
+  <goto value="2"/>
+  <nop value="3"/>
+  <blackhole value="6"/>
+  <unreachable value="7"/>
+  <prohibit value="8"/>
+</define>
+
+<!-- Built-in infiniband ipoib mode/multicast types -->
+<define name="builtin-infiniband-mode" type="uint32" constraint="enum">
+  <datagram value="0"/>
+  <connected value="1"/>
+</define>
+<define name="builtin-infiniband-umcast" type="uint32" constraint="enum">
+  <disallowed value="0"/>
+  <allowed value="1"/>
+</define>
+
+<!-- Built-in vlan protocol names -->
+<define name="builtin-vlan-protocol" type="uint16" constraint="enum">
+  <ieee802-1Q value="0"/>
+  <ieee802-1ad value="1"/>
+</define>
+
+<!-- Built-in lldp types and capabilities -->
+<define name="builtin-lldp-type" type="uint32" constraint="enum">
+  <nearest-bridge value="0"/>
+  <nearest-non-tmpr-bridge value="1"/>
+  <nearest-customer-bridge value="2"/>
+</define>
+<define name="builtin-lldp-system-capabilities" type="uint32" constraint="bitmap">
+  <nearest-bridge bit="0"/>
+  <nearest-non-tmpr-bridge bit="1"/>
+  <nearest-customer-bridge bit="2"/>
+  <bridge bit="3"/>
+  <wlan-ap bit="4"/>
+  <router bit="5"/>
+  <telephone bit="6"/>
+  <docsis-cable-device bit="7"/>
+  <station-only bit="8"/>
+  <vlan-bridge-c-vlan bit="9"/>
+  <vlan-bridge-s-vlan bit="10"/>
+  <two-port-repeater bit="11"/>
+</define>
+
+<!-- Built-in macvlan mode and flag bit names -->
+<define name="builtin-macvlan-mode" type="uint32" constraint="enum">
+  <private value="1"/>
+  <vepa value="2"/>
+  <bridge value="4"/>
+  <pass-through value="8"/>
+  <source value="16"/>
+</define>
+<define name="builtin-macvlan-flag-bits" type="uint16" constraint="bitmap">
+  <nopromisc bit="0"/>
+</define>
+
+<!-- Built-in team constants -->
+<define name="builtin-team-tx-hash-mask" type="uint32" constraint="bitmap">
+  <eth bit="1"/>
+  <vlan bit="2"/>
+  <ipv4 bit="3"/>
+  <ipv6 bit="4"/>
+  <ip bit="5"/>
+  <l3 bit="6"/>
+  <tcp bit="7"/>
+  <udp bit="8"/>
+  <sctp bit="9"/>
+  <l4 bit="10"/>
+</define>
+<define name="builtin-team-tx-balancer-type" type="uint32" constraint="enum">
+  <basic value="0"/>
+</define>
+<define name="builtin-team-ab-hwaddr-policy" type="uint32" constraint="enum">
+  <same_all value="0"/>
+  <by_active value="1"/>
+  <only_active value="2"/>
+</define>
+<define name="builtin-team-lacp-select-policy" type="uint32" constraint="enum">
+  <lacp_prio value="0"/>
+  <lacp_prio_stable value="1"/>
+  <bandwidth value="2"/>
+  <count value="3"/>
+  <port_options value="4"/>
+</define>
+
+<!-- Build-in gre constants -->
+<define name="builtin-gre-flag-mask" type="uint32" constraint="bitmap">
+  <iseq bit="2"/>
+  <oseq bit="3"/>
+  <icsum bit="4"/>
+  <ocsum bit="5"/>
+</define>
+<define name="builtin-gre-encap-type" type="uint16" constraint="enum">
+  <fou value="1"/>
+  <gue value="2"/>
+</define>
+<define name="builtin-gre-encap-flag-mask" type="uint16" constraint="bitmap">
+  <csum bit="0"/>
+  <csum6 bit="1"/>
+  <remcsum bit="2"/>
+</define>
+<define name="builtin-ethtool-driver-supports-mask" type="uint32" constraint="bitmap">
+  <priv-flags bit="0"/>
+  <statistics bit="1"/>
+  <selftest bit="2"/>
+  <eeprom-access bit="3"/>
+  <register-dump bit="4"/>
+</define>
+<define name="builtin-ethtool-link-duplex-type" type="uint32" constraint="enum">
+  <half value="0"/>
+  <full value="1"/>
+</define>
+<define name="builtin-ethtool-link-port-type" type="uint32" constraint="enum">
+  <TP value="0"/>
+  <AUI value="1"/>
+  <BNC value="2"/>
+  <MII value="3"/>
+  <Fibre value="4"/>
+  <DA value="5"/>
+  <None value="254"/>
+  <Other value="255"/>
+</define>
+<define name="builtin-ethtool-link-mdix-type" type="uint32" constraint="enum">
+  <mdi value="1"/>
+  <mdi-x value="2"/>
+  <auto-mdi value="3"/>
+  <auto-mdi-x value="4"/>
+</define>
+<define name="builtin-ethtool-link-mdio-type" type="uint32" constraint="bitmask">
+  <C22 value="1"/>
+  <C45 value="2"/>
+</define>
+<define name="builtin-ethtool-link-xcvr-type" type="uint32" constraint="enum">
+  <internal value="0"/>
+  <external value="1"/>
+</define>
+<define name="builtin-ethtool-wol-flag-mask" type="uint32" constraint="bitmap">
+  <phy  bit="0"/>
+  <unicast  bit="1"/>
+  <multicast  bit="2"/>
+  <broadcast  bit="3"/>
+  <arp  bit="4"/>
+  <magic  bit="5"/>
+  <secure-on  bit="6"/>
+</define>

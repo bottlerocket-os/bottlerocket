@@ -1,0 +1,14 @@
+<!--
+     Client-specific (wicked binary) configuration file
+  -->
+<config>
+  <include name="common.xml"/>
+
+  <netif-firmware-discovery>
+    <script name="ibft" command="/usr/bin/true" />
+  </netif-firmware-discovery>
+
+  <sources>
+    <ifconfig location="wicked:" />
+  </sources>
+</config>

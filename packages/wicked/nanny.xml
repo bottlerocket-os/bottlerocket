@@ -1,0 +1,6 @@
+<!--
+     Nanny-specific (wickedd-nanny binary) configuration
+  -->
+<config>
+  <include name="common.xml"/>
+</config>
