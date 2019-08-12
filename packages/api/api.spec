@@ -1,5 +1,10 @@
 %global workspace_name api
 %global systemd_systemdir %{_cross_libdir}/systemd/system
+%global migrationdir %{_cross_factorydir}%{_cross_sharedstatedir}/thar/datastore/migrations
+
+# List migrations to be installed here, eg:
+#%%global migration_versions v1.0 v1.1 v1.2
+%global migration_versions %{nil}
 
 Name: %{_cross_os}%{workspace_name}
 Version: 0.0
@@ -11,6 +16,7 @@ Source1: apiserver.service
 Source2: moondog.service
 Source3: sundog.service
 Source4: storewolf.service
+Source5: migration-tmpfiles.conf
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -55,6 +61,12 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}storewolf
 %{summary}.
 
+%package -n %{_cross_os}migration
+Summary: Tools to migrate version formats
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}migration
+%{summary}.
+
 %prep
 %setup -qn %{workspace_name}
 %cargo_prep
@@ -78,6 +90,24 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 %cargo_install -p pluto
 %cargo_install -p thar-be-settings
 %cargo_install -p storewolf
+%cargo_install -p migration/migrator
+
+install -d %{buildroot}%{migrationdir}
+echo %{_cross_bindir}/migrator > migration-binaries
+
+for version in %migration_versions ; do
+  for path in migration/migrations/${version}/* ; do
+    [ -e "${path}" ] || continue
+    name="${path##*/}"
+    %cargo_install -p migration/migrations/${version}/${name} -d %{buildroot}%{migrationdir}
+    mv %{buildroot}%{migrationdir}/bin/${name} %{buildroot}%{migrationdir}/migrate_${version}_${name}
+    echo %{migrationdir}/migrate_${version}_${name} >> migration-binaries
+  done
+done
+%{__rm} -rf %{buildroot}%{migrationdir}/bin
+
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
@@ -100,5 +130,9 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 %files -n %{_cross_os}storewolf
 %{_cross_bindir}/storewolf
 %{systemd_systemdir}/storewolf.service
+
+%files -n %{_cross_os}migration -f migration-binaries
+%dir %{migrationdir}
+%{_cross_tmpfilesdir}/migration.conf
 
 %changelog
