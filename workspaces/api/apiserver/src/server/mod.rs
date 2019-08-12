@@ -110,6 +110,11 @@ fn commit_settings(data: web::Data<SharedDataStore>) -> Result<HttpResponse> {
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
 
     let changes = controller::commit(&mut *datastore)?;
+
+    if changes.is_empty() {
+        return error::CommitWithNoPending.fail();
+    }
+
     controller::apply_changes(&changes)?;
 
     Ok(HttpResponse::NoContent().json(()))
@@ -190,16 +195,19 @@ impl ResponseError for error::Error {
     fn error_response(&self) -> HttpResponse {
         use error::Error::*;
         match self {
-            // 400
+            // 400 Bad Request
             MissingInput { .. } => HttpResponse::BadRequest(),
             EmptyInput { .. } => HttpResponse::BadRequest(),
             NewKey { .. } => HttpResponse::BadRequest(),
 
-            // 404
+            // 404 Not Found
             MissingData { .. } => HttpResponse::NotFound(),
             ListKeys { .. } => HttpResponse::NotFound(),
 
-            // 500
+            // 422 Unprocessable Entity
+            CommitWithNoPending => HttpResponse::UnprocessableEntity(),
+
+            // 500 Internal Server Error
             DataStoreLock => HttpResponse::InternalServerError(),
             ResponseSerialization { .. } => HttpResponse::InternalServerError(),
             BindSocket { .. } => HttpResponse::InternalServerError(),
