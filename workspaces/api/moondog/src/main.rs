@@ -27,6 +27,11 @@ const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
 const API_COMMIT_URI: &str = "/settings/commit";
 
+// We only want to run moondog once, at first boot.  Our systemd unit file has a
+// ConditionPathExists that will prevent it from running again if this file exists.
+// We create it after running successfully.
+const MARKER_FILE: &str = "/var/lib/thar/moondog.ran";
+
 type Result<T> = std::result::Result<T, MoondogError>;
 
 mod error {
@@ -348,6 +353,13 @@ fn main() -> Result<()> {
             response_body,
         }
     );
+
+    fs::write(MARKER_FILE, "").unwrap_or_else(|e| {
+        warn!(
+            "Failed to create marker file {}, may unexpectedly run again: {}",
+            MARKER_FILE, e
+        )
+    });
 
     Ok(())
 }
