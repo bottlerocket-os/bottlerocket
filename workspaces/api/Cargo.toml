@@ -4,6 +4,7 @@ members = [
     "apiclient",
     "data_store_version",
     "moondog",
+    "netdog",
     "sundog",
     "pluto",
     "storewolf",
