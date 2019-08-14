@@ -12,19 +12,20 @@ use crate::{error, Result};
 use apiserver::model;
 
 /// Query the API for ConfigurationFile data
-pub fn get_affected_config_files<P, BH>(
+#[allow(clippy::implicit_hasher)]
+pub fn get_affected_config_files<P>(
     socket_path: P,
-    affected_files: HashSet<String, BH>,
+    files_limit: Option<HashSet<String>>,
 ) -> Result<model::ConfigurationFiles>
 where
     P: AsRef<Path>,
-    BH: std::hash::BuildHasher,
 {
-    let query = join(&affected_files, ",");
+    // Only want a query parameter if we had specific affected files, otherwise we want all
+    let query = files_limit.map(|files| ("names", join(&files, ",")));
 
     debug!("Querying API for configuration file metadata");
     let config_files: model::ConfigurationFiles =
-        client::get_json(socket_path, "/configuration-files", Some(("names", query)))?;
+        client::get_json(socket_path, "/configuration-files", query)?;
 
     Ok(config_files)
 }

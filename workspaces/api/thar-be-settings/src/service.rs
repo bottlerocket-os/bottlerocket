@@ -12,15 +12,15 @@ use apiserver::model;
 
 /// Wrapper for the multiple functions needed to go from
 /// a list of changed settings to a Services map
-pub fn get_affected_services<P, BH>(
+#[allow(clippy::implicit_hasher)]
+pub fn get_affected_services<P>(
     socket_path: P,
-    changed_settings: HashSet<String, BH>,
+    settings_limit: Option<HashSet<String>>,
 ) -> Result<model::Services>
 where
     P: AsRef<Path>,
-    BH: std::hash::BuildHasher,
 {
-    let setting_to_service_map = get_affected_service_map(socket_path.as_ref(), changed_settings)?;
+    let setting_to_service_map = get_affected_service_map(socket_path.as_ref(), settings_limit)?;
     if setting_to_service_map.is_empty() {
         return Ok(HashMap::new());
     }
@@ -32,23 +32,25 @@ where
     Ok(services)
 }
 
-/// Gather the services affected for each setting into a map
-fn get_affected_service_map<P, BH>(
+/// Gather the services affected for each setting into a map, or if `settings_limit` is None, all
+/// services
+#[allow(clippy::implicit_hasher)]
+fn get_affected_service_map<P>(
     socket_path: P,
-    changed_settings: HashSet<String, BH>,
+    settings_limit: Option<HashSet<String>>,
 ) -> Result<HashMap<String, Vec<String>>>
 where
     P: AsRef<Path>,
-    BH: std::hash::BuildHasher,
 {
-    let query = join(&changed_settings, ",");
+    // Only want a query parameter if we had specific affected services, otherwise we want all
+    let query = settings_limit.map(|settings| ("keys", join(&settings, ",")));
 
     // Query the API for affected services
     debug!("Querying API for affected services names");
     let uri = "/metadata/affected-services";
 
     let setting_to_services_map: HashMap<String, Vec<String>> =
-        client::get_json(socket_path, uri, Some(("keys", query)))?;
+        client::get_json(socket_path, uri, query)?;
     trace!("API response: {:?}", &setting_to_services_map);
 
     Ok(setting_to_services_map)
@@ -90,9 +92,9 @@ where
 }
 
 /// Call the `restart()` method on each Service in a Services object
-pub fn restart_all_services(services: model::Services) -> Result<()> {
+pub fn restart_services(services: model::Services) -> Result<()> {
     for (name, service) in services {
-        debug!("Restarting {}", name);
+        debug!("Checking for restart-commands for {}", name);
         service.restart()?;
     }
     Ok(())
