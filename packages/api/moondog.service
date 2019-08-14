@@ -4,6 +4,9 @@ After=network-online.target
 After=apiserver.service
 Requires=network-online.target
 Requires=apiserver.service
+# We only want to run once, at first boot.  This file is created by moondog
+# after a successful run.
+ConditionPathExists=!/var/lib/thar/moondog.ran
 
 [Service]
 Type=oneshot
