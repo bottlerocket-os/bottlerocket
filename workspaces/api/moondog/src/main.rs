@@ -13,24 +13,24 @@ User data can also be retrieved from a file for testing.
 #[macro_use]
 extern crate log;
 
+use http::StatusCode;
+use serde::Serialize;
+use snafu::{ensure, OptionExt, ResultExt};
 use std::path::Path;
 use std::{env, fs, process};
-
-use reqwest::StatusCode;
-use serde::Serialize;
-use snafu::ResultExt;
 
 // TODO
 // Tests!
 
 // FIXME Get these from configuration in the future
-const API_SETTINGS_URI: &str = "http://localhost:4242/settings";
-const API_COMMIT_URI: &str = "http://localhost:4242/settings/commit";
+const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
+const API_SETTINGS_URI: &str = "/settings";
+const API_COMMIT_URI: &str = "/settings/commit";
 
 type Result<T> = std::result::Result<T, MoondogError>;
 
 mod error {
-    use reqwest::StatusCode;
+    use http::StatusCode;
     use snafu::Snafu;
     use std::io;
     use std::path::PathBuf;
@@ -49,18 +49,20 @@ mod error {
             source: reqwest::Error,
         },
 
-        #[snafu(display("Error sending {} to '{}': {}", method, uri, source))]
+        #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {
-            method: &'static str,
+            method: String,
             uri: String,
-            source: reqwest::Error,
+            source: apiclient::Error,
         },
 
-        #[snafu(display("Error updating settings through '{}': {}", uri, source))]
-        UpdatingAPISettings { uri: String, source: reqwest::Error },
-
-        #[snafu(display("Error committing changes to '{}': {}", uri, source))]
-        CommittingAPISettings { uri: String, source: reqwest::Error },
+        #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
+        APIResponse {
+            method: String,
+            uri: String,
+            code: StatusCode,
+            response_body: String,
+        },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
@@ -68,8 +70,14 @@ mod error {
         #[snafu(display("Error parsing TOML user data: {}", source))]
         TOMLUserDataParse { source: toml::de::Error },
 
+        #[snafu(display("User data is not a TOML table"))]
+        UserDataNotTomlTable,
+
+        #[snafu(display("TOML user data did not contain 'settings' section"))]
+        UserDataMissingSettings,
+
         #[snafu(display("Error serializing TOML to JSON: {}", source))]
-        TOMLtoJSON { source: serde_json::error::Error },
+        SettingsToJSON { source: serde_json::error::Error },
 
         #[snafu(display("Unable to read user data input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
@@ -192,21 +200,21 @@ impl RawUserData {
 
     // This function should account for multipart data in the future.  The question is what it will
     // return if we plan on supporting more than just TOML.  A Vec of members of an Enum?
-    /// Parses raw user data as TOML.  This is a syntactic check only - it doesn't check if the
-    /// values are valid to send to the API.
-    fn decode(&self) -> Result<impl Serialize> {
-        debug!("Parsing TOML from raw user data");
-        let user_data: toml::Value =
+    /// Returns the "settings" table from the input TOML, if any.
+    fn settings(&self) -> Result<impl Serialize> {
+        let mut val: toml::Value =
             toml::from_str(&self.raw_data).context(error::TOMLUserDataParse)?;
-        trace!("TOML user data: {:?}", &user_data);
-
-        Ok(user_data)
+        let table = val.as_table_mut().context(error::UserDataNotTomlTable)?;
+        table
+            .remove("settings")
+            .context(error::UserDataMissingSettings)
     }
 }
 
 /// Store the args we receive on the command line
 struct Args {
     verbosity: usize,
+    socket_path: String,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -214,25 +222,45 @@ fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
         r"Usage: {}
+            [ --socket-path PATH ]
             [ --verbose --verbose ... ]
-        ",
-        program_name
+
+    Socket path defaults to {}",
+        program_name, DEFAULT_API_SOCKET,
     );
     process::exit(2);
 }
 
+/// Prints a more specific message before exiting through usage().
+fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
+    eprintln!("{}\n", msg.as_ref());
+    usage();
+}
+
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut socket_path = None;
     let mut verbosity = 2;
 
-    for arg in args.skip(1) {
+    let mut iter = args.skip(1);
+    while let Some(arg) = iter.next() {
         match arg.as_ref() {
+            "--socket-path" => {
+                socket_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
+                )
+            }
+
             "-v" | "--verbose" => verbosity += 1,
             _ => usage(),
         }
     }
 
-    Args { verbosity }
+    Args {
+        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        verbosity,
+    }
 }
 
 fn main() -> Result<()> {
@@ -274,43 +302,52 @@ fn main() -> Result<()> {
 
     // Decode the user data into a generic toml Value
     info!("Parsing TOML user data");
-    let user_data = raw_user_data.decode()?;
+    let user_settings = raw_user_data.settings()?;
 
     // Serialize the TOML Value into JSON
-    info!("Serializing user data to JSON for API request");
-    let request_body = serde_json::to_string(&user_data).context(error::TOMLtoJSON)?;
+    info!("Serializing settings to JSON for API request");
+    let request_body = serde_json::to_string(&user_settings).context(error::SettingsToJSON)?;
     trace!("API request body: {:?}", request_body);
 
     // Create an HTTP client and PATCH the JSON
     info!("Sending user data to the API");
-    let client = reqwest::Client::new();
-    client
-        .patch(API_SETTINGS_URI)
-        .body(request_body)
-        .send()
-        .context(error::APIRequest {
+    let (code, response_body) = apiclient::raw_request(
+        &args.socket_path,
+        API_SETTINGS_URI,
+        "PATCH",
+        Some(request_body),
+    )
+    .context(error::APIRequest {
+        method: "PATCH",
+        uri: API_SETTINGS_URI,
+    })?;
+    ensure!(
+        code.is_success(),
+        error::APIResponse {
             method: "PATCH",
             uri: API_SETTINGS_URI,
-        })?
-        .error_for_status()
-        .context(error::UpdatingAPISettings {
-            uri: API_SETTINGS_URI,
-        })?;
+            code,
+            response_body,
+        }
+    );
 
     // POST to /commit to actually make the changes
-    info!("POST-ing to /commit to finalize the changes");
-    client
-        .post(API_COMMIT_URI)
-        .body("")
-        .send()
-        .context(error::APIRequest {
+    let (code, response_body) =
+        apiclient::raw_request(&args.socket_path, API_COMMIT_URI, "POST", None).context(
+            error::APIRequest {
+                method: "POST",
+                uri: API_COMMIT_URI,
+            },
+        )?;
+    ensure!(
+        code.is_success(),
+        error::APIResponse {
             method: "POST",
             uri: API_COMMIT_URI,
-        })?
-        .error_for_status()
-        .context(error::CommittingAPISettings {
-            uri: API_COMMIT_URI,
-        })?;
+            code,
+            response_body,
+        }
+    );
 
     Ok(())
 }

@@ -2,28 +2,29 @@ use snafu::ResultExt;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use itertools::join;
 
-use crate::client::ReqwestClientExt;
-use crate::{error, Result, API_CONFIGURATION_URI};
+use crate::client;
+use crate::{error, Result};
 
 use apiserver::model;
 
 /// Query the API for ConfigurationFile data
-pub fn get_affected_config_files(
-    client: &reqwest::Client,
-    affected_files: HashSet<String>,
-) -> Result<model::ConfigurationFiles> {
+pub fn get_affected_config_files<P, BH>(
+    socket_path: P,
+    affected_files: HashSet<String, BH>,
+) -> Result<model::ConfigurationFiles>
+where
+    P: AsRef<Path>,
+    BH: std::hash::BuildHasher,
+{
     let query = join(&affected_files, ",");
 
     debug!("Querying API for configuration file metadata");
-    let config_files: model::ConfigurationFiles = client.get_json(
-        API_CONFIGURATION_URI.to_string(),
-        "names".to_string(),
-        query,
-    )?;
+    let config_files: model::ConfigurationFiles =
+        client::get_json(socket_path, "/configuration-files", Some(("names", query)))?;
 
     Ok(config_files)
 }

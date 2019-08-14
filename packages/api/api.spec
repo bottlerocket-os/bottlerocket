@@ -31,6 +31,11 @@ Summary: Thar API server
 %description -n %{_cross_os}apiserver
 %{summary}.
 
+%package -n %{_cross_os}apiclient
+Summary: Thar API client
+%description -n %{_cross_os}apiclient
+%{summary}.
+
 %package -n %{_cross_os}moondog
 Summary: Thar userdata configuration system
 Requires: %{_cross_os}apiserver = %{version}-%{release}
@@ -85,6 +90,7 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 
 %cargo_install -p apiserver
+%cargo_install -p apiclient
 %cargo_install -p moondog
 %cargo_install -p sundog
 %cargo_install -p pluto
@@ -112,6 +118,9 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{systemd_systemdir}/apiserver.service
+
+%files -n %{_cross_os}apiclient
+%{_cross_bindir}/apiclient
 
 %files -n %{_cross_os}moondog
 %{_cross_bindir}/moondog

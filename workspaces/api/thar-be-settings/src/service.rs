@@ -1,45 +1,54 @@
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::path::Path;
 use std::process;
 
 use itertools::join;
 
-use crate::client::ReqwestClientExt;
-use crate::{error, Result, API_METADATA_URI, API_SERVICES_URI};
+use crate::client;
+use crate::{error, Result};
 use apiserver::model;
 
 /// Wrapper for the multiple functions needed to go from
 /// a list of changed settings to a Services map
-pub fn get_affected_services(
-    client: &reqwest::Client,
-    changed_settings: HashSet<String>,
-) -> Result<model::Services> {
-    let setting_to_service_map = get_affected_service_map(client, changed_settings)?;
+pub fn get_affected_services<P, BH>(
+    socket_path: P,
+    changed_settings: HashSet<String, BH>,
+) -> Result<model::Services>
+where
+    P: AsRef<Path>,
+    BH: std::hash::BuildHasher,
+{
+    let setting_to_service_map = get_affected_service_map(socket_path.as_ref(), changed_settings)?;
     if setting_to_service_map.is_empty() {
         return Ok(HashMap::new());
     }
 
     let service_names = get_affected_service_names(setting_to_service_map);
 
-    let services = get_service_metadata(client, service_names)?;
+    let services = get_service_metadata(socket_path.as_ref(), service_names)?;
 
     Ok(services)
 }
 
 /// Gather the services affected for each setting into a map
-fn get_affected_service_map(
-    client: &reqwest::Client,
-    changed_settings: HashSet<String>,
-) -> Result<HashMap<String, Vec<String>>> {
+fn get_affected_service_map<P, BH>(
+    socket_path: P,
+    changed_settings: HashSet<String, BH>,
+) -> Result<HashMap<String, Vec<String>>>
+where
+    P: AsRef<Path>,
+    BH: std::hash::BuildHasher,
+{
     let query = join(&changed_settings, ",");
 
     // Query the API for affected services
     debug!("Querying API for affected services names");
-    let uri = API_METADATA_URI.to_string() + "/affected-services";
+    let uri = "/metadata/affected-services";
 
     let setting_to_services_map: HashMap<String, Vec<String>> =
-        client.get_json(uri, "keys".to_string(), query)?;
+        client::get_json(socket_path, uri, Some(("keys", query)))?;
     trace!("API response: {:?}", &setting_to_services_map);
 
     Ok(setting_to_services_map)
@@ -65,16 +74,16 @@ fn get_affected_service_names(
 }
 
 /// Gather the metadata for each Service affected
-fn get_service_metadata(
-    client: &reqwest::Client,
-    services: HashSet<String>,
-) -> Result<model::Services> {
+fn get_service_metadata<P>(socket_path: P, services: HashSet<String>) -> Result<model::Services>
+where
+    P: AsRef<Path>,
+{
     let query = join(&services, ",");
 
     // Query the API for affected service metadata
     debug!("Querying API for affected service metadata");
     let service_map: model::Services =
-        client.get_json(API_SERVICES_URI.to_string(), "names".to_string(), query)?;
+        client::get_json(socket_path, "/services", Some(("names", query)))?;
     trace!("Service metadata: {:?}", &service_map);
 
     Ok(service_map)
