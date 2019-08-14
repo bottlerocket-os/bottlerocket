@@ -3,19 +3,18 @@ use ring::io::der;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use snafu::ResultExt;
 use std::cmp::Ordering;
-use std::fmt::{self, Display};
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::Deref;
 
-/// Represents bytes decoded from a string.
+/// A wrapper around a `Vec<u8>` that contains bytes decoded from an original type `T` (e.g.
+/// hex-encoded bytes or a PEM-encoded public key). The original encoded `T` is also stored so it
+/// can be used during serialization to verify signatures.
 ///
-/// The type parameter `T` represents what kind of data the original string stores (e.g.
-/// hex-encoded bytes, or a PEM-encoded key).
-///
-/// The original string is stored so that it can be re-`Serialize`d for the purposes of verifying
-/// signatures.
+/// Other than `Deserialize` and `Serialize`, traits implemented for `Decoded` are equivalent to
+/// those for `Vec<u8>`.
 #[derive(Debug, Clone)]
-pub(crate) struct Decoded<T: Decode> {
+pub struct Decoded<T: Decode> {
     bytes: Vec<u8>,
     original: String,
     spooky: PhantomData<T>,
@@ -23,18 +22,22 @@ pub(crate) struct Decoded<T: Decode> {
 
 impl<T: Decode> Decoded<T> {
     /// Consume this object and return its decoded bytes.
-    pub(crate) fn into_vec(self) -> Vec<u8> {
+    ///
+    /// You can copy the data with [`to_vec`].
+    ///
+    /// [`to_vec`]: https://doc.rust-lang.org/std/primitive.slice.html#method.to_vec
+    pub fn into_vec(self) -> Vec<u8> {
         self.bytes
     }
 }
 
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 /// A trait that represents how data can be converted from a string to bytes.
 ///
 /// Generally structs that implement `Decode` will be unit-like structs that just implement the one
 /// required method.
-pub(crate) trait Decode {
+pub trait Decode {
     /// Convert a string to bytes.
     ///
     /// The "error" string returned from this method will immediately be wrapped into a
@@ -44,7 +47,7 @@ pub(crate) trait Decode {
 
 /// [`Decode`] implementation for hex-encoded strings.
 #[derive(Debug, Clone)]
-pub(crate) struct Hex;
+pub struct Hex;
 
 impl Decode for Hex {
     fn decode(s: &str) -> Result<Vec<u8>, Error> {
@@ -54,7 +57,7 @@ impl Decode for Hex {
 
 /// [`Decode`] implementation for PEM-encoded keys.
 #[derive(Debug, Clone)]
-pub(crate) struct Pem;
+pub struct Pem;
 
 impl Decode for Pem {
     fn decode(s: &str) -> Result<Vec<u8>, Error> {
@@ -66,7 +69,7 @@ impl Decode for Pem {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct RsaPem;
+pub struct RsaPem;
 
 impl Decode for RsaPem {
     fn decode(s: &str) -> Result<Vec<u8>, Error> {
@@ -105,7 +108,7 @@ impl Decode for RsaPem {
     }
 }
 
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 impl<'de, T: Decode> Deserialize<'de> for Decoded<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -130,7 +133,7 @@ impl<T: Decode> Serialize for Decoded<T> {
     }
 }
 
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 impl<T: Decode> AsRef<[u8]> for Decoded<T> {
     fn as_ref(&self) -> &[u8] {
@@ -146,24 +149,21 @@ impl<T: Decode> Deref for Decoded<T> {
     }
 }
 
-impl<T: Decode> Display for Decoded<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Display::fmt(&self.original, f)
-    }
-}
-
 impl<T: Decode> PartialEq<[u8]> for Decoded<T> {
     fn eq(&self, other: &[u8]) -> bool {
         self.bytes.eq(&other)
     }
 }
 
-// The Eq/Ord implementations compare `original` first, then `bytes`. This is because, primarily,
-// we want to sort on the string that is encoded in the file to correctly implement Canonical JSON.
+impl<T: Decode> PartialEq<Vec<u8>> for Decoded<T> {
+    fn eq(&self, other: &Vec<u8>) -> bool {
+        self.bytes.eq(other)
+    }
+}
 
 impl<T: Decode> PartialEq for Decoded<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.original.eq(&other.original) && self.bytes.eq(&other.bytes)
+        self.bytes.eq(&other.bytes)
     }
 }
 
@@ -171,14 +171,18 @@ impl<T: Decode> Eq for Decoded<T> {}
 
 impl<T: Decode> PartialOrd for Decoded<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(&other))
+        self.bytes.partial_cmp(&other.bytes)
     }
 }
 
 impl<T: Decode> Ord for Decoded<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.original
-            .cmp(&other.original)
-            .then(self.bytes.cmp(&other.bytes))
+        self.bytes.cmp(&other.bytes)
+    }
+}
+
+impl<T: Decode> Hash for Decoded<T> {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.bytes.hash(hasher)
     }
 }
