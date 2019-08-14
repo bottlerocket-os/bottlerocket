@@ -353,6 +353,11 @@ impl DataStore for FilesystemDataStore {
         // Get data for changed keys
         let pending_data = self.get_prefix("settings.", Committed::Pending)?;
 
+        // Nothing to do if no keys are present in pending
+        if pending_data.is_empty() {
+            return Ok(Default::default())
+        }
+
         // Turn String keys of pending data into Key keys, for return
         let try_pending_keys: Result<HashSet<Key>> = pending_data
             .keys()

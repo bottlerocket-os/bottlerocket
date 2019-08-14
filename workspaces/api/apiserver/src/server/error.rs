@@ -28,6 +28,9 @@ pub enum Error {
     #[snafu(display("Unable to start server: {}", source))]
     ServerStart { source: io::Error },
 
+    #[snafu(display("Tried to commit with no pending changes"))]
+    CommitWithNoPending,
+
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     // Controller errors
