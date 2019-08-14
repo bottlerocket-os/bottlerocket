@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync;
 
-use crate::datastore::{Committed, FilesystemDataStore, Value};
+use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
 use crate::model::{ConfigurationFiles, Services, Settings};
 use error::Result;
 
@@ -39,7 +39,9 @@ where
                     .route("", web::get().to(get_settings))
                     .route("", web::patch().to(patch_settings))
                     .route("/pending", web::get().to(get_pending_settings))
-                    .route("/commit", web::post().to(commit_settings)),
+                    .route("/commit", web::post().to(commit_settings))
+                    .route("/apply", web::post().to(apply_settings))
+                    .route("/commit_and_apply", web::post().to(commit_and_apply_settings))
             )
             .service(
                 web::scope("/metadata")
@@ -106,7 +108,7 @@ fn get_pending_settings(data: web::Data<SharedDataStore>) -> Result<Settings> {
 }
 
 /// Save settings changes to the main data store and kick off appliers.
-fn commit_settings(data: web::Data<SharedDataStore>) -> Result<HttpResponse> {
+fn commit_settings(data: web::Data<SharedDataStore>) -> Result<ChangedKeysResponse> {
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
 
     let changes = controller::commit(&mut *datastore)?;
@@ -115,9 +117,34 @@ fn commit_settings(data: web::Data<SharedDataStore>) -> Result<HttpResponse> {
         return error::CommitWithNoPending.fail();
     }
 
-    controller::apply_changes(&changes)?;
+    Ok(ChangedKeysResponse(changes))
+}
+
+/// Save settings changes to the main data store and kick off appliers.
+fn apply_settings(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
+    if let Some(keys_str) = query.get("keys") {
+        let keys = comma_separated("keys", keys_str)?;
+        controller::apply_changes(Some(&keys))?;
+    } else {
+        controller::apply_changes(None as Option<&HashSet<&str>>)?;
+    }
 
     Ok(HttpResponse::NoContent().json(()))
+}
+
+/// Save settings changes to the main data store and kick off appliers.
+fn commit_and_apply_settings(data: web::Data<SharedDataStore>) -> Result<ChangedKeysResponse> {
+    let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
+
+    let changes = controller::commit(&mut *datastore)?;
+
+    if changes.is_empty() {
+        return error::CommitWithNoPending.fail();
+    }
+
+    controller::apply_changes(Some(&changes))?;
+
+    Ok(ChangedKeysResponse(changes))
 }
 
 /// Get the affected services for a list of data keys
@@ -266,3 +293,6 @@ impl_responder_for!(ServicesResponse, self, self.0);
 /// Result<ConfigurationFiles>)
 struct ConfigurationFilesResponse(ConfigurationFiles);
 impl_responder_for!(ConfigurationFilesResponse, self, self.0);
+
+struct ChangedKeysResponse(HashSet<Key>);
+impl_responder_for!(ChangedKeysResponse, self, self.0);
