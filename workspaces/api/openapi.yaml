@@ -9,11 +9,8 @@ info:
     url: ""
 
 servers:
-- url: http://localhost:{port}
+- url: file:///var/lib/thar/api.sock
   description: The production API server
-  variables:
-    port:
-      default: '4242'
 
 paths:
   /settings:
