@@ -18,6 +18,7 @@ Source3: sundog.service
 Source4: storewolf.service
 Source5: settings-committer.service
 Source6: migration-tmpfiles.conf
+Source8: data-store-version
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -95,6 +96,9 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE5}
 
+install -d %{buildroot}/%{_cross_datadir}/thar
+install -m 0644 -t %{buildroot}/%{_cross_datadir}/thar %{SOURCE8}
+
 %cargo_install -p apiserver
 %cargo_install -p apiclient
 %cargo_install -p moondog
@@ -125,6 +129,7 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{systemd_systemdir}/apiserver.service
+%{_cross_datadir}/thar/data-store-version
 
 %files -n %{_cross_os}apiclient
 %{_cross_bindir}/apiclient
