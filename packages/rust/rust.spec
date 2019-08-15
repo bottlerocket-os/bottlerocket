@@ -15,8 +15,8 @@ Summary: The Rust Progamming Language
 License: ASL 2.0 or MIT
 URL: https://www.rust-lang.org
 
-Source0: https://static.rust-lang.org/dist/rustc-%{version}-x86_64-unknown-linux-gnu.tar.xz
-Source1: https://static.rust-lang.org/dist/cargo-%{cargo_version}-x86_64-unknown-linux-gnu.tar.xz
+Source0: https://static.rust-lang.org/dist/rustc-%{version}-%{_build_cpu}-unknown-linux-gnu.tar.xz
+Source1: https://static.rust-lang.org/dist/cargo-%{cargo_version}-%{_build_cpu}-unknown-linux-gnu.tar.xz
 Source2: https://static.rust-lang.org/dist/rust-std-%{version}-%{_cross_arch}-unknown-linux-%{_cross_libc}.tar.xz
 
 %description
@@ -40,8 +40,8 @@ xz -dc %{SOURCE2} | tar -xof -
 
 %install
 for dir in \
-    rustc-%{version}-x86_64-unknown-linux-gnu \
-    cargo-%{cargo_version}-x86_64-unknown-linux-gnu \
+    rustc-%{version}-%{_build_cpu}-unknown-linux-gnu \
+    cargo-%{cargo_version}-%{_build_cpu}-unknown-linux-gnu \
     rust-std-%{version}-%{_cross_arch}-unknown-linux-%{_cross_libc} \
 ; do
     pushd $dir

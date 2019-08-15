@@ -117,14 +117,23 @@ grub2-mkimage \
   -O "%{_cross_grub_tuple}" \
   -o "%{buildroot}%{_cross_grubdir}/%{_cross_grub_image}" \
   -p "%{_cross_grub_prefix}" \
-  biosdisk configfile ext2 gptprio linux normal part_gpt search_fs_uuid
+%if %{_cross_arch} == x86_64
+  biosdisk \
+%else
+  efi_gop \
+%endif
+  configfile ext2 gptprio linux normal part_gpt search_fs_uuid
 
+%if %{_cross_arch} == x86_64
 install -m 0644 ./grub-core/boot.img \
   %{buildroot}%{_cross_grubdir}/boot.img
+%endif
 
 %files
 %dir %{_cross_grubdir}
+%if %{_cross_arch} == x86_64
 %{_cross_grubdir}/boot.img
+%endif
 %{_cross_grubdir}/%{_cross_grub_image}
 %{_cross_sbindir}/grub-bios-setup
 %exclude %{_cross_infodir}

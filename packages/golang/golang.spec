@@ -11,7 +11,11 @@ Summary: The Go Progamming Language
 License: BSD and Public Domain
 URL: https://golang.org
 
+%if %{_build_cpu} == aarch64
+Source0: https://dl.google.com/go/go%{version}.linux-arm64.tar.gz
+%else
 Source0: https://dl.google.com/go/go%{version}.linux-amd64.tar.gz
+%endif
 
 %description
 🙊⚙️

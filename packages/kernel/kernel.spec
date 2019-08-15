@@ -49,6 +49,7 @@ done
 # Patches listed in this spec (Patch0001...)
 %autopatch -p1
 KCONFIG_CONFIG="arch/%{_cross_karch}/configs/%{_cross_vendor}_defconfig" \
+    ARCH="%{_cross_karch}" \
     scripts/kconfig/merge_config.sh ../config-%{_cross_arch} %{SOURCE100}
 rm -f ../config-%{_cross_arch} ../*.patch
 
