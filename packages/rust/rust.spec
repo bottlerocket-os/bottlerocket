@@ -8,8 +8,8 @@
 %global __arch_install_post /usr/lib/rpm/check-buildroot
 
 Name: %{_cross_os}rust
-Version: 1.36.0
-%global cargo_version 0.37.0
+Version: 1.37.0
+%global cargo_version 0.38.0
 Release: 1%{?dist}
 Summary: The Rust Progamming Language
 License: ASL 2.0 or MIT
