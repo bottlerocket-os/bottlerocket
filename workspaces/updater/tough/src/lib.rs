@@ -12,20 +12,19 @@ mod datastore;
 pub mod error;
 mod fetch;
 mod io;
-mod serde;
 
 use crate::datastore::Datastore;
 use crate::error::Result;
 use crate::fetch::{fetch_max_size, fetch_sha256};
-use crate::serde::{Role, Root, Signed, Snapshot, Timestamp};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
 use reqwest::Url;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::borrow::Cow;
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
+use tough_schema::{Role, RoleType, Root, Signed, Snapshot, Timestamp};
 
 /// A TUF repository.
 ///
@@ -36,9 +35,9 @@ pub struct Repository {
     consistent_snapshot: bool,
     datastore: Datastore,
     earliest_expiration: DateTime<Utc>,
-    earliest_expiration_role: Role,
+    earliest_expiration_role: RoleType,
     target_base_url: Url,
-    targets: BTreeMap<String, Target>,
+    targets: HashMap<String, Target>,
 }
 
 impl Repository {
@@ -96,10 +95,10 @@ impl Repository {
         let targets = load_targets(&client, &root, &snapshot, &datastore, &metadata_base_url)?;
 
         let expires_iter = [
-            (root.signed.expires, Role::Root),
-            (timestamp.signed.expires, Role::Timestamp),
-            (snapshot.signed.expires, Role::Snapshot),
-            (targets.signed.expires, Role::Targets),
+            (root.signed.expires, RoleType::Root),
+            (timestamp.signed.expires, RoleType::Timestamp),
+            (snapshot.signed.expires, RoleType::Snapshot),
+            (targets.signed.expires, RoleType::Targets),
         ];
         let (earliest_expiration, earliest_expiration_role) =
             expires_iter.iter().min_by_key(|tup| tup.0).unwrap();
@@ -120,20 +119,8 @@ impl Repository {
         })
     }
 
-    /// Ensures the repository data has not expired since load
-    fn check_expired(&self) -> Result<()> {
-        let sys_time = system_time(&self.datastore)?;
-        ensure!(
-            sys_time < self.earliest_expiration,
-            error::ExpiredMetadata {
-                role: self.earliest_expiration_role
-            }
-        );
-        Ok(())
-    }
-
     /// Returns the list of targets present in the repository.
-    pub fn targets(&self) -> &BTreeMap<String, Target> {
+    pub fn targets(&self) -> &HashMap<String, Target> {
         &self.targets
     }
 
@@ -149,6 +136,14 @@ impl Repository {
     /// mismatch, the reader returns a [`std::io::Error`]. **Consumers of this library must not use
     /// data from the reader if it returns an error.**
     pub fn read_target(&self, name: &str) -> Result<Option<impl Read>> {
+        // Check for repository metadata expiration.
+        ensure!(
+            system_time(&self.datastore)? < self.earliest_expiration,
+            error::ExpiredMetadata {
+                role: self.earliest_expiration_role
+            }
+        );
+
         // 5. Verify the desired target against its targets metadata.
         //
         // 5.1. If there is no targets metadata about this target, abort the update cycle and
@@ -166,7 +161,6 @@ impl Repository {
         //   HASH is one of the hashes of the targets file listed in the targets metadata file
         //   found earlier in step 4. In either case, the client MUST write the file to
         //   non-volatile storage as FILENAME.EXT.
-        self.check_expired()?;
         Ok(if let Some(target) = self.targets.get(name) {
             let file = if self.consistent_snapshot {
                 format!("{}.{}", hex::encode(&target.sha256), name)
@@ -194,7 +188,7 @@ impl Repository {
 #[derive(Debug, Clone)]
 pub struct Target {
     /// Custom metadata for this target from the repository.
-    pub custom: BTreeMap<String, serde_json::Value>,
+    pub custom: HashMap<String, serde_json::Value>,
     /// The SHA-256 checksum for this target.
     pub sha256: Vec<u8>,
     /// The maximum size in bytes for this target. This is an upper bound on size, and not
@@ -202,8 +196,8 @@ pub struct Target {
     pub length: usize,
 }
 
-impl From<crate::serde::Target> for Target {
-    fn from(target: crate::serde::Target) -> Self {
+impl From<tough_schema::Target> for Target {
+    fn from(target: tough_schema::Target) -> Self {
         Self {
             custom: target.custom,
             sha256: target.hashes.sha256.into_vec(),
@@ -213,7 +207,7 @@ impl From<crate::serde::Target> for Target {
 }
 
 /// Ensures that system time has not stepped backward since it was last sampled
-pub(crate) fn system_time(datastore: &Datastore) -> Result<DateTime<Utc>> {
+fn system_time(datastore: &Datastore) -> Result<DateTime<Utc>> {
     let file = "latest_known_time.json";
     // Get 'current' system time
     let sys_time = Utc::now();
@@ -237,13 +231,21 @@ pub(crate) fn system_time(datastore: &Datastore) -> Result<DateTime<Utc>> {
     Ok(sys_time)
 }
 
+fn check_expired<T: Role>(datastore: &Datastore, role: &T) -> Result<()> {
+    ensure!(
+        system_time(datastore)? < role.expires(),
+        error::ExpiredMetadata { role: T::TYPE }
+    );
+    Ok(())
+}
+
 fn ensure_trailing_slash(url: &mut Cow<str>) {
     if !url.ends_with('/') {
         url.to_mut().push('/');
     }
 }
 
-pub(crate) fn parse_url(url: &str) -> Result<Url> {
+fn parse_url(url: &str) -> Result<Url> {
     let mut url = Cow::from(url);
     ensure_trailing_slash(&mut url);
     Url::parse(&url).context(error::ParseUrl { url })
@@ -269,8 +271,16 @@ fn load_root<R: Read>(
         .context(error::VerifyTrustedMetadata)?;
 
     // Used in step 1.9
-    let original_timestamp_keys = root.signed.keys(Role::Timestamp);
-    let original_snapshot_keys = root.signed.keys(Role::Snapshot);
+    let original_timestamp_keys = root
+        .signed
+        .keys(RoleType::Timestamp)
+        .cloned()
+        .collect::<Vec<_>>();
+    let original_snapshot_keys = root
+        .signed
+        .keys(RoleType::Snapshot)
+        .cloned()
+        .collect::<Vec<_>>();
 
     // 1. Update the root metadata file. Since it may now be signed using entirely different keys,
     //    the client must somehow be able to establish a trusted line of continuity to the latest
@@ -296,8 +306,10 @@ fn load_root<R: Read>(
         ) {
             Err(_) => break, // If this file is not available, then go to step 1.8.
             Ok(reader) => {
-                let new_root: Signed<Root> = serde_json::from_reader(reader)
-                    .context(error::ParseMetadata { role: Role::Root })?;
+                let new_root: Signed<Root> =
+                    serde_json::from_reader(reader).context(error::ParseMetadata {
+                        role: RoleType::Root,
+                    })?;
 
                 // 1.3. Check signatures. Version N+1 of the root metadata file MUST have been
                 //   signed by: (1) a threshold of keys specified in the trusted root metadata file
@@ -307,11 +319,15 @@ fn load_root<R: Read>(
                 //   next update cycle, begin at step 0 and version N of the root metadata file.
                 root.signed
                     .verify_role(&new_root)
-                    .context(error::VerifyMetadata { role: Role::Root })?;
+                    .context(error::VerifyMetadata {
+                        role: RoleType::Root,
+                    })?;
                 new_root
                     .signed
                     .verify_role(&new_root)
-                    .context(error::VerifyMetadata { role: Role::Root })?;
+                    .context(error::VerifyMetadata {
+                        role: RoleType::Root,
+                    })?;
 
                 // 1.4. Check for a rollback attack. The version number of the trusted root
                 //   metadata file (version N) must be less than or equal to the version number of
@@ -324,7 +340,7 @@ fn load_root<R: Read>(
                 ensure!(
                     root.signed.version <= new_root.signed.version,
                     error::OlderMetadata {
-                        role: Role::Root,
+                        role: RoleType::Root,
                         current_version: root.signed.version,
                         new_version: new_root.signed.version
                     }
@@ -358,7 +374,7 @@ fn load_root<R: Read>(
     //   timestamp in the trusted root metadata file (version N). If the trusted root metadata file
     //   has expired, abort the update cycle, report the potential freeze attack. On the next
     //   update cycle, begin at step 0 and version N of the root metadata file.
-    root.check_expired(datastore)?;
+    check_expired(datastore, &root.signed)?;
 
     // 1.9. If the timestamp and / or snapshot keys have been rotated, then delete the trusted
     //   timestamp and snapshot metadata files. This is done in order to recover from fast-forward
@@ -366,8 +382,12 @@ fn load_root<R: Read>(
     //   happens when attackers arbitrarily increase the version numbers of: (1) the timestamp
     //   metadata, (2) the snapshot metadata, and / or (3) the targets, or a delegated targets,
     //   metadata file in the snapshot metadata.
-    if original_timestamp_keys != root.signed.keys(Role::Timestamp)
-        || original_snapshot_keys != root.signed.keys(Role::Snapshot)
+    if original_timestamp_keys
+        .iter()
+        .ne(root.signed.keys(RoleType::Timestamp))
+        || original_snapshot_keys
+            .iter()
+            .ne(root.signed.keys(RoleType::Snapshot))
     {
         let r1 = datastore.remove("timestamp.json");
         let r2 = datastore.remove("snapshot.json");
@@ -401,7 +421,7 @@ fn load_timestamp(
     )?;
     let timestamp: Signed<Timestamp> =
         serde_json::from_reader(reader).context(error::ParseMetadata {
-            role: Role::Timestamp,
+            role: RoleType::Timestamp,
         })?;
 
     // 2.1. Check signatures. The new timestamp metadata file must have been signed by a threshold
@@ -410,7 +430,7 @@ fn load_timestamp(
     root.signed
         .verify_role(&timestamp)
         .context(error::VerifyMetadata {
-            role: Role::Timestamp,
+            role: RoleType::Timestamp,
         })?;
 
     // 2.2. Check for a rollback attack. The version number of the trusted timestamp metadata file,
@@ -425,7 +445,7 @@ fn load_timestamp(
             ensure!(
                 old_timestamp.signed.version <= timestamp.signed.version,
                 error::OlderMetadata {
-                    role: Role::Timestamp,
+                    role: RoleType::Timestamp,
                     current_version: old_timestamp.signed.version,
                     new_version: timestamp.signed.version
                 }
@@ -437,7 +457,7 @@ fn load_timestamp(
     //   timestamp in the new timestamp metadata file. If so, the new timestamp metadata file
     //   becomes the trusted timestamp metadata file. If the new timestamp metadata file has
     //   expired, discard it, abort the update cycle, and report the potential freeze attack.
-    timestamp.check_expired(datastore)?;
+    check_expired(datastore, &timestamp.signed)?;
 
     // Now that everything seems okay, write the timestamp file to the datastore.
     datastore.create("timestamp.json", &timestamp)?;
@@ -466,7 +486,7 @@ fn load_snapshot(
         .get("snapshot.json")
         .context(error::MetaMissing {
             file: "snapshot.json",
-            role: Role::Timestamp,
+            role: RoleType::Timestamp,
         })?;
     let path = if root.signed.consistent_snapshot {
         format!("{}.snapshot.json", snapshot_meta.version)
@@ -485,7 +505,7 @@ fn load_snapshot(
     )?;
     let snapshot: Signed<Snapshot> =
         serde_json::from_reader(reader).context(error::ParseMetadata {
-            role: Role::Snapshot,
+            role: RoleType::Snapshot,
         })?;
 
     // 3.1. Check against timestamp metadata. The hashes and version number of the new snapshot
@@ -497,7 +517,7 @@ fn load_snapshot(
     ensure!(
         snapshot.signed.version == snapshot_meta.version,
         error::VersionMismatch {
-            role: Role::Snapshot,
+            role: RoleType::Snapshot,
             fetched: snapshot.signed.version,
             expected: snapshot_meta.version
         }
@@ -510,7 +530,7 @@ fn load_snapshot(
     root.signed
         .verify_role(&snapshot)
         .context(error::VerifyMetadata {
-            role: Role::Snapshot,
+            role: RoleType::Snapshot,
         })?;
 
     // 3.3. Check for a rollback attack.
@@ -529,7 +549,7 @@ fn load_snapshot(
             ensure!(
                 old_snapshot.signed.version <= snapshot.signed.version,
                 error::OlderMetadata {
-                    role: Role::Snapshot,
+                    role: RoleType::Snapshot,
                     current_version: old_snapshot.signed.version,
                     new_version: snapshot.signed.version
                 }
@@ -550,12 +570,12 @@ fn load_snapshot(
                         .get("targets.json")
                         .context(error::MetaMissing {
                             file: "targets.json",
-                            role: Role::Snapshot,
+                            role: RoleType::Snapshot,
                         })?;
                 ensure!(
                     old_targets_meta.version <= targets_meta.version,
                     error::OlderMetadata {
-                        role: Role::Targets,
+                        role: RoleType::Targets,
                         current_version: old_targets_meta.version,
                         new_version: targets_meta.version,
                     }
@@ -568,7 +588,7 @@ fn load_snapshot(
     //   timestamp in the new snapshot metadata file. If so, the new snapshot metadata file becomes
     //   the trusted snapshot metadata file. If the new snapshot metadata file is expired, discard
     //   it, abort the update cycle, and report the potential freeze attack.
-    snapshot.check_expired(datastore)?;
+    check_expired(datastore, &snapshot.signed)?;
 
     // Now that everything seems okay, write the timestamp file to the datastore.
     datastore.create("snapshot.json", &snapshot)?;
@@ -583,7 +603,7 @@ fn load_targets(
     snapshot: &Signed<Snapshot>,
     datastore: &Datastore,
     metadata_base_url: &Url,
-) -> Result<Signed<crate::serde::Targets>> {
+) -> Result<Signed<tough_schema::Targets>> {
     // 4. Download the top-level targets metadata file, up to either the number of bytes specified
     //    in the snapshot metadata file, or some Z number of bytes. The value for Z is set by the
     //    authors of the application using TUF. For example, Z may be tens of kilobytes. If
@@ -602,7 +622,7 @@ fn load_targets(
         .get("targets.json")
         .context(error::MetaMissing {
             file: "targets.json",
-            role: Role::Timestamp,
+            role: RoleType::Timestamp,
         })?;
     let path = if root.signed.consistent_snapshot {
         format!("{}.targets.json", targets_meta.version)
@@ -619,9 +639,9 @@ fn load_targets(
         "snapshot.json",
         &targets_meta.hashes.sha256,
     )?;
-    let targets: Signed<crate::serde::Targets> =
+    let targets: Signed<tough_schema::Targets> =
         serde_json::from_reader(reader).context(error::ParseMetadata {
-            role: Role::Targets,
+            role: RoleType::Targets,
         })?;
 
     // 4.1. Check against snapshot metadata. The hashes (if any), and version number of the new
@@ -633,7 +653,7 @@ fn load_targets(
     ensure!(
         targets.signed.version == targets_meta.version,
         error::VersionMismatch {
-            role: Role::Targets,
+            role: RoleType::Targets,
             fetched: targets.signed.version,
             expected: targets_meta.version
         }
@@ -646,7 +666,7 @@ fn load_targets(
     root.signed
         .verify_role(&targets)
         .context(error::VerifyMetadata {
-            role: Role::Targets,
+            role: RoleType::Targets,
         })?;
 
     // 4.3. Check for a rollback attack. The version number of the trusted targets metadata file,
@@ -655,13 +675,13 @@ fn load_targets(
     //   it, abort the update cycle, and report the potential rollback attack.
     if let Some(Ok(old_targets)) = datastore
         .reader("targets.json")?
-        .map(serde_json::from_reader::<_, Signed<crate::serde::Targets>>)
+        .map(serde_json::from_reader::<_, Signed<tough_schema::Targets>>)
     {
         if root.signed.verify_role(&old_targets).is_ok() {
             ensure!(
                 old_targets.signed.version <= targets.signed.version,
                 error::OlderMetadata {
-                    role: Role::Targets,
+                    role: RoleType::Targets,
                     current_version: old_targets.signed.version,
                     new_version: targets.signed.version
                 }
@@ -673,7 +693,7 @@ fn load_targets(
     //   timestamp in the new targets metadata file. If so, the new targets metadata file becomes
     //   the trusted targets metadata file. If the new targets metadata file is expired, discard
     //   it, abort the update cycle, and report the potential freeze attack.
-    targets.check_expired(datastore)?;
+    check_expired(datastore, &targets.signed)?;
 
     // 4.5. Perform a preorder depth-first search for metadata about the desired target, beginning
     //   with the top-level targets role.

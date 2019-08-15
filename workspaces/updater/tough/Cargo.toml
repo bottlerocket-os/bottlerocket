@@ -8,16 +8,12 @@ publish = false
 [dependencies]
 chrono = { version = "0.4.6", features = ["serde"] }
 hex = "0.3.2"
-olpc-cjson = { path = "../olpc-cjson" }
-pem = "0.6.0"
 reqwest = { version = "0.9.17", default-features = false }
-ring = "0.14.6"
-serde = { version = "1.0.92", features = ["derive"] }
+serde = "1.0.92"
 serde_json = "1.0.39"
-serde_plain = "0.3.0"
 sha2 = "0.8.0"
 snafu = "0.4.1"
-untrusted = "0.6.2"
+tough_schema = { path = "../tough_schema" }
 
 [dev-dependencies]
 hex-literal = "0.2.0"

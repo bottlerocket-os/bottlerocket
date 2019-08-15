@@ -1,4 +1,4 @@
-use crate::serde::decoded::{Decoded, Hex, Pem, RsaPem};
+use crate::decoded::{Decoded, Hex, Pem, RsaPem};
 use ring::signature::VerificationAlgorithm;
 use serde::{Deserialize, Serialize};
 
@@ -6,31 +6,29 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "kebab-case")]
 #[serde(tag = "keytype")]
 pub enum Key {
-    Ecdsa {
-        keyval: EcdsaKey,
-        scheme: EcdsaScheme,
+    Rsa {
+        keyval: RsaKey,
+        scheme: RsaScheme,
     },
     Ed25519 {
         keyval: Ed25519Key,
         scheme: Ed25519Scheme,
     },
-    Rsa {
-        keyval: RsaKey,
-        scheme: RsaScheme,
+    Ecdsa {
+        keyval: EcdsaKey,
+        scheme: EcdsaScheme,
     },
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
-pub enum EcdsaScheme {
-    EcdsaSha2Nistp256,
+pub enum RsaScheme {
+    RsassaPssSha256,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct EcdsaKey {
-    // FIXME: there's probably a difference between what TUF thinks is a valid ECDSA key and what
-    // ring thinks is a valid ECDSA key (similar to the issue we had with RSA).
-    public: Decoded<Pem>,
+pub struct RsaKey {
+    public: Decoded<RsaPem>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -46,13 +44,16 @@ pub struct Ed25519Key {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
-pub enum RsaScheme {
-    RsassaPssSha256,
+pub enum EcdsaScheme {
+    EcdsaSha2Nistp256,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-pub struct RsaKey {
-    public: Decoded<RsaPem>,
+pub struct EcdsaKey {
+    // FIXME: there's probably a difference between what TUF thinks is a valid ECDSA key and what
+    // ring thinks is a valid ECDSA key (similar to the issue we had with RSA; see the lengthy
+    // comment in `impl Decode for RsaPem` in decoded.rs).
+    public: Decoded<Pem>,
 }
 
 impl Key {

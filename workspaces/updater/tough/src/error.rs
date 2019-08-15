@@ -2,11 +2,10 @@
 
 #![allow(clippy::default_trait_access)]
 
-use crate::serde::Role;
 use chrono::{DateTime, Utc};
 use snafu::{Backtrace, Snafu};
-use std::fmt::{self, Debug, Display};
 use std::path::PathBuf;
+use tough_schema::RoleType;
 
 /// Alias for `Result<T, Error>`.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -39,23 +38,11 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    /// A duplicate key ID was present in the root metadata.
-    #[snafu(display("Duplicate key ID: {}", keyid))]
-    DuplicateKeyId { keyid: String },
-
     /// A metadata file has expired.
     #[snafu(display("{} metadata is expired", role))]
-    ExpiredMetadata { role: Role, backtrace: Backtrace },
-
-    /// System time is behaving irrationally, went back in time
-    #[snafu(display(
-        "System time stepped backward: system time '{}', last known time '{}'",
-        sys_time,
-        latest_known_time,
-    ))]
-    SystemTimeSteppedBackward {
-        sys_time: DateTime<Utc>,
-        latest_known_time: DateTime<Utc>,
+    ExpiredMetadata {
+        role: RoleType,
+        backtrace: Backtrace,
     },
 
     /// A downloaded target's checksum does not match the checksum listed in the repository
@@ -70,13 +57,6 @@ pub enum Error {
         context: String,
         calculated: String,
         expected: String,
-        backtrace: Backtrace,
-    },
-
-    /// Failed to decode a hexadecimal-encoded string.
-    #[snafu(display("Invalid hex string: {}", source))]
-    HexDecode {
-        source: hex::FromHexError,
         backtrace: Backtrace,
     },
 
@@ -109,13 +89,9 @@ pub enum Error {
     #[snafu(display("Meta for {:?} missing from {} metadata", file, role))]
     MetaMissing {
         file: &'static str,
-        role: Role,
+        role: RoleType,
         backtrace: Backtrace,
     },
-
-    /// A required role is missing from the root metadata file.
-    #[snafu(display("Role {} missing from root metadata", role))]
-    MissingRole { role: Role, backtrace: Backtrace },
 
     /// A downloaded metadata file has an older version than a previously downloaded metadata file.
     #[snafu(display(
@@ -125,7 +101,7 @@ pub enum Error {
         current_version
     ))]
     OlderMetadata {
-        role: Role,
+        role: RoleType,
         current_version: u64,
         new_version: u64,
         backtrace: Backtrace,
@@ -142,7 +118,7 @@ pub enum Error {
     // * missing field `sig` at line 1 column 16
     #[snafu(display("Failed to parse {} metadata: {}", role, source))]
     ParseMetadata {
-        role: Role,
+        role: RoleType,
         source: serde_json::Error,
         backtrace: Backtrace,
     },
@@ -165,13 +141,6 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    /// Failed to decode a PEM-encoded key.
-    #[snafu(display("Invalid PEM string: {}", source))]
-    PemDecode {
-        source: Compat<pem::PemError>,
-        backtrace: Backtrace,
-    },
-
     /// An HTTP request failed.
     #[snafu(display("Failed to request \"{}\": {}", url, source))]
     Request {
@@ -188,38 +157,29 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    /// Failed to decode a `SubjectPublicKeyInfo` formatted RSA public key.
-    #[snafu(display("Invalid SubjectPublicKeyInfo-formatted RSA public key"))]
-    RsaDecode { backtrace: Backtrace },
-
-    /// A signature threshold specified in root.json was not met when verifying a signature.
+    /// System time is behaving irrationally, went back in time
     #[snafu(display(
-        "Signature threshold of {} not met for role {} ({} valid signatures)",
-        threshold,
-        role,
-        valid,
+        "System time stepped backward: system time '{}', last known time '{}'",
+        sys_time,
+        latest_known_time,
     ))]
-    SignatureThreshold {
-        role: Role,
-        threshold: u64,
-        valid: u64,
-        backtrace: Backtrace,
+    SystemTimeSteppedBackward {
+        sys_time: DateTime<Utc>,
+        latest_known_time: DateTime<Utc>,
     },
 
     /// A metadata file could not be verified.
     #[snafu(display("Failed to verify {} metadata: {}", role, source))]
     VerifyMetadata {
-        role: Role,
-        #[snafu(source(from(Error, Box::new)))]
-        source: Box<Error>,
+        role: RoleType,
+        source: tough_schema::Error,
         backtrace: Backtrace,
     },
 
     /// The trusted root metadata file could not be verified.
     #[snafu(display("Failed to verify trusted root metadata: {}", source))]
     VerifyTrustedMetadata {
-        #[snafu(source(from(Error, Box::new)))]
-        source: Box<Error>,
+        source: tough_schema::Error,
         backtrace: Backtrace,
     },
 
@@ -231,31 +191,12 @@ pub enum Error {
         expected
     ))]
     VersionMismatch {
-        role: Role,
+        role: RoleType,
         fetched: u64,
         expected: u64,
         backtrace: Backtrace,
     },
 }
-
-/// Wrapper for error types that don't impl [`std::error::Error`].
-///
-/// This should not have to exist, and yet...
-pub struct Compat<T>(pub T);
-
-impl<T: Debug> Debug for Compat<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Debug::fmt(&self.0, f)
-    }
-}
-
-impl<T: Display> Display for Compat<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Display::fmt(&self.0, f)
-    }
-}
-
-impl<T: Debug + Display> std::error::Error for Compat<T> {}
 
 // used in `std::io::Read` implementations
 impl From<Error> for std::io::Error {

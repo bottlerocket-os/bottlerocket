@@ -3,6 +3,7 @@ members = [
     "olpc-cjson",
     "signpost",
     "tough",
+    "tough_schema",
     "updog",
 ]
 
