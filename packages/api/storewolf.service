@@ -1,5 +1,7 @@
 [Unit]
 Description=Datastore creator
+After=migrator.service
+Requires=migrator.service
 
 [Service]
 Type=oneshot

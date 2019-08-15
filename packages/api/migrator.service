@@ -1,0 +1,10 @@
+[Unit]
+Description=Thar data store migrator
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/migrator --datastore-path /var/lib/thar/datastore/current --migration-directories /var/lib/thar/datastore/migrations --migrate-to-version-from-file /usr/share/thar/data-store-version -v -v -v
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
