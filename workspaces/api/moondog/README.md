@@ -7,7 +7,7 @@ Current version: 0.1.0
 moondog is a minimal user data agent.
 
 It accepts TOML-formatted settings from a user data provider such as an instance metadata service.
-These are sent to a known Thar API server endpoint, then committed.
+These are sent to a known Thar API server endpoint.
 
 Currently, Amazon EC2 user data support is implemented.
 User data can also be retrieved from a file for testing.

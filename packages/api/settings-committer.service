@@ -1,0 +1,13 @@
+[Unit]
+Description=Commit pending settings
+After=storewolf.service apiserver.service sundog.service moondog.service
+Requires=apiserver.service
+Wants=storewolf.service sundog.service moondog.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/settings-committer
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
