@@ -6,9 +6,13 @@ Current version: 0.1.0
 
 thar-be-settings is a simple configuration applier.
 
-It is intended to be called from, and work directly with, the API server in Thar, the OS.
-After a settings change, this program queries the API to determine which services and configuration files are affected by that change.
-Once it has done so, it renders and rewrites the affected configuration files and restarts any affected services.
+In the normal ("specific keys") mode, it's intended to be called by the Thar API server after a
+commit.  It's told the keys that changed, and then queries the API to determine which services and
+configuration files are affected by that change.  It then renders and rewrites the affected
+configuration files and restarts any affected services.
+
+In the standalone ("all keys") mode, it queries the API for all services and configuration files,
+then renders and rewrites all configuration files and restarts all services.
 
 ## Colophon
 
