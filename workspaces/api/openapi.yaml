@@ -77,11 +77,43 @@ paths:
 
   /settings/commit:
     post:
-      summary: "Commit pending settings"
+      summary: "Commit pending settings, without applying changes to config files or restarting services"
       operationId: "commit_settings"
       responses:
+        200:
+          description: "Successfully Staged settings - changed keys are returned"
+        500:
+          description: "Server error"
+
+  /settings/apply:
+    post:
+      summary: "Apply changes to config files and restart services"
+      operationId: "apply_settings"
+      parameters:
+        - in: query
+          name: keys
+          description: "Apply changes only if related to these keys; if not specified, applies for all known keys"
+          schema:
+            type: array
+            items:
+              type: string
+          # `style: form` and `explode: false` format parameters as such:  /settings/apply?keys=settings.foo,settings.bar
+          style: form
+          explode: false
+          required: false
+      responses:
         204:
-          description: "Successful settings update"
+          description: "Successfully started settings applier"
+        500:
+          description: "Server error"
+
+  /settings/commit_and_apply:
+    post:
+      summary: "Commit pending settings, and apply changes to relevant config files and services"
+      operationId: "commit_and_apply_settings"
+      responses:
+        200:
+          description: "Successful settings update, committed keys are returned"
         500:
           description: "Server error"
 

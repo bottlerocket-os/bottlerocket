@@ -2,6 +2,7 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde::{Serialize, Serializer};
 use std::borrow::Borrow;
 use std::fmt;
 use std::ops::Deref;
@@ -115,6 +116,17 @@ impl AsRef<str> for Key {
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.name)
+    }
+}
+
+// We can't implement Deserialize for Key because Key doesn't store its key type, but we can
+// serialize it to its name.
+impl Serialize for Key {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.name)
     }
 }
 

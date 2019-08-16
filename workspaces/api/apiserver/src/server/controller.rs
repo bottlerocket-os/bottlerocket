@@ -311,33 +311,53 @@ pub(crate) fn commit<D: DataStore>(datastore: &mut D) -> Result<HashSet<Key>> {
         .context(error::DataStore { op: "commit" })
 }
 
-/// Given a list of changed keys, launches the config applier to make appropriate changes to the
-/// system.
-pub(crate) fn apply_changes(changed_keys: &HashSet<Key>) -> Result<()> {
-    // Prepare input to config applier; it uses the changed keys to update the right config
-    let key_strs: Vec<&str> = changed_keys.iter().map(AsRef::as_ref).collect();
-    trace!("Serializing the commit's changed keys: {:?}", key_strs);
-    let cmd_input = serde_json::to_string(&key_strs).context(error::CommandSerialization {
-        given: "commit's changed keys",
-    })?;
+/// Launches the config applier to make appropriate changes to the system based on any settings
+/// that have changed.  Can be called after a commit, with the keys that changed in that commit,
+/// or called on its own to reset configuration state with all known keys.
+///
+/// If `keys_limit` is Some, gives those keys to the applier so only changes relevant to those
+/// keys are made.  Otherwise, tells the applier to apply changes for all known keys.
+pub(crate) fn apply_changes<S>(keys_limit: Option<&HashSet<S>>) -> Result<()>
+where
+    S: AsRef<str>,
+{
+    if let Some(keys_limit) = keys_limit {
+        let keys_limit: Vec<&str> = keys_limit.iter().map(|s| s.as_ref()).collect();
+        // Prepare input to config applier; it uses the changed keys to update the right config
+        trace!("Serializing the commit's changed keys: {:?}", keys_limit);
+        let cmd_input =
+            serde_json::to_string(&keys_limit).context(error::CommandSerialization {
+                given: "commit's changed keys",
+            })?;
 
-    // Start config applier
-    debug!("Launching thar-be-settings to apply changes");
-    let mut cmd = Command::new("/usr/bin/thar-be-settings")
-        .stdin(Stdio::piped())
-        // FIXME where to send output?
-        //.stdout()
-        //.stderr()
-        .spawn()
-        .context(error::ConfigApplierStart)?;
+        // Start config applier
+        debug!("Launching thar-be-settings to apply changes");
+        let mut cmd = Command::new("/usr/bin/thar-be-settings")
+            .stdin(Stdio::piped())
+            // FIXME where to send output?
+            //.stdout()
+            //.stderr()
+            .spawn()
+            .context(error::ConfigApplierStart)?;
 
-    // Send changed keys to config applier
-    trace!("Sending changed keys");
-    cmd.stdin
-        .as_mut()
-        .context(error::ConfigApplierStdin)?
-        .write_all(cmd_input.as_bytes())
-        .context(error::ConfigApplierWrite)?;
+        // Send changed keys to config applier
+        trace!("Sending changed keys");
+        cmd.stdin
+            .as_mut()
+            .context(error::ConfigApplierStdin)?
+            .write_all(cmd_input.as_bytes())
+            .context(error::ConfigApplierWrite)?;
+    } else {
+        // Start config applier
+        debug!("Launching thar-be-settings to apply any and all changes");
+        Command::new("/usr/bin/thar-be-settings")
+            .arg("--all")
+            // FIXME where to send output?
+            //.stdout()
+            //.stderr()
+            .spawn()
+            .context(error::ConfigApplierStart)?;
+    }
 
     // Leave config applier to run in the background; we can't wait for it
     Ok(())
