@@ -20,14 +20,21 @@ pub fn get_affected_services<P>(
 where
     P: AsRef<Path>,
 {
-    let setting_to_service_map = get_affected_service_map(socket_path.as_ref(), settings_limit)?;
-    if setting_to_service_map.is_empty() {
-        return Ok(HashMap::new());
-    }
+    let service_limit = if let Some(settings_limit) = settings_limit {
+        let setting_to_service_map =
+            get_affected_service_map(socket_path.as_ref(), settings_limit)?;
+        if setting_to_service_map.is_empty() {
+            return Ok(HashMap::new());
+        }
 
-    let service_names = get_affected_service_names(setting_to_service_map);
+        let service_names = get_affected_service_names(setting_to_service_map);
+        Some(service_names)
+    } else {
+        // No limit, we want all services.
+        None
+    };
 
-    let services = get_service_metadata(socket_path.as_ref(), service_names)?;
+    let services = get_service_metadata(socket_path.as_ref(), service_limit)?;
 
     Ok(services)
 }
@@ -37,20 +44,19 @@ where
 #[allow(clippy::implicit_hasher)]
 fn get_affected_service_map<P>(
     socket_path: P,
-    settings_limit: Option<HashSet<String>>,
+    settings: HashSet<String>,
 ) -> Result<HashMap<String, Vec<String>>>
 where
     P: AsRef<Path>,
 {
-    // Only want a query parameter if we had specific affected services, otherwise we want all
-    let query = settings_limit.map(|settings| ("keys", join(&settings, ",")));
+    let query = ("keys", join(&settings, ","));
 
     // Query the API for affected services
     debug!("Querying API for affected services names");
     let uri = "/metadata/affected-services";
 
     let setting_to_services_map: HashMap<String, Vec<String>> =
-        client::get_json(socket_path, uri, query)?;
+        client::get_json(socket_path, uri, Some(query))?;
     trace!("API response: {:?}", &setting_to_services_map);
 
     Ok(setting_to_services_map)
@@ -76,16 +82,20 @@ fn get_affected_service_names(
 }
 
 /// Gather the metadata for each Service affected
-fn get_service_metadata<P>(socket_path: P, services: HashSet<String>) -> Result<model::Services>
+fn get_service_metadata<P>(
+    socket_path: P,
+    services_limit: Option<HashSet<String>>,
+) -> Result<model::Services>
 where
     P: AsRef<Path>,
 {
-    let query = join(&services, ",");
+    // Only want a query parameter if we had specific affected services, otherwise we want all
+    let query = services_limit.map(|services| ("names", join(&services, ",")));
 
     // Query the API for affected service metadata
     debug!("Querying API for affected service metadata");
     let service_map: model::Services =
-        client::get_json(socket_path, "/services", Some(("names", query)))?;
+        client::get_json(socket_path, "/services", query)?;
     trace!("Service metadata: {:?}", &service_map);
 
     Ok(service_map)
