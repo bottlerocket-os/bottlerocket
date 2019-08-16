@@ -14,13 +14,13 @@ use std::ops::Deref;
 /// Other than `Deserialize` and `Serialize`, traits implemented for `Decoded` are equivalent to
 /// those for `Vec<u8>`.
 #[derive(Debug, Clone)]
-pub struct Decoded<T: Decode> {
+pub struct Decoded<T> {
     bytes: Vec<u8>,
     original: String,
     spooky: PhantomData<T>,
 }
 
-impl<T: Decode> Decoded<T> {
+impl<T> Decoded<T> {
     /// Consume this object and return its decoded bytes.
     ///
     /// You can copy the data with [`to_vec`].
@@ -28,6 +28,17 @@ impl<T: Decode> Decoded<T> {
     /// [`to_vec`]: https://doc.rust-lang.org/std/primitive.slice.html#method.to_vec
     pub fn into_vec(self) -> Vec<u8> {
         self.bytes
+    }
+}
+
+impl<T: Encode> From<Vec<u8>> for Decoded<T> {
+    fn from(b: Vec<u8>) -> Self {
+        let original = T::encode(&b);
+        Self {
+            bytes: b,
+            original,
+            spooky: PhantomData,
+        }
     }
 }
 
@@ -45,13 +56,28 @@ pub trait Decode {
     fn decode(s: &str) -> Result<Vec<u8>, Error>;
 }
 
-/// [`Decode`] implementation for hex-encoded strings.
+/// A trait that represents how data can be converted from bytes to a string.
+///
+/// Generally structs that implement `Decode` will be unit-like structs that just implement the one
+/// required method.
+pub trait Encode {
+    /// Convert bytes to a string. This method cannot fail.
+    fn encode(b: &[u8]) -> String;
+}
+
+/// [`Decode`]/[`Encode`] implementation for hex-encoded strings.
 #[derive(Debug, Clone)]
 pub struct Hex;
 
 impl Decode for Hex {
     fn decode(s: &str) -> Result<Vec<u8>, Error> {
         hex::decode(s).context(error::HexDecode)
+    }
+}
+
+impl Encode for Hex {
+    fn encode(b: &[u8]) -> String {
+        hex::encode(b)
     }
 }
 
@@ -124,7 +150,7 @@ impl<'de, T: Decode> Deserialize<'de> for Decoded<T> {
     }
 }
 
-impl<T: Decode> Serialize for Decoded<T> {
+impl<T> Serialize for Decoded<T> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -135,13 +161,13 @@ impl<T: Decode> Serialize for Decoded<T> {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-impl<T: Decode> AsRef<[u8]> for Decoded<T> {
+impl<T> AsRef<[u8]> for Decoded<T> {
     fn as_ref(&self) -> &[u8] {
         &self.bytes
     }
 }
 
-impl<T: Decode> Deref for Decoded<T> {
+impl<T> Deref for Decoded<T> {
     type Target = [u8];
 
     fn deref(&self) -> &[u8] {
@@ -149,39 +175,39 @@ impl<T: Decode> Deref for Decoded<T> {
     }
 }
 
-impl<T: Decode> PartialEq<[u8]> for Decoded<T> {
+impl<T> PartialEq<[u8]> for Decoded<T> {
     fn eq(&self, other: &[u8]) -> bool {
         self.bytes.eq(&other)
     }
 }
 
-impl<T: Decode> PartialEq<Vec<u8>> for Decoded<T> {
+impl<T> PartialEq<Vec<u8>> for Decoded<T> {
     fn eq(&self, other: &Vec<u8>) -> bool {
         self.bytes.eq(other)
     }
 }
 
-impl<T: Decode> PartialEq for Decoded<T> {
+impl<T> PartialEq for Decoded<T> {
     fn eq(&self, other: &Self) -> bool {
         self.bytes.eq(&other.bytes)
     }
 }
 
-impl<T: Decode> Eq for Decoded<T> {}
+impl<T> Eq for Decoded<T> {}
 
-impl<T: Decode> PartialOrd for Decoded<T> {
+impl<T> PartialOrd for Decoded<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.bytes.partial_cmp(&other.bytes)
     }
 }
 
-impl<T: Decode> Ord for Decoded<T> {
+impl<T> Ord for Decoded<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.bytes.cmp(&other.bytes)
     }
 }
 
-impl<T: Decode> Hash for Decoded<T> {
+impl<T> Hash for Decoded<T> {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
         self.bytes.hash(hasher)
     }
