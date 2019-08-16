@@ -1,5 +1,7 @@
 %global workspace_name updater
 
+%global templatedir %{_cross_datadir}/templates
+
 Name: %{_cross_os}%{workspace_name}
 Version: 0.0
 Release: 0%{?dist}
@@ -7,7 +9,7 @@ Summary: Thar updater packages
 License: FIXME
 Source0: %{workspace_name}.crate
 Source1: root.json
-Source2: updog.toml
+Source2: updog-toml
 Source3: updog.conf
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
@@ -42,8 +44,8 @@ not much what's up with you
 install -d %{buildroot}/%{_cross_datadir}/updog
 install -m 0644 -t %{buildroot}/%{_cross_datadir}/updog %{SOURCE1}
 
-install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
-install -p -m 0644 %{SOURCE2} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/updog.toml
+install -d %{buildroot}%{templatedir}
+install -p -m 0644 %{SOURCE2} %{buildroot}%{templatedir}/updog-toml
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{SOURCE3} %{buildroot}%{_cross_tmpfilesdir}/updog.conf
@@ -57,7 +59,8 @@ install -p -m 0644 %{SOURCE3} %{buildroot}%{_cross_tmpfilesdir}/updog.conf
 %files -n %{_cross_os}updog
 %{_cross_bindir}/updog
 %{_cross_datadir}/updog
-%{_cross_factorydir}%{_cross_sysconfdir}/updog.toml
 %{_cross_tmpfilesdir}/updog.conf
+%dir %{templatedir}
+%{templatedir}/updog-toml
 
 %changelog

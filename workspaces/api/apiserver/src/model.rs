@@ -42,6 +42,17 @@ pub struct KubernetesSettings {
     pub pod_infra_container_image: Option<String>,
 }
 
+// Updog settings. Taken from userdata.
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct UpdatesSettings {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata_base_url: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target_base_url: Option<String>,
+}
+
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
 // that uses its name in serialization; internal structures use the field name that poitns to it
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -55,6 +66,9 @@ pub struct Settings {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kubernetes: Option<KubernetesSettings>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updates: Option<UpdatesSettings>,
 }
 
 ///// Internal services
