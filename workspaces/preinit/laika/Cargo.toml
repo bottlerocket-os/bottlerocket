@@ -1,0 +1,15 @@
+[package]
+name = "laika"
+version = "0.1.0"
+authors = ["Erikson Tung <etung@amazon.com>"]
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[dependencies]
+sys-mount = "1.2.1"
+filetime = "0.2.7"
+snafu = "0.4.4"
+
+[build-dependencies]
+cargo-readme = "3.1"

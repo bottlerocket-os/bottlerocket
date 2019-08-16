@@ -6,7 +6,6 @@ Release: 1%{?dist}
 Summary: Thar release
 License: Public Domain
 
-Source0: preinit
 Source1: login
 
 Source10: hosts
@@ -47,6 +46,7 @@ Requires: %{_cross_os}migration
 Requires: %{_cross_os}updog
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}amazon-ssm-agent
+Requires: %{_cross_os}preinit
 
 %description
 %{summary}.
@@ -56,8 +56,6 @@ Requires: %{_cross_os}amazon-ssm-agent
 %build
 
 %install
-install -d %{buildroot}%{_cross_sbindir}
-install -p -m 0755 %{S:0} %{buildroot}%{_cross_sbindir}
 
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 %{S:1} %{buildroot}%{_cross_bindir}
@@ -90,7 +88,6 @@ install -p -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 
 %files
 %{_cross_bindir}/login
-%{_cross_sbindir}/preinit
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_tmpfilesdir}/release.conf
