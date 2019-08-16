@@ -120,7 +120,7 @@ done
 %{__rm} -rf %{buildroot}%{migrationdir}/bin
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
+install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
