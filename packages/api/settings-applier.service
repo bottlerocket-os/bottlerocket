@@ -1,0 +1,13 @@
+[Unit]
+Description=Applies settings to create config files
+After=apiserver.service settings-committer.service
+Requires=apiserver.service
+Wants=settings-committer.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/thar-be-settings --all
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

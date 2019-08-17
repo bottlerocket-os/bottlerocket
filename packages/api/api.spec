@@ -18,6 +18,7 @@ Source3: sundog.service
 Source4: storewolf.service
 Source5: settings-committer.service
 Source6: migration-tmpfiles.conf
+Source7: settings-applier.service
 Source8: data-store-version
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
@@ -95,6 +96,7 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE2}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE5}
+install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE7}
 
 install -d %{buildroot}/%{_cross_datadir}/thar
 install -m 0644 -t %{buildroot}/%{_cross_datadir}/thar %{SOURCE8}
@@ -147,6 +149,7 @@ install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
+%{systemd_systemdir}/settings-applier.service
 
 %files -n %{_cross_os}storewolf
 %{_cross_bindir}/storewolf
