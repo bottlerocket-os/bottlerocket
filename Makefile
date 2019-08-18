@@ -32,25 +32,23 @@ BUILDCTL_ARGS += --local context=.
 BUILDCTL_ARGS += --local dockerfile=.
 
 define build_rpm
-	$(eval HASH:= $(shell sha1sum $3 /dev/null | sha1sum - | awk '{printf $$1}'))
 	$(eval RPMS:= $(shell echo $3 | tr ' ' '\n' | awk '/.rpm$$/' | tr '\n' ' '))
 	@$(BUILDCTL) build \
 		--opt target=rpm \
 		--opt build-arg:PACKAGE=$(1) \
 		--opt build-arg:ARCH=$(2) \
-		--opt build-arg:HASH=$(HASH) \
 		--opt build-arg:RPMS="$(RPMS)" \
+		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
 endef
 
 define build_image
-	$(eval HASH:= $(shell sha1sum $(2) /dev/null | sha1sum - | awk '{print $$1}'))
 	@$(BUILDCTL) build \
 		--opt target=image \
 		--opt build-arg:PACKAGE=$(OS)-$(1)-$(RECIPE) \
 		--opt build-arg:ARCH=$(1) \
-		--opt build-arg:HASH=$(HASH) \
+		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
 	lz4 -d -f $(OUTPUT)/$(OS)-$(1).img.lz4 $(OUTPUT)/$(OS)-$(1).img \
@@ -88,8 +86,7 @@ include $(PKGS)
 
 .SECONDEXPANSION:
 $(ARCH): $$($(OS)-$(ARCH)-$(RECIPE))
-	$(eval PKGS:= $(wildcard $(OUTPUT)/$(OS)-$(ARCH)-*.rpm))
-	$(call build_image,$@,$(PKGS))
+	$(call build_image,$@)
 
 all: $(ARCH)
 

@@ -18,7 +18,7 @@ RUN dnf -y install createrepo_c e2fsprogs gdisk grub2-tools kpartx lz4 verityset
 FROM base AS rpmbuild
 ARG PACKAGE
 ARG ARCH
-ARG HASH
+ARG NOCACHE
 ARG RPMS
 WORKDIR /home/builder
 
@@ -30,7 +30,7 @@ RUN rpmdev-setuptree \
    && rm ${ARCH} shared rust cargo \
    && mv *.spec rpmbuild/SPECS \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
-   && echo ${HASH}
+   && echo ${NOCACHE}
 
 USER root
 RUN --mount=target=/host \
@@ -53,7 +53,7 @@ COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /
 FROM util AS imgbuild
 ARG PACKAGE
 ARG ARCH
-ARG HASH
+ARG NOCACHE
 WORKDIR /root
 
 USER root
@@ -73,7 +73,7 @@ RUN --mount=target=/host \
     && /host/bin/rpm2img \
         --package-dir=/local/rpms \
         --output-dir=/local/output \
-    && echo ${HASH}
+    && echo ${NOCACHE}
 
 FROM scratch AS image
 COPY --from=imgbuild /local/output/* /
