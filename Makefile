@@ -17,7 +17,6 @@ PKGS = $(SPECS:.spec=.makepkg)
 
 OUTPUT ?= $(TOPDIR)/build
 OUTVAR := $(shell mkdir -p $(OUTPUT))
-DATE := $(shell date --rfc-3339=date)
 
 ARCH ?= $(shell uname -m)
 
@@ -41,7 +40,6 @@ define build_rpm
 		--opt build-arg:ARCH=$(2) \
 		--opt build-arg:HASH=$(HASH) \
 		--opt build-arg:RPMS="$(RPMS)" \
-		--opt build-arg:DATE=$(DATE) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
 endef
@@ -53,7 +51,6 @@ define build_image
 		--opt build-arg:PACKAGE=$(OS)-$(1)-$(RECIPE) \
 		--opt build-arg:ARCH=$(1) \
 		--opt build-arg:HASH=$(HASH) \
-		--opt build-arg:DATE=$(DATE) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
 	lz4 -d -f $(OUTPUT)/$(OS)-$(1).img.lz4 $(OUTPUT)/$(OS)-$(1).img \

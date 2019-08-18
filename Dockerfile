@@ -1,14 +1,15 @@
 # syntax=docker/dockerfile:experimental
 
 FROM fedora:30 AS origin
-ARG DATE
-RUN dnf makecache && dnf -y update && echo ${DATE}
+RUN dnf makecache && dnf -y update
 
 FROM origin AS base
 RUN dnf -y groupinstall "C Development Tools and Libraries" \
    && dnf -y install \
         rpmdevtools dnf-plugins-core createrepo_c \
-        git rsync which cmake meson \
+        cmake git meson perl-ExtUtils-MakeMaker python which \
+        bc hostname intltool grub2-tools gperf kmod rsync wget \
+        elfutils-devel libcap-devel openssl-devel \
    && useradd builder
 
 FROM origin AS util
@@ -37,7 +38,11 @@ RUN --mount=target=/host \
     && createrepo_c rpmbuild/RPMS \
     && chown -R builder: rpmbuild/RPMS \
     && cp .rpmmacros /etc/rpm/macros \
-    && dnf -y --repofrompath repo,./rpmbuild/RPMS --nogpgcheck builddep rpmbuild/SPECS/${PACKAGE}.spec
+    && dnf -y \
+        --disablerepo '*' \
+        --repofrompath repo,./rpmbuild/RPMS \
+        --enablerepo 'repo' --nogpgcheck \
+        builddep rpmbuild/SPECS/${PACKAGE}.spec
 
 USER builder
 RUN rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
@@ -57,8 +62,9 @@ RUN --mount=target=/host \
     && cp /host/build/*-${ARCH}-*.rpm rpms \
     && createrepo_c rpms \
     && dnf -y \
+        --disablerepo '*' \
         --repofrompath repo,rpms \
-        --repo repo --nogpgcheck \
+        --enablerepo 'repo' --nogpgcheck \
         --downloadonly \
         --downloaddir . \
         install ${PACKAGE} \
