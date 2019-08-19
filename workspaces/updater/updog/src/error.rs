@@ -22,6 +22,19 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to serialize config file {}: {}", path.display(), source))]
+    ConfigSerialize {
+        path: PathBuf,
+        source: toml::ser::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to write config file {}: {}", path.display(), source))]
+    ConfigWrite {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
     #[snafu(display("Failed to create metadata cache directory: {}", source))]
     CreateMetadataCache {
         source: std::io::Error,
@@ -84,14 +97,13 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Failed to determine VERSION_ID from /etc/os-release"))]
-    VersionIdNotFound,
+    VersionIdNotFound {
+        backtrace: Backtrace,
+    },
 
-    #[snafu(display(
-        "Failed to parse VERSION_ID from /etc/os-release as integer: {}",
-        source
-    ))]
+    #[snafu(display("Failed to parse VERSION_ID from /etc/os-release"))]
     VersionIdParse {
-        source: std::num::ParseIntError,
+        source: semver::SemVerError,
         backtrace: Backtrace,
     },
 
@@ -105,5 +117,61 @@ pub(crate) enum Error {
     WriteUpdate {
         source: std::io::Error,
         backtrace: Backtrace,
+    },
+
+    #[snafu(display("Update in the incorrect state"))]
+    UpdateState {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Update wave has been missed"))]
+    WaveMissed {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("No update available"))]
+    NoUpdate {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Update wave is pending"))]
+    WavePending {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Target partition is unrecognized: {}", partition))]
+    UnknownPartition {
+        partition: String,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Invalid bound start: {}", key))]
+    BadBoundKey {
+        source: std::num::ParseIntError,
+        key: String,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Missing seed value"))]
+    MissingSeed {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Updog is not part of any wave"))]
+    NoWave {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Duplicate key ID: {}", keyid))]
+    DuplicateKeyId {
+        backtrace: Backtrace,
+        keyid: u64
+    },
+
+    #[snafu(display("Bad bound field: {}", bound_str))]
+    BadBound {
+        backtrace: Backtrace,
+        source: std::num::ParseIntError,
+        bound_str: String
     },
 }
