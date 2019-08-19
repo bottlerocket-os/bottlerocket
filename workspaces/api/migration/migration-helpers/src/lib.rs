@@ -96,7 +96,7 @@ pub fn run_migration<D: DataStore>(
 
         validate_migrated_data(&migrated)?;
 
-        set_output_data(datastore, &migrated)?;
+        set_output_data(datastore, &migrated, *committed)?;
     }
     Ok(())
 }
