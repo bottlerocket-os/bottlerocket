@@ -24,7 +24,8 @@ RPMS="${RPMS%"${RPMS##*[![:space:]]}"}"
 # Collect file-based targets needed as inputs of a package build.
 SOURCE_LINES="$("${RPMSPEC[@]}" --parse "${SPEC}" | awk '/^Source/ {print $NF}')"
 SOURCE_URLS="$(awk '$0 ~ "^https?://" {print}' <<<"${SOURCE_LINES}")"
-SOURCES="$(awk -v pkg="${PKG}" -F / '{printf "packages/%s/%s ",pkg,$NF}' <<<"${SOURCE_LINES}")"
+SOURCES="$(echo -n "${SOURCE_LINES}" \
+              | awk -v pkg="${PKG}" -F '[/ ]' '{printf "packages/%s/%s ",pkg,$NF}')"
 SOURCES="${SOURCES%"${SOURCES##*[![:space:]]}"}"
 
 PATCHES="$("${RPMSPEC[@]}" --parse "${SPEC}" \
