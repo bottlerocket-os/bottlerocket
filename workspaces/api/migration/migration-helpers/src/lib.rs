@@ -72,16 +72,9 @@ pub fn defaults_for<S: AsRef<str>>(_path: S) -> Result<Value> {
 
 /// Ensures we can use the migrated data in the new data store.  Can use this result to stop the
 /// migration process before saving any data.
-fn validate_migrated_data(input: &MigrationData) -> Result<()> {
-    // Make sure we don't have metadata describing data keys that don't exist
-    for data_key in input.metadata.keys() {
-        if !input.data.contains_key(data_key) {
-            return error::Validation {
-                msg: format!("Metadata describes nonexistent data key: {}", data_key),
-            }
-            .fail();
-        }
-    }
+fn validate_migrated_data(_migrated: &MigrationData) -> Result<()> {
+    // No validations yet.
+    // You can check the migrated data and throw error::Validation if anything seems wrong.
     Ok(())
 }
 
