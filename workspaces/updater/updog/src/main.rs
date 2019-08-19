@@ -369,3 +369,146 @@ fn main() -> ! {
         }
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Duration as TestDuration};
+
+    #[test]
+    fn test_manifest_json() {
+        let s = fs::read_to_string("tests/data/example.json").unwrap();
+        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        assert!(manifest.updates.len() > 0, "Failed to parse update manifest");
+    }
+
+    #[test]
+    fn test_serde_reader() {
+        let file = File::open("tests/data/example_2.json").unwrap();
+        let buffer = BufReader::new(file);
+        let manifest: Manifest = serde_json::from_reader(buffer).unwrap();
+        assert!(manifest.updates.len() > 0);
+    }
+
+    #[test]
+    fn test_update_ready() {
+        let config = Config {
+            metadata_base_url: String::from("foo"),
+            target_base_url: String::from("bar"),
+            seed: Some(123)
+        };
+        let mut update = Update {
+            flavor: String::from("thar"),
+            arch: String::from("test"),
+            version: Version::parse("1.0.0").unwrap(),
+            max_version: Version::parse("1.1.0").unwrap(),
+            waves: BTreeMap::new(),
+            images: Images { boot: String::from("boot"),
+                             root: String::from("root"),
+                             hash: String::from("hash")}
+        };
+
+        assert!(update.update_ready(&config).is_err(), "Imaginary wave chosen");
+
+        update.waves.insert(1024, Utc::now() + TestDuration::hours(1));
+
+        let result = update.update_ready(&config);
+        assert!(result.is_ok());
+        if let Ok(r) = result {
+            assert!(!r, "Incorrect wave chosen");
+        }
+
+
+        update.waves.insert(0, Utc::now() - TestDuration::hours(1));
+
+        let result = update.update_ready(&config);
+        assert!(result.is_ok());
+        if let Ok(r) = result {
+            assert!(r, "Update wave missed");
+        }
+
+    }
+
+    #[test]
+    fn test_final_wave() {
+        let config = Config {
+            metadata_base_url: String::from("foo"),
+            target_base_url: String::from("bar"),
+            seed: Some(512)
+        };
+        let mut update = Update {
+            flavor: String::from("thar"),
+            arch: String::from("test"),
+            version: Version::parse("1.0.0").unwrap(),
+            max_version: Version::parse("1.1.0").unwrap(),
+            waves: BTreeMap::new(),
+            images: Images { boot: String::from("boot"),
+                             root: String::from("root"),
+                             hash: String::from("hash")}
+        };
+
+        update.waves.insert(0, Utc::now() - TestDuration::hours(3));
+        update.waves.insert(256, Utc::now() - TestDuration::hours(2));
+        update.waves.insert(512, Utc::now() - TestDuration::hours(1));
+
+        let result = update.update_ready(&config).unwrap();
+        assert!(result, "All waves passed but no update");
+    }
+
+    #[test]
+    fn test_versions() {
+        let s = fs::read_to_string("tests/data/regret.json").unwrap();
+        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        let config = Config {
+            metadata_base_url: String::from("foo"),
+            target_base_url: String::from("bar"),
+            seed: Some(123)
+        };
+        // max_version is 1.20.0 in manifest
+        let version = Version::parse("1.25.0").unwrap();
+        let flavor = String::from("thar-aws-eks");
+
+        assert!(update_required(&config, &manifest, &version, &flavor).is_none(),
+                "Updog tried to exceed max_version");
+    }
+
+    #[test]
+    fn test_multiple() -> Result<()> {
+        let s = fs::read_to_string("tests/data/multiple.json").unwrap();
+        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        let config = Config {
+            metadata_base_url: String::from("foo"),
+            target_base_url: String::from("bar"),
+            seed: Some(123)
+        };
+
+        let version = Version::parse("1.10.0").unwrap();
+        let flavor = String::from("thar-aws-eks");
+        let result = update_required(&config, &manifest, &version, &flavor);
+
+        assert!(result.is_some(), "Updog failed to find an update");
+
+        if let Some(u) = result {
+            assert!(u.version == Version::parse("1.15.0").unwrap(),
+                "Incorrect version: {}, should be 1.15.0", u.version);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn bad_bound() {
+        assert!(serde_json::from_str::<Manifest>(include_str!(
+            "../tests/data/bad-bound.json"
+        ))
+        .is_err());
+    }
+
+    #[test]
+    fn duplicate_bound() {
+        assert!(serde_json::from_str::<Manifest>(include_str!(
+            "../tests/data/duplicate-bound.json"
+        ))
+        .is_err());
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "updates": [
+    {
+      "flavor": "thar-aws-eks",
+      "arch": "x86_64",
+      "version": "1.13.0",
+      "status": "Ready",
+      "max_version": "1.20.0",
+      "waves": {
+        "0": "2019-10-06T15:00:00Z",
+        "858993459":"2019-10-07T15:00:00Z"
+      },
+      "images": {
+        "boot": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
+        "root": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
+        "hash": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img"
+      }
+    }
+  ]
+}
