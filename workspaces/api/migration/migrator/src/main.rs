@@ -6,8 +6,11 @@
 #[macro_use]
 extern crate log;
 
+use data_store_version::{Version, VERSION_RE};
+use lazy_static::lazy_static;
 use nix::{dir::Dir, fcntl::OFlag, sys::stat::Mode, unistd::fsync};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use regex::Regex;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
 use std::fs;
@@ -18,12 +21,19 @@ use std::process::{self, Command};
 use std::str::FromStr;
 
 mod args;
+mod direction;
 mod error;
-mod version;
 
 use args::Args;
+use direction::Direction;
 use error::Result;
-use version::{Direction, Version, VersionComponent, MIGRATION_FILENAME_RE};
+
+lazy_static! {
+    /// Regular expression that will match migration file names and allow retrieving the
+    /// version and name components.
+    pub(crate) static ref MIGRATION_FILENAME_RE: Regex =
+        Regex::new(&format!(r"^migrate_{}_(?P<name>[a-zA-Z0-9-]+)$", *VERSION_RE)).unwrap();
+}
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -52,7 +62,11 @@ fn run() -> Result<()> {
     // We don't handle data store format (major version) migrations because they could change
     // anything about our storage; they're handled by more free-form binaries run by a separate
     // startup service.
-    let current_version = Version::from_datastore_path(&args.datastore_path)?;
+    let current_version = Version::from_datastore_path(&args.datastore_path).context(
+        error::VersionFromDataStorePath {
+            path: &args.datastore_path,
+        },
+    )?;
     if current_version.major != args.migrate_to_version.major {
         return error::MajorVersionMismatch {
             given: args.migrate_to_version.major,
