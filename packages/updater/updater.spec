@@ -10,6 +10,8 @@ License: FIXME
 Source1: root.json
 Source2: updog-toml
 Source3: updog.conf
+Source4: updog.timer
+Source5: updog.service
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}rust
@@ -51,6 +53,10 @@ install -p -m 0644 %{SOURCE2} %{buildroot}%{_cross_templatedir}/updog-toml
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{SOURCE3} %{buildroot}%{_cross_tmpfilesdir}/updog.conf
 
+mkdir -p %{buildroot}/%{_cross_unitdir}
+install -p -m 0644 %{S:4} %{buildroot}%{_cross_unitdir}/updog.timer
+install -p -m 0644 %{S:5} %{buildroot}%{_cross_unitdir}/updog.service
+
 %files -n %{_cross_os}signpost
 %{_cross_bindir}/signpost
 
@@ -60,5 +66,7 @@ install -p -m 0644 %{SOURCE3} %{buildroot}%{_cross_tmpfilesdir}/updog.conf
 %{_cross_tmpfilesdir}/updog.conf
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/updog-toml
+%{_cross_unitdir}/updog.timer
+%{_cross_unitdir}/updog.service
 
 %changelog
