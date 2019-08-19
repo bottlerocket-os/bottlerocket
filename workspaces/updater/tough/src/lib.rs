@@ -64,8 +64,8 @@ impl Repository {
     pub fn load<R: Read, P: AsRef<Path>>(
         root: R,
         datastore: P,
-        max_root_size: usize,
-        max_timestamp_size: usize,
+        max_root_size: u64,
+        max_timestamp_size: u64,
         metadata_base_url: &str,
         target_base_url: &str,
     ) -> Result<Self> {
@@ -193,7 +193,7 @@ pub struct Target {
     pub sha256: Vec<u8>,
     /// The maximum size in bytes for this target. This is an upper bound on size, and not
     /// necessarily the actual size.
-    pub length: usize,
+    pub length: u64,
 }
 
 impl From<tough_schema::Target> for Target {
@@ -257,7 +257,7 @@ fn load_root<R: Read>(
     client: &Client,
     root: R,
     datastore: &Datastore,
-    max_root_size: usize,
+    max_root_size: u64,
     metadata_base_url: &Url,
 ) -> Result<Signed<Root>> {
     // 0. Load the trusted root metadata file. We assume that a good, trusted copy of this file was
@@ -402,7 +402,7 @@ fn load_timestamp(
     client: &Client,
     root: &Signed<Root>,
     datastore: &Datastore,
-    max_timestamp_size: usize,
+    max_timestamp_size: u64,
     metadata_base_url: &Url,
 ) -> Result<Signed<Timestamp>> {
     // 2. Download the timestamp metadata file, up to Y number of bytes (because the size is

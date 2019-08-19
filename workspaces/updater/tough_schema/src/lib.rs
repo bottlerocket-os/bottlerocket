@@ -136,7 +136,7 @@ pub struct Snapshot {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Meta {
-    pub length: usize,
+    pub length: u64,
     pub hashes: Hashes,
     pub version: NonZeroU64,
 
@@ -193,7 +193,7 @@ pub struct Targets {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Target {
-    pub length: usize,
+    pub length: u64,
     pub hashes: Hashes,
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
