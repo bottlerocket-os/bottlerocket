@@ -13,9 +13,10 @@ extern crate log;
 use lazy_static::lazy_static;
 use regex::Regex;
 use snafu::{OptionExt, ResultExt};
-use std::fmt;
+use std::path::Path;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::{fmt, fs};
 
 /// VersionComponent represents each integer segment of a version string.
 pub type VersionComponent = u32;
@@ -35,6 +36,7 @@ lazy_static! {
 }
 
 pub mod error {
+    use std::io;
     use std::num::ParseIntError;
     use std::path::PathBuf;
 
@@ -60,6 +62,9 @@ pub mod error {
 
         #[snafu(display("Data store path '{}' contains invalid UTF-8", path.display()))]
         DataStorePathNotUTF8 { path: PathBuf },
+
+        #[snafu(display("Unable to read from version file path '{}': {}", path.display(), source))]
+        VersionPathRead { path: PathBuf, source: io::Error },
     }
 }
 
@@ -157,6 +162,14 @@ impl Version {
 
         // Parse and return the version
         Self::from_str_with_re(version_str, &DATA_STORE_DIRECTORY_RE)
+    }
+
+    /// This reads the version number from a given file.
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let version_str = fs::read_to_string(path.as_ref()).context(error::VersionPathRead {
+            path: path.as_ref(),
+        })?;
+        Version::from_str(&version_str)
     }
 }
 
