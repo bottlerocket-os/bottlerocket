@@ -1,0 +1,14 @@
+[package]
+name = "data_store_version"
+version = "0.1.0"
+authors = ["mrowicki <mrowicki@amazon.com>"]
+edition = "2018"
+
+[dependencies]
+lazy_static = "1.2"
+log = "0.4"
+regex = "1.1"
+snafu = "0.4"
+
+[build-dependencies]
+cargo-readme = "3.1"
