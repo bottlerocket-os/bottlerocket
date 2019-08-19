@@ -19,7 +19,6 @@ FROM base AS rpmbuild
 ARG PACKAGE
 ARG ARCH
 ARG NOCACHE
-ARG RPMS
 WORKDIR /home/builder
 
 USER builder
@@ -34,14 +33,19 @@ RUN rpmdev-setuptree \
 
 USER root
 RUN --mount=target=/host \
-    for rpm in ${RPMS} ; do cp -a /host/build/${rpm##*/} rpmbuild/RPMS ; done \
-    && createrepo_c rpmbuild/RPMS \
-    && chown -R builder: rpmbuild/RPMS \
+    ln -s /host/build/*.rpm ./rpmbuild/RPMS \
+    && createrepo_c \
+        -o ./rpmbuild/RPMS \
+        -x '*-debuginfo-*.rpm' \
+        -x '*-debugsource-*.rpm' \
+        --no-database \
+        /host/build \
     && cp .rpmmacros /etc/rpm/macros \
     && dnf -y \
         --disablerepo '*' \
         --repofrompath repo,./rpmbuild/RPMS \
-        --enablerepo 'repo' --nogpgcheck \
+        --enablerepo 'repo' \
+        --nogpgcheck \
         builddep rpmbuild/SPECS/${PACKAGE}.spec
 
 USER builder
@@ -58,13 +62,19 @@ WORKDIR /root
 
 USER root
 RUN --mount=target=/host \
-    mkdir -p {/local/,}rpms \
-    && cp /host/build/*-${ARCH}-*.rpm rpms \
-    && createrepo_c rpms \
+    mkdir -p /local/rpms ./rpmbuild/RPMS \
+    && ln -s /host/build/*.rpm ./rpmbuild/RPMS \
+    && createrepo_c \
+        -o ./rpmbuild/RPMS \
+        -x '*-debuginfo-*.rpm' \
+        -x '*-debugsource-*.rpm' \
+        --no-database \
+        /host/build \
     && dnf -y \
         --disablerepo '*' \
-        --repofrompath repo,rpms \
-        --enablerepo 'repo' --nogpgcheck \
+        --repofrompath repo,./rpmbuild/RPMS \
+        --enablerepo 'repo' \
+        --nogpgcheck \
         --downloadonly \
         --downloaddir . \
         install ${PACKAGE} \

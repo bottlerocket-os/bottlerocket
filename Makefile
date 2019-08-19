@@ -32,12 +32,10 @@ BUILDCTL_ARGS += --local context=.
 BUILDCTL_ARGS += --local dockerfile=.
 
 define build_rpm
-	$(eval RPMS:= $(shell echo $3 | tr ' ' '\n' | awk '/.rpm$$/' | tr '\n' ' '))
 	@$(BUILDCTL) build \
 		--opt target=rpm \
 		--opt build-arg:PACKAGE=$(1) \
 		--opt build-arg:ARCH=$(2) \
-		--opt build-arg:RPMS="$(RPMS)" \
 		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
