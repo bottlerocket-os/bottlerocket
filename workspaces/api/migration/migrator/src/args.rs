@@ -13,6 +13,7 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             --datastore-path PATH
+            --migration-directories PATH[:PATH:PATH...]
             (--migrate-to-version x.y | --migrate-to-version-from-file PATH)
             [ --no-color ]
             [ --verbose --verbose ... ]",
@@ -30,6 +31,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Stores user-supplied arguments.
 pub(crate) struct Args {
     pub(crate) datastore_path: PathBuf,
+    pub(crate) migration_directories: Vec<PathBuf>,
     pub(crate) migrate_to_version: Version,
     pub(crate) color: stderrlog::ColorChoice,
     pub(crate) verbosity: usize,
@@ -40,6 +42,7 @@ impl Args {
     pub(crate) fn from_env(args: env::Args) -> Self {
         // Required parameters.
         let mut datastore_path = None;
+        let mut migration_directories = None;
         let mut migrate_to_version = None;
         // Optional parameters with their defaults.
         let mut verbosity = 2; // default to INFO level
@@ -61,6 +64,18 @@ impl Args {
                     });
                     trace!("Canonicalized data store path: {}", canonical.display());
                     datastore_path = Some(canonical);
+                }
+
+                "--migration-directories" => {
+                    let paths_str = iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --migration-directories")
+                    });
+                    trace!("Given --migration-directories: {}", paths_str);
+                    let paths: Vec<_> = paths_str.split(':').map(PathBuf::from).collect();
+                    if paths.is_empty() {
+                        usage_msg("Found no paths in argument to --migration-directories");
+                    }
+                    migration_directories = Some(paths);
                 }
 
                 "--migrate-to-version" => {
@@ -101,6 +116,7 @@ impl Args {
 
         Self {
             datastore_path: datastore_path.unwrap_or_else(|| usage()),
+            migration_directories: migration_directories.unwrap_or_else(|| usage()),
             migrate_to_version: migrate_to_version.unwrap_or_else(|| usage()),
             color,
             verbosity,

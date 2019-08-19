@@ -25,9 +25,6 @@ use args::Args;
 use error::Result;
 use version::{Direction, Version, VersionComponent, MIGRATION_FILENAME_RE};
 
-// TODO: handle multiple paths for migrations, e.g. stored in an image and downloaded at runtime
-const MIGRATIONS_PATH: &str = "/var/lib/thar/datastore/migrations";
-
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -74,7 +71,11 @@ fn run() -> Result<()> {
             process::exit(0);
         });
 
-    let migrations = find_migrations(current_version, args.migrate_to_version)?;
+    let migrations = find_migrations(
+        &args.migration_directories,
+        current_version,
+        args.migrate_to_version,
+    )?;
 
     let (copy_path, copy_id) = copy_datastore(&args.datastore_path, args.migrate_to_version)?;
     run_migrations(direction, &migrations, &copy_path)?;
@@ -90,13 +91,15 @@ fn run() -> Result<()> {
 /// TODO: This does not yet handle migrations that have been replaced by newer versions - we only
 /// look in one fixed location. We need to get the list of migrations from update metadata, and
 /// only return those.  That may also obviate the need for select_migrations.
-fn find_migrations_on_disk() -> Result<Vec<PathBuf>> {
+fn find_migrations_on_disk<P>(dir: P) -> Result<Vec<PathBuf>>
+where
+    P: AsRef<Path>,
+{
+    let dir = dir.as_ref();
     let mut result = Vec::new();
 
-    trace!("Looking for potential migrations in {}", MIGRATIONS_PATH);
-    let entries = fs::read_dir(MIGRATIONS_PATH).context(error::ListMigrations {
-        dir: MIGRATIONS_PATH,
-    })?;
+    trace!("Looking for potential migrations in {}", dir.display());
+    let entries = fs::read_dir(dir).context(error::ListMigrations { dir })?;
     for entry in entries {
         let entry = entry.context(error::ReadMigrationEntry)?;
         let path = entry.path();
@@ -226,9 +229,15 @@ fn select_migrations<P: AsRef<Path>>(
 
 /// Given the versions we're migrating from and to, this will return an ordered list of paths to
 /// migration binaries we should run to complete the migration on a data store.
-fn find_migrations(from: Version, to: Version) -> Result<Vec<PathBuf>> {
-    // This separation allows for easy testing of select_migrations.
-    let candidates = find_migrations_on_disk()?;
+// This separation allows for easy testing of select_migrations.
+fn find_migrations<P>(paths: &[P], from: Version, to: Version) -> Result<Vec<PathBuf>>
+where
+    P: AsRef<Path>,
+{
+    let mut candidates = Vec::new();
+    for path in paths {
+        candidates.extend(find_migrations_on_disk(path)?);
+    }
     select_migrations(from, to, &candidates)
 }
 
