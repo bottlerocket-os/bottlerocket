@@ -1,5 +1,6 @@
 ---
-title: Bug report - Thar image
+name: Bug report - Thar image
+about: Let us know about a problem with an image
 ---
 
 <!--
