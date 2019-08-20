@@ -1,5 +1,6 @@
 ---
-title: Feature request
+name: Feature request
+about: Request a change to to the project
 ---
 
 <!--
