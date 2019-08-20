@@ -1,22 +1,30 @@
-//! This module handles versioning of data stores - detecting their versions, ordering versions,
-//! determining whether a version change is forward or backward, etc.
+/*!
+# Background
 
-use crate::error::{self, Result};
+This library handles versioning of data stores - primarily the detection and creation of
+Version objects from various inputs.
+
+It is especially helpful during data store migrations, and is also used for data store creation.
+*/
+
+#[macro_use]
+extern crate log;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use snafu::{OptionExt, ResultExt};
-use std::cmp::Ordering;
 use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
 
 /// VersionComponent represents each integer segment of a version string.
-pub(crate) type VersionComponent = u32;
+pub type VersionComponent = u32;
 
 lazy_static! {
     /// Regular expression that captures the entire version string (1.2 or v1.2) along with the
     /// major (1) and minor (2) separately.
-    pub(crate) static ref VERSION_RE: Regex =
+    #[doc(hidden)]
+    pub static ref VERSION_RE: Regex =
         Regex::new(r"(?P<version>v?(?P<major>[0-9]+)\.(?P<minor>[0-9]+))").unwrap();
 
     /// Regular expression that captures the version and ID from the name of a data store
@@ -24,22 +32,48 @@ lazy_static! {
     /// major (1), minor (5), and id (0123456789abcdef).
     pub(crate) static ref DATA_STORE_DIRECTORY_RE: Regex =
         Regex::new(&format!(r"^{}_(?P<id>.*)$", *VERSION_RE)).unwrap();
-
-    /// Regular expression that will match migration file names and allow retrieving the
-    /// version and name components.
-    pub(crate) static ref MIGRATION_FILENAME_RE: Regex =
-        Regex::new(&format!(r"^migrate_{}_(?P<name>[a-zA-Z0-9-]+)$", *VERSION_RE)).unwrap();
 }
+
+pub mod error {
+    use std::num::ParseIntError;
+    use std::path::PathBuf;
+
+    use snafu::Snafu;
+
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility = "pub(super)")]
+    pub enum Error {
+        #[snafu(display("Internal error: {}", msg))]
+        Internal { msg: String },
+
+        #[snafu(display("Given string '{}' not a version, must match re: {}", given, re))]
+        InvalidVersion { given: String, re: String },
+
+        #[snafu(display("Version component '{}' not an integer: {}", component, source))]
+        InvalidVersionComponent {
+            component: String,
+            source: ParseIntError,
+        },
+
+        #[snafu(display("Data store link '{}' points to /", path.display()))]
+        DataStoreLinkToRoot { path: PathBuf },
+
+        #[snafu(display("Data store path '{}' contains invalid UTF-8", path.display()))]
+        DataStorePathNotUTF8 { path: PathBuf },
+    }
+}
+
+type Result<T> = std::result::Result<T, error::Error>;
 
 /// Version represents the version identifiers of our data store.
 // Deriving Ord will check the fields in order, so as long as the more important fields (e.g.
 // 'major') are listed first, it will compare versions as expected.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub(crate) struct Version {
+pub struct Version {
     /// The data store format version, or major for short.
-    pub(crate) major: VersionComponent,
+    pub major: VersionComponent,
     /// The content format version, or minor for short.
-    pub(crate) minor: VersionComponent,
+    pub minor: VersionComponent,
 }
 
 impl FromStr for Version {
@@ -59,7 +93,7 @@ impl fmt::Display for Version {
 
 impl Version {
     #[allow(dead_code)]
-    pub(crate) fn new(major: VersionComponent, minor: VersionComponent) -> Self {
+    pub fn new(major: VersionComponent, minor: VersionComponent) -> Self {
         Self { major, minor }
     }
 
@@ -109,7 +143,7 @@ impl Version {
     ///    -> /path/to/datastore/v1
     ///    -> /path/to/datastore/v1.5
     ///    -> /path/to/datastore/v1.5_0123456789abcdef
-    pub(crate) fn from_datastore_path<P: Into<PathBuf>>(path: P) -> Result<Self> {
+    pub fn from_datastore_path<P: Into<PathBuf>>(path: P) -> Result<Self> {
         let path = path.into();
         trace!("Getting version from datastore path: {}", path.display());
 
@@ -126,38 +160,9 @@ impl Version {
     }
 }
 
-/// Direction represents whether we're moving forward toward a newer version, or rolling back to
-/// an older version.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub(crate) enum Direction {
-    Forward,
-    Backward,
-}
-
-impl fmt::Display for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Direction::Forward => write!(f, "--forward"),
-            Direction::Backward => write!(f, "--backward"),
-        }
-    }
-}
-
-impl Direction {
-    /// Determines the migration direction, given the outgoing ("from') and incoming ("to")
-    /// versions.
-    pub(crate) fn from_versions(from: Version, to: Version) -> Option<Self> {
-        match from.cmp(&to) {
-            Ordering::Less => Some(Direction::Forward),
-            Ordering::Greater => Some(Direction::Backward),
-            Ordering::Equal => None,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::{Direction, Version};
+    use super::Version;
     use std::str::FromStr;
 
     #[test]
@@ -198,25 +203,5 @@ mod test {
         assert_eq!("v0.1", format!("{}", Version::new(0, 1)));
         assert_eq!("v1.0", format!("{}", Version::new(1, 0)));
         assert_eq!("v2.3", format!("{}", Version::new(2, 3)));
-    }
-
-    #[test]
-    fn direction() {
-        let v01 = Version::new(0, 1);
-        let v02 = Version::new(0, 2);
-        let v10 = Version::new(1, 0);
-
-        assert_eq!(Direction::from_versions(v01, v02), Some(Direction::Forward));
-        assert_eq!(
-            Direction::from_versions(v02, v01),
-            Some(Direction::Backward)
-        );
-        assert_eq!(Direction::from_versions(v01, v01), None);
-
-        assert_eq!(Direction::from_versions(v02, v10), Some(Direction::Forward));
-        assert_eq!(
-            Direction::from_versions(v10, v02),
-            Some(Direction::Backward)
-        );
     }
 }

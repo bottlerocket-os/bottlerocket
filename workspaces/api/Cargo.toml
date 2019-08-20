@@ -2,6 +2,7 @@
 members = [
     "apiserver",
     "apiclient",
+    "data_store_version",
     "moondog",
     "sundog",
     "pluto",

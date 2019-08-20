@@ -1,9 +1,9 @@
 //! This module owns the error type used by the migrator.
 
-use crate::{Version, VersionComponent};
+use data_store_version::error::Error as VersionError;
+use data_store_version::{Version, VersionComponent};
 use snafu::Snafu;
 use std::io;
-use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::process::{Command, Output};
 
@@ -17,14 +17,8 @@ pub(crate) enum Error {
     #[snafu(display("Internal error: {}", msg))]
     Internal { msg: String },
 
-    #[snafu(display("Given string '{}' not a version, must match re: {}", given, re))]
-    InvalidVersion { given: String, re: String },
-
-    #[snafu(display("Version component '{}' not an integer: {}", component, source))]
-    InvalidVersionComponent {
-        component: String,
-        source: ParseIntError,
-    },
+    #[snafu(display("Unable to create version from data store path '{}': {}", path.display(), source))]
+    VersionFromDataStorePath { path: PathBuf, source: VersionError },
 
     #[snafu(display("Can only migrate minor versions; major version '{}' requested, major version of given data store is '{}'", given, found))]
     MajorVersionMismatch {
@@ -38,9 +32,6 @@ pub(crate) enum Error {
     #[snafu(display("Data store link '{}' points to /", path.display()))]
     DataStoreLinkToRoot { path: PathBuf },
 
-    #[snafu(display("Data store path '{}' contains invalid UTF-8", path.display()))]
-    DataStorePathNotUTF8 { path: PathBuf },
-
     #[snafu(display("Data store path '{}' contains invalid version: {}", path.display(), source))]
     InvalidDataStoreVersion {
         path: PathBuf,
@@ -51,8 +42,8 @@ pub(crate) enum Error {
     #[snafu(display("Migration '{}' contains invalid version: {}", path.display(), source))]
     InvalidMigrationVersion {
         path: PathBuf,
-        #[snafu(source(from(Error, Box::new)))]
-        source: Box<Error>,
+        #[snafu(source(from(VersionError, Box::new)))]
+        source: Box<VersionError>,
     },
 
     #[snafu(display("Data store for new version {} already exists at {}", version, path.display()))]
