@@ -49,22 +49,15 @@ endef
 define build_image
 	$(eval HASH:= $(shell sha1sum $(2) /dev/null | sha1sum - | awk '{print $$1}'))
 	@$(BUILDCTL) build \
-		--opt target=builder \
+		--opt target=image \
 		--opt build-arg:PACKAGE=$(OS)-$(1)-$(RECIPE) \
 		--opt build-arg:ARCH=$(1) \
 		--opt build-arg:HASH=$(HASH) \
 		--opt build-arg:DATE=$(DATE) \
-		--output type=docker,name=$(OS)-builder:$(1),dest=build/$(OS)-$(1)-builder.tar \
+		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
-	@$(DOCKER) load < build/$(OS)-$(1)-builder.tar
-	@$(DOCKER) run -t -v /dev:/dev -v $(OUTPUT):/local/output \
-		$(OS)-builder:$(1) \
-			--disk-image-name=$(OS)-$(1).img \
-			--boot-image-name=$(OS)-$(1)-boot.ext4.lz4 \
-			--verity-image-name=$(OS)-$(1)-root.verity.lz4 \
-			--root-image-name=$(OS)-$(1)-root.ext4.lz4 \
-			--package-dir=/local/rpms \
-			--output-dir=/local/output
+	lz4 -d $(OUTPUT)/$(OS)-$(1).img.lz4 >$(OUTPUT)/$(OS)-$(1).img \
+		&& rm -f $(OUTPUT)/$(OS)-$(1).img.lz4
 endef
 
 # `makedep` files are a hook to provide additional dependencies when
