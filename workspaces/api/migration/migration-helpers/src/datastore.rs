@@ -54,6 +54,7 @@ pub(crate) fn get_input_data<D: DataStore>(
 pub(crate) fn set_output_data<D: DataStore>(
     datastore: &mut D,
     input: &MigrationData,
+    committed: Committed,
 ) -> Result<()> {
     // Prepare serialized data
     let mut data = HashMap::new();
@@ -62,11 +63,11 @@ pub(crate) fn set_output_data<D: DataStore>(
         data.insert(data_key, value);
     }
 
-    // This is one of the rare cases where we want to set keys directly to the live datastore:
+    // This is one of the rare cases where we want to set keys directly in the datastore:
     // * We're operating on a temporary copy of the datastore, so no concurrency issues
     // * We're either about to reboot or just have, and the settings applier will run afterward
     datastore
-        .set_keys(&data, Committed::Live)
+        .set_keys(&data, committed)
         .context(error::DataStoreWrite)?;
 
     // Set metadata in a loop (currently no batch API)
