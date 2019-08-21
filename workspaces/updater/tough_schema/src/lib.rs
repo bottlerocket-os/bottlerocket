@@ -46,14 +46,6 @@ pub struct Signed<T> {
     pub signed: T,
     /// A list of signatures and their key IDs.
     pub signatures: Vec<Signature>,
-
-    /// Extra arguments found during deserialization.
-    ///
-    /// We must store these to correctly verify signatures for this object.
-    ///
-    /// If you're instantiating this struct, you should make this `HashMap::empty()`.
-    #[serde(flatten)]
-    pub _extra: HashMap<String, Value>,
 }
 
 /// A signature and the key ID that made it.
@@ -63,14 +55,6 @@ pub struct Signature {
     pub keyid: Decoded<Hex>,
     /// A hex-encoded signature of the canonical JSON form of a role.
     pub sig: Decoded<Hex>,
-
-    /// Extra arguments found during deserialization.
-    ///
-    /// We must store these to correctly verify signatures for this object.
-    ///
-    /// If you're instantiating this struct, you should make this `HashMap::empty()`.
-    #[serde(flatten)]
-    pub _extra: HashMap<String, Value>,
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -152,7 +136,7 @@ pub struct Snapshot {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Meta {
-    pub length: usize,
+    pub length: u64,
     pub hashes: Hashes,
     pub version: NonZeroU64,
 
@@ -209,7 +193,7 @@ pub struct Targets {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Target {
-    pub length: usize,
+    pub length: u64,
     pub hashes: Hashes,
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]

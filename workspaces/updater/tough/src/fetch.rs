@@ -41,7 +41,7 @@ fn fetch(client: &Client, url: Url) -> Result<impl Read> {
 pub(crate) fn fetch_max_size(
     client: &Client,
     url: Url,
-    max_size: usize,
+    max_size: u64,
     specifier: &'static str,
 ) -> Result<impl Read> {
     Ok(MaxSizeAdapter::new(
@@ -54,7 +54,7 @@ pub(crate) fn fetch_max_size(
 pub(crate) fn fetch_sha256(
     client: &Client,
     url: Url,
-    size: usize,
+    size: u64,
     specifier: &'static str,
     sha256: &[u8],
 ) -> Result<impl Read> {
