@@ -12,7 +12,7 @@ RUN dnf -y groupinstall "C Development Tools and Libraries" \
    && useradd builder
 
 FROM origin AS util
-RUN dnf -y install e2fsprogs gdisk grub2-tools kpartx lz4 veritysetup dosfstools mtools
+RUN dnf -y install createrepo_c e2fsprogs gdisk grub2-tools kpartx lz4 veritysetup dosfstools mtools
 
 FROM base AS rpmbuild
 ARG PACKAGE
@@ -45,7 +45,7 @@ RUN rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 FROM scratch AS rpm
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /
 
-FROM base AS imgbuild
+FROM util AS imgbuild
 ARG PACKAGE
 ARG ARCH
 ARG HASH
@@ -64,10 +64,10 @@ RUN --mount=target=/host \
         install ${PACKAGE} \
     && mv *.rpm /local/rpms \
     && createrepo_c /local/rpms \
-    && cp /host/bin/rpm2img /local \
+    && /host/bin/rpm2img \
+        --package-dir=/local/rpms \
+        --output-dir=/local/output \
     && echo ${HASH}
 
-FROM util AS builder
-COPY --from=imgbuild /local/ /local/
-ENTRYPOINT ["/local/rpm2img"]
-CMD []
+FROM scratch AS image
+COPY --from=imgbuild /local/output/* /

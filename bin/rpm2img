@@ -6,20 +6,17 @@ shopt -qs failglob
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
-      --disk-image-name=*) DISK_IMAGE_NAME="${optarg}" ;;
-      --boot-image-name=*) BOOT_IMAGE_NAME="${optarg}" ;;
-      --verity-image-name=*) VERITY_IMAGE_NAME="${optarg}" ;;
-      --root-image-name=*) ROOT_IMAGE_NAME="${optarg}" ;;
       --package-dir=*) PACKAGE_DIR="${optarg}" ;;
       --output-dir=*) OUTPUT_DIR="${optarg}" ;;
    esac
 done
 
 mkdir -p "${OUTPUT_DIR}"
-rm -f "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${VERITY_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
+
+DISK_IMAGE_NAME="thar-${ARCH}.img.lz4"
+BOOT_IMAGE_NAME="thar-${ARCH}-boot.ext4.lz4"
+VERITY_IMAGE_NAME="thar-${ARCH}-root.verity.lz4"
+ROOT_IMAGE_NAME="thar-${ARCH}-root.ext4.lz4"
 
 DISK_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
@@ -43,7 +40,7 @@ THAR_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
 THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 THAR_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
 
-if [[ "$(uname -m)" == "x86_64" ]]; then
+if [[ "${ARCH}" == "x86_64" ]]; then
   FIRM_NAME="BIOS-BOOT"
   THAR_FIRM_TYPECODE="ef02"
 else
@@ -72,7 +69,7 @@ mkdir -p "${ROOT_MOUNT}"
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
-if [[ "$(uname -m)" == "x86_64" ]]; then
+if [[ "${ARCH}" == "x86_64" ]]; then
   # MBR and BIOS-BOOT
   echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
   "${ROOT_MOUNT}/sbin/grub-bios-setup" \
@@ -160,7 +157,7 @@ dd if="${DATA_IMAGE}" of="${DISK_IMAGE}" conv=notrunc,sparse bs=512 seek=$((2048
 
 sgdisk -v "${DISK_IMAGE}"
 
-mv "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
+lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
 lz4 -9vc "${VERITY_IMAGE}" >"${OUTPUT_DIR}/${VERITY_IMAGE_NAME}"
 lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
