@@ -7,7 +7,7 @@ Requires=storewolf.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/apiserver --datastore-path /var/lib/thar/datastore/v1 -v -v -v
+ExecStart=/usr/bin/apiserver --datastore-path /var/lib/thar/datastore/current -v -v -v
 
 [Install]
 WantedBy=multi-user.target

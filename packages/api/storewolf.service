@@ -3,7 +3,7 @@ Description=Datastore creator
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/storewolf --datastore-path /var/lib/thar/datastore/v1
+ExecStart=/usr/bin/storewolf --data-store-base-path /var/lib/thar/datastore
 RemainAfterExit=true
 
 [Install]

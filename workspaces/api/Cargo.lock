@@ -1829,7 +1829,9 @@ version = "0.1.0"
 dependencies = [
  "apiserver 0.1.0",
  "cargo-readme 3.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "data_store_version 0.1.0",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "stderrlog 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
