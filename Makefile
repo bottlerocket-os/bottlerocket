@@ -16,7 +16,8 @@ VARS = $(SPECS:.spec=.makevar)
 PKGS = $(SPECS:.spec=.makepkg)
 
 OUTPUT ?= $(TOPDIR)/build
-OUTVAR := $(shell mkdir -p $(OUTPUT))
+CARGO_HOME ?= $(TOPDIR)/.cargo
+OUTVAR := $(shell mkdir -p $(OUTPUT) $(CARGO_HOME))
 
 ARCH ?= $(shell uname -m)
 

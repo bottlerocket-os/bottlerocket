@@ -49,7 +49,10 @@ RUN --mount=target=/host \
         builddep rpmbuild/SPECS/${PACKAGE}.spec
 
 USER builder
-RUN rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
+RUN --mount=source=.cargo,target=/home/builder/.cargo \
+    --mount=type=cache,target=/home/builder/.cache,uid=1000,id=${PACKAGE} \
+    --mount=source=workspaces,target=/home/builder/rpmbuild/BUILD/workspaces \
+    rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
 FROM scratch AS rpm
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /

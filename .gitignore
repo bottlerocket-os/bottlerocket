@@ -5,3 +5,4 @@
 *.tar.*
 /packages/*/*.crate
 **/target/
+/.cargo
