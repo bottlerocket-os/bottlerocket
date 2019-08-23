@@ -1,0 +1,29 @@
+From 24224b70389c05d5aa573047d450e1fe82021bbe Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Fri, 23 Aug 2019 22:14:50 +0000
+Subject: [PATCH] skip libelf check
+
+The host library is detected, but it is not available for the target.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ configure | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/configure b/configure
+index 45fcffb6..ae130c5c 100755
+--- a/configure
++++ b/configure
+@@ -383,9 +383,6 @@ check_setns
+ echo -n "SELinux support: "
+ check_selinux
+ 
+-echo -n "ELF support: "
+-check_elf
+-
+ echo -n "libmnl support: "
+ check_mnl
+ 
+-- 
+2.21.0
+
