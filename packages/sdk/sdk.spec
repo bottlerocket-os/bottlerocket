@@ -97,7 +97,6 @@ License: GPLv3+
 Summary: GNU Standard C++ library for %{_cross_target}
 Version: %{gccver}
 BuildArch: noarch
-Requires: gcc-%{_cross_target} = %{gccver}
 License: GPLv3+
 
 %description -n libstdc++-%{_cross_target}
@@ -107,7 +106,6 @@ License: GPLv3+
 Summary: GNU Atomic library for %{_cross_target}
 Version: %{gccver}
 BuildArch: noarch
-Requires: gcc-%{_cross_target} = %{gccver}
 License: GPLv3+
 
 %description -n libatomic-%{_cross_target}
@@ -117,7 +115,6 @@ License: GPLv3+
 Summary: GNU Transactional Memory library for %{_cross_target}
 Version: %{gccver}
 BuildArch: noarch
-Requires: gcc-%{_cross_target} = %{gccver}
 License: GPLv3+
 
 %description -n libitm-%{_cross_target}
@@ -127,7 +124,6 @@ License: GPLv3+
 Summary: Sanitizer libraries for %{_cross_target}
 Version: %{gccver}
 BuildArch: noarch
-Requires: gcc-%{_cross_target} = %{gccver}
 License: GPLv3+
 
 %description -n libsanitizer-%{_cross_target}
@@ -138,7 +134,6 @@ License: GPLv3+
 Summary: GNU Quad-Precision Math library for %{_cross_target}
 Version: %{gccver}
 BuildArch: noarch
-Requires: gcc-%{_cross_target} = %{gccver}
 License: GPLv3+
 
 %description -n libquadmath-%{_cross_target}
@@ -148,7 +143,6 @@ License: GPLv3+
 Summary: MPX libraries for %{_cross_target}
 Version: %{gccver}
 BuildArch: noarch
-Requires: gcc-%{_cross_target} = %{gccver}
 License: GPLv3+
 
 %description -n libmpx-%{_cross_target}
