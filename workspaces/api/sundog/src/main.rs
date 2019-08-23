@@ -8,11 +8,13 @@ The output is collected and sent to a known Thar API server endpoint.
 */
 
 use snafu::{ensure, OptionExt, ResultExt};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
+use std::path::Path;
 use std::process;
 use std::str;
 
+use apiserver::datastore::serialization::to_pairs_with_prefix;
 use apiserver::datastore::{self, deserialization};
 use apiserver::model;
 
@@ -22,6 +24,7 @@ extern crate log;
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
+const API_PENDING_SETTINGS_URI: &str = "/settings/pending";
 const API_SETTING_GENERATORS_URI: &str = "/metadata/setting-generators";
 
 /// Potential errors during Sundog execution
@@ -31,6 +34,7 @@ mod error {
 
     use apiserver::datastore;
     use apiserver::datastore::deserialization;
+    use apiserver::datastore::serialization;
 
     /// Potential errors during dynamic settings retrieval
     #[derive(Debug, Snafu)]
@@ -109,7 +113,10 @@ mod error {
         Deserialize { source: deserialization::Error },
 
         #[snafu(display("Error serializing Settings to JSON: {}", source))]
-        Serialize { source: serde_json::error::Error },
+        SerializeRequest { source: serde_json::error::Error },
+
+        #[snafu(display("Error serializing Settings: {} ", source))]
+        SerializeSettings { source: serialization::Error },
 
         #[snafu(display("Error serializing command output '{}': {}", output, source))]
         SerializeScalar {
@@ -150,12 +157,78 @@ where
     Ok(generators)
 }
 
+/// Given a list of settings, query the API for any that are currently
+/// set or are in pending state.
+fn get_populated_settings<P>(socket_path: P, to_query: Vec<&str>) -> Result<HashSet<String>>
+where
+    P: AsRef<Path>,
+{
+    debug!("Querying API for populated settings");
+
+    let mut populated_settings = HashSet::new();
+
+    // Build the query string and the URI containing that query. Currently
+    // the API doesn't suport queries for the '/settings/pending' endpoint,
+    // so we dont' build the string for it.
+    let query = to_query.join(",");
+    let committed_uri = format!("{}?keys={}", API_SETTINGS_URI, query);
+
+    for uri in &[committed_uri, API_PENDING_SETTINGS_URI.to_string()] {
+        let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), &uri, "GET", None)
+            .context(error::APIRequest { method: "GET", uri })?;
+        ensure!(
+            code.is_success(),
+            error::APIResponse {
+                method: "GET",
+                uri,
+                code,
+                response_body,
+            }
+        );
+
+        // Build a Settings struct from the response.
+        let settings: model::Settings = serde_json::from_str(&response_body)
+            .context(error::ResponseJson { method: "GET", uri })?;
+
+        // Serialize the Settings struct into key/value pairs. This builds the dotted
+        // string representation of the setting
+        let settings_keypairs = to_pairs_with_prefix("settings".to_string(), &settings)
+            .context(error::SerializeSettings)?;
+
+        // Put the setting into our hashset of populated keys
+        for (k, _) in settings_keypairs {
+            populated_settings.insert(k);
+        }
+    }
+    trace!("Found populated settings: {:#?}", &populated_settings);
+    Ok(populated_settings)
+}
+
 /// Run the setting generators and collect the output
-fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<model::Settings> {
+fn get_dynamic_settings<P>(
+    socket_path: P,
+    generators: HashMap<String, String>,
+) -> Result<model::Settings>
+where
+    P: AsRef<Path>,
+{
     let mut settings = HashMap::new();
+
+    // Build the list of settings to query from the datastore to see if they
+    // are currently populated.
+    // `generators` keys are setting names in the proper dotted
+    // format, i.e. "settings.kubernetes.node-ip"
+    let settings_to_query: Vec<&str> = generators.keys().map(|s| s.as_ref()).collect();
+    let populated_settings = get_populated_settings(&socket_path, settings_to_query)?;
 
     // For each generator, run it and capture the output
     for (setting, generator) in generators {
+        // Don't clobber settings that are already populated
+        if populated_settings.contains(&setting) {
+            debug!("Setting '{}' is already populated, skipping", setting);
+            continue;
+        }
+
         debug!("Running generator: '{}'", &generator);
 
         // Split on space, assume the first item is the command
@@ -217,8 +290,8 @@ fn get_dynamic_settings(generators: HashMap<String, String>) -> Result<model::Se
         // The command output must be serialized since we intend to call the
         // datastore-level construct `from_map` on it. `from_map` treats
         // strings as a serialized structure.
-        let serialized_output = datastore::serialize_scalar(&output)
-            .context(error::SerializeScalar { output: output })?;
+        let serialized_output =
+            datastore::serialize_scalar(&output).context(error::SerializeScalar { output })?;
         trace!("Serialized output: {}", &serialized_output);
 
         settings.insert(setting, serialized_output);
@@ -238,7 +311,7 @@ where
     S: AsRef<str>,
 {
     // Serialize our Settings struct to the JSON wire format
-    let request_body = serde_json::to_string(&settings).context(error::Serialize)?;
+    let request_body = serde_json::to_string(&settings).context(error::SerializeRequest)?;
 
     let uri = API_SETTINGS_URI;
     let method = "PATCH";
@@ -336,7 +409,7 @@ fn main() -> Result<()> {
     }
 
     info!("Retrieving settings values");
-    let settings = get_dynamic_settings(generators)?;
+    let settings = get_dynamic_settings(&args.socket_path, generators)?;
 
     info!("Sending settings values to the API");
     set_settings(&args.socket_path, settings)?;
