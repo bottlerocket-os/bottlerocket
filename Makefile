@@ -44,7 +44,7 @@ endef
 define build_image
 	@$(BUILDCTL) build \
 		--opt target=image \
-		--opt build-arg:PACKAGE=$(OS)-$(ARCH)-$(RECIPE) \
+		--opt build-arg:PACKAGES="$(1)" \
 		--opt build-arg:ARCH=$(ARCH) \
 		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
@@ -84,7 +84,10 @@ include $(PKGS)
 
 .SECONDEXPANSION:
 $(ARCH): $$($(OS)-$(ARCH)-$(RECIPE))
-	$(call build_image)
+	$(eval PACKAGES := $(strip $(subst $(OS)-$(ARCH)-,,$($(OS)-$(ARCH)-$(RECIPE)-install))))
+	$(eval PACKAGES := $(strip $(subst -$(ARCH)-$(OS)-linux-gnu,,$(PACKAGES))))
+	$(eval PACKAGES := $(shell echo -n $(PACKAGES)| awk '!a[$$0]++' RS=' ' ORS=' '))
+	$(call build_image,$(PACKAGES))
 
 all: $(ARCH)
 

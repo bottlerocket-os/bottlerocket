@@ -55,7 +55,7 @@ FROM scratch AS rpm
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /
 
 FROM util AS imgbuild
-ARG PACKAGE
+ARG PACKAGES
 ARG ARCH
 ARG NOCACHE
 WORKDIR /root
@@ -77,7 +77,7 @@ RUN --mount=target=/host \
         --nogpgcheck \
         --downloadonly \
         --downloaddir . \
-        install ${PACKAGE} \
+        install $(printf "thar-${ARCH}-%s\n" ${PACKAGES}) \
     && mv *.rpm /local/rpms \
     && createrepo_c /local/rpms \
     && /host/bin/rpm2img \
