@@ -4,3 +4,4 @@
 *.makedep
 *.tar.*
 /packages/*/*.crate
+**/target/

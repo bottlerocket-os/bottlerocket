@@ -3,3 +3,4 @@
 /build/*.tar
 /build/*-debuginfo-*.rpm
 /build/*-debugsource-*.rpm
+**/target/*
