@@ -147,7 +147,11 @@ CROSS_COMPILATION_CONF_EOF\
   GOPATH="${PWD}/GOPATH" ; export GOPATH ; \
   GOOS="%{_cross_go_os}" ; export GOOS ; \
   GOARCH="%{_cross_go_arch}" ; export GOARCH ; \
+  CC="%{_cross_target}-gcc" ; export CC ; \
+  CXX="%{_cross_target}-g++" ; export CXX ; \
   CC_FOR_%{_cross_go_os}_%{_cross_go_arch}="%{_cross_target}-gcc" ; export CC_FOR_%{_cross_go_os}_%{_cross_go_arch} ; \
+  CC_FOR_TARGET="%{_cross_target}-gcc" ; export CC_FOR_TARGET ; \
+  CXX_FOR_TARGET="%{_cross_target}-g++" ; export CXX_FOR_TARGET ; \
   CGO_ENABLED=1 ; export CGO_ENABLED ; \
   PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
 
