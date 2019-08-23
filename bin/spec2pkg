@@ -37,11 +37,11 @@ BUILDREQUIRES="$("${RPMSPEC[@]}" --query --buildrequires "${SPEC}" \
                     | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
 BUILDREQUIRES="${BUILDREQUIRES%"${BUILDREQUIRES##*[![:space:]]}"}"
 
-echo "${RPMS} : build-${PKG}-${ARCH}"
+echo "${RPMS} : build-${PKG}"
 echo -e "\t@:\n"
-echo -e ".INTERMEDIATE: build-${PKG}-${ARCH}\n"
-echo "build-${PKG}-${ARCH} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}"
-echo -e "\t\$(call build_rpm,${PKG},${ARCH})\n"
+echo -e ".INTERMEDIATE: build-${PKG}\n"
+echo "build-${PKG} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}"
+echo -e "\t\$(call build_rpm,${PKG})\n"
 
 for url in ${SOURCE_URLS}; do
     FILENAME="${url##*/}"

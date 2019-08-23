@@ -35,7 +35,7 @@ define build_rpm
 	@$(BUILDCTL) build \
 		--opt target=rpm \
 		--opt build-arg:PACKAGE=$(1) \
-		--opt build-arg:ARCH=$(2) \
+		--opt build-arg:ARCH=$(ARCH) \
 		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
@@ -44,13 +44,13 @@ endef
 define build_image
 	@$(BUILDCTL) build \
 		--opt target=image \
-		--opt build-arg:PACKAGE=$(OS)-$(1)-$(RECIPE) \
-		--opt build-arg:ARCH=$(1) \
+		--opt build-arg:PACKAGE=$(OS)-$(ARCH)-$(RECIPE) \
+		--opt build-arg:ARCH=$(ARCH) \
 		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
-	lz4 -d -f $(OUTPUT)/$(OS)-$(1).img.lz4 $(OUTPUT)/$(OS)-$(1).img \
-		&& rm -f $(OUTPUT)/$(OS)-$(1).img.lz4
+	lz4 -d -f $(OUTPUT)/$(OS)-$(ARCH).img.lz4 $(OUTPUT)/$(OS)-$(ARCH).img \
+		&& rm -f $(OUTPUT)/$(OS)-$(ARCH).img.lz4
 endef
 
 # `makedep` files are a hook to provide additional dependencies when
@@ -84,7 +84,7 @@ include $(PKGS)
 
 .SECONDEXPANSION:
 $(ARCH): $$($(OS)-$(ARCH)-$(RECIPE))
-	$(call build_image,$@)
+	$(call build_image)
 
 all: $(ARCH)
 
