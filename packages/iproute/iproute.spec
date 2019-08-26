@@ -5,6 +5,7 @@ Summary: Tools for advanced IP routing and network device configuration
 License: GPLv2+ and Public Domain
 URL: http://kernel.org/pub/linux/utils/net/iproute2/
 Source0: http://kernel.org/pub/linux/utils/net/iproute2/iproute2-%{version}.tar.xz
+Patch1: 0001-skip-libelf-check.patch
 
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -20,7 +21,9 @@ Requires: %{_cross_os}libmnl
 %prep
 %autosetup -n iproute2-%{version} -p1
 
-%global set_dirs \
+%global set_env \
+export CC="%{_cross_target}-gcc" \\\
+export HOSTCC="gcc" \\\
 export DESTDIR='%{buildroot}' \\\
 export SBINDIR='%{_cross_sbindir}' \\\
 export MANDIR='%{_cross_mandir}' \\\
@@ -33,13 +36,13 @@ export PKG_CONFIG_PATH='%{_cross_pkgconfigdir}' \\\
 %{nil}
 
 %build
-%set_dirs
+%set_env
 %set_cross_build_flags
 ./configure
 %make_build
 
 %install
-%set_dirs
+%set_env
 %make_install
 
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}

@@ -18,6 +18,9 @@ URL: https://www.rust-lang.org
 Source0: https://static.rust-lang.org/dist/rustc-%{version}-%{_build_cpu}-unknown-linux-gnu.tar.xz
 Source1: https://static.rust-lang.org/dist/cargo-%{cargo_version}-%{_build_cpu}-unknown-linux-gnu.tar.xz
 Source2: https://static.rust-lang.org/dist/rust-std-%{version}-%{_cross_arch}-unknown-linux-%{_cross_libc}.tar.xz
+%if "%{_build_cpu}" != "%{_cross_arch}"
+Source3: https://static.rust-lang.org/dist/rust-std-%{version}-%{_build_cpu}-unknown-linux-%{_cross_libc}.tar.xz
+%endif
 
 %description
 🦀⚙️
@@ -34,6 +37,9 @@ Source2: https://static.rust-lang.org/dist/rust-std-%{version}-%{_cross_arch}-un
 xz -dc %{SOURCE0} | tar -xof -
 xz -dc %{SOURCE1} | tar -xof -
 xz -dc %{SOURCE2} | tar -xof -
+%if "%{_build_cpu}" != "%{_cross_arch}"
+xz -dc %{SOURCE3} | tar -xof -
+%endif
 
 %build
 # whole lot of nothin'
@@ -43,6 +49,9 @@ for dir in \
     rustc-%{version}-%{_build_cpu}-unknown-linux-gnu \
     cargo-%{cargo_version}-%{_build_cpu}-unknown-linux-gnu \
     rust-std-%{version}-%{_cross_arch}-unknown-linux-%{_cross_libc} \
+%if "%{_build_cpu}" != "%{_cross_arch}"
+    rust-std-%{version}-%{_build_cpu}-unknown-linux-%{_cross_libc} \
+%endif
 ; do
     pushd $dir
     ./install.sh --destdir=%{buildroot} --disable-ldconfig \
@@ -65,6 +74,9 @@ rm %{buildroot}%{_prefix}/lib/rustlib/manifest-*
 %exclude %{_bindir}/rust-lldb
 %{_prefix}/lib/*.so
 %{_prefix}/lib/rustlib/%{_cross_arch}-unknown-linux-%{_cross_libc}
+%if "%{_build_cpu}" != "%{_cross_arch}"
+%{_prefix}/lib/rustlib/%{_build_cpu}-unknown-linux-%{_cross_libc}
+%endif
 %exclude %{_prefix}/lib/rustlib/etc
 %exclude %{_docdir}
 %exclude %{_mandir}
