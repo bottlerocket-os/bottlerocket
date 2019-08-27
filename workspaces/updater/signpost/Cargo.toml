@@ -7,8 +7,8 @@ publish = false
 
 [dependencies]
 bit_field = "0.10.0"
-gptman = { version = "0.3.0", default-features = false }
+gptman = { version = "0.5.0", default-features = false }
 hex-literal = "0.2.0"
 serde = { version = "1.0.91", features = ["derive"] }
 serde_plain = "0.3.0"
-snafu = { version = "0.4.1", default-features = false, features = ["rust_1_30"] }
+snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }

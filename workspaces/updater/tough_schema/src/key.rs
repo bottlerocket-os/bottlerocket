@@ -83,8 +83,7 @@ impl Key {
             ),
         };
 
-        ring::signature::verify(
-            alg,
+        alg.verify(
             public_key,
             untrusted::Input::from(msg),
             untrusted::Input::from(signature),
