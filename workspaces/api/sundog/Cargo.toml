@@ -13,7 +13,7 @@ http = "0.1"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-snafu = "0.4"
+snafu = "0.5"
 stderrlog = "0.4"
 
 [build-dependencies]

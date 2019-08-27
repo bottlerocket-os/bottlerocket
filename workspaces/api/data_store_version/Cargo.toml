@@ -8,7 +8,7 @@ edition = "2018"
 lazy_static = "1.2"
 log = "0.4"
 regex = "1.1"
-snafu = "0.4"
+snafu = "0.5"
 
 [build-dependencies]
 cargo-readme = "3.1"

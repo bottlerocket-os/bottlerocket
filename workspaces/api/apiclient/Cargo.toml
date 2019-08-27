@@ -12,7 +12,7 @@ futures = "0.1"
 http = "0.1"
 hyper = "0.12"
 hyperlocal = "0.6"
-snafu = "0.4"
+snafu = "0.5"
 tokio = "0.1"
 
 [build-dependencies]
