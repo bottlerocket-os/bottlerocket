@@ -12,7 +12,7 @@ reqwest = { version = "0.9.17", default-features = false }
 serde = "1.0.92"
 serde_json = "1.0.39"
 sha2 = "0.8.0"
-snafu = "0.4.1"
+snafu = "0.5.0"
 tough_schema = { path = "../tough_schema" }
 
 [dev-dependencies]
