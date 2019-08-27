@@ -56,7 +56,7 @@ define build_image
 		--opt build-arg:DATE=$(DATE) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
-	lz4 -d $(OUTPUT)/$(OS)-$(1).img.lz4 >$(OUTPUT)/$(OS)-$(1).img \
+	lz4 -d -f $(OUTPUT)/$(OS)-$(1).img.lz4 $(OUTPUT)/$(OS)-$(1).img \
 		&& rm -f $(OUTPUT)/$(OS)-$(1).img.lz4
 endef
 
