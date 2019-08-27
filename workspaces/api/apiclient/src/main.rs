@@ -90,7 +90,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = parse_args(env::args());
 
     let (status, body) =
