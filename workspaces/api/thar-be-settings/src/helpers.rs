@@ -89,7 +89,7 @@ pub fn base64_decode(
     _: &Handlebars,
     _: &Context,
     renderctx: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     // To give context to our errors, get the template name.
     // In the context of thar-be-settings, all of our templates have

@@ -100,7 +100,7 @@ fn parse_args(args: env::Args) -> Args {
 fn write_config_files(
     args: &Args,
     files_limit: Option<HashSet<String>>,
-) -> Result<(), Box<std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error>> {
     // Create a vec of ConfigFile structs from the list of changed services
     info!("Requesting configuration file data for affected services");
     let config_files = config::get_affected_config_files(&args.socket_path, files_limit)?;
@@ -125,7 +125,7 @@ fn write_config_files(
     Ok(())
 }
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
