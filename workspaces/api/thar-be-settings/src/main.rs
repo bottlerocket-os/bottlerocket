@@ -116,7 +116,11 @@ fn write_config_files(
 
     // Ensure all files render properly
     info!("Rendering config files...");
-    let rendered = config::render_config_files(&template_registry, config_files, settings)?;
+    let strict = match &args.mode {
+        RunMode::SpecificKeys => true,
+        RunMode::All => false,
+    };
+    let rendered = config::render_config_files(&template_registry, config_files, settings, strict)?;
 
     // If all the config renders properly, write it to disk
     info!("Writing config files to disk...");

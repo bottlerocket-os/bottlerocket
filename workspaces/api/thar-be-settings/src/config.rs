@@ -46,10 +46,14 @@ pub fn get_config_file_names(services: &model::Services) -> HashSet<String> {
 }
 
 /// Render the configuration files
+// If strict is True, return an error if we fail to render any template.
+// If strict is False, ignore failures, always returning an Ok value
+// containing any successfully rendered templates.
 pub fn render_config_files(
     registry: &handlebars::Handlebars,
     config_files: model::ConfigurationFiles,
     settings: model::Settings,
+    strict: bool,
 ) -> Result<Vec<RenderedConfigFile>> {
     // The following is simply to satisfy the Handlebars templating library.
     // The variables in the templates are prefixed with "settings"
@@ -64,10 +68,15 @@ pub fn render_config_files(
     for (name, metadata) in config_files {
         debug!("Rendering {}", &name);
 
-        let rendered = registry
-            .render(&name, &wrapped_template_keys)
-            .context(error::TemplateRender { template: name })?;
-        rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
+        let try_rendered = registry.render(&name, &wrapped_template_keys);
+        if strict {
+            let rendered = try_rendered.context(error::TemplateRender { template: name })?;
+            rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
+        } else {
+            if let Ok(rendered) = try_rendered {
+                rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
+            }
+        }
     }
     trace!("Rendered configs: {:?}", &rendered_configs);
     Ok(rendered_configs)
