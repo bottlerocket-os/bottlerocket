@@ -20,6 +20,7 @@ Source5: settings-committer.service
 Source6: migration-tmpfiles.conf
 Source7: settings-applier.service
 Source8: data-store-version
+Source9: migrator.service
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -97,6 +98,7 @@ install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE5}
 install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE7}
+install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE9}
 
 install -d %{buildroot}/%{_cross_datadir}/thar
 install -m 0644 -t %{buildroot}/%{_cross_datadir}/thar %{SOURCE8}
@@ -131,6 +133,7 @@ install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{systemd_systemdir}/apiserver.service
+%{systemd_systemdir}/migrator.service
 %{_cross_datadir}/thar/data-store-version
 
 %files -n %{_cross_os}apiclient
