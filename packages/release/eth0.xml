@@ -1,0 +1,25 @@
+<interface>
+  <name>eth0</name>
+  <description>Primary Ethernet Device</description>
+
+  <control>
+    <mode>boot</mode>
+    <link-detection>
+      <require-link />
+    </link-detection>
+  </control>
+
+  <ipv4>
+    <arp-verify>false</arp-verify>
+    <arp-notify>false</arp-notify>
+  </ipv4>
+
+  <ipv4:dhcp>
+    <enabled>true</enabled>
+  </ipv4:dhcp>
+
+  <ipv6:dhcp>
+    <enabled>true</enabled>
+    <defer-timeout>1</defer-timeout>
+  </ipv6:dhcp>
+</interface>
