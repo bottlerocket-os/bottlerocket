@@ -1,0 +1,48 @@
+From 859c79f5df14d9cff3383b6ee2709080f38b88c4 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sat, 10 Aug 2019 18:31:42 +0000
+Subject: [PATCH 3/3] ship mkconst and schema sources for runtime use
+
+`mkconst` needs to be compiled for the host architecture, but relies
+on most of the sources in wicked and needs all of the same libraries.
+
+This is a much greater dependency on the host OS than we care to take.
+For now we punt the problem to runtime and expect `constants.xml` to
+be created out-of-band.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ schema/Makefile.am | 2 +-
+ util/Makefile.am   | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/schema/Makefile.am b/schema/Makefile.am
+index 462dc04..03a4bcd 100644
+--- a/schema/Makefile.am
++++ b/schema/Makefile.am
+@@ -4,7 +4,7 @@ MAINTAINERCLEANFILES		= Makefile.in
+ 
+ wicked_schema_DATA		= \
+ 	$(wicked_schema_files)	\
+-	$(wicked_schema_built)
++	$(wicked_schema_sources)
+ 
+ wicked_schema_files		= \
+ 	addrconf.xml		\
+diff --git a/util/Makefile.am b/util/Makefile.am
+index 2af1435..bb9697e 100644
+--- a/util/Makefile.am
++++ b/util/Makefile.am
+@@ -2,7 +2,8 @@
+ CLEANFILES			= *~
+ MAINTAINERCLEANFILES		= Makefile.in
+ 
+-noinst_PROGRAMS			= mkconst schema2html
++wicked_sbin_PROGRAMS		= mkconst
++noinst_PROGRAMS			= schema2html
+ 
+ AM_CPPFLAGS			= -I$(top_srcdir)/src	\
+ 				  -I$(top_srcdir)/include
+-- 
+2.21.0
+

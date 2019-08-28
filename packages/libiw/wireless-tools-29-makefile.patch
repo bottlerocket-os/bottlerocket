@@ -1,0 +1,39 @@
+diff -up wireless_tools.29/Makefile.makefile wireless_tools.29/Makefile
+--- wireless_tools.29/Makefile.makefile	2007-09-17 19:56:46.000000000 -0400
++++ wireless_tools.29/Makefile	2018-06-04 14:34:29.252095389 -0400
+@@ -101,12 +101,15 @@ ifdef BUILD_WE_ESSENTIAL
+   WEDEF_FLAG= -DWE_ESSENTIAL=y
+ endif
+ 
++ifndef OPTFLAGS
++  OPTFLAGS=
++endif
+ # Other flags
+ CFLAGS=-Os -W -Wall -Wstrict-prototypes -Wmissing-prototypes -Wshadow \
+ 	-Wpointer-arith -Wcast-qual -Winline -I.
+ #CFLAGS=-O2 -W -Wall -Wstrict-prototypes -I.
+ DEPFLAGS=-MMD
+-XCFLAGS=$(CFLAGS) $(DEPFLAGS) $(WARN) $(HEADERS) $(WELIB_FLAG) $(WEDEF_FLAG)
++XCFLAGS=$(CFLAGS) $(DEPFLAGS) $(WARN) $(HEADERS) $(WELIB_FLAG) $(WEDEF_FLAG) $(OPTFLAGS)
+ PICFLAG=-fPIC
+ 
+ # Standard compilation targets
+@@ -117,7 +120,7 @@ all:: $(IWLIB) $(PROGS)
+ %.o: %.c wireless.h
+ 	$(CC) $(XCFLAGS) -c $<
+ %.so: %.c wireless.h
+-	$(CC) $(XCFLAGS) $(PICFLAG) -c -o $@ $<
++	$(CC) $(LDFLAGS) $(XCFLAGS) $(PICFLAG) -c -o $@ $<
+ 
+ iwconfig: iwconfig.o $(IWLIB)
+ 
+@@ -145,7 +148,8 @@ wireless.h:
+ 
+ # Compilation of the dynamic library
+ $(DYNAMIC): $(OBJS:.o=.so)
+-	$(CC) -shared -o $@ -Wl,-soname,$@ $(STRIPFLAGS) $(LIBS) -lc $^
++	$(CC) $(LDFLAGS) -shared -o $@ -Wl,-soname,$@ $(STRIPFLAGS) $(LIBS) -lc $^
++	ln -s $@ $(DYNAMIC_LINK)
+ 
+ # Compilation of the static library
+ $(STATIC): $(OBJS:.o=.so)

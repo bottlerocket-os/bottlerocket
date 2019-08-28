@@ -1,0 +1,38 @@
+<!--
+     Server-specific (wickedd binary) configuration file.
+  -->
+<config>
+  <include name="common.xml"/>
+
+  <dbus-service interface="org.opensuse.Network.Ethernet">
+  </dbus-service>
+
+  <dbus-service interface="org.opensuse.Network.Wireless">
+  </dbus-service>
+
+  <dbus-service interface="org.opensuse.Network.Bond">
+    <action name="addSlave" command="/usr/bin/true" />
+    <action name="removeSlave" command="/usr/bin/true" />
+  </dbus-service>
+
+  <dbus-service interface="org.opensuse.Network.Firewall">
+    <action name="firewallUp" command="/usr/bin/true"/>
+    <action name="firewallDown" command="/usr/bin/true"/>
+  </dbus-service>
+
+  <dbus-service interface="org.opensuse.Network.Scripts">
+    <action name="firewallUp" command="/usr/bin/true"/>
+    <action name="networkUp" command="/usr/bin/true"/>
+    <action name="networkDown" command="/usr/bin/true"/>
+    <action name="firewallDown" command="/usr/bin/true"/>
+  </dbus-service>
+
+  <system-updater name="generic" format="info">
+    <action name="install" command="/usr/bin/netdog install"/>
+    <action name="remove" command="/usr/bin/netdog remove"/>
+  </system-updater>
+
+  <teamd>
+    <enabled>false</enabled>
+  </teamd>
+</config>

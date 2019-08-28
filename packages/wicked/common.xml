@@ -1,0 +1,15 @@
+<!--
+     Common configuration file sourced by all application-specific files
+  -->
+<config>
+  <piddir path="/run/wicked" mode="0755"/>
+  <statedir path="/run/wicked" mode="0755"/>
+  <storedir path="/var/lib/wicked" mode="0755"/>
+
+  <dbus>
+    <service name="org.opensuse.Network" />
+    <schema name="/usr/share/wicked/schema/wicked.xml"/>
+  </dbus>
+
+  <use-nanny>true</use-nanny>
+</config>
