@@ -10,8 +10,8 @@ data_store_version = { path = "../../data_store_version" }
 fs_extra = "1.1"
 lazy_static = "1.2"
 log = "0.4"
-nix = "0.14"
+nix = "0.15"
 rand = { version = "0.7", default-features = false, features = ["std"] }
 regex = "1.1"
-snafu = "0.4"
+snafu = "0.5"
 stderrlog = "0.4"

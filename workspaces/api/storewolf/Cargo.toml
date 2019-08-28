@@ -11,7 +11,7 @@ apiserver = { path = "../apiserver" }
 data_store_version = { path = "../data_store_version" }
 log = "0.4"
 rand = { version = "0.7", default-features = false, features = ["std"] }
-snafu = "0.4"
+snafu = "0.5"
 stderrlog = "0.4"
 toml = "0.5"
 
