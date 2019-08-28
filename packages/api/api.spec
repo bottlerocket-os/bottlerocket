@@ -46,6 +46,12 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}moondog
 %{summary}.
 
+%package -n %{_cross_os}netdog
+Summary: Thar network configuration helper
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}netdog
+%{summary}.
+
 %package -n %{_cross_os}sundog
 Summary: Updates settings dynamically based on user-specified generators
 Requires: %{_cross_os}apiserver = %{version}-%{release}
@@ -106,6 +112,7 @@ install -m 0644 -t %{buildroot}/%{_cross_datadir}/thar %{SOURCE8}
 %cargo_install -p apiserver
 %cargo_install -p apiclient
 %cargo_install -p moondog
+%cargo_install -p netdog
 %cargo_install -p sundog
 %cargo_install -p pluto
 %cargo_install -p thar-be-settings
@@ -142,6 +149,9 @@ install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 %files -n %{_cross_os}moondog
 %{_cross_bindir}/moondog
 %{systemd_systemdir}/moondog.service
+
+%files -n %{_cross_os}netdog
+%{_cross_bindir}/netdog
 
 %files -n %{_cross_os}sundog
 %{_cross_bindir}/sundog

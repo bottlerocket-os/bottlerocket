@@ -176,6 +176,10 @@ CROSS_COMPILATION_CONF_EOF\
 # Do not run ldconfig after build.
 %__brp_ldconfig %{nil}
 
+# Disable mangling since we do not have interpreters, and this causes build
+# failures when rewriting "shebangs" in crate files.
+%__brp_mangle_shebangs /bin/true
+
 %__arch_install_post \
 /usr/lib/rpm/check-rpaths \
 /usr/lib/rpm/check-buildroot
