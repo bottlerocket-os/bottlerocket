@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Tom Kirchner <tjk@amazon.com>"]
 edition = "2018"
 publish = false
+build = "build.rs"
 
 [dependencies]
 data_store_version = { path = "../../data_store_version" }
@@ -15,3 +16,6 @@ rand = { version = "0.7", default-features = false, features = ["std"] }
 regex = "1.1"
 snafu = "0.5"
 stderrlog = "0.4"
+
+[build-dependencies]
+cargo-readme = "3.1"
