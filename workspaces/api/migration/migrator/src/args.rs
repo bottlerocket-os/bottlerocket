@@ -3,7 +3,7 @@
 use data_store_version::Version;
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 use std::str::FromStr;
 
@@ -56,6 +56,13 @@ impl Args {
                         .next()
                         .unwrap_or_else(|| usage_msg("Did not give argument to --datastore-path"));
                     trace!("Given --datastore-path: {}", path_str);
+
+                    // On first boot, the data store won't exist yet, because storewolf runs after.
+                    if !Path::new(&path_str).exists() {
+                        eprintln!("Data store does not exist at given path, exiting ({})", path_str);
+                        process::exit(0);
+                    }
+
                     let canonical = fs::canonicalize(path_str).unwrap_or_else(|e| {
                         usage_msg(format!(
                             "Could not canonicalize given data store path: {}",
