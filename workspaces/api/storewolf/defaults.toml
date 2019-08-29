@@ -79,3 +79,30 @@ key = "settings.updates"
 md = "affected-services"
 val = ["updog"]
 
+# HostContainers
+
+[settings.host-containers.admin]
+enabled = false
+source = "FIXME.dkr.ecr.us-west-2.amazonaws.com/thar-admin:latest"
+superpowered = true
+
+[settings.host-containers.control]
+enabled = true
+source = "FIXME.dkr.ecr.us-west-2.amazonaws.com/thar-ssm:latest"
+superpowered = false
+
+[settings.host-containers]
+user = []
+
+# [services.host-containers]
+# configuration-files = ["host-containers"]
+# restart-commands = ["/bin/systemctl try-reload-or-restart host-containers"]
+
+# [configuration-files.host-containers]
+# path = "/etc/hostcontainers/host-containers.toml"
+# template-path = "/usr/share/templates/host-containers-toml"
+
+# [[metadata]]
+# key = "settings.host-containers"
+# md = "affected-services"
+# val = "[host-containers]"

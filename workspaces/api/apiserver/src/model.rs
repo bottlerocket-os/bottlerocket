@@ -14,8 +14,30 @@ use crate::modeled_types::ValidBase64;
 // Note: fields are marked with skip_serializing_if=Option::is_none so that settings GETs don't
 // show field=null for everything that isn't set in the relevant group of settings.
 
+// Note: we have to use 'rename' here because the top-level Settings structure is the only one
+// that uses its name in serialization; internal structures use the field name that poitns to it
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename = "settings", rename_all = "kebab-case")]
+pub struct Settings {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timezone: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hostname: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kubernetes: Option<KubernetesSettings>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updates: Option<UpdatesSettings>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub host_containers: Option<HostContainersSettings>,
+}
+
 // Kubernetes related settings. The dynamic settings are retrieved from
 // IMDS via Sundog's child "Pluto".
+#[rustfmt::skip]
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct KubernetesSettings {
@@ -53,22 +75,32 @@ pub struct UpdatesSettings {
     pub target_base_url: Option<String>,
 }
 
-// Note: we have to use 'rename' here because the top-level Settings structure is the only one
-// that uses its name in serialization; internal structures use the field name that poitns to it
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename = "settings", rename_all = "kebab-case")]
-pub struct Settings {
+// Settings for HostContainers, which manages the lifecycle of privileged, unorchestrated
+// containers that are used for system management purposes.
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct HostContainersSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub timezone: Option<String>,
+    pub admin: Option<ContainerImage>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub hostname: Option<String>,
+    pub control: Option<ContainerImage>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub kubernetes: Option<KubernetesSettings>,
+    pub user: Option<Vec<ContainerImage>>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct ContainerImage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub updates: Option<UpdatesSettings>,
+    pub enabled: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub superpowered: Option<bool>,
 }
 
 ///// Internal services
