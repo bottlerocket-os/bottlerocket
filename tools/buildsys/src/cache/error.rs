@@ -1,0 +1,42 @@
+use snafu::Snafu;
+use std::io;
+use std::path::PathBuf;
+
+#[derive(Debug, Snafu)]
+#[snafu(visibility = "pub")]
+pub enum Error {
+    #[snafu(display("Bad file name '{}'", path.display()))]
+    ExternalFileName { path: PathBuf },
+
+    #[snafu(display("Failed to request '{}': {}", url, source))]
+    ExternalFileUrlRequest { url: String, source: reqwest::Error },
+
+    #[snafu(display("Failed to fetch '{}': {}", url, status))]
+    ExternalFileUrlFetch {
+        url: String,
+        status: reqwest::StatusCode,
+    },
+
+    #[snafu(display("Failed to open file '{}': {}", path.display(), source))]
+    ExternalFileOpen { path: PathBuf, source: io::Error },
+
+    #[snafu(display("Failed to write file '{}': {}", path.display(), source))]
+    ExternalFileSave {
+        path: PathBuf,
+        source: reqwest::Error,
+    },
+
+    #[snafu(display("Failed to load file '{}': {}", path.display(), source))]
+    ExternalFileLoad { path: PathBuf, source: io::Error },
+
+    #[snafu(display("Failed to verify file '{}' with hash '{}'", path.display(), hash))]
+    ExternalFileVerify { path: PathBuf, hash: String },
+
+    #[snafu(display("Failed to rename file '{}': {}", path.display(), source))]
+    ExternalFileRename { path: PathBuf, source: io::Error },
+
+    #[snafu(display("Failed to delete file '{}': {}", path.display(), source))]
+    ExternalFileDelete { path: PathBuf, source: io::Error },
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
