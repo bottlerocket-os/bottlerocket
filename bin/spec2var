@@ -21,7 +21,12 @@ BUILDREQUIRES="$("${RPMSPEC[@]}" --query --buildrequires "${SPEC}" \
                     | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
 BUILDREQUIRES="${BUILDREQUIRES%"${BUILDREQUIRES##*[![:space:]]}"}"
 
-# Emit variables for package names that resolve to all their dependencies.
+# Emit variables for package names that resolve to both build and install dependencies.
 "${RPMSPEC[@]}" --query \
    --queryformat="%{NAME} = \$(OUTPUT)/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm[ \$(%{REQUIRES})] ${BUILDREQUIRES}\n" \
+   "${SPEC}"
+
+# Emit variables for package names that resolve to only install dependencies.
+"${RPMSPEC[@]}" --query \
+   --queryformat="%{NAME}-install = %{NAME}[ \$(%{REQUIRES}-install)]\n" \
    "${SPEC}"

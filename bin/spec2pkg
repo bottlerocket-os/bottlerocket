@@ -24,7 +24,8 @@ RPMS="${RPMS%"${RPMS##*[![:space:]]}"}"
 # Collect file-based targets needed as inputs of a package build.
 SOURCE_LINES="$("${RPMSPEC[@]}" --parse "${SPEC}" | awk '/^Source/ {print $NF}')"
 SOURCE_URLS="$(awk '$0 ~ "^https?://" {print}' <<<"${SOURCE_LINES}")"
-SOURCES="$(awk -v pkg="${PKG}" -F / '{printf "packages/%s/%s ",pkg,$NF}' <<<"${SOURCE_LINES}")"
+SOURCES="$(echo -n "${SOURCE_LINES}" \
+              | awk -v pkg="${PKG}" -F '[/ ]' '{printf "packages/%s/%s ",pkg,$NF}')"
 SOURCES="${SOURCES%"${SOURCES##*[![:space:]]}"}"
 
 PATCHES="$("${RPMSPEC[@]}" --parse "${SPEC}" \
@@ -36,11 +37,11 @@ BUILDREQUIRES="$("${RPMSPEC[@]}" --query --buildrequires "${SPEC}" \
                     | awk '/thar/ {printf "$(%s) ",$0} END {print ""}')"
 BUILDREQUIRES="${BUILDREQUIRES%"${BUILDREQUIRES##*[![:space:]]}"}"
 
-echo "${RPMS} : build-${PKG}-${ARCH}"
+echo "${RPMS} : build-${PKG}"
 echo -e "\t@:\n"
-echo -e ".INTERMEDIATE: build-${PKG}-${ARCH}\n"
-echo "build-${PKG}-${ARCH} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}"
-echo -e "\t\$(call build_rpm,$PKG,${ARCH},\$^)\n"
+echo -e ".INTERMEDIATE: build-${PKG}\n"
+echo "build-${PKG} : ${SPEC} ${SOURCES} ${PATCHES} ${BUILDREQUIRES}"
+echo -e "\t\$(call build_rpm,${PKG})\n"
 
 for url in ${SOURCE_URLS}; do
     FILENAME="${url##*/}"

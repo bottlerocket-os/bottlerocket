@@ -17,7 +17,6 @@ PKGS = $(SPECS:.spec=.makepkg)
 
 OUTPUT ?= $(TOPDIR)/build
 OUTVAR := $(shell mkdir -p $(OUTPUT))
-DATE := $(shell date --rfc-3339=date)
 
 ARCH ?= $(shell uname -m)
 
@@ -33,31 +32,25 @@ BUILDCTL_ARGS += --local context=.
 BUILDCTL_ARGS += --local dockerfile=.
 
 define build_rpm
-	$(eval HASH:= $(shell sha1sum $3 /dev/null | sha1sum - | awk '{printf $$1}'))
-	$(eval RPMS:= $(shell echo $3 | tr ' ' '\n' | awk '/.rpm$$/' | tr '\n' ' '))
 	@$(BUILDCTL) build \
 		--opt target=rpm \
 		--opt build-arg:PACKAGE=$(1) \
-		--opt build-arg:ARCH=$(2) \
-		--opt build-arg:HASH=$(HASH) \
-		--opt build-arg:RPMS="$(RPMS)" \
-		--opt build-arg:DATE=$(DATE) \
+		--opt build-arg:ARCH=$(ARCH) \
+		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
 endef
 
 define build_image
-	$(eval HASH:= $(shell sha1sum $(2) /dev/null | sha1sum - | awk '{print $$1}'))
 	@$(BUILDCTL) build \
 		--opt target=image \
-		--opt build-arg:PACKAGE=$(OS)-$(1)-$(RECIPE) \
-		--opt build-arg:ARCH=$(1) \
-		--opt build-arg:HASH=$(HASH) \
-		--opt build-arg:DATE=$(DATE) \
+		--opt build-arg:PACKAGES="$(1)" \
+		--opt build-arg:ARCH=$(ARCH) \
+		--opt build-arg:NOCACHE=$(shell date +%s) \
 		--output type=local,dest=$(OUTPUT) \
 		$(BUILDCTL_ARGS)
-	lz4 -d -f $(OUTPUT)/$(OS)-$(1).img.lz4 $(OUTPUT)/$(OS)-$(1).img \
-		&& rm -f $(OUTPUT)/$(OS)-$(1).img.lz4
+	lz4 -d -f $(OUTPUT)/$(OS)-$(ARCH).img.lz4 $(OUTPUT)/$(OS)-$(ARCH).img \
+		&& rm -f $(OUTPUT)/$(OS)-$(ARCH).img.lz4
 endef
 
 # `makedep` files are a hook to provide additional dependencies when
@@ -91,8 +84,10 @@ include $(PKGS)
 
 .SECONDEXPANSION:
 $(ARCH): $$($(OS)-$(ARCH)-$(RECIPE))
-	$(eval PKGS:= $(wildcard $(OUTPUT)/$(OS)-$(ARCH)-*.rpm))
-	$(call build_image,$@,$(PKGS))
+	$(eval PACKAGES := $(strip $(subst $(OS)-$(ARCH)-,,$($(OS)-$(ARCH)-$(RECIPE)-install))))
+	$(eval PACKAGES := $(strip $(subst -$(ARCH)-$(OS)-linux-gnu,,$(PACKAGES))))
+	$(eval PACKAGES := $(shell echo -n $(PACKAGES)| awk '!a[$$0]++' RS=' ' ORS=' '))
+	$(call build_image,$(PACKAGES))
 
 all: $(ARCH)
 
