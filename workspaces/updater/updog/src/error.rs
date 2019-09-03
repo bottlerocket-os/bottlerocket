@@ -1,5 +1,6 @@
 #![allow(clippy::default_trait_access)]
 
+use data_store_version::Version as DataVersion;
 use snafu::{Backtrace, Snafu};
 use std::path::PathBuf;
 
@@ -168,10 +169,108 @@ pub(crate) enum Error {
         keyid: u64
     },
 
+    #[snafu(display("Duplicate version key: {}", key))]
+    DuplicateVersionKey {
+        backtrace: Backtrace,
+        key: String
+    },
+
     #[snafu(display("Bad bound field: {}", bound_str))]
     BadBound {
         backtrace: Backtrace,
         source: std::num::ParseIntError,
         bound_str: String
+    },
+
+    #[snafu(display("Could not parse datastore version: {}", key))]
+    BadDataVersion {
+        backtrace: Backtrace,
+        key: String
+    },
+
+    #[snafu(display("Could not parse image version: {} - {}", key, value))]
+    BadMapVersion {
+        backtrace: Backtrace,
+        key: String,
+        value: String
+    },
+
+    #[snafu(display("Missing version in metadata: {}", version))]
+    MissingVersion {
+        backtrace: Backtrace,
+        version: String
+    },
+
+    #[snafu(display("Missing datastore version in metadata: {:?}", version))]
+    MissingDataVersion {
+        backtrace: Backtrace,
+        version: DataVersion
+    },
+
+    #[snafu(display("Error retrieving migration helpers"))]
+    MigrationError {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Temporary image mount failed"))]
+    MountFailed {
+        backtrace: Backtrace,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to create directory: {:?}", path))]
+    DirCreate {
+        backtrace: Backtrace,
+        source: std::io::Error,
+        path: PathBuf
+    },
+
+    #[snafu(display("Migration not found in image: {:?}", name))]
+    MigrationNotLocal {
+        backtrace: Backtrace,
+        name: PathBuf
+    },
+
+    #[snafu(display("Failed to copy migration from image: {}", name))]
+    MigrationCopyFailed {
+        backtrace: Backtrace,
+        source: std::io::Error,
+        name: String
+    },
+
+    #[snafu(display("Reached end of migration chain at {} but target is {}", current, target))]
+    MissingMigration {
+        backtrace: Backtrace,
+        current: DataVersion,
+        target: DataVersion,
+    },
+
+    #[snafu(display("Failed to open loop device control"))]
+    LoopControlFailed {
+        backtrace: Backtrace,
+        source: std::io::Error
+    },
+
+    #[snafu(display("Failed to find free loop device"))]
+    LoopFindFailed {
+        backtrace: Backtrace,
+        source: std::io::Error
+    },
+
+    #[snafu(display("Failed to attach image to loop device"))]
+    LoopAttachFailed {
+        backtrace: Backtrace,
+        source: std::io::Error
+    },
+
+    #[snafu(display("Could not determine loop device path"))]
+    LoopNameFailed {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to create tmpfile for root mount"))]
+    TmpFileCreate {
+        backtrace: Backtrace,
+        source: std::io::Error
     },
 }

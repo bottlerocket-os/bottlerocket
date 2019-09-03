@@ -16,5 +16,7 @@
         "hash": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img"
     }
     }
-  ]
+  ],
+  "migrations" : {},
+  "datastore_versions": {}
 }

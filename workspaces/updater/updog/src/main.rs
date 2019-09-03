@@ -5,22 +5,29 @@ mod de;
 
 use crate::error::Result;
 use chrono::{DateTime, Utc};
+use data_store_version::Version as DVersion;
 use std::collections::{BTreeMap};
+use loopdev::{LoopControl, LoopDevice};
 use platforms::{TARGET_ARCH};
 use rand::{thread_rng, Rng};
 use semver::Version;
 use serde::{Serialize, Deserialize};
 use signpost::State;
-use snafu::{OptionExt, ResultExt, ErrorCompat};
+use snafu::{OptionExt, ResultExt, ensure, ErrorCompat};
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::ops::Bound::{Included, Excluded};
 use std::{thread};
 use std::time::Duration;
+use sys_mount::{Mount, MountFlags, SupportedFilesystems, unmount, UnmountFlags};
+use tempfile::NamedTempFile;
 use tough::Repository;
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
+const MIGRATION_PATH: &str = "/var/lib/thar/datastore/migrations";
+const IMAGE_MIGRATION_PREFIX: &str = "sys-root/usr/share/factory";
+const IMAGE_MOUNT_PATH: &str = "/var/lib/thar/updog/thar-be-updates";
 const MAX_SEED: u64 = 2048;
 
 #[derive(Debug, Deserialize)]
@@ -54,7 +61,7 @@ struct Update {
     arch: String,
     version: Version,
     max_version: Version,
-    #[serde(deserialize_with = "de::deserialize_keys")]
+    #[serde(deserialize_with = "de::deserialize_bound")]
     waves: BTreeMap<u64, DateTime<Utc>>,
     images: Images,
 }
@@ -103,6 +110,10 @@ impl Update {
 #[derive(Debug, Deserialize)]
 struct Manifest {
     updates: Vec<Update>,
+    #[serde(deserialize_with = "de::deserialize_migration")]
+    migrations: BTreeMap<(DVersion, DVersion), Vec<String>>,
+    #[serde(deserialize_with = "de::deserialize_datastore_version")]
+    datastore_versions: BTreeMap<Version, DVersion>,
 }
 
 fn usage() -> ! {
@@ -232,6 +243,7 @@ fn write_target_to_disk<P: AsRef<Path>>(
     let mut reader = lz4::Decoder::new(reader).context(error::Lz4Decode { target })?;
     let mut f = OpenOptions::new()
         .write(true)
+        .create(true)
         .open(disk_path.as_ref())
         .context(error::OpenPartition {
             path: disk_path.as_ref(),
@@ -240,7 +252,139 @@ fn write_target_to_disk<P: AsRef<Path>>(
     Ok(())
 }
 
-fn update_image(update: &Update, repository: &Repository, jitter: Option<u64>) -> Result<()> {
+fn mount_root_target(repository: &Repository, update: &Update)
+    -> Result<(PathBuf, LoopDevice, NamedTempFile)> {
+
+    let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
+
+    // Download partition
+    write_target_to_disk(repository, &update.images.root, &tmpfd.path())?;
+
+    // Create loop device
+    let ld = LoopControl::open()
+        .context(error::LoopControlFailed)?
+        .next_free()
+        .context(error::LoopFindFailed)?;
+    ld.attach_file(&tmpfd.path()).context(error::LoopAttachFailed)?;
+
+    // Mount image
+    let dir = PathBuf::from(IMAGE_MOUNT_PATH);
+    if !dir.exists() {
+        fs::create_dir(&dir)
+            .context(error::DirCreate { path: &dir })?;
+    }
+    let fstype = SupportedFilesystems::new().context(error::MountFailed {})?;
+    Mount::new(ld.path().context(error::LoopNameFailed)?,
+            &dir, &fstype,
+            MountFlags::RDONLY | MountFlags::NOEXEC,
+            None)
+        .context(error::MountFailed {})?;
+
+    Ok((dir, ld, tmpfd))
+}
+
+fn copy_migration_from_image(mount: &PathBuf, name: &str) -> Result<()> {
+
+    let prefix = format!("{}-thar-linux-gnu/{}{}",
+            TARGET_ARCH.as_str(), IMAGE_MIGRATION_PREFIX, MIGRATION_PATH);
+    let path = PathBuf::new()
+            .join(mount)
+            .join(prefix)
+            .join(name);
+
+    ensure!(path.exists() && path.is_file(),
+        error::MigrationNotLocal { name: path }
+    );
+    fs::copy(path, PathBuf::from(MIGRATION_PATH)).context(error::MigrationCopyFailed { name })?;
+    Ok(())
+}
+
+fn migration_targets<'a>(from: &'a DVersion, to: &DVersion, manifest: &'a Manifest)
+    -> Result<Vec<String>> {
+
+    let mut targets = Vec::new();
+    let mut version = from;
+    while version != to {
+        let mut migrations: Vec<&(DVersion, DVersion)>= manifest.migrations
+            .keys()
+            .filter(|(f,t)| f == version && t <= to)
+            .collect();
+
+        // There can be muliple paths to the same target, eg.
+        //      (1.0, 1.1) => [...]
+        //      (1.0, 1.2) => [...]
+        // Choose one with the highest *to* version, <= our target
+        migrations.sort_unstable_by(|(_, a), (_, b)| b.cmp(&a));
+        if let Some(transition) = migrations.first() {
+            // If a transition doesn't require a migration the array will be empty
+            if let Some(migrations) = manifest.migrations.get(transition) {
+                targets.extend_from_slice(&migrations);
+            }
+            version = &transition.1;
+        } else {
+            return error::MissingMigration{ current: *version, target: *to }.fail();
+        }
+    }
+    Ok(targets)
+}
+
+/// Store required migrations for a datastore version update in persistent
+/// storage. All intermediate migrations between the current version and the
+/// target version must be retrieved.
+/// If a migration is available in the target root image it is copied from
+/// the image instead of being downloaded from the repository.
+fn retrieve_migrations(repository: &Repository,
+    manifest: &Manifest,
+    update: &Update,
+    root_path: &Option<PathBuf>)
+    -> Result<()> {
+
+    let (version_current, _) = running_version()?;
+    let datastore_current = manifest.datastore_versions
+            .get(&version_current)
+            .context(error::MissingVersion { version: version_current.to_string() })?;
+    let datastore_target = manifest.datastore_versions
+            .get(&update.version)
+            .context(error::MissingVersion { version: update.version.to_string() })?;
+
+    if datastore_current == datastore_target {
+        return Ok(());
+    }
+
+    // the migrations required for foo to bar and bar to foo are
+    // the same; we can pretend we're always upgrading from foo to
+    // bar and use the same logic to obtain the migrations
+    let target = std::cmp::max(datastore_target, datastore_current);
+    let start = std::cmp::min(datastore_target, datastore_current);
+
+    let dir = Path::new(MIGRATION_PATH);
+    if !dir.exists() {
+        fs::create_dir(&dir)
+            .context(error::DirCreate { path: &dir })?;
+    }
+    for name in migration_targets(start, target, &manifest)? {
+        let path = dir.join(&name);
+        if let Some(mount) = &root_path {
+            match copy_migration_from_image(mount, &name) {
+                Err(e) => {
+                    println!("Migration not copied from image: {}", e);
+                    write_target_to_disk(repository, &name, path)?;
+                },
+                _   => (),
+            }
+        } else {
+            write_target_to_disk(repository, &name, path)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn update_image(update: &Update,
+    repository: &Repository,
+    jitter: Option<u64>,
+    root_path: Option<NamedTempFile>)
+    -> Result<()> {
 
     // Jitter the exact update time
     // Now: lazy spin
@@ -265,8 +409,19 @@ fn update_image(update: &Update, repository: &Repository, jitter: Option<u64>) -
     let inactive = gpt_state.inactive_set();
 
     // TODO Do we want to recover the inactive side on an error?
+    if let Some(path) = root_path {
+        // Copy root from already downloaded image
+        match fs::copy(path, &inactive.root) {
+            Err(e)  => {
+                println!("Root copy failed, redownloading - {}", e);
+                write_target_to_disk(repository, &update.images.root, &inactive.root)?;
+            },
+            _       => (),
+        }
+    } else {
+            write_target_to_disk(repository, &update.images.root, &inactive.root)?;
+    }
     write_target_to_disk(repository, &update.images.boot, &inactive.boot)?;
-    write_target_to_disk(repository, &update.images.root, &inactive.root)?;
     write_target_to_disk(repository, &update.images.hash, &inactive.hash)?;
 
     gpt_state.upgrade_to_inactive();
@@ -339,7 +494,31 @@ fn main_inner() -> Result<()> {
         Command::Update => {
             if let Some(u) = update_required(&config, &manifest, &current_version, &flavor) {
                 if u.update_ready(&config)? {
-                    update_image(u, &repository, u.jitter(&config))?;
+                    // Try to mount the root image to look for migrations
+                    let (root_path, ld, tmpfd) = match mount_root_target(&repository, u) {
+                        Ok((p,l,t))   => (Some(p), Some(l), Some(t)),
+                        Err(e)  => {
+                            println!("Failed to mount image, migrations will be downloaded ({})", e);
+                            (None, None, None)
+                        },
+                    };
+
+                    retrieve_migrations(&repository, &manifest, u, &root_path)?;
+
+                    if let Some(path) = root_path {
+                        // Unmount the target root image - warn only on failure
+                        match unmount(path, UnmountFlags::empty()) {
+                            Err(e)  => eprintln!("Failed to unmount root image: {}", e),
+                            _       => ()
+                        }
+                        if let Some(ld) = ld {
+                            if ld.detach().is_err() {
+                                println!("Failed to detach loop device");
+                            }
+                        }
+                    }
+
+                    update_image(u, &repository, u.jitter(&config), tmpfd)?;
                     println!("Update applied: {}-{}", u.flavor, u.version);
                 } else {
                     eprintln!("Update available in later wave");
@@ -374,12 +553,27 @@ fn main() -> ! {
 mod tests {
     use super::*;
     use chrono::{Duration as TestDuration};
+    use std::str::FromStr;
 
     #[test]
     fn test_manifest_json() {
         let s = fs::read_to_string("tests/data/example.json").unwrap();
         let manifest: Manifest = serde_json::from_str(&s).unwrap();
         assert!(manifest.updates.len() > 0, "Failed to parse update manifest");
+
+        assert!(manifest.migrations.len() > 0, "Failed to parse migrations");
+        let from = DVersion::from_str("1.0").unwrap();
+        let to = DVersion::from_str("1.1").unwrap();
+        assert!(manifest.migrations.contains_key(&(from, to)));
+        let migration = manifest.migrations.get(&(from, to)).unwrap();
+        assert!(migration[0] == "migrate_1.1_foo");
+
+        assert!(manifest.datastore_versions.len() > 0, "Failed to parse version map");
+        let thar_version = Version::parse("1.11.0").unwrap();
+        let data_version = manifest.datastore_versions.get(&thar_version);
+        let version = DVersion::from_str("1.0").unwrap();
+        assert!(data_version.is_some());
+        assert!(*data_version.unwrap() == version);
     }
 
     #[test]
@@ -510,5 +704,22 @@ mod tests {
             "../tests/data/duplicate-bound.json"
         ))
         .is_err());
+    }
+
+    #[test]
+    fn test_migrations() -> Result<()> {
+        let s = fs::read_to_string("tests/data/migrations.json").unwrap();
+        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+
+        let from = DVersion::from_str("1.0").unwrap();
+        let to = DVersion::from_str("1.3").unwrap();
+        let targets = migration_targets(&from, &to, &manifest)?;
+
+        assert!(targets.len() == 3);
+        let mut i = targets.iter();
+        assert!(i.next().unwrap() == "migration_1.1_a");
+        assert!(i.next().unwrap() == "migration_1.1_b");
+        assert!(i.next().unwrap() == "migration_1.3_shortcut");
+        Ok(())
     }
 }
