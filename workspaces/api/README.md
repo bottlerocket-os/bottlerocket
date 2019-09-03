@@ -27,6 +27,8 @@ Rust code can use the `apiclient` library to make requests to the Unix-domain so
 
 ## API system components
 
+![API system boot diagram](api-system.png)
+
 ### migrator
 
 Further docs:
