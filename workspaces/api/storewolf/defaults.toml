@@ -91,9 +91,6 @@ enabled = true
 source = "FIXME.dkr.ecr.us-west-2.amazonaws.com/thar-ssm:latest"
 superpowered = false
 
-[settings.host-containers]
-user = []
-
 # [services.host-containers]
 # configuration-files = ["host-containers"]
 # restart-commands = ["/bin/systemctl try-reload-or-restart host-containers"]

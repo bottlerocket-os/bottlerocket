@@ -85,9 +85,6 @@ pub struct HostContainersSettings {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub control: Option<ContainerImage>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub user: Option<Vec<ContainerImage>>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
