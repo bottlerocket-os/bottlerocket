@@ -1,10 +1,17 @@
 // Automatically generate README.md from rustdoc.
 
+use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
+    // Check for environment variable "SKIP_README". If it is set,
+    // skip README generation
+    if env::var_os("SKIP_README").is_some() {
+        return;
+    }
+
     let mut lib = File::open("src/lib.rs").unwrap();
     let mut template = File::open("README.tpl").unwrap();
 
