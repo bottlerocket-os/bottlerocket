@@ -37,12 +37,12 @@ We favor settings that convey high-level intent over those that provide low-leve
 
 ## Contact us
 
-If you find a security issue, please [contact our security team](security/policy) rather than opening an issue.
+If you find a security issue, please [contact our security team](https://github.com/amazonlinux/PRIVATE-thar/security/policy) rather than opening an issue.
 
 We use GitHub issues to track other bug reports and feature requests.
 You can select from a few templates and get some guidance on the type of information that would be most helpful.
 
-[Contact us with a new issue here.](issues/new/choose)
+[Contact us with a new issue here.](https://github.com/amazonlinux/PRIVATE-thar/issues/new/choose)
 
 We don't have other communication channels set up yet, but don't worry about making an issue!
 You can let us know about things that seem difficult, or even ways you might like to help.
@@ -153,7 +153,7 @@ For more details, see the [update system documentation](workspaces/updater/).
 
 Here we'll describe the settings you can configure on your Thar instance, and how to do it.
 
-(API endpoints are defined in our [OpenAPI spec](blob/develop/workspaces/api/openapi.yaml) if you want more detail.)
+(API endpoints are defined in our [OpenAPI spec](workspaces/api/openapi.yaml) if you want more detail.)
 
 ### Interacting with settings
 
@@ -205,7 +205,7 @@ timezone = "America/Thunder_Bay"
 
 Here we'll describe each setting you can change.
 
-**Note:** You can see the [default values](blob/develop/workspaces/api/storewolf/defaults.toml) for any settings that have defaults.
+**Note:** You can see the [default values](workspaces/api/storewolf/defaults.toml) for any settings that have defaults.
 
 When you're sending settings to the API, or receiving settings from the API, they're in a structured JSON format.
 This allows allow modification of any number of keys at once.
@@ -255,8 +255,8 @@ The following settings are set for you automatically by [pluto](workspaces/api/)
 
 We use [dm-verity](https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity) to load a verified read-only root filesystem, preventing some classes of persistent security threats.
 Only a few locations are made writable:
-* some through [tmpfs mounts](tree/develop/workspaces/preinit/laika), used for configuration, that don't persist over a restart.
-* one [persistent location](blob/develop/packages/release/var-lib-thar.mount) for the data store.
+* some through [tmpfs mounts](workspaces/preinit/laika), used for configuration, that don't persist over a restart.
+* one [persistent location](packages/release/var-lib-thar.mount) for the data store.
 
 Almost all first-party components are written in [Rust](https://www.rust-lang.org/).
 Rust eliminates some classes of memory safety issues, and encourages design patterns that help security.
@@ -268,17 +268,17 @@ We use RPM package definitions to build and install individual packages into an 
 RPM itself is not in the image - it's just a common and convenient package definition format.
 
 We currently package the following major third-party components:
-* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [packaging](tree/develop/packages/kernel/))
-* glibc ([background](https://www.gnu.org/software/libc/), [packaging](tree/develop/packages/glibc/))
-* Buildroot as build toolchain ([background](https://buildroot.org/), [packaging](tree/develop/packages/sdk/))
-* GRUB, with patches for partition flip updates ([background](https://www.gnu.org/software/grub/), [packaging](tree/develop/packages/grub/))
-* systemd as init ([background](https://en.wikipedia.org/wiki/Systemd), [packaging](tree/develop/packages/systemd/))
-* wicked for networking ([background](https://github.com/openSUSE/wicked), [packaging](tree/develop/packages/wicked/))
-* containerd ([background](https://containerd.io/), [packaging](tree/develop/packages/containerd/))
-* Kubernetes ([background](https://kubernetes.io/), [packaging](tree/develop/packages/kubernetes/))
+* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [packaging](packages/kernel/))
+* glibc ([background](https://www.gnu.org/software/libc/), [packaging](packages/glibc/))
+* Buildroot as build toolchain ([background](https://buildroot.org/), [packaging](packages/sdk/))
+* GRUB, with patches for partition flip updates ([background](https://www.gnu.org/software/grub/), [packaging](packages/grub/))
+* systemd as init ([background](https://en.wikipedia.org/wiki/Systemd), [packaging](packages/systemd/))
+* wicked for networking ([background](https://github.com/openSUSE/wicked), [packaging](packages/wicked/))
+* containerd ([background](https://containerd.io/), [packaging](packages/containerd/))
+* Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes/))
 * Some helpers to make usage in AWS easier:
-  * aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](tree/develop/packages/aws-iam-authenticator/))
-  * SSM agent ([background](https://github.com/aws/amazon-ssm-agent), [packaging](tree/develop/packages/ssm/))
+  * aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](packages/aws-iam-authenticator/))
+  * SSM agent ([background](https://github.com/aws/amazon-ssm-agent), [packaging](packages/ssm/))
 
 For further documentation or to see the rest of the packages, see the [packaging directory](packages/).
 
