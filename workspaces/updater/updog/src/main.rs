@@ -2,6 +2,7 @@
 
 mod error;
 mod de;
+mod se;
 
 use crate::error::Result;
 use chrono::{DateTime, Utc};
@@ -30,11 +31,13 @@ const IMAGE_MIGRATION_PREFIX: &str = "sys-root/usr/share/factory";
 const IMAGE_MOUNT_PATH: &str = "/var/lib/thar/updog/thar-be-updates";
 const MAX_SEED: u64 = 2048;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 enum Command {
     CheckUpdate,
     Update,
+    UpdateImage,
+    UpdateFlags,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,14 +51,14 @@ struct Config {
 
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Images {
     boot: String,
     root: String,
     hash: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Update {
     flavor: String,
     arch: String,
@@ -107,12 +110,14 @@ impl Update {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Manifest {
     updates: Vec<Update>,
     #[serde(deserialize_with = "de::deserialize_migration")]
+    #[serde(serialize_with = "se::serialize_migration")]
     migrations: BTreeMap<(DVersion, DVersion), Vec<String>>,
     #[serde(deserialize_with = "de::deserialize_datastore_version")]
+    #[serde(serialize_with = "se::serialize_datastore_map")]
     datastore_versions: BTreeMap<Version, DVersion>,
 }
 
@@ -208,7 +213,8 @@ fn running_version() -> Result<(Version, String)> {
 fn update_required<'a>(_config: &Config,
     manifest: &'a Manifest,
     version: &Version,
-    flavor: &String)
+    flavor: &String,
+    force_version: Option<Version>)
     -> Option<&'a Update> {
 
     let mut updates: Vec<&Update> = manifest.updates
@@ -218,6 +224,10 @@ fn update_required<'a>(_config: &Config,
             u.arch == TARGET_ARCH.as_str() &&
             u.version <= u.max_version)
         .collect();
+
+    if let Some(forced_version) = force_version {
+        return updates.into_iter().find(|u| u.version == forced_version);
+    }
 
     // sort descending
     updates.sort_unstable_by(|a, b| b.version.cmp(&a.version));
@@ -380,6 +390,35 @@ fn retrieve_migrations(repository: &Repository,
     Ok(())
 }
 
+fn update_prepare(repository: &Repository, manifest: &Manifest, update: &Update)
+    -> Result<Option<NamedTempFile>> {
+
+    // Try to mount the root image to look for migrations
+    let (root_path, ld, tmpfd) = match mount_root_target(repository, update) {
+        Ok((p,l,t))   => (Some(p), Some(l), Some(t)),
+        Err(e)  => {
+            println!("Failed to mount image, migrations will be downloaded ({})", e);
+            (None, None, None)
+        },
+    };
+
+    retrieve_migrations(repository, manifest, update, &root_path)?;
+
+    if let Some(path) = root_path {
+        // Unmount the target root image - warn only on failure
+        match unmount(path, UnmountFlags::empty()) {
+            Err(e)  => eprintln!("Failed to unmount root image: {}", e),
+            _       => ()
+        }
+        if let Some(ld) = ld {
+            if ld.detach().is_err() {
+                println!("Failed to detach loop device");
+            }
+        }
+    }
+    Ok(tmpfd)
+}
+
 fn update_image(update: &Update,
     repository: &Repository,
     jitter: Option<u64>,
@@ -423,7 +462,11 @@ fn update_image(update: &Update,
     }
     write_target_to_disk(repository, &update.images.boot, &inactive.boot)?;
     write_target_to_disk(repository, &update.images.hash, &inactive.hash)?;
+    Ok(())
+}
 
+fn update_flags() -> Result<()> {
+    let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.upgrade_to_inactive();
     gpt_state.write().context(error::PartitionTableWrite)?;
     Ok(())
@@ -433,17 +476,41 @@ fn update_image(update: &Update,
 struct Arguments {
     subcommand: String,
     verbosity: usize,
+    json: bool,
+    ignore_wave: bool,
+    force_version: Option<Version>,
 }
 
 /// Parse the command line arguments to get the user-specified values
 fn parse_args(args: std::env::Args) -> Arguments {
     let mut subcommand = None;
     let mut verbosity: usize = 3; // Default log level to 3 (Info)
+    let mut update_version = None;
+    let mut ignore_wave = false;
+    let mut json = false;
 
-    for arg in args.skip(1) {
+    let mut iter = args.skip(1);
+    while let Some(arg) = iter.next() {
         match arg.as_ref() {
             "-v" | "--verbose" => {
                 verbosity += 1;
+            }
+            "-i" | "--image" => {
+                match iter.next() {
+                    Some(v) =>  {
+                        match Version::parse(&v) {
+                            Ok(v) => update_version = Some(v),
+                            _     => usage(),
+                        }
+                    }
+                    _       => usage(),
+                }
+            }
+            "-n" | "--now" => {
+                ignore_wave = true;
+            }
+            "-j" | "--json" => {
+                json = true;
             }
             // Assume any arguments not prefixed with '-' is a subcommand
             s if !s.starts_with('-') => {
@@ -459,6 +526,9 @@ fn parse_args(args: std::env::Args) -> Arguments {
     Arguments {
         subcommand: subcommand.unwrap_or_else(|| usage()),
         verbosity,
+        json,
+        ignore_wave,
+        force_version: update_version,
     }
 }
 
@@ -486,39 +556,37 @@ fn main_inner() -> Result<()> {
 
     match command {
         Command::CheckUpdate => {
-            match update_required(&config, &manifest, &current_version, &flavor) {
-                Some(u) => println!("{}-{}", u.flavor, u.version),
+            match update_required(&config, &manifest, &current_version, &flavor, arguments.force_version) {
+                Some(u) => {
+                    if arguments.json {
+                        println!("{}", serde_json::to_string(&u).context(error::UpdateSerialize)?);
+                    } else {
+                        if let Some(datastore_version) = manifest.datastore_versions.get(&u.version) {
+                            println!("{}-{} ({})", u.flavor, u.version, datastore_version);
+                        } else {
+                            return error::MissingMapping
+                                { version: u.version.to_string() }.fail();
+                        }
+                    }
+                },
                 _       => return error::NoUpdate.fail(),
             }
         }
-        Command::Update => {
-            if let Some(u) = update_required(&config, &manifest, &current_version, &flavor) {
-                if u.update_ready(&config)? {
-                    // Try to mount the root image to look for migrations
-                    let (root_path, ld, tmpfd) = match mount_root_target(&repository, u) {
-                        Ok((p,l,t))   => (Some(p), Some(l), Some(t)),
-                        Err(e)  => {
-                            println!("Failed to mount image, migrations will be downloaded ({})", e);
-                            (None, None, None)
-                        },
-                    };
+        Command::Update | Command::UpdateImage => {
+            if let Some(u) = update_required(&config, &manifest, &current_version, &flavor, arguments.force_version) {
+                if u.update_ready(&config)? || arguments.ignore_wave {
+                    println!("Starting update to {}",  u.version);
 
-                    retrieve_migrations(&repository, &manifest, u, &root_path)?;
-
-                    if let Some(path) = root_path {
-                        // Unmount the target root image - warn only on failure
-                        match unmount(path, UnmountFlags::empty()) {
-                            Err(e)  => eprintln!("Failed to unmount root image: {}", e),
-                            _       => ()
-                        }
-                        if let Some(ld) = ld {
-                            if ld.detach().is_err() {
-                                println!("Failed to detach loop device");
-                            }
-                        }
+                    let root_path = update_prepare(&repository, &manifest, u)?;
+                    if arguments.ignore_wave {
+                        println!("** Updating immediately **");
+                        update_image(u, &repository, None, root_path)?;
+                    } else {
+                        update_image(u, &repository, u.jitter(&config), root_path)?;
                     }
-
-                    update_image(u, &repository, u.jitter(&config), tmpfd)?;
+                    if command == Command::Update {
+                        update_flags()?;
+                    }
                     println!("Update applied: {}-{}", u.flavor, u.version);
                 } else {
                     eprintln!("Update available in later wave");
@@ -526,6 +594,9 @@ fn main_inner() -> Result<()> {
             } else {
                 eprintln!("No update required");
             }
+        }
+        Command::UpdateFlags => {
+            update_flags()?;
         }
     }
 
@@ -662,7 +733,7 @@ mod tests {
         let version = Version::parse("1.25.0").unwrap();
         let flavor = String::from("thar-aws-eks");
 
-        assert!(update_required(&config, &manifest, &version, &flavor).is_none(),
+        assert!(update_required(&config, &manifest, &version, &flavor, None).is_none(),
                 "Updog tried to exceed max_version");
     }
 
@@ -678,7 +749,7 @@ mod tests {
 
         let version = Version::parse("1.10.0").unwrap();
         let flavor = String::from("thar-aws-eks");
-        let result = update_required(&config, &manifest, &version, &flavor);
+        let result = update_required(&config, &manifest, &version, &flavor, None);
 
         assert!(result.is_some(), "Updog failed to find an update");
 
@@ -721,5 +792,37 @@ mod tests {
         assert!(i.next().unwrap() == "migration_1.1_b");
         assert!(i.next().unwrap() == "migration_1.3_shortcut");
         Ok(())
+    }
+
+    #[test]
+    fn serialize_metadata() -> Result<()> {
+        let s = fs::read_to_string("tests/data/example_2.json").unwrap();
+        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        println!("{}", serde_json::to_string_pretty(&manifest)
+                                    .context(error::UpdateSerialize)?);
+        Ok(())
+    }
+
+    #[test]
+    fn force_update_version() {
+        let s = fs::read_to_string("tests/data/multiple.json").unwrap();
+        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        let config = Config {
+            metadata_base_url: String::from("foo"),
+            target_base_url: String::from("bar"),
+            seed: Some(123)
+        };
+
+        let version = Version::parse("1.10.0").unwrap();
+        let forced = Version::parse("1.13.0").unwrap();
+        let flavor = String::from("thar-aws-eks");
+        let result = update_required(&config, &manifest, &version, &flavor, Some(forced));
+
+        assert!(result.is_some(), "Updog failed to find an update");
+
+        if let Some(u) = result {
+            assert!(u.version == Version::parse("1.13.0").unwrap(),
+                "Incorrect version: {}, should be forced to 1.13.0", u.version);
+        }
     }
 }

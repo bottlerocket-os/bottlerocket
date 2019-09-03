@@ -75,6 +75,12 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to serialize update information: {}", source))]
+    UpdateSerialize {
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to read OS disk partition table: {}", source))]
     PartitionTableRead {
         // signpost::Error triggers clippy::large_enum_variant
@@ -205,6 +211,12 @@ pub(crate) enum Error {
     MissingDataVersion {
         backtrace: Backtrace,
         version: DataVersion
+    },
+
+    #[snafu(display("Image version missing datastore mapping: {}", version))]
+    MissingMapping {
+        backtrace: Backtrace,
+        version: String
     },
 
     #[snafu(display("Error retrieving migration helpers"))]
