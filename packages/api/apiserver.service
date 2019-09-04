@@ -4,7 +4,7 @@ After=network.target storewolf.service migrator.service
 Requires=network.target storewolf.service migrator.service
 
 [Service]
-Type=simple
+Type=notify
 ExecStart=/usr/bin/apiserver --datastore-path /var/lib/thar/datastore/current -v -v -v
 
 [Install]
