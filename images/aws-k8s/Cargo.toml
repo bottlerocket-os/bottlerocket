@@ -1,0 +1,25 @@
+[package]
+name = "aws-k8s"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-image]
+included-packages = [
+    "aws-iam-authenticator",
+    "cni",
+    "cni-plugins",
+    "docker-cli",
+    "docker-engine",
+    "docker-init",
+    "docker-proxy",
+    "kubernetes",
+    "release",
+]
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+
+[lib]
+path = "img.rs"
