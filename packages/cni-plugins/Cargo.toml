@@ -1,0 +1,24 @@
+[package]
+name = "cni-plugins"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/containernetworking/plugins/archive/v0.8.0/plugins-0.8.0.tar.gz"
+sha512 = "de685a66e0e875e8a2209b76c5d1f5fd0e426804e3db6084cf2e89695a8b1876eae47ff1fcfdf065a3b027918fe7c4775d2321358402dbd1206928538edb52b4"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+golang = { path = "../golang", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "golang",
+]

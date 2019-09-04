@@ -1,0 +1,26 @@
+[package]
+name = "runc"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/opencontainers/runc/archive/v1.0.0-rc8/runc-1.0.0-rc8.tar.gz"
+sha512 = "4bf464acc87b6d687010f0c070d96e171d91e46c45b84b5570c6f607e7d06777d2d83b2ead87ac4aa761e34afc68a3d9be9ab25107d499e8f41cb68647e23541"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+golang = { path = "../golang", optional=true }
+libseccomp = { path = "../libseccomp", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "golang",
+    "libseccomp",
+]

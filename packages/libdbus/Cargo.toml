@@ -1,0 +1,26 @@
+[package]
+name = "libdbus"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://dbus.freedesktop.org/releases/dbus/dbus-1.12.16.tar.gz"
+sha512 = "27ae805170e9515a8bb0fba5f29d414edc70e3b6b28b7b65bbea47035b8eafa9ac4820cdc92645be6035f6748f8aa45679e1ffc84ba74a64859a3056d318b9bb"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+libcap = { path = "../libcap", optional=true }
+libexpat = { path = "../libexpat", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "libcap",
+    "libexpat",
+]

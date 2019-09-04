@@ -1,0 +1,26 @@
+[package]
+name = "libnetfilter_queue"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://netfilter.org/projects/libnetfilter_queue/files/libnetfilter_queue-1.0.2.tar.bz2"
+sha512 = "89fec4d943b85f35e7cef3b1b9071b1280c6e1b282b7e5cb97eb17d05b9ddd175194639ead986767d27152540fe8e167383a1f7bbfe3cdf874a5a42a2c096f11"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+libmnl = { path = "../libmnl", optional=true }
+libnfnetlink = { path = "../libnfnetlink", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "libmnl",
+    "libnfnetlink",
+]
