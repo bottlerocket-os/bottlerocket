@@ -733,6 +733,7 @@ name = "kernel"
 version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
+ "sdk 0.1.0",
 ]
 
 [[package]]
