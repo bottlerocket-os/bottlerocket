@@ -34,7 +34,6 @@ Requires: %{_cross_os}kernel
 Requires: %{_cross_os}kernel-modules
 Requires: %{_cross_os}moondog
 Requires: %{_cross_os}netdog
-Requires: %{_cross_os}ripgrep
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}sundog
 Requires: %{_cross_os}pluto
