@@ -16,7 +16,8 @@ Requires: %{_cross_os}glibc
 %autosetup -n strace-%{version} -p1
 
 %build
-%cross_configure
+%cross_configure \
+  --disable-mpers \
 
 %make_build
 
