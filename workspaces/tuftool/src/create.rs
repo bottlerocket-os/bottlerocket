@@ -121,6 +121,19 @@ struct CreateProcess<'a> {
 
 impl<'a> CreateProcess<'a> {
     fn run(self) -> Result<()> {
+        let root_path = self
+            .args
+            .outdir
+            .join("metadata")
+            .join(format!("{}.root.json", self.root.version));
+        self.copy_action()
+            .run(&self.args.root, &root_path)
+            .context(error::FileCopy {
+                action: self.copy_action(),
+                src: &self.args.root,
+                dst: root_path,
+            })?;
+
         let (targets_sha256, targets_length) = self.write_metadata(
             Targets {
                 spec_version: crate::SPEC_VERSION.to_owned(),
