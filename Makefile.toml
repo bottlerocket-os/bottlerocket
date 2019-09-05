@@ -1,0 +1,97 @@
+[config]
+skip_core_tasks = true
+
+[env]
+BUILDSYS_ARCH = { script = ["uname -m"] }
+BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
+BUILDSYS_OUTPUT_DIR = "${BUILDSYS_ROOT_DIR}/build"
+BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
+BUILDSYS_BUILDKIT_CLIENT = "moby/buildkit:v0.4.0"
+BUILDSYS_BUILDKIT_SERVER = "tcp://127.0.0.1:1234"
+BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
+CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
+CARGO_MAKE_CARGO_ARGS = "--jobs 8"
+
+[env.development]
+IMAGE = "aws-k8s"
+BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
+
+[tasks.setup]
+script = [
+'''
+mkdir -p ${BUILDSYS_OUTPUT_DIR}
+'''
+]
+
+[tasks.fetch]
+dependencies = ["setup"]
+script = [
+'''
+for ws in workspaces/api workspaces/preinit workspaces/updater packages images ; do
+  cargo fetch --locked --manifest-path ${ws}/Cargo.toml
+done
+chmod o+r -R ${CARGO_HOME}
+'''
+]
+
+[tasks.build-packages]
+dependencies = ["setup", "fetch"]
+script = [
+'''
+cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+  --manifest-path packages/Cargo.toml \
+  --all
+'''
+]
+
+[tasks.world-packages]
+dependencies = ["setup", "fetch"]
+script = [
+'''
+cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+  --manifest-path packages/Cargo.toml \
+  --all --all-features
+'''
+]
+
+[tasks.build-images]
+dependencies = ["build-packages"]
+script = [
+'''
+cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+  --manifest-path images/Cargo.toml \
+  --package ${IMAGE}
+'''
+]
+
+[tasks.world-images]
+dependencies = ["world-packages"]
+script = [
+'''
+cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+  --manifest-path images/Cargo.toml \
+  --package ${IMAGE}
+'''
+]
+
+[tasks.build]
+dependencies = [
+    "build-images",
+]
+
+[tasks.world]
+dependencies = [
+    "world-images",
+]
+
+[tasks.clean]
+script = [
+'''
+for ext in rpm tar lz4 img ; do
+  rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
+done
+'''
+]
+
+[tasks.default]
+alias = "build"
