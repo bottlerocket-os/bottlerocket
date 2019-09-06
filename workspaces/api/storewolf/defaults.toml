@@ -103,3 +103,21 @@ superpowered = false
 # key = "settings.host-containers"
 # md = "affected-services"
 # val = "[host-containers]"
+
+# NTP
+
+[settings.ntp]
+time-servers = ["169.254.169.123", "2.amazon.pool.ntp.org"]
+
+[services.ntp]
+configuration-files = ["chrony-conf"]
+restart-commands = ["/bin/systemctl try-reload-or-restart chronyd.service"]
+
+[configuration-files.chrony-conf]
+path = "/etc/chrony.conf"
+template-path = "/usr/share/templates/chrony-conf"
+
+[[metadata]]
+key = "settings.ntp"
+md = "affected-services"
+val = "[chronyd]"

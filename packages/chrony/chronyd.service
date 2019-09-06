@@ -1,0 +1,12 @@
+[Unit]
+Description=A versatile implementation of the Network Time Protocol
+Documentation=https://chrony.tuxfamily.org
+After=network-online.target configured.target
+Requires=network-online.target configured.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/chronyd -d
+
+[Install]
+WantedBy=multi-user.target

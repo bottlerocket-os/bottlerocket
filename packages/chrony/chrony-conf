@@ -1,0 +1,7 @@
+{{#each settings.ntp.time-servers}}
+pool {{this}} iburst
+{{/each}}
+driftfile /var/lib/thar/chrony/drift
+makestep 1.0 3
+dumponexit
+dumpdir /var/lib/thar/chrony/state
