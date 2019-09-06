@@ -28,7 +28,7 @@ pub enum RsaScheme {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct RsaKey {
-    public: Decoded<RsaPem>,
+    pub public: Decoded<RsaPem>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -39,7 +39,7 @@ pub enum Ed25519Scheme {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Ed25519Key {
-    public: Decoded<Hex>,
+    pub public: Decoded<Hex>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -53,7 +53,7 @@ pub struct EcdsaKey {
     // FIXME: there's probably a difference between what TUF thinks is a valid ECDSA key and what
     // ring thinks is a valid ECDSA key (similar to the issue we had with RSA; see the lengthy
     // comment in `impl Decode for RsaPem` in decoded.rs).
-    public: Decoded<Pem>,
+    pub public: Decoded<Pem>,
 }
 
 impl Key {
