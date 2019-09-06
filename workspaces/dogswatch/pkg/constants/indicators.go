@@ -1,54 +1,44 @@
-//go:generate stringer -linecomment=true -type=NodeState,NodeAction,OperatorVersion,PlatformVersion -output indicators.gen.go
 package constants
 
 // NodeState indicates the general state of the Node as understood by the Node's
 // Agent.
-//
-// Note: the values placed on the resources do not use the internal enum type -
-// they are strings.
-type NodeState uint8
+type NodeState string
 
 const (
-	NodeStateUnknown         NodeState = iota // unknown
-	NodeStateRefreshing                       // refreshing
-	NodeStateUpToDate                         // up-to-date
-	NodeStateUpdateAvailable                  // update-available
-	NodeStateRebooting                        // rebooting
+	NodeStateUnknown         NodeState = "unknown"
+	NodeStateRefreshing      NodeState = "refreshing"
+	NodeStateUpToDate        NodeState = "up-to-date"
+	NodeStateUpdateAvailable NodeState = "update-available"
+	NodeStateRebooting       NodeState = "rebooting"
 )
 
 // NodeAction indicates the permitted action to be taken on a Node by the Agent.
-//
-// Note: the values placed on the resources do not use the internal enum type -
-// they are strings.
-type NodeAction uint8
+type NodeAction string
 
 const (
-	NodeActionUnknown       NodeAction = iota
-	NodeActionStablize                 // stablize
-	NodeActionReset                    // reset-state
-	NodeActionPrepareUpdate            // prepare-update
-	NodeActionPerformUpdate            // perform-update
-	NodeActionRebootUpdate             // reboot-update
+	NodeActionUnknown       NodeAction = "unknown"
+	NodeActionStablize      NodeAction = "stablize"
+	NodeActionReset         NodeAction = "reset-state"
+	NodeActionPrepareUpdate NodeAction = "prepare-update"
+	NodeActionPerformUpdate NodeAction = "perform-update"
+	NodeActionRebootUpdate  NodeAction = "reboot-update"
 )
 
 // OperatorVersion describes compatibility versioning at the Operator level (the
 // Controller and Node Agent).
-//
-// Note: the values placed on the resources do not use the internal enum type -
-// they are strings.
-type OperatorVersion uint8
+type OperatorVersion string
 
 const (
 	// OperatorUnknown is incompatible with all versions of the operator, it
 	// should normally be unused.
-	OperatorUnknown OperatorVersion = iota // 0.0.0-unknown
+	OperatorUnknown OperatorVersion = "0.0.0-unknown"
 
-	OperatorV1Alpha // 1.0.0-alpha
+	OperatorV1Alpha OperatorVersion = "1.0.0-alpha"
 
 	// OperatorDevelopmentDoNotUseInProduction is compatible with production
 	// builds but should not be used in production. If this version is noted,
 	// you should consider using a production build instead.
-	OperatorDevelopmentDoNotUseInProduction // 1.0.0-zeta
+	OperatorDevelopmentDoNotUseInProduction OperatorVersion = "1.0.0-zeta+dev"
 )
 
 var (
@@ -61,30 +51,30 @@ var (
 //
 // Note: the values placed on the resources do not use the internal enum type -
 // they are strings.
-type PlatformVersion uint8
+type PlatformVersion string
 
 const (
 	// PlatformUnknown is incompatible with all versions, it should normally be
 	// unused.
-	PlatformUnknown PlatformVersion = iota // 0.0.0
+	PlatformUnknown PlatformVersion = "0.0.0"
 
 	// PlatformV0 is the stubbed development mock up of the platform integration.
-	PlatformV0 // 0.1.0-zeta
+	PlatformV0 PlatformVersion = "0.1.0-zeta"
 
 	// PlatformV1Alpha is the initial platform integration with a
 	// to-be-stablized interface.
-	PlatformV1Alpha // 1.0.0-alpha
+	PlatformV1Alpha PlatformVersion = "1.0.0-alpha"
 
 	// PlatformV1AlphaNoOp can be used to observe would-be actions in a cluster.
 	// This version indicates that the compiled platform integration will not
 	// perform any action, guranteeing so by excluding the capability at build
 	// time.
-	PlatformV1AlphaNoOp // 1.0.0-alpha+noop
+	PlatformV1AlphaNoOp PlatformVersion = "1.0.0-alpha+noop"
 
 	// PlatformDevelopmentDoNotUseInProduction is compatible with production
 	// builds but should not be used in production. If this version is noted,
 	// you should consider using a production build instead.
-	PlatformDevelopmentDoNotUseInProduction // 0.1.0-zeta
+	PlatformDevelopmentDoNotUseInProduction PlatformVersion = "0.1.0-zeta"
 )
 
 var (
