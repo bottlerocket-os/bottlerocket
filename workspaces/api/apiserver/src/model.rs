@@ -33,6 +33,9 @@ pub struct Settings {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub host_containers: Option<HostContainersSettings>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ntp: Option<NtpSettings>,
 }
 
 // Kubernetes related settings. The dynamic settings are retrieved from
@@ -98,6 +101,14 @@ pub struct ContainerImage {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub superpowered: Option<bool>,
+}
+
+// NTP settings
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct NtpSettings {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub time_servers: Option<Vec<String>>,
 }
 
 ///// Internal services
