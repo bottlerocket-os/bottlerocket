@@ -44,11 +44,11 @@ enum Command {
     UpdateFlags,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Config {
     metadata_base_url: String,
     target_base_url: String,
-    seed: Option<u64>,
+    seed: u64,
     // TODO API sourced configuration, eg.
     // blacklist: Option<Vec<Version>>,
     // mode: Option<{Automatic, Managed, Disabled}>
@@ -73,38 +73,33 @@ struct Update {
 }
 
 impl Update {
-    fn update_ready(&self, config: &Config) -> Result<bool> {
-        if let Some(seed) = config.seed {
-            // Has this client's wave started
-            if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
-                return Ok(*wave <= Utc::now());
-            }
-
-            // Alternately have all waves passed
-            if let Some((_, wave)) = self.waves.iter().last() {
-                return Ok(*wave <= Utc::now());
-            }
-
-            return error::NoWave.fail();
+    fn update_ready(&self, seed: u64) -> Result<bool> {
+        // Has this client's wave started
+        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
+            return Ok(*wave <= Utc::now());
         }
-        error::MissingSeed.fail()
+
+        // Alternately have all waves passed
+        if let Some((_, wave)) = self.waves.iter().last() {
+            return Ok(*wave <= Utc::now());
+        }
+
+        return error::NoWave.fail();
     }
 
-    fn jitter(&self, config: &Config) -> Option<u64> {
-        if let Some(seed) = config.seed {
-            let prev = self.waves.range((Included(0), Included(seed))).last();
-            let next = self
-                .waves
-                .range((Excluded(seed), Excluded(MAX_SEED)))
-                .next();
-            match (prev, next) {
-                (Some((_, start)), Some((_, end))) => {
-                    if Utc::now() < *end {
-                        return Some((end.timestamp() - start.timestamp()) as u64);
-                    }
+    fn jitter(&self, seed: u64) -> Option<u64> {
+        let prev = self.waves.range((Included(0), Included(seed))).last();
+        let next = self
+            .waves
+            .range((Excluded(seed), Excluded(MAX_SEED)))
+            .next();
+        match (prev, next) {
+            (Some((_, start)), Some((_, end))) => {
+                if Utc::now() < *end {
+                    return Some((end.timestamp() - start.timestamp()) as u64);
                 }
-                _ => (),
             }
+            _ => (),
         }
         None
     }
@@ -138,14 +133,7 @@ OPTIONS:
 fn load_config() -> Result<Config> {
     let path = "/etc/updog.toml";
     let s = fs::read_to_string(path).context(error::ConfigRead { path })?;
-    let mut config: Config = toml::from_str(&s).context(error::ConfigParse { path })?;
-    if config.seed.is_none() {
-        let mut rng = thread_rng();
-        config.seed = Some(rng.gen_range(0, MAX_SEED));
-        println!("new seed {:?}, storing to {}", config.seed, &path);
-        let s = toml::to_string(&config).context(error::ConfigSerialize { path })?;
-        fs::write(&path, &s).context(error::ConfigWrite { path })?;
-    }
+    let config: Config = toml::from_str(&s).context(error::ConfigParse { path })?;
     Ok(config)
 }
 
@@ -610,7 +598,7 @@ fn main_inner() -> Result<()> {
                 &flavor,
                 arguments.force_version,
             ) {
-                if u.update_ready(&config)? || arguments.ignore_wave {
+                if u.update_ready(config.seed)? || arguments.ignore_wave {
                     println!("Starting update to {}", u.version);
 
                     let root_path = update_prepare(&repository, &manifest, u)?;
@@ -618,7 +606,7 @@ fn main_inner() -> Result<()> {
                         println!("** Updating immediately **");
                         update_image(u, &repository, None, root_path)?;
                     } else {
-                        update_image(u, &repository, u.jitter(&config), root_path)?;
+                        update_image(u, &repository, u.jitter(config.seed), root_path)?;
                     }
                     if command == Command::Update {
                         update_flags()?;
@@ -702,7 +690,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123),
+            seed: 123,
         };
         let mut update = Update {
             flavor: String::from("thar"),
@@ -718,7 +706,7 @@ mod tests {
         };
 
         assert!(
-            update.update_ready(&config).is_err(),
+            update.update_ready(config.seed).is_err(),
             "Imaginary wave chosen"
         );
 
@@ -726,7 +714,7 @@ mod tests {
             .waves
             .insert(1024, Utc::now() + TestDuration::hours(1));
 
-        let result = update.update_ready(&config);
+        let result = update.update_ready(config.seed);
         assert!(result.is_ok());
         if let Ok(r) = result {
             assert!(!r, "Incorrect wave chosen");
@@ -734,7 +722,7 @@ mod tests {
 
         update.waves.insert(0, Utc::now() - TestDuration::hours(1));
 
-        let result = update.update_ready(&config);
+        let result = update.update_ready(config.seed);
         assert!(result.is_ok());
         if let Ok(r) = result {
             assert!(r, "Update wave missed");
@@ -746,7 +734,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(512),
+            seed: 512,
         };
         let mut update = Update {
             flavor: String::from("thar"),
@@ -769,7 +757,7 @@ mod tests {
             .waves
             .insert(512, Utc::now() - TestDuration::hours(1));
 
-        let result = update.update_ready(&config).unwrap();
+        let result = update.update_ready(config.seed).unwrap();
         assert!(result, "All waves passed but no update");
     }
 
@@ -780,7 +768,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123),
+            seed: 123,
         };
         // max_version is 1.20.0 in manifest
         let version = Version::parse("1.25.0").unwrap();
@@ -799,7 +787,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123),
+            seed: 123,
         };
 
         let version = Version::parse("1.10.0").unwrap();
@@ -869,7 +857,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123),
+            seed: 123,
         };
 
         let version = Version::parse("1.10.0").unwrap();

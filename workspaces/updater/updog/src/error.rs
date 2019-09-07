@@ -156,9 +156,6 @@ pub(crate) enum Error {
         target: DataVersion,
     },
 
-    #[snafu(display("Missing seed value"))]
-    MissingSeed { backtrace: Backtrace },
-
     #[snafu(display("Missing version in metadata: {}", version))]
     MissingVersion {
         backtrace: Backtrace,
