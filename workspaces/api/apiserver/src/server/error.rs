@@ -8,6 +8,16 @@ use snafu::Snafu;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(super)")]
 pub enum Error {
+    // Systemd Notification errors
+
+    #[snafu(display("Systemd notify error: {}", source))]
+    SystemdNotify { source: std::io::Error },
+
+    #[snafu(display("Failed to send systemd status notification"))]
+    SystemdNotifyStatus,
+
+    // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
     // Server errors
 
     #[snafu(display("Missing required input '{}'", input))]

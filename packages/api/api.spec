@@ -24,6 +24,7 @@ Source9: migrator.service
 %cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
+BuildRequires: %{_cross_os}systemd-devel
 BuildRequires: %{_cross_os}rust
 Requires: %{_cross_os}glibc
 
@@ -91,9 +92,11 @@ Summary: Commits settings from user data, defaults, and generators at boot
 %cargo_prep
 
 %build
+export PKG_CONFIG_PATH='%{_cross_pkgconfigdir}'
 %cargo_build --all
 
 %check
+export PKG_CONFIG_PATH='%{_cross_pkgconfigdir}'
 %cargo_test --all
 
 %install

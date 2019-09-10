@@ -6,7 +6,8 @@ mod error;
 pub use error::Error;
 
 use actix_web::{error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use snafu::{OptionExt, ResultExt};
+use snafu::{OptionExt, ResultExt, ensure};
+use systemd::daemon;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync;
@@ -31,7 +32,7 @@ where
         ds: sync::RwLock::new(FilesystemDataStore::new(datastore_path)),
     });
 
-    HttpServer::new(move || {
+    let http_server = HttpServer::new(move || {
         App::new()
             .register_data(shared_datastore.clone())
             .service(
@@ -58,9 +59,16 @@ where
     .bind_uds(socket_path.as_ref())
     .context(error::BindSocket {
         path: socket_path.as_ref(),
-    })?
-    .run()
-    .context(error::ServerStart)
+    })?;
+
+    // Notify system manager the UNIX socket has been initialized, so other service units can proceed
+    let daemon_notify_success = daemon::notify(true, [
+        (daemon::STATE_READY, "1"),
+        (daemon::STATE_STATUS, "Thar API Server: socket ready"),
+    ].into_iter()).context(error::SystemdNotify)?;
+    ensure!(daemon_notify_success, error::SystemdNotifyStatus);
+
+    http_server.run().context(error::ServerStart)
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -248,6 +256,8 @@ impl ResponseError for error::Error {
             ConfigApplierStart { .. } => HttpResponse::InternalServerError(),
             ConfigApplierStdin {} => HttpResponse::InternalServerError(),
             ConfigApplierWrite { .. } => HttpResponse::InternalServerError(),
+            SystemdNotify { .. } => HttpResponse::InternalServerError(),
+            SystemdNotifyStatus {} => HttpResponse::InternalServerError(),
         }
         .finish()
     }
