@@ -12,8 +12,6 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use url::Url;
 
-// Silence "variant is never constructed: `Ssm`"; there appears to be a bug in this linter?
-#[allow(dead_code)]
 #[derive(Debug)]
 pub(crate) enum KeySource {
     Local(PathBuf),
@@ -77,9 +75,9 @@ impl FromStr for KeySource {
             .context(error::UrlParse { url: s })?;
 
         match url.scheme() {
-            "file" => Ok(Self::Local(PathBuf::from(url.path()))),
+            "file" => Ok(KeySource::Local(PathBuf::from(url.path()))),
             #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
-            "aws-ssm" => Ok(Self::Ssm {
+            "aws-ssm" => Ok(KeySource::Ssm {
                 profile: url.host_str().and_then(|s| {
                     if s.is_empty() {
                         None
