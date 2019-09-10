@@ -9,22 +9,44 @@ publish = false
 debug = 1
 lto = true
 
+[features]
+default = ["rusoto"]
+rusoto = ["rusoto-rustls"]
+rusoto-native-tls = ["rusoto_core/native-tls", "rusoto_credential", "rusoto_ssm/native-tls"]
+rusoto-rustls = ["rusoto_core/rustls", "rusoto_credential", "rusoto_ssm/rustls"]
+
 [dependencies]
 chrono = "0.4.6"
 digest = "0.8.1"
 hex = "0.3.2"
 maplit = "1.0.1"
+olpc-cjson = { path = "../updater/olpc-cjson" }
 pem = "0.6.0"
 rayon = "1.1"
 ring = { version = "0.16.7", features = ["std"] }
+rusoto_core = { version = "0.40", optional = true, default-features = false }
+rusoto_credential = { version = "0.40", optional = true }
+rusoto_ssm = { version = "0.40", optional = true, default-features = false }
 serde = "1.0.99"
 serde_json = "1.0.39"
 sha2 = "0.8.0"
 snafu = { version = "0.5.0", features = ["backtrace-crate"] }
 structopt = "0.2.18"
 tough_schema = { path = "../updater/tough_schema" }
-olpc-cjson = { path = "../updater/olpc-cjson" }
+url = "2.1.0"
 walkdir = "2.2.9"
 
 [dev-dependencies]
 tempfile = "3.1.0"
+
+# FIXME drop this when next rusoto releases with
+# https://github.com/rusoto/rusoto/pull/1494
+[patch.crates-io.rusoto_core]
+git = "https://github.com/rusoto/rusoto.git"
+rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"
+[patch.crates-io.rusoto_credential]
+git = "https://github.com/rusoto/rusoto.git"
+rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"
+[patch.crates-io.rusoto_ssm]
+git = "https://github.com/rusoto/rusoto.git"
+rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"

@@ -1,6 +1,7 @@
 use crate::copylike::Copylike;
 use crate::error::{self, Result};
 use crate::key::KeyPair;
+use crate::source::KeySource;
 use chrono::{DateTime, Utc};
 use maplit::hashmap;
 use olpc_cjson::CanonicalFormatter;
@@ -39,7 +40,7 @@ pub(crate) struct CreateArgs {
 
     /// Key files to sign with
     #[structopt(short = "k", long = "key")]
-    keys: Vec<PathBuf>,
+    keys: Vec<KeySource>,
 
     /// Version of snapshot.json file
     #[structopt(long = "snapshot-version")]
@@ -90,9 +91,8 @@ impl CreateArgs {
         let root_length = root_buf.len() as u64;
 
         let mut keys = HashMap::new();
-        for path in &self.keys {
-            let key_buf = std::fs::read(path).context(error::FileRead { path })?;
-            let key_pair = KeyPair::parse(&key_buf).context(error::Key { path })?;
+        for source in &self.keys {
+            let key_pair = source.as_keypair()?;
             if let Some((keyid, _)) = root.keys.iter().find(|(_, key)| key_pair == **key) {
                 keys.insert(keyid.clone(), key_pair);
             }

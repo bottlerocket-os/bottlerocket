@@ -2,8 +2,11 @@
 
 mod copylike;
 mod create;
+mod deref;
 mod error;
 mod key;
+mod source;
+mod ssm;
 
 use crate::error::Result;
 use snafu::ErrorCompat;
