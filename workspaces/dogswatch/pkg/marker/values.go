@@ -1,8 +1,8 @@
-package constants
+package marker
 
 // NodeState indicates the general state of the Node as understood by the Node's
 // Agent.
-type NodeState string
+type NodeState = string
 
 const (
 	NodeStateUnknown         NodeState = "unknown"
@@ -13,7 +13,7 @@ const (
 )
 
 // NodeAction indicates the permitted action to be taken on a Node by the Agent.
-type NodeAction string
+type NodeAction = string
 
 const (
 	NodeActionUnknown       NodeAction = "unknown"
@@ -26,7 +26,7 @@ const (
 
 // OperatorVersion describes compatibility versioning at the Operator level (the
 // Controller and Node Agent).
-type OperatorVersion string
+type OperatorVersion = string
 
 const (
 	// OperatorUnknown is incompatible with all versions of the operator, it
@@ -51,7 +51,7 @@ var (
 //
 // Note: the values placed on the resources do not use the internal enum type -
 // they are strings.
-type PlatformVersion string
+type PlatformVersion = string
 
 const (
 	// PlatformUnknown is incompatible with all versions, it should normally be
