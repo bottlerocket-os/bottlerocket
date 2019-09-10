@@ -144,6 +144,13 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display("Missing field in SSM response: {}", field))]
+    SsmMissingField {
+        field: &'static str,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Unrecognized URL scheme \"{}\"", scheme))]
     UnrecognizedScheme {
         scheme: String,
