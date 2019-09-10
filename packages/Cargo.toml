@@ -20,6 +20,7 @@ members = [
     "glibc",
     "golang",
     "grub",
+    "host-containers",
     "iproute",
     "iptables",
     "kernel",

@@ -589,6 +589,15 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "host-containers"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+ "glibc 0.1.0",
+ "golang 0.1.0",
+]
+
+[[package]]
 name = "http"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
