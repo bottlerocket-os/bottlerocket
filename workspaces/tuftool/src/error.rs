@@ -3,11 +3,20 @@
 use snafu::{Backtrace, Snafu};
 use std::path::PathBuf;
 
+#[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+use crate::deref::OptionDeref;
+
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
+    #[snafu(display("Cannot determine current directory: {}", source))]
+    CurrentDir {
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to {} {} to {}: {}", action, src.display(), dst.display(), source))]
     FileCopy {
         action: crate::copylike::Copylike,
@@ -87,6 +96,28 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display("Error creating AWS credentials provider: {}", source))]
+    RusotoCreds {
+        source: rusoto_credential::CredentialsError,
+        backtrace: Backtrace,
+    },
+
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display("Unknown AWS region \"{}\": {}", region, source))]
+    RusotoRegion {
+        region: String,
+        source: rusoto_core::region::ParseRegionError,
+        backtrace: Backtrace,
+    },
+
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display("Error creating AWS request dispatcher: {}", source))]
+    RusotoTls {
+        source: rusoto_core::request::TlsError,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to sign message"))]
     Sign {
         source: ring::error::Unspecified,
@@ -96,6 +127,40 @@ pub(crate) enum Error {
     #[snafu(display("Failed to serialize role for signing: {}", source))]
     SignJson {
         source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display(
+        "Failed to get aws-ssm://{}{}: {}",
+        profile.deref_shim().unwrap_or(""),
+        parameter_name,
+        source,
+    ))]
+    SsmGetParameter {
+        profile: Option<String>,
+        parameter_name: String,
+        source: rusoto_core::RusotoError<rusoto_ssm::GetParameterError>,
+        backtrace: Backtrace,
+    },
+
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display("Missing field in SSM response: {}", field))]
+    SsmMissingField {
+        field: &'static str,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Unrecognized URL scheme \"{}\"", scheme))]
+    UnrecognizedScheme {
+        scheme: String,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to parse URL \"{}\": {}", url, source))]
+    UrlParse {
+        url: String,
+        source: url::ParseError,
         backtrace: Backtrace,
     },
 
