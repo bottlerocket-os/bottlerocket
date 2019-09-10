@@ -47,8 +47,29 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to copy {} to {}: {}", source.file.path().display(), path.display(), source.error))]
+    FilePersist {
+        path: PathBuf,
+        source: tempfile::PersistError,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to read {}: {}", path.display(), source))]
     FileRead {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to create temporary file in {}: {}", path.display(), source))]
+    FileTempCreate {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to write to {}: {}", path.display(), source))]
+    FileWrite {
         path: PathBuf,
         source: std::io::Error,
         backtrace: Backtrace,
@@ -86,6 +107,9 @@ pub(crate) enum Error {
 
     #[snafu(display("Path {} is not valid UTF-8", path.display()))]
     PathUtf8 { path: PathBuf, backtrace: Backtrace },
+
+    #[snafu(display("Path {} does not have a parent", path.display()))]
+    PathParent { path: PathBuf, backtrace: Backtrace },
 
     // the source error is zero-sized with a fixed message, no sense in displaying it
     #[snafu(display("Path {} is not within {}", path.display(), base.display()))]

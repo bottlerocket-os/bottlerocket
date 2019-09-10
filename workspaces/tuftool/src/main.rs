@@ -5,6 +5,7 @@ mod create;
 mod deref;
 mod error;
 mod key;
+mod root;
 mod source;
 mod ssm;
 
@@ -15,16 +16,18 @@ use structopt::StructOpt;
 static SPEC_VERSION: &str = "1";
 
 #[derive(Debug, StructOpt)]
-#[structopt(rename_all = "kebab-case")]
 enum Command {
     /// Create a TUF repository
     Create(create::CreateArgs),
+    /// Manipulate a root.json metadata file
+    Root(root::Command),
 }
 
 impl Command {
     fn run(&self) -> Result<()> {
         match self {
             Command::Create(args) => args.run(),
+            Command::Root(root_subcommand) => root_subcommand.run(),
         }
     }
 }
