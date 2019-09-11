@@ -1,0 +1,25 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-package]
+source-groups = [ "api" ]
+
+[lib]
+path = "pkg.rs"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+rust = { path = "../rust", optional=true }
+systemd = { path = "../systemd", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "rust",
+    "systemd",
+]

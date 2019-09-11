@@ -1,0 +1,22 @@
+[package]
+name = "glibc"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/glibc/glibc-2.30.tar.xz"
+sha512 = "37483990cd653685873e96c45dd1651b32b441b6d7919a68ebe3bae31a0c3f7ce183fc9b110f0b268b353f80312f18370559a1e7aecea0e5aa755c8f2aef1d6b"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+kernel = { path = "../kernel", optional=true }
+
+[features]
+cascade = [
+    "kernel",
+]

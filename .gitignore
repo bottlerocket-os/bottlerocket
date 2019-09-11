@@ -1,8 +1,4 @@
 /build
-*.makevar
-*.makepkg
-*.makedep
 *.tar.*
-/packages/*/*.crate
 **/target/
 /.cargo

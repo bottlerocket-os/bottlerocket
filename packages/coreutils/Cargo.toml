@@ -1,0 +1,30 @@
+[package]
+name = "coreutils"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/coreutils/coreutils-8.30.tar.xz"
+sha512 = "25bc132c0d89ce71c33e417f04649c9fcfce6c5ef8b19f093b2e9e2851bfde9b5a31e20499d9c427332228ba54b88d445ddb445551e1944bb8f5cbff5ffa4eda"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+libacl = { path = "../libacl", optional=true }
+libattr = { path = "../libattr", optional=true }
+libcap = { path = "../libcap", optional=true }
+libxcrypt = { path = "../libxcrypt", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "libacl",
+    "libattr",
+    "libcap",
+    "libxcrypt",
+]

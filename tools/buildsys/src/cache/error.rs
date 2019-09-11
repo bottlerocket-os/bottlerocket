@@ -8,11 +8,17 @@ pub enum Error {
     #[snafu(display("Bad file name '{}'", path.display()))]
     ExternalFileName { path: PathBuf },
 
+    #[snafu(display("Bad file url '{}': {}", url, source))]
+    ExternalFileUrl {
+        url: String,
+        source: reqwest::UrlError,
+    },
+
     #[snafu(display("Failed to request '{}': {}", url, source))]
-    ExternalFileUrlRequest { url: String, source: reqwest::Error },
+    ExternalFileRequest { url: String, source: reqwest::Error },
 
     #[snafu(display("Failed to fetch '{}': {}", url, status))]
-    ExternalFileUrlFetch {
+    ExternalFileFetch {
         url: String,
         status: reqwest::StatusCode,
     },

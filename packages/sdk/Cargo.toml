@@ -1,0 +1,68 @@
+[package]
+name = "sdk"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/buildroot/buildroot/archive/2018.11.1/buildroot-2018.11.1.tar.gz"
+sha512 = "55cb2cc8dfba67ccaec6bfb33bf52c48e558ed4ba7a9a991e704f296754c4bba5058387ed2da76e98b0739761eb8408e2dedb72173337771b6a8ba9c330d9c38"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz"
+sha512 = "d326408f12a03d9a61a9de56584c2af12f81c2e50d2d7e835d51565df8314df01575724afa1e43bd0db45cfc9916b41519b67dfce03232aa4978704492a6994a"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.xz"
+sha512 = "bbdc23e7772e49da1c7c47e66d4e4efbfbfe9b21dbc59bf3ad9a6e573eecac6c9f52c7f11a64be9897e8deb99ef7ba015164aa8232aa391b901dd7db03632412"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/gawk/gawk-4.2.1.tar.xz"
+sha512 = "0e3006a795dc3ac91359a7d2590c0cccbfd39b18a1d491617d68505c55a2800355b1439050681b4fcacf65fb0d533151a046babe0fd774503037bab363ef2ae4"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/gcc/gcc-8.2.0/gcc-8.2.0.tar.xz"
+sha512 = "64898a165f67e136d802a92e7633bf1b06c85266027e52127ea025bf5fc2291b5e858288aac0bdba246e6cdf7c6ec88bc8e0e7f3f6f1985f4297710cafde56ed"
+
+[[package.metadata.build-package.external-files]]
+url = "http://sources.buildroot.org/glibc/glibc-glibc-2.28-50-gb8dd0f42780a3133c02f064a2c0c5c4e7ab61aaa.tar.gz"
+sha512 = "9bd7394da1199ee45430cf43c54838d9010e2c6589601f2e3e98e36836a94dc446780d0406014e5b03f6a91ddc0a1b5612430d60bf102021448c98e4486012e3"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz"
+sha512 = "9f098281c0593b76ee174b722936952671fab1dae353ce3ed436a31fe2bc9d542eca752353f6645b7077c1f395ab4fdd355c58e08e2a801368f1375690eee2c6"
+
+[[package.metadata.build-package.external-files]]
+url = "http://isl.gforge.inria.fr/isl-0.18.tar.xz"
+sha512 = "3606609765fc34740ab3014e2256d6bba7ff730463b014a0e4f5fcfb2e3dbef974503dff1f3702b307ef79ff86c5bc2c3ce3c3c8511533971fd5d53ab45f6eea"
+
+[[package.metadata.build-package.external-files]]
+url = "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.86.tar.xz"
+sha512 = "fe283dcc3b9c560a4d8fd2d04e3046f9d6fc8df55cb760dab23f523f585aacdd0d47c912c8c35058a5192b6a5c5e230b3ccdf561fe97c3a769fd41cee0481f71"
+
+[[package.metadata.build-package.external-files]]
+url = "http://download.savannah.gnu.org/releases/lzip/lzip-1.20.tar.gz"
+sha512 = "0349b4c6c0b41e601b7ee381c3254d741397beb3ef9354c08162f346f131f4f48f6613ee0a610cdc6d827530df634f884ecfeee35215b10045a40fee76f8e938"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz"
+sha512 = "06f583efc3855cd8477d8347544f4ae5153a3e50aea74d21968afa7214784ea3ddfc02d0a2b11324120d76a19f2e804d20de11a456b5da929eb6ae469519b174"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz"
+sha512 = "0028b76df130720c1fad7de937a0d041224806ce5ef76589f19c7b49d956071a683e2f20d154c192a231e69756b19e48208f2889b0c13950ceb7b3cfaf059a43"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/mpfr/mpfr-3.1.6.tar.xz"
+sha512 = "746ee74d5026f267f74ab352d850ed30ff627d530aa840c71b24793e44875f8503946bd7399905dea2b2dd5744326254d7889337fe94cfe58d03c4066e9d8054"
+
+[[package.metadata.build-package.external-files]]
+url = "https://ftp.gnu.org/gnu/tar/tar-1.29.cpio.gz"
+sha512 = "f004683b68db8a35bb517b92286063acedd01cf88fec2d61b7649fdcb8db855559c98de688b207c146ce01ea5778185f447da924c4c5061db739a8a7528718a5"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }

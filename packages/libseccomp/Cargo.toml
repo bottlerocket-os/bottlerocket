@@ -1,0 +1,22 @@
+[package]
+name = "libseccomp"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/seccomp/libseccomp/releases/download/v2.4.1/libseccomp-2.4.1.tar.gz"
+sha512 = "1fe47ebb032635ba1b1cbefb505a0c103bae659844d1bf106d03e7f28b3c470726f7b0dbbe76d10ab89501630dc4f20b162c2eeefa22394eb632f803ae62ccc5"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+]

@@ -1,0 +1,36 @@
+[package]
+name = "systemd"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/systemd/systemd/archive/v242/systemd-242.tar.gz"
+sha512 = "578f68a3c8f2d454198fc04ff8d943abcfb390531d57f9603d185857f7afa7f4dc641dafecf49ce50fe22f5837b252b181400891e8efd4459fd4f69bb4283cb4"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+kmod = { path = "../kmod", optional=true }
+libacl = { path = "../libacl", optional=true }
+libattr = { path = "../libattr", optional=true }
+libcap = { path = "../libcap", optional=true }
+libseccomp = { path = "../libseccomp", optional=true }
+libxcrypt = { path = "../libxcrypt", optional=true }
+util-linux = { path = "../util-linux", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "kmod",
+    "libacl",
+    "libattr",
+    "libcap",
+    "libseccomp",
+    "libxcrypt",
+    "util-linux",
+]

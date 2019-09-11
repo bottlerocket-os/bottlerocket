@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "aws-k8s",
+]
+
+[profile.release]
+debug = true

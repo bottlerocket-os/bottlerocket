@@ -1,0 +1,20 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://cdn.amazonlinux.com/blobstore/d88833a42027a5779606b1da7579281dd2fde351262da02c3f6daf4ef8983b46/kernel-4.19.66-22.57.amzn2.src.rpm"
+sha512 = "094ff275fb5e07425ed1c130f63863bef5bad0a0399ccb483d820351a0d870f22b036d5e995d3f593d31a0c9bcb9b9f94dcf1856974a29d5fc5f6fb78e83bcee"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+sdk = { path = "../sdk", optional=true }
+
+[features]
+cascade = [ "sdk" ]

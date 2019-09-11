@@ -1,6 +1,7 @@
 %global workspace_name api
-%global systemd_systemdir %{_cross_libdir}/systemd/system
-%global migrationdir %{_cross_factorydir}%{_cross_sharedstatedir}/thar/datastore/migrations
+%global workspace_dir %{_builddir}/workspaces/%{workspace_name}
+%global migration_dir %{_cross_factorydir}%{_cross_sharedstatedir}/thar/datastore/migrations
+%undefine _debugsource_packages
 
 # List migrations to be installed here, eg:
 #%%global migration_versions v1.0 v1.1 v1.2
@@ -11,7 +12,6 @@ Version: 0.0
 Release: 0%{?dist}
 Summary: Thar API packages
 License: Apache-2.0 AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR MIT) AND Apache-2.0/MIT AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND ISC AND MIT AND (MIT OR Apache-2.0) AND MIT/Unlicense AND N/A AND (Unlicense OR MIT) AND Zlib
-Source0: %{workspace_name}.crate
 Source1: apiserver.service
 Source2: moondog.service
 Source3: sundog.service
@@ -21,7 +21,6 @@ Source6: migration-tmpfiles.conf
 Source7: settings-applier.service
 Source8: data-store-version
 Source9: migrator.service
-%cargo_bundle_crates -n %{workspace_name} -t 0
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}systemd-devel
@@ -88,62 +87,59 @@ Summary: Commits settings from user data, defaults, and generators at boot
 %{summary}.
 
 %prep
-%setup -qn %{workspace_name}
+%setup -T -c
 %cargo_prep
 
 %build
-export PKG_CONFIG_PATH='%{_cross_pkgconfigdir}'
-%cargo_build --all
+for p in \
+  apiclient apiserver \
+  moondog netdog sundog pluto \
+  thar-be-settings storewolf settings-committer \
+  migration/migrator ;
+do
+  %cargo_build --path %{workspace_dir}/${p}
+done
 
-%check
-export PKG_CONFIG_PATH='%{_cross_pkgconfigdir}'
-%cargo_test --all
-
-%install
-mkdir -p %{buildroot}/%{systemd_systemdir}
-install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE1}
-install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE2}
-install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE3}
-install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE4}
-install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE5}
-install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE7}
-install -m 0644 -t %{buildroot}/%{systemd_systemdir} %{SOURCE9}
-
-install -d %{buildroot}/%{_cross_datadir}/thar
-install -m 0644 -t %{buildroot}/%{_cross_datadir}/thar %{SOURCE8}
-
-%cargo_install -p apiserver
-%cargo_install -p apiclient
-%cargo_install -p moondog
-%cargo_install -p netdog
-%cargo_install -p sundog
-%cargo_install -p pluto
-%cargo_install -p thar-be-settings
-%cargo_install -p storewolf
-%cargo_install -p settings-committer
-%cargo_install -p migration/migrator
-
-install -d %{buildroot}%{migrationdir}
-echo %{_cross_bindir}/migrator > migration-binaries
-
-for version in %migration_versions ; do
-  for path in migration/migrations/${version}/* ; do
-    [ -e "${path}" ] || continue
-    name="${path##*/}"
-    %cargo_install -p migration/migrations/${version}/${name} -d %{buildroot}%{migrationdir}
-    mv %{buildroot}%{migrationdir}/bin/${name} %{buildroot}%{migrationdir}/migrate_${version}_${name}
-    echo %{migrationdir}/migrate_${version}_${name} >> migration-binaries
+for v in %migration_versions ; do
+  for p in %{workspace_dir}/migration/migrations/${v}/* ; do
+    name="${p##*/}"
+    %cargo_build --path ${p}
+    mv bin/${name} bin/migrate_${v}_${name}
   done
 done
-%{__rm} -rf %{buildroot}%{migrationdir}/bin
+
+%install
+install -d %{buildroot}%{_cross_bindir}
+for p in \
+  apiclient apiserver \
+  moondog netdog sundog pluto \
+  thar-be-settings storewolf settings-committer \
+  migrator ;
+do
+  install -p -m 0755 bin/${p} %{buildroot}%{_cross_bindir}
+done
+
+install -d %{buildroot}%{_cross_unitdir}
+install -p -m 0644 \
+  %{S:1} %{S:2} %{S:3} %{S:4} %{S:5} %{S:7} %{S:9} \
+  %{buildroot}%{_cross_unitdir}
+
+install -d %{buildroot}%{_cross_datadir}/thar
+install -p -m 0644 %{S:8} %{buildroot}%{_cross_datadir}/thar
+
+install -d %{buildroot}%{migration_dir}
+for m in bin/migrate_* ; do
+  [ -f "${m}" ] || continue
+  install -p -m0755 ${m} %{buildroot}%{migration_dir}
+done
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
-%{systemd_systemdir}/apiserver.service
-%{systemd_systemdir}/migrator.service
+%{_cross_unitdir}/apiserver.service
+%{_cross_unitdir}/migrator.service
 %{_cross_datadir}/thar/data-store-version
 
 %files -n %{_cross_os}apiclient
@@ -151,32 +147,33 @@ install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}moondog
 %{_cross_bindir}/moondog
-%{systemd_systemdir}/moondog.service
+%{_cross_unitdir}/moondog.service
 
 %files -n %{_cross_os}netdog
 %{_cross_bindir}/netdog
 
 %files -n %{_cross_os}sundog
 %{_cross_bindir}/sundog
-%{systemd_systemdir}/sundog.service
+%{_cross_unitdir}/sundog.service
 
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
-%{systemd_systemdir}/settings-applier.service
+%{_cross_unitdir}/settings-applier.service
 
 %files -n %{_cross_os}storewolf
 %{_cross_bindir}/storewolf
-%{systemd_systemdir}/storewolf.service
+%{_cross_unitdir}/storewolf.service
 
-%files -n %{_cross_os}migration -f migration-binaries
-%dir %{migrationdir}
+%files -n %{_cross_os}migration
+%{_cross_bindir}/migrator
+%{migration_dir}
 %{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}settings-committer
 %{_cross_bindir}/settings-committer
-%{systemd_systemdir}/settings-committer.service
+%{_cross_unitdir}/settings-committer.service
 
 %changelog
