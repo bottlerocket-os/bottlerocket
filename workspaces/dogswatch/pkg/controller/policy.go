@@ -1,5 +1,7 @@
 package controller
 
+import "github.com/amazonlinux/thar/dogswatch/pkg/intent"
+
 const (
 	allowedClusterActive = 1
 )
@@ -12,15 +14,21 @@ type Policy interface {
 
 type defaultPolicy struct{}
 
-func (p *defaultPolicy) Check(in *Intent) (bool, error) {
+func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
 	// If already active, continue to handle it.
-	if in.Active() {
+	if ck.Intent.Active() {
 		return true, nil
 	}
 	// If there are no other active nodes in the cluster, then go ahead with the
 	// intended action.
-	if in.ClusterActive == 0 {
+	if ck.ClusterActive == 0 {
 		return true, nil
 	}
 	return false, nil
+}
+
+type PolicyCheck struct {
+	Intent        *intent.Intent
+	ClusterActive int
+	ClusterCount  int
 }

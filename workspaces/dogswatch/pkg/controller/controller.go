@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 	"github.com/amazonlinux/thar/dogswatch/pkg/workgroup"
 	"k8s.io/client-go/kubernetes"
 )
@@ -30,8 +31,12 @@ func (c *Controller) Run(ctx context.Context) error {
 
 	group := workgroup.WithContext(worker)
 
-	group.Work(c.informer)
-	group.Work(c.streamer)
+	// The nodestream will provide us with resource events that are scoped to
+	// Nodes we "should" care about - those are labeled with markers.
+	ns := nodestream.New(c.log.WithField("worker", "informer"), c.kube, nodestream.Config{}, c.manager)
+
+	group.Work(ns.Run)
+	group.Work(c.manager.Run)
 
 	c.log.Debug("running control loop")
 	for {
@@ -40,19 +45,5 @@ func (c *Controller) Run(ctx context.Context) error {
 			cancel()
 			return nil
 		}
-	}
-}
-
-func (c *Controller) informer(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return nil
-	}
-}
-
-func (c *Controller) streamer(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return nil
 	}
 }
