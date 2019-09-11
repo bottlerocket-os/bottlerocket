@@ -13,7 +13,7 @@ const (
 	// node, the node's current state and the desired state for the node to
 	// reach.
 	NodeStatusKey Key = Prefix + "/node-status"
-	NodeActionKey Key = Prefix + "/desired-state"
+	NodeActionKey Key = Prefix + "/node-action"
 	NodeStateKey  Key = Prefix + "/node-state"
 
 	LabelPrefix              = Prefix

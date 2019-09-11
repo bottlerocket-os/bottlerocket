@@ -24,6 +24,11 @@ var (
 
 func main() {
 	flag.Parse()
+
+	if *flagLogDebug {
+		logging.Set(logging.Level("debug"))
+	}
+
 	log := logging.New("main")
 
 	kube, err := k8sutil.DefaultKubernetesClient()

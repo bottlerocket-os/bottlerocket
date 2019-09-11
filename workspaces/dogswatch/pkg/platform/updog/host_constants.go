@@ -1,6 +1,6 @@
 package updog
 
-type hostCommand string
+type hostCommand = string
 
 const (
 	CommandStatusQuery   hostCommand = "status"
@@ -10,21 +10,13 @@ const (
 	CommandBootUpdate    hostCommand = "boot-update"
 )
 
-func (h hostCommand) String() string {
-	return string(h)
-}
-
-type hostStatus string
+type hostStatus = string
 
 const (
 	StatusBootable        hostStatus = "bootable"
-	StatusUpToDate                   = "up-to-date"
-	StatusUpdateAvailable            = "available"
-	StatusUpdateApplied              = "applied"
-	StatusUpdatePrepared             = "prepared"
-	StatusPendingAction              = "pending"
+	StatusUpToDate        hostStatus = "up-to-date"
+	StatusUpdateAvailable hostStatus = "available"
+	StatusUpdateApplied   hostStatus = "applied"
+	StatusUpdatePrepared  hostStatus = "prepared"
+	StatusPendingAction   hostStatus = "pending"
 )
-
-func (h hostStatus) String() string {
-	return string(h)
-}
