@@ -14,17 +14,19 @@ source-groups = ["api"]
 ```
 
 `external-files` is a list of out-of-tree files that should be retrieved
-as additional dependencies for the build.
+as additional dependencies for the build. If the path for the external
+file name is not provided, it will be taken from the last path component
+of the URL.
 ```
 [[package.metadata.build-package.external-files]]
 path = "foo"
 url = "https://foo"
-hash = "abcdef"
+sha512 = "abcdef"
 
 [[package.metadata.build-package.external-files]]
 path = "bar"
 url = "https://bar"
-hash = "123456"
+sha512 = "123456"
 ```
 
 `included-packages` is a list of packages that should be included in an image.
@@ -119,7 +121,7 @@ pub(crate) struct BuildImage {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct ExternalFile {
-    pub(crate) path: PathBuf,
-    pub(crate) hash: String,
+    pub(crate) path: Option<PathBuf>,
+    pub(crate) sha512: String,
     pub(crate) url: String,
 }

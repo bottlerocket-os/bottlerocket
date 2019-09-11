@@ -15,7 +15,7 @@ use error::Result;
 
 use super::manifest;
 use sha2::{Digest, Sha512};
-use snafu::{ensure, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufWriter};
@@ -29,13 +29,14 @@ impl LookasideCache {
     /// Fetch files stored out-of-tree and ensure they match the stored hash.
     pub(crate) fn fetch(files: &[manifest::ExternalFile]) -> Result<Self> {
         for f in files {
-            let path = &f.path;
+            let url_file_name = Self::extract_file_name(&f.url)?;
+            let path = &f.path.as_ref().unwrap_or_else(|| &url_file_name);
             ensure!(
                 path.components().count() == 1,
                 error::ExternalFileName { path }
             );
 
-            let hash = &f.hash;
+            let hash = &f.sha512;
             if path.is_file() {
                 match Self::verify_file(path, hash) {
                     Ok(_) => continue,
@@ -72,14 +73,14 @@ impl LookasideCache {
     }
 
     /// Retrieves a file from the specified URL and write it to the given path,
-    /// then verifies the contents against the hash provided.
+    /// then verifies the contents against the SHA-512 hash provided.
     fn fetch_file<P: AsRef<Path>>(url: &str, path: P, hash: &str) -> Result<()> {
         let path = path.as_ref();
-        let mut resp = reqwest::get(url).context(error::ExternalFileUrlRequest { url })?;
+        let mut resp = reqwest::get(url).context(error::ExternalFileRequest { url })?;
         let status = resp.status();
         ensure!(
             status.is_success(),
-            error::ExternalFileUrlFetch { url, status }
+            error::ExternalFileFetch { url, status }
         );
 
         let f = File::create(path).context(error::ExternalFileOpen { path })?;
@@ -95,6 +96,16 @@ impl LookasideCache {
                 Err(e)
             }
         }
+    }
+
+    fn extract_file_name(url: &str) -> Result<PathBuf> {
+        let parsed = reqwest::Url::parse(url).context(error::ExternalFileUrl { url })?;
+        let name = parsed
+            .path_segments()
+            .context(error::ExternalFileName { path: url })?
+            .last()
+            .context(error::ExternalFileName { path: url })?;
+        Ok(name.into())
     }
 
     /// Reads a file from disk and compares it to the expected SHA-512 hash.
