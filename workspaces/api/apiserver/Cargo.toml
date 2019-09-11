@@ -18,7 +18,12 @@ snafu = "0.5"
 stderrlog = "0.4"
 toml = "0.5"
 walkdir = "2.2"
-systemd = { version = "0.4.0", default-features = false, features = [] }
+systemd = { version = "0.4.0", default-features = false, features = [], optional = true }
+
+[features]
+default = []
+
+sd_notify = ["systemd"]
 
 [build-dependencies]
 cargo-readme = "3.1"
