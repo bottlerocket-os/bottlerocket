@@ -15,7 +15,7 @@ License: ASL 2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: containerd.service
-Source2: containerd.toml
+Source2: containerd-config.toml
 Source3: containerd-tmpfiles.conf
 BuildRequires: git
 BuildRequires: gcc-%{_cross_target}
