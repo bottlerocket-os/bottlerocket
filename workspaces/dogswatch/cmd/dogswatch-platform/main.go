@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/amazonlinux/thar/dogswatch/pkg/constants"
+	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 )
 
 func main() {
-	println(constants.PlatformBuildVersion.String())
+	println(marker.PlatformVersionBuild)
 }

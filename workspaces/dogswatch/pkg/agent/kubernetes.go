@@ -6,10 +6,10 @@ import (
 
 func (a *Agent) patchState() error {
 	nc := a.kube.CoreV1().Nodes()
-	patchJSON, err := a.state.PatchJSON()
+	patchJSON, err := a.state.patchJSON()
 	if err != nil {
 		return err
 	}
-	_, err = nc.Patch(a.state.NodeName, types.JSONPatchType, patchJSON)
+	_, err = nc.Patch(a.state.resourceName(), types.JSONPatchType, patchJSON)
 	return err
 }

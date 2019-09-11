@@ -56,7 +56,7 @@ type PlatformVersion = string
 const (
 	// PlatformUnknown is incompatible with all versions, it should normally be
 	// unused.
-	PlatformUnknown PlatformVersion = "0.0.0"
+	PlatformVersionUnknown PlatformVersion = "0.0.0"
 
 	// PlatformV0 is the stubbed development mock up of the platform integration.
 	PlatformV0 PlatformVersion = "0.1.0-zeta"
@@ -78,5 +78,5 @@ const (
 )
 
 var (
-	PlatformBuildVersion = PlatformDevelopmentDoNotUseInProduction
+	PlatformVersionBuild = PlatformDevelopmentDoNotUseInProduction
 )
