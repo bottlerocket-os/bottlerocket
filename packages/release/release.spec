@@ -8,7 +8,7 @@ Source1: login
 
 Source10: hosts
 Source11: nsswitch.conf
-Source99: release.conf
+Source99: release-tmpfiles.conf
 
 # FIXME What should own system-level file templates?
 Source200: hostname.template
@@ -16,6 +16,8 @@ Source200: hostname.template
 Source1000: eth0.xml
 Source1001: var-lib-thar.mount
 Source1002: configured.target
+Source1003: host-containerd.service
+Source1004: host-containerd-config.toml
 
 BuildArch: noarch
 Requires: %{_cross_os}apiclient
@@ -64,6 +66,9 @@ install -p -m 0644 %{S:10} %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysc
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 install -p -m 0644 %{S:1000} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd
+install -p -m 0644 %{S:1004} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
+
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
@@ -75,7 +80,7 @@ VERSION_ID=%{version}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1001} %{S:1002} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1001} %{S:1002} %{S:1003} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
@@ -85,9 +90,11 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig/eth0.xml
+%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/os-release
 %{_cross_unitdir}/configured.target
+%{_cross_unitdir}/host-containerd.service
 %{_cross_unitdir}/var-lib-thar.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/hostname

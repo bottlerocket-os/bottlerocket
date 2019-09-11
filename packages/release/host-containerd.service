@@ -1,0 +1,20 @@
+[Unit]
+Description=containerd runtime for host containers
+Documentation=https://containerd.io
+After=network-online.target configured.target
+Wants=network-online.target configured.target
+
+[Service]
+ExecStart=/usr/bin/containerd --config /etc/host-containerd/config.toml
+Delegate=yes
+KillMode=process
+TimeoutSec=0
+RestartSec=2
+Restart=always
+LimitNPROC=infinity
+LimitCORE=infinity
+LimitNOFILE=infinity
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target
