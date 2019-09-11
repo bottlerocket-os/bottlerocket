@@ -10,7 +10,7 @@ BUILDSYS_BUILDKIT_CLIENT = "moby/buildkit:v0.4.0"
 BUILDSYS_BUILDKIT_SERVER = "tcp://127.0.0.1:1234"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
-CARGO_MAKE_CARGO_ARGS = "--jobs 8"
+CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
 
 [env.development]
 IMAGE = "aws-k8s"
@@ -38,7 +38,9 @@ chmod o+r -R ${CARGO_HOME}
 dependencies = ["setup", "fetch"]
 script = [
 '''
-cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+cargo build \
+  ${CARGO_BUILD_ARGS} \
+  ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path packages/Cargo.toml \
   --all
 '''
@@ -48,7 +50,9 @@ cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
 dependencies = ["setup", "fetch"]
 script = [
 '''
-cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+cargo build \
+  ${CARGO_BUILD_ARGS} \
+  ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path packages/Cargo.toml \
   --all --all-features
 '''
@@ -58,7 +62,9 @@ cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
 dependencies = ["build-packages"]
 script = [
 '''
-cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+cargo build \
+  ${CARGO_BUILD_ARGS} \
+  ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path images/Cargo.toml \
   --package ${IMAGE}
 '''
@@ -68,7 +74,9 @@ cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
 dependencies = ["world-packages"]
 script = [
 '''
-cargo build ${CARGO_BUILD_ARGS} ${CARGO_MAKE_CARGO_ARGS} \
+cargo build \
+  ${CARGO_BUILD_ARGS} \
+  ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path images/Cargo.toml \
   --package ${IMAGE}
 '''
