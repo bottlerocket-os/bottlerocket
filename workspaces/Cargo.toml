@@ -1,0 +1,45 @@
+[workspace]
+members = [
+    "api/apiserver",
+    "api/apiclient",
+    "api/data_store_version",
+    "api/moondog",
+    "api/netdog",
+    "api/sundog",
+    "api/pluto",
+    "api/storewolf",
+    "api/thar-be-settings",
+    "api/settings-committer",
+    "api/migration/migrator",
+    "api/migration/migration-helpers",
+
+    # Migrations will be listed here.  They won't need to be listed as a
+    # workspace member when we add cross-workspace dependencies.
+    "api/migration/migrations/v1.1/testmigration",
+
+    "preinit/laika",
+
+    "updater/olpc-cjson",
+    "updater/signpost",
+    "updater/tough",
+    "updater/tough_schema",
+    "updater/updog",
+
+    "tuftool",
+]
+
+[profile.release]
+debug = true
+lto = true
+
+# FIXME drop this when next rusoto releases with
+# https://github.com/rusoto/rusoto/pull/1494
+[patch.crates-io.rusoto_core]
+git = "https://github.com/rusoto/rusoto.git"
+rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"
+[patch.crates-io.rusoto_credential]
+git = "https://github.com/rusoto/rusoto.git"
+rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"
+[patch.crates-io.rusoto_ssm]
+git = "https://github.com/rusoto/rusoto.git"
+rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"

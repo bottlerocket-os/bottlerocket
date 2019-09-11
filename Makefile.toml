@@ -27,7 +27,7 @@ mkdir -p ${BUILDSYS_OUTPUT_DIR}
 dependencies = ["setup"]
 script = [
 '''
-for ws in workspaces/api workspaces/preinit workspaces/updater packages images ; do
+for ws in workspaces packages images ; do
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
 chmod o+r -R ${CARGO_HOME}
