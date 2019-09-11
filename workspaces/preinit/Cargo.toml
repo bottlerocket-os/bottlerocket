@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "laika",
-]
-
-[profile.release]
-debug = true
