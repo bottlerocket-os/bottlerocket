@@ -23,9 +23,11 @@ impl PackageBuilder {
         let opts = format!(
             "--opt target=rpm \
              --opt build-arg:PACKAGE={package} \
+             --opt build-arg:THAR_FLAVOR={name} \
              --opt build-arg:ARCH={arch}",
             package = package,
             arch = arch,
+            name = getenv("IMAGE")?,
         );
 
         let result = buildctl(&opts)?;

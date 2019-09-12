@@ -1,5 +1,5 @@
 Name: %{_cross_os}release
-Version: 1
+Version: 0.1.0
 Release: 1%{?dist}
 Summary: Thar release
 License: Public Domain
@@ -84,6 +84,7 @@ NAME=Thar
 PRETTY_NAME="Thar, The Operating System"
 ID=thar
 VERSION_ID=%{version}
+VARIANT_ID=%{_cross_image_name}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}

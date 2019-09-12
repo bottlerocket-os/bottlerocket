@@ -23,11 +23,13 @@ COPY .dockerignore .${PACKAGE}.${ARCH}
 FROM base AS rpmbuild
 ARG PACKAGE
 ARG ARCH
+ARG THAR_FLAVOR
 ARG NOCACHE
 WORKDIR /home/builder
 
 USER builder
 ENV PACKAGE=${PACKAGE} ARCH=${ARCH}
+ENV THAR_FLAVOR=${THAR_FLAVOR}
 COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/* .
 RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \
