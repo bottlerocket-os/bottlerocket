@@ -91,8 +91,10 @@ Summary: Commits settings from user data, defaults, and generators at boot
 %cargo_prep
 
 %build
+%cargo_build --path %{workspace_dir}/apiserver --features sd_notify
+
 for p in \
-  apiclient apiserver \
+  apiclient \
   moondog netdog sundog pluto \
   thar-be-settings storewolf settings-committer \
   migration/migrator ;

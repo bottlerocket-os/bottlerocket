@@ -6,8 +6,7 @@ mod error;
 pub use error::Error;
 
 use actix_web::{error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use snafu::{OptionExt, ResultExt, ensure};
-use systemd::daemon;
+use snafu::{OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync;
@@ -17,6 +16,24 @@ use crate::model::{ConfigurationFiles, Services, Settings};
 use error::Result;
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+// sd_notify helper
+#[cfg(feature = "sd_notify")]
+fn notify_unix_socket_ready() -> Result<()> {
+    use snafu::ensure;
+    use systemd::daemon;
+    let daemon_notify_success = daemon::notify(
+        true,
+        [
+            (daemon::STATE_READY, "1"),
+            (daemon::STATE_STATUS, "Thar API Server: socket ready"),
+        ]
+        .into_iter(),
+    )
+    .context(error::SystemdNotify)?;
+    ensure!(daemon_notify_success, error::SystemdNotifyStatus);
+    Ok(())
+}
 
 // Router
 
@@ -62,11 +79,10 @@ where
     })?;
 
     // Notify system manager the UNIX socket has been initialized, so other service units can proceed
-    let daemon_notify_success = daemon::notify(true, [
-        (daemon::STATE_READY, "1"),
-        (daemon::STATE_STATUS, "Thar API Server: socket ready"),
-    ].into_iter()).context(error::SystemdNotify)?;
-    ensure!(daemon_notify_success, error::SystemdNotifyStatus);
+    #[cfg(feature = "sd_notify")]
+    {
+        notify_unix_socket_ready()?;
+    }
 
     http_server.run().context(error::ServerStart)
 }
