@@ -2342,6 +2342,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "servicedog"
+version = "0.1.0"
+dependencies = [
+ "apiclient 0.1.0",
+ "apiserver 0.1.0",
+ "cargo-readme 3.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "http 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.100 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "stderrlog 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "settings-committer"
 version = "0.1.0"
 dependencies = [
