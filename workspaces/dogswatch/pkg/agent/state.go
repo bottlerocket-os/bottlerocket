@@ -67,8 +67,8 @@ func (s *nodeState) toObjectMeta() *metav1.ObjectMeta {
 
 	annos := map[string]string{
 		"dev." + marker.Prefix + "/last-patch": time.Now().Format(time.RFC3339),
-		marker.NodeStateKey:                    s.state,
-		marker.NodeActionKey:                   s.action,
+		marker.NodeActionActive:                s.state,
+		marker.NodeActionWanted:                s.action,
 		marker.UpdateAvailableKey:              fmt.Sprintf("%t", s.updateAvailable),
 		marker.PlatformVersionKey:              s.platformVersion,
 		marker.OperatorVersionKey:              s.operatorVersion,
@@ -80,6 +80,9 @@ func (s *nodeState) toObjectMeta() *metav1.ObjectMeta {
 		marker.OperatorVersionKey: s.operatorVersion,
 	}
 	extendMap(labels, s.staticLabels)
+
+	// TODO: see if k8s.io/apimachinery/pkg/util/strategicpatch can be used
+	// instead, this was discovered much later on.
 
 	meta.SetAnnotations(annos)
 	meta.SetLabels(labels)

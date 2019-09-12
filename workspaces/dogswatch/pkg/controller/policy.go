@@ -9,7 +9,7 @@ const (
 type Policy interface {
 	// Check determines if the policy permits continuing with an intended
 	// action.
-	Check(*Intent) (bool, error)
+	Check(*PolicyCheck) (bool, error)
 }
 
 type defaultPolicy struct{}

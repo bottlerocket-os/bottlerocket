@@ -6,12 +6,14 @@ import (
 )
 
 type Intent struct {
-	// ID is an identifier that uniquely addresses the intent target.
-	ID string
+	// NodeName is an identifier that uniquely addresses the intent target.
+	NodeName string
+
 	// CurrentAction is the currently instructed action on the node.
 	CurrentAction marker.NodeAction
 	// CurrentState is the current state of the node.
 	CurrentState marker.NodeState
+
 	// Action is the intended next action to be instructed.
 	Action marker.NodeAction
 	// State is the state that would be reached if the intent were
@@ -63,13 +65,13 @@ func Given(node *v1.Node) *Intent {
 	annos := node.GetAnnotations()
 
 	intent := &Intent{
-		ID: node.GetName(),
+		NodeName: node.GetName(),
 
-		CurrentState:  annos[marker.NodeStateKey],
-		CurrentAction: annos[marker.NodeActionKey],
+		CurrentState:  annos[marker.NodeActionActive],
+		CurrentAction: annos[marker.NodeActionWanted],
 
-		State:  annos[marker.NodeStateKey],
-		Action: annos[marker.NodeActionKey],
+		State:  annos[marker.NodeActionActive],
+		Action: annos[marker.NodeActionWanted],
 	}
 
 	return intent

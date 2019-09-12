@@ -26,58 +26,68 @@ func newManager(log logging.Logger, kube kubernetes.Interface) *ActionManager {
 		log:    log,
 		kube:   kube,
 		policy: &defaultPolicy{},
-		input:  make(chan *Intent),
+		input:  make(chan *intent.Intent, 1),
 	}
 }
 
+const maxQueuedIntents = 10
+
 func (am *ActionManager) Run(ctx context.Context) error {
 	am.log.Debug("starting")
-	defer am.log.Debug("finished")
+	defer am.log.Debug("finnished")
 
 	actives := map[string]struct{}{}
-	permit := make(chan *Intent)
+	permit := make(chan *intent.Intent, maxQueuedIntents)
 
-	// TODO: ensure permit isn't left to block this, without the separated
-	// selects there could be a race condition from golang's runtime selection
-	// of the channel. So this becomes a busier loop than is needed :(
+	// TODO: split out accepted intent handler - it should handle its
+	// prioritization as needed to ensure that active nodes' events reach it.
+
 	for {
 		// Handle active intents
 		select {
 		case <-ctx.Done():
-			return
-		case pin, ok := <-permit:
-			// TODO: handle
-		default:
-			// carry on
-		}
+			return nil
 
-		// Check for new intents
-		select {
-		case <-ctx.Done():
-			return
+		case pin, ok := <-permit:
+			am.log.Debug("handling permitted event")
+			if !ok {
+				break
+			}
+			var err error
+			if err = am.cordonNode(pin.NodeName); err == nil {
+				err = am.drainWorkload(pin.NodeName)
+			}
+			if err != nil {
+				am.log.WithError(err).Error("could not drain the node")
+			}
 
 		case in, ok := <-am.input:
-			log.Debug("checking with policy")
-			proceed, err := am.policy.Check(&PolicyCheck{Intent: in, ClusterActive(len(actives))})
+			if !ok {
+				break
+			}
+			am.log.Debug("checking with policy")
+			proceed, err := am.policy.Check(&PolicyCheck{Intent: in, ClusterActive: len(actives)})
 			if err != nil {
-				log.WithError(err).Error("policy check errored")
+				am.log.WithError(err).Error("policy check errored")
 				continue
 			}
 			if !proceed {
-				log.Debug("policy denied intent")
+				am.log.Debug("policy denied intent")
 				return nil
 			}
-			log.Debug("policy permitted intent")
-		default:
-			// carry on
+			am.log.Debug("policy permitted intent")
+			if len(permit) < maxQueuedIntents {
+				permit <- in
+			} else {
+				am.log.Warn("backpressure blocking permitted intents")
+			}
 		}
-		return nil
 	}
 }
 
 func (am *ActionManager) handle(node *v1.Node) {
 	log := am.log.WithField("node", node.GetName())
-	log.Debug("handling node event")
+	log.Debug("handling event")
 
 	in := am.intentFor(node)
 	if in == nil {
@@ -86,18 +96,21 @@ func (am *ActionManager) handle(node *v1.Node) {
 
 	select {
 	case am.input <- in:
-		log.Debug("submitted")
+		log.Debug("submitted intent")
 	default:
-		log.Warn("manager is unable to handle intent at this time")
+		log.Warn("unable to submit intent")
 	}
 }
 
+// intentFor interprets the intention given the Node's annotations.
 func (am *ActionManager) intentFor(node *v1.Node) *intent.Intent {
 	log := am.log.WithField("node", node.GetName())
-	in := intent.Given(node).Next()
+	in := intent.Given(node)
 
-	if in.Pending() {
-		log.Debug("needs action")
+	next := in.Next()
+
+	if next.Pending() {
+		log.Debug("needs action towards next step")
 		return in
 	}
 	log.Debug("no action needed")

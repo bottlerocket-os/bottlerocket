@@ -39,12 +39,16 @@ func (c *Config) selector() func(options *metav1.ListOptions) {
 		fieldSelector string
 		labelSelector string
 	)
+
+	// TODO: use k8s.io/apimachinery/pkg/labels for dynamic validated
+	// construction of selectors.
+
 	if c.NodeName != "" {
 		// limit the streamed updates to the specified node.
 		fieldSelector = "metadata.name=" + c.NodeName
 	}
 
-	labelSelector = marker.PlatformVersionKey
+	labelSelector = marker.NodeSelectorLabel
 
 	if c.LabelSelectorExtra != "" {
 		if labelSelector != "" {

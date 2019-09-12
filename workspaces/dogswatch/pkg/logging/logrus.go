@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"io"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -12,12 +13,23 @@ var root = struct {
 	logger *logrus.Logger
 	mutex  *sync.Mutex
 }{
-	logger: logrus.New(),
-	mutex:  &sync.Mutex{},
+	logger: func() *logrus.Logger {
+		l := logrus.New()
+
+		l.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp: true,
+		})
+
+		return l
+	}(),
+	mutex: &sync.Mutex{},
 }
 
 type Logger interface {
 	logrus.FieldLogger
+
+	Writer() *io.PipeWriter
+	WriterLevel(logrus.Level) *io.PipeWriter
 }
 
 func New(component string, setters ...Setter) Logger {
