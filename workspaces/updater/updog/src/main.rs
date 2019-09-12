@@ -9,7 +9,6 @@ use chrono::{DateTime, Utc};
 use data_store_version::Version as DVersion;
 use std::collections::{BTreeMap};
 use loopdev::{LoopControl, LoopDevice};
-use platforms::{TARGET_ARCH};
 use rand::{thread_rng, Rng};
 use semver::Version;
 use serde::{Serialize, Deserialize};
@@ -24,6 +23,11 @@ use std::time::Duration;
 use sys_mount::{Mount, MountFlags, SupportedFilesystems, unmount, UnmountFlags};
 use tempfile::NamedTempFile;
 use tough::Repository;
+
+#[cfg(target_arch = "x86_64")]
+const TARGET_ARCH: &str = "x86_64";
+#[cfg(target_arch = "aarch64")]
+const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
 const MIGRATION_PATH: &str = "/var/lib/thar/datastore/migrations";
@@ -221,7 +225,7 @@ fn update_required<'a>(_config: &Config,
         .iter()
         .filter(|u|
             u.flavor == *flavor &&
-            u.arch == TARGET_ARCH.as_str() &&
+            u.arch == TARGET_ARCH &&
             u.version <= u.max_version)
         .collect();
 
@@ -296,7 +300,7 @@ fn mount_root_target(repository: &Repository, update: &Update)
 fn copy_migration_from_image(mount: &PathBuf, name: &str) -> Result<()> {
 
     let prefix = format!("{}-thar-linux-gnu/{}{}",
-            TARGET_ARCH.as_str(), IMAGE_MIGRATION_PREFIX, MIGRATION_PATH);
+            TARGET_ARCH, IMAGE_MIGRATION_PREFIX, MIGRATION_PATH);
     let path = PathBuf::new()
             .join(mount)
             .join(prefix)
