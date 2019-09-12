@@ -8,6 +8,7 @@ Source0: https://github.com/bus1/dbus-broker/releases/download/v%{version}/dbus-
 Source1: dbus.socket
 Source2: dbus-1-system.conf
 Source3: dbus-sysusers.conf
+Source4: dbus-broker.service
 BuildRequires: meson
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -38,10 +39,7 @@ CONFIGURE_OPTS=(
 %cross_meson_install
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/dbus.socket
-
-install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
-ln -s ../dbus-broker.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
+install -p -m 0644 %{S:1} %{S:4} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_datadir}/dbus-1/{interfaces,services,system-services,system.d}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_datadir}/dbus-1/system.conf
@@ -59,7 +57,6 @@ install -p -m 0644 %{S:3} %{buildroot}%{_cross_sysusersdir}/dbus.conf
 %{_cross_sysusersdir}/dbus.conf
 %{_cross_unitdir}/dbus-broker.service
 %{_cross_unitdir}/dbus.socket
-%{_cross_unitdir}/multi-user.target.wants/dbus-broker.service
 %exclude %{_cross_userunitdir}/dbus-broker.service
 
 %changelog
