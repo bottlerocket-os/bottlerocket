@@ -21,6 +21,7 @@ Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
+Patch3: 0003-adjust-path-to-kubelet-device-plugins-directory.patch
 
 BuildRequires: git
 BuildRequires: rsync
