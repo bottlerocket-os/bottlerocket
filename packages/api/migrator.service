@@ -1,5 +1,7 @@
 [Unit]
 Description=Thar data store migrator
+After=var-lib-thar.mount
+Requires=var-lib-thar.mount
 
 [Service]
 Type=oneshot

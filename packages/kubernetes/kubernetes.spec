@@ -21,6 +21,7 @@ Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
+Patch3: 0003-adjust-path-to-kubelet-device-plugins-directory.patch
 
 BuildRequires: git
 BuildRequires: rsync
@@ -58,9 +59,6 @@ done
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/kubelet.service
 
-install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
-ln -s ../kubelet.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
-
 mkdir -p %{buildroot}%{_cross_templatedir}
 install -m 0644 %{S:2} %{buildroot}%{_cross_templatedir}/kubelet-env
 install -m 0644 %{S:3} %{buildroot}%{_cross_templatedir}/kubelet-config
@@ -76,7 +74,6 @@ install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 %{_cross_bindir}/kubectl
 %{_cross_bindir}/kubelet
 %{_cross_unitdir}/kubelet.service
-%{_cross_unitdir}/multi-user.target.wants/kubelet.service
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/kubelet-env
 %{_cross_templatedir}/kubelet-config

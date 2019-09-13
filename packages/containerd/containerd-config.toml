@@ -1,0 +1,15 @@
+root = "/var/lib/thar/containerd"
+state = "/run/containerd"
+
+[grpc]
+address = "/run/containerd/containerd.sock"
+
+[plugins.cri]
+systemd_cgroup = true
+
+[plugins.cri.cni]
+bin_dir = "/opt/cni/bin"
+conf_dir = "/etc/cni/net.d"
+
+[plugins.opt]
+path = "/opt/containerd"

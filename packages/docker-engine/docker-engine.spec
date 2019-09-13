@@ -62,9 +62,6 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/docker.service
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_unitdir}/docker.socket
 
-install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
-ln -s ../docker.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
-
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_sysusersdir}/docker.conf
 
@@ -78,7 +75,6 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/docker.conf
 %{_cross_bindir}/dockerd
 %{_cross_unitdir}/docker.service
 %{_cross_unitdir}/docker.socket
-%{_cross_unitdir}/multi-user.target.wants/docker.service
 %{_cross_sysusersdir}/docker.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/docker
 %{_cross_tmpfilesdir}/docker.conf

@@ -4,5 +4,6 @@
   "live-restore": true,
   "max-concurrent-downloads": 10,
   "storage-driver": "overlay2",
-  "exec-opts": ["native.cgroupdriver=systemd"]
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "data-root": "/var/lib/thar/docker"
 }
