@@ -26,6 +26,15 @@ pub(crate) enum Command {
         /// When to expire
         time: DateTime<Utc>,
     },
+    /// Set the signature count threshold for a role
+    SetThreshold {
+        /// Path to root.json
+        path: PathBuf,
+        /// The role to set
+        role: RoleType,
+        /// The new threshold
+        threshold: NonZeroU64,
+    },
 }
 
 macro_rules! role_keys {
@@ -69,6 +78,19 @@ impl Command {
             Command::Expire { path, time } => {
                 let mut root = load_root(path)?;
                 root.signed.expires = round_time(*time);
+                write_json(path, &root)
+            }
+            Command::SetThreshold {
+                path,
+                role,
+                threshold,
+            } => {
+                let mut root = load_root(path)?;
+                root.signed
+                    .roles
+                    .entry(*role)
+                    .and_modify(|rk| rk.threshold = *threshold)
+                    .or_insert_with(|| role_keys!(*threshold));
                 write_json(path, &root)
             }
         }
