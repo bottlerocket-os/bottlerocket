@@ -50,7 +50,6 @@ RUN --mount=target=/host \
 
 USER builder
 RUN --mount=source=.cargo,target=/home/builder/.cargo \
-    --mount=type=cache,target=/home/builder/.cache,uid=1000,id=${PACKAGE} \
     --mount=source=workspaces,target=/home/builder/rpmbuild/BUILD/workspaces \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
