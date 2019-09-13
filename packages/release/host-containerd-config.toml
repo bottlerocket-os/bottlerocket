@@ -1,0 +1,9 @@
+root = "/var/lib/thar/host-containerd"
+state = "/run/host-containerd"
+disabled_plugins = ["cri"]
+
+[grpc]
+address = "/run/host-containerd/containerd.sock"
+
+[plugins.opt]
+path = "/opt/host-containerd"
