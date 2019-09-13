@@ -70,7 +70,7 @@ autoreconf -fi
   --disable-teamd \
   --enable-systemd \
   --with-compat=redhat \
-  --with-pkgconfigdir=%{_cross_libdir}/pkgconfig \
+  --with-pkgconfigdir=%{_cross_pkgconfigdir} \
   --with-dbus-configdir=%{_cross_datadir}/dbus-1/system.d \
   --without-dbus-servicedir \
 

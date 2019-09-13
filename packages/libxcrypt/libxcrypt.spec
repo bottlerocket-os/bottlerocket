@@ -33,7 +33,7 @@ Requires: %{name}
   --enable-obsolete-api-enosys=no \
   --enable-shared \
   --enable-static \
-  --with-pkgconfigdir=%{_cross_libdir}/pkgconfig \
+  --with-pkgconfigdir=%{_cross_pkgconfigdir} \
 
 %make_build
 
@@ -47,8 +47,8 @@ Requires: %{name}
 %files devel
 %{_cross_libdir}/*.a
 %{_cross_libdir}/*.so
-%{_cross_libdir}/pkgconfig/*.pc
 %{_cross_includedir}/*.h
+%{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/*.la
 
 %changelog

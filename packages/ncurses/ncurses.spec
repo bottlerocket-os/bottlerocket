@@ -45,7 +45,7 @@ Requires: %{name}
   --enable-xmc-glitch \
   --with-abi-version=6 \
   --with-ospeed=unsigned \
-  --with-pkg-config-libdir=%{_cross_libdir}/pkgconfig \
+  --with-pkg-config-libdir=%{_cross_pkgconfigdir} \
   --with-shared \
   --with-terminfo-dirs=%{_cross_sysconfdir}/terminfo:%{_cross_datadir}/terminfo \
   --with-termlib=tinfo \
@@ -104,7 +104,7 @@ rm -rf "%{buildroot}%{_cross_datadir}/terminfo.bak"
 %exclude %{_cross_bindir}/ncurses*-config
 %{_cross_libdir}/lib*.so
 %{_cross_libdir}/lib*.a
-%{_cross_libdir}/pkgconfig/*.pc
 %{_cross_includedir}/*.h
+%{_cross_pkgconfigdir}/*.pc
 
 %changelog

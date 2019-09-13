@@ -95,6 +95,6 @@ ln -s bash %{buildroot}%{_cross_bindir}/sh
 %{_cross_includedir}/bash/*.h
 %{_cross_includedir}/bash/builtins/*.h
 %{_cross_includedir}/bash/include/*.h
-%{_cross_libdir}/pkgconfig/bash.pc
+%{_cross_pkgconfigdir}/*.pc
 
 %changelog

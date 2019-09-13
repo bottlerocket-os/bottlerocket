@@ -77,10 +77,10 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
 %files devel
 %{_cross_libdir}/*.so
-%{_cross_libdir}/pkgconfig/*.pc
 %{_cross_includedir}/*.h
 %dir %{_cross_includedir}/libiptc
 %{_cross_includedir}/libiptc/*.h
+%{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/*.la
 
 %changelog
