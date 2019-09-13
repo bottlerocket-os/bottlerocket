@@ -299,7 +299,9 @@ impl<'a> CreateProcess<'a> {
         };
         self.sign_metadata(&mut role)?;
 
-        let buf = serde_json::to_vec_pretty(&role).context(error::FileWriteJson { path: &path })?;
+        let mut buf =
+            serde_json::to_vec_pretty(&role).context(error::FileWriteJson { path: &path })?;
+        buf.push(b'\n');
         std::fs::write(&path, &buf).context(error::FileCreate { path: &path })?;
 
         let mut sha256 = [0; 32];

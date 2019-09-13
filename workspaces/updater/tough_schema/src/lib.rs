@@ -16,7 +16,7 @@ use crate::key::Key;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use serde_plain::forward_display_to_serde;
+use serde_plain::{forward_display_to_serde, forward_from_str_to_serde};
 use std::collections::HashMap;
 use std::num::NonZeroU64;
 
@@ -31,6 +31,7 @@ pub enum RoleType {
 }
 
 forward_display_to_serde!(RoleType);
+forward_from_str_to_serde!(RoleType);
 
 /// Common trait implemented by all roles.
 pub trait Role {
