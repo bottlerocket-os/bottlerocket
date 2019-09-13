@@ -95,6 +95,9 @@ dependencies = [
 [tasks.clean]
 script = [
 '''
+for ws in workspaces packages images ; do
+  cargo clean --manifest-path ${ws}/Cargo.toml
+done
 for ext in rpm tar lz4 img ; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
