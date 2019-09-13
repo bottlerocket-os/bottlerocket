@@ -1,5 +1,3 @@
-%global _cross_templatedir %{_cross_datadir}/templates
-
 Name: %{_cross_os}chrony
 Version: 3.5
 Release: 1%{?dist}
