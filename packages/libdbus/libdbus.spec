@@ -56,11 +56,11 @@ rm -rf %{buildroot}%{_cross_docdir}/dbus/examples
 %files devel
 %{_cross_libdir}/*.a
 %{_cross_libdir}/*.so
-%{_cross_libdir}/pkgconfig/*.pc
 %dir %{_cross_libdir}/dbus-1.0
 %{_cross_libdir}/dbus-1.0
 %dir %{_cross_includedir}/dbus-1.0
 %{_cross_includedir}/dbus-1.0
+%{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/*.la
 %exclude %{_cross_libdir}/cmake
 

@@ -1,5 +1,3 @@
-%global templatedir %{_cross_datadir}/templates
-
 Name: %{_cross_os}release
 Version: 1
 Release: 1%{?dist}
@@ -83,8 +81,8 @@ install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../systemd-networkd.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../var-lib-thar.mount %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 
-install -d %{buildroot}%{templatedir}
-install -p -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
+install -d %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 
 %files
 %{_cross_bindir}/login
@@ -97,7 +95,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{templatedir}/hostname
 %{_cross_unitdir}/var-lib-thar.mount
 %{_cross_unitdir}/multi-user.target.wants/systemd-networkd.service
 %{_cross_unitdir}/multi-user.target.wants/var-lib-thar.mount
-%dir %{templatedir}
-%{templatedir}/hostname
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/hostname
 
 %changelog

@@ -237,9 +237,9 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %files -n %{_cross_os}libblkid-devel
 %{_cross_libdir}/libblkid.a
 %{_cross_libdir}/libblkid.so
-%{_cross_libdir}/pkgconfig/blkid.pc
 %dir %{_cross_includedir}/blkid
 %{_cross_includedir}/blkid/blkid.h
+%{_cross_pkgconfigdir}/blkid.pc
 %exclude %{_cross_libdir}/libblkid.la
 
 %files -n %{_cross_os}libmount
@@ -248,9 +248,9 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %files -n %{_cross_os}libmount-devel
 %{_cross_libdir}/libmount.a
 %{_cross_libdir}/libmount.so
-%{_cross_libdir}/pkgconfig/mount.pc
 %dir %{_cross_includedir}/libmount
 %{_cross_includedir}/libmount/libmount.h
+%{_cross_pkgconfigdir}/mount.pc
 %exclude %{_cross_libdir}/libmount.la
 
 %files -n %{_cross_os}libsmartcols
@@ -259,9 +259,9 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %files -n %{_cross_os}libsmartcols-devel
 %{_cross_libdir}/libsmartcols.a
 %{_cross_libdir}/libsmartcols.so
-%{_cross_libdir}/pkgconfig/smartcols.pc
 %dir %{_cross_includedir}/libsmartcols
 %{_cross_includedir}/libsmartcols/libsmartcols.h
+%{_cross_pkgconfigdir}/smartcols.pc
 %exclude %{_cross_libdir}/libsmartcols.la
 
 %files -n %{_cross_os}libuuid
@@ -270,9 +270,9 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %files -n %{_cross_os}libuuid-devel
 %{_cross_libdir}/libuuid.a
 %{_cross_libdir}/libuuid.so
-%{_cross_libdir}/pkgconfig/uuid.pc
 %dir %{_cross_includedir}/uuid
 %{_cross_includedir}/uuid/uuid.h
+%{_cross_pkgconfigdir}/uuid.pc
 %exclude %{_cross_libdir}/libuuid.la
 
 %changelog

@@ -44,9 +44,9 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %files devel
 %{_cross_libdir}/*.a
 %{_cross_libdir}/*.so
-%{_cross_libdir}/pkgconfig/*.pc
 %dir %{_cross_includedir}/attr
 %{_cross_includedir}/attr/*.h
+%{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/*.la
 
 %changelog

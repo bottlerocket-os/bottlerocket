@@ -32,7 +32,7 @@ make \
   prefix=%{_cross_prefix} lib=%{_cross_lib} \
   LIBDIR=%{_cross_libdir} SBINDIR=%{_cross_sbindir} \
   INCDIR=%{_cross_includedir} MANDIR=%{_cross_mandir} \
-  PKGCONFIGDIR=%{_cross_libdir}/pkgconfig \
+  PKGCONFIGDIR=%{_cross_pkgconfigdir} \
   RAISE_SETFCAP=no PAM_CAP=no \
 
 %install
@@ -43,7 +43,7 @@ make install \
   prefix=%{_cross_prefix} lib=%{_cross_lib} \
   LIBDIR=%{_cross_libdir} SBINDIR=%{_cross_sbindir} \
   INCDIR=%{_cross_includedir} MANDIR=%{_cross_mandir} \
-  PKGCONFIGDIR=%{_cross_libdir}/pkgconfig \
+  PKGCONFIGDIR=%{_cross_pkgconfigdir} \
   RAISE_SETFCAP=no PAM_CAP=no \
 
 chmod +x %{buildroot}%{_cross_libdir}/*.so.*
@@ -56,7 +56,7 @@ chmod +x %{buildroot}%{_cross_libdir}/*.so.*
 %files devel
 %{_cross_libdir}/*.a
 %{_cross_libdir}/*.so
-%{_cross_libdir}/pkgconfig/*.pc
 %{_cross_includedir}/sys/capability.h
+%{_cross_pkgconfigdir}/*.pc
 
 %changelog

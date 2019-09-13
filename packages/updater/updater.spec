@@ -2,8 +2,6 @@
 %global workspace_dir %{_builddir}/workspaces/%{workspace_name}
 %undefine _debugsource_packages
 
-%global templatedir %{_cross_datadir}/templates
-
 Name: %{_cross_os}%{workspace_name}
 Version: 0.0
 Release: 0%{?dist}
@@ -47,8 +45,8 @@ install -p -m 0755 bin/updog %{buildroot}%{_cross_bindir}
 install -d %{buildroot}/%{_cross_datadir}/updog
 install -m 0644 -t %{buildroot}/%{_cross_datadir}/updog %{SOURCE1}
 
-install -d %{buildroot}%{templatedir}
-install -p -m 0644 %{SOURCE2} %{buildroot}%{templatedir}/updog-toml
+install -d %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{SOURCE2} %{buildroot}%{_cross_templatedir}/updog-toml
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{SOURCE3} %{buildroot}%{_cross_tmpfilesdir}/updog.conf
@@ -60,7 +58,7 @@ install -p -m 0644 %{SOURCE3} %{buildroot}%{_cross_tmpfilesdir}/updog.conf
 %{_cross_bindir}/updog
 %{_cross_datadir}/updog
 %{_cross_tmpfilesdir}/updog.conf
-%dir %{templatedir}
-%{templatedir}/updog-toml
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/updog-toml
 
 %changelog

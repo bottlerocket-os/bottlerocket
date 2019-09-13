@@ -228,13 +228,10 @@ CONFIGURE_OPTS=(
 %files devel
 %{_cross_libdir}/libsystemd.so
 %{_cross_libdir}/libudev.so
-%{_cross_pkgconfigdir}/systemd.pc
-%{_cross_pkgconfigdir}/udev.pc
-%{_cross_pkgconfigdir}/libsystemd.pc
-%{_cross_pkgconfigdir}/libudev.pc
 %{_cross_includedir}/libudev.h
 %dir %{_cross_includedir}/systemd
 %{_cross_includedir}/systemd/*.h
+%{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/rpm/macros.d
 
 %changelog

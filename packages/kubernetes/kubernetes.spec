@@ -7,8 +7,6 @@
 
 %global _dwz_low_mem_die_limit 0
 
-%global templatedir %{_cross_datadir}/templates
-
 Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
@@ -63,11 +61,11 @@ install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/kubelet.service
 install -d %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 ln -s ../kubelet.service %{buildroot}%{_cross_unitdir}/multi-user.target.wants
 
-mkdir -p %{buildroot}%{templatedir}
-install -m 0644 %{S:2} %{buildroot}%{templatedir}/kubelet-env
-install -m 0644 %{S:3} %{buildroot}%{templatedir}/kubelet-config
-install -m 0644 %{S:4} %{buildroot}%{templatedir}/kubelet-kubeconfig
-install -m 0644 %{S:5} %{buildroot}%{templatedir}/kubernetes-ca-crt
+mkdir -p %{buildroot}%{_cross_templatedir}
+install -m 0644 %{S:2} %{buildroot}%{_cross_templatedir}/kubelet-env
+install -m 0644 %{S:3} %{buildroot}%{_cross_templatedir}/kubelet-config
+install -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/kubelet-kubeconfig
+install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 
 %files
 %{_cross_bindir}/hyperkube
@@ -79,10 +77,10 @@ install -m 0644 %{S:5} %{buildroot}%{templatedir}/kubernetes-ca-crt
 %{_cross_bindir}/kubelet
 %{_cross_unitdir}/kubelet.service
 %{_cross_unitdir}/multi-user.target.wants/kubelet.service
-%dir %{templatedir}
-%{templatedir}/kubelet-env
-%{templatedir}/kubelet-config
-%{templatedir}/kubelet-kubeconfig
-%{templatedir}/kubernetes-ca-crt
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/kubelet-env
+%{_cross_templatedir}/kubelet-config
+%{_cross_templatedir}/kubelet-kubeconfig
+%{_cross_templatedir}/kubernetes-ca-crt
 
 %changelog

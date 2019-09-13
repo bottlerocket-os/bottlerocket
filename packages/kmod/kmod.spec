@@ -55,8 +55,8 @@ ln -s ../bin/kmod %{buildroot}%{_cross_sbindir}/modprobe
 
 %files devel
 %{_cross_libdir}/*.so
-%{_cross_libdir}/pkgconfig/*.pc
 %{_cross_includedir}/*.h
+%{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/*.la
 
 %changelog
