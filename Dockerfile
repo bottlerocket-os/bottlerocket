@@ -15,6 +15,11 @@ RUN dnf -y groupinstall "C Development Tools and Libraries" \
 FROM origin AS util
 RUN dnf -y install createrepo_c e2fsprogs gdisk grub2-tools kpartx lz4 veritysetup dosfstools mtools
 
+FROM scratch AS cache
+ARG PACKAGE
+ARG ARCH
+COPY .dockerignore .${PACKAGE}.${ARCH}
+
 FROM base AS rpmbuild
 ARG PACKAGE
 ARG ARCH
@@ -50,6 +55,7 @@ RUN --mount=target=/host \
 
 USER builder
 RUN --mount=source=.cargo,target=/home/builder/.cargo \
+    --mount=type=cache,target=/home/builder/.cache,uid=1000,from=cache \
     --mount=source=workspaces,target=/home/builder/rpmbuild/BUILD/workspaces \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
