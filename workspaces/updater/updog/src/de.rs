@@ -21,7 +21,9 @@ where
         time: DateTime<Utc>,
         map: &mut BTreeMap<u64, DateTime<Utc>>,
     ) -> Result<(), error::Error> {
-        let bound = key.parse::<u64>().context(error::BadBound { bound_str: key })?;
+        let bound = key
+            .parse::<u64>()
+            .context(error::BadBound { bound_str: key })?;
         ensure!(
             map.insert(bound, time).is_none(),
             error::DuplicateKeyId { keyid: bound }
@@ -61,7 +63,6 @@ pub(crate) fn deserialize_migration<'de, D>(
 where
     D: Deserializer<'de>,
 {
-
     fn parse_versions(key: &str) -> Result<(&str, &str), error::Error> {
         let r = Regex::new(r"\((?P<from_ver>[0-9.]+),[ ]+(?P<to_ver>[0-9.]+)\)");
 
@@ -70,8 +71,8 @@ where
                 let from = captures.name("from_ver");
                 let to = captures.name("to_ver");
                 match (from, to) {
-                    (Some(f), Some(t))  => return Ok((f.as_str(), t.as_str())),
-                    _                   => (),
+                    (Some(f), Some(t)) => return Ok((f.as_str(), t.as_str())),
+                    _ => (),
                 };
             }
         }
@@ -88,13 +89,13 @@ where
         let to_ver = DVersion::from_str(to);
 
         match (from_ver, to_ver) {
-            (Ok(f), Ok(t))  => {
+            (Ok(f), Ok(t)) => {
                 ensure!(
                     map.insert((f, t), list).is_none(),
                     error::DuplicateVersionKey { key }
                 );
-            },
-            _               => (),
+            }
+            _ => (),
         }
 
         Ok(())
@@ -141,14 +142,13 @@ where
         let key_ver = Version::parse(&key);
         let value_ver = DVersion::from_str(&value);
         match (key_ver, value_ver) {
-            (Ok(k), Ok(v))  => {
-                    ensure!(
-                        map.insert(k, v).is_none(),
-                        error::DuplicateVersionKey { key }
-                    );
-                },
-            _               => return error::BadMapVersion { key, value }.fail(),
-
+            (Ok(k), Ok(v)) => {
+                ensure!(
+                    map.insert(k, v).is_none(),
+                    error::DuplicateVersionKey { key }
+                );
+            }
+            _ => return error::BadMapVersion { key, value }.fail(),
         }
         Ok(())
     }

@@ -1,26 +1,26 @@
 #![warn(clippy::pedantic)]
 
-mod error;
 mod de;
+mod error;
 mod se;
 
 use crate::error::Result;
 use chrono::{DateTime, Utc};
 use data_store_version::Version as DVersion;
-use std::collections::{BTreeMap};
 use loopdev::{LoopControl, LoopDevice};
 use rand::{thread_rng, Rng};
 use semver::Version;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use signpost::State;
-use snafu::{OptionExt, ResultExt, ensure, ErrorCompat};
+use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
+use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader};
+use std::ops::Bound::{Excluded, Included};
 use std::path::{Path, PathBuf};
-use std::ops::Bound::{Included, Excluded};
-use std::{thread};
+use std::thread;
 use std::time::Duration;
-use sys_mount::{Mount, MountFlags, SupportedFilesystems, unmount, UnmountFlags};
+use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
 use tempfile::NamedTempFile;
 use tough::Repository;
 
@@ -52,7 +52,6 @@ struct Config {
     // TODO API sourced configuration, eg.
     // blacklist: Option<Vec<Version>>,
     // mode: Option<{Automatic, Managed, Disabled}>
-
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -75,11 +74,9 @@ struct Update {
 
 impl Update {
     fn update_ready(&self, config: &Config) -> Result<bool> {
-
         if let Some(seed) = config.seed {
             // Has this client's wave started
-            if let Some((_, wave)) = self.waves.range((Included(0), Included(seed)))
-                                               .last() {
+            if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
                 return Ok(*wave <= Utc::now());
             }
 
@@ -94,21 +91,20 @@ impl Update {
     }
 
     fn jitter(&self, config: &Config) -> Option<u64> {
-
         if let Some(seed) = config.seed {
-            let prev = self.waves.range((Included(0), Included(seed)))
-                                 .last();
-            let next = self.waves.range((Excluded(seed), Excluded(MAX_SEED)))
-                                 .next();
+            let prev = self.waves.range((Included(0), Included(seed))).last();
+            let next = self
+                .waves
+                .range((Excluded(seed), Excluded(MAX_SEED)))
+                .next();
             match (prev, next) {
                 (Some((_, start)), Some((_, end))) => {
                     if Utc::now() < *end {
                         return Some((end.timestamp() - start.timestamp()) as u64);
                     }
-                },
+                }
                 _ => (),
             }
-
         }
         None
     }
@@ -190,8 +186,9 @@ fn running_version() -> Result<(Version, String)> {
         if version.is_none() {
             let key = "VERSION_ID=";
             if line.starts_with(key) {
-                version = Some(Version::parse(&line[key.len()..])
-                            .context(error::VersionIdParse {line} )?);
+                version = Some(
+                    Version::parse(&line[key.len()..]).context(error::VersionIdParse { line })?,
+                );
             }
         } else if flavor.is_none() {
             let key = "VARIANT_ID=";
@@ -204,8 +201,8 @@ fn running_version() -> Result<(Version, String)> {
     }
 
     match (version, flavor) {
-        (Some(v), Some(f))    => Ok((v, f)),
-        _                     => error::VersionIdNotFound.fail(),
+        (Some(v), Some(f)) => Ok((v, f)),
+        _ => error::VersionIdNotFound.fail(),
     }
 }
 
@@ -215,19 +212,17 @@ fn running_version() -> Result<(Version, String)> {
 //  Ignore Specific Target Version
 //  Ingore Any Target
 //  ...
-fn update_required<'a>(_config: &Config,
+fn update_required<'a>(
+    _config: &Config,
     manifest: &'a Manifest,
     version: &Version,
     flavor: &String,
-    force_version: Option<Version>)
-    -> Option<&'a Update> {
-
-    let mut updates: Vec<&Update> = manifest.updates
+    force_version: Option<Version>,
+) -> Option<&'a Update> {
+    let mut updates: Vec<&Update> = manifest
+        .updates
         .iter()
-        .filter(|u|
-            u.flavor == *flavor &&
-            u.arch == TARGET_ARCH &&
-            u.version <= u.max_version)
+        .filter(|u| u.flavor == *flavor && u.arch == TARGET_ARCH && u.version <= u.max_version)
         .collect();
 
     if let Some(forced_version) = force_version {
@@ -267,9 +262,10 @@ fn write_target_to_disk<P: AsRef<Path>>(
     Ok(())
 }
 
-fn mount_root_target(repository: &Repository, update: &Update)
-    -> Result<(PathBuf, LoopDevice, NamedTempFile)> {
-
+fn mount_root_target(
+    repository: &Repository,
+    update: &Update,
+) -> Result<(PathBuf, LoopDevice, NamedTempFile)> {
     let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
 
     // Download partition
@@ -280,49 +276,54 @@ fn mount_root_target(repository: &Repository, update: &Update)
         .context(error::LoopControlFailed)?
         .next_free()
         .context(error::LoopFindFailed)?;
-    ld.attach_file(&tmpfd.path()).context(error::LoopAttachFailed)?;
+    ld.attach_file(&tmpfd.path())
+        .context(error::LoopAttachFailed)?;
 
     // Mount image
     let dir = PathBuf::from(IMAGE_MOUNT_PATH);
     if !dir.exists() {
-        fs::create_dir(&dir)
-            .context(error::DirCreate { path: &dir })?;
+        fs::create_dir(&dir).context(error::DirCreate { path: &dir })?;
     }
     let fstype = SupportedFilesystems::new().context(error::MountFailed {})?;
-    Mount::new(ld.path().context(error::LoopNameFailed)?,
-            &dir, &fstype,
-            MountFlags::RDONLY | MountFlags::NOEXEC,
-            None)
-        .context(error::MountFailed {})?;
+    Mount::new(
+        ld.path().context(error::LoopNameFailed)?,
+        &dir,
+        &fstype,
+        MountFlags::RDONLY | MountFlags::NOEXEC,
+        None,
+    )
+    .context(error::MountFailed {})?;
 
     Ok((dir, ld, tmpfd))
 }
 
 fn copy_migration_from_image(mount: &PathBuf, name: &str) -> Result<()> {
+    let prefix = format!(
+        "{}-thar-linux-gnu/{}{}",
+        TARGET_ARCH, IMAGE_MIGRATION_PREFIX, MIGRATION_PATH
+    );
+    let path = PathBuf::new().join(mount).join(prefix).join(name);
 
-    let prefix = format!("{}-thar-linux-gnu/{}{}",
-            TARGET_ARCH, IMAGE_MIGRATION_PREFIX, MIGRATION_PATH);
-    let path = PathBuf::new()
-            .join(mount)
-            .join(prefix)
-            .join(name);
-
-    ensure!(path.exists() && path.is_file(),
+    ensure!(
+        path.exists() && path.is_file(),
         error::MigrationNotLocal { name: path }
     );
     fs::copy(path, PathBuf::from(MIGRATION_PATH)).context(error::MigrationCopyFailed { name })?;
     Ok(())
 }
 
-fn migration_targets<'a>(from: &'a DVersion, to: &DVersion, manifest: &'a Manifest)
-    -> Result<Vec<String>> {
-
+fn migration_targets<'a>(
+    from: &'a DVersion,
+    to: &DVersion,
+    manifest: &'a Manifest,
+) -> Result<Vec<String>> {
     let mut targets = Vec::new();
     let mut version = from;
     while version != to {
-        let mut migrations: Vec<&(DVersion, DVersion)>= manifest.migrations
+        let mut migrations: Vec<&(DVersion, DVersion)> = manifest
+            .migrations
             .keys()
-            .filter(|(f,t)| f == version && t <= to)
+            .filter(|(f, t)| f == version && t <= to)
             .collect();
 
         // There can be muliple paths to the same target, eg.
@@ -337,7 +338,11 @@ fn migration_targets<'a>(from: &'a DVersion, to: &DVersion, manifest: &'a Manife
             }
             version = &transition.1;
         } else {
-            return error::MissingMigration{ current: *version, target: *to }.fail();
+            return error::MissingMigration {
+                current: *version,
+                target: *to,
+            }
+            .fail();
         }
     }
     Ok(targets)
@@ -348,19 +353,27 @@ fn migration_targets<'a>(from: &'a DVersion, to: &DVersion, manifest: &'a Manife
 /// target version must be retrieved.
 /// If a migration is available in the target root image it is copied from
 /// the image instead of being downloaded from the repository.
-fn retrieve_migrations(repository: &Repository,
+fn retrieve_migrations(
+    repository: &Repository,
     manifest: &Manifest,
     update: &Update,
-    root_path: &Option<PathBuf>)
-    -> Result<()> {
-
+    root_path: &Option<PathBuf>,
+) -> Result<()> {
     let (version_current, _) = running_version()?;
-    let datastore_current = manifest.datastore_versions
+    let datastore_current =
+        manifest
+            .datastore_versions
             .get(&version_current)
-            .context(error::MissingVersion { version: version_current.to_string() })?;
-    let datastore_target = manifest.datastore_versions
+            .context(error::MissingVersion {
+                version: version_current.to_string(),
+            })?;
+    let datastore_target =
+        manifest
+            .datastore_versions
             .get(&update.version)
-            .context(error::MissingVersion { version: update.version.to_string() })?;
+            .context(error::MissingVersion {
+                version: update.version.to_string(),
+            })?;
 
     if datastore_current == datastore_target {
         return Ok(());
@@ -374,8 +387,7 @@ fn retrieve_migrations(repository: &Repository,
 
     let dir = Path::new(MIGRATION_PATH);
     if !dir.exists() {
-        fs::create_dir(&dir)
-            .context(error::DirCreate { path: &dir })?;
+        fs::create_dir(&dir).context(error::DirCreate { path: &dir })?;
     }
     for name in migration_targets(start, target, &manifest)? {
         let path = dir.join(&name);
@@ -384,8 +396,8 @@ fn retrieve_migrations(repository: &Repository,
                 Err(e) => {
                     println!("Migration not copied from image: {}", e);
                     write_target_to_disk(repository, &name, path)?;
-                },
-                _   => (),
+                }
+                _ => (),
             }
         } else {
             write_target_to_disk(repository, &name, path)?;
@@ -395,16 +407,21 @@ fn retrieve_migrations(repository: &Repository,
     Ok(())
 }
 
-fn update_prepare(repository: &Repository, manifest: &Manifest, update: &Update)
-    -> Result<Option<NamedTempFile>> {
-
+fn update_prepare(
+    repository: &Repository,
+    manifest: &Manifest,
+    update: &Update,
+) -> Result<Option<NamedTempFile>> {
     // Try to mount the root image to look for migrations
     let (root_path, ld, tmpfd) = match mount_root_target(repository, update) {
-        Ok((p,l,t))   => (Some(p), Some(l), Some(t)),
-        Err(e)  => {
-            println!("Failed to mount image, migrations will be downloaded ({})", e);
+        Ok((p, l, t)) => (Some(p), Some(l), Some(t)),
+        Err(e) => {
+            println!(
+                "Failed to mount image, migrations will be downloaded ({})",
+                e
+            );
             (None, None, None)
-        },
+        }
     };
 
     retrieve_migrations(repository, manifest, update, &root_path)?;
@@ -412,8 +429,8 @@ fn update_prepare(repository: &Repository, manifest: &Manifest, update: &Update)
     if let Some(path) = root_path {
         // Unmount the target root image - warn only on failure
         match unmount(path, UnmountFlags::empty()) {
-            Err(e)  => eprintln!("Failed to unmount root image: {}", e),
-            _       => ()
+            Err(e) => eprintln!("Failed to unmount root image: {}", e),
+            _ => (),
         }
         if let Some(ld) = ld {
             if ld.detach().is_err() {
@@ -424,12 +441,12 @@ fn update_prepare(repository: &Repository, manifest: &Manifest, update: &Update)
     Ok(tmpfd)
 }
 
-fn update_image(update: &Update,
+fn update_image(
+    update: &Update,
     repository: &Repository,
     jitter: Option<u64>,
-    root_path: Option<NamedTempFile>)
-    -> Result<()> {
-
+    root_path: Option<NamedTempFile>,
+) -> Result<()> {
     // Jitter the exact update time
     // Now: lazy spin
     // If range > calling_interval we could just exit and wait until updog
@@ -456,14 +473,14 @@ fn update_image(update: &Update,
     if let Some(path) = root_path {
         // Copy root from already downloaded image
         match fs::copy(path, &inactive.root) {
-            Err(e)  => {
+            Err(e) => {
                 println!("Root copy failed, redownloading - {}", e);
                 write_target_to_disk(repository, &update.images.root, &inactive.root)?;
-            },
-            _       => (),
+            }
+            _ => (),
         }
     } else {
-            write_target_to_disk(repository, &update.images.root, &inactive.root)?;
+        write_target_to_disk(repository, &update.images.root, &inactive.root)?;
     }
     write_target_to_disk(repository, &update.images.boot, &inactive.boot)?;
     write_target_to_disk(repository, &update.images.hash, &inactive.hash)?;
@@ -500,17 +517,13 @@ fn parse_args(args: std::env::Args) -> Arguments {
             "-v" | "--verbose" => {
                 verbosity += 1;
             }
-            "-i" | "--image" => {
-                match iter.next() {
-                    Some(v) =>  {
-                        match Version::parse(&v) {
-                            Ok(v) => update_version = Some(v),
-                            _     => usage(),
-                        }
-                    }
-                    _       => usage(),
-                }
-            }
+            "-i" | "--image" => match iter.next() {
+                Some(v) => match Version::parse(&v) {
+                    Ok(v) => update_version = Some(v),
+                    _ => usage(),
+                },
+                _ => usage(),
+            },
             "-n" | "--now" => {
                 ignore_wave = true;
             }
@@ -561,26 +574,44 @@ fn main_inner() -> Result<()> {
 
     match command {
         Command::CheckUpdate => {
-            match update_required(&config, &manifest, &current_version, &flavor, arguments.force_version) {
+            match update_required(
+                &config,
+                &manifest,
+                &current_version,
+                &flavor,
+                arguments.force_version,
+            ) {
                 Some(u) => {
                     if arguments.json {
-                        println!("{}", serde_json::to_string(&u).context(error::UpdateSerialize)?);
+                        println!(
+                            "{}",
+                            serde_json::to_string(&u).context(error::UpdateSerialize)?
+                        );
                     } else {
-                        if let Some(datastore_version) = manifest.datastore_versions.get(&u.version) {
+                        if let Some(datastore_version) = manifest.datastore_versions.get(&u.version)
+                        {
                             println!("{}-{} ({})", u.flavor, u.version, datastore_version);
                         } else {
-                            return error::MissingMapping
-                                { version: u.version.to_string() }.fail();
+                            return error::MissingMapping {
+                                version: u.version.to_string(),
+                            }
+                            .fail();
                         }
                     }
-                },
-                _       => return error::NoUpdate.fail(),
+                }
+                _ => return error::NoUpdate.fail(),
             }
         }
         Command::Update | Command::UpdateImage => {
-            if let Some(u) = update_required(&config, &manifest, &current_version, &flavor, arguments.force_version) {
+            if let Some(u) = update_required(
+                &config,
+                &manifest,
+                &current_version,
+                &flavor,
+                arguments.force_version,
+            ) {
                 if u.update_ready(&config)? || arguments.ignore_wave {
-                    println!("Starting update to {}",  u.version);
+                    println!("Starting update to {}", u.version);
 
                     let root_path = update_prepare(&repository, &manifest, u)?;
                     if arguments.ignore_wave {
@@ -628,14 +659,17 @@ fn main() -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Duration as TestDuration};
+    use chrono::Duration as TestDuration;
     use std::str::FromStr;
 
     #[test]
     fn test_manifest_json() {
         let s = fs::read_to_string("tests/data/example.json").unwrap();
         let manifest: Manifest = serde_json::from_str(&s).unwrap();
-        assert!(manifest.updates.len() > 0, "Failed to parse update manifest");
+        assert!(
+            manifest.updates.len() > 0,
+            "Failed to parse update manifest"
+        );
 
         assert!(manifest.migrations.len() > 0, "Failed to parse migrations");
         let from = DVersion::from_str("1.0").unwrap();
@@ -644,7 +678,10 @@ mod tests {
         let migration = manifest.migrations.get(&(from, to)).unwrap();
         assert!(migration[0] == "migrate_1.1_foo");
 
-        assert!(manifest.datastore_versions.len() > 0, "Failed to parse version map");
+        assert!(
+            manifest.datastore_versions.len() > 0,
+            "Failed to parse version map"
+        );
         let thar_version = Version::parse("1.11.0").unwrap();
         let data_version = manifest.datastore_versions.get(&thar_version);
         let version = DVersion::from_str("1.0").unwrap();
@@ -665,7 +702,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123)
+            seed: Some(123),
         };
         let mut update = Update {
             flavor: String::from("thar"),
@@ -673,21 +710,27 @@ mod tests {
             version: Version::parse("1.0.0").unwrap(),
             max_version: Version::parse("1.1.0").unwrap(),
             waves: BTreeMap::new(),
-            images: Images { boot: String::from("boot"),
-                             root: String::from("root"),
-                             hash: String::from("hash")}
+            images: Images {
+                boot: String::from("boot"),
+                root: String::from("root"),
+                hash: String::from("hash"),
+            },
         };
 
-        assert!(update.update_ready(&config).is_err(), "Imaginary wave chosen");
+        assert!(
+            update.update_ready(&config).is_err(),
+            "Imaginary wave chosen"
+        );
 
-        update.waves.insert(1024, Utc::now() + TestDuration::hours(1));
+        update
+            .waves
+            .insert(1024, Utc::now() + TestDuration::hours(1));
 
         let result = update.update_ready(&config);
         assert!(result.is_ok());
         if let Ok(r) = result {
             assert!(!r, "Incorrect wave chosen");
         }
-
 
         update.waves.insert(0, Utc::now() - TestDuration::hours(1));
 
@@ -696,7 +739,6 @@ mod tests {
         if let Ok(r) = result {
             assert!(r, "Update wave missed");
         }
-
     }
 
     #[test]
@@ -704,7 +746,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(512)
+            seed: Some(512),
         };
         let mut update = Update {
             flavor: String::from("thar"),
@@ -712,14 +754,20 @@ mod tests {
             version: Version::parse("1.0.0").unwrap(),
             max_version: Version::parse("1.1.0").unwrap(),
             waves: BTreeMap::new(),
-            images: Images { boot: String::from("boot"),
-                             root: String::from("root"),
-                             hash: String::from("hash")}
+            images: Images {
+                boot: String::from("boot"),
+                root: String::from("root"),
+                hash: String::from("hash"),
+            },
         };
 
         update.waves.insert(0, Utc::now() - TestDuration::hours(3));
-        update.waves.insert(256, Utc::now() - TestDuration::hours(2));
-        update.waves.insert(512, Utc::now() - TestDuration::hours(1));
+        update
+            .waves
+            .insert(256, Utc::now() - TestDuration::hours(2));
+        update
+            .waves
+            .insert(512, Utc::now() - TestDuration::hours(1));
 
         let result = update.update_ready(&config).unwrap();
         assert!(result, "All waves passed but no update");
@@ -732,14 +780,16 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123)
+            seed: Some(123),
         };
         // max_version is 1.20.0 in manifest
         let version = Version::parse("1.25.0").unwrap();
         let flavor = String::from("thar-aws-eks");
 
-        assert!(update_required(&config, &manifest, &version, &flavor, None).is_none(),
-                "Updog tried to exceed max_version");
+        assert!(
+            update_required(&config, &manifest, &version, &flavor, None).is_none(),
+            "Updog tried to exceed max_version"
+        );
     }
 
     #[test]
@@ -749,7 +799,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123)
+            seed: Some(123),
         };
 
         let version = Version::parse("1.10.0").unwrap();
@@ -759,8 +809,11 @@ mod tests {
         assert!(result.is_some(), "Updog failed to find an update");
 
         if let Some(u) = result {
-            assert!(u.version == Version::parse("1.15.0").unwrap(),
-                "Incorrect version: {}, should be 1.15.0", u.version);
+            assert!(
+                u.version == Version::parse("1.15.0").unwrap(),
+                "Incorrect version: {}, should be 1.15.0",
+                u.version
+            );
         }
 
         Ok(())
@@ -768,10 +821,9 @@ mod tests {
 
     #[test]
     fn bad_bound() {
-        assert!(serde_json::from_str::<Manifest>(include_str!(
-            "../tests/data/bad-bound.json"
-        ))
-        .is_err());
+        assert!(
+            serde_json::from_str::<Manifest>(include_str!("../tests/data/bad-bound.json")).is_err()
+        );
     }
 
     #[test]
@@ -803,8 +855,10 @@ mod tests {
     fn serialize_metadata() -> Result<()> {
         let s = fs::read_to_string("tests/data/example_2.json").unwrap();
         let manifest: Manifest = serde_json::from_str(&s).unwrap();
-        println!("{}", serde_json::to_string_pretty(&manifest)
-                                    .context(error::UpdateSerialize)?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&manifest).context(error::UpdateSerialize)?
+        );
         Ok(())
     }
 
@@ -815,7 +869,7 @@ mod tests {
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
-            seed: Some(123)
+            seed: Some(123),
         };
 
         let version = Version::parse("1.10.0").unwrap();
@@ -826,8 +880,11 @@ mod tests {
         assert!(result.is_some(), "Updog failed to find an update");
 
         if let Some(u) = result {
-            assert!(u.version == Version::parse("1.13.0").unwrap(),
-                "Incorrect version: {}, should be forced to 1.13.0", u.version);
+            assert!(
+                u.version == Version::parse("1.13.0").unwrap(),
+                "Incorrect version: {}, should be forced to 1.13.0",
+                u.version
+            );
         }
     }
 }
