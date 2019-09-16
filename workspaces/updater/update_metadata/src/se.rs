@@ -12,7 +12,11 @@ where
 {
     let mut map = BTreeMap::new();
     for ((from, to), val) in value {
-        let key = format!("({},{})", from, to);
+        let key = format!(
+            "({},{})",
+            from.to_string().trim_start_matches('v'),
+            to.to_string().trim_start_matches('v')
+        );
         map.insert(key, val);
     }
     map.serialize(serializer)
@@ -27,7 +31,8 @@ where
 {
     let mut map = BTreeMap::new();
     for (image, datastore) in value {
-        map.insert(image.to_string(), datastore.to_string());
+        let datastore = String::from(datastore.to_string().trim_start_matches('v'));
+        map.insert(image.to_string(), datastore);
     }
     map.serialize(serializer)
 }

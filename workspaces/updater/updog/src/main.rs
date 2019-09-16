@@ -1,27 +1,23 @@
 #![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
-mod de;
 mod error;
-mod se;
 
 use crate::error::Result;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use data_store_version::Version as DVersion;
-use rand::{thread_rng, Rng};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
-use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader};
-use std::ops::Bound::{Excluded, Included};
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use tough::{Limits, Repository, Settings};
+use update_metadata::{Manifest, Update};
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -30,7 +26,6 @@ const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
 const MIGRATION_PATH: &str = "/var/lib/thar/datastore/migrations";
-const MAX_SEED: u32 = 2048;
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
@@ -51,77 +46,6 @@ struct Config {
     // TODO API sourced configuration, eg.
     // blacklist: Option<Vec<Version>>,
     // mode: Option<{Automatic, Managed, Disabled}>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Images {
-    boot: String,
-    root: String,
-    hash: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Update {
-    flavor: String,
-    arch: String,
-    version: Version,
-    max_version: Version,
-    #[serde(deserialize_with = "de::deserialize_bound")]
-    waves: BTreeMap<u32, DateTime<Utc>>,
-    images: Images,
-}
-
-impl Update {
-    pub fn update_wave(&self, seed: u32) -> Option<&DateTime<Utc>> {
-        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
-            return Some(wave);
-        }
-        None
-    }
-
-    fn update_ready(&self, seed: u32) -> bool {
-        // Has this client's wave started
-        if let Some(wave) = self.update_wave(seed) {
-            return *wave <= Utc::now();
-        }
-
-        // Alternately have all waves passed
-        if let Some((_, wave)) = self.waves.iter().last() {
-            return *wave <= Utc::now();
-        }
-
-        // Or there are no waves
-        true
-    }
-
-    pub fn jitter(&self, seed: u32) -> Option<DateTime<Utc>> {
-        let prev = self.update_wave(seed);
-        let next = self
-            .waves
-            .range((Excluded(seed), Excluded(MAX_SEED)))
-            .next();
-        if let (Some(start), Some(end)) = (prev, next) {
-            if Utc::now() < *end.1 {
-                let mut rng = thread_rng();
-                #[allow(clippy::cast_sign_loss)]
-                let range = (end.1.timestamp() - start.timestamp()) as u64;
-                let jitter = Duration::seconds(rng.gen_range(1, range) as i64);
-                return Some(*start + jitter);
-            }
-        }
-        None
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Manifest {
-    updates: Vec<Update>,
-    #[serde(deserialize_with = "de::deserialize_migration")]
-    #[serde(serialize_with = "se::serialize_migration")]
-    migrations: BTreeMap<(DVersion, DVersion), Vec<String>>,
-    #[serde(deserialize_with = "de::deserialize_datastore_version")]
-    #[serde(serialize_with = "se::serialize_datastore_map")]
-    datastore_versions: BTreeMap<Version, DVersion>,
 }
 
 /// Prints a more specific message before exiting through usage().
@@ -634,7 +558,9 @@ fn main() -> ! {
 mod tests {
     use super::*;
     use chrono::Duration as TestDuration;
+    use std::collections::BTreeMap;
     use std::str::FromStr;
+    use update_metadata::Images;
 
     #[test]
     fn test_manifest_json() {

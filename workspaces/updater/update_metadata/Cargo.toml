@@ -1,0 +1,21 @@
+[package]
+name = "update_metadata"
+version = "0.1.0"
+authors = ["Samuel Mendoza-Jonas <samjonas@amazon.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+chrono = { version = "0.4.9", features = ["serde"] }
+data_store_version = { path = "../../api/data_store_version" }
+rand = "0.7.0"
+regex = "1.1"
+semver = { version = "0.9.0", features = ["serde"] }
+serde = { version = "1.0.100", features = ["derive"] }
+serde_json = "1.0.40"
+serde_plain = "0.3.0"
+snafu = "0.5.0"
+
+[lib]
+name = "update_metadata"
+path = "src/lib.rs"

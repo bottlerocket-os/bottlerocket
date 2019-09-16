@@ -64,7 +64,7 @@ where
     D: Deserializer<'de>,
 {
     fn parse_versions(key: &str) -> Result<(&str, &str), error::Error> {
-        let r = Regex::new(r"\((?P<from_ver>[0-9.]+),[ ]+(?P<to_ver>[0-9.]+)\)");
+        let r = Regex::new(r"\((?P<from_ver>[0-9.]+),[ ]*(?P<to_ver>[0-9.]+)\)");
 
         if let Ok(regex) = r {
             if let Some(captures) = regex.captures(&key) {
@@ -126,7 +126,7 @@ where
 
 /// Converts the key and value into a Version/DVersion pair before insertion and
 /// catches duplicates
-pub(crate) fn deserialize_datastore_version<'de, D>(
+pub(crate) fn deserialize_datastore_map<'de, D>(
     deserializer: D,
 ) -> Result<BTreeMap<Version, DVersion>, D::Error>
 where

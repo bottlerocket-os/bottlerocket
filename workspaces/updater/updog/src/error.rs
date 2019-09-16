@@ -244,11 +244,11 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Update wave has been missed"))]
-    WaveMissed { backtrace: Backtrace },
+    #[snafu(display("Update wave start time missing"))]
+    WaveStartArg { backtrace: Backtrace },
 
-    #[snafu(display("Update wave is pending"))]
-    WavePending { backtrace: Backtrace },
+    #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]
+    WavesUnordered { wave: u32, next: u32 },
 
     #[snafu(display("Failed writing update data to disk: {}", source))]
     WriteUpdate {
