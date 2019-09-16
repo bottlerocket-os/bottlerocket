@@ -4,7 +4,7 @@
 <config>
   <piddir path="/run/wicked" mode="0755"/>
   <statedir path="/run/wicked" mode="0755"/>
-  <storedir path="/var/lib/wicked" mode="0755"/>
+  <storedir path="/run/wicked" mode="0755"/>
 
   <dbus>
     <service name="org.opensuse.Network" />
