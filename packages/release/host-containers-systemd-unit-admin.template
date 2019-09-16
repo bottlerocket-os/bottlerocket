@@ -1,0 +1,13 @@
+[Unit]
+Description=Admin container
+After=host-containerd.service
+Requires=host-containerd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/host-ctr -ctr-id admin -source {{ settings.host-containers.admin.source }} {{#if  settings.host-containers.admin.superpowered }}-superpowered{{/if}}
+Restart=always
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target
