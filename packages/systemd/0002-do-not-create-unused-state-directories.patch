@@ -1,0 +1,31 @@
+From 165d687789904531396afa3d852513b40397fb3f Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sun, 15 Sep 2019 00:51:25 +0000
+Subject: [PATCH 2/3] do not create unused state directories
+
+We do not use the coredump handler, and the private directories have
+been relocated to `/run`.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ tmpfiles.d/systemd.conf.m4 | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/tmpfiles.d/systemd.conf.m4 b/tmpfiles.d/systemd.conf.m4
+index d39c9cb..5d7d420 100644
+--- a/tmpfiles.d/systemd.conf.m4
++++ b/tmpfiles.d/systemd.conf.m4
+@@ -68,10 +68,3 @@ a+ /var/log/journal/%m - - - - d:group:wheel:r-x
+ a+ /var/log/journal/%m - - - - group:wheel:r-x
+ a+ /var/log/journal/%m/system.journal - - - - group:wheel:r--
+ '')')')m4_dnl
+-
+-d /var/lib/systemd 0755 root root -
+-d /var/lib/systemd/coredump 0755 root root 3d
+-
+-d /var/lib/private 0700 root root -
+-d /var/log/private 0700 root root -
+-d /var/cache/private 0700 root root -
+-- 
+2.21.0
+

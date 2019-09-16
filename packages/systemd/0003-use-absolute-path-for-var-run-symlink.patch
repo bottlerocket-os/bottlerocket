@@ -1,0 +1,29 @@
+From 34c8fd9a28879fa97ae7b826475f5f93f1941333 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 17 Sep 2019 01:35:51 +0000
+Subject: [PATCH 3/3] use absolute path for /var/run symlink
+
+Otherwise the symlink may be broken if /var is a bind mount from
+somewhere else.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ tmpfiles.d/var.conf.m4 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tmpfiles.d/var.conf.m4 b/tmpfiles.d/var.conf.m4
+index 0e2c509..6068dcb 100644
+--- a/tmpfiles.d/var.conf.m4
++++ b/tmpfiles.d/var.conf.m4
+@@ -9,7 +9,7 @@
+ 
+ q /var 0755 - - -
+ 
+-L /var/run - - - - ../run
++L+ /var/run - - - - /run
+ 
+ d /var/log 0755 - - -
+ m4_ifdef(`ENABLE_UTMP',
+-- 
+2.21.0
+
