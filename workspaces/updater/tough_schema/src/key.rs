@@ -1,6 +1,8 @@
-use crate::decoded::{Decoded, Hex, Pem, RsaPem};
+use crate::decoded::{Decoded, EcdsaPem, Hex, RsaPem};
 use ring::signature::VerificationAlgorithm;
 use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
@@ -50,10 +52,7 @@ pub enum EcdsaScheme {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct EcdsaKey {
-    // FIXME: there's probably a difference between what TUF thinks is a valid ECDSA key and what
-    // ring thinks is a valid ECDSA key (similar to the issue we had with RSA; see the lengthy
-    // comment in `impl Decode for RsaPem` in decoded.rs).
-    pub public: Decoded<Pem>,
+    pub public: Decoded<EcdsaPem>,
 }
 
 impl Key {
@@ -91,3 +90,43 @@ impl Key {
         .is_ok()
     }
 }
+
+impl FromStr for Key {
+    type Err = KeyParseError;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        if let Ok(public) = serde_plain::from_str::<Decoded<RsaPem>>(s) {
+            Ok(Key::Rsa {
+                keyval: RsaKey { public },
+                scheme: RsaScheme::RsassaPssSha256,
+            })
+        } else if let Ok(public) = serde_plain::from_str::<Decoded<Hex>>(s) {
+            if public.len() == ring::signature::ED25519_PUBLIC_KEY_LEN {
+                Ok(Key::Ed25519 {
+                    keyval: Ed25519Key { public },
+                    scheme: Ed25519Scheme::Ed25519,
+                })
+            } else {
+                Err(KeyParseError(()))
+            }
+        } else if let Ok(public) = serde_plain::from_str::<Decoded<EcdsaPem>>(s) {
+            Ok(Key::Ecdsa {
+                keyval: EcdsaKey { public },
+                scheme: EcdsaScheme::EcdsaSha2Nistp256,
+            })
+        } else {
+            Err(KeyParseError(()))
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct KeyParseError(());
+
+impl fmt::Display for KeyParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unrecognized or invalid public key")
+    }
+}
+
+impl std::error::Error for KeyParseError {}

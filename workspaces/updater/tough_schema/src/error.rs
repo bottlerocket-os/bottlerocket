@@ -61,10 +61,6 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    /// Failed to decode a `SubjectPublicKeyInfo` formatted RSA public key.
-    #[snafu(display("Invalid SubjectPublicKeyInfo-formatted RSA public key"))]
-    RsaDecode { backtrace: Backtrace },
-
     /// A signature threshold specified in root.json was not met when verifying a signature.
     #[snafu(display(
         "Signature threshold of {} not met for role {} ({} valid signatures)",
@@ -78,6 +74,10 @@ pub enum Error {
         valid: u64,
         backtrace: Backtrace,
     },
+
+    /// Failed to extract a bit string from a `SubjectPublicKeyInfo` document.
+    #[snafu(display("Invalid SubjectPublicKeyInfo document"))]
+    SpkiDecode { backtrace: Backtrace },
 }
 
 /// Wrapper for error types that don't impl [`std::error::Error`].

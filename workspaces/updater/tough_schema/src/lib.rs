@@ -6,6 +6,7 @@ pub mod decoded;
 mod error;
 mod iter;
 pub mod key;
+mod spki;
 mod verify;
 
 pub use crate::error::Error;
