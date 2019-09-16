@@ -190,7 +190,8 @@ fn running_version() -> Result<(Version, String)> {
         if version.is_none() {
             let key = "VERSION_ID=";
             if line.starts_with(key) {
-                version = Some(Version::parse(&line[key.len()..]).context(error::VersionIdParse)?);
+                version = Some(Version::parse(&line[key.len()..])
+                            .context(error::VersionIdParse {line} )?);
             }
         } else if flavor.is_none() {
             let key = "VARIANT_ID=";

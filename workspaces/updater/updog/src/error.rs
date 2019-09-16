@@ -9,6 +9,33 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
+    #[snafu(display("Bad bound field: {}", bound_str))]
+    BadBound {
+        backtrace: Backtrace,
+        source: std::num::ParseIntError,
+        bound_str: String
+    },
+
+    #[snafu(display("Invalid bound start: {}", key))]
+    BadBoundKey {
+        source: std::num::ParseIntError,
+        key: String,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Could not parse datastore version: {}", key))]
+    BadDataVersion {
+        backtrace: Backtrace,
+        key: String
+    },
+
+    #[snafu(display("Could not parse image version: {} - {}", key, value))]
+    BadMapVersion {
+        backtrace: Backtrace,
+        key: String,
+        value: String
+    },
+
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
     ConfigParse {
         path: PathBuf,
@@ -36,9 +63,52 @@ pub(crate) enum Error {
         source: std::io::Error,
         backtrace: Backtrace,
     },
+
     #[snafu(display("Failed to create metadata cache directory: {}", source))]
     CreateMetadataCache {
         source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to create directory: {:?}", path))]
+    DirCreate {
+        backtrace: Backtrace,
+        source: std::io::Error,
+        path: PathBuf
+    },
+
+    #[snafu(display("Duplicate key ID: {}", keyid))]
+    DuplicateKeyId {
+        backtrace: Backtrace,
+        keyid: u64
+    },
+
+    #[snafu(display("Duplicate version key: {}", key))]
+    DuplicateVersionKey {
+        backtrace: Backtrace,
+        key: String
+    },
+
+    #[snafu(display("Failed to attach image to loop device"))]
+    LoopAttachFailed {
+        backtrace: Backtrace,
+        source: std::io::Error
+    },
+
+    #[snafu(display("Failed to open loop device control"))]
+    LoopControlFailed {
+        backtrace: Backtrace,
+        source: std::io::Error
+    },
+
+    #[snafu(display("Failed to find free loop device"))]
+    LoopFindFailed {
+        backtrace: Backtrace,
+        source: std::io::Error
+    },
+
+    #[snafu(display("Could not determine loop device path"))]
+    LoopNameFailed {
         backtrace: Backtrace,
     },
 
@@ -49,9 +119,79 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to parse updates manifest: {}", source))]
+    ManifestParse {
+        source: serde_json::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Metadata error: {}", source))]
     Metadata {
         source: tough::error::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to copy migration from image: {}", name))]
+    MigrationCopyFailed {
+        backtrace: Backtrace,
+        source: std::io::Error,
+        name: String
+    },
+
+    #[snafu(display("Error retrieving migration helpers"))]
+    MigrationError {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Migration not found in image: {:?}", name))]
+    MigrationNotLocal {
+        backtrace: Backtrace,
+        name: PathBuf
+    },
+
+    #[snafu(display("Missing datastore version in metadata: {:?}", version))]
+    MissingDataVersion {
+        backtrace: Backtrace,
+        version: DataVersion
+    },
+
+    #[snafu(display("Image version missing datastore mapping: {}", version))]
+    MissingMapping {
+        backtrace: Backtrace,
+        version: String
+    },
+
+    #[snafu(display("Reached end of migration chain at {} but target is {}", current, target))]
+    MissingMigration {
+        backtrace: Backtrace,
+        current: DataVersion,
+        target: DataVersion,
+    },
+
+    #[snafu(display("Missing seed value"))]
+    MissingSeed {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Missing version in metadata: {}", version))]
+    MissingVersion {
+        backtrace: Backtrace,
+        version: String
+    },
+
+    #[snafu(display("Temporary image mount failed"))]
+    MountFailed {
+        backtrace: Backtrace,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("No update available"))]
+    NoUpdate {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Updog is not part of any wave"))]
+    NoWave {
         backtrace: Backtrace,
     },
 
@@ -66,18 +206,6 @@ pub(crate) enum Error {
     OpenRoot {
         path: PathBuf,
         source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Failed to parse updates manifest: {}", source))]
-    ManifestParse {
-        source: serde_json::Error,
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Failed to serialize update information: {}", source))]
-    UpdateSerialize {
-        source: serde_json::Error,
         backtrace: Backtrace,
     },
 
@@ -103,46 +231,20 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to determine VERSION_ID from /etc/os-release"))]
-    VersionIdNotFound {
+    #[snafu(display("Failed to create tmpfile for root mount"))]
+    TmpFileCreate {
         backtrace: Backtrace,
+        source: std::io::Error
     },
 
-    #[snafu(display("Failed to parse VERSION_ID from /etc/os-release"))]
-    VersionIdParse {
-        source: semver::SemVerError,
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Failed to read /etc/os-release: {}", source))]
-    VersionIdRead {
-        source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Failed writing update data to disk: {}", source))]
-    WriteUpdate {
-        source: std::io::Error,
+    #[snafu(display("Failed to serialize update information: {}", source))]
+    UpdateSerialize {
+        source: serde_json::Error,
         backtrace: Backtrace,
     },
 
     #[snafu(display("Update in the incorrect state"))]
     UpdateState {
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Update wave has been missed"))]
-    WaveMissed {
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("No update available"))]
-    NoUpdate {
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Update wave is pending"))]
-    WavePending {
         backtrace: Backtrace,
     },
 
@@ -152,137 +254,39 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Invalid bound start: {}", key))]
-    BadBoundKey {
-        source: std::num::ParseIntError,
-        key: String,
+    #[snafu(display("Failed to determine VERSION_ID from /etc/os-release"))]
+    VersionIdNotFound {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Missing seed value"))]
-    MissingSeed {
+    #[snafu(display(
+        "Failed to parse VERSION_ID from /etc/os-release: {}", line
+    ))]
+    VersionIdParse {
+        source: semver::SemVerError,
         backtrace: Backtrace,
+        line: String,
     },
 
-    #[snafu(display("Updog is not part of any wave"))]
-    NoWave {
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Duplicate key ID: {}", keyid))]
-    DuplicateKeyId {
-        backtrace: Backtrace,
-        keyid: u64
-    },
-
-    #[snafu(display("Duplicate version key: {}", key))]
-    DuplicateVersionKey {
-        backtrace: Backtrace,
-        key: String
-    },
-
-    #[snafu(display("Bad bound field: {}", bound_str))]
-    BadBound {
-        backtrace: Backtrace,
-        source: std::num::ParseIntError,
-        bound_str: String
-    },
-
-    #[snafu(display("Could not parse datastore version: {}", key))]
-    BadDataVersion {
-        backtrace: Backtrace,
-        key: String
-    },
-
-    #[snafu(display("Could not parse image version: {} - {}", key, value))]
-    BadMapVersion {
-        backtrace: Backtrace,
-        key: String,
-        value: String
-    },
-
-    #[snafu(display("Missing version in metadata: {}", version))]
-    MissingVersion {
-        backtrace: Backtrace,
-        version: String
-    },
-
-    #[snafu(display("Missing datastore version in metadata: {:?}", version))]
-    MissingDataVersion {
-        backtrace: Backtrace,
-        version: DataVersion
-    },
-
-    #[snafu(display("Image version missing datastore mapping: {}", version))]
-    MissingMapping {
-        backtrace: Backtrace,
-        version: String
-    },
-
-    #[snafu(display("Error retrieving migration helpers"))]
-    MigrationError {
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Temporary image mount failed"))]
-    MountFailed {
-        backtrace: Backtrace,
+    #[snafu(display("Failed to read /etc/os-release: {}", source))]
+    VersionIdRead {
         source: std::io::Error,
+        backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to create directory: {:?}", path))]
-    DirCreate {
+    #[snafu(display("Update wave has been missed"))]
+    WaveMissed {
         backtrace: Backtrace,
+    },
+
+    #[snafu(display("Update wave is pending"))]
+    WavePending {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed writing update data to disk: {}", source))]
+    WriteUpdate {
         source: std::io::Error,
-        path: PathBuf
-    },
-
-    #[snafu(display("Migration not found in image: {:?}", name))]
-    MigrationNotLocal {
         backtrace: Backtrace,
-        name: PathBuf
-    },
-
-    #[snafu(display("Failed to copy migration from image: {}", name))]
-    MigrationCopyFailed {
-        backtrace: Backtrace,
-        source: std::io::Error,
-        name: String
-    },
-
-    #[snafu(display("Reached end of migration chain at {} but target is {}", current, target))]
-    MissingMigration {
-        backtrace: Backtrace,
-        current: DataVersion,
-        target: DataVersion,
-    },
-
-    #[snafu(display("Failed to open loop device control"))]
-    LoopControlFailed {
-        backtrace: Backtrace,
-        source: std::io::Error
-    },
-
-    #[snafu(display("Failed to find free loop device"))]
-    LoopFindFailed {
-        backtrace: Backtrace,
-        source: std::io::Error
-    },
-
-    #[snafu(display("Failed to attach image to loop device"))]
-    LoopAttachFailed {
-        backtrace: Backtrace,
-        source: std::io::Error
-    },
-
-    #[snafu(display("Could not determine loop device path"))]
-    LoopNameFailed {
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Failed to create tmpfile for root mount"))]
-    TmpFileCreate {
-        backtrace: Backtrace,
-        source: std::io::Error
     },
 }
