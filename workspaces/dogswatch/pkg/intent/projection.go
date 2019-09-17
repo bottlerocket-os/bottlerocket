@@ -2,6 +2,7 @@ package intent
 
 import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
+	"github.com/pkg/errors"
 )
 
 var nextLinear map[marker.NodeAction]marker.NodeAction = map[marker.NodeAction]marker.NodeAction{
@@ -16,7 +17,13 @@ var nextLinear map[marker.NodeAction]marker.NodeAction = map[marker.NodeAction]m
 	marker.NodeActionRebootUpdate: marker.NodeActionRebootUpdate,
 }
 
-func calculateNext(action marker.NodeAction) marker.NodeAction {
+// TODO: add tests for the expected state machine turns.
+
+func calculateNext(action marker.NodeAction) (marker.NodeAction, error) {
 	// TODO: resolve next state if applicable
-	return nextLinear[action]
+	next, ok := nextLinear[action]
+	if !ok {
+		return "", errors.Errorf("no next action available from %q", action)
+	}
+	return next, nil
 }

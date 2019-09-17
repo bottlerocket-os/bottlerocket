@@ -11,10 +11,10 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 	"github.com/amazonlinux/thar/dogswatch/pkg/platform"
-	"github.com/amazonlinux/thar/dogswatch/pkg/platform/updog"
 	"github.com/amazonlinux/thar/dogswatch/pkg/workgroup"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -26,6 +26,7 @@ type Agent struct {
 	log      logging.Logger
 	kube     kubernetes.Interface
 	platform platform.Platform
+	nodeName string
 
 	state    *nodeState
 	progress progression
@@ -110,29 +111,15 @@ func activeIntent(i *intent.Intent) bool {
 
 func (a *Agent) realize(in *intent.Intent) error {
 	a.log.WithField("intent", fmt.Sprintf("%#v", in)).Debug("realizing intent")
-	updateIntent := func(uin *intent.Intent) error {
-		uerr := k8sutil.PostMetadata(a.kube.CoreV1().Nodes(), uin.NodeName, uin)
-		if uerr != nil {
-			a.log.WithError(uerr).Error("could not update markers")
-			uerr = errors.WithMessage(uerr, "could not update markers")
-			return uerr
-		}
-		return nil
-	}
 
 	var err error
-
-	// TODO: implement and wire up updog consistent update invocations
-	if a.progress.GetTarget() == nil {
-		a.progress.SetTarget(&updog.NoopUpdate{})
-	}
 
 	// TODO: Sanity check progression before proceeding
 
 	// ACK the wanted action.
 	in.Active = in.Wanted
 	in.State = marker.NodeStateBusy
-	if err = updateIntent(in); err != nil {
+	if err = a.updateIntent(in); err != nil {
 		return err
 	}
 
@@ -200,7 +187,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 		in.State = marker.NodeStateReady
 	}
 
-	updateIntent(in)
+	a.updateIntent(in)
 
 	return err
 }
@@ -208,5 +195,38 @@ func (a *Agent) realize(in *intent.Intent) error {
 func (a *Agent) nodePreflight() error {
 	// TODO: sanity check node and reset appropriate Resource state
 	// TODO: inform controller for taint removal
+
+	n, err := a.kube.CoreV1().Nodes().Get(a.nodeName, v1meta.GetOptions{})
+	if err != nil {
+		return errors.WithMessage(err, "unable to retrieve Node for preflight check")
+	}
+
+	// Update our state to be "ready" for action, this shouldn't actually do so
+	// unless its really done.
+	in := intent.Given(n)
+	// TODO: check that we're properly reseting, for now its not needed to mark
+	// our work "done"
+	switch {
+	case in.Terminal():
+		in.State = marker.NodeStateReady
+	case in.Waiting():
+		// already in a holding pattern, no need to re-prime ourselves in
+		// preflight.
+	default:
+		// there's not a good way to re-prime ourselves in the prior state.
+		in.State = marker.NodeStateUnknown
+	}
+	a.updateIntent(in)
+
+	return nil
+}
+
+func (a *Agent) updateIntent(uin *intent.Intent) error {
+	uerr := k8sutil.PostMetadata(a.kube.CoreV1().Nodes(), uin.NodeName, uin)
+	if uerr != nil {
+		a.log.WithError(uerr).Error("could not update markers")
+		uerr = errors.WithMessage(uerr, "could not update markers")
+		return uerr
+	}
 	return nil
 }
