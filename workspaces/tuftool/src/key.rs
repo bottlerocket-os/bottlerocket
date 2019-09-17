@@ -19,6 +19,13 @@ impl KeyPair {
     pub(crate) fn parse(key: &[u8]) -> Result<Self> {
         if let Ok(pem) = pem::parse(key) {
             match pem.tag.as_str() {
+                "PRIVATE KEY" => {
+                    if let Ok(key_pair) = RsaKeyPair::from_pkcs8(&pem.contents) {
+                        Ok(KeyPair::Rsa(key_pair))
+                    } else {
+                        error::KeyUnrecognized.fail()
+                    }
+                }
                 "RSA PRIVATE KEY" => Ok(KeyPair::Rsa(
                     RsaKeyPair::from_der(&pem.contents).context(error::KeyRejected)?,
                 )),
