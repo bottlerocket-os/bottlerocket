@@ -11,6 +11,27 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
+    #[snafu(display("Failed to run {}: {}", command_str, source))]
+    CommandExec {
+        command_str: String,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Command {} failed with {}", command_str, status))]
+    CommandStatus {
+        command_str: String,
+        status: std::process::ExitStatus,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Command {} output is not valid UTF-8: {}", command_str, source))]
+    CommandUtf8 {
+        command_str: String,
+        source: std::string::FromUtf8Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Cannot determine current directory: {}", source))]
     CurrentDir {
         source: std::io::Error,
@@ -177,6 +198,20 @@ pub(crate) enum Error {
         profile: Option<String>,
         parameter_name: String,
         source: rusoto_core::RusotoError<rusoto_ssm::GetParameterError>,
+        backtrace: Backtrace,
+    },
+
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display(
+        "Failed to put aws-ssm://{}{}: {}",
+        profile.deref_shim().unwrap_or(""),
+        parameter_name,
+        source,
+    ))]
+    SsmPutParameter {
+        profile: Option<String>,
+        parameter_name: String,
+        source: rusoto_core::RusotoError<rusoto_ssm::PutParameterError>,
         backtrace: Backtrace,
     },
 

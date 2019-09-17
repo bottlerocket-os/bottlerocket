@@ -74,6 +74,38 @@ impl KeySource {
             }
         }
     }
+
+    pub(crate) fn write(&self, value: &str) -> Result<()> {
+        match self {
+            KeySource::Local(path) => {
+                std::fs::write(path, value.as_bytes()).context(error::FileWrite { path })
+            }
+            #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+            KeySource::Ssm {
+                profile,
+                parameter_name,
+            } => {
+                use crate::deref::OptionDeref;
+                use rusoto_ssm::Ssm;
+
+                let ssm_client = crate::ssm::build_client(profile.deref_shim())?;
+                ssm_client
+                    .put_parameter(rusoto_ssm::PutParameterRequest {
+                        name: parameter_name.to_owned(),
+                        overwrite: Some(true),
+                        type_: "SecureString".to_owned(),
+                        value: value.to_owned(),
+                        ..rusoto_ssm::PutParameterRequest::default()
+                    })
+                    .sync()
+                    .context(error::SsmPutParameter {
+                        profile: profile.clone(),
+                        parameter_name,
+                    })?;
+                Ok(())
+            }
+        }
+    }
 }
 
 impl FromStr for KeySource {
