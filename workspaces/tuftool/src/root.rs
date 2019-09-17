@@ -4,7 +4,7 @@ use crate::source::KeySource;
 use crate::{load_file, write_file};
 use chrono::{DateTime, Timelike, Utc};
 use maplit::hashmap;
-use snafu::{ensure, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::num::NonZeroU64;
 use std::path::PathBuf;
@@ -17,6 +17,11 @@ pub(crate) enum Command {
     /// Create a new root.json metadata file
     Init {
         /// Path to new root.json
+        path: PathBuf,
+    },
+    /// Increment the version
+    BumpVersion {
+        /// Path to root.json
         path: PathBuf,
     },
     /// Set the expiration time for root.json
@@ -99,6 +104,18 @@ impl Command {
                     signatures: Vec::new(),
                 },
             ),
+            Command::BumpVersion { path } => {
+                let mut root: Signed<Root> = load_file(path)?;
+                root.signed.version = NonZeroU64::new(
+                    root.signed
+                        .version
+                        .get()
+                        .checked_add(1)
+                        .context(error::VersionOverflow)?,
+                )
+                .context(error::VersionZero)?;
+                write_file(path, &root)
+            }
             Command::Expire { path, time } => {
                 let mut root: Signed<Root> = load_file(path)?;
                 root.signed.expires = round_time(*time);
