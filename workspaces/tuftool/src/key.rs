@@ -34,6 +34,19 @@ impl KeyPair {
             }
         }
     }
+
+    pub(crate) fn public_key(&self) -> Key {
+        use tough_schema::key::{RsaKey, RsaScheme};
+
+        match self {
+            KeyPair::Rsa(key_pair) => Key::Rsa {
+                keyval: RsaKey {
+                    public: key_pair.public_key().as_ref().to_vec().into(),
+                },
+                scheme: RsaScheme::RsassaPssSha256,
+            },
+        }
+    }
 }
 
 impl PartialEq<Key> for KeyPair {

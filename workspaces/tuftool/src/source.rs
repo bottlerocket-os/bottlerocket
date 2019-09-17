@@ -10,6 +10,7 @@ use crate::key::KeyPair;
 use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
 use std::str::FromStr;
+use tough_schema::key::Key;
 use url::Url;
 
 #[derive(Debug)]
@@ -24,11 +25,24 @@ pub(crate) enum KeySource {
 
 impl KeySource {
     pub(crate) fn as_keypair(&self) -> Result<KeyPair> {
+        KeyPair::parse(&self.read()?)
+    }
+
+    pub(crate) fn as_public_key(&self) -> Result<Key> {
+        let data = self.read()?;
+        if let Ok(key_pair) = KeyPair::parse(&data) {
+            Ok(key_pair.public_key())
+        } else {
+            let data = String::from_utf8(data)
+                .ok()
+                .context(error::UnrecognizedKey)?;
+            Key::from_str(&data).ok().context(error::UnrecognizedKey)
+        }
+    }
+
+    fn read(&self) -> Result<Vec<u8>> {
         match self {
-            KeySource::Local(path) => {
-                let buf = std::fs::read(path).context(error::FileRead { path })?;
-                KeyPair::parse(&buf)
-            }
+            KeySource::Local(path) => std::fs::read(path).context(error::FileRead { path }),
             #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
             KeySource::Ssm {
                 profile,
@@ -48,16 +62,15 @@ impl KeySource {
                         profile: profile.clone(),
                         parameter_name,
                     })?;
-                KeyPair::parse(
-                    response
-                        .parameter
-                        .context(error::SsmMissingField { field: "parameter" })?
-                        .value
-                        .context(error::SsmMissingField {
-                            field: "parameter.value",
-                        })?
-                        .as_bytes(),
-                )
+                Ok(response
+                    .parameter
+                    .context(error::SsmMissingField { field: "parameter" })?
+                    .value
+                    .context(error::SsmMissingField {
+                        field: "parameter.value",
+                    })?
+                    .as_bytes()
+                    .to_vec())
             }
         }
     }

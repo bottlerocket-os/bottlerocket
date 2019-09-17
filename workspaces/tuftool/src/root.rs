@@ -1,8 +1,9 @@
 use crate::error::{self, Result};
+use crate::source::KeySource;
 use chrono::{DateTime, Timelike, Utc};
 use maplit::hashmap;
 use serde::Serialize;
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
@@ -10,6 +11,8 @@ use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tempfile::NamedTempFile;
+use tough_schema::decoded::{Decoded, Hex};
+use tough_schema::key::Key;
 use tough_schema::{RoleKeys, RoleType, Root, Signed};
 
 #[derive(Debug, StructOpt)]
@@ -34,6 +37,15 @@ pub(crate) enum Command {
         role: RoleType,
         /// The new threshold
         threshold: NonZeroU64,
+    },
+    /// Add a key (public or private) to a role
+    AddKey {
+        /// Path to root.json
+        path: PathBuf,
+        /// The role to add the key to
+        role: RoleType,
+        /// The new key
+        key_path: KeySource,
     },
 }
 
@@ -93,6 +105,24 @@ impl Command {
                     .or_insert_with(|| role_keys!(*threshold));
                 write_json(path, &root)
             }
+            Command::AddKey {
+                path,
+                role,
+                key_path,
+            } => {
+                let mut root = load_root(path)?;
+                let key_pair = key_path.as_public_key()?;
+                let key_id = add_key(&mut root.signed, key_pair)?;
+                let entry = root
+                    .signed
+                    .roles
+                    .entry(*role)
+                    .or_insert_with(|| role_keys!());
+                if !entry.keyids.contains(&key_id) {
+                    entry.keyids.push(key_id);
+                }
+                write_json(path, &root)
+            }
         }
     }
 }
@@ -116,4 +146,25 @@ fn write_json<T: Serialize>(path: &Path, json: &T) -> Result<()> {
     writer.write_all(b"\n").context(error::FileWrite { path })?;
     writer.persist(path).context(error::FilePersist { path })?;
     Ok(())
+}
+
+/// Adds a key to the root role if not already present, and returns its key ID.
+fn add_key(root: &mut Root, key: Key) -> Result<Decoded<Hex>> {
+    // Check to see if key is already present
+    for (key_id, candidate_key) in &root.keys {
+        if key.eq(candidate_key) {
+            return Ok(key_id.clone());
+        }
+    }
+
+    // Key isn't present yet, so we need to add it
+    let key_id = key.key_id().context(error::KeyId)?;
+    ensure!(
+        !root.keys.contains_key(&key_id),
+        error::KeyDuplicate {
+            key_id: hex::encode(&key_id)
+        }
+    );
+    root.keys.insert(key_id.clone(), key);
+    Ok(key_id)
 }

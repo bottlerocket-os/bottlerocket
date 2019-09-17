@@ -96,6 +96,18 @@ pub(crate) enum Error {
         source: Box<Self>,
     },
 
+    #[snafu(display("Duplicate key ID: {}", key_id))]
+    KeyDuplicate {
+        key_id: String,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to calculate key ID: {}", source))]
+    KeyId {
+        #[snafu(backtrace)]
+        source: tough_schema::Error,
+    },
+
     #[snafu(display("Private key rejected: {}", source))]
     KeyRejected {
         source: ring::error::KeyRejected,
@@ -174,6 +186,9 @@ pub(crate) enum Error {
         field: &'static str,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Unrecognized or invalid public key"))]
+    UnrecognizedKey { backtrace: Backtrace },
 
     #[snafu(display("Unrecognized URL scheme \"{}\"", scheme))]
     UnrecognizedScheme {
