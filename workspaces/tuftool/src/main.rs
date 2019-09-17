@@ -6,6 +6,7 @@ mod deref;
 mod error;
 mod key;
 mod root;
+mod sign;
 mod source;
 mod ssm;
 
@@ -25,6 +26,8 @@ enum Command {
     Create(create::CreateArgs),
     /// Manipulate a root.json metadata file
     Root(root::Command),
+    /// Sign a metadata file
+    Sign(sign::SignArgs),
 }
 
 impl Command {
@@ -32,6 +35,7 @@ impl Command {
         match self {
             Command::Create(args) => args.run(),
             Command::Root(root_subcommand) => root_subcommand.run(),
+            Command::Sign(args) => args.run(),
         }
     }
 }

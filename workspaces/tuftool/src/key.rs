@@ -3,11 +3,12 @@ use crate::source::KeySource;
 use olpc_cjson::CanonicalFormatter;
 use ring::rand::SecureRandom;
 use ring::signature::{KeyPair as _, RsaKeyPair};
+use serde::Serialize;
 use snafu::ResultExt;
 use std::collections::HashMap;
 use tough_schema::decoded::{Decoded, Hex};
 use tough_schema::key::Key;
-use tough_schema::{Role, Root, Signature, Signed};
+use tough_schema::{Role, RoleType, Root, Signature, Signed};
 
 #[derive(Debug)]
 pub(crate) enum KeyPair {
@@ -78,16 +79,23 @@ pub(crate) fn keys_for_root(keys: &[KeySource], root: &Root) -> Result<RootKeys>
     Ok(map)
 }
 
-pub(crate) fn sign_metadata<T>(
+pub(crate) fn sign_metadata<T: Role + Serialize>(
     root: &Root,
     keys: &RootKeys,
     role: &mut Signed<T>,
     rng: &dyn SecureRandom,
-) -> Result<()>
-where
-    T: Role + serde::Serialize,
-{
-    if let Some(role_keys) = root.roles.get(&T::TYPE) {
+) -> Result<()> {
+    sign_metadata_inner(root, keys, T::TYPE, role, rng)
+}
+
+pub(crate) fn sign_metadata_inner<T: Serialize>(
+    root: &Root,
+    keys: &RootKeys,
+    role_type: RoleType,
+    role: &mut Signed<T>,
+    rng: &dyn SecureRandom,
+) -> Result<()> {
+    if let Some(role_keys) = root.roles.get(&role_type) {
         for (keyid, key) in keys {
             if role_keys.keyids.contains(&keyid) {
                 let mut data = Vec::new();
