@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::num::NonZeroU64;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use tough_schema::decoded::{Decoded, Hex};
 use tough_schema::key::Key;
 use tough_schema::{RoleKeys, RoleType, Root, Signed};
 
@@ -48,6 +49,16 @@ pub(crate) enum Command {
         role: RoleType,
         /// The new key
         key_path: KeySource,
+    },
+    /// Remove a key ID, either entirely or from a single role
+    RemoveKey {
+        /// Path to root.json
+        path: PathBuf,
+        /// The key ID to remove
+        key_id: Decoded<Hex>,
+        /// Role to remove the key ID from (if provided, the public key will still be listed in the
+        /// file)
+        role: Option<RoleType>,
     },
     /// Generate a new RSA key pair, saving it to a file, and add it to a role
     GenRsaKey {
@@ -145,6 +156,29 @@ impl Command {
                 let mut root: Signed<Root> = load_file(path)?;
                 let key_pair = key_path.as_public_key()?;
                 add_key(&mut root.signed, *role, key_pair)?;
+                clear_sigs(&mut root);
+                write_file(path, &root)
+            }
+            Command::RemoveKey { path, key_id, role } => {
+                let mut root: Signed<Root> = load_file(path)?;
+                if let Some(role) = role {
+                    if let Some(role_keys) = root.signed.roles.get_mut(role) {
+                        role_keys
+                            .keyids
+                            .iter()
+                            .position(|k| k.eq(key_id))
+                            .map(|pos| role_keys.keyids.remove(pos));
+                    }
+                } else {
+                    for role_keys in root.signed.roles.values_mut() {
+                        role_keys
+                            .keyids
+                            .iter()
+                            .position(|k| k.eq(key_id))
+                            .map(|pos| role_keys.keyids.remove(pos));
+                    }
+                    root.signed.keys.remove(key_id);
+                }
                 clear_sigs(&mut root);
                 write_file(path, &root)
             }
