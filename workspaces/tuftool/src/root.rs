@@ -1,16 +1,13 @@
 use crate::error::{self, Result};
 use crate::source::KeySource;
+use crate::{load_file, write_file};
 use chrono::{DateTime, Timelike, Utc};
 use maplit::hashmap;
-use serde::Serialize;
-use snafu::{ensure, OptionExt, ResultExt};
+use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::Write;
 use std::num::NonZeroU64;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use structopt::StructOpt;
-use tempfile::NamedTempFile;
 use tough_schema::decoded::{Decoded, Hex};
 use tough_schema::key::Key;
 use tough_schema::{RoleKeys, RoleType, Root, Signed};
@@ -67,7 +64,7 @@ macro_rules! role_keys {
 impl Command {
     pub(crate) fn run(&self) -> Result<()> {
         match self {
-            Command::Init { path } => write_json(
+            Command::Init { path } => write_file(
                 path,
                 &Signed {
                     signed: Root {
@@ -88,29 +85,29 @@ impl Command {
                 },
             ),
             Command::Expire { path, time } => {
-                let mut root = load_root(path)?;
+                let mut root: Signed<Root> = load_file(path)?;
                 root.signed.expires = round_time(*time);
-                write_json(path, &root)
+                write_file(path, &root)
             }
             Command::SetThreshold {
                 path,
                 role,
                 threshold,
             } => {
-                let mut root = load_root(path)?;
+                let mut root: Signed<Root> = load_file(path)?;
                 root.signed
                     .roles
                     .entry(*role)
                     .and_modify(|rk| rk.threshold = *threshold)
                     .or_insert_with(|| role_keys!(*threshold));
-                write_json(path, &root)
+                write_file(path, &root)
             }
             Command::AddKey {
                 path,
                 role,
                 key_path,
             } => {
-                let mut root = load_root(path)?;
+                let mut root: Signed<Root> = load_file(path)?;
                 let key_pair = key_path.as_public_key()?;
                 let key_id = add_key(&mut root.signed, key_pair)?;
                 let entry = root
@@ -121,7 +118,7 @@ impl Command {
                 if !entry.keyids.contains(&key_id) {
                     entry.keyids.push(key_id);
                 }
-                write_json(path, &root)
+                write_file(path, &root)
             }
         }
     }
@@ -130,22 +127,6 @@ impl Command {
 fn round_time(time: DateTime<Utc>) -> DateTime<Utc> {
     // `Timelike::with_nanosecond` returns None only when passed a value >= 2_000_000_000
     time.with_nanosecond(0).unwrap()
-}
-
-fn load_root(path: &Path) -> Result<Signed<Root>> {
-    serde_json::from_reader(File::open(path).context(error::FileOpen { path })?)
-        .context(error::FileParseJson { path })
-}
-
-fn write_json<T: Serialize>(path: &Path, json: &T) -> Result<()> {
-    // Use `tempfile::NamedTempFile::persist` to perform an atomic file write.
-    let parent = path.parent().context(error::PathParent { path })?;
-    let mut writer =
-        NamedTempFile::new_in(parent).context(error::FileTempCreate { path: parent })?;
-    serde_json::to_writer_pretty(&mut writer, json).context(error::FileWriteJson { path })?;
-    writer.write_all(b"\n").context(error::FileWrite { path })?;
-    writer.persist(path).context(error::FilePersist { path })?;
-    Ok(())
 }
 
 /// Adds a key to the root role if not already present, and returns its key ID.

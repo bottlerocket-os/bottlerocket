@@ -1,8 +1,13 @@
 use crate::error::{self, Result};
+use crate::source::KeySource;
+use olpc_cjson::CanonicalFormatter;
 use ring::rand::SecureRandom;
 use ring::signature::{KeyPair as _, RsaKeyPair};
 use snafu::ResultExt;
+use std::collections::HashMap;
+use tough_schema::decoded::{Decoded, Hex};
 use tough_schema::key::Key;
+use tough_schema::{Role, Root, Signature, Signed};
 
 #[derive(Debug)]
 pub(crate) enum KeyPair {
@@ -58,4 +63,45 @@ impl PartialEq<Key> for KeyPair {
             _ => false,
         }
     }
+}
+
+pub(crate) type RootKeys = HashMap<Decoded<Hex>, KeyPair>;
+
+pub(crate) fn keys_for_root(keys: &[KeySource], root: &Root) -> Result<RootKeys> {
+    let mut map = HashMap::new();
+    for source in keys {
+        let key_pair = source.as_keypair()?;
+        if let Some((keyid, _)) = root.keys.iter().find(|(_, key)| key_pair == **key) {
+            map.insert(keyid.clone(), key_pair);
+        }
+    }
+    Ok(map)
+}
+
+pub(crate) fn sign_metadata<T>(
+    root: &Root,
+    keys: &RootKeys,
+    role: &mut Signed<T>,
+    rng: &dyn SecureRandom,
+) -> Result<()>
+where
+    T: Role + serde::Serialize,
+{
+    if let Some(role_keys) = root.roles.get(&T::TYPE) {
+        for (keyid, key) in keys {
+            if role_keys.keyids.contains(&keyid) {
+                let mut data = Vec::new();
+                let mut ser =
+                    serde_json::Serializer::with_formatter(&mut data, CanonicalFormatter::new());
+                role.signed.serialize(&mut ser).context(error::SignJson)?;
+                let sig = key.sign(&data, rng)?;
+                role.signatures.push(Signature {
+                    keyid: keyid.clone(),
+                    sig: sig.into(),
+                });
+            }
+        }
+    }
+
+    Ok(())
 }
