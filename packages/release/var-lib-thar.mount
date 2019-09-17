@@ -1,8 +1,0 @@
-[Mount]
-What=/dev/disk/by-partlabel/THAR-DATA
-Where=/var/lib/thar
-Type=ext4
-Options=defaults
-
-[Install]
-WantedBy=multi-user.target
