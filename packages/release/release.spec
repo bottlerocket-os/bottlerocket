@@ -38,6 +38,7 @@ Requires: %{_cross_os}signpost
 Requires: %{_cross_os}sundog
 Requires: %{_cross_os}pluto
 Requires: %{_cross_os}storewolf
+Requires: %{_cross_os}servicedog
 Requires: %{_cross_os}settings-committer
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}thar-be-settings

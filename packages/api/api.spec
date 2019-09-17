@@ -70,6 +70,12 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}thar-be-settings
 %{summary}.
 
+%package -n %{_cross_os}servicedog
+Summary: Manipulates systemd units based on setting changes
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}servicedog
+%{summary}.
+
 %package -n %{_cross_os}storewolf
 Summary: Data store creator
 Requires: %{_cross_os}apiserver = %{version}-%{release}
@@ -96,7 +102,7 @@ Summary: Commits settings from user data, defaults, and generators at boot
 for p in \
   apiclient \
   moondog netdog sundog pluto \
-  thar-be-settings storewolf settings-committer \
+  thar-be-settings servicedog storewolf settings-committer \
   migration/migrator ;
 do
   %cargo_build --path %{workspace_dir}/${p}
@@ -115,7 +121,7 @@ install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiclient apiserver \
   moondog netdog sundog pluto \
-  thar-be-settings storewolf settings-committer \
+  thar-be-settings servicedog storewolf settings-committer \
   migrator ;
 do
   install -p -m 0755 bin/${p} %{buildroot}%{_cross_bindir}
@@ -164,6 +170,9 @@ install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
 %{_cross_unitdir}/settings-applier.service
+
+%files -n %{_cross_os}servicedog
+%{_cross_bindir}/servicedog
 
 %files -n %{_cross_os}storewolf
 %{_cross_bindir}/storewolf
