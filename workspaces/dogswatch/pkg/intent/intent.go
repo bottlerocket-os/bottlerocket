@@ -26,6 +26,11 @@ type Intent struct {
 	UpdateAvailable marker.NodeUpdate
 }
 
+// GetName returns the name of the Intent's target.
+func (i *Intent) GetName() string {
+	return i.NodeName
+}
+
 // GetAnnotations transposes the Intent into a map of Annotations suitable for
 // adding to a Resource.
 func (i *Intent) GetAnnotations() map[string]string {
