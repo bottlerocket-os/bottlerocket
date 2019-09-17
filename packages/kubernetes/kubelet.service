@@ -15,9 +15,10 @@ ExecStart=/usr/bin/kubelet \
     --allow-privileged=true \
     --container-runtime docker \
     --network-plugin cni \
-    --root-dir /var/lib/thar/kubelet \
-    --cert-dir /var/lib/thar/kubelet/pki \
-    --volume-plugin-dir /var/lib/thar/kubelet/plugins/volume/exec \
+    --root-dir /var/lib/kubelet \
+    --cert-dir /var/lib/kubelet/pki \
+    --volume-plugin-dir /var/lib/kubelet/plugins/volume/exec \
+    --experimental-dockershim-root-directory /var/lib/kubelet/dockershim \
     --node-ip ${NODE_IP} \
     --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}
 

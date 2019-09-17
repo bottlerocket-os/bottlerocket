@@ -1,4 +1,4 @@
-root = "/var/lib/thar/host-containerd"
+root = "/var/lib/host-containerd"
 state = "/run/host-containerd"
 disabled_plugins = ["cri"]
 

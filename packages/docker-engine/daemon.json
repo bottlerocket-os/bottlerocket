@@ -5,5 +5,5 @@
   "max-concurrent-downloads": 10,
   "storage-driver": "overlay2",
   "exec-opts": ["native.cgroupdriver=systemd"],
-  "data-root": "/var/lib/thar/docker"
+  "data-root": "/var/lib/docker"
 }

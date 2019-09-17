@@ -1,4 +1,4 @@
-root = "/var/lib/thar/containerd"
+root = "/var/lib/containerd"
 state = "/run/containerd"
 
 [grpc]
