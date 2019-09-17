@@ -4,12 +4,18 @@ package marker
 // Agent.
 type NodeState = string
 
+// TODO: timestamps should accompany the posted state for staleness checking and
+// backoff operations.
+
 const (
 	NodeStateUnknown         NodeState = "unknown"
 	NodeStateRefreshing      NodeState = "refreshing"
 	NodeStateUpToDate        NodeState = "up-to-date"
 	NodeStateUpdateAvailable NodeState = "update-available"
 	NodeStateRebooting       NodeState = "rebooting"
+	NodeStateReady           NodeState = "ready"
+	NodeStateBusy            NodeState = "busy"
+	NodeStateError           NodeState = "error"
 )
 
 // NodeAction indicates the permitted action to be taken on a Node by the Agent.
@@ -79,4 +85,11 @@ const (
 
 var (
 	PlatformVersionBuild = PlatformDevelopmentDoNotUseInProduction
+)
+
+type NodeUpdate = string
+
+const (
+	NodeUpdateAvailable   NodeUpdate = "true"
+	NodeUpdateUnavailable NodeUpdate = "false"
 )

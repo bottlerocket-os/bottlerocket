@@ -34,7 +34,7 @@ const maxQueuedIntents = 10
 
 func (am *ActionManager) Run(ctx context.Context) error {
 	am.log.Debug("starting")
-	defer am.log.Debug("finnished")
+	defer am.log.Debug("finished")
 
 	actives := map[string]struct{}{}
 	permit := make(chan *intent.Intent, maxQueuedIntents)
@@ -54,11 +54,17 @@ func (am *ActionManager) Run(ctx context.Context) error {
 				break
 			}
 			var err error
-			if err = am.cordonNode(pin.NodeName); err == nil {
-				err = am.drainWorkload(pin.NodeName)
+			if pin.Intrusive() {
+				if err = am.cordonNode(pin.NodeName); err == nil {
+					err = am.drainWorkload(pin.NodeName)
+				}
+				if err != nil {
+					am.log.WithError(err).Error("could not drain the node")
+				}
 			}
+			err = am.postIntent(pin)
 			if err != nil {
-				am.log.WithError(err).Error("could not drain the node")
+				am.log.WithError(err).Error("could not post intent")
 			}
 
 		case in, ok := <-am.input:
@@ -66,6 +72,7 @@ func (am *ActionManager) Run(ctx context.Context) error {
 				break
 			}
 			am.log.Debug("checking with policy")
+			// TODO: make policy checking and consideration richer
 			proceed, err := am.policy.Check(&PolicyCheck{Intent: in, ClusterActive: len(actives)})
 			if err != nil {
 				am.log.WithError(err).Error("policy check errored")
@@ -79,6 +86,7 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			if len(permit) < maxQueuedIntents {
 				permit <- in
 			} else {
+				// TODO: handle backpressure with scheduling
 				am.log.Warn("backpressure blocking permitted intents")
 			}
 		}
@@ -107,11 +115,11 @@ func (am *ActionManager) intentFor(node *v1.Node) *intent.Intent {
 	log := am.log.WithField("node", node.GetName())
 	in := intent.Given(node)
 
-	next := in.Next()
+	next := in.Projected()
 
-	if next.Pending() {
+	if next.Needed() || next.HasUpdateAvailable() {
 		log.Debug("needs action towards next step")
-		return in
+		return next
 	}
 	log.Debug("no action needed")
 	return nil

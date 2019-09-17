@@ -25,7 +25,7 @@ const (
 	// make update progress.
 	NodeActionWanted Key = Prefix + "/action-wanted"
 	// NodeActionActiveStatus provides progress information on a
-	NodeActionActiveStatus Key = Prefix + "/action-status"
+	NodeActionActiveState Key = Prefix + "/action-state"
 	// NodeActionActive provides the acknowledged and acted-upon action that was
 	// wanted of a Node.
 	NodeActionActive Key = Prefix + "/action-active"

@@ -16,7 +16,7 @@ type defaultPolicy struct{}
 
 func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
 	// If already active, continue to handle it.
-	if ck.Intent.Active() {
+	if ck.Intent.InProgress() {
 		return true, nil
 	}
 	// If there are no other active nodes in the cluster, then go ahead with the

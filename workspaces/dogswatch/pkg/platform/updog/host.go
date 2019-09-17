@@ -19,7 +19,7 @@ type hostOption struct {
 }
 
 // UpdateID is the type of the opaque Identifier used for this platform.
-type UpdateID string
+type UpdateID = string
 
 type actionResponse struct {
 	// ID is the Update's ID which should match throughout the orchestration of

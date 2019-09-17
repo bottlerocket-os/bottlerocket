@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	"github.com/amazonlinux/thar/dogswatch/pkg/k8sutil"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,6 +63,12 @@ func (am *ActionManager) drainWorkload(nodeName string) error {
 		log.Debug("no workload present")
 	}
 	return err
+}
+
+func (am *ActionManager) postIntent(i *intent.Intent) error {
+	log := am.log.WithField("node", i.NodeName)
+	defer log.Debugf("posted intent on node: %#v", i)
+	return k8sutil.PostMetadata(am.kube.CoreV1().Nodes(), i.NodeName, i)
 }
 
 // func (am *ActionManager) permitIntentAction(nodeName string, in *intent.Intent) error {
