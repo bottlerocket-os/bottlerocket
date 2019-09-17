@@ -1,7 +1,7 @@
 use crate::decoded::{Decoded, Hex};
 use crate::error;
 use crate::key::Key;
-use serde::{de::Error as _, Deserializer};
+use serde::{de::Error as _, Deserialize, Deserializer};
 use snafu::ensure;
 use std::collections::HashMap;
 use std::fmt;
@@ -62,6 +62,18 @@ where
     }
 
     deserializer.deserialize_map(Visitor)
+}
+
+/// Deserializes the `_extra` field on roles, skipping the `_type` tag.
+pub(crate) fn extra_skip_type<'de, D>(
+    deserializer: D,
+) -> Result<HashMap<String, serde_json::Value>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let mut map = HashMap::deserialize(deserializer)?;
+    map.remove("_type");
+    Ok(map)
 }
 
 #[cfg(test)]
