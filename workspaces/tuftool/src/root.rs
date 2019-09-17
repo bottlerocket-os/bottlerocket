@@ -114,11 +114,13 @@ impl Command {
                         .context(error::VersionOverflow)?,
                 )
                 .context(error::VersionZero)?;
+                clear_sigs(&mut root);
                 write_file(path, &root)
             }
             Command::Expire { path, time } => {
                 let mut root: Signed<Root> = load_file(path)?;
                 root.signed.expires = round_time(*time);
+                clear_sigs(&mut root);
                 write_file(path, &root)
             }
             Command::SetThreshold {
@@ -132,6 +134,7 @@ impl Command {
                     .entry(*role)
                     .and_modify(|rk| rk.threshold = *threshold)
                     .or_insert_with(|| role_keys!(*threshold));
+                clear_sigs(&mut root);
                 write_file(path, &root)
             }
             Command::AddKey {
@@ -142,6 +145,7 @@ impl Command {
                 let mut root: Signed<Root> = load_file(path)?;
                 let key_pair = key_path.as_public_key()?;
                 add_key(&mut root.signed, *role, key_pair)?;
+                clear_sigs(&mut root);
                 write_file(path, &root)
             }
             Command::GenRsaKey {
@@ -178,6 +182,7 @@ impl Command {
                 let key_pair = KeyPair::parse(stdout.as_bytes())?;
                 add_key(&mut root.signed, *role, key_pair.public_key())?;
                 key_path.write(&stdout)?;
+                clear_sigs(&mut root);
                 write_file(path, &root)
             }
         }
@@ -187,6 +192,11 @@ impl Command {
 fn round_time(time: DateTime<Utc>) -> DateTime<Utc> {
     // `Timelike::with_nanosecond` returns None only when passed a value >= 2_000_000_000
     time.with_nanosecond(0).unwrap()
+}
+
+/// Removes signatures from a role. Useful if the content is updated.
+fn clear_sigs<T>(role: &mut Signed<T>) {
+    role.signatures.clear();
 }
 
 /// Adds a key to the root role if not already present, and adds its key ID to the specified role.
