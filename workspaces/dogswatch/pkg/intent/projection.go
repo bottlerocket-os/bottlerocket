@@ -23,7 +23,7 @@ func calculateNext(action marker.NodeAction) (marker.NodeAction, error) {
 	// TODO: resolve next state if applicable
 	next, ok := nextLinear[action]
 	if !ok {
-		return "", errors.Errorf("no next action available from %q", action)
+		return marker.NodeActionUnknown, errors.Errorf("no next action from %q, resolving as unknown", action)
 	}
 	return next, nil
 }

@@ -123,9 +123,27 @@ func (i *Intent) Needed() bool {
 // Projected returns the n+1 step projection of a would-be Intent. It does not
 // check whether or not the next step is *sane* given the current intent (ie:
 // this will not error if the node has not actually completed a step).
-func (i Intent) Projected() *Intent {
-	i.Wanted, _ = calculateNext(i.Wanted)
-	return &i
+func (i *Intent) Projected() *Intent {
+	p := i.Clone()
+	if p.inUnknownState() {
+		p.reset()
+	} else {
+		p.Wanted, _ = calculateNext(p.Wanted)
+	}
+	return p
+}
+
+// reset reverts the Intent to its Origin point from which an Intent should be
+// able to be driven to a Terminal point.
+func (i *Intent) reset() {
+	i.Wanted, _ = calculateNext(marker.NodeActionUnknown)
+	i.Active = marker.NodeActionUnknown
+	i.State = marker.NodeStateUnknown
+}
+
+func (i *Intent) inUnknownState() bool {
+	return i.State == "" ||
+		i.State == marker.NodeStateUnknown
 }
 
 func (i Intent) Terminal() bool {
