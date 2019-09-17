@@ -59,12 +59,19 @@ func (u *updog) Status() (*statusResponse, error) {
 
 func (u *updog) ListAvailable() (*listAvailableResponse, error) {
 	action := CommandListAvailable
-	shape := &listAvailableResponse{}
-	response, err := u.cli.execute(context.TODO(), []string{action}, shape)
+	response, err := u.cli.execute(context.TODO(), []string{action}, &listAvailableResponse{})
 	if err != nil {
 		return nil, errors.WithMessage(err, "could not get available updates")
 	}
-	return response.(*listAvailableResponse), nil
+
+	// TODO: handle current interface for updates - stub in placeholder ID when
+	// appropriate.
+	listing := response.(*listAvailableResponse)
+	listing.ReportedUpdates = append(listing.ReportedUpdates, &availableUpdate{
+		ID: "FIXME: unconditional placeholder update ID",
+	})
+
+	return listing, nil
 }
 
 func (u *updog) PrepareUpdate(id UpdateID) (*prepareUpdateResponse, error) {
