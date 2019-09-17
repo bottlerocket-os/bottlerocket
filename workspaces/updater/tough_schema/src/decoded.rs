@@ -6,6 +6,7 @@ use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::Deref;
+use std::str::FromStr;
 
 /// A wrapper around a `Vec<u8>` that contains bytes decoded from an original type `T` (e.g.
 /// hex-encoded bytes or a PEM-encoded public key). The original encoded `T` is also stored so it
@@ -161,6 +162,18 @@ impl<T> Deref for Decoded<T> {
 
     fn deref(&self) -> &[u8] {
         &self.bytes
+    }
+}
+
+impl<T: Decode> FromStr for Decoded<T> {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            bytes: T::decode(s)?,
+            original: s.to_owned(),
+            spooky: PhantomData,
+        })
     }
 }
 
