@@ -1,6 +1,10 @@
 use crate::decoded::{Decoded, EcdsaPem, Hex, RsaPem};
+use crate::error::{self, Result};
+use olpc_cjson::CanonicalFormatter;
 use ring::signature::VerificationAlgorithm;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use snafu::ResultExt;
 use std::fmt;
 use std::str::FromStr;
 
@@ -56,6 +60,16 @@ pub struct EcdsaKey {
 }
 
 impl Key {
+    /// Calculate the key ID for this key.
+    pub fn key_id(&self) -> Result<Decoded<Hex>> {
+        let mut buf = Vec::new();
+        let mut ser = serde_json::Serializer::with_formatter(&mut buf, CanonicalFormatter::new());
+        self.serialize(&mut ser).context(error::JsonSerialization {
+            what: "key".to_owned(),
+        })?;
+        Ok(Sha256::digest(&buf).as_slice().to_vec().into())
+    }
+
     /// Verify a signature of an object made with this key.
     pub(crate) fn verify(&self, msg: &[u8], signature: &[u8]) -> bool {
         let (alg, public_key): (&dyn VerificationAlgorithm, untrusted::Input) = match self {

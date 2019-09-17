@@ -1,10 +1,8 @@
 use crate::decoded::{Decoded, Hex};
 use crate::error;
 use crate::key::Key;
-use olpc_cjson::CanonicalFormatter;
-use serde::{de::Error as _, Deserializer, Serialize};
-use sha2::{Digest, Sha256};
-use snafu::{ensure, ResultExt};
+use serde::{de::Error as _, Deserializer};
+use snafu::ensure;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -24,17 +22,12 @@ where
         key: Key,
         map: &mut HashMap<Decoded<Hex>, Key>,
     ) -> Result<(), error::Error> {
-        let mut buf = Vec::new();
-        let mut ser = serde_json::Serializer::with_formatter(&mut buf, CanonicalFormatter::new());
-        key.serialize(&mut ser).context(error::JsonSerialization {
-            what: format!("key {}", hex::encode(&keyid)),
-        })?;
-        let digest = Sha256::digest(&buf);
+        let calculated = key.key_id()?;
         ensure!(
-            &keyid == digest.as_slice(),
+            keyid == calculated,
             error::HashMismatch {
-                context: format!("key {}", hex::encode(&keyid)),
-                calculated: hex::encode(digest),
+                context: "key".to_owned(),
+                calculated: hex::encode(&calculated),
                 expected: hex::encode(&keyid),
             }
         );
