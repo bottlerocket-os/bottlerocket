@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# Register a partitioned OS image as an AMI in EC2.
+# Register partitioned root and data images as an AMI in EC2.
 # Only registers with HVM virtualization type and GP2 EBS volume type.
 
 # The general process is as follows:
-# * Launch a worker instance with an EBS volume that will fit the image
-# * Send the image to the instance
-# * Write the image to the volume
-# * Create a snapshot of the volume
-# * Register an AMI from the snapshot
+# * Launch a worker instance with EBS volumes that will fit the images
+# * Send the images to the instance
+# * Write the images to the volumes
+# * Create snapshots of the volumes
+# * Register an AMI from the snapshots
 
 # Image assumptions:
-# * Your image is partitioned, and has a bootloader set up as required.
-# * Your image supports SR-IOV (e1000) and ENA networking.
-# * The image fits within the memory of the --instance-type you select.
+# * Your images are partitioned, and the root image has a bootloader set up as required.
+# * Your root image supports SR-IOV (e1000) and ENA networking.
+# * The images fit within the memory of the --instance-type you select.
 
 # Environment assumptions:
 # * aws-cli is set up (via environment or config) to operate EC2 in the given region.
@@ -24,15 +24,17 @@
 #      and you can access EC2 from your location
 
 # Caveats:
-# * We try to clean up the worker instance and volume, but if we're interrupted
+# * We try to clean up the worker instance and volumes, but if we're interrupted
 #      in specific ways (see cleanup()) they can leak; be sure to check your
 #      account and clean up as necessary.
 
 # Tested with the Amazon Linux AMI as worker AMI.
 # Example call:
-#    bin/amiize.sh --image build/thar-x86_64.img --region us-west-2 \
+#    bin/amiize.sh --region us-west-2 \
+#       --root-image build/thar-x86_64.img \
+#       --data-image build/thar-x86_64-data.img \
 #       --worker-ami ami-0f2176987ee50226e --ssh-keypair tjk \
-#       --instance-type m3.xlarge --name thar-20190718-01 --arch x86_64 \
+#       --instance-type m3.xlarge --name thar-20190918-01 --arch x86_64 \
 #       --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
 # This user data disables updates at boot to minimize startup time of this
 # short-lived instance, so make sure to use the latest AMI.
@@ -41,14 +43,16 @@
 
 # Constants
 
-# Where to find the volume attached to the worker instance.
-DEVICE="/dev/sdf"
-# Where to store the image on the worker instance.
+# Where to find the volumes attached to the worker instance.
+ROOT_DEVICE="/dev/sdf"
+DATA_DEVICE="/dev/sdg"
+# Where to store the images on the worker instance.
 STORAGE="/dev/shm"
-# The device name registered as the root filesystem of the AMI.
+# The device names registered with the AMI.
 ROOT_DEVICE_NAME="/dev/xvda"
+DATA_DEVICE_NAME="/dev/xvdb"
 
-# Features we assume/enable for the image.
+# Features we assume/enable for the images.
 VIRT_TYPE="hvm"
 VOLUME_TYPE="gp2"
 SRIOV_FLAG="--sriov-net-support simple"
@@ -57,7 +61,7 @@ ENA_FLAG="--ena-support"
 # The user won't know the server in advance.
 SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
-# Maximum number of times we'll try to register the image - lets us retry in
+# Maximum number of times we'll try to register the images - lets us retry in
 # case of timeouts.
 MAX_ATTEMPTS=2
 
@@ -85,7 +89,9 @@ done
 
 usage() {
    cat >&2 <<EOF
-$(basename "${0}") --image <image_file>
+$(basename "${0}")
+                 --root-image <image_file>
+                 --data-image <image_file>
                  --region <region>
                  --worker-ami <AMI ID>
                  --ssh-keypair <KEYPAIR NAME>
@@ -95,19 +101,21 @@ $(basename "${0}") --image <image_file>
                  [ --description "My great AMI" ]
                  [ --subnet-id subnet-abcdef1234 ]
                  [ --user-data base64 ]
-                 [ --volume-size 1234 ]
+                 [ --root-volume-size 1234 ]
+                 [ --data-volume-size 5678 ]
                  [ --security-group-name default | --security-group-id sg-abcdef1234 ]
 
-Registers the given image in the given EC2 region.
+Registers the given images as an AMI in the given EC2 region.
 
 Required:
-   --image                    The image file to create the AMI from
+   --root-image               The image file for the AMI root volume
+   --data-image               The image file for the AMI data volume
    --region                   The region to upload to
    --worker-ami               The existing AMI ID to use when creating the new snapshot
    --ssh-keypair              The SSH keypair name that's registered with EC2, to connect to worker instance
    --instance-type            Instance type launched for worker instance
-   --name                     The name under which to register the image
-   --arch                     The machine architecture of the image, e.g. x86_64
+   --name                     The name under which to register the AMI
+   --arch                     The machine architecture of the AMI, e.g. x86_64
 
 Optional:
    --description              The description attached to the registered AMI (defaults to name)
@@ -115,7 +123,8 @@ Optional:
                               (required if the given instance type requires VPC and you have no default VPC)
                               (must specify security group by ID and not by name if specifying subnet)
    --user-data                EC2 user data for worker instance, in base64 form with no line wrapping
-   --volume-size              AMI root volume size in GB (defaults to size of disk image)
+   --root-volume-size         AMI root volume size in GB (defaults to size of disk image)
+   --data-volume-size         AMI data volume size in GB (defaults to size of disk image)
    --security-group-id        The ID of a security group name that allows SSH access from this host
    --security-group-name      The name of a security group name that allows SSH access from this host
                               (defaults to "default" if neither name nor ID are specified)
@@ -124,7 +133,7 @@ EOF
 
 required_arg() {
    local arg="${1:?}"
-   local value="${2:?}"
+   local value="${2}"
    if [ -z "${value}" ]; then
       echo "ERROR: ${arg} is required" >&2
       exit 2
@@ -134,7 +143,8 @@ required_arg() {
 parse_args() {
    while [ ${#} -gt 0 ] ; do
       case "${1}" in
-         --image ) shift; IMAGE="${1}" ;;
+         --root-image ) shift; ROOT_IMAGE="${1}" ;;
+         --data-image ) shift; DATA_IMAGE="${1}" ;;
          --region ) shift; REGION="${1}" ;;
          --worker-ami ) shift; WORKER_AMI="${1}" ;;
          --ssh-keypair ) shift; SSH_KEYPAIR="${1}" ;;
@@ -145,7 +155,8 @@ parse_args() {
          --description ) shift; DESCRIPTION="${1}" ;;
          --subnet-id ) shift; SUBNET_ID="${1}" ;;
          --user-data ) shift; USER_DATA="${1}" ;;
-         --volume-size ) shift; VOLUME_SIZE="${1}" ;;
+         --root-volume-size ) shift; ROOT_VOLUME_SIZE="${1}" ;;
+         --data-volume-size ) shift; DATA_VOLUME_SIZE="${1}" ;;
          --security-group-name ) shift; SECURITY_GROUP_NAME="${1}" ;;
          --security-group-id ) shift; SECURITY_GROUP_ID="${1}" ;;
 
@@ -160,7 +171,8 @@ parse_args() {
    done
 
    # Required arguments
-   required_arg "--image" "${IMAGE}"
+   required_arg "--root-image" "${ROOT_IMAGE}"
+   required_arg "--data-image" "${DATA_IMAGE}"
    required_arg "--region" "${REGION}"
    required_arg "--worker-ami" "${WORKER_AMI}"
    required_arg "--ssh-keypair" "${SSH_KEYPAIR}"
@@ -169,8 +181,13 @@ parse_args() {
    required_arg "--arch" "${ARCH}"
 
    # Other argument checks
-   if [ ! -r "${IMAGE}" ] ; then
-      echo "ERROR: cannot read ${IMAGE}" >&2
+   if [ ! -r "${ROOT_IMAGE}" ] ; then
+      echo "ERROR: cannot read ${ROOT_IMAGE}" >&2
+      exit 2
+   fi
+
+   if [ ! -r "${DATA_IMAGE}" ] ; then
+      echo "ERROR: cannot read ${DATA_IMAGE}" >&2
       exit 2
    fi
 
@@ -192,7 +209,8 @@ parse_args() {
    if [ -z "${DESCRIPTION}" ] ; then
       DESCRIPTION="${NAME}"
    fi
-   # VOLUME_SIZE is defaulted below, after we calculate image size
+   # ROOT_VOLUME_SIZE and DATA_VOLUME_SIZE are defaulted below,
+   # after we calculate image size
 }
 
 cleanup() {
@@ -205,33 +223,53 @@ cleanup() {
          --output text \
          --region "${REGION}" \
          --instance-ids "${instance}"
-   # Clean up volume if we have it, but *not* if we have an instance - the
-   # volume would still be attached to the instance, and would be deleted
+   # Clean up volumes if we have them, but *not* if we have an instance - the
+   # volumes would still be attached to the instance, and would be deleted
    # automatically with it.
    # Note: this isn't perfect because of terminate/detach timing...
-   elif [ -n "${volume}" ]; then
-      echo "Cleaning up working volume"
-      aws ec2 delete-volume \
-         --output text \
-         --region "${REGION}" \
-         --volume-id "${volume}"
+   else
+      if [ -n "${root_volume}" ]; then
+         echo "Cleaning up working root volume"
+         aws ec2 delete-volume \
+            --output text \
+            --region "${REGION}" \
+            --volume-id "${root_volume}"
+      fi
+      if [ -n "${data_volume}" ]; then
+         echo "Cleaning up working data volume"
+         aws ec2 delete-volume \
+            --output text \
+            --region "${REGION}" \
+            --volume-id "${data_volume}"
+      fi
    fi
 }
 
 trap 'cleanup' EXIT
 
 block_device_mappings() {
-   local snapshot="${1:?}"
-   local volume_size="${2:?}"
+   local root_snapshot="${1:?}"
+   local root_volume_size="${2:?}"
+   local data_snapshot="${3:?}"
+   local data_volume_size="${4:?}"
 
    cat <<-EOF | jq --compact-output .
 	[
 	   {
 	      "DeviceName": "${ROOT_DEVICE_NAME}",
 	      "Ebs": {
-	         "SnapshotId": "${snapshot}",
+	         "SnapshotId": "${root_snapshot}",
 	         "VolumeType": "${VOLUME_TYPE}",
-	         "VolumeSize": ${volume_size},
+	         "VolumeSize": ${root_volume_size},
+	         "DeleteOnTermination": true
+	      }
+	   },
+	   {
+	      "DeviceName": "${DATA_DEVICE_NAME}",
+	      "Ebs": {
+	         "SnapshotId": "${data_snapshot}",
+	         "VolumeType": "${VOLUME_TYPE}",
+	         "VolumeSize": ${data_volume_size},
 	         "DeleteOnTermination": true
 	      }
 	   }
@@ -297,16 +335,24 @@ if [ -n "${registered_ami}" ]; then
    exit 1
 fi
 
-# Determine the size of the image (in G, for EBS)
-# 8G      amzn-ami-pv-2012.03.2.x86_64.ext4
-# This is overridden by --volume-size if you pass that option.
-image_size=$(du --apparent-size --block-size=G "${IMAGE}" | sed -r 's,^([0-9]+)G\t.*,\1,')
-if [ ! "${image_size}" -gt 0 ]; then
-   echo "* Couldn't find the size of the image!" >&2
+# Determine the size of the images (in G, for EBS)
+# 2G      thar-x86_64.img
+# 8G      thar-x86_64-data.img
+# This is overridden by --root-volume-size and --data-volume-size if you pass those options.
+root_image_size=$(du --apparent-size --block-size=G "${ROOT_IMAGE}" | sed -r 's,^([0-9]+)G\t.*,\1,')
+if [ ! "${root_image_size}" -gt 0 ]; then
+   echo "* Couldn't find the size of the root image!" >&2
    exit 1
 fi
 
-VOLUME_SIZE="${VOLUME_SIZE:-${image_size}}"
+ROOT_VOLUME_SIZE="${ROOT_VOLUME_SIZE:-${root_image_size}}"
+
+data_image_size=$(du --apparent-size --block-size=G "${DATA_IMAGE}" | sed -r 's,^([0-9]+)G\t.*,\1,')
+if [ ! "${data_image_size}" -gt 0 ]; then
+   echo "* Couldn't find the size of the data image!" >&2
+   exit 1
+fi
+DATA_VOLUME_SIZE="${DATA_VOLUME_SIZE:-${data_image_size}}"
 
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -326,9 +372,16 @@ while true; do
    worker_block_device_mapping=$(cat <<-EOF
 	[
 	   {
-	      "DeviceName": "${DEVICE}",
+	      "DeviceName": "${ROOT_DEVICE}",
 	      "Ebs": {
-	         "VolumeSize": ${image_size},
+	         "VolumeSize": ${root_image_size},
+	         "DeleteOnTermination": false
+	      }
+	   },
+	   {
+	      "DeviceName": "${DATA_DEVICE}",
+	      "Ebs": {
+	         "VolumeSize": ${data_image_size},
 	         "DeleteOnTermination": false
 	      }
 	   }
@@ -389,7 +442,7 @@ while true; do
    done
    echo "Found status: ${status}"
 
-   # Get the IP to connect to, and the volume to which we write the image
+   # Get the IP to connect to, and the volumes to which we write the images
    echo "Querying host IP and volume"
    json_output=$(aws ec2 describe-instances \
       --output json \
@@ -401,19 +454,23 @@ while true; do
    host=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_host_query}")
    check_return ${?} "Couldn't find host ip address in describe-instances output!" || continue
 
-   jq_volumeid_query=".Reservations[].Instances[].BlockDeviceMappings[] | select(.DeviceName == \"${DEVICE}\") | .Ebs.VolumeId"
-   volume=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_volumeid_query}")
-   check_return ${?} "Couldn't find ebs volume-id in describe-instances output!" || continue
+   jq_rootvolumeid_query=".Reservations[].Instances[].BlockDeviceMappings[] | select(.DeviceName == \"${ROOT_DEVICE}\") | .Ebs.VolumeId"
+   root_volume=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_rootvolumeid_query}")
+   check_return ${?} "Couldn't find ebs root-volume-id in describe-instances output!" || continue
 
-   [ -n "${host}" ] && [ -n "${volume}" ]
-   check_return ${?} "Couldn't get hostname/volume from instance description!" || continue
-   echo "Found IP '${host}' and volume '${volume}'"
+   jq_datavolumeid_query=".Reservations[].Instances[].BlockDeviceMappings[] | select(.DeviceName == \"${DATA_DEVICE}\") | .Ebs.VolumeId"
+   data_volume=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_datavolumeid_query}")
+   check_return ${?} "Couldn't find ebs data-volume-id in describe-instances output!" || continue
+
+   [ -n "${host}" ] && [ -n "${root_volume}" ] && [ -n "${data_volume}" ]
+   check_return ${?} "Couldn't get hostname and volumes from instance description!" || continue
+   echo "Found IP '${host}' and root volume '${root_volume}' and data volume '${data_volume}'"
 
    echo "Waiting for SSH to be accessible"
    tries=0
    sleep 30
    # shellcheck disable=SC2029 disable=SC2086
-   while ! ssh ${SSH_OPTS} "ec2-user@${host}" "test -b ${DEVICE}"; do
+   while ! ssh ${SSH_OPTS} "ec2-user@${host}" "test -b ${ROOT_DEVICE} && test -b ${DATA_DEVICE}"; do
       [ "${tries}" -lt 10 ]
       check_return ${?} "* SSH not responding on instance!" || continue 2
       sleep 6
@@ -422,31 +479,46 @@ while true; do
 
    # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-   echo -e "\n* Phase 2: send and write the image"
+   echo -e "\n* Phase 2: send and write the images"
 
-   echo "Uploading the image to the instance"
+   echo "Uploading the images to the instance"
    rsync --compress --sparse --rsh="ssh ${SSH_OPTS}" \
-      "${IMAGE}" "ec2-user@${host}:${STORAGE}/"
-   check_return ${?} "rsync of image to volume build host failed!" || continue
-   REMOTE_IMAGE="${STORAGE}/$(basename "${IMAGE}")"
+      "${ROOT_IMAGE}" "ec2-user@${host}:${STORAGE}/"
+   check_return ${?} "rsync of root image to build host failed!" || continue
+   REMOTE_ROOT_IMAGE="${STORAGE}/$(basename "${ROOT_IMAGE}")"
 
-   echo "Writing the image to the volume"
+   rsync --compress --sparse --rsh="ssh ${SSH_OPTS}" \
+      "${DATA_IMAGE}" "ec2-user@${host}:${STORAGE}/"
+   check_return ${?} "rsync of data image to build host failed!" || continue
+   REMOTE_DATA_IMAGE="${STORAGE}/$(basename "${DATA_IMAGE}")"
+
+   echo "Writing the images to the volumes"
    # Run the script in a root shell, which requires -tt; -n is a precaution.
    # shellcheck disable=SC2029 disable=SC2086
    ssh ${SSH_OPTS} -tt "ec2-user@${host}" \
-      "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_IMAGE} of=${DEVICE}"
-   check_return ${?} "Writing image to disk failed!" || continue
+      "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_ROOT_IMAGE} of=${ROOT_DEVICE}"
+   check_return ${?} "Writing root image to disk failed!" || continue
+
+   ssh ${SSH_OPTS} -tt "ec2-user@${host}" \
+      "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_DATA_IMAGE} of=${DATA_DEVICE}"
+   check_return ${?} "Writing data image to disk failed!" || continue
 
    # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-   echo -e "\n* Phase 3: snapshot the volume"
+   echo -e "\n* Phase 3: snapshot the volumes"
 
-   echo "Detaching the volume so we can snapshot it"
+   echo "Detaching the volumes so we can snapshot them"
    aws ec2 detach-volume \
       --output text \
       --region "${REGION}" \
-      --volume-id "${volume}"
-   check_return ${?} "detach of new volume failed!" || continue
+      --volume-id "${root_volume}"
+   check_return ${?} "detach of new root volume failed!" || continue
+
+   aws ec2 detach-volume \
+      --output text \
+      --region "${REGION}" \
+      --volume-id "${data_volume}"
+   check_return ${?} "detach of new data volume failed!" || continue
 
    echo "Terminating the instance"
    if aws ec2 terminate-instances \
@@ -461,67 +533,102 @@ while true; do
       # Don't die though, we got what we want...
    fi
 
-   echo "Waiting for the volume to be 'available'"
+   echo "Waiting for the volumes to be 'available'"
    tries=0
    status="unknown"
    sleep 20
-   while [ "${status}" != "available" ]; do
-      echo "Current status: ${status}"
+   while [ "${root_status}" != "available" ] || [ "${data_status}" != "available" ]; do
+      echo "Current status: root=${root_status}, data=${data_status}"
       [ "${tries}" -lt 20 ]
-      check_return ${?} "* Volume didn't become available in allotted time!" || continue 2
+      check_return ${?} "* Volumes didn't become available in allotted time!" || continue 2
       sleep 6
-      status=$(aws ec2 describe-volumes \
+      root_status=$(aws ec2 describe-volumes \
          --output json \
          --region "${REGION}" \
-         --volume-id "${volume}" \
+         --volume-id "${root_volume}" \
          | jq --raw-output --exit-status '.Volumes[].State')
-      check_return ${?} "Couldn't find volume state in describe-volumes output!" || continue
+      check_return ${?} "Couldn't find root volume state in describe-volumes output!" || continue
+      data_status=$(aws ec2 describe-volumes \
+         --output json \
+         --region "${REGION}" \
+         --volume-id "${data_volume}" \
+         | jq --raw-output --exit-status '.Volumes[].State')
+      check_return ${?} "Couldn't find data volume state in describe-volumes output!" || continue
+
       let tries+=1
    done
-   echo "Found status: ${status}"
+   echo "Found status: root=${root_status}, data=${data_status}"
 
    # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-   echo "Snapshotting the volume so we can create an AMI from it"
-   snapshot=$(aws ec2 create-snapshot \
+   echo "Snapshotting the volumes so we can create an AMI from them"
+   root_snapshot=$(aws ec2 create-snapshot \
       --output json \
       --region "${REGION}" \
       --description "${NAME}" \
-      --volume-id "${volume}" \
+      --volume-id "${root_volume}" \
       | jq --raw-output '.SnapshotId')
 
-   valid_resource_id snap "${snapshot}"
-   check_return ${?} "creating snapshot of new volume failed!" || continue
+   valid_resource_id snap "${root_snapshot}"
+   check_return ${?} "creating snapshot of new root volume failed!" || continue
 
-   echo "Waiting for the snapshot to complete"
+   data_snapshot=$(aws ec2 create-snapshot \
+      --output json \
+      --region "${REGION}" \
+      --description "${NAME}" \
+      --volume-id "${data_volume}" \
+      | jq --raw-output '.SnapshotId')
+
+   valid_resource_id snap "${data_snapshot}"
+   check_return ${?} "creating snapshot of new data volume failed!" || continue
+
+   echo "Waiting for the snapshots to complete"
    tries=0
    status="unknown"
    sleep 20
-   while [ "${status}" != "completed" ]; do
-      echo "Current status: ${status}"
+   while [ "${root_status}" != "completed" ] || [ "${data_status}" != "completed" ]; do
+      echo "Current status: root=${root_status}, data=${data_status}"
       [ "${tries}" -lt 75 ]
-      check_return ${?} "* Snapshot didn't complete in allotted time!" || continue 2
+      check_return ${?} "* Snapshots didn't complete in allotted time!" || continue 2
       sleep 10
-      status=$(aws ec2 describe-snapshots \
+      root_status=$(aws ec2 describe-snapshots \
          --output json \
          --region "${REGION}" \
-         --snapshot-ids "${snapshot}" \
+         --snapshot-ids "${root_snapshot}" \
          | jq --raw-output --exit-status '.Snapshots[].State')
-      check_return ${?} "Couldn't find snapshot state in describe-snapshots output!" || continue
+      check_return ${?} "Couldn't find root snapshot state in describe-snapshots output!" || continue
+      data_status=$(aws ec2 describe-snapshots \
+         --output json \
+         --region "${REGION}" \
+         --snapshot-ids "${data_snapshot}" \
+         | jq --raw-output --exit-status '.Snapshots[].State')
+      check_return ${?} "Couldn't find data snapshot state in describe-snapshots output!" || continue
       let tries+=1
    done
-   echo "Found status: ${status}"
+   echo "Found status: root=${root_status}, data=${data_status}"
 
-   echo "Deleting volume"
+   echo "Deleting volumes"
    if aws ec2 delete-volume \
       --output text \
       --region "${REGION}" \
-      --volume-id "${volume}"
+      --volume-id "${root_volume}"
    then
       # So the cleanup function doesn't try to stop it
-      unset volume
+      unset root_volume
    else
-      echo "* Warning: Could not delete volume!"
+      echo "* Warning: Could not delete root volume!"
+      # Don't die though, we got what we want...
+   fi
+
+   if aws ec2 delete-volume \
+      --output text \
+      --region "${REGION}" \
+      --volume-id "${data_volume}"
+   then
+      # So the cleanup function doesn't try to stop it
+      unset data_volume
+   else
+      echo "* Warning: Could not delete data volume!"
       # Don't die though, we got what we want...
    fi
 
@@ -538,10 +645,12 @@ while true; do
       ${SRIOV_FLAG} \
       ${ENA_FLAG} \
       --virtualization-type "${VIRT_TYPE}" \
-      --block-device-mappings "$(block_device_mappings ${snapshot} ${VOLUME_SIZE})" \
+      --block-device-mappings "$(block_device_mappings \
+                                    ${root_snapshot} ${ROOT_VOLUME_SIZE} \
+                                    ${data_snapshot} ${DATA_VOLUME_SIZE})" \
       --name "${NAME}" \
       --description "${DESCRIPTION}")
-   check_return ${?} "image registration failed!" || continue
+   check_return ${?} "AMI registration failed!" || continue
    echo "Registered ${registered_ami}"
 
    echo "Waiting for the AMI to appear in a describe query"
