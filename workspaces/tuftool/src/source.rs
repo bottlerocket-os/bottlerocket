@@ -77,7 +77,11 @@ impl KeySource {
         }
     }
 
-    pub(crate) fn write(&self, value: &str) -> Result<()> {
+    #[cfg_attr(
+        not(any(feature = "rusoto-native-tls", feature = "rusoto-rustls")),
+        allow(unused)
+    )]
+    pub(crate) fn write(&self, value: &str, key_id_hex: &str) -> Result<()> {
         match self {
             KeySource::Local(path) => {
                 std::fs::write(path, value.as_bytes()).context(error::FileWrite { path })
@@ -95,6 +99,7 @@ impl KeySource {
                 ssm_client
                     .put_parameter(rusoto_ssm::PutParameterRequest {
                         name: parameter_name.to_owned(),
+                        description: Some(key_id_hex.to_owned()),
                         key_id: key_id.as_ref().cloned(),
                         overwrite: Some(true),
                         type_: "SecureString".to_owned(),

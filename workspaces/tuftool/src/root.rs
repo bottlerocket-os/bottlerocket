@@ -155,9 +155,9 @@ impl Command {
             } => {
                 let mut root: Signed<Root> = load_file(path)?;
                 let key_pair = key_path.as_public_key()?;
-                let key_id = add_key(&mut root.signed, *role, key_pair)?;
+                let key_id = hex::encode(add_key(&mut root.signed, *role, key_pair)?);
                 clear_sigs(&mut root);
-                println!("{}", hex::encode(key_id));
+                println!("{}", key_id);
                 write_file(path, &root)
             }
             Command::RemoveKey { path, key_id, role } => {
@@ -215,10 +215,10 @@ impl Command {
                     String::from_utf8(output.stdout).context(error::CommandUtf8 { command_str })?;
 
                 let key_pair = KeyPair::parse(stdout.as_bytes())?;
-                let key_id = add_key(&mut root.signed, *role, key_pair.public_key())?;
-                key_path.write(&stdout)?;
+                let key_id = hex::encode(add_key(&mut root.signed, *role, key_pair.public_key())?);
+                key_path.write(&stdout, &key_id)?;
                 clear_sigs(&mut root);
-                println!("{}", hex::encode(key_id));
+                println!("{}", key_id);
                 write_file(path, &root)
             }
         }
