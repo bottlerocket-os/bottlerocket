@@ -8,6 +8,10 @@ Summary: System and Service Manager
 License: LGPLv2+ and MIT and GPLv2+
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
+Source1: run-tmpfiles.conf
+Patch1: 0001-move-stateful-paths-to-ephemeral-storage.patch
+Patch2: 0002-do-not-create-unused-state-directories.patch
+Patch3: 0003-use-absolute-path-for-var-run-symlink.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -148,11 +152,14 @@ CONFIGURE_OPTS=(
  -Dllvm-fuzz=false
 )
 
-%cross_meson "${CONFIGURE_OPTS[@]}"
+%cross_meson --localstatedir="%{_cross_rundir}" "${CONFIGURE_OPTS[@]}"
 %cross_meson_build
 
 %install
 %cross_meson_install
+
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/run.conf
 
 %files
 %{_cross_bindir}/busctl
@@ -201,10 +208,12 @@ CONFIGURE_OPTS=(
 %{_cross_libdir}/modprobe.d/*
 %{_cross_libdir}/sysctl.d/*
 %{_cross_libdir}/sysusers.d/*
-%{_cross_libdir}/tmpfiles.d/*
 %{_cross_libdir}/systemd/*
 %{_cross_libdir}/udev/*
 %exclude %{_cross_libdir}/kernel/install.d
+
+%{_cross_tmpfilesdir}/*
+%exclude %{_cross_tmpfilesdir}/legacy.conf
 
 %exclude %{_cross_sysconfdir}/systemd/
 %exclude %{_cross_sysconfdir}/udev/
@@ -223,7 +232,7 @@ CONFIGURE_OPTS=(
 
 %exclude %{_cross_docdir}
 %exclude %{_cross_localedir}
-%exclude %{_cross_localstatedir}
+%exclude %{_cross_rundir}
 
 %files devel
 %{_cross_libdir}/libsystemd.so

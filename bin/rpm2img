@@ -17,6 +17,7 @@ DISK_IMAGE_NAME="thar-${ARCH}.img.lz4"
 BOOT_IMAGE_NAME="thar-${ARCH}-boot.ext4.lz4"
 VERITY_IMAGE_NAME="thar-${ARCH}-root.verity.lz4"
 ROOT_IMAGE_NAME="thar-${ARCH}-root.ext4.lz4"
+DATA_IMAGE_NAME="thar-${ARCH}-data.img.lz4"
 
 DISK_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
@@ -24,7 +25,9 @@ VERITY_IMAGE="$(mktemp)"
 ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
 EFI_IMAGE="$(mktemp)"
+THAR_DATA="$(mktemp)"
 ROOT_MOUNT="/mnt/root"
+DATA_MOUNT="/mnt/data"
 
 VERITY_VERSION=1
 VERITY_HASH_ALGORITHM=sha256
@@ -48,13 +51,12 @@ else
   THAR_FIRM_TYPECODE="${EFI_SYSTEM_TYPECODE}"
 fi
 
-truncate -s 4G "${DISK_IMAGE}"
+truncate -s 2G "${DISK_IMAGE}"
 # boot: 20M + root: 900M + hash: 8M + reserved: 95M = 1023M
 # boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
 # partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
 sgdisk --clear \
-   -n 0:2048M:4095M -c 0:"THAR-DATA"       -t 0:8300 \
-   -n 0:1953M:0     -c 0:"THAR-RESERVED-B" -t 0:"${THAR_RESERVED_TYPECODE}" \
+   -n 0:1953M:2047M -c 0:"THAR-RESERVED-B" -t 0:"${THAR_RESERVED_TYPECODE}" \
    -n 0:1945M:0     -c 0:"THAR-HASH-B"     -t 0:"${THAR_HASH_TYPECODE}" \
    -n 0:1045M:0     -c 0:"THAR-ROOT-B"     -t 0:"${THAR_ROOT_TYPECODE}" \
    -n 0:1025M:0     -c 0:"THAR-BOOT-B"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
@@ -152,16 +154,24 @@ resize2fs -M "${BOOT_IMAGE}"
 dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((2*2048))
 
 # THAR-DATA
-mkfs.ext4 "${DATA_IMAGE}" 2047M
-dd if="${DATA_IMAGE}" of="${DISK_IMAGE}" conv=notrunc,sparse bs=512 seek=$((2048*2048))
+truncate -s 8G "${DATA_IMAGE}"
+sgdisk --clear \
+   -n 0:1M:8191M -c 0:"THAR-DATA" -t 0:8300 \
+   --sort --print "${DATA_IMAGE}"
+mkdir -p "${DATA_MOUNT}/var/"{cache,lib,log,spool}
+mkfs.ext4 -L "THAR-DATA" -d "${DATA_MOUNT}" "${THAR_DATA}" 1022M
+dd if="${THAR_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=512 seek=$((1*2048))
 
 sgdisk -v "${DISK_IMAGE}"
+sgdisk -v "${DATA_IMAGE}"
 
 lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
+lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_NAME}"
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
 lz4 -9vc "${VERITY_IMAGE}" >"${OUTPUT_DIR}/${VERITY_IMAGE_NAME}"
 lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
 chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" \
+    "${OUTPUT_DIR}/${DATA_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${VERITY_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"

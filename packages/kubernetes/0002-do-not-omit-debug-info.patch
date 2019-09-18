@@ -1,7 +1,7 @@
-From b2351ac6491a1b7f06e539b87aa3458f7a19ddd0 Mon Sep 17 00:00:00 2001
+From 00092d7d10a9094fd236bae92c704b74a27ddbcb Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 24 Jun 2019 21:30:38 +0000
-Subject: [PATCH 2/3] do not omit debug info
+Subject: [PATCH 2/2] do not omit debug info
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---

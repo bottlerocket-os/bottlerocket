@@ -34,11 +34,11 @@ export BUILDTAGS="rpm_crashtraceback"
 go build -buildmode pie -tags="${BUILDTAGS}" -o "bin/cnitool" %{goimport}/cnitool
 
 %install
-install -d %{buildroot}%{_cross_libexecdir}/cni/bin
-install -p -m 0755 bin/cnitool %{buildroot}%{_cross_libexecdir}/cni/bin
+install -d %{buildroot}%{_cross_factorydir}/opt/cni/bin
+install -p -m 0755 bin/cnitool %{buildroot}%{_cross_factorydir}/opt/cni/bin
 
 %files
-%dir %{_cross_libexecdir}/cni/bin
-%{_cross_libexecdir}/cni/bin/cnitool
+%dir %{_cross_factorydir}/opt/cni/bin
+%{_cross_factorydir}/opt/cni/bin/cnitool
 
 %changelog

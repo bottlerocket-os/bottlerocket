@@ -1,0 +1,10 @@
+[Unit]
+Description=Prepare Local Directory (/local)
+RequiresMountsFor=/local
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/lib/systemd/systemd-growfs /local
+ExecStart=-/usr/bin/mkdir -p /local/var /local/opt
+RemainAfterExit=false

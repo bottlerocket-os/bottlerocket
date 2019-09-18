@@ -7,6 +7,7 @@ Requires=network-online.target configured.target
 [Service]
 Type=simple
 ExecStart=/usr/sbin/chronyd -d
+StateDirectory=chrony/state
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,45 @@
+From bdce8f1cf22cb9f88365deb2120fc91531527b82 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sun, 15 Sep 2019 00:21:26 +0000
+Subject: [PATCH 1/3] move stateful paths to ephemeral storage
+
+We reserve most of /var for persistent local storage controlled by
+the administrator, and want to avoid depending on it for our own
+services.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/libsystemd/sd-path/sd-path.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/libsystemd/sd-path/sd-path.c b/src/libsystemd/sd-path/sd-path.c
+index 9949c23..647e226 100644
+--- a/src/libsystemd/sd-path/sd-path.c
++++ b/src/libsystemd/sd-path/sd-path.c
+@@ -255,19 +255,19 @@ static int get_path(uint64_t type, char **buffer, const char **ret) {
+                 return 0;
+ 
+         case SD_PATH_SYSTEM_STATE_PRIVATE:
+-                *ret = "/var/lib";
++                *ret = "/run/lib";
+                 return 0;
+ 
+         case SD_PATH_SYSTEM_STATE_LOGS:
+-                *ret = "/var/log";
++                *ret = "/run/log";
+                 return 0;
+ 
+         case SD_PATH_SYSTEM_STATE_CACHE:
+-                *ret = "/var/cache";
++                *ret = "/run/cache";
+                 return 0;
+ 
+         case SD_PATH_SYSTEM_STATE_SPOOL:
+-                *ret = "/var/spool";
++                *ret = "/run/spool";
+                 return 0;
+ 
+         case SD_PATH_USER_BINARIES:
+-- 
+2.21.0
+

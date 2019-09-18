@@ -5,8 +5,11 @@ Summary: The GNU libc libraries
 License: LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and GPLv2+ with exceptions and BSD and Inner-Net and ISC and Public Domain and GFDL
 URL: http://www.gnu.org/software/glibc/
 Source0: https://ftp.gnu.org/gnu/glibc/glibc-%{version}.tar.xz
+Source1: glibc-tmpfiles.conf
 Patch1: glibc-cs-path.patch
 Patch2: glibc-c-utf8-locale.patch
+Patch1001: 1001-move-ldconfig-cache-to-ephemeral-storage.patch
+
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: gcc-c++-%{_cross_target}
 BuildRequires: %{_cross_os}kernel-headers
@@ -63,25 +66,9 @@ make %{?_smp_mflags} -O -r
 %install
 make -j1 install_root=%{buildroot} install -C build
 
-mkdir -p %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d
-echo 'include ld.so.conf.d/*.conf' > %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
-chmod 644 %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
-truncate -s 0 %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.cache
-chmod 644 %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.cache
-
-mkdir -p %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig
-chmod 700 %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig
-truncate -s 0 %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig/aux-cache
-chmod 600 %{buildroot}%{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig/aux-cache
-
 mkdir -p %{buildroot}%{_cross_tmpfilesdir}
-cat <<'EOF' > %{buildroot}%{_cross_tmpfilesdir}/glibc.conf
-C %{_cross_sysconfdir}/ld.so.cache - - - -
-C %{_cross_sysconfdir}/ld.so.conf - - - -
-C %{_cross_sysconfdir}/ld.so.conf.d - - - -
-C %{_cross_localstatedir}/cache/ldconfig - - - -
-C %{_cross_localstatedir}/cache/ldconfig/aux-cache - - - -
-EOF
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/glibc.conf
 
 truncate -s 0 %{buildroot}%{_cross_libdir}/gconv/gconv-modules
 chmod 644 %{buildroot}%{_cross_libdir}/gconv/gconv-modules
@@ -92,9 +79,6 @@ truncate -s 0 %{buildroot}%{_cross_datadir}/locale/locale.alias
 chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 
 %files
-%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
-%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.cache
-%dir %{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d
 %{_cross_tmpfilesdir}/glibc.conf
 %exclude %{_cross_sysconfdir}/rpc
 
@@ -177,9 +161,6 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %exclude %{_cross_datadir}/i18n/charmaps/*
 %exclude %{_cross_datadir}/i18n/locales/*
 %exclude %{_cross_datadir}/locale/*
-
-%dir %attr(0700,root,root) %{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig
-%attr(0600,root,root) %{_cross_factorydir}%{_cross_localstatedir}/cache/ldconfig/aux-cache
 %exclude %{_cross_localstatedir}/db/Makefile
 
 %files devel

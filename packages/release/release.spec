@@ -14,10 +14,13 @@ Source99: release-tmpfiles.conf
 Source200: hostname.template
 
 Source1000: eth0.xml
-Source1001: var-lib-thar.mount
 Source1002: configured.target
 Source1003: host-containerd.service
 Source1004: host-containerd-config.toml
+Source1005: local.mount
+Source1006: prepare-local.service
+Source1007: var.mount
+Source1008: opt.mount
 
 BuildArch: noarch
 Requires: %{_cross_os}apiclient
@@ -81,7 +84,7 @@ VERSION_ID=%{version}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1001} %{S:1002} %{S:1003} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1002} %{S:1003} %{S:1005} %{S:1006} %{S:1007} %{S:1008} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
@@ -96,7 +99,10 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_libdir}/os-release
 %{_cross_unitdir}/configured.target
 %{_cross_unitdir}/host-containerd.service
-%{_cross_unitdir}/var-lib-thar.mount
+%{_cross_unitdir}/local.mount
+%{_cross_unitdir}/prepare-local.service
+%{_cross_unitdir}/var.mount
+%{_cross_unitdir}/opt.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/hostname
 

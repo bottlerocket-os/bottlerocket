@@ -59,8 +59,6 @@ fn main() -> Result<()> {
     // Try and mount tmpfs directories
     for target in vec![
         ("/etc", NOATIME | NOSUID | NODEV | NOEXEC),
-        ("/var", NOATIME | NOSUID | NODEV | NOEXEC),
-        ("/opt", NOATIME | NOSUID | NODEV),
     ] {
         Mount::new("tmpfs", target.0, "tmpfs", target.1, Some("mode=0755")).context(
             error::MountFailed {
@@ -70,30 +68,12 @@ fn main() -> Result<()> {
         )?;
     }
 
-    // Create overlayfs directories
-    for dir in vec!["/opt/cni", "/opt/upper", "/opt/work"] {
-        std::fs::create_dir_all(dir).context(error::CreateDirectoryFailed { directory: dir })?;
-    }
-
-    // Try and mount overlayfs
-    Mount::new(
-        "overlay",
-        "/opt/cni",
-        "overlay",
-        MountFlags::empty(),
-        Some("lowerdir=/usr/libexec/cni,upperdir=/opt/upper,workdir=/opt/work"),
-    )
-    .context(error::MountFailed {
-        device: "overlay",
-        target: "/opt/cni",
-    })?;
-
     let unix_epoch = FileTime::zero();
 
-    // Set the file modification times for /etc, /var, /opt to the unix epoch time to ensure that
-    // systemd detect these directories as 'outdated/uninitialized' and perform all the initialization
-    // it needs to do at boot time (e.g. systemd-tmpfiles)
-    for dir in vec!["/etc", "/var", "/opt"] {
+    // Set the file modification times to the unix epoch time to ensure that systemd
+    // detects these directories as 'outdated/uninitialized' and performs all the
+    // initialization it needs to do at boot time (e.g. systemd-tmpfiles)
+    for dir in vec!["/etc"] {
         filetime::set_file_mtime(dir, unix_epoch).context(error::ModifyFileTime {
             path: dir,
             time: unix_epoch,

@@ -28,6 +28,7 @@
 %_cross_localedir %{_cross_datarootdir}/locale
 %_cross_infodir %{_cross_rootdir}%{_infodir}
 %_cross_mandir %{_cross_rootdir}%{_mandir}
+%_cross_rundir %{_rundir}
 %_cross_sharedstatedir %{_sharedstatedir}
 %_cross_localstatedir %{_localstatedir}
 %_cross_bashdir %{_cross_datadir}/bash-completion
