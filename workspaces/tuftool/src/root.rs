@@ -155,8 +155,9 @@ impl Command {
             } => {
                 let mut root: Signed<Root> = load_file(path)?;
                 let key_pair = key_path.as_public_key()?;
-                add_key(&mut root.signed, *role, key_pair)?;
+                let key_id = add_key(&mut root.signed, *role, key_pair)?;
                 clear_sigs(&mut root);
+                println!("{}", hex::encode(key_id));
                 write_file(path, &root)
             }
             Command::RemoveKey { path, key_id, role } => {
@@ -214,9 +215,10 @@ impl Command {
                     String::from_utf8(output.stdout).context(error::CommandUtf8 { command_str })?;
 
                 let key_pair = KeyPair::parse(stdout.as_bytes())?;
-                add_key(&mut root.signed, *role, key_pair.public_key())?;
+                let key_id = add_key(&mut root.signed, *role, key_pair.public_key())?;
                 key_path.write(&stdout)?;
                 clear_sigs(&mut root);
+                println!("{}", hex::encode(key_id));
                 write_file(path, &root)
             }
         }
@@ -234,7 +236,7 @@ fn clear_sigs<T>(role: &mut Signed<T>) {
 }
 
 /// Adds a key to the root role if not already present, and adds its key ID to the specified role.
-fn add_key(root: &mut Root, role: RoleType, key: Key) -> Result<()> {
+fn add_key(root: &mut Root, role: RoleType, key: Key) -> Result<Decoded<Hex>> {
     let key_id = if let Some((key_id, _)) = root
         .keys
         .iter()
@@ -256,8 +258,8 @@ fn add_key(root: &mut Root, role: RoleType, key: Key) -> Result<()> {
 
     let entry = root.roles.entry(role).or_insert_with(|| role_keys!());
     if !entry.keyids.contains(&key_id) {
-        entry.keyids.push(key_id);
+        entry.keyids.push(key_id.clone());
     }
 
-    Ok(())
+    Ok(key_id)
 }
