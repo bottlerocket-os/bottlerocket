@@ -9,6 +9,9 @@ const (
 	// available. The value itself is not checked at this time but may be used
 	// to communicate a version at a later time.
 	UpdateAvailableKey Key = Prefix + "/update-available"
+
+	// TODO: Use this and post "statically" at kubelet launch
+	//
 	// PlatformVersionKey is where the compatibility version is posted for the
 	// given Node.
 	PlatformVersionKey Key = Prefix + "/platform-version"

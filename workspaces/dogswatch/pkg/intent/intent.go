@@ -53,18 +53,18 @@ func (i *Intent) GetLabels() map[string]string {
 // Waiting reports true when a Node is prepared and waiting to make further
 // commanded progress towards completing an update.
 func (i *Intent) Waiting() bool {
-	var isReady bool
+	var done bool
 	switch i.State {
 	case marker.NodeStateReady:
-		isReady = true
+		done = true
 	case "", marker.NodeStateUnknown:
 		// Node may need to be commanded to become intentional.
-		isReady = true
+		done = true
 	case marker.NodeStateError:
 		// error state indicates that the node is ready to be error handled
-		isReady = true
+		done = true
 	}
-	return isReady
+	return done
 }
 
 // Intrusive indicates that the intention will be intrusive if realized.
@@ -81,22 +81,32 @@ func (i *Intent) Intrusive() bool {
 // Errored indicates that the intention was not realized and failed in attempt
 // to do so.
 func (i *Intent) Errored() bool {
-	sameState := i.Active == i.Wanted
-	isError := i.State == marker.NodeStateError
-	return isError && sameState
+	errored := i.State == marker.NodeStateError
+	return errored
 }
 
-// WantProgress indicates that the intention is wanted but not actively being
-// progressed towards.
-func (i *Intent) WantProgress() bool {
-	notCurrent := i.Wanted != i.Active
-	return notCurrent && i.isInProgress(i.Wanted)
+// Stuck intents are those that cannot be realized in their current state and
+// should be unstuck.
+func (i *Intent) Stuck() bool {
+	// The state is inconsistent or isn't actually making progress
+	inconsistentProgress := i.Active != i.Wanted && !i.InProgress()
+	// The step in the forward direction doesn't make check out, its stuck.
+	invalidProgress := i.Active != i.Projected().Wanted
+
+	return inconsistentProgress || invalidProgress
+}
+
+// Realized indicates that the Intent reached the intended state.
+func (i *Intent) Realized() bool {
+	realized := i.Wanted == i.Active
+	successful := !i.Errored()
+	return realized && successful && i.Waiting()
 }
 
 // InProgess reports true when the Intent is for a node that is making progress
 // towards completing an update.
 func (i *Intent) InProgress() bool {
-	return i.isInProgress(i.Active)
+	return i.isInProgress(i.Active) && !i.Realized()
 }
 
 func (i *Intent) isInProgress(field marker.NodeAction) bool {
@@ -118,10 +128,12 @@ func (i *Intent) HasUpdateAvailable() bool {
 }
 
 // Needed indicates that the intent is needing progress made on it.
-func (i *Intent) Needed() bool {
+func (i *Intent) Actionable() bool {
 	// If the node has an update, the intent is needing progress.
-	readyToMakeProgress := i.Waiting() && i.WantProgress()
-	return readyToMakeProgress
+	canProgress := i.Waiting() && i.Realized() && !i.Terminal()
+	unknown := i.inUnknownState()
+	stuck := i.Stuck()
+	return canProgress || unknown || stuck
 }
 
 // Projected returns the n+1 step projection of a would-be Intent. It does not
@@ -131,9 +143,8 @@ func (i *Intent) Projected() *Intent {
 	p := i.Clone()
 	if p.inUnknownState() {
 		p.reset()
-	} else {
-		p.Wanted, _ = calculateNext(p.Wanted)
 	}
+	p.Wanted, _ = calculateNext(p.Wanted)
 	return p
 }
 
@@ -157,8 +168,8 @@ func (i Intent) Terminal() bool {
 	}
 	// The next turn in the state machine is the same as the realized Wanted and
 	// Active states, therefore we've reached a terminal point.
-	matchesTerminal := next == i.Wanted && i.Wanted == i.Active
-	return matchesTerminal
+	atTerminal := next == i.Wanted && i.Wanted == i.Active
+	return atTerminal
 }
 
 // Clone returns a copy of the Intent to mutate independently of the source

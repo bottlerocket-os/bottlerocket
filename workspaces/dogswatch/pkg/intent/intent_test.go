@@ -27,7 +27,7 @@ func TestReset(t *testing.T) {
 	s.reset()
 
 	// first action after reset
-	assert.Check(t, s.Projected().Wanted == marker.NodeActionStablize)
+	assert.Equal(t, s.Projected().Wanted, marker.NodeActionStablize)
 	assert.Check(t, i.Active != s.Active)
 }
 
@@ -44,73 +44,161 @@ func TestClone(t *testing.T) {
 	assert.DeepEqual(t, i, s)
 }
 
-func TestResetStates(t *testing.T) {
-	s := testIntent()
-	i := Intent{NodeName: s.NodeName}
-	s.reset()
-	assert.Check(t, i.Waiting())
-	assert.Check(t, i.Needed())
-	assert.Check(t, i.WantProgress())
-	assert.Check(t, !i.Intrusive())
-}
-
 func TestIntentTruths(t *testing.T) {
 	type pred = string
 
 	testcases := []struct {
-		name   string
-		intent Intent
-		truthy []pred
-		falsy  []pred
+		name    string
+		intents []Intent
+		truthy  []pred
+		falsy   []pred
 	}{
 		{
-			name:   "empty",
-			intent: Intent{},
-			falsy:  []pred{"Needed"},
+			name: "empty",
+			intents: []Intent{
+				{}, // empty
+			},
+			truthy: []pred{"Actionable"},
+			falsy:  []pred{"Errored"},
 		},
 		{
-			name:   "reset",
-			intent: func() Intent { i := testIntent(); i.reset(); return *i }(),
-			truthy: []pred{"Needed", "WantProgress"},
+			name: "reset",
+			intents: []Intent{
+				func() Intent { i := testIntent(); i.reset(); return *i }(),
+			},
+			truthy: []pred{"Actionable", "Realized", "Waiting"},
 			falsy:  []pred{"Intrusive"},
 		},
 		{
-			name: "working state",
-			intent: Intent{
-				Wanted: marker.NodeActionStablize,
-				Active: marker.NodeActionStablize,
-				State:  marker.NodeStateBusy,
+			name: "working",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionStablize,
+					Active: marker.NodeActionStablize,
+					State:  marker.NodeStateBusy,
+				},
 			},
 			truthy: []pred{"InProgress"},
-			falsy:  []pred{"Waiting"},
+			falsy:  []pred{"Waiting", "Actionable", "Realized", "Stuck"},
 		},
 		{
-			name: "errored state",
-			intent: Intent{
-				Wanted: marker.NodeActionStablize,
-				Active: marker.NodeActionStablize,
-				State:  marker.NodeStateError,
+			name: "stuck",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionUnknown,
+					Active: marker.NodeActionUnknown,
+					State:  marker.NodeStateBusy,
+				},
+				{
+					Wanted: marker.NodeActionUnknown,
+					Active: marker.NodeActionUnknown,
+					State:  marker.NodeStateError,
+				},
+				{
+					Wanted: marker.NodeActionRebootUpdate,
+					Active: marker.NodeActionUnknown,
+					State:  marker.NodeStateError,
+				},
+				{
+					Wanted: marker.NodeActionUnknown,
+					Active: marker.NodeActionPerformUpdate,
+					State:  marker.NodeStateReady,
+				},
+			},
+			truthy: []pred{"Stuck", "Actionable"},
+			falsy:  []pred{"Realized", "Terminal"},
+		},
+		{
+			name: "errored-nominal",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionStablize,
+					Active: marker.NodeActionStablize,
+					State:  marker.NodeStateError,
+				},
 			},
 			truthy: []pred{"Errored", "Waiting"},
+			falsy:  []pred{"Stuck"},
+		},
+		{
+			name: "errored-unusual",
+			intents: []Intent{
+				{
+					Wanted: "arst",
+					Active: "neio",
+					State:  marker.NodeStateError,
+				},
+			},
+			truthy: []pred{"Errored", "Waiting", "Stuck", "Actionable"},
+			falsy:  []pred{"Realized"},
+		},
+		{
+			name: "inprogress",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionRebootUpdate,
+					Active: marker.NodeActionRebootUpdate,
+					State:  marker.NodeStateBusy,
+				},
+			},
+			truthy: []pred{"InProgress", "Intrusive"},
+			falsy:  []pred{"Waiting", "Errored", "Realized", "Stuck"},
+		},
+		{
+			name: "terminal",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionRebootUpdate,
+					Active: marker.NodeActionRebootUpdate,
+					State:  marker.NodeStateBusy,
+				},
+			},
+			truthy: []pred{"Terminal"},
+			falsy:  []pred{"Waiting", "Errored", "Realized", "Stuck", "Actionable"},
+		},
+		{
+			name: "terminal",
+			intents: []Intent{
+
+				{
+					Wanted: marker.NodeActionRebootUpdate,
+					Active: marker.NodeActionRebootUpdate,
+					State:  marker.NodeStateReady,
+				},
+			},
+			truthy: []pred{"Terminal", "Realized", "Waiting"},
+			falsy:  []pred{"Errored", "Stuck", "Actionable"},
 		},
 	}
 
 	for _, tc := range testcases {
-		name := fmt.Sprintf("%s(%s-%s-%s)", tc.name, tc.intent.Wanted, tc.intent.Active, tc.intent.State)
-		t.Run(name, func(t *testing.T) {
-			tc.intent.NodeName = "state-machine"
+		for _, intent := range tc.intents {
+			name := fmt.Sprintf("%s(%s,%s,%s)", tc.name, intent.Wanted, intent.Active, intent.State)
+			t.Run(name, func(t *testing.T) {
+				intent.NodeName = "state-machine"
 
-			for _, predT := range tc.truthy {
-				res, err := callCheck(&tc.intent, predT)
-				assert.NilError(t, err)
-				assert.Check(t, res == true, "%q expected to be true", predT)
-			}
-			for _, predF := range tc.falsy {
-				res, err := callCheck(&tc.intent, predF)
-				assert.NilError(t, err)
-				assert.Check(t, res == false, "%q expected to be false", predF)
-			}
-		})
+				preds := map[pred]struct{}{}
+				noOverlap := func(p pred) {
+					_, overlappingPredicate := preds[p]
+					assert.Assert(t, !overlappingPredicate, "the predicate %q was asserted twice", p)
+					preds[p] = struct{}{}
+				}
+
+				for _, predT := range tc.truthy {
+					noOverlap(predT)
+					match, err := callCheck(&intent, predT)
+					assert.NilError(t, err)
+					assert.Check(t, match, "%q expected to be true", predT)
+				}
+
+				for _, predF := range tc.falsy {
+					noOverlap(predF)
+					match, err := callCheck(&intent, predF)
+					assert.NilError(t, err)
+					assert.Check(t, !match, "%q expected to be false", predF)
+				}
+			})
+		}
 	}
 }
 
