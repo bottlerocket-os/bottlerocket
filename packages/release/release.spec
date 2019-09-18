@@ -1,5 +1,8 @@
+# To include a shell in Thar, set this to bcond_without.
+%bcond_with shell # without
+
 Name: %{_cross_os}release
-Version: 0.1.1
+Version: 0.1.2
 Release: 1%{?dist}
 Summary: Thar release
 License: Public Domain
@@ -30,7 +33,9 @@ Source1010: var-lib-thar.mount
 BuildArch: noarch
 Requires: %{_cross_os}apiclient
 Requires: %{_cross_os}apiserver
+%if %{with shell}
 Requires: %{_cross_os}bash
+%endif
 Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
 Requires: %{_cross_os}coreutils
@@ -41,6 +46,9 @@ Requires: %{_cross_os}iproute
 Requires: %{_cross_os}kernel
 Requires: %{_cross_os}kernel-modules
 Requires: %{_cross_os}bork
+%if %{without shell}
+Requires: %{_cross_os}login
+%endif
 Requires: %{_cross_os}moondog
 Requires: %{_cross_os}netdog
 Requires: %{_cross_os}signpost
@@ -67,8 +75,10 @@ Requires: %{_cross_os}host-containers
 
 %install
 
+%if %{with shell}
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 %{S:1} %{buildroot}%{_cross_bindir}
+%endif
 
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -p -m 0644 %{S:10} %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
@@ -101,7 +111,9 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/host-containers-sy
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/host-containers-systemd-unit-control
 
 %files
+%if %{with shell}
 %{_cross_bindir}/login
+%endif
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig/eth0.xml

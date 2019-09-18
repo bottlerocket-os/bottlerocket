@@ -1,6 +1,6 @@
 [package]
-name = "release"
-version = "0.1.2"
+name = "login"
+version = "0.0.1"
 edition = "2018"
 publish = false
 build = "build.rs"
@@ -10,3 +10,9 @@ path = "pkg.rs"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+]
