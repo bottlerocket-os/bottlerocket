@@ -1,10 +1,9 @@
 use crate::copylike::Copylike;
 use crate::error::{self, Result};
-use crate::key::KeyPair;
+use crate::key::{keys_for_root, sign_metadata, RootKeys};
 use crate::source::KeySource;
 use chrono::{DateTime, Utc};
 use maplit::hashmap;
-use olpc_cjson::CanonicalFormatter;
 use rayon::prelude::*;
 use ring::rand::SystemRandom;
 use serde::Serialize;
@@ -15,9 +14,9 @@ use std::fs::File;
 use std::num::{NonZeroU64, NonZeroUsize};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
-use tough_schema::decoded::{Decoded, Hex};
+use tough_schema::decoded::Decoded;
 use tough_schema::{
-    Hashes, Meta, Role, RoleType, Root, Signature, Signed, Snapshot, Target, Targets, Timestamp,
+    Hashes, Meta, Role, RoleType, Root, Signed, Snapshot, Target, Targets, Timestamp,
 };
 use walkdir::WalkDir;
 
@@ -90,21 +89,13 @@ impl CreateArgs {
         root_sha256.copy_from_slice(Sha256::digest(&root_buf).as_slice());
         let root_length = root_buf.len() as u64;
 
-        let mut keys = HashMap::new();
-        for source in &self.keys {
-            let key_pair = source.as_keypair()?;
-            if let Some((keyid, _)) = root.keys.iter().find(|(_, key)| key_pair == **key) {
-                keys.insert(keyid.clone(), key_pair);
-            }
-        }
-
         CreateProcess {
             args: self,
+            keys: keys_for_root(&self.keys, &root)?,
             rng: SystemRandom::new(),
             root,
             root_sha256,
             root_length,
-            keys,
         }
         .run()
     }
@@ -116,7 +107,7 @@ struct CreateProcess<'a> {
     root: Root,
     root_sha256: [u8; 32],
     root_length: u64,
-    keys: HashMap<Decoded<Hex>, KeyPair>,
+    keys: RootKeys,
 }
 
 impl<'a> CreateProcess<'a> {
@@ -310,24 +301,6 @@ impl<'a> CreateProcess<'a> {
     }
 
     fn sign_metadata<T: Role + Serialize>(&self, role: &mut Signed<T>) -> Result<()> {
-        if let Some(role_keys) = self.root.roles.get(&T::TYPE) {
-            for (keyid, key) in &self.keys {
-                if role_keys.keyids.contains(&keyid) {
-                    let mut data = Vec::new();
-                    let mut ser = serde_json::Serializer::with_formatter(
-                        &mut data,
-                        CanonicalFormatter::new(),
-                    );
-                    role.signed.serialize(&mut ser).context(error::SignJson)?;
-                    let sig = key.sign(&data, &self.rng)?;
-                    role.signatures.push(Signature {
-                        keyid: keyid.clone(),
-                        sig: sig.into(),
-                    });
-                }
-            }
-        }
-
-        Ok(())
+        sign_metadata(&self.root, &self.keys, role, &self.rng)
     }
 }

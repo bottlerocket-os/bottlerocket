@@ -1,11 +1,12 @@
-use crate::error::{self, Compat, Error};
-use ring::io::der;
+use crate::error::{self, Error};
+use crate::spki;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use snafu::ResultExt;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::Deref;
+use std::str::FromStr;
 
 /// A wrapper around a `Vec<u8>` that contains bytes decoded from an original type `T` (e.g.
 /// hex-encoded bytes or a PEM-encoded public key). The original encoded `T` is also stored so it
@@ -81,56 +82,45 @@ impl Encode for Hex {
     }
 }
 
-/// [`Decode`] implementation for PEM-encoded keys.
-#[derive(Debug, Clone)]
-pub struct Pem;
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-impl Decode for Pem {
-    fn decode(s: &str) -> Result<Vec<u8>, Error> {
-        pem::parse(s)
-            .map(|pem| pem.contents)
-            .map_err(Compat)
-            .context(error::PemDecode)
-    }
-}
-
+/// [`Decode`]/[`Encode`] implementation for PEM-encoded RSA public keys.
 #[derive(Debug, Clone)]
 pub struct RsaPem;
 
 impl Decode for RsaPem {
     fn decode(s: &str) -> Result<Vec<u8>, Error> {
-        let pem = pem::parse(s).map_err(Compat).context(error::PemDecode)?;
-        // All TUF says about RSA keys is that they are "in PEM format and a string", but tests in
-        // TUF's source code repository [1] imply that they are the sort of output you expect from
-        // `openssl genrsa`. This is the SubjectPublicKeyInfo format, and ring wants the
-        // RSAPublicKey format [2].
-        //
-        // If you run the public key from [1] through `openssl asn1parse -i`, you get:
-        //
-        // ```
-        //    0:d=0  hl=4 l= 418 cons: SEQUENCE
-        //    4:d=1  hl=2 l=  13 cons:  SEQUENCE
-        //    6:d=2  hl=2 l=   9 prim:   OBJECT            :rsaEncryption
-        //   17:d=2  hl=2 l=   0 prim:   NULL
-        //   19:d=1  hl=4 l= 399 prim:  BIT STRING
-        // ```
-        //
-        // The BIT STRING (here, at offset 19) happens to be the RSAPublicKey format. Here, we use
-        // ring's (undocumented but public?!) DER-parsing methods to get there.
-        //
-        // [1]: https://github.com/theupdateframework/tuf/blob/49e75ffe5adfc1f883f53f658ace596d14dc0879/tests/repository_data/repository/metadata/root.json#L20
-        // [2]: https://docs.rs/ring/0.14.6/ring/signature/index.html#signing-and-verifying-with-rsa-pkcs1-15-padding
-        match untrusted::Input::from(&pem.contents).read_all(ring::error::Unspecified, |input| {
-            der::expect_tag_and_get_value(input, der::Tag::Sequence).and_then(|spki_inner| {
-                spki_inner.read_all(ring::error::Unspecified, |input| {
-                    der::expect_tag_and_get_value(input, der::Tag::Sequence)?;
-                    der::bit_string_with_no_unused_bits(input)
-                })
-            })
-        }) {
-            Ok(key_value) => Ok(key_value.as_slice_less_safe().to_owned()),
-            Err(_) => error::RsaDecode.fail(),
-        }
+        spki::decode(spki::OID_RSA_ENCRYPTION, None, s)
+    }
+}
+
+impl Encode for RsaPem {
+    fn encode(b: &[u8]) -> String {
+        spki::encode(spki::OID_RSA_ENCRYPTION, None, b)
+    }
+}
+
+/// [`Decode`]/[`Encode`] implementation for PEM-encoded ECDSA public keys.
+#[derive(Debug, Clone)]
+pub struct EcdsaPem;
+
+impl Decode for EcdsaPem {
+    fn decode(s: &str) -> Result<Vec<u8>, Error> {
+        spki::decode(
+            spki::OID_EC_PUBLIC_KEY,
+            Some(spki::OID_EC_PARAM_SECP256R1),
+            s,
+        )
+    }
+}
+
+impl Encode for EcdsaPem {
+    fn encode(b: &[u8]) -> String {
+        spki::encode(
+            spki::OID_EC_PUBLIC_KEY,
+            Some(spki::OID_EC_PARAM_SECP256R1),
+            b,
+        )
     }
 }
 
@@ -172,6 +162,18 @@ impl<T> Deref for Decoded<T> {
 
     fn deref(&self) -> &[u8] {
         &self.bytes
+    }
+}
+
+impl<T: Decode> FromStr for Decoded<T> {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            bytes: T::decode(s)?,
+            original: s.to_owned(),
+            spooky: PhantomData,
+        })
     }
 }
 

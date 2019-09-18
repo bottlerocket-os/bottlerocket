@@ -6,6 +6,7 @@ pub mod decoded;
 mod error;
 mod iter;
 pub mod key;
+mod spki;
 mod verify;
 
 pub use crate::error::Error;
@@ -78,6 +79,7 @@ pub struct Root {
     ///
     /// If you're instantiating this struct, you should make this `HashMap::empty()`.
     #[serde(flatten)]
+    #[serde(deserialize_with = "de::extra_skip_type")]
     pub _extra: HashMap<String, Value>,
 }
 
@@ -132,6 +134,7 @@ pub struct Snapshot {
     ///
     /// If you're instantiating this struct, you should make this `HashMap::empty()`.
     #[serde(flatten)]
+    #[serde(deserialize_with = "de::extra_skip_type")]
     pub _extra: HashMap<String, Value>,
 }
 
@@ -189,6 +192,7 @@ pub struct Targets {
     ///
     /// If you're instantiating this struct, you should make this `HashMap::empty()`.
     #[serde(flatten)]
+    #[serde(deserialize_with = "de::extra_skip_type")]
     pub _extra: HashMap<String, Value>,
 }
 
@@ -234,6 +238,7 @@ pub struct Timestamp {
     ///
     /// If you're instantiating this struct, you should make this `HashMap::empty()`.
     #[serde(flatten)]
+    #[serde(deserialize_with = "de::extra_skip_type")]
     pub _extra: HashMap<String, Value>,
 }
 

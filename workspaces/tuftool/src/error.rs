@@ -11,6 +11,27 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
+    #[snafu(display("Failed to run {}: {}", command_str, source))]
+    CommandExec {
+        command_str: String,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Command {} failed with {}", command_str, status))]
+    CommandStatus {
+        command_str: String,
+        status: std::process::ExitStatus,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Command {} output is not valid UTF-8: {}", command_str, source))]
+    CommandUtf8 {
+        command_str: String,
+        source: std::string::FromUtf8Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Cannot determine current directory: {}", source))]
     CurrentDir {
         source: std::io::Error,
@@ -96,6 +117,18 @@ pub(crate) enum Error {
         source: Box<Self>,
     },
 
+    #[snafu(display("Duplicate key ID: {}", key_id))]
+    KeyDuplicate {
+        key_id: String,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to calculate key ID: {}", source))]
+    KeyId {
+        #[snafu(backtrace)]
+        source: tough_schema::Error,
+    },
+
     #[snafu(display("Private key rejected: {}", source))]
     KeyRejected {
         source: ring::error::KeyRejected,
@@ -169,11 +202,28 @@ pub(crate) enum Error {
     },
 
     #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
+    #[snafu(display(
+        "Failed to put aws-ssm://{}{}: {}",
+        profile.deref_shim().unwrap_or(""),
+        parameter_name,
+        source,
+    ))]
+    SsmPutParameter {
+        profile: Option<String>,
+        parameter_name: String,
+        source: rusoto_core::RusotoError<rusoto_ssm::PutParameterError>,
+        backtrace: Backtrace,
+    },
+
+    #[cfg(any(feature = "rusoto-native-tls", feature = "rusoto-rustls"))]
     #[snafu(display("Missing field in SSM response: {}", field))]
     SsmMissingField {
         field: &'static str,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Unrecognized or invalid public key"))]
+    UnrecognizedKey { backtrace: Backtrace },
 
     #[snafu(display("Unrecognized URL scheme \"{}\"", scheme))]
     UnrecognizedScheme {
@@ -187,6 +237,12 @@ pub(crate) enum Error {
         source: url::ParseError,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Version number overflow"))]
+    VersionOverflow { backtrace: Backtrace },
+
+    #[snafu(display("Version number is zero"))]
+    VersionZero { backtrace: Backtrace },
 
     #[snafu(display("Failed to walk directory tree: {}", source))]
     WalkDir {
