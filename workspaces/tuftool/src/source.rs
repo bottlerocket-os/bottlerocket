@@ -20,6 +20,7 @@ pub(crate) enum KeySource {
     Ssm {
         profile: Option<String>,
         parameter_name: String,
+        key_id: Option<String>,
     },
 }
 
@@ -47,6 +48,7 @@ impl KeySource {
             KeySource::Ssm {
                 profile,
                 parameter_name,
+                ..
             } => {
                 use crate::deref::OptionDeref;
                 use rusoto_ssm::Ssm;
@@ -84,6 +86,7 @@ impl KeySource {
             KeySource::Ssm {
                 profile,
                 parameter_name,
+                key_id,
             } => {
                 use crate::deref::OptionDeref;
                 use rusoto_ssm::Ssm;
@@ -92,6 +95,7 @@ impl KeySource {
                 ssm_client
                     .put_parameter(rusoto_ssm::PutParameterRequest {
                         name: parameter_name.to_owned(),
+                        key_id: key_id.as_ref().cloned(),
                         overwrite: Some(true),
                         type_: "SecureString".to_owned(),
                         value: value.to_owned(),
@@ -111,6 +115,7 @@ impl KeySource {
 impl FromStr for KeySource {
     type Err = Error;
 
+    #[allow(clippy::find_map)]
     fn from_str(s: &str) -> Result<Self> {
         let pwd_url = Url::from_directory_path(std::env::current_dir().context(error::CurrentDir)?)
             .expect("expected current directory to be absolute");
@@ -131,6 +136,10 @@ impl FromStr for KeySource {
                     }
                 }),
                 parameter_name: url.path().to_owned(),
+                key_id: url
+                    .query_pairs()
+                    .find(|(k, _)| k == "kms-key-id")
+                    .map(|(_, v)| v.into_owned()),
             }),
             _ => error::UnrecognizedScheme {
                 scheme: url.scheme(),
