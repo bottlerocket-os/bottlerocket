@@ -64,8 +64,7 @@ func (i *Intent) Waiting() bool {
 		// error state indicates that the node is ready to be error handled
 		isReady = true
 	}
-	isProgressed := i.Active == i.Wanted
-	return isReady && isProgressed
+	return isReady
 }
 
 // Intrusive indicates that the intention will be intrusive if realized.
@@ -121,7 +120,7 @@ func (i *Intent) HasUpdateAvailable() bool {
 // Needed indicates that the intent is needing progress made on it.
 func (i *Intent) Needed() bool {
 	// If the node has an update, the intent is needing progress.
-	readyToMakeProgress := i.Waiting() && i.InProgress()
+	readyToMakeProgress := i.Waiting() && i.WantProgress()
 	return readyToMakeProgress
 }
 
@@ -141,7 +140,7 @@ func (i *Intent) Projected() *Intent {
 // reset reverts the Intent to its Origin point from which an Intent should be
 // able to be driven to a Terminal point.
 func (i *Intent) reset() {
-	i.Wanted, _ = calculateNext(marker.NodeActionUnknown)
+	i.Wanted = marker.NodeActionUnknown
 	i.Active = marker.NodeActionUnknown
 	i.State = marker.NodeStateUnknown
 }
@@ -165,7 +164,7 @@ func (i Intent) Terminal() bool {
 // Clone returns a copy of the Intent to mutate independently of the source
 // instance.
 func (i Intent) Clone() *Intent {
-	return &i
+	return Given(&i)
 }
 
 // Given determines the commuincated intent from a Node without projecting into
