@@ -114,7 +114,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 
 	var err error
 
-	// TODO: Sanity check progression before proceeding
+	// TODO: Run a quick check of the Nodes posted progress before proceeding
 
 	// ACK the wanted action.
 	in.Active = in.Wanted
@@ -193,8 +193,9 @@ func (a *Agent) realize(in *intent.Intent) error {
 }
 
 func (a *Agent) nodePreflight() error {
-	// TODO: sanity check node and reset appropriate Resource state
-	// TODO: inform controller for taint removal
+	// TODO: Run a check of the Node Resource and reset appropriately
+
+	// TODO: Inform controller for taint removal
 
 	n, err := a.kube.CoreV1().Nodes().Get(a.nodeName, v1meta.GetOptions{})
 	if err != nil {
