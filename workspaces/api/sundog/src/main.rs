@@ -22,7 +22,7 @@ use apiserver::model;
 extern crate log;
 
 // FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
+const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
 const API_PENDING_SETTINGS_URI: &str = "/settings/pending";
 const API_SETTING_GENERATORS_URI: &str = "/metadata/setting-generators";

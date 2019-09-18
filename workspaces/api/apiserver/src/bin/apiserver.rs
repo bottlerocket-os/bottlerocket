@@ -10,7 +10,7 @@ use std::process;
 
 use apiserver::serve;
 
-const DEFAULT_BIND_PATH: &str = "/var/lib/thar/api.sock";
+const DEFAULT_BIND_PATH: &str = "/run/api.sock";
 
 type Result<T> = std::result::Result<T, error::Error>;
 

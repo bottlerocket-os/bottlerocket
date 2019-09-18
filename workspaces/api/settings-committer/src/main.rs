@@ -13,7 +13,7 @@ use std::{collections::HashMap, env, process};
 
 use snafu::{ensure, ResultExt};
 
-const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
+const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_PENDING_URI: &str = "/settings/pending";
 const API_COMMIT_URI: &str = "/settings/commit";
 

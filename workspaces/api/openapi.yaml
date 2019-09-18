@@ -9,7 +9,7 @@ info:
     url: ""
 
 servers:
-- url: file:///var/lib/thar/api.sock
+- url: file:///run/api.sock
   description: The production API server
 
 paths:

@@ -9,7 +9,7 @@ use std::process;
 use thar_be_settings::{config, get_changed_settings, service, settings, template};
 
 // FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
+const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 
 mod error {
     use snafu::Snafu;

@@ -1,7 +1,7 @@
 use std::env;
 use std::process;
 
-const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
+const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 
 /// Stores user-supplied arguments.
 struct Args {
