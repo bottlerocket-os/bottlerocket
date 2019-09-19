@@ -67,7 +67,8 @@ pub struct KubernetesSettings {
     pub pod_infra_container_image: Option<String>,
 }
 
-// Updog settings. Taken from userdata.
+// Updog settings. Taken from userdata. The 'seed' setting is generated
+// by the "Bork" settings generator at runtime.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct UpdatesSettings {
@@ -76,6 +77,9 @@ pub struct UpdatesSettings {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub target_base_url: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub seed: Option<String>,
 }
 
 // Settings for HostContainers, which manages the lifecycle of privileged, unorchestrated

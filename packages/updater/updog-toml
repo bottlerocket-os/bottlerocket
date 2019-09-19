@@ -1,2 +1,3 @@
 metadata_base_url = "{{settings.updates.metadata-base-url}}"
 target_base_url = "{{settings.updates.target-base-url}}"
+seed = {{settings.updates.seed}}
