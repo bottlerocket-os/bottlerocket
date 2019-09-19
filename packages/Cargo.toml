@@ -56,3 +56,7 @@ members = [
     "util-linux",
     "wicked",
 ]
+
+[profile.dev]
+debug = false
+opt-level = 'z'

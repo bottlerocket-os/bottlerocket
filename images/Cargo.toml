@@ -3,5 +3,6 @@ members = [
     "aws-k8s",
 ]
 
-[profile.release]
-debug = true
+[profile.dev]
+debug = false
+opt-level = 'z'
