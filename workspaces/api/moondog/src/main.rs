@@ -23,7 +23,7 @@ use std::{env, fs, process};
 // Tests!
 
 // FIXME Get these from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/var/lib/thar/api.sock";
+const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
 
 // We only want to run moondog once, at first boot.  Our systemd unit file has a
