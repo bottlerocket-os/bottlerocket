@@ -182,7 +182,8 @@ func (i *Intent) Terminal() bool {
 // Reset brings the intent back to the start of the progression where the intent
 // may be able to resolve issues and fall into a valid state.
 func (i *Intent) Reset() *Intent {
-	p := i.Clone().reset()
+	p := i.Clone()
+	p.reset()
 	return p.Projected()
 }
 
