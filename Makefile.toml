@@ -31,6 +31,10 @@ for ws in workspaces packages images ; do
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
 chmod o+r -R ${CARGO_HOME}
+
+cd workspaces/host-containers/cmd/host-ctr
+go list -mod=readonly ./... >/dev/null
+go mod vendor
 '''
 ]
 

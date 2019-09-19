@@ -142,12 +142,7 @@ CROSS_COMPILATION_CONF_EOF\
 
 %_cross_go_os linux
 
-%cross_go_setup() \
-  mkdir -p GOPATH/src/%2 ; \
-  ln -s %{_builddir}/%1 GOPATH/src/%3 ; \
-
-%cross_go_configure() \
-  cd GOPATH/src/%1 ; \
+%set_cross_go_flags \
   GOPATH="${PWD}/GOPATH" ; export GOPATH ; \
   GOOS="%{_cross_go_os}" ; export GOOS ; \
   GOARCH="%{_cross_go_arch}" ; export GOARCH ; \
@@ -158,6 +153,14 @@ CROSS_COMPILATION_CONF_EOF\
   CXX_FOR_TARGET="%{_cross_target}-g++" ; export CXX_FOR_TARGET ; \
   CGO_ENABLED=1 ; export CGO_ENABLED ; \
   PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
+
+%cross_go_setup() \
+  mkdir -p GOPATH/src/%2 ; \
+  ln -s %{_builddir}/%1 GOPATH/src/%3 ; \
+
+%cross_go_configure() \
+  %set_cross_go_flags \
+  cd GOPATH/src/%1 ; \
 
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy

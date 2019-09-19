@@ -1,0 +1,23 @@
+[package]
+name = "host-containers"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-package]
+source-groups = [ "host-containers" ]
+
+[lib]
+path = "pkg.rs"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+golang = { path = "../golang", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "golang",
+]
