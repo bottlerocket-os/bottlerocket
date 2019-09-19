@@ -53,6 +53,7 @@ func (i *Intent) GetLabels() map[string]string {
 // Waiting reports true when a Node is prepared and waiting to make further
 // commanded progress towards completing an update.
 func (i *Intent) Waiting() bool {
+	// Either we're finished with a step
 	var done bool
 	switch i.State {
 	case marker.NodeStateReady:
@@ -90,8 +91,9 @@ func (i *Intent) Errored() bool {
 func (i *Intent) Stuck() bool {
 	// The state is inconsistent or isn't actually making progress
 	inconsistentProgress := i.Active != i.Wanted && !i.InProgress()
+
 	// The step in the forward direction doesn't make check out, its stuck.
-	invalidProgress := i.Active != i.Projected().Wanted
+	invalidProgress := i.Wanted != i.projectActive().Wanted
 
 	return inconsistentProgress || invalidProgress
 }
@@ -106,9 +108,14 @@ func (i *Intent) Realized() bool {
 // InProgess reports true when the Intent is for a node that is making progress
 // towards completing an update.
 func (i *Intent) InProgress() bool {
-	return i.isInProgress(i.Active) && !i.Realized()
+	// The next step has been set, but not started yet so its waiting to be
+	// started.
+	pendingNext := !i.Realized() && i.projectActive().Wanted == i.Wanted
+	return i.isInProgress(i.Active) && pendingNext
 }
 
+// isInProgress indicates that the field provided is an action that may be able
+// to make progress towards another state.
 func (i *Intent) isInProgress(field marker.NodeAction) bool {
 	switch field {
 	case marker.NodeActionReset,
@@ -129,8 +136,7 @@ func (i *Intent) HasUpdateAvailable() bool {
 
 // Needed indicates that the intent is needing progress made on it.
 func (i *Intent) Actionable() bool {
-	// If the node has an update, the intent is needing progress.
-	canProgress := i.Waiting() && i.Realized() && !i.Terminal()
+	canProgress := (i.Waiting() || i.Realized()) && !i.Terminal()
 	unknown := i.inUnknownState()
 	stuck := i.Stuck()
 	return canProgress || unknown || stuck
@@ -148,12 +154,10 @@ func (i *Intent) Projected() *Intent {
 	return p
 }
 
-// reset reverts the Intent to its Origin point from which an Intent should be
-// able to be driven to a Terminal point.
-func (i *Intent) reset() {
-	i.Wanted = marker.NodeActionUnknown
-	i.Active = marker.NodeActionUnknown
-	i.State = marker.NodeStateUnknown
+func (i *Intent) projectActive() *Intent {
+	prior := i.Clone()
+	prior.Wanted = i.Active
+	return prior.Projected()
 }
 
 func (i *Intent) inUnknownState() bool {
@@ -161,7 +165,10 @@ func (i *Intent) inUnknownState() bool {
 		i.State == marker.NodeStateUnknown
 }
 
-func (i Intent) Terminal() bool {
+// Terminal indicates that the intent has reached a terminal point in the
+// progression, the intent will not make progress in anyway without outside
+// state action.
+func (i *Intent) Terminal() bool {
 	next, err := calculateNext(i.Wanted)
 	if err != nil {
 		return false
@@ -170,6 +177,21 @@ func (i Intent) Terminal() bool {
 	// Active states, therefore we've reached a terminal point.
 	atTerminal := next == i.Wanted && i.Wanted == i.Active
 	return atTerminal
+}
+
+// Reset brings the intent back to the start of the progression where the intent
+// may be able to resolve issues and fall into a valid state.
+func (i *Intent) Reset() *Intent {
+	p := i.Clone().reset()
+	return p.Projected()
+}
+
+// reset reverts the Intent to its Origin point from which an Intent should be
+// able to be driven to a Terminal point.
+func (i *Intent) reset() {
+	i.Wanted = marker.NodeActionUnknown
+	i.Active = marker.NodeActionUnknown
+	i.State = marker.NodeStateUnknown
 }
 
 // Clone returns a copy of the Intent to mutate independently of the source

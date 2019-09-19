@@ -111,13 +111,17 @@ func (am *ActionManager) handle(node *v1.Node) {
 }
 
 // intentFor interprets the intention given the Node's annotations.
-func (am *ActionManager) intentFor(node *v1.Node) *intent.Intent {
+func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 	log := am.log.WithField("node", node.GetName())
 	in := intent.Given(node)
 
-	next := in.Projected()
+	if in.Stuck() {
+		log.Warn("resetting to stabilize stuck/invalid intent state")
+		return in.Reset()
+	}
 
-	if next.Needed() || next.HasUpdateAvailable() {
+	next := in.Projected()
+	if in.HasUpdateAvailable() || next.Actionable() {
 		log.Debug("needs action towards next step")
 		return next
 	}

@@ -82,6 +82,18 @@ func TestIntentTruths(t *testing.T) {
 			falsy:  []pred{"Waiting", "Actionable", "Realized", "Stuck"},
 		},
 		{
+			name: "node-actionable",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionRebootUpdate,
+					Active: marker.NodeActionPerformUpdate,
+					State:  marker.NodeStateReady,
+				},
+			},
+			truthy: []pred{"Waiting", "Actionable"},
+			falsy:  []pred{"Realized", "Stuck"},
+		},
+		{
 			name: "stuck",
 			intents: []Intent{
 				{
@@ -107,6 +119,18 @@ func TestIntentTruths(t *testing.T) {
 			},
 			truthy: []pred{"Stuck", "Actionable"},
 			falsy:  []pred{"Realized", "Terminal"},
+		},
+		{
+			name: "waiting",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionStablize,
+					Active: marker.NodeActionStablize,
+					State:  marker.NodeStateReady,
+				},
+			},
+			truthy: []pred{"Waiting", "Realized", "Terminal"},
+			falsy:  []pred{"Actionable"},
 		},
 		{
 			name: "errored-nominal",
@@ -142,7 +166,7 @@ func TestIntentTruths(t *testing.T) {
 				},
 			},
 			truthy: []pred{"InProgress", "Intrusive"},
-			falsy:  []pred{"Waiting", "Errored", "Realized", "Stuck"},
+			falsy:  []pred{"Errored", "Realized", "Stuck", "Waiting"},
 		},
 		{
 			name: "terminal",
@@ -153,8 +177,8 @@ func TestIntentTruths(t *testing.T) {
 					State:  marker.NodeStateBusy,
 				},
 			},
-			truthy: []pred{"Terminal"},
-			falsy:  []pred{"Waiting", "Errored", "Realized", "Stuck", "Actionable"},
+			truthy: []pred{"Terminal", "InProgress"},
+			falsy:  []pred{"Errored", "Realized", "Stuck", "Actionable", "Waiting"},
 		},
 		{
 			name: "terminal",

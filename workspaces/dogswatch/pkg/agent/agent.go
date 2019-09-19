@@ -104,7 +104,7 @@ func (a *Agent) handleEvent(node *v1.Node) {
 }
 
 func activeIntent(i *intent.Intent) bool {
-	return i.WantProgress() && // the intent will make progress
+	return i.Actionable() && // the intent will make progress
 		!i.Errored() && // its not currently in an errored state
 		!i.Waiting() // its not waiting on a command, ie *this* is the intentional command
 }
@@ -208,7 +208,7 @@ func (a *Agent) nodePreflight() error {
 	// TODO: check that we're properly reseting, for now its not needed to mark
 	// our work "done"
 	switch {
-	case in.Terminal():
+	case in.Terminal(): // we're at a terminating point where there's no progress to make.
 		in.State = marker.NodeStateReady
 	case in.Waiting():
 		// already in a holding pattern, no need to re-prime ourselves in
