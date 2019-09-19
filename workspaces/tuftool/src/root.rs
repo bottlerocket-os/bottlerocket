@@ -45,10 +45,11 @@ pub(crate) enum Command {
     AddKey {
         /// Path to root.json
         path: PathBuf,
-        /// The role to add the key to
-        role: RoleType,
         /// The new key
         key_path: KeySource,
+        /// The role to add the key to
+        #[structopt(short = "r", long = "role")]
+        roles: Vec<RoleType>,
     },
     /// Remove a key ID, either entirely or from a single role
     RemoveKey {
@@ -64,8 +65,6 @@ pub(crate) enum Command {
     GenRsaKey {
         /// Path to root.json
         path: PathBuf,
-        /// The role to add the key to
-        role: RoleType,
         /// Where to write the new key
         key_path: KeySource,
         /// Bit length of new key
@@ -74,6 +73,9 @@ pub(crate) enum Command {
         /// Public exponent of new key
         #[structopt(short = "e", long = "exp", default_value = "65537")]
         exponent: u32,
+        /// The role to add the key to
+        #[structopt(short = "r", long = "role")]
+        roles: Vec<RoleType>,
     },
 }
 
@@ -150,12 +152,12 @@ impl Command {
             }
             Command::AddKey {
                 path,
-                role,
+                roles,
                 key_path,
             } => {
                 let mut root: Signed<Root> = load_file(path)?;
                 let key_pair = key_path.as_public_key()?;
-                let key_id = hex::encode(add_key(&mut root.signed, *role, key_pair)?);
+                let key_id = hex::encode(add_key(&mut root.signed, roles, key_pair)?);
                 clear_sigs(&mut root);
                 println!("{}", key_id);
                 write_file(path, &root)
@@ -185,7 +187,7 @@ impl Command {
             }
             Command::GenRsaKey {
                 path,
-                role,
+                roles,
                 key_path,
                 bits,
                 exponent,
@@ -215,7 +217,7 @@ impl Command {
                     String::from_utf8(output.stdout).context(error::CommandUtf8 { command_str })?;
 
                 let key_pair = KeyPair::parse(stdout.as_bytes())?;
-                let key_id = hex::encode(add_key(&mut root.signed, *role, key_pair.public_key())?);
+                let key_id = hex::encode(add_key(&mut root.signed, roles, key_pair.public_key())?);
                 key_path.write(&stdout, &key_id)?;
                 clear_sigs(&mut root);
                 println!("{}", key_id);
@@ -236,7 +238,7 @@ fn clear_sigs<T>(role: &mut Signed<T>) {
 }
 
 /// Adds a key to the root role if not already present, and adds its key ID to the specified role.
-fn add_key(root: &mut Root, role: RoleType, key: Key) -> Result<Decoded<Hex>> {
+fn add_key(root: &mut Root, role: &[RoleType], key: Key) -> Result<Decoded<Hex>> {
     let key_id = if let Some((key_id, _)) = root
         .keys
         .iter()
@@ -256,9 +258,11 @@ fn add_key(root: &mut Root, role: RoleType, key: Key) -> Result<Decoded<Hex>> {
         key_id
     };
 
-    let entry = root.roles.entry(role).or_insert_with(|| role_keys!());
-    if !entry.keyids.contains(&key_id) {
-        entry.keyids.push(key_id.clone());
+    for r in role {
+        let entry = root.roles.entry(*r).or_insert_with(|| role_keys!());
+        if !entry.keyids.contains(&key_id) {
+            entry.keyids.push(key_id.clone());
+        }
     }
 
     Ok(key_id)
