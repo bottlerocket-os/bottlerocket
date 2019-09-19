@@ -6,14 +6,17 @@ import (
 )
 
 var nextLinear map[marker.NodeAction]marker.NodeAction = map[marker.NodeAction]marker.NodeAction{
+	// Stabilization from known points.
 	"":                        marker.NodeActionStablize,
 	marker.NodeActionStablize: marker.NodeActionStablize,
 	marker.NodeActionUnknown:  marker.NodeActionStablize,
 
+	// Linear progression
 	marker.NodeActionReset:         marker.NodeActionStablize,
 	marker.NodeActionPrepareUpdate: marker.NodeActionPerformUpdate,
 	marker.NodeActionPerformUpdate: marker.NodeActionRebootUpdate,
-	// FIN. The intendee must know what to do next.
+	// FIN. The actor must know what to do next to bring itself around again if
+	// that's what's appropriate.
 	marker.NodeActionRebootUpdate: marker.NodeActionRebootUpdate,
 }
 

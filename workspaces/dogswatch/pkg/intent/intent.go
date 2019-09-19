@@ -51,32 +51,35 @@ func (i *Intent) GetLabels() map[string]string {
 }
 
 // Waiting reports true when a Node is prepared and waiting to make further
-// commanded progress towards completing an update.
+// commanded progress towards completing an update. This doesn't however
+// indicate whether or not the intent reached a waiting state successfully or
+// not. Utilize other checks to assert a combinational check.
 func (i *Intent) Waiting() bool {
-	// Either we're finished with a step
 	var done bool
 	switch i.State {
 	case marker.NodeStateReady:
+		// Ready for action, probably waiting for next command.
 		done = true
 	case "", marker.NodeStateUnknown:
-		// Node may need to be commanded to become intentional.
+		// Node is an unknown state or doesn't yet have a state. This is likely
+		// because there hasn't been a requested action or because it hasn't yet
+		// done something to warrant action.
 		done = true
 	case marker.NodeStateError:
-		// error state indicates that the node is ready to be error handled
+		// Node errored and is waiting on a next step.
 		done = true
+	default:
+		// The state is unclear, other predicates may better inform the caller
+		// of the scenario its handling.
+		done = false
 	}
 	return done
 }
 
 // Intrusive indicates that the intention will be intrusive if realized.
 func (i *Intent) Intrusive() bool {
-	switch i.Wanted {
-	case marker.NodeActionPrepareUpdate,
-		marker.NodeActionPerformUpdate,
-		marker.NodeActionRebootUpdate:
-		return true
-	}
-	return false
+	rebooting := i.Wanted == marker.NodeActionRebootUpdate
+	return rebooting
 }
 
 // Errored indicates that the intention was not realized and failed in attempt
@@ -91,7 +94,6 @@ func (i *Intent) Errored() bool {
 func (i *Intent) Stuck() bool {
 	// The state is inconsistent or isn't actually making progress
 	inconsistentProgress := i.Active != i.Wanted && !i.InProgress()
-
 	// The step in the forward direction doesn't make check out, its stuck.
 	invalidProgress := i.Wanted != i.projectActive().Wanted
 
@@ -109,7 +111,7 @@ func (i *Intent) Realized() bool {
 // towards completing an update.
 func (i *Intent) InProgress() bool {
 	// The next step has been set, but not started yet so its waiting to be
-	// started.
+	// started or realized.
 	pendingNext := !i.Realized() && i.projectActive().Wanted == i.Wanted
 	return i.isInProgress(i.Active) && pendingNext
 }
@@ -222,5 +224,6 @@ func Given(input Input) *Intent {
 // succinct and scoped to the used accessors.
 type Input interface {
 	marker.Container
+	// GetName returns the Input's addressable Name.
 	GetName() string
 }
