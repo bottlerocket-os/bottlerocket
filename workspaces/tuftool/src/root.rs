@@ -238,7 +238,7 @@ fn clear_sigs<T>(role: &mut Signed<T>) {
 }
 
 /// Adds a key to the root role if not already present, and adds its key ID to the specified role.
-fn add_key(root: &mut Root, role: &Vec<RoleType>, key: Key) -> Result<Decoded<Hex>> {
+fn add_key(root: &mut Root, role: &[RoleType], key: Key) -> Result<Decoded<Hex>> {
     let key_id = if let Some((key_id, _)) = root
         .keys
         .iter()
