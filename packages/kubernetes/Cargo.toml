@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes/kubernetes/archive/v1.13.7/kubernetes-1.13.7.tar.gz"
-sha512 = "2cfc0b3739679da7e9bb9ce0aa71ef5842e45af382d616ce6188f20fec929aca579427b866b5cd71cca005d88d1717803c8f3be60eab8c99b200d422bdc40f04"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.14.6/kubernetes-1.14.6.tar.gz"
+sha512 = "b6ea20955d15d9980154f1c4a5d9a3153702632cfbd18d3e727daee7307465c0d4694b9a0c20a405fbe491c130dae7bfa23b1459c2733a7239918bbca531076f"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
