@@ -175,8 +175,7 @@ func withTharMounts(targetCtr string) oci.SpecOpts {
 			oci.WithMounts([]runtimespec.Mount{
 				// Mount the Thar API server socket if it's the control container that's being launched
 				{
-					Type:        "bind",
-					Options:     []string{"rw"},
+					Options:     []string{"bind","rw"},
 					Destination: "/run/api.sock",
 					Source:      "/run/api.sock",
 				}}),
@@ -186,13 +185,11 @@ func withTharMounts(targetCtr string) oci.SpecOpts {
 			oci.WithMounts([]runtimespec.Mount{
 				// Mount host `/dev`
 				{
-					Type:        "bind",
 					Options:     []string{"rbind", "rshared", "rw"},
 					Destination: "/dev",
 					Source:      "/dev",
 				},
 				{
-					Type:        "bind",
 					Options:     []string{"rbind", "rw"},
 					Destination: "/var/log",
 					Source:      "/var/log",
