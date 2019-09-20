@@ -65,6 +65,7 @@ impl Repository {
         root: R,
         datastore: P,
         max_root_size: u64,
+        max_targets_size: u64,
         max_timestamp_size: u64,
         metadata_base_url: &str,
         target_base_url: &str,
@@ -92,7 +93,14 @@ impl Repository {
         let snapshot = load_snapshot(&client, &root, &timestamp, &datastore, &metadata_base_url)?;
 
         // 4. Download the targets metadata file
-        let targets = load_targets(&client, &root, &snapshot, &datastore, &metadata_base_url)?;
+        let targets = load_targets(
+            &client,
+            &root,
+            &snapshot,
+            &datastore,
+            max_targets_size,
+            &metadata_base_url,
+        )?;
 
         let expires_iter = [
             (root.signed.expires, RoleType::Root),
@@ -602,6 +610,7 @@ fn load_targets(
     root: &Signed<Root>,
     snapshot: &Signed<Snapshot>,
     datastore: &Datastore,
+    max_targets_size: u64,
     metadata_base_url: &Url,
 ) -> Result<Signed<tough_schema::Targets>> {
     // 4. Download the top-level targets metadata file, up to either the number of bytes specified
@@ -613,9 +622,6 @@ fn load_targets(
     //    VERSION_NUMBER is the version number of the targets metadata file listed in the snapshot
     //    metadata file. In either case, the client MUST write the file to non-volatile storage as
     //    FILENAME.EXT.
-    //
-    // ("... or some Z number of bytes" isn't relevant here, since we require snapshot.json to list
-    // the size.)
     let targets_meta = snapshot
         .signed
         .meta
@@ -629,16 +635,30 @@ fn load_targets(
     } else {
         "targets.json".to_owned()
     };
-    let reader = fetch_sha256(
-        client,
-        metadata_base_url.join(&path).context(error::JoinUrl {
-            path,
-            url: metadata_base_url.to_owned(),
-        })?,
-        targets_meta.length,
-        "snapshot.json",
-        &targets_meta.hashes.sha256,
-    )?;
+    let targets_url = metadata_base_url.join(&path).context(error::JoinUrl {
+        path,
+        url: metadata_base_url.to_owned(),
+    })?;
+    let (max_targets_size, specifier) = match targets_meta.length {
+        Some(length) => (length, "snapshot.json"),
+        None => (max_targets_size, "max_targets_size parameter"),
+    };
+    let reader = if let Some(hashes) = &targets_meta.hashes {
+        Box::new(fetch_sha256(
+            client,
+            targets_url,
+            max_targets_size,
+            specifier,
+            &hashes.sha256,
+        )?) as Box<dyn Read>
+    } else {
+        Box::new(fetch_max_size(
+            client,
+            targets_url,
+            max_targets_size,
+            specifier,
+        )?)
+    };
     let targets: Signed<tough_schema::Targets> =
         serde_json::from_reader(reader).context(error::ParseMetadata {
             role: RoleType::Targets,

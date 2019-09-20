@@ -16,7 +16,8 @@ use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tough_schema::decoded::Decoded;
 use tough_schema::{
-    Hashes, Meta, Role, RoleType, Root, Signed, Snapshot, Target, Targets, Timestamp,
+    Hashes, Role, RoleType, Root, Signed, Snapshot, SnapshotMeta, Target, Targets, Timestamp,
+    TimestampMeta,
 };
 use walkdir::WalkDir;
 
@@ -143,21 +144,21 @@ impl<'a> CreateProcess<'a> {
                 version: self.args.snapshot_version,
                 expires: self.args.snapshot_expires,
                 meta: hashmap! {
-                    "root.json".to_owned() => Meta {
-                        hashes: Hashes {
+                    "root.json".to_owned() => SnapshotMeta {
+                        hashes: Some(Hashes {
                             sha256: self.root_sha256.to_vec().into(),
                             _extra: HashMap::new(),
-                        },
-                        length: self.root_length,
+                        }),
+                        length: Some(self.root_length),
                         version: self.root.version,
                         _extra: HashMap::new(),
                     },
-                    "targets.json".to_owned() => Meta {
-                        hashes: Hashes {
+                    "targets.json".to_owned() => SnapshotMeta {
+                        hashes: Some(Hashes {
                             sha256: targets_sha256.to_vec().into(),
                             _extra: HashMap::new(),
-                        },
-                        length: targets_length,
+                        }),
+                        length: Some(targets_length),
                         version: self.args.targets_version,
                         _extra: HashMap::new(),
                     },
@@ -174,7 +175,7 @@ impl<'a> CreateProcess<'a> {
                 version: self.args.snapshot_version,
                 expires: self.args.snapshot_expires,
                 meta: hashmap! {
-                    "snapshot.json".to_owned() => Meta {
+                    "snapshot.json".to_owned() => TimestampMeta {
                         hashes: Hashes {
                             sha256: snapshot_sha256.to_vec().into(),
                             _extra: HashMap::new(),

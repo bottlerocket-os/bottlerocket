@@ -126,7 +126,7 @@ pub struct Snapshot {
     pub spec_version: String,
     pub version: NonZeroU64,
     pub expires: DateTime<Utc>,
-    pub meta: HashMap<String, Meta>,
+    pub meta: HashMap<String, SnapshotMeta>,
 
     /// Extra arguments found during deserialization.
     ///
@@ -139,9 +139,11 @@ pub struct Snapshot {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
-pub struct Meta {
-    pub length: u64,
-    pub hashes: Hashes,
+pub struct SnapshotMeta {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub length: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hashes: Option<Hashes>,
     pub version: NonZeroU64,
 
     /// Extra arguments found during deserialization.
@@ -230,7 +232,7 @@ pub struct Timestamp {
     pub spec_version: String,
     pub version: NonZeroU64,
     pub expires: DateTime<Utc>,
-    pub meta: HashMap<String, Meta>,
+    pub meta: HashMap<String, TimestampMeta>,
 
     /// Extra arguments found during deserialization.
     ///
@@ -239,6 +241,21 @@ pub struct Timestamp {
     /// If you're instantiating this struct, you should make this `HashMap::empty()`.
     #[serde(flatten)]
     #[serde(deserialize_with = "de::extra_skip_type")]
+    pub _extra: HashMap<String, Value>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct TimestampMeta {
+    pub length: u64,
+    pub hashes: Hashes,
+    pub version: NonZeroU64,
+
+    /// Extra arguments found during deserialization.
+    ///
+    /// We must store these to correctly verify signatures for this object.
+    ///
+    /// If you're instantiating this struct, you should make this `HashMap::empty()`.
+    #[serde(flatten)]
     pub _extra: HashMap<String, Value>,
 }
 

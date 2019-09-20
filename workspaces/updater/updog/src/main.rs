@@ -59,8 +59,9 @@ fn load_repository(config: &Config) -> Result<Repository> {
             path: TRUSTED_ROOT_PATH,
         })?,
         "/var/lib/thar/updog",
-        1024 * 1024, // max allowed root.json size, 1 MiB
-        1024 * 1024, // max allowed timestamp.json size, 1 MiB
+        1024 * 1024,     // max allowed root.json size, 1 MiB
+        1024 * 1024 * 4, // max allowed targets.json size, 4 MiB
+        1024 * 1024,     // max allowed timestamp.json size, 1 MiB
         &config.metadata_base_url,
         &config.target_base_url,
     )
