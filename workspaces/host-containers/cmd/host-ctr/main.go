@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"os"
 	"os/signal"
@@ -18,6 +17,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/pkg/errors"
 	cgroups "github.com/opencontainers/runc/libcontainer/cgroups"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -235,12 +235,12 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 		withDynamicResolver(ctx, source),
 		containerd.WithSchema1Conversion)
 	if err != nil {
-		return nil, errors.New("Failed to pull ctr image")
+		return nil, errors.Wrap(err, "Failed to pull ctr image")
 	}
 	log.G(ctx).WithField("img", img.Name()).Info("Pulled successfully")
 	log.G(ctx).WithField("img", img.Name()).Info("Unpacking...")
 	if err := img.Unpack(ctx, containerd.DefaultSnapshotter); err != nil {
-		return nil, errors.New("Failed to unpack image")
+		return nil, errors.Wrap(err, "Failed to unpack image")
 	}
 	return img, nil
 }
@@ -255,7 +255,7 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 		// Create the ECR resolver
 		resolver, err := ecr.NewResolver()
 		if err != nil {
-			return errors.New("Failed to create ECR resolver")
+			return errors.Wrap(err, "Failed to create ECR resolver")
 		}
 		log.G(ctx).WithField("ref", ref).Info("Pulling from Amazon ECR")
 		c.Resolver = resolver
