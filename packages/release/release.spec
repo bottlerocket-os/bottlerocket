@@ -12,6 +12,8 @@ Source99: release-tmpfiles.conf
 
 # FIXME What should own system-level file templates?
 Source200: hostname.template
+Source201: host-containers-systemd-unit-admin.template
+Source202: host-containers-systemd-unit-control.template
 
 Source1000: eth0.xml
 Source1002: configured.target
@@ -48,7 +50,6 @@ Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}migration
 Requires: %{_cross_os}updog
 Requires: %{_cross_os}util-linux
-Requires: %{_cross_os}amazon-ssm-agent
 Requires: %{_cross_os}preinit
 Requires: %{_cross_os}wicked
 Requires: %{_cross_os}host-containers
@@ -89,6 +90,8 @@ install -p -m 0644 %{S:1002} %{S:1003} %{S:1005} %{S:1006} %{S:1007} %{S:1008} %
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
+install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/host-containers-systemd-unit-admin
+install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/host-containers-systemd-unit-control
 
 %files
 %{_cross_bindir}/login
@@ -106,5 +109,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_unitdir}/opt.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/hostname
+%{_cross_templatedir}/host-containers-systemd-unit-admin
+%{_cross_templatedir}/host-containers-systemd-unit-control
 
 %changelog

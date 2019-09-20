@@ -83,26 +83,39 @@ val = ["updog"]
 
 [settings.host-containers.admin]
 enabled = false
-source = "FIXME.dkr.ecr.us-west-2.amazonaws.com/thar-admin:latest"
+source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-admin:v0.1"
 superpowered = true
 
 [settings.host-containers.control]
 enabled = true
-source = "FIXME.dkr.ecr.us-west-2.amazonaws.com/thar-ssm:latest"
+source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-control:v0.1"
 superpowered = false
 
-# [services.host-containers]
-# configuration-files = ["host-containers"]
-# restart-commands = ["/bin/systemctl try-reload-or-restart host-containers"]
+[services.host-containers-admin]
+configuration-files = ["host-containers-systemd-unit-admin"]
+restart-commands = ["/usr/bin/servicedog -s settings.host-containers.admin.enabled -u host-containers@admin.service"]
 
-# [configuration-files.host-containers]
-# path = "/etc/hostcontainers/host-containers.toml"
-# template-path = "/usr/share/templates/host-containers-toml"
+[services.host-containers-control]
+configuration-files = ["host-containers-systemd-unit-control"]
+restart-commands = ["/usr/bin/servicedog -s settings.host-containers.control.enabled -u host-containers@control.service"]
 
-# [[metadata]]
-# key = "settings.host-containers"
-# md = "affected-services"
-# val = "[host-containers]"
+[configuration-files.host-containers-systemd-unit-admin]
+path = "/etc/systemd/system/host-containers@admin.service"
+template-path = "/usr/share/templates/host-containers-systemd-unit-admin"
+
+[configuration-files.host-containers-systemd-unit-control]
+path = "/etc/systemd/system/host-containers@control.service"
+template-path = "/usr/share/templates/host-containers-systemd-unit-control"
+
+[[metadata]]
+key = "settings.host-containers.admin"
+md = "affected-services"
+val = ["host-containers-admin"]
+
+[[metadata]]
+key = "settings.host-containers.control"
+md = "affected-services"
+val = ["host-containers-control"]
 
 # NTP
 

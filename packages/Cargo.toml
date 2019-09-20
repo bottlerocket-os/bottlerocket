@@ -50,7 +50,6 @@ members = [
     "rust",
     "sdk",
     "socat",
-    "ssm",
     "strace",
     "systemd",
     "updater",

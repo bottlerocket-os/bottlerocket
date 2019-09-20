@@ -187,9 +187,9 @@ impl SystemdUnit {
         }
     }
 
-    /// Starts the current systemd unit
-    fn start(&self) -> Result<()> {
-        run(&["start", &self.unit])
+    /// Starts the current systemd unit with the `--no-block` option
+    fn start_no_block(&self) -> Result<()> {
+        run(&["start", "--no-block", &self.unit])
     }
 
     /// Stops the current systemd unit
@@ -321,9 +321,10 @@ fn main() -> Result<()> {
     match SettingState::query(args.setting)? {
         SettingState::Enabled => {
             info!("Starting and enabling unit {}", &args.systemd_unit);
-            systemd_unit.start()?;
-            systemd_unit.enable()?;
             systemd_daemon_reload()?;
+            systemd_unit.enable()?;
+            // Don't block on starting the unit
+            systemd_unit.start_no_block()?;
         }
 
         SettingState::Disabled => {
