@@ -6,8 +6,8 @@ timezone = "America/Los_Angeles"
 hostname = "localhost"
 
 [settings.updates]
-metadata-base-url = "https://cdn.thar.amazonlinux.a2z.com/updates/metadata/"
-target-base-url = "https://cdn.thar.amazonlinux.a2z.com/updates/targets/"
+metadata-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/metadata/"
+target-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/targets/"
 
 [services.hostname]
 configuration-files = ["hostname"]
