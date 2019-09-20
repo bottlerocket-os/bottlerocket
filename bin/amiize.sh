@@ -450,9 +450,9 @@ while true; do
       --instance-ids "${instance}")
    check_return ${?} "Couldn't describe instance!" || continue
 
-   jq_host_query=".Reservations[].Instances[].PublicIpAddress"
+   jq_host_query=".Reservations[].Instances[].PublicDnsName"
    host=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_host_query}")
-   check_return ${?} "Couldn't find host ip address in describe-instances output!" || continue
+   check_return ${?} "Couldn't find hostname in describe-instances output!" || continue
 
    jq_rootvolumeid_query=".Reservations[].Instances[].BlockDeviceMappings[] | select(.DeviceName == \"${ROOT_DEVICE}\") | .Ebs.VolumeId"
    root_volume=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_rootvolumeid_query}")
@@ -464,7 +464,7 @@ while true; do
 
    [ -n "${host}" ] && [ -n "${root_volume}" ] && [ -n "${data_volume}" ]
    check_return ${?} "Couldn't get hostname and volumes from instance description!" || continue
-   echo "Found IP '${host}' and root volume '${root_volume}' and data volume '${data_volume}'"
+   echo "Found hostname '${host}' and root volume '${root_volume}' and data volume '${data_volume}'"
 
    echo "Waiting for SSH to be accessible"
    tries=0
