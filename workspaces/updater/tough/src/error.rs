@@ -45,6 +45,14 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    /// A file from a `file:///` URL could not be opened.
+    #[snafu(display("Failed to read {}: {}", path.display(), source))]
+    FileRead {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
     /// A downloaded target's checksum does not match the checksum listed in the repository
     /// metadata.
     #[snafu(display(
