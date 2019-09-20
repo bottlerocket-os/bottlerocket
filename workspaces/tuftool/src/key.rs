@@ -55,8 +55,10 @@ impl KeyPair {
             KeyPair::Rsa(key_pair) => Key::Rsa {
                 keyval: RsaKey {
                     public: key_pair.public_key().as_ref().to_vec().into(),
+                    _extra: HashMap::new(),
                 },
                 scheme: RsaScheme::RsassaPssSha256,
+                _extra: HashMap::new(),
             },
         }
     }

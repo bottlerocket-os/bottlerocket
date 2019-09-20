@@ -1,41 +1,33 @@
 use crate::error::Result;
 use crate::io::{DigestAdapter, MaxSizeAdapter};
 use reqwest::{Client, Url};
-#[cfg(not(test))]
 use snafu::ensure;
+use std::fs::File;
 use std::io::Read;
+use std::path::PathBuf;
 
-// Test mock that allows fetching from file:/// URLs relative to crate root
-#[cfg(test)]
-fn fetch(_: &Client, url: Url) -> Result<impl Read> {
-    use std::fs::File;
-    use std::path::PathBuf;
-
-    assert!(
-        url.scheme() == "file",
-        "non-file URL schemes not supported in tests"
-    );
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(url.path());
-    Ok(File::open(path).unwrap())
-}
-
-#[cfg(not(test))]
-fn fetch(client: &Client, url: Url) -> Result<impl Read> {
+fn fetch(client: &Client, url: Url) -> Result<Box<dyn Read>> {
     use crate::error;
     use snafu::ResultExt;
 
-    let response = client
-        .get(url.clone())
-        .send()
-        .context(error::Request { url: url.clone() })?;
-    ensure!(
-        !response.status().is_client_error() && !response.status().is_server_error(),
-        error::ResponseStatus {
-            code: response.status(),
-            url
-        }
-    );
-    Ok(response)
+    if url.scheme() == "file" {
+        let path = PathBuf::from(url.path());
+        let file = File::open(&path).context(error::FileRead { path })?;
+        Ok(Box::new(file) as Box<dyn Read>)
+    } else {
+        let response = client
+            .get(url.clone())
+            .send()
+            .context(error::Request { url: url.clone() })?;
+        ensure!(
+            !response.status().is_client_error() && !response.status().is_server_error(),
+            error::ResponseStatus {
+                code: response.status(),
+                url
+            }
+        );
+        Ok(Box::new(response))
+    }
 }
 
 pub(crate) fn fetch_max_size(

@@ -1,0 +1,49 @@
+{
+ "signatures": [
+  {
+   "keyid": "c8022fa1e9b9cb239a6b362bbdffa9649e61ad2cb699d2e4bc4fdf7930a0e64a",
+   "sig": "9408b46569e622a46f1d35d9fa3c10e17a9285631ced4f2c9c2bba2c2842413fcb796db4e81d6f988fc056c21c407fdc3c10441592cf1e837e088f2e2dfd5403"
+  }
+ ],
+ "signed": {
+  "_type": "targets",
+  "delegations": {
+   "keys": {
+    "c8022fa1e9b9cb239a6b362bbdffa9649e61ad2cb699d2e4bc4fdf7930a0e64a": {
+     "keyid_hash_algorithms": [
+      "sha256",
+      "sha512"
+     ],
+     "keytype": "ed25519",
+     "keyval": {
+      "public": "fcf224e55fa226056adf113ef1eb3d55e308b75b321c8c8316999d8c4fd9e0d9"
+     },
+     "scheme": "ed25519"
+    }
+   },
+   "roles": [
+    {
+     "keyids": [
+      "c8022fa1e9b9cb239a6b362bbdffa9649e61ad2cb699d2e4bc4fdf7930a0e64a"
+     ],
+     "name": "role2",
+     "paths": [],
+     "terminating": false,
+     "threshold": 1
+    }
+   ]
+  },
+  "expires": "2030-01-01T00:00:00Z",
+  "spec_version": "1.0.0",
+  "targets": {
+   "file3.txt": {
+    "hashes": {
+     "sha256": "141f740f53781d1ca54b8a50af22cbf74e44c21a998fa2a8a05aaac2c002886b",
+     "sha512": "ef5beafa16041bcdd2937140afebd485296cd54f7348ecd5a4d035c09759608de467a7ac0eb58753d0242df873c305e8bffad2454aa48f44480f15efae1cacd0"
+    },
+    "length": 28
+   }
+  },
+  "version": 1
+ }
+}
