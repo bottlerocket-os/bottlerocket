@@ -53,6 +53,7 @@ members = [
     "socat",
     "strace",
     "systemd",
+    "tcpdump",
     "updater",
     "util-linux",
     "wicked",

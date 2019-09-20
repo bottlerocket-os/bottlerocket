@@ -1686,6 +1686,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tcpdump"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+ "glibc 0.1.0",
+ "libpcap 0.1.0",
+]
+
+[[package]]
 name = "thread_local"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
