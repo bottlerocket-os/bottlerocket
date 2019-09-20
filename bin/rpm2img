@@ -72,6 +72,7 @@ rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
 if [[ "${ARCH}" == "x86_64" ]]; then
+  SYS_ROOT="x86_64-thar-linux-gnu/sys-root"
   # MBR and BIOS-BOOT
   echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
   "${ROOT_MOUNT}/sbin/grub-bios-setup" \
@@ -83,6 +84,7 @@ if [[ "${ARCH}" == "x86_64" ]]; then
 
   rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
 else
+  SYS_ROOT="aarch64-thar-linux-gnu/sys-root"
   # For aarch64 we need an EFI partition instead, formatted
   # FAT32 with the .efi binary at the correct path, eg /efi/boot.
   # grub-mkimage has put bootaa64.efi at /boot/efi/EFI/BOOT
@@ -107,6 +109,9 @@ fi
 BOOT_MOUNT="/mnt/boot"
 mkdir "${BOOT_MOUNT}"
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
+
+# Set the Thar flavor
+echo "VARIANT_ID=${FLAVOR}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 
 # THAR-ROOT-A
 mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 900M

@@ -84,7 +84,6 @@ NAME=Thar
 PRETTY_NAME="Thar, The Operating System"
 ID=thar
 VERSION_ID=%{version}
-VARIANT_ID=%{_cross_image_name}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}

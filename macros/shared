@@ -1,5 +1,4 @@
 %_cross_vendor thar
-%_cross_image_name %{getenv:THAR_FLAVOR}
 %_cross_libc gnu
 %_cross_os %{_cross_vendor}-%{_cross_arch}-
 %_cross_target %{_cross_arch}-%{_cross_vendor}-linux-%{_cross_libc}
