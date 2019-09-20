@@ -79,6 +79,11 @@ key = "settings.updates"
 md = "affected-services"
 val = ["updog"]
 
+[[metadata]]
+key = "settings.updates.seed"
+md = "setting-generator"
+val = "bork seed"
+
 # HostContainers
 
 [settings.host-containers.admin]

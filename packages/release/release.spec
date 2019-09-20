@@ -37,6 +37,7 @@ Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}kernel
 Requires: %{_cross_os}kernel-modules
+Requires: %{_cross_os}bork
 Requires: %{_cross_os}moondog
 Requires: %{_cross_os}netdog
 Requires: %{_cross_os}signpost

@@ -56,7 +56,13 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 Summary: Updates settings dynamically based on user-specified generators
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 Requires: %{_cross_os}pluto = %{version}-%{release}
+Requires: %{_cross_os}bork = %{version}-%{release}
 %description -n %{_cross_os}sundog
+%{summary}.
+
+%package -n %{_cross_os}bork
+Summary: Dynamic setting generator for updog
+%description -n %{_cross_os}bork
 %{summary}.
 
 %package -n %{_cross_os}pluto
@@ -101,7 +107,7 @@ Summary: Commits settings from user data, defaults, and generators at boot
 
 for p in \
   apiclient \
-  moondog netdog sundog pluto \
+  moondog netdog sundog pluto bork \
   thar-be-settings servicedog storewolf settings-committer \
   migration/migrator ;
 do
@@ -120,7 +126,7 @@ done
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiclient apiserver \
-  moondog netdog sundog pluto \
+  moondog netdog sundog pluto bork \
   thar-be-settings servicedog storewolf settings-committer \
   migrator ;
 do
@@ -166,6 +172,9 @@ install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
+
+%files -n %{_cross_os}bork
+%{_cross_bindir}/bork
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
