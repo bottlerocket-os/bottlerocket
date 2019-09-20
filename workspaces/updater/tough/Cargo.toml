@@ -17,6 +17,7 @@ tough_schema = { path = "../tough_schema" }
 
 [dev-dependencies]
 hex-literal = "0.2.0"
+tempfile = "3.1.0"
 
 [features]
 default = ["rustls-tls"]
