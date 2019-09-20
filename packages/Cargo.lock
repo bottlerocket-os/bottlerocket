@@ -910,6 +910,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "libpcap"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+ "glibc 0.1.0",
+]
+
+[[package]]
 name = "libseccomp"
 version = "0.1.0"
 dependencies = [
