@@ -1,0 +1,12 @@
+[Unit]
+Description=When's Updog?
+Requires=network.target
+After=apiserver.target
+
+[Timer]
+Persistent=true
+OnBootSec=1m
+OnUnitActiveSec=30min
+
+[Install]
+WantedBy=multi-user.target

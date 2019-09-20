@@ -1,0 +1,30 @@
+{
+  "updates": [
+    {
+      "flavor": "thar-aws-eks",
+      "arch": "x86_64",
+      "version": "1.13.0",
+      "status": "Ready",
+      "max_version": "1.20.0",
+      "waves": {
+        "0": "2019-10-06T15:00:00Z",
+        "500":"2019-10-07T15:00:00Z",
+        "1024":"2019-10-08T15:00:00Z"
+      },
+      "images": {
+        "boot": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
+        "root": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
+        "hash": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img"
+      }
+    }
+  ],
+  "migrations": {
+    "(1.0, 1.1)": ["migrate_1.1_foo"],
+    "(1.1, 1.2)": ["migrate_1.2_foo", "migrate_1.2_bar"]
+  },
+  "datastore_versions": {
+    "1.11.0": "1.0",
+    "1.12.0": "1.1",
+    "1.13.0": "1.2"
+  }
+}

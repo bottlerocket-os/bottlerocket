@@ -1,0 +1,33 @@
+{
+  "updates": [
+    {
+      "flavor": "thar-aws-eks",
+      "arch": "x86_64",
+      "version": "1.5.0",
+      "status": "Ready",
+      "max_version": "1.5.0",
+      "waves": {
+        "0": "2019-8-06T15:00:00Z",
+        "500":"2019-8-07T15:00:00Z",
+        "1024":"2019-8-31T15:00:00Z"
+      },
+      "images": {
+        "boot": "thar-updog-test-boot-1.1.0.img",
+        "root": "thar-updog-test-root-1.1.0.img",
+        "hash": "thar-updog-test-hash-1.1.0.img"
+      }
+    }
+  ],
+  "migrations": {
+    "(1.0, 1.1)": [ "migration_1.1_a", "migration_1.1_b"],
+    "(1.1, 1.2)": [ "migration_1.2_skip" ],
+    "(1.1, 1.3)": [ "migration_1.3_shortcut"],
+    "(1.2, 1.3)": [ "migration_1.3_skip" ]
+  },
+  "datastore_versions": {
+    "1.0.0": "1.0",
+    "1.1.0": "1.1",
+    "1.2.0": "1.2",
+    "1.5.0": "1.3"
+  }
+}
