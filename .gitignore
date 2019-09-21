@@ -1,4 +1,5 @@
 /build
 *.tar.*
 **/target/
+**/vendor/
 /.cargo
