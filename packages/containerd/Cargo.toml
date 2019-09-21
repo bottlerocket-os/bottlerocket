@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/containerd/containerd/archive/v1.2.6/containerd-1.2.6.tar.gz"
-sha512 = "287b064cb3e57369e34f6debb434526d6bd4857e337e489c56e4ca484c66e161bbda911b4fc29cb49808a756f6ec7af5629e46d693644500e3bf2d9e45e87e73"
+url = "https://github.com/containerd/containerd/archive/v1.2.9/containerd-1.2.9.tar.gz"
+sha512 = "60c7d08db3796caa8148f242f8386ff530943cef19fe73c72787fd7bbf2420feac06cadd558afc93d2baf168817d679245bf2ac9feb169547286cb312818be85"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
