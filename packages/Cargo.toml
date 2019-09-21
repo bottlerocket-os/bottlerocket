@@ -24,6 +24,7 @@ members = [
     "host-containers",
     "iproute",
     "iptables",
+    "iputils",
     "kernel",
     "kmod",
     "kubernetes",
