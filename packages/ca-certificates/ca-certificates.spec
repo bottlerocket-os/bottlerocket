@@ -1,10 +1,10 @@
 Name: %{_cross_os}ca-certificates
-Version: 2019.05.15
+Version: 2019.08.28
 Release: 1%{?dist}
 Summary: CA certificates extracted from Mozilla
 License: MPL 2.0
 URL: https://curl.haxx.se/docs/caextract.html
-Source0: https://curl.haxx.se/ca/cacert-2019-05-15.pem
+Source0: https://curl.haxx.se/ca/cacert-2019-08-28.pem
 Source1: ca-certificates.conf
 
 %description
