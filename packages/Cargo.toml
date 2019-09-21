@@ -17,6 +17,7 @@ members = [
     "docker-init",
     "docker-proxy",
     "filesystem",
+    "findutils",
     "glibc",
     "golang",
     "grub",

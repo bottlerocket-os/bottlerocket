@@ -470,6 +470,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "findutils"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+ "glibc 0.1.0",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
