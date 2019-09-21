@@ -1171,6 +1171,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "procps"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+ "glibc 0.1.0",
+ "ncurses 0.1.0",
+]
+
+[[package]]
 name = "publicsuffix"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

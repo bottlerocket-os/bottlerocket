@@ -47,6 +47,7 @@ members = [
     "libxcrypt",
     "ncurses",
     "preinit",
+    "procps",
     "readline",
     "release",
     "runc",
