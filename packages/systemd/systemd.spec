@@ -161,6 +161,10 @@ CONFIGURE_OPTS=(
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/run.conf
 
+# Remove all stock network configurations, as they can interfere
+# with container networking by attempting to manage veth devices.
+rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
+
 %files
 %{_cross_bindir}/busctl
 %{_cross_bindir}/journalctl
