@@ -44,6 +44,7 @@
   CXXFLAGS="${CXXFLAGS:-%{_cross_cxxflags}}" ; export CXXFLAGS ; \
   LDFLAGS="${LDFLAGS:-%{_cross_ldflags}}" ; export LDFLAGS ; \
   PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
+  PKG_CONFIG_ALLOW_CROSS=1 ; export PKG_CONFIG_ALLOW_CROSS ; \
 
 %cross_configure \
   %set_cross_build_flags \
@@ -153,6 +154,7 @@ CROSS_COMPILATION_CONF_EOF\
   CXX_FOR_TARGET="%{_cross_target}-g++" ; export CXX_FOR_TARGET ; \
   CGO_ENABLED=1 ; export CGO_ENABLED ; \
   PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
+  PKG_CONFIG_ALLOW_CROSS=1 ; export PKG_CONFIG_ALLOW_CROSS ; \
 
 %cross_go_setup() \
   mkdir -p GOPATH/src/%2 ; \
