@@ -32,13 +32,17 @@ type Agent struct {
 	progress progression
 }
 
-func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform) *Agent {
+func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform, nodeName string) (*Agent, error) {
+	if nodeName == "" {
+		return nil, errors.New("nodeName must be provided for Agent to manage")
+	}
 	return &Agent{
 		log:      log,
 		kube:     kube,
 		platform: plat,
+		nodeName: nodeName,
 		state:    initialState(),
-	}
+	}, nil
 }
 
 func (a *Agent) check() error {
@@ -60,7 +64,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	group := workgroup.WithContext(ctx)
 
 	ns := nodestream.New(a.log.WithField("worker", "informer"), a.kube, nodestream.Config{
-		NodeName: "minikube",
+		NodeName: a.nodeName,
 	}, a.handler())
 
 	group.Work(ns.Run)

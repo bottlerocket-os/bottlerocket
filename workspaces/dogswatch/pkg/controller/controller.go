@@ -15,11 +15,11 @@ type Controller struct {
 	manager *ActionManager
 }
 
-func New(log logging.Logger, kube kubernetes.Interface) (*Controller, error) {
+func New(log logging.Logger, kube kubernetes.Interface, nodeName string) (*Controller, error) {
 	return &Controller{
 		log:     log,
 		kube:    kube,
-		manager: newManager(log.WithField("worker", "manager"), kube),
+		manager: newManager(log.WithField("worker", "manager"), kube, nodeName),
 	}, nil
 }
 

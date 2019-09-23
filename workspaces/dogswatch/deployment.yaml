@@ -1,0 +1,189 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: thar
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: thar-dogswatch-controller
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: thar-dogswatch-controller
+subjects:
+  - kind: ServiceAccount
+    name: dogswatch-controller
+    namespace: thar
+roleRef:
+  kind: ClusterRole
+  name: thar-dogswatch-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: thar-dogswatch-agent
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: thar-dogswatch-agent
+subjects:
+  - kind: ServiceAccount
+    name: dogswatch-agent
+    namespace: thar
+roleRef:
+  kind: ClusterRole
+  name: thar-dogswatch-agent
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dogswatch-controller
+  namespace: thar
+  annotations:
+    kubernetes.io/service-account.name: dogswatch-controller
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dogswatch-agent
+  namespace: thar
+  annotations:
+    kubernetes.io/service-account.name: dogswatch-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dogswatch-controller
+  namespace: thar
+  labels:
+    name: dogswatch-controller
+    app: dogswatch-controller
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: dogswatch-controller
+  template:
+    metadata:
+      namespace: thar
+      labels:
+        name: dogswatch-controller
+        app: dogswatch-controller
+    spec:
+      serviceAccountName: dogswatch-controller
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: thar.amazonaws.com/platform-version
+                    operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 10
+              podAffinityTerm:
+                topologyKey: thar.amazonaws.com/platform-version
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: ["dogswatch-agent"]
+      containers:
+      - name: dogswatch
+        image: @containerRef@
+        imagePullPolicy: Never
+        args:
+          - -controller
+          - -debug
+          - -nodeName
+          - $(NODE_NAME)
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dogswatch-agent
+  namespace: thar
+  labels:
+    dogswatch: agent
+spec:
+  selector:
+    matchLabels:
+      name: dogswatch-agent
+  template:
+    metadata:
+      labels:
+        name: dogswatch-agent
+        app: dogswatch-agent
+    spec:
+      serviceAccountName: dogswatch-agent
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: thar.amazonaws.com/platform-version
+                    operator: Exists
+      # TODO: remove, not needed for a DaemonSet, per
+      # https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/ the
+      # created Pods already have the toleration.
+      # 
+      # tolerations:
+      # # Scheduled on a Thar Node even when its still priming itself. The Node's
+      # # Agent needs to clear it for use - the controller will clear this taint
+      # # after the agent makes its intent clearing the Node for use.
+      # - key: node.kubernetes.io/unschedulable
+      #   effect: NoSchedule
+      containers:
+      - name: dogswatch
+        image: @containerRef@
+        imagePullPolicy: Never
+        args:
+          - -agent
+          - -debug
+          - -nodeName
+          - $(NODE_NAME)
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName          
+        securityContext:
+          privileged: true
+        resources: 
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+          - name: sys-root
+            mountPath: /sys-root
+      volumes:
+        - name: sys-root
+          hostPath:
+            path: /sys-root
+            type: DirectoryOrCreate

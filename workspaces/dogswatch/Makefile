@@ -15,3 +15,14 @@ $(GOBIN):
 
 test:
 	go test -v $(GOPKGS)
+
+container: vendor
+	docker build --network=host -t dogswatch:$$(git describe --always --dirty) .
+
+vendor: go.sum go.mod
+	go mod vendor
+	touch vendor/
+
+deploy:
+	sed 's/@containerRef@/dogswatch:$(shell git describe --always --dirty)/g' ./deployment.yaml \
+		| kubectl apply -f -

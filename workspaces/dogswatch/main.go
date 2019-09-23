@@ -20,6 +20,7 @@ var (
 	flagAgent      = flag.Bool("agent", false, "Run agent component")
 	flagController = flag.Bool("controller", false, "Run controller component")
 	flagLogDebug   = flag.Bool("debug", false, "")
+	flagNodeName   = flag.String("nodeName", "", "nodeName of the Node that this process is running on")
 )
 
 func main() {
@@ -40,6 +41,9 @@ func main() {
 	defer cancel()
 
 	switch {
+	case *flagNodeName == "":
+		log.Errorf("nodeName to operate under must be provided")
+		os.Exit(1)
 	case *flagController && *flagAgent:
 		log.Error("cannot run both agent and controller")
 		os.Exit(1)
@@ -48,12 +52,12 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	case *flagController:
-		err = runController(ctx, kube)
+		err = runController(ctx, kube, *flagNodeName)
 		if err != nil {
 			log.WithError(err).Fatalf("controller stopped")
 		}
 	case *flagAgent:
-		err = runAgent(ctx, kube)
+		err = runAgent(ctx, kube, *flagNodeName)
 		if err != nil {
 			log.WithError(err).Fatalf("agent stopped")
 		}
@@ -61,22 +65,25 @@ func main() {
 	log.Info("bark bark! 🐕")
 }
 
-func runController(ctx context.Context, kube kubernetes.Interface) error {
+func runController(ctx context.Context, kube kubernetes.Interface, nodeName string) error {
 	log := logging.New("controller")
-	c, err := controller.New(log, kube)
+	c, err := controller.New(log, kube, nodeName)
 	if err != nil {
 		return errors.WithMessage(err, "initialization error")
 	}
 	return errors.WithMessage(c.Run(ctx), "run error")
 }
 
-func runAgent(ctx context.Context, kube kubernetes.Interface) error {
+func runAgent(ctx context.Context, kube kubernetes.Interface, nodeName string) error {
 	log := logging.New("agent")
 	platform, err := updog.New()
 	if err != nil {
 		return errors.WithMessage(err, "could not setup platform for agent")
 	}
-	a := agent.New(log, kube, platform)
+	a, err := agent.New(log, kube, platform, nodeName)
+	if err != nil {
+		return err
+	}
 
 	return errors.WithMessage(a.Run(ctx), "run error")
 }

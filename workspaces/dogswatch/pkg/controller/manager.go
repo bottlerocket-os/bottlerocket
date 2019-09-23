@@ -15,13 +15,14 @@ var _ nodestream.Handler = (*ActionManager)(nil)
 // ActionManager handles node changes according to policy and runs a node update
 // flow to completion as allowed by policy.
 type ActionManager struct {
-	log    logging.Logger
-	kube   kubernetes.Interface
-	policy Policy
-	input  chan *intent.Intent
+	log      logging.Logger
+	kube     kubernetes.Interface
+	policy   Policy
+	input    chan *intent.Intent
+	nodeName string
 }
 
-func newManager(log logging.Logger, kube kubernetes.Interface) *ActionManager {
+func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) *ActionManager {
 	return &ActionManager{
 		log:    log,
 		kube:   kube,
