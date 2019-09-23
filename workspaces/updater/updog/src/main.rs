@@ -73,18 +73,19 @@ struct Update {
 }
 
 impl Update {
-    fn update_ready(&self, seed: u64) -> Result<bool> {
+    fn update_ready(&self, seed: u64) -> bool {
         // Has this client's wave started
         if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
-            return Ok(*wave <= Utc::now());
+            return *wave <= Utc::now();
         }
 
         // Alternately have all waves passed
         if let Some((_, wave)) = self.waves.iter().last() {
-            return Ok(*wave <= Utc::now());
+            return *wave <= Utc::now();
         }
 
-        return error::NoWave.fail();
+        // Or there are no waves
+        true
     }
 
     fn jitter(&self, seed: u64) -> Option<u64> {
@@ -599,7 +600,7 @@ fn main_inner() -> Result<()> {
                 &flavor,
                 arguments.force_version,
             ) {
-                if u.update_ready(config.seed)? || arguments.ignore_wave {
+                if u.update_ready(config.seed) || arguments.ignore_wave {
                     println!("Starting update to {}", u.version);
 
                     let root_path = update_prepare(&repository, &manifest, u)?;
@@ -707,27 +708,19 @@ mod tests {
         };
 
         assert!(
-            update.update_ready(config.seed).is_err(),
-            "Imaginary wave chosen"
+            update.update_ready(config.seed),
+            "No waves specified but no update"
         );
 
         update
             .waves
             .insert(1024, Utc::now() + TestDuration::hours(1));
 
-        let result = update.update_ready(config.seed);
-        assert!(result.is_ok());
-        if let Ok(r) = result {
-            assert!(!r, "Incorrect wave chosen");
-        }
+        assert!(!update.update_ready(config.seed), "Incorrect wave chosen");
 
         update.waves.insert(0, Utc::now() - TestDuration::hours(1));
 
-        let result = update.update_ready(config.seed);
-        assert!(result.is_ok());
-        if let Ok(r) = result {
-            assert!(r, "Update wave missed");
-        }
+        assert!(update.update_ready(config.seed), "Update wave missed");
     }
 
     #[test]
@@ -758,8 +751,10 @@ mod tests {
             .waves
             .insert(512, Utc::now() - TestDuration::hours(1));
 
-        let result = update.update_ready(config.seed).unwrap();
-        assert!(result, "All waves passed but no update");
+        assert!(
+            update.update_ready(config.seed),
+            "All waves passed but no update"
+        );
     }
 
     #[test]

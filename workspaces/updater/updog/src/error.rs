@@ -171,9 +171,6 @@ pub(crate) enum Error {
     #[snafu(display("No update available"))]
     NoUpdate { backtrace: Backtrace },
 
-    #[snafu(display("Updog is not part of any wave"))]
-    NoWave { backtrace: Backtrace },
-
     #[snafu(display("Failed to open partition {}: {}", path.display(), source))]
     OpenPartition {
         path: PathBuf,
