@@ -94,13 +94,11 @@ impl Update {
             .waves
             .range((Excluded(seed), Excluded(MAX_SEED)))
             .next();
-        match (prev, next) {
-            (Some((_, start)), Some((_, end))) => {
-                if Utc::now() < *end {
-                    return Some((end.timestamp() - start.timestamp()) as u64);
-                }
+        if let (Some(start), Some(end)) = (prev, next) {
+            if Utc::now() < *end.1 {
+                #[allow(clippy::cast_sign_loss)]
+                return Some((end.1.timestamp() - start.1.timestamp()) as u64);
             }
-            _ => (),
         }
         None
     }
@@ -206,7 +204,7 @@ fn update_required<'a>(
     _config: &Config,
     manifest: &'a Manifest,
     version: &Version,
-    flavor: &String,
+    flavor: &str,
     force_version: Option<Version>,
 ) -> Option<&'a Update> {
     let mut updates: Vec<&Update> = manifest
@@ -302,18 +300,14 @@ fn copy_migration_from_image(mount: &PathBuf, name: &str) -> Result<()> {
     Ok(())
 }
 
-fn migration_targets<'a>(
-    from: &'a DVersion,
-    to: &DVersion,
-    manifest: &'a Manifest,
-) -> Result<Vec<String>> {
+fn migration_targets(from: DVersion, to: DVersion, manifest: &Manifest) -> Result<Vec<String>> {
     let mut targets = Vec::new();
     let mut version = from;
     while version != to {
         let mut migrations: Vec<&(DVersion, DVersion)> = manifest
             .migrations
             .keys()
-            .filter(|(f, t)| f == version && t <= to)
+            .filter(|(f, t)| *f == version && *t <= to)
             .collect();
 
         // There can be muliple paths to the same target, eg.
@@ -326,11 +320,11 @@ fn migration_targets<'a>(
             if let Some(migrations) = manifest.migrations.get(transition) {
                 targets.extend_from_slice(&migrations);
             }
-            version = &transition.1;
+            version = transition.1;
         } else {
             return error::MissingMigration {
-                current: *version,
-                target: *to,
+                current: version,
+                target: to,
             }
             .fail();
         }
@@ -379,15 +373,12 @@ fn retrieve_migrations(
     if !dir.exists() {
         fs::create_dir(&dir).context(error::DirCreate { path: &dir })?;
     }
-    for name in migration_targets(start, target, &manifest)? {
+    for name in migration_targets(*start, *target, &manifest)? {
         let path = dir.join(&name);
         if let Some(mount) = &root_path {
-            match copy_migration_from_image(mount, &name) {
-                Err(e) => {
-                    println!("Migration not copied from image: {}", e);
-                    write_target_to_disk(repository, &name, path)?;
-                }
-                _ => (),
+            if let Err(e) = copy_migration_from_image(mount, &name) {
+                println!("Migration not copied from image: {}", e);
+                write_target_to_disk(repository, &name, path)?;
             }
         } else {
             write_target_to_disk(repository, &name, path)?;
@@ -418,9 +409,8 @@ fn update_prepare(
 
     if let Some(path) = root_path {
         // Unmount the target root image - warn only on failure
-        match unmount(path, UnmountFlags::empty()) {
-            Err(e) => eprintln!("Failed to unmount root image: {}", e),
-            _ => (),
+        if let Err(e) = unmount(path, UnmountFlags::empty()) {
+            eprintln!("Failed to unmount root image: {}", e);
         }
         if let Some(ld) = ld {
             if ld.detach().is_err() {
@@ -462,12 +452,9 @@ fn update_image(
     // TODO Do we want to recover the inactive side on an error?
     if let Some(path) = root_path {
         // Copy root from already downloaded image
-        match fs::copy(path, &inactive.root) {
-            Err(e) => {
-                println!("Root copy failed, redownloading - {}", e);
-                write_target_to_disk(repository, &update.images.root, &inactive.root)?;
-            }
-            _ => (),
+        if let Err(e) = fs::copy(path, &inactive.root) {
+            println!("Root copy failed, redownloading - {}", e);
+            write_target_to_disk(repository, &update.images.root, &inactive.root)?;
         }
     } else {
         write_target_to_disk(repository, &update.images.root, &inactive.root)?;
@@ -577,16 +564,15 @@ fn main_inner() -> Result<()> {
                             "{}",
                             serde_json::to_string(&u).context(error::UpdateSerialize)?
                         );
+                    } else if let Some(datastore_version) =
+                        manifest.datastore_versions.get(&u.version)
+                    {
+                        println!("{}-{} ({})", u.flavor, u.version, datastore_version);
                     } else {
-                        if let Some(datastore_version) = manifest.datastore_versions.get(&u.version)
-                        {
-                            println!("{}-{} ({})", u.flavor, u.version, datastore_version);
-                        } else {
-                            return error::MissingMapping {
-                                version: u.version.to_string(),
-                            }
-                            .fail();
+                        return error::MissingMapping {
+                            version: u.version.to_string(),
                         }
+                        .fail();
                     }
                 }
                 _ => return error::NoUpdate.fail(),
@@ -825,7 +811,7 @@ mod tests {
 
         let from = DVersion::from_str("1.0").unwrap();
         let to = DVersion::from_str("1.3").unwrap();
-        let targets = migration_targets(&from, &to, &manifest)?;
+        let targets = migration_targets(from, to, &manifest)?;
 
         assert!(targets.len() == 3);
         let mut i = targets.iter();

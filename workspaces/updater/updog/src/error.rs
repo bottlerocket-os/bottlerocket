@@ -127,9 +127,6 @@ pub(crate) enum Error {
         name: String,
     },
 
-    #[snafu(display("Error retrieving migration helpers"))]
-    MigrationError { backtrace: Backtrace },
-
     #[snafu(display("Migration not found in image: {:?}", name))]
     MigrationNotLocal { backtrace: Backtrace, name: PathBuf },
 

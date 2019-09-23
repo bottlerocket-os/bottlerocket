@@ -12,7 +12,7 @@ where
 {
     let mut map = BTreeMap::new();
     for ((from, to), val) in value {
-        let key = String::from(format!("({},{})", from, to));
+        let key = format!("({},{})", from, to);
         map.insert(key, val);
     }
     map.serialize(serializer)
