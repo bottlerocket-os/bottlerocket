@@ -150,6 +150,7 @@ fn load_repository(config: &Config) -> Result<Repository> {
             max_root_size: 1024 * 1024,         // 1 MiB
             max_targets_size: 1024 * 1024 * 10, // 10 MiB
             max_timestamp_size: 1024 * 1024,    // 1 MiB
+            max_root_updates: 1024,
         },
     })
     .context(error::Metadata)

@@ -1,9 +1,12 @@
 //! Tough is a client library for [TUF repositories].
 //!
-//! This client adheres to [the 1.0 *draft*, dated 2018-06-19 and last updated 2019-05-24][spec].
+//! This client adheres to [TUF version 1.0.0][spec], with the following exceptions:
+//!
+//! * Delegated roles (and TAP 3) are not yet supported.
+//! * TAP 4 (multiple repository consensus) is not yet supported.
 //!
 //! [TUF repositories]: https://theupdateframework.github.io/
-//! [spec]: https://github.com/theupdateframework/specification/blob/091e1160e68f5bff1c74cf217f595b1a71eec092/tuf-spec.md
+//! [spec]: https://github.com/theupdateframework/specification/blob/9f148556ca15da2ec5c022c8b3e6f99a028e5fe5/tuf-spec.md
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
@@ -64,6 +67,7 @@ pub struct Settings<'a, R: Read> {
 /// * `max_root_size`: 1 MiB
 /// * `max_targets_size`: 10 MiB
 /// * `max_timestamp_size`: 1 MiB
+/// * `max_root_updates`: 1024
 #[derive(Debug, Clone)]
 pub struct Limits {
     /// The maximum allowable size in bytes for downloaded root.json files.
@@ -76,6 +80,9 @@ pub struct Limits {
 
     /// The maximum allowable size in bytes for the downloaded timestamp.json file.
     pub max_timestamp_size: u64,
+
+    /// The maximum number of updates to root.json to download.
+    pub max_root_updates: u64,
 }
 
 impl Default for Limits {
@@ -84,6 +91,7 @@ impl Default for Limits {
             max_root_size: 1024 * 1024,         // 1 MiB
             max_targets_size: 1024 * 1024 * 10, // 10 MiB
             max_timestamp_size: 1024 * 1024,    // 1 MiB
+            max_root_updates: 1024,
         }
     }
 }
@@ -137,6 +145,7 @@ impl<'a> Repository<'a> {
             settings.root,
             &datastore,
             settings.limits.max_root_size,
+            settings.limits.max_root_updates,
             &metadata_base_url,
         )?;
 
@@ -322,6 +331,7 @@ fn load_root<R: Read>(
     root: R,
     datastore: &Datastore,
     max_root_size: u64,
+    max_root_updates: u64,
     metadata_base_url: &Url,
 ) -> Result<Signed<Root>> {
     // 0. Load the trusted root metadata file. We assume that a good, trusted copy of this file was
@@ -333,6 +343,9 @@ fn load_root<R: Read>(
     root.signed
         .verify_role(&root)
         .context(error::VerifyTrustedMetadata)?;
+
+    // Used in step 1.2
+    let original_root_version = root.signed.version.get();
 
     // Used in step 1.9
     let original_timestamp_keys = root
@@ -349,7 +362,8 @@ fn load_root<R: Read>(
     // 1. Update the root metadata file. Since it may now be signed using entirely different keys,
     //    the client must somehow be able to establish a trusted line of continuity to the latest
     //    set of keys. To do so, the client MUST download intermediate root metadata files, until
-    //    the latest available one is reached.
+    //    the latest available one is reached. Therefore, it MUST temporarily turn on consistent
+    //    snapshots in order to download versioned root metadata files as described next.
     loop {
         // 1.1. Let N denote the version number of the trusted root metadata file.
         //
@@ -357,8 +371,15 @@ fn load_root<R: Read>(
         //   (because the size is unknown). The value for X is set by the authors of the
         //   application using TUF. For example, X may be tens of kilobytes. The filename used to
         //   download the root metadata file is of the fixed form VERSION_NUMBER.FILENAME.EXT
-        //   (e.g., 42.root.json). If this file is not available, then go to step 1.8.
-        let path = format!("{}.root.json", u64::from(root.signed.version) + 1);
+        //   (e.g., 42.root.json). If this file is not available, or we have downloaded more than Y
+        //   number of root metadata files (because the exact number is as yet unknown), then go to
+        //   step 1.8. The value for Y is set by the authors of the application using TUF. For
+        //   example, Y may be 2^10.
+        ensure!(
+            root.signed.version.get() < original_root_version + max_root_updates,
+            error::MaxUpdatesExceeded { max_root_updates }
+        );
+        let path = format!("{}.root.json", root.signed.version.get() + 1);
         match fetch_max_size(
             client,
             metadata_base_url.join(&path).context(error::JoinUrl {
@@ -457,6 +478,12 @@ fn load_root<R: Read>(
         let r2 = datastore.remove("snapshot.json");
         r1.and(r2)?;
     }
+
+    // 1.10. Set whether consistent snapshots are used as per the trusted root metadata file (see
+    //   Section 4.3).
+    //
+    // (This is done by checking the value of root.signed.consistent_snapshot throughout this
+    // library.)
 
     Ok(root)
 }
