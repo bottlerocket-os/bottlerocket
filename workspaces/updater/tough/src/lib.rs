@@ -26,21 +26,83 @@ use std::io::Read;
 use std::path::Path;
 use tough_schema::{Role, RoleType, Root, Signed, Snapshot, Timestamp};
 
+/// Repository fetch settings, provided to [`Repository::load`].
+#[derive(Debug, Clone)]
+pub struct Settings<'a, R: Read> {
+    /// A [`Read`]er to the trusted root metadata file, which you must ship with your software
+    /// using an out-of-band-process.
+    ///
+    /// This should be a copy of the most recent root.json from your repository. (It's okay if it
+    /// becomes out of date later; the client establishes trust up to the most recent root.json
+    /// file.)
+    pub root: R,
+
+    /// A [`Path`] to a directory on a persistent filesystem. Tough stores the most recently
+    /// fetched timestamp, snapshot, and targets metadata files here to detect version rollback
+    /// attacks. The directory must exist prior to calling [`Repository::load`].
+    pub datastore: &'a Path,
+
+    /// The URL base for TUF metadata (such as timestamp.json).
+    pub metadata_base_url: &'a str,
+
+    /// The URL base for targets.
+    pub target_base_url: &'a str,
+
+    /// Limits used when fetching repository metadata.
+    ///
+    /// This parameter implements [`Default`]; see its documentation for details.
+    pub limits: Limits,
+}
+
+/// Limits used when fetching repository metadata.
+///
+/// These limits are implemented to prevent endless data attacks. Clients must ensure these values
+/// are set higher than what would reasonably be expected by a repository, but not so high that the
+/// amount of data could interfere with the system.
+///
+/// The [`Default`] implementation sets the following values:
+/// * `max_root_size`: 1 MiB
+/// * `max_targets_size`: 10 MiB
+/// * `max_timestamp_size`: 1 MiB
+#[derive(Debug, Clone)]
+pub struct Limits {
+    /// The maximum allowable size in bytes for downloaded root.json files.
+    pub max_root_size: u64,
+
+    /// The maximum allowable size in bytes for downloaded targets.json file **if** the size is not
+    /// listed in snapshots.json. This setting is ignored if the size of targets.json is in the
+    /// signed snapshots.json file.
+    pub max_targets_size: u64,
+
+    /// The maximum allowable size in bytes for the downloaded timestamp.json file.
+    pub max_timestamp_size: u64,
+}
+
+impl Default for Limits {
+    fn default() -> Self {
+        Self {
+            max_root_size: 1024 * 1024,         // 1 MiB
+            max_targets_size: 1024 * 1024 * 10, // 10 MiB
+            max_timestamp_size: 1024 * 1024,    // 1 MiB
+        }
+    }
+}
+
 /// A TUF repository.
 ///
 /// You can create a `Repository` using the `load` method.
 #[derive(Debug, Clone)]
-pub struct Repository {
+pub struct Repository<'a> {
     client: Client,
     consistent_snapshot: bool,
-    datastore: Datastore,
+    datastore: Datastore<'a>,
     earliest_expiration: DateTime<Utc>,
     earliest_expiration_role: RoleType,
     target_base_url: Url,
     targets: HashMap<String, Target>,
 }
 
-impl Repository {
+impl<'a> Repository<'a> {
     /// Load and verify TUF repository metadata.
     ///
     /// `root` is a [`Read`]er for the trusted root metadata file, which you must ship with your
@@ -61,31 +123,29 @@ impl Repository {
     ///
     /// `metadata_base_url` and `target_base_url` are the HTTP(S) base URLs for where the client
     /// can find metadata (such as root.json) and targets (as listed in targets.json).
-    pub fn load<R: Read, P: AsRef<Path>>(
-        root: R,
-        datastore: P,
-        max_root_size: u64,
-        max_targets_size: u64,
-        max_timestamp_size: u64,
-        metadata_base_url: &str,
-        target_base_url: &str,
-    ) -> Result<Self> {
+    pub fn load<R: Read>(settings: Settings<'a, R>) -> Result<Self> {
         let client = Client::new();
 
-        let metadata_base_url = parse_url(metadata_base_url)?;
-        let target_base_url = parse_url(target_base_url)?;
+        let metadata_base_url = parse_url(settings.metadata_base_url)?;
+        let target_base_url = parse_url(settings.target_base_url)?;
 
-        let datastore = Datastore::new(datastore)?;
+        let datastore = Datastore(settings.datastore);
 
         // 0. Load the trusted root metadata file + 1. Update the root metadata file
-        let root = load_root(&client, root, &datastore, max_root_size, &metadata_base_url)?;
+        let root = load_root(
+            &client,
+            settings.root,
+            &datastore,
+            settings.limits.max_root_size,
+            &metadata_base_url,
+        )?;
 
         // 2. Download the timestamp metadata file
         let timestamp = load_timestamp(
             &client,
             &root,
             &datastore,
-            max_timestamp_size,
+            settings.limits.max_timestamp_size,
             &metadata_base_url,
         )?;
 
@@ -98,7 +158,7 @@ impl Repository {
             &root,
             &snapshot,
             &datastore,
-            max_targets_size,
+            settings.limits.max_targets_size,
             &metadata_base_url,
         )?;
 
@@ -247,15 +307,11 @@ fn check_expired<T: Role>(datastore: &Datastore, role: &T) -> Result<()> {
     Ok(())
 }
 
-fn ensure_trailing_slash(url: &mut Cow<str>) {
+fn parse_url(url: &str) -> Result<Url> {
+    let mut url = Cow::from(url);
     if !url.ends_with('/') {
         url.to_mut().push('/');
     }
-}
-
-fn parse_url(url: &str) -> Result<Url> {
-    let mut url = Cow::from(url);
-    ensure_trailing_slash(&mut url);
     Url::parse(&url).context(error::ParseUrl { url })
 }
 

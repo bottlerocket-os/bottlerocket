@@ -3,16 +3,12 @@ use serde::Serialize;
 use snafu::ResultExt;
 use std::fs::{self, File};
 use std::io::{ErrorKind, Read};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[derive(Debug, Clone)]
-pub(crate) struct Datastore(PathBuf);
+pub(crate) struct Datastore<'a>(pub(crate) &'a Path);
 
-impl Datastore {
-    pub(crate) fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
-        Ok(Self(path.as_ref().to_owned()))
-    }
-
+impl<'a> Datastore<'a> {
     pub(crate) fn reader(&self, file: &str) -> Result<Option<impl Read>> {
         let path = self.0.join(file);
         match File::open(&path) {
