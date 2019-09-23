@@ -17,9 +17,9 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	"github.com/pkg/errors"
 	cgroups "github.com/opencontainers/runc/libcontainer/cgroups"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 )
 
 func main() {
@@ -79,7 +79,19 @@ func _main() int {
 		oci.WithHostResolvconf,
 		// Launch the container under the systemd unit's cgroup
 		oci.WithCgroup(cgroupPath),
-		withTharMounts(targetCtr),
+		// Mount in the API socket for the Thar API server, and the API client used to interact with it
+		oci.WithMounts([]runtimespec.Mount{
+			{
+				Options:     []string{"bind", "rw"},
+				Destination: "/run/api.sock",
+				Source:      "/run/api.sock",
+			},
+			// Mount in the apiclient to make API calls to the Thar API server
+			{
+				Options:     []string{"bind", "ro"},
+				Destination: "/usr/local/bin/apiclient",
+				Source:      "/usr/bin/apiclient",
+			}}),
 		withSuperpowered(superpowered),
 	)
 
@@ -167,39 +179,7 @@ func _main() int {
 	return int(code)
 }
 
-// Depending on what host container, we might want to mount different things
-// TODO Expand on this or make this unnecessary through additional settings?
-func withTharMounts(targetCtr string) oci.SpecOpts {
-	if targetCtr == "control" {
-		return oci.Compose(
-			oci.WithMounts([]runtimespec.Mount{
-				// Mount the Thar API server socket if it's the control container that's being launched
-				{
-					Options:     []string{"bind","rw"},
-					Destination: "/run/api.sock",
-					Source:      "/run/api.sock",
-				}}),
-		)
-	} else if targetCtr == "admin" {
-		return oci.Compose(
-			oci.WithMounts([]runtimespec.Mount{
-				// Mount host `/dev`
-				{
-					Options:     []string{"rbind", "rshared", "rw"},
-					Destination: "/dev",
-					Source:      "/dev",
-				},
-				{
-					Options:     []string{"rbind", "rw"},
-					Destination: "/var/log",
-					Source:      "/var/log",
-				}}),
-		)
-	}
-	return oci.Compose()
-}
-
-// Add additional container options depending on whether it's `superpowered` or not
+// Add container options depending on whether it's `superpowered` or not
 func withSuperpowered(superpowered bool) oci.SpecOpts {
 	if !superpowered {
 		return oci.Compose()
@@ -209,6 +189,12 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 		oci.WithParentCgroupDevices,
 		oci.WithPrivileged,
 		oci.WithNewPrivileges,
+		oci.WithMounts([]runtimespec.Mount{
+			{
+				Options:     []string{"rbind", "ro"},
+				Destination: "/.thar/rootfs",
+				Source:      "/",
+			}}),
 	)
 }
 
