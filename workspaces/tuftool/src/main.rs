@@ -18,7 +18,7 @@ use std::path::Path;
 use structopt::StructOpt;
 use tempfile::NamedTempFile;
 
-static SPEC_VERSION: &str = "1";
+static SPEC_VERSION: &str = "1.0.0";
 
 #[derive(Debug, StructOpt)]
 enum Command {
