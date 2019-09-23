@@ -3,7 +3,6 @@ module github.com/amazonlinux/thar/dogswatch
 go 1.12
 
 require (
-	github.com/Azure/go-autorest v11.1.2+incompatible // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
