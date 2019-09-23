@@ -45,7 +45,7 @@ impl ProjectInfo {
         entry
             .file_name()
             .to_str()
-            .map(|s| s.starts_with('.') || s == "target")
+            .map(|s| s.starts_with('.') || s == "target" || s == "vendor")
             .unwrap_or(false)
     }
 }
