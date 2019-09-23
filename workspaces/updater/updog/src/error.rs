@@ -117,6 +117,13 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to read manifest file {}: {}", path.display(), source))]
+    ManifestRead {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Metadata error: {}", source))]
     Metadata {
         source: tough::error::Error,
@@ -249,6 +256,9 @@ pub(crate) enum Error {
 
     #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]
     WavesUnordered { wave: u32, next: u32 },
+
+    #[snafu(display("Update wave start time missing"))]
+    WaveStartArg { backtrace: Backtrace },
 
     #[snafu(display("Failed writing update data to disk: {}", source))]
     WriteUpdate {
