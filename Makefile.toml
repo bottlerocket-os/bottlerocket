@@ -33,8 +33,12 @@ done
 chmod o+r -R ${CARGO_HOME}
 
 cd workspaces/host-containers/cmd/host-ctr
-go list -mod=readonly ./... >/dev/null
-go mod vendor
+docker run --rm \
+  -e GOPRIVATE='*' \
+  -e GOCACHE='/tmp/.cache' \
+  --user $(id -u):$(id -g) \
+  -v "$PWD":/usr/src/host-ctr -w /usr/src/host-ctr \
+  golang:1.12.5 /bin/bash -c "go list -mod=readonly ./... >/dev/null && go mod vendor"
 '''
 ]
 
