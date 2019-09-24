@@ -12,7 +12,6 @@ ExecStart=/usr/bin/kubelet \
     --cloud-provider aws \
     --config /etc/kubernetes/kubelet/config \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
-    --allow-privileged=true \
     --container-runtime docker \
     --network-plugin cni \
     --root-dir /var/lib/kubelet \

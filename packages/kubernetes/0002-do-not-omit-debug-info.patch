@@ -1,6 +1,6 @@
-From 00092d7d10a9094fd236bae92c704b74a27ddbcb Mon Sep 17 00:00:00 2001
+From 2ec394634c30cb960f65a875d266c7b365e77e7b Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
-Date: Mon, 24 Jun 2019 21:30:38 +0000
+Date: Fri, 20 Sep 2019 00:33:47 +0000
 Subject: [PATCH 2/2] do not omit debug info
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
@@ -9,13 +9,13 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
-index 64338a83..5216450a 100755
+index a82880a5..5454e73f 100755
 --- a/hack/lib/golang.sh
 +++ b/hack/lib/golang.sh
-@@ -688,7 +688,7 @@ kube::golang::build_binaries() {
-     # Use eval to preserve embedded quoted strings.
+@@ -779,7 +779,7 @@ kube::golang::build_binaries() {
+     host_platform=$(kube::golang::host_platform)
+ 
      local goflags goldflags goasmflags gogcflags
-     eval "goflags=(${GOFLAGS:-})"
 -    goldflags="${GOLDFLAGS:-} -s -w $(kube::version::ldflags)"
 +    goldflags="${GOLDFLAGS:-} $(kube::version::ldflags)"
      goasmflags="-trimpath=${KUBE_ROOT}"
