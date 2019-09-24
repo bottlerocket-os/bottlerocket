@@ -1,9 +1,9 @@
 [Unit]
 Description=kubernetes kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=docker.service configured.target
+After=containerd.service configured.target
 Wants=configured.target
-Requires=docker.service
+Requires=containerd.service
 
 [Service]
 Environment=/etc/kubernetes/kubelet/env
@@ -12,12 +12,13 @@ ExecStart=/usr/bin/kubelet \
     --cloud-provider aws \
     --config /etc/kubernetes/kubelet/config \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
-    --container-runtime docker \
+    --container-runtime=remote \
+    --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
+    --runtime-request-timeout=15m \
     --network-plugin cni \
     --root-dir /var/lib/kubelet \
     --cert-dir /var/lib/kubelet/pki \
     --volume-plugin-dir /var/lib/kubelet/plugins/volume/exec \
-    --experimental-dockershim-root-directory /var/lib/kubelet/dockershim \
     --node-ip ${NODE_IP} \
     --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}
 

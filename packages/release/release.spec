@@ -8,6 +8,7 @@ Source1: login
 
 Source10: hosts
 Source11: nsswitch.conf
+Source98: release-sysctl.conf
 Source99: release-tmpfiles.conf
 
 # FIXME What should own system-level file templates?
@@ -78,6 +79,9 @@ install -p -m 0644 %{S:1000} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd
 install -p -m 0644 %{S:1004} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
 
+install -d %{buildroot}%{_cross_sysctldir}
+install -p -m 0644 %{S:98} %{buildroot}%{_cross_sysctldir}/80-release.conf
+
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
@@ -102,6 +106,7 @@ install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/host-containers-sy
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig/eth0.xml
 %{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
+%{_cross_sysctldir}/80-release.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/os-release
 %{_cross_unitdir}/configured.target

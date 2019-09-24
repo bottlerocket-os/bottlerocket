@@ -10,10 +10,6 @@ included-packages = [
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
-    "docker-cli",
-    "docker-engine",
-    "docker-init",
-    "docker-proxy",
     "kubernetes",
     "release",
 ]

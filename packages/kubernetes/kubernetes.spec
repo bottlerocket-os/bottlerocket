@@ -30,6 +30,7 @@ BuildRequires: %{_cross_os}golang
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}glibc
+Requires: %{_cross_os}findutils
 
 %description
 %{summary}.
