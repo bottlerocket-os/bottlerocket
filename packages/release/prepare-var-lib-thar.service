@@ -1,0 +1,9 @@
+[Unit]
+Description=Prepare Private Directory (/var/lib/thar)
+RequiresMountsFor=/var
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/bin/mkdir -p /var/lib/thar
+RemainAfterExit=false

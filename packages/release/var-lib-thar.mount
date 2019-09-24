@@ -1,0 +1,16 @@
+[Unit]
+Description=Private Directory (/var/lib/thar)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+Wants=prepare-var-lib-thar.service
+After=prepare-var-lib-thar.service
+
+[Mount]
+What=/dev/disk/by-partlabel/THAR-PRIVATE
+Where=/var/lib/thar
+Type=ext4
+Options=defaults,noatime,nosuid,nodev
+
+[Install]
+WantedBy=local-fs.target
