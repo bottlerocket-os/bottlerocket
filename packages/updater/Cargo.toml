@@ -6,7 +6,7 @@ publish = false
 build = "build.rs"
 
 [package.metadata.build-package]
-source-groups = [ "updater" ]
+source-groups = [ "updater", "webpki-roots-shim" ]
 
 [lib]
 path = "pkg.rs"
