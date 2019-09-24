@@ -78,7 +78,7 @@ impl AddUpdateArgs {
             },
             waves: BTreeMap::new(),
         };
-        update_max_version(&mut m, &u);
+        update_max_version(&mut m, &u.max_version, Some(&u.arch), Some(&u.flavor));
         m.updates.push(u);
         write_file(&self.file, &m)
     }
@@ -216,12 +216,31 @@ impl MigrationArgs {
 }
 
 #[derive(Debug, StructOpt)]
+struct MaxVersionArgs {
+    // metadata file to create/modify
+    file: PathBuf,
+
+    // maximum valid version
+    #[structopt(short, long)]
+    max_version: Version,
+}
+
+impl MaxVersionArgs {
+    fn run(self) -> Result<()> {
+        let mut m: Manifest = load_file(&self.file)?;
+        update_max_version(&mut m, &self.max_version, None, None);
+        write_file(&self.file, &m)
+    }
+}
+
+#[derive(Debug, StructOpt)]
 #[structopt(rename_all = "kebab-case")]
 enum Command {
     Init(GeneralArgs),
     AddUpdate(AddUpdateArgs),
     AddWave(WaveArgs),
     AddMigration(MigrationArgs),
+    SetMaxVersion(MaxVersionArgs),
     RemoveUpdate(RemoveUpdateArgs),
     RemoveMigration(MigrationArgs),
     RemoveWave(WaveArgs),
@@ -239,16 +258,26 @@ fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
     Ok(())
 }
 
-/// Update the maximum version for all updates that match the architecture
-/// and flavor of some new update.
-fn update_max_version(m: &mut Manifest, new: &Update) {
+/// Update the maximum version for all updates that optionally match the
+/// architecture and flavor of some new update.
+fn update_max_version(
+    m: &mut Manifest,
+    version: &Version,
+    arch: Option<&str>,
+    flavor: Option<&str>,
+) {
     let matching: Vec<&mut Update> = m
         .updates
         .iter_mut()
-        .filter(|u| u.arch == new.arch && u.flavor == new.flavor)
+        .filter(|u| match (arch, flavor) {
+            (Some(arch), Some(flavor)) => u.arch == arch && u.flavor == flavor,
+            (Some(arch), None) => u.arch == arch,
+            (None, Some(flavor)) => u.flavor == flavor,
+            _ => true,
+        })
         .collect();
     for u in matching {
-        u.max_version = new.max_version.clone();
+        u.max_version = version.clone();
     }
 }
 
@@ -258,6 +287,7 @@ fn main_inner() -> Result<()> {
         Command::AddUpdate(args) => args.run(),
         Command::AddWave(args) => args.add(),
         Command::AddMigration(args) => args.add(),
+        Command::SetMaxVersion(args) => args.run(),
         Command::RemoveUpdate(args) => args.run(),
         Command::RemoveWave(args) => args.remove(),
         Command::RemoveMigration(args) => args.remove(),
