@@ -15,6 +15,10 @@ use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
 use crate::model::{ConfigurationFiles, Services, Settings};
 use error::Result;
 
+use std::fs::set_permissions;
+use std::fs::Permissions;
+use std::os::unix::fs::PermissionsExt;
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // sd_notify helper
@@ -76,6 +80,13 @@ where
     .bind_uds(socket_path.as_ref())
     .context(error::BindSocket {
         path: socket_path.as_ref(),
+    })?;
+
+    // The socket needs to be writeable for all users for them to be able make API calls to the API server
+    let mode = 0o0666;
+    let perms = Permissions::from_mode(mode);
+    set_permissions(socket_path.as_ref(), perms).context(error::SetPermissions {
+        mode,
     })?;
 
     // Notify system manager the UNIX socket has been initialized, so other service units can proceed
@@ -274,6 +285,7 @@ impl ResponseError for error::Error {
             ConfigApplierWrite { .. } => HttpResponse::InternalServerError(),
             SystemdNotify { .. } => HttpResponse::InternalServerError(),
             SystemdNotifyStatus {} => HttpResponse::InternalServerError(),
+            SetPermissions { .. } => HttpResponse::InternalServerError(),
         }
         .finish()
     }
