@@ -68,12 +68,10 @@ where
 
         if let Ok(regex) = r {
             if let Some(captures) = regex.captures(&key) {
-                let from = captures.name("from_ver");
-                let to = captures.name("to_ver");
-                match (from, to) {
-                    (Some(f), Some(t)) => return Ok((f.as_str(), t.as_str())),
-                    _ => (),
-                };
+                if let (Some(from), Some(to)) = (captures.name("from_ver"), captures.name("to_ver"))
+                {
+                    return Ok((from.as_str(), to.as_str()));
+                }
             }
         }
         error::BadDataVersion { key }.fail()
@@ -85,17 +83,17 @@ where
         map: &mut BTreeMap<(DVersion, DVersion), Vec<String>>,
     ) -> Result<(), error::Error> {
         let (from, to) = parse_versions(&key)?;
-        let from_ver = DVersion::from_str(from);
-        let to_ver = DVersion::from_str(to);
 
-        match (from_ver, to_ver) {
-            (Ok(f), Ok(t)) => {
-                ensure!(
-                    map.insert((f, t), list).is_none(),
-                    error::DuplicateVersionKey { key }
-                );
+        if let (Ok(from), Ok(to)) = (DVersion::from_str(from), DVersion::from_str(to)) {
+            ensure!(
+                map.insert((from, to), list).is_none(),
+                error::DuplicateVersionKey { key }
+            );
+        } else {
+            return error::BadDataVersion {
+                key: format!("{}, {}", from, to),
             }
-            _ => (),
+            .fail();
         }
 
         Ok(())
