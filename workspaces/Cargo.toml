@@ -28,11 +28,17 @@ members = [
     "updater/updog",
 
     "tuftool",
+
+    "webpki-roots-shim",
 ]
 
 [profile.release]
 debug = true
 lto = true
+
+# This replaces webpki-roots with a shim that reads from the ca-certificates package
+[patch.crates-io.webpki-roots]
+path = "webpki-roots-shim"
 
 # FIXME drop this when next rusoto releases with
 # https://github.com/rusoto/rusoto/pull/1494

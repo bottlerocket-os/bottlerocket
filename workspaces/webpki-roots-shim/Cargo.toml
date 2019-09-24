@@ -1,0 +1,12 @@
+[package]
+name = "webpki-roots"
+version = "0.17.0"
+authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+lazy_static = "1.4.0"
+log = "0.4.8"
+pem = "0.6.1"
+webpki = "0.21.0"

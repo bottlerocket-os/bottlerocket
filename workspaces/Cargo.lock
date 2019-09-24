@@ -1100,7 +1100,7 @@ dependencies = [
  "tokio-io 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-rustls 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "webpki-roots 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "webpki-roots 0.17.0",
 ]
 
 [[package]]
@@ -2088,7 +2088,7 @@ dependencies = [
  "tokio-timer 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "webpki-roots 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "webpki-roots 0.17.0",
  "winreg 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -3363,8 +3363,10 @@ dependencies = [
 [[package]]
 name = "webpki-roots"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pem 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -3782,7 +3784,6 @@ dependencies = [
 "checksum wasm-bindgen-webidl 0.2.50 (registry+https://github.com/rust-lang/crates.io-index)" = "be53d289bf2fa7645a089cfd5c7a34bf4fe94221f58cf86ee42a7b4bc854ff14"
 "checksum web-sys 0.3.27 (registry+https://github.com/rust-lang/crates.io-index)" = "6435c477200ad486089a7a72c2bd6c9bdf9740bd7fff868806076218076d8c51"
 "checksum webpki 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d7e664e770ac0110e2384769bcc59ed19e329d81f555916a6e072714957b81b4"
-"checksum webpki-roots 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a262ae37dd9d60f60dd473d1158f9fbebf110ba7b6a5051c8160460f6043718b"
 "checksum weedle 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3bb43f70885151e629e2a19ce9e50bd730fd436cfd4b666894c9ce4de9141164"
 "checksum widestring 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "effc0e4ff8085673ea7b9b2e3c73f6bd4d118810c9009ed8f1e16bd96c331db6"
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
