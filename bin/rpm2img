@@ -25,6 +25,7 @@ VERITY_IMAGE="$(mktemp)"
 ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
 EFI_IMAGE="$(mktemp)"
+PRIVATE_IMAGE="$(mktemp)"
 THAR_DATA="$(mktemp)"
 ROOT_MOUNT="/mnt/root"
 DATA_MOUNT="/mnt/data"
@@ -42,6 +43,7 @@ EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 THAR_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
 THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 THAR_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
+THAR_PRIVATE_TYPECODE="440408bb-eb0b-4328-a6e5-a29038fad706"
 
 if [[ "${ARCH}" == "x86_64" ]]; then
   FIRM_NAME="BIOS-BOOT"
@@ -52,18 +54,19 @@ else
 fi
 
 truncate -s 2G "${DISK_IMAGE}"
-# boot: 20M + root: 900M + hash: 8M + reserved: 95M = 1023M
+# boot: 40M + root: 920M + hash: 10M + reserved: 30M = 1000M
 # boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
 # partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
 sgdisk --clear \
-   -n 0:1953M:2047M -c 0:"THAR-RESERVED-B" -t 0:"${THAR_RESERVED_TYPECODE}" \
-   -n 0:1945M:0     -c 0:"THAR-HASH-B"     -t 0:"${THAR_HASH_TYPECODE}" \
+   -n 0:2005M:2047M -c 0:"THAR-PRIVATE"    -t 0:"${THAR_PRIVATE_TYPECODE}" \
+   -n 0:1975M:0     -c 0:"THAR-RESERVED-B" -t 0:"${THAR_RESERVED_TYPECODE}" \
+   -n 0:1965M:0     -c 0:"THAR-HASH-B"     -t 0:"${THAR_HASH_TYPECODE}" \
    -n 0:1045M:0     -c 0:"THAR-ROOT-B"     -t 0:"${THAR_ROOT_TYPECODE}" \
-   -n 0:1025M:0     -c 0:"THAR-BOOT-B"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
-   -n 0:930M:0      -c 0:"THAR-RESERVED-A" -t 0:"${THAR_RESERVED_TYPECODE}" \
-   -n 0:922M:0      -c 0:"THAR-HASH-A"     -t 0:"${THAR_HASH_TYPECODE}" \
-   -n 0:22M:0       -c 0:"THAR-ROOT-A"     -t 0:"${THAR_ROOT_TYPECODE}" \
-   -n 0:2M:0        -c 0:"THAR-BOOT-A"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
+   -n 0:1005M:0     -c 0:"THAR-BOOT-B"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
+   -n 0:975M:0      -c 0:"THAR-RESERVED-A" -t 0:"${THAR_RESERVED_TYPECODE}" \
+   -n 0:965M:0      -c 0:"THAR-HASH-A"     -t 0:"${THAR_HASH_TYPECODE}" \
+   -n 0:45M:0       -c 0:"THAR-ROOT-A"     -t 0:"${THAR_ROOT_TYPECODE}" \
+   -n 0:5M:0        -c 0:"THAR-BOOT-A"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
    -n 0:1M:0        -c 0:"${FIRM_NAME}"    -t 0:"${THAR_FIRM_TYPECODE}" \
    --sort --print "${DISK_IMAGE}"
 
@@ -93,9 +96,9 @@ else
   mv ${ROOT_MOUNT}/boot/efi/* "${EFI_MOUNT}"
 
   # The 'recommended' size for the EFI partition is 100MB but our aarch64.efi
-  # only takes up around 700KB. Use just 1MB to match the x86_64 case.
-  dd if=/dev/zero of=${EFI_IMAGE} bs=512 count=$((1*2048))
-  mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((1*2048))
+  # only takes up around 700KB, so this will suffice for now.
+  dd if=/dev/zero of=${EFI_IMAGE} bs=512 count=$((4*2048))
+  mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((4*2048))
   mmd -i ${EFI_IMAGE} ::/EFI
   mmd -i ${EFI_IMAGE} ::/EFI/BOOT
   mcopy -i ${EFI_IMAGE} ${EFI_MOUNT}/EFI/BOOT/bootaa64.efi ::/EFI/BOOT
@@ -114,9 +117,9 @@ mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 echo "VARIANT_ID=${FLAVOR}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 
 # THAR-ROOT-A
-mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 900M
+mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 920M
 resize2fs -M "${ROOT_IMAGE}"
-dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((22*2048))
+dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((45*2048))
 
 # THAR-VERITY-A
 truncate -s 8M "${VERITY_IMAGE}"
@@ -136,7 +139,7 @@ VERITY_DATA_512B_BLOCKS="$(($VERITY_DATA_4K_BLOCKS * 8))"
 VERITY_ROOT_HASH="$(grep '^Root hash:' <<<$veritysetup_output | awk '{ print $NF }')"
 VERITY_SALT="$(grep '^Salt:' <<<$veritysetup_output | awk '{ print $NF }')"
 veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
-dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((922*2048))
+dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((965*2048))
 
 # write GRUB config
 cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
@@ -154,9 +157,19 @@ menuentry "Thar" {
 EOF
 
 # THAR-BOOT-A
-mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 20M
+mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 40M
 resize2fs -M "${BOOT_IMAGE}"
-dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((2*2048))
+dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((5*2048))
+
+# THAR-PRIVATE
+
+# Targeted toward the current API server implementation.
+# Relative to the ext4 defaults, we:
+# - adjust the inode ratio since we expect lots of small files
+# - retain the inode size to allow most settings to be stored inline
+# - retain the block size to handle worse-case alignment for hardware
+mkfs.ext4 -L "THAR-PRIVATE" -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" 42M
+dd if="${PRIVATE_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=512 seek=$((2005*2048))
 
 # THAR-DATA
 truncate -s 8G "${DATA_IMAGE}"
