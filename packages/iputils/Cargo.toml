@@ -1,0 +1,25 @@
+[package]
+name = "iputils"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+path = "iputils-s20190709.tar.gz"
+url = "https://github.com/iputils/iputils/archive/s20190709.tar.gz"
+sha512 = "5db18ac49fa46ed810da4d508e78f4baf2d5c07e7f923eb49d005ad8745743d8861e5788b34a7e37fb7261cee7ddfb768b737eee9d200502ea53537142cac6b5"
+
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+glibc = { path = "../glibc", optional=true }
+libcap = { path = "../libcap", optional=true }
+
+[features]
+cascade = [
+    "glibc",
+    "libcap",
+]
