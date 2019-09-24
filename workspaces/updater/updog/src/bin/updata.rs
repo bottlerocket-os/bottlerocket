@@ -100,6 +100,14 @@ struct RemoveUpdateArgs {
     // architecture image is built for
     #[structopt(short = "a", long = "arch")]
     arch: String,
+
+    // Whether to clean up datastore mappings that no longer reference an
+    // existing update. Migration paths for such datastore versions are
+    // preserved.
+    // This should _only_ be used if there are no existing users of the
+    // specified Thar image version.
+    #[structopt(short, long)]
+    cleanup: bool,
 }
 
 impl RemoveUpdateArgs {
@@ -108,6 +116,22 @@ impl RemoveUpdateArgs {
         m.updates.retain(|u| {
             !(u.arch == self.arch && u.flavor == self.flavor && u.version == self.version)
         });
+        if self.cleanup {
+            let remaining: Vec<&Update> = m
+                .updates
+                .iter()
+                .filter(|u| u.version == self.version)
+                .collect();
+            if remaining.is_empty() {
+                m.datastore_versions.remove(&self.version);
+            } else {
+                println!(
+                    "Cleanup skipped; {} {} updates remain",
+                    remaining.len(),
+                    self.version
+                );
+            }
+        }
         // Note: We don't revert the maximum version on removal
         write_file(&self.file, &m)
     }
@@ -368,6 +392,67 @@ mod tests {
         for u in m.updates {
             assert!(u.max_version == Version::parse("1.2.4").unwrap());
         }
+        Ok(())
+    }
+
+    #[test]
+    fn datastore_mapping() -> Result<()> {
+        let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
+        AddUpdateArgs {
+            file: PathBuf::from(tmpfd.path()),
+            flavor: String::from("yum"),
+            arch: String::from("x86_64"),
+            version: Version::parse("1.2.3").unwrap(),
+            max_version: Version::parse("1.2.3").unwrap(),
+            datastore: DVersion::from_str("1.0").unwrap(),
+            boot: String::from("boot"),
+            root: String::from("root"),
+            hash: String::from("hash"),
+        }
+        .run()
+        .unwrap();
+        AddUpdateArgs {
+            file: PathBuf::from(tmpfd.path()),
+            flavor: String::from("yum"),
+            arch: String::from("x86_64"),
+            version: Version::parse("1.2.5").unwrap(),
+            max_version: Version::parse("1.2.3").unwrap(),
+            datastore: DVersion::from_str("1.1").unwrap(),
+            boot: String::from("boot"),
+            root: String::from("root"),
+            hash: String::from("hash"),
+        }
+        .run()
+        .unwrap();
+        AddUpdateArgs {
+            file: PathBuf::from(tmpfd.path()),
+            flavor: String::from("yum"),
+            arch: String::from("x86_64"),
+            version: Version::parse("1.2.4").unwrap(),
+            max_version: Version::parse("1.2.4").unwrap(),
+            datastore: DVersion::from_str("1.0").unwrap(),
+            boot: String::from("boot"),
+            root: String::from("root"),
+            hash: String::from("hash"),
+        }
+        .run()
+        .unwrap();
+
+        // TODO this needs to test against ARCH and FLAVOR not being considered
+        RemoveUpdateArgs {
+            file: PathBuf::from(tmpfd.path()),
+            flavor: String::from("yum"),
+            arch: String::from("x86_64"),
+            version: Version::parse("1.2.4").unwrap(),
+            cleanup: true,
+        }
+        .run()
+        .unwrap();
+
+        let m: Manifest = load_file(tmpfd.path())?;
+        assert!(m
+            .datastore_versions
+            .contains_key(&Version::parse("1.2.3").unwrap()));
         Ok(())
     }
 }
