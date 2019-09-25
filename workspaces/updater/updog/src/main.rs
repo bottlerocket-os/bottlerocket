@@ -380,7 +380,7 @@ fn retrieve_migrations(
         let path = dir.join(&name);
         if let Some(mount) = &root_path {
             if let Err(e) = copy_migration_from_image(mount, &name) {
-                println!("Migration not copied from image: {}", e);
+                eprintln!("Migration not copied from image: {}", e);
                 write_target_to_disk(repository, &name, path)?;
             }
         } else {
@@ -400,7 +400,7 @@ fn update_prepare(
     let (root_path, ld, tmpfd) = match mount_root_target(repository, update) {
         Ok((p, l, t)) => (Some(p), Some(l), Some(t)),
         Err(e) => {
-            println!(
+            eprintln!(
                 "Failed to mount image, migrations will be downloaded ({})",
                 e
             );
@@ -417,7 +417,7 @@ fn update_prepare(
         }
         if let Some(ld) = ld {
             if ld.detach().is_err() {
-                println!("Failed to detach loop device");
+                eprintln!("Failed to detach loop device");
             }
         }
     }
@@ -439,7 +439,7 @@ fn update_image(
     if let Some(jitter) = jitter {
         let mut rng = thread_rng();
         let jitter = Duration::new(rng.gen_range(1, jitter), 0);
-        println!("Waiting {:?} till update", jitter);
+        eprintln!("Waiting {:?} till update", jitter);
         thread::sleep(jitter);
     }
 
@@ -456,7 +456,7 @@ fn update_image(
     if let Some(path) = root_path {
         // Copy root from already downloaded image
         if let Err(e) = fs::copy(path, &inactive.root) {
-            println!("Root copy failed, redownloading - {}", e);
+            eprintln!("Root copy failed, redownloading - {}", e);
             write_target_to_disk(repository, &update.images.root, &inactive.root)?;
         }
     } else {
@@ -570,7 +570,7 @@ fn main_inner() -> Result<()> {
                     } else if let Some(datastore_version) =
                         manifest.datastore_versions.get(&u.version)
                     {
-                        println!("{}-{} ({})", u.flavor, u.version, datastore_version);
+                        eprintln!("{}-{} ({})", u.flavor, u.version, datastore_version);
                     } else {
                         return error::MissingMapping {
                             version: u.version.to_string(),
@@ -590,11 +590,10 @@ fn main_inner() -> Result<()> {
                 arguments.force_version,
             ) {
                 if u.update_ready(config.seed) || arguments.ignore_wave {
-                    println!("Starting update to {}", u.version);
-
+                    eprintln!("Starting update to {}", u.version);
                     let root_path = update_prepare(&repository, &manifest, u)?;
                     if arguments.ignore_wave {
-                        println!("** Updating immediately **");
+                        eprintln!("** Updating immediately **");
                         update_image(u, &repository, None, root_path)?;
                     } else {
                         update_image(u, &repository, u.jitter(config.seed), root_path)?;
@@ -602,7 +601,13 @@ fn main_inner() -> Result<()> {
                     if command == Command::Update {
                         update_flags()?;
                     }
-                    println!("Update applied: {}-{}", u.flavor, u.version);
+                    eprintln!("Update applied: {}-{}", u.flavor, u.version);
+                    if arguments.json {
+                        println!(
+                            "{}",
+                            serde_json::to_string(&u).context(error::UpdateSerialize)?
+                        );
+                    }
                 } else {
                     eprintln!("Update available in later wave");
                 }
