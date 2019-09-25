@@ -45,6 +45,7 @@ members = [
     "libpcap",
     "libseccomp",
     "libxcrypt",
+    "login",
     "ncurses",
     "preinit",
     "procps",
