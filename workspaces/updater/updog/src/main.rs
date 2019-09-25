@@ -39,6 +39,7 @@ const MAX_SEED: u64 = 2048;
 #[serde(rename_all = "kebab-case")]
 enum Command {
     CheckUpdate,
+    Whats,
     Update,
     UpdateImage,
     UpdateFlags,
@@ -553,7 +554,7 @@ fn main_inner() -> Result<()> {
     let (current_version, flavor) = running_version().unwrap();
 
     match command {
-        Command::CheckUpdate => {
+        Command::CheckUpdate | Command::Whats => {
             match update_required(
                 &config,
                 &manifest,
