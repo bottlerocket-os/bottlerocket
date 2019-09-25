@@ -93,6 +93,13 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
+    /// The maximum root updates setting was exceeded.
+    #[snafu(display("Maximum root updates {} exceeded", max_root_updates))]
+    MaxUpdatesExceeded {
+        max_root_updates: u64,
+        backtrace: Backtrace,
+    },
+
     /// A required reference to a metadata file is missing from a metadata file.
     #[snafu(display("Meta for {:?} missing from {} metadata", file, role))]
     MetaMissing {

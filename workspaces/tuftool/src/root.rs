@@ -101,7 +101,7 @@ impl Command {
                 path,
                 &Signed {
                     signed: Root {
-                        spec_version: "1.0".to_owned(),
+                        spec_version: crate::SPEC_VERSION.to_owned(),
                         consistent_snapshot: true,
                         version: NonZeroU64::new(1).unwrap(),
                         expires: round_time(Utc::now()),

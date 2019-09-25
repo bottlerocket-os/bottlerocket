@@ -22,7 +22,7 @@ use std::thread;
 use std::time::Duration;
 use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
 use tempfile::NamedTempFile;
-use tough::Repository;
+use tough::{Limits, Repository, Settings};
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -138,17 +138,20 @@ fn load_config() -> Result<Config> {
 
 fn load_repository(config: &Config) -> Result<Repository> {
     fs::create_dir_all("/var/lib/thar/updog").context(error::CreateMetadataCache)?;
-    Repository::load(
-        File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
+    Repository::load(Settings {
+        root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
             path: TRUSTED_ROOT_PATH,
         })?,
-        "/var/lib/thar/updog",
-        1024 * 1024,     // max allowed root.json size, 1 MiB
-        1024 * 1024 * 4, // max allowed targets.json size, 4 MiB
-        1024 * 1024,     // max allowed timestamp.json size, 1 MiB
-        &config.metadata_base_url,
-        &config.target_base_url,
-    )
+        datastore: Path::new("/var/lib/thar/updog"),
+        metadata_base_url: &config.metadata_base_url,
+        target_base_url: &config.target_base_url,
+        limits: Limits {
+            max_root_size: 1024 * 1024,         // 1 MiB
+            max_targets_size: 1024 * 1024 * 10, // 10 MiB
+            max_timestamp_size: 1024 * 1024,    // 1 MiB
+            max_root_updates: 1024,
+        },
+    })
     .context(error::Metadata)
 }
 
