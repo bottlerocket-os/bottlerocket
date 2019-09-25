@@ -18,8 +18,16 @@ pub enum Error {
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-    // Server errors
+    // Set file permission errors
+    #[snafu(display("Failed to set file permissions on the API socket to {:o}: {}", mode, source))]
+    SetPermissions {
+        source: std::io::Error,
+        mode: u32,
+    },
 
+    // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+    // Server errors
     #[snafu(display("Missing required input '{}'", input))]
     MissingInput { input: String },
 
