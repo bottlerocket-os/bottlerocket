@@ -1,6 +1,5 @@
 use crate::set::PartitionSet;
 use snafu::Snafu;
-use std::ffi::OsString;
 use std::fmt;
 use std::path::PathBuf;
 
@@ -15,6 +14,24 @@ pub enum Error {
     ActiveNotInSet {
         active_partition: PathBuf,
         sets: [PartitionSet; 2],
+    },
+
+    #[snafu(display("Failed to get block device from path {}: {}", device.display(), source))]
+    BlockDeviceFromPath {
+        device: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to get disk from partition {}: {}", device.display(), source))]
+    DiskFromPartition {
+        device: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to get partition on disk {}: {}", device.display(), source))]
+    PartitionFromDisk {
+        device: PathBuf,
+        source: std::io::Error,
     },
 
     #[snafu(display("Failed to find GPT on device {}: {}", device.display(), source))]
@@ -35,33 +52,6 @@ pub enum Error {
         successful: bool,
     },
 
-    #[snafu(display(
-        "Path {} is a link to {} which does not have a final component (expected {})",
-        path.display(),
-        link_target.display(),
-        expected
-    ))]
-    LinkWithoutFinalComponent {
-        path: PathBuf,
-        link_target: PathBuf,
-        expected: &'static str,
-    },
-
-    #[snafu(display("Failed to parse major:minor integers from string {:?}: {}", s, source))]
-    MajorMinorParseInt {
-        s: String,
-        source: std::num::ParseIntError,
-    },
-
-    #[snafu(display(
-        "Failed to parse major:minor integers from string {:?}: does not have exactly one colon",
-        s
-    ))]
-    MajorMinorLen { s: String },
-
-    #[snafu(display("No block device with partition {} found", device_name.to_string_lossy()))]
-    NoBlockDeviceForPartition { device_name: OsString },
-
     #[snafu(display("Failed to open {} for {}: {}", path.display(), what, source))]
     Open {
         path: PathBuf,
@@ -78,38 +68,17 @@ pub enum Error {
     #[snafu(display("Failed to find device for partition {} on {}", num, device.display()))]
     PartitionNotFoundOnDevice { num: u32, device: PathBuf },
 
-    #[snafu(display("Failed to parse partition number {:?} as integer: {}", s, source))]
-    PartitionParseInt {
-        s: String,
-        source: std::num::ParseIntError,
-    },
+    #[snafu(display("Root device {} has no lower root devices", root.display()))]
+    RootHasNoLowerDevices { root: PathBuf },
 
-    #[snafu(display("Failed to read directory {}: {}", path.display(), source))]
-    ReadDir {
-        path: PathBuf,
+    #[snafu(display("Failed to get lower devices for {}: {}", root.display(), source))]
+    RootLowerDevices {
+        root: PathBuf,
         source: std::io::Error,
     },
 
-    #[snafu(display("Failed to read from file {}: {}", path.display(), source))]
-    ReadFile {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-
-    #[snafu(display("Failed to read link {}: {}", path.display(), source))]
-    ReadLink {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-
-    #[snafu(display("Root device {} has no lower root devices", root_major_minor))]
-    RootHasNoLowerDevices { root_major_minor: String },
-
-    #[snafu(display("Failed to stat {}: {}", path.display(), source))]
-    Stat {
-        path: PathBuf,
-        source: std::io::Error,
-    },
+    #[snafu(display("Block device {} is not a partition", device.display()))]
+    RootNotPartition { device: PathBuf },
 }
 
 #[derive(Debug)]

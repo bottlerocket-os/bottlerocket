@@ -22,6 +22,7 @@ members = [
     "preinit/laika",
 
     "updater/olpc-cjson",
+    "updater/block-party",
     "updater/signpost",
     "updater/tough",
     "updater/tough_schema",
