@@ -136,12 +136,6 @@ pub(crate) enum Error {
         version: DataVersion,
     },
 
-    #[snafu(display("Image version missing datastore mapping: {}", version))]
-    MissingMapping {
-        backtrace: Backtrace,
-        version: String,
-    },
-
     #[snafu(display(
         "Reached end of migration chain at {} but target is {}",
         current,
@@ -195,6 +189,12 @@ pub(crate) enum Error {
         // signpost::Error triggers clippy::large_enum_variant
         #[snafu(source(from(signpost::Error, Box::new)))]
         source: Box<signpost::Error>,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to reboot: {}", source))]
+    RebootFailure {
+        source: std::io::Error,
         backtrace: Backtrace,
     },
 

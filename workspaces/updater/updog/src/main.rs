@@ -19,6 +19,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader};
 use std::ops::Bound::{Excluded, Included};
 use std::path::{Path, PathBuf};
+use std::process;
 use std::thread;
 use std::time::Duration;
 use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
@@ -41,9 +42,10 @@ const MAX_SEED: u64 = 2048;
 enum Command {
     CheckUpdate,
     Whats,
+    Prepare,
     Update,
     UpdateImage,
-    UpdateFlags,
+    UpdateApply,
 }
 
 #[derive(Debug, Deserialize)]
@@ -125,8 +127,16 @@ USAGE:
 
 SUBCOMMANDS:
     check-update            Show if an update is available
+    prepare                 Download update files and migration targets
     update                  Perform an update if available
+    update-image            Download & write an update but do not update flags
+    update-apply            Update boot flags and reboot
 OPTIONS:
+    [ -j | --json ]               JSON-formatted output
+    [ -a | --all ]                Output all applicable updates
+    [ -n | --now ]                Update immediately, ignoring wave limits
+    [ -i | --image ]              Update to a specfic image version
+    [ -r | --reboot ]             Reboot upon updating boot flags
     [ --verbose --verbose ... ]   Increase log verbosity");
     std::process::exit(1)
 }
@@ -199,6 +209,17 @@ fn running_version() -> Result<(Version, String)> {
     }
 }
 
+fn applicable_updates<'a>(manifest: &'a Manifest, flavor: &str) -> Vec<&'a Update> {
+    let mut updates: Vec<&Update> = manifest
+        .updates
+        .iter()
+        .filter(|u| u.flavor == *flavor && u.arch == TARGET_ARCH && u.version <= u.max_version)
+        .collect();
+    // sort descending
+    updates.sort_unstable_by(|a, b| b.version.cmp(&a.version));
+    updates
+}
+
 // TODO use config if there is api-sourced configuration that could affect this
 // TODO updog.toml may include settings that cause us to ignore/delay
 // certain/any updates;
@@ -212,18 +233,12 @@ fn update_required<'a>(
     flavor: &str,
     force_version: Option<Version>,
 ) -> Option<&'a Update> {
-    let mut updates: Vec<&Update> = manifest
-        .updates
-        .iter()
-        .filter(|u| u.flavor == *flavor && u.arch == TARGET_ARCH && u.version <= u.max_version)
-        .collect();
+    let updates = applicable_updates(manifest, flavor);
 
     if let Some(forced_version) = force_version {
         return updates.into_iter().find(|u| u.version == forced_version);
     }
 
-    // sort descending
-    updates.sort_unstable_by(|a, b| b.version.cmp(&a.version));
     for update in updates {
         // If the current running version is greater than the max version ever published,
         // or moves us to a valid version <= the maximum version, update.
@@ -483,6 +498,8 @@ struct Arguments {
     json: bool,
     ignore_wave: bool,
     force_version: Option<Version>,
+    all: bool,
+    reboot: bool,
 }
 
 /// Parse the command line arguments to get the user-specified values
@@ -492,6 +509,8 @@ fn parse_args(args: std::env::Args) -> Arguments {
     let mut update_version = None;
     let mut ignore_wave = false;
     let mut json = false;
+    let mut all = false;
+    let mut reboot = false;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -512,6 +531,12 @@ fn parse_args(args: std::env::Args) -> Arguments {
             "-j" | "--json" => {
                 json = true;
             }
+            "-r" | "--reboot" => {
+                reboot = true;
+            }
+            "-a" | "--all" => {
+                all = true;
+            }
             // Assume any arguments not prefixed with '-' is a subcommand
             s if !s.starts_with('-') => {
                 if subcommand.is_some() {
@@ -529,6 +554,8 @@ fn parse_args(args: std::env::Args) -> Arguments {
         json,
         ignore_wave,
         force_version: update_version,
+        all,
+        reboot,
     }
 }
 
@@ -556,31 +583,32 @@ fn main_inner() -> Result<()> {
 
     match command {
         Command::CheckUpdate | Command::Whats => {
-            match update_required(
+            let updates = if arguments.all {
+                applicable_updates(&manifest, &flavor)
+            } else if let Some(u) = update_required(
                 &config,
                 &manifest,
                 &current_version,
                 &flavor,
                 arguments.force_version,
             ) {
-                Some(u) => {
-                    if arguments.json {
-                        println!(
-                            "{}",
-                            serde_json::to_string(&u).context(error::UpdateSerialize)?
-                        );
-                    } else if let Some(datastore_version) =
-                        manifest.datastore_versions.get(&u.version)
-                    {
+                vec![u]
+            } else {
+                vec![]
+            };
+            if arguments.json {
+                println!(
+                    "{}",
+                    serde_json::to_string(&updates).context(error::UpdateSerialize)?
+                );
+            } else {
+                for u in updates {
+                    if let Some(datastore_version) = manifest.datastore_versions.get(&u.version) {
                         eprintln!("{}-{} ({})", u.flavor, u.version, datastore_version);
                     } else {
-                        return error::MissingMapping {
-                            version: u.version.to_string(),
-                        }
-                        .fail();
+                        println!("{}-{} (Missing datastore mapping!)", u.flavor, u.version);
                     }
                 }
-                _ => return error::NoUpdate.fail(),
             }
         }
         Command::Update | Command::UpdateImage => {
@@ -602,6 +630,12 @@ fn main_inner() -> Result<()> {
                     }
                     if command == Command::Update {
                         update_flags()?;
+                        if arguments.reboot {
+                            process::Command::new("shutdown")
+                                .arg("-r")
+                                .status()
+                                .context(error::RebootFailure)?;
+                        }
                     }
                     eprintln!("Update applied: {}-{}", u.flavor, u.version);
                     if arguments.json {
@@ -617,8 +651,18 @@ fn main_inner() -> Result<()> {
                 eprintln!("No update required");
             }
         }
-        Command::UpdateFlags => {
+        Command::UpdateApply => {
+            // TODO Guard against being called repeatedly
             update_flags()?;
+            if arguments.reboot {
+                process::Command::new("shutdown")
+                    .arg("-r")
+                    .status()
+                    .context(error::RebootFailure)?;
+            }
+        }
+        Command::Prepare => {
+            // TODO unimplemented
         }
     }
 
