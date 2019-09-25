@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [[ $EUID -ne 0  ]]; then
+    echo "sheltie must be run as root"
+    exit 1
+fi
+
+# Location of the container's rootfs on the host filesystem
+ROOT_FS_PATH="/run/host-containerd/io.containerd.runtime.v1.linux/default/admin/rootfs"
+BASH_PATH="/opt/bin/bash"
+
+# Start the root shell on the Thar host
+nsenter -t 1 -a "${ROOT_FS_PATH}${BASH_PATH}"
