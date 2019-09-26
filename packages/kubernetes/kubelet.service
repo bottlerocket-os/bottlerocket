@@ -6,7 +6,7 @@ Wants=configured.target
 Requires=containerd.service
 
 [Service]
-Environment=/etc/kubernetes/kubelet/env
+EnvironmentFile=/etc/kubernetes/kubelet/env
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
 ExecStart=/usr/bin/kubelet \
     --cloud-provider aws \
