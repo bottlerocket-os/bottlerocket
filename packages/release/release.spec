@@ -23,7 +23,6 @@ Source1000: eth0.xml
 Source1002: configured.target
 Source1003: host-containerd.service
 Source1004: host-containerd-config.toml
-Source1005: local.mount
 Source1006: prepare-local.service
 Source1007: var.mount
 Source1008: opt.mount
@@ -41,6 +40,7 @@ Requires: %{_cross_os}chrony
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}dbus-broker
 Requires: %{_cross_os}filesystem
+Requires: %{_cross_os}growpart
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}kernel
@@ -103,7 +103,7 @@ VERSION_ID=%{version}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1002} %{S:1003} %{S:1005} %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1002} %{S:1003} %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
@@ -123,7 +123,6 @@ install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/host-containers-sy
 %{_cross_libdir}/os-release
 %{_cross_unitdir}/configured.target
 %{_cross_unitdir}/host-containerd.service
-%{_cross_unitdir}/local.mount
 %{_cross_unitdir}/prepare-local.service
 %{_cross_unitdir}/prepare-var-lib-thar.service
 %{_cross_unitdir}/var.mount

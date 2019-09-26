@@ -1,10 +1,33 @@
 [Unit]
 Description=Prepare Local Directory (/local)
-RequiresMountsFor=/local
 DefaultDependencies=no
+
+# We need udev to create /dev/disk/by-partlabel/THAR-DATA first.
+Wants=dev-disk-by\x2dpartlabel-THAR\x2dDATA.device
+After=dev-disk-by\x2dpartlabel-THAR\x2dDATA.device
 
 [Service]
 Type=oneshot
-ExecStart=-/usr/lib/systemd/systemd-growfs /local
-ExecStart=-/usr/bin/mkdir -p /local/var /local/opt
+Environment=THAR_DATA=/dev/disk/by-partlabel/THAR-DATA
+Environment=LOCAL_DIR=/local
+
+# To "grow" the partition, we delete it and recreate it at the larger size, which
+# causes the udev links to be deleted and then recreated. We have to wait for the
+# links to return before continuing.
+ExecStart=/usr/sbin/growpart ${THAR_DATA}
+ExecStart=/usr/bin/udevadm settle -E ${THAR_DATA}
+
+# The above note means we can't have a "normal" mount unit here, because it would
+# depend on the link, and would immediately transition to the failed state when the
+# link is removed. systemd will create local.mount for us as a side effect.
+ExecStart=/usr/bin/mount -o defaults,noatime,nosuid,nodev ${THAR_DATA} ${LOCAL_DIR}
+
+# After the mount is active, we grow the filesystem to fill the resized partition,
+# and ensure that it has the directories we need for subsequent mounts.
+ExecStart=/usr/lib/systemd/systemd-growfs ${LOCAL_DIR}
+ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt
+
 RemainAfterExit=false
+
+[Install]
+WantedBy=local-fs.target
