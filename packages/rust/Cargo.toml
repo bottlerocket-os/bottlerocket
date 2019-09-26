@@ -9,28 +9,28 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://static.rust-lang.org/dist/cargo-0.38.0-aarch64-unknown-linux-gnu.tar.xz"
-sha512 = "3a826150eafd19f0fb5b3703c9a4a0f00cc400d7c10f32454059ce47880a300679f4da0a3610661ad15daf0b698561fdf9e1bcb520c6bbd392429df0e0682453"
+url = "https://static.rust-lang.org/dist/cargo-0.39.0-aarch64-unknown-linux-gnu.tar.xz"
+sha512 = "1fb608a44cfd5a915e75d9d83eaf7f9f1b271521fae6e0da98eb78cd51db35ba4e7c1bbf0744e6a329d879f3b8a7573465eb3969d51c22c9886cefbcca4a669a"
 
 [[package.metadata.build-package.external-files]]
-url = "https://static.rust-lang.org/dist/cargo-0.38.0-x86_64-unknown-linux-gnu.tar.xz"
-sha512 = "92eabb1bb66a668987960d5753bdf98555d88521ebd8772fafc14a1b63eecfc8d4145a9424a32b5f494a027df2625ee93611cc9ff32103e09197adfbc8e6aa00"
+url = "https://static.rust-lang.org/dist/cargo-0.39.0-x86_64-unknown-linux-gnu.tar.xz"
+sha512 = "79d8488ca717b4e62de3e91eddbbfc666fd18134bdc6e60e4548b97f84c201161561595645eee3422236355d60386e40474d52dcd3de5752876e556d4bffc2e8"
 
 [[package.metadata.build-package.external-files]]
-url = "https://static.rust-lang.org/dist/rustc-1.37.0-aarch64-unknown-linux-gnu.tar.xz"
-sha512 = "0a2071e953d1939ab784b44826dfda44701ec8f6c38052e9efce42e5a952175f50cc55750ef4afefdc740ef8132ff26ba3c0f81424888f8ebb79a06711e3e4b0"
+url = "https://static.rust-lang.org/dist/rustc-1.38.0-aarch64-unknown-linux-gnu.tar.xz"
+sha512 = "155e9e165e1971e7a5a9ede8400a0f225aefd43684e76b3d2074dc66f9d5935b3f657c2aa1a17a4309389dd0ee6f4244295ca975d16a4b5fc8651dfa9596dfea"
 
 [[package.metadata.build-package.external-files]]
-url = "https://static.rust-lang.org/dist/rustc-1.37.0-x86_64-unknown-linux-gnu.tar.xz"
-sha512 = "da29c306710fbb2f65f4dd9afc8880fa41c26f9899bcc5317b8af7379fc14527fe856d28aecd5178f28ffb099f48d939c52d27292830509f3b41cdd23d33024c"
+url = "https://static.rust-lang.org/dist/rustc-1.38.0-x86_64-unknown-linux-gnu.tar.xz"
+sha512 = "28fc6ac525813a74928c6a1ccfa866b7fd599377e6e4fa74badf6a5258f62dd70f4c7fabdf2fddfc3f06a7ac09b17a42efab112edf0f4b5f51b0aeb65c7335bc"
 
 [[package.metadata.build-package.external-files]]
-url = "https://static.rust-lang.org/dist/rust-std-1.37.0-aarch64-unknown-linux-gnu.tar.xz"
-sha512 = "c2cc83936bd65aca5cb876ad8cf846da087e2c104696437d31795635fa5f6f3b2a61810bab827ac7c2c2f25eff716505d7ce6516458e07ab060f3e6902d422c8"
+url = "https://static.rust-lang.org/dist/rust-std-1.38.0-aarch64-unknown-linux-gnu.tar.xz"
+sha512 = "b58381d01bb052599a881aa571e1ed8cac8d7afde79940942291f94b921de57e433c7235ec317efe226089069fd5e4cd4a4c5975b60cb20f7801a0124990a819"
 
 [[package.metadata.build-package.external-files]]
-url = "https://static.rust-lang.org/dist/rust-std-1.37.0-x86_64-unknown-linux-gnu.tar.xz"
-sha512 = "2773799944d7895ed626b36b25f6b93505ca602dd5bb500493a6c8c8f7913fe1b09aa18e17a8424818c005e4ae1824c25e474d556b1f580518bb6cad65e8572c"
+url = "https://static.rust-lang.org/dist/rust-std-1.38.0-x86_64-unknown-linux-gnu.tar.xz"
+sha512 = "6c9b925dd6ac465a33ce669920619c8c7ad9c22067d8e554450ea35edc10bfb5aabdd22f081a575b1f2b7b3237b43b15c3d62fb18bf32c8e5be4c1c785e8db21"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
