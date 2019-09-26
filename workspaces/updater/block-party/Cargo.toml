@@ -1,0 +1,6 @@
+[package]
+name = "block-party"
+version = "0.1.0"
+authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
+edition = "2018"
+publish = false

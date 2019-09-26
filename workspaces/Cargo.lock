@@ -396,6 +396,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "block-party"
+version = "0.1.0"
+
+[[package]]
 name = "bork"
 version = "0.1.0"
 dependencies = [
@@ -2443,6 +2447,7 @@ name = "signpost"
 version = "0.1.0"
 dependencies = [
  "bit_field 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "block-party 0.1.0",
  "gptman 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex-literal 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.100 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -1,10 +1,8 @@
-mod block;
-
 use crate::error::{self, Error};
 use crate::gptprio::GptPrio;
 use crate::guid::uuid_to_guid;
 use crate::set::{PartitionSet, SetSelect};
-use crate::state::block::BlockDevice;
+use block_party::BlockDevice;
 use gptman::GPT;
 use hex_literal::hex;
 use snafu::{OptionExt, ResultExt};
@@ -44,16 +42,26 @@ impl State {
     pub fn load() -> Result<Self, Error> {
         // The root filesystem is a dm-verity device. We want to determine what disk and partition
         // the backing data is part of. Look up the device major and minor via stat(2):
-        let root_fs = BlockDevice::from_resident("/")?;
+        let root_fs = BlockDevice::from_device_path("/")
+            .context(error::BlockDeviceFromPath { device: "/" })?;
         // Get the first lower device from this one, and determine what disk it belongs to.
-        let active_partition =
-            root_fs
-                .lower_devices()
-                .next()
-                .context(error::RootHasNoLowerDevices {
-                    root_major_minor: root_fs.to_string(),
-                })??;
-        let os_disk = active_partition.disk()?;
+        let active_partition = root_fs
+            .lower_devices()
+            .and_then(|mut iter| iter.next().transpose())
+            .context(error::RootLowerDevices {
+                root: root_fs.path(),
+            })?
+            .context(error::RootHasNoLowerDevices {
+                root: root_fs.path(),
+            })?;
+        let os_disk = active_partition
+            .disk()
+            .context(error::DiskFromPartition {
+                device: root_fs.path(),
+            })?
+            .context(error::RootNotPartition {
+                device: root_fs.path(),
+            })?;
         let active_partition = active_partition.path();
 
         // Parse the partition table on the disk.
@@ -81,7 +89,10 @@ impl State {
         // Loads the path to partition number `num` on the OS disk.
         let device_from_part_num = |num| -> Result<PathBuf, Error> {
             Ok(os_disk
-                .partition(num)?
+                .partition(num)
+                .context(error::PartitionFromDisk {
+                    device: os_disk.path(),
+                })?
                 .context(error::PartitionNotFoundOnDevice {
                     num,
                     device: os_disk.path(),
