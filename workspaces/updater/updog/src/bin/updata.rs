@@ -258,12 +258,42 @@ impl MaxVersionArgs {
 }
 
 #[derive(Debug, StructOpt)]
+struct MappingArgs {
+    // metadata file to create/modify
+    file: PathBuf,
+
+    #[structopt(short, long)]
+    image_version: Version,
+
+    #[structopt(short, long)]
+    data_version: DVersion,
+}
+
+impl MappingArgs {
+    fn run(self) -> Result<()> {
+        let mut m: Manifest = load_file(&self.file)?;
+        let version = self.image_version.clone();
+        let old = m
+            .datastore_versions
+            .insert(self.image_version, self.data_version);
+        if let Some(old) = old {
+            eprintln!(
+                "Warning: New mapping ({},{}) replaced old mapping ({},{})",
+                version, self.data_version, version, old
+            );
+        }
+        write_file(&self.file, &m)
+    }
+}
+
+#[derive(Debug, StructOpt)]
 #[structopt(rename_all = "kebab-case")]
 enum Command {
     Init(GeneralArgs),
     AddUpdate(AddUpdateArgs),
     AddWave(WaveArgs),
     AddMigration(MigrationArgs),
+    AddMapping(MappingArgs),
     SetMaxVersion(MaxVersionArgs),
     RemoveUpdate(RemoveUpdateArgs),
     RemoveMigration(MigrationArgs),
@@ -311,6 +341,7 @@ fn main_inner() -> Result<()> {
         Command::AddUpdate(args) => args.run(),
         Command::AddWave(args) => args.add(),
         Command::AddMigration(args) => args.add(),
+        Command::AddMapping(args) => args.run(),
         Command::SetMaxVersion(args) => args.run(),
         Command::RemoveUpdate(args) => args.run(),
         Command::RemoveWave(args) => args.remove(),
