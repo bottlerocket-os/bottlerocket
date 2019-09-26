@@ -19,7 +19,7 @@ impl PartitionSet {
 }
 
 impl fmt::Display for PartitionSet {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "boot={} root={} hash={}",
@@ -57,7 +57,7 @@ impl Not for SetSelect {
 }
 
 impl fmt::Display for SetSelect {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SetSelect::A => "A",
             SetSelect::B => "B",

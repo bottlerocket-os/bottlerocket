@@ -92,7 +92,7 @@ impl Key {
 
     /// Verify a signature of an object made with this key.
     pub(crate) fn verify(&self, msg: &[u8], signature: &[u8]) -> bool {
-        let (alg, public_key): (&dyn VerificationAlgorithm, untrusted::Input) = match self {
+        let (alg, public_key): (&dyn VerificationAlgorithm, untrusted::Input<'_>) = match self {
             Key::Ecdsa {
                 scheme: EcdsaScheme::EcdsaSha2Nistp256,
                 keyval,
@@ -173,7 +173,7 @@ impl FromStr for Key {
 pub struct KeyParseError(());
 
 impl fmt::Display for KeyParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "unrecognized or invalid public key")
     }
 }

@@ -133,7 +133,7 @@ impl BlockDevice {
 }
 
 impl fmt::Display for BlockDevice {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.device_name.to_string_lossy().fmt(f)
     }
 }
@@ -185,7 +185,7 @@ enum ErrorShim<'a> {
 }
 
 impl<'a> From<ErrorShim<'a>> for Error {
-    fn from(err: ErrorShim) -> Self {
+    fn from(err: ErrorShim<'_>) -> Self {
         match err {
             ErrorShim::LinkTargetFileName(path) => Self::new(
                 ErrorKind::InvalidData,

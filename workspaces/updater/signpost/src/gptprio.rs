@@ -49,7 +49,7 @@ impl From<GptPrio> for u64 {
 }
 
 impl fmt::Display for GptPrio {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "priority={} tries_left={} successful={}",
