@@ -6,7 +6,7 @@ mod error;
 mod se;
 
 use crate::error::Result;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use data_store_version::Version as DVersion;
 use loopdev::{LoopControl, LoopDevice};
 use rand::{thread_rng, Rng};
@@ -20,8 +20,6 @@ use std::io::{self, BufRead, BufReader};
 use std::ops::Bound::{Excluded, Included};
 use std::path::{Path, PathBuf};
 use std::process;
-use std::thread;
-use std::time::Duration;
 use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
 use tempfile::NamedTempFile;
 use tough::{Limits, Repository, Settings};
@@ -77,9 +75,16 @@ struct Update {
 }
 
 impl Update {
+    pub fn update_wave(&self, seed: u64) -> Option<&DateTime<Utc>> {
+        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
+            return Some(wave);
+        }
+        None
+    }
+
     fn update_ready(&self, seed: u64) -> bool {
         // Has this client's wave started
-        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
+        if let Some(wave) = self.update_wave(seed) {
             return *wave <= Utc::now();
         }
 
@@ -92,16 +97,19 @@ impl Update {
         true
     }
 
-    fn jitter(&self, seed: u64) -> Option<u64> {
-        let prev = self.waves.range((Included(0), Included(seed))).last();
+    pub fn jitter(&self, seed: u64) -> Option<DateTime<Utc>> {
+        let prev = self.update_wave(seed);
         let next = self
             .waves
             .range((Excluded(seed), Excluded(MAX_SEED)))
             .next();
         if let (Some(start), Some(end)) = (prev, next) {
             if Utc::now() < *end.1 {
+                let mut rng = thread_rng();
                 #[allow(clippy::cast_sign_loss)]
-                return Some((end.1.timestamp() - start.1.timestamp()) as u64);
+                let range = (end.1.timestamp() - start.timestamp()) as u64;
+                let jitter = Duration::seconds(rng.gen_range(1, range) as i64);
+                return Some(*start + jitter);
             }
         }
         None
@@ -444,22 +452,8 @@ fn update_prepare(
 fn update_image(
     update: &Update,
     repository: &Repository<'_>,
-    jitter: Option<u64>,
     root_path: Option<NamedTempFile>,
 ) -> Result<()> {
-    // Jitter the exact update time
-    // Now: lazy spin
-    // If range > calling_interval we could just exit and wait until updog
-    // is called again.
-    // Alternately if Updog is going to be driven by some orchestrator
-    // then the jitter could be reduced or left to the caller.
-    if let Some(jitter) = jitter {
-        let mut rng = thread_rng();
-        let jitter = Duration::new(rng.gen_range(1, jitter), 0);
-        eprintln!("Waiting {:?} till update", jitter);
-        thread::sleep(jitter);
-    }
-
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
@@ -500,6 +494,7 @@ struct Arguments {
     force_version: Option<Version>,
     all: bool,
     reboot: bool,
+    timestamp: Option<DateTime<Utc>>,
 }
 
 /// Parse the command line arguments to get the user-specified values
@@ -511,6 +506,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
     let mut json = false;
     let mut all = false;
     let mut reboot = false;
+    let mut timestamp = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -528,6 +524,13 @@ fn parse_args(args: std::env::Args) -> Arguments {
             "-n" | "--now" => {
                 ignore_wave = true;
             }
+            "-t" | "--timestamp" => match iter.next() {
+                Some(t) => match DateTime::parse_from_rfc3339(&t) {
+                    Ok(t) => timestamp = Some(DateTime::from_utc(t.naive_utc(), Utc)),
+                    _ => usage(),
+                },
+                _ => usage(),
+            },
             "-j" | "--json" => {
                 json = true;
             }
@@ -556,7 +559,20 @@ fn parse_args(args: std::env::Args) -> Arguments {
         force_version: update_version,
         all,
         reboot,
+        timestamp,
     }
+}
+
+fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string(&object).context(error::UpdateSerialize)?
+        );
+    } else {
+        println!("{}", string);
+    }
+    Ok(())
 }
 
 fn main_inner() -> Result<()> {
@@ -621,13 +637,26 @@ fn main_inner() -> Result<()> {
             ) {
                 if u.update_ready(config.seed) || arguments.ignore_wave {
                     eprintln!("Starting update to {}", u.version);
-                    let root_path = update_prepare(&repository, &manifest, u)?;
+
                     if arguments.ignore_wave {
                         eprintln!("** Updating immediately **");
-                        update_image(u, &repository, None, root_path)?;
                     } else {
-                        update_image(u, &repository, u.jitter(config.seed), root_path)?;
+                        let jitter = match arguments.timestamp {
+                            Some(t) => Some(t),
+                            _ => u.jitter(config.seed),
+                        };
+
+                        if let Some(j) = jitter {
+                            if j > Utc::now() {
+                                // not yet!
+                                output(arguments.json, &j, &format!("{}", j))?;
+                                return Ok(());
+                            }
+                        }
                     }
+
+                    let root_path = update_prepare(&repository, &manifest, u)?;
+                    update_image(u, &repository, root_path)?;
                     if command == Command::Update {
                         update_flags()?;
                         if arguments.reboot {
@@ -637,13 +666,18 @@ fn main_inner() -> Result<()> {
                                 .context(error::RebootFailure)?;
                         }
                     }
-                    eprintln!("Update applied: {}-{}", u.flavor, u.version);
-                    if arguments.json {
-                        println!(
-                            "{}",
-                            serde_json::to_string(&u).context(error::UpdateSerialize)?
-                        );
-                    }
+                    output(
+                        arguments.json,
+                        &u,
+                        &format!("Update applied: {}-{}", u.flavor, u.version),
+                    )?;
+                } else if let Some(wave) = u.jitter(config.seed) {
+                    // return the jittered time of our wave in the update
+                    output(
+                        arguments.json,
+                        &wave,
+                        &format!("Update available at {}", &wave),
+                    )?;
                 } else {
                     eprintln!("Update available in later wave");
                 }
