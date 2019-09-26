@@ -20,6 +20,7 @@ members = [
     "findutils",
     "glibc",
     "golang",
+    "growpart",
     "grub",
     "host-containers",
     "iproute",
