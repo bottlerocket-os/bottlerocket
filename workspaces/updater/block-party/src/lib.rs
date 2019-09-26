@@ -6,7 +6,7 @@
 //! * Getting a numbered partition on a disk
 //! * Getting the devices that are combined as a block device, e.g. a dm-verity device
 
-#![deny(missing_docs)]
+#![deny(missing_docs, rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
 use std::convert::TryFrom;

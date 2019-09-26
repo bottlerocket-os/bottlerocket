@@ -6,6 +6,7 @@ storewolf is a small program to create the filesystem datastore.
 It creates the datastore at a provided path and populates any default
 settings given in the defaults.toml file, unless they already exist.
 */
+#![deny(rust_2018_idioms)]
 
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use snafu::{OptionExt, ResultExt};
@@ -186,7 +187,6 @@ fn populate_default_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
         existing_metadata = datastore
             .list_populated_metadata("", &None as &Option<&str>)
             .context(error::QueryMetadata)?;
-        ;
         existing_data = datastore
             .list_populated_keys("", datastore::Committed::Live)
             .context(error::QueryData)?;

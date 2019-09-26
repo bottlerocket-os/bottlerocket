@@ -1,3 +1,4 @@
+#![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
 use serde::Deserialize;

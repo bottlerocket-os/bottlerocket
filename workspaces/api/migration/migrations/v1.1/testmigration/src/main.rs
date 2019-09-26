@@ -1,3 +1,5 @@
+#![deny(rust_2018_idioms)]
+
 use migration_helpers::{migrate, Migration, MigrationData, Result};
 
 /// Example migration that prepends "New" to the system time zone.

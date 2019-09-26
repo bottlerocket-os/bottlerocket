@@ -8,6 +8,7 @@
 //! [TUF repositories]: https://theupdateframework.github.io/
 //! [spec]: https://github.com/theupdateframework/specification/blob/9f148556ca15da2ec5c022c8b3e6f99a028e5fe5/tuf-spec.md
 
+#![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 

@@ -5,6 +5,7 @@ settings-committer runs on boot after any services that can update
 settings. It logs any pending settings, then commits them to live.
 
 */
+#![deny(rust_2018_idioms)]
 
 #[macro_use]
 extern crate log;

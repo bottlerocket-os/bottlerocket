@@ -9,6 +9,8 @@
 // locked, and also because migration authors are given an interface for ordering via migration
 // name, and running in parallel would violate that.
 
+#![deny(rust_2018_idioms)]
+
 mod args;
 mod datastore;
 pub mod error;

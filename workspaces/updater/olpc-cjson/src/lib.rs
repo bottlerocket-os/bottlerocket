@@ -27,6 +27,7 @@
 //! assert_eq!(buf, br#"{"a":"qwerty","b":12}"#);
 //! ```
 
+#![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
 use serde::Serialize;
