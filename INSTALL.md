@@ -148,7 +148,7 @@ Now we add the IAM role to the EKS cluster so it applies to new nodes.
 To do this, we edit the aws-auth ConfigMap using `kubectl`:
 
 ```
-`kubectl edit -n kube-system configmap/aws-auth`
+kubectl edit -n kube-system configmap/aws-auth
 ```
 
 Inside the file, we need to add the IAM role details to the `mapRoles` section.
@@ -198,12 +198,12 @@ For the instance to be able to communicate with the EKS cluster control plane an
 Run the following command:
 
 ```
-aws ec2 describe-security-groups --filters Name=tag:Name,Values=thar \
+aws ec2 describe-security-groups --filters Name=tag:Name,Values=*thar* \
   --query "SecurityGroups[*].{Name:GroupName,ID:GroupId}"
 ```
 
 This will output several security group names and IDs.
-You want to save the IDs for the "ClusterSharedNodeSecurityGroup" and "nodegroup" entries.
+You want to save the IDs for the `...ClusterSharedNodeSecurityGroup...` and `...nodegroup...` entries.
 
 Example:
 

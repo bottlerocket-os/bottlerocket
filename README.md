@@ -90,7 +90,7 @@ settings.host-containers.admin.enabled = true
 If Thar is already running, you can change the setting with an API call:
 
 ```
-apiclient -u /settings -m PATCH -d '{"settings": {"host-containers": {"admin": {"enabled": true}}}}'
+apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": true}}}'
 ```
 
 (To make an API call like this, you need to use an authenticated channel like [SSM](#control-container).)
