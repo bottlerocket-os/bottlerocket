@@ -89,15 +89,19 @@ func (i *Intent) Errored() bool {
 	return errored
 }
 
-// Stuck intents are those that cannot be realized in their current state and
-// should be unstuck.
+// Stuck intents are those that cannot be realized or are terminal in their
+// current state and should be unstuck. If terminal handling is needed, the
+// caller should use Intent.Terminal() to detect this case.
 func (i *Intent) Stuck() bool {
-	// The state is inconsistent or isn't actually making progress
-	inconsistentProgress := i.Active != i.Wanted && !i.InProgress()
-	// The step in the forward direction doesn't make check out, its stuck.
-	invalidProgress := i.Wanted != i.projectActive().Wanted
+	exhausted := i.Terminal() && i.Realized()
+	realizedFailure := i.Errored() && i.Wanted == i.Active
+	degradedStatic := !i.Waiting() && (exhausted || realizedFailure)
 
-	return inconsistentProgress || invalidProgress
+	degradedActive := (i.Wanted == marker.NodeActionUnknown || i.Active == marker.NodeActionUnknown) && i.Waiting()
+	degradedPath := (i.Projected().Wanted == marker.NodeActionUnknown || i.projectActive().Wanted == marker.NodeActionUnknown)
+	degradedBusy := !i.isInProgress(i.Wanted) && i.Wanted == i.Active && i.State == marker.NodeStateBusy
+
+	return degradedStatic || degradedPath || degradedActive || degradedBusy
 }
 
 // Realized indicates that the Intent reached the intended state.
@@ -110,10 +114,9 @@ func (i *Intent) Realized() bool {
 // InProgess reports true when the Intent is for a node that is making progress
 // towards completing an update.
 func (i *Intent) InProgress() bool {
-	// The next step has been set, but not started yet so its waiting to be
-	// started or realized.
-	pendingNext := !i.Realized() && i.projectActive().Wanted == i.Wanted
-	return i.isInProgress(i.Active) && pendingNext
+	pendingNode := i.Wanted != i.Active && i.Waiting()
+	pendingFinish := i.Wanted == i.Active && !i.Waiting()
+	return pendingNode || pendingFinish
 }
 
 // isInProgress indicates that the field provided is an action that may be able
@@ -121,7 +124,7 @@ func (i *Intent) InProgress() bool {
 func (i *Intent) isInProgress(field marker.NodeAction) bool {
 	switch field {
 	case marker.NodeActionReset,
-		marker.NodeActionStablize,
+		marker.NodeActionStabilize,
 		marker.NodeActionPrepareUpdate,
 		marker.NodeActionPerformUpdate,
 		marker.NodeActionRebootUpdate:
@@ -138,14 +141,14 @@ func (i *Intent) HasUpdateAvailable() bool {
 
 // Needed indicates that the intent is needing progress made on it.
 func (i *Intent) Actionable() bool {
-	canProgress := (i.Waiting() || i.Realized()) && !i.Terminal()
+	needsAction := (i.Waiting() || i.Realized()) && !i.Terminal()
 	unknown := i.inUnknownState()
 	stuck := i.Stuck()
-	return canProgress || unknown || stuck
+	return needsAction || unknown || stuck
 }
 
 // Projected returns the n+1 step projection of a would-be Intent. It does not
-// check whether or not the next step is *sane* given the current intent (ie:
+// check whether or not the next step is correct given the current intent (ie:
 // this will not error if the node has not actually completed a step).
 func (i *Intent) Projected() *Intent {
 	p := i.Clone()

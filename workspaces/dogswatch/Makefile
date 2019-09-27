@@ -14,7 +14,7 @@ $(GOBIN):
 	mkdir -p $(GOBIN)
 
 test:
-	go test -v $(GOPKGS)
+	go test $(GOPKGS)
 
 container: vendor
 	docker build --network=host -t dogswatch:$$(git describe --always --dirty) .

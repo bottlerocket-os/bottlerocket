@@ -13,8 +13,8 @@ import (
 func testIntent() *Intent {
 	i := &Intent{
 		NodeName: "test",
-		Wanted:   marker.NodeActionStablize,
-		Active:   marker.NodeActionStablize,
+		Wanted:   marker.NodeActionStabilize,
+		Active:   marker.NodeActionStabilize,
 		State:    marker.NodeStateReady,
 	}
 	return i
@@ -27,7 +27,7 @@ func TestReset(t *testing.T) {
 	s.reset()
 
 	// first action after reset
-	assert.Equal(t, s.Projected().Wanted, marker.NodeActionStablize)
+	assert.Equal(t, s.Projected().Wanted, marker.NodeActionStabilize)
 	assert.Check(t, i.Active != s.Active)
 }
 
@@ -73,8 +73,8 @@ func TestIntentTruths(t *testing.T) {
 			name: "working",
 			intents: []Intent{
 				{
-					Wanted: marker.NodeActionStablize,
-					Active: marker.NodeActionStablize,
+					Wanted: marker.NodeActionStabilize,
+					Active: marker.NodeActionStabilize,
 					State:  marker.NodeStateBusy,
 				},
 			},
@@ -92,6 +92,23 @@ func TestIntentTruths(t *testing.T) {
 			},
 			truthy: []pred{"Waiting", "Actionable"},
 			falsy:  []pred{"Realized", "Stuck"},
+		},
+		{
+			name: "not-stuck-pending",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionStabilize,
+					Active: marker.NodeActionStabilize,
+					State:  marker.NodeStateReady,
+				},
+				{
+					Wanted: marker.NodeActionPerformUpdate,
+					Active: marker.NodeActionStabilize,
+					State:  marker.NodeStateReady,
+				},
+			},
+			truthy: []pred{"Waiting"},
+			falsy:  []pred{"Stuck"},
 		},
 		{
 			name: "stuck",
@@ -117,15 +134,15 @@ func TestIntentTruths(t *testing.T) {
 					State:  marker.NodeStateReady,
 				},
 			},
-			truthy: []pred{"Stuck", "Actionable"},
+			truthy: []pred{"Stuck"},
 			falsy:  []pred{"Realized", "Terminal"},
 		},
 		{
 			name: "waiting",
 			intents: []Intent{
 				{
-					Wanted: marker.NodeActionStablize,
-					Active: marker.NodeActionStablize,
+					Wanted: marker.NodeActionStabilize,
+					Active: marker.NodeActionStabilize,
 					State:  marker.NodeStateReady,
 				},
 			},
@@ -136,8 +153,8 @@ func TestIntentTruths(t *testing.T) {
 			name: "errored-nominal",
 			intents: []Intent{
 				{
-					Wanted: marker.NodeActionStablize,
-					Active: marker.NodeActionStablize,
+					Wanted: marker.NodeActionStabilize,
+					Active: marker.NodeActionStabilize,
 					State:  marker.NodeStateError,
 				},
 			},
@@ -208,6 +225,8 @@ func TestIntentTruths(t *testing.T) {
 					preds[p] = struct{}{}
 				}
 
+				//t.Logf("projectActive %#v", intent.projectActive())
+
 				for _, predT := range tc.truthy {
 					noOverlap(predT)
 					match, err := callCheck(&intent, predT)
@@ -241,4 +260,13 @@ func callCheck(recv *Intent, methodName string) (bool, error) {
 		return false, errors.Errorf("return value from predicate was not a bool")
 	}
 	return res[0].Bool(), nil
+}
+
+func TestProjectionMatches(t *testing.T) {
+	i := Intent{
+		Wanted: marker.NodeActionPerformUpdate,
+		Active: marker.NodeActionStabilize,
+		State:  marker.NodeStateReady,
+	}
+	assert.Equal(t, i.projectActive().Wanted, i.Active)
 }

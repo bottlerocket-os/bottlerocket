@@ -154,7 +154,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 		a.log.Debug("updating")
 		err = a.platform.Update(a.progress.GetTarget())
 
-	case marker.NodeActionUnknown, marker.NodeActionStablize:
+	case marker.NodeActionUnknown, marker.NodeActionStabilize:
 		if !a.progress.Valid() {
 			err = errInvalidProgress
 			break

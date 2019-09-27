@@ -23,7 +23,7 @@ type NodeAction = string
 
 const (
 	NodeActionUnknown       NodeAction = "unknown"
-	NodeActionStablize      NodeAction = "stablize"
+	NodeActionStabilize      NodeAction = "stabilize"
 	NodeActionReset         NodeAction = "reset-state"
 	NodeActionPrepareUpdate NodeAction = "prepare-update"
 	NodeActionPerformUpdate NodeAction = "perform-update"
@@ -68,7 +68,7 @@ const (
 	PlatformV0 PlatformVersion = "0.1.0-zeta"
 
 	// PlatformV1Alpha is the initial platform integration with a
-	// to-be-stablized interface.
+	// to-be-stabilized interface.
 	PlatformV1Alpha PlatformVersion = "1.0.0-alpha"
 
 	// PlatformV1AlphaNoOp can be used to observe would-be actions in a cluster.

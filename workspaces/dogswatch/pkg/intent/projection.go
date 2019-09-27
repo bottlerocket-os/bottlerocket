@@ -7,12 +7,12 @@ import (
 
 var nextLinear map[marker.NodeAction]marker.NodeAction = map[marker.NodeAction]marker.NodeAction{
 	// Stabilization from known points.
-	"":                        marker.NodeActionStablize,
-	marker.NodeActionStablize: marker.NodeActionStablize,
-	marker.NodeActionUnknown:  marker.NodeActionStablize,
+	"":                        marker.NodeActionStabilize,
+	marker.NodeActionStabilize: marker.NodeActionStabilize,
+	marker.NodeActionUnknown:  marker.NodeActionStabilize,
 
 	// Linear progression
-	marker.NodeActionReset:         marker.NodeActionStablize,
+	marker.NodeActionReset:         marker.NodeActionStabilize,
 	marker.NodeActionPrepareUpdate: marker.NodeActionPerformUpdate,
 	marker.NodeActionPerformUpdate: marker.NodeActionRebootUpdate,
 	// FIN. The actor must know what to do next to bring itself around again if
