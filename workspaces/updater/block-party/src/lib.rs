@@ -9,7 +9,6 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
-use std::convert::TryFrom;
 use std::ffi::OsString;
 use std::fmt;
 use std::fs;
@@ -149,23 +148,6 @@ impl fmt::Display for BlockDevice {
 impl PartialEq for BlockDevice {
     fn eq(&self, other: &Self) -> bool {
         self.major == other.major && self.minor == other.minor
-    }
-}
-
-impl PartialEq<fs::Metadata> for BlockDevice {
-    fn eq(&self, metadata: &fs::Metadata) -> bool {
-        self.major == metadata.st_dev() >> 8 && self.minor == metadata.st_dev() & 0xff
-    }
-}
-
-impl TryFrom<fs::Metadata> for BlockDevice {
-    type Error = Error;
-
-    fn try_from(metadata: fs::Metadata) -> Result<Self> {
-        // see /usr/include/linux/kdev_t.h
-        let major = metadata.st_dev() >> 8;
-        let minor = metadata.st_dev() & 0xff;
-        Self::from_major_minor(major, minor)
     }
 }
 
