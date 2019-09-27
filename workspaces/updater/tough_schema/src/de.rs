@@ -45,7 +45,7 @@ where
     impl<'de> serde::de::Visitor<'de> for Visitor {
         type Value = HashMap<Decoded<Hex>, Key>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
         }
 

@@ -9,6 +9,8 @@
 // locked, and also because migration authors are given an interface for ordering via migration
 // name, and running in parallel would violate that.
 
+#![deny(rust_2018_idioms)]
+
 mod args;
 mod datastore;
 pub mod error;
@@ -109,7 +111,7 @@ pub enum MigrationType {
 }
 
 impl fmt::Display for MigrationType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MigrationType::Forward => write!(f, "forward"),
             MigrationType::Backward => write!(f, "backward"),

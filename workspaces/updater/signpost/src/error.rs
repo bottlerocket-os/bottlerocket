@@ -85,7 +85,7 @@ pub enum Error {
 pub struct GPTError(pub gptman::Error);
 
 impl fmt::Display for GPTError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }

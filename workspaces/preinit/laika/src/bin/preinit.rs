@@ -6,6 +6,8 @@ laika is a preinit agent that mounts the necessary filesystems for setting up Th
 After the filesystems are mounted, laika then invokes the init process.
 */
 
+#![deny(rust_2018_idioms)]
+
 use filetime::FileTime;
 use snafu::{IntoError, ResultExt};
 use std::os::unix::process::CommandExt;

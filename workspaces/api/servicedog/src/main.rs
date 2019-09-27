@@ -12,6 +12,9 @@ If the setting is true, servicedog attempts to start and enable the given system
 As its very last step, service dog calls `systemd daemon-reload` to ensure all changes take affect.
 
 */
+
+#![deny(rust_2018_idioms)]
+
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
 use std::ffi::OsStr;

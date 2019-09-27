@@ -1,5 +1,7 @@
 //! This is the primary binary for the Thar API server.
 
+#![deny(rust_2018_idioms)]
+
 #[macro_use]
 extern crate log;
 

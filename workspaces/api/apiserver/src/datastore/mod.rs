@@ -227,7 +227,7 @@ where
 type ScalarDeserializer<'de> = serde_json::Deserializer<serde_json::de::StrRead<'de>>;
 
 /// Constructor for ScalarDeserializer.
-fn deserializer_for_scalar(scalar: &str) -> ScalarDeserializer {
+fn deserializer_for_scalar(scalar: &str) -> ScalarDeserializer<'_> {
     serde_json::Deserializer::from_str(scalar)
 }
 

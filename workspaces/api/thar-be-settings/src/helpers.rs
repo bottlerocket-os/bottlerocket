@@ -85,10 +85,10 @@ mod error {
 /// `base64_decode` decodes base64 encoded text at template render time.
 /// It takes a single variable as a parameter: {{base64_decode var}}
 pub fn base64_decode(
-    helper: &Helper,
+    helper: &Helper<'_, '_>,
     _: &Handlebars,
     _: &Context,
-    renderctx: &mut RenderContext,
+    renderctx: &mut RenderContext<'_>,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     // To give context to our errors, get the template name.

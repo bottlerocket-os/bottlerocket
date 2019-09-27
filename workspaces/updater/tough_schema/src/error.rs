@@ -86,13 +86,13 @@ pub enum Error {
 pub struct Compat<T>(pub T);
 
 impl<T: Debug> Debug for Compat<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Debug::fmt(&self.0, f)
     }
 }
 
 impl<T: Display> Display for Compat<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.0, f)
     }
 }

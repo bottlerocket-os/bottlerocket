@@ -14,6 +14,8 @@ Service data from the API includes any commands needed to restart services affec
 In the standalone ("all keys") mode, it queries the API for all services and configuration files, then renders and rewrites all configuration files and restarts all services.
 */
 
+#![deny(rust_2018_idioms)]
+
 #[macro_use]
 extern crate log;
 

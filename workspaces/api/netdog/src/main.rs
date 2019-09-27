@@ -13,6 +13,8 @@ It generates `/etc/resolv.conf` and sets the hostname.
 // transactions; otherwise a lease renewal while settings were being added
 // by other processes could cause them to be applied in an incomplete state.
 
+#![deny(rust_2018_idioms)]
+
 use dns_lookup::lookup_addr;
 use envy;
 use ipnet::IpNet;

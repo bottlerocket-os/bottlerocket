@@ -16,6 +16,8 @@
 //! To understand motivation and more about the overall process, look at the migration system
 //! documentation, one level up.
 
+#![deny(rust_2018_idioms)]
+
 #[macro_use]
 extern crate log;
 

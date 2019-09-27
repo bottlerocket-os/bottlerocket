@@ -42,7 +42,7 @@ impl Copylike {
 }
 
 impl Display for Copylike {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",

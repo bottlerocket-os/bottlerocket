@@ -1,3 +1,5 @@
+#![deny(rust_2018_idioms)]
+
 //! The apiclient library provides simple, synchronous methods to query an HTTP API over a
 //! Unix-domain socket.
 //!

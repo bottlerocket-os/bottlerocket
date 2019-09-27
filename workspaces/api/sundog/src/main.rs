@@ -7,6 +7,8 @@ It requests settings generators from the API and runs them.
 The output is collected and sent to a known Thar API server endpoint.
 */
 
+#![deny(rust_2018_idioms)]
+
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::env;

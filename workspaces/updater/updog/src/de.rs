@@ -37,7 +37,7 @@ where
     impl<'de> serde::de::Visitor<'de> for Visitor {
         type Value = BTreeMap<u64, DateTime<Utc>>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
         }
 
@@ -105,7 +105,7 @@ where
     impl<'de> serde::de::Visitor<'de> for Visitor {
         type Value = BTreeMap<(DVersion, DVersion), Vec<String>>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
         }
 
@@ -157,7 +157,7 @@ where
     impl<'de> serde::de::Visitor<'de> for Visitor {
         type Value = BTreeMap<Version, DVersion>;
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
         }
 

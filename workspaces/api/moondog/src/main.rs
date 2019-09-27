@@ -10,6 +10,8 @@ Currently, Amazon EC2 user data support is implemented.
 User data can also be retrieved from a file for testing.
 */
 
+#![deny(rust_2018_idioms)]
+
 #[macro_use]
 extern crate log;
 

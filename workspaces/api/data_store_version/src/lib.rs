@@ -7,6 +7,8 @@ Version objects from various inputs.
 It is especially helpful during data store migrations, and is also used for data store creation.
 */
 
+#![deny(rust_2018_idioms)]
+
 #[macro_use]
 extern crate log;
 
@@ -91,7 +93,7 @@ impl FromStr for Version {
 }
 
 impl fmt::Display for Version {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "v{}.{}", self.major, self.minor)
     }
 }

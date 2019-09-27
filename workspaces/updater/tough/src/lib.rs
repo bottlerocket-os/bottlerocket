@@ -8,6 +8,7 @@
 //! [TUF repositories]: https://theupdateframework.github.io/
 //! [spec]: https://github.com/theupdateframework/specification/blob/9f148556ca15da2ec5c022c8b3e6f99a028e5fe5/tuf-spec.md
 
+#![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 
@@ -284,7 +285,7 @@ impl From<tough_schema::Target> for Target {
 }
 
 /// Ensures that system time has not stepped backward since it was last sampled
-fn system_time(datastore: &Datastore) -> Result<DateTime<Utc>> {
+fn system_time(datastore: &Datastore<'_>) -> Result<DateTime<Utc>> {
     let file = "latest_known_time.json";
     // Get 'current' system time
     let sys_time = Utc::now();
@@ -308,7 +309,7 @@ fn system_time(datastore: &Datastore) -> Result<DateTime<Utc>> {
     Ok(sys_time)
 }
 
-fn check_expired<T: Role>(datastore: &Datastore, role: &T) -> Result<()> {
+fn check_expired<T: Role>(datastore: &Datastore<'_>, role: &T) -> Result<()> {
     ensure!(
         system_time(datastore)? < role.expires(),
         error::ExpiredMetadata { role: T::TYPE }
@@ -329,7 +330,7 @@ fn parse_url(url: &str) -> Result<Url> {
 fn load_root<R: Read>(
     client: &Client,
     root: R,
-    datastore: &Datastore,
+    datastore: &Datastore<'_>,
     max_root_size: u64,
     max_root_updates: u64,
     metadata_base_url: &Url,
@@ -492,7 +493,7 @@ fn load_root<R: Read>(
 fn load_timestamp(
     client: &Client,
     root: &Signed<Root>,
-    datastore: &Datastore,
+    datastore: &Datastore<'_>,
     max_timestamp_size: u64,
     metadata_base_url: &Url,
 ) -> Result<Signed<Timestamp>> {
@@ -561,7 +562,7 @@ fn load_snapshot(
     client: &Client,
     root: &Signed<Root>,
     timestamp: &Signed<Timestamp>,
-    datastore: &Datastore,
+    datastore: &Datastore<'_>,
     metadata_base_url: &Url,
 ) -> Result<Signed<Snapshot>> {
     // 3. Download snapshot metadata file, up to the number of bytes specified in the timestamp
@@ -692,7 +693,7 @@ fn load_targets(
     client: &Client,
     root: &Signed<Root>,
     snapshot: &Signed<Snapshot>,
-    datastore: &Datastore,
+    datastore: &Datastore<'_>,
     max_targets_size: u64,
     metadata_base_url: &Url,
 ) -> Result<Signed<tough_schema::Targets>> {

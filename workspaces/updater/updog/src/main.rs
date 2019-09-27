@@ -1,3 +1,4 @@
+#![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
 mod de;
@@ -137,7 +138,7 @@ fn load_config() -> Result<Config> {
     Ok(config)
 }
 
-fn load_repository(config: &Config) -> Result<Repository> {
+fn load_repository(config: &Config) -> Result<Repository<'_>> {
     fs::create_dir_all("/var/lib/thar/updog").context(error::CreateMetadataCache)?;
     Repository::load(Settings {
         root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
@@ -156,7 +157,7 @@ fn load_repository(config: &Config) -> Result<Repository> {
     .context(error::Metadata)
 }
 
-fn load_manifest(repository: &Repository) -> Result<Manifest> {
+fn load_manifest(repository: &Repository<'_>) -> Result<Manifest> {
     let target = "manifest.json";
     serde_json::from_reader(
         repository
@@ -234,7 +235,7 @@ fn update_required<'a>(
 }
 
 fn write_target_to_disk<P: AsRef<Path>>(
-    repository: &Repository,
+    repository: &Repository<'_>,
     target: &str,
     disk_path: P,
 ) -> Result<()> {
@@ -255,7 +256,7 @@ fn write_target_to_disk<P: AsRef<Path>>(
 }
 
 fn mount_root_target(
-    repository: &Repository,
+    repository: &Repository<'_>,
     update: &Update,
 ) -> Result<(PathBuf, LoopDevice, NamedTempFile)> {
     let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
@@ -342,7 +343,7 @@ fn migration_targets(from: DVersion, to: DVersion, manifest: &Manifest) -> Resul
 /// If a migration is available in the target root image it is copied from
 /// the image instead of being downloaded from the repository.
 fn retrieve_migrations(
-    repository: &Repository,
+    repository: &Repository<'_>,
     manifest: &Manifest,
     update: &Update,
     root_path: &Option<PathBuf>,
@@ -393,7 +394,7 @@ fn retrieve_migrations(
 }
 
 fn update_prepare(
-    repository: &Repository,
+    repository: &Repository<'_>,
     manifest: &Manifest,
     update: &Update,
 ) -> Result<Option<NamedTempFile>> {
@@ -427,7 +428,7 @@ fn update_prepare(
 
 fn update_image(
     update: &Update,
-    repository: &Repository,
+    repository: &Repository<'_>,
     jitter: Option<u64>,
     root_path: Option<NamedTempFile>,
 ) -> Result<()> {

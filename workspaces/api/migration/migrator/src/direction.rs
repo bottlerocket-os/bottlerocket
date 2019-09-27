@@ -14,7 +14,7 @@ pub(crate) enum Direction {
 }
 
 impl fmt::Display for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Direction::Forward => write!(f, "--forward"),
             Direction::Backward => write!(f, "--backward"),
