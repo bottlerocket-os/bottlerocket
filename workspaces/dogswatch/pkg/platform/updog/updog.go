@@ -54,7 +54,7 @@ func (e *executable) UpdateImage() error {
 
 func (e *executable) Reboot() error {
 	// TODO: reboot
-	_, err := e.runOk(exec.Command("echo", "reboot"))
+	_, err := e.runOk(exec.Command("reboot"))
 	return err
 }
 
