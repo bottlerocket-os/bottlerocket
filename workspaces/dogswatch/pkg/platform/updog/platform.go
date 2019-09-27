@@ -15,7 +15,7 @@ type Platform struct {
 }
 
 func New() (*Platform, error) {
-	return &Platform{host: &updog{cli: &binExecute{}}, log: logging.New("platform")}, nil
+	return &Platform{host: newUpdogHost(), log: logging.New("platform")}, nil
 }
 
 // Status reports the underlying platform's health and metadata.

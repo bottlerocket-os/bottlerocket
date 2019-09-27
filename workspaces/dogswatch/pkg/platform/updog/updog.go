@@ -1,11 +1,7 @@
 package updog
 
 import (
-	"context"
-	"encoding/json"
 	"os/exec"
-
-	"github.com/pkg/errors"
 )
 
 var (
@@ -15,92 +11,85 @@ var (
 // updog implements the binding for the platform to the host's implementation
 // for manipulating updates on its behalf.
 type updog struct {
-	cli executer
+	Bin command
 }
 
-type executer interface {
-	execute(ctx context.Context, args []string, data interface{}) (interface{}, error)
+type command interface {
+	CheckUpdate() (bool, error)
+	Update() error
+	UpdateImage() error
+	Reboot() error
+	Status() (bool, error)
+}
+
+type executable struct{}
+
+func (e *executable) runOk(cmd *exec.Cmd) (bool, error) {
+	if err := cmd.Start(); err != nil {
+		return false, err
+	}
+	err := cmd.Wait()
+	return err == nil, err
+}
+
+func (e *executable) CheckUpdate() (bool, error) {
+	return e.runOk(exec.Command(updogBin, "check-update"))
+}
+
+func (e *executable) Update() error {
+	_, err := e.runOk(exec.Command(updogBin, "update"))
+	return err
+}
+
+func (e *executable) UpdateImage() error {
+	_, err := e.runOk(exec.Command(updogBin, "update-image"))
+	return err
+}
+
+func (e *executable) Reboot() error {
+	// TODO: reboot
+	_, err := e.runOk(exec.Command("echo", "reboot"))
+	return err
+}
+
+func (e *executable) Status() (bool, error) {
+	_, err := exec.LookPath(updogBin)
+	return err == nil, err
 }
 
 func newUpdogHost() Host {
-	return &updog{cli: &binExecute{}}
-}
-
-type binExecute struct{}
-
-// binExecute abstracts the call to the backing `updog` executable.
-func (*binExecute) execute(ctx context.Context, args []string, data interface{}) (interface{}, error) {
-	cmd := exec.CommandContext(ctx, updogBin, args...)
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, errors.WithMessage(err, "could not get handle to stdout")
-	}
-
-	if err := cmd.Start(); err != nil {
-		return nil, errors.WithMessagef(err, "failed to execute")
-	}
-	if err := json.NewDecoder(stdout).Decode(data); err != nil {
-		return nil, errors.WithMessagef(err, "could not parse stdout")
-	}
-	err = cmd.Wait()
-	return data, err
+	return &updog{Bin: &executable{}}
 }
 
 func (u *updog) Status() (*statusResponse, error) {
-	action := CommandStatusQuery
-	shape := &statusResponse{Action: action}
-	response, err := u.cli.execute(context.TODO(), []string{action}, shape)
-	if err != nil {
-		return nil, errors.WithMessage(err, "could not get status")
+	if _, err := u.Bin.Status(); err != nil {
+		return nil, err
 	}
-	return response.(*statusResponse), nil
+	return &statusResponse{}, nil
 }
 
 func (u *updog) ListAvailable() (*listAvailableResponse, error) {
-	action := CommandListAvailable
-	response, err := u.cli.execute(context.TODO(), []string{action}, &listAvailableResponse{})
-	if err != nil {
-		return nil, errors.WithMessage(err, "could not get available updates")
+	if _, err := u.Bin.CheckUpdate(); err != nil {
+		return nil, err
 	}
-
-	// TODO: handle current interface for updates - stub in placeholder ID when
-	// appropriate.
-	listing := response.(*listAvailableResponse)
-	listing.ReportedUpdates = append(listing.ReportedUpdates, &availableUpdate{
-		ID: "FIXME: unconditional placeholder update ID",
-	})
-
-	return listing, nil
+	return &listAvailableResponse{}, nil
 }
 
 func (u *updog) PrepareUpdate(id UpdateID) (*prepareUpdateResponse, error) {
-	action := CommandPrepareUpdate
-	shape := &prepareUpdateResponse{Action: action}
-	response, err := u.cli.execute(context.TODO(), []string{action}, shape)
-	if err != nil {
-		return nil, errors.WithMessage(err, "could not prepare update")
-	}
-	return response.(*prepareUpdateResponse), nil
+	// TODO: extend updog for prepare steps
+	return &prepareUpdateResponse{}, nil
 }
 
 func (u *updog) ApplyUpdate(id UpdateID) (*applyUpdateResponse, error) {
-	action := CommandApplyUpdate
-	shape := &applyUpdateResponse{Action: action}
-	response, err := u.cli.execute(context.TODO(), []string{action}, shape)
-	if err != nil {
-		return nil, errors.WithMessage(err, "could not apply update")
+	if err := u.Bin.UpdateImage(); err != nil {
+		return nil, err
 	}
-	return response.(*applyUpdateResponse), nil
+	return &applyUpdateResponse{}, nil
 }
 
 func (u *updog) BootUpdate(id UpdateID, rebootNow bool) (*bootUpdateResponse, error) {
-	action := CommandBootUpdate
-	shape := &bootUpdateResponse{Action: action}
-	response, err := u.cli.execute(context.TODO(), []string{action}, shape)
-	if err != nil {
-		return nil, errors.WithMessagef(err, "could not set update next boot (reboot:%t)", rebootNow)
+	if err := u.Bin.Update(); err != nil {
+		return nil, err
 	}
-
-	return response.(*bootUpdateResponse), nil
+	return &bootUpdateResponse{}, nil
 }
