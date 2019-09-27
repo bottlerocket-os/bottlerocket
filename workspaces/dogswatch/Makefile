@@ -1,14 +1,12 @@
 GOPKG = github.com/amazonlinux/thar/dogswatch
 GOPKGS = $(GOPKG) $(GOPKG)/pkg/... $(GOPKG)/cmd/...
 GOBIN = ./bin/
+DOCKER_IMAGE = dogswatch:$(shell git describe --always --dirty)
 
-build: gogenerate $(GOBIN)
+build: $(GOBIN)
 	cd $(GOBIN) && \
 	go build -v -x $(GOPKG) && \
 	go build -v -x  $(GOPKG)/cmd/...
-
-gogenerate:
-	go generate -v $(GOPKGS)
 
 $(GOBIN):
 	mkdir -p $(GOBIN)
@@ -17,12 +15,28 @@ test:
 	go test $(GOPKGS)
 
 container: vendor
-	docker build --network=host -t dogswatch:$$(git describe --always --dirty) .
+	DOCKER_BUILDKIT=1 docker build --network=host -t $(DOCKER_IMAGE) .
+
+load: container
+	kind load docker-image $(DOCKER_IMAGE)
 
 vendor: go.sum go.mod
-	go mod vendor
+	CGO_ENABLED=0 GOOS=linux go mod vendor
 	touch vendor/
 
 deploy:
-	sed 's/@containerRef@/dogswatch:$(shell git describe --always --dirty)/g' ./deployment.yaml \
+	sed 's/@containerRef@/$(DOCKER_IMAGE)/g' ./deployment.yaml \
 		| kubectl apply -f -
+
+rollout: load deploy
+	kubectl -n thar rollout restart deployment/dogswatch-controller
+	kubectl -n thar rollout restart daemonset/dogswatch-agent
+
+
+cluster:
+	kind create cluster --config ./dev/cluster.yaml
+
+dashboard:
+	kubectl apply -f ./dev/dashboard.yaml
+	@echo 'Visit dashboard at: http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/'
+	kubectl proxy
