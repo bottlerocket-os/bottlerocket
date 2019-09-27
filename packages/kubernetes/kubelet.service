@@ -1,5 +1,5 @@
 [Unit]
-Description=kubernetes kubelet
+Description=Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
 After=containerd.service configured.target
 Wants=configured.target
