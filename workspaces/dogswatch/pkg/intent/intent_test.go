@@ -58,7 +58,7 @@ func TestIntentTruths(t *testing.T) {
 			intents: []Intent{
 				{}, // empty
 			},
-			truthy: []pred{"Actionable"},
+			truthy: []pred{"Stuck"},
 			falsy:  []pred{"Errored"},
 		},
 		{
@@ -66,7 +66,7 @@ func TestIntentTruths(t *testing.T) {
 			intents: []Intent{
 				func() Intent { i := testIntent(); i.reset(); return *i }(),
 			},
-			truthy: []pred{"Actionable", "Realized", "Waiting"},
+			truthy: []pred{"Realized", "Waiting", "Stuck"},
 			falsy:  []pred{"Intrusive"},
 		},
 		{
@@ -82,18 +82,6 @@ func TestIntentTruths(t *testing.T) {
 			falsy:  []pred{"Waiting", "Actionable", "Realized", "Stuck"},
 		},
 		{
-			name: "node-actionable",
-			intents: []Intent{
-				{
-					Wanted: marker.NodeActionRebootUpdate,
-					Active: marker.NodeActionPerformUpdate,
-					State:  marker.NodeStateReady,
-				},
-			},
-			truthy: []pred{"Waiting", "Actionable"},
-			falsy:  []pred{"Realized", "Stuck"},
-		},
-		{
 			name: "not-stuck-pending",
 			intents: []Intent{
 				{
@@ -102,13 +90,15 @@ func TestIntentTruths(t *testing.T) {
 					State:  marker.NodeStateReady,
 				},
 				{
-					Wanted: marker.NodeActionPerformUpdate,
+					// The first step we take in an update, should be coming
+					// from a stable place.
+					Wanted: ((&Intent{}).SetBeginUpdate().Wanted),
 					Active: marker.NodeActionStabilize,
 					State:  marker.NodeStateReady,
 				},
 			},
 			truthy: []pred{"Waiting"},
-			falsy:  []pred{"Stuck"},
+			falsy:  []pred{"Stuck", "Errored", "DegradedPath"},
 		},
 		{
 			name: "stuck",
@@ -124,11 +114,6 @@ func TestIntentTruths(t *testing.T) {
 					State:  marker.NodeStateError,
 				},
 				{
-					Wanted: marker.NodeActionRebootUpdate,
-					Active: marker.NodeActionUnknown,
-					State:  marker.NodeStateError,
-				},
-				{
 					Wanted: marker.NodeActionUnknown,
 					Active: marker.NodeActionPerformUpdate,
 					State:  marker.NodeStateReady,
@@ -136,6 +121,17 @@ func TestIntentTruths(t *testing.T) {
 			},
 			truthy: []pred{"Stuck"},
 			falsy:  []pred{"Realized", "Terminal"},
+		},
+		{
+			name: "stuck",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionRebootUpdate,
+					Active: marker.NodeActionUnknown,
+					State:  marker.NodeStateError,
+				},
+			},
+			truthy: []pred{"DegradedPath"},
 		},
 		{
 			name: "waiting",
@@ -150,6 +146,19 @@ func TestIntentTruths(t *testing.T) {
 			falsy:  []pred{"Actionable"},
 		},
 		{
+			name: "waiting",
+			intents: []Intent{
+				{
+					Wanted:          marker.NodeActionStabilize,
+					Active:          marker.NodeActionUnknown,
+					State:           marker.NodeStateUnknown,
+					UpdateAvailable: marker.NodeUpdateAvailable,
+				},
+			},
+			truthy: []pred{"InProgress"},
+			falsy:  []pred{"Realized", "Actionable", "Stuck"},
+		},
+		{
 			name: "errored-nominal",
 			intents: []Intent{
 				{
@@ -159,7 +168,7 @@ func TestIntentTruths(t *testing.T) {
 				},
 			},
 			truthy: []pred{"Errored", "Waiting"},
-			falsy:  []pred{"Stuck"},
+			falsy:  []pred{"Realized"},
 		},
 		{
 			name: "errored-unusual",
@@ -170,7 +179,7 @@ func TestIntentTruths(t *testing.T) {
 					State:  marker.NodeStateError,
 				},
 			},
-			truthy: []pred{"Errored", "Waiting", "Stuck", "Actionable"},
+			truthy: []pred{"Errored", "Waiting", "Stuck"},
 			falsy:  []pred{"Realized"},
 		},
 		{

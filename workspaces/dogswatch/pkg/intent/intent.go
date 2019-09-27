@@ -99,13 +99,15 @@ func (i *Intent) Stuck() bool {
 	exhausted := i.Terminal() && i.Realized()
 	// A step failed during and may not be able to be tried without taking
 	// intervening action.
-	realizedFailure := i.Errored() && i.Wanted == i.Active
+	failure := i.Errored()
 	// The actions reached a static position, but are unable to be driven by the
 	// state machine's steps.
-	degradedStatic := !i.Waiting() && (exhausted || realizedFailure)
+	degradedStatic := !i.Waiting() && (exhausted || failure)
 	// The actions were transitioned to unknown handling and waiting for
 	// instructions.
-	degradedUnknown := (i.Wanted == marker.NodeActionUnknown || i.Active == marker.NodeActionUnknown) && i.Waiting()
+	stuckUnknown := i.inUnknownState() && !i.InProgress()
+	wantingUnknown := i.Wanted == marker.NodeActionUnknown && i.Waiting()
+	degradedUnknown := stuckUnknown || wantingUnknown
 	// The action's step was out of line and resulted in an taking an unknown
 	// action.
 	degradedPath := i.DegradedPath()
@@ -118,8 +120,12 @@ func (i *Intent) Stuck() bool {
 // DegradedPaths indicates that the intent will derail and step into an unknown
 // step if it has not already.
 func (i *Intent) DegradedPath() bool {
-	derailed := (i.Projected().Wanted == marker.NodeActionUnknown || i.projectActive().Wanted == marker.NodeActionUnknown)
-	return derailed && !i.Terminal()
+	anticipated := i.projectActive()
+	// path is misaligned because we're starting anew.
+	starting := i.SetBeginUpdate().Wanted == i.Wanted
+	untargeted := anticipated.Wanted == marker.NodeActionUnknown
+	inconsistent := anticipated.Wanted != i.Wanted
+	return (!starting || i.Terminal()) && (untargeted || inconsistent)
 }
 
 // Realized indicates that the Intent reached the intended state.
@@ -130,7 +136,9 @@ func (i *Intent) Realized() bool {
 // InProgess reports true when the Intent is for a node that is making progress
 // towards completing an update.
 func (i *Intent) InProgress() bool {
-	pendingNode := i.Wanted != i.Active && i.Waiting()
+	// waiting for handling of intent
+	pendingNode := i.Wanted != i.Active && i.Waiting() && !i.Errored()
+	// waiting on handler to complete its intent handling
 	pendingFinish := i.Wanted == i.Active && !i.Waiting()
 	return pendingNode || pendingFinish
 }
@@ -164,9 +172,7 @@ func (i *Intent) SetBeginUpdate() *Intent {
 // Needed indicates that the intent is needing progress made on it.
 func (i *Intent) Actionable() bool {
 	needsAction := (i.Waiting() || i.Realized()) && !i.Terminal()
-	unknown := i.inUnknownState()
-	stuck := i.Stuck()
-	return needsAction || unknown || stuck
+	return needsAction && !i.Stuck() && !i.InProgress()
 }
 
 // Projected returns the n+1 step projection of a would-be Intent. It does not

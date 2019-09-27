@@ -130,10 +130,13 @@ func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 		return in.Projected()
 	}
 	next := in.Projected()
-	if next.Actionable() && in.Realized() {
+	if next.Actionable() && in.Realized() && !in.InProgress() {
 		log.Debug("intent needs action")
 		log.Debug("needs action towards next step")
 		return next
+	}
+	if !in.Realized() {
+		return nil
 	}
 	if in.HasUpdateAvailable() && in.Waiting() && !in.Errored() {
 		log.Debug("intent starts update")

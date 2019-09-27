@@ -23,11 +23,12 @@ func (l *testingOutput) Write(p []byte) (n int, err error) {
 func testManager(t *testing.T) *ActionManager {
 	l := logging.New("manager").WithFields(logrus.Fields{})
 	l.Logger.SetOutput(&testingOutput{t})
+	l.Logger.SetLevel(logrus.DebugLevel)
 	m := newManager(l, nil, "test-node")
 	return m
 }
 
-func TestManagerIntentFor(t *testing.T) {
+func TestManagerIntentForSimple(t *testing.T) {
 	nils := []intent.Intent{
 		{
 			Wanted:          marker.NodeActionRebootUpdate,
@@ -35,12 +36,6 @@ func TestManagerIntentFor(t *testing.T) {
 			State:           marker.NodeStateBusy,
 			UpdateAvailable: marker.NodeUpdateAvailable,
 		},
-		{
-			Wanted: marker.NodeActionRebootUpdate,
-			Active: marker.NodeActionPerformUpdate,
-			State: marker.NodeStateError,
-			UpdateAvailable: marker.NodeUpdateAvailable,
-		}
 	}
 	nonnils := []intent.Intent{
 		{
@@ -64,6 +59,44 @@ func TestManagerIntentFor(t *testing.T) {
 			m := testManager(t)
 			actual := m.intentFor(&in)
 			assert.Assert(t, actual != nil)
+		})
+	}
+}
+
+func TestManagerIntentForTargeted(t *testing.T) {
+	cases := []struct {
+		input    *intent.Intent
+		expected *intent.Intent
+	}{
+		{
+			input: &intent.Intent{
+				Wanted:          marker.NodeActionRebootUpdate,
+				Active:          marker.NodeActionRebootUpdate,
+				State:           marker.NodeStateError,
+				UpdateAvailable: marker.NodeUpdateAvailable,
+			},
+			expected: (&intent.Intent{}).Reset(),
+		},
+		{
+			input: &intent.Intent{
+				Wanted:          marker.NodeActionStabilize,
+				Active:          marker.NodeActionUnknown,
+				State:           marker.NodeStateUnknown,
+				UpdateAvailable: marker.NodeUpdateAvailable,
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		tc.input.NodeName = "test-node"
+		if tc.expected != nil {
+			tc.expected.NodeName = tc.input.NodeName
+		}
+		t.Run(fmt.Sprintf("%s--->%s", tc.input.DisplayString(), tc.expected.DisplayString()), func(t *testing.T) {
+			m := testManager(t)
+			actual := m.intentFor(tc.input)
+			assert.DeepEqual(t, actual, tc.expected)
 		})
 	}
 }
