@@ -11,6 +11,7 @@ BUILDSYS_BUILDKIT_SERVER = "tcp://127.0.0.1:1234"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
+GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
 
 [env.development]
 IMAGE = "aws-k8s"
@@ -20,6 +21,7 @@ BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
+mkdir -p ${GO_MOD_CACHE}
 '''
 ]
 
@@ -32,11 +34,12 @@ for ws in workspaces packages images ; do
 done
 chmod o+r -R ${CARGO_HOME}
 
-cd workspaces/host-containers/cmd/host-ctr
+cd ${BUILDSYS_SOURCES_DIR}/host-containers/cmd/host-ctr
 docker run --rm \
   -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \
   --user $(id -u):$(id -g) \
+  -v "${GO_MOD_CACHE}":/go/pkg/mod \
   -v "$PWD":/usr/src/host-ctr -w /usr/src/host-ctr \
   golang:1.12.5 /bin/bash -c "go list -mod=readonly ./... >/dev/null && go mod vendor"
 '''
