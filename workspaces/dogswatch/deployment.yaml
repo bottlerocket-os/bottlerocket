@@ -11,6 +11,7 @@ rules:
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list", "watch", "update", "patch"]
+  # Allow the controller to remove Pods running on the Nodes that are updating.
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "delete"]
@@ -147,16 +148,7 @@ spec:
               - matchExpressions:
                   - key: thar.amazonaws.com/platform-version
                     operator: Exists
-      # TODO: remove, not needed for a DaemonSet, per
-      # https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/ the
-      # created Pods already have the toleration.
-      # 
-      # tolerations:
-      # # Scheduled on a Thar Node even when its still priming itself. The Node's
-      # # Agent needs to clear it for use - the controller will clear this taint
-      # # after the agent makes its intent clearing the Node for use.
-      # - key: node.kubernetes.io/unschedulable
-      #   effect: NoSchedule
+      hostPID: true
       containers:
       - name: dogswatch
         image: @containerRef@
@@ -180,10 +172,10 @@ spec:
             cpu: 100m
             memory: 200Mi
         volumeMounts:
-          - name: sys-root
-            mountPath: /sys-root
+          - name: rootfs
+            mountPath: /.thar/rootfs
       volumes:
-        - name: sys-root
+        - name: rootfs
           hostPath:
-            path: /sys-root
-            type: DirectoryOrCreate
+            path: /
+            type: Directory

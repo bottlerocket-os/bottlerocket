@@ -1,11 +1,16 @@
 package updog
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
+
+	"github.com/amazonlinux/thar/dogswatch/pkg/thar"
+	"github.com/pkg/errors"
 )
 
 var (
-	updogBin = "updog"
+	updogBin = filepath.Join(thar.PlatformBin, "updog")
 )
 
 // updog implements the binding for the platform to the host's implementation
@@ -25,6 +30,7 @@ type command interface {
 type executable struct{}
 
 func (e *executable) runOk(cmd *exec.Cmd) (bool, error) {
+	cmd.SysProcAttr = thar.ProcessAttrs()
 	if err := cmd.Start(); err != nil {
 		return false, err
 	}
@@ -53,7 +59,11 @@ func (e *executable) Reboot() error {
 }
 
 func (e *executable) Status() (bool, error) {
-	_, err := exec.LookPath(updogBin)
+	_, err := os.Stat(thar.RootFS + updogBin)
+	if err != nil {
+		return false, errors.Wrap(err, "updog not found in thar container mount "+thar.RootFS)
+	}
+	_, err = e.runOk(exec.Command(updogBin))
 	return err == nil, err
 }
 
