@@ -1,6 +1,8 @@
 package intent
 
 import (
+	"fmt"
+
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 )
 
@@ -93,22 +95,36 @@ func (i *Intent) Errored() bool {
 // current state and should be unstuck. If terminal handling is needed, the
 // caller should use Intent.Terminal() to detect this case.
 func (i *Intent) Stuck() bool {
+	// The end of the state machine has been reached.
 	exhausted := i.Terminal() && i.Realized()
+	// A step failed during and may not be able to be tried without taking
+	// intervening action.
 	realizedFailure := i.Errored() && i.Wanted == i.Active
+	// The actions reached a static position, but are unable to be driven by the
+	// state machine's steps.
 	degradedStatic := !i.Waiting() && (exhausted || realizedFailure)
-
-	degradedActive := (i.Wanted == marker.NodeActionUnknown || i.Active == marker.NodeActionUnknown) && i.Waiting()
-	degradedPath := (i.Projected().Wanted == marker.NodeActionUnknown || i.projectActive().Wanted == marker.NodeActionUnknown)
+	// The actions were transitioned to unknown handling and waiting for
+	// instructions.
+	degradedUnknown := (i.Wanted == marker.NodeActionUnknown || i.Active == marker.NodeActionUnknown) && i.Waiting()
+	// The action's step was out of line and resulted in an taking an unknown
+	// action.
+	degradedPath := i.DegradedPath()
+	// The action was not one of progress and yet was acted upon.
 	degradedBusy := !i.isInProgress(i.Wanted) && i.Wanted == i.Active && i.State == marker.NodeStateBusy
 
-	return degradedStatic || degradedPath || degradedActive || degradedBusy
+	return degradedStatic || degradedUnknown || degradedPath || degradedBusy
+}
+
+// DegradedPaths indicates that the intent will derail and step into an unknown
+// step if it has not already.
+func (i *Intent) DegradedPath() bool {
+	derailed := (i.Projected().Wanted == marker.NodeActionUnknown || i.projectActive().Wanted == marker.NodeActionUnknown)
+	return derailed && !i.Terminal()
 }
 
 // Realized indicates that the Intent reached the intended state.
 func (i *Intent) Realized() bool {
-	realized := i.Wanted == i.Active
-	successful := !i.Errored()
-	return realized && successful && i.Waiting()
+	return !i.InProgress() && !i.Errored()
 }
 
 // InProgess reports true when the Intent is for a node that is making progress
@@ -137,6 +153,12 @@ func (i *Intent) isInProgress(field marker.NodeAction) bool {
 // update.
 func (i *Intent) HasUpdateAvailable() bool {
 	return i.UpdateAvailable == marker.NodeUpdateAvailable
+}
+
+func (i *Intent) SetBeginUpdate() *Intent {
+	u := i.Clone()
+	u.Wanted = marker.NodeActionPrepareUpdate
+	return u
 }
 
 // Needed indicates that the intent is needing progress made on it.
@@ -198,6 +220,11 @@ func (i *Intent) reset() {
 	i.Wanted = marker.NodeActionUnknown
 	i.Active = marker.NodeActionUnknown
 	i.State = marker.NodeStateUnknown
+	i.UpdateAvailable = marker.NodeUpdateUnknown
+}
+
+func (i *Intent) DisplayString() string {
+	return fmt.Sprintf("%s,%s,%s", i.Wanted, i.Active, i.State)
 }
 
 // Clone returns a copy of the Intent to mutate independently of the source

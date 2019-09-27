@@ -108,9 +108,10 @@ func (a *Agent) handleEvent(node *v1.Node) {
 }
 
 func activeIntent(i *intent.Intent) bool {
-	return i.Actionable() && // the intent will make progress
-		!i.Errored() && // its not currently in an errored state
-		!i.Waiting() // its not waiting on a command, ie *this* is the intentional command
+	wanted := i.InProgress() && !i.DegradedPath()
+	empty := i.Wanted == "" || i.Active == "" || i.State == ""
+	unknown := i.Wanted == marker.NodeActionUnknown
+	return wanted && !empty && !unknown
 }
 
 func (a *Agent) realize(in *intent.Intent) error {
@@ -172,17 +173,14 @@ func (a *Agent) realize(in *intent.Intent) error {
 		// TODO: ensure Node is setup to be validated on boot (ie: kubelet will
 		// run agent again before we let other Pods get scheduled)
 		err = a.platform.BootUpdate(a.progress.GetTarget(), true)
-
 		// Shortcircuit to terminate.
 
 		// TODO: actually handle shutdown.
-		{
+		defer func() {
 			// die("goodbye");
 			p, _ := os.FindProcess(os.Getpid())
 			go p.Kill()
-
-		}
-		return nil
+		}()
 	}
 
 	if err != nil {
@@ -217,9 +215,11 @@ func (a *Agent) nodePreflight() error {
 	case in.Waiting():
 		// already in a holding pattern, no need to re-prime ourselves in
 		// preflight.
+	case in.Wanted == "" || in.Active == "":
+		in.Reset()
 	default:
 		// there's not a good way to re-prime ourselves in the prior state.
-		in.State = marker.NodeStateUnknown
+		in.Reset()
 	}
 	a.updateIntent(in)
 

@@ -117,15 +117,28 @@ func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 	in := intent.Given(node)
 
 	if in.Stuck() {
-		log.Warn("resetting to stabilize stuck/invalid intent state")
-		return in.Reset()
+		log.Debug("intent is stuck")
+		log.Warn("resetting to stabilize stuck intent state")
+		in.Reset()
 	}
-
+	// TODO: add per-node bucketed backoff for error handling and retries.
+	if in.Errored() {
+		log.Debug("intent errored")
+		log.Warn("action errored on node, resetting to stabilize")
+		in.Reset()
+		return in.Projected()
+	}
 	next := in.Projected()
-	if in.HasUpdateAvailable() || next.Actionable() {
+	if next.Actionable() && in.Realized() {
+		log.Debug("intent needs action")
 		log.Debug("needs action towards next step")
 		return next
 	}
+	if in.HasUpdateAvailable() && in.Waiting() && !in.Errored() {
+		log.Debug("intent starts update")
+		return in.SetBeginUpdate()
+	}
+
 	log.Debug("no action needed")
 	return nil
 }

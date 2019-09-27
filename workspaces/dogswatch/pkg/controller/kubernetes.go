@@ -41,8 +41,6 @@ func (am *ActionManager) drainWorkload(nodeName string) error {
 		Out:                 am.log.WriterLevel(logrus.InfoLevel),
 		ErrOut:              am.log.WriterLevel(logrus.ErrorLevel),
 		IgnoreAllDaemonSets: true,
-		// TODO: implement a more considerate descheduler
-		Force: true,
 	}
 	pods, errs := helper.GetPodsForDeletion(nodeName)
 	if len(errs) != 0 {

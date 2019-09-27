@@ -23,7 +23,7 @@ type NodeAction = string
 
 const (
 	NodeActionUnknown       NodeAction = "unknown"
-	NodeActionStabilize      NodeAction = "stabilize"
+	NodeActionStabilize     NodeAction = "stabilize"
 	NodeActionReset         NodeAction = "reset-state"
 	NodeActionPrepareUpdate NodeAction = "prepare-update"
 	NodeActionPerformUpdate NodeAction = "perform-update"
@@ -92,4 +92,5 @@ type NodeUpdate = string
 const (
 	NodeUpdateAvailable   NodeUpdate = "true"
 	NodeUpdateUnavailable NodeUpdate = "false"
+	NodeUpdateUnknown     NodeUpdate = "unknown"
 )

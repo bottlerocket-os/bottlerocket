@@ -214,7 +214,7 @@ func TestIntentTruths(t *testing.T) {
 
 	for _, tc := range testcases {
 		for _, intent := range tc.intents {
-			name := fmt.Sprintf("%s(%s,%s,%s)", tc.name, intent.Wanted, intent.Active, intent.State)
+			name := fmt.Sprintf("%s(%s)", tc.name, intent.DisplayString())
 			t.Run(name, func(t *testing.T) {
 				intent.NodeName = "state-machine"
 
