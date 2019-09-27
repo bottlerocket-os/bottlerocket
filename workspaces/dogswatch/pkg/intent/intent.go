@@ -224,6 +224,9 @@ func (i *Intent) reset() {
 }
 
 func (i *Intent) DisplayString() string {
+	if i == nil {
+		return fmt.Sprintf(",,")
+	}
 	return fmt.Sprintf("%s,%s,%s", i.Wanted, i.Active, i.State)
 }
 

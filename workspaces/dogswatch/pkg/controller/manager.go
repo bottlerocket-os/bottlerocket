@@ -119,13 +119,14 @@ func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 	if in.Stuck() {
 		log.Debug("intent is stuck")
 		log.Warn("resetting to stabilize stuck intent state")
-		in.Reset()
+		in = in.Reset()
+		return in
 	}
 	// TODO: add per-node bucketed backoff for error handling and retries.
 	if in.Errored() {
 		log.Debug("intent errored")
 		log.Warn("action errored on node, resetting to stabilize")
-		in.Reset()
+		in = in.Reset()
 		return in.Projected()
 	}
 	next := in.Projected()

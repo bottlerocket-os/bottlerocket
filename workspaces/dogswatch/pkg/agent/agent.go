@@ -216,10 +216,10 @@ func (a *Agent) nodePreflight() error {
 		// already in a holding pattern, no need to re-prime ourselves in
 		// preflight.
 	case in.Wanted == "" || in.Active == "":
-		in.Reset()
+		in = in.Reset()
 	default:
 		// there's not a good way to re-prime ourselves in the prior state.
-		in.Reset()
+		in = in.Reset()
 	}
 	a.updateIntent(in)
 
