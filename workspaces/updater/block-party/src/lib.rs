@@ -9,12 +9,11 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
-use std::convert::TryFrom;
 use std::ffi::OsString;
 use std::fmt;
 use std::fs;
 use std::io::{Error, ErrorKind, Result};
-use std::os::unix::fs::MetadataExt;
+use std::os::linux::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -48,11 +47,19 @@ impl BlockDevice {
         })
     }
 
-    /// Creates a `BlockDevice` from a block device's path.
+    /// Creates a `BlockDevice` from a path residing on a block device.
     pub fn from_device_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let metadata = fs::metadata(&path)?;
-        let major = metadata.dev() >> 8;
-        let minor = metadata.dev() & 0xff;
+        let major = metadata.st_dev() >> 8;
+        let minor = metadata.st_dev() & 0xff;
+        Ok(Self::from_major_minor(major, minor)?)
+    }
+
+    /// Creates a `BlockDevice` from a special block device node.
+    pub fn from_device_node<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let metadata = fs::metadata(&path)?;
+        let major = metadata.st_rdev() >> 8;
+        let minor = metadata.st_rdev() & 0xff;
         Ok(Self::from_major_minor(major, minor)?)
     }
 
@@ -141,23 +148,6 @@ impl fmt::Display for BlockDevice {
 impl PartialEq for BlockDevice {
     fn eq(&self, other: &Self) -> bool {
         self.major == other.major && self.minor == other.minor
-    }
-}
-
-impl PartialEq<fs::Metadata> for BlockDevice {
-    fn eq(&self, metadata: &fs::Metadata) -> bool {
-        self.major == metadata.dev() >> 8 && self.minor == metadata.dev() & 0xff
-    }
-}
-
-impl TryFrom<fs::Metadata> for BlockDevice {
-    type Error = Error;
-
-    fn try_from(metadata: fs::Metadata) -> Result<Self> {
-        // see /usr/include/linux/kdev_t.h
-        let major = metadata.dev() >> 8;
-        let minor = metadata.dev() & 0xff;
-        Self::from_major_minor(major, minor)
     }
 }
 
