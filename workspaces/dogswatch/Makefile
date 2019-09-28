@@ -26,7 +26,7 @@ vendor: go.sum go.mod
 	touch vendor/
 
 deploy:
-	sed 's/@containerRef@/$(DOCKER_IMAGE)/g' ./deployment.yaml \
+	sed 's,@containerRef@,$(DOCKER_IMAGE_REF),g' ./dev/deployment.yaml \
 		| kubectl apply -f -
 
 rollout: load deploy
