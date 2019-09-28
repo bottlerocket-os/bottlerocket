@@ -35,7 +35,8 @@ ADD ./sheltie /usr/bin/
 RUN chmod 440 /etc/sudoers.d/ec2-user
 RUN chmod +x /usr/sbin/start_admin_sshd.sh
 RUN chmod +x /usr/bin/sheltie
-RUN useradd -m -G users ec2-user
+RUN groupadd -g 274 api
+RUN useradd -m -G users,api ec2-user
 
 CMD ["/usr/sbin/start_admin_sshd.sh"]
 ENTRYPOINT ["/bin/bash", "-c"]

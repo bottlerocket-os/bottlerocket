@@ -21,6 +21,7 @@ Source6: migration-tmpfiles.conf
 Source7: settings-applier.service
 Source8: data-store-version
 Source9: migrator.service
+Source10: api-sysusers.conf
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}systemd-devel
@@ -150,11 +151,15 @@ done
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 
+install -d %{buildroot}%{_cross_sysusersdir}
+install -p -m 0644 %{S:10} %{buildroot}%{_cross_sysusersdir}/api.conf
+
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{_cross_unitdir}/apiserver.service
 %{_cross_unitdir}/migrator.service
 %{_cross_datadir}/thar/data-store-version
+%{_cross_sysusersdir}/api.conf
 
 %files -n %{_cross_os}apiclient
 %{_cross_bindir}/apiclient

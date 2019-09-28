@@ -1,7 +1,8 @@
 use crate::datastore::{self, deserialization, serialization};
+use nix::unistd::Gid;
+use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
-use snafu::Snafu;
 
 // We want server (router/handler) and controller errors together so it's easy to define response
 // error codes for all the high-level types of errors that could happen during a request.
@@ -18,12 +19,16 @@ pub enum Error {
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-    // Set file permission errors
-    #[snafu(display("Failed to set file permissions on the API socket to {:o}: {}", mode, source))]
-    SetPermissions {
-        source: std::io::Error,
-        mode: u32,
-    },
+    // Set file metadata errors
+    #[snafu(display(
+        "Failed to set file permissions on the API socket to {:o}: {}",
+        mode,
+        source
+    ))]
+    SetPermissions { source: std::io::Error, mode: u32 },
+
+    #[snafu(display("Failed to set group owner on the API socket to {}: {}", gid, source))]
+    SetGroup { source: nix::Error, gid: Gid },
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
