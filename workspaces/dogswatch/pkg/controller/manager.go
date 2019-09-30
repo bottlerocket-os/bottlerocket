@@ -6,9 +6,13 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 )
+
+const maxQueuedIntents = 10
 
 var _ nodestream.Handler = (*ActionManager)(nil)
 
@@ -19,7 +23,12 @@ type ActionManager struct {
 	kube     kubernetes.Interface
 	policy   Policy
 	input    chan *intent.Intent
+	storer   storer
 	nodeName string
+}
+
+type storer interface {
+	GetStore() cache.Store
 }
 
 func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) *ActionManager {
@@ -31,13 +40,10 @@ func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) 
 	}
 }
 
-const maxQueuedIntents = 10
-
 func (am *ActionManager) Run(ctx context.Context) error {
 	am.log.Debug("starting")
 	defer am.log.Debug("finished")
 
-	actives := map[string]struct{}{}
 	permit := make(chan *intent.Intent, maxQueuedIntents)
 
 	// TODO: split out accepted intent handler - it should handle its
@@ -73,8 +79,14 @@ func (am *ActionManager) Run(ctx context.Context) error {
 				break
 			}
 			am.log.Debug("checking with policy")
+
 			// TODO: make policy checking and consideration richer
-			proceed, err := am.policy.Check(&PolicyCheck{Intent: in, ClusterActive: len(actives)})
+			pview, err := am.MakePolicyCheck(in)
+			if err != nil {
+				am.log.WithError(err).Error("policy unenforceable")
+				continue
+			}
+			proceed, err := am.policy.Check(pview)
 			if err != nil {
 				am.log.WithError(err).Error("policy check errored")
 				continue
@@ -92,6 +104,17 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+func (am *ActionManager) MakePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
+	if am.storer == nil {
+		return nil, errors.Errorf("manager has no store to access, needed for policy check")
+	}
+	return NewPolicyCheck(in, am.storer.GetStore())
+}
+
+func (am *ActionManager) SetStoreProvider(storer storer) {
+	am.storer = storer
 }
 
 func (am *ActionManager) handle(node *v1.Node) {

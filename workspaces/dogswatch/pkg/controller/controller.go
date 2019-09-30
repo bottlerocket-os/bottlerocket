@@ -34,6 +34,9 @@ func (c *Controller) Run(ctx context.Context) error {
 	// The nodestream will provide us with resource events that are scoped to
 	// Nodes we "should" care about - those are labeled with markers.
 	ns := nodestream.New(c.log.WithField("worker", "informer"), c.kube, nodestream.Config{}, c.manager)
+	// Couple the informer's reflector in the manager for accessing the cached
+	// cluster state.
+	c.manager.SetStoreProvider(ns.GetInformer())
 
 	group.Work(ns.Run)
 	group.Work(c.manager.Run)

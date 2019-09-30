@@ -39,6 +39,10 @@ func New(log logging.Logger, kube kubernetes.Interface, config Config, handler H
 	return is
 }
 
+func (is *informerStream) GetInformer() cache.SharedIndexInformer {
+	return is.informer
+}
+
 func (is *informerStream) finish(key interface{}) {
 	is.log.WithField("key", key).Debug("finished with key")
 	is.workqueue.Forget(key)
