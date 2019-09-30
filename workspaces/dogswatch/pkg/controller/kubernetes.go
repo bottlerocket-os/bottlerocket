@@ -68,7 +68,3 @@ func (am *ActionManager) postIntent(i *intent.Intent) error {
 	defer log.Debugf("posted intent on node: %#v", i)
 	return k8sutil.PostMetadata(am.kube.CoreV1().Nodes(), i.NodeName, i)
 }
-
-// func (am *ActionManager) permitIntentAction(nodeName string, in *intent.Intent) error {
-// 	am.kube.CoreV1().Nodes().Patch(nodeName, types.JSONMerge, []byte(""))
-// }

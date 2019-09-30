@@ -28,7 +28,6 @@ type Agent struct {
 	platform platform.Platform
 	nodeName string
 
-	state    *nodeState
 	progress progression
 }
 
@@ -41,7 +40,6 @@ func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform, 
 		kube:     kube,
 		platform: plat,
 		nodeName: nodeName,
-		state:    initialState(),
 	}, nil
 }
 
@@ -54,6 +52,8 @@ func (a *Agent) check() error {
 	}
 	return nil
 }
+
+// TODO: add regular update checks
 
 func (a *Agent) Run(ctx context.Context) error {
 	if err := a.check(); err != nil {
