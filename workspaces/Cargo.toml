@@ -47,10 +47,10 @@ path = "webpki-roots-shim"
 # https://github.com/rusoto/rusoto/pull/1494
 [patch.crates-io.rusoto_core]
 git = "https://github.com/rusoto/rusoto.git"
-rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"
+rev = "260169aabe14b4596e648c551a6246968f4a179a"
 [patch.crates-io.rusoto_credential]
 git = "https://github.com/rusoto/rusoto.git"
-rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"
+rev = "260169aabe14b4596e648c551a6246968f4a179a"
 [patch.crates-io.rusoto_ssm]
 git = "https://github.com/rusoto/rusoto.git"
-rev = "958d9fa439770f94d330d8e06d4ada58e76b3823"
+rev = "260169aabe14b4596e648c551a6246968f4a179a"
