@@ -27,12 +27,19 @@ BuildRequires: rsync
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}golang
+
+%description
+%{summary}.
+
+%package -n %{_cross_os}kubelet
+Summary: Container cluster node agent
+License: ASL 2.0
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}glibc
 Requires: %{_cross_os}findutils
 
-%description
+%description -n %{_cross_os}kubelet
 %{summary}.
 
 %prep
@@ -42,19 +49,12 @@ Requires: %{_cross_os}findutils
 %build
 %cross_go_configure %{goimport}
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
-make WHAT="cmd/hyperkube"
+make WHAT="cmd/kubelet"
 
 %install
 output="./_output/local/bin/linux/%{_cross_go_arch}"
 install -d %{buildroot}%{_cross_bindir}
-install -p -m 0755 ${output}/hyperkube %{buildroot}%{_cross_bindir}
-
-for bin in \
-  kube-apiserver kube-controller-manager \
-  kube-proxy kube-scheduler kubectl kubelet ;
-do
-  ln -s hyperkube  %{buildroot}%{_cross_bindir}/${bin}
-done
+install -p -m 0755 ${output}/kubelet %{buildroot}%{_cross_bindir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/kubelet.service
@@ -65,13 +65,7 @@ install -m 0644 %{S:3} %{buildroot}%{_cross_templatedir}/kubelet-config
 install -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/kubelet-kubeconfig
 install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 
-%files
-%{_cross_bindir}/hyperkube
-%{_cross_bindir}/kube-apiserver
-%{_cross_bindir}/kube-controller-manager
-%{_cross_bindir}/kube-proxy
-%{_cross_bindir}/kube-scheduler
-%{_cross_bindir}/kubectl
+%files -n %{_cross_os}kubelet
 %{_cross_bindir}/kubelet
 %{_cross_unitdir}/kubelet.service
 %dir %{_cross_templatedir}
