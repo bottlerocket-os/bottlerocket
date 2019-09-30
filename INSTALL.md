@@ -8,6 +8,20 @@ You can skip to [Using an AMI](#using-an-ami) to use an existing image in Amazon
 
 ### Dependencies
 
+#### Rust
+
+The build system is based on the Rust language.
+We recommend you install the latest stable Rust using [rustup](https://rustup.rs/), either from the official site or your development host's package manager.
+
+To organize build tasks, we use [cargo-make](https://sagiegurari.github.io/cargo-make/).
+To get this, run:
+
+```
+cargo install cargo-make
+```
+
+#### BuildKit
+
 Thar uses [BuildKit](https://github.com/moby/buildkit) to orchestrate package and image builds.
 In turn, BuildKit uses [Docker](https://docs.docker.com/install/#supported-platforms) to run individual builds.
 
@@ -15,7 +29,13 @@ You'll need to have Docker installed and running, but you don't need to install 
 To start BuildKit as a Docker container, run:
 
 ```
-make buildkitd
+docker run -t --rm \
+   --privileged \
+   --network=host \
+   --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+   --addr tcp://127.0.0.1:1234 \
+   --oci-worker true \
+   moby/buildkit:v0.4.0
 ```
 
 You can run that in the background, or just interrupt the process after BuildKit says it's running - the important part will keep running in the background.
@@ -25,7 +45,7 @@ You can run that in the background, or just interrupt the process after BuildKit
 To build an image, run:
 
 ```
-make
+cargo make world
 ```
 
 All packages will be built in turn, and then compiled into an `img` file in the `build/` directory.
@@ -39,12 +59,22 @@ The `bin/amiize.sh` script does this for you.
 It has some assumptions about your setup, in particular that you have [aws-cli](https://aws.amazon.com/cli/) set up and an SSH key that's registered with EC2 is loaded into `ssh-agent`.
 Read the top of the file for details.
 
-This is an example of how you can register an AMI after building a Thar image:
+This is an example of how you can register an AMI after building a Thar image.
+
+First, decompress the images:
+
+```
+lz4 -d build/thar-x86_64.img.lz4 build/thar-x86_64.img \
+&& lz4 -d build/thar-x86_64-data.img.lz4 build/thar-x86_64-data.img
+```
+
+Next, register an AMI:
+
 ```
 bin/amiize.sh --name YOUR-AMI-NAME-HERE --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
-   --image build/thar-x86_64.img \
+   --root-image build/thar-x86_64.img --data-image build/thar-x86_64-data.img \
    --region us-west-2 --instance-type m3.xlarge --arch x86_64 \
-   --worker-ami ami-0f2176987ee50226e --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
+   --worker-ami ami-08d489468314a58df --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
 ```
 
 The new AMI ID will be printed at the end.
