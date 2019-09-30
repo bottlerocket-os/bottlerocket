@@ -8,6 +8,11 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[build-dependencies]
+buildsys = { path = "../../tools/buildsys" }
+
+# After this point, the file is generated.  See how-to-update.md.  Don't add anything manually after this.
+
 [[package.metadata.build-package.external-files]]
 url = "https://static.rust-lang.org/dist/cargo-0.39.0-aarch64-unknown-linux-gnu.tar.xz"
 sha512 = "1fb608a44cfd5a915e75d9d83eaf7f9f1b271521fae6e0da98eb78cd51db35ba4e7c1bbf0744e6a329d879f3b8a7573465eb3969d51c22c9886cefbcca4a669a"
@@ -31,6 +36,3 @@ sha512 = "b58381d01bb052599a881aa571e1ed8cac8d7afde79940942291f94b921de57e433c72
 [[package.metadata.build-package.external-files]]
 url = "https://static.rust-lang.org/dist/rust-std-1.38.0-x86_64-unknown-linux-gnu.tar.xz"
 sha512 = "6c9b925dd6ac465a33ce669920619c8c7ad9c22067d8e554450ea35edc10bfb5aabdd22f081a575b1f2b7b3237b43b15c3d62fb18bf32c8e5be4c1c785e8db21"
-
-[build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
