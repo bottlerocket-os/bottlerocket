@@ -51,6 +51,8 @@ STORAGE="/dev/shm"
 # The device names registered with the AMI.
 ROOT_DEVICE_NAME="/dev/xvda"
 DATA_DEVICE_NAME="/dev/xvdb"
+# The default size for the data volume, unless overridden.
+DATA_VOLUME_DEFAULT_SIZE="20"
 
 # Features we assume/enable for the images.
 VIRT_TYPE="hvm"
@@ -352,7 +354,12 @@ if [ ! "${data_image_size}" -gt 0 ]; then
    echo "* Couldn't find the size of the data image!" >&2
    exit 1
 fi
-DATA_VOLUME_SIZE="${DATA_VOLUME_SIZE:-${data_image_size}}"
+
+DATA_VOLUME_SIZE="${DATA_VOLUME_SIZE:-${DATA_VOLUME_DEFAULT_SIZE}}"
+if [ "${data_image_size}" -gt "${DATA_VOLUME_SIZE}" ]; then
+   echo "* Found the size of the data image was too large!" >&2
+   exit 1
+fi
 
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
