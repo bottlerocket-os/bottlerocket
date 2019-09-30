@@ -559,6 +559,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "growpart"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+ "glibc 0.1.0",
+ "rust 0.1.0",
+]
+
+[[package]]
 name = "grub"
 version = "0.1.0"
 dependencies = [

@@ -31,6 +31,8 @@ members = [
     "tuftool",
 
     "webpki-roots-shim",
+
+    "growpart",
 ]
 
 [profile.release]
