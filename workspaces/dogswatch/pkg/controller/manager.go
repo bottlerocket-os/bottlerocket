@@ -81,7 +81,7 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			am.log.Debug("checking with policy")
 
 			// TODO: make policy checking and consideration richer
-			pview, err := am.MakePolicyCheck(in)
+			pview, err := am.makePolicyCheck(in)
 			if err != nil {
 				am.log.WithError(err).Error("policy unenforceable")
 				continue
@@ -106,11 +106,11 @@ func (am *ActionManager) Run(ctx context.Context) error {
 	}
 }
 
-func (am *ActionManager) MakePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
+func (am *ActionManager) makePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
 	if am.storer == nil {
 		return nil, errors.Errorf("manager has no store to access, needed for policy check")
 	}
-	return NewPolicyCheck(in, am.storer.GetStore())
+	return newPolicyCheck(in, am.storer.GetStore())
 }
 
 func (am *ActionManager) SetStoreProvider(storer storer) {

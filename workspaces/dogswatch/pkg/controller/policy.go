@@ -38,7 +38,7 @@ type PolicyCheck struct {
 	ClusterCount  int
 }
 
-func NewPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, error) {
+func newPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, error) {
 	// TODO: use a workqueue (or other facility) to pull a stable consistent
 	// view at each intent.
 	ress := resources.List()

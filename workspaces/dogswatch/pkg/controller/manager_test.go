@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/intents"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
 )
@@ -29,27 +29,18 @@ func testManager(t *testing.T) *ActionManager {
 }
 
 func TestManagerIntentForSimple(t *testing.T) {
-	nils := []intent.Intent{
-		{
-			Wanted:          marker.NodeActionRebootUpdate,
-			Active:          marker.NodeActionRebootUpdate,
-			State:           marker.NodeStateBusy,
-			UpdateAvailable: marker.NodeUpdateAvailable,
-		},
+	nils := []*intent.Intent{
+		intents.BusyRebootUpdate(),
 	}
-	nonnils := []intent.Intent{
-		{
-			Wanted:          marker.NodeActionRebootUpdate,
-			Active:          marker.NodeActionRebootUpdate,
-			State:           marker.NodeStateError,
-			UpdateAvailable: marker.NodeUpdateAvailable,
-		},
+	nonnils := []*intent.Intent{
+		intents.UpdateError(),
 	}
+
 	for _, in := range nils {
 		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("nil(%s)", in.DisplayString()), func(t *testing.T) {
 			m := testManager(t)
-			actual := m.intentFor(&in)
+			actual := m.intentFor(in)
 			assert.Assert(t, actual == nil)
 		})
 	}
@@ -57,7 +48,7 @@ func TestManagerIntentForSimple(t *testing.T) {
 		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("non(%s)", in.DisplayString()), func(t *testing.T) {
 			m := testManager(t)
-			actual := m.intentFor(&in)
+			actual := m.intentFor(in)
 			assert.Assert(t, actual != nil)
 		})
 	}
@@ -69,34 +60,36 @@ func TestManagerIntentForTargeted(t *testing.T) {
 		expected *intent.Intent
 	}{
 		{
-			input: &intent.Intent{
-				Wanted:          marker.NodeActionRebootUpdate,
-				Active:          marker.NodeActionRebootUpdate,
-				State:           marker.NodeStateError,
-				UpdateAvailable: marker.NodeUpdateAvailable,
-			},
-			expected: (&intent.Intent{}).Reset(),
+			input:    intents.UpdateError(),
+			expected: intents.Reset(),
 		},
 		{
-			input: &intent.Intent{
-				Wanted:          marker.NodeActionStabilize,
-				Active:          marker.NodeActionUnknown,
-				State:           marker.NodeStateUnknown,
-				UpdateAvailable: marker.NodeUpdateAvailable,
-			},
+			input:    intents.PendingStabilizing(),
 			expected: nil,
 		},
 	}
 
 	for _, tc := range cases {
-		tc.input.NodeName = "test-node"
-		if tc.expected != nil {
-			tc.expected.NodeName = tc.input.NodeName
-		}
 		t.Run(fmt.Sprintf("%s--->%s", tc.input.DisplayString(), tc.expected.DisplayString()), func(t *testing.T) {
+			intents.NormalizeNodeName(t.Name(), tc.input, tc.expected)
 			m := testManager(t)
 			actual := m.intentFor(tc.input)
 			assert.DeepEqual(t, actual, tc.expected)
 		})
 	}
+}
+
+func TestMakePolicyCheck(t *testing.T) {
+	m := testManager(t)
+
+	pview, err := m.makePolicyCheck(intents.Stabilized())
+	assert.Check(t, pview == nil)
+	assert.Check(t, err != nil)
+}
+
+func TestMakePolicyCheckUpdatesAvailable(t *testing.T) {
+	m := testManager(t)
+	pview, err := m.makePolicyCheck(intents.Stabilized(intents.WithUpdateAvailable()))
+	assert.Check(t, pview == nil)
+	assert.Check(t, err != nil)
 }
