@@ -14,6 +14,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::os::unix::fs::symlink;
 use std::path::Path;
+use std::str::FromStr;
 use std::{env, fs, process};
 
 use apiserver::datastore::key::{Key, KeyType};
@@ -109,19 +110,23 @@ use error::StorewolfError;
 type Result<T> = std::result::Result<T, StorewolfError>;
 
 /// Given a base path, create a brand new datastore with the appropriate
-/// symlink structure.
+/// symlink structure for the desired datastore version.
+///
+/// If `version` is given, uses it, otherwise pulls version from DATASTORE_VERSION_FILE.
 ///
 /// An example setup for theoretical version 1.5:
 ///    /path/to/datastore/current
 ///    -> /path/to/datastore/v1
 ///    -> /path/to/datastore/v1.5
 ///    -> /path/to/datastore/v1.5_0123456789abcdef
-fn create_new_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
+fn create_new_datastore<P: AsRef<Path>>(base_path: P, version: Option<Version>) -> Result<()> {
     // Get the datastore version from the version file
-    let datastore_version =
-        Version::from_file(&DATASTORE_VERSION_FILE).context(error::DatastoreVersion {
+    let datastore_version = match version {
+        Some(v) => v,
+        None => Version::from_file(&DATASTORE_VERSION_FILE).context(error::DatastoreVersion {
             path: &DATASTORE_VERSION_FILE,
-        })?;
+        })?,
+    };
     // Create random string to append to the end of the new datastore path
     let random_id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
 
@@ -165,7 +170,10 @@ fn create_new_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
 
 /// Creates a new FilesystemDataStore at the given path, with data and metadata coming from
 /// defaults.toml at compile time.
-fn populate_default_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
+fn populate_default_datastore<P: AsRef<Path>>(
+    base_path: P,
+    version: Option<Version>,
+) -> Result<()> {
     // NOTE: Variables prefixed with "def" refer to values from defaults.
     //
     // Variables prefixed with "existing..." refer to values from the
@@ -192,7 +200,7 @@ fn populate_default_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
             .context(error::QueryData)?;
     } else {
         info!("Creating datastore at: {}", &live_path.display());
-        create_new_datastore(&base_path)?;
+        create_new_datastore(&base_path, version)?;
     }
 
     // Read and parse defaults
@@ -341,8 +349,9 @@ fn populate_default_datastore<P: AsRef<Path>>(base_path: P) -> Result<()> {
 
 /// Store the args we receive on the command line
 struct Args {
-    verbosity: usize,
     data_store_base_path: String,
+    verbosity: usize,
+    version: Option<Version>,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -351,7 +360,11 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             --data-store-base-path PATH
+            [ --version X.Y ]
             [ --verbose --verbose ... ]
+
+        If --version is not given, the version will be pulled from /usr/share/thar/data-store-version.
+        This is used to set up versioned symlinks in the data store base path.
         ",
         program_name
     );
@@ -368,6 +381,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 fn parse_args(args: env::Args) -> Args {
     let mut data_store_base_path = None;
     let mut verbosity = 2;
+    let mut version = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -380,13 +394,24 @@ fn parse_args(args: env::Args) -> Args {
                 }))
             }
 
+            "--version" => {
+                let version_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --version"));
+                version = Some(
+                    Version::from_str(&version_str)
+                        .unwrap_or_else(|e| usage_msg(format!("Invalid version: {}", e))),
+                );
+            }
+
             _ => usage(),
         }
     }
 
     Args {
-        verbosity,
         data_store_base_path: data_store_base_path.unwrap_or_else(|| usage()),
+        verbosity,
+        version,
     }
 }
 
@@ -421,7 +446,7 @@ fn main() -> Result<()> {
 
     // Create the datastore if it doesn't exist
     info!("Populating datastore at: {}", &args.data_store_base_path);
-    populate_default_datastore(&args.data_store_base_path)?;
+    populate_default_datastore(&args.data_store_base_path, args.version)?;
     info!("Datastore populated");
 
     Ok(())
