@@ -17,7 +17,7 @@ public_key_indexes=($(curl -sf "${public_key_base_url}" \
     | cut -d= -f1 \
     | xargs))
 
-for public_key_index in ${public_key_indexes}; do
+for public_key_index in "${public_key_indexes[@]}"; do
   public_key_data="$(curl -sf ${public_key_base_url}/${public_key_index}/openssh-key)"
   if [[ ! "${public_key_data}" =~ ^"ssh" ]]; then
     echo "Key ${public_key_data} with index ${public_key_index} looks invalid" >&2
