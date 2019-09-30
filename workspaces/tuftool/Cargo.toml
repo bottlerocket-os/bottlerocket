@@ -19,6 +19,7 @@ maplit = "1.0.1"
 olpc-cjson = { path = "../updater/olpc-cjson" }
 pem = "0.6.0"
 rayon = "1.2"
+reqwest = "0.9.20"
 ring = { version = "0.16.7", features = ["std"] }
 rusoto_core = { version = "0.40", optional = true, default-features = false }
 rusoto_credential = { version = "0.40", optional = true }
@@ -32,3 +33,5 @@ tempfile = "3.1.0"
 tough_schema = { path = "../updater/tough_schema" }
 url = "2.1.0"
 walkdir = "2.2.9"
+tempdir = "0.3.7"
+tough = { path = "../updater/tough" }
