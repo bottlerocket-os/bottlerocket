@@ -75,6 +75,30 @@ There are a couple out-of-band access methods you can use to explore Thar like y
 Either option will give you a shell within Thar.
 From there, you can [change settings](#settings), manually [update Thar](#updates), debug problems, and generally explore.
 
+#### Control container
+
+Thar has a "control" container, enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
+This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Thar instances in EC2.
+(You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).
+
+You need to give your instance the SSM role for this to work; see the [setup guide](INSTALL.md).
+
+Once the instance is started, you can start a session:
+
+* Go to AWS SSM's [Session Manager](https://console.aws.amazon.com/systems-manager/session-manager/sessions)
+* Select “Start session” and choose your Thar instance
+* Select “Start session” again to get a shell
+
+If you prefer a command-line tool, you can start a session with a recent [AWS CLI](https://aws.amazon.com/cli/) and the [session-manager-plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
+Then you'd be able to start a session using only your instance ID, like this:
+
+```
+aws ssm start-session --target INSTANCE_ID
+```
+
+With the default control container, you can make API calls to change settings in your Thar host.
+To do even more, read the next section about the [admin container](#admin-container).
+
 #### Admin container
 
 Thar has an administrative container, disabled by default, that runs outside of the orchestrator in a separate instance of containerd.
@@ -95,27 +119,8 @@ apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": tr
 
 (To make an API call like this, you need to use an authenticated channel like [SSM](#control-container).)
 
-#### Control container
-
-Thar has a "control" container, enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
-This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Thar instances in EC2.
-(You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).
-
-You need to give your instance the SSM role for this to work; see the [setup guide](INSTALL.md).
-
-Once the instance is started, you can start a session:
-
-* Go to AWS SSM's [Session Manager](https://console.aws.amazon.com/systems-manager/session-manager/sessions)
-* Set the RunAsUser to “root” in the Preferences section
-* Select “Start session” and choose your Thar instance
-* Select “Start session” again - now you've got a secure shell in Thar!
-
-If you prefer a command-line tool, you can start a session with a recent [AWS CLI](https://aws.amazon.com/cli/) and the [session-manager-plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
-Then you'd be able to start a session using only your instance ID, like this:
-
-```
-aws ssm start-session --target INSTANCE_ID
-```
+Once you're in the admin container, you can run `sheltie` to get a full root shell in the Thar host.
+Be careful; while you can inspect and change even more as root, Thar's filesystem and dm-verity setup will prevent most changes from persisting over a restart - see [Security](#security).
 
 ### Updates
 
