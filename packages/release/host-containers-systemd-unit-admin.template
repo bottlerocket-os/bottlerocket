@@ -7,6 +7,7 @@ Requires=host-containerd.service
 Type=simple
 ExecStart=/usr/bin/host-ctr -ctr-id admin -source {{ settings.host-containers.admin.source }} {{#if  settings.host-containers.admin.superpowered }}-superpowered{{/if}}
 Restart=always
+RestartPreventExitStatus=2
 TimeoutStopSec=60
 
 [Install]

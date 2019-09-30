@@ -33,7 +33,7 @@ done
 # If we didn't write any keys at all, there's not much point in continuing
 if [ ! -s "${ssh_authorized_keys}" ]; then
   echo "Failed to write any valid public keys to authorized_keys" >&2
-  exit 1
+  exit 2
 fi
 
 chown ec2-user -R "${ssh_config_dir}"
@@ -55,7 +55,7 @@ for key in rsa ecdsa ed25519; do
         chmod 644 "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
     else
         echo "Failure to generate host ${key} ssh keys" >&2
-        exit 1
+        exit 2
     fi
 done
 
