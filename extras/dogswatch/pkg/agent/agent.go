@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/k8sutil"
@@ -16,6 +17,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	initialPollDelay   = time.Minute * 1
+	updatePollInterval = time.Minute * 30
 )
 
 var (
@@ -68,6 +74,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	}, a.handler())
 
 	group.Work(ns.Run)
+	group.Work(a.periodicUpdateChecker)
 
 	err := a.nodePreflight()
 	if err != nil {
@@ -79,6 +86,42 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.log.Info("waiting on workers to finish")
 		return group.Wait()
 	}
+}
+
+func (a *Agent) periodicUpdateChecker(ctx context.Context) error {
+	timer := time.NewTimer(initialPollDelay)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-timer.C:
+			// TODO: update this when we have richer data plumbed
+			_, err := a.platform.ListAvailable()
+			avail := err == nil
+			a.setUpdateAvailable(avail)
+		}
+		timer.Reset(updatePollInterval)
+	}
+}
+
+func (a *Agent) setUpdateAvailable(available bool) error {
+	// TODO: handle brief race condition internally - this needs to be improved,
+	// though the kubernetes control plane will reject out of order updates by
+	// way of resource versioning C-A-S operations.
+	node, err := a.kube.CoreV1().Nodes().Get(a.nodeName, v1meta.GetOptions{})
+	if err != nil {
+		return errors.WithMessage(err, "unable to get node")
+	}
+	in := intent.Given(node)
+	switch available {
+	case true:
+		in.UpdateAvailable = marker.NodeUpdateAvailable
+	case false:
+		in.UpdateAvailable = marker.NodeUpdateUnavailable
+	}
+	return a.updateIntent(in)
 }
 
 func (a *Agent) handler() nodestream.Handler {
