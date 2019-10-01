@@ -14,7 +14,7 @@ rusoto-rustls = ["rusoto_core/rustls", "rusoto_credential", "rusoto_ssm/rustls"]
 [dependencies]
 chrono = "0.4.6"
 digest = "0.8.1"
-hex = "0.3.2"
+hex = "0.4.0"
 maplit = "1.0.1"
 olpc-cjson = { path = "../updater/olpc-cjson" }
 pem = "0.6.0"
