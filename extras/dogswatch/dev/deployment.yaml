@@ -111,6 +111,7 @@ spec:
       containers:
       - name: dogswatch
         image: "@containerRef@"
+        imagePullPolicy: Always
         args:
           - -controller
           - -debug
@@ -151,6 +152,7 @@ spec:
       containers:
         - name: dogswatch
           image: "@containerRef@"
+          imagePullPolicy: Always
           args:
             - -agent
             - -debug

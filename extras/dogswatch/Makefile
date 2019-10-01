@@ -29,9 +29,11 @@ deploy:
 	sed 's,@containerRef@,$(DOCKER_IMAGE_REF),g' ./dev/deployment.yaml \
 		| kubectl apply -f -
 
-rollout: load deploy
+rollout: deploy
 	kubectl -n thar rollout restart deployment/dogswatch-controller
 	kubectl -n thar rollout restart daemonset/dogswatch-agent
+
+rollout-kind: load rollout
 
 cluster:
 	kind create cluster --config ./dev/cluster.yaml
