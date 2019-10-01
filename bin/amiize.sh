@@ -357,7 +357,7 @@ fi
 
 DATA_VOLUME_SIZE="${DATA_VOLUME_SIZE:-${DATA_VOLUME_DEFAULT_SIZE}}"
 if [ "${data_image_size}" -gt "${DATA_VOLUME_SIZE}" ]; then
-   echo "* Found the size of the data image was too large!" >&2
+   echo "* Found the size of the data image was too large at ${data_image_size}GB, max is ${DATA_VOLUME_SIZE}GB" >&2
    exit 1
 fi
 
