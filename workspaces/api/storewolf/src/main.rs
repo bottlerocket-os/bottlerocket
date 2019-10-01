@@ -16,6 +16,10 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::str::FromStr;
 use std::{env, fs, process};
+use tracing_subscriber::{
+    FmtSubscriber,
+    filter::{EnvFilter, LevelFilter},
+};
 
 use apiserver::datastore::key::{Key, KeyType};
 use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
@@ -23,8 +27,9 @@ use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use apiserver::model;
 use data_store_version::Version;
 
+
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 // FIXME Get these from configuration in the future
 const DATASTORE_VERSION_FILE: &str = "/usr/share/thar/data-store-version";
@@ -42,9 +47,6 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum StorewolfError {
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
-
         #[snafu(display("Unable to clear pending settings: {}", source))]
         DeletePending { source: io::Error },
 
@@ -102,6 +104,11 @@ mod error {
 
         #[snafu(display("Data store link '{}' points to /", path.display()))]
         DataStoreLinkToRoot { path: PathBuf },
+
+        #[snafu(display("Failed to parse provided directive: {}", source))]
+        TracingDirectiveParse {
+            source: tracing_subscriber::filter::LevelParseError,
+        },
     }
 }
 
@@ -419,15 +426,14 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    // TODO Fix this later when we decide our logging story
+    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
     // Start the logger
-    stderrlog::new()
-        .module(module_path!())
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(args.verbosity)
-        .color(stderrlog::ColorChoice::Never)
-        .init()
-        .context(error::Logger)?;
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
 
     info!("Storewolf started");
 

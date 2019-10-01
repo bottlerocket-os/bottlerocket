@@ -8,9 +8,14 @@ settings. It logs any pending settings, then commits them to live.
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 use std::{collections::HashMap, env, process};
+
+use tracing_subscriber::{
+    FmtSubscriber,
+    filter::{EnvFilter, LevelFilter},
+};
 
 use snafu::{ensure, ResultExt};
 
@@ -43,8 +48,13 @@ mod error {
             response_body: String,
         },
 
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
+        #[snafu(display("tracing setup error: {}", source))]
+        Logger { source: tracing::dispatcher::SetGlobalDefaultError },
+
+        #[snafu(display("Failed to parse provided directive: {}", source))]
+        TracingDirectiveParse {
+            source: tracing_subscriber::filter::LevelParseError,
+        },
     }
 }
 
@@ -162,16 +172,14 @@ fn parse_args(args: env::Args) -> Args {
 fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
-
-    // TODO Fix this later when we decide our logging story
+    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
     // Start the logger
-    stderrlog::new()
-        .module(module_path!())
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(args.verbosity)
-        .color(stderrlog::ColorChoice::Never)
-        .init()
-        .context(error::Logger)?;
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
 
     info!("Checking pending settings.");
     check_pending_settings(&args.socket_path);

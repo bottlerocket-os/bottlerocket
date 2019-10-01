@@ -10,12 +10,12 @@ build = "build.rs"
 actix-web = { version = "1.0.5", default-features = false, features = ["uds"] }
 base64 = "0.10"
 lazy_static = "1.2"
-log = "0.4"
+tracing = "0.1"
 regex = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 snafu = "0.5"
-stderrlog = "0.4"
+tracing-subscriber = "0.1"
 toml = "0.5"
 walkdir = "2.2"
 systemd = { version = "0.4.0", default-features = false, features = [], optional = true }

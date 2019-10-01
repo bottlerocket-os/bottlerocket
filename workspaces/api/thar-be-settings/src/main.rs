@@ -1,10 +1,14 @@
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 use snafu::ResultExt;
 use std::collections::HashSet;
 use std::env;
 use std::process;
+use tracing_subscriber::{
+    FmtSubscriber,
+    filter::{EnvFilter, LevelFilter}
+};
 
 use thar_be_settings::{config, get_changed_settings, service, settings, template};
 
@@ -17,8 +21,15 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
+        #[snafu(display("Failed to parse environment directive: {}", source))]
+        TracingFromEnv {
+            source: tracing_subscriber::filter::FromEnvError,
+        },
+
+        #[snafu(display("Failed to parse provided directive: {}", source))]
+        TracingDirectiveParse {
+            source: tracing_subscriber::filter::LevelParseError,
+        },
     }
 }
 
@@ -133,16 +144,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    // TODO fix this in the future when we understand our logging strategy;
-    // it should also be configurable
+    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
     // Start the logger
-    stderrlog::new()
-        .module(module_path!())
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(args.verbosity)
-        .color(stderrlog::ColorChoice::Never)
-        .init()
-        .context(error::Logger)?;
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
 
     info!("thar-be-settings started");
 

@@ -24,7 +24,12 @@ use apiserver::datastore::serialization::to_pairs_with_prefix;
 use apiserver::model;
 
 #[macro_use]
-extern crate log;
+extern crate tracing;
+
+use tracing_subscriber::{
+    FmtSubscriber,
+    filter::{EnvFilter, LevelFilter},
+};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
@@ -42,9 +47,6 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
-
         #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {
             method: String,
@@ -94,6 +96,11 @@ mod error {
         #[snafu(display("Systemd command failed - stderr: {}",
                         std::str::from_utf8(&output.stderr).unwrap_or_else(|_| "<invalid UTF-8>")))]
         SystemdCommandFailure { output: Output },
+
+        #[snafu(display("Failed to parse provided directive: {}", source))]
+        TracingDirectiveParse {
+            source: tracing_subscriber::filter::LevelParseError,
+        },
     }
 }
 
@@ -307,16 +314,14 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    // TODO Fix this later when we decide our logging story
+    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
     // Start the logger
-    stderrlog::new()
-        .module(module_path!())
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(args.verbosity)
-        .color(stderrlog::ColorChoice::Never)
-        .init()
-        .context(error::Logger)?;
-
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
     info!("servicedog started for unit {}", &args.systemd_unit);
 
     let systemd_unit = SystemdUnit::new(&args.systemd_unit);

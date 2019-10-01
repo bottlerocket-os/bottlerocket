@@ -23,6 +23,10 @@ use std::thread;
 use std::time::Duration;
 use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
 use tempfile::NamedTempFile;
+use tracing_subscriber::{
+    FmtSubscriber,
+    filter::{EnvFilter, LevelFilter}
+};
 use tough::{Limits, Repository, Settings};
 
 #[cfg(target_arch = "x86_64")]
@@ -535,17 +539,16 @@ fn parse_args(args: std::env::Args) -> Arguments {
 fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
     let arguments = parse_args(std::env::args());
-
-    // TODO Fix this later when we decide our logging story
-    // TODO Will this also cover telemetry or via another mechanism?
+        
+    let level: LevelFilter = arguments.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
     // Start the logger
-    stderrlog::new()
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(arguments.verbosity)
-        .color(stderrlog::ColorChoice::Never)
-        .init()
-        .unwrap();
-
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    
     let command =
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 

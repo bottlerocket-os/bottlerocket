@@ -75,7 +75,7 @@ See `../../apiclient/README.md` for client examples.
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 pub mod datastore;
 pub mod model;

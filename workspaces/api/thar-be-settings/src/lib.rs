@@ -17,7 +17,7 @@ In the standalone ("all keys") mode, it queries the API for all services and con
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 use snafu::ResultExt;
 use std::collections::HashSet;

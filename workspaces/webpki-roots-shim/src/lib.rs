@@ -9,8 +9,8 @@ use webpki::{TLSServerTrustAnchors, TrustAnchor};
 
 lazy_static::lazy_static! {
     pub static ref TLS_SERVER_ROOTS: TLSServerTrustAnchors<'static> = {
-        log::debug!("webpki-roots-shim activated, {} certificates", ROOTS.len());
-        log::debug!("certificate source: {}", CERT_PATH.display());
+        tracing::debug!("webpki-roots-shim activated, {} certificates", ROOTS.len());
+        tracing::debug!("certificate source: {}", CERT_PATH.display());
         TLSServerTrustAnchors(&ROOTS)
     };
 
@@ -31,7 +31,7 @@ fn tls_server_roots_pem() -> Vec<Pem> {
             v
         }
         Err(err) => {
-            log::error!("failed to read {}: {}", CERT_PATH.display(), err);
+            tracing::error!("failed to read {}: {}", CERT_PATH.display(), err);
             Vec::new()
         }
     }

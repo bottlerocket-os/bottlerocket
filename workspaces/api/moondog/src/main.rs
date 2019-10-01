@@ -13,13 +13,17 @@ User data can also be retrieved from a file for testing.
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 use http::StatusCode;
 use serde::Serialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::path::Path;
 use std::{env, fs, process};
+use tracing_subscriber::{
+    FmtSubscriber,
+    filter::{EnvFilter, LevelFilter},
+};
 
 // TODO
 // Tests!
@@ -70,9 +74,6 @@ mod error {
             response_body: String,
         },
 
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
-
         #[snafu(display("Error parsing TOML user data: {}", source))]
         TOMLUserDataParse { source: toml::de::Error },
 
@@ -84,6 +85,11 @@ mod error {
 
         #[snafu(display("Error serializing TOML to JSON: {}", source))]
         SettingsToJSON { source: serde_json::error::Error },
+
+        #[snafu(display("Failed to parse provided directive: {}", source))]
+        TracingDirectiveParse {
+            source: tracing_subscriber::filter::LevelParseError,
+        },
 
         #[snafu(display("Unable to read user data input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
@@ -273,15 +279,14 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    // TODO Fix this later when we decide our logging story
+    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
     // Start the logger
-    stderrlog::new()
-        .module(module_path!())
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(args.verbosity)
-        .color(stderrlog::ColorChoice::Never)
-        .init()
-        .context(error::Logger)?;
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
 
     info!("Moondog started");
 
