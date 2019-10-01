@@ -72,7 +72,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 fn parse_args(args: env::Args) -> Args {
     let mut datastore_path = None;
     let mut socket_path = None;
-    let mut verbosity = 0;
+    let mut verbosity = 1;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {

@@ -252,7 +252,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
     let mut socket_path = None;
-    let mut verbosity = 2;
+    let mut verbosity = 3;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {

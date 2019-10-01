@@ -387,7 +387,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
     let mut data_store_base_path = None;
-    let mut verbosity = 2;
+    let mut verbosity = 3;
     let mut version = None;
 
     let mut iter = args.skip(1);

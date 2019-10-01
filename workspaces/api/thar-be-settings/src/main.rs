@@ -21,11 +21,6 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
-        #[snafu(display("Failed to parse environment directive: {}", source))]
-        TracingFromEnv {
-            source: tracing_subscriber::filter::FromEnvError,
-        },
-
         #[snafu(display("Failed to parse provided directive: {}", source))]
         TracingDirectiveParse {
             source: tracing_subscriber::filter::LevelParseError,
@@ -78,7 +73,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
     let mut mode = RunMode::SpecificKeys;
-    let mut verbosity = 2;
+    let mut verbosity = 3;
     let mut socket_path = None;
 
     let mut iter = args.skip(1);

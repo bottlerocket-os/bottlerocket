@@ -10,10 +10,7 @@ use std::process::{Command, Output};
 /// Error contains the errors that can happen during migration.
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
-pub(crate) enum Error {
-    #[snafu(display("Tracing setup error: {}", source))]
-    Logger { source: tracing::dispatcher::SetGlobalDefaultError },
-    
+pub(crate) enum Error {    
     #[snafu(display("Failed to parse provided directive: {}", source))]
     TracingDirectiveParse {
         source: tracing_subscriber::filter::LevelParseError,

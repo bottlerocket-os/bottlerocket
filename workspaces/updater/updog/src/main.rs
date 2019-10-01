@@ -492,7 +492,7 @@ struct Arguments {
 /// Parse the command line arguments to get the user-specified values
 fn parse_args(args: std::env::Args) -> Arguments {
     let mut subcommand = None;
-    let mut verbosity: usize = 2; // Default log level to 2 (Info)
+    let mut verbosity: usize = 3; // Default log level to 3 (Info)
     let mut update_version = None;
     let mut ignore_wave = false;
     let mut json = false;
