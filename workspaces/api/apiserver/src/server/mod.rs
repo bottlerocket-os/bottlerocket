@@ -15,6 +15,7 @@ use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
 use crate::model::{ConfigurationFiles, Services, Settings};
 use error::Result;
 
+use nix::unistd::{chown, Gid};
 use std::fs::set_permissions;
 use std::fs::Permissions;
 use std::os::unix::fs::PermissionsExt;
@@ -82,12 +83,14 @@ where
         path: socket_path.as_ref(),
     })?;
 
-    // The socket needs to be writeable for all users for them to be able make API calls to the API server
-    let mode = 0o0666;
+    // Socket needs to be read/writeable for the api group so that users in host containers are able
+    // to make API calls to the API server
+    let api_gid = Gid::from_raw(274);
+    chown(socket_path.as_ref(), None, Some(api_gid)).context(error::SetGroup { gid: api_gid })?;
+
+    let mode = 0o0660;
     let perms = Permissions::from_mode(mode);
-    set_permissions(socket_path.as_ref(), perms).context(error::SetPermissions {
-        mode,
-    })?;
+    set_permissions(socket_path.as_ref(), perms).context(error::SetPermissions { mode })?;
 
     // Notify system manager the UNIX socket has been initialized, so other service units can proceed
     #[cfg(feature = "sd_notify")]
@@ -286,6 +289,7 @@ impl ResponseError for error::Error {
             SystemdNotify { .. } => HttpResponse::InternalServerError(),
             SystemdNotifyStatus {} => HttpResponse::InternalServerError(),
             SetPermissions { .. } => HttpResponse::InternalServerError(),
+            SetGroup { .. } => HttpResponse::InternalServerError(),
         }
         .finish()
     }
