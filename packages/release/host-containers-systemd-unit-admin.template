@@ -9,6 +9,7 @@ ExecStart=/usr/bin/host-ctr -ctr-id admin -source {{ settings.host-containers.ad
 Restart=always
 RestartSec=10
 TimeoutStopSec=60
+KillMode=mixed
 
 [Install]
 WantedBy=multi-user.target
