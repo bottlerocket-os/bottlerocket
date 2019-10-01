@@ -622,7 +622,7 @@ fn main_inner() -> Result<()> {
                     if let Some(datastore_version) = manifest.datastore_versions.get(&u.version) {
                         eprintln!("{}-{} ({})", u.flavor, u.version, datastore_version);
                     } else {
-                        println!("{}-{} (Missing datastore mapping!)", u.flavor, u.version);
+                        eprintln!("{}-{} (Missing datastore mapping!)", u.flavor, u.version);
                     }
                 }
             }
