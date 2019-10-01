@@ -199,10 +199,6 @@ func (a *Agent) realize(in *intent.Intent) error {
 		err = a.platform.Update(a.progress.GetTarget())
 
 	case marker.NodeActionUnknown, marker.NodeActionStabilize:
-		if !a.progress.Valid() {
-			err = errInvalidProgress
-			break
-		}
 		a.log.Debug("sitrep")
 		_, err = a.platform.Status()
 
@@ -227,8 +223,10 @@ func (a *Agent) realize(in *intent.Intent) error {
 	}
 
 	if err != nil {
+		a.log.WithError(err).Error("could not realize intent")
 		in.State = marker.NodeStateError
 	} else {
+		a.log.Debug("realized intent")
 		in.State = marker.NodeStateReady
 	}
 

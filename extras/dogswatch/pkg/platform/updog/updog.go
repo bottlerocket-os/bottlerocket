@@ -31,6 +31,7 @@ type executable struct{}
 
 func (e *executable) runOk(cmd *exec.Cmd) (bool, error) {
 	cmd.SysProcAttr = thar.ProcessAttrs()
+	// TODO: pipe out the updog stderr to debug logger
 	if err := cmd.Start(); err != nil {
 		return false, err
 	}
@@ -63,8 +64,8 @@ func (e *executable) Status() (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "updog not found in thar container mount "+thar.RootFS)
 	}
-	_, err = e.runOk(exec.Command(updogBin))
-	return err == nil, err
+	// TODO: add support for an updog usability check
+	return true, err
 }
 
 func newUpdogHost() Host {
