@@ -6,7 +6,7 @@ mod error;
 mod se;
 
 use crate::error::Result;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use data_store_version::Version as DVersion;
 use loopdev::{LoopControl, LoopDevice};
 use rand::{thread_rng, Rng};
@@ -19,8 +19,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader};
 use std::ops::Bound::{Excluded, Included};
 use std::path::{Path, PathBuf};
-use std::thread;
-use std::time::Duration;
+use std::process;
 use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
 use tempfile::NamedTempFile;
 use tough::{Limits, Repository, Settings};
@@ -41,9 +40,10 @@ const MAX_SEED: u64 = 2048;
 enum Command {
     CheckUpdate,
     Whats,
+    Prepare,
     Update,
     UpdateImage,
-    UpdateFlags,
+    UpdateApply,
 }
 
 #[derive(Debug, Deserialize)]
@@ -75,9 +75,16 @@ struct Update {
 }
 
 impl Update {
+    pub fn update_wave(&self, seed: u64) -> Option<&DateTime<Utc>> {
+        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
+            return Some(wave);
+        }
+        None
+    }
+
     fn update_ready(&self, seed: u64) -> bool {
         // Has this client's wave started
-        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
+        if let Some(wave) = self.update_wave(seed) {
             return *wave <= Utc::now();
         }
 
@@ -90,16 +97,19 @@ impl Update {
         true
     }
 
-    fn jitter(&self, seed: u64) -> Option<u64> {
-        let prev = self.waves.range((Included(0), Included(seed))).last();
+    pub fn jitter(&self, seed: u64) -> Option<DateTime<Utc>> {
+        let prev = self.update_wave(seed);
         let next = self
             .waves
             .range((Excluded(seed), Excluded(MAX_SEED)))
             .next();
         if let (Some(start), Some(end)) = (prev, next) {
             if Utc::now() < *end.1 {
+                let mut rng = thread_rng();
                 #[allow(clippy::cast_sign_loss)]
-                return Some((end.1.timestamp() - start.1.timestamp()) as u64);
+                let range = (end.1.timestamp() - start.timestamp()) as u64;
+                let jitter = Duration::seconds(rng.gen_range(1, range) as i64);
+                return Some(*start + jitter);
             }
         }
         None
@@ -125,8 +135,16 @@ USAGE:
 
 SUBCOMMANDS:
     check-update            Show if an update is available
+    prepare                 Download update files and migration targets
     update                  Perform an update if available
+    update-image            Download & write an update but do not update flags
+    update-apply            Update boot flags and reboot
 OPTIONS:
+    [ -j | --json ]               JSON-formatted output
+    [ -a | --all ]                Output all applicable updates
+    [ -n | --now ]                Update immediately, ignoring wave limits
+    [ -i | --image ]              Update to a specfic image version
+    [ -r | --reboot ]             Reboot upon updating boot flags
     [ --verbose --verbose ... ]   Increase log verbosity");
     std::process::exit(1)
 }
@@ -199,6 +217,17 @@ fn running_version() -> Result<(Version, String)> {
     }
 }
 
+fn applicable_updates<'a>(manifest: &'a Manifest, flavor: &str) -> Vec<&'a Update> {
+    let mut updates: Vec<&Update> = manifest
+        .updates
+        .iter()
+        .filter(|u| u.flavor == *flavor && u.arch == TARGET_ARCH && u.version <= u.max_version)
+        .collect();
+    // sort descending
+    updates.sort_unstable_by(|a, b| b.version.cmp(&a.version));
+    updates
+}
+
 // TODO use config if there is api-sourced configuration that could affect this
 // TODO updog.toml may include settings that cause us to ignore/delay
 // certain/any updates;
@@ -212,18 +241,12 @@ fn update_required<'a>(
     flavor: &str,
     force_version: Option<Version>,
 ) -> Option<&'a Update> {
-    let mut updates: Vec<&Update> = manifest
-        .updates
-        .iter()
-        .filter(|u| u.flavor == *flavor && u.arch == TARGET_ARCH && u.version <= u.max_version)
-        .collect();
+    let updates = applicable_updates(manifest, flavor);
 
     if let Some(forced_version) = force_version {
         return updates.into_iter().find(|u| u.version == forced_version);
     }
 
-    // sort descending
-    updates.sort_unstable_by(|a, b| b.version.cmp(&a.version));
     for update in updates {
         // If the current running version is greater than the max version ever published,
         // or moves us to a valid version <= the maximum version, update.
@@ -429,22 +452,8 @@ fn update_prepare(
 fn update_image(
     update: &Update,
     repository: &Repository<'_>,
-    jitter: Option<u64>,
     root_path: Option<NamedTempFile>,
 ) -> Result<()> {
-    // Jitter the exact update time
-    // Now: lazy spin
-    // If range > calling_interval we could just exit and wait until updog
-    // is called again.
-    // Alternately if Updog is going to be driven by some orchestrator
-    // then the jitter could be reduced or left to the caller.
-    if let Some(jitter) = jitter {
-        let mut rng = thread_rng();
-        let jitter = Duration::new(rng.gen_range(1, jitter), 0);
-        eprintln!("Waiting {:?} till update", jitter);
-        thread::sleep(jitter);
-    }
-
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
@@ -483,6 +492,9 @@ struct Arguments {
     json: bool,
     ignore_wave: bool,
     force_version: Option<Version>,
+    all: bool,
+    reboot: bool,
+    timestamp: Option<DateTime<Utc>>,
 }
 
 /// Parse the command line arguments to get the user-specified values
@@ -492,6 +504,9 @@ fn parse_args(args: std::env::Args) -> Arguments {
     let mut update_version = None;
     let mut ignore_wave = false;
     let mut json = false;
+    let mut all = false;
+    let mut reboot = false;
+    let mut timestamp = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -509,8 +524,21 @@ fn parse_args(args: std::env::Args) -> Arguments {
             "-n" | "--now" => {
                 ignore_wave = true;
             }
+            "-t" | "--timestamp" => match iter.next() {
+                Some(t) => match DateTime::parse_from_rfc3339(&t) {
+                    Ok(t) => timestamp = Some(DateTime::from_utc(t.naive_utc(), Utc)),
+                    _ => usage(),
+                },
+                _ => usage(),
+            },
             "-j" | "--json" => {
                 json = true;
+            }
+            "-r" | "--reboot" => {
+                reboot = true;
+            }
+            "-a" | "--all" => {
+                all = true;
             }
             // Assume any arguments not prefixed with '-' is a subcommand
             s if !s.starts_with('-') => {
@@ -529,7 +557,22 @@ fn parse_args(args: std::env::Args) -> Arguments {
         json,
         ignore_wave,
         force_version: update_version,
+        all,
+        reboot,
+        timestamp,
     }
+}
+
+fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string(&object).context(error::UpdateSerialize)?
+        );
+    } else {
+        println!("{}", string);
+    }
+    Ok(())
 }
 
 fn main_inner() -> Result<()> {
@@ -556,31 +599,32 @@ fn main_inner() -> Result<()> {
 
     match command {
         Command::CheckUpdate | Command::Whats => {
-            match update_required(
+            let updates = if arguments.all {
+                applicable_updates(&manifest, &flavor)
+            } else if let Some(u) = update_required(
                 &config,
                 &manifest,
                 &current_version,
                 &flavor,
                 arguments.force_version,
             ) {
-                Some(u) => {
-                    if arguments.json {
-                        println!(
-                            "{}",
-                            serde_json::to_string(&u).context(error::UpdateSerialize)?
-                        );
-                    } else if let Some(datastore_version) =
-                        manifest.datastore_versions.get(&u.version)
-                    {
+                vec![u]
+            } else {
+                vec![]
+            };
+            if arguments.json {
+                println!(
+                    "{}",
+                    serde_json::to_string(&updates).context(error::UpdateSerialize)?
+                );
+            } else {
+                for u in updates {
+                    if let Some(datastore_version) = manifest.datastore_versions.get(&u.version) {
                         eprintln!("{}-{} ({})", u.flavor, u.version, datastore_version);
                     } else {
-                        return error::MissingMapping {
-                            version: u.version.to_string(),
-                        }
-                        .fail();
+                        eprintln!("{}-{} (Missing datastore mapping!)", u.flavor, u.version);
                     }
                 }
-                _ => return error::NoUpdate.fail(),
             }
         }
         Command::Update | Command::UpdateImage => {
@@ -593,23 +637,47 @@ fn main_inner() -> Result<()> {
             ) {
                 if u.update_ready(config.seed) || arguments.ignore_wave {
                     eprintln!("Starting update to {}", u.version);
-                    let root_path = update_prepare(&repository, &manifest, u)?;
+
                     if arguments.ignore_wave {
                         eprintln!("** Updating immediately **");
-                        update_image(u, &repository, None, root_path)?;
                     } else {
-                        update_image(u, &repository, u.jitter(config.seed), root_path)?;
+                        let jitter = match arguments.timestamp {
+                            Some(t) => Some(t),
+                            _ => u.jitter(config.seed),
+                        };
+
+                        if let Some(j) = jitter {
+                            if j > Utc::now() {
+                                // not yet!
+                                output(arguments.json, &j, &format!("{}", j))?;
+                                return Ok(());
+                            }
+                        }
                     }
+
+                    let root_path = update_prepare(&repository, &manifest, u)?;
+                    update_image(u, &repository, root_path)?;
                     if command == Command::Update {
                         update_flags()?;
+                        if arguments.reboot {
+                            process::Command::new("shutdown")
+                                .arg("-r")
+                                .status()
+                                .context(error::RebootFailure)?;
+                        }
                     }
-                    eprintln!("Update applied: {}-{}", u.flavor, u.version);
-                    if arguments.json {
-                        println!(
-                            "{}",
-                            serde_json::to_string(&u).context(error::UpdateSerialize)?
-                        );
-                    }
+                    output(
+                        arguments.json,
+                        &u,
+                        &format!("Update applied: {}-{}", u.flavor, u.version),
+                    )?;
+                } else if let Some(wave) = u.jitter(config.seed) {
+                    // return the jittered time of our wave in the update
+                    output(
+                        arguments.json,
+                        &wave,
+                        &format!("Update available at {}", &wave),
+                    )?;
                 } else {
                     eprintln!("Update available in later wave");
                 }
@@ -617,8 +685,18 @@ fn main_inner() -> Result<()> {
                 eprintln!("No update required");
             }
         }
-        Command::UpdateFlags => {
+        Command::UpdateApply => {
+            // TODO Guard against being called repeatedly
             update_flags()?;
+            if arguments.reboot {
+                process::Command::new("shutdown")
+                    .arg("-r")
+                    .status()
+                    .context(error::RebootFailure)?;
+            }
+        }
+        Command::Prepare => {
+            // TODO unimplemented
         }
     }
 
