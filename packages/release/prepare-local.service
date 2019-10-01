@@ -17,6 +17,14 @@ Environment=LOCAL_DIR=/local
 ExecStart=/usr/sbin/growpart ${THAR_DATA}
 ExecStart=/usr/bin/udevadm settle -E ${THAR_DATA}
 
+# HACK: If the GPT label was not already at the end of the disk, the first pass
+# will write it there, but any additional sectors beyond the original position
+# were not included in the resized partition. Now that the kernel has reloaded
+# the partition table, the second pass can find and use those sectors. This
+# avoids the need to synchronize with the kernel (and udev) inside `growpart`.
+ExecStart=/usr/sbin/growpart ${THAR_DATA}
+ExecStart=/usr/bin/udevadm settle -E ${THAR_DATA}
+
 # The above note means we can't have a "normal" mount unit here, because it would
 # depend on the link, and would immediately transition to the failed state when the
 # link is removed. systemd will create local.mount for us as a side effect.
