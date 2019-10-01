@@ -355,7 +355,7 @@ impl DataStore for FilesystemDataStore {
 
         // Nothing to do if no keys are present in pending
         if pending_data.is_empty() {
-            return Ok(Default::default())
+            return Ok(Default::default());
         }
 
         // Turn String keys of pending data into Key keys, for return

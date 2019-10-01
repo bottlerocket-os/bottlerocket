@@ -17,8 +17,8 @@ use std::path::Path;
 use std::str::FromStr;
 use std::{env, fs, process};
 use tracing_subscriber::{
-    FmtSubscriber,
     filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
 };
 
 use apiserver::datastore::key::{Key, KeyType};
@@ -26,7 +26,6 @@ use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use apiserver::model;
 use data_store_version::Version;
-
 
 #[macro_use]
 extern crate tracing;
@@ -426,7 +425,11 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
     let filter = EnvFilter::from_default_env().add_directive(level.into());
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(filter)

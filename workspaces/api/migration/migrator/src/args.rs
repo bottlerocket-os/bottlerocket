@@ -57,7 +57,10 @@ impl Args {
 
                     // On first boot, the data store won't exist yet, because storewolf runs after.
                     if !Path::new(&path_str).exists() {
-                        eprintln!("Data store does not exist at given path, exiting ({})", path_str);
+                        eprintln!(
+                            "Data store does not exist at given path, exiting ({})",
+                            path_str
+                        );
                         process::exit(0);
                     }
 

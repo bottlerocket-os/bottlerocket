@@ -10,8 +10,8 @@ use std::env;
 use std::path::Path;
 use std::process;
 use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
     FmtSubscriber,
-    filter::{LevelFilter, EnvFilter},
 };
 
 use apiserver::serve;
@@ -108,7 +108,11 @@ fn parse_args(args: env::Args) -> Args {
 fn main() -> Result<()> {
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
     let filter = EnvFilter::from_default_env().add_directive(level.into());
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(filter)

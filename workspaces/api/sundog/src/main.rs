@@ -20,8 +20,8 @@ use apiserver::datastore::serialization::to_pairs_with_prefix;
 use apiserver::datastore::{self, deserialization};
 use apiserver::model;
 use tracing_subscriber::{
-    FmtSubscriber,
     filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
 };
 
 #[macro_use]
@@ -397,7 +397,11 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
     let filter = EnvFilter::from_default_env().add_directive(level.into());
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(filter)

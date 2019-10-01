@@ -35,8 +35,8 @@ use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
 use tracing_subscriber::{
-    FmtSubscriber,
     filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
 };
 
 mod args;
@@ -69,7 +69,11 @@ fn main() {
 fn run() -> Result<()> {
     let args = Args::from_env(env::args());
 
-    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
     let filter = EnvFilter::from_default_env().add_directive(level.into());
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(filter)

@@ -10,7 +10,6 @@ use std::path::PathBuf;
 #[snafu(visibility = "pub(super)")]
 pub enum Error {
     // Systemd Notification errors
-
     #[snafu(display("Systemd notify error: {}", source))]
     SystemdNotify { source: std::io::Error },
 
@@ -57,7 +56,6 @@ pub enum Error {
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     // Controller errors
-
     #[snafu(display("Found no '{}' in datastore", prefix))]
     MissingData { prefix: String },
 

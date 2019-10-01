@@ -59,9 +59,7 @@ fn main() -> Result<()> {
     const NOEXEC: MountFlags = MountFlags::NOEXEC;
 
     // Try and mount tmpfs directories
-    for target in vec![
-        ("/etc", NOATIME | NOSUID | NODEV | NOEXEC),
-    ] {
+    for target in vec![("/etc", NOATIME | NOSUID | NODEV | NOEXEC)] {
         Mount::new("tmpfs", target.0, "tmpfs", target.1, Some("mode=0755")).context(
             error::MountFailed {
                 device: "tmpfs",

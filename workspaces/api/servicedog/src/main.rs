@@ -27,8 +27,8 @@ use apiserver::model;
 extern crate tracing;
 
 use tracing_subscriber::{
-    FmtSubscriber,
     filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
 };
 
 // FIXME Get from configuration in the future
@@ -314,7 +314,11 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
     let filter = EnvFilter::from_default_env().add_directive(level.into());
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(filter)

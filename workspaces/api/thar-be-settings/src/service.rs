@@ -94,8 +94,7 @@ where
 
     // Query the API for affected service metadata
     debug!("Querying API for affected service metadata");
-    let service_map: model::Services =
-        client::get_json(socket_path, "/services", query)?;
+    let service_map: model::Services = client::get_json(socket_path, "/services", query)?;
     trace!("Service metadata: {:?}", &service_map);
 
     Ok(service_map)
@@ -184,5 +183,4 @@ mod test {
 
         assert_eq!(get_affected_service_names(input_map), expected_output)
     }
-
 }

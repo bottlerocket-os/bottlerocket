@@ -23,11 +23,11 @@ use std::thread;
 use std::time::Duration;
 use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
 use tempfile::NamedTempFile;
-use tracing_subscriber::{
-    FmtSubscriber,
-    filter::{EnvFilter, LevelFilter}
-};
 use tough::{Limits, Repository, Settings};
+use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
+};
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -539,8 +539,12 @@ fn parse_args(args: std::env::Args) -> Arguments {
 fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
     let arguments = parse_args(std::env::args());
-        
-    let level: LevelFilter = arguments.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+
+    let level: LevelFilter = arguments
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
     let filter = EnvFilter::from_default_env().add_directive(level.into());
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(filter)
@@ -548,7 +552,7 @@ fn main_inner() -> Result<()> {
         .finish();
     // Start the logger
     tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
-    
+
     let command =
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 

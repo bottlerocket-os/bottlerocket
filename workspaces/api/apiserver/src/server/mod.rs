@@ -64,7 +64,10 @@ where
                     .route("/pending", web::get().to(get_pending_settings))
                     .route("/commit", web::post().to(commit_settings))
                     .route("/apply", web::post().to(apply_settings))
-                    .route("/commit_and_apply", web::post().to(commit_and_apply_settings))
+                    .route(
+                        "/commit_and_apply",
+                        web::post().to(commit_and_apply_settings),
+                    ),
             )
             .service(
                 web::scope("/metadata")

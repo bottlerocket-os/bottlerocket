@@ -6,8 +6,8 @@ use std::collections::HashSet;
 use std::env;
 use std::process;
 use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
     FmtSubscriber,
-    filter::{EnvFilter, LevelFilter}
 };
 
 use thar_be_settings::{config, get_changed_settings, service, settings, template};
@@ -139,7 +139,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args.verbosity.to_string().parse().context(error::TracingDirectiveParse)?;
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
     let filter = EnvFilter::from_default_env().add_directive(level.into());
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(filter)
