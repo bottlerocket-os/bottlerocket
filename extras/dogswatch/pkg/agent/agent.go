@@ -49,7 +49,7 @@ func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform, 
 	}, nil
 }
 
-func (a *Agent) check() error {
+func (a *Agent) checkProviders() error {
 	switch {
 	case a.kube == nil:
 		return errors.New("kubernetes client is nil")
@@ -62,7 +62,7 @@ func (a *Agent) check() error {
 // TODO: add regular update checks
 
 func (a *Agent) Run(ctx context.Context) error {
-	if err := a.check(); err != nil {
+	if err := a.checkProviders(); err != nil {
 		return errors.WithMessage(err, "misconfigured")
 	}
 	a.log.Debug("starting")
@@ -76,7 +76,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	group.Work(ns.Run)
 	group.Work(a.periodicUpdateChecker)
 
-	err := a.nodePreflight()
+	err := a.checkNodePreflight()
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 	return err
 }
 
-func (a *Agent) nodePreflight() error {
+func (a *Agent) checkNodePreflight() error {
 	// TODO: Run a check of the Node Resource and reset appropriately
 
 	// TODO: Inform controller for taint removal
