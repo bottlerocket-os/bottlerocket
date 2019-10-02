@@ -4,6 +4,7 @@
 mod copylike;
 mod create;
 mod deref;
+mod download;
 mod error;
 mod key;
 mod root;
@@ -29,6 +30,8 @@ enum Command {
     Root(root::Command),
     /// Sign a metadata file
     Sign(sign::SignArgs),
+    /// Download a TUF repository's resources
+    Download(download::DownloadArgs),
 }
 
 impl Command {
@@ -37,6 +40,7 @@ impl Command {
             Command::Create(args) => args.run(),
             Command::Root(root_subcommand) => root_subcommand.run(),
             Command::Sign(args) => args.run(),
+            Command::Download(args) => args.run(),
         }
     }
 }
