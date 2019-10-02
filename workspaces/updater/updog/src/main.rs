@@ -574,8 +574,14 @@ mod tests {
 
     #[test]
     fn test_manifest_json() {
-        let s = fs::read_to_string("tests/data/example.json").unwrap();
-        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        // Loads a general example of a manifest that includes an update with waves,
+        // a set of migrations, and some datastore mappings.
+        // This tests checks that it parses and the following properties are correct:
+        // - the (1.0, 1.1) migrations exist with the migration "migrate_1.1_foo"
+        // - the image:datastore mappings exist
+        // - there is a mapping between 1.11.0 and 1.0
+        let path = "tests/data/example.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         assert!(
             manifest.updates.len() > 0,
             "Failed to parse update manifest"
@@ -601,19 +607,15 @@ mod tests {
 
     #[test]
     fn test_serde_reader() {
-        let file = File::open("tests/data/example_2.json").unwrap();
-        let buffer = BufReader::new(file);
-        let manifest: Manifest = serde_json::from_reader(buffer).unwrap();
+        // A basic manifest with a single update, no migrations, and two
+        // image:datastore mappings
+        let path = "tests/data/example_2.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         assert!(manifest.updates.len() > 0);
     }
 
     #[test]
     fn test_update_ready() {
-        let config = Config {
-            metadata_base_url: String::from("foo"),
-            target_base_url: String::from("bar"),
-            seed: 123,
-        };
         let mut update = Update {
             flavor: String::from("thar"),
             arch: String::from("test"),
@@ -627,8 +629,9 @@ mod tests {
             },
         };
 
+        let seed = 123;
         assert!(
-            update.update_ready(config.seed),
+            update.update_ready(seed),
             "No waves specified but no update"
         );
 
@@ -636,20 +639,24 @@ mod tests {
             .waves
             .insert(1024, Utc::now() + TestDuration::hours(1));
 
-        assert!(!update.update_ready(config.seed), "Incorrect wave chosen");
+        assert!(update.update_ready(seed), "0th wave not ready");
 
-        update.waves.insert(0, Utc::now() - TestDuration::hours(1));
+        update
+            .waves
+            .insert(100, Utc::now() + TestDuration::minutes(30));
 
-        assert!(update.update_ready(config.seed), "Update wave missed");
+        assert!(!update.update_ready(seed), "1st wave scheduled early");
+
+        let early_seed = 50;
+        update
+            .waves
+            .insert(49, Utc::now() - TestDuration::minutes(30));
+
+        assert!(update.update_ready(early_seed), "Update wave missed");
     }
 
     #[test]
     fn test_final_wave() {
-        let config = Config {
-            metadata_base_url: String::from("foo"),
-            target_base_url: String::from("bar"),
-            seed: 512,
-        };
         let mut update = Update {
             flavor: String::from("thar"),
             arch: String::from("test"),
@@ -662,6 +669,7 @@ mod tests {
                 hash: String::from("hash"),
             },
         };
+        let seed = 1024;
 
         update.waves.insert(0, Utc::now() - TestDuration::hours(3));
         update
@@ -671,23 +679,23 @@ mod tests {
             .waves
             .insert(512, Utc::now() - TestDuration::hours(1));
 
-        assert!(
-            update.update_ready(config.seed),
-            "All waves passed but no update"
-        );
+        assert!(update.update_ready(seed), "All waves passed but no update");
     }
 
     #[test]
     fn test_versions() {
-        let s = fs::read_to_string("tests/data/regret.json").unwrap();
-        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        // A manifest with a single update whose version exceeds the max version.
+        // update in manifest has
+        // - version: 1.25.0
+        // - max_version: 1.20.0
+        let path = "tests/data/regret.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
             seed: 123,
         };
-        // max_version is 1.20.0 in manifest
-        let version = SemVer::parse("1.25.0").unwrap();
+        let version = SemVer::parse("1.18.0").unwrap();
         let flavor = String::from("thar-aws-eks");
 
         assert!(
@@ -697,9 +705,35 @@ mod tests {
     }
 
     #[test]
-    fn test_multiple() -> Result<()> {
-        let s = fs::read_to_string("tests/data/multiple.json").unwrap();
-        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+    fn older_versions() {
+        // A manifest with two updates, both less than 0.1.3
+        let path = "tests/data/example_3.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let config = Config {
+            metadata_base_url: String::from("foo"),
+            target_base_url: String::from("bar"),
+            seed: 1487,
+        };
+
+        let version = SemVer::parse("0.1.3").unwrap();
+        let flavor = String::from("aws-k8s");
+        let update = update_required(&config, &manifest, &version, &flavor, None);
+
+        assert!(update.is_some(), "Updog ignored max version");
+        assert!(
+            update.unwrap().version == SemVer::parse("0.1.2").unwrap(),
+            "Updog didn't choose the most recent valid version"
+        );
+    }
+
+    #[test]
+    fn test_multiple() {
+        // A manifest with four updates; two valid, one which exceeds the max
+        // version, and one which is for an aarch64 target. This asserts that
+        // upgrading from the version 1.10.0 results in updating to 1.15.0
+        // instead of 1.13.0 (lower), 1.25.0 (too high), or 1.16.0 (wrong arch).
+        let path = "tests/data/multiple.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
@@ -719,57 +753,16 @@ mod tests {
                 u.version
             );
         }
-
-        Ok(())
-    }
-
-    #[test]
-    fn bad_bound() {
-        assert!(
-            serde_json::from_str::<Manifest>(include_str!("../tests/data/bad-bound.json")).is_err()
-        );
-    }
-
-    #[test]
-    fn duplicate_bound() {
-        assert!(serde_json::from_str::<Manifest>(include_str!(
-            "../tests/data/duplicate-bound.json"
-        ))
-        .is_err());
-    }
-
-    #[test]
-    fn test_migrations() -> Result<()> {
-        let s = fs::read_to_string("tests/data/migrations.json").unwrap();
-        let manifest: Manifest = serde_json::from_str(&s).unwrap();
-
-        let from = DataVersion::from_str("1.0").unwrap();
-        let to = DataVersion::from_str("1.3").unwrap();
-        let targets = migration_targets(from, to, &manifest)?;
-
-        assert!(targets.len() == 3);
-        let mut i = targets.iter();
-        assert!(i.next().unwrap() == "migration_1.1_a");
-        assert!(i.next().unwrap() == "migration_1.1_b");
-        assert!(i.next().unwrap() == "migration_1.3_shortcut");
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_metadata() -> Result<()> {
-        let s = fs::read_to_string("tests/data/example_2.json").unwrap();
-        let manifest: Manifest = serde_json::from_str(&s).unwrap();
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&manifest).context(error::UpdateSerialize)?
-        );
-        Ok(())
     }
 
     #[test]
     fn force_update_version() {
-        let s = fs::read_to_string("tests/data/multiple.json").unwrap();
-        let manifest: Manifest = serde_json::from_str(&s).unwrap();
+        // A manifest with four updates; two valid, one which exceeds the max
+        // version, and one which is for an aarch64 target. This tests forces
+        // a downgrade to 1.13.0, instead of 1.15.0 like it would be in the
+        // above test, test_multiple.
+        let path = "tests/data/multiple.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
@@ -793,6 +786,50 @@ mod tests {
     }
 
     #[test]
+    fn bad_bound() {
+        // This manifest has an invalid key for one of the update's waves
+        assert!(
+            serde_json::from_str::<Manifest>(include_str!("../tests/data/bad-bound.json")).is_err()
+        );
+    }
+
+    #[test]
+    fn duplicate_bound() {
+        // This manifest has two waves with a bound id of 0
+        assert!(serde_json::from_str::<Manifest>(include_str!(
+            "../tests/data/duplicate-bound.json"
+        ))
+        .is_err());
+    }
+
+    #[test]
+    fn test_migrations() {
+        // A manifest with four migration tuples starting at 1.0 and ending at 1.3.
+        // There is a shortcut from 1.1 to 1.3, skipping 1.2
+        let path = "tests/data/migrations.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let from = DataVersion::from_str("1.0").unwrap();
+        let to = DataVersion::from_str("1.3").unwrap();
+        let targets = migration_targets(from, to, &manifest).unwrap();
+
+        assert!(targets.len() == 3);
+        let mut i = targets.iter();
+        assert!(i.next().unwrap() == "migration_1.1_a");
+        assert!(i.next().unwrap() == "migration_1.1_b");
+        assert!(i.next().unwrap() == "migration_1.3_shortcut");
+    }
+
+    #[test]
+    fn serialize_metadata() {
+        // A basic manifest with a single update
+        let path = "tests/data/example_2.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        assert!(serde_json::to_string_pretty(&manifest)
+            .context(error::UpdateSerialize)
+            .is_ok());
+    }
+
+    #[test]
     fn early_wave() {
         let mut u = Update {
             flavor: String::from("thar"),
@@ -810,28 +847,43 @@ mod tests {
         // | ---- (100, "now") ---
         u.waves.insert(100, Utc::now());
         let (start, end) = u.update_wave(1);
-        assert!(start.is_none() && end.is_some());
-        assert!(u.jitter(1).is_none());
+        assert!(start.is_none() && end.is_some(), "Expected to be 0th wave");
+        assert!(u.jitter(1).is_none(), "Expected immediate update");
         let (start, end) = u.update_wave(101);
-        assert!(start.is_some() && end.is_none());
-        assert!(u.jitter(101).is_none());
+        assert!(
+            start.is_some() && end.is_none(),
+            "Expected to be final wave"
+        );
+        assert!(u.jitter(101).is_none(), "Expected immediate update");
 
         // | ---- (100, "now") ---- (200, "+1hr") ---
         u.waves.insert(200, Utc::now() + TestDuration::hours(1));
         let (start, end) = u.update_wave(1);
-        assert!(start.is_none() && end.is_some());
-        assert!(u.jitter(1).is_none());
+        assert!(start.is_none() && end.is_some(), "Expected to be 0th wave");
+        assert!(u.jitter(1).is_none(), "Expected immediate update");
 
         let (start, end) = u.update_wave(100);
-        assert!(start.is_none() && end.is_some());
-        assert!(u.jitter(100).is_none());
+        assert!(
+            start.is_none() && end.is_some(),
+            "Expected to be 0th wave (just!)"
+        );
+        assert!(u.jitter(100).is_none(), "Expected immediate update");
 
         let (start, end) = u.update_wave(150);
-        assert!(start.is_some() && end.is_some());
-        assert!(u.jitter(150).is_some());
+        assert!(
+            start.is_some() && end.is_some(),
+            "Expected to be some bounded wave"
+        );
+        assert!(
+            u.jitter(150).is_some(),
+            "Expected to have to wait for update"
+        );
 
         let (start, end) = u.update_wave(201);
-        assert!(start.is_some() && end.is_none());
-        assert!(u.jitter(201).is_none());
+        assert!(
+            start.is_some() && end.is_none(),
+            "Expected to be final wave"
+        );
+        assert!(u.jitter(201).is_none(), "Expected immediate update");
     }
 }
