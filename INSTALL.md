@@ -127,7 +127,9 @@ eksctl get cluster -o yaml --name thar
 ```
 
 Take the subnet IDs (`subnet-*`) from that output and insert them in this command, which will tell us whether each subnet is public or private.
-Pick one of the private subnet IDs and save it - we'll use it at the end, in the instance launch command.
+You can choose whether you want public or private, but make sure to save the subnet ID for later in the launch command.
+* Choose private for production deployments to get maximum isolation of worker nodes.
+* Choose public to more easily debug your instance.  These subnets have an Internet Gateway, so if you add a public IP address to your instance, you can talk to it.  (You can manually add an Internet Gateway to a private subnet later, so this is a reversible decision.)
 
 (If you use an EC2 region other than "us-west-2", make sure to change that.)
 
@@ -260,7 +262,7 @@ Now we can launch a Thar instance in our cluster!
 
 There are a few values to make sure you change in this command:
 * YOUR_KEY_NAME: your SSH keypair name, as registered with EC2
-* SUBNET_ID: the private subnet you selected earlier
+* SUBNET_ID: the subnet you selected earlier
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier
 * THAR-AMI-ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
 * userdata.toml: the path to the user data file you created earlier
