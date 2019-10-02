@@ -75,4 +75,9 @@ pub enum TBSError {
         uri: String,
         source: serde_json::Error,
     },
+
+    #[snafu(display("Failed to parse provided directive: {}", source))]
+    TracingDirectiveParse {
+        source: tracing_subscriber::filter::LevelParseError,
+    },
 }

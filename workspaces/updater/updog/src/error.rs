@@ -210,6 +210,11 @@ pub(crate) enum Error {
         source: std::io::Error,
     },
 
+    #[snafu(display("Failed to parse provided directive: {}", source))]
+    TracingDirectiveParse {
+        source: tracing_subscriber::filter::LevelParseError,
+    },
+
     #[snafu(display("Failed to serialize update information: {}", source))]
     UpdateSerialize {
         source: serde_json::Error,

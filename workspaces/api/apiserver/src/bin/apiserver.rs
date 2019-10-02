@@ -3,12 +3,16 @@
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate log;
+extern crate tracing;
 
 use snafu::{ensure, ResultExt};
 use std::env;
 use std::path::Path;
 use std::process;
+use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
+};
 
 use apiserver::serve;
 
@@ -22,23 +26,24 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(crate)")]
     pub(crate) enum Error {
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
-
         #[snafu(display("Datastore does not exist, did storewolf run?"))]
         NonexistentDatastore,
 
         #[snafu(display("{}", source))]
         Server { source: apiserver::server::Error },
+
+        #[snafu(display("Failed to parse provided directive: {}", source))]
+        TracingDirectiveParse {
+            source: tracing_subscriber::filter::LevelParseError,
+        },
     }
 }
 
 /// Stores user-supplied arguments.
 struct Args {
-    verbosity: usize,
-    color: stderrlog::ColorChoice,
     datastore_path: String,
     socket_path: String,
+    verbosity: usize,
 }
 
 /// Informs the user about proper usage of the program and exits.
@@ -67,15 +72,12 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 fn parse_args(args: env::Args) -> Args {
     let mut datastore_path = None;
     let mut socket_path = None;
-    let mut verbosity = 0;
-    let mut color = stderrlog::ColorChoice::Auto;
+    let mut verbosity = 1;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
             "-v" | "--verbose" => verbosity += 1,
-
-            "--no-color" => color = stderrlog::ColorChoice::Never,
 
             "--datastore-path" => {
                 datastore_path = Some(
@@ -97,7 +99,6 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         verbosity,
-        color,
         datastore_path: datastore_path.unwrap_or_else(|| usage()),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_BIND_PATH.to_string()),
     }
@@ -107,14 +108,18 @@ fn parse_args(args: env::Args) -> Args {
 fn main() -> Result<()> {
     let args = parse_args(env::args());
 
-    // TODO: starting with simple stderr logging, replace when we have a better idea.
-    stderrlog::new()
-        .module(module_path!())
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(args.verbosity)
-        .color(args.color)
-        .init()
-        .context(error::Logger)?;
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
+    // Start the logger
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
 
     // Make sure the datastore exists
     ensure!(

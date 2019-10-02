@@ -142,15 +142,12 @@ fn get_pod_infra_container_image() -> Result<String> {
     // Get the region from the correct location.
     let instance_identity_document_path = "/dynamic/instance-identity/document";
     let iid_text = get_text_from_imds(&client, &instance_identity_document_path)?;
-    let iid_json: serde_json::Value =
-        serde_json::from_str(&iid_text).context(error::ImdsJson {
-            path: instance_identity_document_path.to_string(),
-        })?;
-    let region = iid_json["region"]
-        .as_str()
-        .context(error::MissingRegion {
-            path: instance_identity_document_path.to_string(),
-        })?;
+    let iid_json: serde_json::Value = serde_json::from_str(&iid_text).context(error::ImdsJson {
+        path: instance_identity_document_path.to_string(),
+    })?;
+    let region = iid_json["region"].as_str().context(error::MissingRegion {
+        path: instance_identity_document_path.to_string(),
+    })?;
 
     // Get machine architecture.
     let arch = if cfg!(target_arch = "x86_64") {

@@ -23,6 +23,10 @@ use std::process;
 use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
 use tempfile::NamedTempFile;
 use tough::{Limits, Repository, Settings};
+use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
+};
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -500,7 +504,7 @@ struct Arguments {
 /// Parse the command line arguments to get the user-specified values
 fn parse_args(args: std::env::Args) -> Arguments {
     let mut subcommand = None;
-    let mut verbosity: usize = 2; // Default log level to 2 (Info)
+    let mut verbosity: usize = 3; // Default log level to 3 (Info)
     let mut update_version = None;
     let mut ignore_wave = false;
     let mut json = false;
@@ -579,15 +583,18 @@ fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
     let arguments = parse_args(std::env::args());
 
-    // TODO Fix this later when we decide our logging story
-    // TODO Will this also cover telemetry or via another mechanism?
+    let level: LevelFilter = arguments
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
     // Start the logger
-    stderrlog::new()
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .verbosity(arguments.verbosity)
-        .color(stderrlog::ColorChoice::Never)
-        .init()
-        .unwrap();
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
 
     let command =
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());

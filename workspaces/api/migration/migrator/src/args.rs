@@ -33,7 +33,6 @@ pub(crate) struct Args {
     pub(crate) datastore_path: PathBuf,
     pub(crate) migration_directories: Vec<PathBuf>,
     pub(crate) migrate_to_version: Version,
-    pub(crate) color: stderrlog::ColorChoice,
     pub(crate) verbosity: usize,
 }
 
@@ -45,8 +44,7 @@ impl Args {
         let mut migration_directories = None;
         let mut migrate_to_version = None;
         // Optional parameters with their defaults.
-        let mut verbosity = 2; // default to INFO level
-        let mut color = stderrlog::ColorChoice::Auto;
+        let mut verbosity = 3; // default to INFO level
 
         let mut iter = args.skip(1);
         while let Some(arg) = iter.next() {
@@ -59,7 +57,10 @@ impl Args {
 
                     // On first boot, the data store won't exist yet, because storewolf runs after.
                     if !Path::new(&path_str).exists() {
-                        eprintln!("Data store does not exist at given path, exiting ({})", path_str);
+                        eprintln!(
+                            "Data store does not exist at given path, exiting ({})",
+                            path_str
+                        );
                         process::exit(0);
                     }
 
@@ -115,8 +116,6 @@ impl Args {
 
                 "-v" | "--verbose" => verbosity += 1,
 
-                "--no-color" => color = stderrlog::ColorChoice::Never,
-
                 _ => usage(),
             }
         }
@@ -125,7 +124,6 @@ impl Args {
             datastore_path: datastore_path.unwrap_or_else(|| usage()),
             migration_directories: migration_directories.unwrap_or_else(|| usage()),
             migrate_to_version: migrate_to_version.unwrap_or_else(|| usage()),
-            color,
             verbosity,
         }
     }

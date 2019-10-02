@@ -11,8 +11,10 @@ use std::process::{Command, Output};
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
-    #[snafu(display("Logger setup error: {}", source))]
-    Logger { source: log::SetLoggerError },
+    #[snafu(display("Failed to parse provided directive: {}", source))]
+    TracingDirectiveParse {
+        source: tracing_subscriber::filter::LevelParseError,
+    },
 
     #[snafu(display("Internal error: {}", msg))]
     Internal { msg: String },
