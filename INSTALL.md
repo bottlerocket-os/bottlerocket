@@ -165,9 +165,15 @@ aws iam create-role \
 sleep 5
 aws iam attach-role-policy \
    --role-name TharInstance \
-   --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM \
-   --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy \
-   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly \
+   --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+aws iam attach-role-policy \
+   --role-name TharInstance \
+   --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+aws iam attach-role-policy \
+   --role-name TharInstance \
+   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+aws iam attach-role-policy \
+   --role-name TharInstance \
    --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
 aws iam create-instance-profile \
    --instance-profile-name TharInstance
