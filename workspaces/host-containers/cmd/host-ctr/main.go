@@ -14,6 +14,7 @@ import (
 	"github.com/awslabs/amazon-ecr-containerd-resolver/ecr"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
@@ -57,6 +58,11 @@ func _main() int {
 		return 1
 	}
 	defer client.Close()
+
+	// Clean up target container if it already exists before starting container task
+	if err := deleteCtrIfExists(ctx, client, targetCtr); err != nil {
+		return 1
+	}
 
 	img, err := pullImage(ctx, source, client)
 	if err != nil {
@@ -177,6 +183,47 @@ func _main() int {
 	}
 	log.G(ctx).WithField("code", code).Info("Container task exited")
 	return int(code)
+}
+
+// Check if container already exists, if it does, kill its task then delete it and clean up its snapshot
+func deleteCtrIfExists(ctx context.Context, client *containerd.Client, targetCtr string) error {
+	existingCtr, err := client.LoadContainer(ctx, targetCtr)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			log.G(ctx).WithField("ctr-id", targetCtr).Info("No clean up necessary, proceeding")
+			return nil
+		}
+		log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to retrieve list of containers")
+		return err
+	}
+	if existingCtr != nil {
+		log.G(ctx).WithField("ctr-id", targetCtr).Info("Container already exists, deleting")
+		// Kill task associated with existing container if it exists
+		existingTask, err := existingCtr.Task(ctx, nil)
+		if err != nil {
+			// No associated task found, proceed to delete existing container
+			if errdefs.IsNotFound(err) {
+				log.G(ctx).WithField("ctr-id", targetCtr).Info("No task associated with existing container")
+			} else {
+				log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to retrieve task associated with existing container")
+				return err
+			}
+		}
+		if existingTask != nil {
+			_, err := existingTask.Delete(ctx, containerd.WithProcessKill)
+			if err != nil {
+				log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to delete existing container task")
+				return err
+			}
+			log.G(ctx).WithField("ctr-id", targetCtr).Info("Killed existing container task")
+		}
+		if err := existingCtr.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
+			log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to delete existing container")
+			return err
+		}
+		log.G(ctx).WithField("ctr-id", targetCtr).Info("Deleted existing container")
+	}
+	return nil
 }
 
 // Add container options depending on whether it's `superpowered` or not
