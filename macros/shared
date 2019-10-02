@@ -40,6 +40,8 @@
 %_cross_sysctldir %{_cross_rootdir}%{_sysctldir}
 %_cross_templatedir %{_cross_datadir}/templates
 
+%_defaultlicensedir %{_cross_datadir}/licenses
+
 %set_cross_build_flags \
   CFLAGS="${CFLAGS:-%{_cross_cflags}}" ; export CFLAGS ; \
   CXXFLAGS="${CXXFLAGS:-%{_cross_cxxflags}}" ; export CXXFLAGS ; \
@@ -164,6 +166,12 @@ CROSS_COMPILATION_CONF_EOF\
 %cross_go_configure() \
   %set_cross_go_flags \
   cd GOPATH/src/%1 ; \
+
+%_cross_attribution_file %{_licensedir}/%{name}/attribution.txt
+%cross_generate_attribution \
+  mkdir -p %{buildroot}%{_licensedir}/%{name} \
+  echo "%{name} - %{url}" >> %{buildroot}%{_cross_attribution_file} \
+  echo "SPDX-License-Identifier: %{license}" >> %{buildroot}%{_cross_attribution_file}
 
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy

@@ -4,7 +4,7 @@ Name: %{_cross_os}kernel
 Version: 4.19.72
 Release: 1%{?dist}
 Summary: The Linux kernel
-License: GPLv2 and Redistributable, no modification permitted
+License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
 Source0: https://cdn.amazonlinux.com/blobstore/376c4a8ffedb59b2a17019fd74811a1f804ca1edcdfb71cab6f64222052631b0/kernel-4.19.72-25.58.amzn2.src.rpm
@@ -81,7 +81,11 @@ find %{buildroot}%{_cross_prefix} \
    \( -name .install -o -name .check -o \
       -name ..install.cmd -o -name ..check.cmd \) -delete
 
+%cross_generate_attribution
+
 %files
+%license COPYING LICENSES/preferred/GPL-2.0 LICENSES/exceptions/Linux-syscall-note
+%{_cross_attribution_file}
 /boot/vmlinuz
 /boot/config
 /boot/System.map
