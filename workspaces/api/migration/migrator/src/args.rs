@@ -44,7 +44,7 @@ impl Args {
         let mut migration_directories = None;
         let mut migrate_to_version = None;
         // Optional parameters with their defaults.
-        let mut verbosity = 2; // default to INFO level
+        let mut verbosity = 3; // default to INFO level
 
         let mut iter = args.skip(1);
         while let Some(arg) = iter.next() {
