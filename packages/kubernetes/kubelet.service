@@ -14,7 +14,6 @@ ExecStart=/usr/bin/kubelet \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
     --container-runtime=remote \
     --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
-    --runtime-request-timeout=15m \
     --network-plugin cni \
     --root-dir /var/lib/kubelet \
     --cert-dir /var/lib/kubelet/pki \
