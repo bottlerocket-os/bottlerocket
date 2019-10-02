@@ -2,7 +2,7 @@
 %bcond_with shell # without
 
 Name: %{_cross_os}release
-Version: 0.1.2
+Version: 0.1.3
 Release: 1%{?dist}
 Summary: Thar release
 License: Public Domain

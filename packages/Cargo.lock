@@ -1391,7 +1391,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "release"
-version = "0.1.2"
+version = "0.0.0"
 dependencies = [
  "buildsys 0.1.0",
 ]
