@@ -45,7 +45,12 @@ fn notify_unix_socket_ready() -> Result<()> {
 /// This is the primary interface of the module.  It defines the server and application that actix
 /// spawns for requests.  It creates a shared datastore handle that can be used by handler methods
 /// to interface with the controller.
-pub fn serve<P1, P2>(socket_path: P1, datastore_path: P2, threads: usize) -> Result<()>
+pub fn serve<P1, P2>(
+    socket_path: P1,
+    datastore_path: P2,
+    threads: usize,
+    dev_mode: bool,
+) -> Result<()>
 where
     P1: AsRef<Path>,
     P2: AsRef<Path>,
@@ -86,10 +91,16 @@ where
         path: socket_path.as_ref(),
     })?;
 
-    // Socket needs to be read/writeable for the api group so that users in host containers are able
-    // to make API calls to the API server
-    let api_gid = Gid::from_raw(274);
-    chown(socket_path.as_ref(), None, Some(api_gid)).context(error::SetGroup { gid: api_gid })?;
+    // In production we want to ensure proper access to the socket, but during development, the
+    // developer likely won't have this group on their system, causing launch failure.  We
+    // don't want to simply warn on failure, because it could affect production behavior, and
+    // we can't reliably detect the type of system we're on, so we use a dev-mode flag.
+    if !dev_mode {
+        // Socket needs to be read/writeable for the api group so that users in host containers are able
+        // to make API calls to the API server
+        let api_gid = Gid::from_raw(274);
+        chown(socket_path.as_ref(), None, Some(api_gid)).context(error::SetGroup { gid: api_gid })?;
+    }
 
     let mode = 0o0660;
     let perms = Permissions::from_mode(mode);

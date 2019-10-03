@@ -42,6 +42,7 @@ mod error {
 /// Stores user-supplied arguments.
 struct Args {
     datastore_path: String,
+    dev_mode: bool,
     socket_path: String,
     verbosity: usize,
 }
@@ -55,8 +56,11 @@ fn usage() -> ! {
             [ --socket-path PATH ]
             [ --no-color ]
             [ --verbose --verbose ... ]
+            [ --dev-mode ]
 
-    Socket path defaults to {}",
+    Socket path defaults to {}
+
+    Pass --dev-mode if running locally for development; this won't chown the API socket.",
         program_name, DEFAULT_BIND_PATH
     );
     process::exit(2);
@@ -71,6 +75,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parses user arguments into an Args structure.
 fn parse_args(args: env::Args) -> Args {
     let mut datastore_path = None;
+    let mut dev_mode = false;
     let mut socket_path = None;
     let mut verbosity = 1;
 
@@ -86,6 +91,8 @@ fn parse_args(args: env::Args) -> Args {
                 )
             }
 
+            "--dev-mode" => dev_mode = true,
+
             "--socket-path" => {
                 socket_path = Some(
                     iter.next()
@@ -100,6 +107,7 @@ fn parse_args(args: env::Args) -> Args {
     Args {
         verbosity,
         datastore_path: datastore_path.unwrap_or_else(|| usage()),
+        dev_mode,
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_BIND_PATH.to_string()),
     }
 }
@@ -140,5 +148,5 @@ fn main() -> Result<()> {
         &args.socket_path, threads, threads_suffix, &args.datastore_path,
     );
 
-    serve(&args.socket_path, &args.datastore_path, threads).context(error::Server)
+    serve(&args.socket_path, &args.datastore_path, threads, args.dev_mode).context(error::Server)
 }

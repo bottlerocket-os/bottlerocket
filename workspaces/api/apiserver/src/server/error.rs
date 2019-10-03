@@ -26,7 +26,7 @@ pub enum Error {
     ))]
     SetPermissions { source: std::io::Error, mode: u32 },
 
-    #[snafu(display("Failed to set group owner on the API socket to {}: {}", gid, source))]
+    #[snafu(display("Failed to set group owner on the API socket to {} (for local development, try --dev-mode) - {}", gid, source))]
     SetGroup { source: nix::Error, gid: Gid },
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
