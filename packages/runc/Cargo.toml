@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/opencontainers/runc/archive/v1.0.0-rc8/runc-1.0.0-rc8.tar.gz"
-sha512 = "4bf464acc87b6d687010f0c070d96e171d91e46c45b84b5570c6f607e7d06777d2d83b2ead87ac4aa761e34afc68a3d9be9ab25107d499e8f41cb68647e23541"
+url = "https://github.com/opencontainers/runc/archive/3e425f80a8c931f88e6d94a8c831b9d5aa481657/runc-3e425f80a8c931f88e6d94a8c831b9d5aa481657.tar.gz"
+sha512 = "7287738ba1cf50569c5ac3637e45b4c6af6fa4c0b6f9e65d9f9889ef7a5736d49c68cd243f08b94131814c579064e13f04258b90d688285be2b7b1c9eb634801"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
