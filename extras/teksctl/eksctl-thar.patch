@@ -1,0 +1,175 @@
+From 7180ff3b05ee782bc3f0fbafddbf136e3a8262de Mon Sep 17 00:00:00 2001
+From: Jacob Vallejo <jake@jahkeup.com>
+Date: Tue, 1 Oct 2019 14:00:21 -0700
+Subject: [PATCH] thar nodebootstrap
+
+---
+ go.mod                               |  3 ++-
+ go.sum                               |  2 ++
+ pkg/ami/api.go                       |  3 +++
+ pkg/ami/static_resolver_ami.go       |  6 ++++++
+ pkg/apis/eksctl.io/v1alpha5/types.go |  5 ++++-
+ pkg/ctl/cmdutils/nodegroup_flags.go  |  3 +++
+ pkg/nodebootstrap/userdata.go        |  2 ++
+ pkg/nodebootstrap/userdata_thar.go   | 28 ++++++++++++++++++++++++++++
+ 8 files changed, 50 insertions(+), 2 deletions(-)
+ create mode 100644 pkg/nodebootstrap/userdata_thar.go
+
+diff --git a/go.mod b/go.mod
+index 2bd84b4..491a609 100644
+--- a/go.mod
++++ b/go.mod
+@@ -9,6 +9,7 @@ require (
+ 	github.com/aws/aws-sdk-go v1.23.15
+ 	github.com/awslabs/goformation v0.0.0-20190320125420-ac0a17860cf1
+ 	github.com/blang/semver v3.5.1+incompatible
++	github.com/burntsushi/toml v0.3.1 // indirect
+ 	github.com/christopherhein/go-version v0.0.0-20180807222509-fee8dd1f7c24
+ 	github.com/cloudflare/cfssl v0.0.0-20190726000631-633726f6bcb7
+ 	github.com/coredns/coredns v0.0.0-20170910182647-1b60688dc8f7 // indirect
+@@ -47,7 +48,7 @@ require (
+ 	github.com/miekg/coredns v0.0.0-20170910182647-1b60688dc8f7 // indirect
+ 	github.com/onsi/ginkgo v1.8.0
+ 	github.com/onsi/gomega v1.5.0
+-	github.com/pelletier/go-toml v1.4.0 // indirect
++	github.com/pelletier/go-toml v1.4.0
+ 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
+ 	github.com/pkg/errors v0.8.1
+ 	github.com/pkg/sftp v1.8.3 // indirect
+diff --git a/go.sum b/go.sum
+index bd834de..963caef 100644
+--- a/go.sum
++++ b/go.sum
+@@ -150,6 +150,8 @@ github.com/bshuster-repo/logrus-logstash-hook v0.0.0-20170517171303-d2c0ecc1836d
+ github.com/bugsnag/bugsnag-go v0.0.0-20141110184014-b1d153021fcd/go.mod h1:2oa8nejYd4cQ/b0hMIopN0lCRxU0bueqREvZLWFrtK8=
+ github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b/go.mod h1:obH5gd0BsqsP2LwDJ9aOkm/6J86V6lyAXCoQWGw3K50=
+ github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
++github.com/burntsushi/toml v0.3.1 h1:XebFhzi1T+XmBZG9aKnQnA50YOydJUYK7g5SM40w+ik=
++github.com/burntsushi/toml v0.3.1/go.mod h1:tCq67G3LEDB9hykA6+KWl2FPEy0nPcvE8TTBhtOtdGs=
+ github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
+ github.com/caarlos0/ctrlc v1.0.0 h1:2DtF8GSIcajgffDFJzyG15vO+1PuBWOMUdFut7NnXhw=
+ github.com/caarlos0/ctrlc v1.0.0/go.mod h1:CdXpj4rmq0q/1Eb44M9zi2nKB0QraNKuRGYGrrHhcQw=
+diff --git a/pkg/ami/api.go b/pkg/ami/api.go
+index 695e118..b440e6c 100644
+--- a/pkg/ami/api.go
++++ b/pkg/ami/api.go
+@@ -18,6 +18,9 @@ const (
+ 	// ImageFamilyAmazonLinux2 represents Amazon Linux 2 family
+ 	ImageFamilyAmazonLinux2 = api.NodeImageFamilyAmazonLinux2 // Owner by EKS(depends on aws partition and opt-in region)
+ 
++	// ImageFamilyThar represents the EKS flavor of Thar
++	ImageFamilyThar = api.NodeImageFamilyThar
++
+ 	// ImageFamilyUbuntu1804 represents Ubuntu 18.04 family
+ 	ImageFamilyUbuntu1804 = api.NodeImageFamilyUbuntu1804 // Owner 099720109477
+ 
+diff --git a/pkg/ami/static_resolver_ami.go b/pkg/ami/static_resolver_ami.go
+index e44fb85..a44ff32 100644
+--- a/pkg/ami/static_resolver_ami.go
++++ b/pkg/ami/static_resolver_ami.go
+@@ -179,6 +179,12 @@ var StaticImages = map[string]map[string]map[int]map[string]string{
+ 		}},
+ 	},
+ 	"1.14": {
++		"thar": {
++			ImageClassGeneral: {
++				"us-west-2": "@amiID@",
++			},
++		},
++
+ 		"AmazonLinux2": {
+ 			ImageClassGPU: {
+ 				"ap-east-1":      "ami-046a1b00bf32a7593",
+diff --git a/pkg/apis/eksctl.io/v1alpha5/types.go b/pkg/apis/eksctl.io/v1alpha5/types.go
+index 7853709..358a19a 100644
+--- a/pkg/apis/eksctl.io/v1alpha5/types.go
++++ b/pkg/apis/eksctl.io/v1alpha5/types.go
+@@ -108,13 +108,16 @@ const (
+ 	NodeVolumeTypeST1 = "st1"
+ 
+ 	// DefaultNodeImageFamily defines the default image family for the worker nodes
+-	DefaultNodeImageFamily = NodeImageFamilyAmazonLinux2
++	DefaultNodeImageFamily = NodeImageFamilyThar
++	// NodeImageFamilyThar represents the EKS flavor of Thar
++	NodeImageFamilyThar = "thar"
+ 	// NodeImageFamilyAmazonLinux2 represents Amazon Linux 2 family
+ 	NodeImageFamilyAmazonLinux2 = "AmazonLinux2"
+ 	// NodeImageFamilyUbuntu1804 represents Ubuntu 18.04 family
+ 	NodeImageFamilyUbuntu1804 = "Ubuntu1804"
+ 	// NodeImageResolverStatic represents static AMI resolver (see ami package)
+ 	NodeImageResolverStatic = "static"
++
+ 	// NodeImageResolverAuto represents auto AMI resolver (see ami package)
+ 	NodeImageResolverAuto = "auto"
+ 
+diff --git a/pkg/ctl/cmdutils/nodegroup_flags.go b/pkg/ctl/cmdutils/nodegroup_flags.go
+index edca813..fb0eeaf 100644
+--- a/pkg/ctl/cmdutils/nodegroup_flags.go
++++ b/pkg/ctl/cmdutils/nodegroup_flags.go
+@@ -9,6 +9,7 @@ import (
+ 
+ 	"github.com/weaveworks/eksctl/pkg/ami"
+ 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
++	"github.com/weaveworks/eksctl/pkg/nodebootstrap"
+ )
+ 
+ // AddCommonCreateNodeGroupFlags adds common flags for creating a nodegroup
+@@ -48,6 +49,8 @@ func AddCommonCreateNodeGroupFlags(fs *pflag.FlagSet, cmd *Cmd, ng *api.NodeGrou
+ 
+ 	fs.StringToStringVar(&ng.Labels, "node-labels", nil, `Extra labels to add when registering the nodes in the nodegroup, e.g. "partition=backend,nodeclass=hugememory"`)
+ 	fs.StringSliceVar(&ng.AvailabilityZones, "node-zones", nil, "(inherited from the cluster if unspecified)")
++
++	fs.BoolVar(&nodebootstrap.TharAdminContainerEnabled, "thar-admin-container", nodebootstrap.TharAdminContainerEnabled, "Enable the Admin Container on Thar nodes")
+ }
+ 
+ // AddCommonCreateNodeGroupIAMAddonsFlags adds flags to set ng.IAM.WithAddonPolicies
+diff --git a/pkg/nodebootstrap/userdata.go b/pkg/nodebootstrap/userdata.go
+index cde46e9..1297294 100644
+--- a/pkg/nodebootstrap/userdata.go
++++ b/pkg/nodebootstrap/userdata.go
+@@ -174,6 +174,8 @@ func NewUserData(spec *api.ClusterConfig, ng *api.NodeGroup) (string, error) {
+ 		return NewUserDataForAmazonLinux2(spec, ng)
+ 	case ami.ImageFamilyUbuntu1804:
+ 		return NewUserDataForUbuntu1804(spec, ng)
++	case ami.ImageFamilyThar:
++		return NewUserDataForThar(spec, ng)
+ 	default:
+ 		return "", nil
+ 	}
+diff --git a/pkg/nodebootstrap/userdata_thar.go b/pkg/nodebootstrap/userdata_thar.go
+new file mode 100644
+index 0000000..31e5ec3
+--- /dev/null
++++ b/pkg/nodebootstrap/userdata_thar.go
+@@ -0,0 +1,28 @@
++package nodebootstrap
++
++import (
++	"encoding/base64"
++
++	toml "github.com/pelletier/go-toml"
++	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
++)
++
++var (
++	TharAdminContainerEnabled = true
++)
++
++func NewUserDataForThar(spec *api.ClusterConfig, ng *api.NodeGroup) (string, error) {
++	tree, _ := toml.Load("")
++
++	tree.SetWithComment("settings.kubernetes.cluster-certificate", "Kubernetes Cluster CA Certificate", false,
++		base64.StdEncoding.EncodeToString([]byte(spec.Status.CertificateAuthorityData)))
++	tree.SetWithComment("settings.kubernetes.api-server", "Kubernetes Control Plane API Endpoint", false,
++		spec.Status.Endpoint)
++	tree.SetWithComment("settings.kubernetes.cluster-name", "Kubernetes Cluster Name", false,
++		spec.Metadata.Name)
++	tree.SetWithComment("settings.host-containers.admin.enabled", "Thar Admin Container", false,
++		true)
++
++	userdata := base64.StdEncoding.EncodeToString([]byte(tree.String()))
++	return userdata, nil
++}
+-- 
+2.7.4
+
