@@ -14,10 +14,11 @@ The build system is based on the Rust language.
 We recommend you install the latest stable Rust using [rustup](https://rustup.rs/), either from the official site or your development host's package manager.
 
 To organize build tasks, we use [cargo-make](https://sagiegurari.github.io/cargo-make/).
-To get this, run:
+We also use [cargo-deny](https://github.com/EmbarkStudios/cargo-deny) during the build process.
+To get these, run:
 
 ```
-cargo install cargo-make
+cargo install cargo-make cargo-deny
 ```
 
 #### BuildKit
