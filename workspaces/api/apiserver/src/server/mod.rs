@@ -45,7 +45,12 @@ fn notify_unix_socket_ready() -> Result<()> {
 /// This is the primary interface of the module.  It defines the server and application that actix
 /// spawns for requests.  It creates a shared datastore handle that can be used by handler methods
 /// to interface with the controller.
-pub fn serve<P1, P2>(socket_path: P1, datastore_path: P2, threads: usize) -> Result<()>
+pub fn serve<P1, P2>(
+    socket_path: P1,
+    datastore_path: P2,
+    threads: usize,
+    socket_gid: Option<Gid>,
+) -> Result<()>
 where
     P1: AsRef<Path>,
     P2: AsRef<Path>,
@@ -86,10 +91,11 @@ where
         path: socket_path.as_ref(),
     })?;
 
-    // Socket needs to be read/writeable for the api group so that users in host containers are able
-    // to make API calls to the API server
-    let api_gid = Gid::from_raw(274);
-    chown(socket_path.as_ref(), None, Some(api_gid)).context(error::SetGroup { gid: api_gid })?;
+    // If the socket needs to be chowned to a group to grant further access, that can be passed
+    // as a paramter.
+    if let Some(gid) = socket_gid {
+        chown(socket_path.as_ref(), None, Some(gid)).context(error::SetGroup { gid })?;
+    }
 
     let mode = 0o0660;
     let perms = Permissions::from_mode(mode);

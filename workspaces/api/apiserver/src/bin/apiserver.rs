@@ -5,6 +5,8 @@
 #[macro_use]
 extern crate tracing;
 
+use libc::gid_t;
+use nix::unistd::Gid;
 use snafu::{ensure, ResultExt};
 use std::env;
 use std::path::Path;
@@ -42,6 +44,7 @@ mod error {
 /// Stores user-supplied arguments.
 struct Args {
     datastore_path: String,
+    socket_gid: Option<Gid>,
     socket_path: String,
     verbosity: usize,
 }
@@ -53,6 +56,7 @@ fn usage() -> ! {
         r"Usage: {}
             --datastore-path PATH
             [ --socket-path PATH ]
+            [ --socket-gid GROUP_ID ]
             [ --no-color ]
             [ --verbose --verbose ... ]
 
@@ -71,6 +75,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parses user arguments into an Args structure.
 fn parse_args(args: env::Args) -> Args {
     let mut datastore_path = None;
+    let mut socket_gid = None;
     let mut socket_path = None;
     let mut verbosity = 1;
 
@@ -93,11 +98,25 @@ fn parse_args(args: env::Args) -> Args {
                 )
             }
 
+            "--socket-gid" => {
+                let gid_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --socket-gid"));
+                let gid = gid_str.parse::<gid_t>().unwrap_or_else(|e| {
+                    usage_msg(format!(
+                        "Invalid group ID '{}' given to --socket-gid: {}",
+                        gid_str, e
+                    ))
+                });
+                socket_gid = Some(Gid::from_raw(gid));
+            }
+
             _ => usage(),
         }
     }
 
     Args {
+        socket_gid,
         verbosity,
         datastore_path: datastore_path.unwrap_or_else(|| usage()),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_BIND_PATH.to_string()),
@@ -140,5 +159,11 @@ fn main() -> Result<()> {
         &args.socket_path, threads, threads_suffix, &args.datastore_path,
     );
 
-    serve(&args.socket_path, &args.datastore_path, threads).context(error::Server)
+    serve(
+        &args.socket_path,
+        &args.datastore_path,
+        threads,
+        args.socket_gid,
+    )
+    .context(error::Server)
 }
