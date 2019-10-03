@@ -22,6 +22,7 @@ resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd
 cgroupRoot: "/"
+runtimeRequestTimeout: 15m
 featureGates:
   RotateKubeletServerCertificate: true
 serializeImagePulls: false
