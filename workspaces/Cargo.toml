@@ -9,6 +9,7 @@ members = [
     "api/sundog",
     "api/pluto",
     "api/servicedog",
+    "api/host-containers",
     "api/storewolf",
     "api/thar-be-settings",
     "api/settings-committer",

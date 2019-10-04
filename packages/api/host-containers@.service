@@ -1,0 +1,16 @@
+[Unit]
+Description=Host container: %i
+After=host-containerd.service
+Requires=host-containerd.service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/host-containers/%i.env
+ExecStart=/usr/bin/host-ctr -ctr-id='%i' -source='${CTR_SOURCE}' -superpowered='${CTR_SUPERPOWERED}'
+Restart=always
+RestartSec=10
+TimeoutStopSec=60
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

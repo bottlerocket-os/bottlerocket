@@ -22,6 +22,8 @@ Source7: settings-applier.service
 Source8: data-store-version
 Source9: migrator.service
 Source10: api-sysusers.conf
+Source11: host-containers@.service
+Source12: host-containers-tmpfiles.conf
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}systemd-devel
@@ -83,6 +85,12 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}servicedog
 %{summary}.
 
+%package -n %{_cross_os}host-containers
+Summary: Manages system- and user-defined host containers
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}host-containers
+%{summary}.
+
 %package -n %{_cross_os}storewolf
 Summary: Data store creator
 Requires: %{_cross_os}apiserver = %{version}-%{release}
@@ -109,7 +117,8 @@ Summary: Commits settings from user data, defaults, and generators at boot
 for p in \
   apiclient \
   moondog netdog sundog pluto bork \
-  thar-be-settings servicedog storewolf settings-committer \
+  thar-be-settings servicedog host-containers \
+  storewolf settings-committer \
   migration/migrator ;
 do
   %cargo_build --path %{workspace_dir}/${p}
@@ -128,7 +137,8 @@ install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiclient apiserver \
   moondog netdog sundog pluto bork \
-  thar-be-settings servicedog storewolf settings-committer \
+  thar-be-settings servicedog host-containers \
+  storewolf settings-committer \
   migrator ;
 do
   install -p -m 0755 bin/${p} %{buildroot}%{_cross_bindir}
@@ -136,7 +146,7 @@ done
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:1} %{S:2} %{S:3} %{S:4} %{S:5} %{S:7} %{S:9} \
+  %{S:1} %{S:2} %{S:3} %{S:4} %{S:5} %{S:7} %{S:9} %{S:11} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_datadir}/thar
@@ -150,6 +160,7 @@ done
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
+install -p -m 0644 %{S:12} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:10} %{buildroot}%{_cross_sysusersdir}/api.conf
@@ -187,6 +198,11 @@ install -p -m 0644 %{S:10} %{buildroot}%{_cross_sysusersdir}/api.conf
 
 %files -n %{_cross_os}servicedog
 %{_cross_bindir}/servicedog
+
+%files -n %{_cross_os}host-containers
+%{_cross_bindir}/host-containers
+%{_cross_unitdir}/host-containers@.service
+%{_cross_tmpfilesdir}/host-containers.conf
 
 %files -n %{_cross_os}storewolf
 %{_cross_bindir}/storewolf

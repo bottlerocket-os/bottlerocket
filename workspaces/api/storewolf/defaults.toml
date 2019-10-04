@@ -96,31 +96,14 @@ enabled = true
 source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-control:v0.1"
 superpowered = false
 
-[services.host-containers-admin]
-configuration-files = ["host-containers-systemd-unit-admin"]
-restart-commands = ["/usr/bin/servicedog -s settings.host-containers.admin.enabled -u host-containers@admin.service"]
-
-[services.host-containers-control]
-configuration-files = ["host-containers-systemd-unit-control"]
-restart-commands = ["/usr/bin/servicedog -s settings.host-containers.control.enabled -u host-containers@control.service"]
-
-[configuration-files.host-containers-systemd-unit-admin]
-path = "/etc/systemd/system/host-containers@admin.service"
-template-path = "/usr/share/templates/host-containers-systemd-unit-admin"
-
-[configuration-files.host-containers-systemd-unit-control]
-path = "/etc/systemd/system/host-containers@control.service"
-template-path = "/usr/share/templates/host-containers-systemd-unit-control"
+[services.host-containers]
+configuration-files = []
+restart-commands = ["/usr/bin/host-containers"]
 
 [[metadata]]
-key = "settings.host-containers.admin"
+key = "settings.host-containers"
 md = "affected-services"
-val = ["host-containers-admin"]
-
-[[metadata]]
-key = "settings.host-containers.control"
-md = "affected-services"
-val = ["host-containers-control"]
+val = ["host-containers"]
 
 # NTP
 

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
-use crate::modeled_types::ValidBase64;
+use crate::modeled_types::{SingleLineString, ValidBase64};
 
 ///// Primary user-visible settings
 
@@ -32,7 +32,7 @@ pub struct Settings {
     pub updates: Option<UpdatesSettings>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub host_containers: Option<HashMap<String, ContainerImage>>,
+    pub host_containers: Option<HashMap<SingleLineString, ContainerImage>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ntp: Option<NtpSettings>,
@@ -86,7 +86,7 @@ pub struct UpdatesSettings {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct ContainerImage {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<String>,
+    pub source: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
