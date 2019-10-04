@@ -165,7 +165,7 @@ index 0000000..31e5ec3
 +	tree.SetWithComment("settings.kubernetes.cluster-name", "Kubernetes Cluster Name", false,
 +		spec.Metadata.Name)
 +	tree.SetWithComment("settings.host-containers.admin.enabled", "Thar Admin Container", false,
-+		true)
++		TharAdminContainerEnabled)
 +
 +	userdata := base64.StdEncoding.EncodeToString([]byte(tree.String()))
 +	return userdata, nil
