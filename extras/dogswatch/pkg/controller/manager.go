@@ -211,7 +211,7 @@ func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 		return in.Projected()
 	}
 	next := in.Projected()
-	if next.Actionable() && in.Realized() && !in.InProgress() {
+	if (in.Actionable() || next.Actionable()) && in.Realized() && !in.InProgress() {
 		log.Debug("intent needs action")
 		log.Debug("needs action towards next step")
 		return next

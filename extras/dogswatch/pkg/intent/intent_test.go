@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/testoutput"
+	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
@@ -207,6 +209,23 @@ func TestIntentTruths(t *testing.T) {
 			falsy:  []pred{"Errored", "Realized", "Stuck", "Waiting"},
 		},
 		{
+			name: "actionable",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionPrepareUpdate,
+					Active: marker.NodeActionPrepareUpdate,
+					State:  marker.NodeStateReady,
+				},
+				{
+					Wanted: marker.NodeActionPerformUpdate,
+					Active: marker.NodeActionPerformUpdate,
+					State:  marker.NodeStateReady,
+				},
+			},
+			truthy: []pred{"Actionable", "Realized", "Waiting"},
+			falsy:  []pred{"Errored", "Stuck", "DegradedPath"},
+		},
+		{
 			name: "terminal",
 			intents: []Intent{
 				{
@@ -237,6 +256,9 @@ func TestIntentTruths(t *testing.T) {
 		for _, intent := range tc.intents {
 			name := fmt.Sprintf("%s(%s)", tc.name, intent.DisplayString())
 			t.Run(name, func(t *testing.T) {
+				logging.Set(testoutput.Setter(t))
+				defer logging.Set(testoutput.Revert())
+
 				intent.NodeName = "state-machine"
 
 				preds := map[pred]struct{}{}

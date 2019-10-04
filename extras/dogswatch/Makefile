@@ -13,7 +13,7 @@ $(GOBIN):
 	mkdir -p $(GOBIN)
 
 test:
-	go test $(GOPKGS)
+	go test -ldflags '-X $(GOPKG)/pkg/logging.DebugEnable=true' $(GOPKGS)
 
 container: vendor
 	DOCKER_BUILDKIT=1 docker build --network=host -t $(DOCKER_IMAGE_REF) .

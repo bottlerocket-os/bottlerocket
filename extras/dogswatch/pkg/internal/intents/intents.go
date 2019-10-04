@@ -6,9 +6,12 @@ import (
 )
 
 const (
-	NodeName = "intents-library"
+	// NodeName is a suitable reusable NodeName that may be provided by callers.
+	NodeName = "intents-node"
 )
 
+// ret is a wrapper that provides the extendable interface to canned and
+// distinguished Intents for use in tests.
 func ret(name string, i intent.Intent, initOpts ...func(i *intent.Intent)) func(opts ...func(i *intent.Intent)) *intent.Intent {
 	i.NodeName = name
 	for _, opt := range initOpts {
@@ -24,24 +27,28 @@ func ret(name string, i intent.Intent, initOpts ...func(i *intent.Intent)) func(
 	}
 }
 
+// WithReset resets the provided intent to the initial state.
 func WithReset() func(i *intent.Intent) {
 	return func(i *intent.Intent) {
 		*i = *i.Reset() // replace the pointer's value
 	}
 }
 
+// WithNodeName sets the intent's NodeName.
 func WithNodeName(name string) func(i *intent.Intent) {
 	return func(i *intent.Intent) {
 		i.NodeName = name
 	}
 }
 
+// WithBusy marks the intent as busy with the intent.
 func WithBusy() func(i *intent.Intent) {
 	return func(i *intent.Intent) {
 		i.State = marker.NodeStateBusy
 	}
 }
 
+// WithUpdateAvailable marks the intent with the provided NodeUpdate marker.
 func WithUpdateAvailable(up ...marker.NodeUpdate) func(i *intent.Intent) {
 	return func(i *intent.Intent) {
 		if len(up) == 1 {
@@ -52,6 +59,8 @@ func WithUpdateAvailable(up ...marker.NodeUpdate) func(i *intent.Intent) {
 	}
 }
 
+// NormalizeNodeName makes all provided intents' NodeName uniform for comparison
+// or otherwise normalized expectations.
 func NormalizeNodeName(name string, is ...*intent.Intent) {
 	namer := WithNodeName(name)
 	for _, in := range is {
@@ -61,6 +70,14 @@ func NormalizeNodeName(name string, is ...*intent.Intent) {
 	}
 }
 
+// Set the intent to be pending the provided NodeAction.
+func Pending(wanted marker.NodeAction) func(*intent.Intent) {
+	return func(i *intent.Intent) {
+		i.Wanted = wanted
+	}
+}
+
+// Use the provided intent as the targeted next NodeAction.
 func NextAs(next *intent.Intent) func(*intent.Intent) {
 	return func(in *intent.Intent) {
 		if next == nil {
@@ -106,6 +123,18 @@ var (
 		Active: marker.NodeActionRebootUpdate,
 		State:  marker.NodeStateReady,
 	}, WithUpdateAvailable(marker.NodeUpdateUnknown))
+
+	UpdatePrepared = ret("UpdatePrepared", intent.Intent{
+		Wanted: marker.NodeActionPrepareUpdate,
+		Active: marker.NodeActionPrepareUpdate,
+		State:  marker.NodeStateReady,
+	}, WithUpdateAvailable(marker.NodeUpdateAvailable))
+
+	UpdatePerformed = ret("UpdatePerformed", intent.Intent{
+		Wanted: marker.NodeActionPerformUpdate,
+		Active: marker.NodeActionPerformUpdate,
+		State:  marker.NodeStateReady,
+	}, WithUpdateAvailable(marker.NodeUpdateAvailable))
 
 	Unknown = ret("Unknown", intent.Intent{
 		Wanted: marker.NodeActionUnknown,

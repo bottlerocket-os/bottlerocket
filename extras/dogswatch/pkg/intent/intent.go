@@ -3,7 +3,9 @@ package intent
 import (
 	"fmt"
 
+	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
+	"github.com/sirupsen/logrus"
 )
 
 // TODO: encapsulate state machine-y handling. Callers should not have to
@@ -114,6 +116,16 @@ func (i *Intent) Stuck() bool {
 	// The action was not one of progress and yet was acted upon.
 	degradedBusy := !i.isInProgress(i.Wanted) && i.Wanted == i.Active && i.State == marker.NodeStateBusy
 
+	if logging.Debuggable {
+		logging.New("intent").WithFields(logrus.Fields{
+			"intent":          i.DisplayString(),
+			"degradedStatic":  degradedStatic,
+			"degradedUnknown": degradedUnknown,
+			"degradedPath":    degradedPath,
+			"degradedBusy":    degradedBusy,
+		}).Debug("Stuck")
+	}
+
 	return degradedStatic || degradedUnknown || degradedPath || degradedBusy
 }
 
@@ -124,7 +136,17 @@ func (i *Intent) DegradedPath() bool {
 	// path is misaligned because we're starting anew.
 	starting := i.SetBeginUpdate().Wanted == i.Wanted
 	untargeted := anticipated.Wanted == marker.NodeActionUnknown
-	inconsistent := anticipated.Wanted != i.Wanted
+	inconsistent := !i.Realized() && anticipated.Wanted != i.Wanted
+
+	if logging.Debuggable {
+		logging.New("intent").WithFields(logrus.Fields{
+			"intent":       i.DisplayString(),
+			"anticipated":  anticipated.DisplayString(),
+			"starting":     starting,
+			"untargeted":   untargeted,
+			"inconsistent": inconsistent,
+		}).Debug("DegradedPath")
+	}
 	return (!starting || i.Terminal()) && (untargeted || inconsistent)
 }
 
@@ -133,8 +155,8 @@ func (i *Intent) Realized() bool {
 	return !i.InProgress() && !i.Errored()
 }
 
-// InProgess reports true when the Intent is for a node that is making progress
-// towards completing an update.
+// InProgess reports true when the Intent is for a node that is actively making
+// progress towards completing an update.
 func (i *Intent) InProgress() bool {
 	// waiting for handling of intent
 	pendingNode := i.Wanted != i.Active && i.Waiting() && !i.Errored()
@@ -209,6 +231,11 @@ func (i *Intent) Terminal() bool {
 	// The next turn in the state machine is the same as the realized Wanted and
 	// Active states, therefore we've reached a terminal point.
 	atTerminal := next == i.Wanted && i.Wanted == i.Active
+	if logging.Debuggable {
+		logging.New("intent").WithFields(logrus.Fields{
+			"atTerminal": atTerminal,
+		}).Debug("Targeted")
+	}
 	return atTerminal
 }
 
@@ -243,7 +270,7 @@ func (i Intent) Clone() *Intent {
 }
 
 // Equivalent compares intentional state to determine equivalency.
-func (i *Intent) Equivalent(j *Intent) bool {
+func Equivalent(i, j *Intent) bool {
 	return i.Wanted == j.Wanted &&
 		i.Active == i.Active &&
 		i.State == i.State

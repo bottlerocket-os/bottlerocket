@@ -6,19 +6,11 @@ import (
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/internal/intents"
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/testoutput"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/sirupsen/logrus"
+	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"gotest.tools/assert"
 )
-
-type testingOutput struct {
-	t *testing.T
-}
-
-func (l *testingOutput) Write(p []byte) (n int, err error) {
-	l.t.Logf("%s", p)
-	return len(p), nil
-}
 
 type testingPoster struct {
 	calledIntents []intent.Intent
@@ -33,13 +25,55 @@ func (p *testingPoster) Post(i *intent.Intent) error {
 	return nil
 }
 
-func testManager(t *testing.T) *ActionManager {
-	l := logging.New("manager").WithFields(logrus.Fields{})
-	l.Logger.SetOutput(&testingOutput{t})
-	l.Logger.SetLevel(logrus.DebugLevel)
-	m := newManager(l, nil, "test-node")
-	m.poster = &testingPoster{}
-	return m
+type testingNodeManager struct {
+	CordonFn   func(string) error
+	UncordonFn func(string) error
+	DrainFn    func(string) error
+}
+
+func trackFn(v *bool) func(string) error {
+	return func(_ string) error {
+		*v = true
+		return nil
+	}
+}
+
+func (nm *testingNodeManager) Cordon(n string) error {
+	if nm.CordonFn != nil {
+		return nm.CordonFn(n)
+	}
+	return nil
+}
+
+func (nm *testingNodeManager) Uncordon(n string) error {
+	if nm.UncordonFn != nil {
+		return nm.UncordonFn(n)
+	}
+	return nil
+}
+
+func (nm *testingNodeManager) Drain(n string) error {
+	if nm.DrainFn != nil {
+		return nm.DrainFn(n)
+	}
+	return nil
+}
+
+type testManagerHooks struct {
+	Poster      *testingPoster
+	NodeManager *testingNodeManager
+}
+
+func testManager(t *testing.T) (*ActionManager, *testManagerHooks) {
+	m := newManager(testoutput.Logger(t, logging.New("manager")), nil, "test-node")
+
+	hooks := &testManagerHooks{
+		Poster:      &testingPoster{},
+		NodeManager: &testingNodeManager{},
+	}
+	m.poster = hooks.Poster
+	m.nodem = hooks.NodeManager
+	return m, hooks
 }
 
 func TestManagerIntentForSimple(t *testing.T) {
@@ -53,7 +87,7 @@ func TestManagerIntentForSimple(t *testing.T) {
 	for _, in := range nils {
 		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("nil(%s)", in.DisplayString()), func(t *testing.T) {
-			m := testManager(t)
+			m, _ := testManager(t)
 			actual := m.intentFor(in)
 			assert.Assert(t, actual == nil)
 		})
@@ -61,7 +95,7 @@ func TestManagerIntentForSimple(t *testing.T) {
 	for _, in := range nonnils {
 		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("non(%s)", in.DisplayString()), func(t *testing.T) {
-			m := testManager(t)
+			m, _ := testManager(t)
 			actual := m.intentFor(in)
 			assert.Assert(t, actual != nil)
 		})
@@ -83,6 +117,11 @@ func TestManagerIntentForTargeted(t *testing.T) {
 			expected: intents.UpdateSuccess(),
 		},
 		{
+			input: intents.UpdatePrepared(),
+			expected: intents.UpdatePrepared(
+				intents.Pending(marker.NodeActionPerformUpdate)),
+		},
+		{
 			input:    intents.PendingStabilizing(),
 			expected: nil,
 		},
@@ -91,15 +130,47 @@ func TestManagerIntentForTargeted(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("%s--->%s", tc.input.DisplayString(), tc.expected.DisplayString()), func(t *testing.T) {
 			intents.NormalizeNodeName(t.Name(), tc.input, tc.expected)
-			m := testManager(t)
+			m, _ := testManager(t)
 			actual := m.intentFor(tc.input)
 			assert.DeepEqual(t, actual, tc.expected)
 		})
 	}
 }
 
+func TestTakeAction(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		m, hooks := testManager(t)
+		var (
+			uncordoned = false
+		)
+		hooks.NodeManager.UncordonFn = trackFn(&uncordoned)
+		err := m.takeAction(intents.UpdateSuccess())
+		assert.NilError(t, err)
+		assert.Check(t, uncordoned)
+	})
+
+	t.Run("perform-update", func(t *testing.T) {
+		m, hooks := testManager(t)
+		var (
+			uncordoned = false
+			cordoned   = false
+			drained    = false
+		)
+		hooks.NodeManager.DrainFn = trackFn(&drained)
+		hooks.NodeManager.CordonFn = trackFn(&cordoned)
+		hooks.NodeManager.UncordonFn = trackFn(&uncordoned)
+		pin := m.intentFor(intents.UpdatePerformed())
+		t.Logf("projected intent: %s", pin.DisplayString())
+		err := m.takeAction(pin)
+		assert.NilError(t, err)
+		assert.Check(t, cordoned == true)
+		assert.Check(t, drained == true)
+		assert.Check(t, uncordoned != true)
+	})
+}
+
 func TestMakePolicyCheck(t *testing.T) {
-	m := testManager(t)
+	m, _ := testManager(t)
 
 	pview, err := m.makePolicyCheck(intents.Stabilized())
 	assert.Check(t, pview == nil)
@@ -107,7 +178,7 @@ func TestMakePolicyCheck(t *testing.T) {
 }
 
 func TestMakePolicyCheckUpdatesAvailable(t *testing.T) {
-	m := testManager(t)
+	m, _ := testManager(t)
 	pview, err := m.makePolicyCheck(intents.Stabilized(intents.WithUpdateAvailable()))
 	assert.Check(t, pview == nil)
 	assert.Check(t, err != nil)
