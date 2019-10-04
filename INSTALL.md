@@ -165,7 +165,7 @@ aws iam create-role \
 sleep 5
 aws iam attach-role-policy \
    --role-name TharInstance \
-   --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+   --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 aws iam attach-role-policy \
    --role-name TharInstance \
    --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
