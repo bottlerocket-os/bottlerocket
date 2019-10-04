@@ -70,6 +70,18 @@ func TestIntentTruths(t *testing.T) {
 			falsy:  []pred{"Intrusive"},
 		},
 		{
+			name: "success",
+			intents: []Intent{
+				{
+					Wanted: marker.NodeActionRebootUpdate,
+					Active: marker.NodeActionRebootUpdate,
+					State:  marker.NodeStateReady,
+				},
+			},
+			truthy: []pred{"Waiting", "Terminal", "Realized"},
+			falsy:  []pred{"Intrusive", "Stuck", "InProgress"},
+		},
+		{
 			name: "working",
 			intents: []Intent{
 				{

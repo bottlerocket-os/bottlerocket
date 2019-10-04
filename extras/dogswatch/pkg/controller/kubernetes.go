@@ -3,11 +3,53 @@ package controller
 import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/k8sutil"
+	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/kubectl/pkg/drain"
 )
+
+type k8sNodeManager struct {
+	kube kubernetes.Interface
+}
+
+func (k *k8sNodeManager) forNode(nodeName string) (*v1.Node, *drain.Helper, error) {
+	var drainer *drain.Helper
+	node, err := k.kube.CoreV1().Nodes().Get(nodeName, v1meta.GetOptions{})
+	if err != nil {
+		return nil, nil, errors.WithMessage(err, "unable to retrieve node from api")
+	}
+	drainer = &drain.Helper{Client: k.kube}
+	return node, drainer, err
+}
+
+func (k *k8sNodeManager) setCordon(nodeName string, cordoned bool) error {
+	node, drainer, err := k.forNode(nodeName)
+	if err != nil {
+		return errors.WithMessage(err, "unable to operate")
+	}
+	return drain.RunCordonOrUncordon(drainer, node, cordoned)
+}
+
+func (k *k8sNodeManager) Uncordon(nodeName string) error {
+	return k.setCordon(nodeName, false)
+}
+
+func (k *k8sNodeManager) Cordon(nodeName string) error {
+	return k.setCordon(nodeName, true)
+}
+
+func (k *k8sNodeManager) Drain(nodeName string) error {
+	_, drainer, err := k.forNode(nodeName)
+	if err != nil {
+		return errors.WithMessage(err, "unable to operate")
+	}
+	return drain.RunNodeDrain(drainer, nodeName)
+}
 
 func (am *ActionManager) cordonNode(nodeName string) error {
 	log := am.log.WithField("node", nodeName)
@@ -30,6 +72,15 @@ func (am *ActionManager) cordonNode(nodeName string) error {
 	} else {
 		log.Debug("node is already cordoned")
 	}
+	return nil
+}
+
+func (am *ActionManager) uncordonNode(nodeName string) error {
+
+	return nil
+}
+
+func (am *ActionManager) checkNode(nodeName string) error {
 	return nil
 }
 
@@ -63,8 +114,13 @@ func (am *ActionManager) drainWorkload(nodeName string) error {
 	return err
 }
 
-func (am *ActionManager) postIntent(i *intent.Intent) error {
-	log := am.log.WithField("node", i.NodeName)
-	defer log.Debugf("posted intent on node: %#v", i)
-	return k8sutil.PostMetadata(am.kube.CoreV1().Nodes(), i.NodeName, i)
+type k8sPoster struct {
+	log        logging.Logger
+	nodeclient corev1.NodeInterface
+}
+
+func (k *k8sPoster) Post(i *intent.Intent) error {
+	nodeName := i.GetName()
+	defer k.log.WithField("node", nodeName).Debugf("posted intent on node: %s", i)
+	return k8sutil.PostMetadata(k.nodeclient, nodeName, i)
 }

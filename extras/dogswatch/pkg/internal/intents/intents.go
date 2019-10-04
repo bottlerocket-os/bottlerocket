@@ -61,6 +61,15 @@ func NormalizeNodeName(name string, is ...*intent.Intent) {
 	}
 }
 
+func NextAs(next *intent.Intent) func(*intent.Intent) {
+	return func(in *intent.Intent) {
+		if next == nil {
+			return
+		}
+		in.Wanted = next.Wanted
+	}
+}
+
 var (
 	Stabilized = ret("Stabilized", intent.Intent{
 		Wanted: marker.NodeActionStabilize,
@@ -91,6 +100,12 @@ var (
 		Active: marker.NodeActionRebootUpdate,
 		State:  marker.NodeStateError,
 	}, WithUpdateAvailable())
+
+	UpdateSuccess = ret("UpdateSuccess", intent.Intent{
+		Wanted: marker.NodeActionRebootUpdate,
+		Active: marker.NodeActionRebootUpdate,
+		State:  marker.NodeStateReady,
+	}, WithUpdateAvailable(marker.NodeUpdateUnknown))
 
 	Unknown = ret("Unknown", intent.Intent{
 		Wanted: marker.NodeActionUnknown,

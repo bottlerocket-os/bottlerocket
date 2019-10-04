@@ -80,7 +80,7 @@ func (i *Intent) Waiting() bool {
 
 // Intrusive indicates that the intention will be intrusive if realized.
 func (i *Intent) Intrusive() bool {
-	rebooting := i.Wanted == marker.NodeActionRebootUpdate
+	rebooting := i.Wanted == marker.NodeActionRebootUpdate && !i.Realized()
 	return rebooting
 }
 
@@ -240,6 +240,13 @@ func (i *Intent) DisplayString() string {
 // instance.
 func (i Intent) Clone() *Intent {
 	return Given(&i)
+}
+
+// Equivalent compares intentional state to determine equivalency.
+func (i *Intent) Equivalent(j *Intent) bool {
+	return i.Wanted == j.Wanted &&
+		i.Active == i.Active &&
+		i.State == i.State
 }
 
 // Given determines the commuincated intent from a Node without projecting into

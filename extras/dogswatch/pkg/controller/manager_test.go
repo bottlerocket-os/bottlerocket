@@ -20,11 +20,25 @@ func (l *testingOutput) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+type testingPoster struct {
+	calledIntents []intent.Intent
+	fn            func(i *intent.Intent) error
+}
+
+func (p *testingPoster) Post(i *intent.Intent) error {
+	p.calledIntents = append(p.calledIntents, *i)
+	if p.fn != nil {
+		return p.fn(i)
+	}
+	return nil
+}
+
 func testManager(t *testing.T) *ActionManager {
 	l := logging.New("manager").WithFields(logrus.Fields{})
 	l.Logger.SetOutput(&testingOutput{t})
 	l.Logger.SetLevel(logrus.DebugLevel)
 	m := newManager(l, nil, "test-node")
+	m.poster = &testingPoster{}
 	return m
 }
 
@@ -62,6 +76,11 @@ func TestManagerIntentForTargeted(t *testing.T) {
 		{
 			input:    intents.UpdateError(),
 			expected: intents.Reset(),
+		},
+		// Update handling is a pass through to handle the "exact" intent.
+		{
+			input:    intents.UpdateSuccess(),
+			expected: intents.UpdateSuccess(),
 		},
 		{
 			input:    intents.PendingStabilizing(),

@@ -7,9 +7,9 @@ import (
 
 var nextLinear map[marker.NodeAction]marker.NodeAction = map[marker.NodeAction]marker.NodeAction{
 	// Stabilization from known points.
-	"":                        marker.NodeActionStabilize,
+	"":                         marker.NodeActionStabilize,
 	marker.NodeActionStabilize: marker.NodeActionStabilize,
-	marker.NodeActionUnknown:  marker.NodeActionStabilize,
+	marker.NodeActionUnknown:   marker.NodeActionStabilize,
 
 	// Linear progression
 	marker.NodeActionReset:         marker.NodeActionStabilize,
@@ -30,3 +30,10 @@ func calculateNext(action marker.NodeAction) (marker.NodeAction, error) {
 	}
 	return next, nil
 }
+
+// FallbackNodeAction is the first recovery action that is reasonble to take
+// from an unknown point.
+var FallbackNodeAction = func() marker.NodeAction {
+	n, _ := calculateNext(marker.NodeActionUnknown)
+	return n
+}()

@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -24,7 +25,23 @@ type ActionManager struct {
 	policy   Policy
 	input    chan *intent.Intent
 	storer   storer
+	poster   poster
 	nodeName string
+	nodem    nodeManager
+}
+
+// poster is the implementation of the intent poster that publishes the provided
+// intent.
+type poster interface {
+	Post(*intent.Intent) error
+}
+
+// nodeManager is the implementation that interfaces the interactions with nodes
+// to accomplish tasks.
+type nodeManager interface {
+	Cordon(string) error
+	Uncordon(string) error
+	Drain(string) error
 }
 
 type storer interface {
@@ -32,11 +49,18 @@ type storer interface {
 }
 
 func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) *ActionManager {
+	var nodeclient corev1.NodeInterface
+	if kube != nil {
+		nodeclient = kube.CoreV1().Nodes()
+	}
+
 	return &ActionManager{
 		log:    log,
 		kube:   kube,
 		policy: &defaultPolicy{},
 		input:  make(chan *intent.Intent, 1),
+		poster: &k8sPoster{log, nodeclient},
+		nodem:  &k8sNodeManager{kube},
 	}
 }
 
@@ -56,23 +80,11 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			return nil
 
 		case pin, ok := <-permit:
-			am.log.Debug("handling permitted event")
 			if !ok {
 				break
 			}
-			var err error
-			if pin.Intrusive() {
-				if err = am.cordonNode(pin.NodeName); err == nil {
-					err = am.drainWorkload(pin.NodeName)
-				}
-				if err != nil {
-					am.log.WithError(err).Error("could not drain the node")
-				}
-			}
-			err = am.postIntent(pin)
-			if err != nil {
-				am.log.WithError(err).Error("could not post intent")
-			}
+			am.log.Debug("handling permitted event")
+			am.takeAction(pin)
 
 		case in, ok := <-am.input:
 			if !ok {
@@ -104,6 +116,52 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+func (am *ActionManager) takeAction(pin *intent.Intent) error {
+	log := am.log.WithField("node", pin.GetName())
+	successCheckRun := successfulUpdate(pin)
+
+	if pin.Intrusive() && !successCheckRun {
+		err := am.nodem.Cordon(pin.NodeName)
+		if err != nil {
+			log.WithError(err).Error("could not cordon")
+			return err
+		}
+		err = am.nodem.Drain(pin.NodeName)
+		if err != nil {
+			log.WithError(err).Error("could not drain")
+			// TODO: make workload check/ignore configurable
+			log.Warn("proceeding anyway")
+		}
+	}
+
+	// Handle successful node reconnection.
+	if successCheckRun {
+		// Reset the state to begin its stabilization.
+		pin = pin.Reset()
+
+		err := am.checkNode(pin.NodeName)
+		if err != nil {
+			log.WithError(err).Error("unable to perform success-check")
+			// TODO: make success checks configurable
+			log.Warn("proceeding anyway")
+		}
+		err = am.nodem.Uncordon(pin.NodeName)
+		if err != nil {
+			log.WithError(err).Error("could not uncordon")
+			// TODO: make policy consider failed success handle scenarios,
+			// otherwise we could make a starved cluster.
+			log.Warn("workload will not return")
+			return err
+		}
+	}
+
+	err := am.poster.Post(pin)
+	if err != nil {
+		log.WithError(err).Error("could not post intent")
+	}
+	return err
 }
 
 func (am *ActionManager) makePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
@@ -159,8 +217,14 @@ func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 		return next
 	}
 	if !in.Realized() {
+		log.Debug("intent is not yet realized")
 		return nil
 	}
+
+	if successfulUpdate(in) {
+		return in
+	}
+
 	if in.HasUpdateAvailable() && in.Waiting() && !in.Errored() {
 		log.Debug("intent starts update")
 		return in.SetBeginUpdate()
@@ -168,6 +232,11 @@ func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 
 	log.Debug("no action needed")
 	return nil
+}
+
+func successfulUpdate(in *intent.Intent) bool {
+	atFinalTerm := intent.FallbackNodeAction != in.Wanted
+	return atFinalTerm && in.Waiting() && in.Terminal() && in.Realized()
 }
 
 // OnAdd is a Handler implementation for nodestream
