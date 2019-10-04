@@ -32,7 +32,7 @@ pub struct Settings {
     pub updates: Option<UpdatesSettings>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub host_containers: Option<HostContainersSettings>,
+    pub host_containers: Option<HashMap<String, ContainerImage>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ntp: Option<NtpSettings>,
@@ -80,18 +80,6 @@ pub struct UpdatesSettings {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<String>,
-}
-
-// Settings for HostContainers, which manages the lifecycle of privileged, unorchestrated
-// containers that are used for system management purposes.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct HostContainersSettings {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub admin: Option<ContainerImage>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub control: Option<ContainerImage>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
