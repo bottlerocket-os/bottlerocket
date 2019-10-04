@@ -162,6 +162,15 @@ func (i *Intent) InProgress() bool {
 	pendingNode := i.Wanted != i.Active && i.Waiting() && !i.Errored()
 	// waiting on handler to complete its intent handling
 	pendingFinish := i.Wanted == i.Active && !i.Waiting()
+
+	if logging.Debuggable {
+		logging.New("intent").WithFields(logrus.Fields{
+			"intent":        i.DisplayString(),
+			"pendingNode":   pendingNode,
+			"pendingFinish": pendingFinish,
+		}).Debug("InProgress")
+	}
+
 	return pendingNode || pendingFinish
 }
 

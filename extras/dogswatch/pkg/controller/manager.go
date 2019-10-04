@@ -121,6 +121,9 @@ func (am *ActionManager) Run(ctx context.Context) error {
 func (am *ActionManager) takeAction(pin *intent.Intent) error {
 	log := am.log.WithField("node", pin.GetName())
 	successCheckRun := successfulUpdate(pin)
+	if successCheckRun {
+		log.Debug("handling successful update")
+	}
 
 	if pin.Intrusive() && !successCheckRun {
 		err := am.nodem.Cordon(pin.NodeName)
@@ -235,7 +238,7 @@ func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
 }
 
 func successfulUpdate(in *intent.Intent) bool {
-	atFinalTerm := intent.FallbackNodeAction != in.Wanted
+	atFinalTerm := intent.FallbackNodeAction != in.Wanted && !in.Stuck()
 	return atFinalTerm && in.Waiting() && in.Terminal() && in.Realized()
 }
 

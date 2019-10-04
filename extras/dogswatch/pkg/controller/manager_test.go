@@ -159,13 +159,36 @@ func TestTakeAction(t *testing.T) {
 		hooks.NodeManager.DrainFn = trackFn(&drained)
 		hooks.NodeManager.CordonFn = trackFn(&cordoned)
 		hooks.NodeManager.UncordonFn = trackFn(&uncordoned)
-		pin := m.intentFor(intents.UpdatePerformed())
-		t.Logf("projected intent: %s", pin.DisplayString())
+		in := intents.UpdatePerformed()
+		t.Logf("controller input intent: %s", in)
+		pin := m.intentFor(in)
+		t.Logf("controller managed intent: %s", pin.DisplayString())
 		err := m.takeAction(pin)
 		assert.NilError(t, err)
 		assert.Check(t, cordoned == true)
 		assert.Check(t, drained == true)
 		assert.Check(t, uncordoned != true)
+	})
+
+	t.Run("signal-stabilize", func(t *testing.T) {
+		m, hooks := testManager(t)
+		var (
+			uncordoned = false
+			cordoned   = false
+			drained    = false
+		)
+		hooks.NodeManager.DrainFn = trackFn(&drained)
+		hooks.NodeManager.CordonFn = trackFn(&cordoned)
+		hooks.NodeManager.UncordonFn = trackFn(&uncordoned)
+		in := intents.Unknown()
+		t.Logf("controller input intent: %s", in)
+		pin := m.intentFor(in)
+		t.Logf("controller managed intent: %s", pin.DisplayString())
+		err := m.takeAction(pin)
+		assert.NilError(t, err)
+		assert.Check(t, cordoned == false)
+		assert.Check(t, drained == false)
+		assert.Check(t, uncordoned == false)
 	})
 }
 
@@ -182,4 +205,36 @@ func TestMakePolicyCheckUpdatesAvailable(t *testing.T) {
 	pview, err := m.makePolicyCheck(intents.Stabilized(intents.WithUpdateAvailable()))
 	assert.Check(t, pview == nil)
 	assert.Check(t, err != nil)
+}
+
+func TestSuccessfulUpdate(t *testing.T) {
+	logging.Set(testoutput.Setter(t))
+	defer logging.Set(testoutput.Revert())
+
+	cases := struct {
+		truthy []*intent.Intent
+		falsy  []*intent.Intent
+	}{
+		truthy: []*intent.Intent{
+			intents.UpdateSuccess(),
+		},
+		falsy: []*intent.Intent{
+			intents.Unknown(),
+		},
+	}
+
+	for _, tc := range cases.truthy {
+		t.Run(tc.DisplayString(), func(t *testing.T) {
+			logging.Set(testoutput.Setter(t))
+			defer logging.Set(testoutput.Revert())
+			assert.Check(t, successfulUpdate(tc) == true)
+		})
+	}
+	for _, tc := range cases.falsy {
+		t.Run(tc.DisplayString(), func(t *testing.T) {
+			logging.Set(testoutput.Setter(t))
+			defer logging.Set(testoutput.Revert())
+			assert.Check(t, successfulUpdate(tc) == false)
+		})
+	}
 }
