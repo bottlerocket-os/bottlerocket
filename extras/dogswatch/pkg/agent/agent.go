@@ -17,6 +17,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 const (
@@ -34,17 +35,34 @@ type Agent struct {
 	platform platform.Platform
 	nodeName string
 
+	poster poster
+	proc   proc
+
 	progress progression
+}
+
+type poster interface {
+	Post(*intent.Intent) error
+}
+
+type proc interface {
+	KillProcess() error
 }
 
 func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform, nodeName string) (*Agent, error) {
 	if nodeName == "" {
 		return nil, errors.New("nodeName must be provided for Agent to manage")
 	}
+	var nodeclient corev1.NodeInterface
+	if kube != nil {
+		nodeclient = kube.CoreV1().Nodes()
+	}
 	return &Agent{
 		log:      log,
 		kube:     kube,
 		platform: plat,
+		poster:   &k8sPoster{log, nodeclient},
+		proc:     &osProc{},
 		nodeName: nodeName,
 	}, nil
 }
@@ -121,7 +139,7 @@ func (a *Agent) setUpdateAvailable(available bool) error {
 	case false:
 		in.UpdateAvailable = marker.NodeUpdateUnavailable
 	}
-	return a.updateIntent(in)
+	return a.poster.Post(in)
 }
 
 func (a *Agent) handler() nodestream.Handler {
@@ -167,7 +185,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 	// ACK the wanted action.
 	in.Active = in.Wanted
 	in.State = marker.NodeStateBusy
-	if err = a.updateIntent(in); err != nil {
+	if err = a.poster.Post(in); err != nil {
 		return err
 	}
 
@@ -215,11 +233,13 @@ func (a *Agent) realize(in *intent.Intent) error {
 		// Shortcircuit to terminate.
 
 		// TODO: actually handle shutdown.
-		defer func() {
-			// die("goodbye");
-			p, _ := os.FindProcess(os.Getpid())
-			go p.Kill()
-		}()
+		// die("goodbye");
+		if err == nil {
+			if a.proc != nil {
+				defer a.proc.KillProcess()
+			}
+			return err
+		}
 	}
 
 	if err != nil {
@@ -230,7 +250,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 		in.State = marker.NodeStateReady
 	}
 
-	a.updateIntent(in)
+	a.poster.Post(in)
 
 	return err
 }
@@ -262,17 +282,26 @@ func (a *Agent) checkNodePreflight() error {
 		// there's not a good way to re-prime ourselves in the prior state.
 		in = in.Reset()
 	}
-	a.updateIntent(in)
+	a.poster.Post(in)
 
 	return nil
 }
 
-func (a *Agent) updateIntent(uin *intent.Intent) error {
-	uerr := k8sutil.PostMetadata(a.kube.CoreV1().Nodes(), uin.NodeName, uin)
-	if uerr != nil {
-		a.log.WithError(uerr).Error("could not update markers")
-		uerr = errors.WithMessage(uerr, "could not update markers")
-		return uerr
-	}
+type osProc struct{}
+
+func (*osProc) KillProcess() error {
+	p, _ := os.FindProcess(os.Getpid())
+	go p.Kill()
 	return nil
+}
+
+type k8sPoster struct {
+	log        logging.Logger
+	nodeclient corev1.NodeInterface
+}
+
+func (k *k8sPoster) Post(i *intent.Intent) error {
+	nodeName := i.GetName()
+	defer k.log.WithField("node", nodeName).Debugf("posted intent %s", i.DisplayString())
+	return k8sutil.PostMetadata(k.nodeclient, nodeName, i)
 }

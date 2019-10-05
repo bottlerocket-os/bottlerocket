@@ -112,6 +112,12 @@ var (
 		State:  marker.NodeStateBusy,
 	}, WithUpdateAvailable())
 
+	PendingRebootUpdate = ret("PendingRebootUpdate", intent.Intent{
+		Wanted: marker.NodeActionRebootUpdate,
+		Active: marker.NodeActionPrepareUpdate,
+		State:  marker.NodeStateReady,
+	})
+
 	UpdateError = ret("UpdateError", intent.Intent{
 		Wanted: marker.NodeActionRebootUpdate,
 		Active: marker.NodeActionRebootUpdate,
@@ -130,11 +136,23 @@ var (
 		State:  marker.NodeStateReady,
 	}, WithUpdateAvailable(marker.NodeUpdateAvailable))
 
+	PendingPrepareUpdate = ret("PendingPrepareUpdate", intent.Intent{
+		Wanted: marker.NodeActionPrepareUpdate,
+		Active: marker.NodeActionStabilize,
+		State:  marker.NodeStateReady,
+	})
+
 	UpdatePerformed = ret("UpdatePerformed", intent.Intent{
 		Wanted: marker.NodeActionPerformUpdate,
 		Active: marker.NodeActionPerformUpdate,
 		State:  marker.NodeStateReady,
 	}, WithUpdateAvailable(marker.NodeUpdateAvailable))
+
+	PendingUpdate = ret("PendingUpdate", intent.Intent{
+		Wanted: marker.NodeActionPerformUpdate,
+		Active: marker.NodeActionPrepareUpdate,
+		State:  marker.NodeStateReady,
+	})
 
 	Unknown = ret("Unknown", intent.Intent{
 		Wanted: marker.NodeActionUnknown,
