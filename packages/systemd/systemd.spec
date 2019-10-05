@@ -2,16 +2,23 @@
 %global __arch_install_post /usr/lib/rpm/check-buildroot
 
 Name: %{_cross_os}systemd
-Version: 242
+Version: 243
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: LGPLv2+ and MIT and GPLv2+
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
 Source1: run-tmpfiles.conf
-Patch1: 0001-move-stateful-paths-to-ephemeral-storage.patch
-Patch2: 0002-do-not-create-unused-state-directories.patch
-Patch3: 0003-use-absolute-path-for-var-run-symlink.patch
+
+# Upstream fixes.
+Patch0001: 0001-cgroup-Check-ancestor-memory-min-for-unified-memory-.patch
+Patch0002: 0002-cgroup-Respect-DefaultMemoryMin-when-setting-memory..patch
+Patch0003: 0003-cgroup-Mark-memory-protections-as-explicitly-set-in-.patch
+
+# Local changes.
+Patch9001: 9001-move-stateful-paths-to-ephemeral-storage.patch
+Patch9002: 9002-do-not-create-unused-state-directories.patch
+Patch9003: 9003-use-absolute-path-for-var-run-symlink.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -229,6 +236,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %exclude %{_cross_datadir}/polkit-1
 
 %dir %{_cross_factorydir}
+%{_cross_factorydir}%{_cross_sysconfdir}/issue
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/other
@@ -236,6 +244,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 
 %exclude %{_cross_docdir}
 %exclude %{_cross_localedir}
+%exclude %{_cross_localstatedir}/log/README
 %exclude %{_cross_rundir}
 
 %files devel
