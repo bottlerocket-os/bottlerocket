@@ -2,7 +2,7 @@
 %global gorepo containerd
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.2.9
+%global gover 1.3.0
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -39,15 +39,27 @@ Requires: %{_cross_os}systemd
 %build
 %cross_go_configure %{goimport}
 export BUILDTAGS="no_btrfs rpm_crashtraceback seccomp selinux"
-for bin in containerd containerd-shim ctr ; do
+for bin in \
+  containerd \
+  containerd-shim \
+  containerd-shim-runc-v1 \
+  containerd-shim-runc-v2 \
+  ctr ;
+do
   go build -buildmode pie -tags="${BUILDTAGS}" -o ${bin} %{goimport}/cmd/${bin}
 done
 
 %install
 install -d %{buildroot}%{_cross_bindir}
-install -p -m 0755 containerd %{buildroot}%{_cross_bindir}
-install -p -m 0755 containerd-shim %{buildroot}%{_cross_bindir}
-install -p -m 0755 ctr %{buildroot}%{_cross_bindir}
+for bin in \
+  containerd \
+  containerd-shim \
+  containerd-shim-runc-v1 \
+  containerd-shim-runc-v2 \
+  ctr ;
+do
+  install -p -m 0755 ${bin} %{buildroot}%{_cross_bindir}
+done
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/containerd.service
@@ -61,6 +73,8 @@ install -p -m 0644 %{S:3} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %files
 %{_cross_bindir}/containerd
 %{_cross_bindir}/containerd-shim
+%{_cross_bindir}/containerd-shim-runc-v1
+%{_cross_bindir}/containerd-shim-runc-v2
 %{_cross_bindir}/ctr
 %{_cross_unitdir}/containerd.service
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/containerd

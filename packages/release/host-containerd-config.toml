@@ -1,9 +1,15 @@
+version = 2
 root = "/var/lib/host-containerd"
 state = "/run/host-containerd"
-disabled_plugins = ["aufs", "zfs", "cri"]
+disabled_plugins = [
+    "io.containerd.snapshotter.v1.aufs",
+    "io.containerd.snapshotter.v1.zfs",
+    "io.containerd.snapshotter.v1.devmapper",
+    "io.containerd.grpc.v1.cri",
+]
 
 [grpc]
 address = "/run/host-containerd/containerd.sock"
 
-[plugins.opt]
+[plugins."io.containerd.internal.v1.opt"]
 path = "/opt/host-containerd"

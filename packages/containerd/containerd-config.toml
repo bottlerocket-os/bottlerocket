@@ -1,16 +1,27 @@
+version = 2
 root = "/var/lib/containerd"
 state = "/run/containerd"
-disabled_plugins = ["aufs", "zfs"]
+disabled_plugins = [
+    "io.containerd.snapshotter.v1.aufs",
+    "io.containerd.snapshotter.v1.zfs",
+    "io.containerd.snapshotter.v1.devmapper",
+]
 
 [grpc]
 address = "/run/containerd/containerd.sock"
 
-[plugins.cri]
-systemd_cgroup = true
+[plugins."io.containerd.grpc.v1.cri".containerd]
+default_runtime_name = "runc"
 
-[plugins.cri.cni]
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+runtime_type = "io.containerd.runc.v2"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+SystemdCgroup = true
+
+[plugins."io.containerd.grpc.v1.cri".cni]
 bin_dir = "/opt/cni/bin"
 conf_dir = "/etc/cni/net.d"
 
-[plugins.opt]
+[plugins."io.containerd.internal.v1.opt"]
 path = "/opt/containerd"
