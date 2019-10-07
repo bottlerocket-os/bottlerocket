@@ -33,9 +33,9 @@ docker run -t --rm \
    --privileged \
    --network=host \
    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+   moby/buildkit:v0.4.0 \
    --addr tcp://127.0.0.1:1234 \
-   --oci-worker true \
-   moby/buildkit:v0.4.0
+   --oci-worker true
 ```
 
 You can run that in the background, or just interrupt the process after BuildKit says it's running - the important part will keep running in the background.
