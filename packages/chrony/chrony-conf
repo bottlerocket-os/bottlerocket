@@ -5,3 +5,4 @@ driftfile /run/lib/chrony/drift
 makestep 1.0 3
 dumponexit
 dumpdir /run/lib/chrony/state
+user chrony
