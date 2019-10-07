@@ -139,16 +139,26 @@ USAGE:
 
 SUBCOMMANDS:
     check-update            Show if an update is available
+        [ -a | --all ]                Output all applicable updates
+
     prepare                 Download update files and migration targets
+
     update                  Perform an update if available
+        [ -i | --image version ]      Update to a specfic image version
+        [ -n | --now ]                Update immediately, ignoring wave limits
+        [ -r | --reboot ]             Reboot into new update on success
+        [ -t | --timestamp time ]     The timestamp from which to execute an update
+
     update-image            Download & write an update but do not update flags
-    update-apply            Update boot flags and reboot
-OPTIONS:
+        [ -i | --image version ]      Update to a specfic image version
+        [ -n | --now ]                Update immediately, ignoring wave limits
+        [ -t | --timestamp time ]     The timestamp to execute an update from
+
+    update-apply            Update boot flags (after having called update-image)
+        [ -r | --reboot ]             Reboot after updating boot flags
+
+GLOBAL OPTIONS:
     [ -j | --json ]               JSON-formatted output
-    [ -a | --all ]                Output all applicable updates
-    [ -n | --now ]                Update immediately, ignoring wave limits
-    [ -i | --image ]              Update to a specfic image version
-    [ -r | --reboot ]             Reboot upon updating boot flags
     [ --verbose --verbose ... ]   Increase log verbosity");
     std::process::exit(1)
 }
