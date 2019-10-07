@@ -412,7 +412,7 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
     if json {
         println!(
             "{}",
-            serde_json::to_string(&object).context(error::UpdateSerialize)?
+            serde_json::to_string_pretty(&object).context(error::UpdateSerialize)?
         );
     } else {
         println!("{}", string);
@@ -459,7 +459,7 @@ fn main_inner() -> Result<()> {
             if arguments.json {
                 println!(
                     "{}",
-                    serde_json::to_string(&updates).context(error::UpdateSerialize)?
+                    serde_json::to_string_pretty(&updates).context(error::UpdateSerialize)?
                 );
             } else {
                 for u in updates {
