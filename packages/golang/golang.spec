@@ -5,7 +5,7 @@
 %global _build_id_links none
 
 Name: %{_cross_os}golang
-Version: 1.12.5
+Version: 1.13.1
 Release: 1%{?dist}
 Summary: The Go Progamming Language
 License: BSD and Public Domain

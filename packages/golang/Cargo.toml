@@ -9,12 +9,12 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://dl.google.com/go/go1.12.5.linux-amd64.tar.gz"
-sha512 = "231d1df831ba4b96d1f9cf3d532a2fdf38eafdd0d6220c96a2103ee1e0058185bf934837cc0d7ebd7a9e9710520b294c1a73161f1e7121dc25b0c4901bbcebff"
+url = "https://dl.google.com/go/go1.13.1.linux-amd64.tar.gz"
+sha512 = "ef7726866f3da07197991875f7570ecab52a3f3f71ef00c92d641ea2dacd8f03494fe7c54ea85d860cc5933da6c816905b10b3cac705e82c802e333834c3fa61"
 
 [[package.metadata.build-package.external-files]]
-url = "https://dl.google.com/go/go1.12.5.linux-arm64.tar.gz"
-sha512 = "3f4e809cf4ea7e0ed14f1304ffa44db26cbdf82983581ac750d11a01e849f8699aecd1bed3faf8706428673ee00d4a3cffba2279c36d5b8c2e07c1a5f6359aa4"
+url = "https://dl.google.com/go/go1.13.1.linux-arm64.tar.gz"
+sha512 = "1352ae73675795461f7fb8c51d4e2eda2f84f3fe8593c51ac9eb74b01d19e4d0a8edd9e988e437e5b619d32c149a31c0f5fc733c5c5c9437ac2915c602bed0cb"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }

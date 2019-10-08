@@ -156,6 +156,9 @@ CROSS_COMPILATION_CONF_EOF\
   CGO_ENABLED=1 ; export CGO_ENABLED ; \
   PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
   PKG_CONFIG_ALLOW_CROSS=1 ; export PKG_CONFIG_ALLOW_CROSS ; \
+  GOFLAGS="-mod=vendor"; export GOFLAGS ; \
+  GOPROXY="off"; export GOPROXY ; \
+  GOSUMDB="off"; export GOSUMDB ; \
 
 %cross_go_setup() \
   mkdir -p GOPATH/src/%2 ; \
