@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/systemd/systemd/archive/v242/systemd-242.tar.gz"
-sha512 = "578f68a3c8f2d454198fc04ff8d943abcfb390531d57f9603d185857f7afa7f4dc641dafecf49ce50fe22f5837b252b181400891e8efd4459fd4f69bb4283cb4"
+url = "https://github.com/systemd/systemd/archive/v243/systemd-243.tar.gz"
+sha512 = "56b52a297aa5ac04d9667eb3afb1598725b197de73ff72baa1aabbc2844e36fba7b7fccdf6d214ae8b5b926616b2b7e15772763aaa80ec938d74333ff9c8673e"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
