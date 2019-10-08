@@ -42,17 +42,33 @@ pub struct Manifest {
 }
 
 impl Update {
-    pub fn update_wave(&self, seed: u32) -> Option<&DateTime<Utc>> {
-        self.waves
-            .range((Included(0), Included(seed)))
-            .last()
-            .map(|(_, wave)| wave)
+    /// Returns the update wave that Updog belongs to, based on the seed value.
+    /// Depending on the waves described in the update, the possible results are
+    /// - Some wave described by a start and end time.
+    /// - The "0th" wave, which has an "end" time but no specified start time.
+    /// - The last wave, which has a start time but no specified end time.
+    /// - Nothing, if no waves are configured.
+    pub fn update_wave(&self, seed: u32) -> (Option<DateTime<Utc>>, Option<DateTime<Utc>>) {
+        (
+            self.waves
+                .range((Included(0), Excluded(seed)))
+                .last()
+                .map(|(_, wave)| *wave),
+            self.waves
+                .range((Included(seed), Included(MAX_SEED)))
+                .next()
+                .map(|(_, wave)| *wave),
+        )
     }
 
     pub fn update_ready(&self, seed: u32) -> bool {
         // Has this client's wave started
-        if let Some(wave) = self.update_wave(seed) {
-            return *wave <= Utc::now();
+        match self.update_wave(seed) {
+            // some wave with time bounds
+            (Some(start), Some(_)) => return start < Utc::now(),
+            // 0th wave with no minimum time
+            (None, Some(_)) => return true,
+            _ => (),
         }
 
         // Alternately have all waves passed
@@ -65,18 +81,16 @@ impl Update {
     }
 
     pub fn jitter(&self, seed: u32) -> Option<DateTime<Utc>> {
-        let prev = self.update_wave(seed);
-        let next = self
-            .waves
-            .range((Excluded(seed), Excluded(MAX_SEED)))
-            .next()
-            .map(|(_, wave)| wave);
-        if let (Some(start), Some(end)) = (prev, next) {
-            if Utc::now() < *end {
-                let mut rng = thread_rng();
-                if let Some(range) = end.timestamp().checked_sub(start.timestamp()) {
-                    return Some(*start + Duration::seconds(rng.gen_range(1, range)));
-                }
+        let (start, end) = self.update_wave(seed);
+        if let Some(end) = end {
+            if end < Utc::now() {
+                // this wave has already passed
+                return None;
+            }
+            let start = start.unwrap_or_else(Utc::now);
+            let mut rng = thread_rng();
+            if let Some(range) = end.timestamp().checked_sub(start.timestamp()) {
+                return Some(start + Duration::seconds(rng.gen_range(1, range)));
             }
         }
         None

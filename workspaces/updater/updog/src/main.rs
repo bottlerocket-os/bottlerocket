@@ -791,4 +791,47 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn early_wave() {
+        let mut u = Update {
+            flavor: String::from("thar"),
+            arch: String::from("test"),
+            version: SemVer::parse("1.0.0").unwrap(),
+            max_version: SemVer::parse("1.1.0").unwrap(),
+            waves: BTreeMap::new(),
+            images: Images {
+                boot: String::from("boot"),
+                root: String::from("root"),
+                hash: String::from("hash"),
+            },
+        };
+
+        // | ---- (100, "now") ---
+        u.waves.insert(100, Utc::now());
+        let (start, end) = u.update_wave(1);
+        assert!(start.is_none() && end.is_some());
+        assert!(u.jitter(1).is_none());
+        let (start, end) = u.update_wave(101);
+        assert!(start.is_some() && end.is_none());
+        assert!(u.jitter(101).is_none());
+
+        // | ---- (100, "now") ---- (200, "+1hr") ---
+        u.waves.insert(200, Utc::now() + TestDuration::hours(1));
+        let (start, end) = u.update_wave(1);
+        assert!(start.is_none() && end.is_some());
+        assert!(u.jitter(1).is_none());
+
+        let (start, end) = u.update_wave(100);
+        assert!(start.is_none() && end.is_some());
+        assert!(u.jitter(100).is_none());
+
+        let (start, end) = u.update_wave(150);
+        assert!(start.is_some() && end.is_some());
+        assert!(u.jitter(150).is_some());
+
+        let (start, end) = u.update_wave(201);
+        assert!(start.is_some() && end.is_none());
+        assert!(u.jitter(201).is_none());
+    }
 }
