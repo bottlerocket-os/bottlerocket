@@ -25,7 +25,7 @@ val = ["hostname"]
 # Kubernetes.
 
 [services.kubernetes]
-configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt"]
+configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt", "containerd-config-toml"]
 restart-commands = []
 
 [configuration-files.kubelet-env]
@@ -43,6 +43,10 @@ template-path = "/usr/share/templates/kubelet-kubeconfig"
 [configuration-files.kubernetes-ca-crt]
 path = "/etc/kubernetes/pki/ca.crt"
 template-path = "/usr/share/templates/kubernetes-ca-crt"
+
+[configuration-files.containerd-config-toml]
+path = "/etc/containerd/config.toml"
+template-path = "/usr/share/templates/containerd-config-toml"
 
 [[metadata]]
 key = "settings.kubernetes.max-pods"
