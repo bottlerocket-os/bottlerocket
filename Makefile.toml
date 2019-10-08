@@ -93,14 +93,25 @@ cargo build \
 '''
 ]
 
+[tasks.check-licenses]
+dependencies = ["fetch"]
+script = [
+'''
+(cd workspaces && cargo deny check)
+(cd tools/buildsys && cargo deny check)
+'''
+]
+
 [tasks.build]
 dependencies = [
     "build-images",
+    "check-licenses",
 ]
 
 [tasks.world]
 dependencies = [
     "world-images",
+    "check-licenses",
 ]
 
 [tasks.clean]
