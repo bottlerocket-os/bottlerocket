@@ -74,6 +74,14 @@ paths:
                 $ref: "Settings"
         500:
           description: "Server error"
+    delete:
+      summary: "Delete pending settings"
+      operationId: "delete_pending_settings"
+      responses:
+        200:
+          description: "Successful deleted pending settings - deleted keys are returned"
+        500:
+          description: "Server error"
 
   /settings/commit:
     post:

@@ -67,6 +67,7 @@ where
                     .route("", web::get().to(get_settings))
                     .route("", web::patch().to(patch_settings))
                     .route("/pending", web::get().to(get_pending_settings))
+                    .route("/pending", web::delete().to(delete_pending_settings))
                     .route("/commit", web::post().to(commit_settings))
                     .route("/apply", web::post().to(apply_settings))
                     .route(
@@ -152,6 +153,13 @@ fn patch_settings(
 fn get_pending_settings(data: web::Data<SharedDataStore>) -> Result<Settings> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
     controller::get_pending_settings(&*datastore)
+}
+
+/// Delete any settings that have been received but not committed
+fn delete_pending_settings(data: web::Data<SharedDataStore>) -> Result<ChangedKeysResponse> {
+    let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
+    let deleted = controller::delete_pending_settings(&mut *datastore)?;
+    Ok(ChangedKeysResponse(deleted))
 }
 
 /// Save settings changes to the main data store and kick off appliers.

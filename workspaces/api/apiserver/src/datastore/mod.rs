@@ -100,6 +100,9 @@ pub trait DataStore {
     /// Applies pending changes to the live datastore.  Returns the list of changed keys.
     fn commit(&mut self) -> Result<HashSet<Key>>;
 
+    /// Remove pending changes from the datastore.  Returns the list of removed keys.
+    fn delete_pending(&mut self) -> Result<HashSet<Key>>;
+
     /// Set multiple data keys at once in the data store.
     ///
     /// Implementers can replace the default implementation if there's a faster way than setting

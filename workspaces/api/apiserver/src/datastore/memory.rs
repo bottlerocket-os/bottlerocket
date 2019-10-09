@@ -5,6 +5,7 @@
 
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
+use std::mem;
 
 use super::{Committed, DataStore, Key, Result};
 
@@ -149,6 +150,14 @@ impl DataStore for MemoryDataStore {
         // Return keys (using into_iter to avoid further clone)
         Ok(pending.into_iter().map(|(k, _v)| k).collect())
     }
+
+    fn delete_pending(&mut self) -> Result<HashSet<Key>> {
+        // Replace pending with an empty map
+        let old_pending = mem::replace(&mut self.pending, HashMap::new());
+
+        // Return the old pending keys
+        Ok(old_pending.into_iter().map(|(key, _val)| key).collect())
+    }
 }
 
 #[cfg(test)]
@@ -206,5 +215,19 @@ mod test {
         m.commit().unwrap();
         assert!(!m.key_populated(&k, Committed::Pending).unwrap());
         assert!(m.key_populated(&k, Committed::Live).unwrap());
+    }
+
+    #[test]
+    fn delete_pending() {
+        let mut m = MemoryDataStore::new();
+        let k = Key::new(KeyType::Data, "settings.a.b.c").unwrap();
+        let v = "memvalue";
+        m.set_key(&k, v, Committed::Pending).unwrap();
+
+        assert!(m.key_populated(&k, Committed::Pending).unwrap());
+        assert!(!m.key_populated(&k, Committed::Live).unwrap());
+        m.delete_pending().unwrap();
+        assert!(!m.key_populated(&k, Committed::Pending).unwrap());
+        assert!(!m.key_populated(&k, Committed::Live).unwrap());
     }
 }
