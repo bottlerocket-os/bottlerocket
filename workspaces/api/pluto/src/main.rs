@@ -13,6 +13,9 @@ It makes calls to IMDS to get meta data:
 - Node IP
 - POD Infra Container Image
 */
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::string::String;
 use std::{env, process};
 
 use snafu::{OptionExt, ResultExt};
@@ -27,6 +30,8 @@ const IMDS_URI: &str = "http://169.254.169.254/2018-09-24";
 
 const PAUSE_CONTAINER_ACCOUNT: &str = "602401143452";
 const PAUSE_CONTAINER_VERSION: &str = "3.1";
+
+const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
 
 mod error {
     use snafu::Snafu;
@@ -79,6 +84,21 @@ mod error {
 
         #[snafu(display("Invalid machine architecture, not one of 'x86_64' or 'aarch64'"))]
         UnknownArchitecture,
+
+        #[snafu(display("Failed to open eni-max-pods file at {}: {}", path, source))]
+        EniMaxPodsFile {
+            path: &'static str,
+            source: std::io::Error,
+        },
+
+        #[snafu(display("Failed to read line: {}", source))]
+        IoReadLine { source: std::io::Error },
+
+        #[snafu(display(
+            "Unable to find maximum number of pods supported for instance-type {}",
+            instance_type
+        ))]
+        NoInstanceTypeMaxPods { instance_type: String },
     }
 }
 
@@ -101,6 +121,31 @@ fn get_text_from_imds(client: &reqwest::Client, path: &str) -> Result<String> {
         .context(error::ImdsText {
             path: path.to_string(),
         })
+}
+
+fn get_max_pods() -> Result<String> {
+    let client = reqwest::Client::new();
+
+    let path = "/meta-data/instance-type";
+    let instance_type = get_text_from_imds(&client, &path)?;
+    // Find the corresponding maximum number of pods supported by this instance type
+    let file = BufReader::new(
+        File::open(ENI_MAX_PODS_PATH).context(error::EniMaxPodsFile {
+            path: ENI_MAX_PODS_PATH,
+        })?,
+    );
+    for line in file.lines() {
+        let line = line.context(error::IoReadLine)?;
+        // Skip the comments in the file
+        if line.trim_start().starts_with('#') {
+            continue;
+        }
+        let tokens: Vec<_> = line.split_whitespace().collect();
+        if tokens.len() == 2 && tokens[0] == instance_type {
+            return Ok(tokens[1].to_string());
+        }
+    }
+    error::NoInstanceTypeMaxPods { instance_type }.fail()
 }
 
 fn get_cluster_dns_ip() -> Result<String> {
@@ -168,7 +213,7 @@ fn get_pod_infra_container_image() -> Result<String> {
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
-        r"Usage: {} [cluster-dns-ip | node-ip | pod-infra-container-image]",
+        r"Usage: {} [max-pods | cluster-dns-ip | node-ip | pod-infra-container-image]",
         program_name
     );
     process::exit(2);
@@ -183,6 +228,7 @@ fn main() -> Result<()> {
     let setting_name = parse_args(env::args());
 
     let setting = match setting_name.as_ref() {
+        "max-pods" => get_max_pods(),
         "cluster-dns-ip" => get_cluster_dns_ip(),
         "node-ip" => get_node_ip(),
         "pod-infra-container-image" => get_pod_infra_container_image(),

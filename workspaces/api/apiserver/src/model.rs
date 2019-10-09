@@ -58,6 +58,9 @@ pub struct KubernetesSettings {
     // Dynamic settings.
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_pods: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cluster_dns_ip: Option<Ipv4Addr>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
