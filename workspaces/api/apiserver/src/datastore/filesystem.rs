@@ -377,6 +377,23 @@ impl DataStore for FilesystemDataStore {
 
         Ok(pending_keys)
     }
+
+    fn delete_pending(&mut self) -> Result<HashSet<Key>> {
+        // Get changed keys so we can return the list
+        let pending_data = self.get_prefix("settings.", Committed::Pending)?;
+
+        // Pull out just the keys so we can log them and return them
+        let pending_keys = pending_data.into_iter().map(|(key, _val)| key).collect();
+        debug!("Found pending keys: {:?}", &pending_keys);
+
+        // Delete pending from the filesystem, same as a commit
+        debug!("Removing all pending keys");
+        fs::remove_dir_all(&self.pending_path).context(error::Io {
+            path: &self.pending_path,
+        })?;
+
+        Ok(pending_keys)
+    }
 }
 
 #[cfg(test)]

@@ -28,6 +28,13 @@ pub(crate) fn get_pending_settings<D: DataStore>(datastore: &D) -> Result<Settin
     .map(|maybe_settings| maybe_settings.unwrap_or_else(Settings::default))
 }
 
+/// Delete any settings that have been received but not committed
+pub(crate) fn delete_pending_settings<D: DataStore>(datastore: &mut D) -> Result<HashSet<Key>> {
+    datastore.delete_pending().context(error::DataStore {
+        op: "delete_pending",
+    })
+}
+
 /// Build a Settings based on the data in the datastore.  Errors if no settings are found.
 pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: Committed) -> Result<Settings> {
     get_prefix(
