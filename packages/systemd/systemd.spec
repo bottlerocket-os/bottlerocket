@@ -9,6 +9,7 @@ License: LGPLv2+ and MIT and GPLv2+
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
 Source1: run-tmpfiles.conf
+Source2: systemd-modules-load.conf
 
 # Upstream fixes.
 Patch0001: 0001-cgroup-Check-ancestor-memory-min-for-unified-memory-.patch
@@ -168,6 +169,9 @@ CONFIGURE_OPTS=(
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/run.conf
 
+install -d %{buildroot}%{_cross_libdir}/modules-load.d
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_libdir}/modules-load.d/nf_conntrack.conf
+
 # Remove all stock network configurations, as they can interfere
 # with container networking by attempting to manage veth devices.
 rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
@@ -217,6 +221,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %dir %{_cross_libdir}/systemd
 %dir %{_cross_libdir}/udev
 %{_cross_libdir}/modprobe.d/*
+%{_cross_libdir}/modules-load.d/nf_conntrack.conf
 %{_cross_libdir}/sysctl.d/*
 %{_cross_libdir}/sysusers.d/*
 %{_cross_libdir}/systemd/*
