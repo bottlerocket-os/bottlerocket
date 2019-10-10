@@ -1,10 +1,10 @@
-%global workspace_name host-containers
+%global workspace_name host-ctr
 %global systemd_systemdir %{_cross_libdir}/systemd/system
 
 Name: %{_cross_os}%{workspace_name}
 Version: 0.0
 Release: 0%{?dist}
-Summary: Thar host container management
+Summary: Thar host container runner
 License: FIXME
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel

@@ -22,7 +22,7 @@ members = [
     "golang",
     "growpart",
     "grub",
-    "host-containers",
+    "host-ctr",
     "iproute",
     "iptables",
     "iputils",

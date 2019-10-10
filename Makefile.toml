@@ -34,7 +34,7 @@ for ws in workspaces packages images ; do
 done
 chmod o+r -R ${CARGO_HOME}
 
-cd ${BUILDSYS_SOURCES_DIR}/host-containers/cmd/host-ctr
+cd ${BUILDSYS_SOURCES_DIR}/host-ctr/cmd/host-ctr
 docker run --rm \
   -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \

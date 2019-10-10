@@ -1,12 +1,12 @@
 [package]
-name = "host-containers"
+name = "host-ctr"
 version = "0.1.0"
 edition = "2018"
 publish = false
 build = "build.rs"
 
 [package.metadata.build-package]
-source-groups = [ "host-containers" ]
+source-groups = [ "host-ctr" ]
 
 [lib]
 path = "pkg.rs"

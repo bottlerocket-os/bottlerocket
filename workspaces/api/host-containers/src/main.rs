@@ -1,0 +1,344 @@
+/*!
+# Background
+
+host-containers is a tool that queries the API for the currently enabled host containers and
+ensures the relevant systemd service is enabled/started or disabled/stopped for each one depending
+on its 'enabled' flag.
+*/
+
+#![deny(rust_2018_idioms)]
+
+use snafu::{ensure, OptionExt, ResultExt};
+use std::collections::HashMap;
+use std::env;
+use std::ffi::OsStr;
+use std::fmt::Write;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::{self, Command};
+
+use apiserver::model;
+use apiserver::modeled_types::SingleLineString;
+
+#[macro_use]
+extern crate tracing;
+
+use tracing_subscriber::{
+    filter::{EnvFilter, LevelFilter},
+    FmtSubscriber,
+};
+
+// FIXME Get from configuration in the future
+const DEFAULT_API_SOCKET: &str = "/run/api.sock";
+const API_SETTINGS_URI: &str = "/settings";
+const ENV_FILE_DIR: &str = "/etc/host-containers";
+
+const SYSTEMCTL_BIN: &str = "/bin/systemctl";
+
+mod error {
+    use http::StatusCode;
+    use snafu::Snafu;
+    use std::fmt;
+    use std::io;
+    use std::path::PathBuf;
+    use std::process::{Command, Output};
+
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility = "pub(super)")]
+    pub(super) enum Error {
+        #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
+        APIRequest {
+            method: String,
+            uri: String,
+            source: apiclient::Error,
+        },
+
+        #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
+        APIResponse {
+            method: String,
+            uri: String,
+            code: StatusCode,
+            response_body: String,
+        },
+
+        #[snafu(display(
+            "Error deserializing response as JSON from {} to {}: {}",
+            method,
+            uri,
+            source
+        ))]
+        ResponseJson {
+            method: &'static str,
+            uri: String,
+            source: serde_json::Error,
+        },
+
+        #[snafu(display("settings.host_containers missing in API response"))]
+        MissingSettings {},
+
+        #[snafu(display("Host containers '{}' missing field '{}'", name, field))]
+        MissingField { name: String, field: String },
+
+        #[snafu(display("Unable to create host-containers config dir {}: {}", path.display(), source))]
+        EnvFileDirCreate { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to build EnvironmentFile for {}: {}", name, source))]
+        EnvFileBuildFailed { name: String, source: fmt::Error },
+
+        #[snafu(display("Failed to write EnvironmentFile to {}: {}", path.display(), source))]
+        EnvFileWriteFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to execute '{:?}': {}", command, source))]
+        ExecutionFailure {
+            command: Command,
+            source: std::io::Error,
+        },
+
+        #[snafu(display("Systemd command failed - stderr: {}",
+                        std::str::from_utf8(&output.stderr).unwrap_or_else(|_| "<invalid UTF-8>")))]
+        SystemdCommandFailure { output: Output },
+
+        #[snafu(display("Failed to parse provided directive: {}", source))]
+        TracingDirectiveParse {
+            source: tracing_subscriber::filter::LevelParseError,
+        },
+
+        #[snafu(display("Failed to manage {} of {} host containers", failed, tried))]
+        ManageContainersFailed { failed: usize, tried: usize },
+    }
+}
+
+type Result<T> = std::result::Result<T, error::Error>;
+
+/// Query the API for the currently defined host containers
+fn get_host_containers<P>(socket_path: P) -> Result<HashMap<SingleLineString, model::ContainerImage>>
+where
+    P: AsRef<Path>,
+{
+    debug!("Querying the API for settings");
+
+    let method = "GET";
+    let uri = API_SETTINGS_URI;
+    let (code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
+        .context(error::APIRequest { method, uri })?;
+    ensure!(
+        code.is_success(),
+        error::APIResponse {
+            method,
+            uri,
+            code,
+            response_body,
+        }
+    );
+
+    // Build a Settings struct from the response string
+    let settings: model::Settings =
+        serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })?;
+
+    settings.host_containers.context(error::MissingSettings)
+}
+
+/// SystemdUnit stores the systemd unit being manipulated
+struct SystemdUnit<'a> {
+    unit: &'a str,
+}
+
+impl<'a> SystemdUnit<'a> {
+    fn new(unit: &'a str) -> Self {
+        SystemdUnit { unit }
+    }
+
+    fn enable_and_start(&self) -> Result<()> {
+        // We enable/start units with --no-block to work around cyclic dependency issues at boot
+        // time.  It would probably be better to give systemd more of a chance to tell us that
+        // something failed to start, if dependencies can be resolved in another way.
+        systemctl(&["enable", &self.unit, "--now", "--no-block"])
+    }
+
+    fn disable_and_stop(&self) -> Result<()> {
+        systemctl(&["disable", &self.unit, "--now"])
+    }
+}
+
+/// Wrapper around process::Command for systemctl that adds error checking.
+fn systemctl<I, S>(args: I) -> Result<()>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let mut command = Command::new(SYSTEMCTL_BIN);
+    command.args(args);
+    let output = command
+        .output()
+        .context(error::ExecutionFailure { command })?;
+
+    trace!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    trace!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+
+    ensure!(
+        output.status.success(),
+        error::SystemdCommandFailure { output }
+    );
+    Ok(())
+}
+
+/// Write out the EnvironmentFile that systemd uses to fill in arguments to host-ctr
+fn write_env_file<S1, S2>(name: S1, source: S2, enabled: bool, superpowered: bool) -> Result<()>
+where
+    S1: AsRef<str>,
+    S2: AsRef<str>,
+{
+    let name = name.as_ref();
+    let filename = format!("{}.env", name);
+    let path = Path::new(ENV_FILE_DIR).join(filename);
+
+    let mut output = String::new();
+    writeln!(output, "CTR_SUPERPOWERED={}", superpowered)
+        .context(error::EnvFileBuildFailed { name })?;
+    writeln!(output, "CTR_SOURCE={}", source.as_ref())
+        .context(error::EnvFileBuildFailed { name })?;
+
+    writeln!(
+        output,
+        "\n# Just for reference; service is enabled or disabled by host-containers service"
+    )
+    .context(error::EnvFileBuildFailed { name })?;
+    writeln!(output, "# CTR_ENABLED={}", enabled).context(error::EnvFileBuildFailed { name })?;
+
+    fs::write(&path, output).context(error::EnvFileWriteFailed { path })?;
+
+    Ok(())
+}
+
+/// Store the args we receive on the command line
+struct Args {
+    socket_path: PathBuf,
+    verbosity: usize,
+}
+
+/// Print a usage message in the event a bad arg is passed
+fn usage() -> ! {
+    let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
+    eprintln!(
+        r"Usage: {}
+            [ --socket-path PATH ]
+            [ --verbose --verbose ... ]
+
+    Socket path defaults to {}",
+        program_name, DEFAULT_API_SOCKET,
+    );
+    process::exit(2);
+}
+
+/// Prints a more specific message before exiting through usage().
+fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
+    eprintln!("{}\n", msg.as_ref());
+    usage();
+}
+
+/// Parse the args to the program and return an Args struct
+fn parse_args(args: env::Args) -> Args {
+    let mut socket_path = None;
+    let mut verbosity = 3;
+
+    let mut iter = args.skip(1);
+    while let Some(arg) = iter.next() {
+        match arg.as_ref() {
+            "-v" | "--verbose" => verbosity += 1,
+
+            "--socket-path" => {
+                socket_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path"))
+                        .into(),
+                )
+            }
+
+            _ => usage(),
+        }
+    }
+
+    Args {
+        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.into()),
+        verbosity,
+    }
+}
+
+fn handle_host_container<S>(name: S, image_details: &model::ContainerImage) -> Result<()>
+where
+    S: AsRef<str>,
+{
+    let name = name.as_ref();
+    let source = image_details.source.as_ref().context(error::MissingField {
+        name,
+        field: "source",
+    })?;
+    let enabled = image_details.enabled.context(error::MissingField {
+        name,
+        field: "enabled",
+    })?;
+    let superpowered = image_details.superpowered.context(error::MissingField {
+        name,
+        field: "superpowered",
+    })?;
+
+    info!(
+        "Handling host container '{}' which is enabled: {}",
+        name, enabled
+    );
+
+    // Write the environment file needed for the systemd service to have details about this
+    // specific host container
+    write_env_file(name, source, enabled, superpowered)?;
+
+    // Now start/stop the container according to the 'enabled' setting
+    let unit_name = format!("host-containers@{}.service", name);
+    let systemd_unit = SystemdUnit::new(&unit_name);
+
+    if enabled {
+        systemd_unit.enable_and_start()?;
+    } else {
+        systemd_unit.disable_and_stop()?;
+    }
+
+    Ok(())
+}
+
+fn main() -> Result<()> {
+    let args = parse_args(env::args());
+
+    // Start the logger
+    let level: LevelFilter = args
+        .verbosity
+        .to_string()
+        .parse()
+        .context(error::TracingDirectiveParse)?;
+    let filter = EnvFilter::from_default_env().add_directive(level.into());
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+
+    info!("host-containers started");
+
+    let mut failed = 0usize;
+    let host_containers = get_host_containers(args.socket_path)?;
+    for (name, image_details) in host_containers.iter() {
+        // Continue to handle other host containers if we fail one
+        if let Err(e) = handle_host_container(name, image_details) {
+            failed += 1;
+            error!("Failed to handle host container '{}': {}", &name, e);
+        }
+    }
+
+    ensure!(
+        failed == 0,
+        error::ManageContainersFailed {
+            failed,
+            tried: host_containers.len()
+        }
+    );
+
+    Ok(())
+}
