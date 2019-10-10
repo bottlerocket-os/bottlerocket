@@ -1,7 +1,7 @@
 # Building Thar
 
 If you'd like to build your own image instead of relying on an Amazon-provided image, follow these steps.
-You can skip to [Using an AMI](#using-a-thar-ami) to use an existing image in Amazon EC2.
+You can skip to [Using a Thar AMI](#using-a-thar-ami) to use an existing image in Amazon EC2.
 (We're still working on other use cases!)
 
 ## Build an image
