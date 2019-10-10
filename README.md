@@ -221,7 +221,7 @@ Here, however, we'll use the shortcut "dotted key" syntax for referring to keys.
 This is used in some API endpoints with less-structured requests or responses.
 It's also more compact for our needs here.
 
-In this format, "settings.kubernetes.cluster_name" refers to the same key as in the JSON `{"settings": {"kubernetes": {"cluster_name": "value"}}}`.
+In this format, "settings.kubernetes.cluster-name" refers to the same key as in the JSON `{"settings": {"kubernetes": {"cluster-name": "value"}}}`.
 
 #### Top-level settings
 
@@ -233,19 +233,19 @@ In this format, "settings.kubernetes.cluster_name" refers to the same key as in 
 The following settings must be specified in order to join a Kubernetes cluster.
 You should [specify them in user data](#using-user-data).
 See the [setup guide](INSTALL.md) for *much* more detail on setting up Thar and Kubernetes.
-* `settings.kubernetes.cluster_name`: The cluster name you chose during setup; the [setup guide](INSTALL.md) uses "thar".
-* `settings.kubernetes.cluster_certificate`: This is the base64-encoded certificate authority of the cluster.
-* `settings.kubernetes.api_server`: This is the cluster's Kubernetes API endpoint.
+* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](INSTALL.md) uses "thar".
+* `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
+* `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
 The following settings are set for you automatically by [pluto](workspaces/api/) based on runtime instance information, but you can override them if you know what you're doing!
-* `settings.kubernetes.cluster_dns_ip`: The CIDR block of the primary network interface.
-* `settings.kubernetes.node_ip`: The IPv4 address of this node.
-* `settings.kubernetes.pod_infra_container_image`: The URI of the "pause" container.
+* `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
+* `settings.kubernetes.node-ip`: The IPv4 address of this node.
+* `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 
 #### Updates settings
 
-* `settings.updates.metadata_base_url`: The common portion of all URIs used to download update metadata.
-* `settings.updates.target_base_url`: The common portion of all URIs used to download update files.
+* `settings.updates.metadata-base-url`: The common portion of all URIs used to download update metadata.
+* `settings.updates.target-base-url`: The common portion of all URIs used to download update files.
 
 #### Host containers settings
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).
