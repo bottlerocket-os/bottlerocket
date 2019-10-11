@@ -45,10 +45,10 @@ pub struct Manifest {
 
 impl Update {
     pub fn update_wave(&self, seed: u32) -> Option<&DateTime<Utc>> {
-        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
-            return Some(wave);
-        }
-        None
+        self.waves
+            .range((Included(0), Included(seed)))
+            .last()
+            .map(|(_, wave)| wave)
     }
 
     pub fn update_ready(&self, seed: u32) -> bool {
