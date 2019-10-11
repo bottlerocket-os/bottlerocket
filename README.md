@@ -255,6 +255,31 @@ The following settings are set for you automatically by [pluto](workspaces/api/)
 * `settings.host-containers.control.enabled`: Whether the control container is enabled.
 * `settings.host-containers.control.superpowered`: Whether the control container has high levels of access to the Thar host.
 
+##### Custom host containers
+
+`admin` and `control` are our default host containers, but you're free to change this.
+Beyond just changing the settings above to affect the `admin` and `control` containers, you can add and remove host containers entirely.
+As long as you define the three fields above -- `source` with a URI, and `enabled` and `superpowered` with true/false -- you can add host containers with an API call.
+
+Here's an example of adding a custom host container:
+```
+apiclient -u /settings -X PATCH -d '{"host-containers": {"custom": {"source": "MY-CONTAINER-URI", "enabled": true, "superpowered": false}}}'
+apiclient -u /settings/commit_and_apply -X POST
+```
+
+If the `enabled` flag is `true`, it will be started automatically.
+
+There are a few important caveats to understand about host containers:
+* They're not orchestrated.  They only start or stop according to that `enabled` flag.
+* They run in a separate instance of containerd than the one used for orchestrated containers like Kubernetes pods.
+* They're not updated automatically.  You need to update the `source`, disable the container, then enable it.
+* If you set `superpowered` to true, they'll essentially have root access to the host.
+
+Because of these caveats, host containers are only intended for special use cases.
+We use it for the control container because it needs to be available early to give you access to the OS, and we use it for the admin container because it needs high levels of privilege and because you need it to debug when orchestration isn't working.
+
+Be careful, and make sure you have a similar low-level use case before reaching for host containers.
+
 ## Details
 
 ### Security
