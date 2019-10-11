@@ -117,6 +117,13 @@ Now that the cluster is created, we can have `eksctl` create the configuration f
 eksctl utils write-kubeconfig --name thar
 ```
 
+Now we can make a configuration change to use a CNI plugin that's compatible with Thar.
+```
+kubectl patch daemonset aws-node \
+-n kube-system \
+-p '{"spec": {"template": {"spec": {"containers": [{"image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.0-rc3","name":"aws-node"}]}}}}'
+```
+
 ## Cluster info
 
 Next, we retrieve some information about the new cluster to use in later steps.
