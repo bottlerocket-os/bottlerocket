@@ -1,0 +1,19 @@
+Welcome to Thar's control container!
+
+This container gives you access to the Thar API, which in turn lets you inspect
+and configure the system.  You'll probably want to use the `apiclient` tool for
+that; for example, to inspect the system:
+
+   apiclient -u /settings
+
+You can run `apiclient --help` for usage details, and check the main Thar
+documentation for descriptions of all settings and examples of changing them.
+
+If you need to debug the system further, you can enable the admin container.
+This enables SSH access to the system using the key you specified when you
+launched the instance.  This environment has more debugging tools installed,
+and allows you to get root access to the host.
+
+To enable the admin container, run:
+
+   enable-admin-container
