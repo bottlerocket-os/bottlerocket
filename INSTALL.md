@@ -132,6 +132,10 @@ You can choose whether you want public or private, but make sure to save the sub
 * Choose private for production deployments to get maximum isolation of worker nodes.
 * Choose public to more easily debug your instance.  These subnets have an Internet Gateway, so if you add a public IP address to your instance, you can talk to it.  (You can manually add an Internet Gateway to a private subnet later, so this is a reversible decision.)
 
+Note that if you choose to use the public subnet, you'll need your instance to have a publicly accessible IP address.
+That either means adding `--associate-public-ip-address` to the launch command below, or attaching an Elastic IP address.
+There will be a reminder about this when we talk about the launch command.
+
 (If you use an EC2 region other than "us-west-2", make sure to change that.)
 
 ```
@@ -270,6 +274,7 @@ Now we can launch a Thar instance in our cluster!
 There are a few values to make sure you change in this command:
 * YOUR_KEY_NAME: your SSH keypair name, as registered with EC2
 * SUBNET_ID: the subnet you selected earlier
+* If you chose a public subnet, either add `--associate-public-ip-address` to the command, or attach an Elastic IP afterward.
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier
 * THAR-AMI-ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
 * userdata.toml: the path to the user data file you created earlier
@@ -285,6 +290,8 @@ aws ec2 run-instances --key-name YOUR_KEY_NAME \
    --user-data file://userdata.toml \
    --iam-instance-profile Name=TharInstance
 ```
+
+And remember, if you used a public subnet, add `--associate-public-ip-address` or attach an Elastic IP after launch.
 
 Once it launches, you should be able to run pods on your Thar instance using normal Kubernetes workflows.
 
