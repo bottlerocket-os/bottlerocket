@@ -29,20 +29,29 @@ func main() {
 
 func _main() int {
 	// Parse command-line arguments
-	targetCtr, source := "", ""
-	superpowered := false
-
+	var (
+		targetCtr        string
+		source           string
+		containerdSocket string
+		namespace        string
+		superpowered     bool
+		pullImageOnly    bool
+	)
 	flag.StringVar(&targetCtr, "ctr-id", "", "The ID of the container to be started")
 	flag.StringVar(&source, "source", "", "The image to be pulled")
 	flag.BoolVar(&superpowered, "superpowered", false, "Specifies whether to launch the container in `superpowered` mode or not")
+	flag.BoolVar(&pullImageOnly, "pull-image-only", false, "Only pull and unpack the container image, do not start any container task")
+	flag.StringVar(&containerdSocket, "containerd-socket", "/run/host-containerd/containerd.sock", "Specifies the path to the containerd socket. Defaults to `/run/host-containerd/containerd.sock`")
+	flag.StringVar(&namespace, "namespace", "default", "Specifies the containerd namespace")
 	flag.Parse()
 
-	if targetCtr == "" || source == "" {
+	if source == "" || (targetCtr == "" && !pullImageOnly) {
 		flag.Usage()
 		return 2
 	}
-
-	ctx := namespaces.NamespaceFromEnv(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	ctx = namespaces.WithNamespace(ctx, namespace)
+	defer cancel()
 
 	// Set up channel on which to send signal notifications.
 	// We must use a buffered channel or risk missing the signal
@@ -52,21 +61,50 @@ func _main() int {
 
 	// Set up containerd client
 	// Use host containers' containerd socket
-	client, err := containerd.New("/run/host-containerd/containerd.sock")
+	client, err := containerd.New(containerdSocket, containerd.WithDefaultNamespace(namespace))
 	if err != nil {
-		log.G(ctx).WithError(err).Error("Failed to connect to containerd")
+		log.G(ctx).WithError(err).WithFields(map[string]interface{}{"containerdSocket": containerdSocket, "namespace": namespace}).Error("Failed to connect to containerd")
 		return 1
 	}
 	defer client.Close()
 
-	// Clean up target container if it already exists before starting container task
-	if err := deleteCtrIfExists(ctx, client, targetCtr); err != nil {
+	// Check if the image is from ECR, if it is, convert the image name into a resolvable reference
+	var ref string
+	match := ecrRegex.MatchString(source)
+	if match {
+		var err error
+		ref, err = ecrImageNameToRef(source)
+		if err != nil {
+			log.G(ctx).WithError(err).WithField("source", source)
+			return 1
+		}
+	}
+
+	img, err := pullImage(ctx, ref, client)
+	if err != nil {
+		log.G(ctx).WithField("ref", ref).Error(err)
 		return 1
 	}
 
-	img, err := pullImage(ctx, source, client)
-	if err != nil {
-		log.G(ctx).WithField("source", source).Error(err)
+	// If the image is from ECR, the image reference will be converted into the form of
+	// `"ecr.aws/" + the ARN of the image repository + label/digest`.
+	// We tag the image with its original image name so other services can discover this image by its original image reference.
+	// After the tag operation, this image should be addressable by both its original image reference and its ECR resolver resolvable reference.
+	if match {
+		// Include original tag on ECR image for other consumers.
+		if err := tagImage(ctx, ref, source, client); err != nil {
+			log.G(ctx).WithError(err).WithField("source", source).Error("Failed to tag an image with original image name")
+			return 1
+		}
+	}
+
+	// If we're only pulling and unpacking the image, we're done here
+	if pullImageOnly {
+		return 0
+	}
+
+	// Clean up target container if it already exists before starting container task
+	if err := deleteCtrIfExists(ctx, client, targetCtr); err != nil {
 		return 1
 	}
 
@@ -252,15 +290,7 @@ var ecrRegex = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr\.([a-z
 
 // Pulls image from specified source
 func pullImage(ctx context.Context, source string, client *containerd.Client) (containerd.Image, error) {
-	if match := ecrRegex.MatchString(source); match {
-		var err error
-		source, err = ecrImageNameToRef(source)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Pull the image from ECR
+	// Pull the image
 	img, err := client.Pull(ctx, source,
 		withDynamicResolver(ctx, source),
 		containerd.WithSchema1Conversion)
@@ -273,6 +303,35 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 		return nil, errors.Wrap(err, "Failed to unpack image")
 	}
 	return img, nil
+}
+
+// Image tag logic derived from:
+// https://github.com/containerd/containerd/blob/d80513ee8a6995bc7889c93e7858ddbbc51f063d/cmd/ctr/commands/images/tag.go#L67-L86
+func tagImage(ctx context.Context, imageName string, newImageName string, client *containerd.Client) error {
+	log.G(ctx).WithField("imageName", newImageName).Info("Tagging image")
+	// Retrieve image information
+	imageService := client.ImageService()
+	image, err := imageService.Get(ctx, imageName)
+	if err != nil {
+		return err
+	}
+	// Tag with new image name
+	image.Name = newImageName
+	// Attempt to create the image first
+	if _, err = imageService.Create(ctx, image); err != nil {
+		// The image already exists then delete the original and attempt to create the new one
+		if errdefs.IsAlreadyExists(err) {
+			if err = imageService.Delete(ctx, newImageName); err != nil {
+				return err
+			}
+			if _, err = imageService.Create(ctx, image); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+	return nil
 }
 
 // Return the resolver appropriate for the specified image reference
@@ -293,7 +352,7 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 	}
 }
 
-// Transform an ECR image name into a reference resolvable by the Amazon ECR Containerd Resolver
+// Transform an ECR image name into a reference resolvable by the Amazon ECR containerd Resolver
 // e.g. ecr.aws/arn:<partition>:ecr:<region>:<account>:repository/<name>:<tag>
 func ecrImageNameToRef(input string) (string, error) {
 	ref := "ecr.aws/"
@@ -322,24 +381,27 @@ func ecrImageNameToRef(input string) (string, error) {
 	} else if isGovCloudEndpoint {
 		partition = "aws-us-gov"
 	}
-	// Separate out <name>:<tag>
+	// Separate out <name>:<tag> for checking validity
 	tokens := strings.Split(input, "/")
-	if len(tokens) != 2 {
+	if len(tokens) < 2 {
 		return "", errors.New("No specified name and tag or digest")
 	}
-	fullImageId := tokens[1]
+	fullImageId := tokens[len(tokens)-1]
 	matchDigest, _ := regexp.MatchString(`^[a-zA-Z0-9-_]+@sha256:[A-Fa-f0-9]{64}$`, fullImageId)
-	matchTag, _ := regexp.MatchString(`^[a-zA-Z0-9-_]+:[a-zA-Z0-9.-_]{1,128}$`, fullImageId)
+	matchTag, _ := regexp.MatchString(`^[a-zA-Z0-9-_]+:[a-zA-Z0-9\.\-_]{1,128}$`, fullImageId)
 	if !matchDigest && !matchTag {
 		return "", errors.New("Malformed name and tag or digest")
 	}
+	// Need to include the full repository path and the imageID (e.g. /eks/image-name:tag)
+	tokens = strings.SplitN(input, "/", 2)
+	fullPath := tokens[len(tokens)-1]
 	// Build the ARN for the reference
 	ecrARN := &arn.ARN{
 		Partition: partition,
 		Service:   "ecr",
 		Region:    region,
 		AccountID: account,
-		Resource:  "repository/" + fullImageId,
+		Resource:  "repository/" + fullPath,
 	}
 	return ref + ecrARN.String(), nil
 }
