@@ -9,6 +9,7 @@ BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/workspaces"
 BUILDSYS_BUILDKIT_CLIENT = "moby/buildkit:v0.6.2"
 BUILDSYS_BUILDKIT_SERVER = "tcp://127.0.0.1:1234"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
+BUILDSYS_VERSION = { script = ["git describe --tag --dirty || date +%Y%m%d"] }
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
@@ -102,16 +103,49 @@ script = [
 '''
 ]
 
+[tasks.link-clean]
+dependencies = ["fetch"]
+script = [
+'''
+for link in ${BUILDSYS_OUTPUT_DIR}/thar*.lz4; do
+	if [ -L "${link}" ]; then
+		rm ${link}
+	fi
+done
+'''
+]
+
+[tasks.link-images]
+script = [
+'''
+PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}-${BUILDSYS_VERSION}"
+ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}.img.lz4 \
+	${BUILDSYS_OUTPUT_DIR}/${PREFIX}.img.lz4
+ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-data.img.lz4 \
+	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-data.img.lz4
+ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-boot.ext4.lz4 \
+	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-boot.ext4.lz4
+ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-root.ext4.lz4 \
+	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.ext4.lz4
+ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-root.verity.lz4 \
+	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.verity.lz4
+'''
+]
+
 [tasks.build]
 dependencies = [
+    "link-clean",
     "build-images",
     "check-licenses",
+    "link-images",
 ]
 
 [tasks.world]
 dependencies = [
+    "link-clean",
     "world-images",
     "check-licenses",
+    "link-images",
 ]
 
 [tasks.clean]
