@@ -43,15 +43,3 @@ lto = true
 # This replaces webpki-roots with a shim that reads from the ca-certificates package
 [patch.crates-io.webpki-roots]
 path = "webpki-roots-shim"
-
-# FIXME drop this when next rusoto releases with
-# https://github.com/rusoto/rusoto/pull/1494
-[patch.crates-io.rusoto_core]
-git = "https://github.com/rusoto/rusoto.git"
-rev = "260169aabe14b4596e648c551a6246968f4a179a"
-[patch.crates-io.rusoto_credential]
-git = "https://github.com/rusoto/rusoto.git"
-rev = "260169aabe14b4596e648c551a6246968f4a179a"
-[patch.crates-io.rusoto_ssm]
-git = "https://github.com/rusoto/rusoto.git"
-rev = "260169aabe14b4596e648c551a6246968f4a179a"
