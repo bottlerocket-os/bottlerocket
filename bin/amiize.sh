@@ -506,6 +506,7 @@ while true; do
       "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_ROOT_IMAGE} of=${ROOT_DEVICE}"
    check_return ${?} "Writing root image to disk failed!" || continue
 
+   # shellcheck disable=SC2029 disable=SC2086
    ssh ${SSH_OPTS} -tt "ec2-user@${host}" \
       "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_DATA_IMAGE} of=${DATA_DEVICE}"
    check_return ${?} "Writing data image to disk failed!" || continue
