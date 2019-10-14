@@ -118,7 +118,7 @@ fn write_config_files(
 
     // Get all settings values for config file templates
     debug!("Requesting settings values");
-    let settings = settings::get_settings_from_template(&args.socket_path, &template_registry)?;
+    let settings = settings::get_settings_from_template(&args.socket_path)?;
 
     // Ensure all files render properly
     info!("Rendering config files...");
