@@ -238,6 +238,7 @@ See the [setup guide](INSTALL.md) for *much* more detail on setting up Thar and 
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
 The following settings are set for you automatically by [pluto](workspaces/api/) based on runtime instance information, but you can override them if you know what you're doing!
+* `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
 * `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.

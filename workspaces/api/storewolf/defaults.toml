@@ -45,6 +45,11 @@ path = "/etc/kubernetes/pki/ca.crt"
 template-path = "/usr/share/templates/kubernetes-ca-crt"
 
 [[metadata]]
+key = "settings.kubernetes.max-pods"
+md = "setting-generator"
+val = "pluto max-pods"
+
+[[metadata]]
 key = "settings.kubernetes.cluster-dns-ip"
 md = "setting-generator"
 val = "pluto cluster-dns-ip"

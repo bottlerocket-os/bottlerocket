@@ -24,6 +24,9 @@ Source9: migrator.service
 Source10: api-sysusers.conf
 Source11: host-containers@.service
 Source12: host-containers-tmpfiles.conf
+# Taken from https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
+Source13: eni-max-pods
+
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}systemd-devel
@@ -165,6 +168,9 @@ install -p -m 0644 %{S:12} %{buildroot}%{_cross_tmpfilesdir}/host-containers.con
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:10} %{buildroot}%{_cross_sysusersdir}/api.conf
 
+install -d %{buildroot}%{_cross_datadir}/eks
+install -p -m 0644 %{S:13} %{buildroot}%{_cross_datadir}/eks
+
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{_cross_unitdir}/apiserver.service
@@ -188,6 +194,8 @@ install -p -m 0644 %{S:10} %{buildroot}%{_cross_sysusersdir}/api.conf
 
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
+%dir %{_cross_datadir}/eks
+%{_cross_datadir}/eks/eni-max-pods
 
 %files -n %{_cross_os}bork
 %{_cross_bindir}/bork
