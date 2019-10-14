@@ -27,6 +27,7 @@ where
     }
 
     let method = "GET";
+    trace!("{}ing from {}", method, uri);
     let (code, response_body) = apiclient::raw_request(socket_path, &uri, method, None)
         .context(error::APIRequest { method, uri: &uri })?;
 
@@ -39,6 +40,7 @@ where
         }
         .fail();
     }
+    trace!("JSON response: {}", response_body);
 
     serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })
 }
