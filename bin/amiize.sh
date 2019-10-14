@@ -490,13 +490,9 @@ while true; do
 
    echo "Uploading the images to the instance"
    rsync --compress --sparse --rsh="ssh ${SSH_OPTS}" \
-      "${ROOT_IMAGE}" "ec2-user@${host}:${STORAGE}/"
-   check_return ${?} "rsync of root image to build host failed!" || continue
+      "${ROOT_IMAGE}" "${DATA_IMAGE}" "ec2-user@${host}:${STORAGE}/"
+   check_return ${?} "rsync of root and data images to build host failed!" || continue
    REMOTE_ROOT_IMAGE="${STORAGE}/$(basename "${ROOT_IMAGE}")"
-
-   rsync --compress --sparse --rsh="ssh ${SSH_OPTS}" \
-      "${DATA_IMAGE}" "ec2-user@${host}:${STORAGE}/"
-   check_return ${?} "rsync of data image to build host failed!" || continue
    REMOTE_DATA_IMAGE="${STORAGE}/$(basename "${DATA_IMAGE}")"
 
    echo "Writing the images to the volumes"
