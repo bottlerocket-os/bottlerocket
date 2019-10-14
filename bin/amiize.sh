@@ -477,7 +477,7 @@ while true; do
    tries=0
    sleep 30
    # shellcheck disable=SC2029 disable=SC2086
-   while ! ssh ${SSH_OPTS} "ec2-user@${host}" "test -b ${ROOT_DEVICE} && test -b ${DATA_DEVICE}"; do
+   while ! ssh ${SSH_OPTS} -o ConnectTimeout=5 "ec2-user@${host}" "test -b ${ROOT_DEVICE} && test -b ${DATA_DEVICE}"; do
       [ "${tries}" -lt 10 ]
       check_return ${?} "* SSH not responding on instance!" || continue 2
       sleep 6
