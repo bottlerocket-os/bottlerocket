@@ -477,7 +477,7 @@ while true; do
    tries=0
    sleep 30
    # shellcheck disable=SC2029 disable=SC2086
-   while ! ssh ${SSH_OPTS} "ec2-user@${host}" "test -b ${ROOT_DEVICE} && test -b ${DATA_DEVICE}"; do
+   while ! ssh ${SSH_OPTS} -o ConnectTimeout=5 "ec2-user@${host}" "test -b ${ROOT_DEVICE} && test -b ${DATA_DEVICE}"; do
       [ "${tries}" -lt 10 ]
       check_return ${?} "* SSH not responding on instance!" || continue 2
       sleep 6
@@ -490,13 +490,9 @@ while true; do
 
    echo "Uploading the images to the instance"
    rsync --compress --sparse --rsh="ssh ${SSH_OPTS}" \
-      "${ROOT_IMAGE}" "ec2-user@${host}:${STORAGE}/"
-   check_return ${?} "rsync of root image to build host failed!" || continue
+      "${ROOT_IMAGE}" "${DATA_IMAGE}" "ec2-user@${host}:${STORAGE}/"
+   check_return ${?} "rsync of root and data images to build host failed!" || continue
    REMOTE_ROOT_IMAGE="${STORAGE}/$(basename "${ROOT_IMAGE}")"
-
-   rsync --compress --sparse --rsh="ssh ${SSH_OPTS}" \
-      "${DATA_IMAGE}" "ec2-user@${host}:${STORAGE}/"
-   check_return ${?} "rsync of data image to build host failed!" || continue
    REMOTE_DATA_IMAGE="${STORAGE}/$(basename "${DATA_IMAGE}")"
 
    echo "Writing the images to the volumes"
@@ -506,6 +502,7 @@ while true; do
       "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_ROOT_IMAGE} of=${ROOT_DEVICE}"
    check_return ${?} "Writing root image to disk failed!" || continue
 
+   # shellcheck disable=SC2029 disable=SC2086
    ssh ${SSH_OPTS} -tt "ec2-user@${host}" \
       "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_DATA_IMAGE} of=${DATA_DEVICE}"
    check_return ${?} "Writing data image to disk failed!" || continue
