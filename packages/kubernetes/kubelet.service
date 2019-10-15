@@ -19,6 +19,8 @@ ExecStart=/usr/bin/kubelet \
     --cert-dir /var/lib/kubelet/pki \
     --volume-plugin-dir /var/lib/kubelet/plugins/volume/exec \
     --node-ip ${NODE_IP} \
+    --node-labels "${NODE_LABELS}" \
+    --register-with-taints "${NODE_TAINTS}" \
     --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}
 
 Restart=on-failure

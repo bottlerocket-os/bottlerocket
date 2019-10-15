@@ -55,6 +55,12 @@ pub struct KubernetesSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub api_server: Option<String>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node_labels: Option<HashMap<SingleLineString, SingleLineString>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node_taints: Option<HashMap<SingleLineString, SingleLineString>>,
+
     // Dynamic settings.
 
     #[serde(skip_serializing_if = "Option::is_none")]
