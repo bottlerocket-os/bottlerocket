@@ -8,7 +8,6 @@ publish = false
 [dependencies]
 chrono = "0.4.9"
 data_store_version = { path = "../../api/data_store_version" }
-loopdev = "0.2.1"
 lz4 = "1.23.1"
 rand = "0.7.0"
 regex = "1.1"
@@ -20,8 +19,6 @@ signpost = { path = "../signpost" }
 snafu = "0.5.0"
 tracing = "0.1"
 tracing-subscriber = "0.1"
-sys-mount = "1.2.1"
-tempfile = "3.1.0"
 time = "0.1"
 toml = "0.5.1"
 tough = { path = "../tough" }
