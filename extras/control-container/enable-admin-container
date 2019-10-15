@@ -1,0 +1,36 @@
+#!/bin/bash
+
+error() {
+   echo -e "Error: ${*}\n" >&2
+   cat >&2 <<-EOF
+	You can manually enable the admin container like this:
+	   apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": true}}}'
+	   apiclient -u /settings/commit_and_apply -m POST
+	EOF
+   exit 1
+}
+
+if ! command -v apiclient >/dev/null 2>&1; then
+   error "can't find 'apiclient'"
+fi
+
+echo "Checking whether there are pending settings; we don't want to silently commit other changes"
+PENDING="$(apiclient -u /settings/pending)"
+rc="${?}"
+if [ "${rc}" -ne 0 ]; then
+   error "apiclient returned ${rc} - couldn't check pending settings, so we don't know if it's safe to commit changes for enabling admin container.\nTry to check what's pending with \`apiclient -u /settings/pending\`"
+elif [ "${PENDING}" != "{}" ]; then
+   error "found pending settings in API, cowardly refusing to commit them.\nYou can commit them yourself with \`apiclient -u /settings/commit_and_apply -m POST\` and try again.\nPending settings: ${PENDING}"
+fi
+
+echo "Setting admin container to enabled"
+if ! apiclient -v -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": true}}}'; then
+   error "failed to change enabled setting of admin container"
+fi
+
+echo "Committing and applying changes"
+if ! apiclient -v -u /settings/commit_and_apply -m POST; then
+   error "failed to commit and apply settings"
+fi
+
+echo "The admin container is now enabled - it should pull and start soon, and then you can SSH in"
