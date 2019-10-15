@@ -237,6 +237,19 @@ See the [setup guide](INSTALL.md) for *much* more detail on setting up Thar and 
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
+The following settings can be optionally set to customize the node labels and taints. 
+* `settings.kubernetes.node-labels`: [Labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) in the form of key, value pairs added when registering the node in the cluster.
+* `settings.kubernetes.node-taints`: [Taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) in the form of key, value and effect entries added when registering the node in the cluster.
+  * Example user data for setting up labels and taints:
+    ```
+    [settings.kubernetes.node-labels]
+    label1 = "foo"
+    label2 = "bar"
+    [settings.kubernetes.node-taints]
+    dedicated = "experimental:PreferNoSchedule"
+    special = "true:NoSchedule"
+    ```
+
 The following settings are set for you automatically by [pluto](workspaces/api/) based on runtime instance information, but you can override them if you know what you're doing!
 * `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
 * `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
