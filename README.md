@@ -111,14 +111,18 @@ To enable the container, you can change the setting in user data when starting T
 settings.host-containers.admin.enabled = true
 ```
 
-If Thar is already running, you can change the setting with an API call:
+If Thar is already running, you can enable the admin container from the default [control container](#control-container) like this:
+
+```
+enable-admin-container
+```
+
+If you're using a custom control container, or want to make the API calls directly, you can enable the admin container like this instead:
 
 ```
 apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": true}}}'
 apiclient -u /settings/commit_and_apply -m POST
 ```
-
-(To make an API call like this, you need to use an authenticated channel like [SSM](#control-container).)
 
 Once you're in the admin container, you can run `sheltie` to get a full root shell in the Thar host.
 Be careful; while you can inspect and change even more as root, Thar's filesystem and dm-verity setup will prevent most changes from persisting over a restart - see [Security](#security).
