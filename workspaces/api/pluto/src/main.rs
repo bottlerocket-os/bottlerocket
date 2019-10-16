@@ -123,9 +123,7 @@ fn get_text_from_imds(client: &reqwest::Client, path: &str) -> Result<String> {
         })
 }
 
-fn get_max_pods() -> Result<String> {
-    let client = reqwest::Client::new();
-
+fn get_max_pods(client: &reqwest::Client) -> Result<String> {
     let path = "/meta-data/instance-type";
     let instance_type = get_text_from_imds(&client, &path)?;
     // Find the corresponding maximum number of pods supported by this instance type
@@ -148,9 +146,7 @@ fn get_max_pods() -> Result<String> {
     error::NoInstanceTypeMaxPods { instance_type }.fail()
 }
 
-fn get_cluster_dns_ip() -> Result<String> {
-    let client = reqwest::Client::new();
-
+fn get_cluster_dns_ip(client: &reqwest::Client) -> Result<String> {
     let macs_path = "/meta-data/network/interfaces/macs";
     let macs = get_text_from_imds(&client, macs_path)?;
     // Take the first (primary) MAC address. Others will exist from attached ENIs.
@@ -175,15 +171,12 @@ fn get_cluster_dns_ip() -> Result<String> {
     Ok(dns)
 }
 
-fn get_node_ip() -> Result<String> {
-    let client = reqwest::Client::new();
+fn get_node_ip(client: &reqwest::Client) -> Result<String> {
     let path = "/meta-data/local-ipv4";
     get_text_from_imds(&client, &path)
 }
 
-fn get_pod_infra_container_image() -> Result<String> {
-    let client = reqwest::Client::new();
-
+fn get_pod_infra_container_image(client: &reqwest::Client) -> Result<String> {
     // Get the region from the correct location.
     let instance_identity_document_path = "/dynamic/instance-identity/document";
     let iid_text = get_text_from_imds(&client, &instance_identity_document_path)?;
@@ -227,11 +220,12 @@ fn parse_args(mut args: env::Args) -> String {
 fn main() -> Result<()> {
     let setting_name = parse_args(env::args());
 
+    let client = reqwest::Client::new();
     let setting = match setting_name.as_ref() {
-        "max-pods" => get_max_pods(),
-        "cluster-dns-ip" => get_cluster_dns_ip(),
-        "node-ip" => get_node_ip(),
-        "pod-infra-container-image" => get_pod_infra_container_image(),
+        "max-pods" => get_max_pods(&client),
+        "cluster-dns-ip" => get_cluster_dns_ip(&client),
+        "node-ip" => get_node_ip(&client),
+        "pod-infra-container-image" => get_pod_infra_container_image(&client),
         _ => usage(),
     }?;
 
