@@ -8,20 +8,17 @@ mod se;
 use crate::error::Result;
 use chrono::{DateTime, Duration, Utc};
 use data_store_version::Version as DVersion;
-use loopdev::{LoopControl, LoopDevice};
 use rand::{thread_rng, Rng};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use signpost::State;
-use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
+use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader};
 use std::ops::Bound::{Excluded, Included};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process;
-use sys_mount::{unmount, Mount, MountFlags, SupportedFilesystems, UnmountFlags};
-use tempfile::NamedTempFile;
 use tough::{Limits, Repository, Settings};
 use tracing_subscriber::{
     filter::{EnvFilter, LevelFilter},
@@ -35,8 +32,6 @@ const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
 const MIGRATION_PATH: &str = "/var/lib/thar/datastore/migrations";
-const IMAGE_MIGRATION_PREFIX: &str = "sys-root/usr/share/factory";
-const IMAGE_MOUNT_PATH: &str = "/var/lib/thar/updog/thar-be-updates";
 const MAX_SEED: u64 = 2048;
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -282,56 +277,6 @@ fn write_target_to_disk<P: AsRef<Path>>(
     Ok(())
 }
 
-fn mount_root_target(
-    repository: &Repository<'_>,
-    update: &Update,
-) -> Result<(PathBuf, LoopDevice, NamedTempFile)> {
-    let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
-
-    // Download partition
-    write_target_to_disk(repository, &update.images.root, &tmpfd.path())?;
-
-    // Create loop device
-    let ld = LoopControl::open()
-        .context(error::LoopControlFailed)?
-        .next_free()
-        .context(error::LoopFindFailed)?;
-    ld.attach_file(&tmpfd.path())
-        .context(error::LoopAttachFailed)?;
-
-    // Mount image
-    let dir = PathBuf::from(IMAGE_MOUNT_PATH);
-    if !dir.exists() {
-        fs::create_dir(&dir).context(error::DirCreate { path: &dir })?;
-    }
-    let fstype = SupportedFilesystems::new().context(error::MountFailed {})?;
-    Mount::new(
-        ld.path().context(error::LoopNameFailed)?,
-        &dir,
-        &fstype,
-        MountFlags::RDONLY | MountFlags::NOEXEC,
-        None,
-    )
-    .context(error::MountFailed {})?;
-
-    Ok((dir, ld, tmpfd))
-}
-
-fn copy_migration_from_image(mount: &PathBuf, name: &str) -> Result<()> {
-    let prefix = format!(
-        "{}-thar-linux-gnu/{}{}",
-        TARGET_ARCH, IMAGE_MIGRATION_PREFIX, MIGRATION_PATH
-    );
-    let path = PathBuf::new().join(mount).join(prefix).join(name);
-
-    ensure!(
-        path.exists() && path.is_file(),
-        error::MigrationNotLocal { name: path }
-    );
-    fs::copy(path, PathBuf::from(MIGRATION_PATH)).context(error::MigrationCopyFailed { name })?;
-    Ok(())
-}
-
 fn migration_targets(from: DVersion, to: DVersion, manifest: &Manifest) -> Result<Vec<String>> {
     let mut targets = Vec::new();
     let mut version = from;
@@ -367,13 +312,10 @@ fn migration_targets(from: DVersion, to: DVersion, manifest: &Manifest) -> Resul
 /// Store required migrations for a datastore version update in persistent
 /// storage. All intermediate migrations between the current version and the
 /// target version must be retrieved.
-/// If a migration is available in the target root image it is copied from
-/// the image instead of being downloaded from the repository.
 fn retrieve_migrations(
     repository: &Repository<'_>,
     manifest: &Manifest,
     update: &Update,
-    root_path: &Option<PathBuf>,
 ) -> Result<()> {
     let (version_current, _) = running_version()?;
     let datastore_current =
@@ -406,58 +348,13 @@ fn retrieve_migrations(
         fs::create_dir(&dir).context(error::DirCreate { path: &dir })?;
     }
     for name in migration_targets(*start, *target, &manifest)? {
-        let path = dir.join(&name);
-        if let Some(mount) = &root_path {
-            if let Err(e) = copy_migration_from_image(mount, &name) {
-                eprintln!("Migration not copied from image: {}", e);
-                write_target_to_disk(repository, &name, path)?;
-            }
-        } else {
-            write_target_to_disk(repository, &name, path)?;
-        }
+        write_target_to_disk(repository, &name, dir.join(&name))?;
     }
 
     Ok(())
 }
 
-fn update_prepare(
-    repository: &Repository<'_>,
-    manifest: &Manifest,
-    update: &Update,
-) -> Result<Option<NamedTempFile>> {
-    // Try to mount the root image to look for migrations
-    let (root_path, ld, tmpfd) = match mount_root_target(repository, update) {
-        Ok((p, l, t)) => (Some(p), Some(l), Some(t)),
-        Err(e) => {
-            eprintln!(
-                "Failed to mount image, migrations will be downloaded ({})",
-                e
-            );
-            (None, None, None)
-        }
-    };
-
-    retrieve_migrations(repository, manifest, update, &root_path)?;
-
-    if let Some(path) = root_path {
-        // Unmount the target root image - warn only on failure
-        if let Err(e) = unmount(path, UnmountFlags::empty()) {
-            eprintln!("Failed to unmount root image: {}", e);
-        }
-        if let Some(ld) = ld {
-            if ld.detach().is_err() {
-                eprintln!("Failed to detach loop device");
-            }
-        }
-    }
-    Ok(tmpfd)
-}
-
-fn update_image(
-    update: &Update,
-    repository: &Repository<'_>,
-    root_path: Option<NamedTempFile>,
-) -> Result<()> {
+fn update_image(update: &Update, repository: &Repository<'_>) -> Result<()> {
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
@@ -468,15 +365,7 @@ fn update_image(
     let inactive = gpt_state.inactive_set();
 
     // TODO Do we want to recover the inactive side on an error?
-    if let Some(path) = root_path {
-        // Copy root from already downloaded image
-        if let Err(e) = fs::copy(path, &inactive.root) {
-            eprintln!("Root copy failed, redownloading - {}", e);
-            write_target_to_disk(repository, &update.images.root, &inactive.root)?;
-        }
-    } else {
-        write_target_to_disk(repository, &update.images.root, &inactive.root)?;
-    }
+    write_target_to_disk(repository, &update.images.root, &inactive.root)?;
     write_target_to_disk(repository, &update.images.boot, &inactive.boot)?;
     write_target_to_disk(repository, &update.images.hash, &inactive.hash)?;
     Ok(())
@@ -662,8 +551,8 @@ fn main_inner() -> Result<()> {
                         }
                     }
 
-                    let root_path = update_prepare(&repository, &manifest, u)?;
-                    update_image(u, &repository, root_path)?;
+                    retrieve_migrations(&repository, &manifest, u)?;
+                    update_image(u, &repository)?;
                     if command == Command::Update {
                         update_flags()?;
                         if arguments.reboot {
