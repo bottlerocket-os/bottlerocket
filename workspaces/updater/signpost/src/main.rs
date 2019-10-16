@@ -9,8 +9,10 @@ use signpost::State;
 enum Command {
     Status,
     MarkSuccessfulBoot,
+    MarkInactiveValid,
     ClearInactive,
     UpgradeToInactive,
+    CancelUpgrade,
     RollbackToInactive,
     RewriteTable,
 }
@@ -24,7 +26,9 @@ SUBCOMMANDS:
     status                  Show partition sets and priority status
     mark-successful-boot    Mark the active partitions as successfully booted
     clear-inactive          Clears inactive priority information to prepare writing images to disk
-    upgrade-to-inactive     Sets the inactive partitions as new upgrade partitions
+    mark-inactive-valid     Marks the inactive partition as having a valid image
+    upgrade-to-inactive     Sets the inactive partitions as new upgrade partitions if marked valid
+    cancel-upgrade          Reverse upgrade-to-inactive
     rollback-to-inactive    Deprioritizes the inactive partitions
     rewrite-table           Rewrite the partition table with no changes to disk (used for testing this code)");
     std::process::exit(1)
@@ -45,8 +49,16 @@ fn main() {
                 state.mark_successful_boot();
                 state.write()?;
             }
+            Command::MarkInactiveValid => {
+                state.mark_inactive_valid();
+                state.write()?;
+            }
             Command::UpgradeToInactive => {
-                state.upgrade_to_inactive();
+                state.upgrade_to_inactive()?;
+                state.write()?;
+            }
+            Command::CancelUpgrade => {
+                state.cancel_upgrade();
                 state.write()?;
             }
             Command::RollbackToInactive => {

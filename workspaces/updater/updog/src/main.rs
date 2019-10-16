@@ -378,12 +378,17 @@ fn update_image(update: &Update, repository: &Repository<'_>) -> Result<()> {
     write_target_to_disk(repository, &update.images.root, &inactive.root)?;
     write_target_to_disk(repository, &update.images.boot, &inactive.boot)?;
     write_target_to_disk(repository, &update.images.hash, &inactive.hash)?;
+
+    gpt_state.mark_inactive_valid();
+    gpt_state.write().context(error::PartitionTableWrite)?;
     Ok(())
 }
 
 fn update_flags() -> Result<()> {
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
-    gpt_state.upgrade_to_inactive();
+    gpt_state
+        .upgrade_to_inactive()
+        .context(error::InactivePartitionUpgrade)?;
     gpt_state.write().context(error::PartitionTableWrite)?;
     Ok(())
 }
@@ -592,7 +597,6 @@ fn main_inner() -> Result<()> {
             }
         }
         Command::UpdateApply => {
-            // TODO Guard against being called repeatedly
             update_flags()?;
             if arguments.reboot {
                 process::Command::new("shutdown")

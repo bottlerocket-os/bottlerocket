@@ -80,6 +80,9 @@ pub(crate) enum Error {
     #[snafu(display("Duplicate version key: {}", key))]
     DuplicateVersionKey { backtrace: Backtrace, key: String },
 
+    #[snafu(display("Could not mark inactive partition for boot: {}", source))]
+    InactivePartitionUpgrade { source: signpost::Error },
+
     #[snafu(display("Failed to attach image to loop device"))]
     LoopAttachFailed {
         backtrace: Backtrace,
