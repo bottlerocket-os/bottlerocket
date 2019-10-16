@@ -254,8 +254,7 @@ where
             })?;
 
         // Match on the generator's exit code. This code lays the foundation
-        // for handling alternative exit codes from generators. For now,
-        // handle 0 and 1
+        // for handling alternative exit codes from generators.
         match result.status.code() {
             Some(0) => {}
             Some(1) => {
@@ -265,6 +264,13 @@ where
                     stderr: String::from_utf8_lossy(&result.stderr),
                 }
                 .fail()
+            }
+            Some(2) => {
+                warn!(
+                    "'{}' returned 2, not setting '{}', continuing with other generators",
+                    command, generator
+                );
+                continue;
             }
             Some(x) => {
                 return error::UnexpectedReturnCode {
