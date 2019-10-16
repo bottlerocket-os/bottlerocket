@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:experimental
+# syntax=docker/dockerfile:1.1.3-experimental
 
 FROM fedora:30 AS origin
 RUN dnf makecache && dnf -y update
