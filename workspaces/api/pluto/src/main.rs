@@ -209,7 +209,7 @@ fn usage() -> ! {
         r"Usage: {} [max-pods | cluster-dns-ip | node-ip | pod-infra-container-image]",
         program_name
     );
-    process::exit(2);
+    process::exit(1);
 }
 
 /// Parses args for the setting key name.
@@ -222,10 +222,14 @@ fn main() -> Result<()> {
 
     let client = reqwest::Client::new();
     let setting = match setting_name.as_ref() {
-        "max-pods" => get_max_pods(&client),
         "cluster-dns-ip" => get_cluster_dns_ip(&client),
         "node-ip" => get_node_ip(&client),
         "pod-infra-container-image" => get_pod_infra_container_image(&client),
+
+        // If we want to specify a reasonable default in a template, we can exit 2 to tell
+        // sundog to skip this setting.
+        "max-pods" => get_max_pods(&client).map_err(|_| process::exit(2)),
+
         _ => usage(),
     }?;
 
