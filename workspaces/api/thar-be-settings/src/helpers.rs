@@ -340,6 +340,83 @@ pub fn join_map(
     Ok(())
 }
 
+/// `default` lets you specify the default value for a key in a template in case that key isn't
+/// set.  The first argument is the default (string) value; the second argument is the key (with
+/// scalar value) to check and insert if it is set.
+pub fn default(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting default helper");
+    let template_name = renderctx
+        .get_root_template_name()
+        .map(|i| i.to_string())
+        .unwrap_or_else(|| "dynamic template".to_string());
+    trace!("Template name: {}", &template_name);
+
+    trace!("Number of params: {}", helper.params().len());
+    if helper.params().len() != 2 {
+        return Err(RenderError::from(
+            error::TemplateHelperError::IncorrectNumberOfParams {
+                expected: 2,
+                received: helper.params().len(),
+                helper: helper.name().to_string(),
+                template: template_name,
+            },
+        ));
+    }
+
+    // Pull out the parameters and confirm their types
+    let default_val = helper
+        .param(0)
+        .map(|v| v.value())
+        .context(error::Internal {
+            msg: "Missing param after confirming there are enough",
+        })?;
+    let default = default_val
+        .as_str()
+        .with_context(|| error::InvalidTemplateValue {
+            expected: "string",
+            value: default_val.to_owned(),
+            template: template_name.to_owned(),
+        })?;
+    trace!("Default value if key is not set: {}", default);
+
+    let requested_value = helper
+        .param(1)
+        .map(|v| v.value())
+        .context(error::Internal {
+            msg: "Missing param after confirming there are enough",
+        })?;
+    let value = match requested_value {
+        // these ones Display as their simple scalar selves
+        Value::Bool(b) => b.to_string(),
+        Value::Number(n) => n.to_string(),
+        Value::String(s) => s.to_string(),
+        // If no value is set, use the given default.
+        Value::Null => default.to_string(),
+        // composite types unsupported
+        Value::Array(_) | Value::Object(_) => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidTemplateValue {
+                    expected: "scalar",
+                    value: requested_value.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            ))
+        }
+    };
+
+    // Write the string out to the template
+    out.write(&value).context(error::TemplateWrite {
+        template: template_name.to_owned(),
+    })?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod test_base64_decode {
     use super::*;
@@ -491,5 +568,85 @@ mod test_join_map {
         )
         // Invalid failure mode 'sup'
         .unwrap_err();
+    }
+}
+
+#[cfg(test)]
+mod test_default {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("default", Box::new(default));
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn have_setting() {
+        let result = setup_and_render_template(
+            "{{default \"42\" setting}}",
+            &json!({"setting": "hi"}),
+        )
+        .unwrap();
+        assert_eq!(result, "hi")
+    }
+
+    #[test]
+    fn dont_have_setting() {
+        let result = setup_and_render_template(
+            "{{default \"42\" setting}}",
+            &json!({"not-the-setting": "hi"}),
+        )
+        .unwrap();
+        assert_eq!(result, "42")
+    }
+
+    #[test]
+    fn have_setting_bool() {
+        let result = setup_and_render_template(
+            "{{default \"42\" setting}}",
+            &json!({"setting": true}),
+        )
+        .unwrap();
+        assert_eq!(result, "true")
+    }
+
+    #[test]
+    fn dont_have_setting_bool() {
+        let result = setup_and_render_template(
+            "{{default \"42\" setting}}",
+            &json!({"not-the-setting": true}),
+        )
+        .unwrap();
+        assert_eq!(result, "42")
+    }
+
+    #[test]
+    fn have_setting_number() {
+        let result = setup_and_render_template(
+            "{{default \"42\" setting}}",
+            &json!({"setting": 42.42}),
+        )
+        .unwrap();
+        assert_eq!(result, "42.42")
+    }
+
+    #[test]
+    fn dont_have_setting_number() {
+        let result = setup_and_render_template(
+            "{{default \"42\" setting}}",
+            &json!({"not-the-setting": 42.42}),
+        )
+        .unwrap();
+        assert_eq!(result, "42")
     }
 }

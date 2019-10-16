@@ -34,6 +34,7 @@ pub fn build_template_registry(
     // that we can call from here. For now, KISS.
     template_registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
     template_registry.register_helper("join_map", Box::new(helpers::join_map));
+    template_registry.register_helper("default", Box::new(helpers::default));
 
     Ok(template_registry)
 }
