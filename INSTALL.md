@@ -126,33 +126,17 @@ kubectl patch daemonset aws-node \
 
 ## Cluster info
 
-Next, we retrieve some information about the new cluster to use in later steps.
-Run this, and save the base64 encoded certificate authority and API Endpoint URL from the output.
-Also save the subnet IDs of the subnets it created in EC2, which we'll use in the next step.
+This section helps you determine some of the cluster information needed later by the instance launch command.
 
+### Kubernetes cluster info
+
+Run this to get the API endpoint and base64-encoded certificate authority, which we use in the next step.
 ```
-eksctl get cluster -o yaml --name thar
-```
-
-Take the subnet IDs (`subnet-*`) from that output and insert them in this command, which will tell us whether each subnet is public or private.
-You can choose whether you want public or private, but make sure to save the subnet ID for later in the launch command.
-* Choose private for production deployments to get maximum isolation of worker nodes.
-* Choose public to more easily debug your instance.  These subnets have an Internet Gateway, so if you add a public IP address to your instance, you can talk to it.  (You can manually add an Internet Gateway to a private subnet later, so this is a reversible decision.)
-
-Note that if you choose to use the public subnet, you'll need your instance to have a publicly accessible IP address.
-That either means adding `--associate-public-ip-address` to the launch command below, or attaching an Elastic IP address.
-There will be a reminder about this when we talk about the launch command.
-
-(If you use an EC2 region other than "us-west-2", make sure to change that.)
-
-```
-aws ec2 describe-subnets \
---subnet-ids PUT-THE-SUBNETS-IDS-HERE subnet-1 subnet-2 ... \
---region us-west-2 \
---query "Subnets[].[SubnetId, Tags[?Key=='aws:cloudformation:logical-id']]"
+eksctl get cluster --name thar -o json \
+   | jq --raw-output '.[] | "Endpoint: " + .Endpoint,"\nCA: " + .CertificateAuthority.Data'
 ```
 
-Using the information from eksctl, create a file like this, named `userdata.toml`.
+Using that information from eksctl, create a file like this, named `userdata.toml`.
 This will be used at the end, in the instance launch command.
 
 ```
@@ -161,6 +145,32 @@ api-server = "YOUR-API-ENDPOINT-HERE"
 cluster-name = "thar"
 cluster-certificate = "YOUR-CERTIFICATE-AUTHORITY-HERE"
 ```
+
+### Subnet info
+
+Next, run this to get information about the subnets that eksctl created.
+It will give you a list of the subnets and tell you whether each is public or private.
+(If you use an EC2 region other than "us-west-2", make sure to change that.)
+
+```
+aws ec2 describe-subnets \
+   --subnet-ids $(eksctl get cluster --name thar -o json | jq --raw-output '.[].ResourcesVpcConfig.SubnetIds[]') \
+   --region us-west-2 \
+   --query "Subnets[].[SubnetId, Tags[?Key=='aws:cloudformation:logical-id'].Value]" \
+   | xargs -L2
+```
+
+You'll want to pick one and save it for the launch command later.
+
+You can choose whether you want public or private.
+* Choose private for production deployments to get maximum isolation of worker nodes.
+* Choose public to more easily debug your instance.  These subnets have an Internet Gateway, so if you add a public IP address to your instance, you can talk to it.  (You can manually add an Internet Gateway to a private subnet later, so this is a reversible decision.)
+
+Note that if you choose to use the public subnet, you'll need your instance to have a publicly accessible IP address.
+That either means adding `--associate-public-ip-address` to the launch command below, or attaching an Elastic IP address.
+There will be a reminder about this when we talk about the launch command.
+
+Finally, note that if you want to launch in a specific availability zone, make sure you pick a subnet that matches; the AZ is listed right next to the public/private status.
 
 ## IAM role
 
