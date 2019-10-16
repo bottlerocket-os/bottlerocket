@@ -10,6 +10,10 @@ disabled_plugins = [
 [grpc]
 address = "/run/containerd/containerd.sock"
 
+[plugins."io.containerd.grpc.v1.cri"]
+# Pause container image is specified here, shares the same image as kubelet's pod-infra-container-image
+sandbox_image = "{{settings.kubernetes.pod-infra-container-image}}"
+
 [plugins."io.containerd.grpc.v1.cri".containerd]
 default_runtime_name = "runc"
 
