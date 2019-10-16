@@ -3,7 +3,7 @@ use snafu::{OptionExt, ResultExt};
 use std::fs::{File, OpenOptions};
 use std::io::{self};
 use std::num::NonZeroU64;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tempdir::TempDir;
 use tough::{Limits, Repository, Settings};
@@ -35,14 +35,14 @@ pub(crate) struct DownloadArgs {
     indir: PathBuf,
 }
 
-fn root_warning(path: &PathBuf) {
+fn root_warning<P: AsRef<Path>>(path: P) {
     #[rustfmt::skip]
     eprintln!("\
 =================================================================
-WARNING: Downloading root.json to {:?}
+WARNING: Downloading root.json to {}
 This is unsafe and will not establish trust, use only for testing
 =================================================================",
-    path);
+    path.as_ref().display());
 }
 
 impl DownloadArgs {
