@@ -7,7 +7,8 @@
 
 %__cargo %{_bindir}/cargo
 %__cargo_common_opts --offline --locked --verbose
-%__cargo_cross_opts %{__cargo_common_opts} --target %{_cross_arch}-unknown-linux-%{_cross_libc}
+%__cargo_target %{_cross_arch}-unknown-linux-%{_cross_libc}
+%__cargo_cross_opts %{__cargo_common_opts} --target %{__cargo_target}
 %__cargo_env CARGO_TARGET_DIR="${HOME}/.cache" SKIP_README="true"
 %__cargo_cross_env %{__cargo_env} TARGET_CC="%{_cross_target}-gcc" PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" PKG_CONFIG_ALLOW_CROSS=1
 
@@ -25,4 +26,4 @@ ar = "%{_bindir}/%{_cross_target}-gcc-ar"\
 EOF\
 )
 
-%cargo_build %{__cargo_cross_env} %{__cargo} install %{__cargo_cross_opts} --root .%{?cargo_args}
+%cargo_build %{__cargo_cross_env} %{__cargo} build %{__cargo_cross_opts} --release %{?cargo_args}

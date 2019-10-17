@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "api",
     "aws-iam-authenticator",
     "bash",
     "ca-certificates",
@@ -20,7 +19,6 @@ members = [
     "findutils",
     "glibc",
     "golang",
-    "growpart",
     "grub",
     "host-ctr",
     "iproute",
@@ -48,7 +46,6 @@ members = [
     "libxcrypt",
     "login",
     "ncurses",
-    "preinit",
     "procps",
     "readline",
     "release",
@@ -59,9 +56,9 @@ members = [
     "strace",
     "systemd",
     "tcpdump",
-    "updater",
     "util-linux",
     "wicked",
+    "workspaces",
 ]
 
 [profile.dev]

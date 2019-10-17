@@ -23,7 +23,7 @@ nix = "0.15.0"
 libc = "0.2"
 
 [features]
-default = []
+default = ["sd_notify"]
 
 sd_notify = ["systemd"]
 

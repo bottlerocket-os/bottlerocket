@@ -1,12 +1,17 @@
 [package]
-name = "api"
+name = "workspaces"
 version = "0.1.0"
 edition = "2018"
 publish = false
 build = "build.rs"
 
 [package.metadata.build-package]
-source-groups = [ "api" ]
+source-groups = [
+    "api",
+    "growpart",
+    "updater",
+    "webpki-roots-shim",
+]
 
 [lib]
 path = "pkg.rs"

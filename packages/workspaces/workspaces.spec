@@ -1,31 +1,36 @@
-%global workspace_name api
-%global workspace_dir %{_builddir}/workspaces/%{workspace_name}
 %global migration_dir %{_cross_factorydir}%{_cross_sharedstatedir}/thar/datastore/migrations
 %undefine _debugsource_packages
 
-# List migrations to be installed here, eg:
-#%%global migration_versions v1.0 v1.1 v1.2
-%global migration_versions %{nil}
-
-Name: %{_cross_os}%{workspace_name}
+Name: %{_cross_os}workspaces
 Version: 0.0
 Release: 0%{?dist}
-Summary: Thar API packages
-License: Apache-2.0 AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR MIT) AND Apache-2.0/MIT AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND ISC AND MIT AND (MIT OR Apache-2.0) AND MIT/Unlicense AND N/A AND (Unlicense OR MIT) AND Zlib
-Source1: apiserver.service
-Source2: moondog.service
-Source3: sundog.service
-Source4: storewolf.service
-Source5: settings-committer.service
-Source6: migration-tmpfiles.conf
-Source7: settings-applier.service
-Source8: data-store-version
-Source9: migrator.service
-Source10: api-sysusers.conf
-Source11: host-containers@.service
-Source12: host-containers-tmpfiles.conf
+Summary: Thar's first-party code
+License: FIXME
+
+# sources < 100: misc
+Source1: data-store-version
+Source2: api-sysusers.conf
 # Taken from https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
-Source13: eni-max-pods
+Source3: eni-max-pods
+
+Source4: root.json
+Source5: updog-toml
+
+# 1xx sources: systemd units
+Source100: apiserver.service
+Source101: moondog.service
+Source102: sundog.service
+Source103: storewolf.service
+Source104: settings-committer.service
+Source105: settings-applier.service
+Source106: migrator.service
+Source107: host-containers@.service
+Source108: updog.timer
+Source109: updog.service
+
+# 2xx sources: tmpfilesd configs
+Source200: migration-tmpfiles.conf
+Source201: host-containers-tmpfiles.conf
 
 BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
@@ -110,30 +115,51 @@ Summary: Commits settings from user data, defaults, and generators at boot
 %description -n %{_cross_os}settings-committer
 %{summary}.
 
+%package -n %{_cross_os}growpart
+Summary: Tool to grow partitions
+%description -n %{_cross_os}growpart
+%{summary}.
+
+%package -n %{_cross_os}signpost
+Summary: Thar GPT priority querier/switcher
+%description -n %{_cross_os}signpost
+%{summary}.
+
+%package -n %{_cross_os}updog
+Summary: Thar updater CLI
+%description -n %{_cross_os}updog
+not much what's up with you
+
+%package -n %{_cross_os}preinit
+Summary: Thar pre-init system setup
+%description -n %{_cross_os}preinit
+%{summary}.
+
 %prep
 %setup -T -c
 %cargo_prep
 
 %build
-%cargo_build --path %{workspace_dir}/apiserver --features sd_notify
-
-for p in \
-  apiclient \
-  moondog netdog sundog pluto bork \
-  thar-be-settings servicedog host-containers \
-  storewolf settings-committer \
-  migration/migrator ;
-do
-  %cargo_build --path %{workspace_dir}/${p}
-done
-
-for v in %migration_versions ; do
-  for p in %{workspace_dir}/migration/migrations/${v}/* ; do
-    name="${p##*/}"
-    %cargo_build --path ${p}
-    mv bin/${name} bin/migrate_${v}_${name}
-  done
-done
+mkdir bin
+%cargo_build --manifest-path %{_builddir}/workspaces/Cargo.toml \
+    -p apiclient \
+    -p apiserver \
+    -p moondog \
+    -p netdog \
+    -p sundog \
+    -p pluto \
+    -p bork \
+    -p thar-be-settings \
+    -p servicedog \
+    -p host-containers \
+    -p storewolf \
+    -p settings-committer \
+    -p migrator \
+    -p signpost \
+    -p updog \
+    -p growpart \
+    -p laika \
+    %{nil}
 
 %install
 install -d %{buildroot}%{_cross_bindir}
@@ -142,34 +168,41 @@ for p in \
   moondog netdog sundog pluto bork \
   thar-be-settings servicedog host-containers \
   storewolf settings-committer \
-  migrator ;
+  migrator \
+  signpost updog ;
 do
-  install -p -m 0755 bin/${p} %{buildroot}%{_cross_bindir}
+  install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
+install -d %{buildroot}%{_cross_sbindir}
+for p in growpart preinit ; do
+  install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_sbindir}
+done
+
+install -d %{buildroot}%{migration_dir}
+
+install -d %{buildroot}%{_cross_datadir}/thar
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_datadir}/thar
+
+install -d %{buildroot}%{_cross_sysusersdir}
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysusersdir}/api.conf
+
+install -d %{buildroot}%{_cross_datadir}/eks
+install -p -m 0644 %{S:3} %{buildroot}%{_cross_datadir}/eks
+
+install -d %{buildroot}%{_cross_datadir}/updog
+install -p -m 0644 %{S:4} %{buildroot}%{_cross_datadir}/updog
+
+install -d %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:1} %{S:2} %{S:3} %{S:4} %{S:5} %{S:7} %{S:9} %{S:11} \
+  %{S:100} %{S:101} %{S:102} %{S:103} %{S:104} %{S:105} %{S:106} %{S:107} %{S:108} %{S:109} \
   %{buildroot}%{_cross_unitdir}
 
-install -d %{buildroot}%{_cross_datadir}/thar
-install -p -m 0644 %{S:8} %{buildroot}%{_cross_datadir}/thar
-
-install -d %{buildroot}%{migration_dir}
-for m in bin/migrate_* ; do
-  [ -f "${m}" ] || continue
-  install -p -m0755 ${m} %{buildroot}%{migration_dir}
-done
-
 install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
-install -p -m 0644 %{S:12} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
-
-install -d %{buildroot}%{_cross_sysusersdir}
-install -p -m 0644 %{S:10} %{buildroot}%{_cross_sysusersdir}/api.conf
-
-install -d %{buildroot}%{_cross_datadir}/eks
-install -p -m 0644 %{S:13} %{buildroot}%{_cross_datadir}/eks
+install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
+install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
@@ -224,5 +257,22 @@ install -p -m 0644 %{S:13} %{buildroot}%{_cross_datadir}/eks
 %files -n %{_cross_os}settings-committer
 %{_cross_bindir}/settings-committer
 %{_cross_unitdir}/settings-committer.service
+
+%files -n %{_cross_os}growpart
+%{_cross_sbindir}/growpart
+
+%files -n %{_cross_os}signpost
+%{_cross_bindir}/signpost
+
+%files -n %{_cross_os}updog
+%{_cross_bindir}/updog
+%{_cross_datadir}/updog
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/updog-toml
+%{_cross_unitdir}/updog.timer
+%{_cross_unitdir}/updog.service
+
+%files -n %{_cross_os}preinit
+%{_cross_sbindir}/preinit
 
 %changelog

@@ -14,16 +14,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "api"
-version = "0.1.0"
-dependencies = [
- "buildsys 0.1.0",
- "glibc 0.1.0",
- "rust 0.1.0",
- "systemd 0.1.0",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -557,15 +547,6 @@ name = "golang"
 version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
-]
-
-[[package]]
-name = "growpart"
-version = "0.1.0"
-dependencies = [
- "buildsys 0.1.0",
- "glibc 0.1.0",
- "rust 0.1.0",
 ]
 
 [[package]]
@@ -1143,15 +1124,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "ppv-lite86"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "preinit"
-version = "0.1.0"
-dependencies = [
- "buildsys 0.1.0",
- "glibc 0.1.0",
- "rust 0.1.0",
-]
 
 [[package]]
 name = "proc-macro2"
@@ -1925,15 +1897,6 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "updater"
-version = "0.1.0"
-dependencies = [
- "buildsys 0.1.0",
- "glibc 0.1.0",
- "rust 0.1.0",
-]
-
-[[package]]
 name = "url"
 version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2166,6 +2129,16 @@ version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "workspaces"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+ "glibc 0.1.0",
+ "rust 0.1.0",
+ "systemd 0.1.0",
 ]
 
 [[package]]
