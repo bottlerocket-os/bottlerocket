@@ -19,19 +19,19 @@ pub enum Error {
     #[snafu(display("Failed to get block device from path {}: {}", device.display(), source))]
     BlockDeviceFromPath {
         device: PathBuf,
-        source: std::io::Error,
+        source: block_party::Error,
     },
 
     #[snafu(display("Failed to get disk from partition {}: {}", device.display(), source))]
     DiskFromPartition {
         device: PathBuf,
-        source: std::io::Error,
+        source: block_party::Error,
     },
 
     #[snafu(display("Failed to get partition on disk {}: {}", device.display(), source))]
     PartitionFromDisk {
         device: PathBuf,
-        source: std::io::Error,
+        source: block_party::Error,
     },
 
     #[snafu(display("Failed to find GPT on device {}: {}", device.display(), source))]
@@ -74,7 +74,7 @@ pub enum Error {
     #[snafu(display("Failed to get lower devices for {}: {}", root.display(), source))]
     RootLowerDevices {
         root: PathBuf,
-        source: std::io::Error,
+        source: block_party::Error,
     },
 
     #[snafu(display("Block device {} is not a partition", device.display()))]

@@ -12,13 +12,13 @@ pub enum Error {
     #[snafu(display("Failed to find block device for '{}': {}", path.display(), source))]
     FindBlockDevice {
         path: std::path::PathBuf,
-        source: std::io::Error,
+        source: block_party::Error,
     },
 
     #[snafu(display("Failed to find disk for '{}': {}", path.display(), source))]
     FindDisk {
         path: std::path::PathBuf,
-        source: std::io::Error,
+        source: block_party::Error,
     },
 
     #[snafu(display("Expected partition for '{}'", path.display()))]

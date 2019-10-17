@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
 edition = "2018"
 publish = false
+
+[dependencies]
+snafu = "0.5.0"
