@@ -73,8 +73,11 @@ pub fn render_config_files(
             let rendered = try_rendered.context(error::TemplateRender { template: name })?;
             rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
         } else {
-            if let Ok(rendered) = try_rendered {
-                rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
+            match try_rendered {
+                Ok(rendered) => {
+                    rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered))
+                }
+                Err(err) => warn!("Unable to render template '{}': {}", &name, err),
             }
         }
     }
