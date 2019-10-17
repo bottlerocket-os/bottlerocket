@@ -8,7 +8,7 @@ Type=simple
 EnvironmentFile=/etc/host-containers/%i.env
 ExecStart=/usr/bin/host-ctr -ctr-id='%i' -source='${CTR_SOURCE}' -superpowered='${CTR_SUPERPOWERED}'
 Restart=always
-RestartSec=10
+RestartSec=45
 TimeoutStopSec=60
 KillMode=mixed
 
