@@ -34,7 +34,7 @@ docker run -t --rm \
    --privileged \
    --network=host \
    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-   moby/buildkit:v0.4.0 \
+   moby/buildkit:v0.6.2 \
    --addr tcp://127.0.0.1:1234 \
    --oci-worker true
 ```
