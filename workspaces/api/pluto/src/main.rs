@@ -74,6 +74,16 @@ mod error {
         },
 
         #[snafu(display(
+            "Error serializing to JSON from command output '{}': {}",
+            output,
+            source
+        ))]
+        OutputJson {
+            output: String,
+            source: serde_json::error::Error,
+        },
+
+        #[snafu(display(
             "Missing 'region' key in Instance Identity Document from IMDS: {}",
             path
         ))]
@@ -233,6 +243,10 @@ fn main() -> Result<()> {
         _ => usage(),
     }?;
 
-    println!("{}", setting);
+    // sundog expects JSON-serialized output so that many types can be represented, allowing the
+    // API model to use more accurate types.
+    let output = serde_json::to_string(&setting).context(error::OutputJson { output: &setting })?;
+
+    println!("{}", output);
     Ok(())
 }

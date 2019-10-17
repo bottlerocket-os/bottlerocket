@@ -112,6 +112,24 @@ mod error {
             source: serde_json::Error,
         },
 
+        #[snafu(display(
+            "Error deserializing command output as JSON from {}: '{}' ;: input: {}",
+            generator,
+            source,
+            input,
+        ))]
+        CommandJson {
+            generator: String,
+            input: String,
+            source: serde_json::Error,
+        },
+
+        #[snafu(display("Can't deserialize {} from command output '{}'", expected, input,))]
+        CommandJsonType {
+            expected: &'static str,
+            input: serde_json::Value,
+        },
+
         #[snafu(display("Error deserializing HashMap to Settings: {}", source))]
         Deserialize { source: deserialization::Error },
 
@@ -126,9 +144,9 @@ mod error {
             source: tracing_subscriber::filter::LevelParseError,
         },
 
-        #[snafu(display("Error serializing command output '{}': {}", output, source))]
+        #[snafu(display("Error serializing command output '{}': {}", value, source))]
         SerializeScalar {
-            output: String,
+            value: serde_json::Value,
             source: datastore::ScalarError,
         },
     }
@@ -292,20 +310,35 @@ where
             }
         }
 
-        // Build a valid utf8 string from the stdout and trim any whitespace
-        let output = str::from_utf8(&result.stdout)
+        // Sundog programs are expected to output JSON, which allows them to represent types other
+        // than strings, which in turn allows our API model to use types more accurate than strings
+        // for generated settings.
+        //
+        // First, we pull the raw string from the process output.
+        let output_raw = str::from_utf8(&result.stdout)
             .context(error::GeneratorOutput {
                 program: generator.as_str(),
             })?
             .trim()
             .to_string();
-        trace!("Generator '{}' output: {}", &generator, &output);
+        trace!("Generator '{}' output: {}", &generator, &output_raw);
 
-        // The command output must be serialized since we intend to call the
-        // datastore-level construct `from_map` on it. `from_map` treats
-        // strings as a serialized structure.
+        // Next, we deserialize the text into a Value that can represent any JSON type.
+        let output_value: serde_json::Value =
+            serde_json::from_str(&output_raw).context(error::CommandJson {
+                generator: &generator,
+                input: &output_raw,
+            })?;
+
+        // Finally, we re-serialize the command output; we intend to call the datastore-level
+        // construct `from_map` on it, which expects serialized values.
+        //
+        // We have to go through the round-trip of serialization because the data store
+        // serialization format may not be the same as the format we choose for sundog.
         let serialized_output =
-            datastore::serialize_scalar(&output).context(error::SerializeScalar { output })?;
+            datastore::serialize_scalar(&output_value).context(error::SerializeScalar {
+                value: output_value,
+            })?;
         trace!("Serialized output: {}", &serialized_output);
 
         settings.insert(setting, serialized_output);
