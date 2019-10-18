@@ -32,7 +32,7 @@ const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
 const MIGRATION_PATH: &str = "/var/lib/thar/datastore/migrations";
-const MAX_SEED: u64 = 2048;
+const MAX_SEED: u32 = 2048;
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
@@ -49,7 +49,7 @@ enum Command {
 struct Config {
     metadata_base_url: String,
     target_base_url: String,
-    seed: u64,
+    seed: u32,
     // TODO API sourced configuration, eg.
     // blacklist: Option<Vec<Version>>,
     // mode: Option<{Automatic, Managed, Disabled}>
@@ -69,19 +69,19 @@ struct Update {
     version: Version,
     max_version: Version,
     #[serde(deserialize_with = "de::deserialize_bound")]
-    waves: BTreeMap<u64, DateTime<Utc>>,
+    waves: BTreeMap<u32, DateTime<Utc>>,
     images: Images,
 }
 
 impl Update {
-    pub fn update_wave(&self, seed: u64) -> Option<&DateTime<Utc>> {
+    pub fn update_wave(&self, seed: u32) -> Option<&DateTime<Utc>> {
         if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
             return Some(wave);
         }
         None
     }
 
-    fn update_ready(&self, seed: u64) -> bool {
+    fn update_ready(&self, seed: u32) -> bool {
         // Has this client's wave started
         if let Some(wave) = self.update_wave(seed) {
             return *wave <= Utc::now();
@@ -96,7 +96,7 @@ impl Update {
         true
     }
 
-    pub fn jitter(&self, seed: u64) -> Option<DateTime<Utc>> {
+    pub fn jitter(&self, seed: u32) -> Option<DateTime<Utc>> {
         let prev = self.update_wave(seed);
         let next = self
             .waves

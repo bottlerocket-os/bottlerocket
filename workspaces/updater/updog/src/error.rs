@@ -75,7 +75,7 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Duplicate key ID: {}", keyid))]
-    DuplicateKeyId { backtrace: Backtrace, keyid: u64 },
+    DuplicateKeyId { backtrace: Backtrace, keyid: u32 },
 
     #[snafu(display("Duplicate version key: {}", key))]
     DuplicateVersionKey { backtrace: Backtrace, key: String },
