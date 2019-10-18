@@ -28,6 +28,7 @@ Source1009: prepare-var-lib-thar.service
 Source1010: var-lib-thar.mount
 
 BuildArch: noarch
+Requires: %{_cross_os}acpid
 Requires: %{_cross_os}apiclient
 Requires: %{_cross_os}apiserver
 %if %{with shell}
