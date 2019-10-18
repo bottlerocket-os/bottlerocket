@@ -413,6 +413,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "borkseed-migration"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+ "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "build_const"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2654,13 +2663,6 @@ dependencies = [
  "redox_syscall 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)",
  "remove_dir_all 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "testmigration"
-version = "0.1.0"
-dependencies = [
- "migration-helpers 0.1.0",
 ]
 
 [[package]]
