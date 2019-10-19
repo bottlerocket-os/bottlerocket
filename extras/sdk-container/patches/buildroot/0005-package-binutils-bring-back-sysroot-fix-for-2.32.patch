@@ -1,0 +1,71 @@
+From d35e7e4616527f6e3b3807cd185aee4d2c911818 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Fri, 15 Mar 2019 18:32:49 +0000
+Subject: [PATCH 5/5] package/binutils: bring back sysroot fix for 2.32
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ .../0006-add-sysroot-fix-from-bug-3049.patch  | 51 +++++++++++++++++++
+ 1 file changed, 51 insertions(+)
+ create mode 100644 package/binutils/2.32/0006-add-sysroot-fix-from-bug-3049.patch
+
+diff --git a/package/binutils/2.32/0006-add-sysroot-fix-from-bug-3049.patch b/package/binutils/2.32/0006-add-sysroot-fix-from-bug-3049.patch
+new file mode 100644
+index 0000000000..6a8d8f2867
+--- /dev/null
++++ b/package/binutils/2.32/0006-add-sysroot-fix-from-bug-3049.patch
+@@ -0,0 +1,51 @@
++From 043bbcc9e4577e9086b9ca74534c844bde550df0 Mon Sep 17 00:00:00 2001
++From: Romain Naour <romain.naour@gmail.com>
++Date: Fri, 25 Dec 2015 11:42:48 +0100
++Subject: [PATCH] add sysroot fix from bug #3049
++
++Always try to prepend the sysroot prefix to absolute filenames first.
++
++http://bugs.gentoo.org/275666
++http://sourceware.org/bugzilla/show_bug.cgi?id=10340
++
++Signed-off-by: Sven Rebhan <odinshorse@googlemail.com>
++[Romain: rebase on top of 2.26]
++Signed-off-by: Romain Naour <romain.naour@gmail.com>
++---
++ ld/ldfile.c | 10 ++++++++--
++ 1 file changed, 8 insertions(+), 2 deletions(-)
++
++diff --git a/ld/ldfile.c b/ld/ldfile.c
++index fcadc08c..8d06d44e 100644
++--- a/ld/ldfile.c
+++++ b/ld/ldfile.c
++@@ -338,18 +338,24 @@ ldfile_open_file_search (const char *arch,
++      directory first.  */
++   if (!entry->flags.maybe_archive)
++     {
++-      if (entry->flags.sysrooted && IS_ABSOLUTE_PATH (entry->filename))
+++     /* For absolute pathnames, try to always open the file in the
+++	 sysroot first. If this fails, try to open the file at the
+++	 given location.  */
+++     entry->flags.sysrooted = is_sysrooted_pathname (entry->filename);
+++     if (!entry->flags.sysrooted && IS_ABSOLUTE_PATH (entry->filename)
+++     && ld_sysroot)
++ 	{
++ 	  char *name = concat (ld_sysroot, entry->filename,
++ 			       (const char *) NULL);
++ 	  if (ldfile_try_open_bfd (name, entry))
++ 	    {
++ 	      entry->filename = name;
+++	      entry->flags.sysrooted = TRUE;
++ 	      return TRUE;
++ 	    }
++ 	  free (name);
++ 	}
++-      else if (ldfile_try_open_bfd (entry->filename, entry))
+++      if (ldfile_try_open_bfd (entry->filename, entry))
++ 	return TRUE;
++ 
++       if (IS_ABSOLUTE_PATH (entry->filename))
++-- 
++2.17.2
++
+-- 
+2.21.0
+
