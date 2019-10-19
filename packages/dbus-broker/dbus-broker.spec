@@ -10,7 +10,6 @@ Source2: dbus-1-system.conf
 Source3: dbus-sysusers.conf
 Source4: dbus-broker.service
 BuildRequires: meson
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libexpat-devel

@@ -5,7 +5,6 @@ Summary: Library for netfilter conntrack
 License: GPLv2+
 URL: http://netfilter.org
 Source0: https://netfilter.org/projects/libnetfilter_conntrack/files/libnetfilter_conntrack-%{version}.tar.bz2
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
 BuildRequires: %{_cross_os}libnfnetlink-devel

@@ -5,7 +5,6 @@ Summary: A set of GNU tools for finding
 License: GPLv3+
 URL: http://www.gnu.org/software/findutils/
 Source0: https://ftp.gnu.org/pub/gnu/findutils/findutils-%{version}.tar.xz
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}glibc
 

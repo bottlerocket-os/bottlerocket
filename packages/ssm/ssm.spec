@@ -18,9 +18,7 @@ Source1: ssm-tmpfiles.conf
 Source2: amazon-ssm-agent.service
 Patch1: 0001-Use-absolute-path-to-launch-shell.patch
 Patch2: 0002-shell-Allow-root-user.patch
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}golang
 Requires: %{_cross_os}glibc
 
 %description

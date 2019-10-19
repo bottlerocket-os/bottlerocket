@@ -15,12 +15,10 @@ sha512 = "7287738ba1cf50569c5ac3637e45b4c6af6fa4c0b6f9e65d9f9889ef7a5736d49c68cd
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc", optional=true }
-golang = { path = "../golang", optional=true }
 libseccomp = { path = "../libseccomp", optional=true }
 
 [features]
 cascade = [
     "glibc",
-    "golang",
     "libseccomp",
 ]

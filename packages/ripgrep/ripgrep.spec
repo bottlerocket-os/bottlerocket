@@ -19,7 +19,6 @@ Summary: Search tool
 License: ASL 2.0 and (ASL 2.0 or BSL 1.0) and MIT and Unlicense and BSD and ISC
 Source0: https://github.com/BurntSushi/ripgrep/archive/%{version}/%{crate_name}-%{version}.tar.gz
 %cargo_bundle_crates -n %{crate_name}-%{version} -t 0
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}rust
 Requires: %{_cross_os}glibc

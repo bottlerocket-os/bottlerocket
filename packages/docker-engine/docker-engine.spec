@@ -26,9 +26,7 @@ Source4: daemon.json
 Source5: docker-tmpfiles.conf
 
 BuildRequires: git
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}golang
 BuildRequires: %{_cross_os}libseccomp-devel
 BuildRequires: %{_cross_os}systemd-devel
 Requires: %{_cross_os}glibc

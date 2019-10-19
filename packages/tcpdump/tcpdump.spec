@@ -5,7 +5,6 @@ Summary: Network monitoring tool
 License: BSD with advertising
 URL: http://www.tcpdump.org
 Source0: http://www.tcpdump.org/release/tcpdump-%{version}.tar.gz
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libpcap-devel
 Requires: %{_cross_os}glibc

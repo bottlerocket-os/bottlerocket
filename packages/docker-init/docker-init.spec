@@ -10,7 +10,6 @@ License: MIT
 URL: https://github.com/krallin/tini
 Source0: https://github.com/krallin/tini/archive/v%{tiniver}/tini-%{tiniver}.tar.gz
 BuildRequires: cmake
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 
 %description

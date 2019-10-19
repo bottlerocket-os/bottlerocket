@@ -5,7 +5,6 @@ Summary: Library for netlink
 License: LGPLv2+
 URL: http://netfilter.org/projects/libmnl
 Source0: http://netfilter.org/projects/libmnl/files/libmnl-%{version}.tar.bz2
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}glibc
 

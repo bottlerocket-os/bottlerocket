@@ -7,7 +7,6 @@ URL: https://hewlettpackard.github.io/wireless-tools/
 Source0: https://hewlettpackard.github.io/wireless-tools/wireless_tools.%{version}.tar.gz
 Patch1: wireless-tools-29-makefile.patch
 
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}glibc
 

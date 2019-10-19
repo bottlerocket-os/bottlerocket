@@ -5,7 +5,6 @@ Summary: Library for netfilter queue
 License: GPLv2
 URL: http://netfilter.org
 Source0: https://netfilter.org/projects/libnetfilter_queue/files/libnetfilter_queue-%{version}.tar.bz2
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
 BuildRequires: %{_cross_os}libnfnetlink-devel

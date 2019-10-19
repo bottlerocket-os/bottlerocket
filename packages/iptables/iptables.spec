@@ -8,7 +8,6 @@ Source0: http://www.netfilter.org/projects/iptables/files/iptables-%{version}.ta
 Patch1: 0001-iptables-apply-Use-mktemp-instead-of-tempfile.patch
 Patch2: 0002-extensions-format-security-fixes-in-libip-6-t_icmp.patch
 
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
 BuildRequires: %{_cross_os}libnfnetlink-devel

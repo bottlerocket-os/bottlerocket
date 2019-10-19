@@ -7,7 +7,6 @@ URL: http://conntrack-tools.netfilter.org/
 Source0: https://www.netfilter.org/projects/conntrack-tools/files/conntrack-tools-%{version}.tar.bz2
 Patch1: 0001-disable-RPC-helper.patch
 
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
 BuildRequires: %{_cross_os}libnfnetlink-devel

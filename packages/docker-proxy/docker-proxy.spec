@@ -15,9 +15,7 @@ Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
 Patch1: 0001-bridge-Fix-hwaddr-set-race-between-us-and-udev.patch
 
 BuildRequires: git
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}golang
 Requires: %{_cross_os}glibc
 
 %description

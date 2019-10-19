@@ -5,7 +5,6 @@ Summary: Library for netfilter cttimeout
 License: GPLv2+
 URL: http://netfilter.org
 Source0: https://netfilter.org/projects/libnetfilter_cttimeout/files/libnetfilter_cttimeout-%{version}.tar.bz2
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
 Requires: %{_cross_os}glibc

@@ -24,9 +24,7 @@ Patch2: 0002-do-not-omit-debug-info.patch
 
 BuildRequires: git
 BuildRequires: rsync
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}golang
 
 %description
 %{summary}.

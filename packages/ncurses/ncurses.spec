@@ -10,7 +10,6 @@ Patch1: ncurses-config.patch
 Patch2: ncurses-libs.patch
 Patch3: ncurses-urxvt.patch
 Patch4: ncurses-kbs.patch
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}glibc
 

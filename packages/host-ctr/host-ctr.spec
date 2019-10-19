@@ -6,9 +6,7 @@ Version: 0.0
 Release: 0%{?dist}
 Summary: Thar host container runner
 License: FIXME
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}golang
 Requires: %{_cross_os}glibc
 
 %description

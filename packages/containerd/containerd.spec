@@ -18,9 +18,7 @@ Source1: containerd.service
 Source2: containerd-config-toml
 Source3: containerd-tmpfiles.conf
 BuildRequires: git
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}golang
 BuildRequires: %{_cross_os}libseccomp-devel
 Requires: %{_cross_os}cni-plugins
 Requires: %{_cross_os}glibc

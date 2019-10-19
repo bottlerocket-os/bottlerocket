@@ -4,7 +4,6 @@ Release: 1%{?dist}
 Summary: A login that doesn't actually allow logins
 License: FIXME
 Source0: login.c
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}glibc
 

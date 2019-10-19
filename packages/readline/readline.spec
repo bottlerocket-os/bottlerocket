@@ -6,7 +6,6 @@ License: GPLv3+
 URL: https://tiswww.case.edu/php/chet/readline/rltop.html
 Source0: https://ftp.gnu.org/gnu/readline/readline-%{version}.tar.gz
 Patch1: readline-8.0-shlib.patch
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}ncurses-devel
 Requires: %{_cross_os}glibc

@@ -5,7 +5,6 @@ Summary: Extended crypt library for descrypt, md5crypt, bcrypt, and others
 License: LGPLv2+ and BSD and Public Domain
 URL: https://github.com/besser82/libxcrypt
 Source0: https://github.com/besser82/libxcrypt/archive/v%{version}/libxcrypt-%{version}.tar.gz
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}glibc
 

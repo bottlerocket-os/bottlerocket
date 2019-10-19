@@ -6,7 +6,6 @@ License: BSD and GPLv2+
 URL: https://github.com/iputils/iputils
 Source0: https://github.com/iputils/iputils/archive/s%{version}.tar.gz#/iputils-s%{version}.tar.gz
 
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 Requires: %{_cross_os}glibc
