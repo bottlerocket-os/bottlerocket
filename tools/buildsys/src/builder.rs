@@ -85,25 +85,25 @@ fn build(target: &str, build_args: &str, tag: &str) -> Result<()> {
     let suffix = &digest[..12];
     let tag = format!("{}-{}", tag, suffix);
 
+    // Our SDK image is picked by the external `cargo make` invocation.
+    let sdk = getenv("BUILDSYS_SDK_IMAGE")?;
+    let sdk_args = format!("--build-arg SDK={}", sdk);
+
     // Avoid using a cached layer from a previous build.
     let nocache = rand::thread_rng().gen::<u32>();
     let nocache_args = format!("--build-arg NOCACHE={}", nocache);
 
-    // Accept additional overrides for Docker arguments. This is only for
-    // overriding network settings, and can be dropped when we no longer need
-    // network access during the build.
-    let docker_run_args = getenv("BUILDSYS_DOCKER_RUN_ARGS").unwrap_or_else(|_| "".to_string());
-
     let build = args(format!(
         "build . \
+         --network none \
          --target {target} \
-         {docker_run_args} \
          {build_args} \
+         {sdk_args} \
          {nocache_args} \
          --tag {tag}",
         target = target,
-        docker_run_args = docker_run_args,
         build_args = build_args,
+        sdk_args = sdk_args,
         nocache_args = nocache_args,
         tag = tag,
     ));

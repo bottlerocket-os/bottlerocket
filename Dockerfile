@@ -1,19 +1,7 @@
 # syntax=docker/dockerfile:1.1.3-experimental
 
-FROM fedora:30 AS origin
-RUN dnf makecache && dnf -y update
-
-FROM origin AS base
-RUN dnf -y groupinstall "C Development Tools and Libraries" \
-   && dnf -y install \
-        rpmdevtools dnf-plugins-core createrepo_c \
-        cmake git meson perl-ExtUtils-MakeMaker python which \
-        bc hostname intltool grub2-tools gperf kmod rsync wget \
-        elfutils-devel libcap-devel openssl-devel \
-   && useradd builder
-
-FROM origin AS util
-RUN dnf -y install createrepo_c e2fsprogs gdisk grub2-tools kpartx lz4 veritysetup dosfstools mtools
+ARG SDK
+FROM ${SDK} as sdk
 
 # The experimental cache mount type doesn't expand arguments, so our choices are limited.
 # We can either reuse the same cache for all builds, which triggers overlayfs errors if
@@ -24,11 +12,11 @@ FROM scratch AS cache
 ARG PACKAGE
 ARG ARCH
 # We can't create directories via RUN in a scratch container, so take an existing one.
-COPY --chown=1000:1000 --from=base /tmp /cache
+COPY --chown=1000:1000 --from=sdk /tmp /cache
 # Ensure the ARG variables are used in the layer to prevent reuse by other builds.
 COPY --chown=1000:1000 .dockerignore /cache/.${PACKAGE}.${ARCH}
 
-FROM base AS rpmbuild
+FROM sdk AS rpmbuild
 ARG PACKAGE
 ARG ARCH
 ARG NOCACHE
@@ -70,7 +58,7 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
 FROM scratch AS rpm
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /output/
 
-FROM util AS imgbuild
+FROM sdk AS imgbuild
 ARG PACKAGES
 ARG ARCH
 ARG NOCACHE
