@@ -38,6 +38,19 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Date argument '{}' is invalid: {}", input, msg))]
+    DateArgInvalid { input: String, msg: &'static str },
+
+    #[snafu(display(
+        "Date argument had count '{}' that failed to parse as integer: {}",
+        input,
+        source
+    ))]
+    DateArgCount {
+        input: String,
+        source: std::num::ParseIntError,
+    },
+
     #[snafu(display("Failed to {} {} to {}: {}", action, src.display(), dst.display(), source))]
     FileCopy {
         action: crate::copylike::Copylike,

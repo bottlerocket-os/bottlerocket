@@ -1,4 +1,5 @@
 use crate::copylike::Copylike;
+use crate::datetime::parse_datetime;
 use crate::error::{self, Result};
 use crate::key::{keys_for_root, sign_metadata, RootKeys};
 use crate::source::KeySource;
@@ -45,22 +46,25 @@ pub(crate) struct CreateArgs {
     /// Version of snapshot.json file
     #[structopt(long = "snapshot-version")]
     snapshot_version: NonZeroU64,
-    /// Expiration of snapshot.json file
-    #[structopt(long = "snapshot-expires")]
+    /// Expiration of snapshot.json file; can be in full RFC 3339 format, or something like 'in
+    /// 7 days'
+    #[structopt(long = "snapshot-expires", parse(try_from_str = parse_datetime))]
     snapshot_expires: DateTime<Utc>,
 
     /// Version of targets.json file
     #[structopt(long = "targets-version")]
     targets_version: NonZeroU64,
-    /// Expiration of targets.json file
-    #[structopt(long = "targets-expires")]
+    /// Expiration of targets.json file; can be in full RFC 3339 format, or something like 'in
+    /// 7 days'
+    #[structopt(long = "targets-expires", parse(try_from_str = parse_datetime))]
     targets_expires: DateTime<Utc>,
 
     /// Version of timestamp.json file
     #[structopt(long = "timestamp-version")]
     timestamp_version: NonZeroU64,
-    /// Expiration of timestamp.json file
-    #[structopt(long = "timestamp-expires")]
+    /// Expiration of timestamp.json file; can be in full RFC 3339 format, or something like 'in
+    /// 7 days'
+    #[structopt(long = "timestamp-expires", parse(try_from_str = parse_datetime))]
     timestamp_expires: DateTime<Utc>,
 
     /// Path to root.json file for the repository
@@ -172,8 +176,8 @@ impl<'a> CreateProcess<'a> {
         self.write_metadata(
             Timestamp {
                 spec_version: crate::SPEC_VERSION.to_owned(),
-                version: self.args.snapshot_version,
-                expires: self.args.snapshot_expires,
+                version: self.args.timestamp_version,
+                expires: self.args.timestamp_expires,
                 meta: hashmap! {
                     "snapshot.json".to_owned() => TimestampMeta {
                         hashes: Hashes {
