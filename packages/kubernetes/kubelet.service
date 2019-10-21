@@ -3,7 +3,7 @@ Description=Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
 After=containerd.service configured.target
 Wants=configured.target
-Requires=containerd.service
+BindsTo=containerd.service
 
 [Service]
 EnvironmentFile=/etc/kubernetes/kubelet/env

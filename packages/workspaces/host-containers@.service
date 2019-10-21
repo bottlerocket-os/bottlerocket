@@ -1,7 +1,7 @@
 [Unit]
 Description=Host container: %i
 After=host-containerd.service
-Requires=host-containerd.service
+BindsTo=host-containerd.service
 
 [Service]
 Type=simple
