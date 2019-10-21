@@ -69,7 +69,7 @@ func _main() int {
 	defer client.Close()
 
 	// Check if the image is from ECR, if it is, convert the image name into a resolvable reference
-	var ref string
+	ref := source
 	match := ecrRegex.MatchString(source)
 	if match {
 		var err error
