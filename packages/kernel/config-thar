@@ -21,3 +21,6 @@ CONFIG_BLK_DEV_DM=y
 CONFIG_DAX=y
 CONFIG_DM_INIT=y
 CONFIG_DM_VERITY=y
+
+# yama LSM for ptrace restrictions
+CONFIG_SECURITY_YAMA=y
