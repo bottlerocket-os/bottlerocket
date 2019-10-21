@@ -1,5 +1,7 @@
 #![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
+// Identifiers like Command::Create are clearer than Self::Create regardless of context
+#![allow(clippy::use_self)]
 
 mod copylike;
 mod create;
