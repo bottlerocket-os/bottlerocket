@@ -18,7 +18,7 @@ members = [
 
     # Migrations will be listed here.  They won't need to be listed as a
     # workspace member when we add cross-workspace dependencies.
-    "api/migration/migrations/v1.1/testmigration",
+    "api/migration/migrations/v0.1/borkseed",
 
     "preinit/laika",
 

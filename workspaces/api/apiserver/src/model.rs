@@ -88,7 +88,7 @@ pub struct UpdatesSettings {
     pub target_base_url: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub seed: Option<String>,
+    pub seed: Option<u32>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
