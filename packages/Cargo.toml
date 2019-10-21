@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "acpid",
     "aws-iam-authenticator",
     "bash",
     "ca-certificates",

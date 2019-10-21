@@ -1,0 +1,27 @@
+From 1a6c5126697cb171eae3922d822ae90b18176e1f Mon Sep 17 00:00:00 2001
+From: iliana destroyer of worlds <iweller@amazon.com>
+Date: Fri, 18 Oct 2019 22:56:45 +0000
+Subject: [PATCH] Remove shell dependency by only shutting down
+
+Thar doesn't have a shell, so this is a hack to get what we want
+(shutdown behavior on power button press) without rearchitecting acpid.
+---
+ event.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/event.c b/event.c
+index 6c67062..defdc42 100644
+--- a/event.c
++++ b/event.c
+@@ -687,7 +687,7 @@ do_cmd_rule(struct rule *rule, const char *event)
+ 			fprintf(stdout, "BEGIN HANDLER MESSAGES\n");
+ 		}
+ 		umask(0077);
+-		execl("/bin/sh", "/bin/sh", "-c", action, NULL);
++		execl("/sbin/shutdown", "/sbin/shutdown", "-h", "now", "Power button pressed", NULL);
+ 		/* should not get here */
+ 		acpid_log(LOG_ERR, "execl(): %s", strerror(errno));
+ 		_exit(EXIT_FAILURE);
+-- 
+2.20.1
+
