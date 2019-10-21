@@ -23,6 +23,7 @@
 * `tuftool` only downloads an arbitrary `root.json` with `--allow-root-download` (#421).
 * BuildKit updated to v0.6.2 (#423, #429).
 * First-party Rust code is built in the same `rpmbuild` invocation to improve build times (#428).
+* `tuftool` correctly uses the `--timestamp-{version,expires}` arguments instead of the `--snapshot-{version,expires}` arguments in the timestamp role (#438).
 * `tuftool` accepts relative dates (#438).
 
 ## Documentation changes
