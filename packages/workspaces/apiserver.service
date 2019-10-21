@@ -1,7 +1,7 @@
 [Unit]
 Description=Thar API server
-After=network.target storewolf.service migrator.service
-Requires=network.target storewolf.service migrator.service
+After=storewolf.service migrator.service
+Requires=storewolf.service migrator.service
 
 [Service]
 Type=notify
