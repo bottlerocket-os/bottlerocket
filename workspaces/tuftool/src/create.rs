@@ -172,8 +172,8 @@ impl<'a> CreateProcess<'a> {
         self.write_metadata(
             Timestamp {
                 spec_version: crate::SPEC_VERSION.to_owned(),
-                version: self.args.snapshot_version,
-                expires: self.args.snapshot_expires,
+                version: self.args.timestamp_version,
+                expires: self.args.timestamp_expires,
                 meta: hashmap! {
                     "snapshot.json".to_owned() => TimestampMeta {
                         hashes: Hashes {
