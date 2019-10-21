@@ -71,14 +71,14 @@ impl Update {
         let next = self
             .waves
             .range((Excluded(seed), Excluded(MAX_SEED)))
-            .next();
+            .next()
+            .map(|(_, wave)| wave);
         if let (Some(start), Some(end)) = (prev, next) {
-            if Utc::now() < *end.1 {
+            if Utc::now() < *end {
                 let mut rng = thread_rng();
-                #[allow(clippy::cast_sign_loss)]
-                let range = (end.1.timestamp() - start.timestamp()) as u64;
-                let jitter = Duration::seconds(rng.gen_range(1, range) as i64);
-                return Some(*start + jitter);
+                if let Some(range) = end.timestamp().checked_sub(start.timestamp()) {
+                    return Some(*start + Duration::seconds(rng.gen_range(1, range)));
+                }
             }
         }
         None
