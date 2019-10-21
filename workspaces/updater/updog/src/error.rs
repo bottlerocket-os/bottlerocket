@@ -260,6 +260,9 @@ pub(crate) enum Error {
     #[snafu(display("Update wave start time missing"))]
     WaveStartArg { backtrace: Backtrace },
 
+    #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]
+    WavesUnordered { wave: u32, next: u32 },
+
     #[snafu(display("Failed writing update data to disk: {}", source))]
     WriteUpdate {
         source: std::io::Error,

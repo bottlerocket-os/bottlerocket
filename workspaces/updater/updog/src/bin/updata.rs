@@ -7,7 +7,7 @@ use crate::error::Result;
 use chrono::{DateTime, Utc};
 use data_store_version::Version as DVersion;
 use semver::Version;
-use snafu::{ErrorCompat, ResultExt};
+use snafu::{ensure, ErrorCompat, ResultExt};
 use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
@@ -164,6 +164,24 @@ struct WaveArgs {
 }
 
 impl WaveArgs {
+    fn validate(updates: &[Update]) -> Result<()> {
+        for update in updates {
+            let mut waves = update.waves.iter().peekable();
+            while let Some(wave) = waves.next() {
+                if let Some(next) = waves.peek() {
+                    ensure!(
+                        wave.1 < next.1,
+                        error::WavesUnordered {
+                            wave: *wave.0,
+                            next: *next.0
+                        }
+                    );
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn add(self) -> Result<()> {
         let mut m: Manifest = load_file(&self.file)?;
         let matching: Vec<&mut Update> = m
@@ -178,6 +196,7 @@ impl WaveArgs {
             for u in matching {
                 u.waves.insert(self.bound, start);
             }
+            Self::validate(&m.updates)?;
             write_file(&self.file, &m)
         } else {
             error::WaveStartArg.fail()
@@ -373,6 +392,7 @@ fn main() -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Duration;
     use std::str::FromStr;
     use tempfile::NamedTempFile;
 
@@ -484,6 +504,48 @@ mod tests {
         assert!(m
             .datastore_versions
             .contains_key(&Version::parse("1.2.3").unwrap()));
+        Ok(())
+    }
+
+    #[test]
+    fn ordered_waves() -> Result<()> {
+        let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
+        AddUpdateArgs {
+            file: PathBuf::from(tmpfd.path()),
+            flavor: String::from("yum"),
+            arch: String::from("x86_64"),
+            version: Version::parse("1.2.3").unwrap(),
+            max_version: Version::parse("1.2.3").unwrap(),
+            datastore: DVersion::from_str("1.0").unwrap(),
+            boot: String::from("boot"),
+            root: String::from("root"),
+            hash: String::from("hash"),
+        }
+        .run()
+        .unwrap();
+
+        WaveArgs {
+            file: PathBuf::from(tmpfd.path()),
+            flavor: String::from("yum"),
+            arch: String::from("x86_64"),
+            version: Version::parse("1.2.3").unwrap(),
+            bound: 1024,
+            start: Some(Utc::now()),
+        }
+        .add()
+        .unwrap();
+
+        assert!(WaveArgs {
+            file: PathBuf::from(tmpfd.path()),
+            flavor: String::from("yum"),
+            arch: String::from("x86_64"),
+            version: Version::parse("1.2.3").unwrap(),
+            bound: 1536,
+            start: Some(Utc::now() - Duration::hours(1)),
+        }
+        .add()
+        .is_err());
+
         Ok(())
     }
 }
