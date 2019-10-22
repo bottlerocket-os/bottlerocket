@@ -146,6 +146,8 @@ cluster-name = "thar"
 cluster-certificate = "YOUR-CERTIFICATE-AUTHORITY-HERE"
 ```
 
+Make sure you keep the quotes around the values you paste in!
+
 ### Subnet info
 
 Next, run this to get information about the subnets that eksctl created.
