@@ -2,9 +2,8 @@
 Description=Private Directory (/var/lib/thar)
 DefaultDependencies=no
 Conflicts=umount.target
+RequiresMountsFor=/var
 Before=local-fs.target umount.target
-Wants=prepare-var-lib-thar.service
-After=prepare-var-lib-thar.service
 
 [Mount]
 What=/dev/disk/by-partlabel/THAR-PRIVATE

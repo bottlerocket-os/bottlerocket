@@ -1,10 +1,8 @@
 [Unit]
 Description=User-specified setting generators
-After=network-online.target
-After=apiserver.service
-After=moondog.service
-Requires=network-online.target
-Requires=apiserver.service
+# Need network access to support commands talking to IMDS.
+After=network-online.target apiserver.service moondog.service
+Requires=network-online.target apiserver.service
 
 [Service]
 Type=oneshot
