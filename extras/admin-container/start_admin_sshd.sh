@@ -3,7 +3,7 @@ set -e
 
 mkdir -p /home/ec2-user/.ssh/
 chmod 700 /home/ec2-user/.ssh/
-ssh_host_key_dir="/etc/ssh"
+ssh_host_key_dir="/.thar/host-containers/admin/etc/ssh"
 ssh_config_dir="/home/ec2-user/.ssh"
 
 # Populate authorized_keys with all the public keys found in instance meta-data
@@ -39,6 +39,7 @@ fi
 chown ec2-user -R "${ssh_config_dir}"
 
 # Generate the server keys
+mkdir -p "${ssh_host_key_dir}"
 for key in rsa ecdsa ed25519; do
     # If both of the keys exist, don't overwrite them
     if [ -s "${ssh_host_key_dir}/ssh_host_${key}_key" ] && [ -s "${ssh_host_key_dir}/ssh_host_${key}_key.pub"  ]; then
@@ -49,7 +50,6 @@ for key in rsa ecdsa ed25519; do
     rm -rf \
        "${ssh_host_key_dir}/ssh_host_${key}_key" \
        "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
-    # Generate new host keys. This would happen every time this script is invoked when we start the admin container.
     if ssh-keygen -t "${key}" -f "${ssh_host_key_dir}/ssh_host_${key}_key" -q -N ""; then
         chmod 600 "${ssh_host_key_dir}/ssh_host_${key}_key"
         chmod 644 "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
