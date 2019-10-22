@@ -135,6 +135,12 @@ func _main() int {
 				Options:     []string{"bind", "ro"},
 				Destination: "/usr/local/bin/apiclient",
 				Source:      "/usr/bin/apiclient",
+			},
+			// Mount in the persistent storage location for this container
+			{
+				Options:     []string{"rbind", "rw"},
+				Destination: "/.thar/host-containers/" + targetCtr,
+				Source:      "/local/host-containers/" + targetCtr,
 			}}),
 		withSuperpowered(superpowered),
 	)
