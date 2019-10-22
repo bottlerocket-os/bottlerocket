@@ -108,7 +108,8 @@ This container has an SSH server that lets you log in as `ec2-user` using your E
 To enable the container, you can change the setting in user data when starting Thar, for example EC2 instance user data:
 
 ```
-settings.host-containers.admin.enabled = true
+[settings.host-containers.admin]
+enabled = true
 ```
 
 If Thar is already running, you can enable the admin container from the default [control container](#control-container) like this:
