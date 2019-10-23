@@ -18,7 +18,9 @@ IMAGE = "aws-k8s"
 BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
 
 [tasks.setup]
-dependencies = [ "setup-buildkitd" ]
+dependencies = [ "setup-build-dirs", "setup-buildkitd" ]
+
+[tasks.setup-build-dirs]
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
