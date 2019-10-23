@@ -20,10 +20,10 @@ use crate::modeled_types::{SingleLineString, ValidBase64};
 #[serde(deny_unknown_fields, rename = "settings", rename_all = "kebab-case")]
 pub struct Settings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub timezone: Option<String>,
+    pub timezone: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub hostname: Option<String>,
+    pub hostname: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kubernetes: Option<KubernetesSettings>,
@@ -47,13 +47,13 @@ pub struct KubernetesSettings {
     // Settings we require the user to specify, likely via user data.
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub cluster_name: Option<String>,
+    pub cluster_name: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cluster_certificate: Option<ValidBase64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub api_server: Option<String>,
+    pub api_server: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub node_labels: Option<HashMap<SingleLineString, SingleLineString>>,
@@ -64,7 +64,7 @@ pub struct KubernetesSettings {
     // Dynamic settings.
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_pods: Option<String>,
+    pub max_pods: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cluster_dns_ip: Option<Ipv4Addr>,
@@ -73,7 +73,7 @@ pub struct KubernetesSettings {
     pub node_ip: Option<Ipv4Addr>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pod_infra_container_image: Option<String>,
+    pub pod_infra_container_image: Option<SingleLineString>,
 }
 
 // Updog settings. Taken from userdata. The 'seed' setting is generated
@@ -82,10 +82,10 @@ pub struct KubernetesSettings {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct UpdatesSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub metadata_base_url: Option<String>,
+    pub metadata_base_url: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub target_base_url: Option<String>,
+    pub target_base_url: Option<SingleLineString>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<u32>,
@@ -109,7 +109,7 @@ pub struct ContainerImage {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct NtpSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub time_servers: Option<Vec<String>>,
+    pub time_servers: Option<Vec<SingleLineString>>,
 }
 
 ///// Internal services
@@ -126,7 +126,7 @@ pub type Services = HashMap<String, Service>;
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename = "", rename_all = "kebab-case")]
 pub struct Service {
-    pub configuration_files: Vec<String>,
+    pub configuration_files: Vec<SingleLineString>,
     pub restart_commands: Vec<String>,
 }
 
@@ -135,8 +135,8 @@ pub type ConfigurationFiles = HashMap<String, ConfigurationFile>;
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename = "", rename_all = "kebab-case")]
 pub struct ConfigurationFile {
-    pub path: String,
-    pub template_path: String,
+    pub path: SingleLineString,
+    pub template_path: SingleLineString,
 }
 
 ///// Metadata
@@ -144,7 +144,7 @@ pub struct ConfigurationFile {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename = "metadata", rename_all = "kebab-case")]
 pub struct Metadata {
-    pub key: String,
-    pub md: String,
+    pub key: SingleLineString,
+    pub md: SingleLineString,
     pub val: toml::Value,
 }

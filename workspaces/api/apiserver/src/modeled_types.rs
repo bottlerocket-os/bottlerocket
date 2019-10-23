@@ -74,6 +74,12 @@ impl fmt::Display for ValidBase64 {
     }
 }
 
+impl From<ValidBase64> for String {
+    fn from(x: ValidBase64) -> Self {
+        x.inner
+    }
+}
+
 #[cfg(test)]
 mod test_valid_base64 {
     use super::ValidBase64;
@@ -173,6 +179,12 @@ impl AsRef<str> for SingleLineString {
 impl fmt::Display for SingleLineString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.inner)
+    }
+}
+
+impl From<SingleLineString> for String {
+    fn from(x: SingleLineString) -> Self {
+        x.inner
     }
 }
 
