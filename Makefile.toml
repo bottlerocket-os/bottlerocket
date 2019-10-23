@@ -16,6 +16,11 @@ GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
 [env.development]
 IMAGE = "aws-k8s"
 BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
+BUILDSYS_DNS_SERVER = { script = ["awk '/^nameserver / { print $2 }' /etc/resolv.conf | head -n 1"] }
+# buildkit container additional args
+BUILDSYS_BUILDKIT_RUN_ARGS = "--dns ${BUILDSYS_DNS_SERVER}"
+# other docker container additional args
+BUILDSYS_DOCKER_RUN_ARGS = "--dns ${BUILDSYS_DNS_SERVER} --network host"
 
 [tasks.setup]
 script = [
@@ -48,6 +53,7 @@ docker run --rm \
   -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \
   --user "$(id -u):$(id -g)" \
+  ${BUILDSYS_DOCKER_RUN_ARGS} \
   -v "${GO_MOD_CACHE}":/go/pkg/mod \
   -v "${PWD}":/usr/src/host-ctr \
   -w /usr/src/host-ctr \
