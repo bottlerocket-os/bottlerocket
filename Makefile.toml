@@ -18,10 +18,46 @@ IMAGE = "aws-k8s"
 BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
 
 [tasks.setup]
+dependencies = [ "setup-buildkitd" ]
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
 mkdir -p ${GO_MOD_CACHE}
+'''
+]
+
+[tasks.setup-buildkitd]
+# Only run if there's not a buildkitd already running.
+condition_script = [
+'''
+set +e
+docker run --rm \
+       --network host \
+       --entrypoint /usr/bin/buildctl ${BUILDSYS_BUILDKIT_CLIENT} \
+       --addr ${BUILDSYS_BUILDKIT_SERVER} \
+       --timeout 1 \
+       debug workers >/dev/null 2>&1
+test "$?" -ne 0
+'''
+]
+install_script = [
+'''
+docker inspect -f "buildkitd using image: {{index .RepoTags 0}}" ${BUILDSYS_BUILDKIT_CLIENT} 2>/dev/null \
+  || docker pull ${BUILDSYS_BUILDKIT_CLIENT}
+'''
+]
+script = [
+'''
+printf "buildkitd container: "
+docker inspect -f "{{.ID}}" buildkitd 2>/dev/null \
+  || docker run -d --name buildkitd \
+       --rm \
+       --network host \
+       --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+       --privileged \
+       ${BUILDSYS_BUILDKIT_CLIENT} \
+       --addr ${BUILDSYS_BUILDKIT_SERVER}\
+       --oci-worker true
 '''
 ]
 
