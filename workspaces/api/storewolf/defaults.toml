@@ -102,7 +102,7 @@ superpowered = true
 
 [settings.host-containers.control]
 enabled = true
-source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-control:v0.1"
+source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-control:v0.2"
 superpowered = false
 
 [services.host-containers]
