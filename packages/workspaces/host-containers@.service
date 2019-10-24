@@ -6,6 +6,9 @@ BindsTo=host-containerd.service
 [Service]
 Type=simple
 EnvironmentFile=/etc/host-containers/%i.env
+Environment=LOCAL_DIR=/local
+# Create directories for container persistent storage
+ExecStartPre=/usr/bin/mkdir -m 1777 -p ${LOCAL_DIR}/host-containers/%i
 ExecStart=/usr/bin/host-ctr -ctr-id='%i' -source='${CTR_SOURCE}' -superpowered='${CTR_SUPERPOWERED}'
 Restart=always
 RestartSec=10

@@ -205,3 +205,103 @@ mod test_single_line_string {
         // paragraph separator
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// Identifier can only be created by deserializing from a string that contains
+/// ASCII alphanumeric characters, plus hyphens, which we use as our standard word separator
+/// character in user-facing identifiers. It stores the original form and makes it accessible
+/// through standard traits. Its purpose is to validate input for identifiers like container names
+/// that might be used to create files/directories.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Identifier {
+    inner: String,
+}
+
+impl<'de> Deserialize<'de> for Identifier {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let original = String::deserialize(deserializer)?;
+
+        if !original
+            .chars()
+            .all(|c| (c.is_ascii() && c.is_alphanumeric()) || c == '-')
+        {
+            Err(D::Error::custom(format!(
+                "Identifiers may only contain ASCII alphanumerics plus hyphens; received '{}'",
+                original,
+            )))
+        } else {
+            Ok(Identifier { inner: original })
+        }
+    }
+}
+
+/// Serialize the original string back out.
+impl Serialize for Identifier {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.inner)
+    }
+}
+
+impl Deref for Identifier {
+    type Target = str;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl Borrow<String> for Identifier {
+    fn borrow(&self) -> &String {
+        &self.inner
+    }
+}
+
+impl Borrow<str> for Identifier {
+    fn borrow(&self) -> &str {
+        &self.inner
+    }
+}
+
+impl AsRef<str> for Identifier {
+    fn as_ref(&self) -> &str {
+        &self.inner
+    }
+}
+
+impl fmt::Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.inner)
+    }
+}
+
+#[cfg(test)]
+mod test_valid_identifier {
+    use super::Identifier;
+
+    #[test]
+    fn valid_identifier() {
+        assert!(serde_json::from_str::<Identifier>("\"hello-world\"").is_ok());
+        assert!(serde_json::from_str::<Identifier>("\"helloworld\"").is_ok());
+        assert!(serde_json::from_str::<Identifier>("\"123321hello\"").is_ok());
+        assert!(serde_json::from_str::<Identifier>("\"hello-1234\"").is_ok());
+        assert!(serde_json::from_str::<Identifier>("\"--------\"").is_ok());
+        assert!(serde_json::from_str::<Identifier>("\"11111111\"").is_ok());
+    }
+
+    #[test]
+    fn invalid_identifier() {
+        assert!(serde_json::from_str::<Identifier>("\"../\"").is_err());
+        assert!(serde_json::from_str::<Identifier>("\"{}\"").is_err());
+        assert!(serde_json::from_str::<Identifier>("\"hello|World\"").is_err());
+        assert!(serde_json::from_str::<Identifier>("\"hello\nWorld\"").is_err());
+        assert!(serde_json::from_str::<Identifier>("\"hello_world\"").is_err());
+        assert!(serde_json::from_str::<Identifier>("\"タール\"").is_err());
+        assert!(serde_json::from_str::<Identifier>("\"💝\"").is_err());
+    }
+}

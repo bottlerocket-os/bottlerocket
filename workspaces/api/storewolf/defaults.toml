@@ -97,7 +97,7 @@ val = "bork seed"
 
 [settings.host-containers.admin]
 enabled = false
-source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-admin:v0.1"
+source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-admin:v0.2"
 superpowered = true
 
 [settings.host-containers.control]

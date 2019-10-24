@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 
 use apiserver::model;
-use apiserver::modeled_types::SingleLineString;
+use apiserver::modeled_types::Identifier;
 
 #[macro_use]
 extern crate tracing;
@@ -111,7 +111,7 @@ mod error {
 type Result<T> = std::result::Result<T, error::Error>;
 
 /// Query the API for the currently defined host containers
-fn get_host_containers<P>(socket_path: P) -> Result<HashMap<SingleLineString, model::ContainerImage>>
+fn get_host_containers<P>(socket_path: P) -> Result<HashMap<Identifier, model::ContainerImage>>
 where
     P: AsRef<Path>,
 {
