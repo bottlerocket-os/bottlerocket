@@ -22,10 +22,10 @@ pub fn build_template_registry(
             &name, &metadata.template_path
         );
         template_registry
-            .register_template_file(&name, &metadata.template_path)
+            .register_template_file(&name, metadata.template_path.as_ref())
             .context(error::TemplateRegister {
                 name: name.as_str(),
-                path: &metadata.template_path,
+                path: metadata.template_path.as_ref(),
             })?;
     }
 
