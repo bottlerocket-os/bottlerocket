@@ -1,13 +1,17 @@
+#![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
 #[path = "../error.rs"]
 mod error;
 
+#[macro_use]
+extern crate log;
+
 use crate::error::Result;
 use chrono::{DateTime, Utc};
-use data_store_version::Version as DVersion;
-use semver::Version;
-use snafu::{ensure, ErrorCompat, ResultExt};
+use data_store_version::Version as DataVersion;
+use semver::Version as SemVer;
+use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
@@ -31,7 +35,7 @@ struct AddUpdateArgs {
 
     // image version
     #[structopt(short = "v", long = "version")]
-    version: Version,
+    image_version: SemVer,
 
     // architecture image is built for
     #[structopt(short = "a", long = "arch")]
@@ -39,11 +43,11 @@ struct AddUpdateArgs {
 
     // corresponding datastore version for this image
     #[structopt(short = "d", long = "data-version")]
-    datastore: DVersion,
+    datastore_version: DataVersion,
 
     // maximum valid version
     #[structopt(short = "m", long = "max-version")]
-    max_version: Version,
+    max_version: Option<SemVer>,
 
     // root image target name
     #[structopt(short = "r", long = "root")]
@@ -60,17 +64,26 @@ struct AddUpdateArgs {
 
 impl AddUpdateArgs {
     fn run(self) -> Result<()> {
-        let mut m: Manifest = match load_file(&self.file) {
+        let mut manifest: Manifest = match load_file(&self.file) {
             Ok(m) => m,
             _ => Manifest::default(), // TODO only if EEXIST
         };
-        m.datastore_versions
-            .insert(self.version.clone(), self.datastore);
-        let u = Update {
+
+        let max_version = if let Some(version) = self.max_version {
+            version
+        } else {
+            // Default to greater of the current max version and this version
+            if let Some(update) = manifest.updates.first() {
+                std::cmp::max(&self.image_version, &update.max_version).clone()
+            } else {
+                self.image_version.clone()
+            }
+        };
+        let update = Update {
             flavor: self.flavor,
             arch: self.arch,
-            version: self.version,
-            max_version: self.max_version,
+            version: self.image_version.clone(),
+            max_version,
             images: Images {
                 root: self.root,
                 boot: self.boot,
@@ -78,9 +91,18 @@ impl AddUpdateArgs {
             },
             waves: BTreeMap::new(),
         };
-        update_max_version(&mut m, &u.max_version, Some(&u.arch), Some(&u.flavor));
-        m.updates.push(u);
-        write_file(&self.file, &m)
+        manifest
+            .datastore_versions
+            .insert(self.image_version, self.datastore_version);
+        update_max_version(
+            &mut manifest,
+            &update.max_version,
+            Some(&update.arch),
+            Some(&update.flavor),
+        );
+        info!("Maximum version set to {}", &update.max_version);
+        manifest.updates.push(update);
+        write_file(&self.file, &manifest)
     }
 }
 
@@ -95,7 +117,7 @@ struct RemoveUpdateArgs {
 
     // image version
     #[structopt(short = "v", long = "version")]
-    version: Version,
+    image_version: SemVer,
 
     // architecture image is built for
     #[structopt(short = "a", long = "arch")]
@@ -112,28 +134,43 @@ struct RemoveUpdateArgs {
 
 impl RemoveUpdateArgs {
     fn run(&self) -> Result<()> {
-        let mut m: Manifest = load_file(&self.file)?;
-        m.updates.retain(|u| {
-            !(u.arch == self.arch && u.flavor == self.flavor && u.version == self.version)
+        let mut manifest: Manifest = load_file(&self.file)?;
+        // Remove any update that exactly matches the specified update
+        manifest.updates.retain(|update| {
+            update.arch != self.arch
+                || update.flavor != self.flavor
+                || update.version != self.image_version
         });
         if self.cleanup {
-            let remaining: Vec<&Update> = m
+            let remaining: Vec<&Update> = manifest
                 .updates
                 .iter()
-                .filter(|u| u.version == self.version)
+                .filter(|update| update.version == self.image_version)
                 .collect();
             if remaining.is_empty() {
-                m.datastore_versions.remove(&self.version);
+                manifest.datastore_versions.remove(&self.image_version);
             } else {
-                println!(
+                info!(
                     "Cleanup skipped; {} {} updates remain",
                     remaining.len(),
-                    self.version
+                    self.image_version
                 );
             }
         }
         // Note: We don't revert the maximum version on removal
-        write_file(&self.file, &m)
+        write_file(&self.file, &manifest)?;
+        if let Some(current) = manifest.updates.first() {
+            info!(
+                "Update {}-{}-{} removed. Current maximum version: {}",
+                self.arch, self.flavor, self.image_version, current.version
+            );
+        } else {
+            info!(
+                "Update {}-{}-{} removed. No remaining updates",
+                self.arch, self.flavor, self.image_version
+            );
+        }
+        Ok(())
     }
 }
 
@@ -148,7 +185,7 @@ struct WaveArgs {
 
     // image version
     #[structopt(short = "v", long = "version")]
-    version: Version,
+    image_version: SemVer,
 
     // architecture image is built for
     #[structopt(short = "a", long = "arch")]
@@ -183,37 +220,43 @@ impl WaveArgs {
     }
 
     fn add(self) -> Result<()> {
-        let mut m: Manifest = load_file(&self.file)?;
-        let matching: Vec<&mut Update> = m
+        let mut manifest: Manifest = load_file(&self.file)?;
+        let matching: Vec<&mut Update> = manifest
             .updates
             .iter_mut()
-            .filter(|u| u.arch == self.arch && u.flavor == self.flavor && u.version == self.version)
+            // Find the update that exactly matches the specified update
+            .filter(|update| {
+                update.arch == self.arch
+                    && update.flavor == self.flavor
+                    && update.version == self.image_version
+            })
             .collect();
         if matching.len() > 1 {
-            println!("Multiple matching updates for wave - this is weird but not a disaster");
+            warn!("Multiple matching updates for wave - this is weird but not a disaster");
         }
-        if let Some(start) = self.start {
-            for u in matching {
-                u.waves.insert(self.bound, start);
-            }
-            Self::validate(&m.updates)?;
-            write_file(&self.file, &m)
-        } else {
-            error::WaveStartArg.fail()
+        let start = self.start.context(error::WaveStartArg)?;
+        for update in matching {
+            update.waves.insert(self.bound, start);
         }
+        Self::validate(&manifest.updates)?;
+        write_file(&self.file, &manifest)
     }
 
     fn remove(self) -> Result<()> {
-        let mut m: Manifest = load_file(&self.file)?;
-        let matching: Vec<&mut Update> = m
+        let mut manifest: Manifest = load_file(&self.file)?;
+        let matching: Vec<&mut Update> = manifest
             .updates
             .iter_mut()
-            .filter(|u| u.arch == self.arch && u.flavor == self.flavor && u.version == self.version)
+            .filter(|update| {
+                update.arch == self.arch
+                    && update.flavor == self.flavor
+                    && update.version == self.image_version
+            })
             .collect();
-        for u in matching {
-            u.waves.remove(&self.bound);
+        for update in matching {
+            update.waves.remove(&self.bound);
         }
-        write_file(&self.file, &m)
+        write_file(&self.file, &manifest)
     }
 }
 
@@ -224,11 +267,11 @@ struct MigrationArgs {
 
     // starting datastore version
     #[structopt(short = "f", long = "from")]
-    from: DVersion,
+    from: DataVersion,
 
     // target datastore version
     #[structopt(short = "t", long = "to")]
-    to: DVersion,
+    to: DataVersion,
 
     // whether to append to or replace any existing migration list
     #[structopt(short, long)]
@@ -240,21 +283,36 @@ struct MigrationArgs {
 
 impl MigrationArgs {
     fn add(self) -> Result<()> {
-        let mut m: Manifest = load_file(&self.file)?;
-        let mut migrations = self.migrations;
-        if self.append {
-            if let Some(e) = m.migrations.remove(&(self.from, self.to)) {
-                migrations.extend_from_slice(&e);
-            }
+        let mut manifest: Manifest = load_file(&self.file)?;
+        // If --append is set, append the new migrations to the existing vec.
+        if self.append && manifest.migrations.contains_key(&(self.from, self.to)) {
+            let migrations = manifest.migrations.get_mut(&(self.from, self.to)).context(
+                error::MigrationMutable {
+                    from: self.from,
+                    to: self.to,
+                },
+            )?;
+            migrations.extend_from_slice(&self.migrations);
+        // Otherwise just overwrite the existing migrations
+        } else {
+            manifest
+                .migrations
+                .insert((self.from, self.to), self.migrations);
         }
-        m.migrations.insert((self.from, self.to), migrations);
-        write_file(&self.file, &m)
+        write_file(&self.file, &manifest)
     }
 
     fn remove(self) -> Result<()> {
-        let mut m: Manifest = load_file(&self.file)?;
-        m.migrations.remove(&(self.from, self.to));
-        write_file(&self.file, &m)
+        let mut manifest: Manifest = load_file(&self.file)?;
+        ensure!(
+            manifest.migrations.contains_key(&(self.from, self.to)),
+            error::MigrationNotPresent {
+                from: self.from,
+                to: self.to,
+            }
+        );
+        manifest.migrations.remove(&(self.from, self.to));
+        write_file(&self.file, &manifest)
     }
 }
 
@@ -265,14 +323,14 @@ struct MaxVersionArgs {
 
     // maximum valid version
     #[structopt(short, long)]
-    max_version: Version,
+    max_version: SemVer,
 }
 
 impl MaxVersionArgs {
     fn run(self) -> Result<()> {
-        let mut m: Manifest = load_file(&self.file)?;
-        update_max_version(&mut m, &self.max_version, None, None);
-        write_file(&self.file, &m)
+        let mut manifest: Manifest = load_file(&self.file)?;
+        update_max_version(&mut manifest, &self.max_version, None, None);
+        write_file(&self.file, &manifest)
     }
 }
 
@@ -282,47 +340,57 @@ struct MappingArgs {
     file: PathBuf,
 
     #[structopt(short, long)]
-    image_version: Version,
+    image_version: SemVer,
 
     #[structopt(short, long)]
-    data_version: DVersion,
+    data_version: DataVersion,
 }
 
 impl MappingArgs {
     fn run(self) -> Result<()> {
-        let mut m: Manifest = load_file(&self.file)?;
+        let mut manifest: Manifest = load_file(&self.file)?;
         let version = self.image_version.clone();
-        let old = m
+        let old = manifest
             .datastore_versions
             .insert(self.image_version, self.data_version);
         if let Some(old) = old {
-            eprintln!(
+            warn!(
                 "Warning: New mapping ({},{}) replaced old mapping ({},{})",
                 version, self.data_version, version, old
             );
         }
-        write_file(&self.file, &m)
+        write_file(&self.file, &manifest)
     }
 }
 
 #[derive(Debug, StructOpt)]
 #[structopt(rename_all = "kebab-case")]
 enum Command {
+    /// Create an empty manifest
     Init(GeneralArgs),
+    /// Add a new update to the manifest, not including wave information
     AddUpdate(AddUpdateArgs),
+    /// Add a (bound_id, time) wave to an existing update
     AddWave(WaveArgs),
+    /// Add one or more migrations to a (from, to) datastore mapping
     AddMigration(MigrationArgs),
-    AddMapping(MappingArgs),
+    /// Add a image_version:data_store_version mapping to the manifest
+    AddVersionMapping(MappingArgs),
+    /// Set the global maximum image version
     SetMaxVersion(MaxVersionArgs),
+    /// Remove an update from the manifest, including wave information
     RemoveUpdate(RemoveUpdateArgs),
-    RemoveMigration(MigrationArgs),
+    /// Remove all migrations for a (from, to) datastore mapping
+    RemoveMigrations(MigrationArgs),
+    /// Remove a (bound_id, time) wave from an update
     RemoveWave(WaveArgs),
+    /// Validate a manifest file, but make no changes
     Validate(GeneralArgs),
 }
 
 fn load_file(path: &Path) -> Result<Manifest> {
-    serde_json::from_reader(File::open(path).context(error::ManifestRead { path })?)
-        .context(error::ManifestParse)
+    let file = File::open(path).context(error::ManifestRead { path })?;
+    serde_json::from_reader(file).context(error::ManifestParse)
 }
 
 fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
@@ -334,18 +402,18 @@ fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
 /// Update the maximum version for all updates that optionally match the
 /// architecture and flavor of some new update.
 fn update_max_version(
-    m: &mut Manifest,
-    version: &Version,
+    manifest: &mut Manifest,
+    version: &SemVer,
     arch: Option<&str>,
     flavor: Option<&str>,
 ) {
-    let matching: Vec<&mut Update> = m
+    let matching: Vec<&mut Update> = manifest
         .updates
         .iter_mut()
-        .filter(|u| match (arch, flavor) {
-            (Some(arch), Some(flavor)) => u.arch == arch && u.flavor == flavor,
-            (Some(arch), None) => u.arch == arch,
-            (None, Some(flavor)) => u.flavor == flavor,
+        .filter(|update| match (arch, flavor) {
+            (Some(arch), Some(flavor)) => update.arch == arch && update.flavor == flavor,
+            (Some(arch), None) => update.arch == arch,
+            (None, Some(flavor)) => update.flavor == flavor,
             _ => true,
         })
         .collect();
@@ -360,11 +428,11 @@ fn main_inner() -> Result<()> {
         Command::AddUpdate(args) => args.run(),
         Command::AddWave(args) => args.add(),
         Command::AddMigration(args) => args.add(),
-        Command::AddMapping(args) => args.run(),
+        Command::AddVersionMapping(args) => args.run(),
         Command::SetMaxVersion(args) => args.run(),
         Command::RemoveUpdate(args) => args.run(),
         Command::RemoveWave(args) => args.remove(),
-        Command::RemoveMigration(args) => args.remove(),
+        Command::RemoveMigrations(args) => args.remove(),
         Command::Validate(args) => match load_file(&args.file) {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
@@ -376,11 +444,11 @@ fn main() -> ! {
     std::process::exit(match main_inner() {
         Ok(()) => 0,
         Err(err) => {
-            eprintln!("{}", err);
+            error!("{}", err);
             if let Some(var) = std::env::var_os("RUST_BACKTRACE") {
                 if var != "0" {
                     if let Some(backtrace) = err.backtrace() {
-                        eprintln!("\n{:?}", backtrace);
+                        error!("\n{:?}", backtrace);
                     }
                 }
             }
@@ -403,9 +471,9 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.3").unwrap(),
-            max_version: Version::parse("1.2.3").unwrap(),
-            datastore: DVersion::from_str("1.0").unwrap(),
+            image_version: SemVer::parse("1.2.3").unwrap(),
+            max_version: Some(SemVer::parse("1.2.3").unwrap()),
+            datastore_version: DataVersion::from_str("1.0").unwrap(),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -416,9 +484,9 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.5").unwrap(),
-            max_version: Version::parse("1.2.3").unwrap(),
-            datastore: DVersion::from_str("1.0").unwrap(),
+            image_version: SemVer::parse("1.2.5").unwrap(),
+            max_version: Some(SemVer::parse("1.2.3").unwrap()),
+            datastore_version: DataVersion::from_str("1.0").unwrap(),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -429,9 +497,9 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.4").unwrap(),
-            max_version: Version::parse("1.2.4").unwrap(),
-            datastore: DVersion::from_str("1.0").unwrap(),
+            image_version: SemVer::parse("1.2.4").unwrap(),
+            max_version: Some(SemVer::parse("1.2.4").unwrap()),
+            datastore_version: DataVersion::from_str("1.0").unwrap(),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -441,7 +509,7 @@ mod tests {
 
         let m: Manifest = load_file(tmpfd.path())?;
         for u in m.updates {
-            assert!(u.max_version == Version::parse("1.2.4").unwrap());
+            assert!(u.max_version == SemVer::parse("1.2.4").unwrap());
         }
         Ok(())
     }
@@ -453,9 +521,9 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.3").unwrap(),
-            max_version: Version::parse("1.2.3").unwrap(),
-            datastore: DVersion::from_str("1.0").unwrap(),
+            image_version: SemVer::parse("1.2.3").unwrap(),
+            max_version: Some(SemVer::parse("1.2.3").unwrap()),
+            datastore_version: DataVersion::from_str("1.0").unwrap(),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -466,9 +534,9 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.5").unwrap(),
-            max_version: Version::parse("1.2.3").unwrap(),
-            datastore: DVersion::from_str("1.1").unwrap(),
+            image_version: SemVer::parse("1.2.5").unwrap(),
+            max_version: Some(SemVer::parse("1.2.3").unwrap()),
+            datastore_version: DataVersion::from_str("1.1").unwrap(),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -479,9 +547,9 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.4").unwrap(),
-            max_version: Version::parse("1.2.4").unwrap(),
-            datastore: DVersion::from_str("1.0").unwrap(),
+            image_version: SemVer::parse("1.2.4").unwrap(),
+            max_version: Some(SemVer::parse("1.2.4").unwrap()),
+            datastore_version: DataVersion::from_str("1.0").unwrap(),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -494,7 +562,7 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.4").unwrap(),
+            image_version: SemVer::parse("1.2.4").unwrap(),
             cleanup: true,
         }
         .run()
@@ -503,7 +571,7 @@ mod tests {
         let m: Manifest = load_file(tmpfd.path())?;
         assert!(m
             .datastore_versions
-            .contains_key(&Version::parse("1.2.3").unwrap()));
+            .contains_key(&SemVer::parse("1.2.3").unwrap()));
         Ok(())
     }
 
@@ -514,9 +582,9 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.3").unwrap(),
-            max_version: Version::parse("1.2.3").unwrap(),
-            datastore: DVersion::from_str("1.0").unwrap(),
+            image_version: SemVer::parse("1.2.3").unwrap(),
+            max_version: Some(SemVer::parse("1.2.3").unwrap()),
+            datastore_version: DataVersion::from_str("1.0").unwrap(),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -528,7 +596,7 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.3").unwrap(),
+            image_version: SemVer::parse("1.2.3").unwrap(),
             bound: 1024,
             start: Some(Utc::now()),
         }
@@ -539,7 +607,7 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             flavor: String::from("yum"),
             arch: String::from("x86_64"),
-            version: Version::parse("1.2.3").unwrap(),
+            image_version: SemVer::parse("1.2.3").unwrap(),
             bound: 1536,
             start: Some(Utc::now() - Duration::hours(1)),
         }

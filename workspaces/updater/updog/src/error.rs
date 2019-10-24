@@ -140,6 +140,20 @@ pub(crate) enum Error {
     #[snafu(display("Migration not found in image: {:?}", name))]
     MigrationNotLocal { backtrace: Backtrace, name: PathBuf },
 
+    #[snafu(display("Unable to get mutable reference to ({},{}) migrations", from, to))]
+    MigrationMutable {
+        backtrace: Backtrace,
+        from: DataVersion,
+        to: DataVersion,
+    },
+
+    #[snafu(display("Migration ({},{}) not present in manifest", from, to))]
+    MigrationNotPresent {
+        backtrace: Backtrace,
+        from: DataVersion,
+        to: DataVersion,
+    },
+
     #[snafu(display("Missing datastore version in metadata: {:?}", version))]
     MissingDataVersion {
         backtrace: Backtrace,
@@ -251,13 +265,7 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Update wave start time missing"))]
-    WaveStartArg { backtrace: Backtrace },
-
-    #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]
-    WavesUnordered { wave: u32, next: u32 },
-
-    #[snafu(display("Update wave start time missing"))]
+    #[snafu(display("--start-time <time> required to add wave to update"))]
     WaveStartArg { backtrace: Backtrace },
 
     #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]

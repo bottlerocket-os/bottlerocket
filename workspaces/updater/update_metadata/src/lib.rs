@@ -5,9 +5,9 @@ pub mod error;
 mod se;
 
 use chrono::{DateTime, Duration, Utc};
-use data_store_version::Version as DVersion;
+use data_store_version::Version as DataVersion;
 use rand::{thread_rng, Rng};
-use semver::Version;
+use semver::Version as SemVer;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::Bound::{Excluded, Included};
@@ -25,8 +25,8 @@ pub struct Images {
 pub struct Update {
     pub flavor: String,
     pub arch: String,
-    pub version: Version,
-    pub max_version: Version,
+    pub version: SemVer,
+    pub max_version: SemVer,
     #[serde(deserialize_with = "de::deserialize_bound")]
     pub waves: BTreeMap<u32, DateTime<Utc>>,
     pub images: Images,
@@ -37,10 +37,10 @@ pub struct Manifest {
     pub updates: Vec<Update>,
     #[serde(deserialize_with = "de::deserialize_migration")]
     #[serde(serialize_with = "se::serialize_migration")]
-    pub migrations: BTreeMap<(DVersion, DVersion), Vec<String>>,
+    pub migrations: BTreeMap<(DataVersion, DataVersion), Vec<String>>,
     #[serde(deserialize_with = "de::deserialize_datastore_map")]
     #[serde(serialize_with = "se::serialize_datastore_map")]
-    pub datastore_versions: BTreeMap<Version, DVersion>,
+    pub datastore_versions: BTreeMap<SemVer, DataVersion>,
 }
 
 impl Update {

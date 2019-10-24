@@ -1,8 +1,8 @@
 use crate::error;
 use chrono::{DateTime, Utc};
-use data_store_version::Version as DVersion;
+use data_store_version::Version as DataVersion;
 use regex::Regex;
-use semver::Version;
+use semver::Version as SemVer;
 use serde::{de::Error as _, Deserializer};
 use snafu::{ensure, ResultExt};
 use std::collections::BTreeMap;
@@ -56,10 +56,10 @@ where
     deserializer.deserialize_map(Visitor)
 }
 
-/// Converts the tuple keys to a `DVersion` before insertion and catches duplicates
+/// Converts the tuple keys to a `DataVersion` before insertion and catches duplicates
 pub(crate) fn deserialize_migration<'de, D>(
     deserializer: D,
-) -> Result<BTreeMap<(DVersion, DVersion), Vec<String>>, D::Error>
+) -> Result<BTreeMap<(DataVersion, DataVersion), Vec<String>>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -80,11 +80,11 @@ where
     fn parse_tuple_key(
         key: String,
         list: Vec<String>,
-        map: &mut BTreeMap<(DVersion, DVersion), Vec<String>>,
+        map: &mut BTreeMap<(DataVersion, DataVersion), Vec<String>>,
     ) -> Result<(), error::Error> {
         let (from, to) = parse_versions(&key)?;
 
-        if let (Ok(from), Ok(to)) = (DVersion::from_str(from), DVersion::from_str(to)) {
+        if let (Ok(from), Ok(to)) = (DataVersion::from_str(from), DataVersion::from_str(to)) {
             ensure!(
                 map.insert((from, to), list).is_none(),
                 error::DuplicateVersionKey { key }
@@ -103,7 +103,7 @@ where
     struct Visitor;
 
     impl<'de> serde::de::Visitor<'de> for Visitor {
-        type Value = BTreeMap<(DVersion, DVersion), Vec<String>>;
+        type Value = BTreeMap<(DataVersion, DataVersion), Vec<String>>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
@@ -124,21 +124,21 @@ where
     deserializer.deserialize_map(Visitor)
 }
 
-/// Converts the key and value into a Version/DVersion pair before insertion and
+/// Converts the key and value into a SemVer/DataVersion pair before insertion and
 /// catches duplicates
 pub(crate) fn deserialize_datastore_map<'de, D>(
     deserializer: D,
-) -> Result<BTreeMap<Version, DVersion>, D::Error>
+) -> Result<BTreeMap<SemVer, DataVersion>, D::Error>
 where
     D: Deserializer<'de>,
 {
     fn to_versions(
         key: String,
         value: String,
-        map: &mut BTreeMap<Version, DVersion>,
+        map: &mut BTreeMap<SemVer, DataVersion>,
     ) -> Result<(), error::Error> {
-        let key_ver = Version::parse(&key);
-        let value_ver = DVersion::from_str(&value);
+        let key_ver = SemVer::parse(&key);
+        let value_ver = DataVersion::from_str(&value);
         match (key_ver, value_ver) {
             (Ok(k), Ok(v)) => {
                 ensure!(
@@ -155,7 +155,7 @@ where
     struct Visitor;
 
     impl<'de> serde::de::Visitor<'de> for Visitor {
-        type Value = BTreeMap<Version, DVersion>;
+        type Value = BTreeMap<SemVer, DataVersion>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")
