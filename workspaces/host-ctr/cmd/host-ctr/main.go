@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"math/rand"
 	"os"
 	"os/signal"
 	"regexp"
@@ -18,10 +19,14 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	cgroups "github.com/opencontainers/runc/libcontainer/cgroups"
+	"github.com/opencontainers/runc/libcontainer/cgroups"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 func main() {
 	os.Exit(_main())
@@ -49,15 +54,25 @@ func _main() int {
 		flag.Usage()
 		return 2
 	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = namespaces.WithNamespace(ctx, namespace)
 	defer cancel()
 
-	// Set up channel on which to send signal notifications.
-	// We must use a buffered channel or risk missing the signal
-	// if we're not ready to receive when the signal is sent.
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	go func(ctx context.Context, cancel context.CancelFunc) {
+		// Set up channel on which to send signal notifications.
+		// We must use a buffered channel or risk missing the signal
+		// if we're not ready to receive when the signal is sent.
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		for {
+			select {
+			case s := <-c:
+				log.G(ctx).Info("Received signal: ", s)
+				cancel()
+			}
+		}
+	}(ctx, cancel)
 
 	// Set up containerd client
 	// Use host containers' containerd socket
@@ -157,7 +172,7 @@ func _main() int {
 		log.G(ctx).WithError(err).WithField("img", img.Name).Error("Failed to create container")
 		return 1
 	}
-	defer container.Delete(ctx, containerd.WithSnapshotCleanup)
+	defer container.Delete(context.TODO(), containerd.WithSnapshotCleanup)
 
 	// Create the container task
 	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
@@ -165,10 +180,10 @@ func _main() int {
 		log.G(ctx).WithError(err).Error("Failed to create container task")
 		return 1
 	}
-	defer task.Delete(ctx)
+	defer task.Delete(context.TODO())
 
 	// Wait before calling start in case the container task finishes too quickly
-	exitStatusC, err := task.Wait(ctx)
+	exitStatusC, err := task.Wait(context.TODO())
 	if err != nil {
 		log.G(ctx).WithError(err).Error("Unexpected error during container task setup.")
 		return 1
@@ -183,12 +198,14 @@ func _main() int {
 
 	// Block until an OS signal (e.g. SIGTERM, SIGINT) is received or the container task finishes and exits on its own.
 	var status containerd.ExitStatus
+	ctrCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	select {
-	case s := <-c:
-		log.G(ctx).Info("Received signal: ", s)
+	case <-ctx.Done():
+
 		// SIGTERM the container task and get its exit status
-		if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
-			log.G(ctx).WithError(err).Error("Failed to send SIGTERM to container")
+		if err := task.Kill(ctrCtx, syscall.SIGTERM); err != nil {
+			log.G(ctrCtx).WithError(err).Error("Failed to send SIGTERM to container")
 			return 1
 		}
 
@@ -206,12 +223,12 @@ func _main() int {
 			// Create a deadline of 45 seconds
 			killCtrTask := func() error {
 				const sigkillTimeout = 45 * time.Second
-				killCtx, cancel := context.WithTimeout(ctx, sigkillTimeout)
+				killCtx, cancel := context.WithTimeout(ctrCtx, sigkillTimeout)
 				defer cancel()
 				return task.Kill(killCtx, syscall.SIGKILL)
 			}
 			if killCtrTask() != nil {
-				log.G(ctx).WithError(err).Error("Failed to SIGKILL container process, timed out")
+				log.G(ctrCtx).WithError(err).Error("Failed to SIGKILL container process, timed out")
 				return 1
 			}
 
@@ -222,10 +239,10 @@ func _main() int {
 	}
 	code, _, err := status.Result()
 	if err != nil {
-		log.G(ctx).WithError(err).Error("Failed to get container task exit status")
+		log.G(ctrCtx).WithError(err).Error("Failed to get container task exit status")
 		return 1
 	}
-	log.G(ctx).WithField("code", code).Info("Container task exited")
+	log.G(ctrCtx).WithField("code", code).Info("Container task exited")
 	return int(code)
 }
 
@@ -297,16 +314,45 @@ var ecrRegex = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr\.([a-z
 // Pulls image from specified source
 func pullImage(ctx context.Context, source string, client *containerd.Client) (containerd.Image, error) {
 	// Pull the image
-	img, err := client.Pull(ctx, source,
-		withDynamicResolver(ctx, source),
-		containerd.WithSchema1Conversion)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to pull ctr image")
+	// Retry with exponential backoff when failures occur, maximum retry duration will not exceed 31 seconds
+	const maxRetryAttempts = 5
+	const intervalMultiplier = 2
+	const maxRetryInterval = 30 * time.Second
+	const jitterPeakAmplitude = 4000
+	const jitterLowerBound = 2000
+	var retryInterval = 1 * time.Second
+	var retryAttempts = 0
+	var img containerd.Image
+	for {
+		var err error
+		img, err = client.Pull(ctx, source,
+			withDynamicResolver(ctx, source),
+			containerd.WithSchema1Conversion)
+		if err == nil {
+			break
+		}
+		if retryAttempts >= maxRetryAttempts {
+			return nil, errors.Wrap(err, "retries exhausted")
+		}
+		// Add a random jitter between 2 - 6 seconds to the retry interval
+		retryIntervalWithJitter := retryInterval + time.Duration(rand.Int31n(jitterPeakAmplitude))*time.Millisecond + jitterLowerBound*time.Millisecond
+		log.G(ctx).WithError(err).Warnf("Failed to pull image. Waiting %s before retrying...", retryIntervalWithJitter)
+		timer := time.NewTimer(retryIntervalWithJitter)
+		select {
+		case <-timer.C:
+			retryInterval *= intervalMultiplier
+			if retryInterval > maxRetryInterval {
+				retryInterval = maxRetryInterval
+			}
+			retryAttempts++
+		case <-ctx.Done():
+			return nil, errors.Wrap(err, "context ended while retrying")
+		}
 	}
 	log.G(ctx).WithField("img", img.Name()).Info("Pulled successfully")
 	log.G(ctx).WithField("img", img.Name()).Info("Unpacking...")
 	if err := img.Unpack(ctx, containerd.DefaultSnapshotter); err != nil {
-		return nil, errors.Wrap(err, "Failed to unpack image")
+		return nil, errors.Wrap(err, "failed to unpack image")
 	}
 	return img, nil
 }
@@ -352,7 +398,7 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 		if err != nil {
 			return errors.Wrap(err, "Failed to create ECR resolver")
 		}
-		log.G(ctx).WithField("ref", ref).Info("Pulling from Amazon ECR")
+		log.G(ctx).WithField("ref", ref).Info("Pulling with Amazon ECR Resolver")
 		c.Resolver = resolver
 		return nil
 	}
