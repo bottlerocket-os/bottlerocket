@@ -1,5 +1,5 @@
 use data_store_version::Version as DataVersion;
-use semver::Version as SemVer;
+use serde::ser::Error as _;
 use serde::{Serialize, Serializer};
 use std::collections::BTreeMap;
 
@@ -14,25 +14,16 @@ where
     for ((from, to), val) in value {
         let key = format!(
             "({},{})",
-            from.to_string().trim_start_matches('v'),
-            to.to_string().trim_start_matches('v')
+            serde_plain::to_string(&from).map_err(|e| S::Error::custom(format!(
+                "Could not serialize 'from' version: {}",
+                e
+            )))?,
+            serde_plain::to_string(&to).map_err(|e| S::Error::custom(format!(
+                "Could not serialize 'to' version: {}",
+                e
+            )))?,
         );
         map.insert(key, val);
-    }
-    map.serialize(serializer)
-}
-
-pub(crate) fn serialize_datastore_map<S>(
-    value: &BTreeMap<SemVer, DataVersion>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let mut map = BTreeMap::new();
-    for (image, datastore) in value {
-        let datastore = String::from(datastore.to_string().trim_start_matches('v'));
-        map.insert(image.to_string(), datastore);
     }
     map.serialize(serializer)
 }

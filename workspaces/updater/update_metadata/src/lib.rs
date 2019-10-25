@@ -38,8 +38,6 @@ pub struct Manifest {
     #[serde(deserialize_with = "de::deserialize_migration")]
     #[serde(serialize_with = "se::serialize_migration")]
     pub migrations: BTreeMap<(DataVersion, DataVersion), Vec<String>>,
-    #[serde(deserialize_with = "de::deserialize_datastore_map")]
-    #[serde(serialize_with = "se::serialize_datastore_map")]
     pub datastore_versions: BTreeMap<SemVer, DataVersion>,
 }
 

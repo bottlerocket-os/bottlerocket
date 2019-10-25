@@ -11,9 +11,12 @@ It is especially helpful during data store migrations, and is also used for data
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate serde_plain;
 
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde::{Serialize, Serializer};
 use snafu::{OptionExt, ResultExt};
 use std::path::Path;
 use std::path::PathBuf;
@@ -92,9 +95,20 @@ impl FromStr for Version {
     }
 }
 
+derive_deserialize_from_str!(Version, "Valid data-store version");
+
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "v{}.{}", self.major, self.minor)
+    }
+}
+
+impl Serialize for Version {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&format!("{}.{}", self.major, self.minor))
     }
 }
 
