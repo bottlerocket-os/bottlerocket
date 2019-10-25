@@ -15,12 +15,16 @@ GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
 
 [env.development]
 IMAGE = "aws-k8s"
+# Permit pulling directly Upstream URLs when lookaside cache results in MISSes.
 BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
-BUILDSYS_DNS_SERVER = { script = ["awk '/^nameserver / { print $2 }' /etc/resolv.conf | head -n 1"] }
-# buildkit container additional args
-BUILDSYS_BUILDKIT_RUN_ARGS = "--dns ${BUILDSYS_DNS_SERVER}"
-# other docker container additional args
-BUILDSYS_DOCKER_RUN_ARGS = "--dns ${BUILDSYS_DNS_SERVER} --network host"
+# Extra flags used when spawning containers.
+#
+# ex: BUILDSYS_BUILDKIT_RUN_ARGS="--network=host --dns=8.8.8.8"
+#
+# For builder containers
+BUILDSYS_BUILDKIT_RUN_ARGS = { default_value = "" }
+# For supporting containers
+BUILDSYS_DOCKER_RUN_ARGS = { default_value = "--network=host" }
 
 [tasks.setup]
 script = [
