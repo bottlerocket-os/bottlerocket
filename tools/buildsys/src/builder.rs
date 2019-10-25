@@ -108,16 +108,16 @@ fn docker_args() -> Result<String> {
     // Gather the environment context.
     let root_dir = getenv("BUILDSYS_ROOT_DIR")?;
     let buildkit_client = getenv("BUILDSYS_BUILDKIT_CLIENT")?;
-    let buildkit_run_args = getenv("BUILDSYS_BUILDKIT_RUN_ARGS").unwrap_or_else(|_| "".to_string());
+    let user_args = getenv("BUILDSYS_DOCKER_RUN_ARGS").unwrap_or_else(|_| "".to_string());
 
     let docker_args = format!(
         "run --init --rm --network host --user {uid}:{uid} \
          --volume {root_dir}:{root_dir} --workdir {root_dir} \
-         {buildkit_run_args} \
+         {user_args} \
          --entrypoint /usr/bin/buildctl {buildkit_client}",
         uid = uid,
         root_dir = root_dir,
-        buildkit_run_args = buildkit_run_args,
+        user_args = user_args,
         buildkit_client = buildkit_client
     );
 

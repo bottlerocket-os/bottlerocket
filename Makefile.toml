@@ -19,11 +19,8 @@ IMAGE = "aws-k8s"
 BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
 # Extra flags used when spawning containers.
 #
-# ex: BUILDSYS_BUILDKIT_RUN_ARGS="--network=host --dns=8.8.8.8"
+# ex: BUILDSYS_DOCKER_RUN_ARGS="--network=host --dns=127.0.0.53"
 #
-# For builder containers
-BUILDSYS_BUILDKIT_RUN_ARGS = { default_value = "" }
-# For supporting containers
 BUILDSYS_DOCKER_RUN_ARGS = { default_value = "--network=host" }
 
 [tasks.setup]
