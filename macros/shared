@@ -151,11 +151,15 @@ CROSS_COMPILATION_CONF_EOF\
   GOOS="%{_cross_go_os}" ; export GOOS ; \
   GOARCH="%{_cross_go_arch}" ; export GOARCH ; \
   CC="%{_cross_target}-gcc" ; export CC ; \
-  CXX="%{_cross_target}-g++" ; export CXX ; \
-  CC_FOR_%{_cross_go_os}_%{_cross_go_arch}="%{_cross_target}-gcc" ; export CC_FOR_%{_cross_go_os}_%{_cross_go_arch} ; \
   CC_FOR_TARGET="%{_cross_target}-gcc" ; export CC_FOR_TARGET ; \
+  CC_FOR_%{_cross_go_os}_%{_cross_go_arch}="%{_cross_target}-gcc" ; export CC_FOR_%{_cross_go_os}_%{_cross_go_arch} ; \
+  CXX="%{_cross_target}-g++" ; export CXX ; \
   CXX_FOR_TARGET="%{_cross_target}-g++" ; export CXX_FOR_TARGET ; \
+  CXX_FOR_%{_cross_go_os}_%{_cross_go_arch}="%{_cross_target}-g++" ; export CXX_FOR_%{_cross_go_os}_%{_cross_go_arch} ; \
   CGO_ENABLED=1 ; export CGO_ENABLED ; \
+  CGO_CFLAGS="%{_cross_cflags}" ; export CGO_CFLAGS ; \
+  CGO_CXXFLAGS="%{_cross_cxxflags}" ; export CGO_CXXFLAGS ; \
+  CGO_LDFLAGS="%{_cross_ldflags}" ; export CGO_LDFLAGS ; \
   PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
   PKG_CONFIG_ALLOW_CROSS=1 ; export PKG_CONFIG_ALLOW_CROSS ; \
   GOFLAGS="-mod=vendor"; export GOFLAGS ; \
