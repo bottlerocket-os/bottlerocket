@@ -5,6 +5,7 @@ Description=Thar data store migrator
 Type=oneshot
 ExecStart=/usr/bin/migrator --datastore-path /var/lib/thar/datastore/current --migration-directories /var/lib/thar/datastore/migrations --migrate-to-version-from-file /usr/share/thar/data-store-version
 RemainAfterExit=true
+StandardError=journal+console
 
 [Install]
 WantedBy=multi-user.target

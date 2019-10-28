@@ -11,6 +11,7 @@ ConditionPathExists=!/var/lib/thar/moondog.ran
 Type=oneshot
 ExecStart=/usr/bin/moondog
 RemainAfterExit=true
+StandardError=journal+console
 
 [Install]
 WantedBy=multi-user.target
