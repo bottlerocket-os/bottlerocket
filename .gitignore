@@ -4,3 +4,4 @@
 **/vendor/
 /.cargo
 /.gomodcache
+/html
