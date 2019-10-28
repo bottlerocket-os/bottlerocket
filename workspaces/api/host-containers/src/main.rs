@@ -8,6 +8,10 @@ on its 'enabled' flag.
 
 #![deny(rust_2018_idioms)]
 
+#[macro_use]
+extern crate log;
+
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::env;
@@ -16,17 +20,10 @@ use std::fmt::Write;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
+use std::str::FromStr;
 
 use apiserver::model;
 use apiserver::modeled_types::Identifier;
-
-#[macro_use]
-extern crate tracing;
-
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
@@ -98,13 +95,11 @@ mod error {
                         std::str::from_utf8(&output.stderr).unwrap_or_else(|_| "<invalid UTF-8>")))]
         SystemdCommandFailure { output: Output },
 
-        #[snafu(display("Failed to parse provided directive: {}", source))]
-        TracingDirectiveParse {
-            source: tracing_subscriber::filter::LevelParseError,
-        },
-
         #[snafu(display("Failed to manage {} of {} host containers", failed, tried))]
         ManageContainersFailed { failed: usize, tried: usize },
+
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: simplelog::TermLogError },
     }
 }
 
@@ -212,8 +207,8 @@ where
 
 /// Store the args we receive on the command line
 struct Args {
+    log_level: LevelFilter,
     socket_path: PathBuf,
-    verbosity: usize,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -222,7 +217,7 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             [ --socket-path PATH ]
-            [ --verbose --verbose ... ]
+            [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
         program_name, DEFAULT_API_SOCKET,
@@ -238,13 +233,20 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut log_level = None;
     let mut socket_path = None;
-    let mut verbosity = 3;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbose" => verbosity += 1,
+            "--log-level" => {
+                let log_level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                    usage_msg(format!("Invalid log level '{}'", log_level_str))
+                }));
+            }
 
             "--socket-path" => {
                 socket_path = Some(
@@ -259,8 +261,8 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
+        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.into()),
-        verbosity,
     }
 }
 
@@ -307,18 +309,9 @@ where
 fn main() -> Result<()> {
     let args = parse_args(env::args());
 
-    // Start the logger
-    let level: LevelFilter = args
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
 
     info!("host-containers started");
 

@@ -8,16 +8,12 @@ settings. It logs any pending settings, then commits them to live.
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate tracing;
+extern crate log;
 
-use std::{collections::HashMap, env, process};
-
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
-
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ResultExt};
+use std::str::FromStr;
+use std::{collections::HashMap, env, process};
 
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_PENDING_URI: &str = "/settings/pending";
@@ -48,10 +44,8 @@ mod error {
             response_body: String,
         },
 
-        #[snafu(display("Failed to parse provided directive: {}", source))]
-        TracingDirectiveParse {
-            source: tracing_subscriber::filter::LevelParseError,
-        },
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: simplelog::TermLogError },
     }
 }
 
@@ -118,8 +112,8 @@ fn commit_pending_settings<S: AsRef<str>>(socket_path: S) -> Result<()> {
 
 /// Store the args we receive on the command line
 struct Args {
+    log_level: LevelFilter,
     socket_path: String,
-    verbosity: usize,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -128,7 +122,8 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             [ --socket-path PATH ]
-            [ --verbose --verbose ... ]
+            [ --log-level trace|debug|info|warn|error ]
+
     Socket path defaults to {}",
         program_name, DEFAULT_API_SOCKET
     );
@@ -143,13 +138,21 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut log_level = None;
     let mut socket_path = None;
-    let mut verbosity = 3;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbose" => verbosity += 1,
+            "--log-level" => {
+                let log_level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                    usage_msg(format!("Invalid log level '{}'", log_level_str))
+                }));
+            }
+
             "--socket-path" => {
                 socket_path = Some(
                     iter.next()
@@ -161,26 +164,18 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
+        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
-        verbosity,
     }
 }
 
 fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
-    let level: LevelFilter = args
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    // Start the logger
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
 
     info!("Checking pending settings.");
     check_pending_settings(&args.socket_path);

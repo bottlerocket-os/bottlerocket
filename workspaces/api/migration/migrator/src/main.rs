@@ -19,13 +19,14 @@
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate tracing;
+extern crate log;
 
 use data_store_version::{Version, VERSION_RE};
 use lazy_static::lazy_static;
 use nix::{dir::Dir, fcntl::OFlag, sys::stat::Mode, unistd::fsync};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use regex::Regex;
+use simplelog::{Config as LogConfig, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
 use std::fs;
@@ -34,10 +35,6 @@ use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
 
 mod args;
 mod direction;
@@ -69,18 +66,10 @@ fn main() {
 fn run() -> Result<()> {
     let args = Args::from_env(env::args());
 
-    let level: LevelFilter = args
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    // Start the logger
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
+
     // We don't handle data store format (major version) migrations because they could change
     // anything about our storage; they're handled by more free-form binaries run by a separate
     // startup service.

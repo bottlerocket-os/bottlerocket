@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 lazy_static = "1.2"
-tracing = "0.1"
+log = "0.4"
 regex = "1.1"
 snafu = "0.5"
 

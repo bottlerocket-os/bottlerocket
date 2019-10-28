@@ -1,6 +1,9 @@
 #![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
+#[macro_use]
+extern crate log;
+
 use pem::Pem;
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
@@ -9,8 +12,8 @@ use webpki::{TLSServerTrustAnchors, TrustAnchor};
 
 lazy_static::lazy_static! {
     pub static ref TLS_SERVER_ROOTS: TLSServerTrustAnchors<'static> = {
-        tracing::debug!("webpki-roots-shim activated, {} certificates", ROOTS.len());
-        tracing::debug!("certificate source: {}", CERT_PATH.display());
+        debug!("webpki-roots-shim activated, {} certificates", ROOTS.len());
+        debug!("certificate source: {}", CERT_PATH.display());
         TLSServerTrustAnchors(&ROOTS)
     };
 
@@ -31,7 +34,7 @@ fn tls_server_roots_pem() -> Vec<Pem> {
             v
         }
         Err(err) => {
-            tracing::error!("failed to read {}: {}", CERT_PATH.display(), err);
+            error!("failed to read {}: {}", CERT_PATH.display(), err);
             Vec::new()
         }
     }

@@ -8,7 +8,11 @@ settings given in the defaults.toml file, unless they already exist.
 */
 #![deny(rust_2018_idioms)]
 
+#[macro_use]
+extern crate log;
+
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::io;
@@ -16,19 +20,12 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::str::FromStr;
 use std::{env, fs, process};
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
 
 use apiserver::datastore::key::{Key, KeyType};
 use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use apiserver::model;
 use data_store_version::Version;
-
-#[macro_use]
-extern crate tracing;
 
 // FIXME Get these from configuration in the future
 const DATASTORE_VERSION_FILE: &str = "/usr/share/thar/data-store-version";
@@ -104,10 +101,8 @@ mod error {
         #[snafu(display("Data store link '{}' points to /", path.display()))]
         DataStoreLinkToRoot { path: PathBuf },
 
-        #[snafu(display("Failed to parse provided directive: {}", source))]
-        TracingDirectiveParse {
-            source: tracing_subscriber::filter::LevelParseError,
-        },
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: simplelog::TermLogError },
     }
 }
 
@@ -356,7 +351,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
 /// Store the args we receive on the command line
 struct Args {
     data_store_base_path: String,
-    verbosity: usize,
+    log_level: LevelFilter,
     version: Option<Version>,
 }
 
@@ -367,7 +362,7 @@ fn usage() -> ! {
         r"Usage: {}
             --data-store-base-path PATH
             [ --version X.Y ]
-            [ --verbose --verbose ... ]
+            [ --log-level trace|debug|info|warn|error ]
 
         If --version is not given, the version will be pulled from /usr/share/thar/data-store-version.
         This is used to set up versioned symlinks in the data store base path.
@@ -386,18 +381,25 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
     let mut data_store_base_path = None;
-    let mut verbosity = 3;
+    let mut log_level = None;
     let mut version = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbose" => verbosity += 1,
-
             "--data-store-base-path" => {
                 data_store_base_path = Some(iter.next().unwrap_or_else(|| {
                     usage_msg("Did not give argument to --data-store-base-path")
                 }))
+            }
+
+            "--log-level" => {
+                let log_level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                    usage_msg(format!("Invalid log level '{}'", log_level_str))
+                }));
             }
 
             "--version" => {
@@ -416,7 +418,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         data_store_base_path: data_store_base_path.unwrap_or_else(|| usage()),
-        verbosity,
+        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         version,
     }
 }
@@ -425,18 +427,9 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    // Start the logger
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
 
     info!("Storewolf started");
 

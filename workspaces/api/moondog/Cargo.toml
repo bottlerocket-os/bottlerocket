@@ -10,12 +10,12 @@ build = "build.rs"
 apiclient = { path = "../apiclient" }
 apiserver = { path = "../apiserver" }
 http = "0.1"
-tracing = "0.1"
+log = "0.4"
 reqwest = { version = "0.9", default-features = false, features = [] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
+simplelog = "0.7"
 snafu = "0.5"
-tracing-subscriber = "0.1"
 toml = "0.5"
 
 [build-dependencies]

@@ -1,14 +1,12 @@
 #[macro_use]
-extern crate tracing;
+extern crate log;
 
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::ResultExt;
 use std::collections::HashSet;
 use std::env;
 use std::process;
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
+use std::str::FromStr;
 
 use thar_be_settings::{config, get_changed_settings, service, settings, template};
 
@@ -21,10 +19,8 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
-        #[snafu(display("Failed to parse provided directive: {}", source))]
-        TracingDirectiveParse {
-            source: tracing_subscriber::filter::LevelParseError,
-        },
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: simplelog::TermLogError },
     }
 }
 
@@ -39,8 +35,8 @@ enum RunMode {
 
 /// Store the args we receive on the command line
 struct Args {
+    log_level: LevelFilter,
     mode: RunMode,
-    verbosity: usize,
     socket_path: String,
 }
 
@@ -51,7 +47,7 @@ fn usage() -> ! {
         r"Usage: {}
             [ --all ]
             [ --socket-path PATH ]
-            [ --verbose --verbose ... ]
+            [ --log-level trace|debug|info|warn|error ]
 
     If --all is given, all configuration files will be written and all
     services will have their restart-commands run.  Otherwise, settings keys
@@ -72,8 +68,8 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut log_level = None;
     let mut mode = RunMode::SpecificKeys;
-    let mut verbosity = 3;
     let mut socket_path = None;
 
     let mut iter = args.skip(1);
@@ -81,7 +77,14 @@ fn parse_args(args: env::Args) -> Args {
         match arg.as_ref() {
             "--all" => mode = RunMode::All,
 
-            "-v" | "--verbose" => verbosity += 1,
+            "--log-level" => {
+                let log_level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                    usage_msg(format!("Invalid log level '{}'", log_level_str))
+                }));
+            }
 
             "--socket-path" => {
                 socket_path = Some(
@@ -96,7 +99,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         mode,
-        verbosity,
+        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
     }
 }
@@ -139,18 +142,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    // Start the logger
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
 
     info!("thar-be-settings started");
 
