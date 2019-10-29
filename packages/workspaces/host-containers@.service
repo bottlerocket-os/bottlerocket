@@ -14,6 +14,7 @@ Restart=always
 RestartSec=45
 TimeoutStopSec=60
 KillMode=mixed
+StandardError=journal+console
 
 [Install]
 WantedBy=multi-user.target

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -22,10 +23,14 @@ import (
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	log.L.Logger.SetOutput(ioutil.Discard)
+	log.L.Logger.AddHook(&LogSplitHook{os.Stdout, []logrus.Level{logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel}})
+	log.L.Logger.AddHook(&LogSplitHook{os.Stderr, []logrus.Level{logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel}})
 }
 
 func main() {
@@ -56,9 +61,8 @@ func _main() int {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ctx = namespaces.WithNamespace(ctx, namespace)
 	defer cancel()
-
+	ctx = namespaces.WithNamespace(ctx, namespace)
 	go func(ctx context.Context, cancel context.CancelFunc) {
 		// Set up channel on which to send signal notifications.
 		// We must use a buffered channel or risk missing the signal
@@ -90,7 +94,7 @@ func _main() int {
 		var err error
 		ref, err = ecrImageNameToRef(source)
 		if err != nil {
-			log.G(ctx).WithError(err).WithField("source", source)
+			log.G(ctx).WithError(err).WithField("source", source).Error("Failed to build resolvable reference")
 			return 1
 		}
 	}
@@ -198,6 +202,7 @@ func _main() int {
 
 	// Block until an OS signal (e.g. SIGTERM, SIGINT) is received or the container task finishes and exits on its own.
 	var status containerd.ExitStatus
+	// Create new context for stopping and cleaning up the container task
 	ctrCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	select {
