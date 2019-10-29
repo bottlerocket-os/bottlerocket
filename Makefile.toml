@@ -145,6 +145,9 @@ dependencies = [
     "check-licenses",
 ]
 
+[tasks.preview-docs]
+script = ['tools/gen-docs.sh']
+
 [tasks.clean]
 script = [
 '''
@@ -154,6 +157,7 @@ done
 for ext in rpm tar lz4 img ; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
+rm -rf html
 '''
 ]
 
