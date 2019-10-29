@@ -10,8 +10,6 @@ build = "build.rs"
 reqwest = { version = "0.9", default-features = false, features = []}
 serde_json = "1"
 snafu = "0.5"
-tracing = "0.1"
-tracing-subscriber = "0.1"
 
 [build-dependencies]
 cargo-readme = "3.1"

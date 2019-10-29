@@ -80,6 +80,9 @@ pub(crate) enum Error {
     #[snafu(display("Duplicate version key: {}", key))]
     DuplicateVersionKey { backtrace: Backtrace, key: String },
 
+    #[snafu(display("Logger setup error: {}", source))]
+    Logger { source: simplelog::TermLogError },
+
     #[snafu(display("Failed to attach image to loop device"))]
     LoopAttachFailed {
         backtrace: Backtrace,
@@ -208,11 +211,6 @@ pub(crate) enum Error {
     TmpFileCreate {
         backtrace: Backtrace,
         source: std::io::Error,
-    },
-
-    #[snafu(display("Failed to parse provided directive: {}", source))]
-    TracingDirectiveParse {
-        source: tracing_subscriber::filter::LevelParseError,
     },
 
     #[snafu(display("Failed to serialize update information: {}", source))]

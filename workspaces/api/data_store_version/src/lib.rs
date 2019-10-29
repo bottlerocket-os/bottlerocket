@@ -10,7 +10,7 @@ It is especially helpful during data store migrations, and is also used for data
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate tracing;
+extern crate log;
 
 use lazy_static::lazy_static;
 use regex::Regex;

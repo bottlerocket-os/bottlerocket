@@ -8,6 +8,7 @@ Wants=storewolf.service sundog.service moondog.service
 Type=oneshot
 ExecStart=/usr/bin/settings-committer
 RemainAfterExit=true
+StandardError=journal+console
 
 [Install]
 WantedBy=multi-user.target

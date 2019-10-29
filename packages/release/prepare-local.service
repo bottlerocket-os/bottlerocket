@@ -36,6 +36,7 @@ ExecStart=/usr/lib/systemd/systemd-growfs ${LOCAL_DIR}
 ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt
 
 RemainAfterExit=false
+StandardError=journal+console
 
 [Install]
 WantedBy=local-fs.target

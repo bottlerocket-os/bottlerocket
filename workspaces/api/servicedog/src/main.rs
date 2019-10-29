@@ -15,21 +15,18 @@ As its very last step, service dog calls `systemd daemon-reload` to ensure all c
 
 #![deny(rust_2018_idioms)]
 
+#[macro_use]
+extern crate log;
+
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
 use std::ffi::OsStr;
 use std::process::{self, Command};
+use std::str::FromStr;
 
 use apiserver::datastore::serialization::to_pairs_with_prefix;
 use apiserver::model;
-
-#[macro_use]
-extern crate tracing;
-
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
@@ -97,10 +94,8 @@ mod error {
                         std::str::from_utf8(&output.stderr).unwrap_or_else(|_| "<invalid UTF-8>")))]
         SystemdCommandFailure { output: Output },
 
-        #[snafu(display("Failed to parse provided directive: {}", source))]
-        TracingDirectiveParse {
-            source: tracing_subscriber::filter::LevelParseError,
-        },
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: simplelog::TermLogError },
     }
 }
 
@@ -250,9 +245,9 @@ where
 
 /// Store the args we receive on the command line
 struct Args {
+    log_level: LevelFilter,
     setting: String,
     systemd_unit: String,
-    verbosity: usize,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -262,7 +257,7 @@ fn usage() -> ! {
         r"Usage: {}
             [ -s | --setting SETTING ]
             [ -u | --systemd-unit UNIT ]
-            [ --verbose --verbose ... ]",
+            [ --log-level trace|debug|info|warn|error ]",
         program_name
     );
     process::exit(2);
@@ -276,14 +271,21 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut log_level = None;
     let mut setting = None;
     let mut systemd_unit = None;
-    let mut verbosity = 3;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbose" => verbosity += 1,
+            "--log-level" => {
+                let log_level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                    usage_msg(format!("Invalid log level '{}'", log_level_str))
+                }));
+            }
 
             "-s" | "--setting" => {
                 setting = Some(
@@ -291,6 +293,7 @@ fn parse_args(args: env::Args) -> Args {
                         .unwrap_or_else(|| usage_msg("Did not give argument to -s | --setting")),
                 )
             }
+
             "-u" | "--systemd-unit" => {
                 systemd_unit =
                     Some(iter.next().unwrap_or_else(|| {
@@ -303,10 +306,10 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
+        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         setting: setting.unwrap_or_else(|| usage_msg("-s|--setting is a required argument")),
         systemd_unit: systemd_unit
             .unwrap_or_else(|| usage_msg("-u|--systemd-unit is a required argument")),
-        verbosity,
     }
 }
 
@@ -314,18 +317,10 @@ fn main() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    // Start the logger
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
+
     info!("servicedog started for unit {}", &args.systemd_unit);
 
     let systemd_unit = SystemdUnit::new(&args.systemd_unit);

@@ -12,6 +12,7 @@ use rand::{thread_rng, Rng};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use signpost::State;
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
@@ -19,11 +20,8 @@ use std::io::{self, BufRead, BufReader};
 use std::ops::Bound::{Excluded, Included};
 use std::path::Path;
 use std::process;
+use std::str::FromStr;
 use tough::{Limits, Repository, Settings};
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -126,6 +124,12 @@ struct Manifest {
     datastore_versions: BTreeMap<Version, DVersion>,
 }
 
+/// Prints a more specific message before exiting through usage().
+fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
+    eprintln!("{}\n", msg.as_ref());
+    usage();
+}
+
 fn usage() -> ! {
     #[rustfmt::skip]
     eprintln!("\
@@ -154,7 +158,7 @@ SUBCOMMANDS:
 
 GLOBAL OPTIONS:
     [ -j | --json ]               JSON-formatted output
-    [ --verbose --verbose ... ]   Increase log verbosity");
+    [ --log-level trace|debug|info|warn|error ]  Set logging verbosity");
     std::process::exit(1)
 }
 
@@ -391,7 +395,7 @@ fn update_flags() -> Result<()> {
 /// Struct to hold the specified command line argument values
 struct Arguments {
     subcommand: String,
-    verbosity: usize,
+    log_level: LevelFilter,
     json: bool,
     ignore_wave: bool,
     force_version: Option<Version>,
@@ -403,7 +407,7 @@ struct Arguments {
 /// Parse the command line arguments to get the user-specified values
 fn parse_args(args: std::env::Args) -> Arguments {
     let mut subcommand = None;
-    let mut verbosity: usize = 3; // Default log level to 3 (Info)
+    let mut log_level = None;
     let mut update_version = None;
     let mut ignore_wave = false;
     let mut json = false;
@@ -414,8 +418,13 @@ fn parse_args(args: std::env::Args) -> Arguments {
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbose" => {
-                verbosity += 1;
+            "--log-level" => {
+                let log_level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                    usage_msg(format!("Invalid log level '{}'", log_level_str))
+                }));
             }
             "-i" | "--image" => match iter.next() {
                 Some(v) => match Version::parse(&v) {
@@ -456,7 +465,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
 
     Arguments {
         subcommand: subcommand.unwrap_or_else(|| usage()),
-        verbosity,
+        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         json,
         ignore_wave,
         force_version: update_version,
@@ -482,18 +491,13 @@ fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
     let arguments = parse_args(std::env::args());
 
-    let level: LevelFilter = arguments
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    // Start the logger
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(
+        arguments.log_level,
+        LogConfig::default(),
+        TerminalMode::Mixed,
+    )
+    .context(error::Logger)?;
 
     let command =
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());

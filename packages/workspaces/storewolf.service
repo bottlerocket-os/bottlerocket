@@ -7,6 +7,7 @@ Requires=migrator.service
 Type=oneshot
 ExecStart=/usr/bin/storewolf --data-store-base-path /var/lib/thar/datastore
 RemainAfterExit=true
+StandardError=journal+console
 
 [Install]
 WantedBy=multi-user.target

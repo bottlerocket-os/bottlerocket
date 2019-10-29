@@ -13,11 +13,11 @@ base64 = "0.10"
 handlebars = "2.0"
 http = "0.1"
 itertools = "0.8"
-tracing = "0.1"
+log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
+simplelog = "0.7"
 snafu = "0.5"
-tracing-subscriber = "0.1"
 
 [build-dependencies]
 cargo-readme = "3.1"

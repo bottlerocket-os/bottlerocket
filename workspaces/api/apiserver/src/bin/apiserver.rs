@@ -3,18 +3,16 @@
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
-extern crate tracing;
+extern crate log;
 
 use libc::gid_t;
 use nix::unistd::Gid;
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ResultExt};
 use std::env;
 use std::path::Path;
 use std::process;
-use tracing_subscriber::{
-    filter::{EnvFilter, LevelFilter},
-    FmtSubscriber,
-};
+use std::str::FromStr;
 
 use apiserver::serve;
 
@@ -34,19 +32,17 @@ mod error {
         #[snafu(display("{}", source))]
         Server { source: apiserver::server::Error },
 
-        #[snafu(display("Failed to parse provided directive: {}", source))]
-        TracingDirectiveParse {
-            source: tracing_subscriber::filter::LevelParseError,
-        },
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: simplelog::TermLogError },
     }
 }
 
 /// Stores user-supplied arguments.
 struct Args {
     datastore_path: String,
+    log_level: LevelFilter,
     socket_gid: Option<Gid>,
     socket_path: String,
-    verbosity: usize,
 }
 
 /// Informs the user about proper usage of the program and exits.
@@ -58,7 +54,7 @@ fn usage() -> ! {
             [ --socket-path PATH ]
             [ --socket-gid GROUP_ID ]
             [ --no-color ]
-            [ --verbose --verbose ... ]
+            [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
         program_name, DEFAULT_BIND_PATH
@@ -75,20 +71,27 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parses user arguments into an Args structure.
 fn parse_args(args: env::Args) -> Args {
     let mut datastore_path = None;
+    let mut log_level = None;
     let mut socket_gid = None;
     let mut socket_path = None;
-    let mut verbosity = 1;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbose" => verbosity += 1,
-
             "--datastore-path" => {
                 datastore_path = Some(
                     iter.next()
                         .unwrap_or_else(|| usage_msg("Did not give argument to --datastore-path")),
                 )
+            }
+
+            "--log-level" => {
+                let log_level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                    usage_msg(format!("Invalid log level '{}'", log_level_str))
+                }));
             }
 
             "--socket-path" => {
@@ -117,8 +120,8 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         socket_gid,
-        verbosity,
         datastore_path: datastore_path.unwrap_or_else(|| usage()),
+        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_BIND_PATH.to_string()),
     }
 }
@@ -127,18 +130,9 @@ fn parse_args(args: env::Args) -> Args {
 fn main() -> Result<()> {
     let args = parse_args(env::args());
 
-    let level: LevelFilter = args
-        .verbosity
-        .to_string()
-        .parse()
-        .context(error::TracingDirectiveParse)?;
-    let filter = EnvFilter::from_default_env().add_directive(level.into());
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .finish();
-    // Start the logger
-    tracing::subscriber::set_global_default(subscriber).expect("setting tracing default failed");
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
 
     // Make sure the datastore exists
     ensure!(

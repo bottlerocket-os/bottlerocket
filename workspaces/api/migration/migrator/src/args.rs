@@ -1,6 +1,7 @@
 //! This module handles argument parsing for the migrator binary.
 
 use data_store_version::Version;
+use simplelog::LevelFilter;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -16,7 +17,7 @@ fn usage() -> ! {
             --migration-directories PATH[:PATH:PATH...]
             (--migrate-to-version x.y | --migrate-to-version-from-file PATH)
             [ --no-color ]
-            [ --verbose --verbose ... ]",
+            [ --log-level trace|debug|info|warn|error ]",
         program_name
     );
     process::exit(2);
@@ -31,9 +32,9 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Stores user-supplied arguments.
 pub(crate) struct Args {
     pub(crate) datastore_path: PathBuf,
+    pub(crate) log_level: LevelFilter,
     pub(crate) migration_directories: Vec<PathBuf>,
     pub(crate) migrate_to_version: Version,
-    pub(crate) verbosity: usize,
 }
 
 impl Args {
@@ -41,10 +42,9 @@ impl Args {
     pub(crate) fn from_env(args: env::Args) -> Self {
         // Required parameters.
         let mut datastore_path = None;
+        let mut log_level = None;
         let mut migration_directories = None;
         let mut migrate_to_version = None;
-        // Optional parameters with their defaults.
-        let mut verbosity = 3; // default to INFO level
 
         let mut iter = args.skip(1);
         while let Some(arg) = iter.next() {
@@ -72,6 +72,15 @@ impl Args {
                     });
                     trace!("Canonicalized data store path: {}", canonical.display());
                     datastore_path = Some(canonical);
+                }
+
+                "--log-level" => {
+                    let log_level_str = iter
+                        .next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
+                    log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                        usage_msg(format!("Invalid log level '{}'", log_level_str))
+                    }));
                 }
 
                 "--migration-directories" => {
@@ -114,17 +123,15 @@ impl Args {
                     migrate_to_version = Some(version)
                 }
 
-                "-v" | "--verbose" => verbosity += 1,
-
                 _ => usage(),
             }
         }
 
         Self {
             datastore_path: datastore_path.unwrap_or_else(|| usage()),
+            log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
             migration_directories: migration_directories.unwrap_or_else(|| usage()),
             migrate_to_version: migrate_to_version.unwrap_or_else(|| usage()),
-            verbosity,
         }
     }
 }

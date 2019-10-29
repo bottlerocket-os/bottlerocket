@@ -11,11 +11,6 @@ use std::process::{Command, Output};
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
-    #[snafu(display("Failed to parse provided directive: {}", source))]
-    TracingDirectiveParse {
-        source: tracing_subscriber::filter::LevelParseError,
-    },
-
     #[snafu(display("Internal error: {}", msg))]
     Internal { msg: String },
 
@@ -81,6 +76,9 @@ pub(crate) enum Error {
 
     #[snafu(display("Migration path '{}' contains invalid UTF-8", path.display()))]
     MigrationNameNotUTF8 { path: PathBuf },
+
+    #[snafu(display("Logger setup error: {}", source))]
+    Logger { source: simplelog::TermLogError },
 }
 
 /// Result alias containing our Error type.

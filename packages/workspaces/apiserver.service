@@ -5,7 +5,8 @@ Requires=storewolf.service migrator.service
 
 [Service]
 Type=notify
-ExecStart=/usr/bin/apiserver --datastore-path /var/lib/thar/datastore/current --socket-gid 274 -v -v -v
+ExecStart=/usr/bin/apiserver --datastore-path /var/lib/thar/datastore/current --socket-gid 274
+StandardError=journal+console
 
 [Install]
 WantedBy=multi-user.target

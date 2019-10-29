@@ -8,6 +8,7 @@ Wants=settings-committer.service
 Type=oneshot
 ExecStart=/usr/bin/thar-be-settings --all
 RemainAfterExit=true
+StandardError=journal+console
 
 [Install]
 WantedBy=multi-user.target
