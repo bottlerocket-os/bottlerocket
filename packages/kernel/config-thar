@@ -28,3 +28,6 @@ CONFIG_SECURITY_YAMA=y
 # enable /proc/config.gz
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y
+
+# kernel headers at /sys/kernel/kheaders.tar.xz
+CONFIG_IKHEADERS=y

@@ -16,6 +16,12 @@ Patch0004: 0004-dm-ioctl-fix-hang-in-early-create-error-condition.patch
 Patch0005: 0005-dm-init-fix-incorrect-uses-of-kstrndup.patch
 Patch0006: 0006-dm-init-remove-trailing-newline-from-calls-to-DMERR-.patch
 Patch0007: 0007-lustrefsx-Disable-Werror-stringop-overflow.patch
+Patch0008: 0008-Provide-in-kernel-headers-to-make-extending-kernel-e.patch
+Patch0009: 0009-kernel-Makefile-don-t-assume-that-kernel-gen_ikh_dat.patch
+Patch0010: 0010-kheaders-Move-from-proc-to-sysfs.patch
+Patch0011: 0011-kheaders-Do-not-regenerate-archive-if-config-is-not-.patch
+Patch0012: 0012-kheaders-remove-meaningless-R-option-of-ls.patch
+Patch0013: 0013-kheaders-include-only-headers-into-kheaders_data.tar.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: gcc-%{_cross_target}
