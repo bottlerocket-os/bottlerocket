@@ -29,7 +29,16 @@ BuildRequires: hostname
 BuildRequires: kmod
 BuildRequires: openssl-devel
 
+%global kernel_sourcedir %{_usrsrc}/kernels/%{version}
+
 %description
+%{summary}.
+
+%package devel
+Summary: Configured Linux kernel source for module building
+Requires: %{_cross_os}filesystem
+
+%description devel
 %{summary}.
 
 %package modules
@@ -89,6 +98,30 @@ find %{buildroot}%{_cross_prefix} \
 
 %cross_generate_attribution
 
+# files for external module compilation
+(
+  find * -name Kbuild\* -type f -print  \
+    -o -name Kconfig\* -type f -print \
+    -o -name Makefile\* -type f -print \
+    -o -name module.lds -type f -print \
+    -o -name Platform -type f -print
+  find arch/*/include/ include/ -type f -o -type l
+  find scripts/ -executable -type f
+  find scripts/ ! \( -name Makefile\* -o -name Kbuild\* \) -type f
+  echo .config
+  echo Module.symvers
+  echo System.map
+) | sort -u > kernel_devel_files
+
+# remove x86 intermediate files like generated/asm/.syscalls_32.h.cmd
+sed -i '/asm\/.*\.cmd$/d' kernel_devel_files
+
+install -d %{buildroot}%{kernel_sourcedir}
+for file in $(cat kernel_devel_files); do
+  install -D ${file} %{buildroot}%{kernel_sourcedir}/${file}
+
+done
+
 %files
 %license COPYING LICENSES/preferred/GPL-2.0 LICENSES/exceptions/Linux-syscall-note
 %{_cross_attribution_file}
@@ -123,5 +156,10 @@ find %{buildroot}%{_cross_prefix} \
 %{_cross_includedir}/sound/*
 %{_cross_includedir}/video/*
 %{_cross_includedir}/xen/*
+
+%files devel
+%dir %{kernel_sourcedir}
+%{kernel_sourcedir}/*
+%{kernel_sourcedir}/.config
 
 %changelog
