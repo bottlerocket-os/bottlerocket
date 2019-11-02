@@ -21,7 +21,6 @@ BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
 Requires: %{_cross_os}cni-plugins
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}runc
 Requires: %{_cross_os}socat

@@ -14,7 +14,6 @@ BuildRequires: %{_cross_os}libnetfilter_conntrack-devel
 BuildRequires: %{_cross_os}libnetfilter_cthelper-devel
 BuildRequires: %{_cross_os}libnetfilter_cttimeout-devel
 BuildRequires: %{_cross_os}libnetfilter_queue-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libmnl
 Requires: %{_cross_os}libnfnetlink
 Requires: %{_cross_os}libnetfilter_conntrack

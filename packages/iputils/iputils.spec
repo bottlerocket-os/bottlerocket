@@ -8,7 +8,6 @@ Source0: https://github.com/iputils/iputils/archive/s%{version}.tar.gz#/iputils-
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libcap
 
 %description

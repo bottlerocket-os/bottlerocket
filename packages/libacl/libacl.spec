@@ -7,7 +7,6 @@ URL: https://savannah.nongnu.org/projects/acl
 Source0: https://download-mirror.savannah.gnu.org/releases/acl/acl-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libattr-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libattr
 
 %description

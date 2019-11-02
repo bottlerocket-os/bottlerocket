@@ -35,7 +35,6 @@ Summary: Container cluster node agent
 License: ASL 2.0
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}findutils
 
 %description -n %{_cross_os}kubelet

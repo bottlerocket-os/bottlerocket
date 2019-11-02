@@ -16,7 +16,6 @@ Patch1: 0001-bridge-Fix-hwaddr-set-race-between-us-and-udev.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

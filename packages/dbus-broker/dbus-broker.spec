@@ -14,7 +14,6 @@ BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libexpat-devel
 BuildRequires: %{_cross_os}systemd-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libexpat
 Requires: %{_cross_os}systemd

@@ -8,7 +8,6 @@ Source0: https://hewlettpackard.github.io/wireless-tools/wireless_tools.%{versio
 Patch1: wireless-tools-29-makefile.patch
 
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

@@ -5,7 +5,6 @@ Summary: A login that doesn't actually allow logins
 License: FIXME
 Source0: login.c
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 # This package should only be installed if there is no shell.
 Conflicts: %{_cross_os}bash

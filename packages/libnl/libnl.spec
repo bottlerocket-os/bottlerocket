@@ -9,7 +9,6 @@ License: LGPLv2+
 URL: https://github.com/thom311/libnl
 Source0: https://github.com/thom311/libnl/archive/libnl%{srcver}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

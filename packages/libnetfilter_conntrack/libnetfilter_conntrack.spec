@@ -8,7 +8,6 @@ Source0: https://netfilter.org/projects/libnetfilter_conntrack/files/libnetfilte
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
 BuildRequires: %{_cross_os}libnfnetlink-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libmnl
 Requires: %{_cross_os}libnfnetlink
 

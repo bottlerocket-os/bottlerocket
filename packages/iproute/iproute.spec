@@ -10,7 +10,6 @@ Patch1: 0001-skip-libelf-check.patch
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libmnl-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libmnl
 

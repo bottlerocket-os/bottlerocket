@@ -13,7 +13,6 @@ BuildRequires: %{_cross_os}libmnl-devel
 BuildRequires: %{_cross_os}libnfnetlink-devel
 BuildRequires: %{_cross_os}libnftnl-devel
 BuildRequires: %{_cross_os}libnetfilter_conntrack-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libmnl
 Requires: %{_cross_os}libnfnetlink
 Requires: %{_cross_os}libnftnl

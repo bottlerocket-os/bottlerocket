@@ -10,7 +10,6 @@ BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libattr-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libacl
 Requires: %{_cross_os}libattr
 Requires: %{_cross_os}libcap

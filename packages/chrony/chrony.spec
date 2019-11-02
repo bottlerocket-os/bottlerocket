@@ -13,7 +13,6 @@ BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libseccomp-devel
 BuildRequires: %{_cross_os}ncurses-devel
 BuildRequires: %{_cross_os}readline-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}ncurses

@@ -6,7 +6,6 @@ License: LGPLv2+
 URL: https://savannah.nongnu.org/projects/attr
 Source0: https://download-mirror.savannah.gnu.org/releases/attr/attr-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

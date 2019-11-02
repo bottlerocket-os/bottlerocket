@@ -8,7 +8,6 @@ Source0: https://ftp.gnu.org/gnu/readline/readline-%{version}.tar.gz
 Patch1: readline-8.0-shlib.patch
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}ncurses-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}ncurses
 
 %description

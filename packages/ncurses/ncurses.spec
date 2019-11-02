@@ -11,7 +11,6 @@ Patch2: ncurses-libs.patch
 Patch3: ncurses-urxvt.patch
 Patch4: ncurses-kbs.patch
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

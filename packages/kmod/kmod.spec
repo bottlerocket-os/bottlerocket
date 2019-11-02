@@ -6,7 +6,6 @@ License: LGPLv2+
 URL: http://git.kernel.org/?p=utils/kernel/kmod/kmod.git;a=summary
 Source0: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

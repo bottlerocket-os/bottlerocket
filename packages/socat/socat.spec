@@ -5,9 +5,7 @@ Summary: Transfer data between two channels
 License: GPLv2
 URL: http://www.dest-unreach.org/socat/
 Source0: http://www.dest-unreach.org/socat/download/socat-%{version}.tar.gz
-
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

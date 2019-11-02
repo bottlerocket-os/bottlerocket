@@ -7,7 +7,6 @@ URL: http://netfilter.org
 Source0: https://netfilter.org/projects/libnetfilter_cttimeout/files/libnetfilter_cttimeout-%{version}.tar.bz2
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libmnl
 
 %description

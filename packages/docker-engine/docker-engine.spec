@@ -29,7 +29,6 @@ BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
 BuildRequires: %{_cross_os}systemd-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}iptables

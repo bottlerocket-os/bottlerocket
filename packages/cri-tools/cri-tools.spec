@@ -17,7 +17,6 @@ Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libseccomp
 
 %description

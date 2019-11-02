@@ -7,7 +7,6 @@ URL: http://netfilter.org/projects/libnftnl/
 Source0: http://netfilter.org/projects/libnftnl/files/libnftnl-%{version}.tar.bz2
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libmnl
 
 %description

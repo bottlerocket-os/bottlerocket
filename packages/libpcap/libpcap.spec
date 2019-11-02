@@ -6,7 +6,6 @@ License: BSD with advertising
 URL: http://www.tcpdump.org
 Source0: http://www.tcpdump.org/release/libpcap-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

@@ -38,6 +38,7 @@ Requires: %{_cross_os}chrony
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}dbus-broker
 Requires: %{_cross_os}filesystem
+Requires: %{_cross_os}glibc
 Requires: %{_cross_os}growpart
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute

@@ -7,7 +7,6 @@ Release: 0%{?dist}
 Summary: Thar host container runner
 License: FIXME
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.
