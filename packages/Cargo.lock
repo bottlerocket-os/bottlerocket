@@ -924,6 +924,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libstd-rust"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+]
+
+[[package]]
 name = "libxcrypt"
 version = "0.1.0"
 dependencies = [

@@ -44,6 +44,7 @@ members = [
     "libnl",
     "libpcap",
     "libseccomp",
+    "libstd-rust",
     "libxcrypt",
     "login",
     "ncurses",
