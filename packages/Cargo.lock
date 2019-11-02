@@ -822,6 +822,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libgcc"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
+]
+
+[[package]]
 name = "libiw"
 version = "0.1.0"
 dependencies = [

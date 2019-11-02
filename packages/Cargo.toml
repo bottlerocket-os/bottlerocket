@@ -31,6 +31,7 @@ members = [
     "libattr",
     "libcap",
     "libdbus",
+    "libgcc",
     "libexpat",
     "libiw",
     "libmnl",
