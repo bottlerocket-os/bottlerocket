@@ -5,7 +5,9 @@ use snafu::ResultExt;
 use std::collections::HashMap;
 
 use crate::{error, MigrationData, Result};
-use apiserver::datastore::{deserialize_scalar, serialize_scalar, Committed, DataStore};
+use apiserver::datastore::{
+    deserialize_scalar, serialize_scalar, Committed, DataStore, Key, KeyType,
+};
 
 // To get input data from the existing data store, we use datastore methods, because we assume
 // breaking changes in the basic data store API would be a major-version migration of the data
@@ -20,12 +22,17 @@ pub(crate) fn get_input_data<D: DataStore>(
         .get_prefix("", committed)
         .context(error::GetData { committed })?;
 
-    // Deserialize values to Value so there's a consistent input type.  (We can't specify item
-    // types because we'd have to know the model structure.)
     let mut data = HashMap::new();
-    for (data_key, value) in raw_data.into_iter() {
-        let value = deserialize_scalar(&value).context(error::Deserialize { input: value })?;
-        data.insert(data_key, value);
+    for (data_key, value_str) in raw_data.into_iter() {
+        // Store keys with just their name, rather than the full Key, so that migrations are easier
+        // to write, and we don't tie migrations to any specific data store version.  Migrations
+        // shouldn't need to link against data store code.
+        let key_name = data_key.name();
+        // Deserialize values to Value so there's a consistent input type.  (We can't specify item
+        // types because we'd have to know the model structure.)
+        let value =
+            deserialize_scalar(&value_str).context(error::Deserialize { input: value_str })?;
+        data.insert(key_name.clone(), value);
     }
 
     // Metadata isn't committed, it goes live immediately, so we only populate the metadata
@@ -36,11 +43,16 @@ pub(crate) fn get_input_data<D: DataStore>(
             .get_metadata_prefix("", &None as &Option<&str>)
             .context(error::GetMetadata)?;
         for (data_key, meta_map) in raw_metadata.into_iter() {
-            let data_entry = metadata.entry(data_key).or_insert_with(HashMap::new);
-            for (metadata_key, value) in meta_map.into_iter() {
-                let value =
-                    deserialize_scalar(&value).context(error::Deserialize { input: value })?;
-                data_entry.insert(metadata_key, value);
+            // See notes above about storing key Strings and Values.
+            let data_key_name = data_key.name();
+            let data_entry = metadata
+                .entry(data_key_name.clone())
+                .or_insert_with(HashMap::new);
+            for (metadata_key, value_str) in meta_map.into_iter() {
+                let metadata_key_name = metadata_key.name();
+                let value = deserialize_scalar(&value_str)
+                    .context(error::Deserialize { input: value_str })?;
+                data_entry.insert(metadata_key_name.clone(), value);
             }
         }
     }
@@ -58,7 +70,12 @@ pub(crate) fn set_output_data<D: DataStore>(
 ) -> Result<()> {
     // Prepare serialized data
     let mut data = HashMap::new();
-    for (data_key, raw_value) in &input.data {
+    for (data_key_name, raw_value) in &input.data {
+        // See notes above about storing key Strings and Values.
+        let data_key = Key::new(KeyType::Data, data_key_name).context(error::InvalidKey {
+            key_type: KeyType::Data,
+            key: data_key_name,
+        })?;
         let value = serialize_scalar(raw_value).context(error::Serialize)?;
         data.insert(data_key, value);
     }
@@ -71,8 +88,17 @@ pub(crate) fn set_output_data<D: DataStore>(
         .context(error::DataStoreWrite)?;
 
     // Set metadata in a loop (currently no batch API)
-    for (data_key, meta_map) in &input.metadata {
-        for (metadata_key, raw_value) in meta_map.into_iter() {
+    for (data_key_name, meta_map) in &input.metadata {
+        let data_key = Key::new(KeyType::Data, data_key_name).context(error::InvalidKey {
+            key_type: KeyType::Data,
+            key: data_key_name,
+        })?;
+        for (metadata_key_name, raw_value) in meta_map.into_iter() {
+            let metadata_key =
+                Key::new(KeyType::Meta, metadata_key_name).context(error::InvalidKey {
+                    key_type: KeyType::Meta,
+                    key: metadata_key_name,
+                })?;
             let value = serialize_scalar(&raw_value).context(error::Serialize)?;
             datastore
                 .set_metadata(&metadata_key, &data_key, value)

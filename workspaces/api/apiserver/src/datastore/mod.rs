@@ -19,7 +19,7 @@ pub mod serialization;
 
 pub use error::{Error, Result};
 pub use filesystem::FilesystemDataStore;
-pub use key::{Key, KeyType, KEY_SEPARATOR};
+pub use key::{Key, KeyType, KEY_SEPARATOR, KEY_SEPARATOR_STR};
 
 use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
@@ -66,17 +66,14 @@ pub trait DataStore {
     /// earlier in the tree, if more specific values are not found later.
     fn get_metadata(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
         let mut result = Ok(None);
-        let mut current_path = String::with_capacity(data_key.len());
+        let mut current_path = Vec::new();
 
         // Walk through segments of the data key in order, returning the last metadata we find
-        for component in data_key.split(KEY_SEPARATOR) {
-            if !current_path.is_empty() {
-                current_path.push_str(KEY_SEPARATOR);
-            }
-            current_path.push_str(component);
+        for component in data_key.segments() {
+            current_path.push(component);
 
-            let data_key = Key::new(KeyType::Data, &current_path).unwrap_or_else(|_| {
-                unreachable!("Prefix of Key failed to make Key: {}", current_path)
+            let data_key = Key::from_segments(KeyType::Data, &current_path).unwrap_or_else(|_| {
+                unreachable!("Prefix of Key failed to make Key: {:?}", current_path)
             });
 
             if let Some(md) = self.get_metadata_raw(metadata_key, &data_key)? {
@@ -107,15 +104,13 @@ pub trait DataStore {
     ///
     /// Implementers can replace the default implementation if there's a faster way than setting
     /// each key individually.
-    fn set_keys<S1, S2>(&mut self, pairs: &HashMap<S1, S2>, committed: Committed) -> Result<()>
+    fn set_keys<S>(&mut self, pairs: &HashMap<Key, S>, committed: Committed) -> Result<()>
     where
-        S1: AsRef<str>,
-        S2: AsRef<str>,
+        S: AsRef<str>,
     {
-        for (key_str, value) in pairs {
-            trace!("Setting data key {}", key_str.as_ref());
-            let key = Key::new(KeyType::Data, key_str)?;
-            self.set_key(&key, value, committed)?;
+        for (key, value) in pairs {
+            trace!("Setting data key {}", key.name());
+            self.set_key(key, value, committed)?;
         }
         Ok(())
     }
@@ -140,7 +135,7 @@ pub trait DataStore {
             trace!("Pulling value from datastore for key: {}", key);
             let value = self
                 .get_key(&key, committed)?
-                .context(error::ListedKeyNotPresent { key: key.as_ref() })?;
+                .context(error::ListedKeyNotPresent { key: key.name() })?;
 
             result.insert(key, value);
         }
@@ -172,7 +167,7 @@ pub trait DataStore {
                 // If the user requested specific metadata, move to the next key unless it
                 // matches.
                 if let Some(name) = metadata_key_name {
-                    if name.as_ref() != meta_key.as_ref() {
+                    if name.as_ref() != meta_key.name() {
                         continue;
                     }
                 }
@@ -185,8 +180,8 @@ pub trait DataStore {
                 );
                 let value = self.get_metadata(&meta_key, &data_key)?.context(
                     error::ListedMetaNotPresent {
-                        meta_key: meta_key.as_ref(),
-                        data_key: data_key.as_ref(),
+                        meta_key: meta_key.name(),
+                        data_key: data_key.name(),
                     },
                 )?;
 
@@ -253,8 +248,8 @@ mod test {
         let v1 = "memvalue1".to_string();
         let v2 = "memvalue2".to_string();
         let data = hashmap!(
-            &k1 => &v1,
-            &k2 => &v2,
+            k1.clone() => &v1,
+            k2.clone() => &v2,
         );
 
         m.set_keys(&data, Committed::Pending).unwrap();

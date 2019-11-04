@@ -20,7 +20,7 @@ use std::env;
 use std::fmt;
 
 use apiserver::datastore::{Committed, Value};
-pub use apiserver::datastore::{DataStore, FilesystemDataStore, Key, KeyType};
+pub use apiserver::datastore::{DataStore, FilesystemDataStore};
 
 use args::parse_args;
 use datastore::{get_input_data, set_output_data};
@@ -50,19 +50,19 @@ pub trait Migration {
     fn backward(&mut self, input: MigrationData) -> Result<MigrationData>;
 }
 
-/// Mapping of metadata key to arbitrary value.  Each data key can have a Metadata describing its
-/// metadata keys.
-pub type Metadata = HashMap<Key, Value>;
+/// Mapping of metadata key name to arbitrary value.  Each data key can have a Metadata describing
+/// its metadata keys.
+pub type Metadata = HashMap<String, Value>;
 
 /// MigrationData holds all data that can be migrated in a migration, and serves as the input and
 /// output format of migrations.  A serde Value type is used to hold the arbitrary data of each
 /// key because we can't represent types when they could change in the migration.
 #[derive(Debug)]
 pub struct MigrationData {
-    /// Mapping of data keys to their arbitrary values.
-    pub data: HashMap<Key, Value>,
-    /// Mapping of data keys to their metadata.
-    pub metadata: HashMap<Key, Metadata>,
+    /// Mapping of data key names to their arbitrary values.
+    pub data: HashMap<String, Value>,
+    /// Mapping of data key names to their metadata.
+    pub metadata: HashMap<String, Metadata>,
 }
 
 /// Returns the default settings for a given path so you can easily replace a given section of the

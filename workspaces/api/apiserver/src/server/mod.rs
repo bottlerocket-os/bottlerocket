@@ -197,7 +197,8 @@ fn commit_and_apply_settings(data: web::Data<SharedDataStore>) -> Result<Changed
         return error::CommitWithNoPending.fail();
     }
 
-    controller::apply_changes(Some(&changes))?;
+    let key_names = changes.iter().map(|k| k.name()).collect();
+    controller::apply_changes(Some(&key_names))?;
 
     Ok(ChangedKeysResponse(changes))
 }

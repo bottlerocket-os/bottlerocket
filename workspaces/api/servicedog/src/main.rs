@@ -26,6 +26,7 @@ use std::process::{self, Command};
 use std::str::FromStr;
 
 use apiserver::datastore::serialization::to_pairs_with_prefix;
+use apiserver::datastore::{Key, KeyType};
 use apiserver::model;
 
 // FIXME Get from configuration in the future
@@ -39,7 +40,7 @@ mod error {
     use snafu::Snafu;
     use std::process::{Command, Output};
 
-    use apiserver::datastore::serialization;
+    use apiserver::datastore::{self, serialization};
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
@@ -74,6 +75,12 @@ mod error {
         #[snafu(display("Error serializing settings: {} ", source))]
         SerializeSettings { source: serialization::Error },
 
+        #[snafu(display("Unable to create key '{}': {}", key, source))]
+        InvalidKey {
+            key: String,
+            source: datastore::Error,
+        },
+
         #[snafu(display(
             "Unknown value for '{}': got '{}', expected 'true' or 'false'",
             setting,
@@ -82,7 +89,7 @@ mod error {
         UnknownSettingState { setting: String, state: String },
 
         #[snafu(display("Setting '{}' does not exist in the data store", setting))]
-        NonexistentSettting { setting: String },
+        NonexistentSetting { setting: String },
 
         #[snafu(display("Failed to execute '{:?}': {}", command, source))]
         ExecutionFailure {
@@ -134,14 +141,15 @@ impl SettingState {
 // We can then serialize this structure to a map of
 // dotted.key.setting -> value. Using this map we can get the setting value.
 // FIXME remove this when we have an API client.
-fn query_setting_value<S>(setting: S) -> Result<String>
+fn query_setting_value<S>(key_str: S) -> Result<String>
 where
     S: AsRef<str>,
 {
-    let setting = setting.as_ref();
-    debug!("Querying the API for setting: {}", setting);
+    let key_str = key_str.as_ref();
+    let key = Key::new(KeyType::Data, key_str).context(error::InvalidKey { key: key_str })?;
+    debug!("Querying the API for setting: {}", key_str);
 
-    let uri = format!("{}?keys={}", API_SETTINGS_URI, setting);
+    let uri = format!("{}?keys={}", API_SETTINGS_URI, key_str);
     let (code, response_body) = apiclient::raw_request(DEFAULT_API_SOCKET, &uri, "GET", None)
         .context(error::APIRequest {
             method: "GET",
@@ -163,15 +171,15 @@ where
 
     // Serialize the Settings struct into key/value pairs. This builds the dotted
     // string representation of the setting
-    let setting_keypair = to_pairs_with_prefix("settings".to_string(), &settings)
-        .context(error::SerializeSettings)?;
+    let setting_keypair =
+        to_pairs_with_prefix("settings", &settings).context(error::SerializeSettings)?;
     debug!("Retrieved setting keypair: {:#?}", &setting_keypair);
 
     // (Hopefully) get the value from the map using the dotted string supplied
     // to the function
     Ok(setting_keypair
-        .get(setting)
-        .context(error::NonexistentSettting { setting: setting })?
+        .get(&key)
+        .context(error::NonexistentSetting { setting: key_str })?
         .to_string())
 }
 

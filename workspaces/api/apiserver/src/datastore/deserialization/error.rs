@@ -1,7 +1,7 @@
 use serde::de;
 use snafu::{IntoError, NoneError as NoSource, Snafu};
 
-use crate::datastore::ScalarError;
+use crate::datastore::{Error as DataStoreError, ScalarError};
 
 /// Potential errors from deserialization.
 #[derive(Debug, Snafu)]
@@ -18,6 +18,24 @@ pub enum Error {
         "Data store deserializer must be used on a struct, or you must give a prefix"
     ))]
     BadRoot {},
+
+    #[snafu(display(
+        "Removal of prefix '{}' from key '{}' failed: {}",
+        prefix,
+        name,
+        source
+    ))]
+    StripPrefix {
+        prefix: String,
+        name: String,
+        source: DataStoreError,
+    },
+
+    #[snafu(display("Prefix '{}' is not a valid key: {}", prefix, source))]
+    InvalidPrefix {
+        prefix: String,
+        source: DataStoreError,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

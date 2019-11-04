@@ -50,10 +50,7 @@ impl ser::Serializer for &MapKeySerializer {
 
     fn serialize_str(self, value: &str) -> Result<String> {
         // Make sure string is valid as a key.
-        // Note: we check as a metadata key here, because metadata keys are simpler - no dotted
-        // components, just one.  We wouldn't want dotted components in a single map key because
-        // it would falsely imply nesting.
-        let key = Key::new(KeyType::Meta, value)
+        let key = Key::from_segments(KeyType::Data, &[value])
             .map_err(|e| {
                 debug!("MapKeySerializer got invalid key name: {}", value);
                 error::InvalidKey { msg: format!("{}", e) }.into_error(NoSource)

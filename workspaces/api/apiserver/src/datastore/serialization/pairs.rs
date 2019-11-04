@@ -8,18 +8,18 @@
 //! to be sure we support the various forms of input/output we care about.
 
 use serde::{ser, Serialize};
-use snafu::{OptionExt, ResultExt};
+use snafu::{IntoError, NoneError as NoSource, OptionExt, ResultExt};
 use std::collections::HashMap;
 
 use super::{error, Error, MapKeySerializer, Result};
-use crate::datastore::{serialize_scalar, ScalarError, KEY_SEPARATOR};
+use crate::datastore::{serialize_scalar, Key, KeyType, ScalarError};
 
 /// This is the primary interface to our serialization.  We turn anything implementing Serialize
 /// into pairs of datastore keys and serialized values.  For example, a nested struct like this:
 ///    Settings -> DockerSettings -> bridge_ip = u64
 /// would turn into a key of "settings.docker-settings.bridge-ip" and a serialized String
 /// representing the u64 data.
-pub fn to_pairs<T: Serialize>(value: &T) -> Result<HashMap<String, String>> {
+pub fn to_pairs<T: Serialize>(value: &T) -> Result<HashMap<Key, String>> {
     let mut output = HashMap::new();
     let serializer = Serializer::new(&mut output, None);
     value.serialize(serializer)?;
@@ -28,12 +28,21 @@ pub fn to_pairs<T: Serialize>(value: &T) -> Result<HashMap<String, String>> {
 
 /// Like to_pairs, but lets you add an arbitrary prefix to the resulting keys.  A separator will
 /// automatically be added after the prefix.
-pub fn to_pairs_with_prefix<T: Serialize>(
-    prefix: String,
-    value: &T,
-) -> Result<HashMap<String, String>> {
+pub fn to_pairs_with_prefix<S, T>(prefix: S, value: &T) -> Result<HashMap<Key, String>>
+where
+    S: AsRef<str>,
+    T: Serialize,
+{
+    let prefix = prefix.as_ref();
+    let prefix_key = Key::new(KeyType::Data, prefix).map_err(|e| {
+        error::InvalidKey {
+            msg: format!("Prefix '{}' not valid as Key: {}", prefix, e),
+        }
+        .into_error(NoSource)
+    })?;
+
     let mut output = HashMap::new();
-    let serializer = Serializer::new(&mut output, Some(prefix));
+    let serializer = Serializer::new(&mut output, Some(prefix_key));
     value.serialize(serializer)?;
     Ok(output)
 }
@@ -50,16 +59,18 @@ pub fn to_pairs_with_prefix<T: Serialize>(
 ///
 /// (We could handle lists as proper compound structures by improving the data store such that it
 /// can store unnamed sub-components, perhaps by using a visible index ("a.b.c[0]", "a.b.c[1]").
+/// It's more common to use a HashMap in the model, and then to use named keys instead of indexes,
+/// which works fine.)
 struct Serializer<'a> {
-    output: &'a mut HashMap<String, String>,
-    prefix: Option<String>,
+    output: &'a mut HashMap<Key, String>,
+    prefix: Option<Key>,
     // This is temporary storage for serializing maps, because serde gives us keys and values
     // separately.  See the SerializeMap implementation below.
-    key: Option<String>,
+    key: Option<Key>,
 }
 
 impl<'a> Serializer<'a> {
-    fn new(output: &'a mut HashMap<String, String>, prefix: Option<String>) -> Self {
+    fn new(output: &'a mut HashMap<Key, String>, prefix: Option<Key>) -> Self {
         Self {
             output,
             prefix,
@@ -70,7 +81,7 @@ impl<'a> Serializer<'a> {
 
 /// This helps us handle the cases where we have to have an existing prefix in order to output a
 /// value.  It creates an explanatory error if the given prefix is None.
-fn expect_prefix(maybe_prefix: Option<String>, value: &str) -> Result<String> {
+fn expect_prefix(maybe_prefix: Option<Key>, value: &str) -> Result<Key> {
     maybe_prefix.context(error::MissingPrefix { value })
 }
 
@@ -139,10 +150,17 @@ impl<'a> ser::Serializer for Serializer<'a> {
         trace!("Serializing struct '{}' at prefix {:?}", name, self.prefix);
         // If we already have a prefix, use it - could be because we're in a nested struct, or the
         // user gave a prefix.  Otherwise, use the given name - this is a top-level struct.
-        let prefix = self.prefix.or_else(|| {
-            trace!("Had no prefix, starting with struct name: {}", name);
-            Some(name.to_string())
-        });
+        let prefix = match self.prefix {
+            p @ Some(_) => p,
+            None => {
+                trace!("Had no prefix, starting with struct name: {}", name);
+                let key = Key::from_segments(KeyType::Data, &[&name])
+                    .map_err(|e| error::InvalidKey {
+                        msg: format!("struct '{}' not valid as Key: {}", name, e)
+                    }.into_error(NoSource))?;
+                Some(key)
+            }
+        };
         Ok(Serializer::new(self.output, prefix))
     }
 
@@ -186,11 +204,19 @@ impl<'a> ser::Serializer for Serializer<'a> {
 }
 
 /// Helper that combines the existing prefix, if any, with a separator and the new key.
-fn dotted_prefix(old_prefix: Option<String>, key: String) -> String {
+fn key_append_or_create(old_prefix: &Option<Key>, key: &Key) -> Result<Key> {
     if let Some(old_prefix) = old_prefix {
-        old_prefix + KEY_SEPARATOR + &key
+        old_prefix.append_key(&key).map_err(|e| {
+            error::InvalidKey {
+                msg: format!(
+                    "appending '{}' to '{}' is invalid as Key: {}",
+                    key, old_prefix, e
+                ),
+            }
+            .into_error(NoSource)
+        })
     } else {
-        key
+        Ok(key.clone())
     }
 }
 
@@ -214,10 +240,20 @@ impl<'a> ser::SerializeMap for Serializer<'a> {
     where
         T: ?Sized + Serialize,
     {
-        // Store the key to use later in serialize_value.
         trace!("Serializing map key at prefix {:?}", self.prefix);
+        // We're given a serializable thing; need to serialize it to get a string we can work with.
         let key_str = key.serialize(&MapKeySerializer::new())?;
-        self.key = Some(dotted_prefix(self.prefix.clone(), key_str));
+        // It should be valid as a Key.
+        // Note: we use 'new', not 'from_segments', because we just serialized into a string,
+        // meaning it's in quoted form.
+        let key = Key::new(KeyType::Data, &key_str).map_err(|e| {
+            error::InvalidKey {
+                msg: format!("serialized map key '{}' not valid as Key: {}", &key_str, e),
+            }
+            .into_error(NoSource)
+        })?;
+        // Store the key to use later in serialize_value.
+        self.key = Some(key_append_or_create(&self.prefix, &key)?);
         Ok(())
     }
 
@@ -255,16 +291,23 @@ impl<'a> ser::SerializeStruct for Serializer<'a> {
     type Ok = ();
     type Error = Error;
 
-    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<()>
+    fn serialize_field<T>(&mut self, key_str: &'static str, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let new_root = dotted_prefix(self.prefix.clone(), key.to_string());
+        let key = Key::from_segments(KeyType::Data, &[&key_str]).map_err(|e| {
+            error::InvalidKey {
+                msg: format!("struct field '{}' not valid as Key: {}", key_str, e),
+            }
+            .into_error(NoSource)
+        })?;
+
+        let new_root = key_append_or_create(&self.prefix, &key)?;
         trace!(
             "Recursively serializing struct with new root '{}' from prefix '{:?}' and key '{}'",
             new_root,
             self.prefix,
-            key
+            &key
         );
         value.serialize(Serializer::new(self.output, Some(new_root)))
     }
@@ -287,13 +330,13 @@ impl<'a> ser::SerializeStruct for Serializer<'a> {
 /// serialization steps, and then at the end, deserialize the strings back into a list of the
 /// original type, and serialize the entire list.  Sorry.
 struct FlatSerializer<'a> {
-    output: &'a mut HashMap<String, String>,
-    prefix: String,
+    output: &'a mut HashMap<Key, String>,
+    prefix: Key,
     list: Vec<String>,
 }
 
 impl<'a> FlatSerializer<'a> {
-    fn new(output: &'a mut HashMap<String, String>, prefix: String) -> Self {
+    fn new(output: &'a mut HashMap<Key, String>, prefix: Key) -> Self {
         FlatSerializer {
             output,
             prefix,
@@ -340,8 +383,16 @@ impl<'a> ser::SerializeSeq for FlatSerializer<'a> {
 #[cfg(test)]
 mod test {
     use super::{to_pairs, to_pairs_with_prefix};
+    use crate::datastore::{Key, KeyType};
     use maplit::hashmap;
     use serde::Serialize;
+
+    // Helper macro for making a data Key for testing whose name we know is valid.
+    macro_rules! key {
+        ($name:expr) => {
+            Key::new(KeyType::Data, $name).unwrap()
+        };
+    }
 
     #[derive(PartialEq, Serialize)]
     struct A {
@@ -365,8 +416,8 @@ mod test {
         assert_eq!(
             keys,
             hashmap!(
-                "B.list".to_string() => "[3,4,5]".to_string(),
-                "B.boolean".to_string() => "true".to_string(),
+                key!("B.list") => "[3,4,5]".to_string(),
+                key!("B.boolean") => "true".to_string(),
             )
         );
     }
@@ -389,9 +440,9 @@ mod test {
         assert_eq!(
             keys,
             hashmap!(
-                "A.b.list".to_string() => "[5,6,7]".to_string(),
-                "A.b.boolean".to_string() => "true".to_string(),
-                "A.id".to_string() => "42".to_string(),
+                key!("A.b.list") => "[5,6,7]".to_string(),
+                key!("A.b.boolean") => "true".to_string(),
+                key!("A.id") => "42".to_string(),
             )
         );
     }
@@ -399,17 +450,17 @@ mod test {
     #[test]
     fn map() {
         let m = hashmap!(
-            "A".to_string() => hashmap!(
-                "id".to_string() => 42,
-                "ie".to_string() => 43,
+            key!("A") => hashmap!(
+                key!("id") => 42,
+                key!("ie") => 43,
             ),
         );
-        let keys = to_pairs_with_prefix("map".to_string(), &m).unwrap();
+        let keys = to_pairs_with_prefix("map", &m).unwrap();
         assert_eq!(
             keys,
             hashmap!(
-                "map.A.id".to_string() => "42".to_string(),
-                "map.A.ie".to_string() => "43".to_string(),
+                key!("map.A.id") => "42".to_string(),
+                key!("map.A.ie") => "43".to_string(),
             )
         );
     }
@@ -417,17 +468,17 @@ mod test {
     #[test]
     fn map_no_root() {
         let m = hashmap!(
-            "A".to_string() => hashmap!(
-                "id".to_string() => 42,
-                "ie".to_string() => 43,
+            key!("A") => hashmap!(
+                key!("id") => 42,
+                key!("ie") => 43,
             ),
         );
         let keys = to_pairs(&m).unwrap();
         assert_eq!(
             keys,
             hashmap!(
-                "A.id".to_string() => "42".to_string(),
-                "A.ie".to_string() => "43".to_string(),
+                key!("A.id") => "42".to_string(),
+                key!("A.ie") => "43".to_string(),
             )
         );
     }
