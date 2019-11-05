@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel
-Version: 4.19.72
+Version: 4.19.75
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/376c4a8ffedb59b2a17019fd74811a1f804ca1edcdfb71cab6f64222052631b0/kernel-4.19.72-25.58.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/9cf01c374c05a9ff6d1d3d37d0a4f27b403b2dd4de27d3e6e5ab0f5e517bb1da/kernel-4.19.75-27.58.amzn2.src.rpm
 Source100: config-thar
 Patch0001: 0001-dm-add-support-to-directly-boot-to-a-mapped-device.patch
 Patch0002: 0002-dm-init-fix-const-confusion-for-dm_allowed_targets-a.patch

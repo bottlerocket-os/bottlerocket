@@ -10,8 +10,8 @@ path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
 # Use latest-srpm-url.sh to get this.
-url = "https://cdn.amazonlinux.com/blobstore/376c4a8ffedb59b2a17019fd74811a1f804ca1edcdfb71cab6f64222052631b0/kernel-4.19.72-25.58.amzn2.src.rpm"
-sha512 = "ff1722d9b21a2c6f9f10600268a68929e1a600254aa25e7621df1006ea62750d892c2503fdc929a355f0a9d70c019202af744803892fade7e6bd8b2977fb3539"
+url = "https://cdn.amazonlinux.com/blobstore/9cf01c374c05a9ff6d1d3d37d0a4f27b403b2dd4de27d3e6e5ab0f5e517bb1da/kernel-4.19.75-27.58.amzn2.src.rpm"
+sha512 = "5ac2f7e08be68dc08223025f2f70ee5165174ad790c6f65700b27a1e7fdb765ffab34d9811a0d68aa2bb7d58a16933a95fd0e4294470c3c92701fda53133d7d4"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
