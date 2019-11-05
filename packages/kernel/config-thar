@@ -24,3 +24,7 @@ CONFIG_DM_VERITY=y
 
 # yama LSM for ptrace restrictions
 CONFIG_SECURITY_YAMA=y
+
+# enable /proc/config.gz
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
