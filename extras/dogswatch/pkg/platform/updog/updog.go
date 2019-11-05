@@ -1,12 +1,16 @@
 package updog
 
 import (
+	"bufio"
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
 
+	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/thar"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -31,12 +35,48 @@ type executable struct{}
 
 func (e *executable) runOk(cmd *exec.Cmd) (bool, error) {
 	cmd.SysProcAttr = thar.ProcessAttrs()
-	// TODO: pipe out the updog stderr to debug logger
+
+	var buf bytes.Buffer
+	writer := bufio.NewWriter(&buf)
+	cmd.Stdout = writer
+	cmd.Stderr = writer
+
+	if logging.Debuggable {
+		logging.New("updog").WithFields(logrus.Fields{
+			"cmd": cmd.String(),
+		}).Debug("Executing")
+	}
+
 	if err := cmd.Start(); err != nil {
+		if logging.Debuggable {
+			logging.New("updog").WithFields(logrus.Fields{
+				"cmd":    cmd.String(),
+				"output": buf.String(),
+			}).WithError(err).Error("Failed to start command")
+		}
 		return false, err
 	}
 	err := cmd.Wait()
-	return err == nil, err
+	if err != nil {
+		if logging.Debuggable {
+			logging.New("updog").WithFields(logrus.Fields{
+				"cmd":    cmd.String(),
+				"output": buf.String(),
+			}).WithError(err).Error("Command errored durring run")
+		}
+		return false, err
+	}
+	if logging.Debuggable {
+		logging.New("updog").WithFields(logrus.Fields{
+			"cmd":    cmd.String(),
+			"output": buf.String(),
+		}).Debug("Command completed successfully")
+	}
+	// Boolean currently only used by ListUpdate. Returns true if the
+	// command yielded output, which indicates an update is available.
+	// TODO: Update this when an interface is defined between updog
+	// and dogswatch.
+	return len(buf.String()) > 0, err
 }
 
 func (e *executable) CheckUpdate() (bool, error) {
@@ -44,7 +84,7 @@ func (e *executable) CheckUpdate() (bool, error) {
 }
 
 func (e *executable) Update() error {
-	_, err := e.runOk(exec.Command(updogBin, "update"))
+	_, err := e.runOk(exec.Command(updogBin, "update-apply", "-r"))
 	return err
 }
 
@@ -80,15 +120,25 @@ func (u *updog) Status() (*statusResponse, error) {
 }
 
 func (u *updog) ListAvailable() (*listAvailableResponse, error) {
-	if _, err := u.Bin.CheckUpdate(); err != nil {
+	if avail, err := u.Bin.CheckUpdate(); err != nil {
 		return nil, err
+	} else {
+		if avail {
+			return &listAvailableResponse{
+				// TODO: deserialize output from updog and plumb version IDs
+				ReportedUpdates: []*availableUpdate{&availableUpdate{ID: "POSITIVE_STUB_INDICATOR"}},
+			}, nil
+		} else {
+			return &listAvailableResponse{}, nil
+		}
 	}
-	return &listAvailableResponse{}, nil
 }
 
 func (u *updog) PrepareUpdate(id UpdateID) (*prepareUpdateResponse, error) {
-	// TODO: extend updog for prepare steps
-	return &prepareUpdateResponse{}, nil
+	// TODO: extend updog for prepare steps.
+	return &prepareUpdateResponse{
+		ID: "POSITIVE_STUB_INDICATOR",
+	}, nil
 }
 
 func (u *updog) ApplyUpdate(id UpdateID) (*applyUpdateResponse, error) {

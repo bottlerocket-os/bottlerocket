@@ -167,10 +167,10 @@ spec:
             privileged: true
           resources: 
             limits:
-              memory: 200Mi
+              memory: 600Mi
             requests:
               cpu: 100m
-              memory: 200Mi
+              memory: 600Mi
           volumeMounts:
             - name: rootfs
               mountPath: /.thar/rootfs
