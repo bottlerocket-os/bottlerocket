@@ -72,8 +72,8 @@ pub enum Error {
     #[snafu(display("Failed to join \"{}\" to URL \"{}\": {}", path, url, source))]
     JoinUrl {
         path: String,
-        url: reqwest::Url,
-        source: reqwest::UrlError,
+        url: url::Url,
+        source: url::ParseError,
         backtrace: Backtrace,
     },
 
@@ -152,14 +152,14 @@ pub enum Error {
     #[snafu(display("Failed to parse URL {:?}: {}", url, source))]
     ParseUrl {
         url: String,
-        source: reqwest::UrlError,
+        source: url::ParseError,
         backtrace: Backtrace,
     },
 
     /// An HTTP request failed.
     #[snafu(display("Failed to request \"{}\": {}", url, source))]
     Request {
-        url: reqwest::Url,
+        url: url::Url,
         source: reqwest::Error,
         backtrace: Backtrace,
     },
@@ -168,7 +168,7 @@ pub enum Error {
     #[snafu(display("Status {} {} in response for \"{}\"", code.as_u16(), code.as_str(), url))]
     ResponseStatus {
         code: reqwest::StatusCode,
-        url: reqwest::Url,
+        url: url::Url,
         backtrace: Backtrace,
     },
 

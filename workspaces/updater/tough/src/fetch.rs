@@ -1,10 +1,11 @@
 use crate::error::Result;
 use crate::io::{DigestAdapter, MaxSizeAdapter};
-use reqwest::{Client, Url};
+use reqwest::Client;
 use snafu::ensure;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
+use url::Url;
 
 fn fetch(client: &Client, url: Url) -> Result<Box<dyn Read>> {
     use crate::error;

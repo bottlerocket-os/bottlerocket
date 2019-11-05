@@ -1,7 +1,7 @@
 use crate::error;
-use reqwest::Url;
 use sha2::{Digest, Sha256};
 use std::io::{self, Read};
+use url::Url;
 
 pub(crate) struct DigestAdapter<T, D> {
     url: Url,
@@ -86,8 +86,8 @@ impl<T: Read> Read for MaxSizeAdapter<T> {
 mod tests {
     use crate::io::{DigestAdapter, MaxSizeAdapter};
     use hex_literal::hex;
-    use reqwest::Url;
     use std::io::{Cursor, Read};
+    use url::Url;
 
     #[test]
     fn test_max_size_adapter() {

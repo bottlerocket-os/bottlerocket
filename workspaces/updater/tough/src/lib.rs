@@ -22,13 +22,13 @@ use crate::error::Result;
 use crate::fetch::{fetch_max_size, fetch_sha256};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
-use reqwest::Url;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
 use tough_schema::{Role, RoleType, Root, Signed, Snapshot, Timestamp};
+use url::Url;
 
 /// Repository fetch settings, provided to [`Repository::load`].
 #[derive(Debug, Clone)]
