@@ -6,7 +6,7 @@ use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tempdir::TempDir;
-use tough::{Limits, Repository, Settings};
+use tough::{HttpTransport, Limits, Repository, Settings};
 use url::Url;
 
 #[derive(Debug, StructOpt)]
@@ -87,15 +87,18 @@ impl DownloadArgs {
 
         // load repository
         let repo_dir = TempDir::new("tuf").context(error::TempDir)?;
-        let repository = Repository::load(Settings {
-            root: File::open(&root_path).context(error::OpenRoot { path: &root_path })?,
-            datastore: repo_dir.path(),
-            metadata_base_url: &self.metadata_base_url,
-            target_base_url: &self.target_base_url,
-            limits: Limits {
-                ..tough::Limits::default()
+        let repository = Repository::load(
+            HttpTransport::new(),
+            Settings {
+                root: File::open(&root_path).context(error::OpenRoot { path: &root_path })?,
+                datastore: repo_dir.path(),
+                metadata_base_url: &self.metadata_base_url,
+                target_base_url: &self.target_base_url,
+                limits: Limits {
+                    ..tough::Limits::default()
+                },
             },
-        })
+        )
         .context(error::Metadata)?;
 
         // copy all available targets

@@ -16,7 +16,7 @@ use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
-use tough::{Limits, Repository, Settings};
+use tough::{HttpTransport, Limits, Repository, Settings};
 use update_metadata::{Manifest, Update};
 
 #[cfg(target_arch = "x86_64")]
@@ -93,26 +93,29 @@ fn load_config() -> Result<Config> {
     Ok(config)
 }
 
-fn load_repository(config: &Config) -> Result<Repository<'_>> {
+fn load_repository(config: &Config) -> Result<Repository<'_, HttpTransport>> {
     fs::create_dir_all("/var/lib/thar/updog").context(error::CreateMetadataCache)?;
-    Repository::load(Settings {
-        root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
-            path: TRUSTED_ROOT_PATH,
-        })?,
-        datastore: Path::new("/var/lib/thar/updog"),
-        metadata_base_url: &config.metadata_base_url,
-        target_base_url: &config.target_base_url,
-        limits: Limits {
-            max_root_size: 1024 * 1024,         // 1 MiB
-            max_targets_size: 1024 * 1024 * 10, // 10 MiB
-            max_timestamp_size: 1024 * 1024,    // 1 MiB
-            max_root_updates: 1024,
+    Repository::load(
+        HttpTransport::new(),
+        Settings {
+            root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
+                path: TRUSTED_ROOT_PATH,
+            })?,
+            datastore: Path::new("/var/lib/thar/updog"),
+            metadata_base_url: &config.metadata_base_url,
+            target_base_url: &config.target_base_url,
+            limits: Limits {
+                max_root_size: 1024 * 1024,         // 1 MiB
+                max_targets_size: 1024 * 1024 * 10, // 10 MiB
+                max_timestamp_size: 1024 * 1024,    // 1 MiB
+                max_root_updates: 1024,
+            },
         },
-    })
+    )
     .context(error::Metadata)
 }
 
-fn load_manifest(repository: &Repository<'_>) -> Result<Manifest> {
+fn load_manifest(repository: &Repository<'_, HttpTransport>) -> Result<Manifest> {
     let target = "manifest.json";
     serde_json::from_reader(
         repository
@@ -195,7 +198,7 @@ fn update_required<'a>(
 }
 
 fn write_target_to_disk<P: AsRef<Path>>(
-    repository: &Repository<'_>,
+    repository: &Repository<'_, HttpTransport>,
     target: &str,
     disk_path: P,
 ) -> Result<()> {
@@ -255,7 +258,7 @@ fn migration_targets(
 /// storage. All intermediate migrations between the current version and the
 /// target version must be retrieved.
 fn retrieve_migrations(
-    repository: &Repository<'_>,
+    repository: &Repository<'_, HttpTransport>,
     manifest: &Manifest,
     update: &Update,
 ) -> Result<()> {
@@ -296,7 +299,7 @@ fn retrieve_migrations(
     Ok(())
 }
 
-fn update_image(update: &Update, repository: &Repository<'_>) -> Result<()> {
+fn update_image(update: &Update, repository: &Repository<'_, HttpTransport>) -> Result<()> {
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to

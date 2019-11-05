@@ -1,58 +1,42 @@
-use crate::error::Result;
+use crate::error::{self, Result};
 use crate::io::{DigestAdapter, MaxSizeAdapter};
-use reqwest::Client;
-use snafu::ensure;
-use std::fs::File;
+use crate::transport::Transport;
+use snafu::ResultExt;
 use std::io::Read;
-use std::path::PathBuf;
 use url::Url;
 
-fn fetch(client: &Client, url: Url) -> Result<Box<dyn Read>> {
-    use crate::error;
-    use snafu::ResultExt;
-
-    if url.scheme() == "file" {
-        let path = PathBuf::from(url.path());
-        let file = File::open(&path).context(error::FileRead { path })?;
-        Ok(Box::new(file) as Box<dyn Read>)
-    } else {
-        let response = client
-            .get(url.clone())
-            .send()
-            .context(error::Request { url: url.clone() })?;
-        ensure!(
-            !response.status().is_client_error() && !response.status().is_server_error(),
-            error::ResponseStatus {
-                code: response.status(),
-                url
-            }
-        );
-        Ok(Box::new(response))
-    }
-}
-
-pub(crate) fn fetch_max_size(
-    client: &Client,
+pub(crate) fn fetch_max_size<T: Transport>(
+    transport: &T,
     url: Url,
     max_size: u64,
     specifier: &'static str,
 ) -> Result<impl Read> {
     Ok(MaxSizeAdapter::new(
-        fetch(client, url)?,
+        transport
+            .fetch(url.clone())
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+            .context(error::Transport { url })?,
         specifier,
         max_size,
     ))
 }
 
-pub(crate) fn fetch_sha256(
-    client: &Client,
+pub(crate) fn fetch_sha256<T: Transport>(
+    transport: &T,
     url: Url,
     size: u64,
     specifier: &'static str,
     sha256: &[u8],
 ) -> Result<impl Read> {
     Ok(DigestAdapter::sha256(
-        MaxSizeAdapter::new(fetch(client, url.clone())?, specifier, size),
+        MaxSizeAdapter::new(
+            transport
+                .fetch(url.clone())
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+                .context(error::Transport { url: url.clone() })?,
+            specifier,
+            size,
+        ),
         sha256,
         url,
     ))

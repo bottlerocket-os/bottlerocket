@@ -16,12 +16,14 @@ mod datastore;
 pub mod error;
 mod fetch;
 mod io;
+mod transport;
+
+pub use crate::transport::{FilesystemTransport, HttpTransport, Transport};
 
 use crate::datastore::Datastore;
 use crate::error::Result;
 use crate::fetch::{fetch_max_size, fetch_sha256};
 use chrono::{DateTime, Utc};
-use reqwest::Client;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -101,8 +103,8 @@ impl Default for Limits {
 ///
 /// You can create a `Repository` using the `load` method.
 #[derive(Debug, Clone)]
-pub struct Repository<'a> {
-    client: Client,
+pub struct Repository<'a, T: Transport> {
+    transport: T,
     consistent_snapshot: bool,
     datastore: Datastore<'a>,
     earliest_expiration: DateTime<Utc>,
@@ -111,7 +113,7 @@ pub struct Repository<'a> {
     targets: HashMap<String, Target>,
 }
 
-impl<'a> Repository<'a> {
+impl<'a, T: Transport> Repository<'a, T> {
     /// Load and verify TUF repository metadata.
     ///
     /// `root` is a [`Read`]er for the trusted root metadata file, which you must ship with your
@@ -132,9 +134,7 @@ impl<'a> Repository<'a> {
     ///
     /// `metadata_base_url` and `target_base_url` are the HTTP(S) base URLs for where the client
     /// can find metadata (such as root.json) and targets (as listed in targets.json).
-    pub fn load<R: Read>(settings: Settings<'a, R>) -> Result<Self> {
-        let client = Client::new();
-
+    pub fn load<R: Read>(transport: T, settings: Settings<'a, R>) -> Result<Self> {
         let metadata_base_url = parse_url(settings.metadata_base_url)?;
         let target_base_url = parse_url(settings.target_base_url)?;
 
@@ -142,7 +142,7 @@ impl<'a> Repository<'a> {
 
         // 0. Load the trusted root metadata file + 1. Update the root metadata file
         let root = load_root(
-            &client,
+            &transport,
             settings.root,
             &datastore,
             settings.limits.max_root_size,
@@ -152,7 +152,7 @@ impl<'a> Repository<'a> {
 
         // 2. Download the timestamp metadata file
         let timestamp = load_timestamp(
-            &client,
+            &transport,
             &root,
             &datastore,
             settings.limits.max_timestamp_size,
@@ -160,11 +160,17 @@ impl<'a> Repository<'a> {
         )?;
 
         // 3. Download the snapshot metadata file
-        let snapshot = load_snapshot(&client, &root, &timestamp, &datastore, &metadata_base_url)?;
+        let snapshot = load_snapshot(
+            &transport,
+            &root,
+            &timestamp,
+            &datastore,
+            &metadata_base_url,
+        )?;
 
         // 4. Download the targets metadata file
         let targets = load_targets(
-            &client,
+            &transport,
             &root,
             &snapshot,
             &datastore,
@@ -182,7 +188,7 @@ impl<'a> Repository<'a> {
             expires_iter.iter().min_by_key(|tup| tup.0).unwrap();
 
         Ok(Self {
-            client,
+            transport,
             consistent_snapshot: root.signed.consistent_snapshot,
             datastore,
             earliest_expiration: earliest_expiration.to_owned(),
@@ -247,7 +253,7 @@ impl<'a> Repository<'a> {
             };
 
             Some(fetch_sha256(
-                &self.client,
+                &self.transport,
                 self.target_base_url.join(&file).context(error::JoinUrl {
                     path: file,
                     url: self.target_base_url.to_owned(),
@@ -327,8 +333,8 @@ fn parse_url(url: &str) -> Result<Url> {
 
 /// Steps 0 and 1 of the client application, which load the current root metadata file based on a
 /// trusted root metadata file.
-fn load_root<R: Read>(
-    client: &Client,
+fn load_root<R: Read, T: Transport>(
+    transport: &T,
     root: R,
     datastore: &Datastore<'_>,
     max_root_size: u64,
@@ -382,7 +388,7 @@ fn load_root<R: Read>(
         );
         let path = format!("{}.root.json", root.signed.version.get() + 1);
         match fetch_max_size(
-            client,
+            transport,
             metadata_base_url.join(&path).context(error::JoinUrl {
                 path,
                 url: metadata_base_url.to_owned(),
@@ -490,8 +496,8 @@ fn load_root<R: Read>(
 }
 
 /// Step 2 of the client application, which loads the timestamp metadata file.
-fn load_timestamp(
-    client: &Client,
+fn load_timestamp<T: Transport>(
+    transport: &T,
     root: &Signed<Root>,
     datastore: &Datastore<'_>,
     max_timestamp_size: u64,
@@ -503,7 +509,7 @@ fn load_timestamp(
     //    file is of the fixed form FILENAME.EXT (e.g., timestamp.json).
     let path = "timestamp.json";
     let reader = fetch_max_size(
-        client,
+        transport,
         metadata_base_url.join(path).context(error::JoinUrl {
             path,
             url: metadata_base_url.to_owned(),
@@ -558,8 +564,8 @@ fn load_timestamp(
 }
 
 /// Step 3 of the client application, which loads the snapshot metadata file.
-fn load_snapshot(
-    client: &Client,
+fn load_snapshot<T: Transport>(
+    transport: &T,
     root: &Signed<Root>,
     timestamp: &Signed<Timestamp>,
     datastore: &Datastore<'_>,
@@ -586,7 +592,7 @@ fn load_snapshot(
         "snapshot.json".to_owned()
     };
     let reader = fetch_sha256(
-        client,
+        transport,
         metadata_base_url.join(&path).context(error::JoinUrl {
             path,
             url: metadata_base_url.to_owned(),
@@ -689,8 +695,8 @@ fn load_snapshot(
 }
 
 /// Step 4 of the client application, which loads the targets metadata file.
-fn load_targets(
-    client: &Client,
+fn load_targets<T: Transport>(
+    transport: &T,
     root: &Signed<Root>,
     snapshot: &Signed<Snapshot>,
     datastore: &Datastore<'_>,
@@ -729,7 +735,7 @@ fn load_targets(
     };
     let reader = if let Some(hashes) = &targets_meta.hashes {
         Box::new(fetch_sha256(
-            client,
+            transport,
             targets_url,
             max_targets_size,
             specifier,
@@ -737,7 +743,7 @@ fn load_targets(
         )?) as Box<dyn Read>
     } else {
         Box::new(fetch_max_size(
-            client,
+            transport,
             targets_url,
             max_targets_size,
             specifier,
