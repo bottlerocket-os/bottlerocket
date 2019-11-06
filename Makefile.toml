@@ -15,13 +15,7 @@ GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
 
 [env.development]
 IMAGE = "aws-k8s"
-# Permit pulling directly Upstream URLs when lookaside cache results in MISSes.
 BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
-# Extra flags used when spawning containers.
-#
-# ex: BUILDSYS_DOCKER_RUN_ARGS="--network=host --dns=127.0.0.53"
-#
-BUILDSYS_DOCKER_RUN_ARGS = { default_value = "--network=host" }
 
 [tasks.setup]
 script = [
@@ -32,9 +26,6 @@ mkdir -p ${GO_MOD_CACHE}
 ]
 
 [tasks.fetch]
-dependencies = ["fetch-workspaces", "fetch-vendored", "fetch-external-files"]
-
-[tasks.fetch-workspaces]
 dependencies = ["setup"]
 script = [
 '''
@@ -42,37 +33,15 @@ for ws in workspaces packages images ; do
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
 chmod o+r -R ${CARGO_HOME}
-'''
-]
 
-[tasks.fetch-vendored]
-dependencies = ["setup"]
-script = [
-'''
 cd ${BUILDSYS_SOURCES_DIR}/host-ctr/cmd/host-ctr
 docker run --rm \
   -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \
-  --user "$(id -u):$(id -g)" \
-  ${BUILDSYS_DOCKER_RUN_ARGS} \
+  --user $(id -u):$(id -g) \
   -v "${GO_MOD_CACHE}":/go/pkg/mod \
-  -v "${PWD}":/usr/src/host-ctr \
-  -w /usr/src/host-ctr \
-  golang:1.12.5 \
-    bash -c "go list -mod=readonly ./... >/dev/null && go mod vendor"
-'''
-]
-
-[tasks.fetch-external-files]
-dependencies = ["setup", "fetch-workspaces"]
-script = [
-'''
-export BUILDSYS_BUILD_FETCH_ONLY=true
-cargo build \
-  ${CARGO_BUILD_ARGS} \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path packages/Cargo.toml \
-  --all
+  -v "$PWD":/usr/src/host-ctr -w /usr/src/host-ctr \
+  golang:1.12.5 /bin/bash -c "go list -mod=readonly ./... >/dev/null && go mod vendor"
 '''
 ]
 
