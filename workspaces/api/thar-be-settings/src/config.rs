@@ -130,16 +130,17 @@ impl RenderedConfigFile {
 mod test {
     use super::*;
     use maplit::{hashmap, hashset};
+    use std::convert::TryInto;
 
     #[test]
     fn test_get_config_file_names() {
         let input_map = hashmap!(
             "foo".to_string() => model::Service {
-                configuration_files: vec!["file1".to_string()],
+                configuration_files: vec!["file1".try_into().unwrap()],
                 restart_commands: vec!["echo hi".to_string()]
             },
             "bar".to_string() => model::Service {
-                configuration_files: vec!["file1".to_string(), "file2".to_string()],
+                configuration_files: vec!["file1".try_into().unwrap(), "file2".try_into().unwrap()],
                 restart_commands: vec!["echo hi".to_string()]
             },
         );
