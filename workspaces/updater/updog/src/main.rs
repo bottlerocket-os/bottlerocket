@@ -1,27 +1,23 @@
 #![deny(rust_2018_idioms)]
 #![warn(clippy::pedantic)]
 
-mod de;
 mod error;
-mod se;
 
 use crate::error::Result;
-use chrono::{DateTime, Duration, Utc};
-use data_store_version::Version as DVersion;
-use rand::{thread_rng, Rng};
-use semver::Version;
+use chrono::{DateTime, Utc};
+use data_store_version::Version as DataVersion;
+use semver::Version as SemVer;
 use serde::{Deserialize, Serialize};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
-use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader};
-use std::ops::Bound::{Excluded, Included};
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use tough::{Limits, Repository, Settings};
+use update_metadata::{Manifest, Update};
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -30,7 +26,6 @@ const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
 const MIGRATION_PATH: &str = "/var/lib/thar/datastore/migrations";
-const MAX_SEED: u32 = 2048;
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
@@ -49,79 +44,8 @@ struct Config {
     target_base_url: String,
     seed: u32,
     // TODO API sourced configuration, eg.
-    // blacklist: Option<Vec<Version>>,
+    // blacklist: Option<Vec<SemVer>>,
     // mode: Option<{Automatic, Managed, Disabled}>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Images {
-    boot: String,
-    root: String,
-    hash: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Update {
-    flavor: String,
-    arch: String,
-    version: Version,
-    max_version: Version,
-    #[serde(deserialize_with = "de::deserialize_bound")]
-    waves: BTreeMap<u32, DateTime<Utc>>,
-    images: Images,
-}
-
-impl Update {
-    pub fn update_wave(&self, seed: u32) -> Option<&DateTime<Utc>> {
-        if let Some((_, wave)) = self.waves.range((Included(0), Included(seed))).last() {
-            return Some(wave);
-        }
-        None
-    }
-
-    fn update_ready(&self, seed: u32) -> bool {
-        // Has this client's wave started
-        if let Some(wave) = self.update_wave(seed) {
-            return *wave <= Utc::now();
-        }
-
-        // Alternately have all waves passed
-        if let Some((_, wave)) = self.waves.iter().last() {
-            return *wave <= Utc::now();
-        }
-
-        // Or there are no waves
-        true
-    }
-
-    pub fn jitter(&self, seed: u32) -> Option<DateTime<Utc>> {
-        let prev = self.update_wave(seed);
-        let next = self
-            .waves
-            .range((Excluded(seed), Excluded(MAX_SEED)))
-            .next();
-        if let (Some(start), Some(end)) = (prev, next) {
-            if Utc::now() < *end.1 {
-                let mut rng = thread_rng();
-                #[allow(clippy::cast_sign_loss)]
-                let range = (end.1.timestamp() - start.timestamp()) as u64;
-                let jitter = Duration::seconds(rng.gen_range(1, range) as i64);
-                return Some(*start + jitter);
-            }
-        }
-        None
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Manifest {
-    updates: Vec<Update>,
-    #[serde(deserialize_with = "de::deserialize_migration")]
-    #[serde(serialize_with = "se::serialize_migration")]
-    migrations: BTreeMap<(DVersion, DVersion), Vec<String>>,
-    #[serde(deserialize_with = "de::deserialize_datastore_version")]
-    #[serde(serialize_with = "se::serialize_datastore_map")]
-    datastore_versions: BTreeMap<Version, DVersion>,
 }
 
 /// Prints a more specific message before exiting through usage().
@@ -199,8 +123,8 @@ fn load_manifest(repository: &Repository<'_>) -> Result<Manifest> {
     .context(error::ManifestParse)
 }
 
-fn running_version() -> Result<(Version, String)> {
-    let mut version: Option<Version> = None;
+fn running_version() -> Result<(SemVer, String)> {
+    let mut version: Option<SemVer> = None;
     let mut flavor: Option<String> = None;
 
     let reader = BufReader::new(File::open("/etc/os-release").context(error::VersionIdRead)?);
@@ -211,7 +135,7 @@ fn running_version() -> Result<(Version, String)> {
             let key = "VERSION_ID=";
             if line.starts_with(key) {
                 version = Some(
-                    Version::parse(&line[key.len()..]).context(error::VersionIdParse { line })?,
+                    SemVer::parse(&line[key.len()..]).context(error::VersionIdParse { line })?,
                 );
             }
         } else if flavor.is_none() {
@@ -250,9 +174,9 @@ fn applicable_updates<'a>(manifest: &'a Manifest, flavor: &str) -> Vec<&'a Updat
 fn update_required<'a>(
     _config: &Config,
     manifest: &'a Manifest,
-    version: &Version,
+    version: &SemVer,
     flavor: &str,
-    force_version: Option<Version>,
+    force_version: Option<SemVer>,
 ) -> Option<&'a Update> {
     let updates = applicable_updates(manifest, flavor);
 
@@ -291,11 +215,15 @@ fn write_target_to_disk<P: AsRef<Path>>(
     Ok(())
 }
 
-fn migration_targets(from: DVersion, to: DVersion, manifest: &Manifest) -> Result<Vec<String>> {
+fn migration_targets(
+    from: DataVersion,
+    to: DataVersion,
+    manifest: &Manifest,
+) -> Result<Vec<String>> {
     let mut targets = Vec::new();
     let mut version = from;
     while version != to {
-        let mut migrations: Vec<&(DVersion, DVersion)> = manifest
+        let mut migrations: Vec<&(DataVersion, DataVersion)> = manifest
             .migrations
             .keys()
             .filter(|(f, t)| *f == version && *t <= to)
@@ -398,7 +326,7 @@ struct Arguments {
     log_level: LevelFilter,
     json: bool,
     ignore_wave: bool,
-    force_version: Option<Version>,
+    force_version: Option<SemVer>,
     all: bool,
     reboot: bool,
     timestamp: Option<DateTime<Utc>>,
@@ -427,7 +355,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
                 }));
             }
             "-i" | "--image" => match iter.next() {
-                Some(v) => match Version::parse(&v) {
+                Some(v) => match SemVer::parse(&v) {
                     Ok(v) => update_version = Some(v),
                     _ => usage(),
                 },
@@ -634,7 +562,9 @@ fn main() -> ! {
 mod tests {
     use super::*;
     use chrono::Duration as TestDuration;
+    use std::collections::BTreeMap;
     use std::str::FromStr;
+    use update_metadata::Images;
 
     #[test]
     fn test_manifest_json() {
@@ -646,8 +576,8 @@ mod tests {
         );
 
         assert!(manifest.migrations.len() > 0, "Failed to parse migrations");
-        let from = DVersion::from_str("1.0").unwrap();
-        let to = DVersion::from_str("1.1").unwrap();
+        let from = DataVersion::from_str("1.0").unwrap();
+        let to = DataVersion::from_str("1.1").unwrap();
         assert!(manifest.migrations.contains_key(&(from, to)));
         let migration = manifest.migrations.get(&(from, to)).unwrap();
         assert!(migration[0] == "migrate_1.1_foo");
@@ -656,9 +586,9 @@ mod tests {
             manifest.datastore_versions.len() > 0,
             "Failed to parse version map"
         );
-        let thar_version = Version::parse("1.11.0").unwrap();
+        let thar_version = SemVer::parse("1.11.0").unwrap();
         let data_version = manifest.datastore_versions.get(&thar_version);
-        let version = DVersion::from_str("1.0").unwrap();
+        let version = DataVersion::from_str("1.0").unwrap();
         assert!(data_version.is_some());
         assert!(*data_version.unwrap() == version);
     }
@@ -681,8 +611,8 @@ mod tests {
         let mut update = Update {
             flavor: String::from("thar"),
             arch: String::from("test"),
-            version: Version::parse("1.0.0").unwrap(),
-            max_version: Version::parse("1.1.0").unwrap(),
+            version: SemVer::parse("1.0.0").unwrap(),
+            max_version: SemVer::parse("1.1.0").unwrap(),
             waves: BTreeMap::new(),
             images: Images {
                 boot: String::from("boot"),
@@ -717,8 +647,8 @@ mod tests {
         let mut update = Update {
             flavor: String::from("thar"),
             arch: String::from("test"),
-            version: Version::parse("1.0.0").unwrap(),
-            max_version: Version::parse("1.1.0").unwrap(),
+            version: SemVer::parse("1.0.0").unwrap(),
+            max_version: SemVer::parse("1.1.0").unwrap(),
             waves: BTreeMap::new(),
             images: Images {
                 boot: String::from("boot"),
@@ -751,7 +681,7 @@ mod tests {
             seed: 123,
         };
         // max_version is 1.20.0 in manifest
-        let version = Version::parse("1.25.0").unwrap();
+        let version = SemVer::parse("1.25.0").unwrap();
         let flavor = String::from("thar-aws-eks");
 
         assert!(
@@ -770,7 +700,7 @@ mod tests {
             seed: 123,
         };
 
-        let version = Version::parse("1.10.0").unwrap();
+        let version = SemVer::parse("1.10.0").unwrap();
         let flavor = String::from("thar-aws-eks");
         let result = update_required(&config, &manifest, &version, &flavor, None);
 
@@ -778,7 +708,7 @@ mod tests {
 
         if let Some(u) = result {
             assert!(
-                u.version == Version::parse("1.15.0").unwrap(),
+                u.version == SemVer::parse("1.15.0").unwrap(),
                 "Incorrect version: {}, should be 1.15.0",
                 u.version
             );
@@ -807,8 +737,8 @@ mod tests {
         let s = fs::read_to_string("tests/data/migrations.json").unwrap();
         let manifest: Manifest = serde_json::from_str(&s).unwrap();
 
-        let from = DVersion::from_str("1.0").unwrap();
-        let to = DVersion::from_str("1.3").unwrap();
+        let from = DataVersion::from_str("1.0").unwrap();
+        let to = DataVersion::from_str("1.3").unwrap();
         let targets = migration_targets(from, to, &manifest)?;
 
         assert!(targets.len() == 3);
@@ -840,8 +770,8 @@ mod tests {
             seed: 123,
         };
 
-        let version = Version::parse("1.10.0").unwrap();
-        let forced = Version::parse("1.13.0").unwrap();
+        let version = SemVer::parse("1.10.0").unwrap();
+        let forced = SemVer::parse("1.13.0").unwrap();
         let flavor = String::from("thar-aws-eks");
         let result = update_required(&config, &manifest, &version, &flavor, Some(forced));
 
@@ -849,7 +779,7 @@ mod tests {
 
         if let Some(u) = result {
             assert!(
-                u.version == Version::parse("1.13.0").unwrap(),
+                u.version == SemVer::parse("1.13.0").unwrap(),
                 "Incorrect version: {}, should be forced to 1.13.0",
                 u.version
             );

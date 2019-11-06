@@ -52,6 +52,7 @@ skip = [
     { name = "tough", licenses = [] },
     { name = "tough_schema", licenses = [] },
     { name = "tuftool", licenses = [] },
+    { name = "update_metadata", licenses = [] },
     { name = "updog", licenses = [] },
     { name = "webpki-roots", licenses = [] },
 
