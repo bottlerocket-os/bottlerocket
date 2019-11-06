@@ -377,6 +377,7 @@ mod test {
     use crate::datastore::{Committed, DataStore, Key, KeyType};
     use crate::model::Service;
     use maplit::{hashmap, hashset};
+    use std::convert::TryInto;
 
     #[test]
     fn get_settings_works() {
@@ -391,7 +392,7 @@ mod test {
 
         // Retrieve with helper
         let settings = get_settings(&ds, Committed::Live).unwrap();
-        assert_eq!(settings.hostname, Some("json string".to_string()));
+        assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
     }
 
     #[test]
@@ -407,10 +408,10 @@ mod test {
 
         // Retrieve with helper
         let settings = get_settings_prefix(&ds, "", Committed::Live).unwrap();
-        assert_eq!(settings.timezone, Some("json string".to_string()));
+        assert_eq!(settings.timezone, Some("json string".try_into().unwrap()));
 
         let settings = get_settings_prefix(&ds, "tim", Committed::Live).unwrap();
-        assert_eq!(settings.timezone, Some("json string".to_string()));
+        assert_eq!(settings.timezone, Some("json string".try_into().unwrap()));
 
         let settings = get_settings_prefix(&ds, "timbits", Committed::Live).unwrap();
         assert_eq!(settings.timezone, None);
@@ -437,7 +438,7 @@ mod test {
         // Retrieve with helper
         let settings =
             get_settings_keys(&ds, &hashset!("settings.timezone"), Committed::Live).unwrap();
-        assert_eq!(settings.timezone, Some("json string 1".to_string()));
+        assert_eq!(settings.timezone, Some("json string 1".try_into().unwrap()));
         assert_eq!(settings.hostname, None);
     }
 
@@ -464,7 +465,7 @@ mod test {
         assert_eq!(
             services,
             hashmap!("foo".to_string() => Service {
-                configuration_files: vec!["file1".to_string()],
+                configuration_files: vec!["file1".try_into().unwrap()],
                 restart_commands: vec!["echo hi".to_string()]
             })
         );
@@ -473,7 +474,7 @@ mod test {
     #[test]
     fn set_settings_works() {
         let mut settings = Settings::default();
-        settings.timezone = Some("tz".to_string());
+        settings.timezone = Some("tz".try_into().unwrap());
 
         // Set with helper
         let mut ds = MemoryDataStore::new();
@@ -547,7 +548,7 @@ mod test {
 
         // Confirm pending
         let settings = get_settings(&ds, Committed::Pending).unwrap();
-        assert_eq!(settings.hostname, Some("json string".to_string()));
+        assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
         // No live settings yet
         get_settings(&ds, Committed::Live).unwrap_err();
 
@@ -558,6 +559,6 @@ mod test {
         get_settings(&ds, Committed::Pending).unwrap_err();
         // Confirm live
         let settings = get_settings(&ds, Committed::Live).unwrap();
-        assert_eq!(settings.hostname, Some("json string".to_string()));
+        assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
     }
 }
