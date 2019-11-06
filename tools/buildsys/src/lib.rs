@@ -52,12 +52,19 @@ pub mod error {
             var: String,
             source: std::env::VarError,
         },
+
+        #[snafu(display("Unable to write marker '{}'", marker.display()))]
+        Marker {
+            marker: std::path::PathBuf,
+            source: std::io::Error,
+        },
     }
 }
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 pub fn build_package() -> Result<()> {
+    let out_dir: PathBuf = getenv("OUT_DIR")?.into();
     let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest_file = "Cargo.toml";
     println!("cargo:rerun-if-changed={}", manifest_file);
@@ -69,13 +76,19 @@ pub fn build_package() -> Result<()> {
         LookasideCache::fetch(&files).context(error::ExternalFileFetch)?;
     }
 
-    // Stop after build has fetched its external files in the context of fetch
-    // cargo-make tasks.
-    println!("cargo:rerun-if-env-changed=BUILDSYS_BUILD_FETCH_ONLY");
+    let build_begin_marker = out_dir.join(".build-begin");
+    println!("cargo:rerun-if-changed={}", build_begin_marker.display());
+
     if let Ok(val) = getenv("BUILDSYS_BUILD_FETCH_ONLY") {
         if val == "true" {
             return Ok(());
         }
+    }
+
+    if !build_begin_marker.exists() {
+        std::fs::write(&build_begin_marker, vec![]).context(error::Marker {
+            marker: build_begin_marker,
+        })?;
     }
 
     if let Some(groups) = manifest.source_groups() {
