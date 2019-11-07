@@ -19,6 +19,8 @@ use std::str::FromStr;
 use tough::{HttpTransport, Limits, Repository, Settings};
 use update_metadata::{Manifest, Update};
 
+type HttpRepo<'a> = Repository<'a, HttpTransport>;
+
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
 #[cfg(target_arch = "aarch64")]
@@ -93,7 +95,7 @@ fn load_config() -> Result<Config> {
     Ok(config)
 }
 
-fn load_repository(config: &Config) -> Result<Repository<'_, HttpTransport>> {
+fn load_repository(config: &Config) -> Result<HttpRepo<'_>> {
     fs::create_dir_all("/var/lib/thar/updog").context(error::CreateMetadataCache)?;
     Repository::load(
         HttpTransport::new(),
@@ -115,7 +117,7 @@ fn load_repository(config: &Config) -> Result<Repository<'_, HttpTransport>> {
     .context(error::Metadata)
 }
 
-fn load_manifest(repository: &Repository<'_, HttpTransport>) -> Result<Manifest> {
+fn load_manifest(repository: &HttpRepo<'_>) -> Result<Manifest> {
     let target = "manifest.json";
     serde_json::from_reader(
         repository
@@ -198,7 +200,7 @@ fn update_required<'a>(
 }
 
 fn write_target_to_disk<P: AsRef<Path>>(
-    repository: &Repository<'_, HttpTransport>,
+    repository: &HttpRepo<'_>,
     target: &str,
     disk_path: P,
 ) -> Result<()> {
@@ -258,7 +260,7 @@ fn migration_targets(
 /// storage. All intermediate migrations between the current version and the
 /// target version must be retrieved.
 fn retrieve_migrations(
-    repository: &Repository<'_, HttpTransport>,
+    repository: &HttpRepo<'_>,
     manifest: &Manifest,
     update: &Update,
 ) -> Result<()> {
@@ -299,7 +301,7 @@ fn retrieve_migrations(
     Ok(())
 }
 
-fn update_image(update: &Update, repository: &Repository<'_, HttpTransport>) -> Result<()> {
+fn update_image(update: &Update, repository: &HttpRepo<'_>) -> Result<()> {
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
