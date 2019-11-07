@@ -34,7 +34,7 @@ fn test_tuf_reference_impl() {
     let target_base_url = &dir_url(base.join("targets"));
 
     let repo = Repository::load(
-        tough::FilesystemTransport,
+        &tough::FilesystemTransport,
         Settings {
             root: File::open(base.join("metadata").join("1.root.json")).unwrap(),
             datastore: datastore.as_ref(),

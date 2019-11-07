@@ -95,10 +95,10 @@ fn load_config() -> Result<Config> {
     Ok(config)
 }
 
-fn load_repository(config: &Config) -> Result<HttpRepo<'_>> {
+fn load_repository<'a>(transport: &'a HttpTransport, config: &'a Config) -> Result<HttpRepo<'a>> {
     fs::create_dir_all("/var/lib/thar/updog").context(error::CreateMetadataCache)?;
     Repository::load(
-        HttpTransport::new(),
+        transport,
         Settings {
             root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
                 path: TRUSTED_ROOT_PATH,
@@ -436,7 +436,8 @@ fn main_inner() -> Result<()> {
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
     let config = load_config()?;
-    let repository = load_repository(&config)?;
+    let transport = HttpTransport::new();
+    let repository = load_repository(&transport, &config)?;
     let manifest = load_manifest(&repository)?;
     let (current_version, flavor) = running_version().unwrap();
 

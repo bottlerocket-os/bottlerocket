@@ -86,9 +86,10 @@ impl DownloadArgs {
         };
 
         // load repository
+        let transport = HttpTransport::new();
         let repo_dir = TempDir::new("tuf").context(error::TempDir)?;
         let repository = Repository::load(
-            HttpTransport::new(),
+            &transport,
             Settings {
                 root: File::open(&root_path).context(error::OpenRoot { path: &root_path })?,
                 datastore: repo_dir.path(),
