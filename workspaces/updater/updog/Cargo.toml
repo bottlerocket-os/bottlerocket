@@ -22,8 +22,6 @@ snafu = "0.5.0"
 time = "0.1"
 toml = "0.5.1"
 tough = { path = "../tough" }
-tracing = "0.1"
-tracing-subscriber = "0.1"
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
 
