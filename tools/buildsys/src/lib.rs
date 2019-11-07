@@ -69,6 +69,15 @@ pub fn build_package() -> Result<()> {
         LookasideCache::fetch(&files).context(error::ExternalFileFetch)?;
     }
 
+    // Stop after build has fetched its external files in the context of fetch
+    // cargo-make tasks.
+    println!("cargo:rerun-if-env-changed=BUILDSYS_BUILD_FETCH_ONLY");
+    if let Ok(val) = getenv("BUILDSYS_BUILD_FETCH_ONLY") {
+        if val == "true" {
+            return Ok(());
+        }
+    }
+
     if let Some(groups) = manifest.source_groups() {
         let var = "BUILDSYS_SOURCES_DIR";
         let root: PathBuf = getenv(var)?.into();
