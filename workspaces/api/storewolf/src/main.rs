@@ -13,8 +13,9 @@ extern crate log;
 
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
+use std::convert::TryFrom;
 use std::io;
 use std::os::unix::fs::symlink;
 use std::path::Path;
@@ -25,6 +26,7 @@ use apiserver::datastore::key::{Key, KeyType};
 use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use apiserver::model;
+use apiserver::modeled_types::SingleLineString;
 use data_store_version::Version;
 
 // FIXME Get these from configuration in the future
@@ -36,6 +38,7 @@ mod error {
 
     use apiserver::datastore::key::KeyType;
     use apiserver::datastore::{self, serialization, ScalarError};
+    use apiserver::modeled_types::error::Error as ModeledTypesError;
     use data_store_version::error::Error as DataStoreVersionError;
     use snafu::Snafu;
 
@@ -66,6 +69,9 @@ mod error {
 
         #[snafu(display("defaults.toml's metadata is not a TOML list of Metadata"))]
         DefaultsMetadataNotTable { source: toml::de::Error },
+
+        #[snafu(display("defaults.toml's metadata has unexpected types"))]
+        DefaultsMetadataUnexpectedFormat {},
 
         #[snafu(display("Error querying datstore for populated keys: {}", source))]
         QueryData { source: datastore::Error },
@@ -103,6 +109,12 @@ mod error {
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
+
+        #[snafu(display("Internal error: {}", msg))]
+        Internal { msg: String },
+
+        #[snafu(display("Keys can't contain newlines: {}", source))]
+        SingleLineString { source: ModeledTypesError },
     }
 }
 
@@ -167,6 +179,100 @@ fn create_new_datastore<P: AsRef<Path>>(base_path: P, version: Option<Version>) 
         path: &current_path,
     })?;
     Ok(())
+}
+
+/// Convert the generic toml::Value representing metadata into a
+/// Vec<Metadata> that can be used to write the metadata to the datastore.
+// The input to this function is a toml::Value that represents the metadata
+// read from defaults.toml. This table is structured like so:
+//
+// Table({"settings": Table({"foo": Table({"affected-services": Array([ ... ])})})})
+//
+// This function will convert the above table to a Vec<model::Metadata>,
+// validating the types and structure. The resulting Vec looks like:
+//
+// [
+//   Metadata {key: "settings.hostname", md: "affected-services", val: Array([ ... ])},
+//   Metadata { ... },
+// ]
+fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>> {
+    debug!("Parsing metadata toml");
+    let mut def_metadatas: Vec<model::Metadata> = Vec::new();
+
+    // Do a breadth-first search of the toml::Value table.
+    // Create a Vec of tuples to keep track of where we have visited in the
+    // toml::Value data structure. The first value in the tuple is the key
+    // (represented as a Vec of key segments), the second is the toml::Value
+    // associated with that key. It ends up looking like:
+    // [
+    //   (
+    //     ["settings", "hostname"],
+    //     toml::Value
+    //   ),
+    //   ...
+    // ]
+    // For each key/value of the table we visit, match on the value of the
+    // table. If it's another table, we add it to the list to process its
+    // contents. If it is an array or string, we can construct a
+    // model::Metadata, and add it to the Vec of model::Metadata to be
+    // returned from the function.
+
+    // Start at the root of the tree.
+    let mut to_process = vec![(Vec::new(), md_toml_val)];
+
+    while !to_process.is_empty() {
+        let (mut path, toml_value) = to_process.pop().unwrap();
+        trace!("Current metadata table path: {:#?}", &path);
+
+        match toml_value {
+            // A table means there is more processing to do. Add the current
+            // key and value to the Vec to be processed further.
+            toml::Value::Table(table) => {
+                for (key, val) in table {
+                    trace!("Found table for key '{}'", &key);
+                    let mut path = path.clone();
+                    path.push(key.to_string());
+                    to_process.push((path, val));
+                }
+            }
+
+            // An array or string means we're ready to create a model::Metadata
+            val @ toml::Value::Array(_) | val @ toml::Value::String(_) => {
+                // Get the metadata key from the end of the path
+                let md_key = path.pop().context(error::Internal {
+                    msg: "parse_metadata_toml found empty 'path' in the to_process vec - is 'metadata' not a Table?",
+                })?;
+
+                // Make sure that the path contains more than 1 item, i.e. ["settings", "hostname"]
+                ensure!(
+                    path.len() >= 1,
+                    error::Internal {
+                        msg: format!(
+                            "Cannot create empty metadata data key - is root not a Table?"
+                        )
+                    }
+                );
+                let data_key = path.join(".");
+
+                trace!(
+                    "Found metadata key '{}' for data key '{}'",
+                    &md_key,
+                    &data_key
+                );
+
+                // Ensure the metadata/data keys don't contain newline chars
+                let md = SingleLineString::try_from(md_key).context(error::SingleLineString)?;
+                let key = SingleLineString::try_from(data_key).context(error::SingleLineString)?;
+
+                // Create the Metadata struct
+                def_metadatas.push(model::Metadata { key, md, val })
+            }
+
+            // We don't recognize any other values yet, something is awry
+            _ => return error::DefaultsMetadataUnexpectedFormat {}.fail(),
+        };
+    }
+    Ok(def_metadatas)
 }
 
 /// Creates a new FilesystemDataStore at the given path, with data and metadata coming from
@@ -262,9 +368,8 @@ fn populate_default_datastore<P: AsRef<Path>>(
     // If we have metadata, write it out to the datastore in Live state
     if let Some(def_metadata_val) = maybe_metadata_val {
         debug!("Serializing metadata and writing new keys to datastore");
-        let def_metadatas: Vec<model::Metadata> = def_metadata_val
-            .try_into()
-            .context(error::DefaultsMetadataNotTable)?;
+        // Create a Vec<Metadata> from the metadata toml::Value
+        let def_metadatas = parse_metadata_toml(def_metadata_val)?;
 
         // Before this transformation, `existing_metadata` is a
         // map of data key to set of metadata keys:
