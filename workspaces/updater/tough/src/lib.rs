@@ -18,7 +18,9 @@ mod fetch;
 mod io;
 mod transport;
 
-pub use crate::transport::{FilesystemTransport, HttpTransport, Transport};
+#[cfg(feature = "http")]
+pub use crate::transport::HttpTransport;
+pub use crate::transport::{FilesystemTransport, Transport};
 
 use crate::datastore::Datastore;
 use crate::error::Result;

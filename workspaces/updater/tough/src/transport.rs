@@ -28,13 +28,15 @@ impl Transport for FilesystemTransport {
     }
 }
 
+#[cfg(feature = "http")]
 pub type HttpTransport = reqwest::Client;
 
+#[cfg(feature = "http")]
 impl Transport for reqwest::Client {
     type Stream = reqwest::Response;
     type Error = reqwest::Error;
 
     fn fetch(&self, url: Url) -> Result<Self::Stream, Self::Error> {
-        self.get(url).send()?.error_for_status()
+        self.get(url.as_str()).send()?.error_for_status()
     }
 }
