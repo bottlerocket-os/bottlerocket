@@ -30,7 +30,6 @@ sha2 = "0.8.0"
 snafu = { version = "0.5.0", features = ["backtrace-crate"] }
 structopt = "0.3"
 tempfile = "3.1.0"
-tough_schema = { path = "../updater/tough_schema" }
 url = "2.1.0"
 walkdir = "2.2.9"
 tempdir = "0.3.7"

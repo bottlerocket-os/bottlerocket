@@ -10,9 +10,8 @@ use std::collections::HashMap;
 use std::num::NonZeroU64;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use tough_schema::decoded::{Decoded, Hex};
-use tough_schema::key::Key;
-use tough_schema::{RoleKeys, RoleType, Root, Signed};
+use tough::schema::decoded::{Decoded, Hex};
+use tough::schema::{key::Key, RoleKeys, RoleType, Root, Signed};
 
 #[derive(Debug, StructOpt)]
 pub(crate) enum Command {

@@ -1,5 +1,5 @@
-use crate::error::{self, Result};
-use crate::{Role, Root, Signed};
+use super::error::{self, Result};
+use super::{Role, Root, Signed};
 use olpc_cjson::CanonicalFormatter;
 use serde::Serialize;
 use snafu::{ensure, OptionExt, ResultExt};
@@ -44,19 +44,19 @@ impl Root {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Root, Signed};
+    use super::{Root, Signed};
 
     #[test]
     fn simple_rsa() {
         let root: Signed<Root> =
-            serde_json::from_str(include_str!("../tests/data/simple-rsa/root.json")).unwrap();
+            serde_json::from_str(include_str!("../../tests/data/simple-rsa/root.json")).unwrap();
         root.signed.verify_role(&root).unwrap();
     }
 
     #[test]
     fn no_root_json_signatures_is_err() {
         let root: Signed<Root> = serde_json::from_str(include_str!(
-            "../tests/data/no-root-json-signatures/root.json"
+            "../../tests/data/no-root-json-signatures/root.json"
         ))
         .expect("should be parsable root.json");
         root.signed
@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn invalid_root_json_signatures_is_err() {
         let root: Signed<Root> = serde_json::from_str(include_str!(
-            "../tests/data/invalid-root-json-signature/root.json"
+            "../../tests/data/invalid-root-json-signature/root.json"
         ))
         .expect("should be parsable root.json");
         root.signed
@@ -81,7 +81,7 @@ mod tests {
     #[ignore]
     fn expired_root_json_signature_is_err() {
         let root: Signed<Root> = serde_json::from_str(include_str!(
-            "../tests/data/expired-root-json-signature/root.json"
+            "../../tests/data/expired-root-json-signature/root.json"
         ))
         .expect("should be parsable root.json");
         root.signed
@@ -92,7 +92,7 @@ mod tests {
     #[test]
     fn mismatched_root_json_keyids_is_err() {
         let root: Signed<Root> = serde_json::from_str(include_str!(
-            "../tests/data/mismatched-root-json-keyids/root.json"
+            "../../tests/data/mismatched-root-json-keyids/root.json"
         ))
         .expect("should be parsable root.json");
         root.signed

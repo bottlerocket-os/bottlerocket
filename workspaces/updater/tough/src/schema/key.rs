@@ -1,5 +1,5 @@
-use crate::decoded::{Decoded, EcdsaPem, Hex, RsaPem};
-use crate::error::{self, Result};
+use crate::schema::decoded::{Decoded, EcdsaPem, Hex, RsaPem};
+use crate::schema::error::{self, Result};
 use olpc_cjson::CanonicalFormatter;
 use ring::signature::VerificationAlgorithm;
 use serde::{Deserialize, Serialize};
@@ -91,7 +91,7 @@ impl Key {
     }
 
     /// Verify a signature of an object made with this key.
-    pub(crate) fn verify(&self, msg: &[u8], signature: &[u8]) -> bool {
+    pub(super) fn verify(&self, msg: &[u8], signature: &[u8]) -> bool {
         let (alg, public_key): (&dyn VerificationAlgorithm, untrusted::Input<'_>) = match self {
             Key::Ecdsa {
                 scheme: EcdsaScheme::EcdsaSha2Nistp256,

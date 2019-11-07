@@ -2,10 +2,10 @@
 
 #![allow(clippy::default_trait_access)]
 
+use crate::schema::RoleType;
 use chrono::{DateTime, Utc};
 use snafu::{Backtrace, Snafu};
 use std::path::PathBuf;
-use tough_schema::RoleType;
 
 /// Alias for `Result<T, Error>`.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -171,14 +171,14 @@ pub enum Error {
     #[snafu(display("Failed to verify {} metadata: {}", role, source))]
     VerifyMetadata {
         role: RoleType,
-        source: tough_schema::Error,
+        source: crate::schema::Error,
         backtrace: Backtrace,
     },
 
     /// The trusted root metadata file could not be verified.
     #[snafu(display("Failed to verify trusted root metadata: {}", source))]
     VerifyTrustedMetadata {
-        source: tough_schema::Error,
+        source: crate::schema::Error,
         backtrace: Backtrace,
     },
 

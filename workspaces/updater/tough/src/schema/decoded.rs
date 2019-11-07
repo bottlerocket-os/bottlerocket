@@ -1,5 +1,5 @@
-use crate::error::{self, Error};
-use crate::spki;
+use crate::schema::error::{self, Error};
+use crate::schema::spki;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use snafu::ResultExt;
 use std::cmp::Ordering;

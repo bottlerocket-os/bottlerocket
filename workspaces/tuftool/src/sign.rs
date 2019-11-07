@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use tough_schema::{RoleType, Root, Signed};
+use tough::schema::{RoleType, Root, Signed};
 
 #[derive(Debug, StructOpt)]
 pub(crate) struct SignArgs {

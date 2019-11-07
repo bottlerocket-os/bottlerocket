@@ -17,16 +17,16 @@
 //! [1]: https://github.com/theupdateframework/tuf/blob/49e75ffe5adfc1f883f53f658ace596d14dc0879/tests/repository_data/repository/metadata/root.json#L20
 //! [2]: https://docs.rs/ring/0.14.6/ring/signature/index.html#signing-and-verifying-with-rsa-pkcs1-15-padding
 
-use crate::error::{self, Compat, Result};
+use super::error::{self, Compat, Result};
 use ring::io::der;
 use snafu::{OptionExt, ResultExt};
 
-pub(crate) static OID_RSA_ENCRYPTION: &[u64] = &[1, 2, 840, 113_549, 1, 1, 1];
-pub(crate) static OID_EC_PUBLIC_KEY: &[u64] = &[1, 2, 840, 10_045, 2, 1];
-pub(crate) static OID_EC_PARAM_SECP256R1: &[u64] = &[1, 2, 840, 10_045, 3, 1, 7];
+pub(super) static OID_RSA_ENCRYPTION: &[u64] = &[1, 2, 840, 113_549, 1, 1, 1];
+pub(super) static OID_EC_PUBLIC_KEY: &[u64] = &[1, 2, 840, 10_045, 2, 1];
+pub(super) static OID_EC_PARAM_SECP256R1: &[u64] = &[1, 2, 840, 10_045, 3, 1, 7];
 
 /// Wrap a bit string in a `SubjectPublicKeyInfo` document.
-pub(crate) fn encode(algorithm_oid: &[u64], parameters_oid: Option<&[u64]>, b: &[u8]) -> String {
+pub(super) fn encode(algorithm_oid: &[u64], parameters_oid: Option<&[u64]>, b: &[u8]) -> String {
     let mut alg_ident = asn1_tag(der::Tag::OID, asn1_encode_oid(algorithm_oid));
     alg_ident.extend(match parameters_oid {
         Some(oid) => asn1_tag(der::Tag::OID, asn1_encode_oid(oid)),
@@ -57,7 +57,7 @@ pub(crate) fn encode(algorithm_oid: &[u64], parameters_oid: Option<&[u64]>, b: &
 }
 
 /// Extract the bit string from a PEM-encoded `SubjectPublicKeyInfo` document.
-pub(crate) fn decode(
+pub(super) fn decode(
     algorithm_oid: &[u64],
     parameters_oid: Option<&[u64]>,
     input: &str,
