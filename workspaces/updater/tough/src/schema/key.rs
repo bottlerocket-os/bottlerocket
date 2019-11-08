@@ -1,3 +1,5 @@
+#![allow(clippy::use_self)]
+
 use crate::schema::decoded::{Decoded, EcdsaPem, Hex, RsaPem};
 use crate::schema::error::{self, Result};
 use olpc_cjson::CanonicalFormatter;
