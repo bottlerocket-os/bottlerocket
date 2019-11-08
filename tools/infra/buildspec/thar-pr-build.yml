@@ -4,15 +4,15 @@ env:
   variables:
     # Explicitly permit use of sources lookaside cache.
     BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL: "true"
-    # Path to lib used in bootstrapping build environment.
-    INFRA_LIB_DIR: "./tools/infra/env/lib"
+    # Path to infra tooling directory.
+    INFRA_DIR: "./tools/infra"
 
 phases:
   install:
     runtime-versions:
       docker: 18
     commands:
-      - . "${INFRA_LIB_DIR}/environment-setup"
+      - . "${INFRA_DIR}/env/lib/environment-setup"
       - . install-rust-builder
   pre_build:
     commands:

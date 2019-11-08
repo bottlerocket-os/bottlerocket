@@ -1,9 +1,8 @@
 #!/usr/bin/env sh
 #
-# environment-setup - update shell's environment for CI builds
+# environment-setup - setup shell for building in
 #
-
-if [ -d "./tools/infra/env/bin" ]; then
+if [ -d "${INFRA_DIR:-./tools/infra}/env/bin" ]; then
     PATH="$(pwd -P)/tools/infra/env/bin:$PATH"
 fi
 
