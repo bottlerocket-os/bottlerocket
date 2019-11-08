@@ -6,9 +6,9 @@ use ring::signature::{KeyPair as _, RsaKeyPair};
 use serde::Serialize;
 use snafu::ResultExt;
 use std::collections::HashMap;
-use tough_schema::decoded::{Decoded, Hex};
-use tough_schema::key::Key;
-use tough_schema::{Role, RoleType, Root, Signature, Signed};
+use tough::schema::decoded::{Decoded, Hex};
+use tough::schema::key::Key;
+use tough::schema::{Role, RoleType, Root, Signature, Signed};
 
 #[derive(Debug)]
 pub(crate) enum KeyPair {
@@ -49,7 +49,7 @@ impl KeyPair {
     }
 
     pub(crate) fn public_key(&self) -> Key {
-        use tough_schema::key::{RsaKey, RsaScheme};
+        use tough::schema::key::{RsaKey, RsaScheme};
 
         match self {
             KeyPair::Rsa(key_pair) => Key::Rsa {

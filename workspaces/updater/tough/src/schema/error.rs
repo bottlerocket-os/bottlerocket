@@ -2,7 +2,7 @@
 
 #![allow(clippy::default_trait_access)]
 
-use crate::RoleType;
+use crate::schema::RoleType;
 use snafu::{Backtrace, Snafu};
 use std::fmt::{self, Debug, Display};
 
@@ -11,7 +11,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// The error type for this library.
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility = "pub(super)")]
 pub enum Error {
     /// A duplicate key ID was present in the root metadata.
     #[snafu(display("Duplicate key ID: {}", keyid))]
@@ -19,16 +19,10 @@ pub enum Error {
 
     /// A downloaded target's checksum does not match the checksum listed in the repository
     /// metadata.
-    #[snafu(display(
-        "Hash mismatch for {}: calculated {}, expected {}",
-        context,
-        calculated,
-        expected,
-    ))]
-    HashMismatch {
-        context: String,
+    #[snafu(display("Invalid key ID {}: calculated {}", keyid, calculated))]
+    InvalidKeyId {
+        keyid: String,
         calculated: String,
-        expected: String,
         backtrace: Backtrace,
     },
 

@@ -139,7 +139,7 @@ pub(crate) enum Error {
     #[snafu(display("Failed to calculate key ID: {}", source))]
     KeyId {
         #[snafu(backtrace)]
-        source: tough_schema::Error,
+        source: tough::schema::Error,
     },
 
     #[snafu(display("Private key rejected: {}", source))]

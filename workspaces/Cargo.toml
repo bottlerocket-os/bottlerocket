@@ -26,7 +26,6 @@ members = [
     "updater/block-party",
     "updater/signpost",
     "updater/tough",
-    "updater/tough_schema",
     "updater/update_metadata",
     "updater/updog",
 

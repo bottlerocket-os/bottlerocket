@@ -1,7 +1,3 @@
-#![deny(rust_2018_idioms)]
-#![warn(clippy::pedantic)]
-#![allow(clippy::module_name_repetitions)]
-
 mod de;
 pub mod decoded;
 mod error;
@@ -10,11 +6,11 @@ pub mod key;
 mod spki;
 mod verify;
 
-pub use crate::error::Error;
+pub use crate::schema::error::Error;
 
-use crate::decoded::{Decoded, Hex};
-use crate::iter::KeysIter;
-use crate::key::Key;
+use crate::schema::decoded::{Decoded, Hex};
+use crate::schema::iter::KeysIter;
+use crate::schema::key::Key;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

@@ -15,10 +15,9 @@ use std::fs::File;
 use std::num::{NonZeroU64, NonZeroUsize};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
-use tough_schema::decoded::Decoded;
-use tough_schema::{
-    Hashes, Role, RoleType, Root, Signed, Snapshot, SnapshotMeta, Target, Targets, Timestamp,
-    TimestampMeta,
+use tough::schema::{
+    decoded::Decoded, Hashes, Role, RoleType, Root, Signed, Snapshot, SnapshotMeta, Target,
+    Targets, Timestamp, TimestampMeta,
 };
 use walkdir::WalkDir;
 

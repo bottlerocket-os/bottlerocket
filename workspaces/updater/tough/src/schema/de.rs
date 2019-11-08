@@ -1,13 +1,13 @@
-use crate::decoded::{Decoded, Hex};
-use crate::error;
-use crate::key::Key;
+use crate::schema::decoded::{Decoded, Hex};
+use crate::schema::error;
+use crate::schema::key::Key;
 use serde::{de::Error as _, Deserialize, Deserializer};
 use snafu::ensure;
 use std::collections::HashMap;
 use std::fmt;
 
 /// Validates the key ID for each key during deserialization and fails if any don't match.
-pub(crate) fn deserialize_keys<'de, D>(
+pub(super) fn deserialize_keys<'de, D>(
     deserializer: D,
 ) -> Result<HashMap<Decoded<Hex>, Key>, D::Error>
 where
@@ -23,15 +23,14 @@ where
         map: &mut HashMap<Decoded<Hex>, Key>,
     ) -> Result<(), error::Error> {
         let calculated = key.key_id()?;
+        let keyid_hex = hex::encode(&keyid);
         ensure!(
             keyid == calculated,
-            error::HashMismatch {
-                context: "key".to_owned(),
+            error::InvalidKeyId {
+                keyid: &keyid_hex,
                 calculated: hex::encode(&calculated),
-                expected: hex::encode(&keyid),
             }
         );
-        let keyid_hex = hex::encode(&keyid); // appease borrowck
         ensure!(
             map.insert(keyid, key).is_none(),
             error::DuplicateKeyId { keyid: keyid_hex }
@@ -65,7 +64,7 @@ where
 }
 
 /// Deserializes the `_extra` field on roles, skipping the `_type` tag.
-pub(crate) fn extra_skip_type<'de, D>(
+pub(super) fn extra_skip_type<'de, D>(
     deserializer: D,
 ) -> Result<HashMap<String, serde_json::Value>, D::Error>
 where
@@ -78,12 +77,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Root, Signed};
+    use crate::schema::{Root, Signed};
 
     #[test]
     fn duplicate_keyid() {
         assert!(serde_json::from_str::<Signed<Root>>(include_str!(
-            "../tests/data/duplicate-keyid/root.json"
+            "../../tests/data/duplicate-keyid/root.json"
         ))
         .is_err());
     }

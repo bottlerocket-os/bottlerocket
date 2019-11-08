@@ -50,7 +50,6 @@ skip = [
     { name = "testmigration", licenses = [] },
     { name = "thar-be-settings", licenses = [] },
     { name = "tough", licenses = [] },
-    { name = "tough_schema", licenses = [] },
     { name = "tuftool", licenses = [] },
     { name = "update_metadata", licenses = [] },
     { name = "updog", licenses = [] },

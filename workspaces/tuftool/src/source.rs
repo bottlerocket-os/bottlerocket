@@ -10,7 +10,7 @@ use crate::key::KeyPair;
 use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
 use std::str::FromStr;
-use tough_schema::key::Key;
+use tough::schema::key::Key;
 use url::Url;
 
 #[derive(Debug)]

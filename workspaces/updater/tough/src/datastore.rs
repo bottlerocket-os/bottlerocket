@@ -26,8 +26,9 @@ impl<'a> Datastore<'a> {
             File::create(&path).context(error::DatastoreCreate { path: &path })?,
             value,
         )
-        .context(error::JsonSerialization {
+        .context(error::DatastoreSerialize {
             what: format!("{} in datastore", file),
+            path,
         })
     }
 
