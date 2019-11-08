@@ -1,9 +1,9 @@
-use reqwest::Url;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 use tough::{Limits, Repository, Settings};
+use url::Url;
 
 fn test_data() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -33,13 +33,16 @@ fn test_tuf_reference_impl() {
     let metadata_base_url = &dir_url(base.join("metadata"));
     let target_base_url = &dir_url(base.join("targets"));
 
-    let repo = Repository::load(Settings {
-        root: File::open(base.join("metadata").join("1.root.json")).unwrap(),
-        datastore: datastore.as_ref(),
-        metadata_base_url,
-        target_base_url,
-        limits: Limits::default(),
-    })
+    let repo = Repository::load(
+        &tough::FilesystemTransport,
+        Settings {
+            root: File::open(base.join("metadata").join("1.root.json")).unwrap(),
+            datastore: datastore.as_ref(),
+            metadata_base_url,
+            target_base_url,
+            limits: Limits::default(),
+        },
+    )
     .unwrap();
 
     assert_eq!(

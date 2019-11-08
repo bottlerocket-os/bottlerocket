@@ -45,14 +45,6 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    /// A file from a `file:///` URL could not be opened.
-    #[snafu(display("Failed to read {}: {}", path.display(), source))]
-    FileRead {
-        path: PathBuf,
-        source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
     /// A downloaded target's checksum does not match the checksum listed in the repository
     /// metadata.
     #[snafu(display(
@@ -72,8 +64,8 @@ pub enum Error {
     #[snafu(display("Failed to join \"{}\" to URL \"{}\": {}", path, url, source))]
     JoinUrl {
         path: String,
-        url: reqwest::Url,
-        source: reqwest::UrlError,
+        url: url::Url,
+        source: url::ParseError,
         backtrace: Backtrace,
     },
 
@@ -152,23 +144,7 @@ pub enum Error {
     #[snafu(display("Failed to parse URL {:?}: {}", url, source))]
     ParseUrl {
         url: String,
-        source: reqwest::UrlError,
-        backtrace: Backtrace,
-    },
-
-    /// An HTTP request failed.
-    #[snafu(display("Failed to request \"{}\": {}", url, source))]
-    Request {
-        url: reqwest::Url,
-        source: reqwest::Error,
-        backtrace: Backtrace,
-    },
-
-    /// A response to an HTTP request was in the 4xx or 5xx range.
-    #[snafu(display("Status {} {} in response for \"{}\"", code.as_u16(), code.as_str(), url))]
-    ResponseStatus {
-        code: reqwest::StatusCode,
-        url: reqwest::Url,
+        source: url::ParseError,
         backtrace: Backtrace,
     },
 
@@ -181,6 +157,14 @@ pub enum Error {
     SystemTimeSteppedBackward {
         sys_time: DateTime<Utc>,
         latest_known_time: DateTime<Utc>,
+    },
+
+    /// A transport error occurred while fetching a URL.
+    #[snafu(display("Failed to fetch {}: {}", url, source))]
+    Transport {
+        url: url::Url,
+        source: Box<dyn std::error::Error + Send + Sync>,
+        backtrace: Backtrace,
     },
 
     /// A metadata file could not be verified.
