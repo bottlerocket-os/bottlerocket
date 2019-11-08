@@ -23,15 +23,14 @@ where
         map: &mut HashMap<Decoded<Hex>, Key>,
     ) -> Result<(), error::Error> {
         let calculated = key.key_id()?;
+        let keyid_hex = hex::encode(&keyid);
         ensure!(
             keyid == calculated,
-            error::HashMismatch {
-                context: "key".to_owned(),
+            error::InvalidKeyId {
+                keyid: &keyid_hex,
                 calculated: hex::encode(&calculated),
-                expected: hex::encode(&keyid),
             }
         );
-        let keyid_hex = hex::encode(&keyid); // appease borrowck
         ensure!(
             map.insert(keyid, key).is_none(),
             error::DuplicateKeyId { keyid: keyid_hex }

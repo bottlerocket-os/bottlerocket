@@ -19,16 +19,10 @@ pub enum Error {
 
     /// A downloaded target's checksum does not match the checksum listed in the repository
     /// metadata.
-    #[snafu(display(
-        "Hash mismatch for {}: calculated {}, expected {}",
-        context,
-        calculated,
-        expected,
-    ))]
-    HashMismatch {
-        context: String,
+    #[snafu(display("Invalid key ID {}: calculated {}", keyid, calculated))]
+    InvalidKeyId {
+        keyid: String,
         calculated: String,
-        expected: String,
         backtrace: Backtrace,
     },
 
