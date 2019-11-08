@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+meta() { echo "build/meta/${1:?need destination file to write to}"; }
+has_command() { type "$1" &>/dev/null; }
+
+mkdir -p $(meta '.')
+
+if [[ -z "$CODEBUILD_BUILD_ID" ]]; then
+    echo "INFO: unknown build environment, cannot generate $(meta '*')" >&2
+    exit 0
+fi
+
+# CI metadata
+echo "codebuild" > $(meta build-service)
+echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" > $(meta build-commit)
+echo "$CODEBUILD_BUILD_ID" > $(meta build-id)
+echo "$CODEBUILD_INITIATOR" > $(meta build-initiator)
+echo "$CODEBUILD_BUILD_URL" > $(meta build-url)
+echo "$USER" > $(meta build-user)
+
+if has_command hostname; then
+    hostname --fqdn > $(meta build-host)
+elif [[ -f "/etc/hostname" ]]; then
+    cat /etc/hostname > $(meta build-host)
+else
+    echo "unknown" > $(meta build-host)
+fi
+
+# Codebuild specific metadata
+echo "$CODEBUILD_BUILD_ARN" > $(meta build-codebuild-arn)

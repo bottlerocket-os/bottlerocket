@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+#
+# environment-setup - update shell's environment for CI builds
+#
+
+if [ -d "./tools/infra/env/bin" ]; then
+    PATH="$(pwd -P)/tools/infra/env/bin:$PATH"
+fi
+
+for src_path in $(env | awk -F'=' '/^CODEBUILD_SRC_DIR/ { print $2; }'); do
+    for src_bin in "$src_path/bin" "$src_path/ci/bin"; do
+        if [ -d "$src_bin" ]; then
+            PATH="$src_bin:$PATH"
+        fi
+    done
+done
+
+PATH="$(absolutify-path "$PATH")"

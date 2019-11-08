@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+
+configure_color() {
+    # Prepare Cargo for build and CI usage
+    PATH="$HOME/.cargo/bin:$PATH"
+    mkdir -p .cargo "$HOME/.cargo/bin"
+    # Configure Cargo to print without ascii coloring.
+    printf '\n[term]\nverbose = false\ncolor = "never"\n' \
+        | tee -a ".cargo/config" "$HOME/.cargo/config" >/dev/null
+
+    # Configure cargo-build to print without ascii coloring.
+    install -d "$HOME/.config/cargo-make"
+    printf '\ndisable_color = true\n' >> "$HOME/.config/cargo-make/config.toml"
+}
+
+configure_color
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --no-modify-path --default-toolchain stable
+
+# Install build dependencies
+cargo install --force cargo-make
+cargo install --force cargo-deny
+
+unset -f configure_color

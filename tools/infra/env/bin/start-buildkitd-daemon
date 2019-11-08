@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+BUILDKIT_VERSION="${BUILDKIT_VERSION:-v0.6.2}"
+BUILDKIT_IMAGE="${BUILDKIT_IMAGE:-moby/buildkit:$BUILDKIT_VERSION}"
+
+if ! grep -q "$BUILDKIT_IMAGE" Makefile.toml; then
+    echo "ERROR: Configured buildkit image does not match Makefile.toml" >&2
+    echo "INFO: update $0 to point to the correct image and retry" >&2
+    exit 1
+fi
+
+set -ex
+
+docker pull "$BUILDKIT_IMAGE"
+docker run \
+    --name buildkit\
+    --detach \
+    --rm \
+    --privileged \
+    --network=host \
+    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    "$BUILDKIT_IMAGE" \
+    --addr tcp://127.0.0.1:1234 \
+    --oci-worker true

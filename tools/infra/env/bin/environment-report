@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -x
+
+uname -a
+nproc
+free --total --wide
+df -x squashfs -x cgroup -x sysfs -x proc -x devtmpfs -x devpts
+rustc --version
+cargo --version
+cargo make --version
+cargo deny --version
+docker version
+

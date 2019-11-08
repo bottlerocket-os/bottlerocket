@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# Handle silly PATH settings
+get_path_realpath() {
+    local path="$1"
+    test -d "$path" && realpath -P "$path"
+}
+
+get_path_simple() {
+    local path="$1"
+    test -d "$path" && ( cd "$path"; pwd -P )
+}
+
+resolve_abspath() {
+    local path="${1:-Provide PATH to resolve to /absolute/paths}"
+    local abspath resolved path_method="get_path_simple"
+    if type realpath &>/dev/null; then
+        path_method="get_path_realpath"
+    fi
+    for p in $(awk -v RS=':' '{print $1}' <<< "$PATH"); do
+        resolved="$($path_method "$p")"
+        if [[ -n "$resolved" ]]; then
+            abspath="${resolved}${abspath:+:$abspath}"
+        fi
+    done
+    echo "$abspath"
+}
+
+resolve_abspath "$*"
