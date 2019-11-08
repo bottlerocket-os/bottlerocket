@@ -140,7 +140,7 @@ impl<'a, T: Transport> Repository<'a, T> {
         let metadata_base_url = parse_url(settings.metadata_base_url)?;
         let target_base_url = parse_url(settings.target_base_url)?;
 
-        let datastore = Datastore(settings.datastore);
+        let datastore = Datastore::new(settings.datastore);
 
         // 0. Load the trusted root metadata file + 1. Update the root metadata file
         let root = load_root(
