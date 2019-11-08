@@ -1,6 +1,5 @@
 /*!
-This library initiates an rpm or image build by running the BuildKit CLI inside
-a Docker container.
+This library carries out an rpm or image build using Docker.
 
 It is meant to be called by a Cargo build script. To keep those scripts simple,
 all of the configuration is taken from the environment.

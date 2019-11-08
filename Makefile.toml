@@ -6,13 +6,12 @@ BUILDSYS_ARCH = { script = ["uname -m"] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_OUTPUT_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/workspaces"
-BUILDSYS_BUILDKIT_CLIENT = "moby/buildkit:v0.6.2"
-BUILDSYS_BUILDKIT_SERVER = "tcp://127.0.0.1:1234"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION = { script = ["git describe --tag --dirty || date +%Y%m%d"] }
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
+DOCKER_BUILDKIT = "1"
 
 [env.development]
 IMAGE = "aws-k8s"

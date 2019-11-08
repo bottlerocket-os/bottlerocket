@@ -60,7 +60,7 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
 FROM scratch AS rpm
-COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /
+COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /output/
 
 FROM util AS imgbuild
 ARG PACKAGES
@@ -96,4 +96,4 @@ RUN --mount=target=/host \
     && echo ${NOCACHE}
 
 FROM scratch AS image
-COPY --from=imgbuild /local/output/* /
+COPY --from=imgbuild /local/output/* /output/
