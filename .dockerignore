@@ -1,3 +1,4 @@
+/.git
 /build/*.img
 /build/*.lz4
 /build/*.tar
