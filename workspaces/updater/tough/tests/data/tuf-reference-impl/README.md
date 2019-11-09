@@ -1,1 +1,0 @@
-This is a subset of [the test repository of the reference Python implementation of TUF](https://github.com/theupdateframework/tuf/tree/21c3285216d2ded8feed7c57ffdb8d5dc045a246/tests/repository_data/repository).
