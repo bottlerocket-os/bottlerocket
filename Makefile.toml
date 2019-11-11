@@ -7,7 +7,21 @@ BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_OUTPUT_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/workspaces"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
-BUILDSYS_VERSION = { script = ["git describe --tag --dirty || date +%Y%m%d"] }
+BUILDSYS_VERSION_TAG = { script = [
+'''
+if [ ! -z "${THAR_CUSTOM_VERSION}" ]; then
+	echo "${THAR_CUSTOM_VERSION}"
+	exit 0
+fi
+version=$(git describe --tag --abbrev=0)
+if [ "$?" -eq "0" ]; then
+	echo "${version}" | tail --bytes=+2
+else
+	date +%Y%m%d
+fi
+'''
+] }
+BUILDSYS_VERSION_FULL = { script = ["git describe --tag --dirty || date +%Y%m%d"] }
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
@@ -148,7 +162,7 @@ done
 [tasks.link-images]
 script = [
 '''
-PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}-${BUILDSYS_VERSION}"
+PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}-${BUILDSYS_VERSION_TAG}"
 ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}.img.lz4 \
 	${BUILDSYS_OUTPUT_DIR}/${PREFIX}.img.lz4
 ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-data.img.lz4 \

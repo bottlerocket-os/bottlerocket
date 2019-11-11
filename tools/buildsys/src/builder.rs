@@ -50,6 +50,8 @@ impl ImageBuilder {
         let packages = packages.join("|");
         let arch = getenv("BUILDSYS_ARCH")?;
         let name = getenv("IMAGE")?;
+        let version_tag = getenv("BUILDSYS_VERSION_TAG")?;
+        let version_full = getenv("BUILDSYS_VERSION_FULL")?;
 
         // Always rebuild images since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
@@ -59,10 +61,14 @@ impl ImageBuilder {
         let build_args = format!(
             "--build-arg PACKAGES={packages} \
              --build-arg ARCH={arch} \
-             --build-arg FLAVOR={name}",
+             --build-arg FLAVOR={name} \
+             --build-arg VERSION_ID={version_tag} \
+             --build-arg BUILD_ID={version_full}",
             packages = packages,
             arch = arch,
             name = name,
+            version_tag = version_tag,
+            version_full = version_full,
         );
         let tag = format!("buildsys-img-{name}-{arch}", name = name, arch = arch);
 

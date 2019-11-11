@@ -113,8 +113,10 @@ BOOT_MOUNT="/mnt/boot"
 mkdir "${BOOT_MOUNT}"
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
-# Set the Thar flavor
+# Set the Thar flavor, version, and build-id
 echo "VARIANT_ID=${FLAVOR}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
+echo "VERSION_ID=${VERSION_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
+echo "BUILD_ID=${BUILD_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 
 # THAR-ROOT-A
 mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 920M

@@ -142,13 +142,17 @@ fn running_version() -> Result<(SemVer, String)> {
                 version = Some(
                     SemVer::parse(&line[key.len()..]).context(error::VersionIdParse { line })?,
                 );
+                continue;
             }
-        } else if flavor.is_none() {
+        }
+        if flavor.is_none() {
             let key = "VARIANT_ID=";
             if line.starts_with(key) {
                 flavor = Some(String::from(&line[key.len()..]));
+                continue;
             }
-        } else {
+        }
+        if version.is_some() && flavor.is_some() {
             break;
         }
     }

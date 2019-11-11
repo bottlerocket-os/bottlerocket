@@ -97,7 +97,6 @@ cat >%{buildroot}%{_cross_libdir}/os-release <<EOF
 NAME=Thar
 PRETTY_NAME="Thar, The Operating System"
 ID=thar
-VERSION_ID=%{version}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}
