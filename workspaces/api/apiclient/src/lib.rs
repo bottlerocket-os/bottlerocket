@@ -18,7 +18,7 @@ use futures::Future;
 use hyper::rt::Stream;
 use hyper::{header, Body, Client, Request};
 use hyperlocal::{UnixConnector, Uri};
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use std::path::Path;
 use tokio::runtime::Runtime;
 
@@ -37,6 +37,12 @@ mod error {
 
         #[snafu(display("Failed to send request: {}", source))]
         RequestSend { source: hyper::Error },
+
+        #[snafu(display("Status {} {} when requesting {}", code.as_u16(), code.as_str(), uri))]
+        ResponseStatus {
+            code: http::StatusCode,
+            uri: http::uri::Uri,
+        },
 
         #[snafu(display("Failed to read body of response: {}", source))]
         ResponseBodyRead { source: hyper::Error },
@@ -87,7 +93,7 @@ where
 
     let request = Request::builder()
         .method(method.as_ref())
-        .uri(uri)
+        .uri(&uri)
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(request_data))
         .context(error::RequestSetup)?;
@@ -101,6 +107,15 @@ where
     let (head, body_future) = runtime
         .block_on(client.request(request).map(|res| res.into_parts()))
         .context(error::RequestSend)?;
+
+    // Error if the response status is in not in the 2xx range.
+    ensure!(
+        head.status.is_success(),
+        error::ResponseStatus {
+            code: head.status,
+            uri
+        }
+    );
 
     // Wait on the second future (the streaming body) and concatenate all the pieces together so we
     // have a single response body.  We make sure each piece is a string, as we go; we assume that
