@@ -1,30 +1,40 @@
 #!/usr/bin/env bash
 
-meta() { echo "build/meta/${1:?need destination file to write to}"; }
 has_command() { type "$1" &>/dev/null; }
 
-mkdir -p $(meta '.')
+write_common() {
+    echo "${USER}" > build-user
+    if has_command hostname; then
+        hostname --fqdn > build-host
+    elif [[ -f "/etc/hostname" ]]; then
+        cat /etc/hostname > build-host
+    else
+        echo "unknown" > build-host
+    fi
+}
 
-if [[ -z "$CODEBUILD_BUILD_ID" ]]; then
-    echo "INFO: unknown build environment, cannot generate $(meta '*')" >&2
+write_codebuild() {
+    echo "codebuild" > build-service
+    echo "${CODEBUILD_RESOLVED_SOURCE_VERSION}" > build-commit
+    echo "${CODEBUILD_BUILD_ID}" > build-id
+    echo "${CODEBUILD_INITIATOR}" > build-initiator
+    echo "${CODEBUILD_BUILD_URL}" > build-url
+    echo "${CODEBUILD_BUILD_ARN}" > build-codebuild-arn
+}
+
+if ! mkdir -p "build/meta" && cd "build/meta"; then
+    logmsg "ERROR: could not create build/meta directory for writing"
+    exit 1
+fi
+
+write_common
+
+if [[ -z "${CODEBUILD_BUILD_ID}" ]]; then
+    write_codebuild
+fi
+
+if [[ ! -s "build-service" ]]; then
+    logmsg "WARN: unknown service, cannot write out CI build metadata"
+    echo "unknown" > build-service
     exit 0
 fi
-
-# CI metadata
-echo "codebuild" > $(meta build-service)
-echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" > $(meta build-commit)
-echo "$CODEBUILD_BUILD_ID" > $(meta build-id)
-echo "$CODEBUILD_INITIATOR" > $(meta build-initiator)
-echo "$CODEBUILD_BUILD_URL" > $(meta build-url)
-echo "$USER" > $(meta build-user)
-
-if has_command hostname; then
-    hostname --fqdn > $(meta build-host)
-elif [[ -f "/etc/hostname" ]]; then
-    cat /etc/hostname > $(meta build-host)
-else
-    echo "unknown" > $(meta build-host)
-fi
-
-# Codebuild specific metadata
-echo "$CODEBUILD_BUILD_ARN" > $(meta build-codebuild-arn)
