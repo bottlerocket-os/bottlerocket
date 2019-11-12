@@ -45,7 +45,7 @@ func (p *Platform) Prepare(target platform.Update) error {
 	return err
 }
 
-// Update causes the platform to commit to an update taking potentially
+// Update causes the platform to commit to an update - potentially taking
 // irreversible steps to do so.
 func (p *Platform) Update(target platform.Update) error {
 	p.log.Debug("performing update")

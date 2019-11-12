@@ -45,7 +45,7 @@ type Update interface {
 }
 
 // Ping the platform to verify its liveliness and general usability based on its
-// status. Platform consumersx should utilize this method to consistently
+// status. Platform consumers should utilize this method to consistently
 // validate the platform before use.
 func Ping(p Platform) error {
 	status, err := p.Status()
