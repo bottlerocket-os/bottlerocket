@@ -16,7 +16,7 @@ test:
 	go test -ldflags '-X $(GOPKG)/pkg/logging.DebugEnable=true' $(GOPKGS)
 
 container: vendor
-	DOCKER_BUILDKIT=1 docker build --network=host -t $(DOCKER_IMAGE_REF) .
+	docker build --network=host -t $(DOCKER_IMAGE_REF) .
 
 load: container
 	kind load docker-image $(DOCKER_IMAGE)
