@@ -117,7 +117,7 @@ Resources:
           - BuildRole
           - Arn
       Source:
-        BuildSpec: tools/infra/buildspec/thar-pr-build.yml
+        BuildSpec: tools/infra/buildspec/host-containers-pr-build.yml
         Location: https://github.com/amazonlinux/PRIVATE-thar.git
         ReportBuildStatus: true
         Type: GITHUB
