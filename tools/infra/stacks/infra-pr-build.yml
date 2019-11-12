@@ -1,4 +1,12 @@
 Resources:
+  BuildArtifactBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+  BuildLogBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
   BuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -17,6 +25,33 @@ Resources:
           - Action:
               - cloudformation:ValidateTemplate
             Effect: Allow
+          - Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:DeleteObject*
+              - s3:PutObject*
+              - s3:Abort*
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - BuildArtifactBucket
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - BuildArtifactBucket
+                        - Arn
+                    - /*
+              - Fn::GetAtt:
+                  - BuildLogBucket
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - BuildLogBucket
+                        - Arn
+                    - /*
           - Action:
               - logs:CreateLogGroup
               - logs:CreateLogStream
@@ -50,6 +85,10 @@ Resources:
         - Ref: BuildRole
   BuildProject:
     Type: AWS::CodeBuild::Project
+    DependsOn:
+      - BuildArtifactBucket
+      - BuildLogBucket
+      - BuildRole
     Properties:
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
@@ -64,16 +103,31 @@ Resources:
         Location: https://github.com/amazonlinux/PRIVATE-thar.git
         ReportBuildStatus: true
         Type: GITHUB
+      LogsConfig:
+        S3Logs:
+          Status: ENABLED
+          Location:
+            Fn::Join:
+              - ""
+              - - Fn::GetAtt:
+                  - BuildArtifactBucket
+                  - Arn
+                - "codebuild/log"
+        CloudWatchLogs:
+          Status: ENABLED
       TimeoutInMinutes: 10
       Triggers:
         Webhook: true
         FilterGroups:
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED,PULL_REQUEST_UPDATED
-
 Outputs:
-  BuildProject:
+  ArtifactBucket:
+    Value:
+      Ref: BuildArtifactBucket
+  LogBucket:
+    Value:
+      Ref: BuildLogBucket
+  Project:
     Value:
       Ref: BuildProject
-  Component:
-    Value: thar-pr
