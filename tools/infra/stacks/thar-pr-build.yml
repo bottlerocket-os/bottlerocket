@@ -3,6 +3,10 @@ Resources:
     Type: AWS::S3::Bucket
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
+  BuildLogBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
   BuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -34,6 +38,15 @@ Resources:
                   - ""
                   - - Fn::GetAtt:
                         - BuildArtifactBucket
+                        - Arn
+                    - /*
+              - Fn::GetAtt:
+                  - BuildLogBucket
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - BuildLogBucket
                         - Arn
                     - /*
           - Action:
@@ -76,7 +89,7 @@ Resources:
         Name: /
         NamespaceType: BUILD_ID
         Packaging: NONE
-        Path: artifacts/
+        Path: artifact/
         Type: S3
       Environment:
         ComputeType: BUILD_GENERAL1_LARGE
@@ -92,18 +105,29 @@ Resources:
         Location: https://github.com/amazonlinux/PRIVATE-thar.git
         ReportBuildStatus: true
         Type: GITHUB
+      LogsConfig:
+        S3Logs:
+          Status: ENABLED
+          Location:
+            Fn::Join:
+              - ""
+              - - Ref: BuildLogBucket
+                - "codebuild/log"
+        CloudWatchLogs:
+          Status: ENABLED
       TimeoutInMinutes: 150
       Triggers:
         Webhook: true
         FilterGroups:
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED,PULL_REQUEST_UPDATED
-
 Outputs:
   ArtifactBucket:
-    Value: !Ref BuildArtifactBucket
-  BuildProject:
+    Value:
+      Ref: BuildArtifactBucket
+  LogBucket:
+    Value:
+      Ref: BuildLogBucket
+  Project:
     Value:
       Ref: BuildProject
-  Component:
-    Value: thar-pr
