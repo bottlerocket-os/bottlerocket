@@ -82,6 +82,10 @@ Resources:
         - Ref: BuildRole
   BuildProject:
     Type: AWS::CodeBuild::Project
+    DependsOn:
+      - BuildArtifactBucket
+      - BuildLogBucket
+      - BuildRole
     Properties:
       Artifacts:
         Location:
