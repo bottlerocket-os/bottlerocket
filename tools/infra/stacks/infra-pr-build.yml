@@ -108,7 +108,7 @@ Resources:
           Status: ENABLED
           Location:
             Fn::Join:
-              - ""
+              - "/"
               - - Fn::GetAtt:
                   - BuildArtifactBucket
                   - Arn

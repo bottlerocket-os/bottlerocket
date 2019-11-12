@@ -100,8 +100,10 @@ Resources:
           Status: ENABLED
           Location:
             Fn::Join:
-              - ""
-              - - Ref: BuildLogBucket
+              - "/"
+              - - Fn::GetAtt:
+                  - BuildLogBucket
+                  - Arn
                 - "codebuild/log"
         CloudWatchLogs:
           Status: ENABLED
