@@ -13,5 +13,3 @@ for src_path in $(env | awk -F'=' '/^CODEBUILD_SRC_DIR/ { print $2; }'); do
         fi
     done
 done
-
-PATH="$(absolutify-path "$PATH")"

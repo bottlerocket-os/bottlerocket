@@ -15,10 +15,15 @@ configure_color() {
 
 configure_color
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --no-modify-path --default-toolchain stable
+# Use rustup to install rust toolchain
+if ! curl --proto '=https' --tlsv1.2 -sS "https://sh.rustup.rs" | bash -s -- -y --no-modify-path --default-toolchain stable; then
+    logmsg "ERROR: could not install rustup to install a rust toolchain"
+    exit 1
+fi
 
-# Install build dependencies
+# Install build tooling dependencies
 cargo install --force cargo-make
 cargo install --force cargo-deny
 
 unset -f configure_color
+

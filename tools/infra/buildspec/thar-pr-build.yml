@@ -2,8 +2,6 @@ version: 0.2
 
 env:
   variables:
-    # Explicitly permit use of sources lookaside cache.
-    BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL: "true"
     # Path to infra tooling directory.
     INFRA_DIR: "./tools/infra"
 
@@ -13,7 +11,7 @@ phases:
       docker: 18
     commands:
       - . "${INFRA_DIR}/env/lib/environment-setup"
-      - . install-rust-builder
+      - . setup-rust-builder
   pre_build:
     commands:
       - environment-report
@@ -23,8 +21,7 @@ phases:
     commands:
       # Retry fetches a few times before failing
       - retry 2 'fetch dependencies' -- cargo make fetch
-      - cargo make world-packages
-      - cargo make world-images
+      - cargo make world
       - write-build-manifest
 
 artifacts:
