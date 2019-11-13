@@ -21,25 +21,15 @@ To get these, run:
 cargo install cargo-make cargo-deny
 ```
 
-#### BuildKit
+#### Docker
 
-Thar uses [BuildKit](https://github.com/moby/buildkit) to orchestrate package and image builds.
-In turn, BuildKit uses [Docker](https://docs.docker.com/install/#supported-platforms) to run individual builds.
+Thar uses [Docker](https://docs.docker.com/install/#supported-platforms) to orchestrate package and image builds.
 
-You'll need to have Docker installed and running, but you don't need to install BuildKit.
-To start BuildKit as a Docker container, run:
+We recommend Docker 19.03 or later.
+Builds rely on Docker's integrated BuildKit support, which has received many fixes and improvements in newer versions.
 
-```
-docker run -t --rm \
-   --privileged \
-   --network=host \
-   --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-   moby/buildkit:v0.6.2 \
-   --addr tcp://127.0.0.1:1234 \
-   --oci-worker true
-```
-
-You can run that in the background, or just interrupt the process after BuildKit says it's running - the important part will keep running in the background.
+You'll need to have Docker installed and running, with your user account added to the `docker` group.
+Docker's [post-installation steps for Linux](https://docs.docker.com/install/linux/linux-postinstall/) will walk you through that.
 
 ### Build process
 
