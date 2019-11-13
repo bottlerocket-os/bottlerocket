@@ -51,7 +51,7 @@ Resources:
                     - ":"
                     - Ref: AWS::AccountId
                     - :log-group:/aws/codebuild/
-                    - Ref: BuildProject
+                    - Ref: HostContainersPullRequestBuild
               - Fn::Join:
                   - ""
                   - - "arn:"
@@ -61,13 +61,13 @@ Resources:
                     - ":"
                     - Ref: AWS::AccountId
                     - :log-group:/aws/codebuild/
-                    - Ref: BuildProject
+                    - Ref: HostContainersPullRequestBuild
                     - :*
         Version: "2012-10-17"
       PolicyName: BuildRolePolicy
       Roles:
         - Ref: BuildRole
-  BuildProject:
+  HostContainersPullRequestBuild:
     Type: AWS::CodeBuild::Project
     DependsOn:
       - BuildLogBucket
@@ -112,4 +112,4 @@ Outputs:
       Ref: BuildLogBucket
   Project:
     Value:
-      Ref: BuildProject
+      Ref: HostContainersPullRequestBuild

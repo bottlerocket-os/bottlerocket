@@ -64,7 +64,7 @@ Resources:
                     - ":"
                     - Ref: AWS::AccountId
                     - :log-group:/aws/codebuild/
-                    - Ref: BuildProject
+                    - Ref: TharPullRequestBuild
               - Fn::Join:
                   - ""
                   - - "arn:"
@@ -74,13 +74,13 @@ Resources:
                     - ":"
                     - Ref: AWS::AccountId
                     - :log-group:/aws/codebuild/
-                    - Ref: BuildProject
+                    - Ref: TharPullRequestBuild
                     - :*
         Version: "2012-10-17"
       PolicyName: BuildRolePolicy
       Roles:
         - Ref: BuildRole
-  BuildProject:
+  TharPullRequestBuild:
     Type: AWS::CodeBuild::Project
     DependsOn:
       - BuildArtifactBucket
@@ -136,4 +136,4 @@ Outputs:
       Ref: BuildLogBucket
   Project:
     Value:
-      Ref: BuildProject
+      Ref: TharPullRequestBuild
