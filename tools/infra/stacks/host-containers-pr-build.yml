@@ -1,8 +1,4 @@
 Resources:
-  BuildArtifactBucket:
-    Type: AWS::S3::Bucket
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
   BuildLogBucket:
     Type: AWS::S3::Bucket
     UpdateReplacePolicy: Retain
@@ -31,15 +27,6 @@ Resources:
               - s3:Abort*
             Effect: Allow
             Resource:
-              - Fn::GetAtt:
-                  - BuildArtifactBucket
-                  - Arn
-              - Fn::Join:
-                  - ""
-                  - - Fn::GetAtt:
-                        - BuildArtifactBucket
-                        - Arn
-                    - /*
               - Fn::GetAtt:
                   - BuildLogBucket
                   - Arn
@@ -83,18 +70,9 @@ Resources:
   BuildProject:
     Type: AWS::CodeBuild::Project
     DependsOn:
-      - BuildArtifactBucket
       - BuildLogBucket
       - BuildRole
     Properties:
-      Artifacts:
-        Location:
-          Ref: BuildArtifactBucket
-        Name: /
-        NamespaceType: BUILD_ID
-        Packaging: NONE
-        Path: artifact/
-        Type: S3
       LogsConfig:
         S3Logs:
           Status: ENABLED
@@ -129,9 +107,6 @@ Resources:
               Pattern: PULL_REQUEST_CREATED,PULL_REQUEST_UPDATED
 
 Outputs:
-  ArtifactBucket:
-    Value:
-      Ref: BuildArtifactBucket
   LogBucket:
     Value:
       Ref: BuildLogBucket
