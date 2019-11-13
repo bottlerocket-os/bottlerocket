@@ -17,10 +17,8 @@ restart-commands = []
 path = "/etc/hostname"
 template-path = "/usr/share/templates/hostname"
 
-[[metadata]]
-key = "settings.hostname"
-md = "affected-services"
-val = ["hostname"]
+[metadata.settings.hostname]
+affected-services = ["hostname"]
 
 # Kubernetes.
 
@@ -48,30 +46,12 @@ template-path = "/usr/share/templates/kubernetes-ca-crt"
 path = "/etc/containerd/config.toml"
 template-path = "/usr/share/templates/containerd-config-toml"
 
-[[metadata]]
-key = "settings.kubernetes.max-pods"
-md = "setting-generator"
-val = "pluto max-pods"
-
-[[metadata]]
-key = "settings.kubernetes.cluster-dns-ip"
-md = "setting-generator"
-val = "pluto cluster-dns-ip"
-
-[[metadata]]
-key = "settings.kubernetes.node-ip"
-md = "setting-generator"
-val = "pluto node-ip"
-
-[[metadata]]
-key = "settings.kubernetes.pod-infra-container-image"
-md = "setting-generator"
-val = "pluto pod-infra-container-image"
-
-[[metadata]]
-key = "settings.kubernetes"
-md = "affected-services"
-val = ["kubernetes"]
+[metadata.settings.kubernetes]
+max-pods.setting-generator = "pluto max-pods"
+cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
+node-ip.setting-generator = "pluto node-ip"
+pod-infra-container-image.setting-generator = "pluto pod-infra-container-image"
+affected-services = ["kubernetes"]
 
 # Updog.
 
@@ -83,15 +63,9 @@ restart-commands = []
 path = "/etc/updog.toml"
 template-path = "/usr/share/templates/updog-toml"
 
-[[metadata]]
-key = "settings.updates"
-md = "affected-services"
-val = ["updog"]
-
-[[metadata]]
-key = "settings.updates.seed"
-md = "setting-generator"
-val = "bork seed"
+[metadata.settings.updates]
+affected-services = ["updog"]
+seed.setting-generator = "bork seed"
 
 # HostContainers
 
@@ -109,10 +83,8 @@ superpowered = false
 configuration-files = []
 restart-commands = ["/usr/bin/host-containers"]
 
-[[metadata]]
-key = "settings.host-containers"
-md = "affected-services"
-val = ["host-containers"]
+[metadata.settings.host-containers]
+affected-services = ["host-containers"]
 
 # NTP
 
@@ -127,7 +99,5 @@ restart-commands = ["/bin/systemctl try-reload-or-restart chronyd.service"]
 path = "/etc/chrony.conf"
 template-path = "/usr/share/templates/chrony-conf"
 
-[[metadata]]
-key = "settings.ntp"
-md = "affected-services"
-val = "[chronyd]"
+[metadata.settings.ntp]
+affected-services = ["chronyd"]
