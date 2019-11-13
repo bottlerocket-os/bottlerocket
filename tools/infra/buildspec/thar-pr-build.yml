@@ -22,13 +22,11 @@ phases:
       # Retry fetches a few times before failing
       - retry 2 'fetch dependencies' -- cargo make fetch
       - cargo make world
-      - write-build-manifest
 
 artifacts:
   base-directory: 'build/'
   files:
     - '*.img*'
-    - '*.sha256'
   secondary-artifacts:
     meta:
       base-directory: 'build/meta'
