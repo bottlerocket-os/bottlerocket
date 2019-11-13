@@ -22,14 +22,10 @@ members = [
 
     "preinit/laika",
 
-    "updater/olpc-cjson",
     "updater/block-party",
     "updater/signpost",
-    "updater/tough",
     "updater/update_metadata",
     "updater/updog",
-
-    "tuftool",
 
     "webpki-roots-shim",
 
