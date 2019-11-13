@@ -121,7 +121,7 @@ Now we can make a configuration change to use a CNI plugin that's compatible wit
 ```
 kubectl patch daemonset aws-node \
 -n kube-system \
--p '{"spec": {"template": {"spec": {"containers": [{"image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.0-rc3","name":"aws-node"}]}}}}'
+-p '{"spec": {"template": {"spec": {"containers": [{"image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.0-rc4","name":"aws-node"}]}}}}'
 ```
 
 ## Cluster info
