@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
-
-MAX_RETRIES="${1:-retries need to be provided}"
+#
+# retry - run and rerun a command if it fails
+#
+# usage:
+#
+#   retry <retries> [msg] -- <command>
+#
+MAX_RETRIES="${1:-number of retry attempts must be provided}"
 MSG=""
 shift 1
 

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+#
+# start-buildkitd-daemon - start a buildkitd process for building with
+#
+
 BUILDKIT_VERSION="${BUILDKIT_VERSION:-v0.6.2}"
 BUILDKIT_IMAGE="${BUILDKIT_IMAGE:-moby/buildkit:$BUILDKIT_VERSION}"
 

@@ -1,2 +1,5 @@
 #!/usr/bin/env sh
+#
+# logmsg - log messages to stderr
+#
 echo "$@" >&2

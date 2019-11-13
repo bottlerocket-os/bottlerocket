@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+#
+# environment-report - print out builder details for reference
+#
+# The output is expected to be read from the buildlog if the details are needing
+# to be referenced to.
+#
 set -x
 
 uname -a

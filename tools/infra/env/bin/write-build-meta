@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-
+#
+# write-build-meta - collect and write out build job details
+#
 has_command() { type "$1" &>/dev/null; }
 
 write_common() {

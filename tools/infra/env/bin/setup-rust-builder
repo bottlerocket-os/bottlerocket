@@ -1,4 +1,14 @@
 #!/usr/bin/env sh
+#
+# setup-rust-builder - install rust and configure shell for its use by a builder
+#
+# This script is expected to be sourced by callers in order to affect their PATH
+# directly AND is used in CodeBuild environments where the SHELL is /bin/sh.
+#
+# usage:
+#
+#   . setup-rust-builder
+#
 
 configure_color() {
     # Prepare Cargo for build and CI usage
