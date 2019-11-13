@@ -15,10 +15,18 @@ RUN dnf -y groupinstall "C Development Tools and Libraries" \
 FROM origin AS util
 RUN dnf -y install createrepo_c e2fsprogs gdisk grub2-tools kpartx lz4 veritysetup dosfstools mtools
 
+# The experimental cache mount type doesn't expand arguments, so our choices are limited.
+# We can either reuse the same cache for all builds, which triggers overlayfs errors if
+# the builds run in parallel, or we can use a new cache for each build, which defeats the
+# purpose. We work around the limitation by materializing a per-build stage that can be
+# used as the source of the cache.
 FROM scratch AS cache
 ARG PACKAGE
 ARG ARCH
-COPY .dockerignore .${PACKAGE}.${ARCH}
+# We can't create directories via RUN in a scratch container, so take an existing one.
+COPY --chown=1000:1000 --from=base /tmp /cache
+# Ensure the ARG variables are used in the layer to prevent reuse by other builds.
+COPY --chown=1000:1000 .dockerignore /cache/.${PACKAGE}.${ARCH}
 
 FROM base AS rpmbuild
 ARG PACKAGE
@@ -55,7 +63,7 @@ RUN --mount=target=/host \
 
 USER builder
 RUN --mount=source=.cargo,target=/home/builder/.cargo \
-    --mount=type=cache,target=/home/builder/.cache,uid=1000,from=cache \
+    --mount=type=cache,target=/home/builder/.cache,from=cache,source=/cache \
     --mount=source=workspaces,target=/home/builder/rpmbuild/BUILD/workspaces \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
