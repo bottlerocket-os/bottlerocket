@@ -121,7 +121,7 @@ Resources:
         Location: https://github.com/amazonlinux/PRIVATE-thar.git
         ReportBuildStatus: true
         Type: GITHUB
-      TimeoutInMinutes: 150
+      TimeoutInMinutes: 60
       Triggers:
         Webhook: true
         FilterGroups:

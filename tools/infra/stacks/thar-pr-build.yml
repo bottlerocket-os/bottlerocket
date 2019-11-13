@@ -121,7 +121,7 @@ Resources:
                 - "codebuild/log"
         CloudWatchLogs:
           Status: ENABLED
-      TimeoutInMinutes: 150
+      TimeoutInMinutes: 180
       Triggers:
         Webhook: true
         FilterGroups:
