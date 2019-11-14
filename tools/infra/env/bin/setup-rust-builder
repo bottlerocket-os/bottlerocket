@@ -10,7 +10,7 @@
 #   . setup-rust-builder
 #
 
-configure_color() {
+configure_color_output() {
     # Prepare Cargo for build and CI usage
     PATH="$HOME/.cargo/bin:$PATH"
     mkdir -p .cargo "$HOME/.cargo/bin"
@@ -23,17 +23,36 @@ configure_color() {
     printf '\ndisable_color = true\n' >> "$HOME/.config/cargo-make/config.toml"
 }
 
-configure_color
+cargo_dep() {
+    cargo_install_package="$1"
+    if ! cargo install --force "$cargo_install_package"; then
+        logmsg "ERROR: could not install cargo packaged dependency: $cargo_install_package"
+        exit 1
+    fi
+}
 
-# Use rustup to install rust toolchain
-if ! curl --proto '=https' --tlsv1.2 -sS "https://sh.rustup.rs" | bash -s -- -y --no-modify-path --default-toolchain stable; then
-    logmsg "ERROR: could not install rustup to install a rust toolchain"
-    exit 1
-fi
+install_rust_toolchain() {
+    test -f rustup-init.sh || rm -f rustup-init.sh
+    if ! curl -o rustup-init.sh --proto '=https' --tlsv1.2 -sS "https://sh.rustup.rs"; then
+        logmsg "ERROR: could not fetch rustup, needed for managing rust toolchain"
+        exit 1
+    fi
+    if ! bash rustup-init.sh -y --no-modify-path --default-toolchain stable ; then
+        logmsg "ERROR: could not setup rustup & rust toolchain for build"
+        exit 1
+    fi
+    rm -f rustup-init.sh
+}
+
+configure_color_output
+
+install_rust_toolchain
 
 # Install build tooling dependencies
-cargo install --force cargo-make
-cargo install --force cargo-deny
+cargo_dep cargo-make
+cargo_dep cargo-deny
 
-unset -f configure_color
+unset -f configure_color_output
+unset -f install_rust_toolchain
+unset -f cargo_dep
 
