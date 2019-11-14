@@ -1,7 +1,7 @@
 /*!
-This module handles the calls to the BuildKit server needed to execute package
-and image builds. The actual build steps and the expected parameters are defined
-in the repository's top-level Dockerfile.
+This module handles the calls to Docker needed to execute package and image
+builds. The actual build steps and the expected parameters are defined in
+the repository's top-level Dockerfile.
 
 */
 pub(crate) mod error;
@@ -9,30 +9,32 @@ use error::Result;
 
 use duct::cmd;
 use rand::Rng;
+use sha2::{Digest, Sha512};
 use snafu::ResultExt;
 use std::env;
 use std::process::Output;
-use users::get_effective_uid;
 
 pub(crate) struct PackageBuilder;
 
 impl PackageBuilder {
-    /// Call `buildctl` to produce RPMs for the specified package.
+    /// Build RPMs for the specified package.
     pub(crate) fn build(package: &str) -> Result<(Self)> {
         let arch = getenv("BUILDSYS_ARCH")?;
-        let opts = format!(
-            "--opt target=rpm \
-             --opt build-arg:PACKAGE={package} \
-             --opt build-arg:ARCH={arch}",
+
+        let target = "rpm";
+        let build_args = format!(
+            "--build-arg PACKAGE={package} \
+             --build-arg ARCH={arch}",
             package = package,
             arch = arch,
         );
+        let tag = format!(
+            "buildsys-pkg-{package}-{arch}",
+            package = package,
+            arch = arch
+        );
 
-        let result = buildctl(&opts)?;
-        if !result.status.success() {
-            let output = String::from_utf8_lossy(&result.stdout);
-            return error::PackageBuild { package, output }.fail();
-        }
+        build(&target, &build_args, &tag)?;
 
         Ok(Self)
     }
@@ -41,103 +43,121 @@ impl PackageBuilder {
 pub(crate) struct ImageBuilder;
 
 impl ImageBuilder {
-    /// Call `buildctl` to create an image with the specified packages installed.
+    /// Build an image with the specified packages installed.
     pub(crate) fn build(packages: &[String]) -> Result<(Self)> {
         // We want PACKAGES to be a value that contains spaces, since that's
         // easier to work with in the shell than other forms of structured data.
         let packages = packages.join("|");
-
         let arch = getenv("BUILDSYS_ARCH")?;
-        let opts = format!(
-            "--opt target=image \
-             --opt build-arg:PACKAGES={packages} \
-             --opt build-arg:FLAVOR={name} \
-             --opt build-arg:ARCH={arch}",
-            packages = packages,
-            arch = arch,
-            name = getenv("IMAGE")?,
-        );
+        let name = getenv("IMAGE")?;
 
         // Always rebuild images since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
         getenv("BUILDSYS_TIMESTAMP")?;
 
-        let result = buildctl(&opts)?;
-        if !result.status.success() {
-            let output = String::from_utf8_lossy(&result.stdout);
-            return error::ImageBuild { packages, output }.fail();
-        }
+        let target = "image";
+        let build_args = format!(
+            "--build-arg PACKAGES={packages} \
+             --build-arg ARCH={arch} \
+             --build-arg FLAVOR={name}",
+            packages = packages,
+            arch = arch,
+            name = name,
+        );
+        let tag = format!("buildsys-img-{name}-{arch}", name = name, arch = arch);
+
+        build(&target, &build_args, &tag)?;
 
         Ok(Self)
     }
 }
 
-/// Invoke `buildctl` by way of `docker` with the arguments for a specific
-/// package or image build.
-fn buildctl(opts: &str) -> Result<Output> {
-    let docker_args = docker_args()?;
-    let buildctl_args = buildctl_args()?;
+/// Invoke a series of `docker` commands to drive a package or image build.
+fn build(target: &str, build_args: &str, tag: &str) -> Result<()> {
+    // Our Dockerfile is in the top-level directory.
+    let root = getenv("BUILDSYS_ROOT_DIR")?;
+    std::env::set_current_dir(&root).context(error::DirectoryChange { path: &root })?;
+
+    // Compute a per-checkout prefix for the tag to avoid collisions.
+    let mut d = Sha512::new();
+    d.input(&root);
+    let digest = hex::encode(d.result());
+    let suffix = &digest[..12];
+    let tag = format!("{}-{}", tag, suffix);
 
     // Avoid using a cached layer from a previous build.
-    let nocache = format!(
-        "--opt build-arg:NOCACHE={}",
-        rand::thread_rng().gen::<u32>(),
-    );
+    let nocache = rand::thread_rng().gen::<u32>();
+    let nocache_args = format!("--build-arg NOCACHE={}", nocache);
 
-    // Build the giant chain of args. Treat "|" as a placeholder that indicates
-    // where the argument should contain spaces after we split on whitespace.
-    let args = docker_args
-        .split_whitespace()
-        .chain(buildctl_args.split_whitespace())
-        .chain(opts.split_whitespace())
-        .chain(nocache.split_whitespace())
-        .map(|s| s.replace("|", " "));
+    // Accept additional overrides for Docker arguments. This is only for
+    // overriding network settings, and can be dropped when we no longer need
+    // network access during the build.
+    let docker_run_args = getenv("BUILDSYS_DOCKER_RUN_ARGS").unwrap_or_else(|_| "".to_string());
 
-    // Run the giant docker invocation
+    let build = args(format!(
+        "build . \
+         --target {target} \
+         {docker_run_args} \
+         {build_args} \
+         {nocache_args} \
+         --tag {tag}",
+        target = target,
+        docker_run_args = docker_run_args,
+        build_args = build_args,
+        nocache_args = nocache_args,
+        tag = tag,
+    ));
+
+    let output = getenv("BUILDSYS_OUTPUT_DIR")?;
+    let create = args(format!("create --name {tag} {tag} true", tag = tag));
+    let cp = args(format!("cp {}:/output/. {}", tag, output));
+    let rm = args(format!("rm --force {}", tag));
+    let rmi = args(format!("rmi --force {}", tag));
+
+    // Clean up the stopped container if it exists.
+    let _ = docker(&rm);
+
+    // Clean up the previous image if it exists.
+    let _ = docker(&rmi);
+
+    // Build the image, which builds the artifacts we want.
+    docker(&build)?;
+
+    // Create a stopped container so we can copy artifacts out.
+    docker(&create)?;
+
+    // Copy artifacts into our output directory.
+    docker(&cp)?;
+
+    // Clean up our stopped container after copying artifacts out.
+    docker(&rm)?;
+
+    // Clean up our image now that we're done.
+    docker(&rmi)?;
+
+    Ok(())
+}
+
+/// Run `docker` with the specified arguments.
+fn docker(args: &[String]) -> Result<Output> {
     cmd("docker", args)
         .stderr_to_stdout()
         .run()
         .context(error::CommandExecution)
 }
 
-/// Prepare the arguments for docker
-fn docker_args() -> Result<String> {
-    // Gather the user context.
-    let uid = get_effective_uid();
-
-    // Gather the environment context.
-    let root_dir = getenv("BUILDSYS_ROOT_DIR")?;
-    let buildkit_client = getenv("BUILDSYS_BUILDKIT_CLIENT")?;
-    let user_args = getenv("BUILDSYS_DOCKER_RUN_ARGS").unwrap_or_else(|_| "".to_string());
-
-    let docker_args = format!(
-        "run --init --rm --network host --user {uid}:{uid} \
-         --volume {root_dir}:{root_dir} --workdir {root_dir} \
-         {user_args} \
-         --entrypoint /usr/bin/buildctl {buildkit_client}",
-        uid = uid,
-        root_dir = root_dir,
-        user_args = user_args,
-        buildkit_client = buildkit_client
-    );
-
-    Ok(docker_args)
-}
-
-fn buildctl_args() -> Result<String> {
-    // Gather the environment context.
-    let output_dir = getenv("BUILDSYS_OUTPUT_DIR")?;
-    let buildkit_server = getenv("BUILDSYS_BUILDKIT_SERVER")?;
-
-    let buildctl_args = format!(
-        "--addr {buildkit_server} build --progress=plain \
-         --frontend=dockerfile.v0 --local context=. --local dockerfile=. \
-         --output type=local,dest={output_dir}",
-        buildkit_server = buildkit_server,
-        output_dir = output_dir
-    );
-
-    Ok(buildctl_args)
+/// Convert an argument string into a collection of positional arguments.
+fn args<S>(input: S) -> Vec<String>
+where
+    S: AsRef<str>,
+{
+    // Treat "|" as a placeholder that indicates where the argument should
+    // contain spaces after we split on whitespace.
+    input
+        .as_ref()
+        .split_whitespace()
+        .map(|s| s.replace("|", " "))
+        .collect()
 }
 
 /// Retrieve a BUILDSYS_* variable that we expect to be set in the environment,
