@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
-use crate::modeled_types::{SingleLineString, ValidBase64, Identifier};
+use crate::modeled_types::{
+    Identifier, KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue,
+    KubernetesTaintValue, SingleLineString, Url, ValidBase64,
+};
 
 ///// Primary user-visible settings
 
@@ -47,19 +50,19 @@ pub struct KubernetesSettings {
     // Settings we require the user to specify, likely via user data.
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub cluster_name: Option<SingleLineString>,
+    pub cluster_name: Option<KubernetesClusterName>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cluster_certificate: Option<ValidBase64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub api_server: Option<SingleLineString>,
+    pub api_server: Option<Url>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub node_labels: Option<HashMap<SingleLineString, SingleLineString>>,
+    pub node_labels: Option<HashMap<KubernetesLabelKey, KubernetesLabelValue>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub node_taints: Option<HashMap<SingleLineString, SingleLineString>>,
+    pub node_taints: Option<HashMap<KubernetesLabelKey, KubernetesTaintValue>>,
 
     // Dynamic settings.
 
@@ -82,10 +85,10 @@ pub struct KubernetesSettings {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct UpdatesSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub metadata_base_url: Option<SingleLineString>,
+    pub metadata_base_url: Option<Url>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub target_base_url: Option<SingleLineString>,
+    pub target_base_url: Option<Url>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<u32>,
@@ -95,7 +98,7 @@ pub struct UpdatesSettings {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct ContainerImage {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<SingleLineString>,
+    pub source: Option<Url>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
@@ -109,7 +112,7 @@ pub struct ContainerImage {
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct NtpSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub time_servers: Option<Vec<SingleLineString>>,
+    pub time_servers: Option<Vec<Url>>,
 }
 
 ///// Internal services
