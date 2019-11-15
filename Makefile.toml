@@ -32,7 +32,7 @@ mkdir -p ${GO_MOD_CACHE}
 ]
 
 [tasks.fetch]
-dependencies = ["fetch-workspaces", "fetch-vendored", "fetch-external-files"]
+dependencies = ["fetch-workspaces", "fetch-vendored"]
 
 [tasks.fetch-workspaces]
 dependencies = ["setup"]
