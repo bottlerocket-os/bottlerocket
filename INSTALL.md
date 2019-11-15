@@ -195,50 +195,43 @@ aws iam add-role-to-instance-profile \
 ```
 
 Now we add the IAM role to the EKS cluster so it applies to new nodes.
-To do this, we edit the aws-auth ConfigMap using `kubectl`:
-
+To do this, we patch the aws-auth ConfigMap using `kubectl`:
 ```
-kubectl edit -n kube-system configmap/aws-auth
-```
-
-Inside the file, we need to add the IAM role details to the `mapRoles` section.
-This is what the beginning of the file will look like, if your AWS account ID is 1234:
-
-```
- apiVersion: v1
- data:
-   mapRoles: |
-     - groups:
-       - system:bootstrappers
-       - system:nodes
-       rolearn: arn:aws:iam::1234:role/eksctl-thar-nodeg-NodeInstanceRole-IDENTIFIER
-       username: system:node:{{EC2PrivateDNSName}}
- kind: ConfigMap
+ROLE_ARN=$(aws iam get-role --role-name TharInstance | jq --raw-output '.Role.Arn')
+ROLE="    - groups:\n      - system:nodes\n      rolearn: ${ROLE_ARN}\n      username: system:node:{{EC2PrivateDNSName}}\n"
+kubectl get -n kube-system configmap/aws-auth -o yaml \
+   | awk "/mapRoles: \|/{print;print \"$ROLE\";next}1" > /tmp/aws-auth-patch.yml
+kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
 ```
 
-We want to add the new role at the end of the `mapRoles` section, so it looks like this:
-
-```
- apiVersion: v1
- data:
-   mapRoles: |
-     - groups:
-       - system:bootstrappers
-       - system:nodes
-       rolearn: arn:aws:iam::1234:role/eksctl-thar-nodeg-NodeInstanceRole-IDENTIFIER
-       username: system:node:{{EC2PrivateDNSName}}
-     - groups:
-       - system:nodes
-       rolearn: arn:aws:iam::1234:role/TharInstance
-       username: system:node:{{EC2PrivateDNSName}}
- kind: ConfigMap
-```
-
-Make sure you change "1234" to your AWS account ID: it's the same ID that appears a few lines up in the existing role.
-Save the file and confirm that the changes have been applied:
+Confirm that the changes have been applied:
 
 ```
 kubectl describe configmap -n kube-system aws-auth
+```
+
+The resulting ConfigMap should look like this:
+```
+ apiVersion: v1
+ data:
+   mapRoles: |
+     - groups:
+       - system:nodes
+       rolearn: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/TharInstance
+       username: system:node:{{EC2PrivateDNSName}}
+
+     - groups:
+       - system:bootstrappers
+       - system:nodes
+       rolearn: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/eksctl-thar-nodeg-NodeInstanceRole-IDENTIFIER
+       username: system:node:{{EC2PrivateDNSName}}
+ kind: ConfigMap
+```
+
+Alternatively, we can manually edit the aws-auth ConfigMap using `kubectl` to make it look like what is shown above:
+
+```
+kubectl edit -n kube-system configmap/aws-auth
 ```
 
 ## Final launch details
