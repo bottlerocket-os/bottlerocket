@@ -14,13 +14,29 @@ configure_color_output() {
     # Prepare Cargo for build and CI usage
     PATH="$HOME/.cargo/bin:$PATH"
     mkdir -p .cargo "$HOME/.cargo/bin"
-    # Configure Cargo to print without ascii coloring.
-    printf '\n[term]\nverbose = false\ncolor = "never"\n' \
-        | tee -a ".cargo/config" "$HOME/.cargo/config" >/dev/null
+
+    # Manage cargo configs in $HOME and the working directory to configure runs
+    # from the project root.
+    cargo_configs="$HOME/.cargo/config $(test "$(pwd)" = "$HOME" || echo "$(pwd)/.cargo/config" )"
+    for cargo_config in $cargo_configs; do
+        if [ -f "$cargo_config" ] && grep -qF '[term]' "$cargo_config"; then
+            logmsg "WARN: unable to manage existing cargo config in $cargo_config"
+            continue
+        fi
+        # Configure Cargo to print without ascii coloring.
+        printf '\n[term]\nverbose = false\ncolor = "never"\n' >> "$cargo_config"
+    done
+    unset cargo_configs
 
     # Configure cargo-build to print without ascii coloring.
-    install -d "$HOME/.config/cargo-make"
-    printf '\ndisable_color = true\n' >> "$HOME/.config/cargo-make/config.toml"
+    mkdir -p "$HOME/.config/cargo-make"
+    cargo_make_config="$HOME/.config/cargo-make/config.toml"
+    if [ -f "$cargo_make_config" ] && grep -q '^disable_color' "$cargo_make_config"; then
+        logmsg "WARN: unable to manage existing cargo-make config in $cargo_make_config"
+    else
+        printf '\ndisable_color = true\n' >> "$HOME/.config/cargo-make/config.toml"
+    fi
+    unset cargo_make_config
 }
 
 cargo_dep() {
