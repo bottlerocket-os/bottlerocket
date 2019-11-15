@@ -16,7 +16,6 @@ phases:
     commands:
       - environment-report
       - write-build-meta
-      - start-buildkitd-daemon
   build:
     commands:
       # Retry fetches a few times before failing
