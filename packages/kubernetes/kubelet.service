@@ -6,6 +6,7 @@ Wants=configured.target
 BindsTo=containerd.service
 
 [Service]
+Type=notify
 EnvironmentFile=/etc/kubernetes/kubelet/env
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
 # Pull the pause container image before starting `kubelet` so `containerd/cri` wouldn't have to
@@ -38,3 +39,4 @@ MemoryAccounting=true
 
 [Install]
 WantedBy=multi-user.target
+RequiredBy=mark-successful-boot.service

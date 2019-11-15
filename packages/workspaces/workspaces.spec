@@ -27,6 +27,7 @@ Source106: migrator.service
 Source107: host-containers@.service
 Source108: updog.timer
 Source109: updog.service
+Source110: mark-successful-boot.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -197,7 +198,8 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:100} %{S:101} %{S:102} %{S:103} %{S:104} %{S:105} %{S:106} %{S:107} %{S:108} %{S:109} \
+  %{S:100} %{S:101} %{S:102} %{S:103} %{S:104} %{S:105} \
+  %{S:106} %{S:107} %{S:108} %{S:109} %{S:110} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
@@ -263,6 +265,7 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 
 %files -n %{_cross_os}signpost
 %{_cross_bindir}/signpost
+%{_cross_unitdir}/mark-successful-boot.service
 
 %files -n %{_cross_os}updog
 %{_cross_bindir}/updog
