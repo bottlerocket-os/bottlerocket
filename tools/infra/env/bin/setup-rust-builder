@@ -70,7 +70,7 @@ install_rust_toolchain
 
 # Install build tooling dependencies
 cargo_dep --version 0.23.0 cargo-make
-cargo_dep --version 0.3.0  cargo-deny
+cargo_dep --version 0.2.6  cargo-deny
 
 unset -f configure_color_output
 unset -f install_rust_toolchain
