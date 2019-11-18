@@ -35,11 +35,11 @@ use serde::de::{value::MapDeserializer, IntoDeserializer, Visitor};
 use serde::{forward_to_deserialize_any, Deserialize};
 use snafu::ResultExt;
 use std::borrow::Borrow;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
 
 use super::{error, Error, Result};
-use crate::datastore::{deserializer_for_scalar, ScalarDeserializer, KEY_SEPARATOR};
+use crate::datastore::{deserializer_for_scalar, Key, KeyType, ScalarDeserializer};
 
 /// This is the primary interface to deserialization.  We turn the input map into the requested
 /// output type, assuming all non-Option fields are provided, etc.
@@ -50,18 +50,14 @@ use crate::datastore::{deserializer_for_scalar, ScalarDeserializer, KEY_SEPARATO
 /// The BuildHasher bound on the input HashMap lets you use a HashMap with any hashing
 /// implementation.  This is just an implementation detail and not something you have to specify
 /// about your input HashMap - any HashMap using string-like key/value types is fine.
-pub fn from_map<'de, S1, S2, T, BH>(map: &'de HashMap<S1, S2, BH>) -> Result<T>
+pub fn from_map<'de, K, S, T, BH>(map: &'de HashMap<K, S, BH>) -> Result<T>
 where
-    S1: Borrow<str> + Eq + Hash,
-    S2: AsRef<str>,
+    K: Borrow<Key> + Eq + Hash,
+    S: AsRef<str>,
     T: Deserialize<'de>,
     BH: std::hash::BuildHasher,
 {
-    let de = CompoundDeserializer::new(
-        map,
-        map.keys().map(|s| s.borrow().to_string()).collect(),
-        None,
-    );
+    let de = CompoundDeserializer::new(map, map.keys().map(|s| s.borrow().clone()).collect(), None);
     trace!("Deserializing keys: {:?}", de.keys);
     T::deserialize(de)
 }
@@ -78,20 +74,26 @@ where
 ///
 /// This isn't necessary for structs because serde knows the struct's name, so we
 /// can strip it automatically.
-pub fn from_map_with_prefix<'de, S1, S2, T, BH>(
+pub fn from_map_with_prefix<'de, K, S, T, BH>(
     prefix: Option<String>,
-    map: &'de HashMap<S1, S2, BH>,
+    map: &'de HashMap<K, S, BH>,
 ) -> Result<T>
 where
-    S1: Borrow<str> + Eq + Hash,
-    S2: AsRef<str>,
+    K: Borrow<Key> + Eq + Hash,
+    S: AsRef<str>,
     T: Deserialize<'de>,
     BH: std::hash::BuildHasher,
 {
+    let key_prefix = match prefix {
+        None => None,
+        Some(ref p) => {
+            Some(Key::new(KeyType::Data, p).context(error::InvalidPrefix { prefix: p })?)
+        }
+    };
     let de = CompoundDeserializer::new(
         map,
-        map.keys().map(|s| s.borrow().to_string()).collect(),
-        prefix,
+        map.keys().map(|s| s.borrow().clone()).collect(),
+        key_prefix,
     );
     trace!(
         "Deserializing keys with prefix {:?}: {:?}",
@@ -105,15 +107,15 @@ where
 /// key name and a deserializer for it on each iteration, i.e. for each field.  Based on whether
 /// the key name has a dot, we know if we need to recurse again or just deserialize a final value,
 /// which we represent as the two arms of the enum.
-enum ValueDeserializer<'de, S1, S2, BH> {
+enum ValueDeserializer<'de, K, S, BH> {
     Scalar(ScalarDeserializer<'de>),
-    Compound(CompoundDeserializer<'de, S1, S2, BH>),
+    Compound(CompoundDeserializer<'de, K, S, BH>),
 }
 
-impl<'de, S1, S2, BH> serde::de::Deserializer<'de> for ValueDeserializer<'de, S1, S2, BH>
+impl<'de, K, S, BH> serde::de::Deserializer<'de> for ValueDeserializer<'de, K, S, BH>
 where
-    S1: Borrow<str> + Eq + Hash,
-    S2: AsRef<str>,
+    K: Borrow<Key> + Eq + Hash,
+    S: AsRef<str>,
     BH: std::hash::BuildHasher,
 {
     type Error = Error;
@@ -163,10 +165,10 @@ where
     }
 }
 
-impl<'de, S1, S2, BH> IntoDeserializer<'de, Error> for ValueDeserializer<'de, S1, S2, BH>
+impl<'de, K, S, BH> IntoDeserializer<'de, Error> for ValueDeserializer<'de, K, S, BH>
 where
-    S1: Borrow<str> + Eq + Hash,
-    S2: AsRef<str>,
+    K: Borrow<Key> + Eq + Hash,
+    S: AsRef<str>,
     BH: std::hash::BuildHasher,
 {
     type Deserializer = Self;
@@ -178,26 +180,26 @@ where
 
 /// CompoundDeserializer is our main structure that drives serde's MapDeserializer and stores the
 /// state we need to understand the recursive structure of the output.
-struct CompoundDeserializer<'de, S1, S2, BH> {
+struct CompoundDeserializer<'de, K, S, BH> {
     /// A reference to the input data we're deserializing.
-    map: &'de HashMap<S1, S2, BH>,
+    map: &'de HashMap<K, S, BH>,
     /// The keys that we need to consider in this iteration.  Starts out the same as the keys
     /// of the input map, but on recursive calls it's only the keys that are relevant to the
     /// sub-struct we're handling, with the duplicated prefix (the 'path') removed.
-    keys: HashSet<String>,
+    keys: HashSet<Key>,
     /// The path tells us where we are in our recursive structures.
-    path: Option<String>,
+    path: Option<Key>,
 }
 
-impl<'de, S1, S2, BH> CompoundDeserializer<'de, S1, S2, BH>
+impl<'de, K, S, BH> CompoundDeserializer<'de, K, S, BH>
 where
     BH: std::hash::BuildHasher,
 {
     fn new(
-        map: &'de HashMap<S1, S2, BH>,
-        keys: HashSet<String>,
-        path: Option<String>,
-    ) -> CompoundDeserializer<'de, S1, S2, BH> {
+        map: &'de HashMap<K, S, BH>,
+        keys: HashSet<Key>,
+        path: Option<Key>,
+    ) -> CompoundDeserializer<'de, K, S, BH> {
         CompoundDeserializer { map, keys, path }
     }
 }
@@ -206,10 +208,10 @@ fn bad_root<T>() -> Result<T> {
     error::BadRoot.fail()
 }
 
-impl<'de, S1, S2, BH> serde::de::Deserializer<'de> for CompoundDeserializer<'de, S1, S2, BH>
+impl<'de, K, S, BH> serde::de::Deserializer<'de> for CompoundDeserializer<'de, K, S, BH>
 where
-    S1: Borrow<str> + Eq + Hash,
-    S2: AsRef<str>,
+    K: Borrow<Key> + Eq + Hash,
+    S: AsRef<str>,
     BH: std::hash::BuildHasher,
 {
     type Error = Error;
@@ -230,8 +232,15 @@ where
         // MapDeserializer.)
         if !name.is_empty() {
             trace!("Path before name check: {:?}", self.path);
-            self.path
-                .get_or_insert_with(|| name.to_lowercase().to_owned());
+            if self.path.is_none() {
+                self.path = Some(
+                    // to_lowercase handles the discrepancy between key naming and struct naming;
+                    // this initial 'path' creation is the only place we take the struct name from
+                    // serde, per above comment.
+                    Key::from_segments(KeyType::Data, &[name.to_lowercase()])
+                        .context(error::InvalidPrefix { prefix: name })?,
+                );
+            }
             trace!("Path after name check: {:?}", self.path);
         }
 
@@ -241,11 +250,16 @@ where
             // handing it to the MapDeserializer.  (Our real customer is the one specifying the
             // dotted keys, and we always use the struct name there for clarity.)
             trace!("Keys before path strip: {:?}", self.keys);
-            self.keys = self
-                .keys
-                .iter()
-                .map(|k| k.replacen(&format!("{}.", path.to_lowercase()), "", 1))
-                .collect();
+            let mut new_keys = HashSet::new();
+            for key in self.keys {
+                new_keys.insert(key.strip_prefix_segments(&path.segments()).context(
+                    error::StripPrefix {
+                        prefix: path.name(),
+                        name: key.name(),
+                    },
+                )?);
+            }
+            self.keys = new_keys;
             trace!("Keys after path strip: {:?}", self.keys);
         }
 
@@ -259,42 +273,71 @@ where
         // give it an iterator that yields (key, deserializer) pairs.  The nested deserializers
         // have the appropriate 'path' and a subset of 'keys' so they can do their job.
         visitor.visit_map(MapDeserializer::new(self.keys.iter().filter_map(|key| {
-            let struct_name = key.split('.').next().unwrap();
-            trace!("Visiting key '{}', struct name '{}'", key, struct_name);
+            let mut segments: VecDeque<_> = key.segments().clone().into();
+            // Inside this filter_map closure, we can't return early from the outer function, so we
+            // log an error and skip the key.  Errors in this path are generally logic errors
+            // rather than user errors, so this isn't so bad.
+            let struct_name = match segments.pop_front() {
+                Some(s) => s,
+                None => {
+                    error!("Logic error - Key segments.pop_front failed, empty Key?");
+                    return None;
+                }
+            };
+            trace!("Visiting key '{}', struct name '{}'", key, &struct_name);
 
-            // If we have a path, add a separator, otherwise start with an empty string.
-            let old_path = self
-                .path
-                .as_ref()
-                .map(|s| s.clone() + KEY_SEPARATOR)
-                .unwrap_or_default();
-            trace!("Old path: {}", &old_path);
-            let new_path = old_path + struct_name;
-            trace!("New path: {}", &new_path);
+            // At the top level (None path) we start with struct_name as Key, otherwise append
+            // struct_name.
+            trace!("Old path: {:?}", &self.path);
+            let path = match self.path {
+                None => match Key::from_segments(KeyType::Data, &[&struct_name]) {
+                    Ok(key) => key,
+                    Err(e) => {
+                        error!(
+                            "Tried to construct invalid key from struct name '{}', skipping: {}",
+                            &struct_name, e
+                        );
+                        return None;
+                    }
+                },
+                Some(ref old_path) => match old_path.append_segments(&[&struct_name]) {
+                    Ok(key) => key,
+                    Err(e) => {
+                        error!(
+                            "Appending '{}' to existing key '{}' resulted in invalid key, skipping: {}",
+                            old_path, &struct_name, e
+                        );
+                        return None;
+                    }
+                }
+            };
+            trace!("New path: {}", &path);
 
-            if key.contains('.') {
+            if !segments.is_empty() {
                 if structs_done.contains(&struct_name) {
                     // We've handled this structure with a recursive call, so we're done.
-                    trace!("Already handled struct '{}', skipping", struct_name);
+                    trace!("Already handled struct '{}', skipping", &struct_name);
                     None
                 } else {
                     // Otherwise, mark it, and recurse.
-                    structs_done.insert(struct_name);
+                    structs_done.insert(struct_name.clone());
 
                     // Subset the keys so the recursive call knows what it needs to handle -
                     // only things starting with the new path.
-                    let dotted_prefix = struct_name.to_owned() + KEY_SEPARATOR;
                     let keys = self
                         .keys
                         .iter()
-                        .filter(|new_key| new_key.starts_with(&dotted_prefix))
-                        .map(|new_key| new_key[dotted_prefix.len()..].to_owned())
+                        .filter(|new_key| new_key.starts_with_segments(&[&struct_name]))
+                        // Remove the prefix - should always work, but log and skip the key otherwise
+                        .filter_map(|new_key| new_key
+                                    .strip_prefix(&struct_name)
+                                    .map_err(|e| error!("Key starting with segment '{}' couldn't remove it as prefix: {}", &struct_name, e)).ok())
                         .collect();
 
                     // And here's what MapDeserializer expects, the key and deserializer for it
                     trace!(
                         "Recursing for struct '{}' with keys: {:?}",
-                        struct_name,
+                        &struct_name,
                         keys
                     );
                     Some((
@@ -302,7 +345,7 @@ where
                         ValueDeserializer::Compound(CompoundDeserializer::new(
                             self.map,
                             keys,
-                            Some(new_path),
+                            Some(path),
                         )),
                     ))
                 }
@@ -310,12 +353,12 @@ where
                 // No dot, so we have a scalar; hand the data to a scalar deserializer.
                 trace!(
                     "Key '{}' is scalar, getting '{}' from input to deserialize",
-                    key,
-                    new_path
+                    struct_name,
+                    path
                 );
-                let val = self.map.get(&new_path)?;
+                let val = self.map.get(&path)?;
                 Some((
-                    key.to_owned(),
+                    struct_name,
                     ValueDeserializer::Scalar(deserializer_for_scalar(val.as_ref())),
                 ))
             }
@@ -365,11 +408,18 @@ where
 #[cfg(test)]
 mod test {
     use super::{from_map, from_map_with_prefix};
-    use crate::datastore::deserialization::Error;
+    use crate::datastore::{deserialization::Error, Key, KeyType};
 
     use maplit::hashmap;
     use serde::Deserialize;
     use std::collections::HashMap;
+
+    // Helper macro for making a data Key for testing whose name we know is valid.
+    macro_rules! key {
+        ($name:expr) => {
+            Key::new(KeyType::Data, $name).unwrap()
+        };
+    }
 
     #[derive(Debug, Deserialize, PartialEq)]
     struct A {
@@ -396,7 +446,7 @@ mod test {
     #[test]
     fn basic_struct_works() {
         let c: C = from_map(&hashmap! {
-            "c.boolean".to_string() => "true".to_string(),
+            key!("c.boolean") => "true".to_string(),
         })
         .unwrap();
         assert_eq!(c, C { boolean: true });
@@ -405,14 +455,14 @@ mod test {
     #[test]
     fn deep_struct_works() {
         let a: A = from_map(&hashmap! {
-            "a.id".to_string() => "1".to_string(),
-            "a.name".to_string() => "\"it's my name\"".to_string(),
-            "a.list".to_string() => "[1,2, 3, 4]".to_string(),
-            "a.map.a".to_string() => "\"answer is always map\"".to_string(),
-            "a.nested.a".to_string() => "\"quite nested\"".to_string(),
-            "a.nested.b".to_string() => "false".to_string(),
-            "a.nested.c".to_string() => "null".to_string(),
-            "a.nested.d.boolean".to_string() => "true".to_string(),
+            key!("a.id") => "1".to_string(),
+            key!("a.name") => "\"it's my name\"".to_string(),
+            key!("a.list") => "[1,2, 3, 4]".to_string(),
+            key!("a.map.a") => "\"answer is always map\"".to_string(),
+            key!("a.nested.a") => "\"quite nested\"".to_string(),
+            key!("a.nested.b") => "false".to_string(),
+            key!("a.nested.c") => "null".to_string(),
+            key!("a.nested.d.boolean") => "true".to_string(),
         })
         .unwrap();
         assert_eq!(
@@ -437,8 +487,8 @@ mod test {
     #[test]
     fn map_doesnt_work_at_root() {
         let a: Result<HashMap<String, String>, Error> = from_map(&hashmap! {
-            "a".to_string() => "\"it's a\"".to_string(),
-            "b".to_string() => "\"it's b\"".to_string(),
+            key!("a") => "\"it's a\"".to_string(),
+            key!("b") => "\"it's b\"".to_string(),
         });
         a.unwrap_err();
     }
@@ -446,7 +496,7 @@ mod test {
     #[test]
     fn map_works_at_root_with_prefix() {
         let map = &hashmap! {
-            "x.boolean".to_string() => "true".to_string()
+            key!("x.boolean") => "true".to_string()
         };
         let x: HashMap<String, bool> = from_map_with_prefix(Some("x".to_string()), map).unwrap();
         assert_eq!(
@@ -465,7 +515,7 @@ mod test {
     #[test]
     fn disallowed_data_type() {
         let bad: Result<Bad, Error> = from_map(&hashmap! {
-            "id".to_string() => "42".to_string(),
+            key!("id") => "42".to_string(),
         });
         bad.unwrap_err();
     }

@@ -3,7 +3,6 @@
 //! Mimics some of the decisions made for FilesystemDataStore, e.g. metadata being committed
 //! immediately.
 
-use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use std::mem;
 
@@ -54,7 +53,7 @@ impl DataStore for MemoryDataStore {
         Ok(dataset
             .keys()
             // Make sure the data keys start with the given prefix.
-            .filter(|k| k.starts_with(prefix.as_ref()))
+            .filter(|k| k.name().starts_with(prefix.as_ref()))
             .cloned()
             .collect())
     }
@@ -71,7 +70,7 @@ impl DataStore for MemoryDataStore {
         let mut result = HashMap::new();
         for (data_key, meta_map) in self.metadata.iter() {
             // Confirm data key matches requested prefix.
-            if !data_key.starts_with(prefix.as_ref()) {
+            if !data_key.name().starts_with(prefix.as_ref()) {
                 continue;
             }
 
@@ -79,7 +78,7 @@ impl DataStore for MemoryDataStore {
             for (meta_key, _value) in meta_map {
                 // Confirm metadata key matches requested name, if any.
                 if let Some(name) = metadata_key_name {
-                    if name.as_ref() != meta_key.as_ref() {
+                    if name.as_ref() != meta_key.name() {
                         continue;
                     }
                 }
@@ -95,8 +94,7 @@ impl DataStore for MemoryDataStore {
     }
 
     fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>> {
-        let map_key: &str = key.borrow();
-        Ok(self.dataset(committed).get(map_key).cloned())
+        Ok(self.dataset(committed).get(key).cloned())
     }
 
     fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: Committed) -> Result<()> {
@@ -106,15 +104,14 @@ impl DataStore for MemoryDataStore {
     }
 
     fn key_populated(&self, key: &Key, committed: Committed) -> Result<bool> {
-        let map_key: &str = key.borrow();
-        Ok(self.dataset(committed).contains_key(map_key))
+        Ok(self.dataset(committed).contains_key(key))
     }
 
     fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
-        let metadata_for_data = self.metadata.get(data_key.as_ref());
+        let metadata_for_data = self.metadata.get(data_key);
         // If we have a metadata entry for this data key, then we can try fetching the requested
         // metadata key, otherwise we'll return early with Ok(None).
-        let result = metadata_for_data.and_then(|m| m.get(metadata_key.as_ref()));
+        let result = metadata_for_data.and_then(|m| m.get(metadata_key));
         Ok(result.cloned())
     }
 

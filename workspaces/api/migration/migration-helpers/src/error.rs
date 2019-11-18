@@ -40,8 +40,9 @@ pub enum Error {
     #[snafu(display("Migration requires missing key: {}", key))]
     MissingData { key: String },
 
-    #[snafu(display("Migration used invalid key '{}': {}", key, source))]
+    #[snafu(display("Migration used invalid {:?} key '{}': {}", key_type, key, source))]
     InvalidKey {
+        key_type: datastore::KeyType,
         key: String,
         source: datastore::Error,
     },

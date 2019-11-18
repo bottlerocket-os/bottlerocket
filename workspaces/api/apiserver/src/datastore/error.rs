@@ -51,12 +51,8 @@ pub enum Error {
     ))]
     ListedMetaNotPresent { meta_key: String, data_key: String },
 
-    #[snafu(display(
-        "Key name '{}' has invalid format, should match regex: {}",
-        name,
-        pattern
-    ))]
-    InvalidKey { name: String, pattern: regex::Regex },
+    #[snafu(display("Key name '{}' has invalid format: {}", name, msg))]
+    InvalidKey { name: String, msg: String },
 
     #[snafu(display("Key name beyond maximum length {}: {}", name, max))]
     KeyTooLong { name: String, max: usize },

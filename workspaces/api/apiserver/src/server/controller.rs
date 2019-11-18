@@ -18,14 +18,8 @@ use crate::server::error::{self, Result};
 /// Build a Settings based on pending data in the datastore; the Settings will be empty if there
 /// are no pending settings.
 pub(crate) fn get_pending_settings<D: DataStore>(datastore: &D) -> Result<Settings> {
-    get_prefix(
-        datastore,
-        Committed::Pending,
-        "settings.",
-        None as Option<&str>,
-        None,
-    )
-    .map(|maybe_settings| maybe_settings.unwrap_or_else(Settings::default))
+    get_prefix(datastore, Committed::Pending, "settings.", None)
+        .map(|maybe_settings| maybe_settings.unwrap_or_else(Settings::default))
 }
 
 /// Delete any settings that have been received but not committed
@@ -37,16 +31,10 @@ pub(crate) fn delete_pending_settings<D: DataStore>(datastore: &mut D) -> Result
 
 /// Build a Settings based on the data in the datastore.  Errors if no settings are found.
 pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: Committed) -> Result<Settings> {
-    get_prefix(
-        datastore,
-        committed,
-        "settings.",
-        None as Option<&str>,
-        None,
-    )
-    .transpose()
-    // None is not OK here - we always have *some* settings
-    .context(error::MissingData { prefix: "settings" })?
+    get_prefix(datastore, committed, "settings.", None)
+        .transpose()
+        // None is not OK here - we always have *some* settings
+        .context(error::MissingData { prefix: "settings" })?
 }
 
 /// Build a Settings based on the data in the datastore that begins with the given prefix.
@@ -56,7 +44,7 @@ pub(crate) fn get_settings_prefix<D: DataStore, S: AsRef<str>>(
     committed: Committed,
 ) -> Result<Settings> {
     let prefix = "settings.".to_string() + prefix.as_ref();
-    get_prefix(datastore, committed, &prefix, None as Option<&str>, None)
+    get_prefix(datastore, committed, &prefix, None)
         .transpose()
         // None is OK here - they could ask for a prefix we don't have
         .unwrap_or_else(|| Ok(Settings::default()))
@@ -68,7 +56,6 @@ pub(crate) fn get_services<D: DataStore>(datastore: &D) -> Result<Services> {
         datastore,
         Committed::Live,
         "services.",
-        None as Option<&str>,
         Some("services".to_string()),
     )
     .transpose()
@@ -82,7 +69,6 @@ pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<Con
         datastore,
         Committed::Live,
         "configuration-files",
-        None as Option<&str>,
         Some("configuration-files".to_string()),
     )
     .transpose()
@@ -93,49 +79,29 @@ pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<Con
 }
 
 /// Helper to get data from the datastore, starting with the given find_prefix, and deserialize it
-/// into the desired type.  Each key has strip_prefix removed from its start.  map_prefix should
-/// be the prefix to remove if you're deserializing into a map; see docs on from_map_with_prefix.
-/// Returns Err if we couldn't pull expected data; returns Ok(None) if we found there were no
-/// populated keys.
-fn get_prefix<D, T, S1, S2>(
+/// into the desired type.  map_prefix should be the prefix to remove if you're deserializing into
+/// a map; see docs on from_map_with_prefix.  Returns Err if we couldn't pull expected data;
+/// returns Ok(None) if we found there were no populated keys.
+fn get_prefix<D, T, S>(
     datastore: &D,
     committed: Committed,
-    find_prefix: S1,
-    strip_prefix: Option<S2>,
+    find_prefix: S,
     map_prefix: Option<String>,
 ) -> Result<Option<T>>
 where
     D: DataStore,
     T: DeserializeOwned,
-    S1: AsRef<str>,
-    S2: AsRef<str>,
+    S: AsRef<str>,
 {
     let find_prefix = find_prefix.as_ref();
 
-    let mut data = datastore
+    let data = datastore
         .get_prefix(find_prefix, committed)
         .with_context(|| error::DataStore {
             op: format!("get_prefix '{}' for {:?}", find_prefix, committed),
         })?;
     if data.is_empty() {
         return Ok(None);
-    }
-
-    if let Some(ref strip_prefix) = strip_prefix {
-        data = data
-            .into_iter()
-            .map(|(mut key, value)| {
-                let strip_prefix = strip_prefix.as_ref();
-                if key.starts_with(strip_prefix) {
-                    let stripped = &key[strip_prefix.len()..];
-                    trace!("Stripped prefix of key, result: {}", stripped);
-                    key = Key::new(KeyType::Data, &stripped).unwrap_or_else(|_| {
-                        unreachable!("Stripping prefix of Key failed to make Key: {}", stripped)
-                    });
-                }
-                (key, value)
-            })
-            .collect();
     }
 
     from_map_with_prefix(map_prefix, &data).context(error::Deserialization { given: find_prefix })
@@ -162,7 +128,7 @@ pub(crate) fn get_settings_keys<D: DataStore>(
             // TODO: confirm we want to skip requested keys if not populated, or error
             None => continue,
         };
-        data.insert(key_str.to_string(), value);
+        data.insert(key, value);
     }
 
     let settings = from_map(&data).context(error::Deserialization {
@@ -273,10 +239,8 @@ pub(crate) fn get_metadata_for_data_keys<D: DataStore, S: AsRef<str>>(
             Err(_) => continue,
         };
         trace!("Deserializing scalar from metadata");
-        let value: Value =
-            deserialize_scalar::<_, ScalarError>(&value_str).context(error::InvalidMetadata {
-                key: md_key.as_ref(),
-            })?;
+        let value: Value = deserialize_scalar::<_, ScalarError>(&value_str)
+            .context(error::InvalidMetadata { key: md_key.name() })?;
         result.insert(data_key.to_string(), value);
     }
 
@@ -302,7 +266,7 @@ pub(crate) fn get_metadata_for_all_data_keys<D: DataStore, S: AsRef<str>>(
             trace!("Deserializing scalar from metadata");
             let value: Value = deserialize_scalar::<_, ScalarError>(&value_str).context(
                 error::InvalidMetadata {
-                    key: meta_key.as_ref(),
+                    key: meta_key.name(),
                 },
             )?;
             result.insert(data_key.to_string(), value);

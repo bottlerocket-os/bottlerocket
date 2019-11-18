@@ -4,6 +4,7 @@
 //! Data is kept in files with paths resembling the keys, e.g. a/b/c for a.b.c, and metadata is
 //! kept in a suffixed file next to the data, e.g. a/b/c.meta for metadata "meta" about a.b.c
 
+use percent_encoding::{percent_decode_str, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -11,10 +12,17 @@ use std::io;
 use std::path::{self, Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
 
-use super::key::{Key, KeyType, KEY_SEPARATOR};
+use super::key::{Key, KeyType};
 use super::{error, Committed, DataStore, Result};
 
-const METADATA_KEY_PREFIX: char = '.';
+const METADATA_KEY_PREFIX: &str = ".";
+
+// This describes the set of characters we encode when making the filesystem path for a given key.
+// Any non-ASCII characters, plus these ones, will be encoded.
+// We start off very strict (anything not alphanumeric) and remove characters we'll allow.
+// To make inspecting the filesystem easier, we allow any filesystem-safe characters that are
+// allowed in a Key.
+const ENCODE_CHARACTERS: &AsciiSet = &NON_ALPHANUMERIC.remove(b'_').remove(b'-');
 
 #[derive(Debug)]
 pub struct FilesystemDataStore {
@@ -42,8 +50,10 @@ impl FilesystemDataStore {
     fn data_path(&self, key: &Key, committed: Committed) -> Result<PathBuf> {
         let base_path = self.base_path(committed);
 
-        // turn dot-separated key into slash-separated path suffix
-        let path_suffix = key.replace(KEY_SEPARATOR, &path::MAIN_SEPARATOR.to_string());
+        // Encode key segments so they're filesystem-safe
+        let encoded: Vec<_> = key.segments().iter().map(encode_path_component).collect();
+        // Join segments with filesystem separator to get path underneath data store
+        let path_suffix = encoded.join(&path::MAIN_SEPARATOR.to_string());
 
         // Make path from base + prefix
         // FIXME: canonicalize requires that the full path exists.  We know our Key is checked
@@ -54,7 +64,7 @@ impl FilesystemDataStore {
         // Confirm no path traversal outside of base
         ensure!(
             path != *base_path && path.starts_with(base_path),
-            error::PathTraversal { name: key.as_ref() }
+            error::PathTraversal { name: key.name() }
         );
 
         Ok(path)
@@ -67,21 +77,56 @@ impl FilesystemDataStore {
         data_key: &Key,
         committed: Committed,
     ) -> Result<PathBuf> {
-        let data_path = self.data_path(data_key, committed)?;
-        let data_path_str = data_path.to_str().expect("Key paths must be UTF-8");
+        let path = self.data_path(data_key, committed)?;
 
-        let segments: Vec<&str> = data_path_str.rsplitn(2, path::MAIN_SEPARATOR).collect();
-        let (basename, dirname) = match segments.len() {
-            2 => (segments[0], segments[1]),
-            _ => panic!("Grave error with path generation; invalid base path?"),
-        };
+        // We want to add to the existing file name, not create new path components (directories),
+        // so we use a string type rather than a path type.
+        let mut path_str = path.into_os_string();
 
-        let filename = basename.to_owned() + &METADATA_KEY_PREFIX.to_string() + metadata_key;
-        Ok(Path::new(dirname).join(filename))
+        // Key names have quotes as necessary to identify segments with special characters, so
+        // we don't think "a.b" is actually two segments, for example.
+        // Metadata keys only have a single segment, and we encode that as a single path
+        // component, so we don't need the quotes in the filename.
+        let raw_key_name = metadata_key.segments().get(0).context(error::Internal {
+            msg: "metadata key with no segments",
+        })?;
+
+        let encoded_meta = encode_path_component(raw_key_name);
+        path_str.push(METADATA_KEY_PREFIX);
+        path_str.push(encoded_meta);
+
+        Ok(path_str.into())
     }
 }
 
 // Filesystem helpers
+
+/// Encodes a string so that it's safe to use as a filesystem path component.
+fn encode_path_component<S: AsRef<str>>(segment: S) -> String {
+    let encoded = utf8_percent_encode(segment.as_ref(), ENCODE_CHARACTERS);
+    encoded.to_string()
+}
+
+/// Decodes a path component, removing the encoding that's applied to make it filesystem-safe.
+fn decode_path_component<S, P>(segment: S, path: P) -> Result<String>
+where
+    S: AsRef<str>,
+    P: AsRef<Path>,
+{
+    let segment = segment.as_ref();
+
+    percent_decode_str(segment)
+        .decode_utf8()
+        // Get back a plain String.
+        .map(|cow| cow.into_owned())
+        // decode_utf8 will only fail if someone messed with the filesystem contents directly
+        // and created a filename that contains percent-encoded bytes that are invalid UTF-8.
+        .ok()
+        .context(error::Corruption {
+            path: path.as_ref(),
+            msg: format!("invalid UTF-8 in encoded segment '{}'", segment),
+        })
+}
 
 /// Helper for reading a key from the filesystem.  Returns Ok(None) if the file doesn't exist
 /// rather than erroring.
@@ -93,7 +138,7 @@ fn read_file_for_key(key: &Key, path: &Path) -> Result<Option<String>> {
                 return Ok(None);
             }
 
-            Err(e).context(error::KeyRead { key: key.as_ref() })
+            Err(e).context(error::KeyRead { key: key.name() })
         }
     }
 }
@@ -132,24 +177,48 @@ struct KeyPath {
 }
 
 impl KeyPath {
-    fn new(path: &Path) -> Result<KeyPath> {
+    /// Given a DirEntry, gives you a KeyPath if it's a valid path to a key.  Specifically, we return
+    /// Ok(Some(Key)) if it seems like a datastore key.  Returns Ok(None) if it doesn't seem like a
+    /// datastore key, e.g. a directory, or if it's a file otherwise invalid as a key.  Returns Err if
+    /// we weren't able to check.
+    fn from_entry<P: AsRef<Path>>(
+        entry: &DirEntry,
+        strip_path_prefix: P,
+    ) -> Result<Option<KeyPath>> {
+        if !entry.file_type().is_file() {
+            trace!("Skipping non-file entry: {}", entry.path().display());
+            return Ok(None);
+        }
+
+        let key_path_raw = entry
+            .path()
+            .strip_prefix(strip_path_prefix)
+            .context(error::Path)?;
+        // If from_path doesn't think this is an OK key, we'll return Ok(None), otherwise the KeyPath
+        Ok(Self::from_path(key_path_raw).ok())
+    }
+
+    fn from_path(path: &Path) -> Result<KeyPath> {
         let path_str = path.to_str().context(error::Corruption {
             msg: "Non-UTF8 path",
             path,
         })?;
 
-        let mut segments = path_str.splitn(2, '.');
-
-        // Split the data and metadata parts
-        let data_key_raw = segments.next().context(error::Internal {
+        // Split the data and metadata parts.
+        // Any dots in key names are encoded.
+        let mut keys = path_str.splitn(2, '.');
+        let data_key_raw = keys.next().context(error::Internal {
             msg: "KeyPath given empty path",
         })?;
         // Turn the data path into a dotted key
-        let data_key_str = data_key_raw.replace("/", KEY_SEPARATOR);
-        let data_key = Key::new(KeyType::Data, data_key_str)?;
+        let data_segments = data_key_raw
+            .split(path::MAIN_SEPARATOR)
+            .map(|s| decode_path_component(s, path))
+            .collect::<Result<Vec<_>>>()?;
+        let data_key = Key::from_segments(KeyType::Data, &data_segments)?;
 
         // If we have a metadata portion, make that a Key too
-        let metadata_key = match segments.next() {
+        let metadata_key = match keys.next() {
             Some(meta_key_str) => Some(Key::new(KeyType::Meta, meta_key_str)?),
             None => None,
         };
@@ -166,25 +235,6 @@ impl KeyPath {
             None => KeyType::Data,
         }
     }
-}
-
-/// Given a DirEntry, gives you a KeyPath if it's a valid path to a key.  Specifically, we return
-/// Ok(Some(Key)) if it seems like a datastore key.  Returns Ok(None) if it doesn't seem like a
-/// datastore key, e.g. a directory, or if it's a file otherwise invalid as a key.  Returns Err if
-/// we weren't able to check.
-fn key_path_for_entry<P: AsRef<Path>>(
-    entry: &DirEntry,
-    strip_path_prefix: P,
-) -> Result<Option<KeyPath>> {
-    if !entry.file_type().is_file() {
-        trace!("Skipping non-file entry: {}", entry.path().display());
-        return Ok(None);
-    }
-
-    let path = entry.path();
-    let key_path_raw = path.strip_prefix(strip_path_prefix).context(error::Path)?;
-    // If KeyPath doesn't think this is an OK key, we'll return Ok(None), otherwise the KeyPath
-    Ok(KeyPath::new(key_path_raw).ok())
 }
 
 /// Helper to walk through the filesystem to find populated keys of the given type, starting with
@@ -238,8 +288,8 @@ fn find_populated_key_paths<S: AsRef<str>>(
     // For anything we find, confirm it matches the user's filters, and add it to results.
     for entry in walker {
         let entry = entry.context(error::ListKeys)?;
-        if let Some(kp) = key_path_for_entry(&entry, &base)? {
-            if !kp.data_key.as_ref().starts_with(prefix.as_ref()) {
+        if let Some(kp) = KeyPath::from_entry(&entry, &base)? {
+            if !kp.data_key.name().starts_with(prefix.as_ref()) {
                 trace!(
                     "Discarded {:?} key whose data_key '{}' doesn't start with prefix '{}'",
                     kp.key_type(),
@@ -309,7 +359,7 @@ impl DataStore for FilesystemDataStore {
 
             // If the user requested specific metadata, move to the next key unless it matches.
             if let Some(name) = metadata_key_name {
-                if name.as_ref() != meta_key.as_ref() {
+                if name.as_ref() != meta_key.name() {
                     continue;
                 }
             }
@@ -358,12 +408,8 @@ impl DataStore for FilesystemDataStore {
             return Ok(Default::default());
         }
 
-        // Turn String keys of pending data into Key keys, for return
-        let try_pending_keys: Result<HashSet<Key>> = pending_data
-            .keys()
-            .map(|s| Key::new(KeyType::Data, s))
-            .collect();
-        let pending_keys = try_pending_keys?;
+        // Save Keys for return value
+        let pending_keys: HashSet<Key> = pending_data.keys().cloned().collect();
 
         // Apply changes to live
         debug!("Writing pending keys to live");
@@ -398,7 +444,7 @@ impl DataStore for FilesystemDataStore {
 
 #[cfg(test)]
 mod test {
-    use super::{Committed, FilesystemDataStore, Key, KeyType};
+    use super::*;
 
     #[test]
     fn data_path() {
@@ -427,5 +473,27 @@ mod test {
             .metadata_path(&md_key, &data_key, Committed::Live)
             .unwrap();
         assert_eq!(live.into_os_string(), "/base/live/a/b/c.my-metadata");
+    }
+
+    #[test]
+    fn encode_path_component_works() {
+        assert_eq!(encode_path_component("a-b_42"), "a-b_42");
+        assert_eq!(encode_path_component("a.b"), "a%2Eb");
+        assert_eq!(encode_path_component("a/b"), "a%2Fb");
+        assert_eq!(encode_path_component("a b%c<d>e"), "a%20b%25c%3Cd%3Ee");
+    }
+
+    #[test]
+    fn decode_path_component_works() {
+        assert_eq!(decode_path_component("a-b_42", "").unwrap(), "a-b_42");
+        assert_eq!(decode_path_component("a%2Eb", "").unwrap(), "a.b");
+        assert_eq!(decode_path_component("a%2Fb", "").unwrap(), "a/b");
+        assert_eq!(
+            decode_path_component("a%20b%25c%3Cd%3Ee", "").unwrap(),
+            "a b%c<d>e"
+        );
+
+        // Invalid UTF-8
+        decode_path_component("%C3%28", "").unwrap_err();
     }
 }

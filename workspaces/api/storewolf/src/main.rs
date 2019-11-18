@@ -338,20 +338,17 @@ fn populate_default_datastore<P: AsRef<Path>>(
         // before serializing so we have full dotted keys like
         // "settings.foo.bar" and not just "foo.bar". We use a HashMap
         // to rebuild the nested structure.
-        let def_settings = to_pairs_with_prefix("settings".to_string(), &def_settings_table)
-            .context(error::Serialization {
+        let def_settings = to_pairs_with_prefix("settings", &def_settings_table).context(
+            error::Serialization {
                 given: "default settings",
-            })?;
+            },
+        )?;
 
         // For each of the default settings, check if it exists in the
         // datastore. If not, add it to the map of settings to write
         let mut settings_to_write = HashMap::new();
         for (key, val) in def_settings {
-            let setting = Key::new(KeyType::Data, &key).context(error::InvalidKey {
-                key_type: KeyType::Data,
-                key: key.to_string(),
-            })?;
-            if !existing_data.contains(&setting) {
+            if !existing_data.contains(&key) {
                 settings_to_write.insert(key, val);
             }
         }
@@ -432,12 +429,8 @@ fn populate_default_datastore<P: AsRef<Path>>(
 
     let mut other_defaults_to_write = HashMap::new();
     if !defaults.is_empty() {
-        for (key, val) in defaults.iter() {
-            let data_key = Key::new(KeyType::Data, &key).context(error::InvalidKey {
-                key_type: KeyType::Data,
-                key,
-            })?;
-            if !existing_data.contains(&data_key) {
+        for (key, val) in defaults {
+            if !existing_data.contains(&key) {
                 other_defaults_to_write.insert(key, val);
             }
         }

@@ -21,7 +21,7 @@ use std::process;
 use std::str::{self, FromStr};
 
 use apiserver::datastore::serialization::to_pairs_with_prefix;
-use apiserver::datastore::{self, deserialization};
+use apiserver::datastore::{self, deserialization, Key, KeyType};
 use apiserver::model;
 
 // FIXME Get from configuration in the future
@@ -35,9 +35,7 @@ mod error {
     use http::StatusCode;
     use snafu::Snafu;
 
-    use apiserver::datastore;
-    use apiserver::datastore::deserialization;
-    use apiserver::datastore::serialization;
+    use apiserver::datastore::{self, deserialization, serialization, KeyType};
 
     /// Potential errors during dynamic settings retrieval
     #[derive(Debug, Snafu)]
@@ -142,6 +140,13 @@ mod error {
             source: datastore::ScalarError,
         },
 
+        #[snafu(display("Unable to create {:?} key '{}': {}", key_type, key, source))]
+        InvalidKey {
+            key_type: KeyType,
+            key: String,
+            source: datastore::Error,
+        },
+
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
     }
@@ -180,7 +185,7 @@ where
 
 /// Given a list of settings, query the API for any that are currently
 /// set or are in pending state.
-fn get_populated_settings<P>(socket_path: P, to_query: Vec<&str>) -> Result<HashSet<String>>
+fn get_populated_settings<P>(socket_path: P, to_query: Vec<&str>) -> Result<HashSet<Key>>
 where
     P: AsRef<Path>,
 {
@@ -213,8 +218,8 @@ where
 
         // Serialize the Settings struct into key/value pairs. This builds the dotted
         // string representation of the setting
-        let settings_keypairs = to_pairs_with_prefix("settings".to_string(), &settings)
-            .context(error::SerializeSettings)?;
+        let settings_keypairs =
+            to_pairs_with_prefix("settings", &settings).context(error::SerializeSettings)?;
 
         // Put the setting into our hashset of populated keys
         for (k, _) in settings_keypairs {
@@ -243,7 +248,11 @@ where
     let populated_settings = get_populated_settings(&socket_path, settings_to_query)?;
 
     // For each generator, run it and capture the output
-    for (setting, generator) in generators {
+    for (setting_str, generator) in generators {
+        let setting = Key::new(KeyType::Data, &setting_str).context(error::InvalidKey {
+            key_type: KeyType::Data,
+            key: &setting_str,
+        })?;
         // Don't clobber settings that are already populated
         if populated_settings.contains(&setting) {
             debug!("Setting '{}' is already populated, skipping", setting);
