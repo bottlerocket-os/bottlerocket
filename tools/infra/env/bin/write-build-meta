@@ -25,7 +25,7 @@ write_codebuild() {
 }
 
 if ! mkdir -p "build/meta" && cd "build/meta"; then
-    logmsg "ERROR: could not create build/meta directory for writing"
+    logger -s -t ERROR "could not create build/meta directory for writing"
     exit 1
 fi
 
@@ -36,7 +36,7 @@ if [[ -z "${CODEBUILD_BUILD_ID}" ]]; then
 fi
 
 if [[ ! -s "build-service" ]]; then
-    logmsg "WARN: unknown service, cannot write out CI build metadata"
+    logger -s -t WARN "unknown service, cannot write out CI build metadata"
     echo "unknown" > build-service
     exit 0
 fi

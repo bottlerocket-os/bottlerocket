@@ -12,23 +12,23 @@ shift 1
 
 until [[ "$1" = "--" ]]; do
     if [[ "$#" -eq 0 ]]; then
-        echo "ERROR: command must be given after a '--' argument." >&2
-        echo "       example: '$0 5 -- curl -L https://checkip.amazonaws.com'" >&2
+        logger -s -t ERROR <<EOF
+command must be given after a '--' argument.
+example retry: '$0 5 -- curl -L https://checkip.amazonaws.com'
+EOF
         exit 2
     fi
     MSG="${1:+$MSG $1}"
     shift 1
 done
-MSG="${MSG:+ - $MSG}"
+shift 1 # drop '--'
 
 for i in $(seq 1 "$MAX_RETRIES"); do
-    eval "${@}"
-    ret=$?
-    if [[ "$ret" -eq 0 ]]; then
+    if "${@}"; then
         exit 0
     fi
     if [[ "$i" -eq "$MAX_RETRIES" ]]; then
-        echo "FAIL: retries exhausted$MSG"
+        logger -s -t ERROR "retries exhausted${MSG:+ - $MSG}"
         exit 1
     fi
 done

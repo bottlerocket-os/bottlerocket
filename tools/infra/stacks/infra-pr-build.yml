@@ -1,4 +1,4 @@
-Parameters:
+gppParameters:
   BuildSpecPath:
     Type: String
     AllowedPattern: '.+\.yml$'
