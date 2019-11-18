@@ -2,6 +2,10 @@
 //! (ser/de) behavior is desired.  For example, the ValidBase64 type can be used for a model field
 //! when we don't even want to accept an API call with invalid base64 data.
 
+// The pattern in this file is to make a struct and implement TryFrom<&str> with code that does
+// necessary checks and returns the struct.  Other traits that treat the struct like a string can
+// be implemented for you with the string_impls_for macro.
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
 use serde::de::Error as _;
@@ -31,6 +35,82 @@ pub mod error {
     }
 }
 
+/// Helper macro for implementing the common string-like traits for a modeled type.
+/// Pass the name of the type, and the name of the type in quotes (to be used in string error
+/// messages, etc.).
+macro_rules! string_impls_for {
+    ($for:ident, $for_str:expr) => (
+        impl TryFrom<String> for $for {
+            type Error = error::Error;
+
+            fn try_from(input: String) -> Result<Self, Self::Error> {
+                Self::try_from(input.as_ref())
+            }
+        }
+
+        impl<'de> Deserialize<'de> for $for {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                let original = String::deserialize(deserializer)?;
+                Self::try_from(original)
+                    .map_err(|e| D::Error::custom(format!("Unable to deserialize into {}: {}", $for_str, e)))
+            }
+        }
+
+        /// We want to serialize the original string back out, not our structure, which is just there to
+        /// force validation.
+        impl Serialize for $for {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: Serializer,
+            {
+                serializer.serialize_str(&self.inner)
+            }
+        }
+
+        impl Deref for $for {
+            type Target = str;
+            fn deref(&self) -> &Self::Target {
+                &self.inner
+            }
+        }
+
+        impl Borrow<String> for $for {
+            fn borrow(&self) -> &String {
+                &self.inner
+            }
+        }
+
+        impl Borrow<str> for $for {
+            fn borrow(&self) -> &str {
+                &self.inner
+            }
+        }
+
+        impl AsRef<str> for $for {
+            fn as_ref(&self) -> &str {
+                &self.inner
+            }
+        }
+
+        impl fmt::Display for $for {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.inner)
+            }
+        }
+
+        impl From<$for> for String {
+            fn from(x: $for) -> Self {
+                x.inner
+            }
+        }
+    )
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// ValidBase64 can only be created by deserializing from valid base64 text.  It stores the
 /// original text, not the decoded form.  Its purpose is input validation, namely being used as a
 /// field in a model structure so that you don't even accept a request with a field that has
@@ -53,72 +133,7 @@ impl TryFrom<&str> for ValidBase64 {
     }
 }
 
-impl TryFrom<String> for ValidBase64 {
-    type Error = error::Error;
-
-    fn try_from(input: String) -> Result<Self, Self::Error> {
-        Self::try_from(input.as_ref())
-    }
-}
-
-impl<'de> Deserialize<'de> for ValidBase64 {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let original = String::deserialize(deserializer)?;
-        Self::try_from(original)
-            .map_err(|e| D::Error::custom(format!("Unable to deserialize into ValidBase64: {}", e)))
-    }
-}
-
-/// We want to serialize the original string back out, not our structure, which is just there to
-/// force validation.
-impl Serialize for ValidBase64 {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.inner)
-    }
-}
-
-impl Deref for ValidBase64 {
-    type Target = str;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl Borrow<String> for ValidBase64 {
-    fn borrow(&self) -> &String {
-        &self.inner
-    }
-}
-
-impl Borrow<str> for ValidBase64 {
-    fn borrow(&self) -> &str {
-        &self.inner
-    }
-}
-
-impl AsRef<str> for ValidBase64 {
-    fn as_ref(&self) -> &str {
-        &self.inner
-    }
-}
-
-impl fmt::Display for ValidBase64 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.inner)
-    }
-}
-
-impl From<ValidBase64> for String {
-    fn from(x: ValidBase64) -> Self {
-        x.inner
-    }
-}
+string_impls_for!(ValidBase64, "ValidBase64");
 
 #[cfg(test)]
 mod test_valid_base64 {
@@ -178,76 +193,7 @@ impl TryFrom<&str> for SingleLineString {
     }
 }
 
-impl TryFrom<String> for SingleLineString {
-    type Error = error::Error;
-
-    fn try_from(input: String) -> Result<Self, Self::Error> {
-        Self::try_from(input.as_ref())
-    }
-}
-
-/// Validate line count before we accept a deserialization.
-impl<'de> Deserialize<'de> for SingleLineString {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let original = String::deserialize(deserializer)?;
-        Self::try_from(original).map_err(|e| {
-            D::Error::custom(format!(
-                "Unable to deserialize into SingleLineString: {}",
-                e
-            ))
-        })
-    }
-}
-
-/// Serialize the original string back out.
-impl Serialize for SingleLineString {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.inner)
-    }
-}
-
-impl Deref for SingleLineString {
-    type Target = str;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl Borrow<String> for SingleLineString {
-    fn borrow(&self) -> &String {
-        &self.inner
-    }
-}
-
-impl Borrow<str> for SingleLineString {
-    fn borrow(&self) -> &str {
-        &self.inner
-    }
-}
-
-impl AsRef<str> for SingleLineString {
-    fn as_ref(&self) -> &str {
-        &self.inner
-    }
-}
-
-impl fmt::Display for SingleLineString {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.inner)
-    }
-}
-
-impl From<SingleLineString> for String {
-    fn from(x: SingleLineString) -> Self {
-        x.inner
-    }
-}
+string_impls_for!(SingleLineString, "SingleLineString");
 
 #[cfg(test)]
 mod test_single_line_string {
@@ -308,65 +254,7 @@ impl TryFrom<&str> for Identifier {
     }
 }
 
-impl TryFrom<String> for Identifier {
-    type Error = error::Error;
-
-    fn try_from(input: String) -> Result<Self, Self::Error> {
-        Self::try_from(input.as_ref())
-    }
-}
-
-impl<'de> Deserialize<'de> for Identifier {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let original = String::deserialize(deserializer)?;
-        Self::try_from(original)
-            .map_err(|e| D::Error::custom(format!("Unable to deserialize into Identifier: {}", e)))
-    }
-}
-
-/// Serialize the original string back out.
-impl Serialize for Identifier {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.inner)
-    }
-}
-
-impl Deref for Identifier {
-    type Target = str;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl Borrow<String> for Identifier {
-    fn borrow(&self) -> &String {
-        &self.inner
-    }
-}
-
-impl Borrow<str> for Identifier {
-    fn borrow(&self) -> &str {
-        &self.inner
-    }
-}
-
-impl AsRef<str> for Identifier {
-    fn as_ref(&self) -> &str {
-        &self.inner
-    }
-}
-
-impl fmt::Display for Identifier {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.inner)
-    }
-}
+string_impls_for!(Identifier, "Identifier");
 
 #[cfg(test)]
 mod test_valid_identifier {
