@@ -35,6 +35,7 @@ skip = [
     { name = "data_store_version", licenses = [] },
     { name = "growpart", licenses = [] },
     { name = "host-containers", licenses = [] },
+    { name = "host-containers-version-migration", licenses = [] },
     { name = "laika", licenses = [] },
     { name = "migration-helpers", licenses = [] },
     { name = "migrator", licenses = [] },

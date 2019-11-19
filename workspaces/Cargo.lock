@@ -1021,6 +1021,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "host-containers-version-migration"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+ "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "hostname"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
