@@ -1,0 +1,78 @@
+#!/usr/bin/env sh
+#
+# setup-rust-builder - install rust and configure shell for its use by a builder
+#
+# This script is expected to be sourced by callers in order to affect their PATH
+# directly AND is used in CodeBuild environments where the SHELL is /bin/sh.
+#
+# usage:
+#
+#   . setup-rust-builder
+#
+
+configure_color_output() {
+    # Prepare Cargo for build and CI usage
+    PATH="$HOME/.cargo/bin:$PATH"
+    mkdir -p .cargo "$HOME/.cargo/bin"
+
+    # Manage cargo configs in $HOME and the working directory to configure runs
+    # from the project root.
+    cargo_configs="$HOME/.cargo/config"
+    if [ "$(pwd)" = "$HOME" ]; then
+        cargo_configs="$cargo_configs $(pwd)/.cargo/config"
+    fi
+    for cargo_config in $cargo_configs; do
+        if [ -f "$cargo_config" ] && grep -qF '[term]' "$cargo_config"; then
+            logger -s -t WARN "unable to manage existing cargo config in $cargo_config"
+            continue
+        fi
+        # Configure Cargo to print without ascii coloring.
+        printf '\n[term]\nverbose = false\ncolor = "never"\n' >> "$cargo_config"
+    done
+    unset cargo_configs
+
+    # Configure cargo-build to print without ascii coloring.
+    mkdir -p "$HOME/.config/cargo-make"
+    cargo_make_config="$HOME/.config/cargo-make/config.toml"
+    if [ -f "$cargo_make_config" ] && grep -q '^disable_color' "$cargo_make_config"; then
+        logger -s -t WARN "unable to manage existing cargo-make config in $cargo_make_config"
+    else
+        printf '\ndisable_color = true\n' >> "$HOME/.config/cargo-make/config.toml"
+    fi
+    unset cargo_make_config
+}
+
+cargo_dep() {
+    cargo_install_package="$@"
+    logger -s -t INFO "installing cargo dep with 'cargo install $cargo_install_package'"
+    if ! cargo install --force $cargo_install_package; then
+        logger -s -t ERROR "failed to install dep with 'cargo install $cargo_install_package'"
+        exit 1
+    fi
+}
+
+install_rust_toolchain() {
+    test -f rustup-init.sh || rm -f rustup-init.sh
+    if ! curl -o rustup-init.sh --proto '=https' --tlsv1.2 -sS "https://sh.rustup.rs"; then
+        logger -s -t ERROR "could not fetch rustup, needed for managing rust toolchain"
+        exit 1
+    fi
+    if ! bash rustup-init.sh -y --no-modify-path --default-toolchain stable ; then
+        logger -s -t ERROR "could not setup rustup & rust toolchain for build"
+        exit 1
+    fi
+    rm -f rustup-init.sh
+}
+
+configure_color_output
+
+install_rust_toolchain
+
+# Install build tooling dependencies
+cargo_dep --version 0.23.0 cargo-make
+cargo_dep --version 0.2.6  cargo-deny
+
+unset -f configure_color_output
+unset -f install_rust_toolchain
+unset -f cargo_dep
+

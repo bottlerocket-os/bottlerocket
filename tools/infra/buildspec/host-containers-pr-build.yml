@@ -1,0 +1,17 @@
+version: 0.2
+
+env:
+  variables:
+    # Path to host containers folder
+    EXTRAS_DIR: "./extras"
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+  build:
+    commands:
+      - echo Building the admin container...
+      - cd "${CODEBUILD_SRC_DIR}/${EXTRAS_DIR}"/admin-container && docker build .
+      - echo Building the control container...
+      - cd "${CODEBUILD_SRC_DIR}/${EXTRAS_DIR}"/control-container && docker build .

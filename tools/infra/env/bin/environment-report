@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# environment-report - print out builder details for reference
+#
+# The output is expected to be read from the buildlog if the details are needing
+# to be referenced to.
+#
+set -x
+
+uname -a
+nproc
+free --total --wide
+df -x squashfs -x cgroup -x sysfs -x proc -x devtmpfs -x devpts
+rustc --version
+cargo --version
+cargo make --version
+cargo deny --version
+docker version
+
