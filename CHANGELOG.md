@@ -2,7 +2,7 @@
 
 ## Breaking changes
 
-* Host container names (e.g. `admin` in `settings.host-containers.admin`) are restricted to ASCII alphanumeric characters and hyphens. Upgrades from v0.1 that use additional characters in hsot container names will result in a broken system ([#450]).
+* Host container names (e.g. `admin` in `settings.host-containers.admin`) are restricted to ASCII alphanumeric characters and hyphens. Upgrades from v0.1 that use additional characters in host container names will result in a broken system ([#450]).
 * Most settings values disallow multi-line strings. Upgrades from v0.1 that use multi-line strings in settings values will result in a broken system ([#453], [#483]).
 * Additional characters are permitted in API keys; for example, dots and slashes in Kubernetes labels. Downgrades from v0.2 that use dots and slashes in API keys will result in a broken system ([#511]).
 
