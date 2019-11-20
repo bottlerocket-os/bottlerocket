@@ -5,9 +5,7 @@ Summary: Library for packet capture
 License: BSD with advertising
 URL: http://www.tcpdump.org
 Source0: http://www.tcpdump.org/release/libpcap-%{version}.tar.gz
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

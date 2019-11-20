@@ -1,7 +1,7 @@
-From 91f8bfc0fd5eff9066f0371c44fd7c8a5e986d02 Mon Sep 17 00:00:00 2001
+From b12604ebee623187352f1430ad7b87ccfc58b3a0 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:15:02 +0000
-Subject: [PATCH 1/6] disable shared for host builds of gmp, isl, mpc, mpfr
+Subject: [PATCH 1/5] disable shared for host builds of gmp, isl, mpc, mpfr
 
 Building these GCC dependencies as static libraries avoids the need to
 provide the shared library paths at runtime, using either rpath entries
@@ -17,10 +17,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  5 files changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/package/Makefile.in b/package/Makefile.in
-index 44761b79c5..f24abdd703 100644
+index 0a7899c852..0d1330f444 100644
 --- a/package/Makefile.in
 +++ b/package/Makefile.in
-@@ -217,7 +217,7 @@ HOST_CPPFLAGS  = -I$(HOST_DIR)/include
+@@ -228,7 +228,7 @@ HOST_CPPFLAGS  = -I$(HOST_DIR)/include
  HOST_CFLAGS   ?= -O2
  HOST_CFLAGS   += $(HOST_CPPFLAGS)
  HOST_CXXFLAGS += $(HOST_CFLAGS)
@@ -58,7 +58,7 @@ index b5f01c4c8d..855de8fb46 100644
 +
  $(eval $(host-autotools-package))
 diff --git a/package/mpc/mpc.mk b/package/mpc/mpc.mk
-index 89bbfd9c51..ebf01e2069 100644
+index 0e84bc2770..485910e5c3 100644
 --- a/package/mpc/mpc.mk
 +++ b/package/mpc/mpc.mk
 @@ -12,5 +12,9 @@ MPC_INSTALL_STAGING = YES
@@ -72,7 +72,7 @@ index 89bbfd9c51..ebf01e2069 100644
  $(eval $(autotools-package))
  $(eval $(host-autotools-package))
 diff --git a/package/mpfr/mpfr.mk b/package/mpfr/mpfr.mk
-index 1b67cf2e45..d65c29b9d1 100644
+index ef2999eb16..a65c189228 100644
 --- a/package/mpfr/mpfr.mk
 +++ b/package/mpfr/mpfr.mk
 @@ -14,5 +14,9 @@ MPFR_DEPENDENCIES = gmp

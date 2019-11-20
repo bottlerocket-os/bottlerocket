@@ -5,10 +5,8 @@ Summary: Library for netfilter cthelper
 License: GPLv2
 URL: http://netfilter.org
 Source0: https://netfilter.org/projects/libnetfilter_cthelper/files/libnetfilter_cthelper-%{version}.tar.bz2
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libmnl
 
 %description

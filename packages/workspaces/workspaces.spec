@@ -33,11 +33,8 @@ Source110: mark-successful-boot.service
 Source200: migration-tmpfiles.conf
 Source201: host-containers-tmpfiles.conf
 
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}systemd-devel
-BuildRequires: %{_cross_os}rust
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

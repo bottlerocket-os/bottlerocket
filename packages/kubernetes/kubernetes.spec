@@ -21,12 +21,11 @@ Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
+Patch3: 0003-enable-PIE-for-platform-binaries.patch
 
 BuildRequires: git
 BuildRequires: rsync
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}golang
 
 %description
 %{summary}.
@@ -36,7 +35,6 @@ Summary: Container cluster node agent
 License: ASL 2.0
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}findutils
 
 %description -n %{_cross_os}kubelet

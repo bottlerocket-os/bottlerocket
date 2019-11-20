@@ -8,13 +8,11 @@ Source0: https://download.tuxfamily.org/chrony/chrony-3.5.tar.gz
 Source1: chronyd.service
 Source2: chrony-conf
 Source3: chrony-sysusers.conf
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libseccomp-devel
 BuildRequires: %{_cross_os}ncurses-devel
 BuildRequires: %{_cross_os}readline-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}ncurses

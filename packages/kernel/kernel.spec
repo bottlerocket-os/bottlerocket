@@ -18,7 +18,6 @@ Patch0006: 0006-dm-init-remove-trailing-newline-from-calls-to-DMERR-.patch
 Patch0007: 0007-lustrefsx-Disable-Werror-stringop-overflow.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: hostname
 BuildRequires: kmod
 BuildRequires: openssl-devel

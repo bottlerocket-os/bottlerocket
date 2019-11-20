@@ -19,12 +19,10 @@ path = "pkg.rs"
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc", optional=true }
-rust = { path = "../rust", optional=true }
 systemd = { path = "../systemd", optional=true }
 
 [features]
 cascade = [
     "glibc",
-    "rust",
     "systemd",
 ]

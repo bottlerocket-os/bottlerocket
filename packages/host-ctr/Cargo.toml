@@ -14,10 +14,8 @@ path = "pkg.rs"
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc", optional=true }
-golang = { path = "../golang", optional=true }
 
 [features]
 cascade = [
     "glibc",
-    "golang",
 ]

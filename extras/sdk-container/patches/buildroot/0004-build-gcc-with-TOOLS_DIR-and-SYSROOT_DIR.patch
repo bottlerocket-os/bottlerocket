@@ -1,7 +1,7 @@
-From 17d2577b888f364e299c093c25e7eb88ee160955 Mon Sep 17 00:00:00 2001
+From bb41cbf1a393416e74efa9dc7bee0610a2ec3fbb Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:58:27 +0000
-Subject: [PATCH 4/6] build gcc with TOOLS_DIR and SYSROOT_DIR
+Subject: [PATCH 4/5] build gcc with TOOLS_DIR and SYSROOT_DIR
 
 Most of the changes here are to the second and final stage of our GCC
 build, so that the binaries are written to the new output path, and
@@ -28,10 +28,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  3 files changed, 46 insertions(+), 15 deletions(-)
 
 diff --git a/package/gcc/gcc-final/gcc-final.mk b/package/gcc/gcc-final/gcc-final.mk
-index cbde56ce1c..a5a90f41c1 100644
+index f478fde0d7..94b587fbb0 100644
 --- a/package/gcc/gcc-final/gcc-final.mk
 +++ b/package/gcc/gcc-final/gcc-final.mk
-@@ -46,9 +46,16 @@ define  HOST_GCC_FINAL_CONFIGURE_CMDS
+@@ -45,9 +45,16 @@ define  HOST_GCC_FINAL_CONFIGURE_CMDS
  		LDFLAGS="$(HOST_LDFLAGS)" \
  		$(HOST_GCC_FINAL_CONF_ENV) \
  		./configure \
@@ -50,7 +50,7 @@ index cbde56ce1c..a5a90f41c1 100644
  		$(QUIET) $(HOST_GCC_FINAL_CONF_OPTS) \
  	)
  endef
-@@ -64,16 +71,16 @@ HOST_GCC_FINAL_CONF_OPTS = \
+@@ -63,18 +70,18 @@ HOST_GCC_FINAL_CONF_OPTS = \
  	--enable-languages=$(GCC_FINAL_CROSS_LANGUAGES) \
  	--with-build-time-tools=$(HOST_DIR)/$(GNU_TARGET_NAME)/bin
  
@@ -60,17 +60,19 @@ index cbde56ce1c..a5a90f41c1 100644
  # doesn't use floating point operations.
  ifeq ($(BR2_sh4)$(BR2_sh4eb),y)
  HOST_GCC_FINAL_CONF_OPTS += "--with-multilib-list=m4,m4-nofpu"
+ # check-package OverriddenVariable
 -HOST_GCC_FINAL_GCC_LIB_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/lib/!m4*
 +HOST_GCC_FINAL_GCC_LIB_DIR = $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib/!m4*
  endif
  ifeq ($(BR2_sh4a)$(BR2_sh4aeb),y)
  HOST_GCC_FINAL_CONF_OPTS += "--with-multilib-list=m4a,m4a-nofpu"
+ # check-package OverriddenVariable
 -HOST_GCC_FINAL_GCC_LIB_DIR = $(HOST_DIR)/$(GNU_TARGET_NAME)/lib/!m4*
 +HOST_GCC_FINAL_GCC_LIB_DIR = $(TOOLS_DIR)/usr/$(GNU_TARGET_NAME)/lib/!m4*
  endif
  
  ifeq ($(BR2_GCC_SUPPORTS_LIBCILKRTS),y)
-@@ -88,7 +95,7 @@ ifeq ($(BR2_PTHREADS_NONE),y)
+@@ -89,7 +96,7 @@ ifeq ($(BR2_PTHREADS_NONE),y)
  HOST_GCC_FINAL_CONF_OPTS += --disable-libcilkrts
  endif
  
@@ -79,7 +81,7 @@ index cbde56ce1c..a5a90f41c1 100644
  # disable libcilkrts as there is no static version
  HOST_GCC_FINAL_CONF_OPTS += --disable-libcilkrts
  endif
-@@ -96,10 +103,8 @@ endif
+@@ -97,10 +104,8 @@ endif
  endif # BR2_GCC_SUPPORTS_LIBCILKRTS
  
  # Disable shared libs like libstdc++ if we do static since it confuses linking
@@ -92,7 +94,7 @@ index cbde56ce1c..a5a90f41c1 100644
  endif
  
  ifeq ($(BR2_GCC_ENABLE_OPENMP),y)
-@@ -118,22 +123,27 @@ HOST_GCC_FINAL_CONF_ENV = \
+@@ -119,22 +124,27 @@ HOST_GCC_FINAL_CONF_ENV = \
  
  HOST_GCC_FINAL_MAKE_OPTS += $(HOST_GCC_COMMON_MAKE_OPTS)
  
@@ -123,7 +125,7 @@ index cbde56ce1c..a5a90f41c1 100644
  
  # coldfire is not working without removing these object files from libgcc.a
  ifeq ($(BR2_m68k_cf),y)
-@@ -146,6 +156,7 @@ endif
+@@ -147,6 +157,7 @@ endif
  
  # Cannot use the HOST_GCC_FINAL_USR_LIBS mechanism below, because we want
  # libgcc_s to be installed in /lib and not /usr/lib.
@@ -131,7 +133,7 @@ index cbde56ce1c..a5a90f41c1 100644
  define HOST_GCC_FINAL_INSTALL_LIBGCC
  	-cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/libgcc_s* \
  		$(STAGING_DIR)/lib/
-@@ -154,6 +165,7 @@ define HOST_GCC_FINAL_INSTALL_LIBGCC
+@@ -155,6 +166,7 @@ define HOST_GCC_FINAL_INSTALL_LIBGCC
  endef
  
  HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_INSTALL_LIBGCC
@@ -139,7 +141,7 @@ index cbde56ce1c..a5a90f41c1 100644
  
  define HOST_GCC_FINAL_INSTALL_LIBATOMIC
  	-cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/libatomic* \
-@@ -199,7 +211,7 @@ define HOST_GCC_FINAL_INSTALL_STATIC_LIBS
+@@ -192,7 +204,7 @@ define HOST_GCC_FINAL_INSTALL_STATIC_LIBS
  	done
  endef
  
@@ -148,7 +150,7 @@ index cbde56ce1c..a5a90f41c1 100644
  define HOST_GCC_FINAL_INSTALL_SHARED_LIBS
  	for i in $(HOST_GCC_FINAL_USR_LIBS) ; do \
  		cp -dpf $(HOST_GCC_FINAL_GCC_LIB_DIR)/$${i}.so* \
-@@ -218,4 +230,20 @@ endef
+@@ -211,4 +223,20 @@ endef
  HOST_GCC_FINAL_POST_INSTALL_HOOKS += HOST_GCC_FINAL_INSTALL_USR_LIBS
  endif
  
@@ -170,10 +172,10 @@ index cbde56ce1c..a5a90f41c1 100644
 +
  $(eval $(host-autotools-package))
 diff --git a/package/gcc/gcc-initial/gcc-initial.mk b/package/gcc/gcc-initial/gcc-initial.mk
-index d5d925a3d9..8a4a24be8f 100644
+index f5bc6c5b77..9f34effd10 100644
 --- a/package/gcc/gcc-initial/gcc-initial.mk
 +++ b/package/gcc/gcc-initial/gcc-initial.mk
-@@ -35,6 +35,7 @@ HOST_GCC_INITIAL_CONF_OPTS = \
+@@ -34,6 +34,7 @@ HOST_GCC_INITIAL_CONF_OPTS = \
  	$(HOST_GCC_COMMON_CONF_OPTS) \
  	--enable-languages=c \
  	--disable-shared \
@@ -181,7 +183,7 @@ index d5d925a3d9..8a4a24be8f 100644
  	--without-headers \
  	--disable-threads \
  	--with-newlib \
-@@ -48,9 +49,11 @@ HOST_GCC_INITIAL_CONF_ENV = \
+@@ -46,9 +47,11 @@ HOST_GCC_INITIAL_CONF_ENV = \
  HOST_GCC_INITIAL_MAKE_OPTS = $(HOST_GCC_COMMON_MAKE_OPTS) all-gcc all-target-libgcc
  HOST_GCC_INITIAL_INSTALL_OPTS = install-gcc install-target-libgcc
  
@@ -194,15 +196,15 @@ index d5d925a3d9..8a4a24be8f 100644
  
  $(eval $(host-autotools-package))
 diff --git a/package/gcc/gcc.mk b/package/gcc/gcc.mk
-index e47435677e..7a9edecacd 100644
+index 86e1d4df51..f0f3efbef8 100644
 --- a/package/gcc/gcc.mk
 +++ b/package/gcc/gcc.mk
-@@ -86,12 +86,12 @@ HOST_GCC_COMMON_DEPENDENCIES = \
+@@ -83,12 +83,12 @@ HOST_GCC_COMMON_DEPENDENCIES = \
  
  HOST_GCC_COMMON_CONF_OPTS = \
  	--target=$(GNU_TARGET_NAME) \
 -	--with-sysroot=$(STAGING_DIR) \
- 	--disable-__cxa_atexit \
+ 	--enable-__cxa_atexit \
  	--with-gnu-ld \
  	--disable-libssp \
  	--disable-multilib \

@@ -40,7 +40,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
 ]
 
 [[package]]
@@ -197,7 +196,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
 ]
 
 [[package]]
@@ -206,7 +204,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
 ]
 
 [[package]]
@@ -229,7 +226,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
  "libseccomp 0.1.0",
 ]
 
@@ -285,7 +281,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
  "libseccomp 0.1.0",
 ]
 
@@ -366,7 +361,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
 ]
 
 [[package]]
@@ -375,7 +369,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
  "libseccomp 0.1.0",
  "systemd 0.1.0",
 ]
@@ -394,7 +387,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
 ]
 
 [[package]]
@@ -547,14 +539,6 @@ name = "glibc"
 version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
- "kernel 0.1.0",
-]
-
-[[package]]
-name = "golang"
-version = "0.1.0"
-dependencies = [
- "buildsys 0.1.0",
 ]
 
 [[package]]
@@ -601,7 +585,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
 ]
 
 [[package]]
@@ -757,7 +740,6 @@ name = "kernel"
 version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
- "sdk 0.1.0",
 ]
 
 [[package]]
@@ -783,7 +765,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
 ]
 
 [[package]]
@@ -838,6 +819,13 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
+]
+
+[[package]]
+name = "libgcc"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
 ]
 
 [[package]]
@@ -933,6 +921,13 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
+]
+
+[[package]]
+name = "libstd-rust"
+version = "0.1.0"
+dependencies = [
+ "buildsys 0.1.0",
 ]
 
 [[package]]
@@ -1419,15 +1414,7 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "golang 0.1.0",
  "libseccomp 0.1.0",
-]
-
-[[package]]
-name = "rust"
-version = "0.1.0"
-dependencies = [
- "buildsys 0.1.0",
 ]
 
 [[package]]
@@ -1480,13 +1467,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "ring 0.16.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "untrusted 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sdk"
-version = "0.1.0"
-dependencies = [
- "buildsys 0.1.0",
 ]
 
 [[package]]
@@ -2145,7 +2125,6 @@ version = "0.1.0"
 dependencies = [
  "buildsys 0.1.0",
  "glibc 0.1.0",
- "rust 0.1.0",
  "systemd 0.1.0",
 ]
 

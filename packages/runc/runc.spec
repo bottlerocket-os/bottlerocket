@@ -17,11 +17,8 @@ License: ASL 2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
 BuildRequires: git
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
-BuildRequires: %{_cross_os}golang
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libseccomp
 
 %description

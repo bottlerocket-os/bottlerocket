@@ -7,11 +7,9 @@ URL: http://kernel.org/pub/linux/utils/net/iproute2/
 Source0: http://kernel.org/pub/linux/utils/net/iproute2/iproute2-%{version}.tar.xz
 Patch1: 0001-skip-libelf-check.patch
 
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libmnl-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libmnl
 

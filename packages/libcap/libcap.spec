@@ -6,10 +6,8 @@ License: GPLv2
 URL: https://sites.google.com/site/fullycapable/
 Source0: https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-%{version}.tar.gz
 BuildRequires: libcap-devel
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libattr-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libattr
 
 %description

@@ -8,9 +8,7 @@ Source0: http://downloads.sourceforge.net/acpid2/acpid-%{version}.tar.xz
 Source1: acpid.service
 Source2: power.conf
 Patch1: 0001-Remove-shell-dependency-by-only-shutting-down.patch
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

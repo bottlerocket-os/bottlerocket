@@ -5,11 +5,9 @@ Summary: Library for a message bus
 License: (GPLv2+ or AFL) and GPLv2+
 URL: http://www.freedesktop.org/Software/dbus/
 Source0: https://dbus.freedesktop.org/releases/dbus/dbus-%{version}.tar.gz
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libexpat-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libexpat
 

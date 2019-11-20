@@ -10,18 +10,12 @@ Patch1: glibc-cs-path.patch
 Patch2: glibc-c-utf8-locale.patch
 Patch1001: 1001-move-ldconfig-cache-to-ephemeral-storage.patch
 
-BuildRequires: gcc-%{_cross_target}
-BuildRequires: gcc-c++-%{_cross_target}
-BuildRequires: %{_cross_os}kernel-headers
-Requires: libgcc-%{_cross_target}
-
 %description
 %{summary}.
 
 %package devel
 Summary: Files for development using the GNU libc libraries.
 Requires: %{name}
-Requires: %{_cross_os}kernel-headers
 
 %description devel
 %{summary}.

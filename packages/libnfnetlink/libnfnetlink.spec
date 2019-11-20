@@ -5,9 +5,7 @@ Summary: Library for netfilter netlink
 License: GPLv2+
 URL: http://netfilter.org
 Source0: http://netfilter.org/projects/libnfnetlink/files/libnfnetlink-%{version}.tar.bz2
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

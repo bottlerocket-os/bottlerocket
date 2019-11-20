@@ -15,7 +15,3 @@ sha512 = "5ac2f7e08be68dc08223025f2f70ee5165174ad790c6f65700b27a1e7fdb765ffab34d
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-sdk = { path = "../sdk", optional=true }
-
-[features]
-cascade = [ "sdk" ]

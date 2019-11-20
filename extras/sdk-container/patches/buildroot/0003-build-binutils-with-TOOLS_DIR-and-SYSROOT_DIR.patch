@@ -1,7 +1,7 @@
-From 81c6b12d0bfc2ff91f41f46bfd3ba94eadcf9ca8 Mon Sep 17 00:00:00 2001
+From ca0ae13b3e36a1eb5b913e550c1986582145ee1a Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:40:50 +0000
-Subject: [PATCH 3/6] build binutils with TOOLS_DIR and SYSROOT_DIR
+Subject: [PATCH 3/5] build binutils with TOOLS_DIR and SYSROOT_DIR
 
 The binutils build only needs one stage, so we can write the binaries
 directly to the new output path.
@@ -16,10 +16,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/package/binutils/binutils.mk b/package/binutils/binutils.mk
-index 090065a3e4..e3feea73c4 100644
+index d60c032bde..0d54827e8a 100644
 --- a/package/binutils/binutils.mk
 +++ b/package/binutils/binutils.mk
-@@ -61,9 +61,10 @@ endif
+@@ -68,9 +68,10 @@ endif
  BINUTILS_CONF_ENV += MAKEINFO=true
  BINUTILS_MAKE_OPTS += MAKEINFO=true
  BINUTILS_INSTALL_TARGET_OPTS = DESTDIR=$(TARGET_DIR) MAKEINFO=true install
@@ -31,7 +31,7 @@ index 090065a3e4..e3feea73c4 100644
  
  # Workaround a build issue with -Os for ARM Cortex-M cpus.
  # (Binutils 2.25.1 and 2.26.1)
-@@ -84,11 +85,15 @@ HOST_BINUTILS_CONF_OPTS = \
+@@ -91,11 +92,15 @@ HOST_BINUTILS_CONF_OPTS = \
  	--target=$(GNU_TARGET_NAME) \
  	--disable-shared \
  	--enable-static \
@@ -48,8 +48,8 @@ index 090065a3e4..e3feea73c4 100644
 +
  # binutils run configure script of subdirs at make time, so ensure
  # our TARGET_CONFIGURE_ARGS are taken into consideration for those
- define BINUTILS_BUILD_CMDS
-@@ -138,5 +143,17 @@ define HOST_BINUTILS_FIXUP_HARDLINKS
+ BINUTILS_MAKE_ENV = $(TARGET_CONFIGURE_ARGS)
+@@ -143,5 +148,17 @@ define HOST_BINUTILS_FIXUP_HARDLINKS
  endef
  HOST_BINUTILS_POST_INSTALL_HOOKS += HOST_BINUTILS_FIXUP_HARDLINKS
  

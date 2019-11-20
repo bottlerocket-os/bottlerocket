@@ -14,9 +14,3 @@ sha512 = "37483990cd653685873e96c45dd1651b32b441b6d7919a68ebe3bae31a0c3f7ce183fc
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-kernel = { path = "../kernel", optional=true }
-
-[features]
-cascade = [
-    "kernel",
-]

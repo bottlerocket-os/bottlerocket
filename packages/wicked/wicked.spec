@@ -38,13 +38,11 @@ Patch101: 0001-avoid-gcrypt-dependency.patch
 Patch102: 0002-exclude-unused-components.patch
 Patch103: 0003-ship-mkconst-and-schema-sources-for-runtime-use.patch
 
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libdbus-devel
 BuildRequires: %{_cross_os}libiw-devel
 BuildRequires: %{_cross_os}libnl-devel
 BuildRequires: %{_cross_os}systemd-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}libdbus
 Requires: %{_cross_os}libiw
 Requires: %{_cross_os}libnl

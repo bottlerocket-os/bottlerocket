@@ -1,7 +1,7 @@
-From f9e37a4ae1184489f79fa8e34c8b08b1640b059d Mon Sep 17 00:00:00 2001
+From d668eab1928c59ce9885528f057016d4d1afbd88 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 6 Aug 2017 23:35:06 +0000
-Subject: [PATCH 2/6] add TOOLS_DIR and SYSROOT_DIR to control output
+Subject: [PATCH 2/5] add TOOLS_DIR and SYSROOT_DIR to control output
 
 The sysroot directory is essential to our purpose of building a
 relocatable toolchain, as GCC will look for it relative to the
@@ -19,15 +19,15 @@ an embedded system image, while we only care about the toolchain.
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
- Makefile            | 10 +++++++---
- package/Makefile.in |  3 ++-
- 2 files changed, 9 insertions(+), 4 deletions(-)
+ Makefile            | 8 ++++++--
+ package/Makefile.in | 3 ++-
+ 2 files changed, 8 insertions(+), 3 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index dd8cc7a9ae..2570bf118e 100644
+index 39c01135f8..b254a622b7 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -228,6 +228,7 @@ TARGET_DIR = $(if $(ROOTFS),$(ROOTFS_$(ROOTFS)_TARGET_DIR),$(BASE_TARGET_DIR))
+@@ -208,6 +208,7 @@ BASE_TARGET_DIR := $(BASE_DIR)/target
  # .config. HOST_DIR will be overwritten later when .config is included.
  HOST_DIR := $(BASE_DIR)/host
  GRAPHS_DIR := $(BASE_DIR)/graphs
@@ -35,7 +35,7 @@ index dd8cc7a9ae..2570bf118e 100644
  
  LEGAL_INFO_DIR = $(BASE_DIR)/legal-info
  REDIST_SOURCES_DIR_TARGET = $(LEGAL_INFO_DIR)/sources
-@@ -486,7 +487,9 @@ export BR2_CONFIG
+@@ -488,7 +489,9 @@ export BR2_CONFIG
  export BR2_REPRODUCIBLE
  export TARGET_DIR
  export STAGING_DIR
@@ -45,16 +45,7 @@ index dd8cc7a9ae..2570bf118e 100644
  export BINARIES_DIR
  export BASE_DIR
  
-@@ -574,7 +577,7 @@ endif
- 
- .PHONY: dirs
- dirs: $(BUILD_DIR) $(STAGING_DIR) $(BASE_TARGET_DIR) \
--	$(HOST_DIR) $(HOST_DIR_SYMLINK) $(BINARIES_DIR)
-+	$(HOST_DIR) $(HOST_DIR_SYMLINK) $(BINARIES_DIR) $(TOOLS_DIR)
- 
- $(BUILD_DIR)/buildroot-config/auto.conf: $(BR2_CONFIG)
- 	$(MAKE1) $(EXTRAMAKEARGS) HOSTCC="$(HOSTCC_NOCCACHE)" HOSTCXX="$(HOSTCXX_NOCCACHE)" syncconfig
-@@ -975,7 +978,7 @@ savedefconfig: $(BUILD_DIR)/buildroot-config/conf prepare-kconfig
+@@ -1016,7 +1019,7 @@ savedefconfig: $(BUILD_DIR)/buildroot-config/conf outputmakefile
  
  # staging and target directories do NOT list these as
  # dependencies anywhere else
@@ -63,7 +54,7 @@ index dd8cc7a9ae..2570bf118e 100644
  	@mkdir -p $@
  
  # outputmakefile generates a Makefile in the output directory, if using a
-@@ -1014,7 +1017,8 @@ printvars:
+@@ -1048,7 +1051,8 @@ printvars:
  clean:
  	rm -rf $(BASE_TARGET_DIR) $(BINARIES_DIR) $(HOST_DIR) $(HOST_DIR_SYMLINK) \
  		$(BUILD_DIR) $(BASE_DIR)/staging \
@@ -74,11 +65,11 @@ index dd8cc7a9ae..2570bf118e 100644
  .PHONY: distclean
  distclean: clean
 diff --git a/package/Makefile.in b/package/Makefile.in
-index f24abdd703..3f0810e38e 100644
+index 0d1330f444..dbf4cb25ed 100644
 --- a/package/Makefile.in
 +++ b/package/Makefile.in
-@@ -107,8 +107,9 @@ ifeq ($(BR2_arc)$(BR2_ARC_ATOMIC_EXT),yy)
- TARGET_ABI += -matomic
+@@ -112,8 +112,9 @@ ifeq ($(BR2_xtensa),y)
+ TARGET_ABI += -mlongcalls -mauto-litpools
  endif
  
 -STAGING_SUBDIR = $(GNU_TARGET_NAME)/sysroot

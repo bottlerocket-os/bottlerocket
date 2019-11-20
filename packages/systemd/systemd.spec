@@ -24,7 +24,6 @@ Patch9003: 9003-use-absolute-path-for-var-run-symlink.patch
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}kmod-devel
 BuildRequires: %{_cross_os}libacl-devel
@@ -35,7 +34,6 @@ BuildRequires: %{_cross_os}libmount-devel
 BuildRequires: %{_cross_os}libseccomp-devel
 BuildRequires: %{_cross_os}libuuid-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
-Requires: %{_cross_os}glibc
 Requires: %{_cross_os}kmod
 Requires: %{_cross_os}libacl
 Requires: %{_cross_os}libattr

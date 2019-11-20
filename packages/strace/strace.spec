@@ -5,9 +5,7 @@ Summary: Linux syscall tracer
 License: LGPLv2.1+
 URL: https://strace.io/
 Source0: https://strace.io/files/%{version}/strace-%{version}.tar.xz
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc
 
 %description
 %{summary}.

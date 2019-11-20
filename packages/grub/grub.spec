@@ -53,7 +53,6 @@ Patch0041: 0041-gptprio-Use-Thar-boot-partition-type-GUID.patch
 BuildRequires: automake
 BuildRequires: bison
 BuildRequires: flex
-BuildRequires: gcc-%{_cross_target}
 BuildRequires: gettext-devel
 BuildRequires: grub2-tools
 BuildRequires: %{_cross_os}glibc-devel
