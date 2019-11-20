@@ -92,19 +92,6 @@ docker run --rm \
 '''
 ]
 
-[tasks.fetch-external-files]
-dependencies = ["setup", "fetch-workspaces"]
-script = [
-'''
-export BUILDSYS_BUILD_FETCH_ONLY=true
-cargo build \
-  ${CARGO_BUILD_ARGS} \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path packages/Cargo.toml \
-  --all
-'''
-]
-
 [tasks.build-packages]
 dependencies = ["setup", "fetch"]
 script = [
