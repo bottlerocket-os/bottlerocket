@@ -1,4 +1,5 @@
 /.git
+/.gomodcache
 /build/*.img
 /build/*.lz4
 /build/*.tar
