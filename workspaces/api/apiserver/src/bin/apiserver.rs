@@ -127,7 +127,7 @@ fn parse_args(args: env::Args) -> Args {
 }
 
 /// Starts a web server to accept user requests, dispatching those requests to the controller.
-fn main() -> Result<()> {
+fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
@@ -160,4 +160,14 @@ fn main() -> Result<()> {
         args.socket_gid,
     )
     .context(error::Server)
+}
+
+// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
+// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
+// https://github.com/shepmaster/snafu/issues/110
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
 }

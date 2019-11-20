@@ -38,10 +38,12 @@ mod error {
         #[snafu(display("Failed to send request: {}", source))]
         RequestSend { source: hyper::Error },
 
-        #[snafu(display("Status {} {} when requesting {}", code.as_u16(), code.as_str(), uri))]
+        #[snafu(display("Status {} when {}ing {}: {}", code.as_str(), method, uri, body))]
         ResponseStatus {
+            method: String,
             code: http::StatusCode,
             uri: http::uri::Uri,
+            body: String,
         },
 
         #[snafu(display("Failed to read body of response: {}", source))]
@@ -80,6 +82,8 @@ where
     S1: AsRef<str>,
     S2: AsRef<str>,
 {
+    let method = method.as_ref();
+
     let request_data = if let Some(data) = data {
         Body::from(data)
     } else {
@@ -92,7 +96,7 @@ where
     let client = Client::builder().build::<_, ::hyper::Body>(UnixConnector::new());
 
     let request = Request::builder()
-        .method(method.as_ref())
+        .method(method)
         .uri(&uri)
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(request_data))
@@ -108,15 +112,6 @@ where
         .block_on(client.request(request).map(|res| res.into_parts()))
         .context(error::RequestSend)?;
 
-    // Error if the response status is in not in the 2xx range.
-    ensure!(
-        head.status.is_success(),
-        error::ResponseStatus {
-            code: head.status,
-            uri
-        }
-    );
-
     // Wait on the second future (the streaming body) and concatenate all the pieces together so we
     // have a single response body.  We make sure each piece is a string, as we go; we assume that
     // we're not handling binary data.
@@ -127,6 +122,17 @@ where
         .block_on(body_stream)
         .context(error::ResponseBodyRead)?
         .context(error::NonUtf8Response)?;
+
+    // Error if the response status is in not in the 2xx range.
+    ensure!(
+        head.status.is_success(),
+        error::ResponseStatus {
+            method,
+            code: head.status,
+            uri,
+            body,
+        }
+    );
 
     Ok((head.status, body))
 }

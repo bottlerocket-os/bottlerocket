@@ -202,22 +202,22 @@ impl SystemdUnit {
 
     /// Starts the current systemd unit with the `--no-block` option
     fn start_no_block(&self) -> Result<()> {
-        run(&["start", "--no-block", &self.unit])
+        systemctl(&["start", "--no-block", &self.unit])
     }
 
     /// Stops the current systemd unit
     fn stop(&self) -> Result<()> {
-        run(&["stop", &self.unit])
+        systemctl(&["stop", &self.unit])
     }
 
     /// Enables the current systemd unit
     fn enable(&self) -> Result<()> {
-        run(&["enable", &self.unit])
+        systemctl(&["enable", &self.unit])
     }
 
     /// Disables the current systemd unit
     fn disable(&self) -> Result<()> {
-        run(&["disable", &self.unit])
+        systemctl(&["disable", &self.unit])
     }
 }
 
@@ -225,11 +225,11 @@ impl SystemdUnit {
 /// According to docs, this *shouldn't* be necessary but experience
 /// has show this isn't always the case. It shoudn't hurt to call it
 fn systemd_daemon_reload() -> Result<()> {
-    run(&["daemon-reload"])
+    systemctl(&["daemon-reload"])
 }
 
 /// Wrapper around process::Command that does error handling.
-fn run<I, S>(args: I) -> Result<()>
+fn systemctl<I, S>(args: I) -> Result<()>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -321,7 +321,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn main() -> Result<()> {
+fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -350,4 +350,14 @@ fn main() -> Result<()> {
         }
     };
     Ok(())
+}
+
+// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
+// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
+// https://github.com/shepmaster/snafu/issues/110
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
 }
