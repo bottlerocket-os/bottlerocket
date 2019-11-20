@@ -14,23 +14,11 @@ sha512 = "56b52a297aa5ac04d9667eb3afb1598725b197de73ff72baa1aabbc2844e36fba7b7fc
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-kmod = { path = "../kmod", optional=true }
-libacl = { path = "../libacl", optional=true }
-libattr = { path = "../libattr", optional=true }
-libcap = { path = "../libcap", optional=true }
-libseccomp = { path = "../libseccomp", optional=true }
-libxcrypt = { path = "../libxcrypt", optional=true }
-util-linux = { path = "../util-linux", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "kmod",
-    "libacl",
-    "libattr",
-    "libcap",
-    "libseccomp",
-    "libxcrypt",
-    "util-linux",
-]
+glibc = { path = "../glibc" }
+kmod = { path = "../kmod" }
+libacl = { path = "../libacl" }
+libattr = { path = "../libattr" }
+libcap = { path = "../libcap" }
+libseccomp = { path = "../libseccomp" }
+libxcrypt = { path = "../libxcrypt" }
+util-linux = { path = "../util-linux" }

@@ -14,11 +14,5 @@ sha512 = "c8978e4380ebb2dd59ce533ade94486ae1e4091fda7acd8cf5cce662034a1d34a1851c
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libseccomp = { path = "../libseccomp", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libseccomp",
-]
+glibc = { path = "../glibc" }
+libseccomp = { path = "../libseccomp" }

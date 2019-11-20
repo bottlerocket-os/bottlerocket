@@ -14,17 +14,8 @@ sha512 = "25bc132c0d89ce71c33e417f04649c9fcfce6c5ef8b19f093b2e9e2851bfde9b5a31e2
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libacl = { path = "../libacl", optional=true }
-libattr = { path = "../libattr", optional=true }
-libcap = { path = "../libcap", optional=true }
-libxcrypt = { path = "../libxcrypt", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libacl",
-    "libattr",
-    "libcap",
-    "libxcrypt",
-]
+glibc = { path = "../glibc" }
+libacl = { path = "../libacl" }
+libattr = { path = "../libattr" }
+libcap = { path = "../libcap" }
+libxcrypt = { path = "../libxcrypt" }

@@ -108,6 +108,7 @@ ${BUILDSYS_TOOLS_DIR}/docker-go \
 ]
 
 [tasks.build-packages]
+alias = "world-packages"
 dependencies = ["setup", "fetch"]
 script = [
 '''
@@ -116,18 +117,6 @@ cargo build \
   ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path packages/Cargo.toml \
   --all
-'''
-]
-
-[tasks.world-packages]
-dependencies = ["setup", "fetch"]
-script = [
-'''
-cargo build \
-  ${CARGO_BUILD_ARGS} \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path packages/Cargo.toml \
-  --all --all-features
 '''
 ]
 
@@ -143,17 +132,11 @@ cargo build \
 '''
 ]
 
+[tasks.world-packages]
+alias = "build-packages"
+
 [tasks.world-images]
-dependencies = ["world-packages"]
-script = [
-'''
-cargo build \
-  ${CARGO_BUILD_ARGS} \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path images/Cargo.toml \
-  --package ${IMAGE}
-'''
-]
+alias = "build-images"
 
 [tasks.check-licenses]
 dependencies = ["fetch"]
@@ -202,12 +185,7 @@ dependencies = [
 ]
 
 [tasks.world]
-dependencies = [
-    "link-clean",
-    "world-images",
-    "check-licenses",
-    "link-images",
-]
+alias = "build"
 
 [tasks.preview-docs]
 script = ['tools/gen-docs.sh']

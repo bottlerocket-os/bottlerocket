@@ -14,11 +14,5 @@ sha512 = "e1bc19a5867d6e3628f3941bdf3ec831bf13784f1233ca1bccc46aac1702f47ee9357d
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libpcap = { path = "../libpcap", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libpcap",
-]
+glibc = { path = "../glibc" }
+libpcap = { path = "../libpcap" }

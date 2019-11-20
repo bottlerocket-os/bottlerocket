@@ -14,17 +14,8 @@ sha512 = "8c5234d035d7dc686132c08a859b402a8fdf48ec03a1496025974ccd4ccc5f5ed10ba7
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libdbus = { path = "../libdbus", optional=true }
-libiw = { path = "../libiw", optional=true }
-libnl = { path = "../libnl", optional=true }
-systemd = { path = "../systemd", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libdbus",
-    "libiw",
-    "libnl",
-    "systemd",
-]
+glibc = { path = "../glibc" }
+libdbus = { path = "../libdbus" }
+libiw = { path = "../libiw" }
+libnl = { path = "../libnl" }
+systemd = { path = "../systemd" }

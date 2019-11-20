@@ -14,17 +14,8 @@ sha512 = "8cf0f515764e1dc6e03284581d682d1949b33e8f25fea29c27ae856f1089fe8ca7b181
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libmnl = { path = "../libmnl", optional=true }
-libnetfilter_conntrack = { path = "../libnetfilter_conntrack", optional=true }
-libnfnetlink = { path = "../libnfnetlink", optional=true }
-libnftnl = { path = "../libnftnl", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libmnl",
-    "libnetfilter_conntrack",
-    "libnfnetlink",
-    "libnftnl",
-]
+glibc = { path = "../glibc" }
+libmnl = { path = "../libmnl" }
+libnetfilter_conntrack = { path = "../libnetfilter_conntrack" }
+libnfnetlink = { path = "../libnfnetlink" }
+libnftnl = { path = "../libnftnl" }

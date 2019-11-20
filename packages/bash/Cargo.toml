@@ -14,13 +14,6 @@ sha512 = "bb4519f06e278f271d08722b531e49d2e842cc3e0b02a6b3eee422e2efcb5b6226111a
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-ncurses = { path = "../ncurses", optional=true }
-readline = { path = "../readline", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "ncurses",
-    "readline",
-]
+glibc = { path = "../glibc" }
+ncurses = { path = "../ncurses" }
+readline = { path = "../readline" }

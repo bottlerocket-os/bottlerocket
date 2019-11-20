@@ -14,9 +14,4 @@ sha512 = "b6ea20955d15d9980154f1c4a5d9a3153702632cfbd18d3e727daee7307465c0d4694b
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-]
+glibc = { path = "../glibc" }
