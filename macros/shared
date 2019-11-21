@@ -1,7 +1,8 @@
 %_cross_vendor thar
 %_cross_libc gnu
 %_cross_os %{_cross_vendor}-%{_cross_arch}-
-%_cross_target %{_cross_arch}-%{_cross_vendor}-linux-%{_cross_libc}
+%_cross_triple %{_cross_arch}-%{_cross_vendor}-linux
+%_cross_target %{_cross_triple}-%{_cross_libc}
 %dist %{nil}
 
 %_cross_cflags -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-clash-protection
