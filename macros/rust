@@ -4,10 +4,21 @@
 %__rustc %{_bindir}/rustc
 %__rustdoc %{_bindir}/rustdoc
 
-# Enable dynamic linking, optimization, debuginfo, and link hardening.
-%__global_rustflags -Cprefer-dynamic -Copt-level=3 -Cdebuginfo=2 -Ccodegen-units=1 -Clink-arg=-Wl,-z,relro,-z,now
+# Enable optimization, debuginfo, and link hardening.
+%__global_rustflags -Copt-level=3 -Cdebuginfo=2 -Ccodegen-units=1 -Clink-arg=-Wl,-z,relro,-z,now
 
-%__global_rustflags_toml [%{lua:
-    for arg in string.gmatch(rpm.expand("%{__global_rustflags}"), "%S+") do
+# Enable dynamic linking.
+%__global_rustflags_shared -Cprefer-dynamic %__global_rustflags
+
+# Enable LTO and static C runtime.
+%__global_rustflags_static -Clto=thin -Ctarget-feature=+crt-static -Clink-arg=-lgcc %__global_rustflags
+
+%__global_rustflags_shared_toml [%{lua:
+    for arg in string.gmatch(rpm.expand("%{__global_rustflags_shared}"), "%S+") do
+        print('"' .. arg .. '", ')
+    end}]
+
+%__global_rustflags_static_toml [%{lua:
+    for arg in string.gmatch(rpm.expand("%{__global_rustflags_static}"), "%S+") do
         print('"' .. arg .. '", ')
     end}]
