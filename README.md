@@ -266,6 +266,10 @@ The following settings are set for you automatically by [pluto](workspaces/api/)
 * `settings.updates.metadata-base-url`: The common portion of all URIs used to download update metadata.
 * `settings.updates.target-base-url`: The common portion of all URIs used to download update files.
 
+#### Time settings
+
+* `settings.ntp.time-servers`: A list of NTP servers used to set and verify the system time.
+
 #### Host containers settings
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).
 * `settings.host-containers.admin.enabled`: Whether the admin container is enabled.
