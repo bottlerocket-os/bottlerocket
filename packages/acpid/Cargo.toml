@@ -13,5 +13,4 @@ url = "http://downloads.sourceforge.net/acpid2/acpid-2.0.32.tar.xz"
 sha512 = "c7afffdf9818504e1ac03b0ad693a05f772bfd07af9808262b3b6bb82ca4dabe6253c94e6dc59e5be6f0da9e815e8bcf2d3e16f02b23d0248b6bad4509e78be7"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

@@ -13,7 +13,6 @@ url = "http://kernel.org/pub/linux/utils/net/iproute2/iproute2-4.19.0.tar.xz"
 sha512 = "47c750da2247705b1b1d1621f58987333e54370d0fff2f24106194022de793ff35dfd67fd1be127ce019008705702092d31dac49abf930a7c0dc5c7e7c0665b8"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libcap = { path = "../libcap" }
 libmnl = { path = "../libmnl" }

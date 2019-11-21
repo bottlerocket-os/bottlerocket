@@ -13,7 +13,6 @@ url = "https://github.com/bus1/dbus-broker/releases/download/v21/dbus-broker-21.
 sha512 = "b6db7bb9426bfce5ee46e9ef9fcfb0107f8d8fe9cd1fef3a18db33a2886cf6b67515a128ffe5d7e64fa6c9087d2fd3818bea2adf39532b38be638ae39d428e6b"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libcap = { path = "../libcap" }
 libexpat = { path = "../libexpat" }

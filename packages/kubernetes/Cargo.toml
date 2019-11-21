@@ -13,5 +13,4 @@ url = "https://github.com/kubernetes/kubernetes/archive/v1.14.6/kubernetes-1.14.
 sha512 = "b6ea20955d15d9980154f1c4a5d9a3153702632cfbd18d3e727daee7307465c0d4694b9a0c20a405fbe491c130dae7bfa23b1459c2733a7239918bbca531076f"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

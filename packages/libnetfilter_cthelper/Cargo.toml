@@ -13,6 +13,5 @@ url = "https://netfilter.org/projects/libnetfilter_cthelper/files/libnetfilter_c
 sha512 = "f0372daee0edbf4c27ee80eadd4ce786a4b67b39c0b9d22e88bc9adcbdffd6676eb9df01b933ee64d2fcea9c05a9ca9070c94e907277d69acbd22ae9a3c74e45"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libmnl = { path = "../libmnl" }

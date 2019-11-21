@@ -13,6 +13,5 @@ url = "http://netfilter.org/projects/libnftnl/files/libnftnl-1.1.3.tar.bz2"
 sha512 = "3fb96ea1a8bc9eb00fa2cf79f64cc9613250e8b97de6e90e440c7c44e92789e7c7fd603b7347bb02d9d74af725cf8fde5d2e435c5ffdcb784316c67b83ddf0fe"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libmnl = { path = "../libmnl" }

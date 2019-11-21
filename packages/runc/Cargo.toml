@@ -13,6 +13,5 @@ url = "https://github.com/opencontainers/runc/archive/3e425f80a8c931f88e6d94a8c8
 sha512 = "7287738ba1cf50569c5ac3637e45b4c6af6fa4c0b6f9e65d9f9889ef7a5736d49c68cd243f08b94131814c579064e13f04258b90d688285be2b7b1c9eb634801"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libseccomp = { path = "../libseccomp" }

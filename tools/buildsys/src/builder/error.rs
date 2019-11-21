@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(super)")]
-pub enum Error {
+pub(crate) enum Error {
     #[snafu(display("Failed to execute command: {}", source))]
     CommandExecution { source: std::io::Error },
 
@@ -20,4 +20,4 @@ pub enum Error {
     },
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub(super) type Result<T> = std::result::Result<T, Error>;

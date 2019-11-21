@@ -14,8 +14,5 @@ included-packages = [
     "release",
 ]
 
-[build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-
 [lib]
 path = "img.rs"

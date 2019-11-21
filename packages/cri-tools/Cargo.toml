@@ -13,6 +13,5 @@ url = "https://github.com/kubernetes-sigs/cri-tools/archive/v1.14.0/cri-tools-1.
 sha512 = "c8978e4380ebb2dd59ce533ade94486ae1e4091fda7acd8cf5cce662034a1d34a1851c43bf766a723c5ba71c15972733a2e80c6e82fb1c27e5a1dfc2e85476bf"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libseccomp = { path = "../libseccomp" }

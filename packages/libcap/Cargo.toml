@@ -13,6 +13,5 @@ url = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-2.2
 sha512 = "4a0bfbc1c3efb009a309d9b894aa553009a229323da4780caa424bd70d0579d6b156e2034bc4dee8dc3b2caaf8617a18c74a01095a4c2a8fbe732e5e8a304603"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libattr = { path = "../libattr" }

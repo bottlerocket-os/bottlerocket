@@ -13,5 +13,4 @@ url = "https://github.com/docker/libnetwork/archive/872f0a83c98add6cae255c8859e2
 sha512 = "c8e8544a3d8d44dc0f309aa3520a2cf62cee374a06d40473542078de94d88cb484c0dca1cee7ad89fb312c969af1694c848f464d04d61df5a9888058e21a485e"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

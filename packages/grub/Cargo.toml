@@ -13,5 +13,4 @@ url = "https://ftp.gnu.org/gnu/grub/grub-2.04.tar.xz"
 sha512 = "9c15c42d0cf5d61446b752194e3b628bb04be0fe6ea0240ab62b3d753784712744846e1f7c3651d8e0968d22012e6d713c38c44936d4004ded3ca4d4007babbb"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

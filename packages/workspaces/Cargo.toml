@@ -17,6 +17,5 @@ source-groups = [
 path = "pkg.rs"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 systemd = { path = "../systemd" }

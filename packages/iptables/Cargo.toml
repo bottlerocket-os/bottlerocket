@@ -13,7 +13,6 @@ url = "http://www.netfilter.org/projects/iptables/files/iptables-1.8.2.tar.bz2"
 sha512 = "8cf0f515764e1dc6e03284581d682d1949b33e8f25fea29c27ae856f1089fe8ca7b1814524b85f4378fd1fc7c7c7d002f06557b257ae2bbc945f8555bad0dc76"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libmnl = { path = "../libmnl" }
 libnetfilter_conntrack = { path = "../libnetfilter_conntrack" }

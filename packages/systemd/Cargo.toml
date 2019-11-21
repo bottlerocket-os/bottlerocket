@@ -13,7 +13,6 @@ url = "https://github.com/systemd/systemd/archive/v243/systemd-243.tar.gz"
 sha512 = "56b52a297aa5ac04d9667eb3afb1598725b197de73ff72baa1aabbc2844e36fba7b7fccdf6d214ae8b5b926616b2b7e15772763aaa80ec938d74333ff9c8673e"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 kmod = { path = "../kmod" }
 libacl = { path = "../libacl" }

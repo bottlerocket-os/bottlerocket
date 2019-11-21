@@ -13,7 +13,6 @@ url = "https://download.tuxfamily.org/chrony/chrony-3.5.tar.gz"
 sha512 = "c4f6376a44d71b6ac2b6d86e3d6fb4348642faeef7f3f3a4d6431627b5645efcc868b005cc398c8292bc3b63a1161fbd1a042c6ac2a0595843f908fe32eed90c"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libcap = { path = "../libcap" }
 ncurses = { path = "../ncurses" }

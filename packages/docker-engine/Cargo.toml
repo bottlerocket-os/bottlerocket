@@ -13,7 +13,6 @@ url = "https://github.com/docker/engine/archive/v18.09.6/engine-18.09.6.tar.gz"
 sha512 = "3ad016432b892fb9438fcb0b9218cd73fc720255c59cbcccd2f16b9325d5a1e848f115f67fc4131f1f659d98e1f93bf0a8cc3a49081a530dbb134dedee916bf8"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libseccomp = { path = "../libseccomp" }
 systemd = { path = "../systemd" }

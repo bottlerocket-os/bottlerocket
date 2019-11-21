@@ -69,7 +69,7 @@ fi
 dependencies = ["setup"]
 script = [
 '''
-for ws in workspaces packages images ; do
+for ws in workspaces packages images tools/buildsys ; do
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
 chmod o+r -R ${CARGO_HOME}
@@ -107,11 +107,24 @@ ${BUILDSYS_TOOLS_DIR}/docker-go \
 '''
 ]
 
-[tasks.build-packages]
-alias = "world-packages"
+[tasks.build-tools]
 dependencies = ["setup", "fetch"]
 script = [
 '''
+cargo install \
+  ${CARGO_MAKE_CARGO_ARGS} \
+  --path tools/buildsys \
+  --root tools \
+  --force \
+  --quiet
+'''
+]
+
+[tasks.build-packages]
+dependencies = ["build-tools"]
+script = [
+'''
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
@@ -124,6 +137,7 @@ cargo build \
 dependencies = ["build-packages"]
 script = [
 '''
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
@@ -193,9 +207,10 @@ script = ['tools/gen-docs.sh']
 [tasks.clean]
 script = [
 '''
-for ws in workspaces packages images ; do
+for ws in workspaces packages images tools/buildsys ; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
+rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys
 for ext in rpm tar lz4 img ; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done

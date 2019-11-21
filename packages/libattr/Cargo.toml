@@ -13,5 +13,4 @@ url = "https://download-mirror.savannah.gnu.org/releases/attr/attr-2.4.48.tar.gz
 sha512 = "75f870a0e6e19b8975f3fdceee786fbaff3eadaa9ab9af01996ffa8e50fe5b2bba6e4c22c44a6722d11b55feb9e89895d0151d6811c1d2b475ef4ed145f0c923"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

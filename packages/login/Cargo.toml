@@ -9,5 +9,4 @@ build = "build.rs"
 path = "pkg.rs"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

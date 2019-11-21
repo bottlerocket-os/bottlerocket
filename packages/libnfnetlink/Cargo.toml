@@ -13,5 +13,4 @@ url = "http://netfilter.org/projects/libnfnetlink/files/libnfnetlink-1.0.1.tar.b
 sha512 = "2ec2cd389c04e21c8a02fb3f6d6f326fc33ca9589577f1739c23d883fe2ee9feaa16e83b6ed09063ad886432e49565dc3256277d035260aca5aab17954b46104"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

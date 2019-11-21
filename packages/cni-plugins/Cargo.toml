@@ -13,5 +13,4 @@ url = "https://github.com/containernetworking/plugins/archive/v0.8.2/plugins-0.8
 sha512 = "383540232593c7ef8c28f83e660a58ae6dd2592c6d97a43c8fc1f046a3fa448911d4066ec0a6a7d7e770a1a2dceee7c31d742100b0871e07d691fe6bdffd42f9"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }

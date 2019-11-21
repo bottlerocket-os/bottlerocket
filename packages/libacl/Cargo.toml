@@ -13,6 +13,5 @@ url = "https://download-mirror.savannah.gnu.org/releases/acl/acl-2.2.53.tar.gz"
 sha512 = "176b7957fe0e7618e0b7bf2ac5071f7fa29417df718cce977661a576fa184e4af9d303b591c9d556b6ba8923e799457343afa401f5a9f7ecd9022185a4e06716"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
 glibc = { path = "../glibc" }
 libattr = { path = "../libattr" }
