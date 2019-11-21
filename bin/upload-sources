@@ -2,15 +2,46 @@
 
 set -euo pipefail
 
+cargo_external_file_tool() {
+    local cargo_toml="${1:?Need path to Cargo.toml to search for checksum type}"
+    local external_filename="${2:?Need external filename to search for checksum type}"
+    local sha_type
+    if [[ ! -s "${cargo_toml}" ]]; then
+        return
+    fi
+    if ! grep -q "^url.*${external_filename}" "${cargo_toml}"; then
+        return
+    fi
+    sha_type="$(grep -A1 "^url.*${external_filename}" "${cargo_toml}" | grep -o '^sha...')"
+    echo "${sha_type}sum"
+}
+
 for path in "$@"; do
+    # If the path isn't a subpath or even a ./relative path, then the
+    # substitutes below break. We can just add the relative to it if there's no
+    # pathing.
+    if [[ ! "${path}" =~ .*/.* ]]; then
+        path="./$path"
+    fi
+
     filename="${path##*/}"
     sources_file="${path%/*}/sources"
-    # a bit of a hack: if a source isn't listed explicitly in the sources file, it must come from a Cargo.lock, so use a sha256sum.
+    cargo_toml="${path%/*}/Cargo.toml"
+
+    # a bit of a hack: if a source isn't listed explicitly in the sources file,
+    # it must come from a Cargo.lock, so use a sha256sum.
     if [ -f "${sources_file}" ] && grep -Fwq "${filename}" "${sources_file}"; then
         checksum_tool=sha512sum
-    else
-        checksum_tool=sha256sum
     fi
+
+    # Check the Cargo.toml for the respective source's checksum_tool
+    if [ -f "${cargo_toml}" ]; then
+        checksum_tool="$(cargo_external_file_tool "${cargo_toml}" "${filename}")"
+    fi
+
+    checksum_tool="${checksum_tool:-sha256sum}"
+
+
     checksum="$("${checksum_tool}" "${path}" | awk '{print $1}')"
 
     url="https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com/${filename}/${checksum}/${filename}"
