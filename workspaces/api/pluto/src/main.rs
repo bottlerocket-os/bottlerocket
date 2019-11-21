@@ -227,7 +227,7 @@ fn parse_args(mut args: env::Args) -> String {
     args.nth(1).unwrap_or_else(|| usage())
 }
 
-fn main() -> Result<()> {
+fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
 
     let client = reqwest::Client::new();
@@ -249,4 +249,14 @@ fn main() -> Result<()> {
 
     println!("{}", output);
     Ok(())
+}
+
+// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
+// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
+// https://github.com/shepmaster/snafu/issues/110
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
 }

@@ -1,6 +1,7 @@
 #![deny(rust_2018_idioms)]
 
 use migration_helpers::{migrate, Migration, MigrationData, Result};
+use std::process;
 
 /// We bumped the versions of the default admin container and the default control container from v0.1 to v0.2
 struct HostContainersVersionMigration;
@@ -58,6 +59,16 @@ impl Migration for HostContainersVersionMigration {
     }
 }
 
-fn main() -> Result<()> {
+fn run() -> Result<()> {
     migrate(HostContainersVersionMigration)
+}
+
+// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
+// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
+// https://github.com/shepmaster/snafu/issues/110
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
 }

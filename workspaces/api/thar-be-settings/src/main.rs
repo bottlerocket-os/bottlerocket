@@ -138,7 +138,7 @@ fn write_config_files(
     Ok(())
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -189,4 +189,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
+// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
+// https://github.com/shepmaster/snafu/issues/110
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
 }

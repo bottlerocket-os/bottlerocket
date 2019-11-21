@@ -521,7 +521,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn main() -> Result<()> {
+fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -550,4 +550,14 @@ fn main() -> Result<()> {
     info!("Datastore populated");
 
     Ok(())
+}
+
+// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
+// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
+// https://github.com/shepmaster/snafu/issues/110
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
 }
