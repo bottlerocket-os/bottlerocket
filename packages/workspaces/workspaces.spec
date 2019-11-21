@@ -140,7 +140,6 @@ Summary: Thar pre-init system setup
 %build
 mkdir bin
 %cargo_build --manifest-path %{_builddir}/workspaces/Cargo.toml \
-    -p apiclient \
     -p apiserver \
     -p moondog \
     -p netdog \
@@ -159,10 +158,14 @@ mkdir bin
     -p laika \
     %{nil}
 
+%cargo_build_static --manifest-path %{_builddir}/workspaces/Cargo.toml \
+    -p apiclient \
+    %{nil}
+
 %install
 install -d %{buildroot}%{_cross_bindir}
 for p in \
-  apiclient apiserver \
+  apiserver \
   moondog netdog sundog pluto bork \
   thar-be-settings servicedog host-containers \
   storewolf settings-committer \
@@ -171,6 +174,11 @@ for p in \
 do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
+
+for p in apiclient ; do
+  install -p -m 0755 ${HOME}/.cache/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
+done
+
 install -d %{buildroot}%{_cross_sbindir}
 for p in growpart preinit ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_sbindir}
