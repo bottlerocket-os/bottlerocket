@@ -292,6 +292,11 @@ apiclient -u /settings/commit_and_apply -X POST
 
 If the `enabled` flag is `true`, it will be started automatically.
 
+All host containers will have the `apiclient` binary available at `/usr/local/bin/apiclient` so they're able to [interact with the API](#using-the-api-client).
+
+In addition, all host containers come with persistent storage at `/.thar/host-containers/$HOST_CONTAINER_NAME` that is persisted across reboots and container start/stop cycles.
+The default `admin` host-container, for example, store its SSH host keys under `/.thar/host-containers/admin/etc/ssh/`.
+
 There are a few important caveats to understand about host containers:
 * They're not orchestrated.  They only start or stop according to that `enabled` flag.
 * They run in a separate instance of containerd than the one used for orchestrated containers like Kubernetes pods.
