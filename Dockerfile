@@ -86,7 +86,7 @@ RUN --mount=target=/host \
         install $(printf "thar-${ARCH}-%s\n" ${PACKAGES}) \
     && mv *.rpm /local/rpms \
     && createrepo_c /local/rpms \
-    && /host/bin/rpm2img \
+    && /host/tools/rpm2img \
         --package-dir=/local/rpms \
         --output-dir=/local/output \
     && echo ${NOCACHE}
