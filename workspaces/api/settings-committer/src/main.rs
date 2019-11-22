@@ -11,7 +11,7 @@ settings. It logs any pending settings, then commits them to live.
 extern crate log;
 
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
-use snafu::{ensure, ResultExt};
+use snafu::ResultExt;
 use std::str::FromStr;
 use std::{collections::HashMap, env, process};
 
@@ -90,23 +90,33 @@ fn check_pending_settings<S: AsRef<str>>(socket_path: S) {
 /// Commits pending settings to live.
 fn commit_pending_settings<S: AsRef<str>>(socket_path: S) -> Result<()> {
     let uri = API_COMMIT_URI;
-
     debug!("POST-ing to {} to move pending settings to live", uri);
-    let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "POST", None)
-        .context(error::APIRequest {
-            method: "POST",
-            uri,
-        })?;
-    ensure!(
-        // 422 is returned when there are no pending settings.
-        code.is_success() || code == 422,
-        error::APIResponse {
-            method: "POST",
-            uri,
-            code,
-            response_body,
+
+    if let Err(e) = apiclient::raw_request(socket_path.as_ref(), uri, "POST", None) {
+        match e {
+            // Some types of response errors are OK for this use.
+            apiclient::Error::ResponseStatus { code, body, .. } => {
+                if code.as_u16() == 422 {
+                    info!("settings-committer found no settings changes to commit");
+                    return Ok(());
+                } else {
+                    return error::APIResponse {
+                        method: "POST",
+                        uri,
+                        code,
+                        response_body: body,
+                    }.fail();
+                }
+            }
+            // Any other type of error means we couldn't even make the request.
+            _ => {
+                return Err(e).context(error::APIRequest {
+                    method: "POST",
+                    uri,
+                });
+            }
         }
-    );
+    }
     Ok(())
 }
 
