@@ -2,8 +2,11 @@
 
 ## Breaking changes
 
-* Host container names (e.g. `admin` in `settings.host-containers.admin`) are restricted to ASCII alphanumeric characters and hyphens. Upgrades from v0.1 that use additional characters in host container names will result in a broken system ([#450]).
-* Most settings values disallow multi-line strings. Upgrades from v0.1 that use multi-line strings in settings values will result in a broken system ([#453], [#483]).
+* Several settings now have added validation for their contents.  Upgrades from v0.1 that use invalid settings values will result in a broken system.
+  * Host container names (e.g. `admin` in `settings.host-containers.admin`) are restricted to ASCII alphanumeric characters and hyphens ([#450]).
+  * `settings.kubernetes.api-server`, `settings.updates.metadata-base-url` and `target-base-url`, `settings.host-containers.*.sources`, and `settings.ntp.time-servers` are now validated to be URIs ([#549]).
+  * `settings.kubernetes.cluster_name`, `settings.kubernetes.node-labels`, and `settings.kubernetes.node-taints` are now verified to fit Kubernetes naming conventions ([#549]).
+  * Most settings values disallow multi-line strings ([#453], [#483]).
 * Additional characters are permitted in API keys; for example, dots and slashes in Kubernetes labels. Downgrades from v0.2 that use dots and slashes in API keys will result in a broken system ([#511]).
 
 ## OS changes
@@ -17,7 +20,7 @@
 * Persist SSH host keys for admin container ([#450]).
 * Use admin container v0.2 by default ([#450], [#536]).
 * Use control container v0.2 by default ([#472], [#536]).
-* Print most critical errors to the console to aid debugging ([#476], [#479]).
+* Print most critical errors to the console to aid debugging ([#476], [#479], [#546]).
 * Update Linux kernel to 4.19.75-27.58.amzn2 ([#478]).
 * Updated partitions are marked `successful` after services start ([#481]).
 * Kernel config is available at `/proc/config.gz` ([#482]).
@@ -38,10 +41,10 @@
 
 * Add `updata` tool, which builds update repository metadata ([#265]).
 * Create versioned symlinks to output images ([#434]).
-* Introduce infrastructure for fetching external sources ([#485], [#523]).
 * Add code and CloudFormation template for TUF repository canary ([#490]).
 * Move the TUF client library, `tough`, to [its own repository](https://github.com/awslabs/tough) and [crates.io packages](https://crates.io/crates/tough) ([#499]).
 * Remove build dependency on the BuildKit daemon ([#506]).
+* Switch to SDK container as toolchain for builds, rather than requiring local build of toolchain ([#525]).
 
 [#239]: ../../pull/239
 [#265]: ../../pull/265
@@ -70,8 +73,10 @@
 [#506]: ../../pull/506
 [#507]: ../../pull/507
 [#511]: ../../pull/511
-[#523]: ../../pull/523
+[#525]: ../../pull/525
 [#536]: ../../pull/536
+[#546]: ../../pull/546
+[#549]: ../../pull/549
 
 # v0.1.6 (2019-10-21)
 
