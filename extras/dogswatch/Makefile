@@ -1,8 +1,12 @@
+
+DOGSWATCH_VERSION=v0.1.0
+
 GOPKG = github.com/amazonlinux/thar/dogswatch
 GOPKGS = $(GOPKG) $(GOPKG)/pkg/... $(GOPKG)/cmd/...
 GOBIN = ./bin/
 DOCKER_IMAGE := dogswatch
-DOCKER_IMAGE_REF := $(DOCKER_IMAGE):$(shell git describe --always --dirty)
+DOCKER_IMAGE_REF_RELEASE := $(DOCKER_IMAGE):$(DOGSWATCH_VERSION)
+DOCKER_IMAGE_REF := $(DOCKER_IMAGE):$(shell git rev-parse --short=8 HEAD)
 
 build: $(GOBIN)
 	cd $(GOBIN) && \
@@ -17,6 +21,9 @@ test:
 
 container: vendor
 	docker build --network=host -t $(DOCKER_IMAGE_REF) .
+
+release-container: container
+	docker tag $(DOCKER_IMAGE_REF) $(DOCKER_IMAGE_REF_RELEASE)
 
 load: container
 	kind load docker-image $(DOCKER_IMAGE)
