@@ -29,8 +29,8 @@ use regex::Regex;
 use simplelog::{Config as LogConfig, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
-use std::fs;
-use std::os::unix::fs::symlink;
+use std::fs::{self, Permissions};
+use std::os::unix::fs::{symlink, PermissionsExt};
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
@@ -310,6 +310,13 @@ where
     P2: AsRef<Path>,
 {
     for migration in migrations {
+        // Ensure the migration is executable.
+        fs::set_permissions(migration.as_ref(), Permissions::from_mode(0o755)).context(
+            error::SetPermissions {
+                path: migration.as_ref(),
+            },
+        )?;
+
         let mut command = Command::new(migration.as_ref());
 
         // Point each migration in the right direction, and at the given data store.
