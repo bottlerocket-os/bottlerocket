@@ -74,6 +74,9 @@ pub(crate) enum Error {
     #[snafu(display("Failed reading metadata of '{}': {}", path.display(), source))]
     PathMetadata { path: PathBuf, source: io::Error },
 
+    #[snafu(display("Failed setting permissions of '{}': {}", path.display(), source))]
+    SetPermissions { path: PathBuf, source: io::Error },
+
     #[snafu(display("Migration path '{}' contains invalid UTF-8", path.display()))]
     MigrationNameNotUTF8 { path: PathBuf },
 
