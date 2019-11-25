@@ -11,4 +11,5 @@ rand = "0.7.0"
 reqwest = { version = "0.9.17", default-features = false, features = ["rustls-tls"] }
 simplelog = "0.7"
 snafu = "0.5.0"
+tempfile = "3.1.0"
 tough = { version = "0.1.0", features = ["http"] }

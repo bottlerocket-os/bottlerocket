@@ -6,18 +6,16 @@ extern crate log;
 use rand::seq::SliceRandom;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
-use std::fs::{self, File, OpenOptions};
+use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::process;
 use std::str::FromStr;
 use std::string::ToString;
 use std::{env, io};
-use tough::{error as tough_error, Limits, Repository, Settings, HttpTransport};
+use tempfile::tempdir;
+use tough::{error as tough_error, HttpTransport, Limits, Repository, Settings};
 
 type HttpRepo<'a> = Repository<'a, HttpTransport>;
-
-const DATASTORE_PATH: &str = "/var/lib/repo-canary";
-const TRUSTED_ROOT_PATH: &str = "/usr/share/repo-canary/root.json";
 
 // Custom exit codes
 const TRUSTED_ROOT_VALIDATION_FAILURE: i32 = 64;
@@ -53,10 +51,16 @@ mod error {
             backtrace: Backtrace,
         },
 
-        #[snafu(display("Failed to create directory {}: {}", directory, source))]
-        CreateDatastoreFailed {
-            directory: &'static str,
+        #[snafu(display("Failed to create tempdir for data store: {}", source))]
+        CreateTempdir {
             source: std::io::Error,
+            backtrace: Backtrace,
+        },
+
+        #[snafu(display("Failed to remove tempdir used for data store: {}", source))]
+        CloseTempdir {
+            source: std::io::Error,
+            backtrace: Backtrace,
         },
 
         #[snafu(display("Logger setup error: {}", source))]
@@ -71,6 +75,7 @@ struct Args {
     log_level: LevelFilter,
     metadata_base_url: String,
     target_base_url: String,
+    trusted_root_path: PathBuf,
     percent_target_files: u8,
 }
 
@@ -81,6 +86,7 @@ fn usage() -> ! {
         r"Usage: {}
             --metadata-base-url URL
             --target-base-url URL
+            --trusted-root-path PATH_TO_root.json
             [ --percentage-of-targets-to-retrieve 0-100 ] 'Randomly samples specified percentage of targets'
             [ --log-level trace|debug|info|warn|error ]
 
@@ -101,10 +107,11 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
-    let mut metadata_base_url = None;
-    let mut target_base_url = None;
     let mut log_level = None;
+    let mut metadata_base_url = None;
     let mut percent_target_files: Option<u8> = None;
+    let mut target_base_url = None;
+    let mut trusted_root_path = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -120,6 +127,16 @@ fn parse_args(args: env::Args) -> Args {
                 target_base_url = Some(
                     iter.next()
                         .unwrap_or_else(|| usage_msg("Did not give argument to --target_base_url")),
+                )
+            }
+
+            "--trusted-root-path" => {
+                trusted_root_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| {
+                            usage_msg("Did not give argument to --trusted-root-path")
+                        })
+                        .into(),
                 )
             }
 
@@ -155,8 +172,9 @@ fn parse_args(args: env::Args) -> Args {
     Args {
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         metadata_base_url: metadata_base_url.unwrap_or_else(|| usage()),
-        target_base_url: target_base_url.unwrap_or_else(|| usage()),
         percent_target_files: percent_target_files.unwrap_or_else(|| 100),
+        target_base_url: target_base_url.unwrap_or_else(|| usage()),
+        trusted_root_path: trusted_root_path.unwrap_or_else(|| usage()),
     }
 }
 
@@ -177,7 +195,14 @@ fn match_report_tough_error(err: &tough::error::Error) -> i32 {
 }
 
 /// Randomly samples specified percentage of listed targets in the TUF repo and tries to retrieve them
-fn retrieve_percentage_of_targets(repo: &HttpRepo<'_>, percentage: u8) -> Result<i32> {
+fn retrieve_percentage_of_targets<P>(
+    repo: &HttpRepo<'_>,
+    datastore_path: P,
+    percentage: u8,
+) -> Result<i32>
+where
+    P: AsRef<Path>,
+{
     let targets = repo.targets();
     let percentage = percentage as f32 / 100.0;
     let num_to_retrieve = (targets.len() as f32 * percentage).ceil();
@@ -198,7 +223,7 @@ fn retrieve_percentage_of_targets(repo: &HttpRepo<'_>, percentage: u8) -> Result
                 }
                 Some(mut reader) => {
                     info!("Downloading target: {}", target);
-                    let path = PathBuf::from(DATASTORE_PATH).join(target);
+                    let path = datastore_path.as_ref().join(target);
                     let mut f = OpenOptions::new()
                         .write(true)
                         .create(true)
@@ -222,27 +247,29 @@ fn main() -> Result<()> {
     SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     // Create the datastore path for storing the metadata files
-    fs::create_dir_all(DATASTORE_PATH).context(error::CreateDatastoreFailed {
-        directory: DATASTORE_PATH,
-    })?;
+    let datastore = tempdir().context(error::CreateTempdir)?;
+
     info!("Loading TUF repo");
     let transport = HttpTransport::new();
-    let repo = Repository::load(&transport,Settings {
-        root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
-            path: TRUSTED_ROOT_PATH,
-        })?,
-        datastore: Path::new("/var/lib/repo-canary"),
-        metadata_base_url: &args.metadata_base_url,
-        target_base_url: &args.target_base_url,
-        limits: Limits {
-            max_root_size: 1024 * 1024,         // 1 MiB
-            max_targets_size: 1024 * 1024 * 10, // 10 MiB
-            max_timestamp_size: 1024 * 1024,    // 1 MiB
-            max_root_updates: 1024,
+    let repo = Repository::load(
+        &transport,
+        Settings {
+            root: File::open(&args.trusted_root_path).context(error::OpenRoot {
+                path: &args.trusted_root_path,
+            })?,
+            datastore: datastore.path(),
+            metadata_base_url: &args.metadata_base_url,
+            target_base_url: &args.target_base_url,
+            limits: Limits {
+                max_root_size: 1024 * 1024,         // 1 MiB
+                max_targets_size: 1024 * 1024 * 10, // 10 MiB
+                max_timestamp_size: 1024 * 1024,    // 1 MiB
+                max_root_updates: 1024,
+            },
         },
-    });
+    );
     // Check for errors from loading the TUF repository
-    std::process::exit(match &repo {
+    let rc = match &repo {
         Err(err) => match_report_tough_error(err),
         Ok(repo) => {
             info!("Loaded TUF repo");
@@ -251,7 +278,12 @@ fn main() -> Result<()> {
                 "Downloading {}% of listed targets",
                 args.percent_target_files
             );
-            retrieve_percentage_of_targets(repo, args.percent_target_files)?
+            retrieve_percentage_of_targets(repo, datastore.path(), args.percent_target_files)?
         }
-    });
+    };
+
+    // Close/delete tempdir
+    datastore.close().context(error::CloseTempdir)?;
+
+    process::exit(rc);
 }
