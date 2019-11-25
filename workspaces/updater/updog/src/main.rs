@@ -11,8 +11,9 @@ use serde::{Deserialize, Serialize};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, File, OpenOptions, Permissions};
 use std::io::{self, BufRead, BufReader};
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
@@ -294,8 +295,15 @@ fn retrieve_migrations(
     if !dir.exists() {
         fs::create_dir(&dir).context(error::DirCreate { path: &dir })?;
     }
+
+    // download each migration, making sure they are executable and removing
+    // any extension (eg, .lz4)
     for name in migration_targets(*start, *target, &manifest)? {
-        write_target_to_disk(repository, &name, dir.join(&name))?;
+        let mut destination = dir.join(&name);
+        destination.set_extension("");
+        write_target_to_disk(repository, &name, &destination)?;
+        fs::set_permissions(&destination, Permissions::from_mode(0o755))
+            .context(error::SetPermissions { path: destination })?;
     }
 
     Ok(())
