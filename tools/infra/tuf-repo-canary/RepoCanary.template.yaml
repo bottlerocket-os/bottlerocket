@@ -2,6 +2,11 @@ Parameters:
   TaskName:
     Type: String
     Default: tuf-repo-canary
+  SNSSubscriptionEndpoint:
+    Type: String
+  SNSSubscriptionProtocol:
+    Type: String
+    Default: email
 Resources:
   VPC:
     Type: 'AWS::EC2::VPC'
@@ -59,8 +64,8 @@ Resources:
   TUFRepoCanarySNSSubscription:
     Type: 'AWS::SNS::Subscription'
     Properties:
-      Endpoint: etung@amazon.com
-      Protocol: email
+      Endpoint: !Sub '${SNSSubscriptionEndpoint}'
+      Protocol: !Sub '${SNSSubscriptionProtocol}'
       TopicArn: !Ref TUFRepoCanarySNSNotificationTopic
   TUFRepoCanaryImgRepo:
     Type: 'AWS::ECR::Repository'
