@@ -570,7 +570,7 @@ mod tests {
     use chrono::Duration as TestDuration;
     use std::collections::BTreeMap;
     use std::str::FromStr;
-    use update_metadata::Images;
+    use update_metadata::{Images, Wave};
 
     #[test]
     fn test_manifest_json() {
@@ -845,33 +845,40 @@ mod tests {
         };
 
         // | ---- (100, "now") ---
-        u.waves.insert(100, Utc::now());
-        let (start, end) = u.update_wave(1);
-        assert!(start.is_none() && end.is_some(), "Expected to be 0th wave");
-        assert!(u.jitter(1).is_none(), "Expected immediate update");
-        let (start, end) = u.update_wave(101);
+        let first_bound = Utc::now();
+        u.waves.insert(100, first_bound);
         assert!(
-            start.is_some() && end.is_none(),
+            u.update_wave(1).unwrap() == Wave::Initial { end: first_bound },
+            "Expected to be 0th wave"
+        );
+        assert!(u.jitter(1).is_none(), "Expected immediate update");
+        assert!(
+            u.update_wave(101).unwrap() == Wave::Last { start: first_bound },
             "Expected to be final wave"
         );
         assert!(u.jitter(101).is_none(), "Expected immediate update");
 
         // | ---- (100, "now") ---- (200, "+1hr") ---
-        u.waves.insert(200, Utc::now() + TestDuration::hours(1));
-        let (start, end) = u.update_wave(1);
-        assert!(start.is_none() && end.is_some(), "Expected to be 0th wave");
+        let second_bound = Utc::now() + TestDuration::hours(1);
+        u.waves.insert(200, second_bound);
+        assert!(
+            u.update_wave(1).unwrap() == Wave::Initial { end: first_bound },
+            "Expected to be 0th wave"
+        );
         assert!(u.jitter(1).is_none(), "Expected immediate update");
 
-        let (start, end) = u.update_wave(100);
         assert!(
-            start.is_none() && end.is_some(),
+            u.update_wave(100).unwrap() == Wave::Initial { end: first_bound },
             "Expected to be 0th wave (just!)"
         );
         assert!(u.jitter(100).is_none(), "Expected immediate update");
 
-        let (start, end) = u.update_wave(150);
         assert!(
-            start.is_some() && end.is_some(),
+            u.update_wave(150).unwrap()
+                == Wave::General {
+                    start: first_bound,
+                    end: second_bound
+                },
             "Expected to be some bounded wave"
         );
         assert!(
@@ -879,9 +886,11 @@ mod tests {
             "Expected to have to wait for update"
         );
 
-        let (start, end) = u.update_wave(201);
         assert!(
-            start.is_some() && end.is_none(),
+            u.update_wave(201).unwrap()
+                == Wave::Last {
+                    start: second_bound
+                },
             "Expected to be final wave"
         );
         assert!(u.jitter(201).is_none(), "Expected immediate update");
