@@ -222,6 +222,12 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed setting permissions of '{}': {}", path.display(), source))]
+    SetPermissions {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
     #[snafu(display("Target not found: {}", target))]
     TargetNotFound {
         target: String,
