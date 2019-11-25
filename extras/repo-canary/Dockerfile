@@ -14,4 +14,4 @@ RUN mkdir -p /usr/share/repo-canary
 COPY root.json /usr/share/repo-canary/
 COPY --from=builder /opt/build/target/release/repo-canary /usr/bin/
 
-CMD /usr/bin/repo-canary --metadata-base-url $METADATA_BASE_URL --target-base-url $TARGET_BASE_URL --percentage-of-targets-to-retrieve 50
+CMD /usr/bin/repo-canary --metadata-base-url $METADATA_BASE_URL --target-base-url $TARGET_BASE_URL --trusted-root-path /usr/share/repo-canary/root.json --percentage-of-targets-to-retrieve 50
