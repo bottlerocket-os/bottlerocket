@@ -1,33 +1,48 @@
-From 7180ff3b05ee782bc3f0fbafddbf136e3a8262de Mon Sep 17 00:00:00 2001
+From 142fec17fcdaa4dfbda83a1f4eecfa8d4014a0f6 Mon Sep 17 00:00:00 2001
 From: Jacob Vallejo <jake@jahkeup.com>
-Date: Tue, 1 Oct 2019 14:00:21 -0700
-Subject: [PATCH] thar nodebootstrap
+Date: Mon, 25 Nov 2019 13:44:25 -0800
+Subject: [PATCH] teksctl: wire up thar launches
 
 ---
- go.mod                               |  3 ++-
- go.sum                               |  2 ++
- pkg/ami/api.go                       |  3 +++
- pkg/ami/static_resolver_ami.go       |  6 ++++++
- pkg/apis/eksctl.io/v1alpha5/types.go |  5 ++++-
- pkg/ctl/cmdutils/nodegroup_flags.go  |  3 +++
- pkg/nodebootstrap/userdata.go        |  2 ++
- pkg/nodebootstrap/userdata_thar.go   | 28 ++++++++++++++++++++++++++++
- 8 files changed, 50 insertions(+), 2 deletions(-)
- create mode 100644 pkg/nodebootstrap/userdata_thar.go
+ go.mod                        |  4 +--
+ go.sum                        |  2 ++
+ pkg/ami/resolver.go           |  3 +-
+ pkg/ctl/create/cluster.go     |  2 ++
+ pkg/ctl/create/nodegroup.go   |  2 ++
+ pkg/nodebootstrap/userdata.go |  4 +++
+ pkg/thar/const.go             |  5 ++++
+ pkg/thar/flags.go             | 16 +++++++++++
+ pkg/thar/images_static.go     | 30 ++++++++++++++++++++
+ pkg/thar/resolver.go          | 25 +++++++++++++++++
+ pkg/thar/userdata.go          | 53 +++++++++++++++++++++++++++++++++++
+ 11 files changed, 143 insertions(+), 3 deletions(-)
+ create mode 100644 pkg/thar/const.go
+ create mode 100644 pkg/thar/flags.go
+ create mode 100644 pkg/thar/images_static.go
+ create mode 100644 pkg/thar/resolver.go
+ create mode 100644 pkg/thar/userdata.go
 
 diff --git a/go.mod b/go.mod
-index 2bd84b4..491a609 100644
+index dab029e0..34fd5dbb 100644
 --- a/go.mod
 +++ b/go.mod
-@@ -9,6 +9,7 @@ require (
- 	github.com/aws/aws-sdk-go v1.23.15
+@@ -10,6 +10,7 @@ require (
+ 	github.com/aws/aws-sdk-go v1.25.36
  	github.com/awslabs/goformation v0.0.0-20190320125420-ac0a17860cf1
  	github.com/blang/semver v3.5.1+incompatible
 +	github.com/burntsushi/toml v0.3.1 // indirect
  	github.com/christopherhein/go-version v0.0.0-20180807222509-fee8dd1f7c24
  	github.com/cloudflare/cfssl v0.0.0-20190726000631-633726f6bcb7
  	github.com/coredns/coredns v0.0.0-20170910182647-1b60688dc8f7 // indirect
-@@ -47,7 +48,7 @@ require (
+@@ -25,7 +26,6 @@ require (
+ 	github.com/fluxcd/flux v1.15.0
+ 	github.com/fluxcd/helm-operator v1.0.0-rc2
+ 	github.com/go-ini/ini v1.37.0 // indirect
+-	github.com/go-stack/stack v1.8.0 // indirect
+ 	github.com/gobuffalo/envy v1.7.0 // indirect
+ 	github.com/gobwas/glob v0.2.3
+ 	github.com/gofrs/flock v0.7.1 // indirect
+@@ -50,7 +50,7 @@ require (
  	github.com/miekg/coredns v0.0.0-20170910182647-1b60688dc8f7 // indirect
  	github.com/onsi/ginkgo v1.8.0
  	github.com/onsi/gomega v1.5.0
@@ -37,10 +52,10 @@ index 2bd84b4..491a609 100644
  	github.com/pkg/errors v0.8.1
  	github.com/pkg/sftp v1.8.3 // indirect
 diff --git a/go.sum b/go.sum
-index bd834de..963caef 100644
+index 21257acc..546ec3ae 100644
 --- a/go.sum
 +++ b/go.sum
-@@ -150,6 +150,8 @@ github.com/bshuster-repo/logrus-logstash-hook v0.0.0-20170517171303-d2c0ecc1836d
+@@ -140,6 +140,8 @@ github.com/bshuster-repo/logrus-logstash-hook v0.0.0-20170517171303-d2c0ecc1836d
  github.com/bugsnag/bugsnag-go v0.0.0-20141110184014-b1d153021fcd/go.mod h1:2oa8nejYd4cQ/b0hMIopN0lCRxU0bueqREvZLWFrtK8=
  github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b/go.mod h1:obH5gd0BsqsP2LwDJ9aOkm/6J86V6lyAXCoQWGw3K50=
  github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
@@ -49,100 +64,196 @@ index bd834de..963caef 100644
  github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
  github.com/caarlos0/ctrlc v1.0.0 h1:2DtF8GSIcajgffDFJzyG15vO+1PuBWOMUdFut7NnXhw=
  github.com/caarlos0/ctrlc v1.0.0/go.mod h1:CdXpj4rmq0q/1Eb44M9zi2nKB0QraNKuRGYGrrHhcQw=
-diff --git a/pkg/ami/api.go b/pkg/ami/api.go
-index 695e118..b440e6c 100644
---- a/pkg/ami/api.go
-+++ b/pkg/ami/api.go
-@@ -18,6 +18,9 @@ const (
- 	// ImageFamilyAmazonLinux2 represents Amazon Linux 2 family
- 	ImageFamilyAmazonLinux2 = api.NodeImageFamilyAmazonLinux2 // Owner by EKS(depends on aws partition and opt-in region)
- 
-+	// ImageFamilyThar represents the EKS flavor of Thar
-+	ImageFamilyThar = api.NodeImageFamilyThar
-+
- 	// ImageFamilyUbuntu1804 represents Ubuntu 18.04 family
- 	ImageFamilyUbuntu1804 = api.NodeImageFamilyUbuntu1804 // Owner 099720109477
- 
-diff --git a/pkg/ami/static_resolver_ami.go b/pkg/ami/static_resolver_ami.go
-index e44fb85..a44ff32 100644
---- a/pkg/ami/static_resolver_ami.go
-+++ b/pkg/ami/static_resolver_ami.go
-@@ -179,6 +179,12 @@ var StaticImages = map[string]map[string]map[int]map[string]string{
- 		}},
- 	},
- 	"1.14": {
-+		"thar": {
-+			ImageClassGeneral: {
-+				"us-west-2": "@amiID@",
-+			},
-+		},
-+
- 		"AmazonLinux2": {
- 			ImageClassGPU: {
- 				"ap-east-1":      "ami-046a1b00bf32a7593",
-diff --git a/pkg/apis/eksctl.io/v1alpha5/types.go b/pkg/apis/eksctl.io/v1alpha5/types.go
-index 7853709..358a19a 100644
---- a/pkg/apis/eksctl.io/v1alpha5/types.go
-+++ b/pkg/apis/eksctl.io/v1alpha5/types.go
-@@ -108,13 +108,16 @@ const (
- 	NodeVolumeTypeST1 = "st1"
- 
- 	// DefaultNodeImageFamily defines the default image family for the worker nodes
--	DefaultNodeImageFamily = NodeImageFamilyAmazonLinux2
-+	DefaultNodeImageFamily = NodeImageFamilyThar
-+	// NodeImageFamilyThar represents the EKS flavor of Thar
-+	NodeImageFamilyThar = "thar"
- 	// NodeImageFamilyAmazonLinux2 represents Amazon Linux 2 family
- 	NodeImageFamilyAmazonLinux2 = "AmazonLinux2"
- 	// NodeImageFamilyUbuntu1804 represents Ubuntu 18.04 family
- 	NodeImageFamilyUbuntu1804 = "Ubuntu1804"
- 	// NodeImageResolverStatic represents static AMI resolver (see ami package)
- 	NodeImageResolverStatic = "static"
-+
- 	// NodeImageResolverAuto represents auto AMI resolver (see ami package)
- 	NodeImageResolverAuto = "auto"
- 
-diff --git a/pkg/ctl/cmdutils/nodegroup_flags.go b/pkg/ctl/cmdutils/nodegroup_flags.go
-index edca813..fb0eeaf 100644
---- a/pkg/ctl/cmdutils/nodegroup_flags.go
-+++ b/pkg/ctl/cmdutils/nodegroup_flags.go
-@@ -9,6 +9,7 @@ import (
- 
- 	"github.com/weaveworks/eksctl/pkg/ami"
- 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
-+	"github.com/weaveworks/eksctl/pkg/nodebootstrap"
+diff --git a/pkg/ami/resolver.go b/pkg/ami/resolver.go
+index 346a14c6..c03cb830 100644
+--- a/pkg/ami/resolver.go
++++ b/pkg/ami/resolver.go
+@@ -3,6 +3,7 @@ package ami
+ import (
+ 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+ 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
++	"github.com/weaveworks/eksctl/pkg/thar"
  )
  
- // AddCommonCreateNodeGroupFlags adds common flags for creating a nodegroup
-@@ -48,6 +49,8 @@ func AddCommonCreateNodeGroupFlags(fs *pflag.FlagSet, cmd *Cmd, ng *api.NodeGrou
- 
- 	fs.StringToStringVar(&ng.Labels, "node-labels", nil, `Extra labels to add when registering the nodes in the nodegroup, e.g. "partition=backend,nodeclass=hugememory"`)
- 	fs.StringSliceVar(&ng.AvailabilityZones, "node-zones", nil, "(inherited from the cluster if unspecified)")
-+
-+	fs.BoolVar(&nodebootstrap.TharAdminContainerEnabled, "thar-admin-container", nodebootstrap.TharAdminContainerEnabled, "Enable the Admin Container on Thar nodes")
+ // MultiResolver is a Resolver that delegates to one or more Resolvers.
+@@ -37,7 +38,7 @@ type Resolver interface {
+ // NewDefaultResolver returns a static resolver that delegates on StaticGPUResolver and StaticDefaultResolver
+ func NewDefaultResolver() Resolver {
+ 	return &MultiResolver{
+-		delegates: []Resolver{&StaticGPUResolver{}, &StaticDefaultResolver{}},
++		delegates: []Resolver{&StaticGPUResolver{}, thar.NewImageResolver(), &StaticDefaultResolver{}},
+ 	}
  }
  
- // AddCommonCreateNodeGroupIAMAddonsFlags adds flags to set ng.IAM.WithAddonPolicies
+diff --git a/pkg/ctl/create/cluster.go b/pkg/ctl/create/cluster.go
+index eccfcd77..c08731ab 100644
+--- a/pkg/ctl/create/cluster.go
++++ b/pkg/ctl/create/cluster.go
+@@ -15,6 +15,7 @@ import (
+ 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
+ 	"github.com/weaveworks/eksctl/pkg/kops"
+ 	"github.com/weaveworks/eksctl/pkg/printers"
++	"github.com/weaveworks/eksctl/pkg/thar"
+ 	"github.com/weaveworks/eksctl/pkg/utils"
+ 	"github.com/weaveworks/eksctl/pkg/utils/kubeconfig"
+ 	"github.com/weaveworks/eksctl/pkg/vpc"
+@@ -66,6 +67,7 @@ func createClusterCmd(cmd *cmdutils.Cmd) {
+ 		fs.StringVar(&ng.Name, "nodegroup-name", "", fmt.Sprintf("name of the nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
+ 		fs.BoolVar(&params.withoutNodeGroup, "without-nodegroup", false, "if set, initial nodegroup will not be created")
+ 		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
++		thar.AddCreateNodeGroupFlags(fs)
+ 	})
+ 
+ 	cmd.FlagSetGroup.InFlagSet("Cluster and nodegroup add-ons", func(fs *pflag.FlagSet) {
+diff --git a/pkg/ctl/create/nodegroup.go b/pkg/ctl/create/nodegroup.go
+index 3e50b902..60ca6cd0 100644
+--- a/pkg/ctl/create/nodegroup.go
++++ b/pkg/ctl/create/nodegroup.go
+@@ -13,6 +13,7 @@ import (
+ 	"github.com/weaveworks/eksctl/pkg/authconfigmap"
+ 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
+ 	"github.com/weaveworks/eksctl/pkg/printers"
++	"github.com/weaveworks/eksctl/pkg/thar"
+ 	"github.com/weaveworks/eksctl/pkg/utils"
+ )
+ 
+@@ -52,6 +53,7 @@ func createNodeGroupCmd(cmd *cmdutils.Cmd) {
+ 		fs.StringVarP(&ng.Name, "name", "n", "", fmt.Sprintf("name of the new nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
+ 		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
+ 		fs.BoolVarP(&params.managed, "managed", "", false, "Create EKS-managed nodegroup")
++		thar.AddCreateNodeGroupFlags(fs)
+ 	})
+ 
+ 	cmd.FlagSetGroup.InFlagSet("IAM addons", func(fs *pflag.FlagSet) {
 diff --git a/pkg/nodebootstrap/userdata.go b/pkg/nodebootstrap/userdata.go
-index cde46e9..1297294 100644
+index 0f3bf95b..17de813a 100644
 --- a/pkg/nodebootstrap/userdata.go
 +++ b/pkg/nodebootstrap/userdata.go
-@@ -174,6 +174,8 @@ func NewUserData(spec *api.ClusterConfig, ng *api.NodeGroup) (string, error) {
- 		return NewUserDataForAmazonLinux2(spec, ng)
- 	case ami.ImageFamilyUbuntu1804:
+@@ -13,6 +13,8 @@ import (
+ 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
+ 	"github.com/weaveworks/eksctl/pkg/cloudconfig"
+ 	"github.com/weaveworks/eksctl/pkg/utils/kubeconfig"
++
++	"github.com/weaveworks/eksctl/pkg/thar"
+ )
+ 
+ //go:generate ${GOBIN}/go-bindata -pkg ${GOPACKAGE} -prefix assets -nometadata -o assets.go assets
+@@ -175,6 +177,8 @@ func NewUserData(spec *api.ClusterConfig, ng *api.NodeGroup) (string, error) {
  		return NewUserDataForUbuntu1804(spec, ng)
-+	case ami.ImageFamilyThar:
-+		return NewUserDataForThar(spec, ng)
+ 	case api.NodeImageFamilyWindowsServer2019FullContainer, api.NodeImageFamilyWindowsServer2019CoreContainer:
+ 		return newUserDataForWindows(spec, ng)
++	case thar.NodeImageFamilyThar:
++		return thar.NewUserDataForThar(spec, ng)
  	default:
  		return "", nil
  	}
-diff --git a/pkg/nodebootstrap/userdata_thar.go b/pkg/nodebootstrap/userdata_thar.go
+diff --git a/pkg/thar/const.go b/pkg/thar/const.go
 new file mode 100644
-index 0000000..31e5ec3
+index 00000000..1a6c89f5
 --- /dev/null
-+++ b/pkg/nodebootstrap/userdata_thar.go
-@@ -0,0 +1,28 @@
-+package nodebootstrap
++++ b/pkg/thar/const.go
+@@ -0,0 +1,5 @@
++package thar
++
++const (
++	NodeImageFamilyThar = "thar"
++)
+diff --git a/pkg/thar/flags.go b/pkg/thar/flags.go
+new file mode 100644
+index 00000000..823a3a14
+--- /dev/null
++++ b/pkg/thar/flags.go
+@@ -0,0 +1,16 @@
++package thar
++
++import "github.com/spf13/pflag"
++
++var (
++	flagEnableAdminContainer bool    = true
++	flagBaseTOMLFile         string  = ""
++	flagTharImageVersion     imageID = defaultTharImageVersion
++)
++
++// AddCreateNodeGroupFlags appends thar related flags to the command's flagset.
++func AddCreateNodeGroupFlags(fs *pflag.FlagSet) {
++	fs.BoolVar(&flagEnableAdminContainer, "node-admin-container", flagEnableAdminContainer, "Enable the Thar Admin container")
++	fs.StringVar(&flagBaseTOMLFile, "node-settings-toml", flagBaseTOMLFile, "Provide a base settings.toml userdata for NodeGroup")
++	fs.StringVar(&flagTharImageVersion, "node-image-version", flagTharImageVersion, "Thar image version (advanced usage)")
++}
+diff --git a/pkg/thar/images_static.go b/pkg/thar/images_static.go
+new file mode 100644
+index 00000000..ed3b4f44
+--- /dev/null
++++ b/pkg/thar/images_static.go
+@@ -0,0 +1,30 @@
++package thar
++
++type imageID = string
++type versionID = string
++type regionID = string
++
++type regionalListing = map[regionID]imageID
++
++// version in this case *is not* kubernetes, it's thar.
++type versionListing = map[versionID]regionalListing
++
++const (
++	defaultTharImageVersion = "0.1.6"
++)
++
++var staticImages = versionListing{
++	"0.1.6": regionalListing{
++		"us-west-2": "ami-07245e9300b9290c1",
++		"us-east-1": "ami-02a409074bbecb641",
++	},
++	"0.1.5": regionalListing{
++		"us-west-2": "ami-0b00816dd82d05e1f",
++	},
++	"0.1.4": regionalListing{
++		"us-west-2": "ami-0331423be16b32cca",
++	},
++	"0.1.3": regionalListing{
++		"us-west-2": "ami-0346bb6ef129f9f11",
++	},
++}
+diff --git a/pkg/thar/resolver.go b/pkg/thar/resolver.go
+new file mode 100644
+index 00000000..62c46cbf
+--- /dev/null
++++ b/pkg/thar/resolver.go
+@@ -0,0 +1,25 @@
++package thar
++
++import "errors"
++
++type imageResolver struct{}
++
++func NewImageResolver() *imageResolver {
++	return &imageResolver{}
++}
++
++func (*imageResolver) Resolve(region, _kubeVersion, _instanceType, imageFamily string) (string, error) {
++	if imageFamily != NodeImageFamilyThar {
++		return "", nil
++	}
++	return resolveTharImage(flagTharImageVersion, region)
++}
++
++func resolveTharImage(version versionID, region regionID) (string, error) {
++	if byRegion, ok := staticImages[version]; ok {
++		if image, ok := byRegion[region]; ok {
++			return image, nil
++		}
++	}
++	return "", errors.New("unknown image by region and version")
++}
+diff --git a/pkg/thar/userdata.go b/pkg/thar/userdata.go
+new file mode 100644
+index 00000000..b0df3ccc
+--- /dev/null
++++ b/pkg/thar/userdata.go
+@@ -0,0 +1,53 @@
++package thar
 +
 +import (
 +	"encoding/base64"
@@ -151,25 +262,50 @@ index 0000000..31e5ec3
 +	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
 +)
 +
-+var (
-+	TharAdminContainerEnabled = true
-+)
-+
++// NewUserDataForThar generates TOML userdata for bootstrapping a Thar node.
 +func NewUserDataForThar(spec *api.ClusterConfig, ng *api.NodeGroup) (string, error) {
-+	tree, _ := toml.Load("")
++	var (
++		baseTOML *toml.Tree
++		tomlErr  error
++	)
++	if flagBaseTOMLFile != "" {
++		baseTOML, tomlErr = toml.LoadFile(flagBaseTOMLFile)
++	} else {
++		baseTOML, tomlErr = toml.Load("")
++	}
++	if tomlErr != nil {
++		return "", tomlErr
++	}
 +
-+	tree.SetWithComment("settings.kubernetes.cluster-certificate", "Kubernetes Cluster CA Certificate", false,
++	return NewUserDataForTharWithBase(spec, ng, baseTOML)
++}
++
++// NewUserDataForThar generates TOML userdata for bootstrapping a Thar node.
++// Additional settings may be provided by supplying a base TOML file to write
++// with.
++func NewUserDataForTharWithBase(spec *api.ClusterConfig, ng *api.NodeGroup, baseTOML *toml.Tree) (string, error) {
++	tree := baseTOML
++	// TODO: check keys prior to use, they're quietly overridden.
++
++	// Make EKS relevant settings overriding anything in the base toml (if it
++	// was provided).
++	tree.SetWithComment("settings.kubernetes.cluster-certificate", "Kubernetes Cluster CA Certificate",
++		false, // insert without commenting it out
 +		base64.StdEncoding.EncodeToString([]byte(spec.Status.CertificateAuthorityData)))
-+	tree.SetWithComment("settings.kubernetes.api-server", "Kubernetes Control Plane API Endpoint", false,
++	tree.SetWithComment("settings.kubernetes.api-server", "Kubernetes Control Plane API Endpoint",
++		false, // insert without commenting it out
 +		spec.Status.Endpoint)
-+	tree.SetWithComment("settings.kubernetes.cluster-name", "Kubernetes Cluster Name", false,
++	tree.SetWithComment("settings.kubernetes.cluster-name", "Kubernetes Cluster Name",
++		false, // insert without commenting it out
 +		spec.Metadata.Name)
-+	tree.SetWithComment("settings.host-containers.admin.enabled", "Thar Admin Container", false,
-+		TharAdminContainerEnabled)
++	tree.SetWithComment("settings.host-containers.admin.enabled", "Thar Admin Container",
++		false, // insert without commenting it out
++		flagEnableAdminContainer)
 +
 +	userdata := base64.StdEncoding.EncodeToString([]byte(tree.String()))
++
 +	return userdata, nil
 +}
 -- 
-2.7.4
+2.23.0
 
