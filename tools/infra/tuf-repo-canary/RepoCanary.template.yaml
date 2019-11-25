@@ -97,7 +97,7 @@ Resources:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref LogGroup
-              awslogs-region: us-west-2
+              awslogs-region: !Ref 'AWS::Region'
               awslogs-stream-prefix: 'ecs'
   TUFRepoCanaryTaskExecutionRole:
     Type: 'AWS::IAM::Role'
@@ -161,14 +161,15 @@ Resources:
       Threshold: 0
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanThreshold
-      EvaluationPeriods: 1
+      EvaluationPeriods: 4
+      DatapointsToAlarm: 3
       ActionsEnabled: true
       AlarmActions:
         - !Ref TUFRepoCanarySNSNotificationTopic
   TUFRepoCanaryScheduledTask:
     Type: 'AWS::Events::Rule'
     Properties:
-      Description: !Sub 'Schedules ${TaskName} task to run every hour at 00 minutes'
+      Description: !Sub 'Schedules ${TaskName} task to run every 10 minutes'
       ScheduleExpression: cron(0/10 * * * ? *)
       State: ENABLED
       Targets:
@@ -202,7 +203,8 @@ Resources:
       Threshold: 0
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanThreshold
-      EvaluationPeriods: 1
+      EvaluationPeriods: 4
+      DatapointsToAlarm: 3
       ActionsEnabled: true
       AlarmActions:
         - !Ref TUFRepoCanarySNSNotificationTopic
@@ -236,7 +238,8 @@ Resources:
       Threshold: 0
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanThreshold
-      EvaluationPeriods: 1
+      EvaluationPeriods: 4
+      DatapointsToAlarm: 3
       ActionsEnabled: true
       AlarmActions:
         - !Ref TUFRepoCanarySNSNotificationTopic
