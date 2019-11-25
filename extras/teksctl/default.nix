@@ -1,31 +1,26 @@
-{ lib, buildGoModule, fetchFromGitHub }:
-{ amiID, versionExtra ? "" }:
+{ lib, buildGoModule, fetchFromGitHub, versionExtra ? "" }:
 let
-  rev = "0bf29e753d6c90a04fe0f8255d345fde3684fdf2";
-  snapshotDate = "20191002";
+  rev = "f683a9daf8b4bdeb6e9f287d08b1eaa411eb294c";
+  snapshotDate = "20191125";
 in
 buildGoModule rec {
-  inherit amiID;
-  
   pname = "eksctl";
-  version = "0.6.0";
+  version = "0.10.2";
 
   src = fetchFromGitHub {
     inherit rev;
     owner = "weaveworks";
     repo = "eksctl";
-    sha256 = "0y9l5fy4ld2sch4g1h8lkvxbw7vi3231fz5lvwpnwas6bwvcm3v8";
+    sha256 = "1rqfxklngw0qkbasqjr9hxnhlh40chx6dv1m5d2xa0hq9h6nxjy2";
   };
-  modSha256 = "19my0xfssgki18syqfwbd2n8iasajy4zg0jblb0pg35lh145zz3a";
+  modSha256 = "1s42pdnibginjbss21fz1brdn4z6wdh8d4kxc2jwd4qbpb4lxwic";
   subPackages = [ "cmd/eksctl" ];
+
 
   patches = [./eksctl-thar.patch ];
   postPatch = let
     tag = "${version}${lib.optionalString (versionExtra != "") "/${versionExtra}"}";
   in ''
-    substituteInPlace pkg/ami/static_resolver_ami.go \
-                      --subst-var amiID
-
     cat > pkg/version/release.go <<EOF
     // +build release
 
