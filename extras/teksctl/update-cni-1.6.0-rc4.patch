@@ -1,0 +1,13 @@
+diff --git a/pkg/addons/default/assets/aws-node.yaml b/pkg/addons/default/assets/aws-node.yaml
+index d6c2caa7..d7788cbd 100644
+--- a/pkg/addons/default/assets/aws-node.yaml
++++ b/pkg/addons/default/assets/aws-node.yaml
+@@ -81,7 +81,7 @@ spec:
+       tolerations:
+         - operator: Exists
+       containers:
+-        - image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.5.0
++        - image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.0-rc4
+           imagePullPolicy: Always
+           ports:
+             - containerPort: 61678

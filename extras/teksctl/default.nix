@@ -1,4 +1,4 @@
-{ lib, buildGoModule, fetchFromGitHub, versionExtra ? "" }:
+{ lib, buildGoModule, fetchFromGitHub, go-bindata, versionExtra ? "" }:
 let
   rev = "f683a9daf8b4bdeb6e9f287d08b1eaa411eb294c";
   snapshotDate = "20191125";
@@ -16,25 +16,32 @@ buildGoModule rec {
   modSha256 = "1s42pdnibginjbss21fz1brdn4z6wdh8d4kxc2jwd4qbpb4lxwic";
   subPackages = [ "cmd/eksctl" ];
 
+  CGO_ENABLED=0;
+  buildFlags = [ "-tags netgo" "-tags release" ];
 
-  patches = [./eksctl-thar.patch ];
-  postPatch = let
+  patches = [./eksctl-thar.patch ./update-cni-1.6.0-rc4.patch ];
+
+  postConfigure = let
     tag = "${version}${lib.optionalString (versionExtra != "") "/${versionExtra}"}";
   in ''
+    echo "updating go-bindata assets"
+    pushd pkg/addons &>/dev/null
+    ${go-bindata}/bin/go-bindata -pkg addons -prefix assets -nometadata -o assets.go assets
+    cd default &>/dev/null
+    ${go-bindata}/bin/go-bindata -pkg defaultaddons -prefix assets -nometadata -o assets.go assets
+    popd
+
+    # Hardcode source data
     cat > pkg/version/release.go <<EOF
     // +build release
 
     package version
 
-    // Values of builtAt and gitCommit will be set by the linker.
     var builtAt = "${snapshotDate}"
     var gitCommit = "${rev}"
     var gitTag = "${tag}"
     EOF
   '';
-
-  CGO_ENABLED=0;
-  buildFlags = [ "-tags netgo" "-tags release" ];
 
   postInstall =
   ''
