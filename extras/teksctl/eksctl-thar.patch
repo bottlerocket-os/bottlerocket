@@ -1,7 +1,7 @@
 From 142fec17fcdaa4dfbda83a1f4eecfa8d4014a0f6 Mon Sep 17 00:00:00 2001
 From: Jacob Vallejo <jake@jahkeup.com>
 Date: Mon, 25 Nov 2019 13:44:25 -0800
-Subject: [PATCH] teksctl: wire up thar launches
+Subject: [PATCH 1/2] teksctl: wire up thar launches
 
 ---
  go.mod                        |  4 +--
@@ -306,6 +306,121 @@ index 00000000..b0df3ccc
 +
 +	return userdata, nil
 +}
+-- 
+2.23.0
+
+
+From 56e3176b983ef0e91846ef129f43c82eaff9be63 Mon Sep 17 00:00:00 2001
+From: Jacob Vallejo <jake@jahkeup.com>
+Date: Mon, 25 Nov 2019 18:13:20 -0800
+Subject: [PATCH 2/2] tekctl: add validation at beginning
+
+Without this, errors would not be discovered until much later in the
+cluster creation process. This uses a hack where the validation logic is
+applied at image retrieval time because adding it to the CLI flow seemed
+intrusive at the time. It very much should be revisited.
+---
+ pkg/ctl/create/cluster.go   |  3 ++-
+ pkg/ctl/create/nodegroup.go |  3 ++-
+ pkg/thar/flags.go           | 23 ++++++++++++++++++++++-
+ pkg/thar/resolver.go        |  9 ++++++++-
+ 4 files changed, 34 insertions(+), 4 deletions(-)
+
+diff --git a/pkg/ctl/create/cluster.go b/pkg/ctl/create/cluster.go
+index c08731ab..3d2bab39 100644
+--- a/pkg/ctl/create/cluster.go
++++ b/pkg/ctl/create/cluster.go
+@@ -67,9 +67,10 @@ func createClusterCmd(cmd *cmdutils.Cmd) {
+ 		fs.StringVar(&ng.Name, "nodegroup-name", "", fmt.Sprintf("name of the nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
+ 		fs.BoolVar(&params.withoutNodeGroup, "without-nodegroup", false, "if set, initial nodegroup will not be created")
+ 		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
+-		thar.AddCreateNodeGroupFlags(fs)
+ 	})
+ 
++	cmd.FlagSetGroup.InFlagSet("Initial nodegroup (node-ami-family: thar)", thar.AddCreateNodeGroupFlags)
++
+ 	cmd.FlagSetGroup.InFlagSet("Cluster and nodegroup add-ons", func(fs *pflag.FlagSet) {
+ 		cmdutils.AddCommonCreateNodeGroupIAMAddonsFlags(fs, ng)
+ 	})
+diff --git a/pkg/ctl/create/nodegroup.go b/pkg/ctl/create/nodegroup.go
+index 60ca6cd0..2500a02a 100644
+--- a/pkg/ctl/create/nodegroup.go
++++ b/pkg/ctl/create/nodegroup.go
+@@ -53,9 +53,10 @@ func createNodeGroupCmd(cmd *cmdutils.Cmd) {
+ 		fs.StringVarP(&ng.Name, "name", "n", "", fmt.Sprintf("name of the new nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
+ 		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
+ 		fs.BoolVarP(&params.managed, "managed", "", false, "Create EKS-managed nodegroup")
+-		thar.AddCreateNodeGroupFlags(fs)
+ 	})
+ 
++	cmd.FlagSetGroup.InFlagSet("New nodegroup (node-ami-family: thar)", thar.AddCreateNodeGroupFlags)
++
+ 	cmd.FlagSetGroup.InFlagSet("IAM addons", func(fs *pflag.FlagSet) {
+ 		cmdutils.AddCommonCreateNodeGroupIAMAddonsFlags(fs, ng)
+ 	})
+diff --git a/pkg/thar/flags.go b/pkg/thar/flags.go
+index 823a3a14..32a78c39 100644
+--- a/pkg/thar/flags.go
++++ b/pkg/thar/flags.go
+@@ -1,6 +1,12 @@
+ package thar
+ 
+-import "github.com/spf13/pflag"
++import (
++	"os"
++
++	toml "github.com/pelletier/go-toml"
++	"github.com/pkg/errors"
++	"github.com/spf13/pflag"
++)
+ 
+ var (
+ 	flagEnableAdminContainer bool    = true
+@@ -14,3 +20,18 @@ func AddCreateNodeGroupFlags(fs *pflag.FlagSet) {
+ 	fs.StringVar(&flagBaseTOMLFile, "node-settings-toml", flagBaseTOMLFile, "Provide a base settings.toml userdata for NodeGroup")
+ 	fs.StringVar(&flagTharImageVersion, "node-image-version", flagTharImageVersion, "Thar image version (advanced usage)")
+ }
++
++func validateFlagArgs() error {
++	if flagBaseTOMLFile != "" {
++		_, fileErr := os.Stat(flagBaseTOMLFile)
++		if fileErr != nil {
++			return errors.Wrapf(fileErr, "cannot use provided file %q", flagBaseTOMLFile)
++		}
++		_, loadErr := toml.LoadFile(flagBaseTOMLFile)
++		if loadErr != nil {
++			return errors.Wrapf(loadErr, "TOML error in provided file %q", flagBaseTOMLFile)
++		}
++	}
++
++	return nil
++}
+diff --git a/pkg/thar/resolver.go b/pkg/thar/resolver.go
+index 62c46cbf..f2cfcb3f 100644
+--- a/pkg/thar/resolver.go
++++ b/pkg/thar/resolver.go
+@@ -1,6 +1,6 @@
+ package thar
+ 
+-import "errors"
++import "github.com/pkg/errors"
+ 
+ type imageResolver struct{}
+ 
+@@ -12,6 +12,13 @@ func (*imageResolver) Resolve(region, _kubeVersion, _instanceType, imageFamily s
+ 	if imageFamily != NodeImageFamilyThar {
+ 		return "", nil
+ 	}
++
++	// HACK: edit to command level validation is intrusive, so we do it here.
++	validationErr := validateFlagArgs()
++	if validationErr != nil {
++		return "", validationErr
++	}
++
+ 	return resolveTharImage(flagTharImageVersion, region)
+ }
+ 
 -- 
 2.23.0
 
