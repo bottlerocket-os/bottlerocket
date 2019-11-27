@@ -166,80 +166,45 @@ Finally, note that if you want to launch in a specific availability zone, make s
 
 The instance we launch needs to be associated with an IAM role that allows for communication with EKS.
 
-If you also add SSM permissions, you can use Thar's default SSM agent to get a shell session on the instance.
+`eksctl` by default already creates such a role (and an instance profile that allows use of the role) as part of the cluster nodegroup.
 
-Here's how to create a role that allows both, and an instance profile that lets the instance use the role:
+The ARN of the IAM role can be retrieved with:
 
 ```
-aws iam create-role \
-   --role-name TharInstance \
-   --assume-role-policy-document '{ "Version": "2012-10-17", "Statement": [ { "Sid": "", "Effect": "Allow", "Principal": { "Service": "ec2.amazonaws.com" }, "Action": "sts:AssumeRole" } ] }'
-sleep 5
+eksctl get iamidentitymapping --cluster thar
+```
+
+The output should look like this:
+
+```
+ARN                                                               USERNAME                                GROUPS
+arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/INSTANCE_ROLE_NAME          system:node:{{EC2PrivateDNSName}}       system:bootstrappers,system:nodes
+```
+
+Note down the INSTANCE_ROLE_NAME for the instructions below.
+
+If you add SSM permissions, you can use Thar's default SSM agent to get a shell session on the instance.
+
+To attach the role policy for SSM permissions, run the following:
+
+```
 aws iam attach-role-policy \
-   --role-name TharInstance \
+   --role-name INSTANCE_ROLE_NAME \
    --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-aws iam attach-role-policy \
-   --role-name TharInstance \
-   --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-aws iam attach-role-policy \
-   --role-name TharInstance \
-   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-aws iam attach-role-policy \
-   --role-name TharInstance \
-   --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-aws iam create-instance-profile \
-   --instance-profile-name TharInstance
-aws iam add-role-to-instance-profile \
-   --instance-profile-name TharInstance \
-   --role-name TharInstance
 ```
 
-Now we add the IAM role to the EKS cluster so it applies to new nodes.
-To do this, we edit the aws-auth ConfigMap using `kubectl`:
+Then, to retrieve the instance profile name used to launch instances, run this:
 
 ```
-kubectl edit -n kube-system configmap/aws-auth
+aws iam list-instance-profiles-for-role --role-name INSTANCE_ROLE_NAME --query "InstanceProfiles[*].InstanceProfileName" --output text
 ```
 
-Inside the file, we need to add the IAM role details to the `mapRoles` section.
-This is what the beginning of the file will look like, if your AWS account ID is 1234:
-
+There should only be one that looks like:
 ```
- apiVersion: v1
- data:
-   mapRoles: |
-     - groups:
-       - system:bootstrappers
-       - system:nodes
-       rolearn: arn:aws:iam::1234:role/eksctl-thar-nodeg-NodeInstanceRole-IDENTIFIER
-       username: system:node:{{EC2PrivateDNSName}}
- kind: ConfigMap
+eksctl-thar-nodegroup-ng-IDENTIFIER-NodeInstanceProfile-IDENTIFIER
 ```
 
-We want to add the new role at the end of the `mapRoles` section, so it looks like this:
-
-```
- apiVersion: v1
- data:
-   mapRoles: |
-     - groups:
-       - system:bootstrappers
-       - system:nodes
-       rolearn: arn:aws:iam::1234:role/eksctl-thar-nodeg-NodeInstanceRole-IDENTIFIER
-       username: system:node:{{EC2PrivateDNSName}}
-     - groups:
-       - system:nodes
-       rolearn: arn:aws:iam::1234:role/TharInstance
-       username: system:node:{{EC2PrivateDNSName}}
- kind: ConfigMap
-```
-
-Make sure you change "1234" to your AWS account ID: it's the same ID that appears a few lines up in the existing role.
-Save the file and confirm that the changes have been applied:
-
-```
-kubectl describe configmap -n kube-system aws-auth
-```
+Note this down as the INSTANCE_PROFILE_NAME for the final launch command.
 
 ## Final launch details
 
@@ -285,6 +250,7 @@ There are a few values to make sure you change in this command:
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier
 * THAR-AMI-ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
 * userdata.toml: the path to the user data file you created earlier
+* INSTANCE_PROFILE_NAME: the instance profile created by `eksctl` for the cluster nodegroups. 
 
 ```
 aws ec2 run-instances --key-name YOUR_KEY_NAME \
@@ -295,7 +261,7 @@ aws ec2 run-instances --key-name YOUR_KEY_NAME \
    --region us-west-2 \
    --tag-specifications 'ResourceType=instance,Tags=[{Key=kubernetes.io/cluster/thar,Value=owned}]' \
    --user-data file://userdata.toml \
-   --iam-instance-profile Name=TharInstance
+   --iam-instance-profile Name=INSTANCE_PROFILE_NAME
 ```
 
 And remember, if you used a public subnet, add `--associate-public-ip-address` or attach an Elastic IP after launch.
