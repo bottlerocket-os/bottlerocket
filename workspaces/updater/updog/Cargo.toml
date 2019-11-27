@@ -25,6 +25,7 @@ toml = "0.5.1"
 tough = { version = "0.1.0", features = ["http"] }
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
+migrator = { path = "../../api/migration/migrator" }
 
 [dev-dependencies]
 tempfile = "3.1.0"
