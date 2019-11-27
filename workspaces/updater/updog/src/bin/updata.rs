@@ -11,6 +11,7 @@ use crate::error::Result;
 use chrono::{DateTime, Utc};
 use data_store_version::Version as DataVersion;
 use semver::Version as SemVer;
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::fs::{self, File};
@@ -423,6 +424,10 @@ fn update_max_version(
 }
 
 fn main_inner() -> Result<()> {
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(LevelFilter::Info, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
+
     match Command::from_args() {
         Command::Init(args) => write_file(&args.file, &Manifest::default()),
         Command::AddUpdate(args) => args.run(),
