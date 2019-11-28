@@ -1,7 +1,7 @@
-From 142fec17fcdaa4dfbda83a1f4eecfa8d4014a0f6 Mon Sep 17 00:00:00 2001
+From 0f56cd10b8d0c3d3bc19976cbf42bcdea7289330 Mon Sep 17 00:00:00 2001
 From: Jacob Vallejo <jake@jahkeup.com>
 Date: Mon, 25 Nov 2019 13:44:25 -0800
-Subject: [PATCH 1/2] teksctl: wire up thar launches
+Subject: [PATCH 1/3] thar: wire up thar launches
 
 ---
  go.mod                        |  4 +--
@@ -310,10 +310,10 @@ index 00000000..b0df3ccc
 2.23.0
 
 
-From 56e3176b983ef0e91846ef129f43c82eaff9be63 Mon Sep 17 00:00:00 2001
+From f767116255d7a09b2cd680e4aa20e5cb1e8e213a Mon Sep 17 00:00:00 2001
 From: Jacob Vallejo <jake@jahkeup.com>
 Date: Mon, 25 Nov 2019 18:13:20 -0800
-Subject: [PATCH 2/2] tekctl: add validation at beginning
+Subject: [PATCH 2/3] thar: add validation at beginning
 
 Without this, errors would not be discovered until much later in the
 cluster creation process. This uses a hack where the validation logic is
@@ -421,6 +421,97 @@ index 62c46cbf..f2cfcb3f 100644
  	return resolveTharImage(flagTharImageVersion, region)
  }
  
+-- 
+2.23.0
+
+
+From ef04e8445ffcf520b332deac542dd0851e5b4bb2 Mon Sep 17 00:00:00 2001
+From: Jacob Vallejo <jake@jahkeup.com>
+Date: Wed, 27 Nov 2019 12:14:06 -0800
+Subject: [PATCH 3/3] thar: update aws-node during cluster setup
+
+---
+ pkg/ctl/create/cluster.go     | 10 ++++++++++
+ pkg/thar/check.go             | 12 ++++++++++++
+ pkg/thar/cluster/configure.go | 22 ++++++++++++++++++++++
+ 3 files changed, 44 insertions(+)
+ create mode 100644 pkg/thar/check.go
+ create mode 100644 pkg/thar/cluster/configure.go
+
+diff --git a/pkg/ctl/create/cluster.go b/pkg/ctl/create/cluster.go
+index 3d2bab39..32f17af2 100644
+--- a/pkg/ctl/create/cluster.go
++++ b/pkg/ctl/create/cluster.go
+@@ -16,6 +16,7 @@ import (
+ 	"github.com/weaveworks/eksctl/pkg/kops"
+ 	"github.com/weaveworks/eksctl/pkg/printers"
+ 	"github.com/weaveworks/eksctl/pkg/thar"
++	tharcl "github.com/weaveworks/eksctl/pkg/thar/cluster"
+ 	"github.com/weaveworks/eksctl/pkg/utils"
+ 	"github.com/weaveworks/eksctl/pkg/utils/kubeconfig"
+ 	"github.com/weaveworks/eksctl/pkg/vpc"
+@@ -366,6 +367,15 @@ func doCreateCluster(cmd *cmdutils.Cmd, ng *api.NodeGroup, params *createCluster
+ 			return err
+ 		}
+ 
++		// TODO: refactor AMI Families with interfaces for additional setup steps.
++		if thar.InNodeGroups(cfg.NodeGroups...) {
++			logger.Info("Configuring cluster for Thar nodes")
++			err := tharcl.Configure(cfg, ctl)
++			if err != nil {
++				return err
++			}
++		}
++
+ 		for _, ng := range cfg.NodeGroups {
+ 			// authorise nodes to join
+ 			if err = authconfigmap.AddNodeGroup(clientSet, ng); err != nil {
+diff --git a/pkg/thar/check.go b/pkg/thar/check.go
+new file mode 100644
+index 00000000..66b3dc91
+--- /dev/null
++++ b/pkg/thar/check.go
+@@ -0,0 +1,12 @@
++package thar
++
++import api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
++
++func InNodeGroups(ngs ...*api.NodeGroup) bool {
++	for _, ng := range ngs {
++		if ng.AMIFamily == NodeImageFamilyThar {
++			return true
++		}
++	}
++	return false
++}
+diff --git a/pkg/thar/cluster/configure.go b/pkg/thar/cluster/configure.go
+new file mode 100644
+index 00000000..e1ce19fa
+--- /dev/null
++++ b/pkg/thar/cluster/configure.go
+@@ -0,0 +1,22 @@
++package cluster
++
++import (
++	"github.com/weaveworks/eksctl/pkg/addons/default"
++	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
++	"github.com/weaveworks/eksctl/pkg/eks"
++)
++
++// Configure tunes a cluster for running Thar nodes.
++func Configure(cfg *api.ClusterConfig, provider *eks.ClusterProvider) error {
++	rawClient, err := provider.NewRawClient(cfg)
++	if err != nil {
++		return err
++	}
++
++	_, err = defaultaddons.UpdateAWSNode(rawClient, cfg.Metadata.Region, false)
++	if err != nil {
++		return err
++	}
++
++	return nil
++}
 -- 
 2.23.0
 
