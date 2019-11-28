@@ -265,6 +265,19 @@ func (i *Intent) reset() {
 	i.UpdateAvailable = marker.NodeUpdateUnknown
 }
 
+// SetUpdateAvailable modifies the intent to reflect the provided available
+// state.
+func (i *Intent) SetUpdateAvailable(available bool) *Intent {
+	switch available {
+	case true:
+		i.UpdateAvailable = marker.NodeUpdateAvailable
+	case false:
+		i.UpdateAvailable = marker.NodeUpdateUnavailable
+	}
+
+	return i
+}
+
 func (i *Intent) DisplayString() string {
 	if i == nil {
 		return fmt.Sprintf(",,")

@@ -99,46 +99,75 @@ func (a *Agent) Run(ctx context.Context) error {
 		return err
 	}
 
-	select {
-	case <-ctx.Done():
-		a.log.Info("waiting on workers to finish")
-		return group.Wait()
-	}
+	<-ctx.Done()
+	a.log.Info("waiting on workers to finish")
+	return group.Wait()
 }
 
 func (a *Agent) periodicUpdateChecker(ctx context.Context) error {
 	timer := time.NewTimer(initialPollDelay)
 	defer timer.Stop()
 
+	log := a.log.WithField("worker", "update-checker")
+
 	for {
 		select {
 		case <-ctx.Done():
+			log.Debug("finished")
 			return nil
 		case <-timer.C:
-			// TODO: update this when we have richer data plumbed
-			_, err := a.platform.ListAvailable()
-			avail := err == nil
-			a.setUpdateAvailable(avail)
+			log.Info("checking for update")
+			err := a.checkPostUpdate(a.log)
+			if err != nil {
+				log.WithError(err).Error("periodic check error")
+			}
 		}
 		timer.Reset(updatePollInterval)
 	}
 }
 
-func (a *Agent) setUpdateAvailable(available bool) error {
+func (a *Agent) checkUpdate(log logging.Logger) (bool, error) {
+	available, err := a.platform.ListAvailable()
+	if err != nil {
+		log.WithError(err).Error("unable to query available updates")
+		return false, err
+	}
+	hasUpdate := len(available.Updates()) > 0
+	log = log.WithField("update-available", hasUpdate)
+	if hasUpdate {
+		log.Info("an update is available")
+	}
+	return hasUpdate, nil
+}
+
+func (a *Agent) checkPostUpdate(log logging.Logger) error {
+	hasUpdate, err := a.checkUpdate(log)
+	if err != nil {
+		return err
+	}
+	log = log.WithField("update-available", hasUpdate)
+	log.Debug("posting update status")
+	err = a.postUpdateAvailable(hasUpdate)
+	if err != nil {
+		log.WithError(err).Error("could not post update status")
+		return err
+	}
+	log.Debug("posted update status")
+	return nil
+}
+
+func (a *Agent) postUpdateAvailable(available bool) error {
 	// TODO: handle brief race condition internally - this needs to be improved,
 	// though the kubernetes control plane will reject out of order updates by
 	// way of resource versioning C-A-S operations.
+	if a.kube == nil {
+		return errors.New("kubernetes client is required to fetch node resource")
+	}
 	node, err := a.kube.CoreV1().Nodes().Get(a.nodeName, v1meta.GetOptions{})
 	if err != nil {
 		return errors.WithMessage(err, "unable to get node")
 	}
-	in := intent.Given(node)
-	switch available {
-	case true:
-		in.UpdateAvailable = marker.NodeUpdateAvailable
-	case false:
-		in.UpdateAvailable = marker.NodeUpdateUnavailable
-	}
+	in := intent.Given(node).SetUpdateAvailable(available)
 	return a.poster.Post(in)
 }
 
@@ -176,7 +205,9 @@ func activeIntent(i *intent.Intent) bool {
 }
 
 func (a *Agent) realize(in *intent.Intent) error {
-	a.log.WithField("intent", fmt.Sprintf("%#v", in)).Debug("realizing intent")
+	log := a.log.WithField("worker", "handler")
+
+	log.WithField("intent", fmt.Sprintf("%#v", in)).Debug("handling intent")
 
 	var err error
 
@@ -185,7 +216,8 @@ func (a *Agent) realize(in *intent.Intent) error {
 	// ACK the wanted action.
 	in.Active = in.Wanted
 	in.State = marker.NodeStateBusy
-	if err = a.poster.Post(in); err != nil {
+	err = a.poster.Post(in)
+	if err != nil {
 		return err
 	}
 
@@ -205,7 +237,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 			break
 		}
 		a.progress.SetTarget(ups.Updates()[0])
-		a.log.Debug("preparing update")
+		log.Debug("preparing update")
 		err = a.platform.Prepare(a.progress.GetTarget())
 
 	case marker.NodeActionPerformUpdate:
@@ -213,27 +245,34 @@ func (a *Agent) realize(in *intent.Intent) error {
 			err = errInvalidProgress
 			break
 		}
-		a.log.Debug("updating")
+		log.Debug("updating")
 		err = a.platform.Update(a.progress.GetTarget())
 
 	case marker.NodeActionUnknown, marker.NodeActionStabilize:
-		a.log.Debug("sitrep")
+		log.Debug("sitrep")
 		_, err = a.platform.Status()
+		if err != nil {
+			break
+		}
+		hasUpdate, err := a.checkUpdate(log)
+		if err != nil {
+			log.WithError(err).Error("sitrep update check errored")
+		}
+		in.SetUpdateAvailable(hasUpdate)
 
 	case marker.NodeActionRebootUpdate:
 		if !a.progress.Valid() {
 			err = errInvalidProgress
 			break
 		}
-		a.log.Debug("rebooting")
-		a.log.Info("Rebooting Node to complete update")
+		log.Debug("rebooting")
+		log.Info("Rebooting Node to complete update")
 		// TODO: ensure Node is setup to be validated on boot (ie: kubelet will
 		// run agent again before we let other Pods get scheduled)
 		err = a.platform.BootUpdate(a.progress.GetTarget(), true)
 		// Shortcircuit to terminate.
 
 		// TODO: actually handle shutdown.
-		// die("goodbye");
 		if err == nil {
 			if a.proc != nil {
 				defer a.proc.KillProcess()
@@ -243,14 +282,17 @@ func (a *Agent) realize(in *intent.Intent) error {
 	}
 
 	if err != nil {
-		a.log.WithError(err).Error("could not realize intent")
+		log.WithError(err).Error("could not realize intent")
 		in.State = marker.NodeStateError
 	} else {
-		a.log.Debug("realized intent")
+		log.Debug("realized intent")
 		in.State = marker.NodeStateReady
 	}
 
-	a.poster.Post(in)
+	postErr := a.poster.Post(in)
+	if postErr != nil {
+		log.WithError(postErr).Error("could not update intent status")
+	}
 
 	return err
 }
@@ -282,7 +324,12 @@ func (a *Agent) checkNodePreflight() error {
 		// there's not a good way to re-prime ourselves in the prior state.
 		in = in.Reset()
 	}
-	a.poster.Post(in)
+
+	postErr := a.poster.Post(in)
+	if postErr != nil {
+		a.log.WithError(postErr).Error("could not update intent status")
+		return postErr
+	}
 
 	return nil
 }
