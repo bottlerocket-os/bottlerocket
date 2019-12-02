@@ -152,7 +152,7 @@ var (
 		Wanted: marker.NodeActionPerformUpdate,
 		Active: marker.NodeActionPrepareUpdate,
 		State:  marker.NodeStateReady,
-	})
+	}, WithUpdateAvailable(marker.NodeUpdateAvailable))
 
 	Unknown = ret("Unknown", intent.Intent{
 		Wanted: marker.NodeActionUnknown,

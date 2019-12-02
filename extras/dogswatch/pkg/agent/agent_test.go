@@ -53,6 +53,9 @@ func TestActiveIntent(t *testing.T) {
 			Active: marker.NodeActionPerformUpdate,
 			State:  marker.NodeStateUnknown,
 		},
+
+		*intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
+		*intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnknown)),
 	}
 
 	for _, in := range active {

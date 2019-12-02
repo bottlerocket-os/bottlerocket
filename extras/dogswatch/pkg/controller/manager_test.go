@@ -79,13 +79,18 @@ func testManager(t *testing.T) (*ActionManager, *testManagerHooks) {
 func TestManagerIntentForSimple(t *testing.T) {
 	nils := []*intent.Intent{
 		intents.BusyRebootUpdate(),
+		intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
+		intents.PendingUpdate(),
 	}
 	nonnils := []*intent.Intent{
 		intents.UpdateError(),
+		intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)),
 	}
 
+	intents.NormalizeNodeName("inactive", nils...)
+	intents.NormalizeNodeName("active", nonnils...)
+
 	for _, in := range nils {
-		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("nil(%s)", in.DisplayString()), func(t *testing.T) {
 			m, _ := testManager(t)
 			actual := m.intentFor(in)
@@ -93,7 +98,6 @@ func TestManagerIntentForSimple(t *testing.T) {
 		})
 	}
 	for _, in := range nonnils {
-		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("non(%s)", in.DisplayString()), func(t *testing.T) {
 			m, _ := testManager(t)
 			actual := m.intentFor(in)
@@ -123,6 +127,10 @@ func TestManagerIntentForTargeted(t *testing.T) {
 		},
 		{
 			input:    intents.PendingStabilizing(),
+			expected: nil,
+		},
+		{
+			input:    intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
 			expected: nil,
 		},
 	}
@@ -220,6 +228,8 @@ func TestSuccessfulUpdate(t *testing.T) {
 		},
 		falsy: []*intent.Intent{
 			intents.Unknown(),
+			intents.Stabilized(),
+			intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
 		},
 	}
 
