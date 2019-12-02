@@ -341,6 +341,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libsepol"
+version = "0.1.0"
+dependencies = [
+ "glibc 0.1.0",
+]
+
+[[package]]
 name = "libstd-rust"
 version = "0.1.0"
 
