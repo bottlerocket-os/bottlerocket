@@ -29,6 +29,13 @@ var (
 	errInvalidProgress = errors.New("intended to make invalid progress")
 )
 
+// Agent is a privileged on-host process that acts on communicated Intents from
+// the controller. Its event loop hinges off of a Kubernetes Informer which
+// feeds it metadata and Intent data.
+//
+// The Agent only acts as directed, its logic covers safety checks and related
+// on-host responsibilities. Larger coordination and gating is handled by the
+// controller.
 type Agent struct {
 	log      logging.Logger
 	kube     kubernetes.Interface
@@ -41,10 +48,15 @@ type Agent struct {
 	progress progression
 }
 
+// poster implements the logic for updating, or posting, a provided Intent for
+// the appropriate resource.
 type poster interface {
 	Post(*intent.Intent) error
 }
 
+// proc interposes the self-terminate kill signaling allowing for an Agent to
+// terminate itself from the outside. Signals are trapped and handled elsewhere
+// within the application.
 type proc interface {
 	KillProcess() error
 }
@@ -104,6 +116,8 @@ func (a *Agent) Run(ctx context.Context) error {
 	return group.Wait()
 }
 
+// periodicUpdateChecker regularly checks for available updates and posts this
+// status on the Node resource.
 func (a *Agent) periodicUpdateChecker(ctx context.Context) error {
 	timer := time.NewTimer(initialPollDelay)
 	defer timer.Stop()
@@ -126,6 +140,7 @@ func (a *Agent) periodicUpdateChecker(ctx context.Context) error {
 	}
 }
 
+// checkUpdate queries for an available update from the host.
 func (a *Agent) checkUpdate(log logging.Logger) (bool, error) {
 	available, err := a.platform.ListAvailable()
 	if err != nil {
@@ -140,6 +155,7 @@ func (a *Agent) checkUpdate(log logging.Logger) (bool, error) {
 	return hasUpdate, nil
 }
 
+// checkPostUpdate checks for and posts the status of an available update.
 func (a *Agent) checkPostUpdate(log logging.Logger) error {
 	hasUpdate, err := a.checkUpdate(log)
 	if err != nil {
@@ -156,6 +172,8 @@ func (a *Agent) checkPostUpdate(log logging.Logger) error {
 	return nil
 }
 
+// postUpdateAvailable posts the available update status to the Kubernetes Node
+// resource.
 func (a *Agent) postUpdateAvailable(available bool) error {
 	// TODO: handle brief race condition internally - this needs to be improved,
 	// though the kubernetes control plane will reject out of order updates by
@@ -171,6 +189,8 @@ func (a *Agent) postUpdateAvailable(available bool) error {
 	return a.poster.Post(in)
 }
 
+// handler is the entrypoint for the Kubernetes Informer to schedule handling of
+// events for the Node to act on.
 func (a *Agent) handler() nodestream.Handler {
 	return &nodestream.HandlerFuncs{
 		OnAddFunc: a.handleEvent,
@@ -185,6 +205,8 @@ func (a *Agent) handler() nodestream.Handler {
 	}
 }
 
+// handleEvent handles a coalesced Node resource received from a nodestream
+// callback.
 func (a *Agent) handleEvent(node *v1.Node) {
 	in := intent.Given(node)
 	if activeIntent(in) {
@@ -197,6 +219,8 @@ func (a *Agent) handleEvent(node *v1.Node) {
 	a.log.Debug("inactive intent received")
 }
 
+// activeIntent filters an intent as an active intent which must be handled by
+// the Agent.
 func activeIntent(i *intent.Intent) bool {
 	wanted := i.InProgress() && !i.DegradedPath()
 	empty := i.Wanted == "" || i.Active == "" || i.State == ""
@@ -204,6 +228,7 @@ func activeIntent(i *intent.Intent) bool {
 	return wanted && !empty && !unknown
 }
 
+// realize acts on an Intent to achieve, or realize, the Intent's intent.
 func (a *Agent) realize(in *intent.Intent) error {
 	log := a.log.WithField("worker", "handler")
 
@@ -297,6 +322,8 @@ func (a *Agent) realize(in *intent.Intent) error {
 	return err
 }
 
+// checkNodePreflight runs checks against the current Node resource and prepares
+// it for use by the Agent and Controller.
 func (a *Agent) checkNodePreflight() error {
 	// TODO: Run a check of the Node Resource and reset appropriately
 
@@ -334,19 +361,24 @@ func (a *Agent) checkNodePreflight() error {
 	return nil
 }
 
+// osProc encapsulates host interactions in order to kill the current process.
 type osProc struct{}
 
+// KillProcess kills the current process.
 func (*osProc) KillProcess() error {
 	p, _ := os.FindProcess(os.Getpid())
 	go p.Kill()
 	return nil
 }
 
+// k8sPoster captures the functionality of the posting of a Node resource
+// modification - in the form of an Intent.
 type k8sPoster struct {
 	log        logging.Logger
 	nodeclient corev1.NodeInterface
 }
 
+// Post writes out the Intent to the Kubernetes Node resource.
 func (k *k8sPoster) Post(i *intent.Intent) error {
 	nodeName := i.GetName()
 	defer k.log.WithField("node", nodeName).Debugf("posted intent %s", i.DisplayString())
