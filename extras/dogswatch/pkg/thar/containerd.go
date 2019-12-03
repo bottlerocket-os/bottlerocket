@@ -29,7 +29,7 @@ func (*containerdDropIn) Name() string {
 	return "containerd-killmode"
 }
 
-func (c *containerdDropIn) Apply() (bool, error) {
+func (c *containerdDropIn) Apply(log logging.SubLogger) (bool, error) {
 	err := c.writeUnit()
 	if err != nil {
 		return false, err
@@ -41,13 +41,15 @@ func (c *containerdDropIn) Apply() (bool, error) {
 	return true, nil
 }
 
-func (c *containerdDropIn) Check() (bool, error) {
-	if !c.runEnvironment() {
+func (c *containerdDropIn) Check(log logging.SubLogger) (bool, error) {
+	if !c.runEnvironment(log) {
+		log.Debug("environment prevents run")
 		return false, nil
 	}
 
 	conn, err := c.connect()
 	if err != nil {
+		log.Warn("unable to connect to systemd daemon socket")
 		return false, err
 	}
 	defer conn.Close()
@@ -72,21 +74,25 @@ func (c *containerdDropIn) Check() (bool, error) {
 	return true, nil
 }
 
-func (*containerdDropIn) runEnvironment() bool {
+func (*containerdDropIn) runEnvironment(log logging.SubLogger) bool {
 	// This doesn't apply without having root.
-	if os.Geteuid() != 0 {
+	if uid := os.Getuid(); uid != 0 {
+		log.WithField("uid", uid).Debug("requires root")
 		return false
 	}
 
 	// And needs systemd access
 	stat, err := os.Stat(systemdSocket)
 	if err != nil {
+		log.WithField("socket", systemdSocket).Debug("requires systemd socket at path")
 		return false
 	}
 	isSocket := stat.Mode()&os.ModeSocket == os.ModeSocket
 	if !isSocket {
+		log.WithField("socket", systemdSocket).Debug("requires systemd unix socket access")
 		return false
 	}
+	log.Debug("environment permits run")
 	return true
 }
 

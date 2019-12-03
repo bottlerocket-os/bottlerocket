@@ -12,8 +12,8 @@ var mitigations = []mitigation{
 // mitigation applies a change, if needed, to permit dogswatch operation.
 type mitigation interface {
 	Name() string
-	Check() (bool, error)
-	Apply() (bool, error)
+	Check(logging.SubLogger) (bool, error)
+	Apply(logging.SubLogger) (bool, error)
 }
 
 func ApplyMitigations() error {
@@ -23,21 +23,20 @@ func ApplyMitigations() error {
 
 	for _, m := range mitigations {
 		mlog := log.WithField("mitigation", m.Name())
-		needed, err := m.Check()
+		needed, err := m.Check(log)
 		if err != nil {
 			errored = true
 			mlog.WithError(err).Error("unable to determine need")
 			continue
 		}
 		if !needed {
-			errored = true
 			mlog.Debug("not needed")
 			continue
 		}
 
 		applied = true
 		mlog.Warn("applying mitigation")
-		applied, err := m.Apply()
+		applied, err := m.Apply(log)
 		if err != nil {
 			errored = true
 			mlog.WithError(err).Error("unable to apply")
@@ -59,7 +58,7 @@ func ApplyMitigations() error {
 	}
 
 	if applied {
-		log.Info("applied all mitigations")
+		log.Info("applied mitigations")
 	}
 
 	return nil
