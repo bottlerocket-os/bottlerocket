@@ -9,10 +9,12 @@ BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libattr-devel
 BuildRequires: %{_cross_os}libcap-devel
+BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
 Requires: %{_cross_os}libacl
 Requires: %{_cross_os}libattr
 Requires: %{_cross_os}libcap
+Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libxcrypt
 
 %description
@@ -27,6 +29,7 @@ Requires: %{_cross_os}libxcrypt
   --disable-rpath \
   --enable-single-binary=symlinks \
   --enable-no-install-program=kill,stdbuf,uptime \
+  --with-selinux \
   --without-gmp \
   --without-openssl \
 

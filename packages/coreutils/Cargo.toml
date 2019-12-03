@@ -17,4 +17,5 @@ glibc = { path = "../glibc" }
 libacl = { path = "../libacl" }
 libattr = { path = "../libattr" }
 libcap = { path = "../libcap" }
+libselinux = { path = "../libselinux" }
 libxcrypt = { path = "../libxcrypt" }

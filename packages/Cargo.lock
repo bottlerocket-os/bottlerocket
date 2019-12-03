@@ -80,6 +80,7 @@ dependencies = [
  "libacl 0.1.0",
  "libattr 0.1.0",
  "libcap 0.1.0",
+ "libselinux 0.1.0",
  "libxcrypt 0.1.0",
 ]
 
