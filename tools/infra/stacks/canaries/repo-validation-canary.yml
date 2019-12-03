@@ -1,39 +1,36 @@
 Parameters:
+  CanaryInfraStack:
+    Type: String
   TaskName:
     Type: String
-    Default: tuf-repo-canary
+    Default: repo-validation-canary
   SNSSubscriptionEndpoint:
     Type: String
   SNSSubscriptionProtocol:
     Type: String
     Default: email
 Resources:
-  VPC:
-    Type: 'AWS::EC2::VPC'
-    Properties:
-      CidrBlock: 10.0.0.0/16
-  VPCSubnet:
-    Type: 'AWS::EC2::Subnet'
-    Properties:
-      CidrBlock: 10.0.0.0/24
-      VpcId: !Ref VPC
-  VPCInternetGateway:
-    Type: 'AWS::EC2::InternetGateway'
-  AttachGateway:
-    Type: 'AWS::EC2::VPCGatewayAttachment'
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref VPCInternetGateway
   VPCRouteTable:
     Type: 'AWS::EC2::RouteTable'
     Properties:
-      VpcId: !Ref VPC
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${CanaryInfraStack}-VpcId"
   ExternalRoute:
     Type: 'AWS::EC2::Route'
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref VPCInternetGateway
+      GatewayId:
+        Fn::ImportValue:
+          !Sub "${CanaryInfraStack}-VpcInternetGatewayId"
       RouteTableId: !Ref VPCRouteTable
+  VPCSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${CanaryInfraStack}-VpcId"
   SubnetRouteAssociation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
@@ -43,7 +40,9 @@ Resources:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupDescription: !Sub 'Allow traffic to ${TaskName}'
-      VpcId: !Ref VPC
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${CanaryInfraStack}-VpcId"
   LogGroup:
     Type: 'AWS::Logs::LogGroup'
     Properties:
@@ -56,7 +55,7 @@ Resources:
   RepoValidationFailureLogGroup:
     Type: 'AWS::Logs::LogGroup'
     Properties:
-      LogGroupName: '/aws/events/tuf-repo-validation-failures'
+      LogGroupName: !Sub '/aws/events/${TaskName}-failures'
   TUFRepoCanarySNSNotificationTopic:
     Type: 'AWS::SNS::Topic'
     Properties:
@@ -71,14 +70,15 @@ Resources:
     Type: 'AWS::ECR::Repository'
     Properties:
       RepositoryName: !Sub '${TaskName}'
-  ECSCluster:
-    Type: 'AWS::ECS::Cluster'
-    Properties: {}
   TUFRepoCanaryTask:
     Type: 'AWS::ECS::TaskDefinition'
     Properties:
-      TaskRoleArn: !GetAtt TUFRepoCanaryTaskExecutionRole.Arn
-      ExecutionRoleArn: !GetAtt TUFRepoCanaryTaskExecutionRole.Arn
+      TaskRoleArn:
+        Fn::ImportValue:
+          !Sub "${CanaryInfraStack}-CanaryTaskExecutionRoleArn"
+      ExecutionRoleArn:
+        Fn::ImportValue:
+          !Sub "${CanaryInfraStack}-CanaryTaskExecutionRoleArn"
       Family: !Sub '${TaskName}'
       NetworkMode: awsvpc
       Cpu: '256'
@@ -104,53 +104,6 @@ Resources:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref 'AWS::Region'
               awslogs-stream-prefix: 'ecs'
-  TUFRepoCanaryTaskExecutionRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      RoleName: TUFRepoCanaryTaskExecutionRole
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Policies:
-        - PolicyName: AmazonECSTaskExecutionPolicy
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'ecr:GetAuthorizationToken'
-                  - 'ecr:BatchCheckLayerAvailability'
-                  - 'ecr:GetDownloadUrlForLayer'
-                  - 'ecr:BatchGetImage'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                  - 'logs:DescribeLogStreams'
-                  - 'logs:GetLogEvents'
-                  - 'cloudwatch:PutMetricData'
-                Resource: '*'
-  TUFRepoCanaryTaskEventRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      RoleName: TUFRepoCanaryTaskEventRole
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Policies:
-        - PolicyName: AmazonEC2ContainerServiceEventsRole
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'ecs:RunTask'
-                  - 'iam:PassRole'
-                Resource: '*'
   TUFRepoCanaryFailedInvocationAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
@@ -179,7 +132,9 @@ Resources:
       State: ENABLED
       Targets:
         - Id: !Sub '${TaskName}-Fargate-Task'
-          RoleArn: !GetAtt TUFRepoCanaryTaskEventRole.Arn
+          RoleArn:
+            Fn::ImportValue:
+              !Sub "${CanaryInfraStack}-CanaryTaskEventRoleArn"
           EcsParameters:
             TaskDefinitionArn: !Ref TUFRepoCanaryTask
             TaskCount: 1
@@ -192,7 +147,9 @@ Resources:
                   - !Ref VPCSecurityGroup
                 Subnets:
                   - !Ref VPCSubnet
-          Arn: !GetAtt ECSCluster.Arn
+          Arn:
+            Fn::ImportValue:
+              !Sub "${CanaryInfraStack}-ECSClusterArn"
   TUFRepoCanaryFailedAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
