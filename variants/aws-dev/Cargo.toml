@@ -1,0 +1,27 @@
+[package]
+name = "aws-dev"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-variant]
+included-packages = [
+# core
+    "release",
+# docker
+    "docker-cli",
+    "docker-engine",
+    "docker-init",
+    "docker-proxy",
+# tools
+    "findutils",
+    "login",
+    "iputils",
+    "procps",
+    "strace",
+    "tcpdump",
+]
+
+[lib]
+path = "lib.rs"
