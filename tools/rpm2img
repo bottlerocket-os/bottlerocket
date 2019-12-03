@@ -151,7 +151,7 @@ set timeout="0"
 
 menuentry "Bottlerocket OS ${VERSION_ID}" {
    linux (\$root)/vmlinuz root=/dev/dm-0 rootwait ro init=/sbin/preinit \\
-       audit=0 console=tty0 console=ttyS0 random.trust_cpu=on \\
+       console=tty0 console=ttyS0 random.trust_cpu=on selinux=1 enforcing=1 \\
        systemd.log_target=journal-or-kmsg net.ifnames=0 biosdevname=0 \\
        dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\
        dm-mod.create="root,,,ro,0 $VERITY_DATA_512B_BLOCKS verity $VERITY_VERSION PARTUUID=\$boot_uuid/PARTNROFF=1 PARTUUID=\$boot_uuid/PARTNROFF=2 \\
