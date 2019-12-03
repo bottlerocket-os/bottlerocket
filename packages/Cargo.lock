@@ -434,6 +434,7 @@ dependencies = [
  "libattr 0.1.0",
  "libcap 0.1.0",
  "libseccomp 0.1.0",
+ "libselinux 0.1.0",
  "libxcrypt 0.1.0",
  "util-linux 0.1.0",
 ]
