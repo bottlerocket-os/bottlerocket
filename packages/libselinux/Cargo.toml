@@ -1,0 +1,18 @@
+[package]
+name = "libselinux"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/SELinuxProject/selinux/releases/download/20191204/libselinux-3.0.tar.gz"
+sha512 = "6fd8c3711e25cb1363232e484268609b71d823975537b3863e403836222eba026abce8ca198f64dba6f4c1ea4deb7ecef68a0397b9656a67b363e4d74409cd95"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libpcre = { path = "../libpcre" }
+libsepol = { path = "../libsepol" }

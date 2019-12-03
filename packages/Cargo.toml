@@ -46,6 +46,7 @@ members = [
     "libpcre",
     "libseccomp",
     "libsepol",
+    "libselinux",
     "libstd-rust",
     "libxcrypt",
     "login",

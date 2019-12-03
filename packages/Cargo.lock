@@ -341,6 +341,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "libselinux"
+version = "0.1.0"
+dependencies = [
+ "glibc 0.1.0",
+ "libpcre 0.1.0",
+ "libsepol 0.1.0",
+]
+
+[[package]]
 name = "libsepol"
 version = "0.1.0"
 dependencies = [
