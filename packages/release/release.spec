@@ -19,8 +19,6 @@ Source200: hostname.template
 
 Source1000: eth0.xml
 Source1002: configured.target
-Source1003: host-containerd.service
-Source1004: host-containerd-config.toml
 Source1006: prepare-local.service
 Source1007: var.mount
 Source1008: opt.mount
@@ -65,7 +63,6 @@ Requires: %{_cross_os}updog
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}preinit
 Requires: %{_cross_os}wicked
-Requires: %{_cross_os}host-ctr
 
 %description
 %{summary}.
@@ -87,9 +84,6 @@ install -p -m 0644 %{S:10} %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysc
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 install -p -m 0644 %{S:1000} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 
-install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd
-install -p -m 0644 %{S:1004} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
-
 install -d %{buildroot}%{_cross_sysctldir}
 install -p -m 0644 %{S:98} %{buildroot}%{_cross_sysctldir}/80-release.conf
 
@@ -104,7 +98,7 @@ VERSION_ID=%{version}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1002} %{S:1003} %{S:1006} %{S:1007} %{S:1008} %{S:1010} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1010} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
@@ -116,12 +110,10 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig/eth0.xml
-%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
 %{_cross_sysctldir}/80-release.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/os-release
 %{_cross_unitdir}/configured.target
-%{_cross_unitdir}/host-containerd.service
 %{_cross_unitdir}/prepare-local.service
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
