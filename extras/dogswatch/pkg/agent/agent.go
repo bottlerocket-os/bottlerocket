@@ -103,13 +103,13 @@ func (a *Agent) Run(ctx context.Context) error {
 		NodeName: a.nodeName,
 	}, a.handler())
 
-	group.Work(ns.Run)
-	group.Work(a.periodicUpdateChecker)
-
 	err := a.checkNodePreflight()
 	if err != nil {
 		return err
 	}
+
+	group.Work(ns.Run)
+	group.Work(a.periodicUpdateChecker)
 
 	<-ctx.Done()
 	a.log.Info("waiting on workers to finish")
