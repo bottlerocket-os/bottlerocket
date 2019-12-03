@@ -170,6 +170,7 @@ dependencies = [
  "glibc 0.1.0",
  "libcap 0.1.0",
  "libmnl 0.1.0",
+ "libselinux 0.1.0",
 ]
 
 [[package]]
