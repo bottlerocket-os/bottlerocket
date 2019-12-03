@@ -3,6 +3,8 @@ module github.com/amazonlinux/thar/dogswatch
 go 1.12
 
 require (
+	github.com/coreos/go-systemd/v22 v22.0.0
+	github.com/godbus/dbus/v5 v5.0.3
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect

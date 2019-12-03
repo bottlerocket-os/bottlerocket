@@ -12,6 +12,7 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/platform/updog"
 	"github.com/amazonlinux/thar/dogswatch/pkg/sigcontext"
+	"github.com/amazonlinux/thar/dogswatch/pkg/thar"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 )
@@ -57,6 +58,10 @@ func main() {
 			log.WithError(err).Fatalf("controller stopped")
 		}
 	case *flagAgent:
+		err := thar.ApplyMitigations()
+		if err != nil {
+			log.WithError(err).Fatalf("unable to perform mitigations")
+		}
 		err = runAgent(ctx, kube, *flagNodeName)
 		if err != nil {
 			log.WithError(err).Fatalf("agent stopped")
