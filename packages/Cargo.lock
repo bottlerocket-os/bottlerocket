@@ -142,6 +142,7 @@ name = "findutils"
 version = "0.1.0"
 dependencies = [
  "glibc 0.1.0",
+ "libselinux 0.1.0",
 ]
 
 [[package]]
