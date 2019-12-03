@@ -43,6 +43,7 @@ members = [
     "libnftnl",
     "libnl",
     "libpcap",
+    "libpcre",
     "libseccomp",
     "libstd-rust",
     "libxcrypt",
