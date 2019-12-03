@@ -165,10 +165,11 @@ script = [
 dependencies = ["fetch"]
 script = [
 '''
-for link in ${BUILDSYS_OUTPUT_DIR}/thar*.lz4; do
-	if [ -L "${link}" ]; then
-		rm ${link}
-	fi
+PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}"
+for link in ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-*.lz4; do
+  if [ -L "${link}" ]; then
+    rm ${link}
+  fi
 done
 '''
 ]
@@ -176,17 +177,18 @@ done
 [tasks.link-images]
 script = [
 '''
-PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}-${BUILDSYS_VERSION}"
-ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}.img.lz4 \
-	${BUILDSYS_OUTPUT_DIR}/${PREFIX}.img.lz4
-ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-data.img.lz4 \
-	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-data.img.lz4
-ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-boot.ext4.lz4 \
-	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-boot.ext4.lz4
-ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-root.ext4.lz4 \
-	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.ext4.lz4
-ln -s ${BUILDSYS_OUTPUT_DIR}/thar-${BUILDSYS_ARCH}-root.verity.lz4 \
-	${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.verity.lz4
+PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}"
+VERSIONED="${PREFIX}-${BUILDSYS_VERSION}"
+ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}.img.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}.img.lz4
+ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-data.img.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-data.img.lz4
+ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-boot.ext4.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-boot.ext4.lz4
+ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.ext4.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-root.ext4.lz4
+ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.verity.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-root.verity.lz4
 '''
 ]
 

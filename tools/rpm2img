@@ -13,11 +13,11 @@ done
 
 mkdir -p "${OUTPUT_DIR}"
 
-DISK_IMAGE_NAME="thar-${ARCH}.img.lz4"
-BOOT_IMAGE_NAME="thar-${ARCH}-boot.ext4.lz4"
-VERITY_IMAGE_NAME="thar-${ARCH}-root.verity.lz4"
-ROOT_IMAGE_NAME="thar-${ARCH}-root.ext4.lz4"
-DATA_IMAGE_NAME="thar-${ARCH}-data.img.lz4"
+DISK_IMAGE_NAME="thar-${ARCH}-${FLAVOR}.img.lz4"
+BOOT_IMAGE_NAME="thar-${ARCH}-${FLAVOR}-boot.ext4.lz4"
+VERITY_IMAGE_NAME="thar-${ARCH}-${FLAVOR}-root.verity.lz4"
+ROOT_IMAGE_NAME="thar-${ARCH}-${FLAVOR}-root.ext4.lz4"
+DATA_IMAGE_NAME="thar-${ARCH}-${FLAVOR}-data.img.lz4"
 
 DISK_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
