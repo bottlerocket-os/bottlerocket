@@ -16,4 +16,5 @@ sha512 = "b6db7bb9426bfce5ee46e9ef9fcfb0107f8d8fe9cd1fef3a18db33a2886cf6b67515a1
 glibc = { path = "../glibc" }
 libcap = { path = "../libcap" }
 libexpat = { path = "../libexpat" }
+libselinux = { path = "../libselinux" }
 systemd = { path = "../systemd" }

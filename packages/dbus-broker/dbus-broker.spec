@@ -13,9 +13,11 @@ BuildRequires: meson
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libexpat-devel
+BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}systemd-devel
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libexpat
+Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}systemd
 
 %description
@@ -28,6 +30,7 @@ Requires: %{_cross_os}systemd
 CONFIGURE_OPTS=(
  -Daudit=false
  -Dlauncher=true
+ -Dselinux=true
 )
 
 %cross_meson "${CONFIGURE_OPTS[@]}"
