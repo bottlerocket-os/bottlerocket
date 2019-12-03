@@ -37,6 +37,8 @@
 %_cross_unitdir %{_cross_rootdir}%{_unitdir}
 %_cross_userunitdir %{_cross_rootdir}%{_userunitdir}
 %_cross_journalcatalogdir %{_cross_rootdir}%{_journalcatalogdir}
+%_cross_systemdgeneratordir %{_cross_rootdir}%{_systemdgeneratordir}
+%_cross_systemdusergeneratordir %{_cross_rootdir}%{_systemdusergeneratordir}
 %_cross_sysusersdir %{_cross_rootdir}%{_sysusersdir}
 %_cross_sysctldir %{_cross_rootdir}%{_sysctldir}
 %_cross_templatedir %{_cross_datadir}/templates
