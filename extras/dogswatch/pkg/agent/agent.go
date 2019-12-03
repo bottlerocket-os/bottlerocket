@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	initialPollDelay   = time.Minute * 1
+	initialPollDelay   = updatePollInterval / 2
 	updatePollInterval = time.Minute * 30
 )
 
