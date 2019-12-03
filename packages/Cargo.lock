@@ -452,6 +452,7 @@ version = "0.1.0"
 dependencies = [
  "glibc 0.1.0",
  "libacl 0.1.0",
+ "libselinux 0.1.0",
  "libxcrypt 0.1.0",
  "ncurses 0.1.0",
 ]
