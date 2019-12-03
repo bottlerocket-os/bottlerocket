@@ -13,22 +13,10 @@ url = "https://www.netfilter.org/projects/conntrack-tools/files/conntrack-tools-
 sha512 = "480fe2cc4420bc8477a2ba67b3d052bcb39c6b3ec000cff27fc12db70b42ec94fa3b5fe12ee35d439e88d9a631a33cd12ae470b69dde6d371d4e53af62a2eed1"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libmnl = { path = "../libmnl", optional=true }
-libnetfilter_conntrack = { path = "../libnetfilter_conntrack", optional=true }
-libnetfilter_cthelper = { path = "../libnetfilter_cthelper", optional=true }
-libnetfilter_cttimeout = { path = "../libnetfilter_cttimeout", optional=true }
-libnetfilter_queue = { path = "../libnetfilter_queue", optional=true }
-libnfnetlink = { path = "../libnfnetlink", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libmnl",
-    "libnetfilter_conntrack",
-    "libnetfilter_cthelper",
-    "libnetfilter_cttimeout",
-    "libnetfilter_queue",
-    "libnfnetlink",
-]
+glibc = { path = "../glibc" }
+libmnl = { path = "../libmnl" }
+libnetfilter_conntrack = { path = "../libnetfilter_conntrack" }
+libnetfilter_cthelper = { path = "../libnetfilter_cthelper" }
+libnetfilter_cttimeout = { path = "../libnetfilter_cttimeout" }
+libnetfilter_queue = { path = "../libnetfilter_queue" }
+libnfnetlink = { path = "../libnfnetlink" }

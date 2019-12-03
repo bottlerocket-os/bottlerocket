@@ -13,10 +13,4 @@ url = "https://strace.io/files/5.0/strace-5.0.tar.xz"
 sha512 = "cba3280ada27ef434eda54d0e150f04ab89ad227d67b29bd0993f9ac7747eb32b0e49af8cc493b92eab99c0848ec8dc6bbd9b1db423abd53f19129dacbddf265"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-]
+glibc = { path = "../glibc" }

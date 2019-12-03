@@ -1,8 +1,11 @@
 /*!
-This library carries out an rpm or image build using Docker.
+This tool carries out a package or image build using Docker.
 
 It is meant to be called by a Cargo build script. To keep those scripts simple,
-all of the configuration is taken from the environment.
+all of the configuration is taken from the environment, with the build type
+specified as a command line argument.
+
+The implementation is closely tied to the top-level Dockerfile.
 
 */
 mod builder;
@@ -15,17 +18,18 @@ use builder::{ImageBuilder, PackageBuilder};
 use cache::LookasideCache;
 use manifest::ManifestInfo;
 use project::ProjectInfo;
+use serde::Deserialize;
 use snafu::ResultExt;
 use spec::SpecInfo;
 use std::env;
 use std::path::PathBuf;
 
-pub mod error {
+mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub")]
-    pub enum Error {
+    #[snafu(visibility = "pub(super)")]
+    pub(super) enum Error {
         ManifestParse {
             source: super::manifest::error::Error,
         },
@@ -54,9 +58,39 @@ pub mod error {
     }
 }
 
-pub type Result<T> = std::result::Result<T, error::Error>;
+type Result<T> = std::result::Result<T, error::Error>;
 
-pub fn build_package() -> Result<()> {
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum Command {
+    BuildPackage,
+    BuildImage,
+}
+
+fn usage() -> ! {
+    eprintln!(
+        "\
+USAGE:
+    buildsys <SUBCOMMAND>
+
+SUBCOMMANDS:
+    build-package           Build RPMs from a spec file and sources.
+    build-image             Build filesystem and disk images from RPMs."
+    );
+    std::process::exit(1)
+}
+
+fn main() -> Result<()> {
+    let command_str = std::env::args().nth(1).unwrap_or_else(|| usage());
+    let command = serde_plain::from_str::<Command>(&command_str).unwrap_or_else(|_| usage());
+    match command {
+        Command::BuildPackage => build_package()?,
+        Command::BuildImage => build_image()?,
+    }
+    Ok(())
+}
+
+fn build_package() -> Result<()> {
     let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest_file = "Cargo.toml";
     println!("cargo:rerun-if-changed={}", manifest_file);
@@ -99,7 +133,7 @@ pub fn build_package() -> Result<()> {
     Ok(())
 }
 
-pub fn build_image() -> Result<()> {
+fn build_image() -> Result<()> {
     let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest_file = "Cargo.toml";
     println!("cargo:rerun-if-changed={}", manifest_file);

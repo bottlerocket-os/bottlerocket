@@ -3,8 +3,8 @@ use std::io;
 use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
-pub enum Error {
+#[snafu(visibility = "pub(super)")]
+pub(crate) enum Error {
     #[snafu(display("Bad file name '{}'", path.display()))]
     ExternalFileName { path: PathBuf },
 
@@ -45,4 +45,4 @@ pub enum Error {
     ExternalFileDelete { path: PathBuf, source: io::Error },
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub(super) type Result<T> = std::result::Result<T, Error>;

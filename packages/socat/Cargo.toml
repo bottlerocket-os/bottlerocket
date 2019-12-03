@@ -13,10 +13,4 @@ url = "http://www.dest-unreach.org/socat/download/socat-1.7.3.3.tar.gz"
 sha512 = "b3ea4cb6081f7778a0281a3ec36ea7e5daf07dc19f2e0de08f767417112776e96e1bcac7962ebb6dd8b960ad91fc4a452f0da8327736d50e215e4ab43947ff78"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-]
+glibc = { path = "../glibc" }

@@ -13,10 +13,4 @@ url = "https://github.com/thom311/libnl/archive/libnl3_4_0.tar.gz"
 sha512 = "f7fa6987130b58e4a9cbe5401333a94eec4069324b760bb3a58b0dca74a767e5289e43bcf1ee78ea43a3c9d44a27d3c0e1db5d97c8c208ee2be3ecd9080b269c"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-]
+glibc = { path = "../glibc" }

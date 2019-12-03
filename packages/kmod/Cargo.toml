@@ -13,10 +13,4 @@ url = "https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-26.tar.xz"
 sha512 = "3ca276c6fc13c2dd2220ec528b8dc4ab4edee5d2b22e16b6f945c552e51f74342c01c33a53740e6af8c893d42bd4d6f629cd8fa6e15ef8bd8da30cb003ef0865"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-]
+glibc = { path = "../glibc" }

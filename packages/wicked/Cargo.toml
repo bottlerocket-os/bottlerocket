@@ -13,18 +13,8 @@ url = "https://github.com/openSUSE/wicked/archive/version-0.6.54.tar.gz"
 sha512 = "8c5234d035d7dc686132c08a859b402a8fdf48ec03a1496025974ccd4ccc5f5ed10ba7aa40f6edbb471351533d01ee4a910273711c506a7b2f1ab9696c724fcb"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libdbus = { path = "../libdbus", optional=true }
-libiw = { path = "../libiw", optional=true }
-libnl = { path = "../libnl", optional=true }
-systemd = { path = "../systemd", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libdbus",
-    "libiw",
-    "libnl",
-    "systemd",
-]
+glibc = { path = "../glibc" }
+libdbus = { path = "../libdbus" }
+libiw = { path = "../libiw" }
+libnl = { path = "../libnl" }
+systemd = { path = "../systemd" }

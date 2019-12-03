@@ -3,8 +3,8 @@ use std::io;
 use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
-pub enum Error {
+#[snafu(visibility = "pub(super)")]
+pub(crate) enum Error {
     #[snafu(display("Failed to read manifest file '{}': {}", path.display(), source))]
     ManifestFileRead { path: PathBuf, source: io::Error },
 
@@ -15,4 +15,4 @@ pub enum Error {
     },
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub(super) type Result<T> = std::result::Result<T, Error>;

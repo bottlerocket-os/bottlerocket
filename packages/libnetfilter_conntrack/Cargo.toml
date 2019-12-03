@@ -13,14 +13,6 @@ url = "https://netfilter.org/projects/libnetfilter_conntrack/files/libnetfilter_
 sha512 = "5be5ed5daba385d11123a4e497c6334c6bb7e668594e667f85596619afe607f8783c088934098a4c07557d86f9b9157ff67d28541c8f4a80a5454307b979c22b"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-libmnl = { path = "../libmnl", optional=true }
-libnfnetlink = { path = "../libnfnetlink", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-    "libmnl",
-    "libnfnetlink",
-]
+glibc = { path = "../glibc" }
+libmnl = { path = "../libmnl" }
+libnfnetlink = { path = "../libnfnetlink" }

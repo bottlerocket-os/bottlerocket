@@ -13,10 +13,4 @@ url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.4.0/a
 sha512 = "2020ba908268d32bf5b0fa799052b26c37ea27fec6c41948bb090119a1963052b5f736da57a09390cc060bfa0b0717e8ed24d20ed01d828d5d27918117bbd7d0"
 
 [build-dependencies]
-buildsys = { path = "../../tools/buildsys" }
-glibc = { path = "../glibc", optional=true }
-
-[features]
-cascade = [
-    "glibc",
-]
+glibc = { path = "../glibc" }
