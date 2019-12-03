@@ -1,13 +1,12 @@
 Name: %{_cross_os}login
 Version: 0.0.1
 Release: 1%{?dist}
-Summary: A login that doesn't actually allow logins
+Summary: A login helper
 License: FIXME
-Source0: login.c
+Source0: login
 BuildRequires: %{_cross_os}glibc-devel
-
-# This package should only be installed if there is no shell.
-Conflicts: %{_cross_os}bash
+Requires: %{_cross_os}bash
+Requires: %{_cross_os}systemd-console
 
 %description
 %{summary}.
@@ -15,12 +14,10 @@ Conflicts: %{_cross_os}bash
 %prep
 
 %build
-%set_cross_build_flags
-%{_cross_target}-gcc ${CFLAGS} ${LDFLAGS} -o login %{S:0}
 
 %install
 install -d %{buildroot}%{_cross_bindir}
-install -p -m 0755 login %{buildroot}%{_cross_bindir}/login
+install -p -m 0755 %{S:0} %{buildroot}%{_cross_bindir}/login
 
 %files
 %{_cross_bindir}/login

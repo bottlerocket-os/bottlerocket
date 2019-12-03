@@ -1,13 +1,8 @@
-# To include a shell in Thar, set this to bcond_without.
-%bcond_with shell # without
-
 Name: %{_cross_os}release
 Version: 0.1.6
 Release: 1%{?dist}
 Summary: Thar release
 License: Public Domain
-
-Source1: login
 
 Source10: hosts
 Source11: nsswitch.conf
@@ -28,9 +23,6 @@ BuildArch: noarch
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}apiclient
 Requires: %{_cross_os}apiserver
-%if %{with shell}
-Requires: %{_cross_os}bash
-%endif
 Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
 Requires: %{_cross_os}coreutils
@@ -45,9 +37,6 @@ Requires: %{_cross_os}iproute
 Requires: %{_cross_os}kernel
 Requires: %{_cross_os}kernel-modules
 Requires: %{_cross_os}bork
-%if %{without shell}
-Requires: %{_cross_os}login
-%endif
 Requires: %{_cross_os}moondog
 Requires: %{_cross_os}netdog
 Requires: %{_cross_os}signpost
@@ -72,12 +61,6 @@ Requires: %{_cross_os}wicked
 %build
 
 %install
-
-%if %{with shell}
-install -d %{buildroot}%{_cross_bindir}
-install -p -m 0755 %{S:1} %{buildroot}%{_cross_bindir}
-%endif
-
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -p -m 0644 %{S:10} %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
@@ -104,9 +87,6 @@ install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 
 %files
-%if %{with shell}
-%{_cross_bindir}/login
-%endif
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig/eth0.xml

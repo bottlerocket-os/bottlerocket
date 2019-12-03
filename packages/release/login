@@ -1,4 +1,0 @@
-#!/bin/bash
-
-# FIXME: build from shadow-utils?
-exec bash --login
