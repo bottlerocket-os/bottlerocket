@@ -9,6 +9,10 @@ Parameters:
   SNSSubscriptionProtocol:
     Type: String
     Default: email
+  RepoMetadataBaseUrl:
+    Type: String
+  RepoTargetBaseUrl:
+    Type: String
 Resources:
   VPCRouteTable:
     Type: 'AWS::EC2::RouteTable'
@@ -86,7 +90,16 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       ContainerDefinitions:
-        - Memory: 512
+        - Command:
+            - '--metadata-base-url'
+            - !Sub '${RepoMetadataBaseUrl}'
+            - '--target-base-url'
+            - !Sub '${RepoTargetBaseUrl}'
+            - '--trusted-root-path'
+            - '/usr/share/repo-validation-canary/root.json'
+            - '--percentage-of-targets-to-retrieve'
+            - '30'
+          Memory: 512
           Cpu: 256
           Image: !Join
             - /
