@@ -9,6 +9,8 @@ BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/workspaces"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION = { script = ["git describe --tag --dirty || date +%Y%m%d"] }
+BUILDSYS_VARIANT = "aws-k8s"
+
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
@@ -16,7 +18,6 @@ GO_VERSION = "1.12.5"
 DOCKER_BUILDKIT = "1"
 
 [env.development]
-IMAGE = "aws-k8s"
 # Defined here to allow us to override ${BUILDSYS_ARCH} on the command line.
 BUILDSYS_SDK_IMAGE = "thar/sdk-${BUILDSYS_ARCH}:0.0.1"
 # Permit pulling directly Upstream URLs when lookaside cache results in MISSes.
@@ -69,7 +70,7 @@ fi
 dependencies = ["setup"]
 script = [
 '''
-for ws in workspaces packages images tools/buildsys ; do
+for ws in workspaces packages variants tools/buildsys ; do
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
 chmod o+r -R ${CARGO_HOME}
@@ -133,7 +134,7 @@ cargo build \
 '''
 ]
 
-[tasks.build-images]
+[tasks.build-variant]
 dependencies = ["build-packages"]
 script = [
 '''
@@ -141,16 +142,16 @@ export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path images/Cargo.toml \
-  --package ${IMAGE}
+  --manifest-path variants/Cargo.toml \
+  --package ${BUILDSYS_VARIANT}
 '''
 ]
 
 [tasks.world-packages]
 alias = "build-packages"
 
-[tasks.world-images]
-alias = "build-images"
+[tasks.world-variant]
+alias = "build-variant"
 
 [tasks.check-licenses]
 dependencies = ["fetch"]
@@ -165,7 +166,7 @@ script = [
 dependencies = ["fetch"]
 script = [
 '''
-PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}"
+PREFIX="thar-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
 for link in ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-*.lz4; do
   if [ -L "${link}" ]; then
     rm ${link}
@@ -174,10 +175,10 @@ done
 '''
 ]
 
-[tasks.link-images]
+[tasks.link-variant]
 script = [
 '''
-PREFIX="thar-${BUILDSYS_ARCH}-${IMAGE}"
+PREFIX="thar-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
 VERSIONED="${PREFIX}-${BUILDSYS_VERSION}"
 ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}.img.lz4 \
   ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}.img.lz4
@@ -195,9 +196,9 @@ ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.verity.lz4 \
 [tasks.build]
 dependencies = [
     "link-clean",
-    "build-images",
+    "build-variant",
     "check-licenses",
-    "link-images",
+    "link-variant",
 ]
 
 [tasks.world]
@@ -209,7 +210,7 @@ script = ['tools/gen-docs.sh']
 [tasks.clean]
 script = [
 '''
-for ws in workspaces packages images tools/buildsys ; do
+for ws in workspaces packages variants tools/buildsys ; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys

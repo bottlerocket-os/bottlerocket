@@ -1,5 +1,5 @@
 /*!
-This tool carries out a package or image build using Docker.
+This tool carries out a package or variant build using Docker.
 
 It is meant to be called by a Cargo build script. To keep those scripts simple,
 all of the configuration is taken from the environment, with the build type
@@ -14,7 +14,7 @@ mod manifest;
 mod project;
 mod spec;
 
-use builder::{ImageBuilder, PackageBuilder};
+use builder::{PackageBuilder, VariantBuilder};
 use cache::LookasideCache;
 use manifest::ManifestInfo;
 use project::ProjectInfo;
@@ -64,7 +64,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 #[serde(rename_all = "kebab-case")]
 enum Command {
     BuildPackage,
-    BuildImage,
+    BuildVariant,
 }
 
 fn usage() -> ! {
@@ -75,7 +75,7 @@ USAGE:
 
 SUBCOMMANDS:
     build-package           Build RPMs from a spec file and sources.
-    build-image             Build filesystem and disk images from RPMs."
+    build-variant           Build filesystem and disk images from RPMs."
     );
     std::process::exit(1)
 }
@@ -85,7 +85,7 @@ fn main() -> Result<()> {
     let command = serde_plain::from_str::<Command>(&command_str).unwrap_or_else(|_| usage());
     match command {
         Command::BuildPackage => build_package()?,
-        Command::BuildImage => build_image()?,
+        Command::BuildVariant => build_variant()?,
     }
     Ok(())
 }
@@ -133,7 +133,7 @@ fn build_package() -> Result<()> {
     Ok(())
 }
 
-fn build_image() -> Result<()> {
+fn build_variant() -> Result<()> {
     let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest_file = "Cargo.toml";
     println!("cargo:rerun-if-changed={}", manifest_file);
@@ -142,9 +142,9 @@ fn build_image() -> Result<()> {
         ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParse)?;
 
     if let Some(packages) = manifest.included_packages() {
-        ImageBuilder::build(&packages).context(error::BuildAttempt)?;
+        VariantBuilder::build(&packages).context(error::BuildAttempt)?;
     } else {
-        println!("cargo:warning=No included packages in manifest. Skipping image build.");
+        println!("cargo:warning=No included packages in manifest. Skipping variant build.");
     }
 
     Ok(())

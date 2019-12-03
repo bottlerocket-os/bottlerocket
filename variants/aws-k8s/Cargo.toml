@@ -5,7 +5,7 @@ edition = "2018"
 publish = false
 build = "build.rs"
 
-[package.metadata.build-image]
+[package.metadata.build-variant]
 included-packages = [
     "aws-iam-authenticator",
     "cni",
@@ -15,4 +15,4 @@ included-packages = [
 ]
 
 [lib]
-path = "img.rs"
+path = "lib.rs"

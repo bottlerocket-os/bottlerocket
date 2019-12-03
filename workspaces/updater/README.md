@@ -32,10 +32,10 @@ Any file listed in the manifest is also a TUF 'target' listed in targets.json an
 ## Updog
 Updog is the client tool that interacts with a 'The Update Framework' (TUF) repository to download and write updates to a Thar partition.
 Updog will parse the manifest.json file from the TUF repository and will update to a new image if the following criteria are satisfied:
-### Version & Flavor
+### Version & Variant
 By default Updog only considers updates resulting in a version increase; downgrades are possible by using the `--image` option to force a specific version.
 Updog will respect the `max_version` field in the update manifest and refuse to update beyond it.
-Updog also considers the Thar "flavor" of its current image and will not download updates for a different flavor.
+Updog also considers the Thar "variant" of its current image and will not download updates for a different variant.
 ### Datastore version
 Each update image has an associated datastore version.
 If an update would cause a change in datastore version, Updog will ensure the appropriate migration files are available to safely transition between datastore versions.
