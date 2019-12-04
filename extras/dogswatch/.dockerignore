@@ -1,5 +1,7 @@
 .direnv/
+dev/
 *.nix
 .envrc
 *.el
 *.tar*
+Makefile

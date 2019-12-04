@@ -7,6 +7,7 @@ GOBIN = ./bin/
 DOCKER_IMAGE := dogswatch
 DOCKER_IMAGE_REF_RELEASE := $(DOCKER_IMAGE):$(DOGSWATCH_VERSION)
 DOCKER_IMAGE_REF := $(DOCKER_IMAGE):$(shell git rev-parse --short=8 HEAD)
+DEBUG_LDFLAGS := -X $(GOPKG)/pkg/logging.DebugEnable=true
 
 build: $(GOBIN)
 	cd $(GOBIN) && \
@@ -17,10 +18,13 @@ $(GOBIN):
 	mkdir -p $(GOBIN)
 
 test:
-	go test -ldflags '-X $(GOPKG)/pkg/logging.DebugEnable=true' $(GOPKGS)
+	go test -ldflags '$(DEBUG_LDFLAGS)' $(GOPKGS)
 
 container: vendor
-	docker build --network=host -t $(DOCKER_IMAGE_REF) .
+	docker build --network=host \
+		--tag $(DOCKER_IMAGE_REF)\
+		--build-arg BUILD_LDFLAGS='$(DEBUG_LDFLAGS)' \
+		.
 
 release-container: container
 	docker tag $(DOCKER_IMAGE_REF) $(DOCKER_IMAGE_REF_RELEASE)
