@@ -3,17 +3,22 @@
 
 #[macro_use]
 extern crate log;
+
 use rand::seq::SliceRandom;
+use signal_hook::{iterator::Signals, SIGINT, SIGQUIT, SIGTERM};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
-use std::process;
 use std::str::FromStr;
 use std::string::ToString;
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::{env, io};
+use std::{process, thread};
 use tempfile::tempdir;
 use tough::{error as tough_error, HttpTransport, Limits, Repository, Settings};
+
+static SIGNAL: AtomicI32 = AtomicI32::new(0);
 
 type HttpRepo<'a> = Repository<'a, HttpTransport>;
 
@@ -63,6 +68,12 @@ mod error {
             backtrace: Backtrace,
         },
 
+        #[snafu(display("Failed to set up signal handler: {}", source))]
+        Signal {
+            source: std::io::Error,
+            backtrace: Backtrace,
+        },
+
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
     }
@@ -90,8 +101,7 @@ fn usage() -> ! {
             [ --percentage-of-targets-to-retrieve 0-100 ] 'Randomly samples specified percentage of targets'
             [ --log-level trace|debug|info|warn|error ]
 
-            If --percentage-of-targets-to-retrieve is not specified, {} will attempt to retrieve all
-            targets listed in the TUF repository.
+            If --percentage-of-targets-to-retrieve is not specified, {} will attempt to retrieve all targets listed in the TUF repository.
         ",
         program_name,
         program_name
@@ -213,6 +223,10 @@ where
         .cloned()
         .collect();
     for target in sampled_targets {
+        let recv_signal = SIGNAL.load(Ordering::SeqCst);
+        if recv_signal != 0 {
+            return Ok(recv_signal + 128);
+        }
         let target_reader = repo.read_target(&target);
         match target_reader {
             Err(ref err) => return Ok(match_report_tough_error(err)),
@@ -248,6 +262,15 @@ fn main() -> Result<()> {
 
     // Create the datastore path for storing the metadata files
     let datastore = tempdir().context(error::CreateTempdir)?;
+    let signals = Signals::new(&[SIGINT, SIGTERM, SIGQUIT]).context(error::Signal)?;
+    thread::spawn(move || {
+        for sig in signals.forever() {
+            // No, we're not supposed to print here, but by the time we check STOP in our main loop
+            // it could be many seconds later and the user will have no indication that their input was received.
+            SIGNAL.store(sig, Ordering::SeqCst);
+            info!("Received termination signal, will exit after next operation");
+        }
+    });
 
     info!("Loading TUF repo");
     let transport = HttpTransport::new();

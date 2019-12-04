@@ -6,6 +6,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
+signal-hook = "0.1.12"
 log = "0.4"
 rand = "0.7.0"
 reqwest = { version = "0.9.17", default-features = false, features = ["rustls-tls"] }
