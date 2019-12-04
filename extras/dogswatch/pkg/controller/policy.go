@@ -26,13 +26,24 @@ type defaultPolicy struct{}
 func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
 	// If already active, continue to handle it.
 	if ck.Intent.InProgress() {
+		if logging.Debuggable {
+			logging.New("policy-check").WithField("intent", ck.Intent.DisplayString()).Debug("permit already in progress")
+		}
 		return true, nil
 	}
 	// If there are no other active nodes in the cluster, then go ahead with the
 	// intended action.
-	if ck.ClusterActive == 0 {
+	if ck.ClusterActive < allowedClusterActive {
+		if logging.Debuggable {
+			logging.New("policy-check").WithFields(logrus.Fields{
+				"intent":         ck.Intent.DisplayString(),
+				"cluster-active": fmt.Sprintf("%d", ck.ClusterActive),
+				"allowed-active": fmt.Sprintf("%d", allowedClusterActive),
+			}).Debugf("permit according to active threshold")
+		}
 		return true, nil
 	}
+
 	return false, nil
 }
 
