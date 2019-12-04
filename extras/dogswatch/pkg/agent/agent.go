@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -13,7 +12,9 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 	"github.com/amazonlinux/thar/dogswatch/pkg/platform"
 	"github.com/amazonlinux/thar/dogswatch/pkg/workgroup"
+
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -230,9 +231,12 @@ func activeIntent(i *intent.Intent) bool {
 
 // realize acts on an Intent to achieve, or realize, the Intent's intent.
 func (a *Agent) realize(in *intent.Intent) error {
-	log := a.log.WithField("worker", "handler")
+	log := a.log.WithFields(logrus.Fields{
+		"worker": "handler",
+		"intent": in.DisplayString(),
+	})
 
-	log.WithField("intent", fmt.Sprintf("%#v", in)).Debug("handling intent")
+	log.Debug("handling intent")
 
 	var err error
 
@@ -316,7 +320,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 
 	postErr := a.poster.Post(in)
 	if postErr != nil {
-		log.WithError(postErr).Error("could not update intent status")
+		log.WithError(postErr).Error("could not update intent")
 	}
 
 	return err
@@ -381,6 +385,14 @@ type k8sPoster struct {
 // Post writes out the Intent to the Kubernetes Node resource.
 func (k *k8sPoster) Post(i *intent.Intent) error {
 	nodeName := i.GetName()
-	defer k.log.WithField("node", nodeName).Debugf("posted intent %s", i.DisplayString())
-	return k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	log := k.log.WithFields(logrus.Fields{
+		"node":   nodeName,
+		"intent": i.DisplayString(),
+	})
+	err := k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	if err != nil {
+		return err
+	}
+	log.Debugf("posted intent")
+	return nil
 }

@@ -7,6 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	SubComponentField = "subcomponent"
+	ComponentField    = "component"
+)
+
 type Setter func(*logrus.Logger) error
 
 var root = struct {
@@ -45,7 +50,7 @@ func New(component string, setters ...Setter) Logger {
 		// no errors handling for now
 		_ = Set(setter)
 	}
-	return root.logger.WithField("component", component)
+	return root.logger.WithField(ComponentField, component)
 }
 
 // Set mutates the underlying root logging implementation.

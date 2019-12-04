@@ -1,8 +1,12 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -54,6 +58,15 @@ func newPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, err
 		if !cin.Terminal() {
 			clusterActive++
 		}
+	}
+
+	if logging.Debuggable {
+		logging.New("policy-check").WithFields(logrus.Fields{
+			"intent":         in.DisplayString(),
+			"cluster-count":  fmt.Sprintf("%d", clusterCount),
+			"cluster-active": fmt.Sprintf("%d", clusterActive),
+			"resource-count": fmt.Sprintf("%d", len(ress)),
+		}).Debug("collected policy check")
 	}
 
 	if clusterCount <= 0 {

@@ -7,6 +7,7 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -83,43 +84,53 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			if !ok {
 				break
 			}
-			am.log.Debug("handling permitted event")
+			am.log.WithFields(logrus.Fields{
+				"intent": pin.DisplayString(),
+				"node":   pin.GetName(),
+			}).Debug("handling permitted intent")
 			am.takeAction(pin)
 
 		case in, ok := <-am.input:
 			if !ok {
 				break
 			}
-			am.log.Debug("checking with policy")
+			log := am.log.WithFields(logrus.Fields{
+				"intent": in.DisplayString(),
+				"node":   in.GetName(),
+			})
+			log.Debug("checking with policy")
 
 			// TODO: make policy checking and consideration richer
 			pview, err := am.makePolicyCheck(in)
 			if err != nil {
-				am.log.WithError(err).Error("policy unenforceable")
+				log.WithError(err).Error("policy unenforceable")
 				continue
 			}
 			proceed, err := am.policy.Check(pview)
 			if err != nil {
-				am.log.WithError(err).Error("policy check errored")
+				log.WithError(err).Error("policy check errored")
 				continue
 			}
 			if !proceed {
-				am.log.Debug("policy denied intent")
+				log.Debug("policy denied intent")
 				return nil
 			}
-			am.log.Debug("policy permitted intent")
+			log.Debug("policy permitted intent")
 			if len(permit) < maxQueuedIntents {
 				permit <- in
 			} else {
 				// TODO: handle backpressure with scheduling
-				am.log.Warn("backpressure blocking permitted intents")
+				log.Warn("backpressure blocking permitted intents")
 			}
 		}
 	}
 }
 
 func (am *ActionManager) takeAction(pin *intent.Intent) error {
-	log := am.log.WithField("node", pin.GetName())
+	log := am.log.WithFields(logrus.Fields{
+		"node":   pin.GetName(),
+		"intent": pin.DisplayString(),
+	})
 	successCheckRun := successfulUpdate(pin)
 	if successCheckRun {
 		log.Debug("handling successful update")
@@ -162,11 +173,13 @@ func (am *ActionManager) takeAction(pin *intent.Intent) error {
 
 	err := am.poster.Post(pin)
 	if err != nil {
-		log.WithError(err).Error("could not post intent")
+		log.WithError(err).Error("unable to post intent")
 	}
 	return err
 }
 
+// makePolicyCheck collects cluster information as a PolicyCheck for which to be
+// provided to a policy checker.
 func (am *ActionManager) makePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
 	if am.storer == nil {
 		return nil, errors.Errorf("manager has no store to access, needed for policy check")

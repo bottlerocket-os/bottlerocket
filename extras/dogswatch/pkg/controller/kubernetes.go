@@ -121,6 +121,13 @@ type k8sPoster struct {
 
 func (k *k8sPoster) Post(i *intent.Intent) error {
 	nodeName := i.GetName()
-	defer k.log.WithField("node", nodeName).Debugf("posted intent on node: %s", i)
-	return k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	err := k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	if err != nil {
+		return err
+	}
+	k.log.WithFields(logrus.Fields{
+		"node":   nodeName,
+		"intent": i.DisplayString(),
+	}).Debugf("posted intent")
+	return nil
 }
