@@ -2,10 +2,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/internal/logfields"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -14,9 +17,17 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const maxQueuedIntents = 10
+const (
+	// maxQueuedIntents controls the number of queued Intents that are waiting
+	// to be handled.
+	maxQueuedIntents   = 100
+	maxQueuedInputs    = maxQueuedIntents * (1 / 4)
+	queueSkipThreshold = maxQueuedIntents / 2
+)
 
 var _ nodestream.Handler = (*ActionManager)(nil)
+
+var randDropIntFunc func(int) int = rand.Intn
 
 // ActionManager handles node changes according to policy and runs a node update
 // flow to completion as allowed by policy.
@@ -24,7 +35,7 @@ type ActionManager struct {
 	log      logging.Logger
 	kube     kubernetes.Interface
 	policy   Policy
-	input    chan *intent.Intent
+	inputs   chan *intent.Intent
 	storer   storer
 	poster   poster
 	nodeName string
@@ -59,7 +70,7 @@ func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) 
 		log:    log,
 		kube:   kube,
 		policy: &defaultPolicy{log: log.WithField(logging.SubComponentField, "policy-check")},
-		input:  make(chan *intent.Intent, 1),
+		inputs: make(chan *intent.Intent, maxQueuedInputs),
 		poster: &k8sPoster{log, nodeclient},
 		nodem:  &k8sNodeManager{kube},
 	}
@@ -69,7 +80,7 @@ func (am *ActionManager) Run(ctx context.Context) error {
 	am.log.Debug("starting")
 	defer am.log.Debug("finished")
 
-	permit := make(chan *intent.Intent, maxQueuedIntents)
+	queuedIntents := make(chan *intent.Intent, maxQueuedIntents)
 
 	// TODO: split out accepted intent handler - it should handle its
 	// prioritization as needed to ensure that active nodes' events reach it.
@@ -80,22 +91,11 @@ func (am *ActionManager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 
-		case pin, ok := <-permit:
-			if !ok {
-				break
-			}
-			am.log.WithFields(logfields.Intent(pin)).Debug("handling permitted intent")
-			am.takeAction(pin)
-
-		case in, ok := <-am.input:
-			if !ok {
-				break
-			}
-			log := am.log.WithFields(logfields.Intent(in))
+		case qin, ok := <-queuedIntents:
+			log := am.log.WithFields(logfields.Intent(qin))
 			log.Debug("checking with policy")
-
 			// TODO: make policy checking and consideration richer
-			pview, err := am.makePolicyCheck(in)
+			pview, err := am.makePolicyCheck(qin)
 			if err != nil {
 				log.WithError(err).Error("policy unenforceable")
 				continue
@@ -109,15 +109,59 @@ func (am *ActionManager) Run(ctx context.Context) error {
 				log.Debug("policy denied intent")
 				continue
 			}
-			log.Debug("policy permitted intent")
-			if len(permit) < maxQueuedIntents {
-				permit <- in
-			} else {
-				// TODO: handle backpressure with scheduling
-				log.Warn("backpressure blocking permitted intents")
+			if !ok {
+				break
 			}
+			log.Debug("handling permitted intent")
+			am.takeAction(qin)
+
+		case input, ok := <-am.inputs:
+			if !ok {
+				am.log.Error("input channel closed")
+				break
+			}
+
+			queued := len(queuedIntents)
+			log := am.log.WithFields(logfields.Intent(input)).
+				WithField("queue-length", fmt.Sprintf("%d", queued))
+
+			if queued < queueSkipThreshold {
+				queuedIntents <- input
+				continue
+			}
+
+			// TODO: handle backpressure better with rescheduling
+
+			if queued >= queueSkipThreshold {
+				// Queue is getting full, let's be more selective about events that
+				// are propagated.
+				if isClusterActive(input) {
+					log.Info("queue active intent")
+					queuedIntents <- input
+				}
+				if isLowPriority(input) {
+					n := randDropIntFunc(10)
+					willDrop := n%2 == 0
+					if willDrop {
+						log.Warn("queue backlog high, randomly dropping intent")
+						continue
+					}
+				}
+				queuedIntents <- input
+				continue
+			}
+
+			// Queue is full, have to drop intent.
+			log.Warn("queue full, dropping intent this try")
 		}
 	}
+}
+
+func isLowPriority(in *intent.Intent) bool {
+	stabilizing := in.Wanted == marker.NodeActionStabilize
+	unknown := in.Wanted == marker.NodeActionUnknown || in.Wanted == ""
+	hasUpdate := in.UpdateAvailable == marker.NodeUpdateAvailable
+	return (stabilizing && !hasUpdate) || unknown
 }
 
 func (am *ActionManager) takeAction(pin *intent.Intent) error {
@@ -186,14 +230,14 @@ func (am *ActionManager) handle(node *v1.Node) {
 	log := am.log.WithField("node", node.GetName())
 	log.Debug("handling event")
 
-	in := am.intentFor(node)
-	if in == nil {
+	intent := am.intentFor(node)
+	if intent == nil {
 		return // no actionable intent signaled
 	}
 
-	log = log.WithFields(logfields.Intent(in))
+	log = log.WithFields(logfields.Intent(intent))
 	select {
-	case am.input <- in:
+	case am.inputs <- intent:
 		log.Debug("queue intent")
 	default:
 		log.Warn("unable to queue intent (back pressure)")
