@@ -5,6 +5,7 @@ import (
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -12,39 +13,13 @@ import (
 )
 
 const (
-	allowedClusterActive = 1
+	maxClusterActive = 1
 )
 
 type Policy interface {
 	// Check determines if the policy permits continuing with an intended
 	// action.
 	Check(*PolicyCheck) (bool, error)
-}
-
-type defaultPolicy struct{}
-
-func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
-	// If already active, continue to handle it.
-	if ck.Intent.InProgress() {
-		if logging.Debuggable {
-			logging.New("policy-check").WithField("intent", ck.Intent.DisplayString()).Debug("permit already in progress")
-		}
-		return true, nil
-	}
-	// If there are no other active nodes in the cluster, then go ahead with the
-	// intended action.
-	if ck.ClusterActive < allowedClusterActive {
-		if logging.Debuggable {
-			logging.New("policy-check").WithFields(logrus.Fields{
-				"intent":         ck.Intent.DisplayString(),
-				"cluster-active": fmt.Sprintf("%d", ck.ClusterActive),
-				"allowed-active": fmt.Sprintf("%d", allowedClusterActive),
-			}).Debugf("permit according to active threshold")
-		}
-		return true, nil
-	}
-
-	return false, nil
 }
 
 type PolicyCheck struct {
@@ -89,4 +64,42 @@ func newPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, err
 		ClusterActive: clusterActive,
 		ClusterCount:  clusterCount,
 	}, nil
+}
+
+type defaultPolicy struct {
+	log logging.Logger
+}
+
+func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
+	// policy checks are applied to intended actions, Intents that are next in
+	// line to be executed. Projections are made without considering the policy
+	// at time of the projection to the next state. So, we have to check when
+	// the update process is starting up.
+	startingUpdate := ck.Intent.Active == marker.NodeActionStabilize
+
+	// If already active, continue to handle it.
+	if ck.Intent.InProgress() && !startingUpdate {
+		if logging.Debuggable && p.log != nil {
+			p.log.WithFields(logrus.Fields{
+				"intent": ck.Intent.DisplayString(),
+				"node":   ck.Intent.GetName(),
+			}).Debug("permit already in progress")
+		}
+		return true, nil
+	}
+	// If there are no other active nodes in the cluster, then go ahead with the
+	// intended action.
+	if ck.ClusterActive < maxClusterActive {
+		if logging.Debuggable && p.log != nil {
+			p.log.WithFields(logrus.Fields{
+				"node":           ck.Intent.GetName(),
+				"intent":         ck.Intent.DisplayString(),
+				"cluster-active": fmt.Sprintf("%d", ck.ClusterActive),
+				"allowed-active": fmt.Sprintf("%d", maxClusterActive),
+			}).Debugf("permit according to active threshold")
+		}
+		return true, nil
+	}
+
+	return false, nil
 }

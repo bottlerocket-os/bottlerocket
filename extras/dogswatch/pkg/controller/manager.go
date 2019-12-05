@@ -58,7 +58,7 @@ func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) 
 	return &ActionManager{
 		log:    log,
 		kube:   kube,
-		policy: &defaultPolicy{},
+		policy: &defaultPolicy{log: log.WithField(logging.SubComponentField, "policy-check")},
 		input:  make(chan *intent.Intent, 1),
 		poster: &k8sPoster{log, nodeclient},
 		nodem:  &k8sNodeManager{kube},
