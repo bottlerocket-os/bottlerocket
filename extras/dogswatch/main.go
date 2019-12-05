@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/agent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/controller"
@@ -32,6 +33,18 @@ func main() {
 	}
 
 	log := logging.New("main")
+
+	// "debuggable" builds at runtime produce extensive logging output compared
+	// to release builds with the debug flag enabled. This requires building and
+	// using a distinct build in the deployment in order to use.
+	if logging.Debuggable {
+		log.Info("low-level logging.Debuggable is enabled in this build")
+		log.Warn("logging.Debuggable produces large volumes of logs")
+		delay := 3 * time.Second
+		log.WithField("delay", delay).Warn("delaying start due to logging.Debuggable build")
+		time.Sleep(delay)
+		log.Info("starting logging.Debuggable enabled build")
+	}
 
 	kube, err := k8sutil.DefaultKubernetesClient()
 	if err != nil {
