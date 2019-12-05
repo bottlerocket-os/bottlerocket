@@ -10,14 +10,10 @@ extern crate log;
 use crate::error::Result;
 use chrono::{DateTime, Utc};
 use data_store_version::Version as DataVersion;
-use migrator::MIGRATION_FILENAME_RE;
 use semver::Version as SemVer;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
-use std::collections::BTreeMap;
-use std::fs::{self, File};
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::path::PathBuf;
 use structopt::StructOpt;
 use update_metadata::{Images, Manifest, Update};
 
@@ -67,45 +63,25 @@ struct AddUpdateArgs {
 
 impl AddUpdateArgs {
     fn run(self) -> Result<()> {
-        let mut manifest: Manifest = match load_file(&self.file) {
+        let mut manifest: Manifest = match update_metadata::load_file(&self.file) {
             Ok(m) => m,
             _ => Manifest::default(), // TODO only if EEXIST
         };
 
-        let max_version = if let Some(version) = self.max_version {
-            version
-        } else {
-            // Default to greater of the current max version and this version
-            if let Some(update) = manifest.updates.first() {
-                std::cmp::max(&self.image_version, &update.max_version).clone()
-            } else {
-                self.image_version.clone()
-            }
-        };
-        let update = Update {
-            flavor: self.flavor,
-            arch: self.arch,
-            version: self.image_version.clone(),
-            max_version,
-            images: Images {
+        manifest.add_update(
+            self.image_version,
+            self.max_version,
+            self.datastore_version,
+            self.arch,
+            self.flavor,
+            Images {
                 root: self.root,
                 boot: self.boot,
                 hash: self.hash,
             },
-            waves: BTreeMap::new(),
-        };
-        manifest
-            .datastore_versions
-            .insert(self.image_version, self.datastore_version);
-        update_max_version(
-            &mut manifest,
-            &update.max_version,
-            Some(&update.arch),
-            Some(&update.flavor),
-        );
-        info!("Maximum version set to {}", &update.max_version);
-        manifest.updates.push(update);
-        write_file(&self.file, &manifest)
+        )?;
+        update_metadata::write_file(&self.file, &manifest)?;
+        Ok(())
     }
 }
 
@@ -137,7 +113,7 @@ struct RemoveUpdateArgs {
 
 impl RemoveUpdateArgs {
     fn run(&self) -> Result<()> {
-        let mut manifest: Manifest = load_file(&self.file)?;
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
         // Remove any update that exactly matches the specified update
         manifest.updates.retain(|update| {
             update.arch != self.arch
@@ -161,7 +137,7 @@ impl RemoveUpdateArgs {
             }
         }
         // Note: We don't revert the maximum version on removal
-        write_file(&self.file, &manifest)?;
+        update_metadata::write_file(&self.file, &manifest)?;
         if let Some(current) = manifest.updates.first() {
             info!(
                 "Update {}-{}-{} removed. Current maximum version: {}",
@@ -204,62 +180,22 @@ struct WaveArgs {
 }
 
 impl WaveArgs {
-    fn validate(updates: &[Update]) -> Result<()> {
-        for update in updates {
-            let mut waves = update.waves.iter().peekable();
-            while let Some(wave) = waves.next() {
-                if let Some(next) = waves.peek() {
-                    ensure!(
-                        wave.1 < next.1,
-                        error::WavesUnordered {
-                            wave: *wave.0,
-                            next: *next.0
-                        }
-                    );
-                }
-            }
+    fn add(self) -> Result<()> {
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
+        let start = self.start.context(error::WaveStartArg)?;
+        let num_matching = manifest.add_wave(self.flavor, self.arch, self.image_version, self.bound, start)?;
+        if num_matching > 1 {
+            warn!("Multiple matching updates for wave - this is weird but not a disaster");
         }
+        update_metadata::write_file(&self.file, &manifest)?;
         Ok(())
     }
 
-    fn add(self) -> Result<()> {
-        let mut manifest: Manifest = load_file(&self.file)?;
-        let matching: Vec<&mut Update> = manifest
-            .updates
-            .iter_mut()
-            // Find the update that exactly matches the specified update
-            .filter(|update| {
-                update.arch == self.arch
-                    && update.flavor == self.flavor
-                    && update.version == self.image_version
-            })
-            .collect();
-        if matching.len() > 1 {
-            warn!("Multiple matching updates for wave - this is weird but not a disaster");
-        }
-        let start = self.start.context(error::WaveStartArg)?;
-        for update in matching {
-            update.waves.insert(self.bound, start);
-        }
-        Self::validate(&manifest.updates)?;
-        write_file(&self.file, &manifest)
-    }
-
     fn remove(self) -> Result<()> {
-        let mut manifest: Manifest = load_file(&self.file)?;
-        let matching: Vec<&mut Update> = manifest
-            .updates
-            .iter_mut()
-            .filter(|update| {
-                update.arch == self.arch
-                    && update.flavor == self.flavor
-                    && update.version == self.image_version
-            })
-            .collect();
-        for update in matching {
-            update.waves.remove(&self.bound);
-        }
-        write_file(&self.file, &manifest)
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
+        manifest.remove_wave(self.flavor, self.arch, self.image_version, self.bound)?;
+        update_metadata::write_file(&self.file, &manifest)?;
+        Ok(())
     }
 }
 
@@ -286,53 +222,14 @@ struct MigrationArgs {
 
 impl MigrationArgs {
     fn add(self) -> Result<()> {
-        let mut manifest: Manifest = load_file(&self.file)?;
-
-        // Check each migration matches the filename conventions used by the migrator
-        for name in &self.migrations {
-            let captures = MIGRATION_FILENAME_RE
-                .captures(&name)
-                .context(error::MigrationNaming)?;
-
-            let version_match = captures
-                .name("version")
-                .context(error::BadRegexVersion { name })?;
-            let version = DataVersion::from_str(version_match.as_str())
-                .context(error::BadDataVersion { key: name })?;
-            if version != self.to {
-                return error::MigrationInvalidTarget {
-                    name,
-                    to: self.to,
-                    version,
-                }
-                .fail();
-            }
-
-            let _ = captures
-                .name("name")
-                .context(error::BadRegexName { name })?;
-        }
-
-        // If --append is set, append the new migrations to the existing vec.
-        if self.append && manifest.migrations.contains_key(&(self.from, self.to)) {
-            let migrations = manifest.migrations.get_mut(&(self.from, self.to)).context(
-                error::MigrationMutable {
-                    from: self.from,
-                    to: self.to,
-                },
-            )?;
-            migrations.extend_from_slice(&self.migrations);
-        // Otherwise just overwrite the existing migrations
-        } else {
-            manifest
-                .migrations
-                .insert((self.from, self.to), self.migrations);
-        }
-        write_file(&self.file, &manifest)
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
+        manifest.add_migration(self.append, self.from, self.to, self.migrations)?;
+        update_metadata::write_file(&self.file, &manifest)?;
+        Ok(())
     }
 
     fn remove(self) -> Result<()> {
-        let mut manifest: Manifest = load_file(&self.file)?;
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
         ensure!(
             manifest.migrations.contains_key(&(self.from, self.to)),
             error::MigrationNotPresent {
@@ -341,7 +238,8 @@ impl MigrationArgs {
             }
         );
         manifest.migrations.remove(&(self.from, self.to));
-        write_file(&self.file, &manifest)
+        update_metadata::write_file(&self.file, &manifest)?;
+        Ok(())
     }
 }
 
@@ -357,9 +255,10 @@ struct MaxVersionArgs {
 
 impl MaxVersionArgs {
     fn run(self) -> Result<()> {
-        let mut manifest: Manifest = load_file(&self.file)?;
-        update_max_version(&mut manifest, &self.max_version, None, None);
-        write_file(&self.file, &manifest)
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
+        manifest.update_max_version(&self.max_version, None, None);
+        update_metadata::write_file(&self.file, &manifest)?;
+        Ok(())
     }
 }
 
@@ -377,7 +276,7 @@ struct MappingArgs {
 
 impl MappingArgs {
     fn run(self) -> Result<()> {
-        let mut manifest: Manifest = load_file(&self.file)?;
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
         let version = self.image_version.clone();
         let old = manifest
             .datastore_versions
@@ -388,7 +287,8 @@ impl MappingArgs {
                 version, self.data_version, version, old
             );
         }
-        write_file(&self.file, &manifest)
+        update_metadata::write_file(&self.file, &manifest)?;
+        Ok(())
     }
 }
 
@@ -417,47 +317,18 @@ enum Command {
     Validate(GeneralArgs),
 }
 
-fn load_file(path: &Path) -> Result<Manifest> {
-    let file = File::open(path).context(error::ManifestRead { path })?;
-    serde_json::from_reader(file).context(error::ManifestParse)
-}
-
-fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
-    let manifest = serde_json::to_string_pretty(&manifest).context(error::UpdateSerialize)?;
-    fs::write(path, &manifest).context(error::ConfigWrite { path })?;
-    Ok(())
-}
-
-/// Update the maximum version for all updates that optionally match the
-/// architecture and flavor of some new update.
-fn update_max_version(
-    manifest: &mut Manifest,
-    version: &SemVer,
-    arch: Option<&str>,
-    flavor: Option<&str>,
-) {
-    let matching: Vec<&mut Update> = manifest
-        .updates
-        .iter_mut()
-        .filter(|update| match (arch, flavor) {
-            (Some(arch), Some(flavor)) => update.arch == arch && update.flavor == flavor,
-            (Some(arch), None) => update.arch == arch,
-            (None, Some(flavor)) => update.flavor == flavor,
-            _ => true,
-        })
-        .collect();
-    for u in matching {
-        u.max_version = version.clone();
-    }
-}
-
 fn main_inner() -> Result<()> {
     // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
     TermLogger::init(LevelFilter::Info, LogConfig::default(), TerminalMode::Mixed)
         .context(error::Logger)?;
 
     match Command::from_args() {
-        Command::Init(args) => write_file(&args.file, &Manifest::default()),
+        Command::Init(args) => {
+            match update_metadata::write_file(&args.file, &Manifest::default()) {
+                Ok(_) => Ok(()),
+                Err(e) => Err(error::Error::UpdateMetadata { source: e }),
+            }
+        }
         Command::AddUpdate(args) => args.run(),
         Command::AddWave(args) => args.add(),
         Command::AddMigration(args) => args.add(),
@@ -466,9 +337,9 @@ fn main_inner() -> Result<()> {
         Command::RemoveUpdate(args) => args.run(),
         Command::RemoveWave(args) => args.remove(),
         Command::RemoveMigrations(args) => args.remove(),
-        Command::Validate(args) => match load_file(&args.file) {
+        Command::Validate(args) => match update_metadata::load_file(&args.file) {
             Ok(_) => Ok(()),
-            Err(e) => Err(e),
+            Err(e) => Err(error::Error::UpdateMetadata { source: e }),
         },
     }
 }
@@ -540,7 +411,7 @@ mod tests {
         .run()
         .unwrap();
 
-        let m: Manifest = load_file(tmpfd.path())?;
+        let m: Manifest = update_metadata::load_file(tmpfd.path())?;
         for u in m.updates {
             assert!(u.max_version == SemVer::parse("1.2.4").unwrap());
         }
@@ -601,7 +472,7 @@ mod tests {
         .run()
         .unwrap();
 
-        let m: Manifest = load_file(tmpfd.path())?;
+        let m: Manifest = update_metadata::load_file(tmpfd.path())?;
         assert!(m
             .datastore_versions
             .contains_key(&SemVer::parse("1.2.3").unwrap()));

@@ -2,6 +2,7 @@
 
 use data_store_version::Version as DataVersion;
 use snafu::{Backtrace, Snafu};
+use std::path::PathBuf;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -23,7 +24,14 @@ pub enum Error {
     },
 
     #[snafu(display("Could not parse datastore version: {}", key))]
-    BadDataVersion { backtrace: Backtrace, key: String },
+    BadDataVersion {
+        backtrace: Backtrace,
+        key: String,
+        source: data_store_version::error::Error,
+    },
+
+    #[snafu(display("Could not parse datastore versions: {}", key))]
+    BadDataVersionsFromTo { backtrace: Backtrace, key: String },
 
     #[snafu(display("Could not parse image version: {} - {}", key, value))]
     BadMapVersion {
@@ -32,8 +40,14 @@ pub enum Error {
         value: String,
     },
 
+    #[snafu(display("Migration {} matches regex but missing version", name))]
+    BadRegexVersion { name: String },
+
+    #[snafu(display("Migration {} matches regex but missing name", name))]
+    BadRegexName { name: String },
+
     #[snafu(display("Duplicate key ID: {}", keyid))]
-    DuplicateKeyId { backtrace: Backtrace, keyid: u64 },
+    DuplicateKeyId { backtrace: Backtrace, keyid: u32 },
 
     #[snafu(display("Duplicate version key: {}", key))]
     DuplicateVersionKey { backtrace: Backtrace, key: String },
@@ -44,41 +58,51 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Missing datastore version in metadata: {:?}", version))]
-    MissingDataVersion {
+    #[snafu(display("Failed to read manifest file {}: {}", path.display(), source))]
+    ManifestRead {
+        path: PathBuf,
+        source: std::io::Error,
         backtrace: Backtrace,
-        version: DataVersion,
     },
 
-    #[snafu(display("Image version missing datastore mapping: {}", version))]
-    MissingMapping {
+    #[snafu(display("Failed to write manifest file {}: {}", path.display(), source))]
+    ManifestWrite {
+        path: PathBuf,
+        source: std::io::Error,
         backtrace: Backtrace,
-        version: String,
     },
 
     #[snafu(display(
-        "Reached end of migration chain at {} but target is {}",
-        current,
-        target
+        "Migration {} given for {} but name implies it is for {}",
+        name,
+        to,
+        version
     ))]
-    MissingMigration {
+    MigrationInvalidTarget {
         backtrace: Backtrace,
-        current: DataVersion,
-        target: DataVersion,
+        name: String,
+        to: DataVersion,
+        version: DataVersion,
     },
 
-    #[snafu(display("Missing version in metadata: {}", version))]
-    MissingVersion {
-        backtrace: Backtrace,
-        version: String,
-    },
+    #[snafu(display(
+        "Migration name invalid; must follow format 'migrate_${{TO_VERSION}}_${{NAME}}'"
+    ))]
+    MigrationNaming { backtrace: Backtrace },
 
-    #[snafu(display("This host is not part of any wave"))]
-    NoWave { backtrace: Backtrace },
+    #[snafu(display("Unable to get mutable reference to ({},{}) migrations", from, to))]
+    MigrationMutable {
+        backtrace: Backtrace,
+        from: DataVersion,
+        to: DataVersion,
+    },
 
     #[snafu(display("Failed to serialize update information: {}", source))]
     UpdateSerialize {
         source: serde_json::Error,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]
+    WavesUnordered { wave: u32, next: u32 },
 }
