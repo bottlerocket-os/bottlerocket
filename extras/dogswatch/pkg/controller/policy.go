@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/logfields"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/pkg/errors"
@@ -47,8 +48,7 @@ func newPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, err
 	}
 
 	if logging.Debuggable {
-		logging.New("policy-check").WithFields(logrus.Fields{
-			"intent":         in.DisplayString(),
+		logging.New("policy-check").WithFields(logfields.Intent(in)).WithFields(logrus.Fields{
 			"cluster-count":  fmt.Sprintf("%d", clusterCount),
 			"cluster-active": fmt.Sprintf("%d", clusterActive),
 			"resource-count": fmt.Sprintf("%d", len(ress)),

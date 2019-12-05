@@ -91,16 +91,16 @@ func (is *informerStream) shutdown() {
 }
 
 func (is *informerStream) OnAdd(obj interface{}) {
-	is.log.Debug("add event")
+	is.log.Debug("resource add event")
 	is.handler.OnAdd(obj.(*v1.Node))
 }
 
 func (is *informerStream) OnDelete(obj interface{}) {
-	is.log.Debug("delete event")
+	is.log.Debug("resource delete event")
 	is.handler.OnDelete(obj.(*v1.Node))
 }
 
 func (is *informerStream) OnUpdate(oldObj, newObj interface{}) {
-	is.log.Debug("update event")
+	is.log.Debug("resource update event")
 	is.handler.OnUpdate(oldObj.(*v1.Node), newObj.(*v1.Node))
 }

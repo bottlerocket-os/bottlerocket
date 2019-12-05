@@ -116,6 +116,8 @@ func (i *Intent) Stuck() bool {
 	// The action was not one of progress and yet was acted upon.
 	degradedBusy := !i.isInProgress(i.Wanted) && i.Wanted == i.Active && i.State == marker.NodeStateBusy
 
+	result := degradedStatic || degradedUnknown || degradedPath || degradedBusy
+
 	if logging.Debuggable {
 		logging.New("intent").WithFields(logrus.Fields{
 			"intent":          i.DisplayString(),
@@ -123,10 +125,11 @@ func (i *Intent) Stuck() bool {
 			"degradedUnknown": degradedUnknown,
 			"degradedPath":    degradedPath,
 			"degradedBusy":    degradedBusy,
-		}).Debug("Stuck")
+			"result":          result,
+		}).Debug("intent:Stuck")
 	}
 
-	return degradedStatic || degradedUnknown || degradedPath || degradedBusy
+	return result
 }
 
 // DegradedPaths indicates that the intent will derail and step into an unknown
@@ -138,6 +141,8 @@ func (i *Intent) DegradedPath() bool {
 	untargeted := anticipated.Wanted == marker.NodeActionUnknown
 	inconsistent := !i.Realized() && anticipated.Wanted != i.Wanted
 
+	result := (!starting || i.Terminal()) && (untargeted || inconsistent)
+
 	if logging.Debuggable {
 		logging.New("intent").WithFields(logrus.Fields{
 			"intent":       i.DisplayString(),
@@ -145,9 +150,11 @@ func (i *Intent) DegradedPath() bool {
 			"starting":     starting,
 			"untargeted":   untargeted,
 			"inconsistent": inconsistent,
-		}).Debug("DegradedPath")
+			"result":       result,
+		}).Debug("intent:DegradedPath")
 	}
-	return (!starting || i.Terminal()) && (untargeted || inconsistent)
+
+	return result
 }
 
 // Realized indicates that the Intent reached the intended state.
@@ -163,15 +170,18 @@ func (i *Intent) InProgress() bool {
 	// waiting on handler to complete its intent handling
 	pendingFinish := i.Wanted == i.Active && !i.Waiting()
 
+	result := pendingNode || pendingFinish
+
 	if logging.Debuggable {
 		logging.New("intent").WithFields(logrus.Fields{
 			"intent":        i.DisplayString(),
 			"pendingNode":   pendingNode,
 			"pendingFinish": pendingFinish,
-		}).Debug("InProgress")
+			"result":        result,
+		}).Debug("intent:InProgress")
 	}
 
-	return pendingNode || pendingFinish
+	return result
 }
 
 // isInProgress indicates that the field provided is an action that may be able
@@ -242,8 +252,8 @@ func (i *Intent) Terminal() bool {
 	atTerminal := next == i.Wanted && i.Wanted == i.Active
 	if logging.Debuggable {
 		logging.New("intent").WithFields(logrus.Fields{
-			"atTerminal": atTerminal,
-		}).Debug("Targeted")
+			"result": atTerminal,
+		}).Debug("intent:Targeted")
 	}
 	return atTerminal
 }

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/logfields"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -84,20 +84,14 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			if !ok {
 				break
 			}
-			am.log.WithFields(logrus.Fields{
-				"intent": pin.DisplayString(),
-				"node":   pin.GetName(),
-			}).Debug("handling permitted intent")
+			am.log.WithFields(logfields.Intent(pin)).Debug("handling permitted intent")
 			am.takeAction(pin)
 
 		case in, ok := <-am.input:
 			if !ok {
 				break
 			}
-			log := am.log.WithFields(logrus.Fields{
-				"intent": in.DisplayString(),
-				"node":   in.GetName(),
-			})
+			log := am.log.WithFields(logfields.Intent(in))
 			log.Debug("checking with policy")
 
 			// TODO: make policy checking and consideration richer
@@ -127,10 +121,7 @@ func (am *ActionManager) Run(ctx context.Context) error {
 }
 
 func (am *ActionManager) takeAction(pin *intent.Intent) error {
-	log := am.log.WithFields(logrus.Fields{
-		"node":   pin.GetName(),
-		"intent": pin.DisplayString(),
-	})
+	log := am.log.WithFields(logfields.Intent(pin))
 	successCheckRun := successfulUpdate(pin)
 	if successCheckRun {
 		log.Debug("handling successful update")
@@ -200,24 +191,25 @@ func (am *ActionManager) handle(node *v1.Node) {
 		return // no actionable intent signaled
 	}
 
+	log = log.WithFields(logfields.Intent(in))
 	select {
 	case am.input <- in:
-		log.Debug("submitted intent")
+		log.Debug("queue intent")
 	default:
-		log.Warn("unable to submit intent")
+		log.Warn("unable to queue intent (back pressure)")
 	}
 }
 
 // intentFor interprets the intention given the Node's annotations.
 func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
-	log := am.log.WithField("node", node.GetName())
 	in := intent.Given(node)
+	log := am.log.WithFields(logfields.Intent(in))
 
 	if in.Stuck() {
-		log.Debug("intent is stuck")
-		log.Warn("resetting to stabilize stuck intent state")
-		in = in.Reset()
-		return in
+		reset := in.Reset()
+		log.WithField("intent-reset", reset.DisplayString()).Debug("node intent indicates stuck")
+		log.Warn("stabilizing stuck node")
+		return reset
 	}
 	// TODO: add per-node bucketed backoff for error handling and retries.
 	if in.Errored() {
