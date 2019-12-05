@@ -77,34 +77,37 @@ type defaultPolicy struct {
 }
 
 func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
+	log := p.log.WithFields(logfields.Intent(ck.Intent))
+
 	// policy checks are applied to intended actions, Intents that are next in
 	// line to be executed. Projections are made without considering the policy
 	// at time of the projection to the next state. So, we have to check when
 	// the update process is starting up.
 	startingUpdate := ck.Intent.Active == marker.NodeActionStabilize
-
-	// If already active, continue to handle it.
-	if ck.Intent.InProgress() && !startingUpdate {
-		if logging.Debuggable && p.log != nil {
-			p.log.WithFields(logrus.Fields{
-				"intent": ck.Intent.DisplayString(),
-				"node":   ck.Intent.GetName(),
-			}).Debug("permit already in progress")
+	if !startingUpdate {
+		if ck.Intent.InProgress() {
+			if logging.Debuggable {
+				log.Debug("permit already in progress")
+			}
+			return true, nil
 		}
-		return true, nil
+
+		if ck.Intent.Terminal() {
+			if logging.Debuggable {
+				log.Debug("permit terminal intent")
+			}
+			return true, nil
+		}
 	}
 
 	// If there are no other active nodes in the cluster, then go ahead with the
 	// intended action.
 	if ck.ClusterActive < maxClusterActive {
-		if logging.Debuggable && p.log != nil {
-			p.log.WithFields(logrus.Fields{
-				"node":           ck.Intent.GetName(),
-				"intent":         ck.Intent.DisplayString(),
-				"cluster-active": fmt.Sprintf("%d", ck.ClusterActive),
-				"allowed-active": fmt.Sprintf("%d", maxClusterActive),
-			}).Debugf("permit according to active threshold")
-		}
+		log.WithFields(logrus.Fields{
+			"cluster-active": fmt.Sprintf("%d", ck.ClusterActive),
+			"allowed-active": fmt.Sprintf("%d", maxClusterActive),
+		}).Debugf("permit according to active threshold")
+
 		return true, nil
 	}
 
