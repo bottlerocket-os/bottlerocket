@@ -50,7 +50,16 @@ func TestPolicyCheck(t *testing.T) {
 			},
 		},
 		{
-			Name:         "perform-maxactive",
+			Name:         "stabilize-new",
+			ShouldPermit: true,
+			PolicyCheck: &PolicyCheck{
+				Intent:        intents.PendingStabilizing(),
+				ClusterActive: maxClusterActive,
+				ClusterCount:  maxClusterActive + 1,
+			},
+		},
+		{
+			Name:         "perform-max-active",
 			ShouldPermit: false,
 			PolicyCheck: &PolicyCheck{
 				Intent:        intents.PendingPrepareUpdate(),
@@ -59,6 +68,17 @@ func TestPolicyCheck(t *testing.T) {
 			},
 		},
 		{
+			Name:         "perform-over-threshold",
+			ShouldPermit: false,
+			PolicyCheck: &PolicyCheck{
+				Intent:        intents.PendingPrepareUpdate(),
+				ClusterActive: maxClusterActive + 1,
+				ClusterCount:  maxClusterActive + 1,
+			},
+		},
+		{
+			// After an update, we'll need to handle the Node's intent to
+			// uncordon it.
 			Name:         "updated",
 			ShouldPermit: true,
 			PolicyCheck: &PolicyCheck{

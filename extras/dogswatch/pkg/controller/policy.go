@@ -44,6 +44,11 @@ func newPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, err
 		cin := intent.Given(node)
 		if isClusterActive(cin) {
 			clusterActive++
+			if logging.Debuggable {
+				logging.New("policy-check").WithFields(logfields.Intent(cin)).
+					WithField("cluster-active", fmt.Sprintf("%d", clusterActive)).
+					Debug("cluster node's intent considered active")
+			}
 		}
 	}
 
