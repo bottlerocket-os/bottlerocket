@@ -41,7 +41,7 @@ func newPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, err
 			continue
 		}
 		cin := intent.Given(node)
-		if !cin.Terminal() {
+		if isClusterActive(cin) {
 			clusterActive++
 		}
 	}
@@ -66,6 +66,12 @@ func newPolicyCheck(in *intent.Intent, resources cache.Store) (*PolicyCheck, err
 	}, nil
 }
 
+// isClusterActive matches intents that the cluster shouldn't run concurrently.
+func isClusterActive(i *intent.Intent) bool {
+	stabilizing := i.Wanted == marker.NodeActionStabilize
+	return !stabilizing && !i.Stuck()
+}
+
 type defaultPolicy struct {
 	log logging.Logger
 }
@@ -87,6 +93,7 @@ func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
 		}
 		return true, nil
 	}
+
 	// If there are no other active nodes in the cluster, then go ahead with the
 	// intended action.
 	if ck.ClusterActive < maxClusterActive {

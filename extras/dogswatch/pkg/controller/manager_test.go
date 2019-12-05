@@ -115,8 +115,8 @@ func TestManagerIntentForTargeted(t *testing.T) {
 			input:    intents.UpdateError(),
 			expected: intents.Reset(),
 		},
-		// Update handling is a pass through to handle the "exact" intent.
 		{
+			// Update handling is a pass through to handle the "exact" intent.
 			input:    intents.UpdateSuccess(),
 			expected: intents.UpdateSuccess(),
 		},
@@ -126,12 +126,29 @@ func TestManagerIntentForTargeted(t *testing.T) {
 				intents.Pending(marker.NodeActionPerformUpdate)),
 		},
 		{
+			// Busy doing work, shouldn't modify the intent.
+			input:    intents.UpdatePrepared(intents.WithBusy()),
+			expected: nil,
+		},
+		{
+			// Busy doing work, shouldn't modify the intent.
+			input: intents.UpdatePrepared(
+				intents.Pending(marker.NodeActionPerformUpdate)),
+			expected: nil,
+		},
+		{
 			input:    intents.PendingStabilizing(),
 			expected: nil,
 		},
 		{
 			input:    intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
 			expected: nil,
+		},
+		{
+			// Available updates are primed and intended to be tried.
+			input: intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)),
+			expected: intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)).
+				SetBeginUpdate(),
 		},
 	}
 
