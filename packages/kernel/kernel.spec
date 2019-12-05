@@ -16,13 +16,28 @@ Patch0004: 0004-dm-ioctl-fix-hang-in-early-create-error-condition.patch
 Patch0005: 0005-dm-init-fix-incorrect-uses-of-kstrndup.patch
 Patch0006: 0006-dm-init-remove-trailing-newline-from-calls-to-DMERR-.patch
 Patch0007: 0007-lustrefsx-Disable-Werror-stringop-overflow.patch
+Patch0008: 0008-Provide-in-kernel-headers-to-make-extending-kernel-e.patch
+Patch0009: 0009-kernel-Makefile-don-t-assume-that-kernel-gen_ikh_dat.patch
+Patch0010: 0010-kheaders-Move-from-proc-to-sysfs.patch
+Patch0011: 0011-kheaders-Do-not-regenerate-archive-if-config-is-not-.patch
+Patch0012: 0012-kheaders-remove-meaningless-R-option-of-ls.patch
+Patch0013: 0013-kheaders-include-only-headers-into-kheaders_data.tar.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
 BuildRequires: kmod
 BuildRequires: openssl-devel
 
+%global kernel_sourcedir %{_usrsrc}/kernels/%{version}
+
 %description
+%{summary}.
+
+%package devel
+Summary: Configured Linux kernel source for module building
+Requires: %{_cross_os}filesystem
+
+%description devel
 %{summary}.
 
 %package modules
@@ -82,6 +97,30 @@ find %{buildroot}%{_cross_prefix} \
 
 %cross_generate_attribution
 
+# files for external module compilation
+(
+  find * -name Kbuild\* -type f -print  \
+    -o -name Kconfig\* -type f -print \
+    -o -name Makefile\* -type f -print \
+    -o -name module.lds -type f -print \
+    -o -name Platform -type f -print
+  find arch/*/include/ include/ -type f -o -type l
+  find scripts/ -executable -type f
+  find scripts/ ! \( -name Makefile\* -o -name Kbuild\* \) -type f
+  echo .config
+  echo Module.symvers
+  echo System.map
+) | sort -u > kernel_devel_files
+
+# remove x86 intermediate files like generated/asm/.syscalls_32.h.cmd
+sed -i '/asm\/.*\.cmd$/d' kernel_devel_files
+
+install -d %{buildroot}%{kernel_sourcedir}
+for file in $(cat kernel_devel_files); do
+  install -D ${file} %{buildroot}%{kernel_sourcedir}/${file}
+
+done
+
 %files
 %license COPYING LICENSES/preferred/GPL-2.0 LICENSES/exceptions/Linux-syscall-note
 %{_cross_attribution_file}
@@ -116,5 +155,10 @@ find %{buildroot}%{_cross_prefix} \
 %{_cross_includedir}/sound/*
 %{_cross_includedir}/video/*
 %{_cross_includedir}/xen/*
+
+%files devel
+%dir %{kernel_sourcedir}
+%{kernel_sourcedir}/*
+%{kernel_sourcedir}/.config
 
 %changelog

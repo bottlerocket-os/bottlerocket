@@ -1,0 +1,70 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
+Date: Wed, 15 May 2019 17:35:52 -0400
+Subject: [PATCH 4/6] kheaders: Do not regenerate archive if config is not
+ changed
+
+Linus reported an issue that doing an allmodconfig was causing the
+kheaders archive to be regenerated even though the config is the same.
+This patch fixes the issue by ignoring the config-related header files
+for "knowing when to regenerate based on timestamps".  Instead, if the
+CONFIG_X_Y option really changes, then we there are the
+include/config/X/Y.h which will already tells us "if a config really
+changed". So we don't really need these files for regeneration detection
+anyway, and ignoring them fixes Linus's issue.
+
+Reported-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+(cherry picked from commit 1457dc9ed8da871fbbc0a2ebdaed0405eeeed0cf)
+---
+ kernel/gen_kheaders.sh | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/gen_kheaders.sh b/kernel/gen_kheaders.sh
+index 581b83534587..9a34e1d9bd7f 100755
+--- a/kernel/gen_kheaders.sh
++++ b/kernel/gen_kheaders.sh
+@@ -31,9 +31,8 @@ arch/$SRCARCH/include/
+ 
+ # This block is useful for debugging the incremental builds.
+ # Uncomment it for debugging.
+-# iter=1
+-# if [ ! -f /tmp/iter ]; then echo 1 > /tmp/iter;
+-# else; 	iter=$(($(cat /tmp/iter) + 1)); fi
++# if [ ! -f /tmp/iter ]; then iter=1; echo 1 > /tmp/iter;
++# else iter=$(($(cat /tmp/iter) + 1)); echo $iter > /tmp/iter; fi
+ # find $src_file_list -type f | xargs ls -lR > /tmp/src-ls-$iter
+ # find $obj_file_list -type f | xargs ls -lR > /tmp/obj-ls-$iter
+ 
+@@ -43,10 +42,18 @@ arch/$SRCARCH/include/
+ pushd $kroot > /dev/null
+ src_files_md5="$(find $src_file_list -type f                       |
+ 		grep -v "include/generated/compile.h"		   |
++		grep -v "include/generated/autoconf.h"		   |
++		grep -v "include/config/auto.conf"		   |
++		grep -v "include/config/auto.conf.cmd"		   |
++		grep -v "include/config/tristate.conf"		   |
+ 		xargs ls -lR | md5sum | cut -d ' ' -f1)"
+ popd > /dev/null
+ obj_files_md5="$(find $obj_file_list -type f                       |
+ 		grep -v "include/generated/compile.h"		   |
++		grep -v "include/generated/autoconf.h"		   |
++		grep -v "include/config/auto.conf"                 |
++		grep -v "include/config/auto.conf.cmd"		   |
++		grep -v "include/config/tristate.conf"		   |
+ 		xargs ls -lR | md5sum | cut -d ' ' -f1)"
+ 
+ if [ -f $tarfile ]; then tarfile_md5="$(md5sum $tarfile | cut -d ' ' -f1)"; fi
+@@ -82,7 +89,7 @@ find $cpio_dir -type f -print0 |
+ 
+ tar -Jcf $tarfile -C $cpio_dir/ . > /dev/null
+ 
+-echo "$src_files_md5" > kernel/kheaders.md5
++echo "$src_files_md5" >  kernel/kheaders.md5
+ echo "$obj_files_md5" >> kernel/kheaders.md5
+ echo "$(md5sum $tarfile | cut -d ' ' -f1)" >> kernel/kheaders.md5
+ 
+-- 
+2.17.1
+

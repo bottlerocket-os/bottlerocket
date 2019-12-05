@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Masahiro Yamada <yamada.masahiro@socionext.com>
+Date: Mon, 1 Jul 2019 09:58:43 +0900
+Subject: [PATCH 5/6] kheaders: remove meaningless -R option of 'ls'
+
+The -R option of 'ls' is supposed to be used for directories.
+
+   -R, --recursive
+          list subdirectories recursively
+
+Since 'find ... -type f' only matches to regular files, we do not
+expect directories passed to the 'ls' command here.
+
+Giving -R is harmless at least, but unneeded.
+
+Signed-off-by: Masahiro Yamada <yamada.masahiro@socionext.com>
+Reviewed-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+(cherry picked from commit b60b7c2ea9b7f854d457fefd592c77f621a86580)
+---
+ kernel/gen_kheaders.sh | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/gen_kheaders.sh b/kernel/gen_kheaders.sh
+index 9a34e1d9bd7f..86a666f5cb17 100755
+--- a/kernel/gen_kheaders.sh
++++ b/kernel/gen_kheaders.sh
+@@ -33,8 +33,8 @@ arch/$SRCARCH/include/
+ # Uncomment it for debugging.
+ # if [ ! -f /tmp/iter ]; then iter=1; echo 1 > /tmp/iter;
+ # else iter=$(($(cat /tmp/iter) + 1)); echo $iter > /tmp/iter; fi
+-# find $src_file_list -type f | xargs ls -lR > /tmp/src-ls-$iter
+-# find $obj_file_list -type f | xargs ls -lR > /tmp/obj-ls-$iter
++# find $src_file_list -type f | xargs ls -l > /tmp/src-ls-$iter
++# find $obj_file_list -type f | xargs ls -l > /tmp/obj-ls-$iter
+ 
+ # include/generated/compile.h is ignored because it is touched even when none
+ # of the source files changed. This causes pointless regeneration, so let us
+@@ -46,7 +46,7 @@ src_files_md5="$(find $src_file_list -type f                       |
+ 		grep -v "include/config/auto.conf"		   |
+ 		grep -v "include/config/auto.conf.cmd"		   |
+ 		grep -v "include/config/tristate.conf"		   |
+-		xargs ls -lR | md5sum | cut -d ' ' -f1)"
++		xargs ls -l | md5sum | cut -d ' ' -f1)"
+ popd > /dev/null
+ obj_files_md5="$(find $obj_file_list -type f                       |
+ 		grep -v "include/generated/compile.h"		   |
+@@ -54,7 +54,7 @@ obj_files_md5="$(find $obj_file_list -type f                       |
+ 		grep -v "include/config/auto.conf"                 |
+ 		grep -v "include/config/auto.conf.cmd"		   |
+ 		grep -v "include/config/tristate.conf"		   |
+-		xargs ls -lR | md5sum | cut -d ' ' -f1)"
++		xargs ls -l | md5sum | cut -d ' ' -f1)"
+ 
+ if [ -f $tarfile ]; then tarfile_md5="$(md5sum $tarfile | cut -d ' ' -f1)"; fi
+ if [ -f kernel/kheaders.md5 ] &&
+-- 
+2.17.1
+
