@@ -107,7 +107,7 @@ func (am *ActionManager) Run(ctx context.Context) error {
 			}
 			if !proceed {
 				log.Debug("policy denied intent")
-				return nil
+				continue
 			}
 			log.Debug("policy permitted intent")
 			if len(permit) < maxQueuedIntents {
