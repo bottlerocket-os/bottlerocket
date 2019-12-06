@@ -303,6 +303,10 @@ func (i Intent) Clone() *Intent {
 
 // Equivalent compares intentional state to determine equivalency.
 func Equivalent(i, j *Intent) bool {
+	if i == nil || j == nil {
+		return false
+	}
+
 	return i.Wanted == j.Wanted &&
 		i.Active == i.Active &&
 		i.State == i.State
