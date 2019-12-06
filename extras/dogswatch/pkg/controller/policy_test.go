@@ -117,8 +117,8 @@ func TestIsClusterActiveIntents(t *testing.T) {
 		// Nodes beginning updates are actively working towards a goal, they're
 		// active and should be counted.
 		{Intent: intents.PendingPrepareUpdate(), Expected: true},
-
-		{Intent: intents.Stabilized(intents.WithBusy()).SetBeginUpdate(), Expected: true},
+		// Nodes waiting to start an update are actively working.
+		{Intent: intents.PendingUpdate(), Expected: true},
 		// Updates success is yet to be handled, so should "occupy" a slot in
 		// the active count.
 		{Intent: intents.UpdateSuccess(), Expected: true},

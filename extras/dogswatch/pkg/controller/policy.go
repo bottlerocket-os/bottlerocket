@@ -82,7 +82,11 @@ type defaultPolicy struct {
 }
 
 func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
-	log := p.log.WithFields(logfields.Intent(ck.Intent))
+	log := p.log.WithFields(logfields.Intent(ck.Intent)).
+		WithFields(logrus.Fields{
+			"cluster-active": fmt.Sprintf("%d", ck.ClusterActive),
+			"cluster-count":  fmt.Sprintf("%d", ck.ClusterCount),
+		})
 
 	// policy checks are applied to intended actions, Intents that are next in
 	// line to be executed. Projections are made without considering the policy
@@ -108,13 +112,11 @@ func (p *defaultPolicy) Check(ck *PolicyCheck) (bool, error) {
 	// If there are no other active nodes in the cluster, then go ahead with the
 	// intended action.
 	if ck.ClusterActive < maxClusterActive {
-		log.WithFields(logrus.Fields{
-			"cluster-active": fmt.Sprintf("%d", ck.ClusterActive),
-			"allowed-active": fmt.Sprintf("%d", maxClusterActive),
-		}).Debugf("permit according to active threshold")
+		log.WithField("allowed-active", fmt.Sprintf("%d", maxClusterActive)).Debugf("permit according to active threshold")
 
 		return true, nil
 	}
 
+	log.Debug("deny intent")
 	return false, nil
 }

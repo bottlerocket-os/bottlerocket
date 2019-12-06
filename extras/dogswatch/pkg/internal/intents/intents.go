@@ -145,10 +145,22 @@ var (
 		State:  marker.NodeStateReady,
 	}, WithUpdateAvailable())
 
+	PreparingUpdate = ret("PendingPrepareUpdate", intent.Intent{
+		Wanted: marker.NodeActionPrepareUpdate,
+		Active: marker.NodeActionPrepareUpdate,
+		State:  marker.NodeStateBusy,
+	}, WithUpdateAvailable())
+
 	UpdatePerformed = ret("UpdatePerformed", intent.Intent{
 		Wanted: marker.NodeActionPerformUpdate,
 		Active: marker.NodeActionPerformUpdate,
 		State:  marker.NodeStateReady,
+	}, WithUpdateAvailable())
+
+	PerformingUpdate = ret("PerformingUpdate", intent.Intent{
+		Wanted: marker.NodeActionPerformUpdate,
+		Active: marker.NodeActionPerformUpdate,
+		State:  marker.NodeStateBusy,
 	}, WithUpdateAvailable())
 
 	PendingUpdate = ret("PendingUpdate", intent.Intent{

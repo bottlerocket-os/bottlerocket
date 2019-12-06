@@ -112,7 +112,7 @@ func (i *Intent) Stuck() bool {
 	degradedUnknown := stuckUnknown || wantingUnknown
 	// The action's step was out of line and resulted in an taking an unknown
 	// action.
-	degradedPath := i.DegradedPath()
+	degradedPath := i.DegradedPath() && i.Waiting()
 	// The action was not one of progress and yet was acted upon.
 	degradedBusy := !i.isInProgress(i.Wanted) && i.Wanted == i.Active && i.State == marker.NodeStateBusy
 

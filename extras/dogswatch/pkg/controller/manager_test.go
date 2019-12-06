@@ -169,6 +169,10 @@ func TestManagerIntentForTargeted(t *testing.T) {
 			expected: nil,
 		},
 		{
+			input:    intents.PerformingUpdate(),
+			expected: nil,
+		},
+		{
 			// Available updates are primed and intended to be tried.
 			input: intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)),
 			expected: intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)).
