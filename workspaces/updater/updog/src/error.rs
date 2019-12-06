@@ -24,7 +24,11 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Could not parse datastore version: {}", key))]
-    BadDataVersion { backtrace: Backtrace, key: String },
+    BadDataVersion {
+        backtrace: Backtrace,
+        key: String,
+        source: data_store_version::error::Error,
+    },
 
     #[snafu(display("Could not parse image version: {} - {}", key, value))]
     BadMapVersion {
@@ -32,6 +36,12 @@ pub(crate) enum Error {
         key: String,
         value: String,
     },
+
+    #[snafu(display("Migration {} matches regex but missing version", name))]
+    BadRegexVersion { name: String },
+
+    #[snafu(display("Migration {} matches regex but missing name", name))]
+    BadRegexName { name: String },
 
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
     ConfigParse {
@@ -79,6 +89,12 @@ pub(crate) enum Error {
 
     #[snafu(display("Duplicate version key: {}", key))]
     DuplicateVersionKey { backtrace: Backtrace, key: String },
+
+    #[snafu(display("Migration '{}' contains invalid version: {}", name, source))]
+    InvalidMigrationVersion {
+        name: String,
+        source: data_store_version::error::Error,
+    },
 
     #[snafu(display("Logger setup error: {}", source))]
     Logger { source: simplelog::TermLogError },
@@ -136,6 +152,24 @@ pub(crate) enum Error {
         source: std::io::Error,
         name: String,
     },
+
+    #[snafu(display(
+        "Migration {} given for {} but name implies it is for {}",
+        name,
+        to,
+        version
+    ))]
+    MigrationInvalidTarget {
+        backtrace: Backtrace,
+        name: String,
+        to: DataVersion,
+        version: DataVersion,
+    },
+
+    #[snafu(display(
+        "Migration name invalid; must follow format 'migrate_${{TO_VERSION}}_${{NAME}}'"
+    ))]
+    MigrationNaming { backtrace: Backtrace },
 
     #[snafu(display("Migration not found in image: {:?}", name))]
     MigrationNotLocal { backtrace: Backtrace, name: PathBuf },

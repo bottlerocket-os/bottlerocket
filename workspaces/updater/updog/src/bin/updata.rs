@@ -10,11 +10,14 @@ extern crate log;
 use crate::error::Result;
 use chrono::{DateTime, Utc};
 use data_store_version::Version as DataVersion;
+use migrator::MIGRATION_FILENAME_RE;
 use semver::Version as SemVer;
+use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use structopt::StructOpt;
 use update_metadata::{Images, Manifest, Update};
 
@@ -284,6 +287,32 @@ struct MigrationArgs {
 impl MigrationArgs {
     fn add(self) -> Result<()> {
         let mut manifest: Manifest = load_file(&self.file)?;
+
+        // Check each migration matches the filename conventions used by the migrator
+        for name in &self.migrations {
+            let captures = MIGRATION_FILENAME_RE
+                .captures(&name)
+                .context(error::MigrationNaming)?;
+
+            let version_match = captures
+                .name("version")
+                .context(error::BadRegexVersion { name })?;
+            let version = DataVersion::from_str(version_match.as_str())
+                .context(error::BadDataVersion { key: name })?;
+            if version != self.to {
+                return error::MigrationInvalidTarget {
+                    name,
+                    to: self.to,
+                    version,
+                }
+                .fail();
+            }
+
+            let _ = captures
+                .name("name")
+                .context(error::BadRegexName { name })?;
+        }
+
         // If --append is set, append the new migrations to the existing vec.
         if self.append && manifest.migrations.contains_key(&(self.from, self.to)) {
             let migrations = manifest.migrations.get_mut(&(self.from, self.to)).context(
@@ -423,6 +452,10 @@ fn update_max_version(
 }
 
 fn main_inner() -> Result<()> {
+    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
+    TermLogger::init(LevelFilter::Info, LogConfig::default(), TerminalMode::Mixed)
+        .context(error::Logger)?;
+
     match Command::from_args() {
         Command::Init(args) => write_file(&args.file, &Manifest::default()),
         Command::AddUpdate(args) => args.run(),

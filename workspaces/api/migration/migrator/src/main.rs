@@ -21,11 +21,9 @@
 #[macro_use]
 extern crate log;
 
-use data_store_version::{Version, VERSION_RE};
-use lazy_static::lazy_static;
+use data_store_version::Version;
 use nix::{dir::Dir, fcntl::OFlag, sys::stat::Mode, unistd::fsync};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use regex::Regex;
 use simplelog::{Config as LogConfig, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
@@ -36,6 +34,7 @@ use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
 
+use migrator::MIGRATION_FILENAME_RE;
 mod args;
 mod direction;
 mod error;
@@ -43,15 +42,6 @@ mod error;
 use args::Args;
 use direction::Direction;
 use error::Result;
-
-lazy_static! {
-    /// Regular expression that will match migration file names and allow retrieving the
-    /// version and name components.
-    pub(crate) static ref MIGRATION_FILENAME_RE: Regex =
-        Regex::new(&format!(r"^migrate_{}_(?P<name>[a-zA-Z0-9-]+)$", *VERSION_RE)).unwrap();
-}
-
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
