@@ -6,10 +6,12 @@ import (
 	"math/rand"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	intentcache "github.com/amazonlinux/thar/dogswatch/pkg/intent/cache"
 	"github.com/amazonlinux/thar/dogswatch/pkg/internal/logfields"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
+
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -32,14 +34,15 @@ var randDropIntFunc func(int) int = rand.Intn
 // ActionManager handles node changes according to policy and runs a node update
 // flow to completion as allowed by policy.
 type ActionManager struct {
-	log      logging.Logger
-	kube     kubernetes.Interface
-	policy   Policy
-	inputs   chan *intent.Intent
-	storer   storer
-	poster   poster
-	nodeName string
-	nodem    nodeManager
+	log       logging.Logger
+	kube      kubernetes.Interface
+	policy    Policy
+	inputs    chan *intent.Intent
+	storer    storer
+	poster    poster
+	nodeName  string
+	nodem     nodeManager
+	lastCache intentcache.LastCache
 }
 
 // poster is the implementation of the intent poster that publishes the provided
@@ -67,12 +70,13 @@ func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) 
 	}
 
 	return &ActionManager{
-		log:    log,
-		kube:   kube,
-		policy: &defaultPolicy{log: log.WithField(logging.SubComponentField, "policy-check")},
-		inputs: make(chan *intent.Intent, maxQueuedInputs),
-		poster: &k8sPoster{log, nodeclient},
-		nodem:  &k8sNodeManager{kube},
+		log:       log,
+		kube:      kube,
+		policy:    &defaultPolicy{log: log.WithField(logging.SubComponentField, "policy-check")},
+		inputs:    make(chan *intent.Intent, maxQueuedInputs),
+		poster:    &k8sPoster{log, nodeclient},
+		nodem:     &k8sNodeManager{kube},
+		lastCache: intentcache.NewLastCache(),
 	}
 }
 
@@ -226,18 +230,24 @@ func (am *ActionManager) SetStoreProvider(storer storer) {
 	am.storer = storer
 }
 
-func (am *ActionManager) handle(node *v1.Node) {
+func (am *ActionManager) handle(node intent.Input) {
 	log := am.log.WithField("node", node.GetName())
 	log.Debug("handling event")
 
-	intent := am.intentFor(node)
-	if intent == nil {
+	in := am.intentFor(node)
+	if in == nil {
 		return // no actionable intent signaled
 	}
+	log = log.WithFields(logfields.Intent(in))
 
-	log = log.WithFields(logfields.Intent(intent))
+	if intent.Equivalent(am.lastCache.Last(in), in) {
+		log.Debug("dropping duplicate intent")
+		return // same as the last Intent sent through
+	}
+	am.lastCache.Record(in)
+
 	select {
-	case am.inputs <- intent:
+	case am.inputs <- in:
 		log.Debug("queue intent")
 	default:
 		log.Warn("unable to queue intent (back pressure)")

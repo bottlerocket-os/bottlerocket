@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	"github.com/amazonlinux/thar/dogswatch/pkg/intent/cache"
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/logfields"
 	"github.com/amazonlinux/thar/dogswatch/pkg/k8sutil"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
@@ -46,6 +48,8 @@ type Agent struct {
 	poster poster
 	proc   proc
 
+	lastCache cache.LastCache
+
 	progress progression
 }
 
@@ -71,12 +75,13 @@ func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform, 
 		nodeclient = kube.CoreV1().Nodes()
 	}
 	return &Agent{
-		log:      log,
-		kube:     kube,
-		platform: plat,
-		poster:   &k8sPoster{log, nodeclient},
-		proc:     &osProc{},
-		nodeName: nodeName,
+		log:       log,
+		kube:      kube,
+		platform:  plat,
+		poster:    &k8sPoster{log, nodeclient},
+		proc:      &osProc{},
+		nodeName:  nodeName,
+		lastCache: cache.NewLastCache(),
 	}, nil
 }
 
@@ -194,7 +199,9 @@ func (a *Agent) postUpdateAvailable(available bool) error {
 // events for the Node to act on.
 func (a *Agent) handler() nodestream.Handler {
 	return &nodestream.HandlerFuncs{
-		OnAddFunc: a.handleEvent,
+		OnAddFunc: func(n *v1.Node) {
+			a.handleEvent(n)
+		},
 		// we don't mind the diff between old and new, so handle the new
 		// resource.
 		OnUpdateFunc: func(_, n *v1.Node) {
@@ -208,16 +215,25 @@ func (a *Agent) handler() nodestream.Handler {
 
 // handleEvent handles a coalesced Node resource received from a nodestream
 // callback.
-func (a *Agent) handleEvent(node *v1.Node) {
+func (a *Agent) handleEvent(node intent.Input) {
 	in := intent.Given(node)
+
+	log := a.log.WithFields(logfields.Intent(in))
+
+	if intent.Equivalent(a.lastCache.Last(in), in) {
+		a.log.Debug("dropping duplicate event")
+		return
+	}
+	a.lastCache.Record(in)
+
 	if activeIntent(in) {
-		a.log.Debug("active intent received")
+		log.Debug("active intent received")
 		if err := a.realize(in); err != nil {
-			a.log.WithError(err).Error("could not handle intent")
+			log.WithError(err).Error("unable to realize intent")
 		}
 		return
 	}
-	a.log.Debug("inactive intent received")
+	log.Debug("inactive intent received")
 }
 
 // activeIntent filters an intent as an active intent which must be handled by

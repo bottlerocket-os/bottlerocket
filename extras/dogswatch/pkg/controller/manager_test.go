@@ -106,6 +106,30 @@ func TestManagerIntentForSimple(t *testing.T) {
 	}
 }
 
+func TestManagerHandleCacheFilter(t *testing.T) {
+	m, _ := testManager(t)
+	nodes := []string{"node-a", "node-b"}
+	eventInputs := []*intent.Intent{
+		// 2 events should make it through (deduped)
+		intents.UpdatePrepared(intents.WithNodeName(nodes[0])),
+		intents.UpdatePrepared(intents.WithNodeName(nodes[1])),
+		intents.UpdatePrepared(intents.WithNodeName(nodes[0])),
+		intents.UpdatePrepared(intents.WithNodeName(nodes[1])),
+
+		// another 2, they're different from the first set
+		intents.UpdateSuccess(intents.WithNodeName(nodes[0])),
+		intents.UpdateSuccess(intents.WithNodeName(nodes[1])),
+	}
+	m.inputs = make(chan *intent.Intent, len(eventInputs))
+	defer close(m.inputs)
+
+	for _, eventInput := range eventInputs {
+		m.handle(eventInput)
+	}
+
+	assert.Equal(t, len(m.inputs), 4)
+}
+
 func TestManagerIntentForTargeted(t *testing.T) {
 	cases := []struct {
 		input    *intent.Intent
