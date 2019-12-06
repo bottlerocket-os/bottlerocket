@@ -6,4 +6,4 @@ var DebugEnable string
 
 // Debuggable means that the build should include any debugging logic in it. The
 // compiler *should* erase anything that's otherwise in a conditional.
-var Debuggable = DebugEnable != ""
+var Debuggable = DebugEnable == "true"
