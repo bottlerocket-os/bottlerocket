@@ -20,7 +20,7 @@ $(GOBIN):
 test:
 	go test -ldflags '$(DEBUG_LDFLAGS)' $(GOPKGS)
 
-container: vendor
+container:
 	docker build --network=host \
 		--tag $(DOCKER_IMAGE_REF)\
 		--build-arg BUILD_LDFLAGS='$(DEBUG_LDFLAGS)' \
@@ -31,10 +31,6 @@ release-container: container
 
 load: container
 	kind load docker-image $(DOCKER_IMAGE)
-
-vendor: go.sum go.mod
-	CGO_ENABLED=0 GOOS=linux go mod vendor
-	touch vendor/
 
 deploy:
 	sed 's,@containerRef@,$(DOCKER_IMAGE_REF),g' ./dev/deployment.yaml \
