@@ -240,15 +240,21 @@ func (am *actionManager) handle(node intent.Input) {
 	}
 	log = log.WithFields(logfields.Intent(in))
 
-	if intent.Equivalent(am.lastCache.Last(in), in) {
-		log.Debug("dropping duplicate intent")
-		return // same as the last Intent sent through
+	lastQueued := am.lastCache.Last(in)
+	if logging.Debuggable && lastQueued != nil {
+		log.WithField("last-intent", lastQueued.DisplayString()).
+			Debug("retrieved cached queued intent to dedupe")
 	}
-	am.lastCache.Record(in)
+	if intent.Equivalent(lastQueued, in) {
+		log.Debug("not queuing duplicate intent")
+		return
+	}
 
+	record := in.Clone()
 	select {
 	case am.inputs <- in:
 		log.Debug("queue intent")
+		am.lastCache.Record(record)
 	default:
 		log.Warn("unable to queue intent (back pressure)")
 	}
