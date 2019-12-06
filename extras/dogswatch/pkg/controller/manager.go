@@ -27,13 +27,13 @@ const (
 	queueSkipThreshold = maxQueuedIntents / 2
 )
 
-var _ nodestream.Handler = (*ActionManager)(nil)
+var _ nodestream.Handler = (*actionManager)(nil)
 
 var randDropIntFunc func(int) int = rand.Intn
 
-// ActionManager handles node changes according to policy and runs a node update
+// actionManager handles node changes according to policy and runs a node update
 // flow to completion as allowed by policy.
-type ActionManager struct {
+type actionManager struct {
 	log       logging.Logger
 	kube      kubernetes.Interface
 	policy    Policy
@@ -63,13 +63,13 @@ type storer interface {
 	GetStore() cache.Store
 }
 
-func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) *ActionManager {
+func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) *actionManager {
 	var nodeclient corev1.NodeInterface
 	if kube != nil {
 		nodeclient = kube.CoreV1().Nodes()
 	}
 
-	return &ActionManager{
+	return &actionManager{
 		log:       log,
 		kube:      kube,
 		policy:    &defaultPolicy{log: log.WithField(logging.SubComponentField, "policy-check")},
@@ -80,7 +80,7 @@ func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) 
 	}
 }
 
-func (am *ActionManager) Run(ctx context.Context) error {
+func (am *actionManager) Run(ctx context.Context) error {
 	am.log.Debug("starting")
 	defer am.log.Debug("finished")
 
@@ -168,7 +168,7 @@ func isLowPriority(in *intent.Intent) bool {
 	return (stabilizing && !hasUpdate) || unknown
 }
 
-func (am *ActionManager) takeAction(pin *intent.Intent) error {
+func (am *actionManager) takeAction(pin *intent.Intent) error {
 	log := am.log.WithFields(logfields.Intent(pin))
 	successCheckRun := successfulUpdate(pin)
 	if successCheckRun {
@@ -219,18 +219,18 @@ func (am *ActionManager) takeAction(pin *intent.Intent) error {
 
 // makePolicyCheck collects cluster information as a PolicyCheck for which to be
 // provided to a policy checker.
-func (am *ActionManager) makePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
+func (am *actionManager) makePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
 	if am.storer == nil {
 		return nil, errors.Errorf("manager has no store to access, needed for policy check")
 	}
 	return newPolicyCheck(in, am.storer.GetStore())
 }
 
-func (am *ActionManager) SetStoreProvider(storer storer) {
+func (am *actionManager) SetStoreProvider(storer storer) {
 	am.storer = storer
 }
 
-func (am *ActionManager) handle(node intent.Input) {
+func (am *actionManager) handle(node intent.Input) {
 	log := am.log.WithField("node", node.GetName())
 	log.Debug("handling event")
 
@@ -255,7 +255,7 @@ func (am *ActionManager) handle(node intent.Input) {
 }
 
 // intentFor interprets the intention given the Node's annotations.
-func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
+func (am *actionManager) intentFor(node intent.Input) *intent.Intent {
 	in := intent.Given(node)
 	log := am.log.WithFields(logfields.Intent(in))
 
@@ -302,16 +302,16 @@ func successfulUpdate(in *intent.Intent) bool {
 }
 
 // OnAdd is a Handler implementation for nodestream
-func (am *ActionManager) OnAdd(node *v1.Node) {
+func (am *actionManager) OnAdd(node *v1.Node) {
 	am.handle(node)
 }
 
 // OnDelete is a Handler implementation for nodestream
-func (am *ActionManager) OnDelete(node *v1.Node) {
+func (am *actionManager) OnDelete(node *v1.Node) {
 	am.handle(node)
 }
 
 // OnUpdate is a Handler implementation for nodestream
-func (am *ActionManager) OnUpdate(_ *v1.Node, node *v1.Node) {
+func (am *actionManager) OnUpdate(_ *v1.Node, node *v1.Node) {
 	am.handle(node)
 }

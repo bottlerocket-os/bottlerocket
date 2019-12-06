@@ -51,7 +51,7 @@ func (k *k8sNodeManager) Drain(nodeName string) error {
 	return drain.RunNodeDrain(drainer, nodeName)
 }
 
-func (am *ActionManager) cordonNode(nodeName string) error {
+func (am *actionManager) cordonNode(nodeName string) error {
 	log := am.log.WithField("node", nodeName)
 	log.Debug("preparing to cordon")
 	node, err := am.kube.CoreV1().Nodes().Get(nodeName, v1meta.GetOptions{})
@@ -75,16 +75,16 @@ func (am *ActionManager) cordonNode(nodeName string) error {
 	return nil
 }
 
-func (am *ActionManager) uncordonNode(nodeName string) error {
+func (am *actionManager) uncordonNode(nodeName string) error {
 
 	return nil
 }
 
-func (am *ActionManager) checkNode(nodeName string) error {
+func (am *actionManager) checkNode(nodeName string) error {
 	return nil
 }
 
-func (am *ActionManager) drainWorkload(nodeName string) error {
+func (am *actionManager) drainWorkload(nodeName string) error {
 	log := am.log.WithField("node", nodeName)
 	log.Debug("draining workload")
 	helper := drain.Helper{

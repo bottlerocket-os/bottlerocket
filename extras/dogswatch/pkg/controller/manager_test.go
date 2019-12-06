@@ -64,7 +64,7 @@ type testManagerHooks struct {
 	NodeManager *testingNodeManager
 }
 
-func testManager(t *testing.T) (*ActionManager, *testManagerHooks) {
+func testManager(t *testing.T) (*actionManager, *testManagerHooks) {
 	m := newManager(testoutput.Logger(t, logging.New("manager")), nil, "test-node")
 
 	hooks := &testManagerHooks{
