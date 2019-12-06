@@ -308,8 +308,9 @@ func Equivalent(i, j *Intent) bool {
 	}
 
 	return i.Wanted == j.Wanted &&
-		i.Active == i.Active &&
-		i.State == i.State
+		i.Active == j.Active &&
+		i.State == j.State &&
+		i.UpdateAvailable == j.UpdateAvailable
 }
 
 // Given determines the commuincated intent from a Node without projecting into
