@@ -23,8 +23,15 @@ test:
 container:
 	docker build --network=host \
 		--tag $(DOCKER_IMAGE_REF)\
+		--build-arg BUILD_LDFLAGS='' \
+		.
+
+debug-container:
+	docker build --network=host \
+		--tag $(DOCKER_IMAGE_REF)\
 		--build-arg BUILD_LDFLAGS='$(DEBUG_LDFLAGS)' \
 		.
+
 
 release-container: container
 	docker tag $(DOCKER_IMAGE_REF) $(DOCKER_IMAGE_REF_RELEASE)
