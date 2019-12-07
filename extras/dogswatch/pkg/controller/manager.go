@@ -13,6 +13,7 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -127,7 +128,10 @@ func (am *actionManager) Run(ctx context.Context) error {
 
 			queued := len(queuedIntents)
 			log := am.log.WithFields(logfields.Intent(input)).
-				WithField("queue-length", fmt.Sprintf("%d", queued))
+				WithFields(logrus.Fields{
+					"queue":        "process",
+					"queue-length": fmt.Sprintf("%d", queued),
+				})
 
 			if queued < queueSkipThreshold {
 				queuedIntents <- input
@@ -256,7 +260,10 @@ func (am *actionManager) handle(node intent.Input) {
 		log.Debug("queue intent")
 		am.lastCache.Record(record)
 	default:
-		log.Warn("unable to queue intent (back pressure)")
+		log.WithFields(logrus.Fields{
+			"queue":        "input",
+			"queue-length": len(am.inputs),
+		}).Warn("unable to queue intent (back pressure)")
 	}
 }
 
