@@ -110,7 +110,7 @@ spec:
                       values: ["dogswatch-agent"]
       containers:
       - name: dogswatch
-        image: "@containerRef@"
+        image: "328549459982.dkr.ecr.us-west-2.amazonaws.com/dogswatch:v0.1.0"
         imagePullPolicy: Always
         args:
           - -controller
@@ -151,7 +151,7 @@ spec:
       hostPID: true
       containers:
         - name: dogswatch
-          image: "@containerRef@"
+          image: "328549459982.dkr.ecr.us-west-2.amazonaws.com/dogswatch:v0.1.0"
           imagePullPolicy: Always
           # XXX: tty required to exec binaries that use `simplelog` until #576 is resolved.
           tty: true
@@ -166,6 +166,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName          
           securityContext:
+            # Required for executing OS update operations.
             privileged: true
           resources: 
             limits:
