@@ -54,6 +54,7 @@ func TestActiveIntent(t *testing.T) {
 			State:  marker.NodeStateUnknown,
 		},
 
+		*intents.Stabilized(intents.WithUpdateAvailable("")),
 		*intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
 		*intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnknown)),
 	}

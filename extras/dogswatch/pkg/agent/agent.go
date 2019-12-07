@@ -49,6 +49,7 @@ type Agent struct {
 	proc   proc
 
 	lastCache cache.LastCache
+	tracker   *postTracker
 
 	progress progression
 }
@@ -82,6 +83,7 @@ func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform, 
 		proc:      &osProc{},
 		nodeName:  nodeName,
 		lastCache: cache.NewLastCache(),
+		tracker:   newPostTracker(),
 	}, nil
 }
 
@@ -192,7 +194,7 @@ func (a *Agent) postUpdateAvailable(available bool) error {
 		return errors.WithMessage(err, "unable to get node")
 	}
 	in := intent.Given(node).SetUpdateAvailable(available)
-	return a.poster.Post(in)
+	return a.postIntent(in)
 }
 
 // handler is the entrypoint for the Kubernetes Informer to schedule handling of
@@ -220,13 +222,12 @@ func (a *Agent) handleEvent(node intent.Input) {
 
 	log := a.log.WithFields(logfields.Intent(in))
 
-	if intent.Equivalent(a.lastCache.Last(in), in) {
-		a.log.Debug("dropping duplicate event")
+	if a.skipIntentEvent(in) {
 		return
 	}
-	a.lastCache.Record(in)
 
 	if activeIntent(in) {
+		a.lastCache.Record(in)
 		log.Debug("active intent received")
 		if err := a.realize(in); err != nil {
 			log.WithError(err).Error("unable to realize intent")
@@ -234,6 +235,24 @@ func (a *Agent) handleEvent(node intent.Input) {
 		return
 	}
 	log.Debug("inactive intent received")
+}
+
+func (a *Agent) skipIntentEvent(in *intent.Intent) bool {
+	log := a.log.WithFields(logfields.Intent(in))
+	if a.tracker.matchesPost(in) {
+		log.Debug("skipping emitted intent as event")
+		return true
+	}
+	if intent.Equivalent(a.lastCache.Last(in), in) {
+		log.Debug("skipping duplicate received event")
+		return true
+	}
+	if logging.Debuggable {
+		log.Debug("clearing tracked posted intents")
+	}
+	a.tracker.clear()
+
+	return false
 }
 
 // activeIntent filters an intent as an active intent which must be handled by
@@ -261,7 +280,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 	// ACK the wanted action.
 	in.Active = in.Wanted
 	in.State = marker.NodeStateBusy
-	err = a.poster.Post(in)
+	err = a.postIntent(in)
 	if err != nil {
 		return err
 	}
@@ -334,11 +353,19 @@ func (a *Agent) realize(in *intent.Intent) error {
 		in.State = marker.NodeStateReady
 	}
 
-	postErr := a.poster.Post(in)
+	postErr := a.postIntent(in)
 	if postErr != nil {
 		log.WithError(postErr).Error("could not update intent")
 	}
 
+	return err
+}
+
+func (a *Agent) postIntent(in *intent.Intent) error {
+	err := a.poster.Post(in)
+	if err != nil {
+		a.tracker.recordPost(in)
+	}
 	return err
 }
 
@@ -372,7 +399,7 @@ func (a *Agent) checkNodePreflight() error {
 		in = in.Reset()
 	}
 
-	postErr := a.poster.Post(in)
+	postErr := a.postIntent(in)
 	if postErr != nil {
 		a.log.WithError(postErr).Error("could not update intent status")
 		return postErr
