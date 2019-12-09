@@ -132,35 +132,43 @@ func (am *actionManager) Run(ctx context.Context) error {
 					"queue":        "process",
 					"queue-length": fmt.Sprintf("%d", queued),
 				})
-
 			if queued < queueSkipThreshold {
 				queuedIntents <- input
 				continue
 			}
+			// Start dropping if its not possible to queue at all.
+			if queued+1 > maxQueuedIntents {
+				log.Warn("queue full, dropping intent this try")
+				continue
+			}
 
-			// TODO: handle backpressure better with rescheduling
+			// TODO: handle backpressure better with rescheduling instead of drops
 
-			if queued >= queueSkipThreshold {
-				// Queue is getting full, let's be more selective about events that
-				// are propagated.
-				if isClusterActive(input) {
-					log.Info("queue active intent")
-					queuedIntents <- input
-				}
-				if isLowPriority(input) {
-					n := randDropIntFunc(10)
-					willDrop := n%2 == 0
-					if willDrop {
-						log.Warn("queue backlog high, randomly dropping intent")
-						continue
-					}
-				}
+			// Queue is getting full, let's be more selective about events that
+			// are propagated.
+
+			if isClusterActive(input) {
+				log.Info("queue active intent")
 				queuedIntents <- input
 				continue
 			}
 
-			// Queue is full, have to drop intent.
-			log.Warn("queue full, dropping intent this try")
+			if isLowPriority(input) {
+				n := randDropIntFunc(10)
+				willDrop := n%2 == 0
+				if willDrop {
+					// Intent is picked up again when cached Intent expires &
+					// Informer syncs OR if the Intent is changed (from update
+					// or otherwise by Node). This provides indirect
+					// backpressure by delaying the next time the Intent will be
+					// handled.
+					log.Warn("queue backlog high, randomly dropping intent")
+					continue
+				}
+			}
+			log.Debug("queue intent")
+			queuedIntents <- input
+
 		}
 	}
 }
