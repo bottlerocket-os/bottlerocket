@@ -58,4 +58,4 @@ dashboard:
 	kubectl proxy
 
 get-nodes-status:
-	kubectl get nodes -o json | jq -C -S '.items| map({(.metadata.name): (.metadata.labels * .metadata.annotations)})'
+	kubectl get nodes -o json | jq -C -S '.items | map(.metadata|{(.name): (.annotations*.labels|to_entries|map(select(.key|startswith("thar")))|from_entries)}) | add'
