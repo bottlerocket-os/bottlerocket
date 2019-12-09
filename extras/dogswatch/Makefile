@@ -1,5 +1,5 @@
-
-DOGSWATCH_VERSION=v0.1.0
+# This is the NEXT version tag for the Dogswatch container image.
+DOGSWATCH_VERSION=v0.1.2
 
 GOPKG = github.com/amazonlinux/thar/dogswatch
 GOPKGS = $(GOPKG) $(GOPKG)/pkg/... $(GOPKG)/cmd/...
