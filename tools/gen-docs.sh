@@ -6,8 +6,9 @@ fi
 
 top=$(git rev-parse --show-toplevel)
 mkdir -p "${top}/html"
-for doc in README.md INSTALL.md CHANGELOG.md; do
+for doc in README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md; do
     out="${top}/html/${doc%.md}.html"
+    mkdir -p "$(dirname "$out")"
     grip --title="${doc}" --export \
         <(
             cat <<'EOF'
@@ -30,4 +31,11 @@ EOF
         -e 's/<a href="\(.*\).md">/<a href="\1.html">/g' \
         -e 's^<a href="\.\./\.\./pull/.*">\(#[0-9]\+\)</a>^\1^g' \
         "${out}"
+done
+
+for extra in extras/dogswatch/{dogswatch,dev/deployment}.yaml; do
+    out="${top}/html/${extra}"
+    echo "Copying to ${out}"
+    mkdir -p "$(dirname "$out")"
+    cp "${extra}" "${out}"
 done
