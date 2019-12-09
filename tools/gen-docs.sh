@@ -6,7 +6,7 @@ fi
 
 top=$(git rev-parse --show-toplevel)
 mkdir -p "${top}/html"
-for doc in README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md; do
+for doc in START.md README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md; do
     out="${top}/html/${doc%.md}.html"
     mkdir -p "$(dirname "$out")"
     grip --title="${doc}" --export \
@@ -17,6 +17,8 @@ for doc in README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md; do
 is via [thar-preview@amazon.com](mailto:thar-preview@amazon.com)
 or #thar-preview on the [awsdevelopers Slack workspace](https://awsdevelopers.slack.com) (email us for an invite).
 We'd love to talk with you and hear your feedback on Thar!
+<br><br>
+[&larr; Documentation index](/START.md)
 
 ---
 
@@ -28,7 +30,7 @@ EOF
         -e '/<link rel="stylesheet".*octicons\.css/d' \
         -e '/<link rel="icon"/d' \
         -e 's/<p>@@THAR-SENTINEL-START@@/<p style="background-color: #a8dfee; border: 1px solid #008296; padding: 1em;">/' \
-        -e 's/<a href="\(.*\).md">/<a href="\1.html">/g' \
+        -e 's/<a href="\(.*\).md\(#.*\)\?">/<a href="\1.html\2">/g' \
         -e 's^<a href="\.\./\.\./pull/.*">\(#[0-9]\+\)</a>^\1^g' \
         "${out}"
 done
