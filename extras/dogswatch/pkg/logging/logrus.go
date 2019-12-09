@@ -7,6 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	SubComponentField = "subcomponent"
+	ComponentField    = "component"
+)
+
 type Setter func(*logrus.Logger) error
 
 var root = struct {
@@ -25,6 +30,7 @@ var root = struct {
 	mutex: &sync.Mutex{},
 }
 
+// Logger is a top level component logging facade.
 type Logger interface {
 	logrus.FieldLogger
 
@@ -32,14 +38,22 @@ type Logger interface {
 	WriterLevel(logrus.Level) *io.PipeWriter
 }
 
+// SubLogger is a sub component logging facade for subsystems that do not have
+// their own top level logging owner.
+type SubLogger interface {
+	logrus.FieldLogger
+}
+
+// New creates a top level Logger for a given component.
 func New(component string, setters ...Setter) Logger {
 	for _, setter := range setters {
 		// no errors handling for now
 		_ = Set(setter)
 	}
-	return root.logger.WithField("component", component)
+	return root.logger.WithField(ComponentField, component)
 }
 
+// Set mutates the underlying root logging implementation.
 func Set(setter Setter) error {
 	root.mutex.Lock()
 	err := setter(root.logger)
@@ -47,6 +61,7 @@ func Set(setter Setter) error {
 	return err
 }
 
+// Level sets the level of the root logger.
 func Level(lvl string) Setter {
 	l, err := logrus.ParseLevel(lvl)
 	if err != nil {

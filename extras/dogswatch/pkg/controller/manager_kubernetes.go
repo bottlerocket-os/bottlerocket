@@ -51,7 +51,7 @@ func (k *k8sNodeManager) Drain(nodeName string) error {
 	return drain.RunNodeDrain(drainer, nodeName)
 }
 
-func (am *ActionManager) cordonNode(nodeName string) error {
+func (am *actionManager) cordonNode(nodeName string) error {
 	log := am.log.WithField("node", nodeName)
 	log.Debug("preparing to cordon")
 	node, err := am.kube.CoreV1().Nodes().Get(nodeName, v1meta.GetOptions{})
@@ -75,16 +75,16 @@ func (am *ActionManager) cordonNode(nodeName string) error {
 	return nil
 }
 
-func (am *ActionManager) uncordonNode(nodeName string) error {
+func (am *actionManager) uncordonNode(nodeName string) error {
 
 	return nil
 }
 
-func (am *ActionManager) checkNode(nodeName string) error {
+func (am *actionManager) checkNode(nodeName string) error {
 	return nil
 }
 
-func (am *ActionManager) drainWorkload(nodeName string) error {
+func (am *actionManager) drainWorkload(nodeName string) error {
 	log := am.log.WithField("node", nodeName)
 	log.Debug("draining workload")
 	helper := drain.Helper{
@@ -121,6 +121,13 @@ type k8sPoster struct {
 
 func (k *k8sPoster) Post(i *intent.Intent) error {
 	nodeName := i.GetName()
-	defer k.log.WithField("node", nodeName).Debugf("posted intent on node: %s", i)
-	return k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	err := k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	if err != nil {
+		return err
+	}
+	k.log.WithFields(logrus.Fields{
+		"node":   nodeName,
+		"intent": i.DisplayString(),
+	}).Debugf("posted intent")
+	return nil
 }

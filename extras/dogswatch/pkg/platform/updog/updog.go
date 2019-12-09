@@ -10,17 +10,23 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/thar"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (
 	updogBin = filepath.Join(thar.PlatformBin, "updog")
 )
 
+const (
+	// updateIdentifier is a stand-in update identifier for Updog sourced updates.
+	updateIdentifier = "latest"
+)
+
 // updog implements the binding for the platform to the host's implementation
 // for manipulating updates on its behalf.
 type updog struct {
 	Bin command
+
+	log logging.Logger
 }
 
 type command interface {
@@ -31,7 +37,9 @@ type command interface {
 	Status() (bool, error)
 }
 
-type executable struct{}
+type executable struct {
+	log logging.SubLogger
+}
 
 func (e *executable) runOk(cmd *exec.Cmd) (bool, error) {
 	cmd.SysProcAttr = thar.ProcessAttrs()
@@ -41,42 +49,33 @@ func (e *executable) runOk(cmd *exec.Cmd) (bool, error) {
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 
-	if logging.Debuggable {
-		logging.New("updog").WithFields(logrus.Fields{
-			"cmd": cmd.String(),
-		}).Debug("Executing")
-	}
-
+	log := e.log.WithField("cmd", cmd.String())
+	log.Debug("running command")
 	if err := cmd.Start(); err != nil {
+		log.WithError(err).Error("failed to start command")
 		if logging.Debuggable {
-			logging.New("updog").WithFields(logrus.Fields{
-				"cmd":    cmd.String(),
-				"output": buf.String(),
-			}).WithError(err).Error("Failed to start command")
+			log.WithField("output", buf.String()).Debugf("command output")
 		}
 		return false, err
 	}
 	err := cmd.Wait()
 	if err != nil {
+		log.WithError(err).Error("error during command run")
 		if logging.Debuggable {
-			logging.New("updog").WithFields(logrus.Fields{
-				"cmd":    cmd.String(),
-				"output": buf.String(),
-			}).WithError(err).Error("Command errored durring run")
+			log.WithField("output", buf.String()).Debug("command output")
 		}
 		return false, err
 	}
+	log.Debug("command completed successfully")
 	if logging.Debuggable {
-		logging.New("updog").WithFields(logrus.Fields{
-			"cmd":    cmd.String(),
-			"output": buf.String(),
-		}).Debug("Command completed successfully")
+		log.WithField("output", buf.String()).Debug("command output")
 	}
 	// Boolean currently only used by ListUpdate. Returns true if the
 	// command yielded output, which indicates an update is available.
 	// TODO: Update this when an interface is defined between updog
 	// and dogswatch.
-	return len(buf.String()) > 0, err
+	updateEmitted := len(buf.String()) > 0
+	return updateEmitted, err
 }
 
 func (e *executable) CheckUpdate() (bool, error) {
@@ -109,7 +108,12 @@ func (e *executable) Status() (bool, error) {
 }
 
 func newUpdogHost() Host {
-	return &updog{Bin: &executable{}}
+	log := logging.New("updog")
+
+	return &updog{
+		Bin: &executable{log: log.WithField(logging.SubComponentField, "host-bin")},
+		log: log,
+	}
 }
 
 func (u *updog) Status() (*statusResponse, error) {
@@ -120,24 +124,23 @@ func (u *updog) Status() (*statusResponse, error) {
 }
 
 func (u *updog) ListAvailable() (*listAvailableResponse, error) {
-	if avail, err := u.Bin.CheckUpdate(); err != nil {
-		return nil, err
-	} else {
-		if avail {
-			return &listAvailableResponse{
-				// TODO: deserialize output from updog and plumb version IDs
-				ReportedUpdates: []*availableUpdate{&availableUpdate{ID: "POSITIVE_STUB_INDICATOR"}},
-			}, nil
-		} else {
-			return &listAvailableResponse{}, nil
-		}
+	avail, err := u.Bin.CheckUpdate()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check for updates")
 	}
+	if avail {
+		return &listAvailableResponse{
+			// TODO: deserialize output from updog and plumb version IDs
+			ReportedUpdates: []*availableUpdate{&availableUpdate{ID: updateIdentifier}},
+		}, nil
+	}
+	return &listAvailableResponse{}, nil
 }
 
 func (u *updog) PrepareUpdate(id UpdateID) (*prepareUpdateResponse, error) {
 	// TODO: extend updog for prepare steps.
 	return &prepareUpdateResponse{
-		ID: "POSITIVE_STUB_INDICATOR",
+		ID: updateIdentifier,
 	}, nil
 }
 

@@ -64,7 +64,7 @@ type testManagerHooks struct {
 	NodeManager *testingNodeManager
 }
 
-func testManager(t *testing.T) (*ActionManager, *testManagerHooks) {
+func testManager(t *testing.T) (*actionManager, *testManagerHooks) {
 	m := newManager(testoutput.Logger(t, logging.New("manager")), nil, "test-node")
 
 	hooks := &testManagerHooks{
@@ -79,13 +79,18 @@ func testManager(t *testing.T) (*ActionManager, *testManagerHooks) {
 func TestManagerIntentForSimple(t *testing.T) {
 	nils := []*intent.Intent{
 		intents.BusyRebootUpdate(),
+		intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
+		intents.PendingUpdate(),
 	}
 	nonnils := []*intent.Intent{
 		intents.UpdateError(),
+		intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)),
 	}
 
+	intents.NormalizeNodeName("inactive", nils...)
+	intents.NormalizeNodeName("active", nonnils...)
+
 	for _, in := range nils {
-		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("nil(%s)", in.DisplayString()), func(t *testing.T) {
 			m, _ := testManager(t)
 			actual := m.intentFor(in)
@@ -93,13 +98,36 @@ func TestManagerIntentForSimple(t *testing.T) {
 		})
 	}
 	for _, in := range nonnils {
-		in.NodeName = "test-node"
 		t.Run(fmt.Sprintf("non(%s)", in.DisplayString()), func(t *testing.T) {
 			m, _ := testManager(t)
 			actual := m.intentFor(in)
 			assert.Assert(t, actual != nil)
 		})
 	}
+}
+
+func TestManagerHandleCacheFilter(t *testing.T) {
+	m, _ := testManager(t)
+	nodes := []string{"node-a", "node-b"}
+	eventInputs := []*intent.Intent{
+		// 2 events should make it through (deduped)
+		intents.UpdatePrepared(intents.WithNodeName(nodes[0])),
+		intents.UpdatePrepared(intents.WithNodeName(nodes[1])),
+		intents.UpdatePrepared(intents.WithNodeName(nodes[0])),
+		intents.UpdatePrepared(intents.WithNodeName(nodes[1])),
+
+		// another 2, they're different from the first set
+		intents.UpdateSuccess(intents.WithNodeName(nodes[0])),
+		intents.UpdateSuccess(intents.WithNodeName(nodes[1])),
+	}
+	m.inputs = make(chan *intent.Intent, len(eventInputs))
+	defer close(m.inputs)
+
+	for _, eventInput := range eventInputs {
+		m.handle(eventInput)
+	}
+
+	assert.Equal(t, len(m.inputs), 4)
 }
 
 func TestManagerIntentForTargeted(t *testing.T) {
@@ -111,8 +139,8 @@ func TestManagerIntentForTargeted(t *testing.T) {
 			input:    intents.UpdateError(),
 			expected: intents.Reset(),
 		},
-		// Update handling is a pass through to handle the "exact" intent.
 		{
+			// Update handling is a pass through to handle the "exact" intent.
 			input:    intents.UpdateSuccess(),
 			expected: intents.UpdateSuccess(),
 		},
@@ -122,8 +150,33 @@ func TestManagerIntentForTargeted(t *testing.T) {
 				intents.Pending(marker.NodeActionPerformUpdate)),
 		},
 		{
+			// Busy doing work, shouldn't modify the intent.
+			input:    intents.UpdatePrepared(intents.WithBusy()),
+			expected: nil,
+		},
+		{
+			// Busy doing work, shouldn't modify the intent.
+			input: intents.UpdatePrepared(
+				intents.Pending(marker.NodeActionPerformUpdate)),
+			expected: nil,
+		},
+		{
 			input:    intents.PendingStabilizing(),
 			expected: nil,
+		},
+		{
+			input:    intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
+			expected: nil,
+		},
+		{
+			input:    intents.PerformingUpdate(),
+			expected: nil,
+		},
+		{
+			// Available updates are primed and intended to be tried.
+			input: intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)),
+			expected: intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateAvailable)).
+				SetBeginUpdate(),
 		},
 	}
 
@@ -220,6 +273,8 @@ func TestSuccessfulUpdate(t *testing.T) {
 		},
 		falsy: []*intent.Intent{
 			intents.Unknown(),
+			intents.Stabilized(),
+			intents.Stabilized(intents.WithUpdateAvailable(marker.NodeUpdateUnavailable)),
 		},
 	}
 

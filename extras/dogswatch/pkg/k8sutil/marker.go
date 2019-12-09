@@ -5,6 +5,7 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
@@ -17,8 +18,11 @@ func PostMetadata(nc v1.NodeInterface, nodeName string, cont marker.Container) e
 	marker.OverwriteFrom(cont, node)
 	if logging.Debuggable {
 		l := logging.New("k8sutil")
-		l.Debugf("annotations: %#v", node.GetAnnotations())
-		l.Debugf("labels: %#v", node.GetLabels())
+		l.WithFields(logrus.Fields{
+			"node":        nodeName,
+			"annotations": node.GetAnnotations(),
+			"labels":      node.GetLabels(),
+		}).Debug("merged in new metadata")
 	}
 	_, err = nc.Update(node)
 	if err != nil {

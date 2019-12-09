@@ -2,32 +2,48 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	intentcache "github.com/amazonlinux/thar/dogswatch/pkg/intent/cache"
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/logfields"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
+
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
-const maxQueuedIntents = 10
+const (
+	// maxQueuedIntents controls the number of queued Intents that are waiting
+	// to be handled.
+	maxQueuedIntents   = 100
+	maxQueuedInputs    = maxQueuedIntents * (1 / 4)
+	queueSkipThreshold = maxQueuedIntents / 2
+)
 
-var _ nodestream.Handler = (*ActionManager)(nil)
+var _ nodestream.Handler = (*actionManager)(nil)
 
-// ActionManager handles node changes according to policy and runs a node update
+var randDropIntFunc func(int) int = rand.Intn
+
+// actionManager handles node changes according to policy and runs a node update
 // flow to completion as allowed by policy.
-type ActionManager struct {
-	log      logging.Logger
-	kube     kubernetes.Interface
-	policy   Policy
-	input    chan *intent.Intent
-	storer   storer
-	poster   poster
-	nodeName string
-	nodem    nodeManager
+type actionManager struct {
+	log       logging.Logger
+	kube      kubernetes.Interface
+	policy    Policy
+	inputs    chan *intent.Intent
+	storer    storer
+	poster    poster
+	nodeName  string
+	nodem     nodeManager
+	lastCache intentcache.LastCache
 }
 
 // poster is the implementation of the intent poster that publishes the provided
@@ -48,27 +64,28 @@ type storer interface {
 	GetStore() cache.Store
 }
 
-func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) *ActionManager {
+func newManager(log logging.Logger, kube kubernetes.Interface, nodeName string) *actionManager {
 	var nodeclient corev1.NodeInterface
 	if kube != nil {
 		nodeclient = kube.CoreV1().Nodes()
 	}
 
-	return &ActionManager{
-		log:    log,
-		kube:   kube,
-		policy: &defaultPolicy{},
-		input:  make(chan *intent.Intent, 1),
-		poster: &k8sPoster{log, nodeclient},
-		nodem:  &k8sNodeManager{kube},
+	return &actionManager{
+		log:       log,
+		kube:      kube,
+		policy:    &defaultPolicy{log: log.WithField(logging.SubComponentField, "policy-check")},
+		inputs:    make(chan *intent.Intent, maxQueuedInputs),
+		poster:    &k8sPoster{log, nodeclient},
+		nodem:     &k8sNodeManager{kube},
+		lastCache: intentcache.NewLastCache(),
 	}
 }
 
-func (am *ActionManager) Run(ctx context.Context) error {
+func (am *actionManager) Run(ctx context.Context) error {
 	am.log.Debug("starting")
 	defer am.log.Debug("finished")
 
-	permit := make(chan *intent.Intent, maxQueuedIntents)
+	queuedIntents := make(chan *intent.Intent, maxQueuedIntents)
 
 	// TODO: split out accepted intent handler - it should handle its
 	// prioritization as needed to ensure that active nodes' events reach it.
@@ -79,47 +96,92 @@ func (am *ActionManager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 
-		case pin, ok := <-permit:
-			if !ok {
-				break
-			}
-			am.log.Debug("handling permitted event")
-			am.takeAction(pin)
-
-		case in, ok := <-am.input:
-			if !ok {
-				break
-			}
-			am.log.Debug("checking with policy")
-
+		case qin, ok := <-queuedIntents:
+			log := am.log.WithFields(logfields.Intent(qin))
+			log.Debug("checking with policy")
 			// TODO: make policy checking and consideration richer
-			pview, err := am.makePolicyCheck(in)
+			pview, err := am.makePolicyCheck(qin)
 			if err != nil {
-				am.log.WithError(err).Error("policy unenforceable")
+				log.WithError(err).Error("policy unenforceable")
 				continue
 			}
 			proceed, err := am.policy.Check(pview)
 			if err != nil {
-				am.log.WithError(err).Error("policy check errored")
+				log.WithError(err).Error("policy check errored")
 				continue
 			}
 			if !proceed {
-				am.log.Debug("policy denied intent")
-				return nil
+				log.Debug("policy denied intent")
+				continue
 			}
-			am.log.Debug("policy permitted intent")
-			if len(permit) < maxQueuedIntents {
-				permit <- in
-			} else {
-				// TODO: handle backpressure with scheduling
-				am.log.Warn("backpressure blocking permitted intents")
+			if !ok {
+				break
 			}
+			log.Debug("handling permitted intent")
+			am.takeAction(qin)
+
+		case input, ok := <-am.inputs:
+			if !ok {
+				am.log.Error("input channel closed")
+				break
+			}
+
+			queued := len(queuedIntents)
+			log := am.log.WithFields(logfields.Intent(input)).
+				WithFields(logrus.Fields{
+					"queue":        "process",
+					"queue-length": fmt.Sprintf("%d", queued),
+				})
+			if queued < queueSkipThreshold {
+				queuedIntents <- input
+				continue
+			}
+			// Start dropping if its not possible to queue at all.
+			if queued+1 > maxQueuedIntents {
+				log.Warn("queue full, dropping intent this try")
+				continue
+			}
+
+			// TODO: handle backpressure better with rescheduling instead of drops
+
+			// Queue is getting full, let's be more selective about events that
+			// are propagated.
+
+			if isClusterActive(input) {
+				log.Info("queue active intent")
+				queuedIntents <- input
+				continue
+			}
+
+			if isLowPriority(input) {
+				n := randDropIntFunc(10)
+				willDrop := n%2 == 0
+				if willDrop {
+					// Intent is picked up again when cached Intent expires &
+					// Informer syncs OR if the Intent is changed (from update
+					// or otherwise by Node). This provides indirect
+					// backpressure by delaying the next time the Intent will be
+					// handled.
+					log.Warn("queue backlog high, randomly dropping intent")
+					continue
+				}
+			}
+			log.Debug("queue intent")
+			queuedIntents <- input
+
 		}
 	}
 }
 
-func (am *ActionManager) takeAction(pin *intent.Intent) error {
-	log := am.log.WithField("node", pin.GetName())
+func isLowPriority(in *intent.Intent) bool {
+	stabilizing := in.Wanted == marker.NodeActionStabilize
+	unknown := in.Wanted == marker.NodeActionUnknown || in.Wanted == ""
+	hasUpdate := in.UpdateAvailable == marker.NodeUpdateAvailable
+	return (stabilizing && !hasUpdate) || unknown
+}
+
+func (am *actionManager) takeAction(pin *intent.Intent) error {
+	log := am.log.WithFields(logfields.Intent(pin))
 	successCheckRun := successfulUpdate(pin)
 	if successCheckRun {
 		log.Debug("handling successful update")
@@ -162,23 +224,25 @@ func (am *ActionManager) takeAction(pin *intent.Intent) error {
 
 	err := am.poster.Post(pin)
 	if err != nil {
-		log.WithError(err).Error("could not post intent")
+		log.WithError(err).Error("unable to post intent")
 	}
 	return err
 }
 
-func (am *ActionManager) makePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
+// makePolicyCheck collects cluster information as a PolicyCheck for which to be
+// provided to a policy checker.
+func (am *actionManager) makePolicyCheck(in *intent.Intent) (*PolicyCheck, error) {
 	if am.storer == nil {
 		return nil, errors.Errorf("manager has no store to access, needed for policy check")
 	}
 	return newPolicyCheck(in, am.storer.GetStore())
 }
 
-func (am *ActionManager) SetStoreProvider(storer storer) {
+func (am *actionManager) SetStoreProvider(storer storer) {
 	am.storer = storer
 }
 
-func (am *ActionManager) handle(node *v1.Node) {
+func (am *actionManager) handle(node intent.Input) {
 	log := am.log.WithField("node", node.GetName())
 	log.Debug("handling event")
 
@@ -186,25 +250,41 @@ func (am *ActionManager) handle(node *v1.Node) {
 	if in == nil {
 		return // no actionable intent signaled
 	}
+	log = log.WithFields(logfields.Intent(in))
 
+	lastQueued := am.lastCache.Last(in)
+	if logging.Debuggable && lastQueued != nil {
+		log.WithField("last-intent", lastQueued.DisplayString()).
+			Debug("retrieved cached queued intent to dedupe")
+	}
+	if intent.Equivalent(lastQueued, in) {
+		log.Debug("not queuing duplicate intent")
+		return
+	}
+
+	record := in.Clone()
 	select {
-	case am.input <- in:
-		log.Debug("submitted intent")
+	case am.inputs <- in:
+		log.Debug("queue intent")
+		am.lastCache.Record(record)
 	default:
-		log.Warn("unable to submit intent")
+		log.WithFields(logrus.Fields{
+			"queue":        "input",
+			"queue-length": len(am.inputs),
+		}).Warn("unable to queue intent (back pressure)")
 	}
 }
 
 // intentFor interprets the intention given the Node's annotations.
-func (am *ActionManager) intentFor(node intent.Input) *intent.Intent {
-	log := am.log.WithField("node", node.GetName())
+func (am *actionManager) intentFor(node intent.Input) *intent.Intent {
 	in := intent.Given(node)
+	log := am.log.WithFields(logfields.Intent(in))
 
 	if in.Stuck() {
-		log.Debug("intent is stuck")
-		log.Warn("resetting to stabilize stuck intent state")
-		in = in.Reset()
-		return in
+		reset := in.Reset()
+		log.WithField("intent-reset", reset.DisplayString()).Debug("node intent indicates stuck")
+		log.Warn("stabilizing stuck node")
+		return reset
 	}
 	// TODO: add per-node bucketed backoff for error handling and retries.
 	if in.Errored() {
@@ -243,16 +323,16 @@ func successfulUpdate(in *intent.Intent) bool {
 }
 
 // OnAdd is a Handler implementation for nodestream
-func (am *ActionManager) OnAdd(node *v1.Node) {
+func (am *actionManager) OnAdd(node *v1.Node) {
 	am.handle(node)
 }
 
 // OnDelete is a Handler implementation for nodestream
-func (am *ActionManager) OnDelete(node *v1.Node) {
+func (am *actionManager) OnDelete(node *v1.Node) {
 	am.handle(node)
 }
 
 // OnUpdate is a Handler implementation for nodestream
-func (am *ActionManager) OnUpdate(_ *v1.Node, node *v1.Node) {
+func (am *actionManager) OnUpdate(_ *v1.Node, node *v1.Node) {
 	am.handle(node)
 }

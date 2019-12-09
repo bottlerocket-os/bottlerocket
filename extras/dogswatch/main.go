@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/agent"
 	"github.com/amazonlinux/thar/dogswatch/pkg/controller"
@@ -12,15 +13,17 @@ import (
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/platform/updog"
 	"github.com/amazonlinux/thar/dogswatch/pkg/sigcontext"
+	"github.com/amazonlinux/thar/dogswatch/pkg/thar"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 )
 
 var (
-	flagAgent      = flag.Bool("agent", false, "Run agent component")
-	flagController = flag.Bool("controller", false, "Run controller component")
-	flagLogDebug   = flag.Bool("debug", false, "")
-	flagNodeName   = flag.String("nodeName", "", "nodeName of the Node that this process is running on")
+	flagAgent          = flag.Bool("agent", false, "Run agent component")
+	flagController     = flag.Bool("controller", false, "Run controller component")
+	flagSkipMitigation = flag.Bool("skip-mitigation", false, "Skip applying mitigations")
+	flagLogDebug       = flag.Bool("debug", false, "")
+	flagNodeName       = flag.String("nodeName", "", "nodeName of the Node that this process is running on")
 )
 
 func main() {
@@ -31,6 +34,18 @@ func main() {
 	}
 
 	log := logging.New("main")
+
+	// "debuggable" builds at runtime produce extensive logging output compared
+	// to release builds with the debug flag enabled. This requires building and
+	// using a distinct build in the deployment in order to use.
+	if logging.Debuggable {
+		log.Info("low-level logging.Debuggable is enabled in this build")
+		log.Warn("logging.Debuggable produces large volumes of logs")
+		delay := 3 * time.Second
+		log.WithField("delay", delay).Warn("delaying start due to logging.Debuggable build")
+		time.Sleep(delay)
+		log.Info("starting logging.Debuggable enabled build")
+	}
 
 	kube, err := k8sutil.DefaultKubernetesClient()
 	if err != nil {
@@ -48,7 +63,7 @@ func main() {
 		log.Error("cannot run both agent and controller")
 		os.Exit(1)
 	case (!*flagController && !*flagAgent):
-		log.Error("no component specified to run, provide one")
+		log.Error("no component specified to run, provide either -agent or -controller")
 		flag.Usage()
 		os.Exit(1)
 	case *flagController:
@@ -57,6 +72,13 @@ func main() {
 			log.WithError(err).Fatalf("controller stopped")
 		}
 	case *flagAgent:
+		if !*flagSkipMitigation {
+			log.Info("checking for necessary mitigations")
+			err := thar.ApplyMitigations()
+			if err != nil {
+				log.WithError(err).Fatalf("unable to perform mitigations")
+			}
+		}
 		err = runAgent(ctx, kube, *flagNodeName)
 		if err != nil {
 			log.WithError(err).Fatalf("agent stopped")

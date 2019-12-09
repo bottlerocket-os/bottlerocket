@@ -9,12 +9,16 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// Controller is the Dogswatch component that runs coordination for the Thar
+// upgrade processes across many hosts, running the Dogswatch Agent, in a
+// cluster.
 type Controller struct {
 	log     logging.Logger
 	kube    kubernetes.Interface
-	manager *ActionManager
+	manager *actionManager
 }
 
+// New creates a Dogswatch Controller instance.
 func New(log logging.Logger, kube kubernetes.Interface, nodeName string) (*Controller, error) {
 	return &Controller{
 		log:     log,
@@ -23,6 +27,7 @@ func New(log logging.Logger, kube kubernetes.Interface, nodeName string) (*Contr
 	}, nil
 }
 
+// Run executes the event loop for the Controller until signaled to exit.
 func (c *Controller) Run(ctx context.Context) error {
 	worker, cancel := context.WithCancel(ctx)
 	defer cancel()

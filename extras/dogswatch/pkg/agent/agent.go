@@ -2,18 +2,21 @@ package agent
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
+	"github.com/amazonlinux/thar/dogswatch/pkg/intent/cache"
+	"github.com/amazonlinux/thar/dogswatch/pkg/internal/logfields"
 	"github.com/amazonlinux/thar/dogswatch/pkg/k8sutil"
 	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
 	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
 	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
 	"github.com/amazonlinux/thar/dogswatch/pkg/platform"
 	"github.com/amazonlinux/thar/dogswatch/pkg/workgroup"
+
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -21,7 +24,7 @@ import (
 )
 
 const (
-	initialPollDelay   = time.Minute * 1
+	initialPollDelay   = updatePollInterval / 2
 	updatePollInterval = time.Minute * 30
 )
 
@@ -29,6 +32,13 @@ var (
 	errInvalidProgress = errors.New("intended to make invalid progress")
 )
 
+// Agent is a privileged on-host process that acts on communicated Intents from
+// the controller. Its event loop hinges off of a Kubernetes Informer which
+// feeds it metadata and Intent data.
+//
+// The Agent only acts as directed, its logic covers safety checks and related
+// on-host responsibilities. Larger coordination and gating is handled by the
+// controller.
 type Agent struct {
 	log      logging.Logger
 	kube     kubernetes.Interface
@@ -38,13 +48,21 @@ type Agent struct {
 	poster poster
 	proc   proc
 
+	lastCache cache.LastCache
+	tracker   *postTracker
+
 	progress progression
 }
 
+// poster implements the logic for updating, or posting, a provided Intent for
+// the appropriate resource.
 type poster interface {
 	Post(*intent.Intent) error
 }
 
+// proc interposes the self-terminate kill signaling allowing for an Agent to
+// terminate itself from the outside. Signals are trapped and handled elsewhere
+// within the application.
 type proc interface {
 	KillProcess() error
 }
@@ -58,12 +76,14 @@ func New(log logging.Logger, kube kubernetes.Interface, plat platform.Platform, 
 		nodeclient = kube.CoreV1().Nodes()
 	}
 	return &Agent{
-		log:      log,
-		kube:     kube,
-		platform: plat,
-		poster:   &k8sPoster{log, nodeclient},
-		proc:     &osProc{},
-		nodeName: nodeName,
+		log:       log,
+		kube:      kube,
+		platform:  plat,
+		poster:    &k8sPoster{log, nodeclient},
+		proc:      &osProc{},
+		nodeName:  nodeName,
+		lastCache: cache.NewLastCache(),
+		tracker:   newPostTracker(),
 	}, nil
 }
 
@@ -91,60 +111,99 @@ func (a *Agent) Run(ctx context.Context) error {
 		NodeName: a.nodeName,
 	}, a.handler())
 
-	group.Work(ns.Run)
-	group.Work(a.periodicUpdateChecker)
-
 	err := a.checkNodePreflight()
 	if err != nil {
 		return err
 	}
 
-	select {
-	case <-ctx.Done():
-		a.log.Info("waiting on workers to finish")
-		return group.Wait()
-	}
+	group.Work(ns.Run)
+	group.Work(a.periodicUpdateChecker)
+
+	<-ctx.Done()
+	a.log.Info("waiting on workers to finish")
+	return group.Wait()
 }
 
+// periodicUpdateChecker regularly checks for available updates and posts this
+// status on the Node resource.
 func (a *Agent) periodicUpdateChecker(ctx context.Context) error {
 	timer := time.NewTimer(initialPollDelay)
 	defer timer.Stop()
 
+	log := a.log.WithField("worker", "update-checker")
+
 	for {
 		select {
 		case <-ctx.Done():
+			log.Debug("finished")
 			return nil
 		case <-timer.C:
-			// TODO: update this when we have richer data plumbed
-			_, err := a.platform.ListAvailable()
-			avail := err == nil
-			a.setUpdateAvailable(avail)
+			log.Info("checking for update")
+			err := a.checkPostUpdate(a.log)
+			if err != nil {
+				log.WithError(err).Error("periodic check error")
+			}
 		}
 		timer.Reset(updatePollInterval)
 	}
 }
 
-func (a *Agent) setUpdateAvailable(available bool) error {
+// checkUpdate queries for an available update from the host.
+func (a *Agent) checkUpdate(log logging.Logger) (bool, error) {
+	available, err := a.platform.ListAvailable()
+	if err != nil {
+		log.WithError(err).Error("unable to query available updates")
+		return false, err
+	}
+	hasUpdate := len(available.Updates()) > 0
+	log = log.WithField("update-available", hasUpdate)
+	if hasUpdate {
+		log.Info("an update is available")
+	}
+	return hasUpdate, nil
+}
+
+// checkPostUpdate checks for and posts the status of an available update.
+func (a *Agent) checkPostUpdate(log logging.Logger) error {
+	hasUpdate, err := a.checkUpdate(log)
+	if err != nil {
+		return err
+	}
+	log = log.WithField("update-available", hasUpdate)
+	log.Debug("posting update status")
+	err = a.postUpdateAvailable(hasUpdate)
+	if err != nil {
+		log.WithError(err).Error("could not post update status")
+		return err
+	}
+	log.Debug("posted update status")
+	return nil
+}
+
+// postUpdateAvailable posts the available update status to the Kubernetes Node
+// resource.
+func (a *Agent) postUpdateAvailable(available bool) error {
 	// TODO: handle brief race condition internally - this needs to be improved,
 	// though the kubernetes control plane will reject out of order updates by
 	// way of resource versioning C-A-S operations.
+	if a.kube == nil {
+		return errors.New("kubernetes client is required to fetch node resource")
+	}
 	node, err := a.kube.CoreV1().Nodes().Get(a.nodeName, v1meta.GetOptions{})
 	if err != nil {
 		return errors.WithMessage(err, "unable to get node")
 	}
-	in := intent.Given(node)
-	switch available {
-	case true:
-		in.UpdateAvailable = marker.NodeUpdateAvailable
-	case false:
-		in.UpdateAvailable = marker.NodeUpdateUnavailable
-	}
-	return a.poster.Post(in)
+	in := intent.Given(node).SetUpdateAvailable(available)
+	return a.postIntent(in)
 }
 
+// handler is the entrypoint for the Kubernetes Informer to schedule handling of
+// events for the Node to act on.
 func (a *Agent) handler() nodestream.Handler {
 	return &nodestream.HandlerFuncs{
-		OnAddFunc: a.handleEvent,
+		OnAddFunc: func(n *v1.Node) {
+			a.handleEvent(n)
+		},
 		// we don't mind the diff between old and new, so handle the new
 		// resource.
 		OnUpdateFunc: func(_, n *v1.Node) {
@@ -156,18 +215,48 @@ func (a *Agent) handler() nodestream.Handler {
 	}
 }
 
-func (a *Agent) handleEvent(node *v1.Node) {
+// handleEvent handles a coalesced Node resource received from a nodestream
+// callback.
+func (a *Agent) handleEvent(node intent.Input) {
 	in := intent.Given(node)
+
+	log := a.log.WithFields(logfields.Intent(in))
+
+	if a.skipIntentEvent(in) {
+		return
+	}
+
 	if activeIntent(in) {
-		a.log.Debug("active intent received")
+		a.lastCache.Record(in)
+		log.Debug("active intent received")
 		if err := a.realize(in); err != nil {
-			a.log.WithError(err).Error("could not handle intent")
+			log.WithError(err).Error("unable to realize intent")
 		}
 		return
 	}
-	a.log.Debug("inactive intent received")
+	log.Debug("inactive intent received")
 }
 
+func (a *Agent) skipIntentEvent(in *intent.Intent) bool {
+	log := a.log.WithFields(logfields.Intent(in))
+	if a.tracker.matchesPost(in) {
+		log.Debug("skipping emitted intent as event")
+		return true
+	}
+	if intent.Equivalent(a.lastCache.Last(in), in) {
+		log.Debug("skipping duplicate received event")
+		return true
+	}
+	if logging.Debuggable {
+		log.Debug("clearing tracked posted intents")
+	}
+	a.tracker.clear()
+
+	return false
+}
+
+// activeIntent filters an intent as an active intent which must be handled by
+// the Agent.
 func activeIntent(i *intent.Intent) bool {
 	wanted := i.InProgress() && !i.DegradedPath()
 	empty := i.Wanted == "" || i.Active == "" || i.State == ""
@@ -175,8 +264,14 @@ func activeIntent(i *intent.Intent) bool {
 	return wanted && !empty && !unknown
 }
 
+// realize acts on an Intent to achieve, or realize, the Intent's intent.
 func (a *Agent) realize(in *intent.Intent) error {
-	a.log.WithField("intent", fmt.Sprintf("%#v", in)).Debug("realizing intent")
+	log := a.log.WithFields(logrus.Fields{
+		"worker": "handler",
+		"intent": in.DisplayString(),
+	})
+
+	log.Debug("handling intent")
 
 	var err error
 
@@ -185,7 +280,8 @@ func (a *Agent) realize(in *intent.Intent) error {
 	// ACK the wanted action.
 	in.Active = in.Wanted
 	in.State = marker.NodeStateBusy
-	if err = a.poster.Post(in); err != nil {
+	err = a.postIntent(in)
+	if err != nil {
 		return err
 	}
 
@@ -205,7 +301,7 @@ func (a *Agent) realize(in *intent.Intent) error {
 			break
 		}
 		a.progress.SetTarget(ups.Updates()[0])
-		a.log.Debug("preparing update")
+		log.Debug("preparing update")
 		err = a.platform.Prepare(a.progress.GetTarget())
 
 	case marker.NodeActionPerformUpdate:
@@ -213,27 +309,34 @@ func (a *Agent) realize(in *intent.Intent) error {
 			err = errInvalidProgress
 			break
 		}
-		a.log.Debug("updating")
+		log.Debug("updating")
 		err = a.platform.Update(a.progress.GetTarget())
 
 	case marker.NodeActionUnknown, marker.NodeActionStabilize:
-		a.log.Debug("sitrep")
+		log.Debug("sitrep")
 		_, err = a.platform.Status()
+		if err != nil {
+			break
+		}
+		hasUpdate, err := a.checkUpdate(log)
+		if err != nil {
+			log.WithError(err).Error("sitrep update check errored")
+		}
+		in.SetUpdateAvailable(hasUpdate)
 
 	case marker.NodeActionRebootUpdate:
 		if !a.progress.Valid() {
 			err = errInvalidProgress
 			break
 		}
-		a.log.Debug("rebooting")
-		a.log.Info("Rebooting Node to complete update")
+		log.Debug("rebooting")
+		log.Info("Rebooting Node to complete update")
 		// TODO: ensure Node is setup to be validated on boot (ie: kubelet will
 		// run agent again before we let other Pods get scheduled)
 		err = a.platform.BootUpdate(a.progress.GetTarget(), true)
 		// Shortcircuit to terminate.
 
 		// TODO: actually handle shutdown.
-		// die("goodbye");
 		if err == nil {
 			if a.proc != nil {
 				defer a.proc.KillProcess()
@@ -243,18 +346,31 @@ func (a *Agent) realize(in *intent.Intent) error {
 	}
 
 	if err != nil {
-		a.log.WithError(err).Error("could not realize intent")
+		log.WithError(err).Error("could not realize intent")
 		in.State = marker.NodeStateError
 	} else {
-		a.log.Debug("realized intent")
+		log.Debug("realized intent")
 		in.State = marker.NodeStateReady
 	}
 
-	a.poster.Post(in)
+	postErr := a.postIntent(in)
+	if postErr != nil {
+		log.WithError(postErr).Error("could not update intent")
+	}
 
 	return err
 }
 
+func (a *Agent) postIntent(in *intent.Intent) error {
+	err := a.poster.Post(in)
+	if err != nil {
+		a.tracker.recordPost(in)
+	}
+	return err
+}
+
+// checkNodePreflight runs checks against the current Node resource and prepares
+// it for use by the Agent and Controller.
 func (a *Agent) checkNodePreflight() error {
 	// TODO: Run a check of the Node Resource and reset appropriately
 
@@ -282,26 +398,44 @@ func (a *Agent) checkNodePreflight() error {
 		// there's not a good way to re-prime ourselves in the prior state.
 		in = in.Reset()
 	}
-	a.poster.Post(in)
+
+	postErr := a.postIntent(in)
+	if postErr != nil {
+		a.log.WithError(postErr).Error("could not update intent status")
+		return postErr
+	}
 
 	return nil
 }
 
+// osProc encapsulates host interactions in order to kill the current process.
 type osProc struct{}
 
+// KillProcess kills the current process.
 func (*osProc) KillProcess() error {
 	p, _ := os.FindProcess(os.Getpid())
 	go p.Kill()
 	return nil
 }
 
+// k8sPoster captures the functionality of the posting of a Node resource
+// modification - in the form of an Intent.
 type k8sPoster struct {
 	log        logging.Logger
 	nodeclient corev1.NodeInterface
 }
 
+// Post writes out the Intent to the Kubernetes Node resource.
 func (k *k8sPoster) Post(i *intent.Intent) error {
 	nodeName := i.GetName()
-	defer k.log.WithField("node", nodeName).Debugf("posted intent %s", i.DisplayString())
-	return k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	log := k.log.WithFields(logrus.Fields{
+		"node":   nodeName,
+		"intent": i.DisplayString(),
+	})
+	err := k8sutil.PostMetadata(k.nodeclient, nodeName, i)
+	if err != nil {
+		return err
+	}
+	log.Debugf("posted intent")
+	return nil
 }
