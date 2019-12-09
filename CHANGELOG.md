@@ -1,4 +1,4 @@
-# v0.2.0 (2019-11-??)
+# v0.2.0 (2019-12-09)
 
 ## Breaking changes
 
@@ -16,7 +16,7 @@
 * Retry host container pulls with exponential backoff ([#433]).
 * Better model startup dependencies in systemd units ([#442]).
 * Enable panic on disk corruption detected with dm_verity ([#445]).
-* Add persistent storage for host containers, mapped to `/.thar/host-containers/[CONTAINER_NAME]` ([#450]).
+* Add persistent storage for host containers, mapped to `/.thar/host-containers/[CONTAINER_NAME]` ([#450], [#555]).
 * Persist SSH host keys for admin container ([#450]).
 * Use admin container v0.2 by default ([#450], [#536]).
 * Use control container v0.2 by default ([#472], [#536]).
@@ -30,12 +30,19 @@
   * Add locking around tough datastore write operations ([#497]).
 * Simplify representation of default metadata ([#491]).
 * `apiclient` (available via the host containers) exits non-zero on HTTP response errors ([#498]).
+* `apiclient` builds as a static binary ([#552]).
+* `/proc/kheaders.tar.xz` is enabled in the kernel ([#557]).
+* `settings-committer` no longer errors at boot when there are no changes to commit ([#559]).
+* `migrator` and `updog` set migrations executable before running to work around a v0.1.6 bug ([#561], [#567]).
 
 ## Documentation changes
 
+* Document how to use Thar's default for the `nf_conntrack_max` kernel parameter when using `kube-proxy` ([#391]).
 * Fix example user data for enabling admin container ([#448]).
 * Update build documentation for using Docker instead of `buildkitd` ([#506]).
 * Update recommended CNI plugin version ([#507]).
+* Document `settings.ntp.time-servers` ([#550]).
+* Update INSTALL.md to use the instance role created by `eksctl` instead of creating a new one ([#569]).
 
 ## Build changes
 
@@ -45,9 +52,11 @@
 * Move the TUF client library, `tough`, to [its own repository](https://github.com/awslabs/tough) and [crates.io packages](https://crates.io/crates/tough) ([#499]).
 * Remove build dependency on the BuildKit daemon ([#506]).
 * Switch to SDK container as toolchain for builds, rather than requiring local build of toolchain ([#525]).
+* Turn `buildsys` into a binary and remove the `cascade` feature ([#562]).
 
 [#239]: ../../pull/239
 [#265]: ../../pull/265
+[#391]: ../../pull/391
 [#430]: ../../pull/430
 [#433]: ../../pull/433
 [#434]: ../../pull/434
@@ -77,6 +86,15 @@
 [#536]: ../../pull/536
 [#546]: ../../pull/546
 [#549]: ../../pull/549
+[#550]: ../../pull/550
+[#552]: ../../pull/552
+[#555]: ../../pull/555
+[#557]: ../../pull/557
+[#559]: ../../pull/559
+[#561]: ../../pull/561
+[#562]: ../../pull/562
+[#567]: ../../pull/567
+[#569]: ../../pull/569
 
 # v0.1.6 (2019-10-21)
 
