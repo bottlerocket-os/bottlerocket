@@ -5,7 +5,7 @@ Dogswatch is a [Kubernetes operator](https://Kubernetes.io/docs/concepts/extend-
 ## How to Run on Kubernetes
 
 
-To run the Dogswatch Operator in a Kubernetes cluster, the following are required resources and configuration (examples given in the [./dev/deployment.yaml](./dev/deployment.yaml) template):
+To run the Dogswatch Operator in a Kubernetes cluster, the following are required resources and configuration ([suggested deployment is defined in `dogswatch.yaml`](./dogswatch.yaml)):
 
 - **`dogswatch` Container Image**
 
