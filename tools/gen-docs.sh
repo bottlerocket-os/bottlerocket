@@ -27,5 +27,7 @@ EOF
         -e '/<link rel="stylesheet".*octicons\.css/d' \
         -e '/<link rel="icon"/d' \
         -e 's/<p>@@THAR-SENTINEL-START@@/<p style="background-color: #a8dfee; border: 1px solid #008296; padding: 1em;">/' \
+        -e 's/<a href="\(.*\).md">/<a href="\1.html">/g' \
+        -e 's^<a href="\.\./\.\./pull/.*">\(#[0-9]\+\)</a>^\1^g' \
         "${out}"
 done
