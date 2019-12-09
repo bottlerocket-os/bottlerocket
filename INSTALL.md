@@ -206,6 +206,26 @@ eksctl-thar-nodegroup-ng-IDENTIFIER-NodeInstanceProfile-IDENTIFIER
 
 Note this down as the INSTANCE_PROFILE_NAME for the final launch command.
 
+## kube-proxy settings
+By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Thar originally sets at boot.
+If you prefer to keep Thar's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
+
+```
+kubectl edit -n kube-system daemonset kube-proxy
+```
+
+Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments like so (0 implies no change):
+```
+      containers:
+      - command:
+        - kube-proxy
+        - --v=2
+        - --config=/var/lib/kube-proxy-config/config
+        - --conntrack-max-per-core 0
+        - --conntrack-min 0
+
+```
+
 ## Final launch details
 
 For the instance to be able to communicate with the EKS cluster control plane and other worker nodes, we need to make sure the instance is launched with the right security groups.
