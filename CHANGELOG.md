@@ -1,10 +1,108 @@
+# v0.2.0 (2019-12-09)
+
+## Breaking changes
+
+* Several settings now have added validation for their contents.  Upgrades from v0.1 that use invalid settings values will result in a broken system.
+  * Host container names (e.g. `admin` in `settings.host-containers.admin`) are restricted to ASCII alphanumeric characters and hyphens ([#450]).
+  * `settings.kubernetes.api-server`, `settings.updates.metadata-base-url` and `target-base-url`, `settings.host-containers.*.sources`, and `settings.ntp.time-servers` are now validated to be URIs ([#549]).
+  * `settings.kubernetes.cluster_name`, `settings.kubernetes.node-labels`, and `settings.kubernetes.node-taints` are now verified to fit Kubernetes naming conventions ([#549]).
+  * Most settings values disallow multi-line strings ([#453], [#483]).
+* Additional characters are permitted in API keys; for example, dots and slashes in Kubernetes labels. Downgrades from v0.2 that use dots and slashes in API keys will result in a broken system ([#511]).
+
+## OS changes
+
+* Add `dogswatch`, a Kubernetes operator for managing OS upgrades ([#239]).
+* More accurately represent data type of update seed ([#430]).
+* Retry host container pulls with exponential backoff ([#433]).
+* Better model startup dependencies in systemd units ([#442]).
+* Enable panic on disk corruption detected with dm_verity ([#445]).
+* Add persistent storage for host containers, mapped to `/.thar/host-containers/[CONTAINER_NAME]` ([#450], [#555]).
+* Persist SSH host keys for admin container ([#450]).
+* Use admin container v0.2 by default ([#450], [#536]).
+* Use control container v0.2 by default ([#472], [#536]).
+* Print most critical errors to the console to aid debugging ([#476], [#479], [#546]).
+* Update Linux kernel to 4.19.75-27.58.amzn2 ([#478]).
+* Updated partitions are marked `successful` after services start ([#481]).
+* Kernel config is available at `/proc/config.gz` ([#482]).
+* Prepare `tough` for separate release, including:
+  * Allow library consumers to override the transport mechanism ([#488]).
+  * Merge `tough_schema` back into `tough` ([#496]).
+  * Add locking around tough datastore write operations ([#497]).
+* Simplify representation of default metadata ([#491]).
+* `apiclient` (available via the host containers) exits non-zero on HTTP response errors ([#498]).
+* `apiclient` builds as a static binary ([#552]).
+* `/proc/kheaders.tar.xz` is enabled in the kernel ([#557]).
+* `settings-committer` no longer errors at boot when there are no changes to commit ([#559]).
+* `migrator` and `updog` set migrations executable before running to work around a v0.1.6 bug ([#561], [#567]).
+
+## Documentation changes
+
+* Document how to use Thar's default for the `nf_conntrack_max` kernel parameter when using `kube-proxy` ([#391]).
+* Fix example user data for enabling admin container ([#448]).
+* Update build documentation for using Docker instead of `buildkitd` ([#506]).
+* Update recommended CNI plugin version ([#507]).
+* Document `settings.ntp.time-servers` ([#550]).
+* Update INSTALL.md to use the instance role created by `eksctl` instead of creating a new one ([#569]).
+
+## Build changes
+
+* Add `updata` tool, which builds update repository metadata ([#265]).
+* Create versioned symlinks to output images ([#434]).
+* Add code and CloudFormation template for TUF repository canary ([#490]).
+* Move the TUF client library, `tough`, to [its own repository](https://github.com/awslabs/tough) and [crates.io packages](https://crates.io/crates/tough) ([#499]).
+* Remove build dependency on the BuildKit daemon ([#506]).
+* Switch to SDK container as toolchain for builds, rather than requiring local build of toolchain ([#525]).
+* Turn `buildsys` into a binary and remove the `cascade` feature ([#562]).
+
+[#239]: ../../pull/239
+[#265]: ../../pull/265
+[#391]: ../../pull/391
+[#430]: ../../pull/430
+[#433]: ../../pull/433
+[#434]: ../../pull/434
+[#442]: ../../pull/442
+[#445]: ../../pull/445
+[#448]: ../../pull/448
+[#450]: ../../pull/450
+[#453]: ../../pull/453
+[#472]: ../../pull/472
+[#476]: ../../pull/476
+[#478]: ../../pull/478
+[#479]: ../../pull/479
+[#481]: ../../pull/481
+[#482]: ../../pull/482
+[#483]: ../../pull/483
+[#488]: ../../pull/488
+[#490]: ../../pull/490
+[#491]: ../../pull/491
+[#496]: ../../pull/496
+[#497]: ../../pull/497
+[#498]: ../../pull/498
+[#499]: ../../pull/499
+[#506]: ../../pull/506
+[#507]: ../../pull/507
+[#511]: ../../pull/511
+[#525]: ../../pull/525
+[#536]: ../../pull/536
+[#546]: ../../pull/546
+[#549]: ../../pull/549
+[#550]: ../../pull/550
+[#552]: ../../pull/552
+[#555]: ../../pull/555
+[#557]: ../../pull/557
+[#559]: ../../pull/559
+[#561]: ../../pull/561
+[#562]: ../../pull/562
+[#567]: ../../pull/567
+[#569]: ../../pull/569
+
 # v0.1.6 (2019-10-21)
 
 ## OS changes
 
 * The system fetches the pause container from ECR before starting `kubelet` ([#382]).
 * New settings: `settings.kubernetes.node-labels` and `settings.kubernetes.node-taints` ([#390], [#408]).
-* The control container has an `enable-admin-container` helper ([#405], [#413]).
+* The control container has an `enable-admin-container` helper ([#405], [#413]). Made default in v0.2.0 ([#472]).
 * Rust dependencies updated ([#410]).
 * `thar-be-settings` added trace-level messages in the client module ([#411]).
 * `updog` no longer checks for migrations from new root images ([#416]).
