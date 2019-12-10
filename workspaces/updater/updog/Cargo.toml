@@ -26,6 +26,7 @@ tough = { version = "0.1.0", features = ["http"] }
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
 migrator = { path = "../../api/migration/migrator" }
+url = "2.1.0"
 
 [dev-dependencies]
 tempfile = "3.1.0"

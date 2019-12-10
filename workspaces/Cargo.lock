@@ -2862,6 +2862,7 @@ dependencies = [
  "toml 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tough 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "update_metadata 0.1.0",
+ "url 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

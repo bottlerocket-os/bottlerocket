@@ -2,8 +2,10 @@
 #![warn(clippy::pedantic)]
 
 mod error;
+mod transport;
 
 use crate::error::Result;
+use crate::transport::{HttpQueryRepo, HttpQueryTransport};
 use chrono::{DateTime, Utc};
 use data_store_version::Version as DataVersion;
 use semver::Version as SemVer;
@@ -17,10 +19,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
-use tough::{HttpTransport, Limits, Repository, Settings};
+use tough::{Limits, Repository, Settings};
 use update_metadata::{Manifest, Update};
-
-type HttpRepo<'a> = Repository<'a, HttpTransport>;
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -96,7 +96,10 @@ fn load_config() -> Result<Config> {
     Ok(config)
 }
 
-fn load_repository<'a>(transport: &'a HttpTransport, config: &'a Config) -> Result<HttpRepo<'a>> {
+fn load_repository<'a>(
+    transport: &'a HttpQueryTransport,
+    config: &'a Config,
+) -> Result<HttpQueryRepo<'a>> {
     fs::create_dir_all("/var/lib/thar/updog").context(error::CreateMetadataCache)?;
     Repository::load(
         transport,
@@ -118,7 +121,7 @@ fn load_repository<'a>(transport: &'a HttpTransport, config: &'a Config) -> Resu
     .context(error::Metadata)
 }
 
-fn load_manifest(repository: &HttpRepo<'_>) -> Result<Manifest> {
+fn load_manifest(repository: &HttpQueryRepo<'_>) -> Result<Manifest> {
     let target = "manifest.json";
     serde_json::from_reader(
         repository
@@ -201,7 +204,7 @@ fn update_required<'a>(
 }
 
 fn write_target_to_disk<P: AsRef<Path>>(
-    repository: &HttpRepo<'_>,
+    repository: &HttpQueryRepo<'_>,
     target: &str,
     disk_path: P,
 ) -> Result<()> {
@@ -261,7 +264,7 @@ fn migration_targets(
 /// storage. All intermediate migrations between the current version and the
 /// target version must be retrieved.
 fn retrieve_migrations(
-    repository: &HttpRepo<'_>,
+    repository: &HttpQueryRepo<'_>,
     manifest: &Manifest,
     update: &Update,
 ) -> Result<()> {
@@ -309,7 +312,7 @@ fn retrieve_migrations(
     Ok(())
 }
 
-fn update_image(update: &Update, repository: &HttpRepo<'_>) -> Result<()> {
+fn update_image(update: &Update, repository: &HttpQueryRepo<'_>) -> Result<()> {
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
@@ -444,10 +447,14 @@ fn main_inner() -> Result<()> {
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
     let config = load_config()?;
-    let transport = HttpTransport::new();
+    let (current_version, flavor) = running_version()?;
+    let transport = HttpQueryTransport::new();
+    transport
+        .queries_get_mut()
+        .context(error::TransportBorrow)?
+        .push((String::from("version"), current_version.to_string()));
     let repository = load_repository(&transport, &config)?;
     let manifest = load_manifest(&repository)?;
-    let (current_version, flavor) = running_version().unwrap();
 
     match command {
         Command::CheckUpdate | Command::Whats => {

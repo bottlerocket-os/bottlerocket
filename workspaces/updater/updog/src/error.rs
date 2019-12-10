@@ -274,6 +274,12 @@ pub(crate) enum Error {
         source: std::io::Error,
     },
 
+    #[snafu(display("2Borrow2Fast"))]
+    TransportBorrow {
+        backtrace: Backtrace,
+        source: std::cell::BorrowMutError,
+    },
+
     #[snafu(display("Failed to serialize update information: {}", source))]
     UpdateSerialize {
         source: serde_json::Error,
