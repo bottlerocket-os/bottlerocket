@@ -41,6 +41,5 @@ done
 for extra in "${EXTRAS[@]}"; do
     out="${top}/html/${extra}"
     echo "Copying ${extra} to ${out}"
-    mkdir -p "$(dirname "$out")"
-    cp "${extra}" "${out}"
+    install -D "${extra}" "${out}"
 done
