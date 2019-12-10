@@ -1,4 +1,7 @@
 #!/bin/bash
+DOCS=(START.md README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md)
+EXTRAS=(extras/dogswatch/{dogswatch,dev/deployment}.yaml)
+
 if ! hash grip; then
     >&2 echo "grip is not installed, run 'pip3 install --user grip'"
     exit 1
@@ -6,7 +9,7 @@ fi
 
 top=$(git rev-parse --show-toplevel)
 mkdir -p "${top}/html"
-for doc in START.md README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md; do
+for doc in "${DOCS[@]}"; do
     out="${top}/html/${doc%.md}.html"
     mkdir -p "$(dirname "$out")"
     grip --title="${doc}" --export \
@@ -35,7 +38,7 @@ EOF
         "${out}"
 done
 
-for extra in extras/dogswatch/{dogswatch,dev/deployment}.yaml; do
+for extra in "${EXTRAS[@]}"; do
     out="${top}/html/${extra}"
     echo "Copying ${extra} to ${out}"
     mkdir -p "$(dirname "$out")"
