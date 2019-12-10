@@ -1,5 +1,5 @@
 SHELL := bash
-stacks := $(wildcard *.yml)
+stacks := $(wildcard *.yml */*.yml)
 
 list:
 	@printf "%s\n" $(stacks)
