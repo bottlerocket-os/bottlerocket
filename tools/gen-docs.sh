@@ -30,7 +30,7 @@ EOF
         ) \
         "${out}"
     sed -i \
-        -e '/<link rel="stylesheet".*octicons\.css/d' \
+        -e 's/.*<link rel="stylesheet".*octicons\.css.*/<style>.markdown-body .anchor span:before { font-size: 16px; content: "\\1f517"; }<\/style>/' \
         -e '/<link rel="icon"/d' \
         -e 's/<p>@@THAR-SENTINEL-START@@/<p style="background-color: #a8dfee; border: 1px solid #008296; padding: 1em;">/' \
         -e 's/<a href="\([^ ">]*\).md/<a href="\1.html/g' \
