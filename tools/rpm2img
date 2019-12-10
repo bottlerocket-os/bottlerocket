@@ -27,8 +27,11 @@ DATA_IMAGE="$(mktemp)"
 EFI_IMAGE="$(mktemp)"
 PRIVATE_IMAGE="$(mktemp)"
 THAR_DATA="$(mktemp)"
-ROOT_MOUNT="/mnt/root"
-DATA_MOUNT="/mnt/data"
+
+ROOT_MOUNT="$(mktemp -d)"
+BOOT_MOUNT="$(mktemp -d)"
+DATA_MOUNT="$(mktemp -d)"
+EFI_MOUNT="$(mktemp -d)"
 
 VERITY_VERSION=1
 VERITY_HASH_ALGORITHM=sha256
@@ -70,7 +73,6 @@ sgdisk --clear \
    -n 0:1M:0        -c 0:"${FIRM_NAME}"    -t 0:"${THAR_FIRM_TYPECODE}" \
    --sort --print "${DISK_IMAGE}"
 
-mkdir -p "${ROOT_MOUNT}"
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 rm -rf "${ROOT_MOUNT}"/var/lib
 
@@ -91,8 +93,6 @@ else
   # For aarch64 we need an EFI partition instead, formatted
   # FAT32 with the .efi binary at the correct path, eg /efi/boot.
   # grub-mkimage has put bootaa64.efi at /boot/efi/EFI/BOOT
-  EFI_MOUNT="/mnt/efi"
-  mkdir "${EFI_MOUNT}"
   mv ${ROOT_MOUNT}/boot/efi/* "${EFI_MOUNT}"
 
   # The 'recommended' size for the EFI partition is 100MB but our aarch64.efi
@@ -109,8 +109,6 @@ else
 fi
 
 # Now that we're done messing with /, move /boot out of it
-BOOT_MOUNT="/mnt/boot"
-mkdir "${BOOT_MOUNT}"
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # Set the Thar variant
@@ -193,3 +191,7 @@ chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${VERITY_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
+
+# Clean up temporary files to reduce size of layer.
+rm -f "${PACKAGE_DIR}"/*.rpm
+rm -rf /tmp/*
