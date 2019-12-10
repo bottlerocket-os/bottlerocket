@@ -30,14 +30,14 @@ EOF
         -e '/<link rel="stylesheet".*octicons\.css/d' \
         -e '/<link rel="icon"/d' \
         -e 's/<p>@@THAR-SENTINEL-START@@/<p style="background-color: #a8dfee; border: 1px solid #008296; padding: 1em;">/' \
-        -e 's/<a href="\(.*\).md\(#.*\)\?">/<a href="\1.html\2">/g' \
-        -e 's^<a href="\.\./\.\./pull/.*">\(#[0-9]\+\)</a>^\1^g' \
+        -e 's/<a href="\([^ ">]*\).md/<a href="\1.html/g' \
+        -e 's^<a href="\.\./\.\./pull/[^ >]*">\(#[0-9]\+\)</a>^\1^g' \
         "${out}"
 done
 
 for extra in extras/dogswatch/{dogswatch,dev/deployment}.yaml; do
     out="${top}/html/${extra}"
-    echo "Copying to ${out}"
+    echo "Copying ${extra} to ${out}"
     mkdir -p "$(dirname "$out")"
     cp "${extra}" "${out}"
 done
