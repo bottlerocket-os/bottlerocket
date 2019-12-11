@@ -1,0 +1,32 @@
+From ded87ae71f953d538f7a89bfff2d0fcc417bbf06 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 3 Dec 2019 22:02:35 +0000
+Subject: [PATCH] adjust default selinux directory
+
+systemd loads the SELinux policy very early, before /etc is populated
+with volatile files.
+
+We expect the policy to be immutable and shipped with the image, so
+storing it under /usr/lib is fine.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/selinux_internal.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/selinux_internal.h b/src/selinux_internal.h
+index 8b4bed2..bcaf2f7 100644
+--- a/src/selinux_internal.h
++++ b/src/selinux_internal.h
+@@ -178,7 +178,7 @@ extern int selinux_page_size hidden;
+ 	} while (0)
+ 
+ 
+-#define SELINUXDIR "/etc/selinux/"
++#define SELINUXDIR "/usr/lib/selinux/"
+ #define SELINUXCONFIG SELINUXDIR "config"
+ 
+ extern int has_selinux_config hidden;
+-- 
+2.21.0
+

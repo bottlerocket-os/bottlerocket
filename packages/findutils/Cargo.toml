@@ -14,3 +14,4 @@ sha512 = "650a24507f8f4ebff83ad28dd27daa4785b4038dcaadc4fe00823b976e848527074cce
 
 [build-dependencies]
 glibc = { path = "../glibc" }
+libselinux = { path = "../libselinux" }

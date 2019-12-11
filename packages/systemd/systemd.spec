@@ -32,6 +32,7 @@ BuildRequires: %{_cross_os}libblkid-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libmount-devel
 BuildRequires: %{_cross_os}libseccomp-devel
+BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libuuid-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
 Requires: %{_cross_os}kmod
@@ -41,6 +42,7 @@ Requires: %{_cross_os}libblkid
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libmount
 Requires: %{_cross_os}libseccomp
+Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libuuid
 Requires: %{_cross_os}libxcrypt
 

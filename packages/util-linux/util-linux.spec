@@ -7,6 +7,7 @@ URL: http://en.wikipedia.org/wiki/Util-linux
 Source0: https://www.kernel.org/pub/linux/utils/util-linux/v2.33/util-linux-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libacl-devel
+BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
 BuildRequires: %{_cross_os}ncurses-devel
 Requires: %{_cross_os}libacl
@@ -14,6 +15,7 @@ Requires: %{_cross_os}libxcrypt
 Requires: %{_cross_os}ncurses
 Requires: %{_cross_os}libblkid
 Requires: %{_cross_os}libmount
+Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libsmartcols
 Requires: %{_cross_os}libuuid
 
@@ -38,6 +40,7 @@ Requires: %{_cross_os}libblkid
 %package -n %{_cross_os}libmount
 Summary: Device mounting library
 License: LGPLv2+
+Requires: %{_cross_os}libselinux
 
 %description -n %{_cross_os}libmount
 %{summary}.
@@ -95,10 +98,10 @@ Requires: %{_cross_os}libuuid
   --enable-libsmartcols \
   --enable-libuuid \
   --enable-usrdir-path \
+  --with-selinux \
   --without-audit \
   --without-python \
   --without-readline \
-  --without-selinux \
   --without-systemd \
   --without-udev \
   --without-utempter \
