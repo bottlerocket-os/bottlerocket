@@ -114,7 +114,7 @@ Resources:
             - !Sub '${RepoTargetBaseUrl}'
             - '--trusted-root-path'
             - '/usr/share/repo-canary/root.json'
-            - '--check-upcoming-expiration'
+            - '--check-upcoming-expiration-days'
             - '3'
             - '--percentage-targets-to-retrieve'
             - '0'
