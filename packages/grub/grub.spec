@@ -121,7 +121,7 @@ grub2-mkimage \
 %else
   efi_gop \
 %endif
-  configfile ext2 gptprio linux normal part_gpt search_fs_uuid
+  configfile echo ext2 gptprio linux normal part_gpt reboot sleep
 
 %if %{_cross_arch} == x86_64
 install -m 0644 ./grub-core/boot.img \
