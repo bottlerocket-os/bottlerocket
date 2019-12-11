@@ -33,8 +33,12 @@ debug-container:
 		.
 
 
-release-container: container
-	docker tag $(DOCKER_IMAGE_REF) $(DOCKER_IMAGE_REF_RELEASE)
+release-container:
+	docker build --network=host \
+		--tag $(DOCKER_IMAGE_REF_RELEASE) \
+		--tag $(DOCKER_IMAGE):latest \
+		--build-arg BUILD_LDFLAGS='' \
+		.
 
 load: container
 	kind load docker-image $(DOCKER_IMAGE)

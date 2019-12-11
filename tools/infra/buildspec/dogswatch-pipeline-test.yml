@@ -1,0 +1,20 @@
+version: 0.2
+
+env:
+  variables:
+    # Path to infra tooling directory.
+    INFRA_DIR: "./tools/infra"
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+    commands:
+      - . "${INFRA_DIR}/env/lib/environment-setup"
+  pre_build:
+    commands:
+      - write-build-meta
+  build:
+    commands:
+      - docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/dogswatch.tar.gz
+      - docker run --rm dogswatch -help 2>&1 | grep -C 10 'dogswatch'

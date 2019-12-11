@@ -1,0 +1,21 @@
+version: 0.2
+
+env:
+  variables:
+    # Path to infra tooling directory.
+    INFRA_DIR: "./tools/infra"
+
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+    commands:
+      - . "${INFRA_DIR}/env/lib/environment-setup"
+  pre_build:
+    commands:
+      - environment-report
+      - write-build-meta
+  build:
+    commands:
+      - docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/${CONTAINER_IMAGE}.tar.gz
+      - docker run --rm ${CONTAINER_IMAGE}:latest cat /etc/motd

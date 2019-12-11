@@ -1,0 +1,34 @@
+version: 0.2
+
+env:
+  variables:
+    # Path to infra tooling directory.
+    INFRA_DIR: "./tools/infra"
+    # Path to host containers folder
+    EXTRAS_DIR: "./extras"
+    # Path to built host container images
+    IMAGES_DIR: "./build/host-container-images"
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+    commands:
+      - . "${INFRA_DIR}/env/lib/environment-setup"
+  pre_build:
+    commands:
+      - write-build-meta
+      - mkdir -p "${IMAGES_DIR}"
+  build:
+    commands:
+      - IMG_VER=$(cat ${EXTRAS_DIR}/host-containers/${CONTAINER_IMAGE}/VERSION)
+      - docker build --build-arg CTR_IMG_VER="${IMG_VER}" -t "${CONTAINER_IMAGE}" "${EXTRAS_DIR}/host-containers/${CONTAINER_IMAGE}"
+      - docker save "${CONTAINER_IMAGE}" | gzip > "${IMAGES_DIR}"/"${CONTAINER_IMAGE}".tar.gz
+artifacts:
+  base-directory: '${IMAGES_DIR}'
+  files:
+    - '*.tar.gz'
+  secondary-artifacts:
+    meta:
+      base-directory: 'build/meta'
+      files:
+        - '*'

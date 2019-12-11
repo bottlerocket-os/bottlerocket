@@ -21,6 +21,11 @@ RUN cp bash /opt/bash
 
 FROM amazonlinux:2
 
+ARG CTR_IMG_VER
+# Make the container image version a mandatory build argument
+RUN test -n "$CTR_IMG_VER"
+ENV CTR_IMG_VER $CTR_IMG_VER
+
 RUN yum -y update && yum -y install openssh-server sudo util-linux && yum clean all
 RUN rm -f /etc/motd /etc/issue
 
