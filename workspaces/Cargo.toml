@@ -21,6 +21,8 @@ members = [
     "api/migration/migrations/v0.1/borkseed",
     "api/migration/migrations/v0.1/host-containers-version",
 
+    "models",
+
     "preinit/laika",
 
     "updater/block-party",

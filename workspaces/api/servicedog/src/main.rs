@@ -27,7 +27,6 @@ use std::str::FromStr;
 
 use apiserver::datastore::serialization::to_pairs_with_prefix;
 use apiserver::datastore::{Key, KeyType};
-use apiserver::model;
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";

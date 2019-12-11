@@ -1,0 +1,3 @@
+We want git to track this directory so that it exists for end-user builds.
+It's needed by build.rs and the symlinks described in README.md.
+It's clearer what's going on if the directory exists already, rather than build.rs creating it.

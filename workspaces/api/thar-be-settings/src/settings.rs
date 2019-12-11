@@ -3,8 +3,6 @@ use std::path::Path;
 use crate::client;
 use crate::Result;
 
-use apiserver::model;
-
 /// Using the template registry, gather all keys and request
 /// their values from the API
 pub fn get_settings_from_template<P>(

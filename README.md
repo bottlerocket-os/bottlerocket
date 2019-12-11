@@ -216,7 +216,7 @@ timezone = "America/Thunder_Bay"
 
 Here we'll describe each setting you can change.
 
-**Note:** You can see the [default values](workspaces/api/storewolf/defaults.toml) for any settings that have defaults.
+**Note:** You can see the default values (for any settings that have defaults) by looking at the `defaults.toml` for your Thar variant under [models](workspaces/models/).
 
 When you're sending settings to the API, or receiving settings from the API, they're in a structured JSON format.
 This allows allow modification of any number of keys at once.

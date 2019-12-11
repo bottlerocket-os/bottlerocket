@@ -8,7 +8,6 @@ use itertools::join;
 
 use crate::client;
 use crate::{error, Result};
-use apiserver::model;
 
 /// Wrapper for the multiple functions needed to go from
 /// a list of changed settings to a Services map

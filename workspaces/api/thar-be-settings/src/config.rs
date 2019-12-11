@@ -9,8 +9,6 @@ use itertools::join;
 use crate::client;
 use crate::{error, Result};
 
-use apiserver::model;
-
 /// Query the API for ConfigurationFile data
 #[allow(clippy::implicit_hasher)]
 pub fn get_affected_config_files<P>(

@@ -12,8 +12,8 @@ use crate::datastore::serialization::to_pairs;
 use crate::datastore::{
     deserialize_scalar, Committed, DataStore, Key, KeyType, ScalarError, Value,
 };
-use crate::model::{ConfigurationFiles, Services, Settings};
 use crate::server::error::{self, Result};
+use model::{ConfigurationFiles, Services, Settings};
 
 /// Build a Settings based on pending data in the datastore; the Settings will be empty if there
 /// are no pending settings.
@@ -339,8 +339,8 @@ mod test {
     use super::*;
     use crate::datastore::memory::MemoryDataStore;
     use crate::datastore::{Committed, DataStore, Key, KeyType};
-    use crate::model::Service;
     use maplit::{hashmap, hashset};
+    use model::Service;
     use std::convert::TryInto;
 
     #[test]

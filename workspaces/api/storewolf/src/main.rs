@@ -25,9 +25,8 @@ use std::{env, fs, process};
 use apiserver::datastore::key::{Key, KeyType};
 use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
-use apiserver::model;
-use apiserver::modeled_types::SingleLineString;
 use data_store_version::Version;
+use model::modeled_types::SingleLineString;
 
 // FIXME Get these from configuration in the future
 const DATASTORE_VERSION_FILE: &str = "/usr/share/thar/data-store-version";
@@ -38,8 +37,8 @@ mod error {
 
     use apiserver::datastore::key::KeyType;
     use apiserver::datastore::{self, serialization, ScalarError};
-    use apiserver::modeled_types::error::Error as ModeledTypesError;
     use data_store_version::error::Error as DataStoreVersionError;
+    use model::modeled_types::error::Error as ModeledTypesError;
     use snafu::Snafu;
 
     /// Potential errors during execution
@@ -311,7 +310,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
     }
 
     // Read and parse defaults
-    let defaults_str = include_str!("../defaults.toml");
+    let defaults_str = include_str!("../../../models/current/src/defaults.toml");
     let mut defaults_val: toml::Value =
         toml::from_str(defaults_str).context(error::DefaultsFormatting)?;
 

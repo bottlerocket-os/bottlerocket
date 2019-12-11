@@ -10,6 +10,7 @@ build = "build.rs"
 apiserver = { path = "../apiserver" }
 data_store_version = { path = "../data_store_version" }
 log = "0.4"
+models = { path = "../../models" }
 rand = { version = "0.7", default-features = false, features = ["std"] }
 simplelog = "0.7"
 snafu = "0.5"
