@@ -3,46 +3,13 @@
 use data_store_version::Version as DataVersion;
 use snafu::{Backtrace, Snafu};
 use std::path::PathBuf;
+use update_metadata::error::Error as update_metadata_error;
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
-    #[snafu(display("Bad bound field: {}", bound_str))]
-    BadBound {
-        backtrace: Backtrace,
-        source: std::num::ParseIntError,
-        bound_str: String,
-    },
-
-    #[snafu(display("Invalid bound start: {}", key))]
-    BadBoundKey {
-        source: std::num::ParseIntError,
-        key: String,
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Could not parse datastore version: {}", key))]
-    BadDataVersion {
-        backtrace: Backtrace,
-        key: String,
-        source: data_store_version::error::Error,
-    },
-
-    #[snafu(display("Could not parse image version: {} - {}", key, value))]
-    BadMapVersion {
-        backtrace: Backtrace,
-        key: String,
-        value: String,
-    },
-
-    #[snafu(display("Migration {} matches regex but missing version", name))]
-    BadRegexVersion { name: String },
-
-    #[snafu(display("Migration {} matches regex but missing name", name))]
-    BadRegexName { name: String },
-
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
     ConfigParse {
         path: PathBuf,
@@ -64,13 +31,6 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to write config file {}: {}", path.display(), source))]
-    ConfigWrite {
-        path: PathBuf,
-        source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
     #[snafu(display("Failed to create metadata cache directory: {}", source))]
     CreateMetadataCache {
         source: std::io::Error,
@@ -82,18 +42,6 @@ pub(crate) enum Error {
         backtrace: Backtrace,
         source: std::io::Error,
         path: PathBuf,
-    },
-
-    #[snafu(display("Duplicate key ID: {}", keyid))]
-    DuplicateKeyId { backtrace: Backtrace, keyid: u32 },
-
-    #[snafu(display("Duplicate version key: {}", key))]
-    DuplicateVersionKey { backtrace: Backtrace, key: String },
-
-    #[snafu(display("Migration '{}' contains invalid version: {}", name, source))]
-    InvalidMigrationVersion {
-        name: String,
-        source: data_store_version::error::Error,
     },
 
     #[snafu(display("Logger setup error: {}", source))]
@@ -133,13 +81,6 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to read manifest file {}: {}", path.display(), source))]
-    ManifestRead {
-        path: PathBuf,
-        source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
     #[snafu(display("Metadata error: {}", source))]
     Metadata {
         source: tough::error::Error,
@@ -153,33 +94,8 @@ pub(crate) enum Error {
         name: String,
     },
 
-    #[snafu(display(
-        "Migration {} given for {} but name implies it is for {}",
-        name,
-        to,
-        version
-    ))]
-    MigrationInvalidTarget {
-        backtrace: Backtrace,
-        name: String,
-        to: DataVersion,
-        version: DataVersion,
-    },
-
-    #[snafu(display(
-        "Migration name invalid; must follow format 'migrate_${{TO_VERSION}}_${{NAME}}'"
-    ))]
-    MigrationNaming { backtrace: Backtrace },
-
     #[snafu(display("Migration not found in image: {:?}", name))]
     MigrationNotLocal { backtrace: Backtrace, name: PathBuf },
-
-    #[snafu(display("Unable to get mutable reference to ({},{}) migrations", from, to))]
-    MigrationMutable {
-        backtrace: Backtrace,
-        from: DataVersion,
-        to: DataVersion,
-    },
 
     #[snafu(display("Migration ({},{}) not present in manifest", from, to))]
     MigrationNotPresent {
@@ -314,12 +230,20 @@ pub(crate) enum Error {
     #[snafu(display("--start-time <time> required to add wave to update"))]
     WaveStartArg { backtrace: Backtrace },
 
-    #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]
-    WavesUnordered { wave: u32, next: u32 },
-
     #[snafu(display("Failed writing update data to disk: {}", source))]
     WriteUpdate {
         source: std::io::Error,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("{}", source))]
+    UpdateMetadata {
+        source: update_metadata::error::Error,
+    },
+}
+
+impl std::convert::From<update_metadata::error::Error> for Error {
+    fn from(e: update_metadata_error) -> Self {
+        Error::UpdateMetadata { source: e }
+    }
 }

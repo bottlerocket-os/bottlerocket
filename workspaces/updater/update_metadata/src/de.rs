@@ -72,7 +72,7 @@ where
                 }
             }
         }
-        error::BadDataVersion { key }.fail()
+        error::BadDataVersionsFromTo { key }.fail()
     }
 
     fn parse_tuple_key(
@@ -88,7 +88,7 @@ where
                 error::DuplicateVersionKey { key }
             );
         } else {
-            return error::BadDataVersion {
+            return error::BadDataVersionsFromTo {
                 key: format!("{}, {}", from, to),
             }
             .fail();
