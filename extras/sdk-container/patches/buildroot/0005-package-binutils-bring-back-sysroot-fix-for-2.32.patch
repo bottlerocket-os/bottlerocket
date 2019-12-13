@@ -1,7 +1,7 @@
 From d35e7e4616527f6e3b3807cd185aee4d2c911818 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Fri, 15 Mar 2019 18:32:49 +0000
-Subject: [PATCH 5/5] package/binutils: bring back sysroot fix for 2.32
+Subject: [PATCH 5/6] package/binutils: bring back sysroot fix for 2.32
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---

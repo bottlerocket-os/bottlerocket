@@ -25,8 +25,8 @@ RUN \
   git config --global user.name "Builder" && \
   git config --global user.email "builder@localhost"
 
-ARG BRVER="2019.08.2"
-ARG KVER="4.19.81"
+ARG BRVER="2019.08.3"
+ARG KVER="4.19.88"
 
 WORKDIR /home/builder
 COPY ./hashes/buildroot ./hashes
@@ -48,6 +48,7 @@ RUN \
 
 FROM toolchain as toolchain-gnu
 ARG ARCH
+ARG KVER="4.19.88"
 RUN \
   make O=output/${ARCH}-gnu defconfig BR2_DEFCONFIG=configs/sdk_${ARCH}_gnu_defconfig && \
   make O=output/${ARCH}-gnu toolchain && \
@@ -57,6 +58,7 @@ RUN \
 
 FROM toolchain as toolchain-musl
 ARG ARCH
+ARG KVER="4.19.88"
 RUN \
   make O=output/${ARCH}-musl defconfig BR2_DEFCONFIG=configs/sdk_${ARCH}_musl_defconfig && \
   make O=output/${ARCH}-musl toolchain && \
@@ -69,7 +71,7 @@ FROM base as sdk
 USER root
 
 ARG ARCH
-ARG KVER="4.19.81"
+ARG KVER="4.19.88"
 
 WORKDIR /
 
@@ -156,6 +158,7 @@ RUN \
   rm musl-${MUSLVER}.tar.gz && \
   mv musl-${MUSLVER} musl
 
+ARG ARCH
 ARG TARGET="${ARCH}-thar-linux-musl"
 ARG SYSROOT="/${TARGET}/sys-root"
 ARG CFLAGS="-O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-clash-protection"
@@ -220,6 +223,7 @@ RUN make install-unwind DESTDIR="${SYSROOT}"
 
 FROM sdk as sdk-libc
 
+ARG ARCH
 ARG GNU_TARGET="${ARCH}-thar-linux-gnu"
 ARG GNU_SYSROOT="/${GNU_TARGET}/sys-root"
 ARG MUSL_TARGET="${ARCH}-thar-linux-musl"

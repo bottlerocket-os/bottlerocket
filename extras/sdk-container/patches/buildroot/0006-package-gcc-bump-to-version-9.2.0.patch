@@ -1,0 +1,494 @@
+From 7163388d50a74c491e7d9cc94513814d2d438c5c Mon Sep 17 00:00:00 2001
+From: Romain Naour <romain.naour@gmail.com>
+Date: Wed, 14 Aug 2019 18:46:13 +0200
+Subject: [PATCH 6/6] package/gcc: bump to version 9.2.0
+
+Remove upstream patches
+
+https://github.com/gcc-mirror/gcc/commit/472bac30e63ffacecfa5eda813054555f2cc7def
+https://github.com/gcc-mirror/gcc/commit/869e468112244b6a3812ab181642fcd9df8838d4
+
+Signed-off-by: Romain Naour <romain.naour@gmail.com>
+Cc: Alexey Brodkin <abrodkin@synopsys.com>
+Cc: Evgeniy Didin <didin@synopsys.com>
+Signed-off-by: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
+---
+ .../9.1.0/0001-ARC-Backport-fix-PR89838.patch | 367 ------------------
+ .../0002-ARC-Fix-emitting-TLS-symbols.patch   |  61 ---
+ package/gcc/Config.in.host                    |   2 +-
+ package/gcc/gcc.hash                          |   4 +-
+ 4 files changed, 3 insertions(+), 431 deletions(-)
+ delete mode 100644 package/gcc/9.1.0/0001-ARC-Backport-fix-PR89838.patch
+ delete mode 100644 package/gcc/9.1.0/0002-ARC-Fix-emitting-TLS-symbols.patch
+
+diff --git a/package/gcc/9.1.0/0001-ARC-Backport-fix-PR89838.patch b/package/gcc/9.1.0/0001-ARC-Backport-fix-PR89838.patch
+deleted file mode 100644
+index 3e8b86d709..0000000000
+--- a/package/gcc/9.1.0/0001-ARC-Backport-fix-PR89838.patch
++++ /dev/null
+@@ -1,367 +0,0 @@
+-From e5398fbcaa1dc35422958acfdb13074bf4a797a3 Mon Sep 17 00:00:00 2001
+-From: claziss <claziss@138bc75d-0d04-0410-961f-82ee72b054a4>
+-Date: Tue, 25 Jun 2019 11:02:21 +0000
+-Subject: [PATCH 1/2] [ARC] Backport fix PR89838
+-
+-Fixes https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89838
+-Similar to https://git.buildroot.org/buildroot/commit/?h=dbf7fffb37e25c40fd5c03d0a64e50a1bba86424
+-but rebased on upstream stable "gcc-9-branch".
+-
+-gcc/
+-xxxx-xx-xx  Claudiu Zissulescu  <claziss@synopsys.com>
+-
+-        * config/arc/arc.c (arc_symbol_binds_local_p): New function.
+-        (arc_legitimize_pic_address): Simplify and cleanup the function.
+-        (SYMBOLIC_CONST): Remove.
+-        (prepare_pic_move): Likewise.
+-        (prepare_move_operands): Handle complex mov cases here.
+-        (arc_legitimize_address_0): Remove call to
+-        arc_legitimize_pic_address.
+-        (arc_legitimize_address): Remove call to
+-        arc_legitimize_tls_address.
+-        * config/arc/arc.md (movqi_insn): Allow Cm3 match.
+-        (movhi_insn): Likewise.
+-
+-/gcc/testsuite
+-xxxx-xx-xx  Claudiu Zissulescu  <claziss@synopsys.com
+-
+-git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/branches/gcc-9-branch@272645 138bc75d-0d04-0410-961f-82ee72b054a4
+-
+-Fix in upstream gcc-9-branch:
+-https://github.com/gcc-mirror/gcc/commit/472bac30e63ffacecfa5eda813054555f2cc7de
+-
+-Signed-off-by: Claudiu Zissulescu <claziss@synopsys.com>
+-Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+----
+- gcc/config/arc/arc.c  | 238 ++++++++++++--------------------------------------
+- gcc/config/arc/arc.md |   8 +-
+- 2 files changed, 60 insertions(+), 186 deletions(-)
+-
+-diff --git a/gcc/config/arc/arc.c b/gcc/config/arc/arc.c
+-index 2f5753b02fa..daacc79d0cb 100644
+---- a/gcc/config/arc/arc.c
+-+++ b/gcc/config/arc/arc.c
+-@@ -5971,130 +5971,47 @@ arc_legitimize_tls_address (rtx addr, enum tls_model model)
+-     }
+- }
+- 
+--/* Legitimize a pic address reference in ORIG.
+--   The return value is the legitimated address.
+--   If OLDX is non-zero, it is the target to assign the address to first.  */
+-+/* Return true if SYMBOL_REF X binds locally.  */
+- 
+--static rtx
+--arc_legitimize_pic_address (rtx orig, rtx oldx)
+-+static bool
+-+arc_symbol_binds_local_p (const_rtx x)
+- {
+--  rtx addr = orig;
+--  rtx pat = orig;
+--  rtx base;
+-+  return (SYMBOL_REF_DECL (x)
+-+	  ? targetm.binds_local_p (SYMBOL_REF_DECL (x))
+-+	  : SYMBOL_REF_LOCAL_P (x));
+-+}
+- 
+--  if (oldx == orig)
+--    oldx = NULL;
+-+/* Legitimize a pic address reference in ADDR.  The return value is
+-+   the legitimated address.  */
+- 
+--  if (GET_CODE (addr) == LABEL_REF)
+--    ; /* Do nothing.  */
+--  else if (GET_CODE (addr) == SYMBOL_REF)
+-+static rtx
+-+arc_legitimize_pic_address (rtx addr)
+-+{
+-+  if (!flag_pic)
+-+    return addr;
+-+
+-+  switch (GET_CODE (addr))
+-     {
+--      enum tls_model model = SYMBOL_REF_TLS_MODEL (addr);
+--      if (model != 0)
+--	return arc_legitimize_tls_address (addr, model);
+--      else if (!flag_pic)
+--	return orig;
+--      else if (CONSTANT_POOL_ADDRESS_P (addr) || SYMBOL_REF_LOCAL_P (addr))
+--	return arc_unspec_offset (addr, ARC_UNSPEC_GOTOFFPC);
+-+    case SYMBOL_REF:
+-+      /* TLS symbols are handled in different place.  */
+-+      if (SYMBOL_REF_TLS_MODEL (addr))
+-+	return addr;
+- 
+-       /* This symbol must be referenced via a load from the Global
+- 	 Offset Table (@GOTPC).  */
+--      pat = arc_unspec_offset (addr, ARC_UNSPEC_GOT);
+--      pat = gen_const_mem (Pmode, pat);
+--
+--      if (oldx == NULL)
+--	oldx = gen_reg_rtx (Pmode);
+--
+--      emit_move_insn (oldx, pat);
+--      pat = oldx;
+--    }
+--  else
+--    {
+--      if (GET_CODE (addr) == CONST)
+--	{
+--	  addr = XEXP (addr, 0);
+--	  if (GET_CODE (addr) == UNSPEC)
+--	    {
+--	      /* Check that the unspec is one of the ones we generate?  */
+--	      return orig;
+--	    }
+--	  /* fwprop is placing in the REG_EQUIV notes constant pic
+--	     unspecs expressions.  Then, loop may use these notes for
+--	     optimizations resulting in complex patterns that are not
+--	     supported by the current implementation. The following
+--	     two if-cases are simplifying the complex patters to
+--	     simpler ones.  */
+--	  else if (GET_CODE (addr) == MINUS)
+--	    {
+--	      rtx op0 = XEXP (addr, 0);
+--	      rtx op1 = XEXP (addr, 1);
+--	      gcc_assert (oldx);
+--	      gcc_assert (GET_CODE (op1) == UNSPEC);
+--
+--	      emit_move_insn (oldx,
+--			      gen_rtx_CONST (SImode,
+--					     arc_legitimize_pic_address (op1,
+--									 NULL_RTX)));
+--	      emit_insn (gen_rtx_SET (oldx, gen_rtx_MINUS (SImode, op0, oldx)));
+--	      return oldx;
+--
+--	    }
+--	  else if (GET_CODE (addr) != PLUS)
+--	    {
+--	      rtx tmp = XEXP (addr, 0);
+--	      enum rtx_code code = GET_CODE (addr);
+--
+--	      /* It only works for UNARY operations.  */
+--	      gcc_assert (UNARY_P (addr));
+--	      gcc_assert (GET_CODE (tmp) == UNSPEC);
+--	      gcc_assert (oldx);
+--
+--	      emit_move_insn
+--		(oldx,
+--		 gen_rtx_CONST (SImode,
+--				arc_legitimize_pic_address (tmp,
+--							    NULL_RTX)));
+--
+--	      emit_insn (gen_rtx_SET (oldx,
+--				      gen_rtx_fmt_ee (code, SImode,
+--						      oldx, const0_rtx)));
+--
+--	      return oldx;
+--	    }
+--	  else
+--	    {
+--	      gcc_assert (GET_CODE (addr) == PLUS);
+--	      if (GET_CODE (XEXP (addr, 0)) == UNSPEC)
+--		return orig;
+--	    }
+--	}
+--
+--      if (GET_CODE (addr) == PLUS)
+--	{
+--	  rtx op0 = XEXP (addr, 0), op1 = XEXP (addr, 1);
+-+      if (!arc_symbol_binds_local_p (addr))
+-+	return gen_const_mem (Pmode, arc_unspec_offset (addr, ARC_UNSPEC_GOT));
+- 
+--	  base = arc_legitimize_pic_address (op0, oldx);
+--	  pat  = arc_legitimize_pic_address (op1,
+--					     base == oldx ? NULL_RTX : oldx);
+--
+--	  if (base == op0 && pat == op1)
+--	    return orig;
+-+      /* Local symb: use @pcl to access it.  */
+-+      /* Fall through.  */
+-+    case LABEL_REF:
+-+      return arc_unspec_offset (addr, ARC_UNSPEC_GOTOFFPC);
+- 
+--	  if (GET_CODE (pat) == CONST_INT)
+--	    pat = plus_constant (Pmode, base, INTVAL (pat));
+--	  else
+--	    {
+--	      if (GET_CODE (pat) == PLUS && CONSTANT_P (XEXP (pat, 1)))
+--		{
+--		  base = gen_rtx_PLUS (Pmode, base, XEXP (pat, 0));
+--		  pat = XEXP (pat, 1);
+--		}
+--	      pat = gen_rtx_PLUS (Pmode, base, pat);
+--	    }
+--	}
+-+    default:
+-+      break;
+-     }
+- 
+-- return pat;
+-+ return addr;
+- }
+- 
+- /* Output address constant X to FILE, taking PIC into account.  */
+-@@ -6256,28 +6173,6 @@ arc_output_pic_addr_const (FILE * file, rtx x, int code)
+-     }
+- }
+- 
+--#define SYMBOLIC_CONST(X)	\
+--(GET_CODE (X) == SYMBOL_REF						\
+-- || GET_CODE (X) == LABEL_REF						\
+-- || (GET_CODE (X) == CONST && symbolic_reference_mentioned_p (X)))
+--
+--/* Emit insns to move operands[1] into operands[0].  */
+--
+--static void
+--prepare_pic_move (rtx *operands, machine_mode)
+--{
+--  if (GET_CODE (operands[0]) == MEM && SYMBOLIC_CONST (operands[1])
+--      && flag_pic)
+--    operands[1] = force_reg (Pmode, operands[1]);
+--  else
+--    {
+--      rtx temp = (reload_in_progress ? operands[0]
+--		  : flag_pic? gen_reg_rtx (Pmode) : NULL_RTX);
+--      operands[1] = arc_legitimize_pic_address (operands[1], temp);
+--    }
+--}
+--
+--
+- /* The function returning the number of words, at the beginning of an
+-    argument, must be put in registers.  The returned value must be
+-    zero for arguments that are passed entirely in registers or that
+-@@ -9053,54 +8948,37 @@ prepare_move_operands (rtx *operands, machine_mode mode)
+- 	}
+-     }
+- 
+--  if (mode == SImode && SYMBOLIC_CONST (operands[1]))
+-+  if (GET_CODE (operands[1]) == SYMBOL_REF)
+-     {
+--      prepare_pic_move (operands, SImode);
+--
+--      /* Disable any REG_EQUALs associated with the symref
+--	 otherwise the optimization pass undoes the work done
+--	 here and references the variable directly.  */
+-+      enum tls_model model = SYMBOL_REF_TLS_MODEL (operands[1]);
+-+      if (MEM_P (operands[0]) && flag_pic)
+-+	operands[1] = force_reg (mode, operands[1]);
+-+      else if (model)
+-+	operands[1] = arc_legitimize_tls_address (operands[1], model);
+-     }
+- 
+-+  operands[1] = arc_legitimize_pic_address (operands[1]);
+-+
+-+  /* Store instructions are limited, they only accept as address an
+-+     immediate, a register or a register plus a small immediate.  */
+-   if (MEM_P (operands[0])
+--      && !(reload_in_progress || reload_completed))
+-+      && !move_dest_operand (operands[0], mode))
+-     {
+--      operands[1] = force_reg (mode, operands[1]);
+--      if (!move_dest_operand (operands[0], mode))
+--	{
+--	  rtx addr = copy_to_mode_reg (Pmode, XEXP (operands[0], 0));
+--	  /* This is like change_address_1 (operands[0], mode, 0, 1) ,
+--	     except that we can't use that function because it is static.  */
+--	  rtx pat = change_address (operands[0], mode, addr);
+--	  MEM_COPY_ATTRIBUTES (pat, operands[0]);
+--	  operands[0] = pat;
+--	}
+--      if (!cse_not_expected)
+--	{
+--	  rtx pat = XEXP (operands[0], 0);
+--
+--	  pat = arc_legitimize_address_0 (pat, pat, mode);
+--	  if (pat)
+--	    {
+--	      pat = change_address (operands[0], mode, pat);
+--	      MEM_COPY_ATTRIBUTES (pat, operands[0]);
+--	      operands[0] = pat;
+--	    }
+--	}
+-+      rtx tmp0 = copy_to_mode_reg (Pmode, XEXP (operands[0], 0));
+-+      rtx tmp1 = change_address (operands[0], mode, tmp0);
+-+      MEM_COPY_ATTRIBUTES (tmp1, operands[0]);
+-+      operands[0] = tmp1;
+-     }
+- 
+--  if (MEM_P (operands[1]) && !cse_not_expected)
+--    {
+--      rtx pat = XEXP (operands[1], 0);
+--
+--      pat = arc_legitimize_address_0 (pat, pat, mode);
+--      if (pat)
+--	{
+--	  pat = change_address (operands[1], mode, pat);
+--	  MEM_COPY_ATTRIBUTES (pat, operands[1]);
+--	  operands[1] = pat;
+--	}
+--    }
+-+  /* Check if it is constant but it is not legitimized.  */
+-+  if (CONSTANT_P (operands[1])
+-+      && !arc_legitimate_constant_p (mode, operands[1]))
+-+    operands[1] = force_reg (mode, XEXP (operands[1], 0));
+-+  else if (MEM_P (operands[0])
+-+	   && ((CONSTANT_P (operands[1])
+-+		&& !satisfies_constraint_Cm3 (operands[1]))
+-+	       || MEM_P (operands[1])))
+-+    operands[1] = force_reg (mode, operands[1]);
+- 
+-   return false;
+- }
+-@@ -9572,11 +9450,10 @@ arc_legitimize_address_0 (rtx x, rtx oldx ATTRIBUTE_UNUSED,
+- {
+-   rtx addr, inner;
+- 
+--  if (flag_pic && SYMBOLIC_CONST (x))
+--     (x) =  arc_legitimize_pic_address (x, 0);
+-   addr = x;
+-   if (GET_CODE (addr) == CONST)
+-     addr = XEXP (addr, 0);
+-+
+-   if (GET_CODE (addr) == PLUS
+-       && CONST_INT_P (XEXP (addr, 1))
+-       && ((GET_CODE (XEXP (addr, 0)) == SYMBOL_REF
+-@@ -9607,13 +9484,6 @@ arc_legitimize_address_0 (rtx x, rtx oldx ATTRIBUTE_UNUSED,
+- static rtx
+- arc_legitimize_address (rtx orig_x, rtx oldx, machine_mode mode)
+- {
+--  if (GET_CODE (orig_x) == SYMBOL_REF)
+--    {
+--      enum tls_model model = SYMBOL_REF_TLS_MODEL (orig_x);
+--      if (model != 0)
+--	return arc_legitimize_tls_address (orig_x, model);
+--    }
+--
+-   rtx new_x = arc_legitimize_address_0 (orig_x, oldx, mode);
+- 
+-   if (new_x)
+-diff --git a/gcc/config/arc/arc.md b/gcc/config/arc/arc.md
+-index ce1004c1b56..78e304d4c71 100644
+---- a/gcc/config/arc/arc.md
+-+++ b/gcc/config/arc/arc.md
+-@@ -671,7 +671,9 @@ core_3, archs4x, archs4xd, archs4xd_slow"
+-   [(set (match_operand:QI 0 "move_dest_operand" "=Rcq,Rcq#q,    w,Rcq#q,   h, w, w,???w,h, w,Rcq,  S,!*x,  r,r, Ucm,m,???m,  m,Usc")
+- 	(match_operand:QI 1 "move_src_operand"  "  cL,   cP,Rcq#q,    P,hCm1,cL, I,?Rac,i,?i,  T,Rcq,Usd,Ucm,m,?Rac,c,?Rac,Cm3,i"))]
+-   "register_operand (operands[0], QImode)
+--   || register_operand (operands[1], QImode)"
+-+   || register_operand (operands[1], QImode)
+-+   || (satisfies_constraint_Cm3 (operands[1])
+-+       && memory_operand (operands[0], QImode))"
+-   "@
+-    mov%? %0,%1%&
+-    mov%? %0,%1%&
+-@@ -713,7 +715,9 @@ core_3, archs4x, archs4xd, archs4xd_slow"
+-        /* Don't use a LIMM that we could load with a single insn - we loose
+- 	  delay-slot filling opportunities.  */
+-        && !satisfies_constraint_I (operands[1])
+--       && satisfies_constraint_Usc (operands[0]))"
+-+       && satisfies_constraint_Usc (operands[0]))
+-+   || (satisfies_constraint_Cm3 (operands[1])
+-+       && memory_operand (operands[0], HImode))"
+-   "@
+-    mov%? %0,%1%&
+-    mov%? %0,%1%&
+--- 
+-2.16.2
+-
+diff --git a/package/gcc/9.1.0/0002-ARC-Fix-emitting-TLS-symbols.patch b/package/gcc/9.1.0/0002-ARC-Fix-emitting-TLS-symbols.patch
+deleted file mode 100644
+index 15df921290..0000000000
+--- a/package/gcc/9.1.0/0002-ARC-Fix-emitting-TLS-symbols.patch
++++ /dev/null
+@@ -1,61 +0,0 @@
+-From d17cd0f88ed986be4046b2eb70240dc95b2958cd Mon Sep 17 00:00:00 2001
+-From: Claudiu Zissulescu <claziss@synopsys.com>
+-Date: Wed, 26 Jun 2019 17:53:51 +0300
+-Subject: [PATCH 2/2] [ARC] Fix emitting TLS symbols.
+-
+-When storing a TLS symbol to memory, always use an intermediate register
+-to load it. Otherwise compiler generates instruction which couldn't be
+-encoded and we see:
+------------------------------>8---------------------------
+-In file included from gethstent_r.c:34:
+-../nss/getXXent_r.c: In function '__gethostent_r':
+-../nss/getXXent_r.c:168:1: error: unrecognizable insn:
+- }
+- ^
+-(insn 25 24 26 5 (set (mem:SI (plus:SI (reg/f:SI 149 virtual-outgoing-args)
+-                (const_int 16 [0x10])) [0  S4 A32])
+-        (plus:SI (reg:SI 25 r25)
+-            (reg:SI 174))) "../nss/getXXent_r.c":160 -1
+-     (nil))
+-during RTL pass: vregs
+-../nss/getXXent_r.c:168:1: internal compiler error: in extract_insn, at recog.c:2304
+-In file included from getnetent_r.c:34:
+-../nss/getXXent_r.c: In function '__getnetent_r':
+-../nss/getXXent_r.c:168:1: error: unrecognizable insn:
+- }
+- ^
+-(insn 25 24 26 5 (set (mem:SI (plus:SI (reg/f:SI 149 virtual-outgoing-args)
+-                (const_int 16 [0x10])) [0  S4 A32])
+-        (plus:SI (reg:SI 25 r25)
+-            (reg:SI 174))) "../nss/getXXent_r.c":160 -1
+-     (nil))
+-during RTL pass: vregs
+-../nss/getXXent_r.c:168:1: internal compiler error: in extract_insn, at recog.c:2304
+------------------------------>8---------------------------
+-
+-Note this patch is not yet submitted to the GCC's master and gcc-9-branch but
+-will be submitted soon. That said with bump of GCC this patch won't be
+-needed any longer.
+-
+-Signed-off-by: Claudiu Zissulescu  <claziss@synopsys.com>
+-Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+----
+- gcc/config/arc/arc.c | 2 +-
+- 1 file changed, 1 insertion(+), 1 deletion(-)
+-
+-diff --git a/gcc/config/arc/arc.c b/gcc/config/arc/arc.c
+-index daacc79d0cb..ee1f70bbb51 100644
+---- a/gcc/config/arc/arc.c
+-+++ b/gcc/config/arc/arc.c
+-@@ -8951,7 +8951,7 @@ prepare_move_operands (rtx *operands, machine_mode mode)
+-   if (GET_CODE (operands[1]) == SYMBOL_REF)
+-     {
+-       enum tls_model model = SYMBOL_REF_TLS_MODEL (operands[1]);
+--      if (MEM_P (operands[0]) && flag_pic)
+-+      if (MEM_P (operands[0]))
+- 	operands[1] = force_reg (mode, operands[1]);
+-       else if (model)
+- 	operands[1] = arc_legitimize_tls_address (operands[1], model);
+--- 
+-2.16.2
+-
+diff --git a/package/gcc/Config.in.host b/package/gcc/Config.in.host
+index 4425be9df3..5a53b9702f 100644
+--- a/package/gcc/Config.in.host
++++ b/package/gcc/Config.in.host
+@@ -85,7 +85,7 @@ config BR2_GCC_VERSION
+ 	default "5.5.0"     if BR2_GCC_VERSION_5_X
+ 	default "7.4.0"     if BR2_GCC_VERSION_7_X
+ 	default "8.3.0"     if BR2_GCC_VERSION_8_X
+-	default "9.1.0"     if BR2_GCC_VERSION_9_X
++	default "9.2.0"     if BR2_GCC_VERSION_9_X
+ 	default "arc-2019.03-release" if BR2_GCC_VERSION_ARC
+ 	default "or1k-musl-5.4.0-20170218" if BR2_GCC_VERSION_OR1K
+ 	default "48152afb96c59733d5bc79e3399bb7b3d4b44266" if BR2_GCC_VERSION_CSKY
+diff --git a/package/gcc/gcc.hash b/package/gcc/gcc.hash
+index 20f5145be6..5be1ec1a1d 100644
+--- a/package/gcc/gcc.hash
++++ b/package/gcc/gcc.hash
+@@ -4,8 +4,8 @@ sha512  670ff52c2ae12c7852c12987e91798c5aa8bd6daf21f0d6e0cd57a4aa59cc4f06a837fe7
+ sha512  8864d8e4b97c2e1a4f17422f6e68120172ebefeab97b1757734f7185ca68a6b9a89011c6833c03fa454c17b0ac35b15e1d284881e6971035948ac6100f3aa45e  gcc-7.4.0.tar.xz
+ # From ftp://gcc.gnu.org/pub/gcc/releases/gcc-8.3.0/sha512.sum
+ sha512  1811337ae3add9680cec64968a2509d085b6dc5b6783fc1e8c295e3e47416196fd1a3ad8dfe7e10be2276b4f62c357659ce2902f239f60a8648548231b4b5802  gcc-8.3.0.tar.xz
+-#  From ftp://gcc.gnu.org/pub/gcc/releases/gcc-9.1.0/sha512.sum
+-sha512  b6134df027e734cee5395afd739fcfa4ea319a6017d662e54e89df927dea19d3fff7a6e35d676685383034e3db01c9d0b653f63574c274eeb15a2cb0bc7a1f28  gcc-9.1.0.tar.xz
++#  From ftp://gcc.gnu.org/pub/gcc/releases/gcc-9.2.0/sha512.sum
++sha512  a12dff52af876aee0fd89a8d09cdc455f35ec46845e154023202392adc164848faf8ee881b59b681b696e27c69fd143a214014db4214db62f9891a1c8365c040  gcc-9.2.0.tar.xz
+ 
+ # Locally calculated (fetched from Github)
+ sha512  c3f63fb601140f92d2dbef96b2dcc025ef754d2f049bfcc3d33e746c7b218b5138f2d8768cd580134858a8d347d234cf3ead276638f6de409f8f07c986e136b6  gcc-arc-2019.03-release.tar.gz
+-- 
+2.21.0
+
