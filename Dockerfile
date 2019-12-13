@@ -55,15 +55,15 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=source=workspaces,target=/home/builder/rpmbuild/BUILD/workspaces \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
-FROM scratch AS rpm
+FROM scratch AS package
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /output/
 
 FROM sdk AS imgbuild
 ARG PACKAGES
 ARG ARCH
 ARG NOCACHE
-ARG FLAVOR
-ENV FLAVOR=${FLAVOR}
+ARG VARIANT
+ENV VARIANT=${VARIANT}
 WORKDIR /root
 
 USER root
@@ -91,5 +91,5 @@ RUN --mount=target=/host \
         --output-dir=/local/output \
     && echo ${NOCACHE}
 
-FROM scratch AS image
+FROM scratch AS variant
 COPY --from=imgbuild /local/output/* /output/

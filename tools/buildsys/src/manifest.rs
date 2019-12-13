@@ -29,9 +29,9 @@ url = "https://bar"
 sha512 = "123456"
 ```
 
-`included-packages` is a list of packages that should be included in an image.
+`included-packages` is a list of packages that should be included in a variant.
 ```
-[package.metadata.build-image]
+[package.metadata.build-variant]
 included-packages = ["release"]
 ```
 */
@@ -72,7 +72,7 @@ impl ManifestInfo {
 
     /// Convenience method to return the list of included packages.
     pub(crate) fn included_packages(&self) -> Option<&Vec<String>> {
-        self.build_image()
+        self.build_variant()
             .and_then(|b| b.included_packages.as_ref())
     }
 
@@ -84,11 +84,11 @@ impl ManifestInfo {
             .and_then(|m| m.build_package.as_ref())
     }
 
-    fn build_image(&self) -> Option<&BuildImage> {
+    fn build_variant(&self) -> Option<&BuildVariant> {
         self.package
             .metadata
             .as_ref()
-            .and_then(|m| m.build_image.as_ref())
+            .and_then(|m| m.build_variant.as_ref())
     }
 }
 
@@ -102,7 +102,7 @@ struct Package {
 #[serde(rename_all = "kebab-case")]
 struct Metadata {
     build_package: Option<BuildPackage>,
-    build_image: Option<BuildImage>,
+    build_variant: Option<BuildVariant>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -114,7 +114,7 @@ pub(crate) struct BuildPackage {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) struct BuildImage {
+pub(crate) struct BuildVariant {
     pub(crate) included_packages: Option<Vec<String>>,
 }
 

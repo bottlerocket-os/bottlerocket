@@ -1,5 +1,5 @@
 /*!
-This module handles the calls to Docker needed to execute package and image
+This module handles the calls to Docker needed to execute package and variant
 builds. The actual build steps and the expected parameters are defined in
 the repository's top-level Dockerfile.
 
@@ -21,7 +21,7 @@ impl PackageBuilder {
     pub(crate) fn build(package: &str) -> Result<(Self)> {
         let arch = getenv("BUILDSYS_ARCH")?;
 
-        let target = "rpm";
+        let target = "package";
         let build_args = format!(
             "--build-arg PACKAGE={package} \
              --build-arg ARCH={arch}",
@@ -40,31 +40,31 @@ impl PackageBuilder {
     }
 }
 
-pub(crate) struct ImageBuilder;
+pub(crate) struct VariantBuilder;
 
-impl ImageBuilder {
-    /// Build an image with the specified packages installed.
+impl VariantBuilder {
+    /// Build a variant with the specified packages installed.
     pub(crate) fn build(packages: &[String]) -> Result<(Self)> {
         // We want PACKAGES to be a value that contains spaces, since that's
         // easier to work with in the shell than other forms of structured data.
         let packages = packages.join("|");
         let arch = getenv("BUILDSYS_ARCH")?;
-        let name = getenv("IMAGE")?;
+        let variant = getenv("BUILDSYS_VARIANT")?;
 
-        // Always rebuild images since they are located in a different workspace,
+        // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
         getenv("BUILDSYS_TIMESTAMP")?;
 
-        let target = "image";
+        let target = "variant";
         let build_args = format!(
             "--build-arg PACKAGES={packages} \
              --build-arg ARCH={arch} \
-             --build-arg FLAVOR={name}",
+             --build-arg VARIANT={variant}",
             packages = packages,
             arch = arch,
-            name = name,
+            variant = variant,
         );
-        let tag = format!("buildsys-img-{name}-{arch}", name = name, arch = arch);
+        let tag = format!("buildsys-var-{variant}-{arch}", variant = variant, arch = arch);
 
         build(&target, &build_args, &tag)?;
 
@@ -72,7 +72,7 @@ impl ImageBuilder {
     }
 }
 
-/// Invoke a series of `docker` commands to drive a package or image build.
+/// Invoke a series of `docker` commands to drive a package or variant build.
 fn build(target: &str, build_args: &str, tag: &str) -> Result<()> {
     // Our Dockerfile is in the top-level directory.
     let root = getenv("BUILDSYS_ROOT_DIR")?;

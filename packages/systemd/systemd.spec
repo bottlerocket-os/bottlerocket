@@ -49,6 +49,12 @@ Requires: %{_cross_os}libxcrypt
 %description
 %{summary}.
 
+%package console
+Summary: Files for console login using the System and Service Manager
+
+%description console
+%{summary}.
+
 %package devel
 Summary: Files for development using the System and Service Manager
 Requires: %{name}
@@ -251,6 +257,19 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %exclude %{_cross_localedir}
 %exclude %{_cross_localstatedir}/log/README
 %exclude %{_cross_rundir}
+
+%exclude %{_cross_systemdgeneratordir}/systemd-getty-generator
+%exclude %{_cross_unitdir}/console-getty.service
+%exclude %{_cross_unitdir}/container-getty@.service
+%exclude %{_cross_unitdir}/getty@.service
+%exclude %{_cross_unitdir}/serial-getty@.service
+
+%files console
+%{_cross_systemdgeneratordir}/systemd-getty-generator
+%{_cross_unitdir}/console-getty.service
+%{_cross_unitdir}/container-getty@.service
+%{_cross_unitdir}/getty@.service
+%{_cross_unitdir}/serial-getty@.service
 
 %files devel
 %{_cross_libdir}/libsystemd.so

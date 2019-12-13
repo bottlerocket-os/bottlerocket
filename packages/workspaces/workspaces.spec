@@ -94,6 +94,7 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %package -n %{_cross_os}host-containers
 Summary: Manages system- and user-defined host containers
 Requires: %{_cross_os}apiserver = %{version}-%{release}
+Requires: %{_cross_os}host-ctr
 %description -n %{_cross_os}host-containers
 %{summary}.
 
