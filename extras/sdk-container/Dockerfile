@@ -29,7 +29,7 @@ ARG BRVER="2019.08.2"
 ARG KVER="4.19.81"
 
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/buildroot ./hashes
 RUN \
   curl -OJL https://github.com/buildroot/buildroot/archive/${BRVER}.tar.gz && \
   grep buildroot-${BRVER}.tar.gz hashes | sha512sum --check - && \
@@ -94,7 +94,7 @@ USER builder
 ARG GLIBCVER="2.30"
 
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/glibc ./hashes
 RUN \
   curl -OJL https://ftp.gnu.org/gnu/glibc/glibc-${GLIBCVER}.tar.xz && \
   grep glibc-${GLIBCVER}.tar.xz hashes | sha512sum --check - && \
@@ -148,7 +148,7 @@ USER builder
 ARG MUSLVER="1.1.24"
 
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/musl ./hashes
 RUN \
   curl -OJL https://www.musl-libc.org/releases/musl-${MUSLVER}.tar.gz && \
   grep musl-${MUSLVER}.tar.gz hashes | sha512sum --check - && \
@@ -181,7 +181,6 @@ ARG LLVMVER="9.0.0"
 
 USER builder
 WORKDIR /home/builder
-COPY ./hashes ./
 
 # Rust's musl targets depend on libunwind.
 RUN \
@@ -244,7 +243,7 @@ ARG RUSTVER="1.39.0"
 
 USER builder
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/rust ./hashes
 RUN \
   curl -OJL https://static.rust-lang.org/dist/rustc-${RUSTVER}-src.tar.xz && \
   grep rustc-${RUSTVER}-src.tar.xz hashes | sha512sum --check - && \
@@ -271,7 +270,7 @@ RUN dnf -y install golang
 
 USER builder
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/go ./hashes
 RUN \
   curl -OJL https://dl.google.com/go/go${GOVER}.src.tar.gz && \
   grep go${GOVER}.src.tar.gz hashes | sha512sum --check - && \
