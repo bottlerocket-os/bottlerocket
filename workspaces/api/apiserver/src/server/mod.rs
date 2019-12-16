@@ -12,8 +12,8 @@ use std::path::Path;
 use std::sync;
 
 use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
-use crate::model::{ConfigurationFiles, Services, Settings};
 use error::Result;
+use model::{ConfigurationFiles, Services, Settings};
 
 use nix::unistd::{chown, Gid};
 use std::fs::set_permissions;
@@ -122,10 +122,10 @@ where
 fn get_settings(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
-) -> Result<Settings> {
+) -> Result<SettingsResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
 
-    if let Some(keys_str) = query.get("keys") {
+    let settings = if let Some(keys_str) = query.get("keys") {
         let keys = comma_separated("keys", keys_str)?;
         controller::get_settings_keys(&*datastore, &keys, Committed::Live)
     } else if let Some(prefix_str) = query.get("prefix") {
@@ -136,7 +136,9 @@ fn get_settings(
         controller::get_settings_prefix(&*datastore, prefix_str, Committed::Live)
     } else {
         controller::get_settings(&*datastore, Committed::Live)
-    }
+    }?;
+
+    Ok(SettingsResponse(settings))
 }
 
 /// Apply the requested settings to the pending data store
@@ -150,9 +152,10 @@ fn patch_settings(
 }
 
 /// Return any settings that have been received but not committed
-fn get_pending_settings(data: web::Data<SharedDataStore>) -> Result<Settings> {
+fn get_pending_settings(data: web::Data<SharedDataStore>) -> Result<SettingsResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
-    controller::get_pending_settings(&*datastore)
+    let settings = controller::get_pending_settings(&*datastore)?;
+    Ok(SettingsResponse(settings))
 }
 
 /// Delete any settings that have been received but not committed
@@ -338,8 +341,9 @@ macro_rules! impl_responder_for {
     )
 }
 
-// This lets us respond from our handler methods with a Settings (or Result<Settings>)
-impl_responder_for!(Settings, self, self);
+/// This lets us respond from our handler methods with a Settings (or Result<Settings>)
+struct SettingsResponse(Settings);
+impl_responder_for!(SettingsResponse, self, self.0);
 
 /// This lets us respond from our handler methods with a HashMap (or Result<HashMap>) for metadata
 struct MetadataResponse(HashMap<String, Value>);

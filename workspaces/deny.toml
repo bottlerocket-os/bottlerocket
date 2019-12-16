@@ -39,6 +39,7 @@ skip = [
     { name = "laika", licenses = [] },
     { name = "migration-helpers", licenses = [] },
     { name = "migrator", licenses = [] },
+    { name = "models", licenses = [] },
     { name = "moondog", licenses = [] },
     { name = "netdog", licenses = [] },
     { name = "pluto", licenses = [] },

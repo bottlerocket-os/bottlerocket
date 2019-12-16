@@ -21,17 +21,25 @@ impl PackageBuilder {
     pub(crate) fn build(package: &str) -> Result<(Self)> {
         let arch = getenv("BUILDSYS_ARCH")?;
 
+        // We do *not* want to rebuild most packages when the variant changes, becauses most aren't
+        // affected; packages that care about variant should "echo cargo:rerun-if-env-changed=VAR"
+        // themselves in the package's spec file.
+        let var = "BUILDSYS_VARIANT";
+        let variant = env::var(var).context(error::Environment { var })?;
+
         let target = "package";
         let build_args = format!(
             "--build-arg PACKAGE={package} \
-             --build-arg ARCH={arch}",
+             --build-arg ARCH={arch} \
+             --build-arg VARIANT={variant}",
             package = package,
             arch = arch,
+            variant = variant,
         );
         let tag = format!(
             "buildsys-pkg-{package}-{arch}",
             package = package,
-            arch = arch
+            arch = arch,
         );
 
         build(&target, &build_args, &tag)?;

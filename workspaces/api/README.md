@@ -49,7 +49,7 @@ On first boot, [storewolf](#storewolf) hasn’t run yet, so there’s no data st
 
 storewolf owns the creation and initial population of the data store.
 
-storewolf ensures the defined [default values](storewolf/defaults.toml) are populated in the data store.
+storewolf ensures the default values (defined in the `defaults.toml` for [your variant](../models)) are populated in the data store.
 First, it has to create the data store directories and symlinks if they don’t exist.
 Then, it goes key-by-key through the defaults, and if a key isn’t already set, sets it with the default value.
 
@@ -107,7 +107,7 @@ This service sends a commit request to the API, which moves all the pending sett
 
 Further docs:
 * [thar-be-settings](thar-be-settings/), the tool settings-applier uses
-* [defaults.toml](storewolf/defaults.toml), which defines our configuration files and services
+* The `defaults.toml` files for each [variant](../models), which define our configuration files and services
 
 This is a simple startup service that runs `thar-be-settings --all` to write out all of the configuration files that are based on our settings.
 

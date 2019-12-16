@@ -98,6 +98,13 @@ fn build_package() -> Result<()> {
     let manifest =
         ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParse)?;
 
+    // if manifest has package.metadata.build-package.variant-specific = true, then println rerun-if-env-changed
+    if let Some(sensitive) = manifest.variant_sensitive() {
+        if sensitive {
+            println!("cargo:rerun-if-env-changed=BUILDSYS_VARIANT");
+        }
+    }
+
     if let Some(files) = manifest.external_files() {
         LookasideCache::fetch(&files).context(error::ExternalFileFetch)?;
     }

@@ -3,6 +3,8 @@
 //! The datastore::serialization and datastore::deserialization modules make it easy to map between
 //! Rust types and the datastore, and thus, all inputs and outputs are type-checked.
 
+pub mod modeled_types;
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::Ipv4Addr;

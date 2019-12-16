@@ -70,6 +70,11 @@ impl ManifestInfo {
         self.build_package().and_then(|b| b.external_files.as_ref())
     }
 
+    /// Convenience method to find whether the package is sensitive to variant changes.
+    pub(crate) fn variant_sensitive(&self) -> Option<bool> {
+        self.build_package().and_then(|b| b.variant_sensitive)
+    }
+
     /// Convenience method to return the list of included packages.
     pub(crate) fn included_packages(&self) -> Option<&Vec<String>> {
         self.build_variant()
@@ -110,6 +115,7 @@ struct Metadata {
 pub(crate) struct BuildPackage {
     pub(crate) source_groups: Option<Vec<PathBuf>>,
     pub(crate) external_files: Option<Vec<ExternalFile>>,
+    pub(crate) variant_sensitive: Option<bool>,
 }
 
 #[derive(Deserialize, Debug)]

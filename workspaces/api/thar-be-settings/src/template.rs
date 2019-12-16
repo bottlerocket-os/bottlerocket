@@ -3,8 +3,6 @@ use snafu::ResultExt;
 
 use crate::{error, helpers, Result};
 
-use apiserver::model;
-
 /// Build the template registry using the ConfigFile structs
 /// and let handlebars parse the templates
 pub fn build_template_registry(

@@ -1,0 +1,70 @@
+# OS-level defaults.
+# Should match the structures in src/model.rs.
+
+[settings]
+timezone = "America/Los_Angeles"
+hostname = "localhost"
+
+[settings.updates]
+metadata-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/metadata/"
+target-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/targets/"
+
+[services.hostname]
+configuration-files = ["hostname"]
+restart-commands = []
+
+[configuration-files.hostname]
+path = "/etc/hostname"
+template-path = "/usr/share/templates/hostname"
+
+[metadata.settings.hostname]
+affected-services = ["hostname"]
+
+# Updog.
+
+[services.updog]
+configuration-files = ["updog-toml"]
+restart-commands = []
+
+[configuration-files.updog-toml]
+path = "/etc/updog.toml"
+template-path = "/usr/share/templates/updog-toml"
+
+[metadata.settings.updates]
+affected-services = ["updog"]
+seed.setting-generator = "bork seed"
+
+# HostContainers
+
+[settings.host-containers.admin]
+enabled = false
+source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-admin:v0.2"
+superpowered = true
+
+[settings.host-containers.control]
+enabled = true
+source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-control:v0.2"
+superpowered = false
+
+[services.host-containers]
+configuration-files = []
+restart-commands = ["/usr/bin/host-containers"]
+
+[metadata.settings.host-containers]
+affected-services = ["host-containers"]
+
+# NTP
+
+[settings.ntp]
+time-servers = ["169.254.169.123", "2.amazon.pool.ntp.org"]
+
+[services.ntp]
+configuration-files = ["chrony-conf"]
+restart-commands = ["/bin/systemctl try-reload-or-restart chronyd.service"]
+
+[configuration-files.chrony-conf]
+path = "/etc/chrony.conf"
+template-path = "/usr/share/templates/chrony-conf"
+
+[metadata.settings.ntp]
+affected-services = ["chronyd"]

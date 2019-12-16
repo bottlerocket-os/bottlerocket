@@ -22,8 +22,7 @@ use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
 
-use apiserver::model;
-use apiserver::modeled_types::Identifier;
+use model::modeled_types::Identifier;
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";

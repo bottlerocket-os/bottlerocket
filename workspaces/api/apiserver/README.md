@@ -34,7 +34,7 @@ Requests are directed by `server::router`.
 ### Model
 
 The API is driven by a data model (similar to a schema) defined in Rust.
-See the 'model' module.
+See the 'models' workspace.
 All input is deserialized into model types, and all output is serialized from model types, so we can be more confident that data is in the format we expect.
 
 The data model describes system settings, services using those settings, and configuration files used by those services.
