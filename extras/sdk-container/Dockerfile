@@ -15,6 +15,8 @@ RUN \
   dnf clean all && \
   useradd builder
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM base as toolchain
 USER builder
 
@@ -42,6 +44,8 @@ RUN \
   git init . && \
   git apply --whitespace=nowarn *.patch
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM toolchain as toolchain-gnu
 ARG ARCH
 RUN \
@@ -49,12 +53,16 @@ RUN \
   make O=output/${ARCH}-gnu toolchain && \
   find output/${ARCH}-gnu/build/linux-headers-${KVER}/usr/include -name '.*' -delete
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM toolchain as toolchain-musl
 ARG ARCH
 RUN \
   make O=output/${ARCH}-musl defconfig BR2_DEFCONFIG=configs/sdk_${ARCH}_musl_defconfig && \
   make O=output/${ARCH}-musl toolchain && \
   find output/${ARCH}-musl/build/linux-headers-${KVER}/usr/include -name '.*' -delete
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 # Add our cross-compilers to the base SDK layer.
 FROM base as sdk
@@ -76,6 +84,8 @@ COPY --from=toolchain-musl \
 COPY --from=toolchain-musl \
   /home/builder/buildroot/output/${ARCH}-musl/build/linux-headers-${KVER}/usr/include/ \
   /${ARCH}-thar-linux-musl/sys-root/usr/include/
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 # Build C libraries so we can build our rust and golang toolchains.
 FROM sdk as sdk-gnu
@@ -129,6 +139,8 @@ RUN \
 USER root
 WORKDIR /home/builder/glibc/build
 RUN make install
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 FROM sdk as sdk-musl
 USER builder
@@ -205,6 +217,8 @@ USER root
 WORKDIR /home/builder/libunwind/build
 RUN make install-unwind DESTDIR="${SYSROOT}"
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM sdk as sdk-libc
 
 ARG GNU_TARGET="${ARCH}-thar-linux-gnu"
@@ -214,6 +228,8 @@ ARG MUSL_SYSROOT="/${MUSL_TARGET}/sys-root"
 
 COPY --from=sdk-gnu ${GNU_SYSROOT}/ ${GNU_SYSROOT}/
 COPY --from=sdk-musl ${MUSL_SYSROOT}/ ${MUSL_SYSROOT}/
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 FROM sdk-libc as sdk-rust
 
@@ -241,6 +257,8 @@ COPY ./configs/rust/* ./
 RUN \
   cp config-${ARCH}.toml config.toml && \
   ./x.py install
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 FROM sdk-libc as sdk-go
 
@@ -295,6 +313,8 @@ RUN \
   export PATH="${PWD}/bin:${PATH}" ; \
   go install std && \
   go install -buildmode=pie std
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 # Collect all builds in a single layer.
 FROM scratch as sdk-final
