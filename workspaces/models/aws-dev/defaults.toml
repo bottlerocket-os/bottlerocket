@@ -20,6 +20,17 @@ template-path = "/usr/share/templates/hostname"
 [metadata.settings.hostname]
 affected-services = ["hostname"]
 
+# Container runtime.
+
+[services.containerd]
+configuration-files = ["containerd-config-toml"]
+restart-commands = []
+
+[configuration-files.containerd-config-toml]
+path = "/etc/containerd/config.toml"
+template-path = "/usr/share/templates/containerd-config-toml_aws-dev"
+
+
 # Updog.
 
 [services.updog]
