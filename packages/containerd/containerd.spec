@@ -15,8 +15,9 @@ License: ASL 2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: containerd.service
-Source2: containerd-config-toml
-Source3: containerd-tmpfiles.conf
+Source2: containerd-config-toml_aws-k8s
+Source3: containerd-config-toml_aws-dev
+Source4: containerd-tmpfiles.conf
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
@@ -63,10 +64,10 @@ install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/containerd.service
 
 install -d %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
-install -p -m 0644 %{S:2} %{buildroot}%{_cross_templatedir}/containerd-config-toml
+install -p -m 0644 %{S:2} %{S:3} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:3} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
+install -p -m 0644 %{S:4} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 
 %files
 %{_cross_bindir}/containerd
@@ -76,7 +77,7 @@ install -p -m 0644 %{S:3} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %{_cross_bindir}/ctr
 %{_cross_unitdir}/containerd.service
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/containerd
-%{_cross_templatedir}/containerd-config-toml
+%{_cross_templatedir}/containerd-config-toml*
 %{_cross_tmpfilesdir}/containerd.conf
 
 %changelog

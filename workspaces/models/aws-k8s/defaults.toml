@@ -20,10 +20,20 @@ template-path = "/usr/share/templates/hostname"
 [metadata.settings.hostname]
 affected-services = ["hostname"]
 
+# Container runtime.
+
+[services.containerd]
+configuration-files = ["containerd-config-toml"]
+restart-commands = []
+
+[configuration-files.containerd-config-toml]
+path = "/etc/containerd/config.toml"
+template-path = "/usr/share/templates/containerd-config-toml_aws-k8s"
+
 # Kubernetes.
 
 [services.kubernetes]
-configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt", "containerd-config-toml"]
+configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt"]
 restart-commands = []
 
 [configuration-files.kubelet-env]
@@ -42,16 +52,15 @@ template-path = "/usr/share/templates/kubelet-kubeconfig"
 path = "/etc/kubernetes/pki/ca.crt"
 template-path = "/usr/share/templates/kubernetes-ca-crt"
 
-[configuration-files.containerd-config-toml]
-path = "/etc/containerd/config.toml"
-template-path = "/usr/share/templates/containerd-config-toml"
-
 [metadata.settings.kubernetes]
 max-pods.setting-generator = "pluto max-pods"
 cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
 node-ip.setting-generator = "pluto node-ip"
-pod-infra-container-image.setting-generator = "pluto pod-infra-container-image"
 affected-services = ["kubernetes"]
+
+[metadata.settings.kubernetes.pod-infra-container-image]
+setting-generator = "pluto pod-infra-container-image"
+affected-services = ["kubernetes", "containerd"]
 
 # Updog.
 
