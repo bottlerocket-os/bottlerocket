@@ -1,0 +1,339 @@
+use lazy_static::lazy_static;
+use regex::Regex;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+// Just need serde's Error in scope to get its trait methods
+use serde::de::Error as _;
+use snafu::ensure;
+use std::borrow::Borrow;
+use std::convert::TryFrom;
+use std::fmt;
+use std::ops::Deref;
+use super::error;
+
+/// KubernetesName represents a string that contains a valid Kubernetes resource name.  It stores
+/// the original string and makes it accessible through standard traits.
+// https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesName {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref KUBERNETES_NAME: Regex = Regex::new(r"^[0-9a-z.-]{1,253}$").unwrap();
+}
+
+impl TryFrom<&str> for KubernetesName {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            KUBERNETES_NAME.is_match(input),
+            error::Pattern {
+                thing: "Kubernetes name",
+                pattern: KUBERNETES_NAME.clone(),
+                input
+            }
+        );
+        Ok(KubernetesName {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesName, "KubernetesName");
+
+#[cfg(test)]
+mod test_kubernetes_name {
+    use super::KubernetesName;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_names() {
+        for ok in &["howdy", "42", "18-eighteen."] {
+            KubernetesName::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_names() {
+        for err in &["", "HOWDY", "@", "hi/there", &"a".repeat(254)] {
+            KubernetesName::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesLabelKey represents a string that contains a valid Kubernetes label key.  It stores
+/// the original string and makes it accessible through standard traits.
+// https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesLabelKey {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref KUBERNETES_LABEL_KEY: Regex = Regex::new(
+        r"(?x)^
+       (  # optional prefix
+           [[:alnum:].-]{1,253}/  # DNS label characters followed by slash
+       )?
+       [[:alnum:]]  # at least one alphanumeric
+       (
+           ([[:alnum:]._-]{0,61})?  # more characters allowed in middle
+           [[:alnum:]]  # have to end with alphanumeric
+       )?
+   $"
+    )
+    .unwrap();
+}
+
+impl TryFrom<&str> for KubernetesLabelKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            KUBERNETES_LABEL_KEY.is_match(input),
+            error::BigPattern {
+                thing: "Kubernetes label key",
+                input
+            }
+        );
+        Ok(KubernetesLabelKey {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesLabelKey, "KubernetesLabelKey");
+
+#[cfg(test)]
+mod test_kubernetes_label_key {
+    use super::KubernetesLabelKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_keys() {
+        for ok in &[
+            "no-prefix",
+            "have.a/prefix",
+            "more-chars_here.now",
+            &"a".repeat(63),
+            &format!("{}/{}", "a".repeat(253), "name"),
+        ] {
+            KubernetesLabelKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_keys() {
+        for err in &[
+            ".bad",
+            "bad.",
+            &"a".repeat(64),
+            &format!("{}/{}", "a".repeat(254), "name"),
+        ] {
+            KubernetesLabelKey::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesLabelValue represents a string that contains a valid Kubernetes label value.  It
+/// stores the original string and makes it accessible through standard traits.
+// https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesLabelValue {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref KUBERNETES_LABEL_VALUE: Regex = Regex::new(
+        r"(?x)
+        ^$ |  # may be empty, or:
+        ^
+           [[:alnum:]]  # at least one alphanumeric
+           (
+               ([[:alnum:]._-]{0,61})?  # more characters allowed in middle
+               [[:alnum:]]  # have to end with alphanumeric
+           )?
+        $
+   "
+    )
+    .unwrap();
+}
+
+impl TryFrom<&str> for KubernetesLabelValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            KUBERNETES_LABEL_VALUE.is_match(input),
+            error::BigPattern {
+                thing: "Kubernetes label value",
+                input
+            }
+        );
+        Ok(KubernetesLabelValue {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesLabelValue, "KubernetesLabelValue");
+
+#[cfg(test)]
+mod test_kubernetes_label_value {
+    use super::KubernetesLabelValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_values() {
+        for ok in &["", "more-chars_here.now", &"a".repeat(63)] {
+            KubernetesLabelValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_values() {
+        for err in &[".bad", "bad.", &"a".repeat(64)] {
+            KubernetesLabelValue::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesTaintValue represents a string that contains a valid Kubernetes taint value, which is
+/// like a label value, plus a colon, plus an "effect".  It stores the original string and makes it
+/// accessible through standard traits.
+///
+/// Note: Kubelet won't launch if you specify an effect it doesn't know about, but we don't want to
+/// gatekeep all possible values, so be careful.
+// Note: couldn't find an exact spec for this.  Cobbling things together, and guessing a bit as to
+// the syntax of the effect.
+// https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+// https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesTaintValue {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref KUBERNETES_TAINT_VALUE: Regex = Regex::new(
+        r"(?x)^
+       [[:alnum:]]  # at least one alphanumeric
+       (
+           ([[:alnum:]._-]{0,61})?  # more characters allowed in middle
+           [[:alnum:]]  # have to end with alphanumeric
+       )?
+       :  # separate the label value from the effect
+       [[:alnum:]]{1,253}  # effect
+   $"
+    )
+    .unwrap();
+}
+
+impl TryFrom<&str> for KubernetesTaintValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            KUBERNETES_TAINT_VALUE.is_match(input),
+            error::BigPattern {
+                thing: "Kubernetes taint value",
+                input
+            }
+        );
+        Ok(KubernetesTaintValue {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesTaintValue, "KubernetesTaintValue");
+
+#[cfg(test)]
+mod test_kubernetes_taint_value {
+    use super::KubernetesTaintValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_values() {
+        // All the examples from the docs linked above
+        for ok in &[
+            "value:NoSchedule",
+            "value:PreferNoSchedule",
+            "value:NoExecute",
+        ] {
+            KubernetesTaintValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_values() {
+        for err in &[".bad", "bad.", &"a".repeat(254), "value:", ":effect"] {
+            KubernetesTaintValue::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesClusterName represents a string that contains a valid Kubernetes cluster name.  It
+/// stores the original string and makes it accessible through standard traits.
+// Note: I was unable to find the rules for cluster naming.  We know they have to fit into label
+// values, because of the common cluster-name label, but they also can't be empty.  This combines
+// those two characteristics into a new type, until we find an explicit syntax.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesClusterName {
+    inner: String,
+}
+
+impl TryFrom<&str> for KubernetesClusterName {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            !input.is_empty(),
+            error::InvalidClusterName {
+                name: input,
+                msg: "must not be empty"
+            }
+        );
+        ensure!(
+            KubernetesLabelValue::try_from(input).is_ok(),
+            error::InvalidClusterName {
+                name: input,
+                msg: "cluster names must be valid Kubernetes label values"
+            }
+        );
+
+        Ok(KubernetesClusterName {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesClusterName, "KubernetesClusterName");
+
+#[cfg(test)]
+mod test_kubernetes_cluster_name {
+    use super::KubernetesClusterName;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_cluster_names() {
+        for ok in &["more-chars_here.now", &"a".repeat(63)] {
+            KubernetesClusterName::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_alues() {
+        for err in &["", ".bad", "bad.", &"a".repeat(64)] {
+            KubernetesClusterName::try_from(*err).unwrap_err();
+        }
+    }
+}

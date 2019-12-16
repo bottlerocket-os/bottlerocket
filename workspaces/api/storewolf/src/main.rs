@@ -310,7 +310,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
     }
 
     // Read and parse defaults
-    let defaults_str = include_str!("../../../models/current/src/defaults.toml");
+    let defaults_str = include_str!("../../../models/src/variant/current/defaults.toml");
     let mut defaults_val: toml::Value =
         toml::from_str(defaults_str).context(error::DefaultsFormatting)?;
 
