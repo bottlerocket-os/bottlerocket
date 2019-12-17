@@ -1,5 +1,5 @@
 # OS-level defaults.
-# Should match the structures in src/model.rs.
+# Should match the structures in the model definition.
 
 [settings]
 timezone = "America/Los_Angeles"

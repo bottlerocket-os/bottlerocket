@@ -1,20 +1,32 @@
-# API models
+# models
+
+Current version: 0.1.0
+
+## API models
 
 Thar has different variants supporting different features and use cases.
 Each variant has its own set of software, and therefore needs its own configuration.
 We support having an API model for each variant to support these different configurations.
 
-## aws-k8s: Kubernetes
+Each model defines a top-level `Settings` structure.
+It can use pre-defined structures inside, or custom ones as needed.
 
-* [Model](aws-k8s/lib.rs)
-* [Defaults](aws-k8s/defaults.toml)
+This `Settings` essentially becomes the schema for the variant's data store.
+`apiserver::datastore` offers serialization and deserialization modules that make it easy to map between Rust types and the data store, and thus, all inputs and outputs are type-checked.
 
-## aws-dev: Development build
+At the field level, standard Rust types can be used, or ["modeled types"](src/modeled_types) that add input validation.
 
-* [Model](aws-dev/lib.rs)
-* [Defaults](aws-dev/defaults.toml)
+### aws-k8s: Kubernetes
 
-# This directory
+* [Model](src/aws-k8s/mod.rs)
+* [Defaults](src/aws-k8s/defaults.toml)
+
+### aws-dev: Development build
+
+* [Model](src/aws-dev/mod.rs)
+* [Defaults](src/aws-dev/defaults.toml)
+
+## This directory
 
 We use `build.rs` to symlink the proper API model source code for Cargo to build.
 We determine the "proper" model by using the `VARIANT` environment variable.
@@ -25,7 +37,15 @@ When building with the Thar build system, `VARIANT` is based on `BUILDSYS_VARIAN
 
 Note: when building with the build system, we can't create the symlink in the source directory during a build - the directories are owned by `root`, but we're `builder`.
 We can't use a read/write bind mount with current Docker syntax.
-To get around this, in the top-level `Dockerfile`, we mount a "cache" directory at `current` that we can modify.
-We set Cargo (via `Cargo.toml`) to look for the source at `current/src`, rather than the default `src`.
+To get around this, in the top-level `Dockerfile`, we mount a "cache" directory at `src/variant` that we can modify, and create a `current` symlink inside.
+The code in `src/lib.rs` then imports the requested model using `variant/current`.
+
+Note: for the same reason, we symlink `variant/mod.rs` to `variant_mod.rs`.
+Rust needs a `mod.rs` file to understand that a directory is part of the module structure, so we have to have `variant/mod.rs`.
+`variant/` is the cache mount that starts empty, so we have to store the file elsewhere and link it in.
 
 Note: all models share the same `Cargo.toml`.
+
+## Colophon
+
+This text was generated from `README.tpl` using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/lib.rs`.
