@@ -22,7 +22,7 @@ simplelog = "0.7"
 snafu = "0.6.0"
 time = "0.1"
 toml = "0.5.1"
-tough = { version = "0.1.0", features = ["http"] }
+tough = { version = "0.3.0", features = ["http"] }
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
 migrator = { path = "../../api/migration/migrator" }

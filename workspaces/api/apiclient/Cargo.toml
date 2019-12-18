@@ -7,7 +7,7 @@ publish = false
 build = "build.rs"
 
 [dependencies]
-# TODO: move to futures 0.3 / stdlib futures when it's ready
+# TODO: update futures/hyper/tokio to new async
 futures = "0.1"
 http = "0.1"
 hyper = "0.12"

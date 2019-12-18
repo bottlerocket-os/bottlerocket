@@ -7,7 +7,7 @@ publish = false
 build = "build.rs"
 
 [dependencies]
-base64 = "0.10"
+base64 = "0.11"
 lazy_static = "1.2"
 regex = "1.1"
 serde = { version = "1.0", features = ["derive"] }
