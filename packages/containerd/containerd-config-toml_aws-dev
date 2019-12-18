@@ -5,6 +5,7 @@ disabled_plugins = [
     "io.containerd.snapshotter.v1.aufs",
     "io.containerd.snapshotter.v1.zfs",
     "io.containerd.snapshotter.v1.devmapper",
+    "io.containerd.grpc.v1.cri",
 ]
 
 [grpc]
