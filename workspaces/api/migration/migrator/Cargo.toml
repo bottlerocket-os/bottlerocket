@@ -15,7 +15,7 @@ nix = "0.15"
 rand = { version = "0.7", default-features = false, features = ["std"] }
 regex = "1.1"
 simplelog = "0.7"
-snafu = "0.5"
+snafu = "0.6"
 
 [build-dependencies]
 cargo-readme = "3.1"

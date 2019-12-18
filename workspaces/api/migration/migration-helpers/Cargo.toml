@@ -7,5 +7,5 @@ publish = false
 
 [dependencies]
 apiserver = { path = "../../apiserver" }
-snafu = "0.5"
+snafu = "0.6"
 toml = "0.5"
