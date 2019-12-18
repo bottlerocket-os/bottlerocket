@@ -1,5 +1,5 @@
-%global rpmver 3.4.0
-%global srcver 3_4_0
+%global rpmver 3.5.0
+%global srcver 3_5_0
 
 Name: %{_cross_os}libnl
 Version: %{rpmver}

@@ -1,0 +1,11 @@
+diff -ru libcap-2.28.orig/Makefile libcap-2.28/Makefile
+--- libcap-2.28.orig/Makefile	2019-12-07 11:45:11.000000000 -0800
++++ libcap-2.28/Makefile	2019-12-18 14:14:17.985096354 -0800
+@@ -16,7 +16,6 @@
+ ifeq ($(GOLANG),yes)
+ 	$(MAKE) -C go $@
+ endif
+-	$(MAKE) -C tests $@
+ 	$(MAKE) -C progs $@
+ 	$(MAKE) -C doc $@
+ 	$(MAKE) -C kdebug $@

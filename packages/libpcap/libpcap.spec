@@ -1,5 +1,5 @@
 Name: %{_cross_os}libpcap
-Version: 1.9.0
+Version: 1.9.1
 Release: 1%{?dist}
 Summary: Library for packet capture
 License: BSD with advertising

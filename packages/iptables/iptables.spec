@@ -1,12 +1,11 @@
 Name: %{_cross_os}iptables
-Version: 1.8.2
+Version: 1.8.4
 Release: 1%{?dist}
 Summary: Tools for managing Linux kernel packet filtering capabilities
 License: GPLv2
 URL: http://www.netfilter.org/
 Source0: http://www.netfilter.org/projects/iptables/files/iptables-%{version}.tar.bz2
 Patch1: 0001-iptables-apply-Use-mktemp-instead-of-tempfile.patch
-Patch2: 0002-extensions-format-security-fixes-in-libip-6-t_icmp.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel

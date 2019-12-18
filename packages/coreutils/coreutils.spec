@@ -1,5 +1,5 @@
 Name: %{_cross_os}coreutils
-Version: 8.30
+Version: 8.31
 Release: 1%{?dist}
 Summary: A set of basic GNU tools
 License: GPLv3+
@@ -44,6 +44,7 @@ Requires: %{_cross_os}libxcrypt
 %{_cross_bindir}/base32
 %{_cross_bindir}/base64
 %{_cross_bindir}/basename
+%{_cross_bindir}/basenc
 %{_cross_bindir}/cat
 %{_cross_bindir}/chcon
 %{_cross_bindir}/chgrp

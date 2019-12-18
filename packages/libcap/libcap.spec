@@ -1,5 +1,5 @@
 Name: %{_cross_os}libcap
-Version: 2.26
+Version: 2.28
 Release: 1%{?dist}
 Summary: Library for getting and setting POSIX.1e capabilities
 License: GPLv2
@@ -9,6 +9,9 @@ BuildRequires: libcap-devel
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libattr-devel
 Requires: %{_cross_os}libattr
+
+# Local changes.
+Patch9001: 9001-dont-test-during-install.patch
 
 %description
 %{summary}.

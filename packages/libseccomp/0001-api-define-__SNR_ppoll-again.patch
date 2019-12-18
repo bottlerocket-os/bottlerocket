@@ -1,0 +1,44 @@
+From e3647f5b6b52996bf30d0c2c1d1248e4182e1c1c Mon Sep 17 00:00:00 2001
+From: Miroslav Lichvar <mlichvar@redhat.com>
+Date: Wed, 13 Nov 2019 13:36:10 +0100
+Subject: [PATCH] api: define __SNR_ppoll again
+
+Commit bf747eb21e428c2b3ead6ebcca27951b681963a0 accidentally removed the
+__SNR_ppoll definition. Add it back, using a PNR value if disabled in
+the kernel headers.
+
+Signed-off-by: Miroslav Lichvar <mlichvar@redhat.com>
+Acked-by: Tom Hromatka <tom.hromatka@oracle.com>
+Signed-off-by: Paul Moore <paul@paul-moore.com>
+---
+ include/seccomp-syscalls.h | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/include/seccomp-syscalls.h b/include/seccomp-syscalls.h
+index 6457592..3c958df 100644
+--- a/include/seccomp-syscalls.h
++++ b/include/seccomp-syscalls.h
+@@ -272,6 +272,7 @@
+ #define __PNR_timerfd_gettime64			-10238
+ #define __PNR_timerfd_settime64			-10239
+ #define __PNR_utimensat_time64			-10240
++#define __PNR_ppoll				-10241
+ 
+ /*
+  * libseccomp syscall definitions
+@@ -1359,6 +1360,12 @@
+ #define __SNR_poll			__PNR_poll
+ #endif
+ 
++#ifdef __NR_ppoll
++#define __SNR_ppoll			__NR_ppoll
++#else
++#define __SNR_ppoll			__PNR_ppoll
++#endif
++
+ #ifdef __NR_ppoll_time64
+ #define __SNR_ppoll_time64		__NR_ppoll_time64
+ #else
+-- 
+2.23.0
+

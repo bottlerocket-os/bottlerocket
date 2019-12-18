@@ -1,10 +1,10 @@
 Name: %{_cross_os}util-linux
-Version: 2.33.1
+Version: 2.34
 Release: 1%{?dist}
 Summary: A collection of basic system utilities
 License: GPLv2 and GPLv2+ and LGPLv2+ and BSD with advertising and Public Domain
 URL: http://en.wikipedia.org/wiki/Util-linux
-Source0: https://www.kernel.org/pub/linux/utils/util-linux/v2.33/util-linux-%{version}.tar.xz
+Source0: https://www.kernel.org/pub/linux/utils/util-linux/v2.34/util-linux-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libselinux-devel
@@ -153,6 +153,7 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %exclude %{_cross_bindir}/eject
 %exclude %{_cross_bindir}/fincore
 %exclude %{_cross_bindir}/getopt
+%exclude %{_cross_bindir}/hardlink
 %exclude %{_cross_bindir}/hexdump
 %exclude %{_cross_bindir}/isosize
 %exclude %{_cross_bindir}/last

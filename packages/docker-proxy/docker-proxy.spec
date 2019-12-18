@@ -1,12 +1,12 @@
 %global goproject github.com/docker
 %global gorepo libnetwork
 %global goimport %{goproject}/%{gorepo}
-%global commit 872f0a83c98add6cae255c8859e29532febc0039
+%global commit 48722da498b202dfed2eb4299dfcfbdf8b75392d
 
 %global _dwz_low_mem_die_limit 0
 
 Name: %{_cross_os}docker-proxy
-Version: 18.09.6
+Version: 18.09.9
 Release: 1%{?dist}
 Summary: Docker CLI
 License: ASL 2.0
