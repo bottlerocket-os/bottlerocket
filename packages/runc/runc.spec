@@ -1,11 +1,11 @@
 %global goproject github.com/opencontainers
 %global gorepo runc
 %global goimport %{goproject}/%{gorepo}
-%global commit 3e425f80a8c931f88e6d94a8c831b9d5aa481657
-%global shortcommit 3e425f80
+%global commit d736ef14f0288d6993a1845745d6756cfc9ddd5a
+%global shortcommit d736ef14
 
-%global gover 1.0.0-rc8
-%global rpmver 1.0.0~rc8
+%global gover 1.0.0-rc9
+%global rpmver 1.0.0~rc9
 
 %global _dwz_low_mem_die_limit 0
 

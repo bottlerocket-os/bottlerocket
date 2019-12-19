@@ -3,7 +3,7 @@
 %global tiniver 0.18.0
 
 Name: %{_cross_os}docker-init
-Version: 18.09.6
+Version: 18.09.9
 Release: 1%{?dist}
 Summary: Init for containers
 License: MIT

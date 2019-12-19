@@ -1,5 +1,5 @@
 Name: %{_cross_os}libnftnl
-Version: 1.1.3
+Version: 1.1.5
 Release: 1%{?dist}
 Summary: Library for nftables netlink
 License: GPLv2+

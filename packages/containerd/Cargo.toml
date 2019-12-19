@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/containerd/containerd/archive/v1.3.0/containerd-1.3.0.tar.gz"
-sha512 = "cff9f0189b9fdc2b5492c92129af284aa8cd099e48de94cafd90aed191e2d20060c96008111b05fe081de0d4fc41d35f8cba5a3dc2d8cc0a5c37f695fd3cedc1"
+url = "https://github.com/containerd/containerd/archive/v1.3.2/containerd-1.3.2.tar.gz"
+sha512 = "768a19eb0829e196a61ddedaa11b0d6691caf8f9cc590a3e47ac77c1acad62e64b7a55017a1a6cccfcb87785a083d5ce131048b0e39e48c65e6cd5922382fc3c"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

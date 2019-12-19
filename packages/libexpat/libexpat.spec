@@ -1,4 +1,4 @@
-%global unversion 2_2_6
+%global unversion 2_2_9
 
 Name: %{_cross_os}libexpat
 Version: %(echo %{unversion} | sed 's/_/./g')

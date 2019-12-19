@@ -1,0 +1,40 @@
+From 1ecdddb2a5b61cf527d1f238f88a9d129239f87a Mon Sep 17 00:00:00 2001
+From: Paul Moore <paul@paul-moore.com>
+Date: Tue, 5 Nov 2019 15:11:11 -0500
+Subject: [PATCH] tests: rely on __SNR_xxx instead of __NR_xxx for syscalls
+
+We recently changed how libseccomp handles syscall numbers that are
+not defined natively, but we missed test #15.
+
+Acked-by: Tom Hromatka <tom.hromatka@oracle.com>
+Signed-off-by: Paul Moore <paul@paul-moore.com>
+---
+ tests/15-basic-resolver.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tests/15-basic-resolver.c b/tests/15-basic-resolver.c
+index 6badef1..0c1eefe 100644
+--- a/tests/15-basic-resolver.c
++++ b/tests/15-basic-resolver.c
+@@ -55,15 +55,15 @@ int main(int argc, char *argv[])
+ 	unsigned int arch;
+ 	char *name = NULL;
+ 
+-	if (seccomp_syscall_resolve_name("open") != __NR_open)
++	if (seccomp_syscall_resolve_name("open") != __SNR_open)
+ 		goto fail;
+-	if (seccomp_syscall_resolve_name("read") != __NR_read)
++	if (seccomp_syscall_resolve_name("read") != __SNR_read)
+ 		goto fail;
+ 	if (seccomp_syscall_resolve_name("INVALID") != __NR_SCMP_ERROR)
+ 		goto fail;
+ 
+ 	rc = seccomp_syscall_resolve_name_rewrite(SCMP_ARCH_NATIVE, "openat");
+-	if (rc != __NR_openat)
++	if (rc != __SNR_openat)
+ 		goto fail;
+ 
+ 	while ((arch = arch_list[iter++]) != -1) {
+-- 
+2.23.0
+

@@ -1,5 +1,5 @@
 Name: %{_cross_os}libnetfilter_queue
-Version: 1.0.2
+Version: 1.0.3
 Release: 1%{?dist}
 Summary: Library for netfilter queue
 License: GPLv2
@@ -32,7 +32,6 @@ Requires: %{name}
 
 %install
 %make_install
-rm %{buildroot}%{_cross_includedir}/internal.h
 
 %files
 %{_cross_libdir}/*.so.*

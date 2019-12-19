@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://www.kernel.org/pub/linux/utils/util-linux/v2.33/util-linux-2.33.1.tar.xz"
-sha512 = "94ada47e472b62a612c26fd5a5b7423e09366690a8a96f777191a5d920981eb0f224474bc2f128e827299bf60062770011332757e1551a8cd3764b5c70ae4ba2"
+url = "https://www.kernel.org/pub/linux/utils/util-linux/v2.34/util-linux-2.34.tar.xz"
+sha512 = "2d0b76f63d32e7afb7acf61a83fabbfd58baa34ab78b3a331ce87f9c676a5fd71c56a493ded95039540d2c46b6048caaa38d7fb4491eb3d52d7b09dc54655cd7"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

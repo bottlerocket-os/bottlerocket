@@ -7,7 +7,7 @@
 %global dorepo docker
 %global doimport %{goproject}/%{dorepo}
 
-%global gover 18.09.6
+%global gover 18.09.9
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0

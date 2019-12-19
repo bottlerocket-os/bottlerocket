@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/systemd/systemd/archive/v243/systemd-243.tar.gz"
-sha512 = "56b52a297aa5ac04d9667eb3afb1598725b197de73ff72baa1aabbc2844e36fba7b7fccdf6d214ae8b5b926616b2b7e15772763aaa80ec938d74333ff9c8673e"
+url = "https://github.com/systemd/systemd/archive/v244/systemd-244.tar.gz"
+sha512 = "08f260fb15b5eb273faafda826dd9154e9a02841b4c5911cc1c7e1445072ad51389f8cced7b9acf112737c20fd56b2fbf48b3f914733c934c774d38a23b616fb"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

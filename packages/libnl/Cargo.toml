@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/thom311/libnl/archive/libnl3_4_0.tar.gz"
-sha512 = "f7fa6987130b58e4a9cbe5401333a94eec4069324b760bb3a58b0dca74a767e5289e43bcf1ee78ea43a3c9d44a27d3c0e1db5d97c8c208ee2be3ecd9080b269c"
+url = "https://github.com/thom311/libnl/archive/libnl3_5_0.tar.gz"
+sha512 = "2b762419a21b4560f7d488791a9d7aec0d1c6eac0cd2839ceec0bef5562f130ce44b826691276e1301b9e239f684063037959207474cefec4b46efc32039615d"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

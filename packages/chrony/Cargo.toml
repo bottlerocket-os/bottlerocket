@@ -15,5 +15,6 @@ sha512 = "c4f6376a44d71b6ac2b6d86e3d6fb4348642faeef7f3f3a4d6431627b5645efcc868b0
 [build-dependencies]
 glibc = { path = "../glibc" }
 libcap = { path = "../libcap" }
+libseccomp = { path = "../libseccomp" }
 ncurses = { path = "../ncurses" }
 readline = { path = "../readline" }

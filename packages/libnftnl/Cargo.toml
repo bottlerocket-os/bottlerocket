@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "http://netfilter.org/projects/libnftnl/files/libnftnl-1.1.3.tar.bz2"
-sha512 = "3fb96ea1a8bc9eb00fa2cf79f64cc9613250e8b97de6e90e440c7c44e92789e7c7fd603b7347bb02d9d74af725cf8fde5d2e435c5ffdcb784316c67b83ddf0fe"
+url = "http://netfilter.org/projects/libnftnl/files/libnftnl-1.1.5.tar.bz2"
+sha512 = "a0495e1a99ea9efcf3994db48e50943023ff3d8101055887574ff4eb6b0df8600cf7db68a9c91ca02bbbcc1f01099b008649f88321bb956897bcc90eb4167ee7"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
