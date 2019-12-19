@@ -86,14 +86,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cri-tools"
-version = "0.1.0"
-dependencies = [
- "glibc 0.1.0",
- "libseccomp 0.1.0",
-]
-
-[[package]]
 name = "dbus-broker"
 version = "0.1.0"
 dependencies = [

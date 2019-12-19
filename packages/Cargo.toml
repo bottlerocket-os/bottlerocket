@@ -10,7 +10,6 @@ members = [
     "conntrack-tools",
     "containerd",
     "coreutils",
-    "cri-tools",
     "dbus-broker",
     "docker-cli",
     "docker-engine",
