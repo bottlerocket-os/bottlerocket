@@ -13,7 +13,7 @@ log = "0.4"
 models = { path = "../../models" }
 rand = { version = "0.7", default-features = false, features = ["std"] }
 simplelog = "0.7"
-snafu = "0.5"
+snafu = "0.6"
 toml = "0.5"
 
 [build-dependencies]

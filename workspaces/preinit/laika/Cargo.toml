@@ -9,7 +9,7 @@ build = "build.rs"
 [dependencies]
 sys-mount = "1.2.1"
 filetime = "0.2.7"
-snafu = "0.5.0"
+snafu = "0.6.0"
 
 [build-dependencies]
 cargo-readme = "3.1"

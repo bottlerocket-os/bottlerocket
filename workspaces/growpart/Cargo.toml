@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 gptman = { version = "0.5.0", default-features = false }
-snafu = "0.5"
+snafu = "0.6"
 libc = "0.2"
 block-party = { path = "../updater/block-party" }
 
