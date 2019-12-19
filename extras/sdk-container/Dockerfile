@@ -239,7 +239,7 @@ RUN \
 
 ARG ARCH
 ARG TARGET="${ARCH}-thar-linux-gnu"
-ARG RUSTVER="1.39.0"
+ARG RUSTVER="1.40.0"
 
 USER builder
 WORKDIR /home/builder
