@@ -1,8 +1,8 @@
 FROM amazonlinux:2
-ARG CTR_IMG_VER
+ARG IMAGE_VERSION
 # Make the container image version a mandatory build argument
-RUN test -n "$CTR_IMG_VER"
-ENV CTR_IMG_VER $CTR_IMG_VER
+RUN test -n "$IMAGE_VERSION"
+LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
 RUN yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm shadow-utils
 

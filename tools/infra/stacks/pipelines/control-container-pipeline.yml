@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Thar control container pipeline
 Parameters:
+  CodeBuildResourceStack:
+    Type: String
+    Description: 'Enter the name of the CloudFormation stack that sets up the pipeline CodeBuild projects.'
   BranchName:
     Description: GitHub branch name
     Type: String
@@ -22,188 +25,8 @@ Parameters:
     MinLength: 40
     MaxLength: 40
     AllowedPattern: '[a-z0-9]*'
-  HostContainersBuildSpecPath:
-    Type: String
-    AllowedPattern: '.+\.yml$'
-    Default: "./tools/infra/buildspec/host-containers-pipeline-build.yml"
-    Description: "The path to the host containers buildspec."
-  HostContainersTestBuildSpecPath:
-    Type: String
-    AllowedPattern: '.+\.yml$'
-    Default: "./tools/infra/buildspec/host-containers-pipeline-test.yml"
-    Description: "The path to the host containers testing buildspec."
-  HostContainersBetaDeployBuildSpecPath:
-    Type: String
-    AllowedPattern: '.+\.yml$'
-    Default: "./tools/infra/buildspec/host-containers-pipeline-beta-deploy.yml"
-    Description: "The path to the host containers beta deploy buildspec."
-  BetaEcrAccountId:
-    Type: String
-    Description: "Thar's Beta ECR account ID"
 
 Resources:
-  PipelineArtifactBucket:
-    Type: AWS::S3::Bucket
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-  BuildLogBucket:
-    Type: AWS::S3::Bucket
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-  BuildLogGroup:
-    Type: AWS::Logs::LogGroup
-  BuildRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Action: sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service: codebuild.amazonaws.com
-      Path: /
-      Policies:
-        - PolicyName: HostContainerBuildRolePolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              # For managing cache, logs, and artifacts in the build's buckets.
-              - Action:
-                  - 's3:GetObject'
-                  - 's3:GetObjectVersion'
-                  - 's3:GetBucketVersioning'
-                  - 's3:GetBucketAcl'
-                  - 's3:GetBucketLocation'
-                  - 's3:PutObject'
-                  - 's3:PutObjectAcl'
-                  - 's3:DeleteObject'
-                  - 's3:DeleteObjectVersion'
-                Effect: Allow
-                Resource:
-                  - !GetAtt PipelineArtifactBucket.Arn
-                  - Fn::Join:
-                      - ""
-                      - - !GetAtt PipelineArtifactBucket.Arn
-                        - /*
-              # For writing to CloudWatch Logs Streams for each build.
-              - Action:
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Effect: Allow
-                Resource:
-                  - !GetAtt BuildLogGroup.Arn
-              # For being able to push to other ECR repositories
-              - Effect: Allow
-                Action:
-                  - 'ecr:GetAuthorizationToken'
-                  - 'ecr:InitiateLayerUpload'
-                  - 'ecr:UploadLayerPart'
-                  - 'ecr:CompleteLayerUpload'
-                  - 'ecr:BatchCheckLayerAvailability'
-                  - 'ecr:PutImage'
-                Resource: '*'
-
-  TharControlCtrBuild:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Artifacts:
-        Type: CODEPIPELINE
-      Cache:
-        Type: LOCAL
-        Modes:
-          - LOCAL_DOCKER_LAYER_CACHE
-      Environment:
-        ComputeType: BUILD_GENERAL1_LARGE
-        Image: aws/codebuild/standard:2.0
-        PrivilegedMode: true
-        Type: LINUX_CONTAINER
-        EnvironmentVariables:
-          - Name: 'CONTAINER_IMAGE'
-            Type: 'PLAINTEXT'
-            Value: 'thar-control'
-      ServiceRole: !GetAtt BuildRole.Arn
-      Source:
-        BuildSpec: !Ref HostContainersBuildSpecPath
-        Type: CODEPIPELINE
-      LogsConfig:
-        S3Logs:
-          Status: ENABLED
-          Location:
-            Fn::Join:
-              - "/"
-              - - !GetAtt BuildLogBucket.Arn
-                - "codebuild/log"
-        CloudWatchLogs:
-          Status: ENABLED
-          GroupName: !Ref BuildLogGroup
-      TimeoutInMinutes: 180
-
-  TharControlCtrTest:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        ComputeType: BUILD_GENERAL1_LARGE
-        Image: aws/codebuild/standard:2.0
-        PrivilegedMode: true
-        Type: LINUX_CONTAINER
-        EnvironmentVariables:
-          - Name: 'CONTAINER_IMAGE'
-            Type: 'PLAINTEXT'
-            Value: 'thar-control'
-      ServiceRole: !GetAtt BuildRole.Arn
-      Source:
-        BuildSpec: !Ref HostContainersTestBuildSpecPath
-        Type: CODEPIPELINE
-      LogsConfig:
-        S3Logs:
-          Status: ENABLED
-          Location:
-            Fn::Join:
-              - "/"
-              - - !GetAtt BuildLogBucket.Arn
-                - "codebuild/log"
-        CloudWatchLogs:
-          Status: ENABLED
-          GroupName: !Ref BuildLogGroup
-      TimeoutInMinutes: 180
-
-  TharControlCtrBetaDeploy:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        ComputeType: BUILD_GENERAL1_LARGE
-        Image: aws/codebuild/standard:2.0
-        PrivilegedMode: true
-        Type: LINUX_CONTAINER
-        EnvironmentVariables:
-          - Name: 'ECR_ACCT_ID'
-            Type: 'PLAINTEXT'
-            Value: !Sub '${BetaEcrAccountId}'
-          - Name: 'CONTAINER_IMAGE'
-            Type: 'PLAINTEXT'
-            Value: 'thar-control'
-      ServiceRole: !GetAtt BuildRole.Arn
-      Source:
-        BuildSpec: !Ref HostContainersBetaDeployBuildSpecPath
-        Type: CODEPIPELINE
-      LogsConfig:
-        S3Logs:
-          Status: ENABLED
-          Location:
-            Fn::Join:
-              - "/"
-              - - !GetAtt BuildLogBucket.Arn
-                - "codebuild/log"
-        CloudWatchLogs:
-          Status: ENABLED
-          GroupName: !Ref BuildLogGroup
-      TimeoutInMinutes: 60
-
   CodePipelineServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -215,7 +38,7 @@ Resources:
               Service:
                 - codepipeline.amazonaws.com
             Action: 'sts:AssumeRole'
-      Path: /
+      Path: !Sub "/${AWS::StackName}/"
       Policies:
         - PolicyName: HostContainerPipelineRolePolicy
           PolicyDocument:
@@ -223,37 +46,21 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 'codecommit:CancelUploadArchive'
-                  - 'codecommit:GetBranch'
-                  - 'codecommit:GetCommit'
-                  - 'codecommit:GetUploadArchiveStatus'
-                  - 'codecommit:UploadArchive'
-                Resource: '*'
-              - Effect: Allow
-                Action:
                   - 'codebuild:BatchGetBuilds'
                   - 'codebuild:StartBuild'
                 Resource: '*'
               - Effect: Allow
                 Action:
-                  - 'lambda:InvokeFunction'
-                  - 'lambda:ListFunctions'
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - 'iam:PassRole'
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - 'ec2:*'
-                  - 'elasticloadbalancing:*'
-                  - 'autoscaling:*'
-                  - 'cloudwatch:*'
-                  - 's3:*'
-                  - 'sns:*'
-                  - 'cloudformation:*'
-                  - 'ecs:*'
-                Resource: '*'
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketAcl
+                  - s3:GetBucketLocation
+                Resource:
+                  Fn::Join:
+                    - '/'
+                    - - Fn::ImportValue: !Sub "${CodeBuildResourceStack}-ArtifactBucketArn"
+                      - '*'
 
   TharControlCtrPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
@@ -293,8 +100,9 @@ Resources:
               OutputArtifacts:
                 - Name: BuildArtifact
               Configuration:
-                ProjectName: !Ref TharControlCtrBuild
-                PrimarySource: SourceOutput
+                ProjectName:
+                  Fn::ImportValue:
+                    !Sub "${CodeBuildResourceStack}-Build"
               RunOrder: 1
         - Name: Test
           Actions:
@@ -308,7 +116,9 @@ Resources:
                 Version: '1'
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref TharControlCtrTest
+                ProjectName:
+                  Fn::ImportValue:
+                    !Sub "${CodeBuildResourceStack}-Test"
                 PrimarySource: SourceOutput
               RunOrder: 1
         - Name: BetaDeploy
@@ -323,12 +133,16 @@ Resources:
                 Version: '1'
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref TharControlCtrBetaDeploy
+                ProjectName:
+                  Fn::ImportValue:
+                    !Sub "${CodeBuildResourceStack}-BetaDeploy"
                 PrimarySource: SourceOutput
               RunOrder: 1
       ArtifactStore:
         Type: S3
-        Location: !Ref PipelineArtifactBucket
+        Location:
+          Fn::ImportValue:
+            !Sub "${CodeBuildResourceStack}-ArtifactBucket"
 
   TharControlWebhook:
     Type: 'AWS::CodePipeline::Webhook'

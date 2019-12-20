@@ -1,12 +1,13 @@
 # This is the NEXT version tag for the Dogswatch container image.
-DOGSWATCH_VERSION=v0.1.2
+DOGSWATCH_VERSION=`cat VERSION`
 
 GOPKG = github.com/amazonlinux/thar/dogswatch
 GOPKGS = $(GOPKG) $(GOPKG)/pkg/... $(GOPKG)/cmd/...
 GOBIN = ./bin/
 DOCKER_IMAGE := dogswatch
 DOCKER_IMAGE_REF_RELEASE := $(DOCKER_IMAGE):$(DOGSWATCH_VERSION)
-DOCKER_IMAGE_REF := $(DOCKER_IMAGE):$(shell git rev-parse --short=8 HEAD)
+SHORT_SHA ?= $(shell git rev-parse --short=8 HEAD)
+DOCKER_IMAGE_REF := $(DOCKER_IMAGE):$(SHORT_SHA)
 DEBUG_LDFLAGS := -X $(GOPKG)/pkg/logging.DebugEnable=true
 
 build: $(GOBIN)
@@ -22,9 +23,12 @@ test:
 
 container:
 	docker build --network=host \
-		--tag $(DOCKER_IMAGE_REF)\
+		--tag $(DOCKER_IMAGE_REF) \
 		--build-arg BUILD_LDFLAGS='' \
 		.
+
+container-simple-test:
+	docker run --rm $(DOCKER_IMAGE_REF) -help 2>&1 | grep -C 10 'dogswatch'
 
 debug-container:
 	docker build --network=host \
@@ -32,13 +36,8 @@ debug-container:
 		--build-arg BUILD_LDFLAGS='$(DEBUG_LDFLAGS)' \
 		.
 
-
-release-container:
-	docker build --network=host \
-		--tag $(DOCKER_IMAGE_REF_RELEASE) \
-		--tag $(DOCKER_IMAGE):latest \
-		--build-arg BUILD_LDFLAGS='' \
-		.
+release-container: container
+	docker tag $(DOCKER_IMAGE_REF) $(DOCKER_IMAGE_REF_RELEASE)
 
 load: container
 	kind load docker-image $(DOCKER_IMAGE)
