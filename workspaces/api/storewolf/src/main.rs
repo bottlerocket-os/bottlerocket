@@ -21,6 +21,7 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::str::FromStr;
 use std::{env, fs, process};
+use toml::{map::Entry, Value};
 
 use apiserver::datastore::key::{Key, KeyType};
 use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
@@ -57,8 +58,11 @@ mod error {
             source: DataStoreVersionError,
         },
 
-        #[snafu(display("defaults.toml is not valid TOML: {}", source))]
-        DefaultsFormatting { source: toml::de::Error },
+        #[snafu(display("{} is not valid TOML: {}", file, source))]
+        DefaultsFormatting {
+            file: String,
+            source: toml::de::Error,
+        },
 
         #[snafu(display("defaults.toml is not a TOML table"))]
         DefaultsNotTable {},
@@ -71,6 +75,9 @@ mod error {
 
         #[snafu(display("defaults.toml's metadata has unexpected types"))]
         DefaultsMetadataUnexpectedFormat {},
+
+        #[snafu(display("defaults.toml data types do not match types defined in current variant's override-defaults.toml"))]
+        DefaultsVariantDoesNotMatch {},
 
         #[snafu(display("Error querying datstore for populated keys: {}", source))]
         QueryData { source: datastore::Error },
@@ -274,6 +281,56 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
     Ok(def_metadatas)
 }
 
+/// This modifies the first given toml Value by inserting any values from the second Value.
+///
+/// This is done recursively.  Any time a scalar or array is seen, the left side is set to the
+/// right side.  Any time a table is seen, we iterate through the keys of the tables; if the left
+/// side does not have the key from the right side, it's inserted, otherwise we recursively merge
+/// the values in each table for that key.
+///
+/// If at any point in the recursion the data types of the two values does not match, we error.
+fn merge_values<'a>(merge_into: &'a mut Value, merge_from: &'a Value) -> Result<()> {
+    // If the types of left and right don't match, we have inconsistent models, and shouldn't try
+    // to merge them.
+    ensure!(
+        merge_into.same_type(&merge_from),
+        error::DefaultsVariantDoesNotMatch
+    );
+
+    match merge_from {
+        // If we see a scalar, we replace the left with the right.  We treat arrays like scalars so
+        // behavior is clear - no question about whether we're appending right onto left, etc.
+        Value::String(_)
+        | Value::Integer(_)
+        | Value::Float(_)
+        | Value::Boolean(_)
+        | Value::Datetime(_)
+        | Value::Array(_) => *merge_into = merge_from.clone(),
+
+        // If we see a table, we recursively merge each key.
+        Value::Table(t2) => {
+            // We know the other side is a table because of the `ensure` above.
+            let t1 = merge_into.as_table_mut().unwrap();
+            for (k2, v2) in t2.iter() {
+                // Check if the left has the same key as the right.
+                match t1.entry(k2) {
+                    // If not, we can just insert the value.
+                    Entry::Vacant(e) => {
+                        e.insert(v2.clone());
+                    }
+                    // If so, we need to recursively merge; we don't want to replace an entire
+                    // table, for example, because the left may have some distinct inner keys.
+                    Entry::Occupied(ref mut e) => {
+                        merge_values(e.get_mut(), v2)?;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// Creates a new FilesystemDataStore at the given path, with data and metadata coming from
 /// defaults.toml at compile time.
 fn populate_default_datastore<P: AsRef<Path>>(
@@ -309,13 +366,24 @@ fn populate_default_datastore<P: AsRef<Path>>(
         create_new_datastore(&base_path, version)?;
     }
 
-    // Read and parse defaults
-    let defaults_str = include_str!("../../../models/src/variant/current/defaults.toml");
+    // Read and parse shared defaults
+    let defaults_str = include_str!("../../../models/defaults.toml");
     let mut defaults_val: toml::Value =
-        toml::from_str(defaults_str).context(error::DefaultsFormatting)?;
+        toml::from_str(defaults_str).context(error::DefaultsFormatting {
+            file: "defaults.toml",
+        })?;
+
+    // Merge in any defaults for the current variant
+    let variant_defaults_str =
+        include_str!("../../../models/src/variant/current/override-defaults.toml");
+    let variant_defaults_val: toml::Value =
+        toml::from_str(variant_defaults_str).context(error::DefaultsFormatting {
+            file: "override_defaults.toml",
+        })?;
+    merge_values(&mut defaults_val, &variant_defaults_val)?;
 
     // Check if we have metadata and settings. If so, pull them out
-    // of `defaults_val`
+    // of `shared_defaults_val`
     let table = defaults_val
         .as_table_mut()
         .context(error::DefaultsNotTable)?;
@@ -558,5 +626,48 @@ fn main() {
     if let Err(e) = run() {
         eprintln!("{}", e);
         process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::merge_values;
+    use toml::toml;
+
+    #[test]
+    fn merge() {
+        let mut left = toml! {
+            top1 = "left top1"
+            top2 = "left top2"
+            [settings.inner]
+            inner_setting1 = "left inner_setting1"
+            inner_setting2 = "left inner_setting2"
+        };
+        let right = toml! {
+            top1 = "right top1"
+            [settings]
+            setting = "right setting"
+            [settings.inner]
+            inner_setting1 = "right inner_setting1"
+            inner_setting3 = "right inner_setting3"
+        };
+        // Can't comment inside this toml, unfortunately.
+        // "top1" is being overwritten from right.
+        // "top2" is only in the left and remains.
+        // "setting" is only in the right side.
+        // "inner" tests that recursion works; inner_setting1 is replaced, 2 is untouched, and
+        // 3 is new.
+        let expected = toml! {
+            top1 = "right top1"
+            top2 = "left top2"
+            [settings]
+            setting = "right setting"
+            [settings.inner]
+            inner_setting1 = "right inner_setting1"
+            inner_setting2 = "left inner_setting2"
+            inner_setting3 = "right inner_setting3"
+        };
+        merge_values(&mut left, &right).unwrap();
+        assert_eq!(left, expected);
     }
 }
