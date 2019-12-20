@@ -1,5 +1,9 @@
-# OS-level defaults.
-# Should match the structures in the model definition.
+# Here we define default values for the settings in the API model.
+# Variant builds can override or supplement these in
+# src/VARIANT/override-defaults.toml.
+
+# The structures, fields, and types here need to match those of the API model,
+# as defined in src/VARIANT/mod.rs.
 
 [settings]
 timezone = "America/Los_Angeles"
@@ -28,7 +32,7 @@ restart-commands = []
 
 [configuration-files.containerd-config-toml]
 path = "/etc/containerd/config.toml"
-template-path = "/usr/share/templates/containerd-config-toml_aws-dev"
+template-path = "/usr/share/templates/containerd-config-toml"
 
 
 # Updog.

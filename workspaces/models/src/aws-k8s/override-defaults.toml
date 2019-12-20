@@ -1,0 +1,35 @@
+[configuration-files.containerd-config-toml]
+# No override to path
+template-path = "/usr/share/templates/containerd-config-toml_aws-k8s"
+
+# Kubernetes.
+
+[services.kubernetes]
+configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt"]
+restart-commands = []
+
+[configuration-files.kubelet-env]
+path = "/etc/kubernetes/kubelet/env"
+template-path = "/usr/share/templates/kubelet-env"
+
+[configuration-files.kubelet-config]
+path = "/etc/kubernetes/kubelet/config"
+template-path = "/usr/share/templates/kubelet-config"
+
+[configuration-files.kubelet-kubeconfig]
+path = "/etc/kubernetes/kubelet/kubeconfig"
+template-path = "/usr/share/templates/kubelet-kubeconfig"
+
+[configuration-files.kubernetes-ca-crt]
+path = "/etc/kubernetes/pki/ca.crt"
+template-path = "/usr/share/templates/kubernetes-ca-crt"
+
+[metadata.settings.kubernetes]
+max-pods.setting-generator = "pluto max-pods"
+cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
+node-ip.setting-generator = "pluto node-ip"
+affected-services = ["kubernetes"]
+
+[metadata.settings.kubernetes.pod-infra-container-image]
+setting-generator = "pluto pod-infra-container-image"
+affected-services = ["kubernetes", "containerd"]
