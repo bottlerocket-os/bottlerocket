@@ -19,7 +19,7 @@ DOCKER_BUILDKIT = "1"
 
 [env.development]
 # Defined here to allow us to override ${BUILDSYS_ARCH} on the command line.
-BUILDSYS_SDK_IMAGE = "thar/sdk-${BUILDSYS_ARCH}:v0.3"
+BUILDSYS_SDK_IMAGE = "thar/sdk-${BUILDSYS_ARCH}:v0.4"
 # Permit pulling directly Upstream URLs when lookaside cache results in MISSes.
 BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
 # Extra flags used when spawning containers.

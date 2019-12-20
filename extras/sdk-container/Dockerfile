@@ -261,6 +261,9 @@ RUN \
   cp config-${ARCH}.toml config.toml && \
   ./x.py install
 
+# Set appropriate environment for using this Rust compiler to build tools
+ENV PATH="/usr/libexec/rust/bin:$PATH" LD_LIBRARY_PATH="/usr/libexec/rust/lib"
+
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 FROM sdk-libc as sdk-go
@@ -319,6 +322,31 @@ RUN \
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+FROM sdk-rust as sdk-license-scan
+
+USER root
+RUN \
+  mkdir -p /usr/libexec/tools /home/builder/license-scan && \
+  chown -R builder:builder /usr/libexec/tools /home/builder/license-scan
+
+ARG SPDXVER="3.7"
+
+USER builder
+WORKDIR /home/builder/license-scan
+COPY ./hashes/license-scan ./hashes
+RUN \
+  curl -OJL https://github.com/spdx/license-list-data/archive/v${SPDXVER}.tar.gz && \
+  grep license-list-data-${SPDXVER}.tar.gz hashes | sha512sum --check - && \
+  tar xf license-list-data-${SPDXVER}.tar.gz license-list-data-${SPDXVER}/json/details && \
+  rm license-list-data-${SPDXVER}.tar.gz && \
+  mv license-list-data-${SPDXVER} license-list-data
+COPY license-scan /home/builder/license-scan
+RUN cargo build --release --locked
+RUN install -p -m 0755 target/release/thar-license-scan /usr/libexec/tools/
+RUN cp -r license-list-data/json/details /usr/libexec/tools/spdx-data
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 # Collect all builds in a single layer.
 FROM scratch as sdk-final
 USER root
@@ -348,6 +376,9 @@ COPY --chown=0:0 --from=sdk-go /home/builder/go/lib /usr/libexec/go/lib/
 COPY --chown=0:0 --from=sdk-go /home/builder/go/pkg /usr/libexec/go/pkg/
 COPY --chown=0:0 --from=sdk-go /home/builder/go/src /usr/libexec/go/src/
 
+# "sdk-license-scan" has our attribution generation tool.
+COPY --chown=0:0 --from=sdk-license-scan /usr/libexec/tools/ /usr/libexec/tools/
+
 # Add Rust programs and libraries to the path.
 RUN \
   for b in /usr/libexec/rust/bin/* ; do \
@@ -376,6 +407,13 @@ RUN \
   ln -s ../../${GNU_TARGET}/bin/objcopy /usr/local/bin/objcopy && \
   ln -s ../../${GNU_TARGET}/bin/objdump /usr/local/bin/objdump && \
   ln -s ../../${GNU_TARGET}/bin/strip /usr/local/bin/strip
+
+# Strip and add tools to the path.
+RUN \
+  for b in /usr/libexec/tools/* ; do \
+    strip -g $b ; \
+    ln -s ../libexec/tools/${b##*/} /usr/bin/${b##*/} ; \
+  done
 
 # Reset permissions for `builder`.
 RUN chown builder:builder -R /home/builder

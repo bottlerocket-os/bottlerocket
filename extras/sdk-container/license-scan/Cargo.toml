@@ -1,0 +1,18 @@
+[package]
+name = "thar-license-scan"
+version = "0.1.0"
+authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+anyhow = "1"
+askalono = "0.4"
+ignore = "0.4"
+lazy_static = "1"
+serde = { version = "1", features = ["derive"] }
+spdx = "0.3"
+structopt = { version = "0.3", default-features = false }
+toml = "0.5"
+twox-hash = "1"
+walkdir = "2"
