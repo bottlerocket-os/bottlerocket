@@ -15,6 +15,8 @@ RUN \
   dnf clean all && \
   useradd builder
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM base as toolchain
 USER builder
 
@@ -27,7 +29,7 @@ ARG BRVER="2019.08.2"
 ARG KVER="4.19.81"
 
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/buildroot ./hashes
 RUN \
   curl -OJL https://github.com/buildroot/buildroot/archive/${BRVER}.tar.gz && \
   grep buildroot-${BRVER}.tar.gz hashes | sha512sum --check - && \
@@ -42,6 +44,8 @@ RUN \
   git init . && \
   git apply --whitespace=nowarn *.patch
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM toolchain as toolchain-gnu
 ARG ARCH
 RUN \
@@ -49,12 +53,16 @@ RUN \
   make O=output/${ARCH}-gnu toolchain && \
   find output/${ARCH}-gnu/build/linux-headers-${KVER}/usr/include -name '.*' -delete
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM toolchain as toolchain-musl
 ARG ARCH
 RUN \
   make O=output/${ARCH}-musl defconfig BR2_DEFCONFIG=configs/sdk_${ARCH}_musl_defconfig && \
   make O=output/${ARCH}-musl toolchain && \
   find output/${ARCH}-musl/build/linux-headers-${KVER}/usr/include -name '.*' -delete
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 # Add our cross-compilers to the base SDK layer.
 FROM base as sdk
@@ -77,6 +85,8 @@ COPY --from=toolchain-musl \
   /home/builder/buildroot/output/${ARCH}-musl/build/linux-headers-${KVER}/usr/include/ \
   /${ARCH}-thar-linux-musl/sys-root/usr/include/
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 # Build C libraries so we can build our rust and golang toolchains.
 FROM sdk as sdk-gnu
 USER builder
@@ -84,7 +94,7 @@ USER builder
 ARG GLIBCVER="2.30"
 
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/glibc ./hashes
 RUN \
   curl -OJL https://ftp.gnu.org/gnu/glibc/glibc-${GLIBCVER}.tar.xz && \
   grep glibc-${GLIBCVER}.tar.xz hashes | sha512sum --check - && \
@@ -130,13 +140,15 @@ USER root
 WORKDIR /home/builder/glibc/build
 RUN make install
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM sdk as sdk-musl
 USER builder
 
 ARG MUSLVER="1.1.24"
 
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/musl ./hashes
 RUN \
   curl -OJL https://www.musl-libc.org/releases/musl-${MUSLVER}.tar.gz && \
   grep musl-${MUSLVER}.tar.gz hashes | sha512sum --check - && \
@@ -169,7 +181,6 @@ ARG LLVMVER="9.0.0"
 
 USER builder
 WORKDIR /home/builder
-COPY ./hashes ./
 
 # Rust's musl targets depend on libunwind.
 RUN \
@@ -205,6 +216,8 @@ USER root
 WORKDIR /home/builder/libunwind/build
 RUN make install-unwind DESTDIR="${SYSROOT}"
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM sdk as sdk-libc
 
 ARG GNU_TARGET="${ARCH}-thar-linux-gnu"
@@ -215,6 +228,8 @@ ARG MUSL_SYSROOT="/${MUSL_TARGET}/sys-root"
 COPY --from=sdk-gnu ${GNU_SYSROOT}/ ${GNU_SYSROOT}/
 COPY --from=sdk-musl ${MUSL_SYSROOT}/ ${MUSL_SYSROOT}/
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM sdk-libc as sdk-rust
 
 USER root
@@ -224,11 +239,11 @@ RUN \
 
 ARG ARCH
 ARG TARGET="${ARCH}-thar-linux-gnu"
-ARG RUSTVER="1.39.0"
+ARG RUSTVER="1.40.0"
 
 USER builder
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/rust ./hashes
 RUN \
   curl -OJL https://static.rust-lang.org/dist/rustc-${RUSTVER}-src.tar.xz && \
   grep rustc-${RUSTVER}-src.tar.xz hashes | sha512sum --check - && \
@@ -242,6 +257,8 @@ RUN \
   cp config-${ARCH}.toml config.toml && \
   ./x.py install
 
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 FROM sdk-libc as sdk-go
 
 ARG ARCH
@@ -253,7 +270,7 @@ RUN dnf -y install golang
 
 USER builder
 WORKDIR /home/builder
-COPY ./hashes ./
+COPY ./hashes/go ./hashes
 RUN \
   curl -OJL https://dl.google.com/go/go${GOVER}.src.tar.gz && \
   grep go${GOVER}.src.tar.gz hashes | sha512sum --check - && \
@@ -295,6 +312,8 @@ RUN \
   export PATH="${PWD}/bin:${PATH}" ; \
   go install std && \
   go install -buildmode=pie std
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 # Collect all builds in a single layer.
 FROM scratch as sdk-final

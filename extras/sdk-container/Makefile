@@ -1,11 +1,11 @@
 ARCH ?= $(shell uname -m)
 
-VERSION := 0.0.1
+VERSION := 0.0.2
 TAG := thar/sdk-$(ARCH):$(VERSION)
 ARCHIVE := thar-sdk-$(ARCH)-$(VERSION).tar.gz
 
 $(ARCHIVE) :
-	@docker build . -t $(TAG) --squash --build-arg ARCH=$(ARCH)
+	@DOCKER_BUILDKIT=1 docker build . -t $(TAG) --squash --build-arg ARCH=$(ARCH)
 	@docker image save $(TAG) | gzip --fast > $(@)
 
 .PHONY: upload clean
