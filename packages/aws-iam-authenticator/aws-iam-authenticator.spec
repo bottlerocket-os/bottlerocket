@@ -11,7 +11,7 @@ Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
 Summary: AWS IAM authenticator
-License: ASL 2.0
+License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 BuildRequires: git
@@ -33,7 +33,13 @@ go build -buildmode pie -tags="${BUILDTAGS}" -o aws-iam-authenticator %{goimport
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 aws-iam-authenticator %{buildroot}%{_cross_bindir}
 
+%cross_generate_attribution
+%cross_scan_attribution go-vendor vendor
+
 %files
+%license LICENSE
+%{_cross_attribution_file}
+%{_cross_attribution_vendor_dir}
 %{_cross_bindir}/aws-iam-authenticator
 
 %changelog
