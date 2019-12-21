@@ -1,6 +1,6 @@
 ARCH ?= $(shell uname -m)
 
-VERSION := 0.0.2
+VERSION := v0.3
 TAG := thar/sdk-$(ARCH):$(VERSION)
 ARCHIVE := thar-sdk-$(ARCH)-$(VERSION).tar.gz
 
