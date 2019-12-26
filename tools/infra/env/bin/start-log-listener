@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+hash socat
+# Listen on syslog domain socket to make for cleaner output.
+nohup socat UNIX-LISTEN:/dev/log,fork - &>/dev/null &
+tries=0
+until test -S /dev/log; do
+  ((tries++))
+  if [[ "$tries" -gt 3 ]]; then
+     echo "ERROR: unable to start log listener" >&2
+     exit 1
+  fi
+  sleep 0.1s
+done

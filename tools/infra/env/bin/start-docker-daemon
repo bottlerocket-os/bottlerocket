@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+nohup dockerd \
+    --host=unix:///var/run/docker.sock \
+    &>/var/log/docker.log &
+daemon_pid="$!"
+sleep 1
+if [[ ! -e "/proc/$daemon_pid" ]]; then
+    echo "ERROR: docker daemon did not start up"
+    exit 1
+fi
+
+tries=0
+max_tries=5
+until docker info &>/dev/null; do
+    ((tries++))
+    if [[ "$tries" -gt "$max_tries" ]]; then
+        echo "ERROR: unable to start dockerd for build" >&2
+        exit 1
+    fi
+    sleep 1
+done

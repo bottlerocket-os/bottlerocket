@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -xe
+start-log-listener
+logger -s -t INFO "starting docker daemon"
+start-docker-daemon
