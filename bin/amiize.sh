@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Register partitioned root and data images as an AMI in EC2.
 # Only registers with HVM virtualization type and GP2 EBS volume type.
