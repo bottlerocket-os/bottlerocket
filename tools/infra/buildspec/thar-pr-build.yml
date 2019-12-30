@@ -26,6 +26,8 @@ artifacts:
   base-directory: 'build/'
   files:
     - '*.img*'
+    - '*.txt'
+    - '*.toml'
   secondary-artifacts:
     meta:
       base-directory: 'build/meta'
