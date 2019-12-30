@@ -193,12 +193,24 @@ ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.verity.lz4 \
 '''
 ]
 
+[tasks.gen-build-material]
+script = [
+'''
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+cp -f RELEASE.toml ${BUILDSYS_OUTPUT_DIR}/RELEASE.toml
+( cd ${BUILDSYS_OUTPUT_DIR} && gen-build-manifest ) \
+  | grep -w -v 'build-manifest.txt' > ${BUILDSYS_OUTPUT_DIR}/build-manifest.txt
+'''
+]
+
 [tasks.build]
 dependencies = [
     "link-clean",
     "build-variant",
     "check-licenses",
     "link-variant",
+    "gen-build-material"
 ]
 
 [tasks.world]
@@ -214,7 +226,7 @@ for ws in workspaces packages variants tools/buildsys ; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys
-for ext in rpm tar lz4 img ; do
+for ext in rpm tar lz4 img toml txt ; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
 rm -rf html

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# gen-build-manifest - Generate a manifest for current directory.
+#
+# usage:
+#
+#     # Generate manifest for this directory and all children:
+#     gen-build-manifest > manifest.txt
+#
+#     # Generate manifest for another directory:
+#     ( cd build/ ; gen-build-manifest ) > build-manifest.txt
+#
+#     # Filter out entries before writing if desired:
+#     ( cd build/ ; gen-build-manifest ) | grep -v 'meta/' > build-manifest.txt
+#
+set -e
+
+hash find xargs sort sha512sum
+
+find -L . -xdev -type f -print0 \
+	| xargs -0 -n 1 -P "$(nproc)" -- sha512sum --tag \
+	| sort -t '=' -k 1
