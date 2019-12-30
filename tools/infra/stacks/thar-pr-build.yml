@@ -105,12 +105,20 @@ Resources:
       - BuildRole
     Properties:
       Artifacts:
+        Name: build
         Location: !Ref BuildArtifactBucket
-        Name: /
         NamespaceType: BUILD_ID
         Packaging: NONE
         Path: artifact/
         Type: S3
+      SecondaryArtifacts:
+        - Name: meta
+          ArtifactIdentifier: meta
+          Location: !Ref BuildArtifactBucket
+          NamespaceType: BUILD_ID
+          Packaging: NONE
+          Path: artifact/
+          Type: S3
       Environment:
         ComputeType: BUILD_GENERAL1_LARGE
         Type: LINUX_CONTAINER
