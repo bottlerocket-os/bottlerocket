@@ -34,7 +34,7 @@ make \
   LIBDIR=%{_cross_libdir} SBINDIR=%{_cross_sbindir} \
   INCDIR=%{_cross_includedir} MANDIR=%{_cross_mandir} \
   PKGCONFIGDIR=%{_cross_pkgconfigdir} \
-  RAISE_SETFCAP=no PAM_CAP=no \
+  GOLANG=no RAISE_SETFCAP=no PAM_CAP=no \
 
 %install
 make install \
@@ -45,7 +45,7 @@ make install \
   LIBDIR=%{_cross_libdir} SBINDIR=%{_cross_sbindir} \
   INCDIR=%{_cross_includedir} MANDIR=%{_cross_mandir} \
   PKGCONFIGDIR=%{_cross_pkgconfigdir} \
-  RAISE_SETFCAP=no PAM_CAP=no \
+  GOLANG=no RAISE_SETFCAP=no PAM_CAP=no \
 
 chmod +x %{buildroot}%{_cross_libdir}/*.so.*
 
