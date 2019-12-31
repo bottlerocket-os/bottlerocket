@@ -18,7 +18,7 @@ pub(crate) struct PackageBuilder;
 
 impl PackageBuilder {
     /// Build RPMs for the specified package.
-    pub(crate) fn build(package: &str) -> Result<(Self)> {
+    pub(crate) fn build(package: &str) -> Result<Self> {
         let arch = getenv("BUILDSYS_ARCH")?;
 
         // We do *not* want to rebuild most packages when the variant changes, becauses most aren't
@@ -52,7 +52,7 @@ pub(crate) struct VariantBuilder;
 
 impl VariantBuilder {
     /// Build a variant with the specified packages installed.
-    pub(crate) fn build(packages: &[String]) -> Result<(Self)> {
+    pub(crate) fn build(packages: &[String]) -> Result<Self> {
         // We want PACKAGES to be a value that contains spaces, since that's
         // easier to work with in the shell than other forms of structured data.
         let packages = packages.join("|");
