@@ -7,12 +7,17 @@ RUN yum update -y \
 	&& rm -rf /var/cache/yum /var/cache/amzn2extras
 
 FROM base
-ENV PATH="$PATH:/build/env/bin:/build/.cargo/bin"
+ENV PATH="$PATH:/build/runtime/bin:/build/scripts:/build/.cargo/bin"
 ENV CARGO_HOME="/build/.cargo"
-COPY env/ /build/env/
+
+COPY scripts /build/scripts
 WORKDIR /build
 
-RUN source setup-rust-builder
+RUN install-rust && configure-rust && install-crates
 
-ENTRYPOINT ["/build/env/container/entrypoint.sh"]
+COPY runtime /build/runtime
+COPY builder/entrypoint.sh /build/entrypoint.sh
+
+ENTRYPOINT ["/build/entrypoint.sh"]
+
 CMD [ "bash" ]
