@@ -193,14 +193,18 @@ ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.verity.lz4 \
 '''
 ]
 
-[tasks.gen-build-material]
+[tasks.generate-build-material]
+script_runner = "bash"
 script = [
 '''
+set -eo pipefail
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+MANIFEST_FILE="build-manifest.txt"
 
 cp -f RELEASE.toml ${BUILDSYS_OUTPUT_DIR}/RELEASE.toml
-( cd ${BUILDSYS_OUTPUT_DIR} && gen-build-manifest ) \
-  | grep -w -v 'build-manifest.txt' > ${BUILDSYS_OUTPUT_DIR}/build-manifest.txt
+
+( cd "${BUILDSYS_OUTPUT_DIR}" && gen-build-manifest ) \
+  | grep -F -w -v "$MANIFEST_FILE" > "${BUILDSYS_OUTPUT_DIR}/${MANIFEST_FILE}"
 '''
 ]
 
@@ -210,7 +214,7 @@ dependencies = [
     "build-variant",
     "check-licenses",
     "link-variant",
-    "gen-build-material"
+    "generate-build-material"
 ]
 
 [tasks.world]

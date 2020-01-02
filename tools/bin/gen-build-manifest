@@ -13,10 +13,10 @@
 #     # Filter out entries before writing if desired:
 #     ( cd build/ ; gen-build-manifest ) | grep -v 'meta/' > build-manifest.txt
 #
-set -e
+set -eo pipefail
 
 hash find xargs sort sha512sum
 
-find -L . -xdev -type f -print0 \
+find -L . -mindepth 1 -maxdepth 1 -xdev -type f -printf '%P\0' \
 	| xargs -0 -n 1 -P "$(nproc)" -- sha512sum --tag \
 	| sort -t '=' -k 1
