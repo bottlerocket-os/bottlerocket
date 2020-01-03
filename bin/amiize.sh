@@ -106,6 +106,7 @@ $(basename "${0}")
                  [ --root-volume-size 1234 ]
                  [ --data-volume-size 5678 ]
                  [ --security-group-name default | --security-group-id sg-abcdef1234 ]
+                 [ --write-output-dir output-dir ]
 
 Registers the given images as an AMI in the given EC2 region.
 
@@ -130,6 +131,9 @@ Optional:
    --security-group-id        The ID of a security group name that allows SSH access from this host
    --security-group-name      The name of a security group name that allows SSH access from this host
                               (defaults to "default" if neither name nor ID are specified)
+   --write-output-dir         The directory to write out IDs into attribute named files.
+                              (not written out to anywhere other than log otherwise)
+
 EOF
 }
 
@@ -161,6 +165,7 @@ parse_args() {
          --data-volume-size ) shift; DATA_VOLUME_SIZE="${1}" ;;
          --security-group-name ) shift; SECURITY_GROUP_NAME="${1}" ;;
          --security-group-id ) shift; SECURITY_GROUP_ID="${1}" ;;
+         --write-output-dir ) shift; WRITE_OUTPUT_DIR="${1}" ;;
 
          --help ) usage; exit 0 ;;
          *)
@@ -323,6 +328,19 @@ check_return() {
    return 0
 }
 
+# Helper to conditionally write out attribute if WRITE_OUTPUT_DIR is
+# configured.
+write_output() {
+    local name="$1"
+    local value="$2"
+
+    if [[ -z "${WRITE_OUTPUT_DIR}" ]]; then
+        return
+    fi
+
+    mkdir -p "${WRITE_OUTPUT_DIR}/$(dirname "$name")"
+    echo -n "$value" > "${WRITE_OUTPUT_DIR}/${name}"
+}
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -623,6 +641,7 @@ while true; do
       echo "* Warning: Could not delete root volume!"
       # Don't die though, we got what we want...
    fi
+   write_output "root_snapshot_id" "$root_snapshot"
 
    if aws ec2 delete-volume \
       --output text \
@@ -635,6 +654,7 @@ while true; do
       echo "* Warning: Could not delete data volume!"
       # Don't die though, we got what we want...
    fi
+   write_output "data_snapshot_id" "$data_snapshot"
 
    # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -656,6 +676,8 @@ while true; do
       --description "${DESCRIPTION}")
    check_return ${?} "AMI registration failed!" || continue
    echo "Registered ${registered_ami}"
+
+   write_output "ami_id" "$registered_ami"
 
    echo "Waiting for the AMI to appear in a describe query"
    waits=0
