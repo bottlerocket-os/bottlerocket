@@ -13,6 +13,8 @@ This `Settings` essentially becomes the schema for the variant's data store.
 
 At the field level, standard Rust types can be used, or ["modeled types"](src/modeled_types) that add input validation.
 
+The `#[model]` attribute on Settings and its sub-structs reduces duplication and adds some required metadata; see [its docs](model-derive/) for details.
+
 ## aws-k8s: Kubernetes
 
 * [Model](src/aws-k8s/mod.rs)
@@ -56,6 +58,7 @@ pub use variant::Settings;
 // structure based on these, and that's what gets exposed via the API.  (Specific variants' models
 // are in subdirectories and linked into place by build.rs at variant/current.)
 
+use model_derive::model;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::Ipv4Addr;
@@ -65,86 +68,49 @@ use crate::modeled_types::{
     SingleLineString, Url, ValidBase64,
 };
 
-// Note: fields are marked with skip_serializing_if=Option::is_none so that settings GETs don't
-// show field=null for everything that isn't set in the relevant group of settings.
-
 // Kubernetes related settings. The dynamic settings are retrieved from
 // IMDS via Sundog's child "Pluto".
-#[rustfmt::skip]
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct KubernetesSettings {
+#[model]
+struct KubernetesSettings {
     // Settings we require the user to specify, likely via user data.
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cluster_name: Option<KubernetesClusterName>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cluster_certificate: Option<ValidBase64>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub api_server: Option<Url>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub node_labels: Option<HashMap<KubernetesLabelKey, KubernetesLabelValue>>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub node_taints: Option<HashMap<KubernetesLabelKey, KubernetesTaintValue>>,
+    cluster_name: KubernetesClusterName,
+    cluster_certificate: ValidBase64,
+    api_server: Url,
+    node_labels: HashMap<KubernetesLabelKey, KubernetesLabelValue>,
+    node_taints: HashMap<KubernetesLabelKey, KubernetesTaintValue>,
 
     // Dynamic settings.
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_pods: Option<SingleLineString>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cluster_dns_ip: Option<Ipv4Addr>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub node_ip: Option<Ipv4Addr>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pod_infra_container_image: Option<SingleLineString>,
+    max_pods: SingleLineString,
+    cluster_dns_ip: Ipv4Addr,
+    node_ip: Ipv4Addr,
+    pod_infra_container_image: SingleLineString,
 }
 
 // Updog settings. Taken from userdata. The 'seed' setting is generated
 // by the "Bork" settings generator at runtime.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct UpdatesSettings {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub metadata_base_url: Option<Url>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub target_base_url: Option<Url>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub seed: Option<u32>,
+#[model]
+struct UpdatesSettings {
+    metadata_base_url: Url,
+    target_base_url: Url,
+    seed: u32,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct ContainerImage {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub source: Option<Url>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub enabled: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub superpowered: Option<bool>,
+#[model]
+struct ContainerImage {
+    source: Url,
+    enabled: bool,
+    superpowered: bool,
 }
 
 // NTP settings
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct NtpSettings {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub time_servers: Option<Vec<Url>>,
+#[model]
+struct NtpSettings {
+    time_servers: Vec<Url>,
 }
 
 ///// Internal services
 
-// Note: Top-level objects that get returned from the API should have a serde "rename" attribute
+// Note: Top-level objects that get returned from the API should have a "rename" attribute
 // matching the struct name, but in kebab-case, e.g. ConfigurationFiles -> "configuration-files".
 // This lets it match the datastore name.
 // Objects that live inside those top-level objects, e.g. Service lives in Services, should have
@@ -153,28 +119,25 @@ pub struct NtpSettings {
 
 pub type Services = HashMap<String, Service>;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename = "", rename_all = "kebab-case")]
-pub struct Service {
-    pub configuration_files: Vec<SingleLineString>,
-    pub restart_commands: Vec<String>,
+#[model(add_option = false, rename = "")]
+struct Service {
+    configuration_files: Vec<SingleLineString>,
+    restart_commands: Vec<String>,
 }
 
 pub type ConfigurationFiles = HashMap<String, ConfigurationFile>;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename = "", rename_all = "kebab-case")]
-pub struct ConfigurationFile {
-    pub path: SingleLineString,
-    pub template_path: SingleLineString,
+#[model(add_option = false, rename = "")]
+struct ConfigurationFile {
+    path: SingleLineString,
+    template_path: SingleLineString,
 }
 
 ///// Metadata
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields, rename = "metadata", rename_all = "kebab-case")]
-pub struct Metadata {
-    pub key: SingleLineString,
-    pub md: SingleLineString,
-    pub val: toml::Value,
+#[model(add_option = false, rename = "metadata")]
+struct Metadata {
+    key: SingleLineString,
+    md: SingleLineString,
+    val: toml::Value,
 }

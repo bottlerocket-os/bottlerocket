@@ -1,0 +1,20 @@
+[package]
+name = "model-derive"
+version = "0.1.0"
+authors = ["Tom Kirchner <tjk@amazon.com>"]
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+darling = "0.10"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "1.0", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
+
+[build-dependencies]
+cargo-readme = "3.1"
