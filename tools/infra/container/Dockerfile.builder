@@ -9,13 +9,14 @@ RUN yum update -y \
 FROM base
 ENV PATH="$PATH:/build/runtime/bin:/build/scripts:/build/.cargo/bin"
 ENV CARGO_HOME="/build/.cargo"
+ENV RUNTIME_SCRIPT_LIB="/build/runtime/lib"
 
 COPY scripts /build/scripts
+COPY runtime /build/runtime
 WORKDIR /build
 
 RUN install-rust && configure-rust && install-crates
 
-COPY runtime /build/runtime
 COPY builder/entrypoint.sh /build/entrypoint.sh
 
 ENTRYPOINT ["/build/entrypoint.sh"]

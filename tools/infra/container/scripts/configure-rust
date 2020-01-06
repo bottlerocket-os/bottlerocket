@@ -7,6 +7,9 @@
 #   configure-rust
 #
 
+# shellcheck source=../runtime/lib/lib.bash
+source "$RUNTIME_SCRIPT_LIB/lib.bash"
+
 configure_color_output() {
     # Prepare Cargo for build and CI usage
     PATH="$HOME/.cargo/bin:$PATH"

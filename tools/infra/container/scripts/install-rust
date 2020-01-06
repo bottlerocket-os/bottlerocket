@@ -7,6 +7,9 @@
 #   install-rust
 #
 
+# shellcheck source=../runtime/lib/lib.bash
+source "$RUNTIME_SCRIPT_LIB/lib.bash"
+
 install_rust_toolchain() {
     local toolchain="${1:-stable}"
     test -f rustup-init.sh || rm -f rustup-init.sh

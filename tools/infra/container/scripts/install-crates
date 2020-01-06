@@ -4,14 +4,17 @@
 #
 # usage:
 #
-#   install-rust
+#   install-crates
 #
 
+# shellcheck source=../runtime/lib/lib.bash
+source "$RUNTIME_SCRIPT_LIB/lib.bash"
+
 cargo_dep() {
-    cargo_install_package="$@"
-    logger -s -t INFO "installing cargo dep with 'cargo install $cargo_install_package'"
-    if ! cargo install --force $cargo_install_package; then
-        logger -s -t ERROR "failed to install dep with 'cargo install $cargo_install_package'"
+    local cargo_install_package=( "$@" )
+    logger -s -t INFO "installing cargo dep with 'cargo install ${cargo_install_package[*]}'"
+    if ! cargo install --force "${cargo_install_package[@]}"; then
+        logger -s -t ERROR "failed to install dep with 'cargo install ${cargo_install_package[*]}'"
         exit 1
     fi
 }
