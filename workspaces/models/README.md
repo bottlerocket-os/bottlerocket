@@ -16,17 +16,19 @@ This `Settings` essentially becomes the schema for the variant's data store.
 
 At the field level, standard Rust types can be used, or ["modeled types"](src/modeled_types) that add input validation.
 
+Default values are specified in [defaults.toml](defaults.toml) and can be overridden by each variant.
+
 The `#[model]` attribute on Settings and its sub-structs reduces duplication and adds some required metadata; see [its docs](model-derive/) for details.
 
 ### aws-k8s: Kubernetes
 
 * [Model](src/aws-k8s/mod.rs)
-* [Defaults](src/aws-k8s/defaults.toml)
+* [Overridden defaults](src/aws-k8s/override-defaults.toml)
 
 ### aws-dev: Development build
 
 * [Model](src/aws-dev/mod.rs)
-* [Defaults](src/aws-dev/defaults.toml)
+* [Overridden defaults](src/aws-dev/override-defaults.toml)
 
 ## This directory
 
