@@ -1,3 +1,12 @@
+# Dockerfile.builder - Base build environment container image
+#
+# The builder image provides an environment in which packages and images may be
+# built. This includes the necessary compilers, libraries, services, and
+# executable dependencies used in the course of the build process.
+#
+# Facilitating scripts may be found in the ./runtime and ./scripts directory
+# where scripts are generally participants in the build of the environment.
+#
 FROM amazonlinux:2 as base
 RUN yum update -y \
 	&& yum groupinstall -y 'Development Tools' \

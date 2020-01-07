@@ -1,13 +1,55 @@
 #!/usr/bin/env bash
-hash socat
-# Listen on syslog domain socket to make for cleaner output.
-nohup socat UNIX-LISTEN:/dev/log,fork - &>/dev/null &
-tries=0
-until test -S /dev/log; do
-  ((tries++))
-  if [[ "$tries" -gt 3 ]]; then
-     echo "ERROR: unable to start log listener" >&2
+#
+# start-log-listener - Setup a socket at /dev/log when missing
+#
+# The kernel's /dev/log socket may not be present in some environments so this
+# script stands up a blackhole listener, to avoid logger from complaining and
+# not outputting our messages.
+#
+# usage:
+#
+#     start-log-listener
+#
+if ! hash socat; then
+   echo "ERROR: missing required commands"
+fi
+
+log_sock="/dev/log"
+
+# Starting up the socket asynchronously may take a moment or may fail to start
+# in the background, tries are made to check in on the brief time between exec
+# and the listener bound.
+#
+# sleep interval before attempting each try
+try_interval="0.1s"
+# maximum try attempts that will be made
+try_max_count=3
+
+# Let the existing socket be.
+if [[ -S "$log_sock" ]]; then
+   logger -s --no-act -t INFO -- "kernel's log socket is already present /dev/log"
+   logger -s --no-act -t INFO -- "not replacing /dev/log"
+   exit 0
+fi
+
+# Require EUID 0 as we're mucking about in /dev
+euid="$(id -u)"
+if [[ "$euid" -ne 0 ]]; then
+   echo "ERROR: unable to start log listener socket as non-root user (euid: $euid != 0)"
+   exit 1
+fi
+
+# Listen on syslog unix socket and dump any sent datagrams.
+nohup socat "UNIX-LISTEN:$log_sock,fork" - &>/dev/null &
+
+# Wait for the listener to start and assume the process didn't successfully bind
+# to the socket otherwise.
+try_count=0
+until [[ -S "$log_sock" ]]; do
+  ((try_count++))
+  if [[ "$try_count" -gt "$try_max_count" ]]; then
+     echo "ERROR: unable to start log listener at $log_sock" >&2
      exit 1
   fi
-  sleep 0.1s
+  sleep "$try_interval"
 done
