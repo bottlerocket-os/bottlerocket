@@ -18,7 +18,8 @@ We also use [cargo-deny](https://github.com/EmbarkStudios/cargo-deny) during the
 To get these, run:
 
 ```
-cargo install cargo-make cargo-deny
+cargo install cargo-make
+cargo install cargo-deny --version 0.2.6
 ```
 
 #### Docker
