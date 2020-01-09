@@ -7,7 +7,7 @@ Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/9cf01c374c05a9ff6d1d3d37d0a4f27b403b2dd4de27d3e6e5ab0f5e517bb1da/kernel-4.19.75-27.58.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/70374188b12dd9d6df9dec5112a3c7761cc185c01de728c96d71fb000b7449a5/kernel-4.19.75-28.73.amzn2.src.rpm
 Source100: config-thar
 Patch0001: 0001-dm-add-support-to-directly-boot-to-a-mapped-device.patch
 Patch0002: 0002-dm-init-fix-const-confusion-for-dm_allowed_targets-a.patch
