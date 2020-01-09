@@ -1,13 +1,13 @@
 /*!
 # Introduction
 
-moondog is a minimal user data agent.
+moondog sends provider-specific platform data to the Thar API.
 
-It accepts TOML-formatted settings from a user data provider such as an instance metadata service.
-These are sent to a known Thar API server endpoint.
+For most providers this means configuration from user data and platform metadata, taken from
+something like an instance metadata service.
 
-Currently, Amazon EC2 user data support is implemented.
-User data can also be retrieved from a file for testing.
+Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be taken from files in
+/etc/moondog instead, if available, for testing purposes.
 */
 
 #![deny(rust_2018_idioms)]
@@ -17,6 +17,7 @@ extern crate log;
 
 use http::StatusCode;
 use serde::Serialize;
+use serde_json::json;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::path::Path;
@@ -43,58 +44,65 @@ mod error {
     use std::io;
     use std::path::PathBuf;
 
-    /// Potential errors during user data management.
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum MoondogError {
-        #[snafu(display("Error requesting '{}': {}", uri, source))]
-        UserDataRequest { uri: String, source: reqwest::Error },
-
-        #[snafu(display("Error {} requesting '{}': {}", code, uri, source))]
-        UserDataResponse {
-            code: StatusCode,
+        #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
+        Request {
+            method: String,
             uri: String,
             source: reqwest::Error,
         },
 
-        #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
+        #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
         APIRequest {
             method: String,
             uri: String,
             source: apiclient::Error,
         },
 
-        #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
-        APIResponse {
+        #[snafu(display("Error {} when {}ing '{}': {}", code, method, uri, response_body))]
+        Response {
             method: String,
             uri: String,
             code: StatusCode,
             response_body: String,
         },
 
+        #[snafu(display(
+            "Unable to read response body when {}ing '{}' (code {}) - {}",
+            method,
+            uri,
+            code,
+            source
+        ))]
+        ResponseBody {
+            method: String,
+            uri: String,
+            code: StatusCode,
+            source: reqwest::Error,
+        },
+
         #[snafu(display("Error parsing TOML user data: {}", source))]
         TOMLUserDataParse { source: toml::de::Error },
 
-        #[snafu(display("User data is not a TOML table"))]
+        #[snafu(display("Data is not a TOML table"))]
         UserDataNotTomlTable,
 
-        #[snafu(display("TOML user data did not contain 'settings' section"))]
+        #[snafu(display("TOML data did not contain 'settings' section"))]
         UserDataMissingSettings,
 
         #[snafu(display("Error serializing TOML to JSON: {}", source))]
         SettingsToJSON { source: serde_json::error::Error },
 
-        #[snafu(display("Unable to read user data input file '{}': {}", path.display(), source))]
+        #[snafu(display("Error deserializing from JSON: {}", source))]
+        DeserializeJson { source: serde_json::error::Error },
+
+        #[snafu(display("Unable to read input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
 
-        #[snafu(display("No user data found from provider '{}'", provider))]
-        UserDataNotFound {
-            provider: &'static str,
-            location: String,
-        },
-
-        #[snafu(display("Error {} requesting data from IMDS: {}", code, response))]
-        IMDSRequest { code: StatusCode, response: String },
+        #[snafu(display("Instance identity document missing {}", missing))]
+        IdentityDocMissingData { missing: String },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
@@ -102,124 +110,184 @@ mod error {
 }
 use error::MoondogError;
 
-/// UserDataProviders must implement this trait. It retrieves the user data (leaving the complexity
-/// of this to each different provider) and returns an unparsed and not validated "raw" user data.
-trait UserDataProvider {
-    /// Retrieve the raw, unparsed user data.
-    fn retrieve_user_data(&self) -> Result<RawUserData>;
+/// Support for new platforms can be added by implementing this trait.
+trait PlatformDataProvider {
+    /// You should return a list of SettingsJson, representing the settings changes you want to
+    /// send to the API.
+    ///
+    /// This is a list so that handling multiple data sources within a platform can feel more
+    /// natural; you can also send all changes in one entry if you like.
+    fn platform_data(&self) -> Result<Vec<SettingsJson>>;
 }
 
-/// Unit struct for AWS so we can implement the UserDataProvider trait.
-// This will more than likely not stay a unit struct once we have more things to store about this
-// provider.
-struct AwsUserDataProvider;
+/// Unit struct for AWS so we can implement the PlatformDataProvider trait.
+struct AwsDataProvider;
 
-impl AwsUserDataProvider {
+impl AwsDataProvider {
+    const USER_DATA_FILE: &'static str = "/etc/moondog/user-data";
     const USER_DATA_ENDPOINT: &'static str = "http://169.254.169.254/latest/user-data";
-}
+    const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/moondog/identity-document";
+    const IDENTITY_DOCUMENT_ENDPOINT: &'static str =
+        "http://169.254.169.254/latest/dynamic/instance-identity/document";
 
-impl UserDataProvider for AwsUserDataProvider {
-    fn retrieve_user_data(&self) -> Result<RawUserData> {
-        debug!("Requesting user data from IMDS");
-        let mut response =
-            reqwest::get(Self::USER_DATA_ENDPOINT).context(error::UserDataRequest {
-                uri: Self::USER_DATA_ENDPOINT,
-            })?;
+    /// Helper to fetch data from IMDS, preferring an override file if present.
+    ///
+    /// IMDS returns a 404 if no user data was given, or if IMDS was disabled, for example; we
+    /// return Ok(None) to represent this, otherwise Ok(Some(body)) with the response body.
+    fn fetch_imds(file: &str, uri: &str, description: &str) -> Result<Option<String>> {
+        if Path::new(file).exists() {
+            info!("{} file found at {}, using it", description, file);
+            return Ok(Some(
+                fs::read_to_string(file).context(error::InputFileRead { path: file })?,
+            ));
+        }
+        debug!("Requesting {} from {}", description, uri);
+        let mut response = reqwest::get(uri).context(error::Request { method: "GET", uri })?;
         trace!("IMDS response: {:?}", &response);
 
         match response.status() {
-            StatusCode::OK => {
-                info!("User data found");
-                let raw_data = response.text().context(error::UserDataRequest {
-                    uri: Self::USER_DATA_ENDPOINT,
+            code @ StatusCode::OK => {
+                info!("Received {}", description);
+                let response_body = response.text().context(error::ResponseBody {
+                    method: "GET",
+                    uri,
+                    code,
                 })?;
-                trace!("IMDS response text: {:?}", &raw_data);
+                trace!("Response text: {:?}", &response_body);
 
-                Ok(RawUserData::new(raw_data))
+                Ok(Some(response_body))
             }
 
-            // IMDS doesn't even include a user data endpoint
-            // if no user data is given, so we get a 404
-            StatusCode::NOT_FOUND => error::UserDataNotFound {
-                provider: "IMDS",
-                location: Self::USER_DATA_ENDPOINT,
-            }
-            .fail(),
+            // IMDS returns 404 if no user data is given, or if IMDS is disabled, for example
+            StatusCode::NOT_FOUND => Ok(None),
 
-            code @ _ => error::IMDSRequest {
-                code: code,
-                response: response.text().context(error::UserDataResponse {
-                    code: code,
-                    uri: Self::USER_DATA_ENDPOINT,
-                })?,
+            code @ _ => {
+                let response_body = response.text().context(error::ResponseBody {
+                    method: "GET",
+                    uri,
+                    code,
+                })?;
+                trace!("Response text: {:?}", &response_body);
+
+                error::Response {
+                    method: "GET",
+                    uri,
+                    code,
+                    response_body,
+                }
+                .fail()
             }
-            .fail(),
         }
+    }
+
+    /// Fetches user data, which is expected to be in TOML form and contain a `[settings]` section,
+    /// returning a SettingsJson representing the inside of that section.
+    fn user_data() -> Result<Option<SettingsJson>> {
+        let desc = "user data";
+        let uri = Self::USER_DATA_ENDPOINT;
+        let file = Self::USER_DATA_FILE;
+
+        let user_data_str = match Self::fetch_imds(file, uri, desc) {
+            Err(e) => return Err(e),
+            Ok(None) => return Ok(None),
+            Ok(Some(s)) => s,
+        };
+        trace!("Received user data: {}", user_data_str);
+
+        // Remove outer "settings" layer before sending to API
+        let mut val: toml::Value =
+            toml::from_str(&user_data_str).context(error::TOMLUserDataParse)?;
+        let table = val.as_table_mut().context(error::UserDataNotTomlTable)?;
+        let inner = table
+            .remove("settings")
+            .context(error::UserDataMissingSettings)?;
+
+        SettingsJson::from_val(&inner, desc).map(|s| Some(s))
+    }
+
+    /// Fetches the instance identity, returning a SettingsJson representing the values from the
+    /// document which we'd like to send to the API - currently just region.
+    fn identity_document() -> Result<Option<SettingsJson>> {
+        let desc = "instance identity document";
+        let uri = Self::IDENTITY_DOCUMENT_ENDPOINT;
+        let file = Self::IDENTITY_DOCUMENT_FILE;
+
+        let iid_str = match Self::fetch_imds(file, uri, desc) {
+            Err(e) => return Err(e),
+            Ok(None) => return Ok(None),
+            Ok(Some(s)) => s,
+        };
+        trace!("Received instance identity document: {}", iid_str);
+
+        // Grab region from instance identity document.
+        let iid: serde_json::Value =
+            serde_json::from_str(&iid_str).context(error::DeserializeJson)?;
+        let region = iid
+            .get("region")
+            .context(error::IdentityDocMissingData { missing: "region" })?;
+        let val = json!({ "aws": {"region": region} });
+
+        SettingsJson::from_val(&val, desc).map(|s| Some(s))
     }
 }
 
-/// Retrieves user data from a known file.  Useful for testing, or simpler providers that store
-/// user data on disk.
-struct FileUserDataProvider;
+impl PlatformDataProvider for AwsDataProvider {
+    /// Return settings changes from the instance identity document and user data.
+    fn platform_data(&self) -> Result<Vec<SettingsJson>> {
+        let mut output = Vec::new();
 
-impl FileUserDataProvider {
-    const USER_DATA_INPUT_FILE: &'static str = "/etc/moondog/input";
-}
+        // Instance identity doc first, so the user has a chance to override
+        match Self::identity_document() {
+            Err(e) => return Err(e),
+            Ok(None) => warn!("No instance identity document found."),
+            Ok(Some(s)) => output.push(s),
+        }
 
-impl UserDataProvider for FileUserDataProvider {
-    fn retrieve_user_data(&self) -> Result<RawUserData> {
-        debug!("Reading user data input file");
-        let contents =
-            fs::read_to_string(Self::USER_DATA_INPUT_FILE).context(error::InputFileRead {
-                path: Self::USER_DATA_INPUT_FILE,
-            })?;
-        trace!("Raw file contents: {:?}", &contents);
+        // Optional user-specified configuration / overrides
+        match Self::user_data() {
+            Err(e) => return Err(e),
+            Ok(None) => warn!("No user data found."),
+            Ok(Some(s)) => output.push(s),
+        }
 
-        Ok(RawUserData::new(contents))
+        Ok(output)
     }
 }
 
 /// This function determines which provider we're currently running on.
-fn find_provider() -> Result<Box<dyn UserDataProvider>> {
-    // FIXME We need to decide what we're going to do with this
-    // in the future. If the user data file exists at a location on disk,
-    // use it by default as the UserDataProvider.
-    if Path::new(FileUserDataProvider::USER_DATA_INPUT_FILE).exists() {
-        info!(
-            "User data file found at {}, using it",
-            &FileUserDataProvider::USER_DATA_INPUT_FILE
-        );
-        Ok(Box::new(FileUserDataProvider))
-    } else {
-        info!("Running on AWS: Using IMDS for user data");
-        Ok(Box::new(AwsUserDataProvider))
-    }
+fn find_provider() -> Result<Box<dyn PlatformDataProvider>> {
+    // FIXME: We need to decide what we're going to do with this in the future; ask each
+    // provider if they should be used?  In what order?
+    Ok(Box::new(AwsDataProvider))
 }
 
-/// This struct contains the raw and unparsed user data retrieved from the UserDataProvider.
-struct RawUserData {
-    raw_data: String,
+/// SettingsJson represents a change that a provider would like to make in the API.
+#[derive(Debug)]
+struct SettingsJson {
+    json: String,
+    desc: String,
 }
 
-impl RawUserData {
-    fn new(raw_data: String) -> RawUserData {
-        RawUserData { raw_data }
-    }
-
-    // This function should account for multipart data in the future.  The question is what it will
-    // return if we plan on supporting more than just TOML.  A Vec of members of an Enum?
-    /// Returns the "settings" table from the input TOML, if any.
-    fn settings(&self) -> Result<impl Serialize> {
-        let mut val: toml::Value =
-            toml::from_str(&self.raw_data).context(error::TOMLUserDataParse)?;
-        let table = val.as_table_mut().context(error::UserDataNotTomlTable)?;
-        table
-            .remove("settings")
-            .context(error::UserDataMissingSettings)
+impl SettingsJson {
+    /// Construct a SettingsJson from a serializable object and a description of that object,
+    /// which is used for logging.
+    ///
+    /// The serializable object is typically something like a toml::Value or serde_json::Value,
+    /// since they can be easily deserialized from text input in the platform, and manipulated as
+    /// desired.
+    fn from_val<S>(data: &impl Serialize, desc: S) -> Result<Self>
+    where
+        S: Into<String>,
+    {
+        Ok(Self {
+            json: serde_json::to_string(&data).context(error::SettingsToJSON)?,
+            desc: desc.into(),
+        })
     }
 }
 
 /// Store the args we receive on the command line
+#[derive(Debug)]
 struct Args {
     log_level: LevelFilter,
     socket_path: String,
@@ -290,56 +358,33 @@ fn run() -> Result<()> {
     info!("Moondog started");
 
     // Figure out the current provider
-    info!("Detecting user data provider");
-    let user_data_provider = find_provider()?;
+    info!("Detecting platform data provider");
+    let data_provider = find_provider()?;
 
-    // Query the raw data using the method provided by the
-    // UserDataProvider trait
-    info!("Retrieving user data");
-    let raw_user_data = match user_data_provider.retrieve_user_data() {
-        Ok(raw_ud) => raw_ud,
-        Err(err) => match err {
-            error::MoondogError::UserDataNotFound { .. } => {
-                warn!("{}", err);
-                process::exit(0)
-            }
-            _ => {
-                error!("Error retrieving user data, exiting: {:?}", err);
-                process::exit(1)
-            }
-        },
-    };
-
-    // Decode the user data into a generic toml Value
-    info!("Parsing TOML user data");
-    let user_settings = raw_user_data.settings()?;
-
-    // Serialize the TOML Value into JSON
-    info!("Serializing settings to JSON for API request");
-    let request_body = serde_json::to_string(&user_settings).context(error::SettingsToJSON)?;
-    trace!("API request body: {:?}", request_body);
-
-    // Create an HTTP client and PATCH the JSON
-    info!("Sending user data to the API");
-    let (code, response_body) = apiclient::raw_request(
-        &args.socket_path,
-        API_SETTINGS_URI,
-        "PATCH",
-        Some(request_body),
-    )
-    .context(error::APIRequest {
-        method: "PATCH",
-        uri: API_SETTINGS_URI,
-    })?;
-    ensure!(
-        code.is_success(),
-        error::APIResponse {
+    info!("Retrieving platform-specific data");
+    for settings_json in data_provider.platform_data()? {
+        info!("Sending {} to API", settings_json.desc);
+        trace!("Request body: {}", settings_json.json);
+        let (code, response_body) = apiclient::raw_request(
+            &args.socket_path,
+            API_SETTINGS_URI,
+            "PATCH",
+            Some(settings_json.json),
+        )
+        .context(error::APIRequest {
             method: "PATCH",
             uri: API_SETTINGS_URI,
-            code,
-            response_body,
-        }
-    );
+        })?;
+        ensure!(
+            code.is_success(),
+            error::Response {
+                method: "PATCH",
+                uri: API_SETTINGS_URI,
+                code,
+                response_body,
+            }
+        );
+    }
 
     fs::write(MARKER_FILE, "").unwrap_or_else(|e| {
         warn!(
