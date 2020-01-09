@@ -1,4 +1,5 @@
-# stack: thar-pr-build
+# stack-name: thar-pr-build
+# stack-require: infra-container
 
 Parameters:
   BuildSpecPath:
@@ -66,9 +67,9 @@ Resources:
   BuildRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
+      PolicyName: BuildRolePolicy
       Roles:
         - !Ref BuildRole
-      PolicyName: BuildRolePolicy
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
