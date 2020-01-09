@@ -31,7 +31,7 @@ fi
 
 write_common
 
-if [[ -z "${CODEBUILD_BUILD_ID}" ]]; then
+if [[ -n "${CODEBUILD_BUILD_ID}" ]]; then
     write_codebuild
 fi
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Helper script for running commands in a golang build/runtime environment for testing/vendoring/building a go module
 
