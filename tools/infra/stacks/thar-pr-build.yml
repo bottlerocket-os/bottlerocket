@@ -1,9 +1,12 @@
+# stack: thar-pr-build
+
 Parameters:
   BuildSpecPath:
     Type: String
     AllowedPattern: '.+\.yml$'
     Default: "./tools/infra/buildspec/thar-pr-build.yml"
-    Description: "The path to the buildspec.yml file to use."
+    Description: >-
+      The path to the buildspec.yml file to use.
   SourceGitHubRepositoryURL:
     Type: String
     Default: "https://github.com/amazonlinux/PRIVATE-thar.git"
@@ -12,6 +15,29 @@ Parameters:
     Description: >-
       The GitHub repository that builds run for. Your account must be authorized
       to modify this repository's settings.
+  EnvironmentImageName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /infra/container/infra/builder
+    Description: >-
+      Parameter that defines the image name the builder uses as its execution
+      environment *without* a tag (eg: registry/image-name, not
+      registry/image-name:tag). The EnvironmentImageTag Parameter provides the
+      appropriate tag separately.
+  EnvironmentImageTag:
+    Type: String
+    Default: latest
+    Description: >-
+      The image 'tag' (as in registry/image-name:tag) to select of the EnvironmentImage
+      provided.
+  ImageCredentialsType:
+    Type: String
+    Default: CODEBUILD
+    AllowedValues: [ CODEBUILD, SERVICE_ROLE ]
+    Description: >-
+      If image policy does not trust codebuild.amazonaws.com OR cross-account
+      role is needed, then the SERVICE_ROLE must be specified to use the role
+      assigned to the build project.
+
 Resources:
   BuildArtifactBucket:
     Type: AWS::S3::Bucket
@@ -47,29 +73,25 @@ Resources:
         Version: "2012-10-17"
         Statement:
           # For managing cache, logs, and artifacts in the build's buckets.
-          - Action:
+          - Sid: "manageBuildArtifacts"
+            Effect: Allow
+            Action:
               - s3:GetObject*
               - s3:GetBucket*
               - s3:List*
               - s3:PutObject*
               - s3:Abort*
-            Effect: Allow
             Resource:
               - !GetAtt BuildArtifactBucket.Arn
-              - Fn::Join:
-                  - ""
-                  - - !GetAtt BuildArtifactBucket.Arn
-                    - /*
+              - !Sub "${BuildArtifactBucket.Arn}/*"
               - !GetAtt BuildLogBucket.Arn
-              - Fn::Join:
-                  - ""
-                  - - !GetAtt BuildLogBucket.Arn
-                    - /*
+              - !Sub "${BuildLogBucket.Arn}/*"
           # For writing to CloudWatch Logs Streams for each build.
-          - Action:
+          - Sid: "manageBuildLogs"
+            Effect: Allow
+            Action:
               - logs:CreateLogStream
               - logs:PutLogEvents
-            Effect: Allow
             Resource:
               - !GetAtt BuildLogGroup.Arn
 
@@ -90,9 +112,10 @@ Resources:
         Type: S3
       Environment:
         ComputeType: BUILD_GENERAL1_LARGE
-        Image: aws/codebuild/standard:2.0
-        PrivilegedMode: true
         Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        Image: !Sub "${EnvironmentImageName}:${EnvironmentImageTag}"
+        ImagePullCredentialsType: !Ref ImageCredentialsType
       ServiceRole: !GetAtt BuildRole.Arn
       Source:
         BuildSpec: !Ref BuildSpecPath
@@ -102,11 +125,7 @@ Resources:
       LogsConfig:
         S3Logs:
           Status: ENABLED
-          Location:
-            Fn::Join:
-              - "/"
-              - - !GetAtt BuildLogBucket.Arn
-                - "codebuild/log"
+          Location: !Sub "${BuildLogBucket.Arn}/codebuild/log"
         CloudWatchLogs:
           Status: ENABLED
           GroupName: !Ref BuildLogGroup
