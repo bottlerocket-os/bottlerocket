@@ -15,6 +15,8 @@ RUN yum update -y \
 	&& yum install -y docker amazon-ecr-credential-helper \
 	&& yum clean all \
 	&& rm -rf /var/cache/yum /var/cache/amzn2extras
+RUN install -D /dev/null /root/.docker/config.json \
+	&& echo '{ "credsStore": "ecr-login" }' >> /root/.docker/config.json
 
 FROM base
 ENV PATH="$PATH:/build/runtime/bin:/build/scripts:/build/.cargo/bin"
