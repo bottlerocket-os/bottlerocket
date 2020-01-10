@@ -53,13 +53,19 @@ seed.setting-generator = "bork seed"
 
 [settings.host-containers.admin]
 enabled = false
-source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-admin:v0.2"
 superpowered = true
+
+[metadata.settings.host-containers.admin.source]
+setting-generator = "schnauzer settings.host-containers.admin.source"
+template = "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/thar-admin:v0.2"
 
 [settings.host-containers.control]
 enabled = true
-source = "328549459982.dkr.ecr.us-west-2.amazonaws.com/thar-control:v0.2"
 superpowered = false
+
+[metadata.settings.host-containers.control.source]
+setting-generator = "schnauzer settings.host-containers.control.source"
+template = "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/thar-control:v0.2"
 
 [services.host-containers]
 configuration-files = []
