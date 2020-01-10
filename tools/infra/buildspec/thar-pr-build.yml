@@ -19,6 +19,8 @@ artifacts:
   base-directory: 'build/'
   files:
     - '*.img*'
+    - '*.ext4*'
+    - '*.verity*'
   secondary-artifacts:
     meta:
       base-directory: 'build/meta'
