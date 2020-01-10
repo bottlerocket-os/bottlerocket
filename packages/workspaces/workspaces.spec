@@ -22,7 +22,6 @@ Source100: apiserver.service
 Source101: moondog.service
 Source102: sundog.service
 Source103: storewolf.service
-Source104: settings-committer.service
 Source105: settings-applier.service
 Source106: migrator.service
 Source107: host-containers@.service
@@ -64,6 +63,7 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %package -n %{_cross_os}sundog
 Summary: Updates settings dynamically based on user-specified generators
 Requires: %{_cross_os}apiserver = %{version}-%{release}
+Requires: %{_cross_os}schnauzer = %{version}-%{release}
 Requires: %{_cross_os}pluto = %{version}-%{release}
 Requires: %{_cross_os}bork = %{version}-%{release}
 %description -n %{_cross_os}sundog
@@ -72,6 +72,11 @@ Requires: %{_cross_os}bork = %{version}-%{release}
 %package -n %{_cross_os}bork
 Summary: Dynamic setting generator for updog
 %description -n %{_cross_os}bork
+%{summary}.
+
+%package -n %{_cross_os}schnauzer
+Summary: Setting generator for templated settings values.
+%description -n %{_cross_os}schnauzer
 %{summary}.
 
 %package -n %{_cross_os}pluto
@@ -145,6 +150,7 @@ mkdir bin
     -p moondog \
     -p netdog \
     -p sundog \
+    -p schnauzer \
     -p pluto \
     -p bork \
     -p thar-be-settings \
@@ -167,7 +173,7 @@ mkdir bin
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  moondog netdog sundog pluto bork \
+  moondog netdog sundog schnauzer pluto bork \
   thar-be-settings servicedog host-containers \
   storewolf settings-committer \
   migrator \
@@ -204,7 +210,7 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:100} %{S:101} %{S:102} %{S:103} %{S:104} %{S:105} \
+  %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:108} %{S:109} %{S:110} \
   %{buildroot}%{_cross_unitdir}
 
@@ -232,6 +238,9 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %files -n %{_cross_os}sundog
 %{_cross_bindir}/sundog
 %{_cross_unitdir}/sundog.service
+
+%files -n %{_cross_os}schnauzer
+%{_cross_bindir}/schnauzer
 
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
@@ -264,7 +273,6 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 
 %files -n %{_cross_os}settings-committer
 %{_cross_bindir}/settings-committer
-%{_cross_unitdir}/settings-committer.service
 
 %files -n %{_cross_os}growpart
 %{_cross_sbindir}/growpart

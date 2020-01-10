@@ -8,19 +8,27 @@ use std::env;
 use std::process;
 use std::str::FromStr;
 
-use thar_be_settings::{config, get_changed_settings, service, settings, template};
+use thar_be_settings::{config, get_changed_settings, service};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 
 mod error {
     use snafu::Snafu;
+    use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
+
+        #[snafu(display("Failure to read template '{}' from '{}': {}", name, path.display(), source))]
+        TemplateRegister {
+            name: String,
+            path: PathBuf,
+            source: handlebars::TemplateFileError,
+        },
     }
 }
 
@@ -117,11 +125,23 @@ fn write_config_files(
 
     // Build the template registry from config file metadata
     debug!("Building template registry");
-    let template_registry = template::build_template_registry(&config_files)?;
+    let mut template_registry = schnauzer::build_template_registry()?;
+    for (name, metadata) in &config_files {
+        debug!(
+            "Registering {} at path '{}'",
+            &name, &metadata.template_path
+        );
+        template_registry
+            .register_template_file(&name, metadata.template_path.as_ref())
+            .context(error::TemplateRegister {
+                name: name.as_str(),
+                path: metadata.template_path.as_ref(),
+            })?;
+    }
 
     // Get all settings values for config file templates
     debug!("Requesting settings values");
-    let settings = settings::get_settings_from_template(&args.socket_path)?;
+    let settings = schnauzer::get_settings(&args.socket_path)?;
 
     // Ensure all files render properly
     info!("Rendering config files...");

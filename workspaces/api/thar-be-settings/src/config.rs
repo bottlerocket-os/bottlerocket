@@ -1,13 +1,9 @@
+use crate::{error, Result};
+use itertools::join;
 use snafu::ResultExt;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-
-use itertools::join;
-
-use crate::client;
-use crate::{error, Result};
 
 /// Query the API for ConfigurationFile data
 #[allow(clippy::implicit_hasher)]
@@ -22,8 +18,9 @@ where
     let query = files_limit.map(|files| ("names", join(&files, ",")));
 
     debug!("Querying API for configuration file metadata");
+    let uri = "/configuration-files";
     let config_files: model::ConfigurationFiles =
-        client::get_json(socket_path, "/configuration-files", query)?;
+        schnauzer::get_json(socket_path, uri, query).context(error::GetJson { uri })?;
 
     Ok(config_files)
 }
@@ -48,25 +45,17 @@ pub fn get_config_file_names(services: &model::Services) -> HashSet<String> {
 // If strict is False, ignore failures, always returning an Ok value
 // containing any successfully rendered templates.
 pub fn render_config_files(
-    registry: &handlebars::Handlebars,
+    registry: &handlebars::Handlebars<'_>,
     config_files: model::ConfigurationFiles,
-    settings: model::Settings,
+    settings: HashMap<String, model::Settings>,
     strict: bool,
 ) -> Result<Vec<RenderedConfigFile>> {
-    // The following is simply to satisfy the Handlebars templating library.
-    // The variables in the templates are prefixed with "settings"
-    // {{ settings.foo.bar }} so we need to wrap the Settings struct in a map
-    // with the key "settings".
-    let mut wrapped_template_keys: HashMap<String, model::Settings> = HashMap::new();
-    wrapped_template_keys.insert("settings".to_string(), settings);
-    trace!("Final template keys map: {:?}", &wrapped_template_keys);
-
     // Go write all the configuration files from template
     let mut rendered_configs = Vec::new();
     for (name, metadata) in config_files {
         debug!("Rendering {}", &name);
 
-        let try_rendered = registry.render(&name, &wrapped_template_keys);
+        let try_rendered = registry.render(&name, &settings);
         if strict {
             let rendered = try_rendered.context(error::TemplateRender { template: name })?;
             rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));

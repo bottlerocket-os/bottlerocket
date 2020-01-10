@@ -81,7 +81,8 @@ where
             .service(
                 web::scope("/metadata")
                     .route("/affected-services", web::get().to(get_affected_services))
-                    .route("/setting-generators", web::get().to(get_setting_generators)),
+                    .route("/setting-generators", web::get().to(get_setting_generators))
+                    .route("/templates", web::get().to(get_templates)),
             )
             .service(web::scope("/services").route("", web::get().to(get_services)))
             .service(
@@ -228,6 +229,23 @@ fn get_setting_generators(data: web::Data<SharedDataStore>) -> Result<MetadataRe
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
     let resp = controller::get_metadata_for_all_data_keys(&*datastore, "setting-generator")?;
     Ok(MetadataResponse(resp))
+}
+
+/// Get the template metadata for a list of data keys
+fn get_templates(
+    query: web::Query<HashMap<String, String>>,
+    data: web::Data<SharedDataStore>,
+) -> Result<MetadataResponse> {
+    if let Some(keys_str) = query.get("keys") {
+        let data_keys = comma_separated("keys", keys_str)?;
+        let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+        let resp =
+            controller::get_metadata_for_data_keys(&*datastore, "template", &data_keys)?;
+
+        Ok(MetadataResponse(resp))
+    } else {
+        return error::MissingInput { input: "keys" }.fail();
+    }
 }
 
 /// Get all services, or if 'names' is specified, services with those names

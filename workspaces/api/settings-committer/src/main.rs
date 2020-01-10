@@ -1,9 +1,11 @@
 /*!
 # Introduction
 
-settings-committer runs on boot after any services that can update
-settings. It logs any pending settings, then commits them to live.
+settings-committer can be called to commit any pending settings in the API.
+It logs any pending settings, then commits them to live.
 
+This is typically run during startup as a pre-exec command by any services that depend on settings
+changes from previous services.
 */
 #![deny(rust_2018_idioms)]
 

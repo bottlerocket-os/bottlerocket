@@ -97,15 +97,10 @@ pub fn base64_decode(
     helper: &Helper<'_, '_>,
     _: &Handlebars,
     _: &Context,
-    renderctx: &mut RenderContext<'_>,
+    renderctx: &mut RenderContext<'_, '_>,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
-    // To give context to our errors, get the template name.
-    // In the context of thar-be-settings, all of our templates have
-    // registered names, which means that the get_root_template_name()
-    // call should return an intelligible and valid name.
-    // To protect us in the unlikely event a template was registered
-    // without a name, we return the text "dynamic template"
+    // To give context to our errors, get the template name, if available.
     trace!("Starting base64_decode helper");
     let template_name = renderctx
         .get_root_template_name()
@@ -184,7 +179,7 @@ pub fn join_map(
     helper: &Helper<'_, '_>,
     _: &Handlebars,
     _: &Context,
-    renderctx: &mut RenderContext<'_>,
+    renderctx: &mut RenderContext<'_, '_>,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     trace!("Starting join_map helper");
@@ -347,7 +342,7 @@ pub fn default(
     helper: &Helper<'_, '_>,
     _: &Handlebars,
     _: &Context,
-    renderctx: &mut RenderContext<'_>,
+    renderctx: &mut RenderContext<'_, '_>,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     trace!("Starting default helper");

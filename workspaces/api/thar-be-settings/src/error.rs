@@ -6,7 +6,7 @@ use std::path::PathBuf;
 /// Potential errors during configuration application
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
-pub enum TBSError {
+pub enum Error {
     #[snafu(display("Failed to read changed settings from {}", location))]
     ReadInput {
         location: &'static str,
@@ -42,13 +42,6 @@ pub enum TBSError {
         source: handlebars::RenderError,
     },
 
-    #[snafu(display("Failure to read template '{}' from '{}': {}", name, path.display(), source))]
-    TemplateRegister {
-        name: String,
-        path: PathBuf,
-        source: handlebars::TemplateFileError,
-    },
-
     #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
     APIRequest {
         method: String,
@@ -74,5 +67,11 @@ pub enum TBSError {
         method: &'static str,
         uri: String,
         source: serde_json::Error,
+    },
+
+    #[snafu(display("Error GETing JSON from '{}': {}", uri, source))]
+    GetJson {
+        uri: String,
+        source: schnauzer::Error,
     },
 }
