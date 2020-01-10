@@ -234,7 +234,7 @@ For the instance to be able to communicate with the EKS cluster control plane an
 Run the following command:
 
 ```
-aws ec2 describe-security-groups --filters Name=tag:Name,Values=*thar* \
+aws ec2 describe-security-groups --filters 'Name=tag:Name,Values=*thar*' \
   --query "SecurityGroups[*].{Name:GroupName,ID:GroupId}"
 ```
 
