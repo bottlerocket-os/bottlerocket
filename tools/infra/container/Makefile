@@ -2,13 +2,13 @@ DOCKERFILES = $(filter-out %~,$(wildcard Dockerfile.*))
 NAMES = $(DOCKERFILES:Dockerfile.%=%)
 
 IMAGE_REPO_PREFIX ?= infra/
-IMAGE_NAME ?= $(IMAGE_REPO_PREFIX)$(NAME):$(IMAGE_TAG)
+DEFAULT_IMAGE_TAG = develop
+IMAGE_NAME ?= $(IMAGE_REPO_PREFIX)$(NAME):$(if $(IMAGE_TAG),$(IMAGE_TAG),$(DEFAULT_IMAGE_TAG))
 
 .PHONY: force all release $(NAMES)
 .DEFAULT: all
 force:
 
-all : IMAGE_TAG ?= develop
 all: $(NAMES)
 
 release : IMAGE_TAG ?= latest
