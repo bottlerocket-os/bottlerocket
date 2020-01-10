@@ -172,7 +172,7 @@ The instance we launch needs to be associated with an IAM role that allows for c
 The ARN of the IAM role can be retrieved with:
 
 ```
-eksctl get iamidentitymapping --cluster thar
+eksctl get iamidentitymapping --name thar
 ```
 
 The output should look like this:
