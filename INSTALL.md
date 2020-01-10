@@ -97,15 +97,17 @@ Finally, you'll need [aws-cli](https://aws.amazon.com/cli/) set up to interact w
 
 ## Cluster setup
 
+*Note:* most commands will have a region argument; make sure to change it if you don't want to set up in us-west-2.
+
 You can set up a new cluster like this:
 
 ```
-eksctl create cluster --name thar
+eksctl create cluster --region us-west-2 --name thar
 ```
 
 Now that the cluster is created, we can have `eksctl` create the configuration for `kubectl`:
 ```
-eksctl utils write-kubeconfig --name thar
+eksctl utils write-kubeconfig --region us-west-2 --name thar
 ```
 
 Now we can make a configuration change to use a CNI plugin that's compatible with Thar.
@@ -123,7 +125,7 @@ This section helps you determine some of the cluster information needed later by
 
 Run this to get the API endpoint and base64-encoded certificate authority, which we use in the next step.
 ```
-eksctl get cluster --name thar -o json \
+eksctl get cluster --region us-west-2 --name thar -o json \
    | jq --raw-output '.[] | "Endpoint: " + .Endpoint,"\nCA: " + .CertificateAuthority.Data'
 ```
 
@@ -145,7 +147,7 @@ It will give you a list of the subnets and tell you whether each is public or pr
 
 ```
 aws ec2 describe-subnets \
-   --subnet-ids $(eksctl get cluster --name thar -o json | jq --raw-output '.[].ResourcesVpcConfig.SubnetIds[]') \
+   --subnet-ids $(eksctl get cluster --region us-west-2 --name thar -o json | jq --raw-output '.[].ResourcesVpcConfig.SubnetIds[]') \
    --region us-west-2 \
    --query "Subnets[].[SubnetId, Tags[?Key=='aws:cloudformation:logical-id'].Value]" \
    | xargs -L2
@@ -172,7 +174,7 @@ The instance we launch needs to be associated with an IAM role that allows for c
 The ARN of the IAM role can be retrieved with:
 
 ```
-eksctl get iamidentitymapping --cluster thar
+eksctl get iamidentitymapping --region us-west-2 --name thar
 ```
 
 The output should look like this:
@@ -234,7 +236,7 @@ For the instance to be able to communicate with the EKS cluster control plane an
 Run the following command:
 
 ```
-aws ec2 describe-security-groups --filters Name=tag:Name,Values=*thar* \
+aws ec2 describe-security-groups --filters 'Name=tag:Name,Values=*thar*' \
   --query "SecurityGroups[*].{Name:GroupName,ID:GroupId}"
 ```
 
