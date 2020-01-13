@@ -161,6 +161,7 @@ script = [
 '''
 (cd workspaces && cargo deny check)
 (cd tools/buildsys && cargo deny check)
+(cd extras/sdk-container/license-scan && cargo deny check)
 '''
 ]
 
