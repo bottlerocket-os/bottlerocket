@@ -16,7 +16,7 @@ Name: %{_cross_os}docker-%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
 Summary: Docker engine
-License: ASL 2.0
+License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: docker.service
@@ -24,6 +24,7 @@ Source2: docker.socket
 Source3: docker-sysusers.conf
 Source4: daemon.json
 Source5: docker-tmpfiles.conf
+Source1000: clarify.toml
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
@@ -68,7 +69,12 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/d
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/docker.conf
 
+%cross_generate_attribution
+%cross_scan_attribution --clarify %{S:1000} go-vendor vendor
+
 %files
+%{_cross_attribution_file}
+%{_cross_attribution_vendor_dir}
 %{_cross_bindir}/dockerd
 %{_cross_unitdir}/docker.service
 %{_cross_unitdir}/docker.socket
