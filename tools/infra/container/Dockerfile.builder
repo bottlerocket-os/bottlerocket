@@ -34,3 +34,5 @@ COPY builder/entrypoint.sh /build/entrypoint.sh
 ENTRYPOINT ["/build/entrypoint.sh"]
 
 CMD [ "bash" ]
+
+RUN ln -snfv /build/runtime/bin/sh-dispatcher /bin/sh

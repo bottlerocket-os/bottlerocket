@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+# sh-dispatcher - dispatch to bash or sh based on call
+#
+# sh-dispatcher always execs bash on the first call to it and exports the PID in
+# the environment before exec-ing to use a determining factor of "first call",
+# or, put another way, the "entrypoint call".
+#
+# This shape works well for environments such as CodeBuild as the spec's
+# commands are executed in a new shell process for each command or each section
+# (depending on the buildspec version used or how you interpret the docs).
+# Therefore, the anticipated use of this script is to place at /bin/sh (under
+# the guise of being /bin/sh) to be executed as the script or command "runner"
+# shell.
+#
+# Within the interpretation and execution of the running script, any calls made
+# to run /bin/sh will be redirected to /bin/sh - which is likely what the caller
+# intended. This, however, assumes that there are no interposing processes that
+# clear environment variables or use a fresh environment altogether as this
+# would be clean of the signaling variable set before exec-ing and cause
+# false-negative calls to use bash.
+#
+
+real_bash="$(command -v bash)"
+# Check to see if the call is for the origin shell or for a caller within
+# origin's run.
+if [[ -n "$__INFRA_CONTAINER_SH_PID" ]] && [[ -d "/proc/$__INFRA_CONTAINER_SH_PID" ]]; then
+	exec -a "/bin/sh" "$real_bash" "$@"
+fi
+# Originating call, set the signaling environment variable to dispatch to sh.
+export __INFRA_CONTAINER_SH_PID="$$"
+exec -a "$real_bash" "$real_bash" "$@"
