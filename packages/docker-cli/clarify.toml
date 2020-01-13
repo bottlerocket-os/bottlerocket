@@ -1,0 +1,12 @@
+[clarify."github.com/docker/licensing"]
+expression = "Apache-2.0"
+license-files = [
+    { path = "LICENSE", hash = 0xd2f64213 },
+]
+skip-files = ["license.go", "model/license.go"]
+
+[clarify."github.com/ghodss/yaml"]
+expression = "MIT AND BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xcdf3ae00 },
+]
