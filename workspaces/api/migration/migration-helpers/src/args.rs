@@ -7,7 +7,8 @@ use crate::{MigrationType, Result};
 
 /// Stores user-supplied arguments.
 pub struct Args {
-    pub datastore_path: String,
+    pub source_datastore: String,
+    pub target_datastore: String,
     pub migration_type: MigrationType,
 }
 
@@ -16,7 +17,8 @@ fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
         r"Usage: {}
-            --datastore-path PATH
+            --source-datastore PATH
+            --target-datastore PATH
             ( --forward | --backward )",
         program_name
     );
@@ -32,16 +34,24 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parses user arguments into an Args structure.
 pub(crate) fn parse_args(args: env::Args) -> Result<Args> {
     let mut migration_type = None;
-    let mut datastore_path = None;
+    let mut source_datastore = None;
+    let mut target_datastore = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "--datastore-path" => {
-                datastore_path = Some(
-                    iter.next()
-                        .unwrap_or_else(|| usage_msg("Did not give argument to --datastore-path")),
-                )
+            "--source-datastore" => {
+                source_datastore =
+                    Some(iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --source-datastore")
+                    }))
+            }
+
+            "--target-datastore" => {
+                target_datastore =
+                    Some(iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --target-datastore")
+                    }))
             }
 
             "--forward" => migration_type = Some(MigrationType::Forward),
@@ -52,7 +62,8 @@ pub(crate) fn parse_args(args: env::Args) -> Result<Args> {
     }
 
     Ok(Args {
-        datastore_path: datastore_path.unwrap_or_else(|| usage()),
+        source_datastore: source_datastore.unwrap_or_else(|| usage()),
+        target_datastore: target_datastore.unwrap_or_else(|| usage()),
         migration_type: migration_type.unwrap_or_else(|| usage()),
     })
 }

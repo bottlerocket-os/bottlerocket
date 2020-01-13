@@ -85,11 +85,12 @@ fn validate_migrated_data(_migrated: &MigrationData) -> Result<()> {
 /// normally be parsed from the migration binary's command line.
 pub fn run_migration<D: DataStore>(
     mut migration: impl Migration,
-    datastore: &mut D,
+    source: &D,
+    target: &mut D,
     migration_type: MigrationType,
 ) -> Result<()> {
     for committed in &[Committed::Live, Committed::Pending] {
-        let input = get_input_data(datastore, *committed)?;
+        let input = get_input_data(source, *committed)?;
 
         let migrated = match migration_type {
             MigrationType::Forward => migration.forward(input),
@@ -98,7 +99,7 @@ pub fn run_migration<D: DataStore>(
 
         validate_migrated_data(&migrated)?;
 
-        set_output_data(datastore, &migrated, *committed)?;
+        set_output_data(target, &migrated, *committed)?;
     }
     Ok(())
 }
@@ -121,10 +122,11 @@ impl fmt::Display for MigrationType {
 
 /// This is the primary entry point for migration authors.  When you've implemented the Migration
 /// trait, you should just be able to pass it to this function from your main function and let it
-/// take care of the rest.  The migration runner will pass in the appropriate datastore path and
+/// take care of the rest.  The migration runner will pass in the appropriate datastore paths and
 /// migration type.
 pub fn migrate(migration: impl Migration) -> Result<()> {
     let args = parse_args(env::args())?;
-    let mut datastore = DataStoreImplementation::new(args.datastore_path);
-    run_migration(migration, &mut datastore, args.migration_type)
+    let source = DataStoreImplementation::new(args.source_datastore);
+    let mut target = DataStoreImplementation::new(args.target_datastore);
+    run_migration(migration, &source, &mut target, args.migration_type)
 }
