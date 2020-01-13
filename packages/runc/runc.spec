@@ -13,7 +13,7 @@ Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
 Release: 2.%{shortcommit}%{?dist}
 Summary: CLI for running Open Containers
-License: ASL 2.0
+License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
 BuildRequires: git
@@ -37,7 +37,13 @@ go build -buildmode pie -tags="${BUILDTAGS}" -o bin/runc .
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 bin/runc %{buildroot}%{_cross_bindir}
 
+%cross_generate_attribution
+%cross_scan_attribution go-vendor vendor
+
 %files
+%license LICENSE NOTICE
+%{_cross_attribution_file}
+%{_cross_attribution_vendor_dir}
 %{_cross_bindir}/runc
 
 %changelog
