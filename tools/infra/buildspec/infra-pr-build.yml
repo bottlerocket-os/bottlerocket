@@ -8,4 +8,4 @@ env:
 phases:
   build:
     commands:
-      - make -C "$INFRA_DIR/stacks" --keep-going validate
+      - make -C "$INFRA_DIR/stacks" --keep-going validate check
