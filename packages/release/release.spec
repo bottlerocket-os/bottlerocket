@@ -46,6 +46,7 @@ Requires: %{_cross_os}bork
 Requires: %{_cross_os}moondog
 Requires: %{_cross_os}schnauzer
 Requires: %{_cross_os}netdog
+Requires: %{_cross_os}selinux-policy
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}sundog
 Requires: %{_cross_os}pluto
