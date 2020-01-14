@@ -101,12 +101,8 @@ KEYPAIR_PARAMETER="${KEYPAIR_PARAMETER:-/Prod/ami-build/$KEYPAIR_NAME}"
 
 WORK_DIR="$(mktemp -d -t create-image-ami.XXX)"
 
-# Shim for `logger` to write out to STDERR correctly throughout.
-#
-# shellcheck disable=2032
-logger() {
-    command logger --stderr --no-act "$@"
-}
+# shellcheck source=../lib/lib.bash
+source "${RUNTIME_SCRIPT_LIB:-../lib}/lib.bash"
 
 # Explicitly configured aws-cli for making API calls.
 aws() {
