@@ -5,7 +5,7 @@ use crate::set::{PartitionSet, SetSelect};
 use block_party::BlockDevice;
 use gptman::GPT;
 use hex_literal::hex;
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
@@ -200,20 +200,56 @@ impl State {
         self.set_gptprio(self.inactive(), inactive_flags);
     }
 
+    /// Sets 'tries left' to 1 on the inactive partition to represent a
+    /// potentially valid image, but does not change the priority.
+    /// **does not write to the disk**.
+    pub fn mark_inactive_valid(&mut self) {
+        let mut inactive_flags = self.gptprio(self.inactive());
+        inactive_flags.set_tries_left(1);
+        self.set_gptprio(self.inactive(), inactive_flags);
+    }
+
     /// Sets the inactive partition as a new upgrade partition, but **does not write to the disk**.
     ///
     /// * Sets the inactive partition's priority to 2 and the active partition's priority to 1.
     /// * Sets the inactive partition's tries left to 1.
     /// * Sets the inactive partition as not successfully booted.
-    pub fn upgrade_to_inactive(&mut self) {
+    /// * Returns an error if the partition has not been marked as potentially
+    ///   valid or if it has already been marked for upgrade.
+    pub fn upgrade_to_inactive(&mut self) -> Result<(), Error> {
         let mut inactive_flags = self.gptprio(self.inactive());
+        ensure!(
+            inactive_flags.priority() == 0 && !inactive_flags.successful(),
+            error::InactiveAlreadyMarked {
+                inactive: &self.os_disk
+            }
+        );
+        ensure!(
+            inactive_flags.tries_left() > 0,
+            error::InactiveNotValid {
+                inactive: &self.os_disk
+            }
+        );
+
         inactive_flags.set_priority(2);
-        inactive_flags.set_tries_left(1);
         inactive_flags.set_successful(false);
         self.set_gptprio(self.inactive(), inactive_flags);
 
         let mut active_flags = self.gptprio(self.active());
         active_flags.set_priority(1);
+        self.set_gptprio(self.active(), active_flags);
+        Ok(())
+    }
+
+    /// Reverts upgrade_to_inactive(), but **does not write to the disk**.
+    ///
+    /// * Clears all bits of the inactive partition.
+    /// * Restores the active partition's priority to 2
+    pub fn cancel_upgrade(&mut self) {
+        self.clear_inactive();
+
+        let mut active_flags = self.gptprio(self.active());
+        active_flags.set_priority(2);
         self.set_gptprio(self.active(), active_flags);
     }
 
