@@ -10,7 +10,7 @@
 FROM amazonlinux:2 as base
 RUN yum update -y \
 	&& yum groupinstall -y 'Development Tools' \
-	&& yum install -y socat procps-ng awscli jq openssh rsync \
+	&& yum install -y socat procps-ng awscli jq openssh rsync systemd-devel \
 	&& amazon-linux-extras enable docker \
 	&& yum install -y docker amazon-ecr-credential-helper \
 	&& yum clean all \
