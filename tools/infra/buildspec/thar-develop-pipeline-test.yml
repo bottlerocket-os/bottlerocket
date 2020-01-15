@@ -1,21 +1,9 @@
 version: 0.2
 
-env:
-  variables:
-    # Path to infra tooling directory.
-    INFRA_DIR: "./tools/infra"
-
 phases:
-  install:
-    runtime-versions:
-      docker: 18
-    commands:
-      - . "${INFRA_DIR}/env/lib/environment-setup"
-      - . setup-rust-builder
-      # TODO: rely on libsystemd in build container instead, see #545
-      - apt install -y libsystemd-dev
   pre_build:
     commands:
+      - start-build-environment
       - environment-report
       - write-build-meta
   build:
