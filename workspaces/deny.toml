@@ -32,6 +32,7 @@ skip = [
     { name = "block-party", licenses = [] },
     { name = "bork", licenses = [] },
     { name = "borkseed-migration", licenses = [] },
+    { name = "containerd-config-path", licenses = [] },
     { name = "data_store_version", licenses = [] },
     { name = "growpart", licenses = [] },
     { name = "host-containers", licenses = [] },
