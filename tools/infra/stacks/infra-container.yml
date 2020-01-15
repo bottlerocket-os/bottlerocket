@@ -1,4 +1,4 @@
-# stack: infra-container
+# stack-name: infra-container
 
 AWSTemplateFormatVersion: "2010-09-09"
 
