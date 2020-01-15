@@ -1,10 +1,5 @@
 version: 0.2
 
-env:
-  variables:
-    # Path to infra tooling directory.
-    INFRA_DIR: "./tools/infra"
-
 phases:
   pre_build:
     commands:
