@@ -24,7 +24,7 @@ write_codebuild() {
     echo "${CODEBUILD_BUILD_ARN}" > build-codebuild-arn
 }
 
-if ! mkdir -p "build/meta" && cd "build/meta"; then
+if ! { mkdir -p "build/meta" && cd "build/meta"; }; then
     logger -s -t ERROR "could not create build/meta directory for writing"
     exit 1
 fi
