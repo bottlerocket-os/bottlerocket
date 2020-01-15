@@ -1,3 +1,6 @@
+# stack-name: infra-pr-build
+# stack-require: infra-container
+
 Parameters:
   BuildSpecPath:
     Type: String
@@ -12,6 +15,28 @@ Parameters:
     Description: >-
       The GitHub repository that builds run for. Your account must be authorized
       to modify this repository's settings.
+  EnvironmentImageName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /infra/container/infra/builder
+    Description: >-
+      Parameter that defines the image name the builder uses as its execution
+      environment *without* a tag (eg: registry/image-name, not
+      registry/image-name:tag). The EnvironmentImageTag Parameter provides the
+      appropriate tag separately.
+  EnvironmentImageTag:
+    Type: String
+    Default: latest
+    Description: >-
+      The image 'tag' (as in registry/image-name:tag) to select of the EnvironmentImage
+      provided.
+  ImageCredentialsType:
+    Type: String
+    Default: CODEBUILD
+    AllowedValues: [ CODEBUILD, SERVICE_ROLE ]
+    Description: >-
+      If image policy does not trust codebuild.amazonaws.com OR cross-account
+      role is needed, then the SERVICE_ROLE must be specified to use the role
+      assigned to the build project.
 
 Resources:
   BuildArtifactBucket:
@@ -41,40 +66,38 @@ Resources:
   BuildRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
-      Roles:
-        - Ref: BuildRole
       PolicyName: BuildRolePolicy
+      Roles:
+        - !Ref BuildRole
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
           # For validation API usage performed on templates during build.
-          - Action:
-              - cloudformation:ValidateTemplate
+          - Sid: "validateCfnTemplates"
             Effect: Allow
+            Action:
+              - cloudformation:ValidateTemplate
+            Resource: "*"
           # For managing cache, logs, and artifacts in the build's buckets.
-          - Action:
+          - Sid: "manageBuildArtifacts"
+            Effect: Allow
+            Action:
               - s3:GetObject*
               - s3:GetBucket*
               - s3:List*
               - s3:PutObject*
               - s3:Abort*
-            Effect: Allow
             Resource:
               - !GetAtt BuildArtifactBucket.Arn
-              - Fn::Join:
-                  - ""
-                  - - !GetAtt BuildArtifactBucket.Arn
-                    - /*
+              - !Sub "${BuildArtifactBucket.Arn}/*"
               - !GetAtt BuildLogBucket.Arn
-              - Fn::Join:
-                  - ""
-                  - - !GetAtt BuildLogBucket.Arn
-                    - /*
+              - !Sub "${BuildLogBucket.Arn}/*"
           # For writing to CloudWatch Logs Streams for each build.
-          - Action:
+          - Sid: "manageBuildLogs"
+            Effect: Allow
+            Action:
               - logs:CreateLogStream
               - logs:PutLogEvents
-            Effect: Allow
             Resource:
               - !GetAtt BuildLogGroup.Arn
 
@@ -86,14 +109,19 @@ Resources:
       - BuildLogGroup
       - BuildRole
     Properties:
+      Artifacts:
+        Location: !Ref BuildArtifactBucket
+        Name: /
+        NamespaceType: BUILD_ID
+        Packaging: NONE
+        Path: artifact/
+        Type: S3
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:2.0
         Type: LINUX_CONTAINER
-      ServiceRole:
-        Fn::GetAtt:
-          - BuildRole
-          - Arn
+        Image: !Sub "${EnvironmentImageName}:${EnvironmentImageTag}"
+        ImagePullCredentialsType: !Ref ImageCredentialsType
+      ServiceRole: !GetAtt BuildRole.Arn
       Source:
         BuildSpec: !Ref BuildSpecPath
         Location: !Ref SourceGitHubRepositoryURL
@@ -102,11 +130,7 @@ Resources:
       LogsConfig:
         S3Logs:
           Status: ENABLED
-          Location:
-            Fn::Join:
-              - "/"
-              - - !GetAtt BuildArtifactBucket.Arn
-                - "codebuild/log"
+          Location: !Sub "${BuildArtifactBucket.Arn}/codebuild/log"
         CloudWatchLogs:
           Status: ENABLED
           GroupName: !Ref BuildLogGroup

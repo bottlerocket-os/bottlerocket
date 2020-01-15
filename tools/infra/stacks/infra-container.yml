@@ -1,0 +1,163 @@
+# stack-name: infra-container
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Infra's container images ECR repositories used in release automation.
+
+Parameters:
+  SSMPathNamespace:
+    Type: String
+    Default: /infra/container
+    AllowedPattern: '^/.*[^/]$'
+    Description: >
+      Namespace under which SSM Parameters will be created for container images (should start but *not* end with '/')
+
+Resources:
+  SDKx8664Repo:
+    Type: AWS::ECR::Repository
+    Metadata:
+      Source: extras/sdk-container
+    Properties:
+      RepositoryName: thar/sdk-x86_64
+
+  SDKx8664Parameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${SSMPathNamespace}/${SDKx8664Repo}"
+      Type: String
+      Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${SDKx8664Repo}"
+
+  SDKaarch64Repo:
+    Type: AWS::ECR::Repository
+    Metadata:
+      Source: extras/sdk-container
+    Properties:
+      RepositoryName: thar/sdk-aarch64
+
+  SDKaarch64Parameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${SSMPathNamespace}/${SDKaarch64Repo}"
+      Type: String
+      Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${SDKaarch64Repo}"
+
+  BuilderRepo:
+    Type: AWS::ECR::Repository
+    Metadata:
+      Source: tools/infra/container/Dockerfile.builder
+    Properties:
+      RepositoryName: infra/builder
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "codeBuildPull"
+            Effect: Allow
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action:
+               - "ecr:GetDownloadUrlForLayer"
+               - "ecr:BatchGetImage"
+               - "ecr:BatchCheckLayerAvailability"
+
+  BuilderParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${SSMPathNamespace}/${BuilderRepo}"
+      Type: String
+      Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BuilderRepo}"
+
+  SigningRepo:
+    Type: AWS::ECR::Repository
+    Metadata:
+      Source: tools/infra/container/Dockerfile.signing
+    Properties:
+      RepositoryName: infra/signing
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "codeBuildPull"
+            Effect: Allow
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action:
+               - "ecr:GetDownloadUrlForLayer"
+               - "ecr:BatchGetImage"
+               - "ecr:BatchCheckLayerAvailability"
+
+  SigningParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "${SSMPathNamespace}/${SigningRepo}"
+      Type: String
+      Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${SigningRepo}"
+
+  PullPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: pull
+      Path: !Sub "/${AWS::StackName}/"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: "imagePull"
+            Effect: Allow
+            Resource:
+              - !GetAtt BuilderRepo.Arn
+              - !GetAtt SigningRepo.Arn
+              - !GetAtt SDKx8664Repo.Arn
+              - !GetAtt SDKaarch64Repo.Arn
+            Action:
+              - "ecr:GetAuthorizationToken"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:ListImages"
+              - "ecr:DescribeImages"
+              - "ecr:BatchGetImage"
+              - "ecr:ListTagsForResource"
+          - Sid: "imageResolve"
+            Effect: Allow
+            Resource:
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/*"
+            Action:
+              - "ssm:GetParameter"
+              - "ssm:GetParameters"
+              - "ssm:GetParametersByPath"
+              - "ssm:DescribeParameters"
+
+  PushPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: push
+      Path: !Sub "/${AWS::StackName}/"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: "imagePush"
+            Effect: Allow
+            Resource:
+              - !GetAtt BuilderRepo.Arn
+              - !GetAtt SigningRepo.Arn
+              - !GetAtt SDKx8664Repo.Arn
+              - !GetAtt SDKaarch64Repo.Arn
+            Action:
+              - "ecr:GetAuthorizationToken"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:DescribeImages"
+              - "ecr:BatchGetImage"
+              - "ecr:ListTagsForResource"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:UploadLayerPart"
+              - "ecr:CompleteLayerUpload"
+              - "ecr:PutImage"
+
+Outputs:
+  PullPolicy:
+    Export:
+      Name: !Sub "${AWS::StackName}-pull-policy"
+    Value: !Ref PullPolicy
+  PushPolicy:
+    Export:
+      Name: !Sub "${AWS::StackName}-push-policy"
+    Value: !Ref PushPolicy

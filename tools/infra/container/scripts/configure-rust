@@ -1,14 +1,14 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #
-# setup-rust-builder - install rust and configure shell for its use by a builder
-#
-# This script is expected to be sourced by callers in order to affect their PATH
-# directly AND is used in CodeBuild environments where the SHELL is /bin/sh.
+# confgure-rust - configure container environment for rust usage
 #
 # usage:
 #
-#   . setup-rust-builder
+#   configure-rust
 #
+
+# shellcheck source=../runtime/lib/lib.bash
+source "$RUNTIME_SCRIPT_LIB/lib.bash"
 
 configure_color_output() {
     # Prepare Cargo for build and CI usage
@@ -42,37 +42,5 @@ configure_color_output() {
     unset cargo_make_config
 }
 
-cargo_dep() {
-    cargo_install_package="$@"
-    logger -s -t INFO "installing cargo dep with 'cargo install $cargo_install_package'"
-    if ! cargo install --force $cargo_install_package; then
-        logger -s -t ERROR "failed to install dep with 'cargo install $cargo_install_package'"
-        exit 1
-    fi
-}
-
-install_rust_toolchain() {
-    test -f rustup-init.sh || rm -f rustup-init.sh
-    if ! curl -o rustup-init.sh --proto '=https' --tlsv1.2 -sS "https://sh.rustup.rs"; then
-        logger -s -t ERROR "could not fetch rustup, needed for managing rust toolchain"
-        exit 1
-    fi
-    if ! bash rustup-init.sh -y --no-modify-path --default-toolchain stable ; then
-        logger -s -t ERROR "could not setup rustup & rust toolchain for build"
-        exit 1
-    fi
-    rm -f rustup-init.sh
-}
-
 configure_color_output
-
-install_rust_toolchain
-
-# Install build tooling dependencies
-cargo_dep --version 0.23.0 cargo-make
-cargo_dep --version 0.2.6  cargo-deny
-
-unset -f configure_color_output
-unset -f install_rust_toolchain
-unset -f cargo_dep
 

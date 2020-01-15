@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 DOCS=(START.md README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md)
 EXTRAS=(extras/dogswatch/{dogswatch,dev/deployment}.yaml)
 

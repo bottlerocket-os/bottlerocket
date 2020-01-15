@@ -1,31 +1,21 @@
 version: 0.2
 
-env:
-  variables:
-    # Path to infra tooling directory.
-    INFRA_DIR: "./tools/infra"
-
 phases:
-  install:
-    runtime-versions:
-      docker: 18
-    commands:
-      - . "${INFRA_DIR}/env/lib/environment-setup"
-      - . setup-rust-builder
   pre_build:
     commands:
+      - start-build-environment
       - environment-report
       - write-build-meta
   build:
     commands:
-      # Retry fetches a few times before failing
-      - retry 2 'fetch dependencies' -- cargo make fetch
       - cargo make world
 
 artifacts:
   base-directory: 'build/'
   files:
     - '*.img*'
+    - '*.ext4*'
+    - '*.verity*'
   secondary-artifacts:
     meta:
       base-directory: 'build/meta'

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# start-build-environment - Setup the build environment & start supporting services
+#
+# Intended primarily for use in the builder container image, the
+# start-build-environment provides a single call setup for the common use cases
+# in the context of builds.
+#
+# usage:
+#
+#    start-build-environment
+#
+set -xe
+# Ensure we have a logging facility (or stubbed service)
+start-log-listener
+# Ensure the docker daemon is running.
+start-docker-daemon
