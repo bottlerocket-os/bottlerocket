@@ -49,3 +49,9 @@ logger() {
 
     return 0
 }
+
+# has_command returns true for present commands
+has_command() {
+    local name="${1:?has_command requires a name to check}"
+    command -v "$name" &>/dev/null
+}
