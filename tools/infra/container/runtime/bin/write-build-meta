@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 #
-# write-build-meta - collect and write out build job details
+# write-build-meta - collect and write out build job & environment details
 #
-has_command() { type "$1" &>/dev/null; }
+
+# shellcheck source=../lib/lib.bash
+source "${RUNTIME_SCRIPT_LIB:-../lib}/lib.bash"
 
 write_common() {
     echo "${USER}" > build-user
@@ -24,10 +26,13 @@ write_codebuild() {
     echo "${CODEBUILD_BUILD_ARN}" > build-codebuild-arn
 }
 
-if ! { mkdir -p "build/meta" && cd "build/meta"; }; then
-    logger -s -t ERROR "could not create build/meta directory for writing"
+if ! mkdir -p "build/meta"; then
+    logger -t ERROR "could not create build/meta directory for writing"
     exit 1
 fi
+cd build/meta
+
+# Write build environment information to disk
 
 write_common
 
@@ -36,7 +41,7 @@ if [[ -n "${CODEBUILD_BUILD_ID}" ]]; then
 fi
 
 if [[ ! -s "build-service" ]]; then
-    logger -s -t WARN "unknown service, cannot write out CI build metadata"
+    logger -t WARN "unknown service, cannot write out CI build metadata"
     echo "unknown" > build-service
     exit 0
 fi
