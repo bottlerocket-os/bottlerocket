@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+# sign-tuf-repo - wrapper for the Rust binary that signs a tuf repo
+#
+# usage:
+#
+#   sign-tuf-repo
+#
+
+# shellcheck source=../lib/lib.bash
+source "${RUNTIME_SCRIPT_LIB:-../lib}/lib.bash"
+
+# $INPUT_BUILDSYS_ARTIFACTS_VAR comes from CodePipelines and is a reference to a
+# CODEBUILD provided variable that points to artifacts. We remap them in
+# order to remove references to CodeBuild.
+if [[ -z "${INPUT_BUILDSYS_ARTIFACTS}" ]] && [[ -n "${INPUT_BUILDSYS_ARTIFACTS_VAR}" ]]; then
+    export INPUT_BUILDSYS_ARTIFACTS="${!INPUT_BUILDSYS_ARTIFACTS_VAR}"
+fi
+
+if [[ -z "${INPUT_BUILDSYS_ARTIFACTS}" ]]; then
+    logger -t ERROR "unable to resolve expected environment variable 'INPUT_BUILDSYS_ARTIFACTS'"
+    exit 1
+fi
+
+if [[ -d "${INPUT_BUILDSYS_ARTIFACTS}" ]]; then
+    logger -t ERROR "provided path to artifacts is not present (provided: ${INPUT_BUILDSYS_ARTIFACTS})"
+    exit 1
+fi
+
+
+if !update_sign_tuf_repo; then
+    logger -t ERROR "signing failed"
+    exit 1
+fi
