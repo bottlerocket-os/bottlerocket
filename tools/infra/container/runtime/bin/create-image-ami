@@ -154,11 +154,11 @@ trap "cleanup" EXIT
 mkdir -p "$WORK_DIR"
 
 if ! [[ -s "$BUILD_IMAGE_ROOT" ]]; then
-    logger -t ERROR "missing root disk image"
+    logger -t ERROR "no root disk image at specified path: $BUILD_IMAGE_ROOT"
     exit 1
 fi
 if ! [[ -s "$BUILD_IMAGE_DATA" ]]; then
-    logger -t ERROR "missing data disk image"
+    logger -t ERROR "no data disk image at specified path: $BUILD_IMAGE_DATA"
     exit 1
 fi
 
