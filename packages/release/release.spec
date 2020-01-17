@@ -75,7 +75,7 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
 cat >%{buildroot}%{_cross_libdir}/os-release <<EOF
 NAME=Thar
-PRETTY_NAME="Thar, The Operating System"
+PRETTY_NAME="Thar, The Operating System (%{version})"
 ID=thar
 VERSION_ID=%{version}
 EOF
