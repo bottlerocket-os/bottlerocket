@@ -1,3 +1,78 @@
+# v0.2.1 (2020-01-20)
+
+## OS changes
+
+* Make `signpost` usage clearer to avoid updating into empty partition ([#444]).
+* Fix handling of wave bounds in `updog` that could result in seeing an update but not accepting it ([#539]).
+* Add support for query parameters in repo requests to allow for basic telemetry ([#542]).
+* Enable support for SELinux in OS packages (not yet enforcing) ([#579]).
+* Make grub reboot when config or kernel loading fails so it can try other partition sets ([#585]).
+* Add support for image "variants" with separate API models ([#578], [#588], [#589], [#591], [#597], [#613], [#625], [#626], [#627], [#653]).
+  The default variant is "aws-k8s" for Kubernetes usage, and an "aws-dev" variant can be built that has a local Docker daemon and debug tools.
+* Remove unused cri-tools package ([#602]).
+* Update Linux kernel to 4.19.75-28.73.amzn2 ([#622]).
+* Make containerd.service stop containerd-shims to fix shutdown/reboot delay ([#652]).
+* Ensure `updog` only removes known extensions from migration filenames ([#662]).
+* Add OS version to "pretty name" so it's visible in console log ([#663]).
+
+## Documentation changes
+
+* Reorganize "getting started" documentation for clarity ([#581]).
+* Fix formatting of kube-proxy options in install guide ([#584]).
+* Specify compatible cargo-deny version in install guide ([#631]).
+* Fix typos and improve clarity of install guide ([#639]).
+
+## Build changes
+
+* Add scripts to ease Kubernetes conformance testing through Sonobuoy ([#530]).
+* Add release metadata file to be used in future automation ([#556], [#594]).
+* Update dependencies of third-party packages in base OS ([#595]).
+* Update dependencies of Rust packages ([#598]).
+* Update SDK container to include Rust 1.40.0, GCC 9.2, and other small fixes ([#603], [#628]).
+* Fix aarch64 build failure for libcap ([#621]).
+* Add initial container definitions and scripts for CI process ([#619], [#624], [#633], [#646], [#647], [#651], [#654], [#658]).
+
+[#444]: ../../pull/444
+[#530]: ../../pull/530
+[#539]: ../../pull/539
+[#542]: ../../pull/542
+[#556]: ../../pull/556
+[#578]: ../../pull/578
+[#579]: ../../pull/579
+[#581]: ../../pull/581
+[#584]: ../../pull/584
+[#585]: ../../pull/585
+[#588]: ../../pull/588
+[#589]: ../../pull/589
+[#591]: ../../pull/591
+[#594]: ../../pull/594
+[#595]: ../../pull/595
+[#597]: ../../pull/597
+[#598]: ../../pull/598
+[#602]: ../../pull/602
+[#603]: ../../pull/603
+[#613]: ../../pull/613
+[#619]: ../../pull/619
+[#621]: ../../pull/621
+[#622]: ../../pull/622
+[#624]: ../../pull/624
+[#625]: ../../pull/625
+[#626]: ../../pull/626
+[#627]: ../../pull/627
+[#628]: ../../pull/628
+[#631]: ../../pull/631
+[#633]: ../../pull/633
+[#639]: ../../pull/639
+[#646]: ../../pull/646
+[#647]: ../../pull/647
+[#651]: ../../pull/651
+[#652]: ../../pull/652
+[#653]: ../../pull/653
+[#654]: ../../pull/654
+[#658]: ../../pull/658
+[#662]: ../../pull/662
+[#663]: ../../pull/663
+
 # v0.2.0 (2019-12-09)
 
 ## Breaking changes
