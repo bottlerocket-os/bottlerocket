@@ -212,6 +212,8 @@ fn write_target_to_disk<P: AsRef<Path>>(
         .read_target(target)
         .context(error::Metadata)?
         .context(error::TargetNotFound { target })?;
+    // Note: the file extension for the compression type we're using should be removed in
+    // retrieve_migrations below.
     let mut reader = lz4::Decoder::new(reader).context(error::Lz4Decode { target })?;
     let mut f = OpenOptions::new()
         .write(true)
@@ -300,10 +302,12 @@ fn retrieve_migrations(
     }
 
     // download each migration, making sure they are executable and removing
-    // any extension (eg, .lz4)
+    // known extensions from our compression, e.g. .lz4
     for name in migration_targets(*start, *target, &manifest)? {
         let mut destination = dir.join(&name);
-        destination.set_extension("");
+        if destination.extension() == Some("lz4".as_ref()) {
+            destination.set_extension("");
+        }
         write_target_to_disk(repository, &name, &destination)?;
         fs::set_permissions(&destination, Permissions::from_mode(0o755))
             .context(error::SetPermissions { path: destination })?;
