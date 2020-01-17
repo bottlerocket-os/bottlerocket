@@ -11,7 +11,8 @@ Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
 Summary: Container cluster management
-License: ASL 2.0
+# base Apache-2.0, third_party Apache-2.0 AND BSD-3-Clause
+License: Apache-2.0 AND BSD-3-Clause
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: kubelet.service
@@ -19,6 +20,7 @@ Source2: kubelet-env
 Source3: kubelet-config
 Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
+Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
 Patch3: 0003-enable-PIE-for-platform-binaries.patch
@@ -32,7 +34,6 @@ BuildRequires: %{_cross_os}glibc-devel
 
 %package -n %{_cross_os}kubelet
 Summary: Container cluster node agent
-License: ASL 2.0
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}findutils
@@ -43,6 +44,15 @@ Requires: %{_cross_os}findutils
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
 %cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
+
+# third_party licenses
+# multiarch/qemu-user-static ignored, we're not using it
+cp third_party/forked/gonum/graph/LICENSE LICENSE.gonum.graph
+cp third_party/forked/shell2junit/LICENSE LICENSE.shell2junit
+cp third_party/forked/golang/LICENSE LICENSE.golang
+cp third_party/forked/golang/PATENTS PATENTS.golang
+cp third_party/go-srcimporter/LICENSE LICENSE.go-srcimporter
+cp third_party/intemp/LICENSE LICENSE.intemp
 
 %build
 %cross_go_configure %{goimport}
@@ -63,7 +73,13 @@ install -m 0644 %{S:3} %{buildroot}%{_cross_templatedir}/kubelet-config
 install -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/kubelet-kubeconfig
 install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 
+%cross_generate_attribution
+%cross_scan_attribution --clarify %{S:1000} go-vendor vendor
+
 %files -n %{_cross_os}kubelet
+%license LICENSE LICENSE.gonum.graph LICENSE.shell2junit LICENSE.golang PATENTS.golang LICENSE.go-srcimporter LICENSE.intemp
+%{_cross_attribution_file}
+%{_cross_attribution_vendor_dir}
 %{_cross_bindir}/kubelet
 %{_cross_unitdir}/kubelet.service
 %dir %{_cross_templatedir}

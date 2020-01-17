@@ -182,6 +182,9 @@ CROSS_COMPILATION_CONF_EOF\
   mkdir -p %{buildroot}%{_licensedir}/%{name} \
   echo "%{name} - %{url}" >> %{buildroot}%{_cross_attribution_file} \
   echo "SPDX-License-Identifier: %{license}" >> %{buildroot}%{_cross_attribution_file}
+%_cross_attribution_vendor_dir %{_licensedir}/%{name}/vendor
+%cross_scan_attribution \
+  thar-license-scan --spdx-data /usr/libexec/tools/spdx-data --out-dir %{buildroot}%{_cross_attribution_vendor_dir}
 
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy

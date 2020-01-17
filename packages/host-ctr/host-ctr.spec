@@ -37,7 +37,12 @@ install -p -m 0644 %{S:11} %{buildroot}%{_cross_tmpfilesdir}/host-containerd.con
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd
 install -p -m 0644 %{S:12} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
 
+#%%cross_generate_attribution FIXME
+%cross_scan_attribution go-vendor vendor
+
 %files
+#%%{_cross_attribution_file} FIXME
+%{_cross_attribution_vendor_dir}
 %{_cross_bindir}/host-ctr
 %{_cross_unitdir}/host-containerd.service
 %{_cross_tmpfilesdir}/host-containerd.conf

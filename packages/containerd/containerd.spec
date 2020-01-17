@@ -11,13 +11,14 @@ Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
 Summary: An industry-standard container runtime
-License: ASL 2.0
+License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: containerd.service
 Source2: containerd-config-toml_aws-k8s
 Source3: containerd-config-toml_aws-dev
 Source4: containerd-tmpfiles.conf
+Source1000: clarify.toml
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
@@ -69,7 +70,13 @@ install -p -m 0644 %{S:2} %{S:3} %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:4} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 
+%cross_generate_attribution
+%cross_scan_attribution --clarify %{S:1000} go-vendor vendor
+
 %files
+%license LICENSE NOTICE
+%{_cross_attribution_file}
+%{_cross_attribution_vendor_dir}
 %{_cross_bindir}/containerd
 %{_cross_bindir}/containerd-shim
 %{_cross_bindir}/containerd-shim-runc-v1

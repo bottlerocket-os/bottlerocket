@@ -1,0 +1,5 @@
+[clarify."github.com/sean-/seed"]
+expression = "MIT AND BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xd5734f17 },
+]

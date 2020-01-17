@@ -11,9 +11,10 @@ Name: %{_cross_os}docker-%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
 Summary: Docker CLI
-License: ASL 2.0
+License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
+Source1000: clarify.toml
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 
@@ -33,7 +34,13 @@ go build -buildmode pie -tags="${BUILDTAGS}" -o docker %{goimport}/cmd/docker
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 docker %{buildroot}%{_cross_bindir}
 
+%cross_generate_attribution
+%cross_scan_attribution --clarify %{S:1000} go-vendor vendor
+
 %files
+%license LICENSE NOTICE
+%{_cross_attribution_file}
+%{_cross_attribution_vendor_dir}
 %{_cross_bindir}/docker
 
 %changelog
