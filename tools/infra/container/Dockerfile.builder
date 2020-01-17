@@ -24,6 +24,8 @@ ENV CARGO_HOME="/build/.cargo"
 ENV RUNTIME_SCRIPT_LIB="/build/runtime/lib"
 COPY tools/infra/container/scripts /build/scripts
 COPY tools/infra/container/runtime /build/runtime
+# FIXME: remove depedency on top level source - #656
+COPY bin/amiize.sh /build/runtime/bin/amiize.sh
 RUN install-rust && configure-rust && install-crates
 
 FROM buildenv as signing-tool
