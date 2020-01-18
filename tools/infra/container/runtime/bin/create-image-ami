@@ -88,7 +88,7 @@ BUILD_AMI_NAME="${BUILD_AMI_NAME:-thar-${BUILD_ARCH}-${ami_suffix}}"
 BUILD_IMAGE_ROOT="${BUILD_IMAGE_ROOT:-build/thar-$BUILD_ARCH-${BUILDSYS_VARIANT}.img.lz4}"
 # BUILD_IMAGE_DATA may be specified to provide a specific data disk
 # image to write out.
-BUILD_IMAGE_DATA="${BUILD_IMAGE_ROOT:-build/thar-$BUILD_ARCH-${BUILDSYS_VARIANT}-data.img.lz4}"
+BUILD_IMAGE_DATA="${BUILD_IMAGE_DATA:-build/thar-$BUILD_ARCH-${BUILDSYS_VARIANT}-data.img.lz4}"
 # EC2 Key Pair used to spin up and access instance for AMIizing disk
 # images. These are created automatically if the build task is
 # configured with access to the SSM, EC2, and KMS resources involved.
@@ -148,6 +148,11 @@ cleanup() {
         rm -rf -- "$WORK_DIR"
     fi
 }
+
+if ! hash amiize.sh ensure-key-pair aws ssh ssh-agent ssh-add; then
+    logger -t ERROR "some required commands are not available"
+    exit 1
+fi
 
 trap "cleanup" EXIT
 
