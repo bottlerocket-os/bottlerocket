@@ -25,7 +25,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Join [ ',' , [!Ref AllowedAccountIds]]
+              AWS: !Ref AllowedAccountIds
             Action:
               - 'sts:AssumeRole'
       Policies:
