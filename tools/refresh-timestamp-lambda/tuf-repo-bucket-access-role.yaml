@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ''
+Parameters:
+  LambdaAccountId:
+    Description: 'The AWS account where the lambda that needs access to the TUF repository bucket'
+    Type: String
+  TUFBucketRepoName:
+    Description: 'Name of the TUF repository S3 bucket'
+    Default: 'thar-be-updates-in-us-west-2'
+    Type: String
+Resources:
+  TufRepositoryBucketAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: 'Role allowing access to the TUF repository S3 bucket'
+      Path: !Sub '/${AWS::StackName}/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub '${LambdaAccountId}'
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'TufRepositoryAccess'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${TUFBucketRepoName}/*/timestamp.json'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${TUFBucketRepoName}/*/*.root.json'
+Outputs:
+  Role:
+    Description: 'The ARN of the TUF repository bucket access role'
+    Value: !GetAtt TufRepositoryBucketAccessRole.Arn

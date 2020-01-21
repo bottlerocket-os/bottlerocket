@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Lambda Function for refreshing TUF repository timestamp metadata'
+Parameters:
+  SigningRole:
+    Description: 'The ARN of the role that allows access to the signing keys'
+    Type: String
+  SigningKeyParameterName:
+    Description: 'Name of the SSM parameter for the signing key'
+    Type: String
+  LambdaBucketName:
+    Description: 'The name of the S3 bucket where the lambda code lives'
+    Type: String
+  LambdaZipKey:
+    Description: 'The key of the lambda zip file within the lambda bucket'
+    Type: String
+    Default: 'refresh_timestamp_lambda.zip'
+  BucketAccessRole:
+    Description: 'The ARN of the role that allows access to the TUF repository S3 bucket'
+    Type: String
+  TUFRepoBucketName:
+    Description: 'The name of the TUF repository S3 bucket'
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    Type: String
+  MetadataPath:
+    Description: 'The path where to find metadata files in the TUF repo S3 bucket (e.g. "0af132ea221/metadata")'
+    Type: String
+  RefreshFrequencyDays:
+    Description: 'Defines how often to run the refresh lambda (in days).'
+    MinValue: 1
+    MaxValue: 10
+    Type: Number
+  RefreshValidityDays:
+    Description: 'How many days to refresh the timestamp metadata for.'
+    MinValue: 1
+    MaxValue: 10
+    Default: 7
+    Type: Number
+  MetadataBaseUrl:
+    Type: String
+    Description: 'Metadata base url that specifies the TUF repository metadata files source.'
+  TargetBaseUrl:
+    Type: String
+    Description: 'Target base url that specifies where the listed targets in the TUF repository can be retrieved.'
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: 'AssumeSigningRole'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Sub '${SigningRole}'
+        - PolicyName: 'AssumeBucketAccessRole'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Sub '${BucketAccessRole}'
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Refreshes TUF repository timestamp.json
+      Handler: hello.handler
+      Runtime: provided
+      Role: !GetAtt 'LambdaRole.Arn'
+      Timeout: 300
+      Code:
+        S3Bucket: !Sub '${LambdaBucketName}'
+        S3Key: !Sub '${LambdaZipKey}'
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub '${TUFRepoBucketName}'
+          SIGNING_ROLE_ARN: !Sub '${SigningRole}'
+          BUCKET_ACCESS_ROLE_ARN: !Sub '${BucketAccessRole}'
+          KEY_PARAMETER_NAME: !Sub '${SigningKeyParameterName}'
+          METADATA_PATH: !Sub '${MetadataPath}'
+          REFRESH_VALIDITY_DAYS: !Sub '${RefreshValidityDays}'
+          METADATA_URL: !Sub '${MetadataBaseUrl}'
+          TARGETS_URL: !Sub '${TargetBaseUrl}'
+  LambdaFunctionSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Schedules the refresh lambda
+      Name: refresh-timestamp-lambda-schedule
+      ScheduleExpression: !Sub 'cron(0 0 */${RefreshFrequencyDays} * ? *)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt 'LambdaFunction.Arn'
+          Id: refresh-timestamp-lambda
+  LambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt 'LambdaFunction.Arn'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt 'LambdaFunctionSchedule.Arn'
