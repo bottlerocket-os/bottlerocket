@@ -55,6 +55,7 @@ members = [
     "readline",
     "release",
     "runc",
+    "selinux-policy",
     "socat",
     "strace",
     "systemd",

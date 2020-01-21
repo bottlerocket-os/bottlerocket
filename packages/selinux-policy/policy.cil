@@ -1,0 +1,112 @@
+; Permit any action that is not defined by the policy.
+(handleunknown allow)
+
+; Define the set of all subject and object types, to allow certain
+; actions to be whitelisted or blacklisted for everything.
+(typeattribute global)
+(typeattributeset global ((all_s) (all_o)))
+
+; All subjects are allowed to use the label they already have.
+(allow all_s self (processes (transform)))
+
+; All subjects are allowed to read and execute all files.
+(allow all_s global (files (load)))
+
+; PID 1 starts as "kernel_t" and becomes "init_t".
+(typetransition kernel_t init_exec_t process init_t)
+(allow kernel_t init_t (processes (transform)))
+(allow init_t init_exec_t (file (entrypoint)))
+
+; PID 1 starts most daemons as "system_t".
+(typetransition init_t os_t process system_t)
+(allow init_t system_t (processes (transform)))
+(allow system_t os_t (file (entrypoint)))
+
+; PID 1 starts container runtimes as "runtime_t".
+; The level range is adjusted to span all categories at the same time,
+; to support Docker's use of MCS labels.
+(typetransition init_t runtime_exec_t process runtime_t)
+(allow init_t runtime_t (processes (transform)))
+(allow runtime_t runtime_exec_t (file (entrypoint)))
+
+; `runc` starts container processes as "container_t" by default, but
+; it can use other "container" subject labels like "super_t".
+; Unlike the above transitions, this depends on correct labeling for
+; objects on local storage.
+(typetransition runtime_t local_t process container_t)
+(allow runtime_t container_s (processes (transform)))
+(allow container_s local_t (file (entrypoint)))
+
+; Allow containers to communicate with runtimes via pipes.
+(allow container_s runtime_t (files (mutate)))
+
+; If a trusted process creates a file or directory when the parent
+; directory has no label, it receives the "local_t" label.
+(typetransition trusted_s unlabeled_t file local_t)
+(typetransition trusted_s unlabeled_t dir local_t)
+
+; If a runtime process creates a directory for cached container layers
+; on local storage, it receives the "cache_t" label.
+(typetransition runtime_t local_t dir "io.containerd.content.v1.content" cache_t)
+
+; All subjects are allowed to write to objects with their own label.
+; This includes files like the ones under /proc/self.
+(allow all_s self (files (mutate)))
+
+; All subjects are allowed to write to "ephemeral" and "foreign"
+; objects, such as files in /tmp and /mnt. They can also manage
+; mounts for "foreign" objects.
+(allow all_s ephemeral_o (files (mutate)))
+(allow all_s foreign_o (files (mutate)))
+(allow all_s foreign_o (files (mount)))
+
+; All subjects are allowed to write to and manage mounts for most
+; files and directories on /local.
+(allow all_s unprotected_o (files (mutate)))
+(allow all_s unprotected_o (files (mount)))
+
+; Trusted components are allowed to manage mounts everywhere.
+(allow trusted_s global (files (mount)))
+
+; Only trusted components can write to "cache_t" or "private_t", as
+; they provide a means to persist changes across container restarts
+; and reboots.
+(allow trusted_s protected_o (files (mutate)))
+
+; Untrusted processes should never be permitted to modify these files,
+; or to manage mounts for these directories.
+(neverallow untrusted_s protected_o (files (mutate)))
+(neverallow untrusted_s protected_o (files (mount)))
+
+; Only trusted components are allowed to relabel files.
+(allow trusted_s global (files (relabel)))
+
+; Untrusted processes should never be permitted to relabel anything.
+(neverallow untrusted_s global (files (relabel)))
+
+; Containers are allowed to relax security constraints, since we
+; don't control what code they run or how it's built.
+(allow container_s self (processes (relax)))
+(allow container_s global (files (relax)))
+
+; Host processes should never need to relax security constraints.
+(neverallow host_s global (processes (relax)))
+(neverallow host_s global (files (relax)))
+
+; Files and directories that reside on the dm-verity backed root
+; filesystem are not mutable, and the policy should not permit it.
+(neverallow all_s immutable_o (files (mutate)))
+
+; Files that exist elsewhere should not be an entrypoint.
+(neverallow all_s ephemeral_o (files (enter)))
+(neverallow all_s foreign_o (files (enter)))
+
+; TODO: remove once we're confident that we aren't generating AVC
+; denials for the majority of workloads.
+(typepermissive kernel_t)
+(typepermissive init_t)
+(typepermissive system_t)
+(typepermissive api_t)
+(typepermissive runtime_t)
+(typepermissive container_t)
+(typepermissive super_t)

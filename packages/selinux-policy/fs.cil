@@ -1,0 +1,75 @@
+; Label inodes by using xattrs for supported filesystems.
+(fsuse xattr ext4 any)
+(fsuse xattr overlay any)
+(fsuse xattr xfs any)
+
+; Label inodes by using the type of the creating task.
+(fsuse task eventpollfs any)
+(fsuse task pipefs any)
+(fsuse task sockfs any)
+
+; Label inodes by deriving a type from the creating task.
+(fsuse trans devpts any)
+(fsuse trans devtmpfs any)
+(fsuse trans hugetlbfs any)
+(fsuse trans mqueue any)
+(fsuse trans shm any)
+(fsuse trans tmpfs any)
+
+; Specify a context for filesystems that do not support other ways to label.
+(genfscon autofs / any)
+(genfscon bdev / any)
+(genfscon binfmt_misc / any)
+(genfscon bpf / any)
+(genfscon cgroup / any)
+(genfscon cgroup2 / any)
+(genfscon debugfs / any)
+(genfscon kvmfs / any)
+(genfscon nsfs / any)
+(genfscon proc / any)
+(genfscon pstore / any)
+(genfscon ramfs / any)
+(genfscon rootfs / any)
+(genfscon securityfs / any)
+(genfscon selinuxfs / any)
+(genfscon sysfs / any)
+(genfscon tracefs / any)
+
+; Label most files.
+(filecon "/.*" any os)
+
+; Label entry points.
+(filecon "/.*/usr/lib/systemd/systemd" file init_exec)
+(filecon "/.*/usr/bin/containerd.*" file runtime_exec)
+(filecon "/.*/usr/bin/docker.*" file runtime_exec)
+(filecon "/.*/usr/sbin/runc" file runtime_exec)
+
+; Label local storage mounts.
+(filecon "/local" any local)
+(filecon "/local/.*" any ())
+(filecon "/opt" any local)
+(filecon "/opt/.*" any ())
+(filecon "/var" any local)
+(filecon "/var/.*" any ())
+
+; Label kernel filesystem mounts.
+(filecon "/proc" any any)
+(filecon "/proc/.*" any ())
+(filecon "/sys" any any)
+(filecon "/sys/.*" any ())
+(filecon "/dev" any any)
+(filecon "/dev/.*" any ())
+
+; Label tmpfs mounts.
+(filecon "/etc" any any)
+(filecon "/etc/.*" any ())
+(filecon "/tmp" any any)
+(filecon "/tmp/.*" any ())
+(filecon "/run" any any)
+(filecon "/run/.*" any ())
+
+; Label external filesystem mounts.
+(filecon "/mnt" any external)
+(filecon "/mnt/.*" any ())
+(filecon "/media" any external)
+(filecon "/media/.*" any ())

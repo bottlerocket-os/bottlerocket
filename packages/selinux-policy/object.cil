@@ -1,0 +1,84 @@
+;
+; Objects are the resources in the system. They answer the question of
+; what is being accessed when policy rules are checked.
+;
+
+; Files shipped with the OS.
+(type os_t)
+(roletype object_r os_t)
+(context os (system_u object_r os_t s0))
+
+; Executable files for PID 1 such as /sbin/init.
+(type init_exec_t)
+(roletype object_r init_exec_t)
+(context init_exec (system_u object_r init_exec_t s0))
+
+; Executable files for the API such as /usr/bin/apiserver.
+(type api_exec_t)
+(roletype object_r api_exec_t)
+(context api_exec (system_u object_r api_exec_t s0))
+
+; Executable files for container runtimes such as /usr/sbin/runc.
+(type runtime_exec_t)
+(roletype object_r runtime_exec_t)
+(context runtime_exec (system_u object_r runtime_exec_t s0))
+
+; Files where we have no specific policy objectives, such as
+; those on kernel filesystems like /proc and /dev.
+(type any_t)
+(roletype object_r any_t)
+(context any (system_u object_r any_t s0))
+
+; Files that have no label, or perhaps an invalid label.
+(type unlabeled_t)
+(roletype object_r unlabeled_t)
+(context unlabeled (system_u object_r unlabeled_t s0))
+
+; Files created on local storage.
+(type local_t)
+(roletype object_r local_t)
+(context local (system_u object_r local_t s0))
+
+; Files for the API components.
+(type private_t)
+(roletype object_r private_t)
+(context private (system_u object_r private_t s0))
+
+; Files for cached container layers.
+(type cache_t)
+(roletype object_r cache_t)
+(context cache (system_u object_r cache_t s0))
+
+; Files that are mount points for external filesystems.
+(type external_t)
+(roletype object_r external_t)
+(context external (system_u object_r external_t s0))
+
+; Ephemeral objects reside on temporary storage.
+(typeattribute ephemeral_o)
+(typeattributeset ephemeral_o (any_t))
+
+; Protected objects are certain files on local storage.
+(typeattribute protected_o)
+(typeattributeset protected_o (cache_t private_t))
+
+; Unprotected objects are everything else on local storage.
+(typeattribute unprotected_o)
+(typeattributeset unprotected_o (local_t))
+
+; Immutable objects reside on read-only storage.
+(typeattribute immutable_o)
+(typeattributeset immutable_o (
+  os_t init_exec_t api_exec_t runtime_exec_t))
+
+; Foreign objects reside on storage with a different lifecycle from
+; the rest of the OS, such as EBS volumes and EFS filesystems.
+(typeattribute foreign_o)
+(typeattributeset foreign_o (external_t unlabeled_t))
+
+; The set of all objects.
+(typeattribute all_o)
+(typeattributeset all_o (
+  os_t init_exec_t api_exec_t runtime_exec_t
+  any_t unlabeled_t external_t
+  local_t private_t cache_t))

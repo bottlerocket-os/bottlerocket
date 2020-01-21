@@ -1,0 +1,9 @@
+[package]
+name = "selinux-policy"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
