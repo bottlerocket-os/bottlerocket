@@ -1,0 +1,14 @@
+[package]
+name = "bttr"
+version = "0.1.0"
+authors = ["Jacob Vallejo <jakeev@amazon.com>"]
+edition = "2018"
+
+[dependencies]
+serde = { version = "1.0.104", features = [ "derive" ] }
+toml = "0.5.6"
+snafu = "0.6.2"
+structopt = "0.3.8"
+semver = "0.9.0"
+serde_json = "1.0.44"
+lazy_static = "1.4.0"
