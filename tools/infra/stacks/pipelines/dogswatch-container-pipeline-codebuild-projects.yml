@@ -1,0 +1,252 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Dogswatch container pipeline - CodeBuild projects
+Parameters:
+  ImageRegistryUri:
+    Type: String
+    Description: "The beta image registry URI"
+  EnvironmentImageName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /infra/container/infra/builder
+    Description: >-
+      Parameter that defines the image name the builder uses as its execution
+      environment *without* a tag (eg: registry/image-name, not
+      registry/image-name:tag). The EnvironmentImageTag Parameter provides the
+      appropriate tag separately.
+  EnvironmentImageTag:
+    Type: String
+    Default: latest
+    Description: >-
+      The image 'tag' (as in registry/image-name:tag) to select of the EnvironmentImage
+      provided.
+  EnvironmentImageCredentialsType:
+    Type: String
+    Default: CODEBUILD
+    AllowedValues: [ CODEBUILD, SERVICE_ROLE ]
+    Description: >-
+      If image policy does not trust codebuild.amazonaws.com OR cross-account
+      role is needed, then the SERVICE_ROLE must be specified to use the role
+      assigned to the build project.
+Resources:
+  PipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+  BuildLogBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+  BuildLogGroup:
+    Type: AWS::Logs::LogGroup
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+      Path: !Sub "/${AWS::StackName}/"
+      Policies:
+        - PolicyName: HostContainerBuildRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # For managing cache, logs, and artifacts in the build's buckets.
+              - Action:
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                  - 's3:GetBucketVersioning'
+                  - 's3:GetBucketAcl'
+                  - 's3:GetBucketLocation'
+                  - 's3:PutObject'
+                  - 's3:PutObjectAcl'
+                  - 's3:DeleteObject'
+                  - 's3:DeleteObjectVersion'
+                Effect: Allow
+                Resource:
+                  - !GetAtt PipelineArtifactBucket.Arn
+                  - !Sub "${PipelineArtifactBucket.Arn}/*"
+              # For writing to CloudWatch Logs Streams for each build.
+              - Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource:
+                  - !GetAtt BuildLogGroup.Arn
+              # For being able to push to other ECR repositories
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:InitiateLayerUpload'
+                  - 'ecr:UploadLayerPart'
+                  - 'ecr:CompleteLayerUpload'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:PutImage'
+                Resource: '*'
+  DogswatchCtrBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_DOCKER_LAYER_CACHE
+      Environment:
+        ComputeType: BUILD_GENERAL1_LARGE
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        Image: !Sub "${EnvironmentImageName}:${EnvironmentImageTag}"
+        ImagePullCredentialsType: !Ref EnvironmentImageCredentialsType
+      ServiceRole: !GetAtt BuildRole.Arn
+      Source:
+        BuildSpec: |
+          version: 0.2
+
+          env:
+            variables:
+              # Path to host containers folder
+              EXTRAS_DIR: "./extras"
+              # Path to built host container images
+              IMAGES_DIR: "./build/host-container-images"
+          phases:
+            pre_build:
+              commands:
+                - start-build-environment
+                - environment-report
+                - mkdir -p "${IMAGES_DIR}"
+            build:
+              commands:
+                - SHORT_SHA="$(head -c 8 <<< "$CODEBUILD_RESOLVED_SOURCE_VERSION")"
+                - make -C "${EXTRAS_DIR}/dogswatch" SHORT_SHA="${SHORT_SHA}" release-container
+                - docker save dogswatch:"${SHORT_SHA}" | gzip > "${IMAGES_DIR}"/dogswatch.tar.gz
+          artifacts:
+            base-directory: '${IMAGES_DIR}'
+            files:
+              - '*.tar.gz'
+        Type: CODEPIPELINE
+      LogsConfig:
+        S3Logs:
+          Status: ENABLED
+          Location: !Sub "${BuildLogBucket.Arn}/codebuild/log"
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Ref BuildLogGroup
+      TimeoutInMinutes: 180
+
+  DogswatchCtrTest:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_LARGE
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        Image: !Sub "${EnvironmentImageName}:${EnvironmentImageTag}"
+        ImagePullCredentialsType: !Ref EnvironmentImageCredentialsType
+      ServiceRole: !GetAtt BuildRole.Arn
+      Source:
+        BuildSpec: |
+          version: 0.2
+
+          env:
+            variables:
+              # Path to host containers folder
+              EXTRAS_DIR: "./extras"
+          phases:
+            pre_build:
+              commands:
+                - start-build-environment
+                - environment-report
+            build:
+              commands:
+                - SHORT_SHA="$(head -c 8 <<< "$CODEBUILD_RESOLVED_SOURCE_VERSION")"
+                - docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/dogswatch.tar.gz
+                - make -C "${EXTRAS_DIR}/dogswatch" SHORT_SHA="${SHORT_SHA}" container-simple-test
+        Type: CODEPIPELINE
+      LogsConfig:
+        S3Logs:
+          Status: ENABLED
+          Location: !Sub "${BuildLogBucket.Arn}/codebuild/log"
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Ref BuildLogGroup
+      TimeoutInMinutes: 180
+
+  DogswatchCtrBetaDeploy:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_LARGE
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        Image: !Sub "${EnvironmentImageName}:${EnvironmentImageTag}"
+        ImagePullCredentialsType: !Ref EnvironmentImageCredentialsType
+        EnvironmentVariables:
+          - Name: 'IMAGE_REGISTRY_URI'
+            Type: 'PLAINTEXT'
+            Value: !Sub '${ImageRegistryUri}'
+          - Name: 'CONTAINER_IMAGE'
+            Type: 'PLAINTEXT'
+            Value: 'dogswatch'
+      ServiceRole: !GetAtt BuildRole.Arn
+      Source:
+        BuildSpec: |
+          version: 0.2
+
+          env:
+            variables:
+              # Path to host containers folder
+              EXTRAS_DIR: "./extras"
+          phases:
+            pre_build:
+              commands:
+                - start-build-environment
+                - environment-report
+            build:
+              commands:
+                - docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/${CONTAINER_IMAGE}.tar.gz
+                - SHORT_SHA="$(head -c 8 <<< "$CODEBUILD_RESOLVED_SOURCE_VERSION")"
+                - docker tag "${CONTAINER_IMAGE}":"${SHORT_SHA}" "${IMAGE_REGISTRY_URI}":"${SHORT_SHA}"
+                - docker push "${IMAGE_REGISTRY_URI}":"${SHORT_SHA}"
+        Type: CODEPIPELINE
+      LogsConfig:
+        S3Logs:
+          Status: ENABLED
+          Location: !Sub "${BuildLogBucket.Arn}/codebuild/log"
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Ref BuildLogGroup
+      TimeoutInMinutes: 60
+
+Outputs:
+  PipelineArtifactBucketName:
+    Description: "Pipeline artifact bucket name"
+    Value: !Ref PipelineArtifactBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtifactBucket"
+  PipelineArtifactBucketArn:
+    Description: "Pipeline artifact bucket ARN"
+    Value: !GetAtt PipelineArtifactBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtifactBucketArn"
+  BuildProjectName:
+    Description: "Build step CodeBuild project name"
+    Value: !Ref DogswatchCtrBuild
+    Export:
+      Name: !Sub "${AWS::StackName}-Build"
+  TestProjectName:
+    Description: "Test step CodeBuild project name"
+    Value: !Ref DogswatchCtrTest
+    Export:
+      Name: !Sub "${AWS::StackName}-Test"
+  BetaDeployProjectName:
+    Description: "Beta deploy step CodeBuild project name"
+    Value: !Ref DogswatchCtrBetaDeploy
+    Export:
+      Name: !Sub "${AWS::StackName}-BetaDeploy"
