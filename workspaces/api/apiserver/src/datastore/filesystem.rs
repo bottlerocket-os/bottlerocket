@@ -97,6 +97,72 @@ impl FilesystemDataStore {
 
         Ok(path_str.into())
     }
+
+    /// Deletes the given path from the filesystem.  Also removes the parent directory if empty
+    /// (repeatedly, up to the base path), so as to have consistent artifacts on the filesystem
+    /// after adding and removing keys.
+    ///
+    /// If the path doesn't exist, we still return Ok for idempotency, but if it exists and we
+    /// fail to remove it, we return Err.
+    ///
+    /// If we fail to remove an empty directory, we log an error, but still return Ok.  (The
+    /// error for trying to remove an empty directory is not specific, and we don't want to rely
+    /// on platform-specific error codes or the error description.  We could check the directory
+    /// contents ourself, but it would be more complex and subject to timing issues.)
+    fn delete_key_path<P>(&mut self, path: P, committed: Committed) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
+
+        // Remove the file.  If it doesn't exist, we're still OK.
+        match fs::remove_file(path) {
+            Ok(()) => {}
+            Err(e) => {
+                if e.kind() != io::ErrorKind::NotFound {
+                    return Err(e).context(error::DeleteKey { path });
+                }
+            }
+        }
+
+        // Remove the directory if it's empty, i.e. if the setting we removed was the last setting
+        // in that prefix.  Continue up the tree until the base, in case it was the only thing in
+        // that subtree.
+        let base = self.base_path(committed);
+        if let Some(parent) = path.parent() {
+            // Note: ancestors() includes 'parent' itself
+            for parent in parent.ancestors() {
+                // Stop at the base directory; we don't expect anything here or above to be empty,
+                // but stop as a safeguard.
+                if parent == base {
+                    break;
+                }
+                if let Err(e) = fs::remove_dir(parent) {
+                    // If the directory doesn't exist, continue up the tree.  Modulo timing issues,
+                    // this means the key didn't exist either, which means a previous attempt to remove
+                    // the directory failed or we got an unset request for a bogus key.  Either way, we
+                    // can clean up and make things consistent.
+                    if e.kind() == io::ErrorKind::NotFound {
+                        continue;
+
+                    // "Directory not empty" doesn't have its own ErrorKind, so we have to check a
+                    // platform-specific error number or the error description, neither of which is
+                    // ideal.  Still, we can at least log an error in the case we know.  Don't
+                    // fail, though, because we've still accomplished our main purpose.
+                    } else if e.raw_os_error() != Some(39) {
+                        error!(
+                            "Failed to delete directory '{}' we believe is empty: {}",
+                            parent.display(),
+                            e
+                        );
+                    }
+                    // We won't be able to delete parent directories if this one still exists.
+                    break;
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 // Filesystem helpers
@@ -382,6 +448,11 @@ impl DataStore for FilesystemDataStore {
         write_file_mkdir(path, value)
     }
 
+    fn unset_key(&mut self, key: &Key, committed: Committed) -> Result<()> {
+        let path = self.data_path(key, committed)?;
+        self.delete_key_path(path, committed)
+    }
+
     fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
         let path = self.metadata_path(metadata_key, data_key, Committed::Live)?;
         read_file_for_key(&metadata_key, &path)
@@ -395,6 +466,11 @@ impl DataStore for FilesystemDataStore {
     ) -> Result<()> {
         let path = self.metadata_path(metadata_key, data_key, Committed::Live)?;
         write_file_mkdir(path, value)
+    }
+
+    fn unset_metadata(&mut self, metadata_key: &Key, data_key: &Key) -> Result<()> {
+        let path = self.metadata_path(metadata_key, data_key, Committed::Live)?;
+        self.delete_key_path(path, Committed::Live)
     }
 
     /// We commit by copying pending keys to live, then removing pending.  Something smarter (lock,

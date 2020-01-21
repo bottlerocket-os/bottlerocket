@@ -60,6 +60,10 @@ pub trait DataStore {
     fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>>;
     /// Set the value of a single data key in the datastore.
     fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: Committed) -> Result<()>;
+    /// Removes the given data key from the datastore.  If we succeeded, we return Ok(()); if
+    /// the key didn't exist, we also return Ok(()); we return Err only if we failed to check
+    /// or remove the key.
+    fn unset_key(&mut self, key: &Key, committed: Committed) -> Result<()>;
 
     /// Retrieve the value for a single metadata key from the datastore.  Values will inherit from
     /// earlier in the tree, if more specific values are not found later.
@@ -92,6 +96,10 @@ pub trait DataStore {
         data_key: &Key,
         value: S,
     ) -> Result<()>;
+    /// Removes the given metadata key from the given data key in the datastore.  If we
+    /// succeeded, we return Ok(()); if the data or metadata key didn't exist, we also return
+    /// Ok(()); we return Err only if we failed to check or remove the key.
+    fn unset_metadata(&mut self, metadata_key: &Key, data_key: &Key) -> Result<()>;
 
     /// Applies pending changes to the live datastore.  Returns the list of changed keys.
     fn commit(&mut self) -> Result<HashSet<Key>>;
@@ -110,6 +118,17 @@ pub trait DataStore {
         for (key, value) in pairs {
             trace!("Setting data key {}", key.name());
             self.set_key(key, value, committed)?;
+        }
+        Ok(())
+    }
+    /// Removes multiple data keys at once in the data store.
+    ///
+    /// Implementers can replace the default implementation if there's a faster way than
+    /// unsetting each key individually.
+    fn unset_keys(&mut self, keys: &HashSet<Key>, committed: Committed) -> Result<()> {
+        for key in keys {
+            trace!("Unsetting data key {}", key.name());
+            self.unset_key(key, committed)?;
         }
         Ok(())
     }
@@ -236,25 +255,36 @@ pub type Value = serde_json::Value;
 mod test {
     use super::memory::MemoryDataStore;
     use super::{Committed, DataStore, Key, KeyType};
-    use maplit::hashmap;
+    use maplit::{hashmap, hashset};
 
     #[test]
-    fn set_keys() {
+    fn set_unset_keys() {
         let mut m = MemoryDataStore::new();
 
         let k1 = Key::new(KeyType::Data, "memtest1").unwrap();
         let k2 = Key::new(KeyType::Data, "memtest2").unwrap();
+        let k3 = Key::new(KeyType::Data, "memtest3").unwrap();
         let v1 = "memvalue1".to_string();
         let v2 = "memvalue2".to_string();
+        let v3 = "memvalue3".to_string();
         let data = hashmap!(
             k1.clone() => &v1,
             k2.clone() => &v2,
+            k3.clone() => &v3,
         );
 
         m.set_keys(&data, Committed::Pending).unwrap();
 
         assert_eq!(m.get_key(&k1, Committed::Pending).unwrap(), Some(v1));
         assert_eq!(m.get_key(&k2, Committed::Pending).unwrap(), Some(v2));
+        assert_eq!(m.get_key(&k3, Committed::Pending).unwrap(), Some(v3.clone()));
+
+        let unset = hashset!(k1.clone(), k2.clone());
+        m.unset_keys(&unset, Committed::Pending).unwrap();
+
+        assert_eq!(m.get_key(&k1, Committed::Pending).unwrap(), None);
+        assert_eq!(m.get_key(&k2, Committed::Pending).unwrap(), None);
+        assert_eq!(m.get_key(&k3, Committed::Pending).unwrap(), Some(v3));
     }
 
     #[test]
