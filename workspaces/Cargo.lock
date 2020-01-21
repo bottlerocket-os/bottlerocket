@@ -1401,6 +1401,8 @@ name = "migration-helpers"
 version = "0.1.0"
 dependencies = [
  "apiserver 0.1.0",
+ "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

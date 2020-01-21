@@ -14,6 +14,7 @@
 mod args;
 mod datastore;
 pub mod error;
+mod workarounds;
 
 use std::collections::HashMap;
 use std::env;
@@ -22,9 +23,10 @@ use std::fmt;
 use apiserver::datastore::{Committed, Value};
 pub use apiserver::datastore::{DataStore, FilesystemDataStore};
 
-use args::parse_args;
+use args::{parse_args, Args};
 use datastore::{get_input_data, set_output_data};
 pub use error::Result;
+use workarounds::fix_migrated_data;
 
 /// The data store implementation currently in use.  Used by the simpler `migrate` interface; can
 /// be overridden by using the `run_migration` interface.
@@ -57,7 +59,7 @@ pub type Metadata = HashMap<String, Value>;
 /// MigrationData holds all data that can be migrated in a migration, and serves as the input and
 /// output format of migrations.  A serde Value type is used to hold the arbitrary data of each
 /// key because we can't represent types when they could change in the migration.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MigrationData {
     /// Mapping of data key names to their arbitrary values.
     pub data: HashMap<String, Value>,
@@ -83,23 +85,31 @@ fn validate_migrated_data(_migrated: &MigrationData) -> Result<()> {
 /// If you need a little more control over a migration than with migrate, or you're using this
 /// module as a library, you can call run_migration directly with the arguments that would
 /// normally be parsed from the migration binary's command line.
-pub fn run_migration<D: DataStore>(
-    mut migration: impl Migration,
-    source: &D,
-    target: &mut D,
-    migration_type: MigrationType,
-) -> Result<()> {
-    for committed in &[Committed::Live, Committed::Pending] {
-        let input = get_input_data(source, *committed)?;
+pub fn run_migration(mut migration: impl Migration, args: &Args) -> Result<()> {
+    let source = DataStoreImplementation::new(&args.source_datastore);
+    let mut target = DataStoreImplementation::new(&args.target_datastore);
 
-        let migrated = match migration_type {
-            MigrationType::Forward => migration.forward(input),
-            MigrationType::Backward => migration.backward(input),
+    for committed in &[Committed::Live, Committed::Pending] {
+        let input = get_input_data(&source, *committed)?;
+
+        let mut migrated = input.clone();
+        migrated = match args.migration_type {
+            MigrationType::Forward => migration.forward(migrated),
+            MigrationType::Backward => migration.backward(migrated),
         }?;
+
+        fix_migrated_data(
+            &input,
+            &mut migrated,
+            &source,
+            &mut target,
+            *committed,
+            &args,
+        )?;
 
         validate_migrated_data(&migrated)?;
 
-        set_output_data(target, &migrated, *committed)?;
+        set_output_data(&mut target, &migrated, *committed)?;
     }
     Ok(())
 }
@@ -126,7 +136,5 @@ impl fmt::Display for MigrationType {
 /// migration type.
 pub fn migrate(migration: impl Migration) -> Result<()> {
     let args = parse_args(env::args())?;
-    let source = DataStoreImplementation::new(args.source_datastore);
-    let mut target = DataStoreImplementation::new(args.target_datastore);
-    run_migration(migration, &source, &mut target, args.migration_type)
+    run_migration(migration, &args)
 }
