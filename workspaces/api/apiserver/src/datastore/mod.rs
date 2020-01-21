@@ -13,8 +13,7 @@ pub mod deserialization;
 pub mod error;
 pub mod filesystem;
 pub mod key;
-#[cfg(test)]
-pub(crate) mod memory;
+pub mod memory;
 pub mod serialization;
 
 pub use error::{Error, Result};

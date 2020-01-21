@@ -9,7 +9,7 @@ use std::mem;
 use super::{Committed, DataStore, Key, Result};
 
 #[derive(Debug)]
-pub(crate) struct MemoryDataStore {
+pub struct MemoryDataStore {
     // Uncommitted (pending) data.
     pending: HashMap<Key, String>,
     // Committed (live) data.
@@ -20,7 +20,7 @@ pub(crate) struct MemoryDataStore {
 }
 
 impl MemoryDataStore {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             pending: HashMap::new(),
             live: HashMap::new(),
