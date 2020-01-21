@@ -44,6 +44,12 @@ pub(crate) enum Error {
         path: PathBuf,
     },
 
+    #[snafu(display("Failed to fetch URL via transport: {}", source))]
+    FetchFailure {
+        backtrace: Backtrace,
+        source: reqwest::Error,
+    },
+
     #[snafu(display("Logger setup error: {}", source))]
     Logger { source: simplelog::TermLogError },
 
@@ -243,6 +249,12 @@ pub(crate) enum Error {
     UpdateMetadata {
         source: update_metadata::error::Error,
     },
+
+    #[snafu(display("Unable to parse URL: {}", source))]
+    UrlParse { source: url::ParseError },
+
+    #[snafu(display("Unable to join URL: {}", source))]
+    UrlJoin { source: url::ParseError },
 }
 
 impl std::convert::From<update_metadata::error::Error> for Error {

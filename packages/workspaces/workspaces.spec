@@ -177,7 +177,7 @@ for p in \
   thar-be-settings servicedog host-containers \
   storewolf settings-committer \
   migrator \
-  signpost updog ;
+  signpost updog smoky ;
 do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
@@ -283,6 +283,7 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 
 %files -n %{_cross_os}updog
 %{_cross_bindir}/updog
+%{_cross_bindir}/smoky
 %{_cross_datadir}/updog
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/updog-toml
