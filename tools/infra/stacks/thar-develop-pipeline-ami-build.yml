@@ -1,0 +1,311 @@
+# stack-name: thar-develop-pipeline-ami-build
+# stack-resource-context: build
+
+Description: |
+  Supporting resources for the AMI Build pipeline action
+
+Parameters:
+  KeyPairName:
+    Description: >-
+      Name of the EC2 key-pair resource for launching against KeyPairParameter's
+      SSH key
+    Type: String
+    Default: ami-build-key
+
+  KeyPairParameter:
+    Description: >-
+      SSM Parameter path that holds the key-pair's private ssh material
+    Type: String
+    Default: /infra/ami-build/instance/key-pair
+
+  EnvironmentImageName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /infra/container/infra/builder
+    Description: >-
+      Parameter that defines the image name the builder uses as its execution
+      environment *without* a tag (eg: registry/image-name, not
+      registry/image-name:tag). The EnvironmentImageTag Parameter provides the
+      appropriate tag separately.
+
+  EnvironmentImageTag:
+    Type: String
+    Default: latest
+    Description: >-
+      The image 'tag' (as in registry/image-name:tag) to select of the EnvironmentImage
+      provided.
+
+  ImageCredentialsType:
+    Type: String
+    Default: CODEBUILD
+    AllowedValues: [ CODEBUILD, SERVICE_ROLE ]
+    Description: >-
+      If image policy does not trust codebuild.amazonaws.com OR cross-account
+      role is needed, then the SERVICE_ROLE must be specified to use the role
+      assigned to the build project.
+
+  BuildVPCId:
+    Type: AWS::EC2::VPC::Id
+    Description: >-
+      The VPC ID that the AMI build instance will be launched into.
+
+Resources:
+  AmiBuildStage:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      ServiceRole: !GetAtt BuildRole.Arn
+      LogsConfig:
+        S3Logs:
+          Status: ENABLED
+          Location: !Sub "${BuildLogBucket.Arn}/codebuild/log"
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Ref BuildLogGroup
+      Environment:
+        ComputeType: BUILD_GENERAL1_LARGE
+        Type: LINUX_CONTAINER
+        PrivilegedMode: true
+        Image: !Sub "${EnvironmentImageName}:${EnvironmentImageTag}"
+        ImagePullCredentialsType: !Ref ImageCredentialsType
+        EnvironmentVariables:
+          - Name: KEYPAIR_NAME
+            Type: PLAINTEXT
+            Value: !Ref KeyPairName
+          - Name: KEYPAIR_PARAMETER
+            Type: PLAINTEXT
+            Value: !Ref KeyPairParameter
+          - Name: SECURITY_GROUP_ID
+            Type: PLAINTEXT
+            Value: !GetAtt AMIBuildSecurityGroup.GroupId
+
+          # TODO: resolve these using release-lib based cli (when it exists!)
+          - Name: BUILD_IMAGE_ROOT
+            Type: PLAINTEXT
+            Value: thar-x86_64-aws-k8s.img.lz4
+          - Name: BUILD_IMAGE_DATA
+            Type: PLAINTEXT
+            Value: thar-x86_64-aws-k8s-data.img.lz4
+      TimeoutInMinutes: 30
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - start-build-environment
+                - environment-report
+                - write-build-meta
+                # List CODEPIPELINE and CODEBUILD variables for active-work on these projects.
+                #
+                # TODO: Remove printing of the environment variables here at a later time.
+                - env | grep -e '^CODE' -e 'infra/' -e '\bthar\b' | sort | sed 's/^/# /'
+            build:
+              commands:
+                - create-image-ami
+          artifacts:
+            base-directory: build/
+            files:
+              - ami/*
+
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: !Sub "/${AWS::StackName}/"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+
+  AmiBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AmiBuildPolicy
+      Roles:
+        - !Ref BuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "readImageResources"
+            Effect: Allow
+            Action:
+              - ec2:DescribeImages
+              - ec2:DescribeInstances
+              - ec2:DescribeVolumes
+              - ec2:DescribeSnapshots
+              - ec2:DescribeImages
+            Resource: "*"
+
+          - Sid: "resolveLatestImage"
+            Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource:
+              # SSM Public Parameters used for querying the publishing latest Amazon Linux AMIs
+              - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:*:parameter/aws/service/*"
+
+          # TODO: switch to using Launch Templates to restrict *and* provide
+          # instance configuration for launching with more "statically".
+          - Sid: "launchBuildInstance"
+            Effect: Allow
+            Action:
+              - ec2:RunInstances
+            Resource: "*"
+            Condition:
+              StringEqualsIfExists:
+                # Require a recognized distributed AMI to build on to prevent
+                # injection of another image.
+                "ec2:Owner": "amazon"
+                # Keep all actions within the stacks' region (and thus the
+                # builder's).
+                "ec2:Region": !Sub "${AWS::Region}"
+
+          - Sid: "manageBuildInstanceResources"
+            Effect: Allow
+            Action:
+              - ec2:TerminateInstances
+              - ec2:DeleteVolume
+              - ec2:DetachVolume
+            Resource: "*"
+            Condition:
+              StringEqualsIfExists:
+                # Keep all actions within the stacks' region (and thus the
+                # builder's).
+                "ec2:Region": !Sub "${AWS::Region}"
+
+          - Sid: "registerImages"
+            Effect: Allow
+            Action:
+              - ec2:CreateSnapshot
+              - ec2:RegisterImage
+            Resource: "*"
+            Condition:
+              StringEqualsIfExists:
+                "ec2:Region": !Sub "${AWS::Region}"
+
+          - Sid: "keypairManageSSM"
+            Effect: Allow
+            Action:
+              - ssm:PutParameter
+              - ssm:GetParameter
+            Resource:
+              - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${KeyPairParameter}"
+
+          - Sid: "keypairManageEC2"
+            Effect: Allow
+            Action:
+              - ec2:DescribeKeyPairs
+              - ec2:ImportKeyPair
+            Resource: "*"
+
+          - Sid: "keypairDecrypt"
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
+
+  PipelineBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: PipelineBuildPolicy
+      Roles:
+        - !Ref BuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # This is from the codepipelines' generated policy that it attaches to
+          # CodeBuild project (among other statements). This does limit the
+          # builder to working with specific objects.
+          #
+          # TODO: Define these with a stack managed pipeline's bucket and refer
+          # to its scoped resources.
+          #
+          - Sid: "codepipelineIO"
+            Effect: Allow
+            Action:
+               - s3:PutObject
+               - s3:GetObject
+               - s3:GetObjectVersion
+               - s3:GetBucketAcl
+               - s3:GetBucketLocation
+            Resource: !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*"
+
+  ProjectPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: BuildRolePolicy
+      Roles:
+        - !Ref BuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # For managing cache, logs, and artifacts in the build's buckets.
+          - Sid: "manageBuildArtifacts"
+            Effect: Allow
+            Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:PutObject*
+              - s3:Abort*
+            Resource:
+              - !GetAtt BuildArtifactBucket.Arn
+              - !Sub "${BuildArtifactBucket.Arn}/*"
+              - !GetAtt BuildLogBucket.Arn
+              - !Sub "${BuildLogBucket.Arn}/*"
+          # For writing to CloudWatch Logs Streams for each build.
+          - Sid: "manageBuildLogs"
+            Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !GetAtt BuildLogGroup.Arn
+
+  BuildArtifactBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+
+  BuildLogBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+
+  BuildLogGroup:
+    Type: AWS::Logs::LogGroup
+
+  AMIBuildSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${AWS::StackName}.AMIBuildSecurityGroup"
+      GroupDescription: AMI Build Instance Access
+      VpcId: !Ref BuildVPCId
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+      SecurityGroupIngress:
+        - Description: "Allow SSH Connections - IPv4"
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+        - Description: "Allow ICMPv4"
+          CidrIp: 0.0.0.0/0
+          IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+
+Outputs:
+  ArtifactBucket:
+    Value: !Ref BuildArtifactBucket
+  LogBucket:
+    Value: !Ref BuildLogBucket
+  Project:
+    Value: !Ref AmiBuildStage
