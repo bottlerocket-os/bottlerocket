@@ -55,6 +55,9 @@ RUN \
   make O=output/${ARCH}-gnu toolchain && \
   find output/${ARCH}-gnu/build/linux-headers-${KVER}/usr/include -name '.*' -delete
 
+RUN \
+  install -p -m 0644 -Dt licenses output/${ARCH}-gnu/build/host-gcc-final-*/{COPYING3,COPYING.RUNTIME}
+
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 FROM toolchain as toolchain-musl
@@ -81,6 +84,9 @@ COPY --from=toolchain-gnu \
 COPY --from=toolchain-gnu \
   /home/builder/buildroot/output/${ARCH}-gnu/build/linux-headers-${KVER}/usr/include/ \
   /${ARCH}-thar-linux-gnu/sys-root/usr/include/
+COPY --from=toolchain-gnu \
+  /home/builder/buildroot/licenses/ \
+  /${ARCH}-thar-linux-gnu/sys-root/usr/share/licenses/thar-${ARCH}-libgcc/
 
 COPY --from=toolchain-musl \
   /home/builder/buildroot/output/${ARCH}-musl/toolchain/ /
@@ -262,6 +268,9 @@ RUN \
   cp config-${ARCH}.toml config.toml && \
   ./x.py install
 
+RUN \
+  install -p -m 0644 -Dt licenses COPYRIGHT LICENSE-*
+
 # Set appropriate environment for using this Rust compiler to build tools
 ENV PATH="/usr/libexec/rust/bin:$PATH" LD_LIBRARY_PATH="/usr/libexec/rust/lib"
 
@@ -370,6 +379,9 @@ COPY --chown=0:0 --from=sdk-musl ${MUSL_SYSROOT}/ ${MUSL_SYSROOT}/
 
 # "sdk-rust" has our Rust toolchain with the required targets.
 COPY --chown=0:0 --from=sdk-rust /usr/libexec/rust/ /usr/libexec/rust/
+COPY --chown=0:0 --from=sdk-rust \
+  /home/builder/rust/licenses/ \
+  /${ARCH}-thar-linux-gnu/sys-root/usr/share/licenses/thar-${ARCH}-libstd-rust/
 
 # "sdk-go" has the Go toolchain and standard library builds.
 COPY --chown=0:0 --from=sdk-go /home/builder/go/bin /usr/libexec/go/bin/
