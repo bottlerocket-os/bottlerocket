@@ -42,8 +42,8 @@
 %_cross_sysusersdir %{_cross_rootdir}%{_sysusersdir}
 %_cross_sysctldir %{_cross_rootdir}%{_sysctldir}
 %_cross_templatedir %{_cross_datadir}/templates
-
-%_defaultlicensedir %{_cross_datadir}/licenses
+%_cross_licensedir %{_cross_datadir}/licenses
+%_defaultlicensedir %{_cross_licensedir}
 
 %set_cross_build_flags \
   CFLAGS="${CFLAGS:-%{_cross_cflags}}" ; export CFLAGS ; \
@@ -177,12 +177,12 @@ CROSS_COMPILATION_CONF_EOF\
   %set_cross_go_flags \
   cd GOPATH/src/%1 ; \
 
-%_cross_attribution_file %{_licensedir}/%{name}/attribution.txt
+%_cross_attribution_file %{_cross_licensedir}/%{name}/attribution.txt
 %cross_generate_attribution \
-  mkdir -p %{buildroot}%{_licensedir}/%{name} \
+  mkdir -p %{buildroot}%{_cross_licensedir}/%{name} \
   echo "%{name} - %{url}" >> %{buildroot}%{_cross_attribution_file} \
   echo "SPDX-License-Identifier: %{license}" >> %{buildroot}%{_cross_attribution_file}
-%_cross_attribution_vendor_dir %{_licensedir}/%{name}/vendor
+%_cross_attribution_vendor_dir %{_cross_licensedir}/%{name}/vendor
 %cross_scan_attribution \
   thar-license-scan --spdx-data /usr/libexec/tools/spdx-data --out-dir %{buildroot}%{_cross_attribution_vendor_dir}
 
