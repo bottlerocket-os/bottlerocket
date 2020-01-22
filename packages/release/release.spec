@@ -2,7 +2,7 @@ Name: %{_cross_os}release
 Version: 0.2.1
 Release: 1%{?dist}
 Summary: Thar release
-License: Public Domain
+License: LicenseRef-Pending
 
 Source10: hosts
 Source11: nsswitch.conf
