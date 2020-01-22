@@ -2,7 +2,7 @@ Name: %{_cross_os}libpcap
 Version: 1.9.1
 Release: 1%{?dist}
 Summary: Library for packet capture
-License: BSD with advertising
+License: BSD-3-Clause
 URL: http://www.tcpdump.org
 Source0: http://www.tcpdump.org/release/libpcap-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
@@ -30,6 +30,8 @@ Requires: %{name}
 %make_install
 
 %files
+%license LICENSE
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_bindir}/*
 %exclude %{_cross_mandir}/*

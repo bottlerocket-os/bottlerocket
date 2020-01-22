@@ -179,9 +179,11 @@ CROSS_COMPILATION_CONF_EOF\
 
 %_cross_attribution_file %{_cross_licensedir}/%{name}/attribution.txt
 %cross_generate_attribution \
-  mkdir -p %{buildroot}%{_cross_licensedir}/%{name} \
-  echo "%{name} - %{url}" >> %{buildroot}%{_cross_attribution_file} \
-  echo "SPDX-License-Identifier: %{license}" >> %{buildroot}%{_cross_attribution_file}
+  if [ 0%{?_cross_first_party} -eq 0 ]; then \
+    mkdir -p %{buildroot}%{_cross_licensedir}/%{name} \
+    echo "%{name} - %{url}" >> %{buildroot}%{_cross_attribution_file} \
+    echo "SPDX-License-Identifier: %{license}" >> %{buildroot}%{_cross_attribution_file} \
+  fi
 %_cross_attribution_vendor_dir %{_cross_licensedir}/%{name}/vendor
 %cross_scan_attribution \
   thar-license-scan --spdx-data /usr/libexec/tools/spdx-data --out-dir %{buildroot}%{_cross_attribution_vendor_dir}
@@ -210,5 +212,6 @@ CROSS_COMPILATION_CONF_EOF\
 %__brp_mangle_shebangs /bin/true
 
 %__arch_install_post \
-/usr/lib/rpm/check-rpaths \
-/usr/lib/rpm/check-buildroot
+  /usr/lib/rpm/check-rpaths \
+  /usr/lib/rpm/check-buildroot \
+  %cross_generate_attribution

@@ -11,7 +11,7 @@ Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
 Release: 1%{?dist}
 Summary: Plugins for container networking
-License: ASL 2.0
+License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 BuildRequires: git
@@ -35,6 +35,8 @@ install -d %{buildroot}%{_cross_factorydir}/opt/cni/bin
 install -p -m 0755 bin/cnitool %{buildroot}%{_cross_factorydir}/opt/cni/bin
 
 %files
+%license LICENSE
+%{_cross_attribution_file}
 %dir %{_cross_factorydir}/opt/cni/bin
 %{_cross_factorydir}/opt/cni/bin/cnitool
 

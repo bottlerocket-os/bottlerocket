@@ -95,8 +95,6 @@ find %{buildroot}%{_cross_prefix} \
    \( -name .install -o -name .check -o \
       -name ..install.cmd -o -name ..check.cmd \) -delete
 
-%cross_generate_attribution
-
 # files for external module compilation
 (
   find * -name Kbuild\* -type f -print  \

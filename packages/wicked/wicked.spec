@@ -14,7 +14,7 @@ Name: %{_cross_os}wicked
 Version: 0.6.54
 Release: 1%{?dist}
 Summary: Network configuration infrastructure
-License: GPLv2+
+License: GPL-2.0-or-later AND (GPL-2.0-only OR BSD-3-Clause)
 URL: https://github.com/openSUSE/wicked
 Source0: https://github.com/openSUSE/wicked/archive/version-%{version}.tar.gz
 
@@ -96,6 +96,8 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_datadir}/wicked/schema/constants
 %endif
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_sbindir}/wicked
 %{_cross_sbindir}/wickedd
 %{_cross_sbindir}/wickedd-nanny

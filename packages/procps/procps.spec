@@ -2,7 +2,7 @@ Name: %{_cross_os}procps
 Version: 3.3.16
 Release: 1%{?dist}
 Summary: A set of process monitoring tools
-License: GPL+ and GPLv2 and GPLv2+ and GPLv3+ and LGPLv2+
+License: GPL-2.0-or-later AND LGPL-2.1-or-later
 URL: https://gitlab.com/procps-ng/procps
 Source0: https://gitlab.com/procps-ng/procps/-/archive/v%{version}/procps-v%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
@@ -42,6 +42,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %make_install
 
 %files
+%license COPYING COPYING.LIB
+%{_cross_attribution_file}
 %{_cross_bindir}/free
 %{_cross_bindir}/pgrep
 %{_cross_bindir}/pidof

@@ -1,3 +1,5 @@
+%global _cross_first_party 1
+
 Name: %{_cross_os}release
 Version: 0.2.1
 Release: 1%{?dist}

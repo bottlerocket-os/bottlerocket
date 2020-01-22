@@ -2,7 +2,7 @@ Name: %{_cross_os}ca-certificates
 Version: 2019.11.27
 Release: 1%{?dist}
 Summary: CA certificates extracted from Mozilla
-License: MPL 2.0
+License: MPL-2.0
 # Note: You can see changes here:
 # https://hg.mozilla.org/projects/nss/log/tip/lib/ckfw/builtins/certdata.txt
 URL: https://curl.haxx.se/docs/caextract.html
@@ -24,6 +24,7 @@ install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/ca-certificates.conf
 
 %files
+%{_cross_attribution_file}
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/pki
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/pki/tls
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/pki/tls/certs

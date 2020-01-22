@@ -2,7 +2,7 @@ Name: %{_cross_os}util-linux
 Version: 2.34
 Release: 1%{?dist}
 Summary: A collection of basic system utilities
-License: GPLv2 and GPLv2+ and LGPLv2+ and BSD with advertising and Public Domain
+License: BSD-3-Clause AND BSD-4-Clause-UC AND GPL-1.0-or-later AND GPL-2.0-only AND GPL-2.0-or-later AND GPL-3.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT
 URL: http://en.wikipedia.org/wiki/Util-linux
 Source0: https://www.kernel.org/pub/linux/utils/util-linux/v2.34/util-linux-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
@@ -24,14 +24,14 @@ Requires: %{_cross_os}libuuid
 
 %package -n %{_cross_os}libblkid
 Summary: Block device ID library
-License: LGPLv2+
+License: LGPL-2.1-or-later
 
 %description -n %{_cross_os}libblkid
 %{summary}.
 
 %package -n %{_cross_os}libblkid-devel
 Summary: Files for development using the block device ID library
-License: LGPLv2+
+License: LGPL-2.1-or-later
 Requires: %{_cross_os}libblkid
 
 %description -n %{_cross_os}libblkid-devel
@@ -39,7 +39,7 @@ Requires: %{_cross_os}libblkid
 
 %package -n %{_cross_os}libmount
 Summary: Device mounting library
-License: LGPLv2+
+License: LGPL-2.1-or-later
 Requires: %{_cross_os}libselinux
 
 %description -n %{_cross_os}libmount
@@ -47,7 +47,7 @@ Requires: %{_cross_os}libselinux
 
 %package -n %{_cross_os}libmount-devel
 Summary: Files for development using the device mounting library
-License: LGPLv2+
+License: LGPL-2.1-or-later
 Requires: %{_cross_os}libmount
 
 %description -n %{_cross_os}libmount-devel
@@ -55,14 +55,14 @@ Requires: %{_cross_os}libmount
 
 %package -n %{_cross_os}libsmartcols
 Summary: Formatting library for ls-like programs
-License: LGPLv2+
+License: LGPL-2.1-or-later
 
 %description -n %{_cross_os}libsmartcols
 %{summary}.
 
 %package -n %{_cross_os}libsmartcols-devel
 Summary: Files for development using the formatting library for ls-like programs
-License: LGPLv2+
+License: LGPL-2.1-or-later
 Requires: %{_cross_os}libsmartcols
 
 %description -n %{_cross_os}libsmartcols-devel
@@ -70,14 +70,14 @@ Requires: %{_cross_os}libsmartcols
 
 %package -n %{_cross_os}libuuid
 Summary: Universally unique ID library
-License: BSD
+License: BSD-3-Clause
 
 %description -n %{_cross_os}libuuid
 %{summary}.
 
 %package -n %{_cross_os}libuuid-devel
 Summary: Files for development using the universally unique ID library
-License: BSD
+License: BSD-3-Clause
 Requires: %{_cross_os}libuuid
 
 %description -n %{_cross_os}libuuid-devel
@@ -85,6 +85,8 @@ Requires: %{_cross_os}libuuid
 
 %prep
 %autosetup -n util-linux-%{version} -p1
+
+cp Documentation/licenses/COPYING.* .
 
 %build
 %cross_configure \
@@ -114,7 +116,18 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %install
 %make_install
 
+# add attribution.txt files for lib subpackages that need them, since the
+# default macro only generates attribution.txt for the main package
+for lib in lib{blkid,mount,smartcols,uuid}; do
+    mkdir -p %{buildroot}%{_cross_licensedir}/$lib
+    echo "$lib - %{url}" >> %{buildroot}%{_cross_licensedir}/$lib/attribution.txt
+done
+echo "SPDX-License-Identifier: LGPL-2.1-or-later" | tee -a %{buildroot}%{_cross_licensedir}/lib{blkid,mount,smartcols}/attribution.txt >/dev/null
+echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licensedir}/libuuid/attribution.txt
+
 %files
+%license COPYING.BSD-3-Clause COPYING.BSD-4-Clause-UC COPYING.GPL-2.0-or-later COPYING.LGPL-2.1-or-later
+%{_cross_attribution_file}
 %{_cross_bindir}/chmem
 %{_cross_bindir}/choom
 %{_cross_bindir}/chrt
@@ -234,6 +247,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %exclude %{_cross_mandir}
 
 %files -n %{_cross_os}libblkid
+%license COPYING.LGPL-2.1-or-later
+%{_licensedir}/libblkid/attribution.txt
 %{_cross_libdir}/libblkid.so.*
 
 %files -n %{_cross_os}libblkid-devel
@@ -245,6 +260,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %exclude %{_cross_libdir}/libblkid.la
 
 %files -n %{_cross_os}libmount
+%license COPYING.LGPL-2.1-or-later
+%{_licensedir}/libmount/attribution.txt
 %{_cross_libdir}/libmount.so.*
 
 %files -n %{_cross_os}libmount-devel
@@ -256,6 +273,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %exclude %{_cross_libdir}/libmount.la
 
 %files -n %{_cross_os}libsmartcols
+%license COPYING.LGPL-2.1-or-later
+%{_licensedir}/libsmartcols/attribution.txt
 %{_cross_libdir}/libsmartcols.so.*
 
 %files -n %{_cross_os}libsmartcols-devel
@@ -267,6 +286,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %exclude %{_cross_libdir}/libsmartcols.la
 
 %files -n %{_cross_os}libuuid
+%license COPYING.BSD-3-Clause
+%{_licensedir}/libuuid/attribution.txt
 %{_cross_libdir}/libuuid.so.*
 
 %files -n %{_cross_os}libuuid-devel

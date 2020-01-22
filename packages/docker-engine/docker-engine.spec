@@ -69,7 +69,6 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/d
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/docker.conf
 
-%cross_generate_attribution
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files

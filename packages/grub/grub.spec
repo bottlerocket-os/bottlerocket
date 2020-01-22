@@ -4,7 +4,7 @@ Name: %{_cross_os}grub
 Version: 2.04
 Release: 1%{?dist}
 Summary: Bootloader with support for Linux and more
-License: GPLv3+
+License: GPL-3.0-or-later AND Unicode-DFS-2015
 URL: https://www.gnu.org/software/grub/
 Source0: https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
 Source1: core.cfg
@@ -75,6 +75,7 @@ Summary: Tools for the bootloader with support for Linux and more
 
 %prep
 %autosetup -n grub-%{version} -p1
+cp unicode/COPYING COPYING.unicode
 
 %global grub_cflags -pipe -fno-stack-protector -fno-strict-aliasing
 %global grub_ldflags -static
@@ -129,6 +130,8 @@ install -m 0644 ./grub-core/boot.img \
 %endif
 
 %files
+%license COPYING COPYING.unicode
+%{_cross_attribution_file}
 %dir %{_cross_grubdir}
 %if %{_cross_arch} == x86_64
 %{_cross_grubdir}/boot.img

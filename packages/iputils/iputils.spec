@@ -2,7 +2,7 @@ Name: %{_cross_os}iputils
 Version: 20190709
 Release: 1%{?dist}
 Summary: A set of network monitoring tools
-License: BSD and GPLv2+
+License: GPL-2.0-or-later AND BSD-3-Clause
 URL: https://github.com/iputils/iputils
 Source0: https://github.com/iputils/iputils/archive/s%{version}.tar.gz#/iputils-s%{version}.tar.gz
 
@@ -15,6 +15,7 @@ Requires: %{_cross_os}libcap
 
 %prep
 %autosetup -n iputils-s%{version} -p1
+cp ninfod/COPYING COPYING.ninfod
 
 %build
 CONFIGURE_OPTS=(
@@ -45,6 +46,8 @@ CONFIGURE_OPTS=(
 %cross_meson_install
 
 %files
+%license LICENSE Documentation/LICENSE.GPL2 Documentation/LICENSE.BSD3 COPYING.ninfod
+%{_cross_attribution_file}
 %attr(0755,root,root) %caps(cap_net_raw=p) %{_cross_bindir}/arping
 %attr(0755,root,root) %caps(cap_net_raw=p cap_net_admin=p) %{_cross_bindir}/ping
 %{_cross_bindir}/tracepath

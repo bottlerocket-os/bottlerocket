@@ -1,4 +1,5 @@
 %global migration_dir %{_cross_factorydir}%{_cross_sharedstatedir}/thar/datastore/migrations
+%global _cross_first_party 1
 %undefine _debugsource_packages
 
 Name: %{_cross_os}workspaces

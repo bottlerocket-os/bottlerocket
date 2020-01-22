@@ -73,7 +73,6 @@ install -m 0644 %{S:3} %{buildroot}%{_cross_templatedir}/kubelet-config
 install -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/kubelet-kubeconfig
 install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 
-%cross_generate_attribution
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files -n %{_cross_os}kubelet

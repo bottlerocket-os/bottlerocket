@@ -36,7 +36,6 @@ done
 install -d %{buildroot}%{_cross_factorydir}/opt/cni/bin
 install -p -m 0755 bin/* %{buildroot}%{_cross_factorydir}/opt/cni/bin
 
-%cross_generate_attribution
 %cross_scan_attribution go-vendor vendor
 
 %files

@@ -1,11 +1,13 @@
 # Skip check-rpaths since we expect them for systemd.
-%global __arch_install_post /usr/lib/rpm/check-buildroot
+%global __arch_install_post \
+  /usr/lib/rpm/check-buildroot \
+  %cross_generate_attribution
 
 Name: %{_cross_os}systemd
 Version: 244
 Release: 1%{?dist}
 Summary: System and Service Manager
-License: LGPLv2+ and MIT and GPLv2+
+License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
 Source1: run-tmpfiles.conf
@@ -178,6 +180,8 @@ install -p -m 0644 %{S:2} %{buildroot}%{_cross_libdir}/modules-load.d/nf_conntra
 rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 
 %files
+%license LICENSE.GPL2 LICENSE.LGPL2.1
+%{_cross_attribution_file}
 %{_cross_bindir}/busctl
 %{_cross_bindir}/journalctl
 %{_cross_bindir}/systemctl

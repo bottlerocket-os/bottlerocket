@@ -1,3 +1,5 @@
+%global _cross_first_party 1
+
 Name: %{_cross_os}login
 Version: 0.0.1
 Release: 1%{?dist}

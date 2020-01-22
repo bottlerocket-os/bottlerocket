@@ -15,6 +15,7 @@ URL: https://www.rust-lang.org/
 
 %prep
 %setup -T -c
+cp %{_cross_licensedir}/%{name}/* .
 
 %build
 %define _rust_target %{_cross_arch}-unknown-linux-%{_cross_libc}
@@ -25,6 +26,8 @@ mkdir -p %{buildroot}%{_cross_libdir}
 install -p -m0755 libstd-*.so %{buildroot}%{_cross_libdir}
 
 %files
+%license COPYRIGHT LICENSE-APACHE LICENSE-MIT
+%{_cross_attribution_file}
 %{_cross_libdir}/libstd-*.so
 
 %changelog

@@ -2,7 +2,7 @@ Name: %{_cross_os}glibc
 Version: 2.30
 Release: 1%{?dist}
 Summary: The GNU libc libraries
-License: LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and GPLv2+ with exceptions and BSD and Inner-Net and ISC and Public Domain and GFDL
+License: LGPL-2.1-or-later AND (LGPL-2.1-or-later WITH GCC-exception-2.0) AND GPL-2.0-or-later AND (GPL-2.0-or-later WITH GCC-exception-2.0) AND BSD-3-Clause AND ISC
 URL: http://www.gnu.org/software/glibc/
 Source0: https://ftp.gnu.org/gnu/glibc/glibc-%{version}.tar.xz
 Source1: glibc-tmpfiles.conf
@@ -73,6 +73,8 @@ truncate -s 0 %{buildroot}%{_cross_datadir}/locale/locale.alias
 chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 
 %files
+%license COPYING COPYING.LIB LICENSES
+%{_cross_attribution_file}
 %{_cross_tmpfilesdir}/glibc.conf
 %exclude %{_cross_sysconfdir}/rpc
 

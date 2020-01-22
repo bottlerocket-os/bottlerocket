@@ -1,3 +1,4 @@
+%global _cross_first_party 1
 %global workspace_name host-ctr
 
 Name: %{_cross_os}%{workspace_name}

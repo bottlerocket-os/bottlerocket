@@ -37,6 +37,8 @@ export SHLIBDIR='%{_cross_libdir}' \\\
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_bindir}
 %exclude %{_cross_mandir}

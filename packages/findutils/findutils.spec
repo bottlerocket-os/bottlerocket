@@ -2,7 +2,7 @@ Name: %{_cross_os}findutils
 Version: 4.7.0
 Release: 1%{?dist}
 Summary: A set of GNU tools for finding
-License: GPLv3+
+License: GPL-3.0-or-later
 URL: http://www.gnu.org/software/findutils/
 Source0: https://ftp.gnu.org/pub/gnu/findutils/findutils-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
@@ -23,6 +23,8 @@ Requires: %{_cross_os}libselinux
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_bindir}/find
 %{_cross_bindir}/xargs
 %exclude %{_cross_bindir}/locate

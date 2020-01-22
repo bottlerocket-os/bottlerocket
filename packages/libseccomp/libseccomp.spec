@@ -2,7 +2,7 @@ Name: %{_cross_os}libseccomp
 Version: 2.4.2
 Release: 1%{?dist}
 Summary: Library for enhanced seccomp
-License: LGPLv2
+License: LGPL-2.1-only
 URL: https://github.com/seccomp/libseccomp
 Source0: https://github.com/seccomp/libseccomp/releases/download/v%{version}/libseccomp-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
@@ -32,6 +32,8 @@ Requires: %{name}
 %make_install
 
 %files
+%license LICENSE
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_bindir}/scmp_sys_resolver
 %exclude %{_cross_mandir}

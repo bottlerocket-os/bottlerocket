@@ -1,3 +1,5 @@
+%global _cross_first_party 1
+
 Name: %{_cross_os}filesystem
 Version: 1.0
 Release: 1%{?dist}

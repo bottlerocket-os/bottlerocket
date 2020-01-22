@@ -2,7 +2,7 @@ Name: %{_cross_os}kmod
 Version: 26
 Release: 1%{?dist}
 Summary: Tools for kernel module loading and unloading
-License: LGPLv2+
+License: GPL-2.0-or-later AND LGPL-2.1-or-later
 URL: http://git.kernel.org/?p=utils/kernel/kmod/kmod.git;a=summary
 Source0: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
@@ -19,6 +19,8 @@ Requires: %{name}
 
 %prep
 %autosetup -n kmod-%{version} -p1
+cp COPYING COPYING.LGPL
+cp tools/COPYING COPYING.GPL
 
 %build
 %cross_configure \
@@ -39,6 +41,8 @@ install -d %{buildroot}%{_cross_sbindir}
 ln -s ../bin/kmod %{buildroot}%{_cross_sbindir}/modprobe
 
 %files
+%license COPYING.LGPL COPYING.GPL
+%{_cross_attribution_file}
 %{_cross_bindir}/kmod
 %{_cross_bindir}/depmod
 %{_cross_bindir}/insmod
