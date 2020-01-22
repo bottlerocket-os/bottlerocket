@@ -1,20 +1,17 @@
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::path::Path;
 
 pub use derived_data::*;
 
-lazy_static! {
-    pub static ref FILESYSTEM_FILE_SUFFICES: std::vec::Vec<&'static str> = vec![
-        "boot.ext4.lz4",
-        "root.ext4.lz4",
-        "root.ext4.lz4",
-        "root.verity.lz4"
-    ];
-    pub static ref DISK_IMAGE_FILE_SUFFICES: std::vec::Vec<&'static str> =
-        vec!["img.lz4", "data.img.lz4"];
-}
+pub static FILESYSTEM_FILE_SUFFICES: &[&str] = &[
+    "boot.ext4.lz4",
+    "root.ext4.lz4",
+    "root.ext4.lz4",
+    "root.verity.lz4",
+];
+
+pub static DISK_IMAGE_FILE_SUFFICES: &[&str] = &["img.lz4", "data.img.lz4"];
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Release {
