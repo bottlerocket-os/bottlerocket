@@ -196,11 +196,13 @@ fn refresh_timestamp() -> failure::Fallible<CustomOutput> {
     );
     timestamp.signed.version = new_version;
 
+    let new_expiration = now + Duration::days(env_vars.refresh_validity_days.parse::<i64>()?);
     info!(
         "Updating expiration date from {} to {}",
-        timestamp.signed.version, new_version
+        timestamp.signed.expires.to_rfc3339(),
+        new_expiration.to_rfc3339()
     );
-    timestamp.signed.expires = now + Duration::days(env_vars.refresh_validity_days.parse::<i64>()?);
+    timestamp.signed.expires = new_expiration;
 
     let signed_root = repo.root();
     let key_id = if let Some(key) = signed_root
