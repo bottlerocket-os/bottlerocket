@@ -48,31 +48,39 @@ You may want to take advantage of multiple cores on your system by running `make
 
 To use the image in Amazon EC2, we need to register the image as an AMI.
 The `bin/amiize.sh` script does this for you.
-It has some assumptions about your setup, in particular that you have [aws-cli](https://aws.amazon.com/cli/) set up and an SSH key that's registered with EC2 is loaded into `ssh-agent`.
-Read the top of the file for details.
 
-This is an example of how you can register an AMI after building a Thar image.
+The script has some assumptions about your setup, in particular that you:
+  * have [aws-cli v1](https://aws.amazon.com/cli/) set up, and that its default profile can create and control EC2 resources.
+  * An SSH key that's registered with EC2 is loaded into `ssh-agent`.
 
-First, decompress the images:
+First, decompress the images.
+(Note: these filenames assume an `x86_64` architecture and `aws-k8s` [variant](README.md#variant).)
 
 ```
-lz4 -d build/thar-x86_64.img.lz4 build/thar-x86_64.img \
-&& lz4 -d build/thar-x86_64-data.img.lz4 build/thar-x86_64-data.img
+lz4 -d build/thar-x86_64-aws-k8s.img.lz4 build/thar-x86_64-aws-k8s.img && \
+lz4 -d build/thar-x86_64-aws-k8s-data.img.lz4 build/thar-x86_64-aws-k8s-data.img
 ```
 
 Next, register an AMI:
 
 ```
-bin/amiize.sh --name YOUR-AMI-NAME-HERE --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
-   --root-image build/thar-x86_64.img --data-image build/thar-x86_64-data.img \
-   --region us-west-2 --instance-type m3.xlarge --arch x86_64 \
-   --worker-ami ami-08d489468314a58df --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
+bin/amiize.sh --name YOUR-AMI-NAME-HERE \
+              --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
+              --root-image build/thar-aws-k8s-x86_64.img \
+              --data-image build/thar-x86_64-aws-k8s-data.img \
+              --region us-west-2 \
+              --instance-type m3.xlarge \
+              --arch x86_64 \
+              --worker-ami ami-08d489468314a58df \
+              --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
 ```
 
 The new AMI ID will be printed at the end.
 
-The amiize script starts an EC2 instance, which it uses to write the image to a new EBS volume, which is then registered as an AMI.
-The listed worker AMI is an Amazon Linux AMI, and the listed user data disables updates at boot to speed up registration - make sure you use an up-to-date worker AMI.
+The amiize script starts an EC2 instance, which it uses to write the image to a new EBS volume.
+It then registers this EBS volume as an AMI and terminates the instance.
+In the example command above, the `--worker-ami` is an Amazon Linux AMI, and the `--user-data` disables updates at boot to speed up registration.
+Make sure you use an up-to-date worker AMI.
 
 # Using a Thar AMI
 
@@ -92,8 +100,8 @@ First, get [eksctl set up](https://github.com/weaveworks/eksctl).
 
 You'll also need to [install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to augment `eksctl` during setup, and to run pods afterward.
 
-Finally, you'll need [aws-cli](https://aws.amazon.com/cli/) set up to interact with AWS.
-(You'll need a [recent version](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-bundled) with EKS support.)
+Finally, you'll need [aws-cli v1](https://aws.amazon.com/cli/) set up to interact with AWS.
+(You'll need a [recent v1 release](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-bundled) with EKS support.)
 
 ## Cluster setup
 
@@ -160,7 +168,7 @@ You can choose whether you want public or private.
 * Choose public to more easily debug your instance.  These subnets have an Internet Gateway, so if you add a public IP address to your instance, you can talk to it.  (You can manually add an Internet Gateway to a private subnet later, so this is a reversible decision.)
 
 Note that if you choose to use the public subnet, you'll need your instance to have a publicly accessible IP address.
-That either means adding `--associate-public-ip-address` to the launch command below, or attaching an Elastic IP address.
+That either means adding `--associate-public-ip-address` to the launch command below, or attaching an Elastic IP address after launch.
 There will be a reminder about this when we talk about the launch command.
 
 Finally, note that if you want to launch in a specific availability zone, make sure you pick a subnet that matches; the AZ is listed right next to the public/private status.
@@ -186,6 +194,8 @@ arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/INSTANCE_ROLE_NAME          system:node:{{
 
 Note down the INSTANCE_ROLE_NAME for the instructions below.
 
+#### Enabling SSM
+
 If you add SSM permissions, you can use Thar's default SSM agent to get a shell session on the instance.
 
 To attach the role policy for SSM permissions, run the following:
@@ -196,7 +206,15 @@ aws iam attach-role-policy \
    --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 ```
 
-Then, to retrieve the instance profile name used to launch instances, run this:
+If you receive the following error, you need to truncate INSTANCE_ROLE_NAME to 64 characters.
+(We are working on improving this.)
+
+```
+1 validation error detected: Value 'INSTANCE_ROLE_NAME' at 'role Name' failed to satisfy constraint:
+Member must have length less than or equal to 64
+```
+
+Next, to retrieve the instance profile name used to launch instances, run this:
 
 ```
 aws iam list-instance-profiles-for-role --role-name INSTANCE_ROLE_NAME --query "InstanceProfiles[*].InstanceProfileName" --output text
@@ -210,6 +228,7 @@ eksctl-thar-nodegroup-ng-IDENTIFIER-NodeInstanceProfile-IDENTIFIER
 Note this down as the INSTANCE_PROFILE_NAME for the final launch command.
 
 ## kube-proxy settings
+
 By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Thar originally sets at boot.
 If you prefer to keep Thar's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
 
@@ -217,7 +236,8 @@ If you prefer to keep Thar's [default setting](packages/release/release-sysctl.c
 kubectl edit -n kube-system daemonset kube-proxy
 ```
 
-Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments like so (0 implies no change):
+Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments like so (a setting of 0 implies no change):
+
 ```
       containers:
       - command:
