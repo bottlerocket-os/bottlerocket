@@ -419,6 +419,7 @@ while true; do
       --output json \
       --region "${REGION}" \
       --image-id "${WORKER_AMI}" \
+      --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=amiize-worker}]' \
       --instance-type "${INSTANCE_TYPE}" \
       ${SUBNET_ID:+--subnet-id "${SUBNET_ID}"} \
       ${USER_DATA:+--user-data "${USER_DATA}"} \
