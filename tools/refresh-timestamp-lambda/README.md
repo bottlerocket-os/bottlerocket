@@ -6,7 +6,8 @@ Current version: 0.1.0
 
 This is a lambda function that periodically refreshes a TUF repository's `timestamp.json` metadata file's expiration date and version.
 
-Every time this lambda runs, the expiration date is pushed out by a custom number of days from the current date (defined by the lambda event).
+If the current date passes the defined refresh threshold, the expiration date is pushed out by a custom number of days from the current date (defined by the lambda event).
+Otherwise the lambda does not push out the updated and signed `timestamp.json` metadata file, which makes the execution equivalent to a no-op operation.
 
 ## Compiling & Building
 

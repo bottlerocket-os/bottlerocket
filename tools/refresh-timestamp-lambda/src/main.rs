@@ -3,7 +3,8 @@
 
 This is a lambda function that periodically refreshes a TUF repository's `timestamp.json` metadata file's expiration date and version.
 
-Every time this lambda runs, the expiration date is pushed out by a custom number of days from the current date (defined by the lambda event).
+If the current date passes the defined refresh threshold, the expiration date is pushed out by a custom number of days from the current date (defined by the lambda event).
+Otherwise the lambda does not push out the updated and signed `timestamp.json` metadata file, which makes the execution equivalent to a no-op operation.
 
 # Compiling & Building
 
@@ -44,7 +45,7 @@ use std::error::Error;
 use std::io::Read;
 use std::num::NonZeroU64;
 use tempfile::tempdir;
-use tough::schema::{RoleType, Signature};
+use tough::schema::{RoleType, Signature, Signed, Timestamp};
 use tough::sign::Sign;
 use tough::{HttpTransport, Limits, Repository, Settings};
 
@@ -59,7 +60,8 @@ struct EnvVars {
     metadata_path: String,
     metadata_url: String,
     targets_url: String,
-    refresh_validity_days: String,
+    refresh_validity_days: i64,
+    refresh_threshold: i64,
 }
 
 #[derive(Deserialize, Copy, Clone)]
@@ -98,6 +100,44 @@ fn get_signing_key(
             Err(HandlerError::from(failure::Error::from(error)))
         }
     }
+}
+
+fn sign_timestamp(
+    repo: &Repository<'_, HttpTransport>,
+    keypair: &dyn Sign,
+    timestamp: &mut Signed<Timestamp>,
+) -> failure::Fallible<()> {
+    let signed_root = repo.root();
+    let key_id = if let Some(key) = signed_root
+        .signed
+        .keys
+        .iter()
+        .find(|(_, key)| keypair.tuf_key() == **key)
+    {
+        key.0
+    } else {
+        error!("Couldn't find key pair");
+        return Err(format_err!("Couldn't find key"));
+    };
+
+    let mut data = Vec::new();
+    let role_key = match signed_root.signed.roles.get(&RoleType::Timestamp) {
+        Some(key) => key,
+        None => return Err(format_err!("Unable to find role keys")),
+    };
+    if role_key.keyids.contains(key_id) {
+        let mut ser = serde_json::Serializer::with_formatter(&mut data, CanonicalFormatter::new());
+        timestamp.signed.serialize(&mut ser)?;
+
+        let sig = keypair.sign(&data, &SystemRandom::new())?;
+        timestamp.signatures.clear();
+        timestamp.signatures.push(Signature {
+            keyid: key_id.clone(),
+            sig: sig.into(),
+        });
+    }
+    info!("Signed data: {}", from_utf8_lossy(&data));
+    Ok(())
 }
 
 fn handler(_e: CustomEvent, _c: Context) -> Result<CustomOutput, HandlerError> {
@@ -143,9 +183,7 @@ fn refresh_timestamp() -> failure::Fallible<CustomOutput> {
 
     // Retrieves signing key from SSM parameter
     let signing_key = get_signing_key(&ssm_client, env_vars.key_parameter_name)?;
-    let keypair: Box<dyn Sign> = Box::new(tough::sign::parse_keypair(
-        &signing_key.as_bytes().to_vec(),
-    )?);
+    let keypair = tough::sign::parse_keypair(&signing_key.as_bytes().to_vec())?;
 
     // Create the datastore path for storing the metadata files
     let datastore = tempdir()?;
@@ -196,7 +234,8 @@ fn refresh_timestamp() -> failure::Fallible<CustomOutput> {
     );
     timestamp.signed.version = new_version;
 
-    let new_expiration = now + Duration::days(env_vars.refresh_validity_days.parse::<i64>()?);
+    let old_expiration = timestamp.signed.expires;
+    let new_expiration = now + Duration::days(env_vars.refresh_validity_days);
     info!(
         "Updating expiration date from {} to {}",
         timestamp.signed.expires.to_rfc3339(),
@@ -204,51 +243,26 @@ fn refresh_timestamp() -> failure::Fallible<CustomOutput> {
     );
     timestamp.signed.expires = new_expiration;
 
-    let signed_root = repo.root();
-    let key_id = if let Some(key) = signed_root
-        .signed
-        .keys
-        .iter()
-        .find(|(_, key)| keypair.tuf_key() == **key)
-    {
-        key.0
-    } else {
-        error!("Couldn't find key pair");
-        return Err(format_err!("Couldn't find key"));
-    };
+    sign_timestamp(&repo, &keypair, &mut timestamp)?;
 
-    let mut data = Vec::new();
-    let role_key = match signed_root.signed.roles.get(&RoleType::Timestamp) {
-        Some(key) => key,
-        None => return Err(format_err!("Unable to find role keys")),
-    };
-    if role_key.keyids.contains(key_id) {
-        let mut ser = serde_json::Serializer::with_formatter(&mut data, CanonicalFormatter::new());
-        timestamp.signed.serialize(&mut ser)?;
-
-        let sig = keypair.sign(&data, &SystemRandom::new())?;
-        timestamp.signatures.clear();
-        timestamp.signatures.push(Signature {
-            keyid: key_id.clone(),
-            sig: sig.into(),
-        });
+    // Only update the timestamp.json in the TUF repository if we've passed the refresh threshold
+    let should_push_timestamp =
+        now > old_expiration - Duration::days(env_vars.refresh_threshold);
+    if should_push_timestamp {
+        let body = serde_json::to_vec_pretty(&timestamp)?;
+        let put_request = PutObjectRequest {
+            bucket: env_vars.bucket_name,
+            key: (env_vars.metadata_path + "/timestamp.json"),
+            body: Some(body.into()),
+            ..PutObjectRequest::default()
+        };
+        s3_client.put_object(put_request).sync()?;
     }
-
-    let body = serde_json::to_vec_pretty(&timestamp)?;
-    let put_request = PutObjectRequest {
-        bucket: env_vars.bucket_name,
-        key: (env_vars.metadata_path + "/timestamp.json"),
-        body: Some(body.into()),
-        ..PutObjectRequest::default()
-    };
-    s3_client.put_object(put_request).sync()?;
 
     Ok(CustomOutput {
         message: format!(
-            "new version = {}, new expiration date = {}, signed data: {}",
-            timestamp.signed.version,
-            timestamp.signed.expires,
-            from_utf8_lossy(&data)
+            "new version = {}, new expiration date = {}, pushed timestamp = {}",
+            timestamp.signed.version, timestamp.signed.expires, should_push_timestamp
         ),
     })
 }

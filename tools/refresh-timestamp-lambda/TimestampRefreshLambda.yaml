@@ -24,13 +24,23 @@ Parameters:
   MetadataPath:
     Description: 'The path where to find metadata files in the TUF repo S3 bucket (e.g. "0af132ea221/metadata")'
     Type: String
-  RefreshFrequencyDays:
-    Description: 'Defines how often to run the refresh lambda (in days).'
+  LambdaInvocationFrequency:
+    Description: 'Defines how often to run the refresh lambda (in hours).'
     MinValue: 1
-    MaxValue: 10
+    MaxValue: 72
     Type: Number
   RefreshValidityDays:
     Description: 'How many days to refresh the timestamp metadata for.'
+    MinValue: 1
+    MaxValue: 10
+    Default: 7
+    Type: Number
+  RefreshThresholdDays:
+    Description: >-
+      The threshold for pushing timestamp.json. The threshold is set to be the old expiration date of timestamp.json
+      subtract the value of this parameter. If current date passes the threshold, the lambda will push
+      out the updated and signed timestamp.json. Otherwise the lambda will only go through the motions of updating and
+      signing timestamp.json and not push anything out to the TUF repository.
     MinValue: 1
     MaxValue: 10
     Default: 7
@@ -88,6 +98,7 @@ Resources:
           KEY_PARAMETER_NAME: !Sub '${SigningKeyParameterName}'
           METADATA_PATH: !Sub '${MetadataPath}'
           REFRESH_VALIDITY_DAYS: !Sub '${RefreshValidityDays}'
+          REFRESH_THRESHOLD: !Sub '${RefreshThresholdDays}'
           METADATA_URL: !Sub '${MetadataBaseUrl}'
           TARGETS_URL: !Sub '${TargetBaseUrl}'
   LambdaFunctionSchedule:
@@ -95,7 +106,7 @@ Resources:
     Properties:
       Description: Schedules the refresh lambda
       Name: refresh-timestamp-lambda-schedule
-      ScheduleExpression: !Sub 'cron(0 0 */${RefreshFrequencyDays} * ? *)'
+      ScheduleExpression: !Sub 'rate(${LambdaInvocationFrequency} hours)'
       State: ENABLED
       Targets:
         - Arn: !GetAtt 'LambdaFunction.Arn'
