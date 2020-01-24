@@ -2,7 +2,7 @@ Name: %{_cross_os}iproute
 Version: 4.19.0
 Release: 1%{?dist}
 Summary: Tools for advanced IP routing and network device configuration
-License: GPLv2+ and Public Domain
+License: GPL-2.0-or-later AND GPL-2.0-only
 URL: http://kernel.org/pub/linux/utils/net/iproute2/
 Source0: http://kernel.org/pub/linux/utils/net/iproute2/iproute2-%{version}.tar.xz
 Patch1: 0001-skip-libelf-check.patch
@@ -54,6 +54,8 @@ for f in %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/iproute2/* ; do
 done
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_sbindir}/bridge
 %{_cross_sbindir}/ctstat
 %{_cross_sbindir}/devlink

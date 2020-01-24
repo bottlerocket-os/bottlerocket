@@ -2,7 +2,7 @@ Name: %{_cross_os}libdbus
 Version: 1.12.16
 Release: 1%{?dist}
 Summary: Library for a message bus
-License: (GPLv2+ or AFL) and GPLv2+
+License: AFL-2.1 OR GPL-2.0-or-later
 URL: http://www.freedesktop.org/Software/dbus/
 Source0: https://dbus.freedesktop.org/releases/dbus/dbus-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
@@ -45,6 +45,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 rm -rf %{buildroot}%{_cross_docdir}/dbus/examples
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_bindir}
 %exclude %{_cross_datadir}

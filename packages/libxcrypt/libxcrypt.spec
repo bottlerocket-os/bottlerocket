@@ -2,7 +2,7 @@ Name: %{_cross_os}libxcrypt
 Version: 4.4.10
 Release: 1%{?dist}
 Summary: Extended crypt library for descrypt, md5crypt, bcrypt, and others
-License: LGPLv2+ and BSD and Public Domain
+License: LGPL-2.1-or-later
 URL: https://github.com/besser82/libxcrypt
 Source0: https://github.com/besser82/libxcrypt/archive/v%{version}/libxcrypt-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
@@ -39,6 +39,8 @@ Requires: %{name}
 %make_install
 
 %files
+%license LICENSING COPYING.LIB
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_mandir}
 

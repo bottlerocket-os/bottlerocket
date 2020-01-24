@@ -5,7 +5,7 @@ Name: %{_cross_os}libnl
 Version: %{rpmver}
 Release: 1%{?dist}
 Summary: Convenience library for netlink
-License: LGPLv2+
+License: LGPL-2.1-only
 URL: https://github.com/thom311/libnl
 Source0: https://github.com/thom311/libnl/archive/libnl%{srcver}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
@@ -38,6 +38,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_mandir}
 %exclude %{_cross_sysconfdir}

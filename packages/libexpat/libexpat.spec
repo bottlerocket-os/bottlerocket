@@ -34,6 +34,8 @@ Requires: %{name}
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_docdir}
 

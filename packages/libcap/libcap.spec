@@ -2,7 +2,7 @@ Name: %{_cross_os}libcap
 Version: 2.28
 Release: 1%{?dist}
 Summary: Library for getting and setting POSIX.1e capabilities
-License: GPLv2
+License: GPL-2.0-only OR BSD-3-Clause
 URL: https://sites.google.com/site/fullycapable/
 Source0: https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-%{version}.tar.gz
 BuildRequires: libcap-devel
@@ -50,6 +50,8 @@ make install \
 chmod +x %{buildroot}%{_cross_libdir}/*.so.*
 
 %files
+%license License
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_mandir}
 %exclude %{_cross_sbindir}

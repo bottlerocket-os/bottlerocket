@@ -3,7 +3,7 @@ Name: %{_cross_os}ncurses
 Version: 6.1
 Release: 10.%{revision}%{?dist}
 Summary: Ncurses libraries
-License: MIT
+License: X11
 URL: https://invisible-island.net/ncurses/ncurses.html
 Source0: https://invisible-mirror.net/archives/ncurses/current/ncurses-%{version}-%{revision}.tgz
 Patch1: ncurses-config.patch
@@ -94,6 +94,8 @@ done
 rm -rf "%{buildroot}%{_cross_datadir}/terminfo.bak"
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/lib*.so.6*
 %dir %{_cross_datadir}/terminfo
 %{_cross_datadir}/terminfo/*

@@ -1,8 +1,10 @@
+%global _cross_first_party 1
+
 Name: %{_cross_os}login
 Version: 0.0.1
 Release: 1%{?dist}
 Summary: A login helper
-License: FIXME
+License: LicenseRef-Pending
 Source0: login
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}bash

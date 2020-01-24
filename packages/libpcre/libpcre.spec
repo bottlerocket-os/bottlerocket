@@ -48,6 +48,8 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %make_install
 
 %files
+%license LICENCE
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_bindir}
 %exclude %{_cross_docdir}

@@ -2,7 +2,7 @@ Name: %{_cross_os}libmnl
 Version: 1.0.4
 Release: 1%{?dist}
 Summary: Library for netlink
-License: LGPLv2+
+License: LGPL-2.1-or-later
 URL: http://netfilter.org/projects/libmnl
 Source0: http://netfilter.org/projects/libmnl/files/libmnl-%{version}.tar.bz2
 BuildRequires: %{_cross_os}glibc-devel
@@ -30,6 +30,8 @@ Requires: %{name}
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 
 %files devel

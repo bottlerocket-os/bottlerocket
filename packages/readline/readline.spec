@@ -2,7 +2,7 @@ Name: %{_cross_os}readline
 Version: 8.0
 Release: 1%{?dist}
 Summary: A library for editing typed command lines
-License: GPLv3+
+License: GPL-3.0-or-later
 URL: https://tiswww.case.edu/php/chet/readline/rltop.html
 Source0: https://ftp.gnu.org/gnu/readline/readline-%{version}.tar.gz
 Patch1: readline-8.0-shlib.patch
@@ -31,6 +31,8 @@ Requires: %{name}
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_infodir}
 %exclude %{_cross_mandir}

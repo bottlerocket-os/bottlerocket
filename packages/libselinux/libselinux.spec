@@ -2,7 +2,7 @@ Name: %{_cross_os}libselinux
 Version: 3.0
 Release: 1%{?dist}
 Summary: Library for SELinux
-License: Public Domain
+License: LicenseRef-SELinux-PD
 URL: https://github.com/SELinuxProject/
 Source0: https://github.com/SELinuxProject/selinux/releases/download/20191204/libselinux-%{version}.tar.gz
 Patch1: 0001-adjust-default-selinux-directory.patch
@@ -45,6 +45,8 @@ export USE_PCRE2='y' \\\
 %make_install
 
 %files
+%license LICENSE
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_sbindir}
 %exclude %{_cross_mandir}

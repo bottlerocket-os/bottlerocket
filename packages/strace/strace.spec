@@ -2,7 +2,7 @@ Name: %{_cross_os}strace
 Version: 5.4
 Release: 1%{?dist}
 Summary: Linux syscall tracer
-License: LGPLv2.1+
+License: LGPL-2.1-or-later
 URL: https://strace.io/
 Source0: https://strace.io/files/%{version}/strace-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
@@ -23,6 +23,8 @@ BuildRequires: %{_cross_os}glibc-devel
 %make_install
 
 %files
+%license COPYING LGPL-2.1-or-later
+%{_cross_attribution_file}
 %{_cross_bindir}/strace
 %exclude %{_cross_bindir}/strace-graph
 %exclude %{_cross_bindir}/strace-log-merge

@@ -2,7 +2,8 @@ Name: %{_cross_os}conntrack-tools
 Version: 1.4.5
 Release: 1%{?dist}
 Summary: Tools for managing Linux kernel connection tracking
-License: GPLv2
+# src/utils.c contains GPLv2-only code from linux
+License: GPL-2.0-or-later AND GPL-2.0-only
 URL: http://conntrack-tools.netfilter.org/
 Source0: https://www.netfilter.org/projects/conntrack-tools/files/conntrack-tools-%{version}.tar.bz2
 Patch1: 0001-disable-RPC-helper.patch
@@ -44,6 +45,8 @@ autoreconf -fi
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_sbindir}/conntrack
 %exclude %{_cross_sbindir}/conntrackd
 %exclude %{_cross_sbindir}/nfct

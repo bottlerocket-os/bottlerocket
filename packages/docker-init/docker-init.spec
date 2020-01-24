@@ -27,6 +27,8 @@ install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 tini-static %{buildroot}%{_cross_bindir}/docker-init
 
 %files
+%license LICENSE
+%{_cross_attribution_file}
 %{_cross_bindir}/docker-init
 
 %changelog

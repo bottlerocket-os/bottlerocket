@@ -34,7 +34,6 @@ go build -buildmode pie -tags="${BUILDTAGS}" -o docker %{goimport}/cmd/docker
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 docker %{buildroot}%{_cross_bindir}
 
-%cross_generate_attribution
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files

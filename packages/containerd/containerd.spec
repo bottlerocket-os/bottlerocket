@@ -70,7 +70,6 @@ install -p -m 0644 %{S:2} %{S:3} %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:4} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 
-%cross_generate_attribution
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files

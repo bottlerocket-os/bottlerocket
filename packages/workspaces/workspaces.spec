@@ -1,11 +1,12 @@
 %global migration_dir %{_cross_factorydir}%{_cross_sharedstatedir}/thar/datastore/migrations
+%global _cross_first_party 1
 %undefine _debugsource_packages
 
 Name: %{_cross_os}workspaces
 Version: 0.0
 Release: 0%{?dist}
 Summary: Thar's first-party code
-License: FIXME
+License: LicenseRef-Pending
 
 # sources < 100: misc
 Source1: data-store-version

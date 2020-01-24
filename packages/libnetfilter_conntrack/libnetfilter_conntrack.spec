@@ -2,7 +2,7 @@ Name: %{_cross_os}libnetfilter_conntrack
 Version: 1.0.7
 Release: 1%{?dist}
 Summary: Library for netfilter conntrack
-License: GPLv2+
+License: GPL-2.0-or-later
 URL: http://netfilter.org
 Source0: https://netfilter.org/projects/libnetfilter_conntrack/files/libnetfilter_conntrack-%{version}.tar.bz2
 BuildRequires: %{_cross_os}glibc-devel
@@ -35,6 +35,8 @@ Requires: %{name}
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 
 %files devel

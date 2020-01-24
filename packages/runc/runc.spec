@@ -37,7 +37,6 @@ go build -buildmode pie -tags="${BUILDTAGS}" -o bin/runc .
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 bin/runc %{buildroot}%{_cross_bindir}
 
-%cross_generate_attribution
 %cross_scan_attribution go-vendor vendor
 
 %files

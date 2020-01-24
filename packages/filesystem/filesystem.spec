@@ -1,8 +1,10 @@
+%global _cross_first_party 1
+
 Name: %{_cross_os}filesystem
 Version: 1.0
 Release: 1%{?dist}
 Summary: The basic directory layout
-License: Public Domain
+License: LicenseRef-Pending
 BuildArch: noarch
 
 %description

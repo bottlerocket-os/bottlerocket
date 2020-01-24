@@ -2,7 +2,7 @@ Name: %{_cross_os}dbus-broker
 Version: 21
 Release: 1%{?dist}
 Summary: D-BUS message broker
-License: ASL 2.0
+License: Apache-2.0
 URL: https://github.com/bus1/dbus-broker
 Source0: https://github.com/bus1/dbus-broker/releases/download/v%{version}/dbus-broker-%{version}.tar.xz
 Source1: dbus.socket
@@ -49,6 +49,8 @@ install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_sysusersdir}/dbus.conf
 
 %files
+%license LICENSE
+%{_cross_attribution_file}
 %{_cross_bindir}/dbus-broker
 %{_cross_bindir}/dbus-broker-launch
 %dir %{_cross_datadir}/dbus-1

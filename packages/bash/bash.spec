@@ -2,7 +2,7 @@ Name: %{_cross_os}bash
 Version: 5.0
 Release: 1%{?dist}
 Summary: The GNU Bourne Again shell
-License: GPLv3+
+License: GPL-3.0-or-later
 URL: https://www.gnu.org/software/bash
 Source0: https://ftp.gnu.org/gnu/bash/bash-%{version}.tar.gz
 
@@ -78,6 +78,8 @@ make "CPPFLAGS=-D_GNU_SOURCE -DRECYCLES_PIDS -DDEFAULT_PATH_VALUE='\"/usr/local/
 ln -s bash %{buildroot}%{_cross_bindir}/sh
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_bindir}/bash
 %{_cross_bindir}/sh
 %exclude %{_cross_bindir}/bashbug

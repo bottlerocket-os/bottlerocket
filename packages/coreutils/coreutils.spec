@@ -2,7 +2,7 @@ Name: %{_cross_os}coreutils
 Version: 8.31
 Release: 1%{?dist}
 Summary: A set of basic GNU tools
-License: GPLv3+
+License: GPL-3.0-or-later
 URL: https://www.gnu.org/software/coreutils/
 Source0: https://ftp.gnu.org/gnu/coreutils/coreutils-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
@@ -39,6 +39,8 @@ Requires: %{_cross_os}libxcrypt
 %make_install
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_bindir}/[
 %{_cross_bindir}/b2sum
 %{_cross_bindir}/base32

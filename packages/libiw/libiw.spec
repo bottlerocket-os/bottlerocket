@@ -2,7 +2,7 @@ Name: %{_cross_os}libiw
 Version: 29
 Release: 1%{?dist}
 Summary: Library for wireless
-License: GPLv2+
+License: GPL-2.0-or-later
 URL: https://hewlettpackard.github.io/wireless-tools/
 Source0: https://hewlettpackard.github.io/wireless-tools/wireless_tools.%{version}.tar.gz
 Patch1: wireless-tools-29-makefile.patch
@@ -36,6 +36,8 @@ make \
   install-dynamic install-hdr
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 
 %files devel

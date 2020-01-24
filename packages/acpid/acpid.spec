@@ -2,7 +2,7 @@ Name: %{_cross_os}acpid
 Version: 2.0.32
 Release: 1%{?dist}
 Summary: ACPI event daemon
-License: GPLv2+
+License: GPL-2.0-or-later
 URL: http://sourceforge.net/projects/acpid2/
 Source0: http://downloads.sourceforge.net/acpid2/acpid-%{version}.tar.xz
 Source1: acpid.service
@@ -30,6 +30,8 @@ install -d %{buildroot}%{_cross_libdir}/acpid/events
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_libdir}/acpid/events/power
 
 %files
+%license COPYING
+%{_cross_attribution_file}
 %{_cross_sbindir}/acpid
 %{_cross_unitdir}/acpid.service
 %{_cross_libdir}/acpid/
