@@ -11,7 +11,7 @@ RUN \
     bc hostname intltool grub2-tools gperf kmod rsync wget \
     elfutils-devel libcap-devel openssl-devel \
     createrepo_c e2fsprogs gdisk grub2-tools \
-    kpartx lz4 veritysetup dosfstools mtools \
+    kpartx lz4 veritysetup dosfstools mtools squashfs-tools \
     policycoreutils secilc && \
   dnf clean all && \
   useradd builder
