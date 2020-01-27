@@ -31,8 +31,8 @@
 # Tested with the Amazon Linux AMI as worker AMI.
 # Example call:
 #    bin/amiize.sh --region us-west-2 \
-#       --root-image build/thar-x86_64.img \
-#       --data-image build/thar-x86_64-data.img \
+#       --root-image build/thar-x86_64-aws-k8s.img \
+#       --data-image build/thar-x86_64-aws-k8s-data.img \
 #       --worker-ami ami-0f2176987ee50226e --ssh-keypair tjk \
 #       --instance-type m3.xlarge --name thar-20190918-01 --arch x86_64 \
 #       --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'

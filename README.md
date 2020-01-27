@@ -51,8 +51,18 @@ Thank you!
 
 ## Overview
 
-To start, we're focusing on use of Thar as a host OS in Kubernetes clusters.
-We’re excited to get early feedback and to continue working on more use cases.
+To start, we're focusing on use of Thar as a host OS in AWS EKS Kubernetes clusters.
+We’re excited to get early feedback and to continue working on more use cases!
+
+## Variants
+
+Thar is architected such that different cloud environments and container orchestraters can be supported in the future.
+A build of Thar that supports different features or integration characteristics is known as a 'variant'.
+
+Our first supported variant, `aws-k8s`, supports EKS as described above.
+
+The artifacts of a build will include the architecture and variant name.
+For example, an `x86_64` build of `aws-k8s` will produce an image named `thar-x86_64-aws-k8s.img`.
 
 ### Setup
 
@@ -81,7 +91,7 @@ Thar has a "control" container, enabled by default, that runs outside of the orc
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Thar instances in EC2.
 (You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).
 
-You need to give your instance the SSM role for this to work; see the [setup guide](INSTALL.md).
+You need to give your instance the SSM role for this to work; see the [setup guide](INSTALL.md#enabling-ssm).
 
 Once the instance is started, you can start a session:
 
