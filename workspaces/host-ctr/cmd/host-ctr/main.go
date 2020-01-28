@@ -307,6 +307,16 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 				Options:     []string{"rbind", "ro"},
 				Destination: "/.thar/rootfs",
 				Source:      "/",
+			},
+			{
+				Options:     []string{"rbind", "ro"},
+				Destination: "/lib/modules",
+				Source:      "/lib/modules",
+			},
+			{
+				Options:     []string{"rbind", "ro"},
+				Destination: "/usr/src/kernels",
+				Source:      "/usr/src/kernels",
 			}}),
 	)
 }

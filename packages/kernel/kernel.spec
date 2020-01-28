@@ -28,7 +28,8 @@ BuildRequires: hostname
 BuildRequires: kmod
 BuildRequires: openssl-devel
 
-%global kernel_sourcedir %{_cross_usrsrc}/kernels/%{version}
+%global kernel_sourcedir %{_cross_usrsrc}/kernels
+%global kernel_libdir %{_cross_libdir}/modules/%{version}
 
 %description
 %{summary}.
@@ -113,11 +114,21 @@ find %{buildroot}%{_cross_prefix} \
 # remove x86 intermediate files like generated/asm/.syscalls_32.h.cmd
 sed -i '/asm\/.*\.cmd$/d' kernel_devel_files
 
-install -d %{buildroot}%{kernel_sourcedir}
+## Create squashfs of kernel-devel files (ie. /usr/src/kernels/<version>)
+mkdir src_squashfs
 for file in $(cat kernel_devel_files); do
-  install -D ${file} %{buildroot}%{kernel_sourcedir}/${file}
-
+  install -D ${file} src_squashfs/%{version}/${file}
 done
+mksquashfs src_squashfs kernel-devel.squashfs
+install -D kernel-devel.squashfs %{buildroot}%{_cross_datadir}/thar/kernel-devel.squashfs
+install -d %{buildroot}%{kernel_sourcedir}
+
+# Replace the incorrect links from modules_install. These will be bound
+# into a host container (and unused in the host) so they must not point
+# to %{_cross_usrsrc} (eg. /x86_64-thar-linux-gnu/sys-root/...)
+rm -f %{buildroot}%{kernel_libdir}/build %{buildroot}%{kernel_libdir}/source
+ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/build
+ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
 
 %files
 %license COPYING LICENSES/preferred/GPL-2.0 LICENSES/exceptions/Linux-syscall-note
@@ -156,7 +167,6 @@ done
 
 %files devel
 %dir %{kernel_sourcedir}
-%{kernel_sourcedir}/*
-%{kernel_sourcedir}/.config
+%{_cross_datadir}/thar/kernel-devel.squashfs
 
 %changelog

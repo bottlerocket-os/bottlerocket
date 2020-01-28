@@ -19,6 +19,7 @@ Source1002: configured.target
 Source1006: prepare-local.service
 Source1007: var.mount
 Source1008: opt.mount
+Source1009: usr-src-kernels.mount.in
 Source1010: var-lib-thar.mount
 
 BuildArch: noarch
@@ -38,6 +39,7 @@ Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}kernel
 Requires: %{_cross_os}kernel-modules
+Requires: %{_cross_os}kernel-devel
 Requires: %{_cross_os}bork
 Requires: %{_cross_os}moondog
 Requires: %{_cross_os}netdog
@@ -84,6 +86,10 @@ EOF
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1010} %{buildroot}%{_cross_unitdir}
+# Mounting on usr/src/kernels requires using the real path: %{_cross_usrsrc}/kernels
+KERNELPATH=$(systemd-escape --path %{_cross_usrsrc}/kernels)
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1009} > ${KERNELPATH}.mount
+install -p -m 0644 ${KERNELPATH}.mount %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
@@ -99,6 +105,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_unitdir}/prepare-local.service
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
+%{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/var-lib-thar.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/hostname
