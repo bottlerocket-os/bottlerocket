@@ -7,7 +7,14 @@ ARG bash_version=5.0
 ARG bash_patch_level=11
 
 WORKDIR /opt/build
-RUN curl -L https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz | tar -xz
+COPY ./hashes/bash ./hashes
+
+RUN \
+  curl -OL https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz && \
+  grep bash-${bash_version}.tar.gz hashes | sha512sum --check - && \
+  tar -xf bash-${bash_version}.tar.gz && \
+  rm bash-${bash_version}.tar.gz
+
 WORKDIR /opt/build/bash-${bash_version}
 RUN for patch_level in $(seq ${bash_patch_level}); do \
         curl -L https://ftp.gnu.org/gnu/bash/bash-${bash_version}-patches/bash${bash_version//.}-$(printf '%03d' $patch_level) | patch -p0; \
