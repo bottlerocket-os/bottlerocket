@@ -4,4 +4,4 @@ dev/
 .envrc
 *.el
 *.tar*
-Makefile
+bin/

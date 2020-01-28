@@ -128,14 +128,15 @@ If `kubectl` is configured to configured with access to production, please ensur
 
 **General use targets**
 
-- `container` - build a container image used by the Kubernetes resources
+- `container` - build a container image for use in Kubernetes resources
+- `container` - run unit tests in a container
 - `dashboard` - create or update Kubernetes-dashboard (*not suitable for use in Production*)
-- `deploy` - create or update Dogswatch Kubernetes resources
+- `deploy-dev` - create or update Dogswatch Kubernetes resources
 - `rollout` - reload and restart Dogswatch processes in the cluster
 - `test` - run `go test` against `dogswatch`
 
 **`kind` development targets**
 
-- `load`
-- `cluster`
-- `rollout-kind`
+- `kind-cluster`
+- `kind-load`
+- `kind-rollout`
