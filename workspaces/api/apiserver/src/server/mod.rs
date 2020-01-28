@@ -6,9 +6,12 @@ mod error;
 pub use error::Error;
 
 use actix_web::{error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use snafu::{OptionExt, ResultExt};
+use log::info;
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::path::Path;
+use std::process::Command;
 use std::sync;
 
 use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
@@ -23,20 +26,20 @@ use std::os::unix::fs::PermissionsExt;
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // sd_notify helper
-#[cfg(feature = "sd_notify")]
 fn notify_unix_socket_ready() -> Result<()> {
-    use snafu::ensure;
-    use systemd::daemon;
-    let daemon_notify_success = daemon::notify(
-        true,
-        [
-            (daemon::STATE_READY, "1"),
-            (daemon::STATE_STATUS, "Thar API Server: socket ready"),
-        ]
-        .into_iter(),
-    )
-    .context(error::SystemdNotify)?;
-    ensure!(daemon_notify_success, error::SystemdNotifyStatus);
+    if env::var_os("NOTIFY_SOCKET").is_some() {
+        ensure!(
+            Command::new("systemd-notify")
+                .arg("--ready")
+                .status()
+                .context(error::SystemdNotify)?
+                .success(),
+            error::SystemdNotifyStatus
+        );
+        env::remove_var("NOTIFY_SOCKET");
+    } else {
+        info!("NOTIFY_SOCKET not set, not calling systemd-notify");
+    }
     Ok(())
 }
 
@@ -103,10 +106,7 @@ where
     set_permissions(socket_path.as_ref(), perms).context(error::SetPermissions { mode })?;
 
     // Notify system manager the UNIX socket has been initialized, so other service units can proceed
-    #[cfg(feature = "sd_notify")]
-    {
-        notify_unix_socket_ready()?;
-    }
+    notify_unix_socket_ready()?;
 
     http_server.run().context(error::ServerStart)
 }

@@ -471,6 +471,5 @@ name = "workspaces"
 version = "0.1.0"
 dependencies = [
  "glibc 0.1.0",
- "systemd 0.1.0",
 ]
 
