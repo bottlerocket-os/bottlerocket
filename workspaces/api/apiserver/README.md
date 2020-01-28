@@ -68,9 +68,7 @@ The `datastore::deserialization` module provides code to deserialize datastore-a
 
 You can start the API server from the development workspace with a command like:
 
-`cargo run -- --datastore-path /tmp/thar/be/data --socket-path /tmp/thar/api.sock -v -v -v -v`
-
-(Add a few -v options to increase logging.)
+`cargo run -- --datastore-path /tmp/thar/be/data --socket-path /tmp/thar/api.sock --log-level debug`
 
 Then, from another shell, you can query or modify data.
 See `../../apiclient/README.md` for client examples.
