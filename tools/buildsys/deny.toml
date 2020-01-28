@@ -1,61 +1,44 @@
 [licenses]
 unlicensed = "deny"
-unknown = "deny"
+
+# Deny licenses unless they are specifically listed here
+copyleft = "deny"
+allow-osi-fsf-free = "neither"
+default = "deny"
+
 # We want really high confidence when inferring licenses from text
-confidence_threshold = 0.93
+confidence-threshold = 0.93
 
 allow = [
     "Apache-2.0",
     "BSD-2-Clause",
-    "BSD-2-Clause-FreeBSD",
     "BSD-3-Clause",
-    "CC0-1.0",
+    "BSL-1.0",
     "ISC",
     "MIT",
-    "Openssl",
+    "OpenSSL",
     "Unlicense",
     "Zlib",
-
-    # cargo-deny currently parses out exceptions as separate licenses, which may not be the correct thing to do
-    # example: `wasi` crate uses "Apache-2.0 WITH LLVM-exception" as on of the licenses
-    # tracked in https://github.com/EmbarkStudios/cargo-deny/issues/22
-    "LLVM-exception",
-
-    # pending review
-    "BSL-1.0",
 ]
 
-skip = [
-    # first-party code, license pending
-    { name = "buildsys", licenses = [] },
-
-    # ring: ISC AND Openssl
-    { name = "ring", licenses = [] },
-
-    # webpki: ISC AND BSD-3-Clause
-    { name = "webpki", licenses = [] },
-
-    # pending review
-    { name = "webpki-roots", licenses = ["MPL-2.0"] },
+exceptions = [
+    { name = "webpki-roots", allow = ["MPL-2.0"], version = "*" },
 ]
 
-ignore = [
-    # standard rustls "any of Apache-2.0/ISC/MIT" files
-    { name = "ct-logs", license_files = [{ path = "LICENSE", hash = 0xe567c411 }] },
-    { name = "hyper-rustls", license_files = [{ path = "LICENSE", hash = 0x3154a1c7 }] },
-    { name = "rustls", license_files = [{ path = "LICENSE", hash = 0xe567c411 }] },
-    { name = "sct", license_files = [{ path = "LICENSE", hash = 0xb7619ae7 }] },
+# FIXME: Remove this when a license is assigned for first-party packages
+[licenses.private]
+ignore = true
 
-    # adler32: two Zlib notices
-    { name = "adler32", license_files = [{ path = "LICENSE", hash = 0x1e225da6 }] },
-    # crossbeam-queue: source information at top of LICENSE-THIRD-PARTY file (BSD-2-Clause-FreeBSD)
-    { name = "crossbeam-queue", license_files = [{ path = "LICENSE-THIRD-PARTY", hash = 0x7e40bc60 }] },
-    # ring: ISC AND Openssl
-    # pending review
-    { name = "ring", license_files = [{ path = "LICENSE", hash = 0xbd0eed23 }] },
-    # webpki: first-party ISC, third-party/chromium BSD-3-Clause
-    { name = "webpki", license_files = [{ path = "LICENSE", hash = 0x001c7e6c }] },
-    # webpki-roots: describes provenance from ca-bundle.crt and MPL-2.0
-    # pending review
-    { name = "webpki-roots", license_files = [{ path = "LICENSE", hash = 0x6c919c48 }] },
+[[licenses.clarify]]
+name = "ring"
+expression = "MIT AND ISC AND OpenSSL"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 },
+]
+
+[[licenses.clarify]]
+name = "webpki"
+expression = "ISC"
+license-files = [
+    { path = "LICENSE", hash = 0x001c7e6c },
 ]
