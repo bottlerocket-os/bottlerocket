@@ -149,7 +149,7 @@ Now you can start the API server.
 From the `workspaces/api/apiserver` directory:
 
 ```
-cargo run -- --datastore-path /tmp/data-store/current --socket-path /tmp/thar-api.sock -v -v -v
+cargo run -- --datastore-path /tmp/data-store/current --socket-path /tmp/thar-api.sock --log-level debug
 ```
 
 You can leave that running in a terminal, or background it, whatever you like.
