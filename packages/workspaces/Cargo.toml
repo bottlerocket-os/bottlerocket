@@ -19,4 +19,3 @@ path = "pkg.rs"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
-systemd = { path = "../systemd" }

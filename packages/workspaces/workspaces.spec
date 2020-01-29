@@ -35,7 +35,6 @@ Source200: migration-tmpfiles.conf
 Source201: host-containers-tmpfiles.conf
 
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}systemd-devel
 
 %description
 %{summary}.
