@@ -28,7 +28,7 @@ BuildRequires: hostname
 BuildRequires: kmod
 BuildRequires: openssl-devel
 
-%global kernel_sourcedir %{_usrsrc}/kernels/%{version}
+%global kernel_sourcedir %{_cross_usrsrc}/kernels/%{version}
 
 %description
 %{summary}.
