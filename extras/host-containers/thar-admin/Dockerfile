@@ -1,4 +1,5 @@
-FROM fedora:30 as builder
+ARG DOCKER_ARCH
+FROM $DOCKER_ARCH/fedora:30 as builder
 RUN sed -i 's/^enabled=.*/enabled=0/' /etc/yum.repos.d/*modular*.repo
 RUN dnf group install -y "C Development Tools and Libraries"
 RUN dnf install -y glibc-static patch
@@ -26,20 +27,23 @@ RUN CFLAGS="-Os -DHAVE_DLOPEN=0" ./configure \
 RUN make -j`nproc`
 RUN cp bash /opt/bash
 
-FROM amazonlinux:2
+FROM $DOCKER_ARCH/amazonlinux:2
 
 ARG IMAGE_VERSION
 # Make the container image version a mandatory build argument
 RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
-RUN yum -y update && yum -y install openssh-server sudo util-linux && yum clean all
-RUN rm -f /etc/motd /etc/issue
+RUN yum update -y \
+    && yum install -y openssh-server sudo util-linux \
+    && yum clean all
 
 COPY --from=builder /opt/bash /opt/bin/
 
-ADD --chown=root:root ec2-user.sudoers /etc/sudoers.d/ec2-user
+RUN rm -f /etc/motd /etc/issue
 ADD --chown=root:root motd /etc/
+
+ADD --chown=root:root ec2-user.sudoers /etc/sudoers.d/ec2-user
 ADD start_admin_sshd.sh /usr/sbin/
 ADD ./sshd_config /etc/ssh/
 ADD ./sheltie /usr/bin/
