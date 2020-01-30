@@ -147,10 +147,13 @@
 </define>
 
 <!-- Built-in dhcp6 run/configuration mode types -->
-<define name="builtin-dhcp6-mode" type="uint32" constraint="enum">
-  <auto value="0"/>
-  <info value="1"/>
-  <managed value="2"/>
+<define name="builtin-dhcp6-mode" type="uint32" constraint="bitmap">
+  <auto bit="0"/>
+  <info bit="1"/>
+  <config bit="1"/>
+  <managed bit="2"/>
+  <address bit="2"/>
+  <prefix bit="3"/>
 </define>
 
 <!-- Built-in interface status flags -->

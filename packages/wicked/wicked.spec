@@ -11,7 +11,7 @@
 %bcond_with bootstrap # without
 
 Name: %{_cross_os}wicked
-Version: 0.6.54
+Version: 0.6.61
 Release: 1%{?dist}
 Summary: Network configuration infrastructure
 License: GPL-2.0-or-later AND (GPL-2.0-only OR BSD-3-Clause)
@@ -31,7 +31,6 @@ Source99: constants.xml
 %endif
 
 # upstream fixes
-Patch1: cleaned-up-extern-inline-use-in-header-files.patch
 
 # local hacks
 Patch101: 0001-avoid-gcrypt-dependency.patch
@@ -108,7 +107,7 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_datadir}/wicked/schema/constants
 %endif
 %dir %{_cross_libexecdir}/wicked
 %{_cross_libexecdir}/wicked/*
-%{_cross_libdir}/libwicked-0.so.*
+%{_cross_libdir}/libwicked-%{version}.so
 %{_cross_unitdir}/wicked*.service
 %{_cross_datadir}/dbus-1/system.d/*.conf
 %dir %{_cross_datadir}/wicked
