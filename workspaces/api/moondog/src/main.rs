@@ -41,6 +41,18 @@ type Result<T> = std::result::Result<T, MoondogError>;
 mod error {
     use http::StatusCode;
     use snafu::Snafu;
+
+    // Taken from pluto.
+    // Extracts the status code from a reqwest::Error and converts it to a string to be displayed
+    fn get_bad_status_code(source: &reqwest::Error) -> String {
+        source
+            .status()
+            .as_ref()
+            .map(|i| i.as_str())
+            .unwrap_or("Unknown")
+            .to_string()
+    }
+
     use std::io;
     use std::path::PathBuf;
 
@@ -53,6 +65,9 @@ mod error {
             uri: String,
             source: reqwest::Error,
         },
+
+        #[snafu(display("Response '{}' from '{}': {}", get_bad_status_code(&source), uri, source))]
+        BadResponse { uri: String, source: reqwest::Error },
 
         #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
         APIRequest {
@@ -124,17 +139,44 @@ trait PlatformDataProvider {
 struct AwsDataProvider;
 
 impl AwsDataProvider {
+    // Currently only able to get fetch session tokens from `latest`
+    // FIXME Pin to a date version that supports IMDSv2 once such a date version is available.
+    const IMDS_TOKEN_ENDPOINT: &'static str = "http://169.254.169.254/latest/api/token";
+
     const USER_DATA_FILE: &'static str = "/etc/moondog/user-data";
-    const USER_DATA_ENDPOINT: &'static str = "http://169.254.169.254/latest/user-data";
+    const USER_DATA_ENDPOINT: &'static str = "http://169.254.169.254/2018-09-24/user-data";
     const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/moondog/identity-document";
     const IDENTITY_DOCUMENT_ENDPOINT: &'static str =
-        "http://169.254.169.254/latest/dynamic/instance-identity/document";
+        "http://169.254.169.254/2018-09-24/dynamic/instance-identity/document";
+
+    /// Helper to fetch an IMDSv2 session token that is valid for 60 seconds.
+    fn fetch_imds_session_token(client: &reqwest::Client) -> Result<String> {
+        let uri = Self::IMDS_TOKEN_ENDPOINT;
+        let mut response = client
+            .put(uri)
+            .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
+            .send()
+            .context(error::Request { method: "PUT", uri })?
+            .error_for_status()
+            .context(error::BadResponse { uri })?;
+        response.text().context(error::ResponseBody {
+            method: "PUT",
+            uri,
+            code: response.status(),
+        })
+    }
 
     /// Helper to fetch data from IMDS, preferring an override file if present.
     ///
-    /// IMDS returns a 404 if no user data was given, or if IMDS was disabled, for example; we
-    /// return Ok(None) to represent this, otherwise Ok(Some(body)) with the response body.
-    fn fetch_imds(file: &str, uri: &str, description: &str) -> Result<Option<String>> {
+    /// IMDS returns a 404 if no user data was given, for example; we return Ok(None) to represent
+    /// this, otherwise Ok(Some(body)) with the response body.
+    fn fetch_imds(
+        file: &str,
+        client: &reqwest::Client,
+        session_token: &str,
+        uri: &str,
+        description: &str,
+    ) -> Result<Option<String>> {
         if Path::new(file).exists() {
             info!("{} file found at {}, using it", description, file);
             return Ok(Some(
@@ -142,7 +184,11 @@ impl AwsDataProvider {
             ));
         }
         debug!("Requesting {} from {}", description, uri);
-        let mut response = reqwest::get(uri).context(error::Request { method: "GET", uri })?;
+        let mut response = client
+            .get(uri)
+            .header("X-aws-ec2-metadata-token", session_token)
+            .send()
+            .context(error::Request { method: "GET", uri })?;
         trace!("IMDS response: {:?}", &response);
 
         match response.status() {
@@ -182,12 +228,12 @@ impl AwsDataProvider {
 
     /// Fetches user data, which is expected to be in TOML form and contain a `[settings]` section,
     /// returning a SettingsJson representing the inside of that section.
-    fn user_data() -> Result<Option<SettingsJson>> {
+    fn user_data(client: &reqwest::Client, session_token: &str) -> Result<Option<SettingsJson>> {
         let desc = "user data";
         let uri = Self::USER_DATA_ENDPOINT;
         let file = Self::USER_DATA_FILE;
 
-        let user_data_str = match Self::fetch_imds(file, uri, desc) {
+        let user_data_str = match Self::fetch_imds(file, client, session_token, uri, desc) {
             Err(e) => return Err(e),
             Ok(None) => return Ok(None),
             Ok(Some(s)) => s,
@@ -207,12 +253,15 @@ impl AwsDataProvider {
 
     /// Fetches the instance identity, returning a SettingsJson representing the values from the
     /// document which we'd like to send to the API - currently just region.
-    fn identity_document() -> Result<Option<SettingsJson>> {
+    fn identity_document(
+        client: &reqwest::Client,
+        session_token: &str,
+    ) -> Result<Option<SettingsJson>> {
         let desc = "instance identity document";
         let uri = Self::IDENTITY_DOCUMENT_ENDPOINT;
         let file = Self::IDENTITY_DOCUMENT_FILE;
 
-        let iid_str = match Self::fetch_imds(file, uri, desc) {
+        let iid_str = match Self::fetch_imds(file, client, session_token, uri, desc) {
             Err(e) => return Err(e),
             Ok(None) => return Ok(None),
             Ok(Some(s)) => s,
@@ -235,16 +284,19 @@ impl PlatformDataProvider for AwsDataProvider {
     /// Return settings changes from the instance identity document and user data.
     fn platform_data(&self) -> Result<Vec<SettingsJson>> {
         let mut output = Vec::new();
+        let client = reqwest::Client::new();
+
+        let session_token = Self::fetch_imds_session_token(&client)?;
 
         // Instance identity doc first, so the user has a chance to override
-        match Self::identity_document() {
+        match Self::identity_document(&client, &session_token) {
             Err(e) => return Err(e),
             Ok(None) => warn!("No instance identity document found."),
             Ok(Some(s)) => output.push(s),
         }
 
         // Optional user-specified configuration / overrides
-        match Self::user_data() {
+        match Self::user_data(&client, &session_token) {
             Err(e) => return Err(e),
             Ok(None) => warn!("No user data found."),
             Ok(Some(s)) => output.push(s),
