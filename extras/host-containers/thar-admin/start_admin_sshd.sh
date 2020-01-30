@@ -13,12 +13,14 @@ ssh_authorized_keys="${ssh_config_dir}/authorized_keys"
 touch ${ssh_authorized_keys}
 chmod 600 ${ssh_authorized_keys}
 public_key_base_url="http://169.254.169.254/latest/meta-data/public-keys/"
-public_key_indexes=($(curl -sf "${public_key_base_url}" \
+imds_session_token=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+imds_request_add_header="X-aws-ec2-metadata-token: ${imds_session_token}"
+public_key_indexes=($(curl -H "${imds_request_add_header}" -sf "${public_key_base_url}" \
     | cut -d= -f1 \
     | xargs))
 
 for public_key_index in "${public_key_indexes[@]}"; do
-  public_key_data="$(curl -sf ${public_key_base_url}/${public_key_index}/openssh-key)"
+  public_key_data="$(curl -H "${imds_request_add_header}" -sf "${public_key_base_url}/${public_key_index}/openssh-key")"
   if [[ ! "${public_key_data}" =~ ^"ssh" ]]; then
     echo "Key ${public_key_data} with index ${public_key_index} looks invalid" >&2
     continue
