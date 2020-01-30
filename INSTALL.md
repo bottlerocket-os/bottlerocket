@@ -19,7 +19,7 @@ To get these, run:
 
 ```
 cargo install cargo-make
-cargo install cargo-deny --version 0.2.6
+cargo install cargo-deny --version 0.6.2
 ```
 
 #### Docker
