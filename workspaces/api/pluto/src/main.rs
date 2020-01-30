@@ -26,7 +26,17 @@ const DEFAULT_DNS_CLUSTER_IP: &str = "10.100.0.10";
 const DEFAULT_10_RANGE_DNS_CLUSTER_IP: &str = "172.20.0.10";
 
 // Instance Meta Data Service
-const IMDS_URI: &str = "http://169.254.169.254/2018-09-24";
+const IMDS_BASE_URL: &str = "http://169.254.169.254/2018-09-24";
+// Currently only able to get fetch session tokens from `latest`
+// FIXME Pin to a date version that supports IMDSv2 once such a date version is available.
+const IMDS_SESSION_TOKEN_ENDPOINT: &str = "http://169.254.169.254/latest/api/token";
+const IMDS_NODE_IPV4_ENDPOINT: &str = "http://169.254.169.254/2018-09-24/meta-data/local-ipv4";
+const IMDS_MAC_ENDPOINT: &str =
+    "http://169.254.169.254/2018-09-24/meta-data/network/interfaces/macs";
+const IMDS_INSTANCE_TYPE_ENDPOINT: &str =
+    "http://169.254.169.254/2018-09-24/meta-data/instance-type";
+const IMDS_INSTANCE_IDENTITY_DOCUMENT_ENDPOINT: &str =
+    "http://169.254.169.254/2018-09-24/dynamic/instance-identity/document";
 
 const PAUSE_CONTAINER_ACCOUNT: &str = "602401143452";
 const PAUSE_CONTAINER_VERSION: &str = "3.1";
@@ -49,27 +59,22 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum PlutoError {
-        #[snafu(display("Error '{}' to '{}': {}", code(&source), path, source))]
+        #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
         ImdsRequest {
-            path: String,
+            method: String,
+            uri: String,
             source: reqwest::Error,
         },
 
-        #[snafu(display("Error '{}' from '{}': {}", code(&source), path, source))]
-        ImdsResponse {
-            path: String,
-            source: reqwest::Error,
-        },
+        #[snafu(display("Error '{}' from '{}': {}", code(&source), uri, source))]
+        ImdsResponse { uri: String, source: reqwest::Error },
 
-        #[snafu(display("Error getting text response from {}: {}", path, source))]
-        ImdsText {
-            path: String,
-            source: reqwest::Error,
-        },
+        #[snafu(display("Error getting text response from {}: {}", uri, source))]
+        ImdsText { uri: String, source: reqwest::Error },
 
-        #[snafu(display("Error deserializing response into JSON from {}: {}", path, source))]
+        #[snafu(display("Error deserializing response into JSON from {}: {}", uri, source))]
         ImdsJson {
-            path: String,
+            uri: String,
             source: serde_json::error::Error,
         },
 
@@ -85,12 +90,12 @@ mod error {
 
         #[snafu(display(
             "Missing 'region' key in Instance Identity Document from IMDS: {}",
-            path
+            uri
         ))]
-        MissingRegion { path: String },
+        MissingRegion { uri: String },
 
-        #[snafu(display("Missing MAC address from IMDS: {}", path))]
-        MissingMac { path: String },
+        #[snafu(display("Missing MAC address from IMDS: {}", uri))]
+        MissingMac { uri: String },
 
         #[snafu(display("Invalid machine architecture, not one of 'x86_64' or 'aarch64'"))]
         UnknownArchitecture,
@@ -116,26 +121,20 @@ use error::PlutoError;
 
 type Result<T> = std::result::Result<T, PlutoError>;
 
-fn get_text_from_imds(client: &reqwest::Client, path: &str) -> Result<String> {
+fn get_text_from_imds(client: &reqwest::Client, uri: &str, session_token: &str) -> Result<String> {
     client
-        .get(&format!("{}{}", IMDS_URI, path))
+        .get(uri)
+        .header("X-aws-ec2-metadata-token", session_token)
         .send()
-        .context(error::ImdsRequest {
-            path: path.to_string(),
-        })?
+        .context(error::ImdsRequest { method: "GET", uri })?
         .error_for_status()
-        .context(error::ImdsResponse {
-            path: path.to_string(),
-        })?
+        .context(error::ImdsResponse { uri })?
         .text()
-        .context(error::ImdsText {
-            path: path.to_string(),
-        })
+        .context(error::ImdsText { uri })
 }
 
-fn get_max_pods(client: &reqwest::Client) -> Result<String> {
-    let path = "/meta-data/instance-type";
-    let instance_type = get_text_from_imds(&client, &path)?;
+fn get_max_pods(client: &reqwest::Client, session_token: &str) -> Result<String> {
+    let instance_type = get_text_from_imds(&client, IMDS_INSTANCE_TYPE_ENDPOINT, session_token)?;
     // Find the corresponding maximum number of pods supported by this instance type
     let file = BufReader::new(
         File::open(ENI_MAX_PODS_PATH).context(error::EniMaxPodsFile {
@@ -156,20 +155,18 @@ fn get_max_pods(client: &reqwest::Client) -> Result<String> {
     error::NoInstanceTypeMaxPods { instance_type }.fail()
 }
 
-fn get_cluster_dns_ip(client: &reqwest::Client) -> Result<String> {
-    let macs_path = "/meta-data/network/interfaces/macs";
-    let macs = get_text_from_imds(&client, macs_path)?;
+fn get_cluster_dns_ip(client: &reqwest::Client, session_token: &str) -> Result<String> {
+    let uri = IMDS_MAC_ENDPOINT;
+    let macs = get_text_from_imds(&client, uri, session_token)?;
     // Take the first (primary) MAC address. Others will exist from attached ENIs.
-    let mac = macs.split('\n').next().context(error::MissingMac {
-        path: macs_path.to_string(),
-    })?;
+    let mac = macs.split('\n').next().context(error::MissingMac { uri })?;
 
     // Infer the cluster DNS based on our CIDR blocks.
-    let mac_cidr_blocks_path = format!(
-        "/meta-data/network/interfaces/macs/{}/vpc-ipv4-cidr-blocks",
-        mac
+    let mac_cidr_blocks_uri = format!(
+        "{}/meta-data/network/interfaces/macs/{}/vpc-ipv4-cidr-blocks",
+        IMDS_BASE_URL, mac
     );
-    let mac_cidr_blocks = get_text_from_imds(&client, &mac_cidr_blocks_path)?;
+    let mac_cidr_blocks = get_text_from_imds(&client, &mac_cidr_blocks_uri, session_token)?;
 
     let dns = if mac_cidr_blocks.starts_with("10.") {
         DEFAULT_10_RANGE_DNS_CLUSTER_IP
@@ -181,21 +178,19 @@ fn get_cluster_dns_ip(client: &reqwest::Client) -> Result<String> {
     Ok(dns)
 }
 
-fn get_node_ip(client: &reqwest::Client) -> Result<String> {
-    let path = "/meta-data/local-ipv4";
-    get_text_from_imds(&client, &path)
+fn get_node_ip(client: &reqwest::Client, session_token: &str) -> Result<String> {
+    get_text_from_imds(&client, IMDS_NODE_IPV4_ENDPOINT, session_token)
 }
 
-fn get_pod_infra_container_image(client: &reqwest::Client) -> Result<String> {
+fn get_pod_infra_container_image(client: &reqwest::Client, session_token: &str) -> Result<String> {
     // Get the region from the correct location.
-    let instance_identity_document_path = "/dynamic/instance-identity/document";
-    let iid_text = get_text_from_imds(&client, &instance_identity_document_path)?;
-    let iid_json: serde_json::Value = serde_json::from_str(&iid_text).context(error::ImdsJson {
-        path: instance_identity_document_path.to_string(),
-    })?;
-    let region = iid_json["region"].as_str().context(error::MissingRegion {
-        path: instance_identity_document_path.to_string(),
-    })?;
+    let uri = IMDS_INSTANCE_IDENTITY_DOCUMENT_ENDPOINT;
+    let iid_text = get_text_from_imds(&client, uri, session_token)?;
+    let iid_json: serde_json::Value =
+        serde_json::from_str(&iid_text).context(error::ImdsJson { uri })?;
+    let region = iid_json["region"]
+        .as_str()
+        .context(error::MissingRegion { uri })?;
 
     // Get machine architecture.
     let arch = if cfg!(target_arch = "x86_64") {
@@ -231,14 +226,26 @@ fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
 
     let client = reqwest::Client::new();
+    // Use IMDSv2 for accessing instance metadata
+    let uri = IMDS_SESSION_TOKEN_ENDPOINT;
+    let imds_session_token = client
+        .put(uri)
+        .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
+        .send()
+        .context(error::ImdsRequest { method: "PUT", uri })?
+        .error_for_status()
+        .context(error::ImdsResponse { uri })?
+        .text()
+        .context(error::ImdsText { uri })?;
+
     let setting = match setting_name.as_ref() {
-        "cluster-dns-ip" => get_cluster_dns_ip(&client),
-        "node-ip" => get_node_ip(&client),
-        "pod-infra-container-image" => get_pod_infra_container_image(&client),
+        "cluster-dns-ip" => get_cluster_dns_ip(&client, &imds_session_token),
+        "node-ip" => get_node_ip(&client, &imds_session_token),
+        "pod-infra-container-image" => get_pod_infra_container_image(&client, &imds_session_token),
 
         // If we want to specify a reasonable default in a template, we can exit 2 to tell
         // sundog to skip this setting.
-        "max-pods" => get_max_pods(&client).map_err(|_| process::exit(2)),
+        "max-pods" => get_max_pods(&client, &imds_session_token).map_err(|_| process::exit(2)),
 
         _ => usage(),
     }?;
