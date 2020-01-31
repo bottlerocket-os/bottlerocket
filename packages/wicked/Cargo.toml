@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/openSUSE/wicked/archive/version-0.6.54.tar.gz"
-sha512 = "8c5234d035d7dc686132c08a859b402a8fdf48ec03a1496025974ccd4ccc5f5ed10ba7aa40f6edbb471351533d01ee4a910273711c506a7b2f1ab9696c724fcb"
+url = "https://github.com/openSUSE/wicked/archive/version-0.6.61.tar.gz"
+sha512 = "96ee32d88f34e721453db7b33cf1f367cc4d579282f7c85b378390b6a93f31f478c74ad14e78bb720bfa46b713d7b9b50cb65b29572ab327d6defceffbeb0763"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
