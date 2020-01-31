@@ -15,10 +15,17 @@ BuildRequires: %{_cross_os}ncurses-devel
 BuildRequires: %{_cross_os}readline-devel
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libseccomp
-Requires: %{_cross_os}ncurses
-Requires: %{_cross_os}readline
 
 %description
+%{summary}.
+
+%package tools
+Summary: Command-line interface for chrony daemon
+Requires: %{_cross_os}chrony
+Requires: %{_cross_os}readline
+Requires: %{_cross_os}ncurses
+
+%description tools
 %{summary}.
 
 %prep
@@ -48,11 +55,13 @@ install -p -m 0644 %{SOURCE3} %{buildroot}%{_cross_sysusersdir}/chrony.conf
 %license COPYING
 %{_cross_attribution_file}
 %dir %{_cross_templatedir}
-%{_cross_bindir}/chronyc
 %{_cross_sbindir}/chronyd
 %{_cross_templatedir}/chrony-conf
 %{_cross_unitdir}/chronyd.service
 %{_cross_sysusersdir}/chrony.conf
 %exclude %{_cross_mandir}
+
+%files tools
+%{_cross_bindir}/chronyc
 
 %changelog

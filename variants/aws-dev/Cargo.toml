@@ -21,6 +21,7 @@ included-packages = [
     "procps",
     "strace",
     "tcpdump",
+    "chrony-tools",
 ]
 
 [lib]
