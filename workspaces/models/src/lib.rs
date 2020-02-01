@@ -110,6 +110,12 @@ struct NtpSettings {
     time_servers: Vec<Url>,
 }
 
+// Platform-specific settings
+#[model]
+struct AwsSettings {
+    region: SingleLineString,
+}
+
 ///// Internal services
 
 // Note: Top-level objects that get returned from the API should have a "rename" attribute
