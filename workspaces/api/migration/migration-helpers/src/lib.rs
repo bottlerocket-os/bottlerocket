@@ -12,6 +12,7 @@
 #![deny(rust_2018_idioms)]
 
 mod args;
+pub mod common_migrations;
 mod datastore;
 pub mod error;
 mod workarounds;
