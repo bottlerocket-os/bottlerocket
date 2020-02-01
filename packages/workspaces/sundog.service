@@ -6,6 +6,8 @@ Requires=network-online.target apiserver.service
 
 [Service]
 Type=oneshot
+# Commit first so we can use settings from user data.
+ExecStartPre=/usr/bin/settings-committer
 ExecStart=/usr/bin/sundog
 RemainAfterExit=true
 StandardError=journal+console

@@ -23,16 +23,12 @@ use snafu::ResultExt;
 use std::collections::HashSet;
 use std::io::{self, Read};
 
-pub mod client;
 pub mod config;
 pub mod error;
-pub mod helpers;
 pub mod service;
-pub mod settings;
-pub mod template;
 
-pub use error::TBSError;
-type Result<T> = std::result::Result<T, TBSError>;
+pub use error::Error;
+type Result<T> = std::result::Result<T, Error>;
 
 /// Read stdin and parse into JSON
 pub fn get_changed_settings() -> Result<HashSet<String>> {

@@ -101,7 +101,8 @@ Pluto generates settings needed for Kubernetes configuration, for example cluste
 
 [Further docs](settings-committer/)
 
-This service sends a commit request to the API, which moves all the pending settings from the above services into the live part of the data store.
+This binary sends a commit request to the API, which moves all the pending settings from the above services into the live part of the data store.
+It's called as a prerequisite of other services, like [sundog](#sundog) and [settings-applier](#settings-applier), that rely on settings being committed.
 
 ### settings-applier
 

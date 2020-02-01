@@ -6,7 +6,6 @@ use std::process;
 
 use itertools::join;
 
-use crate::client;
 use crate::{error, Result};
 
 /// Wrapper for the multiple functions needed to go from
@@ -55,7 +54,7 @@ where
     let uri = "/metadata/affected-services";
 
     let setting_to_services_map: HashMap<String, Vec<String>> =
-        client::get_json(socket_path, uri, Some(query))?;
+        schnauzer::get_json(socket_path, uri, Some(query)).context(error::GetJson { uri })?;
     trace!("API response: {:?}", &setting_to_services_map);
 
     Ok(setting_to_services_map)
@@ -93,7 +92,9 @@ where
 
     // Query the API for affected service metadata
     debug!("Querying API for affected service metadata");
-    let service_map: model::Services = client::get_json(socket_path, "/services", query)?;
+    let uri = "/services";
+    let service_map: model::Services =
+        schnauzer::get_json(socket_path, uri, query).context(error::GetJson { uri })?;
     trace!("Service metadata: {:?}", &service_map);
 
     Ok(service_map)
