@@ -4,4 +4,4 @@ datastore_version = "0.2"
 [[migrations]]
 from = "0.2.0"
 to = "0.2.1"
-names = ["migrate_0.2_containerd-config-path"]
+names = ["migrate_0.2_containerd-config-path", "migrate_0.2_remove-region"]

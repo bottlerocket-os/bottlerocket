@@ -22,6 +22,7 @@ members = [
     "api/migration/migrations/v0.1/borkseed",
     "api/migration/migrations/v0.1/host-containers-version",
     "api/migration/migrations/v0.2/containerd-config-path",
+    "api/migration/migrations/v0.2/remove-region",
 
     "models",
 
