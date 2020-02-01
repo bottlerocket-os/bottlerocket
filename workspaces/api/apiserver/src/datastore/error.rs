@@ -23,6 +23,9 @@ pub enum Error {
     #[snafu(display("Reading key '{}' failed: {}", key, source))]
     KeyRead { key: String, source: io::Error },
 
+    #[snafu(display("Removing key at '{}' failed: {}", path.display(), source))]
+    DeleteKey { path: PathBuf, source: io::Error },
+
     #[snafu(display("IO error on '{}': {}", path.display(), source))]
     Io { path: PathBuf, source: io::Error },
 

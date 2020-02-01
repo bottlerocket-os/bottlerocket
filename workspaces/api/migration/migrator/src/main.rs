@@ -93,7 +93,7 @@ fn run() -> Result<()> {
     )?;
 
     let (copy_path, copy_id) = copy_datastore(&args.datastore_path, args.migrate_to_version)?;
-    run_migrations(direction, &migrations, &copy_path)?;
+    run_migrations(direction, &migrations, &args.datastore_path, &copy_path)?;
     flip_to_new_minor_version(args.migrate_to_version, &copy_path, &copy_id)?;
 
     Ok(())
@@ -276,28 +276,17 @@ fn copy_datastore<P: AsRef<Path>>(from: P, new_version: Version) -> Result<(Path
         }
     );
 
-    info!(
-        "Copying datastore from {} to work location {}",
-        from.as_ref().display(),
-        to.display()
-    );
-
-    let mut copy_options = fs_extra::dir::CopyOptions::new();
-    // Set copy_inside true; if we're moving from v0.0 to v0.1, and this isn't set, it tries to
-    // copy "v0.0" itself inside "v0.1".
-    copy_options.copy_inside = true;
-    // Note: this copies file permissions but not directory permissions; OK?
-    fs_extra::dir::copy(&from, &to, &copy_options).context(error::DataStoreCopy)?;
-
+    info!("New data store is being built at work location {}", to.display());
     Ok((to, copy_id))
 }
 
 /// Runs the given migrations in their given order on the given data store.  The given direction
 /// is passed to each migration so it knows which direction we're migrating.
-fn run_migrations<P1, P2>(direction: Direction, migrations: &[P1], datastore_path: P2) -> Result<()>
+fn run_migrations<P1, P2, P3>(direction: Direction, migrations: &[P1], source_datastore: P2, target_datastore: P3) -> Result<()>
 where
     P1: AsRef<Path>,
     P2: AsRef<Path>,
+    P3: AsRef<Path>,
 {
     for migration in migrations {
         // Ensure the migration is executable.
@@ -312,8 +301,12 @@ where
         // Point each migration in the right direction, and at the given data store.
         command.arg(direction.to_string());
         command.args(&[
-            "--datastore-path".to_string(),
-            datastore_path.as_ref().display().to_string(),
+            "--source-datastore".to_string(),
+            source_datastore.as_ref().display().to_string(),
+        ]);
+        command.args(&[
+            "--target-datastore".to_string(),
+            target_datastore.as_ref().display().to_string(),
         ]);
 
         info!("Running migration command: {:?}", command);

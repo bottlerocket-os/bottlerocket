@@ -46,9 +46,6 @@ pub(crate) enum Error {
     #[snafu(display("Data store for new version {} already exists at {}", version, path.display()))]
     NewVersionAlreadyExists { version: Version, path: PathBuf },
 
-    #[snafu(display("Failed copying data store to work location: {}", source))]
-    DataStoreCopy { source: fs_extra::error::Error },
-
     #[snafu(display("Unable to start migration command {:?} - {}", command, source))]
     StartMigration { command: Command, source: io::Error },
 

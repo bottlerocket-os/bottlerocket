@@ -9,7 +9,7 @@ use std::mem;
 use super::{Committed, DataStore, Key, Result};
 
 #[derive(Debug)]
-pub(crate) struct MemoryDataStore {
+pub struct MemoryDataStore {
     // Uncommitted (pending) data.
     pending: HashMap<Key, String>,
     // Committed (live) data.
@@ -20,7 +20,7 @@ pub(crate) struct MemoryDataStore {
 }
 
 impl MemoryDataStore {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             pending: HashMap::new(),
             live: HashMap::new(),
@@ -103,6 +103,11 @@ impl DataStore for MemoryDataStore {
         Ok(())
     }
 
+    fn unset_key(&mut self, key: &Key, committed: Committed) -> Result<()> {
+        self.dataset_mut(committed).remove(key);
+        Ok(())
+    }
+
     fn key_populated(&self, key: &Key, committed: Committed) -> Result<bool> {
         Ok(self.dataset(committed).contains_key(key))
     }
@@ -130,6 +135,14 @@ impl DataStore for MemoryDataStore {
             .or_insert_with(HashMap::new);
 
         metadata_for_data.insert(metadata_key.clone(), value.as_ref().to_owned());
+        Ok(())
+    }
+
+    fn unset_metadata(&mut self, metadata_key: &Key, data_key: &Key) -> Result<()> {
+        // If we have any metadata for this data key, remove the given metadata key.
+        if let Some(metadata_for_data) = self.metadata.get_mut(data_key) {
+            metadata_for_data.remove(metadata_key);
+        }
         Ok(())
     }
 
@@ -164,7 +177,7 @@ mod test {
     use maplit::hashset;
 
     #[test]
-    fn get_set() {
+    fn get_set_unset() {
         let mut m = MemoryDataStore::new();
         let k = Key::new(KeyType::Data, "memtest").unwrap();
         let v = "memvalue";
@@ -178,6 +191,12 @@ mod test {
             m.get_metadata_raw(&mdkey, &k).unwrap(),
             Some(md.to_string())
         );
+
+        m.unset_metadata(&mdkey, &k).unwrap();
+        assert_eq!(m.get_metadata_raw(&mdkey, &k).unwrap(), None);
+
+        m.unset_key(&k, Committed::Live).unwrap();
+        assert_eq!(m.get_key(&k, Committed::Live).unwrap(), None);
     }
 
     #[test]

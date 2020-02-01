@@ -29,6 +29,12 @@ pub enum Error {
     #[snafu(display("Unable to write to data store: {}", source))]
     DataStoreWrite { source: datastore::Error },
 
+    #[snafu(display("Unable to remove key '{}' from data store: {}", key, source))]
+    DataStoreRemove {
+        key: String,
+        source: datastore::Error,
+    },
+
     #[snafu(display("Migrated data failed validation: {}", msg))]
     Validation { msg: String },
 
