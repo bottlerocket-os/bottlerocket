@@ -250,7 +250,7 @@ RUN \
 
 ARG ARCH
 ARG TARGET="${ARCH}-thar-linux-gnu"
-ARG RUSTVER="1.40.0"
+ARG RUSTVER="1.41.0"
 
 USER builder
 WORKDIR /home/builder
@@ -405,8 +405,7 @@ RUN \
   export HOSTDIR="/usr/libexec/rust/lib/rustlib/x86_64-unknown-linux-gnu/" ; \
   diff /usr/libexec/rust/lib/libLLVM-*.so ${HOSTDIR}/lib/libLLVM-*.so && \
   strip -g /usr/libexec/rust/lib/libLLVM-*.so && \
-  ln -f /usr/libexec/rust/lib/libLLVM-*.so ${HOSTDIR}/lib/ && \
-  strip -g ${HOSTDIR}/codegen-backends/librustc_codegen_llvm-llvm.so
+  ln -f /usr/libexec/rust/lib/libLLVM-*.so ${HOSTDIR}/lib/
 
 # Add Go programs to $PATH and sync timestamps to avoid rebuilds.
 RUN \
