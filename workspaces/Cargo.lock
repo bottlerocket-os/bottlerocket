@@ -425,15 +425,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "borkseed-migration"
-version = "0.1.0"
-dependencies = [
- "migration-helpers 0.1.0",
- "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "build_const"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -567,15 +558,6 @@ dependencies = [
 name = "constant_time_eq"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "containerd-config-path"
-version = "0.1.0"
-dependencies = [
- "migration-helpers 0.1.0",
- "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "cookie"
@@ -1095,15 +1077,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "host-containers-version-migration"
-version = "0.1.0"
-dependencies = [
- "migration-helpers 0.1.0",
- "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "hostname"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1394,6 +1367,42 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "rustc_version 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "migrate-borkseed"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+ "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "migrate-containerd-config-path"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+ "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "migrate-host-containers-version"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+ "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "migrate-remove-region"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+ "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1985,15 +1994,6 @@ dependencies = [
 name = "regex-syntax"
 version = "0.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "remove-region"
-version = "0.1.0"
-dependencies = [
- "migration-helpers 0.1.0",
- "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "remove_dir_all"
