@@ -98,6 +98,14 @@ spec:
               - matchExpressions:
                   - key: bottlerocket.amazonaws.com/platform-version
                     operator: Exists
+                  - key: "kubernetes.io/os"
+                    operator: In
+                    values:
+                      - linux
+                  - key: "kubernetes.io/arch"
+                    operator: In
+                    values:
+                      - amd64
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 10
@@ -148,6 +156,14 @@ spec:
               - matchExpressions:
                   - key: bottlerocket.amazonaws.com/platform-version
                     operator: Exists
+                  - key: "kubernetes.io/os"
+                    operator: In
+                    values:
+                      - linux
+                  - key: "kubernetes.io/arch"
+                    operator: In
+                    values:
+                      - amd64
       hostPID: true
       containers:
         - name: dogswatch
@@ -164,11 +180,80 @@ spec:
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: spec.nodeName          
+                  fieldPath: spec.nodeName
           securityContext:
             # Required for executing OS update operations.
             privileged: true
-          resources: 
+          resources:
+            limits:
+              memory: 600Mi
+            requests:
+              cpu: 100m
+              memory: 600Mi
+          volumeMounts:
+            - name: rootfs
+              mountPath: /.bottlerocket/rootfs
+      volumes:
+        - name: rootfs
+          hostPath:
+            path: /
+            type: Directory
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dogswatch-agent-arm64
+  namespace: bottlerocket
+  labels:
+    dogswatch: agent
+spec:
+  selector:
+    matchLabels:
+      name: dogswatch-agent
+  template:
+    metadata:
+      labels:
+        name: dogswatch-agent
+        app: dogswatch-agent
+    spec:
+      serviceAccountName: dogswatch-agent
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: bottlerocket.amazonaws.com/platform-version
+                    operator: Exists
+                  - key: "kubernetes.io/os"
+                    operator: In
+                    values:
+                      - linux
+                  - key: "kubernetes.io/arch"
+                    operator: In
+                    values:
+                      - arm64
+      hostPID: true
+      containers:
+        - name: dogswatch
+          image: "328549459982.dkr.ecr.us-west-2.amazonaws.com/dogswatch-arm64:v0.1.1"
+          imagePullPolicy: Always
+          # XXX: tty required to exec binaries that use `simplelog` until #576 is resolved.
+          tty: true
+          args:
+            - -agent
+            - -debug
+            - -nodeName
+            - $(NODE_NAME)
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            # Required for executing OS update operations.
+            privileged: true
+          resources:
             limits:
               memory: 600Mi
             requests:
