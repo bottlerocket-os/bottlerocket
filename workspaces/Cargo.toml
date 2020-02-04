@@ -19,10 +19,10 @@ members = [
 
     # Migrations will be listed here.  They won't need to be listed as a
     # workspace member when we add cross-workspace dependencies.
-    "api/migration/migrations/v0.1/borkseed",
-    "api/migration/migrations/v0.1/host-containers-version",
-    "api/migration/migrations/v0.2/containerd-config-path",
-    "api/migration/migrations/v0.2/remove-region",
+    "api/migration/migrations/v0.1/migrate-borkseed",
+    "api/migration/migrations/v0.1/migrate-host-containers-version",
+    "api/migration/migrations/v0.2/migrate-containerd-config-path",
+    "api/migration/migrations/v0.2/migrate-remove-region",
 
     "models",
 

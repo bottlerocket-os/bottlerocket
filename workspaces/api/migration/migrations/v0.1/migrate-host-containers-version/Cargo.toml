@@ -1,7 +1,7 @@
 [package]
-name = "remove-region"
+name = "migrate-host-containers-version"
 version = "0.1.0"
-authors = ["Tom Kirchner <tjk@amazon.com>"]
+authors = ["Erikson Tung <etung@amazon.com>"]
 edition = "2018"
 publish = false
 

@@ -1,5 +1,5 @@
 [package]
-name = "containerd-config-path"
+name = "migrate-borkseed"
 version = "0.1.0"
 authors = ["Tom Kirchner <tjk@amazon.com>"]
 edition = "2018"
