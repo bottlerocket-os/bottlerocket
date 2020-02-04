@@ -15,22 +15,45 @@ use crate::datastore::{
 use crate::server::error::{self, Result};
 use model::{ConfigurationFiles, Services, Settings};
 
-/// Build a Settings based on pending data in the datastore; the Settings will be empty if there
-/// are no pending settings.
-pub(crate) fn get_pending_settings<D: DataStore>(datastore: &D) -> Result<Settings> {
-    get_prefix(datastore, Committed::Pending, "settings.", None)
-        .map(|maybe_settings| maybe_settings.unwrap_or_else(Settings::default))
-}
-
-/// Delete any settings that have been received but not committed
-pub(crate) fn delete_pending_settings<D: DataStore>(datastore: &mut D) -> Result<HashSet<Key>> {
-    datastore.delete_pending().context(error::DataStore {
-        op: "delete_pending",
+/// List the open transactions from the data store.
+pub(crate) fn list_transactions<D>(datastore: &D) -> Result<HashSet<String>>
+where
+    D: DataStore,
+{
+    datastore.list_transactions().context(error::DataStore {
+        op: "list_transactions",
     })
 }
 
+/// Build a Settings based on pending data in the datastore; the Settings will be empty if there
+/// are no pending settings.
+pub(crate) fn get_transaction<D, S>(datastore: &D, transaction: S) -> Result<Settings>
+where
+    D: DataStore,
+    S: Into<String>,
+{
+    let pending = Committed::Pending {
+        tx: transaction.into(),
+    };
+    get_prefix(datastore, &pending, "settings.", None)
+        .map(|maybe_settings| maybe_settings.unwrap_or_else(Settings::default))
+}
+
+/// Deletes the transaction from the data store, removing any uncommitted settings under that
+/// transaction name.
+pub(crate) fn delete_transaction<D: DataStore>(
+    datastore: &mut D,
+    transaction: &str,
+) -> Result<HashSet<Key>> {
+    datastore
+        .delete_transaction(transaction)
+        .context(error::DataStore {
+            op: "delete_pending",
+        })
+}
+
 /// Build a Settings based on the data in the datastore.  Errors if no settings are found.
-pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: Committed) -> Result<Settings> {
+pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: &Committed) -> Result<Settings> {
     get_prefix(datastore, committed, "settings.", None)
         .transpose()
         // None is not OK here - we always have *some* settings
@@ -41,7 +64,7 @@ pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: Committed) ->
 pub(crate) fn get_settings_prefix<D: DataStore, S: AsRef<str>>(
     datastore: &D,
     prefix: S,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<Settings> {
     let prefix = "settings.".to_string() + prefix.as_ref();
     get_prefix(datastore, committed, &prefix, None)
@@ -54,7 +77,7 @@ pub(crate) fn get_settings_prefix<D: DataStore, S: AsRef<str>>(
 pub(crate) fn get_services<D: DataStore>(datastore: &D) -> Result<Services> {
     get_prefix(
         datastore,
-        Committed::Live,
+        &Committed::Live,
         "services.",
         Some("services".to_string()),
     )
@@ -67,7 +90,7 @@ pub(crate) fn get_services<D: DataStore>(datastore: &D) -> Result<Services> {
 pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<ConfigurationFiles> {
     get_prefix(
         datastore,
-        Committed::Live,
+        &Committed::Live,
         "configuration-files",
         Some("configuration-files".to_string()),
     )
@@ -84,7 +107,7 @@ pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<Con
 /// returns Ok(None) if we found there were no populated keys.
 fn get_prefix<D, T, S>(
     datastore: &D,
-    committed: Committed,
+    committed: &Committed,
     find_prefix: S,
     map_prefix: Option<String>,
 ) -> Result<Option<T>>
@@ -111,7 +134,7 @@ where
 pub(crate) fn get_settings_keys<D: DataStore>(
     datastore: &D,
     keys: &HashSet<&str>,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<Settings> {
     let mut data = HashMap::new();
     for key_str in keys {
@@ -141,7 +164,7 @@ pub(crate) fn get_settings_keys<D: DataStore>(
 pub(crate) fn get_services_names<'a, D: DataStore>(
     datastore: &D,
     names: &'a HashSet<&str>,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<Services> {
     get_map_from_prefix(datastore, "services.".to_string(), names, committed)
 }
@@ -151,7 +174,7 @@ pub(crate) fn get_services_names<'a, D: DataStore>(
 pub(crate) fn get_configuration_files_names<D: DataStore>(
     datastore: &D,
     names: &HashSet<&str>,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<ConfigurationFiles> {
     get_map_from_prefix(
         datastore,
@@ -169,7 +192,7 @@ fn get_map_from_prefix<D: DataStore, T>(
     datastore: &D,
     prefix: String,
     names: &HashSet<&str>,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<HashMap<String, T>>
 where
     T: DeserializeOwned,
@@ -200,11 +223,18 @@ where
 }
 
 /// Given a Settings, takes any Some values and updates them in the datastore.
-pub(crate) fn set_settings<D: DataStore>(datastore: &mut D, settings: &Settings) -> Result<()> {
+pub(crate) fn set_settings<D: DataStore>(
+    datastore: &mut D,
+    settings: &Settings,
+    transaction: &str,
+) -> Result<()> {
     trace!("Serializing Settings to write to data store");
     let pairs = to_pairs(settings).context(error::DataStoreSerialization { given: "Settings" })?;
+    let pending = Committed::Pending {
+        tx: transaction.into(),
+    };
     datastore
-        .set_keys(&pairs, Committed::Pending)
+        .set_keys(&pairs, &pending)
         .context(error::DataStore { op: "set_keys" })
 }
 
@@ -276,15 +306,18 @@ pub(crate) fn get_metadata_for_all_data_keys<D: DataStore, S: AsRef<str>>(
 }
 
 /// Makes live any pending settings in the datastore, returning the changed keys.
-pub(crate) fn commit<D: DataStore>(datastore: &mut D) -> Result<HashSet<Key>> {
+pub(crate) fn commit_transaction<D>(datastore: &mut D, transaction: &str) -> Result<HashSet<Key>>
+where
+    D: DataStore,
+{
     datastore
-        .commit()
+        .commit_transaction(transaction)
         .context(error::DataStore { op: "commit" })
 }
 
 /// Launches the config applier to make appropriate changes to the system based on any settings
-/// that have changed.  Can be called after a commit, with the keys that changed in that commit,
-/// or called on its own to reset configuration state with all known keys.
+/// that have been committed.  Can be called after a commit, with the keys that changed in that
+/// commit, or called on its own to reset configuration state with all known keys.
 ///
 /// If `keys_limit` is Some, gives those keys to the applier so only changes relevant to those
 /// keys are made.  Otherwise, tells the applier to apply changes for all known keys.
@@ -350,12 +383,12 @@ mod test {
         ds.set_key(
             &Key::new(KeyType::Data, "settings.hostname").unwrap(),
             "\"json string\"",
-            Committed::Live,
+            &Committed::Live,
         )
         .unwrap();
 
         // Retrieve with helper
-        let settings = get_settings(&ds, Committed::Live).unwrap();
+        let settings = get_settings(&ds, &Committed::Live).unwrap();
         assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
     }
 
@@ -366,18 +399,18 @@ mod test {
         ds.set_key(
             &Key::new(KeyType::Data, "settings.timezone").unwrap(),
             "\"json string\"",
-            Committed::Live,
+            &Committed::Live,
         )
         .unwrap();
 
         // Retrieve with helper
-        let settings = get_settings_prefix(&ds, "", Committed::Live).unwrap();
+        let settings = get_settings_prefix(&ds, "", &Committed::Live).unwrap();
         assert_eq!(settings.timezone, Some("json string".try_into().unwrap()));
 
-        let settings = get_settings_prefix(&ds, "tim", Committed::Live).unwrap();
+        let settings = get_settings_prefix(&ds, "tim", &Committed::Live).unwrap();
         assert_eq!(settings.timezone, Some("json string".try_into().unwrap()));
 
-        let settings = get_settings_prefix(&ds, "timbits", Committed::Live).unwrap();
+        let settings = get_settings_prefix(&ds, "timbits", &Committed::Live).unwrap();
         assert_eq!(settings.timezone, None);
     }
 
@@ -388,20 +421,20 @@ mod test {
         ds.set_key(
             &Key::new(KeyType::Data, "settings.timezone").unwrap(),
             "\"json string 1\"",
-            Committed::Live,
+            &Committed::Live,
         )
         .unwrap();
 
         ds.set_key(
             &Key::new(KeyType::Data, "settings.hostname").unwrap(),
             "\"json string 2\"",
-            Committed::Live,
+            &Committed::Live,
         )
         .unwrap();
 
         // Retrieve with helper
         let settings =
-            get_settings_keys(&ds, &hashset!("settings.timezone"), Committed::Live).unwrap();
+            get_settings_keys(&ds, &hashset!("settings.timezone"), &Committed::Live).unwrap();
         assert_eq!(settings.timezone, Some("json string 1".try_into().unwrap()));
         assert_eq!(settings.hostname, None);
     }
@@ -413,19 +446,19 @@ mod test {
         ds.set_key(
             &Key::new(KeyType::Data, "services.foo.configuration-files").unwrap(),
             "[\"file1\"]",
-            Committed::Pending,
+            &Committed::Live,
         )
         .unwrap();
         ds.set_key(
             &Key::new(KeyType::Data, "services.foo.restart-commands").unwrap(),
             "[\"echo hi\"]",
-            Committed::Pending,
+            &Committed::Live,
         )
         .unwrap();
 
         // Retrieve built service
         let names = hashset!("foo");
-        let services = get_services_names(&ds, &names, Committed::Pending).unwrap();
+        let services = get_services_names(&ds, &names, &Committed::Live).unwrap();
         assert_eq!(
             services,
             hashmap!("foo".to_string() => Service {
@@ -442,13 +475,15 @@ mod test {
 
         // Set with helper
         let mut ds = MemoryDataStore::new();
-        set_settings(&mut ds, &settings).unwrap();
+        let tx = "test transaction";
+        let pending = Committed::Pending { tx: tx.into() };
+        set_settings(&mut ds, &settings, tx).unwrap();
 
         // Retrieve directly
         let key = Key::new(KeyType::Data, "settings.timezone").unwrap();
         assert_eq!(
             Some("\"tz\"".to_string()),
-            ds.get_key(&key, Committed::Pending).unwrap()
+            ds.get_key(&key, &pending).unwrap()
         );
     }
 
@@ -503,26 +538,28 @@ mod test {
     fn commit_works() {
         // Set directly with data store
         let mut ds = MemoryDataStore::new();
+        let tx = "test transaction";
+        let pending = Committed::Pending { tx: tx.into() };
         ds.set_key(
             &Key::new(KeyType::Data, "settings.hostname").unwrap(),
             "\"json string\"",
-            Committed::Pending,
+            &pending,
         )
         .unwrap();
 
         // Confirm pending
-        let settings = get_settings(&ds, Committed::Pending).unwrap();
+        let settings = get_settings(&ds, &pending).unwrap();
         assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
         // No live settings yet
-        get_settings(&ds, Committed::Live).unwrap_err();
+        get_settings(&ds, &Committed::Live).unwrap_err();
 
         // Commit, pending -> live
-        commit(&mut ds).unwrap();
+        commit_transaction(&mut ds, tx).unwrap();
 
         // No more pending settings
-        get_settings(&ds, Committed::Pending).unwrap_err();
+        get_settings(&ds, &pending).unwrap_err();
         // Confirm live
-        let settings = get_settings(&ds, Committed::Live).unwrap();
+        let settings = get_settings(&ds, &Committed::Live).unwrap();
         assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
     }
 }

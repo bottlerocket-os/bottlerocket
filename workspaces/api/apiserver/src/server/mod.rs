@@ -68,14 +68,19 @@ where
             .service(
                 web::scope("/settings")
                     .route("", web::get().to(get_settings))
-                    .route("", web::patch().to(patch_settings))
-                    .route("/pending", web::get().to(get_pending_settings))
-                    .route("/pending", web::delete().to(delete_pending_settings))
-                    .route("/commit", web::post().to(commit_settings))
-                    .route("/apply", web::post().to(apply_settings))
+                    .route("", web::patch().to(patch_settings)),
+            )
+            .service(
+                // Transaction support
+                web::scope("/tx")
+                    .route("/list", web::get().to(get_transaction_list))
+                    .route("", web::get().to(get_transaction))
+                    .route("", web::delete().to(delete_transaction))
+                    .route("/commit", web::post().to(commit_transaction))
+                    .route("/apply", web::post().to(apply_changes))
                     .route(
                         "/commit_and_apply",
-                        web::post().to(commit_and_apply_settings),
+                        web::post().to(commit_transaction_and_apply),
                     ),
             )
             .service(
@@ -128,15 +133,15 @@ fn get_settings(
 
     let settings = if let Some(keys_str) = query.get("keys") {
         let keys = comma_separated("keys", keys_str)?;
-        controller::get_settings_keys(&*datastore, &keys, Committed::Live)
+        controller::get_settings_keys(&*datastore, &keys, &Committed::Live)
     } else if let Some(prefix_str) = query.get("prefix") {
         if prefix_str.is_empty() {
             return error::EmptyInput { input: "prefix" }.fail();
         }
         // Note: the prefix should not include "settings."
-        controller::get_settings_prefix(&*datastore, prefix_str, Committed::Live)
+        controller::get_settings_prefix(&*datastore, prefix_str, &Committed::Live)
     } else {
-        controller::get_settings(&*datastore, Committed::Live)
+        controller::get_settings(&*datastore, &Committed::Live)
     }?;
 
     Ok(SettingsResponse(settings))
@@ -145,32 +150,53 @@ fn get_settings(
 /// Apply the requested settings to the pending data store
 fn patch_settings(
     settings: web::Json<Settings>,
+    query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<HttpResponse> {
+    let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
-    controller::set_settings(&mut *datastore, &settings)?;
+    controller::set_settings(&mut *datastore, &settings, transaction)?;
     Ok(HttpResponse::NoContent().finish()) // 204
 }
 
-/// Return any settings that have been received but not committed
-fn get_pending_settings(data: web::Data<SharedDataStore>) -> Result<SettingsResponse> {
+fn get_transaction_list(data: web::Data<SharedDataStore>) -> Result<TransactionListResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
-    let settings = controller::get_pending_settings(&*datastore)?;
-    Ok(SettingsResponse(settings))
+    let data = controller::list_transactions(&*datastore)?;
+    Ok(TransactionListResponse(data))
 }
 
-/// Delete any settings that have been received but not committed
-fn delete_pending_settings(data: web::Data<SharedDataStore>) -> Result<ChangedKeysResponse> {
+/// Get any pending settings in the given transaction, or the "default" transaction if unspecified.
+fn get_transaction(
+    query: web::Query<HashMap<String, String>>,
+    data: web::Data<SharedDataStore>,
+) -> Result<SettingsResponse> {
+    let transaction = transaction_name(&query);
+    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let data = controller::get_transaction(&*datastore, transaction)?;
+    Ok(SettingsResponse(data))
+}
+
+/// Delete the given transaction, or the "default" transaction if unspecified.
+fn delete_transaction(
+    query: web::Query<HashMap<String, String>>,
+    data: web::Data<SharedDataStore>,
+) -> Result<ChangedKeysResponse> {
+    let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
-    let deleted = controller::delete_pending_settings(&mut *datastore)?;
+    let deleted = controller::delete_transaction(&mut *datastore, transaction)?;
     Ok(ChangedKeysResponse(deleted))
 }
 
-/// Save settings changes to the main data store and kick off appliers.
-fn commit_settings(data: web::Data<SharedDataStore>) -> Result<ChangedKeysResponse> {
+/// Save settings changes from the given transaction, or the "default" transaction if unspecified,
+/// to the live data store.  Returns the list of changed keys.
+fn commit_transaction(
+    query: web::Query<HashMap<String, String>>,
+    data: web::Data<SharedDataStore>,
+) -> Result<ChangedKeysResponse> {
+    let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
 
-    let changes = controller::commit(&mut *datastore)?;
+    let changes = controller::commit_transaction(&mut *datastore, transaction)?;
 
     if changes.is_empty() {
         return error::CommitWithNoPending.fail();
@@ -179,8 +205,9 @@ fn commit_settings(data: web::Data<SharedDataStore>) -> Result<ChangedKeysRespon
     Ok(ChangedKeysResponse(changes))
 }
 
-/// Save settings changes to the main data store and kick off appliers.
-fn apply_settings(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
+/// Starts settings appliers for any changes that have been committed to the data store.  This
+/// updates config files, runs restart commands, etc.
+fn apply_changes(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
     if let Some(keys_str) = query.get("keys") {
         let keys = comma_separated("keys", keys_str)?;
         controller::apply_changes(Some(&keys))?;
@@ -191,11 +218,17 @@ fn apply_settings(query: web::Query<HashMap<String, String>>) -> Result<HttpResp
     Ok(HttpResponse::NoContent().json(()))
 }
 
-/// Save settings changes to the main data store and kick off appliers.
-fn commit_and_apply_settings(data: web::Data<SharedDataStore>) -> Result<ChangedKeysResponse> {
+/// Usually you want to apply settings changes you've committed, so this is a convenience method to
+/// perform both a commit and an apply.  Commits the given transaction, or the "default"
+/// transaction if unspecified.
+fn commit_transaction_and_apply(
+    query: web::Query<HashMap<String, String>>,
+    data: web::Data<SharedDataStore>,
+) -> Result<ChangedKeysResponse> {
+    let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
 
-    let changes = controller::commit(&mut *datastore)?;
+    let changes = controller::commit_transaction(&mut *datastore, transaction)?;
 
     if changes.is_empty() {
         return error::CommitWithNoPending.fail();
@@ -239,8 +272,7 @@ fn get_templates(
     if let Some(keys_str) = query.get("keys") {
         let data_keys = comma_separated("keys", keys_str)?;
         let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
-        let resp =
-            controller::get_metadata_for_data_keys(&*datastore, "template", &data_keys)?;
+        let resp = controller::get_metadata_for_data_keys(&*datastore, "template", &data_keys)?;
 
         Ok(MetadataResponse(resp))
     } else {
@@ -257,7 +289,7 @@ fn get_services(
 
     let resp = if let Some(names_str) = query.get("names") {
         let names = comma_separated("names", names_str)?;
-        controller::get_services_names(&*datastore, &names, Committed::Live)
+        controller::get_services_names(&*datastore, &names, &Committed::Live)
     } else {
         controller::get_services(&*datastore)
     }?;
@@ -274,7 +306,7 @@ fn get_configuration_files(
 
     let resp = if let Some(names_str) = query.get("names") {
         let names = comma_separated("names", names_str)?;
-        controller::get_configuration_files_names(&*datastore, &names, Committed::Live)
+        controller::get_configuration_files_names(&*datastore, &names, &Committed::Live)
     } else {
         controller::get_configuration_files(&*datastore)
     }?;
@@ -291,6 +323,14 @@ fn comma_separated<'a>(key_name: &'static str, input: &'a str) -> Result<HashSet
         return error::EmptyInput { input: key_name }.fail();
     }
     Ok(input.split(',').collect())
+}
+
+fn transaction_name(query: &web::Query<HashMap<String, String>>) -> &str {
+    if let Some(name_str) = query.get("tx") {
+        name_str
+    } else {
+        "default"
+    }
 }
 
 // Can also override `render_response` if we want to change headers, content type, etc.
@@ -378,3 +418,6 @@ impl_responder_for!(ConfigurationFilesResponse, self, self.0);
 
 struct ChangedKeysResponse(HashSet<Key>);
 impl_responder_for!(ChangedKeysResponse, self, self.0);
+
+struct TransactionListResponse(HashSet<String>);
+impl_responder_for!(TransactionListResponse, self, self.0);

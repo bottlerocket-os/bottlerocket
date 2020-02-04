@@ -4,14 +4,13 @@
 //! immediately.
 
 use std::collections::{HashMap, HashSet};
-use std::mem;
 
 use super::{Committed, DataStore, Key, Result};
 
 #[derive(Debug)]
 pub struct MemoryDataStore {
-    // Uncommitted (pending) data.
-    pending: HashMap<Key, String>,
+    // Transaction name -> (key -> data)
+    pending: HashMap<String, HashMap<Key, String>>,
     // Committed (live) data.
     live: HashMap<Key, String>,
     // Map of data keys to their metadata, which in turn is a mapping of metadata keys to
@@ -28,17 +27,17 @@ impl MemoryDataStore {
         }
     }
 
-    fn dataset(&self, committed: Committed) -> &HashMap<Key, String> {
+    fn dataset(&self, committed: &Committed) -> Option<&HashMap<Key, String>> {
         match committed {
-            Committed::Live => &self.live,
-            Committed::Pending => &self.pending,
+            Committed::Live => Some(&self.live),
+            Committed::Pending { tx } => self.pending.get(tx)
         }
     }
 
-    fn dataset_mut(&mut self, committed: Committed) -> &mut HashMap<Key, String> {
+    fn dataset_mut(&mut self, committed: &Committed) -> &mut HashMap<Key, String> {
         match committed {
             Committed::Live => &mut self.live,
-            Committed::Pending => &mut self.pending,
+            Committed::Pending { tx } => self.pending.entry(tx.clone()).or_default(),
         }
     }
 }
@@ -47,9 +46,10 @@ impl DataStore for MemoryDataStore {
     fn list_populated_keys<S: AsRef<str>>(
         &self,
         prefix: S,
-        committed: Committed,
+        committed: &Committed,
     ) -> Result<HashSet<Key>> {
-        let dataset = self.dataset(committed);
+        let empty = HashMap::new();
+        let dataset = self.dataset(committed).unwrap_or(&empty);
         Ok(dataset
             .keys()
             // Make sure the data keys start with the given prefix.
@@ -93,23 +93,27 @@ impl DataStore for MemoryDataStore {
         Ok(result)
     }
 
-    fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>> {
-        Ok(self.dataset(committed).get(key).cloned())
+    fn get_key(&self, key: &Key, committed: &Committed) -> Result<Option<String>> {
+        let empty = HashMap::new();
+        let dataset = self.dataset(committed).unwrap_or(&empty);
+        Ok(dataset.get(key).cloned())
     }
 
-    fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: Committed) -> Result<()> {
+    fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: &Committed) -> Result<()> {
         self.dataset_mut(committed)
             .insert(key.clone(), value.as_ref().to_owned());
         Ok(())
     }
 
-    fn unset_key(&mut self, key: &Key, committed: Committed) -> Result<()> {
+    fn unset_key(&mut self, key: &Key, committed: &Committed) -> Result<()> {
         self.dataset_mut(committed).remove(key);
         Ok(())
     }
 
-    fn key_populated(&self, key: &Key, committed: Committed) -> Result<bool> {
-        Ok(self.dataset(committed).contains_key(key))
+    fn key_populated(&self, key: &Key, committed: &Committed) -> Result<bool> {
+        let empty = HashMap::new();
+        let dataset = self.dataset(committed).unwrap_or(&empty);
+        Ok(dataset.contains_key(key))
     }
 
     fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
@@ -146,27 +150,36 @@ impl DataStore for MemoryDataStore {
         Ok(())
     }
 
-    fn commit(&mut self) -> Result<HashSet<Key>> {
-        // We need a clone of the pending keys so we can set_keys (which holds &mut self) and we
-        // have to clone the keys anyway for the return value.
-        let pending = self.pending.clone();
-
-        // Apply pending changes to live
-        self.set_keys(&pending, Committed::Live)?;
-
-        // Remove pending
-        self.pending = HashMap::new();
-
-        // Return keys (using into_iter to avoid further clone)
-        Ok(pending.into_iter().map(|(k, _v)| k).collect())
+    fn commit_transaction<S>(&mut self, transaction: S) -> Result<HashSet<Key>>
+    where
+        S: Into<String> + AsRef<str>,
+    {
+        // Remove anything pending for this transaction
+        if let Some(pending) = self.pending.remove(transaction.as_ref()) {
+            // Apply pending changes to live
+            self.set_keys(&pending, &Committed::Live)?;
+            // Return keys that were committed
+            Ok(pending.keys().cloned().collect())
+        } else {
+            Ok(HashSet::new())
+        }
     }
 
-    fn delete_pending(&mut self) -> Result<HashSet<Key>> {
-        // Replace pending with an empty map
-        let old_pending = mem::replace(&mut self.pending, HashMap::new());
+    fn delete_transaction<S>(&mut self, transaction: S) -> Result<HashSet<Key>>
+    where
+        S: Into<String> + AsRef<str>,
+    {
+        // Remove anything pending for this transaction
+        if let Some(pending) = self.pending.remove(transaction.as_ref()) {
+            // Return the old pending keys
+            Ok(pending.keys().cloned().collect())
+        } else {
+            Ok(HashSet::new())
+        }
+    }
 
-        // Return the old pending keys
-        Ok(old_pending.into_iter().map(|(key, _val)| key).collect())
+    fn list_transactions(&self) -> Result<HashSet<String>> {
+        Ok(self.pending.keys().cloned().collect())
     }
 }
 
@@ -181,8 +194,8 @@ mod test {
         let mut m = MemoryDataStore::new();
         let k = Key::new(KeyType::Data, "memtest").unwrap();
         let v = "memvalue";
-        m.set_key(&k, v, Committed::Live).unwrap();
-        assert_eq!(m.get_key(&k, Committed::Live).unwrap(), Some(v.to_string()));
+        m.set_key(&k, v, &Committed::Live).unwrap();
+        assert_eq!(m.get_key(&k, &Committed::Live).unwrap(), Some(v.to_string()));
 
         let mdkey = Key::new(KeyType::Meta, "testmd").unwrap();
         let md = "mdval";
@@ -195,8 +208,8 @@ mod test {
         m.unset_metadata(&mdkey, &k).unwrap();
         assert_eq!(m.get_metadata_raw(&mdkey, &k).unwrap(), None);
 
-        m.unset_key(&k, Committed::Live).unwrap();
-        assert_eq!(m.get_key(&k, Committed::Live).unwrap(), None);
+        m.unset_key(&k, &Committed::Live).unwrap();
+        assert_eq!(m.get_key(&k, &Committed::Live).unwrap(), None);
     }
 
     #[test]
@@ -205,18 +218,18 @@ mod test {
         let k1 = Key::new(KeyType::Data, "memtest1").unwrap();
         let k2 = Key::new(KeyType::Data, "memtest2").unwrap();
         let v = "memvalue";
-        m.set_key(&k1, v, Committed::Live).unwrap();
-        m.set_key(&k2, v, Committed::Live).unwrap();
+        m.set_key(&k1, v, &Committed::Live).unwrap();
+        m.set_key(&k2, v, &Committed::Live).unwrap();
 
-        assert!(m.key_populated(&k1, Committed::Live).unwrap());
-        assert!(m.key_populated(&k2, Committed::Live).unwrap());
+        assert!(m.key_populated(&k1, &Committed::Live).unwrap());
+        assert!(m.key_populated(&k2, &Committed::Live).unwrap());
         assert_eq!(
-            m.list_populated_keys("", Committed::Live).unwrap(),
+            m.list_populated_keys("", &Committed::Live).unwrap(),
             hashset!(k1, k2),
         );
 
         let bad_key = Key::new(KeyType::Data, "memtest3").unwrap();
-        assert!(!m.key_populated(&bad_key, Committed::Live).unwrap());
+        assert!(!m.key_populated(&bad_key, &Committed::Live).unwrap());
     }
 
     #[test]
@@ -224,26 +237,40 @@ mod test {
         let mut m = MemoryDataStore::new();
         let k = Key::new(KeyType::Data, "settings.a.b.c").unwrap();
         let v = "memvalue";
-        m.set_key(&k, v, Committed::Pending).unwrap();
+        let tx = "test transaction";
+        let pending = Committed::Pending { tx: tx.into() };
+        m.set_key(&k, v, &pending).unwrap();
 
-        assert!(m.key_populated(&k, Committed::Pending).unwrap());
-        assert!(!m.key_populated(&k, Committed::Live).unwrap());
-        m.commit().unwrap();
-        assert!(!m.key_populated(&k, Committed::Pending).unwrap());
-        assert!(m.key_populated(&k, Committed::Live).unwrap());
+        assert!(m.key_populated(&k, &pending).unwrap());
+        assert!(!m.key_populated(&k, &Committed::Live).unwrap());
+        m.commit_transaction(tx).unwrap();
+        assert!(!m.key_populated(&k, &pending).unwrap());
+        assert!(m.key_populated(&k, &Committed::Live).unwrap());
     }
 
     #[test]
-    fn delete_pending() {
+    fn delete_transaction() {
         let mut m = MemoryDataStore::new();
         let k = Key::new(KeyType::Data, "settings.a.b.c").unwrap();
         let v = "memvalue";
-        m.set_key(&k, v, Committed::Pending).unwrap();
+        let tx = "test transaction";
+        let pending = Committed::Pending { tx: tx.into() };
+        m.set_key(&k, v, &pending).unwrap();
 
-        assert!(m.key_populated(&k, Committed::Pending).unwrap());
-        assert!(!m.key_populated(&k, Committed::Live).unwrap());
-        m.delete_pending().unwrap();
-        assert!(!m.key_populated(&k, Committed::Pending).unwrap());
-        assert!(!m.key_populated(&k, Committed::Live).unwrap());
+        // Set something in a different transaction to ensure it doesn't get deleted
+        let k2 = Key::new(KeyType::Data, "settings.x.y.z").unwrap();
+        let v2 = "memvalue 2";
+        let tx2 = "test transaction 2";
+        let pending2 = Committed::Pending { tx: tx2.into() };
+        m.set_key(&k2, v2, &pending2).unwrap();
+
+        assert!(m.key_populated(&k, &pending).unwrap());
+        assert!(!m.key_populated(&k, &Committed::Live).unwrap());
+        m.delete_transaction(tx).unwrap();
+        assert!(!m.key_populated(&k, &pending).unwrap());
+        assert!(!m.key_populated(&k, &Committed::Live).unwrap());
+
+        // Assure other transactions were not deleted
+        assert!(m.key_populated(&k2, &pending2).unwrap());
     }
 }
