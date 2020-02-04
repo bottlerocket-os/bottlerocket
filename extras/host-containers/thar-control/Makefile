@@ -1,5 +1,5 @@
 IMAGE_VERSION=`cat VERSION`
-
+SSM_AGENT_VERSION ?= 2.3.842.0
 DOCKER_IMAGE := thar-control
 DOCKER_IMAGE_REF_RELEASE := $(DOCKER_IMAGE):$(CONTROL_CTR_VERSION)
 SHORT_SHA ?= $(shell git rev-parse --short=8 HEAD)
@@ -9,6 +9,7 @@ container:
 	docker build --network=host \
 		--tag $(DOCKER_IMAGE_REF) \
 		--build-arg IMAGE_VERSION="$(IMAGE_VERSION)" \
+		--build-arg SSM_AGENT_VERSION="$(SSM_AGENT_VERSION)" \
 		--build-arg BUILD_LDFLAGS='' \
 		.
 

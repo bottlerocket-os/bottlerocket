@@ -1,10 +1,12 @@
 FROM amazonlinux:2
 ARG IMAGE_VERSION
-# Make the container image version a mandatory build argument
+ARG SSM_AGENT_VERSION
+# Mandatory build arguments
 RUN test -n "$IMAGE_VERSION"
+RUN test -n "$SSM_AGENT_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
-RUN yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm shadow-utils
+RUN yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/"$SSM_AGENT_VERSION"/linux_amd64/amazon-ssm-agent.rpm shadow-utils
 
 # Add motd explaining the control container.
 RUN rm -f /etc/motd /etc/issue
