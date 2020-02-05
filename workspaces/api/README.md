@@ -53,10 +53,10 @@ storewolf ensures the default values (defined in [defaults.toml](../models/defau
 First, it has to create the data store directories and symlinks if they don’t exist.
 Then, it goes key-by-key through the defaults, and if a key isn’t already set, sets it with the default value.
 
-The settings are written to the *pending* section of the data store, meaning they’re not available until committed later by [settings-committer](#settings-committer).
+The settings are written to the *pending* section of the data store, in a "thar-boot" transaction, which is used for startup coordination.
+This means they’re not available until committed later by [settings-committer](#settings-committer).
 
-If there are any pending settings in the data store, they’re discarded.
-We’re unable to guarantee users that any pending settings they haven’t committed will survive a reboot, because we have to be able to commit changes ourselves during the boot process (see later services), and we don’t yet have a way of separating transactions.
+If there are any pending transactions in the data store when storewolf starts, they’re discarded.
 
 ### apiserver
 
@@ -101,7 +101,7 @@ Pluto generates settings needed for Kubernetes configuration, for example cluste
 
 [Further docs](settings-committer/)
 
-This binary sends a commit request to the API, which moves all the pending settings from the above services into the live part of the data store.
+This binary sends a commit request to the API (by default for the "thar-boot" transaction) which moves all the pending settings from the above services into the live part of the data store.
 It's called as a prerequisite of other services, like [sundog](#sundog) and [settings-applier](#settings-applier), that rely on settings being committed.
 
 ### settings-applier
