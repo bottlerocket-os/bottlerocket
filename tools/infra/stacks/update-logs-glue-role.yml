@@ -1,0 +1,172 @@
+# This stack is intended for use in the main repository account. It allows the
+# AWS Glue service to process raw S3 access logs and store them in a resulting
+# bucket which a separate "Telemetry" account will have access to.
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'A role that gives a Glue job permissions to process a bucket of raw s3 logs'
+Parameters:
+  LogBucketArn:
+    Description: "ARN of the S3 bucket Glue will read raw logs from"
+    AllowedPattern: 'arn:aws:s3:::[a-z\-]+'
+    ConstraintDescription: "Must follow normal S3 bucket naming rules"
+    Type: String
+  CrawlerAccount:
+    Description: "Account ID of the user which will crawl the converted logs bucket"
+    AllowedPattern: '[0-9]+'
+    Type: String
+
+Resources:
+  # Bucket that glue results are stored in
+  GlueResultBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+
+  # Bucket policy to give permissions to reader of glue results
+  GlueResultBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref GlueResultBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - s3:GetObject*
+              - s3:ListMultipartUploadParts
+              - s3:GetBucketAcl
+              - s3:GetBucketLocation
+              - s3:ListBucket
+              - s3:ListBucketVersions
+              - s3:ListBucketMultipartUploads
+            Effect: Allow
+            Resource:
+              - !GetAtt GlueResultBucket.Arn
+              - !Sub "${GlueResultBucket.Arn}/*"
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${CrawlerAccount}:root'
+
+  GlueJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'AWSGlueServiceRole-metrics-${AWS::Region}'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+
+  GlueJobRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref GlueJobRole
+      PolicyName: GlueJobRolePolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: 'glueServiceRawBucketAccess'
+            Action:
+              - s3:GetObject*
+            Effect: Allow
+            Resource:
+              - !Ref LogBucketArn
+              - !Sub '${LogBucketArn}/*'
+          - Action:
+              - s3:ListBucket
+            Effect: Allow
+            Resource:
+              - !Ref LogBucketArn
+          - Sid: 'glueServiceResultBucketAccess'
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:ListBucket
+            Effect: Allow
+            Resource:
+              - !GetAtt GlueResultBucket.Arn
+              - !Sub "${GlueResultBucket.Arn}/*"
+          - Action:
+              - s3:ListAllMyBuckets
+            Effect: Allow
+            Resource:
+              - "arn:aws:s3:::*"
+          - Sid: 'glueServiceGeneralAccess'
+            Action:
+              - glue:BatchCreatePartition
+              - glue:BatchGetCrawlers
+              - glue:BatchGetJobs
+              - glue:BatchGetPartition
+              - glue:BatchGetTriggers
+              - glue:BatchStopJobRun
+              - glue:CreateDatabase
+              - glue:CreatePartition
+              - glue:CreateTable
+              - glue:GetDatabase
+              - glue:GetDatabases
+              - glue:GetJob
+              - glue:GetJobBookmark
+              - glue:GetJobRun
+              - glue:GetJobRuns
+              - glue:GetJobs
+              - glue:GetPartition
+              - glue:GetPartitions
+              - glue:GetResourcePolicy
+              - glue:GetTable
+              - glue:GetTableVersion
+              - glue:GetTableVersions
+              - glue:GetTables
+              - glue:GetTags
+              - glue:GetTrigger
+              - glue:GetTriggers
+              - glue:ListJobs
+              - glue:ListTriggers
+              - glue:ResetJobBookmark
+              - glue:SearchTables
+              - glue:StartJobRun
+              - glue:StartTrigger
+              - glue:StopTrigger
+              - glue:TagResource
+              - glue:UntagResource
+              - glue:UpdateDatabase
+              - glue:UpdateJob
+              - glue:UpdatePartition
+              - glue:UpdateTable
+              - glue:UpdateTrigger
+              - cloudwatch:PutMetricData
+            Effect: Allow
+            Resource:
+              - "*"
+          - Action:
+                  - s3:CreateBucket
+            Effect: Allow
+            Resource:
+              - "arn:aws:s3:::aws-glue-*"
+          - Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+            Effect: Allow
+            Resource:
+              - "arn:aws:s3:::aws-glue-*/*"
+              - "arn:aws:s3:::*/*aws-glue-*/*"
+          - Action:
+                  - s3:GetObject
+            Effect: Allow
+            Resource:
+              - "arn:aws:s3:::aws-glue-*"
+              - "arn:aws:s3:::crawler-public*"
+          - Action:
+                  - logs:*
+            Effect: Allow
+            Resource:
+              - "arn:aws:logs:*:*:/aws-glue/*"
+
+Outputs:
+  GlueResultBucket:
+    Description: 'S3 bucket containing converted S3 access logs'
+    Value: !Ref GlueResultBucket
+  GlueJobRole:
+    Description: 'Role for the Glue job processing access logs'
+    Value: !GetAtt GlueJobRole.Arn

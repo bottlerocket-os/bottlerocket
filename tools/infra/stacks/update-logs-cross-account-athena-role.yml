@@ -1,0 +1,79 @@
+# Role for the Athena user / Glue crawler in the consuming Telemetry account
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'A role that allows access to a Glue catalog in a separate account'
+Parameters:
+  SourceBucketName:
+    Description: "Name of the S3 bucket that Glue will crawl"
+    AllowedPattern: '[a-z0-9\-]+'
+    ConstraintDescription: "Must follow normal S3 bucket naming rules"
+    Type: String
+  DatabaseName:
+    Description: "Name of database to store metrics in"
+    AllowedPattern: '[a-z0-9_]+'
+    ConstraintDescription: "Lowercase names only, no special characters bar _"
+    Type: String
+
+Resources:
+  MetricsAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "AWSGlueServiceRole-log-processing-${AWS::Region}"
+      Description: 'Role allowing access to the S3 bucket and Glue/Athena services'
+      Path: !Sub "/${AWS::StackName}/"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: 'S3LogsReadOnlyAccess'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject*
+                Resource: 
+                  - !Sub "arn:aws:s3:::${SourceBucketName}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${SourceBucketName}"
+
+  MetricsDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Ref DatabaseName
+        Description: "Telemetry derived metrics"
+
+  GlueResultCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Role: !GetAtt MetricsAccessRole.Arn
+      Description: "Processed telemetry metrics collector"
+      #Schedule: none for now (on-demand)
+      DatabaseName: !Ref DatabaseName
+      Targets:
+        S3Targets:
+          - Path: !Sub 's3://${SourceBucketName}'
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+        DeleteBehavior: "LOG"
+      Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
+
+Outputs:
+  MetricsAccessRole:
+    Description: 'The ARN of the metrics user role'
+    Value: !GetAtt MetricsAccessRole.Arn
+  MetricsDatabase:
+    Description: 'The database to store metrics and run queries against'
+    Value: !Ref MetricsDatabase
+  GlueResultCrawler:
+    Description: 'The Glue crawler which reads processed S3 logs'
+    Value: !Ref GlueResultCrawler
