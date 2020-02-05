@@ -17,6 +17,7 @@ mod datastore;
 pub mod error;
 mod workarounds;
 
+use snafu::ResultExt;
 use std::collections::HashMap;
 use std::env;
 use std::fmt;
@@ -40,9 +41,10 @@ type DataStoreImplementation = FilesystemDataStore;
 /// necessary.
 ///
 /// Migrations must not assume any key will exist because they're run on pending data as well as
-/// live, and pending may be empty.  For the same reason, migrations must not add a key in all
-/// cases if it's missing, because you could add a key to the pending data when the user didn't
-/// have any pending data.  Instead, make sure you're adding a key to an existing structure.
+/// live, and pending transactions usually do not impact all keys.  For the same reason, migrations
+/// must not add a key in all cases if it's missing, because you could be adding the key to an
+/// unrelated pending transaction.  Instead, make sure you're adding a key to an existing
+/// structure.
 pub trait Migration {
     /// Migrates data forward from the prior version to the version specified in the migration
     /// name.
@@ -90,8 +92,13 @@ pub fn run_migration(mut migration: impl Migration, args: &Args) -> Result<()> {
     let source = DataStoreImplementation::new(&args.source_datastore);
     let mut target = DataStoreImplementation::new(&args.target_datastore);
 
-    for committed in &[Committed::Live, Committed::Pending] {
-        let input = get_input_data(&source, *committed)?;
+    // Run for live data and for each pending transaction
+    let mut committeds = vec![Committed::Live];
+    let transactions = source.list_transactions().context(error::ListTransactions)?;
+    committeds.extend(transactions.into_iter().map(|tx| Committed::Pending { tx }));
+
+    for committed in committeds {
+        let input = get_input_data(&source, &committed)?;
 
         let mut migrated = input.clone();
         migrated = match args.migration_type {
@@ -104,13 +111,13 @@ pub fn run_migration(mut migration: impl Migration, args: &Args) -> Result<()> {
             &mut migrated,
             &source,
             &mut target,
-            *committed,
+            &committed,
             &args,
         )?;
 
         validate_migrated_data(&migrated)?;
 
-        set_output_data(&mut target, &migrated, *committed)?;
+        set_output_data(&mut target, &migrated, &committed)?;
     }
     Ok(())
 }
