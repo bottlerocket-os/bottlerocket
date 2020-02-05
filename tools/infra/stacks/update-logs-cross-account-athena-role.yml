@@ -1,0 +1,48 @@
+# Role for the Athena user / Glue crawler in the consuming Telemetry account
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'A role that allows access to a Glue catalog in a separate account'
+Parameters:
+  SourceBucketARN:
+    Description: "ARN of the S3 bucket containing converted log files"
+    Type: String
+  MetricsRoleName:
+    Description: "Name of the IAM role Glue will use (probably AWSGlueServiceRoleDefault)"
+    Type: String
+
+Resources:
+  MetricsAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref MetricsRoleName
+      Description: 'Role allowing access to the S3 bucket and Glue/Athena services'
+      Path: !Sub '/${AWS::StackName}/'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: 'S3LogsReadOnlyAccess'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject*
+                Resource: 
+                   - Fn::Join:
+                       - ""
+                       - - !Sub '${SourceBucketARN}'
+                         - /*
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub '${SourceBucketARN}'
+Outputs:
+  Role:
+    Description: 'The ARN of the metrics user role'
+    Value: !GetAtt MetricsAccessRole.Arn

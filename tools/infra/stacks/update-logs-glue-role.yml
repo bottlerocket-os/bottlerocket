@@ -1,0 +1,140 @@
+# This stack is intended for use in the main repository account. It allows the
+# AWS Glue service to process raw S3 access logs and store them in a resulting
+# bucket which a separate "Telemetry" account will have access to.
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'A role that gives a Glue job permissions to process a bucket of raw s3 logs'
+Parameters:
+  LogBucketArn:
+    Description: "ARN of the S3 bucket Glue will read raw logs from"
+    Type: String
+  GlueBucketName:
+    Description: "Name of the S3 bucket Glue will use for converted logs (must be lowercase)"
+    Type: String
+  GlueRoleName:
+    Description: "Name of the IAM role Glue will use (probably AWSGlueServiceRoleDefault)"
+    Type: String
+  CrawlerARN:
+    Description: "ARN of the user/role which will crawl the converted logs bucket"
+    Type: String
+
+Resources:
+  # Bucket that glue results are stored in
+  GlueBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+        BucketName: !Ref GlueBucketName
+
+  # Bucket policy to give permissions to reader of glue results
+  GlueBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref GlueBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - s3:GetObject*
+              - s3:ListMultipartUploadParts
+            Effect: Allow
+            Resource:
+              - !GetAtt GlueBucket.Arn
+              - Fn::Join:
+                  - ""
+                  - - !GetAtt GlueBucket.Arn
+                    - /*
+            Principal:
+              AWS: !Ref CrawlerARN
+          - Action:
+              - s3:GetBucketAcl
+              - s3:GetBucketLocation
+              - s3:ListBucket
+              - s3:ListBucketVersions
+              - s3:ListBucketMultipartUploads
+            Effect: Allow
+            Resource:
+              - !GetAtt GlueBucket.Arn
+            Principal:
+              AWS: !Ref CrawlerARN
+
+  GlueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref GlueRoleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+
+  GlueRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref GlueRole
+      PolicyName: GlueRolePolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # Access to the S3 bucket containing raw access logs
+          - Action:
+              - s3:GetObject*
+            Effect: Allow
+            Resource:
+              - !Ref LogBucketArn
+              - Fn::Join:
+                  - ""
+                  - - !Ref LogBucketArn
+                    - /*
+          - Action:
+              - s3:ListBucket
+            Effect: Allow
+            Resource:
+              - !Ref LogBucketArn
+          # Access to the S3 bucket for Glue's resulting artifacts
+          - Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !GetAtt GlueBucket.Arn
+              - Fn::Join:
+                  - ""
+                  - - !GetAtt GlueBucket.Arn
+                    - /*
+          - Action:
+              - s3:ListAllMyBuckets
+            Effect: Allow
+            Resource:
+              - "*"
+          # General glue related permissions
+          - Action:
+              - glue:*
+              - iam:GetRole
+              - iam:GetRolePolicy
+              - iam:ListRolePolicies
+              - cloudwatch:PutMetricData
+            Effect: Allow
+            Resource:
+              - "*"
+          - Action:
+                  - s3:*
+            Effect: Allow
+            Resource:
+              - "arn:aws:s3:::aws-glue-*"
+              - "arn:aws:s3:::aws-glue-*/*"
+              - "arn:aws:s3:::*/*aws-glue-*/*"
+              - "arn:aws:s3:::crawler-public*"
+          - Action:
+                  - logs:*
+            Effect: Allow
+            Resource:
+              - "arn:aws:logs:*:*:/aws-glue/*"
+
+Outputs:
+  Bucket:
+    Value: !Ref GlueBucket
+  Role:
+    Value: !GetAtt GlueRole.Arn
