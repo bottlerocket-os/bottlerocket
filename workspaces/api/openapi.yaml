@@ -47,6 +47,13 @@ paths:
     patch:
       summary: "Update settings"
       operationId: "set_settings"
+      parameters:
+        - in: query
+          name: tx
+          description: "Transaction in which to update settings; defaults to user 'default' transaction"
+          schema:
+            type: string
+          required: false
       requestBody:
         required: true
         content:
@@ -61,10 +68,17 @@ paths:
         500:
           description: "Server error"
 
-  /settings/pending:
+  /tx:
     get:
-      summary: "Get pending settings"
-      operationId: "get_pending_settings"
+      summary: "Get pending settings in a transaction"
+      operationId: "get_tx"
+      parameters:
+        - in: query
+          name: tx
+          description: "Transaction for which to retrieve pending settings; defaults to user 'default' transaction"
+          schema:
+            type: string
+          required: false
       responses:
         200:
           description: "Successful request"
@@ -75,28 +89,58 @@ paths:
         500:
           description: "Server error"
     delete:
-      summary: "Delete pending settings"
-      operationId: "delete_pending_settings"
+      summary: "Delete transaction"
+      operationId: "delete_tx"
+      parameters:
+        - in: query
+          name: tx
+          description: "Transaction to delete; defaults to user 'default' transaction"
+          schema:
+            type: string
+          required: false
       responses:
         200:
           description: "Successful deleted pending settings - deleted keys are returned"
         500:
           description: "Server error"
 
-  /settings/commit:
+  /tx/list:
+    get:
+      summary: "List names of pending transactions"
+      operationId: "list_tx"
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        500:
+          description: "Server error"
+
+  /tx/commit:
     post:
       summary: "Commit pending settings, without applying changes to config files or restarting services"
-      operationId: "commit_settings"
+      operationId: "commit_tx"
+      parameters:
+        - in: query
+          name: tx
+          description: "Transaction to commit; defaults to user 'default' transaction"
+          schema:
+            type: string
+          required: false
       responses:
         200:
           description: "Successfully Staged settings - changed keys are returned"
         500:
           description: "Server error"
 
-  /settings/apply:
+  /tx/apply:
     post:
       summary: "Apply changes to config files and restart services"
-      operationId: "apply_settings"
+      operationId: "apply"
       parameters:
         - in: query
           name: keys
@@ -115,10 +159,17 @@ paths:
         500:
           description: "Server error"
 
-  /settings/commit_and_apply:
+  /tx/commit_and_apply:
     post:
-      summary: "Commit pending settings, and apply changes to relevant config files and services"
-      operationId: "commit_and_apply_settings"
+      summary: "Commit transaction, and apply any committed changes to relevant config files and services"
+      operationId: "commit_tx_and_apply"
+      parameters:
+        - in: query
+          name: tx
+          description: "Transaction to commit; defaults to user 'default' transaction"
+          schema:
+            type: string
+          required: false
       responses:
         200:
           description: "Successful settings update, committed keys are returned"
@@ -177,6 +228,23 @@ paths:
         500:
           description: "Server error"
 
+  /metadata/templates:
+    get:
+      summary: "Get template strings for dynamically generated settings"
+      operationId: "get_templates"
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              # The response is a hashmap of string to string. Example:
+              # { "settings.foobar": "hi {{ key }}" }
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        500:
+          description: "Server error"
 
   /services:
     get:
