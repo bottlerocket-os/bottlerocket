@@ -1,27 +1,15 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel
-Version: 4.19.75
+Version: 5.4.16
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/70374188b12dd9d6df9dec5112a3c7761cc185c01de728c96d71fb000b7449a5/kernel-4.19.75-28.73.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/8a2ede840234ebc72d835fab144162ba8184b8aa7df163a5d36aad2d3c85529b/kernel-5.4.16-8.72.amzn2.src.rpm
 Source100: config-bottlerocket
-Patch0001: 0001-dm-add-support-to-directly-boot-to-a-mapped-device.patch
-Patch0002: 0002-dm-init-fix-const-confusion-for-dm_allowed_targets-a.patch
-Patch0003: 0003-dm-init-fix-max-devices-targets-checks.patch
-Patch0004: 0004-dm-ioctl-fix-hang-in-early-create-error-condition.patch
-Patch0005: 0005-dm-init-fix-incorrect-uses-of-kstrndup.patch
-Patch0006: 0006-dm-init-remove-trailing-newline-from-calls-to-DMERR-.patch
-Patch0007: 0007-lustrefsx-Disable-Werror-stringop-overflow.patch
-Patch0008: 0008-Provide-in-kernel-headers-to-make-extending-kernel-e.patch
-Patch0009: 0009-kernel-Makefile-don-t-assume-that-kernel-gen_ikh_dat.patch
-Patch0010: 0010-kheaders-Move-from-proc-to-sysfs.patch
-Patch0011: 0011-kheaders-Do-not-regenerate-archive-if-config-is-not-.patch
-Patch0012: 0012-kheaders-remove-meaningless-R-option-of-ls.patch
-Patch0013: 0013-kheaders-include-only-headers-into-kheaders_data.tar.patch
+Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
