@@ -8,7 +8,7 @@ Using a signing key that it pulls down via SSM Secure Parameters, it will sign t
 # Running
 
 In order the run this code, you must have:
-* Current `Thar` code repository (more specifically `RELEASE.toml`, and a trusted `root.json`)
+* Current `Thar` code repository (more specifically `Release.toml`, and a trusted `root.json`)
 * Built Thar artifacts in a directory (the images that end up in `/build` and suffixed with `.lz4`)
 * The metadata and target URLs for an existing TUF repository (most likely in S3)
 
@@ -66,7 +66,7 @@ const EXISTING_TUF_REPO_DIR: &str = "/tmp/tuf_in";
 const UPDATED_TUF_REPO_DIR: &str = "/tmp/tuf_out";
 const ROOT_JSON: &str = "root.json";
 const TUF_MANIFEST_JSON: &str = "manifest.json";
-const RELEASE_TOML: &str = "RELEASE.toml";
+const RELEASE_TOML: &str = "Release.toml";
 const FILES_TO_SIGN: &[&str] = &["boot", "root", "verity"];
 const OS_NAME: &str = "thar";
 
@@ -231,7 +231,7 @@ struct EnvVars {
     timestamp_refresh_days: i64,
 }
 
-// Represents RELEASE.toml
+// Represents Release.toml
 // TODO: Make this into a crate
 #[derive(Deserialize, Debug)]
 struct ReleaseInfo {
@@ -240,7 +240,7 @@ struct ReleaseInfo {
     migrations: Vec<Migration>,
 }
 
-// Represents migration info from RELEASE.toml
+// Represents migration info from Release.toml
 #[derive(Deserialize, Debug)]
 struct Migration {
     from: String,
@@ -484,9 +484,9 @@ fn run() -> Result<()> {
         Err(error) => return Err(error).context(error::EnvironmentVariables)?,
     };
 
-    // Parse the RELEASE.toml into a ReleaseInfo struct
-    // RELEASE.toml is located at ${CODEBUILD_SRC_DIR}/RELEASE.toml
-    info!("Reading and deserializing RELEASE.toml");
+    // Parse the Release.toml into a ReleaseInfo struct
+    // Release.toml is located at ${CODEBUILD_SRC_DIR}/Release.toml
+    info!("Reading and deserializing Release.toml");
     let release_path = Path::new(&env_vars.codebuild_src_dir).join(RELEASE_TOML);
     let release_reader = File::open(&release_path).context(error::FileOpen {
         path: &release_path,

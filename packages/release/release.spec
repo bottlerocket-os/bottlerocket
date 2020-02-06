@@ -1,8 +1,8 @@
 %global _cross_first_party 1
 
 Name: %{_cross_os}release
-Version: 0.2.1
-Release: 1%{?dist}
+Version: 0.0
+Release: 0%{?dist}
 Summary: Thar release
 License: LicenseRef-Pending
 
@@ -78,9 +78,7 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
 cat >%{buildroot}%{_cross_libdir}/os-release <<EOF
 NAME=Thar
-PRETTY_NAME="Thar, The Operating System (%{version})"
 ID=thar
-VERSION_ID=%{version}
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}

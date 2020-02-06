@@ -58,6 +58,8 @@ impl VariantBuilder {
         let packages = packages.join("|");
         let arch = getenv("BUILDSYS_ARCH")?;
         let variant = getenv("BUILDSYS_VARIANT")?;
+        let version_image = getenv("BUILDSYS_VERSION_IMAGE")?;
+        let version_build = getenv("BUILDSYS_VERSION_BUILD")?;
 
         // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
@@ -67,10 +69,14 @@ impl VariantBuilder {
         let build_args = format!(
             "--build-arg PACKAGES={packages} \
              --build-arg ARCH={arch} \
-             --build-arg VARIANT={variant}",
+             --build-arg VARIANT={variant} \
+             --build-arg VERSION_ID={version_image} \
+             --build-arg BUILD_ID={version_build}",
             packages = packages,
             arch = arch,
             variant = variant,
+            version_image = version_image,
+            version_build = version_build,
         );
         let tag = format!("buildsys-var-{variant}-{arch}", variant = variant, arch = arch);
 

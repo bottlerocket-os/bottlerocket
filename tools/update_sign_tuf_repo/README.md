@@ -11,7 +11,7 @@ Using a signing key that it pulls down via SSM Secure Parameters, it will sign t
 ## Running
 
 In order the run this code, you must have:
-* Current `Thar` code repository (more specifically `RELEASE.toml`, and a trusted `root.json`)
+* Current `Thar` code repository (more specifically `Release.toml`, and a trusted `root.json`)
 * Built Thar artifacts in a directory (the images that end up in `/build` and suffixed with `.lz4`)
 * The metadata and target URLs for an existing TUF repository (most likely in S3)
 

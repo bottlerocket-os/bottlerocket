@@ -8,7 +8,8 @@ BUILDSYS_OUTPUT_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/workspaces"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
-BUILDSYS_VERSION = { script = ["git describe --tag --dirty || date +%Y%m%d"] }
+BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*' || echo 00000000"] }
+BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' Release.toml"] }
 BUILDSYS_VARIANT = "aws-k8s"
 
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
@@ -165,43 +166,10 @@ script = [
 '''
 ]
 
-[tasks.link-clean]
-dependencies = ["fetch"]
-script = [
-'''
-PREFIX="thar-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
-for link in ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-*.lz4; do
-  if [ -L "${link}" ]; then
-    rm ${link}
-  fi
-done
-'''
-]
-
-[tasks.link-variant]
-script = [
-'''
-PREFIX="thar-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
-VERSIONED="${PREFIX}-${BUILDSYS_VERSION}"
-ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}.img.lz4
-ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-data.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-data.img.lz4
-ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-boot.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-boot.ext4.lz4
-ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-root.ext4.lz4
-ln -snf ${BUILDSYS_OUTPUT_DIR}/${PREFIX}-root.verity.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/${VERSIONED}-root.verity.lz4
-'''
-]
-
 [tasks.build]
 dependencies = [
-    "link-clean",
     "build-variant",
     "check-licenses",
-    "link-variant",
 ]
 
 [tasks.world]
