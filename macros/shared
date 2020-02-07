@@ -42,6 +42,7 @@
 %_cross_sysusersdir %{_cross_rootdir}%{_sysusersdir}
 %_cross_sysctldir %{_cross_rootdir}%{_sysctldir}
 %_cross_templatedir %{_cross_datadir}/templates
+%_cross_usrsrc %{_cross_prefix}/src
 %_cross_licensedir %{_cross_datadir}/licenses
 %_defaultlicensedir %{_cross_licensedir}
 
