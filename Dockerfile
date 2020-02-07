@@ -84,20 +84,17 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
 FROM scratch AS package
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /output/
 
-FROM sdk AS imgbuild
+FROM sdk AS repobuild
 ARG PACKAGES
 ARG ARCH
-ARG VERSION_ID
-ARG BUILD_ID
 ARG NOCACHE
-ARG VARIANT
-ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID}
 WORKDIR /root
 
 USER root
 RUN --mount=target=/host \
-    mkdir -p /local/rpms ./rpmbuild/RPMS \
+    mkdir -p /local/rpms /local/migrations ./rpmbuild/RPMS \
     && ln -s /host/build/*.rpm ./rpmbuild/RPMS \
+    && cp /host/build/thar-${ARCH}-migrations-*.rpm /local/migrations \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
@@ -114,10 +111,40 @@ RUN --mount=target=/host \
         install $(printf "thar-${ARCH}-%s\n" ${PACKAGES}) \
     && mv *.rpm /local/rpms \
     && createrepo_c /local/rpms \
-    && /host/tools/rpm2img \
-        --package-dir=/local/rpms \
-        --output-dir=/local/output \
+    && echo ${NOCACHE}
+
+FROM repobuild as imgbuild
+ARG ARCH
+ARG VERSION_ID
+ARG BUILD_ID
+ARG NOCACHE
+ARG VARIANT
+ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID}
+WORKDIR /root
+
+USER root
+RUN --mount=target=/host \
+    /host/tools/rpm2img \
+      --package-dir=/local/rpms \
+      --output-dir=/local/output \
+    && echo ${NOCACHE}
+
+FROM repobuild as migrationbuild
+ARG ARCH
+ARG VERSION_ID
+ARG BUILD_ID
+ARG NOCACHE
+ARG VARIANT
+ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID}
+WORKDIR /root
+
+USER root
+RUN --mount=target=/host \
+    /host/tools/rpm2migrations \
+      --package-dir=/local/migrations \
+      --output-dir=/local/output \
     && echo ${NOCACHE}
 
 FROM scratch AS variant
 COPY --from=imgbuild /local/output/* /output/
+COPY --from=migrationbuild /local/output/* /output/

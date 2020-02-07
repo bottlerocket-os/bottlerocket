@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# Retrieve migrations from the RPM and output an appropriately named tarball
+set -eu -o pipefail
+shopt -qs failglob
+
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --package-dir=*) PACKAGE_DIR="${optarg}" ;;
+      --output-dir=*) OUTPUT_DIR="${optarg}" ;;
+   esac
+done
+
+mkdir -p "${OUTPUT_DIR}"
+
+MIGRATIONS_ARCHIVE="thar-${ARCH}-${VARIANT}-${VERSION_ID}-${BUILD_ID}-migrations.tar"
+ROOT_TEMP="$(mktemp -d)"
+SYS_ROOT="${ARCH}-thar-linux-gnu/sys-root"
+MIGRATIONS_DIR="${ROOT_TEMP}/${SYS_ROOT}/usr/share/migrations"
+
+# "Install" the migrations (just puts them in $MIGRATIONS_DIR)
+rpm -iv --root "${ROOT_TEMP}" "${PACKAGE_DIR}"/*.rpm
+
+if [ ! -d "${MIGRATIONS_DIR}" ]; then
+  echo "Migrations directory does not exist: ${MIGRATIONS_DIR}"
+  rm -rf "${ROOT_TEMP}"
+  exit 1
+fi
+
+# lz4 compress each migration
+for migration in "${MIGRATIONS_DIR}"/*; do
+  lz4 -v "${migration}" "${migration}.lz4"
+done
+
+# Tar up migrations with a .lz4 extension if they exist.
+# Otherwise create an empty archive
+pushd "${MIGRATIONS_DIR}"
+if ls *.lz4 &> /dev/null; then
+  tar -cvf "${OUTPUT_DIR}/${MIGRATIONS_ARCHIVE}" *.lz4
+else
+  tar -cvf "${OUTPUT_DIR}/${MIGRATIONS_ARCHIVE}" --files-from /dev/null
+fi
+popd
+
+rm -rf "${ROOT_TEMP}"

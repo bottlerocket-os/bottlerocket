@@ -139,6 +139,11 @@ Summary: Thar pre-init system setup
 %description -n %{_cross_os}preinit
 %{summary}.
 
+%package -n %{_cross_os}migrations
+Summary: Thar data store migrations
+%description -n %{_cross_os}migrations
+%{summary}.
+
 %prep
 %setup -T -c
 %cargo_prep
@@ -169,6 +174,11 @@ mkdir bin
     -p apiclient \
     %{nil}
 
+# Build the migrations
+for crate in $(find %{_builddir}/workspaces/api/migration/migrations -name 'Cargo.toml'); do
+    %cargo_build_static --manifest-path "${crate}"
+done
+
 %install
 install -d %{buildroot}%{_cross_bindir}
 for p in \
@@ -189,6 +199,19 @@ done
 install -d %{buildroot}%{_cross_sbindir}
 for p in growpart preinit ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_sbindir}
+done
+
+install -d %{buildroot}%{_cross_datadir}/migrations
+for version_path in %{_builddir}/workspaces/api/migration/migrations/*; do
+  for migration_path in "${version_path}"/*; do
+    version="${version_path##*/}"
+    crate_name="${migration_path##*/}"
+    migration_binary_name="migrate_${version}_${crate_name#migrate-}"
+    built_path="${HOME}/.cache/%{__cargo_target_static}/release/${crate_name}"
+    target_path="%{buildroot}%{_cross_datadir}/migrations/${migration_binary_name}"
+
+    install -m 0555 "${built_path}" "${target_path}"
+  done
 done
 
 install -d %{buildroot}%{migration_dir}
@@ -270,6 +293,10 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %{_cross_bindir}/migrator
 %{migration_dir}
 %{_cross_tmpfilesdir}/migration.conf
+
+%files -n %{_cross_os}migrations
+%dir %{_cross_datadir}/migrations
+%{_cross_datadir}/migrations
 
 %files -n %{_cross_os}settings-committer
 %{_cross_bindir}/settings-committer
