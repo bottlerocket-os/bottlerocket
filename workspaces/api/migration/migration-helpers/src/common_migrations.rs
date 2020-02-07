@@ -51,3 +51,68 @@ impl Migration for RemoveSettingMigration {
         Ok(input)
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// We use this migration when we replace a setting's old string value with a new string value.
+pub struct ReplaceStringMigration {
+    pub setting: &'static str,
+    pub old_val: &'static str,
+    pub new_val: &'static str,
+}
+
+impl Migration for ReplaceStringMigration {
+    fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        if let Some(data) = input.data.get_mut(self.setting) {
+            match data {
+                serde_json::Value::String(data) => {
+                    if data == self.old_val {
+                        *data = self.new_val.to_owned();
+                        println!(
+                            "Changed value of '{}' from '{}' to '{}' on upgrade",
+                            self.setting, self.old_val, self.new_val
+                        );
+                    } else {
+                        println!("'{}' is not set to '{}', leaving alone", self.setting, self.old_val);
+                    }
+                }
+                _ => {
+                    println!(
+                        "'{}' is set to non-string value '{}'; ReplaceStringMigration only handles strings",
+                        self.setting, data
+                    );
+                }
+            }
+        } else {
+            println!("Found no '{}' to change on upgrade", self.setting);
+        }
+        Ok(input)
+    }
+
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        if let Some(data) = input.data.get_mut(self.setting) {
+            match data {
+                serde_json::Value::String(data) => {
+                    if data == self.new_val {
+                        *data = self.old_val.to_owned();
+                        println!(
+                            "Changed value of '{}' from '{}' to '{}' on downgrade",
+                            self.setting, self.new_val, self.old_val
+                        );
+                    } else {
+                        println!("'{}' is not set to '{}', leaving alone", self.setting, self.new_val);
+                    }
+                }
+                _ => {
+                    println!(
+                        "'{}' is set to non-string value '{}'; ReplaceStringMigration only handles strings",
+                        self.setting, data
+                    );
+                }
+            }
+        } else {
+            println!("Found no '{}' to change on downgrade", self.setting);
+        }
+        Ok(input)
+    }
+}
