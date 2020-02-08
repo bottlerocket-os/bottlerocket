@@ -31,6 +31,8 @@ use model::modeled_types::SingleLineString;
 
 // FIXME Get these from configuration in the future
 const DATASTORE_VERSION_FILE: &str = "/usr/share/thar/data-store-version";
+// Shared transaction used by boot-time services.
+const TRANSACTION: &str = "thar-boot";
 
 mod error {
     use std::io;
@@ -46,7 +48,7 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum StorewolfError {
-        #[snafu(display("Unable to clear pending settings: {}", source))]
+        #[snafu(display("Unable to clear pending transactions: {}", source))]
         DeletePending { source: io::Error },
 
         #[snafu(display("Unable to create datastore at '{}': {}", path.display(), source))]
@@ -359,7 +361,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
             .list_populated_metadata("", &None as &Option<&str>)
             .context(error::QueryMetadata)?;
         existing_data = datastore
-            .list_populated_keys("", datastore::Committed::Live)
+            .list_populated_keys("", &datastore::Committed::Live)
             .context(error::QueryData)?;
     } else {
         info!("Creating datastore at: {}", &live_path.display());
@@ -390,10 +392,9 @@ fn populate_default_datastore<P: AsRef<Path>>(
     let maybe_metadata_val = table.remove("metadata");
     let maybe_settings_val = table.remove("settings");
 
-    // If there are default settings, write them to the datastore in Pending
-    // state. This ensures the settings will go through a commit cycle when
-    // first-boot services run, which will create config files for default
-    // keys that require them.
+    // If there are default settings, write them to the datastore in the shared pending
+    // transaction. This ensures the settings will go through a commit cycle when first-boot
+    // services run, which will create config files for default keys that require them.
     if let Some(def_settings_val) = maybe_settings_val {
         debug!("Serializing default settings and writing new ones to datastore");
         let def_settings_table = def_settings_val
@@ -424,8 +425,11 @@ fn populate_default_datastore<P: AsRef<Path>>(
             "Writing default settings to datastore: {:#?}",
             &settings_to_write
         );
+        let pending = datastore::Committed::Pending {
+            tx: TRANSACTION.to_string(),
+        };
         datastore
-            .set_keys(&settings_to_write, datastore::Committed::Pending)
+            .set_keys(&settings_to_write, &pending)
             .context(error::WriteKeys)?;
     }
 
@@ -507,7 +511,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
             &other_defaults_to_write
         );
         datastore
-            .set_keys(&other_defaults_to_write, datastore::Committed::Live)
+            .set_keys(&other_defaults_to_write, &datastore::Committed::Live)
             .context(error::WriteKeys)?;
     }
     Ok(())
@@ -598,8 +602,7 @@ fn run() -> Result<()> {
 
     info!("Storewolf started");
 
-    // If anything exists in Pending state, delete it
-    info!("Deleting pending settings");
+    info!("Deleting pending transactions");
     let pending_path = Path::new(&args.data_store_base_path)
         .join("current")
         .join("pending");

@@ -16,11 +16,11 @@ use apiserver::datastore::{
 /// Retrieves data from the specified data store in a consistent format for easy modification.
 pub(crate) fn get_input_data<D: DataStore>(
     datastore: &D,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<MigrationData> {
     let raw_data = datastore
         .get_prefix("", committed)
-        .context(error::GetData { committed })?;
+        .with_context(|| error::GetData { committed: committed.clone() })?;
 
     let mut data = HashMap::new();
     for (data_key, value_str) in raw_data.into_iter() {
@@ -66,7 +66,7 @@ pub(crate) fn get_input_data<D: DataStore>(
 pub(crate) fn set_output_data<D: DataStore>(
     datastore: &mut D,
     input: &MigrationData,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<()> {
     // Prepare serialized data
     let mut data = HashMap::new();

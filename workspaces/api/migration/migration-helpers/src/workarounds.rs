@@ -11,7 +11,7 @@ pub(crate) fn fix_migrated_data<D: DataStore>(
     output: &MigrationData,
     _source_datastore: &D,
     target_datastore: &mut D,
-    committed: Committed,
+    committed: &Committed,
     args: &Args,
 ) -> Result<()> {
     // If the source and target data store path are the same, we're using the old migrator
@@ -33,7 +33,7 @@ pub(crate) fn fix_migrated_data<D: DataStore>(
                     key: *removed_key_str,
                 })?;
             target_datastore
-                .unset_key(&removed_key, committed)
+                .unset_key(&removed_key, &committed)
                 .context(error::DataStoreRemove {
                     key: *removed_key_str,
                 })?;
@@ -122,19 +122,19 @@ mod test {
 
         // The point of the workaround is affecting the data store directly, so make test stores
         let mut source = MemoryDataStore::new();
-        set_output_data(&mut source, &input, Committed::Live).unwrap();
+        set_output_data(&mut source, &input, &Committed::Live).unwrap();
         // To replicate old interface, the target data store starts with the input data, and
         // we're going to confirm that removed values are actually removed
         let mut target = MemoryDataStore::new();
-        set_output_data(&mut target, &input, Committed::Live).unwrap();
+        set_output_data(&mut target, &input, &Committed::Live).unwrap();
 
         // Ensure values are there at the start
         let kept_data = Key::new(KeyType::Data, "keepdata").unwrap();
         let removed_data = Key::new(KeyType::Data, "removedata").unwrap();
         let kept_meta = Key::new(KeyType::Meta, "keepmeta").unwrap();
         let removed_meta = Key::new(KeyType::Meta, "removemeta").unwrap();
-        assert_eq!(target.get_key(&kept_data, Committed::Live).unwrap(), Some("\"hi\"".into()));
-        assert_eq!(target.get_key(&removed_data, Committed::Live).unwrap(), Some("\"sup\"".into()));
+        assert_eq!(target.get_key(&kept_data, &Committed::Live).unwrap(), Some("\"hi\"".into()));
+        assert_eq!(target.get_key(&removed_data, &Committed::Live).unwrap(), Some("\"sup\"".into()));
         assert_eq!(target.get_metadata(&kept_meta, &kept_data).unwrap(), Some("\"howdy\"".into()));
         assert_eq!(target.get_metadata(&kept_meta, &removed_data).unwrap(), Some("\"hello\"".into()));
         assert_eq!(target.get_metadata(&removed_meta, &kept_data).unwrap(), Some("\"yo\"".into()));
@@ -151,17 +151,17 @@ mod test {
             &expected,
             &source,
             &mut target,
-            Committed::Live,
+            &Committed::Live,
             &args,
         )
         .unwrap();
 
         // Ensure unaffected values were kept
-        assert_eq!(target.get_key(&kept_data, Committed::Live).unwrap(), Some("\"hi\"".into()));
+        assert_eq!(target.get_key(&kept_data, &Committed::Live).unwrap(), Some("\"hi\"".into()));
         assert_eq!(target.get_metadata(&kept_meta, &kept_data).unwrap(), Some("\"howdy\"".into()));
         assert_eq!(target.get_metadata(&kept_meta, &removed_data).unwrap(), Some("\"hello\"".into()));
         // Ensure removed values were removed
-        assert_eq!(target.get_key(&removed_data, Committed::Live).unwrap(), None);
+        assert_eq!(target.get_key(&removed_data, &Committed::Live).unwrap(), None);
         assert_eq!(target.get_metadata(&removed_meta, &kept_data).unwrap(), None);
         assert_eq!(target.get_metadata(&removed_meta, &removed_data).unwrap(), None);
     }

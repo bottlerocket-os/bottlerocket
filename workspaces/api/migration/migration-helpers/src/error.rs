@@ -52,6 +52,9 @@ pub enum Error {
         key: String,
         source: datastore::Error,
     },
+
+    #[snafu(display("Unable to list transactions in data store: {}", source))]
+    ListTransactions { source: datastore::Error },
 }
 
 /// Result alias containing our Error type.

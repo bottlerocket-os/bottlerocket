@@ -25,15 +25,22 @@ Getting settings:
 
 ```
 apiclient -m GET -u /settings
-apiclient -m GET -u /settings/pending
 ```
 
 Changing settings:
 
 ```
 apiclient -X PATCH -u /settings -d '{"timezone": "OldLosAngeles"}'
-apiclient -m POST -u /settings/commit_and_apply
+apiclient -m POST -u /tx/commit_and_apply
 ```
+
+You can also check what you've changed but not commited by looking at the pending transaction:
+
+```
+apiclient -m GET -u /tx
+```
+
+(You can group changes into transactions by adding a parameter like `?tx=FOO` to the calls above.)
 
 ## apiclient library
 

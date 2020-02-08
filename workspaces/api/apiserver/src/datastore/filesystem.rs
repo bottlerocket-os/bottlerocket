@@ -27,27 +27,30 @@ const ENCODE_CHARACTERS: &AsciiSet = &NON_ALPHANUMERIC.remove(b'_').remove(b'-')
 #[derive(Debug)]
 pub struct FilesystemDataStore {
     live_path: PathBuf,
-    pending_path: PathBuf,
+    pending_base_path: PathBuf,
 }
 
 impl FilesystemDataStore {
     pub fn new<P: AsRef<Path>>(base_path: P) -> FilesystemDataStore {
         FilesystemDataStore {
             live_path: base_path.as_ref().join("live"),
-            pending_path: base_path.as_ref().join("pending"),
+            pending_base_path: base_path.as_ref().join("pending"),
         }
     }
 
     /// Returns the appropriate filesystem path for pending or live data.
-    fn base_path(&self, committed: Committed) -> &PathBuf {
+    fn base_path(&self, committed: &Committed) -> PathBuf {
         match committed {
-            Committed::Pending => &self.pending_path,
-            Committed::Live => &self.live_path,
+            Committed::Pending { tx } => {
+                let encoded = encode_path_component(tx);
+                self.pending_base_path.join(encoded)
+            }
+            Committed::Live => self.live_path.clone(),
         }
     }
 
     /// Returns the appropriate path on the filesystem for the given data key.
-    fn data_path(&self, key: &Key, committed: Committed) -> Result<PathBuf> {
+    fn data_path(&self, key: &Key, committed: &Committed) -> Result<PathBuf> {
         let base_path = self.base_path(committed);
 
         // Encode key segments so they're filesystem-safe
@@ -75,7 +78,7 @@ impl FilesystemDataStore {
         &self,
         metadata_key: &Key,
         data_key: &Key,
-        committed: Committed,
+        committed: &Committed,
     ) -> Result<PathBuf> {
         let path = self.data_path(data_key, committed)?;
 
@@ -109,7 +112,7 @@ impl FilesystemDataStore {
     /// error for trying to remove an empty directory is not specific, and we don't want to rely
     /// on platform-specific error codes or the error description.  We could check the directory
     /// contents ourself, but it would be more complex and subject to timing issues.)
-    fn delete_key_path<P>(&mut self, path: P, committed: Committed) -> Result<()>
+    fn delete_key_path<P>(&mut self, path: P, committed: &Committed) -> Result<()>
     where
         P: AsRef<Path>,
     {
@@ -314,7 +317,7 @@ fn find_populated_key_paths<S: AsRef<str>>(
     datastore: &FilesystemDataStore,
     key_type: KeyType,
     prefix: S,
-    committed: Committed,
+    committed: &Committed,
 ) -> Result<HashSet<KeyPath>> {
     // Find the base path for our search, and confirm it exists.
     let base = datastore.base_path(committed);
@@ -329,7 +332,7 @@ fn find_populated_key_paths<S: AsRef<str>>(
                 .fail()
             }
             // No pending keys, OK, return empty set.
-            Committed::Pending => {
+            Committed::Pending { .. } => {
                 trace!(
                     "Returning empty list because pending path doesn't exist: {}",
                     base.display()
@@ -340,7 +343,7 @@ fn find_populated_key_paths<S: AsRef<str>>(
     }
 
     // Walk through the filesystem.
-    let walker = WalkDir::new(base)
+    let walker = WalkDir::new(&base)
         .follow_links(false) // shouldn't be links...
         .same_file_system(true); // shouldn't be filesystems to cross...
 
@@ -377,7 +380,7 @@ fn find_populated_key_paths<S: AsRef<str>>(
 
 // TODO: maybe add/strip single newline at end, so file is easier to read
 impl DataStore for FilesystemDataStore {
-    fn key_populated(&self, key: &Key, committed: Committed) -> Result<bool> {
+    fn key_populated(&self, key: &Key, committed: &Committed) -> Result<bool> {
         let path = self.data_path(key, committed)?;
 
         Ok(path.exists())
@@ -388,7 +391,7 @@ impl DataStore for FilesystemDataStore {
     fn list_populated_keys<S: AsRef<str>>(
         &self,
         prefix: S,
-        committed: Committed,
+        committed: &Committed,
     ) -> Result<HashSet<Key>> {
         let key_paths = find_populated_key_paths(self, KeyType::Data, prefix, committed)?;
         let keys = key_paths.into_iter().map(|kp| kp.data_key).collect();
@@ -413,7 +416,7 @@ impl DataStore for FilesystemDataStore {
         S2: AsRef<str>,
     {
         // Find metadata key paths on disk
-        let key_paths = find_populated_key_paths(self, KeyType::Meta, prefix, Committed::Live)?;
+        let key_paths = find_populated_key_paths(self, KeyType::Meta, prefix, &Committed::Live)?;
 
         // For each file on disk, check the user's conditions, and add it to our output
         let mut result = HashMap::new();
@@ -438,23 +441,23 @@ impl DataStore for FilesystemDataStore {
         Ok(result)
     }
 
-    fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>> {
+    fn get_key(&self, key: &Key, committed: &Committed) -> Result<Option<String>> {
         let path = self.data_path(key, committed)?;
         read_file_for_key(&key, &path)
     }
 
-    fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: Committed) -> Result<()> {
+    fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: &Committed) -> Result<()> {
         let path = self.data_path(key, committed)?;
         write_file_mkdir(path, value)
     }
 
-    fn unset_key(&mut self, key: &Key, committed: Committed) -> Result<()> {
+    fn unset_key(&mut self, key: &Key, committed: &Committed) -> Result<()> {
         let path = self.data_path(key, committed)?;
         self.delete_key_path(path, committed)
     }
 
     fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
-        let path = self.metadata_path(metadata_key, data_key, Committed::Live)?;
+        let path = self.metadata_path(metadata_key, data_key, &Committed::Live)?;
         read_file_for_key(&metadata_key, &path)
     }
 
@@ -464,20 +467,26 @@ impl DataStore for FilesystemDataStore {
         data_key: &Key,
         value: S,
     ) -> Result<()> {
-        let path = self.metadata_path(metadata_key, data_key, Committed::Live)?;
+        let path = self.metadata_path(metadata_key, data_key, &Committed::Live)?;
         write_file_mkdir(path, value)
     }
 
     fn unset_metadata(&mut self, metadata_key: &Key, data_key: &Key) -> Result<()> {
-        let path = self.metadata_path(metadata_key, data_key, Committed::Live)?;
-        self.delete_key_path(path, Committed::Live)
+        let path = self.metadata_path(metadata_key, data_key, &Committed::Live)?;
+        self.delete_key_path(path, &Committed::Live)
     }
 
     /// We commit by copying pending keys to live, then removing pending.  Something smarter (lock,
     /// atomic flip, etc.) will be required to make the server concurrent.
-    fn commit(&mut self) -> Result<HashSet<Key>> {
+    fn commit_transaction<S>(&mut self, transaction: S) -> Result<HashSet<Key>>
+    where
+        S: Into<String> + AsRef<str>,
+    {
+        let pending = Committed::Pending {
+            tx: transaction.into(),
+        };
         // Get data for changed keys
-        let pending_data = self.get_prefix("settings.", Committed::Pending)?;
+        let pending_data = self.get_prefix("settings.", &pending)?;
 
         // Nothing to do if no keys are present in pending
         if pending_data.is_empty() {
@@ -489,32 +498,72 @@ impl DataStore for FilesystemDataStore {
 
         // Apply changes to live
         debug!("Writing pending keys to live");
-        self.set_keys(&pending_data, Committed::Live)?;
+        self.set_keys(&pending_data, &Committed::Live)?;
 
         // Remove pending
         debug!("Removing old pending keys");
-        fs::remove_dir_all(&self.pending_path).context(error::Io {
-            path: &self.pending_path,
-        })?;
+        let path = self.base_path(&pending);
+        fs::remove_dir_all(&path).context(error::Io { path })?;
 
         Ok(pending_keys)
     }
 
-    fn delete_pending(&mut self) -> Result<HashSet<Key>> {
+    fn delete_transaction<S>(&mut self, transaction: S) -> Result<HashSet<Key>>
+    where
+        S: Into<String> + AsRef<str>,
+    {
+        let pending = Committed::Pending {
+            tx: transaction.into(),
+        };
         // Get changed keys so we can return the list
-        let pending_data = self.get_prefix("settings.", Committed::Pending)?;
+        let pending_data = self.get_prefix("settings.", &pending)?;
 
         // Pull out just the keys so we can log them and return them
         let pending_keys = pending_data.into_iter().map(|(key, _val)| key).collect();
         debug!("Found pending keys: {:?}", &pending_keys);
 
         // Delete pending from the filesystem, same as a commit
-        debug!("Removing all pending keys");
-        fs::remove_dir_all(&self.pending_path).context(error::Io {
-            path: &self.pending_path,
-        })?;
+        let path = self.base_path(&pending);
+        debug!("Removing transaction directory {}", path.display());
+        if let Err(e) = fs::remove_dir_all(&path) {
+            // If path doesn't exist, it's fine, we'll just return an empty list.
+            if e.kind() != io::ErrorKind::NotFound {
+                return Err(e).context(error::Io { path });
+            }
+        }
 
         Ok(pending_keys)
+    }
+
+    /// We store transactions as subdirectories of the pending data store, so to list them we list
+    /// the names of the subdirectories.
+    fn list_transactions(&self) -> Result<HashSet<String>> {
+        // Any directory under pending should be a transaction name.
+        let walker = WalkDir::new(&self.pending_base_path)
+            .min_depth(1)
+            .max_depth(1);
+
+        let mut transactions = HashSet::new();
+        trace!(
+            "Starting walk of filesystem to list transactions under {}",
+            self.pending_base_path.display(),
+        );
+
+        for entry in walker {
+            let entry = entry.context(error::ListKeys)?;
+            if entry.file_type().is_dir() {
+                // The directory name should be valid UTF-8, encoded by encode_path_component,
+                // or the data store has been corrupted.
+                let file_name = entry.file_name().to_str().context(error::Corruption {
+                    msg: "Non-UTF8 path",
+                    path: entry.path(),
+                })?;
+                let transaction = decode_path_component(file_name, entry.path())?;
+                transactions.insert(transaction);
+            }
+        }
+
+        Ok(transactions)
     }
 }
 
@@ -527,10 +576,16 @@ mod test {
         let f = FilesystemDataStore::new("/base");
         let key = Key::new(KeyType::Data, "a.b.c").unwrap();
 
-        let pending = f.data_path(&key, Committed::Pending).unwrap();
-        assert_eq!(pending.into_os_string(), "/base/pending/a/b/c");
+        let tx = "test transaction";
+        let pending = f
+            .data_path(&key, &Committed::Pending { tx: tx.into() })
+            .unwrap();
+        assert_eq!(
+            pending.into_os_string(),
+            "/base/pending/test%20transaction/a/b/c"
+        );
 
-        let live = f.data_path(&key, Committed::Live).unwrap();
+        let live = f.data_path(&key, &Committed::Live).unwrap();
         assert_eq!(live.into_os_string(), "/base/live/a/b/c");
     }
 
@@ -540,13 +595,17 @@ mod test {
         let data_key = Key::new(KeyType::Data, "a.b.c").unwrap();
         let md_key = Key::new(KeyType::Meta, "my-metadata").unwrap();
 
+        let tx = "test transaction";
         let pending = f
-            .metadata_path(&md_key, &data_key, Committed::Pending)
+            .metadata_path(&md_key, &data_key, &Committed::Pending { tx: tx.into() })
             .unwrap();
-        assert_eq!(pending.into_os_string(), "/base/pending/a/b/c.my-metadata");
+        assert_eq!(
+            pending.into_os_string(),
+            "/base/pending/test%20transaction/a/b/c.my-metadata"
+        );
 
         let live = f
-            .metadata_path(&md_key, &data_key, Committed::Live)
+            .metadata_path(&md_key, &data_key, &Committed::Live)
             .unwrap();
         assert_eq!(live.into_os_string(), "/base/live/a/b/c.my-metadata");
     }

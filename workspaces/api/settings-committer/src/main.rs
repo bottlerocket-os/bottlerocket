@@ -1,11 +1,12 @@
 /*!
 # Introduction
 
-settings-committer can be called to commit any pending settings in the API.
+settings-committer can be called to commit a pending transaction in the API.
 It logs any pending settings, then commits them to live.
 
-This is typically run during startup as a pre-exec command by any services that depend on settings
-changes from previous services.
+By default, it commits the 'thar-boot' transaction, which is used to organize boot-time services - this program is typically run as a pre-exec command by any services that depend on settings changes from previous services.
+
+The `--transaction` argument can be used to specify another transaction.
 */
 #![deny(rust_2018_idioms)]
 
@@ -18,8 +19,10 @@ use std::str::FromStr;
 use std::{collections::HashMap, env, process};
 
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-const API_PENDING_URI: &str = "/settings/pending";
-const API_COMMIT_URI: &str = "/settings/commit";
+const API_PENDING_URI_BASE: &str = "/tx";
+const API_COMMIT_URI_BASE: &str = "/tx/commit";
+// By default we commit settings from a shared transaction used by boot-time services.
+const DEFAULT_TRANSACTION: &str = "thar-boot";
 
 type Result<T> = std::result::Result<T, error::SettingsCommitterError>;
 
@@ -55,11 +58,11 @@ mod error {
 /// commit if there's a blip in retrieval or parsing of the pending
 /// settings.  We know the system won't be functional without a commit,
 /// but we can live without logging what was committed.
-fn check_pending_settings<S: AsRef<str>>(socket_path: S) {
-    let uri = API_PENDING_URI;
+fn check_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &str) {
+    let uri = format!("{}?tx={}", API_PENDING_URI_BASE, transaction);
 
     debug!("GET-ing {} to determine if there are pending settings", uri);
-    let get_result = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None);
+    let get_result = apiclient::raw_request(socket_path.as_ref(), &uri, "GET", None);
     let response_body = match get_result {
         Ok((code, response_body)) => {
             if !code.is_success() {
@@ -81,7 +84,7 @@ fn check_pending_settings<S: AsRef<str>>(socket_path: S) {
         serde_json::from_str(&response_body);
     match pending_result {
         Ok(pending) => {
-            debug!("Pending settings: {:?}", &pending);
+            debug!("Pending settings for tx {}: {:?}", transaction, &pending);
         }
         Err(err) => {
             warn!("Failed to parse response from {}: {}", uri, err);
@@ -90,11 +93,11 @@ fn check_pending_settings<S: AsRef<str>>(socket_path: S) {
 }
 
 /// Commits pending settings to live.
-fn commit_pending_settings<S: AsRef<str>>(socket_path: S) -> Result<()> {
-    let uri = API_COMMIT_URI;
+fn commit_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &str) -> Result<()> {
+    let uri = format!("{}?tx={}", API_COMMIT_URI_BASE, transaction);
     debug!("POST-ing to {} to move pending settings to live", uri);
 
-    if let Err(e) = apiclient::raw_request(socket_path.as_ref(), uri, "POST", None) {
+    if let Err(e) = apiclient::raw_request(socket_path.as_ref(), &uri, "POST", None) {
         match e {
             // Some types of response errors are OK for this use.
             apiclient::Error::ResponseStatus { code, body, .. } => {
@@ -107,7 +110,8 @@ fn commit_pending_settings<S: AsRef<str>>(socket_path: S) -> Result<()> {
                         uri,
                         code,
                         response_body: body,
-                    }.fail();
+                    }
+                    .fail();
                 }
             }
             // Any other type of error means we couldn't even make the request.
@@ -124,6 +128,7 @@ fn commit_pending_settings<S: AsRef<str>>(socket_path: S) -> Result<()> {
 
 /// Store the args we receive on the command line
 struct Args {
+    transaction: String,
     log_level: LevelFilter,
     socket_path: String,
 }
@@ -133,11 +138,13 @@ fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
         r"Usage: {}
+            [ --transaction TX ]
             [ --socket-path PATH ]
             [ --log-level trace|debug|info|warn|error ]
 
+    Transaction defaults to {}
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET
+        program_name, DEFAULT_TRANSACTION, DEFAULT_API_SOCKET
     );
     process::exit(2);
 }
@@ -150,12 +157,20 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut transaction = None;
     let mut log_level = None;
     let mut socket_path = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
+            "--transaction" => {
+                transaction = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --transaction")),
+                )
+            }
+
             "--log-level" => {
                 let log_level_str = iter
                     .next()
@@ -171,11 +186,13 @@ fn parse_args(args: env::Args) -> Args {
                         .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
                 )
             }
+
             _ => usage(),
         }
     }
 
     Args {
+        transaction: transaction.unwrap_or_else(|| DEFAULT_TRANSACTION.to_string()),
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
     }
@@ -190,10 +207,10 @@ fn run() -> Result<()> {
         .context(error::Logger)?;
 
     info!("Checking pending settings.");
-    check_pending_settings(&args.socket_path);
+    check_pending_settings(&args.socket_path, &args.transaction);
 
     info!("Committing settings.");
-    commit_pending_settings(&args.socket_path)?;
+    commit_pending_settings(&args.socket_path, &args.transaction)?;
 
     Ok(())
 }

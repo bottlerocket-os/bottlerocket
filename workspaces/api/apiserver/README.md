@@ -21,12 +21,16 @@ The interface is documented in [OpenAPI format](https://swagger.io/docs/specific
 The Settings APIs are particularly important.
 You can GET settings from the `/settings` endpoint.
 You can also PATCH changes to the `/settings` endpoint.
-Settings are stored as pending until a commit API is called.
-Pending settings can be retrieved from `/settings/pending` to see what will change.
+Settings are stored as a pending transaction until a commit API is called.
+Pending settings can be retrieved from `/tx` to see what will change.
 
-Upon making a `commit` API call, pending settings are made live.
-Upon making an `apply` API call, an external settings applier tool is called to apply the changes to the system and restart services as necessary.
-There's also a `commit_and_apply` API to do both, which is the most common case.
+Upon making a `/tx/commit` POST call, the pending transaction is made live.
+Upon making an `/tx/apply` POST call, an external settings applier tool is called to apply the changes to the system and restart services as necessary.
+There's also `/tx/commit_and_apply` to do both, which is the most common case.
+
+If you don't specify a transaction, the "default" transaction is used, so you usually don't have to think about it.
+If you want to group changes into transactions yourself, you can add a `tx` parameter to the APIs mentioned above.
+For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` and `POST` to `/tx/commit_and_apply?tx=FOO`.
 
 Requests are directed by `server::router`.
 `server::controller` maps requests into our data model.

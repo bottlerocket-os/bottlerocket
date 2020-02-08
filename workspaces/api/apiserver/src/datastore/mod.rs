@@ -26,21 +26,24 @@ use std::collections::{HashMap, HashSet};
 
 /// Committed represents whether we want to look at pending (uncommitted) or live (committed) data
 /// in the datastore.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum Committed {
-    Pending,
     Live,
+    Pending {
+        // If the change is pending, we need to know the transaction name.
+        tx: String,
+    },
 }
 
 pub trait DataStore {
     /// Returns whether a key is present (has a value) in the datastore.
-    fn key_populated(&self, key: &Key, committed: Committed) -> Result<bool>;
+    fn key_populated(&self, key: &Key, committed: &Committed) -> Result<bool>;
     /// Returns a list of the populated data keys in the datastore whose names start with the given
     /// prefix.
     fn list_populated_keys<S: AsRef<str>>(
         &self,
         prefix: S,
-        committed: Committed,
+        committed: &Committed,
     ) -> Result<HashSet<Key>>;
     /// Finds all metadata keys that are currently populated in the datastore whose data keys
     /// start with the given prefix.  If you specify metadata_key_name, only metadata keys with
@@ -57,13 +60,13 @@ pub trait DataStore {
         S2: AsRef<str>;
 
     /// Retrieve the value for a single data key from the datastore.
-    fn get_key(&self, key: &Key, committed: Committed) -> Result<Option<String>>;
+    fn get_key(&self, key: &Key, committed: &Committed) -> Result<Option<String>>;
     /// Set the value of a single data key in the datastore.
-    fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: Committed) -> Result<()>;
+    fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: &Committed) -> Result<()>;
     /// Removes the given data key from the datastore.  If we succeeded, we return Ok(()); if
     /// the key didn't exist, we also return Ok(()); we return Err only if we failed to check
     /// or remove the key.
-    fn unset_key(&mut self, key: &Key, committed: Committed) -> Result<()>;
+    fn unset_key(&mut self, key: &Key, committed: &Committed) -> Result<()>;
 
     /// Retrieve the value for a single metadata key from the datastore.  Values will inherit from
     /// earlier in the tree, if more specific values are not found later.
@@ -101,17 +104,26 @@ pub trait DataStore {
     /// Ok(()); we return Err only if we failed to check or remove the key.
     fn unset_metadata(&mut self, metadata_key: &Key, data_key: &Key) -> Result<()>;
 
-    /// Applies pending changes to the live datastore.  Returns the list of changed keys.
-    fn commit(&mut self) -> Result<HashSet<Key>>;
+    /// Applies pending changes from the given transaction to the live datastore.  Returns the
+    /// list of changed keys.
+    fn commit_transaction<S>(&mut self, transaction: S) -> Result<HashSet<Key>>
+    where
+        S: Into<String> + AsRef<str>;
 
-    /// Remove pending changes from the datastore.  Returns the list of removed keys.
-    fn delete_pending(&mut self) -> Result<HashSet<Key>>;
+    /// Remove the given pending transaction from the datastore.  Returns the list of removed
+    /// keys.  If the transaction doesn't exist, will return Ok with an empty list.
+    fn delete_transaction<S>(&mut self, transaction: S) -> Result<HashSet<Key>>
+    where
+        S: Into<String> + AsRef<str>;
+
+    /// Returns a list of the names of any pending transactions in the data store.
+    fn list_transactions(&self) -> Result<HashSet<String>>;
 
     /// Set multiple data keys at once in the data store.
     ///
     /// Implementers can replace the default implementation if there's a faster way than setting
     /// each key individually.
-    fn set_keys<S>(&mut self, pairs: &HashMap<Key, S>, committed: Committed) -> Result<()>
+    fn set_keys<S>(&mut self, pairs: &HashMap<Key, S>, committed: &Committed) -> Result<()>
     where
         S: AsRef<str>,
     {
@@ -125,7 +137,7 @@ pub trait DataStore {
     ///
     /// Implementers can replace the default implementation if there's a faster way than
     /// unsetting each key individually.
-    fn unset_keys(&mut self, keys: &HashSet<Key>, committed: Committed) -> Result<()> {
+    fn unset_keys(&mut self, keys: &HashSet<Key>, committed: &Committed) -> Result<()> {
         for key in keys {
             trace!("Unsetting data key {}", key.name());
             self.unset_key(key, committed)?;
@@ -139,7 +151,7 @@ pub trait DataStore {
     fn get_prefix<S: AsRef<str>>(
         &self,
         find_prefix: S,
-        committed: Committed,
+        committed: &Committed,
     ) -> Result<HashMap<Key, String>> {
         let keys = self.list_populated_keys(&find_prefix, committed)?;
         trace!("Found populated keys: {:?}", keys);
@@ -273,18 +285,20 @@ mod test {
             k3.clone() => &v3,
         );
 
-        m.set_keys(&data, Committed::Pending).unwrap();
+        let tx = "test transaction";
+        let pending = Committed::Pending { tx: tx.into() };
+        m.set_keys(&data, &pending).unwrap();
 
-        assert_eq!(m.get_key(&k1, Committed::Pending).unwrap(), Some(v1));
-        assert_eq!(m.get_key(&k2, Committed::Pending).unwrap(), Some(v2));
-        assert_eq!(m.get_key(&k3, Committed::Pending).unwrap(), Some(v3.clone()));
+        assert_eq!(m.get_key(&k1, &pending).unwrap(), Some(v1));
+        assert_eq!(m.get_key(&k2, &pending).unwrap(), Some(v2));
+        assert_eq!(m.get_key(&k3, &pending).unwrap(), Some(v3.clone()));
 
         let unset = hashset!(k1.clone(), k2.clone());
-        m.unset_keys(&unset, Committed::Pending).unwrap();
+        m.unset_keys(&unset, &pending).unwrap();
 
-        assert_eq!(m.get_key(&k1, Committed::Pending).unwrap(), None);
-        assert_eq!(m.get_key(&k2, Committed::Pending).unwrap(), None);
-        assert_eq!(m.get_key(&k3, Committed::Pending).unwrap(), Some(v3));
+        assert_eq!(m.get_key(&k1, &pending).unwrap(), None);
+        assert_eq!(m.get_key(&k2, &pending).unwrap(), None);
+        assert_eq!(m.get_key(&k3, &pending).unwrap(), Some(v3));
     }
 
     #[test]
@@ -314,10 +328,12 @@ mod test {
             Key::new(KeyType::Data, "x.2").unwrap() => "x2".to_string(),
             Key::new(KeyType::Data, "y.3").unwrap() => "y3".to_string(),
         );
-        m.set_keys(&data, Committed::Pending).unwrap();
+        let tx = "test transaction";
+        let pending = Committed::Pending { tx: tx.into() };
+        m.set_keys(&data, &pending).unwrap();
 
         assert_eq!(
-            m.get_prefix("x.", Committed::Pending).unwrap(),
+            m.get_prefix("x.", &pending).unwrap(),
             hashmap!(Key::new(KeyType::Data, "x.1").unwrap() => "x1".to_string(),
                      Key::new(KeyType::Data, "x.2").unwrap() => "x2".to_string())
         );

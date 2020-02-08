@@ -197,16 +197,25 @@ This can include any number of settings changes.
 apiclient -m PATCH -u /settings -d '{"timezone": "America/Thunder_Bay"}'
 ```
 
-This will *stage* the setting in a "pending" area.
-You can see all the pending settings like this:
+This will *stage* the setting in a "pending" area - a transaction.
+You can see all your pending settings like this:
 ```
-apiclient -u /settings/pending
+apiclient -u /tx
 ```
 
 To *commit* the settings, and let the system apply them to any relevant configuration files or services, do this:
 ```
-apiclient -m POST -u /settings/commit_and_apply
+apiclient -m POST -u /tx/commit_and_apply
 ```
+
+Behind the scenes, these commands are working with the "default" transaction.
+This keeps the interface simple.
+System services use their own transactions, so you don't have to worry about conflicts.
+For example, there's a "thar-boot" transaction used to coordinate changes at startup.
+
+If you want to group sets of changes yourself, pick a transaction name and append a `tx` parameter to the URLs above.
+For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` and `POST` to `/tx/commit_and_apply?tx=FOO`.
+(Transactions are created automatically when used, and are cleaned up on reboot.)
 
 For more details on using the client, see the [apiclient documentation](workspaces/api/apiclient/).
 
