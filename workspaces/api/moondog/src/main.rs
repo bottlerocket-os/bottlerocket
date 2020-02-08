@@ -30,6 +30,8 @@ use std::{env, fs, process};
 // FIXME Get these from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
+// We change settings in the shared transaction used by boot-time services.
+const TRANSACTION: &str = "thar-boot";
 
 // We only want to run moondog once, at first boot.  Our systemd unit file has a
 // ConditionPathExists that will prevent it from running again if this file exists.
@@ -362,24 +364,19 @@ fn run() -> Result<()> {
     let data_provider = find_provider()?;
 
     info!("Retrieving platform-specific data");
+    let uri = &format!("{}?tx={}", API_SETTINGS_URI, TRANSACTION);
+    let method = "PATCH";
     for settings_json in data_provider.platform_data()? {
         info!("Sending {} to API", settings_json.desc);
         trace!("Request body: {}", settings_json.json);
-        let (code, response_body) = apiclient::raw_request(
-            &args.socket_path,
-            API_SETTINGS_URI,
-            "PATCH",
-            Some(settings_json.json),
-        )
-        .context(error::APIRequest {
-            method: "PATCH",
-            uri: API_SETTINGS_URI,
-        })?;
+        let (code, response_body) =
+            apiclient::raw_request(&args.socket_path, uri, method, Some(settings_json.json))
+                .context(error::APIRequest { method, uri })?;
         ensure!(
             code.is_success(),
             error::Response {
-                method: "PATCH",
-                uri: API_SETTINGS_URI,
+                method,
+                uri,
                 code,
                 response_body,
             }

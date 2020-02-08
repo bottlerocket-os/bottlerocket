@@ -26,8 +26,9 @@ use apiserver::datastore::{self, deserialization, Key, KeyType};
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
-const API_PENDING_SETTINGS_URI: &str = "/settings/pending";
 const API_SETTING_GENERATORS_URI: &str = "/metadata/setting-generators";
+// We change settings in the shared transaction used by boot-time services.
+const TRANSACTION: &str = "thar-boot";
 
 /// Potential errors during Sundog execution
 mod error {
@@ -182,8 +183,7 @@ where
     Ok(generators)
 }
 
-/// Given a list of settings, query the API for any that are currently
-/// set or are in pending state.
+/// Given a list of settings, query the API for any that are currently set.
 fn get_populated_settings<P>(socket_path: P, to_query: Vec<&str>) -> Result<HashSet<Key>>
 where
     P: AsRef<Path>,
@@ -192,39 +192,36 @@ where
 
     let mut populated_settings = HashSet::new();
 
-    // Build the query string and the URI containing that query. Currently
-    // the API doesn't suport queries for the '/settings/pending' endpoint,
-    // so we dont' build the string for it.
+    // Build the query string and the URI containing that query.
     let query = to_query.join(",");
-    let committed_uri = format!("{}?keys={}", API_SETTINGS_URI, query);
+    let uri = &format!("{}?keys={}", API_SETTINGS_URI, query);
 
-    for uri in &[committed_uri, API_PENDING_SETTINGS_URI.to_string()] {
-        let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), &uri, "GET", None)
-            .context(error::APIRequest { method: "GET", uri })?;
-        ensure!(
-            code.is_success(),
-            error::APIResponse {
-                method: "GET",
-                uri,
-                code,
-                response_body,
-            }
-        );
-
-        // Build a Settings struct from the response.
-        let settings: model::Settings = serde_json::from_str(&response_body)
-            .context(error::ResponseJson { method: "GET", uri })?;
-
-        // Serialize the Settings struct into key/value pairs. This builds the dotted
-        // string representation of the setting
-        let settings_keypairs =
-            to_pairs_with_prefix("settings", &settings).context(error::SerializeSettings)?;
-
-        // Put the setting into our hashset of populated keys
-        for (k, _) in settings_keypairs {
-            populated_settings.insert(k);
+    let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
+        .context(error::APIRequest { method: "GET", uri })?;
+    ensure!(
+        code.is_success(),
+        error::APIResponse {
+            method: "GET",
+            uri,
+            code,
+            response_body,
         }
+    );
+
+    // Build a Settings struct from the response.
+    let settings: model::Settings =
+        serde_json::from_str(&response_body).context(error::ResponseJson { method: "GET", uri })?;
+
+    // Serialize the Settings struct into key/value pairs. This builds the dotted
+    // string representation of the setting
+    let settings_keypairs =
+        to_pairs_with_prefix("settings", &settings).context(error::SerializeSettings)?;
+
+    // Put the setting into our hashset of populated keys
+    for (k, _) in settings_keypairs {
+        populated_settings.insert(k);
     }
+
     trace!("Found populated settings: {:#?}", &populated_settings);
     Ok(populated_settings)
 }
@@ -363,7 +360,7 @@ where
     // Serialize our Settings struct to the JSON wire format
     let request_body = serde_json::to_string(&settings).context(error::SerializeRequest)?;
 
-    let uri = API_SETTINGS_URI;
+    let uri = &format!("{}?tx={}", API_SETTINGS_URI, TRANSACTION);
     let method = "PATCH";
     trace!("Settings to {} to {}: {}", method, uri, &request_body);
     let (code, response_body) =
