@@ -91,7 +91,7 @@
 * Retry host container pulls with exponential backoff ([#433]).
 * Better model startup dependencies in systemd units ([#442]).
 * Enable panic on disk corruption detected with dm_verity ([#445]).
-* Add persistent storage for host containers, mapped to `/.thar/host-containers/[CONTAINER_NAME]` ([#450], [#555]).
+* Add persistent storage for host containers, mapped to `/.bottlerocket/host-containers/[CONTAINER_NAME]` ([#450], [#555]).
 * Persist SSH host keys for admin container ([#450]).
 * Use admin container v0.2 by default ([#450], [#536]).
 * Use control container v0.2 by default ([#472], [#536]).
@@ -112,7 +112,7 @@
 
 ## Documentation changes
 
-* Document how to use Thar's default for the `nf_conntrack_max` kernel parameter when using `kube-proxy` ([#391]).
+* Document how to use Bottlerocket's default for the `nf_conntrack_max` kernel parameter when using `kube-proxy` ([#391]).
 * Fix example user data for enabling admin container ([#448]).
 * Update build documentation for using Docker instead of `buildkitd` ([#506]).
 * Update recommended CNI plugin version ([#507]).

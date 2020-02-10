@@ -1,7 +1,7 @@
-# Building Thar
+# Building Bottlerocket
 
 If you'd like to build your own image instead of relying on an Amazon-provided image, follow these steps.
-You can skip to [Using a Thar AMI](#using-a-thar-ami) to use an existing image in Amazon EC2.
+You can skip to [Using a Bottlerocket AMI](#using-a-bottlerocket-ami) to use an existing image in Amazon EC2.
 (We're still working on other use cases!)
 
 ## Build an image
@@ -24,7 +24,7 @@ cargo install cargo-deny --version 0.6.2
 
 #### Docker
 
-Thar uses [Docker](https://docs.docker.com/install/#supported-platforms) to orchestrate package and image builds.
+Bottlerocket uses [Docker](https://docs.docker.com/install/#supported-platforms) to orchestrate package and image builds.
 
 We recommend Docker 19.03 or later.
 Builds rely on Docker's integrated BuildKit support, which has received many fixes and improvements in newer versions.
@@ -57,8 +57,8 @@ First, decompress the images.
 (Note: these filenames assume an `x86_64` architecture and `aws-k8s` [variant](README.md#variant).)
 
 ```
-lz4 -d build/thar-x86_64-aws-k8s.img.lz4 build/thar-x86_64-aws-k8s.img && \
-lz4 -d build/thar-x86_64-aws-k8s-data.img.lz4 build/thar-x86_64-aws-k8s-data.img
+lz4 -d build/bottlerocket-x86_64-aws-k8s.img.lz4 build/bottlerocket-x86_64-aws-k8s.img && \
+lz4 -d build/bottlerocket-x86_64-aws-k8s-data.img.lz4 build/bottlerocket-x86_64-aws-k8s-data.img
 ```
 
 Next, register an AMI:
@@ -66,8 +66,8 @@ Next, register an AMI:
 ```
 bin/amiize.sh --name YOUR-AMI-NAME-HERE \
               --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
-              --root-image build/thar-aws-k8s-x86_64.img \
-              --data-image build/thar-x86_64-aws-k8s-data.img \
+              --root-image build/bottlerocket-aws-k8s-x86_64.img \
+              --data-image build/bottlerocket-x86_64-aws-k8s-data.img \
               --region us-west-2 \
               --instance-type m3.xlarge \
               --arch x86_64 \
@@ -82,13 +82,13 @@ It then registers this EBS volume as an AMI and terminates the instance.
 In the example command above, the `--worker-ami` is an Amazon Linux AMI, and the `--user-data` disables updates at boot to speed up registration.
 Make sure you use an up-to-date worker AMI.
 
-# Using a Thar AMI
+# Using a Bottlerocket AMI
 
-The first release of Thar focuses on Kubernetes, in particular serving as the host OS for Kubernetes pods.
+The first release of Bottlerocket focuses on Kubernetes, in particular serving as the host OS for Kubernetes pods.
 
 One easy way to get started is to use Amazon EKS, a service that manages a Kubernetes control plane for you.
 This document will focus on EKS to make it easy to follow a single path.
-There's nothing that limits Thar to EKS or AWS, though.
+There's nothing that limits Bottlerocket to EKS or AWS, though.
 
 Most of this is one-time setup, and yes, we plan to automate more of it!
 Once you have a cluster, you can skip to the last step, [Launch!](#launch)
@@ -110,15 +110,15 @@ Finally, you'll need [aws-cli v1](https://aws.amazon.com/cli/) set up to interac
 You can set up a new cluster like this:
 
 ```
-eksctl create cluster --region us-west-2 --name thar
+eksctl create cluster --region us-west-2 --name bottlerocket
 ```
 
 Now that the cluster is created, we can have `eksctl` create the configuration for `kubectl`:
 ```
-eksctl utils write-kubeconfig --region us-west-2 --name thar
+eksctl utils write-kubeconfig --region us-west-2 --name bottlerocket
 ```
 
-Now we can make a configuration change to use a CNI plugin that's compatible with Thar.
+Now we can make a configuration change to use a CNI plugin that's compatible with Bottlerocket.
 ```
 kubectl patch daemonset aws-node \
 -n kube-system \
@@ -133,7 +133,7 @@ This section helps you determine some of the cluster information needed later by
 
 Run this to get the API endpoint and base64-encoded certificate authority, which we use in the next step.
 ```
-eksctl get cluster --region us-west-2 --name thar -o json \
+eksctl get cluster --region us-west-2 --name bottlerocket -o json \
    | jq --raw-output '.[] | "Endpoint: " + .Endpoint,"\nCA: " + .CertificateAuthority.Data'
 ```
 
@@ -143,7 +143,7 @@ This will be used at the end, in the instance launch command.
 ```
 [settings.kubernetes]
 api-server = "YOUR-API-ENDPOINT-HERE"
-cluster-name = "thar"
+cluster-name = "bottlerocket"
 cluster-certificate = "YOUR-CERTIFICATE-AUTHORITY-HERE"
 ```
 
@@ -155,7 +155,7 @@ It will give you a list of the subnets and tell you whether each is public or pr
 
 ```
 aws ec2 describe-subnets \
-   --subnet-ids $(eksctl get cluster --region us-west-2 --name thar -o json | jq --raw-output '.[].ResourcesVpcConfig.SubnetIds[]') \
+   --subnet-ids $(eksctl get cluster --region us-west-2 --name bottlerocket -o json | jq --raw-output '.[].ResourcesVpcConfig.SubnetIds[]') \
    --region us-west-2 \
    --query "Subnets[].[SubnetId, Tags[?Key=='aws:cloudformation:logical-id'].Value]" \
    | xargs -L2
@@ -182,7 +182,7 @@ The instance we launch needs to be associated with an IAM role that allows for c
 The ARN of the IAM role can be retrieved with:
 
 ```
-eksctl get iamidentitymapping --region us-west-2 --name thar
+eksctl get iamidentitymapping --region us-west-2 --name bottlerocket
 ```
 
 The output should look like this:
@@ -196,7 +196,7 @@ Note down the INSTANCE_ROLE_NAME for the instructions below.
 
 #### Enabling SSM
 
-If you add SSM permissions, you can use Thar's default SSM agent to get a shell session on the instance.
+If you add SSM permissions, you can use Bottlerocket's default SSM agent to get a shell session on the instance.
 
 To attach the role policy for SSM permissions, run the following:
 
@@ -222,15 +222,15 @@ aws iam list-instance-profiles-for-role --role-name INSTANCE_ROLE_NAME --query "
 
 There should only be one that looks like:
 ```
-eksctl-thar-nodegroup-ng-IDENTIFIER-NodeInstanceProfile-IDENTIFIER
+eksctl-bottlerocket-nodegroup-ng-IDENTIFIER-NodeInstanceProfile-IDENTIFIER
 ```
 
 Note this down as the INSTANCE_PROFILE_NAME for the final launch command.
 
 ## kube-proxy settings
 
-By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Thar originally sets at boot.
-If you prefer to keep Thar's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
+By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Bottlerocket originally sets at boot.
+If you prefer to keep Bottlerocket's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
 
 ```
 kubectl edit -n kube-system daemonset kube-proxy
@@ -256,7 +256,7 @@ For the instance to be able to communicate with the EKS cluster control plane an
 Run the following command:
 
 ```
-aws ec2 describe-security-groups --filters 'Name=tag:Name,Values=*thar*' \
+aws ec2 describe-security-groups --filters 'Name=tag:Name,Values=*bottlerocket*' \
   --query "SecurityGroups[*].{Name:GroupName,ID:GroupId}"
 ```
 
@@ -268,15 +268,15 @@ Example:
 ```
 [
     {
-        "Name": "eksctl-thar-cluster-ClusterSharedNodeSecurityGroup-IDENTIFIER",
+        "Name": "eksctl-bottlerocket-cluster-ClusterSharedNodeSecurityGroup-IDENTIFIER",
         "ID": "SECURITY_GROUP_ID_1"
     },
     {
-        "Name": "eksctl-thar-cluster-ControlPlaneSecurityGroup-IDENTIFIER",
+        "Name": "eksctl-bottlerocket-cluster-ControlPlaneSecurityGroup-IDENTIFIER",
         "ID": *ignore*
     },
     {
-        "Name": "eksctl-thar-nodegroup-ng-IDENTIFIER-SG-IDENTIFIER",
+        "Name": "eksctl-bottlerocket-nodegroup-ng-IDENTIFIER-SG-IDENTIFIER",
         "ID": "SECURITY_GROUP_ID_2"
     }
 ]
@@ -284,14 +284,14 @@ Example:
 
 ## Launch!
 
-Now we can launch a Thar instance in our cluster!
+Now we can launch a Bottlerocket instance in our cluster!
 
 There are a few values to make sure you change in this command:
 * YOUR_KEY_NAME: your SSH keypair name, as registered with EC2
 * SUBNET_ID: the subnet you selected earlier
 * If you chose a public subnet, either add `--associate-public-ip-address` to the command, or attach an Elastic IP afterward.
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier
-* THAR-AMI-ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
+* BOTTLEROCKET_AMI_ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
 * userdata.toml: the path to the user data file you created earlier
 * INSTANCE_PROFILE_NAME: the instance profile created by `eksctl` for the cluster nodegroups. 
 
@@ -299,17 +299,17 @@ There are a few values to make sure you change in this command:
 aws ec2 run-instances --key-name YOUR_KEY_NAME \
    --subnet-id SUBNET_ID \
    --security-group-ids SECURITY_GROUP_ID_1 SECURITY_GROUP_ID_2 \
-   --image-id THAR_AMI_ID \
+   --image-id BOTTLEROCKET_AMI_ID \
    --instance-type c3.large \
    --region us-west-2 \
-   --tag-specifications 'ResourceType=instance,Tags=[{Key=kubernetes.io/cluster/thar,Value=owned}]' \
+   --tag-specifications 'ResourceType=instance,Tags=[{Key=kubernetes.io/cluster/bottlerocket,Value=owned}]' \
    --user-data file://userdata.toml \
    --iam-instance-profile Name=INSTANCE_PROFILE_NAME
 ```
 
 And remember, if you used a public subnet, add `--associate-public-ip-address` or attach an Elastic IP after launch.
 
-Once it launches, you should be able to run pods on your Thar instance using normal Kubernetes workflows.
+Once it launches, you should be able to run pods on your Bottlerocket instance using normal Kubernetes workflows.
 
 For example, to run busybox:
 `kubectl run -i -t busybox --image=busybox --restart=Never`

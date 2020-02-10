@@ -1,37 +1,37 @@
-# Thar, the Operating System
+# Bottlerocket operating system
 
-Welcome to Thar!
+Welcome to Bottlerocket!
 
-Thar is a free and open-source Linux-based operating system meant for hosting containers.
+Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
 
 ## Tenets
 
-These tenets guide Thar's development.
+These tenets guide Bottlerocket's development.
 They let you know what we value and what we're working toward, even if not every feature is ready yet.
 
 ### Open
 
-Thar is **open** because the best OS can only be built through collaboration.
+Bottlerocket is **open** because the best OS can only be built through collaboration.
 It is developed in full view of the world using open source tools and public infrastructure services.
 It is not a Kubernetes distro, nor an Amazon distro.
 We obsess over shared components like the kernel, but we are willing to accept support for other orchestrators or platforms.
 
 ### Small
 
-Thar is **small** because a few big ideas scale better than many small ones.
+Bottlerocket is **small** because a few big ideas scale better than many small ones.
 It includes only the core set of components needed for development and for use at runtime.
 Anything we ship, we must be prepared to fix, so our goal is to ship as little as possible while staying useful.
 
 ### Secure
 
-Thar is **secure** so it can become a quiet piece of a platform you trust.
+Bottlerocket is **secure** so it can become a quiet piece of a platform you trust.
 It uses a variety of mechanisms to provide defense-in-depth, and enables automatic updates by default.
 It protects itself from persistent threats.
 It enables kernel features that allow users to assert their own policies for locking down workloads.
 
 ### Simple
 
-Thar is **simple** because simple lasts.
+Bottlerocket is **simple** because simple lasts.
 Users can pick the image they want, tweak a handful of settings, and then forget about it.
 We favor settings that convey high-level intent over those that provide low-level control over specific details, because it is easier to preserve intent across months and years of automatic updates.
 
@@ -51,18 +51,18 @@ Thank you!
 
 ## Overview
 
-To start, we're focusing on use of Thar as a host OS in AWS EKS Kubernetes clusters.
+To start, we're focusing on use of Bottlerocket as a host OS in AWS EKS Kubernetes clusters.
 We’re excited to get early feedback and to continue working on more use cases!
 
 ## Variants
 
-Thar is architected such that different cloud environments and container orchestraters can be supported in the future.
-A build of Thar that supports different features or integration characteristics is known as a 'variant'.
+Bottlerocket is architected such that different cloud environments and container orchestraters can be supported in the future.
+A build of Bottlerocket that supports different features or integration characteristics is known as a 'variant'.
 
 Our first supported variant, `aws-k8s`, supports EKS as described above.
 
 The artifacts of a build will include the architecture and variant name.
-For example, an `x86_64` build of `aws-k8s` will produce an image named `thar-x86_64-aws-k8s.img`.
+For example, an `x86_64` build of `aws-k8s` will produce an image named `bottlerocket-x86_64-aws-k8s.img`.
 
 ### Setup
 
@@ -72,23 +72,23 @@ To get started, please see [INSTALL](INSTALL.md).
 It describes:
 * how to build an image
 * how to register an EC2 AMI from an image
-* how to set up a Kubernetes cluster, so your Thar instance can run pods
-* how to launch a Thar instance in EC2
+* how to set up a Kubernetes cluster, so your Bottlerocket instance can run pods
+* how to launch a Bottlerocket instance in EC2
 
 ### Exploration
 
-To improve security, there's no SSH server in a Thar image, and not even a shell.
+To improve security, there's no SSH server in a Bottlerocket image, and not even a shell.
 
 Don't panic!
 
-There are a couple out-of-band access methods you can use to explore Thar like you would a typical Linux system.
-Either option will give you a shell within Thar.
-From there, you can [change settings](#settings), manually [update Thar](#updates), debug problems, and generally explore.
+There are a couple out-of-band access methods you can use to explore Bottlerocket like you would a typical Linux system.
+Either option will give you a shell within Bottlerocket.
+From there, you can [change settings](#settings), manually [update Bottlerocket](#updates), debug problems, and generally explore.
 
 #### Control container
 
-Thar has a "control" container, enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
-This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Thar instances in EC2.
+Bottlerocket has a "control" container, enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
+This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
 (You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).
 
 You need to give your instance the SSM role for this to work; see the [setup guide](INSTALL.md#enabling-ssm).
@@ -96,7 +96,7 @@ You need to give your instance the SSM role for this to work; see the [setup gui
 Once the instance is started, you can start a session:
 
 * Go to AWS SSM's [Session Manager](https://console.aws.amazon.com/systems-manager/session-manager/sessions)
-* Select “Start session” and choose your Thar instance
+* Select “Start session” and choose your Bottlerocket instance
 * Select “Start session” again to get a shell
 
 If you prefer a command-line tool, you can start a session with a recent [AWS CLI](https://aws.amazon.com/cli/) and the [session-manager-plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
@@ -106,23 +106,23 @@ Then you'd be able to start a session using only your instance ID, like this:
 aws ssm start-session --target INSTANCE_ID
 ```
 
-With the default control container, you can make API calls to change settings in your Thar host.
+With the default control container, you can make API calls to change settings in your Bottlerocket host.
 To do even more, read the next section about the [admin container](#admin-container).
 
 #### Admin container
 
-Thar has an administrative container, disabled by default, that runs outside of the orchestrator in a separate instance of containerd.
+Bottlerocket has an administrative container, disabled by default, that runs outside of the orchestrator in a separate instance of containerd.
 This container has an SSH server that lets you log in as `ec2-user` using your EC2-registered SSH key.
 (You can easily replace this admin container with your own just by changing the URI; see [Settings](#settings).
 
-To enable the container, you can change the setting in user data when starting Thar, for example EC2 instance user data:
+To enable the container, you can change the setting in user data when starting Bottlerocket, for example EC2 instance user data:
 
 ```
 [settings.host-containers.admin]
 enabled = true
 ```
 
-If Thar is already running, you can enable the admin container from the default [control container](#control-container) like this:
+If Bottlerocket is already running, you can enable the admin container from the default [control container](#control-container) like this:
 
 ```
 enable-admin-container
@@ -135,12 +135,12 @@ apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": tr
 apiclient -u /tx/commit_and_apply -m POST
 ```
 
-Once you're in the admin container, you can run `sheltie` to get a full root shell in the Thar host.
-Be careful; while you can inspect and change even more as root, Thar's filesystem and dm-verity setup will prevent most changes from persisting over a restart - see [Security](#security).
+Once you're in the admin container, you can run `sheltie` to get a full root shell in the Bottlerocket host.
+Be careful; while you can inspect and change even more as root, Bottlerocket's filesystem and dm-verity setup will prevent most changes from persisting over a restart - see [Security](#security).
 
 ### Updates
 
-Rather than a package manager that updates individual pieces of software, Thar downloads a full filesystem image and reboots into it.
+Rather than a package manager that updates individual pieces of software, Bottlerocket downloads a full filesystem image and reboots into it.
 It can automatically roll back if boot failures occur, and workload failures can trigger manual rollbacks.
 
 Currently, you can update using a CLI tool, updog.
@@ -172,7 +172,7 @@ For more details, see the [update system documentation](workspaces/updater/).
 
 ## Settings
 
-Here we'll describe the settings you can configure on your Thar instance, and how to do it.
+Here we'll describe the settings you can configure on your Bottlerocket instance, and how to do it.
 
 (API endpoints are defined in our [OpenAPI spec](workspaces/api/openapi.yaml) if you want more detail.)
 
@@ -211,7 +211,7 @@ apiclient -m POST -u /tx/commit_and_apply
 Behind the scenes, these commands are working with the "default" transaction.
 This keeps the interface simple.
 System services use their own transactions, so you don't have to worry about conflicts.
-For example, there's a "thar-boot" transaction used to coordinate changes at startup.
+For example, there's a "bottlerocket-launch" transaction used to coordinate changes at startup.
 
 If you want to group sets of changes yourself, pick a transaction name and append a `tx` parameter to the URLs above.
 For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` and `POST` to `/tx/commit_and_apply?tx=FOO`.
@@ -221,7 +221,7 @@ For more details on using the client, see the [apiclient documentation](workspac
 
 #### Using user data
 
-If you know what settings you want to change when you start your Thar instance, you can send them in the user data.
+If you know what settings you want to change when you start your Bottlerocket instance, you can send them in the user data.
 
 In user data, we structure the settings in TOML form to make things a bit simpler.
 Here's the user data to change the time zone setting, as we did in the last section:
@@ -239,7 +239,7 @@ Here we'll describe each setting you can change.
 
 When you're sending settings to the API, or receiving settings from the API, they're in a structured JSON format.
 This allows allow modification of any number of keys at once.
-It also lets us ensure that they fit the definition of the Thar data model - requests with invalid settings won't even parse correctly, helping ensure safety.
+It also lets us ensure that they fit the definition of the Bottlerocket data model - requests with invalid settings won't even parse correctly, helping ensure safety.
 
 Here, however, we'll use the shortcut "dotted key" syntax for referring to keys.
 This is used in some API endpoints with less-structured requests or responses.
@@ -256,8 +256,8 @@ In this format, "settings.kubernetes.cluster-name" refers to the same key as in 
 
 The following settings must be specified in order to join a Kubernetes cluster.
 You should [specify them in user data](#using-user-data).
-See the [setup guide](INSTALL.md) for *much* more detail on setting up Thar and Kubernetes.
-* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](INSTALL.md) uses "thar".
+See the [setup guide](INSTALL.md) for *much* more detail on setting up Bottlerocket and Kubernetes.
+* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](INSTALL.md) uses "bottlerocket".
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
@@ -292,10 +292,10 @@ The following settings are set for you automatically by [pluto](workspaces/api/)
 #### Host containers settings
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).
 * `settings.host-containers.admin.enabled`: Whether the admin container is enabled.
-* `settings.host-containers.admin.superpowered`: Whether the admin container has high levels of access to the Thar host.
+* `settings.host-containers.admin.superpowered`: Whether the admin container has high levels of access to the Bottlerocket host.
 * `settings.host-containers.control.source`: The URI of the [control container](#control-container).
 * `settings.host-containers.control.enabled`: Whether the control container is enabled.
-* `settings.host-containers.control.superpowered`: Whether the control container has high levels of access to the Thar host.
+* `settings.host-containers.control.superpowered`: Whether the control container has high levels of access to the Bottlerocket host.
 
 ##### Custom host containers
 
@@ -313,8 +313,8 @@ If the `enabled` flag is `true`, it will be started automatically.
 
 All host containers will have the `apiclient` binary available at `/usr/local/bin/apiclient` so they're able to [interact with the API](#using-the-api-client).
 
-In addition, all host containers come with persistent storage at `/.thar/host-containers/$HOST_CONTAINER_NAME` that is persisted across reboots and container start/stop cycles.
-The default `admin` host-container, for example, store its SSH host keys under `/.thar/host-containers/admin/etc/ssh/`.
+In addition, all host containers come with persistent storage at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME` that is persisted across reboots and container start/stop cycles.
+The default `admin` host-container, for example, store its SSH host keys under `/.bottlerocket/host-containers/admin/etc/ssh/`.
 
 There are a few important caveats to understand about host containers:
 * They're not orchestrated.  They only start or stop according to that `enabled` flag.
@@ -334,14 +334,14 @@ Be careful, and make sure you have a similar low-level use case before reaching 
 We use [dm-verity](https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity) to load a verified read-only root filesystem, preventing some classes of persistent security threats.
 Only a few locations are made writable:
 * some through [tmpfs mounts](workspaces/preinit/laika), used for configuration, that don't persist over a restart.
-* one [persistent location](packages/release/var-lib-thar.mount) for the data store.
+* one [persistent location](packages/release/var-lib-bottlerocket.mount) for the data store.
 
 Almost all first-party components are written in [Rust](https://www.rust-lang.org/).
 Rust eliminates some classes of memory safety issues, and encourages design patterns that help security.
 
 ### Packaging
 
-Thar is built from source using a container toolchain.
+Bottlerocket is built from source using a container toolchain.
 We use RPM package definitions to build and install individual packages into an image.
 RPM itself is not in the image - it's just a common and convenient package definition format.
 
@@ -362,8 +362,8 @@ For further documentation or to see the rest of the packages, see the [packaging
 
 ### Updates
 
-The Thar image has two identical sets of partitions, A and B.
-When updating Thar, the partition table is updated to point from set A to set B, or vice versa.
+The Bottlerocket image has two identical sets of partitions, A and B.
+When updating Bottlerocket, the partition table is updated to point from set A to set B, or vice versa.
 
 We also track successful boots, and if there are failures it will automatically revert back to the prior working partition set.
 
@@ -372,13 +372,13 @@ For more details, see the [update system documentation](workspaces/updater/).
 
 ### API
 
-There are two main ways you'd interact with a production Thar instance.
+There are two main ways you'd interact with a production Bottlerocket instance.
 (There are a couple more [exploration](#exploration) methods above for test instances.)
 
 The first method is through a container orchestrator, for when you want to run or manage containers.
 This uses the standard channel for your orchestrator, for example a tool like `kubectl` for Kubernetes.
 
-The second method is through the Thar API, for example when you want to configure the system.
+The second method is through the Bottlerocket API, for example when you want to configure the system.
 
 There's an HTTP API server that listens on a local Unix-domain socket.
 Remote access to the API requires an authenticated transport such as SSM's RunCommand or Session Manager, as described above.
@@ -388,11 +388,11 @@ The [apiclient](workspaces/api/apiclient/) can be used to make requests.
 They're just HTTP requests, but the API client simplifies making requests with the Unix-domain socket.
 
 To make configuration easier, we have [moondog](workspaces/api/moondog/), which can send an API request for you based on instance user data.
-If you start a virtual machine, like an EC2 instance, it will read TOML-formatted Thar configuration from user data and send it to the API server.
-This way, you can configure your Thar instance without having to make API calls after launch.
+If you start a virtual machine, like an EC2 instance, it will read TOML-formatted Bottlerocket configuration from user data and send it to the API server.
+This way, you can configure your Bottlerocket instance without having to make API calls after launch.
 
 See [Settings](#settings) above for examples and to understand what you can configure.
 
-The server and client are the user-facing components of the API system, but there are a number of other components that work together to make sure your settings are applied, and that they survive upgrades of Thar.
+The server and client are the user-facing components of the API system, but there are a number of other components that work together to make sure your settings are applied, and that they survive upgrades of Bottlerocket.
 
 For more details, see the [API system documentation](workspaces/api/).
