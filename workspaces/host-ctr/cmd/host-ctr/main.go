@@ -142,14 +142,14 @@ func _main() int {
 		oci.WithHostResolvconf,
 		// Launch the container under the systemd unit's cgroup
 		oci.WithCgroup(cgroupPath),
-		// Mount in the API socket for the Thar API server, and the API client used to interact with it
+		// Mount in the API socket for the Bottlerocket API server, and the API client used to interact with it
 		oci.WithMounts([]runtimespec.Mount{
 			{
 				Options:     []string{"bind", "rw"},
 				Destination: "/run/api.sock",
 				Source:      "/run/api.sock",
 			},
-			// Mount in the apiclient to make API calls to the Thar API server
+			// Mount in the apiclient to make API calls to the Bottlerocket API server
 			{
 				Options:     []string{"bind", "ro"},
 				Destination: "/usr/local/bin/apiclient",
@@ -158,7 +158,7 @@ func _main() int {
 			// Mount in the persistent storage location for this container
 			{
 				Options:     []string{"rbind", "rw"},
-				Destination: "/.thar/host-containers/" + targetCtr,
+				Destination: "/.bottlerocket/host-containers/" + targetCtr,
 				Source:      "/local/host-containers/" + targetCtr,
 			}}),
 		withSuperpowered(superpowered),
@@ -305,7 +305,7 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 		oci.WithMounts([]runtimespec.Mount{
 			{
 				Options:     []string{"rbind", "ro"},
-				Destination: "/.thar/rootfs",
+				Destination: "/.bottlerocket/rootfs",
 				Source:      "/",
 			},
 			{
