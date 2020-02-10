@@ -13,7 +13,7 @@ done
 
 mkdir -p "${OUTPUT_DIR}"
 
-FILENAME_PREFIX="thar-${ARCH}-${VARIANT}-${VERSION_ID}-${BUILD_ID}"
+FILENAME_PREFIX="bottlerocket-${ARCH}-${VARIANT}-${VERSION_ID}-${BUILD_ID}"
 DISK_IMAGE_NAME="${FILENAME_PREFIX}.img.lz4"
 BOOT_IMAGE_NAME="${FILENAME_PREFIX}-boot.ext4.lz4"
 VERITY_IMAGE_NAME="${FILENAME_PREFIX}-root.verity.lz4"
@@ -27,7 +27,7 @@ ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
 EFI_IMAGE="$(mktemp)"
 PRIVATE_IMAGE="$(mktemp)"
-THAR_DATA="$(mktemp)"
+BOTTLEROCKET_DATA="$(mktemp)"
 
 ROOT_MOUNT="$(mktemp -d)"
 BOOT_MOUNT="$(mktemp -d)"
@@ -42,44 +42,45 @@ VERITY_HASH_BLOCK_SIZE=4096
 # Define partition type GUIDs for all OS-managed partitions. This is required
 # for the boot partition, where we set gptprio bits in the GUID-specific use
 # field, but we might as well do it for all of them.
-THAR_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
+BOTTLEROCKET_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
 EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-THAR_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
-THAR_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
-THAR_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
-THAR_PRIVATE_TYPECODE="440408bb-eb0b-4328-a6e5-a29038fad706"
+BOTTLEROCKET_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
+BOTTLEROCKET_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
+BOTTLEROCKET_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
+BOTTLEROCKET_PRIVATE_TYPECODE="440408bb-eb0b-4328-a6e5-a29038fad706"
 
 if [[ "${ARCH}" == "x86_64" ]]; then
   FIRM_NAME="BIOS-BOOT"
-  THAR_FIRM_TYPECODE="ef02"
+  BOTTLEROCKET_FIRM_TYPECODE="ef02"
 else
   FIRM_NAME="EFI_BOOT"
-  THAR_FIRM_TYPECODE="${EFI_SYSTEM_TYPECODE}"
+  BOTTLEROCKET_FIRM_TYPECODE="${EFI_SYSTEM_TYPECODE}"
 fi
 
 truncate -s 2G "${DISK_IMAGE}"
 # boot: 40M + root: 920M + hash: 10M + reserved: 30M = 1000M
 # boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
 # partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
+# TODO: change "THAR" to "BOTTLEROCKET" (here and below) in the labels when we're ready for that upgrade-breaking change
 sgdisk --clear \
-   -n 0:2005M:2047M -c 0:"THAR-PRIVATE"    -t 0:"${THAR_PRIVATE_TYPECODE}" \
-   -n 0:1975M:0     -c 0:"THAR-RESERVED-B" -t 0:"${THAR_RESERVED_TYPECODE}" \
-   -n 0:1965M:0     -c 0:"THAR-HASH-B"     -t 0:"${THAR_HASH_TYPECODE}" \
-   -n 0:1045M:0     -c 0:"THAR-ROOT-B"     -t 0:"${THAR_ROOT_TYPECODE}" \
-   -n 0:1005M:0     -c 0:"THAR-BOOT-B"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
-   -n 0:975M:0      -c 0:"THAR-RESERVED-A" -t 0:"${THAR_RESERVED_TYPECODE}" \
-   -n 0:965M:0      -c 0:"THAR-HASH-A"     -t 0:"${THAR_HASH_TYPECODE}" \
-   -n 0:45M:0       -c 0:"THAR-ROOT-A"     -t 0:"${THAR_ROOT_TYPECODE}" \
-   -n 0:5M:0        -c 0:"THAR-BOOT-A"     -t 0:"${THAR_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
-   -n 0:1M:0        -c 0:"${FIRM_NAME}"    -t 0:"${THAR_FIRM_TYPECODE}" \
+   -n 0:2005M:2047M -c 0:"THAR-PRIVATE"    -t 0:"${BOTTLEROCKET_PRIVATE_TYPECODE}" \
+   -n 0:1975M:0     -c 0:"THAR-RESERVED-B" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
+   -n 0:1965M:0     -c 0:"THAR-HASH-B"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
+   -n 0:1045M:0     -c 0:"THAR-ROOT-B"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
+   -n 0:1005M:0     -c 0:"THAR-BOOT-B"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
+   -n 0:975M:0      -c 0:"THAR-RESERVED-A" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
+   -n 0:965M:0      -c 0:"THAR-HASH-A"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
+   -n 0:45M:0       -c 0:"THAR-ROOT-A"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
+   -n 0:5M:0        -c 0:"THAR-BOOT-A"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
+   -n 0:1M:0        -c 0:"${FIRM_NAME}"    -t 0:"${BOTTLEROCKET_FIRM_TYPECODE}" \
    --sort --print "${DISK_IMAGE}"
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
-mksquashfs "${ROOT_MOUNT}"/usr/share/licenses "${ROOT_MOUNT}"/usr/share/thar/licenses.squashfs
+mksquashfs "${ROOT_MOUNT}"/usr/share/licenses "${ROOT_MOUNT}"/usr/share/bottlerocket/licenses.squashfs
 rm -rf "${ROOT_MOUNT}"/var/lib "${ROOT_MOUNT}"/usr/share/licenses/*
 
 if [[ "${ARCH}" == "x86_64" ]]; then
-  SYS_ROOT="x86_64-thar-linux-gnu/sys-root"
+  SYS_ROOT="x86_64-bottlerocket-linux-gnu/sys-root"
   # MBR and BIOS-BOOT
   echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
   "${ROOT_MOUNT}/sbin/grub-bios-setup" \
@@ -91,7 +92,7 @@ if [[ "${ARCH}" == "x86_64" ]]; then
 
   rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
 else
-  SYS_ROOT="aarch64-thar-linux-gnu/sys-root"
+  SYS_ROOT="aarch64-bottlerocket-linux-gnu/sys-root"
   # For aarch64 we need an EFI partition instead, formatted
   # FAT32 with the .efi binary at the correct path, eg /efi/boot.
   # grub-mkimage has put bootaa64.efi at /boot/efi/EFI/BOOT
@@ -113,8 +114,8 @@ fi
 # Now that we're done messing with /, move /boot out of it
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
-# Set the Thar variant, version, and build-id
-echo "PRETTY_NAME=\"Thar, The Operating System (${VERSION_ID})\"" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
+# Set the Bottlerocket variant, version, and build-id
+echo "PRETTY_NAME=\"Bottlerocket OS ${VERSION_ID}\"" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 echo "VARIANT_ID=${VARIANT}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 echo "VERSION_ID=${VERSION_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 echo "BUILD_ID=${BUILD_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
@@ -149,7 +150,7 @@ cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
 set default="0"
 set timeout="0"
 
-menuentry "Thar" {
+menuentry "Bottlerocket OS ${VERSION_ID}" {
    linux (\$root)/vmlinuz root=/dev/dm-0 rootwait ro init=/sbin/preinit \\
        audit=0 console=tty0 console=ttyS0 random.trust_cpu=on \\
        systemd.log_target=journal-or-kmsg net.ifnames=0 biosdevname=0 \\
@@ -180,8 +181,8 @@ sgdisk --clear \
    -n 0:1M:1023M -c 0:"THAR-DATA" -t 0:8300 \
    --sort --print "${DATA_IMAGE}"
 mkdir -p "${DATA_MOUNT}/var/"{cache,lib,log,spool}
-mkfs.ext4 -L "THAR-DATA" -d "${DATA_MOUNT}" "${THAR_DATA}" 1022M
-dd if="${THAR_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek=1
+mkfs.ext4 -L "THAR-DATA" -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" 1022M
+dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek=1
 
 sgdisk -v "${DISK_IMAGE}"
 sgdisk -v "${DATA_IMAGE}"

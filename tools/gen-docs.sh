@@ -15,11 +15,11 @@ for doc in "${DOCS[@]}"; do
     grip --title="${doc}" --export \
         <(
             cat <<'EOF'
-@@THAR-SENTINEL-START@@
-**The best way to get in touch with the Thar development team** during this early preview
+@@BOTTLEROCKET-SENTINEL-START@@
+**The best way to get in touch with the Bottlerocket development team** during this early preview
 is via [thar-preview@amazon.com](mailto:thar-preview@amazon.com)
 or #thar-preview on the [awsdevelopers Slack workspace](https://awsdevelopers.slack.com) (email us for an invite).
-We'd love to talk with you and hear your feedback on Thar!
+We'd love to talk with you and hear your feedback on Bottlerocket!
 <br><br>
 [&larr; Documentation index](/START.md)
 
@@ -32,7 +32,7 @@ EOF
     sed -i \
         -e 's/.*<link rel="stylesheet".*octicons\.css.*/<style>.markdown-body .anchor span:before { font-size: 16px; content: "\\1f517"; }<\/style>/' \
         -e '/<link rel="icon"/d' \
-        -e 's/<p>@@THAR-SENTINEL-START@@/<p style="background-color: #a8dfee; border: 1px solid #008296; padding: 1em;">/' \
+        -e 's/<p>@@BOTTLEROCKET-SENTINEL-START@@/<p style="background-color: #a8dfee; border: 1px solid #008296; padding: 1em;">/' \
         -e 's/<a href="\([^ ">]*\).md/<a href="\1.html/g' \
         -e 's^<a href="\.\./\.\./pull/[^ ">]*">\(#[0-9]\+\)</a>^\1^g' \
         "${out}"

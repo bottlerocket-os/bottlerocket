@@ -31,7 +31,7 @@ Required:
 
 Optional:
    --kube-conformance-version   The version of the conformance image to use for conformance testing (default "${DEFAULT_KUBE_CONFORMANCE_VERSION}")
-   --num-nodes                  The number of Thar worker nodes to launch (default ${DEFAULT_NUM_NODES})
+   --num-nodes                  The number of Bottlerocket worker nodes to launch (default ${DEFAULT_NUM_NODES})
 EOF
 }
 
@@ -74,7 +74,7 @@ parse_args() {
 
 cleanup() {
   if [ ${#instance_ids[@]} -ne 0 ]; then
-    echo "Cleaning up Thar worker node instances"
+    echo "Cleaning up Bottlerocket worker node instances"
     for instance_id in "${instance_ids[@]}"; do
       aws ec2 terminate-instances \
         --output text \
@@ -116,7 +116,7 @@ else
   exit 1
 fi
 
-echo "Launching ${NUM_NODES} Thar worker nodes"
+echo "Launching ${NUM_NODES} Bottlerocket worker nodes"
 unset instance_ids
 counter=0
 while [ ${counter} -lt "${NUM_NODES}" ]; do
@@ -139,11 +139,11 @@ while [ ${counter} -lt "${NUM_NODES}" ]; do
 done
 actual_num_nodes=${#instance_ids[@]}
 if [ "${actual_num_nodes}" -ne "${NUM_NODES}" ]; then
-  echo "* Failed to launch requested number of Thar instances: launched ${actual_num_nodes} out of ${NUM_NODES}." >&2
+  echo "* Failed to launch requested number of Bottlerocket instances: launched ${actual_num_nodes} out of ${NUM_NODES}." >&2
   exit 1
 fi
 
-echo "Waiting for all Thar worker nodes to become 'Ready' in ${CLUSTER_NAME} cluster"
+echo "Waiting for all Bottlerocket worker nodes to become 'Ready' in ${CLUSTER_NAME} cluster"
 KUBECTL="kubectl --kubeconfig ${KUBECONFIG_FILE}"
 MAX_ATTEMPTS=30
 attempts=0

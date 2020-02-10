@@ -129,7 +129,7 @@ ${KUBECTL} patch daemonset aws-node \
   -p "${CNI_PLUGIN_PATCH}"
 exit_on_error ${?} "* Failed to patch CNI plugin"
 
-echo "Generating userdata file for launching Thar worker nodes"
+echo "Generating userdata file for launching Bottlerocket worker nodes"
 endpoint=$(set -o pipefail; \
   eksctl get cluster -r "${REGION}" -n "${CLUSTER_NAME}" -o json \
   | jq --raw-output '.[].Endpoint')
@@ -171,7 +171,7 @@ subnet_ids=($(set -o pipefail; \
   --region "${REGION}" \
   --filters "Name=tag:Name,Values=eksctl-${CLUSTER_NAME}-cluster/SubnetPrivate*" \
   --output json | jq --raw-output '.Subnets[].SubnetId'))
-exit_on_error ${?} "* Failed to get subnet ID for launching thar worker nodes"
+exit_on_error ${?} "* Failed to get subnet ID for launching bottlerocket worker nodes"
 
 
 # Allow TCP traffic over ports 1-1024 for Kubernetes conformance testing
@@ -215,7 +215,7 @@ aws ec2 authorize-security-group-egress \
   --source-group "${nodegroup_sg}"
 exit_on_error ${?} "* Failed to authorize control plane sg egress rules"
 
-echo "Generating env file for launching Thar worker nodes"
+echo "Generating env file for launching Bottlerocket worker nodes"
 cat > "${CLUSTER_NAME}.env" <<EOF
 CLUSTER_NAME="${CLUSTER_NAME}"
 REGION="${REGION}"

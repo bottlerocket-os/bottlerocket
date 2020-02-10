@@ -8,7 +8,7 @@ Parameters:
     Description: 'The parameter name of the signing key to grant access to'
     Type: String
     AllowedPattern: ^/.*$
-    Default: '/thar/root-key'
+    Default: '/bottlerocket/root-key'
   KMSKeyId:
     Description: 'The key id of the KMS key used to encrypt the signing key parameter into a secure string'
     Type: String

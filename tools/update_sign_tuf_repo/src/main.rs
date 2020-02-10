@@ -8,15 +8,15 @@ Using a signing key that it pulls down via SSM Secure Parameters, it will sign t
 # Running
 
 In order the run this code, you must have:
-* Current `Thar` code repository (more specifically `Release.toml`, and a trusted `root.json`)
-* Built Thar artifacts in a directory (the images that end up in `/build` and suffixed with `.lz4`)
+* Current `Bottlerocket` code repository (more specifically `Release.toml`, and a trusted `root.json`)
+* Built Bottlerocket artifacts in a directory (the images that end up in `/build` and suffixed with `.lz4`)
 * The metadata and target URLs for an existing TUF repository (most likely in S3)
 
 Currently the code expects the following environment variables to be set:
-* `CODEBUILD_SRC_DIR` (subject to change) This is the directory where your `Thar` repository lives
+* `CODEBUILD_SRC_DIR` (subject to change) This is the directory where your `Bottlerocket` repository lives
 * `ARCH` : architecture for your current set of images (i.e. `x86_64`)
-* `FLAVOR` : Variant of Thar for your current set of images (i.e. `aws-k8s`)
-* `INPUT_BUILDSYS_ARTIFACTS` : A directory containing the built Thar images
+* `FLAVOR` : Variant of Bottlerocket for your current set of images (i.e. `aws-k8s`)
+* `INPUT_BUILDSYS_ARTIFACTS` : A directory containing the built Bottlerocket images
 * `METADATA_URL` : Metadata URL for your existing TUF repo
 * `TARGET_URL` : Target URL for your existing TUF repo
 * `REFRESH_DAYS` : After how many days does metadata expire? (an integer, i.e. `7`)
@@ -68,7 +68,7 @@ const ROOT_JSON: &str = "root.json";
 const TUF_MANIFEST_JSON: &str = "manifest.json";
 const RELEASE_TOML: &str = "Release.toml";
 const FILES_TO_SIGN: &[&str] = &["boot", "root", "verity"];
-const OS_NAME: &str = "thar";
+const OS_NAME: &str = "bottlerocket";
 
 mod error {
     use snafu::Snafu;
