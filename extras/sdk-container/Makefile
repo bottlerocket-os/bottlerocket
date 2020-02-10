@@ -1,8 +1,8 @@
 ARCH ?= $(shell uname -m)
 
 VERSION := v0.7
-TAG := thar/sdk-$(ARCH):$(VERSION)
-ARCHIVE := thar-sdk-$(ARCH)-$(VERSION).tar.gz
+TAG := bottlerocket/sdk-$(ARCH):$(VERSION)
+ARCHIVE := bottlerocket-sdk-$(ARCH)-$(VERSION).tar.gz
 
 $(ARCHIVE) :
 	@DOCKER_BUILDKIT=1 docker build . -t $(TAG) --squash --build-arg ARCH=$(ARCH)

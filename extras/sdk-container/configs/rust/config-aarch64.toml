@@ -28,18 +28,18 @@ prefix = "/usr/libexec/rust"
 sysconfdir = "/usr/libexec/rust/etc"
 
 [target.aarch64-unknown-linux-gnu]
-cc = "aarch64-thar-linux-gnu-gcc"
-cxx = "aarch64-thar-linux-gnu-g++"
-ar = "/usr/bin/aarch64-thar-linux-gnu-ar"
-ranlib = "/usr/bin/aarch64-thar-linux-gnu-ranlib"
-linker = "aarch64-thar-linux-gnu-gcc"
+cc = "aarch64-bottlerocket-linux-gnu-gcc"
+cxx = "aarch64-bottlerocket-linux-gnu-g++"
+ar = "/usr/bin/aarch64-bottlerocket-linux-gnu-ar"
+ranlib = "/usr/bin/aarch64-bottlerocket-linux-gnu-ranlib"
+linker = "aarch64-bottlerocket-linux-gnu-gcc"
 crt-static = false
 
 [target.aarch64-unknown-linux-musl]
-cc = "aarch64-thar-linux-musl-gcc"
-cxx = "aarch64-thar-linux-musl-g++"
-ar = "/usr/bin/aarch64-thar-linux-musl-ar"
-ranlib = "/usr/bin/aarch64-thar-linux-musl-ranlib"
-linker = "aarch64-thar-linux-musl-gcc"
-musl-root = "/aarch64-thar-linux-musl/sys-root/usr"
+cc = "aarch64-bottlerocket-linux-musl-gcc"
+cxx = "aarch64-bottlerocket-linux-musl-g++"
+ar = "/usr/bin/aarch64-bottlerocket-linux-musl-ar"
+ranlib = "/usr/bin/aarch64-bottlerocket-linux-musl-ranlib"
+linker = "aarch64-bottlerocket-linux-musl-gcc"
+musl-root = "/aarch64-bottlerocket-linux-musl/sys-root/usr"
 crt-static = true

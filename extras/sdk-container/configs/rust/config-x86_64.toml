@@ -27,10 +27,10 @@ prefix = "/usr/libexec/rust"
 sysconfdir = "/usr/libexec/rust/etc"
 
 [target.x86_64-unknown-linux-musl]
-cc = "x86_64-thar-linux-musl-gcc"
-cxx = "x86_64-thar-linux-musl-g++"
-ar = "/usr/bin/x86_64-thar-linux-musl-ar"
-ranlib = "/usr/bin/x86_64-thar-linux-musl-ranlib"
-linker = "x86_64-thar-linux-musl-gcc"
-musl-root = "/x86_64-thar-linux-musl/sys-root/usr"
+cc = "x86_64-bottlerocket-linux-musl-gcc"
+cxx = "x86_64-bottlerocket-linux-musl-g++"
+ar = "/usr/bin/x86_64-bottlerocket-linux-musl-ar"
+ranlib = "/usr/bin/x86_64-bottlerocket-linux-musl-ranlib"
+linker = "x86_64-bottlerocket-linux-musl-gcc"
+musl-root = "/x86_64-bottlerocket-linux-musl/sys-root/usr"
 crt-static = true

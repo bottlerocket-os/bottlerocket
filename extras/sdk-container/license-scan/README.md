@@ -1,13 +1,13 @@
-# Thar's license-scan tool
+# Bottlerocket's license-scan tool
 
 In a traditional package-based Linux distribution, upstream sources installed on the host have entries in a database that list the name, upstream URL, and license information.
 The license files are generally also provided on the filesystem.
 
-Thar is not a package-based Linux distribution, so an alternative to attributing third-party software must be present.
+Bottlerocket is not a package-based Linux distribution, so an alternative to attributing third-party software must be present.
 The **license-scan** tool scans third-party code from sources such as the Go vendor directory or the Cargo dependency graph.
 It writes attribution information for the software, along with the result of a license scan and copies of the license files, to a directory structure.
 
-The Thar build system uses this tool to generate the /usr/share/licenses directory for Go and Rust projects.
+The Bottlerocket build system uses this tool to generate the /usr/share/licenses directory for Go and Rust projects.
 
 ## Logic
 
@@ -22,9 +22,9 @@ The attribution.txt contains the name of the package, the URL if it's reasonable
 Some types of files, like `NOTICE` or `PATENTS`, are statements to distribute along with the license text, but are not themselves scannable licenses.
 If they fail to scan, they're ignored but still copied into the output directory.
 
-## Use in the Thar build system
+## Use in the Bottlerocket build system
 
-The RPM macro `%cross_scan_attribution` calls `thar-license-scan` with the `--spdx-data` and `--out-dir` options.
+The RPM macro `%cross_scan_attribution` calls `bottlerocket-license-scan` with the `--spdx-data` and `--out-dir` options.
 The package's spec file can list additional options, then lists the subcommand and any subcommand options.
 For example, a Go project might write:
 

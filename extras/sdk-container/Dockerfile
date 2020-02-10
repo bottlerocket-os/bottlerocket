@@ -83,16 +83,16 @@ COPY --from=toolchain-gnu \
   /home/builder/buildroot/output/${ARCH}-gnu/toolchain/ /
 COPY --from=toolchain-gnu \
   /home/builder/buildroot/output/${ARCH}-gnu/build/linux-headers-${KVER}/usr/include/ \
-  /${ARCH}-thar-linux-gnu/sys-root/usr/include/
+  /${ARCH}-bottlerocket-linux-gnu/sys-root/usr/include/
 COPY --from=toolchain-gnu \
   /home/builder/buildroot/licenses/ \
-  /${ARCH}-thar-linux-gnu/sys-root/usr/share/licenses/thar-${ARCH}-libgcc/
+  /${ARCH}-bottlerocket-linux-gnu/sys-root/usr/share/licenses/bottlerocket-${ARCH}-libgcc/
 
 COPY --from=toolchain-musl \
   /home/builder/buildroot/output/${ARCH}-musl/toolchain/ /
 COPY --from=toolchain-musl \
   /home/builder/buildroot/output/${ARCH}-musl/build/linux-headers-${KVER}/usr/include/ \
-  /${ARCH}-thar-linux-musl/sys-root/usr/include/
+  /${ARCH}-bottlerocket-linux-musl/sys-root/usr/include/
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -114,7 +114,7 @@ RUN \
   mkdir build
 
 ARG ARCH
-ARG TARGET="${ARCH}-thar-linux-gnu"
+ARG TARGET="${ARCH}-bottlerocket-linux-gnu"
 ARG SYSROOT="/${TARGET}/sys-root"
 ARG CFLAGS="-O2 -g -Wp,-D_GLIBCXX_ASSERTIONS -fstack-clash-protection"
 ARG CXXFLAGS="${CFLAGS}"
@@ -166,7 +166,7 @@ RUN \
   mv musl-${MUSLVER} musl
 
 ARG ARCH
-ARG TARGET="${ARCH}-thar-linux-musl"
+ARG TARGET="${ARCH}-bottlerocket-linux-musl"
 ARG SYSROOT="/${TARGET}/sys-root"
 ARG CFLAGS="-O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-clash-protection"
 ARG LDFLAGS="-Wl,-z,relro -Wl,-z,now"
@@ -231,9 +231,9 @@ RUN make install-unwind DESTDIR="${SYSROOT}"
 FROM sdk as sdk-libc
 
 ARG ARCH
-ARG GNU_TARGET="${ARCH}-thar-linux-gnu"
+ARG GNU_TARGET="${ARCH}-bottlerocket-linux-gnu"
 ARG GNU_SYSROOT="/${GNU_TARGET}/sys-root"
-ARG MUSL_TARGET="${ARCH}-thar-linux-musl"
+ARG MUSL_TARGET="${ARCH}-bottlerocket-linux-musl"
 ARG MUSL_SYSROOT="/${MUSL_TARGET}/sys-root"
 
 COPY --from=sdk-gnu ${GNU_SYSROOT}/ ${GNU_SYSROOT}/
@@ -249,7 +249,7 @@ RUN \
   chown -R builder:builder /usr/libexec/rust
 
 ARG ARCH
-ARG TARGET="${ARCH}-thar-linux-gnu"
+ARG TARGET="${ARCH}-bottlerocket-linux-gnu"
 ARG RUSTVER="1.41.0"
 
 USER builder
@@ -279,7 +279,7 @@ ENV PATH="/usr/libexec/rust/bin:$PATH" LD_LIBRARY_PATH="/usr/libexec/rust/lib"
 FROM sdk-libc as sdk-go
 
 ARG ARCH
-ARG TARGET="${ARCH}-thar-linux-gnu"
+ARG TARGET="${ARCH}-bottlerocket-linux-gnu"
 ARG GOVER="1.13.4"
 
 USER root
@@ -352,7 +352,7 @@ RUN \
   mv license-list-data-${SPDXVER} license-list-data
 COPY license-scan /home/builder/license-scan
 RUN cargo build --release --locked
-RUN install -p -m 0755 target/release/thar-license-scan /usr/libexec/tools/
+RUN install -p -m 0755 target/release/bottlerocket-license-scan /usr/libexec/tools/
 RUN cp -r license-list-data/json/details /usr/libexec/tools/spdx-data
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -362,9 +362,9 @@ FROM scratch as sdk-final
 USER root
 
 ARG ARCH
-ARG GNU_TARGET="${ARCH}-thar-linux-gnu"
+ARG GNU_TARGET="${ARCH}-bottlerocket-linux-gnu"
 ARG GNU_SYSROOT="/${GNU_TARGET}/sys-root"
-ARG MUSL_TARGET="${ARCH}-thar-linux-musl"
+ARG MUSL_TARGET="${ARCH}-bottlerocket-linux-musl"
 ARG MUSL_SYSROOT="/${MUSL_TARGET}/sys-root"
 
 WORKDIR /
@@ -381,7 +381,7 @@ COPY --chown=0:0 --from=sdk-musl ${MUSL_SYSROOT}/ ${MUSL_SYSROOT}/
 COPY --chown=0:0 --from=sdk-rust /usr/libexec/rust/ /usr/libexec/rust/
 COPY --chown=0:0 --from=sdk-rust \
   /home/builder/rust/licenses/ \
-  /${ARCH}-thar-linux-gnu/sys-root/usr/share/licenses/thar-${ARCH}-libstd-rust/
+  /${ARCH}-bottlerocket-linux-gnu/sys-root/usr/share/licenses/bottlerocket-${ARCH}-libstd-rust/
 
 # "sdk-go" has the Go toolchain and standard library builds.
 COPY --chown=0:0 --from=sdk-go /home/builder/go/bin /usr/libexec/go/bin/
