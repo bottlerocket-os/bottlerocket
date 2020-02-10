@@ -1,7 +1,7 @@
 /*!
 # Introduction
 
-laika is a preinit agent that mounts the necessary filesystems for setting up Thar.
+laika is a preinit agent that mounts the necessary filesystems for setting up Bottlerocket.
 
 After the filesystems are mounted, laika then invokes the init process.
 */
