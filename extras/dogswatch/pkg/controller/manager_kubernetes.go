@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
-	"github.com/amazonlinux/thar/dogswatch/pkg/k8sutil"
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/intent"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/k8sutil"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"

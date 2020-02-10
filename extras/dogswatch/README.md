@@ -1,6 +1,6 @@
 # Dogswatch: Update Operator
 
-Dogswatch is a [Kubernetes operator](https://Kubernetes.io/docs/concepts/extend-Kubernetes/operator/) that coordinates update activities on Thar hosts in a Kubernetes cluster.
+Dogswatch is a [Kubernetes operator](https://Kubernetes.io/docs/concepts/extend-Kubernetes/operator/) that coordinates update activities on Bottlerocket hosts in a Kubernetes cluster.
 
 ## How to Run on Kubernetes
 
@@ -17,11 +17,11 @@ To run the Dogswatch Operator in a Kubernetes cluster, the following are require
 
 - **Agent DaemonSet**
 
-  Scheduling Agent on Thar hosts
+  Scheduling Agent on Bottlerocket hosts
 
-- **Thar Namespace**
+- **Bottlerocket Namespace**
 
-  Grouping Thar related resources and roles.
+  Grouping Bottlerocket related resources and roles.
 
 - **Service Account for the Agent**
 
@@ -40,33 +40,33 @@ To run the Dogswatch Operator in a Kubernetes cluster, the following are require
   Applied to the Controller Service Account for manipulating annotations on Node resources as well as cordon & uncordoning for updates.
   The Controller also must be able to un-schedule (`delete`) Pods running on Nodes that will be updated.
 
-Cluster administrators can deploy dogswatch with [suggested configuration defined here](./dogswatch.yaml) - this includes the above resources and Thar published container images.
+Cluster administrators can deploy dogswatch with [suggested configuration defined here](./dogswatch.yaml) - this includes the above resources and Bottlerocket published container images.
 The dogswatch deployment can be applied to a cluster by calling `kubectl apply -f ./dogswatch.yaml` with an appropriately configured `kubectl` client for the target cluster.
 
 Once resources are in place one last step is required to let the Kubernetes schedule place the required Pods.
-The deployments control scheduling of the dogswatch pods by limiting Pods to appropriate Thar hosts using labels.
+The deployments control scheduling of the dogswatch pods by limiting Pods to appropriate Bottlerocket hosts using labels.
 For now, these labels are not applied automatically at boot and will need to be set on each Node resource using a tool like `kubectl`.
 
-Each Node that is running Thar must be labeled with the Node's `platform-version` (a host compatibility indicator) in order to have `dogswatch` Pods scheduled on them, the label `thar.amazonaws.com/platform-version` is used for this:
+Each Node that is running Bottlerocket must be labeled with the Node's `platform-version` (a host compatibility indicator) in order to have `dogswatch` Pods scheduled on them, the label `bottlerocket.amazonaws.com/platform-version` is used for this:
 
 ``` text
-thar.amazonaws.com/platform-version=1.0.0
+bottlerocket.amazonaws.com/platform-version=1.0.0
 ```
 
 `kubectl` may be used to set this label on a Node:
 
 ``` sh
-: kubectl label node $NODE_NAME thar.amazonaws.com/platform-version=1.0.0
+: kubectl label node $NODE_NAME bottlerocket.amazonaws.com/platform-version=1.0.0
 ```
 
-If all Nodes in the cluster are running Thar, they can all be labeled at the same time with a single command:
+If all Nodes in the cluster are running Bottlerocket, they can all be labeled at the same time with a single command:
 
 ``` sh
-: kubectl label node $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}') thar.amazonaws.com/platform-version=1.0.0
+: kubectl label node $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}') bottlerocket.amazonaws.com/platform-version=1.0.0
 ```
 
 In the [development example deployment](./dev/deployment.yaml) the resources specify conditions that the Kubernetes Schedulers uses to place Pods in the Cluster.
-These conditions, among others, include a constraint on each Node being labeled as having support for the Operator to function on it: the `thar.amazonaws.com/platform-version` label.
+These conditions, among others, include a constraint on each Node being labeled as having support for the Operator to function on it: the `bottlerocket.amazonaws.com/platform-version` label.
 With this label present and the workloads scheduled, the Agent and Controller process will coordinate an update as soon as the Agent annotates its Node (by default only one update will happen at a time).
 
 To use the [suggested deployment](./dogswatch.yaml) or [development deployment](./dev/deployment.yaml) as a base, any customized resources must be updated to use a customized container image to run.
@@ -78,7 +78,7 @@ Dogswatch is made up of two distinct processes, one of which runs on each host.
 
 - `dogswatch -controller`
 
-  The coordinating process responsible for the handling update of Thar nodes
+  The coordinating process responsible for the handling update of Bottlerocket nodes
   cooperatively with the cluster's workloads.
 
 - `dogswatch -agent`
@@ -102,7 +102,7 @@ The state and pending activity are posted as progress is made.
 ``` sh
 # With a configured kubectl and jq available on $PATH
 kubectl get nodes -o json \
-  | jq -C -S '.items | map(.metadata|{(.name): (.annotations*.labels|to_entries|map(select(.key|startswith("thar")))|from_entries)}) | add'
+  | jq -C -S '.items | map(.metadata|{(.name): (.annotations*.labels|to_entries|map(select(.key|startswith("bottlerocket")))|from_entries)}) | add'
 ```
 
 ### Current Limitations

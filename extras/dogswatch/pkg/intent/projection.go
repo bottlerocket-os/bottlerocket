@@ -1,7 +1,7 @@
 package intent
 
 import (
-	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/marker"
 	"github.com/pkg/errors"
 )
 

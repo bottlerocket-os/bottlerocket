@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: thar
+  name: bottlerocket
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: thar-dogswatch-controller
+  name: bottlerocket-dogswatch-controller
 rules:
   - apiGroups: [""]
     resources: ["nodes"]
@@ -19,20 +19,20 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: thar-dogswatch-controller
+  name: bottlerocket-dogswatch-controller
 subjects:
   - kind: ServiceAccount
     name: dogswatch-controller
-    namespace: thar
+    namespace: bottlerocket
 roleRef:
   kind: ClusterRole
-  name: thar-dogswatch-controller
+  name: bottlerocket-dogswatch-controller
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: thar-dogswatch-agent
+  name: bottlerocket-dogswatch-agent
 rules:
   - apiGroups: [""]
     resources: ["nodes"]
@@ -41,21 +41,21 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: thar-dogswatch-agent
+  name: bottlerocket-dogswatch-agent
 subjects:
   - kind: ServiceAccount
     name: dogswatch-agent
-    namespace: thar
+    namespace: bottlerocket
 roleRef:
   kind: ClusterRole
-  name: thar-dogswatch-agent
+  name: bottlerocket-dogswatch-agent
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: dogswatch-controller
-  namespace: thar
+  namespace: bottlerocket
   annotations:
     kubernetes.io/service-account.name: dogswatch-controller
 ---
@@ -63,7 +63,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: dogswatch-agent
-  namespace: thar
+  namespace: bottlerocket
   annotations:
     kubernetes.io/service-account.name: dogswatch-controller
 ---
@@ -71,7 +71,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dogswatch-controller
-  namespace: thar
+  namespace: bottlerocket
   labels:
     name: dogswatch-controller
     app: dogswatch-controller
@@ -85,7 +85,7 @@ spec:
       app: dogswatch-controller
   template:
     metadata:
-      namespace: thar
+      namespace: bottlerocket
       labels:
         name: dogswatch-controller
         app: dogswatch-controller
@@ -96,13 +96,13 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: thar.amazonaws.com/platform-version
+                  - key: bottlerocket.amazonaws.com/platform-version
                     operator: Exists
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 10
               podAffinityTerm:
-                topologyKey: thar.amazonaws.com/platform-version
+                topologyKey: bottlerocket.amazonaws.com/platform-version
                 labelSelector:
                   matchExpressions:
                     - key: app
@@ -127,7 +127,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: dogswatch-agent
-  namespace: thar
+  namespace: bottlerocket
   labels:
     dogswatch: agent
 spec:
@@ -146,7 +146,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: thar.amazonaws.com/platform-version
+                  - key: bottlerocket.amazonaws.com/platform-version
                     operator: Exists
       hostPID: true
       containers:
@@ -176,7 +176,7 @@ spec:
               memory: 600Mi
           volumeMounts:
             - name: rootfs
-              mountPath: /.thar/rootfs
+              mountPath: /.bottlerocket/rootfs
       volumes:
         - name: rootfs
           hostPath:

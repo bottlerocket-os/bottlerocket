@@ -1,7 +1,7 @@
 # This is the NEXT version tag for the Dogswatch container image.
 DOGSWATCH_VERSION=`cat VERSION`
 
-GOPKG = github.com/amazonlinux/thar/dogswatch
+GOPKG = github.com/amazonlinux/bottlerocket/dogswatch
 GOPKGS = $(GOPKG) $(GOPKG)/pkg/... $(GOPKG)/cmd/...
 GOBIN = ./bin/
 DOCKER_IMAGE := dogswatch
@@ -47,8 +47,8 @@ deploy:
 		| kubectl apply -f -
 
 rollout: deploy
-	kubectl -n thar rollout restart deployment/dogswatch-controller
-	kubectl -n thar rollout restart daemonset/dogswatch-agent
+	kubectl -n bottlerocket rollout restart deployment/dogswatch-controller
+	kubectl -n bottlerocket rollout restart daemonset/dogswatch-agent
 
 rollout-kind: load rollout
 
@@ -61,4 +61,4 @@ dashboard:
 	kubectl proxy
 
 get-nodes-status:
-	kubectl get nodes -o json | jq -C -S '.items | map(.metadata|{(.name): (.annotations*.labels|to_entries|map(select(.key|startswith("thar")))|from_entries)}) | add'
+	kubectl get nodes -o json | jq -C -S '.items | map(.metadata|{(.name): (.annotations*.labels|to_entries|map(select(.key|startswith("bottlerocket")))|from_entries)}) | add'

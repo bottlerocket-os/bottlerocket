@@ -1,6 +1,6 @@
 package agent
 
-import "github.com/amazonlinux/thar/dogswatch/pkg/platform"
+import "github.com/amazonlinux/bottlerocket/dogswatch/pkg/platform"
 
 type progression struct {
 	target platform.Update

@@ -3,13 +3,13 @@ package controller
 import (
 	"context"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/nodestream"
-	"github.com/amazonlinux/thar/dogswatch/pkg/workgroup"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/nodestream"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/workgroup"
 	"k8s.io/client-go/kubernetes"
 )
 
-// Controller is the Dogswatch component that runs coordination for the Thar
+// Controller is the Dogswatch component that runs coordination for the Bottlerocket
 // upgrade processes across many hosts, running the Dogswatch Agent, in a
 // cluster.
 type Controller struct {

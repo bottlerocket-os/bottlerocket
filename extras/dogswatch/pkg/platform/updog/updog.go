@@ -7,13 +7,13 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/thar"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/bottlerocket"
 	"github.com/pkg/errors"
 )
 
 var (
-	updogBin = filepath.Join(thar.PlatformBin, "updog")
+	updogBin = filepath.Join(bottlerocket.PlatformBin, "updog")
 )
 
 const (
@@ -42,7 +42,7 @@ type executable struct {
 }
 
 func (e *executable) runOk(cmd *exec.Cmd) (bool, error) {
-	cmd.SysProcAttr = thar.ProcessAttrs()
+	cmd.SysProcAttr = bottlerocket.ProcessAttrs()
 
 	var buf bytes.Buffer
 	writer := bufio.NewWriter(&buf)
@@ -99,9 +99,9 @@ func (e *executable) Reboot() error {
 }
 
 func (e *executable) Status() (bool, error) {
-	_, err := os.Stat(thar.RootFS + updogBin)
+	_, err := os.Stat(bottlerocket.RootFS + updogBin)
 	if err != nil {
-		return false, errors.Wrap(err, "updog not found in thar container mount "+thar.RootFS)
+		return false, errors.Wrap(err, "updog not found in bottlerocket container mount "+bottlerocket.RootFS)
 	}
 	// TODO: add support for an updog usability check
 	return true, err

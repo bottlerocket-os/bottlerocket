@@ -1,4 +1,4 @@
-package thar
+package bottlerocket
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 
 func TestContainerdSystemdPath(t *testing.T) {
 	t.Log(containerdDropInDir)
-	if containerdDropInDir != "/.thar/rootfs/run/systemd/system/containerd.service.d" {
+	if containerdDropInDir != "/.bottlerocket/rootfs/run/systemd/system/containerd.service.d" {
 		t.Fatal("should have matched")
 	}
 }

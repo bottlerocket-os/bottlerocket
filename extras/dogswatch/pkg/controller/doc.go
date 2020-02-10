@@ -1,8 +1,8 @@
 // Controller manages the state transitions of the node's agent which itself
-// integrates with the Thar platform. The controller takes cluster state into
-// account and manages the nodes at arms length by encoding agreed upon state
-// transitions into a combination of labels and annotations stored as metadata
-// on the Kubernetes Resource Object for each Node.
+// integrates with the Bottlerocket platform. The controller takes cluster
+// state into account and manages the nodes at arms length by encoding agreed
+// upon state transitions into a combination of labels and annotations stored
+// as metadata on the Kubernetes Resource Object for each Node.
 //
 // Currently, this controller is capable of:
 //

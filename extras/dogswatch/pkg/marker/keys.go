@@ -3,8 +3,8 @@ package marker
 type Key = string
 
 const (
-	// Prefix is the common base for Thar's related annotations.
-	Prefix = "thar.amazonaws.com"
+	// Prefix is the common base for Bottlerocket's related annotations.
+	Prefix = "bottlerocket.amazonaws.com"
 
 	// NodeSelectorLabel is used to identify controlled nodes in Kubernetes
 	// selectors.

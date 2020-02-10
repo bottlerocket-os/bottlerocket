@@ -3,8 +3,8 @@ package intent
 import (
 	"fmt"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/marker"
 	"github.com/sirupsen/logrus"
 )
 

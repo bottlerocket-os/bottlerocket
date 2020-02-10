@@ -1,8 +1,8 @@
 package updog
 
 import (
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/platform"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/platform"
 	"github.com/pkg/errors"
 )
 

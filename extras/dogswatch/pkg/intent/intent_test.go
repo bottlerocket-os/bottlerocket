@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/intent/internal/callcheck"
-	"github.com/amazonlinux/thar/dogswatch/pkg/internal/testoutput"
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/intent/internal/callcheck"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/internal/testoutput"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/marker"
 
 	"gotest.tools/assert"
 )

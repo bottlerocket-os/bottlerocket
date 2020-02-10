@@ -1,8 +1,8 @@
-package thar
+package bottlerocket
 
 import "syscall"
 
-const RootFS = "/.thar/rootfs"
+const RootFS = "/.bottlerocket/rootfs"
 
 // PlatformBin is where platform interfacing executables are located.
 const PlatformBin = "/usr/bin"

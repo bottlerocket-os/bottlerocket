@@ -1,4 +1,4 @@
-package thar
+package bottlerocket
 
 import (
 	"io"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
 	systemd "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/coreos/go-systemd/v22/unit"
 	dbus "github.com/godbus/dbus/v5"
@@ -138,17 +138,17 @@ func (c *containerdDropIn) reloadUnit() error {
 
 func (c *containerdDropIn) connect() (*systemd.Conn, error) {
 	dialer := func() (*dbus.Conn, error) {
-		// Connect to the thar systemd socket
+		// Connect to the bottlerocket systemd socket
 		conn, err := dbus.Dial("unix:path=" + systemdSocket)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to connect to thar systemd socket")
+			return nil, errors.Wrap(err, "unable to connect to bottlerocket systemd socket")
 		}
 		// Authenticate with the user's authority.
 		methods := []dbus.Auth{dbus.AuthExternal(strconv.Itoa(os.Getuid()))}
 		err = conn.Auth(methods)
 		if err != nil {
 			conn.Close()
-			return nil, errors.Wrap(err, "unable to authenticate with thar systemd")
+			return nil, errors.Wrap(err, "unable to authenticate with bottlerocket systemd")
 		}
 		return conn, nil
 	}

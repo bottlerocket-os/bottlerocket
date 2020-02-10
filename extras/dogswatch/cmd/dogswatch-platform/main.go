@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/marker"
 )
 
 func main() {

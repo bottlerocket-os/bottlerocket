@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
-	"github.com/amazonlinux/thar/dogswatch/pkg/internal/intents"
-	"github.com/amazonlinux/thar/dogswatch/pkg/internal/testoutput"
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
-	"github.com/amazonlinux/thar/dogswatch/pkg/platform"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/intent"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/internal/intents"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/internal/testoutput"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/marker"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/platform"
 	"gotest.tools/assert"
 )
 

@@ -3,7 +3,7 @@ package nodestream
 import (
 	"context"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"

@@ -7,13 +7,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/amazonlinux/thar/dogswatch/pkg/agent"
-	"github.com/amazonlinux/thar/dogswatch/pkg/controller"
-	"github.com/amazonlinux/thar/dogswatch/pkg/k8sutil"
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
-	"github.com/amazonlinux/thar/dogswatch/pkg/platform/updog"
-	"github.com/amazonlinux/thar/dogswatch/pkg/sigcontext"
-	"github.com/amazonlinux/thar/dogswatch/pkg/thar"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/agent"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/controller"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/k8sutil"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/platform/updog"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/sigcontext"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/bottlerocket"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 )
@@ -74,7 +74,7 @@ func main() {
 	case *flagAgent:
 		if !*flagSkipMitigation {
 			log.Info("checking for necessary mitigations")
-			err := thar.ApplyMitigations()
+			err := bottlerocket.ApplyMitigations()
 			if err != nil {
 				log.WithError(err).Fatalf("unable to perform mitigations")
 			}

@@ -1,4 +1,4 @@
-module github.com/amazonlinux/thar/dogswatch
+module github.com/amazonlinux/bottlerocket/dogswatch
 
 go 1.12
 

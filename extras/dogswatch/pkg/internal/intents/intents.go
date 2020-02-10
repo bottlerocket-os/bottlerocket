@@ -1,8 +1,8 @@
 package intents
 
 import (
-	"github.com/amazonlinux/thar/dogswatch/pkg/intent"
-	"github.com/amazonlinux/thar/dogswatch/pkg/marker"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/intent"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/marker"
 )
 
 const (

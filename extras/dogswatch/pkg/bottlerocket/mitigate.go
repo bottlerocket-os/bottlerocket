@@ -1,7 +1,7 @@
-package thar
+package bottlerocket
 
 import (
-	"github.com/amazonlinux/thar/dogswatch/pkg/logging"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
 	"github.com/pkg/errors"
 )
 
