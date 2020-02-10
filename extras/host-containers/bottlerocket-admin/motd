@@ -1,0 +1,11 @@
+Welcome to Bottlerocket's admin container!
+
+This container provides access to the Bottlerocket host filesystems (see
+/.bottlerocket/rootfs) and contains common tools for inspection and
+troubleshooting.  It is based on Amazon Linux 2, and most things are in the
+same places you would find them on an AL2 host.
+
+To permit more intrusive troubleshooting, including actions that mutate the
+running state of the Bottlerocket host, we provide a tool called "sheltie"
+(`sudo sheltie`).  When run, this tool drops you into a root shell in the
+Bottlerocket host's root filesystem.

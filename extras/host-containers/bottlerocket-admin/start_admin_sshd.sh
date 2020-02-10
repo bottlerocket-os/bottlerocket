@@ -3,7 +3,7 @@ set -e
 
 mkdir -p /home/ec2-user/.ssh/
 chmod 700 /home/ec2-user/.ssh/
-ssh_host_key_dir="/.thar/host-containers/admin/etc/ssh"
+ssh_host_key_dir="/.bottlerocket/host-containers/admin/etc/ssh"
 ssh_config_dir="/home/ec2-user/.ssh"
 
 # Populate authorized_keys with all the public keys found in instance meta-data

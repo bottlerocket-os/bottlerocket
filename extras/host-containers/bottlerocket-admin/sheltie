@@ -9,5 +9,5 @@ fi
 ROOT_FS_PATH="/run/host-containerd/io.containerd.runtime.v1.linux/default/admin/rootfs"
 BASH_PATH="/opt/bin/bash"
 
-# Start the root shell on the Thar host
+# Start the root shell on the Bottlerocket host
 exec nsenter -t 1 -a "${ROOT_FS_PATH}${BASH_PATH}"

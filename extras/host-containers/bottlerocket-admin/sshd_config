@@ -1,6 +1,6 @@
-HostKey /.thar/host-containers/admin/etc/ssh/ssh_host_rsa_key
-HostKey /.thar/host-containers/admin/etc/ssh/ssh_host_ecdsa_key
-HostKey /.thar/host-containers/admin/etc/ssh/ssh_host_ed25519_key
+HostKey /.bottlerocket/host-containers/admin/etc/ssh/ssh_host_rsa_key
+HostKey /.bottlerocket/host-containers/admin/etc/ssh/ssh_host_ecdsa_key
+HostKey /.bottlerocket/host-containers/admin/etc/ssh/ssh_host_ed25519_key
 
 PasswordAuthentication no
 
