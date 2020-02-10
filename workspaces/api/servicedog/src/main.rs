@@ -107,7 +107,7 @@ mod error {
 
 type Result<T> = std::result::Result<T, error::Error>;
 
-/// SettingState represents the possible states of systemd units for Thar
+/// SettingState represents the possible states of systemd units for Bottlerocket
 enum SettingState {
     Enabled,
     Disabled,

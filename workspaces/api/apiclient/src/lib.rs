@@ -7,7 +7,7 @@
 //! socket, and requires you to specify the socket path, the URI (including query string), the
 //! HTTP method, and any request body data.
 //!
-//! In the future, we intend to add methods that understand the Thar API and help more with common
+//! In the future, we intend to add methods that understand the Bottlerocket API and help more with common
 //! types of requests.
 
 // Think "reqwest" but for Unix-domain sockets.  Would be nice to use the simpler reqwest instead

@@ -117,7 +117,7 @@ We could mitigate this downside by deduplicating data through clever inner linki
 
 ### Data store symlink structure
 
-Applications access the data store at `/var/lib/thar/datastore/current` so they don't have to understand the versioning scheme.
+Applications access the data store at `/var/lib/bottlerocket/datastore/current` so they don't have to understand the versioning scheme.
 
 `current` is a link to the data store format (major) version, e.g. `v1`.
 If we change data store format versions, it's this symlink we'd flip; see [Handling data store format changes](#handling-data-store-format-changes) below for details.
@@ -131,7 +131,7 @@ The link is created by the migrator.
 
 Here's a full example setup for version 1.5:
 ```
-/var/lib/thar/datastore/current
+/var/lib/bottlerocket/datastore/current
    -> v1
    -> v1.5
    -> v1.5_0123456789abcdef
@@ -148,14 +148,14 @@ The migration system will follow these steps.
 ### Find outgoing and incoming versions
 
 The outgoing version is represented by the link described above in [How to update and flip the data store](#how-to-update-and-flip-the-data-store).
-The incoming version is listed in the file `/usr/share/thar/data-store-version` in the incoming image.
+The incoming version is listed in the file `/usr/share/bottlerocket/data-store-version` in the incoming image.
 
 ### Find migrations
 
 Next we find the migration binaries that are applicable when moving from the outgoing version to the incoming version.
 Migration names include the version where they first apply, so we take any migrations applicable after the outgoing version, up to and including the incoming version.
 
-Migrations from recent versions will be in a known location (e.g. `/var/lib/thar/datastore/migrations`) in the incoming image, and all migrations will also be available on the update server for download.
+Migrations from recent versions will be in a known location (e.g. `/var/lib/bottlerocket/datastore/migrations`) in the incoming image, and all migrations will also be available on the update server for download.
 Migration lists (metadata) will be available from both sources to ensure we're not missing any migrations.
 
 ### Run migrations

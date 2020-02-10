@@ -4,7 +4,7 @@
 settings-committer can be called to commit a pending transaction in the API.
 It logs any pending settings, then commits them to live.
 
-By default, it commits the 'thar-boot' transaction, which is used to organize boot-time services - this program is typically run as a pre-exec command by any services that depend on settings changes from previous services.
+By default, it commits the 'bottlerocket-launch' transaction, which is used to organize boot-time services - this program is typically run as a pre-exec command by any services that depend on settings changes from previous services.
 
 The `--transaction` argument can be used to specify another transaction.
 */
@@ -22,7 +22,7 @@ const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_PENDING_URI_BASE: &str = "/tx";
 const API_COMMIT_URI_BASE: &str = "/tx/commit";
 // By default we commit settings from a shared transaction used by boot-time services.
-const DEFAULT_TRANSACTION: &str = "thar-boot";
+const DEFAULT_TRANSACTION: &str = "bottlerocket-launch";
 
 type Result<T> = std::result::Result<T, error::SettingsCommitterError>;
 

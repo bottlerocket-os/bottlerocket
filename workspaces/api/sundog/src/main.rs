@@ -4,7 +4,7 @@
 sundog is a small program to handle settings that must be generated at OS runtime.
 
 It requests settings generators from the API and runs them.
-The output is collected and sent to a known Thar API server endpoint.
+The output is collected and sent to a known Bottlerocket API server endpoint.
 */
 
 #![deny(rust_2018_idioms)]
@@ -28,7 +28,7 @@ const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
 const API_SETTING_GENERATORS_URI: &str = "/metadata/setting-generators";
 // We change settings in the shared transaction used by boot-time services.
-const TRANSACTION: &str = "thar-boot";
+const TRANSACTION: &str = "bottlerocket-launch";
 
 /// Potential errors during Sundog execution
 mod error {

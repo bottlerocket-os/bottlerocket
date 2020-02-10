@@ -30,9 +30,9 @@ use data_store_version::Version;
 use model::modeled_types::SingleLineString;
 
 // FIXME Get these from configuration in the future
-const DATASTORE_VERSION_FILE: &str = "/usr/share/thar/data-store-version";
+const DATASTORE_VERSION_FILE: &str = "/usr/share/bottlerocket/data-store-version";
 // Shared transaction used by boot-time services.
-const TRANSACTION: &str = "thar-boot";
+const TRANSACTION: &str = "bottlerocket-launch";
 
 mod error {
     use std::io;
@@ -533,7 +533,7 @@ fn usage() -> ! {
             [ --version X.Y ]
             [ --log-level trace|debug|info|warn|error ]
 
-        If --version is not given, the version will be pulled from /usr/share/thar/data-store-version.
+        If --version is not given, the version will be pulled from /usr/share/bottlerocket/data-store-version.
         This is used to set up versioned symlinks in the data store base path.
         ",
         program_name

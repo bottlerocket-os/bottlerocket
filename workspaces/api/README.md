@@ -1,6 +1,6 @@
-# Thar API system
+# Bottlerocket API system
 
-This document describes the Thar API system.
+This document describes the Bottlerocket API system.
 
 In the [Background](#background) section, the API system's components are described in the order in which they start, so it's a handy reference for the boot process.
 
@@ -8,7 +8,7 @@ The [Development](#development) section has an overview of how to work on the AP
 
 ## Background
 
-Thar is intended to be an API-first operating system - direct user interaction with Thar is usually through the API.
+Bottlerocket is intended to be an API-first operating system - direct user interaction with Bottlerocket is usually through the API.
 However, the [API server](#apiserver) that handles requests is just one piece.
 The remaining components make sure the system is up to date, and that requests are persisted and applied correctly.
 Overall, it's the bridge between the user and the underlying system.
@@ -23,7 +23,7 @@ It's described in context in the [API server docs](apiserver/).
 [Further docs](apiclient/)
 
 Users can access the API through the `apiclient` binary.
-It's available in Thar, whether you're accessing it through a control channel like SSM or the admin container.
+It's available in Bottlerocket, whether you're accessing it through a control channel like SSM or the admin container.
 (See the top-level [README](../../) for information about those.)
 
 Rust code can use the `apiclient` library to make requests to the Unix-domain socket of the [apiserver](#apiserver).
@@ -39,7 +39,7 @@ Further docs:
 * [Migration system](migration/)
 
 The migrator ensures the data store is up to date by running any applicable data store migrations.
-The existing data store format version is found by looking at the symlink naming in `/var/lib/thar/datastore`, and the incoming data store format version is found by looking at `/usr/share/thar/data-store-version` in the booting image.
+The existing data store format version is found by looking at the symlink naming in `/var/lib/bottlerocket/datastore`, and the incoming data store format version is found by looking at `/usr/share/bottlerocket/data-store-version` in the booting image.
 
 On first boot, [storewolf](#storewolf) hasn’t run yet, so there’s no data store, so the migrator has nothing to do.
 
@@ -53,7 +53,7 @@ storewolf ensures the default values (defined in [defaults.toml](../models/defau
 First, it has to create the data store directories and symlinks if they don’t exist.
 Then, it goes key-by-key through the defaults, and if a key isn’t already set, sets it with the default value.
 
-The settings are written to the *pending* section of the data store, in a "thar-boot" transaction, which is used for startup coordination.
+The settings are written to the *pending* section of the data store, in a "bottlerocket-launch" transaction, which is used for startup coordination.
 This means they’re not available until committed later by [settings-committer](#settings-committer).
 
 If there are any pending transactions in the data store when storewolf starts, they’re discarded.
@@ -62,7 +62,7 @@ If there are any pending transactions in the data store when storewolf starts, t
 
 [Further docs](apiserver/)
 
-The API server for Thar starts next.
+The API server for Bottlerocket starts next.
 This gives users (and later components) the ability to read or change settings in the data store, and have any changes applied to the system.
 
 ### moondog
@@ -87,7 +87,7 @@ For example, the primary IP address is needed in some config files but can only 
 Sundog finds any settings with metadata (“setting-generator”) indicating that they must be generated after boot.
 Each key is checked on every boot.
 If the key is already set, we don’t need to generate it - either it was generated before, or overridden by the user.
-If it’s not set, we could be handling a new key added in a Thar upgrade.
+If it’s not set, we could be handling a new key added in a Bottlerocket upgrade.
 
 The settings are PATCHed to the API and *not* committed, meaning they’re not available until committed later by [settings-committer](#settings-committer).
 
@@ -101,7 +101,7 @@ Pluto generates settings needed for Kubernetes configuration, for example cluste
 
 [Further docs](settings-committer/)
 
-This binary sends a commit request to the API (by default for the "thar-boot" transaction) which moves all the pending settings from the above services into the live part of the data store.
+This binary sends a commit request to the API (by default for the "bottlerocket-launch" transaction) which moves all the pending settings from the above services into the live part of the data store.
 It's called as a prerequisite of other services, like [sundog](#sundog) and [settings-applier](#settings-applier), that rely on settings being committed.
 
 ### settings-applier
@@ -150,7 +150,7 @@ Now you can start the API server.
 From the `workspaces/api/apiserver` directory:
 
 ```
-cargo run -- --datastore-path /tmp/data-store/current --socket-path /tmp/thar-api.sock --log-level debug
+cargo run -- --datastore-path /tmp/data-store/current --socket-path /tmp/bottlerocket-api.sock --log-level debug
 ```
 
 You can leave that running in a terminal, or background it, whatever you like.
@@ -162,10 +162,10 @@ We can use settings-committer to do the same thing with our development data sto
 From the `workspaces/api/settings-committer` directory:
 
 ```
-cargo run -- --socket-path /tmp/thar-api.sock
+cargo run -- --socket-path /tmp/bottlerocket-api.sock
 ```
 
 Now you can inspect settings in the API or do any other testing you like.
 
-You won't have dynamic settings generated by [sundog](#sundog) during a normal Thar launch, but you're probably not locally running the software that needs those, like Kubernetes.
+You won't have dynamic settings generated by [sundog](#sundog) during a normal Bottlerocket launch, but you're probably not locally running the software that needs those, like Kubernetes.
 If you are, you can set them manually; see the top-level README for descriptions of those settings.

@@ -4,7 +4,7 @@ Current version: 0.1.0
 
 ## Introduction
 
-moondog sends provider-specific platform data to the Thar API.
+moondog sends provider-specific platform data to the Bottlerocket API.
 
 For most providers this means configuration from user data and platform metadata, taken from
 something like an instance metadata service.

@@ -1,7 +1,7 @@
 /*!
 # Introduction
 
-moondog sends provider-specific platform data to the Thar API.
+moondog sends provider-specific platform data to the Bottlerocket API.
 
 For most providers this means configuration from user data and platform metadata, taken from
 something like an instance metadata service.
@@ -31,12 +31,12 @@ use std::{env, fs, process};
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
 // We change settings in the shared transaction used by boot-time services.
-const TRANSACTION: &str = "thar-boot";
+const TRANSACTION: &str = "bottlerocket-launch";
 
 // We only want to run moondog once, at first boot.  Our systemd unit file has a
 // ConditionPathExists that will prevent it from running again if this file exists.
 // We create it after running successfully.
-const MARKER_FILE: &str = "/var/lib/thar/moondog.ran";
+const MARKER_FILE: &str = "/var/lib/bottlerocket/moondog.ran";
 
 type Result<T> = std::result::Result<T, MoondogError>;
 

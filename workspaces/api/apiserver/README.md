@@ -53,7 +53,7 @@ This naturally implies some grouping and hierarchy of the data, corresponding to
 
 The current data store implementation maps keys to filesystem paths and stores the value in a file.
 Metadata about a data key is stored in a file at the data key path + "." + the metadata key.
-The default data store location is `/var/lib/thar/datastore/current`, and the filesystem format makes it fairly easy to inspect.
+The default data store location is `/var/lib/bottlerocket/datastore/current`, and the filesystem format makes it fairly easy to inspect.
 
 ### Serialization and deserialization
 
@@ -72,7 +72,7 @@ The `datastore::deserialization` module provides code to deserialize datastore-a
 
 You can start the API server from the development workspace with a command like:
 
-`cargo run -- --datastore-path /tmp/thar/be/data --socket-path /tmp/thar/api.sock --log-level debug`
+`cargo run -- --datastore-path /tmp/bottlerocket/data --socket-path /tmp/bottlerocket/api.sock --log-level debug`
 
 Then, from another shell, you can query or modify data.
 See `../../apiclient/README.md` for client examples.

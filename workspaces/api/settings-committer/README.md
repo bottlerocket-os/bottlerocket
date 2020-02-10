@@ -7,7 +7,7 @@ Current version: 0.1.0
 settings-committer can be called to commit a pending transaction in the API.
 It logs any pending settings, then commits them to live.
 
-By default, it commits the 'thar-boot' transaction, which is used to organize boot-time services - this program is typically run as a pre-exec command by any services that depend on settings changes from previous services.
+By default, it commits the 'bottlerocket-launch' transaction, which is used to organize boot-time services - this program is typically run as a pre-exec command by any services that depend on settings changes from previous services.
 
 The `--transaction` argument can be used to specify another transaction.
 
