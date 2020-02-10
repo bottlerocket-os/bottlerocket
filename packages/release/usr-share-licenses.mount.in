@@ -4,7 +4,7 @@ Conflicts=umount.target
 Before=local-fs.target umount.target
 
 [Mount]
-What=PREFIX/share/thar/licenses.squashfs
+What=PREFIX/share/bottlerocket/licenses.squashfs
 Where=PREFIX/share/licenses
 Type=squashfs
 Options=defaults,ro,loop

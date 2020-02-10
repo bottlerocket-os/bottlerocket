@@ -1,11 +1,11 @@
-%global migration_dir %{_cross_factorydir}%{_cross_sharedstatedir}/thar/datastore/migrations
+%global migration_dir %{_cross_factorydir}%{_cross_sharedstatedir}/bottlerocket/datastore/migrations
 %global _cross_first_party 1
 %undefine _debugsource_packages
 
 Name: %{_cross_os}workspaces
 Version: 0.0
 Release: 0%{?dist}
-Summary: Thar's first-party code
+Summary: Bottlerocket's first-party code
 License: LicenseRef-Pending
 
 # sources < 100: misc
@@ -39,23 +39,23 @@ BuildRequires: %{_cross_os}glibc-devel
 %{summary}.
 
 %package -n %{_cross_os}apiserver
-Summary: Thar API server
+Summary: Bottlerocket API server
 %description -n %{_cross_os}apiserver
 %{summary}.
 
 %package -n %{_cross_os}apiclient
-Summary: Thar API client
+Summary: Bottlerocket API client
 %description -n %{_cross_os}apiclient
 %{summary}.
 
 %package -n %{_cross_os}moondog
-Summary: Thar userdata configuration system
+Summary: Bottlerocket userdata configuration system
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}moondog
 %{summary}.
 
 %package -n %{_cross_os}netdog
-Summary: Thar network configuration helper
+Summary: Bottlerocket network configuration helper
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}netdog
 %{summary}.
@@ -85,7 +85,7 @@ Summary: Dynamic setting generator for kubernetes
 %{summary}.
 
 %package -n %{_cross_os}thar-be-settings
-Summary: Applies changed settings to a Thar system
+Summary: Applies changed settings to a Bottlerocket system
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}thar-be-settings
 %{summary}.
@@ -125,17 +125,17 @@ Summary: Tool to grow partitions
 %{summary}.
 
 %package -n %{_cross_os}signpost
-Summary: Thar GPT priority querier/switcher
+Summary: Bottlerocket GPT priority querier/switcher
 %description -n %{_cross_os}signpost
 %{summary}.
 
 %package -n %{_cross_os}updog
-Summary: Thar updater CLI
+Summary: Bottlerocket updater CLI
 %description -n %{_cross_os}updog
 not much what's up with you
 
 %package -n %{_cross_os}preinit
-Summary: Thar pre-init system setup
+Summary: Bottlerocket pre-init system setup
 %description -n %{_cross_os}preinit
 %{summary}.
 
@@ -193,8 +193,8 @@ done
 
 install -d %{buildroot}%{migration_dir}
 
-install -d %{buildroot}%{_cross_datadir}/thar
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_datadir}/thar
+install -d %{buildroot}%{_cross_datadir}/bottlerocket
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_datadir}/bottlerocket
 
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysusersdir}/api.conf
@@ -222,7 +222,7 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %{_cross_bindir}/apiserver
 %{_cross_unitdir}/apiserver.service
 %{_cross_unitdir}/migrator.service
-%{_cross_datadir}/thar/data-store-version
+%{_cross_datadir}/bottlerocket/data-store-version
 %{_cross_sysusersdir}/api.conf
 
 %files -n %{_cross_os}apiclient

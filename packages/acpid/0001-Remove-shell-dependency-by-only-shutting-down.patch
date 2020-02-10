@@ -3,7 +3,7 @@ From: iliana destroyer of worlds <iweller@amazon.com>
 Date: Fri, 18 Oct 2019 22:56:45 +0000
 Subject: [PATCH] Remove shell dependency by only shutting down
 
-Thar doesn't have a shell, so this is a hack to get what we want
+Bottlerocket doesn't have a shell, so this is a hack to get what we want
 (shutdown behavior on power button press) without rearchitecting acpid.
 ---
  event.c | 2 +-

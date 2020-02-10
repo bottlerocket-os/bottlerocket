@@ -1,7 +1,7 @@
 From 9e925f4ccaf5d7137f58152598d75381b6bbefe8 Mon Sep 17 00:00:00 2001
 From: iliana destroyer of worlds <iweller@amazon.com>
 Date: Thu, 28 Mar 2019 16:28:41 -0700
-Subject: [PATCH] gptprio: Use Thar boot partition type GUID
+Subject: [PATCH] gptprio: Use Bottlerocket boot partition type GUID
 
 Signed-off-by: iliana destroyer of worlds <iweller@amazon.com>
 ---
@@ -19,7 +19,7 @@ index 8908d8bed..3678d1018 100644
  
    /* TODO: Add a uuid parser and a command line flag for providing type.  */
 -  grub_gpt_part_guid_t part_type = GRUB_GPT_PARTITION_TYPE_USR_X86_64;
-+  grub_gpt_part_guid_t part_type = GRUB_GPT_PARTITION_TYPE_THAR_BOOT;
++  grub_gpt_part_guid_t part_type = GRUB_GPT_PARTITION_TYPE_BOTTLEROCKET_BOOT;
  
    if (!state[NEXT_SET_DEVICE].set || !state[NEXT_SET_UUID].set)
      {
@@ -34,7 +34,7 @@ index 726b98c00..88ad02a44 100644
 -#define GRUB_GPT_PARTITION_TYPE_USR_X86_64 \
 -  GRUB_GPT_GUID_INIT (0x5dfbf5f4, 0x2848, 0x4bac, \
 -      0xaa, 0x5e, 0x0d, 0x9a, 0x20, 0xb7, 0x45, 0xa6)
-+#define GRUB_GPT_PARTITION_TYPE_THAR_BOOT \
++#define GRUB_GPT_PARTITION_TYPE_BOTTLEROCKET_BOOT \
 +  GRUB_GPT_GUID_INIT (0x6b636168, 0x7420, 0x6568, \
 +      0x20, 0x70, 0x6c, 0x61, 0x6e, 0x65, 0x74, 0x21)
  

@@ -1,13 +1,14 @@
 [Unit]
-Description=Private Directory (/var/lib/thar)
+Description=Private Directory (/var/lib/bottlerocket)
 DefaultDependencies=no
 Conflicts=umount.target
 RequiresMountsFor=/var
 Before=local-fs.target umount.target
 
 [Mount]
+# TODO: change "THAR" to "BOTTLEROCKET" when we change rpm2img
 What=/dev/disk/by-partlabel/THAR-PRIVATE
-Where=/var/lib/thar
+Where=/var/lib/bottlerocket
 Type=ext4
 Options=defaults,noatime,nosuid,nodev
 

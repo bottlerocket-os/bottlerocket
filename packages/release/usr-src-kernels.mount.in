@@ -4,7 +4,7 @@ Conflicts=umount.target
 Before=local-fs.target umount.target
 
 [Mount]
-What=PREFIX/share/thar/kernel-devel.squashfs
+What=PREFIX/share/bottlerocket/kernel-devel.squashfs
 Where=PREFIX/src/kernels
 Type=squashfs
 Options=defaults,ro,loop

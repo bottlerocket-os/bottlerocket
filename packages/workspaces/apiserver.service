@@ -1,11 +1,11 @@
 [Unit]
-Description=Thar API server
+Description=Bottlerocket API server
 After=storewolf.service migrator.service
 Requires=storewolf.service migrator.service
 
 [Service]
 Type=notify
-ExecStart=/usr/bin/apiserver --datastore-path /var/lib/thar/datastore/current --socket-gid 274
+ExecStart=/usr/bin/apiserver --datastore-path /var/lib/bottlerocket/datastore/current --socket-gid 274
 StandardError=journal+console
 
 [Install]

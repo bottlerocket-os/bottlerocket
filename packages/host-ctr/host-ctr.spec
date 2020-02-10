@@ -4,7 +4,7 @@
 Name: %{_cross_os}%{workspace_name}
 Version: 0.0
 Release: 0%{?dist}
-Summary: Thar host container runner
+Summary: Bottlerocket host container runner
 License: LicenseRef-Pending
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}containerd

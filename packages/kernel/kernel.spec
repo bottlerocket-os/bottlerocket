@@ -8,7 +8,7 @@ License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
 Source0: https://cdn.amazonlinux.com/blobstore/70374188b12dd9d6df9dec5112a3c7761cc185c01de728c96d71fb000b7449a5/kernel-4.19.75-28.73.amzn2.src.rpm
-Source100: config-thar
+Source100: config-bottlerocket
 Patch0001: 0001-dm-add-support-to-directly-boot-to-a-mapped-device.patch
 Patch0002: 0002-dm-init-fix-const-confusion-for-dm_allowed_targets-a.patch
 Patch0003: 0003-dm-init-fix-max-devices-targets-checks.patch
@@ -120,12 +120,12 @@ for file in $(cat kernel_devel_files); do
   install -D ${file} src_squashfs/%{version}/${file}
 done
 mksquashfs src_squashfs kernel-devel.squashfs
-install -D kernel-devel.squashfs %{buildroot}%{_cross_datadir}/thar/kernel-devel.squashfs
+install -D kernel-devel.squashfs %{buildroot}%{_cross_datadir}/bottlerocket/kernel-devel.squashfs
 install -d %{buildroot}%{kernel_sourcedir}
 
 # Replace the incorrect links from modules_install. These will be bound
 # into a host container (and unused in the host) so they must not point
-# to %{_cross_usrsrc} (eg. /x86_64-thar-linux-gnu/sys-root/...)
+# to %{_cross_usrsrc} (eg. /x86_64-bottlerocket-linux-gnu/sys-root/...)
 rm -f %{buildroot}%{kernel_libdir}/build %{buildroot}%{kernel_libdir}/source
 ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/build
 ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
@@ -167,6 +167,6 @@ ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
 
 %files devel
 %dir %{kernel_sourcedir}
-%{_cross_datadir}/thar/kernel-devel.squashfs
+%{_cross_datadir}/bottlerocket/kernel-devel.squashfs
 
 %changelog

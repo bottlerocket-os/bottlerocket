@@ -1,5 +1,5 @@
-# Because Thar does not have an initramfs, modules required to mount the root
-# filesystem must be set to y.
+# Because Bottlerocket does not have an initramfs, modules required to mount
+# the root filesystem must be set to y.
 
 # The root filesystem is ext4
 CONFIG_EXT4_FS=y

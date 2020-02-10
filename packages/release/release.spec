@@ -3,7 +3,7 @@
 Name: %{_cross_os}release
 Version: 0.0
 Release: 0%{?dist}
-Summary: Thar release
+Summary: Bottlerocket release
 License: LicenseRef-Pending
 
 Source10: hosts
@@ -20,7 +20,7 @@ Source1006: prepare-local.service
 Source1007: var.mount
 Source1008: opt.mount
 Source1009: usr-src-kernels.mount.in
-Source1010: var-lib-thar.mount
+Source1010: var-lib-bottlerocket.mount
 Source1011: usr-share-licenses.mount.in
 
 BuildArch: noarch
@@ -81,8 +81,8 @@ install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
 cat >%{buildroot}%{_cross_libdir}/os-release <<EOF
-NAME=Thar
-ID=thar
+NAME=Bottlerocket
+ID=bottlerocket
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}
@@ -112,7 +112,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_unitdir}/opt.mount
 %{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/*-licenses.mount
-%{_cross_unitdir}/var-lib-thar.mount
+%{_cross_unitdir}/var-lib-bottlerocket.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/hostname
 

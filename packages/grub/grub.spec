@@ -48,7 +48,7 @@ Patch0037: 0037-gpt-read-entries-table-at-the-same-time-as-the-heade.patch
 Patch0038: 0038-gpt-report-all-revalidation-errors.patch
 Patch0039: 0039-gpt-rename-and-update-documentation-for-grub_gpt_upd.patch
 Patch0040: 0040-gpt-write-backup-GPT-first-skip-if-inaccessible.patch
-Patch0041: 0041-gptprio-Use-Thar-boot-partition-type-GUID.patch
+Patch0041: 0041-gptprio-Use-Bottlerocket-boot-partition-type-GUID.patch
 
 BuildRequires: automake
 BuildRequires: bison

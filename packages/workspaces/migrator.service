@@ -1,9 +1,9 @@
 [Unit]
-Description=Thar data store migrator
+Description=Bottlerocket data store migrator
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/migrator --datastore-path /var/lib/thar/datastore/current --migration-directories /var/lib/thar/datastore/migrations --migrate-to-version-from-file /usr/share/thar/data-store-version
+ExecStart=/usr/bin/migrator --datastore-path /var/lib/bottlerocket/datastore/current --migration-directories /var/lib/bottlerocket/datastore/migrations --migrate-to-version-from-file /usr/share/bottlerocket/data-store-version
 RemainAfterExit=true
 StandardError=journal+console
 

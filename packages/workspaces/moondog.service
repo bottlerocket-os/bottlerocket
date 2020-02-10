@@ -1,11 +1,11 @@
 [Unit]
-Description=Thar userdata configuration system
+Description=Bottlerocket userdata configuration system
 # Need network online to talk to IMDS.
 After=network-online.target apiserver.service
 Requires=network-online.target apiserver.service
 # We only want to run once, at first boot.  This file is created by moondog
 # after a successful run.
-ConditionPathExists=!/var/lib/thar/moondog.ran
+ConditionPathExists=!/var/lib/bottlerocket/moondog.ran
 
 [Service]
 Type=oneshot

@@ -1,5 +1,5 @@
 [Unit]
-Description=Thar be configuration - user and dynamic configuration complete
+Description=Bottlerocket user and dynamic configuration complete
 After=settings-applier.service
 Requires=settings-applier.service
 AllowIsolate=yes
