@@ -10,9 +10,9 @@ use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 
-const THAR_BOOT: [u8; 16] = uuid_to_guid(hex!("6b636168 7420 6568 2070 6c616e657421"));
-const THAR_ROOT: [u8; 16] = uuid_to_guid(hex!("5526016a 1a97 4ea4 b39a b7c8c6ca4502"));
-const THAR_HASH: [u8; 16] = uuid_to_guid(hex!("598f10af c955 4456 6a99 7720068a6cea"));
+const BOTTLEROCKET_BOOT: [u8; 16] = uuid_to_guid(hex!("6b636168 7420 6568 2070 6c616e657421"));
+const BOTTLEROCKET_ROOT: [u8; 16] = uuid_to_guid(hex!("5526016a 1a97 4ea4 b39a b7c8c6ca4502"));
+const BOTTLEROCKET_HASH: [u8; 16] = uuid_to_guid(hex!("598f10af c955 4456 6a99 7720068a6cea"));
 
 #[derive(Debug, Clone)]
 pub struct State {
@@ -100,17 +100,17 @@ impl State {
                 .path())
         };
 
-        let boot_partition_nums = [nth_guid(THAR_BOOT, 0)?, nth_guid(THAR_BOOT, 1)?];
+        let boot_partition_nums = [nth_guid(BOTTLEROCKET_BOOT, 0)?, nth_guid(BOTTLEROCKET_BOOT, 1)?];
         let sets = [
             PartitionSet {
                 boot: device_from_part_num(boot_partition_nums[0])?,
-                root: device_from_part_num(nth_guid(THAR_ROOT, 0)?)?,
-                hash: device_from_part_num(nth_guid(THAR_HASH, 0)?)?,
+                root: device_from_part_num(nth_guid(BOTTLEROCKET_ROOT, 0)?)?,
+                hash: device_from_part_num(nth_guid(BOTTLEROCKET_HASH, 0)?)?,
             },
             PartitionSet {
                 boot: device_from_part_num(boot_partition_nums[1])?,
-                root: device_from_part_num(nth_guid(THAR_ROOT, 1)?)?,
-                hash: device_from_part_num(nth_guid(THAR_HASH, 1)?)?,
+                root: device_from_part_num(nth_guid(BOTTLEROCKET_ROOT, 1)?)?,
+                hash: device_from_part_num(nth_guid(BOTTLEROCKET_HASH, 1)?)?,
             },
         ];
 

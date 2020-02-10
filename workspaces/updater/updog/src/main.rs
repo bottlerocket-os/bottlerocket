@@ -28,7 +28,7 @@ const TARGET_ARCH: &str = "x86_64";
 const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
-const MIGRATION_PATH: &str = "/var/lib/thar/datastore/migrations";
+const MIGRATION_PATH: &str = "/var/lib/bottlerocket/datastore/migrations";
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
@@ -100,14 +100,14 @@ fn load_repository<'a>(
     transport: &'a HttpQueryTransport,
     config: &'a Config,
 ) -> Result<HttpQueryRepo<'a>> {
-    fs::create_dir_all("/var/lib/thar/updog").context(error::CreateMetadataCache)?;
+    fs::create_dir_all("/var/lib/bottlerocket/updog").context(error::CreateMetadataCache)?;
     Repository::load(
         transport,
         Settings {
             root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
                 path: TRUSTED_ROOT_PATH,
             })?,
-            datastore: Path::new("/var/lib/thar/updog"),
+            datastore: Path::new("/var/lib/bottlerocket/updog"),
             metadata_base_url: &config.metadata_base_url,
             target_base_url: &config.target_base_url,
             limits: Limits {
@@ -625,8 +625,8 @@ mod tests {
             manifest.datastore_versions.len() > 0,
             "Failed to parse version map"
         );
-        let thar_version = SemVer::parse("1.11.0").unwrap();
-        let data_version = manifest.datastore_versions.get(&thar_version);
+        let bottlerocket_version = SemVer::parse("1.11.0").unwrap();
+        let data_version = manifest.datastore_versions.get(&bottlerocket_version);
         let version = DataVersion::from_str("1.0").unwrap();
         assert!(data_version.is_some());
         assert!(*data_version.unwrap() == version);
@@ -644,7 +644,7 @@ mod tests {
     #[test]
     fn test_update_ready() {
         let mut update = Update {
-            flavor: String::from("thar"),
+            flavor: String::from("bottlerocket"),
             arch: String::from("test"),
             version: SemVer::parse("1.0.0").unwrap(),
             max_version: SemVer::parse("1.1.0").unwrap(),
@@ -685,7 +685,7 @@ mod tests {
     #[test]
     fn test_final_wave() {
         let mut update = Update {
-            flavor: String::from("thar"),
+            flavor: String::from("bottlerocket"),
             arch: String::from("test"),
             version: SemVer::parse("1.0.0").unwrap(),
             max_version: SemVer::parse("1.1.0").unwrap(),
@@ -723,7 +723,7 @@ mod tests {
             seed: 123,
         };
         let version = SemVer::parse("1.18.0").unwrap();
-        let flavor = String::from("thar-aws-eks");
+        let flavor = String::from("bottlerocket-aws-eks");
 
         assert!(
             update_required(&config, &manifest, &version, &flavor, None).is_none(),
@@ -768,7 +768,7 @@ mod tests {
         };
 
         let version = SemVer::parse("1.10.0").unwrap();
-        let flavor = String::from("thar-aws-eks");
+        let flavor = String::from("bottlerocket-aws-eks");
         let result = update_required(&config, &manifest, &version, &flavor, None);
 
         assert!(result.is_some(), "Updog failed to find an update");
@@ -798,7 +798,7 @@ mod tests {
 
         let version = SemVer::parse("1.10.0").unwrap();
         let forced = SemVer::parse("1.13.0").unwrap();
-        let flavor = String::from("thar-aws-eks");
+        let flavor = String::from("bottlerocket-aws-eks");
         let result = update_required(&config, &manifest, &version, &flavor, Some(forced));
 
         assert!(result.is_some(), "Updog failed to find an update");
@@ -859,7 +859,7 @@ mod tests {
     #[test]
     fn early_wave() {
         let mut u = Update {
-            flavor: String::from("thar"),
+            flavor: String::from("bottlerocket"),
             arch: String::from("test"),
             version: SemVer::parse("1.0.0").unwrap(),
             max_version: SemVer::parse("1.1.0").unwrap(),

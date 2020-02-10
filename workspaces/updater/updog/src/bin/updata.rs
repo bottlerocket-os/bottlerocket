@@ -106,7 +106,7 @@ struct RemoveUpdateArgs {
     // existing update. Migration paths for such datastore versions are
     // preserved.
     // This should _only_ be used if there are no existing users of the
-    // specified Thar image version.
+    // specified Bottlerocket image version.
     #[structopt(short, long)]
     cleanup: bool,
 }

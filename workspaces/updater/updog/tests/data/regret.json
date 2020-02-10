@@ -1,7 +1,7 @@
 {
   "updates": [
     {
-      "flavor": "thar-aws-eks",
+      "flavor": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.25.0",
       "status": "Ready",
@@ -11,9 +11,9 @@
         "858993459":"2019-10-07T15:00:00Z"
       },
       "images": {
-        "boot": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
-        "root": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
-        "hash": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img"
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img"
     }
     }
   ],

@@ -17,13 +17,13 @@ SUBCOMMANDS:
 
 ## Background
 
-The Thar OS disk has two partition sets, each containing three partitions:
+The Bottlerocket OS disk has two partition sets, each containing three partitions:
 
 * the *boot* partition, containing the `vmlinuz` Linux kernel image and the GRUB configuration.
 * the *root* partition, containing the read-only `/` filesystem.
 * the *hash* partition, containing the full dm-verity hash tree for the root partition.
 
-The Thar boot partition uses the same GPT partition attribute flags as Chrome OS, which are used by GRUB to select the partition from which to read a `grub.cfg`:
+The Bottlerocket boot partition uses the same GPT partition attribute flags as Chrome OS, which are used by GRUB to select the partition from which to read a `grub.cfg`:
 
 | Bits  | Content                       |
 |-------|-------------------------------|

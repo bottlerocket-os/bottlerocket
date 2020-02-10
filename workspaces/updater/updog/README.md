@@ -4,7 +4,7 @@ not much what's up with you
 
 ## no really
 
-The Updog client provides an interface to a TUF repository and prepares for, downloads, and applies updates to the Thar instance. Updog can be called manually, but will more commonly be called automatically by some cluster orchestrator. For usage run `updog --help`.
+The Updog client provides an interface to a TUF repository and prepares for, downloads, and applies updates to the Bottlerocket instance. Updog can be called manually, but will more commonly be called automatically by some cluster orchestrator. For usage run `updog --help`.
 
 ## Quick reference
 
@@ -25,7 +25,7 @@ aws-k8s-0.1.1 (v0.0)
 ### Specify JSON output
 ```
 # updog check-update --json
-[{"flavor":"aws-k8s","arch":"x86_64","version":"0.1.4","max_version":"0.1.4","waves":{"512":"2019-10-03T20:45:52Z","1024":"2019-10-03T21:00:52Z","1536":"2019-10-03T22:00:52Z","2048":"2019-10-03T23:00:52Z"},"images":{"boot":"thar-x86_64-aws-k8s-v0.1.4-boot.ext4.lz4","root":"thar-x86_64-aws-k8s-v0.1.4-root.ext4.lz4","hash":"thar-x86_64-aws-k8s-v0.1.4-root.verity.lz4"}}]
+[{"flavor":"aws-k8s","arch":"x86_64","version":"0.1.4","max_version":"0.1.4","waves":{"512":"2019-10-03T20:45:52Z","1024":"2019-10-03T21:00:52Z","1536":"2019-10-03T22:00:52Z","2048":"2019-10-03T23:00:52Z"},"images":{"boot":"bottlerocket-x86_64-aws-k8s-v0.1.4-boot.ext4.lz4","root":"bottlerocket-x86_64-aws-k8s-v0.1.4-root.ext4.lz4","hash":"bottlerocket-x86_64-aws-k8s-v0.1.4-root.verity.lz4"}}]
 ```
 
 ### Try to update with wave information

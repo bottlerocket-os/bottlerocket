@@ -1,7 +1,7 @@
 {
   "updates": [
     {
-      "flavor": "thar-aws-eks",
+      "flavor": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.5.0",
       "status": "Ready",
@@ -12,9 +12,9 @@
         "1024":"2019-8-31T15:00:00Z"
       },
       "images": {
-        "boot": "thar-updog-test-boot-1.1.0.img",
-        "root": "thar-updog-test-root-1.1.0.img",
-        "hash": "thar-updog-test-hash-1.1.0.img"
+        "boot": "bottlerocket-updog-test-boot-1.1.0.img",
+        "root": "bottlerocket-updog-test-root-1.1.0.img",
+        "hash": "bottlerocket-updog-test-hash-1.1.0.img"
       }
     }
   ],

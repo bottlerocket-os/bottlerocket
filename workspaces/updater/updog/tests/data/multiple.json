@@ -1,7 +1,7 @@
 {
   "updates": [
     {
-      "flavor": "thar-aws-eks",
+      "flavor": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.13.0",
       "status": "Ready",
@@ -11,13 +11,13 @@
         "858993459":"2019-10-07T15:00:00Z"
       },
       "images": {
-        "boot": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
-        "root": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img",
-        "hash": "stuff-boot-thar-aws-eks-1.13-m1.20191006.img"
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img"
       }
     },
     {
-      "flavor": "thar-aws-eks",
+      "flavor": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.25.0",
       "status": "Ready",
@@ -27,13 +27,13 @@
         "858993459":"2019-10-07T15:00:00Z"
       },
       "images": {
-        "boot": "stuff-boot-thar-aws-eks-1.25-m1.20191015.img",
-        "root": "stuff-boot-thar-aws-eks-1.25-m1.20191015.img",
-        "hash": "stuff-boot-thar-aws-eks-1.25-m1.20191015.img"
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.25-m1.20191015.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.25-m1.20191015.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.25-m1.20191015.img"
     }
     },
     {
-      "flavor": "thar-aws-eks",
+      "flavor": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.15.0",
       "status": "Ready",
@@ -43,13 +43,13 @@
         "858993459":"2019-10-07T15:00:00Z"
       },
       "images": {
-        "boot": "stuff-boot-thar-aws-eks-1.15-m1.20191009.img",
-        "root": "stuff-boot-thar-aws-eks-1.15-m1.20191009.img",
-        "hash": "stuff-boot-thar-aws-eks-1.15-m1.20191009.img"
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.15-m1.20191009.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.15-m1.20191009.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.15-m1.20191009.img"
     }
     },
     {
-      "flavor": "thar-aws-eks",
+      "flavor": "bottlerocket-aws-eks",
       "arch": "aarch64",
       "version": "1.16.0",
       "status": "Ready",
@@ -59,9 +59,9 @@
         "858993459":"2019-10-07T15:00:00Z"
       },
       "images": {
-        "boot": "stuff-boot-thar-aws-eks-1.13-m1.20191010.img",
-        "root": "stuff-boot-thar-aws-eks-1.13-m1.20191010.img",
-        "hash": "stuff-boot-thar-aws-eks-1.13-m1.20191010.img"
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191010.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191010.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191010.img"
     }
     }
   ],
