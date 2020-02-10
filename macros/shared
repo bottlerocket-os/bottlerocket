@@ -1,4 +1,4 @@
-%_cross_vendor thar
+%_cross_vendor bottlerocket
 %_cross_libc gnu
 %_cross_os %{_cross_vendor}-%{_cross_arch}-
 %_cross_triple %{_cross_arch}-%{_cross_vendor}-linux
@@ -187,7 +187,7 @@ CROSS_COMPILATION_CONF_EOF\
   fi
 %_cross_attribution_vendor_dir %{_cross_licensedir}/%{name}/vendor
 %cross_scan_attribution \
-  thar-license-scan --spdx-data /usr/libexec/tools/spdx-data --out-dir %{buildroot}%{_cross_attribution_vendor_dir}
+  bottlerocket-license-scan --spdx-data /usr/libexec/tools/spdx-data --out-dir %{buildroot}%{_cross_attribution_vendor_dir}
 
 %__nm %{_bindir}/%{_cross_target}-nm
 %__objcopy %{_bindir}/%{_cross_target}-objcopy

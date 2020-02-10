@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # https://github.com/amazonlinux/rust-bundled-packaging/blob/master/macros.cargo
 
-# Changes for Thar:
+# Changes for Bottlerocket:
 # - Remove _cargometadir, no automatic bundled() provides
 # - Remove local registry generation
 
