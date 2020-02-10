@@ -131,8 +131,7 @@ Resources:
             build:
               commands:
                 - SHORT_SHA="$(head -c 8 <<< "$CODEBUILD_RESOLVED_SOURCE_VERSION")"
-                - make -C "${HOST_CONTAINERS_DIR}/${CONTAINER_IMAGE}" SHORT_SHA="${SHORT_SHA}" container
-                - docker save "${CONTAINER_IMAGE}" | gzip > "${IMAGES_DIR}"/"${CONTAINER_IMAGE}".tar.gz
+                - make -C "${HOST_CONTAINERS_DIR}/${CONTAINER_IMAGE}" SHORT_SHA="${SHORT_SHA}" DESTDIR="${IMAGES_DIR}" dist
           artifacts:
             base-directory: '${IMAGES_DIR}'
             files:
@@ -179,8 +178,8 @@ Resources:
             build:
               commands:
                 - SHORT_SHA="$(head -c 8 <<< "$CODEBUILD_RESOLVED_SOURCE_VERSION")"
-                - docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/${CONTAINER_IMAGE}.tar.gz
-                - make -C "${HOST_CONTAINERS_DIR}/${CONTAINER_IMAGE}" SHORT_SHA="${SHORT_SHA}" container-simple-test
+                - docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/*${SHORT_SHA}*.tar.gz
+                - make -C "${HOST_CONTAINERS_DIR}/${CONTAINER_IMAGE}" SHORT_SHA="${SHORT_SHA}" check
         Type: CODEPIPELINE
       LogsConfig:
         S3Logs:
@@ -221,10 +220,11 @@ Resources:
                 - environment-report
             build:
               commands:
-                - docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/${CONTAINER_IMAGE}.tar.gz
                 - SHORT_SHA="$(head -c 8 <<< "$CODEBUILD_RESOLVED_SOURCE_VERSION")"
-                - docker tag "${CONTAINER_IMAGE}":"${SHORT_SHA}" "${IMAGE_REGISTRY_URI}":"${SHORT_SHA}"
-                - docker push "${IMAGE_REGISTRY_URI}":"${SHORT_SHA}"
+                - PUSH_TAG="${IMAGE_REGISTRY_URI}":"${SHORT_SHA}"
+                - IMAGE_ID="$(docker load -i ${CODEBUILD_SRC_DIR_BuildArtifact}/*${SHORT_SHA}*.tar.gz | awk -F': ' '{print $NF}')"
+                - docker tag "${IMAGE_ID:?IMAGE_ID not returned from load}" "${PUSH_TAG}"
+                - docker push "${PUSH_TAG}"
         Type: CODEPIPELINE
       LogsConfig:
         S3Logs:
