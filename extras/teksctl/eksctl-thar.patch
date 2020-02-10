@@ -1,11 +1,10 @@
-From 0f56cd10b8d0c3d3bc19976cbf42bcdea7289330 Mon Sep 17 00:00:00 2001
+From bbdefa6e4581b738a93ba813e76eaf2a243c98bb Mon Sep 17 00:00:00 2001
 From: Jacob Vallejo <jake@jahkeup.com>
 Date: Mon, 25 Nov 2019 13:44:25 -0800
 Subject: [PATCH 1/3] thar: wire up thar launches
 
 ---
- go.mod                        |  4 +--
- go.sum                        |  2 ++
+ go.mod                        |  2 +-
  pkg/ami/resolver.go           |  3 +-
  pkg/ctl/create/cluster.go     |  2 ++
  pkg/ctl/create/nodegroup.go   |  2 ++
@@ -15,7 +14,7 @@ Subject: [PATCH 1/3] thar: wire up thar launches
  pkg/thar/images_static.go     | 30 ++++++++++++++++++++
  pkg/thar/resolver.go          | 25 +++++++++++++++++
  pkg/thar/userdata.go          | 53 +++++++++++++++++++++++++++++++++++
- 11 files changed, 143 insertions(+), 3 deletions(-)
+ 10 files changed, 140 insertions(+), 2 deletions(-)
  create mode 100644 pkg/thar/const.go
  create mode 100644 pkg/thar/flags.go
  create mode 100644 pkg/thar/images_static.go
@@ -23,47 +22,18 @@ Subject: [PATCH 1/3] thar: wire up thar launches
  create mode 100644 pkg/thar/userdata.go
 
 diff --git a/go.mod b/go.mod
-index dab029e0..34fd5dbb 100644
+index 974ea723..09f8807d 100644
 --- a/go.mod
 +++ b/go.mod
-@@ -10,6 +10,7 @@ require (
- 	github.com/aws/aws-sdk-go v1.25.36
- 	github.com/awslabs/goformation v0.0.0-20190320125420-ac0a17860cf1
- 	github.com/blang/semver v3.5.1+incompatible
-+	github.com/burntsushi/toml v0.3.1 // indirect
- 	github.com/christopherhein/go-version v0.0.0-20180807222509-fee8dd1f7c24
- 	github.com/cloudflare/cfssl v0.0.0-20190726000631-633726f6bcb7
- 	github.com/coredns/coredns v0.0.0-20170910182647-1b60688dc8f7 // indirect
-@@ -25,7 +26,6 @@ require (
- 	github.com/fluxcd/flux v1.15.0
- 	github.com/fluxcd/helm-operator v1.0.0-rc2
- 	github.com/go-ini/ini v1.37.0 // indirect
--	github.com/go-stack/stack v1.8.0 // indirect
- 	github.com/gobuffalo/envy v1.7.0 // indirect
- 	github.com/gobwas/glob v0.2.3
- 	github.com/gofrs/flock v0.7.1 // indirect
-@@ -50,7 +50,7 @@ require (
+@@ -51,7 +51,7 @@ require (
  	github.com/miekg/coredns v0.0.0-20170910182647-1b60688dc8f7 // indirect
- 	github.com/onsi/ginkgo v1.8.0
- 	github.com/onsi/gomega v1.5.0
+ 	github.com/onsi/ginkgo v1.10.1
+ 	github.com/onsi/gomega v1.7.0
 -	github.com/pelletier/go-toml v1.4.0 // indirect
 +	github.com/pelletier/go-toml v1.4.0
  	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
  	github.com/pkg/errors v0.8.1
  	github.com/pkg/sftp v1.8.3 // indirect
-diff --git a/go.sum b/go.sum
-index 21257acc..546ec3ae 100644
---- a/go.sum
-+++ b/go.sum
-@@ -140,6 +140,8 @@ github.com/bshuster-repo/logrus-logstash-hook v0.0.0-20170517171303-d2c0ecc1836d
- github.com/bugsnag/bugsnag-go v0.0.0-20141110184014-b1d153021fcd/go.mod h1:2oa8nejYd4cQ/b0hMIopN0lCRxU0bueqREvZLWFrtK8=
- github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b/go.mod h1:obH5gd0BsqsP2LwDJ9aOkm/6J86V6lyAXCoQWGw3K50=
- github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
-+github.com/burntsushi/toml v0.3.1 h1:XebFhzi1T+XmBZG9aKnQnA50YOydJUYK7g5SM40w+ik=
-+github.com/burntsushi/toml v0.3.1/go.mod h1:tCq67G3LEDB9hykA6+KWl2FPEy0nPcvE8TTBhtOtdGs=
- github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
- github.com/caarlos0/ctrlc v1.0.0 h1:2DtF8GSIcajgffDFJzyG15vO+1PuBWOMUdFut7NnXhw=
- github.com/caarlos0/ctrlc v1.0.0/go.mod h1:CdXpj4rmq0q/1Eb44M9zi2nKB0QraNKuRGYGrrHhcQw=
 diff --git a/pkg/ami/resolver.go b/pkg/ami/resolver.go
 index 346a14c6..c03cb830 100644
 --- a/pkg/ami/resolver.go
@@ -86,30 +56,30 @@ index 346a14c6..c03cb830 100644
  }
  
 diff --git a/pkg/ctl/create/cluster.go b/pkg/ctl/create/cluster.go
-index eccfcd77..c08731ab 100644
+index b255584b..da4ea956 100644
 --- a/pkg/ctl/create/cluster.go
 +++ b/pkg/ctl/create/cluster.go
-@@ -15,6 +15,7 @@ import (
+@@ -16,6 +16,7 @@ import (
  	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
  	"github.com/weaveworks/eksctl/pkg/kops"
  	"github.com/weaveworks/eksctl/pkg/printers"
 +	"github.com/weaveworks/eksctl/pkg/thar"
  	"github.com/weaveworks/eksctl/pkg/utils"
  	"github.com/weaveworks/eksctl/pkg/utils/kubeconfig"
- 	"github.com/weaveworks/eksctl/pkg/vpc"
-@@ -66,6 +67,7 @@ func createClusterCmd(cmd *cmdutils.Cmd) {
+ 	"github.com/weaveworks/eksctl/pkg/utils/names"
+@@ -56,6 +57,7 @@ func createClusterCmd(cmd *cmdutils.Cmd) {
  		fs.StringVar(&ng.Name, "nodegroup-name", "", fmt.Sprintf("name of the nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
- 		fs.BoolVar(&params.withoutNodeGroup, "without-nodegroup", false, "if set, initial nodegroup will not be created")
+ 		fs.BoolVar(&params.WithoutNodeGroup, "without-nodegroup", false, "if set, initial nodegroup will not be created")
  		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
 +		thar.AddCreateNodeGroupFlags(fs)
  	})
  
  	cmd.FlagSetGroup.InFlagSet("Cluster and nodegroup add-ons", func(fs *pflag.FlagSet) {
 diff --git a/pkg/ctl/create/nodegroup.go b/pkg/ctl/create/nodegroup.go
-index 3e50b902..60ca6cd0 100644
+index bafc8f95..d7e15494 100644
 --- a/pkg/ctl/create/nodegroup.go
 +++ b/pkg/ctl/create/nodegroup.go
-@@ -13,6 +13,7 @@ import (
+@@ -16,6 +16,7 @@ import (
  	"github.com/weaveworks/eksctl/pkg/authconfigmap"
  	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
  	"github.com/weaveworks/eksctl/pkg/printers"
@@ -117,7 +87,7 @@ index 3e50b902..60ca6cd0 100644
  	"github.com/weaveworks/eksctl/pkg/utils"
  )
  
-@@ -52,6 +53,7 @@ func createNodeGroupCmd(cmd *cmdutils.Cmd) {
+@@ -56,6 +57,7 @@ func createNodeGroupCmd(cmd *cmdutils.Cmd) {
  		fs.StringVarP(&ng.Name, "name", "n", "", fmt.Sprintf("name of the new nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
  		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
  		fs.BoolVarP(&params.managed, "managed", "", false, "Create EKS-managed nodegroup")
@@ -126,7 +96,7 @@ index 3e50b902..60ca6cd0 100644
  
  	cmd.FlagSetGroup.InFlagSet("IAM addons", func(fs *pflag.FlagSet) {
 diff --git a/pkg/nodebootstrap/userdata.go b/pkg/nodebootstrap/userdata.go
-index 0f3bf95b..17de813a 100644
+index b1d6e81f..a2f3428c 100644
 --- a/pkg/nodebootstrap/userdata.go
 +++ b/pkg/nodebootstrap/userdata.go
 @@ -13,6 +13,8 @@ import (
@@ -138,7 +108,7 @@ index 0f3bf95b..17de813a 100644
  )
  
  //go:generate ${GOBIN}/go-bindata -pkg ${GOPACKAGE} -prefix assets -nometadata -o assets.go assets
-@@ -175,6 +177,8 @@ func NewUserData(spec *api.ClusterConfig, ng *api.NodeGroup) (string, error) {
+@@ -183,6 +185,8 @@ func NewUserData(spec *api.ClusterConfig, ng *api.NodeGroup) (string, error) {
  		return NewUserDataForUbuntu1804(spec, ng)
  	case api.NodeImageFamilyWindowsServer2019FullContainer, api.NodeImageFamilyWindowsServer2019CoreContainer:
  		return newUserDataForWindows(spec, ng)
@@ -307,10 +277,10 @@ index 00000000..b0df3ccc
 +	return userdata, nil
 +}
 -- 
-2.23.0
+2.25.0
 
 
-From f767116255d7a09b2cd680e4aa20e5cb1e8e213a Mon Sep 17 00:00:00 2001
+From 88956c9234b17eba49fd05e4d7fcdd9c282a37ab Mon Sep 17 00:00:00 2001
 From: Jacob Vallejo <jake@jahkeup.com>
 Date: Mon, 25 Nov 2019 18:13:20 -0800
 Subject: [PATCH 2/3] thar: add validation at beginning
@@ -327,12 +297,12 @@ intrusive at the time. It very much should be revisited.
  4 files changed, 34 insertions(+), 4 deletions(-)
 
 diff --git a/pkg/ctl/create/cluster.go b/pkg/ctl/create/cluster.go
-index c08731ab..3d2bab39 100644
+index da4ea956..a5cb0e3c 100644
 --- a/pkg/ctl/create/cluster.go
 +++ b/pkg/ctl/create/cluster.go
-@@ -67,9 +67,10 @@ func createClusterCmd(cmd *cmdutils.Cmd) {
+@@ -57,9 +57,10 @@ func createClusterCmd(cmd *cmdutils.Cmd) {
  		fs.StringVar(&ng.Name, "nodegroup-name", "", fmt.Sprintf("name of the nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
- 		fs.BoolVar(&params.withoutNodeGroup, "without-nodegroup", false, "if set, initial nodegroup will not be created")
+ 		fs.BoolVar(&params.WithoutNodeGroup, "without-nodegroup", false, "if set, initial nodegroup will not be created")
  		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
 -		thar.AddCreateNodeGroupFlags(fs)
  	})
@@ -343,10 +313,10 @@ index c08731ab..3d2bab39 100644
  		cmdutils.AddCommonCreateNodeGroupIAMAddonsFlags(fs, ng)
  	})
 diff --git a/pkg/ctl/create/nodegroup.go b/pkg/ctl/create/nodegroup.go
-index 60ca6cd0..2500a02a 100644
+index d7e15494..b88eead2 100644
 --- a/pkg/ctl/create/nodegroup.go
 +++ b/pkg/ctl/create/nodegroup.go
-@@ -53,9 +53,10 @@ func createNodeGroupCmd(cmd *cmdutils.Cmd) {
+@@ -57,9 +57,10 @@ func createNodeGroupCmd(cmd *cmdutils.Cmd) {
  		fs.StringVarP(&ng.Name, "name", "n", "", fmt.Sprintf("name of the new nodegroup (generated if unspecified, e.g. %q)", exampleNodeGroupName))
  		cmdutils.AddCommonCreateNodeGroupFlags(fs, cmd, ng)
  		fs.BoolVarP(&params.managed, "managed", "", false, "Create EKS-managed nodegroup")
@@ -422,10 +392,10 @@ index 62c46cbf..f2cfcb3f 100644
  }
  
 -- 
-2.23.0
+2.25.0
 
 
-From ef04e8445ffcf520b332deac542dd0851e5b4bb2 Mon Sep 17 00:00:00 2001
+From 85fca72b71d23bd5b15431ff08ce09be0dec31fb Mon Sep 17 00:00:00 2001
 From: Jacob Vallejo <jake@jahkeup.com>
 Date: Wed, 27 Nov 2019 12:14:06 -0800
 Subject: [PATCH 3/3] thar: update aws-node during cluster setup
@@ -439,18 +409,18 @@ Subject: [PATCH 3/3] thar: update aws-node during cluster setup
  create mode 100644 pkg/thar/cluster/configure.go
 
 diff --git a/pkg/ctl/create/cluster.go b/pkg/ctl/create/cluster.go
-index 3d2bab39..32f17af2 100644
+index a5cb0e3c..9a847f67 100644
 --- a/pkg/ctl/create/cluster.go
 +++ b/pkg/ctl/create/cluster.go
-@@ -16,6 +16,7 @@ import (
+@@ -17,6 +17,7 @@ import (
  	"github.com/weaveworks/eksctl/pkg/kops"
  	"github.com/weaveworks/eksctl/pkg/printers"
  	"github.com/weaveworks/eksctl/pkg/thar"
 +	tharcl "github.com/weaveworks/eksctl/pkg/thar/cluster"
  	"github.com/weaveworks/eksctl/pkg/utils"
  	"github.com/weaveworks/eksctl/pkg/utils/kubeconfig"
- 	"github.com/weaveworks/eksctl/pkg/vpc"
-@@ -366,6 +367,15 @@ func doCreateCluster(cmd *cmdutils.Cmd, ng *api.NodeGroup, params *createCluster
+ 	"github.com/weaveworks/eksctl/pkg/utils/names"
+@@ -355,6 +356,15 @@ func doCreateCluster(cmd *cmdutils.Cmd, ng *api.NodeGroup, params *cmdutils.Crea
  			return err
  		}
  
@@ -513,5 +483,5 @@ index 00000000..e1ce19fa
 +	return nil
 +}
 -- 
-2.23.0
+2.25.0
 

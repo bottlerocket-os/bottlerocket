@@ -1,0 +1,25 @@
+From 5043388b93c92d15715faee744a51c0c3561c3a4 Mon Sep 17 00:00:00 2001
+From: Jacob Vallejo <jake@jahkeup.com>
+Date: Mon, 10 Feb 2020 14:40:17 -0800
+Subject: [PATCH] aws-node: use v1.6.0-rc6 in yaml
+
+---
+ pkg/addons/default/assets/aws-node.yaml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/addons/default/assets/aws-node.yaml b/pkg/addons/default/assets/aws-node.yaml
+index 3f24f340..f6558874 100644
+--- a/pkg/addons/default/assets/aws-node.yaml
++++ b/pkg/addons/default/assets/aws-node.yaml
+@@ -81,7 +81,7 @@ spec:
+       tolerations:
+         - operator: Exists
+       containers:
+-        - image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.5.5
++        - image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.0-rc6
+           imagePullPolicy: Always
+           ports:
+             - containerPort: 61678
+-- 
+2.25.0
+

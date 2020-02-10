@@ -1,25 +1,25 @@
 { lib, buildGoModule, fetchFromGitHub, go-bindata, versionExtra ? "" }:
 let
-  rev = "f683a9daf8b4bdeb6e9f287d08b1eaa411eb294c";
-  snapshotDate = "20191125";
+  rev = "0.13.0";
+  snapshotDate = "20200210";
 in
 buildGoModule rec {
   pname = "eksctl";
-  version = "0.10.2";
+  version = "0.13.0";
 
   src = fetchFromGitHub {
     inherit rev;
     owner = "weaveworks";
     repo = "eksctl";
-    sha256 = "1rqfxklngw0qkbasqjr9hxnhlh40chx6dv1m5d2xa0hq9h6nxjy2";
+    sha256 = "13kxilsy0fdzg1phzcsxfg53flzx3xk6c5jyygggajp45aysbyra";
   };
-  modSha256 = "1s42pdnibginjbss21fz1brdn4z6wdh8d4kxc2jwd4qbpb4lxwic";
+  modSha256 = "0g5alqhwna9sd6dp50waqa87af2z3n5pj5mwnb9i2y65g2kclaha";
   subPackages = [ "cmd/eksctl" ];
 
   CGO_ENABLED=0;
   buildFlags = [ "-tags netgo" "-tags release" ];
 
-  patches = [./eksctl-thar.patch ./update-cni-1.6.0-rc4.patch ];
+  patches = [./eksctl-thar.patch ./update-cni-1.6.0-rc6.patch ];
 
   postConfigure = let
     tag = "${version}${lib.optionalString (versionExtra != "") "/${versionExtra}"}";
