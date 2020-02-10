@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Thar control container pipeline
+Description: Bottlerocket control container pipeline
 Parameters:
   CodeBuildResourceStack:
     Type: String
@@ -62,10 +62,10 @@ Resources:
                     - - Fn::ImportValue: !Sub "${CodeBuildResourceStack}-ArtifactBucketArn"
                       - '*'
 
-  TharControlCtrPipeline:
+  BottlerocketControlCtrPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
-      Name: thar-control-ctr-pipeline
+      Name: bottlerocket-control-ctr-pipeline
       RoleArn: !GetAtt
         - CodePipelineServiceRole
         - Arn
@@ -144,7 +144,7 @@ Resources:
           Fn::ImportValue:
             !Sub "${CodeBuildResourceStack}-ArtifactBucket"
 
-  TharControlWebhook:
+  BottlerocketControlWebhook:
     Type: 'AWS::CodePipeline::Webhook'
     Properties:
       Authentication: GITHUB_HMAC
@@ -155,7 +155,7 @@ Resources:
         - JsonPath: "$.ref"
           MatchEquals: refs/heads/{Branch}
         - JsonPath: "$.head_commit.modified[*]"
-          MatchEquals: "extras/host-containers/thar-control/VERSION"
-      TargetPipeline: !Ref TharControlCtrPipeline
+          MatchEquals: "extras/host-containers/bottlerocket-control/VERSION"
+      TargetPipeline: !Ref BottlerocketControlCtrPipeline
       TargetAction: SourceAction
-      TargetPipelineVersion: !GetAtt TharControlCtrPipeline.Version
+      TargetPipelineVersion: !GetAtt BottlerocketControlCtrPipeline.Version

@@ -1,4 +1,4 @@
-# stack-name: thar-develop-pipeline-ami-build
+# stack-name: bottlerocket-develop-pipeline-ami-build
 # stack-resource-context: build
 
 Description: |
@@ -82,10 +82,10 @@ Resources:
           # TODO: resolve these using release-lib based cli (when it exists!)
           - Name: BUILD_IMAGE_ROOT
             Type: PLAINTEXT
-            Value: thar-x86_64-aws-k8s.img.lz4
+            Value: bottlerocket-x86_64-aws-k8s.img.lz4
           - Name: BUILD_IMAGE_DATA
             Type: PLAINTEXT
-            Value: thar-x86_64-aws-k8s-data.img.lz4
+            Value: bottlerocket-x86_64-aws-k8s-data.img.lz4
       TimeoutInMinutes: 30
       Source:
         Type: CODEPIPELINE
@@ -100,7 +100,7 @@ Resources:
                 # List CODEPIPELINE and CODEBUILD variables for active-work on these projects.
                 #
                 # TODO: Remove printing of the environment variables here at a later time.
-                - env | grep -e '^CODE' -e 'infra/' -e '\bthar\b' | sort | sed 's/^/# /'
+                - env | grep -e '^CODE' -e 'infra/' -e '\bbottlerocket\b' | sort | sed 's/^/# /'
             build:
               commands:
                 - create-image-ami

@@ -25,12 +25,12 @@ ECR_URI_PREFIX = $(shell aws ssm get-parameter --name /infra/container/infra/bui
 # conventional across automations' consumed images.
 ECR_NAME_PREFIX ?= infra/
 
-# This is a reference to the root of the Thar repo (relative to the current path)
+# This is a reference to the root of the Bottlerocket repo (relative to the current path)
 # so later we can run `docker build` with this path. This allows us to
-# more easily copy the Thar repo into a container, which in turn makes it simpler
+# more easily copy the Bottlerocket repo into a container, which in turn makes it simpler
 # to build Rust code that has dependencies on other code in the repo.
 # FIXME: when we split this code out we will need to handle this differently
-THAR_SRC = ../../../
+BOTTLEROCKET_SRC = ../../../
 
 .DEFAULT: all
 .PHONY: force all release $(NAMES)
@@ -41,7 +41,7 @@ all: $(if $(NAME),$(NAME),$(NAMES))
 $(NAMES) : NAME = $@
 $(NAMES): force
 	@echo "Building container image for '$(NAME)'"
-	docker build -t $(IMAGE_NAME) -f Dockerfile.$(NAME) $(THAR_SRC)
+	docker build -t $(IMAGE_NAME) -f Dockerfile.$(NAME) $(BOTTLEROCKET_SRC)
 
 # Push images (must explicitly provide IMAGE_TAG=release to be pulled
 # by consumers).

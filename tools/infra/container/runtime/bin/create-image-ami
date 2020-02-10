@@ -82,13 +82,13 @@ else
     ami_suffix="$USER-$(date +'%s')"
 fi
 # BUILD_AMI_NAME is the created AMI's EC2 AMI Name.
-BUILD_AMI_NAME="${BUILD_AMI_NAME:-thar-${BUILD_ARCH}-${ami_suffix}}"
+BUILD_AMI_NAME="${BUILD_AMI_NAME:-bottlerocket-${BUILD_ARCH}-${ami_suffix}}"
 # BUILD_IMAGE_ROOT may be specified to provide a specific root disk
 # image to write out.
-BUILD_IMAGE_ROOT="${BUILD_IMAGE_ROOT:-build/thar-$BUILD_ARCH-${BUILDSYS_VARIANT}.img.lz4}"
+BUILD_IMAGE_ROOT="${BUILD_IMAGE_ROOT:-build/bottlerocket-$BUILD_ARCH-${BUILDSYS_VARIANT}.img.lz4}"
 # BUILD_IMAGE_DATA may be specified to provide a specific data disk
 # image to write out.
-BUILD_IMAGE_DATA="${BUILD_IMAGE_DATA:-build/thar-$BUILD_ARCH-${BUILDSYS_VARIANT}-data.img.lz4}"
+BUILD_IMAGE_DATA="${BUILD_IMAGE_DATA:-build/bottlerocket-$BUILD_ARCH-${BUILDSYS_VARIANT}-data.img.lz4}"
 # EC2 Key Pair used to spin up and access instance for AMIizing disk
 # images. These are created automatically if the build task is
 # configured with access to the SSM, EC2, and KMS resources involved.

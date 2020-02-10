@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Thar host containers pipeline - CodeBuild steps resources
+Description: Bottlerocket host containers pipeline - CodeBuild steps resources
 Parameters:
   ImageRegistryUri:
     Type: String
@@ -8,8 +8,8 @@ Parameters:
     Type: String
     Description: "Name of the container image"
     AllowedValues:
-      - "thar-admin"
-      - "thar-control"
+      - "bottlerocket-admin"
+      - "bottlerocket-control"
   EnvironmentImageName:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /infra/container/infra/builder

@@ -19,7 +19,7 @@ Resources:
     Metadata:
       Source: extras/sdk-container
     Properties:
-      RepositoryName: thar/sdk-x86_64
+      RepositoryName: bottlerocket/sdk-x86_64
 
   SDKx8664Parameter:
     Type: AWS::SSM::Parameter
@@ -33,7 +33,7 @@ Resources:
     Metadata:
       Source: extras/sdk-container
     Properties:
-      RepositoryName: thar/sdk-aarch64
+      RepositoryName: bottlerocket/sdk-aarch64
 
   SDKaarch64Parameter:
     Type: AWS::SSM::Parameter
