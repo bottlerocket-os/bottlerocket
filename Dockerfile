@@ -111,7 +111,7 @@ RUN --mount=target=/host \
         --nogpgcheck \
         --downloadonly \
         --downloaddir . \
-        install $(printf "thar-${ARCH}-%s\n" ${PACKAGES}) \
+        install $(printf "bottlerocket-${ARCH}-%s\n" ${PACKAGES}) \
     && mv *.rpm /local/rpms \
     && createrepo_c /local/rpms \
     && /host/tools/rpm2img \
