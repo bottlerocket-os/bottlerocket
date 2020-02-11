@@ -8,6 +8,7 @@ publish = false
 [dependencies]
 anyhow = "1"
 askalono = "0.4"
+cargo_metadata = "0.9"
 ignore = "0.4"
 lazy_static = "1"
 serde = { version = "1", features = ["derive"] }

@@ -2,7 +2,7 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::redundant_closure_for_method_calls)]
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use askalono::{ScanStrategy, Store, TextData};
 use ignore::types::{Types, TypesBuilder};
 use ignore::WalkBuilder;
@@ -42,6 +42,18 @@ enum Cmd {
         /// Path to the vendor directory of a project.
         vendor_dir: PathBuf,
     },
+    Cargo {
+        /// Path to Cargo.toml for a project.
+        manifest_path: PathBuf,
+
+        /// Equivalent to `cargo --locked`
+        #[structopt(long)]
+        locked: bool,
+
+        /// Equivalent to `cargo --offline`
+        #[structopt(long)]
+        offline: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -75,6 +87,53 @@ fn main() -> Result<()> {
                     &opt.out_dir.join(&repo),
                     &scanner,
                     &clarify,
+                    None,
+                )?;
+            }
+            Ok(())
+        }
+        Cmd::Cargo {
+            manifest_path,
+            locked,
+            offline,
+        } => {
+            let mut builder = cargo_metadata::MetadataCommand::new();
+            builder.manifest_path(manifest_path);
+            if locked {
+                builder.other_options(&["--locked".to_owned()]);
+            }
+            if offline {
+                builder.other_options(&["--offline".to_owned()]);
+            }
+            let metadata = builder.exec()?;
+            for package in metadata.packages {
+                if package.source.is_none() {
+                    if let Some(publish) = package.publish {
+                        if publish.is_empty() {
+                            // `package.source` is None if the project is a local project;
+                            // `package.publish` is an empty Vec if `publish = false` is set
+                            continue;
+                        }
+                    }
+                }
+                write_attribution(
+                    &package.name,
+                    package
+                        .manifest_path
+                        .parent()
+                        .expect("expected a path to Cargo.toml to have a parent"),
+                    &opt.out_dir
+                        .join(format!("{}-{}", package.name, package.version)),
+                    &scanner,
+                    &clarify,
+                    if let Some(license) = package.license {
+                        Some(Expression::parse(&unslash(&license)).map_err(|err| {
+                            // spdx errors use the lifetime of the string
+                            anyhow!(err.to_string())
+                        })?)
+                    } else {
+                        None
+                    },
                 )?;
             }
             Ok(())
@@ -203,6 +262,12 @@ lazy_static::lazy_static! {
     };
 }
 
+/// Replace '/' characters in a license string with 'OR'. (crates.io allows '/' instead of 'OR' for
+/// compatibility.)
+fn unslash(s: &str) -> String {
+    s.split('/').map(str::trim).collect::<Vec<_>>().join(" OR ")
+}
+
 /// Returns true if the file is expected to not be a license text (such as the Apache-2.0 NOTICE
 /// file).
 fn non_license(path: &Path) -> bool {
@@ -222,14 +287,20 @@ fn hash(data: &[u8]) -> u32 {
         .expect("XxHash32 returned hash larger than 32 bits")
 }
 
+#[allow(clippy::too_many_lines)] // maybe someday...
 fn write_attribution(
     name: &str,
     scan_dir: &Path,
     out_dir: &Path,
     scanner: &ScanStrategy<'_>,
     clarifications: &Clarifications,
+    stated_license: Option<Expression>,
 ) -> Result<()> {
-    eprintln!("{}:", name);
+    if let Some(stated_license) = stated_license.as_ref() {
+        eprintln!("{} ({}):", name, stated_license);
+    } else {
+        eprintln!("{}:", name);
+    }
     let mut files = HashMap::new();
     for entry in WalkBuilder::new(scan_dir).types(TYPES.clone()).build() {
         let entry = entry?;
@@ -266,6 +337,21 @@ fn write_attribution(
                         file_hash
                     );
                 } else {
+                    if stated_license.is_some() {
+                        // if the package states a license and we heuristically detect that this is
+                        // a top-level "either license, at your option" file, ignore it
+                        let trainwreck = data.split_whitespace().collect::<Vec<_>>().join(" ");
+                        if trainwreck.contains("under the terms of either license")
+                            || trainwreck.contains("at your option")
+                        {
+                            eprintln!(
+                                "  + {} (hash = 0x{:x}) detected as non-license file",
+                                file.display(),
+                                file_hash
+                            );
+                            continue;
+                        }
+                    }
                     bail!(
                         "failed to detect any license from {} (hash = 0x{:x}), \
                          please add a clarification",
@@ -282,15 +368,39 @@ fn write_attribution(
                     result.license.name,
                     result.score,
                 );
-                licenses.push(result.license.name);
+                if let Some(stated_license) = stated_license.as_ref() {
+                    // If the package states a license, verify that the license we detected is a
+                    // subset of that.
+                    if !stated_license
+                        .requirements()
+                        .any(|er| er.req.license.id() == spdx::license_id(result.license.name))
+                    {
+                        bail!(
+                            "detected license \"{}\" from {} is not present in the license \
+                             field \"{}\" for {}",
+                            result.license.name,
+                            file.display(),
+                            stated_license,
+                            name
+                        );
+                    }
+                } else {
+                    licenses.push(result.license.name);
+                }
             }
         }
-        licenses.sort();
-        licenses.dedup();
-        let expression = licenses.join(" AND ");
-        eprintln!("  = {}", expression);
+
         copy_files(out_dir, &files, &[])?;
-        expression
+
+        if let Some(stated_license) = stated_license {
+            stated_license.to_string()
+        } else {
+            licenses.sort();
+            licenses.dedup();
+            let expression = licenses.join(" AND ");
+            eprintln!("  = {}", expression);
+            expression
+        }
     };
 
     fs::create_dir_all(out_dir)?;

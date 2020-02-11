@@ -218,6 +218,12 @@ install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 
+%cross_scan_attribution --clarify %{_builddir}/workspaces/clarify.toml \
+    cargo --offline --locked %{_builddir}/workspaces/Cargo.toml
+
+%files
+%{_cross_attribution_vendor_dir}
+
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{_cross_unitdir}/apiserver.service

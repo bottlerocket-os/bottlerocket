@@ -57,6 +57,7 @@ Requires: %{_cross_os}updog
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}preinit
 Requires: %{_cross_os}wicked
+Requires: %{_cross_os}workspaces
 
 %description
 %{summary}.
