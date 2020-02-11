@@ -75,7 +75,8 @@ sgdisk --clear \
    --sort --print "${DISK_IMAGE}"
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
-rm -rf "${ROOT_MOUNT}"/var/lib
+mksquashfs "${ROOT_MOUNT}"/usr/share/licenses "${ROOT_MOUNT}"/usr/share/thar/licenses.squashfs
+rm -rf "${ROOT_MOUNT}"/var/lib "${ROOT_MOUNT}"/usr/share/licenses/*
 
 if [[ "${ARCH}" == "x86_64" ]]; then
   SYS_ROOT="x86_64-thar-linux-gnu/sys-root"

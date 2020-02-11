@@ -21,6 +21,7 @@ Source1007: var.mount
 Source1008: opt.mount
 Source1009: usr-src-kernels.mount.in
 Source1010: var-lib-thar.mount
+Source1011: usr-share-licenses.mount.in
 
 BuildArch: noarch
 Requires: %{_cross_os}acpid
@@ -90,6 +91,10 @@ KERNELPATH=$(systemd-escape --path %{_cross_usrsrc}/kernels)
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1009} > ${KERNELPATH}.mount
 install -p -m 0644 ${KERNELPATH}.mount %{buildroot}%{_cross_unitdir}
 
+LICENSEPATH=$(systemd-escape --path %{_cross_licensedir})
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1011} > ${LICENSEPATH}.mount
+install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
+
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 
@@ -105,6 +110,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
 %{_cross_unitdir}/*-kernels.mount
+%{_cross_unitdir}/*-licenses.mount
 %{_cross_unitdir}/var-lib-thar.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/hostname
