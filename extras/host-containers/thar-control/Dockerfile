@@ -1,12 +1,31 @@
-FROM amazonlinux:2
+# DOCKER_ARCH is the multiarch variant that is used as the base image.
+ARG DOCKER_ARCH
+FROM $DOCKER_ARCH/amazonlinux:2
+
+# IMAGE_VERSION is the assigned version of inputs for this image.
 ARG IMAGE_VERSION
+ENV IMAGE_VERSION=$IMAGE_VERSION
+# IMAGE_VERSION is the assigned version of inputs for this image.
 ARG SSM_AGENT_VERSION
-# Mandatory build arguments
-RUN test -n "$IMAGE_VERSION"
-RUN test -n "$SSM_AGENT_VERSION"
+ENV SSM_AGENT_VERSION=$SSM_AGENT_VERSION
+# ARCH is the normative target architecture for the image.
+ARG ARCH
+ENV ARCH=$ARCH
+
+# Validation
+RUN : \
+    "${IMAGE_VERSION:?IMAGE_VERSION is required to build}" \
+    "${ARCH:?ARCH is required to build}" \
+    "${SSM_AGENT_VERSION:?SSM Agent version required to build}"
+
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
-RUN yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/"$SSM_AGENT_VERSION"/linux_amd64/amazon-ssm-agent.rpm shadow-utils
+# Install the arch specific build of SSM agent *and confirm that it installed* -
+# yum will allow architecture-mismatched packages to not install and consider
+# the run successful.
+RUN yum install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm" \
+    shadow-utils \
+    && rm -rf /var/cache/yum
 
 # Add motd explaining the control container.
 RUN rm -f /etc/motd /etc/issue
