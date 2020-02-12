@@ -149,7 +149,7 @@ paths:
             type: array
             items:
               type: string
-          # `style: form` and `explode: false` format parameters as such:  /settings/apply?keys=settings.foo,settings.bar
+          # `style: form` and `explode: false` format parameters as such:  /tx/apply?keys=settings.foo,settings.bar
           style: form
           explode: false
           required: false
