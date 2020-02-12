@@ -172,7 +172,7 @@ dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=5
 # - adjust the inode ratio since we expect lots of small files
 # - retain the inode size to allow most settings to be stored inline
 # - retain the block size to handle worse-case alignment for hardware
-mkfs.ext4 -L "THAR-PRIVATE" -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" 42M
+mkfs.ext4 -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" 42M
 dd if="${PRIVATE_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=2005
 
 # THAR-DATA
@@ -181,7 +181,7 @@ sgdisk --clear \
    -n 0:1M:1023M -c 0:"THAR-DATA" -t 0:8300 \
    --sort --print "${DATA_IMAGE}"
 mkdir -p "${DATA_MOUNT}/var/"{cache,lib,log,spool}
-mkfs.ext4 -L "THAR-DATA" -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" 1022M
+mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" 1022M
 dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek=1
 
 sgdisk -v "${DISK_IMAGE}"
