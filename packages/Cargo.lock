@@ -219,6 +219,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libaudit"
+version = "0.1.0"
+dependencies = [
+ "glibc 0.1.0",
+]
+
+[[package]]
 name = "libcap"
 version = "0.1.0"
 dependencies = [

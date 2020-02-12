@@ -26,6 +26,7 @@ BuildArch: noarch
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}apiclient
 Requires: %{_cross_os}apiserver
+Requires: %{_cross_os}audit
 Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
 Requires: %{_cross_os}coreutils

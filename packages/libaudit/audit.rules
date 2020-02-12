@@ -1,0 +1,15 @@
+# Delete all rules.
+-D
+
+# Exclude userspace events.
+-a never,user
+
+# Exclude per-task events.
+-a never,task
+
+# Exclude syscalls.
+-a never,exit -S all
+
+# Exclude everything except SELinux events.
+-a always,exclude -F msgtype<1400
+-a always,exclude -F msgtype>1499

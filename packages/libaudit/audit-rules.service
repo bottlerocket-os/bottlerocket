@@ -1,0 +1,15 @@
+[Unit]
+Description=Load audit rules
+DefaultDependencies=no
+Conflicts=shutdown.target
+Before=sysinit.target shutdown.target
+ConditionSecurity=audit
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/sbin/auditctl -R /usr/share/audit/audit.rules
+ExecStop=-/sbin/auditctl -D
+
+[Install]
+WantedBy=multi-user.target
