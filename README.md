@@ -132,7 +132,7 @@ If you're using a custom control container, or want to make the API calls direct
 
 ```
 apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": true}}}'
-apiclient -u /settings/commit_and_apply -m POST
+apiclient -u /tx/commit_and_apply -m POST
 ```
 
 Once you're in the admin container, you can run `sheltie` to get a full root shell in the Thar host.
@@ -306,7 +306,7 @@ As long as you define the three fields above -- `source` with a URI, and `enable
 Here's an example of adding a custom host container:
 ```
 apiclient -u /settings -X PATCH -d '{"host-containers": {"custom": {"source": "MY-CONTAINER-URI", "enabled": true, "superpowered": false}}}'
-apiclient -u /settings/commit_and_apply -X POST
+apiclient -u /tx/commit_and_apply -X POST
 ```
 
 If the `enabled` flag is `true`, it will be started automatically.
