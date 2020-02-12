@@ -28,6 +28,7 @@ members = [
     "kubernetes",
     "libacl",
     "libattr",
+    "libaudit",
     "libcap",
     "libdbus",
     "libgcc",
