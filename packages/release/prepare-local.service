@@ -2,14 +2,13 @@
 Description=Prepare Local Directory (/local)
 DefaultDependencies=no
 
-# We need udev to create /dev/disk/by-partlabel/THAR-DATA first.
-# TODO: change "THAR" to "BOTTLEROCKET" (here and below) when we change rpm2img
-Wants=dev-disk-by\x2dpartlabel-THAR\x2dDATA.device
-After=dev-disk-by\x2dpartlabel-THAR\x2dDATA.device
+# We need udev to create /dev/disk/by-partlabel/BOTTLEROCKET-DATA first.
+Wants=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
+After=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
 
 [Service]
 Type=oneshot
-Environment=BOTTLEROCKET_DATA=/dev/disk/by-partlabel/THAR-DATA
+Environment=BOTTLEROCKET_DATA=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
 Environment=LOCAL_DIR=/local
 
 # To "grow" the partition, we delete it and recreate it at the larger size, which
