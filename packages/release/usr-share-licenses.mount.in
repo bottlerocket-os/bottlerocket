@@ -1,0 +1,13 @@
+[Unit]
+Description=License files
+Conflicts=umount.target
+Before=local-fs.target umount.target
+
+[Mount]
+What=PREFIX/share/thar/licenses.squashfs
+Where=PREFIX/share/licenses
+Type=squashfs
+Options=defaults,ro,loop
+
+[Install]
+WantedBy=local-fs.target
