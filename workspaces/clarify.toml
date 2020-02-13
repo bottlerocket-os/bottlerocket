@@ -1,0 +1,73 @@
+[clarify.backtrace-sys]
+# backtrace-sys is MIT/Apache-2.0, libbacktrace is BSD-3-Clause
+expression = "(MIT OR Apache-2.0) AND BSD-3-Clause"
+license-files = [
+    { path = "src/libbacktrace/LICENSE", hash = 0x0ce09262 },
+]
+
+[clarify.crossbeam-queue]
+expression = "(MIT OR Apache-2.0) AND BSD-2-Clause-FreeBSD"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0x24b54f4b },
+    { path = "LICENSE-MIT", hash = 0x386ca1bc },
+    { path = "LICENSE-THIRD-PARTY", hash = 0x7e40bc60 },
+]
+
+[clarify.lz4-sys]
+# The lz4-sys crate's license is listed as MIT.
+#
+# lz4-sys compiles four files from liblz4 as a static library:
+# - lib/lz4.c
+# - lib/lz4frame.c
+# - lib/lz4hc.c
+# - lib/xxhash.c
+#
+# liblz4's LICENSE file states:
+# > This repository uses 2 different licenses :
+# > - all files in the `lib` directory use a BSD 2-Clause license
+# > - all other files use a GPLv2 license, unless explicitly stated otherwise
+expression = "MIT AND BSD-2-Clause"
+license-files = [
+    { path = "liblz4/lib/LICENSE", hash = 0x5c0c490b },
+]
+skip-files = [
+    "liblz4/LICENSE", # top-level explainer file
+    "liblz4/contrib/djgpp/LICENSE",
+    "liblz4/examples/COPYING",
+    "liblz4/programs/COPYING",
+    "liblz4/tests/COPYING",
+]
+
+[clarify.pulldown-cmark]
+expression = "MIT"
+license-files = [
+    { path = "LICENSE", hash = 0x4cb272b3 },
+]
+skip-files = [
+    "third_party/CommonMark/LICENSE", # only contains the commonmark specification
+]
+
+[clarify.regex]
+expression = "MIT OR Apache-2.0"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0x24b54f4b },
+    { path = "LICENSE-MIT", hash = 0xb755395b },
+]
+skip-files = [
+    "src/testdata/LICENSE", # we aren't using the test data
+]
+
+[clarify.regex-syntax]
+expression = "(MIT OR Apache-2.0) AND Unicode-DFS-2016"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0x24b54f4b },
+    { path = "LICENSE-MIT", hash = 0xb755395b },
+    { path = "src/unicode_tables/LICENSE-UNICODE", hash = 0xa7f28b93 },
+]
+
+[clarify.ring]
+expression = "MIT AND ISC AND OpenSSL"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 },
+    { path = "third_party/fiat/LICENSE", hash = 0xdad0527d },
+]
