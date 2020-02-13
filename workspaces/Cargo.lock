@@ -1522,6 +1522,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "migrate-host-containers-v03"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+ "schnauzer 0.1.0",
+ "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "migrate-host-containers-version"
 version = "0.1.0"
 dependencies = [
@@ -1544,7 +1554,10 @@ name = "migration-helpers"
 version = "0.1.0"
 dependencies = [
  "apiserver 0.1.0",
+ "handlebars 3.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "schnauzer 0.1.0",
+ "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -55,6 +55,28 @@ pub enum Error {
 
     #[snafu(display("Unable to list transactions in data store: {}", source))]
     ListTransactions { source: datastore::Error },
+
+    #[snafu(display("Unable to build handlebar template registry: {}", source))]
+    BuildTemplateRegistry { source: schnauzer::error::Error },
+
+    #[snafu(display("Unable to render template string '{}': {}", template, source))]
+    RenderTemplate {
+        template: String,
+        source: handlebars::TemplateRenderError,
+    },
+
+    #[snafu(display("'{}' is set to non-string value", setting))]
+    NonStringSettingDataType { setting: &'static str },
+
+    #[snafu(display("Unable to deserialize datastore data: {}", source))]
+    DeserializeDatastore {
+        source: apiserver::datastore::deserialization::Error,
+    },
+
+    #[snafu(display("Unable to create new key: {}", source))]
+    NewKey {
+        source: apiserver::datastore::error::Error,
+    },
 }
 
 /// Result alias containing our Error type.
