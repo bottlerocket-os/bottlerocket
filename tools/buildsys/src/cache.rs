@@ -16,7 +16,6 @@ use error::Result;
 use super::manifest;
 use sha2::{Digest, Sha512};
 use snafu::{ensure, OptionExt, ResultExt};
-use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufWriter};
 use std::path::{Path, PathBuf};
@@ -63,7 +62,8 @@ impl LookasideCache {
             }
 
             // next check with upstream, if permitted
-            if env::var_os("BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL").is_some() {
+            if std::env::var("BUILDSYS_UPSTREAM_SOURCE_FALLBACK") == Ok("true".to_string()) {
+                println!("Fetching {:?} from upstream source", url_file_name);
                 Self::fetch_file(&f.url, &tmp, hash)?;
                 fs::rename(&tmp, path).context(error::ExternalFileRename { path: &tmp })?;
             }
