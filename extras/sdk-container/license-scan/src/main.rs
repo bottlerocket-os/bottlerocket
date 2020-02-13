@@ -296,10 +296,9 @@ fn write_attribution(
     clarifications: &Clarifications,
     stated_license: Option<Expression>,
 ) -> Result<()> {
+    eprintln!("{}:", name);
     if let Some(stated_license) = stated_license.as_ref() {
-        eprintln!("{} ({}):", name, stated_license);
-    } else {
-        eprintln!("{}:", name);
+        eprintln!("  + {} (stated in metadata)", stated_license);
     }
     let mut files = HashMap::new();
     for entry in WalkBuilder::new(scan_dir).types(TYPES.clone()).build() {
@@ -369,21 +368,23 @@ fn write_attribution(
                     result.score,
                 );
                 if let Some(stated_license) = stated_license.as_ref() {
-                    // If the package states a license, verify that the license we detected is a
-                    // subset of that.
-                    if !stated_license
-                        .requirements()
-                        .any(|er| er.req.license.id() == spdx::license_id(result.license.name))
-                    {
-                        bail!(
-                            "detected license \"{}\" from {} is not present in the license \
-                             field \"{}\" for {}",
-                            result.license.name,
-                            file.display(),
-                            stated_license,
-                            name
-                        );
-                    }
+                    // The license we detected should be included in the stated license string,
+                    // otherwise we know the stated license is incomplete, in which case we should
+                    // have had a clarification.
+                    ensure!(
+                        stated_license.requirements().any(|er| {
+                            // `er` is an `ExpressionReq`; `er.req` is a `LicenseReq`.
+                            // `er.req.license.id()` returns `Option<LicenseId>`.
+                            er.req.license.id().is_some()
+                                && er.req.license.id() == spdx::license_id(result.license.name)
+                        }),
+                        "detected license \"{}\" from {} is not present in the license \
+                         field \"{}\" for {}",
+                        result.license.name,
+                        file.display(),
+                        stated_license,
+                        name
+                    );
                 } else {
                     licenses.push(result.license.name);
                 }

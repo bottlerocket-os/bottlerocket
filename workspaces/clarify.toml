@@ -17,7 +17,10 @@ license-files = [
 # The lz4-sys crate's license is listed as MIT.
 #
 # lz4-sys compiles four files from liblz4 as a static library:
-# lz4.c, lz4frame.c, lz4hc.c, and xxhash.c.
+# - lib/lz4.c
+# - lib/lz4frame.c
+# - lib/lz4hc.c
+# - lib/xxhash.c
 #
 # liblz4's LICENSE file states:
 # > This repository uses 2 different licenses :
