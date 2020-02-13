@@ -16,7 +16,7 @@ for doc in "${DOCS[@]}"; do
         <(
             cat <<'EOF'
 @@BOTTLEROCKET-SENTINEL-START@@
-**The best way to get in touch with the Bottlerocket development team** during this early preview
+**The best way to get in touch with the Bottlerocket development team** during our preview
 is via [thar-preview@amazon.com](mailto:thar-preview@amazon.com)
 or #thar-preview on the [awsdevelopers Slack workspace](https://awsdevelopers.slack.com) (email us for an invite).
 We'd love to talk with you and hear your feedback on Bottlerocket!

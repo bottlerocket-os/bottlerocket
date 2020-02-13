@@ -1,70 +1,44 @@
-# Bottlerocket operating system
+# Bottlerocket OS
 
 Welcome to Bottlerocket!
 
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
+You can read more about what drives us in [our charter](CHARTER.md).
 
-## Tenets
-
-These tenets guide Bottlerocket's development.
-They let you know what we value and what we're working toward, even if not every feature is ready yet.
-
-### Open
-
-Bottlerocket is **open** because the best OS can only be built through collaboration.
-It is developed in full view of the world using open source tools and public infrastructure services.
-It is not a Kubernetes distro, nor an Amazon distro.
-We obsess over shared components like the kernel, but we are willing to accept support for other orchestrators or platforms.
-
-### Small
-
-Bottlerocket is **small** because a few big ideas scale better than many small ones.
-It includes only the core set of components needed for development and for use at runtime.
-Anything we ship, we must be prepared to fix, so our goal is to ship as little as possible while staying useful.
-
-### Secure
-
-Bottlerocket is **secure** so it can become a quiet piece of a platform you trust.
-It uses a variety of mechanisms to provide defense-in-depth, and enables automatic updates by default.
-It protects itself from persistent threats.
-It enables kernel features that allow users to assert their own policies for locking down workloads.
-
-### Simple
-
-Bottlerocket is **simple** because simple lasts.
-Users can pick the image they want, tweak a handful of settings, and then forget about it.
-We favor settings that convey high-level intent over those that provide low-level control over specific details, because it is easier to preserve intent across months and years of automatic updates.
+Some notable features include:
+* [API access](#api) for configuring your system, with secure out-of-band [access methods](#exploration) when you need them.
+* [Updates](#updates) based on partition flips, for fast and reliable system updates.
+* [Modeled configuration](#settings) that's automatically migrated through updates.
+* [Security](#security) as a top priority.
 
 ## Contact us
 
 If you find a security issue, please [contact our security team](https://github.com/amazonlinux/PRIVATE-thar/security/policy) rather than opening an issue.
+
+If you're interested in contributing, thank you!
+Please see our [contributor's guide](CONTRIBUTING.md).
 
 We use GitHub issues to track other bug reports and feature requests.
 You can select from a few templates and get some guidance on the type of information that would be most helpful.
 
 [Contact us with a new issue here.](https://github.com/amazonlinux/PRIVATE-thar/issues/new/choose)
 
-We don't have other communication channels set up yet, but don't worry about making an issue!
+We don't have other communication channels set up quite yet, but don't worry about making an issue!
 You can let us know about things that seem difficult, or even ways you might like to help.
 
-Thank you!
-
-## Overview
+## Variants
 
 To start, we're focusing on use of Bottlerocket as a host OS in AWS EKS Kubernetes clusters.
 We’re excited to get early feedback and to continue working on more use cases!
 
-## Variants
-
-Bottlerocket is architected such that different cloud environments and container orchestraters can be supported in the future.
+Bottlerocket is architected such that different cloud environments and container orchestrators can be supported in the future.
 A build of Bottlerocket that supports different features or integration characteristics is known as a 'variant'.
+The artifacts of a build will include the architecture and variant name.
+For example, an `x86_64` build of the `aws-k8s` variant will produce an image named `bottlerocket-x86_64-aws-k8s.img`.
 
 Our first supported variant, `aws-k8s`, supports EKS as described above.
 
-The artifacts of a build will include the architecture and variant name.
-For example, an `x86_64` build of `aws-k8s` will produce an image named `bottlerocket-x86_64-aws-k8s.img`.
-
-### Setup
+## Setup
 
 :walking: :running:
 
@@ -75,7 +49,7 @@ It describes:
 * how to set up a Kubernetes cluster, so your Bottlerocket instance can run pods
 * how to launch a Bottlerocket instance in EC2
 
-### Exploration
+## Exploration
 
 To improve security, there's no SSH server in a Bottlerocket image, and not even a shell.
 
@@ -85,7 +59,7 @@ There are a couple out-of-band access methods you can use to explore Bottlerocke
 Either option will give you a shell within Bottlerocket.
 From there, you can [change settings](#settings), manually [update Bottlerocket](#updates), debug problems, and generally explore.
 
-#### Control container
+### Control container
 
 Bottlerocket has a "control" container, enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
@@ -109,7 +83,7 @@ aws ssm start-session --target INSTANCE_ID
 With the default control container, you can make API calls to change settings in your Bottlerocket host.
 To do even more, read the next section about the [admin container](#admin-container).
 
-#### Admin container
+### Admin container
 
 Bottlerocket has an administrative container, disabled by default, that runs outside of the orchestrator in a separate instance of containerd.
 This container has an SSH server that lets you log in as `ec2-user` using your EC2-registered SSH key.
@@ -138,7 +112,7 @@ apiclient -u /tx/commit_and_apply -m POST
 Once you're in the admin container, you can run `sheltie` to get a full root shell in the Bottlerocket host.
 Be careful; while you can inspect and change even more as root, Bottlerocket's filesystem and dm-verity setup will prevent most changes from persisting over a restart - see [Security](#security).
 
-### Updates
+## Updates
 
 Rather than a package manager that updates individual pieces of software, Bottlerocket downloads a full filesystem image and reboots into it.
 It can automatically roll back if boot failures occur, and workload failures can trigger manual rollbacks.
@@ -156,6 +130,8 @@ Here's how you initiate an update:
 updog update
 reboot
 ```
+
+(If you know what you're doing and want to update *now*, you can run `updog update --reboot --now`)
 
 The system will automatically roll back if it's unable to boot.
 If the update is not functional for a given container workload, you can do a manual rollback:
@@ -249,8 +225,7 @@ In this format, "settings.kubernetes.cluster-name" refers to the same key as in 
 
 #### Top-level settings
 
-* `settings.timezone`: This doesn't function currently, but is intended to let you set the system timezone, and is specified in [tz database format](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
-* `settings.hostname`: This lets you override the system hostname retrieved from DHCP.
+* `settings.timezone`, `settings.hostname`: These don't function currently, but are intended to let you override the system timezone or the hostname retrieved from DHCP.  At the moment they're used as example settings.
 
 #### Kubernetes settings
 
@@ -284,6 +259,7 @@ The following settings are set for you automatically by [pluto](workspaces/api/)
 
 * `settings.updates.metadata-base-url`: The common portion of all URIs used to download update metadata.
 * `settings.updates.target-base-url`: The common portion of all URIs used to download update files.
+* `settings.updates.seed`: A `u32` value that determines how far into in the update schedule this machine will accept an update.  We recommending leaving this at its default generated value so that updates can be somewhat randomized in your cluster.
 
 #### Time settings
 
@@ -301,12 +277,20 @@ The following settings are set for you automatically by [pluto](workspaces/api/)
 
 `admin` and `control` are our default host containers, but you're free to change this.
 Beyond just changing the settings above to affect the `admin` and `control` containers, you can add and remove host containers entirely.
-As long as you define the three fields above -- `source` with a URI, and `enabled` and `superpowered` with true/false -- you can add host containers with an API call.
+As long as you define the three fields above -- `source` with a URI, and `enabled` and `superpowered` with true/false -- you can add host containers with an API call or user data.
 
-Here's an example of adding a custom host container:
+Here's an example of adding a custom host container with API calls:
 ```
 apiclient -u /settings -X PATCH -d '{"host-containers": {"custom": {"source": "MY-CONTAINER-URI", "enabled": true, "superpowered": false}}}'
 apiclient -u /tx/commit_and_apply -X POST
+```
+
+Here's the same example, but with the settings you'd add to user data:
+```
+[settings.host-containers.custom]
+enabled = true
+source = "MY-CONTAINER-URI"
+superpowered = false
 ```
 
 If the `enabled` flag is `true`, it will be started automatically.
@@ -319,7 +303,7 @@ The default `admin` host-container, for example, store its SSH host keys under `
 There are a few important caveats to understand about host containers:
 * They're not orchestrated.  They only start or stop according to that `enabled` flag.
 * They run in a separate instance of containerd than the one used for orchestrated containers like Kubernetes pods.
-* They're not updated automatically.  You need to update the `source`, disable the container, then enable it.
+* They're not updated automatically.  You need to update the `source`, disable the container, commit those changes, then re-enable it.
 * If you set `superpowered` to true, they'll essentially have root access to the host.
 
 Because of these caveats, host containers are only intended for special use cases.
