@@ -354,6 +354,7 @@ COPY license-scan /home/builder/license-scan
 RUN cargo build --release --locked
 RUN install -p -m 0755 target/release/thar-license-scan /usr/libexec/tools/
 RUN cp -r license-list-data/json/details /usr/libexec/tools/spdx-data
+# quine - scan the license tool itself for licenses
 RUN \
   /usr/libexec/tools/thar-license-scan \
     --clarify clarify.toml \
@@ -397,6 +398,7 @@ COPY --chown=0:0 --from=sdk-go /home/builder/go/src /usr/libexec/go/src/
 
 # "sdk-license-scan" has our attribution generation tool.
 COPY --chown=0:0 --from=sdk-license-scan /usr/libexec/tools/ /usr/libexec/tools/
+# quine - include the licenses for the license scan tool itself
 COPY --chown=0:0 --from=sdk-license-scan /usr/share/licenses/thar-license-scan/ /usr/share/licenses/thar-license-scan/
 
 # Add Rust programs and libraries to the path.
