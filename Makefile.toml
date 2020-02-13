@@ -18,7 +18,7 @@ BUILDSYS_UPSTREAM_SOURCE_FALLBACK = "false"
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
-GO_VERSION = "1.12.5"
+GO_VERSION = "1.13.8"
 DOCKER_BUILDKIT = "1"
 
 [env.development]
