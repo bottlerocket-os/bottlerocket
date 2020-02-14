@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/agent"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/bottlerocket"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/controller"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/k8sutil"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/platform/updog"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/sigcontext"
-	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/bottlerocket"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 )
