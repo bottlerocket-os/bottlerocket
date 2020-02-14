@@ -14,9 +14,9 @@ done
 
 mkdir -p "${OUTPUT_DIR}"
 
-MIGRATIONS_ARCHIVE="thar-${ARCH}-${VARIANT}-${VERSION_ID}-${BUILD_ID}-migrations.tar"
+MIGRATIONS_ARCHIVE="bottlerocket-${ARCH}-${VARIANT}-${VERSION_ID}-${BUILD_ID}-migrations.tar"
 ROOT_TEMP="$(mktemp -d)"
-SYS_ROOT="${ARCH}-thar-linux-gnu/sys-root"
+SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
 MIGRATIONS_DIR="${ROOT_TEMP}/${SYS_ROOT}/usr/share/migrations"
 
 # "Install" the migrations (just puts them in $MIGRATIONS_DIR)

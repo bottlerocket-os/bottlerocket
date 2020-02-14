@@ -94,7 +94,7 @@ USER root
 RUN --mount=target=/host \
     mkdir -p /local/rpms /local/migrations ./rpmbuild/RPMS \
     && ln -s /host/build/*.rpm ./rpmbuild/RPMS \
-    && cp /host/build/thar-${ARCH}-migrations-*.rpm /local/migrations \
+    && cp /host/build/bottlerocket-${ARCH}-migrations-*.rpm /local/migrations \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
