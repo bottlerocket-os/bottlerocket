@@ -62,7 +62,7 @@ func main() {
 	case *flagController && *flagAgent:
 		log.Error("cannot run both agent and controller")
 		os.Exit(1)
-	case (!*flagController && !*flagAgent):
+	case !*flagController && !*flagAgent:
 		log.Error("no component specified to run, provide either -agent or -controller")
 		flag.Usage()
 		os.Exit(1)
