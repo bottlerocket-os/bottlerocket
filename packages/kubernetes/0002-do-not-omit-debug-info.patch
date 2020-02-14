@@ -12,11 +12,11 @@ diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
 index a82880a5..5454e73f 100755
 --- a/hack/lib/golang.sh
 +++ b/hack/lib/golang.sh
-@@ -779,7 +779,7 @@ kube::golang::build_binaries() {
-     host_platform=$(kube::golang::host_platform)
- 
-     local goflags goldflags goasmflags gogcflags
--    goldflags="${GOLDFLAGS:-} -s -w $(kube::version::ldflags)"
+@@ -790,7 +790,7 @@ kube::golang::build_binaries() {
+     # Disable SC2153 for this, as it will throw a warning that the local
+     # variable goldflags will exist, and it suggest changing it to this.
+     # shellcheck disable=SC2153
+-    goldflags="${GOLDFLAGS=-s -w} $(kube::version::ldflags)"
 +    goldflags="${GOLDFLAGS:-} $(kube::version::ldflags)"
      goasmflags="-trimpath=${KUBE_ROOT}"
      gogcflags="${GOGCFLAGS:-} -trimpath=${KUBE_ROOT}"
