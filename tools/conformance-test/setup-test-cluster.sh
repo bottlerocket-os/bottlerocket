@@ -28,7 +28,7 @@ for tool in jq aws kubectl eksctl; do
 done
 
 DEFAULT_CLUSTER_NAME=sonobuoy-test
-CNI_PLUGIN_PATCH='{"spec": {"template": {"spec": {"containers": [{"image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.0-rc4","name":"aws-node"}]}}}}'
+CNI_PLUGIN_CONFIG=https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.6/config/v1.6/aws-k8s-cni.yaml
 
 # Helper functions
 
@@ -107,7 +107,7 @@ exit_on_error() {
 parse_args "${@}"
 
 echo "Setting up fresh EKS cluster with eksctl"
-eksctl get cluster -r "${REGION}" -n "${CLUSTER_NAME}" > /dev/null
+eksctl get cluster -r "${REGION}" -n "${CLUSTER_NAME}" > /dev/null 2>&1
 if [ "${?}" -eq 0 ]; then
   echo "* An EKS cluster already exists with name ${CLUSTER_NAME}" >&2
   exit 1
@@ -123,11 +123,9 @@ eksctl utils write-kubeconfig -r "${REGION}" -c "${CLUSTER_NAME}" --kubeconfig "
 exit_on_error ${?} "* Failed to write kube config"
 
 KUBECTL="kubectl --kubeconfig ${kubeconfig_file}"
-echo "Updating the CNI plugin version"
-${KUBECTL} patch daemonset aws-node \
-  -n kube-system \
-  -p "${CNI_PLUGIN_PATCH}"
-exit_on_error ${?} "* Failed to patch CNI plugin"
+echo "Apply configuration for AWS CNI plugin"
+${KUBECTL} apply -f "${CNI_PLUGIN_CONFIG}"
+exit_on_error ${?} "* Failed to apply configuration for AWS CNI plugin"
 
 echo "Generating userdata file for launching Bottlerocket worker nodes"
 endpoint=$(set -o pipefail; \
