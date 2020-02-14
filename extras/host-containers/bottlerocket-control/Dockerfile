@@ -23,9 +23,14 @@ LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 # Install the arch specific build of SSM agent *and confirm that it installed* -
 # yum will allow architecture-mismatched packages to not install and consider
 # the run successful.
-RUN yum install -y "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm" \
-    shadow-utils \
-    && rm -rf /var/cache/yum
+COPY ./hashes/ssm ./hashes
+RUN \
+  curl -L "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm" \
+       -o "amazon-ssm-agent-${SSM_AGENT_VERSION}.${ARCH}.rpm" && \
+  grep "amazon-ssm-agent-${SSM_AGENT_VERSION}.${ARCH}.rpm" hashes | sha512sum --check - && \
+  yum install -y "amazon-ssm-agent-${SSM_AGENT_VERSION}.${ARCH}.rpm" shadow-utils && \
+  rm "amazon-ssm-agent-${SSM_AGENT_VERSION}.${ARCH}.rpm" && \
+  rm -rf /var/cache/yum ./hashes
 
 # Add motd explaining the control container.
 RUN rm -f /etc/motd /etc/issue
