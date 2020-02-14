@@ -1,7 +1,7 @@
 {
   "updates": [
     {
-      "flavor": "bottlerocket-aws-eks",
+      "variant": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.13.0",
       "status": "Ready",
@@ -17,7 +17,7 @@
       }
     },
     {
-      "flavor": "bottlerocket-aws-eks",
+      "variant": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.25.0",
       "status": "Ready",
@@ -33,7 +33,7 @@
     }
     },
     {
-      "flavor": "bottlerocket-aws-eks",
+      "variant": "bottlerocket-aws-eks",
       "arch": "x86_64",
       "version": "1.15.0",
       "status": "Ready",
@@ -49,7 +49,7 @@
     }
     },
     {
-      "flavor": "bottlerocket-aws-eks",
+      "variant": "bottlerocket-aws-eks",
       "arch": "aarch64",
       "version": "1.16.0",
       "status": "Ready",
