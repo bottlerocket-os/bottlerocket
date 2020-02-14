@@ -120,9 +120,7 @@ eksctl utils write-kubeconfig --region us-west-2 --name bottlerocket
 
 Now we can make a configuration change to use a CNI plugin that's compatible with Bottlerocket.
 ```
-kubectl patch daemonset aws-node \
--n kube-system \
--p '{"spec": {"template": {"spec": {"containers": [{"image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.0-rc4","name":"aws-node"}]}}}}'
+kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.6/config/v1.6/aws-k8s-cni.yaml
 ```
 
 ## Cluster info
