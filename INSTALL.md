@@ -37,14 +37,12 @@ Docker's [post-installation steps for Linux](https://docs.docker.com/install/lin
 To build an image, run:
 
 ```
-cargo make world
+cargo make
 ```
 
 All packages will be built in turn, and then compiled into an `img` file in the `build/` directory.
 
-You may want to take advantage of multiple cores on your system by running `make -j7`, for example, which will build up to 7 components in parallel.
-
-## Register an AMI
+### Register an AMI
 
 To use the image in Amazon EC2, we need to register the image as an AMI.
 The `bin/amiize.sh` script does this for you.
@@ -54,7 +52,7 @@ The script has some assumptions about your setup, in particular that you:
   * An SSH key that's registered with EC2 is loaded into `ssh-agent`.
 
 First, decompress the images.
-(Note: these filenames assume an `x86_64` architecture and `aws-k8s` [variant](README.md#variant).)
+(Note: these filenames assume an `x86_64` architecture and `aws-k8s` [variant](README.md).)
 
 ```
 lz4 -d build/bottlerocket-x86_64-aws-k8s.img.lz4 build/bottlerocket-x86_64-aws-k8s.img && \
@@ -75,7 +73,7 @@ bin/amiize.sh --name YOUR-AMI-NAME-HERE \
               --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
 ```
 
-The new AMI ID will be printed at the end.
+Your new AMI ID will be printed at the end.
 
 The amiize script starts an EC2 instance, which it uses to write the image to a new EBS volume.
 It then registers this EBS volume as an AMI and terminates the instance.
@@ -289,7 +287,7 @@ Now we can launch a Bottlerocket instance in our cluster!
 There are a few values to make sure you change in this command:
 * YOUR_KEY_NAME: your SSH keypair name, as registered with EC2
 * SUBNET_ID: the subnet you selected earlier
-* If you chose a public subnet, either add `--associate-public-ip-address` to the command, or attach an Elastic IP afterward.
+  * If you chose a public subnet, either add `--associate-public-ip-address` to the command, or attach an Elastic IP afterward.
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier
 * BOTTLEROCKET_AMI_ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
 * userdata.toml: the path to the user data file you created earlier
