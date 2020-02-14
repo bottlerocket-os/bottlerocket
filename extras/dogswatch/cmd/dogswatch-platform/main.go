@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/marker"
 )
 
 func main() {
-	println(marker.PlatformVersionBuild)
+	fmt.Println(marker.PlatformVersionBuild)
 }
