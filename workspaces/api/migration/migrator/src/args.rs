@@ -1,6 +1,7 @@
 //! This module handles argument parsing for the migrator binary.
 
-use data_store_version::Version;
+use bottlerocket_release::BottlerocketRelease;
+use semver::Version;
 use simplelog::LevelFilter;
 use std::env;
 use std::fs;
@@ -15,7 +16,7 @@ fn usage() -> ! {
         r"Usage: {}
             --datastore-path PATH
             --migration-directories PATH[:PATH:PATH...]
-            (--migrate-to-version x.y | --migrate-to-version-from-file PATH)
+            (--migrate-to-version x.y | --migrate-to-version-from-os-release)
             [ --no-color ]
             [ --log-level trace|debug|info|warn|error ]",
         program_name
@@ -106,21 +107,11 @@ impl Args {
                     migrate_to_version = Some(version)
                 }
 
-                "--migrate-to-version-from-file" => {
-                    let path_str = iter.next().unwrap_or_else(|| {
-                        usage_msg("Did not give argument to --migrate-to-version-from-file")
+                "--migrate-to-version-from-os-release" => {
+                    let br = BottlerocketRelease::new().unwrap_or_else(|e| {
+                        usage_msg(format!("Unable to get version from os-release: {}", e))
                     });
-                    trace!("Given --migrate-to-version-from-file: {}", path_str);
-
-                    let version_str = fs::read_to_string(&path_str).unwrap_or_else(|e| {
-                        usage_msg(format!("Could not read version from {}: {}", path_str, e))
-                    });
-                    trace!("Read version string from file: {}", version_str);
-
-                    let version = Version::from_str(&version_str).unwrap_or_else(|e| {
-                        usage_msg(format!("Invalid version in {}: {}", path_str, e))
-                    });
-                    migrate_to_version = Some(version)
+                    migrate_to_version = Some(br.version_id)
                 }
 
                 _ => usage(),

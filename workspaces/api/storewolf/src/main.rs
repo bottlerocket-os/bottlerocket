@@ -1,7 +1,7 @@
 /*!
 # Introduction
 
-storewolf is a small program to create the filesystem datastore.
+storewolf creates the filesystem datastore used by the API system.
 
 It creates the datastore at a provided path and populates any default
 settings given in the defaults.toml file, unless they already exist.
@@ -12,6 +12,7 @@ settings given in the defaults.toml file, unless they already exist.
 extern crate log;
 
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -26,11 +27,10 @@ use toml::{map::Entry, Value};
 use apiserver::datastore::key::{Key, KeyType};
 use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
-use data_store_version::Version;
+use bottlerocket_release::BottlerocketRelease;
 use model::modeled_types::SingleLineString;
 
 // FIXME Get these from configuration in the future
-const DATASTORE_VERSION_FILE: &str = "/usr/share/bottlerocket/data-store-version";
 // Shared transaction used by boot-time services.
 const TRANSACTION: &str = "bottlerocket-launch";
 
@@ -40,7 +40,6 @@ mod error {
 
     use apiserver::datastore::key::KeyType;
     use apiserver::datastore::{self, serialization, ScalarError};
-    use data_store_version::error::Error as DataStoreVersionError;
     use model::modeled_types::error::Error as ModeledTypesError;
     use snafu::Snafu;
 
@@ -54,10 +53,9 @@ mod error {
         #[snafu(display("Unable to create datastore at '{}': {}", path.display(), source))]
         DatastoreCreation { path: PathBuf, source: io::Error },
 
-        #[snafu(display("Unable to read datastore version from '{}': {}", path.display(), source))]
-        DatastoreVersion {
-            path: PathBuf,
-            source: DataStoreVersionError,
+        #[snafu(display("Unable to get OS version: {}", source))]
+        ReleaseVersion {
+            source: bottlerocket_release::Error,
         },
 
         #[snafu(display("{} is not valid TOML: {}", file, source))]
@@ -133,37 +131,43 @@ type Result<T> = std::result::Result<T, StorewolfError>;
 /// Given a base path, create a brand new datastore with the appropriate
 /// symlink structure for the desired datastore version.
 ///
-/// If `version` is given, uses it, otherwise pulls version from DATASTORE_VERSION_FILE.
+/// If `version` is given, uses it, otherwise pulls version from /etc/os-release.
 ///
 /// An example setup for theoretical version 1.5:
 ///    /path/to/datastore/current
 ///    -> /path/to/datastore/v1
 ///    -> /path/to/datastore/v1.5
-///    -> /path/to/datastore/v1.5_0123456789abcdef
+///    -> /path/to/datastore/v1.5.2
+///    -> /path/to/datastore/v1.5.2_0123456789abcdef
 fn create_new_datastore<P: AsRef<Path>>(base_path: P, version: Option<Version>) -> Result<()> {
-    // Get the datastore version from the version file
-    let datastore_version = match version {
+    let version = match version {
         Some(v) => v,
-        None => Version::from_file(&DATASTORE_VERSION_FILE).context(error::DatastoreVersion {
-            path: &DATASTORE_VERSION_FILE,
-        })?,
+        None => {
+            let br = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+            br.version_id
+        },
     };
+
     // Create random string to append to the end of the new datastore path
     let random_id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
 
     // Build the various paths to which we'll symlink
 
-    // /path/to/datastore/v1.5_0123456789abcdef
-    let data_store_filename = format!("{}_{}", datastore_version, random_id);
-    let data_store_path = base_path.as_ref().join(&data_store_filename);
-
     // /path/to/datastore/v1
-    let major_version_filename = format!("v{}", datastore_version.major);
+    let major_version_filename = format!("v{}", version.major);
     let major_version_path = base_path.as_ref().join(&major_version_filename);
 
     // /path/to/datastore/v1.5
-    let minor_version_filename = format!("{}", datastore_version);
+    let minor_version_filename = format!("v{}.{}", version.major, version.minor);
     let minor_version_path = base_path.as_ref().join(&minor_version_filename);
+
+    // /path/to/datastore/v1.5.2
+    let patch_version_filename = format!("v{}.{}.{}", version.major, version.minor, version.patch);
+    let patch_version_path = base_path.as_ref().join(&patch_version_filename);
+
+    // /path/to/datastore/v1.5_0123456789abcdef
+    let data_store_filename = format!("v{}.{}.{}_{}", version.major, version.minor, version.patch, random_id);
+    let data_store_path = base_path.as_ref().join(&data_store_filename);
 
     // /path/to/datastore/current
     let current_path = base_path.as_ref().join("current");
@@ -174,8 +178,12 @@ fn create_new_datastore<P: AsRef<Path>>(base_path: P, version: Option<Version>) 
     })?;
 
     // Build our symlink chain (See example in docstring above)
-    // /path/to/datastore/v1.5 -> v1.5_0123456789abcdef
-    symlink(&data_store_filename, &minor_version_path).context(error::LinkCreate {
+    // /path/to/datastore/v1.5.2 -> v1.5.2_0123456789abcdef
+    symlink(&data_store_filename, &patch_version_path).context(error::LinkCreate {
+        path: &patch_version_path,
+    })?;
+    // /path/to/datastore/v1.5 -> v1.5.2
+    symlink(&patch_version_filename, &minor_version_path).context(error::LinkCreate {
         path: &minor_version_path,
     })?;
     // /path/to/datastore/v1 -> v1.5
@@ -533,7 +541,7 @@ fn usage() -> ! {
             [ --version X.Y ]
             [ --log-level trace|debug|info|warn|error ]
 
-        If --version is not given, the version will be pulled from /usr/share/bottlerocket/data-store-version.
+        If --version is not given, the version will be pulled from /etc/os-release.
         This is used to set up versioned symlinks in the data store base path.
         ",
         program_name

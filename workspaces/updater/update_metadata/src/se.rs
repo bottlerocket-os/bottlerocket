@@ -1,10 +1,10 @@
-use data_store_version::Version as DataVersion;
+use semver::Version;
 use serde::ser::Error as _;
 use serde::{Serialize, Serializer};
 use std::collections::BTreeMap;
 
 pub(crate) fn serialize_migration<S>(
-    value: &BTreeMap<(DataVersion, DataVersion), Vec<String>>,
+    value: &BTreeMap<(Version, Version), Vec<String>>,
     serializer: S,
 ) -> Result<S::Ok, S::Error>
 where

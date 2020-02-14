@@ -8,12 +8,13 @@ publish = false
 build = "build.rs"
 
 [dependencies]
-data_store_version = { path = "../../data_store_version" }
+bottlerocket-release = { path = "../../../bottlerocket-release" }
 lazy_static = "1.2"
 log = "0.4"
 nix = "0.16"
 rand = { version = "0.7", default-features = false, features = ["std"] }
 regex = "1.1"
+semver = "0.9"
 simplelog = "0.7"
 snafu = "0.6"
 

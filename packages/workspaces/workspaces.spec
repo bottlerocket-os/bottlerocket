@@ -9,7 +9,6 @@ Summary: Bottlerocket's first-party code
 License: Apache-2.0 OR MIT
 
 # sources < 100: misc
-Source1: data-store-version
 Source2: api-sysusers.conf
 # Taken from https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
 Source3: eni-max-pods
@@ -217,7 +216,6 @@ done
 install -d %{buildroot}%{migration_dir}
 
 install -d %{buildroot}%{_cross_datadir}/bottlerocket
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_datadir}/bottlerocket
 
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysusersdir}/api.conf
@@ -251,7 +249,6 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %{_cross_bindir}/apiserver
 %{_cross_unitdir}/apiserver.service
 %{_cross_unitdir}/migrator.service
-%{_cross_datadir}/bottlerocket/data-store-version
 %{_cross_sysusersdir}/api.conf
 
 %files -n %{_cross_os}apiclient

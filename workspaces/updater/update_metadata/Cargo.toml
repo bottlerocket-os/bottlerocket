@@ -8,7 +8,6 @@ publish = false
 
 [dependencies]
 chrono = { version = "0.4.9", features = ["serde"] }
-data_store_version = { path = "../../api/data_store_version" }
 rand = "0.7.0"
 regex = "1.1"
 semver = { version = "0.9.0", features = ["serde"] }

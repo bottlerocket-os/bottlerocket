@@ -13,9 +13,11 @@ Given those, it will:
 * confirm that the given data store has the appropriate versioned symlink structure
 * find the version of the given data store
 * find migrations between the two versions
-* copy the data store
-* run the migrations on the copy
-* do a symlink-flip so the copy takes the place of the original
+* if there are migrations:
+  * run the migrations; the transformed data becomes the new data store
+* if there are *no* migrations:
+  * just symlink to the old data store
+* do symlink flips so the new version takes the place of the original
 
 To understand motivation and more about the overall process, look at the migration system
 documentation, one level up.

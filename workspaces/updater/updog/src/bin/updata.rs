@@ -9,14 +9,13 @@ extern crate log;
 
 use crate::error::Result;
 use chrono::{DateTime, Utc};
-use data_store_version::Version as DataVersion;
-use semver::Version as SemVer;
+use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::fs;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use update_metadata::{Images, Manifest, Release, Update};
+use update_metadata::{Images, Manifest, Release};
 
 #[derive(Debug, StructOpt)]
 struct GeneralArgs {
@@ -35,19 +34,15 @@ struct AddUpdateArgs {
 
     // image version
     #[structopt(short = "v", long = "version")]
-    image_version: SemVer,
+    image_version: Version,
 
     // architecture image is built for
     #[structopt(short = "a", long = "arch")]
     arch: String,
 
-    // corresponding datastore version for this image
-    #[structopt(short = "d", long = "data-version")]
-    datastore_version: DataVersion,
-
     // maximum valid version
     #[structopt(short = "m", long = "max-version")]
-    max_version: Option<SemVer>,
+    max_version: Option<Version>,
 
     // root image target name
     #[structopt(short = "r", long = "root")]
@@ -72,7 +67,6 @@ impl AddUpdateArgs {
         manifest.add_update(
             self.image_version,
             self.max_version,
-            self.datastore_version,
             self.arch,
             self.variant,
             Images {
@@ -97,19 +91,11 @@ struct RemoveUpdateArgs {
 
     // image version
     #[structopt(short = "v", long = "version")]
-    image_version: SemVer,
+    image_version: Version,
 
     // architecture image is built for
     #[structopt(short = "a", long = "arch")]
     arch: String,
-
-    // Whether to clean up datastore mappings that no longer reference an
-    // existing update. Migration paths for such datastore versions are
-    // preserved.
-    // This should _only_ be used if there are no existing users of the
-    // specified Bottlerocket image version.
-    #[structopt(short, long)]
-    cleanup: bool,
 }
 
 impl RemoveUpdateArgs {
@@ -121,22 +107,6 @@ impl RemoveUpdateArgs {
                 || update.variant != self.variant
                 || update.version != self.image_version
         });
-        if self.cleanup {
-            let remaining: Vec<&Update> = manifest
-                .updates
-                .iter()
-                .filter(|update| update.version == self.image_version)
-                .collect();
-            if remaining.is_empty() {
-                manifest.datastore_versions.remove(&self.image_version);
-            } else {
-                info!(
-                    "Cleanup skipped; {} {} updates remain",
-                    remaining.len(),
-                    self.image_version
-                );
-            }
-        }
         // Note: We don't revert the maximum version on removal
         update_metadata::write_file(&self.file, &manifest)?;
         if let Some(current) = manifest.updates.first() {
@@ -165,7 +135,7 @@ struct WaveArgs {
 
     // image version
     #[structopt(short = "v", long = "version")]
-    image_version: SemVer,
+    image_version: Version,
 
     // architecture image is built for
     #[structopt(short = "a", long = "arch")]
@@ -243,43 +213,13 @@ struct MaxVersionArgs {
 
     // maximum valid version
     #[structopt(short, long)]
-    max_version: SemVer,
+    max_version: Version,
 }
 
 impl MaxVersionArgs {
     fn run(self) -> Result<()> {
         let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
         manifest.update_max_version(&self.max_version, None, None);
-        update_metadata::write_file(&self.file, &manifest)?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, StructOpt)]
-struct MappingArgs {
-    // metadata file to create/modify
-    file: PathBuf,
-
-    #[structopt(short, long)]
-    image_version: SemVer,
-
-    #[structopt(short, long)]
-    data_version: DataVersion,
-}
-
-impl MappingArgs {
-    fn run(self) -> Result<()> {
-        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
-        let version = self.image_version.clone();
-        let old = manifest
-            .datastore_versions
-            .insert(self.image_version, self.data_version);
-        if let Some(old) = old {
-            warn!(
-                "Warning: New mapping ({},{}) replaced old mapping ({},{})",
-                version, self.data_version, version, old
-            );
-        }
         update_metadata::write_file(&self.file, &manifest)?;
         Ok(())
     }
@@ -294,8 +234,6 @@ enum Command {
     AddUpdate(AddUpdateArgs),
     /// Add a (bound_id, time) wave to an existing update
     AddWave(WaveArgs),
-    /// Add a image_version:data_store_version mapping to the manifest
-    AddVersionMapping(MappingArgs),
     /// Set the global maximum image version
     SetMaxVersion(MaxVersionArgs),
     /// Remove an update from the manifest, including wave information
@@ -322,7 +260,6 @@ fn main_inner() -> Result<()> {
         }
         Command::AddUpdate(args) => args.run(),
         Command::AddWave(args) => args.add(),
-        Command::AddVersionMapping(args) => args.run(),
         Command::SetMaxVersion(args) => args.run(),
         Command::RemoveUpdate(args) => args.run(),
         Command::RemoveWave(args) => args.remove(),
@@ -356,7 +293,6 @@ mod tests {
     use super::*;
     use chrono::Duration;
     use std::path::Path;
-    use std::str::FromStr;
     use tempfile::NamedTempFile;
 
     #[test]
@@ -420,9 +356,8 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             variant: String::from("yum"),
             arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.3").unwrap(),
-            max_version: Some(SemVer::parse("1.2.3").unwrap()),
-            datastore_version: DataVersion::from_str("1.0").unwrap(),
+            image_version: Version::parse("1.2.3").unwrap(),
+            max_version: Some(Version::parse("1.2.3").unwrap()),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -433,9 +368,8 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             variant: String::from("yum"),
             arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.5").unwrap(),
-            max_version: Some(SemVer::parse("1.2.3").unwrap()),
-            datastore_version: DataVersion::from_str("1.0").unwrap(),
+            image_version: Version::parse("1.2.5").unwrap(),
+            max_version: Some(Version::parse("1.2.3").unwrap()),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -446,9 +380,8 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             variant: String::from("yum"),
             arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.4").unwrap(),
-            max_version: Some(SemVer::parse("1.2.4").unwrap()),
-            datastore_version: DataVersion::from_str("1.0").unwrap(),
+            image_version: Version::parse("1.2.4").unwrap(),
+            max_version: Some(Version::parse("1.2.4").unwrap()),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -458,69 +391,8 @@ mod tests {
 
         let m: Manifest = update_metadata::load_file(tmpfd.path())?;
         for u in m.updates {
-            assert!(u.max_version == SemVer::parse("1.2.4").unwrap());
+            assert!(u.max_version == Version::parse("1.2.4").unwrap());
         }
-        Ok(())
-    }
-
-    #[test]
-    fn datastore_mapping() -> Result<()> {
-        let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
-        AddUpdateArgs {
-            file: PathBuf::from(tmpfd.path()),
-            variant: String::from("yum"),
-            arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.3").unwrap(),
-            max_version: Some(SemVer::parse("1.2.3").unwrap()),
-            datastore_version: DataVersion::from_str("1.0").unwrap(),
-            boot: String::from("boot"),
-            root: String::from("root"),
-            hash: String::from("hash"),
-        }
-        .run()
-        .unwrap();
-        AddUpdateArgs {
-            file: PathBuf::from(tmpfd.path()),
-            variant: String::from("yum"),
-            arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.5").unwrap(),
-            max_version: Some(SemVer::parse("1.2.3").unwrap()),
-            datastore_version: DataVersion::from_str("1.1").unwrap(),
-            boot: String::from("boot"),
-            root: String::from("root"),
-            hash: String::from("hash"),
-        }
-        .run()
-        .unwrap();
-        AddUpdateArgs {
-            file: PathBuf::from(tmpfd.path()),
-            variant: String::from("yum"),
-            arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.4").unwrap(),
-            max_version: Some(SemVer::parse("1.2.4").unwrap()),
-            datastore_version: DataVersion::from_str("1.0").unwrap(),
-            boot: String::from("boot"),
-            root: String::from("root"),
-            hash: String::from("hash"),
-        }
-        .run()
-        .unwrap();
-
-        // TODO this needs to test against arch and variant not being considered
-        RemoveUpdateArgs {
-            file: PathBuf::from(tmpfd.path()),
-            variant: String::from("yum"),
-            arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.4").unwrap(),
-            cleanup: true,
-        }
-        .run()
-        .unwrap();
-
-        let m: Manifest = update_metadata::load_file(tmpfd.path())?;
-        assert!(m
-            .datastore_versions
-            .contains_key(&SemVer::parse("1.2.3").unwrap()));
         Ok(())
     }
 
@@ -531,9 +403,8 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             variant: String::from("yum"),
             arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.3").unwrap(),
-            max_version: Some(SemVer::parse("1.2.3").unwrap()),
-            datastore_version: DataVersion::from_str("1.0").unwrap(),
+            image_version: Version::parse("1.2.3").unwrap(),
+            max_version: Some(Version::parse("1.2.3").unwrap()),
             boot: String::from("boot"),
             root: String::from("root"),
             hash: String::from("hash"),
@@ -545,7 +416,7 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             variant: String::from("yum"),
             arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.3").unwrap(),
+            image_version: Version::parse("1.2.3").unwrap(),
             bound: 1024,
             start: Some(Utc::now()),
         }
@@ -556,7 +427,7 @@ mod tests {
             file: PathBuf::from(tmpfd.path()),
             variant: String::from("yum"),
             arch: String::from("x86_64"),
-            image_version: SemVer::parse("1.2.3").unwrap(),
+            image_version: Version::parse("1.2.3").unwrap(),
             bound: 1536,
             start: Some(Utc::now() - Duration::hours(1)),
         }

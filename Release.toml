@@ -1,5 +1,4 @@
 version = "0.2.2"
-datastore_version = "0.3"
 
 [migrations]
 # Happy path - skip over 0.1, which had an issue with compressed migrations.  Normal new migrations go here.

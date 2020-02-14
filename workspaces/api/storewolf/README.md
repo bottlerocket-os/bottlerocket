@@ -4,7 +4,7 @@ Current version: 0.1.0
 
 ## Introduction
 
-storewolf is a small program to create the filesystem datastore.
+storewolf creates the filesystem datastore used by the API system.
 
 It creates the datastore at a provided path and populates any default
 settings given in the defaults.toml file, unless they already exist.

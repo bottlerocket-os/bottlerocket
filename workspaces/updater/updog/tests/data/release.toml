@@ -1,6 +1,6 @@
 version = "0.2.2"
 
 [migrations]
-"(0.0, 0.2)" = ["migrate_0.1_foo", "migrate_0.1_baz", "migrate_0.2_bar"]
-"(0.2, 0.3)" = ["migrate_0.3_foobar"]
-"(0.0, 0.1)" = ["migrate_0.1_foo", "migrate_0.1_baz"]
+"(0.0.0, 0.0.2)" = ["migrate_0.0.1_foo", "migrate_0.0.1_baz", "migrate_0.0.2_bar"]
+"(0.0.2, 0.0.3)" = ["migrate_0.0.3_foobar"]
+"(0.0.0, 0.0.1)" = ["migrate_0.0.1_foo", "migrate_0.0.1_baz"]

@@ -9,10 +9,11 @@ build = "build.rs"
 
 [dependencies]
 apiserver = { path = "../apiserver" }
-data_store_version = { path = "../data_store_version" }
+bottlerocket-release = { path = "../../bottlerocket-release" }
 log = "0.4"
 models = { path = "../../models" }
 rand = { version = "0.7", default-features = false, features = ["std"] }
+semver = "0.9"
 simplelog = "0.7"
 snafu = "0.6"
 toml = "0.5"

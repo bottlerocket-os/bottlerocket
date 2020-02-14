@@ -1,7 +1,7 @@
 //! This module owns the Direction type used by the migrator to determine whether a migration
 //! is moving forward to a new version or rolling back to a previous version.
 
-use data_store_version::Version;
+use semver::Version;
 use std::cmp::Ordering;
 use std::fmt;
 
@@ -25,7 +25,7 @@ impl fmt::Display for Direction {
 impl Direction {
     /// Determines the migration direction, given the outgoing ("from') and incoming ("to")
     /// versions.
-    pub(crate) fn from_versions(from: Version, to: Version) -> Option<Self> {
+    pub(crate) fn from_versions(from: &Version, to: &Version) -> Option<Self> {
         match from.cmp(&to) {
             Ordering::Less => Some(Direction::Forward),
             Ordering::Greater => Some(Direction::Backward),
@@ -37,24 +37,24 @@ impl Direction {
 #[cfg(test)]
 mod test {
     use super::Direction;
-    use data_store_version::Version;
+    use semver::Version;
 
     #[test]
     fn direction() {
-        let v01 = Version::new(0, 1);
-        let v02 = Version::new(0, 2);
-        let v10 = Version::new(1, 0);
+        let v01 = Version::new(0, 0, 1);
+        let v02 = Version::new(0, 0, 2);
+        let v10 = Version::new(0, 1, 0);
 
-        assert_eq!(Direction::from_versions(v01, v02), Some(Direction::Forward));
+        assert_eq!(Direction::from_versions(&v01, &v02), Some(Direction::Forward));
         assert_eq!(
-            Direction::from_versions(v02, v01),
+            Direction::from_versions(&v02, &v01),
             Some(Direction::Backward)
         );
-        assert_eq!(Direction::from_versions(v01, v01), None);
+        assert_eq!(Direction::from_versions(&v01, &v01), None);
 
-        assert_eq!(Direction::from_versions(v02, v10), Some(Direction::Forward));
+        assert_eq!(Direction::from_versions(&v02, &v10), Some(Direction::Forward));
         assert_eq!(
-            Direction::from_versions(v10, v02),
+            Direction::from_versions(&v10, &v02),
             Some(Direction::Backward)
         );
     }
