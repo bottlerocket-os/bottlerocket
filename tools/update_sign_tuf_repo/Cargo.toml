@@ -22,7 +22,7 @@ serde_derive = "1.0.103"
 simplelog = "0.7"
 snafu = "0.6.0"
 tempdir = "0.3.7"
-tough = { version = "0.3.0", features = ["http"]  }
+tough = { version = "0.4.0", features = ["http"]  }
 tracing = "0.1.10"
 update_metadata = { path = "../../workspaces/updater/update_metadata" }
 
