@@ -1,6 +1,6 @@
 ---
-name: Bug report - Thar image
-about: Let us know about a problem with an image
+name: Bug report - Bottlerocket image
+about: Let us know about a problem with Bottlerocket
 ---
 
 <!--
