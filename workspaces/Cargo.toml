@@ -25,6 +25,10 @@ members = [
     "api/migration/migrations/v0.2/migrate-remove-region",
     "api/migration/migrations/v0.2/migrate-host-containers-v03",
 
+    "bottlerocket-release",
+
+    "growpart",
+
     "models",
 
     "preinit/laika",
@@ -35,8 +39,6 @@ members = [
     "updater/updog",
 
     "webpki-roots-shim",
-
-    "growpart",
 ]
 
 [profile.release]
