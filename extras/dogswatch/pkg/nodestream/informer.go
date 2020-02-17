@@ -22,7 +22,6 @@ type informerStream struct {
 	// TODO: determine if we need to be using a queue. I think we'll be using
 	// other synchronization mechanisms elsewhere that may avoid the need.
 	workqueue workqueue.RateLimitingInterface
-	indexer   cache.Indexer
 }
 
 func New(log logging.Logger, kube kubernetes.Interface, config Config, handler Handler) *informerStream {
@@ -33,7 +32,6 @@ func New(log logging.Logger, kube kubernetes.Interface, config Config, handler H
 	informer.AddEventHandler(is)
 
 	is.informer = informer
-	is.indexer = informer.GetIndexer()
 	is.workqueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	return is
@@ -41,27 +39,6 @@ func New(log logging.Logger, kube kubernetes.Interface, config Config, handler H
 
 func (is *informerStream) GetInformer() cache.SharedIndexInformer {
 	return is.informer
-}
-
-func (is *informerStream) finish(key interface{}) {
-	is.log.WithField("key", key).Debug("finished with key")
-	is.workqueue.Forget(key)
-	is.workqueue.Done(key)
-}
-
-func (is *informerStream) pop(fn func(key interface{}) error) {
-	key, shutdown := is.workqueue.Get()
-	if shutdown {
-		is.log.Debug("workqueue is shutting down")
-		return
-	}
-	if key == nil {
-		is.log.Debug("workqueue sent nil work item")
-		return
-	}
-	is.log.Debug("sending to worker to process work item")
-	fn(key)
-	return
 }
 
 func (is *informerStream) Run(ctx context.Context) error {
