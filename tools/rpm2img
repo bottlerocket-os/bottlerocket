@@ -61,17 +61,16 @@ truncate -s 2G "${DISK_IMAGE}"
 # boot: 40M + root: 920M + hash: 10M + reserved: 30M = 1000M
 # boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
 # partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
-# TODO: change "THAR" to "BOTTLEROCKET" (here and below) in the labels when we're ready for that upgrade-breaking change
 sgdisk --clear \
-   -n 0:2005M:2047M -c 0:"THAR-PRIVATE"    -t 0:"${BOTTLEROCKET_PRIVATE_TYPECODE}" \
-   -n 0:1975M:0     -c 0:"THAR-RESERVED-B" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
-   -n 0:1965M:0     -c 0:"THAR-HASH-B"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
-   -n 0:1045M:0     -c 0:"THAR-ROOT-B"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
-   -n 0:1005M:0     -c 0:"THAR-BOOT-B"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
-   -n 0:975M:0      -c 0:"THAR-RESERVED-A" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
-   -n 0:965M:0      -c 0:"THAR-HASH-A"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
-   -n 0:45M:0       -c 0:"THAR-ROOT-A"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
-   -n 0:5M:0        -c 0:"THAR-BOOT-A"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
+   -n 0:2005M:2047M -c 0:"BOTTLEROCKET-PRIVATE"    -t 0:"${BOTTLEROCKET_PRIVATE_TYPECODE}" \
+   -n 0:1975M:0     -c 0:"BOTTLEROCKET-RESERVED-B" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
+   -n 0:1965M:0     -c 0:"BOTTLEROCKET-HASH-B"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
+   -n 0:1045M:0     -c 0:"BOTTLEROCKET-ROOT-B"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
+   -n 0:1005M:0     -c 0:"BOTTLEROCKET-BOOT-B"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
+   -n 0:975M:0      -c 0:"BOTTLEROCKET-RESERVED-A" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
+   -n 0:965M:0      -c 0:"BOTTLEROCKET-HASH-A"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
+   -n 0:45M:0       -c 0:"BOTTLEROCKET-ROOT-A"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
+   -n 0:5M:0        -c 0:"BOTTLEROCKET-BOOT-A"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
    -n 0:1M:0        -c 0:"${FIRM_NAME}"    -t 0:"${BOTTLEROCKET_FIRM_TYPECODE}" \
    --sort --print "${DISK_IMAGE}"
 
@@ -120,12 +119,12 @@ echo "VARIANT_ID=${VARIANT}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 echo "VERSION_ID=${VERSION_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 echo "BUILD_ID=${BUILD_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 
-# THAR-ROOT-A
+# BOTTLEROCKET-ROOT-A
 mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 920M
 resize2fs -M "${ROOT_IMAGE}"
 dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=45
 
-# THAR-VERITY-A
+# BOTTLEROCKET-VERITY-A
 truncate -s 8M "${VERITY_IMAGE}"
 veritysetup_output="$(veritysetup format \
     --format "$VERITY_VERSION" \
@@ -160,12 +159,12 @@ menuentry "Bottlerocket OS ${VERSION_ID}" {
 }
 EOF
 
-# THAR-BOOT-A
+# BOTTLEROCKET-BOOT-A
 mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 40M
 resize2fs -M "${BOOT_IMAGE}"
 dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=5
 
-# THAR-PRIVATE
+# BOTTLEROCKET-PRIVATE
 
 # Targeted toward the current API server implementation.
 # Relative to the ext4 defaults, we:
@@ -175,10 +174,10 @@ dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=5
 mkfs.ext4 -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" 42M
 dd if="${PRIVATE_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=2005
 
-# THAR-DATA
+# BOTTLEROCKET-DATA
 truncate -s 1G "${DATA_IMAGE}"
 sgdisk --clear \
-   -n 0:1M:1023M -c 0:"THAR-DATA" -t 0:8300 \
+   -n 0:1M:1023M -c 0:"BOTTLEROCKET-DATA" -t 0:8300 \
    --sort --print "${DATA_IMAGE}"
 mkdir -p "${DATA_MOUNT}/var/"{cache,lib,log,spool}
 mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" 1022M

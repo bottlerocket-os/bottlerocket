@@ -6,8 +6,7 @@ RequiresMountsFor=/var
 Before=local-fs.target umount.target
 
 [Mount]
-# TODO: change "THAR" to "BOTTLEROCKET" when we change rpm2img
-What=/dev/disk/by-partlabel/THAR-PRIVATE
+What=/dev/disk/by-partlabel/BOTTLEROCKET-PRIVATE
 Where=/var/lib/bottlerocket
 Type=ext4
 Options=defaults,noatime,nosuid,nodev
