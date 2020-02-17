@@ -11,6 +11,9 @@ BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*' || echo 00000000"] }
 BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' Release.toml"] }
 BUILDSYS_VARIANT = "aws-k8s"
+# Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
+# To use the upstream source as fallback, override this on the command line and set it to 'true'
+BUILDSYS_UPSTREAM_SOURCE_FALLBACK = "false"
 
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
@@ -21,8 +24,6 @@ DOCKER_BUILDKIT = "1"
 [env.development]
 # Defined here to allow us to override ${BUILDSYS_ARCH} on the command line.
 BUILDSYS_SDK_IMAGE = "bottlerocket/sdk-${BUILDSYS_ARCH}:v0.8"
-# Permit pulling directly Upstream URLs when lookaside cache results in MISSes.
-BUILDSYS_ALLOW_UPSTREAM_SOURCE_URL = "true"
 # Extra flags used when spawning containers.
 #
 # ex: BUILDSYS_DOCKER_RUN_ARGS="--network=host --dns=127.0.0.53"
