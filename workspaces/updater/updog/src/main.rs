@@ -271,6 +271,7 @@ fn migration_targets(
 /// target version must be retrieved.
 fn retrieve_migrations(
     repository: &HttpQueryRepo<'_>,
+    transport: &HttpQueryTransport,
     manifest: &Manifest,
     update: &Update,
 ) -> Result<()> {
@@ -307,7 +308,9 @@ fn retrieve_migrations(
 
     // download each migration, making sure they are executable and removing
     // known extensions from our compression, e.g. .lz4
-    for name in migration_targets(*start, *target, &manifest)? {
+    let mut targets = migration_targets(*start, *target, &manifest)?;
+    targets.sort();
+    for name in &targets {
         let mut destination = dir.join(&name);
         if destination.extension() == Some("lz4".as_ref()) {
             destination.set_extension("");
@@ -316,6 +319,12 @@ fn retrieve_migrations(
         fs::set_permissions(&destination, Permissions::from_mode(0o755))
             .context(error::SetPermissions { path: destination })?;
     }
+
+    // Set a query parameter listing the required migrations
+    transport
+        .queries_get_mut()
+        .context(error::TransportBorrow)?
+        .push(("migrations".to_owned(), targets.join(",")));
 
     Ok(())
 }
@@ -346,6 +355,23 @@ fn update_flags() -> Result<()> {
         .upgrade_to_inactive()
         .context(error::InactivePartitionUpgrade)?;
     gpt_state.write().context(error::PartitionTableWrite)?;
+    Ok(())
+}
+
+fn set_common_query_params(
+    transport: &HttpQueryTransport,
+    current_version: &SemVer,
+    config: &Config,
+) -> Result<()> {
+    let mut transport_borrow = transport
+        .queries_get_mut()
+        .context(error::TransportBorrow)?;
+
+    transport_borrow
+        .push((String::from("version"), current_version.to_string()));
+    transport_borrow
+        .push((String::from("seed"), config.seed.to_string()));
+
     Ok(())
 }
 
@@ -462,10 +488,7 @@ fn main_inner() -> Result<()> {
     let config = load_config()?;
     let (current_version, variant) = running_version()?;
     let transport = HttpQueryTransport::new();
-    transport
-        .queries_get_mut()
-        .context(error::TransportBorrow)?
-        .push((String::from("version"), current_version.to_string()));
+    set_common_query_params(&transport, &current_version, &config)?;
     let repository = load_repository(&transport, &config)?;
     let manifest = load_manifest(&repository)?;
 
@@ -527,7 +550,12 @@ fn main_inner() -> Result<()> {
                         }
                     }
 
-                    retrieve_migrations(&repository, &manifest, u)?;
+                    transport
+                        .queries_get_mut()
+                        .context(error::TransportBorrow)?
+                        .push((String::from("target"), u.version.to_string()));
+
+                    retrieve_migrations(&repository, &transport, &manifest, u)?;
                     update_image(u, &repository)?;
                     if command == Command::Update {
                         update_flags()?;
