@@ -63,7 +63,7 @@ var _ platform.Update = (*availableUpdate)(nil)
 type availableUpdate struct {
 	ID         UpdateID `json:"id"`
 	Applicable bool     `json:"applicable"`
-	Flavor     string   `json:"flavor"`
+	Variant    string   `json:"variant"`
 	Arch       string   `json:"arch"`
 	Version    string   `json:"version"`
 	Status     string   `json:"status"`

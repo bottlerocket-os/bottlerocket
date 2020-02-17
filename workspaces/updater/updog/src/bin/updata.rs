@@ -28,9 +28,9 @@ struct AddUpdateArgs {
     // metadata file to create/modify
     file: PathBuf,
 
-    // image 'flavor', eg. 'aws-k8s'
-    #[structopt(short = "f", long = "flavor")]
-    flavor: String,
+    // image 'variant', eg. 'aws-k8s'
+    #[structopt(short = "f", long = "variant")]
+    variant: String,
 
     // image version
     #[structopt(short = "v", long = "version")]
@@ -73,7 +73,7 @@ impl AddUpdateArgs {
             self.max_version,
             self.datastore_version,
             self.arch,
-            self.flavor,
+            self.variant,
             Images {
                 root: self.root,
                 boot: self.boot,
@@ -90,9 +90,9 @@ struct RemoveUpdateArgs {
     // metadata file to create/modify
     file: PathBuf,
 
-    // image 'flavor', eg. 'aws-k8s'
-    #[structopt(short = "l", long = "flavor")]
-    flavor: String,
+    // image 'variant', eg. 'aws-k8s'
+    #[structopt(short = "l", long = "variant")]
+    variant: String,
 
     // image version
     #[structopt(short = "v", long = "version")]
@@ -117,7 +117,7 @@ impl RemoveUpdateArgs {
         // Remove any update that exactly matches the specified update
         manifest.updates.retain(|update| {
             update.arch != self.arch
-                || update.flavor != self.flavor
+                || update.variant != self.variant
                 || update.version != self.image_version
         });
         if self.cleanup {
@@ -141,12 +141,12 @@ impl RemoveUpdateArgs {
         if let Some(current) = manifest.updates.first() {
             info!(
                 "Update {}-{}-{} removed. Current maximum version: {}",
-                self.arch, self.flavor, self.image_version, current.version
+                self.arch, self.variant, self.image_version, current.version
             );
         } else {
             info!(
                 "Update {}-{}-{} removed. No remaining updates",
-                self.arch, self.flavor, self.image_version
+                self.arch, self.variant, self.image_version
             );
         }
         Ok(())
@@ -158,9 +158,9 @@ struct WaveArgs {
     // metadata file to create/modify
     file: PathBuf,
 
-    // image 'flavor', eg. 'aws-k8s'
-    #[structopt(short = "l", long = "flavor")]
-    flavor: String,
+    // image 'variant', eg. 'aws-k8s'
+    #[structopt(short = "l", long = "variant")]
+    variant: String,
 
     // image version
     #[structopt(short = "v", long = "version")]
@@ -183,7 +183,13 @@ impl WaveArgs {
     fn add(self) -> Result<()> {
         let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
         let start = self.start.context(error::WaveStartArg)?;
-        let num_matching = manifest.add_wave(self.flavor, self.arch, self.image_version, self.bound, start)?;
+        let num_matching = manifest.add_wave(
+            self.variant,
+            self.arch,
+            self.image_version,
+            self.bound,
+            start,
+        )?;
         if num_matching > 1 {
             warn!("Multiple matching updates for wave - this is weird but not a disaster");
         }
@@ -193,7 +199,7 @@ impl WaveArgs {
 
     fn remove(self) -> Result<()> {
         let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
-        manifest.remove_wave(self.flavor, self.arch, self.image_version, self.bound)?;
+        manifest.remove_wave(self.variant, self.arch, self.image_version, self.bound)?;
         update_metadata::write_file(&self.file, &manifest)?;
         Ok(())
     }
@@ -373,7 +379,7 @@ mod tests {
         let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.3").unwrap(),
             max_version: Some(SemVer::parse("1.2.3").unwrap()),
@@ -386,7 +392,7 @@ mod tests {
         .unwrap();
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.5").unwrap(),
             max_version: Some(SemVer::parse("1.2.3").unwrap()),
@@ -399,7 +405,7 @@ mod tests {
         .unwrap();
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.4").unwrap(),
             max_version: Some(SemVer::parse("1.2.4").unwrap()),
@@ -423,7 +429,7 @@ mod tests {
         let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.3").unwrap(),
             max_version: Some(SemVer::parse("1.2.3").unwrap()),
@@ -436,7 +442,7 @@ mod tests {
         .unwrap();
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.5").unwrap(),
             max_version: Some(SemVer::parse("1.2.3").unwrap()),
@@ -449,7 +455,7 @@ mod tests {
         .unwrap();
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.4").unwrap(),
             max_version: Some(SemVer::parse("1.2.4").unwrap()),
@@ -461,10 +467,10 @@ mod tests {
         .run()
         .unwrap();
 
-        // TODO this needs to test against ARCH and FLAVOR not being considered
+        // TODO this needs to test against arch and variant not being considered
         RemoveUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.4").unwrap(),
             cleanup: true,
@@ -484,7 +490,7 @@ mod tests {
         let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.3").unwrap(),
             max_version: Some(SemVer::parse("1.2.3").unwrap()),
@@ -498,7 +504,7 @@ mod tests {
 
         WaveArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.3").unwrap(),
             bound: 1024,
@@ -509,7 +515,7 @@ mod tests {
 
         assert!(WaveArgs {
             file: PathBuf::from(tmpfd.path()),
-            flavor: String::from("yum"),
+            variant: String::from("yum"),
             arch: String::from("x86_64"),
             image_version: SemVer::parse("1.2.3").unwrap(),
             bound: 1536,

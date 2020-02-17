@@ -134,7 +134,7 @@ fn load_manifest(repository: &HttpQueryRepo<'_>) -> Result<Manifest> {
 
 fn running_version() -> Result<(SemVer, String)> {
     let mut version: Option<SemVer> = None;
-    let mut flavor: Option<String> = None;
+    let mut variant: Option<String> = None;
 
     let reader = BufReader::new(File::open("/etc/os-release").context(error::VersionIdRead)?);
     for line in reader.lines() {
@@ -149,29 +149,29 @@ fn running_version() -> Result<(SemVer, String)> {
                 continue;
             }
         }
-        if flavor.is_none() {
+        if variant.is_none() {
             let key = "VARIANT_ID=";
             if line.starts_with(key) {
-                flavor = Some(String::from(&line[key.len()..]));
+                variant = Some(String::from(&line[key.len()..]));
                 continue;
             }
         }
-        if version.is_some() && flavor.is_some() {
+        if version.is_some() && variant.is_some() {
             break;
         }
     }
 
-    match (version, flavor) {
+    match (version, variant) {
         (Some(v), Some(f)) => Ok((v, f)),
         _ => error::VersionIdNotFound.fail(),
     }
 }
 
-fn applicable_updates<'a>(manifest: &'a Manifest, flavor: &str) -> Vec<&'a Update> {
+fn applicable_updates<'a>(manifest: &'a Manifest, variant: &str) -> Vec<&'a Update> {
     let mut updates: Vec<&Update> = manifest
         .updates
         .iter()
-        .filter(|u| u.flavor == *flavor && u.arch == TARGET_ARCH && u.version <= u.max_version)
+        .filter(|u| u.variant == *variant && u.arch == TARGET_ARCH && u.version <= u.max_version)
         .collect();
     // sort descending
     updates.sort_unstable_by(|a, b| b.version.cmp(&a.version));
@@ -188,10 +188,10 @@ fn update_required<'a>(
     _config: &Config,
     manifest: &'a Manifest,
     version: &SemVer,
-    flavor: &str,
+    variant: &str,
     force_version: Option<SemVer>,
 ) -> Option<&'a Update> {
-    let updates = applicable_updates(manifest, flavor);
+    let updates = applicable_updates(manifest, variant);
 
     if let Some(forced_version) = force_version {
         return updates.into_iter().find(|u| u.version == forced_version);
@@ -460,7 +460,7 @@ fn main_inner() -> Result<()> {
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
     let config = load_config()?;
-    let (current_version, flavor) = running_version()?;
+    let (current_version, variant) = running_version()?;
     let transport = HttpQueryTransport::new();
     transport
         .queries_get_mut()
@@ -472,12 +472,12 @@ fn main_inner() -> Result<()> {
     match command {
         Command::CheckUpdate | Command::Whats => {
             let updates = if arguments.all {
-                applicable_updates(&manifest, &flavor)
+                applicable_updates(&manifest, &variant)
             } else if let Some(u) = update_required(
                 &config,
                 &manifest,
                 &current_version,
-                &flavor,
+                &variant,
                 arguments.force_version,
             ) {
                 vec![u]
@@ -492,9 +492,9 @@ fn main_inner() -> Result<()> {
             } else {
                 for u in updates {
                     if let Some(datastore_version) = manifest.datastore_versions.get(&u.version) {
-                        eprintln!("{}-{} ({})", u.flavor, u.version, datastore_version);
+                        eprintln!("{}-{} ({})", u.variant, u.version, datastore_version);
                     } else {
-                        eprintln!("{}-{} (Missing datastore mapping!)", u.flavor, u.version);
+                        eprintln!("{}-{} (Missing datastore mapping!)", u.variant, u.version);
                     }
                 }
             }
@@ -504,7 +504,7 @@ fn main_inner() -> Result<()> {
                 &config,
                 &manifest,
                 &current_version,
-                &flavor,
+                &variant,
                 arguments.force_version,
             ) {
                 if u.update_ready(config.seed) || arguments.ignore_wave {
@@ -541,7 +541,7 @@ fn main_inner() -> Result<()> {
                     output(
                         arguments.json,
                         &u,
-                        &format!("Update applied: {}-{}", u.flavor, u.version),
+                        &format!("Update applied: {}-{}", u.variant, u.version),
                     )?;
                 } else if let Some(wave) = u.jitter(config.seed) {
                     // return the jittered time of our wave in the update
@@ -644,7 +644,7 @@ mod tests {
     #[test]
     fn test_update_ready() {
         let mut update = Update {
-            flavor: String::from("bottlerocket"),
+            variant: String::from("bottlerocket"),
             arch: String::from("test"),
             version: SemVer::parse("1.0.0").unwrap(),
             max_version: SemVer::parse("1.1.0").unwrap(),
@@ -685,7 +685,7 @@ mod tests {
     #[test]
     fn test_final_wave() {
         let mut update = Update {
-            flavor: String::from("bottlerocket"),
+            variant: String::from("bottlerocket"),
             arch: String::from("test"),
             version: SemVer::parse("1.0.0").unwrap(),
             max_version: SemVer::parse("1.1.0").unwrap(),
@@ -723,10 +723,10 @@ mod tests {
             seed: 123,
         };
         let version = SemVer::parse("1.18.0").unwrap();
-        let flavor = String::from("bottlerocket-aws-eks");
+        let variant = String::from("bottlerocket-aws-eks");
 
         assert!(
-            update_required(&config, &manifest, &version, &flavor, None).is_none(),
+            update_required(&config, &manifest, &version, &variant, None).is_none(),
             "Updog tried to exceed max_version"
         );
     }
@@ -743,8 +743,8 @@ mod tests {
         };
 
         let version = SemVer::parse("0.1.3").unwrap();
-        let flavor = String::from("aws-k8s");
-        let update = update_required(&config, &manifest, &version, &flavor, None);
+        let variant = String::from("aws-k8s");
+        let update = update_required(&config, &manifest, &version, &variant, None);
 
         assert!(update.is_some(), "Updog ignored max version");
         assert!(
@@ -768,8 +768,8 @@ mod tests {
         };
 
         let version = SemVer::parse("1.10.0").unwrap();
-        let flavor = String::from("bottlerocket-aws-eks");
-        let result = update_required(&config, &manifest, &version, &flavor, None);
+        let variant = String::from("bottlerocket-aws-eks");
+        let result = update_required(&config, &manifest, &version, &variant, None);
 
         assert!(result.is_some(), "Updog failed to find an update");
 
@@ -798,8 +798,8 @@ mod tests {
 
         let version = SemVer::parse("1.10.0").unwrap();
         let forced = SemVer::parse("1.13.0").unwrap();
-        let flavor = String::from("bottlerocket-aws-eks");
-        let result = update_required(&config, &manifest, &version, &flavor, Some(forced));
+        let variant = String::from("bottlerocket-aws-eks");
+        let result = update_required(&config, &manifest, &version, &variant, Some(forced));
 
         assert!(result.is_some(), "Updog failed to find an update");
 
@@ -859,7 +859,7 @@ mod tests {
     #[test]
     fn early_wave() {
         let mut u = Update {
-            flavor: String::from("bottlerocket"),
+            variant: String::from("bottlerocket"),
             arch: String::from("test"),
             version: SemVer::parse("1.0.0").unwrap(),
             max_version: SemVer::parse("1.1.0").unwrap(),

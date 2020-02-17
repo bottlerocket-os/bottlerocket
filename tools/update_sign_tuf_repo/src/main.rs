@@ -15,7 +15,7 @@ In order the run this code, you must have:
 Currently the code expects the following environment variables to be set:
 * `CODEBUILD_SRC_DIR` (subject to change) This is the directory where your `Bottlerocket` repository lives
 * `ARCH` : architecture for your current set of images (i.e. `x86_64`)
-* `FLAVOR` : Variant of Bottlerocket for your current set of images (i.e. `aws-k8s`)
+* `VARIANT` : Variant of Bottlerocket for your current set of images (i.e. `aws-k8s`)
 * `INPUT_BUILDSYS_ARTIFACTS` : A directory containing the built Bottlerocket images
 * `METADATA_URL` : Metadata URL for your existing TUF repo
 * `TARGET_URL` : Target URL for your existing TUF repo
@@ -221,7 +221,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 struct EnvVars {
     codebuild_src_dir: String,
     arch: String,
-    flavor: String,
+    variant: String,
     input_buildsys_artifacts: String,
     metadata_url: String,
     refresh_days: i64,
@@ -326,7 +326,7 @@ fn build_target_names(env: &EnvVars, release: &ReleaseInfo) -> Result<HashMap<St
     let mut map = HashMap::new();
     let name_stub = format!(
         "{}-{}-{}-v{}",
-        OS_NAME, env.arch, env.flavor, release.version
+        OS_NAME, env.arch, env.variant, release.version
     );
     for file in FILES_TO_SIGN {
         let name = match file.as_ref() {
@@ -597,7 +597,7 @@ fn run() -> Result<()> {
             Some(release_semver.clone()),
             datastore_version,
             env_vars.arch.clone(),
-            env_vars.flavor.clone(),
+            env_vars.variant.clone(),
             images,
         )
         .context(error::ManifestUpdate)?;
@@ -611,7 +611,7 @@ fn run() -> Result<()> {
     // First wave starts today
     manifest
         .add_wave(
-            env_vars.flavor.clone(),
+            env_vars.variant.clone(),
             env_vars.arch.clone(),
             release_semver.clone(),
             512,
@@ -621,7 +621,7 @@ fn run() -> Result<()> {
     // Second wave starts tomorrow
     manifest
         .add_wave(
-            env_vars.flavor.clone(),
+            env_vars.variant.clone(),
             env_vars.arch.clone(),
             release_semver.clone(),
             1024,
@@ -631,7 +631,7 @@ fn run() -> Result<()> {
     // Third wave starts the day after tomorrow
     manifest
         .add_wave(
-            env_vars.flavor.clone(),
+            env_vars.variant.clone(),
             env_vars.arch.clone(),
             release_semver.clone(),
             1576,

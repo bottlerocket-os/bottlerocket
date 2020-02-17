@@ -62,7 +62,7 @@ pub struct Images {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Update {
-    pub flavor: String,
+    pub variant: String,
     pub arch: String,
     pub version: SemVer,
     pub max_version: SemVer,
@@ -140,7 +140,7 @@ impl Manifest {
         max_version: Option<SemVer>,
         datastore_version: DataVersion,
         arch: String,
-        flavor: String,
+        variant: String,
         images: Images,
     ) -> Result<()> {
         let max_version = if let Some(version) = max_version {
@@ -154,7 +154,7 @@ impl Manifest {
             }
         };
         let update = Update {
-            flavor,
+            variant,
             arch,
             version: image_version.clone(),
             max_version: max_version.clone(),
@@ -166,27 +166,27 @@ impl Manifest {
         self.update_max_version(
             &update.max_version,
             Some(&update.arch),
-            Some(&update.flavor),
+            Some(&update.variant),
         );
         self.updates.push(update);
         Ok(())
     }
 
     /// Update the maximum version for all updates that optionally match the
-    /// architecture and flavor of some new update.
+    /// architecture and variant of some new update.
     pub fn update_max_version(
         &mut self,
         version: &SemVer,
         arch: Option<&str>,
-        flavor: Option<&str>,
+        variant: Option<&str>,
     ) {
         let matching: Vec<&mut Update> = self
             .updates
             .iter_mut()
-            .filter(|update| match (arch, flavor) {
-                (Some(arch), Some(flavor)) => update.arch == arch && update.flavor == flavor,
+            .filter(|update| match (arch, variant) {
+                (Some(arch), Some(variant)) => update.arch == arch && update.variant == variant,
                 (Some(arch), None) => update.arch == arch,
-                (None, Some(flavor)) => update.flavor == flavor,
+                (None, Some(variant)) => update.variant == variant,
                 _ => true,
             })
             .collect();
@@ -216,7 +216,7 @@ impl Manifest {
     /// Adds a wave to update, returns number of matching updates for wave
     pub fn add_wave(
         &mut self,
-        flavor: String,
+        variant: String,
         arch: String,
         image_version: SemVer,
         bound: u32,
@@ -227,7 +227,7 @@ impl Manifest {
             .iter_mut()
             // Find the update that exactly matches the specified update
             .filter(|update| {
-                update.arch == arch && update.flavor == flavor && update.version == image_version
+                update.arch == arch && update.variant == variant && update.version == image_version
             })
             .collect();
         let num_matching = matching.len();
@@ -240,7 +240,7 @@ impl Manifest {
 
     pub fn remove_wave(
         &mut self,
-        flavor: String,
+        variant: String,
         arch: String,
         image_version: SemVer,
         bound: u32,
@@ -249,7 +249,7 @@ impl Manifest {
             .updates
             .iter_mut()
             .filter(|update| {
-                update.arch == arch && update.flavor == flavor && update.version == image_version
+                update.arch == arch && update.variant == variant && update.version == image_version
             })
             .collect();
         for update in matching {
