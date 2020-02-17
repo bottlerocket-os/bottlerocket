@@ -1,6 +1,7 @@
 #![allow(clippy::default_trait_access)]
 
 use data_store_version::Version as DataVersion;
+use semver::Version as SemVer;
 use snafu::{Backtrace, Snafu};
 use std::path::PathBuf;
 use update_metadata::error::Error as update_metadata_error;
@@ -197,6 +198,17 @@ pub(crate) enum Error {
     TransportBorrow {
         backtrace: Backtrace,
         source: std::cell::BorrowMutError,
+    },
+
+    #[snafu(display("No update available"))]
+    UpdateNotAvailable {
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Update {} exists but wave in the future", version))]
+    UpdateNotReady {
+        backtrace: Backtrace,
+        version: SemVer,
     },
 
     #[snafu(display("Failed to serialize update information: {}", source))]

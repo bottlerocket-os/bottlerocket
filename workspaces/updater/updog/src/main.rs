@@ -12,7 +12,7 @@ use semver::Version as SemVer;
 use serde::{Deserialize, Serialize};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
-use snafu::{ErrorCompat, OptionExt, ResultExt};
+use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
 use std::fs::{self, File, OpenOptions, Permissions};
 use std::io::{self, BufRead, BufReader};
 use std::os::unix::fs::PermissionsExt;
@@ -66,12 +66,14 @@ USAGE:
 SUBCOMMANDS:
     check-update            Show if an update is available
         [ -a | --all ]                Output all applicable updates
+        [ --ignore-waves ]            Ignore release schedule when checking
+                                      for a new update
 
     prepare                 Download update files and migration targets
 
     update                  Perform an update if available
         [ -i | --image version ]      Update to a specfic image version
-        [ -n | --now ]                Update immediately, ignoring wave limits
+        [ -n | --now ]                Update immediately, ignoring any release schedule
         [ -r | --reboot ]             Reboot into new update on success
         [ -t | --timestamp time ]     The timestamp from which to execute an update
 
@@ -375,12 +377,31 @@ fn set_common_query_params(
     Ok(())
 }
 
+/// List any available update that matches the current variant, ignoring waves
+fn list_updates(manifest: &Manifest, variant: &str, json: bool) -> Result<()> {
+    let updates = applicable_updates(manifest, variant);
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&updates).context(error::UpdateSerialize)?
+        );
+    } else {
+        for u in updates {
+            eprintln!(
+                "{}",
+                &fmt_full_version(&u, manifest.datastore_versions.get(&u.version))
+            );
+        }
+    }
+    Ok(())
+}
+
 /// Struct to hold the specified command line argument values
 struct Arguments {
     subcommand: String,
     log_level: LevelFilter,
     json: bool,
-    ignore_wave: bool,
+    ignore_waves: bool,
     force_version: Option<SemVer>,
     all: bool,
     reboot: bool,
@@ -392,7 +413,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
     let mut subcommand = None;
     let mut log_level = None;
     let mut update_version = None;
-    let mut ignore_wave = false;
+    let mut ignore_waves = false;
     let mut json = false;
     let mut all = false;
     let mut reboot = false;
@@ -416,8 +437,8 @@ fn parse_args(args: std::env::Args) -> Arguments {
                 },
                 _ => usage(),
             },
-            "-n" | "--now" => {
-                ignore_wave = true;
+            "-n" | "--now" | "--ignore-waves" => {
+                ignore_waves = true;
             }
             "-t" | "--timestamp" => match iter.next() {
                 Some(t) => match DateTime::parse_from_rfc3339(&t) {
@@ -450,11 +471,25 @@ fn parse_args(args: std::env::Args) -> Arguments {
         subcommand: subcommand.unwrap_or_else(|| usage()),
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         json,
-        ignore_wave,
+        ignore_waves,
         force_version: update_version,
         all,
         reboot,
         timestamp,
+    }
+}
+
+fn fmt_full_version(update: &Update, datastore_version: Option<&DataVersion>) -> String {
+    if let Some(datastore_version) = datastore_version {
+        format!(
+            "{}-{} ({})",
+            update.variant, update.version, datastore_version
+        )
+    } else {
+        format!(
+            "{}-{} (Missing datastore mapping!)",
+            update.variant, update.version
+        )
     }
 }
 
@@ -470,6 +505,7 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
     let arguments = parse_args(std::env::args());
@@ -494,33 +530,31 @@ fn main_inner() -> Result<()> {
 
     match command {
         Command::CheckUpdate | Command::Whats => {
-            let updates = if arguments.all {
-                applicable_updates(&manifest, &variant)
-            } else if let Some(u) = update_required(
+            if arguments.all {
+                return list_updates(&manifest, &variant, arguments.json);
+            }
+
+            let update = update_required(
                 &config,
                 &manifest,
                 &current_version,
                 &variant,
                 arguments.force_version,
-            ) {
-                vec![u]
-            } else {
-                vec![]
-            };
-            if arguments.json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&updates).context(error::UpdateSerialize)?
-                );
-            } else {
-                for u in updates {
-                    if let Some(datastore_version) = manifest.datastore_versions.get(&u.version) {
-                        eprintln!("{}-{} ({})", u.variant, u.version, datastore_version);
-                    } else {
-                        eprintln!("{}-{} (Missing datastore mapping!)", u.variant, u.version);
+            ).context(error::UpdateNotAvailable)?;
+
+            if !arguments.ignore_waves {
+                ensure!(
+                    update.update_ready(config.seed),
+                    error::UpdateNotReady {
+                        version: update.version.clone()
                     }
-                }
+                );
             }
+            output(
+                arguments.json,
+                &update,
+                &fmt_full_version(&update, manifest.datastore_versions.get(&update.version)),
+            )?;
         }
         Command::Update | Command::UpdateImage => {
             if let Some(u) = update_required(
@@ -530,10 +564,10 @@ fn main_inner() -> Result<()> {
                 &variant,
                 arguments.force_version,
             ) {
-                if u.update_ready(config.seed) || arguments.ignore_wave {
+                if u.update_ready(config.seed) || arguments.ignore_waves {
                     eprintln!("Starting update to {}", u.version);
 
-                    if arguments.ignore_wave {
+                    if arguments.ignore_waves {
                         eprintln!("** Updating immediately **");
                     } else {
                         let jitter = match arguments.timestamp {
@@ -949,5 +983,50 @@ mod tests {
             "Expected to be final wave"
         );
         assert!(u.jitter(201).is_none(), "Expected immediate update");
+    }
+
+    #[test]
+    /// Make sure that update_ready() doesn't return true unless the client's
+    /// wave is also ready.
+    fn check_update_waves() {
+        let mut manifest = Manifest::default();
+        let mut update = Update {
+            variant: String::from("aws-k8s"),
+            arch: String::from(TARGET_ARCH),
+            version: SemVer::parse("1.1.1").unwrap(),
+            max_version: SemVer::parse("1.1.1").unwrap(),
+            waves: BTreeMap::new(),
+            images: Images {
+                boot: String::from("boot"),
+                root: String::from("boot"),
+                hash: String::from("boot"),
+            }
+        };
+
+        let current_version = SemVer::parse("1.0.0").unwrap();
+        let variant = String::from("aws-k8s");
+        let config = Config {
+            metadata_base_url: String::from("foo"),
+            target_base_url: String::from("bar"),
+            seed: 512,
+        };
+
+        // Two waves; the 0th wave, and the final wave which starts in one hour
+        update
+            .waves
+            .insert(1024, Utc::now() + TestDuration::hours(1));
+        manifest.updates.push(update);
+
+        let potential_update =
+            update_required(&config, &manifest, &current_version, &variant, None).unwrap();
+
+        assert!(
+            potential_update.update_ready(512),
+            "0th wave doesn't appear ready"
+        );
+        assert!(
+            !potential_update.update_ready(2000),
+            "Later wave incorrectly sees update"
+        );
     }
 }
