@@ -8,7 +8,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 )
 
 var _ cache.ResourceEventHandler = (*informerStream)(nil)
@@ -18,10 +17,6 @@ type informerStream struct {
 
 	informer cache.SharedIndexInformer
 	handler  Handler
-
-	// TODO: determine if we need to be using a queue. I think we'll be using
-	// other synchronization mechanisms elsewhere that may avoid the need.
-	workqueue workqueue.RateLimitingInterface
 }
 
 func New(log logging.Logger, kube kubernetes.Interface, config Config, handler Handler) *informerStream {
@@ -32,7 +27,6 @@ func New(log logging.Logger, kube kubernetes.Interface, config Config, handler H
 	informer.AddEventHandler(is)
 
 	is.informer = informer
-	is.workqueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	return is
 }
@@ -44,27 +38,8 @@ func (is *informerStream) GetInformer() cache.SharedIndexInformer {
 func (is *informerStream) Run(ctx context.Context) error {
 	is.log.Debug("starting")
 	defer is.log.Debug("finished")
-	go is.shutdownWithContext(ctx)
 	is.informer.Run(ctx.Done())
 	return nil
-}
-
-func (is *informerStream) shutdownWithContext(ctx context.Context) {
-	select {
-	case <-ctx.Done():
-		is.shutdown()
-	}
-}
-
-func (is *informerStream) shutdown() {
-	is.log.Debug("shutting down")
-	defer is.log.Debug("shutdown")
-	// Insert an event to unblock de-queue-ing process and shutdown the
-	// queue. This causes the worker to exit itself because it *must* be
-	// listening on the same context and does not latch on to the queue
-	// again (otherwise, this would be a race condition).
-	is.workqueue.Add(nil)
-	is.workqueue.ShutDown()
 }
 
 func (is *informerStream) OnAdd(obj interface{}) {
