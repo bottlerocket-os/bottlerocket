@@ -163,7 +163,6 @@ script = [
 '''
 (cd workspaces && cargo deny check --disable-fetch licenses)
 (cd tools/buildsys && cargo deny check --disable-fetch licenses)
-(cd extras/sdk-container/license-scan && cargo deny check --disable-fetch licenses)
 '''
 ]
 
