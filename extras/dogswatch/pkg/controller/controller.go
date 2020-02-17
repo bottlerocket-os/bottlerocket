@@ -47,11 +47,6 @@ func (c *Controller) Run(ctx context.Context) error {
 	group.Work(c.manager.Run)
 
 	c.log.Debug("running control loop")
-	for {
-		select {
-		case <-ctx.Done():
-			cancel()
-			return nil
-		}
-	}
+	<-ctx.Done()
+	return nil
 }
