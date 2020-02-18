@@ -19,9 +19,9 @@ var _ marker.Container = (*Intent)(nil)
 type Intent struct {
 	// NodeName is the Resource name that addresses it.
 	NodeName string
-	// CurrentAction is the currently instructed action on the node.
+	// Wanted is the currently instructed action on the node.
 	Wanted marker.NodeAction
-	// CurrentState is the current action taken on the Node.
+	// Active is the current action taken on the Node.
 	Active marker.NodeAction
 	// State is the current status or state of the Node reported, generally for
 	// the Active action.
