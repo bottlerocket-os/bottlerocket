@@ -4,7 +4,7 @@ Name: %{_cross_os}filesystem
 Version: 1.0
 Release: 1%{?dist}
 Summary: The basic directory layout
-License: LicenseRef-Pending
+License: Apache-2.0 OR MIT
 BuildArch: noarch
 
 %description

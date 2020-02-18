@@ -4,7 +4,7 @@ Name: %{_cross_os}release
 Version: 0.0
 Release: 0%{?dist}
 Summary: Bottlerocket release
-License: LicenseRef-Pending
+License: Apache-2.0 OR MIT
 
 Source10: hosts
 Source11: nsswitch.conf

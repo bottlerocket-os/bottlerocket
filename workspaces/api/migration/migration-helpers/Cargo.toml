@@ -2,6 +2,7 @@
 name = "migration-helpers"
 version = "0.1.0"
 authors = ["Tom Kirchner <tjk@amazon.com>"]
+license = "Apache-2.0 OR MIT"
 edition = "2018"
 publish = false
 

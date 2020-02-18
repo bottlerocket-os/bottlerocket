@@ -2,6 +2,7 @@
 name = "settings-committer"
 version = "0.1.0"
 authors = ["Michael Patraw <patraw@amazon.com>"]
+license = "Apache-2.0 OR MIT"
 edition = "2018"
 publish = false
 build = "build.rs"
