@@ -1,7 +1,5 @@
 # Skip check-rpaths since we expect them for systemd.
-%global __arch_install_post \
-  /usr/lib/rpm/check-buildroot \
-  %cross_generate_attribution
+%global _cross_allow_rpath 1
 
 Name: %{_cross_os}systemd
 Version: 244
