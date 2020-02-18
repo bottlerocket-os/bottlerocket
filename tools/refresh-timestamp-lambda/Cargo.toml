@@ -19,8 +19,8 @@ rusoto_sts = "0.42.0"
 rusoto_core = "0.42.0"
 chrono = "0.4"
 failure = "0.1.6"
-reqwest = { version = "0.9.17", default-features = false, features = ["rustls-tls"] }
-tough = { version = "0.3.0", features = ["http"] }
+reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls"] }
+tough = { version = "0.4.0", features = ["http"] }
 ring = "0.16.9"
 olpc-cjson = "0.1.0"
 tempfile = "3.1.0"
