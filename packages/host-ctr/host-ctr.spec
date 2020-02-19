@@ -5,7 +5,7 @@ Name: %{_cross_os}%{workspace_name}
 Version: 0.0
 Release: 0%{?dist}
 Summary: Bottlerocket host container runner
-License: LicenseRef-Pending
+License: Apache-2.0 OR MIT
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}containerd
 

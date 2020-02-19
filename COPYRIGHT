@@ -1,0 +1,19 @@
+Copyright Amazon.com, Inc., its affiliates, or other contributors. All Rights Reserved.
+
+Except as otherwise noted (below and/or in individual files), Bottlerocket is dual-licensed under
+the Apache License, version 2.0 <LICENSE-APACHE> or the MIT license <LICENSE-MIT>, at your option.
+
+Copyrights in Bottlerocket are retained by their contributors. No copyright assignment is required
+to contribute to Bottlerocket. Contributions to Bottlerocket are explicitly made under both the
+Apache License, version 2.0, and the MIT license. For full authorship information, see the version
+control history.
+
+Bottlerocket operating system images include packages written by third parties, which may carry
+their own copyright notices and license terms. These are available in /usr/share/licenses on the
+operating system images.
+
+=^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+macros/rust and macros/cargo (used during build) are derived from the Fedora Rust SIG's rust2rpm.
+https://pagure.io/fedora-rust/rust2rpm
+Copyright (c) 2017 Igor Gnatenko

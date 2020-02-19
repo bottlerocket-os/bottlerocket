@@ -75,6 +75,7 @@ sgdisk --clear \
    --sort --print "${DISK_IMAGE}"
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
+install -p -m 0644 /host/{COPYRIGHT,LICENSE-APACHE,LICENSE-MIT} "${ROOT_MOUNT}"/usr/share/licenses/
 mksquashfs "${ROOT_MOUNT}"/usr/share/licenses "${ROOT_MOUNT}"/usr/share/bottlerocket/licenses.squashfs
 rm -rf "${ROOT_MOUNT}"/var/lib "${ROOT_MOUNT}"/usr/share/licenses/*
 

@@ -1,5 +1,9 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
-# https://github.com/amazonlinux/rust-bundled-packaging/blob/master/macros.rust
+#
+# Originally derived from https://github.com/amazonlinux/rust-bundled-packaging
+# which is in turn derived from https://pagure.io/fedora-rust/rust2rpm
+# Copyright (c) 2017 Igor Gnatenko
 
 %__rustc %{_bindir}/rustc
 %__rustdoc %{_bindir}/rustdoc

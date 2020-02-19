@@ -6,7 +6,7 @@ Name: %{_cross_os}workspaces
 Version: 0.0
 Release: 0%{?dist}
 Summary: Bottlerocket's first-party code
-License: LicenseRef-Pending
+License: Apache-2.0 OR MIT
 
 # sources < 100: misc
 Source1: data-store-version

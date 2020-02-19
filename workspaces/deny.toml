@@ -26,10 +26,6 @@ exceptions = [
     { name = "copyless", allow = ["MPL-2.0"], version = "*" },
 ]
 
-# FIXME: Remove this when a license is assigned for first-party packages
-[licenses.private]
-ignore = true
-
 [[licenses.clarify]]
 name = "ring"
 expression = "MIT AND ISC AND OpenSSL"
