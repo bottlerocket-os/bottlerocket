@@ -61,7 +61,7 @@ From there, you can [change settings](#settings), manually [update Bottlerocket]
 
 ### Control container
 
-Bottlerocket has a "control" container, enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
+Bottlerocket has a ["control" container](https://github.com/bottlerocket-os/bottlerocket-control-container), enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
 (You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).
 
@@ -80,12 +80,12 @@ Then you'd be able to start a session using only your instance ID, like this:
 aws ssm start-session --target INSTANCE_ID
 ```
 
-With the default control container, you can make API calls to change settings in your Bottlerocket host.
+With the [default control container](https://github.com/bottlerocket-os/bottlerocket-control-container), you can make API calls to change settings in your Bottlerocket host.
 To do even more, read the next section about the [admin container](#admin-container).
 
 ### Admin container
 
-Bottlerocket has an administrative container, disabled by default, that runs outside of the orchestrator in a separate instance of containerd.
+Bottlerocket has an [administrative container](https://github.com/bottlerocket-os/bottlerocket-admin-container), disabled by default, that runs outside of the orchestrator in a separate instance of containerd.
 This container has an SSH server that lets you log in as `ec2-user` using your EC2-registered SSH key.
 (You can easily replace this admin container with your own just by changing the URI; see [Settings](#settings).
 
@@ -275,7 +275,7 @@ The following settings are set for you automatically by [pluto](workspaces/api/)
 
 ##### Custom host containers
 
-`admin` and `control` are our default host containers, but you're free to change this.
+[`admin`](https://github.com/bottlerocket-os/bottlerocket-admin-container) and [`control`](https://github.com/bottlerocket-os/bottlerocket-control-container) are our default host containers, but you're free to change this.
 Beyond just changing the settings above to affect the `admin` and `control` containers, you can add and remove host containers entirely.
 As long as you define the three fields above -- `source` with a URI, and `enabled` and `superpowered` with true/false -- you can add host containers with an API call or user data.
 
