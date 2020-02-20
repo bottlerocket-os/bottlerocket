@@ -2,7 +2,7 @@
 %global gorepo kubernetes
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.14.10
+%global gover 1.15.10
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -24,6 +24,10 @@ Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
 Patch3: 0003-enable-PIE-for-platform-binaries.patch
+
+# Fix builds in $GOPATH when using Go 1.13 - drop when we catch up in v1.17.0
+# https://github.com/kubernetes/kubernetes/commit/8618c09
+Patch4: 0004-opt-out-of-module-mode-for-builds.patch 
 
 BuildRequires: git
 BuildRequires: rsync

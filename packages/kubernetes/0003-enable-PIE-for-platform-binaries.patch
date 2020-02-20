@@ -12,7 +12,7 @@ diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
 index 5454e73f..a146fc28 100755
 --- a/hack/lib/golang.sh
 +++ b/hack/lib/golang.sh
-@@ -709,6 +709,7 @@ kube::golang::build_binaries_for_platform() {
+@@ -715,6 +715,7 @@ kube::golang::build_binaries_for_platform() {
  
    if [[ "${#nonstatics[@]}" != 0 ]]; then
      build_args=(
