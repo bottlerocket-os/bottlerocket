@@ -9,9 +9,12 @@ build = "build.rs"
 variant-sensitive = true
 source-groups = [
     "api",
+    "bottlerocket-release",
     "growpart",
     "updater",
     "webpki-roots-shim",
+    "models",
+    "preinit",
 ]
 
 [lib]
