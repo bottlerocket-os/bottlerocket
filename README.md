@@ -374,7 +374,7 @@ For more details, see the [apiserver documentation](sources/api/apiserver/).
 The [apiclient](sources/api/apiclient/) can be used to make requests.
 They're just HTTP requests, but the API client simplifies making requests with the Unix-domain socket.
 
-To make configuration easier, we have [moondog](sources/api/moondog/), which can send an API request for you based on instance user data.
+To make configuration easier, we have [early-boot-config](sources/api/early-boot-config/), which can send an API request for you based on instance user data.
 If you start a virtual machine, like an EC2 instance, it will read TOML-formatted Bottlerocket configuration from user data and send it to the API server.
 This way, you can configure your Bottlerocket instance without having to make API calls after launch.
 

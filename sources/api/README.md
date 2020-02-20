@@ -65,11 +65,11 @@ If there are any pending transactions in the data store when storewolf starts, t
 The API server for Bottlerocket starts next.
 This gives users (and later components) the ability to read or change settings in the data store, and have any changes applied to the system.
 
-### moondog
+### early-boot-config
 
-[Further docs](moondog/)
+[Further docs](early-boot-config/)
 
-Moondog applies settings changes that the user requests through EC2 user data.
+early-boot-config applies settings changes that the user requests through EC2 user data.
 Think of it as cloud-init but smaller in scope; we only accept TOML-formatted settings that the API understands, right now.
 
 It only runs on first boot.

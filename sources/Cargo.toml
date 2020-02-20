@@ -3,7 +3,7 @@ members = [
     "api/apiserver",
     "api/apiclient",
     "api/bork",
-    "api/moondog",
+    "api/early-boot-config",
     "api/netdog",
     "api/sundog",
     "api/schnauzer",

@@ -1,8 +1,8 @@
 [Unit]
 Description=Applies settings to create config files
-After=storewolf.service sundog.service moondog.service apiserver.service
+After=storewolf.service sundog.service early-boot-config.service apiserver.service
 Requires=apiserver.service
-Wants=storewolf.service sundog.service moondog.service
+Wants=storewolf.service sundog.service early-boot-config.service
 
 [Service]
 Type=oneshot

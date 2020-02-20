@@ -1,5 +1,5 @@
 [package]
-name = "moondog"
+name = "early-boot-config"
 version = "0.1.0"
 authors = ["Zac Mrowicki <mrowicki@amazon.com>"]
 license = "Apache-2.0 OR MIT"
