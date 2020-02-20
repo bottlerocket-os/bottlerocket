@@ -12,10 +12,11 @@ use chrono::{DateTime, Utc};
 use data_store_version::Version as DataVersion;
 use semver::Version as SemVer;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
-use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
+use snafu::{ErrorCompat, OptionExt, ResultExt};
+use std::fs;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use update_metadata::{Images, Manifest, Update};
+use update_metadata::{Images, Manifest, Release, Update};
 
 #[derive(Debug, StructOpt)]
 struct GeneralArgs {
@@ -207,44 +208,30 @@ impl WaveArgs {
 
 #[derive(Debug, StructOpt)]
 struct MigrationArgs {
-    // metadata file to create/modify
-    file: PathBuf,
-
-    // starting datastore version
+    // file to get migrations from (probably Release.toml)
     #[structopt(short = "f", long = "from")]
-    from: DataVersion,
+    from: PathBuf,
 
-    // target datastore version
+    // file to write migrations to (probably manifest.json)
     #[structopt(short = "t", long = "to")]
-    to: DataVersion,
-
-    // whether to append to or replace any existing migration list
-    #[structopt(short, long)]
-    append: bool,
-
-    // migration names
-    migrations: Vec<String>,
+    to: PathBuf,
 }
 
 impl MigrationArgs {
-    fn add(self) -> Result<()> {
-        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
-        manifest.add_migration(self.append, self.from, self.to, self.migrations)?;
-        update_metadata::write_file(&self.file, &manifest)?;
-        Ok(())
-    }
+    fn set(self) -> Result<()> {
+        // Load the file we will be writing to
+        let mut manifest: Manifest = update_metadata::load_file(&self.to)?;
 
-    fn remove(self) -> Result<()> {
-        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
-        ensure!(
-            manifest.migrations.contains_key(&(self.from, self.to)),
-            error::MigrationNotPresent {
-                from: self.from,
-                to: self.to,
-            }
-        );
-        manifest.migrations.remove(&(self.from, self.to));
-        update_metadata::write_file(&self.file, &manifest)?;
+        // Load the file we will be reading from
+        let release_data =
+            fs::read_to_string(&self.from).context(error::ConfigRead { path: &self.from })?;
+        let release: Release =
+            toml::from_str(&release_data).context(error::ReleaseParse { path: &self.from })?;
+
+        // Replace the manifest 'migrations' section with the new data
+        manifest.migrations = release.migrations;
+
+        update_metadata::write_file(&self.to, &manifest)?;
         Ok(())
     }
 }
@@ -307,18 +294,16 @@ enum Command {
     AddUpdate(AddUpdateArgs),
     /// Add a (bound_id, time) wave to an existing update
     AddWave(WaveArgs),
-    /// Add one or more migrations to a (from, to) datastore mapping
-    AddMigration(MigrationArgs),
     /// Add a image_version:data_store_version mapping to the manifest
     AddVersionMapping(MappingArgs),
     /// Set the global maximum image version
     SetMaxVersion(MaxVersionArgs),
     /// Remove an update from the manifest, including wave information
     RemoveUpdate(RemoveUpdateArgs),
-    /// Remove all migrations for a (from, to) datastore mapping
-    RemoveMigrations(MigrationArgs),
     /// Remove a (bound_id, time) wave from an update
     RemoveWave(WaveArgs),
+    /// Copy the migrations from an input file to an output file
+    SetMigrations(MigrationArgs),
     /// Validate a manifest file, but make no changes
     Validate(GeneralArgs),
 }
@@ -337,12 +322,11 @@ fn main_inner() -> Result<()> {
         }
         Command::AddUpdate(args) => args.run(),
         Command::AddWave(args) => args.add(),
-        Command::AddMigration(args) => args.add(),
         Command::AddVersionMapping(args) => args.run(),
         Command::SetMaxVersion(args) => args.run(),
         Command::RemoveUpdate(args) => args.run(),
         Command::RemoveWave(args) => args.remove(),
-        Command::RemoveMigrations(args) => args.remove(),
+        Command::SetMigrations(args) => args.set(),
         Command::Validate(args) => match update_metadata::load_file(&args.file) {
             Ok(_) => Ok(()),
             Err(e) => Err(error::Error::UpdateMetadata { source: e }),
@@ -371,8 +355,63 @@ fn main() -> ! {
 mod tests {
     use super::*;
     use chrono::Duration;
+    use std::path::Path;
     use std::str::FromStr;
     use tempfile::NamedTempFile;
+
+    #[test]
+    // Ensure that we can update a blank manifest
+    fn test_migration_copy() -> Result<()> {
+        let release_path = "tests/data/release.toml";
+        let temp_manifest = NamedTempFile::new().context(error::TmpFileCreate)?;
+
+        // Create a new blank manifest
+        update_metadata::write_file(&temp_manifest.path(), &Manifest::default()).unwrap();
+
+        // Copy the migration data to the new manifest
+        MigrationArgs {
+            from: PathBuf::from(&release_path),
+            to: PathBuf::from(temp_manifest.path()),
+        }
+        .set()
+        .unwrap();
+
+        // Make sure the manifest has the correct releases
+        let manifest: Manifest = update_metadata::load_file(&temp_manifest.path()).unwrap();
+        let release_data = fs::read_to_string(&release_path).unwrap();
+        let release: Release = toml::from_str(&release_data).unwrap();
+        assert_eq!(manifest.migrations, release.migrations);
+        Ok(())
+    }
+
+    #[test]
+    // Ensure that we can update an existing manifest
+    fn test_migration_update() -> Result<()> {
+        let release_path = "tests/data/release.toml";
+        let example_manifest = "tests/data/example.json";
+
+        // Write example data to temp manifest so we dont' overwrite the file
+        // when we call MigrationsArgs.set() below
+        let temp_manifest = NamedTempFile::new().context(error::TmpFileCreate)?;
+        let example_data = fs::read_to_string(&example_manifest).unwrap();
+        fs::write(&temp_manifest, &example_data).unwrap();
+
+        // Copy the migration data to the existing manifest
+        MigrationArgs {
+            from: PathBuf::from(&release_path),
+            to: PathBuf::from(&temp_manifest.path()),
+        }
+        .set()
+        .unwrap();
+
+        // Make sure the manifest has the correct releases
+        let manifest: Manifest =
+            update_metadata::load_file(Path::new(&temp_manifest.path())).unwrap();
+        let release_data = fs::read_to_string(&release_path).unwrap();
+        let release: Release = toml::from_str(&release_data).unwrap();
+        assert_eq!(manifest.migrations, release.migrations);
+        Ok(())
+    }
 
     #[test]
     fn max_versions() -> Result<()> {

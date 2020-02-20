@@ -80,6 +80,17 @@ pub struct Manifest {
     pub datastore_versions: BTreeMap<SemVer, DataVersion>,
 }
 
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct Release {
+    pub version: String,
+    /// For now, this matches the Manifest struct, but having a separate struct gives us the
+    /// flexibility to have a different, human-oriented representation in the release TOML compared
+    /// to the machine-oriented representation in the manifest.
+    #[serde(deserialize_with = "de::deserialize_migration")]
+    #[serde(serialize_with = "se::serialize_migration")]
+    pub migrations: BTreeMap<(DataVersion, DataVersion), Vec<String>>,
+}
+
 pub fn load_file(path: &Path) -> Result<Manifest> {
     let file = File::open(path).context(error::ManifestRead { path })?;
     serde_json::from_reader(file).context(error::ManifestParse)

@@ -176,6 +176,13 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Failed to parse release metadata file '{}': {}", path.display(), source))]
+    ReleaseParse {
+        path: PathBuf,
+        source: toml::de::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed setting permissions of '{}': {}", path.display(), source))]
     SetPermissions {
         path: PathBuf,
@@ -201,9 +208,7 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("No update available"))]
-    UpdateNotAvailable {
-        backtrace: Backtrace,
-    },
+    UpdateNotAvailable { backtrace: Backtrace },
 
     #[snafu(display("Update {} exists but wave in the future", version))]
     UpdateNotReady {
