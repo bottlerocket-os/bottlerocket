@@ -550,7 +550,19 @@ impl DataStore for FilesystemDataStore {
         );
 
         for entry in walker {
-            let entry = entry.context(error::ListKeys)?;
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(e) => {
+                    if let Some(io_error) = e.io_error() {
+                        // If there's no pending directory, that's OK, just return empty set.
+                        if io_error.kind() == io::ErrorKind::NotFound {
+                            break;
+                        }
+                    }
+                    return Err(e).context(error::ListKeys);
+                }
+            };
+
             if entry.file_type().is_dir() {
                 // The directory name should be valid UTF-8, encoded by encode_path_component,
                 // or the data store has been corrupted.
