@@ -82,7 +82,7 @@ struct KubernetesSettings {
     node_taints: HashMap<KubernetesLabelKey, KubernetesTaintValue>,
 
     // Dynamic settings.
-    max_pods: SingleLineString,
+    max_pods: u32,
     cluster_dns_ip: Ipv4Addr,
     node_ip: Ipv4Addr,
     pod_infra_container_image: SingleLineString,
