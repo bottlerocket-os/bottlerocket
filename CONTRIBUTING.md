@@ -10,7 +10,7 @@ Please read through this document before submitting any issues or pull requests 
 
 We welcome you to use the GitHub issue tracker to report bugs or suggest features.
 
-When filing an issue, please check [existing open](https://github.com/amazonlinux/PRIVATE-thar/issues) and [closed](https://github.com/amazonlinux/PRIVATE-thar/issues?q=is%3Aissue+is%3Aclosed) issues to make sure somebody else hasn't already reported the issue.
+When filing an issue, please check [existing open](https://github.com/bottlerocket-os/bottlerocket/issues) and [closed](https://github.com/bottlerocket-os/bottlerocket/issues?q=is%3Aissue+is%3Aclosed) issues to make sure somebody else hasn't already reported the issue.
 Please try to include as much information as you can.
 Details like these are incredibly useful:
 
@@ -26,7 +26,7 @@ Before starting a pull request, please ensure that:
 
 1. You open an issue first to discuss any significant work - we would hate for your time to be wasted.
 2. You are working against the latest source on the *develop* branch.
-3. You check existing [open](https://github.com/amazonlinux/PRIVATE-thar/pulls) and [merged](https://github.com/amazonlinux/PRIVATE-thar/pulls?q=is%3Apr+is%3Aclosed) pull requests to make sure someone else hasn't addressed the problem already.
+3. You check existing [open](https://github.com/bottlerocket-os/bottlerocket/pulls) and [merged](https://github.com/bottlerocket-os/bottlerocket/pulls?q=is%3Apr+is%3Aclosed) pull requests to make sure someone else hasn't addressed the problem already.
 
 To send us a pull request, please:
 
@@ -42,7 +42,7 @@ GitHub provides additional documentation on [forking a repository](https://help.
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on.
-As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/amazonlinux/PRIVATE-thar/labels/help%20wanted) issues is a great place to start.
+As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/bottlerocket-os/bottlerocket/labels/help%20wanted) issues is a great place to start.
 
 
 ## Code of Conduct
