@@ -62,7 +62,7 @@ members = [
     "tcpdump",
     "util-linux",
     "wicked",
-    "workspaces",
+    "os",
 ]
 
 [profile.dev]

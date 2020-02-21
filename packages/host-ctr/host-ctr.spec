@@ -18,7 +18,7 @@ Source12: host-containerd-config.toml
 
 %prep
 %setup -T -c
-cp -r %{_builddir}/workspaces/%{workspace_name}/cmd/host-ctr/* .
+cp -r %{_builddir}/sources/%{workspace_name}/cmd/host-ctr/* .
 
 %build
 %set_cross_go_flags

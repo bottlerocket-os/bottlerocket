@@ -77,8 +77,8 @@ RUN --mount=target=/host \
 USER builder
 RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=type=cache,target=/home/builder/.cache,from=cache,source=/cache \
-    --mount=type=cache,target=/home/builder/rpmbuild/BUILD/workspaces/models/src/variant,from=variantcache,source=/variantcache \
-    --mount=source=workspaces,target=/home/builder/rpmbuild/BUILD/workspaces \
+    --mount=type=cache,target=/home/builder/rpmbuild/BUILD/sources/models/src/variant,from=variantcache,source=/variantcache \
+    --mount=source=sources,target=/home/builder/rpmbuild/BUILD/sources \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
 FROM scratch AS package

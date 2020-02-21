@@ -201,7 +201,7 @@
 
 ## Documentation changes
 
-* The `workspaces/updater` crates are better documented ([#381]).
+* The `sources/updater` crates are better documented ([#381]).
 * INSTALL.md's subnet selection documentation is improved ([#422]).
 
 [#381]: ../../pull/381

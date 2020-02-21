@@ -144,13 +144,13 @@ reboot
 We're working on more automated update methods.
 
 The update process uses images secured by [TUF](https://theupdateframework.github.io/).
-For more details, see the [update system documentation](workspaces/updater/).
+For more details, see the [update system documentation](sources/updater/).
 
 ## Settings
 
 Here we'll describe the settings you can configure on your Bottlerocket instance, and how to do it.
 
-(API endpoints are defined in our [OpenAPI spec](workspaces/api/openapi.yaml) if you want more detail.)
+(API endpoints are defined in our [OpenAPI spec](sources/api/openapi.yaml) if you want more detail.)
 
 ### Interacting with settings
 
@@ -193,7 +193,7 @@ If you want to group sets of changes yourself, pick a transaction name and appen
 For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` and `POST` to `/tx/commit_and_apply?tx=FOO`.
 (Transactions are created automatically when used, and are cleaned up on reboot.)
 
-For more details on using the client, see the [apiclient documentation](workspaces/api/apiclient/).
+For more details on using the client, see the [apiclient documentation](sources/api/apiclient/).
 
 #### Using user data
 
@@ -211,7 +211,7 @@ timezone = "America/Thunder_Bay"
 
 Here we'll describe each setting you can change.
 
-**Note:** You can see the default values (for any settings that are not generated at runtime) by looking at [defaults.toml](workspaces/models/defaults.toml).
+**Note:** You can see the default values (for any settings that are not generated at runtime) by looking at [defaults.toml](sources/models/defaults.toml).
 
 When you're sending settings to the API, or receiving settings from the API, they're in a structured JSON format.
 This allows allow modification of any number of keys at once.
@@ -249,7 +249,7 @@ The following settings can be optionally set to customize the node labels and ta
     special = "true:NoSchedule"
     ```
 
-The following settings are set for you automatically by [pluto](workspaces/api/) based on runtime instance information, but you can override them if you know what you're doing!
+The following settings are set for you automatically by [pluto](sources/api/) based on runtime instance information, but you can override them if you know what you're doing!
 * `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
 * `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
@@ -317,7 +317,7 @@ Be careful, and make sure you have a similar low-level use case before reaching 
 
 We use [dm-verity](https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity) to load a verified read-only root filesystem, preventing some classes of persistent security threats.
 Only a few locations are made writable:
-* some through [tmpfs mounts](workspaces/preinit/laika), used for configuration, that don't persist over a restart.
+* some through [tmpfs mounts](sources/preinit/laika), used for configuration, that don't persist over a restart.
 * one [persistent location](packages/release/var-lib-bottlerocket.mount) for the data store.
 
 We enable [SELinux](https://selinuxproject.org/) in enforcing mode.
@@ -355,7 +355,7 @@ When updating Bottlerocket, the partition table is updated to point from set A t
 We also track successful boots, and if there are failures it will automatically revert back to the prior working partition set.
 
 The update process uses images secured by [TUF](https://theupdateframework.github.io/).
-For more details, see the [update system documentation](workspaces/updater/).
+For more details, see the [update system documentation](sources/updater/).
 
 ### API
 
@@ -369,12 +369,12 @@ The second method is through the Bottlerocket API, for example when you want to 
 
 There's an HTTP API server that listens on a local Unix-domain socket.
 Remote access to the API requires an authenticated transport such as SSM's RunCommand or Session Manager, as described above.
-For more details, see the [apiserver documentation](workspaces/api/apiserver/).
+For more details, see the [apiserver documentation](sources/api/apiserver/).
 
-The [apiclient](workspaces/api/apiclient/) can be used to make requests.
+The [apiclient](sources/api/apiclient/) can be used to make requests.
 They're just HTTP requests, but the API client simplifies making requests with the Unix-domain socket.
 
-To make configuration easier, we have [moondog](workspaces/api/moondog/), which can send an API request for you based on instance user data.
+To make configuration easier, we have [moondog](sources/api/moondog/), which can send an API request for you based on instance user data.
 If you start a virtual machine, like an EC2 instance, it will read TOML-formatted Bottlerocket configuration from user data and send it to the API server.
 This way, you can configure your Bottlerocket instance without having to make API calls after launch.
 
@@ -382,4 +382,4 @@ See [Settings](#settings) above for examples and to understand what you can conf
 
 The server and client are the user-facing components of the API system, but there are a number of other components that work together to make sure your settings are applied, and that they survive upgrades of Bottlerocket.
 
-For more details, see the [API system documentation](workspaces/api/).
+For more details, see the [API system documentation](sources/api/).

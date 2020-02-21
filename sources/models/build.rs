@@ -33,7 +33,7 @@ fn link_current_variant() {
     let var = "VARIANT";
     println!("cargo:rerun-if-env-changed={}", var);
     let variant = env::var(var).unwrap_or_else(|_| {
-        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in workspaces/models, for example \"aws-k8s\".", var);
+        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in sources/models, for example \"aws-k8s\".", var);
         process::exit(1);
     });
 
@@ -44,7 +44,7 @@ fn link_current_variant() {
     // Make sure requested variant exists
     let variant_path = format!("src/{}", variant);
     if !Path::new(&variant_path).exists() {
-        eprintln!("The environment variable {} should refer to a directory under workspaces/models/src with an API model, but it's set to '{}' which doesn't exist", var, variant);
+        eprintln!("The environment variable {} should refer to a directory under sources/models/src with an API model, but it's set to '{}' which doesn't exist", var, variant);
         process::exit(1);
     }
 
