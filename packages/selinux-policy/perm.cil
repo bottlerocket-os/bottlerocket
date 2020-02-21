@@ -1,0 +1,266 @@
+; Enable policy to allow domain transitions when executing with the
+; "no new privs" bit enabled, or when the executable is on a "nosuid"
+; filesystem.
+(policycap "nnp_nosuid_transition")
+
+; Add process permissions related to labels and security features.
+(class process (
+  execheap execmem execstack dyntransition setcurrent setexec
+  setfscreate setkeycreate setsockcreate transition))
+(class process2 (nnp_transition nosuid_transition))
+
+; Add all filesystem permissions.
+(class filesystem (
+  associate getattr mount quotaget quotamod
+  relabelfrom relabelto remount transition unmount))
+
+; Add permissions shared by all file classes.
+(common file (
+  append audit_access create execmod execute getattr ioctl link
+  lock map mounton open quotaon read relabelfrom relabelto rename
+  setattr swapon unlink write))
+(classcommon file file)
+(classcommon dir file)
+(classcommon lnk_file file)
+(classcommon chr_file file)
+(classcommon blk_file file)
+(classcommon sock_file file)
+(classcommon fifo_file file)
+
+; Add permissions specific to some file classes.
+(class file (entrypoint execute_no_trans))
+(class dir (add_name remove_name reparent rmdir search))
+(class lnk_file ())
+(class chr_file (entrypoint execute_no_trans))
+(class blk_file ())
+(class sock_file ())
+(class fifo_file ())
+
+(classorder (
+  process process2 filesystem file dir lnk_file
+  chr_file blk_file sock_file fifo_file))
+
+; Permission groups for processes.
+(classmap processes (transform relax))
+
+; Permission group for changing labels on processes.
+(classmapping processes transform (
+  process (
+    dyntransition transition setcurrent setexec
+    setfscreate setkeycreate setsockcreate)))
+(classmapping processes transform (
+  process2 (nnp_transition nosuid_transition)))
+
+; Permission group for relaxing security constraints on processes.
+(classmapping processes relax (
+  process (execheap execmem execstack)))
+
+; Sets of permissions for relabeling file objects.
+(classpermission relabel_file)
+(classpermission relabel_dir)
+(classpermission relabel_lnk_file)
+(classpermission relabel_chr_file)
+(classpermission relabel_blk_file)
+(classpermission relabel_sock_file)
+(classpermission relabel_fifo_file)
+(classpermission relabel_filesystem)
+(classpermissionset relabel_file (
+  file (relabelfrom relabelto)))
+(classpermissionset relabel_dir (
+  dir (relabelfrom relabelto)))
+(classpermissionset relabel_lnk_file (
+  lnk_file (relabelfrom relabelto)))
+(classpermissionset relabel_chr_file (
+  chr_file (relabelfrom relabelto)))
+(classpermissionset relabel_blk_file (
+  blk_file (relabelfrom relabelto)))
+(classpermissionset relabel_sock_file (
+  sock_file (relabelfrom relabelto)))
+(classpermissionset relabel_fifo_file (
+  fifo_file (relabelfrom relabelto)))
+(classpermissionset relabel_filesystem (
+  filesystem (associate relabelfrom relabelto transition)))
+
+; Sets of permissions for mounts.
+(classpermission mount_file)
+(classpermission mount_dir)
+(classpermission mount_lnk_file)
+(classpermission mount_chr_file)
+(classpermission mount_blk_file)
+(classpermission mount_sock_file)
+(classpermission mount_fifo_file)
+(classpermission mount_filesystem)
+(classpermissionset mount_file (
+  file (mounton quotaon swapon)))
+(classpermissionset mount_dir (
+  dir (mounton quotaon swapon)))
+(classpermissionset mount_lnk_file (
+  lnk_file (mounton quotaon swapon)))
+(classpermissionset mount_chr_file (
+  chr_file (mounton quotaon swapon)))
+(classpermissionset mount_blk_file (
+  blk_file (mounton quotaon swapon)))
+(classpermissionset mount_sock_file (
+  sock_file (mounton quotaon swapon)))
+(classpermissionset mount_fifo_file (
+  fifo_file (mounton quotaon swapon)))
+(classpermissionset mount_filesystem (
+  filesystem (mount quotamod remount unmount)))
+
+; Sets of permissions that relax security constraints for file objects.
+(classpermission relax_file)
+(classpermission relax_dir)
+(classpermission relax_lnk_file)
+(classpermission relax_chr_file)
+(classpermission relax_blk_file)
+(classpermission relax_sock_file)
+(classpermission relax_fifo_file)
+(classpermissionset relax_file (
+  file (execmod)))
+(classpermissionset relax_dir (
+  dir (execmod)))
+(classpermissionset relax_lnk_file (
+  lnk_file (execmod)))
+(classpermissionset relax_chr_file (
+  chr_file (execmod)))
+(classpermissionset relax_blk_file (
+  blk_file (execmod)))
+(classpermissionset relax_sock_file (
+  sock_file (execmod)))
+(classpermissionset relax_fifo_file (
+  fifo_file (execmod)))
+
+; Sets of permissions for using file objects as entry points.
+(classpermission enter_file)
+(classpermission enter_chr_file)
+(classpermissionset enter_file (
+  file (entrypoint)))
+(classpermissionset enter_chr_file (
+  chr_file (entrypoint)))
+
+; Sets of permissions for read-only actions that do not affect the
+; integrity of file objects.
+(classpermission load_file)
+(classpermission load_dir)
+(classpermission load_lnk_file)
+(classpermission load_chr_file)
+(classpermission load_blk_file)
+(classpermission load_sock_file)
+(classpermission load_fifo_file)
+(classpermission load_filesystem)
+(classpermissionset load_file (
+  file (execute getattr ioctl map open read execute_no_trans)))
+(classpermissionset load_dir (
+  dir (execute getattr ioctl map open read search)))
+(classpermissionset load_lnk_file (
+  lnk_file (execute ioctl getattr map open read)))
+(classpermissionset load_chr_file (
+  chr_file (execute ioctl getattr map open read execute_no_trans)))
+(classpermissionset load_blk_file (
+  blk_file (execute ioctl getattr map open read)))
+(classpermissionset load_sock_file (
+  sock_file (execute ioctl getattr map open read)))
+(classpermissionset load_fifo_file (
+  fifo_file (execute ioctl getattr map open read)))
+(classpermissionset load_filesystem (
+  filesystem (getattr quotaget)))
+
+; Sets of permissions for mutating file objects, which includes all
+; actions that are not covered by other policy restrictions.
+(classpermission mutate_file)
+(classpermission mutate_dir)
+(classpermission mutate_lnk_file)
+(classpermission mutate_chr_file)
+(classpermission mutate_blk_file)
+(classpermission mutate_sock_file)
+(classpermission mutate_fifo_file)
+(classpermissionset mutate_file (
+  file (not (
+    execute ioctl getattr map open read execute_no_trans
+    execmod relabelfrom relabelto entrypoint
+    mounton quotaon swapon))))
+(classpermissionset mutate_dir (
+  dir (not (
+    execute ioctl getattr map open read search
+    execmod relabelfrom relabelto
+    mounton quotaon swapon))))
+(classpermissionset mutate_lnk_file (
+  lnk_file (not (
+    execute ioctl getattr map open read
+    execmod relabelfrom relabelto
+    mounton quotaon swapon))))
+(classpermissionset mutate_chr_file (
+  chr_file (not (
+    execute ioctl getattr map open read execute_no_trans
+    execmod relabelfrom relabelto entrypoint
+    mounton quotaon swapon))))
+(classpermissionset mutate_blk_file (
+  blk_file (not (
+    execute ioctl getattr map open read
+    execmod relabelfrom relabelto
+    mounton quotaon swapon))))
+(classpermissionset mutate_sock_file (
+  sock_file (not (
+    execute ioctl getattr map open read
+    execmod relabelfrom relabelto
+    mounton quotaon swapon))))
+(classpermissionset mutate_fifo_file (
+  fifo_file (not (
+    execute ioctl getattr map open read
+    execmod relabelfrom relabelto
+    mounton quotaon swapon))))
+
+; Permission groups for files.
+(classmap files (relabel mount relax enter load mutate))
+
+; Permission group for relabeling files.
+(classmapping files relabel relabel_file)
+(classmapping files relabel relabel_dir)
+(classmapping files relabel relabel_lnk_file)
+(classmapping files relabel relabel_chr_file)
+(classmapping files relabel relabel_blk_file)
+(classmapping files relabel relabel_sock_file)
+(classmapping files relabel relabel_fifo_file)
+(classmapping files relabel relabel_filesystem)
+
+; Permission group for mounts.
+(classmapping files mount mount_file)
+(classmapping files mount mount_dir)
+(classmapping files mount mount_lnk_file)
+(classmapping files mount mount_chr_file)
+(classmapping files mount mount_blk_file)
+(classmapping files mount mount_sock_file)
+(classmapping files mount mount_fifo_file)
+(classmapping files mount mount_filesystem)
+
+; Permission group for relaxing security constraints on files.
+(classmapping files relax relax_file)
+(classmapping files relax relax_dir)
+(classmapping files relax relax_lnk_file)
+(classmapping files relax relax_chr_file)
+(classmapping files relax relax_blk_file)
+(classmapping files relax relax_sock_file)
+(classmapping files relax relax_fifo_file)
+
+; Permission group for using files as entry points.
+(classmapping files enter enter_file)
+(classmapping files enter enter_chr_file)
+
+; Permission group for reading and executing files.
+(classmapping files load load_file)
+(classmapping files load load_dir)
+(classmapping files load load_lnk_file)
+(classmapping files load load_chr_file)
+(classmapping files load load_blk_file)
+(classmapping files load load_sock_file)
+(classmapping files load load_fifo_file)
+(classmapping files load load_filesystem)
+
+; Permission group for mutating files.
+(classmapping files mutate mutate_file)
+(classmapping files mutate mutate_dir)
+(classmapping files mutate mutate_lnk_file)
+(classmapping files mutate mutate_chr_file)
+(classmapping files mutate mutate_blk_file)
+(classmapping files mutate mutate_sock_file)
+(classmapping files mutate mutate_fifo_file)

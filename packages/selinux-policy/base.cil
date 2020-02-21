@@ -1,0 +1,29 @@
+; Build an MLS policy. Ensures that we emit the sensitivity tag in
+; file_contexts, which makes it compatible as input to `setfiles`.
+(mls true)
+
+; MLS has concepts of sensitivities and levels that we can ignore
+; since we're not writing a true MLS policy. However, they are still
+; required arguments in many places, so we need a minimal set.
+(sensitivity s0)
+(sensitivityorder (s0))
+(sensitivitycategory s0 (range c0 c1023))
+
+(level s0 (s0))
+(levelrange s0 (s0 s0))
+
+(level s0-s0 (s0 (range c0 c1023)))
+(levelrange s0-s0 (s0 s0-s0))
+
+; The system_r role is used for processes.
+(role system_r)
+
+; The object_r role is used for files.
+(role object_r)
+
+; Our system_u user has both roles.
+(user system_u)
+(userrole system_u system_r)
+(userrole system_u object_r)
+(userlevel system_u s0-s0)
+(userrange system_u s0-s0)

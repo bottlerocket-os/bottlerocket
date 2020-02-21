@@ -1,0 +1,70 @@
+; Security identifiers (SIDs) are opaque references to contexts.
+; Initial SIDs (ISIDs) are used for initialization and to label
+; fixed objects. The list of ISIDs is defined by the kernel:
+;   security/selinux/include/initial_sid_to_string.h
+(sid kernel)
+(sid security)
+(sid unlabeled)
+(sid fs)
+(sid file)
+(sid file_labels)
+(sid init)
+(sid any_socket)
+(sid port)
+(sid netif)
+(sid netmsg)
+(sid node)
+(sid igmp_packet)
+(sid icmp_socket)
+(sid tcp_socket)
+(sid sysctl_modprobe)
+(sid sysctl)
+(sid sysctl_fs)
+(sid sysctl_kernel)
+(sid sysctl_net)
+(sid sysctl_net_unix)
+(sid sysctl_vm)
+(sid sysctl_dev)
+(sid kmod)
+(sid policy)
+(sid scmp_packet)
+(sid devnull)
+
+; The order of ISIDs must match the kernel's order.
+(sidorder (
+   kernel security unlabeled fs file file_labels init any_socket port
+   netif netmsg node igmp_packet icmp_socket tcp_socket sysctl_modprobe
+   sysctl sysctl_fs sysctl_kernel sysctl_net sysctl_net_unix sysctl_vm
+   sysctl_dev kmod policy scmp_packet devnull))
+
+; We associate the same context with all ISIDs, with two exceptions.
+; "unlabeled" is used for entities with an invalid context, such as
+; a file labeled on a different system. "file" is used for entities
+; that have no context at all, such as a file with no label.
+(sidcontext kernel kernel)
+(sidcontext security kernel)
+(sidcontext unlabeled unlabeled)
+(sidcontext fs kernel)
+(sidcontext file unlabeled)
+(sidcontext file_labels kernel)
+(sidcontext init kernel)
+(sidcontext any_socket kernel)
+(sidcontext port kernel)
+(sidcontext netif kernel)
+(sidcontext netmsg kernel)
+(sidcontext node kernel)
+(sidcontext igmp_packet kernel)
+(sidcontext icmp_socket kernel)
+(sidcontext tcp_socket kernel)
+(sidcontext sysctl_modprobe kernel)
+(sidcontext sysctl kernel)
+(sidcontext sysctl_fs kernel)
+(sidcontext sysctl_kernel kernel)
+(sidcontext sysctl_net kernel)
+(sidcontext sysctl_net_unix kernel)
+(sidcontext sysctl_vm kernel)
+(sidcontext sysctl_dev kernel)
+(sidcontext kmod kernel)
+(sidcontext policy kernel)
+(sidcontext scmp_packet kernel)
+(sidcontext devnull kernel)

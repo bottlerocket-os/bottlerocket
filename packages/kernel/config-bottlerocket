@@ -25,6 +25,15 @@ CONFIG_DM_VERITY=y
 # yama LSM for ptrace restrictions
 CONFIG_SECURITY_YAMA=y
 
+# Do not allow SELinux to be disabled at boot.
+CONFIG_SECURITY_SELINUX_BOOTPARAM=n
+
+# Do not allow SELinux to be disabled at runtime.
+CONFIG_SECURITY_SELINUX_DISABLE=n
+
+# Do not allow SELinux to use `enforcing=0` behavior.
+CONFIG_SECURITY_SELINUX_DEVELOP=n
+
 # enable /proc/config.gz
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y

@@ -34,6 +34,10 @@ BOOT_MOUNT="$(mktemp -d)"
 DATA_MOUNT="$(mktemp -d)"
 EFI_MOUNT="$(mktemp -d)"
 
+SELINUX_ROOT="/usr/lib/selinux"
+SELINUX_POLICY="fortified"
+SELINUX_FILE_CONTEXTS="${ROOT_MOUNT}/${SELINUX_ROOT}/${SELINUX_POLICY}/contexts/files/file_contexts"
+
 VERITY_VERSION=1
 VERITY_HASH_ALGORITHM=sha256
 VERITY_DATA_BLOCK_SIZE=4096
@@ -121,7 +125,12 @@ echo "VERSION_ID=${VERSION_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 echo "BUILD_ID=${BUILD_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
 
 # BOTTLEROCKET-ROOT-A
+mkdir -p "${ROOT_MOUNT}/lost+found"
+ROOT_LABELS=$(setfiles -n -d -F -m -r "${ROOT_MOUNT}" \
+    "${SELINUX_FILE_CONTEXTS}" "${ROOT_MOUNT}" \
+    | awk -v root="${ROOT_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_set", $1, "security.selinux", $4}')
 mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 920M
+echo "${ROOT_LABELS}" | debugfs -w -f - "${ROOT_IMAGE}"
 resize2fs -M "${ROOT_IMAGE}"
 dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=45
 
@@ -152,7 +161,7 @@ set timeout="0"
 
 menuentry "Bottlerocket OS ${VERSION_ID}" {
    linux (\$root)/vmlinuz root=/dev/dm-0 rootwait ro init=/sbin/preinit \\
-       audit=0 console=tty0 console=ttyS0 random.trust_cpu=on \\
+       console=tty0 console=ttyS0 random.trust_cpu=on selinux=1 enforcing=1 \\
        systemd.log_target=journal-or-kmsg net.ifnames=0 biosdevname=0 \\
        dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\
        dm-mod.create="root,,,ro,0 $VERITY_DATA_512B_BLOCKS verity $VERITY_VERSION PARTUUID=\$boot_uuid/PARTNROFF=1 PARTUUID=\$boot_uuid/PARTNROFF=2 \\
@@ -180,8 +189,14 @@ truncate -s 1G "${DATA_IMAGE}"
 sgdisk --clear \
    -n 0:1M:1023M -c 0:"BOTTLEROCKET-DATA" -t 0:8300 \
    --sort --print "${DATA_IMAGE}"
-mkdir -p "${DATA_MOUNT}/var/"{cache,lib,log,spool}
+# If we build on a host with SELinux enabled, we could end up with labels that
+# do not match our policy. Since we allow replacing the data volume at runtime,
+# we can't count on these labels being correct in any case, and it's better to
+# remove them all.
+UNLABELED=$(find "${DATA_MOUNT}" \
+    | awk -v root="${DATA_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_rm", $1, "security.selinux"}')
 mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" 1022M
+echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
 dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek=1
 
 sgdisk -v "${DISK_IMAGE}"

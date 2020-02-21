@@ -5,6 +5,7 @@ Summary: Library for SELinux
 License: LicenseRef-SELinux-PD
 URL: https://github.com/SELinuxProject/
 Source0: https://github.com/SELinuxProject/selinux/releases/download/20191204/libselinux-%{version}.tar.gz
+Source1: libselinux-tmpfiles.conf
 Patch1: 0001-adjust-default-selinux-directory.patch
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libpcre-devel
@@ -44,10 +45,14 @@ export USE_PCRE2='y' \\\
 %set_env
 %make_install
 
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/libselinux.conf
+
 %files
 %license LICENSE
 %{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
+%{_cross_tmpfilesdir}/libselinux.conf
 %exclude %{_cross_sbindir}
 %exclude %{_cross_mandir}
 

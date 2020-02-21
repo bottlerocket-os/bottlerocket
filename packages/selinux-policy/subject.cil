@@ -1,0 +1,64 @@
+;
+; Subjects are the actors in the system. They answer the question of
+; who is performing the access when policy rules are checked.
+;
+
+; Kernel threads.
+(type kernel_t)
+(roletype system_r kernel_t)
+(context kernel (system_u system_r kernel_t s0))
+
+; PID 1.
+(type init_t)
+(roletype system_r init_t)
+(context init (system_u system_r init_t s0))
+
+; Most processes that run outside of containers.
+(type system_t)
+(roletype system_r system_t)
+(context system (system_u system_r system_t s0))
+
+; Processes that back the API.
+(type api_t)
+(roletype system_r api_t)
+(context api (system_u system_r api_t s0))
+
+; Processes that run containers.
+(type runtime_t)
+(roletype system_r runtime_t)
+(context runtime (system_u system_r runtime_t s0))
+
+; Processes that run inside containers.
+(type container_t)
+(roletype system_r container_t)
+(context container (system_u system_r container_t s0))
+
+; Processes that run inside highly privileged containers.
+(type super_t)
+(roletype system_r super_t)
+(context admin (system_u system_r super_t s0))
+
+; The set of all subjects.
+(typeattribute all_s)
+(typeattributeset all_s (
+  kernel_t init_t system_t api_t runtime_t container_t super_t))
+
+; Subjects that are treated as part of the OS.
+(typeattribute trusted_s)
+(typeattributeset trusted_s (not container_t))
+
+; Subjects that are not treated as part of the OS.
+(typeattribute untrusted_s)
+(typeattributeset untrusted_s (not trusted_s))
+
+; Subjects that are started from containers.
+(typeattribute container_s)
+(typeattributeset container_s (container_t super_t))
+
+; Subjects that are shipped with the OS.
+(typeattribute host_s)
+(typeattributeset host_s (not container_s))
+
+; Subjects that are treated as container runtimes.
+(typeattribute runtime_s)
+(typeattributeset runtime_s (runtime_t super_t))

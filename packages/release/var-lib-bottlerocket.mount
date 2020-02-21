@@ -9,7 +9,7 @@ Before=local-fs.target umount.target
 What=/dev/disk/by-partlabel/BOTTLEROCKET-PRIVATE
 Where=/var/lib/bottlerocket
 Type=ext4
-Options=defaults,noatime,nosuid,nodev
+Options=defaults,noatime,nosuid,nodev,context=system_u:object_r:private_t:s0
 
 [Install]
 WantedBy=local-fs.target

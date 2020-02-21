@@ -1,0 +1,2 @@
+process = "system_u:system_r:container_t:s0"
+file = "system_u:object_r:local_t:s0"

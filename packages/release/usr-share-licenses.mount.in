@@ -7,7 +7,7 @@ Before=local-fs.target umount.target
 What=PREFIX/share/bottlerocket/licenses.squashfs
 Where=PREFIX/share/licenses
 Type=squashfs
-Options=defaults,ro,loop
+Options=defaults,ro,loop,noatime,nosuid,nodev,context=system_u:object_r:os_t:s0
 
 [Install]
 WantedBy=local-fs.target
