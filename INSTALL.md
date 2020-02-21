@@ -48,8 +48,9 @@ To use the image in Amazon EC2, we need to register the image as an AMI.
 The `bin/amiize.sh` script does this for you.
 
 The script has some assumptions about your setup, in particular that you:
-  * have [aws-cli v1](https://aws.amazon.com/cli/) set up, and that its default profile can create and control EC2 resources.
-  * An SSH key that's registered with EC2 is loaded into `ssh-agent`.
+  * have [aws-cli v1](https://aws.amazon.com/cli/) set up, and that its default profile can create and control EC2 resources
+  * have an SSH key that's registered with EC2 and is available to `ssh` (for example, loaded into `ssh-agent`)
+  * have a few other common tools installed, like `jq`, `du`, and `rsync`
 
 First, decompress the images.
 (Note: these filenames assume an `x86_64` architecture and `aws-k8s` [variant](README.md).)
@@ -64,7 +65,7 @@ Next, register an AMI:
 ```
 bin/amiize.sh --name YOUR-AMI-NAME-HERE \
               --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
-              --root-image build/bottlerocket-aws-k8s-x86_64.img \
+              --root-image build/bottlerocket-x86_64-aws-k8s.img \
               --data-image build/bottlerocket-x86_64-aws-k8s-data.img \
               --region us-west-2 \
               --instance-type m3.xlarge \
@@ -127,21 +128,17 @@ This section helps you determine some of the cluster information needed later by
 
 ### Kubernetes cluster info
 
-Run this to get the API endpoint and base64-encoded certificate authority, which we use in the next step.
+Bottlerocket uses a TOML-formatted configuration file as user data.
+This can include the configuration of the Kubernetes cluster we just created.
+
+Run this to generate the configuration file with the relevant cluster config, including the API endpoint and base64-encoded certificate authority.
 ```
 eksctl get cluster --region us-west-2 --name bottlerocket -o json \
-   | jq --raw-output '.[] | "Endpoint: " + .Endpoint,"\nCA: " + .CertificateAuthority.Data'
+   | jq --raw-output '.[] | "[settings.kubernetes]\napi-server = \"" + .Endpoint + "\"\ncluster-certificate =\"" + .CertificateAuthority.Data + "\"\ncluster-name = \"bottlerocket\""' > userdata.toml
 ```
 
-Using that information from eksctl, create a file like this, named `userdata.toml`.
+This will save the TOML-formmated configuration data into a file named `userdata.toml`.
 This will be used at the end, in the instance launch command.
-
-```
-[settings.kubernetes]
-api-server = "YOUR-API-ENDPOINT-HERE"
-cluster-name = "bottlerocket"
-cluster-certificate = "YOUR-CERTIFICATE-AUTHORITY-HERE"
-```
 
 ### Subnet info
 
@@ -178,7 +175,7 @@ The instance we launch needs to be associated with an IAM role that allows for c
 The ARN of the IAM role can be retrieved with:
 
 ```
-eksctl get iamidentitymapping --region us-west-2 --name bottlerocket
+eksctl get iamidentitymapping --region us-west-2 --cluster bottlerocket
 ```
 
 The output should look like this:
@@ -289,7 +286,7 @@ There are a few values to make sure you change in this command:
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier
 * BOTTLEROCKET_AMI_ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
 * userdata.toml: the path to the user data file you created earlier
-* INSTANCE_PROFILE_NAME: the instance profile created by `eksctl` for the cluster nodegroups. 
+* INSTANCE_PROFILE_NAME: the instance profile created by `eksctl` for the cluster nodegroups.
 
 ```
 aws ec2 run-instances --key-name YOUR_KEY_NAME \
