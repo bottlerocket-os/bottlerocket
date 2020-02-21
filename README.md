@@ -13,7 +13,7 @@ Some notable features include:
 
 ## Contact us
 
-If you find a security issue, please [contact our security team](https://github.com/amazonlinux/PRIVATE-thar/security/policy) rather than opening an issue.
+If you find a security issue, please [contact our security team](https://github.com/bottlerocket-os/bottlerocket/security/policy) rather than opening an issue.
 
 If you're interested in contributing, thank you!
 Please see our [contributor's guide](CONTRIBUTING.md).
@@ -21,7 +21,7 @@ Please see our [contributor's guide](CONTRIBUTING.md).
 We use GitHub issues to track other bug reports and feature requests.
 You can select from a few templates and get some guidance on the type of information that would be most helpful.
 
-[Contact us with a new issue here.](https://github.com/amazonlinux/PRIVATE-thar/issues/new/choose)
+[Contact us with a new issue here.](https://github.com/bottlerocket-os/bottlerocket/issues/new/choose)
 
 We don't have other communication channels set up quite yet, but don't worry about making an issue!
 You can let us know about things that seem difficult, or even ways you might like to help.
