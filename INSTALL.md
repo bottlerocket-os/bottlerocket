@@ -56,8 +56,8 @@ First, decompress the images.
 (Note: these filenames assume an `x86_64` architecture and `aws-k8s` [variant](README.md).)
 
 ```
-lz4 -d build/bottlerocket-x86_64-aws-k8s.img.lz4 build/bottlerocket-x86_64-aws-k8s.img && \
-lz4 -d build/bottlerocket-x86_64-aws-k8s-data.img.lz4 build/bottlerocket-x86_64-aws-k8s-data.img
+lz4 -d build/latest/bottlerocket-x86_64-aws-k8s.img.lz4 && \
+lz4 -d build/latest/bottlerocket-x86_64-aws-k8s-data.img.lz4
 ```
 
 Next, register an AMI:
@@ -65,8 +65,8 @@ Next, register an AMI:
 ```
 bin/amiize.sh --name YOUR-AMI-NAME-HERE \
               --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
-              --root-image build/bottlerocket-x86_64-aws-k8s.img \
-              --data-image build/bottlerocket-x86_64-aws-k8s-data.img \
+              --root-image build/latest/bottlerocket-x86_64-aws-k8s.img \
+              --data-image build/latest/bottlerocket-x86_64-aws-k8s-data.img \
               --region us-west-2 \
               --instance-type m3.xlarge \
               --arch x86_64 \
