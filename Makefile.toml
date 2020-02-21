@@ -14,6 +14,11 @@ BUILDSYS_VARIANT = "aws-k8s"
 # Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
 # To use the upstream source as fallback, override this on the command line and set it to 'true'
 BUILDSYS_UPSTREAM_SOURCE_FALLBACK = "false"
+# We require license checks to pass to build an image.  If you're working on a
+# local change and don't have license information yet, you can run with `-e
+# BUILDSYS_ALLOW_FAILED_LICENSE_CHECK=true` to allow the build to continue even
+# if the license check fails.
+BUILDSYS_ALLOW_FAILED_LICENSE_CHECK = "false"
 
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
@@ -161,8 +166,10 @@ alias = "build-variant"
 dependencies = ["fetch"]
 script = [
 '''
+[ "${BUILDSYS_ALLOW_FAILED_LICENSE_CHECK}" = "true" ] && set +e
 (cd sources && cargo deny check --disable-fetch licenses)
 (cd tools/buildsys && cargo deny check --disable-fetch licenses)
+set -e
 '''
 ]
 
@@ -204,8 +211,8 @@ ln -snf ../${VERSIONED}-migrations.tar \
 [tasks.build]
 dependencies = [
     "link-clean",
-    "build-variant",
     "check-licenses",
+    "build-variant",
     "link-variant",
 ]
 
