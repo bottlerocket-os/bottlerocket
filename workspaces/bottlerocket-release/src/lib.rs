@@ -70,7 +70,6 @@ impl BottlerocketRelease {
                     Some(part) => part,
                     None => return None,
                 };
-                debug!("Found os-release value {}={}", key, value);
 
                 // If the value was quoted (unnecessary in this file) then remove the quotes
                 if value.starts_with('"') {
@@ -80,6 +79,7 @@ impl BottlerocketRelease {
                     value = &value[..value.len() - 1];
                 }
 
+                debug!("Found os-release value {}={}", key, value);
                 Some((key.to_owned(), value.to_owned()))
             })
             .collect();

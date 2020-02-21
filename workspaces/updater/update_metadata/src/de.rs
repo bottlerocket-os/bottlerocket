@@ -1,7 +1,7 @@
 use crate::error;
 use chrono::{DateTime, Utc};
-use data_store_version::Version as DataVersion;
 use regex::Regex;
+use semver::Version;
 use serde::{de::Error as _, Deserializer};
 use snafu::{ensure, ResultExt};
 use std::collections::BTreeMap;
@@ -54,15 +54,17 @@ where
     deserializer.deserialize_map(Visitor)
 }
 
-/// Converts the tuple keys to a `DataVersion` before insertion and catches duplicates
+/// Converts the tuple keys to a `Version` before insertion and catches duplicates
 pub(crate) fn deserialize_migration<'de, D>(
     deserializer: D,
-) -> Result<BTreeMap<(DataVersion, DataVersion), Vec<String>>, D::Error>
+) -> Result<BTreeMap<(Version, Version), Vec<String>>, D::Error>
 where
     D: Deserializer<'de>,
 {
     fn parse_versions(key: &str) -> Result<(&str, &str), error::Error> {
-        let r = Regex::new(r"\((?P<from_ver>[0-9.]+),[ ]*(?P<to_ver>[0-9.]+)\)");
+        // We don't need to be too strict about the version syntax here, it's parsed after we
+        // return these strings.  We just want to make sure we have "(X, Y)" syntax and split it.
+        let r = Regex::new(r"\((?P<from_ver>[^ ,]+),[ ]*(?P<to_ver>[^ ,]+)\)");
 
         if let Ok(regex) = r {
             if let Some(captures) = regex.captures(&key) {
@@ -78,7 +80,7 @@ where
     fn parse_tuple_key(
         key: String,
         list: Vec<String>,
-        map: &mut BTreeMap<(DataVersion, DataVersion), Vec<String>>,
+        map: &mut BTreeMap<(Version, Version), Vec<String>>,
     ) -> Result<(), error::Error> {
         let (from, to) = parse_versions(&key)?;
 
@@ -101,7 +103,7 @@ where
     struct Visitor;
 
     impl<'de> serde::de::Visitor<'de> for Visitor {
-        type Value = BTreeMap<(DataVersion, DataVersion), Vec<String>>;
+        type Value = BTreeMap<(Version, Version), Vec<String>>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a map")

@@ -39,7 +39,7 @@ Further docs:
 * [Migration system](migration/)
 
 The migrator ensures the data store is up to date by running any applicable data store migrations.
-The existing data store format version is found by looking at the symlink naming in `/var/lib/bottlerocket/datastore`, and the incoming data store format version is found by looking at `/usr/share/bottlerocket/data-store-version` in the booting image.
+The existing data store format version is found by looking at the symlink naming in `/var/lib/bottlerocket/datastore`, and the incoming data store format version is found by looking at `/etc/os-release` in the booting image.
 
 On first boot, [storewolf](#storewolf) hasn’t run yet, so there’s no data store, so the migrator has nothing to do.
 

@@ -33,14 +33,14 @@ impl Migration for AddSettingMigration {
 
 /// We use this migration when we remove a setting from the model, so the new version doesn't see
 /// it and error.
-pub struct RemoveSettingMigration(String);
+pub struct RemoveSettingMigration(pub &'static str);
 
 impl Migration for RemoveSettingMigration {
     /// Newer versions don't know about the setting; we remove it so that new versions don't see
     /// it and fail deserialization.  (The setting must be defaulted or generated in old versions,
     /// and safe to remove.)
     fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
-        if let Some(data) = input.data.remove(&self.0) {
+        if let Some(data) = input.data.remove(self.0) {
             println!("Removed {}, which was set to '{}'", self.0, data);
         } else {
             println!("Found no {} to remove", self.0);

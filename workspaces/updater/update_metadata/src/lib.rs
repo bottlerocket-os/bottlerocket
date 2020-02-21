@@ -5,10 +5,9 @@ pub mod error;
 mod se;
 
 use chrono::{DateTime, Duration, Utc};
-use data_store_version::Version as DataVersion;
 use migrator::MIGRATION_FILENAME_RE;
 use rand::{thread_rng, Rng};
-use semver::Version as SemVer;
+use semver::Version;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::BTreeMap;
@@ -64,8 +63,8 @@ pub struct Images {
 pub struct Update {
     pub variant: String,
     pub arch: String,
-    pub version: SemVer,
-    pub max_version: SemVer,
+    pub version: Version,
+    pub max_version: Version,
     #[serde(deserialize_with = "de::deserialize_bound")]
     pub waves: BTreeMap<u32, DateTime<Utc>>,
     pub images: Images,
@@ -76,19 +75,18 @@ pub struct Manifest {
     pub updates: Vec<Update>,
     #[serde(deserialize_with = "de::deserialize_migration")]
     #[serde(serialize_with = "se::serialize_migration")]
-    pub migrations: BTreeMap<(DataVersion, DataVersion), Vec<String>>,
-    pub datastore_versions: BTreeMap<SemVer, DataVersion>,
+    pub migrations: BTreeMap<(Version, Version), Vec<String>>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Release {
-    pub version: String,
+    pub version: Version,
     /// For now, this matches the Manifest struct, but having a separate struct gives us the
     /// flexibility to have a different, human-oriented representation in the release TOML compared
     /// to the machine-oriented representation in the manifest.
     #[serde(deserialize_with = "de::deserialize_migration")]
     #[serde(serialize_with = "se::serialize_migration")]
-    pub migrations: BTreeMap<(DataVersion, DataVersion), Vec<String>>,
+    pub migrations: BTreeMap<(Version, Version), Vec<String>>,
 }
 
 pub fn load_file(path: &Path) -> Result<Manifest> {
@@ -106,8 +104,8 @@ impl Manifest {
     pub fn add_migration(
         &mut self,
         append: bool,
-        from: DataVersion,
-        to: DataVersion,
+        from: Version,
+        to: Version,
         migration_list: Vec<String>,
     ) -> Result<()> {
         // Check each migration matches the filename conventions used by the migrator
@@ -119,8 +117,8 @@ impl Manifest {
             let version_match = captures
                 .name("version")
                 .context(error::BadRegexVersion { name })?;
-            let version = DataVersion::from_str(version_match.as_str())
-                .context(error::BadDataVersion { key: name })?;
+            let version = Version::from_str(version_match.as_str())
+                .context(error::BadVersion { key: name })?;
             ensure!(
                 version == to,
                 error::MigrationInvalidTarget { name, to, version }
@@ -132,11 +130,11 @@ impl Manifest {
         }
 
         // If append is true, append the new migrations to the existing vec.
-        if append && self.migrations.contains_key(&(from, to)) {
+        if append && self.migrations.contains_key(&(from.clone(), to.clone())) {
             let migrations = self
                 .migrations
-                .get_mut(&(from, to))
-                .context(error::MigrationMutable { from: from, to: to })?;
+                .get_mut(&(from.clone(), to.clone()))
+                .context(error::MigrationMutable { from, to })?;
             migrations.extend_from_slice(&migration_list);
         // Otherwise just overwrite the existing migrations
         } else {
@@ -147,9 +145,8 @@ impl Manifest {
 
     pub fn add_update(
         &mut self,
-        image_version: SemVer,
-        max_version: Option<SemVer>,
-        datastore_version: DataVersion,
+        image_version: Version,
+        max_version: Option<Version>,
         arch: String,
         variant: String,
         images: Images,
@@ -172,8 +169,6 @@ impl Manifest {
             images,
             waves: BTreeMap::new(),
         };
-        self.datastore_versions
-            .insert(image_version, datastore_version);
         self.update_max_version(
             &update.max_version,
             Some(&update.arch),
@@ -187,7 +182,7 @@ impl Manifest {
     /// architecture and variant of some new update.
     pub fn update_max_version(
         &mut self,
-        version: &SemVer,
+        version: &Version,
         arch: Option<&str>,
         variant: Option<&str>,
     ) {
@@ -229,7 +224,7 @@ impl Manifest {
         &mut self,
         variant: String,
         arch: String,
-        image_version: SemVer,
+        image_version: Version,
         bound: u32,
         start: DateTime<Utc>,
     ) -> Result<usize> {
@@ -253,7 +248,7 @@ impl Manifest {
         &mut self,
         variant: String,
         arch: String,
-        image_version: SemVer,
+        image_version: Version,
         bound: u32,
     ) -> Result<()> {
         let matching: Vec<&mut Update> = self

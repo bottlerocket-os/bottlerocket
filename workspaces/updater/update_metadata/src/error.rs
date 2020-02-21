@@ -1,6 +1,6 @@
 #![allow(clippy::default_trait_access)]
 
-use data_store_version::Version as DataVersion;
+use semver::Version;
 use snafu::{Backtrace, Snafu};
 use std::path::PathBuf;
 
@@ -23,14 +23,14 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Could not parse datastore version: {}", key))]
-    BadDataVersion {
+    #[snafu(display("Could not parse OS version: {}", key))]
+    BadVersion {
         backtrace: Backtrace,
         key: String,
-        source: data_store_version::error::Error,
+        source: semver::SemVerError,
     },
 
-    #[snafu(display("Could not parse datastore versions: {}", key))]
+    #[snafu(display("Could not parse OS versions: {}", key))]
     BadDataVersionsFromTo { backtrace: Backtrace, key: String },
 
     #[snafu(display("Could not parse image version: {} - {}", key, value))]
@@ -81,8 +81,8 @@ pub enum Error {
     MigrationInvalidTarget {
         backtrace: Backtrace,
         name: String,
-        to: DataVersion,
-        version: DataVersion,
+        to: Version,
+        version: Version,
     },
 
     #[snafu(display(
@@ -93,8 +93,8 @@ pub enum Error {
     #[snafu(display("Unable to get mutable reference to ({},{}) migrations", from, to))]
     MigrationMutable {
         backtrace: Backtrace,
-        from: DataVersion,
-        to: DataVersion,
+        from: Version,
+        to: Version,
     },
 
     #[snafu(display("Failed to serialize update information: {}", source))]

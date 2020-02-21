@@ -7,8 +7,8 @@ edition = "2018"
 publish = false
 
 [dependencies]
+bottlerocket-release = { path = "../../bottlerocket-release" }
 chrono = "0.4.9"
-data_store_version = { path = "../../api/data_store_version" }
 log = "0.4"
 lz4 = "1.23.1"
 rand = "0.7.0"

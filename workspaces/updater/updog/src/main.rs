@@ -6,15 +6,15 @@ mod transport;
 
 use crate::error::Result;
 use crate::transport::{HttpQueryRepo, HttpQueryTransport};
+use bottlerocket_release::BottlerocketRelease;
 use chrono::{DateTime, Utc};
-use data_store_version::Version as DataVersion;
-use semver::Version as SemVer;
+use semver::Version;
 use serde::{Deserialize, Serialize};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
 use std::fs::{self, File, OpenOptions, Permissions};
-use std::io::{self, BufRead, BufReader};
+use std::io;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process;
@@ -47,7 +47,7 @@ struct Config {
     target_base_url: String,
     seed: u32,
     // TODO API sourced configuration, eg.
-    // blacklist: Option<Vec<SemVer>>,
+    // blacklist: Option<Vec<Version>>,
     // mode: Option<{Automatic, Managed, Disabled}>
 }
 
@@ -134,39 +134,9 @@ fn load_manifest(repository: &HttpQueryRepo<'_>) -> Result<Manifest> {
     .context(error::ManifestParse)
 }
 
-fn running_version() -> Result<(SemVer, String)> {
-    let mut version: Option<SemVer> = None;
-    let mut variant: Option<String> = None;
-
-    let reader = BufReader::new(File::open("/etc/os-release").context(error::VersionIdRead)?);
-    for line in reader.lines() {
-        let line = line.context(error::VersionIdRead)?;
-        let line = line.trim();
-        if version.is_none() {
-            let key = "VERSION_ID=";
-            if line.starts_with(key) {
-                version = Some(
-                    SemVer::parse(&line[key.len()..]).context(error::VersionIdParse { line })?,
-                );
-                continue;
-            }
-        }
-        if variant.is_none() {
-            let key = "VARIANT_ID=";
-            if line.starts_with(key) {
-                variant = Some(String::from(&line[key.len()..]));
-                continue;
-            }
-        }
-        if version.is_some() && variant.is_some() {
-            break;
-        }
-    }
-
-    match (version, variant) {
-        (Some(v), Some(f)) => Ok((v, f)),
-        _ => error::VersionIdNotFound.fail(),
-    }
+fn running_version() -> Result<(Version, String)> {
+    let br = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+    Ok((br.version_id, br.variant_id))
 }
 
 fn applicable_updates<'a>(manifest: &'a Manifest, variant: &str) -> Vec<&'a Update> {
@@ -189,9 +159,9 @@ fn applicable_updates<'a>(manifest: &'a Manifest, variant: &str) -> Vec<&'a Upda
 fn update_required<'a>(
     _config: &Config,
     manifest: &'a Manifest,
-    version: &SemVer,
+    version: &Version,
     variant: &str,
-    force_version: Option<SemVer>,
+    force_version: Option<Version>,
 ) -> Option<&'a Update> {
     let updates = applicable_updates(manifest, variant);
 
@@ -232,23 +202,19 @@ fn write_target_to_disk<P: AsRef<Path>>(
     Ok(())
 }
 
-fn migration_targets(
-    from: DataVersion,
-    to: DataVersion,
-    manifest: &Manifest,
-) -> Result<Vec<String>> {
+fn migration_targets(from: &Version, to: &Version, manifest: &Manifest) -> Result<Vec<String>> {
     let mut targets = Vec::new();
     let mut version = from;
     while version != to {
-        let mut migrations: Vec<&(DataVersion, DataVersion)> = manifest
+        let mut migrations: Vec<&(Version, Version)> = manifest
             .migrations
             .keys()
-            .filter(|(f, t)| *f == version && *t <= to)
+            .filter(|(f, t)| *f == *version && *t <= *to)
             .collect();
 
-        // There can be muliple paths to the same target, eg.
-        //      (1.0, 1.1) => [...]
-        //      (1.0, 1.2) => [...]
+        // There can be multiple paths to the same target, e.g.
+        //      (1.0.0, 1.1.0) => [...]
+        //      (1.0.0, 1.2.0) => [...]
         // Choose one with the highest *to* version, <= our target
         migrations.sort_unstable_by(|(_, a), (_, b)| b.cmp(&a));
         if let Some(transition) = migrations.first() {
@@ -256,11 +222,11 @@ fn migration_targets(
             if let Some(migrations) = manifest.migrations.get(transition) {
                 targets.extend_from_slice(&migrations);
             }
-            version = transition.1;
+            version = &transition.1;
         } else {
             return error::MissingMigration {
-                current: version,
-                target: to,
+                current: version.clone(),
+                target: to.clone(),
             }
             .fail();
         }
@@ -268,9 +234,8 @@ fn migration_targets(
     Ok(targets)
 }
 
-/// Store required migrations for a datastore version update in persistent
-/// storage. All intermediate migrations between the current version and the
-/// target version must be retrieved.
+/// Store required migrations for an update in persistent storage. All intermediate migrations
+/// between the current version and the target version must be retrieved.
 fn retrieve_migrations(
     repository: &HttpQueryRepo<'_>,
     transport: &HttpQueryTransport,
@@ -278,30 +243,12 @@ fn retrieve_migrations(
     update: &Update,
 ) -> Result<()> {
     let (version_current, _) = running_version()?;
-    let datastore_current =
-        manifest
-            .datastore_versions
-            .get(&version_current)
-            .context(error::MissingVersion {
-                version: version_current.to_string(),
-            })?;
-    let datastore_target =
-        manifest
-            .datastore_versions
-            .get(&update.version)
-            .context(error::MissingVersion {
-                version: update.version.to_string(),
-            })?;
-
-    if datastore_current == datastore_target {
-        return Ok(());
-    }
 
     // the migrations required for foo to bar and bar to foo are
     // the same; we can pretend we're always upgrading from foo to
     // bar and use the same logic to obtain the migrations
-    let target = std::cmp::max(datastore_target, datastore_current);
-    let start = std::cmp::min(datastore_target, datastore_current);
+    let target = std::cmp::max(&update.version, &version_current);
+    let start = std::cmp::min(&update.version, &version_current);
 
     let dir = Path::new(MIGRATION_PATH);
     if !dir.exists() {
@@ -310,7 +257,7 @@ fn retrieve_migrations(
 
     // download each migration, making sure they are executable and removing
     // known extensions from our compression, e.g. .lz4
-    let mut targets = migration_targets(*start, *target, &manifest)?;
+    let mut targets = migration_targets(start, target, &manifest)?;
     targets.sort();
     for name in &targets {
         let mut destination = dir.join(&name);
@@ -362,17 +309,15 @@ fn update_flags() -> Result<()> {
 
 fn set_common_query_params(
     transport: &HttpQueryTransport,
-    current_version: &SemVer,
+    current_version: &Version,
     config: &Config,
 ) -> Result<()> {
     let mut transport_borrow = transport
         .queries_get_mut()
         .context(error::TransportBorrow)?;
 
-    transport_borrow
-        .push((String::from("version"), current_version.to_string()));
-    transport_borrow
-        .push((String::from("seed"), config.seed.to_string()));
+    transport_borrow.push((String::from("version"), current_version.to_string()));
+    transport_borrow.push((String::from("seed"), config.seed.to_string()));
 
     Ok(())
 }
@@ -387,10 +332,7 @@ fn list_updates(manifest: &Manifest, variant: &str, json: bool) -> Result<()> {
         );
     } else {
         for u in updates {
-            eprintln!(
-                "{}",
-                &fmt_full_version(&u, manifest.datastore_versions.get(&u.version))
-            );
+            eprintln!("{}", &fmt_full_version(&u));
         }
     }
     Ok(())
@@ -402,7 +344,7 @@ struct Arguments {
     log_level: LevelFilter,
     json: bool,
     ignore_waves: bool,
-    force_version: Option<SemVer>,
+    force_version: Option<Version>,
     all: bool,
     reboot: bool,
     timestamp: Option<DateTime<Utc>>,
@@ -431,7 +373,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
                 }));
             }
             "-i" | "--image" => match iter.next() {
-                Some(v) => match SemVer::parse(&v) {
+                Some(v) => match Version::parse(&v) {
                     Ok(v) => update_version = Some(v),
                     _ => usage(),
                 },
@@ -479,18 +421,8 @@ fn parse_args(args: std::env::Args) -> Arguments {
     }
 }
 
-fn fmt_full_version(update: &Update, datastore_version: Option<&DataVersion>) -> String {
-    if let Some(datastore_version) = datastore_version {
-        format!(
-            "{}-{} ({})",
-            update.variant, update.version, datastore_version
-        )
-    } else {
-        format!(
-            "{}-{} (Missing datastore mapping!)",
-            update.variant, update.version
-        )
-    }
+fn fmt_full_version(update: &Update) -> String {
+    format!("{}-{}", update.variant, update.version)
 }
 
 fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
@@ -540,7 +472,8 @@ fn main_inner() -> Result<()> {
                 &current_version,
                 &variant,
                 arguments.force_version,
-            ).context(error::UpdateNotAvailable)?;
+            )
+            .context(error::UpdateNotAvailable)?;
 
             if !arguments.ignore_waves {
                 ensure!(
@@ -550,11 +483,7 @@ fn main_inner() -> Result<()> {
                     }
                 );
             }
-            output(
-                arguments.json,
-                &update,
-                &fmt_full_version(&update, manifest.datastore_versions.get(&update.version)),
-            )?;
+            output(arguments.json, &update, &fmt_full_version(&update))?;
         }
         Command::Update | Command::UpdateImage => {
             if let Some(u) = update_required(
@@ -658,7 +587,6 @@ mod tests {
     use super::*;
     use chrono::Duration as TestDuration;
     use std::collections::BTreeMap;
-    use std::str::FromStr;
     use update_metadata::{Images, Wave};
 
     #[test]
@@ -677,21 +605,13 @@ mod tests {
         );
 
         assert!(manifest.migrations.len() > 0, "Failed to parse migrations");
-        let from = DataVersion::from_str("1.0").unwrap();
-        let to = DataVersion::from_str("1.1").unwrap();
-        assert!(manifest.migrations.contains_key(&(from, to)));
+        let from = Version::parse("1.11.0").unwrap();
+        let to = Version::parse("1.12.0").unwrap();
+        assert!(manifest
+            .migrations
+            .contains_key(&(from.clone(), to.clone())));
         let migration = manifest.migrations.get(&(from, to)).unwrap();
-        assert!(migration[0] == "migrate_1.1_foo");
-
-        assert!(
-            manifest.datastore_versions.len() > 0,
-            "Failed to parse version map"
-        );
-        let bottlerocket_version = SemVer::parse("1.11.0").unwrap();
-        let data_version = manifest.datastore_versions.get(&bottlerocket_version);
-        let version = DataVersion::from_str("1.0").unwrap();
-        assert!(data_version.is_some());
-        assert!(*data_version.unwrap() == version);
+        assert!(migration[0] == "migrate_1.12.0_foo");
     }
 
     #[test]
@@ -708,8 +628,8 @@ mod tests {
         let mut update = Update {
             variant: String::from("bottlerocket"),
             arch: String::from("test"),
-            version: SemVer::parse("1.0.0").unwrap(),
-            max_version: SemVer::parse("1.1.0").unwrap(),
+            version: Version::parse("1.0.0").unwrap(),
+            max_version: Version::parse("1.1.0").unwrap(),
             waves: BTreeMap::new(),
             images: Images {
                 boot: String::from("boot"),
@@ -749,8 +669,8 @@ mod tests {
         let mut update = Update {
             variant: String::from("bottlerocket"),
             arch: String::from("test"),
-            version: SemVer::parse("1.0.0").unwrap(),
-            max_version: SemVer::parse("1.1.0").unwrap(),
+            version: Version::parse("1.0.0").unwrap(),
+            max_version: Version::parse("1.1.0").unwrap(),
             waves: BTreeMap::new(),
             images: Images {
                 boot: String::from("boot"),
@@ -784,7 +704,7 @@ mod tests {
             target_base_url: String::from("bar"),
             seed: 123,
         };
-        let version = SemVer::parse("1.18.0").unwrap();
+        let version = Version::parse("1.18.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
 
         assert!(
@@ -804,13 +724,13 @@ mod tests {
             seed: 1487,
         };
 
-        let version = SemVer::parse("0.1.3").unwrap();
+        let version = Version::parse("0.1.3").unwrap();
         let variant = String::from("aws-k8s");
         let update = update_required(&config, &manifest, &version, &variant, None);
 
         assert!(update.is_some(), "Updog ignored max version");
         assert!(
-            update.unwrap().version == SemVer::parse("0.1.2").unwrap(),
+            update.unwrap().version == Version::parse("0.1.2").unwrap(),
             "Updog didn't choose the most recent valid version"
         );
     }
@@ -829,7 +749,7 @@ mod tests {
             seed: 123,
         };
 
-        let version = SemVer::parse("1.10.0").unwrap();
+        let version = Version::parse("1.10.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
         let result = update_required(&config, &manifest, &version, &variant, None);
 
@@ -837,7 +757,7 @@ mod tests {
 
         if let Some(u) = result {
             assert!(
-                u.version == SemVer::parse("1.15.0").unwrap(),
+                u.version == Version::parse("1.15.0").unwrap(),
                 "Incorrect version: {}, should be 1.15.0",
                 u.version
             );
@@ -858,8 +778,8 @@ mod tests {
             seed: 123,
         };
 
-        let version = SemVer::parse("1.10.0").unwrap();
-        let forced = SemVer::parse("1.13.0").unwrap();
+        let version = Version::parse("1.10.0").unwrap();
+        let forced = Version::parse("1.13.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
         let result = update_required(&config, &manifest, &version, &variant, Some(forced));
 
@@ -867,7 +787,7 @@ mod tests {
 
         if let Some(u) = result {
             assert!(
-                u.version == SemVer::parse("1.13.0").unwrap(),
+                u.version == Version::parse("1.13.0").unwrap(),
                 "Incorrect version: {}, should be forced to 1.13.0",
                 u.version
             );
@@ -897,15 +817,15 @@ mod tests {
         // There is a shortcut from 1.1 to 1.3, skipping 1.2
         let path = "tests/data/migrations.json";
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
-        let from = DataVersion::from_str("1.0").unwrap();
-        let to = DataVersion::from_str("1.3").unwrap();
-        let targets = migration_targets(from, to, &manifest).unwrap();
+        let from = Version::parse("1.0.0").unwrap();
+        let to = Version::parse("1.5.0").unwrap();
+        let targets = migration_targets(&from, &to, &manifest).unwrap();
 
         assert!(targets.len() == 3);
         let mut i = targets.iter();
-        assert!(i.next().unwrap() == "migration_1.1_a");
-        assert!(i.next().unwrap() == "migration_1.1_b");
-        assert!(i.next().unwrap() == "migration_1.3_shortcut");
+        assert!(i.next().unwrap() == "migration_1.1.0_a");
+        assert!(i.next().unwrap() == "migration_1.1.0_b");
+        assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
     }
 
     #[test]
@@ -923,8 +843,8 @@ mod tests {
         let mut u = Update {
             variant: String::from("bottlerocket"),
             arch: String::from("test"),
-            version: SemVer::parse("1.0.0").unwrap(),
-            max_version: SemVer::parse("1.1.0").unwrap(),
+            version: Version::parse("1.0.0").unwrap(),
+            max_version: Version::parse("1.1.0").unwrap(),
             waves: BTreeMap::new(),
             images: Images {
                 boot: String::from("boot"),
@@ -993,17 +913,17 @@ mod tests {
         let mut update = Update {
             variant: String::from("aws-k8s"),
             arch: String::from(TARGET_ARCH),
-            version: SemVer::parse("1.1.1").unwrap(),
-            max_version: SemVer::parse("1.1.1").unwrap(),
+            version: Version::parse("1.1.1").unwrap(),
+            max_version: Version::parse("1.1.1").unwrap(),
             waves: BTreeMap::new(),
             images: Images {
                 boot: String::from("boot"),
                 root: String::from("boot"),
                 hash: String::from("boot"),
-            }
+            },
         };
 
-        let current_version = SemVer::parse("1.0.0").unwrap();
+        let current_version = Version::parse("1.0.0").unwrap();
         let variant = String::from("aws-k8s");
         let config = Config {
             metadata_base_url: String::from("foo"),

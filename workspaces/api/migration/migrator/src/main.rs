@@ -9,9 +9,11 @@
 //! * confirm that the given data store has the appropriate versioned symlink structure
 //! * find the version of the given data store
 //! * find migrations between the two versions
-//! * copy the data store
-//! * run the migrations on the copy
-//! * do a symlink-flip so the copy takes the place of the original
+//! * if there are migrations:
+//!   * run the migrations; the transformed data becomes the new data store
+//! * if there are *no* migrations:
+//!   * just symlink to the old data store
+//! * do symlink flips so the new version takes the place of the original
 //!
 //! To understand motivation and more about the overall process, look at the migration system
 //! documentation, one level up.
@@ -21,18 +23,18 @@
 #[macro_use]
 extern crate log;
 
-use data_store_version::Version;
 use nix::{dir::Dir, fcntl::OFlag, sys::stat::Mode, unistd::fsync};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use semver::Version;
 use simplelog::{Config as LogConfig, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
+use std::collections::HashSet;
 use std::env;
 use std::fs::{self, Permissions};
 use std::os::unix::fs::{symlink, PermissionsExt};
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
-use std::str::FromStr;
 
 use migrator::MIGRATION_FILENAME_RE;
 mod args;
@@ -60,23 +62,17 @@ fn run() -> Result<()> {
     TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
         .context(error::Logger)?;
 
-    // We don't handle data store format (major version) migrations because they could change
-    // anything about our storage; they're handled by more free-form binaries run by a separate
-    // startup service.
-    let current_version = Version::from_datastore_path(&args.datastore_path).context(
-        error::VersionFromDataStorePath {
+    // Get the directory we're working in.
+    let datastore_dir = args
+        .datastore_path
+        .parent()
+        .context(error::DataStoreLinkToRoot {
             path: &args.datastore_path,
-        },
-    )?;
-    if current_version.major != args.migrate_to_version.major {
-        return error::MajorVersionMismatch {
-            given: args.migrate_to_version.major,
-            found: current_version.major,
-        }
-        .fail();
-    }
+        })?;
 
-    let direction = Direction::from_versions(current_version, args.migrate_to_version)
+    let current_version = get_current_version(&datastore_dir)?;
+
+    let direction = Direction::from_versions(&current_version, &args.migrate_to_version)
         .unwrap_or_else(|| {
             info!(
                 "Requested version {} matches version of given datastore at '{}'; nothing to do",
@@ -88,18 +84,59 @@ fn run() -> Result<()> {
 
     let migrations = find_migrations(
         &args.migration_directories,
-        current_version,
-        args.migrate_to_version,
+        &current_version,
+        &args.migrate_to_version,
     )?;
 
-    let (copy_path, copy_id) = copy_datastore(&args.datastore_path, args.migrate_to_version)?;
-    run_migrations(direction, &migrations, &args.datastore_path, &copy_path)?;
-    flip_to_new_minor_version(args.migrate_to_version, &copy_path, &copy_id)?;
+    if migrations.is_empty() {
+        // Not all new OS versions need to change the data store format.  If there's been no
+        // change, we can just link to the last version rather than making a copy.
+        // (Note: we link to the fully resolved directory, args.datastore_path,  so we don't
+        // have a chain of symlinks that could go past the maximum depth.)
+        flip_to_new_version(&args.migrate_to_version, &args.datastore_path)?;
+    } else {
+        let copy_path = run_migrations(
+            direction,
+            &migrations,
+            &args.datastore_path,
+            &args.migrate_to_version,
+        )?;
+        flip_to_new_version(&args.migrate_to_version, &copy_path)?;
+    }
 
     Ok(())
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+fn get_current_version<P>(datastore_dir: P) -> Result<Version>
+where
+    P: AsRef<Path>,
+{
+    let datastore_dir = datastore_dir.as_ref();
+
+    // Find the current patch version link, which contains our full version number
+    let current = datastore_dir.join("current");
+    let major =
+        datastore_dir.join(fs::read_link(&current).context(error::LinkRead { link: current })?);
+    let minor = datastore_dir.join(fs::read_link(&major).context(error::LinkRead { link: major })?);
+    let patch = datastore_dir.join(fs::read_link(&minor).context(error::LinkRead { link: minor })?);
+
+    // Pull out the basename of the path, which contains the version
+    let version_os_str = patch
+        .file_name()
+        .context(error::DataStoreLinkToRoot { path: &patch })?;
+    let mut version_str = version_os_str
+        .to_str()
+        .context(error::DataStorePathNotUTF8 { path: &patch })?;
+
+    // Allow 'v' at the start so the links have clearer names for humans
+    if version_str.starts_with('v') {
+        version_str = &version_str[1..];
+    }
+
+    Version::parse(version_str).context(error::InvalidDataStoreVersion { path: &patch })
+}
 
 /// Returns a list of all migrations found on disk.
 ///
@@ -142,8 +179,8 @@ where
 /// Returns the sublist of the given migrations that should be run, in the returned order, to move
 /// from the 'from' version to the 'to' version.
 fn select_migrations<P: AsRef<Path>>(
-    from: Version,
-    to: Version,
+    from: &Version,
+    to: &Version,
     paths: &[P],
 ) -> Result<Vec<PathBuf>> {
     // Intermediate result where we also store the version and name, needed for sorting
@@ -174,7 +211,7 @@ fn select_migrations<P: AsRef<Path>>(
         let version_match = captures.name("version").context(error::Internal {
             msg: "Migration name matched regex but we don't have a 'version' capture",
         })?;
-        let version = Version::from_str(version_match.as_str())
+        let version = Version::parse(version_match.as_str())
             .context(error::InvalidMigrationVersion { path: &path })?;
 
         let name_match = captures.name("name").context(error::Internal {
@@ -187,13 +224,13 @@ fn select_migrations<P: AsRef<Path>>(
         // how to undo its changes and take you to the lower version.  For example, the v2
         // migration knows what changes it made to go from v1 to v2 and therefore how to go
         // back from v2 to v1.  See tests.
-        let applicable = if to > from && version > from && version <= to {
+        let applicable = if to > from && version > *from && version <= *to {
             info!(
                 "Found applicable forward migration '{}': {} < ({}) <= {}",
                 file_name, from, version, to
             );
             true
-        } else if to < from && version > to && version <= from {
+        } else if to < from && version > *to && version <= *from {
             info!(
                 "Found applicable backward migration '{}': {} >= ({}) > {}",
                 file_name, from, version, to
@@ -245,7 +282,7 @@ fn select_migrations<P: AsRef<Path>>(
 /// Given the versions we're migrating from and to, this will return an ordered list of paths to
 /// migration binaries we should run to complete the migration on a data store.
 // This separation allows for easy testing of select_migrations.
-fn find_migrations<P>(paths: &[P], from: Version, to: Version) -> Result<Vec<PathBuf>>
+fn find_migrations<P>(paths: &[P], from: &Version, to: &Version) -> Result<Vec<PathBuf>>
 where
     P: AsRef<Path>,
 {
@@ -256,38 +293,61 @@ where
     select_migrations(from, to, &candidates)
 }
 
-/// Copies the data store at the given path to a new directory in the same parent direction, with
-/// the new copy being named appropriately for the given new version.
-fn copy_datastore<P: AsRef<Path>>(from: P, new_version: Version) -> Result<(PathBuf, String)> {
-    // First, we need a random ID to append; this helps us avoid timing issues, and lets us
-    // leave failed migrations for inspection, while being able to try again in a new path.
-    // Note: we use this rather than mktemp::new_path_in because that has a delete destructor.
-    // Note: consider using this as a more general migration ID?
-    let copy_id = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
+/// Generates a random ID, affectionately known as a 'rando', that can be used to avoid timing
+/// issues and identify unique migration attempts.
+fn rando() -> String {
+    thread_rng().sample_iter(&Alphanumeric).take(16).collect()
+}
 
+/// Generates a path for a new data store, given the path of the existing data store,
+/// the new version number, and a random "copy id" to append.
+fn new_datastore_location<P>(from: P, new_version: &Version) -> Result<PathBuf>
+where
+    P: AsRef<Path>,
+{
     let to = from
         .as_ref()
-        .with_file_name(format!("{}_{}", new_version, copy_id));
+        .with_file_name(format!("v{}_{}", new_version, rando()));
     ensure!(
         !to.exists(),
         error::NewVersionAlreadyExists {
-            version: new_version,
+            version: new_version.clone(),
             path: to
         }
     );
 
-    info!("New data store is being built at work location {}", to.display());
-    Ok((to, copy_id))
+    info!(
+        "New data store is being built at work location {}",
+        to.display()
+    );
+    Ok(to)
 }
 
-/// Runs the given migrations in their given order on the given data store.  The given direction
-/// is passed to each migration so it knows which direction we're migrating.
-fn run_migrations<P1, P2, P3>(direction: Direction, migrations: &[P1], source_datastore: P2, target_datastore: P3) -> Result<()>
+/// Runs the given migrations in their given order.  The given direction is passed to each
+/// migration so it knows which direction we're migrating.
+///
+/// The given data store is used as a starting point; each migration is given the output of the
+/// previous migration, and the final output becomes the new data store.
+fn run_migrations<P1, P2>(
+    direction: Direction,
+    migrations: &[P1],
+    source_datastore: P2,
+    new_version: &Version,
+) -> Result<PathBuf>
 where
     P1: AsRef<Path>,
     P2: AsRef<Path>,
-    P3: AsRef<Path>,
 {
+    // We start with the given source_datastore, updating this after each migration to point to the
+    // output of the previous one.
+    let mut source_datastore = source_datastore.as_ref();
+    // We create a new data store (below) to serve as the target of each migration.  (Start at
+    // source just to have the right type; we know we have migrations at this point.)
+    let mut target_datastore = source_datastore.to_owned();
+    // Any data stores we create that aren't the final one, i.e. intermediate data stores, will be
+    // removed at the end.  (If we fail and return early, they're left for debugging purposes.)
+    let mut intermediate_datastores = HashSet::new();
+
     for migration in migrations {
         // Ensure the migration is executable.
         fs::set_permissions(migration.as_ref(), Permissions::from_mode(0o755)).context(
@@ -302,11 +362,16 @@ where
         command.arg(direction.to_string());
         command.args(&[
             "--source-datastore".to_string(),
-            source_datastore.as_ref().display().to_string(),
+            source_datastore.display().to_string(),
         ]);
+
+        // Create a new output location for this migration.
+        target_datastore = new_datastore_location(&source_datastore, &new_version)?;
+        intermediate_datastores.insert(target_datastore.clone());
+
         command.args(&[
             "--target-datastore".to_string(),
-            target_datastore.as_ref().display().to_string(),
+            target_datastore.display().to_string(),
         ]);
 
         info!("Running migration command: {:?}", command);
@@ -325,22 +390,40 @@ where
         );
 
         ensure!(output.status.success(), error::MigrationFailure { output });
+
+        source_datastore = &target_datastore;
     }
-    Ok(())
+
+    // Remove the intermediate data stores
+    intermediate_datastores.remove(&target_datastore);
+    for intermediate_datastore in intermediate_datastores {
+        // Even if we fail to remove an intermediate data store, we've still migrated
+        // successfully, and we don't want to fail the upgrade - just let someone know for
+        // later cleanup.
+        trace!("Removing intermediate data store at {}", intermediate_datastore.display());
+        if let Err(e) = fs::remove_dir_all(&intermediate_datastore) {
+            error!(
+                "Failed to remove intermediate data store at '{}': {}",
+                intermediate_datastore.display(),
+                e
+            );
+        }
+    }
+
+    Ok(target_datastore)
 }
 
 /// Atomically flips version symlinks to point to the given "to" datastore so that it becomes live.
 ///
-/// This includes pointing the new minor version to the given `to_datastore` (which includes
-/// `copy_id` in its name), then pointing the major version to the new minor version, and finally
-/// fsyncing the directory to disk.
-///
-/// `copy_id` is the identifier for this migration attempt, as created by copy_datastore, which we
-/// use internally in this function for consistency.
-fn flip_to_new_minor_version<P, S>(version: Version, to_datastore: P, copy_id: S) -> Result<()>
+/// This includes:
+/// * pointing the new patch version to the given `to_datastore`
+/// * pointing the minor version to the patch version
+/// * pointing the major version to the minor version
+/// * pointing the 'current' link to the major version
+/// * fsyncing the directory to disk
+fn flip_to_new_version<P>(version: &Version, to_datastore: P) -> Result<()>
 where
     P: AsRef<Path>,
-    S: AsRef<str>,
 {
     // Get the directory we're working in.
     let to_dir = to_datastore
@@ -360,18 +443,27 @@ where
     .context(error::DataStoreDirOpen { path: &to_dir })?;
 
     // Get a unique temporary path in the directory; we need this to atomically swap.
-    // We use the same copy_id so that mistakes/errors here will be obviously related to a
-    // given copy attempt.
-    let temp_link = to_dir.join(copy_id.as_ref());
+    let temp_link = to_dir.join(rando());
+    // Build the path to the 'current' link; this is what we're atomically swapping from
+    // pointing at the old major version to pointing at the new major version.
+    // Example: /path/to/datastore/current
+    let current_version_link = to_dir.join("current");
     // Build the path to the major version link; this is what we're atomically swapping from
     // pointing at the old minor version to pointing at the new minor version.
     // Example: /path/to/datastore/v1
-    // FIXME: duplicating knowledge of formatting here
     let major_version_link = to_dir.join(format!("v{}", version.major));
-    // Build the path to the minor version link.  If this already exists, it's because we've
-    // previously tried to migrate to this version.  We point it at the full `to_datastore` path.
+    // Build the path to the minor version link; this is what we're atomically swapping from
+    // pointing at the old patch version to pointing at the new patch version.
     // Example: /path/to/datastore/v1.5
-    let minor_version_link = to_dir.join(format!("{}", version));
+    let minor_version_link = to_dir.join(format!("v{}.{}", version.major, version.minor));
+    // Build the path to the patch version link.  If this already exists, it's because we've
+    // previously tried to migrate to this version.  We point it at the full `to_datastore`
+    // path.
+    // Example: /path/to/datastore/v1.5.2
+    let patch_version_link = to_dir.join(format!(
+        "v{}.{}.{}",
+        version.major, version.minor, version.patch
+    ));
 
     // Get the final component of the paths we're linking to, so we can use relative links instead
     // of absolute, for understandability.
@@ -381,27 +473,58 @@ where
         .context(error::DataStoreLinkToRoot {
             path: to_datastore.as_ref(),
         })?;
+    let patch_target = patch_version_link
+        .file_name()
+        .context(error::DataStoreLinkToRoot {
+            path: to_datastore.as_ref(),
+        })?;
     let minor_target = minor_version_link
         .file_name()
         .context(error::DataStoreLinkToRoot {
             path: to_datastore.as_ref(),
         })?;
+    let major_target = major_version_link
+        .file_name()
+        .context(error::DataStoreLinkToRoot {
+            path: to_datastore.as_ref(),
+        })?;
+
+    // =^..^=   =^..^=   =^..^=   =^..^=
+
+    info!(
+        "Flipping {} to point to {}",
+        patch_version_link.display(),
+        to_target.to_string_lossy(),
+    );
+
+    // Create a symlink from the patch version to the new data store.  We create it at a temporary
+    // path so we can atomically swap it into the real path with a rename call.
+    // This will point at, for example, /path/to/datastore/v1.5.2_0123456789abcdef
+    symlink(&to_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
+    // Atomically swap the link into place, so that the patch version link points to the new data
+    // store copy.
+    fs::rename(&temp_link, &patch_version_link).context(error::LinkSwap {
+        link: &patch_version_link,
+    })?;
+
+    // =^..^=   =^..^=   =^..^=   =^..^=
 
     info!(
         "Flipping {} to point to {}",
         minor_version_link.display(),
-        to_target.to_string_lossy(),
+        patch_target.to_string_lossy(),
     );
 
-    // Create a symlink from the minor version to the new data store.  We create it at a temporary
-    // path so we can atomically swap it into the real path with a rename call.
-    // This will point at, for example, /path/to/datastore/v1.5_0123456789abcdef
-    symlink(&to_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
-    // Atomically swap the link into place, so that the minor version link points to the new data
-    // store copy.
+    // Create a symlink from the minor version to the new patch version.
+    // This will point at, for example, /path/to/datastore/v1.5.2
+    symlink(&patch_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
+    // Atomically swap the link into place, so that the minor version link points to the new patch
+    // version.
     fs::rename(&temp_link, &minor_version_link).context(error::LinkSwap {
         link: &minor_version_link,
     })?;
+
+    // =^..^=   =^..^=   =^..^=   =^..^=
 
     info!(
         "Flipping {} to point to {}",
@@ -417,6 +540,24 @@ where
     fs::rename(&temp_link, &major_version_link).context(error::LinkSwap {
         link: &major_version_link,
     })?;
+
+    // =^..^=   =^..^=   =^..^=   =^..^=
+
+    info!(
+        "Flipping {} to point to {}",
+        current_version_link.display(),
+        major_target.to_string_lossy(),
+    );
+
+    // Create a symlink from 'current' to the new major version.
+    // This will point at, for example, /path/to/datastore/v1
+    symlink(&major_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
+    // Atomically swap the link into place, so that 'current' points to the new major version.
+    fs::rename(&temp_link, &current_version_link).context(error::LinkSwap {
+        link: &current_version_link,
+    })?;
+
+    // =^..^=   =^..^=   =^..^=   =^..^=
 
     // fsync the directory so the links point to the new version even if we crash right after
     // this.  If fsync fails, warn but continue, because we likely can't swap the links back
@@ -442,49 +583,49 @@ mod test {
     #[allow(unused_variables)]
     fn select_migrations_works() {
         // Migration paths for use in testing
-        let m00_1 = Path::new("migrate_v0.0_001");
-        let m01_1 = Path::new("migrate_v0.1_001");
-        let m01_2 = Path::new("migrate_v0.1_002");
-        let m02_1 = Path::new("migrate_v0.2_001");
-        let m03_1 = Path::new("migrate_v0.3_001");
-        let m04_1 = Path::new("migrate_v0.4_001");
-        let m04_2 = Path::new("migrate_v0.4_002");
+        let m00_1 = Path::new("migrate_v0.0.0_001");
+        let m01_1 = Path::new("migrate_v0.0.1_001");
+        let m01_2 = Path::new("migrate_v0.0.1_002");
+        let m02_1 = Path::new("migrate_v0.0.2_001");
+        let m03_1 = Path::new("migrate_v0.0.3_001");
+        let m04_1 = Path::new("migrate_v0.0.4_001");
+        let m04_2 = Path::new("migrate_v0.0.4_002");
         let all_migrations = vec![&m00_1, &m01_1, &m01_2, &m02_1, &m03_1, &m04_1, &m04_2];
 
         // Versions for use in testing
-        let v00 = Version::new(0, 0);
-        let v01 = Version::new(0, 1);
-        let v02 = Version::new(0, 2);
-        let v03 = Version::new(0, 3);
-        let v04 = Version::new(0, 4);
-        let v05 = Version::new(0, 5);
+        let v00 = Version::new(0, 0, 0);
+        let v01 = Version::new(0, 0, 1);
+        let v02 = Version::new(0, 0, 2);
+        let v03 = Version::new(0, 0, 3);
+        let v04 = Version::new(0, 0, 4);
+        let v05 = Version::new(0, 0, 5);
 
         // Test going forward one minor version
         assert_eq!(
-            select_migrations(v01, v02, &all_migrations).unwrap(),
+            select_migrations(&v01, &v02, &all_migrations).unwrap(),
             vec![m02_1]
         );
 
         // Test going backward one minor version
         assert_eq!(
-            select_migrations(v02, v01, &all_migrations).unwrap(),
+            select_migrations(&v02, &v01, &all_migrations).unwrap(),
             vec![m02_1]
         );
 
         // Test going forward a few minor versions
         assert_eq!(
-            select_migrations(v01, v04, &all_migrations).unwrap(),
+            select_migrations(&v01, &v04, &all_migrations).unwrap(),
             vec![m02_1, m03_1, m04_1, m04_2]
         );
 
         // Test going backward a few minor versions
         assert_eq!(
-            select_migrations(v04, v01, &all_migrations).unwrap(),
+            select_migrations(&v04, &v01, &all_migrations).unwrap(),
             vec![m04_2, m04_1, m03_1, m02_1]
         );
 
         // Test no matching migrations
-        assert!(select_migrations(v04, v05, &all_migrations)
+        assert!(select_migrations(&v04, &v05, &all_migrations)
             .unwrap()
             .is_empty());
     }

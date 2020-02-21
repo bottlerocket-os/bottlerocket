@@ -1,7 +1,6 @@
 //! This module owns the error type used by the migrator.
 
-use data_store_version::error::Error as VersionError;
-use data_store_version::{Version, VersionComponent};
+use semver::Version;
 use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
@@ -14,14 +13,8 @@ pub(crate) enum Error {
     #[snafu(display("Internal error: {}", msg))]
     Internal { msg: String },
 
-    #[snafu(display("Unable to create version from data store path '{}': {}", path.display(), source))]
-    VersionFromDataStorePath { path: PathBuf, source: VersionError },
-
-    #[snafu(display("Can only migrate minor versions; major version '{}' requested, major version of given data store is '{}'", given, found))]
-    MajorVersionMismatch {
-        given: VersionComponent,
-        found: VersionComponent,
-    },
+    #[snafu(display("Data store path '{}' contains invalid UTF-8", path.display()))]
+    DataStorePathNotUTF8 { path: PathBuf },
 
     #[snafu(display("Unable to open data store directory '{}': {}", path.display(), source))]
     DataStoreDirOpen { path: PathBuf, source: nix::Error },
@@ -32,15 +25,13 @@ pub(crate) enum Error {
     #[snafu(display("Data store path '{}' contains invalid version: {}", path.display(), source))]
     InvalidDataStoreVersion {
         path: PathBuf,
-        #[snafu(source(from(Error, Box::new)))]
-        source: Box<Error>,
+        source: semver::SemVerError,
     },
 
     #[snafu(display("Migration '{}' contains invalid version: {}", path.display(), source))]
     InvalidMigrationVersion {
         path: PathBuf,
-        #[snafu(source(from(VersionError, Box::new)))]
-        source: Box<VersionError>,
+        source: semver::SemVerError,
     },
 
     #[snafu(display("Data store for new version {} already exists at {}", version, path.display()))]
@@ -61,6 +52,9 @@ pub(crate) enum Error {
 
     #[snafu(display("Failed to swap symlink at {} to new version: {}", link.display(), source))]
     LinkSwap { link: PathBuf, source: io::Error },
+
+    #[snafu(display("Failed to read symlink at {} to find version: {}", link.display(), source))]
+    LinkRead { link: PathBuf, source: io::Error },
 
     #[snafu(display("Failed listing migration directory '{}': {}", dir.display(), source))]
     ListMigrations { dir: PathBuf, source: io::Error },

@@ -1,7 +1,6 @@
 #![allow(clippy::default_trait_access)]
 
-use data_store_version::Version as DataVersion;
-use semver::Version as SemVer;
+use semver::Version;
 use snafu::{Backtrace, Snafu};
 use std::path::PathBuf;
 use update_metadata::error::Error as update_metadata_error;
@@ -104,14 +103,8 @@ pub(crate) enum Error {
     #[snafu(display("Migration ({},{}) not present in manifest", from, to))]
     MigrationNotPresent {
         backtrace: Backtrace,
-        from: DataVersion,
-        to: DataVersion,
-    },
-
-    #[snafu(display("Missing datastore version in metadata: {:?}", version))]
-    MissingDataVersion {
-        backtrace: Backtrace,
-        version: DataVersion,
+        from: Version,
+        to: Version,
     },
 
     #[snafu(display(
@@ -121,8 +114,8 @@ pub(crate) enum Error {
     ))]
     MissingMigration {
         backtrace: Backtrace,
-        current: DataVersion,
-        target: DataVersion,
+        current: Version,
+        target: Version,
     },
 
     #[snafu(display("Missing version in metadata: {}", version))]
@@ -183,6 +176,11 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Unable to get OS version: {}", source))]
+    ReleaseVersion {
+        source: bottlerocket_release::Error,
+    },
+
     #[snafu(display("Failed setting permissions of '{}': {}", path.display(), source))]
     SetPermissions {
         path: PathBuf,
@@ -213,7 +211,7 @@ pub(crate) enum Error {
     #[snafu(display("Update {} exists but wave in the future", version))]
     UpdateNotReady {
         backtrace: Backtrace,
-        version: SemVer,
+        version: Version,
     },
 
     #[snafu(display("Failed to serialize update information: {}", source))]
@@ -228,22 +226,6 @@ pub(crate) enum Error {
     #[snafu(display("Target partition is unrecognized: {}", partition))]
     UnknownPartition {
         partition: String,
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Failed to determine VERSION_ID from /etc/os-release"))]
-    VersionIdNotFound { backtrace: Backtrace },
-
-    #[snafu(display("Failed to parse VERSION_ID from /etc/os-release: {}", line))]
-    VersionIdParse {
-        source: semver::SemVerError,
-        backtrace: Backtrace,
-        line: String,
-    },
-
-    #[snafu(display("Failed to read /etc/os-release: {}", source))]
-    VersionIdRead {
-        source: std::io::Error,
         backtrace: Backtrace,
     },
 
