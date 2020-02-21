@@ -12,7 +12,7 @@
 // The controller IS NOT capable of (yet!):
 //
 // - ensuring that workloads are sufficiently replicated or distributed to avoid
-//   service outtages.
+//   service outages.
 //
 // - executing transitions during a set maintenance period
 //

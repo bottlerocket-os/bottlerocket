@@ -73,7 +73,7 @@ const (
 
 	// PlatformV1AlphaNoOp can be used to observe would-be actions in a cluster.
 	// This version indicates that the compiled platform integration will not
-	// perform any action, guranteeing so by excluding the capability at build
+	// perform any action, guaranteeing so by excluding the capability at build
 	// time.
 	PlatformV1AlphaNoOp PlatformVersion = "1.0.0-alpha+noop"
 

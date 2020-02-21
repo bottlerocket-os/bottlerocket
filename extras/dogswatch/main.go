@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/agent"
+	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/bottlerocket"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/controller"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/k8sutil"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/logging"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/platform/updog"
 	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/sigcontext"
-	"github.com/amazonlinux/bottlerocket/dogswatch/pkg/bottlerocket"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 )
@@ -62,7 +62,7 @@ func main() {
 	case *flagController && *flagAgent:
 		log.Error("cannot run both agent and controller")
 		os.Exit(1)
-	case (!*flagController && !*flagAgent):
+	case !*flagController && !*flagAgent:
 		log.Error("no component specified to run, provide either -agent or -controller")
 		flag.Usage()
 		os.Exit(1)
