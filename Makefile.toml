@@ -166,10 +166,47 @@ script = [
 '''
 ]
 
+[tasks.link-clean]
+dependencies = ["fetch"]
+script = [
+'''
+PREFIX="bottlerocket-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
+for link in ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}*; do
+  if [ -L "${link}" ]; then
+    rm ${link}
+  fi
+done
+'''
+]
+
+[tasks.link-variant]
+dependencies = ["build-variant"]
+script = [
+'''
+PREFIX="bottlerocket-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
+VERSIONED="${PREFIX}-${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
+mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
+ln -snf ../${VERSIONED}.img.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}.img.lz4
+ln -snf ../${VERSIONED}-data.img.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-data.img.lz4
+ln -snf ../${VERSIONED}-boot.ext4.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-boot.ext4.lz4
+ln -snf ../${VERSIONED}-root.ext4.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-root.ext4.lz4
+ln -snf ../${VERSIONED}-root.verity.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-root.verity.lz4
+ln -snf ../${VERSIONED}-migrations.tar \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-migrations.tar
+'''
+]
+
 [tasks.build]
 dependencies = [
+    "link-clean",
     "build-variant",
     "check-licenses",
+    "link-variant",
 ]
 
 [tasks.world]
@@ -188,6 +225,7 @@ rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys
 for ext in rpm tar lz4 img ; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
+rm -rf ${BUILDSYS_OUTPUT_DIR}/latest
 rm -rf html
 '''
 ]
