@@ -106,6 +106,12 @@ mod error {
             source: std::io::Error,
         },
 
+        #[snafu(display("Failed to parse setting {} as u32: {}", setting, source))]
+        ParseToU32 {
+            setting: String,
+            source: std::num::ParseIntError,
+        },
+
         #[snafu(display("Failed to read line: {}", source))]
         IoReadLine { source: std::io::Error },
 
@@ -252,9 +258,21 @@ fn run() -> Result<()> {
 
     // sundog expects JSON-serialized output so that many types can be represented, allowing the
     // API model to use more accurate types.
-    let output = serde_json::to_string(&setting).context(error::OutputJson { output: &setting })?;
 
-    println!("{}", output);
+    // 'max_pods' setting is an unsigned integer, convert 'settings' to u32 before serializing to JSON
+    if setting_name == "max-pods" {
+        let max_pods = serde_json::to_string(
+            &setting
+                .parse::<u32>()
+                .context(error::ParseToU32 { setting: &setting })?,
+        )
+        .context(error::OutputJson { output: &setting })?;
+        println!("{}", max_pods);
+    } else {
+        let output =
+            serde_json::to_string(&setting).context(error::OutputJson { output: &setting })?;
+        println!("{}", output);
+    }
     Ok(())
 }
 
