@@ -320,6 +320,9 @@ Only a few locations are made writable:
 * some through [tmpfs mounts](workspaces/preinit/laika), used for configuration, that don't persist over a restart.
 * one [persistent location](packages/release/var-lib-bottlerocket.mount) for the data store.
 
+We enable [SELinux](https://selinuxproject.org/) in enforcing mode.
+This protects the data store from tampering, and blocks modification of sensitive files such as container archives.
+
 Almost all first-party components are written in [Rust](https://www.rust-lang.org/).
 Rust eliminates some classes of memory safety issues, and encourages design patterns that help security.
 
