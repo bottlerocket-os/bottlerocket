@@ -336,7 +336,7 @@ pub fn join_map(
 }
 
 /// `default` lets you specify the default value for a key in a template in case that key isn't
-/// set.  The first argument is the default (string) value; the second argument is the key (with
+/// set.  The first argument is the default (scalar) value; the second argument is the key (with
 /// scalar value) to check and insert if it is set.
 pub fn default(
     helper: &Helper<'_, '_>,
@@ -371,13 +371,23 @@ pub fn default(
         .context(error::Internal {
             msg: "Missing param after confirming there are enough",
         })?;
-    let default = default_val
-        .as_str()
-        .with_context(|| error::InvalidTemplateValue {
-            expected: "string",
-            value: default_val.to_owned(),
-            template: template_name.to_owned(),
-        })?;
+    let default = match default_val {
+        // these ones Display as their simple scalar selves
+        Value::Bool(b) => b.to_string(),
+        Value::Number(n) => n.to_string(),
+        Value::String(s) => s.to_string(),
+        // Null isn't allowed - we're here to give a default!
+        // And composite types are unsupported.
+        Value::Null | Value::Array(_) | Value::Object(_) => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidTemplateValue {
+                    expected: "non-null scalar",
+                    value: default_val.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            ))
+        }
+    };
     trace!("Default value if key is not set: {}", default);
 
     let requested_value = helper
@@ -557,12 +567,9 @@ mod test_join_map {
 
     #[test]
     fn invalid_fail_if_missing() {
-        setup_and_render_template(
-            "{{join_map \"=\" \",\" \"sup\" map}}",
-            &json!({}),
-        )
-        // Invalid failure mode 'sup'
-        .unwrap_err();
+        setup_and_render_template("{{join_map \"=\" \",\" \"sup\" map}}", &json!({}))
+            // Invalid failure mode 'sup'
+            .unwrap_err();
     }
 }
 
@@ -587,11 +594,9 @@ mod test_default {
 
     #[test]
     fn have_setting() {
-        let result = setup_and_render_template(
-            "{{default \"42\" setting}}",
-            &json!({"setting": "hi"}),
-        )
-        .unwrap();
+        let result =
+            setup_and_render_template("{{default \"42\" setting}}", &json!({"setting": "hi"}))
+                .unwrap();
         assert_eq!(result, "hi")
     }
 
@@ -607,11 +612,9 @@ mod test_default {
 
     #[test]
     fn have_setting_bool() {
-        let result = setup_and_render_template(
-            "{{default \"42\" setting}}",
-            &json!({"setting": true}),
-        )
-        .unwrap();
+        let result =
+            setup_and_render_template("{{default \"42\" setting}}", &json!({"setting": true}))
+                .unwrap();
         assert_eq!(result, "true")
     }
 
@@ -627,11 +630,9 @@ mod test_default {
 
     #[test]
     fn have_setting_number() {
-        let result = setup_and_render_template(
-            "{{default \"42\" setting}}",
-            &json!({"setting": 42.42}),
-        )
-        .unwrap();
+        let result =
+            setup_and_render_template("{{default \"42\" setting}}", &json!({"setting": 42.42}))
+                .unwrap();
         assert_eq!(result, "42.42")
     }
 
@@ -643,5 +644,21 @@ mod test_default {
         )
         .unwrap();
         assert_eq!(result, "42")
+    }
+
+    #[test]
+    fn number_default() {
+        let result =
+            setup_and_render_template("{{default 42 setting}}", &json!({"not-the-setting": 42.42}))
+                .unwrap();
+        assert_eq!(result, "42")
+    }
+
+    #[test]
+    fn bool_default() {
+        let result =
+            setup_and_render_template("{{default true setting}}", &json!({"not-the-setting": 42.42}))
+                .unwrap();
+        assert_eq!(result, "true")
     }
 }
