@@ -140,14 +140,14 @@ First, you need a data store for the API server.
 You can create a data store with storewolf.
 These commands create one in `/tmp`, but you can create it in a more permanent location if desired.
 
-From the `workspaces/api/storewolf` directory:
+From the `sources/api/storewolf` directory:
 
 ```
 cargo run -- --data-store-base-path /tmp/data-store --version 0.1
 ```
 
 Now you can start the API server.
-From the `workspaces/api/apiserver` directory:
+From the `sources/api/apiserver` directory:
 
 ```
 cargo run -- --datastore-path /tmp/data-store/current --socket-path /tmp/bottlerocket-api.sock --log-level debug
@@ -159,7 +159,7 @@ When storewolf creates the data store, it puts settings into `pending` state.
 This is so we can commit all settings generated at startup at once.
 
 We can use settings-committer to do the same thing with our development data store.
-From the `workspaces/api/settings-committer` directory:
+From the `sources/api/settings-committer` directory:
 
 ```
 cargo run -- --socket-path /tmp/bottlerocket-api.sock

@@ -478,7 +478,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "workspaces"
+name = "os"
 version = "0.1.0"
 dependencies = [
  "glibc 0.1.0",

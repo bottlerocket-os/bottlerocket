@@ -2,7 +2,7 @@
 %global _cross_first_party 1
 %undefine _debugsource_packages
 
-Name: %{_cross_os}workspaces
+Name: %{_cross_os}os
 Version: 0.0
 Release: 0%{?dist}
 Summary: Bottlerocket's first-party code
@@ -149,7 +149,7 @@ Summary: Thar data store migrations
 
 %build
 mkdir bin
-%cargo_build --manifest-path %{_builddir}/workspaces/Cargo.toml \
+%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiserver \
     -p moondog \
     -p netdog \
@@ -169,12 +169,12 @@ mkdir bin
     -p laika \
     %{nil}
 
-%cargo_build_static --manifest-path %{_builddir}/workspaces/Cargo.toml \
+%cargo_build_static --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiclient \
     %{nil}
 
 # Build the migrations
-for crate in $(find %{_builddir}/workspaces/api/migration/migrations -name 'Cargo.toml'); do
+for crate in $(find %{_builddir}/sources/api/migration/migrations -name 'Cargo.toml'); do
     %cargo_build_static --manifest-path "${crate}"
 done
 
@@ -201,7 +201,7 @@ for p in growpart preinit ; do
 done
 
 install -d %{buildroot}%{_cross_datadir}/migrations
-for version_path in %{_builddir}/workspaces/api/migration/migrations/*; do
+for version_path in %{_builddir}/sources/api/migration/migrations/*; do
   for migration_path in "${version_path}"/*; do
     version="${version_path##*/}"
     crate_name="${migration_path##*/}"
@@ -239,8 +239,8 @@ install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 
-%cross_scan_attribution --clarify %{_builddir}/workspaces/clarify.toml \
-    cargo --offline --locked %{_builddir}/workspaces/Cargo.toml
+%cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
+    cargo --offline --locked %{_builddir}/sources/Cargo.toml
 
 %files
 %{_cross_attribution_vendor_dir}

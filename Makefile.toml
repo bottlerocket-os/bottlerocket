@@ -6,7 +6,7 @@ BUILDSYS_ARCH = { script = ["uname -m"] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_OUTPUT_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
-BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/workspaces"
+BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*' || echo 00000000"] }
 BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' Release.toml"] }
@@ -48,7 +48,7 @@ done
 [tasks.fetch]
 dependencies = [
   "fetch-sdk",
-  "fetch-workspaces",
+  "fetch-sources",
   "fetch-vendored",
 ]
 
@@ -70,11 +70,11 @@ fi
 '''
 ]
 
-[tasks.fetch-workspaces]
+[tasks.fetch-sources]
 dependencies = ["setup"]
 script = [
 '''
-for ws in workspaces packages variants tools/buildsys ; do
+for ws in sources packages variants tools/buildsys ; do
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
 chmod o+r -R ${CARGO_HOME}
@@ -94,7 +94,7 @@ ${BUILDSYS_TOOLS_DIR}/docker-go \
 ]
 
 [tasks.unit-tests]
-dependencies = ["setup", "fetch-workspaces", "fetch-vendored"]
+dependencies = ["setup", "fetch-sources", "fetch-vendored"]
 script = [
 '''
 cargo test \
@@ -161,7 +161,7 @@ alias = "build-variant"
 dependencies = ["fetch"]
 script = [
 '''
-(cd workspaces && cargo deny check --disable-fetch licenses)
+(cd sources && cargo deny check --disable-fetch licenses)
 (cd tools/buildsys && cargo deny check --disable-fetch licenses)
 '''
 ]
@@ -218,7 +218,7 @@ script = ['tools/gen-docs.sh']
 [tasks.clean]
 script = [
 '''
-for ws in workspaces packages variants tools/buildsys ; do
+for ws in sources packages variants tools/buildsys ; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys
