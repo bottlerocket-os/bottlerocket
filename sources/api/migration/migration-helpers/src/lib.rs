@@ -15,7 +15,6 @@ mod args;
 pub mod common_migrations;
 mod datastore;
 pub mod error;
-mod workarounds;
 
 use snafu::ResultExt;
 use std::collections::HashMap;
@@ -28,7 +27,6 @@ pub use apiserver::datastore::{DataStore, FilesystemDataStore};
 use args::{parse_args, Args};
 use datastore::{get_input_data, set_output_data};
 pub use error::Result;
-use workarounds::fix_migrated_data;
 
 /// The data store implementation currently in use.  Used by the simpler `migrate` interface; can
 /// be overridden by using the `run_migration` interface.
@@ -105,15 +103,6 @@ pub fn run_migration(mut migration: impl Migration, args: &Args) -> Result<()> {
             MigrationType::Forward => migration.forward(migrated),
             MigrationType::Backward => migration.backward(migrated),
         }?;
-
-        fix_migrated_data(
-            &input,
-            &mut migrated,
-            &source,
-            &mut target,
-            &committed,
-            &args,
-        )?;
 
         validate_migrated_data(&migrated)?;
 
