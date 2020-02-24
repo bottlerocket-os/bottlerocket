@@ -1,7 +1,0 @@
-[Unit]
-Description=What's Updog?
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/updog check-update
-StandardError=journal+console

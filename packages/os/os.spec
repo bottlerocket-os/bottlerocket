@@ -24,8 +24,6 @@ Source103: storewolf.service
 Source105: settings-applier.service
 Source106: migrator.service
 Source107: host-containers@.service
-Source108: updog.timer
-Source109: updog.service
 Source110: mark-successful-boot.service
 
 # 2xx sources: tmpfilesd configs
@@ -232,7 +230,7 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
-  %{S:106} %{S:107} %{S:108} %{S:109} %{S:110} \
+  %{S:106} %{S:107} %{S:110} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
@@ -316,8 +314,6 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %{_cross_datadir}/updog
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/updog-toml
-%{_cross_unitdir}/updog.timer
-%{_cross_unitdir}/updog.service
 
 %files -n %{_cross_os}preinit
 %{_cross_sbindir}/preinit
