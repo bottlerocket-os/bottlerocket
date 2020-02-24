@@ -16,11 +16,7 @@ members = [
     "api/migration/migrator",
     "api/migration/migration-helpers",
 
-    "api/migration/migrations/v0.1/migrate-borkseed",
-    "api/migration/migrations/v0.1/migrate-host-containers-version",
-    "api/migration/migrations/v0.2/migrate-containerd-config-path",
-    "api/migration/migrations/v0.2/migrate-remove-region",
-    "api/migration/migrations/v0.2/migrate-host-containers-v03",
+    # "api/migration/migrations/vX.Y.Z/...
 
     "bottlerocket-release",
 

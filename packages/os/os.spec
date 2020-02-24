@@ -200,7 +200,10 @@ done
 
 install -d %{buildroot}%{_cross_datadir}/migrations
 for version_path in %{_builddir}/sources/api/migration/migrations/*; do
+  [ -e "${version_path}" ] || continue
   for migration_path in "${version_path}"/*; do
+    [ -e "${migration_path}" ] || continue
+
     version="${version_path##*/}"
     crate_name="${migration_path##*/}"
     migration_binary_name="migrate_${version}_${crate_name#migrate-}"
