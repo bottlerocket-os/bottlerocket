@@ -208,7 +208,7 @@ fn create_new_datastore<P: AsRef<Path>>(base_path: P, version: Option<Version>) 
 // validating the types and structure. The resulting Vec looks like:
 //
 // [
-//   Metadata {key: "settings.hostname", md: "affected-services", val: Array([ ... ])},
+//   Metadata {key: "settings.motd", md: "affected-services", val: Array([ ... ])},
 //   Metadata { ... },
 // ]
 fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>> {
@@ -222,7 +222,7 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
     // associated with that key. It ends up looking like:
     // [
     //   (
-    //     ["settings", "hostname"],
+    //     ["settings", "motd"],
     //     toml::Value
     //   ),
     //   ...
@@ -259,7 +259,7 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
                     msg: "parse_metadata_toml found empty 'path' in the to_process vec - is 'metadata' not a Table?",
                 })?;
 
-                // Make sure that the path contains more than 1 item, i.e. ["settings", "hostname"]
+                // Make sure that the path contains more than 1 item, i.e. ["settings", "motd"]
                 ensure!(
                     path.len() >= 1,
                     error::Internal {

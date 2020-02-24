@@ -6,23 +6,18 @@
 # as defined in src/VARIANT/mod.rs.
 
 [settings]
-timezone = "America/Los_Angeles"
-hostname = "localhost"
+motd = "Welcome to Bottlerocket!"
 
-[settings.updates]
-metadata-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/metadata/"
-target-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/targets/"
+[metadata.settings.motd]
+affected-services = ["motd"]
 
-[services.hostname]
-configuration-files = ["hostname"]
+[services.motd]
+configuration-files = ["motd"]
 restart-commands = []
 
-[configuration-files.hostname]
-path = "/etc/hostname"
-template-path = "/usr/share/templates/hostname"
-
-[metadata.settings.hostname]
-affected-services = ["hostname"]
+[configuration-files.motd]
+path = "/etc/motd"
+template-path = "/usr/share/templates/motd"
 
 # Container runtime.
 
@@ -34,8 +29,11 @@ restart-commands = []
 path = "/etc/containerd/config.toml"
 template-path = "/usr/share/templates/containerd-config-toml"
 
+# Updates.
 
-# Updog.
+[settings.updates]
+metadata-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/metadata/"
+target-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/targets/"
 
 [services.updog]
 configuration-files = ["updog-toml"]

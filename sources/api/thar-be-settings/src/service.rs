@@ -168,18 +168,17 @@ mod test {
     #[test]
     fn test_get_affected_service_names() {
         let input_map = hashmap!(
-            "settings.hostname".to_string() => vec![
-                "hostname".to_string(),
-                "timezone".to_string(),
+            "settings.example".to_string() => vec![
+                "example".to_string(),
             ],
             "settings.foobar".to_string() => vec![
-                "timezone".to_string(),
+                "example".to_string(),
                 "barbaz".to_string()
             ]
         );
 
         let expected_output =
-            hashset! {"hostname".to_string(), "timezone".to_string(), "barbaz".to_string()};
+            hashset! {"example".to_string(), "barbaz".to_string()};
 
         assert_eq!(get_affected_service_names(input_map), expected_output)
     }

@@ -381,7 +381,7 @@ mod test {
         let mut ds = MemoryDataStore::new();
         // Set directly with data store
         ds.set_key(
-            &Key::new(KeyType::Data, "settings.hostname").unwrap(),
+            &Key::new(KeyType::Data, "settings.motd").unwrap(),
             "\"json string\"",
             &Committed::Live,
         )
@@ -389,7 +389,7 @@ mod test {
 
         // Retrieve with helper
         let settings = get_settings(&ds, &Committed::Live).unwrap();
-        assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
     }
 
     #[test]
@@ -397,7 +397,7 @@ mod test {
         let mut ds = MemoryDataStore::new();
         // Set directly with data store
         ds.set_key(
-            &Key::new(KeyType::Data, "settings.timezone").unwrap(),
+            &Key::new(KeyType::Data, "settings.motd").unwrap(),
             "\"json string\"",
             &Committed::Live,
         )
@@ -405,13 +405,13 @@ mod test {
 
         // Retrieve with helper
         let settings = get_settings_prefix(&ds, "", &Committed::Live).unwrap();
-        assert_eq!(settings.timezone, Some("json string".try_into().unwrap()));
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
 
-        let settings = get_settings_prefix(&ds, "tim", &Committed::Live).unwrap();
-        assert_eq!(settings.timezone, Some("json string".try_into().unwrap()));
+        let settings = get_settings_prefix(&ds, "mot", &Committed::Live).unwrap();
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
 
-        let settings = get_settings_prefix(&ds, "timbits", &Committed::Live).unwrap();
-        assert_eq!(settings.timezone, None);
+        let settings = get_settings_prefix(&ds, "motdxxx", &Committed::Live).unwrap();
+        assert_eq!(settings.motd, None);
     }
 
     #[test]
@@ -419,14 +419,14 @@ mod test {
         let mut ds = MemoryDataStore::new();
         // Set directly with data store
         ds.set_key(
-            &Key::new(KeyType::Data, "settings.timezone").unwrap(),
+            &Key::new(KeyType::Data, "settings.motd").unwrap(),
             "\"json string 1\"",
             &Committed::Live,
         )
         .unwrap();
 
         ds.set_key(
-            &Key::new(KeyType::Data, "settings.hostname").unwrap(),
+            &Key::new(KeyType::Data, "settings.ntp.time-servers").unwrap(),
             "\"json string 2\"",
             &Committed::Live,
         )
@@ -434,9 +434,9 @@ mod test {
 
         // Retrieve with helper
         let settings =
-            get_settings_keys(&ds, &hashset!("settings.timezone"), &Committed::Live).unwrap();
-        assert_eq!(settings.timezone, Some("json string 1".try_into().unwrap()));
-        assert_eq!(settings.hostname, None);
+            get_settings_keys(&ds, &hashset!("settings.motd"), &Committed::Live).unwrap();
+        assert_eq!(settings.motd, Some("json string 1".try_into().unwrap()));
+        assert_eq!(settings.ntp, None);
     }
 
     #[test]
@@ -471,7 +471,7 @@ mod test {
     #[test]
     fn set_settings_works() {
         let mut settings = Settings::default();
-        settings.timezone = Some("tz".try_into().unwrap());
+        settings.motd = Some("tz".try_into().unwrap());
 
         // Set with helper
         let mut ds = MemoryDataStore::new();
@@ -480,7 +480,7 @@ mod test {
         set_settings(&mut ds, &settings, tx).unwrap();
 
         // Retrieve directly
-        let key = Key::new(KeyType::Data, "settings.timezone").unwrap();
+        let key = Key::new(KeyType::Data, "settings.motd").unwrap();
         assert_eq!(
             Some("\"tz\"".to_string()),
             ds.get_key(&key, &pending).unwrap()
@@ -541,7 +541,7 @@ mod test {
         let tx = "test transaction";
         let pending = Committed::Pending { tx: tx.into() };
         ds.set_key(
-            &Key::new(KeyType::Data, "settings.hostname").unwrap(),
+            &Key::new(KeyType::Data, "settings.motd").unwrap(),
             "\"json string\"",
             &pending,
         )
@@ -549,7 +549,7 @@ mod test {
 
         // Confirm pending
         let settings = get_settings(&ds, &pending).unwrap();
-        assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
         // No live settings yet
         get_settings(&ds, &Committed::Live).unwrap_err();
 
@@ -560,6 +560,6 @@ mod test {
         get_settings(&ds, &pending).unwrap_err();
         // Confirm live
         let settings = get_settings(&ds, &Committed::Live).unwrap();
-        assert_eq!(settings.hostname, Some("json string".try_into().unwrap()));
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
     }
 }

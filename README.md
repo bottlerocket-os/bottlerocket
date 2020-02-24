@@ -164,13 +164,13 @@ apiclient -u /settings
 This will return all of the current settings in JSON format.
 For example, here's an abbreviated response:
 ```
-{"timezone":"America/Los_Angeles","kubernetes":{...}}
+{"motd":"...", {"kubernetes": ...}}
 ```
 
 You can change settings by sending back the same type of JSON data in a PATCH request.
 This can include any number of settings changes.
 ```
-apiclient -m PATCH -u /settings -d '{"timezone": "America/Thunder_Bay"}'
+apiclient -m PATCH -u /settings -d '{"motd": "my own value!"}'
 ```
 
 This will *stage* the setting in a "pending" area - a transaction.
@@ -204,7 +204,7 @@ Here's the user data to change the time zone setting, as we did in the last sect
 
 ```
 [settings]
-timezone = "America/Thunder_Bay"
+motd = "my own value!"
 ```
 
 ### Description of settings
@@ -225,7 +225,7 @@ In this format, "settings.kubernetes.cluster-name" refers to the same key as in 
 
 #### Top-level settings
 
-* `settings.timezone`, `settings.hostname`: These don't function currently, but are intended to let you override the system timezone or the hostname retrieved from DHCP.  At the moment they're used as example settings.
+* `settings.motd`: This setting is just written out to /etc/motd. It's useful as a way to get familiar with the API!  Try changing it.
 
 #### Kubernetes settings
 

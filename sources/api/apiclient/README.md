@@ -30,7 +30,7 @@ apiclient -m GET -u /settings
 Changing settings:
 
 ```
-apiclient -X PATCH -u /settings -d '{"timezone": "OldLosAngeles"}'
+apiclient -X PATCH -u /settings -d '{"motd": "my own value!"}'
 apiclient -m POST -u /tx/commit_and_apply
 ```
 
