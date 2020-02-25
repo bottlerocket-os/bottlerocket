@@ -27,8 +27,7 @@ Requires: %{_cross_os}iptables
 
 %build
 %cross_go_configure %{goimport}
-export BUILDTAGS="rpm_crashtraceback"
-go build -buildmode pie -tags="${BUILDTAGS}" -o "bin/cnitool" %{goimport}/cnitool
+go build -buildmode pie -o "bin/cnitool" %{goimport}/cnitool
 
 %install
 install -d %{buildroot}%{_cross_factorydir}/opt/cni/bin

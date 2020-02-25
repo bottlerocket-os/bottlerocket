@@ -27,9 +27,8 @@ Requires: %{_cross_os}iptables
 
 %build
 %cross_go_configure %{goimport}
-export BUILDTAGS="rpm_crashtraceback"
 for d in $(find plugins -mindepth 2 -maxdepth 2 -type d ! -name windows) ; do
-  go build -buildmode pie -tags="${BUILDTAGS}" -o "bin/${d##*/}" %{goimport}/${d}
+  go build -buildmode pie -o "bin/${d##*/}" %{goimport}/${d}
 done
 
 %install

@@ -44,7 +44,7 @@ Requires: %{_cross_os}systemd
 
 %build
 %cross_go_configure %{doimport}
-BUILDTAGS="journald rpm_crashtraceback selinux seccomp"
+BUILDTAGS="journald selinux seccomp"
 BUILDTAGS+=" exclude_graphdriver_btrfs"
 BUILDTAGS+=" exclude_graphdriver_devicemapper"
 BUILDTAGS+=" exclude_graphdriver_vfs"

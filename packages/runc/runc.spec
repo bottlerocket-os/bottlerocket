@@ -30,7 +30,7 @@ Requires: %{_cross_os}libseccomp
 
 %build
 %cross_go_configure %{goimport}
-export BUILDTAGS="rpm_crashtraceback ambient seccomp selinux"
+export BUILDTAGS="ambient seccomp selinux"
 go build -buildmode pie -tags="${BUILDTAGS}" -o bin/runc .
 
 %install
