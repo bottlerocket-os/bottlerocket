@@ -7,6 +7,7 @@ extern crate log;
 
 mod helpers;
 
+use bottlerocket_release::BottlerocketRelease;
 use handlebars::Handlebars;
 use serde::de::DeserializeOwned;
 use snafu::ResultExt;
@@ -94,23 +95,28 @@ where
 
 /// Requests all settings from the API and wraps them in a "settings" key, so they can be used as
 /// the data source for a handlebars templating call.
-pub fn get_settings<P>(socket_path: P) -> Result<HashMap<String, model::Settings>>
+pub fn get_settings<P>(socket_path: P) -> Result<HashMap<String, Box<dyn erased_serde::Serialize>>>
 where
     P: AsRef<Path>,
 {
     debug!("Querying API for settings data");
     let settings: model::Settings =
-        get_json(socket_path, "/settings", None as Option<(String, String)>)?;
+        get_json(&socket_path, "/settings", None as Option<(String, String)>)?;
 
     trace!("Settings values: {:?}", settings);
 
-    // The following helps satisfy the Handlebars templating library.
-    // The variables in the templates are prefixed with "settings"
-    // {{ settings.foo.bar }} so we need to wrap the Settings struct in a map
-    // with the key "settings".
-    let mut wrapped_template_keys: HashMap<String, model::Settings> = HashMap::new();
-    wrapped_template_keys.insert("settings".to_string(), settings);
-    trace!("Final template keys map: {:?}", &wrapped_template_keys);
+    debug!("Querying API for OS data");
+    let br: BottlerocketRelease =
+        get_json(&socket_path, "/os", None as Option<(String, String)>)?;
+
+    trace!("OS values: {:?}", br);
+
+    // The following helps satisfy the Handlebars templating library.  The variables in the
+    // templates include a prefix like "settings" or "os", for example {{ settings.foo.bar }}
+    // so we need to wrap the structs struct in a map with the relevant prefixes.
+    let mut wrapped_template_keys: HashMap<String, Box<dyn erased_serde::Serialize>> = HashMap::new();
+    wrapped_template_keys.insert("settings".to_string(), Box::new(settings));
+    wrapped_template_keys.insert("os".to_string(), Box::new(br));
 
     Ok(wrapped_template_keys)
 }
