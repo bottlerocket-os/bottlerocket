@@ -1,13 +1,13 @@
 /*!
 # Introduction
 
-moondog sends provider-specific platform data to the Bottlerocket API.
+early-boot-config sends provider-specific platform data to the Bottlerocket API.
 
 For most providers this means configuration from user data and platform metadata, taken from
 something like an instance metadata service.
 
 Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be taken from files in
-/etc/moondog instead, if available, for testing purposes.
+/etc/early-boot-config instead, if available, for testing purposes.
 */
 
 #![deny(rust_2018_idioms)]
@@ -33,12 +33,10 @@ const API_SETTINGS_URI: &str = "/settings";
 // We change settings in the shared transaction used by boot-time services.
 const TRANSACTION: &str = "bottlerocket-launch";
 
-// We only want to run moondog once, at first boot.  Our systemd unit file has a
+// We only want to run early-boot-config once, at first boot.  Our systemd unit file has a
 // ConditionPathExists that will prevent it from running again if this file exists.
 // We create it after running successfully.
-const MARKER_FILE: &str = "/var/lib/bottlerocket/moondog.ran";
-
-type Result<T> = std::result::Result<T, MoondogError>;
+const MARKER_FILE: &str = "/var/lib/bottlerocket/early-boot-config.ran";
 
 mod error {
     use http::StatusCode;
@@ -60,7 +58,7 @@ mod error {
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
-    pub(super) enum MoondogError {
+    pub(super) enum Error {
         #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
         Request {
             method: String,
@@ -125,7 +123,8 @@ mod error {
         Logger { source: simplelog::TermLogError },
     }
 }
-use error::MoondogError;
+
+type Result<T> = std::result::Result<T, error::Error>;
 
 /// Support for new platforms can be added by implementing this trait.
 trait PlatformDataProvider {
@@ -145,9 +144,9 @@ impl AwsDataProvider {
     // FIXME Pin to a date version that supports IMDSv2 once such a date version is available.
     const IMDS_TOKEN_ENDPOINT: &'static str = "http://169.254.169.254/latest/api/token";
 
-    const USER_DATA_FILE: &'static str = "/etc/moondog/user-data";
+    const USER_DATA_FILE: &'static str = "/etc/early-boot-config/user-data";
     const USER_DATA_ENDPOINT: &'static str = "http://169.254.169.254/2018-09-24/user-data";
-    const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/moondog/identity-document";
+    const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/early-boot-config/identity-document";
     const IDENTITY_DOCUMENT_ENDPOINT: &'static str =
         "http://169.254.169.254/2018-09-24/dynamic/instance-identity/document";
 
@@ -409,7 +408,7 @@ fn run() -> Result<()> {
     TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
         .context(error::Logger)?;
 
-    info!("Moondog started");
+    info!("early-boot-config started");
 
     // Figure out the current provider
     info!("Detecting platform data provider");

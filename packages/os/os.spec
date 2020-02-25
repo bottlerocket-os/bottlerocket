@@ -18,7 +18,7 @@ Source5: updog-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
-Source101: moondog.service
+Source101: early-boot-config.service
 Source102: sundog.service
 Source103: storewolf.service
 Source105: settings-applier.service
@@ -45,10 +45,10 @@ Summary: Bottlerocket API client
 %description -n %{_cross_os}apiclient
 %{summary}.
 
-%package -n %{_cross_os}moondog
+%package -n %{_cross_os}early-boot-config
 Summary: Bottlerocket userdata configuration system
 Requires: %{_cross_os}apiserver = %{version}-%{release}
-%description -n %{_cross_os}moondog
+%description -n %{_cross_os}early-boot-config
 %{summary}.
 
 %package -n %{_cross_os}netdog
@@ -149,7 +149,7 @@ Summary: Thar data store migrations
 mkdir bin
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiserver \
-    -p moondog \
+    -p early-boot-config \
     -p netdog \
     -p sundog \
     -p schnauzer \
@@ -180,7 +180,7 @@ done
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  moondog netdog sundog schnauzer pluto bork \
+  early-boot-config netdog sundog schnauzer pluto bork \
   thar-be-settings servicedog host-containers \
   storewolf settings-committer \
   migrator \
@@ -252,9 +252,9 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %files -n %{_cross_os}apiclient
 %{_cross_bindir}/apiclient
 
-%files -n %{_cross_os}moondog
-%{_cross_bindir}/moondog
-%{_cross_unitdir}/moondog.service
+%files -n %{_cross_os}early-boot-config
+%{_cross_bindir}/early-boot-config
+%{_cross_unitdir}/early-boot-config.service
 
 %files -n %{_cross_os}netdog
 %{_cross_bindir}/netdog

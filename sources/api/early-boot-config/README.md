@@ -1,16 +1,16 @@
-# moondog
+# early-boot-config
 
 Current version: 0.1.0
 
 ## Introduction
 
-moondog sends provider-specific platform data to the Bottlerocket API.
+early-boot-config sends provider-specific platform data to the Bottlerocket API.
 
 For most providers this means configuration from user data and platform metadata, taken from
 something like an instance metadata service.
 
 Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be taken from files in
-/etc/moondog instead, if available, for testing purposes.
+/etc/early-boot-config instead, if available, for testing purposes.
 
 ## Colophon
 
