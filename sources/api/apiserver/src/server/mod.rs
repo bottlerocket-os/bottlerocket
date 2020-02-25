@@ -5,23 +5,22 @@ mod controller;
 mod error;
 pub use error::Error;
 
+use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
 use actix_web::{error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use bottlerocket_release::BottlerocketRelease;
+use error::Result;
 use log::info;
+use model::{ConfigurationFiles, Services, Settings};
+use nix::unistd::{chown, Gid};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::env;
-use std::path::Path;
-use std::process::Command;
-use std::sync;
-
-use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
-use error::Result;
-use model::{ConfigurationFiles, Services, Settings};
-
-use nix::unistd::{chown, Gid};
 use std::fs::set_permissions;
 use std::fs::Permissions;
 use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+use std::process::Command;
+use std::sync;
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -82,6 +81,10 @@ where
                         "/commit_and_apply",
                         web::post().to(commit_transaction_and_apply),
                     ),
+            )
+            .service(
+                web::scope("/os")
+                    .route("", web::get().to(get_os_info))
             )
             .service(
                 web::scope("/metadata")
@@ -240,6 +243,13 @@ fn commit_transaction_and_apply(
     Ok(ChangedKeysResponse(changes))
 }
 
+// The "os" APIs don't deal with the data store at all, they just read a release field, so we
+// handle them here.
+fn get_os_info() -> Result<BottlerocketReleaseResponse> {
+    let br = BottlerocketRelease::new().context(error::ReleaseData)?;
+    Ok(BottlerocketReleaseResponse(br))
+}
+
 /// Get the affected services for a list of data keys
 fn get_affected_services(
     query: web::Query<HashMap<String, String>>,
@@ -369,6 +379,7 @@ impl ResponseError for error::Error {
             SystemdNotifyStatus {} => HttpResponse::InternalServerError(),
             SetPermissions { .. } => HttpResponse::InternalServerError(),
             SetGroup { .. } => HttpResponse::InternalServerError(),
+            ReleaseData { .. } => HttpResponse::InternalServerError(),
         }
         .finish()
     }
@@ -402,6 +413,10 @@ macro_rules! impl_responder_for {
 /// This lets us respond from our handler methods with a Settings (or Result<Settings>)
 struct SettingsResponse(Settings);
 impl_responder_for!(SettingsResponse, self, self.0);
+
+/// This lets us respond from our handler methods with a BottlerocketRelease (or Result<BottlerocketRelease>)
+struct BottlerocketReleaseResponse(BottlerocketRelease);
+impl_responder_for!(BottlerocketReleaseResponse, self, self.0);
 
 /// This lets us respond from our handler methods with a HashMap (or Result<HashMap>) for metadata
 struct MetadataResponse(HashMap<String, Value>);

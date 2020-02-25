@@ -53,6 +53,11 @@ pub enum Error {
     #[snafu(display("Tried to commit with no pending changes"))]
     CommitWithNoPending,
 
+    #[snafu(display("Unable to get OS release data: {}", source))]
+    ReleaseData {
+        source: bottlerocket_release::Error,
+    },
+
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     // Controller errors

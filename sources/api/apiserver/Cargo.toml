@@ -9,6 +9,7 @@ build = "build.rs"
 
 [dependencies]
 actix-web = { version = "1.0.5", default-features = false, features = ["uds"] }
+bottlerocket-release = { path = "../../bottlerocket-release" }
 libc = "0.2"
 log = "0.4"
 models = { path = "../../models" }
