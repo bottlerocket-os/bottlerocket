@@ -177,7 +177,7 @@ set -e
 dependencies = ["fetch"]
 script = [
 '''
-PREFIX="bottlerocket-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
+PREFIX="bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
 for link in ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}*; do
   if [ -L "${link}" ]; then
     rm ${link}
@@ -190,7 +190,7 @@ done
 dependencies = ["build-variant"]
 script = [
 '''
-PREFIX="bottlerocket-${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
+PREFIX="bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
 VERSIONED="${PREFIX}-${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
 ln -snf ../${VERSIONED}.img.lz4 \
