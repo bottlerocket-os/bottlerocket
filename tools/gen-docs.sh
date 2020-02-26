@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-DOCS=(START.md README.md INSTALL.md CHANGELOG.md extras/dogswatch/README.md)
+DOCS=(START.md README.md BUILDING.md QUICKSTART.md CHANGELOG.md extras/dogswatch/README.md)
 EXTRAS=(extras/dogswatch/{dogswatch,dev/deployment}.yaml)
 
 if ! hash grip; then
