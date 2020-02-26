@@ -1,11 +1,13 @@
 /*!
 # Background
 
-This library lets you get a BottlerocketRelease struct that represents the data in the /etc/os-release file, or another file you point to.
+This library lets you get a BottlerocketRelease struct that represents the data in the standard os-release file, or another file you point to.
 The VERSION_ID is returned as a semver::Version for convenience.
+
+The information is pulled at runtime because build_id changes frequently and would cause unnecessary rebuilds.
 */
 
-const DEFAULT_RELEASE_FILE: &str = "/etc/os-release";
+const DEFAULT_RELEASE_FILE: &str = "/usr/lib/os-release";
 
 include!(concat!(env!("OUT_DIR"), "/constants.rs"));
 
