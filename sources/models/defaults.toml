@@ -32,8 +32,11 @@ template-path = "/usr/share/templates/containerd-config-toml"
 # Updates.
 
 [settings.updates]
-metadata-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/metadata/"
-target-base-url = "https://d25d9m6x9pxh9h.cloudfront.net/45efedef4afe/targets/"
+target-base-url = "https://updates.bottlerocket.aws/targets/"
+
+[metadata.settings.updates.metadata-base-url]
+setting-generator = "schnauzer settings.updates.metadata-base-url"
+template = "https://updates.bottlerocket.aws/2020-02-02/{{ os.variant_id }}/{{ os.arch }}/"
 
 [services.updog]
 configuration-files = ["updog-toml"]
