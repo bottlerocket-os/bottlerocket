@@ -13,7 +13,7 @@ done
 
 mkdir -p "${OUTPUT_DIR}"
 
-MIGRATIONS_ARCHIVE="bottlerocket-${ARCH}-${VARIANT}-${VERSION_ID}-${BUILD_ID}-migrations.tar"
+MIGRATIONS_ARCHIVE="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}-migrations.tar"
 ROOT_TEMP="$(mktemp -d)"
 SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
 MIGRATIONS_DIR="${ROOT_TEMP}/${SYS_ROOT}/usr/share/migrations"

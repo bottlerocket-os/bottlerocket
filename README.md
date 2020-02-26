@@ -34,7 +34,7 @@ We’re excited to get early feedback and to continue working on more use cases!
 Bottlerocket is architected such that different cloud environments and container orchestrators can be supported in the future.
 A build of Bottlerocket that supports different features or integration characteristics is known as a 'variant'.
 The artifacts of a build will include the architecture and variant name.
-For example, an `x86_64` build of the `aws-k8s` variant will produce an image named `bottlerocket-x86_64-aws-k8s.img`.
+For example, an `x86_64` build of the `aws-k8s` variant will produce an image named `bottlerocket-aws-k8s-x86_64-<version>-<commit>.img`.
 
 Our first supported variant, `aws-k8s`, supports EKS as described above.
 
