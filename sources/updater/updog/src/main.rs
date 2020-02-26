@@ -422,7 +422,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
 }
 
 fn fmt_full_version(update: &Update) -> String {
-    format!("{}-{}", update.variant, update.version)
+    format!("{} {}", update.variant, update.version)
 }
 
 fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
@@ -532,7 +532,7 @@ fn main_inner() -> Result<()> {
                     output(
                         arguments.json,
                         &u,
-                        &format!("Update applied: {}-{}", u.variant, u.version),
+                        &format!("Update applied: {}", fmt_full_version(&u)),
                     )?;
                 } else if let Some(wave) = u.jitter(config.seed) {
                     // return the jittered time of our wave in the update
