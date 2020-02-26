@@ -1,7 +1,7 @@
 {
   "updates": [
     {
-      "variant": "aws-k8s",
+      "variant": "aws-k8s-1.15",
       "arch": "x86_64",
       "version": "0.1.1",
       "max_version": "0.1.2",
@@ -16,7 +16,7 @@
       }
     },
     {
-      "variant": "aws-k8s",
+      "variant": "aws-k8s-1.15",
       "arch": "x86_64",
       "version": "0.1.2",
       "max_version": "0.1.2",
