@@ -1,12 +1,3 @@
-version = "0.2.2"
+version = "0.3.0"
 
 [migrations]
-# Happy path - skip over 0.1, which had an issue with compressed migrations.  Normal new migrations go here.
-"(0.0, 0.2)" = ["migrate_0.1_borkseed", "migrate_0.1_host-containers-version-migration", "migrate_0.2_containerd-config-path"]
-"(0.2, 0.3)" = ["migrate_0.3_remove-region"]
-# We don't want to block updating into 0.1 if a user specifically wants the related OS version...
-"(0.0, 0.1)" = ["migrate_0.1_borkseed", "migrate_0.1_host-containers-version-migration"]
-# ...but to migrate out of the OS with version 0.1 we have to have copies of the migration with the lz4 extension.
-# (These filenames are also supported by newer OS versions.)
-"(0.1, 0.2)" = ["migrate_0.2_containerd-config-path.lz4"]
-"(0.1, 0.3)" = ["migrate_0.2_containerd-config-path.lz4", "migrate_0.3_remove-region.lz4"]

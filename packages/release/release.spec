@@ -11,8 +11,7 @@ Source11: nsswitch.conf
 Source98: release-sysctl.conf
 Source99: release-tmpfiles.conf
 
-# FIXME What should own system-level file templates?
-Source200: hostname.template
+Source200: motd.template
 
 Source1000: eth0.xml
 Source1002: configured.target
@@ -99,7 +98,7 @@ sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1011} > ${LICENSEPATH}.mount
 install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
-install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
+install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
@@ -116,6 +115,6 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/hostname
 %{_cross_unitdir}/*-licenses.mount
 %{_cross_unitdir}/var-lib-bottlerocket.mount
 %dir %{_cross_templatedir}
-%{_cross_templatedir}/hostname
+%{_cross_templatedir}/motd
 
 %changelog

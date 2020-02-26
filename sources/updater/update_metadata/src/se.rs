@@ -12,7 +12,6 @@ where
 {
     let mut map = BTreeMap::new();
     for ((from, to), val) in value {
-        // NOTE: The space in this tuple is required for versions of Bottlerocket < 0.2.0
         let key = format!(
             "({}, {})",
             serde_plain::to_string(&from).map_err(|e| S::Error::custom(format!(

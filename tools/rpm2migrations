@@ -2,7 +2,6 @@
 #
 # Retrieve migrations from the RPM and output an appropriately named tarball
 set -eu -o pipefail
-shopt -qs failglob
 
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
@@ -30,6 +29,7 @@ fi
 
 # lz4 compress each migration
 for migration in "${MIGRATIONS_DIR}"/*; do
+  [ -e "${migration}" ] || continue
   lz4 -v "${migration}" "${migration}.lz4"
 done
 
