@@ -131,7 +131,7 @@ type Result<T> = std::result::Result<T, StorewolfError>;
 /// Given a base path, create a brand new datastore with the appropriate
 /// symlink structure for the desired datastore version.
 ///
-/// If `version` is given, uses it, otherwise pulls version from /etc/os-release.
+/// If `version` is given, uses it, otherwise pulls version from bottlerocket-release.
 ///
 /// An example setup for theoretical version 1.5:
 ///    /path/to/datastore/current

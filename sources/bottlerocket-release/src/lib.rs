@@ -1,26 +1,34 @@
 /*!
 # Background
 
-This library lets you get a BottlerocketRelease struct that represents the data in the /etc/os-release file, or another file you point to.
+This library lets you get a BottlerocketRelease struct that represents the data in the standard os-release file, or another file you point to.
 The VERSION_ID is returned as a semver::Version for convenience.
+
+The information is pulled at runtime because build_id changes frequently and would cause unnecessary rebuilds.
 */
 
-const DEFAULT_RELEASE_FILE: &str = "/etc/os-release";
+const DEFAULT_RELEASE_FILE: &str = "/usr/lib/os-release";
+
+include!(concat!(env!("OUT_DIR"), "/constants.rs"));
 
 use log::debug;
 use semver::Version;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::fs;
 use std::path::Path;
 
 /// BottlerocketRelease represents the data found in the release file.
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct BottlerocketRelease {
+    // Fields from os-release
     pub pretty_name: String,
     pub variant_id: String,
     pub version_id: Version,
     pub build_id: String,
+
+    // Other system information
+    pub arch: String,
 }
 
 mod error {
@@ -55,7 +63,7 @@ impl BottlerocketRelease {
         let release_data = fs::read_to_string(path).context(error::ReadReleaseFile { path })?;
 
         // Split and process each line
-        let pairs: Vec<(String, String)> = release_data
+        let mut pairs: Vec<(String, String)> = release_data
             .lines()
             .filter_map(|line| {
                 // Allow for comments
@@ -83,6 +91,9 @@ impl BottlerocketRelease {
                 Some((key.to_owned(), value.to_owned()))
             })
             .collect();
+
+        // Add information from other sources
+        pairs.push(("arch".to_string(), ARCH.to_string()));
 
         envy::from_iter(pairs).context(error::LoadReleaseData { path })
     }

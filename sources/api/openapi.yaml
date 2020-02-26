@@ -176,6 +176,24 @@ paths:
         500:
           description: "Server error"
 
+  /os:
+    get:
+      summary: "Get OS information such as version, variant, and architecture"
+      operationId: "get_os_info"
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              # The response is a hashmap of string to string. Example:
+              # { "arch": "x86_64" }
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        500:
+          description: "Server error"
+
   /metadata/affected-services:
     get:
       summary: "Get affected services"
