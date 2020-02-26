@@ -27,8 +27,7 @@ BuildRequires: %{_cross_os}glibc-devel
 
 %build
 %cross_go_configure %{goimport}
-export BUILDTAGS="rpm_crashtraceback"
-go build -buildmode pie -tags="${BUILDTAGS}" -o docker %{goimport}/cmd/docker
+go build -buildmode pie -o docker %{goimport}/cmd/docker
 
 %install
 install -d %{buildroot}%{_cross_bindir}

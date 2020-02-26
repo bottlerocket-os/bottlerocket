@@ -22,8 +22,7 @@ cp -r %{_builddir}/sources/%{workspace_name}/cmd/host-ctr/* .
 
 %build
 %set_cross_go_flags
-export BUILDTAGS="rpm_crashtraceback"
-go build -buildmode=pie -tags="${BUILDTAGS}" -o host-ctr
+go build -buildmode=pie -o host-ctr
 
 %install
 install -d %{buildroot}%{_cross_bindir}

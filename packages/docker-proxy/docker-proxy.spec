@@ -30,8 +30,7 @@ cp client/mflag/LICENSE LICENSE.mflag
 
 %build
 %cross_go_configure %{goimport}
-export BUILDTAGS="rpm_crashtraceback"
-go build -buildmode pie -tags="${BUILDTAGS}" -o docker-proxy %{goimport}/cmd/proxy
+go build -buildmode pie -o docker-proxy %{goimport}/cmd/proxy
 
 %install
 install -d %{buildroot}%{_cross_bindir}

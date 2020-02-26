@@ -37,7 +37,7 @@ Requires: %{_cross_os}systemd
 
 %build
 %cross_go_configure %{goimport}
-export BUILDTAGS="no_btrfs rpm_crashtraceback seccomp selinux"
+export BUILDTAGS="no_btrfs seccomp selinux"
 for bin in \
   containerd \
   containerd-shim \
