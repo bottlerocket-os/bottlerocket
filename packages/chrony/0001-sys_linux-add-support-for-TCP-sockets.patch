@@ -1,0 +1,40 @@
+From 1e3925f7a62765d271cfad4eb371c6e555911746 Mon Sep 17 00:00:00 2001
+From: Jamie Anderson <jamieand@amazon.com>
+Date: Wed, 26 Feb 2020 20:29:00 +0000
+Subject: [PATCH] sys_linux: add support for TCP sockets
+
+This patch was reworked from an upstream patch to only apply changes to
+the seccomp filter, to allow later patches to the seccomp filter to
+apply cleanly.  The upstream patch message is preserved below:
+
+From 02ada36838e48942dd1ecd0513c3449fcf9135df Mon Sep 17 00:00:00 2001
+From: Miroslav Lichvar <mlichvar@redhat.com>
+Date: Tue, 6 Aug 2019 18:33:06 +0200
+Subject: socket: add support for TCP sockets
+
+TCP sockets will be needed for NTS key establishment.
+---
+ sys_linux.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/sys_linux.c b/sys_linux.c
+index 898dc7a..1f36696 100644
+--- a/sys_linux.c
++++ b/sys_linux.c
+@@ -496,9 +496,10 @@ SYS_Linux_EnableSystemCallFilter(int level)
+     SCMP_SYS(stat), SCMP_SYS(stat64), SCMP_SYS(statfs), SCMP_SYS(statfs64),
+     SCMP_SYS(unlink), SCMP_SYS(unlinkat),
+     /* Socket */
+-    SCMP_SYS(bind), SCMP_SYS(connect), SCMP_SYS(getsockname), SCMP_SYS(getsockopt),
+-    SCMP_SYS(recv), SCMP_SYS(recvfrom), SCMP_SYS(recvmmsg), SCMP_SYS(recvmsg),
+-    SCMP_SYS(send), SCMP_SYS(sendmmsg), SCMP_SYS(sendmsg), SCMP_SYS(sendto),
++    SCMP_SYS(accept), SCMP_SYS(bind), SCMP_SYS(connect), SCMP_SYS(getsockname),
++    SCMP_SYS(getsockopt), SCMP_SYS(recv), SCMP_SYS(recvfrom),
++    SCMP_SYS(recvmmsg), SCMP_SYS(recvmsg), SCMP_SYS(send), SCMP_SYS(sendmmsg),
++    SCMP_SYS(sendmsg), SCMP_SYS(sendto), SCMP_SYS(shutdown),
+     /* TODO: check socketcall arguments */
+     SCMP_SYS(socketcall),
+     /* General I/O */
+-- 
+2.25.0.191.gde93cc14ab
+
