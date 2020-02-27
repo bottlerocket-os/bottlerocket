@@ -11,7 +11,7 @@ pub(crate) enum Error {
     #[snafu(display("Bad file url '{}': {}", url, source))]
     ExternalFileUrl {
         url: String,
-        source: reqwest::UrlError,
+        source: url::ParseError,
     },
 
     #[snafu(display("Failed to request '{}': {}", url, source))]

@@ -76,7 +76,7 @@ impl LookasideCache {
     /// then verifies the contents against the SHA-512 hash provided.
     fn fetch_file<P: AsRef<Path>>(url: &str, path: P, hash: &str) -> Result<()> {
         let path = path.as_ref();
-        let mut resp = reqwest::get(url).context(error::ExternalFileRequest { url })?;
+        let mut resp = reqwest::blocking::get(url).context(error::ExternalFileRequest { url })?;
         let status = resp.status();
         ensure!(
             status.is_success(),
