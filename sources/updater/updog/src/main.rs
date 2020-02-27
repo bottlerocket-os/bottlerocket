@@ -44,7 +44,7 @@ enum Command {
 #[derive(Debug, Deserialize)]
 struct Config {
     metadata_base_url: String,
-    target_base_url: String,
+    targets_base_url: String,
     seed: u32,
     // TODO API sourced configuration, eg.
     // blacklist: Option<Vec<Version>>,
@@ -111,7 +111,7 @@ fn load_repository<'a>(
             })?,
             datastore: Path::new("/var/lib/bottlerocket/updog"),
             metadata_base_url: &config.metadata_base_url,
-            target_base_url: &config.target_base_url,
+            target_base_url: &config.targets_base_url,
             limits: Limits {
                 max_root_size: 1024 * 1024,         // 1 MiB
                 max_targets_size: 1024 * 1024 * 10, // 10 MiB
@@ -701,7 +701,7 @@ mod tests {
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
-            target_base_url: String::from("bar"),
+            targets_base_url: String::from("bar"),
             seed: 123,
         };
         let version = Version::parse("1.18.0").unwrap();
@@ -720,7 +720,7 @@ mod tests {
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
-            target_base_url: String::from("bar"),
+            targets_base_url: String::from("bar"),
             seed: 1487,
         };
 
@@ -745,7 +745,7 @@ mod tests {
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
-            target_base_url: String::from("bar"),
+            targets_base_url: String::from("bar"),
             seed: 123,
         };
 
@@ -774,7 +774,7 @@ mod tests {
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
-            target_base_url: String::from("bar"),
+            targets_base_url: String::from("bar"),
             seed: 123,
         };
 
@@ -927,7 +927,7 @@ mod tests {
         let variant = String::from("aws-k8s-1.15");
         let config = Config {
             metadata_base_url: String::from("foo"),
-            target_base_url: String::from("bar"),
+            targets_base_url: String::from("bar"),
             seed: 512,
         };
 

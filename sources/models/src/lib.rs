@@ -93,7 +93,7 @@ struct KubernetesSettings {
 #[model]
 struct UpdatesSettings {
     metadata_base_url: Url,
-    target_base_url: Url,
+    targets_base_url: Url,
     seed: u32,
 }
 
