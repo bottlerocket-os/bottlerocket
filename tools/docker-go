@@ -17,7 +17,7 @@ Required:
     --module-path               The path of the Go module to mount into the container
     --sdk-image                 Name of the SDK image to use
     --go-mod-cache              The Go module cache path to mount into the container
-    --command                   The command to run in the golang container
+    --command                   The command to run in the SDK container
 EOF
 }
 
