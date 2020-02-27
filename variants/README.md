@@ -24,9 +24,9 @@ Information about API settings for variants can be found in the [models](../sour
 
 ## Variants
 
-### aws-k8s: Kubernetes node
+### aws-k8s-1.15: Kubernetes 1.15 node
 
-The [aws-k8s](aws-k8s/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+The [aws-k8s-1.15](aws-k8s-1.15/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 
 ### aws-dev: Development build

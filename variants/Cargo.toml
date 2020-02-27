@@ -1,9 +1,0 @@
-[workspace]
-members = [
-    "aws-k8s",
-    "aws-dev",
-]
-
-[profile.dev]
-debug = false
-opt-level = 'z'

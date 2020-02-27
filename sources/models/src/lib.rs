@@ -17,10 +17,10 @@ Default values are specified in [defaults.toml](defaults.toml) and can be overri
 
 The `#[model]` attribute on Settings and its sub-structs reduces duplication and adds some required metadata; see [its docs](model-derive/) for details.
 
-## aws-k8s: Kubernetes
+## aws-k8s-1.15: Kubernetes 1.15
 
-* [Model](src/aws-k8s/mod.rs)
-* [Overridden defaults](src/aws-k8s/override-defaults.toml)
+* [Model](src/aws-k8s-1.15/mod.rs)
+* [Overridden defaults](src/aws-k8s-1.15/override-defaults.toml)
 
 ## aws-dev: Development build
 

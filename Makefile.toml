@@ -10,7 +10,7 @@ BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*' || echo 00000000"] }
 BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' Release.toml"] }
-BUILDSYS_VARIANT = "aws-k8s"
+BUILDSYS_VARIANT = "aws-k8s-1.15"
 # Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
 # To use the upstream source as fallback, override this on the command line and set it to 'true'
 BUILDSYS_UPSTREAM_SOURCE_FALLBACK = "false"
@@ -79,7 +79,8 @@ fi
 dependencies = ["setup"]
 script = [
 '''
-for ws in sources packages variants tools/buildsys ; do
+for ws in sources packages variants/* tools/buildsys ; do
+  [ -d "${ws}" ] || continue
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
 chmod o+r -R ${CARGO_HOME}
@@ -151,8 +152,7 @@ export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path variants/Cargo.toml \
-  --package ${BUILDSYS_VARIANT}
+  --manifest-path variants/${BUILDSYS_VARIANT}/Cargo.toml
 '''
 ]
 
@@ -225,7 +225,8 @@ script = ['tools/gen-docs.sh']
 [tasks.clean]
 script = [
 '''
-for ws in sources packages variants tools/buildsys ; do
+for ws in sources packages variants/* tools/buildsys ; do
+  [ -d "${ws}" ] || continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys

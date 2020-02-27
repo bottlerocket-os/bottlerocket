@@ -33,7 +33,7 @@ fn link_current_variant() {
     let var = "VARIANT";
     println!("cargo:rerun-if-env-changed={}", var);
     let variant = env::var(var).unwrap_or_else(|_| {
-        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in sources/models, for example \"aws-k8s\".", var);
+        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in sources/models, for example \"aws-k8s-1.15\".", var);
         process::exit(1);
     });
 

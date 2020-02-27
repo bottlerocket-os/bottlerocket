@@ -422,7 +422,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
 }
 
 fn fmt_full_version(update: &Update) -> String {
-    format!("{}-{}", update.variant, update.version)
+    format!("{} {}", update.variant, update.version)
 }
 
 fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
@@ -532,7 +532,7 @@ fn main_inner() -> Result<()> {
                     output(
                         arguments.json,
                         &u,
-                        &format!("Update applied: {}-{}", u.variant, u.version),
+                        &format!("Update applied: {}", fmt_full_version(&u)),
                     )?;
                 } else if let Some(wave) = u.jitter(config.seed) {
                     // return the jittered time of our wave in the update
@@ -725,7 +725,7 @@ mod tests {
         };
 
         let version = Version::parse("0.1.3").unwrap();
-        let variant = String::from("aws-k8s");
+        let variant = String::from("aws-k8s-1.15");
         let update = update_required(&config, &manifest, &version, &variant, None);
 
         assert!(update.is_some(), "Updog ignored max version");
@@ -911,7 +911,7 @@ mod tests {
     fn check_update_waves() {
         let mut manifest = Manifest::default();
         let mut update = Update {
-            variant: String::from("aws-k8s"),
+            variant: String::from("aws-k8s-1.15"),
             arch: String::from(TARGET_ARCH),
             version: Version::parse("1.1.1").unwrap(),
             max_version: Version::parse("1.1.1").unwrap(),
@@ -924,7 +924,7 @@ mod tests {
         };
 
         let current_version = Version::parse("1.0.0").unwrap();
-        let variant = String::from("aws-k8s");
+        let variant = String::from("aws-k8s-1.15");
         let config = Config {
             metadata_base_url: String::from("foo"),
             target_base_url: String::from("bar"),
