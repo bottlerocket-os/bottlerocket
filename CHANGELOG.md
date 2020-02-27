@@ -1,3 +1,150 @@
+# v0.3.0 (2020-02-27)
+
+Welcome to Bottlerocket!
+Bottlerocket is the new name for the OS.
+
+In preparation for public preview, v0.3.0 includes a number of breaking changes that mean upgrades from previous versions are not possible.
+This is not done lightly, but had to be done to accommodate all we've learned during private preview.
+
+## Breaking Changes
+
+* Rename to Bottlerocket ([#722], [#740]).
+* Change partition labels to `BOTTLEROCKET-*` ([#726]).
+* Switch to new updates repository URIs under `updates.bottlerocket.aws` ([#778]).
+* Update Kubernetes to 1.15 ([#749]).
+* Rename aws-k8s variant to aws-k8s-1.15 to enable versioning ([#785]).
+* Update Linux kernel to 5.4.16-8.72.amzn2 ([#731]).
+* Rename `settings.target-base-url` to `settings.targets-base-url` ([#788]).
+
+## OS Changes
+
+* Mount kernel modules and development headers into containers from a squashfs file on the host ([#701]).
+* Include third-party licenses at `/usr/share/licenses` ([#723]).
+* Add initial implementation of SELinux ([#683], [#724]).
+* Support transactions in the API ([#715], [#727]).
+* Add support for platform-specific settings like AWS region ([#636]).
+* Support templated settings with new tool 'schnauzer' ([#637]).
+* Generate container image URIs with parameterized regions using schnauzer ([#638]).
+* Respect update release waves when using `updog check-updates` ([#615]).
+* Fix an issue with failed updates through certain https connections ([#730]).
+* Add support for EC2 IMDSv2 ([#705], [#706], [#709]).
+* Remove update-checking boot service ([#772]).
+* Remove old migrations and mitigations that no longer apply ([#774]).
+* Add /os API to expose variant, arch, version, etc. ([#777]).
+* Update host container packages ([#707]).
+* Allow removing settings in migrations ([#644]).
+* Create abstractions for creating common migrations ([#712], [#717]).
+* Remove the datastore version, instead use Bottlerocket version ([#760]).
+* Improve datastore migration naming convention and build migrations during cargo make ([#704], [#716]).
+* Update dependencies of third-party packages in base OS ([#691], [#696], [#698], [#699], [#700], [#708], [#728], [#786]).
+* Update dependencies of Rust packages ([#738], [#730]).
+* Rename `moondog` to `early-boot-config` ([#757]).
+* Update admin and control containers to v0.4.0 ([#789]).
+
+## Documentation
+
+* Add copyright statement and Bottlerocket license ([#746]).
+* General documentation improvements ([#681], [#693], [#736], [#761], [#762]).
+* Added READMEs for [packages](packages/) and [variants](variants/) ([#773]).
+* Split INSTALL guide into BUILDING and QUICKSTART ([#780]).
+* Update CNI plugin in documentation and conformance test scripts ([#739]).
+
+## Build Changes
+
+* General improvements to third-party license scanning ([#686], [#719], [#768]).
+* Add policycoreutils, secilc, and squashfs-tools to SDK ([#678], [#690]).
+* Update to Rust 1.41 and Go 1.13.8 ([#711], [#733]).
+* Disallow upstream source fallback by default ([#735]).
+* Move host, operator, and SDK containers to their own git repos ([#743], [#751], [#775]).
+  * [SDK Container](https://github.com/bottlerocket-os/bottlerocket-sdk)
+  * [Admin Container](https://github.com/bottlerocket-os/bottlerocket-admin-container)
+  * [Control Container](https://github.com/bottlerocket-os/bottlerocket-control-container)
+  * [Bottlerocket Update Operator](https://github.com/bottlerocket-os/bottlerocket-update-operator)
+* Improve the syntax of migrations listed in Release.toml ([#687]).
+* Add arm64 builds for host-containers ([#694]).
+* Build stable image paths using symlinks in `build/latest/` ([#767]).
+* Add a `set-migrations` subcommand to the `updata` tool ([#756]).
+* Remove `rpm_crashtraceback` tag from go builds ([#779]).
+* Rename built artifacts to specify variant before arch ([#776]).
+* Update SDK to v0.9.0 ([#790]).
+* Fix architecture conditional in glibc spec ([#787]).
+* Rename the `workspaces` directory to `sources` and the `workspaces` package to `os`. ([#770]).
+
+[#615]: https://github.com/bottlerocket-os/bottlerocket/pull/615
+[#636]: https://github.com/bottlerocket-os/bottlerocket/pull/636
+[#637]: https://github.com/bottlerocket-os/bottlerocket/pull/637
+[#638]: https://github.com/bottlerocket-os/bottlerocket/pull/638
+[#644]: https://github.com/bottlerocket-os/bottlerocket/pull/644
+[#678]: https://github.com/bottlerocket-os/bottlerocket/pull/678
+[#681]: https://github.com/bottlerocket-os/bottlerocket/pull/681
+[#683]: https://github.com/bottlerocket-os/bottlerocket/pull/683
+[#686]: https://github.com/bottlerocket-os/bottlerocket/pull/686
+[#687]: https://github.com/bottlerocket-os/bottlerocket/pull/687
+[#690]: https://github.com/bottlerocket-os/bottlerocket/pull/690
+[#691]: https://github.com/bottlerocket-os/bottlerocket/pull/691
+[#693]: https://github.com/bottlerocket-os/bottlerocket/pull/693
+[#694]: https://github.com/bottlerocket-os/bottlerocket/pull/694
+[#696]: https://github.com/bottlerocket-os/bottlerocket/pull/696
+[#698]: https://github.com/bottlerocket-os/bottlerocket/pull/698
+[#699]: https://github.com/bottlerocket-os/bottlerocket/pull/699
+[#700]: https://github.com/bottlerocket-os/bottlerocket/pull/700
+[#701]: https://github.com/bottlerocket-os/bottlerocket/pull/701
+[#704]: https://github.com/bottlerocket-os/bottlerocket/pull/704
+[#705]: https://github.com/bottlerocket-os/bottlerocket/pull/705
+[#706]: https://github.com/bottlerocket-os/bottlerocket/pull/706
+[#707]: https://github.com/bottlerocket-os/bottlerocket/pull/707
+[#708]: https://github.com/bottlerocket-os/bottlerocket/pull/708
+[#709]: https://github.com/bottlerocket-os/bottlerocket/pull/709
+[#711]: https://github.com/bottlerocket-os/bottlerocket/pull/711
+[#712]: https://github.com/bottlerocket-os/bottlerocket/pull/712
+[#715]: https://github.com/bottlerocket-os/bottlerocket/pull/715
+[#716]: https://github.com/bottlerocket-os/bottlerocket/pull/716
+[#717]: https://github.com/bottlerocket-os/bottlerocket/pull/717
+[#719]: https://github.com/bottlerocket-os/bottlerocket/pull/719
+[#722]: https://github.com/bottlerocket-os/bottlerocket/pull/722
+[#723]: https://github.com/bottlerocket-os/bottlerocket/pull/723
+[#724]: https://github.com/bottlerocket-os/bottlerocket/pull/724
+[#726]: https://github.com/bottlerocket-os/bottlerocket/pull/726
+[#727]: https://github.com/bottlerocket-os/bottlerocket/pull/727
+[#728]: https://github.com/bottlerocket-os/bottlerocket/pull/728
+[#730]: https://github.com/bottlerocket-os/bottlerocket/pull/730
+[#731]: https://github.com/bottlerocket-os/bottlerocket/pull/731
+[#733]: https://github.com/bottlerocket-os/bottlerocket/pull/733
+[#735]: https://github.com/bottlerocket-os/bottlerocket/pull/735
+[#736]: https://github.com/bottlerocket-os/bottlerocket/pull/736
+[#738]: https://github.com/bottlerocket-os/bottlerocket/pull/738
+[#739]: https://github.com/bottlerocket-os/bottlerocket/pull/739
+[#740]: https://github.com/bottlerocket-os/bottlerocket/pull/740
+[#743]: https://github.com/bottlerocket-os/bottlerocket/pull/743
+[#746]: https://github.com/bottlerocket-os/bottlerocket/pull/746
+[#749]: https://github.com/bottlerocket-os/bottlerocket/pull/749
+[#751]: https://github.com/bottlerocket-os/bottlerocket/pull/751
+[#756]: https://github.com/bottlerocket-os/bottlerocket/pull/756
+[#757]: https://github.com/bottlerocket-os/bottlerocket/pull/757
+[#758]: https://github.com/bottlerocket-os/bottlerocket/pull/758
+[#760]: https://github.com/bottlerocket-os/bottlerocket/pull/760
+[#761]: https://github.com/bottlerocket-os/bottlerocket/pull/761
+[#762]: https://github.com/bottlerocket-os/bottlerocket/pull/762
+[#767]: https://github.com/bottlerocket-os/bottlerocket/pull/767
+[#768]: https://github.com/bottlerocket-os/bottlerocket/pull/768
+[#770]: https://github.com/bottlerocket-os/bottlerocket/pull/770
+[#772]: https://github.com/bottlerocket-os/bottlerocket/pull/772
+[#773]: https://github.com/bottlerocket-os/bottlerocket/pull/773
+[#774]: https://github.com/bottlerocket-os/bottlerocket/pull/774
+[#775]: https://github.com/bottlerocket-os/bottlerocket/pull/775
+[#776]: https://github.com/bottlerocket-os/bottlerocket/pull/776
+[#777]: https://github.com/bottlerocket-os/bottlerocket/pull/777
+[#778]: https://github.com/bottlerocket-os/bottlerocket/pull/778
+[#779]: https://github.com/bottlerocket-os/bottlerocket/pull/779
+[#780]: https://github.com/bottlerocket-os/bottlerocket/pull/780
+[#782]: https://github.com/bottlerocket-os/bottlerocket/pull/782
+[#785]: https://github.com/bottlerocket-os/bottlerocket/pull/785
+[#786]: https://github.com/bottlerocket-os/bottlerocket/pull/786
+[#787]: https://github.com/bottlerocket-os/bottlerocket/pull/787
+[#788]: https://github.com/bottlerocket-os/bottlerocket/pull/788
+[#789]: https://github.com/bottlerocket-os/bottlerocket/pull/789
+[#790]: https://github.com/bottlerocket-os/bottlerocket/pull/790
+
 # v0.2.1 (2020-01-20)
 
 ## OS changes
