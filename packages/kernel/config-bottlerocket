@@ -40,3 +40,6 @@ CONFIG_IKCONFIG_PROC=y
 
 # kernel headers at /sys/kernel/kheaders.tar.xz
 CONFIG_IKHEADERS=y
+
+# BTF debug info at /sys/kernel/btf/vmlinux
+CONFIG_DEBUG_INFO_BTF=y
