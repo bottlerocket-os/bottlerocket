@@ -40,6 +40,7 @@ This is not done lightly, but had to be done to accommodate all we've learned du
 * Update dependencies of Rust packages ([#738], [#730]).
 * Rename `moondog` to `early-boot-config` ([#757]).
 * Update admin and control containers to v0.4.0 ([#789]).
+* Update container runtime socket path to more common `/run/dockershim.sock` ([#796])
 
 ## Documentation
 
@@ -144,6 +145,7 @@ This is not done lightly, but had to be done to accommodate all we've learned du
 [#788]: https://github.com/bottlerocket-os/bottlerocket/pull/788
 [#789]: https://github.com/bottlerocket-os/bottlerocket/pull/789
 [#790]: https://github.com/bottlerocket-os/bottlerocket/pull/790
+[#796]: https://github.com/bottlerocket-os/bottlerocket/pull/796
 
 # v0.2.1 (2020-01-20)
 
