@@ -65,7 +65,7 @@ set -o pipefail
 if ! docker image inspect ${BUILDSYS_SDK_IMAGE} >/dev/null 2>&1 ; then
   # Let curl resolve the certificates instead of the tasks resolved bundle.
   unset SSL_CERT_FILE SSL_CERT_DIR
-  if ! curl https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com/${BUILDSYS_SDK_IMAGE}.tar.gz \
+  if ! curl https://cache.bottlerocket.aws/${BUILDSYS_SDK_IMAGE}.tar.gz \
        | gunzip | docker load ; then
     echo "failed to load '${BUILDSYS_SDK_IMAGE}'" >&2
     exit 1

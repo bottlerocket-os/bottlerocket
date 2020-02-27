@@ -20,7 +20,7 @@ use std::fs::{self, File};
 use std::io::{self, BufWriter};
 use std::path::{Path, PathBuf};
 
-static LOOKASIDE_CACHE: &str = "https://thar-upstream-lookaside-cache.s3.us-west-2.amazonaws.com";
+static LOOKASIDE_CACHE: &str = "https://cache.bottlerocket.aws";
 
 pub(crate) struct LookasideCache;
 
