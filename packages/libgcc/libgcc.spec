@@ -15,7 +15,7 @@ URL: https://gcc.gnu.org/
 
 %prep
 %setup -T -c
-cp %{_cross_licensedir}/%{name}/* .
+cp %{_cross_licensedir}/gcc/COPYING{3,.RUNTIME} .
 
 %build
 install -p -m0755 %{_cross_libdir}/libgcc_s.so.1 .

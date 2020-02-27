@@ -15,7 +15,7 @@ URL: https://www.rust-lang.org/
 
 %prep
 %setup -T -c
-cp %{_cross_licensedir}/%{name}/* .
+cp /usr/share/licenses/rust/* .
 
 %build
 %define _rust_target %{_cross_arch}-unknown-linux-%{_cross_libc}
