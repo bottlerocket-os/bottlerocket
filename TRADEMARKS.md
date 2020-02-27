@@ -61,7 +61,7 @@ Thus, the text of this policy (and not the Bottlerocket Trademarks themselves) i
 **1. Can I create and redistribute my own builds of Bottlerocket?**
 If you build Bottlerocket from unmodified source and redistribute the results, you may use “Bottlerocket” only if it is clear in both the name of your distribution and the content associated with it that your distribution is your build of Amazon’s Bottlerocket and not the official build, and you must identify the commit from which it is built, including the commit date.
 
-**2. How can I use the Bottlerocket Trademarks to refer to my own version of Amazon’s Bottlerocket that I’ve adapted for a different container orchestrator?**
+**2. How can I use the Bottlerocket Trademarks to refer to my own version of Amazon’s Bottlerocket, for example a version adapted for a different container orchestrator?**
 If you modify Amazon’s Bottlerocket to work with a different container orchestrator, you may use “Bottlerocket Remix” to refer to your version in accordance with the policy guidelines.
 If you have the rights to use the trademarks of that container orchestrator in this manner, you may append the name of that container orchestrator to “Bottlerocket Remix”.
 
