@@ -15,7 +15,7 @@ Runs
 
 Required:
     --module-path               The path of the Go module to mount into the container
-    --go-version                Version of Go to use
+    --sdk-image                 Name of the SDK image to use
     --go-mod-cache              The Go module cache path to mount into the container
     --command                   The command to run in the golang container
 EOF
@@ -35,7 +35,7 @@ parse_args() {
     case "${1}" in
         --help ) usage; exit 0 ;;
         --module-path ) shift; GO_MODULE_PATH="${1}" ;;
-        --go-version ) shift; GO_VERSION="${1}" ;;
+        --sdk-image ) shift; SDK_IMAGE="${1}" ;;
         --go-mod-cache ) shift; GO_MOD_CACHE="${1}" ;;
         --command ) shift; COMMAND="${@:1}" ;;
         *) ;;
@@ -45,7 +45,7 @@ parse_args() {
 
   # Required arguments
   required_arg "--module-path" "${GO_MODULE_PATH}"
-  required_arg "--go-version" "${GO_VERSION}"
+  required_arg "--sdk-image" "${SDK_IMAGE}"
   required_arg "--go-mod-cache" "${GO_MOD_CACHE}"
   required_arg "--command" "${COMMAND}"
 }
@@ -57,10 +57,11 @@ parse_args "${@}"
 docker run --rm \
   -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \
+  -e GOPATH='/tmp/go' \
   --user "$(id -u):$(id -g)" \
   ${DOCKER_RUN_ARGS} \
-  -v "${GO_MOD_CACHE}":/go/pkg/mod \
+  -v "${GO_MOD_CACHE}":/tmp/go/pkg/mod \
   -v "${GO_MODULE_PATH}":/usr/src/host-ctr \
   -w /usr/src/host-ctr \
-  golang:${GO_VERSION} \
+  "${SDK_IMAGE}" \
     bash -c "${COMMAND}"

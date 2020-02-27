@@ -23,7 +23,6 @@ BUILDSYS_ALLOW_FAILED_LICENSE_CHECK = "false"
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 CARGO_MAKE_CARGO_ARGS = "--jobs 8 --offline --locked"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
-GO_VERSION = "1.13.8"
 DOCKER_BUILDKIT = "1"
 
 [env.development]
@@ -88,19 +87,19 @@ chmod o+r -R ${CARGO_HOME}
 ]
 
 [tasks.fetch-vendored]
-dependencies = ["setup"]
+dependencies = ["setup", "fetch-sdk"]
 script = [
 '''
 ${BUILDSYS_TOOLS_DIR}/docker-go \
   --module-path ${BUILDSYS_SOURCES_DIR}/host-ctr/cmd/host-ctr \
-  --go-version ${GO_VERSION} \
+  --sdk-image ${BUILDSYS_SDK_IMAGE} \
   --go-mod-cache ${GO_MOD_CACHE} \
   --command "go list -mod=readonly ./... >/dev/null && go mod vendor"
 '''
 ]
 
 [tasks.unit-tests]
-dependencies = ["setup", "fetch-sources", "fetch-vendored"]
+dependencies = ["setup", "fetch-sdk", "fetch-sources", "fetch-vendored"]
 script = [
 '''
 cargo test \
@@ -112,7 +111,7 @@ cargo test \
 # host-ctr unit tests (go)
 ${BUILDSYS_TOOLS_DIR}/docker-go \
   --module-path ${BUILDSYS_SOURCES_DIR}/host-ctr/cmd/host-ctr \
-  --go-version ${GO_VERSION} \
+  --sdk-image ${BUILDSYS_SDK_IMAGE} \
   --go-mod-cache ${GO_MOD_CACHE} \
   --command "go test -v"
 '''
