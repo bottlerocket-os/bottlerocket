@@ -9,6 +9,7 @@ use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
 use actix_web::{error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use bottlerocket_release::BottlerocketRelease;
 use error::Result;
+use futures::future;
 use log::info;
 use model::{ConfigurationFiles, Services, Settings};
 use nix::unistd::{chown, Gid};
@@ -47,7 +48,7 @@ fn notify_unix_socket_ready() -> Result<()> {
 /// This is the primary interface of the module.  It defines the server and application that actix
 /// spawns for requests.  It creates a shared datastore handle that can be used by handler methods
 /// to interface with the controller.
-pub fn serve<P1, P2>(
+pub async fn serve<P1, P2>(
     socket_path: P1,
     datastore_path: P2,
     threads: usize,
@@ -63,7 +64,7 @@ where
 
     let http_server = HttpServer::new(move || {
         App::new()
-            .register_data(shared_datastore.clone())
+            .app_data(shared_datastore.clone())
             .service(
                 web::scope("/settings")
                     .route("", web::get().to(get_settings))
@@ -117,7 +118,7 @@ where
     // Notify system manager the UNIX socket has been initialized, so other service units can proceed
     notify_unix_socket_ready()?;
 
-    http_server.run().context(error::ServerStart)
+    http_server.run().await.context(error::ServerStart)
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -128,7 +129,7 @@ where
 // ourselves.
 /// Return the live settings from the data store; if 'keys' or 'prefix' are specified in query
 /// parameters, return the subset of matching settings.
-fn get_settings(
+async fn get_settings(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<SettingsResponse> {
@@ -151,7 +152,7 @@ fn get_settings(
 }
 
 /// Apply the requested settings to the pending data store
-fn patch_settings(
+async fn patch_settings(
     settings: web::Json<Settings>,
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
@@ -162,14 +163,14 @@ fn patch_settings(
     Ok(HttpResponse::NoContent().finish()) // 204
 }
 
-fn get_transaction_list(data: web::Data<SharedDataStore>) -> Result<TransactionListResponse> {
+async fn get_transaction_list(data: web::Data<SharedDataStore>) -> Result<TransactionListResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
     let data = controller::list_transactions(&*datastore)?;
     Ok(TransactionListResponse(data))
 }
 
 /// Get any pending settings in the given transaction, or the "default" transaction if unspecified.
-fn get_transaction(
+async fn get_transaction(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<SettingsResponse> {
@@ -180,7 +181,7 @@ fn get_transaction(
 }
 
 /// Delete the given transaction, or the "default" transaction if unspecified.
-fn delete_transaction(
+async fn delete_transaction(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<ChangedKeysResponse> {
@@ -192,7 +193,7 @@ fn delete_transaction(
 
 /// Save settings changes from the given transaction, or the "default" transaction if unspecified,
 /// to the live data store.  Returns the list of changed keys.
-fn commit_transaction(
+async fn commit_transaction(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<ChangedKeysResponse> {
@@ -210,7 +211,7 @@ fn commit_transaction(
 
 /// Starts settings appliers for any changes that have been committed to the data store.  This
 /// updates config files, runs restart commands, etc.
-fn apply_changes(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
+async fn apply_changes(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
     if let Some(keys_str) = query.get("keys") {
         let keys = comma_separated("keys", keys_str)?;
         controller::apply_changes(Some(&keys))?;
@@ -224,7 +225,7 @@ fn apply_changes(query: web::Query<HashMap<String, String>>) -> Result<HttpRespo
 /// Usually you want to apply settings changes you've committed, so this is a convenience method to
 /// perform both a commit and an apply.  Commits the given transaction, or the "default"
 /// transaction if unspecified.
-fn commit_transaction_and_apply(
+async fn commit_transaction_and_apply(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<ChangedKeysResponse> {
@@ -245,13 +246,13 @@ fn commit_transaction_and_apply(
 
 // The "os" APIs don't deal with the data store at all, they just read a release field, so we
 // handle them here.
-fn get_os_info() -> Result<BottlerocketReleaseResponse> {
+async fn get_os_info() -> Result<BottlerocketReleaseResponse> {
     let br = BottlerocketRelease::new().context(error::ReleaseData)?;
     Ok(BottlerocketReleaseResponse(br))
 }
 
 /// Get the affected services for a list of data keys
-fn get_affected_services(
+async fn get_affected_services(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<MetadataResponse> {
@@ -268,14 +269,14 @@ fn get_affected_services(
 }
 
 /// Get all settings that have setting-generator metadata
-fn get_setting_generators(data: web::Data<SharedDataStore>) -> Result<MetadataResponse> {
+async fn get_setting_generators(data: web::Data<SharedDataStore>) -> Result<MetadataResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
     let resp = controller::get_metadata_for_all_data_keys(&*datastore, "setting-generator")?;
     Ok(MetadataResponse(resp))
 }
 
 /// Get the template metadata for a list of data keys
-fn get_templates(
+async fn get_templates(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<MetadataResponse> {
@@ -291,7 +292,7 @@ fn get_templates(
 }
 
 /// Get all services, or if 'names' is specified, services with those names
-fn get_services(
+async fn get_services(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<ServicesResponse> {
@@ -308,7 +309,7 @@ fn get_services(
 }
 
 /// Get all configuration files, or if 'names' is specified, configuration files with those names
-fn get_configuration_files(
+async fn get_configuration_files(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedDataStore>,
 ) -> Result<ConfigurationFilesResponse> {
@@ -398,13 +399,16 @@ macro_rules! impl_responder_for {
     ($for:ident, $self:ident, $serialize_expr:expr) => (
         impl Responder for $for {
             type Error = error::Error;
-            type Future = Result<HttpResponse>;
+            type Future = future::Ready<Result<HttpResponse>>;
 
             fn respond_to($self, _req: &HttpRequest) -> Self::Future {
-                let body = serde_json::to_string(&$serialize_expr).context(error::ResponseSerialization)?;
-                Ok(HttpResponse::Ok()
+                let body = match serde_json::to_string(&$serialize_expr) {
+                    Ok(s) => s,
+                    Err(e) => return future::ready(Err(e).context(error::ResponseSerialization)),
+                };
+                future::ready(Ok(HttpResponse::Ok()
                     .content_type("application/json")
-                    .body(body))
+                    .body(body)))
             }
         }
     )
