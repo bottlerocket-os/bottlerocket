@@ -3,10 +3,9 @@ info:
   version: "0.1.0"
   title: "Bottlerocket API"
   description: "The API for the Bottlerocket OS"
-  # TODO Get the right license in here
   license:
-    name: ""
-    url: ""
+    name: "Apache-2.0 OR MIT"
+    url: "https://github.com/bottlerocket-os/bottlerocket/blob/develop/COPYRIGHT"
 
 servers:
 - url: file:///run/api.sock
