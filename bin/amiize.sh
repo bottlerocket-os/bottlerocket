@@ -221,34 +221,53 @@ parse_args() {
 }
 
 cleanup() {
-   # Note: this isn't perfect because the user could ctrl-C the process in a
-   # way that restarts our main loop and starts another instance, replacing
-   # this variable.
    if [ -n "${instance}" ]; then
       echo "Cleaning up worker instance"
       aws ec2 terminate-instances \
          --output text \
          --region "${REGION}" \
          --instance-ids "${instance}"
+      unset instance
    # Clean up volumes if we have them, but *not* if we have an instance - the
    # volumes would still be attached to the instance, and would be deleted
    # automatically with it.
-   # Note: this isn't perfect because of terminate/detach timing...
    else
       if [ -n "${root_volume}" ]; then
+         echo "Waiting for working root volume ${root_volume} to be available"
+         aws ec2 wait volume-available \
+            --region "${REGION}" \
+            --volume-ids "${root_volume}"
          echo "Cleaning up working root volume"
          aws ec2 delete-volume \
             --output text \
             --region "${REGION}" \
             --volume-id "${root_volume}"
+         unset root_volume
       fi
       if [ -n "${data_volume}" ]; then
+         echo "Waiting for working data volume ${data_volume} to be available"
+         aws ec2 wait volume-available \
+            --region "${REGION}" \
+            --volume-ids "${data_volume}"
          echo "Cleaning up working data volume"
          aws ec2 delete-volume \
             --output text \
             --region "${REGION}" \
             --volume-id "${data_volume}"
+         unset data_volume
       fi
+   fi
+
+   # Clean up snapshots if we failed to make an AMI from them
+   if [ -n "${root_snapshot}" ]; then
+      echo "Deleting root snapshot from failed attempt"
+      aws ec2 delete-snapshot --snapshot-id "${root_snapshot}"
+      unset root_snapshot
+   fi
+   if [ -n "${data_snapshot}" ]; then
+      echo "Deleting data snapshot from failed attempt"
+      aws ec2 delete-snapshot --snapshot-id "${data_snapshot}"
+      unset data_snapshot
    fi
 }
 
@@ -441,20 +460,10 @@ while true; do
       echo "Current status: ${status}"
       if [ "${tries}" -ge 10 ]; then
          echo "* Instance didn't start running in allotted time!" >&2
-         # Don't leave it hanging
-         if aws ec2 terminate-instances \
-            --output text \
-            --region "${REGION}" \
-            --instance-ids "${instance}"
-         then
-            # So the cleanup function doesn't try to stop it
-            unset instance
-         else
-            echo "* Warning: Could not terminate instance!" >&2
-         fi
-
+         cleanup
          continue 2
       fi
+      let tries+=1
 
       sleep 6
       status=$(aws ec2 describe-instances \
@@ -463,8 +472,7 @@ while true; do
          --instance-ids "${instance}" \
          | jq --raw-output --exit-status '.Reservations[].Instances[].State.Name')
 
-       check_return ${?} "Couldn't find instance state in describe-instances output!" || continue
-       let tries+=1
+      check_return ${?} "Couldn't find instance state in describe-instances output!" || continue
    done
    echo "Found status: ${status}"
 
@@ -474,22 +482,22 @@ while true; do
       --output json \
       --region "${REGION}" \
       --instance-ids "${instance}")
-   check_return ${?} "Couldn't describe instance!" || continue
+   check_return ${?} "Couldn't describe instance!" || { cleanup; continue; }
 
    jq_host_query=".Reservations[].Instances[].PublicDnsName"
    host=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_host_query}")
-   check_return ${?} "Couldn't find hostname in describe-instances output!" || continue
+   check_return ${?} "Couldn't find hostname in describe-instances output!" || { cleanup; continue; }
 
    jq_rootvolumeid_query=".Reservations[].Instances[].BlockDeviceMappings[] | select(.DeviceName == \"${ROOT_DEVICE}\") | .Ebs.VolumeId"
    root_volume=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_rootvolumeid_query}")
-   check_return ${?} "Couldn't find ebs root-volume-id in describe-instances output!" || continue
+   check_return ${?} "Couldn't find ebs root-volume-id in describe-instances output!" || { cleanup; continue; }
 
    jq_datavolumeid_query=".Reservations[].Instances[].BlockDeviceMappings[] | select(.DeviceName == \"${DATA_DEVICE}\") | .Ebs.VolumeId"
    data_volume=$(echo "${json_output}" | jq --raw-output --exit-status "${jq_datavolumeid_query}")
-   check_return ${?} "Couldn't find ebs data-volume-id in describe-instances output!" || continue
+   check_return ${?} "Couldn't find ebs data-volume-id in describe-instances output!" || { cleanup; continue; }
 
    [ -n "${host}" ] && [ -n "${root_volume}" ] && [ -n "${data_volume}" ]
-   check_return ${?} "Couldn't get hostname and volumes from instance description!" || continue
+   check_return ${?} "Couldn't get hostname and volumes from instance description!" || { cleanup; continue; }
    echo "Found hostname '${host}' and root volume '${root_volume}' and data volume '${data_volume}'"
 
    echo "Waiting for SSH to be accessible"
@@ -498,7 +506,7 @@ while true; do
    # shellcheck disable=SC2029 disable=SC2086
    while ! ssh ${SSH_OPTS} -o ConnectTimeout=5 "ec2-user@${host}" "test -b ${ROOT_DEVICE} && test -b ${DATA_DEVICE}"; do
       [ "${tries}" -lt 10 ]
-      check_return ${?} "* SSH not responding on instance!" || continue 2
+      check_return ${?} "* SSH not responding on instance!" || { cleanup; continue 2; }
       sleep 6
       let tries+=1
    done
@@ -510,7 +518,7 @@ while true; do
    echo "Uploading the images to the instance"
    rsync --compress --sparse --rsh="ssh ${SSH_OPTS}" \
       "${ROOT_IMAGE}" "${DATA_IMAGE}" "ec2-user@${host}:${STORAGE}/"
-   check_return ${?} "rsync of root and data images to build host failed!" || continue
+   check_return ${?} "rsync of root and data images to build host failed!" || { cleanup; continue; }
    REMOTE_ROOT_IMAGE="${STORAGE}/$(basename "${ROOT_IMAGE}")"
    REMOTE_DATA_IMAGE="${STORAGE}/$(basename "${DATA_IMAGE}")"
 
@@ -519,12 +527,12 @@ while true; do
    # shellcheck disable=SC2029 disable=SC2086
    ssh ${SSH_OPTS} -tt "ec2-user@${host}" \
       "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_ROOT_IMAGE} of=${ROOT_DEVICE}"
-   check_return ${?} "Writing root image to disk failed!" || continue
+   check_return ${?} "Writing root image to disk failed!" || { cleanup; continue; }
 
    # shellcheck disable=SC2029 disable=SC2086
    ssh ${SSH_OPTS} -tt "ec2-user@${host}" \
       "sudo -n dd conv=sparse conv=fsync bs=256K if=${REMOTE_DATA_IMAGE} of=${DATA_DEVICE}"
-   check_return ${?} "Writing data image to disk failed!" || continue
+   check_return ${?} "Writing data image to disk failed!" || { cleanup; continue; }
 
    # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -535,13 +543,13 @@ while true; do
       --output text \
       --region "${REGION}" \
       --volume-id "${root_volume}"
-   check_return ${?} "detach of new root volume failed!" || continue
+   check_return ${?} "detach of new root volume failed!" || { cleanup; continue; }
 
    aws ec2 detach-volume \
       --output text \
       --region "${REGION}" \
       --volume-id "${data_volume}"
-   check_return ${?} "detach of new data volume failed!" || continue
+   check_return ${?} "detach of new data volume failed!" || { cleanup; continue; }
 
    echo "Terminating the instance"
    if aws ec2 terminate-instances \
@@ -558,13 +566,16 @@ while true; do
 
    echo "Waiting for the volumes to be 'available'"
    tries=0
-   status="unknown"
+   root_status="unknown"
+   data_status="unknown"
    sleep 20
    while [ "${root_status}" != "available" ] || [ "${data_status}" != "available" ]; do
       echo "Current status: root=${root_status}, data=${data_status}"
       [ "${tries}" -lt 20 ]
-      check_return ${?} "* Volumes didn't become available in allotted time!" || continue 2
+      check_return ${?} "* Volumes didn't become available in allotted time!" || { cleanup; continue 2; }
+      let tries+=1
       sleep 6
+
       root_status=$(aws ec2 describe-volumes \
          --output json \
          --region "${REGION}" \
@@ -577,8 +588,6 @@ while true; do
          --volume-id "${data_volume}" \
          | jq --raw-output --exit-status '.Volumes[].State')
       check_return ${?} "Couldn't find data volume state in describe-volumes output!" || continue
-
-      let tries+=1
    done
    echo "Found status: root=${root_status}, data=${data_status}"
 
@@ -593,7 +602,7 @@ while true; do
       | jq --raw-output '.SnapshotId')
 
    valid_resource_id snap "${root_snapshot}"
-   check_return ${?} "creating snapshot of new root volume failed!" || continue
+   check_return ${?} "creating snapshot of new root volume failed!" || { cleanup; continue; }
 
    data_snapshot=$(aws ec2 create-snapshot \
       --output json \
@@ -603,17 +612,20 @@ while true; do
       | jq --raw-output '.SnapshotId')
 
    valid_resource_id snap "${data_snapshot}"
-   check_return ${?} "creating snapshot of new data volume failed!" || continue
+   check_return ${?} "creating snapshot of new data volume failed!" || { cleanup; continue; }
 
    echo "Waiting for the snapshots to complete"
    tries=0
-   status="unknown"
+   root_status="unknown"
+   data_status="unknown"
    sleep 20
    while [ "${root_status}" != "completed" ] || [ "${data_status}" != "completed" ]; do
       echo "Current status: root=${root_status}, data=${data_status}"
       [ "${tries}" -lt 75 ]
-      check_return ${?} "* Snapshots didn't complete in allotted time!" || continue 2
+      check_return ${?} "* Snapshots didn't complete in allotted time!" || { cleanup; continue 2; }
+      let tries+=1
       sleep 10
+
       root_status=$(aws ec2 describe-snapshots \
          --output json \
          --region "${REGION}" \
@@ -626,7 +638,6 @@ while true; do
          --snapshot-ids "${data_snapshot}" \
          | jq --raw-output --exit-status '.Snapshots[].State')
       check_return ${?} "Couldn't find data snapshot state in describe-snapshots output!" || continue
-      let tries+=1
    done
    echo "Found status: root=${root_status}, data=${data_status}"
 
@@ -636,7 +647,7 @@ while true; do
       --region "${REGION}" \
       --volume-id "${root_volume}"
    then
-      # So the cleanup function doesn't try to stop it
+      # So the cleanup function doesn't try to delete it
       unset root_volume
    else
       echo "* Warning: Could not delete root volume!"
@@ -649,7 +660,7 @@ while true; do
       --region "${REGION}" \
       --volume-id "${data_volume}"
    then
-      # So the cleanup function doesn't try to stop it
+      # So the cleanup function doesn't try to delete it
       unset data_volume
    else
       echo "* Warning: Could not delete data volume!"
@@ -675,7 +686,11 @@ while true; do
                                     ${data_snapshot} ${DATA_VOLUME_SIZE})" \
       --name "${NAME}" \
       --description "${DESCRIPTION}")
-   check_return ${?} "AMI registration failed!" || continue
+   check_return ${?} "AMI registration failed!" || { cleanup; continue; }
+
+   # So we don't try to delete the snapshots behind our new AMI
+   unset root_snapshot data_snapshot
+
    echo "Registered ${registered_ami}"
 
    write_output "ami_id" "$registered_ami"
