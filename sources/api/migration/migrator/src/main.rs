@@ -380,14 +380,21 @@ where
             .output()
             .context(error::StartMigration { command })?;
 
-        debug!(
-            "Migration stdout: {}",
-            std::str::from_utf8(&output.stdout).unwrap_or("<invalid UTF-8>")
-        );
-        debug!(
-            "Migration stderr: {}",
-            std::str::from_utf8(&output.stderr).unwrap_or("<invalid UTF-8>")
-        );
+        if !output.stdout.is_empty() {
+            debug!(
+                "Migration stdout: {}",
+                std::str::from_utf8(&output.stdout).unwrap_or("<invalid UTF-8>")
+            );
+        } else {
+            debug!("No migration stdout");
+        }
+        if !output.stderr.is_empty() {
+            let stderr = std::str::from_utf8(&output.stderr).unwrap_or("<invalid UTF-8>");
+            // We want to see migration stderr on the console, so log at error level.
+            error!("Migration stderr: {}", stderr);
+        } else {
+            debug!("No migration stderr");
+        }
 
         ensure!(output.status.success(), error::MigrationFailure { output });
 
