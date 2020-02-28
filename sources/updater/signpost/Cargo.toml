@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 bit_field = "0.10.0"
 block-party = { path = "../block-party" }
-gptman = { version = "0.5.0", default-features = false }
+gptman = { version = "0.6.1", default-features = false }
 hex-literal = "0.2.0"
 serde = { version = "1.0.91", features = ["derive"] }
 serde_plain = "0.3.0"

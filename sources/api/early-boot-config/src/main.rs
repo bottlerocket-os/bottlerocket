@@ -16,6 +16,7 @@ Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be ta
 extern crate log;
 
 use http::StatusCode;
+use reqwest::blocking::Client;
 use serde::Serialize;
 use serde_json::json;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
@@ -151,19 +152,20 @@ impl AwsDataProvider {
         "http://169.254.169.254/2018-09-24/dynamic/instance-identity/document";
 
     /// Helper to fetch an IMDSv2 session token that is valid for 60 seconds.
-    fn fetch_imds_session_token(client: &reqwest::Client) -> Result<String> {
+    fn fetch_imds_session_token(client: &Client) -> Result<String> {
         let uri = Self::IMDS_TOKEN_ENDPOINT;
-        let mut response = client
+        let response = client
             .put(uri)
             .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
             .send()
             .context(error::Request { method: "PUT", uri })?
             .error_for_status()
             .context(error::BadResponse { uri })?;
+        let code = response.status();
         response.text().context(error::ResponseBody {
             method: "PUT",
             uri,
-            code: response.status(),
+            code,
         })
     }
 
@@ -173,7 +175,7 @@ impl AwsDataProvider {
     /// this, otherwise Ok(Some(body)) with the response body.
     fn fetch_imds(
         file: &str,
-        client: &reqwest::Client,
+        client: &Client,
         session_token: &str,
         uri: &str,
         description: &str,
@@ -185,7 +187,7 @@ impl AwsDataProvider {
             ));
         }
         debug!("Requesting {} from {}", description, uri);
-        let mut response = client
+        let response = client
             .get(uri)
             .header("X-aws-ec2-metadata-token", session_token)
             .send()
@@ -229,7 +231,7 @@ impl AwsDataProvider {
 
     /// Fetches user data, which is expected to be in TOML form and contain a `[settings]` section,
     /// returning a SettingsJson representing the inside of that section.
-    fn user_data(client: &reqwest::Client, session_token: &str) -> Result<Option<SettingsJson>> {
+    fn user_data(client: &Client, session_token: &str) -> Result<Option<SettingsJson>> {
         let desc = "user data";
         let uri = Self::USER_DATA_ENDPOINT;
         let file = Self::USER_DATA_FILE;
@@ -255,7 +257,7 @@ impl AwsDataProvider {
     /// Fetches the instance identity, returning a SettingsJson representing the values from the
     /// document which we'd like to send to the API - currently just region.
     fn identity_document(
-        client: &reqwest::Client,
+        client: &Client,
         session_token: &str,
     ) -> Result<Option<SettingsJson>> {
         let desc = "instance identity document";
@@ -285,7 +287,7 @@ impl PlatformDataProvider for AwsDataProvider {
     /// Return settings changes from the instance identity document and user data.
     fn platform_data(&self) -> Result<Vec<SettingsJson>> {
         let mut output = Vec::new();
-        let client = reqwest::Client::new();
+        let client = Client::new();
 
         let session_token = Self::fetch_imds_session_token(&client)?;
 
