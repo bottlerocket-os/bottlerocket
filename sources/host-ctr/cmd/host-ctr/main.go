@@ -321,6 +321,11 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 				Options:     []string{"rbind", "ro"},
 				Destination: "/usr/src/kernels",
 				Source:      "/usr/src/kernels",
+			},
+			{
+				Options:     []string{"rbind"},
+				Destination: "/sys/kernel/debug",
+				Source:      "/sys/kernel/debug",
 			}}),
 	)
 }
