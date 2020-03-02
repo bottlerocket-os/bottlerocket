@@ -96,6 +96,10 @@ libseccomp = { path = "../libseccomp" }
 The [package.metadata](https://doc.rust-lang.org/cargo/reference/manifest.html#the-metadata-table-optional) table is ignored by Cargo and interpreted by our `buildsys` tool.
 
 It contains an `external-files` list which provides upstream URLs and expected hashes.
+These files are, by default, only fetched from our upstream source mirror, using the URL template `https://cache.bottlerocket.aws/{file}/{sha512}/{file}`.
+(If `file` is not defined, the text after the last `/` character in `url` is used.)
+
+If your source is not yet available in the upstream source mirror, you can run `cargo make` with `-e BUILDSYS_UPSTREAM_SOURCE_FALLBACK=true`.
 
 The [build-dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#build-dependencies) table is used to declare a dependency on another crate.
 In this case, `libwoof` depends on `glibc` and `libseccomp`.
