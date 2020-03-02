@@ -11,7 +11,7 @@ build = "build.rs"
 apiclient = { path = "../apiclient" }
 erased-serde = "0.3"
 handlebars = "3.0"
-http = "0.1"
+http = "0.2"
 itertools = "0.8"
 log = "0.4"
 models = { path = "../../models" }

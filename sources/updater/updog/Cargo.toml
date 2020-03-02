@@ -21,7 +21,6 @@ serde_plain = "0.3.0"
 signpost = { path = "../signpost" }
 simplelog = "0.7"
 snafu = "0.6.0"
-time = "0.1"
 toml = "0.5.1"
 tough = { version = "0.4.0", features = ["http"] }
 update_metadata = { path = "../update_metadata" }

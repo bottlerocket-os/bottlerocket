@@ -14,10 +14,9 @@
 // of hyper, but it lacks Unix-domain socket support:
 // https://github.com/seanmonstar/reqwest/issues/39
 
-use futures::Future;
-use hyper::rt::Stream;
+use futures::TryStreamExt;
 use hyper::{header, Body, Client, Request};
-use hyperlocal::{UnixConnector, Uri};
+use hyper_unix_connector::{UnixClient, Uri};
 use snafu::{ensure, ResultExt};
 use std::path::Path;
 use tokio::runtime::Runtime;
@@ -50,7 +49,7 @@ mod error {
         ResponseBodyRead { source: hyper::Error },
 
         #[snafu(display("Response was not UTF-8: {}", source))]
-        NonUtf8Response { source: std::str::Utf8Error },
+        NonUtf8Response { source: std::string::FromUtf8Error },
     }
 }
 pub use error::Error;
@@ -93,7 +92,7 @@ where
 
     let mut runtime = Runtime::new().context(error::ClientSetup)?;
 
-    let client = Client::builder().build::<_, ::hyper::Body>(UnixConnector::new());
+    let client = Client::builder().build::<_, ::hyper::Body>(UnixClient);
 
     let request = Request::builder()
         .method(method)
@@ -108,20 +107,18 @@ where
     // hyper's "into_parts" method splits the response into two parts: (1) the head, which we have
     // immediately, and (2) the body, which may be streamed back in chunks.  Therefore, the second
     // return value here is another future.
-    let (head, body_future) = runtime
-        .block_on(client.request(request).map(|res| res.into_parts()))
-        .context(error::RequestSend)?;
+    let (head, body_stream) = runtime
+        .block_on(client.request(request))
+        .context(error::RequestSend)?
+        .into_parts();
 
     // Wait on the second future (the streaming body) and concatenate all the pieces together so we
-    // have a single response body.  We make sure each piece is a string, as we go; we assume that
-    // we're not handling binary data.
-    let body_stream = body_future
-        .concat2()
-        .map(|chunk| std::str::from_utf8(&chunk).map(|s| s.to_string()));
-    let body = runtime
-        .block_on(body_stream)
-        .context(error::ResponseBodyRead)?
-        .context(error::NonUtf8Response)?;
+    // have a single response body.  We make sure the result is a string; we assume that we're not
+    // handling binary data.
+    let body_bytes: Vec<u8> = runtime
+        .block_on(body_stream.map_ok(|bytes| bytes.to_vec()).try_concat())
+        .context(error::ResponseBodyRead)?;
+    let body = String::from_utf8(body_bytes).context(error::NonUtf8Response)?;
 
     // Error if the response status is in not in the 2xx range.
     ensure!(

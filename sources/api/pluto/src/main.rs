@@ -13,6 +13,8 @@ It makes calls to IMDS to get meta data:
 - Node IP
 - POD Infra Container Image
 */
+
+use reqwest::blocking::Client;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::string::String;
@@ -127,7 +129,7 @@ use error::PlutoError;
 
 type Result<T> = std::result::Result<T, PlutoError>;
 
-fn get_text_from_imds(client: &reqwest::Client, uri: &str, session_token: &str) -> Result<String> {
+fn get_text_from_imds(client: &Client, uri: &str, session_token: &str) -> Result<String> {
     client
         .get(uri)
         .header("X-aws-ec2-metadata-token", session_token)
@@ -139,7 +141,7 @@ fn get_text_from_imds(client: &reqwest::Client, uri: &str, session_token: &str) 
         .context(error::ImdsText { uri })
 }
 
-fn get_max_pods(client: &reqwest::Client, session_token: &str) -> Result<String> {
+fn get_max_pods(client: &Client, session_token: &str) -> Result<String> {
     let instance_type = get_text_from_imds(&client, IMDS_INSTANCE_TYPE_ENDPOINT, session_token)?;
     // Find the corresponding maximum number of pods supported by this instance type
     let file = BufReader::new(
@@ -161,7 +163,7 @@ fn get_max_pods(client: &reqwest::Client, session_token: &str) -> Result<String>
     error::NoInstanceTypeMaxPods { instance_type }.fail()
 }
 
-fn get_cluster_dns_ip(client: &reqwest::Client, session_token: &str) -> Result<String> {
+fn get_cluster_dns_ip(client: &Client, session_token: &str) -> Result<String> {
     let uri = IMDS_MAC_ENDPOINT;
     let macs = get_text_from_imds(&client, uri, session_token)?;
     // Take the first (primary) MAC address. Others will exist from attached ENIs.
@@ -184,11 +186,11 @@ fn get_cluster_dns_ip(client: &reqwest::Client, session_token: &str) -> Result<S
     Ok(dns)
 }
 
-fn get_node_ip(client: &reqwest::Client, session_token: &str) -> Result<String> {
+fn get_node_ip(client: &Client, session_token: &str) -> Result<String> {
     get_text_from_imds(&client, IMDS_NODE_IPV4_ENDPOINT, session_token)
 }
 
-fn get_pod_infra_container_image(client: &reqwest::Client, session_token: &str) -> Result<String> {
+fn get_pod_infra_container_image(client: &Client, session_token: &str) -> Result<String> {
     // Get the region from the correct location.
     let uri = IMDS_INSTANCE_IDENTITY_DOCUMENT_ENDPOINT;
     let iid_text = get_text_from_imds(&client, uri, session_token)?;
@@ -231,7 +233,7 @@ fn parse_args(mut args: env::Args) -> String {
 fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
 
-    let client = reqwest::Client::new();
+    let client = Client::new();
     // Use IMDSv2 for accessing instance metadata
     let uri = IMDS_SESSION_TOKEN_ENDPOINT;
     let imds_session_token = client
