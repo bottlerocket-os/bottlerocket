@@ -8,13 +8,12 @@ publish = false
 build = "build.rs"
 
 [dependencies]
-# TODO: update futures/hyper/tokio to new async
-futures = "0.1"
-http = "0.1"
-hyper = "0.12"
-hyperlocal = "0.6"
+futures = "0.3"
+http = "0.2"
+hyper = "0.13"
+hyper-unix-connector = "0.1"
 snafu = "0.6"
-tokio = "0.1"
+tokio = { version = "0.2", features = ["stream"] }
 
 [build-dependencies]
 cargo-readme = "3.1"
