@@ -11,7 +11,6 @@ build = "build.rs"
 apiclient = { path = "../apiclient" }
 base64 = "0.11"
 bottlerocket-release = { path = "../../bottlerocket-release" }
-erased-serde = "0.3"
 handlebars = "3.0"
 http = "0.2"
 log = "0.4"

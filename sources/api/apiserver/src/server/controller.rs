@@ -1,6 +1,7 @@
 //! The controller module maps between the datastore and the API interface, similar to the
 //! controller in the MVC model.
 
+use bottlerocket_release::BottlerocketRelease;
 use serde::de::DeserializeOwned;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -71,6 +72,12 @@ pub(crate) fn get_settings_prefix<D: DataStore, S: AsRef<str>>(
         .transpose()
         // None is OK here - they could ask for a prefix we don't have
         .unwrap_or_else(|| Ok(Settings::default()))
+}
+
+// The "os" APIs don't deal with the data store at all, they just read a release field.
+/// Build a BottlerocketRelease using the bottlerocket-release library.
+pub(crate) fn get_os_info() -> Result<BottlerocketRelease> {
+    BottlerocketRelease::new().context(error::ReleaseData)
 }
 
 /// Build a Services based on the data in the datastore.

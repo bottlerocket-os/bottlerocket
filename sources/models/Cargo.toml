@@ -9,6 +9,7 @@ build = "build.rs"
 
 [dependencies]
 base64 = "0.11"
+bottlerocket-release = { path = "../bottlerocket-release" }
 lazy_static = "1.2"
 model-derive = { path = "model-derive" }
 regex = "1.1"

@@ -9,7 +9,6 @@ build = "build.rs"
 
 [dependencies]
 apiclient = { path = "../apiclient" }
-erased-serde = "0.3"
 handlebars = "3.0"
 http = "0.2"
 itertools = "0.8"
