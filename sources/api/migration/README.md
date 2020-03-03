@@ -84,7 +84,7 @@ The incoming version is listed in the file `/etc/os-release` in the incoming ima
 Next we find the migration binaries that are applicable when moving from the outgoing version to the incoming version.
 Migration names include the version where they first apply, so we take any migrations applicable after the outgoing version, up to and including the incoming version.
 
-Migrations will be in a known location (e.g. `/var/lib/bottlerocket/datastore/migrations`) and all migrations will also be available on the update server for download.
+Migrations will be in a known location (e.g. `/var/lib/bottlerocket-migrations`) and all migrations will also be available on the update server for download.
 Migration lists (metadata) will be available from both sources to ensure we're not missing any migrations.
 
 ### Run migrations
