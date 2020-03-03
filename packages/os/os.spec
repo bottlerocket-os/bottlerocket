@@ -1,4 +1,3 @@
-%global migration_dir %{_cross_factorydir}%{_cross_sharedstatedir}/bottlerocket/datastore/migrations
 %global _cross_first_party 1
 %undefine _debugsource_packages
 
@@ -214,8 +213,6 @@ for version_path in %{_builddir}/sources/api/migration/migrations/*; do
   done
 done
 
-install -d %{buildroot}%{migration_dir}
-
 install -d %{buildroot}%{_cross_datadir}/bottlerocket
 
 install -d %{buildroot}%{_cross_sysusersdir}
@@ -295,7 +292,6 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 
 %files -n %{_cross_os}migration
 %{_cross_bindir}/migrator
-%{migration_dir}
 %{_cross_tmpfilesdir}/migration.conf
 
 %files -n %{_cross_os}migrations

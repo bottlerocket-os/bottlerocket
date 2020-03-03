@@ -28,7 +28,7 @@ const TARGET_ARCH: &str = "x86_64";
 const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
-const MIGRATION_PATH: &str = "/var/lib/bottlerocket/datastore/migrations";
+const MIGRATION_PATH: &str = "/var/lib/bottlerocket-migrations";
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
