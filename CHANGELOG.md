@@ -1,3 +1,46 @@
+# v0.3.1 (2020-03-10)
+
+## OS changes
+
+* Log migration errors to console ([#795])
+* Enable BTF debug info (`CONFIG_DEBUG_INFO_BTF`) ([#799])
+* Move migrations from private partition to data partition ([#818])
+* Add top-level model struct ([#824])
+* Update ca-certificates, cni-plugins, coreutils, dbus-broker, iproute, kmod, libcap, libxcrypt, ncurses, socat, and wicked ([#826])
+
+## Build changes
+
+* Update Rust dependencies ([#798], [#806], [#809], [#810])
+* Add additional cleanup steps to amiize.sh ([#804])
+* Work around warnings for unused licenses ([#827])
+
+## Documentation changes
+
+* Add [GLOSSARY.md](GLOSSARY.md), [SECURITY_FEATURES.md](SECURITY_FEATURES.md), and [SECURITY_GUIDANCE.md](SECURITY_GUIDANCE.md) ([#800], [#807], [#821])
+* Add additional information to top section of [README.md](README.md) ([#802])
+* Add license information to OpenAPI specification ([#803])
+* Add description of source mirroring ([#817])
+* Update [CHARTER.md](CHARTER.md) wording ([#823])
+
+[#795]: https://github.com/bottlerocket-os/bottlerocket/pull/795
+[#798]: https://github.com/bottlerocket-os/bottlerocket/pull/798
+[#799]: https://github.com/bottlerocket-os/bottlerocket/pull/799
+[#800]: https://github.com/bottlerocket-os/bottlerocket/pull/800
+[#802]: https://github.com/bottlerocket-os/bottlerocket/pull/802
+[#803]: https://github.com/bottlerocket-os/bottlerocket/pull/803
+[#804]: https://github.com/bottlerocket-os/bottlerocket/pull/804
+[#806]: https://github.com/bottlerocket-os/bottlerocket/pull/806
+[#807]: https://github.com/bottlerocket-os/bottlerocket/pull/807
+[#809]: https://github.com/bottlerocket-os/bottlerocket/pull/809
+[#810]: https://github.com/bottlerocket-os/bottlerocket/pull/810
+[#817]: https://github.com/bottlerocket-os/bottlerocket/pull/817
+[#818]: https://github.com/bottlerocket-os/bottlerocket/pull/818
+[#821]: https://github.com/bottlerocket-os/bottlerocket/pull/821
+[#823]: https://github.com/bottlerocket-os/bottlerocket/pull/823
+[#824]: https://github.com/bottlerocket-os/bottlerocket/pull/824
+[#826]: https://github.com/bottlerocket-os/bottlerocket/pull/826
+[#827]: https://github.com/bottlerocket-os/bottlerocket/pull/827
+
 # v0.3.0 (2020-02-27)
 
 Welcome to Bottlerocket!
