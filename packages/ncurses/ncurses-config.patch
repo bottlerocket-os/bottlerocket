@@ -1,7 +1,19 @@
-diff -up ncurses-6.1-20180714/misc/ncurses-config.in.config ncurses-6.1-20180714/misc/ncurses-config.in
---- ncurses-6.1-20180714/misc/ncurses-config.in.config	2018-06-10 00:29:01.000000000 +0200
-+++ ncurses-6.1-20180714/misc/ncurses-config.in	2018-07-16 16:23:22.202581815 +0200
-@@ -40,7 +40,6 @@ exec_prefix="@exec_prefix@"
+diff -up ncurses-6.2-20200222/misc/gen-pkgconfig.in.config ncurses-6.2-20200222/misc/gen-pkgconfig.in
+--- ncurses-6.2-20200222/misc/gen-pkgconfig.in.config	2020-02-12 01:09:26.000000000 +0100
++++ ncurses-6.2-20200222/misc/gen-pkgconfig.in	2020-02-26 15:46:18.899263947 +0100
+@@ -80,7 +80,7 @@ if [ "$includedir" != "/usr/include" ];
+ fi
+ 
+ lib_flags=
+-for opt in -L$libdir @LDFLAGS@ @EXTRA_LDFLAGS@ @LIBS@
++for opt in -L$libdir @LIBS@
+ do
+ 	case $opt in
+ 	-l*) # LIBS is handled specially below
+diff -up ncurses-6.2-20200222/misc/ncurses-config.in.config ncurses-6.2-20200222/misc/ncurses-config.in
+--- ncurses-6.2-20200222/misc/ncurses-config.in.config	2020-02-03 00:34:34.000000000 +0100
++++ ncurses-6.2-20200222/misc/ncurses-config.in	2020-02-26 15:47:12.827386582 +0100
+@@ -41,7 +41,6 @@ exec_prefix="@exec_prefix@"
  
  bindir="@bindir@"
  includedir="@includedir@"
@@ -9,16 +21,26 @@ diff -up ncurses-6.1-20180714/misc/ncurses-config.in.config ncurses-6.1-20180714
  datarootdir="@datarootdir@"
  datadir="@datadir@"
  mandir="@mandir@"
-@@ -111,7 +110,7 @@ while test $# -gt 0; do
- ENDECHO
- 		;;
- 	--libs)
--		if test "$libdir" = /usr/lib
-+		if true
- 		then
- 			LIBDIR=
- 		else
-@@ -155,7 +154,6 @@ ENDECHO
+@@ -101,7 +100,7 @@ fi
+ # There is no portable way to find the list of standard library directories. 
+ # Require a POSIX shell anyway, to keep this simple.
+ lib_flags=
+-for opt in -L$libdir @LDFLAGS@ @EXTRA_LDFLAGS@ $LIBS
++for opt in $LIBS
+ do
+ 	case $opt in
+ 	-specs*) # ignore linker specs-files which were used to build library
+@@ -113,9 +112,6 @@ do
+ 	-L*)
+ 		[ -d ${opt##-L} ] || continue
+ 		case ${opt##-L} in
+-		@LD_SEARCHPATH@) # skip standard libdir
+-			continue
+-			;;
+ 		*)
+ 			found=no
+ 			for check in $lib_flags
+@@ -235,7 +231,6 @@ ENDECHO
  		echo $INCS
  		;;
  	--libdir)

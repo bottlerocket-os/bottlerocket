@@ -1,7 +1,7 @@
 diff -up ncurses-6.0-20150810/misc/terminfo.src.urxvt ncurses-6.0-20150810/misc/terminfo.src
 --- ncurses-6.0-20150810/misc/terminfo.src.urxvt	2015-07-25 21:27:20.000000000 +0200
 +++ ncurses-6.0-20150810/misc/terminfo.src	2015-08-12 17:38:46.050362567 +0200
-@@ -5214,6 +5214,175 @@ rxvt-cygwin-native|rxvt terminal emulato
+@@ -5214,6 +5214,181 @@ rxvt-cygwin-native|rxvt terminal emulato
  rxvt-16color|rxvt with 16 colors like aixterm,
  	ncv#32, use=ibm+16color, use=rxvt,
  
@@ -13,6 +13,7 @@ diff -up ncurses-6.0-20150810/misc/terminfo.src.urxvt ncurses-6.0-20150810/misc/
 +# Updated: Marc Lehmann <schmorp@schmorp.de>, 04 Nov 2008: change init/reset sequences
 +# Updated: Marc Lehmann <schmorp@schmorp.de>, 24 Nov 2014: implement cvvis as blinking cursor
 +# Updated: Marc Lehmann <schmorp@schmorp.de>, 13 Dec 2014: removed superfluous 0 from sgr
++# Updated: Robbie Harwood <rharwood@redhat.com>, 25 Oct 2019: restore deleted rxvt-unicode-256color
 +rxvt-unicode|rxvt-unicode terminal (X Window System),
 +	am,
 +	bce,
@@ -173,6 +174,11 @@ diff -up ncurses-6.0-20150810/misc/terminfo.src.urxvt ncurses-6.0-20150810/misc/
 +	tsl=\E]2;,
 +	fsl=\007,
 +	dsl=\E]2;\007,
++
++rxvt-unicode-256color|rxvt-unicode terminal with 256 colors (X Window System),
++        colors#256,
++        pairs#32767,
++        use=rxvt-unicode,
 +
  #### MRXVT
  # mrxvt 0.5.4
