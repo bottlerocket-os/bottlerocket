@@ -11,14 +11,14 @@ confidence-threshold = 0.93
 
 allow = [
     "Apache-2.0",
-    "BSD-2-Clause",
+    #"BSD-2-Clause",  # OK but currently unused; commenting to prevent warning
     "BSD-3-Clause",
     "BSL-1.0",
     "ISC",
     "MIT",
     "OpenSSL",
     "Unlicense",
-    "Zlib",
+    #"Zlib",  # OK but currently unused; commenting to prevent warning
 ]
 
 exceptions = [
