@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/bus1/dbus-broker/releases/download/v21/dbus-broker-21.tar.xz"
-sha512 = "b6db7bb9426bfce5ee46e9ef9fcfb0107f8d8fe9cd1fef3a18db33a2886cf6b67515a128ffe5d7e64fa6c9087d2fd3818bea2adf39532b38be638ae39d428e6b"
+url = "https://github.com/bus1/dbus-broker/releases/download/v22/dbus-broker-22.tar.xz"
+sha512 = "70a6b75f428f141dab90d7e1fa6a667ee8783f570a8ae481bca78edcfcb3b6199d7ea220d2867fbc358d3fcb002a63a1ac3d918211e6f4f30b2aee92a88746eb"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

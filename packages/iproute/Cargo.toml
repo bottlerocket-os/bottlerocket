@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "http://kernel.org/pub/linux/utils/net/iproute2/iproute2-4.19.0.tar.xz"
-sha512 = "47c750da2247705b1b1d1621f58987333e54370d0fff2f24106194022de793ff35dfd67fd1be127ce019008705702092d31dac49abf930a7c0dc5c7e7c0665b8"
+url = "http://kernel.org/pub/linux/utils/net/iproute2/iproute2-5.4.0.tar.xz"
+sha512 = "26d1230e10d9ba4466edd3fe95cb6f595df691eeb27b87ae845ceb9da09fe11c2e0daa8d67187121320413f9ee7131fd426182055eb285be7c4de558d9e47051"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
