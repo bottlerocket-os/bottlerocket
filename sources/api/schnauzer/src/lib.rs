@@ -7,11 +7,9 @@ extern crate log;
 
 mod helpers;
 
-use bottlerocket_release::BottlerocketRelease;
 use handlebars::Handlebars;
 use serde::de::DeserializeOwned;
 use snafu::ResultExt;
-use std::collections::HashMap;
 use std::path::Path;
 
 pub mod error {
@@ -93,32 +91,18 @@ where
     serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })
 }
 
-/// Requests all settings from the API and wraps them in a "settings" key, so they can be used as
-/// the data source for a handlebars templating call.
-pub fn get_settings<P>(socket_path: P) -> Result<HashMap<String, Box<dyn erased_serde::Serialize>>>
+/// Requests all settings from the API so they can be used as the data source for a handlebars
+/// templating call.
+pub fn get_settings<P>(socket_path: P) -> Result<model::Model>
 where
     P: AsRef<Path>,
 {
     debug!("Querying API for settings data");
-    let settings: model::Settings =
-        get_json(&socket_path, "/settings", None as Option<(String, String)>)?;
+    let settings: model::Model =
+        get_json(&socket_path, "/", None as Option<(String, String)>)?;
+    trace!("Model values: {:?}", settings);
 
-    trace!("Settings values: {:?}", settings);
-
-    debug!("Querying API for OS data");
-    let br: BottlerocketRelease =
-        get_json(&socket_path, "/os", None as Option<(String, String)>)?;
-
-    trace!("OS values: {:?}", br);
-
-    // The following helps satisfy the Handlebars templating library.  The variables in the
-    // templates include a prefix like "settings" or "os", for example {{ settings.foo.bar }}
-    // so we need to wrap the structs struct in a map with the relevant prefixes.
-    let mut wrapped_template_keys: HashMap<String, Box<dyn erased_serde::Serialize>> = HashMap::new();
-    wrapped_template_keys.insert("settings".to_string(), Box::new(settings));
-    wrapped_template_keys.insert("os".to_string(), Box::new(br));
-
-    Ok(wrapped_template_keys)
+    Ok(settings)
 }
 
 /// Build a handlebars template registry with our common helper functions.

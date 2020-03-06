@@ -11,7 +11,7 @@ use bottlerocket_release::BottlerocketRelease;
 use error::Result;
 use futures::future;
 use log::info;
-use model::{ConfigurationFiles, Services, Settings};
+use model::{ConfigurationFiles, Model, Services, Settings};
 use nix::unistd::{chown, Gid};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -65,6 +65,10 @@ where
     let http_server = HttpServer::new(move || {
         App::new()
             .app_data(shared_datastore.clone())
+
+            // Retrieve the full API model; not all data is writable, so we only support GET.
+            .route("/", web::get().to(get_model))
+
             .service(
                 web::scope("/settings")
                     .route("", web::get().to(get_settings))
@@ -124,6 +128,19 @@ where
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // Handler methods called by the router
+
+/// Returns all data in the API model.
+async fn get_model(data: web::Data<SharedDataStore>) -> Result<ModelResponse> {
+    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+
+    let settings = Some(controller::get_settings(&*datastore, &Committed::Live)?);
+    let services = Some(controller::get_services(&*datastore)?);
+    let configuration_files = Some(controller::get_configuration_files(&*datastore)?);
+    let os = Some(controller::get_os_info()?);
+
+    let model = Model {settings, services, configuration_files, os};
+    Ok(ModelResponse(model))
+}
 
 // actix-web doesn't support Query for enums, so we use a HashMap and check for the expected keys
 // ourselves.
@@ -244,11 +261,8 @@ async fn commit_transaction_and_apply(
     Ok(ChangedKeysResponse(changes))
 }
 
-// The "os" APIs don't deal with the data store at all, they just read a release field, so we
-// handle them here.
 async fn get_os_info() -> Result<BottlerocketReleaseResponse> {
-    let br = BottlerocketRelease::new().context(error::ReleaseData)?;
-    Ok(BottlerocketReleaseResponse(br))
+    Ok(BottlerocketReleaseResponse(controller::get_os_info()?))
 }
 
 /// Get the affected services for a list of data keys
@@ -413,6 +427,10 @@ macro_rules! impl_responder_for {
         }
     )
 }
+
+/// This lets us respond from our handler methods with a Model (or Result<Model>)
+struct ModelResponse(Model);
+impl_responder_for!(ModelResponse, self, self.0);
 
 /// This lets us respond from our handler methods with a Settings (or Result<Settings>)
 struct SettingsResponse(Settings);

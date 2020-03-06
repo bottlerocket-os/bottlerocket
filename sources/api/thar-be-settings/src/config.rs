@@ -1,7 +1,7 @@
 use crate::{error, Result};
 use itertools::join;
 use snafu::ResultExt;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -47,7 +47,7 @@ pub fn get_config_file_names(services: &model::Services) -> HashSet<String> {
 pub fn render_config_files(
     registry: &handlebars::Handlebars<'_>,
     config_files: model::ConfigurationFiles,
-    settings: HashMap<String, Box<dyn erased_serde::Serialize>>,
+    settings: model::Model,
     strict: bool,
 ) -> Result<Vec<RenderedConfigFile>> {
     // Go write all the configuration files from template

@@ -19,7 +19,7 @@ use std::fs;
 use std::path::Path;
 
 /// BottlerocketRelease represents the data found in the release file.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct BottlerocketRelease {
     // Fields from os-release
     pub pretty_name: String,

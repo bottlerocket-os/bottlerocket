@@ -54,7 +54,7 @@ pub mod modeled_types;
 // The "variant" module is just a directory where we symlink in the user's requested build
 // variant; each variant defines a top-level Settings structure and we re-export the current one.
 mod variant;
-pub use variant::Settings;
+pub use variant::*;
 
 // Below, we define common structures used in the API surface; specific variants build a Settings
 // structure based on these, and that's what gets exposed via the API.  (Specific variants' models
