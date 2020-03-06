@@ -1,5 +1,5 @@
 Name: %{_cross_os}libxcrypt
-Version: 4.4.10
+Version: 4.4.15
 Release: 1%{?dist}
 Summary: Extended crypt library for descrypt, md5crypt, bcrypt, and others
 License: LGPL-2.1-or-later
@@ -19,7 +19,7 @@ Requires: %{name}
 
 %prep
 %autosetup -n libxcrypt-%{version} -p1
-./bootstrap
+./autogen.sh
 
 %build
 %cross_configure \
