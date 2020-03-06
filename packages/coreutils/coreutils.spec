@@ -1,5 +1,5 @@
 Name: %{_cross_os}coreutils
-Version: 8.31
+Version: 8.32
 Release: 1%{?dist}
 Summary: A set of basic GNU tools
 License: GPL-3.0-or-later

@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.gnu.org/gnu/coreutils/coreutils-8.31.tar.xz"
-sha512 = "ef8941dae845bbf5ae5838bc49e44554a766302930601aada6fa594e8088f0fbad74e481ee392ff89633e68b99e4da3f761fcb5d31ee3b233d540fe2a2d4e1af"
+url = "https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz"
+sha512 = "1c8f3584efd61b4b02e7ac5db8e103b63cfb2063432caaf1e64cb2dcc56d8c657d1133bbf10bd41468d6a1f31142e6caa81d16ae68fa3e6e84075c253613a145"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
