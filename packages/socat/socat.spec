@@ -1,10 +1,10 @@
 Name: %{_cross_os}socat
-Version: 1.7.3.3
+Version: 1.7.3.4
 Release: 1%{?dist}
 Summary: Transfer data between two channels
 License: GPL-2.0-only
 URL: http://www.dest-unreach.org/socat/
-Source0: http://www.dest-unreach.org/socat/download/socat-%{version}.tar.gz
+Source0: http://www.dest-unreach.org/socat/download/socat-%{version}.tar.bz2
 BuildRequires: %{_cross_os}glibc-devel
 
 %description
