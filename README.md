@@ -327,15 +327,15 @@ Be careful, and make sure you have a similar low-level use case before reaching 
 
 ### Security
 
-We use [dm-verity](https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity) to load a verified read-only root filesystem, preventing some classes of persistent security threats.
-Only a few locations are made writable:
-* some through [tmpfs mounts](sources/preinit/laika), used for configuration, that don't persist over a restart.
-* one [persistent location](packages/release/var-lib-bottlerocket.mount) for the data store.
+:shield: :crab:
 
-We enable [SELinux](https://selinuxproject.org/) in enforcing mode.
-This protects the data store from tampering, and blocks modification of sensitive files such as container archives.
+To learn more about security features in Bottlerocket, please see [SECURITY FEATURES](SECURITY_FEATURES.md).
+It describes how we use features like [dm-verity](https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity) and [SELinux](https://selinuxproject.org/) to protect the system from security threats.
 
-Almost all first-party components are written in [Rust](https://www.rust-lang.org/).
+To learn more about security recommendations for Bottlerocket, please see [SECURITY GUIDANCE](SECURITY_GUIDANCE.md).
+It documents additional steps you can take to secure the OS, and includes resources such as a [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) for your reference.
+
+In addition, almost all first-party components are written in [Rust](https://www.rust-lang.org/).
 Rust eliminates some classes of memory safety issues, and encourages design patterns that help security.
 
 ### Packaging
