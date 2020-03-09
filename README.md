@@ -3,7 +3,7 @@
 Welcome to Bottlerocket!
 
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
-Bottlerocket is currently in a developer preview phase and we’re looking for your [feedback](/issues).
+Bottlerocket is currently in a developer preview phase and we’re looking for your [feedback](#contact-us).
 
 If you’re ready to jump right in, read our [QUICKSTART](QUICKSTART.md) to try Bottlerocket in an Amazon EKS cluster.
 
@@ -29,8 +29,9 @@ If you're interested in contributing, thank you!
 Please see our [contributor's guide](CONTRIBUTING.md).
 
 We use GitHub issues to track other bug reports and feature requests.
-You can select from a few templates and get some guidance on the type of information that would be most helpful.
+You can look at [existing issues](https://github.com/bottlerocket-os/bottlerocket/issues) to see whether your concern is already known.
 
+If not, you can select from a few templates and get some guidance on the type of information that would be most helpful.
 [Contact us with a new issue here.](https://github.com/bottlerocket-os/bottlerocket/issues/new/choose)
 
 We don't have other communication channels set up quite yet, but don't worry about making an issue!
