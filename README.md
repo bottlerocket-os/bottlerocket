@@ -75,7 +75,7 @@ From there, you can [change settings](#settings), manually [update Bottlerocket]
 
 Bottlerocket has a ["control" container](https://github.com/bottlerocket-os/bottlerocket-control-container), enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
-(You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).
+(You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).)
 
 You need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART.md#enabling-ssm).
 
@@ -212,7 +212,7 @@ For more details on using the client, see the [apiclient documentation](sources/
 If you know what settings you want to change when you start your Bottlerocket instance, you can send them in the user data.
 
 In user data, we structure the settings in TOML form to make things a bit simpler.
-Here's the user data to change the time zone setting, as we did in the last section:
+Here's the user data to change the message of the day setting, as we did in the last section:
 
 ```
 [settings]
@@ -327,15 +327,15 @@ Be careful, and make sure you have a similar low-level use case before reaching 
 
 ### Security
 
-We use [dm-verity](https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity) to load a verified read-only root filesystem, preventing some classes of persistent security threats.
-Only a few locations are made writable:
-* some through [tmpfs mounts](sources/preinit/laika), used for configuration, that don't persist over a restart.
-* one [persistent location](packages/release/var-lib-bottlerocket.mount) for the data store.
+:shield: :crab:
 
-We enable [SELinux](https://selinuxproject.org/) in enforcing mode.
-This protects the data store from tampering, and blocks modification of sensitive files such as container archives.
+To learn more about security features in Bottlerocket, please see [SECURITY FEATURES](SECURITY_FEATURES.md).
+It describes how we use features like [dm-verity](https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity) and [SELinux](https://selinuxproject.org/) to protect the system from security threats.
 
-Almost all first-party components are written in [Rust](https://www.rust-lang.org/).
+To learn more about security recommendations for Bottlerocket, please see [SECURITY GUIDANCE](SECURITY_GUIDANCE.md).
+It documents additional steps you can take to secure the OS, and includes resources such as a [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) for your reference.
+
+In addition, almost all first-party components are written in [Rust](https://www.rust-lang.org/).
 Rust eliminates some classes of memory safety issues, and encourages design patterns that help security.
 
 ### Packaging
@@ -347,15 +347,13 @@ RPM itself is not in the image - it's just a common and convenient package defin
 We currently package the following major third-party components:
 * Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [packaging](packages/kernel/))
 * glibc ([background](https://www.gnu.org/software/libc/), [packaging](packages/glibc/))
-* Buildroot as build toolchain ([background](https://buildroot.org/), [packaging](packages/sdk/))
+* Buildroot as build toolchain ([background](https://buildroot.org/), via the [SDK](https://github.com/bottlerocket-os/bottlerocket-sdk))
 * GRUB, with patches for partition flip updates ([background](https://www.gnu.org/software/grub/), [packaging](packages/grub/))
 * systemd as init ([background](https://en.wikipedia.org/wiki/Systemd), [packaging](packages/systemd/))
 * wicked for networking ([background](https://github.com/openSUSE/wicked), [packaging](packages/wicked/))
 * containerd ([background](https://containerd.io/), [packaging](packages/containerd/))
 * Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes/))
-* Some helpers to make usage in AWS easier:
-  * aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](packages/aws-iam-authenticator/))
-  * SSM agent ([background](https://github.com/aws/amazon-ssm-agent), [packaging](packages/ssm/))
+* aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](packages/aws-iam-authenticator/))
 
 For further documentation or to see the rest of the packages, see the [packaging directory](packages/).
 
