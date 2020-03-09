@@ -3,6 +3,7 @@
 Welcome to Bottlerocket!
 
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
+Bottlerocket is currently in a developer preview phase and we’re looking for your [feedback](/issues).
 
 If you’re ready to jump right in, read our [QUICKSTART](QUICKSTART.md) to try Bottlerocket in an Amazon EKS cluster.
 
