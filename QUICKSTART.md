@@ -19,6 +19,31 @@ You'll also need to [install kubectl](https://kubernetes.io/docs/tasks/tools/ins
 Finally, you'll need [aws-cli v1](https://aws.amazon.com/cli/) set up to interact with AWS.
 (You'll need a [recent v1 release](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-bundled) with EKS support.)
 
+## Finding an AMI
+
+You can either build an AMI yourself using [our guide](BUILDING.md), or use an official AMI provided by Amazon.
+
+The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
+Let's say you want to use the `aws-k8s-1.15` variant for the `x86_64` architecture, and you operate in the `us-west-2` region:
+
+```
+aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-k8s-1.15/x86_64/latest/image_id" --query Parameter.Value --output text
+```
+
+If you have `jq` and would like a bit more information, try this:
+```
+aws ssm get-parameters --region us-west-2 \
+   --names "/aws/service/bottlerocket/aws-k8s-1.15/x86_64/latest/image_id" \
+           "/aws/service/bottlerocket/aws-k8s-1.15/x86_64/latest/image_version" \
+   --output json | jq -r '.Parameters | .[] | "\(.Name): \(.Value) (updated \(.LastModifiedDate | gmtime | strftime("%c")) UTC)"'
+```
+
+You can replace the variant (`aws-k8s-1.15`) and architecture (`x86_64`) to look for other images.
+Supported variants and architectures are described in the [README](README.md).
+If you know a specific Bottlerocket version you'd like to use, you can replace `latest` with that version.
+
+You can also see all available parameters [through the web console](https://us-west-2.console.aws.amazon.com/systems-manager/parameters/#list_parameter_filters=Path:Recursive:%2Faws%2Fservice%2Fbottlerocket).
+
 ## Cluster setup
 
 *Note:* most commands will have a region argument; make sure to change it if you don't want to set up in us-west-2.
