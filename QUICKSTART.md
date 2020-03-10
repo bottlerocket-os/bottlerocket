@@ -217,6 +217,16 @@ Example:
 ]
 ```
 
+If you chose a public subnet, and you plan to SSH to the instance (using the admin container), you'll also need to allow SSH traffic to your security group.
+You can do that with a command like this - just make sure to insert a security group from the last command, and your source network CIDR.
+```
+aws ec2 authorize-security-group-ingress --region us-west-2 \
+   --group-id SECURITY_GROUP_ID_1 --cidr YOUR_NETWORK_CIDR \
+   --protocol tcp --port 22
+```
+
+If you chose a private subnet and you want to SSH in, you can do so from another instance in the same subnet and security group.
+
 ## Launch!
 
 Now we can launch a Bottlerocket instance in our cluster!
