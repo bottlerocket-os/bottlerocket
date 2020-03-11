@@ -36,9 +36,9 @@ Updog will parse the manifest.json file from the TUF repository and will update 
 By default Updog only considers updates resulting in a version increase; downgrades are possible by using the `--image` option to force a specific version.
 Updog will respect the `max_version` field in the update manifest and refuse to update beyond it.
 Updog also considers the Bottlerocket "variant" of its current image and will not download updates for a different variant.
-### Datastore version
-Each update image has an associated datastore version.
-If an update would cause a change in datastore version, Updog will ensure the appropriate migration files are available to safely transition between datastore versions.
+
+Updog will ensure that appropriate migration files are available to safely transition to the new version and back.
+
 ### Update wave
 Updates may include "wave" information which provides a way for updates to be scheduled over time for groups of Bottlerocket hosts.
 Updog will find the update wave the host belongs to and jitter its update time within that range.
