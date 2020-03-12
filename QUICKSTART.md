@@ -12,14 +12,91 @@ Once you have a cluster, you can skip to the last step, [Launch!](#launch)
 ## Dependencies
 
 EKS has a command-line tool called `eksctl` that makes cluster setup easy.
-First, get [eksctl set up](https://github.com/weaveworks/eksctl).
+Versions of eksctl starting with 0.15.0-rc.2 support Bottlerocket natively.
+We recommend that you download the [latest version of eksctl](https://github.com/weaveworks/eksctl/releases) to get this support.
 
 You'll also need to [install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to augment `eksctl` during setup, and to run pods afterward.
 
 Finally, you'll need [aws-cli v1](https://aws.amazon.com/cli/) set up to interact with AWS.
 (You'll need a [recent v1 release](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-bundled) with EKS support.)
 
-## Finding an AMI
+## Automated setup
+
+If you have a recent `eksctl`, as mentioned above, most of Bottlerocket setup for EKS is automated.
+
+### Cluster setup
+
+#### Cluster setup configuration file
+
+eksctl can use a configuration file to simplify setup.
+We have sample configuration files in the repo:
+* [`sample-eksctl.yaml`](sample-eksctl.yaml) - recommended for most setups.
+* [`sample-eksctl-ssh.yaml`](sample-eksctl-ssh.yaml) - for test clusters where you know you'll want SSH access.  Make sure to change the `publicKeyName` setting to the name of the SSH keypair you have registered with EC2.
+
+Pick the file most appropriate for you and make a copy, for example `my-eksctl.yaml`.
+In this file you can change your desired numbered of nodes and even set Bottlerocket settings in advance if you like.  The 'settings' section under 'bottlerocket' can include any [Bottlerocket settings](https://github.com/bottlerocket-os/bottlerocket/#description-of-settings).
+
+Note that the configuration file includes the AWS region, so change it from `us-west-2` if you operate in another region.
+
+To learn more about eksctl configuration files, you can look at the [full schema](https://eksctl.io/usage/schema/) or [official examples](https://github.com/weaveworks/eksctl/tree/master/examples).
+
+#### Cluster creation
+
+You can set up a new cluster like this, pointing to the file you created in the last step:
+
+```
+eksctl create cluster --config-file ./my-eksctl.yaml
+```
+
+This will take a few minutes to create the EKS cluster and spin up your Bottlerocket worker nodes.
+
+#### Remaining cluster configuration
+
+##### CNI plugin
+
+Now we can make a configuration change to use a CNI plugin that's compatible with Bottlerocket.
+```
+kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.6/config/v1.6/aws-k8s-cni.yaml
+```
+
+##### conntrack configuration
+
+By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Bottlerocket originally sets at boot.
+If you prefer to keep Bottlerocket's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
+
+```
+kubectl edit -n kube-system daemonset kube-proxy
+```
+
+Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments like so (a setting of 0 implies no change):
+
+```
+      containers:
+      - command:
+        - kube-proxy
+        - --v=2
+        - --config=/var/lib/kube-proxy-config/config
+        - --conntrack-max-per-core=0
+        - --conntrack-min=0
+
+```
+
+### Done!
+
+Bottlerocket instances are launched in an autoscaling group, up to the number specified in your eksctl configuration file.
+(You can change this number after creation by [configuring the ASG](https://console.aws.amazon.com/ec2/autoscaling/home#AutoScalingGroups:view=details), the same way you might change other ASGs.)
+
+The Bottlerocket instances will automatically register into the EKS cluster created by eksctl.
+You can now use normal Kubernetes tools like `kubectl` to manage your cluster and the Bottlerocket nodes.
+
+For example, to run a simple busybox pod:
+`kubectl run -i -t busybox --image=busybox --restart=Never`
+
+## Manual setup
+
+If you'd like even more control over your setup, something that eksctl can't (yet) provide, or you just want to see what's involved, you can follow these steps.
+
+### Finding an AMI
 
 You can either build an AMI yourself using [our guide](BUILDING.md), or use an official AMI provided by Amazon.
 
@@ -44,7 +121,7 @@ If you know a specific Bottlerocket version you'd like to use, you can replace `
 
 You can also see all available parameters [through the web console](https://us-west-2.console.aws.amazon.com/systems-manager/parameters/#list_parameter_filters=Path:Recursive:%2Faws%2Fservice%2Fbottlerocket).
 
-## Cluster setup
+### Cluster setup
 
 *Note:* most commands will have a region argument; make sure to change it if you don't want to set up in us-west-2.
 
@@ -64,11 +141,11 @@ Now we can make a configuration change to use a CNI plugin that's compatible wit
 kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.6/config/v1.6/aws-k8s-cni.yaml
 ```
 
-## Cluster info
+### Cluster info
 
 This section helps you determine some of the cluster information needed later by the instance launch command.
 
-### Kubernetes cluster info
+#### Kubernetes cluster info
 
 Bottlerocket uses a TOML-formatted configuration file as user data.
 This can include the configuration of the Kubernetes cluster we just created.
@@ -82,7 +159,7 @@ eksctl get cluster --region us-west-2 --name bottlerocket -o json \
 This will save the TOML-formmated configuration data into a file named `userdata.toml`.
 This will be used at the end, in the instance launch command.
 
-### Subnet info
+#### Subnet info
 
 Next, run this to get information about the subnets that eksctl created.
 It will give you a list of the subnets and tell you whether each is public or private.
@@ -108,7 +185,7 @@ There will be a reminder about this when we talk about the launch command.
 
 Finally, note that if you want to launch in a specific availability zone, make sure you pick a subnet that matches; the AZ is listed right next to the public/private status.
 
-## IAM role
+### IAM role
 
 The instance we launch needs to be associated with an IAM role that allows for communication with EKS.
 
@@ -129,7 +206,7 @@ arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/INSTANCE_ROLE_NAME          system:node:{{
 
 Note down the INSTANCE_ROLE_NAME for the instructions below.
 
-#### Enabling SSM
+##### Enabling SSM
 
 If you add SSM permissions, you can use Bottlerocket's default SSM agent to get a shell session on the instance.
 
@@ -162,7 +239,7 @@ eksctl-bottlerocket-nodegroup-ng-IDENTIFIER-NodeInstanceProfile-IDENTIFIER
 
 Note this down as the INSTANCE_PROFILE_NAME for the final launch command.
 
-## kube-proxy settings
+### kube-proxy settings
 
 By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Bottlerocket originally sets at boot.
 If you prefer to keep Bottlerocket's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
@@ -184,7 +261,7 @@ Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments
 
 ```
 
-## Final launch details
+### Final launch details
 
 For the instance to be able to communicate with the EKS cluster control plane and other worker nodes, we need to make sure the instance is launched with the right security groups.
 
@@ -227,7 +304,7 @@ aws ec2 authorize-security-group-ingress --region us-west-2 \
 
 If you chose a private subnet and you want to SSH in, you can do so from another instance in the same subnet and security group.
 
-## Launch!
+### Launch!
 
 Now we can launch a Bottlerocket instance in our cluster!
 
