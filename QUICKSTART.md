@@ -99,6 +99,16 @@ If you'd like even more control over your setup, something that eksctl can't (ye
 ### Finding an AMI
 
 You can either build an AMI yourself using [our guide](BUILDING.md), or use an official AMI provided by Amazon.
+We plan to have official support in all regions when Bottlerocket is no longer in its preview phase, but to start out we focused on getting ready in a few regions.
+We plan to expand this list during our preview and will update it here accordingly.
+The currently supported regions are:
+
+```
+ap-northeast-1
+eu-central-1
+us-east-1
+us-west-2
+```
 
 The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
 Let's say you want to use the `aws-k8s-1.15` variant for the `x86_64` architecture, and you operate in the `us-west-2` region:
