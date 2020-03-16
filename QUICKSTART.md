@@ -197,7 +197,7 @@ Finally, note that if you want to launch in a specific availability zone, make s
 
 ### IAM role
 
-The instance we launch needs to be associated with an IAM role that allows for communication with EKS.
+The instance we launch needs to be associated with an IAM role that allows for communication with EKS and ECR.
 
 `eksctl` by default already creates such a role (and an instance profile that allows use of the role) as part of the cluster nodegroup.
 
