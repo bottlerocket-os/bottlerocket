@@ -73,6 +73,8 @@ There are a couple out-of-band access methods you can use to explore Bottlerocke
 Either option will give you a shell within Bottlerocket.
 From there, you can [change settings](#settings), manually [update Bottlerocket](#updates), debug problems, and generally explore.
 
+**Note:** These methods require that your instance has permission to access the ECR repository where these containers live; the appropriate policy to add to your instance's IAM role is `AmazonEC2ContainerRegistryReadOnly`.
+
 ### Control container
 
 Bottlerocket has a ["control" container](https://github.com/bottlerocket-os/bottlerocket-control-container), enabled by default, that runs outside of the orchestrator in a separate instance of containerd.
