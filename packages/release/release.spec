@@ -8,7 +8,8 @@ License: Apache-2.0 OR MIT
 
 Source10: hosts
 Source11: nsswitch.conf
-Source98: release-sysctl.conf
+Source97: release-sysctl.conf
+Source98: release-systemd-system.conf
 Source99: release-tmpfiles.conf
 
 Source200: motd.template
@@ -76,7 +77,10 @@ install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 install -p -m 0644 %{S:1000} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 
 install -d %{buildroot}%{_cross_sysctldir}
-install -p -m 0644 %{S:98} %{buildroot}%{_cross_sysctldir}/80-release.conf
+install -p -m 0644 %{S:97} %{buildroot}%{_cross_sysctldir}/80-release.conf
+
+install -d %{buildroot}%{_cross_libdir}/systemd/system.conf.d
+install -p -m 0644 %{S:98} %{buildroot}%{_cross_libdir}/systemd/system.conf.d/80-release.conf
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
@@ -107,6 +111,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 %{_cross_sysctldir}/80-release.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/os-release
+%{_cross_libdir}/systemd/system.conf.d/80-release.conf
 %{_cross_unitdir}/configured.target
 %{_cross_unitdir}/prepare-local.service
 %{_cross_unitdir}/var.mount
