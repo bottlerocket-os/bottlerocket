@@ -27,3 +27,26 @@
 (userrole system_u object_r)
 (userlevel system_u s0-s0)
 (userrange system_u s0-s0)
+
+; Enable policy to use consolidated network peer controls. This
+; avoids a function call to the compatibility mode helper, and
+; will be faster when no network labeling rules are defined.
+(policycap "network_peer_controls")
+
+; Enable policy to check "open" actions for file classes.
+(policycap "open_perms")
+
+; Enable policy to use separate socket security classes.
+(policycap "extended_socket_class")
+
+; Disable policy to force packet checks even if no network labeling
+; rules are defined.
+; (policycap "always_check_network")
+
+; Enable policy to allow the cgroup filesystem to be labeled.
+(policycap "cgroup_seclabel")
+
+; Enable policy to allow domain transitions when executing with the
+; "no new privs" bit enabled, or when the executable is on a "nosuid"
+; filesystem.
+(policycap "nnp_nosuid_transition")

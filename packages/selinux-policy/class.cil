@@ -1,0 +1,266 @@
+; Add all process permissions.
+(class process (
+  fork transition sigchld sigkill sigstop signull signal ptrace
+  getsched setsched getsession getpgid setpgid getcap setcap
+  share getattr setexec setfscreate noatsecure siginh setrlimit
+  rlimitinh dyntransition setcurrent execmem execstack execheap
+  setkeycreate setsockcreate getrlimit))
+
+(class process2 (
+  nnp_transition nosuid_transition))
+
+; Add all filesystem permissions.
+(class filesystem (
+  mount remount unmount getattr relabelfrom relabelto associate
+  quotamod quotaget watch))
+
+; Add all capability permissions.
+(common capability (
+  chown dac_override dac_read_search fowner fsetid kill setgid
+  setuid setpcap linux_immutable net_bind_service net_broadcast
+  net_admin net_raw ipc_lock ipc_owner sys_module sys_rawio
+  sys_chroot sys_ptrace sys_pacct sys_admin sys_boot sys_nice
+  sys_resource sys_time sys_tty_config mknod lease audit_write
+  audit_control setfcap))
+(classcommon capability capability)
+(classcommon cap_userns capability)
+
+(common capability2 (
+  mac_override mac_admin syslog wake_alarm block_suspend
+  audit_read))
+(classcommon capability2 capability2)
+(classcommon cap2_userns capability2)
+
+; Add permissions specific to some capability classes.
+(class capability ())
+(class capability2 ())
+(class cap_userns ())
+(class cap2_userns ())
+
+; Add permissions shared by all file classes.
+(common file (
+  ioctl read write create getattr setattr lock relabelfrom
+  relabelto append map unlink link rename execute quotaon
+  mounton audit_access open execmod watch watch_mount watch_sb
+  watch_with_perm watch_reads))
+(classcommon file file)
+(classcommon dir file)
+(classcommon lnk_file file)
+(classcommon chr_file file)
+(classcommon blk_file file)
+(classcommon sock_file file)
+(classcommon fifo_file file)
+
+; Add permissions specific to some file classes.
+(class file (execute_no_trans entrypoint))
+(class dir (add_name remove_name reparent search rmdir))
+(class fd (use))
+(class lnk_file ())
+(class chr_file ())
+(class blk_file ())
+(class sock_file ())
+(class fifo_file ())
+
+; Add permissions shared by all socket classes.
+(common socket (
+  ioctl read write create getattr setattr lock relabelfrom
+  relabelto append map bind connect listen accept getopt
+  setopt shutdown recvfrom sendto name_bind))
+(classcommon socket socket)
+(classcommon tcp_socket socket)
+(classcommon udp_socket socket)
+(classcommon rawip_socket socket)
+(classcommon netlink_socket socket)
+(classcommon packet_socket socket)
+(classcommon key_socket socket)
+(classcommon unix_stream_socket socket)
+(classcommon unix_dgram_socket socket)
+(classcommon netlink_route_socket socket)
+(classcommon netlink_tcpdiag_socket socket)
+(classcommon netlink_nflog_socket socket)
+(classcommon netlink_xfrm_socket socket)
+(classcommon netlink_selinux_socket socket)
+(classcommon netlink_iscsi_socket socket)
+(classcommon netlink_audit_socket socket)
+(classcommon netlink_fib_lookup_socket socket)
+(classcommon netlink_connector_socket socket)
+(classcommon netlink_netfilter_socket socket)
+(classcommon netlink_dnrt_socket socket)
+(classcommon netlink_kobject_uevent_socket socket)
+(classcommon netlink_generic_socket socket)
+(classcommon netlink_scsitransport_socket socket)
+(classcommon netlink_rdma_socket socket)
+(classcommon netlink_crypto_socket socket)
+(classcommon appletalk_socket socket)
+(classcommon dccp_socket socket)
+(classcommon tun_socket socket)
+(classcommon sctp_socket socket)
+(classcommon icmp_socket socket)
+(classcommon ax25_socket socket)
+(classcommon ipx_socket socket)
+(classcommon netrom_socket socket)
+(classcommon atmpvc_socket socket)
+(classcommon x25_socket socket)
+(classcommon rose_socket socket)
+(classcommon decnet_socket socket)
+(classcommon atmsvc_socket socket)
+(classcommon rds_socket socket)
+(classcommon irda_socket socket)
+(classcommon pppox_socket socket)
+(classcommon llc_socket socket)
+(classcommon can_socket socket)
+(classcommon tipc_socket socket)
+(classcommon bluetooth_socket socket)
+(classcommon iucv_socket socket)
+(classcommon rxrpc_socket socket)
+(classcommon isdn_socket socket)
+(classcommon phonet_socket socket)
+(classcommon ieee802154_socket socket)
+(classcommon caif_socket socket)
+(classcommon alg_socket socket)
+(classcommon nfc_socket socket)
+(classcommon vsock_socket socket)
+(classcommon kcm_socket socket)
+(classcommon qipcrtr_socket socket)
+(classcommon smc_socket socket)
+(classcommon xdp_socket socket)
+
+; Add permissions specific to some socket classes.
+(class socket ())
+(class tcp_socket (node_bind name_connect))
+(class udp_socket (node_bind))
+(class rawip_socket (node_bind))
+(class netlink_socket ())
+(class packet_socket ())
+(class key_socket ())
+(class unix_stream_socket (connectto))
+(class unix_dgram_socket ())
+(class netlink_route_socket (nlmsg_read nlmsg_write))
+(class netlink_tcpdiag_socket (nlmsg_read nlmsg_write))
+(class netlink_nflog_socket ())
+(class netlink_xfrm_socket (nlmsg_read nlmsg_write))
+(class netlink_selinux_socket ())
+(class netlink_iscsi_socket ())
+(class netlink_audit_socket (
+  nlmsg_read nlmsg_write nlmsg_relay nlmsg_readpriv
+  nlmsg_tty_audit))
+(class netlink_fib_lookup_socket ())
+(class netlink_connector_socket ())
+(class netlink_netfilter_socket ())
+(class netlink_dnrt_socket ())
+(class netlink_kobject_uevent_socket ())
+(class netlink_generic_socket ())
+(class netlink_scsitransport_socket ())
+(class netlink_rdma_socket ())
+(class netlink_crypto_socket ())
+(class appletalk_socket ())
+(class dccp_socket (node_bind name_connect))
+(class tun_socket (attach_queue))
+(class sctp_socket (node_bind name_connect association))
+(class icmp_socket (node_bind))
+(class ax25_socket ())
+(class ipx_socket ())
+(class netrom_socket ())
+(class atmpvc_socket ())
+(class x25_socket ())
+(class rose_socket ())
+(class decnet_socket ())
+(class atmsvc_socket ())
+(class rds_socket ())
+(class irda_socket ())
+(class pppox_socket ())
+(class llc_socket ())
+(class can_socket ())
+(class tipc_socket ())
+(class bluetooth_socket ())
+(class iucv_socket ())
+(class rxrpc_socket ())
+(class isdn_socket ())
+(class phonet_socket ())
+(class ieee802154_socket ())
+(class caif_socket ())
+(class alg_socket ())
+(class nfc_socket ())
+(class vsock_socket ())
+(class kcm_socket ())
+(class qipcrtr_socket ())
+(class smc_socket ())
+(class xdp_socket ())
+
+; Add permissions for various network classes.
+(class node (recvfrom sendto))
+(class netif (ingress egress))
+(class association (sendto recvfrom setcontext polmatch))
+(class packet (
+  send recv relabelto relabelfrom forward_in forward_out))
+(class peer (recv))
+(class infiniband_pkey (access))
+(class infiniband_endport (manage_subnet))
+
+; Add permissions shared by all IPC classes.
+(common ipc (
+  create destroy getattr setattr read write associate unix_read
+  unix_write))
+(classcommon sem ipc)
+(classcommon msg ipc)
+(classcommon msgq ipc)
+(classcommon shm ipc)
+(classcommon ipc ipc)
+
+; Add permissions specific to some IPC classes.
+(class sem ())
+(class msg (send receive))
+(class msgq (enqueue))
+(class shm (lock))
+(class ipc ())
+
+; Add permissions for the system class.
+; This includes service-related actions that are not defined in
+; the kernel, but are checked by systemd for DBUS requests.
+(class system (
+  ipc_info syslog_read syslog_mod syslog_console module_request
+  module_load halt reboot status start stop enable disable
+  reload))
+
+; Add permissions for other classes.
+(class security (
+  compute_av compute_create compute_member check_context
+  load_policy compute_relabel compute_user setenforce setbool
+  setsecparam setcheckreqprot read_policy validate_trans))
+(class key (view read write search link setattr create))
+(class memprotect (mmap_zero))
+(class kernel_service (use_as_override create_files_as))
+(class binder (impersonate call set_context_mgr transfer))
+(class bpf (map_create map_read map_write prog_load prog_run))
+
+; Match the kernel's class order.
+(classorder (
+  security process process2 system capability filesystem file
+  dir fd lnk_file chr_file blk_file sock_file fifo_file socket
+  tcp_socket udp_socket rawip_socket node netif netlink_socket
+  packet_socket key_socket unix_stream_socket unix_dgram_socket
+  sem msg msgq shm ipc netlink_route_socket
+  netlink_tcpdiag_socket netlink_nflog_socket
+  netlink_xfrm_socket netlink_selinux_socket
+  netlink_iscsi_socket netlink_audit_socket
+  netlink_fib_lookup_socket netlink_connector_socket
+  netlink_netfilter_socket netlink_dnrt_socket association
+  netlink_kobject_uevent_socket netlink_generic_socket
+  netlink_scsitransport_socket netlink_rdma_socket
+  netlink_crypto_socket appletalk_socket packet key dccp_socket
+  memprotect peer capability2 kernel_service tun_socket binder
+  cap_userns cap2_userns sctp_socket icmp_socket ax25_socket
+  ipx_socket netrom_socket atmpvc_socket x25_socket rose_socket
+  decnet_socket atmsvc_socket rds_socket irda_socket
+  pppox_socket llc_socket can_socket tipc_socket
+  bluetooth_socket iucv_socket rxrpc_socket isdn_socket
+  phonet_socket ieee802154_socket caif_socket alg_socket
+  nfc_socket vsock_socket kcm_socket qipcrtr_socket smc_socket
+  infiniband_pkey infiniband_endport bpf xdp_socket))
+
+; Add permissions for SELinux-aware applications.
+; This includes systemd and dbus-broker.
+(class service (start stop status reload enable disable))
+(class dbus (acquire_svc send_msg))
+
+(classorder (unordered service dbus))

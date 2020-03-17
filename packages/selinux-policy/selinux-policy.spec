@@ -9,15 +9,21 @@ License: Apache-2.0 OR MIT
 
 # CIL policy files
 Source0: base.cil
-Source1: subject.cil
-Source2: object.cil
-Source3: sid.cil
-Source4: fs.cil
-Source5: perm.cil
-Source6: policy.cil
+Source1: sid.cil
+Source2: class.cil
+Source3: subject.cil
+Source4: object.cil
+Source5: fs.cil
+Source6: processes.cil
+Source7: files.cil
+Source8: sockets.cil
+Source9: networks.cil
+Source10: ipcs.cil
+Source11: systems.cil
+Source12: rules.cil
 
 # Helpers for generating CIL
-Source10: catgen.sh
+Source50: catgen.sh
 
 # Misc config files
 Source100: selinux.config
@@ -35,7 +41,9 @@ BuildRequires: secilc
 %build
 %{_sourcedir}/catgen.sh > category.cil
 secilc --policyvers=31 \
-  %{S:0} %{S:1} %{S:2} %{S:3} %{S:4} %{S:5} %{S:6} *.cil
+  %{S:0} %{S:1} %{S:2} %{S:3} %{S:4} %{S:5} \
+  %{S:6} %{S:7} %{S:8} %{S:9} %{S:10} %{S:11} \
+  %{S:12} *.cil
 
 %install
 install -d %{buildroot}%{_cross_libdir}/selinux/%{policytype}/{contexts/files,policy}

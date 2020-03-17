@@ -1,5 +1,5 @@
-; Permit any action that is not defined by the policy.
-(handleunknown allow)
+; Deny any action that is not defined by the policy.
+(handleunknown deny)
 
 ; Define the set of all subject and object types, to allow certain
 ; actions to be whitelisted or blacklisted for everything.
@@ -11,6 +11,10 @@
 
 ; All subjects are allowed to read and execute all files.
 (allow all_s global (files (load)))
+
+; All subjects are allowed to interact with processes in
+; most ways without policy restrictions.
+(allow all_s global (processes (interact)))
 
 ; PID 1 starts as "kernel_t" and becomes "init_t".
 (typetransition kernel_t init_exec_t process init_t)
@@ -51,37 +55,38 @@
 
 ; All subjects are allowed to write to objects with their own label.
 ; This includes files like the ones under /proc/self.
-(allow all_s self (files (mutate)))
+; They can also set watches on those objects.
+(allow all_s self (files (mutate watch)))
 
-; All subjects are allowed to write to "ephemeral" and "foreign"
-; objects, such as files in /tmp and /mnt. They can also manage
-; mounts for "foreign" objects.
-(allow all_s ephemeral_o (files (mutate)))
-(allow all_s foreign_o (files (mutate)))
-(allow all_s foreign_o (files (mount)))
+; All subjects are allowed to write to and set watches for "foreign"
+; and "ephemeral" objects, such as files in /mnt and /tmp.
+; They can also manage mounts for "foreign" objects.
+(allow all_s ephemeral_o (files (mutate watch)))
+(allow all_s foreign_o (files (mutate watch mount)))
 
-; All subjects are allowed to write to and manage mounts for most
-; files and directories on /local.
-(allow all_s unprotected_o (files (mutate)))
-(allow all_s unprotected_o (files (mount)))
+; All subjects are allowed to write to, set watches for, and manage
+; mounts for most files and directories on /local.
+(allow all_s unprotected_o (files (mutate watch mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))
 
 ; Only trusted components can write to "cache_t" or "private_t", as
 ; they provide a means to persist changes across container restarts
-; and reboots.
-(allow trusted_s protected_o (files (mutate)))
+; and reboots. We restrict the ability to set watches as this can
+; be used to block access for another process.
+(allow trusted_s protected_o (files (mutate watch)))
+(allow trusted_s immutable_o (files (watch)))
 
-; Untrusted processes should never be permitted to modify these files,
-; or to manage mounts for these directories.
-(neverallow untrusted_s protected_o (files (mutate)))
-(neverallow untrusted_s protected_o (files (mount)))
+; Untrusted processes should not be permitted to modify these files,
+; set watches for them, or to manage mounts for these directories.
+(neverallow untrusted_s protected_o (files (mutate watch mount)))
+(neverallow untrusted_s immutable_o (files (watch)))
 
 ; Only trusted components are allowed to relabel files.
 (allow trusted_s global (files (relabel)))
 
-; Untrusted processes should never be permitted to relabel anything.
+; Untrusted processes should not be permitted to relabel files.
 (neverallow untrusted_s global (files (relabel)))
 
 ; Containers are allowed to relax security constraints, since we
@@ -89,7 +94,7 @@
 (allow container_s self (processes (relax)))
 (allow container_s global (files (relax)))
 
-; Host processes should never need to relax security constraints.
+; Host processes should not need to relax security constraints.
 (neverallow host_s global (processes (relax)))
 (neverallow host_s global (files (relax)))
 
@@ -100,6 +105,32 @@
 ; Files that exist elsewhere should not be an entrypoint.
 (neverallow all_s ephemeral_o (files (enter)))
 (neverallow all_s foreign_o (files (enter)))
+
+; All subjects are allowed to use most actions related to sockets,
+; networks, and IPC mechanisms.
+(allow all_s global (sockets (use)))
+(allow all_s global (networks (use)))
+(allow all_s global (ipcs (use)))
+
+; Only trusted components are allowed to relabel sockets and packets.
+(allow trusted_s global (sockets (relabel)))
+(allow trusted_s global (networks (relabel)))
+
+; Untrusted processes cannot relabel sockets or packets.
+(neverallow untrusted_s global (sockets (relabel)))
+(neverallow untrusted_s global (networks (relabel)))
+
+; All subjects are allowed to use most systems-level functionality,
+; such as bpf and capabilities.
+(allow all_s global (systems (use)))
+
+; Only trusted components can use systems-level management functions.
+; This includes interactions with SELinux-aware userspace programs
+; such as systemd and dbus-broker.
+(allow trusted_s global (systems (manage)))
+
+; Untrusted processes cannot use systems-level management functions.
+(neverallow untrusted_s global (systems (manage)))
 
 ; TODO: remove once we're confident that we aren't generating AVC
 ; denials for the majority of workloads.

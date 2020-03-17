@@ -1,0 +1,22 @@
+; Permission groups for OS functions.
+(classmap systems (manage use))
+
+; Permission group for managing the OS.
+(classmapping systems manage (capability2 (mac_override mac_admin)))
+(classmapping systems manage (cap2_userns (mac_override mac_admin)))
+(classmapping systems manage (dbus (all)))
+(classmapping systems manage (security (all)))
+(classmapping systems manage (service (all)))
+(classmapping systems manage (
+  system (halt reboot status start stop enable disable reload)))
+
+; Permission group for other OS functions.
+(classmapping systems use (binder (all)))
+(classmapping systems use (bpf (all)))
+(classmapping systems use (capability (all)))
+(classmapping systems use (capability2 (not (mac_override mac_admin))))
+(classmapping systems use (cap_userns (all)))
+(classmapping systems use (cap2_userns (not (mac_override mac_admin))))
+(classmapping systems use (key (all)))
+(classmapping systems use (
+  system (not (halt reboot status start stop enable disable reload))))

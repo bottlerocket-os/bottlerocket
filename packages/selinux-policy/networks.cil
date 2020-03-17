@@ -1,0 +1,15 @@
+; Permission groups for network actions.
+(classmap networks (relabel use))
+
+; Permission groups for relabeling network flows.
+(classmapping networks relabel (association (setcontext polmatch)))
+(classmapping networks relabel (packet (relabelto)))
+
+; Permission group for other network actions.
+(classmapping networks use (node (all)))
+(classmapping networks use (netif (all)))
+(classmapping networks use (association (not (setcontext polmatch))))
+(classmapping networks use (packet (not (relabelto))))
+(classmapping networks use (peer (all)))
+(classmapping networks use (infiniband_pkey (all)))
+(classmapping networks use (infiniband_endport (all)))
