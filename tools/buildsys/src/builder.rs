@@ -20,6 +20,7 @@ impl PackageBuilder {
     /// Build RPMs for the specified package.
     pub(crate) fn build(package: &str) -> Result<Self> {
         let arch = getenv("BUILDSYS_ARCH")?;
+        let output = getenv("BUILDSYS_PACKAGES_DIR")?;
 
         // We do *not* want to rebuild most packages when the variant changes, becauses most aren't
         // affected; packages that care about variant should "echo cargo:rerun-if-env-changed=VAR"
@@ -42,7 +43,7 @@ impl PackageBuilder {
             arch = arch,
         );
 
-        build(&target, &build_args, &tag)?;
+        build(&target, &build_args, &tag, &output)?;
 
         Ok(Self)
     }
@@ -60,6 +61,7 @@ impl VariantBuilder {
         let variant = getenv("BUILDSYS_VARIANT")?;
         let version_image = getenv("BUILDSYS_VERSION_IMAGE")?;
         let version_build = getenv("BUILDSYS_VERSION_BUILD")?;
+        let output = getenv("BUILDSYS_OUTPUT_DIR")?;
 
         // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
@@ -78,16 +80,20 @@ impl VariantBuilder {
             version_image = version_image,
             version_build = version_build,
         );
-        let tag = format!("buildsys-var-{variant}-{arch}", variant = variant, arch = arch);
+        let tag = format!(
+            "buildsys-var-{variant}-{arch}",
+            variant = variant,
+            arch = arch
+        );
 
-        build(&target, &build_args, &tag)?;
+        build(&target, &build_args, &tag, &output)?;
 
         Ok(Self)
     }
 }
 
 /// Invoke a series of `docker` commands to drive a package or variant build.
-fn build(target: &str, build_args: &str, tag: &str) -> Result<()> {
+fn build(target: &str, build_args: &str, tag: &str, output: &str) -> Result<()> {
     // Our Dockerfile is in the top-level directory.
     let root = getenv("BUILDSYS_ROOT_DIR")?;
     std::env::set_current_dir(&root).context(error::DirectoryChange { path: &root })?;
@@ -122,7 +128,6 @@ fn build(target: &str, build_args: &str, tag: &str) -> Result<()> {
         tag = tag,
     ));
 
-    let output = getenv("BUILDSYS_OUTPUT_DIR")?;
     let create = args(format!("create --name {tag} {tag} true", tag = tag));
     let cp = args(format!("cp {}:/output/. {}", tag, output));
     let rm = args(format!("rm --force {}", tag));

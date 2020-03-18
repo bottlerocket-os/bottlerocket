@@ -5,6 +5,7 @@ skip_core_tasks = true
 BUILDSYS_ARCH = { script = ["uname -m"] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_OUTPUT_DIR = "${BUILDSYS_ROOT_DIR}/build"
+BUILDSYS_PACKAGES_DIR = "${BUILDSYS_OUTPUT_DIR}/packages"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
@@ -38,6 +39,7 @@ BUILDSYS_DOCKER_RUN_ARGS = { default_value = "--network=host" }
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
+mkdir -p ${BUILDSYS_PACKAGES_DIR}
 mkdir -p ${GO_MOD_CACHE}
 
 for cmd in bash curl docker gunzip ; do
@@ -229,9 +231,10 @@ for ws in sources packages variants/* tools/buildsys ; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys
-for ext in rpm tar lz4 img ; do
+for ext in tar lz4 img ; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
+rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
 rm -rf ${BUILDSYS_OUTPUT_DIR}/latest
 rm -rf html
 '''
