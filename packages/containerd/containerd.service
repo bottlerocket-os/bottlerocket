@@ -7,7 +7,7 @@ Wants=network-online.target configured.target
 [Service]
 ExecStart=/usr/bin/containerd
 Delegate=yes
-KillMode=mixed
+KillMode=process
 TimeoutSec=0
 RestartSec=2
 Restart=always

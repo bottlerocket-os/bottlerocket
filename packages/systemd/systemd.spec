@@ -16,6 +16,10 @@ Patch9001: 9001-move-stateful-paths-to-ephemeral-storage.patch
 Patch9002: 9002-do-not-create-unused-state-directories.patch
 Patch9003: 9003-use-absolute-path-for-var-run-symlink.patch
 
+# TODO: this could potentially be submitted upstream, but needs a better
+# way to be configured at build time or during execution first.
+Patch9004: 9004-core-add-separate-timeout-for-system-shutdown.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson

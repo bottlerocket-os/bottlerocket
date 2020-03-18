@@ -1,7 +1,7 @@
-From 8189d4f9604c4e37eee6db75e2cea2a3e3935f34 Mon Sep 17 00:00:00 2001
+From 8862df96457fa790bb2dea414f89d1fe0a704716 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 15 Sep 2019 00:21:26 +0000
-Subject: [PATCH 9001/9003] move stateful paths to ephemeral storage
+Subject: [PATCH 9001/9004] move stateful paths to ephemeral storage
 
 We reserve most of /var for persistent local storage controlled by
 the administrator, and want to avoid depending on it for our own
@@ -13,10 +13,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/src/libsystemd/sd-path/sd-path.c b/src/libsystemd/sd-path/sd-path.c
-index ad56ddb..36cd0b4 100644
+index 95d6551..ac3e6fc 100644
 --- a/src/libsystemd/sd-path/sd-path.c
 +++ b/src/libsystemd/sd-path/sd-path.c
-@@ -252,19 +252,19 @@ static int get_path(uint64_t type, char **buffer, const char **ret) {
+@@ -251,19 +251,19 @@ static int get_path(uint64_t type, char **buffer, const char **ret) {
                  return 0;
  
          case SD_PATH_SYSTEM_STATE_PRIVATE:
