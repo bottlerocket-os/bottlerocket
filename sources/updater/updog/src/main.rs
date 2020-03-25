@@ -10,6 +10,7 @@ use bottlerocket_release::BottlerocketRelease;
 use chrono::{DateTime, Utc};
 use semver::Version;
 use serde::{Deserialize, Serialize};
+use signal_hook::{iterator::Signals, SIGTERM};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
@@ -19,6 +20,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
+use std::thread;
 use tough::{Limits, Repository, Settings};
 use update_metadata::{Manifest, Update};
 
@@ -437,6 +439,29 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
     Ok(())
 }
 
+fn initiate_reboot() -> Result<()> {
+    // Set up signal handler for termination signals
+    let signals = Signals::new(&[SIGTERM]).context(error::Signal)?;
+    let signals_bg = signals.clone();
+    thread::spawn(move || {
+        for _sig in signals_bg.forever() {
+            // Ignore termination signals in case updog gets terminated
+            // before getting to exit normally by itself after invoking
+            // `shutdown -r` to complete the update.
+        }
+    });
+    if let Err(err) = process::Command::new("shutdown")
+        .arg("-r")
+        .status()
+        .context(error::RebootFailure)
+    {
+        // Kill the signal handling thread
+        signals.close();
+        return Err(err);
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_lines)]
 fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
@@ -523,10 +548,7 @@ fn main_inner() -> Result<()> {
                     if command == Command::Update {
                         update_flags()?;
                         if arguments.reboot {
-                            process::Command::new("shutdown")
-                                .arg("-r")
-                                .status()
-                                .context(error::RebootFailure)?;
+                            initiate_reboot()?;
                         }
                     }
                     output(
@@ -551,10 +573,7 @@ fn main_inner() -> Result<()> {
         Command::UpdateApply => {
             update_flags()?;
             if arguments.reboot {
-                process::Command::new("shutdown")
-                    .arg("-r")
-                    .status()
-                    .context(error::RebootFailure)?;
+                initiate_reboot()?;
             }
         }
         Command::Prepare => {
