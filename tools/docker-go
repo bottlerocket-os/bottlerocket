@@ -54,10 +54,19 @@ DOCKER_RUN_ARGS="--network=host"
 
 parse_args "${@}"
 
+# Go accepts both lower and uppercase proxy variables, pass both through.
+proxy_env=( )
+for i in http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY; do
+   if [ -n "${!i}" ]; then
+      proxy_env[${#proxy_env[@]}]="--env=$i=${!i}"
+   fi
+done
+
 docker run --rm \
   -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \
   -e GOPATH='/tmp/go' \
+  "${proxy_env[@]}" \
   --user "$(id -u):$(id -g)" \
   ${DOCKER_RUN_ARGS} \
   -v "${GO_MOD_CACHE}":/tmp/go/pkg/mod \
