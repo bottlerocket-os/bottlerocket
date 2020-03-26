@@ -46,7 +46,7 @@ dependencies = [
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "copyless 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 0.99.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "either 1.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -270,7 +270,7 @@ dependencies = [
  "http 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper-unix-connector 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -292,7 +292,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -436,7 +436,7 @@ dependencies = [
 name = "block-party"
 version = "0.1.0"
 dependencies = [
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -456,7 +456,7 @@ dependencies = [
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -543,7 +543,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "chrono"
-version = "0.4.10"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "num-integer 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -726,7 +726,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1002,7 +1002,7 @@ dependencies = [
  "cargo-readme 3.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gptman 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.67 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1086,7 +1086,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1261,7 +1261,7 @@ version = "0.1.0"
 dependencies = [
  "cargo-readme 3.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "filetime 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "sys-mount 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1362,7 +1362,7 @@ dependencies = [
  "schnauzer 0.1.0",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1379,7 +1379,7 @@ dependencies = [
  "regex 1.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1457,7 +1457,7 @@ dependencies = [
  "model-derive 0.1.0",
  "regex 1.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1485,7 +1485,7 @@ dependencies = [
  "regex 1.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_plain 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1590,6 +1590,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "parse-datetime"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme 3.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "pem"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1683,7 +1692,7 @@ dependencies = [
  "cargo-readme 3.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2011,7 +2020,7 @@ dependencies = [
  "models 0.1.0",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2122,7 +2131,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2136,7 +2145,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2183,7 +2192,7 @@ dependencies = [
  "hex-literal 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_plain 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2191,7 +2200,7 @@ name = "simplelog"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "term 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2223,16 +2232,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "snafu"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
+ "backtrace 0.3.44 (registry+https://github.com/rust-lang/crates.io-index)",
  "doc-comment 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu-derive 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu-derive 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "snafu-derive"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2273,7 +2283,7 @@ dependencies = [
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2322,7 +2332,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2420,7 +2430,7 @@ dependencies = [
  "schnauzer 0.1.0",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2515,7 +2525,7 @@ name = "tough"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "olpc-cjson 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pem 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2524,7 +2534,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_plain 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "untrusted 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2634,7 +2644,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "update_metadata"
 version = "0.1.0"
 dependencies = [
- "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "migrator 0.1.0",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2642,7 +2652,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_plain 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2650,7 +2660,7 @@ name = "updog"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release 0.1.0",
- "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "lz4 1.23.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "migrator 0.1.0",
@@ -2664,7 +2674,7 @@ dependencies = [
  "signal-hook 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "signpost 0.1.0",
  "simplelog 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "structopt 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2956,7 +2966,7 @@ dependencies = [
 "checksum cargo_metadata 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "e5d1b4d380e1bab994591a24c2bdd1b054f64b60bef483a8c598c7c345bc3bbe"
 "checksum cc 1.0.50 (registry+https://github.com/rust-lang/crates.io-index)" = "95e28fa049fda1c330bcf9d723be7663a899c4679724b34c81e9f5a326aab8cd"
 "checksum cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)" = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
-"checksum chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)" = "31850b4a4d6bae316f7a09e691c944c28299298837edc0a03f755618c23cbc01"
+"checksum chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)" = "80094f509cf8b5ae86a4966a39b3ff66cd7e2a3e594accec3743ff3fabeab5b2"
 "checksum clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5067f5bb2d80ef5d68b4c87db81601f0b75bca627bc2ef76b141d7b846a3c6d9"
 "checksum cloudabi 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 "checksum constant_time_eq 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
@@ -3124,8 +3134,8 @@ dependencies = [
 "checksum skeptic 0.13.4 (registry+https://github.com/rust-lang/crates.io-index)" = "d6fb8ed853fdc19ce09752d63f3a2e5b5158aeb261520cd75eb618bd60305165"
 "checksum slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 "checksum smallvec 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5c2fb2ec9bcd216a5b0d0ccf31ab17b5ed1d627960edff65bbe95d3ce221cefc"
-"checksum snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "546db9181bce2aa22ed883c33d65603b76335b4c2533a98289f54265043de7a1"
-"checksum snafu-derive 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "bdc75da2e0323f297402fd9c8fdba709bb04e4c627cbe31d19a2c91fc8d9f0e2"
+"checksum snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "48492e4f51c6e679217e80c11290edfdedf3133e358f4f432a6296f4c820f95b"
+"checksum snafu-derive 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "b5d1c41856cbfa99befda5034c72539dd9d7dd6f3e61058bdb804ac40715bc2a"
 "checksum socket2 0.3.11 (registry+https://github.com/rust-lang/crates.io-index)" = "e8b74de517221a2cb01a53349cf54182acdc31a074727d3079068448c0676d85"
 "checksum sourcefile 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "4bf77cb82ba8453b42b6ae1d692e4cdc92f9a47beaf89a847c8be83f4e328ad3"
 "checksum spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"

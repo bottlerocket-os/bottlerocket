@@ -1,0 +1,14 @@
+[package]
+name = "parse-datetime"
+version = "0.1.0"
+authors = ["Zac Mrowicki <mrowicki@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+
+[dependencies]
+chrono = "0.4.11"
+snafu = { version = "0.6.3", features = ["backtraces-impl-backtrace-crate"] }
+
+[build-dependencies]
+cargo-readme = "3.1"

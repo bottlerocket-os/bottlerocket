@@ -24,6 +24,8 @@ members = [
 
     "models",
 
+    "parse-datetime",
+
     "preinit/laika",
 
     "updater/block-party",
