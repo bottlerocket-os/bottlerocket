@@ -7,6 +7,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     steps:
       - uses: actions/checkout@v2
-      - run: cargo install --version 0.28.0 cargo-make
+      - run: cargo install --version 0.30.0 cargo-make
       - run: cargo install --version 0.6.6 cargo-deny --no-default-features
       - run: cargo make
