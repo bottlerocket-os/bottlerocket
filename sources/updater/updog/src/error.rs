@@ -242,6 +242,12 @@ pub(crate) enum Error {
     UpdateMetadata {
         source: update_metadata::error::Error,
     },
+
+    #[snafu(display("Failed to set up signal handler: {}", source))]
+    Signal {
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
 }
 
 impl std::convert::From<update_metadata::error::Error> for Error {
