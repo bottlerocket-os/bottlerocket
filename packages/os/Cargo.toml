@@ -10,6 +10,7 @@ variant-sensitive = true
 source-groups = [
     "api",
     "bottlerocket-release",
+    "parse-datetime",
     "growpart",
     "updater",
     "webpki-roots-shim",
