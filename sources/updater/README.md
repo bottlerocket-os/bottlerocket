@@ -46,7 +46,9 @@ If the calculated time has not passed yet, Updog returns the update timestamp to
 
 Assuming all the requirements are met, Updog requests the update images from the TUF repository and writes them to the "inactive" partition.
 
-For more information on what's Updog see [Updog](updog/)
+For more information on what's Updog see [Updog](updog/).
+For more information about update waves see [Waves](waves/).
+
 ## Signpost
 Once an update has been successfully written to the inactive partition, Updog calls the Signpost utility.
 This updates the priority bits in the GUID partition table of each partition and swaps the "active" and "inactive" partitions.
