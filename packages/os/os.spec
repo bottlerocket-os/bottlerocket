@@ -130,6 +130,11 @@ Summary: Bottlerocket updater CLI
 %description -n %{_cross_os}updog
 not much what's up with you
 
+%package -n %{_cross_os}logdog
+Summary: Bottlerocket log extractor
+%description -n %{_cross_os}logdog
+use logdog to extract logs from the Bottlerocket host
+
 %package -n %{_cross_os}preinit
 Summary: Bottlerocket pre-init system setup
 %description -n %{_cross_os}preinit
@@ -162,6 +167,7 @@ mkdir bin
     -p migrator \
     -p signpost \
     -p updog \
+    -p logdog \
     -p growpart \
     -p laika \
     %{nil}
@@ -183,7 +189,7 @@ for p in \
   thar-be-settings servicedog host-containers \
   storewolf settings-committer \
   migrator \
-  signpost updog ;
+  signpost updog logdog;
 do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
@@ -313,6 +319,9 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %{_cross_datadir}/updog
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/updog-toml
+
+%files -n %{_cross_os}logdog
+%{_cross_bindir}/logdog
 
 %files -n %{_cross_os}preinit
 %{_cross_sbindir}/preinit

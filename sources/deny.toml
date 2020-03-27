@@ -19,7 +19,7 @@ allow = [
     "MIT",
     "OpenSSL",
     "Unlicense",
-    #"Zlib",  # OK but currently unused; commenting to prevent warning
+    "Zlib"
 ]
 
 exceptions = [

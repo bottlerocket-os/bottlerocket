@@ -22,6 +22,8 @@ members = [
 
     "growpart",
 
+    "logdog",
+
     "models",
 
     "parse-datetime",
