@@ -107,6 +107,11 @@ mkdir src_squashfs
 for file in $(cat kernel_devel_files); do
   install -D ${file} src_squashfs/%{version}/${file}
 done
+# if we have it, include objtool (not all arches support it yet)
+if [ "%{_cross_karch}" == "x86"  ]; then
+  install -D tools/objtool/objtool src_squashfs/%{version}/tools/objtool/objtool
+fi
+
 mksquashfs src_squashfs kernel-devel.squashfs
 install -D kernel-devel.squashfs %{buildroot}%{_cross_datadir}/bottlerocket/kernel-devel.squashfs
 install -d %{buildroot}%{kernel_sourcedir}
