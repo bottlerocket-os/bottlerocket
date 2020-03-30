@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Paul Eggert <eggert@cs.ucla.edu>
+Date: Sat, 7 Mar 2020 10:29:51 -0800
+Subject: [PATCH 2/2] ls: improve removed-directory test
+
+* tests/ls/removed-directory.sh: Remove host_triplet test.
+Skip this test if one cannot remove the working directory.
+From a suggestion by Bernhard Voelker (Bug#39929).
+---
+ tests/ls/removed-directory.sh | 13 ++++---------
+ 1 file changed, 4 insertions(+), 9 deletions(-)
+
+diff --git a/tests/ls/removed-directory.sh b/tests/ls/removed-directory.sh
+index fe8f929a1..63b209dee 100755
+--- a/tests/ls/removed-directory.sh
++++ b/tests/ls/removed-directory.sh
+@@ -1,7 +1,7 @@
+ #!/bin/sh
+-# If ls is asked to list a removed directory (e.g. the parent process's
+-# current working directory that has been removed by another process), it
+-# emits an error message.
++# If ls is asked to list a removed directory (e.g., the parent process's
++# current working directory has been removed by another process), it
++# should not emit an error message merely because the directory is removed.
+ 
+ # Copyright (C) 2020 Free Software Foundation, Inc.
+ 
+@@ -21,15 +21,10 @@
+ . "${srcdir=.}/tests/init.sh"; path_prepend_ ./src
+ print_ver_ ls
+ 
+-case $host_triplet in
+-  *linux*) ;;
+-  *) skip_ 'non linux kernel' ;;
+-esac
+-
+ cwd=$(pwd)
+ mkdir d || framework_failure_
+ cd d || framework_failure_
+-rmdir ../d || framework_failure_
++rmdir ../d || skip_ "can't remove working directory on this platform"
+ 
+ ls >../out 2>../err || fail=1
+ cd "$cwd" || framework_failure_
+-- 
+2.17.1
+
