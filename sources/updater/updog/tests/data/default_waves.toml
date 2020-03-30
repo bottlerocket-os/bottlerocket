@@ -1,0 +1,15 @@
+[[waves]]
+start_after = '12 hours'
+fleet_percentage = 1
+
+[[waves]]
+start_after = '1 day'
+fleet_percentage = 10
+
+[[waves]]
+start_after = '3 days'
+fleet_percentage = 25
+
+[[waves]]
+start_after = '6 days'
+fleet_percentage = 100

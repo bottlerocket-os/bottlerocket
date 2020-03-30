@@ -6,6 +6,7 @@ mod se;
 
 use chrono::{DateTime, Duration, Utc};
 use migrator::MIGRATION_FILENAME_RE;
+use parse_datetime::parse_datetime;
 use rand::{thread_rng, Rng};
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -50,6 +51,19 @@ impl Wave {
             Self::Last { start } => *start <= Utc::now(),
         }
     }
+}
+
+/// UpdateWaves is provided for the specific purpose of deserializing
+/// update waves from TOML files
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateWaves {
+    pub waves: Vec<UpdateWave>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateWave {
+    pub start_after: String,
+    pub fleet_percentage: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -201,67 +215,99 @@ impl Manifest {
         }
     }
 
+    // Ensures wave dates and bounds are in ascending order.
+    // Update.waves is a BTreeMap which means its keys are always ordered.
+    // If a user has fleet percentages (which have been converted to seeds by
+    // this point) out of order, we will catch it here as the dates will also
+    // be out of order.
     fn validate_updates(updates: &[Update]) -> Result<()> {
         for update in updates {
             let mut waves = update.waves.iter().peekable();
             while let Some(wave) = waves.next() {
                 if let Some(next) = waves.peek() {
-                    ensure!(
-                        wave.1 < next.1,
-                        error::WavesUnordered {
-                            wave: *wave.0,
-                            next: *next.0
-                        }
-                    );
+                    ensure!(wave.1 < next.1, error::WavesUnordered);
                 }
             }
         }
         Ok(())
     }
 
-    /// Adds a wave to update, returns number of matching updates for wave
-    pub fn add_wave(
+    /// Returns Updates matching variant, arch, and version
+    fn get_matching_updates(
         &mut self,
         variant: String,
         arch: String,
         image_version: Version,
-        bound: u32,
-        start: DateTime<Utc>,
-    ) -> Result<usize> {
-        let matching: Vec<&mut Update> = self
-            .updates
+    ) -> Vec<&mut Update> {
+        self.updates
             .iter_mut()
             // Find the update that exactly matches the specified update
             .filter(|update| {
                 update.arch == arch && update.variant == variant && update.version == image_version
             })
-            .collect();
-        let num_matching = matching.len();
-        for update in matching {
-            update.waves.insert(bound, start);
-        }
-        Self::validate_updates(&self.updates)?;
-        Ok(num_matching)
+            .collect()
     }
 
-    pub fn remove_wave(
+    /// Adds a vec of waves to update, returns number of matching updates for wave
+    // Wave format in `manifest.json` is slightly different from the wave structs
+    // provided to this function. For example, if two `UpdateWave` structs are
+    // passed to this function:
+    // [
+    //   UpdateWave { start_after: "1 hour", fleet_percentage: 1 },
+    //   UpdateWave { start_after: "1 day", fleet_percentage: 100},
+    // ]
+    //
+    // The resulting `waves` section of the applicable update looks like:
+    // waves: {
+    //   "0": "<UTC datetime of 1 hour from now>",
+    //   "20": "<UTC datetime of 1 day from now>"
+    // }
+    //
+    // This might look odd until you understand that the first wave begins
+    // at the time specified, and includes seeds 0-19, or 1%, of the seeds
+    // available (`MAX_SEED` in this file). The next wave begins at the time
+    // specified and includes seeds 20-MAX_SEED, or 100% of the rest of the
+    // seeds available. We do this so that the waves input can be more
+    // understandable for human operators, with times relative to when they
+    // start a release, but still have absolute times and seeds that are more
+    // understandable in our update code.
+    pub fn set_waves(
         &mut self,
         variant: String,
         arch: String,
         image_version: Version,
-        bound: u32,
-    ) -> Result<()> {
-        let matching: Vec<&mut Update> = self
-            .updates
-            .iter_mut()
-            .filter(|update| {
-                update.arch == arch && update.variant == variant && update.version == image_version
-            })
-            .collect();
+        waves: &UpdateWaves,
+    ) -> Result<usize> {
+        let matching = self.get_matching_updates(variant, arch, image_version);
+        let num_matching = matching.len();
+
         for update in matching {
-            update.waves.remove(&bound);
+            update.waves.clear();
+
+            // The first wave has a 0 seed
+            let mut seed = 0;
+            for wave in &waves.waves {
+                ensure!(
+                    wave.fleet_percentage > 0 && wave.fleet_percentage <= 100,
+                    error::InvalidFleetPercentage {
+                        provided: wave.fleet_percentage
+                    }
+                );
+
+                let start_time = parse_datetime(&wave.start_after).context(error::BadDateTime {
+                    datetime: &wave.start_after,
+                })?;
+                update.waves.insert(seed, start_time);
+
+                // Get the appropriate seed from the percentage given
+                // First get the percentage as a decimal,
+                let percent = wave.fleet_percentage as f32 / 100 as f32;
+                // then, get seed from the percentage of MAX_SEED as a u32
+                seed = (percent * MAX_SEED as f32) as u32;
+            }
         }
-        Ok(())
+        Self::validate_updates(&self.updates)?;
+        Ok(num_matching)
     }
 }
 

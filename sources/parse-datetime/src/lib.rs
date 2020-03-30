@@ -6,7 +6,7 @@ This library parses a `DateTime<Utc>` from a string.
 The string can be:
 
 * an `RFC3339` formatted date / time
-* a string with the form `"in <unsigned integer> <unit(s)>"` where
+* a string with the form `"[in] <unsigned integer> <unit(s)>"` where 'in' is optional
    * `<unsigned integer>` may be any unsigned integer and
    * `<unit(s)>` may be either the singular or plural form of the following: `hour | hours`, `day | days`, `week | weeks`
 
@@ -16,6 +16,8 @@ Examples:
 * `"in 2 hours"`
 * `"in 6 days"`
 * `"in 2 weeks"`
+* `"1 hour"`
+* `"7 days"`
 */
 
 use chrono::{DateTime, Duration, FixedOffset, Utc};
@@ -58,23 +60,25 @@ pub fn parse_datetime(input: &str) -> Result<DateTime<Utc>> {
     // Otherwise, pull apart a request like "in 5 days" to get an exact datetime.
     let mut parts: Vec<&str> = input.split_whitespace().collect();
     ensure!(
-        parts.len() == 3,
+        parts.len() == 3 || parts.len() == 2,
         error::DateArgInvalid {
             input,
-            msg: "expected RFC 3339, or something like 'in 7 days'"
+            msg: "expected RFC 3339, or something like 'in 7 days' or '7 days'"
         }
     );
     let unit_str = parts.pop().unwrap();
     let count_str = parts.pop().unwrap();
-    let prefix_str = parts.pop().unwrap();
 
-    ensure!(
-        prefix_str == "in",
-        error::DateArgInvalid {
-            input,
-            msg: "expected RFC 3339, or prefix 'in', something like 'in 7 days'",
-        }
-    );
+    // the prefix string 'in' is optional
+    if let Some(prefix_str) = parts.pop() {
+        ensure!(
+            prefix_str == "in",
+            error::DateArgInvalid {
+                input,
+                msg: "expected prefix 'in', something like 'in 7 days'",
+            }
+        );
+    }
 
     let count: u32 = count_str.parse().context(error::DateArgCount { input })?;
 
@@ -112,6 +116,9 @@ mod tests {
             "in 0 weeks",
             "in 1 week",
             "in 5000000 weeks",
+            "0 weeks",
+            "1 week",
+            "5000000 weeks",
         ];
 
         for input in inputs {
@@ -121,7 +128,7 @@ mod tests {
 
     #[test]
     fn test_unacceptable_strings() {
-        let inputs = vec!["in", "0 hours", "hours", "in 1 month"];
+        let inputs = vec!["in", "0 hou", "hours", "in 1 month"];
 
         for input in inputs {
             assert!(parse_datetime(input).is_err())

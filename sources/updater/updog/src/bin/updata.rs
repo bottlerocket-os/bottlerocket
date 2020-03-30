@@ -8,14 +8,13 @@ mod error;
 extern crate log;
 
 use crate::error::Result;
-use chrono::{DateTime, Utc};
 use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::fs;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use update_metadata::{Images, Manifest, Release};
+use update_metadata::{Images, Manifest, Release, UpdateWaves};
 
 #[derive(Debug, StructOpt)]
 struct GeneralArgs {
@@ -141,36 +140,26 @@ struct WaveArgs {
     #[structopt(short = "a", long = "arch")]
     arch: String,
 
-    // start bound id for this wave (0 <= x < 2048)
-    #[structopt(short = "b", long = "bound-id")]
-    bound: u32,
-
-    // start time for this wave
-    #[structopt(short = "s", long = "start-time")]
-    start: Option<DateTime<Utc>>,
+    // file that contains wave structure
+    #[structopt(short = "w", long = "wave-file", conflicts_with_all = &["bound", "start"])]
+    wave_file: Option<PathBuf>,
 }
 
 impl WaveArgs {
-    fn add(self) -> Result<()> {
+    fn set(self) -> Result<()> {
         let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
-        let start = self.start.context(error::WaveStartArg)?;
-        let num_matching = manifest.add_wave(
-            self.variant,
-            self.arch,
-            self.image_version,
-            self.bound,
-            start,
-        )?;
+
+        let wave_file = self.wave_file.context(error::WaveFileArg)?;
+        let wave_str =
+            fs::read_to_string(&wave_file).context(error::ConfigRead { path: &wave_file })?;
+        let waves: UpdateWaves =
+            toml::from_str(&wave_str).context(error::ConfigParse { path: &wave_file })?;
+        let num_matching =
+            manifest.set_waves(self.variant, self.arch, self.image_version, &waves)?;
+
         if num_matching > 1 {
             warn!("Multiple matching updates for wave - this is weird but not a disaster");
         }
-        update_metadata::write_file(&self.file, &manifest)?;
-        Ok(())
-    }
-
-    fn remove(self) -> Result<()> {
-        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
-        manifest.remove_wave(self.variant, self.arch, self.image_version, self.bound)?;
         update_metadata::write_file(&self.file, &manifest)?;
         Ok(())
     }
@@ -232,14 +221,12 @@ enum Command {
     Init(GeneralArgs),
     /// Add a new update to the manifest, not including wave information
     AddUpdate(AddUpdateArgs),
-    /// Add a (bound_id, time) wave to an existing update
-    AddWave(WaveArgs),
+    /// Set waves for an update
+    SetWaves(WaveArgs),
     /// Set the global maximum image version
     SetMaxVersion(MaxVersionArgs),
     /// Remove an update from the manifest, including wave information
     RemoveUpdate(RemoveUpdateArgs),
-    /// Remove a (bound_id, time) wave from an update
-    RemoveWave(WaveArgs),
     /// Copy the migrations from an input file to an output file
     SetMigrations(MigrationArgs),
     /// Validate a manifest file, but make no changes
@@ -259,10 +246,9 @@ fn main_inner() -> Result<()> {
             }
         }
         Command::AddUpdate(args) => args.run(),
-        Command::AddWave(args) => args.add(),
+        Command::SetWaves(args) => args.set(),
         Command::SetMaxVersion(args) => args.run(),
         Command::RemoveUpdate(args) => args.run(),
-        Command::RemoveWave(args) => args.remove(),
         Command::SetMigrations(args) => args.set(),
         Command::Validate(args) => match update_metadata::load_file(&args.file) {
             Ok(_) => Ok(()),
@@ -291,9 +277,28 @@ fn main() -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Duration;
+    use std::fs::File;
     use std::path::Path;
     use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_set_waves() {
+        // A basic manifest with a single update, no migrations, and two
+        // image:datastore mappings
+        let path = "tests/data/single_wave.json";
+        let mut manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let wave_path = "tests/data/default_waves.toml";
+        let waves: UpdateWaves = toml::from_str(&fs::read_to_string(&wave_path).unwrap()).unwrap();
+        let variant = manifest.updates[0].variant.clone();
+        let arch = manifest.updates[0].arch.clone();
+        let image_version = manifest.updates[0].version.clone();
+
+        assert!(manifest
+            .set_waves(variant, arch, image_version, &waves)
+            .is_ok());
+
+        assert!(manifest.updates[0].waves.len() == 4)
+    }
 
     #[test]
     // Ensure that we can update a blank manifest
@@ -393,47 +398,6 @@ mod tests {
         for u in m.updates {
             assert!(u.max_version == Version::parse("1.2.4").unwrap());
         }
-        Ok(())
-    }
-
-    #[test]
-    fn ordered_waves() -> Result<()> {
-        let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
-        AddUpdateArgs {
-            file: PathBuf::from(tmpfd.path()),
-            variant: String::from("yum"),
-            arch: String::from("x86_64"),
-            image_version: Version::parse("1.2.3").unwrap(),
-            max_version: Some(Version::parse("1.2.3").unwrap()),
-            boot: String::from("boot"),
-            root: String::from("root"),
-            hash: String::from("hash"),
-        }
-        .run()
-        .unwrap();
-
-        WaveArgs {
-            file: PathBuf::from(tmpfd.path()),
-            variant: String::from("yum"),
-            arch: String::from("x86_64"),
-            image_version: Version::parse("1.2.3").unwrap(),
-            bound: 1024,
-            start: Some(Utc::now()),
-        }
-        .add()
-        .unwrap();
-
-        assert!(WaveArgs {
-            file: PathBuf::from(tmpfd.path()),
-            variant: String::from("yum"),
-            arch: String::from("x86_64"),
-            image_version: Version::parse("1.2.3").unwrap(),
-            bound: 1536,
-            start: Some(Utc::now() - Duration::hours(1)),
-        }
-        .add()
-        .is_err());
-
         Ok(())
     }
 }

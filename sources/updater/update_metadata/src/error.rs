@@ -46,6 +46,12 @@ pub enum Error {
     #[snafu(display("Migration {} matches regex but missing name", name))]
     BadRegexName { name: String },
 
+    #[snafu(display("Unable to parse datetime from string '{}': {}", datetime, source))]
+    BadDateTime {
+        datetime: String,
+        source: parse_datetime::Error,
+    },
+
     #[snafu(display("Duplicate key ID: {}", keyid))]
     DuplicateKeyId { backtrace: Backtrace, keyid: u32 },
 
@@ -103,6 +109,12 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Waves are not ordered: bound {} occurs before bound {}", next, wave))]
-    WavesUnordered { wave: u32, next: u32 },
+    #[snafu(display("Waves are not ordered; percentages and dates must be in ascending order"))]
+    WavesUnordered,
+
+    #[snafu(display(
+        "`fleet_percentage` must be a value between 1 - 100: value provided: {}",
+        provided
+    ))]
+    InvalidFleetPercentage { provided: u32 },
 }
