@@ -5,7 +5,7 @@ After=network-online.target configured.target
 Wants=network-online.target configured.target
 
 [Service]
-ExecStart=/usr/bin/containerd
+ExecStart=/usr/bin/containerd --log-level=warn
 Delegate=yes
 KillMode=process
 TimeoutSec=0
