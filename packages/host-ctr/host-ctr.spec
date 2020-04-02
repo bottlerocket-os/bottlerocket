@@ -18,11 +18,11 @@ Source12: host-containerd-config.toml
 
 %prep
 %setup -T -c
-cp -r %{_builddir}/sources/%{workspace_name}/cmd/host-ctr/* .
+cp -r %{_builddir}/sources/%{workspace_name}/* .
 
 %build
 %set_cross_go_flags
-go build -buildmode=pie -o host-ctr
+go build -buildmode=pie -o host-ctr ./cmd/host-ctr
 
 %install
 install -d %{buildroot}%{_cross_bindir}

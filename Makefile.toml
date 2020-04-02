@@ -93,7 +93,7 @@ dependencies = ["setup", "fetch-sdk"]
 script = [
 '''
 ${BUILDSYS_TOOLS_DIR}/docker-go \
-  --module-path ${BUILDSYS_SOURCES_DIR}/host-ctr/cmd/host-ctr \
+  --module-path ${BUILDSYS_SOURCES_DIR}/host-ctr \
   --sdk-image ${BUILDSYS_SDK_IMAGE} \
   --go-mod-cache ${GO_MOD_CACHE} \
   --command "go list -mod=readonly ./... >/dev/null && go mod vendor"
