@@ -1,0 +1,22 @@
+# The following represents a "normal" set of update waves for a typical
+# deployment. The deployment lasts for 6 days, and gradually increases the
+# nodes updated at once.
+[[wave]]
+start_after = '1 hour'
+fleet_percentage = 1
+
+[[wave]]
+start_after = '4 hours'
+fleet_percentage = 5
+
+[[wave]]
+start_after = '1 day'
+fleet_percentage = 10
+
+[[wave]]
+start_after = '3 days'
+fleet_percentage = 25
+
+[[wave]]
+start_after = '6 days'
+fleet_percentage = 100
