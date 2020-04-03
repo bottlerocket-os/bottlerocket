@@ -1,0 +1,63 @@
+From dd750a2271b64758c5c2240b6ed9586dd79ccb7a Mon Sep 17 00:00:00 2001
+From: Matt Briggs <brigmatt@amazon.com>
+Date: Wed, 1 Apr 2020 16:55:04 -0700
+Subject: [PATCH] reduce logging when no errors have occurred
+
+---
+ .../containerd/cri/pkg/server/container_execsync.go           | 3 ++-
+ .../containerd/cri/pkg/server/instrumented_service.go         | 4 ++--
+ vendor/github.com/containerd/cri/pkg/server/io/exec_io.go     | 2 +-
+ 3 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/vendor/github.com/containerd/cri/pkg/server/container_execsync.go b/vendor/github.com/containerd/cri/pkg/server/container_execsync.go
+index b46e6e56..36e64c03 100644
+--- a/vendor/github.com/containerd/cri/pkg/server/container_execsync.go
++++ b/vendor/github.com/containerd/cri/pkg/server/container_execsync.go
+@@ -186,10 +186,11 @@ func (c *criService) execInContainer(ctx context.Context, id string, opts execOp
+ 		return nil, errors.Wrapf(execCtx.Err(), "timeout %v exceeded", opts.timeout)
+ 	case exitRes := <-exitCh:
+ 		code, _, err := exitRes.Result()
+-		log.G(ctx).Infof("Exec process %q exits with exit code %d and error %v", execID, code, err)
+ 		if err != nil {
++			log.G(ctx).Errorf("Exec process %q exits with exit code %d and error %v", execID, code, err)
+ 			return nil, errors.Wrapf(err, "failed while waiting for exec %q", execID)
+ 		}
++		log.G(ctx).Debugf("Exec process %q exits with exit code %d and error %v", execID, code, err)
+ 		<-attachDone
+ 		log.G(ctx).Debugf("Stream pipe for exec process %q done", execID)
+ 		return &code, nil
+diff --git a/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go b/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go
+index 8a23c139..11e1f340 100644
+--- a/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go
++++ b/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go
+@@ -247,12 +247,12 @@ func (in *instrumentedService) ExecSync(ctx context.Context, r *runtime.ExecSync
+ 	if err := in.checkInitialized(); err != nil {
+ 		return nil, err
+ 	}
+-	log.G(ctx).Infof("ExecSync for %q with command %+v and timeout %d (s)", r.GetContainerId(), r.GetCmd(), r.GetTimeout())
++	log.G(ctx).Debugf("ExecSync for %q with command %+v and timeout %d (s)", r.GetContainerId(), r.GetCmd(), r.GetTimeout())
+ 	defer func() {
+ 		if err != nil {
+ 			log.G(ctx).WithError(err).Errorf("ExecSync for %q failed", r.GetContainerId())
+ 		} else {
+-			log.G(ctx).Infof("ExecSync for %q returns with exit code %d", r.GetContainerId(), res.GetExitCode())
++			log.G(ctx).Debugf("ExecSync for %q returns with exit code %d", r.GetContainerId(), res.GetExitCode())
+ 			log.G(ctx).Debugf("ExecSync for %q outputs - stdout: %q, stderr: %q", r.GetContainerId(),
+ 				res.GetStdout(), res.GetStderr())
+ 		}
+diff --git a/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go b/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go
+index 3b2c36a9..4e868b63 100644
+--- a/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go
++++ b/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go
+@@ -99,7 +99,7 @@ func (e *ExecIO) Attach(opts AttachOptions) <-chan struct{} {
+ 		}
+ 		e.closer.wg.Done()
+ 		wg.Done()
+-		logrus.Infof("Finish piping %q of container exec %q", t, e.id)
++		logrus.Debugf("Finish piping %q of container exec %q", t, e.id)
+ 	}
+ 
+ 	if opts.Stdout != nil {
+-- 
+2.21.1 (Apple Git-122.3)
+

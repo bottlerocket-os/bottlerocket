@@ -19,6 +19,7 @@ Source2: containerd-config-toml_aws-k8s
 Source3: containerd-config-toml_aws-dev
 Source4: containerd-tmpfiles.conf
 Source1000: clarify.toml
+Patch1: 0001-reduce-logging-when-no-errors-have-occurred.patch
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
