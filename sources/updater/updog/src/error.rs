@@ -177,9 +177,7 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Unable to get OS version: {}", source))]
-    ReleaseVersion {
-        source: bottlerocket_release::Error,
-    },
+    ReleaseVersion { source: bottlerocket_release::Error },
 
     #[snafu(display("Failed setting permissions of '{}': {}", path.display(), source))]
     SetPermissions {
@@ -229,8 +227,8 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("--start-time <time> required to add wave to update"))]
-    WaveStartArg { backtrace: Backtrace },
+    #[snafu(display("--wave-file <path> required to add waves to update"))]
+    WaveFileArg { backtrace: Backtrace },
 
     #[snafu(display("Failed writing update data to disk: {}", source))]
     WriteUpdate {
