@@ -16,6 +16,7 @@ import (
 	"github.com/awslabs/amazon-ecr-containerd-resolver/ecr"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
@@ -295,7 +296,9 @@ func deleteCtrIfExists(ctx context.Context, client *containerd.Client, targetCtr
 // Add container options depending on whether it's `superpowered` or not
 func withSuperpowered(superpowered bool) oci.SpecOpts {
 	if !superpowered {
-		return oci.Compose()
+		return oci.Compose(
+			seccomp.WithDefaultProfile(),
+		)
 	}
 	return oci.Compose(
 		oci.WithHostNamespace(runtimespec.PIDNamespace),
