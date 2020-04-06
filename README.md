@@ -327,6 +327,28 @@ We use it for the control container because it needs to be available early to gi
 
 Be careful, and make sure you have a similar low-level use case before reaching for host containers.
 
+### Logs
+
+You can use `logdog` through the [admin container](#admin-container) to obtain an archive of log files from your Bottlerocket host.
+SSH to the Bottlerocket host, then run:
+
+```bash
+sudo sheltie
+logdog
+```
+
+This will write an archive of the logs to `/tmp/bottlerocket-logs.tar.gz`.
+You can use SSH to retrieve the file.
+Once you have exited from the Bottlerocket host, run a command like:
+
+```bash
+ssh -i YOUR_KEY_FILE \
+    ec2-user@YOUR_HOST \
+    "cat /.bottlerocket/rootfs/tmp/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
+```
+
+For a list of what is collected, see the logdog [command list](sources/logdog/src/log_request.rs).
+
 ## Details
 
 ### Security
