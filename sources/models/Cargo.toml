@@ -8,7 +8,7 @@ publish = false
 build = "build.rs"
 
 [dependencies]
-base64 = "0.11"
+base64 = "0.12"
 bottlerocket-release = { path = "../bottlerocket-release" }
 lazy_static = "1.2"
 model-derive = { path = "model-derive" }
