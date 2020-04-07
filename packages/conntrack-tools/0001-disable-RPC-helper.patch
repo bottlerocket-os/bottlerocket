@@ -11,11 +11,25 @@ to avoid for now since we have no other need for it.
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
+ configure.ac            | 2 --
  src/helpers/Makefile.am | 5 -----
- 1 file changed, 5 deletions(-)
+ 2 files changed, 7 deletions(-)
 
+diff --git a/configure.ac b/configure.ac
+index d0565be..a417691 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -50,8 +50,6 @@ AC_ARG_ENABLE([systemd],
+         AS_HELP_STRING([--enable-systemd], [Build systemd support]),
+         [enable_systemd="$enableval"], [enable_systemd="no"])
+
+-AC_CHECK_HEADER([rpc/rpc_msg.h], [AC_SUBST([LIBTIRPC_CFLAGS],'')], [PKG_CHECK_MODULES([LIBTIRPC], [libtirpc])])
+-
+ PKG_CHECK_MODULES([LIBNFNETLINK], [libnfnetlink >= 1.0.1])
+ PKG_CHECK_MODULES([LIBMNL], [libmnl >= 1.0.3])
+ PKG_CHECK_MODULES([LIBNETFILTER_CONNTRACK], [libnetfilter_conntrack >= 1.0.8])
 diff --git a/src/helpers/Makefile.am b/src/helpers/Makefile.am
-index 05801bc..adb6154 100644
+index e4f10c9..159362f 100644
 --- a/src/helpers/Makefile.am
 +++ b/src/helpers/Makefile.am
 @@ -4,7 +4,6 @@ pkglib_LTLIBRARIES = ct_helper_amanda.la \
@@ -26,13 +40,13 @@ index 05801bc..adb6154 100644
  		     ct_helper_tftp.la	\
  		     ct_helper_tns.la	\
  		     ct_helper_sane.la	\
-@@ -29,10 +28,6 @@ ct_helper_mdns_la_SOURCES = mdns.c
+@@ -30,10 +29,6 @@ ct_helper_mdns_la_SOURCES = mdns.c
  ct_helper_mdns_la_LDFLAGS = $(HELPER_LDFLAGS)
  ct_helper_mdns_la_CFLAGS = $(HELPER_CFLAGS)
- 
+
 -ct_helper_rpc_la_SOURCES = rpc.c
 -ct_helper_rpc_la_LDFLAGS = $(HELPER_LDFLAGS)
--ct_helper_rpc_la_CFLAGS = $(HELPER_CFLAGS)
+-ct_helper_rpc_la_CFLAGS = $(HELPER_CFLAGS) $(LIBTIRPC_CFLAGS)
 -
  ct_helper_tftp_la_SOURCES = tftp.c
  ct_helper_tftp_la_LDFLAGS = $(HELPER_LDFLAGS)
