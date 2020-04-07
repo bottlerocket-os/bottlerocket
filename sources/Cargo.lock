@@ -1394,7 +1394,6 @@ version = "0.1.0"
 dependencies = [
  "apiserver 0.1.0",
  "handlebars 3.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "schnauzer 0.1.0",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
