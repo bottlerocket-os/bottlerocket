@@ -1,15 +1,11 @@
 Name: %{_cross_os}libseccomp
-Version: 2.4.2
+Version: 2.4.3
 Release: 1%{?dist}
 Summary: Library for enhanced seccomp
 License: LGPL-2.1-only
 URL: https://github.com/seccomp/libseccomp
 Source0: https://github.com/seccomp/libseccomp/releases/download/v%{version}/libseccomp-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
-
-# Backports from upstream after 2.4.2 release
-Patch0001: 0001-api-define-__SNR_ppoll-again.patch
-Patch0002: 0002-tests-rely-on-__SNR_xxx-instead-of-__NR_xxx-for-sysc.patch
 
 %description
 %{summary}.
@@ -26,6 +22,11 @@ Requires: %{name}
 
 %build
 %cross_configure
+
+# "fix" rpath
+sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
+sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+
 %make_build
 
 %install
