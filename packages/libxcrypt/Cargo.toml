@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/besser82/libxcrypt/archive/v4.4.15/libxcrypt-4.4.15.tar.gz"
-sha512 = "e325425d5865cc5d4d7d140a0ed99ba69eec04d5c0b3dbef01b28fb2b9420e86b6367702dfb258a8e0d817893dab6be4005825e4cb767e71f06309b69d93191a"
+url = "https://github.com/besser82/libxcrypt/archive/v4.4.16/libxcrypt-4.4.16.tar.gz"
+sha512 = "e1d3b1262c6be7c6c8847b8c4eb8191d9e5e482798be6f1186876c72f3d8c737124378ec45a38aa464f556e10a557b96f855bd371f03c3611eada27904bf6781"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
