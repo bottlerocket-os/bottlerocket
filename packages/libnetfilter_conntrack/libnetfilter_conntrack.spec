@@ -1,5 +1,5 @@
 Name: %{_cross_os}libnetfilter_conntrack
-Version: 1.0.7
+Version: 1.0.8
 Release: 1%{?dist}
 Summary: Library for netfilter conntrack
 License: GPL-2.0-or-later
