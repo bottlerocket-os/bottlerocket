@@ -6,7 +6,9 @@ mod error;
 pub use error::Error;
 
 use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
-use actix_web::{error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{
+    error::ResponseError, web, App, FromRequest, HttpRequest, HttpResponse, HttpServer, Responder,
+};
 use bottlerocket_release::BottlerocketRelease;
 use error::Result;
 use futures::future;
@@ -64,6 +66,17 @@ where
 
     let http_server = HttpServer::new(move || {
         App::new()
+            // In our implementation of ResponseError on our own error type below, we include the
+            // error message in the response for debugging purposes.  If actix rejects a request
+            // early because it doesn't fit our model, though, it doesn't even get to the
+            // ResponseError implementation.  This configuration of the Json extractor allows us to
+            // add the error message into the response.
+            .app_data(web::Json::<Settings>::configure(|cfg| {
+                cfg.error_handler(|err, _req| HttpResponse::BadRequest().body(err.to_string()).into())
+            }))
+
+            // This makes the data store available to API methods merely by having a Data
+            // parameter.
             .app_data(shared_datastore.clone())
 
             // Retrieve the full API model; not all data is writable, so we only support GET.
@@ -396,7 +409,10 @@ impl ResponseError for error::Error {
             SetGroup { .. } => HttpResponse::InternalServerError(),
             ReleaseData { .. } => HttpResponse::InternalServerError(),
         }
-        .finish()
+        // Include the error message in the response, and for all error types.  The Bottlerocket
+        // API is only exposed locally, and only on the host filesystem and to authorized
+        // containers, so we're not worried about exposing error details.
+        .body(self.to_string())
     }
 }
 
