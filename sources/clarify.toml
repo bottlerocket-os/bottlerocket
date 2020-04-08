@@ -2,6 +2,8 @@
 # backtrace-sys is MIT/Apache-2.0, libbacktrace is BSD-3-Clause
 expression = "(MIT OR Apache-2.0) AND BSD-3-Clause"
 license-files = [
+    { path = "LICENSE-APACHE", hash = 0x24b54f4b },
+    { path = "LICENSE-MIT", hash = 0x9374b940 },
     { path = "src/libbacktrace/LICENSE", hash = 0x0ce09262 },
 ]
 
