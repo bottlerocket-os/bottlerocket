@@ -17,5 +17,4 @@ sha2 = "0.8"
 snafu = "0.6"
 toml = "0.5"
 url = "2.1"
-users = { version = "0.9", default-features = false }
 walkdir = "2"
