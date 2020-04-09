@@ -1,0 +1,238 @@
+; Permission groups for sockets.
+(classmap sockets (relabel use))
+
+; Permission group for relabeling sockets.
+(classmapping sockets relabel (
+  socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  tcp_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  udp_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  rawip_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  packet_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  key_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  unix_stream_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  unix_dgram_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_route_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_tcpdiag_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_nflog_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_xfrm_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_selinux_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_iscsi_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_audit_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_fib_lookup_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_connector_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_netfilter_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_dnrt_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_kobject_uevent_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_generic_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_scsitransport_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_rdma_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netlink_crypto_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  appletalk_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  dccp_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  tun_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  sctp_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  icmp_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  ax25_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  ipx_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  netrom_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  atmpvc_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  x25_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  rose_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  decnet_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  atmsvc_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  rds_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  irda_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  pppox_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  llc_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  can_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  tipc_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  bluetooth_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  iucv_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  rxrpc_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  isdn_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  phonet_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  ieee802154_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  caif_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  alg_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  nfc_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  vsock_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  kcm_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  qipcrtr_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  smc_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  xdp_socket (relabelfrom relabelto)))
+
+; Permission group for other socket actions.
+(classmapping sockets use (
+  socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  tcp_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  udp_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  rawip_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  packet_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  key_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  unix_stream_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  unix_dgram_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_route_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_tcpdiag_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_nflog_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_xfrm_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_selinux_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_iscsi_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_audit_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_fib_lookup_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_connector_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_netfilter_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_dnrt_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_kobject_uevent_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_generic_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_scsitransport_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_rdma_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netlink_crypto_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  appletalk_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  dccp_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  tun_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  sctp_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  icmp_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  ax25_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  ipx_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  netrom_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  atmpvc_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  x25_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  rose_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  decnet_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  atmsvc_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  rds_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  irda_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  pppox_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  llc_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  can_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  tipc_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  bluetooth_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  iucv_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  rxrpc_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  isdn_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  phonet_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  ieee802154_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  caif_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  alg_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  nfc_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  vsock_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  kcm_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  qipcrtr_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  smc_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  xdp_socket (not (relabelfrom relabelto))))

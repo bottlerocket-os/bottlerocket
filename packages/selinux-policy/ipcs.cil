@@ -1,0 +1,9 @@
+; Permission groups for IPCs.
+(classmap ipcs (use))
+
+; Permission group for all IPC actions.
+(classmapping ipcs use (sem (all)))
+(classmapping ipcs use (msg (all)))
+(classmapping ipcs use (msgq (all)))
+(classmapping ipcs use (shm (all)))
+(classmapping ipcs use (ipc (all)))

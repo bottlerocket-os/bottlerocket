@@ -1,7 +1,7 @@
-From 89af88d823a01785947f49cfda7c9f9db541489a Mon Sep 17 00:00:00 2001
+From 8a067b93f1d6dabf4fe0c0c9c94dbad6f078e10b Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Fri, 20 Sep 2019 00:33:47 +0000
-Subject: [PATCH 2/3] do not omit debug info
+Subject: [PATCH 2/4] do not omit debug info
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
-index a82880a5..5454e73f 100755
+index 14c15994..1547bad5 100755
 --- a/hack/lib/golang.sh
 +++ b/hack/lib/golang.sh
 @@ -790,7 +790,7 @@ kube::golang::build_binaries() {

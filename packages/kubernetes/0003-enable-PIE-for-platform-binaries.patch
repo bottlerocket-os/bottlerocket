@@ -1,7 +1,7 @@
-From ae0a4d1175b2231aa47ada51cdfa90249a04ceee Mon Sep 17 00:00:00 2001
+From 33cb415ae50c5fb48d37842247261b466093d1ae Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 5 Nov 2019 14:23:38 +0000
-Subject: [PATCH 3/3] enable PIE for platform binaries
+Subject: [PATCH 3/4] enable PIE for platform binaries
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
-index 5454e73f..a146fc28 100755
+index 1547bad5..f07418a0 100755
 --- a/hack/lib/golang.sh
 +++ b/hack/lib/golang.sh
 @@ -715,6 +715,7 @@ kube::golang::build_binaries_for_platform() {

@@ -1,0 +1,25 @@
+; Permission groups for processes.
+(classmap processes (transform relax interact))
+
+; Permission group for changing labels on processes.
+(classmapping processes transform (
+  process (
+    dyntransition transition setcurrent setexec
+    setfscreate setkeycreate setsockcreate)))
+(classmapping processes transform (
+  process2 (nnp_transition nosuid_transition)))
+(classmapping processes transform (
+  kernel_service (use_as_override)))
+
+; Permission group for relaxing security constraints on processes.
+(classmapping processes relax (
+  process (execheap execmem execstack)))
+(classmapping processes relax (
+  memprotect (mmap_zero)))
+
+; Permission group for other actions.
+(classmapping processes interact (
+  process (not (
+    dyntransition transition setcurrent setexec
+    setfscreate setkeycreate setsockcreate
+    execheap execmem execstack))))
