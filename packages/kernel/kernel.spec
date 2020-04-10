@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel
-Version: 5.4.16
+Version: 5.4.20
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/8a2ede840234ebc72d835fab144162ba8184b8aa7df163a5d36aad2d3c85529b/kernel-5.4.16-8.72.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/2e1a86879ed805e227d81f815fcc9f7575ae98a2fd6573ca71c9be2776c0637d/kernel-5.4.20-12.75.amzn2.src.rpm
 Source100: config-bottlerocket
 Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
 BuildRequires: bc
