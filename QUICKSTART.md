@@ -50,14 +50,14 @@ eksctl create cluster --config-file ./my-eksctl.yaml
 
 This will take a few minutes to create the EKS cluster and spin up your Bottlerocket worker nodes.
 
-#### Remaining cluster configuration
-
 ##### CNI plugin
 
 Now we can make a configuration change to use a CNI plugin that's compatible with Bottlerocket.
 ```
 kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.6/config/v1.6/aws-k8s-cni.yaml
 ```
+
+#### Optional cluster configuration
 
 ##### CSI plugin
 
