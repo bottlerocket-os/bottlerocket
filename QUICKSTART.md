@@ -59,6 +59,12 @@ Now we can make a configuration change to use a CNI plugin that's compatible wit
 kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.6/config/v1.6/aws-k8s-cni.yaml
 ```
 
+##### CSI plugin
+
+If you want to create a [persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) on a Bottlerocket host, you will need to use the [EBS CSI Plugin](https://github.com/kubernetes-sigs/aws-ebs-csi-driver).
+This is because the default EBS driver relies on file system tools that are not included with Bottlerocket.
+A walk-through of creating a storage class using the driver is available [here](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html).
+
 ##### conntrack configuration
 
 By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Bottlerocket originally sets at boot.
