@@ -17,6 +17,7 @@ members = [
     "api/migration/migration-helpers",
 
     # "api/migration/migrations/vX.Y.Z/...
+    "api/migration/migrations/v0.3.2/migrate-admin-container-v0_5_0",
 
     "bottlerocket-release",
 
