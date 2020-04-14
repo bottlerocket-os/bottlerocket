@@ -1,6 +1,6 @@
 use crate::{error, Metadata, Migration, MigrationData, Result};
 use apiserver::datastore;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
 
@@ -153,8 +153,7 @@ impl ReplaceTemplateMigration {
     }
 
     /// This helper function takes `MigrationData.data`, which is a mapping of dotted keys ->
-    /// scalar values, and converts it into the hierarchical representation needed by
-    /// handlebars templates.  Note: only keys under "settings" are included.
+    /// scalar values, and converts it into the hierarchical representation needed by handlebars templates.
     fn structure_migration_data(
         &self,
         input: &HashMap<String, serde_json::Value>,
@@ -170,17 +169,17 @@ impl ReplaceTemplateMigration {
                 );
             }
         }
-
-        // We make a struct with a 'settings' key so we can use the datastore code to
-        // deserialize into a hierarchical form.  If the datastore code supported deserializing
-        // into a map without a prefix, we could support non-settings keys without hardcoding
-        // them here.
-        #[derive(Deserialize, Serialize)]
-        struct WrappedSettings {
-            settings: serde_json::Value,
-        }
-        let structured_data: WrappedSettings = datastore::deserialization::from_map(&datastore)
+        // Note this is a workaround because we don't have a top level model structure that encompasses 'settings'.
+        // We need to use `from_map_with_prefix` because we don't have a struct; it strips away the
+        // "settings" layer, which we then add back on with a wrapping HashMap.
+        let input_data: HashMap<String, serde_json::Value> =
+            datastore::deserialization::from_map_with_prefix(
+                Some("settings".to_string()),
+                &datastore,
+            )
             .context(error::DeserializeDatastore)?;
+        let mut structured_data = HashMap::new();
+        structured_data.insert("settings", input_data);
         Ok(structured_data)
     }
 
