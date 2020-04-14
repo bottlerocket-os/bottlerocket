@@ -1,3 +1,89 @@
+# v0.3.2 (unreleased)
+
+Special thanks to our first contributors, @inductor ([#853]), @smoser ([#871]), and @gliptak ([#870])!
+
+## OS changes
+
+* Update kernel to 5.4.20 ([#898])
+* Expand SELinux policy to include all classes and actions in 5.4 kernel ([#888])
+* Include error messages in apiserver error responses ([#897])
+* Add "logdog" to help users collect debug logs ([#880])
+* Include objtool in kernel-devel for compiling external modules ([#874])
+* Ignore termination signals in updog right before initiating reboot ([#869])
+* Pass `--containerd` flag to kubelet to specify containerd socket path, fixing some cAdvisor metrics ([#868])
+* Fix delay on reboot or power off ([#859])
+* Add `systemd.log_color=0` to remove ANSI color escapes from console log ([#836])
+* Reduce containerd logging when no errors have occurred ([#886])
+* Update admin container to v0.5.0 ([#903])
+
+## Build changes
+
+* Set up GitHub Actions to test OS builds for PRs ([#837])
+* Update SDK to v0.10.1 ([#866])
+* Move built RPMs to `build/packages` ([#863])
+* Bump cargo-make to 0.30.0 ([#870])
+* Pass proxy environment variables through to docker containers ([#871])
+* Add parse-datetime crate ([#875])
+* Update third-party software packages ([#895])
+* Update Rust dependencies ([#896])
+* Remove unused Rust dependencies ([#894])
+* Add upstream fix for arm64 in coreutils ([#879])
+* Add ability to add waves using TOML files ([#883])
+* Add default wave files ([#881])
+
+## Documentation changes
+
+* QUICKSTART: Clarify which setup is optional ([#902])
+* QUICKSTART: add easier setup instructions using new eksctl release ([#849])
+* QUICKSTART: add note about allowing SSH access ([#839])
+* QUICKSTART: add section on finding AMIs through SSM parameters ([#838])
+* QUICKSTART: Add supported region list ([73d120c9])
+* QUICKSTART: Add info about persistent volume CSI plugin ([#899])
+* QUICKSTART and README: Add appropriate ECR policy guidance ([#856])
+* README: Fix feedback link to point at existing section ([#833])
+* README: Add sentence about preview phase with feedback link ([#832])
+* README: Fixes and updates ([#831])
+* Update name of early-boot-config in API system diagram ([#840])
+* Fix updater README's reference to data store version ([#844])
+
+[#831]: https://github.com/bottlerocket-os/bottlerocket/pull/831
+[#832]: https://github.com/bottlerocket-os/bottlerocket/pull/832
+[#833]: https://github.com/bottlerocket-os/bottlerocket/pull/833
+[#836]: https://github.com/bottlerocket-os/bottlerocket/pull/836
+[#837]: https://github.com/bottlerocket-os/bottlerocket/pull/837
+[#838]: https://github.com/bottlerocket-os/bottlerocket/pull/838
+[#839]: https://github.com/bottlerocket-os/bottlerocket/pull/839
+[#840]: https://github.com/bottlerocket-os/bottlerocket/pull/840
+[#844]: https://github.com/bottlerocket-os/bottlerocket/pull/844
+[#849]: https://github.com/bottlerocket-os/bottlerocket/pull/849
+[#853]: https://github.com/bottlerocket-os/bottlerocket/pull/853
+[#856]: https://github.com/bottlerocket-os/bottlerocket/pull/856
+[#859]: https://github.com/bottlerocket-os/bottlerocket/pull/859
+[#860]: https://github.com/bottlerocket-os/bottlerocket/pull/860
+[#863]: https://github.com/bottlerocket-os/bottlerocket/pull/863
+[#866]: https://github.com/bottlerocket-os/bottlerocket/pull/866
+[#868]: https://github.com/bottlerocket-os/bottlerocket/pull/868
+[#869]: https://github.com/bottlerocket-os/bottlerocket/pull/869
+[#870]: https://github.com/bottlerocket-os/bottlerocket/pull/870
+[#871]: https://github.com/bottlerocket-os/bottlerocket/pull/871
+[#874]: https://github.com/bottlerocket-os/bottlerocket/pull/874
+[#875]: https://github.com/bottlerocket-os/bottlerocket/pull/875
+[#879]: https://github.com/bottlerocket-os/bottlerocket/pull/879
+[#880]: https://github.com/bottlerocket-os/bottlerocket/pull/880
+[#881]: https://github.com/bottlerocket-os/bottlerocket/pull/881
+[#883]: https://github.com/bottlerocket-os/bottlerocket/pull/883
+[#886]: https://github.com/bottlerocket-os/bottlerocket/pull/886
+[#888]: https://github.com/bottlerocket-os/bottlerocket/pull/888
+[#894]: https://github.com/bottlerocket-os/bottlerocket/pull/894
+[#895]: https://github.com/bottlerocket-os/bottlerocket/pull/895
+[#896]: https://github.com/bottlerocket-os/bottlerocket/pull/896
+[#897]: https://github.com/bottlerocket-os/bottlerocket/pull/897
+[#898]: https://github.com/bottlerocket-os/bottlerocket/pull/898
+[#899]: https://github.com/bottlerocket-os/bottlerocket/pull/899
+[#902]: https://github.com/bottlerocket-os/bottlerocket/pull/902
+[#903]: https://github.com/bottlerocket-os/bottlerocket/pull/903
+[73d120c9]: https://github.com/bottlerocket-os/bottlerocket/commit/73d120c9
+
 # v0.3.1 (2020-03-10)
 
 ## OS changes
