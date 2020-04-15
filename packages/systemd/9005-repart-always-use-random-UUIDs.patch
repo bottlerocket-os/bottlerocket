@@ -1,0 +1,178 @@
+From b96a0d9b2449719a7152f4b3c2871fd3b18a8ebf Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Thu, 16 Apr 2020 15:10:41 +0000
+Subject: [PATCH 9005/9005] repart: always use random UUIDs
+
+We would like to avoid adding OpenSSL to the base OS, and for our use
+case we do not need the UUIDs assigned to disks or partitions to be
+reproducible.
+
+The upstream implementation keys off machine ID, and we will almost
+always be resizing the local data partition on first boot, when the
+machine ID will be freshly generated and therefore also random.
+
+This takes the fallback case of generating a random UUID in the event
+of a collision and makes it the default behavior for both partition
+and disk UUIDs.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ meson.build            |   3 +-
+ src/partition/repart.c | 101 ++++++-----------------------------------
+ 2 files changed, 14 insertions(+), 90 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index fc216d2..eb28daa 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1305,8 +1305,7 @@ substs.set('DEFAULT_DNS_OVER_TLS_MODE', default_dns_over_tls)
+ 
+ want_repart = get_option('repart')
+ if want_repart != 'false'
+-        have = (conf.get('HAVE_OPENSSL') == 1 and
+-                conf.get('HAVE_LIBFDISK') == 1)
++        have = (conf.get('HAVE_LIBFDISK') == 1)
+         if want_repart == 'true' and not have
+                 error('repart support was requested, but dependencies are not available')
+         endif
+diff --git a/src/partition/repart.c b/src/partition/repart.c
+index 3e52f26..93f6834 100644
+--- a/src/partition/repart.c
++++ b/src/partition/repart.c
+@@ -13,9 +13,6 @@
+ #include <sys/ioctl.h>
+ #include <sys/stat.h>
+ 
+-#include <openssl/hmac.h>
+-#include <openssl/sha.h>
+-
+ #include "sd-id128.h"
+ 
+ #include "alloc-util.h"
+@@ -1143,26 +1140,18 @@ static int fdisk_set_disklabel_id_by_uuid(struct fdisk_context *c, sd_id128_t id
+ #define DISK_UUID_TOKEN "disk-uuid"
+ 
+ static int disk_acquire_uuid(Context *context, sd_id128_t *ret) {
+-        union {
+-                unsigned char md[SHA256_DIGEST_LENGTH];
+-                sd_id128_t id;
+-        } result;
++        sd_id128_t id;
++        int r;
+ 
+         assert(context);
+         assert(ret);
+ 
+-        /* Calculate the HMAC-SHA256 of the string "disk-uuid", keyed off the machine ID. We use the machine
+-         * ID as key (and not as cleartext!) since it's the machine ID we don't want to leak. */
+-
+-        if (!HMAC(EVP_sha256(),
+-                  &context->seed, sizeof(context->seed),
+-                  (const unsigned char*) DISK_UUID_TOKEN, strlen(DISK_UUID_TOKEN),
+-                  result.md, NULL))
+-                return log_error_errno(SYNTHETIC_ERRNO(ENOTRECOVERABLE), "HMAC-SHA256 calculation failed.");
++        /* Calculate a random UUID for the indicated disk. */
++        r = sd_id128_randomize(&id);
++        if (r < 0)
++            return log_error_errno(r, "Failed to generate randomized UUID: %m");
+ 
+-        /* Take the first half, mark it as v4 UUID */
+-        assert_cc(sizeof(result.md) == sizeof(result.id) * 2);
+-        *ret = id128_make_v4_uuid(result.id);
++        *ret = id;
+         return 0;
+ }
+ 
+@@ -2073,83 +2062,19 @@ static int context_wipe_and_discard(Context *context, bool from_scratch) {
+ }
+ 
+ static int partition_acquire_uuid(Context *context, Partition *p, sd_id128_t *ret) {
+-        struct {
+-                sd_id128_t type_uuid;
+-                uint64_t counter;
+-        } _packed_  plaintext = {};
+-        union {
+-                unsigned char md[SHA256_DIGEST_LENGTH];
+-                sd_id128_t id;
+-        } result;
+-
+-        uint64_t k = 0;
+-        Partition *q;
++        sd_id128_t id;
+         int r;
+ 
+         assert(context);
+         assert(p);
+         assert(ret);
+ 
+-        /* Calculate a good UUID for the indicated partition. We want a certain degree of reproducibility,
+-         * hence we won't generate the UUIDs randomly. Instead we use a cryptographic hash (precisely:
+-         * HMAC-SHA256) to derive them from a single seed. The seed is generally the machine ID of the
+-         * installation we are processing, but if random behaviour is desired can be random, too. We use the
+-         * seed value as key for the HMAC (since the machine ID is something we generally don't want to leak)
+-         * and the partition type as plaintext. The partition type is suffixed with a counter (only for the
+-         * second and later partition of the same type) if we have more than one partition of the same
+-         * time. Or in other words:
+-         *
+-         * With:
+-         *     SEED := /etc/machine-id
+-         *
+-         * If first partition instance of type TYPE_UUID:
+-         *     PARTITION_UUID := HMAC-SHA256(SEED, TYPE_UUID)
+-         *
+-         * For all later partition instances of type TYPE_UUID with INSTANCE being the LE64 encoded instance number:
+-         *     PARTITION_UUID := HMAC-SHA256(SEED, TYPE_UUID || INSTANCE)
+-         */
+-
+-        LIST_FOREACH(partitions, q, context->partitions) {
+-                if (p == q)
+-                        break;
+-
+-                if (!sd_id128_equal(p->type_uuid, q->type_uuid))
+-                        continue;
+-
+-                k++;
+-        }
+-
+-        plaintext.type_uuid = p->type_uuid;
+-        plaintext.counter = htole64(k);
+-
+-        if (!HMAC(EVP_sha256(),
+-                  &context->seed, sizeof(context->seed),
+-                  (const unsigned char*) &plaintext, k == 0 ? sizeof(sd_id128_t) : sizeof(plaintext),
+-                  result.md, NULL))
+-                return log_error_errno(SYNTHETIC_ERRNO(ENOTRECOVERABLE), "SHA256 calculation failed.");
+-
+-        /* Take the first half, mark it as v4 UUID */
+-        assert_cc(sizeof(result.md) == sizeof(result.id) * 2);
+-        result.id = id128_make_v4_uuid(result.id);
+-
+-        /* Ensure this partition UUID is actually unique, and there's no remaining partition from an earlier run? */
+-        LIST_FOREACH(partitions, q, context->partitions) {
+-                if (p == q)
+-                        continue;
+-
+-                if (sd_id128_equal(q->current_uuid, result.id) ||
+-                    sd_id128_equal(q->new_uuid, result.id)) {
+-                        log_warning("Partition UUID calculated from seed for partition %" PRIu64 " exists already, reverting to randomized UUID.", p->partno);
+-
+-                        r = sd_id128_randomize(&result.id);
+-                        if (r < 0)
+-                                return log_error_errno(r, "Failed to generate randomized UUID: %m");
+-
+-                        break;
+-                }
+-        }
++        /* Calculate a random UUID for the indicated partition. */
++        r = sd_id128_randomize(&id);
++        if (r < 0)
++                return log_error_errno(r, "Failed to generate randomized UUID: %m");
+ 
+-        *ret = result.id;
++        *ret = id;
+         return 0;
+ }
+ 
+-- 
+2.21.0
+

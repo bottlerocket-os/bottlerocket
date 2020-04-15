@@ -1,7 +1,7 @@
-From 4d11f5d502ca4a61c491681cdfd99ebe24e3f58c Mon Sep 17 00:00:00 2001
+From 2feddea6cbee14216e26a4312f5cb0e546a472ff Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 10 Mar 2020 20:30:10 +0000
-Subject: [PATCH 9004/9004] core: add separate timeout for system shutdown
+Subject: [PATCH 9004/9005] core: add separate timeout for system shutdown
 
 There is an existing setting for this (DefaultTimeoutStopUSec), but
 changing it has no effect because `reset_arguments()` is called just
@@ -19,7 +19,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/src/basic/def.h b/src/basic/def.h
-index 970654a..b02f6f0 100644
+index 970654a..9251bb9 100644
 --- a/src/basic/def.h
 +++ b/src/basic/def.h
 @@ -13,6 +13,9 @@
@@ -33,7 +33,7 @@ index 970654a..b02f6f0 100644
  #define DEFAULT_UNIX_MAX_DGRAM_QLEN 512UL
  
 diff --git a/src/core/main.c b/src/core/main.c
-index c24b696..8ffa09f 100644
+index 3c6b66e..f2e9776 100644
 --- a/src/core/main.c
 +++ b/src/core/main.c
 @@ -114,6 +114,7 @@ static ExecOutput arg_default_std_error;
@@ -44,7 +44,7 @@ index c24b696..8ffa09f 100644
  static usec_t arg_default_timeout_abort_usec;
  static bool arg_default_timeout_abort_set;
  static usec_t arg_default_start_limit_interval;
-@@ -1389,7 +1390,7 @@ static int become_shutdown(
+@@ -1398,7 +1399,7 @@ static int become_shutdown(
          env_block = strv_copy(environ);
  
          xsprintf(log_level, "%d", log_get_max_level());
@@ -53,7 +53,7 @@ index c24b696..8ffa09f 100644
  
          switch (log_get_target()) {
  
-@@ -2124,6 +2125,7 @@ static void reset_arguments(void) {
+@@ -2151,6 +2152,7 @@ static void reset_arguments(void) {
          arg_default_restart_usec = DEFAULT_RESTART_USEC;
          arg_default_timeout_start_usec = DEFAULT_TIMEOUT_USEC;
          arg_default_timeout_stop_usec = DEFAULT_TIMEOUT_USEC;
