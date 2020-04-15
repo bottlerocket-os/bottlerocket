@@ -94,7 +94,7 @@ USER root
 RUN --mount=target=/host \
     mkdir -p /local/rpms /local/migrations ./rpmbuild/RPMS \
     && ln -s /host/build/packages/*.rpm ./rpmbuild/RPMS \
-    && cp /host/build/packages/bottlerocket-${ARCH}-migrations-*.rpm /local/migrations \
+    && find /host/build/packages/ -maxdepth 1 -type f -name "bottlerocket-${ARCH}-migrations-*.rpm" -not -iname '*debuginfo*' -exec cp '{}' '/local/migrations/' ';' \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
