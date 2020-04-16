@@ -30,6 +30,7 @@ Special thanks to our first contributors, @inductor ([#853]), @smoser ([#871]), 
 * Add upstream fix for arm64 in coreutils ([#879])
 * Add ability to add waves using TOML files ([#883])
 * Add default wave files ([#881])
+* Fix migrations builds ([#906])
 
 ## Documentation changes
 
@@ -45,6 +46,7 @@ Special thanks to our first contributors, @inductor ([#853]), @smoser ([#871]), 
 * README: Fixes and updates ([#831])
 * Update name of early-boot-config in API system diagram ([#840])
 * Fix updater README's reference to data store version ([#844])
+* Fix example wave files ([#908])
 
 [#831]: https://github.com/bottlerocket-os/bottlerocket/pull/831
 [#832]: https://github.com/bottlerocket-os/bottlerocket/pull/832
@@ -82,6 +84,8 @@ Special thanks to our first contributors, @inductor ([#853]), @smoser ([#871]), 
 [#899]: https://github.com/bottlerocket-os/bottlerocket/pull/899
 [#902]: https://github.com/bottlerocket-os/bottlerocket/pull/902
 [#903]: https://github.com/bottlerocket-os/bottlerocket/pull/903
+[#906]: https://github.com/bottlerocket-os/bottlerocket/pull/906
+[#908]: https://github.com/bottlerocket-os/bottlerocket/pull/908
 [73d120c9]: https://github.com/bottlerocket-os/bottlerocket/commit/73d120c9
 
 # v0.3.1 (2020-03-10)
