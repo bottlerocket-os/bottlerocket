@@ -22,7 +22,7 @@ All waves include the seeds of the prior wave, so if a node misses its wave for 
 
 ## Writing wave files
 
-Wave files must be [valid TOML](https://github.com/toml-lang/toml) containing a list of `[[wave]]` entries.
+Wave files must be [valid TOML](https://github.com/toml-lang/toml) containing a list of `[[waves]]` entries.
 Waves defined in these files must contain two keys, `start_after` and `fleet_percentage`.
 
 `start_after` must be:
