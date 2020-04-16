@@ -1,18 +1,18 @@
 # The following represents an "accelerated" set of update waves for a much
 # quicker deployment. The deployment lasts for 1 day, and quickly increases the
 # nodes updated at once.
-[[wave]]
+[[waves]]
 start_after = '1 hour'
 fleet_percentage = 3
 
-[[wave]]
+[[waves]]
 start_after = '4 hours'
 fleet_percentage = 12
 
-[[wave]]
+[[waves]]
 start_after = '8 hours'
 fleet_percentage = 50
 
-[[wave]]
+[[waves]]
 start_after = '1 day'
 fleet_percentage = 100

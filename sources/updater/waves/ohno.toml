@@ -1,14 +1,14 @@
 # The following represents an "emergency" set of update waves for a rapid
 # deployment. The deployment lasts for 3 hours, with a small initial wave,
 # and then all nodes will be updated after the first hour.
-[[wave]]
+[[waves]]
 start_after = '1 hour'
 fleet_percentage = 5
 
-[[wave]]
+[[waves]]
 start_after = '2 hours'
 fleet_percentage = 25
 
-[[wave]]
+[[waves]]
 start_after = '3 hours'
 fleet_percentage = 100
