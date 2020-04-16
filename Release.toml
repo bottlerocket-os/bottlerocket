@@ -1,4 +1,4 @@
 version = "0.3.2"
 
 [migrations]
-"(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0_5_0.lz4"]
+"(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
