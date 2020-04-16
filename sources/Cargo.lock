@@ -1387,7 +1387,7 @@ version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "migrate-admin-container-v0_5_0"
+name = "migrate-admin-container-v0-5-0"
 version = "0.1.0"
 dependencies = [
  "migration-helpers 0.1.0",
