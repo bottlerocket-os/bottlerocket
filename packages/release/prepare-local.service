@@ -38,7 +38,7 @@ ExecStart=/usr/bin/mount \
 ExecStart=/usr/lib/systemd/systemd-growfs ${LOCAL_DIR}
 ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt
 
-RemainAfterExit=false
+RemainAfterExit=true
 StandardError=journal+console
 
 [Install]
