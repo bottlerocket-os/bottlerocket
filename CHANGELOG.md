@@ -1,4 +1,4 @@
-# v0.3.2 (unreleased)
+# v0.3.2 (2020-04-20)
 
 Special thanks to our first contributors, @inductor ([#853]), @smoser ([#871]), and @gliptak ([#870])!
 
