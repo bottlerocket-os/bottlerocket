@@ -276,18 +276,48 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %exclude %{_cross_localstatedir}/log/README
 %exclude %{_cross_rundir}
 
+%exclude %{_cross_bindir}/systemd-ask-password
+%exclude %{_cross_bindir}/systemd-tty-ask-password-agent
+%exclude %{_cross_libdir}/systemd/systemd-sulogin-shell
+%exclude %{_cross_libdir}/systemd/systemd-reply-password
+%exclude %{_cross_systemdgeneratordir}/systemd-debug-generator
 %exclude %{_cross_systemdgeneratordir}/systemd-getty-generator
 %exclude %{_cross_unitdir}/console-getty.service
 %exclude %{_cross_unitdir}/container-getty@.service
+%exclude %{_cross_unitdir}/debug-shell.service
+%exclude %{_cross_unitdir}/emergency.service
+%exclude %{_cross_unitdir}/emergency.target
 %exclude %{_cross_unitdir}/getty@.service
+%exclude %{_cross_unitdir}/rescue.service
+%exclude %{_cross_unitdir}/rescue.target
 %exclude %{_cross_unitdir}/serial-getty@.service
+%exclude %{_cross_unitdir}/systemd-ask-password-console.service
+%exclude %{_cross_unitdir}/systemd-ask-password-console.path
+%exclude %{_cross_unitdir}/systemd-ask-password-wall.path
+%exclude %{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
+%exclude %{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
 
 %files console
+%{_cross_bindir}/systemd-ask-password
+%{_cross_bindir}/systemd-tty-ask-password-agent
+%{_cross_libdir}/systemd/systemd-sulogin-shell
+%{_cross_libdir}/systemd/systemd-reply-password
+%{_cross_systemdgeneratordir}/systemd-debug-generator
 %{_cross_systemdgeneratordir}/systemd-getty-generator
 %{_cross_unitdir}/console-getty.service
 %{_cross_unitdir}/container-getty@.service
+%{_cross_unitdir}/debug-shell.service
+%{_cross_unitdir}/emergency.service
+%{_cross_unitdir}/emergency.target
 %{_cross_unitdir}/getty@.service
+%{_cross_unitdir}/rescue.service
+%{_cross_unitdir}/rescue.target
 %{_cross_unitdir}/serial-getty@.service
+%{_cross_unitdir}/systemd-ask-password-console.service
+%{_cross_unitdir}/systemd-ask-password-console.path
+%{_cross_unitdir}/systemd-ask-password-wall.path
+%{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
+%{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
 
 %files devel
 %{_cross_libdir}/libsystemd.so
