@@ -1,7 +1,7 @@
-From 8862df96457fa790bb2dea414f89d1fe0a704716 Mon Sep 17 00:00:00 2001
+From 4f14d52fb6951f3870bfbe6789471cd75a87c341 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 15 Sep 2019 00:21:26 +0000
-Subject: [PATCH 9001/9004] move stateful paths to ephemeral storage
+Subject: [PATCH 9001/9005] move stateful paths to ephemeral storage
 
 We reserve most of /var for persistent local storage controlled by
 the administrator, and want to avoid depending on it for our own

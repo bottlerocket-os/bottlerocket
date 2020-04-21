@@ -37,6 +37,21 @@ Requires: %{_cross_os}libblkid
 %description -n %{_cross_os}libblkid-devel
 %{summary}.
 
+%package -n %{_cross_os}libfdisk
+Summary: Partition table library
+License: LGPL-2.1-or-later
+
+%description -n %{_cross_os}libfdisk
+%{summary}.
+
+%package -n %{_cross_os}libfdisk-devel
+Summary: Files for development using the partition table library
+License: LGPL-2.1-or-later
+Requires: %{_cross_os}libfdisk
+
+%description -n %{_cross_os}libfdisk-devel
+%{summary}.
+
 %package -n %{_cross_os}libmount
 Summary: Device mounting library
 License: LGPL-2.1-or-later
@@ -90,12 +105,12 @@ cp Documentation/licenses/COPYING.* .
 
 %build
 %cross_configure \
-  --disable-libfdisk \
   --disable-makeinstall-chown \
   --disable-nls \
   --disable-rpath \
   --enable-all-programs \
   --enable-libblkid \
+  --enable-libfdisk \
   --enable-libmount \
   --enable-libsmartcols \
   --enable-libuuid \
@@ -118,12 +133,24 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
 # add attribution.txt files for lib subpackages that need them, since the
 # default macro only generates attribution.txt for the main package
-for lib in lib{blkid,mount,smartcols,uuid}; do
-    mkdir -p %{buildroot}%{_cross_licensedir}/$lib
-    echo "$lib - %{url}" >> %{buildroot}%{_cross_licensedir}/$lib/attribution.txt
+for lib in lib{blkid,fdisk,mount,smartcols,uuid}; do
+    mkdir -p %{buildroot}%{_cross_licensedir}/${lib}
+    echo "${lib} - %{url}" >> %{buildroot}%{_cross_licensedir}/${lib}/attribution.txt
 done
-echo "SPDX-License-Identifier: LGPL-2.1-or-later" | tee -a %{buildroot}%{_cross_licensedir}/lib{blkid,mount,smartcols}/attribution.txt >/dev/null
-echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licensedir}/libuuid/attribution.txt
+
+# most lib subpackages are LGPL-2.1-or-later
+for lib in lib{blkid,fdisk,mount,smartcols}; do
+    echo "SPDX-License-Identifier: LGPL-2.1-or-later" \
+      | tee -a %{buildroot}%{_cross_licensedir}/${lib}/attribution.txt >/dev/null
+    cp -a COPYING.LGPL-2.1-or-later %{buildroot}%{_cross_licensedir}/${lib}
+done
+
+# libuuid is BSD-3-Clause
+for lib in libuuid; do
+    echo "SPDX-License-Identifier: BSD-3-Clause" \
+      | tee -a %{buildroot}%{_cross_licensedir}/${lib}/attribution.txt >/dev/null
+    cp -a COPYING.BSD-3-Clause %{buildroot}%{_cross_licensedir}/${lib}
+done
 
 %files
 %license COPYING.BSD-3-Clause COPYING.BSD-4-Clause-UC COPYING.GPL-2.0-or-later COPYING.LGPL-2.1-or-later
@@ -221,8 +248,10 @@ echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licen
 %{_cross_sbindir}/switch_root
 %{_cross_sbindir}/wipefs
 %exclude %{_cross_sbindir}/hwclock
+%exclude %{_cross_sbindir}/cfdisk
 %exclude %{_cross_sbindir}/ctrlaltdel
 %exclude %{_cross_sbindir}/fdformat
+%exclude %{_cross_sbindir}/fdisk
 %exclude %{_cross_sbindir}/fsck.minix
 %exclude %{_cross_sbindir}/ldattach
 %exclude %{_cross_sbindir}/mkfs.bfs
@@ -232,6 +261,7 @@ echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licen
 %exclude %{_cross_sbindir}/readprofile
 %exclude %{_cross_sbindir}/rfkill
 %exclude %{_cross_sbindir}/rtcwake
+%exclude %{_cross_sbindir}/sfdisk
 %exclude %{_cross_sbindir}/sulogin
 %exclude %{_cross_sbindir}/swaplabel
 %exclude %{_cross_sbindir}/swapoff
@@ -247,8 +277,8 @@ echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licen
 %exclude %{_cross_mandir}
 
 %files -n %{_cross_os}libblkid
-%license COPYING.LGPL-2.1-or-later
-%{_licensedir}/libblkid/attribution.txt
+%license %{_cross_licensedir}/libblkid/COPYING.LGPL-2.1-or-later
+%license %{_cross_licensedir}/libblkid/attribution.txt
 %{_cross_libdir}/libblkid.so.*
 
 %files -n %{_cross_os}libblkid-devel
@@ -259,9 +289,22 @@ echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licen
 %{_cross_pkgconfigdir}/blkid.pc
 %exclude %{_cross_libdir}/libblkid.la
 
+%files -n %{_cross_os}libfdisk
+%license %{_cross_licensedir}/libfdisk/COPYING.LGPL-2.1-or-later
+%license %{_cross_licensedir}/libfdisk/attribution.txt
+%{_cross_libdir}/libfdisk.so.*
+
+%files -n %{_cross_os}libfdisk-devel
+%{_cross_libdir}/libfdisk.a
+%{_cross_libdir}/libfdisk.so
+%dir %{_cross_includedir}/libfdisk
+%{_cross_includedir}/libfdisk/libfdisk.h
+%{_cross_pkgconfigdir}/fdisk.pc
+%exclude %{_cross_libdir}/libfdisk.la
+
 %files -n %{_cross_os}libmount
-%license COPYING.LGPL-2.1-or-later
-%{_licensedir}/libmount/attribution.txt
+%license %{_cross_licensedir}/libmount/COPYING.LGPL-2.1-or-later
+%license %{_cross_licensedir}/libmount/attribution.txt
 %{_cross_libdir}/libmount.so.*
 
 %files -n %{_cross_os}libmount-devel
@@ -273,8 +316,8 @@ echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licen
 %exclude %{_cross_libdir}/libmount.la
 
 %files -n %{_cross_os}libsmartcols
-%license COPYING.LGPL-2.1-or-later
-%{_licensedir}/libsmartcols/attribution.txt
+%license %{_cross_licensedir}/libsmartcols/COPYING.LGPL-2.1-or-later
+%license %{_cross_licensedir}/libsmartcols/attribution.txt
 %{_cross_libdir}/libsmartcols.so.*
 
 %files -n %{_cross_os}libsmartcols-devel
@@ -286,8 +329,8 @@ echo "SPDX-License-Identifier: BSD-3-Clause" | tee -a %{buildroot}%{_cross_licen
 %exclude %{_cross_libdir}/libsmartcols.la
 
 %files -n %{_cross_os}libuuid
-%license COPYING.BSD-3-Clause
-%{_licensedir}/libuuid/attribution.txt
+%license %{_cross_licensedir}/libuuid/COPYING.BSD-3-Clause
+%license %{_cross_licensedir}/libuuid/attribution.txt
 %{_cross_libdir}/libuuid.so.*
 
 %files -n %{_cross_os}libuuid-devel

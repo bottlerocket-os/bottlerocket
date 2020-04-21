@@ -52,6 +52,7 @@ BOTTLEROCKET_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
 BOTTLEROCKET_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 BOTTLEROCKET_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
 BOTTLEROCKET_PRIVATE_TYPECODE="440408bb-eb0b-4328-a6e5-a29038fad706"
+BOTTLEROCKET_DATA_TYPECODE="626f7474-6c65-6474-6861-726d61726b73"
 
 if [[ "${ARCH}" == "x86_64" ]]; then
   FIRM_NAME="BIOS-BOOT"
@@ -187,7 +188,7 @@ dd if="${PRIVATE_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=2005
 # BOTTLEROCKET-DATA
 truncate -s 1G "${DATA_IMAGE}"
 sgdisk --clear \
-   -n 0:1M:1023M -c 0:"BOTTLEROCKET-DATA" -t 0:8300 \
+   -n 0:1M:1023M -c 0:"BOTTLEROCKET-DATA" -t 0:"${BOTTLEROCKET_DATA_TYPECODE}" \
    --sort --print "${DATA_IMAGE}"
 # If we build on a host with SELinux enabled, we could end up with labels that
 # do not match our policy. Since we allow replacing the data volume at runtime,

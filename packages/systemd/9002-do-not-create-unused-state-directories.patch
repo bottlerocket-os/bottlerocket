@@ -1,7 +1,7 @@
-From 1b3b7345d19a7877026690ef05852dbb4fb0efe8 Mon Sep 17 00:00:00 2001
+From 8711db616a17523abcea9615c56233c68cf6a1e5 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 15 Sep 2019 00:51:25 +0000
-Subject: [PATCH 9002/9004] do not create unused state directories
+Subject: [PATCH 9002/9005] do not create unused state directories
 
 We do not use the coredump handler, and the private directories have
 been relocated to `/run`.
@@ -12,11 +12,11 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 7 deletions(-)
 
 diff --git a/tmpfiles.d/systemd.conf.m4 b/tmpfiles.d/systemd.conf.m4
-index 9c57d3b..30a9bd9 100644
+index 11d87d2..c8fb51a 100644
 --- a/tmpfiles.d/systemd.conf.m4
 +++ b/tmpfiles.d/systemd.conf.m4
-@@ -70,10 +70,3 @@ a+ /var/log/journal/%m - - - - d:group:wheel:r-x
- a+ /var/log/journal/%m - - - - group:wheel:r-x
+@@ -65,10 +65,3 @@ a+ /var/log/journal    - - - - d:group::r-x,d:group:wheel:r-x,group::r-x,group:w
+ a+ /var/log/journal/%m - - - - d:group:wheel:r-x,group:wheel:r-x
  a+ /var/log/journal/%m/system.journal - - - - group:wheel:r--
  '')')')m4_dnl
 -

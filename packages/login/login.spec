@@ -21,7 +21,11 @@ Requires: %{_cross_os}systemd-console
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 %{S:0} %{buildroot}%{_cross_bindir}/login
 
+install -d %{buildroot}%{_cross_sbindir}
+ln -s ../bin/login %{buildroot}%{_cross_sbindir}/sulogin
+
 %files
 %{_cross_bindir}/login
+%{_cross_sbindir}/sulogin
 
 %changelog

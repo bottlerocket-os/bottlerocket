@@ -2,7 +2,7 @@
 %global _cross_allow_rpath 1
 
 Name: %{_cross_os}systemd
-Version: 244
+Version: 245
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
@@ -11,14 +11,21 @@ Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{versio
 Source1: run-tmpfiles.conf
 Source2: systemd-modules-load.conf
 
-# Local changes.
+# Local patches that can be dropped when we have an SELinux policy that
+# limits access to system files on the data volume.
 Patch9001: 9001-move-stateful-paths-to-ephemeral-storage.patch
 Patch9002: 9002-do-not-create-unused-state-directories.patch
+
+# Local patch to work around the fact that /var is a bind mount from
+# /local/var, and we want the /local/var/run symlink to point to /run.
 Patch9003: 9003-use-absolute-path-for-var-run-symlink.patch
 
 # TODO: this could potentially be submitted upstream, but needs a better
 # way to be configured at build time or during execution first.
 Patch9004: 9004-core-add-separate-timeout-for-system-shutdown.patch
+
+# Local patch to avoid an OpenSSL dependency that's otherwise not needed.
+Patch9005: 9005-repart-always-use-random-UUIDs.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -29,6 +36,7 @@ BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libattr-devel
 BuildRequires: %{_cross_os}libblkid-devel
 BuildRequires: %{_cross_os}libcap-devel
+BuildRequires: %{_cross_os}libfdisk-devel
 BuildRequires: %{_cross_os}libmount-devel
 BuildRequires: %{_cross_os}libseccomp-devel
 BuildRequires: %{_cross_os}libselinux-devel
@@ -39,6 +47,7 @@ Requires: %{_cross_os}libacl
 Requires: %{_cross_os}libattr
 Requires: %{_cross_os}libblkid
 Requires: %{_cross_os}libcap
+Requires: %{_cross_os}libfdisk
 Requires: %{_cross_os}libmount
 Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}libselinux
@@ -86,12 +95,16 @@ CONFIGURE_OPTS=(
  -Dtpm=false
  -Denvironment-d=false
  -Dbinfmt=false
+ -Drepart=true
  -Dcoredump=false
+ -Dpstore=true
  -Dlogind=false
  -Dhostnamed=false
  -Dlocaled=false
  -Dmachined=false
  -Dportabled=false
+ -Duserdb=false
+ -Dhomed=false
  -Dnetworkd=false
  -Dtimedated=false
  -Dtimesyncd=false
@@ -129,8 +142,10 @@ CONFIGURE_OPTS=(
  -Dacl=true
  -Daudit=false
  -Dblkid=true
+ -Dfdisk=true
  -Dkmod=true
  -Dpam=false
+ -Dpwquality=false
  -Dmicrohttpd=false
  -Dlibcryptsetup=false
  -Dlibcurl=false
@@ -142,6 +157,7 @@ CONFIGURE_OPTS=(
  -Dgcrypt=false
  -Dgnutls=false
  -Dopenssl=false
+ -Dp11kit=false
  -Delfutils=false
  -Dzlib=false
  -Dbzip2=false
@@ -201,6 +217,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %{_cross_bindir}/systemd-notify
 %{_cross_bindir}/systemd-nspawn
 %{_cross_bindir}/systemd-path
+%{_cross_bindir}/systemd-repart
 %{_cross_bindir}/systemd-run
 %{_cross_bindir}/systemd-socket-activate
 %{_cross_bindir}/systemd-stdio-bridge
@@ -259,18 +276,48 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %exclude %{_cross_localstatedir}/log/README
 %exclude %{_cross_rundir}
 
+%exclude %{_cross_bindir}/systemd-ask-password
+%exclude %{_cross_bindir}/systemd-tty-ask-password-agent
+%exclude %{_cross_libdir}/systemd/systemd-sulogin-shell
+%exclude %{_cross_libdir}/systemd/systemd-reply-password
+%exclude %{_cross_systemdgeneratordir}/systemd-debug-generator
 %exclude %{_cross_systemdgeneratordir}/systemd-getty-generator
 %exclude %{_cross_unitdir}/console-getty.service
 %exclude %{_cross_unitdir}/container-getty@.service
+%exclude %{_cross_unitdir}/debug-shell.service
+%exclude %{_cross_unitdir}/emergency.service
+%exclude %{_cross_unitdir}/emergency.target
 %exclude %{_cross_unitdir}/getty@.service
+%exclude %{_cross_unitdir}/rescue.service
+%exclude %{_cross_unitdir}/rescue.target
 %exclude %{_cross_unitdir}/serial-getty@.service
+%exclude %{_cross_unitdir}/systemd-ask-password-console.service
+%exclude %{_cross_unitdir}/systemd-ask-password-console.path
+%exclude %{_cross_unitdir}/systemd-ask-password-wall.path
+%exclude %{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
+%exclude %{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
 
 %files console
+%{_cross_bindir}/systemd-ask-password
+%{_cross_bindir}/systemd-tty-ask-password-agent
+%{_cross_libdir}/systemd/systemd-sulogin-shell
+%{_cross_libdir}/systemd/systemd-reply-password
+%{_cross_systemdgeneratordir}/systemd-debug-generator
 %{_cross_systemdgeneratordir}/systemd-getty-generator
 %{_cross_unitdir}/console-getty.service
 %{_cross_unitdir}/container-getty@.service
+%{_cross_unitdir}/debug-shell.service
+%{_cross_unitdir}/emergency.service
+%{_cross_unitdir}/emergency.target
 %{_cross_unitdir}/getty@.service
+%{_cross_unitdir}/rescue.service
+%{_cross_unitdir}/rescue.target
 %{_cross_unitdir}/serial-getty@.service
+%{_cross_unitdir}/systemd-ask-password-console.service
+%{_cross_unitdir}/systemd-ask-password-console.path
+%{_cross_unitdir}/systemd-ask-password-wall.path
+%{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
+%{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
 
 %files devel
 %{_cross_libdir}/libsystemd.so
