@@ -59,6 +59,10 @@
 (typeattribute host_s)
 (typeattributeset host_s (not container_s))
 
+; Subjects that are allowed to manage the API datastore.
+(typeattribute api_s)
+(typeattributeset api_s (api_t super_t))
+
 ; Subjects that are treated as container runtimes.
 (typeattribute runtime_s)
 (typeattributeset runtime_s (runtime_t super_t))

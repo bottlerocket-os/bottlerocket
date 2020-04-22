@@ -43,6 +43,10 @@
 (filecon "/.*/usr/bin/containerd.*" file runtime_exec)
 (filecon "/.*/usr/bin/docker.*" file runtime_exec)
 (filecon "/.*/usr/sbin/runc" file runtime_exec)
+(filecon "/.*/usr/bin/apiserver" file api_exec)
+(filecon "/.*/usr/bin/early-boot-config" file api_exec)
+(filecon "/.*/usr/bin/migrator" file api_exec)
+(filecon "/.*/usr/bin/storewolf" file api_exec)
 
 ; Label local storage mounts.
 (filecon "/local" any local)
