@@ -26,6 +26,11 @@
 (allow init_t system_t (processes (transform)))
 (allow system_t os_t (file (entrypoint)))
 
+; PID 1 starts API components as "api_t".
+(typetransition init_t api_exec_t process api_t)
+(allow init_t api_t (processes (transform)))
+(allow api_t api_exec_t (file (entrypoint)))
+
 ; PID 1 starts container runtimes as "runtime_t".
 ; The level range is adjusted to span all categories at the same time,
 ; to support Docker's use of MCS labels.
@@ -66,17 +71,21 @@
 
 ; All subjects are allowed to write to, set watches for, and manage
 ; mounts for most files and directories on /local.
-(allow all_s unprotected_o (files (mutate watch mount)))
+(allow all_s local_t (files (mutate watch mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))
 
-; Only trusted components can write to "cache_t" or "private_t", as
-; they provide a means to persist changes across container restarts
-; and reboots. We restrict the ability to set watches as this can
-; be used to block access for another process.
-(allow trusted_s protected_o (files (mutate watch)))
+; Trusted components can set watches on immutable files, since we
+; expect this behavior from systemd and dbus-broker.
 (allow trusted_s immutable_o (files (watch)))
+
+; Only specific components can write to "private_t" or "cache_t", as
+; they provide a means to persist changes across container restarts
+; and reboots. We also restrict the ability to set watches as this
+; can be used to block access for another process.
+(allow api_s private_t (files (mutate watch)))
+(allow runtime_s cache_t (files (mutate watch)))
 
 ; Untrusted processes should not be permitted to modify these files,
 ; set watches for them, or to manage mounts for these directories.

@@ -58,13 +58,9 @@
 (typeattribute ephemeral_o)
 (typeattributeset ephemeral_o (any_t))
 
-; Protected objects are certain files on local storage.
+; Protected objects are files on local storage with special rules.
 (typeattribute protected_o)
 (typeattributeset protected_o (cache_t private_t))
-
-; Unprotected objects are everything else on local storage.
-(typeattribute unprotected_o)
-(typeattributeset unprotected_o (local_t))
 
 ; Immutable objects reside on read-only storage.
 (typeattribute immutable_o)

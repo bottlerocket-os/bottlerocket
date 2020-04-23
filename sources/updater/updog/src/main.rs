@@ -31,6 +31,7 @@ const TARGET_ARCH: &str = "aarch64";
 
 const TRUSTED_ROOT_PATH: &str = "/usr/share/updog/root.json";
 const MIGRATION_PATH: &str = "/var/lib/bottlerocket-migrations";
+const METADATA_PATH: &str = "/var/cache/bottlerocket-metadata";
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
@@ -104,14 +105,14 @@ fn load_repository<'a>(
     transport: &'a HttpQueryTransport,
     config: &'a Config,
 ) -> Result<HttpQueryRepo<'a>> {
-    fs::create_dir_all("/var/lib/bottlerocket/updog").context(error::CreateMetadataCache)?;
+    fs::create_dir_all(METADATA_PATH).context(error::CreateMetadataCache)?;
     Repository::load(
         transport,
         Settings {
             root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
                 path: TRUSTED_ROOT_PATH,
             })?,
-            datastore: Path::new("/var/lib/bottlerocket/updog"),
+            datastore: Path::new(METADATA_PATH),
             metadata_base_url: &config.metadata_base_url,
             target_base_url: &config.targets_base_url,
             limits: Limits {
