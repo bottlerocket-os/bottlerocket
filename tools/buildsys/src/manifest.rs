@@ -1,9 +1,13 @@
 /*!
+# Build system metadata
+
 This module provides deserialization and convenience methods for build system
 metadata located in `Cargo.toml`.
 
 Cargo ignores the `package.metadata` table in its manifest, so it can be used
 to store configuration for other tools. We recognize the following keys.
+
+## Metadata for packages
 
 `source-groups` is a list of directories in the top-level `sources` directory,
 each of which contains a set of related Rust projects. Changes to files in
@@ -28,6 +32,26 @@ path = "bar"
 url = "https://bar"
 sha512 = "123456"
 ```
+
+`package-name` lets you override the package name in Cargo.toml; this is useful
+if you have a package with "." in its name, for example, which Cargo doesn't
+allow.  This means the directory name and spec file name can use your preferred
+naming.
+```
+[package.metadata.build-package]
+package-name = "better.name"
+```
+
+`variant-sensitive` lets you specify whether the package should be rebuilt when
+building a new variant, and defaults to false; set it to true if a package is
+using the variant to affect its build process.  (Typically this means that it
+reads BUILDSYS_VARIANT.)
+```
+[package.metadata.build-package]
+variant-sensitive = true
+```
+
+## Metadata for variants
 
 `included-packages` is a list of packages that should be included in a variant.
 ```
@@ -68,6 +92,11 @@ impl ManifestInfo {
     /// Convenience method to return the list of external files.
     pub(crate) fn external_files(&self) -> Option<&Vec<ExternalFile>> {
         self.build_package().and_then(|b| b.external_files.as_ref())
+    }
+
+    /// Convenience method to return the package name override, if any.
+    pub(crate) fn package_name(&self) -> Option<&String> {
+        self.build_package().and_then(|b| b.package_name.as_ref())
     }
 
     /// Convenience method to find whether the package is sensitive to variant changes.
@@ -113,8 +142,9 @@ struct Metadata {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct BuildPackage {
-    pub(crate) source_groups: Option<Vec<PathBuf>>,
     pub(crate) external_files: Option<Vec<ExternalFile>>,
+    pub(crate) package_name: Option<String>,
+    pub(crate) source_groups: Option<Vec<PathBuf>>,
     pub(crate) variant_sensitive: Option<bool>,
 }
 

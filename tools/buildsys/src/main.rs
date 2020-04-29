@@ -121,7 +121,13 @@ fn build_package() -> Result<()> {
         }
     }
 
-    let package = getenv("CARGO_PKG_NAME")?;
+    // Package developer can override name of package if desired, e.g. to name package with
+    // characters invalid in Cargo crate names
+    let package = if let Some(name_override) = manifest.package_name() {
+        name_override.clone()
+    } else {
+        getenv("CARGO_PKG_NAME")?
+    };
     let spec = format!("{}.spec", package);
     println!("cargo:rerun-if-changed={}", spec);
 
