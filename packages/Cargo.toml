@@ -25,7 +25,7 @@ members = [
     "iputils",
     "kernel",
     "kmod",
-    "kubernetes",
+    "kubernetes-1.15",
     "libacl",
     "libattr",
     "libaudit",

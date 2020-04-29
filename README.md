@@ -378,7 +378,7 @@ We currently package the following major third-party components:
 * systemd as init ([background](https://en.wikipedia.org/wiki/Systemd), [packaging](packages/systemd/))
 * wicked for networking ([background](https://github.com/openSUSE/wicked), [packaging](packages/wicked/))
 * containerd ([background](https://containerd.io/), [packaging](packages/containerd/))
-* Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes/))
+* Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes-1.15/))
 * aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](packages/aws-iam-authenticator/))
 
 For further documentation or to see the rest of the packages, see the [packaging directory](packages/).

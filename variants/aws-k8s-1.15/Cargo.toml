@@ -12,7 +12,7 @@ included-packages = [
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
-    "kubelet",
+    "kubelet-1.15",
     "release",
 ]
 
