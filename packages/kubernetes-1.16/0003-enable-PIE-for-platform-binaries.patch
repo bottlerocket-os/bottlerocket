@@ -1,0 +1,25 @@
+From 33cb415ae50c5fb48d37842247261b466093d1ae Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 5 Nov 2019 14:23:38 +0000
+Subject: [PATCH 3/4] enable PIE for platform binaries
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ hack/lib/golang.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
+index 1547bad5..f07418a0 100755
+--- a/hack/lib/golang.sh
++++ b/hack/lib/golang.sh
+@@ -715,6 +715,7 @@ kube::golang::build_binaries_for_platform() {
+ 
+   if [[ "${#nonstatics[@]}" != 0 ]]; then
+     build_args=(
++      -buildmode pie
+       ${goflags:+"${goflags[@]}"}
+       -gcflags "${gogcflags:-}"
+       -asmflags "${goasmflags:-}"
+-- 
+2.21.0
+
