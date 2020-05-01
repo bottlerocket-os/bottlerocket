@@ -22,7 +22,7 @@ use std::process;
 use std::str::FromStr;
 use std::thread;
 use tough::{Limits, Repository, Settings};
-use update_metadata::{Manifest, Update};
+use update_metadata::{load_manifest, migration_targets, Manifest, Update};
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -126,17 +126,6 @@ fn load_repository<'a>(
     .context(error::Metadata)
 }
 
-fn load_manifest(repository: &HttpQueryRepo<'_>) -> Result<Manifest> {
-    let target = "manifest.json";
-    serde_json::from_reader(
-        repository
-            .read_target(target)
-            .context(error::Metadata)?
-            .context(error::TargetNotFound { target })?,
-    )
-    .context(error::ManifestParse)
-}
-
 fn running_version() -> Result<(Version, String)> {
     let br = BottlerocketRelease::new().context(error::ReleaseVersion)?;
     Ok((br.version_id, br.variant_id))
@@ -157,7 +146,7 @@ fn applicable_updates<'a>(manifest: &'a Manifest, variant: &str) -> Vec<&'a Upda
 // TODO updog.toml may include settings that cause us to ignore/delay
 // certain/any updates;
 //  Ignore Specific Target Version
-//  Ingore Any Target
+//  Ignore Any Target
 //  ...
 fn update_required<'a>(
     _config: &Config,
@@ -203,38 +192,6 @@ fn write_target_to_disk<P: AsRef<Path>>(
         })?;
     io::copy(&mut reader, &mut f).context(error::WriteUpdate)?;
     Ok(())
-}
-
-fn migration_targets(from: &Version, to: &Version, manifest: &Manifest) -> Result<Vec<String>> {
-    let mut targets = Vec::new();
-    let mut version = from;
-    while version != to {
-        let mut migrations: Vec<&(Version, Version)> = manifest
-            .migrations
-            .keys()
-            .filter(|(f, t)| *f == *version && *t <= *to)
-            .collect();
-
-        // There can be multiple paths to the same target, e.g.
-        //      (1.0.0, 1.1.0) => [...]
-        //      (1.0.0, 1.2.0) => [...]
-        // Choose one with the highest *to* version, <= our target
-        migrations.sort_unstable_by(|(_, a), (_, b)| b.cmp(&a));
-        if let Some(transition) = migrations.first() {
-            // If a transition doesn't require a migration the array will be empty
-            if let Some(migrations) = manifest.migrations.get(transition) {
-                targets.extend_from_slice(&migrations);
-            }
-            version = &transition.1;
-        } else {
-            return error::MissingMigration {
-                current: version.clone(),
-                target: to.clone(),
-            }
-            .fail();
-        }
-    }
-    Ok(targets)
 }
 
 /// Store required migrations for an update in persistent storage. All intermediate migrations
@@ -832,23 +789,6 @@ mod tests {
     }
 
     #[test]
-    fn test_migrations() {
-        // A manifest with four migration tuples starting at 1.0 and ending at 1.3.
-        // There is a shortcut from 1.1 to 1.3, skipping 1.2
-        let path = "tests/data/migrations.json";
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
-        let from = Version::parse("1.0.0").unwrap();
-        let to = Version::parse("1.5.0").unwrap();
-        let targets = migration_targets(&from, &to, &manifest).unwrap();
-
-        assert!(targets.len() == 3);
-        let mut i = targets.iter();
-        assert!(i.next().unwrap() == "migration_1.1.0_a");
-        assert!(i.next().unwrap() == "migration_1.1.0_b");
-        assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
-    }
-
-    #[test]
     fn serialize_metadata() {
         // A basic manifest with a single update
         let path = "tests/data/example_2.json";
@@ -906,7 +846,7 @@ mod tests {
             u.update_wave(150).unwrap()
                 == Wave::General {
                     start: first_bound,
-                    end: second_bound
+                    end: second_bound,
                 },
             "Expected to be some bounded wave"
         );

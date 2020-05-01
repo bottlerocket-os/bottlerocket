@@ -4,10 +4,12 @@ mod de;
 pub mod error;
 mod se;
 
+use crate::error::Result;
 use chrono::{DateTime, Duration, Utc};
-use migrator::MIGRATION_FILENAME_RE;
+use lazy_static::lazy_static;
 use parse_datetime::parse_datetime;
 use rand::{thread_rng, Rng};
+use regex::Regex;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -17,10 +19,25 @@ use std::fs::File;
 use std::ops::Bound::{Excluded, Included};
 use std::path::Path;
 use std::str::FromStr;
-
-use crate::error::Result;
+use tough;
 
 pub const MAX_SEED: u32 = 2048;
+
+lazy_static! {
+    /// Regular expression that will match migration file names and allow retrieving the
+    /// version and name components.
+    // Note: the version component is a simplified semver regex; we don't use any of the
+    // extensions, just a simple x.y.z, so this isn't as strict as it could be.
+    pub static ref MIGRATION_FILENAME_RE: Regex =
+        Regex::new(r"(?x)^
+                   migrate
+                   _
+                   v?  # optional 'v' prefix for humans
+                   (?P<version>[0-9]+\.[0-9]+\.[0-9]+[0-9a-zA-Z+-]*)
+                   _
+                   (?P<name>[a-zA-Z0-9-]+)
+                   $").unwrap();
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Wave {
@@ -367,4 +384,64 @@ impl Update {
         }
         None
     }
+}
+
+pub fn migration_targets(from: &Version, to: &Version, manifest: &Manifest) -> Result<Vec<String>> {
+    let mut targets = Vec::new();
+    let mut version = from;
+    while version != to {
+        let mut migrations: Vec<&(Version, Version)> = manifest
+            .migrations
+            .keys()
+            .filter(|(f, t)| *f == *version && *t <= *to)
+            .collect();
+
+        // There can be multiple paths to the same target, e.g.
+        //      (1.0.0, 1.1.0) => [...]
+        //      (1.0.0, 1.2.0) => [...]
+        // Choose one with the highest *to* version, <= our target
+        migrations.sort_unstable_by(|(_, a), (_, b)| b.cmp(&a));
+        if let Some(transition) = migrations.first() {
+            // If a transition doesn't require a migration the array will be empty
+            if let Some(migrations) = manifest.migrations.get(transition) {
+                targets.extend_from_slice(&migrations);
+            }
+            version = &transition.1;
+        } else {
+            return error::MissingMigration {
+                current: version.clone(),
+                target: to.clone(),
+            }
+            .fail();
+        }
+    }
+    Ok(targets)
+}
+
+pub fn load_manifest<T: tough::Transport>(repository: &tough::Repository<T>) -> Result<Manifest> {
+    let target = "manifest.json";
+    serde_json::from_reader(
+        repository
+            .read_target(target)
+            .context(error::ManifestLoad)?
+            .context(error::ManifestNotFound)?,
+    )
+    .context(error::ManifestParse)
+}
+
+#[test]
+fn test_migrations() {
+    // A manifest with four migration tuples starting at 1.0 and ending at 1.3.
+    // There is a shortcut from 1.1 to 1.3, skipping 1.2
+    let path = "./tests/data/migrations.json";
+    let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+    let from = Version::parse("1.0.0").unwrap();
+    let to = Version::parse("1.5.0").unwrap();
+    let targets = migration_targets(&from, &to, &manifest).unwrap();
+
+    assert!(targets.len() == 3);
+    let mut i = targets.iter();
+    assert!(i.next().unwrap() == "migration_1.1.0_a");
+    assert!(i.next().unwrap() == "migration_1.1.0_b");
+    assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
 }
