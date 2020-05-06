@@ -26,6 +26,9 @@ Patch2: 0002-do-not-omit-debug-info.patch
 Patch3: 0003-enable-PIE-for-platform-binaries.patch
 Patch4: 0004-override-SELinux-label-for-kubelet-plugins.patch
 
+# Update aws-sdk-go for IMDSv2 support
+Patch100: aws-sdk-go-1.28.2.patch.bz2
+
 BuildRequires: git
 BuildRequires: rsync
 BuildRequires: %{_cross_os}glibc-devel
