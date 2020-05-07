@@ -36,7 +36,7 @@ use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 
-use migrator::MIGRATION_FILENAME_RE;
+use update_metadata::MIGRATION_FILENAME_RE;
 mod args;
 mod direction;
 mod error;

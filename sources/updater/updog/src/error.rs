@@ -107,17 +107,6 @@ pub(crate) enum Error {
         to: Version,
     },
 
-    #[snafu(display(
-        "Reached end of migration chain at {} but target is {}",
-        current,
-        target
-    ))]
-    MissingMigration {
-        backtrace: Backtrace,
-        current: Version,
-        target: Version,
-    },
-
     #[snafu(display("Missing version in metadata: {}", version))]
     MissingVersion {
         backtrace: Backtrace,

@@ -17,13 +17,10 @@ regex = "1.1"
 semver = "0.9"
 simplelog = "0.7"
 snafu = "0.6"
+update_metadata = { path = "../../../updater/update_metadata" }
 
 [build-dependencies]
 cargo-readme = "3.1"
-
-[lib]
-name = "migrator"
-path = "src/lib.rs"
 
 [[bin]]
 name = "migrator"

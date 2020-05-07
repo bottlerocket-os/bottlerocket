@@ -58,7 +58,10 @@ pub enum Error {
     #[snafu(display("Duplicate version key: {}", key))]
     DuplicateVersionKey { backtrace: Backtrace, key: String },
 
-    #[snafu(display("Failed to parse updates manifest: {}", source))]
+    #[snafu(display("Manifest not found in repository"))]
+    ManifestNotFound { backtrace: Backtrace },
+
+    #[snafu(display("Failed to parse manifest file: {}", source))]
     ManifestParse {
         source: serde_json::Error,
         backtrace: Backtrace,
@@ -75,6 +78,12 @@ pub enum Error {
     ManifestWrite {
         path: PathBuf,
         source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Manifest load error: {}", source))]
+    ManifestLoad {
+        source: tough::error::Error,
         backtrace: Backtrace,
     },
 
@@ -101,6 +110,17 @@ pub enum Error {
         backtrace: Backtrace,
         from: Version,
         to: Version,
+    },
+
+    #[snafu(display(
+        "Reached end of migration chain at {} but target is {}",
+        current,
+        target
+    ))]
+    MissingMigration {
+        backtrace: Backtrace,
+        current: Version,
+        target: Version,
     },
 
     #[snafu(display("Failed to serialize update information: {}", source))]
