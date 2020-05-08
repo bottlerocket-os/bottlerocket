@@ -37,13 +37,13 @@ BuildRequires: %{_cross_os}glibc-devel
 %description
 %{summary}.
 
-%package -n %{_cross_os}kubelet
+%package -n %{_cross_os}kubelet-1.15
 Summary: Container cluster node agent
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}findutils
 
-%description -n %{_cross_os}kubelet
+%description -n %{_cross_os}kubelet-1.15
 %{summary}.
 
 %prep
@@ -80,7 +80,7 @@ install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
-%files -n %{_cross_os}kubelet
+%files -n %{_cross_os}kubelet-1.15
 %license LICENSE LICENSE.gonum.graph LICENSE.shell2junit LICENSE.golang PATENTS.golang LICENSE.go-srcimporter LICENSE.intemp
 %{_cross_attribution_file}
 %{_cross_attribution_vendor_dir}

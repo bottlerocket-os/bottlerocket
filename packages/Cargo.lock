@@ -4,23 +4,23 @@
 name = "acpid"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "aws-iam-authenticator"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "bash"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "ncurses 0.1.0",
- "readline 0.1.0",
+ "glibc",
+ "ncurses",
+ "readline",
 ]
 
 [[package]]
@@ -31,99 +31,99 @@ version = "0.1.0"
 name = "chrony"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libcap 0.1.0",
- "libseccomp 0.1.0",
- "ncurses 0.1.0",
- "readline 0.1.0",
+ "glibc",
+ "libcap",
+ "libseccomp",
+ "ncurses",
+ "readline",
 ]
 
 [[package]]
 name = "cni"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "cni-plugins"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "conntrack-tools"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libmnl 0.1.0",
- "libnetfilter_conntrack 0.1.0",
- "libnetfilter_cthelper 0.1.0",
- "libnetfilter_cttimeout 0.1.0",
- "libnetfilter_queue 0.1.0",
- "libnfnetlink 0.1.0",
+ "glibc",
+ "libmnl",
+ "libnetfilter_conntrack",
+ "libnetfilter_cthelper",
+ "libnetfilter_cttimeout",
+ "libnetfilter_queue",
+ "libnfnetlink",
 ]
 
 [[package]]
 name = "containerd"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libseccomp 0.1.0",
+ "glibc",
+ "libseccomp",
 ]
 
 [[package]]
 name = "coreutils"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libacl 0.1.0",
- "libattr 0.1.0",
- "libcap 0.1.0",
- "libselinux 0.1.0",
- "libxcrypt 0.1.0",
+ "glibc",
+ "libacl",
+ "libattr",
+ "libcap",
+ "libselinux",
+ "libxcrypt",
 ]
 
 [[package]]
 name = "dbus-broker"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libcap 0.1.0",
- "libexpat 0.1.0",
- "libselinux 0.1.0",
- "systemd 0.1.0",
+ "glibc",
+ "libcap",
+ "libexpat",
+ "libselinux",
+ "systemd",
 ]
 
 [[package]]
 name = "docker-cli"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "docker-engine"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libseccomp 0.1.0",
- "systemd 0.1.0",
+ "glibc",
+ "libseccomp",
+ "systemd",
 ]
 
 [[package]]
 name = "docker-init"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "docker-proxy"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
@@ -134,8 +134,8 @@ version = "0.1.0"
 name = "findutils"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libselinux 0.1.0",
+ "glibc",
+ "libselinux",
 ]
 
 [[package]]
@@ -146,43 +146,43 @@ version = "0.1.0"
 name = "grub"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "host-ctr"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "iproute"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libcap 0.1.0",
- "libmnl 0.1.0",
- "libselinux 0.1.0",
+ "glibc",
+ "libcap",
+ "libmnl",
+ "libselinux",
 ]
 
 [[package]]
 name = "iptables"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libmnl 0.1.0",
- "libnetfilter_conntrack 0.1.0",
- "libnfnetlink 0.1.0",
- "libnftnl 0.1.0",
+ "glibc",
+ "libmnl",
+ "libnetfilter_conntrack",
+ "libnfnetlink",
+ "libnftnl",
 ]
 
 [[package]]
 name = "iputils"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libcap 0.1.0",
+ "glibc",
+ "libcap",
 ]
 
 [[package]]
@@ -193,60 +193,67 @@ version = "0.1.0"
 name = "kmod"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
-name = "kubernetes"
+name = "kubernetes-1_15"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_16"
+version = "0.1.0"
+dependencies = [
+ "glibc",
 ]
 
 [[package]]
 name = "libacl"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libattr 0.1.0",
+ "glibc",
+ "libattr",
 ]
 
 [[package]]
 name = "libattr"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libaudit"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libcap"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libattr 0.1.0",
+ "glibc",
+ "libattr",
 ]
 
 [[package]]
 name = "libdbus"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libcap 0.1.0",
- "libexpat 0.1.0",
+ "glibc",
+ "libcap",
+ "libexpat",
 ]
 
 [[package]]
 name = "libexpat"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
@@ -257,107 +264,107 @@ version = "0.1.0"
 name = "libiw"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libmnl"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libnetfilter_conntrack"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libmnl 0.1.0",
- "libnfnetlink 0.1.0",
+ "glibc",
+ "libmnl",
+ "libnfnetlink",
 ]
 
 [[package]]
 name = "libnetfilter_cthelper"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libmnl 0.1.0",
+ "glibc",
+ "libmnl",
 ]
 
 [[package]]
 name = "libnetfilter_cttimeout"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libmnl 0.1.0",
+ "glibc",
+ "libmnl",
 ]
 
 [[package]]
 name = "libnetfilter_queue"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libmnl 0.1.0",
- "libnfnetlink 0.1.0",
+ "glibc",
+ "libmnl",
+ "libnfnetlink",
 ]
 
 [[package]]
 name = "libnfnetlink"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libnftnl"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libmnl 0.1.0",
+ "glibc",
+ "libmnl",
 ]
 
 [[package]]
 name = "libnl"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libpcap"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libpcre"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libseccomp"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "libselinux"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libpcre 0.1.0",
- "libsepol 0.1.0",
+ "glibc",
+ "libpcre",
+ "libsepol",
 ]
 
 [[package]]
 name = "libsepol"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
@@ -368,38 +375,45 @@ version = "0.1.0"
 name = "libxcrypt"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "login"
 version = "0.0.1"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "ncurses"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
+]
+
+[[package]]
+name = "os"
+version = "0.1.0"
+dependencies = [
+ "glibc",
 ]
 
 [[package]]
 name = "procps"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libselinux 0.1.0",
- "ncurses 0.1.0",
+ "glibc",
+ "libselinux",
+ "ncurses",
 ]
 
 [[package]]
 name = "readline"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "ncurses 0.1.0",
+ "glibc",
+ "ncurses",
 ]
 
 [[package]]
@@ -410,8 +424,8 @@ version = "0.0.0"
 name = "runc"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libseccomp 0.1.0",
+ "glibc",
+ "libseccomp",
 ]
 
 [[package]]
@@ -422,65 +436,57 @@ version = "0.1.0"
 name = "socat"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "strace"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
+ "glibc",
 ]
 
 [[package]]
 name = "systemd"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "kmod 0.1.0",
- "libacl 0.1.0",
- "libattr 0.1.0",
- "libcap 0.1.0",
- "libseccomp 0.1.0",
- "libselinux 0.1.0",
- "libxcrypt 0.1.0",
- "util-linux 0.1.0",
+ "glibc",
+ "kmod",
+ "libacl",
+ "libattr",
+ "libcap",
+ "libseccomp",
+ "libselinux",
+ "libxcrypt",
+ "util-linux",
 ]
 
 [[package]]
 name = "tcpdump"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libpcap 0.1.0",
+ "glibc",
+ "libpcap",
 ]
 
 [[package]]
 name = "util-linux"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libacl 0.1.0",
- "libselinux 0.1.0",
- "libxcrypt 0.1.0",
- "ncurses 0.1.0",
+ "glibc",
+ "libacl",
+ "libselinux",
+ "libxcrypt",
+ "ncurses",
 ]
 
 [[package]]
 name = "wicked"
 version = "0.1.0"
 dependencies = [
- "glibc 0.1.0",
- "libdbus 0.1.0",
- "libiw 0.1.0",
- "libnl 0.1.0",
- "systemd 0.1.0",
+ "glibc",
+ "libdbus",
+ "libiw",
+ "libnl",
+ "systemd",
 ]
-
-[[package]]
-name = "os"
-version = "0.1.0"
-dependencies = [
- "glibc 0.1.0",
-]
-

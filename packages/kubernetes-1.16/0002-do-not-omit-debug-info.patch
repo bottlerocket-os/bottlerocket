@@ -1,0 +1,26 @@
+From 8a067b93f1d6dabf4fe0c0c9c94dbad6f078e10b Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Fri, 20 Sep 2019 00:33:47 +0000
+Subject: [PATCH 2/4] do not omit debug info
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ hack/lib/golang.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
+index 14c15994..1547bad5 100755
+--- a/hack/lib/golang.sh
++++ b/hack/lib/golang.sh
+@@ -790,7 +790,7 @@ kube::golang::build_binaries() {
+     # Disable SC2153 for this, as it will throw a warning that the local
+     # variable goldflags will exist, and it suggest changing it to this.
+     # shellcheck disable=SC2153
+-    goldflags="${GOLDFLAGS=-s -w} $(kube::version::ldflags)"
++    goldflags="${GOLDFLAGS:-} $(kube::version::ldflags)"
+     goasmflags="-trimpath=${KUBE_ROOT}"
+     gogcflags="${GOGCFLAGS:-} -trimpath=${KUBE_ROOT}"
+ 
+-- 
+2.21.0
+

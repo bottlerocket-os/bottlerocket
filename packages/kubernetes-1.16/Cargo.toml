@@ -1,0 +1,29 @@
+[package]
+# "." is not allowed in crate names, but we want a friendlier name for the
+# directory and spec file, so we override it below.
+name = "kubernetes-1_16"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-package]
+package-name = "kubernetes-1.16"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/kubernetes/kubernetes/archive/v1.16.9/kubernetes-1.16.9.tar.gz"
+sha512 = "08fffe855a433ad0cc7586afd12815adb3bcafcac86712181625198fedbfe170bc36ae31aca9783d30dd790c415d447f073234f621416a76a7e4e0de2eeb008d"
+
+# This is a large patch, so we don't want to check it into the repo.  It's like
+# https://github.com/kubernetes/kubernetes/commit/a94346bef9806a135ebcfda03672966c336c1c17
+# but applies to 1.16.9 without further context changes.
+[[package.metadata.build-package.external-files]]
+path = "aws-sdk-go-1.28.2.patch.bz2"
+url = "file:///aws-sdk-go-1.28.2.patch.bz2"
+sha512 = "221cc4a0e0c88ae96daadccb4ec3799f1a36c9df77f83f2cb6bb7fe7123880958e7cc12bb9bf91de9cfee5f17502e5873efbd492e9b2eaf5fed519f5614017fd"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
