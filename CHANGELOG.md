@@ -1,3 +1,11 @@
+# v0.3.3 (2020-05-14)
+
+## OS changes
+
+* Security: update kernel to 5.4.38 ([#924])
+
+[#924]: https://github.com/bottlerocket-os/bottlerocket/pull/924
+
 # v0.3.2 (2020-04-20)
 
 Special thanks to our first contributors, @inductor ([#853]), @smoser ([#871]), and @gliptak ([#870])!
