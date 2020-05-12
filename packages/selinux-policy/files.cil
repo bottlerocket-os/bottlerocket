@@ -89,7 +89,7 @@
 (classpermissionset relabel_fifo_file (
   fifo_file (relabelfrom relabelto)))
 (classpermissionset relabel_filesystem (
-  filesystem (associate relabelfrom relabelto transition)))
+  filesystem (associate relabelfrom relabelto)))
 (classpermissionset relabel_kernel_service (
   kernel_service (create_files_as)))
 
@@ -103,19 +103,19 @@
 (classpermission mount_fifo_file)
 (classpermission mount_filesystem)
 (classpermissionset mount_file (
-  file (mounton quotaon swapon)))
+  file (mounton quotaon)))
 (classpermissionset mount_dir (
-  dir (mounton quotaon swapon)))
+  dir (mounton quotaon)))
 (classpermissionset mount_lnk_file (
-  lnk_file (mounton quotaon swapon)))
+  lnk_file (mounton quotaon)))
 (classpermissionset mount_chr_file (
-  chr_file (mounton quotaon swapon)))
+  chr_file (mounton quotaon)))
 (classpermissionset mount_blk_file (
-  blk_file (mounton quotaon swapon)))
+  blk_file (mounton quotaon)))
 (classpermissionset mount_sock_file (
-  sock_file (mounton quotaon swapon)))
+  sock_file (mounton quotaon)))
 (classpermissionset mount_fifo_file (
-  fifo_file (mounton quotaon swapon)))
+  fifo_file (mounton quotaon)))
 (classpermissionset mount_filesystem (
   filesystem (mount quotamod remount unmount)))
 
@@ -216,36 +216,36 @@
   file (not (
     entrypoint execute_no_trans
     execute ioctl getattr map open read execmod
-    relabelfrom relabelto mounton quotaon swapon
+    relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
 (classpermissionset mutate_dir (
   dir (not (
     search
     execute ioctl getattr map open read execmod
-    relabelfrom relabelto mounton quotaon swapon
+    relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
 (classpermissionset mutate_lnk_file (
   lnk_file (not (
     execute ioctl getattr map open read execmod
-    relabelfrom relabelto mounton quotaon swapon
+    relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
 (classpermissionset mutate_chr_file (
   chr_file (not (
     execute ioctl getattr map open read execmod
-    relabelfrom relabelto mounton quotaon swapon
+    relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
 (classpermissionset mutate_blk_file (
   blk_file (not (
     execute ioctl getattr map open read execmod
-    relabelfrom relabelto mounton quotaon swapon
+    relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
 (classpermissionset mutate_sock_file (
   sock_file (not (
     execute ioctl getattr map open read execmod
-    relabelfrom relabelto mounton quotaon swapon
+    relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
 (classpermissionset mutate_fifo_file (
   fifo_file (not (
     execute ioctl getattr map open read execmod
-    relabelfrom relabelto mounton quotaon swapon
+    relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
