@@ -37,7 +37,7 @@ CFLAGS="${BUILDFLAGS}" CPPFLAGS="" CXXFLAGS="${BUILDFLAGS}" \
   --build="%{_build}" \
   --with-headers="%{_cross_includedir}" \
   --enable-bind-now \
-  --enable-kernel="4.19" \
+  --enable-kernel="5.4.0" \
   --enable-shared \
   --enable-stack-protector=strong \
   --enable-static-pie \
