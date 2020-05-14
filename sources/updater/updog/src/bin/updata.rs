@@ -8,6 +8,7 @@ mod error;
 extern crate log;
 
 use crate::error::Result;
+use chrono::{DateTime, Utc};
 use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
@@ -143,6 +144,19 @@ struct WaveArgs {
     // file that contains wave structure
     #[structopt(short = "w", long = "wave-file", conflicts_with_all = &["bound", "start"])]
     wave_file: Option<PathBuf>,
+
+    // The user can specify the starting point for the the wave offsets, if they don't want them to
+    // start when they run this tool.
+    //
+    // For example, let's say you have a wave with start_after "1 hour" and you run this tool at
+    // 2020-02-02 02:00.  If you don't specify --start-at, it will assume "now", and the wave will
+    // start 1 hour from then, i.e. 2020-02-02 03:00.
+    //
+    // If instead you specify --start-at "2020-02-02T10:00:00Z" then the first wave will start 1
+    // hour after that, i.e. 2020-02-02 11:00.
+    /// Wave offsets will be relative to this RFC3339 datetime, instead of right now
+    #[structopt(long = "start-at")]
+    start_at: Option<DateTime<Utc>>,
 }
 
 impl WaveArgs {
@@ -154,8 +168,15 @@ impl WaveArgs {
             fs::read_to_string(&wave_file).context(error::ConfigRead { path: &wave_file })?;
         let waves: UpdateWaves =
             toml::from_str(&wave_str).context(error::ConfigParse { path: &wave_file })?;
-        let num_matching =
-            manifest.set_waves(self.variant, self.arch, self.image_version, &waves)?;
+
+        let start_at = self.start_at.unwrap_or(Utc::now());
+        let num_matching = manifest.set_waves(
+            self.variant,
+            self.arch,
+            self.image_version,
+            start_at,
+            &waves,
+        )?;
 
         if num_matching > 1 {
             warn!("Multiple matching updates for wave - this is weird but not a disaster");
@@ -294,7 +315,7 @@ mod tests {
         let image_version = manifest.updates[0].version.clone();
 
         assert!(manifest
-            .set_waves(variant, arch, image_version, &waves)
+            .set_waves(variant, arch, image_version, Utc::now(), &waves)
             .is_ok());
 
         assert!(manifest.updates[0].waves.len() == 4)
