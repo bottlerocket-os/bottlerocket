@@ -46,9 +46,13 @@ pub enum Error {
     #[snafu(display("Migration {} matches regex but missing name", name))]
     BadRegexName { name: String },
 
-    #[snafu(display("Unable to parse datetime from string '{}': {}", datetime, source))]
-    BadDateTime {
-        datetime: String,
+    #[snafu(display(
+        "Unable to parse 'start_after' offset from string '{}': {}",
+        offset,
+        source
+    ))]
+    BadOffset {
+        offset: String,
         source: parse_datetime::Error,
     },
 

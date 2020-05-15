@@ -47,7 +47,7 @@ pub use error::Error;
 type Result<T> = std::result::Result<T, error::Error>;
 
 /// Parses a user-specified datetime, either in full RFC 3339 format, or a shorthand like "in 7
-/// days"
+/// days" that's taken as an offset from the time the function is run.
 pub fn parse_datetime(input: &str) -> Result<DateTime<Utc>> {
     // If the user gave an absolute date in a standard format, accept it.
     let try_dt: std::result::Result<DateTime<FixedOffset>, chrono::format::ParseError> =
@@ -57,6 +57,15 @@ pub fn parse_datetime(input: &str) -> Result<DateTime<Utc>> {
         return Ok(utc);
     }
 
+    let offset = parse_offset(input)?;
+
+    let now = Utc::now();
+    let then = now + offset;
+    Ok(then)
+}
+
+/// Parses a user-specified datetime offset in the form of a shorthand like "in 7 days".
+pub fn parse_offset(input: &str) -> Result<Duration> {
     // Otherwise, pull apart a request like "in 5 days" to get an exact datetime.
     let mut parts: Vec<&str> = input.split_whitespace().collect();
     ensure!(
@@ -95,9 +104,7 @@ pub fn parse_datetime(input: &str) -> Result<DateTime<Utc>> {
         }
     };
 
-    let now = Utc::now();
-    let then = now + duration;
-    Ok(then)
+    Ok(duration)
 }
 
 #[cfg(test)]
