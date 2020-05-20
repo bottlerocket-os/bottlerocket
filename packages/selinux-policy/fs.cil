@@ -42,6 +42,7 @@
 (filecon "/.*/usr/lib/systemd/systemd" file init_exec)
 (filecon "/.*/usr/bin/containerd.*" file runtime_exec)
 (filecon "/.*/usr/bin/docker.*" file runtime_exec)
+(filecon "/.*/usr/bin/host-ctr" file runtime_exec)
 (filecon "/.*/usr/sbin/runc" file runtime_exec)
 (filecon "/.*/usr/bin/apiserver" file api_exec)
 (filecon "/.*/usr/bin/early-boot-config" file api_exec)
