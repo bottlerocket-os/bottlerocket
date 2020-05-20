@@ -47,7 +47,7 @@ WORKDIR /home/builder
 
 USER builder
 ENV PACKAGE=${PACKAGE} ARCH=${ARCH}
-COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/* .
+COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/ .
 RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \
    && rm ${ARCH} shared rust cargo \
