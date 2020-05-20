@@ -2,7 +2,7 @@
 //! is moving forward to a new version or rolling back to a previous version.
 
 use semver::Version;
-use std::cmp::Ordering;
+use std::cmp::{Ord, Ordering};
 use std::fmt;
 
 /// Direction represents whether we're moving forward toward a newer version, or rolling back to
@@ -45,14 +45,20 @@ mod test {
         let v02 = Version::new(0, 0, 2);
         let v10 = Version::new(0, 1, 0);
 
-        assert_eq!(Direction::from_versions(&v01, &v02), Some(Direction::Forward));
+        assert_eq!(
+            Direction::from_versions(&v01, &v02),
+            Some(Direction::Forward)
+        );
         assert_eq!(
             Direction::from_versions(&v02, &v01),
             Some(Direction::Backward)
         );
         assert_eq!(Direction::from_versions(&v01, &v01), None);
 
-        assert_eq!(Direction::from_versions(&v02, &v10), Some(Direction::Forward));
+        assert_eq!(
+            Direction::from_versions(&v02, &v10),
+            Some(Direction::Forward)
+        );
         assert_eq!(
             Direction::from_versions(&v10, &v02),
             Some(Direction::Backward)

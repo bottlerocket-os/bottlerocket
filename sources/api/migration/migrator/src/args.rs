@@ -15,7 +15,9 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             --datastore-path PATH
-            --migration-directories PATH[:PATH:PATH...]
+            --migration-directory PATH
+            --root-path PATH
+            --metadata-directory PATH
             (--migrate-to-version x.y | --migrate-to-version-from-os-release)
             [ --no-color ]
             [ --log-level trace|debug|info|warn|error ]",
@@ -34,8 +36,10 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 pub(crate) struct Args {
     pub(crate) datastore_path: PathBuf,
     pub(crate) log_level: LevelFilter,
-    pub(crate) migration_directories: Vec<PathBuf>,
+    pub(crate) migration_directory: PathBuf,
     pub(crate) migrate_to_version: Version,
+    pub(crate) root_path: PathBuf,
+    pub(crate) metadata_directory: PathBuf,
 }
 
 impl Args {
@@ -44,8 +48,10 @@ impl Args {
         // Required parameters.
         let mut datastore_path = None;
         let mut log_level = None;
-        let mut migration_directories = None;
+        let mut migration_directory = None;
         let mut migrate_to_version = None;
+        let mut root_path = None;
+        let mut metadata_path = None;
 
         let mut iter = args.skip(1);
         while let Some(arg) = iter.next() {
@@ -84,16 +90,12 @@ impl Args {
                     }));
                 }
 
-                "--migration-directories" => {
-                    let paths_str = iter.next().unwrap_or_else(|| {
-                        usage_msg("Did not give argument to --migration-directories")
+                "--migration-directory" => {
+                    let path_str = iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --migration-directory")
                     });
-                    trace!("Given --migration-directories: {}", paths_str);
-                    let paths: Vec<_> = paths_str.split(':').map(PathBuf::from).collect();
-                    if paths.is_empty() {
-                        usage_msg("Found no paths in argument to --migration-directories");
-                    }
-                    migration_directories = Some(paths);
+                    trace!("Given --migration-directory: {}", path_str);
+                    migration_directory = Some(PathBuf::from(path_str));
                 }
 
                 "--migrate-to-version" => {
@@ -114,15 +116,40 @@ impl Args {
                     migrate_to_version = Some(br.version_id)
                 }
 
-                _ => usage(),
+                "--root-path" => {
+                    let path_str = iter
+                        .next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --root-path"));
+                    trace!("Given --root-path: {}", path_str);
+                    root_path = Some(PathBuf::from(path_str));
+                }
+
+                "--metadata-directory" => {
+                    let path_str = iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --metadata-directory")
+                    });
+                    trace!("Given --metadata-directory: {}", path_str);
+                    metadata_path = Some(PathBuf::from(path_str));
+                }
+                _ => usage_msg(format!("Unable to parse input '{}'", arg)),
             }
         }
 
         Self {
-            datastore_path: datastore_path.unwrap_or_else(|| usage()),
+            datastore_path: datastore_path
+                .unwrap_or_else(|| usage_msg("--datastore-path must be specified")),
             log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-            migration_directories: migration_directories.unwrap_or_else(|| usage()),
-            migrate_to_version: migrate_to_version.unwrap_or_else(|| usage()),
+            migration_directory: migration_directory
+                .unwrap_or_else(|| usage_msg("--migration-directory must be specified")),
+            migrate_to_version: migrate_to_version.unwrap_or_else(|| {
+                usage_msg(
+                    "Desired version could not be determined; pass --migrate-to-version or \
+                    --migrate-to-version-from-os-release",
+                )
+            }),
+            root_path: root_path.unwrap_or_else(|| usage_msg("--root-path must be specified")),
+            metadata_directory: metadata_path
+                .unwrap_or_else(|| usage_msg("--metadata-directory must be specified")),
         }
     }
 }

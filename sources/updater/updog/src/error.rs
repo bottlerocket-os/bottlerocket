@@ -31,8 +31,15 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to create metadata cache directory: {}", source))]
+    #[snafu(display("Failed to create metadata cache directory '{}': {}", path, source))]
     CreateMetadataCache {
+        path: &'static str,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to create a tempdir for tough datastore: {}", source))]
+    CreateTempDir {
         source: std::io::Error,
         backtrace: Backtrace,
     },
@@ -235,6 +242,9 @@ pub(crate) enum Error {
         source: std::io::Error,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Failed to store manifest and migrations: {}", source))]
+    RepoCacheMigrations { source: tough::error::Error },
 }
 
 impl std::convert::From<update_metadata::error::Error> for Error {

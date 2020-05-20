@@ -3,7 +3,7 @@ Description=Bottlerocket data store migrator
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/migrator --datastore-path /var/lib/bottlerocket/datastore/current --migration-directories /var/lib/bottlerocket-migrations --migrate-to-version-from-os-release
+ExecStart=/usr/bin/migrator --datastore-path /var/lib/bottlerocket/datastore/current --migration-directory /var/lib/bottlerocket-migrations --root-path /usr/share/updog/root.json --metadata-directory /var/cache/bottlerocket-metadata --migrate-to-version-from-os-release
 RemainAfterExit=true
 StandardError=journal+console
 

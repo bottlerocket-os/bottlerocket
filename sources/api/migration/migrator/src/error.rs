@@ -4,7 +4,7 @@ use semver::Version;
 use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
-use std::process::{Command, Output};
+use std::process::Output;
 
 /// Error contains the errors that can happen during migration.
 #[derive(Debug, Snafu)]
@@ -12,6 +12,9 @@ use std::process::{Command, Output};
 pub(crate) enum Error {
     #[snafu(display("Internal error: {}", msg))]
     Internal { msg: String },
+
+    #[snafu(display("Unable to create tempdir for tough datastore: '{}'", source))]
+    CreateToughTempDir { source: std::io::Error },
 
     #[snafu(display("Data store path '{}' contains invalid UTF-8", path.display()))]
     DataStorePathNotUTF8 { path: PathBuf },
@@ -21,6 +24,14 @@ pub(crate) enum Error {
 
     #[snafu(display("Data store link '{}' points to /", path.display()))]
     DataStoreLinkToRoot { path: PathBuf },
+
+    #[snafu(display("Unable to create URL from path '{}'", path.display()))]
+    DirectoryUrl { path: PathBuf },
+
+    #[snafu(display("Error finding migration: {}", source))]
+    FindMigrations {
+        source: update_metadata::error::Error,
+    },
 
     #[snafu(display("Data store path '{}' contains invalid version: {}", path.display(), source))]
     InvalidDataStoreVersion {
@@ -37,8 +48,11 @@ pub(crate) enum Error {
     #[snafu(display("Data store for new version {} already exists at {}", version, path.display()))]
     NewVersionAlreadyExists { version: Version, path: PathBuf },
 
-    #[snafu(display("Unable to start migration command {:?} - {}", command, source))]
-    StartMigration { command: Command, source: io::Error },
+    #[snafu(display("Unable to seal migration command: {}", source))]
+    SealMigration { source: std::io::Error },
+
+    #[snafu(display("Unable to start migration command: {}", source))]
+    StartMigration { source: std::io::Error },
 
     #[snafu(display("Migration returned '{}' - stderr: {}",
                     output.status.code()
@@ -59,8 +73,37 @@ pub(crate) enum Error {
     #[snafu(display("Failed listing migration directory '{}': {}", dir.display(), source))]
     ListMigrations { dir: PathBuf, source: io::Error },
 
+    #[snafu(display("Error loading manifest: {}", source))]
+    LoadManifest {
+        source: update_metadata::error::Error,
+    },
+
+    #[snafu(display("Error loading migration '{}': {}", migration, source))]
+    LoadMigration {
+        migration: String,
+        source: tough::error::Error,
+    },
+
+    #[snafu(display("Failed to decode LZ4-compressed migration {}: {}", migration, source))]
+    Lz4Decode {
+        migration: String,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Migration '{}' not found", migration))]
+    MigrationNotFound { migration: String },
+
+    #[snafu(display("Failed to open trusted root metadata file {}: {}", path.display(), source))]
+    OpenRoot {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
     #[snafu(display("Failed reading migration directory entry: {}", source))]
     ReadMigrationEntry { source: io::Error },
+
+    #[snafu(display("Failed to load TUF repo: {}", source))]
+    RepoLoad { source: tough::error::Error },
 
     #[snafu(display("Failed reading metadata of '{}': {}", path.display(), source))]
     PathMetadata { path: PathBuf, source: io::Error },
@@ -70,9 +113,6 @@ pub(crate) enum Error {
 
     #[snafu(display("Migration path '{}' contains invalid UTF-8", path.display()))]
     MigrationNameNotUTF8 { path: PathBuf },
-
-    #[snafu(display("Logger setup error: {}", source))]
-    Logger { source: simplelog::TermLogError },
 }
 
 /// Result alias containing our Error type.
