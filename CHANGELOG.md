@@ -1,3 +1,26 @@
+# v0.3.4 (2020-05-27)
+
+## OS changes
+
+* Add a new Kubernetes 1.16 variant ([#919])
+* Use SELinux to restrict datastore modifications ([#917])
+* Add variant override to updog arguments ([#923])
+
+## Build changes
+
+* Update systemd to v245 ([#916])
+* Update build SDK to v0.11.0 ([#926])
+* Allow specifying a start time for waves in updata ([#927])
+* Update `tough` dependencies to v0.5.0 ([#928])
+
+[#916]: https://github.com/bottlerocket-os/bottlerocket/pull/916
+[#917]: https://github.com/bottlerocket-os/bottlerocket/pull/917
+[#919]: https://github.com/bottlerocket-os/bottlerocket/pull/919
+[#923]: https://github.com/bottlerocket-os/bottlerocket/pull/923
+[#926]: https://github.com/bottlerocket-os/bottlerocket/pull/926
+[#927]: https://github.com/bottlerocket-os/bottlerocket/pull/927
+[#928]: https://github.com/bottlerocket-os/bottlerocket/pull/928
+
 # v0.3.3 (2020-05-14)
 
 ## OS changes
