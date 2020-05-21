@@ -118,7 +118,7 @@ Required:
    --ssh-keypair              The SSH keypair name that's registered with EC2, to connect to worker instance
    --instance-type            Instance type launched for worker instance
    --name                     The name under which to register the AMI
-   --arch                     The machine architecture of the AMI, e.g. x86_64
+   --arch                     The machine architecture of the AMI, e.g. x86_64, arm64
 
 Optional:
    --description              The description attached to the registered AMI (defaults to name)
@@ -186,6 +186,20 @@ parse_args() {
    required_arg "--instance-type" "${INSTANCE_TYPE}"
    required_arg "--name" "${NAME}"
    required_arg "--arch" "${ARCH}"
+
+   # Validate and canonicalize architecture identifier.
+   case "${ARCH,,}" in
+      arm64|aarch64)
+         ARCH=arm64
+         ;;
+      x86_64|amd64)
+         ARCH=x86_64
+         ;;
+      *)
+         echo "ERROR: Unsupported EC2 machine architecture: $ARCH" >&2
+         usage
+         exit 2
+   esac
 
    # Other argument checks
    if [ ! -r "${ROOT_IMAGE}" ] ; then
