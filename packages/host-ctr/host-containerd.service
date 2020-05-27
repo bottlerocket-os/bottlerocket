@@ -6,6 +6,7 @@ Wants=network-online.target configured.target
 
 [Service]
 ExecStart=/usr/bin/containerd --config /etc/host-containerd/config.toml
+Type=notify
 Delegate=yes
 KillMode=process
 TimeoutSec=0
