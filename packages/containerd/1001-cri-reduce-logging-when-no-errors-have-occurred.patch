@@ -1,7 +1,7 @@
-From dd750a2271b64758c5c2240b6ed9586dd79ccb7a Mon Sep 17 00:00:00 2001
+From 620046d6f883433ef1d030ea9c428acbd1e71035 Mon Sep 17 00:00:00 2001
 From: Matt Briggs <brigmatt@amazon.com>
 Date: Wed, 1 Apr 2020 16:55:04 -0700
-Subject: [PATCH] reduce logging when no errors have occurred
+Subject: [PATCH] cri: reduce logging when no errors have occurred
 
 ---
  .../containerd/cri/pkg/server/container_execsync.go           | 3 ++-
@@ -10,7 +10,7 @@ Subject: [PATCH] reduce logging when no errors have occurred
  3 files changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/vendor/github.com/containerd/cri/pkg/server/container_execsync.go b/vendor/github.com/containerd/cri/pkg/server/container_execsync.go
-index b46e6e56..36e64c03 100644
+index b46e6e5..36e64c0 100644
 --- a/vendor/github.com/containerd/cri/pkg/server/container_execsync.go
 +++ b/vendor/github.com/containerd/cri/pkg/server/container_execsync.go
 @@ -186,10 +186,11 @@ func (c *criService) execInContainer(ctx context.Context, id string, opts execOp
@@ -27,7 +27,7 @@ index b46e6e56..36e64c03 100644
  		log.G(ctx).Debugf("Stream pipe for exec process %q done", execID)
  		return &code, nil
 diff --git a/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go b/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go
-index 8a23c139..11e1f340 100644
+index 8a23c13..11e1f34 100644
 --- a/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go
 +++ b/vendor/github.com/containerd/cri/pkg/server/instrumented_service.go
 @@ -247,12 +247,12 @@ func (in *instrumentedService) ExecSync(ctx context.Context, r *runtime.ExecSync
@@ -46,7 +46,7 @@ index 8a23c139..11e1f340 100644
  				res.GetStdout(), res.GetStderr())
  		}
 diff --git a/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go b/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go
-index 3b2c36a9..4e868b63 100644
+index 3b2c36a..4e868b6 100644
 --- a/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go
 +++ b/vendor/github.com/containerd/cri/pkg/server/io/exec_io.go
 @@ -99,7 +99,7 @@ func (e *ExecIO) Attach(opts AttachOptions) <-chan struct{} {
@@ -59,5 +59,5 @@ index 3b2c36a9..4e868b63 100644
  
  	if opts.Stdout != nil {
 -- 
-2.21.1 (Apple Git-122.3)
+2.21.0
 
