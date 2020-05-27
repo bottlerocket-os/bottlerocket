@@ -16,6 +16,10 @@ Summary: CLI for running Open Containers
 License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
+
+# TODO: see if this can go upstream
+Patch0001: 0001-do-not-label-dev-mqueue.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
