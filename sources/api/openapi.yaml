@@ -314,3 +314,13 @@ paths:
                 $ref: "ConfigurationFiles"
         500:
           description: "Server error"
+
+  /actions/reboot:
+    post:
+      summary: "Reboot"
+      operationId: "reboot"
+      responses:
+        204:
+          description: "Reboot requested"
+        500:
+          description: "Server error"

@@ -3,6 +3,7 @@ use nix::unistd::Gid;
 use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
+use std::string::String;
 
 // We want server (router/handler) and controller errors together so it's easy to define response
 // error codes for all the high-level types of errors that could happen during a request.
@@ -115,6 +116,12 @@ pub enum Error {
 
     #[snafu(display("Unable to send input to config applier: {}", source))]
     ConfigApplierWrite { source: io::Error },
+
+    #[snafu(display("Unable to start shutdown: {}", source))]
+    Shutdown { source: io::Error },
+
+    #[snafu(display("Failed to reboot, exit code: {}, stderr: {}", exit_code, String::from_utf8_lossy(stderr)))]
+    Reboot { exit_code: i32, stderr: Vec<u8> },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
