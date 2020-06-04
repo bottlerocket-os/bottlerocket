@@ -1,0 +1,98 @@
+From b9b8e01729ea72e081c0488f21a6b7eff9836de9 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Wed, 29 Apr 2020 15:10:04 +0000
+Subject: [PATCH 2001/2002] selinux: add DefaultLabels helper
+
+This is very similar to the existing InitLabels helper function, but
+avoids allocating a new MCS label pair which would isolate containers
+in a pod from each other and break compatibility.
+
+In v1.4.0, containerd will have support for ensuring that containers
+in a pod end up sharing the MCS label pair, which should address the
+compatibility problem.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ .../selinux/go-selinux/label/label.go         |  6 +++
+ .../selinux/go-selinux/label/label_selinux.go | 48 +++++++++++++++++++
+ 2 files changed, 54 insertions(+)
+
+diff --git a/vendor/github.com/opencontainers/selinux/go-selinux/label/label.go b/vendor/github.com/opencontainers/selinux/go-selinux/label/label.go
+index e178568..194c797 100644
+--- a/vendor/github.com/opencontainers/selinux/go-selinux/label/label.go
++++ b/vendor/github.com/opencontainers/selinux/go-selinux/label/label.go
+@@ -2,6 +2,12 @@
+ 
+ package label
+ 
++// DefaultLabels returns the process and file labels that should be used on the
++// system if nothing more specific is requested.
++func DefaultLabels() (string, string, error) {
++	return "", "", nil
++}
++
+ // InitLabels returns the process label and file labels to be used within
+ // the container.  A list of options can be passed into this function to alter
+ // the labels.
+diff --git a/vendor/github.com/opencontainers/selinux/go-selinux/label/label_selinux.go b/vendor/github.com/opencontainers/selinux/go-selinux/label/label_selinux.go
+index 2730fcf..9170521 100644
+--- a/vendor/github.com/opencontainers/selinux/go-selinux/label/label_selinux.go
++++ b/vendor/github.com/opencontainers/selinux/go-selinux/label/label_selinux.go
+@@ -23,6 +23,54 @@ var validOptions = map[string]bool{
+ 
+ var ErrIncompatibleLabel = fmt.Errorf("Bad SELinux option z and Z can not be used together")
+ 
++// DefaultLabels returns the process and file labels that should be used on the
++// system if nothing more specific is requested.  The labels returned do not
++// need any subsequent cleanup.
++func DefaultLabels() (plabel string, mlabel string, err error) {
++	if !selinux.GetEnabled() {
++		return "", "", nil
++	}
++
++	// The labels we get back have an MCS pair, and we need to release it
++	// since the caller won't expect to handle it. The MCS pair is shared
++	// by both labels and we only need to release it once.
++	processLabelMcs, mountLabelMcs := selinux.ContainerLabels()
++	if processLabelMcs == "" {
++		return "", "", nil
++	}
++
++	defer func() {
++		if err != nil {
++			selinux.ReleaseLabel(processLabelMcs)
++		}
++	}()
++
++	// Turn the labels into structures for more convenient modification.
++	pcon, err := selinux.NewContext(processLabelMcs)
++	if err != nil {
++		return "", "", err
++	}
++
++	mcon, err := selinux.NewContext(mountLabelMcs)
++	if err != nil {
++		return "", "", err
++	}
++
++	// We've got what we need from the original labels, which is just the
++	// user, role, and type that are defined in the OS policy, so we can
++	// release the MCS pair now.
++	selinux.ReleaseLabel(processLabelMcs)
++
++	// Replace the level (which includes the MCS pair) with the default.
++	pcon["level"] = "s0"
++	mcon["level"] = "s0"
++
++	processLabel := pcon.Get()
++	mountLabel := mcon.Get()
++
++	return processLabel, mountLabel, nil
++}
++
+ // InitLabels returns the process label and file labels to be used within
+ // the container.  A list of options can be passed into this function to alter
+ // the labels.  The labels returned will include a random MCS String, that is
+-- 
+2.21.0
+

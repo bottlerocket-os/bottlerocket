@@ -54,9 +54,16 @@
 (typetransition trusted_s unlabeled_t file local_t)
 (typetransition trusted_s unlabeled_t dir local_t)
 
-; If a runtime process creates a directory for cached container layers
-; on local storage, it receives the "cache_t" label.
+; If a runtime process creates a directory for cached container archives
+; or snapshot layers on local storage, it receives the "cache_t" label.
+; ... containerd's pristine archives
 (typetransition runtime_t local_t dir "io.containerd.content.v1.content" cache_t)
+; ... containerd's metadata database
+(typetransition runtime_t local_t dir "io.containerd.metadata.v1.bolt" cache_t)
+; ... containerd's snapshot layers
+(typetransition runtime_t local_t dir "io.containerd.snapshotter.v1.overlayfs" cache_t)
+; ... docker's image layers
+(typetransition runtime_t local_t dir "overlay2" cache_t)
 
 ; All subjects are allowed to write to objects with their own label.
 ; This includes files like the ones under /proc/self.

@@ -16,6 +16,7 @@ import (
 	"github.com/awslabs/amazon-ecr-containerd-resolver/ecr"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log"
@@ -162,6 +163,8 @@ func _main() int {
 				Destination: "/.bottlerocket/host-containers/" + targetCtr,
 				Source:      "/local/host-containers/" + targetCtr,
 			}}),
+		// Mount the rootfs with an SELinux label that makes it writable
+		withMountLabel("system_u:object_r:local_t:s0"),
 		withSuperpowered(superpowered),
 	)
 
@@ -291,6 +294,15 @@ func deleteCtrIfExists(ctx context.Context, client *containerd.Client, targetCtr
 		log.G(ctx).WithField("ctr-id", targetCtr).Info("Deleted existing container")
 	}
 	return nil
+}
+
+func withMountLabel(label string) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
+		if s.Linux != nil {
+			s.Linux.MountLabel = label
+		}
+		return nil
+	}
 }
 
 // Add container options depending on whether it's `superpowered` or not
