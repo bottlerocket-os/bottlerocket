@@ -8,11 +8,32 @@ pub(crate) mod error;
 use error::Result;
 
 use duct::cmd;
+use nonzero_ext::nonzero;
 use rand::Rng;
 use sha2::{Digest, Sha512};
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use std::env;
+use std::num::NonZeroU16;
 use std::process::Output;
+
+/*
+There's a bug in BuildKit that can lead to a build failure during parallel
+`docker build` executions:
+   https://github.com/moby/buildkit/issues/1090
+
+Unfortunately we can't do much to control the concurrency here, and even when
+the bug is fixed there will be many older versions of Docker in the wild.
+
+The failure has an exit code of 1, which is too generic to be helpful. All we
+can do is check the output for the error's signature, and retry if we find it.
+*/
+static DOCKER_BUILD_FRONTEND_ERROR: &str = concat!(
+    r#"failed to solve with frontend dockerfile.v0: "#,
+    r#"failed to solve with frontend gateway.v0: "#,
+    r#"frontend grpc server closed unexpectedly"#
+);
+
+static DOCKER_BUILD_MAX_ATTEMPTS: NonZeroU16 = nonzero!(10u16);
 
 pub(crate) struct PackageBuilder;
 
@@ -134,35 +155,79 @@ fn build(target: &str, build_args: &str, tag: &str, output: &str) -> Result<()> 
     let rmi = args(format!("rmi --force {}", tag));
 
     // Clean up the stopped container if it exists.
-    let _ = docker(&rm);
+    let _ = docker(&rm, Retry::No);
 
     // Clean up the previous image if it exists.
-    let _ = docker(&rmi);
+    let _ = docker(&rmi, Retry::No);
 
     // Build the image, which builds the artifacts we want.
-    docker(&build)?;
+    // Work around a transient, known failure case with Docker.
+    docker(
+        &build,
+        Retry::Yes {
+            attempts: DOCKER_BUILD_MAX_ATTEMPTS,
+            messages: &[DOCKER_BUILD_FRONTEND_ERROR],
+        },
+    )?;
 
     // Create a stopped container so we can copy artifacts out.
-    docker(&create)?;
+    docker(&create, Retry::No)?;
 
     // Copy artifacts into our output directory.
-    docker(&cp)?;
+    docker(&cp, Retry::No)?;
 
     // Clean up our stopped container after copying artifacts out.
-    docker(&rm)?;
+    docker(&rm, Retry::No)?;
 
     // Clean up our image now that we're done.
-    docker(&rmi)?;
+    docker(&rmi, Retry::No)?;
 
     Ok(())
 }
 
 /// Run `docker` with the specified arguments.
-fn docker(args: &[String]) -> Result<Output> {
-    cmd("docker", args)
-        .stderr_to_stdout()
-        .run()
-        .context(error::CommandExecution)
+fn docker(args: &[String], retry: Retry) -> Result<Output> {
+    let mut max_attempts: u16 = 1;
+    let mut retry_messages: &[&str] = &[];
+    if let Retry::Yes { attempts, messages } = retry {
+        max_attempts = attempts.into();
+        retry_messages = messages;
+    }
+
+    let mut attempt = 1;
+    loop {
+        let output = cmd("docker", args)
+            .stderr_to_stdout()
+            .stdout_capture()
+            .unchecked()
+            .run()
+            .context(error::CommandStart)?;
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        println!("{}", &stdout);
+        if output.status.success() {
+            return Ok(output);
+        }
+
+        ensure!(
+            retry_messages.iter().any(|&m| stdout.contains(m)) && attempt < max_attempts,
+            error::DockerExecution {
+                args: &args.join(" ")
+            }
+        );
+
+        attempt += 1;
+    }
+}
+
+/// Allow the caller to configure retry behavior, since the command may fail
+/// for spurious reasons that should not be treated as an error.
+enum Retry<'a> {
+    No,
+    Yes {
+        attempts: NonZeroU16,
+        messages: &'a [&'a str],
+    },
 }
 
 /// Convert an argument string into a collection of positional arguments.

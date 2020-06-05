@@ -4,8 +4,11 @@ use std::path::PathBuf;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(super)")]
 pub(crate) enum Error {
-    #[snafu(display("Failed to execute command: {}", source))]
-    CommandExecution { source: std::io::Error },
+    #[snafu(display("Failed to start command: {}", source))]
+    CommandStart { source: std::io::Error },
+
+    #[snafu(display("Failed to execute command: 'docker {}'", args))]
+    DockerExecution { args: String },
 
     #[snafu(display("Failed to change directory to '{}': {}", path.display(), source))]
     DirectoryChange {

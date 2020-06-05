@@ -23,6 +23,7 @@ use snafu::ResultExt;
 use spec::SpecInfo;
 use std::env;
 use std::path::PathBuf;
+use std::process;
 
 mod error {
     use snafu::Snafu;
@@ -77,10 +78,20 @@ SUBCOMMANDS:
     build-package           Build RPMs from a spec file and sources.
     build-variant           Build filesystem and disk images from RPMs."
     );
-    std::process::exit(1)
+    process::exit(1)
 }
 
-fn main() -> Result<()> {
+// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
+// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
+// https://github.com/shepmaster/snafu/issues/110
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
+}
+
+fn run() -> Result<()> {
     let command_str = std::env::args().nth(1).unwrap_or_else(|| usage());
     let command = serde_plain::from_str::<Command>(&command_str).unwrap_or_else(|_| usage());
     match command {
