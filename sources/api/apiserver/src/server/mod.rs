@@ -21,6 +21,7 @@ use std::env;
 use std::fs::set_permissions;
 use std::fs::Permissions;
 use std::os::unix::fs::PermissionsExt;
+use std::os::unix::process::ExitStatusExt;
 use std::path::Path;
 use std::process::Command;
 use std::sync;
@@ -115,6 +116,7 @@ where
                 web::scope("/configuration-files")
                     .route("", web::get().to(get_configuration_files)),
             )
+            .service(web::scope("/actions").route("/reboot", web::post().to(reboot)))
     })
     .workers(threads)
     .bind_uds(socket_path.as_ref())
@@ -352,6 +354,27 @@ async fn get_configuration_files(
     Ok(ConfigurationFilesResponse(resp))
 }
 
+/// Reboots the machine
+async fn reboot() -> Result<HttpResponse> {
+    debug!("Rebooting now");
+    let output = Command::new("/sbin/shutdown")
+        .arg("-r")
+        .arg("now")
+        .output()
+        .context(error::Shutdown)?;
+    ensure!(
+        output.status.success(),
+        error::Reboot {
+            exit_code: match output.status.code() {
+                Some(code) => code,
+                None => output.status.signal().unwrap_or(1),
+            },
+            stderr: output.stderr
+        }
+    );
+    Ok(HttpResponse::NoContent().finish())
+}
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // Helpers for handler methods called by the router
@@ -408,6 +431,8 @@ impl ResponseError for error::Error {
             SetPermissions { .. } => HttpResponse::InternalServerError(),
             SetGroup { .. } => HttpResponse::InternalServerError(),
             ReleaseData { .. } => HttpResponse::InternalServerError(),
+            Shutdown { .. } => HttpResponse::InternalServerError(),
+            Reboot { .. } => HttpResponse::InternalServerError(),
         }
         // Include the error message in the response, and for all error types.  The Bottlerocket
         // API is only exposed locally, and only on the host filesystem and to authorized
