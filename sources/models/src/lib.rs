@@ -71,8 +71,8 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue,
-    SingleLineString, Url, ValidBase64,
+    FriendlyVersion, KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue,
+    KubernetesTaintValue, SingleLineString, Url, ValidBase64,
 };
 
 // Kubernetes related settings. The dynamic settings are retrieved from
@@ -93,13 +93,16 @@ struct KubernetesSettings {
     pod_infra_container_image: SingleLineString,
 }
 
-// Updog settings. Taken from userdata. The 'seed' setting is generated
+// Update settings. Taken from userdata. The 'seed' setting is generated
 // by the "Bork" settings generator at runtime.
 #[model]
 struct UpdatesSettings {
     metadata_base_url: Url,
     targets_base_url: Url,
     seed: u32,
+    // Version to update to when updating via the API.
+    version_lock: FriendlyVersion,
+    ignore_waves: bool,
 }
 
 #[model]
