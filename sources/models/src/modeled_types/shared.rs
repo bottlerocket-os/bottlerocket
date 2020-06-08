@@ -1,12 +1,14 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
+use super::error;
+use semver::Version;
 use serde::de::Error as _;
 use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
 use std::ops::Deref;
-use super::error;
+use std::str::FromStr;
 
 /// ValidBase64 can only be created by deserializing from valid base64 text.  It stores the
 /// original text, not the decoded form.  Its purpose is input validation, namely being used as a
@@ -247,6 +249,103 @@ mod test_url {
             "weird@",
         ] {
             Url::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// FriendlyVersion represents a version string that can optionally be prefixed with 'v'.
+/// It can also be set to 'latest' to represent the latest version. It stores the original string
+/// and makes it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct FriendlyVersion {
+    inner: String,
+}
+
+impl TryFrom<&str> for FriendlyVersion {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        if input == "latest" {
+            return Ok(FriendlyVersion {
+                inner: input.to_string(),
+            });
+        }
+        // If the string begins with a 'v', skip it before checking if it is valid semver.
+        let version = if input.starts_with('v') {
+            &input[1..]
+        } else {
+            input
+        };
+
+        if version.parse::<semver::Version>().is_ok() {
+            return Ok(FriendlyVersion {
+                inner: input.to_string(),
+            });
+        }
+        error::InvalidVersion { input }.fail()
+    }
+}
+
+impl TryFrom<FriendlyVersion> for semver::Version {
+    type Error = semver::SemVerError;
+
+    fn try_from(input: FriendlyVersion) -> Result<semver::Version, Self::Error> {
+        // If the string begins with a 'v', skip it before conversion
+        let version = if input.inner.starts_with('v') {
+            &input.inner[1..]
+        } else {
+            &input.inner
+        };
+        Version::from_str(version)
+    }
+}
+
+string_impls_for!(FriendlyVersion, "FriendlyVersion");
+
+#[cfg(test)]
+mod test_version {
+    use super::FriendlyVersion;
+    use semver::{SemVerError, Version};
+    use std::convert::TryFrom;
+    use std::convert::TryInto;
+
+    #[test]
+    fn good_version_strings() {
+        for ok in &[
+            "1.0.0",
+            "v1.0.0",
+            "1.0.1-alpha",
+            "v1.0.1-alpha",
+            "1.0.2-alpha+1.0",
+            "v1.0.2-alpha+1.0",
+            "1.0.3-beta.1.01",
+            "v1.0.3-beta.1.01",
+            "1.1.0-rc.1.1",
+            "v1.1.0-rc.1.1",
+            "latest",
+        ] {
+            FriendlyVersion::try_from(*ok).unwrap();
+            // Test conversion to semver::Version
+            if *ok != "latest" {
+                let _: Version = FriendlyVersion {
+                    inner: ok.to_string(),
+                }
+                .try_into()
+                .unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn bad_version_string() {
+        for err in &["hi", "1.0", "1", "v", "v1", "v1.0", "vv1.1.0"] {
+            FriendlyVersion::try_from(*err).unwrap_err();
+            let res: Result<Version, SemVerError> = Version::try_from(FriendlyVersion {
+                inner: err.to_string(),
+            });
+            res.unwrap_err();
         }
     }
 }
