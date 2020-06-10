@@ -327,6 +327,17 @@ We use it for the control container because it needs to be available early to gi
 
 Be careful, and make sure you have a similar low-level use case before reaching for host containers.
 
+#### Platform-specific settings
+
+Platform-specific settings are automatically set at boot time by [early-boot-config](sources/api/early-boot-config) based on metadata available on the running platform.
+They can be overridden for testing purposes in [the same way as other settings](#interacting-with-settings).
+
+##### AWS-specific settings
+
+AWS-specific settings are automatically set based on calls to the Instance MetaData Service (IMDS).
+
+* `settings.aws.region`: This is set to the AWS region in which the instance is running, for example `us-west-2`.
+
 ### Logs
 
 You can use `logdog` through the [admin container](#admin-container) to obtain an archive of log files from your Bottlerocket host.
