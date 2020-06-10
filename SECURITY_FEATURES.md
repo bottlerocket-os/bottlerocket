@@ -137,7 +137,5 @@ The policy in Bottlerocket has the following objectives:
 2) Block most components from modifying the container archives saved on disk.
 3) Stop containers from directly modifying the layers for other running containers.
 
-The policy is currently **incomplete**.
-Notably, all domains are marked as "permissive", which means that actions denied by the policy will be logged but not blocked.
-This is a temporary measure to allow us to evaluate compatibility with common use cases.
-Additional work is tracked in #764.
+The policy is currently aimed at hardening the OS against persistent threats.
+Future enhancements to the policy will focus on mitigating the impact of OS vulnerabilities, and protecting containers from other containers.
