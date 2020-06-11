@@ -55,6 +55,7 @@ Requires: %{_cross_os}host-containers
 Requires: %{_cross_os}settings-committer
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}thar-be-settings
+Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}migration
 Requires: %{_cross_os}updog
 Requires: %{_cross_os}logdog

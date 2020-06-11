@@ -28,6 +28,7 @@ Source110: mark-successful-boot.service
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
 Source201: host-containers-tmpfiles.conf
+Source202: thar-be-updates-tmpfiles.conf
 
 BuildRequires: %{_cross_os}glibc-devel
 
@@ -84,6 +85,12 @@ Summary: Dynamic setting generator for kubernetes
 Summary: Applies changed settings to a Bottlerocket system
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}thar-be-settings
+%{summary}.
+
+%package -n %{_cross_os}thar-be-updates
+Summary: Dispatches Bottlerocket update commands
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}thar-be-updates
 %{summary}.
 
 %package -n %{_cross_os}servicedog
@@ -160,6 +167,7 @@ mkdir bin
     -p pluto \
     -p bork \
     -p thar-be-settings \
+    -p thar-be-updates \
     -p servicedog \
     -p host-containers \
     -p storewolf \
@@ -186,7 +194,7 @@ install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
   early-boot-config netdog sundog schnauzer pluto bork \
-  thar-be-settings servicedog host-containers \
+  thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
   migrator \
   signpost updog logdog;
@@ -242,6 +250,7 @@ install -p -m 0644 \
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
+install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.conf
 
 %cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
     cargo --offline --locked %{_builddir}/sources/Cargo.toml
@@ -283,6 +292,10 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.co
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
 %{_cross_unitdir}/settings-applier.service
+
+%files -n %{_cross_os}thar-be-updates
+%{_cross_bindir}/thar-be-updates
+%{_cross_tmpfilesdir}/thar-be-updates.conf
 
 %files -n %{_cross_os}servicedog
 %{_cross_bindir}/servicedog

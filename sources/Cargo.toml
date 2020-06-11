@@ -12,6 +12,7 @@ members = [
     "api/host-containers",
     "api/storewolf",
     "api/thar-be-settings",
+    "api/thar-be-updates",
     "api/settings-committer",
     "api/migration/migrator",
     "api/migration/migration-helpers",
