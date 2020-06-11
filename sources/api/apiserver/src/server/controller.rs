@@ -14,7 +14,11 @@ use crate::datastore::{
     deserialize_scalar, Committed, DataStore, Key, KeyType, ScalarError, Value,
 };
 use crate::server::error::{self, Result};
+use actix_web::HttpResponse;
 use model::{ConfigurationFiles, Services, Settings};
+use num::FromPrimitive;
+use std::os::unix::process::ExitStatusExt;
+use thar_be_updates::error::TbuErrorStatus;
 
 /// List the open transactions from the data store.
 pub(crate) fn list_transactions<D>(datastore: &D) -> Result<HashSet<String>>
@@ -372,6 +376,31 @@ where
 
     // Leave config applier to run in the background; we can't wait for it
     Ok(())
+}
+
+/// Dispatches an update command via `thar-be-updates`
+pub(crate) fn dispatch_update_command(args: &[&str]) -> Result<HttpResponse> {
+    let status = Command::new("/usr/bin/thar-be-updates")
+        .args(args)
+        .status()
+        .context(error::UpdateDispatcher)?;
+    if status.success() {
+        return Ok(HttpResponse::NoContent().finish())
+    }
+    let exit_status = match status.code() {
+        Some(code) => code,
+        None => status.signal().unwrap_or(1),
+    };
+    let error_type = FromPrimitive::from_i32(exit_status);
+    let error = match error_type {
+        Some(TbuErrorStatus::UpdateLockHeld) => error::Error::UpdateLockHeld,
+        Some(TbuErrorStatus::DisallowCommand) => error::Error::DisallowCommand,
+        Some(TbuErrorStatus::UpdateDoesNotExist) => error::Error::UpdateDoesNotExist,
+        Some(TbuErrorStatus::NoStagedImage) => error::Error::NoStagedImage,
+        // other errors
+        _ => error::Error::UpdateError,
+    };
+    Err(error)
 }
 
 #[cfg(test)]
