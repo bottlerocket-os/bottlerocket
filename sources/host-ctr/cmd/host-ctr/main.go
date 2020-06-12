@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/awslabs/amazon-ecr-containerd-resolver/ecr"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -27,6 +26,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
+
+// Expecting to match ECR image names of the form:
+//
+// Example 1: 777777777777.dkr.ecr.us-west-2.amazonaws.com/my_image:latest
+// Example 2: 777777777777.dkr.ecr.cn-north-1.amazonaws.com.cn/my_image:latest
+var ecrRegex = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?.*`)
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -89,16 +94,20 @@ func _main() int {
 	}
 	defer client.Close()
 
-	// Check if the image is from ECR, if it is, convert the image name into a resolvable reference
+	// Parse the source ref if it looks like an ECR ref.
 	ref := source
-	match := ecrRegex.MatchString(source)
-	if match {
-		var err error
-		ref, err = ecrImageNameToRef(source)
+	isECRImage := ecrRegex.MatchString(ref)
+	if isECRImage {
+		ecrRef, err := ecr.ParseImageURI(ref)
 		if err != nil {
-			log.G(ctx).WithError(err).WithField("source", source).Error("Failed to build resolvable reference")
+			log.G(ctx).WithError(err).WithField("source", source).Error("Failed to parse ECR reference")
 			return 1
 		}
+		ref = ecrRef.Canonical()
+		log.G(ctx).
+			WithField("source", source).
+			WithField("ref", ref).
+			Debug("Parsed ECR reference from URI")
 	}
 
 	img, err := pullImage(ctx, ref, client)
@@ -107,20 +116,35 @@ func _main() int {
 		return 1
 	}
 
-	// If the image is from ECR, the image reference will be converted into the form of
-	// `"ecr.aws/" + the ARN of the image repository + label/digest`.
-	// We tag the image with its original image name so other services can discover this image by its original image reference.
-	// After the tag operation, this image should be addressable by both its original image reference and its ECR resolver resolvable reference.
-	if match {
-		// Include original tag on ECR image for other consumers.
+	// When the image is from ECR, the image reference will be converted from
+	// its ref format. This is of the form of `"ecr.aws/" + ECR repository ARN +
+	// label/digest`.
+	//
+	// See the resolver for details on this format -
+	// https://github.com/awslabs/amazon-ecr-containerd-resolver.
+	//
+	// If the image was pulled from ECR, add `source` ref pointing to the same
+	// image so other clients can locate it using both `source` and the parsed
+	// ECR ref.
+	if isECRImage {
+		// Add additional `source` tag on ECR image for other clients.
+		log.G(ctx).
+			WithField("ref", ref).
+			WithField("source", source).
+			Debug("Adding source tag on pulled image")
 		if err := tagImage(ctx, ref, source, client); err != nil {
-			log.G(ctx).WithError(err).WithField("source", source).Error("Failed to tag an image with original image name")
+			log.G(ctx).
+				WithError(err).
+				WithField("source", source).
+				WithField("ref", ref).
+				Error("Failed to add source tag on pulled image")
 			return 1
 		}
 	}
 
-	// If we're only pulling and unpacking the image, we're done here
+	// If we're only pulling and unpacking the image, we're done here.
 	if pullImageOnly {
+		log.G(ctx).Info("Not starting host container, pull-image-only mode specified")
 		return 0
 	}
 
@@ -342,11 +366,6 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 	)
 }
 
-// Expecting to match ECR image names of the form:
-// Example 1: 777777777777.dkr.ecr.us-west-2.amazonaws.com/my_image:latest
-// Example 2: 777777777777.dkr.ecr.cn-north-1.amazonaws.com.cn/my_image:latest
-var ecrRegex = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?.*`)
-
 // Pulls image from specified source
 func pullImage(ctx context.Context, source string, client *containerd.Client) (containerd.Image, error) {
 	// Pull the image
@@ -438,58 +457,4 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 		c.Resolver = resolver
 		return nil
 	}
-}
-
-// Transform an ECR image name into a reference resolvable by the Amazon ECR containerd Resolver
-// e.g. ecr.aws/arn:<partition>:ecr:<region>:<account>:repository/<name>:<tag>
-func ecrImageNameToRef(input string) (string, error) {
-	ref := "ecr.aws/"
-	partition := "aws"
-	if strings.HasPrefix(input, "https://") {
-		input = strings.TrimPrefix(input, "https://")
-	}
-	// Matching on account, region and TLD
-	err := errors.New("Invalid ECR image name")
-	matches := ecrRegex.FindStringSubmatch(input)
-	if len(matches) < 3 {
-		return "", err
-	}
-	tld := matches[3]
-	region := matches[2]
-	account := matches[1]
-	// If `.cn` TLD, partition should be "aws-cn"
-	// If US gov cloud regions, partition should be "aws-us-gov"
-	// If both of them match, the image source is invalid
-	isCnEndpoint := tld == ".cn"
-	isGovCloudEndpoint := (region == "us-gov-west-1" || region == "us-gov-east-1")
-	if isCnEndpoint && isGovCloudEndpoint {
-		return "", err
-	} else if isCnEndpoint {
-		partition = "aws-cn"
-	} else if isGovCloudEndpoint {
-		partition = "aws-us-gov"
-	}
-	// Separate out <name>:<tag> for checking validity
-	tokens := strings.Split(input, "/")
-	if len(tokens) < 2 {
-		return "", errors.New("No specified name and tag or digest")
-	}
-	fullImageId := tokens[len(tokens)-1]
-	matchDigest, _ := regexp.MatchString(`^[a-zA-Z0-9-_]+@sha256:[A-Fa-f0-9]{64}$`, fullImageId)
-	matchTag, _ := regexp.MatchString(`^[a-zA-Z0-9-_]+:[a-zA-Z0-9\.\-_]{1,128}$`, fullImageId)
-	if !matchDigest && !matchTag {
-		return "", errors.New("Malformed name and tag or digest")
-	}
-	// Need to include the full repository path and the imageID (e.g. /eks/image-name:tag)
-	tokens = strings.SplitN(input, "/", 2)
-	fullPath := tokens[len(tokens)-1]
-	// Build the ARN for the reference
-	ecrARN := &arn.ARN{
-		Partition: partition,
-		Service:   "ecr",
-		Region:    region,
-		AccountID: account,
-		Resource:  "repository/" + fullPath,
-	}
-	return ref + ecrARN.String(), nil
 }
