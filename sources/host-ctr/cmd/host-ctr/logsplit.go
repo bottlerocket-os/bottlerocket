@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// LogSplitHook directs matched levels to its configured output.
 type LogSplitHook struct {
 	output io.Writer
 	levels []logrus.Level

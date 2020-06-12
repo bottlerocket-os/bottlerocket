@@ -35,9 +35,13 @@ var ecrRegex = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr\.([a-z
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	// Dispatch logging output instead of writing all levels' messages to
+	// stderr.
 	log.L.Logger.SetOutput(ioutil.Discard)
-	log.L.Logger.AddHook(&LogSplitHook{os.Stdout, []logrus.Level{logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel}})
-	log.L.Logger.AddHook(&LogSplitHook{os.Stderr, []logrus.Level{logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel}})
+	log.L.Logger.AddHook(&LogSplitHook{os.Stdout, []logrus.Level{
+		logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel}})
+	log.L.Logger.AddHook(&LogSplitHook{os.Stderr, []logrus.Level{
+		logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel}})
 }
 
 func main() {
@@ -54,15 +58,26 @@ func _main() int {
 		superpowered     bool
 		pullImageOnly    bool
 	)
+
 	flag.StringVar(&targetCtr, "ctr-id", "", "The ID of the container to be started")
 	flag.StringVar(&source, "source", "", "The image to be pulled")
 	flag.BoolVar(&superpowered, "superpowered", false, "Specifies whether to launch the container in `superpowered` mode or not")
 	flag.BoolVar(&pullImageOnly, "pull-image-only", false, "Only pull and unpack the container image, do not start any container task")
 	flag.StringVar(&containerdSocket, "containerd-socket", "/run/host-containerd/containerd.sock", "Specifies the path to the containerd socket. Defaults to `/run/host-containerd/containerd.sock`")
 	flag.StringVar(&namespace, "namespace", "default", "Specifies the containerd namespace")
+
 	flag.Parse()
 
-	if source == "" || (targetCtr == "" && !pullImageOnly) {
+	// Image source must always be provided.
+	if source == "" {
+		log.L.Error("source image must be provided")
+		flag.Usage()
+		return 2
+	}
+
+	// Container ID must be provided unless the goal is to pull an image.
+	if targetCtr == "" && !pullImageOnly {
+		log.L.Error("container ID must be provided")
 		flag.Usage()
 		return 2
 	}
@@ -85,11 +100,14 @@ func _main() int {
 		}
 	}(ctx, cancel)
 
-	// Set up containerd client
-	// Use host containers' containerd socket
+	// Setup containerd client using provided socket.
 	client, err := containerd.New(containerdSocket, containerd.WithDefaultNamespace(namespace))
 	if err != nil {
-		log.G(ctx).WithError(err).WithFields(map[string]interface{}{"containerdSocket": containerdSocket, "namespace": namespace}).Error("Failed to connect to containerd")
+		log.G(ctx).
+			WithError(err).
+			WithField("socket", containerdSocket).
+			WithField("namespace", namespace).
+			Error("Failed to connect to containerd")
 		return 1
 	}
 	defer client.Close()
@@ -148,7 +166,8 @@ func _main() int {
 		return 0
 	}
 
-	// Clean up target container if it already exists before starting container task
+	// Clean up target container if it already exists before starting container
+	// task.
 	if err := deleteCtrIfExists(ctx, client, targetCtr); err != nil {
 		return 1
 	}
@@ -384,6 +403,7 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 			withDynamicResolver(ctx, source),
 			containerd.WithSchema1Conversion)
 		if err == nil {
+			log.G(ctx).WithField("img", img.Name()).Info("Pulled successfully")
 			break
 		}
 		if retryAttempts >= maxRetryAttempts {
@@ -404,11 +424,12 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 			return nil, errors.Wrap(err, "context ended while retrying")
 		}
 	}
-	log.G(ctx).WithField("img", img.Name()).Info("Pulled successfully")
+
 	log.G(ctx).WithField("img", img.Name()).Info("Unpacking...")
 	if err := img.Unpack(ctx, containerd.DefaultSnapshotter); err != nil {
 		return nil, errors.Wrap(err, "failed to unpack image")
 	}
+
 	return img, nil
 }
 
