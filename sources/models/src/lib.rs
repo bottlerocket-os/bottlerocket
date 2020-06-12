@@ -32,6 +32,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-k8s-1.17/mod.rs)
 * [Overridden defaults](src/aws-k8s-1.17/override-defaults.toml)
 
+## aws-ecs-1: Amazon ECS
+
+* [Model](src/aws-ecs-1/mod.rs)
+* [Overridden defaults](src/aws-ecs-1/override-defaults.toml)
+
 ## aws-dev: Development build
 
 * [Model](src/aws-dev/mod.rs)
@@ -97,6 +102,12 @@ struct KubernetesSettings {
     cluster_domain: DNSDomain,
     node_ip: Ipv4Addr,
     pod_infra_container_image: SingleLineString,
+}
+
+// ECS settings.
+#[model]
+struct ECSSettings {
+    cluster: String,
 }
 
 // Update settings. Taken from userdata. The 'seed' setting is generated
