@@ -45,6 +45,11 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.16, 1.17, and 1.18 clusters.
 
+### aws-ecs-1: Amazon ECS container instance
+
+The [aws-ecs-1](aws-ecs-1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
+container instance in AWS.
+
 ### aws-dev: Development build
 
 The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local development of the OS.

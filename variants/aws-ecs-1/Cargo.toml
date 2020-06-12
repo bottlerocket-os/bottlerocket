@@ -1,0 +1,20 @@
+[package]
+name = "aws-ecs-1"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-variant]
+included-packages = [
+# core
+    "release",
+# docker
+    "docker-cli",
+    "docker-engine",
+    "docker-init",
+    "docker-proxy",
+]
+
+[lib]
+path = "lib.rs"
