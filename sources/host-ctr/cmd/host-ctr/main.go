@@ -51,7 +51,7 @@ func main() {
 func _main() int {
 	// Parse command-line arguments
 	var (
-		targetCtr        string
+		containerID      string
 		source           string
 		containerdSocket string
 		namespace        string
@@ -59,7 +59,7 @@ func _main() int {
 		pullImageOnly    bool
 	)
 
-	flag.StringVar(&targetCtr, "ctr-id", "", "The ID of the container to be started")
+	flag.StringVar(&containerID, "ctr-id", "", "The ID of the container to be started")
 	flag.StringVar(&source, "source", "", "The image to be pulled")
 	flag.BoolVar(&superpowered, "superpowered", false, "Specifies whether to launch the container in `superpowered` mode or not")
 	flag.BoolVar(&pullImageOnly, "pull-image-only", false, "Only pull and unpack the container image, do not start any container task")
@@ -76,7 +76,7 @@ func _main() int {
 	}
 
 	// Container ID must be provided unless the goal is to pull an image.
-	if targetCtr == "" && !pullImageOnly {
+	if containerID == "" && !pullImageOnly {
 		log.L.Error("container ID must be provided")
 		flag.Usage()
 		return 2
@@ -168,7 +168,7 @@ func _main() int {
 
 	// Clean up target container if it already exists before starting container
 	// task.
-	if err := deleteCtrIfExists(ctx, client, targetCtr); err != nil {
+	if err := deleteCtrIfExists(ctx, client, containerID); err != nil {
 		return 1
 	}
 
@@ -203,8 +203,8 @@ func _main() int {
 			// Mount in the persistent storage location for this container
 			{
 				Options:     []string{"rbind", "rw"},
-				Destination: "/.bottlerocket/host-containers/" + targetCtr,
-				Source:      "/local/host-containers/" + targetCtr,
+				Destination: "/.bottlerocket/host-containers/" + containerID,
+				Source:      "/local/host-containers/" + containerID,
 			}}),
 		// Mount the rootfs with an SELinux label that makes it writable
 		withMountLabel("system_u:object_r:local_t:s0"),
@@ -214,9 +214,9 @@ func _main() int {
 	// Create and start the container via containerd
 	container, err := client.NewContainer(
 		ctx,
-		targetCtr,
+		containerID,
 		containerd.WithImage(img),
-		containerd.WithNewSnapshot(targetCtr+"-snapshot", img),
+		containerd.WithNewSnapshot(containerID+"-snapshot", img),
 		ctrOpts,
 	)
 	if err != nil {
