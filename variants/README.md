@@ -130,20 +130,6 @@ We use the same Rust code for all variants.
 
 ### Next Steps
 
-After the above files are in place, the variant must be added to the `variants` workspace.
-
-Open `variants/Cargo.toml` in your editor and update the `members` list.
-```
-[workspace]
-members = [
-    ...
-    "my-variant",
-    ...
-]
-```
-
-Next, run `cargo generate-lockfile` to refresh `Cargo.lock`.
-
 To build your variant, run the following command in the top-level Bottlerocket directory.
 ```
 cargo make -e BUILDSYS_VARIANT=my-variant
