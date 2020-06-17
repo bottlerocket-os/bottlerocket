@@ -10,6 +10,9 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
+    #[snafu(display("Failed to get convert between version types: {}", source))]
+    BadVersion { source: semver::SemVerError },
+
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
     ConfigParse {
         path: PathBuf,
