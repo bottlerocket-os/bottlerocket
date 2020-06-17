@@ -50,6 +50,7 @@ enum Command {
     Update,
     UpdateImage,
     UpdateApply,
+    UpdateRevert,
 }
 
 #[derive(Debug, Deserialize)]
@@ -97,6 +98,8 @@ SUBCOMMANDS:
 
     update-apply            Update boot flags (after having called update-image)
         [ -r | --reboot ]             Reboot after updating boot flags
+
+    update-revert           Revert actions done by 'update-apply'
 
 GLOBAL OPTIONS:
     [ -j | --json ]               JSON-formatted output
@@ -282,6 +285,13 @@ fn update_flags() -> Result<()> {
     gpt_state
         .upgrade_to_inactive()
         .context(error::InactivePartitionUpgrade)?;
+    gpt_state.write().context(error::PartitionTableWrite)?;
+    Ok(())
+}
+
+fn revert_update_flags() -> Result<()> {
+    let mut gpt_state = State::load().context(error::PartitionTableRead)?;
+    gpt_state.cancel_upgrade();
     gpt_state.write().context(error::PartitionTableWrite)?;
     Ok(())
 }
@@ -595,6 +605,9 @@ fn main_inner() -> Result<()> {
             if arguments.reboot {
                 initiate_reboot()?;
             }
+        }
+        Command::UpdateRevert => {
+            revert_update_flags()?;
         }
         Command::Prepare => {
             // TODO unimplemented
