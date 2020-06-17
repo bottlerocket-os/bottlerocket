@@ -28,6 +28,7 @@ structopt = "0.3"
 migrator = { path = "../../api/migration/migrator" }
 url = "2.1.0"
 signal-hook = "0.1.13"
+models = { path = "../../models" }
 
 [dev-dependencies]
 tempfile = "3.1.0"

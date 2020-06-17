@@ -8,12 +8,14 @@ use crate::error::Result;
 use crate::transport::{HttpQueryRepo, HttpQueryTransport};
 use bottlerocket_release::BottlerocketRelease;
 use chrono::{DateTime, Utc};
+use model::modeled_types::FriendlyVersion;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use signal_hook::{iterator::Signals, SIGTERM};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
+use std::convert::{TryFrom, TryInto};
 use std::fs::{self, File, OpenOptions, Permissions};
 use std::io;
 use std::os::unix::fs::PermissionsExt;
@@ -55,6 +57,8 @@ struct Config {
     metadata_base_url: String,
     targets_base_url: String,
     seed: u32,
+    version_lock: String,
+    ignore_waves: bool,
     // TODO API sourced configuration, eg.
     // blacklist: Option<Vec<Version>>,
     // mode: Option<{Automatic, Managed, Disabled}>
@@ -444,6 +448,31 @@ fn initiate_reboot() -> Result<()> {
     Ok(())
 }
 
+/// Returns the target version. `force_version` takes priority. If that's not specified, take it from the config.
+fn get_target_version(config: &Config, force_version: &Option<Version>) -> Result<Option<Version>> {
+    // If a version is specified on the command line, return it as the target version
+    if let Some(version) = force_version {
+        return Ok(Some(version.to_owned()));
+    }
+    // If no version is specified on the command line, get the target version from the config
+    // If the version is locked to 'latest', we return None for the target version to indicate that
+    else if config.version_lock == "latest" {
+        return Ok(None);
+    }
+    // Make sure the version string from the config is a valid version string that might be prefixed with 'v'
+    let version = FriendlyVersion::try_from(config.version_lock.as_str()).with_context(|| {
+        error::BadVersionConfig {
+            version_str: config.version_lock.to_owned(),
+        }
+    })?;
+    // Convert back to semver::Version
+    Ok(Some(version.try_into().with_context(|| {
+        error::BadVersion {
+            version_str: config.version_lock.to_owned(),
+        }
+    })?))
+}
+
 #[allow(clippy::too_many_lines)]
 fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
@@ -468,7 +497,8 @@ fn main_inner() -> Result<()> {
     let tough_datastore = TempDir::new().context(error::CreateTempDir)?;
     let repository = load_repository(&transport, &config, tough_datastore.path())?;
     let manifest = load_manifest(&repository)?;
-
+    let forced_version = get_target_version(&config, &arguments.force_version)?;
+    let ignore_waves = arguments.ignore_waves || config.ignore_waves;
     match command {
         Command::CheckUpdate | Command::Whats => {
             if arguments.all {
@@ -480,11 +510,11 @@ fn main_inner() -> Result<()> {
                 &manifest,
                 &current_release.version_id,
                 &variant,
-                arguments.force_version,
+                forced_version,
             )
             .context(error::UpdateNotAvailable)?;
 
-            if !arguments.ignore_waves {
+            if !ignore_waves {
                 ensure!(
                     update.update_ready(config.seed),
                     error::UpdateNotReady {
@@ -500,12 +530,12 @@ fn main_inner() -> Result<()> {
                 &manifest,
                 &current_release.version_id,
                 &variant,
-                arguments.force_version,
+                forced_version,
             ) {
-                if u.update_ready(config.seed) || arguments.ignore_waves {
+                if ignore_waves || u.update_ready(config.seed) {
                     eprintln!("Starting update to {}", u.version);
 
-                    if arguments.ignore_waves {
+                    if ignore_waves {
                         eprintln!("** Updating immediately **");
                     } else {
                         let jitter = match arguments.timestamp {
@@ -712,6 +742,8 @@ mod tests {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
             seed: 123,
+            version_lock: "latest".to_string(),
+            ignore_waves: false,
         };
         let version = Version::parse("1.18.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
@@ -731,6 +763,8 @@ mod tests {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
             seed: 1487,
+            version_lock: "latest".to_string(),
+            ignore_waves: false,
         };
 
         let version = Version::parse("0.1.3").unwrap();
@@ -756,6 +790,8 @@ mod tests {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
             seed: 123,
+            version_lock: "latest".to_string(),
+            ignore_waves: false,
         };
 
         let version = Version::parse("1.10.0").unwrap();
@@ -785,6 +821,8 @@ mod tests {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
             seed: 123,
+            version_lock: "latest".to_string(),
+            ignore_waves: false,
         };
 
         let version = Version::parse("1.10.0").unwrap();
@@ -921,6 +959,8 @@ mod tests {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
             seed: 512,
+            version_lock: "latest".to_string(),
+            ignore_waves: false,
         };
 
         // Two waves; the 0th wave, and the final wave which starts in one hour

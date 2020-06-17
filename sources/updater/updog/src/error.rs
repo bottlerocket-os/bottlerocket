@@ -10,6 +10,22 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
+    #[snafu(display(
+        "Failed to convert '{}' from FriendlyVersion to semver::Version: {}",
+        version_str,
+        source
+    ))]
+    BadVersion {
+        version_str: String,
+        source: semver::SemVerError,
+    },
+
+    #[snafu(display("Bad version string '{}' in config: {}", version_str, source))]
+    BadVersionConfig {
+        version_str: String,
+        source: model::modeled_types::error::Error,
+    },
+
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
     ConfigParse {
         path: PathBuf,
