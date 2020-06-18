@@ -57,13 +57,13 @@ RUN rpmdev-setuptree \
 
 USER root
 RUN --mount=target=/host \
-    ln -s /host/build/packages/*.rpm ./rpmbuild/RPMS \
+    ln -s /host/build/rpms/*.rpm ./rpmbuild/RPMS \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
         -x '*-debugsource-*.rpm' \
         --no-database \
-        /host/build/packages \
+        /host/build/rpms \
     && cp .rpmmacros /etc/rpm/macros \
     && dnf -y \
         --disablerepo '*' \
@@ -93,14 +93,14 @@ WORKDIR /root
 USER root
 RUN --mount=target=/host \
     mkdir -p /local/rpms /local/migrations ./rpmbuild/RPMS \
-    && ln -s /host/build/packages/*.rpm ./rpmbuild/RPMS \
-    && find /host/build/packages/ -maxdepth 1 -type f -name "bottlerocket-${ARCH}-migrations-*.rpm" -not -iname '*debuginfo*' -exec cp '{}' '/local/migrations/' ';' \
+    && ln -s /host/build/rpms/*.rpm ./rpmbuild/RPMS \
+    && find /host/build/rpms/ -maxdepth 1 -type f -name "bottlerocket-${ARCH}-migrations-*.rpm" -not -iname '*debuginfo*' -exec cp '{}' '/local/migrations/' ';' \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
         -x '*-debugsource-*.rpm' \
         --no-database \
-        /host/build/packages \
+        /host/build/rpms \
     && dnf -y \
         --disablerepo '*' \
         --repofrompath repo,./rpmbuild/RPMS \
