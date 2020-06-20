@@ -210,9 +210,9 @@ impl State {
     }
 
     /// Sets the inactive partition as a new upgrade partition, but **does not write to the disk**.
+    /// Ensures that the inactive partition is marked as valid beforehand
     ///
     /// * Sets the inactive partition's priority to 2 and the active partition's priority to 1.
-    /// * Sets the inactive partition's tries left to 1.
     /// * Sets the inactive partition as not successfully booted.
     /// * Returns an error if the partition has not been marked as potentially
     ///   valid or if it has already been marked for upgrade.
@@ -243,10 +243,12 @@ impl State {
 
     /// Reverts upgrade_to_inactive(), but **does not write to the disk**.
     ///
-    /// * Clears all bits of the inactive partition.
+    /// * Sets the inactive partition's priority to 0
     /// * Restores the active partition's priority to 2
     pub fn cancel_upgrade(&mut self) {
-        self.clear_inactive();
+        let mut inactive_flags = self.gptprio(self.inactive());
+        inactive_flags.set_priority(0);
+        self.set_gptprio(self.inactive(), inactive_flags);
 
         let mut active_flags = self.gptprio(self.active());
         active_flags.set_priority(2);
