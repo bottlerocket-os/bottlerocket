@@ -91,7 +91,7 @@ for ws in sources packages variants/* tools/buildsys ; do
   [ -d "${ws}" ] || continue
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
-chmod o+r -R ${CARGO_HOME}
+chmod -R o+r ${CARGO_HOME}
 '''
 ]
 
