@@ -147,13 +147,3 @@
 
 ; Untrusted processes cannot use systems-level management functions.
 (neverallow untrusted_s global (systems (manage)))
-
-; TODO: remove once we're confident that we aren't generating AVC
-; denials for the majority of workloads.
-(typepermissive kernel_t)
-(typepermissive init_t)
-(typepermissive system_t)
-(typepermissive api_t)
-(typepermissive runtime_t)
-(typepermissive container_t)
-(typepermissive super_t)
