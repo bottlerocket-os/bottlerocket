@@ -11,13 +11,18 @@ build = "build.rs"
 bottlerocket-release = { path = "../../../bottlerocket-release" }
 lazy_static = "1.2"
 log = "0.4"
+lz4 = "1.23.1"
 nix = "0.17"
+pentacle = "0.1.1"
 rand = { version = "0.7", default-features = false, features = ["std"] }
 regex = "1.1"
 semver = "0.9"
 simplelog = "0.7"
 snafu = "0.6"
+tempfile = "3.1.0"
+tough = "0.6.0"
 update_metadata = { path = "../../../updater/update_metadata" }
+url = "2.1.1"
 
 [build-dependencies]
 cargo-readme = "3.1"
