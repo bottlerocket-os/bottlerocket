@@ -1,3 +1,43 @@
+# v0.4.0 (2020-06-25)
+
+## Breaking changes
+
+* Remove all permissive types from the SELinux policy ([#945]). Actions that were not allowed by the SELinux policy now fail instead of only being logged.
+
+## OS changes
+
+* Use update repository metadata and signatures to run settings migrations ([#930])
+* Mount debugfs in superpowered host containers, such as the admin container, to support tools like `bcc` and `bpftrace` ([#934])
+* Protect container snapshot layers in SELinux policy ([#935])
+* Add `POST /actions/reboot` API path ([#936])
+* Update `tough` to v0.6.0 ([#944])
+* Fix behavior of `signpost cancel-upgrade` ([#950])
+* Update to kernel 5.4.46 ([#953])
+
+## Build changes
+
+* Canonicalize architecture names in amiize.sh ([#932])
+* Split build output directories by variant and architecture ([#948])
+* Move intermediate RPM output from `build/packages` to `build/rpms` ([#948])
+* Fix `chmod` usage for building on macOS ([#951])
+
+## Documentation changes
+
+* Document platform-specific settings in README.md ([#941])
+
+[#930]: https://github.com/bottlerocket-os/bottlerocket/pull/930
+[#932]: https://github.com/bottlerocket-os/bottlerocket/pull/932
+[#934]: https://github.com/bottlerocket-os/bottlerocket/pull/934
+[#935]: https://github.com/bottlerocket-os/bottlerocket/pull/935
+[#936]: https://github.com/bottlerocket-os/bottlerocket/pull/936
+[#941]: https://github.com/bottlerocket-os/bottlerocket/pull/941
+[#944]: https://github.com/bottlerocket-os/bottlerocket/pull/944
+[#945]: https://github.com/bottlerocket-os/bottlerocket/pull/945
+[#948]: https://github.com/bottlerocket-os/bottlerocket/pull/948
+[#950]: https://github.com/bottlerocket-os/bottlerocket/pull/950
+[#951]: https://github.com/bottlerocket-os/bottlerocket/pull/951
+[#953]: https://github.com/bottlerocket-os/bottlerocket/pull/953
+
 # v0.3.4 (2020-05-27)
 
 ## OS changes
