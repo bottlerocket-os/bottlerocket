@@ -4,6 +4,7 @@ members = [
     "api/apiclient",
     "api/bork",
     "api/early-boot-config",
+    "api/ecs-settings-applier",
     "api/netdog",
     "api/sundog",
     "api/schnauzer",
