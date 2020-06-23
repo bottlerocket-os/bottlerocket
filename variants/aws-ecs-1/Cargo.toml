@@ -16,7 +16,8 @@ included-packages = [
     "docker-proxy",
 
 # ecs
-    "ecs-agent"
+    "ecs-agent",
+    "ecs-settings-applier"
 ]
 
 [lib]
