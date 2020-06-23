@@ -78,8 +78,15 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to write manifest file {}: {}", path.display(), source))]
-    ManifestWrite {
+    #[snafu(display("Failed to read '{}': {}", path.display(), source))]
+    FileRead {
+        path: PathBuf,
+        source: std::io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Failed to write '{}': {}", path.display(), source))]
+    FileWrite {
         path: PathBuf,
         source: std::io::Error,
         backtrace: Backtrace,
@@ -89,6 +96,12 @@ pub enum Error {
     ManifestLoad {
         source: tough::error::Error,
         backtrace: Backtrace,
+    },
+
+    #[snafu(display("Invalid TOML in '{}': {}", path.display(), source))]
+    InvalidToml {
+        path: PathBuf,
+        source: toml::de::Error,
     },
 
     #[snafu(display(

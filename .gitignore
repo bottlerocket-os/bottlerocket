@@ -5,3 +5,5 @@
 /.cargo
 /.gomodcache
 /html
+/Infra.toml
+/*.pem

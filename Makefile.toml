@@ -10,8 +10,28 @@ BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*' || echo 00000000"] }
-BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' Release.toml"] }
+# For now, release config path can't be overridden with -e, because it's used
+# later in this section.  You have to edit the path here in Makefile.toml to
+# use a different Release.toml.
+BUILDSYS_RELEASE_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Release.toml"
+BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' ${BUILDSYS_RELEASE_CONFIG_PATH}"] }
+# This can be overridden with -e to build a different variant from the variants/ directory
 BUILDSYS_VARIANT = "aws-k8s-1.15"
+# Product name used for file and directory naming
+BUILDSYS_NAME = "bottlerocket"
+
+# These can be overridden with -e to change configuration for pubsys (`cargo
+# make repo`).  In addition, you can set RELEASE_START_TIME to determine when
+# update waves and repo metadata expiration times will start, instead of
+# starting now.  (This can be an RFC3339 date, or an offset like "in X
+# hours/days/weeks".)
+PUBLISH_EXPIRATION_POLICY_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/repo-expiration/2w-2w-1w.toml"
+PUBLISH_WAVE_POLICY_PATH = "${BUILDSYS_ROOT_DIR}/sources/updater/waves/default-waves.toml"
+PUBLISH_INFRA_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Infra.toml"
+# Default repo to read from PUBLISH_INFRA_CONFIG_PATH
+PUBLISH_REPO = "default"
+# Default signing key to use from PUBLISH_INFRA_CONFIG_PATH
+PUBLISH_KEY = "default"
 
 # Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
 # To use the upstream source as fallback, override this on the command line and set it to 'true'
@@ -42,6 +62,16 @@ CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
 
 # Depends on ${BUILDSYS_ARCH} and ${BUILDSYS_VARIANT}.
 BUILDSYS_OUTPUT_DIR = "${BUILDSYS_BUILD_DIR}/images/${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
+
+# Depends on a number of variables defined above, and each other.
+BUILDSYS_VERSION_FULL="${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
+# These names are used as prefixes for build and repo steps.
+BUILDSYS_NAME_VARIANT="${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
+BUILDSYS_NAME_VERSION="${BUILDSYS_NAME}-${BUILDSYS_VERSION_FULL}"
+BUILDSYS_NAME_FULL="${BUILDSYS_NAME_VARIANT}-${BUILDSYS_VERSION_FULL}"
+# Repo directories have subdirectories for variant/arch, so we only want version here.
+PUBLISH_REPO_BASE_DIR = "${BUILDSYS_BUILD_DIR}/repos"
+PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${BUILDSYS_NAME_VERSION}"
 
 [tasks.setup]
 script = [
@@ -87,9 +117,10 @@ fi
 
 [tasks.fetch-sources]
 dependencies = ["setup"]
+script_runner = "bash"
 script = [
 '''
-for ws in sources packages variants/* tools/buildsys ; do
+for ws in sources packages variants/* tools; do
   [ -d "${ws}" ] || continue
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
@@ -140,6 +171,13 @@ cargo install \
   --root tools \
   --force \
   --quiet
+
+cargo install \
+  ${CARGO_MAKE_CARGO_ARGS} \
+  --path tools/pubsys \
+  --root tools \
+  --force \
+  --quiet
 '''
 ]
 
@@ -181,6 +219,7 @@ script = [
 [ "${BUILDSYS_ALLOW_FAILED_LICENSE_CHECK}" = "true" ] && set +e
 (cd sources && cargo deny check --disable-fetch licenses)
 (cd tools/buildsys && cargo deny check --disable-fetch licenses)
+(cd tools/pubsys && cargo deny check --disable-fetch licenses)
 set -e
 '''
 ]
@@ -189,8 +228,7 @@ set -e
 dependencies = ["fetch"]
 script = [
 '''
-PREFIX="bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
-for link in ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}*; do
+for link in ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}*; do
   if [ -L "${link}" ]; then
     rm ${link}
   fi
@@ -202,21 +240,19 @@ done
 dependencies = ["build-variant"]
 script = [
 '''
-PREFIX="bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
-VERSIONED="${PREFIX}-${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
-ln -snf ../${VERSIONED}.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}.img.lz4
-ln -snf ../${VERSIONED}-data.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-data.img.lz4
-ln -snf ../${VERSIONED}-boot.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-boot.ext4.lz4
-ln -snf ../${VERSIONED}-root.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-root.ext4.lz4
-ln -snf ../${VERSIONED}-root.verity.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-root.verity.lz4
-ln -snf ../${VERSIONED}-migrations.tar \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${PREFIX}-migrations.tar
+ln -snf ../${BUILDSYS_NAME_FULL}.img.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}.img.lz4
+ln -snf ../${BUILDSYS_NAME_FULL}-data.img.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-data.img.lz4
+ln -snf ../${BUILDSYS_NAME_FULL}-boot.ext4.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-boot.ext4.lz4
+ln -snf ../${BUILDSYS_NAME_FULL}-root.ext4.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-root.ext4.lz4
+ln -snf ../${BUILDSYS_NAME_FULL}-root.verity.lz4 \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-root.verity.lz4
+ln -snf ../${BUILDSYS_NAME_FULL}-migrations.tar \
+  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-migrations.tar
 '''
 ]
 
@@ -231,17 +267,73 @@ dependencies = [
 [tasks.world]
 alias = "build"
 
-[tasks.clean]
+# Builds a local repository based on the 'latest' built targets.  Uses pubsys
+# to create a repo under /build/repos, named after the arch/variant/version,
+# containing subdirectories for the repo metadata and targets.
+[tasks.repo]
+dependencies = ["build"]
+script_runner = "bash"
 script = [
 '''
-for ws in sources packages variants/* tools/buildsys ; do
+set -e
+
+cleanup() {
+   [ -n "${MIGRATIONS_DIR}" ] && rm -rf "${MIGRATIONS_DIR}"
+}
+trap 'cleanup' EXIT
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+# TODO: only add migrations from Release.toml, not all
+MIGRATIONS_DIR="$(mktemp -d)"
+tar xpf "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-migrations.tar" -C "${MIGRATIONS_DIR}"
+ADD_MIGRATION_TARGETS=()
+for file in ${MIGRATIONS_DIR}/*; do
+   [ -e "${file}" ] || continue
+   ADD_MIGRATION_TARGETS+=("--copy-target ${file}")
+done
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   repo \
+   \
+   --repo "${PUBLISH_REPO}" \
+   --arch "${BUILDSYS_ARCH}" \
+   --version "${BUILDSYS_VERSION_IMAGE}" \
+   --variant "${BUILDSYS_VARIANT}" \
+   \
+   --boot-image "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-boot.ext4.lz4" \
+   --root-image "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.ext4.lz4" \
+   --hash-image "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.verity.lz4" \
+   ${ADD_MIGRATION_TARGETS[*]} \
+   \
+   --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
+   --release-config-path "${BUILDSYS_RELEASE_CONFIG_PATH}" \
+   --wave-policy-path "${PUBLISH_WAVE_POLICY_PATH}" \
+   \
+   ${RELEASE_START_TIME:+--release-start-time ${RELEASE_START_TIME}} \
+   \
+   --signing-key "${PUBLISH_KEY}" \
+   --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
+
+ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_BASE_DIR}/latest"
+'''
+]
+
+[tasks.clean]
+script_runner = "bash"
+script = [
+'''
+for ws in sources packages variants/* tools/{buildsys,pubsys}; do
   [ -d "${ws}" ] || continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
-rm -f ${BUILDSYS_TOOLS_DIR}/bin/buildsys
+rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
 for ext in tar lz4 img ; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
+rm -rf ${PUBLISH_REPO_BASE_DIR}
 rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
 rm -rf ${BUILDSYS_OUTPUT_DIR}/latest
 rm -rf html

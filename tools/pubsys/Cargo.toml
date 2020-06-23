@@ -1,0 +1,28 @@
+[package]
+name = "pubsys"
+version = "0.1.0"
+authors = ["Zac Mrowicki <mrowicki@amazon.com>", "Tom Kirchner <tjk@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+
+[dependencies]
+chrono = "0.4"
+clap = "2.33"
+lazy_static = "1.4"
+log = "0.4"
+parse-datetime = { path = "../../sources/parse-datetime" }
+# Need to bring in reqwest with a TLS feature so tough can support TLS repos.
+reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
+simplelog = "0.7"
+snafu = "0.6"
+semver = "0.9"
+serde = { version = "1.0", features = ["derive"]  }
+serde_json = "1.0"
+structopt = { version = "0.3", default-features = false  }
+toml = "0.5"
+tough = { version = "0.8", features = ["http"] }
+tough-ssm = "0.3"
+update_metadata = { path = "../../sources/updater/update_metadata/" }
+url = { version = "2.1.0", features = ["serde"] }
+tempfile = "3.1"
