@@ -538,7 +538,7 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             --data-store-base-path PATH
-            [ --version X.Y ]
+            [ --version X.Y.Z ]
             [ --log-level trace|debug|info|warn|error ]
 
         If --version is not given, the version will be pulled from /etc/os-release.

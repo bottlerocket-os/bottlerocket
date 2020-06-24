@@ -143,7 +143,7 @@ These commands create one in `/tmp`, but you can create it in a more permanent l
 From the `sources/api/storewolf` directory:
 
 ```
-cargo run -- --data-store-base-path /tmp/data-store --version 0.1
+cargo run -- --data-store-base-path /tmp/data-store --version 0.0.1
 ```
 
 Now you can start the API server.
