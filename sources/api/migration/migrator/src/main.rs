@@ -46,6 +46,8 @@ use update_metadata::{load_manifest, MIGRATION_FILENAME_RE};
 mod args;
 mod direction;
 mod error;
+#[cfg(test)]
+mod test;
 
 lazy_static! {
     /// This is the last version of Bottlerocket that supports *only* unsigned migrations.
@@ -131,7 +133,7 @@ where
     Version::parse(version_str).context(error::InvalidDataStoreVersion { path: &patch })
 }
 
-fn run(args: &Args) -> Result<()> {
+pub(crate) fn run(args: &Args) -> Result<()> {
     // Get the directory we're working in.
     let datastore_dir = args
         .datastore_path
@@ -782,7 +784,7 @@ where
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 #[cfg(test)]
-mod test {
+mod main_test {
     use super::*;
 
     #[test]

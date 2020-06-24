@@ -11,14 +11,12 @@ settings given in the defaults.toml file, unless they already exist.
 #[macro_use]
 extern crate log;
 
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::io;
-use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::str::FromStr;
 use std::{env, fs, process};
@@ -27,7 +25,6 @@ use toml::{map::Entry, Value};
 use apiserver::datastore::key::{Key, KeyType};
 use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
-use bottlerocket_release::BottlerocketRelease;
 use model::modeled_types::SingleLineString;
 
 // FIXME Get these from configuration in the future
@@ -50,13 +47,8 @@ mod error {
         #[snafu(display("Unable to clear pending transactions: {}", source))]
         DeletePending { source: io::Error },
 
-        #[snafu(display("Unable to create datastore at '{}': {}", path.display(), source))]
-        DatastoreCreation { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Unable to get OS version: {}", source))]
-        ReleaseVersion {
-            source: bottlerocket_release::Error,
-        },
+        #[snafu(display("Unable to create datastore: {}", source))]
+        DatastoreCreation { source: storewolf::error::Error },
 
         #[snafu(display("{} is not valid TOML: {}", file, source))]
         DefaultsFormatting {
@@ -107,9 +99,6 @@ mod error {
         #[snafu(display("Unable to write metadata to the datastore: {}", source))]
         WriteMetadata { source: datastore::Error },
 
-        #[snafu(display("Failed to create symlink at '{}': {}", path.display(), source))]
-        LinkCreate { path: PathBuf, source: io::Error },
-
         #[snafu(display("Data store link '{}' points to /", path.display()))]
         DataStoreLinkToRoot { path: PathBuf },
 
@@ -125,77 +114,9 @@ mod error {
 }
 
 use error::StorewolfError;
+use storewolf::create_new_datastore;
 
 type Result<T> = std::result::Result<T, StorewolfError>;
-
-/// Given a base path, create a brand new datastore with the appropriate
-/// symlink structure for the desired datastore version.
-///
-/// If `version` is given, uses it, otherwise pulls version from bottlerocket-release.
-///
-/// An example setup for theoretical version 1.5:
-///    /path/to/datastore/current
-///    -> /path/to/datastore/v1
-///    -> /path/to/datastore/v1.5
-///    -> /path/to/datastore/v1.5.2
-///    -> /path/to/datastore/v1.5.2_0123456789abcdef
-fn create_new_datastore<P: AsRef<Path>>(base_path: P, version: Option<Version>) -> Result<()> {
-    let version = match version {
-        Some(v) => v,
-        None => {
-            let br = BottlerocketRelease::new().context(error::ReleaseVersion)?;
-            br.version_id
-        },
-    };
-
-    // Create random string to append to the end of the new datastore path
-    let random_id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
-
-    // Build the various paths to which we'll symlink
-
-    // /path/to/datastore/v1
-    let major_version_filename = format!("v{}", version.major);
-    let major_version_path = base_path.as_ref().join(&major_version_filename);
-
-    // /path/to/datastore/v1.5
-    let minor_version_filename = format!("v{}.{}", version.major, version.minor);
-    let minor_version_path = base_path.as_ref().join(&minor_version_filename);
-
-    // /path/to/datastore/v1.5.2
-    let patch_version_filename = format!("v{}.{}.{}", version.major, version.minor, version.patch);
-    let patch_version_path = base_path.as_ref().join(&patch_version_filename);
-
-    // /path/to/datastore/v1.5_0123456789abcdef
-    let data_store_filename = format!("v{}.{}.{}_{}", version.major, version.minor, version.patch, random_id);
-    let data_store_path = base_path.as_ref().join(&data_store_filename);
-
-    // /path/to/datastore/current
-    let current_path = base_path.as_ref().join("current");
-
-    // Create the path to the datastore, i.e /path/to/datastore/v1.5_0123456789abcdef
-    fs::create_dir_all(&data_store_path).context(error::DatastoreCreation {
-        path: &base_path.as_ref(),
-    })?;
-
-    // Build our symlink chain (See example in docstring above)
-    // /path/to/datastore/v1.5.2 -> v1.5.2_0123456789abcdef
-    symlink(&data_store_filename, &patch_version_path).context(error::LinkCreate {
-        path: &patch_version_path,
-    })?;
-    // /path/to/datastore/v1.5 -> v1.5.2
-    symlink(&patch_version_filename, &minor_version_path).context(error::LinkCreate {
-        path: &minor_version_path,
-    })?;
-    // /path/to/datastore/v1 -> v1.5
-    symlink(&minor_version_filename, &major_version_path).context(error::LinkCreate {
-        path: &major_version_path,
-    })?;
-    // /path/to/datastore/current -> v1
-    symlink(&major_version_filename, &current_path).context(error::LinkCreate {
-        path: &current_path,
-    })?;
-    Ok(())
-}
 
 /// Convert the generic toml::Value representing metadata into a
 /// Vec<Metadata> that can be used to write the metadata to the datastore.
@@ -373,7 +294,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
             .context(error::QueryData)?;
     } else {
         info!("Creating datastore at: {}", &live_path.display());
-        create_new_datastore(&base_path, version)?;
+        create_new_datastore(&base_path, version).context(error::DatastoreCreation)?;
     }
 
     // Read and parse shared defaults

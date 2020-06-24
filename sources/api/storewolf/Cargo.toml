@@ -20,3 +20,11 @@ toml = "0.5"
 
 [build-dependencies]
 cargo-readme = "3.1"
+
+[[bin]]
+name = "storewolf"
+path = "src/main.rs"
+
+[lib]
+name = "storewolf"
+path = "src/lib.rs"
