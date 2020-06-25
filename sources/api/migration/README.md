@@ -156,7 +156,7 @@ If we're confident no user configuration has changed, or if the user wants to di
 Say we add a new open-source application, like rngd.
 We can add data regarding settings, services, and configuration-files of the application to our data model.
 
-In this case, we can use the existing helper `AddSettingMigration`.
+In this case, we can use the existing helper `AddSettingsMigration`.
 It doesn't need to do anything on upgrade, because the new key will be populated by its default value.
 On downgrade, it removes the setting, so that the old data store model doesn't see an unexpected key and reject the data.
 
@@ -164,7 +164,7 @@ On downgrade, it removes the setting, so that the old data store model doesn't s
 
 If we upgrade an important application, its available and required settings may change.
 This means we'd have to update the data model to include any new or changed settings, and we'd write migrations to transform data from the old settings to the new.
-This can likely be handled by existing helpers `AddSettingMigration`, `RemoveSettingMigration`, `ReplaceStringMigration`, and `ReplaceTemplateMigration`.
+This can likely be handled by existing helpers `AddSettingsMigration`, `RemoveSettingMigration`, `ReplaceStringMigration`, and `ReplaceTemplateMigration`.
 
 ### Data store implementation change
 
