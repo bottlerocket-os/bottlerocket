@@ -1,5 +1,4 @@
 {
-  "bridge": "none",
   "log-driver": "journald",
   "live-restore": true,
   "max-concurrent-downloads": 10,
