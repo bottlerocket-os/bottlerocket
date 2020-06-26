@@ -164,7 +164,7 @@ On downgrade, it removes the setting, so that the old data store model doesn't s
 
 If we upgrade an important application, its available and required settings may change.
 This means we'd have to update the data model to include any new or changed settings, and we'd write migrations to transform data from the old settings to the new.
-This can likely be handled by existing helpers `AddSettingsMigration`, `RemoveSettingMigration`, `ReplaceStringMigration`, and `ReplaceTemplateMigration`.
+This can likely be handled by existing helpers `AddSettingsMigration`, `RemoveSettingsMigration`, `ReplaceStringMigration`, and `ReplaceTemplateMigration`.
 
 ### Data store implementation change
 

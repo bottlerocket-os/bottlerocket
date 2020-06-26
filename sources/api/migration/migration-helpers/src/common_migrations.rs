@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 /// We use this migration when we add settings and want to make sure they're removed before we go
 /// back to old versions that don't understand them.
-pub struct AddSettingsMigration<'a> (pub &'a [&'static str]);
+pub struct AddSettingsMigration<'a>(pub &'a [&'static str]);
 
 impl Migration for AddSettingsMigration<'_> {
     /// New versions must either have a default for the settings or generate them; we don't need to
@@ -53,28 +53,50 @@ impl Migration for AddSettingMigration {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// We use this migration when we remove a setting from the model, so the new version doesn't see
-/// it and error.
-pub struct RemoveSettingMigration(pub &'static str);
+/// We use this migration when we remove settings from the model, so the new version doesn't see
+/// them and error.
+pub struct RemoveSettingsMigration<'a>(pub &'a [&'static str]);
 
-impl Migration for RemoveSettingMigration {
-    /// Newer versions don't know about the setting; we remove it so that new versions don't see
-    /// it and fail deserialization.  (The setting must be defaulted or generated in old versions,
+impl Migration for RemoveSettingsMigration<'_> {
+    /// Newer versions don't know about the settings; we remove them so that new versions don't see
+    /// them and fail deserialization.  (The settings must be defaulted or generated in old versions,
     /// and safe to remove.)
     fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
-        if let Some(data) = input.data.remove(self.0) {
-            println!("Removed {}, which was set to '{}'", self.0, data);
-        } else {
-            println!("Found no {} to remove", self.0);
+        for setting in self.0 {
+            if let Some(data) = input.data.remove(*setting) {
+                println!("Removed {}, which was set to '{}'", setting, data);
+            } else {
+                println!("Found no {} to remove", setting);
+            }
         }
         Ok(input)
     }
 
-    /// Old versions must either have a default for the setting or generate it; we don't need to
+    /// Old versions must either have a default for the settings or generate it; we don't need to
     /// do anything.
     fn backward(&mut self, input: MigrationData) -> Result<MigrationData> {
-        println!("RemoveSettingMigration({}) has no work to do on downgrade.", self.0);
+        println!(
+            "RemoveSettingsMigration({:?}) has no work to do on downgrade.",
+            self.0
+        );
         Ok(input)
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// Similar to the above, this migration is for when we need to remove a single setting.
+/// We are retaining this migration helper in case there are migrations already using it.
+#[deprecated(note = "Please use `RemoveSettingsMigration` instead")]
+pub struct RemoveSettingMigration(pub &'static str);
+
+impl Migration for RemoveSettingMigration {
+    fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        RemoveSettingsMigration(&[self.0]).forward(input)
+    }
+
+    fn backward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        RemoveSettingsMigration(&[self.0]).backward(input)
     }
 }
 
