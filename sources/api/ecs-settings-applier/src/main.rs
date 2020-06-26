@@ -1,13 +1,11 @@
 use log::debug;
-use std::{process};
+use std::{env, process};
 use std::fs;
 use std::path::{Path};
 use serde::{Serialize};
 use snafu::{ResultExt};
 
-// FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
 
 
@@ -29,9 +27,11 @@ fn main() {
 }
 
 fn run() -> Result<()> {
+    let args = parse_args(env::args());
+
     // Get all settings values for config file templates
     debug!("Requesting settings values");
-    let settings = schnauzer::get_settings(&DEFAULT_API_SOCKET).context(error::Settings)?;
+    let settings = schnauzer::get_settings(&args.socket_path).context(error::Settings)?;
 
     debug!("settings = {:#?}", settings.settings);
     let config = ECSConfig{ cluster: settings.settings.and_then(|s| s.ecs).and_then(|s| s.cluster)};
@@ -49,6 +49,49 @@ fn write_to_disk<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::i
     };
 
     fs::write(path, contents)
+}
+
+// Stores user-supplied arguments.
+struct Args {
+    socket_path: String
+}
+
+fn parse_args(args: env::Args) -> Args {
+    let mut socket_path = None;
+    let mut iter = args.skip(1);
+    while let Some(arg) = iter.next() {
+        match arg.as_ref() {
+            "--socket-path" => {
+                socket_path = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
+                )
+            }
+            _ => usage(),
+        }
+    }
+    Args {
+        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+    }
+}
+
+// Prints a more specific message before exiting through usage().
+fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
+    eprintln!("{}\n", msg.as_ref());
+    usage();
+}
+
+// Informs the user about proper usage of the program and exits.
+fn usage() -> ! {
+    let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
+    eprintln!(
+        r"Usage: {}
+            [ (-s | --socket-path) PATH ]
+
+    Socket path defaults to {}",
+        program_name, DEFAULT_API_SOCKET
+    );
+    process::exit(2);
 }
 
 type Result<T> = std::result::Result<T, error::Error>;
