@@ -13,7 +13,7 @@ Remote access should only be allowed through an authenticated control channel su
 ## API
 
 We present an HTTP interface to configurable settings and other state.
-The interface is documented in [OpenAPI format](https://swagger.io/docs/specification/about/) in [openapi.yaml](openapi.yaml).
+The interface is documented in [OpenAPI format](https://swagger.io/docs/specification/about/) in [openapi.yaml](../openapi.yaml).
 
 The Settings APIs are particularly important.
 You can GET settings from the `/settings` endpoint.
