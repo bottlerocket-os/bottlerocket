@@ -11,20 +11,22 @@ use actix_web::{
 };
 use bottlerocket_release::BottlerocketRelease;
 use error::Result;
+use fs2::FileExt;
 use futures::future;
+use http::StatusCode;
 use log::info;
 use model::{ConfigurationFiles, Model, Services, Settings};
 use nix::unistd::{chown, Gid};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::env;
-use std::fs::set_permissions;
-use std::fs::Permissions;
+use std::fs::{set_permissions, File, Permissions};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::process::ExitStatusExt;
 use std::path::Path;
 use std::process::Command;
 use std::sync;
+use thar_be_updates::status::{UpdateStatus, UPDATE_LOCKFILE};
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -101,10 +103,7 @@ where
                         web::post().to(commit_transaction_and_apply),
                     ),
             )
-            .service(
-                web::scope("/os")
-                    .route("", web::get().to(get_os_info))
-            )
+            .service(web::scope("/os").route("", web::get().to(get_os_info)))
             .service(
                 web::scope("/metadata")
                     .route("/affected-services", web::get().to(get_affected_services))
@@ -116,7 +115,15 @@ where
                 web::scope("/configuration-files")
                     .route("", web::get().to(get_configuration_files)),
             )
-            .service(web::scope("/actions").route("/reboot", web::post().to(reboot)))
+            .service(
+                web::scope("/actions")
+                    .route("/reboot", web::post().to(reboot))
+                    .route("/refresh-updates", web::post().to(refresh_updates))
+                    .route("/prepare-update", web::post().to(prepare_update))
+                    .route("/activate-update", web::post().to(activate_update))
+                    .route("/deactivate-update", web::post().to(deactivate_update)),
+            )
+            .service(web::scope("/updates").route("/status", web::get().to(get_update_status)))
     })
     .workers(threads)
     .bind_uds(socket_path.as_ref())
@@ -354,6 +361,42 @@ async fn get_configuration_files(
     Ok(ConfigurationFilesResponse(resp))
 }
 
+/// Get the update status from 'thar-be-updates'
+async fn get_update_status() -> Result<UpdateStatusResponse> {
+    let lockfile = File::create(UPDATE_LOCKFILE).context(error::UpdateLockOpen)?;
+    lockfile.try_lock_shared().context(error::UpdateShareLock)?;
+    let result = thar_be_updates::status::get_update_status(&lockfile);
+    match result {
+        Ok(update_status) => Ok(UpdateStatusResponse(update_status)),
+        Err(e) => match e {
+            thar_be_updates::error::Error::NoStatusFile { .. } => {
+                error::UninitializedUpdateStatus.fail()
+            }
+            _ => error::UpdateError.fail(),
+        },
+    }
+}
+
+/// Refreshes the list of updates and checks if an update is available matching the configured version lock
+async fn refresh_updates() -> Result<HttpResponse> {
+    controller::dispatch_update_command(&["refresh"])
+}
+
+/// Prepares update by downloading the images to the staging partition set
+async fn prepare_update() -> Result<HttpResponse> {
+    controller::dispatch_update_command(&["prepare"])
+}
+
+/// "Activates" an already staged update by bumping the priority bits on the staging partition set
+async fn activate_update() -> Result<HttpResponse> {
+    controller::dispatch_update_command(&["activate"])
+}
+
+/// "Deactivates" an already activated update by rolling back actions done by 'activate-update'
+async fn deactivate_update() -> Result<HttpResponse> {
+    controller::dispatch_update_command(&["deactivate"])
+}
+
 /// Reboots the machine
 async fn reboot() -> Result<HttpResponse> {
     debug!("Rebooting now");
@@ -408,9 +451,19 @@ impl ResponseError for error::Error {
             // 404 Not Found
             MissingData { .. } => HttpResponse::NotFound(),
             ListKeys { .. } => HttpResponse::NotFound(),
+            UpdateDoesNotExist { .. } => HttpResponse::NotFound(),
+            NoStagedImage { .. } => HttpResponse::NotFound(),
+            UninitializedUpdateStatus { .. } => HttpResponse::NotFound(),
 
             // 422 Unprocessable Entity
             CommitWithNoPending => HttpResponse::UnprocessableEntity(),
+
+            // 423 Locked
+            UpdateShareLock { .. } => HttpResponse::build(StatusCode::LOCKED),
+            UpdateLockHeld { .. } => HttpResponse::build(StatusCode::LOCKED),
+
+            // 409 Conflict
+            DisallowCommand { .. } => HttpResponse::Conflict(),
 
             // 500 Internal Server Error
             DataStoreLock => HttpResponse::InternalServerError(),
@@ -433,6 +486,11 @@ impl ResponseError for error::Error {
             ReleaseData { .. } => HttpResponse::InternalServerError(),
             Shutdown { .. } => HttpResponse::InternalServerError(),
             Reboot { .. } => HttpResponse::InternalServerError(),
+            UpdateDispatcher { .. } => HttpResponse::InternalServerError(),
+            UpdateError { .. } => HttpResponse::InternalServerError(),
+            UpdateStatusParse { .. } => HttpResponse::InternalServerError(),
+            UpdateInfoParse { .. } => HttpResponse::InternalServerError(),
+            UpdateLockOpen { .. } => HttpResponse::InternalServerError(),
         }
         // Include the error message in the response, and for all error types.  The Bottlerocket
         // API is only exposed locally, and only on the host filesystem and to authorized
@@ -488,6 +546,10 @@ impl_responder_for!(MetadataResponse, self, self.0);
 /// This lets us respond from our handler methods with a Services (or Result<Services>)
 struct ServicesResponse(Services);
 impl_responder_for!(ServicesResponse, self, self.0);
+
+/// This lets us respond from our handler methods with a UpdateStatus (or Result<UpdateStatus>)
+struct UpdateStatusResponse(UpdateStatus);
+impl_responder_for!(UpdateStatusResponse, self, self.0);
 
 /// This lets us respond from our handler methods with a ConfigurationFiles (or
 /// Result<ConfigurationFiles>)

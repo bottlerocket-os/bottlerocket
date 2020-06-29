@@ -149,11 +149,11 @@ impl State {
         self.table[self.boot_partition_nums[select.idx()]].attribute_bits = flags.into();
     }
 
-    pub(crate) fn active(&self) -> SetSelect {
+    pub fn active(&self) -> SetSelect {
         self.active
     }
 
-    pub(crate) fn inactive(&self) -> SetSelect {
+    pub fn inactive(&self) -> SetSelect {
         // resolve opposing set member
         !self.active
     }
@@ -166,7 +166,7 @@ impl State {
         &self.sets[self.inactive().idx()]
     }
 
-    pub(crate) fn next(&self) -> Option<SetSelect> {
+    pub fn next(&self) -> Option<SetSelect> {
         let gptprio_a = self.gptprio(SetSelect::A);
         let gptprio_b = self.gptprio(SetSelect::B);
         match (gptprio_a.will_boot(), gptprio_b.will_boot()) {

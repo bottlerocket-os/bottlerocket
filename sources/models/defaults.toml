@@ -33,6 +33,8 @@ template-path = "/usr/share/templates/containerd-config-toml"
 
 [settings.updates]
 targets-base-url = "https://updates.bottlerocket.aws/targets/"
+version-lock = "latest"
+ignore-waves = false
 
 [metadata.settings.updates.metadata-base-url]
 setting-generator = "schnauzer settings.updates.metadata-base-url"

@@ -324,3 +324,79 @@ paths:
           description: "Reboot requested"
         500:
           description: "Server error"
+
+  /actions/refresh-updates:
+    post:
+      summary: "Query update repository and refresh list of updates"
+      operationId: "refresh_update"
+      responses:
+        204:
+          description: "Successful request"
+        500:
+          description: "Server error"
+        423:
+          description: "Update write lock held. Try again in a moment"
+
+  /actions/prepare-update:
+    post:
+      summary: "Download the chosen update and write the update image to the inactive partition"
+      operationId: "prepare_update"
+      responses:
+        204:
+          description: "Successful request"
+        404:
+          description: "Chosen update does not exist"
+        409:
+          description: "Action not allowed according to current update state"
+        500:
+          description: "Server error"
+        423:
+          description: "Update write lock held. Try again in a moment"
+
+  /actions/activate-update:
+    post:
+      summary: "Mark the partition with the prepared update as active so you can reboot into the chosen version"
+      operationId: "activate_update"
+      responses:
+        204:
+          description: "Successfully activated update"
+        404:
+          description: "No update image applied to staging partition, need to prepare-update first"
+        409:
+          description: "Action not allowed according to current update state"
+        500:
+          description: "Server error"
+        423:
+          description: "Update write lock held. Try again in a moment"
+
+  /actions/deactivate-update:
+    post:
+      summary: "Deactivate the update by marking the running partition as active again"
+      operationId: "deactivate-update"
+      responses:
+        204:
+          description: "Successfully deactivated update"
+        404:
+          description: "No update image applied to staging partition, need to prepare-update first"
+        409:
+          description: "Action not allowed according to current update state"
+        500:
+          description: "Server error"
+        423:
+          description: "Update write lock held. Try again in a moment"
+
+  /updates/status:
+    get:
+      summary: "Get update status"
+      operationId: "get_update_status"
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                $ref: "UpdateStatus"
+        500:
+          description: "Server error"
+        423:
+          description: "Update write lock held. Try again in a moment"

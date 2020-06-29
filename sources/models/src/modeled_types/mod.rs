@@ -28,6 +28,9 @@ pub mod error {
         #[snafu(display("Given invalid URL '{}'", input))]
         InvalidUrl { input: String },
 
+        #[snafu(display("Invalid version string '{}'", input))]
+        InvalidVersion { input: String },
+
         #[snafu(display("{} must match '{}', given: {}", thing, pattern, input))]
         Pattern {
             thing: String,

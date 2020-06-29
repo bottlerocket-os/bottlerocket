@@ -30,8 +30,8 @@ impl fmt::Display for PartitionSet {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum SetSelect {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SetSelect {
     A,
     B,
 }

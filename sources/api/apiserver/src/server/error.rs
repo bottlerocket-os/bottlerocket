@@ -120,8 +120,55 @@ pub enum Error {
     #[snafu(display("Unable to start shutdown: {}", source))]
     Shutdown { source: io::Error },
 
-    #[snafu(display("Failed to reboot, exit code: {}, stderr: {}", exit_code, String::from_utf8_lossy(stderr)))]
+    #[snafu(display(
+        "Failed to reboot, exit code: {}, stderr: {}",
+        exit_code,
+        String::from_utf8_lossy(stderr)
+    ))]
     Reboot { exit_code: i32, stderr: Vec<u8> },
+
+    // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+    // Update related errors
+    #[snafu(display("Unable to start the update dispatcher: {} ", source))]
+    UpdateDispatcher { source: io::Error },
+
+    #[snafu(display("Unable to open update lock file: {}", source))]
+    UpdateLockOpen { source: io::Error },
+
+    #[snafu(display("Update lock held"))]
+    UpdateLockHeld,
+
+    #[snafu(display("Unable to obtain shared lock for reading update status: {}", source))]
+    UpdateShareLock { source: io::Error },
+
+    #[snafu(display("Previously chosen Update no longer exists"))]
+    UpdateDoesNotExist,
+
+    #[snafu(display("No update image applied to staging partition"))]
+    NoStagedImage,
+
+    #[snafu(display("Update action not allowed according to update state"))]
+    DisallowCommand,
+
+    #[snafu(display("Update dispatcher failed"))]
+    UpdateError,
+
+    #[snafu(display("Update status is uninitialized, refresh-updates to initialize it"))]
+    UninitializedUpdateStatus,
+
+    #[snafu(display("Failed to parse update status: {} ", source))]
+    UpdateStatusParse { source: serde_json::Error },
+
+    #[snafu(display(
+        "Failed to parse update information from '{}': {} ",
+        String::from_utf8_lossy(stdout),
+        source
+    ))]
+    UpdateInfoParse {
+        stdout: Vec<u8>,
+        source: serde_json::Error,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
