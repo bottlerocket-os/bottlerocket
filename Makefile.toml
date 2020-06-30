@@ -12,7 +12,6 @@ BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*' || echo 00000000"] }
 BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' Release.toml"] }
 BUILDSYS_VARIANT = "aws-k8s-1.15"
-BUILDSYS_OUTPUT_DIR = "${BUILDSYS_BUILD_DIR}/images/${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
 
 # Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
 # To use the upstream source as fallback, override this on the command line and set it to 'true'
@@ -40,6 +39,9 @@ BUILDSYS_SDK_IMAGE = "bottlerocket/sdk-${BUILDSYS_ARCH}:v0.11.0"
 
 # Depends on ${BUILDSYS_JOBS}.
 CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
+
+# Depends on ${BUILDSYS_ARCH} and ${BUILDSYS_VARIANT}.
+BUILDSYS_OUTPUT_DIR = "${BUILDSYS_BUILD_DIR}/images/${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
 
 [tasks.setup]
 script = [
