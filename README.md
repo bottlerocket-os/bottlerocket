@@ -96,7 +96,7 @@ Then you'd be able to start a session using only your instance ID, like this:
 aws ssm start-session --target INSTANCE_ID
 ```
 
-With the [default control container](https://github.com/bottlerocket-os/bottlerocket-control-container), you can make API calls to change settings in your Bottlerocket host.
+With the [default control container](https://github.com/bottlerocket-os/bottlerocket-control-container), you can make [API calls](#api) to configure and manage your Bottlerocket host.
 To do even more, read the next section about the [admin container](#admin-container).
 
 ### Admin container
@@ -133,7 +133,88 @@ Be careful; while you can inspect and change even more as root, Bottlerocket's f
 Rather than a package manager that updates individual pieces of software, Bottlerocket downloads a full filesystem image and reboots into it.
 It can automatically roll back if boot failures occur, and workload failures can trigger manual rollbacks.
 
-Currently, you can update using a CLI tool, updog.
+The update process uses images secured by [TUF](https://theupdateframework.github.io/).
+For more details, see the [update system documentation](sources/updater/).
+
+### Update methods
+
+There are several ways of updating your Bottlerocket hosts:
+
+#### Update API
+
+The [Bottlerocket API](#api) allows you to update and reboot your host with simple API calls.  You can change [settings](#updates-settings) to control which updates are selected.
+
+In general, the process of using the update API looks like this.  You refresh the list of known updates, then apply one to the system.  Calls to `/updates/status` will tell you the current state and give more details on any errors.
+
+![Update API overview](sources/api/update_api.png)
+
+First, refresh the list of available updates:
+```
+apiclient -u /actions/refresh-updates -m POST
+```
+
+Now you can see the list of available updates, along with the chosen update, according to your `version-lock` [setting](#updates-settings):
+```
+apiclient -u /updates/status
+```
+
+This will return the current update status in JSON format. The status should look something like the following (pretty-printed):
+```
+{
+  "update_state": "Available",
+  "available_updates": [
+    "0.4.0",
+    "0.3.4",
+    ...
+  ],
+  "chosen_update": {
+    "arch": "x86_64",
+    "version": "0.4.0",
+    "variant": "aws-k8s-1.15"
+  },
+  "active_partition": {
+    "image": {
+      "arch": "x86_64",
+      "version": "0.3.2",
+      "variant": "aws-k8s-1.15"
+    },
+    "next_to_boot": true
+  },
+  "staging_partition": null,
+  "most_recent_command": {
+    "cmd_type": "refresh",
+    "cmd_status": "Success",
+    ...
+  }
+}
+```
+
+You can see that the we're running `v0.3.2` in the active partition, and that `v0.4.0` is available.
+If you're happy with that selection, you can request that the update be downloaded and applied to disk.  (The update will remain inactive until you make the `activate-update` call below.)
+```
+apiclient -u /actions/prepare-update -m POST
+```
+
+After you request that the update be prepared, you can check the update status again until it reflects the new version in the staging partition.
+```
+apiclient -u /updates/status
+```
+
+If the staging partition shows the new version, you can proceed to "activate" the update.
+This means that as soon as the host is rebooted it will try to run the new version.  (If the new version can't boot, we automatically flip back to the old version.)
+```
+apiclient -u /actions/activate-update -m POST
+```
+
+You can reboot the host with:
+```
+apiclient -u /actions/reboot -m POST
+```
+
+#### Updog
+
+You can also update using a CLI tool, `updog`, if you [connect through a host container](#exploration).
+
 Here's how you can see whether there's an update:
 
 ```
@@ -149,6 +230,12 @@ reboot
 
 (If you know what you're doing and want to update *now*, you can run `updog update --reboot --now`)
 
+#### Bottlerocket Update Operator
+
+If you are running the Kubernetes variant of Bottlerocket, you can use the [Bottlerocket update operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) to automate Bottlerocket updates.
+
+### Update rollback
+
 The system will automatically roll back if it's unable to boot.
 If the update is not functional for a given container workload, you can do a manual rollback:
 
@@ -156,11 +243,6 @@ If the update is not functional for a given container workload, you can do a man
 signpost rollback-to-inactive
 reboot
 ```
-
-We're working on more automated update methods.
-
-The update process uses images secured by [TUF](https://theupdateframework.github.io/).
-For more details, see the [update system documentation](sources/updater/).
 
 ## Settings
 
