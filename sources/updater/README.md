@@ -4,7 +4,7 @@ This document describes the Bottlerocket update system and its components, namel
 - tough: implementation of "The Update Framework" (TUF)
 - updog: update client that interfaces with a TUF repository to find and apply updates
 - signpost: helper tool to update partition priority flags
-- dogswatch: an optional component that coordinates node updates with the rest of the cluster
+- Bottlerocket update operator (brupop): an optional component that coordinates node updates with the rest of the cluster
 
 ![Update overview](update-system.png)
 ## TUF and tough
