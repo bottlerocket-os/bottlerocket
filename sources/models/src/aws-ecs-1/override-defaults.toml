@@ -9,3 +9,6 @@ configuration-files = []
 
 [metadata.settings.ecs]
 affected-services = ["ecs"]
+
+[settings.ecs]
+allow-privileged-containers = false
