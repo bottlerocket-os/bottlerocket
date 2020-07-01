@@ -7,6 +7,8 @@ use snafu::{ResultExt};
 
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
+const VARIANT_ATTRIBUTE_NAME: &str = "bottlerocket.variant";
+const VERSION_ATTRIBUTE_NAME: &str = "bottlerocket.version";
 
 
 #[derive(Serialize, Debug)]
@@ -14,6 +16,9 @@ const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
 struct ECSConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     cluster: Option<String>,
+
+    #[serde(skip_serializing_if = "std::collections::HashMap::is_empty")]
+    instance_attributes: std::collections::HashMap<String, String>,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -34,7 +39,17 @@ fn run() -> Result<()> {
     let settings = schnauzer::get_settings(&args.socket_path).context(error::Settings)?;
 
     debug!("settings = {:#?}", settings.settings);
-    let config = ECSConfig{ cluster: settings.settings.and_then(|s| s.ecs).and_then(|s| s.cluster)};
+    let mut config = ECSConfig{
+        cluster: settings.settings.and_then(|s| s.ecs).and_then(|s| s.cluster),
+        instance_attributes: std::collections::HashMap::new()
+    };
+    match settings.os {
+        None => {}
+        Some(os) => {
+            config.instance_attributes.insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
+            config.instance_attributes.insert(VERSION_ATTRIBUTE_NAME.to_string(), os.version_id.to_string());
+        }
+    }
     let serialized = serde_json::to_string(&config).context(error::Serialization)?;
     debug!("serialized = {}", serialized);
 
