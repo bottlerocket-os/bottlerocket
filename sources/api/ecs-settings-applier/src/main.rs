@@ -39,8 +39,10 @@ fn run() -> Result<()> {
     let settings = schnauzer::get_settings(&args.socket_path).context(error::Settings)?;
 
     debug!("settings = {:#?}", settings.settings);
+    let ecs = settings.settings.and_then(|s| s.ecs);
+    let cluster = ecs.as_ref().and_then(|s| s.cluster.as_ref());
     let mut config = ECSConfig{
-        cluster: settings.settings.and_then(|s| s.ecs).and_then(|s| s.cluster),
+        cluster: cluster.map(|s| s.clone()),
         instance_attributes: std::collections::HashMap::new()
     };
     match settings.os {
@@ -48,6 +50,14 @@ fn run() -> Result<()> {
         Some(os) => {
             config.instance_attributes.insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
             config.instance_attributes.insert(VERSION_ATTRIBUTE_NAME.to_string(), os.version_id.to_string());
+        }
+    }
+    match ecs.as_ref().and_then(|s| s.instance_attributes.as_ref()) {
+        None => {}
+        Some(attributes) => {
+            for (key, value) in attributes {
+                config.instance_attributes.insert(key.to_string(), value.to_string());
+            }
         }
     }
     let serialized = serde_json::to_string(&config).context(error::Serialization)?;
