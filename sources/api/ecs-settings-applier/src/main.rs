@@ -19,6 +19,9 @@ struct ECSConfig {
 
     #[serde(skip_serializing_if = "std::collections::HashMap::is_empty")]
     instance_attributes: std::collections::HashMap<String, String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    privileged_disabled: Option<bool>,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -41,9 +44,11 @@ fn run() -> Result<()> {
     debug!("settings = {:#?}", settings.settings);
     let ecs = settings.settings.and_then(|s| s.ecs);
     let cluster = ecs.as_ref().and_then(|s| s.cluster.as_ref());
+    let privileged_disabled = ecs.as_ref().and_then(|s| s.allow_privileged_containers).map(|s| !s);
     let mut config = ECSConfig{
         cluster: cluster.map(|s| s.clone()),
-        instance_attributes: std::collections::HashMap::new()
+        instance_attributes: std::collections::HashMap::new(),
+        privileged_disabled,
     };
     match settings.os {
         None => {}
