@@ -81,8 +81,9 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    DNSDomain, FriendlyVersion, KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue,
-    KubernetesTaintValue, SingleLineString, Url, ValidBase64,
+    DNSDomain, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, KubernetesClusterName,
+    KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue, SingleLineString, Url,
+    ValidBase64,
 };
 
 // Kubernetes related settings. The dynamic settings are retrieved from
@@ -108,6 +109,7 @@ struct KubernetesSettings {
 #[model]
 struct ECSSettings {
     cluster: String,
+    instance_attributes: HashMap<ECSAttributeKey, ECSAttributeValue>,
 }
 
 // Update settings. Taken from userdata. The 'seed' setting is generated

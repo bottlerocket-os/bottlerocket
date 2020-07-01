@@ -21,7 +21,6 @@ work items for the ECS agent.
     to the container path of the procfs bind mount
     https://github.com/aws/amazon-ecs-agent/blob/782948476da6d995ad33c6a04130f8172820af27/agent/ecscni/types.go#L38
 * Logging is currently set to `debug` to assist with development.
-* The systemd unit contains many `ExecStartPre`/`ExecStartPost` commands, with
-  little explanation or infrastructure.  One `ExecStopPost` command depends on
-  `/bin/sh`, which is not available in Bottlerocket or compatible with our
-  goals for Bottlerocket.
+* The Bottlerocket datastore does not accept keys with `\` characters.  This
+  means that even though `\` is valid in ECS attribute names, it is not
+  supported on Bottlerocket.
