@@ -175,7 +175,7 @@ func _main() int {
 	// Get the cgroup path of the systemd service
 	cgroupPath, err := cgroups.GetOwnCgroup("name=systemd")
 	if err != nil {
-		log.G(ctx).WithError(err).Error("Failed to connect to containerd")
+		log.G(ctx).WithError(err).Error("Failed to discover systemd cgroup path")
 		return 1
 	}
 
