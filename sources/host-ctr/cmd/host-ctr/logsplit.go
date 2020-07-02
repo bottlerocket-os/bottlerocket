@@ -1,9 +1,13 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"io"
+
+	"github.com/sirupsen/logrus"
 )
+
+// LogSplitHook is expected to implement the correct logrus interface.
+var _ logrus.Hook = (*LogSplitHook)(nil)
 
 // LogSplitHook directs matched levels to its configured output.
 type LogSplitHook struct {
