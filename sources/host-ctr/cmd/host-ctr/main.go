@@ -84,6 +84,7 @@ func _main() int {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	ctx = namespaces.WithNamespace(ctx, namespace)
 	go func(ctx context.Context, cancel context.CancelFunc) {
 		// Set up channel on which to send signal notifications.
@@ -91,12 +92,9 @@ func _main() int {
 		// if we're not ready to receive when the signal is sent.
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		for {
-			select {
-			case s := <-c:
-				log.G(ctx).Info("Received signal: ", s)
-				cancel()
-			}
+		for sigrecv := range c {
+			log.G(ctx).Info("Received signal: ", sigrecv)
+			cancel()
 		}
 	}(ctx, cancel)
 
@@ -223,7 +221,15 @@ func _main() int {
 		log.G(ctx).WithError(err).WithField("img", img.Name).Error("Failed to create container")
 		return 1
 	}
-	defer container.Delete(context.TODO(), containerd.WithSnapshotCleanup)
+	defer func() {
+		// Clean up the container as program wraps up.
+		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err := container.Delete(cleanup, containerd.WithSnapshotCleanup)
+		if err != nil {
+			log.G(cleanup).WithError(err).Error("Failed to cleanup container")
+		}
+	}()
 
 	// Create the container task
 	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
@@ -231,55 +237,67 @@ func _main() int {
 		log.G(ctx).WithError(err).Error("Failed to create container task")
 		return 1
 	}
-	defer task.Delete(context.TODO())
+	defer func() {
+		// Clean up the container's task as program wraps up.
+		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_, err := task.Delete(cleanup)
+		if err != nil {
+			log.G(cleanup).WithError(err).Error("Failed to delete container task")
+		}
+	}()
 
-	// Wait before calling start in case the container task finishes too quickly
+	// Call Wait before calling Start to ensure the task's status notifications
+	// are received.
 	exitStatusC, err := task.Wait(context.TODO())
 	if err != nil {
 		log.G(ctx).WithError(err).Error("Unexpected error during container task setup.")
 		return 1
 	}
 
-	// Call start on the task to execute the target container
+	// Execute the target container's task.
 	if err := task.Start(ctx); err != nil {
 		log.G(ctx).WithError(err).Error("Failed to start container task")
 		return 1
 	}
 	log.G(ctx).Info("Successfully started container task")
 
-	// Block until an OS signal (e.g. SIGTERM, SIGINT) is received or the container task finishes and exits on its own.
+	// Block until an OS signal (e.g. SIGTERM, SIGINT) is received or the
+	// container task finishes and exits on its own.
+
+	// Container task's exit status.
 	var status containerd.ExitStatus
-	// Create new context for stopping and cleaning up the container task
+	// Context used when stopping and cleaning up the container task
 	ctrCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	select {
 	case <-ctx.Done():
-
 		// SIGTERM the container task and get its exit status
 		if err := task.Kill(ctrCtx, syscall.SIGTERM); err != nil {
 			log.G(ctrCtx).WithError(err).Error("Failed to send SIGTERM to container")
 			return 1
 		}
-
 		// Wait for 20 seconds and see check if container task exited
-		force := make(chan struct{})
-		timeout := time.AfterFunc(20*time.Second, func() {
-			close(force)
-		})
+		const gracePeriod = 20 * time.Second
+		timeout := time.NewTimer(gracePeriod)
+
 		select {
 		case status = <-exitStatusC:
-			// Container task was able to exit on its own
-			timeout.Stop()
-		case <-force:
-			// Container task still hasn't exited, SIGKILL the container task
-			// Create a deadline of 45 seconds
-			killCtrTask := func() error {
-				const sigkillTimeout = 45 * time.Second
-				killCtx, cancel := context.WithTimeout(ctrCtx, sigkillTimeout)
-				defer cancel()
-				return task.Kill(killCtx, syscall.SIGKILL)
+			// Container task was able to exit on its own, stop the timer.
+			if !timeout.Stop() {
+				<-timeout.C
 			}
-			if killCtrTask() != nil {
+		case <-timeout.C:
+			// Container task still hasn't exited, SIGKILL the container task or
+			// timeout and bail.
+
+			const sigkillTimeout = 45 * time.Second
+			killCtx, cancel := context.WithTimeout(ctrCtx, sigkillTimeout)
+
+			err := task.Kill(killCtx, syscall.SIGKILL)
+			cancel()
+			if err != nil {
 				log.G(ctrCtx).WithError(err).Error("Failed to SIGKILL container process, timed out")
 				return 1
 			}
