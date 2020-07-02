@@ -111,6 +111,7 @@ The currently supported regions are:
 
 ```
 ap-northeast-1
+ap-south-1
 eu-central-1
 us-east-1
 us-west-2
