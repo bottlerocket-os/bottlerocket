@@ -177,7 +177,8 @@ func _main() int {
 		return 1
 	}
 
-	// Set up the container specifications depending on the type of container and whether it's superpowered or not
+	// Set up the container spec. See `withSuperpowered` for conditional options
+	// set when configured as superpowered.
 	ctrOpts := containerd.WithNewSpec(
 		oci.WithImageConfig(img),
 		oci.WithHostNamespace(runtimespec.NetworkNamespace),
@@ -185,7 +186,8 @@ func _main() int {
 		oci.WithHostResolvconf,
 		// Launch the container under the systemd unit's cgroup
 		oci.WithCgroup(cgroupPath),
-		// Mount in the API socket for the Bottlerocket API server, and the API client used to interact with it
+		// Mount in the API socket for the Bottlerocket API server, and the API
+		// client used to interact with it
 		oci.WithMounts([]runtimespec.Mount{
 			{
 				Options:     []string{"bind", "rw"},
@@ -206,10 +208,11 @@ func _main() int {
 			}}),
 		// Mount the rootfs with an SELinux label that makes it writable
 		withMountLabel("system_u:object_r:local_t:s0"),
+		// Include conditional options for superpowered containers.
 		withSuperpowered(superpowered),
 	)
 
-	// Create and start the container via containerd
+	// Create and start the container.
 	container, err := client.NewContainer(
 		ctx,
 		containerID,
@@ -316,7 +319,8 @@ func _main() int {
 	return int(code)
 }
 
-// Check if container already exists, if it does, kill its task then delete it and clean up its snapshot
+// deleteCtrIfExists cleans up an existing container. This involves killing its
+// task then deleting it and its snapshot when any exist.
 func deleteCtrIfExists(ctx context.Context, client *containerd.Client, targetCtr string) error {
 	existingCtr, err := client.LoadContainer(ctx, targetCtr)
 	if err != nil {
@@ -357,6 +361,7 @@ func deleteCtrIfExists(ctx context.Context, client *containerd.Client, targetCtr
 	return nil
 }
 
+// withMountLabel configures the mount with the provided SELinux label.
 func withMountLabel(label string) oci.SpecOpts {
 	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
 		if s.Linux != nil {
@@ -366,13 +371,15 @@ func withMountLabel(label string) oci.SpecOpts {
 	}
 }
 
-// Add container options depending on whether it's `superpowered` or not
+// withSuperpowered add container options granting administrative privileges
+// when it's `superpowered`.
 func withSuperpowered(superpowered bool) oci.SpecOpts {
 	if !superpowered {
 		return oci.Compose(
 			seccomp.WithDefaultProfile(),
 		)
 	}
+
 	return oci.Compose(
 		oci.WithHostNamespace(runtimespec.PIDNamespace),
 		oci.WithParentCgroupDevices,
@@ -403,7 +410,7 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 	)
 }
 
-// Pulls image from specified source
+// pullImage pulls an image from the specified source.
 func pullImage(ctx context.Context, source string, client *containerd.Client) (containerd.Image, error) {
 	// Pull the image
 	// Retry with exponential backoff when failures occur, maximum retry duration will not exceed 31 seconds
@@ -451,8 +458,12 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 	return img, nil
 }
 
+// tagImage adds a tag to the image in containerd's metadata storage.
+//
 // Image tag logic derived from:
+//
 // https://github.com/containerd/containerd/blob/d80513ee8a6995bc7889c93e7858ddbbc51f063d/cmd/ctr/commands/images/tag.go#L67-L86
+//
 func tagImage(ctx context.Context, imageName string, newImageName string, client *containerd.Client) error {
 	log.G(ctx).WithField("imageName", newImageName).Info("Tagging image")
 	// Retrieve image information
@@ -480,12 +491,13 @@ func tagImage(ctx context.Context, imageName string, newImageName string, client
 	return nil
 }
 
-// Return the resolver appropriate for the specified image reference
+// withDynamicResolver provides an initialized resolver for use with ref.
 func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 	if !strings.HasPrefix(ref, "ecr.aws/") {
 		// not handled here
 		return func(_ *containerd.Client, _ *containerd.RemoteContext) error { return nil }
 	}
+
 	return func(_ *containerd.Client, c *containerd.RemoteContext) error {
 		// Create the ECR resolver
 		resolver, err := ecr.NewResolver()
