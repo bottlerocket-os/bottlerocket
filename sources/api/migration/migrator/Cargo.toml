@@ -9,7 +9,6 @@ build = "build.rs"
 
 [dependencies]
 bottlerocket-release = { path = "../../../bottlerocket-release" }
-lazy_static = "1.2"
 log = "0.4"
 lz4 = "1.23.1"
 nix = "0.17"
