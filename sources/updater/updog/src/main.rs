@@ -16,8 +16,9 @@ use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
 use std::convert::{TryFrom, TryInto};
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, File, OpenOptions, Permissions};
 use std::io;
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
@@ -222,6 +223,27 @@ fn retrieve_migrations(
 
     // find the list of migrations in the manifest based on our from and to versions.
     let mut targets = find_migrations(start, target, &manifest)?;
+
+    // DEPRECATED CODE BEGIN ///////////////////////////////////////////////////////////////////////
+    // write unsigned migrations for backward compatibility. note that signed migrations will have
+    // a sha prefix because we use consistent snapshots in our TUF repository. old versions of
+    // migrator will ignore signed migrations because they do not match the regex, and new versions
+    // of migrator will be unaffected by the presence of these unsigned migrations. this loop should
+    // be removed when we no longer support backward compatibility. signed migrations will remain
+    // lz4 compressed and will not be marked as executable, but unsigned migrations are uncompressed
+    // and marked as executable. original comment follows...
+    // download each migration, making sure they are executable and removing
+    // known extensions from our compression, e.g. .lz4
+    for name in &targets {
+        let mut destination = dir.join(&name);
+        if destination.extension() == Some("lz4".as_ref()) {
+            destination.set_extension("");
+        }
+        write_target_to_disk(repository, &name, &destination)?;
+        fs::set_permissions(&destination, Permissions::from_mode(0o755))
+            .context(error::SetPermissions { path: destination })?;
+    }
+    // DEPRECATED CODE END /////////////////////////////////////////////////////////////////////////
 
     // we need to store the manifest so that migrator can independently and securely determine the
     // migration list. this is true even if there are no migrations.
