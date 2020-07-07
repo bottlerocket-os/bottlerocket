@@ -6,8 +6,10 @@ mod se;
 
 use crate::error::Result;
 use chrono::{DateTime, Duration, Utc};
+use lazy_static::lazy_static;
 use parse_datetime::parse_offset;
 use rand::{thread_rng, Rng};
+use regex::Regex;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -19,6 +21,29 @@ use std::ops::Bound::{Excluded, Included};
 use std::path::Path;
 
 pub const MAX_SEED: u32 = 2048;
+
+// DEPRECATED CODE BEGIN ///////////////////////////////////////////////////////////////////////////
+// the use of this regex is deprecated and only used for backward compatibility with
+// unsigned migration
+lazy_static! {
+    /// Regular expression that will match migration file names and allow retrieving the
+    /// version and name components.
+    // Note: the version component is a simplified semver regex; we don't use any of the
+    // extensions, just a simple x.y.z, so this isn't as strict as it could be.
+    // Note: this regex will NOT match signed TUF targets because we use consistent snapshots in our
+    // TUF repository. We are relying on that behavior during the transition to signed migrations
+    // in which both signed an unsigned migrations are written in the same directory.
+    pub static ref MIGRATION_FILENAME_RE: Regex =
+        Regex::new(r"(?x)^
+                   migrate
+                   _
+                   v?  # optional 'v' prefix for humans
+                   (?P<version>[0-9]+\.[0-9]+\.[0-9]+[0-9a-zA-Z+-]*)
+                   _
+                   (?P<name>[a-zA-Z0-9-]+)
+                   $").unwrap();
+}
+// DEPRECATED CODE END /////////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Wave {
