@@ -231,9 +231,6 @@ dependencies = [
 [tasks.world]
 alias = "build"
 
-[tasks.preview-docs]
-script = ['tools/gen-docs.sh']
-
 [tasks.clean]
 script = [
 '''
