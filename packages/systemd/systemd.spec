@@ -22,6 +22,10 @@ Patch9002: 9002-core-add-separate-timeout-for-system-shutdown.patch
 # Local patch to avoid an OpenSSL dependency that's otherwise not needed.
 Patch9003: 9003-repart-always-use-random-UUIDs.patch
 
+# TODO: this could be submitted upstream as well, but needs to account for
+# the dom0 case first, where the UUID is all zeroes and hence not unique.
+Patch9004: 9004-machine-id-setup-generate-stable-ID-under-Xen.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
