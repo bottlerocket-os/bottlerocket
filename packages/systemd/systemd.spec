@@ -10,6 +10,7 @@ URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
 Source1: var-run-tmpfiles.conf
 Source2: systemd-modules-load.conf
+Source3: journald.conf
 
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
@@ -191,6 +192,9 @@ install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/var-run.conf
 
 install -d %{buildroot}%{_cross_libdir}/modules-load.d
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_libdir}/modules-load.d/nf_conntrack.conf
+
+install -d %{buildroot}%{_cross_libdir}/systemd/journald.conf.d
+install -p -m 0644 %{S:3} %{buildroot}%{_cross_libdir}/systemd/journald.conf.d/journald.conf
 
 # Remove all stock network configurations, as they can interfere
 # with container networking by attempting to manage veth devices.
