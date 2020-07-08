@@ -1,0 +1,48 @@
+From d22a61e21d677f7527bc8a4aeb3288c5e11dd49b Mon Sep 17 00:00:00 2001
+From: Casey Callendrello <cdc@redhat.com>
+Date: Fri, 29 May 2020 13:03:37 +0200
+Subject: [PATCH] kubelet: block non-forwarded packets from crossing the
+ localhost boundary
+
+We set route_localnet so that host-network processes can connect to
+<127.0.0.1:NodePort> and it still works. This, however, is too
+permissive.
+
+So, block martians that are not already in conntrack.
+
+See: #90259
+Signed-off-by: Casey Callendrello <cdc@redhat.com>
+---
+ pkg/kubelet/kubelet_network_linux.go | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/pkg/kubelet/kubelet_network_linux.go b/pkg/kubelet/kubelet_network_linux.go
+index 1c9ad46b989..d18ab75a053 100644
+--- a/pkg/kubelet/kubelet_network_linux.go
++++ b/pkg/kubelet/kubelet_network_linux.go
+@@ -68,6 +68,22 @@ func (kl *Kubelet) syncNetworkUtil() {
+ 		klog.Errorf("Failed to ensure rule to drop packet marked by %v in %v chain %v: %v", KubeMarkDropChain, utiliptables.TableFilter, KubeFirewallChain, err)
+ 		return
+ 	}
++
++	// drop all non-local packets to localhost if they're not part of an existing
++	// forwarded connection. See #90259
++	if !kl.iptClient.IsIpv6() { // ipv6 doesn't have this issue
++		if _, err := kl.iptClient.EnsureRule(utiliptables.Append, utiliptables.TableFilter, KubeFirewallChain,
++			"-m", "comment", "--comment", "block incoming localnet connections",
++			"--dst", "127.0.0.0/8",
++			"!", "--src", "127.0.0.0/8",
++			"-m", "conntrack",
++			"!", "--ctstate", "RELATED,ESTABLISHED,DNAT",
++			"-j", "DROP"); err != nil {
++			klog.Errorf("Failed to ensure rule to drop invalid localhost packets in %v chain %v: %v", utiliptables.TableFilter, KubeFirewallChain, err)
++			return
++		}
++	}
++
+ 	if _, err := kl.iptClient.EnsureRule(utiliptables.Prepend, utiliptables.TableFilter, utiliptables.ChainOutput, "-j", string(KubeFirewallChain)); err != nil {
+ 		klog.Errorf("Failed to ensure that %s chain %s jumps to %s: %v", utiliptables.TableFilter, utiliptables.ChainOutput, KubeFirewallChain, err)
+ 		return
+-- 
+2.27.0
+
