@@ -30,6 +30,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-k8s-1.16/mod.rs)
 * [Overridden defaults](src/aws-k8s-1.16/override-defaults.toml)
 
+### aws-k8s-1.17: Kubernetes 1.17
+
+* [Model](src/aws-k8s-1.17/mod.rs)
+* [Overridden defaults](src/aws-k8s-1.17/override-defaults.toml)
+
 ### aws-dev: Development build
 
 * [Model](src/aws-dev/mod.rs)

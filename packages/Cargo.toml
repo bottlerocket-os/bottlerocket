@@ -27,6 +27,7 @@ members = [
     "kmod",
     "kubernetes-1.15",
     "kubernetes-1.16",
+    "kubernetes-1.17",
     "libacl",
     "libattr",
     "libaudit",
