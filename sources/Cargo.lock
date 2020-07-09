@@ -1814,6 +1814,13 @@ version = "0.1.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "pivot-repo-2020-07-07"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+]
+
+[[package]]
 name = "pluto"
 version = "0.1.0"
 dependencies = [

@@ -38,7 +38,7 @@ ignore-waves = false
 
 [metadata.settings.updates.metadata-base-url]
 setting-generator = "schnauzer settings.updates.metadata-base-url"
-template = "https://updates.bottlerocket.aws/2020-02-02/{{ os.variant_id }}/{{ os.arch }}/"
+template = "https://updates.bottlerocket.aws/2020-07-07/{{ os.variant_id }}/{{ os.arch }}/"
 
 [services.updog]
 configuration-files = ["updog-toml"]
