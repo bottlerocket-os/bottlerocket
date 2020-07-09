@@ -28,6 +28,21 @@
 (roletype system_r runtime_t)
 (context runtime (system_u system_r runtime_t s0))
 
+; Processes that manage network interfaces.
+(type network_t)
+(roletype system_r network_t)
+(context network (system_u system_r network_t s0))
+
+; Processes that manage the system clock.
+(type clock_t)
+(roletype system_r clock_t)
+(context clock (system_u system_r clock_t s0))
+
+; Processes that manage the system message bus.
+(type bus_t)
+(roletype system_r bus_t)
+(context bus (system_u system_r bus_t s0))
+
 ; Processes that run inside containers.
 (type container_t)
 (roletype system_r container_t)
@@ -41,15 +56,29 @@
 ; The set of all subjects.
 (typeattribute all_s)
 (typeattributeset all_s (
-  kernel_t init_t system_t api_t runtime_t container_t super_t))
+  kernel_t init_t system_t api_t
+  network_t clock_t bus_t runtime_t
+  container_t super_t))
 
-; Subjects that are treated as part of the OS.
+; Subjects that are treated as a trusted part of the OS.
 (typeattribute trusted_s)
-(typeattributeset trusted_s (not container_t))
+(typeattributeset trusted_s (not (untrusted_s)))
 
-; Subjects that are not treated as part of the OS.
+; Subjects that are part of the OS, but confined through policy.
+(typeattribute confined_s)
+(typeattributeset confined_s (network_t clock_t bus_t))
+
+; Subjects that are not confined by policy.
+(typeattribute unconfined_s)
+(typeattributeset unconfined_s (not (confined_s)))
+
+; Subjects that are not part of the OS.
+(typeattribute other_s)
+(typeattributeset other_s (container_t))
+
+; Subjects that are not treated as a trusted part of the OS.
 (typeattribute untrusted_s)
-(typeattributeset untrusted_s (not trusted_s))
+(typeattributeset untrusted_s (confined_s other_s))
 
 ; Subjects that are started from containers.
 (typeattribute container_s)
@@ -66,3 +95,15 @@
 ; Subjects that are treated as container runtimes.
 (typeattribute runtime_s)
 (typeattributeset runtime_s (runtime_t super_t))
+
+; Subjects that are allowed to manage the system clock.
+(typeattribute clock_s)
+(typeattributeset clock_s (clock_t system_t super_t))
+
+; Subjects that are allowed to manage network interfaces.
+(typeattribute network_s)
+(typeattributeset network_s (network_t system_t super_t))
+
+; Subjects that are allowed to manage system files.
+(typeattribute system_s)
+(typeattributeset system_s (system_t super_t))

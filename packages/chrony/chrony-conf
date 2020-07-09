@@ -1,8 +1,8 @@
 {{#each settings.ntp.time-servers}}
 pool {{this}} iburst
 {{/each}}
-driftfile /run/lib/chrony/drift
+driftfile /var/lib/chrony/drift
 makestep 1.0 3
 dumponexit
-dumpdir /run/lib/chrony/state
+dumpdir /var/lib/chrony
 user chrony

@@ -40,14 +40,18 @@
 
 ; Label entry points.
 (filecon "/.*/usr/lib/systemd/systemd" file init_exec)
-(filecon "/.*/usr/bin/containerd.*" file runtime_exec)
-(filecon "/.*/usr/bin/docker.*" file runtime_exec)
-(filecon "/.*/usr/bin/host-ctr" file runtime_exec)
-(filecon "/.*/usr/sbin/runc" file runtime_exec)
 (filecon "/.*/usr/bin/apiserver" file api_exec)
 (filecon "/.*/usr/bin/early-boot-config" file api_exec)
 (filecon "/.*/usr/bin/migrator" file api_exec)
 (filecon "/.*/usr/bin/storewolf" file api_exec)
+(filecon "/.*/usr/bin/dbus-broker.*" file bus_exec)
+(filecon "/.*/usr/sbin/chronyd" file clock_exec)
+(filecon "/.*/usr/sbin/wicked.*" file network_exec)
+(filecon "/.*/usr/libexec/wicked/bin/wicked.*" file network_exec)
+(filecon "/.*/usr/bin/containerd.*" file runtime_exec)
+(filecon "/.*/usr/bin/docker.*" file runtime_exec)
+(filecon "/.*/usr/bin/host-ctr" file runtime_exec)
+(filecon "/.*/usr/sbin/runc" file runtime_exec)
 
 ; Label local storage mounts.
 (filecon "/local" any local)
@@ -56,6 +60,16 @@
 (filecon "/opt/.*" any ())
 (filecon "/var" any local)
 (filecon "/var/.*" any ())
+
+; Label local state directories.
+(filecon "/var/lib/chrony" any measure)
+(filecon "/var/lib/chrony/.*" any measure)
+(filecon "/var/lib/systemd" any state)
+(filecon "/var/lib/systemd/.*" any state)
+(filecon "/var/lib/wicked" any lease)
+(filecon "/var/lib/wicked/.*" any lease)
+(filecon "/var/log/journal" any state)
+(filecon "/var/log/journal/.*" any state)
 
 ; Label kernel filesystem mounts.
 (filecon "/proc" any any)

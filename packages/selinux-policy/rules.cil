@@ -31,6 +31,21 @@
 (allow init_t api_t (processes (transform)))
 (allow api_t api_exec_t (file (entrypoint)))
 
+; PID1 starts NTP daemons as "clock_t".
+(typetransition init_t clock_exec_t process clock_t)
+(allow init_t clock_t (processes (transform)))
+(allow clock_t clock_exec_t (file (entrypoint)))
+
+; PID1 starts network daemons as "network_t".
+(typetransition init_t network_exec_t process network_t)
+(allow init_t network_t (processes (transform)))
+(allow network_t network_exec_t (file (entrypoint)))
+
+; PID1 starts DBUS daemons as "bus_t".
+(typetransition init_t bus_exec_t process bus_t)
+(allow init_t bus_t (processes (transform)))
+(allow bus_t bus_exec_t (file (entrypoint)))
+
 ; PID 1 starts container runtimes as "runtime_t".
 ; The level range is adjusted to span all categories at the same time,
 ; to support Docker's use of MCS labels.
@@ -76,33 +91,42 @@
 (allow all_s ephemeral_o (files (mutate watch)))
 (allow all_s foreign_o (files (mutate watch mount)))
 
-; All subjects are allowed to write to, set watches for, and manage
-; mounts for most files and directories on /local.
-(allow all_s local_t (files (mutate watch mount)))
+; Most subjects are allowed to write to, set watches for, and manage
+; mounts for "local" files and directories on /local.
+(allow unconfined_s local_t (files (mutate watch mount)))
+
+; Confined subjects cannot modify these "local" files.
+(neverallow confined_s local_t (files (mutate watch mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))
 
 ; Trusted components can set watches on immutable files, since we
-; expect this behavior from systemd and dbus-broker.
+; expect this behavior from systemd.
 (allow trusted_s immutable_o (files (watch)))
 
-; Only specific components can write to "private_t" or "cache_t", as
-; they provide a means to persist changes across container restarts
-; and reboots. We also restrict the ability to set watches as this
-; can be used to block access for another process.
-(allow api_s private_t (files (mutate watch)))
-(allow runtime_s cache_t (files (mutate watch)))
+; dbus-broker watches /usr/share/dbus-1/system.d.
+(allow bus_t os_t (files (watch)))
 
-; Untrusted processes should not be permitted to modify these files,
+; Only specific components can write to these objects, as they
+; provide a means to persist changes across container restarts
+; and reboots. We also restrict the ability to set watches as
+; this can be used to block access for other processes.
+(allow api_s private_t (files (mutate watch)))
+(allow clock_s measure_t (files (mutate watch)))
+(allow network_s lease_t (files (mutate watch)))
+(allow runtime_s cache_t (files (mutate watch)))
+(allow system_s state_t (files (mutate watch)))
+
+; Other components should not be permitted to modify these files,
 ; set watches for them, or to manage mounts for these directories.
-(neverallow untrusted_s protected_o (files (mutate watch mount)))
-(neverallow untrusted_s immutable_o (files (watch)))
+(neverallow other_s protected_o (files (mutate watch mount)))
+(neverallow other_s immutable_o (files (watch)))
 
 ; Only trusted components are allowed to relabel files.
 (allow trusted_s global (files (relabel)))
 
-; Untrusted processes should not be permitted to relabel files.
+; Untrusted components are not allowed to relabel files.
 (neverallow untrusted_s global (files (relabel)))
 
 ; Containers are allowed to relax security constraints, since we
@@ -132,7 +156,7 @@
 (allow trusted_s global (sockets (relabel)))
 (allow trusted_s global (networks (relabel)))
 
-; Untrusted processes cannot relabel sockets or packets.
+; Untrusted components cannot relabel sockets or packets.
 (neverallow untrusted_s global (sockets (relabel)))
 (neverallow untrusted_s global (networks (relabel)))
 
@@ -142,8 +166,16 @@
 
 ; Only trusted components can use systems-level management functions.
 ; This includes interactions with SELinux-aware userspace programs
-; such as systemd and dbus-broker.
+; such as systemd.
 (allow trusted_s global (systems (manage)))
 
-; Untrusted processes cannot use systems-level management functions.
-(neverallow untrusted_s global (systems (manage)))
+; dbus-broker implements DBUS and uses SELinux for access control.
+(allow bus_t global (dbus (all)))
+(allow bus_t global (security (compute_av)))
+
+; wicked needs DBUS for IPC.
+(allow network_t bus_t (dbus (all)))
+(allow network_t network_t (dbus (all)))
+
+; Other components cannot use systems-level management functions.
+(neverallow other_s global (systems (manage)))

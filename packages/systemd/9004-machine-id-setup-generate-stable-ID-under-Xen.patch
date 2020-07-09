@@ -1,0 +1,49 @@
+From f17dd7d63c9a3424e8b592d3e3afb70209102706 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 7 Jul 2020 22:38:20 +0000
+Subject: [PATCH 9004/9004] machine-id-setup: generate stable ID under Xen
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ man/machine-id.xml          |  3 ++-
+ src/core/machine-id-setup.c | 10 ++++++++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/man/machine-id.xml b/man/machine-id.xml
+index ebee065..8150bdb 100644
+--- a/man/machine-id.xml
++++ b/man/machine-id.xml
+@@ -100,7 +100,8 @@
+     to use the D-Bus machine ID from <filename>/var/lib/dbus/machine-id</filename>, the
+     value of the kernel command line option <varname>container_uuid</varname>, the KVM DMI
+     <filename>product_uuid</filename> or the devicetree <filename>vm,uuid</filename>
+-    (on KVM systems), and finally a randomly generated UUID.</para>
++    (on KVM systems), the hypervisor UUID from <filename>/sys/hypervisor/uuid</filename>
++    (under Xen), and finally a randomly generated UUID.</para>
+ 
+     <para>After the machine ID is established,
+     <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+diff --git a/src/core/machine-id-setup.c b/src/core/machine-id-setup.c
+index 284b77c..275daf5 100644
+--- a/src/core/machine-id-setup.c
++++ b/src/core/machine-id-setup.c
+@@ -73,6 +73,16 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
+                                 log_info("Initializing machine ID from KVM UUID.");
+                                 return 0;
+                         }
++
++                } else if (detect_vm() == VIRTUALIZATION_XEN) {
++
++                        /* Otherwise, if we're running under Xen, check for
++                         * a UUID from the hypervisor. */
++
++                        if (id128_read("/sys/hypervisor/uuid", ID128_UUID, ret) >= 0) {
++                                log_info("Initializing machine ID from Xen UUID.");
++                                return 0;
++                        }
+                 }
+         }
+ 
+-- 
+2.21.0
+

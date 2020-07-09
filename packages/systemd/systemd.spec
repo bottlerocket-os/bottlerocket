@@ -8,24 +8,24 @@ Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
-Source1: run-tmpfiles.conf
+Source1: var-run-tmpfiles.conf
 Source2: systemd-modules-load.conf
-
-# Local patches that can be dropped when we have an SELinux policy that
-# limits access to system files on the data volume.
-Patch9001: 9001-move-stateful-paths-to-ephemeral-storage.patch
-Patch9002: 9002-do-not-create-unused-state-directories.patch
+Source3: journald.conf
 
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
-Patch9003: 9003-use-absolute-path-for-var-run-symlink.patch
+Patch9001: 9001-use-absolute-path-for-var-run-symlink.patch
 
 # TODO: this could potentially be submitted upstream, but needs a better
 # way to be configured at build time or during execution first.
-Patch9004: 9004-core-add-separate-timeout-for-system-shutdown.patch
+Patch9002: 9002-core-add-separate-timeout-for-system-shutdown.patch
 
 # Local patch to avoid an OpenSSL dependency that's otherwise not needed.
-Patch9005: 9005-repart-always-use-random-UUIDs.patch
+Patch9003: 9003-repart-always-use-random-UUIDs.patch
+
+# TODO: this could be submitted upstream as well, but needs to account for
+# the dom0 case first, where the UUID is all zeroes and hence not unique.
+Patch9004: 9004-machine-id-setup-generate-stable-ID-under-Xen.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -181,17 +181,20 @@ CONFIGURE_OPTS=(
  -Dllvm-fuzz=false
 )
 
-%cross_meson --localstatedir="%{_cross_rundir}" "${CONFIGURE_OPTS[@]}"
+%cross_meson "${CONFIGURE_OPTS[@]}"
 %cross_meson_build
 
 %install
 %cross_meson_install
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/run.conf
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/var-run.conf
 
 install -d %{buildroot}%{_cross_libdir}/modules-load.d
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_libdir}/modules-load.d/nf_conntrack.conf
+
+install -d %{buildroot}%{_cross_libdir}/systemd/journald.conf.d
+install -p -m 0644 %{S:3} %{buildroot}%{_cross_libdir}/systemd/journald.conf.d/journald.conf
 
 # Remove all stock network configurations, as they can interfere
 # with container networking by attempting to manage veth devices.

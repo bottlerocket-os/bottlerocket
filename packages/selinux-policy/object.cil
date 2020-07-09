@@ -18,6 +18,22 @@
 (roletype object_r api_exec_t)
 (context api_exec (system_u object_r api_exec_t s0))
 
+; Executable files for NTP daemons such as /usr/sbin/chronyd.
+(type clock_exec_t)
+(roletype object_r clock_exec_t)
+(context clock_exec (system_u object_r clock_exec_t s0))
+
+; Executable files for network daemons such as /usr/sbin/wickedd.
+(type network_exec_t)
+(roletype object_r network_exec_t)
+(context network_exec (system_u object_r network_exec_t s0))
+
+; Executable files for message bus daemons such as
+; /usr/bin/dbus-broker-launch.
+(type bus_exec_t)
+(roletype object_r bus_exec_t)
+(context bus_exec (system_u object_r bus_exec_t s0))
+
 ; Executable files for container runtimes such as /usr/sbin/runc.
 (type runtime_exec_t)
 (roletype object_r runtime_exec_t)
@@ -49,6 +65,21 @@
 (roletype object_r cache_t)
 (context cache (system_u object_r cache_t s0))
 
+; Files for saved DHCP leases.
+(type lease_t)
+(roletype object_r lease_t)
+(context lease (system_u object_r lease_t s0))
+
+; Files for saved clock measurements.
+(type measure_t)
+(roletype object_r measure_t)
+(context measure (system_u object_r measure_t s0))
+
+; Files for saved system state.
+(type state_t)
+(roletype object_r state_t)
+(context state (system_u object_r state_t s0))
+
 ; Files that are mount points for external filesystems.
 (type external_t)
 (roletype object_r external_t)
@@ -60,12 +91,14 @@
 
 ; Protected objects are files on local storage with special rules.
 (typeattribute protected_o)
-(typeattributeset protected_o (cache_t private_t))
+(typeattributeset protected_o (
+  cache_t private_t lease_t measure_t state_t))
 
 ; Immutable objects reside on read-only storage.
 (typeattribute immutable_o)
 (typeattributeset immutable_o (
-  os_t init_exec_t api_exec_t runtime_exec_t))
+  os_t init_exec_t api_exec_t clock_exec_t
+  network_exec_t bus_exec_t runtime_exec_t))
 
 ; Foreign objects reside on storage with a different lifecycle from
 ; the rest of the OS, such as EBS volumes and EFS filesystems.
@@ -75,6 +108,8 @@
 ; The set of all objects.
 (typeattribute all_o)
 (typeattributeset all_o (
-  os_t init_exec_t api_exec_t runtime_exec_t
+  os_t init_exec_t api_exec_t clock_exec_t
+  network_exec_t bus_exec_t runtime_exec_t
   any_t unlabeled_t external_t
-  local_t private_t cache_t))
+  local_t private_t cache_t
+  lease_t measure_t state_t))
