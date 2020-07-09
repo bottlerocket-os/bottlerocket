@@ -31,8 +31,6 @@ members = [
 
     "parse-datetime",
 
-    "preinit/laika",
-
     "updater/block-party",
     "updater/signpost",
     "updater/update_metadata",

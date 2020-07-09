@@ -16,7 +16,6 @@ source-groups = [
     "webpki-roots-shim",
     "logdog",
     "models",
-    "preinit",
 ]
 
 [lib]
