@@ -349,3 +349,77 @@ mod test_version {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// DNSDomain represents a string that is a valid DNS domain. It stores the
+/// original string and makes it accessible through standard traits. Its purpose
+/// is input validation, for example validating the kubelet's "clusterDomain"
+/// config value.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct DNSDomain {
+    inner: String,
+}
+
+impl TryFrom<&str> for DNSDomain {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(input.len() <= 253, error::InvalidDomainName { input });
+
+        let labels = input.split(".");
+        for (i, label) in labels.enumerate() {
+            ensure!(i < 127, error::InvalidDomainName { input });
+            ensure!(label.len() <= 63, error::InvalidDomainName { input });
+            let last = label.len() - 1;
+            for (j, c) in label.chars().enumerate() {
+                ensure!(
+                    (j != 0 && j != last && (c.is_alphanumeric() || c == '-'))
+                        || c.is_alphanumeric(),
+                    error::InvalidDomainName { input }
+                );
+            }
+        }
+
+        Ok(Self {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(DNSDomain, "DNSDomain");
+
+#[cfg(test)]
+mod test_dns_domain {
+    use super::DNSDomain;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_dns_domain() {
+        for ok in &[
+            "cluster.local",
+            "dev.eks",
+            "stage.eks",
+            "prod.eks",
+            "1-good.local",
+            &"a".repeat(63),
+            &format!("a{}", ".a".repeat(126)),
+        ] {
+            assert!(DNSDomain::try_from(*ok).is_ok());
+        }
+    }
+
+    #[test]
+    fn invalid_dns_domain() {
+        for err in &[
+            "-bad.com",
+            "bad-.com",
+            "-bad-.com",
+            "b_ad.com",
+            &"a".repeat(64),
+            &format!("a{}", ".a".repeat(127)),
+        ] {
+            assert!(DNSDomain::try_from(*err).is_err());
+        }
+    }
+}

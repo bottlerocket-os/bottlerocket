@@ -44,6 +44,9 @@ pub mod error {
 
         #[snafu(display("Given invalid cluster name '{}': {}", name, msg))]
         InvalidClusterName { name: String, msg: String },
+
+        #[snafu(display("Invalid domain name '{}'", input))]
+        InvalidDomainName { input: String },
     }
 }
 
