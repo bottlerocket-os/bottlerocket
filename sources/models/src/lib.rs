@@ -76,7 +76,7 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    FriendlyVersion, KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue,
+    DNSDomain, FriendlyVersion, KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue,
     KubernetesTaintValue, SingleLineString, Url, ValidBase64,
 };
 
@@ -94,6 +94,7 @@ struct KubernetesSettings {
     // Dynamic settings.
     max_pods: u32,
     cluster_dns_ip: Ipv4Addr,
+    cluster_domain: DNSDomain,
     node_ip: Ipv4Addr,
     pod_infra_container_image: SingleLineString,
 }
