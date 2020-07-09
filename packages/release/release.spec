@@ -22,6 +22,7 @@ Source1008: opt.mount
 Source1009: usr-src-kernels.mount.in
 Source1010: var-lib-bottlerocket.mount
 Source1011: usr-share-licenses.mount.in
+Source1012: etc-cni.mount
 
 BuildArch: noarch
 Requires: %{_cross_os}acpid
@@ -92,7 +93,9 @@ ID=bottlerocket
 EOF
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1010} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 \
+  %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1010} %{S:1012} \
+  %{buildroot}%{_cross_unitdir}
 # Mounting on usr/src/kernels requires using the real path: %{_cross_usrsrc}/kernels
 KERNELPATH=$(systemd-escape --path %{_cross_usrsrc}/kernels)
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1009} > ${KERNELPATH}.mount
@@ -117,6 +120,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 %{_cross_unitdir}/prepare-local.service
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
+%{_cross_unitdir}/etc-cni.mount
 %{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/*-licenses.mount
 %{_cross_unitdir}/var-lib-bottlerocket.mount
