@@ -80,7 +80,7 @@
 (filecon "/dev/.*" any ())
 
 ; Label tmpfs mounts.
-(filecon "/etc" any any)
+(filecon "/etc" any etc)
 (filecon "/etc/.*" any ())
 (filecon "/tmp" any any)
 (filecon "/tmp/.*" any ())

@@ -85,11 +85,19 @@
 ; They can also set watches on those objects.
 (allow all_s self (files (mutate watch)))
 
-; All subjects are allowed to write to and set watches for "foreign"
-; and "ephemeral" objects, such as files in /mnt and /tmp.
-; They can also manage mounts for "foreign" objects.
-(allow all_s ephemeral_o (files (mutate watch)))
-(allow all_s foreign_o (files (mutate watch mount)))
+; All subjects are allowed to write to, set watches for, and manage
+; mounts for "ephemeral" objects, such as files in /mnt and /tmp.
+(allow all_s ephemeral_o (files (mutate watch mount)))
+
+; Trusted subjects are allowed to write to, set watches for, and
+; manage mounts for "dynamic" files in /etc.
+(allow trusted_s dynamic_o (files (mutate watch mount)))
+
+; wicked calls netdog which writes /etc/resolv.conf.
+(allow network_t etc_t (files (mutate)))
+
+; Other subjects cannot modify these "dynamic" files.
+(neverallow other_s dynamic_o (files (mutate watch mount)))
 
 ; Most subjects are allowed to write to, set watches for, and manage
 ; mounts for "local" files and directories on /local.
@@ -144,7 +152,7 @@
 
 ; Files that exist elsewhere should not be an entrypoint.
 (neverallow all_s ephemeral_o (files (enter)))
-(neverallow all_s foreign_o (files (enter)))
+(neverallow all_s dynamic_o (files (enter)))
 
 ; All subjects are allowed to use most actions related to sockets,
 ; networks, and IPC mechanisms.

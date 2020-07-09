@@ -45,6 +45,11 @@
 (roletype object_r any_t)
 (context any (system_u object_r any_t s0))
 
+; Files for system configuration.
+(type etc_t)
+(roletype object_r etc_t)
+(context etc (system_u object_r etc_t s0))
+
 ; Files that have no label, or perhaps an invalid label.
 (type unlabeled_t)
 (roletype object_r unlabeled_t)
@@ -85,9 +90,9 @@
 (roletype object_r external_t)
 (context external (system_u object_r external_t s0))
 
-; Ephemeral objects reside on temporary storage.
-(typeattribute ephemeral_o)
-(typeattributeset ephemeral_o (any_t))
+; Dynamic objects are files on temporary storage with special rules.
+(typeattribute dynamic_o)
+(typeattributeset dynamic_o (etc_t))
 
 ; Protected objects are files on local storage with special rules.
 (typeattribute protected_o)
@@ -100,16 +105,17 @@
   os_t init_exec_t api_exec_t clock_exec_t
   network_exec_t bus_exec_t runtime_exec_t))
 
-; Foreign objects reside on storage with a different lifecycle from
-; the rest of the OS, such as EBS volumes and EFS filesystems.
-(typeattribute foreign_o)
-(typeattributeset foreign_o (external_t unlabeled_t))
+; Ephemeral objects reside on storage with a different lifecycle
+; from the rest of the OS, such as tmpfs filesystems, EBS volumes,
+; and EFS filesystems.
+(typeattribute ephemeral_o)
+(typeattributeset ephemeral_o (any_t external_t unlabeled_t))
 
 ; The set of all objects.
 (typeattribute all_o)
 (typeattributeset all_o (
   os_t init_exec_t api_exec_t clock_exec_t
   network_exec_t bus_exec_t runtime_exec_t
-  any_t unlabeled_t external_t
+  any_t etc_t unlabeled_t external_t
   local_t private_t cache_t
   lease_t measure_t state_t))
