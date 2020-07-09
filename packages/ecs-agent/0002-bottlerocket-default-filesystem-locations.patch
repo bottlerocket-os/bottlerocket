@@ -1,0 +1,82 @@
+From f3e8123fc244d256e95f0dac0a12ee8cf383d92a Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Wed, 8 Jul 2020 11:18:35 -0700
+Subject: [PATCH 1/2] bottlerocket: default filesystem locations
+
+---
+ agent/config/config.go      | 6 +++---
+ agent/config/config_unix.go | 4 ++--
+ agent/utils/license.go      | 6 +++---
+ 3 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/agent/config/config.go b/agent/config/config.go
+index 1079684b..b11c0153 100644
+--- a/agent/config/config.go
++++ b/agent/config/config.go
+@@ -51,7 +51,7 @@ const (
+ 	AgentPrometheusExpositionPort = 51680
+ 
+ 	// defaultConfigFileName is the default (json-formatted) config file
+-	defaultConfigFileName = "/etc/ecs_container_agent/config.json"
++	defaultConfigFileName = "/etc/ecs/ecs.config.json"
+ 
+ 	// DefaultClusterName is the name of the default cluster.
+ 	DefaultClusterName = "default"
+@@ -115,13 +115,13 @@ const (
+ 	minimumNumImagesToDeletePerCycle = 1
+ 
+ 	// defaultCNIPluginsPath is the default path where cni binaries are located
+-	defaultCNIPluginsPath = "/amazon-ecs-cni-plugins"
++	defaultCNIPluginsPath = "/usr/lib/amazon-ecs-agent/cni-plugins"
+ 
+ 	// DefaultMinSupportedCNIVersion denotes the minimum version of cni spec required
+ 	DefaultMinSupportedCNIVersion = "0.3.0"
+ 
+ 	// pauseContainerTarball is the path to the pause container tarball
+-	pauseContainerTarballPath = "/images/amazon-ecs-pause.tar"
++	pauseContainerTarballPath = "/usr/lib/amazon-ecs-agent/amazon-ecs-pause.tar"
+ 
+ 	// DefaultTaskMetadataSteadyStateRate is set as 40. This is arrived from our benchmarking
+ 	// results where task endpoint can handle 4000 rps effectively. Here, 100 containers
+diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
+index ac5f5d0f..86984db4 100644
+--- a/agent/config/config_unix.go
++++ b/agent/config/config_unix.go
+@@ -27,7 +27,7 @@ const (
+ 	// AgentCredentialsAddress is used to serve the credentials for tasks.
+ 	AgentCredentialsAddress = "" // this is left blank right now for net=bridge
+ 	// defaultAuditLogFile specifies the default audit log filename
+-	defaultCredentialsAuditLogFile = "/log/audit.log"
++	defaultCredentialsAuditLogFile = "/var/log/ecs/audit.log"
+ 	// DefaultTaskCgroupPrefix is default cgroup prefix for ECS tasks
+ 	DefaultTaskCgroupPrefix = "/ecs"
+ 
+@@ -48,7 +48,7 @@ func DefaultConfig() Config {
+ 		DockerEndpoint:                      "unix:///var/run/docker.sock",
+ 		ReservedPorts:                       []uint16{SSHPort, DockerReservedPort, DockerReservedSSLPort, AgentIntrospectionPort, AgentCredentialsPort},
+ 		ReservedPortsUDP:                    []uint16{},
+-		DataDir:                             "/data/",
++		DataDir:                             "/var/lib/ecs/data",
+ 		DataDirOnHost:                       "/var/lib/ecs",
+ 		DisableMetrics:                      false,
+ 		ReservedMemory:                      0,
+diff --git a/agent/utils/license.go b/agent/utils/license.go
+index 6eccff6a..324307cd 100644
+--- a/agent/utils/license.go
++++ b/agent/utils/license.go
+@@ -24,9 +24,9 @@ type LicenseProvider interface {
+ type licenseProvider struct{}
+ 
+ const (
+-	licenseFile    = "LICENSE"
+-	noticeFile     = "NOTICE"
+-	thirdPartyFile = "THIRD-PARTY"
++	licenseFile    = "/usr/share/licenses/ecs-agent/LICENSE"
++	noticeFile     = "/usr/share/licenses/ecs-agent/NOTICE"
++	thirdPartyFile = "/usr/share/licenses/ecs-agent/THIRD-PARTY"
+ )
+ 
+ var readFile = ioutil.ReadFile
+-- 
+2.27.0
+

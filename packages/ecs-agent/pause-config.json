@@ -1,0 +1,1 @@
+{"author":"Amazon Web Services, Inc.","config":{"Cmd":["/usr/bin/pause"],"ArgsEscaped":true},"created":"2014-12-12T01:12:53.332832423Z","history":[{"created":"2014-12-12T01:12:53.332832423Z","author":"Amazon Web Services, Inc.","created_by":"[] + [] === \"\"","empty_layer":true}],"os":"linux","rootfs":{"type":"layers","diff_ids":["sha256:~~digest~~"]}}

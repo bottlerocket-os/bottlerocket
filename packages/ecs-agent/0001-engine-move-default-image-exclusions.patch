@@ -1,0 +1,145 @@
+From c2a7cea2edeae59cdc6ca31696e36f7e922ae71f Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Wed, 8 Jul 2020 10:05:12 -0700
+Subject: [PATCH] engine: move default image exclusions
+
+This commit moves the logic adding default excluded images from the
+cleanup list to the engine package, away from the config package, and in
+doing so fixes two bugs:
+
+1. Prior to this change, any value for ImageCleanupExclusionList
+   provided by a config mechanism *other* than environmentConfig would
+   be ignored.  This is because environmentConfig has the highest
+   precedence, the defaults were added to environmentConfig by
+   parseImageCleanupExclusionList, and config.Merge will only merge a
+   new value when the left config's field is its zero value.  Since the
+   default excluded images were populated, environmentConfig's
+   ImageCleanupExclusionList field was never zero.
+2. CachedImageNamePauseContainer hard-coded a name for the pause
+   container image that was used to populate the exclusion list, but the
+   actual name of the pause container is a value populated at link-time
+   into the DefaultPauseContainerImageName and DefaultPauseContainerTag
+   variables.  If the value was set to anything other than what was
+   defined in CachedImageNamePauseContainer, the pause container image
+   would not be correctly excluded from image cleanup.
+
+Signed-off-by: Samuel Karp <skarp@amazon.com>
+---
+ agent/config/config.go                    |  1 -
+ agent/config/config_test.go               |  2 +-
+ agent/config/parse.go                     |  7 +------
+ agent/engine/docker_image_manager.go      | 15 ++++++++++++++-
+ agent/engine/docker_image_manager_test.go | 17 +++++++++++++++++
+ 5 files changed, 33 insertions(+), 9 deletions(-)
+
+diff --git a/agent/config/config.go b/agent/config/config.go
+index 1079684b..20f2f684 100644
+--- a/agent/config/config.go
++++ b/agent/config/config.go
+@@ -132,7 +132,6 @@ const (
+ 	DefaultTaskMetadataBurstRate = 60
+ 
+ 	//Known cached image names
+-	CachedImageNamePauseContainer = "amazon/amazon-ecs-pause:0.1.0"
+ 	CachedImageNameAgentContainer = "amazon/amazon-ecs-agent:latest"
+ 
+ 	// DefaultNvidiaRuntime is the name of the runtime to pass Nvidia GPUs to containers
+diff --git a/agent/config/config_test.go b/agent/config/config_test.go
+index e4ae71ab..3ac2d9e2 100644
+--- a/agent/config/config_test.go
++++ b/agent/config/config_test.go
+@@ -419,7 +419,7 @@ func TestValidForImagesCleanupExclusion(t *testing.T) {
+ 	defer setTestRegion()()
+ 	defer setTestEnv("ECS_EXCLUDE_UNTRACKED_IMAGE", "amazonlinux:2,amazonlinux:3")()
+ 	imagesNotDelete := parseImageCleanupExclusionList("ECS_EXCLUDE_UNTRACKED_IMAGE")
+-	expectedImages := []string{"amazonlinux:2", "amazonlinux:3", CachedImageNameAgentContainer, CachedImageNamePauseContainer}
++	expectedImages := []string{"amazonlinux:2", "amazonlinux:3"}
+ 	assert.Equal(t, expectedImages, imagesNotDelete, "unexpected imageCleanupExclusionList")
+ }
+ 
+diff --git a/agent/config/parse.go b/agent/config/parse.go
+index 186f126d..ef1165af 100644
+--- a/agent/config/parse.go
++++ b/agent/config/parse.go
+@@ -309,16 +309,11 @@ func parseImageCleanupExclusionList(envVar string) []string {
+ 	var imageCleanupExclusionList []string
+ 	if imageEnv == "" {
+ 		seelog.Debugf("Environment variable empty: %s", imageEnv)
++		return nil
+ 	} else {
+ 		imageCleanupExclusionList = strings.Split(imageEnv, ",")
+ 	}
+ 
+-	// append known cached internal images to imageCleanupExclusionLis
+-	imageCleanupExclusionList = append(imageCleanupExclusionList, CachedImageNameAgentContainer, CachedImageNamePauseContainer)
+-
+-	for _, image := range imageCleanupExclusionList {
+-		seelog.Infof("Image excluded from cleanup: %s", image)
+-	}
+ 	return imageCleanupExclusionList
+ }
+ 
+diff --git a/agent/engine/docker_image_manager.go b/agent/engine/docker_image_manager.go
+index 2d575457..22815db5 100644
+--- a/agent/engine/docker_image_manager.go
++++ b/agent/engine/docker_image_manager.go
+@@ -81,7 +81,7 @@ func NewImageManager(cfg *config.Config, client dockerapi.DockerClient, state do
+ 		numImagesToDelete:                  cfg.NumImagesToDeletePerCycle,
+ 		imageCleanupTimeInterval:           cfg.ImageCleanupInterval,
+ 		imagePullBehavior:                  cfg.ImagePullBehavior,
+-		imageCleanupExclusionList:          cfg.ImageCleanupExclusionList,
++		imageCleanupExclusionList:          buildImageCleanupExclusionList(cfg),
+ 		deleteNonECSImagesEnabled:          cfg.DeleteNonECSImagesEnabled,
+ 		nonECSContainerCleanupWaitDuration: cfg.TaskCleanupWaitDuration,
+ 		numNonECSContainersToDelete:        cfg.NumNonECSContainersToDeletePerCycle,
+@@ -89,6 +89,19 @@ func NewImageManager(cfg *config.Config, client dockerapi.DockerClient, state do
+ 	}
+ }
+ 
++func buildImageCleanupExclusionList(cfg *config.Config) []string {
++	// append known cached internal images to imageCleanupExclusionList
++	excludedImages := append(cfg.ImageCleanupExclusionList,
++		cfg.PauseContainerImageName+":"+cfg.PauseContainerTag,
++		config.DefaultPauseContainerImageName+":"+config.DefaultPauseContainerTag,
++		config.CachedImageNameAgentContainer,
++	)
++	for _, image := range excludedImages {
++		seelog.Infof("Image excluded from cleanup: %s", image)
++	}
++	return excludedImages
++}
++
+ func (imageManager *dockerImageManager) SetSaver(stateManager statemanager.Saver) {
+ 	imageManager.saver = stateManager
+ }
+diff --git a/agent/engine/docker_image_manager_test.go b/agent/engine/docker_image_manager_test.go
+index 6fbacba4..8a014dc3 100644
+--- a/agent/engine/docker_image_manager_test.go
++++ b/agent/engine/docker_image_manager_test.go
+@@ -44,6 +44,23 @@ func defaultTestConfig() *config.Config {
+ 	return cfg
+ }
+ 
++func TestNewImageManagerExcludesCachedImages(t *testing.T) {
++	cfg := defaultTestConfig()
++	cfg.PauseContainerImageName = "pause-name"
++	cfg.PauseContainerTag = "pause-tag"
++	cfg.ImageCleanupExclusionList = []string{"excluded:1"}
++	expected := []string{
++		"excluded:1",
++		"pause-name:pause-tag",
++		config.DefaultPauseContainerImageName + ":" + config.DefaultPauseContainerTag,
++		config.CachedImageNameAgentContainer,
++	}
++	imageManager := NewImageManager(cfg, nil, nil)
++	dockerImageManager, ok := imageManager.(*dockerImageManager)
++	require.True(t, ok, "imageManager must be *dockerImageManager")
++	assert.ElementsMatch(t, expected, dockerImageManager.imageCleanupExclusionList)
++}
++
+ // TestImagePullRemoveDeadlock tests if there's a deadlock when trying to
+ // pull an image while image clean up is in progress
+ func TestImagePullRemoveDeadlock(t *testing.T) {
+-- 
+2.27.0
+
