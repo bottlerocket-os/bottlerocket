@@ -20,7 +20,7 @@ semver = "0.9"
 simplelog = "0.7"
 snafu = "0.6"
 tempfile = "3.1.0"
-tough = "0.6.0"
+tough = "0.7.1"
 update_metadata = { path = "../../../updater/update_metadata" }
 url = "2.1.1"
 
