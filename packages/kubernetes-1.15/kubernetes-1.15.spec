@@ -30,6 +30,8 @@ Patch4: 0004-override-SELinux-label-for-kubelet-plugins.patch
 # https://github.com/kubernetes/kubernetes/commit/8618c09
 Patch5: 0005-opt-out-of-module-mode-for-builds.patch
 
+Patch6: 0006-kubelet-block-non-forwarded-packets.patch
+
 BuildRequires: git
 BuildRequires: rsync
 BuildRequires: %{_cross_os}glibc-devel
