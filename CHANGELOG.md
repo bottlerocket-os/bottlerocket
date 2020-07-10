@@ -1,3 +1,49 @@
+# v0.4.1 (2020-07-13)
+
+## Security fixes
+
+* Patch Kubernetes for CVE-2020-8558 ([#977])
+* Update `tough` to 0.7.1 to patch CVE-2020-15093 ([#979])
+
+## OS changes
+
+* Add a new `aws-k8s-1.17` variant for Kubernetes 1.17 ([#973])
+* Confine `chrony`, `wicked`, and `dbus-broker` via SELinux, and persist their state to disk ([#970])
+* Persist `systemd` journal to disk ([#970])
+* Add an API for OS updates ([#942], [#959], [#986])
+* Add migration helpers to add / remove multiple settings at once ([#958])
+* Fix SELinux policy to allow CSI driver mounts and transition used by Kaniko ([#983])
+* Update to new repo URL via migration to ensure signed migration support ([#980])
+
+## Build changes
+
+* Fix environment variable override for build output directory ([#963])
+* Update `.dockerignore` to account for the new build output directory structure ([#967])
+* Remove the `preview-docs` task from `Makefile` ([#969])
+
+## Documentation changes
+
+* Document new update APIs and add associated diagrams ([#962])
+* Add `ap-south-1` to supported regions ([#965])
+* Fix `storewolf`'s documentation and usage message as it expects a semver value ([#957])
+
+[#942]: https://github.com/bottlerocket-os/bottlerocket/pull/942
+[#957]: https://github.com/bottlerocket-os/bottlerocket/pull/957
+[#958]: https://github.com/bottlerocket-os/bottlerocket/pull/958
+[#959]: https://github.com/bottlerocket-os/bottlerocket/pull/959
+[#962]: https://github.com/bottlerocket-os/bottlerocket/pull/962
+[#963]: https://github.com/bottlerocket-os/bottlerocket/pull/963
+[#965]: https://github.com/bottlerocket-os/bottlerocket/pull/965
+[#967]: https://github.com/bottlerocket-os/bottlerocket/pull/967
+[#969]: https://github.com/bottlerocket-os/bottlerocket/pull/969
+[#970]: https://github.com/bottlerocket-os/bottlerocket/pull/970
+[#973]: https://github.com/bottlerocket-os/bottlerocket/pull/973
+[#977]: https://github.com/bottlerocket-os/bottlerocket/pull/977
+[#979]: https://github.com/bottlerocket-os/bottlerocket/pull/979
+[#980]: https://github.com/bottlerocket-os/bottlerocket/pull/980
+[#983]: https://github.com/bottlerocket-os/bottlerocket/pull/983
+[#986]: https://github.com/bottlerocket-os/bottlerocket/pull/986
+
 # v0.4.0 (2020-06-25)
 
 ## Breaking changes
