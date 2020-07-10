@@ -1,0 +1,14 @@
+[Unit]
+Description=CNI Configuration Directory (/etc/cni)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+
+[Mount]
+What=tmpfs
+Where=/etc/cni
+Type=tmpfs
+Options=nosuid,nodev,noexec,noatime
+
+[Install]
+WantedBy=local-fs.target

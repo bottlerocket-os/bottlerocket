@@ -1,7 +1,7 @@
-From c867691ea344e8d518dac292e082e832dafa87a0 Mon Sep 17 00:00:00 2001
+From b080e8af77c4484a3fdd40c599454b69e5a193a5 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 16 Apr 2020 15:10:41 +0000
-Subject: [PATCH 9003/9004] repart: always use random UUIDs
+Subject: [PATCH 9003/9005] repart: always use random UUIDs
 
 We would like to avoid adding OpenSSL to the base OS, and for our use
 case we do not need the UUIDs assigned to disks or partitions to be

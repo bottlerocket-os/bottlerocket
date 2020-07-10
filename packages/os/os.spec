@@ -142,11 +142,6 @@ Summary: Bottlerocket log extractor
 %description -n %{_cross_os}logdog
 use logdog to extract logs from the Bottlerocket host
 
-%package -n %{_cross_os}preinit
-Summary: Bottlerocket pre-init system setup
-%description -n %{_cross_os}preinit
-%{summary}.
-
 %package -n %{_cross_os}migrations
 Summary: Thar data store migrations
 %description -n %{_cross_os}migrations
@@ -177,7 +172,6 @@ mkdir bin
     -p updog \
     -p logdog \
     -p growpart \
-    -p laika \
     %{nil}
 
 %cargo_build_static --manifest-path %{_builddir}/sources/Cargo.toml \
@@ -207,7 +201,7 @@ for p in apiclient ; do
 done
 
 install -d %{buildroot}%{_cross_sbindir}
-for p in growpart preinit ; do
+for p in growpart ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_sbindir}
 done
 
@@ -335,8 +329,5 @@ install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.co
 
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog
-
-%files -n %{_cross_os}preinit
-%{_cross_sbindir}/preinit
 
 %changelog

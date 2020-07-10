@@ -12,7 +12,6 @@
   Used for system maintenance and connectivity.
 * [**host-ctr**](sources/host-ctr): The program started by `host-containers@.service` for each host container.
   Its job is to start the specified host container on the “host” instance of containerd, which is separate from the “user” instance of containerd used for Kubernetes pods.
-* [**laika**](sources/preinit/laika): A crate that builds a binary (`/sbin/preinit`) that's used to mount filesystems before starting init (`systemd`).
 * [**model**](sources/models): The API system has a data model defined for each variant, and this model is used by other programs to serialize and deserialize requests while maintaining safety around data types.
 * [**netdog**](sources/api/netdog): A program called by wicked to retrieve and write out network configuration from DHCP.
 * [**pluto**](sources/api/pluto): A setting generator called by sundog to find networking settings required by Kubernetes.
