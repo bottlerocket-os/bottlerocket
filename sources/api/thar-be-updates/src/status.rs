@@ -288,14 +288,17 @@ impl UpdateStatus {
                 FriendlyVersion::try_into(locked_version.to_owned()).context(error::SemVer {
                     version: locked_version,
                 })?;
-            for update in &updates {
-                if update.version == chosen_version {
-                    self.chosen_update = Some(UpdateImage {
-                        arch: update.arch.clone(),
-                        version: chosen_version,
-                        variant: update.variant.clone(),
-                    });
-                    return Ok(true);
+            let os_info = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+            if chosen_version != os_info.version_id {
+                for update in &updates {
+                    if update.version == chosen_version {
+                        self.chosen_update = Some(UpdateImage {
+                            arch: update.arch.clone(),
+                            version: chosen_version,
+                            variant: update.variant.clone(),
+                        });
+                        return Ok(true);
+                    }
                 }
             }
         }

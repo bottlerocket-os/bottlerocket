@@ -156,26 +156,47 @@ fn applicable_updates<'a>(manifest: &'a Manifest, variant: &str) -> Vec<&'a Upda
 //  Ignore Any Target
 //  ...
 fn update_required<'a>(
-    _config: &Config,
+    config: &Config,
     manifest: &'a Manifest,
     version: &Version,
     variant: &str,
     force_version: Option<Version>,
-) -> Option<&'a Update> {
+) -> Result<Option<&'a Update>> {
     let updates = applicable_updates(manifest, variant);
 
     if let Some(forced_version) = force_version {
-        return updates.into_iter().find(|u| u.version == forced_version);
+        return Ok(updates.into_iter().find(|u| u.version == forced_version));
+    }
+
+    if config.version_lock != "latest" {
+        // Make sure the version string from the config is a valid version string that might be prefixed with 'v'
+        let version_lock = FriendlyVersion::try_from(config.version_lock.as_str()).context(
+            error::BadVersionConfig {
+                version_str: config.version_lock.to_owned(),
+            },
+        )?;
+        // Convert back to semver::Version
+        let semver_version_lock = version_lock.try_into().with_context(|| error::BadVersion {
+            version_str: config.version_lock.to_owned(),
+        })?;
+        // If the configured version-lock matches our current version, we won't update to the same version
+        return if semver_version_lock == *version {
+            Ok(None)
+        } else {
+            Ok(updates
+                .into_iter()
+                .find(|u| u.version == semver_version_lock))
+        };
     }
 
     for update in updates {
         // If the current running version is greater than the max version ever published,
         // or moves us to a valid version <= the maximum version, update.
         if *version < update.version || *version > update.max_version {
-            return Some(update);
+            return Ok(Some(update));
         }
     }
-    None
+    Ok(None)
 }
 
 fn write_target_to_disk<P: AsRef<Path>>(
@@ -458,31 +479,6 @@ fn initiate_reboot() -> Result<()> {
     Ok(())
 }
 
-/// Returns the target version. `force_version` takes priority. If that's not specified, take it from the config.
-fn get_target_version(config: &Config, force_version: &Option<Version>) -> Result<Option<Version>> {
-    // If a version is specified on the command line, return it as the target version
-    if let Some(version) = force_version {
-        return Ok(Some(version.to_owned()));
-    }
-    // If no version is specified on the command line, get the target version from the config
-    // If the version is locked to 'latest', we return None for the target version to indicate that
-    else if config.version_lock == "latest" {
-        return Ok(None);
-    }
-    // Make sure the version string from the config is a valid version string that might be prefixed with 'v'
-    let version = FriendlyVersion::try_from(config.version_lock.as_str()).with_context(|| {
-        error::BadVersionConfig {
-            version_str: config.version_lock.to_owned(),
-        }
-    })?;
-    // Convert back to semver::Version
-    Ok(Some(version.try_into().with_context(|| {
-        error::BadVersion {
-            version_str: config.version_lock.to_owned(),
-        }
-    })?))
-}
-
 #[allow(clippy::too_many_lines)]
 fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
@@ -507,7 +503,6 @@ fn main_inner() -> Result<()> {
     let tough_datastore = TempDir::new().context(error::CreateTempDir)?;
     let repository = load_repository(&transport, &config, tough_datastore.path())?;
     let manifest = load_manifest(&repository)?;
-    let forced_version = get_target_version(&config, &arguments.force_version)?;
     let ignore_waves = arguments.ignore_waves || config.ignore_waves;
     match command {
         Command::CheckUpdate | Command::Whats => {
@@ -520,8 +515,8 @@ fn main_inner() -> Result<()> {
                 &manifest,
                 &current_release.version_id,
                 &variant,
-                forced_version,
-            )
+                arguments.force_version,
+            )?
             .context(error::UpdateNotAvailable)?;
 
             if !ignore_waves {
@@ -540,8 +535,8 @@ fn main_inner() -> Result<()> {
                 &manifest,
                 &current_release.version_id,
                 &variant,
-                forced_version,
-            ) {
+                arguments.force_version,
+            )? {
                 if ignore_waves || u.update_ready(config.seed) {
                     eprintln!("Starting update to {}", u.version);
 
@@ -762,7 +757,9 @@ mod tests {
         let variant = String::from("bottlerocket-aws-eks");
 
         assert!(
-            update_required(&config, &manifest, &version, &variant, None).is_none(),
+            update_required(&config, &manifest, &version, &variant, None)
+                .unwrap()
+                .is_none(),
             "Updog tried to exceed max_version"
         );
     }
@@ -782,7 +779,7 @@ mod tests {
 
         let version = Version::parse("0.1.3").unwrap();
         let variant = String::from("aws-k8s-1.15");
-        let update = update_required(&config, &manifest, &version, &variant, None);
+        let update = update_required(&config, &manifest, &version, &variant, None).unwrap();
 
         assert!(update.is_some(), "Updog ignored max version");
         assert!(
@@ -809,7 +806,7 @@ mod tests {
 
         let version = Version::parse("1.10.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
-        let result = update_required(&config, &manifest, &version, &variant, None);
+        let result = update_required(&config, &manifest, &version, &variant, None).unwrap();
 
         assert!(result.is_some(), "Updog failed to find an update");
 
@@ -841,7 +838,7 @@ mod tests {
         let version = Version::parse("1.10.0").unwrap();
         let forced = Version::parse("1.13.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
-        let result = update_required(&config, &manifest, &version, &variant, Some(forced));
+        let result = update_required(&config, &manifest, &version, &variant, Some(forced)).unwrap();
 
         assert!(result.is_some(), "Updog failed to find an update");
 
@@ -983,7 +980,9 @@ mod tests {
         manifest.updates.push(update);
 
         let potential_update =
-            update_required(&config, &manifest, &current_version, &variant, None).unwrap();
+            update_required(&config, &manifest, &current_version, &variant, None)
+                .unwrap()
+                .unwrap();
 
         assert!(
             potential_update.update_ready(512),
