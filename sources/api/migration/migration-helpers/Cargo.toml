@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 apiserver = { path = "../../apiserver" }
+bottlerocket-release = { path = "../../../bottlerocket-release" }
 schnauzer = { path = "../../schnauzer" }
 handlebars = "3.0.1"
 snafu = "0.6"

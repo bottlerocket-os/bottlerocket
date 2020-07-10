@@ -1,12 +1,14 @@
 //! This module contains the functions that interact with the data store, retrieving data to
 //! migrate and writing back migrated data.
 
+use bottlerocket_release::BottlerocketRelease;
 use snafu::ResultExt;
 use std::collections::HashMap;
 
 use crate::{error, MigrationData, Result};
 use apiserver::datastore::{
-    deserialize_scalar, serialize_scalar, Committed, DataStore, Key, KeyType,
+    deserialize_scalar, serialization::to_pairs_with_prefix, serialize_scalar, Committed,
+    DataStore, Key, KeyType,
 };
 
 // To get input data from the existing data store, we use datastore methods, because we assume
@@ -33,6 +35,15 @@ pub(crate) fn get_input_data<D: DataStore>(
         let value =
             deserialize_scalar(&value_str).context(error::Deserialize { input: value_str })?;
         data.insert(key_name.clone(), value);
+    }
+
+    // We also want to make "os.*" values, like variant and arch, available to migrations.
+    let release = BottlerocketRelease::new().context(error::BottlerocketRelease)?;
+    let os_pairs = to_pairs_with_prefix("os", &release).context(error::SerializeRelease)?;
+    for (data_key, value_str) in os_pairs.into_iter() {
+        let value =
+            deserialize_scalar(&value_str).context(error::Deserialize { input: value_str })?;
+        data.insert(data_key.name().clone(), value);
     }
 
     // Metadata isn't committed, it goes live immediately, so we only populate the metadata

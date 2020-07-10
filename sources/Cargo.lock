@@ -1376,6 +1376,7 @@ name = "migration-helpers"
 version = "0.1.0"
 dependencies = [
  "apiserver 0.1.0",
+ "bottlerocket-release 0.1.0",
  "handlebars 3.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "schnauzer 0.1.0",
  "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1769,6 +1770,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "pin-utils"
 version = "0.1.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "pivot-repo-2020-07-07"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+]
 
 [[package]]
 name = "pluto"
