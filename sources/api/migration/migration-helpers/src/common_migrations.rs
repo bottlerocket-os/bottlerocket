@@ -204,7 +204,8 @@ impl ReplaceTemplateMigration {
     ) -> Result<impl Serialize> {
         let mut datastore: HashMap<datastore::Key, String> = HashMap::new();
         for (k, v) in input.iter() {
-            if k.starts_with("settings.") {
+            // The prefixes we want to make available; these each have to be deserialized below.
+            if k.starts_with("settings.") || k.starts_with("os.") {
                 datastore.insert(
                     datastore::Key::new(datastore::KeyType::Data, k).context(error::NewKey)?,
                     // We want the serialized form here, to work with the datastore deserialization code.
@@ -216,14 +217,24 @@ impl ReplaceTemplateMigration {
         // Note this is a workaround because we don't have a top level model structure that encompasses 'settings'.
         // We need to use `from_map_with_prefix` because we don't have a struct; it strips away the
         // "settings" layer, which we then add back on with a wrapping HashMap.
-        let input_data: HashMap<String, serde_json::Value> =
+        let settings_data: HashMap<String, serde_json::Value> =
             datastore::deserialization::from_map_with_prefix(
                 Some("settings".to_string()),
                 &datastore,
             )
             .context(error::DeserializeDatastore)?;
+        // Same for "os.*"
+        let os_data: HashMap<String, serde_json::Value> =
+            datastore::deserialization::from_map_with_prefix(
+                Some("os".to_string()),
+                &datastore,
+            )
+            .context(error::DeserializeDatastore)?;
+
         let mut structured_data = HashMap::new();
-        structured_data.insert("settings", input_data);
+        structured_data.insert("settings", settings_data);
+        structured_data.insert("os", os_data);
+
         Ok(structured_data)
     }
 

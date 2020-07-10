@@ -8,6 +8,11 @@ use apiserver::datastore;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
 pub enum Error {
+    #[snafu(display("Unable to get system release data: {}", source))]
+    BottlerocketRelease {
+        source: bottlerocket_release::Error,
+    },
+
     #[snafu(display("Unable to get {:?} data for migration: {}", committed, source))]
     GetData {
         committed: datastore::Committed,
@@ -25,6 +30,9 @@ pub enum Error {
 
     #[snafu(display("Unable to serialize Value: {}", source))]
     Serialize { source: datastore::ScalarError },
+
+    #[snafu(display("Unable to serialize release data: {}", source))]
+    SerializeRelease { source: datastore::serialization::Error },
 
     #[snafu(display("Unable to write to data store: {}", source))]
     DataStoreWrite { source: datastore::Error },
