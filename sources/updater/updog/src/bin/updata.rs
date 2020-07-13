@@ -59,11 +59,7 @@ struct AddUpdateArgs {
 
 impl AddUpdateArgs {
     fn run(self) -> Result<()> {
-        let mut manifest: Manifest = match update_metadata::load_file(&self.file) {
-            Ok(m) => m,
-            _ => Manifest::default(), // TODO only if EEXIST
-        };
-
+        let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
         manifest.add_update(
             self.image_version,
             self.max_version,
