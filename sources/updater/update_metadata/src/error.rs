@@ -71,7 +71,7 @@ pub enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to read manifest file {}: {}", path.display(), source))]
+    #[snafu(display("Failed to read manifest file '{}' - do you need to `updata init`? ({})", path.display(), source))]
     ManifestRead {
         path: PathBuf,
         source: std::io::Error,
