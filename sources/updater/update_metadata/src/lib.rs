@@ -5,10 +5,9 @@ pub mod error;
 mod se;
 
 use crate::error::Result;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use parse_datetime::parse_offset;
-use rand::{thread_rng, Rng};
 use regex::Regex;
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -320,34 +319,40 @@ impl Update {
         }
     }
 
+    /// Returns whether the update is truly available. A update is said to be 'ready/available' if the wave
+    /// this instance belongs to has fully passed, or if the instance's position in the wave has passed.
+    /// The position of the instance within the wave is determined by the seed value.
     pub fn update_ready(&self, seed: u32) -> bool {
-        // Has this client's wave started
-        if let Some(wave) = self.update_wave(seed) {
-            return wave.has_started();
-        }
-
-        // Or there are no waves
-        true
-    }
-
-    pub fn jitter(&self, seed: u32) -> Option<DateTime<Utc>> {
+        // If this instance is part of some update wave
         if let Some(wave) = self.update_wave(seed) {
             if wave.has_passed() {
-                return None;
+                return true;
             }
-            let bounds = match self.update_wave(seed) {
-                Some(Wave::Initial { end }) => Some((Utc::now(), end)),
-                Some(Wave::General { start, end }) => Some((start, end)),
-                Some(Wave::Last { start: _ }) | None => None,
+            let bound = match wave {
+                // For all intent and purposes, with the way we define update wave structures,
+                // the initial wave (0th wave) never has any updates.
+                // No seed value would ever land the instance in this initial wave. But if for whatever reason
+                // this instance is part of the initial (0th) wave, the update is going to be available
+                Wave::Initial { .. } => None,
+                Wave::General { start, end } => Some((start, Some(end))),
+                Wave::Last { start } => Some((start, None)),
             };
-            if let Some((start, end)) = bounds {
-                let mut rng = thread_rng();
-                if let Some(range) = end.timestamp().checked_sub(start.timestamp()) {
-                    return Some(start + Duration::seconds(rng.gen_range(1, range)));
+            if let Some((start, end)) = bound {
+                if let Some(end) = end {
+                    let wave_duration = end - start;
+                    let time_increment = wave_duration / MAX_SEED as i32;
+                    // Derive the target time position within the wave given the instance's seed.
+                    let target_time = start + (time_increment * (seed as i32));
+                    // If the current time is past the target time position in the wave, the update is
+                    // marked available
+                    return Utc::now() >= target_time;
+                } else {
+                    // Check if last wave has started
+                    return Utc::now() >= start;
                 }
             }
         }
-        None
+        true
     }
 }
 
@@ -417,6 +422,36 @@ pub fn load_manifest<T: tough::Transport>(repository: &tough::Repository<T>) -> 
             .context(error::ManifestNotFound)?,
     )
     .context(error::ManifestParse)
+}
+
+#[test]
+fn test_update_ready_with_seeds() {
+    use chrono::Duration;
+    use std::thread::sleep;
+    let mut waves = BTreeMap::new();
+    // One single wave (0th wave does not count) for every update that spans over 2048 millisecond,
+    // Each seed will be mapped to a single millisecond within this wave,
+    // e.g. seed 1 -> update is ready 1 millisecond past start of wave
+    // seed 500 -> update is ready 500 millisecond past start of wave, etc
+    waves.insert(0, Utc::now());
+    waves.insert(MAX_SEED, Utc::now() + Duration::milliseconds(MAX_SEED as i64));
+    let update = Update {
+        variant: "".to_string(),
+        arch: "".to_string(),
+        version: Version::parse("1.1.1").unwrap(),
+        max_version: Version::parse("1.1.1").unwrap(),
+        waves,
+        images: Images {
+            boot: String::from("boot"),
+            root: String::from("boot"),
+            hash: String::from("boot"),
+        },
+    };
+    assert!(!update.update_ready(100), "100 milliseconds hasn't passed yet");
+    sleep(Duration::milliseconds(101).to_std().unwrap());
+    assert!(update.update_ready(100));
+    sleep(Duration::milliseconds(100).to_std().unwrap());
+    assert!(update.update_ready(200));
 }
 
 #[test]
