@@ -7,18 +7,17 @@ mod transport;
 use crate::error::Result;
 use crate::transport::{HttpQueryRepo, HttpQueryTransport};
 use bottlerocket_release::BottlerocketRelease;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use model::modeled_types::FriendlyVersion;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use signal_hook::{iterator::Signals, SIGTERM};
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
-use snafu::{ensure, ErrorCompat, OptionExt, ResultExt};
+use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::convert::{TryFrom, TryInto};
-use std::fs::{self, File, OpenOptions, Permissions};
+use std::fs::{self, File, OpenOptions};
 use std::io;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
@@ -79,7 +78,7 @@ USAGE:
 
 SUBCOMMANDS:
     check-update            Show if an update is available
-        [ -a | --all ]                Output all applicable updates
+        [ -a | --all ]                Output all available updates, even if they're not upgrades
         [ --ignore-waves ]            Ignore release schedule when checking
                                       for a new update
 
@@ -89,7 +88,6 @@ SUBCOMMANDS:
         [ -i | --image version ]      Update to a specfic image version
         [ -n | --now ]                Update immediately, ignoring any release schedule
         [ -r | --reboot ]             Reboot into new update on success
-        [ -t | --timestamp time ]     The timestamp from which to execute an update
 
     update-image            Download & write an update but do not update flags
         [ -i | --image version ]      Update to a specfic image version
@@ -138,11 +136,21 @@ fn load_repository<'a>(
     .context(error::Metadata)
 }
 
-fn applicable_updates<'a>(manifest: &'a Manifest, variant: &str) -> Vec<&'a Update> {
+fn applicable_updates<'a>(
+    manifest: &'a Manifest,
+    variant: &str,
+    ignore_waves: bool,
+    seed: u32,
+) -> Vec<&'a Update> {
     let mut updates: Vec<&Update> = manifest
         .updates
         .iter()
-        .filter(|u| u.variant == *variant && u.arch == TARGET_ARCH && u.version <= u.max_version)
+        .filter(|u| {
+            u.variant == *variant
+                && u.arch == TARGET_ARCH
+                && u.version <= u.max_version
+                && (ignore_waves || u.update_ready(seed, Utc::now()))
+        })
         .collect();
     // sort descending
     updates.sort_unstable_by(|a, b| b.version.cmp(&a.version));
@@ -156,29 +164,32 @@ fn applicable_updates<'a>(manifest: &'a Manifest, variant: &str) -> Vec<&'a Upda
 //  Ignore Any Target
 //  ...
 fn update_required<'a>(
-    config: &Config,
     manifest: &'a Manifest,
     version: &Version,
     variant: &str,
+    ignore_waves: bool,
+    seed: u32,
+    version_lock: &str,
     force_version: Option<Version>,
 ) -> Result<Option<&'a Update>> {
-    let updates = applicable_updates(manifest, variant);
+    let updates = applicable_updates(manifest, variant, ignore_waves, seed);
 
     if let Some(forced_version) = force_version {
         return Ok(updates.into_iter().find(|u| u.version == forced_version));
     }
 
-    if config.version_lock != "latest" {
+    if version_lock != "latest" {
         // Make sure the version string from the config is a valid version string that might be prefixed with 'v'
-        let version_lock = FriendlyVersion::try_from(config.version_lock.as_str()).context(
-            error::BadVersionConfig {
-                version_str: config.version_lock.to_owned(),
-            },
-        )?;
+        let friendly_version_lock =
+            FriendlyVersion::try_from(version_lock).context(error::BadVersionConfig {
+                version_str: version_lock,
+            })?;
         // Convert back to semver::Version
-        let semver_version_lock = version_lock.try_into().with_context(|| error::BadVersion {
-            version_str: config.version_lock.to_owned(),
-        })?;
+        let semver_version_lock = friendly_version_lock
+            .try_into()
+            .context(error::BadVersion {
+                version_str: version_lock,
+            })?;
         // If the configured version-lock matches our current version, we won't update to the same version
         return if semver_version_lock == *version {
             Ok(None)
@@ -311,9 +322,15 @@ fn set_common_query_params(
     Ok(())
 }
 
-/// List any available update that matches the current variant, ignoring waves
-fn list_updates(manifest: &Manifest, variant: &str, json: bool) -> Result<()> {
-    let updates = applicable_updates(manifest, variant);
+/// List any available update that matches the current variant
+fn list_updates(
+    manifest: &Manifest,
+    variant: &str,
+    json: bool,
+    ignore_waves: bool,
+    seed: u32,
+) -> Result<()> {
+    let updates = applicable_updates(manifest, variant, ignore_waves, seed);
     if json {
         println!(
             "{}",
@@ -336,7 +353,6 @@ struct Arguments {
     force_version: Option<Version>,
     all: bool,
     reboot: bool,
-    timestamp: Option<DateTime<Utc>>,
     variant: Option<String>,
 }
 
@@ -349,7 +365,6 @@ fn parse_args(args: std::env::Args) -> Arguments {
     let mut json = false;
     let mut all = false;
     let mut reboot = false;
-    let mut timestamp = None;
     let mut variant = None;
 
     let mut iter = args.skip(1);
@@ -379,13 +394,6 @@ fn parse_args(args: std::env::Args) -> Arguments {
             "-n" | "--now" | "--ignore-waves" => {
                 ignore_waves = true;
             }
-            "-t" | "--timestamp" => match iter.next() {
-                Some(t) => match DateTime::parse_from_rfc3339(&t) {
-                    Ok(t) => timestamp = Some(DateTime::from_utc(t.naive_utc(), Utc)),
-                    _ => usage(),
-                },
-                _ => usage(),
-            },
             "-j" | "--json" => {
                 json = true;
             }
@@ -414,7 +422,6 @@ fn parse_args(args: std::env::Args) -> Arguments {
         force_version: update_version,
         all,
         reboot,
-        timestamp,
         variant,
     }
 }
@@ -486,90 +493,64 @@ fn main_inner() -> Result<()> {
     match command {
         Command::CheckUpdate | Command::Whats => {
             if arguments.all {
-                return list_updates(&manifest, &variant, arguments.json);
+                return list_updates(
+                    &manifest,
+                    &variant,
+                    arguments.json,
+                    ignore_waves,
+                    config.seed,
+                );
             }
 
             let update = update_required(
-                &config,
                 &manifest,
                 &current_release.version_id,
                 &variant,
+                ignore_waves,
+                config.seed,
+                &config.version_lock,
                 arguments.force_version,
             )?
             .context(error::UpdateNotAvailable)?;
 
-            if !ignore_waves {
-                ensure!(
-                    update.update_ready(config.seed),
-                    error::UpdateNotReady {
-                        version: update.version.clone()
-                    }
-                );
-            }
             output(arguments.json, &update, &fmt_full_version(&update))?;
         }
         Command::Update | Command::UpdateImage => {
             if let Some(u) = update_required(
-                &config,
                 &manifest,
                 &current_release.version_id,
                 &variant,
+                ignore_waves,
+                config.seed,
+                &config.version_lock,
                 arguments.force_version,
             )? {
-                if ignore_waves || u.update_ready(config.seed) {
-                    eprintln!("Starting update to {}", u.version);
+                eprintln!("Starting update to {}", u.version);
 
-                    if ignore_waves {
-                        eprintln!("** Updating immediately **");
-                    } else {
-                        let jitter = match arguments.timestamp {
-                            Some(t) => Some(t),
-                            _ => u.jitter(config.seed),
-                        };
+                transport
+                    .queries_get_mut()
+                    .context(error::TransportBorrow)?
+                    .push((String::from("target"), u.version.to_string()));
 
-                        if let Some(j) = jitter {
-                            if j > Utc::now() {
-                                // not yet!
-                                output(arguments.json, &j, &format!("{}", j))?;
-                                return Ok(());
-                            }
-                        }
+                retrieve_migrations(
+                    &repository,
+                    &transport,
+                    &manifest,
+                    u,
+                    &current_release.version_id,
+                )?;
+                update_image(u, &repository)?;
+                if command == Command::Update {
+                    update_flags()?;
+                    if arguments.reboot {
+                        initiate_reboot()?;
                     }
-
-                    transport
-                        .queries_get_mut()
-                        .context(error::TransportBorrow)?
-                        .push((String::from("target"), u.version.to_string()));
-
-                    retrieve_migrations(
-                        &repository,
-                        &transport,
-                        &manifest,
-                        u,
-                        &current_release.version_id,
-                    )?;
-                    update_image(u, &repository)?;
-                    if command == Command::Update {
-                        update_flags()?;
-                        if arguments.reboot {
-                            initiate_reboot()?;
-                        }
-                    }
-                    output(
-                        arguments.json,
-                        &u,
-                        &format!("Update applied: {}", fmt_full_version(&u)),
-                    )?;
-                } else if let Some(wave) = u.jitter(config.seed) {
-                    // return the jittered time of our wave in the update
-                    output(
-                        arguments.json,
-                        &wave,
-                        &format!("Update available at {}", &wave),
-                    )?;
-                } else {
-                    eprintln!("Update available in later wave");
                 }
+                output(
+                    arguments.json,
+                    &u,
+                    &format!("Update applied: {}", fmt_full_version(&u)),
+                )?;
             } else {
                 eprintln!("No update required");
             }
@@ -613,7 +594,7 @@ mod tests {
     use super::*;
     use chrono::Duration as TestDuration;
     use std::collections::BTreeMap;
-    use update_metadata::{Images, Wave};
+    use update_metadata::Images;
 
     #[test]
     fn test_manifest_json() {
@@ -650,74 +631,6 @@ mod tests {
     }
 
     #[test]
-    fn test_update_ready() {
-        let mut update = Update {
-            variant: String::from("bottlerocket"),
-            arch: String::from("test"),
-            version: Version::parse("1.0.0").unwrap(),
-            max_version: Version::parse("1.1.0").unwrap(),
-            waves: BTreeMap::new(),
-            images: Images {
-                boot: String::from("boot"),
-                root: String::from("root"),
-                hash: String::from("hash"),
-            },
-        };
-
-        let seed = 123;
-        assert!(
-            update.update_ready(seed),
-            "No waves specified but no update"
-        );
-
-        update
-            .waves
-            .insert(1024, Utc::now() + TestDuration::hours(1));
-
-        assert!(update.update_ready(seed), "0th wave not ready");
-
-        update
-            .waves
-            .insert(100, Utc::now() + TestDuration::minutes(30));
-
-        assert!(!update.update_ready(seed), "1st wave scheduled early");
-
-        let early_seed = 50;
-        update
-            .waves
-            .insert(49, Utc::now() - TestDuration::minutes(30));
-
-        assert!(update.update_ready(early_seed), "Update wave missed");
-    }
-
-    #[test]
-    fn test_final_wave() {
-        let mut update = Update {
-            variant: String::from("bottlerocket"),
-            arch: String::from("test"),
-            version: Version::parse("1.0.0").unwrap(),
-            max_version: Version::parse("1.1.0").unwrap(),
-            waves: BTreeMap::new(),
-            images: Images {
-                boot: String::from("boot"),
-                root: String::from("root"),
-                hash: String::from("hash"),
-            },
-        };
-        let seed = 1024;
-
-        update.waves.insert(0, Utc::now() - TestDuration::hours(3));
-        update
-            .waves
-            .insert(256, Utc::now() - TestDuration::hours(2));
-        update
-            .waves
-            .insert(512, Utc::now() - TestDuration::hours(1));
-
-        assert!(update.update_ready(seed), "All waves passed but no update");
-    }
-
-    #[test]
     fn test_versions() {
         // A manifest with a single update whose version exceeds the max version.
         // update in manifest has
@@ -736,9 +649,17 @@ mod tests {
         let variant = String::from("bottlerocket-aws-eks");
 
         assert!(
-            update_required(&config, &manifest, &version, &variant, None)
-                .unwrap()
-                .is_none(),
+            update_required(
+                &manifest,
+                &version,
+                &variant,
+                config.ignore_waves,
+                config.seed,
+                &config.version_lock,
+                None
+            )
+            .unwrap()
+            .is_none(),
             "Updog tried to exceed max_version"
         );
     }
@@ -758,7 +679,16 @@ mod tests {
 
         let version = Version::parse("0.1.3").unwrap();
         let variant = String::from("aws-k8s-1.15");
-        let update = update_required(&config, &manifest, &version, &variant, None).unwrap();
+        let update = update_required(
+            &manifest,
+            &version,
+            &variant,
+            config.ignore_waves,
+            config.seed,
+            &config.version_lock,
+            None,
+        )
+        .unwrap();
 
         assert!(update.is_some(), "Updog ignored max version");
         assert!(
@@ -785,7 +715,16 @@ mod tests {
 
         let version = Version::parse("1.10.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
-        let result = update_required(&config, &manifest, &version, &variant, None).unwrap();
+        let result = update_required(
+            &manifest,
+            &version,
+            &variant,
+            config.ignore_waves,
+            config.seed,
+            &config.version_lock,
+            None,
+        )
+        .unwrap();
 
         assert!(result.is_some(), "Updog failed to find an update");
 
@@ -817,7 +756,16 @@ mod tests {
         let version = Version::parse("1.10.0").unwrap();
         let forced = Version::parse("1.13.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
-        let result = update_required(&config, &manifest, &version, &variant, Some(forced)).unwrap();
+        let result = update_required(
+            &manifest,
+            &version,
+            &variant,
+            config.ignore_waves,
+            config.seed,
+            &config.version_lock,
+            Some(forced),
+        )
+        .unwrap();
 
         assert!(result.is_some(), "Updog failed to find an update");
 
@@ -858,74 +806,7 @@ mod tests {
     }
 
     #[test]
-    fn early_wave() {
-        let mut u = Update {
-            variant: String::from("bottlerocket"),
-            arch: String::from("test"),
-            version: Version::parse("1.0.0").unwrap(),
-            max_version: Version::parse("1.1.0").unwrap(),
-            waves: BTreeMap::new(),
-            images: Images {
-                boot: String::from("boot"),
-                root: String::from("root"),
-                hash: String::from("hash"),
-            },
-        };
-
-        // | ---- (100, "now") ---
-        let first_bound = Utc::now();
-        u.waves.insert(100, first_bound);
-        assert!(
-            u.update_wave(1).unwrap() == Wave::Initial { end: first_bound },
-            "Expected to be 0th wave"
-        );
-        assert!(u.jitter(1).is_none(), "Expected immediate update");
-        assert!(
-            u.update_wave(101).unwrap() == Wave::Last { start: first_bound },
-            "Expected to be final wave"
-        );
-        assert!(u.jitter(101).is_none(), "Expected immediate update");
-
-        // | ---- (100, "now") ---- (200, "+1hr") ---
-        let second_bound = Utc::now() + TestDuration::hours(1);
-        u.waves.insert(200, second_bound);
-        assert!(
-            u.update_wave(1).unwrap() == Wave::Initial { end: first_bound },
-            "Expected to be 0th wave"
-        );
-        assert!(u.jitter(1).is_none(), "Expected immediate update");
-
-        assert!(
-            u.update_wave(100).unwrap() == Wave::Initial { end: first_bound },
-            "Expected to be 0th wave (just!)"
-        );
-        assert!(u.jitter(100).is_none(), "Expected immediate update");
-
-        assert!(
-            u.update_wave(150).unwrap()
-                == Wave::General {
-                    start: first_bound,
-                    end: second_bound,
-                },
-            "Expected to be some bounded wave"
-        );
-        assert!(
-            u.jitter(150).is_some(),
-            "Expected to have to wait for update"
-        );
-
-        assert!(
-            u.update_wave(201).unwrap()
-                == Wave::Last {
-                    start: second_bound
-                },
-            "Expected to be final wave"
-        );
-        assert!(u.jitter(201).is_none(), "Expected immediate update");
-    }
-
-    #[test]
-    /// Make sure that update_ready() doesn't return true unless the client's
+    /// Make sure that update_required() doesn't return true unless the client's
     /// wave is also ready.
     fn check_update_waves() {
         let mut manifest = Manifest::default();
@@ -944,31 +825,49 @@ mod tests {
 
         let current_version = Version::parse("1.0.0").unwrap();
         let variant = String::from("aws-k8s-1.15");
+        let first_wave_seed = 0;
         let config = Config {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
-            seed: 512,
+            seed: first_wave_seed,
             version_lock: "latest".to_string(),
             ignore_waves: false,
         };
 
-        // Two waves; the 0th wave, and the final wave which starts in one hour
-        update
-            .waves
-            .insert(1024, Utc::now() + TestDuration::hours(1));
+        // Two waves; the 1st wave that starts immediately, and the final wave which starts in one hour
+        let time = Utc::now();
+        update.waves.insert(0, time);
+        update.waves.insert(1024, time + TestDuration::hours(1));
+        update.waves.insert(2048, time + TestDuration::hours(1));
         manifest.updates.push(update);
 
-        let potential_update =
-            update_required(&config, &manifest, &current_version, &variant, None)
-                .unwrap()
-                .unwrap();
+        assert!(
+            update_required(
+                &manifest,
+                &current_version,
+                &variant,
+                config.ignore_waves,
+                config.seed,
+                &config.version_lock,
+                None,
+            )
+            .unwrap()
+            .is_some(),
+            "1st wave doesn't appear ready"
+        );
 
         assert!(
-            potential_update.update_ready(512),
-            "0th wave doesn't appear ready"
-        );
-        assert!(
-            !potential_update.update_ready(2000),
+            update_required(
+                &manifest,
+                &current_version,
+                &variant,
+                config.ignore_waves,
+                2000,
+                &config.version_lock,
+                None,
+            )
+            .unwrap()
+            .is_none(),
             "Later wave incorrectly sees update"
         );
     }

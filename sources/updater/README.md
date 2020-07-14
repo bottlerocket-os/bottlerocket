@@ -41,8 +41,8 @@ Updog will ensure that appropriate migration files are available to safely trans
 
 ### Update wave
 Updates may include "wave" information which provides a way for updates to be scheduled over time for groups of Bottlerocket hosts.
-Updog will find the update wave the host belongs to and jitter its update time within that range.
-If the calculated time has not passed yet, Updog returns the update timestamp to the caller so it can be called again at the correct time.
+Updog will find the update wave the host belongs to and calculate its time position within the wave based on its `settings.updates.seed` value.
+If the calculated time has not passed, Updog will not report an update as being available.
 
 Assuming all the requirements are met, Updog requests the update images from the TUF repository and writes them to the "inactive" partition.
 
