@@ -92,8 +92,3 @@ template-path = "/usr/share/templates/chrony-conf"
 
 [metadata.settings.ntp]
 affected-services = ["chronyd"]
-
-# Kubernetes
-
-[settings.kubernetes]
-cluster-domain = "cluster.local"

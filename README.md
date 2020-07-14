@@ -347,10 +347,12 @@ The following settings can be optionally set to customize the node labels and ta
     special = "true:NoSchedule"
     ```
 
+The following settings are optional and allow you to further configure your cluster.
+* `settings.kubernetes.cluster-domain`: The DNS domain for this cluster, allowing all Kubernetes-run containers to search this domain before the host's search domains.  Defaults to `cluster.local`.
+
 The following settings are set for you automatically by [pluto](sources/api/) based on runtime instance information, but you can override them if you know what you're doing!
 * `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
 * `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
-* `settings.kubernetes.cluster-domain`: The cluster domain is set to `cluster.local` by default.
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 

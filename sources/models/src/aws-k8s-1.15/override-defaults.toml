@@ -33,3 +33,6 @@ affected-services = ["kubernetes"]
 [metadata.settings.kubernetes.pod-infra-container-image]
 setting-generator = "pluto pod-infra-container-image"
 affected-services = ["kubernetes", "containerd"]
+
+[settings.kubernetes]
+cluster-domain = "cluster.local"

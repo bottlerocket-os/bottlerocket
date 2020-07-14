@@ -9,6 +9,7 @@ use std::convert::TryFrom;
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
+use url::Host;
 
 /// ValidBase64 can only be created by deserializing from valid base64 text.  It stores the
 /// original text, not the decoded form.  Its purpose is input validation, namely being used as a
@@ -365,25 +366,36 @@ impl TryFrom<&str> for DNSDomain {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        ensure!(input.len() <= 253, error::InvalidDomainName { input });
-
-        let labels = input.split(".");
-        for (i, label) in labels.enumerate() {
-            ensure!(i < 127, error::InvalidDomainName { input });
-            ensure!(label.len() <= 63, error::InvalidDomainName { input });
-            let last = label.len() - 1;
-            for (j, c) in label.chars().enumerate() {
-                ensure!(
-                    (j != 0 && j != last && (c.is_alphanumeric() || c == '-'))
-                        || c.is_alphanumeric(),
-                    error::InvalidDomainName { input }
-                );
+        if input.starts_with('.') {
+            return error::InvalidDomainName {
+                input: input,
+                msg: "must not start with '.'",
             }
+            .fail();
         }
 
-        Ok(Self {
-            inner: input.to_string(),
-        })
+        match Host::parse(input) {
+            Err(e) => error::InvalidDomainName {
+                input: input,
+                msg: e.to_string(),
+            }
+            .fail(),
+            Ok(h) => match h {
+                Host::Ipv4(_) => error::InvalidDomainName {
+                    input: input,
+                    msg: "IP address is not a valid domain name",
+                }
+                .fail(),
+                Host::Ipv6(_) => error::InvalidDomainName {
+                    input: input,
+                    msg: "IP address is not a valid domain name",
+                }
+                .fail(),
+                Host::Domain(_) => Ok(Self {
+                    inner: input.to_string(),
+                }),
+            },
+        }
     }
 }
 
@@ -396,15 +408,7 @@ mod test_dns_domain {
 
     #[test]
     fn valid_dns_domain() {
-        for ok in &[
-            "cluster.local",
-            "dev.eks",
-            "stage.eks",
-            "prod.eks",
-            "1-good.local",
-            &"a".repeat(63),
-            &format!("a{}", ".a".repeat(126)),
-        ] {
+        for ok in &["cluster.local", "dev.eks", "stage.eks", "prod.eks"] {
             assert!(DNSDomain::try_from(*ok).is_ok());
         }
     }
@@ -412,12 +416,10 @@ mod test_dns_domain {
     #[test]
     fn invalid_dns_domain() {
         for err in &[
-            "-bad.com",
-            "bad-.com",
-            "-bad-.com",
-            "b_ad.com",
-            &"a".repeat(64),
-            &format!("a{}", ".a".repeat(127)),
+            "foo/com",
+            ".a",
+            "123.123.123.123",
+            "[2001:db8::ff00:42:8329]",
         ] {
             assert!(DNSDomain::try_from(*err).is_err());
         }
