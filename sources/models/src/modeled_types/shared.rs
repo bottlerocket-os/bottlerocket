@@ -9,6 +9,7 @@ use std::convert::TryFrom;
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
+use url::Host;
 
 /// ValidBase64 can only be created by deserializing from valid base64 text.  It stores the
 /// original text, not the decoded form.  Its purpose is input validation, namely being used as a
@@ -346,6 +347,76 @@ mod test_version {
                 inner: err.to_string(),
             });
             res.unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// DNSDomain represents a string that is a valid DNS domain. It stores the
+/// original string and makes it accessible through standard traits. Its purpose
+/// is input validation, for example validating the kubelet's "clusterDomain"
+/// config value.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct DNSDomain {
+    inner: String,
+}
+
+impl TryFrom<&str> for DNSDomain {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        ensure!(
+            !input.starts_with('.'),
+            error::InvalidDomainName {
+                input: input,
+                msg: "must not start with '.'",
+            }
+        );
+
+        let host = Host::parse(input).or_else(|e| {
+            error::InvalidDomainName {
+                input: input,
+                msg: e.to_string(),
+            }
+            .fail()
+        })?;
+        match host {
+            Host::Ipv4(_) | Host::Ipv6(_) => error::InvalidDomainName {
+                input: input,
+                msg: "IP address is not a valid domain name",
+            }
+            .fail(),
+            Host::Domain(_) => Ok(Self {
+                inner: input.to_string(),
+            }),
+        }
+    }
+}
+
+string_impls_for!(DNSDomain, "DNSDomain");
+
+#[cfg(test)]
+mod test_dns_domain {
+    use super::DNSDomain;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_dns_domain() {
+        for ok in &["cluster.local", "dev.eks", "stage.eks", "prod.eks"] {
+            assert!(DNSDomain::try_from(*ok).is_ok());
+        }
+    }
+
+    #[test]
+    fn invalid_dns_domain() {
+        for err in &[
+            "foo/com",
+            ".a",
+            "123.123.123.123",
+            "[2001:db8::ff00:42:8329]",
+        ] {
+            assert!(DNSDomain::try_from(*err).is_err());
         }
     }
 }

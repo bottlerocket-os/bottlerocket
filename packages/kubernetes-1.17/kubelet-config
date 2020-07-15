@@ -15,7 +15,7 @@ authorization:
   webhook:
     cacheAuthorizedTTL: 5m0s
     cacheUnauthorizedTTL: 30s
-clusterDomain: cluster.local
+clusterDomain: {{settings.kubernetes.cluster-domain}}
 clusterDNS:
 - {{settings.kubernetes.cluster-dns-ip}}
 resolvConf: "/etc/resolv.conf"
