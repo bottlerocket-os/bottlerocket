@@ -365,36 +365,31 @@ pub struct DNSDomain {
 impl TryFrom<&str> for DNSDomain {
     type Error = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        if input.starts_with('.') {
-            return error::InvalidDomainName {
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        ensure!(
+            !input.starts_with('.'),
+            error::InvalidDomainName {
                 input: input,
                 msg: "must not start with '.'",
             }
-            .fail();
-        }
+        );
 
-        match Host::parse(input) {
-            Err(e) => error::InvalidDomainName {
+        let host = Host::parse(input).or_else(|e| {
+            error::InvalidDomainName {
                 input: input,
                 msg: e.to_string(),
             }
+            .fail()
+        })?;
+        match host {
+            Host::Ipv4(_) | Host::Ipv6(_) => error::InvalidDomainName {
+                input: input,
+                msg: "IP address is not a valid domain name",
+            }
             .fail(),
-            Ok(h) => match h {
-                Host::Ipv4(_) => error::InvalidDomainName {
-                    input: input,
-                    msg: "IP address is not a valid domain name",
-                }
-                .fail(),
-                Host::Ipv6(_) => error::InvalidDomainName {
-                    input: input,
-                    msg: "IP address is not a valid domain name",
-                }
-                .fail(),
-                Host::Domain(_) => Ok(Self {
-                    inner: input.to_string(),
-                }),
-            },
+            Host::Domain(_) => Ok(Self {
+                inner: input.to_string(),
+            }),
         }
     }
 }
