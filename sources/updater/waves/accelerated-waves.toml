@@ -11,8 +11,14 @@ fleet_percentage = 12
 
 [[waves]]
 start_after = '8 hours'
-fleet_percentage = 50
+fleet_percentage = 40
 
+[[waves]]
+start_after = '16 hours'
+fleet_percentage = 80
+
+# Last 20 percent of the hosts will update immediately after 24 hours since the start of
+# deployment. Unlike the other waves, there will be no velocity control.
 [[waves]]
 start_after = '1 day'
 fleet_percentage = 100
