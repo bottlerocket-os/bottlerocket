@@ -6,6 +6,11 @@
 # git rev-parse --short=8
 %global gitrev 3776bee9
 
+# Construct reproducible tar archives
+# See https://reproducible-builds.org/docs/archives/
+%global source_date_epoch 1234567890
+%global tar_cf tar --sort=name --mtime="@%{source_date_epoch}" --owner=0 --group=0 --numeric-owner -cf
+
 Name: %{_cross_os}ecs-agent
 Version: %{gover}
 Release: 1%{?dist}
@@ -68,14 +73,14 @@ go build -a \
 
   # Construct image
   mkdir -p image/rootfs
-  tar cvf image/rootfs/layer.tar -C rootfs .
+  %tar_cf image/rootfs/layer.tar -C rootfs .
   DIGEST=$(sha256sum image/rootfs/layer.tar | sed -e 's/ .*//')
   install -m 0644 %{S:3} image/rootfs/VERSION
   install -m 0644 %{S:4} image/config.json
   sed -i "s/~~digest~~/${DIGEST}/" image/config.json
   install -m 0644 %{S:5} image/manifest.json
   install -m 0644 %{S:6} image/repositories
-  tar cvf ../../../amazon-ecs-pause.tar -C image .
+  %tar_cf ../../../amazon-ecs-pause.tar -C image .
 )
 
 %install
