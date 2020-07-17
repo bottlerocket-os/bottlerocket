@@ -8,7 +8,7 @@ jobs:
     continue-on-error: ${{ matrix.supported }}
     strategy:
       matrix:
-        variant: [aws-k8s-1.15, aws-k8s-1.16, aws-k8s-1.17]
+        variant: [aws-k8s-1.15, aws-k8s-1.16, aws-k8s-1.17, aws-ecs-1]
         arch: [x86_64, aarch64]
         supported: [true]
         include:
