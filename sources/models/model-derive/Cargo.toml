@@ -6,6 +6,8 @@ license = "Apache-2.0 OR MIT"
 edition = "2018"
 publish = false
 build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
 
 [lib]
 path = "src/lib.rs"

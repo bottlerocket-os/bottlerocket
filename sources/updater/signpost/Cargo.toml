@@ -5,6 +5,8 @@ authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 edition = "2018"
 publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
 
 [dependencies]
 bit_field = "0.10.0"

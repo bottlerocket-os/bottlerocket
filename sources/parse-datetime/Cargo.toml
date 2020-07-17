@@ -5,6 +5,8 @@ authors = ["Zac Mrowicki <mrowicki@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 edition = "2018"
 publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
 
 [dependencies]
 chrono = "0.4.11"
