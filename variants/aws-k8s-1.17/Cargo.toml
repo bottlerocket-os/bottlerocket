@@ -6,6 +6,8 @@ version = "0.1.0"
 edition = "2018"
 publish = false
 build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
 
 [package.metadata.build-variant]
 included-packages = [
