@@ -374,6 +374,7 @@ mod tests {
     #[test]
     fn max_versions() -> Result<()> {
         let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
+        update_metadata::write_file(tmpfd.path(), &Manifest::default()).unwrap();
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),
             variant: String::from("yum"),
