@@ -19,7 +19,6 @@ ExecStartPre=/sbin/iptables -t nat -A OUTPUT -d 169.254.170.2/32 \
  -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
 ExecStartPre=/sbin/iptables -t filter -I INPUT --dst 127.0.0.0/8 ! \
  --src 127.0.0.0/8 -m conntrack ! --ctstate RELATED,ESTABLISHED,DNAT -j DROP
-ExecStartPre=/sbin/sysctl -w net.ipv4.conf.all.route_localnet=1
 ExecStart=/usr/bin/amazon-ecs-agent
 ExecStopPost=-/sbin/iptables -t nat -D PREROUTING -d 169.254.170.2/32 \
  -p tcp -m tcp --dport 80 -j DNAT --to-destination 127.0.0.1:51679
@@ -27,8 +26,6 @@ ExecStopPost=-/sbin/iptables -t nat -D OUTPUT -d 169.254.170.2/32 \
  -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
 ExecStopPost=-/sbin/iptables -t filter -D INPUT --dst 127.0.0.0/8 ! \
  --src 127.0.0.0/8  -m conntrack ! --ctstate RELATED,ESTABLISHED,DNAT -j DROP
-ExecStopPost=/bin/sh -c \
- "/sbin/sysctl -w net.ipv4.conf.all.route_localnet=$(/sbin/sysctl -q -n net.ipv4.conf.default.route_localnet)"
 
 [Install]
 WantedBy=multi-user.target

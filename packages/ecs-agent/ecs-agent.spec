@@ -20,10 +20,11 @@ URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}.tar.gz
 Source1: ecs.service
 Source2: ecs-tmpfiles.conf
-Source3: pause-image-VERSION
-Source4: pause-config.json
-Source5: pause-manifest.json
-Source6: pause-repositories
+Source3: ecs-sysctl.conf
+Source4: pause-image-VERSION
+Source5: pause-config.json
+Source6: pause-manifest.json
+Source7: pause-repositories
 
 # Upstream: https://github.com/aws/amazon-ecs-agent/pull/2513
 # Upstream status: Merged
@@ -38,8 +39,6 @@ Patch0003: 0003-bottlerocket-version-values-settable-with-linker.patch
 BuildRequires: %{_cross_os}glibc-devel
 
 Requires: %{_cross_os}docker-engine
-# for sysctl
-Requires: %{_cross_os}procps
 Requires: %{_cross_os}iptables
 
 %description
@@ -75,11 +74,11 @@ go build -a \
   mkdir -p image/rootfs
   %tar_cf image/rootfs/layer.tar -C rootfs .
   DIGEST=$(sha256sum image/rootfs/layer.tar | sed -e 's/ .*//')
-  install -m 0644 %{S:3} image/rootfs/VERSION
-  install -m 0644 %{S:4} image/config.json
+  install -m 0644 %{S:4} image/rootfs/VERSION
+  install -m 0644 %{S:5} image/config.json
   sed -i "s/~~digest~~/${DIGEST}/" image/config.json
-  install -m 0644 %{S:5} image/manifest.json
-  install -m 0644 %{S:6} image/repositories
+  install -m 0644 %{S:6} image/manifest.json
+  install -m 0644 %{S:7} image/repositories
   %tar_cf ../../../amazon-ecs-pause.tar -C image .
 )
 
@@ -89,6 +88,7 @@ install -D -p -m 0644 amazon-ecs-pause.tar %{buildroot}%{_cross_libdir}/amazon-e
 
 install -D -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/ecs.service
 install -D -p -m 0644 %{S:2} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
+install -D -p -m 0644 %{S:3} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
 
 %cross_scan_attribution go-vendor agent/vendor
 
@@ -99,6 +99,7 @@ install -D -p -m 0644 %{S:2} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
 %{_cross_bindir}/amazon-ecs-agent
 %{_cross_unitdir}/ecs.service
 %{_cross_tmpfilesdir}/ecs.conf
+%{_cross_sysctldir}/90-ecs.conf
 %{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
 
 %changelog
