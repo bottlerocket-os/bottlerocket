@@ -1,5 +1,13 @@
-use log::debug;
-use std::{env, process};
+/*!
+# Introduction
+
+ecs-settings-applier generates a configuration file for the ECS agent from Bottlerocket settings.
+
+The configuration file for ECS is a JSON-formatted document with conditionally-defined keys and
+embedded lists.
+*/
+
+use log::debug;use std::{env, process};
 use std::fs;
 use std::path::{Path};
 use serde::{Serialize};

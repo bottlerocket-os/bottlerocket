@@ -5,6 +5,9 @@ authors = ["Samuel Karp <skarp@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 publish = false
 edition = "2018"
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
 
 [dependencies]
 serde = {version = "1.0", features = ["derive"]}
@@ -14,3 +17,5 @@ schnauzer = { path = "../schnauzer" }
 log = "0.4"
 snafu = "0.6"
 
+[build-dependencies]
+cargo-readme = "3.1"
