@@ -3,7 +3,7 @@ use std::{env, process};
 use std::fs;
 use std::path::{Path};
 use serde::{Serialize};
-use snafu::{ResultExt};
+use snafu::{OptionExt, ResultExt};
 
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
@@ -11,7 +11,7 @@ const VARIANT_ATTRIBUTE_NAME: &str = "bottlerocket.variant";
 const VERSION_ATTRIBUTE_NAME: &str = "bottlerocket.version";
 
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Default)]
 #[serde(rename_all="PascalCase")]
 struct ECSConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -42,32 +42,20 @@ fn run() -> Result<()> {
     let settings = schnauzer::get_settings(&args.socket_path).context(error::Settings)?;
 
     debug!("settings = {:#?}", settings.settings);
-    let ecs = settings.settings.and_then(|s| s.ecs);
-    let ecs = if let Some(x) = ecs {
-        x
-    } else {
-        return Err(error::Error::Model);
-    };
-    let cluster = ecs.cluster.as_ref();
-    let privileged_disabled = ecs.allow_privileged_containers.map(|s| !s);
+    let ecs = settings.settings.and_then(|s| s.ecs).context(error::Model)?;
+
     let mut config = ECSConfig{
-        cluster: cluster.map(|s| s.clone()),
-        instance_attributes: std::collections::HashMap::new(),
-        privileged_disabled,
+        cluster: ecs.cluster.map(|s| s.to_owned()),
+	privileged_disabled: ecs.allow_privileged_containers.map(|s| !s),
+        ..Default::default()
     };
-    match settings.os {
-        None => {}
-        Some(os) => {
-            config.instance_attributes.insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
-            config.instance_attributes.insert(VERSION_ATTRIBUTE_NAME.to_string(), os.version_id.to_string());
-        }
+    if let Some(os) = settings.os {
+        config.instance_attributes.insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
+        config.instance_attributes.insert(VERSION_ATTRIBUTE_NAME.to_string(), os.version_id.to_string());
     }
-    match ecs.instance_attributes.as_ref() {
-        None => {}
-        Some(attributes) => {
-            for (key, value) in attributes {
-                config.instance_attributes.insert(key.to_string(), value.to_string());
-            }
+    if let Some(attributes) = ecs.instance_attributes {
+        for (key, value) in attributes {
+            config.instance_attributes.insert(key.to_string(), value.to_string());
         }
     }
     let serialized = serde_json::to_string(&config).context(error::Serialization)?;
