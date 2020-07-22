@@ -53,8 +53,8 @@ fn run() -> Result<()> {
     let ecs = settings.settings.and_then(|s| s.ecs).context(error::Model)?;
 
     let mut config = ECSConfig{
-        cluster: ecs.cluster.map(|s| s.to_owned()),
-	privileged_disabled: ecs.allow_privileged_containers.map(|s| !s),
+        cluster: ecs.cluster,
+        privileged_disabled: ecs.allow_privileged_containers.map(|s| !s),
         ..Default::default()
     };
     if let Some(os) = settings.os {
