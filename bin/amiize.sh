@@ -31,8 +31,8 @@
 # Tested with the Amazon Linux AMI as worker AMI.
 # Example call:
 #    bin/amiize.sh --region us-west-2 \
-#       --root-image build/latest/bottlerocket-aws-k8s-1.15-x86_64.img \
-#       --data-image build/latest/bottlerocket-aws-k8s-1.15-x86_64-data.img \
+#       --root-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64.img \
+#       --data-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64-data.img \
 #       --worker-ami ami-0f2176987ee50226e --ssh-keypair tjk \
 #       --instance-type m3.xlarge --name bottlerocket-20190918-01 --arch x86_64 \
 #       --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
@@ -389,8 +389,8 @@ if [ -n "${registered_ami}" ]; then
 fi
 
 # Determine the size of the images (in G, for EBS)
-# 2G      bottlerocket-aws-k8s-1.15-x86_64.img
-# 8G      bottlerocket-aws-k8s-1.15-x86_64-data.img
+# 2G      bottlerocket-aws-k8s-1.17-x86_64.img
+# 8G      bottlerocket-aws-k8s-1.17-x86_64-data.img
 # This is overridden by --root-volume-size and --data-volume-size if you pass those options.
 root_image_size=$(du --apparent-size --block-size=G "${ROOT_IMAGE}" | sed -r 's,^([0-9]+)G\t.*,\1,')
 if [ ! "${root_image_size}" -gt 0 ]; then
