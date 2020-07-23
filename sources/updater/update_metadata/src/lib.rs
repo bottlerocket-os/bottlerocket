@@ -58,6 +58,18 @@ pub struct UpdateWaves {
     pub waves: Vec<UpdateWave>,
 }
 
+impl UpdateWaves {
+    /// Deserializes an UpdateWaves from a given path
+    pub fn from_path<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
+        let wave_data = fs::read_to_string(path).context(error::FileRead { path })?;
+        toml::from_str(&wave_data).context(error::InvalidToml { path })
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateWave {
     pub start_after: String,
@@ -101,14 +113,26 @@ pub struct Release {
     pub migrations: BTreeMap<(Version, Version), Vec<String>>,
 }
 
+impl Release {
+    /// Deserializes a Release from a given path
+    pub fn from_path<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
+        let release_data = fs::read_to_string(path).context(error::FileRead { path })?;
+        toml::from_str(&release_data).context(error::InvalidToml { path })
+    }
+}
+
 pub fn load_file(path: &Path) -> Result<Manifest> {
-    let file = File::open(path).context(error::ManifestRead { path })?;
+    let file = File::open(path).context(error::FileRead { path })?;
     serde_json::from_reader(file).context(error::ManifestParse)
 }
 
 pub fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
     let manifest = serde_json::to_string_pretty(&manifest).context(error::UpdateSerialize)?;
-    fs::write(path, &manifest).context(error::ManifestWrite { path })?;
+    fs::write(path, &manifest).context(error::FileWrite { path })?;
     Ok(())
 }
 

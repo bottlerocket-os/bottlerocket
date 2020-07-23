@@ -1,0 +1,3 @@
+snapshot_expiration = '2 weeks'
+targets_expiration = '2 weeks'
+timestamp_expiration = '1 week'

@@ -2791,6 +2791,7 @@ dependencies = [
  "serde_json 1.0.53 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_plain 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "tough 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
