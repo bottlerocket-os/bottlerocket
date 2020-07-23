@@ -28,7 +28,7 @@ struct AddUpdateArgs {
     // metadata file to create/modify
     file: PathBuf,
 
-    // image 'variant', eg. 'aws-k8s-1.15'
+    // image 'variant', eg. 'aws-k8s-1.17'
     #[structopt(short = "f", long = "variant")]
     variant: String,
 
@@ -81,7 +81,7 @@ struct RemoveUpdateArgs {
     // metadata file to create/modify
     file: PathBuf,
 
-    // image 'variant', eg. 'aws-k8s-1.15'
+    // image 'variant', eg. 'aws-k8s-1.17'
     #[structopt(short = "l", long = "variant")]
     variant: String,
 
@@ -125,7 +125,7 @@ struct WaveArgs {
     // metadata file to create/modify
     file: PathBuf,
 
-    // image 'variant', eg. 'aws-k8s-1.15'
+    // image 'variant', eg. 'aws-k8s-1.17'
     #[structopt(short = "l", long = "variant")]
     variant: String,
 

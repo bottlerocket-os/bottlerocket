@@ -118,21 +118,21 @@ us-west-2
 ```
 
 The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
-Let's say you want to use the `aws-k8s-1.15` variant for the `x86_64` architecture, and you operate in the `us-west-2` region:
+Let's say you want to use the `aws-k8s-1.17` variant for the `x86_64` architecture, and you operate in the `us-west-2` region:
 
 ```
-aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-k8s-1.15/x86_64/latest/image_id" --query Parameter.Value --output text
+aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_id" --query Parameter.Value --output text
 ```
 
 If you have `jq` and would like a bit more information, try this:
 ```
 aws ssm get-parameters --region us-west-2 \
-   --names "/aws/service/bottlerocket/aws-k8s-1.15/x86_64/latest/image_id" \
-           "/aws/service/bottlerocket/aws-k8s-1.15/x86_64/latest/image_version" \
+   --names "/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_id" \
+           "/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_version" \
    --output json | jq -r '.Parameters | .[] | "\(.Name): \(.Value) (updated \(.LastModifiedDate | gmtime | strftime("%c")) UTC)"'
 ```
 
-You can replace the variant (`aws-k8s-1.15`) and architecture (`x86_64`) to look for other images.
+You can replace the variant (`aws-k8s-1.17`) and architecture (`x86_64`) to look for other images.
 Supported variants and architectures are described in the [README](README.md).
 If you know a specific Bottlerocket version you'd like to use, you can replace `latest` with that version.
 

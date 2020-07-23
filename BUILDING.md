@@ -53,11 +53,11 @@ The script has some assumptions about your setup, in particular that you:
   * have a few other common tools installed, like `jq`, `du`, and `rsync`
 
 First, decompress the images.
-(Note: these filenames assume an `x86_64` architecture and `aws-k8s-1.15` [variant](README.md).)
+(Note: these filenames assume an `x86_64` architecture and `aws-k8s-1.17` [variant](README.md).)
 
 ```
-lz4 -d build/latest/bottlerocket-aws-k8s-1.15-x86_64.img.lz4 && \
-lz4 -d build/latest/bottlerocket-aws-k8s-1.15-x86_64-data.img.lz4
+lz4 -d build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64.img.lz4 && \
+lz4 -d build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64-data.img.lz4
 ```
 
 Next, register an AMI:
@@ -65,8 +65,8 @@ Next, register an AMI:
 ```
 bin/amiize.sh --name YOUR-AMI-NAME-HERE \
               --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
-              --root-image build/latest/bottlerocket-aws-k8s-1.15-x86_64.img \
-              --data-image build/latest/bottlerocket-aws-k8s-1.15-x86_64-data.img \
+              --root-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64.img \
+              --data-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64-data.img \
               --region us-west-2 \
               --instance-type m3.xlarge \
               --arch x86_64 \
