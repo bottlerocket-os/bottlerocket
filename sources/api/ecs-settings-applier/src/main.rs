@@ -7,20 +7,20 @@ The configuration file for ECS is a JSON-formatted document with conditionally-d
 embedded lists.
 */
 
-use log::debug;use std::{env, process};
-use std::fs;
-use std::path::{Path};
-use serde::{Serialize};
+use log::debug;
+use serde::Serialize;
 use snafu::{OptionExt, ResultExt};
+use std::fs;
+use std::path::Path;
+use std::{env, process};
 
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
 const VARIANT_ATTRIBUTE_NAME: &str = "bottlerocket.variant";
 const VERSION_ATTRIBUTE_NAME: &str = "bottlerocket.version";
 
-
 #[derive(Serialize, Debug, Default)]
-#[serde(rename_all="PascalCase")]
+#[serde(rename_all = "PascalCase")]
 struct ECSConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     cluster: Option<String>,
@@ -50,26 +50,38 @@ fn run() -> Result<()> {
     let settings = schnauzer::get_settings(&args.socket_path).context(error::Settings)?;
 
     debug!("settings = {:#?}", settings.settings);
-    let ecs = settings.settings.and_then(|s| s.ecs).context(error::Model)?;
+    let ecs = settings
+        .settings
+        .and_then(|s| s.ecs)
+        .context(error::Model)?;
 
-    let mut config = ECSConfig{
+    let mut config = ECSConfig {
         cluster: ecs.cluster,
         privileged_disabled: ecs.allow_privileged_containers.map(|s| !s),
         ..Default::default()
     };
     if let Some(os) = settings.os {
-        config.instance_attributes.insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
-        config.instance_attributes.insert(VERSION_ATTRIBUTE_NAME.to_string(), os.version_id.to_string());
+        config
+            .instance_attributes
+            .insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
+        config.instance_attributes.insert(
+            VERSION_ATTRIBUTE_NAME.to_string(),
+            os.version_id.to_string(),
+        );
     }
     if let Some(attributes) = ecs.instance_attributes {
         for (key, value) in attributes {
-            config.instance_attributes.insert(key.to_string(), value.to_string());
+            config
+                .instance_attributes
+                .insert(key.to_string(), value.to_string());
         }
     }
     let serialized = serde_json::to_string(&config).context(error::Serialization)?;
     debug!("serialized = {}", serialized);
 
-    write_to_disk(DEFAULT_ECS_CONFIG_PATH, serialized).context(error::FS{path:DEFAULT_ECS_CONFIG_PATH})?;
+    write_to_disk(DEFAULT_ECS_CONFIG_PATH, serialized).context(error::FS {
+        path: DEFAULT_ECS_CONFIG_PATH,
+    })?;
     Ok(())
 }
 
@@ -84,7 +96,7 @@ fn write_to_disk<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::i
 
 // Stores user-supplied arguments.
 struct Args {
-    socket_path: String
+    socket_path: String,
 }
 
 fn parse_args(args: env::Args) -> Args {
@@ -134,21 +146,21 @@ mod error {
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
         #[snafu(display("Failed to read settings: {}", source))]
-        Settings{
-            source: schnauzer::Error
+        Settings {
+            source: schnauzer::Error,
         },
 
         Model,
 
         #[snafu(display("Failed to serialize ECS config: {}", source))]
-        Serialization{
-            source: serde_json::error::Error
+        Serialization {
+            source: serde_json::error::Error,
         },
 
         #[snafu(display("Filesystem operation for path {} failed: {}", path, source))]
-        FS{
+        FS {
             path: &'static str,
-            source: std::io::Error
-        }
+            source: std::io::Error,
+        },
     }
 }
