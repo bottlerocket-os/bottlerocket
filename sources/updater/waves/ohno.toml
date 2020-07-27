@@ -1,14 +1,23 @@
 # The following represents an "emergency" set of update waves for a rapid
-# deployment. The deployment lasts for 3 hours, with a small initial wave,
-# and then all nodes will be updated after the first hour.
+# deployment. The deployment lasts for 3 hours, with a small initial wave.
 [[waves]]
-start_after = '1 hour'
+start_after = '30 minutes'
 fleet_percentage = 5
 
 [[waves]]
-start_after = '2 hours'
+start_after = '60 minutes'
 fleet_percentage = 25
 
 [[waves]]
-start_after = '3 hours'
+start_after = '120 minutes'
+fleet_percentage = 50
+
+[[waves]]
+start_after = '150 minutes'
+fleet_percentage = 90
+
+# Last 10 percent of the hosts will update immediately after 3 hours since the start of
+# deployment. Unlike the other waves, there will be no velocity control.
+[[waves]]
+start_after = '180 minutes'
 fleet_percentage = 100

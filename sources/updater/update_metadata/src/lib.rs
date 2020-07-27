@@ -5,9 +5,8 @@ pub mod error;
 mod se;
 
 use crate::error::Result;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use parse_datetime::parse_offset;
-use rand::{thread_rng, Rng};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -23,30 +22,34 @@ pub const MAX_SEED: u32 = 2048;
 #[derive(Debug, PartialEq, Eq)]
 pub enum Wave {
     Initial {
-        end: DateTime<Utc>,
+        end_time: DateTime<Utc>,
+        end_seed: u32,
     },
     General {
-        start: DateTime<Utc>,
-        end: DateTime<Utc>,
+        start_time: DateTime<Utc>,
+        end_time: DateTime<Utc>,
+        start_seed: u32,
+        end_seed: u32,
     },
     Last {
-        start: DateTime<Utc>,
+        start_time: DateTime<Utc>,
+        start_seed: u32,
     },
 }
 
 impl Wave {
-    pub fn has_started(&self) -> bool {
+    pub fn has_started(&self, time: DateTime<Utc>) -> bool {
         match self {
             Self::Initial { .. } => true,
-            Self::General { start, .. } | Self::Last { start } => *start <= Utc::now(),
+            Self::General { start_time, .. } | Self::Last { start_time, .. } => *start_time <= time,
         }
     }
 
-    pub fn has_passed(&self) -> bool {
+    pub fn has_passed(&self, time: DateTime<Utc>) -> bool {
         match self {
-            Self::Initial { end } => *end <= Utc::now(),
-            Self::General { end, .. } => *end <= Utc::now(),
-            Self::Last { start } => *start <= Utc::now(),
+            Self::Initial { end_time, .. } => *end_time <= time,
+            Self::General { end_time, .. } => *end_time <= time,
+            Self::Last { start_time, .. } => *start_time <= time,
         }
     }
 }
@@ -295,58 +298,92 @@ impl Manifest {
 impl Update {
     /// Returns the update wave that Updog belongs to, based on the seed value.
     /// Depending on the waves described in the update, the possible results are
-    /// - Some wave described by a start and end time.
-    /// - The "0th" wave, which has an "end" time but no specified start time.
-    /// - The last wave, which has a start time but no specified end time.
+    /// - Some wave described by a start and end time, and the starting seed and ending seed.
+    /// - The "0th" wave, which has an "end" time but no specified start time, and the ending seed.
+    /// - The last wave, which has a start time but no specified end time, and the starting seed.
     /// - Nothing, if no waves are configured.
+    #[must_use]
     pub fn update_wave(&self, seed: u32) -> Option<Wave> {
-        let start = self
+        let start_wave = self
             .waves
             .range((Included(0), Excluded(seed)))
-            .last()
-            .map(|(_, wave)| *wave);
-        let end = self
+            .map(|(k, v)| (*k, *v))
+            .last();
+        let end_wave = self
             .waves
             .range((Included(seed), Included(MAX_SEED)))
-            .next()
-            .map(|(_, wave)| *wave);
+            .map(|(k, v)| (*k, *v))
+            .next();
 
-        match (start, end) {
-            (None, Some(end)) => Some(Wave::Initial { end }),
-            (Some(start), Some(end)) => Some(Wave::General { start, end }),
-            (Some(start), None) => Some(Wave::Last { start }),
+        match (start_wave, end_wave) {
+            // Note that the key for each wave entry is the starting seed for that wave, the value is the DateTime
+            (None, Some((end_seed, end_time))) => Some(Wave::Initial { end_seed, end_time }),
+            (Some((start_seed, start_time)), Some((end_seed, end_time))) => Some(Wave::General {
+                start_time,
+                end_time,
+                start_seed,
+                end_seed,
+            }),
+            (Some((start_seed, start_time)), None) => Some(Wave::Last {
+                start_time,
+                start_seed,
+            }),
             _ => None,
         }
     }
 
-    pub fn update_ready(&self, seed: u32) -> bool {
-        // Has this client's wave started
+    /// Returns whether the update is available. An update is said to be 'ready/available' if the wave
+    /// this host belongs to has fully passed, or if the host's position in the wave has passed, or
+    /// if there are no waves.
+    /// The position of the host within the wave is determined by the seed value.
+    #[must_use]
+    pub fn update_ready(&self, seed: u32, time: DateTime<Utc>) -> bool {
+        // If this host is part of some update wave
         if let Some(wave) = self.update_wave(seed) {
-            return wave.has_started();
-        }
-
-        // Or there are no waves
-        true
-    }
-
-    pub fn jitter(&self, seed: u32) -> Option<DateTime<Utc>> {
-        if let Some(wave) = self.update_wave(seed) {
-            if wave.has_passed() {
-                return None;
+            // If the wave has passed, the update is available (this includes passing the last wave start time)
+            if wave.has_passed(time) {
+                return true;
+            } else if !wave.has_started(time) {
+                return false;
             }
-            let bounds = match self.update_wave(seed) {
-                Some(Wave::Initial { end }) => Some((Utc::now(), end)),
-                Some(Wave::General { start, end }) => Some((start, end)),
-                Some(Wave::Last { start: _ }) | None => None,
+            let bound = match wave {
+                // Hosts should not wind up in the special "initial" wave with no start time, but if they do,
+                // we consider the update as being available immediately.
+                Wave::Initial { .. } => None,
+                Wave::General {
+                    start_time,
+                    end_time,
+                    start_seed,
+                    end_seed,
+                } => Some((start_time, Some(end_time), start_seed, end_seed)),
+                // Last wave has no end time nor end seed; Let end seed be `MAX_SEED` since all the
+                // remaining hosts are in this last wave
+                Wave::Last {
+                    start_time,
+                    start_seed,
+                } => Some((start_time, None, start_seed, MAX_SEED)),
             };
-            if let Some((start, end)) = bounds {
-                let mut rng = thread_rng();
-                if let Some(range) = end.timestamp().checked_sub(start.timestamp()) {
-                    return Some(start + Duration::seconds(rng.gen_range(1, range)));
+            if let Some((start_time, maybe_end_time, start_seed, end_seed)) = bound {
+                if let Some(end_time) = maybe_end_time {
+                    // This host is not part of last wave
+                    // Determine the duration of this host's wave
+                    let wave_duration = end_time - start_time;
+                    let num_seeds_allocated_to_wave = (end_seed - start_seed) as i32;
+                    if num_seeds_allocated_to_wave == 0 {
+                        // Empty wave, no host should have been allocated to it
+                        return true;
+                    }
+                    let time_per_seed = wave_duration / num_seeds_allocated_to_wave;
+                    // Derive the target time position within the wave given the host's seed.
+                    let target_time = start_time + (time_per_seed * (seed as i32));
+                    // If the current time is past the target time position in the wave, the update is
+                    // marked available
+                    return time >= target_time;
                 }
             }
         }
-        None
+        // There are no waves, so we consider the update available
+        true
     }
 }
 
@@ -418,35 +455,245 @@ pub fn load_manifest<T: tough::Transport>(repository: &tough::Repository<T>) -> 
     .context(error::ManifestParse)
 }
 
-#[test]
-fn test_migrations_forward() {
-    // A manifest with four migration tuples starting at 1.0 and ending at 1.3.
-    // There is a shortcut from 1.1 to 1.3, skipping 1.2
-    let path = "./tests/data/migrations.json";
-    let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
-    let from = Version::parse("1.0.0").unwrap();
-    let to = Version::parse("1.5.0").unwrap();
-    let targets = find_migrations(&from, &to, &manifest).unwrap();
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{DateTime, Duration, NaiveDate, Utc};
 
-    assert!(targets.len() == 3);
-    let mut i = targets.iter();
-    assert!(i.next().unwrap() == "migration_1.1.0_a");
-    assert!(i.next().unwrap() == "migration_1.1.0_b");
-    assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
-}
+    fn test_time() -> DateTime<Utc> {
+        // DateTime for 1/1/2000 00:00:00
+        DateTime::<Utc>::from_utc(
+            NaiveDate::from_ymd(2000, 1, 1).and_hms_milli(0, 0, 0, 0),
+            Utc,
+        )
+    }
 
-#[test]
-fn test_migrations_backward() {
-    // The same manifest as `test_migrations_forward` but this time we will migrate backward.
-    let path = "./tests/data/migrations.json";
-    let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
-    let from = Version::parse("1.5.0").unwrap();
-    let to = Version::parse("1.0.0").unwrap();
-    let targets = find_migrations(&from, &to, &manifest).unwrap();
+    fn test_update() -> Update {
+        Update {
+            variant: "bottlerocket".to_string(),
+            arch: "test".to_string(),
+            version: Version::parse("1.1.1").unwrap(),
+            max_version: Version::parse("1.1.1").unwrap(),
+            waves: BTreeMap::new(),
+            images: Images {
+                boot: String::from("boot"),
+                root: String::from("root"),
+                hash: String::from("hash"),
+            },
+        }
+    }
 
-    assert!(targets.len() == 3);
-    let mut i = targets.iter();
-    assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
-    assert!(i.next().unwrap() == "migration_1.1.0_b");
-    assert!(i.next().unwrap() == "migration_1.1.0_a");
+    #[test]
+    fn test_update_ready_no_wave() {
+        let time = test_time();
+        let seed = 100;
+        let update = test_update();
+        assert!(
+            update.update_ready(seed, time),
+            "no waves specified, update should be ready"
+        );
+    }
+
+    #[test]
+    fn test_update_ready_single_wave() {
+        let time = test_time();
+        let mut update = test_update();
+        // One single wave (0th wave does not count) for every update that spans over 2048 millisecond,
+        // Each seed will be mapped to a single millisecond within this wave,
+        // e.g. seed 1 -> update is ready 1 millisecond past start of wave
+        // seed 500 -> update is ready 500 millisecond past start of wave, etc
+        update.waves.insert(0, time);
+        update
+            .waves
+            .insert(MAX_SEED, time + Duration::milliseconds(MAX_SEED as i64));
+
+        for seed in (100..500).step_by(100) {
+            assert!(
+                !update.update_ready(seed, time + Duration::milliseconds((seed as i64) - 1)),
+                "seed: {}, time: {}, wave start time: {}, wave start seed: {}, {} milliseconds hasn't passed yet",
+                seed,
+                time,
+                time,
+                0,
+                seed
+            );
+            assert!(
+                update.update_ready(seed, time + Duration::milliseconds(seed as i64)),
+                "seed: {}, time: {}, wave start time: {}, wave start seed: {}, update should be ready",
+                seed,
+                time + Duration::milliseconds(100),
+                time,
+                0,
+            );
+        }
+    }
+
+    fn add_test_waves(update: &mut Update) {
+        let time = test_time();
+        update.waves.insert(0, time);
+        // First wave ends 200 milliseconds into the update and has seeds 0 - 50
+        update.waves.insert(50, time + Duration::milliseconds(200));
+        // Second wave ends 1024 milliseconds into the update and has seeds 50 - 100
+        update
+            .waves
+            .insert(100, time + Duration::milliseconds(1024));
+        // Third wave ends 4096 milliseconds into the update and has seeds 100 - 1024
+        update
+            .waves
+            .insert(1024, time + Duration::milliseconds(4096));
+    }
+
+    #[test]
+    fn test_update_ready_second_wave() {
+        let time = test_time();
+        let mut update = test_update();
+        add_test_waves(&mut update);
+        // Now we should be in the second wave
+        let seed = 60;
+
+        for duration in (0..200).step_by(10) {
+            assert!(
+                !update.update_ready(seed, time + Duration::milliseconds(duration)),
+                "seed should not part of first wave",
+            );
+        }
+
+        let seed_time_position = (1024 - 200) / (100 - 50) * seed;
+        for duration in (200..seed_time_position).step_by(2) {
+            assert!(
+                !update.update_ready(
+                    seed, time + Duration::milliseconds(duration as i64)
+                ),
+                "update should not be ready, it's the second wave but not at position within wave yet: {}", duration,
+            );
+        }
+
+        for duration in (seed_time_position..1024).step_by(4) {
+            assert!(
+                update.update_ready(
+                    seed,
+                    time + Duration::milliseconds(200)
+                        + Duration::milliseconds(duration as i64)
+                ),
+                "update should be ready now that we're passed the allocated time position within the second wave: {}", duration,
+            );
+        }
+
+        for duration in (1024..4096).step_by(8) {
+            assert!(
+                update.update_ready(seed, time + Duration::milliseconds(duration as i64)),
+                "update should be ready after the third wave starts and onwards",
+            );
+        }
+    }
+
+    #[test]
+    fn test_update_ready_third_wave() {
+        let time = test_time();
+        let mut update = test_update();
+        add_test_waves(&mut update);
+        let seed = 148;
+
+        for duration in (0..200).step_by(10) {
+            assert!(
+                !update.update_ready(seed, time + Duration::milliseconds(duration)),
+                "seed should not part of first wave",
+            );
+        }
+
+        for duration in (200..1024).step_by(4) {
+            assert!(
+                !update.update_ready(seed, time + Duration::milliseconds(duration)),
+                "seed should not part of second wave",
+            );
+        }
+
+        let seed_time_position = (4096 - 1024) / (1024 - 100) * seed;
+        for duration in (1024..seed_time_position).step_by(4) {
+            assert!(
+                !update.update_ready(
+                    seed,
+                    time + Duration::milliseconds(200)
+                        + Duration::milliseconds(duration as i64)
+                ),
+                "update should not be ready, it's the third wave but not at position within wave yet: {}", duration,
+            );
+        }
+
+        for duration in (seed_time_position..4096).step_by(4) {
+            assert!(
+                update.update_ready(
+                    seed,
+                    time + Duration::milliseconds(1024 + 200)
+                        + Duration::milliseconds(duration as i64)
+                ),
+                "update should be ready now that we're passed the allocated time position within the third wave: {}", duration,
+            );
+        }
+    }
+
+    #[test]
+    fn test_update_ready_final_wave() {
+        let mut update = Update {
+            variant: String::from("bottlerocket"),
+            arch: String::from("test"),
+            version: Version::parse("1.0.0").unwrap(),
+            max_version: Version::parse("1.1.0").unwrap(),
+            waves: BTreeMap::new(),
+            images: Images {
+                boot: String::from("boot"),
+                root: String::from("root"),
+                hash: String::from("hash"),
+            },
+        };
+        let seed = 1024;
+        // Construct a DateTime object for 1/1/2000 00:00:00
+        let time = DateTime::<Utc>::from_utc(
+            NaiveDate::from_ymd(2000, 1, 1).and_hms_milli(0, 0, 0, 0),
+            Utc,
+        );
+
+        update.waves.insert(0, time - Duration::hours(3));
+        update.waves.insert(256, time - Duration::hours(2));
+        update.waves.insert(512, time - Duration::hours(1));
+
+        assert!(
+            // Last wave should have already passed
+            update.update_ready(seed, time),
+            "update should be ready"
+        );
+    }
+
+    #[test]
+    fn test_migrations_forward() {
+        // A manifest with four migration tuples starting at 1.0 and ending at 1.3.
+        // There is a shortcut from 1.1 to 1.3, skipping 1.2
+        let path = "./tests/data/migrations.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let from = Version::parse("1.0.0").unwrap();
+        let to = Version::parse("1.5.0").unwrap();
+        let targets = find_migrations(&from, &to, &manifest).unwrap();
+
+        assert!(targets.len() == 3);
+        let mut i = targets.iter();
+        assert!(i.next().unwrap() == "migration_1.1.0_a");
+        assert!(i.next().unwrap() == "migration_1.1.0_b");
+        assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
+    }
+
+    #[test]
+    fn test_migrations_backward() {
+        // The same manifest as `test_migrations_forward` but this time we will migrate backward.
+        let path = "./tests/data/migrations.json";
+        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let from = Version::parse("1.5.0").unwrap();
+        let to = Version::parse("1.0.0").unwrap();
+        let targets = find_migrations(&from, &to, &manifest).unwrap();
+
+        assert!(targets.len() == 3);
+        let mut i = targets.iter();
+        assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
+        assert!(i.next().unwrap() == "migration_1.1.0_b");
+        assert!(i.next().unwrap() == "migration_1.1.0_a");
+    }
 }
