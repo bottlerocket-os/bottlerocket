@@ -17,7 +17,8 @@ Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: containerd.service
 Source2: containerd-config-toml_aws-k8s
 Source3: containerd-config-toml_aws-dev
-Source4: containerd-tmpfiles.conf
+Source4: containerd-config-toml_aws-ecs-1
+Source5: containerd-tmpfiles.conf
 Source1000: clarify.toml
 
 # Upstream patch; can drop when we move to v1.4.0.
@@ -77,10 +78,10 @@ install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/containerd.service
 
 install -d %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
-install -p -m 0644 %{S:2} %{S:3} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:2} %{S:3} %{S:4} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:4} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
+install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 

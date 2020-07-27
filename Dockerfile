@@ -50,6 +50,7 @@ ENV PACKAGE=${PACKAGE} ARCH=${ARCH}
 COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/ .
 RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \
+   && echo "%_cross_variant ${VARIANT}" >> .rpmmacros \
    && rm ${ARCH} shared rust cargo \
    && mv *.spec rpmbuild/SPECS \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \

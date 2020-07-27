@@ -1,0 +1,31 @@
+[Unit]
+Description=Amazon Elastic Container Service - container agent
+Documentation=https://aws.amazon.com/documentation/ecs/
+Requires=docker.service
+After=docker.service configured.target
+Wants=network-online.target configured.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartPreventExitStatus=5
+RestartSec=1s
+EnvironmentFile=-/etc/ecs/ecs.config
+Environment=ECS_LOGFILE=/var/log/ecs/ecs-agent.log ECS_LOGLEVEL=debug
+Environment=ECS_CHECKPOINT=true
+ExecStartPre=/sbin/iptables -t nat -A PREROUTING -d 169.254.170.2/32 \
+ -p tcp -m tcp --dport 80 -j DNAT --to-destination 127.0.0.1:51679
+ExecStartPre=/sbin/iptables -t nat -A OUTPUT -d 169.254.170.2/32 \
+ -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
+ExecStartPre=/sbin/iptables -t filter -I INPUT --dst 127.0.0.0/8 ! \
+ --src 127.0.0.0/8 -m conntrack ! --ctstate RELATED,ESTABLISHED,DNAT -j DROP
+ExecStart=/usr/bin/amazon-ecs-agent
+ExecStopPost=-/sbin/iptables -t nat -D PREROUTING -d 169.254.170.2/32 \
+ -p tcp -m tcp --dport 80 -j DNAT --to-destination 127.0.0.1:51679
+ExecStopPost=-/sbin/iptables -t nat -D OUTPUT -d 169.254.170.2/32 \
+ -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
+ExecStopPost=-/sbin/iptables -t filter -D INPUT --dst 127.0.0.0/8 ! \
+ --src 127.0.0.0/8  -m conntrack ! --ctstate RELATED,ESTABLISHED,DNAT -j DROP
+
+[Install]
+WantedBy=multi-user.target

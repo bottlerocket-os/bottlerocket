@@ -1,10 +1,9 @@
 {
-  "bridge": "none",
   "log-driver": "journald",
   "live-restore": true,
   "max-concurrent-downloads": 10,
   "storage-driver": "overlay2",
-  "exec-opts": ["native.cgroupdriver=systemd"],
+  "exec-opts": ["native.cgroupdriver=cgroupfs"],
   "data-root": "/var/lib/docker",
   "selinux-enabled": true
 }

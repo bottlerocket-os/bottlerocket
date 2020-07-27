@@ -748,6 +748,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecs-settings-applier"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme 3.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "models 0.1.0",
+ "schnauzer 0.1.0",
+ "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.53 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "either"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

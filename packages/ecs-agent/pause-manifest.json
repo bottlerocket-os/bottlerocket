@@ -1,0 +1,1 @@
+[{"Config":"config.json","RepoTags":["amazon/amazon-ecs-pause:bottlerocket"],"Layers":["rootfs/layer.tar"]}]

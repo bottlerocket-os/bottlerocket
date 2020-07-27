@@ -1,0 +1,14 @@
+[configuration-files.containerd-config-toml]
+# No override to path
+template-path = "/usr/share/templates/containerd-config-toml_aws-ecs-1"
+
+# ECS
+[services.ecs]
+restart-commands = ["/usr/bin/ecs-settings-applier", "/bin/systemctl try-reload-or-restart ecs.service"]
+configuration-files = []
+
+[metadata.settings.ecs]
+affected-services = ["ecs"]
+
+[settings.ecs]
+allow-privileged-containers = false

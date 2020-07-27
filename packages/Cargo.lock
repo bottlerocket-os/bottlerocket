@@ -127,6 +127,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecs-agent"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "filesystem"
 version = "0.1.0"
 

@@ -15,6 +15,7 @@ members = [
     "docker-engine",
     "docker-init",
     "docker-proxy",
+    "ecs-agent",
     "filesystem",
     "findutils",
     "glibc",

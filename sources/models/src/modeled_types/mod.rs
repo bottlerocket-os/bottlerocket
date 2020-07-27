@@ -126,8 +126,10 @@ macro_rules! string_impls_for {
 }
 
 // Must be after macro definition
+mod ecs;
 mod kubernetes;
 mod shared;
 
+pub use ecs::*;
 pub use kubernetes::*;
 pub use shared::*;

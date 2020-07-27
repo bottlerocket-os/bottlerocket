@@ -1,0 +1,30 @@
+From 648041259821e73e79965f3de3864109c3a5a816 Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Thu, 16 Jul 2020 10:52:01 -0700
+Subject: [PATCH] bottlerocket: version values settable with linker
+
+---
+ agent/version/version.go | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/agent/version/version.go b/agent/version/version.go
+index 4417a7cf..6fcb4832 100644
+--- a/agent/version/version.go
++++ b/agent/version/version.go
+@@ -22,10 +22,10 @@ package version
+ // repository. Only the 'Version' const should change in checked-in source code
+ 
+ // Version is the version of the Agent
+-const Version = "1.41.0"
++var Version = "1.41.0"
+ 
+ // GitDirty indicates the cleanliness of the git repo when this agent was built
+-const GitDirty = true
++const GitDirty = false
+ 
+ // GitShortHash is the short hash of this agent build
+-const GitShortHash = "33c15e8b"
++var GitShortHash = "33c15e8b"
+-- 
+2.27.0
+

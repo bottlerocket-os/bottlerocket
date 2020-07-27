@@ -32,6 +32,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-k8s-1.17/mod.rs)
 * [Overridden defaults](src/aws-k8s-1.17/override-defaults.toml)
 
+## aws-ecs-1: Amazon ECS
+
+* [Model](src/aws-ecs-1/mod.rs)
+* [Overridden defaults](src/aws-ecs-1/override-defaults.toml)
+
 ## aws-dev: Development build
 
 * [Model](src/aws-dev/mod.rs)
@@ -76,8 +81,9 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    DNSDomain, FriendlyVersion, KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue,
-    KubernetesTaintValue, SingleLineString, Url, ValidBase64,
+    DNSDomain, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, KubernetesClusterName,
+    KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue, SingleLineString, Url,
+    ValidBase64,
 };
 
 // Kubernetes related settings. The dynamic settings are retrieved from
@@ -97,6 +103,14 @@ struct KubernetesSettings {
     cluster_domain: DNSDomain,
     node_ip: Ipv4Addr,
     pod_infra_container_image: SingleLineString,
+}
+
+// ECS settings.
+#[model]
+struct ECSSettings {
+    cluster: String,
+    instance_attributes: HashMap<ECSAttributeKey, ECSAttributeValue>,
+    allow_privileged_containers: bool,
 }
 
 // Update settings. Taken from userdata. The 'seed' setting is generated

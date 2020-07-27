@@ -45,6 +45,11 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.16, 1.17, and 1.18 clusters.
 
+### aws-ecs-1: Amazon ECS container instance
+
+The [aws-ecs-1](aws-ecs-1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
+container instance in AWS.
+
 ### aws-dev: Development build
 
 The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local development of the OS.
@@ -129,20 +134,6 @@ We use the same Rust code for all variants.
 ```
 
 ### Next Steps
-
-After the above files are in place, the variant must be added to the `variants` workspace.
-
-Open `variants/Cargo.toml` in your editor and update the `members` list.
-```
-[workspace]
-members = [
-    ...
-    "my-variant",
-    ...
-]
-```
-
-Next, run `cargo generate-lockfile` to refresh `Cargo.lock`.
 
 To build your variant, run the following command in the top-level Bottlerocket directory.
 ```

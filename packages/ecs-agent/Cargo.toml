@@ -1,0 +1,22 @@
+[package]
+name = "ecs-agent"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+# ECS agent
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/aws/amazon-ecs-agent/archive/v1.41.0.tar.gz"
+sha512 = "d53d1a47eb41d39ffd541b6e416b42276f1d2207fdf5f031be173a8737655dab71ca0c88732716b6fee0761f7fede474cee08a21fd2db5d33b460d6aa547630e"
+
+# TODO: Package the CNI plugins
+# The ECS agent repository includes two CNI plugins as git submodules.  git
+# archive does not include submodules, so the tarball above does not include
+# the source of those plugins.
+
+[build-dependencies]
+glibc = { path = "../glibc" }
