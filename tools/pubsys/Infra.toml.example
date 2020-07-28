@@ -9,6 +9,8 @@ root_role_path = "/home/user/root.json"
 # as part of the initial setup of your TUF roles.  pubsys assumes a single
 # publication key that lives in the snapshot, targets, and timestamp roles.
 # Here you specify where that key lives so we can sign the created repo.
+# You can specify multiple keys, if you like, and select one by name:
+#     cargo make repo -e PUBLISH_KEY=mysigningkey
 # (Don't keep your keys in the repo!)
 # You can keep your private key in a file or an SSM parameter; pick one:
 # (Need inline table syntax until this is fixed: https://github.com/alexcrichton/toml-rs/issues/225)
@@ -16,7 +18,7 @@ signing_keys = { default = { file = { path = "/home/user/key.pem" } } }
 # signing_keys = { default = { ssm = { parameter = "/my/parameter" } } }
 
 # You can have any number of repos defined and build a specific one by running like this:
-#     cargo make repo -e REPO=myrepo
+#     cargo make repo -e PUBLISH_REPO=myrepo
 # If the URLs are uncommented, they will be pulled and used as a starting
 # point, and your images (and related files) will be added as a new update in
 # the created repo.  Otherwise, we build a new repo from scratch.
