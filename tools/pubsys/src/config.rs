@@ -12,9 +12,9 @@ use url::Url;
 /// Configuration needed to load and create repos
 #[derive(Debug, Deserialize)]
 pub(crate) struct InfraConfig {
-    pub(crate) root_role_path: PathBuf,
-    pub(crate) signing_keys: HashMap<String, SigningKeyConfig>,
-    pub(crate) repo: HashMap<String, RepoConfig>,
+    pub(crate) root_role_path: Option<PathBuf>,
+    pub(crate) signing_keys: Option<HashMap<String, SigningKeyConfig>>,
+    pub(crate) repo: Option<HashMap<String, RepoConfig>>,
 }
 
 impl InfraConfig {

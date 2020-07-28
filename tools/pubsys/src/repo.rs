@@ -248,9 +248,13 @@ fn repo_urls<'a>(
 ) -> Result<Option<(Url, &'a Url)>> {
     let repo_config = infra_config
         .repo
+        .as_ref()
+        .context(error::MissingConfig {
+            missing: "repo section",
+        })?
         .get(&repo_args.repo)
-        .context(error::MissingRepoConfig {
-            repo: &repo_args.repo,
+        .context(error::MissingConfig {
+            missing: format!("definition for repo {}", &repo_args.repo),
         })?;
 
     // Check if both URLs are set
@@ -364,12 +368,18 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     );
     let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
     trace!("Parsed infra config: {:?}", infra_config);
+    let root_role_path = infra_config
+        .root_role_path
+        .as_ref()
+        .context(error::MissingConfig {
+            missing: "root_role_path",
+        })?;
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
     let maybe_urls = repo_urls(&repo_args, &infra_config)?;
     let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls {
         info!("Found metadata and target URLs, loading existing repository");
-        match load_editor_and_manifest(&infra_config.root_role_path, &metadata_url, &targets_url)? {
+        match load_editor_and_manifest(root_role_path, &metadata_url, &targets_url)? {
             Some((editor, manifest)) => (editor, manifest),
             None => {
                 info!(
@@ -377,8 +387,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
                     metadata_url
                 );
                 (
-                    RepositoryEditor::new(&infra_config.root_role_path)
-                        .context(error::NewEditor)?,
+                    RepositoryEditor::new(root_role_path).context(error::NewEditor)?,
                     Manifest::default(),
                 )
             }
@@ -386,7 +395,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     } else {
         info!("Did not find metadata and target URLs in infra config, creating a new repository");
         (
-            RepositoryEditor::new(&infra_config.root_role_path).context(error::NewEditor)?,
+            RepositoryEditor::new(root_role_path).context(error::NewEditor)?,
             Manifest::default(),
         )
     };
@@ -416,9 +425,13 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
 
     let signing_key_config = infra_config
         .signing_keys
+        .as_ref()
+        .context(error::MissingConfig {
+            missing: "signing_keys",
+        })?
         .get(&repo_args.signing_key)
-        .context(error::MissingSigningKey {
-            profile: &repo_args.signing_key,
+        .context(error::MissingConfig {
+            missing: format!("profile {} in signing_keys", &repo_args.signing_key),
         })?;
 
     let key_source: Box<dyn KeySource> = match signing_key_config {
@@ -563,14 +576,8 @@ mod error {
             source: update_metadata::error::Error,
         },
 
-        #[snafu(display(
-            "Requested build of repo '{}' that isn't specified in Infra.toml",
-            repo
-        ))]
-        MissingRepoConfig { repo: String },
-
-        #[snafu(display("No profile '{}' for signing key in Infra.toml", profile))]
-        MissingSigningKey { profile: String },
+        #[snafu(display("Infra.toml is missing {}", missing))]
+        MissingConfig { missing: String },
 
         #[snafu(display("Failed to create new repo editor: {}", source))]
         NewEditor { source: tough::error::Error },
