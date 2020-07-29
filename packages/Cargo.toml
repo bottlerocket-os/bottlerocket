@@ -32,6 +32,7 @@ members = [
     "libacl",
     "libattr",
     "libaudit",
+    "libbzip2",
     "libcap",
     "libdbus",
     "libgcc",

@@ -1,0 +1,10 @@
+prefix=__PREFIX__
+exec_prefix=__EXEC_PREFIX__
+libdir=__LIBDIR__
+includedir=__INCLUDEDIR__
+
+Name: bzip2
+Description: __DESCRIPTION__
+Version: __VERSION__
+Libs: -L${libdir} -lbz2
+Cflags: -I${includedir}
