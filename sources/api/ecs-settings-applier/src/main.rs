@@ -30,6 +30,9 @@ struct ECSConfig {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     privileged_disabled: Option<bool>,
+
+    #[serde(skip_serializing_if = "std::vec::Vec::is_empty")]
+    available_logging_drivers: Vec<String>,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -58,6 +61,12 @@ fn run() -> Result<()> {
     let mut config = ECSConfig {
         cluster: ecs.cluster,
         privileged_disabled: ecs.allow_privileged_containers.map(|s| !s),
+        available_logging_drivers: ecs
+            .logging_drivers
+            .unwrap_or_default()
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
         ..Default::default()
     };
     if let Some(os) = settings.os {

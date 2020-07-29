@@ -12,3 +12,4 @@ affected-services = ["ecs"]
 
 [settings.ecs]
 allow-privileged-containers = false
+logging-drivers = ["json-file", "awslogs", "none"]
