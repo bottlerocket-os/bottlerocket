@@ -111,6 +111,7 @@ struct ECSSettings {
     cluster: String,
     instance_attributes: HashMap<ECSAttributeKey, ECSAttributeValue>,
     allow_privileged_containers: bool,
+    logging_drivers: Vec<SingleLineString>,
 }
 
 // Update settings. Taken from userdata. The 'seed' setting is generated
