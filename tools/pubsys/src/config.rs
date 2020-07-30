@@ -4,7 +4,7 @@ use crate::deserialize_offset;
 use chrono::Duration;
 use serde::Deserialize;
 use snafu::ResultExt;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::path::{Path, PathBuf};
 use url::Url;
@@ -12,9 +12,13 @@ use url::Url;
 /// Configuration needed to load and create repos
 #[derive(Debug, Deserialize)]
 pub(crate) struct InfraConfig {
+    // Repo subcommand config
     pub(crate) root_role_path: Option<PathBuf>,
     pub(crate) signing_keys: Option<HashMap<String, SigningKeyConfig>>,
     pub(crate) repo: Option<HashMap<String, RepoConfig>>,
+
+    // Config for AWS specific subcommands
+    pub(crate) aws: Option<AwsConfig>,
 }
 
 impl InfraConfig {
@@ -27,6 +31,22 @@ impl InfraConfig {
         let infra_config_str = fs::read_to_string(path).context(error::File { path })?;
         toml::from_str(&infra_config_str).context(error::InvalidToml { path })
     }
+}
+
+/// AWS-specific infrastructure configuration
+#[derive(Debug, Deserialize)]
+pub(crate) struct AwsConfig {
+    pub(crate) regions: VecDeque<String>,
+    pub(crate) role: Option<String>,
+    pub(crate) profile: Option<String>,
+    pub(crate) region: HashMap<String, AwsRegionConfig>,
+}
+
+/// AWS region-specific configuration
+#[derive(Debug, Deserialize)]
+pub(crate) struct AwsRegionConfig {
+    pub(crate) role: Option<String>,
+    pub(crate) endpoint: Option<String>,
 }
 
 /// Location of signing keys

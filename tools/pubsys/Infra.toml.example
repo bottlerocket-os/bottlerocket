@@ -26,3 +26,20 @@ signing_keys = { default = { file = { path = "/home/user/key.pem" } } }
 [repo.default]
 # metadata_base_url = "https://example.com/metadata/"
 # targets_url = "https://example.com/targets/"
+
+[aws]
+# The list of regions in which you want to publish AMIs. We register an AMI in
+# the first region and copy it to all other regions.
+regions = ["us-west-2", "us-east-1", "us-east-2"]
+# If specified, we use this named profile from ~/.aws/credentials, rather than
+# the default path of trying credentials from the environment, from a
+# credential process, from the default profile, and then from an IAM instance
+# profile.
+profile = "my-profile"
+# If specified, we assume this role before making any API calls.
+role = "arn:aws:iam::012345678901:role/assume-global"
+
+[aws.region.us-west-2]
+# If specified, we assume this role before making any API calls in this region.
+# (This is assumed after the "global" aws.role, if that is also specified.)
+role = "arn:aws:iam::012345678901:role/assume-regional"

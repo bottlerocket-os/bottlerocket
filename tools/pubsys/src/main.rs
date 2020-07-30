@@ -3,20 +3,23 @@
 
 Currently implemented:
 * building repos, whether starting from an existing repo or from scratch
+* registering and copying EC2 AMIs
 
 To be implemented:
-* building AMIs
+* machine-readable output describing AMI registrations
 * updating SSM parameters
+* high-level document describing pubsys usage with examples
 
 Configuration comes from:
 * command-line parameters, to specify basic options and paths to the below files
-* Infra.toml, for repo configuration
+* Infra.toml, for repo and AMI configuration
 * Release.toml, for migrations
 * Policy files for repo metadata expiration and update wave timing
 */
 
 #![deny(rust_2018_idioms)]
 
+mod aws;
 mod config;
 mod repo;
 
@@ -30,7 +33,7 @@ use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
@@ -40,11 +43,13 @@ fn run() -> Result<()> {
 
     match args.subcommand {
         SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::Repo),
+        SubCommand::Ami(ref ami_args) => aws::ami::run(&args, &ami_args).await.context(error::Ami),
     }
 }
 
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }
@@ -69,6 +74,7 @@ struct Args {
 #[derive(Debug, StructOpt)]
 enum SubCommand {
     Repo(repo::RepoArgs),
+    Ami(aws::ami::AmiArgs),
 }
 
 /// Parses a SemVer, stripping a leading 'v' if present
@@ -102,6 +108,9 @@ mod error {
 
         #[snafu(display("Failed to build repo: {}", source))]
         Repo { source: crate::repo::Error },
+
+        #[snafu(display("Failed to build AMI: {}", source))]
+        Ami { source: crate::aws::ami::Error },
     }
 }
 type Result<T> = std::result::Result<T, error::Error>;
