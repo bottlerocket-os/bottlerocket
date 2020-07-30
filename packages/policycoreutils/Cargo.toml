@@ -1,0 +1,19 @@
+[package]
+name = "policycoreutils"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/SELinuxProject/selinux/releases/download/20191204/policycoreutils-3.0.tar.gz"
+sha512 = "d8d25db48c1caef69228e87d7ebb2c0f075e44e4ff6bf18a26af341d948b81375b33945128cd0410ffebc64ca478fd19a207295189c716c95e6a3c586e9f053d"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libselinux = { path = "../libselinux" }
+libsemanage = { path = "../libsemanage" }
+libsepol = { path = "../libsepol" }

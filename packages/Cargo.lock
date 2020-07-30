@@ -432,6 +432,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "policycoreutils"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libselinux",
+ "libsemanage",
+ "libsepol",
+]
+
+[[package]]
 name = "procps"
 version = "0.1.0"
 dependencies = [
