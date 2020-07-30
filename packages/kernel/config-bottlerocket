@@ -34,6 +34,10 @@ CONFIG_SECURITY_SELINUX_DISABLE=n
 # Do not allow SELinux to use `enforcing=0` behavior.
 CONFIG_SECURITY_SELINUX_DEVELOP=n
 
+# Check the protection applied by the kernel for mmap and mprotect,
+# rather than the protection requested by userspace.
+CONFIG_SECURITY_SELINUX_CHECKREQPROT_VALUE=0
+
 # enable /proc/config.gz
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y
