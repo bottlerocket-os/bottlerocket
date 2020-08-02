@@ -13,6 +13,15 @@ Requires: %{_cross_os}libpcre
 %description
 %{summary}.
 
+%package utils
+Summary: A set of utilities for SELinux
+Requires: %{name}
+Requires: %{_cross_os}libpcre
+Requires: %{_cross_os}libsepol
+
+%description utils
+%{summary}.
+
 %package devel
 Summary: Files for development using the library for SELinux
 Requires: %{name}
@@ -47,8 +56,40 @@ export USE_PCRE2='y' \\\
 %license LICENSE
 %{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
-%exclude %{_cross_sbindir}
 %exclude %{_cross_mandir}
+
+%files utils
+%{_cross_sbindir}/avcstat
+%{_cross_sbindir}/sefcontext_compile
+%exclude %{_cross_sbindir}/compute_av
+%exclude %{_cross_sbindir}/compute_create
+%exclude %{_cross_sbindir}/compute_member
+%exclude %{_cross_sbindir}/compute_relabel
+%exclude %{_cross_sbindir}/compute_user
+%exclude %{_cross_sbindir}/getconlist
+%exclude %{_cross_sbindir}/getdefaultcon
+%exclude %{_cross_sbindir}/getenforce
+%exclude %{_cross_sbindir}/getfilecon
+%exclude %{_cross_sbindir}/getpidcon
+%exclude %{_cross_sbindir}/getsebool
+%exclude %{_cross_sbindir}/getseuser
+%exclude %{_cross_sbindir}/matchpathcon
+%exclude %{_cross_sbindir}/policyvers
+%exclude %{_cross_sbindir}/selabel_digest
+%exclude %{_cross_sbindir}/selabel_get_digests_all_partial_matches
+%exclude %{_cross_sbindir}/selabel_lookup
+%exclude %{_cross_sbindir}/selabel_lookup_best_match
+%exclude %{_cross_sbindir}/selabel_partial_match
+%exclude %{_cross_sbindir}/selinux_check_access
+%exclude %{_cross_sbindir}/selinux_check_securetty_context
+%exclude %{_cross_sbindir}/selinuxconlist
+%exclude %{_cross_sbindir}/selinuxdefcon
+%exclude %{_cross_sbindir}/selinuxenabled
+%exclude %{_cross_sbindir}/selinuxexeccon
+%exclude %{_cross_sbindir}/setenforce
+%exclude %{_cross_sbindir}/setfilecon
+%exclude %{_cross_sbindir}/togglesebool
+%exclude %{_cross_sbindir}/validatetrans
 
 %files devel
 %{_cross_libdir}/*.a
