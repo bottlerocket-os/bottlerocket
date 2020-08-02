@@ -28,6 +28,7 @@ Source50: catgen.sh
 # Misc config files
 Source100: selinux.config
 Source101: lxc_contexts
+Source102: selinux-policy-files.service
 
 BuildArch: noarch
 BuildRequires: secilc
@@ -46,16 +47,25 @@ secilc --policyvers=31 \
   %{S:12} *.cil
 
 %install
-install -d %{buildroot}%{_cross_libdir}/selinux/%{policytype}/{contexts/files,policy}
-install -p -m 0644 %{S:100} %{buildroot}%{_cross_libdir}/selinux/config
-install -p -m 0644 %{S:101} %{buildroot}%{_cross_libdir}/selinux/%{policytype}/contexts
-install -p -m 0644 file_contexts %{buildroot}%{_cross_libdir}/selinux/%{policytype}/contexts/files
-install -p -m 0644 policy.31 %{buildroot}%{_cross_libdir}/selinux/%{policytype}/policy
+poldir="%{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/selinux"
+install -d "${poldir}/%{policytype}/"{contexts/files,policy}
+install -p -m 0644 %{S:100} "${poldir}/config"
+install -p -m 0644 %{S:101} "${poldir}/%{policytype}/contexts"
+install -p -m 0644 file_contexts "${poldir}/%{policytype}/contexts/files"
+install -p -m 0644 policy.31 "${poldir}/%{policytype}/policy"
+
+install -d %{buildroot}%{_cross_sysconfdir}
+ln -s ..%{_cross_factorydir}%{_cross_sysconfdir}/selinux %{buildroot}%{_cross_sysconfdir}/selinux
+
+install -d %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:102} %{buildroot}%{_cross_unitdir}/selinux-policy-files.service
 
 %files
-%{_cross_libdir}/selinux/config
-%{_cross_libdir}/selinux/%{policytype}/contexts/files/file_contexts
-%{_cross_libdir}/selinux/%{policytype}/contexts/lxc_contexts
-%{_cross_libdir}/selinux/%{policytype}/policy/policy.31
+%{_cross_factorydir}%{_cross_sysconfdir}/selinux/config
+%{_cross_factorydir}%{_cross_sysconfdir}/selinux/%{policytype}/contexts/files/file_contexts
+%{_cross_factorydir}%{_cross_sysconfdir}/selinux/%{policytype}/contexts/lxc_contexts
+%{_cross_factorydir}%{_cross_sysconfdir}/selinux/%{policytype}/policy/policy.31
+%{_cross_sysconfdir}/selinux
+%{_cross_unitdir}/selinux-policy-files.service
 
 %changelog
