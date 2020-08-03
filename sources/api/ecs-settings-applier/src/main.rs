@@ -33,6 +33,12 @@ struct ECSConfig {
 
     #[serde(skip_serializing_if = "std::vec::Vec::is_empty")]
     available_logging_drivers: Vec<String>,
+
+    #[serde(rename = "TaskIAMRoleEnabled")]
+    task_iam_role_enabled: bool,
+
+    #[serde(rename = "TaskIAMRoleEnabledForNetworkHost")]
+    task_iam_role_enabled_for_network_host: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -67,6 +73,10 @@ fn run() -> Result<()> {
             .iter()
             .map(|s| s.to_string())
             .collect(),
+
+        // Task role support is always enabled
+        task_iam_role_enabled: true,
+        task_iam_role_enabled_for_network_host: true,
         ..Default::default()
     };
     if let Some(os) = settings.os {
