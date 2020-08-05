@@ -38,6 +38,9 @@ struct ECSConfig {
 
     #[serde(rename = "TaskIAMRoleEnabledForNetworkHost")]
     task_iam_role_enabled_for_network_host: bool,
+
+    #[serde(rename = "SELinuxCapable")]
+    selinux_capable: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -76,6 +79,9 @@ fn run() -> Result<()> {
         // Task role support is always enabled
         task_iam_role_enabled: true,
         task_iam_role_enabled_for_network_host: true,
+
+        // SELinux is always available
+        selinux_capable: true,
         ..Default::default()
     };
     if let Some(os) = settings.os {
