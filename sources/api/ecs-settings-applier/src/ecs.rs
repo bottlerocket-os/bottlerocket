@@ -4,7 +4,8 @@
 ecs-settings-applier generates a configuration file for the ECS agent from Bottlerocket settings.
 
 The configuration file for ECS is a JSON-formatted document with conditionally-defined keys and
-embedded lists.
+embedded lists.  The structure and names of fields in the document can be found
+[here](https://github.com/aws/amazon-ecs-agent/blob/a250409cf5eb4ad84a7b889023f1e4d2e274b7ab/agent/config/types.go).
 */
 use log::debug;
 use serde::Serialize;
@@ -38,6 +39,9 @@ struct ECSConfig {
 
     #[serde(rename = "TaskIAMRoleEnabledForNetworkHost")]
     task_iam_role_enabled_for_network_host: bool,
+
+    #[serde(rename = "SELinuxCapable")]
+    selinux_capable: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -76,6 +80,9 @@ fn run() -> Result<()> {
         // Task role support is always enabled
         task_iam_role_enabled: true,
         task_iam_role_enabled_for_network_host: true,
+
+        // SELinux is always available
+        selinux_capable: true,
         ..Default::default()
     };
     if let Some(os) = settings.os {
