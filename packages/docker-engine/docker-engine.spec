@@ -26,6 +26,10 @@ Source4: daemon.json
 Source5: docker-tmpfiles.conf
 Source1000: clarify.toml
 
+# Bottlerocket-specific - Privileged containers should receive SELinux labels
+# https://github.com/bottlerocket-os/bottlerocket/issues/1011
+Patch0001: 0001-bottlerocket-privileged-shouldn-t-disable-SELinux.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel

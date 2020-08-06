@@ -1,0 +1,59 @@
+From ad791e1881941490a3ee6e13c0712b620d6c1af6 Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Fri, 7 Aug 2020 10:24:15 -0700
+Subject: [PATCH] bottlerocket: privileged shouldn't disable SELinux
+
+In Bottlerocket, the SELinux policy prevents writes to the files
+underlying the root filesystem by all processes except container
+runtimes.  In the absence of a context override, the root filesystem on
+the upper layer has the same restricted label as the lower layers.
+Disabling SELinux labeling for privileged containers effectively
+prevents privileged containers from being able to write to mounted
+filesystems, including their own root filesystem.  Rather than
+increasing privilege by disabling SELinux, the removal of labeling
+decreases privilege.
+
+This change removes the automatic disable of SELinux labeling for
+privileged containers.  Privileged containers will now receive the same
+default labels as non-privileged containers and be subject to the same
+set of policies.  To increase privilege, containers can be launched with
+both --privileged and --security-opt label:type:super_t.
+---
+ container/container.go | 5 -----
+ daemon/create.go       | 4 ----
+ 2 files changed, 9 deletions(-)
+
+diff --git a/container/container.go b/container/container.go
+index 1c82c4c296..c2c621dc7d 100644
+--- a/container/container.go
++++ b/container/container.go
+@@ -420,11 +420,6 @@ func (container *Container) StartLogger() (logger.Logger, error) {
+ 
+ // GetProcessLabel returns the process label for the container.
+ func (container *Container) GetProcessLabel() string {
+-	// even if we have a process label return "" if we are running
+-	// in privileged mode
+-	if container.HostConfig.Privileged {
+-		return ""
+-	}
+ 	return container.ProcessLabel
+ }
+ 
+diff --git a/daemon/create.go b/daemon/create.go
+index 1afb1bebea..ec517def1b 100644
+--- a/daemon/create.go
++++ b/daemon/create.go
+@@ -212,10 +212,6 @@ func (daemon *Daemon) generateSecurityOpt(hostConfig *containertypes.HostConfig)
+ 	}
+ 	ipcMode := hostConfig.IpcMode
+ 	pidMode := hostConfig.PidMode
+-	privileged := hostConfig.Privileged
+-	if ipcMode.IsHost() || pidMode.IsHost() || privileged {
+-		return toHostConfigSelinuxLabels(label.DisableSecOpt()), nil
+-	}
+ 
+ 	var ipcLabel []string
+ 	var pidLabel []string
+-- 
+2.28.0
+
