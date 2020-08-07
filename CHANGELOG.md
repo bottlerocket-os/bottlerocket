@@ -1,3 +1,75 @@
+# v0.5.0 (2020-08-13)
+
+Special thanks to first-time contributor @spoonofpower ([#988])!
+
+## Breaking changes
+
+* Remove support for unsigned datastore migrations ([#976])
+
+## OS changes
+
+* Add `aws-ecs-1` variant prototype for running containers in ECS clusters ([#946], [#1005], [#1007], [#1008], [#1009], [#1017])
+* Configurable `clusterDomain` kubelet setting via `settings.kubernetes.cluster-domain` ([#988])
+* Make update position within waves consistent ([#993])
+* Fix kubelet configuration for `MaxPods` ([#994])
+* Update `eni-max-pods` with new instance types ([#994])
+* Fix `max_versions` unit test in `updata` ([#998])
+* Remove injection of `label:disable` option for privileged containers in Docker ([#1013])
+* Add `policycoreutils` and related tools ([#1016])
+* Update third-party software packages ([#1018], [#1023], [#1025], [#1026])
+* Update Rust dependencies ([#1019], [#1021])
+* Update `host-ctr`'s dependencies ([#1020])
+* Update the host-containers' default versions ([#1030])
+
+## Build changes
+
+* Add `pubsys` (`cargo make repo`, `cargo make ami`) for repo and AMI creation ([#964], [#1010], [#1028])
+* Require `updata init` before creating a new repo manifest ([#991])
+* Exclude README.md files from cargo change tracking ([#995], [#996])
+* Build `aws-k8s-1.17` variant by default with `cargo make` ([#1002])
+* Update comments to be more accurate in Infra.toml ([#1004])
+* Update `amiize` to use `coldsnap` ([#1012])
+* Update Bottlerocket SDK to v0.12.0 ([#1014])
+* Fix warnings for use of deprecated items in `common_migrations` ([#1022])
+
+## Documentation changes
+
+* Removed instructions to manually apply the manifest for aws-vpc-cni-k8s ([#1029])
+
+[#946]: https://github.com/bottlerocket-os/bottlerocket/pull/946
+[#964]: https://github.com/bottlerocket-os/bottlerocket/pull/964
+[#976]: https://github.com/bottlerocket-os/bottlerocket/pull/976
+[#988]: https://github.com/bottlerocket-os/bottlerocket/pull/988
+[#991]: https://github.com/bottlerocket-os/bottlerocket/pull/991
+[#993]: https://github.com/bottlerocket-os/bottlerocket/pull/993
+[#994]: https://github.com/bottlerocket-os/bottlerocket/pull/994
+[#995]: https://github.com/bottlerocket-os/bottlerocket/pull/995
+[#996]: https://github.com/bottlerocket-os/bottlerocket/pull/996
+[#998]: https://github.com/bottlerocket-os/bottlerocket/pull/998
+[#1002]: https://github.com/bottlerocket-os/bottlerocket/pull/1002
+[#1004]: https://github.com/bottlerocket-os/bottlerocket/pull/1004
+[#1005]: https://github.com/bottlerocket-os/bottlerocket/pull/1005
+[#1007]: https://github.com/bottlerocket-os/bottlerocket/pull/1007
+[#1008]: https://github.com/bottlerocket-os/bottlerocket/pull/1008
+[#1009]: https://github.com/bottlerocket-os/bottlerocket/pull/1009
+[#1010]: https://github.com/bottlerocket-os/bottlerocket/pull/1010
+[#1012]: https://github.com/bottlerocket-os/bottlerocket/pull/1012
+[#1013]: https://github.com/bottlerocket-os/bottlerocket/pull/1013
+[#1014]: https://github.com/bottlerocket-os/bottlerocket/pull/1014
+[#1016]: https://github.com/bottlerocket-os/bottlerocket/pull/1016
+[#1017]: https://github.com/bottlerocket-os/bottlerocket/pull/1017
+[#1018]: https://github.com/bottlerocket-os/bottlerocket/pull/1018
+[#1019]: https://github.com/bottlerocket-os/bottlerocket/pull/1019
+[#1020]: https://github.com/bottlerocket-os/bottlerocket/pull/1020
+[#1021]: https://github.com/bottlerocket-os/bottlerocket/pull/1021
+[#1022]: https://github.com/bottlerocket-os/bottlerocket/pull/1022
+[#1023]: https://github.com/bottlerocket-os/bottlerocket/pull/1023
+[#1025]: https://github.com/bottlerocket-os/bottlerocket/pull/1025
+[#1026]: https://github.com/bottlerocket-os/bottlerocket/pull/1026
+[#1028]: https://github.com/bottlerocket-os/bottlerocket/pull/1028
+[#1029]: https://github.com/bottlerocket-os/bottlerocket/pull/1029
+[#1030]: https://github.com/bottlerocket-os/bottlerocket/pull/1030
+
 # v0.4.1 (2020-07-13)
 
 ## Security fixes
