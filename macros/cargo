@@ -18,7 +18,7 @@
 %__cargo_env CARGO_TARGET_DIR="${HOME}/.cache" SKIP_README="true"
 %__cargo_cross_pkg_config PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" PKG_CONFIG_ALLOW_CROSS=1
 %__cargo_cross_env %{__cargo_env} %{__cargo_cross_pkg_config} TARGET_CC="%{_cross_triple}-gnu-gcc"
-%__cargo_cross_env_static %{__cargo_env} %{__cargo_cross_pkg_config} TARGET_CC="%{_cross_triple}-musl-gcc"
+%__cargo_cross_env_static %{__cargo_env} %{__cargo_cross_pkg_config} TARGET_CC="%{_cross_triple}-musl-gcc" CARGO_PROFILE_RELEASE_LTO=thin
 
 %cargo_prep (\
 %{__mkdir} -p %{_builddir}/.cargo \
