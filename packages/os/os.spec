@@ -179,18 +179,14 @@ mkdir bin
     -p updog \
     -p logdog \
     -p growpart \
+%if "%{_cross_variant}" == "aws-ecs-1"
+    -p ecs-settings-applier \
+%endif
     %{nil}
 
 %cargo_build_static --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiclient \
     %{nil}
-
-# Build conditional ECS component
-%if "%{_cross_variant}" == "aws-ecs-1"
-%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
-    -p ecs-settings-applier \
-    %{nil}
-%endif
 
 # Build the migrations
 for crate in $(find %{_builddir}/sources/api/migration/migrations -name 'Cargo.toml'); do
@@ -205,20 +201,13 @@ for p in \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
   migrator \
-  signpost updog logdog;
-do
-  install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
-done
-
-
+  signpost updog logdog \
 %if "%{_cross_variant}" == "aws-ecs-1"
-for p in \
-  ecs-settings-applier;
-do
+  ecs-settings-applier \
+%endif
+; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
-%endif
-
 
 for p in apiclient ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
