@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/containernetworking/cni/archive/v0.7.1/cni-0.7.1.tar.gz"
-sha512 = "ca97ad8cd693a50c7c793266e23c2c38c4cb6917dc38c68f88921f48daf437375aa2d347eba70c8dc4e08ba6e6f008e0164282029fa36aab98417e763eb29285"
+url = "https://github.com/containernetworking/cni/archive/v0.8.0/cni-0.8.0.tar.gz"
+sha512 = "2b0baa5be5a8b4b886c821fb03d8a186b30afd1165d6c9ea6b876a0e93a5f54375ea5cf774dbdfcc648bab05ca368add59cea2c0e1c7a7f4f4bbb9634fed6280"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
