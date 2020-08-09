@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/krallin/tini/archive/v0.18.0/tini-0.18.0.tar.gz"
-sha512 = "83279180b6a875aaff9b6b7446ee7e71fd05357279744afcb4db67c76572dc871acfba86c035857009b5dd88ca75d9f2e815d6a925563cdb3e6e771eb83be9b1"
+url = "https://github.com/krallin/tini/archive/v0.19.0/tini-0.19.0.tar.gz"
+sha512 = "1fa85b56e2c6085ea474f251928e7a40510d92aeef60b3c145b0496969c1b5df86835d143cb91ef5b4bf4da63fa8a56947cc39a4276e4b72faa57276d432b292"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
