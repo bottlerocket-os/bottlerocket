@@ -14,12 +14,12 @@ package-name = "kubernetes-1.17"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes/kubernetes/archive/v1.17.8/kubernetes-1.17.8.tar.gz"
-sha512 = "0bf42da5162d91afe7be4cc9e2ca989e22d768b82b0e7b9d2ddc6bac9583fa73f22f4b755fd9cdd215d4c5023b5a349efc3f3b1a944048a329ba657b05b95f0b"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.17.9/kubernetes-1.17.9.tar.gz"
+sha512 = "c6c1c27a534b5b6dbbc3be34d9f8f321b0289e9032ad11549e1f028cd4cf6ba288cdc54283f5263b5e9cef017d535db911b5f7e5cbaccd2bee7d955ce2039696"
 
 # This is a large patch, so we don't want to check it into the repo.  It's like
 # https://github.com/kubernetes/kubernetes/commit/a94346bef9806a135ebcfda03672966c336c1c17
-# but applies to 1.17.8 without further context changes.
+# but applies to 1.17.x without further context changes.
 [[package.metadata.build-package.external-files]]
 path = "aws-sdk-go-1.28.2_k8s-1.17.8.patch.bz2"
 url = "file:///aws-sdk-go-1.28.2_k8s-1.17.8.patch.bz2"
