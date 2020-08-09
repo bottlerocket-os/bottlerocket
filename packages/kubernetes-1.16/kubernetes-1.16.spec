@@ -2,7 +2,7 @@
 %global gorepo kubernetes
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.16.9
+%global gover 1.16.13
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -25,7 +25,6 @@ Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 Patch2: 0002-do-not-omit-debug-info.patch
 Patch3: 0003-enable-PIE-for-platform-binaries.patch
 Patch4: 0004-override-SELinux-label-for-kubelet-plugins.patch
-Patch5: 0005-kubelet-block-non-forwarded-packets.patch
 
 # Update aws-sdk-go for IMDSv2 support
 Patch100: aws-sdk-go-1.28.2.patch.bz2
