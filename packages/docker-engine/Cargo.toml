@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/docker/engine/archive/v18.09.9/engine-18.09.9.tar.gz"
-sha512 = "070700e5b9dac439fd494ae52824ebbd0a8dbc4bf0351c4173c47f585ab81a0fb39470c4d566a7dc69481b03e04f073727062872d2550505ae67a5d1bb30132e"
+url = "https://github.com/docker/engine/archive/v19.03.12/engine-19.03.12.tar.gz"
+sha512 = "51632ca8cff03440e3b76ad3e7f06b9c6275c776f4c4f9dc88cd7f5aa9b8aa8cb16ce2b3702426cb93f3714265a6cd28d4ba31612db37199e2915821b9ee8fd4"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
