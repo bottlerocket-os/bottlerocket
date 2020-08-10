@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 
-%global tiniver 0.18.0
+%global tiniver 0.19.0
 
 Name: %{_cross_os}docker-init
 Version: 18.09.9

@@ -1,10 +1,10 @@
 Name: %{_cross_os}util-linux
-Version: 2.34
+Version: 2.36
 Release: 1%{?dist}
 Summary: A collection of basic system utilities
 License: BSD-3-Clause AND BSD-4-Clause-UC AND GPL-1.0-or-later AND GPL-2.0-only AND GPL-2.0-or-later AND GPL-3.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT
 URL: http://en.wikipedia.org/wiki/Util-linux
-Source0: https://www.kernel.org/pub/linux/utils/util-linux/v2.34/util-linux-%{version}.tar.xz
+Source0: https://www.kernel.org/pub/linux/utils/util-linux/v%{version}/util-linux-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libselinux-devel
@@ -166,10 +166,12 @@ done
 %{_cross_bindir}/ipcmk
 %{_cross_bindir}/ipcrm
 %{_cross_bindir}/ipcs
+%{_cross_bindir}/irqtop
 %{_cross_bindir}/kill
 %{_cross_bindir}/lsblk
 %{_cross_bindir}/lscpu
 %{_cross_bindir}/lsipc
+%{_cross_bindir}/lsirq
 %{_cross_bindir}/lslocks
 %{_cross_bindir}/lsmem
 %{_cross_bindir}/lsns
@@ -212,6 +214,7 @@ done
 %exclude %{_cross_bindir}/rename
 %exclude %{_cross_bindir}/rev
 %exclude %{_cross_bindir}/script
+%exclude %{_cross_bindir}/scriptlive
 %exclude %{_cross_bindir}/scriptreplay
 %exclude %{_cross_bindir}/setarch
 %exclude %{_cross_bindir}/setterm

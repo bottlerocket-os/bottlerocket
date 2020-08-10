@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/seccomp/libseccomp/releases/download/v2.4.3/libseccomp-2.4.3.tar.gz"
-sha512 = "7b7af2e98493243ffe1934fefff5723b24ae9b9bdc4bf039343ee8456c15acb0ea34e81ec292a41143848272aeca794ef92ad38fc3f42c77465170cb540479ef"
+url = "https://github.com/seccomp/libseccomp/releases/download/v2.5.0/libseccomp-2.5.0.tar.gz"
+sha512 = "00ef5aeb4db8dafb546ae680b2d6d9b6aeed008df805d0f28f9dd15c074ff6ea7a5e5131ab503825b8011c59aa23046baedd5849ca040aa73352f43ab2d602ae"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

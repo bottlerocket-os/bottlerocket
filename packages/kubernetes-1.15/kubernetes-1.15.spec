@@ -2,7 +2,7 @@
 %global gorepo kubernetes
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.15.10
+%global gover 1.15.12
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -31,6 +31,7 @@ Patch4: 0004-override-SELinux-label-for-kubelet-plugins.patch
 Patch5: 0005-opt-out-of-module-mode-for-builds.patch
 
 Patch6: 0006-kubelet-block-non-forwarded-packets.patch
+Patch7: 0007-include-etc-hosts-in-eviction-calc.patch
 
 BuildRequires: git
 BuildRequires: rsync

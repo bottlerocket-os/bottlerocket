@@ -2,7 +2,7 @@
 %global gorepo aws-iam-authenticator
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 0.5.0
+%global gover 0.5.1
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
