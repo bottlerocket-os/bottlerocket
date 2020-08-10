@@ -41,6 +41,7 @@ impl Migration for AddSettingsMigration<'_> {
 #[deprecated(note = "Please use `AddSettingsMigration` instead")]
 pub struct AddSettingMigration(pub &'static str);
 
+#[allow(deprecated)]
 impl Migration for AddSettingMigration {
     fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
         AddSettingsMigration(&[self.0]).forward(input)
@@ -90,6 +91,7 @@ impl Migration for RemoveSettingsMigration<'_> {
 #[deprecated(note = "Please use `RemoveSettingsMigration` instead")]
 pub struct RemoveSettingMigration(pub &'static str);
 
+#[allow(deprecated)]
 impl Migration for RemoveSettingMigration {
     fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
         RemoveSettingsMigration(&[self.0]).forward(input)
