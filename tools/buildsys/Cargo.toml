@@ -15,7 +15,7 @@ rand = { version = "0.7", default-features = false, features = ["std"] }
 reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_plain = "0.3.0"
-sha2 = "0.8"
+sha2 = "0.9"
 snafu = "0.6"
 toml = "0.5"
 url = { version = "2.1.0", features = ["serde"] }

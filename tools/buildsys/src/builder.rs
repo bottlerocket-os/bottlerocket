@@ -121,8 +121,8 @@ fn build(target: &str, build_args: &str, tag: &str, output: &str) -> Result<()> 
 
     // Compute a per-checkout prefix for the tag to avoid collisions.
     let mut d = Sha512::new();
-    d.input(&root);
-    let digest = hex::encode(d.result());
+    d.update(&root);
+    let digest = hex::encode(d.finalize());
     let suffix = &digest[..12];
     let tag = format!("{}-{}", tag, suffix);
 
