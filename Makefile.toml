@@ -33,6 +33,14 @@ PUBLISH_REPO = "default"
 # Default signing key to use from PUBLISH_INFRA_CONFIG_PATH
 PUBLISH_KEY = "default"
 
+# The size in GiB of the data volume in the block device mapping of registered
+# AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
+# volume size; by default it's the image size, rounded up.)
+PUBLISH_DATA_VOLUME_SIZE = "20"
+# You can also set PUBLISH_REGIONS to override the list of regions for AMIs
+# from Infra.toml; it's a comma-separated list like "us-west-2,us-east-1".
+# You can also set NO_PROGRESS to not print progress bars during snapshot upload.
+
 # Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
 # To use the upstream source as fallback, override this on the command line and set it to 'true'
 BUILDSYS_UPSTREAM_SOURCE_FALLBACK = "false"
@@ -72,6 +80,8 @@ BUILDSYS_NAME_FULL="${BUILDSYS_NAME_VARIANT}-${BUILDSYS_VERSION_FULL}"
 # Repo directories have subdirectories for variant/arch, so we only want version here.
 PUBLISH_REPO_BASE_DIR = "${BUILDSYS_BUILD_DIR}/repos"
 PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${BUILDSYS_NAME_VERSION}"
+# The name of registered AMIs.
+PUBLISH_AMI_NAME = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 
 [tasks.setup]
 script = [
@@ -318,6 +328,58 @@ pubsys \
    --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
 
 ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_BASE_DIR}/latest"
+'''
+]
+
+[tasks.ami]
+dependencies = ["build"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+cleanup() {
+   [ -f "${root_image}" ] && rm -f "${root_image}"
+   [ -f "${data_image}" ] && rm -f "${data_image}"
+}
+trap 'cleanup' EXIT
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+# Canonicalize architecture identifier to the value recognized by EC2.
+case "${BUILDSYS_ARCH,,}" in
+   arm64|aarch64)
+      arch=arm64 ;;
+   x86_64|amd64)
+      arch=x86_64 ;;
+   *)
+      arch="${BUILDSYS_ARCH}" ;;
+esac
+
+# Unlz4 the root / data images
+rootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+root_image="${rootlz4%.lz4}"
+lz4 -df "${rootlz4}" "${root_image}"
+
+datalz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+data_image="${datalz4%.lz4}"
+lz4 -df "${datalz4}" "${data_image}"
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   ami \
+   \
+   --root-image "${root_image}" \
+   --data-image "${data_image}" \
+   ${PUBLISH_ROOT_VOLUME_SIZE:+--root-volume-size "${PUBLISH_ROOT_VOLUME_SIZE}"} \
+   --data-volume-size "${PUBLISH_DATA_VOLUME_SIZE}" \
+   \
+   --arch "${arch}" \
+   --name "${PUBLISH_AMI_NAME}" \
+   --description "${PUBLISH_AMI_DESCRIPTION:-${PUBLISH_AMI_NAME}}" \
+   ${NO_PROGRESS:+--no-progress} \
+   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
 '''
 ]
 
