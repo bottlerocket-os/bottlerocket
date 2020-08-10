@@ -162,7 +162,13 @@ fn create_test_repo() -> TestRepo {
     let signed_repo = editor
         .sign(&[Box::new(tough::key_source::LocalKeySource { path: pem() })])
         .unwrap();
-    signed_repo.link_targets(tuf_indir, &targets_path).unwrap();
+    signed_repo
+        .link_targets(
+            tuf_indir,
+            &targets_path,
+            tough::editor::signed::PathExists::Fail,
+        )
+        .unwrap();
     signed_repo.write(&metadata_path).unwrap();
 
     TestRepo {
