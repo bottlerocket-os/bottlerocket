@@ -86,7 +86,7 @@ mod error {
     // Implement "From" for TemplateHelperError.
     impl From<TemplateHelperError> for RenderError {
         fn from(e: TemplateHelperError) -> RenderError {
-            RenderError::with(e)
+            RenderError::from_error("TemplateHelperError", e)
         }
     }
 }

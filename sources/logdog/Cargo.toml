@@ -10,7 +10,7 @@ exclude = ["README.md"]
 
 [dependencies]
 flate2 = "1.0"
-shell-words = "0.1.0"
+shell-words = "1.0.0"
 snafu = { version = "0.6", features = ["backtraces-impl-backtrace-crate"] }
 tar = { version = "0.4", default-features = false }
 tempfile = { version = "3.1.0", default-features = false }

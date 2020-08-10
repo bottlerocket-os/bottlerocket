@@ -115,7 +115,7 @@ impl LookasideCache {
         let mut d = Sha512::new();
 
         io::copy(&mut f, &mut d).context(error::ExternalFileLoad { path })?;
-        let digest = hex::encode(d.result());
+        let digest = hex::encode(d.finalize());
 
         ensure!(digest == hash, error::ExternalFileVerify { path, hash });
         Ok(())

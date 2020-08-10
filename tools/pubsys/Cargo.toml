@@ -14,9 +14,9 @@ log = "0.4"
 parse-datetime = { path = "../../sources/parse-datetime" }
 # Need to bring in reqwest with a TLS feature so tough can support TLS repos.
 reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
-simplelog = "0.7"
+simplelog = "0.8"
 snafu = "0.6"
-semver = "0.9"
+semver = "0.10.0"
 serde = { version = "1.0", features = ["derive"]  }
 serde_json = "1.0"
 structopt = { version = "0.3", default-features = false  }

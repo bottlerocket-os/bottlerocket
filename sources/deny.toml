@@ -14,16 +14,12 @@ allow = [
     "BSD-2-Clause",
     "BSD-3-Clause",
     "BSL-1.0",
-    "CC0-1.0",
+    #"CC0-1.0",  # OK but currently unused; commenting to prevent warning
     "ISC",
     "MIT",
     "OpenSSL",
     "Unlicense",
     "Zlib"
-]
-
-exceptions = [
-    { name = "copyless", allow = ["MPL-2.0"], version = "*" },
 ]
 
 [[licenses.clarify]]
