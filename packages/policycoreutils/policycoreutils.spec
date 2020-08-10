@@ -1,10 +1,10 @@
 Name: %{_cross_os}policycoreutils
-Version: 3.0
+Version: 3.1
 Release: 1%{?dist}
 Summary: A set of SELinux policy tools
 License: GPL-2.0-only
 URL: https://github.com/SELinuxProject/
-Source0: https://github.com/SELinuxProject/selinux/releases/download/20191204/policycoreutils-%{version}.tar.gz
+Source0: https://github.com/SELinuxProject/selinux/releases/download/20200710/policycoreutils-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libsemanage-devel
