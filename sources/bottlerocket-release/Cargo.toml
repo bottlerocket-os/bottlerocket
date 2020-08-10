@@ -11,7 +11,7 @@ exclude = ["README.md"]
 [dependencies]
 envy = "0.4"
 log = "0.4"
-semver = { version = "0.9", features = ["serde"] }
+semver = { version = "0.10", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 snafu = "0.6"
 

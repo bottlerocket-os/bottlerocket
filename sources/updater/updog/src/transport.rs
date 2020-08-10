@@ -52,8 +52,8 @@ impl HttpQueryTransport {
 pub type HttpQueryRepo<'a> = Repository<'a, HttpQueryTransport>;
 
 impl Transport for HttpQueryTransport {
-    type Stream = reqwest::blocking::Response;
-    type Error = reqwest::Error;
+    type Stream = <HttpTransport as Transport>::Stream;
+    type Error = <HttpTransport as Transport>::Error;
 
     fn fetch(&self, url: Url) -> Result<Self::Stream, Self::Error> {
         self.inner.fetch(self.set_query_string(url))
