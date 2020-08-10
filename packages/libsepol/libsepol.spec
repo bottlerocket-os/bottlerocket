@@ -1,10 +1,10 @@
 Name: %{_cross_os}libsepol
-Version: 3.0
+Version: 3.1
 Release: 1%{?dist}
 Summary: Library for SELinux policy manipulation
 License: LGPL-2.1-or-later
 URL: https://github.com/SELinuxProject/
-Source0: https://github.com/SELinuxProject/selinux/releases/download/20191204/libsepol-%{version}.tar.gz
+Source0: https://github.com/SELinuxProject/selinux/releases/download/20200710/libsepol-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 
 %description

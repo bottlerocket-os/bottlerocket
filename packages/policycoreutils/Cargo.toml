@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/SELinuxProject/selinux/releases/download/20191204/policycoreutils-3.0.tar.gz"
-sha512 = "d8d25db48c1caef69228e87d7ebb2c0f075e44e4ff6bf18a26af341d948b81375b33945128cd0410ffebc64ca478fd19a207295189c716c95e6a3c586e9f053d"
+url = "https://github.com/SELinuxProject/selinux/releases/download/20200710/policycoreutils-3.1.tar.gz"
+sha512 = "0592f218563a99ba95d2cfd07fdc3761b61c1cc3c01a17ab89ad840169e1a7d4083521d5cacc72d1b76911d516bf592db7a3f90d9ef0cc11ceed007e4580e140"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
