@@ -7,6 +7,15 @@ license-files = [
     { path = "src/libbacktrace/LICENSE", hash = 0x0ce09262 },
 ]
 
+[clarify.bstr]
+expression = "(MIT OR Apache-2.0) AND Unicode-DFS-2016"
+license-files = [
+    { path = "COPYING", hash = 0x28398560 },
+    { path = "LICENSE-APACHE", hash = 0x24b54f4b },
+    { path = "LICENSE-MIT", hash = 0x462dee44 },
+    { path = "src/unicode/data/LICENSE-UNICODE", hash = 0x70f7339 },
+]
+
 [clarify.crossbeam-queue]
 expression = "(MIT OR Apache-2.0) AND BSD-2-Clause-FreeBSD"
 license-files = [
