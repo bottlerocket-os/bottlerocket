@@ -23,6 +23,7 @@ rusoto_credential = "0.45.0"
 rusoto_ebs = "0.45.0"
 rusoto_ec2 = "0.45.0"
 rusoto_signature = "0.45.0"
+rusoto_ssm = "0.45.0"
 rusoto_sts = "0.45.0"
 simplelog = "0.8"
 snafu = "0.6"
@@ -30,7 +31,8 @@ semver = "0.10.0"
 serde = { version = "1.0", features = ["derive"]  }
 serde_json = "1.0"
 structopt = { version = "0.3", default-features = false  }
-tokio = "0.2.21"
+tinytemplate = "1.1"
+tokio = { version = "0.2.21", features = ["time"] }
 toml = "0.5"
 tough = { version = "0.8", features = ["http"] }
 tough-ssm = "0.3"

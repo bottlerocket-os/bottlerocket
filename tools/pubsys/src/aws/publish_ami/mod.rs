@@ -1,7 +1,7 @@
 //! The publish_ami module owns the 'publish-ami' subcommand and controls the process of granting
 //! and revoking public access to EC2 AMIs.
 
-use crate::aws::{client::build_client, region_from_string};
+use crate::aws::{ami::Image, client::build_client, region_from_string};
 use crate::config::InfraConfig;
 use crate::Args;
 use futures::future::{join, ready};
@@ -60,7 +60,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
         op: "open",
         path: &publish_args.ami_input,
     })?;
-    let mut ami_input: HashMap<String, String> =
+    let mut ami_input: HashMap<String, Image> =
         serde_json::from_reader(file).context(error::Deserialize {
             path: &publish_args.ami_input,
         })?;
@@ -110,14 +110,14 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     // Parse region names, adding endpoints from InfraConfig if specified
     let mut amis = HashMap::with_capacity(regions.len());
     for name in regions {
-        let ami_id = ami_input
+        let image = ami_input
             .remove(&name)
             // This could only happen if someone removes the check above...
             .with_context(|| error::UnknownRegions {
                 regions: vec![name.clone()],
             })?;
         let region = region_from_string(&name, &aws).context(error::ParseRegion)?;
-        amis.insert(region, ami_id);
+        amis.insert(region, image);
     }
 
     // We make a map storing our regional clients because they're used in a future and need to
@@ -144,21 +144,21 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
 
 /// Returns a regional mapping of snapshot IDs associated with the given AMIs.
 async fn get_snapshots(
-    amis: &HashMap<Region, String>,
+    amis: &HashMap<Region, Image>,
     clients: &HashMap<Region, Ec2Client>,
 ) -> Result<HashMap<Region, Vec<String>>> {
     // Build requests for image information.
     let mut describe_requests = Vec::with_capacity(amis.len());
-    for (region, image_id) in amis {
+    for (region, image) in amis {
         let ec2_client = &clients[region];
         let describe_request = DescribeImagesRequest {
-            image_ids: Some(vec![image_id.to_string()]),
+            image_ids: Some(vec![image.id.to_string()]),
             ..Default::default()
         };
         let describe_future = ec2_client.describe_images(describe_request);
 
         // Store the region and image ID so we can include it in errors
-        let info_future = ready((region.clone(), image_id.clone()));
+        let info_future = ready((region.clone(), image.id.clone()));
         describe_requests.push(join(info_future, describe_future));
     }
 
@@ -300,25 +300,25 @@ async fn modify_snapshots(
 
 /// Modify image attributes to make them public/private as requested.
 async fn modify_images(
-    images: &HashMap<Region, String>,
+    images: &HashMap<Region, Image>,
     clients: &HashMap<Region, Ec2Client>,
     operation: String,
 ) -> Result<()> {
     // Build requests to modify image attributes.
     let mut modify_image_requests = Vec::new();
-    for (region, image_id) in images {
+    for (region, image) in images {
         let ec2_client = &clients[region];
         let modify_image_request = ModifyImageAttributeRequest {
             attribute: Some("launchPermission".to_string()),
             user_groups: Some(vec!["all".to_string()]),
             operation_type: Some(operation.clone()),
-            image_id: image_id.clone(),
+            image_id: image.id.clone(),
             ..Default::default()
         };
         let modify_image_future = ec2_client.modify_image_attribute(modify_image_request);
 
         // Store the region and image ID so we can include it in errors
-        let info_future = ready((region.name().to_string(), image_id.clone()));
+        let info_future = ready((region.name().to_string(), image.id.clone()));
         modify_image_requests.push(join(info_future, modify_image_future));
     }
 

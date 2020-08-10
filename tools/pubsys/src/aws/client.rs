@@ -7,6 +7,7 @@ use rusoto_credential::{
 };
 use rusoto_ebs::EbsClient;
 use rusoto_ec2::Ec2Client;
+use rusoto_ssm::SsmClient;
 use rusoto_sts::{StsAssumeRoleSessionCredentialsProvider, StsClient};
 use snafu::ResultExt;
 
@@ -28,6 +29,16 @@ impl NewWith for EbsClient {
 }
 
 impl NewWith for Ec2Client {
+    fn new_with<P, D>(request_dispatcher: D, credentials_provider: P, region: Region) -> Self
+    where
+        P: ProvideAwsCredentials + Send + Sync + 'static,
+        D: DispatchSignedRequest + Send + Sync + 'static,
+    {
+        Self::new_with(request_dispatcher, credentials_provider, region)
+    }
+}
+
+impl NewWith for SsmClient {
     fn new_with<P, D>(request_dispatcher: D, credentials_provider: P, region: Region) -> Self
     where
         P: ProvideAwsCredentials + Send + Sync + 'static,
