@@ -1,0 +1,20 @@
+[package]
+name = "libsemanage"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/SELinuxProject/selinux/releases/download/20191204/libsemanage-3.0.tar.gz"
+sha512 = "f960e1bd6815d3c9f000efa7ae717bc7937e742af5a7fea4aa865cf1aee49486e34897d83dbdb9cf77975a09a5ad77e5512d47690a74512a468a89432b72a42c"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libaudit = { path = "../libaudit" }
+libbzip2 = { path = "../libbzip2" }
+libselinux = { path = "../libselinux" }
+libsepol = { path = "../libsepol" }

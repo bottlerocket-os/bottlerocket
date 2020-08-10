@@ -1,0 +1,19 @@
+[Unit]
+Description=Copy SELinux policy files
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+
+# Userspace expects the SELinux policy files to be available in /etc/selinux.
+# Because our /etc is a tmpfs mount, we need to copy the policy files from the
+# root filesystem during startup. Ordinarily we would use a tmpfiles.d snippet
+# for this, but we need to ensure that the file_contexts are available before
+# tmpfiles.d runs, so that relabel directives work as expected.
+ExecStart=/usr/bin/cp -r -n /usr/share/factory/etc/selinux /etc
+
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=local-fs.target

@@ -48,6 +48,7 @@ Requires: %{_cross_os}early-boot-config
 Requires: %{_cross_os}schnauzer
 Requires: %{_cross_os}netdog
 Requires: %{_cross_os}selinux-policy
+Requires: %{_cross_os}policycoreutils
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}sundog
 Requires: %{_cross_os}pluto

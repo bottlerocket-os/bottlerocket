@@ -247,6 +247,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libbzip2"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libcap"
 version = "0.1.0"
 dependencies = [
@@ -375,6 +382,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "libsemanage"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libaudit",
+ "libbzip2",
+ "libselinux",
+ "libsepol",
+]
+
+[[package]]
 name = "libsepol"
 version = "0.1.0"
 dependencies = [
@@ -411,6 +429,16 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "glibc",
+]
+
+[[package]]
+name = "policycoreutils"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libselinux",
+ "libsemanage",
+ "libsepol",
 ]
 
 [[package]]

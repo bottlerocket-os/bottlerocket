@@ -1,0 +1,43 @@
+From e76e1ea775d7a1897775767fc17626389372f6e9 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Wed, 29 Jul 2020 19:46:30 +0000
+Subject: [PATCH] simplify shared object build
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ Makefile-libbz2_so | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/Makefile-libbz2_so b/Makefile-libbz2_so
+index fb0f230..5e26467 100644
+--- a/Makefile-libbz2_so
++++ b/Makefile-libbz2_so
+@@ -22,9 +22,6 @@
+ 
+ 
+ SHELL=/bin/sh
+-CC=gcc
+-BIGFILES=-D_FILE_OFFSET_BITS=64
+-CFLAGS=-fpic -fPIC -Wall -Winline -O2 -g $(BIGFILES)
+ 
+ OBJS= blocksort.o  \
+       huffman.o    \
+@@ -35,13 +32,12 @@ OBJS= blocksort.o  \
+       bzlib.o
+ 
+ all: $(OBJS)
+-	$(CC) -shared -Wl,-soname -Wl,libbz2.so.1.0 -o libbz2.so.1.0.8 $(OBJS)
+-	$(CC) $(CFLAGS) -o bzip2-shared bzip2.c libbz2.so.1.0.8
++	$(CC) $(CFLAGS) $(LDFLAGS) -shared -Wl,-soname -Wl,libbz2.so.1 -o libbz2.so.1.0.8 $(OBJS)
+ 	rm -f libbz2.so.1.0
+ 	ln -s libbz2.so.1.0.8 libbz2.so.1.0
+ 
+ clean: 
+-	rm -f $(OBJS) bzip2.o libbz2.so.1.0.8 libbz2.so.1.0 bzip2-shared
++	rm -f $(OBJS) libbz2.so.1.0.8 libbz2.so.1.0
+ 
+ blocksort.o: blocksort.c
+ 	$(CC) $(CFLAGS) -c blocksort.c
+-- 
+2.21.0
+

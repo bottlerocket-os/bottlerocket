@@ -34,7 +34,7 @@ BOOT_MOUNT="$(mktemp -d)"
 DATA_MOUNT="$(mktemp -d)"
 EFI_MOUNT="$(mktemp -d)"
 
-SELINUX_ROOT="/usr/lib/selinux"
+SELINUX_ROOT="/etc/selinux"
 SELINUX_POLICY="fortified"
 SELINUX_FILE_CONTEXTS="${ROOT_MOUNT}/${SELINUX_ROOT}/${SELINUX_POLICY}/contexts/files/file_contexts"
 
