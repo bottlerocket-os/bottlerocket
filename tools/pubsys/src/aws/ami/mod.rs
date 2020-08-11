@@ -71,9 +71,7 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
     let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
     trace!("Parsed infra config: {:?}", infra_config);
 
-    let aws = infra_config.aws.context(error::MissingConfig {
-        missing: "aws section",
-    })?;
+    let aws = infra_config.aws.unwrap_or_else(|| Default::default());
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
     let mut regions = if !ami_args.regions.is_empty() {
