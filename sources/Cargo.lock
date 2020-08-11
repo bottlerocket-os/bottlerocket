@@ -1315,6 +1315,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "migrate-admin-container-v0-5-1"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+]
+
+[[package]]
+name = "migrate-control-container-v0-4-1"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+]
+
+[[package]]
 name = "migration-helpers"
 version = "0.1.0"
 dependencies = [
