@@ -7,8 +7,11 @@
 %global dorepo docker
 %global doimport %{goproject}/%{dorepo}
 
-%global gover 18.09.9
+%global gover 19.03.12
 %global rpmver %{gover}
+%global gitrev 9dc6525e6118a25fab2be322d1914740ea842495
+
+%global source_date_epoch 1363394400
 
 %global _dwz_low_mem_die_limit 0
 
@@ -48,12 +51,18 @@ Requires: %{_cross_os}systemd
 
 %build
 %cross_go_configure %{doimport}
-BUILDTAGS="journald selinux seccomp"
+BUILDTAGS="autogen journald selinux seccomp"
 BUILDTAGS+=" exclude_graphdriver_btrfs"
 BUILDTAGS+=" exclude_graphdriver_devicemapper"
 BUILDTAGS+=" exclude_graphdriver_vfs"
 BUILDTAGS+=" exclude_graphdriver_zfs"
 export BUILDTAGS
+export VERSION=%{gover}
+export GITCOMMIT=%{gitrev}
+export BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null | sed -e 's/ /T/')
+export PLATFORM="Docker Engine - Community"
+chmod +x ./hack/make/.go-autogen
+./hack/make/.go-autogen
 go build -buildmode pie -tags="${BUILDTAGS}" -o dockerd %{doimport}/cmd/dockerd
 
 %install

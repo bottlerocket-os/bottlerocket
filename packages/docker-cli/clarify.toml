@@ -5,8 +5,8 @@ license-files = [
 ]
 skip-files = ["license.go", "model/license.go"]
 
-[clarify."github.com/ghodss/yaml"]
+[clarify."sigs.k8s.io/yaml"]
 expression = "MIT AND BSD-3-Clause"
 license-files = [
-    { path = "LICENSE", hash = 0xcdf3ae00 },
+    { path = "LICENSE", hash = 0xcdf3ae00},
 ]
