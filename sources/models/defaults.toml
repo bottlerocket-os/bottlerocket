@@ -60,7 +60,7 @@ superpowered = true
 
 [metadata.settings.host-containers.admin.source]
 setting-generator = "schnauzer settings.host-containers.admin.source"
-template = "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/bottlerocket-admin:v0.5.0"
+template = "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/bottlerocket-admin:v0.5.1"
 
 [settings.host-containers.control]
 enabled = true
@@ -68,7 +68,7 @@ superpowered = false
 
 [metadata.settings.host-containers.control.source]
 setting-generator = "schnauzer settings.host-containers.control.source"
-template = "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/bottlerocket-control:v0.4.0"
+template = "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/bottlerocket-control:v0.4.1"
 
 [services.host-containers]
 configuration-files = []
