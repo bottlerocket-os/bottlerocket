@@ -32,8 +32,9 @@ use snafu::ResultExt;
 use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
+use tokio::runtime::Runtime;
 
-async fn run() -> Result<()> {
+fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
@@ -43,13 +44,17 @@ async fn run() -> Result<()> {
 
     match args.subcommand {
         SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::Repo),
-        SubCommand::Ami(ref ami_args) => aws::ami::run(&args, &ami_args).await.context(error::Ami),
+        SubCommand::Ami(ref ami_args) => {
+            let mut rt = Runtime::new().context(error::Runtime)?;
+            rt.block_on(async {
+                aws::ami::run(&args, &ami_args).await.context(error::Ami)
+            })
+        },
     }
 }
 
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+fn main() {
+    if let Err(e) = run() {
         eprintln!("{}", e);
         process::exit(1);
     }
@@ -103,14 +108,17 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
+        #[snafu(display("Failed to build AMI: {}", source))]
+        Ami { source: crate::aws::ami::Error },
+
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
 
         #[snafu(display("Failed to build repo: {}", source))]
         Repo { source: crate::repo::Error },
 
-        #[snafu(display("Failed to build AMI: {}", source))]
-        Ami { source: crate::aws::ami::Error },
+        #[snafu(display("Failed to create async runtime: {}", source))]
+        Runtime { source: std::io::Error },
     }
 }
 type Result<T> = std::result::Result<T, error::Error>;
