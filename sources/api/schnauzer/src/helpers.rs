@@ -22,7 +22,7 @@ mod error {
             received,
         ))]
         IncorrectNumberOfParams {
-            expected: u8,
+            expected: usize,
             received: usize,
             helper: String,
             template: String,
@@ -44,6 +44,9 @@ mod error {
             value: handlebars::JsonValue,
             template: String,
         },
+
+        #[snafu(display("Missing param {} for helper '{}'", index, helper_name))]
+        MissingParam { index: usize, helper_name: String },
 
         #[snafu(display(
             "Missing data and fail-if-missing was set; see given line/col in template '{}'",
@@ -102,25 +105,12 @@ pub fn base64_decode(
 ) -> Result<(), RenderError> {
     // To give context to our errors, get the template name, if available.
     trace!("Starting base64_decode helper");
-    let template_name = renderctx
-        .get_root_template_name()
-        .map(|i| i.to_string())
-        .unwrap_or_else(|| "dynamic template".to_string());
+    let template_name = template_name(renderctx);
     trace!("Template name: {}", &template_name);
 
     // Check number of parameters, must be exactly one
     trace!("Number of params: {}", helper.params().len());
-
-    if helper.params().len() != 1 {
-        return Err(RenderError::from(
-            error::TemplateHelperError::IncorrectNumberOfParams {
-                expected: 1,
-                received: helper.params().len(),
-                helper: helper.name().to_string(),
-                template: template_name,
-            },
-        ));
-    }
+    check_param_count(helper, template_name, 1)?;
 
     // Get the resolved key out of the template (param(0)). value() returns
     // a serde_json::Value
@@ -183,31 +173,14 @@ pub fn join_map(
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     trace!("Starting join_map helper");
-    let template_name = renderctx
-        .get_root_template_name()
-        .map(|i| i.to_string())
-        .unwrap_or_else(|| "dynamic template".to_string());
+    let template_name = template_name(renderctx);
     trace!("Template name: {}", &template_name);
 
     trace!("Number of params: {}", helper.params().len());
-    if helper.params().len() != 4 {
-        return Err(RenderError::from(
-            error::TemplateHelperError::IncorrectNumberOfParams {
-                expected: 4,
-                received: helper.params().len(),
-                helper: helper.name().to_string(),
-                template: template_name,
-            },
-        ));
-    }
+    check_param_count(helper, template_name, 4)?;
 
     // Pull out the parameters and confirm their types
-    let join_key_val = helper
-        .param(0)
-        .map(|v| v.value())
-        .context(error::Internal {
-            msg: "Missing param after confirming there are enough",
-        })?;
+    let join_key_val = get_param(helper, 0)?;
     let join_key = join_key_val
         .as_str()
         .with_context(|| error::InvalidTemplateValue {
@@ -217,12 +190,7 @@ pub fn join_map(
         })?;
     trace!("Character used to join keys to values: {}", join_key);
 
-    let join_pairs_val = helper
-        .param(1)
-        .map(|v| v.value())
-        .context(error::Internal {
-            msg: "Missing param after confirming there are enough",
-        })?;
+    let join_pairs_val = get_param(helper, 1)?;
     let join_pairs = join_pairs_val
         .as_str()
         .with_context(|| error::InvalidTemplateValue {
@@ -232,12 +200,7 @@ pub fn join_map(
         })?;
     trace!("Character used to join pairs: {}", join_pairs);
 
-    let fail_behavior_val = helper
-        .param(2)
-        .map(|v| v.value())
-        .context(error::Internal {
-            msg: "Missing param after confirming there are enough",
-        })?;
+    let fail_behavior_val = get_param(helper, 2)?;
     let fail_behavior_str =
         fail_behavior_val
             .as_str()
@@ -264,12 +227,7 @@ pub fn join_map(
         fail_if_missing
     );
 
-    let map_value = helper
-        .param(3)
-        .map(|v| v.value())
-        .context(error::Internal {
-            msg: "Missing param after confirming there are enough",
-        })?;
+    let map_value = get_param(helper, 3)?;
     // If the requested setting is not set, we check the user's requested fail-if-missing behavior
     // to determine whether to fail hard or just write nothing quietly.
     if !map_value.is_object() {
@@ -346,31 +304,14 @@ pub fn default(
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     trace!("Starting default helper");
-    let template_name = renderctx
-        .get_root_template_name()
-        .map(|i| i.to_string())
-        .unwrap_or_else(|| "dynamic template".to_string());
+    let template_name = template_name(renderctx);
     trace!("Template name: {}", &template_name);
 
     trace!("Number of params: {}", helper.params().len());
-    if helper.params().len() != 2 {
-        return Err(RenderError::from(
-            error::TemplateHelperError::IncorrectNumberOfParams {
-                expected: 2,
-                received: helper.params().len(),
-                helper: helper.name().to_string(),
-                template: template_name,
-            },
-        ));
-    }
+    check_param_count(helper, template_name, 2)?;
 
     // Pull out the parameters and confirm their types
-    let default_val = helper
-        .param(0)
-        .map(|v| v.value())
-        .context(error::Internal {
-            msg: "Missing param after confirming there are enough",
-        })?;
+    let default_val = get_param(helper, 0)?;
     let default = match default_val {
         // these ones Display as their simple scalar selves
         Value::Bool(b) => b.to_string(),
@@ -390,12 +331,7 @@ pub fn default(
     };
     trace!("Default value if key is not set: {}", default);
 
-    let requested_value = helper
-        .param(1)
-        .map(|v| v.value())
-        .context(error::Internal {
-            msg: "Missing param after confirming there are enough",
-        })?;
+    let requested_value = get_param(helper, 1)?;
     let value = match requested_value {
         // these ones Display as their simple scalar selves
         Value::Bool(b) => b.to_string(),
@@ -421,6 +357,51 @@ pub fn default(
     })?;
     Ok(())
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+// helpers to the helpers
+
+/// Gets the value at `idx` and unwraps it. Returns an error if the param cannot be unwrapped.
+fn get_param<'a>(helper: &'a Helper<'_, '_>, idx: usize) -> Result<&'a Value, RenderError> {
+    Ok(helper
+        .param(idx)
+        .map(|v| v.value())
+        .context(error::MissingParam {
+            index: idx,
+            helper_name: helper.name(),
+        })?)
+}
+
+/// Get the template name if there is one, otherwise return "dynamic template"
+fn template_name<'a>(renderctx: &'a RenderContext<'_, '_>) -> &'a str {
+    match renderctx.get_root_template_name() {
+        Some(s) => s.as_str(),
+        None => "dynamic template",
+    }
+}
+
+/// Creates a an `IncorrectNumberofParams` error if the number of `helper`
+/// params does not equal `expected`. Template name is only used in constructing
+/// the error message.
+fn check_param_count<S: AsRef<str>>(
+    helper: &Helper<'_, '_>,
+    template_name: S,
+    expected: usize,
+) -> Result<(), RenderError> {
+    if helper.params().len() != expected {
+        return Err(RenderError::from(
+            error::TemplateHelperError::IncorrectNumberOfParams {
+                expected,
+                received: helper.params().len(),
+                helper: helper.name().to_string(),
+                template: template_name.as_ref().into(),
+            },
+        ));
+    }
+    Ok(())
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 #[cfg(test)]
 mod test_base64_decode {
@@ -656,9 +637,11 @@ mod test_default {
 
     #[test]
     fn bool_default() {
-        let result =
-            setup_and_render_template("{{default true setting}}", &json!({"not-the-setting": 42.42}))
-                .unwrap();
+        let result = setup_and_render_template(
+            "{{default true setting}}",
+            &json!({"not-the-setting": 42.42}),
+        )
+        .unwrap();
         assert_eq!(result, "true")
     }
 }
