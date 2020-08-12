@@ -3,8 +3,45 @@
 // text at render time.
 
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError};
+use lazy_static::lazy_static;
 use serde_json::value::Value;
 use snafu::{OptionExt, ResultExt};
+use std::borrow::Borrow;
+use std::collections::HashMap;
+
+lazy_static! {
+    /// A map to tell us which registry to pull ECR images from for a given region.
+    static ref ECR_MAP: HashMap<&'static str, &'static str> = {
+        let mut m = HashMap::new();
+        m.insert("af-south-1", "917644944286");
+        m.insert("ap-east-1", "375569722642");
+        m.insert("ap-northeast-1", "328549459982");
+        m.insert("ap-northeast-2", "328549459982");
+        m.insert("ap-south-1", "328549459982");
+        m.insert("ap-southeast-1", "328549459982");
+        m.insert("ap-southeast-2", "328549459982");
+        m.insert("ca-central-1", "328549459982");
+        m.insert("eu-central-1", "328549459982");
+        m.insert("eu-north-1", "328549459982");
+        m.insert("eu-south-1", "586180183710");
+        m.insert("eu-west-1", "328549459982");
+        m.insert("eu-west-2", "328549459982");
+        m.insert("eu-west-3", "328549459982");
+        m.insert("me-south-1", "509306038620");
+        m.insert("sa-east-1", "328549459982");
+        m.insert("us-east-1", "328549459982");
+        m.insert("us-east-2", "328549459982");
+        m.insert("us-west-1", "328549459982");
+        m.insert("us-west-2", "328549459982");
+        m
+    };
+}
+
+/// But if there is a region that does not exist in our map (for example a new
+/// region is created or being tested), then we will fallback to pulling ECR
+/// containers from here.
+const ECR_FALLBACK_REGION: &str = "us-east-1";
+const ECR_FALLBACK_REGISTRY: &str = "328549459982";
 
 /// Potential errors during helper execution
 mod error {
@@ -14,6 +51,18 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum TemplateHelperError {
+        #[snafu(display(
+            "Expected ecr helper to be called with either 'registry' or 'region', got '{}'",
+            value,
+        ))]
+        EcrParam { value: String },
+
+        #[snafu(display("Expected an AWS region, got '{}' in template {}", value, template))]
+        EcrRegion {
+            value: handlebars::JsonValue,
+            template: String,
+        },
+
         #[snafu(display(
             "Incorrect number of params provided to helper '{}' in template '{}' - {} expected, {} received",
             helper,
@@ -358,6 +407,62 @@ pub fn default(
     Ok(())
 }
 
+/// The `ecr-prefix` helper is used to map an AWS region to the correct ECR
+/// registry.
+///
+/// Initially we held all of our ECR repos in a single registry, but with some
+/// regions this was no longer possible. Because the ECR repo URL includes the
+/// the registry number, we created this helper to lookup the correct registry
+/// number for a given region.
+///
+/// This helper takes the AWS region as its only parameter, and returns the
+/// fully qualified domain name to the correct ECR registry.
+///
+/// # Fallback
+///
+/// A map of region to ECR registry ID is maintained herein. But if we do not
+/// have the region in our map, a fallback region and registry number are
+/// returned. This would allow a version of Bottlerocket to run in a new region
+/// before this map has been updated.
+///
+/// # Example
+///
+/// In this example the registry number for the region will be returned.
+/// `{{ ecr-prefix settings.aws.region }}`
+///
+/// This would result in something like:
+/// `328549459982.dkr.ecr.eu-central-1.amazonaws.com`
+pub fn ecr_prefix(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting ecr helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 1)?;
+
+    // get the region parameter, which is probably given by the template value
+    // settings.aws.region. regardless, we expect it to be a string.
+    let aws_region = get_param(helper, 0)?;
+    let aws_region = aws_region.as_str().with_context(|| error::EcrRegion {
+        value: aws_region.to_owned(),
+        template: template_name,
+    })?;
+
+    // construct the registry fqdn
+    let ecr_registry = ecr_registry(aws_region);
+
+    // write it to the template
+    out.write(&ecr_registry)
+        .with_context(|| error::TemplateWrite {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 // helpers to the helpers
 
@@ -399,6 +504,17 @@ fn check_param_count<S: AsRef<str>>(
         ));
     }
     Ok(())
+}
+
+/// Constructs the fully qualified domain name for the ECR registry for the
+/// given region. Returns a default ECR registry if the region is not mapped.
+fn ecr_registry<S: AsRef<str>>(region: S) -> String {
+    // lookup the ecr registry ID or fallback to the default region and id
+    let (region, registry_id) = match ECR_MAP.borrow().get(region.as_ref()) {
+        None => (ECR_FALLBACK_REGION, ECR_FALLBACK_REGISTRY),
+        Some(registry_id) => (region.as_ref(), *registry_id),
+    };
+    format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region)
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -643,5 +759,67 @@ mod test_default {
         )
         .unwrap();
         assert_eq!(result, "true")
+    }
+}
+
+#[cfg(test)]
+mod test_ecr_registry {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("ecr-prefix", Box::new(ecr_prefix));
+
+        registry.render_template(tmpl, data)
+    }
+
+    const ADMIN_CONTAINER_TEMPLATE: &str =
+        "{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.5.1";
+
+    const EXPECTED_URL_EU_CENTRAL_1: &str =
+        "328549459982.dkr.ecr.eu-central-1.amazonaws.com/bottlerocket-admin:v0.5.1";
+
+    const EXPECTED_URL_AF_SOUTH_1: &str =
+        "917644944286.dkr.ecr.af-south-1.amazonaws.com/bottlerocket-admin:v0.5.1";
+
+    const EXPECTED_URL_XY_ZTOWN_1: &str =
+        "328549459982.dkr.ecr.us-east-1.amazonaws.com/bottlerocket-admin:v0.5.1";
+
+    #[test]
+    fn url_eu_central_1() {
+        let result = setup_and_render_template(
+            ADMIN_CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "eu-central-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_EU_CENTRAL_1);
+    }
+
+    #[test]
+    fn url_af_south_1() {
+        let result = setup_and_render_template(
+            ADMIN_CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "af-south-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_AF_SOUTH_1);
+    }
+
+    #[test]
+    fn url_fallback() {
+        let result = setup_and_render_template(
+            ADMIN_CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "xy-ztown-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_XY_ZTOWN_1);
     }
 }
