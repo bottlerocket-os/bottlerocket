@@ -34,11 +34,13 @@ impl InfraConfig {
 }
 
 /// AWS-specific infrastructure configuration
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub(crate) struct AwsConfig {
+    #[serde(default)]
     pub(crate) regions: VecDeque<String>,
     pub(crate) role: Option<String>,
     pub(crate) profile: Option<String>,
+    #[serde(default)]
     pub(crate) region: HashMap<String, AwsRegionConfig>,
 }
 

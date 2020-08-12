@@ -181,7 +181,13 @@ cargo install \
   --root tools \
   --force \
   --quiet
+'''
+]
 
+[tasks.publish-tools]
+dependencies = ["setup", "fetch-sources"]
+script = [
+'''
 cargo install \
   ${CARGO_MAKE_CARGO_ARGS} \
   --path tools/pubsys \
@@ -281,7 +287,10 @@ alias = "build"
 # to create a repo under /build/repos, named after the arch/variant/version,
 # containing subdirectories for the repo metadata and targets.
 [tasks.repo]
-dependencies = ["build"]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# check for the image files below to save time.  This does mean that `cargo
+# make` must be run before `cargo make repo`.
+dependencies = ["publish-tools"]
 script_runner = "bash"
 script = [
 '''
@@ -293,6 +302,14 @@ cleanup() {
 trap 'cleanup' EXIT
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+bootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-boot.ext4.lz4"
+rootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.ext4.lz4"
+hashlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.verity.lz4"
+if [ ! -s "${bootlz4}" ] || [ ! -s "${rootlz4}" ] || [ ! -s "${hashlz4}" ]; then
+   echo "Image files don't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
+   exit 1
+fi
 
 # TODO: only add migrations from Release.toml, not all
 MIGRATIONS_DIR="$(mktemp -d)"
@@ -313,9 +330,9 @@ pubsys \
    --version "${BUILDSYS_VERSION_IMAGE}" \
    --variant "${BUILDSYS_VARIANT}" \
    \
-   --boot-image "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-boot.ext4.lz4" \
-   --root-image "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.ext4.lz4" \
-   --hash-image "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.verity.lz4" \
+   --boot-image "${bootlz4}" \
+   --root-image "${rootlz4}" \
+   --hash-image "${hashlz4}" \
    ${ADD_MIGRATION_TARGETS[*]} \
    \
    --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
@@ -332,11 +349,16 @@ ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_BASE_DIR}/latest"
 ]
 
 [tasks.ami]
-dependencies = ["build"]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the image files below to save time.
+# This does mean that `cargo make` must be run before `cargo make ami`.
+dependencies = ["publish-tools"]
 script_runner = "bash"
 script = [
 '''
 set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
 cleanup() {
    [ -f "${root_image}" ] && rm -f "${root_image}"
@@ -344,7 +366,17 @@ cleanup() {
 }
 trap 'cleanup' EXIT
 
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+# Unlz4 the root / data images
+rootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+root_image="${rootlz4%.lz4}"
+datalz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+data_image="${datalz4%.lz4}"
+if [ ! -s "${rootlz4}" ] || [ ! -s "${datalz4}" ]; then
+   echo "Image files don't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
+   exit 1
+fi
+lz4 -df "${rootlz4}" "${root_image}"
+lz4 -df "${datalz4}" "${data_image}"
 
 # Canonicalize architecture identifier to the value recognized by EC2.
 case "${BUILDSYS_ARCH,,}" in
@@ -355,15 +387,6 @@ case "${BUILDSYS_ARCH,,}" in
    *)
       arch="${BUILDSYS_ARCH}" ;;
 esac
-
-# Unlz4 the root / data images
-rootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
-root_image="${rootlz4%.lz4}"
-lz4 -df "${rootlz4}" "${root_image}"
-
-datalz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
-data_image="${datalz4%.lz4}"
-lz4 -df "${datalz4}" "${data_image}"
 
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
