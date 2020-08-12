@@ -414,6 +414,64 @@ ln -snf "../${ami_output##*/}" "${ami_output_latest}"
 '''
 ]
 
+[tasks.ami-public]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the input file below to save time.
+# This does mean that `cargo make ami` must be run before `cargo make ami-public`.
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+if [ ! -s "${ami_input}" ]; then
+   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   publish-ami \
+   --make-public \
+   \
+   --ami-input "${ami_input}" \
+   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
+'''
+]
+
+[tasks.ami-private]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the input file below to save time.
+# This does mean that `cargo make ami` must be run before `cargo make ami-private`.
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+if [ ! -s "${ami_input}" ]; then
+   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   publish-ami \
+   --make-private \
+   \
+   --ami-input "${ami_input}" \
+   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
+'''
+]
+
 [tasks.clean]
 script_runner = "bash"
 script = [

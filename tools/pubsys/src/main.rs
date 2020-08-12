@@ -4,6 +4,7 @@
 Currently implemented:
 * building repos, whether starting from an existing repo or from scratch
 * registering and copying EC2 AMIs
+* Marking EC2 AMIs public (or private again)
 
 To be implemented:
 * updating SSM parameters
@@ -45,10 +46,16 @@ fn run() -> Result<()> {
         SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::Repo),
         SubCommand::Ami(ref ami_args) => {
             let mut rt = Runtime::new().context(error::Runtime)?;
+            rt.block_on(async { aws::ami::run(&args, &ami_args).await.context(error::Ami) })
+        }
+        SubCommand::PublishAmi(ref publish_args) => {
+            let mut rt = Runtime::new().context(error::Runtime)?;
             rt.block_on(async {
-                aws::ami::run(&args, &ami_args).await.context(error::Ami)
+                aws::publish_ami::run(&args, &publish_args)
+                    .await
+                    .context(error::PublishAmi)
             })
-        },
+        }
     }
 }
 
@@ -79,6 +86,7 @@ struct Args {
 enum SubCommand {
     Repo(repo::RepoArgs),
     Ami(aws::ami::AmiArgs),
+    PublishAmi(aws::publish_ami::PublishArgs),
 }
 
 /// Parses a SemVer, stripping a leading 'v' if present
@@ -112,6 +120,11 @@ mod error {
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
+
+        #[snafu(display("Failed to publish AMI: {}", source))]
+        PublishAmi {
+            source: crate::aws::publish_ami::Error,
+        },
 
         #[snafu(display("Failed to build repo: {}", source))]
         Repo { source: crate::repo::Error },
