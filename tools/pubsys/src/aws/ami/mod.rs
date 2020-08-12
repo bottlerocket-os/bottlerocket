@@ -5,8 +5,8 @@ mod register;
 mod snapshot;
 mod wait;
 
-use crate::aws::client::build_client;
-use crate::config::{AwsConfig, InfraConfig};
+use crate::aws::{client::build_client, region_from_string};
+use crate::config::InfraConfig;
 use crate::Args;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
@@ -102,7 +102,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
         aws.regions.clone()
     }
     .into_iter()
-    .map(|name| region_from_string(&name, &aws))
+    .map(|name| region_from_string(&name, &aws).context(error::ParseRegion))
     .collect::<Result<VecDeque<Region>>>()?;
 
     // We register in this base region first, then copy from there to any other regions.
@@ -289,19 +289,6 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
     Ok(ami_ids)
 }
 
-/// Builds a Region from the given region name, and uses the custom endpoint from the AWS config,
-/// if specified in aws.region.REGION.endpoint.
-fn region_from_string(name: &str, aws: &AwsConfig) -> Result<Region> {
-    let maybe_endpoint = aws.region.get(name).and_then(|r| r.endpoint.clone());
-    Ok(match maybe_endpoint {
-        Some(endpoint) => Region::Custom {
-            name: name.to_string(),
-            endpoint,
-        },
-        None => name.parse().context(error::ParseRegion { name })?,
-    })
-}
-
 mod error {
     use crate::aws::{self, ami};
     use snafu::Snafu;
@@ -344,10 +331,8 @@ mod error {
             missing: String,
         },
 
-        #[snafu(display("Failed to parse region '{}': {}", name, source))]
         ParseRegion {
-            name: String,
-            source: rusoto_signature::region::ParseRegionError,
+            source: crate::aws::Error,
         },
 
         #[snafu(display("Error registering {} {} in {}: {}", arch, name, region, source))]
