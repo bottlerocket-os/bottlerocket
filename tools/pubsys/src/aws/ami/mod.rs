@@ -17,6 +17,7 @@ use rusoto_ebs::EbsClient;
 use rusoto_ec2::{CopyImageError, CopyImageRequest, CopyImageResult, Ec2, Ec2Client};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, VecDeque};
+use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use wait::wait_for_ami;
@@ -60,10 +61,31 @@ pub(crate) struct AmiArgs {
     /// Regions where you want the AMI, the first will be used as the base for copying
     #[structopt(long, use_delimiter = true)]
     regions: Vec<String>,
+
+    /// If specified, save created regional AMI IDs in JSON at this path.
+    #[structopt(long)]
+    ami_output: Option<PathBuf>,
 }
 
 /// Common entrypoint from main()
 pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
+    match _run(args, ami_args).await {
+        Ok(ami_ids) => {
+            // Write the AMI IDs to file if requested
+            if let Some(ref path) = ami_args.ami_output {
+                let file = File::create(path).context(error::FileCreate { path })?;
+                serde_json::to_writer_pretty(file, &ami_ids).context(error::Serialize { path })?;
+                info!("Wrote AMI data to {}", path.display());
+            }
+            Ok(())
+        }
+        Err(e) => Err(e),
+    }
+}
+
+async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>> {
+    let mut ami_ids = HashMap::new();
+
     info!(
         "Using infra config from path: {}",
         args.infra_config_path.display()
@@ -138,9 +160,11 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
         (new_id, false)
     };
 
+    ami_ids.insert(base_region.name().to_string(), image_id.clone());
+
     // If we don't need to copy AMIs, we're done.
     if regions.is_empty() {
-        return Ok(());
+        return Ok(ami_ids);
     }
 
     // Wait for AMI to be available so it can be copied
@@ -187,6 +211,7 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
                 region.name(),
                 id
             );
+            ami_ids.insert(region.name().to_string(), id.clone());
             continue;
         }
         let request = CopyImageRequest {
@@ -214,7 +239,7 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
 
     // If all target regions already have the AMI, we're done.
     if copy_requests.is_empty() {
-        return Ok(());
+        return Ok(ami_ids);
     }
 
     // Start requests; they return almost immediately and the copying work is done by the service
@@ -234,12 +259,24 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
     let mut saw_error = false;
     for (region, copy_response) in copy_responses {
         match copy_response {
-            Ok(success) => info!(
-                "Registered AMI '{}' in region {}: {}",
-                ami_args.name,
-                region.name(),
-                success.image_id.unwrap_or_else(|| "<missing>".to_string())
-            ),
+            Ok(success) => {
+                if let Some(image_id) = success.image_id {
+                    info!(
+                        "Registered AMI '{}' in {}: {}",
+                        ami_args.name,
+                        region.name(),
+                        image_id,
+                    );
+                    ami_ids.insert(region.name().to_string(), image_id);
+                } else {
+                    saw_error = true;
+                    error!(
+                        "Registered AMI '{}' in {} but didn't receive an AMI ID!",
+                        ami_args.name,
+                        region.name(),
+                    );
+                }
+            }
             Err(e) => {
                 saw_error = true;
                 error!("Copy to {} failed: {}", region.name(), e);
@@ -249,7 +286,7 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
 
     ensure!(!saw_error, error::AmiCopy);
 
-    Ok(())
+    Ok(ami_ids)
 }
 
 /// Builds a Region from the given region name, and uses the custom endpoint from the AWS config,
@@ -268,6 +305,7 @@ fn region_from_string(name: &str, aws: &AwsConfig) -> Result<Region> {
 mod error {
     use crate::aws::{self, ami};
     use snafu::Snafu;
+    use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
@@ -283,7 +321,15 @@ mod error {
         },
 
         #[snafu(display("Error reading config: {}", source))]
-        Config { source: crate::config::Error },
+        Config {
+            source: crate::config::Error,
+        },
+
+        #[snafu(display("Failed to create file '{}': {}", path.display(), source))]
+        FileCreate {
+            path: PathBuf,
+            source: std::io::Error,
+        },
 
         #[snafu(display("Error getting AMI ID for {} {} in {}: {}", arch, name, region, source))]
         GetAmiId {
@@ -294,7 +340,9 @@ mod error {
         },
 
         #[snafu(display("Infra.toml is missing {}", missing))]
-        MissingConfig { missing: String },
+        MissingConfig {
+            missing: String,
+        },
 
         #[snafu(display("Failed to parse region '{}': {}", name, source))]
         ParseRegion {
@@ -308,6 +356,12 @@ mod error {
             arch: String,
             region: String,
             source: ami::register::Error,
+        },
+
+        #[snafu(display("Failed to serialize output to '{}': {}", path.display(), source))]
+        Serialize {
+            path: PathBuf,
+            source: serde_json::Error,
         },
 
         #[snafu(display("AMI '{}' in {} did not become available: {}", id, region, source))]

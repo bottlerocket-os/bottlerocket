@@ -388,6 +388,9 @@ case "${BUILDSYS_ARCH,,}" in
       arch="${BUILDSYS_ARCH}" ;;
 esac
 
+ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-amis.json"
+
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
    \
@@ -401,8 +404,13 @@ pubsys \
    --arch "${arch}" \
    --name "${PUBLISH_AMI_NAME}" \
    --description "${PUBLISH_AMI_DESCRIPTION:-${PUBLISH_AMI_NAME}}" \
+   \
+   --ami-output "${ami_output}" \
+   \
    ${NO_PROGRESS:+--no-progress} \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
+
+ln -snf "../${ami_output##*/}" "${ami_output_latest}"
 '''
 ]
 

@@ -6,7 +6,6 @@ Currently implemented:
 * registering and copying EC2 AMIs
 
 To be implemented:
-* machine-readable output describing AMI registrations
 * updating SSM parameters
 * high-level document describing pubsys usage with examples
 
