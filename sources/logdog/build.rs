@@ -5,7 +5,20 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
+const VARIANT_GROUPS: &[&str] = &["aws-k8s", "aws-ecs"];
+
 fn main() {
+    println!("cargo:rerun-if-env-changed=VARIANT");
+    if let Ok(variant) = env::var("VARIANT") {
+        println!("cargo:rustc-cfg=variant=\"{}\"", variant);
+        for &variant_group in VARIANT_GROUPS {
+            if variant.starts_with(variant_group) {
+                println!("cargo:rustc-cfg=variant_group=\"{}\"", variant_group);
+                break;
+            }
+        }
+    }
+
     // Check for environment variable "SKIP_README". If it is set,
     // skip README generation
     if env::var_os("SKIP_README").is_some() {
