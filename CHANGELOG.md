@@ -1,4 +1,4 @@
-# v0.5.0 (2020-08-13)
+# v0.5.0 (2020-08-14)
 
 Special thanks to first-time contributor @spoonofpower ([#988])!
 
@@ -9,7 +9,7 @@ Special thanks to first-time contributor @spoonofpower ([#988])!
 ## OS changes
 
 * Add `aws-ecs-1` variant prototype for running containers in ECS clusters ([#946], [#1005], [#1007], [#1008], [#1009], [#1017])
-* Configurable `clusterDomain` kubelet setting via `settings.kubernetes.cluster-domain` ([#988])
+* Configurable `clusterDomain` kubelet setting via `settings.kubernetes.cluster-domain` ([#988], [#1036])
 * Make update position within waves consistent ([#993])
 * Fix kubelet configuration for `MaxPods` ([#994])
 * Update `eni-max-pods` with new instance types ([#994])
@@ -19,7 +19,8 @@ Special thanks to first-time contributor @spoonofpower ([#988])!
 * Update third-party software packages ([#1018], [#1023], [#1025], [#1026])
 * Update Rust dependencies ([#1019], [#1021])
 * Update `host-ctr`'s dependencies ([#1020])
-* Update the host-containers' default versions ([#1030])
+* Update the host-containers' default versions ([#1030], [#1040])
+* Allow access to all device nodes for superpowered host-containers ([#1037])
 
 ## Build changes
 
@@ -70,6 +71,9 @@ Special thanks to first-time contributor @spoonofpower ([#988])!
 [#1029]: https://github.com/bottlerocket-os/bottlerocket/pull/1029
 [#1030]: https://github.com/bottlerocket-os/bottlerocket/pull/1030
 [#1034]: https://github.com/bottlerocket-os/bottlerocket/pull/1034
+[#1036]: https://github.com/bottlerocket-os/bottlerocket/pull/1036
+[#1037]: https://github.com/bottlerocket-os/bottlerocket/pull/1037
+[#1040]: https://github.com/bottlerocket-os/bottlerocket/pull/1040
 
 # v0.4.1 (2020-07-13)
 
