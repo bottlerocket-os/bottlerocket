@@ -7,9 +7,9 @@ use std::process;
 const OLD_ADMIN_CTR_TEMPLATE: &str =
     "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/bottlerocket-admin:v0.5.0";
 const NEW_ADMIN_CTR_TEMPLATE: &str =
-    "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/bottlerocket-admin:v0.5.1";
+    "328549459982.dkr.ecr.{{ settings.aws.region }}.amazonaws.com/bottlerocket-admin:v0.5.2";
 
-/// We bumped the version of the default admin container from v0.5.0 to v0.5.1
+/// We bumped the version of the default admin container from v0.5.0 to v0.5.2
 fn run() -> Result<()> {
     migrate(ReplaceTemplateMigration {
         setting: "settings.host-containers.admin.source",

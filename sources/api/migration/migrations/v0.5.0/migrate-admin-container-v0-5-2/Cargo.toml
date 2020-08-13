@@ -1,5 +1,5 @@
 [package]
-name = "migrate-admin-container-v0-5-1"
+name = "migrate-admin-container-v0-5-2"
 version = "0.1.0"
 authors = ["Erikson Tung <etung@amazon.com>"]
 license = "Apache-2.0 OR MIT"

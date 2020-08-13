@@ -1322,7 +1322,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "migrate-admin-container-v0-5-1"
+name = "migrate-admin-container-v0-5-2"
 version = "0.1.0"
 dependencies = [
  "migration-helpers 0.1.0",
