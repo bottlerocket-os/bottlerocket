@@ -24,6 +24,7 @@ members = [
     "api/migration/migrations/v0.4.1/pivot-repo-2020-07-07",
     "api/migration/migrations/v0.5.0/migrate-admin-container-v0-5-1",
     "api/migration/migrations/v0.5.0/migrate-control-container-v0-4-1",
+    "api/migration/migrations/v0.5.0/add-cluster-domain",
 
     "bottlerocket-release",
 

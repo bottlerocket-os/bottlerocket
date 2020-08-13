@@ -243,6 +243,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-cluster-domain"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+]
+
+[[package]]
 name = "add-version-lock-ignore-waves"
 version = "0.1.0"
 dependencies = [
