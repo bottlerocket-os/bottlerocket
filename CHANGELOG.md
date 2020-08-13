@@ -23,7 +23,7 @@ Special thanks to first-time contributor @spoonofpower ([#988])!
 
 ## Build changes
 
-* Add `pubsys` (`cargo make repo`, `cargo make ami`) for repo and AMI creation ([#964], [#1010], [#1028])
+* Add `pubsys` (`cargo make repo`, `cargo make ami`) for repo and AMI creation ([#964], [#1010], [#1028], [#1034])
 * Require `updata init` before creating a new repo manifest ([#991])
 * Exclude README.md files from cargo change tracking ([#995], [#996])
 * Build `aws-k8s-1.17` variant by default with `cargo make` ([#1002])
@@ -69,6 +69,7 @@ Special thanks to first-time contributor @spoonofpower ([#988])!
 [#1028]: https://github.com/bottlerocket-os/bottlerocket/pull/1028
 [#1029]: https://github.com/bottlerocket-os/bottlerocket/pull/1029
 [#1030]: https://github.com/bottlerocket-os/bottlerocket/pull/1030
+[#1034]: https://github.com/bottlerocket-os/bottlerocket/pull/1034
 
 # v0.4.1 (2020-07-13)
 
