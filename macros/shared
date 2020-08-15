@@ -222,6 +222,13 @@ CROSS_COMPILATION_CONF_EOF\
 # failures when rewriting "shebangs" in crate files.
 %__brp_mangle_shebangs /bin/true
 
+# Do not compress debuginfo.
+%_find_debuginfo_dwz_opts %{nil}
+
+# Compress RPM payloads with zstd level 1 in single-threaded mode.
+%_source_payload w1T0.zstdio
+%_binary_payload w1T0.zstdio
+
 %__arch_install_post \
   %{?!_cross_allow_rpath:/usr/lib/rpm/check-rpaths} \
   /usr/lib/rpm/check-buildroot \
