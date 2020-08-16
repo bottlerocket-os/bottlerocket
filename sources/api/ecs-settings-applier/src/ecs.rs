@@ -42,6 +42,9 @@ struct ECSConfig {
 
     #[serde(rename = "SELinuxCapable")]
     selinux_capable: bool,
+
+    #[serde(rename = "OverrideAWSLogsExecutionRole")]
+    override_awslogs_execution_role: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -83,6 +86,10 @@ fn run() -> Result<()> {
 
         // SELinux is always available
         selinux_capable: true,
+
+        // Always supported with Docker newer than v17.11.0
+        // See https://github.com/docker/engine/commit/c7cc9d67590dd11343336c121e3629924a9894e9
+        override_awslogs_execution_role: true,
         ..Default::default()
     };
     if let Some(os) = settings.os {
