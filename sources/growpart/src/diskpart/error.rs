@@ -30,12 +30,6 @@ pub enum Error {
         source: std::io::Error,
     },
 
-    #[snafu(display("Failed to stat '{}': {}", path.display(), source))]
-    DeviceStat {
-        path: std::path::PathBuf,
-        source: std::io::Error,
-    },
-
     #[snafu(display("Failed to read partition table from '{}': {}", path.display(), source))]
     ReadPartitionTable {
         path: std::path::PathBuf,
@@ -54,12 +48,6 @@ pub enum Error {
         source: gptman::Error,
     },
 
-    #[snafu(display("Failed to reload partition table from '{}': {}", path.display(), source))]
-    ReloadPartitionTable {
-        path: std::path::PathBuf,
-        source: gptman::linux::BlockError,
-    },
-
     #[snafu(display("Failed to remove partition {} from '{}': {}", part, path.display(), source))]
     RemovePartition {
         part: u32,
@@ -72,6 +60,21 @@ pub enum Error {
         path: std::path::PathBuf,
         source: gptman::Error,
     },
+
+    #[snafu(display("Failed to initialize inotify: {}", source))]
+    InitInotify { source: std::io::Error },
+
+    #[snafu(display("Failed to add inotify watch: {}", source))]
+    AddInotifyWatch { source: std::io::Error },
+
+    #[snafu(display("Failed to read inotify events: {}", source))]
+    ReadInotifyEvents { source: std::io::Error },
+
+    #[snafu(display("Failed to find parent directory for '{}'", path.display()))]
+    FindParentDirectory { path: std::path::PathBuf },
+
+    #[snafu(display("Failed to find file name for '{}'", path.display()))]
+    FindFileName { path: std::path::PathBuf },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
