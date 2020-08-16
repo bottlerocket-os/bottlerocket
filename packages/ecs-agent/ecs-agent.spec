@@ -2,9 +2,9 @@
 %global gorepo amazon-ecs-agent
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.41.0
+%global gover 1.43.0
 # git rev-parse --short=8
-%global gitrev 3776bee9
+%global gitrev 1ebf0604
 
 # Construct reproducible tar archives
 # See https://reproducible-builds.org/docs/archives/
@@ -17,7 +17,7 @@ Release: 1%{?dist}
 Summary: Amazon Elastic Container Service agent
 License: Apache-2.0
 URL: https://%{goimport}
-Source0: https://%{goimport}/archive/v%{gover}.tar.gz
+Source0: https://%{goimport}/archive/v%{gover}/amazon-ecs-agent-v%{gover}.tar.gz
 Source1: ecs.service
 Source2: ecs-tmpfiles.conf
 Source3: ecs-sysctl.conf
@@ -26,15 +26,11 @@ Source5: pause-config.json
 Source6: pause-manifest.json
 Source7: pause-repositories
 
-# Upstream: https://github.com/aws/amazon-ecs-agent/pull/2513
-# Upstream status: Merged
-Patch0001: 0001-engine-move-default-image-exclusions.patch
-
 # Bottlerocket-specific - filesystem location of the pause image
-Patch0002: 0002-bottlerocket-default-filesystem-locations.patch
+Patch0001: 0001-bottlerocket-default-filesystem-locations.patch
 
 # Bottlerocket-specific - version data can be set with linker options
-Patch0003: 0003-bottlerocket-version-values-settable-with-linker.patch
+Patch0002: 0002-bottlerocket-version-values-settable-with-linker.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 
