@@ -123,8 +123,8 @@ fn build(target: &str, build_args: &str, tag: &str, output: &str) -> Result<()> 
     let mut d = Sha512::new();
     d.update(&root);
     let digest = hex::encode(d.finalize());
-    let suffix = &digest[..12];
-    let tag = format!("{}-{}", tag, suffix);
+    let token = &digest[..12];
+    let tag = format!("{}-{}", tag, token);
 
     // Our SDK image is picked by the external `cargo make` invocation.
     let sdk = getenv("BUILDSYS_SDK_IMAGE")?;
@@ -134,6 +134,9 @@ fn build(target: &str, build_args: &str, tag: &str, output: &str) -> Result<()> 
     let nocache = rand::thread_rng().gen::<u32>();
     let nocache_args = format!("--build-arg NOCACHE={}", nocache);
 
+    // Avoid using a cached layer from a concurrent build in another checkout.
+    let token_args = format!("--build-arg TOKEN={}", token);
+
     let build = args(format!(
         "build . \
          --network none \
@@ -141,11 +144,13 @@ fn build(target: &str, build_args: &str, tag: &str, output: &str) -> Result<()> 
          {build_args} \
          {sdk_args} \
          {nocache_args} \
+         {token_args} \
          --tag {tag}",
         target = target,
         build_args = build_args,
         sdk_args = sdk_args,
         nocache_args = nocache_args,
+        token_args = token_args,
         tag = tag,
     ));
 
