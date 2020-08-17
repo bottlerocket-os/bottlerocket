@@ -15,7 +15,7 @@
 %__global_rustflags_shared -Cprefer-dynamic %__global_rustflags
 
 # Enable LTO and static C runtime.
-%__global_rustflags_static -Ctarget-feature=+crt-static -Clink-arg=-lgcc %__global_rustflags
+%__global_rustflags_static -Clto=thin -Cembed-bitcode=yes -Ctarget-feature=+crt-static -Clink-arg=-lgcc %__global_rustflags
 
 %__global_rustflags_shared_toml [%{lua:
     for arg in string.gmatch(rpm.expand("%{__global_rustflags_shared}"), "%S+") do

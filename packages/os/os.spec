@@ -210,7 +210,7 @@ for p in \
 done
 
 for p in apiclient ; do
-  install -p -m 0755 ${HOME}/.cache/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
+  install -p -m 0755 ${HOME}/.cache/.static/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
 done
 
 install -d %{buildroot}%{_cross_sbindir}
@@ -227,7 +227,7 @@ for version_path in %{_builddir}/sources/api/migration/migrations/*; do
     version="${version_path##*/}"
     crate_name="${migration_path##*/}"
     migration_binary_name="migrate_${version}_${crate_name#migrate-}"
-    built_path="${HOME}/.cache/%{__cargo_target_static}/release/${crate_name}"
+    built_path="${HOME}/.cache/.static/%{__cargo_target_static}/release/${crate_name}"
     target_path="%{buildroot}%{_cross_datadir}/migrations/${migration_binary_name}"
 
     install -m 0555 "${built_path}" "${target_path}"
