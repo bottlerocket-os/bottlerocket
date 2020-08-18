@@ -49,6 +49,10 @@ For example, an `x86_64` build of the `aws-k8s-1.17` variant will produce an ima
 
 Our first supported variants, `aws-k8s-1.15`, `aws-k8s-1.16`, and `aws-k8s-1.17`, supports EKS as described above.
 
+## Architectures
+
+Our supported architectures include `x86_64` and `aarch64` (written as `arm64` in some contexts).
+
 ## Setup
 
 :walking: :running:
