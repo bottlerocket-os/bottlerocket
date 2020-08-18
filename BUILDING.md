@@ -49,8 +49,8 @@ The `bin/amiize.sh` script does this for you.
 
 The script has some assumptions about your setup, in particular that you:
   * have [aws-cli v1](https://aws.amazon.com/cli/) set up, and that its default profile can create and control EC2 resources
-  * have an SSH key that's registered with EC2 and is available to `ssh` (for example, loaded into `ssh-agent`)
-  * have a few other common tools installed, like `jq`, `du`, and `rsync`
+  * have [coldsnap](https://github.com/awslabs/coldsnap/) installed to upload snapshots
+  * have a few other common tools installed, like `jq` and `du`
 
 First, decompress the images.
 (Note: these filenames assume an `x86_64` architecture and `aws-k8s-1.17` [variant](README.md).)
@@ -64,22 +64,13 @@ Next, register an AMI:
 
 ```
 bin/amiize.sh --name YOUR-AMI-NAME-HERE \
-              --ssh-keypair YOUR-EC2-SSH-KEYPAIR-NAME-HERE \
-              --root-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64.img \
-              --data-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64-data.img \
-              --region us-west-2 \
-              --instance-type m3.xlarge \
               --arch x86_64 \
-              --worker-ami ami-08d489468314a58df \
-              --user-data 'I2Nsb3VkLWNvbmZpZwpyZXBvX3VwZ3JhZGU6IG5vbmUK'
+              --region us-west-2 \
+              --root-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64.img \
+              --data-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64-data.img
 ```
 
 Your new AMI ID will be printed at the end.
-
-The amiize script starts an EC2 instance, which it uses to write the image to a new EBS volume.
-It then registers this EBS volume as an AMI and terminates the instance.
-In the example command above, the `--worker-ami` is an Amazon Linux AMI, and the `--user-data` disables updates at boot to speed up registration.
-Make sure you use an up-to-date worker AMI.
 
 ## Use your image
 
