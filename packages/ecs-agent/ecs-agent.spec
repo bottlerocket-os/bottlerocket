@@ -32,6 +32,9 @@ Patch0001: 0001-bottlerocket-default-filesystem-locations.patch
 # Bottlerocket-specific - version data can be set with linker options
 Patch0002: 0002-bottlerocket-version-values-settable-with-linker.patch
 
+# Bottlerocket-specific - remove unsupported capabilities
+Patch0003: 0003-bottlerocket-remove-unsupported-capabilities.patch
+
 BuildRequires: %{_cross_os}glibc-devel
 
 Requires: %{_cross_os}docker-engine
