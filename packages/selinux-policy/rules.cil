@@ -59,9 +59,11 @@
 ; objects on local storage.
 (typetransition runtime_t local_t process container_t)
 (typetransition runtime_t cache_t process container_t)
+(typetransition runtime_t state_t process container_t)
 (allow runtime_t container_s (processes (transform)))
 (allow container_s local_t (file (entrypoint)))
 (allow container_s cache_t (file (entrypoint)))
+(allow container_s state_t (file (entrypoint)))
 
 ; Allow containers to communicate with runtimes via pipes.
 (allow container_s runtime_t (files (mutate)))
@@ -81,6 +83,10 @@
 (typetransition runtime_t local_t dir "io.containerd.snapshotter.v1.overlayfs" cache_t)
 ; ... docker's image layers
 (typetransition runtime_t local_t dir "overlay2" cache_t)
+
+; If a system process creates a directory for host container state, it
+; receives the "state_t" label.
+(typetransition system_t local_t dir "host-containers" state_t)
 
 ; All subjects are allowed to write to objects with their own label.
 ; This includes files like the ones under /proc/self.
@@ -105,8 +111,19 @@
 ; mounts for "local" files and directories on /local.
 (allow unconfined_s local_t (files (mutate watch mount)))
 
-; Confined subjects cannot modify these "local" files.
+; Subjects that control the OS can write to, set watches for, and
+; manage mounts for "state" files and directories on /local. Our
+; runtimes also need to be able to perform these operations so that
+; they can launch host containers.
+(allow control_s state_t (files (mutate watch mount)))
+(allow runtime_s state_t (files (mutate watch mount)))
+
+; Untrusted subjects cannot modify the "state" files.
+(neverallow untrusted_s state_t (files (mutate watch mount)))
+
+; Confined subjects cannot modify either "state" or "local" files.
 (neverallow confined_s local_t (files (mutate watch mount)))
+(neverallow confined_s state_t (files (mutate watch mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))
@@ -126,7 +143,6 @@
 (allow clock_s measure_t (files (mutate watch)))
 (allow network_s lease_t (files (mutate watch)))
 (allow runtime_s cache_t (files (mutate watch)))
-(allow system_s state_t (files (mutate watch)))
 
 ; Other components should not be permitted to modify these files,
 ; set watches for them, or to manage mounts for these directories.

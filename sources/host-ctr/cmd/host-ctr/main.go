@@ -207,7 +207,7 @@ func _main() int {
 				Source:      "/local/host-containers/" + containerID,
 			}}),
 		// Mount the rootfs with an SELinux label that makes it writable
-		withMountLabel("system_u:object_r:local_t:s0"),
+		withMountLabel("system_u:object_r:state_t:s0"),
 		// Include conditional options for superpowered containers.
 		withSuperpowered(superpowered),
 	)
@@ -375,8 +375,11 @@ func withMountLabel(label string) oci.SpecOpts {
 // when it's `superpowered`.
 func withSuperpowered(superpowered bool) oci.SpecOpts {
 	if !superpowered {
+		// Set the `control_t` process label so the host container can
+		// interact with the API and modify its local state files.
 		return oci.Compose(
 			seccomp.WithDefaultProfile(),
+			oci.WithSelinuxLabel("system_u:system_r:control_t:s0"),
 		)
 	}
 
