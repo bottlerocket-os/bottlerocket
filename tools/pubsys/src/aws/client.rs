@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use crate::config::AwsConfig;
+use async_trait::async_trait;
 use rusoto_core::{request::DispatchSignedRequest, HttpClient, Region};
 use rusoto_credential::{
     AutoRefreshingProvider, AwsCredentials, CredentialsError, DefaultCredentialsProvider,
@@ -22,9 +22,9 @@ impl NewWith for EbsClient {
     where
         P: ProvideAwsCredentials + Send + Sync + 'static,
         D: DispatchSignedRequest + Send + Sync + 'static,
-        {
-            Self::new_with(request_dispatcher, credentials_provider, region)
-        }
+    {
+        Self::new_with(request_dispatcher, credentials_provider, region)
+    }
 }
 
 impl NewWith for Ec2Client {
@@ -32,9 +32,9 @@ impl NewWith for Ec2Client {
     where
         P: ProvideAwsCredentials + Send + Sync + 'static,
         D: DispatchSignedRequest + Send + Sync + 'static,
-        {
-            Self::new_with(request_dispatcher, credentials_provider, region)
-        }
+    {
+        Self::new_with(request_dispatcher, credentials_provider, region)
+    }
 }
 
 /// Create a rusoto client of the given type using the given region and configuration.
