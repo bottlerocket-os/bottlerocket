@@ -1,7 +1,7 @@
 # Building Bottlerocket
 
 If you'd like to build your own image instead of relying on an Amazon-provided image, follow these steps.
-You can skip to the [setup guide](QUICKSTART-EKS.md) to use an existing image in Amazon EC2.
+You can skip to the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setup guide for Amazon ECS](QUICKSTART-ECS.md) to use an existing image in Amazon EC2.
 (We're still working on other use cases!)
 
 ## Build an image
@@ -40,7 +40,14 @@ To build an image, run:
 cargo make
 ```
 
+This will build an image for the default variant, `aws-k8s-1.17`.
 All packages will be built in turn, and then compiled into an `img` file in the `build/` directory.
+
+To build an image for a different variant, run:
+
+```
+cargo make -e BUILDSYS_VARIANT=my-variant-here
+```
 
 ### Register an AMI
 
@@ -74,4 +81,4 @@ Your new AMI ID will be printed at the end.
 
 ## Use your image
 
-See the [setup guide](QUICKSTART-EKS.md) for information on running Bottlerocket images.
+See the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setup guide for Amazon ECS](QUICKSTART-ECS.md) for information on running Bottlerocket images.
