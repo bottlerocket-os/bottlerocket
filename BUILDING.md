@@ -1,7 +1,7 @@
 # Building Bottlerocket
 
 If you'd like to build your own image instead of relying on an Amazon-provided image, follow these steps.
-You can skip to the [setup guide](QUICKSTART.md) to use an existing image in Amazon EC2.
+You can skip to the [setup guide](QUICKSTART-EKS.md) to use an existing image in Amazon EC2.
 (We're still working on other use cases!)
 
 ## Build an image
@@ -74,4 +74,4 @@ Your new AMI ID will be printed at the end.
 
 ## Use your image
 
-See the [setup guide](QUICKSTART.md) for information on running Bottlerocket images.
+See the [setup guide](QUICKSTART-EKS.md) for information on running Bottlerocket images.

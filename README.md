@@ -5,7 +5,7 @@ Welcome to Bottlerocket!
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
 Bottlerocket is currently in a developer preview phase and we’re looking for your [feedback](#contact-us).
 
-If you’re ready to jump right in, read our [QUICKSTART](QUICKSTART.md) to try Bottlerocket in an Amazon EKS cluster.
+If you’re ready to jump right in, read our [QUICKSTART](QUICKSTART-EKS.md) to try Bottlerocket in an Amazon EKS cluster.
 
 Bottlerocket focuses on security and maintainability, providing a reliable, consistent, and safe platform for container-based workloads.
 This is a reflection of what we've learned building operating systems and services at Amazon.
@@ -62,7 +62,7 @@ It describes:
 * how to build an image
 * how to register an EC2 AMI from an image
 
-To get started using Bottlerocket, please see [QUICKSTART](QUICKSTART.md).
+To get started using Bottlerocket, please see [QUICKSTART](QUICKSTART-EKS.md).
 It describes:
 * how to set up a Kubernetes cluster, so your Bottlerocket instance can run pods
 * how to launch a Bottlerocket instance in EC2
@@ -85,7 +85,7 @@ Bottlerocket has a ["control" container](https://github.com/bottlerocket-os/bott
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
 (You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).)
 
-You need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART.md#enabling-ssm).
+You need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART-EKS.md#enabling-ssm).
 
 Once the instance is started, you can start a session:
 
@@ -333,8 +333,8 @@ In this format, "settings.kubernetes.cluster-name" refers to the same key as in 
 
 The following settings must be specified in order to join a Kubernetes cluster.
 You should [specify them in user data](#using-user-data).
-See the [setup guide](QUICKSTART.md) for *much* more detail on setting up Bottlerocket and Kubernetes.
-* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART.md) uses "bottlerocket".
+See the [setup guide](QUICKSTART-EKS.md) for *much* more detail on setting up Bottlerocket and Kubernetes.
+* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART-EKS.md) uses "bottlerocket".
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 

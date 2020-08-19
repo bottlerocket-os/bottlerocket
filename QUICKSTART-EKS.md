@@ -1,4 +1,4 @@
-# Using a Bottlerocket AMI
+# Using a Bottlerocket AMI with Amazon EKS
 
 The first release of Bottlerocket focuses on Kubernetes, in particular serving as the host OS for Kubernetes pods.
 
