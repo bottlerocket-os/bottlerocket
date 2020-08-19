@@ -98,8 +98,7 @@ where
     P: AsRef<Path>,
 {
     debug!("Querying API for settings data");
-    let settings: model::Model =
-        get_json(&socket_path, "/", None as Option<(String, String)>)?;
+    let settings: model::Model = get_json(&socket_path, "/", None as Option<(String, String)>)?;
     trace!("Model values: {:?}", settings);
 
     Ok(settings)
@@ -115,6 +114,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
     template_registry.register_helper("join_map", Box::new(helpers::join_map));
     template_registry.register_helper("default", Box::new(helpers::default));
+    template_registry.register_helper("ecr-prefix", Box::new(helpers::ecr_prefix));
 
     Ok(template_registry)
 }

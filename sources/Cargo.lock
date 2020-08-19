@@ -672,6 +672,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecr-helper-admin"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+]
+
+[[package]]
+name = "ecr-helper-control"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers 0.1.0",
+]
+
+[[package]]
 name = "ecs-settings-applier"
 version = "0.1.0"
 dependencies = [
@@ -1996,6 +2010,7 @@ dependencies = [
  "cargo-readme 3.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "handlebars 3.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "http 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "models 0.1.0",
  "serde 1.0.114 (registry+https://github.com/rust-lang/crates.io-index)",
