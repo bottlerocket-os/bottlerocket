@@ -88,6 +88,9 @@
 ; receives the "state_t" label.
 (typetransition system_t local_t dir "host-containers" state_t)
 
+; The socket for the API server gets the "api_socket_t" label.
+(typetransition api_t any_t sock_file "api.sock" api_socket_t)
+
 ; All subjects are allowed to write to objects with their own label.
 ; This includes files like the ones under /proc/self.
 ; They can also set watches on those objects.
@@ -148,6 +151,15 @@
 ; set watches for them, or to manage mounts for these directories.
 (neverallow other_s protected_o (files (mutate watch mount)))
 (neverallow other_s immutable_o (files (watch)))
+
+; Only the API server and specific components can use the API
+; socket, as this provides a means to escalate privileges and
+; persist changes.
+(allow api_s api_socket_t (files (mutate watch)))
+(allow control_s api_socket_t (files (mutate watch)))
+
+; Untrusted components are not allowed to use the API socket.
+(neverallow untrusted_s api_socket_t (files (mutate watch)))
 
 ; Only trusted components are allowed to relabel files.
 (allow trusted_s global (files (relabel)))

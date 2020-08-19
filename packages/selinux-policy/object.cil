@@ -65,6 +65,11 @@
 (roletype object_r private_t)
 (context private (system_u object_r private_t s0))
 
+; Files that are the API socket.
+(type api_socket_t)
+(roletype object_r api_socket_t)
+(context api_socket (system_u object_r api_socket_t s0))
+
 ; Files for cached container layers.
 (type cache_t)
 (roletype object_r cache_t)
@@ -118,4 +123,5 @@
   network_exec_t bus_exec_t runtime_exec_t
   any_t etc_t unlabeled_t external_t
   local_t private_t cache_t
-  lease_t measure_t state_t))
+  lease_t measure_t state_t
+  api_socket_t))
