@@ -11,10 +11,11 @@ FROM ${SDK} as sdk
 FROM scratch AS cache
 ARG PACKAGE
 ARG ARCH
+ARG TOKEN
 # We can't create directories via RUN in a scratch container, so take an existing one.
 COPY --chown=1000:1000 --from=sdk /tmp /cache
 # Ensure the ARG variables are used in the layer to prevent reuse by other builds.
-COPY --chown=1000:1000 .dockerignore /cache/.${PACKAGE}.${ARCH}
+COPY --chown=1000:1000 .dockerignore /cache/.${PACKAGE}.${ARCH}.${TOKEN}
 
 # Some builds need to modify files in the source directory, for example Rust
 # software using build.rs to generate code.  The source directory is mounted in
@@ -32,10 +33,11 @@ FROM scratch AS variantcache
 ARG PACKAGE
 ARG ARCH
 ARG VARIANT
+ARG TOKEN
 # We can't create directories via RUN in a scratch container, so take an existing one.
 COPY --chown=1000:1000 --from=sdk /tmp /variantcache
 # Ensure the ARG variables are used in the layer to prevent reuse by other builds.
-COPY --chown=1000:1000 .dockerignore /variantcache/.${PACKAGE}.${ARCH}.${VARIANT}
+COPY --chown=1000:1000 .dockerignore /variantcache/.${PACKAGE}.${ARCH}.${VARIANT}.${TOKEN}
 
 FROM sdk AS rpmbuild
 ARG PACKAGE
