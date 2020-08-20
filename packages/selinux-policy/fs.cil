@@ -62,6 +62,8 @@
 (filecon "/var/.*" any ())
 
 ; Label local state directories.
+(filecon "/local/host-containers" any state)
+(filecon "/local/host-containers/.*" any state)
 (filecon "/var/lib/chrony" any measure)
 (filecon "/var/lib/chrony/.*" any measure)
 (filecon "/var/lib/systemd" any state)

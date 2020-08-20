@@ -48,6 +48,11 @@
 (roletype system_r container_t)
 (context container (system_u system_r container_t s0))
 
+; Processes that run inside containers that control the OS.
+(type control_t)
+(roletype system_r control_t)
+(context control (system_u system_r control_t s0))
+
 ; Processes that run inside highly privileged containers.
 (type super_t)
 (roletype system_r super_t)
@@ -58,7 +63,7 @@
 (typeattributeset all_s (
   kernel_t init_t system_t api_t
   network_t clock_t bus_t runtime_t
-  container_t super_t))
+  container_t control_t super_t))
 
 ; Subjects that are treated as a trusted part of the OS.
 (typeattribute trusted_s)
@@ -82,7 +87,7 @@
 
 ; Subjects that are started from containers.
 (typeattribute container_s)
-(typeattributeset container_s (container_t super_t))
+(typeattributeset container_s (container_t control_t super_t))
 
 ; Subjects that are shipped with the OS.
 (typeattribute host_s)
@@ -104,6 +109,6 @@
 (typeattribute network_s)
 (typeattributeset network_s (network_t system_t super_t))
 
-; Subjects that are allowed to manage system files.
-(typeattribute system_s)
-(typeattributeset system_s (system_t super_t))
+; Subjects that are allowed to control system files.
+(typeattribute control_s)
+(typeattributeset control_s (control_t system_t super_t))
