@@ -33,6 +33,9 @@ Source1000: clarify.toml
 # https://github.com/bottlerocket-os/bottlerocket/issues/1011
 Patch0001: 0001-bottlerocket-privileged-shouldn-t-disable-SELinux.patch
 
+# Update aws-sdk-go for IMDSv2 support
+Patch0100: awslogs_update_aws-sdk-go_to_support_imdsv2.patch.bz2
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
