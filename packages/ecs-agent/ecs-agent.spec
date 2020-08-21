@@ -35,6 +35,10 @@ Patch0002: 0002-bottlerocket-version-values-settable-with-linker.patch
 # Bottlerocket-specific - remove unsupported capabilities
 Patch0003: 0003-bottlerocket-remove-unsupported-capabilities.patch
 
+# bind introspection to localhost
+# https://github.com/aws/amazon-ecs-agent/pull/2588
+Patch0004: 0004-bottlerocket-bind-introspection-to-localhost.patch 
+
 BuildRequires: %{_cross_os}glibc-devel
 
 Requires: %{_cross_os}docker-engine
