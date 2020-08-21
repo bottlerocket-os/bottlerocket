@@ -5,7 +5,11 @@ template-path = "/usr/share/templates/containerd-config-toml_aws-ecs-1"
 # ECS
 [services.ecs]
 restart-commands = ["/usr/bin/ecs-settings-applier", "/bin/systemctl try-reload-or-restart ecs.service"]
-configuration-files = []
+configuration-files = ["ecs-config"]
+
+[configuration-files.ecs-config]
+path = "/etc/ecs/ecs.config"
+template-path = "/usr/share/templates/ecs.config"
 
 [metadata.settings.ecs]
 affected-services = ["ecs"]
@@ -13,3 +17,4 @@ affected-services = ["ecs"]
 [settings.ecs]
 allow-privileged-containers = false
 logging-drivers = ["json-file", "awslogs", "none"]
+loglevel = "info"

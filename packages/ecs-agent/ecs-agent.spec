@@ -21,10 +21,11 @@ Source0: https://%{goimport}/archive/v%{gover}/amazon-ecs-agent-v%{gover}.tar.gz
 Source1: ecs.service
 Source2: ecs-tmpfiles.conf
 Source3: ecs-sysctl.conf
-Source4: pause-image-VERSION
-Source5: pause-config.json
-Source6: pause-manifest.json
-Source7: pause-repositories
+Source4: ecs.config
+Source5: pause-image-VERSION
+Source6: pause-config.json
+Source7: pause-manifest.json
+Source8: pause-repositories
 
 # Bottlerocket-specific - filesystem location of the pause image
 Patch0001: 0001-bottlerocket-default-filesystem-locations.patch
@@ -73,11 +74,11 @@ go build -a \
   mkdir -p image/rootfs
   %tar_cf image/rootfs/layer.tar -C rootfs .
   DIGEST=$(sha256sum image/rootfs/layer.tar | sed -e 's/ .*//')
-  install -m 0644 %{S:4} image/rootfs/VERSION
-  install -m 0644 %{S:5} image/config.json
+  install -m 0644 %{S:5} image/rootfs/VERSION
+  install -m 0644 %{S:6} image/config.json
   sed -i "s/~~digest~~/${DIGEST}/" image/config.json
-  install -m 0644 %{S:6} image/manifest.json
-  install -m 0644 %{S:7} image/repositories
+  install -m 0644 %{S:7} image/manifest.json
+  install -m 0644 %{S:8} image/repositories
   %tar_cf ../../../amazon-ecs-pause.tar -C image .
 )
 
@@ -88,6 +89,7 @@ install -D -p -m 0644 amazon-ecs-pause.tar %{buildroot}%{_cross_libdir}/amazon-e
 install -D -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/ecs.service
 install -D -p -m 0644 %{S:2} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
 install -D -p -m 0644 %{S:3} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
+install -D -p -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/ecs.config
 
 %cross_scan_attribution go-vendor agent/vendor
 
@@ -99,6 +101,7 @@ install -D -p -m 0644 %{S:3} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
 %{_cross_unitdir}/ecs.service
 %{_cross_tmpfilesdir}/ecs.conf
 %{_cross_sysctldir}/90-ecs.conf
+%{_cross_templatedir}/ecs.config
 %{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
 
 %changelog
