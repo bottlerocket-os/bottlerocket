@@ -128,8 +128,9 @@ If you're using a custom control container, or want to make the API calls direct
 apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": true}}}'
 apiclient -u /tx/commit_and_apply -m POST
 ```
-
-Once you're in the admin container, you can run `sheltie` to get a full root shell in the Bottlerocket host.
+  
+Once you have enabled admin container, you can ssh with `ec2-user` using your EC2-registered SSH key to enter admin container.
+In the admin container, you can run `sheltie` to get a full root shell in the Bottlerocket host.
 Be careful; while you can inspect and change even more as root, Bottlerocket's filesystem and dm-verity setup will prevent most changes from persisting over a restart - see [Security](#security).
 
 ## Updates
