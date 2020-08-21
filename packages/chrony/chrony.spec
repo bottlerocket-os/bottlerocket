@@ -1,10 +1,10 @@
 Name: %{_cross_os}chrony
-Version: 3.5
+Version: 3.5.1
 Release: 1%{?dist}
 Summary: A versatile implementation of the Network Time Protocol
 License: GPL-2.0-only
 URL: https://chrony.tuxfamily.org
-Source0: https://download.tuxfamily.org/chrony/chrony-3.5.tar.gz
+Source0: https://download.tuxfamily.org/chrony/chrony-%{version}.tar.gz
 Source1: chronyd.service
 Source2: chrony-conf
 Source3: chrony-sysusers.conf
