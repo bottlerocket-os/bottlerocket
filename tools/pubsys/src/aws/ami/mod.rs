@@ -111,11 +111,11 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
     })?;
 
     // Build EBS client for snapshot management, and EC2 client for registration
-    let ebs_client = build_client::<EbsClient>(&base_region, &aws).context(error::Client {
+    let ebs_client = build_client::<EbsClient>(&base_region, &base_region, &aws).context(error::Client {
         client_type: "EBS",
         region: base_region.name(),
     })?;
-    let ec2_client = build_client::<Ec2Client>(&base_region, &aws).context(error::Client {
+    let ec2_client = build_client::<Ec2Client>(&base_region, &base_region, &aws).context(error::Client {
         client_type: "EC2",
         region: base_region.name(),
     })?;
@@ -172,6 +172,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
     wait_for_ami(
         &image_id,
         &base_region,
+        &base_region,
         "available",
         successes_required,
         &aws,
@@ -187,7 +188,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
     // live until the future is resolved.
     let mut ec2_clients = HashMap::with_capacity(regions.len());
     for region in regions.iter() {
-        let ec2_client = build_client::<Ec2Client>(&region, &aws).context(error::Client {
+        let ec2_client = build_client::<Ec2Client>(&region, &base_region, &aws).context(error::Client {
             client_type: "EC2",
             region: base_region.name(),
         })?;

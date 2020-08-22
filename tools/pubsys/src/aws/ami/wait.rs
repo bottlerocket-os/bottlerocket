@@ -12,6 +12,7 @@ use std::time::Duration;
 pub(crate) async fn wait_for_ami(
     id: &str,
     region: &Region,
+    sts_region: &Region,
     state: &str,
     successes_required: u8,
     aws: &AwsConfig,
@@ -49,7 +50,7 @@ pub(crate) async fn wait_for_ami(
         };
         // Use a new client each time so we have more confidence that different endpoints can see
         // the new AMI.
-        let ec2_client = build_client::<Ec2Client>(&region, &aws).context(error::Client {
+        let ec2_client = build_client::<Ec2Client>(&region, &sts_region, &aws).context(error::Client {
             client_type: "EC2",
             region: region.name(),
         })?;

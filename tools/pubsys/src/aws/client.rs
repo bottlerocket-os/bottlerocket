@@ -38,10 +38,14 @@ impl NewWith for Ec2Client {
 }
 
 /// Create a rusoto client of the given type using the given region and configuration.
-pub(crate) fn build_client<T: NewWith>(region: &Region, aws: &AwsConfig) -> Result<T> {
+pub(crate) fn build_client<T: NewWith>(
+    region: &Region,
+    sts_region: &Region,
+    aws: &AwsConfig,
+) -> Result<T> {
     let maybe_regional_role = aws.region.get(region.name()).and_then(|r| r.role.clone());
     let assume_roles = aws.role.iter().chain(maybe_regional_role.iter()).cloned();
-    let provider = build_provider(&region, assume_roles.clone(), base_provider(&aws.profile)?)?;
+    let provider = build_provider(&sts_region, assume_roles.clone(), base_provider(&aws.profile)?)?;
     Ok(T::new_with(
         rusoto_core::HttpClient::new().context(error::HttpClient)?,
         provider,
@@ -61,8 +65,13 @@ impl ProvideAwsCredentials for CredentialsProvider {
 }
 
 /// Chains credentials providers to assume the given roles in order.
+/// The region given should be the one in which you want to talk to STS to get temporary
+/// credentials, not the region in which you want to talk to a service endpoint like EC2.  This is
+/// needed because you may be assuming a role in an opt-in region from an account that has not
+/// opted-in to that region, and you need to get session credentials from an STS endpoint in a
+/// region to which you have access in the base account.
 fn build_provider<P>(
-    region: &Region,
+    sts_region: &Region,
     assume_roles: impl Iterator<Item = String>,
     base_provider: P,
 ) -> Result<CredentialsProvider>
@@ -74,7 +83,7 @@ where
         let sts = StsClient::new_with(
             HttpClient::new().context(error::HttpClient)?,
             provider,
-            region.clone(),
+            sts_region.clone(),
         );
         let expiring_provider = StsAssumeRoleSessionCredentialsProvider::new(
             sts,
