@@ -90,6 +90,9 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     } else {
         aws.regions.clone().into()
     };
+    ensure!(!regions.is_empty(), error::MissingConfig { missing: "aws.regions" });
+    let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegion)?;
+
     // Check that the requested regions are a subset of the regions we *could* publish from the AMI
     // input JSON.
     let requested_regions = HashSet::from_iter(regions.iter());
@@ -121,7 +124,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     // live until the future is resolved.
     let mut ec2_clients = HashMap::with_capacity(amis.len());
     for region in amis.keys() {
-        let ec2_client = build_client::<Ec2Client>(&region, &aws).context(error::Client {
+        let ec2_client = build_client::<Ec2Client>(&region, &base_region, &aws).context(error::Client {
             client_type: "EC2",
             region: region.name(),
         })?;
