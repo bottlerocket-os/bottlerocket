@@ -3,6 +3,7 @@
 use std::io;
 use std::path::PathBuf;
 
+use reqwest::Url;
 use snafu::{Backtrace, Snafu};
 
 #[derive(Debug, Snafu)]
@@ -19,6 +20,12 @@ pub(crate) enum Error {
     CommandFinish {
         command: String,
         source: io::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("The request has no command: '{}'", request))]
+    CommandMissing {
+        request: String,
         backtrace: Backtrace,
     },
 
@@ -50,9 +57,6 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Encountered an empty command."))]
-    EmptyCommand { backtrace: Backtrace },
-
     #[snafu(display("Error creating the error file '{}': {}", path.display(), source))]
     ErrorFile {
         source: io::Error,
@@ -66,6 +70,59 @@ pub(crate) enum Error {
         path: PathBuf,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Unable to copy file from '{}' to '{}' for request '{}': {}", from, to.display(), request, source))]
+    FileCopy {
+        source: std::io::Error,
+        request: String,
+        from: String,
+        to: PathBuf,
+    },
+
+    #[snafu(display("No file to copy from given for request '{}'", request))]
+    FileFromEmpty { request: String },
+
+    #[snafu(display("Output filename is missing in request: '{}'", request))]
+    FilenameMissing { request: String },
+
+    #[snafu(display("Unable to create HTTP client for '{}': {}", url, source))]
+    HttpClient { url: Url, source: reqwest::Error },
+
+    #[snafu(display("HTTP request '{}' has no URL", request))]
+    HttpMissingUrl { request: String },
+
+    #[snafu(display("HTTP error for '{}': {}", url, source))]
+    HttpResponse { url: Url, source: reqwest::Error },
+
+    #[snafu(display("HTTP response body for '{}' could not be read: {}", request, source))]
+    HttpResponseBytes {
+        request: String,
+        source: reqwest::Error,
+    },
+
+    #[snafu(display("Unable to send HTTP request to '{}': {}", url, source))]
+    HttpSend { url: Url, source: reqwest::Error },
+
+    #[snafu(display("Unable to parse '{}' to a URL: {}", url, source))]
+    HttpUrlParse {
+        url: String,
+        source: url::ParseError,
+    },
+
+    #[snafu(display(
+    "Unable to write HTTP response for '{}' to '{}': {}",
+    request,
+    path.display(),
+    source
+    ))]
+    HttpWriteBytes {
+        request: String,
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Empty command."))]
+    ModeMissing {},
 
     #[snafu(display("Cannot write to / as a file."))]
     RootAsFile { backtrace: Backtrace },
@@ -107,6 +164,9 @@ pub(crate) enum Error {
         source: io::Error,
         backtrace: Backtrace,
     },
+
+    #[snafu(display("Unknown request type '{}' in '{}'", mode, request))]
+    UnhandledRequest { mode: String, request: String },
 }
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;

@@ -81,6 +81,7 @@ USER builder
 RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=type=cache,target=/home/builder/.cache,from=cache,source=/cache \
     --mount=type=cache,target=/home/builder/rpmbuild/BUILD/sources/models/src/variant,from=variantcache,source=/variantcache \
+    --mount=type=cache,target=/home/builder/rpmbuild/BUILD/sources/logdog/conf/current,from=variantcache,source=/variantcache \
     --mount=source=sources,target=/home/builder/rpmbuild/BUILD/sources \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
