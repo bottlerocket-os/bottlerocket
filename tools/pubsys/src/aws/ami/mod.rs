@@ -273,7 +273,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         let ec2_client =
             build_client::<Ec2Client>(&region, &base_region, &aws).context(error::Client {
                 client_type: "EC2",
-                region: base_region.name(),
+                region: region.name(),
             })?;
         ec2_clients.insert(region.clone(), ec2_client);
     }
@@ -286,7 +286,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             .context(error::GetAmiId {
                 name: &ami_args.name,
                 arch: &ami_args.arch,
-                region: base_region.name(),
+                region: region.name(),
             })?
         {
             info!(
