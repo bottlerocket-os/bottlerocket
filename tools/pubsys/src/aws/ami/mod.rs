@@ -121,12 +121,12 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let base_region = regions.remove(0);
 
     // Build EBS client for snapshot management, and EC2 client for registration
-    let ebs_client =
+    let base_ebs_client =
         build_client::<EbsClient>(&base_region, &base_region, &aws).context(error::Client {
             client_type: "EBS",
             region: base_region.name(),
         })?;
-    let ec2_client =
+    let base_ec2_client =
         build_client::<Ec2Client>(&base_region, &base_region, &aws).context(error::Client {
             client_type: "EC2",
             region: base_region.name(),
@@ -138,7 +138,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         &ami_args.name,
         &ami_args.arch,
         base_region.name(),
-        &ec2_client,
+        &base_ec2_client,
     )
     .await
     .context(error::GetAmiId {
@@ -154,7 +154,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             base_region.name(),
             found_id
         );
-        let snapshot_ids = get_snapshots(&found_id, &base_region, &ec2_client)
+        let snapshot_ids = get_snapshots(&found_id, &base_region, &base_ec2_client)
             .await
             .context(error::GetSnapshots {
                 image_id: &found_id,
@@ -166,7 +166,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         };
         (found_ids, true)
     } else {
-        let new_ids = register_image(ami_args, base_region.name(), ebs_client, &ec2_client)
+        let new_ids = register_image(ami_args, base_region.name(), base_ebs_client, &base_ec2_client)
             .await
             .context(error::RegisterImage {
                 name: &ami_args.name,
@@ -216,12 +216,12 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 
     // Get the account ID used in the base region; we don't need to grant to it so we can remove it
     // from the list.
-    let sts_client =
+    let base_sts_client =
         build_client::<StsClient>(&base_region, &base_region, &aws).context(error::Client {
             client_type: "STS",
             region: base_region.name(),
         })?;
-    let response = sts_client
+    let response = base_sts_client
         .get_caller_identity(GetCallerIdentityRequest {})
         .await
         .context(error::GetCallerIdentity {
@@ -242,7 +242,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             None,
             "add",
             &ids_of_image.snapshot_ids,
-            &ec2_client,
+            &base_ec2_client,
             &base_region,
         )
         .await
@@ -256,7 +256,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             None,
             "add",
             &ids_of_image.image_id,
-            &ec2_client,
+            &base_ec2_client,
             &base_region,
         )
         .await
