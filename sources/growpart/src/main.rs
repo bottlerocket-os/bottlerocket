@@ -44,6 +44,7 @@ fn run() -> Result<()> {
     let mut diskpart = DiskPart::new(args.partition)?;
     diskpart.grow()?;
     diskpart.write()?;
+    diskpart.sync()?;
     Ok(())
 }
 

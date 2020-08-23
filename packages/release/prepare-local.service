@@ -12,19 +12,17 @@ Environment=BOTTLEROCKET_DATA=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
 Environment=LOCAL_DIR=/local
 Environment=CONTEXT="system_u:object_r:local_t:s0"
 
-# To "grow" the partition, we delete it and recreate it at the larger size, which
-# causes the udev links to be deleted and then recreated. We have to wait for the
-# links to return before continuing.
+# To "grow" the partition, we delete it and recreate it at the larger size, then
+# write it back to the device. udevd observes the write via inotify, and tells
+# the kernel to reload the partition table. This causes the partition link to be
+# deleted and then recreated.
 ExecStart=/usr/sbin/growpart ${BOTTLEROCKET_DATA}
-ExecStart=/usr/bin/udevadm settle -E ${BOTTLEROCKET_DATA}
 
-# HACK: If the GPT label was not already at the end of the disk, the first pass
-# will write it there, but any additional sectors beyond the original position
-# were not included in the resized partition. Now that the kernel has reloaded
-# the partition table, the second pass can find and use those sectors. This
-# avoids the need to synchronize with the kernel (and udev) inside `growpart`.
+# If the GPT label was not already at the end of the disk, the first pass will
+# write it there, but any additional sectors beyond the original position were
+# not included in the resized partition. Now that the kernel has reloaded the
+# partition table, the second pass can find and use those sectors.
 ExecStart=/usr/sbin/growpart ${BOTTLEROCKET_DATA}
-ExecStart=/usr/bin/udevadm settle -E ${BOTTLEROCKET_DATA}
 
 # The above note means we can't have a "normal" mount unit here, because it would
 # depend on the link, and would immediately transition to the failed state when the
