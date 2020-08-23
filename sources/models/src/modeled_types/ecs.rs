@@ -4,7 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
 use super::error;
 use serde::de::Error as _;
-use snafu::ensure;
+use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
@@ -172,6 +172,59 @@ mod test_ecs_attribute_value {
             "trailing space ",
         ] {
             ECSAttributeValue::try_from(*val).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// ECSAgentLogLevel represents a string that contains a valid ECS log level for the ECS agent.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct ECSAgentLogLevel {
+    inner: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ECSLogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error,
+    Crit,
+}
+
+string_impls_for!(ECSAgentLogLevel, "ECSAgentLogLevel");
+
+impl TryFrom<&str> for ECSAgentLogLevel {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ECSLogLevel>(&input).context(error::InvalidPlainValue {
+            field: "ecs.loglevel",
+        })?;
+        Ok(ECSAgentLogLevel {
+            inner: input.to_string(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod test_ecs_agent_log_level {
+    use super::ECSAgentLogLevel;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_vals() {
+        for val in &["debug", "info", "warn"] {
+            ECSAgentLogLevel::try_from(*val).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_vals() {
+        for val in &["", "warning", "errors", " "] {
+            ECSAgentLogLevel::try_from(*val).unwrap_err();
         }
     }
 }

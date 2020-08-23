@@ -17,6 +17,7 @@ model-derive = { path = "model-derive" }
 regex = "1.1"
 semver = "0.10.0"
 serde = { version = "1.0", features = ["derive"] }
+serde_plain = "0.3.0"
 snafu = "0.6"
 toml = "0.5"
 url = "2.1"

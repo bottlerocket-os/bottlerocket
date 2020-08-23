@@ -47,6 +47,12 @@ pub mod error {
 
         #[snafu(display("Invalid domain name '{}': {}", input, msg))]
         InvalidDomainName { input: String, msg: String },
+
+        #[snafu(display("Invalid input for field {}: {}", field, source))]
+        InvalidPlainValue {
+            field: String,
+            source: serde_plain::Error,
+        },
     }
 }
 
