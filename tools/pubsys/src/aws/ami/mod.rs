@@ -278,17 +278,27 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         ec2_clients.insert(region.clone(), ec2_client);
     }
 
-    let mut copy_requests = Vec::with_capacity(regions.len());
+    // First, we check if the AMI already exists in each region.
+    let mut get_requests = Vec::with_capacity(regions.len());
     for region in regions.iter() {
         let ec2_client = &ec2_clients[region];
-        if let Some(id) = get_ami_id(&ami_args.name, &ami_args.arch, region.name(), ec2_client)
-            .await
-            .context(error::GetAmiId {
-                name: &ami_args.name,
-                arch: &ami_args.arch,
-                region: region.name(),
-            })?
-        {
+        let get_request = get_ami_id(&ami_args.name, &ami_args.arch, region.name(), ec2_client);
+        let info_future = ready(region.clone());
+        get_requests.push(join(info_future, get_request));
+    }
+    let request_stream = stream::iter(get_requests).buffer_unordered(4);
+    let get_responses: Vec<(Region, std::result::Result<Option<String>, register::Error>)> =
+        request_stream.collect().await;
+
+    // If an AMI already existed, just add it to our list, otherwise prepare a copy request.
+    let mut copy_requests = Vec::with_capacity(regions.len());
+    for (region, get_response) in get_responses {
+        let get_response = get_response.context(error::GetAmiId {
+            name: &ami_args.name,
+            arch: &ami_args.arch,
+            region: region.name(),
+        })?;
+        if let Some(id) = get_response {
             info!(
                 "Found '{}' already registered in {}: {}",
                 ami_args.name,
@@ -298,14 +308,16 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             amis.insert(region.name().to_string(), Image::new(&id, &ami_args.name));
             continue;
         }
-        let request = CopyImageRequest {
+
+        let ec2_client = &ec2_clients[&region];
+        let copy_request = CopyImageRequest {
             description: ami_args.description.clone(),
             name: ami_args.name.clone(),
             source_image_id: ids_of_image.image_id.clone(),
             source_region: base_region.name().to_string(),
             ..Default::default()
         };
-        let response_future = ec2_client.copy_image(request);
+        let copy_future = ec2_client.copy_image(copy_request);
 
         let base_region_name = base_region.name();
         // Store the region so we can output it to the user
@@ -318,7 +330,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
                 region.name()
             )
         });
-        copy_requests.push(message_future.then(|_| join(region_future, response_future)));
+        copy_requests.push(message_future.then(|_| join(region_future, copy_future)));
     }
 
     // If all target regions already have the AMI, we're done.
