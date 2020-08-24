@@ -38,6 +38,8 @@ regions = ["us-west-2", "us-east-1", "us-east-2"]
 profile = "my-profile"
 # If specified, we assume this role before making any API calls.
 role = "arn:aws:iam::012345678901:role/assume-global"
+# If specified, this string will be prefixed on all parameter names published to SSM.
+ssm_prefix = "/your/prefix/here"
 
 [aws.region.us-west-2]
 # If specified, we assume this role before making any API calls in this region.

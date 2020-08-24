@@ -37,9 +37,17 @@ PUBLISH_KEY = "default"
 # AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
 # volume size; by default it's the image size, rounded up.)
 PUBLISH_DATA_VOLUME_SIZE = "20"
-# You can also set PUBLISH_REGIONS to override the list of regions for AMIs
-# from Infra.toml; it's a comma-separated list like "us-west-2,us-east-1".
-# You can also set NO_PROGRESS to not print progress bars during snapshot upload.
+# This can be overridden with -e to change the path to the directory containing
+# SSM parameter template files.  These files determine the parameter names and
+# values that will be published to SSM when you run `cargo make ssm`.
+PUBLISH_SSM_TEMPLATES_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/ssm"
+
+# You can also set PUBLISH_REGIONS to override the list of regions from
+# Infra.toml for AMI and SSM commands; it's a comma-separated list like
+# "us-west-2,us-east-1".
+# You can set NO_PROGRESS=true to not print progress bars during snapshot upload.
+# You can use ALLOW_CLOBBER=true with the `ssm` task to make it overwrite existing values.
+# (This is not required with `promote-ssm` because the intent of promotion is overwriting.)
 
 # Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
 # To use the upstream source as fallback, override this on the command line and set it to 'true'
@@ -468,6 +476,71 @@ pubsys \
    --make-private \
    \
    --ami-input "${ami_input}" \
+   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
+'''
+]
+
+[tasks.ssm]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the input file below to save time.
+# This does mean that `cargo make ami` must be run before `cargo make ssm`.
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+if [ ! -s "${ami_input}" ]; then
+   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   ssm \
+   \
+   --ami-input "${ami_input}" \
+   --arch "${BUILDSYS_ARCH}" \
+   --variant "${BUILDSYS_VARIANT}" \
+   --version "${BUILDSYS_VERSION_FULL}" \
+   --template-dir "${PUBLISH_SSM_TEMPLATES_PATH}" \
+   \
+   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"} \
+   ${ALLOW_CLOBBER:+--allow-clobber}
+'''
+]
+
+[tasks.promote-ssm]
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+source="${SSM_SOURCE:-${BUILDSYS_VERSION_FULL}}"
+target="${SSM_TARGET}"
+if [ -z "${target}" ]; then
+   echo "SSM_TARGET is mandatory for promote-ssm; please give the version (or pointer like "latest") to which you want to promote ${source}" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   promote-ssm \
+   \
+   --arch "${BUILDSYS_ARCH}" \
+   --variant "${BUILDSYS_VARIANT}" \
+   --source "${source}" \
+   --target "${target}" \
+   --template-dir "${PUBLISH_SSM_TEMPLATES_PATH}" \
+   \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
 '''
 ]

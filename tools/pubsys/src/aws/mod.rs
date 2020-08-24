@@ -6,7 +6,9 @@ use snafu::ResultExt;
 pub(crate) mod client;
 
 pub(crate) mod ami;
+pub(crate) mod promote_ssm;
 pub(crate) mod publish_ami;
+pub(crate) mod ssm;
 
 /// Builds a Region from the given region name, and uses the custom endpoint from the AWS config,
 /// if specified in aws.region.REGION.endpoint.

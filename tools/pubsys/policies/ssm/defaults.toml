@@ -1,0 +1,7 @@
+[[parameter]]
+name = "{variant}/{arch}/{image_version}/image_id"
+value = "{image_id}"
+
+[[parameter]]
+name = "{variant}/{arch}/{image_version}/image_version"
+value = "{image_version}"

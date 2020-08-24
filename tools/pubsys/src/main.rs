@@ -5,9 +5,10 @@ Currently implemented:
 * building repos, whether starting from an existing repo or from scratch
 * registering and copying EC2 AMIs
 * Marking EC2 AMIs public (or private again)
+* setting SSM parameters based on built AMIs
+* promoting SSM parameters from versioned entries to named (e.g. 'latest')
 
 To be implemented:
-* updating SSM parameters
 * high-level document describing pubsys usage with examples
 
 Configuration comes from:
@@ -56,6 +57,18 @@ fn run() -> Result<()> {
                     .context(error::PublishAmi)
             })
         }
+        SubCommand::Ssm(ref ssm_args) => {
+            let mut rt = Runtime::new().context(error::Runtime)?;
+            rt.block_on(async { aws::ssm::run(&args, &ssm_args).await.context(error::Ssm) })
+        }
+        SubCommand::PromoteSsm(ref promote_args) => {
+            let mut rt = Runtime::new().context(error::Runtime)?;
+            rt.block_on(async {
+                aws::promote_ssm::run(&args, &promote_args)
+                    .await
+                    .context(error::PromoteSsm)
+            })
+        }
     }
 }
 
@@ -85,8 +98,12 @@ struct Args {
 #[derive(Debug, StructOpt)]
 enum SubCommand {
     Repo(repo::RepoArgs),
+
     Ami(aws::ami::AmiArgs),
     PublishAmi(aws::publish_ami::PublishArgs),
+
+    Ssm(aws::ssm::SsmArgs),
+    PromoteSsm(aws::promote_ssm::PromoteArgs),
 }
 
 /// Parses a SemVer, stripping a leading 'v' if present
@@ -126,11 +143,19 @@ mod error {
             source: crate::aws::publish_ami::Error,
         },
 
+        #[snafu(display("Failed to promote SSM: {}", source))]
+        PromoteSsm {
+            source: crate::aws::promote_ssm::Error,
+        },
+
         #[snafu(display("Failed to build repo: {}", source))]
         Repo { source: crate::repo::Error },
 
         #[snafu(display("Failed to create async runtime: {}", source))]
         Runtime { source: std::io::Error },
+
+        #[snafu(display("Failed to update SSM: {}", source))]
+        Ssm { source: crate::aws::ssm::Error },
     }
 }
 type Result<T> = std::result::Result<T, error::Error>;

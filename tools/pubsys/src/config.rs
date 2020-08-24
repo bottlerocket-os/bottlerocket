@@ -42,6 +42,7 @@ pub(crate) struct AwsConfig {
     pub(crate) profile: Option<String>,
     #[serde(default)]
     pub(crate) region: HashMap<String, AwsRegionConfig>,
+    pub(crate) ssm_prefix: Option<String>,
 }
 
 /// AWS region-specific configuration

@@ -15,6 +15,7 @@ use register::{get_ami_id, register_image};
 use rusoto_core::{Region, RusotoError};
 use rusoto_ebs::EbsClient;
 use rusoto_ec2::{CopyImageError, CopyImageRequest, CopyImageResult, Ec2, Ec2Client};
+use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, VecDeque};
 use std::fs::File;
@@ -70,11 +71,11 @@ pub(crate) struct AmiArgs {
 /// Common entrypoint from main()
 pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
     match _run(args, ami_args).await {
-        Ok(ami_ids) => {
+        Ok(amis) => {
             // Write the AMI IDs to file if requested
             if let Some(ref path) = ami_args.ami_output {
                 let file = File::create(path).context(error::FileCreate { path })?;
-                serde_json::to_writer_pretty(file, &ami_ids).context(error::Serialize { path })?;
+                serde_json::to_writer_pretty(file, &amis).context(error::Serialize { path })?;
                 info!("Wrote AMI data to {}", path.display());
             }
             Ok(())
@@ -83,8 +84,8 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
     }
 }
 
-async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>> {
-    let mut ami_ids = HashMap::new();
+async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>> {
+    let mut amis = HashMap::new();
 
     info!(
         "Using infra config from path: {}",
@@ -160,11 +161,14 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
         (new_id, false)
     };
 
-    ami_ids.insert(base_region.name().to_string(), image_id.clone());
+    amis.insert(
+        base_region.name().to_string(),
+        Image::new(&image_id, &ami_args.name),
+    );
 
     // If we don't need to copy AMIs, we're done.
     if regions.is_empty() {
-        return Ok(ami_ids);
+        return Ok(amis);
     }
 
     // Wait for AMI to be available so it can be copied
@@ -212,7 +216,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
                 region.name(),
                 id
             );
-            ami_ids.insert(region.name().to_string(), id.clone());
+            amis.insert(region.name().to_string(), Image::new(&id, &ami_args.name));
             continue;
         }
         let request = CopyImageRequest {
@@ -240,7 +244,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
 
     // If all target regions already have the AMI, we're done.
     if copy_requests.is_empty() {
-        return Ok(ami_ids);
+        return Ok(amis);
     }
 
     // Start requests; they return almost immediately and the copying work is done by the service
@@ -268,7 +272,10 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
                         region.name(),
                         image_id,
                     );
-                    ami_ids.insert(region.name().to_string(), image_id);
+                    amis.insert(
+                        region.name().to_string(),
+                        Image::new(&image_id, &ami_args.name),
+                    );
                 } else {
                     saw_error = true;
                     error!(
@@ -287,7 +294,25 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, String>
 
     ensure!(!saw_error, error::AmiCopy);
 
-    Ok(ami_ids)
+    Ok(amis)
+}
+
+/// If JSON output was requested, we serialize out a mapping of region to AMI information; this
+/// struct holds the information we save about each AMI.  The `ssm` subcommand uses this
+/// information to populate templates representing SSM parameter names and values.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct Image {
+    pub(crate) id: String,
+    pub(crate) name: String,
+}
+
+impl Image {
+    fn new(id: &str, name: &str) -> Self {
+        Self {
+            id: id.to_string(),
+            name: name.to_string(),
+        }
+    }
 }
 
 mod error {

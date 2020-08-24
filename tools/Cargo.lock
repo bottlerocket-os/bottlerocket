@@ -1332,6 +1332,7 @@ dependencies = [
  "rusoto_ebs",
  "rusoto_ec2",
  "rusoto_signature 0.45.0",
+ "rusoto_ssm 0.45.0",
  "rusoto_sts",
  "semver 0.10.0",
  "serde",
@@ -1340,6 +1341,7 @@ dependencies = [
  "snafu",
  "structopt",
  "tempfile",
+ "tinytemplate",
  "tokio",
  "toml",
  "tough",
@@ -1679,6 +1681,20 @@ dependencies = [
  "bytes",
  "futures",
  "rusoto_core 0.44.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rusoto_ssm"
+version = "0.45.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e4950a5600f4aab2eeb1f525d7843acbfbc7a720275d26c2afcddbb112ffd17"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures",
+ "rusoto_core 0.45.0",
  "serde",
  "serde_json",
 ]
@@ -2233,6 +2249,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinytemplate"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d3dc76004a03cec1c5932bca4cdc2e39aaa798e3f82363dd94f9adf6098c12f"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "tinyvec"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2361,7 +2387,7 @@ checksum = "54e670640f67e719671a87fac948eabba0fd33633aa8be7804b38a1a1d2da32b"
 dependencies = [
  "rusoto_core 0.44.0",
  "rusoto_credential 0.44.0",
- "rusoto_ssm",
+ "rusoto_ssm 0.44.0",
  "serde",
  "serde_json",
  "snafu",
