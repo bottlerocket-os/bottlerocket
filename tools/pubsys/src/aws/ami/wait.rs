@@ -33,16 +33,6 @@ pub(crate) async fn wait_for_ami(
                 region: region.name()
             }
         );
-        if attempts % 5 == 1 {
-            info!(
-                "Waiting for {} in {} to be {}... (attempt {} of {})",
-                id,
-                region.name(),
-                state,
-                attempts,
-                max_attempts
-            );
-        }
 
         let describe_request = DescribeImagesRequest {
             image_ids: Some(vec![id.to_string()]),
@@ -102,6 +92,17 @@ pub(crate) async fn wait_for_ami(
             // Did not receive list; reset success count and try again (if we have spare attempts)
             successes = 0;
         };
+
+        if attempts % 5 == 1 {
+            info!(
+                "Waiting for {} in {} to be {}... (attempt {} of {})",
+                id,
+                region.name(),
+                state,
+                attempts,
+                max_attempts
+            );
+        }
         sleep(Duration::from_secs(seconds_between_attempts));
     }
 }

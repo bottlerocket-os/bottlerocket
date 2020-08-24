@@ -63,7 +63,7 @@ async fn _register_image(
     })?;
     cleanup_snapshot_ids.push(data_snapshot.clone());
 
-    debug!(
+    info!(
         "Waiting for root and data snapshots to become available in {}",
         region
     );
@@ -111,7 +111,7 @@ async fn _register_image(
         ..Default::default()
     };
 
-    debug!("Registering AMI in {}", region);
+    info!("Making register image call in {}", region);
     let register_response = ec2_client
         .register_image(register_request)
         .await
