@@ -15,7 +15,12 @@ logs are at: /tmp/bottlerocket-logs.tar.gz
 
 ## Logs
 
-For the commands used to gather logs, please see [log_request](src/log_request.rs).
+For the log requests used to gather logs, please see the following:
+
+* [log_request](src/log_request.rs)
+* [logdog.common.conf](conf/logdog.common.conf)
+* And the variant-specific files in [conf](conf/), one of which is selected by [build.rs](build.rs)
+based on the value of the `VARIANT` environment variable at build time.
 
 
 ## Colophon
