@@ -17,6 +17,12 @@ const VOLUME_TYPE: &str = "gp2";
 const SRIOV: &str = "simple";
 const ENA: bool = true;
 
+#[derive(Debug)]
+pub(crate) struct RegisteredIds {
+    pub(crate) image_id: String,
+    pub(crate) snapshot_ids: Vec<String>,
+}
+
 /// Helper for `register_image`.  Inserts registered snapshot IDs into `cleanup_snapshot_ids` so
 /// they can be cleaned up on failure if desired.
 async fn _register_image(
@@ -25,7 +31,7 @@ async fn _register_image(
     ebs_client: EbsClient,
     ec2_client: &Ec2Client,
     cleanup_snapshot_ids: &mut Vec<String>,
-) -> Result<String> {
+) -> Result<RegisteredIds> {
     debug!(
         "Uploading root and data images into EBS snapshots in {}",
         region
@@ -80,7 +86,7 @@ async fn _register_image(
         device_name: Some(ROOT_DEVICE_NAME.to_string()),
         ebs: Some(EbsBlockDevice {
             delete_on_termination: Some(true),
-            snapshot_id: Some(root_snapshot),
+            snapshot_id: Some(root_snapshot.clone()),
             volume_type: Some(VOLUME_TYPE.to_string()),
             ..Default::default()
         }),
@@ -90,7 +96,7 @@ async fn _register_image(
     let mut data_bdm = root_bdm.clone();
     data_bdm.device_name = Some(DATA_DEVICE_NAME.to_string());
     if let Some(ebs) = data_bdm.ebs.as_mut() {
-        ebs.snapshot_id = Some(data_snapshot);
+        ebs.snapshot_id = Some(data_snapshot.clone());
     }
 
     let register_request = RegisterImageRequest {
@@ -111,9 +117,14 @@ async fn _register_image(
         .await
         .context(error::RegisterImage { region })?;
 
-    register_response
+    let image_id = register_response
         .image_id
-        .context(error::MissingImageId { region })
+        .context(error::MissingImageId { region })?;
+
+    Ok(RegisteredIds {
+        image_id,
+        snapshot_ids: vec![root_snapshot, data_snapshot],
+    })
 }
 
 /// Uploads the given images into snapshots and registers an AMI using them as its block device
@@ -123,7 +134,7 @@ pub(crate) async fn register_image(
     region: &str,
     ebs_client: EbsClient,
     ec2_client: &Ec2Client,
-) -> Result<String> {
+) -> Result<RegisteredIds> {
     info!("Registering '{}' in {}", ami_args.name, region);
     let mut cleanup_snapshot_ids = Vec::new();
     let register_result = _register_image(

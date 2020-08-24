@@ -48,6 +48,16 @@ impl NewWith for SsmClient {
     }
 }
 
+impl NewWith for StsClient {
+    fn new_with<P, D>(request_dispatcher: D, credentials_provider: P, region: Region) -> Self
+    where
+        P: ProvideAwsCredentials + Send + Sync + 'static,
+        D: DispatchSignedRequest + Send + Sync + 'static,
+    {
+        Self::new_with(request_dispatcher, credentials_provider, region)
+    }
+}
+
 /// Create a rusoto client of the given type using the given region and configuration.
 pub(crate) fn build_client<T: NewWith>(
     region: &Region,
@@ -56,7 +66,11 @@ pub(crate) fn build_client<T: NewWith>(
 ) -> Result<T> {
     let maybe_regional_role = aws.region.get(region.name()).and_then(|r| r.role.clone());
     let assume_roles = aws.role.iter().chain(maybe_regional_role.iter()).cloned();
-    let provider = build_provider(&sts_region, assume_roles.clone(), base_provider(&aws.profile)?)?;
+    let provider = build_provider(
+        &sts_region,
+        assume_roles.clone(),
+        base_provider(&aws.profile)?,
+    )?;
     Ok(T::new_with(
         rusoto_core::HttpClient::new().context(error::HttpClient)?,
         provider,

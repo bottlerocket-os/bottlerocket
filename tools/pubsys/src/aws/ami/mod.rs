@@ -5,19 +5,23 @@ mod register;
 mod snapshot;
 mod wait;
 
+use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots};
 use crate::aws::{client::build_client, region_from_string};
-use crate::config::InfraConfig;
+use crate::config::{AwsConfig, InfraConfig};
 use crate::Args;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
 use log::{error, info, trace};
-use register::{get_ami_id, register_image};
+use register::{get_ami_id, register_image, RegisteredIds};
 use rusoto_core::{Region, RusotoError};
 use rusoto_ebs::EbsClient;
 use rusoto_ec2::{CopyImageError, CopyImageRequest, CopyImageResult, Ec2, Ec2Client};
+use rusoto_sts::{
+    GetCallerIdentityError, GetCallerIdentityRequest, GetCallerIdentityResponse, Sts, StsClient,
+};
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -98,28 +102,35 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
     let mut regions = if !ami_args.regions.is_empty() {
-        VecDeque::from(ami_args.regions.clone())
+        ami_args.regions.clone()
     } else {
-        aws.regions.clone()
+        aws.regions.clone().into()
     }
     .into_iter()
     .map(|name| region_from_string(&name, &aws).context(error::ParseRegion))
-    .collect::<Result<VecDeque<Region>>>()?;
+    .collect::<Result<Vec<Region>>>()?;
+
+    ensure!(
+        !regions.is_empty(),
+        error::MissingConfig {
+            missing: "aws.regions"
+        }
+    );
 
     // We register in this base region first, then copy from there to any other regions.
-    let base_region = regions.pop_front().context(error::MissingConfig {
-        missing: "aws.regions",
-    })?;
+    let base_region = regions.remove(0);
 
     // Build EBS client for snapshot management, and EC2 client for registration
-    let ebs_client = build_client::<EbsClient>(&base_region, &base_region, &aws).context(error::Client {
-        client_type: "EBS",
-        region: base_region.name(),
-    })?;
-    let ec2_client = build_client::<Ec2Client>(&base_region, &base_region, &aws).context(error::Client {
-        client_type: "EC2",
-        region: base_region.name(),
-    })?;
+    let ebs_client =
+        build_client::<EbsClient>(&base_region, &base_region, &aws).context(error::Client {
+            client_type: "EBS",
+            region: base_region.name(),
+        })?;
+    let ec2_client =
+        build_client::<Ec2Client>(&base_region, &base_region, &aws).context(error::Client {
+            client_type: "EC2",
+            region: base_region.name(),
+        })?;
 
     // Check if the AMI already exists, in which case we can use the existing ID, otherwise we
     // register a new one.
@@ -136,16 +147,26 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         region: base_region.name(),
     })?;
 
-    let (image_id, already_registered) = if let Some(found_id) = maybe_id {
+    let (ids_of_image, already_registered) = if let Some(found_id) = maybe_id {
         info!(
             "Found '{}' already registered in {}: {}",
             ami_args.name,
             base_region.name(),
             found_id
         );
-        (found_id, true)
+        let snapshot_ids = get_snapshots(&found_id, &base_region, &ec2_client)
+            .await
+            .context(error::GetSnapshots {
+                image_id: &found_id,
+                region: base_region.name(),
+            })?;
+        let found_ids = RegisteredIds {
+            image_id: found_id,
+            snapshot_ids,
+        };
+        (found_ids, true)
     } else {
-        let new_id = register_image(ami_args, base_region.name(), ebs_client, &ec2_client)
+        let new_ids = register_image(ami_args, base_region.name(), ebs_client, &ec2_client)
             .await
             .context(error::RegisterImage {
                 name: &ami_args.name,
@@ -156,14 +177,14 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             "Registered AMI '{}' in {}: {}",
             ami_args.name,
             base_region.name(),
-            new_id
+            new_ids.image_id
         );
-        (new_id, false)
+        (new_ids, false)
     };
 
     amis.insert(
         base_region.name().to_string(),
-        Image::new(&image_id, &ami_args.name),
+        Image::new(&ids_of_image.image_id, &ami_args.name),
     );
 
     // If we don't need to copy AMIs, we're done.
@@ -174,7 +195,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     // Wait for AMI to be available so it can be copied
     let successes_required = if already_registered { 1 } else { 3 };
     wait_for_ami(
-        &image_id,
+        &ids_of_image.image_id,
         &base_region,
         &base_region,
         "available",
@@ -183,19 +204,77 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     )
     .await
     .context(error::WaitAmi {
-        id: &image_id,
+        id: &ids_of_image.image_id,
         region: base_region.name(),
     })?;
 
     // For every other region, initiate copy-image calls.
-    // We make a map storing our regional clients because they're used in a future and need to
-    // live until the future is resolved.
-    let mut ec2_clients = HashMap::with_capacity(regions.len());
-    for region in regions.iter() {
-        let ec2_client = build_client::<Ec2Client>(&region, &base_region, &aws).context(error::Client {
-            client_type: "EC2",
+
+    // First we need to find the account IDs for any given roles, so we can grant access to those
+    // accounts to copy the AMI and snapshots.
+    let mut account_ids = get_account_ids(&regions, &base_region, &aws).await?;
+
+    // Get the account ID used in the base region; we don't need to grant to it so we can remove it
+    // from the list.
+    let sts_client =
+        build_client::<StsClient>(&base_region, &base_region, &aws).context(error::Client {
+            client_type: "STS",
             region: base_region.name(),
         })?;
+    let response = sts_client
+        .get_caller_identity(GetCallerIdentityRequest {})
+        .await
+        .context(error::GetCallerIdentity {
+            region: base_region.name(),
+        })?;
+    let base_account_id = response.account.context(error::MissingInResponse {
+        request_type: "GetCallerIdentity",
+        missing: "account",
+    })?;
+    account_ids.remove(&base_account_id);
+
+    // If we have any accounts other than the base account, grant them access.
+    if !account_ids.is_empty() {
+        let account_id_vec: Vec<_> = account_ids.into_iter().collect();
+
+        modify_snapshots(
+            Some(account_id_vec.clone()),
+            None,
+            "add",
+            &ids_of_image.snapshot_ids,
+            &ec2_client,
+            &base_region,
+        )
+        .await
+        .context(error::GrantAccess {
+            thing: "snapshots",
+            region: base_region.name(),
+        })?;
+
+        modify_image(
+            Some(account_id_vec.clone()),
+            None,
+            "add",
+            &ids_of_image.image_id,
+            &ec2_client,
+            &base_region,
+        )
+        .await
+        .context(error::GrantAccess {
+            thing: "image",
+            region: base_region.name(),
+        })?;
+    }
+
+    // Next, make EC2 clients so we can fetch and copy AMIs.  We make a map storing our regional
+    // clients because they're used in a future and need to live until the future is resolved.
+    let mut ec2_clients = HashMap::with_capacity(regions.len());
+    for region in regions.iter() {
+        let ec2_client =
+            build_client::<Ec2Client>(&region, &base_region, &aws).context(error::Client {
+                client_type: "EC2",
+                region: base_region.name(),
+            })?;
         ec2_clients.insert(region.clone(), ec2_client);
     }
 
@@ -222,7 +301,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         let request = CopyImageRequest {
             description: ami_args.description.clone(),
             name: ami_args.name.clone(),
-            source_image_id: image_id.clone(),
+            source_image_id: ids_of_image.image_id.clone(),
             source_region: base_region.name().to_string(),
             ..Default::default()
         };
@@ -315,8 +394,62 @@ impl Image {
     }
 }
 
+/// Returns the set of account IDs associated with the roles configured for the given regions.
+async fn get_account_ids(
+    regions: &[Region],
+    base_region: &Region,
+    aws: &AwsConfig,
+) -> Result<HashSet<String>> {
+    let mut grant_accounts = HashSet::new();
+
+    // We make a map storing our regional clients because they're used in a future and need to
+    // live until the future is resolved.
+    let mut sts_clients = HashMap::with_capacity(regions.len());
+    for region in regions.iter() {
+        let sts_client =
+            build_client::<StsClient>(&region, &base_region, &aws).context(error::Client {
+                client_type: "STS",
+                region: region.name(),
+            })?;
+        sts_clients.insert(region.clone(), sts_client);
+    }
+
+    let mut requests = Vec::with_capacity(regions.len());
+    for region in regions.iter() {
+        let sts_client = &sts_clients[region];
+        let response_future = sts_client.get_caller_identity(GetCallerIdentityRequest {});
+
+        // Store the region so we can include it in any errors
+        let region_future = ready(region.clone());
+        requests.push(join(region_future, response_future));
+    }
+
+    let request_stream = stream::iter(requests).buffer_unordered(4);
+    // Run through the stream and collect results into a list.
+    let responses: Vec<(
+        Region,
+        std::result::Result<GetCallerIdentityResponse, RusotoError<GetCallerIdentityError>>,
+    )> = request_stream.collect().await;
+
+    for (region, response) in responses {
+        let response = response.context(error::GetCallerIdentity {
+            region: region.name(),
+        })?;
+        let account_id = response.account.context(error::MissingInResponse {
+            request_type: "GetCallerIdentity",
+            missing: "account",
+        })?;
+        grant_accounts.insert(account_id);
+    }
+    trace!("Found account IDs {:?}", grant_accounts);
+
+    Ok(grant_accounts)
+}
+
 mod error {
-    use crate::aws::{self, ami};
+    use crate::aws::{self, ami, publish_ami};
+    use rusoto_core::RusotoError;
+    use rusoto_sts::GetCallerIdentityError;
     use snafu::Snafu;
     use std::path::PathBuf;
 
@@ -352,8 +485,39 @@ mod error {
             source: ami::register::Error,
         },
 
+        #[snafu(display("Error getting account ID in {}: {}", region, source))]
+        GetCallerIdentity {
+            region: String,
+            source: RusotoError<GetCallerIdentityError>,
+        },
+
+        #[snafu(display(
+            "Failed to get snapshot IDs associated with {} in {}: {}",
+            image_id,
+            region,
+            source
+        ))]
+        GetSnapshots {
+            image_id: String,
+            region: String,
+            source: publish_ami::Error,
+        },
+
+        #[snafu(display("Failed to grant access to {} in {}: {}", thing, region, source))]
+        GrantAccess {
+            thing: String,
+            region: String,
+            source: publish_ami::Error,
+        },
+
         #[snafu(display("Infra.toml is missing {}", missing))]
         MissingConfig {
+            missing: String,
+        },
+
+        #[snafu(display("Response to {} was missing {}", request_type, missing))]
+        MissingInResponse {
+            request_type: String,
             missing: String,
         },
 
