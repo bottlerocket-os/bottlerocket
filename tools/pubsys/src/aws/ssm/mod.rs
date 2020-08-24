@@ -4,7 +4,7 @@
 pub(crate) mod ssm;
 pub(crate) mod template;
 
-use crate::aws::{ami::Image, client::build_client, region_from_string};
+use crate::aws::{ami::Image, client::build_client, parse_arch, region_from_string};
 use crate::config::{AwsConfig, InfraConfig};
 use crate::Args;
 use log::{info, trace};
@@ -28,7 +28,7 @@ pub(crate) struct SsmArgs {
     ami_input: PathBuf,
 
     /// The architecture of the machine image
-    #[structopt(long)]
+    #[structopt(long, parse(try_from_str = parse_arch))]
     arch: String,
 
     /// The variant name for the current build

@@ -2,7 +2,7 @@
 //! SSM parameters from one version to another
 
 use crate::aws::client::build_client;
-use crate::aws::region_from_string;
+use crate::aws::{parse_arch, region_from_string};
 use crate::aws::ssm::{key_difference, ssm, template, BuildContext, SsmKey};
 use crate::config::InfraConfig;
 use crate::Args;
@@ -19,7 +19,7 @@ use structopt::StructOpt;
 #[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
 pub(crate) struct PromoteArgs {
     /// The architecture of the machine image
-    #[structopt(long)]
+    #[structopt(long, parse(try_from_str = parse_arch))]
     arch: String,
 
     /// The variant name for the current build
