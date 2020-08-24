@@ -21,10 +21,18 @@ The available variables include:
 * `image_version`, for example "0.5.0-e0ddf1b"
 * `region`, for example "us-west-2"
 
-# Overrides
+# Conditional parameters
 
-You can also add or override parameters that are specific to `variant` or `arch`.
-To do so, create a directory named "variant" or "arch" inside parameters directory, and create a file named after the specific variant or arch for which you want overrides.
+You can also list parameters that only apply to specific variants or architectures.
+To do so, add `variant` or `arch` keys (or both) to your parameter definition.
+The parameter will only be populated if the current `variant` or `arch` matches one of the values in the list.
+(If both `variant` and `arch` are listed, the build must match an entry from both lists.)
 
-For example, to add extra parameters just for the "aarch64" architecture, create `arch/aarch64.toml`.
-Inside you can put the same types of `[[parameter]]` declarations that you see in `defaults.toml`, but they'll only be applied for `aarch64` builds.
+For example, to add an extra parameter that's only set for "aarch64" builds of the "aws-ecs-1" variant:
+```
+[[parameter]]
+arch = ["aarch64"]
+variant = ["aws-ecs-1"]
+name = "/a/special/aarch64/ecs/parameter"
+value = "{image_name}"
+```

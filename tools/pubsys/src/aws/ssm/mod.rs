@@ -43,9 +43,9 @@ pub(crate) struct SsmArgs {
     #[structopt(long, use_delimiter = true)]
     regions: Vec<String>,
 
-    /// Directory holding the parameter template files
+    /// File holding the parameter templates
     #[structopt(long)]
-    template_dir: PathBuf,
+    template_path: PathBuf,
 
     /// Allows overwrite of existing parameters
     #[structopt(long)]
@@ -96,10 +96,18 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
 
     info!(
         "Parsing SSM parameter templates from {}",
-        ssm_args.template_dir.display()
+        ssm_args.template_path.display()
     );
-    let template_parameters = template::get_parameters(&ssm_args.template_dir, &build_context)
+    let template_parameters = template::get_parameters(&ssm_args.template_path, &build_context)
         .context(error::FindTemplates)?;
+
+    if template_parameters.parameters.is_empty() {
+        info!(
+            "No parameters for this arch/variant in {}",
+            ssm_args.template_path.display()
+        );
+        return Ok(());
+    }
 
     let new_parameters =
         template::render_parameters(template_parameters, amis, ssm_prefix, &build_context)

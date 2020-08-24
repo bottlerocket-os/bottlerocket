@@ -37,10 +37,11 @@ PUBLISH_KEY = "default"
 # AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
 # volume size; by default it's the image size, rounded up.)
 PUBLISH_DATA_VOLUME_SIZE = "20"
-# This can be overridden with -e to change the path to the directory containing
-# SSM parameter template files.  These files determine the parameter names and
-# values that will be published to SSM when you run `cargo make ssm`.
-PUBLISH_SSM_TEMPLATES_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/ssm"
+# This can be overridden with -e to change the path to the file containing SSM
+# parameter templates.  This file determines the parameter names and values
+# that will be published to SSM when you run `cargo make ssm`.  See
+# tools/pubsys/policies/ssm/README.md for more information.
+PUBLISH_SSM_TEMPLATES_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/ssm/defaults.toml"
 
 # You can also set PUBLISH_REGIONS to override the list of regions from
 # Infra.toml for AMI and SSM commands; it's a comma-separated list like
@@ -507,7 +508,7 @@ pubsys \
    --arch "${BUILDSYS_ARCH}" \
    --variant "${BUILDSYS_VARIANT}" \
    --version "${BUILDSYS_VERSION_FULL}" \
-   --template-dir "${PUBLISH_SSM_TEMPLATES_PATH}" \
+   --template-path "${PUBLISH_SSM_TEMPLATES_PATH}" \
    \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"} \
    ${ALLOW_CLOBBER:+--allow-clobber}
@@ -539,7 +540,7 @@ pubsys \
    --variant "${BUILDSYS_VARIANT}" \
    --source "${source}" \
    --target "${target}" \
-   --template-dir "${PUBLISH_SSM_TEMPLATES_PATH}" \
+   --template-path "${PUBLISH_SSM_TEMPLATES_PATH}" \
    \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
 '''
