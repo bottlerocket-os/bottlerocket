@@ -17,7 +17,7 @@ We recommend that you download the [latest version of eksctl](https://github.com
 
 You'll also need to [install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to augment `eksctl` during setup, and to run pods afterward.
 
-Finally, you'll need [aws-cli v1](https://aws.amazon.com/cli/) set up to interact with AWS.
+Finally, you'll need [aws-cli](https://aws.amazon.com/cli/) set up to interact with AWS.
 (You'll need a [recent v1 release](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-bundled) with EKS support.)
 
 ## Automated setup
