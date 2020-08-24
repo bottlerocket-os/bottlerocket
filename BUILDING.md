@@ -48,7 +48,7 @@ To use the image in Amazon EC2, we need to register the image as an AMI.
 The `bin/amiize.sh` script does this for you.
 
 The script has some assumptions about your setup, in particular that you:
-  * have [aws-cli v1](https://aws.amazon.com/cli/) set up, and that its default profile can create and control EC2 resources
+  * have [aws-cli](https://aws.amazon.com/cli/) set up, and that its default profile can create and control EC2 resources
   * have [coldsnap](https://github.com/awslabs/coldsnap/) installed to upload snapshots
   * have a few other common tools installed, like `jq` and `du`
 
