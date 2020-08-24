@@ -49,10 +49,10 @@ fn parse_args(args: env::Args) -> Args {
         match arg.as_ref() {
             "-v" | "--verbose" => verbosity += 1,
 
-            "--socket-path" => {
+            "-s" | "--socket-path" => {
                 socket_path = Some(
                     iter.next()
-                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
+                        .unwrap_or_else(|| usage_msg("Did not give argument to -s | --socket-path")),
                 )
             }
 
