@@ -123,6 +123,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("default", Box::new(helpers::default));
     template_registry.register_helper("ecr-prefix", Box::new(helpers::ecr_prefix));
     template_registry.register_helper("host", Box::new(helpers::host));
+    template_registry.register_helper("join_array", Box::new(helpers::join_array));
 
     Ok(template_registry)
 }

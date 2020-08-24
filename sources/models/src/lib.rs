@@ -176,6 +176,14 @@ struct AwsSettings {
     region: SingleLineString,
 }
 
+// Metrics settings
+#[model]
+struct MetricsSettings {
+    metrics_url: Url,
+    send_metrics: bool,
+    service_checks: Vec<String>,
+}
+
 ///// Internal services
 
 // Note: Top-level objects that get returned from the API should have a "rename" attribute

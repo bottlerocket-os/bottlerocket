@@ -10,6 +10,7 @@ variant-sensitive = true
 source-groups = [
     "api",
     "bottlerocket-release",
+    "metricdog",
     "parse-datetime",
     "ghostdog",
     "growpart",

@@ -1,5 +1,5 @@
 // This module contains helpers for rendering templates. These helpers can
-// be registerd with the Handlebars library to assist in manipulating
+// be registered with the Handlebars library to assist in manipulating
 // text at render time.
 
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError};
@@ -91,6 +91,18 @@ mod error {
         ))]
         InvalidTemplateValue {
             expected: &'static str,
+            value: handlebars::JsonValue,
+            template: String,
+        },
+
+        #[snafu(display(
+            "The join_array helper expected type '{}' while processing '{}' for template '{}'",
+            expected_type,
+            value,
+            template
+        ))]
+        JoinStringsWrongType {
+            expected_type: &'static str,
             value: handlebars::JsonValue,
             template: String,
         },
@@ -507,6 +519,73 @@ pub fn host(
 
     // write it to the template
     out.write(&url_host).with_context(|| error::TemplateWrite {
+        template: template_name.to_owned(),
+    })?;
+
+    Ok(())
+}
+
+/// `join_array` is used to join an array of scalar strings into an array of
+/// quoted, delimited strings. The delimiter must be specified.
+///
+/// # Example
+///
+/// Consider an array of values: `[ "a", "b", "c" ]` stored in a setting such as
+/// `settings.somewhere.foo-list`. In our template we can write:
+/// `{{ join_array ", " settings.somewhere.foo-list }}`
+///
+/// This will render `"a", "b", "c"`.
+pub fn join_array(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting join_array helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 2)?;
+
+    // get the delimiter
+    let delimiter_param = get_param(helper, 0)?;
+    let delimiter = delimiter_param
+        .as_str()
+        .with_context(|| error::JoinStringsWrongType {
+            expected_type: "string",
+            value: delimiter_param.to_owned(),
+            template: template_name,
+        })?;
+
+    // get the array
+    let array_param = get_param(helper, 1)?;
+    let array = array_param
+        .as_array()
+        .with_context(|| error::JoinStringsWrongType {
+            expected_type: "array",
+            value: array_param.to_owned(),
+            template: template_name,
+        })?;
+
+    let mut result = String::new();
+    for (i, value) in array.iter().enumerate() {
+        if i > 0 {
+            result.push_str(delimiter);
+        }
+        result.push_str(
+            format!(
+                "\"{}\"",
+                value.as_str().context(error::JoinStringsWrongType {
+                    expected_type: "string",
+                    value: array.to_owned(),
+                    template: template_name,
+                })?
+            )
+            .as_str(),
+        );
+    }
+
+    // write it to the template
+    out.write(&result).with_context(|| error::TemplateWrite {
         template: template_name.to_owned(),
     })?;
 
@@ -930,5 +1009,73 @@ mod test_host {
         )
         .unwrap();
         assert_eq!(result, "example.com");
+    }
+}
+
+#[cfg(test)]
+mod test_join_array {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("join_array", Box::new(join_array));
+
+        registry.render_template(tmpl, data)
+    }
+
+    const TEMPLATE: &str = r#"{{join_array ", " settings.foo-list}}"#;
+
+    #[test]
+    fn join_array_empty() {
+        let result =
+            setup_and_render_template(TEMPLATE, &json!({"settings": {"foo-list": []}})).unwrap();
+        let expected = "";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn join_array_one_item() {
+        let result =
+            setup_and_render_template(TEMPLATE, &json!({"settings": {"foo-list": ["a"]}})).unwrap();
+        let expected = r#""a""#;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn join_array_two_items() {
+        let result =
+            setup_and_render_template(TEMPLATE, &json!({"settings": {"foo-list": ["a", "b"]}}))
+                .unwrap();
+        let expected = r#""a", "b""#;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn join_array_two_delimiter() {
+        let template = r#"{{join_array "~ " settings.foo-list}}"#;
+        let result = setup_and_render_template(
+            template,
+            &json!({"settings": {"foo-list": ["a", "b", "c"]}}),
+        )
+        .unwrap();
+        let expected = r#""a"~ "b"~ "c""#;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn join_array_empty_item() {
+        let result =
+            setup_and_render_template(TEMPLATE, &json!({"settings": {"foo-list": ["a", "", "c"]}}))
+                .unwrap();
+        let expected = r#""a", "", "c""#;
+        assert_eq!(result, expected);
     }
 }

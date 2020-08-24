@@ -37,12 +37,15 @@ members = [
     "api/migration/migrations/v1.0.5/add-network-settings",
     "api/migration/migrations/v1.0.5/add-proxy-restart",
     "api/migration/migrations/v1.0.5/add-proxy-services",
+    "api/migration/migrations/v1.0.6/metricdog-init",
 
     "bottlerocket-release",
 
     "ghostdog",
 
     "growpart",
+
+    "metricdog",
 
     "logdog",
 

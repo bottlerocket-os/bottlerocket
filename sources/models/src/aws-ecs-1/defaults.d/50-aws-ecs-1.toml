@@ -24,6 +24,10 @@ allow-privileged-containers = false
 logging-drivers = ["json-file", "awslogs", "none"]
 loglevel = "info"
 
+# Metrics
+[settings.metrics]
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "docker", "ecs"]
+
 # Network
 [metadata.settings.network]
 affected-services = ["containerd", "docker", "ecs", "host-containerd"]

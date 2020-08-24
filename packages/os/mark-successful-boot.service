@@ -8,6 +8,7 @@ After=multi-user.target
 Type=oneshot
 RemainAfterExit=true
 ExecStart=/bin/signpost mark-successful-boot
+ExecStartPost=-/usr/bin/metricdog send-boot-success
 
 [Install]
 WantedBy=multi-user.target

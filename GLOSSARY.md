@@ -14,6 +14,8 @@
   Used for system maintenance and connectivity.
 * [**host-ctr**](sources/host-ctr): The program started by `host-containers@.service` for each host container.
   Its job is to start the specified host container on the “host” instance of containerd, which is separate from the “user” instance of containerd used for Kubernetes pods.
+* [**logdog**](sources/logdog): A program that one can use to collect logs when things go wrong. 
+* [**metricdog**](sources/metricdog): A program that sends anonymous health pings.
 * [**model**](sources/models): The API system has a data model defined for each variant, and this model is used by other programs to serialize and deserialize requests while maintaining safety around data types.
 * [**netdog**](sources/api/netdog): A program called by wicked to retrieve and write out network configuration from DHCP.
 * [**pluto**](sources/api/pluto): A setting generator called by sundog to find networking settings required by Kubernetes.
