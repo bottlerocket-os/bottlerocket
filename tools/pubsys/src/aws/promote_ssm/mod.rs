@@ -38,9 +38,9 @@ pub(crate) struct PromoteArgs {
     #[structopt(long, use_delimiter = true)]
     regions: Vec<String>,
 
-    /// Directory holding the parameter template files
+    /// File holding the parameter templates
     #[structopt(long)]
-    template_dir: PathBuf,
+    template_path: PathBuf,
 }
 
 /// Common entrypoint from main()
@@ -100,13 +100,21 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
 
     info!(
         "Parsing SSM parameter templates from {}",
-        promote_args.template_dir.display()
+        promote_args.template_path.display()
     );
     // Doesn't matter which build context we use to find template files because version isn't used
     // in their naming
     let template_parameters =
-        template::get_parameters(&promote_args.template_dir, &source_build_context)
+        template::get_parameters(&promote_args.template_path, &source_build_context)
             .context(error::FindTemplates)?;
+
+    if template_parameters.parameters.is_empty() {
+        info!(
+            "No parameters for this arch/variant in {}",
+            promote_args.template_path.display()
+        );
+        return Ok(());
+    }
 
     // Render parameter names into maps of {template string => rendered value}.  We need the
     // template strings so we can associate source parameters with target parameters that came

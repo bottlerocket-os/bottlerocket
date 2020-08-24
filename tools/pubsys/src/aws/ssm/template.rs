@@ -3,7 +3,7 @@
 
 use super::{BuildContext, SsmKey, SsmParameters};
 use crate::aws::ami::Image;
-use log::{info, trace};
+use log::trace;
 use rusoto_core::Region;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, ResultExt};
@@ -17,6 +17,12 @@ use tinytemplate::TinyTemplate;
 pub(crate) struct TemplateParameter {
     pub(crate) name: String,
     pub(crate) value: String,
+
+    // User can say parameters only apply to these variants/arches
+    #[serde(default, rename = "variant")]
+    pub(crate) variants: Vec<String>,
+    #[serde(default, rename = "arch")]
+    pub(crate) arches: Vec<String>,
 }
 
 /// Represents a set of SSM parameters, in a format that allows for clear definition of
@@ -28,59 +34,38 @@ pub(crate) struct TemplateParameters {
     pub(crate) parameters: Vec<TemplateParameter>,
 }
 
-impl TemplateParameters {
-    fn extend(&mut self, other: Self) {
-        self.parameters.extend(other.parameters)
-    }
-}
-
-/// Finds and deserializes template parameters from the template directory, taking into account
-/// overrides requested by the user
+/// Deserializes template parameters from the template file, taking into account conditional
+/// parameters that may or may not apply based on our build context.
 pub(crate) fn get_parameters(
-    template_dir: &Path,
+    template_path: &Path,
     build_context: &BuildContext<'_>,
 ) -> Result<TemplateParameters> {
-    let defaults_path = template_dir.join("defaults.toml");
-    let defaults_str = fs::read_to_string(&defaults_path).context(error::File {
+    let templates_str = fs::read_to_string(&template_path).context(error::File {
         op: "read",
-        path: &defaults_path,
+        path: &template_path,
     })?;
     let mut template_parameters: TemplateParameters =
-        toml::from_str(&defaults_str).context(error::InvalidToml {
-            path: &defaults_path,
+        toml::from_str(&templates_str).context(error::InvalidToml {
+            path: &template_path,
         })?;
-    trace!("Parsed default templates: {:#?}", template_parameters);
+    trace!("Parsed templates: {:#?}", template_parameters);
 
-    // Allow the user to add/override parameters specific to variant or arch.  Because these are
-    // added after the defaults, they will take precedence. (It doesn't make sense to override
-    // based on the version argument.)
-    let mut context = HashMap::new();
-    context.insert("variant", build_context.variant);
-    context.insert("arch", build_context.arch);
-    for (key, value) in context {
-        let override_path = template_dir.join(key).join(format!("{}.toml", value));
-        if override_path.exists() {
-            info!(
-                "Parsing SSM parameter overrides from {}",
-                override_path.display()
-            );
-            let template_str = fs::read_to_string(&override_path).context(error::File {
-                op: "read",
-                path: &override_path,
-            })?;
-            let override_parameters: TemplateParameters =
-                toml::from_str(&template_str).context(error::InvalidToml {
-                    path: &override_path,
-                })?;
-            trace!("Parsed override templates: {:#?}", override_parameters);
-            template_parameters.extend(override_parameters);
-        }
-    }
-
+    // You shouldn't point to an empty file, but if all the entries are removed by
+    // conditionals below, we allow that and just don't set any parameters.
     ensure!(
         !template_parameters.parameters.is_empty(),
-        error::NoTemplates { path: template_dir }
+        error::NoTemplates {
+            path: template_path
+        }
     );
+
+    let variant = build_context.variant.to_string();
+    let arch = build_context.arch.to_string();
+    template_parameters.parameters.retain(|p| {
+        (p.variants.is_empty() || p.variants.contains(&variant))
+            && (p.arches.is_empty() || p.arches.contains(&arch))
+    });
+    trace!("Templates after conditionals: {:#?}", template_parameters);
 
     Ok(template_parameters)
 }
@@ -201,9 +186,7 @@ mod error {
         },
 
         #[snafu(display("Found no parameter templates in {}", path.display()))]
-        NoTemplates {
-            path: PathBuf,
-        },
+        NoTemplates { path: PathBuf },
 
         #[snafu(display("Error rendering template from '{}': {}", template, source))]
         RenderTemplate {
