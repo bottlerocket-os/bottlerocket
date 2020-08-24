@@ -1,7 +1,10 @@
 //! The publish_ami module owns the 'publish-ami' subcommand and controls the process of granting
 //! and revoking public access to EC2 AMIs.
 
-use crate::aws::{ami::Image, client::build_client, region_from_string};
+use crate::aws::ami::wait::{self, wait_for_ami};
+use crate::aws::ami::Image;
+use crate::aws::client::build_client;
+use crate::aws::region_from_string;
 use crate::config::InfraConfig;
 use crate::Args;
 use futures::future::{join, ready};
@@ -134,6 +137,29 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
                 region: region.name(),
             })?;
         ec2_clients.insert(region.clone(), ec2_client);
+    }
+
+    // If AMIs aren't in "available" state, we can get a DescribeImages response that includes
+    // most of the data we need, but not snapshot IDs.
+    info!("Waiting for AMIs to be available...");
+    let mut wait_requests = Vec::with_capacity(amis.len());
+    for (region, image) in &amis {
+        let wait_future = wait_for_ami(&image.id, &region, &base_region, "available", 1, &aws);
+        // Store the region and ID so we can include it in errors
+        let info_future = ready((region.clone(), image.id.clone()));
+        wait_requests.push(join(info_future, wait_future));
+    }
+    // Send requests in parallel and wait for responses, collecting results into a list.
+    let request_stream = stream::iter(wait_requests).buffer_unordered(4);
+    let wait_responses: Vec<((Region, String), std::result::Result<(), wait::Error>)> =
+        request_stream.collect().await;
+
+    // Make sure waits succeeded and AMIs are available.
+    for ((region, image_id), wait_response) in wait_responses {
+        wait_response.context(error::WaitAmi {
+            id: &image_id,
+            region: region.name(),
+        })?;
     }
 
     let snapshots = get_regional_snapshots(&amis, &ec2_clients).await?;
@@ -453,7 +479,7 @@ pub(crate) async fn modify_regional_images(
 }
 
 mod error {
-    use crate::aws;
+    use crate::aws::{self, ami};
     use rusoto_core::RusotoError;
     use rusoto_ec2::{ModifyImageAttributeError, ModifySnapshotAttributeError};
     use snafu::Snafu;
@@ -574,6 +600,13 @@ mod error {
         ))]
         UnknownRegions {
             regions: Vec<String>,
+        },
+
+        #[snafu(display("AMI '{}' in {} did not become available: {}", id, region, source))]
+        WaitAmi {
+            id: String,
+            region: String,
+            source: ami::wait::Error,
         },
     }
 }

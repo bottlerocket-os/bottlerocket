@@ -3,7 +3,7 @@
 
 mod register;
 mod snapshot;
-mod wait;
+pub(crate) mod wait;
 
 use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots};
 use crate::aws::{client::build_client, region_from_string};
