@@ -9,14 +9,14 @@ We provide these recommendations, along with [details](#details) and [examples](
 | Recommendation                                                                                      | Priority  |
 | :-------------------------------------------------------------------------------------------------- | :-------- |
 | [Enable automatic updates](#enable-automatic-updates)                                               | Critical  |
+| [Avoid containers with elevated privileges](#avoid-containers-with-elevated-privileges)             | Critical  |
 | [Restrict access to the host API socket](#restrict-access-to-the-host-api-socket)                   | Critical  |
 | [Restrict access to the container runtime socket](#restrict-access-to-the-container-runtime-socket) | Critical  |
 | [Design for host replacement](#design-for-host-replacement)                                         | Important |
 | [Limit use of host containers](#limit-use-of-host-containers)                                       | Important |
 | [Limit use of privileged SELinux labels](#limit-use-of-privileged-selinux-labels)                   | Important |
 | [Limit access to system mounts](#limit-access-to-system-mounts)                                     | Important |
-| [Do not run containers in host namespaces](#do-not-run-containers-in-host-namespaces)               | Moderate  |
-| [Do not run containers with elevated privileges](#do-not-run-containers-with-elevated-privileges)   | Moderate  |
+| [Limit access to host namespaces](#limit-access-to-host-namespaces)                                 | Important |
 | [Do not run containers as UID 0](#do-not-run-containers-as-uid-0)                                   | Moderate  |
 
 ## Details
@@ -30,11 +30,39 @@ However, it is always better to patch vulnerabilities than to rely on mitigation
 We provide [a Kubernetes operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates to Bottlerocket.
 We recommend deploying it on your Kubernetes clusters.
 
+### Avoid containers with elevated privileges
+
+Containers can be made more secure by limiting the capabilities they have, by filtering syscalls they can make, and by changing the SELinux labels they use.
+
+Capabilities are a way to split up the traditional powers of the `root` user so that a subset of the permissions can be granted instead.
+For example, `CAP_NET_BIND_SERVICE` can be granted to allow binding to a low-numbered port.
+Bottlerocket uses `runc` to execute containers with [a subset of Linux capabilities](https://github.com/opencontainers/runc/blob/master/libcontainer/SPEC.md#security).
+
+Syscalls are a way for userspace programs to request services from the kernel.
+Seccomp filters can be used to allow access to a subset of syscalls.
+Bottlerocket uses `containerd` as the container runtime which provides [a default seccomp profile](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go).
+
+SELinux labels are part of mandatory access controls, which impose constraints after discretionary access controls are checked.
+Bottlerocket runs all containers with the unprivileged `container_t` label today.
+However, privileged containers may run with the privileged `super_t` label in the future.
+
+Orchestrators provide ways to disable these protections:
+* Docker can run containers with the `--privileged` flag
+* Kubernetes can run pods with `privileged: true` in the pod definition
+* Amazon ECS can run tasks with `"privileged": true` in the task definition
+
+By default, Kubernetes also runs pods with no seccomp filter applied.
+Pods can specify a seccomp profile, or you can apply a default profile using a [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/).
+
+We recommend that you avoid containers with elevated privileges.
+The default set of capabilities, the default seccomp filter, and the default SELinux labels should be used where possible.
+
 ### Restrict access to the host API socket
 
 The Bottlerocket API server listens for requests on a Unix domain socket.
 The canonical location of this socket is `/run/api.sock`.
 It is owned by UID 0 (`root`) and GID 274 (`api`).
+It is labeled `api_socket_t`, so only processes with privileged SELinux labels can use it.
 
 Write access to this socket will grant full control over system configuration.
 This includes the ability to define an arbitrary source for a host container, and to run that container with "superpowers" that bypass other restrictions.
@@ -50,6 +78,7 @@ Each container runtime will have its own API and will listen for requests on a U
 The socket will usually be owned by UID 0 (`root`) and GID 0 (`root`).
 
 Some potential locations of container runtime sockets are:
+* `/run/docker.sock`
 * `/run/dockershim.sock`
 * `/run/containerd/containerd.sock`
 * `/run/host-containerd/host-containerd.sock`
@@ -104,18 +133,19 @@ A process can change its own label or the label of a child process under certain
 These changes are called "transitions".
 The SELinux policy for Bottlerocket defines special transition rules for container runtimes.
 
-A container runtime can transition a child processes to either of these labels:
+A container runtime can transition a child processes to any of these labels:
 * `container_t` (the default, for ordinary containers)
+* `control_t` (for containers that need to access the API)
 * `super_t` (for "superpowered" containers)
 
-Some orchestrators such as Kubernetes allow SELinux labels to be defined in the container specification.
-If `super_t` is specified in this way, it will override the default transition rules and the container will run with elevated privileges.
+Some orchestrators allow SELinux labels to be defined in the container specification, including Kubernetes and Amazon ECS.
+If `control_t` or `super_t` is specified in this way, it will override the default transition rules and the container will run with additional privileges.
 
 We recommend limiting access to any SELinux label other than `container_t`.
 
 ### Limit access to system mounts
 
-Bottlerocket provides a read-only root filesystem and ephemeral mounts for system directories such as `/etc` and `/run`.
+Bottlerocket provides a read-only root filesystem, ephemeral mounts for system directories such as `/etc` and `/run`, and persistent storage under `/local`.
 
 The `/etc` directory contains system configuration files generated by the API.
 These are regenerated when a setting changes, but otherwise not monitored.
@@ -125,9 +155,13 @@ This is not supported and may interfere with the reliability of automated update
 The `/run` directory contains ephemeral files such as Unix domain sockets used by the API server and the container runtime.
 If the contents of this directory are mounted into a privileged container, they can be used to bypass security protections.
 
+The `/local` directory is where persistent storage is mounted, with `/var` and `/opt` as subdirectories.
+This is where cached container images, unpacked container layers, and files for host containers are stored.
+If this directory or its subdirectories are mounted into a privileged container, the integrity of the system can be compromised.
+
 We recommend limiting access to all system mounts.
 
-### Do not run containers in host namespaces
+### Limit access to host namespaces
 
 Namespaces are one of the key building blocks for Linux containers.
 
@@ -139,27 +173,10 @@ PID namespaces provide isolation for the process ID number space.
 Containers that share the host PID namespace can interact with processes running on the host.
 This includes the ability to send signals to those processes, which may interfere with system functionality.
 
-We recommend that you do not run containers that share any of the host namespaces.
+Sharing the host PID namespace also enables access to the host filesystem through `/proc/<pid>/root` links for host processes.
+This can bypass intended restrictions for system mounts.
 
-### Do not run containers with elevated privileges
-
-Containers can be made more secure by limiting the capabilities they have, and by filtering syscalls they can make.
-
-Capabilities are a way to split up the traditional powers of the `root` user so that a subset of the permissions can be granted instead.
-For example, `CAP_NET_BIND_SERVICE` can be granted to allow binding to a low-numbered port.
-Bottlerocket uses `runc` to execute containers with [a subset of Linux capabilities](https://github.com/opencontainers/runc/blob/master/libcontainer/SPEC.md#security).
-
-Syscalls are a way for userspace programs to request services from the kernel.
-Seccomp filters can be used to allow access to a subset of syscalls.
-Bottlerocket uses `containerd` as the container runtime which provides [a default seccomp profile](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go).
-
-Orchestrators provide ways to disable these protections.
-For example, Docker can run containers with the `--privileged` flag, and Kubernetes can run pods with `privileged: true` set in the pod definition.
-By default, Kubernetes also runs pods with no seccomp filter applied.
-Pods can specify a seccomp profile, or you can apply a default profile using a [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/).
-
-We recommend that you do not run containers with elevated privileges.
-The default set of capabilities and the default seccomp filter should be used where possible.
+We recommend limiting access to all host namespaces.
 
 ### Do not run containers as UID 0
 
@@ -178,10 +195,10 @@ We recommend that you do not run containers as UID 0.
 
 ## Examples
 
-### EC2
+### Amazon EC2
 
 These settings can passed as [user data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) on EC2 instance launch.
-Note that some orchestrator-specific settings are required but not shown.
+They apply to any Bottlerocket variant.
 
 ```
 # The admin host container provides SSH access and runs with "superpowers".
@@ -194,6 +211,18 @@ enabled = false
 # This could leave you with no way to access the API and change settings on an existing node!
 [settings.host-containers.control]
 enabled = false
+```
+
+### Amazon ECS
+
+These settings can passed as [user data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) on EC2 instance launch.
+They are specific to the `aws-ecs-1` variant.
+
+```
+# By default, this variant does not allow launching privileged containers.
+# The feature can also be disabled explicitly.
+[settings.ecs]
+allow-privileged-containers = false
 ```
 
 ### Kubernetes
