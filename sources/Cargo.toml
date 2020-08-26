@@ -25,8 +25,8 @@ members = [
     "api/migration/migrations/v0.5.0/migrate-admin-container-v0-5-2",
     "api/migration/migrations/v0.5.0/migrate-control-container-v0-4-1",
     "api/migration/migrations/v0.5.0/add-cluster-domain",
-    "api/migration/migrations/v0.5.1/ecr-helper-admin",
-    "api/migration/migrations/v0.5.1/ecr-helper-control",
+    "api/migration/migrations/v1.0.0/ecr-helper-admin",
+    "api/migration/migrations/v1.0.0/ecr-helper-control",
 
     "bottlerocket-release",
 
