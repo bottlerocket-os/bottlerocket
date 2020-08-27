@@ -1,5 +1,5 @@
 //! The publish_ami module owns the 'publish-ami' subcommand and controls the process of granting
-//! and revoking public access to EC2 AMIs.
+//! and revoking access to EC2 AMIs.
 
 use crate::aws::ami::wait::{self, wait_for_ami};
 use crate::aws::ami::Image;
@@ -26,6 +26,7 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
 #[structopt(group = clap::ArgGroup::with_name("mode").required(true).multiple(false))]
+#[structopt(group = clap::ArgGroup::with_name("who").required(true).multiple(true))]
 pub(crate) struct PublishArgs {
     /// Path to the JSON file containing regional AMI IDs to modify
     #[structopt(long)]
@@ -36,22 +37,29 @@ pub(crate) struct PublishArgs {
     #[structopt(long, use_delimiter = true)]
     regions: Vec<String>,
 
-    /// Make the AMIs public
+    /// Grant access to the given users/groups
     #[structopt(long, group = "mode")]
-    make_public: bool,
-    /// Make the AMIs private
+    grant: bool,
+    /// Revoke access from the given users/groups
     #[structopt(long, group = "mode")]
-    make_private: bool,
+    revoke: bool,
+
+    /// User IDs to give/remove access
+    #[structopt(long, use_delimiter = true, group = "who")]
+    user_ids: Vec<String>,
+    /// Group names to give/remove access
+    #[structopt(long, use_delimiter = true, group = "who")]
+    group_names: Vec<String>,
 }
 
 /// Common entrypoint from main()
 pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
-    let (operation, mode) = if publish_args.make_public {
-        ("add".to_string(), "public")
-    } else if publish_args.make_private {
-        ("remove".to_string(), "private")
+    let (operation, description) = if publish_args.grant {
+        ("add".to_string(), "granting access")
+    } else if publish_args.revoke {
+        ("remove".to_string(), "revoking access")
     } else {
-        unreachable!("developer error: make-public and make-private not required/exclusive");
+        unreachable!("developer error: --grant and --revoke not required/exclusive");
     };
 
     info!(
@@ -165,16 +173,29 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     let snapshots = get_regional_snapshots(&amis, &ec2_clients).await?;
     trace!("Found snapshots: {:?}", snapshots);
 
-    let all = Some(vec!["all".to_string()]);
-    info!("Updating snapshot permissions - making {}", mode);
-    modify_regional_snapshots(None, all.clone(), &operation, &snapshots, &ec2_clients).await?;
+    info!("Updating snapshot permissions - {}", description);
+    modify_regional_snapshots(
+        Some(publish_args.user_ids.clone()),
+        Some(publish_args.group_names.clone()),
+        &operation,
+        &snapshots,
+        &ec2_clients,
+    )
+    .await?;
 
-    info!("Updating image permissions - making {}", mode);
+    info!("Updating image permissions - {}", description);
     let ami_ids = amis
         .into_iter()
         .map(|(region, image)| (region, image.id))
         .collect();
-    modify_regional_images(None, all, &operation, &ami_ids, &ec2_clients).await?;
+    modify_regional_images(
+        Some(publish_args.user_ids.clone()),
+        Some(publish_args.group_names.clone()),
+        &operation,
+        &ami_ids,
+        &ec2_clients,
+    )
+    .await?;
 
     Ok(())
 }

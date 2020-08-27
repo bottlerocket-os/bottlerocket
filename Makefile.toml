@@ -445,7 +445,8 @@ pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
    \
    publish-ami \
-   --make-public \
+   --grant \
+   --group-names all \
    \
    --ami-input "${ami_input}" \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
@@ -474,7 +475,80 @@ pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
    \
    publish-ami \
-   --make-private \
+   --revoke \
+   --group-names all \
+   \
+   --ami-input "${ami_input}" \
+   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
+'''
+]
+
+[tasks.grant-ami]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the input file below to save time.
+# This does mean that `cargo make ami` must be run before `cargo make grant-ami`.
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+if [ -z "${GRANT_TO_USERS}" ] && [ -z "${GRANT_TO_GROUPS}" ]; then
+   echo "GRANT_TO_USERS and/or GRANT_TO_GROUPS is mandatory for grant-ami; please give a comma-separated list of user IDs or group names" >&2
+   exit 1
+fi
+
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+if [ ! -s "${ami_input}" ]; then
+   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   publish-ami \
+   --grant \
+   ${GRANT_TO_USERS:+--user-ids "${GRANT_TO_USERS}"} \
+   ${GRANT_TO_GROUPS:+--group-names "${GRANT_TO_GROUPS}"} \
+   \
+   --ami-input "${ami_input}" \
+   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
+'''
+]
+
+[tasks.revoke-ami]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the input file below to save time.
+# This does mean that `cargo make ami` must be run before `cargo make revoke-ami`.
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+if [ -z "${REVOKE_FROM_USERS}" ] && [ -z "${REVOKE_FROM_GROUPS}" ]; then
+   echo "REVOKE_FROM_USERS and/or REVOKE_FROM_GROUPS is mandatory for revoke-ami; please give a comma-separated list of user IDs or group names" >&2
+   exit 1
+fi
+
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+if [ ! -s "${ami_input}" ]; then
+   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   publish-ami \
+   --revoke \
+   ${REVOKE_FROM_USERS:+--user-ids "${REVOKE_FROM_USERS}"} \
+   ${REVOKE_FROM_GROUPS:+--group-names "${REVOKE_FROM_GROUPS}"} \
    \
    --ami-input "${ami_input}" \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
