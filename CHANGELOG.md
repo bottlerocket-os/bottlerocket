@@ -1,3 +1,81 @@
+# v1.0.0 (2020-08-31)
+
+Welcome to Bottlerocket 1.0!
+Since the first public preview, we've added new variants for Amazon ECS and Kubernetes 1.16 and 1.17, support for ARM instances and more EC2 regions, along with many new features and security improvements.
+We appreciate all the feedback and contributions so far and look forward to working with the community on even wider support.
+
+:partying_face: :smile_cat:
+
+## Security fixes
+
+* Update to chrony 3.5.1 ([#1057])
+* Isolate host containers and limit access to API socket ([#1056])
+
+## OS changes
+
+* The `aws-ecs-1` variant is now available as a preview.
+   * ecs-agent: upgrade to v1.43.0 ([#1043])
+   * aws-ecs-1: add ecs.loglevel setting ([#1062])
+   * aws-ecs-1: remove unsupported capabilities ([#1052])
+   * aws-ecs-1: constrain ephemeral port range ([#1051])
+   * aws-ecs-1: enable awslogs execution role support ([#1044])
+   * ecs-agent: don't start if not configured ([#1049])
+   * ecs-agent: bind introspection to localhost ([#1071])
+   * Update logdog to pull ECS-related log files ([#1054])
+   * Add documentation for the aws-ecs-1 variant ([#1053])
+* apiclient: accept -s for --socket-path, as per usage message ([#1069])
+* Fix growpart to avoid race in partition table reload ([#1058])
+* Added patch for EC2 IMDSv2 support in Docker ([#1055])
+* schnauzer: add a helper for ecr repos ([#1032])
+
+## Build changes
+
+* Add `cargo make ami-public` and `ami-private` targets ([#1033], [#1065], [#1064])
+* Add `cargo make ssm` and `promote-ssm` targets for publishing parameters ([#1060], [#1070], [#1067], [#1066])
+* Use per-checkout cache directories for builds ([#1050])
+* Fix rust build caching and tune rpm compression ([#1045])
+* Add official builds in 16 more EC2 regions. ([aws/containers-roadmap#827](https://github.com/aws/containers-roadmap/issues/827))
+
+## Documentation changes
+
+* Revise security guidance ([#1072])
+* README: add supported architectures ([#1048])
+* Update supported region list after 0.5.0 release ([#1046])
+* Removed aws-cli v1 requirement in docs ([#1073])
+* Update BUILDING.md for new coldsnap-based amiize.sh ([#1047])
+
+
+[#1073]: https://github.com/bottlerocket-os/bottlerocket/pull/1073
+[#1072]: https://github.com/bottlerocket-os/bottlerocket/pull/1072
+[#1071]: https://github.com/bottlerocket-os/bottlerocket/pull/1071
+[#1070]: https://github.com/bottlerocket-os/bottlerocket/pull/1070
+[#1069]: https://github.com/bottlerocket-os/bottlerocket/pull/1069
+[#1067]: https://github.com/bottlerocket-os/bottlerocket/pull/1067
+[#1066]: https://github.com/bottlerocket-os/bottlerocket/pull/1066
+[#1065]: https://github.com/bottlerocket-os/bottlerocket/pull/1065
+[#1064]: https://github.com/bottlerocket-os/bottlerocket/pull/1064
+[#1062]: https://github.com/bottlerocket-os/bottlerocket/pull/1062
+[#1060]: https://github.com/bottlerocket-os/bottlerocket/pull/1060
+[#1058]: https://github.com/bottlerocket-os/bottlerocket/pull/1058
+[#1057]: https://github.com/bottlerocket-os/bottlerocket/pull/1057
+[#1056]: https://github.com/bottlerocket-os/bottlerocket/pull/1056
+[#1055]: https://github.com/bottlerocket-os/bottlerocket/pull/1055
+[#1054]: https://github.com/bottlerocket-os/bottlerocket/pull/1054
+[#1053]: https://github.com/bottlerocket-os/bottlerocket/pull/1053
+[#1052]: https://github.com/bottlerocket-os/bottlerocket/pull/1052
+[#1051]: https://github.com/bottlerocket-os/bottlerocket/pull/1051
+[#1050]: https://github.com/bottlerocket-os/bottlerocket/pull/1050
+[#1049]: https://github.com/bottlerocket-os/bottlerocket/pull/1049
+[#1048]: https://github.com/bottlerocket-os/bottlerocket/pull/1048
+[#1047]: https://github.com/bottlerocket-os/bottlerocket/pull/1047
+[#1046]: https://github.com/bottlerocket-os/bottlerocket/pull/1046
+[#1045]: https://github.com/bottlerocket-os/bottlerocket/pull/1045
+[#1044]: https://github.com/bottlerocket-os/bottlerocket/pull/1044
+[#1043]: https://github.com/bottlerocket-os/bottlerocket/pull/1043
+[#1033]: https://github.com/bottlerocket-os/bottlerocket/pull/1033
+[#1032]: https://github.com/bottlerocket-os/bottlerocket/pull/1032
+
+
 # v0.5.0 (2020-08-14)
 
 Special thanks to first-time contributor @spoonofpower ([#988])!
