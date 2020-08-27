@@ -212,6 +212,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 
     // First we need to find the account IDs for any given roles, so we can grant access to those
     // accounts to copy the AMI and snapshots.
+    info!("Getting account IDs for target regions so we can grant access to copy source AMI");
     let mut account_ids = get_account_ids(&regions, &base_region, &aws).await?;
 
     // Get the account ID used in the base region; we don't need to grant to it so we can remove it
@@ -235,6 +236,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 
     // If we have any accounts other than the base account, grant them access.
     if !account_ids.is_empty() {
+        info!("Granting access to target accounts so we can copy the AMI");
         let account_id_vec: Vec<_> = account_ids.into_iter().collect();
 
         modify_snapshots(
@@ -279,6 +281,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     }
 
     // First, we check if the AMI already exists in each region.
+    info!("Checking whether AMIs already exist in target regions");
     let mut get_requests = Vec::with_capacity(regions.len());
     for region in regions.iter() {
         let ec2_client = &ec2_clients[region];
