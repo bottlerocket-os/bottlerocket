@@ -100,7 +100,7 @@ mkdir -p ${BUILDSYS_OUTPUT_DIR}
 mkdir -p ${BUILDSYS_PACKAGES_DIR}
 mkdir -p ${GO_MOD_CACHE}
 
-for cmd in bash curl docker gunzip ; do
+for cmd in bash curl docker gunzip lz4 ; do
   if ! command -v ${cmd} >/dev/null 2>&1 ; then
     echo "required program '${cmd}' not found" >&2
     exit 1
