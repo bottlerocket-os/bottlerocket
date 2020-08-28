@@ -561,7 +561,6 @@ done
 rm -rf ${PUBLISH_REPO_BASE_DIR}
 rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
 rm -rf ${BUILDSYS_OUTPUT_DIR}/latest
-rm -rf html
 '''
 ]
 
