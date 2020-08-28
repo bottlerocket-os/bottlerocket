@@ -547,20 +547,58 @@ pubsys \
 ]
 
 [tasks.clean]
+dependencies = [
+  "clean-sources",
+  "clean-packages",
+  "clean-images",
+  "clean-repos",
+]
+
+[tasks.clean-sources]
 script_runner = "bash"
 script = [
 '''
-for ws in sources packages variants/* tools/{buildsys,pubsys}; do
+for ws in sources variants/* tools/{buildsys,pubsys}; do
   [ -d "${ws}" ] || continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
+'''
+]
+
+[tasks.clean-packages]
+script_runner = "bash"
+script = [
+'''
+for ws in packages; do
+  [ -d "${ws}" ] || continue
+  cargo clean --manifest-path ${ws}/Cargo.toml
+done
+rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
+'''
+]
+
+# Note: this only cleans images for the current arch and variant.  Specify
+# BUILDSYS_ARCH and/or BUILDSYS_VARIANT in your call to clean images for other
+# combinations.
+[tasks.clean-images]
+script_runner = "bash"
+script = [
+'''
 for ext in tar lz4 img json; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
-rm -rf ${PUBLISH_REPO_BASE_DIR}
-rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
 rm -rf ${BUILDSYS_OUTPUT_DIR}/latest
+'''
+]
+
+# Note: this cleans all repos; the repo targets directory is shared between
+# arches/variants.
+[tasks.clean-repos]
+script_runner = "bash"
+script = [
+'''
+rm -rf ${PUBLISH_REPO_BASE_DIR}
 '''
 ]
 
