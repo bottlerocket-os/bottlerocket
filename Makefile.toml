@@ -555,7 +555,7 @@ for ws in sources packages variants/* tools/{buildsys,pubsys}; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
-for ext in tar lz4 img ; do
+for ext in tar lz4 img json; do
   rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
 done
 rm -rf ${PUBLISH_REPO_BASE_DIR}
