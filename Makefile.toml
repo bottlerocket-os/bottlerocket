@@ -72,7 +72,7 @@ DOCKER_BUILDKIT = "1"
 # on the command line.
 
 # Depends on ${BUILDSYS_ARCH}.
-BUILDSYS_SDK_IMAGE = "bottlerocket/sdk-${BUILDSYS_ARCH}:v0.12.0"
+BUILDSYS_SDK_IMAGE = { script = [ "echo bottlerocket/sdk-${BUILDSYS_ARCH}:v0.13.0-$(uname -m)" ] }
 
 # Depends on ${BUILDSYS_JOBS}.
 CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"

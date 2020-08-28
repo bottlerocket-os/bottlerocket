@@ -18,8 +18,7 @@ URL: https://www.rust-lang.org/
 cp /usr/share/licenses/rust/* .
 
 %build
-%define _rust_target %{_cross_arch}-unknown-linux-%{_cross_libc}
-install -p -m0755 %{_libexecdir}/rust/lib/rustlib/%{_rust_target}/lib/libstd-*.so .
+install -p -m0755 %{_libexecdir}/rust/lib/rustlib/%{__cargo_target}/lib/libstd-*.so .
 
 %install
 mkdir -p %{buildroot}%{_cross_libdir}

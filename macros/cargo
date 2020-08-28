@@ -11,8 +11,8 @@
 
 %__cargo %{_bindir}/cargo
 %__cargo_common_opts --offline --locked --verbose
-%__cargo_target %{_cross_arch}-unknown-linux-gnu
-%__cargo_target_static %{_cross_arch}-unknown-linux-musl
+%__cargo_target %{_cross_triple}-gnu
+%__cargo_target_static %{_cross_triple}-musl
 %__cargo_cross_opts %{__cargo_common_opts} --target %{__cargo_target}
 %__cargo_cross_opts_static %{__cargo_common_opts} --target %{__cargo_target_static}
 %__cargo_env CARGO_TARGET_DIR="${HOME}/.cache" SKIP_README="true"
@@ -28,12 +28,12 @@ cat > %{_builddir}/.cargo/config << EOF \
 rustc = "%{__rustc}"\
 rustdoc = "%{__rustdoc}"\
 \
-[target.%{_cross_arch}-unknown-linux-gnu]\
+[target.%{_cross_triple}-gnu]\
 linker = "%{_bindir}/%{_cross_triple}-gnu-gcc"\
 ar = "%{_bindir}/%{_cross_triple}-gnu-gcc-ar"\
 rustflags = %{__global_rustflags_shared_toml}\
 \
-[target.%{_cross_arch}-unknown-linux-musl]\
+[target.%{_cross_triple}-musl]\
 linker = "%{_bindir}/%{_cross_triple}-musl-gcc"\
 ar = "%{_bindir}/%{_cross_triple}-musl-gcc-ar"\
 rustflags = %{__global_rustflags_static_toml}\
