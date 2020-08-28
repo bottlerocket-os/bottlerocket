@@ -574,7 +574,7 @@ for ws in packages; do
   [ -d "${ws}" ] || continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
-rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
+rm -rf ${BUILDSYS_PACKAGES_DIR}
 '''
 ]
 
