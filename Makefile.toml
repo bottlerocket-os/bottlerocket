@@ -585,10 +585,7 @@ rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
 script_runner = "bash"
 script = [
 '''
-for ext in tar lz4 img json; do
-  rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
-done
-rm -rf ${BUILDSYS_OUTPUT_DIR}/latest
+rm -rf ${BUILDSYS_OUTPUT_DIR}
 '''
 ]
 
