@@ -1,4 +1,5 @@
 %global debug_package %{nil}
+%global __strip %{_bindir}/strip
 
 Name: %{_cross_os}grub
 Version: 2.04
@@ -82,7 +83,7 @@ cp unicode/COPYING COPYING.unicode
 
 %build
 export \
-  CPP="%{_cross_target}-gcc -E" \
+  TARGET_CPP="%{_cross_target}-gcc -E" \
   TARGET_CC="%{_cross_target}-gcc" \
   TARGET_CFLAGS="%{grub_cflags}" \
   TARGET_CPPFLAGS="%{grub_cflags}" \
@@ -96,6 +97,7 @@ export \
 %cross_configure \
   CFLAGS="" \
   LDFLAGS="" \
+  --host="%{_build}" \
   --target="%{_cross_grub_target}" \
   --with-platform="%{_cross_grub_platform}" \
   --disable-grub-mkfont \
