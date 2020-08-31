@@ -6,6 +6,7 @@ BUILDSYS_ARCH = { script = ["uname -m"] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
+BUILDSYS_IMAGES_DIR = "${BUILDSYS_BUILD_DIR}/images"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
@@ -78,7 +79,7 @@ BUILDSYS_SDK_IMAGE = "bottlerocket/sdk-${BUILDSYS_ARCH}:v0.12.0"
 CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
 
 # Depends on ${BUILDSYS_ARCH} and ${BUILDSYS_VARIANT}.
-BUILDSYS_OUTPUT_DIR = "${BUILDSYS_BUILD_DIR}/images/${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
+BUILDSYS_OUTPUT_DIR = "${BUILDSYS_IMAGES_DIR}/${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
 
 # Depends on a number of variables defined above, and each other.
 BUILDSYS_VERSION_FULL="${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
@@ -547,21 +548,50 @@ pubsys \
 ]
 
 [tasks.clean]
+dependencies = [
+  "clean-sources",
+  "clean-packages",
+  "clean-images",
+  "clean-repos",
+]
+
+[tasks.clean-sources]
 script_runner = "bash"
 script = [
 '''
-for ws in sources packages variants/* tools/{buildsys,pubsys}; do
+for ws in sources variants/* tools/{buildsys,pubsys}; do
   [ -d "${ws}" ] || continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
-for ext in tar lz4 img ; do
-  rm -f ${BUILDSYS_OUTPUT_DIR}/*.${ext}
+'''
+]
+
+[tasks.clean-packages]
+script_runner = "bash"
+script = [
+'''
+for ws in packages; do
+  [ -d "${ws}" ] || continue
+  cargo clean --manifest-path ${ws}/Cargo.toml
 done
+rm -rf ${BUILDSYS_PACKAGES_DIR}
+'''
+]
+
+[tasks.clean-images]
+script_runner = "bash"
+script = [
+'''
+rm -rf ${BUILDSYS_IMAGES_DIR}
+'''
+]
+
+[tasks.clean-repos]
+script_runner = "bash"
+script = [
+'''
 rm -rf ${PUBLISH_REPO_BASE_DIR}
-rm -f ${BUILDSYS_PACKAGES_DIR}/*.rpm
-rm -rf ${BUILDSYS_OUTPUT_DIR}/latest
-rm -rf html
 '''
 ]
 
