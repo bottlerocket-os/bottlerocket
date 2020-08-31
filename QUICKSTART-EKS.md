@@ -98,11 +98,11 @@ If you'd like even more control over your setup, something that eksctl can't (ye
 ### Finding an AMI
 
 You can either build an AMI yourself using [our guide](BUILDING.md), or use an official AMI provided by Amazon.
-We plan to have official support in all regions when Bottlerocket is no longer in its preview phase, but to start out we focused on getting ready in a few regions.
-We plan to expand this list during our preview and will update it here accordingly.
 The currently supported regions are:
 
 ```
+af-south-1
+ap-east-1
 ap-northeast-1
 ap-northeast-2
 ap-south-1
@@ -111,9 +111,11 @@ ap-southeast-2
 ca-central-1
 eu-central-1
 eu-north-1
+eu-south-1
 eu-west-1
 eu-west-2
 eu-west-3
+me-south-1
 sa-east-1
 us-east-1
 us-east-2
