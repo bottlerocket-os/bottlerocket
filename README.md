@@ -5,7 +5,7 @@ Welcome to Bottlerocket!
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
 Bottlerocket is currently in a developer preview phase and we’re looking for your [feedback](#contact-us).
 
-If you’re ready to jump right in, read our [QUICKSTART](QUICKSTART.md) to try Bottlerocket in an Amazon EKS cluster.
+If you’re ready to jump right in, read our [QUICKSTART for Kubernetes](QUICKSTART-EKS.md) to try Bottlerocket in an Amazon EKS cluster or our [QUICKSTART for Amazon ECS](QUICKSTART-ECS.md) to try Bottlerocket in an Amazon ECS cluster.
 
 Bottlerocket focuses on security and maintainability, providing a reliable, consistent, and safe platform for container-based workloads.
 This is a reflection of what we've learned building operating systems and services at Amazon.
@@ -39,7 +39,7 @@ You can let us know about things that seem difficult, or even ways you might lik
 
 ## Variants
 
-To start, we're focusing on use of Bottlerocket as a host OS in AWS EKS Kubernetes clusters.
+To start, we're focusing on use of Bottlerocket as a host OS in AWS EKS Kubernetes clusters and Amazon ECS clusters.
 We’re excited to get early feedback and to continue working on more use cases!
 
 Bottlerocket is architected such that different cloud environments and container orchestrators can be supported in the future.
@@ -47,7 +47,8 @@ A build of Bottlerocket that supports different features or integration characte
 The artifacts of a build will include the architecture and variant name.
 For example, an `x86_64` build of the `aws-k8s-1.17` variant will produce an image named `bottlerocket-aws-k8s-1.17-x86_64-<version>-<commit>.img`.
 
-Our first supported variants, `aws-k8s-1.15`, `aws-k8s-1.16`, and `aws-k8s-1.17`, supports EKS as described above.
+Our first supported variants, `aws-k8s-1.15`, `aws-k8s-1.16`, and `aws-k8s-1.17`, support EKS as described above.
+We also have a new `aws-ecs-1` variant designed to work with ECS.
 
 ## Architectures
 
@@ -62,9 +63,11 @@ It describes:
 * how to build an image
 * how to register an EC2 AMI from an image
 
-To get started using Bottlerocket, please see [QUICKSTART](QUICKSTART.md).
-It describes:
-* how to set up a Kubernetes cluster, so your Bottlerocket instance can run pods
+Bottlerocket is best used with a container orchestrator.
+To get started with Kubernetes, please see [QUICKSTART-EKS](QUICKSTART-EKS.md).
+To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
+These guides describe:
+* how to set up a cluster with the orchestrator, so your Bottlerocket instance can run containers
 * how to launch a Bottlerocket instance in EC2
 
 ## Exploration
@@ -85,7 +88,7 @@ Bottlerocket has a ["control" container](https://github.com/bottlerocket-os/bott
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
 (You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).)
 
-You need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART.md#enabling-ssm).
+You need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART-EKS.md#enabling-ssm).
 
 Once the instance is started, you can start a session:
 
@@ -331,10 +334,11 @@ In this format, "settings.kubernetes.cluster-name" refers to the same key as in 
 
 #### Kubernetes settings
 
+See the [setup guide](QUICKSTART-EKS.md) for much more detail on setting up Bottlerocket and Kubernetes.
+
 The following settings must be specified in order to join a Kubernetes cluster.
 You should [specify them in user data](#using-user-data).
-See the [setup guide](QUICKSTART.md) for *much* more detail on setting up Bottlerocket and Kubernetes.
-* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART.md) uses "bottlerocket".
+* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART-EKS.md) uses "bottlerocket".
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
@@ -359,6 +363,33 @@ The following settings are set for you automatically by [pluto](sources/api/) ba
 * `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
+
+#### Amazon ECS settings
+
+See the [setup guide](QUICKSTART-ECS.md) for much more detail on setting up Bottlerocket and ECS.
+
+The following settings are optional and allow you to configure how your instance joins an ECS cluster.
+Since joining a cluster happens at startup, they need to be [specified in user data](#using-user-data).
+* `settings.ecs.cluster`: The name or [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) of your Amazon ECS cluster.
+  If left unspecified, Bottlerocket will join your `default` cluster.
+* `settings.ecs.instance-attributes`: [Attributes](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-placement-constraints.html#attributes) in the form of key, value pairs added when registering the container instance in the cluster.
+  * Example user data for setting up attributes:
+    ```
+    [settings.ecs.instance-attributes]
+    attribute1 = "foo"
+    attribute2 = "bar"
+    ```
+
+The following settings are optional and allow you to further configure your cluster.
+These settings can be changed at any time.
+* `settings.ecs.logging-drivers`: The list of logging drivers available on the container instance.
+  The ECS agent running on a container instance must register available logging drivers before tasks that use those drivers are eligible to be placed on the instance.
+  Bottlerocket enables the `json-file`, `awslogs`, and `none` drivers by default.
+* `settings.ecs.allow-privileged-containers`: Whether launching privileged containers is allowed on the container instance.
+  If this value is set to false, privileged containers are not permitted.
+  Bottlerocket sets this value to false by default. 
+* `settings.ecs.loglevel`: The level of verbosity for the ECS agent's logs.
+  Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
 
 #### Updates settings
 
@@ -482,6 +513,7 @@ We currently package the following major third-party components:
 * containerd ([background](https://containerd.io/), [packaging](packages/containerd/))
 * Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes-1.15/))
 * aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](packages/aws-iam-authenticator/))
+* Amazon ECS agent ([background](https://github.com/aws/amazon-ecs-agent), [packaging](packages/ecs-agent/))
 
 For further documentation or to see the rest of the packages, see the [packaging directory](packages/).
 
