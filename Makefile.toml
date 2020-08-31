@@ -90,8 +90,8 @@ BUILDSYS_NAME_FULL="${BUILDSYS_NAME_VARIANT}-${BUILDSYS_VERSION_FULL}"
 # Repo directories have subdirectories for variant/arch, so we only want version here.
 PUBLISH_REPO_BASE_DIR = "${BUILDSYS_BUILD_DIR}/repos"
 PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${BUILDSYS_NAME_VERSION}"
-# The name of registered AMIs.
-PUBLISH_AMI_NAME = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
+# The default name of registered AMIs; override by setting PUBLISH_AMI_NAME.
+PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 
 [tasks.setup]
 script = [
@@ -401,6 +401,8 @@ esac
 ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
 ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-amis.json"
 
+ami_name="${PUBLISH_AMI_NAME:-${PUBLISH_AMI_NAME_DEFAULT}}"
+
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
    \
@@ -412,8 +414,8 @@ pubsys \
    --data-volume-size "${PUBLISH_DATA_VOLUME_SIZE}" \
    \
    --arch "${arch}" \
-   --name "${PUBLISH_AMI_NAME}" \
-   --description "${PUBLISH_AMI_DESCRIPTION:-${PUBLISH_AMI_NAME}}" \
+   --name "${ami_name}" \
+   --description "${PUBLISH_AMI_DESCRIPTION:-${ami_name}}" \
    \
    --ami-output "${ami_output}" \
    \
