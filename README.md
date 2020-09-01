@@ -38,7 +38,7 @@ You can let us know about things that seem difficult, or even ways you might lik
 
 ## Variants
 
-To start, we're focusing on use of Bottlerocket as a host OS in AWS EKS Kubernetes clusters and Amazon ECS clusters.
+To start, we're focusing on the use of Bottlerocket as a host OS in AWS EKS Kubernetes clusters and Amazon ECS clusters.
 We’re excited to get early feedback and to continue working on more use cases!
 
 Bottlerocket is architected such that different cloud environments and container orchestrators can be supported in the future.
@@ -195,7 +195,7 @@ This will return the current update status in JSON format. The status should loo
 }
 ```
 
-You can see that the we're running `v0.3.2` in the active partition, and that `v0.4.0` is available.
+You can see that we're running `v0.3.2` in the active partition, and that `v0.4.0` is available.
 If you're happy with that selection, you can request that the update be downloaded and applied to disk.  (The update will remain inactive until you make the `activate-update` call below.)
 ```
 apiclient -u /actions/prepare-update -m POST
@@ -318,7 +318,7 @@ Here we'll describe each setting you can change.
 **Note:** You can see the default values (for any settings that are not generated at runtime) by looking at [defaults.toml](sources/models/defaults.toml).
 
 When you're sending settings to the API, or receiving settings from the API, they're in a structured JSON format.
-This allows allow modification of any number of keys at once.
+This allows modification of any number of keys at once.
 It also lets us ensure that they fit the definition of the Bottlerocket data model - requests with invalid settings won't even parse correctly, helping ensure safety.
 
 Here, however, we'll use the shortcut "dotted key" syntax for referring to keys.
@@ -394,7 +394,7 @@ These settings can be changed at any time.
 
 * `settings.updates.metadata-base-url`: The common portion of all URIs used to download update metadata.
 * `settings.updates.targets-base-url`: The common portion of all URIs used to download update files.
-* `settings.updates.seed`: A `u32` value that determines how far into in the update schedule this machine will accept an update.  We recommending leaving this at its default generated value so that updates can be somewhat randomized in your cluster.
+* `settings.updates.seed`: A `u32` value that determines how far into the update schedule this machine will accept an update.  We recommend leaving this at its default generated value so that updates can be somewhat randomized in your cluster.
 * `settings.updates.version-lock`: Controls the version that will be selected when you issue an update request.  Can be locked to a specific version like `v1.0.0`, or `latest` to take the latest available version.  Defaults to `latest`.
 * `settings.updates.ignore-waves`: Updates are rolled out in waves to reduce the impact of issues.  For testing purposes, you can set this to `true` to ignore those waves and update immediately.
 
@@ -435,7 +435,7 @@ If the `enabled` flag is `true`, it will be started automatically.
 All host containers will have the `apiclient` binary available at `/usr/local/bin/apiclient` so they're able to [interact with the API](#using-the-api-client).
 
 In addition, all host containers come with persistent storage at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME` that is persisted across reboots and container start/stop cycles.
-The default `admin` host-container, for example, store its SSH host keys under `/.bottlerocket/host-containers/admin/etc/ssh/`.
+The default `admin` host-container, for example, stores its SSH host keys under `/.bottlerocket/host-containers/admin/etc/ssh/`.
 
 There are a few important caveats to understand about host containers:
 * They're not orchestrated.  They only start or stop according to that `enabled` flag.
