@@ -65,6 +65,10 @@
 (allow container_s cache_t (file (entrypoint)))
 (allow container_s state_t (file (entrypoint)))
 
+; Also allow entry to container domains through `docker-init`, which
+; is mounted from the root filesystem and used as the init process.
+(allow container_s runtime_exec_t (file (entrypoint)))
+
 ; Allow containers to communicate with runtimes via pipes.
 (allow container_s runtime_t (files (mutate)))
 
