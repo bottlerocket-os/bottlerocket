@@ -9,5 +9,5 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.gnu.org/gnu/glibc/glibc-2.31.tar.xz"
-sha512 = "735e4c0ef10418b6ea945ad3906585e5bbd8b282d76f2131309dce4cec6b15066a5e4a3731773ce428a819b542579c9957867bb0abf05ed2030983fca4412306"
+url = "https://ftp.gnu.org/gnu/glibc/glibc-2.32.tar.xz"
+sha512 = "8460c155b7003e04f18dabece4ed9ad77445fa2288a7dc08e80a8fc4c418828af29e0649951bd71a54ea2ad2d4da7570aafd9bdfe4a37e9951b772b442afe50b"
