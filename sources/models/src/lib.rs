@@ -113,6 +113,7 @@ struct ECSSettings {
     allow_privileged_containers: bool,
     logging_drivers: Vec<SingleLineString>,
     loglevel: ECSAgentLogLevel,
+    enable_spot_instance_draining: bool,
 }
 
 // Update settings. Taken from userdata. The 'seed' setting is generated

@@ -45,6 +45,9 @@ struct ECSConfig {
 
     #[serde(rename = "OverrideAWSLogsExecutionRole")]
     override_awslogs_execution_role: bool,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    spot_instance_draining_enabled: Option<bool>,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -79,6 +82,7 @@ fn run() -> Result<()> {
             .iter()
             .map(|s| s.to_string())
             .collect(),
+        spot_instance_draining_enabled: ecs.enable_spot_instance_draining,
 
         // Task role support is always enabled
         task_iam_role_enabled: true,
