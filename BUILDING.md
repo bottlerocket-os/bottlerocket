@@ -8,6 +8,17 @@ You can skip to the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setu
 
 ### Dependencies
 
+#### Operating System Packages
+
+The Rust tooling requires certain operating system packages to be installed in order to complete builds.  
+Error messages from the Rust tooling do not clearly identify the issues.
+
+Ensure the following OS packages are installed:
+
+- `build-essential`
+- `openssl-dev` or `libssl-dev`
+- `pkg-config`
+
 #### Rust
 
 The build system is based on the Rust language.
