@@ -8,6 +8,29 @@ You can skip to the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setu
 
 ### Dependencies
 
+#### System Requirements
+
+The build process artifacts and resulting images can consume in excess of 80GB in the local directory.
+
+#### Linux
+
+The build system requires certain operating system packages to be installed.  
+
+Ensure the following OS packages are installed:
+
+##### Ubuntu 
+
+```
+apt install build-essential libssl-dev pkg-config
+```
+
+##### Fedora
+
+```
+yum install make automake gcc openssl-devel pkg-config
+```
+
+
 #### Rust
 
 The build system is based on the Rust language.
