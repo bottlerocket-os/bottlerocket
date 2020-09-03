@@ -10,6 +10,7 @@ URL: https://www.kernel.org/
 Source0: https://cdn.amazonlinux.com/blobstore/9e3beaecef0b030d83fb215be7ca67c01009cfec52fe9b12eb4b24fdb46eebce/kernel-5.4.50-25.83.amzn2.src.rpm
 Source100: config-bottlerocket
 Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
+Patch0002: 0002-net-packet-fix-overflow-in-tpacket_rcv.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
