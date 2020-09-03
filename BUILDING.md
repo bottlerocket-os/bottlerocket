@@ -8,6 +8,10 @@ You can skip to the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setu
 
 ### Dependencies
 
+#### Adequate Disk Space
+
+The build process artifacts and resulting images can consume in excess of 4GB in the local directory.
+
 #### Operating System Packages
 
 The Rust tooling requires certain operating system packages to be installed in order to complete builds.  
