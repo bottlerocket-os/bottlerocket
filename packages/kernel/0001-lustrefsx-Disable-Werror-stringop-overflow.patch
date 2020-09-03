@@ -1,7 +1,7 @@
-From b85e7195a25319afb421a6a3ee2065fc8d225a8b Mon Sep 17 00:00:00 2001
+From a5f6b26082e0022d3c3e70e0718e4787939778d8 Mon Sep 17 00:00:00 2001
 From: iliana destroyer of worlds <iweller@amazon.com>
 Date: Tue, 30 Jul 2019 12:59:09 -0700
-Subject: [PATCH] lustrefsx: Disable -Werror=stringop-overflow=
+Subject: [PATCH 1/2] lustrefsx: Disable -Werror=stringop-overflow=
 
 Signed-off-by: iliana destroyer of worlds <iweller@amazon.com>
 ---
