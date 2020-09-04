@@ -14,7 +14,7 @@ The build process artifacts and resulting images can consume in excess of 4GB in
 
 #### Operating System Packages
 
-The Rust tooling requires certain operating system packages to be installed in order to complete builds.  
+The build system requires certain operating system packages to be installed.  
 
 Ensure the following OS packages are installed:
 
