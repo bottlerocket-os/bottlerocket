@@ -1,4 +1,4 @@
-version = "1.0.0"
+version = "1.0.1"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -8,3 +8,4 @@ version = "1.0.0"
 "(0.4.0, 0.4.1)" = ["migrate_v0.4.1_add-version-lock-ignore-waves.lz4", "migrate_v0.4.1_pivot-repo-2020-07-07.lz4"]
 "(0.4.1, 0.5.0)" = ["migrate_v0.5.0_add-cluster-domain.lz4", "migrate_v0.5.0_admin-container-v0-5-2.lz4", "migrate_v0.5.0_control-container-v0-4-1.lz4"]
 "(0.5.0, 1.0.0)" = ["migrate_v1.0.0_ecr-helper-admin.lz4", "migrate_v1.0.0_ecr-helper-control.lz4"]
+"(1.0.0, 1.0.1)" = []

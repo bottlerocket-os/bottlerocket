@@ -1,3 +1,11 @@
+# v1.0.1 (2020-09-03)
+
+## Security fixes
+
+* Patch kernel for CVE-2020-14386 ([#1108])
+
+[#1108]: https://github.com/bottlerocket-os/bottlerocket/pull/1108
+
 # v1.0.0 (2020-08-31)
 
 Welcome to Bottlerocket 1.0!
