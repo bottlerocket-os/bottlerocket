@@ -40,7 +40,7 @@ async fn _register_image(
     let root_snapshot = snapshot_from_image(
         &ami_args.root_image,
         &uploader,
-        ami_args.root_volume_size,
+        None,
         ami_args.no_progress,
     )
     .await
@@ -53,7 +53,7 @@ async fn _register_image(
     let data_snapshot = snapshot_from_image(
         &ami_args.data_image,
         &uploader,
-        Some(ami_args.data_volume_size),
+        None,
         ami_args.no_progress,
     )
     .await
@@ -88,6 +88,7 @@ async fn _register_image(
             delete_on_termination: Some(true),
             snapshot_id: Some(root_snapshot.clone()),
             volume_type: Some(VOLUME_TYPE.to_string()),
+            volume_size: ami_args.root_volume_size,
             ..Default::default()
         }),
         ..Default::default()
@@ -97,6 +98,7 @@ async fn _register_image(
     data_bdm.device_name = Some(DATA_DEVICE_NAME.to_string());
     if let Some(ebs) = data_bdm.ebs.as_mut() {
         ebs.snapshot_id = Some(data_snapshot.clone());
+        ebs.volume_size = Some(ami_args.data_volume_size);
     }
 
     let register_request = RegisterImageRequest {
