@@ -62,6 +62,7 @@ for i in http_proxy https_proxy no_proxy goproxy HTTP_PROXY HTTPS_PROXY NO_PROXY
    fi
 done
 
+set -x
 docker run --rm \
   -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \
