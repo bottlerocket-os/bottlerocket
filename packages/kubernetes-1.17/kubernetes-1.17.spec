@@ -22,9 +22,7 @@ Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
 Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
-Patch2: 0002-do-not-omit-debug-info.patch
-Patch3: 0003-enable-PIE-for-platform-binaries.patch
-Patch4: 0004-override-SELinux-label-for-kubelet-plugins.patch
+Patch2: 0002-override-SELinux-label-for-kubelet-plugins.patch
 
 # Update aws-sdk-go for IMDSv2 support
 Patch100: aws-sdk-go-1.28.2_k8s-1.17.8.patch.bz2
@@ -61,6 +59,7 @@ cp third_party/intemp/LICENSE LICENSE.intemp
 %build
 %cross_go_configure %{goimport}
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
+export GOLDFLAGS="-buildmode=pie"
 make WHAT="cmd/kubelet"
 
 %install

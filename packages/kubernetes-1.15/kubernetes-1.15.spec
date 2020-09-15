@@ -22,16 +22,14 @@ Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
 Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
-Patch2: 0002-do-not-omit-debug-info.patch
-Patch3: 0003-enable-PIE-for-platform-binaries.patch
-Patch4: 0004-override-SELinux-label-for-kubelet-plugins.patch
+Patch2: 0002-override-SELinux-label-for-kubelet-plugins.patch
 
 # Fix builds in $GOPATH when using Go 1.13 - drop when we catch up in v1.17.0
 # https://github.com/kubernetes/kubernetes/commit/8618c09
-Patch5: 0005-opt-out-of-module-mode-for-builds.patch
+Patch3: 0003-opt-out-of-module-mode-for-builds.patch
 
-Patch6: 0006-kubelet-block-non-forwarded-packets.patch
-Patch7: 0007-include-etc-hosts-in-eviction-calc.patch
+Patch4: 0004-kubelet-block-non-forwarded-packets.patch
+Patch5: 0005-include-etc-hosts-in-eviction-calc.patch
 
 BuildRequires: git
 BuildRequires: rsync
@@ -65,6 +63,7 @@ cp third_party/intemp/LICENSE LICENSE.intemp
 %build
 %cross_go_configure %{goimport}
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
+export GOLDFLAGS="-buildmode=pie"
 make WHAT="cmd/kubelet"
 
 %install
