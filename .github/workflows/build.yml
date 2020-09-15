@@ -16,6 +16,8 @@ jobs:
             arch: x86_64
             supported: false
       fail-fast: false
+    env:
+      GOPROXY: direct
     steps:
       - uses: actions/checkout@v2
       - run: cargo install --version 0.30.0 cargo-make
