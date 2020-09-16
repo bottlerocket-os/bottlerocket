@@ -54,18 +54,31 @@ DOCKER_RUN_ARGS="--network=host"
 
 parse_args "${@}"
 
+# Pass through relevant Go variables, from the config or environment.
+go_env=( )
+for i in GOPROXY GONOPROXY GOPRIVATE ; do
+  if command -v go >/dev/null 2>&1 ; then
+    govar="$(go env ${i})"
+    if [ -n "${govar}" ] ; then
+      go_env[${#go_env[@]}]="--env=${i}=${govar}"
+    fi
+  elif [ -n "${!i}" ] ; then
+    go_env[${#go_env[@]}]="--env=${i}=${!i}"
+  fi
+done
+
 # Go accepts both lower and uppercase proxy variables, pass both through.
 proxy_env=( )
-for i in http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY; do
-   if [ -n "${!i}" ]; then
-      proxy_env[${#proxy_env[@]}]="--env=$i=${!i}"
-   fi
+for i in http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY ; do
+  if [ -n "${!i}" ]; then
+    proxy_env[${#proxy_env[@]}]="--env=$i=${!i}"
+  fi
 done
 
 docker run --rm \
-  -e GOPRIVATE='*' \
   -e GOCACHE='/tmp/.cache' \
   -e GOPATH='/tmp/go' \
+  "${go_env[@]}" \
   "${proxy_env[@]}" \
   --user "$(id -u):$(id -g)" \
   --security-opt label:disable \
