@@ -59,6 +59,7 @@ pub(crate) struct AwsRegionConfig {
 #[derive(Debug, Deserialize)]
 pub(crate) enum SigningKeyConfig {
     file { path: PathBuf },
+    kms { key_id: String },
     ssm { parameter: String },
 }
 
