@@ -23,6 +23,7 @@ use tough::{
     schema::Target,
     ExpirationEnforcement, Limits, Repository, Settings,
 };
+use tough_kms::{KmsKeySource, KmsSigningAlgorithm};
 use tough_ssm::SsmKeySource;
 use transport::RepoTransport;
 use update_metadata::{Images, Manifest, Release, UpdateWaves};
@@ -182,7 +183,7 @@ fn update_manifest(repo_args: &RepoArgs, manifest: &mut Manifest) -> Result<()> 
 /// Adds targets, expirations, and version to the RepositoryEditor
 fn update_editor<'a, P>(
     repo_args: &'a RepoArgs,
-    editor: &mut RepositoryEditor,
+    editor: &mut RepositoryEditor<'a, RepoTransport>,
     targets: impl Iterator<Item = &'a PathBuf>,
     manifest_path: P,
 ) -> Result<()>
@@ -202,7 +203,7 @@ where
         path: manifest_path.as_ref(),
     })?;
     debug!("Adding target for manifest.json");
-    editor.add_target("manifest.json".to_string(), manifest_target);
+    editor.add_target("manifest.json", manifest_target).context(error::AddTarget { path: "manifest.json" })?;
 
     // Add expirations   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -224,6 +225,9 @@ where
     editor
         .snapshot_expires(snapshot_expiration)
         .targets_expires(targets_expiration)
+        .context(error::SetTargetsExpiration {
+            expiration: targets_expiration,
+        })?
         .timestamp_expires(timestamp_expiration);
 
     // Add version   =^..^=   =^..^=   =^..^=   =^..^=
@@ -235,6 +239,7 @@ where
     editor
         .snapshot_version(version)
         .targets_version(version)
+        .context(error::SetTargetsVersion { version })?
         .timestamp_version(version);
 
     Ok(())
@@ -284,23 +289,24 @@ fn repo_urls<'a>(
 /// Builds an editor and manifest; will start from an existing repo if one is specified in the
 /// configuration.  Returns Err if we fail to read from the repo.  Returns Ok(None) if we detect
 /// that the repo does not exist.
-fn load_editor_and_manifest<P>(
+fn load_editor_and_manifest<'a, P>(
     root_role_path: P,
-    metadata_url: &Url,
-    targets_url: &Url,
-) -> Result<Option<(RepositoryEditor, Manifest)>>
+    transport: &'a RepoTransport,
+    datastore: &'a Path,
+    metadata_url: &'a Url,
+    targets_url: &'a Url,
+) -> Result<Option<(RepositoryEditor<'a, RepoTransport>, Manifest)>>
 where
     P: AsRef<Path>,
 {
     let root_role_path = root_role_path.as_ref();
 
     // Create a temporary directory where the TUF client can store metadata
-    let workdir = tempdir().context(error::TempDir)?;
     let settings = Settings {
         root: File::open(root_role_path).context(error::File {
             path: root_role_path,
         })?,
-        datastore: workdir.path(),
+        datastore,
         metadata_base_url: metadata_url.as_str(),
         targets_base_url: targets_url.as_str(),
         limits: Limits::default(),
@@ -308,8 +314,7 @@ where
     };
 
     // Try to load the repo...
-    let transport = RepoTransport::default();
-    match Repository::load(&transport, settings) {
+    match Repository::load(transport, settings) {
         // If we load it successfully, build an editor and manifest from it.
         Ok(repo) => {
             let reader = repo
@@ -377,9 +382,11 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
     let maybe_urls = repo_urls(&repo_args, &infra_config)?;
-    let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls {
+    let workdir = tempdir().context(error::TempDir)?;
+    let transport = RepoTransport::default();
+    let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref() {
         info!("Found metadata and target URLs, loading existing repository");
-        match load_editor_and_manifest(root_role_path, &metadata_url, &targets_url)? {
+        match load_editor_and_manifest(root_role_path, &transport, workdir.path(), &metadata_url, &targets_url)? {
             Some((editor, manifest)) => (editor, manifest),
             None => {
                 info!(
@@ -436,6 +443,12 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
 
     let key_source: Box<dyn KeySource> = match signing_key_config {
         SigningKeyConfig::file { path } => Box::new(LocalKeySource { path: path.clone() }),
+        SigningKeyConfig::kms { key_id } => Box::new(KmsKeySource {
+            profile: None,
+            key_id: key_id.clone(),
+            client: None,
+            signing_algorithm: KmsSigningAlgorithm::RsassaPssSha256,
+        }),
         SigningKeyConfig::ssm { parameter } => Box::new(SsmKeySource {
             profile: None,
             parameter_name: parameter.clone(),
@@ -510,6 +523,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
 }
 
 mod error {
+    use chrono::{DateTime, Utc};
     use snafu::Snafu;
     use std::io;
     use std::path::PathBuf;
@@ -625,6 +639,18 @@ mod error {
         #[snafu(display("Failed to write repository to {}: {}", path.display(), source))]
         RepoWrite {
             path: PathBuf,
+            source: tough::error::Error,
+        },
+
+        #[snafu(display("Failed to set targets expiration to {}: {}", expiration, source))]
+        SetTargetsExpiration {
+            expiration: DateTime<Utc>,
+            source: tough::error::Error,
+        },
+
+        #[snafu(display("Failed to set targets version to {}: {}", version, source))]
+        SetTargetsVersion {
+            version: u64,
             source: tough::error::Error,
         },
 

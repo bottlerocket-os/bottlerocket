@@ -1344,7 +1344,8 @@ dependencies = [
  "tinytemplate",
  "tokio",
  "toml",
- "tough",
+ "tough 0.9.0",
+ "tough-kms",
  "tough-ssm",
  "update_metadata",
  "url",
@@ -1619,6 +1620,20 @@ dependencies = [
  "rusoto_core 0.45.0",
  "serde_urlencoded",
  "xml-rs",
+]
+
+[[package]]
+name = "rusoto_kms"
+version = "0.44.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c5a083f44d08db76d4deedd7527bb215dd008fa08f4b1d8ca40071522bdbcb7"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures",
+ "rusoto_core 0.44.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2368,6 +2383,28 @@ dependencies = [
  "log",
  "olpc-cjson",
  "pem",
+ "ring",
+ "serde",
+ "serde_json",
+ "serde_plain",
+ "snafu",
+ "untrusted",
+ "url",
+ "walkdir",
+]
+
+[[package]]
+name = "tough"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc05d902ccf136ba55d5e2c7222ddc1623f657e6add3f030e93c4dc5341bbdb7"
+dependencies = [
+ "chrono",
+ "globset",
+ "hex",
+ "log",
+ "olpc-cjson",
+ "pem",
  "reqwest",
  "ring",
  "serde",
@@ -2380,10 +2417,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "tough-ssm"
-version = "0.3.0"
+name = "tough-kms"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54e670640f67e719671a87fac948eabba0fd33633aa8be7804b38a1a1d2da32b"
+checksum = "90d5273998150708e8639464e4fe21eba7afbf7372f57f4d7ae0dabffd3d8dab"
+dependencies = [
+ "bytes",
+ "pem",
+ "ring",
+ "rusoto_core 0.44.0",
+ "rusoto_credential 0.44.0",
+ "rusoto_kms",
+ "snafu",
+ "tokio",
+ "tough 0.9.0",
+]
+
+[[package]]
+name = "tough-ssm"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63b7e51b42318a756ab7cbcf036f2adb23a8462d762519d5a3e50b886430ed23"
 dependencies = [
  "rusoto_core 0.44.0",
  "rusoto_credential 0.44.0",
@@ -2392,7 +2446,7 @@ dependencies = [
  "serde_json",
  "snafu",
  "tokio",
- "tough",
+ "tough 0.9.0",
 ]
 
 [[package]]
@@ -2498,7 +2552,7 @@ dependencies = [
  "serde_plain",
  "snafu",
  "toml",
- "tough",
+ "tough 0.8.0",
 ]
 
 [[package]]
