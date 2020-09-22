@@ -144,7 +144,12 @@ For more details, see the [update system documentation](sources/updater/).
 
 ### Update methods
 
-There are several ways of updating your Bottlerocket hosts:
+There are several ways of updating your Bottlerocket hosts.
+
+For EKS variants of Bottlerocket, we recommend using the [Bottlerocket update operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates.
+You can also use one of the methods below for direct control of updates.
+
+For the ECS preview variant of Bottlerocket, we recommend updating hosts using one of the methods below, until further automation is ready.
 
 #### Update API
 
