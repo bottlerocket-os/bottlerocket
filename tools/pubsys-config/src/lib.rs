@@ -12,6 +12,7 @@ use url::Url;
 
 /// Configuration needed to load and create repos
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct InfraConfig {
     // Repo subcommand config
     pub repo: Option<HashMap<String, RepoConfig>>,
@@ -34,6 +35,7 @@ impl InfraConfig {
 
 /// AWS-specific infrastructure configuration
 #[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AwsConfig {
     #[serde(default)]
     pub regions: VecDeque<String>,
@@ -46,6 +48,7 @@ pub struct AwsConfig {
 
 /// AWS region-specific configuration
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AwsRegionConfig {
     pub role: Option<String>,
     pub endpoint: Option<String>,
@@ -56,6 +59,7 @@ pub struct AwsRegionConfig {
 // more common for TOML config to be lowercase.
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum SigningKeyConfig {
     file { path: PathBuf },
     kms { key_id: String },
@@ -91,6 +95,7 @@ impl TryFrom<SigningKeyConfig> for Url {
 
 /// Represents a Bottlerocket repo's location and the metadata needed to update the repo
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct RepoConfig {
     pub root_role_url: Option<Url>,
     pub root_role_sha512: Option<String>,
@@ -103,6 +108,7 @@ pub struct RepoConfig {
 
 /// How long it takes for each metadata type to expire
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct RepoExpirationPolicy {
     #[serde(deserialize_with = "deserialize_offset")]
     pub snapshot_expiration: Duration,
