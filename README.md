@@ -327,6 +327,7 @@ These settings can be changed at any time.
   Bottlerocket sets this value to false by default. 
 * `settings.ecs.loglevel`: The level of verbosity for the ECS agent's logs.
   Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
+* `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
 
 #### Updates settings
 
