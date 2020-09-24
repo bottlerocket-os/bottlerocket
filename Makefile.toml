@@ -46,6 +46,7 @@ PUBLISH_SSM_TEMPLATES_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/ssm/def
 REPO_VALIDATE_TARGETS = "true"
 # Specifies the timeframe to look for upcoming repository metadata expirations
 REPO_METADATA_EXPIRING_WITHIN = "3 days"
+# When refreshing repositories, you can set REPO_UNSAFE_REFRESH=true to refresh repositories that have expired metadata files.
 
 # You can also set PUBLISH_REGIONS to override the list of regions from
 # Infra.toml for AMI and SSM commands; it's a comma-separated list like
@@ -463,6 +464,35 @@ pubsys \
    \
    --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
    --expiration-limit "${REPO_METADATA_EXPIRING_WITHIN}"
+'''
+]
+
+[tasks.refresh-repo]
+dependencies = ["publish-setup", "publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+if [ "${REPO_UNSAFE_REFRESH}" = "true" ]; then
+   REPO_UNSAFE_REFRESH_ARG="--unsafe-refresh"
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   refresh-repo \
+   \
+   --repo "${PUBLISH_REPO}" \
+   --arch "${BUILDSYS_ARCH}" \
+   --variant "${BUILDSYS_VARIANT}" \
+   \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
+   ${REPO_UNSAFE_REFRESH_ARG} \
+   --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
 '''
 ]
 
