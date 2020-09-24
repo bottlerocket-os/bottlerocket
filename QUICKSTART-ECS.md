@@ -1,6 +1,6 @@
 # Using a Bottlerocket AMI with Amazon ECS
 
-> The [ECS variant](./aws-ecs.md) of Bottlerocket is currently in a developer preview phase and we're looking for your
+> The [ECS variant](variants/README.md#aws-ecs-1-amazon-ecs-container-instance) of Bottlerocket is currently in a developer preview phase and we're looking for your
 > [feedback](https://github.com/bottlerocket-os/bottlerocket#contact-us).
 > We'd love for you to try it out!
 
