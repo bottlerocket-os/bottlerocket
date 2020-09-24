@@ -12,7 +12,13 @@ Source2: api-sysusers.conf
 # Taken from https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
 Source3: eni-max-pods
 
-Source4: root.json
+# Note: root.json is copied into place by Dockerfile and its path is made
+# available with the _cross_repo_root_json macro, so we don't list it as a
+# source here.  The alternative is copying/mapping it into the SOURCES
+# directory, but then root.json would be present in all package builds,
+# potentially causing a conflict.
+#SourceX: root.json
+
 Source5: updog-toml
 
 # 1xx sources: systemd units
@@ -243,7 +249,7 @@ install -d %{buildroot}%{_cross_datadir}/eks
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_datadir}/eks
 
 install -d %{buildroot}%{_cross_datadir}/updog
-install -p -m 0644 %{S:4} %{buildroot}%{_cross_datadir}/updog
+install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}

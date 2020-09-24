@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use log::{debug, info, trace};
 use parse_datetime::parse_datetime;
-use pubsys_config::{InfraConfig, RepoExpirationPolicy, SigningKeyConfig};
+use pubsys_config::{InfraConfig, RepoConfig, RepoExpirationPolicy, SigningKeyConfig};
 use semver::Version;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::convert::TryInto;
@@ -75,21 +75,23 @@ pub(crate) struct RepoArgs {
     /// Path to file that defines when repo metadata should expire
     repo_expiration_policy_path: PathBuf,
 
-    // Policies that pubsys passes on to other tools
+    // Configuration that pubsys passes on to other tools
     #[structopt(long, parse(from_os_str))]
     /// Path to Release.toml
     release_config_path: PathBuf,
     #[structopt(long, parse(from_os_str))]
     /// Path to file that defines when this update will become available
     wave_policy_path: PathBuf,
+    #[structopt(long, parse(from_os_str))]
+    /// Path to root.json for this repo
+    root_role_path: PathBuf,
+    #[structopt(long, parse(from_os_str))]
+    /// If we generated a local key, we'll find it here; used if Infra.toml has no key defined
+    default_key_path: PathBuf,
 
     #[structopt(long, parse(try_from_str = parse_datetime))]
     /// When the waves and expiration timer will start; RFC3339 date or "in X hours/days/weeks"
     release_start_time: Option<DateTime<Utc>>,
-
-    #[structopt(long)]
-    /// Use this named key from Infra.toml
-    signing_key: String,
 
     #[structopt(long, parse(from_os_str))]
     /// Where to store the created repo
@@ -203,7 +205,11 @@ where
         path: manifest_path.as_ref(),
     })?;
     debug!("Adding target for manifest.json");
-    editor.add_target("manifest.json", manifest_target).context(error::AddTarget { path: "manifest.json" })?;
+    editor
+        .add_target("manifest.json", manifest_target)
+        .context(error::AddTarget {
+            path: "manifest.json",
+        })?;
 
     // Add expirations   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -249,19 +255,8 @@ where
 /// targets URLs defined, returns those URLs, otherwise None.
 fn repo_urls<'a>(
     repo_args: &RepoArgs,
-    infra_config: &'a InfraConfig,
+    repo_config: &'a RepoConfig,
 ) -> Result<Option<(Url, &'a Url)>> {
-    let repo_config = infra_config
-        .repo
-        .as_ref()
-        .context(error::MissingConfig {
-            missing: "repo section",
-        })?
-        .get(&repo_args.repo)
-        .context(error::MissingConfig {
-            missing: format!("definition for repo {}", &repo_args.repo),
-        })?;
-
     // Check if both URLs are set
     if let Some(metadata_base_url) = repo_config.metadata_base_url.as_ref() {
         if let Some(targets_url) = repo_config.targets_url.as_ref() {
@@ -373,20 +368,32 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     );
     let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
     trace!("Parsed infra config: {:?}", infra_config);
-    let root_role_path = infra_config
-        .root_role_path
+
+    let repo_config = infra_config
+        .repo
         .as_ref()
         .context(error::MissingConfig {
-            missing: "root_role_path",
+            missing: "repo section",
+        })?
+        .get(&repo_args.repo)
+        .context(error::MissingConfig {
+            missing: format!("definition for repo {}", &repo_args.repo),
         })?;
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
-    let maybe_urls = repo_urls(&repo_args, &infra_config)?;
+    let maybe_urls = repo_urls(&repo_args, &repo_config)?;
     let workdir = tempdir().context(error::TempDir)?;
     let transport = RepoTransport::default();
-    let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref() {
+    let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref()
+    {
         info!("Found metadata and target URLs, loading existing repository");
-        match load_editor_and_manifest(root_role_path, &transport, workdir.path(), &metadata_url, &targets_url)? {
+        match load_editor_and_manifest(
+            &repo_args.root_role_path,
+            &transport,
+            workdir.path(),
+            &metadata_url,
+            &targets_url,
+        )? {
             Some((editor, manifest)) => (editor, manifest),
             None => {
                 info!(
@@ -394,7 +401,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
                     metadata_url
                 );
                 (
-                    RepositoryEditor::new(root_role_path).context(error::NewEditor)?,
+                    RepositoryEditor::new(&repo_args.root_role_path).context(error::NewEditor)?,
                     Manifest::default(),
                 )
             }
@@ -402,7 +409,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     } else {
         info!("Did not find metadata and target URLs in infra config, creating a new repository");
         (
-            RepositoryEditor::new(root_role_path).context(error::NewEditor)?,
+            RepositoryEditor::new(&repo_args.root_role_path).context(error::NewEditor)?,
             Manifest::default(),
         )
     };
@@ -430,30 +437,34 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
 
     // Sign repo   =^..^=   =^..^=   =^..^=   =^..^=
 
-    let signing_key_config = infra_config
-        .signing_keys
-        .as_ref()
-        .context(error::MissingConfig {
-            missing: "signing_keys",
-        })?
-        .get(&repo_args.signing_key)
-        .context(error::MissingConfig {
-            missing: format!("profile {} in signing_keys", &repo_args.signing_key),
-        })?;
+    // Check if we have a signing key defined in Infra.toml; if not, we'll fall back to the
+    // generated local key.
+    let signing_key_config = repo_config.signing_keys.as_ref();
 
     let key_source: Box<dyn KeySource> = match signing_key_config {
-        SigningKeyConfig::file { path } => Box::new(LocalKeySource { path: path.clone() }),
-        SigningKeyConfig::kms { key_id } => Box::new(KmsKeySource {
+        Some(SigningKeyConfig::file { path }) => Box::new(LocalKeySource { path: path.clone() }),
+        Some(SigningKeyConfig::kms { key_id }) => Box::new(KmsKeySource {
             profile: None,
             key_id: key_id.clone(),
             client: None,
             signing_algorithm: KmsSigningAlgorithm::RsassaPssSha256,
         }),
-        SigningKeyConfig::ssm { parameter } => Box::new(SsmKeySource {
+        Some(SigningKeyConfig::ssm { parameter }) => Box::new(SsmKeySource {
             profile: None,
             parameter_name: parameter.clone(),
             key_id: None,
         }),
+        None => {
+            ensure!(
+                repo_args.default_key_path.exists(),
+                error::MissingConfig {
+                    missing: "signing_keys in repo config, and we found no local key",
+                }
+            );
+            Box::new(LocalKeySource {
+                path: repo_args.default_key_path.clone(),
+            })
+        }
     };
 
     let signed_repo = editor.sign(&[key_source]).context(error::RepoSign)?;

@@ -1,0 +1,21 @@
+[package]
+name = "pubsys-setup"
+version = "0.1.0"
+authors = ["Zac Mrowicki <mrowicki@amazon.com>", "Tom Kirchner <tjk@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+
+[dependencies]
+hex = "0.4.0"
+log = "0.4"
+pubsys-config = { path = "../pubsys-config/" }
+reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
+sha2 = "0.9"
+shell-words = "1.0"
+simplelog = "0.8"
+snafu = "0.6"
+structopt = { version = "0.3", default-features = false  }
+tempfile = "3.1"
+toml = "0.5"
+url = { version = "2.1.0", features = ["serde"] }

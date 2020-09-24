@@ -5,6 +5,7 @@ use parse_datetime::parse_offset;
 use serde::{Deserialize, Deserializer};
 use snafu::ResultExt;
 use std::collections::{HashMap, VecDeque};
+use std::convert::TryFrom;
 use std::fs;
 use std::path::{Path, PathBuf};
 use url::Url;
@@ -13,8 +14,6 @@ use url::Url;
 #[derive(Debug, Deserialize)]
 pub struct InfraConfig {
     // Repo subcommand config
-    pub root_role_path: Option<PathBuf>,
-    pub signing_keys: Option<HashMap<String, SigningKeyConfig>>,
     pub repo: Option<HashMap<String, RepoConfig>>,
 
     // Config for AWS specific subcommands
@@ -56,16 +55,48 @@ pub struct AwsRegionConfig {
 // These variant names are lowercase because they have to match the text in Infra.toml, and it's
 // more common for TOML config to be lowercase.
 #[allow(non_camel_case_types)]
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum SigningKeyConfig {
     file { path: PathBuf },
     kms { key_id: String },
     ssm { parameter: String },
 }
 
-/// Location of existing published repo
+impl TryFrom<SigningKeyConfig> for Url {
+    type Error = ();
+    fn try_from(key: SigningKeyConfig) -> std::result::Result<Self, Self::Error> {
+        match key {
+            SigningKeyConfig::file { path } => Url::from_file_path(path),
+            // We don't support passing profiles to tough in the name of the key/parameter, so for
+            // KMS and SSM we prepend a slash if there isn't one present.
+            SigningKeyConfig::kms { key_id } => {
+                let key_id = if key_id.starts_with('/') {
+                    key_id.to_string()
+                } else {
+                    format!("/{}", key_id)
+                };
+                Url::parse(&format!("aws-kms://{}", key_id)).map_err(|_| ())
+            }
+            SigningKeyConfig::ssm { parameter } => {
+                let parameter = if parameter.starts_with('/') {
+                    parameter.to_string()
+                } else {
+                    format!("/{}", parameter)
+                };
+                Url::parse(&format!("aws-ssm://{}", parameter)).map_err(|_| ())
+            }
+        }
+    }
+}
+
+/// Represents a Bottlerocket repo's location and the metadata needed to update the repo
 #[derive(Debug, Deserialize)]
 pub struct RepoConfig {
+    pub root_role_url: Option<Url>,
+    pub root_role_sha512: Option<String>,
+
+    pub signing_keys: Option<SigningKeyConfig>,
+
     pub metadata_base_url: Option<Url>,
     pub targets_url: Option<Url>,
 }

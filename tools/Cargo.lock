@@ -1365,6 +1365,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pubsys-setup"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "log",
+ "pubsys-config",
+ "reqwest",
+ "sha2 0.9.1",
+ "shell-words",
+ "simplelog",
+ "snafu",
+ "structopt",
+ "tempfile",
+ "toml",
+ "url",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1983,6 +2001,12 @@ dependencies = [
  "libc",
  "winapi 0.3.9",
 ]
+
+[[package]]
+name = "shell-words"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6fa3938c99da4914afedd13bf3d79bcb6c277d1b2c398d23257a304d9e1b074"
 
 [[package]]
 name = "shlex"

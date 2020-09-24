@@ -3,4 +3,5 @@ members = [
     "buildsys",
     "pubsys",
     "pubsys-config",
+    "pubsys-setup",
 ]

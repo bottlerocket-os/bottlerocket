@@ -1,4 +1,3 @@
-/bin/buildsys
-/bin/pubsys
+/bin
 /.crates.toml
 /.crates2.json

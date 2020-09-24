@@ -31,8 +31,6 @@ PUBLISH_WAVE_POLICY_PATH = "${BUILDSYS_ROOT_DIR}/sources/updater/waves/default-w
 PUBLISH_INFRA_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Infra.toml"
 # Default repo to read from PUBLISH_INFRA_CONFIG_PATH
 PUBLISH_REPO = "default"
-# Default signing key to use from PUBLISH_INFRA_CONFIG_PATH
-PUBLISH_KEY = "default"
 
 # The size in GiB of the data volume in the block device mapping of registered
 # AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
@@ -87,6 +85,10 @@ BUILDSYS_VERSION_FULL="${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 BUILDSYS_NAME_VARIANT="${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
 BUILDSYS_NAME_VERSION="${BUILDSYS_NAME}-${BUILDSYS_VERSION_FULL}"
 BUILDSYS_NAME_FULL="${BUILDSYS_NAME_VARIANT}-${BUILDSYS_VERSION_FULL}"
+# Path to repo-specific root role.
+PUBLISH_REPO_ROOT_JSON = "${BUILDSYS_ROOT_DIR}/roles/${PUBLISH_REPO}.root.json"
+# If you don't specify a signing key in Infra.toml, we generate one at this path.
+PUBLISH_REPO_KEY = "${BUILDSYS_ROOT_DIR}/keys/${PUBLISH_REPO}.pem"
 # Repo directories have subdirectories for variant/arch, so we only want version here.
 PUBLISH_REPO_BASE_DIR = "${BUILDSYS_BUILD_DIR}/repos"
 PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${BUILDSYS_NAME_VERSION}"
@@ -194,6 +196,21 @@ cargo install \
 '''
 ]
 
+# Note: this is separate from publish-tools because publish-tools takes a while
+# to build and isn't needed to build an image.
+[tasks.publish-setup-tools]
+dependencies = ["setup", "fetch-sources", "tuftool"]
+script = [
+'''
+cargo install \
+  ${CARGO_MAKE_CARGO_ARGS} \
+  --path tools/pubsys-setup \
+  --root tools \
+  --force \
+  --quiet
+'''
+]
+
 [tasks.publish-tools]
 dependencies = ["setup", "fetch-sources"]
 script = [
@@ -208,7 +225,7 @@ cargo install \
 ]
 
 [tasks.build-packages]
-dependencies = ["build-tools"]
+dependencies = ["build-tools", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
@@ -292,6 +309,37 @@ dependencies = [
 [tasks.world]
 alias = "build"
 
+[tasks.tuftool]
+script = [
+'''
+cargo install \
+  --jobs ${BUILDSYS_JOBS} \
+  --root tools \
+  --quiet \
+  tuftool
+'''
+]
+
+[tasks.publish-setup]
+dependencies = ["publish-setup-tools"]
+script = [
+'''
+set -e
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+if [ "${ALLOW_MISSING_KEY}" = "true" ]; then
+   ALLOW_MISSING_KEY_ARG="--allow-missing-key"
+fi
+
+pubsys-setup \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --default-key-path "${PUBLISH_REPO_KEY}" \
+   --repo "${PUBLISH_REPO}" \
+   ${ALLOW_MISSING_KEY_ARG}
+'''
+]
+
 # Builds a local repository based on the 'latest' built targets.  Uses pubsys
 # to create a repo under /build/repos, named after the arch/variant/version,
 # containing subdirectories for the repo metadata and targets.
@@ -299,7 +347,7 @@ alias = "build"
 # Rather than depend on "build", which currently rebuilds images each run, we
 # check for the image files below to save time.  This does mean that `cargo
 # make` must be run before `cargo make repo`.
-dependencies = ["publish-tools"]
+dependencies = ["publish-setup", "publish-tools"]
 script_runner = "bash"
 script = [
 '''
@@ -350,7 +398,9 @@ pubsys \
    \
    ${RELEASE_START_TIME:+--release-start-time ${RELEASE_START_TIME}} \
    \
-   --signing-key "${PUBLISH_KEY}" \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --default-key-path "${PUBLISH_REPO_KEY}" \
+   \
    --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
 
 ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_BASE_DIR}/latest"

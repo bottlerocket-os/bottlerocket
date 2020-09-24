@@ -7,3 +7,5 @@
 /html
 /Infra.toml
 /*.pem
+/keys
+/roles
