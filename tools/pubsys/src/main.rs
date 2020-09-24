@@ -21,13 +21,9 @@ Configuration comes from:
 #![deny(rust_2018_idioms)]
 
 mod aws;
-mod config;
 mod repo;
 
-use chrono::Duration;
-use parse_datetime::parse_offset;
 use semver::Version;
-use serde::{Deserialize, Deserializer};
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::ResultExt;
 use std::path::PathBuf;
@@ -115,15 +111,6 @@ pub(crate) fn friendly_version(
     };
 
     Version::parse(version_str)
-}
-
-/// Deserializes a Duration in the form of "in X hours/days/weeks"
-pub(crate) fn deserialize_offset<'de, D>(deserializer: D) -> std::result::Result<Duration, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s: &str = Deserialize::deserialize(deserializer)?;
-    parse_offset(s).map_err(serde::de::Error::custom)
 }
 
 mod error {

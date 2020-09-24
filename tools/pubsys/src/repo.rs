@@ -2,12 +2,12 @@
 
 mod transport;
 
-use crate::config::{InfraConfig, RepoExpirationPolicy, SigningKeyConfig};
 use crate::{friendly_version, Args};
 use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use log::{debug, info, trace};
 use parse_datetime::parse_datetime;
+use pubsys_config::{InfraConfig, RepoExpirationPolicy, SigningKeyConfig};
 use semver::Version;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::convert::TryInto;
@@ -557,7 +557,7 @@ mod error {
         },
 
         #[snafu(display("Error reading config: {}", source))]
-        Config { source: crate::config::Error },
+        Config { source: pubsys_config::Error },
 
         #[snafu(display("Failed to create directory '{}': {}", path.display(), source))]
         CreateDir { path: PathBuf, source: io::Error },

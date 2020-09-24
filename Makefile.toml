@@ -244,8 +244,7 @@ script = [
 '''
 [ "${BUILDSYS_ALLOW_FAILED_LICENSE_CHECK}" = "true" ] && set +e
 (cd sources && cargo deny check --disable-fetch licenses)
-(cd tools/buildsys && cargo deny check --disable-fetch licenses)
-(cd tools/pubsys && cargo deny check --disable-fetch licenses)
+(cd tools && cargo deny check --disable-fetch licenses)
 set -e
 '''
 ]

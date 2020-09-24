@@ -7,7 +7,7 @@ pub(crate) mod wait;
 
 use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots};
 use crate::aws::{client::build_client, region_from_string};
-use crate::config::{AwsConfig, InfraConfig};
+use pubsys_config::{AwsConfig, InfraConfig};
 use crate::Args;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
@@ -483,7 +483,7 @@ mod error {
 
         #[snafu(display("Error reading config: {}", source))]
         Config {
-            source: crate::config::Error,
+            source: pubsys_config::Error,
         },
 
         #[snafu(display("Failed to create file '{}': {}", path.display(), source))]

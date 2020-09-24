@@ -11,6 +11,7 @@ async-trait = "0.1.36"
 chrono = "0.4"
 clap = "2.33"
 coldsnap = "0.1"
+pubsys-config = { path = "../pubsys-config/" }
 futures = "0.3.5"
 indicatif = "0.15.0"
 lazy_static = "1.4"

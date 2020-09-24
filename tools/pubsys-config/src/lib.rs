@@ -1,8 +1,8 @@
 //! The config module owns the definition and loading process for our configuration sources.
 
-use crate::deserialize_offset;
 use chrono::Duration;
-use serde::Deserialize;
+use parse_datetime::parse_offset;
+use serde::{Deserialize, Deserializer};
 use snafu::ResultExt;
 use std::collections::{HashMap, VecDeque};
 use std::fs;
@@ -11,19 +11,19 @@ use url::Url;
 
 /// Configuration needed to load and create repos
 #[derive(Debug, Deserialize)]
-pub(crate) struct InfraConfig {
+pub struct InfraConfig {
     // Repo subcommand config
-    pub(crate) root_role_path: Option<PathBuf>,
-    pub(crate) signing_keys: Option<HashMap<String, SigningKeyConfig>>,
-    pub(crate) repo: Option<HashMap<String, RepoConfig>>,
+    pub root_role_path: Option<PathBuf>,
+    pub signing_keys: Option<HashMap<String, SigningKeyConfig>>,
+    pub repo: Option<HashMap<String, RepoConfig>>,
 
     // Config for AWS specific subcommands
-    pub(crate) aws: Option<AwsConfig>,
+    pub aws: Option<AwsConfig>,
 }
 
 impl InfraConfig {
     /// Deserializes an InfraConfig from a given path
-    pub(crate) fn from_path<P>(path: P) -> Result<InfraConfig>
+    pub fn from_path<P>(path: P) -> Result<InfraConfig>
     where
         P: AsRef<Path>,
     {
@@ -35,21 +35,21 @@ impl InfraConfig {
 
 /// AWS-specific infrastructure configuration
 #[derive(Debug, Default, Deserialize)]
-pub(crate) struct AwsConfig {
+pub struct AwsConfig {
     #[serde(default)]
-    pub(crate) regions: VecDeque<String>,
-    pub(crate) role: Option<String>,
-    pub(crate) profile: Option<String>,
+    pub regions: VecDeque<String>,
+    pub role: Option<String>,
+    pub profile: Option<String>,
     #[serde(default)]
-    pub(crate) region: HashMap<String, AwsRegionConfig>,
-    pub(crate) ssm_prefix: Option<String>,
+    pub region: HashMap<String, AwsRegionConfig>,
+    pub ssm_prefix: Option<String>,
 }
 
 /// AWS region-specific configuration
 #[derive(Debug, Deserialize)]
-pub(crate) struct AwsRegionConfig {
-    pub(crate) role: Option<String>,
-    pub(crate) endpoint: Option<String>,
+pub struct AwsRegionConfig {
+    pub role: Option<String>,
+    pub endpoint: Option<String>,
 }
 
 /// Location of signing keys
@@ -57,7 +57,7 @@ pub(crate) struct AwsRegionConfig {
 // more common for TOML config to be lowercase.
 #[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
-pub(crate) enum SigningKeyConfig {
+pub enum SigningKeyConfig {
     file { path: PathBuf },
     kms { key_id: String },
     ssm { parameter: String },
@@ -65,25 +65,25 @@ pub(crate) enum SigningKeyConfig {
 
 /// Location of existing published repo
 #[derive(Debug, Deserialize)]
-pub(crate) struct RepoConfig {
-    pub(crate) metadata_base_url: Option<Url>,
-    pub(crate) targets_url: Option<Url>,
+pub struct RepoConfig {
+    pub metadata_base_url: Option<Url>,
+    pub targets_url: Option<Url>,
 }
 
 /// How long it takes for each metadata type to expire
 #[derive(Debug, Deserialize)]
-pub(crate) struct RepoExpirationPolicy {
+pub struct RepoExpirationPolicy {
     #[serde(deserialize_with = "deserialize_offset")]
-    pub(crate) snapshot_expiration: Duration,
+    pub snapshot_expiration: Duration,
     #[serde(deserialize_with = "deserialize_offset")]
-    pub(crate) targets_expiration: Duration,
+    pub targets_expiration: Duration,
     #[serde(deserialize_with = "deserialize_offset")]
-    pub(crate) timestamp_expiration: Duration,
+    pub timestamp_expiration: Duration,
 }
 
 impl RepoExpirationPolicy {
     /// Deserializes a RepoExpirationPolicy from a given path
-    pub(crate) fn from_path<P>(path: P) -> Result<RepoExpirationPolicy>
+    pub fn from_path<P>(path: P) -> Result<RepoExpirationPolicy>
     where
         P: AsRef<Path>,
     {
@@ -93,6 +93,15 @@ impl RepoExpirationPolicy {
     }
 }
 
+/// Deserializes a Duration in the form of "in X hours/days/weeks"
+fn deserialize_offset<'de, D>(deserializer: D) -> std::result::Result<Duration, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(deserializer)?;
+    parse_offset(s).map_err(serde::de::Error::custom)
+}
+
 mod error {
     use snafu::Snafu;
     use std::io;
@@ -100,7 +109,7 @@ mod error {
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
-    pub(crate) enum Error {
+    pub enum Error {
         #[snafu(display("Failed to read '{}': {}", path.display(), source))]
         File { path: PathBuf, source: io::Error },
 
@@ -111,5 +120,5 @@ mod error {
         },
     }
 }
-pub(crate) use error::Error;
-type Result<T> = std::result::Result<T, error::Error>;
+pub use error::Error;
+pub type Result<T> = std::result::Result<T, error::Error>;

@@ -1,4 +1,4 @@
-use crate::config::AwsConfig;
+use pubsys_config::AwsConfig;
 use rusoto_core::Region;
 use snafu::ResultExt;
 

@@ -5,7 +5,7 @@ pub(crate) mod ssm;
 pub(crate) mod template;
 
 use crate::aws::{ami::Image, client::build_client, parse_arch, region_from_string};
-use crate::config::{AwsConfig, InfraConfig};
+use pubsys_config::{AwsConfig, InfraConfig};
 use crate::Args;
 use log::{info, trace};
 use rusoto_core::Region;
@@ -304,7 +304,7 @@ mod error {
 
         #[snafu(display("Error reading config: {}", source))]
         Config {
-            source: crate::config::Error,
+            source: pubsys_config::Error,
         },
 
         #[snafu(display("Failed to deserialize input from '{}': {}", path.display(), source))]

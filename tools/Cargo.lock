@@ -1326,6 +1326,7 @@ dependencies = [
  "lazy_static",
  "log",
  "parse-datetime",
+ "pubsys-config",
  "reqwest",
  "rusoto_core 0.45.0",
  "rusoto_credential 0.45.0",
@@ -1348,6 +1349,18 @@ dependencies = [
  "tough-kms",
  "tough-ssm",
  "update_metadata",
+ "url",
+]
+
+[[package]]
+name = "pubsys-config"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "parse-datetime",
+ "serde",
+ "snafu",
+ "toml",
  "url",
 ]
 

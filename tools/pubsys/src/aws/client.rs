@@ -1,4 +1,4 @@
-use crate::config::AwsConfig;
+use pubsys_config::AwsConfig;
 use async_trait::async_trait;
 use rusoto_core::{request::DispatchSignedRequest, HttpClient, Region};
 use rusoto_credential::{
