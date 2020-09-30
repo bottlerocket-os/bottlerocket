@@ -22,7 +22,7 @@ Some notable features include:
 
 ## Contact us
 
-If you find a security issue, please [contact our security team](https://github.com/bottlerocket-os/bottlerocket/security/policy) rather than opening an issue.
+If you find any security issue, please [contact our security team](https://github.com/bottlerocket-os/bottlerocket/security/policy) rather than opening an issue.
 
 If you're interested in contributing, thank you!
 Please see our [contributor's guide](CONTRIBUTING.md).
