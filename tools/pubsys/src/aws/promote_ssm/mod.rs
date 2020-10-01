@@ -4,7 +4,7 @@
 use crate::aws::client::build_client;
 use crate::aws::{parse_arch, region_from_string};
 use crate::aws::ssm::{key_difference, ssm, template, BuildContext, SsmKey};
-use crate::config::InfraConfig;
+use pubsys_config::InfraConfig;
 use crate::Args;
 use log::{info, trace};
 use rusoto_core::Region;
@@ -231,7 +231,7 @@ mod error {
 
         #[snafu(display("Error reading config: {}", source))]
         Config {
-            source: crate::config::Error,
+            source: pubsys_config::Error,
         },
 
         #[snafu(display("Found no parameters in source version {}", version))]

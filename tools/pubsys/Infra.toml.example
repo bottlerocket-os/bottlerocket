@@ -2,30 +2,35 @@
 # creates repos when you call `cargo make repo`.  Save a copy as `Infra.toml`
 # at the root of the repo, then edit the settings below to match your use case.
 
-# Path to your root role JSON file.
-root_role_path = "/home/user/root.json"
-
-# You would normally create repo signing keys using `tuftool root gen-rsa-key`
-# as part of the initial setup of your TUF roles.  pubsys assumes a single
-# publication key that lives in the snapshot, targets, and timestamp roles.
-# Here you specify where that key lives so we can sign the created repo.
-# You can specify multiple keys, if you like, and select one by name:
-#     cargo make repo -e PUBLISH_KEY=mysigningkey
-# (Don't keep your keys in the repo!)
-# You can keep your private key in a file or an SSM parameter; pick one:
-# (Need inline table syntax until this is fixed: https://github.com/alexcrichton/toml-rs/issues/225)
-signing_keys = { default = { file = { path = "/home/user/key.pem" } } }
-# signing_keys = { default = { ssm = { parameter = "/my/parameter" } } }
-
 # You can have any number of repos defined and build a specific one by running like this:
 #     cargo make repo -e PUBLISH_REPO=myrepo
-# If the URLs are uncommented, they will be pulled and used as a starting
+[repo.default]
+# URL to your root role JSON file; can be a file:// URL for local files.  If
+# you don't specify one here, a file will be generated for you under /roles.
+# For production use, you should store them somewhere safer.
+root_role_url = "https://example.com/root.json"
+# SHA512 checksum of your root role JSON file.
+root_role_sha512 = "0123456789abcdef"
+
+# For reference, this is the Bottlerocket root role:
+#root_role_url = "https://cache.bottlerocket.aws/root.json"
+#root_role_sha512 = "90393204232a1ad6b0a45528b1f7df1a3e37493b1e05b1c149f081849a292c8dafb4ea5f7ee17bcc664e35f66e37e4cfa4aae9de7a2a28aa31ae6ac3d9bea4d5"
+
+# pubsys assumes a single publication key that signs the snapshot, targets,
+# and timestamp roles.  Here you specify where that key lives so we can sign
+# the created repo.  If you don't specify one here, a key will be generated for
+# you under /keys.  For production use, you should use a key stored in a
+# trusted service like KMS or SSM.
+# (Need inline table syntax until this is fixed: https://github.com/alexcrichton/toml-rs/issues/225)
+signing_keys = { file = { path = "/home/user/key.pem" } }
+#signing_keys = { kms = { key_id = "abc-def-123" } }
+#signing_keys = { ssm = { parameter = "/my/parameter" } }
+
+# If these URLs are uncommented, the repo will be pulled and used as a starting
 # point, and your images (and related files) will be added as a new update in
 # the created repo.  Otherwise, we build a new repo from scratch.
-
-[repo.default]
-# metadata_base_url = "https://example.com/metadata/"
-# targets_url = "https://example.com/targets/"
+metadata_base_url = "https://example.com/metadata/"
+targets_url = "https://example.com/targets/"
 
 [aws]
 # The list of regions in which you want to publish AMIs. We register an AMI in

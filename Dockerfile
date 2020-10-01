@@ -44,15 +44,18 @@ ARG PACKAGE
 ARG ARCH
 ARG NOCACHE
 ARG VARIANT
+ARG REPO
 ENV VARIANT=${VARIANT}
 WORKDIR /home/builder
 
 USER builder
 ENV PACKAGE=${PACKAGE} ARCH=${ARCH}
+COPY --chown=builder roles/${REPO}.root.json ./rpmbuild/BUILD/root.json
 COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/ .
 RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \
    && echo "%_cross_variant ${VARIANT}" >> .rpmmacros \
+   && echo "%_cross_repo_root_json %{_builddir}/root.json" >> .rpmmacros \
    && rm ${ARCH} shared rust cargo \
    && mv *.spec rpmbuild/SPECS \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \

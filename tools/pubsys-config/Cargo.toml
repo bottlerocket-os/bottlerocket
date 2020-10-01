@@ -1,0 +1,15 @@
+[package]
+name = "pubsys-config"
+version = "0.1.0"
+authors = ["Zac Mrowicki <mrowicki@amazon.com>", "Tom Kirchner <tjk@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+
+[dependencies]
+chrono = "0.4"
+parse-datetime = { path = "../../sources/parse-datetime" }
+serde = { version = "1.0", features = ["derive"]  }
+snafu = "0.6"
+toml = "0.5"
+url = { version = "2.1.0", features = ["serde"] }

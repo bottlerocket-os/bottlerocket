@@ -1,5 +1,5 @@
 use crate::aws::client::build_client;
-use crate::config::AwsConfig;
+use pubsys_config::AwsConfig;
 use log::info;
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeImagesRequest, Ec2, Ec2Client};

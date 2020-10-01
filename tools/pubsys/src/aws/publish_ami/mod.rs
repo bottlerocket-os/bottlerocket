@@ -5,7 +5,7 @@ use crate::aws::ami::wait::{self, wait_for_ami};
 use crate::aws::ami::Image;
 use crate::aws::client::build_client;
 use crate::aws::region_from_string;
-use crate::config::InfraConfig;
+use pubsys_config::InfraConfig;
 use crate::Args;
 use futures::future::{join, ready};
 use futures::stream::{self, StreamExt};
@@ -519,7 +519,7 @@ mod error {
 
         #[snafu(display("Error reading config: {}", source))]
         Config {
-            source: crate::config::Error,
+            source: pubsys_config::Error,
         },
 
         #[snafu(display("Failed to describe images in {}: {}", region, source))]

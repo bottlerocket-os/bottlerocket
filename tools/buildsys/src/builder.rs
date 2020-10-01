@@ -48,15 +48,21 @@ impl PackageBuilder {
         // themselves in the package's spec file.
         let var = "BUILDSYS_VARIANT";
         let variant = env::var(var).context(error::Environment { var })?;
+        // Same for repo, which is used to determine the correct root.json, which is only included
+        // in the os package.
+        let var = "PUBLISH_REPO";
+        let repo = env::var(var).context(error::Environment { var })?;
 
         let target = "package";
         let build_args = format!(
             "--build-arg PACKAGE={package} \
              --build-arg ARCH={arch} \
-             --build-arg VARIANT={variant}",
+             --build-arg VARIANT={variant} \
+             --build-arg REPO={repo}",
             package = package,
             arch = arch,
             variant = variant,
+            repo = repo,
         );
         let tag = format!(
             "buildsys-pkg-{package}-{arch}",
