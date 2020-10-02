@@ -127,6 +127,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "e2fsprogs"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "util-linux",
+]
+
+[[package]]
 name = "ecs-agent"
 version = "0.1.0"
 dependencies = [
