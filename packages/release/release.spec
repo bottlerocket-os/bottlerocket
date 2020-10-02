@@ -33,6 +33,7 @@ Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}dbus-broker
+Requires: %{_cross_os}e2fsprogs
 Requires: %{_cross_os}libgcc
 Requires: %{_cross_os}libstd-rust
 Requires: %{_cross_os}filesystem
