@@ -144,6 +144,8 @@ aws iam attach-role-policy \
    --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 ```
 
+**Note:** The instance also need permission to access ECR repository where [default control container](https://github.com/bottlerocket-os/bottlerocket-control-container) live; the appropriate policy to add to INSTANCE_ROLE_NAME role is `AmazonEC2ContainerRegistryReadOnly`
+
 Next, to retrieve the instance profile name used to launch instances, run this:
 
 ```
