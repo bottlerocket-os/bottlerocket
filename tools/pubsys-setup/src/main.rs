@@ -188,81 +188,83 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
             InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
         trace!("Parsed infra config: {:?}", infra_config);
 
-        let repo_config = infra_config
+        // Check whether the user has the relevant repo defined in their Infra.toml.
+        if let Some(repo_config) = infra_config
             .repo
             .as_ref()
-            .context(error::MissingConfig {
-                missing: "repo section",
-            })?
-            .get(&args.repo)
-            .context(error::MissingConfig {
-                missing: format!("definition for repo {}", &args.repo),
-            })?;
-
-        // If they have a root role URL and checksum defined, we can download it.
-        if let (Some(url), Some(sha512)) =
-            (&repo_config.root_role_url, &repo_config.root_role_sha512)
+            .and_then(|repo_section| repo_section.get(&args.repo))
         {
-            // If it's already been downloaded, just confirm the checksum.
-            if args.root_role_path.exists() {
-                let root_role_data =
-                    fs::read_to_string(&args.root_role_path).context(error::ReadFile {
+            // If they have a root role URL and checksum defined, we can download it.
+            if let (Some(url), Some(sha512)) =
+                (&repo_config.root_role_url, &repo_config.root_role_sha512)
+            {
+                // If it's already been downloaded, just confirm the checksum.
+                if args.root_role_path.exists() {
+                    let root_role_data =
+                        fs::read_to_string(&args.root_role_path).context(error::ReadFile {
+                            path: &args.root_role_path,
+                        })?;
+                    let mut d = Sha512::new();
+                    d.update(&root_role_data);
+                    let digest = hex::encode(d.finalize());
+
+                    ensure!(
+                        &digest == sha512,
+                        error::Hash {
+                            expected: sha512,
+                            got: digest,
+                            thing: args.root_role_path.to_string_lossy()
+                        }
+                    );
+                    debug!(
+                        "Using existing downloaded root role at {}",
+                        args.root_role_path.display()
+                    );
+                } else {
+                    // Download the root role by URL and verify its checksum before writing it.
+                    let root_role_data = reqwest::blocking::get(url.clone())
+                        .with_context(|| error::GetUrl { url: url.clone() })?
+                        .text()
+                        .with_context(|| error::GetUrl { url: url.clone() })?;
+
+                    let mut d = Sha512::new();
+                    d.update(&root_role_data);
+                    let digest = hex::encode(d.finalize());
+
+                    ensure!(
+                        &digest == sha512,
+                        error::Hash {
+                            expected: sha512,
+                            got: digest,
+                            thing: url.to_string()
+                        }
+                    );
+
+                    // Write root role to expected path on disk.
+                    fs::write(&args.root_role_path, &root_role_data).context(error::WriteFile {
                         path: &args.root_role_path,
                     })?;
-                let mut d = Sha512::new();
-                d.update(&root_role_data);
-                let digest = hex::encode(d.finalize());
+                    debug!("Downloaded root role to {}", args.root_role_path.display());
+                }
 
-                ensure!(
-                    &digest == sha512,
-                    error::Hash {
-                        expected: sha512,
-                        got: digest,
-                        thing: args.root_role_path.to_string_lossy()
-                    }
-                );
-                debug!(
-                    "Using existing downloaded root role at {}",
-                    args.root_role_path.display()
-                );
-            } else {
-                // Download the root role by URL and verify its checksum before writing it.
-                let root_role_data = reqwest::blocking::get(url.clone())
-                    .with_context(|| error::GetUrl { url: url.clone() })?
-                    .text()
-                    .with_context(|| error::GetUrl { url: url.clone() })?;
-
-                let mut d = Sha512::new();
-                d.update(&root_role_data);
-                let digest = hex::encode(d.finalize());
-
-                ensure!(
-                    &digest == sha512,
-                    error::Hash {
-                        expected: sha512,
-                        got: digest,
-                        thing: url.to_string()
-                    }
-                );
-
-                // Write root role to expected path on disk.
-                fs::write(&args.root_role_path, &root_role_data).context(error::WriteFile {
-                    path: &args.root_role_path,
-                })?;
-                debug!("Downloaded root role to {}", args.root_role_path.display());
+                root_role_path = Some(&args.root_role_path);
+            } else if repo_config.root_role_url.is_some() || repo_config.root_role_sha512.is_some()
+            {
+                // Must specify both URL and checksum.
+                error::RootRoleConfig.fail()?;
             }
 
-            root_role_path = Some(&args.root_role_path);
-        } else if repo_config.root_role_url.is_some() || repo_config.root_role_sha512.is_some() {
-            // Must specify both URL and checksum.
-            error::RootRoleConfig.fail()?;
-        }
-
-        if let Some(key_config) = &repo_config.signing_keys {
-            key_url = Some(
-                Url::try_from(key_config.clone())
-                    .ok()
-                    .context(error::SigningKeyUrl { repo: &args.repo })?,
+            if let Some(key_config) = &repo_config.signing_keys {
+                key_url = Some(
+                    Url::try_from(key_config.clone())
+                        .ok()
+                        .context(error::SigningKeyUrl { repo: &args.repo })?,
+                );
+            }
+        } else {
+            info!(
+                "No repo config in '{}' - using local roles/keys",
+                args.infra_config_path.display()
             );
         }
     } else {
@@ -331,9 +333,6 @@ mod error {
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
-
-        #[snafu(display("Infra.toml is missing {}", missing))]
-        MissingConfig { missing: String },
 
         #[snafu(display("'{}' repo has root role but no key.  You wouldn't be able to update a repo without the matching key.  To continue, pass '-e ALLOW_MISSING_KEY=true'", repo))]
         MissingKey { repo: String },
