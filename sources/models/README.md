@@ -35,6 +35,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-k8s-1.17/mod.rs)
 * [Overridden defaults](src/aws-k8s-1.17/override-defaults.toml)
 
+### aws-k8s-1.18: Kubernetes 1.18
+
+* [Model](src/aws-k8s-1.18/mod.rs)
+* [Overridden defaults](src/aws-k8s-1.18/override-defaults.toml)
+
 ### aws-ecs-1: Amazon ECS
 
 * [Model](src/aws-ecs-1/mod.rs)

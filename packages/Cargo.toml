@@ -29,6 +29,7 @@ members = [
     "kubernetes-1.15",
     "kubernetes-1.16",
     "kubernetes-1.17",
+    "kubernetes-1.18",
     "libacl",
     "libattr",
     "libaudit",

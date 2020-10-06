@@ -45,6 +45,13 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.16, 1.17, and 1.18 clusters.
 
+### aws-k8s-1.18: Kubernetes 1.18 node
+
+The [aws-k8s-1.18](aws-k8s-1.18/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.17, 1.18, and 1.19 clusters.
+
 ### aws-ecs-1: Amazon ECS container instance
 
 The [aws-ecs-1](aws-ecs-1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
