@@ -5,9 +5,9 @@ pub(crate) mod ssm;
 pub(crate) mod template;
 
 use crate::aws::{ami::Image, client::build_client, parse_arch, region_from_string};
-use pubsys_config::{AwsConfig, InfraConfig};
 use crate::Args;
 use log::{info, trace};
+use pubsys_config::{AwsConfig, InfraConfig};
 use rusoto_core::Region;
 use rusoto_ssm::SsmClient;
 use serde::Serialize;
@@ -71,17 +71,23 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     } else {
         aws.regions.clone().into()
     };
-    ensure!(!regions.is_empty(), error::MissingConfig { missing: "aws.regions" });
+    ensure!(
+        !regions.is_empty(),
+        error::MissingConfig {
+            missing: "aws.regions"
+        }
+    );
     let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegion)?;
 
     let amis = parse_ami_input(&regions, &ssm_args, &aws)?;
 
     let mut ssm_clients = HashMap::with_capacity(amis.len());
     for region in amis.keys() {
-        let ssm_client = build_client::<SsmClient>(&region, &base_region, &aws).context(error::Client {
-            client_type: "SSM",
-            region: region.name(),
-        })?;
+        let ssm_client =
+            build_client::<SsmClient>(&region, &base_region, &aws).context(error::Client {
+                client_type: "SSM",
+                region: region.name(),
+            })?;
         ssm_clients.insert(region.clone(), ssm_client);
     }
 
@@ -185,7 +191,11 @@ pub(crate) struct BuildContext<'a> {
 type SsmParameters = HashMap<SsmKey, String>;
 
 /// Parse the AMI input file
-fn parse_ami_input(regions: &[String], ssm_args: &SsmArgs, aws: &AwsConfig) -> Result<HashMap<Region, Image>> {
+fn parse_ami_input(
+    regions: &[String],
+    ssm_args: &SsmArgs,
+    aws: &AwsConfig,
+) -> Result<HashMap<Region, Image>> {
     info!("Using AMI data from path: {}", ssm_args.ami_input.display());
     let file = File::open(&ssm_args.ami_input).context(error::File {
         op: "open",

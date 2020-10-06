@@ -1,5 +1,5 @@
-use pubsys_config::AwsConfig;
 use async_trait::async_trait;
+use pubsys_config::AwsConfig;
 use rusoto_core::{request::DispatchSignedRequest, HttpClient, Region};
 use rusoto_credential::{
     AutoRefreshingProvider, AwsCredentials, CredentialsError, DefaultCredentialsProvider,

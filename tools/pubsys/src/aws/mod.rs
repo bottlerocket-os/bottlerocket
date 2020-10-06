@@ -28,7 +28,11 @@ pub(crate) fn parse_arch(input: &str) -> Result<String> {
     match input {
         "x86_64" | "amd64" => Ok("x86_64".to_string()),
         "arm64" | "aarch64" => Ok("arm64".to_string()),
-        _ => error::ParseArch { input, msg: "unknown architecture" }.fail(),
+        _ => error::ParseArch {
+            input,
+            msg: "unknown architecture",
+        }
+        .fail(),
     }
 }
 
@@ -39,10 +43,7 @@ mod error {
     #[snafu(visibility = "pub(super)")]
     pub(crate) enum Error {
         #[snafu(display("Failed to parse arch '{}': {}", input, msg))]
-        ParseArch {
-            input: String,
-            msg: String
-        },
+        ParseArch { input: String, msg: String },
 
         #[snafu(display("Failed to parse region '{}': {}", name, source))]
         ParseRegion {

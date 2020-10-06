@@ -5,11 +5,11 @@ use crate::aws::ami::wait::{self, wait_for_ami};
 use crate::aws::ami::Image;
 use crate::aws::client::build_client;
 use crate::aws::region_from_string;
-use pubsys_config::InfraConfig;
 use crate::Args;
 use futures::future::{join, ready};
 use futures::stream::{self, StreamExt};
 use log::{debug, error, info, trace};
+use pubsys_config::InfraConfig;
 use rusoto_core::{Region, RusotoError};
 use rusoto_ec2::{
     DescribeImagesRequest, Ec2, Ec2Client, ModifyImageAttributeRequest,
