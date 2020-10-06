@@ -2,11 +2,11 @@
 //! SSM parameters from one version to another
 
 use crate::aws::client::build_client;
-use crate::aws::{parse_arch, region_from_string};
 use crate::aws::ssm::{key_difference, ssm, template, BuildContext, SsmKey};
-use pubsys_config::InfraConfig;
+use crate::aws::{parse_arch, region_from_string};
 use crate::Args;
 use log::{info, trace};
+use pubsys_config::InfraConfig;
 use rusoto_core::Region;
 use rusoto_ssm::SsmClient;
 use snafu::{ensure, ResultExt};
@@ -71,15 +71,21 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     .map(|name| region_from_string(&name, &aws).context(error::ParseRegion))
     .collect::<Result<Vec<Region>>>()?;
 
-    ensure!(!regions.is_empty(), error::MissingConfig { missing: "aws.regions" });
+    ensure!(
+        !regions.is_empty(),
+        error::MissingConfig {
+            missing: "aws.regions"
+        }
+    );
     let base_region = &regions[0];
 
     let mut ssm_clients = HashMap::with_capacity(regions.len());
     for region in &regions {
-        let ssm_client = build_client::<SsmClient>(region, &base_region, &aws).context(error::Client {
-            client_type: "SSM",
-            region: region.name(),
-        })?;
+        let ssm_client =
+            build_client::<SsmClient>(region, &base_region, &aws).context(error::Client {
+                client_type: "SSM",
+                region: region.name(),
+            })?;
         ssm_clients.insert(region.clone(), ssm_client);
     }
 

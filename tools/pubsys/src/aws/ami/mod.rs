@@ -7,11 +7,11 @@ pub(crate) mod wait;
 
 use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots};
 use crate::aws::{client::build_client, region_from_string};
-use pubsys_config::{AwsConfig, InfraConfig};
 use crate::Args;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
 use log::{error, info, trace};
+use pubsys_config::{AwsConfig, InfraConfig};
 use register::{get_ami_id, register_image, RegisteredIds};
 use rusoto_core::{Region, RusotoError};
 use rusoto_ebs::EbsClient;
@@ -166,13 +166,18 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         };
         (found_ids, true)
     } else {
-        let new_ids = register_image(ami_args, base_region.name(), base_ebs_client, &base_ec2_client)
-            .await
-            .context(error::RegisterImage {
-                name: &ami_args.name,
-                arch: &ami_args.arch,
-                region: base_region.name(),
-            })?;
+        let new_ids = register_image(
+            ami_args,
+            base_region.name(),
+            base_ebs_client,
+            &base_ec2_client,
+        )
+        .await
+        .context(error::RegisterImage {
+            name: &ami_args.name,
+            arch: &ami_args.arch,
+            region: base_region.name(),
+        })?;
         info!(
             "Registered AMI '{}' in {}: {}",
             ami_args.name,

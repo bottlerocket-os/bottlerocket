@@ -365,9 +365,7 @@ mod error {
             "SSM requests throttled too many times, went beyond our max interval {:?}",
             max_interval
         ))]
-        Throttled {
-            max_interval: Duration,
-        },
+        Throttled { max_interval: Duration },
 
         #[snafu(display("Failed to validate all changes; see above."))]
         ValidateParameters,

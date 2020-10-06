@@ -37,30 +37,22 @@ async fn _register_image(
         region
     );
     let uploader = SnapshotUploader::new(ebs_client);
-    let root_snapshot = snapshot_from_image(
-        &ami_args.root_image,
-        &uploader,
-        None,
-        ami_args.no_progress,
-    )
-    .await
-    .context(error::Snapshot {
-        path: &ami_args.root_image,
-        region,
-    })?;
+    let root_snapshot =
+        snapshot_from_image(&ami_args.root_image, &uploader, None, ami_args.no_progress)
+            .await
+            .context(error::Snapshot {
+                path: &ami_args.root_image,
+                region,
+            })?;
     cleanup_snapshot_ids.push(root_snapshot.clone());
 
-    let data_snapshot = snapshot_from_image(
-        &ami_args.data_image,
-        &uploader,
-        None,
-        ami_args.no_progress,
-    )
-    .await
-    .context(error::Snapshot {
-        path: &ami_args.root_image,
-        region,
-    })?;
+    let data_snapshot =
+        snapshot_from_image(&ami_args.data_image, &uploader, None, ami_args.no_progress)
+            .await
+            .context(error::Snapshot {
+                path: &ami_args.root_image,
+                region,
+            })?;
     cleanup_snapshot_ids.push(data_snapshot.clone());
 
     info!(

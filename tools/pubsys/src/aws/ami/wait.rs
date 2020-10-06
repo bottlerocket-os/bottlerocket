@@ -1,6 +1,6 @@
 use crate::aws::client::build_client;
-use pubsys_config::AwsConfig;
 use log::info;
+use pubsys_config::AwsConfig;
 use rusoto_core::Region;
 use rusoto_ec2::{DescribeImagesRequest, Ec2, Ec2Client};
 use snafu::{ensure, ResultExt};
@@ -40,10 +40,11 @@ pub(crate) async fn wait_for_ami(
         };
         // Use a new client each time so we have more confidence that different endpoints can see
         // the new AMI.
-        let ec2_client = build_client::<Ec2Client>(&region, &sts_region, &aws).context(error::Client {
-            client_type: "EC2",
-            region: region.name(),
-        })?;
+        let ec2_client =
+            build_client::<Ec2Client>(&region, &sts_region, &aws).context(error::Client {
+                client_type: "EC2",
+                region: region.name(),
+            })?;
         let describe_response =
             ec2_client
                 .describe_images(describe_request)
