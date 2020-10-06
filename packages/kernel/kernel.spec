@@ -1,16 +1,15 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel
-Version: 5.4.50
+Version: 5.4.58
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/9e3beaecef0b030d83fb215be7ca67c01009cfec52fe9b12eb4b24fdb46eebce/kernel-5.4.50-25.83.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/36ea759a11e6e364ab8b2bf857c03cdbf53d33e348e785ed6767b87f8ac12c27/kernel-5.4.58-32.125.amzn2.src.rpm
 Source100: config-bottlerocket
 Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
-Patch0002: 0002-net-packet-fix-overflow-in-tpacket_rcv.patch
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
