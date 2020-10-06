@@ -1,6 +1,7 @@
 //! The repo module owns the 'repo' subcommand and controls the process of building a repository.
 
 mod transport;
+pub(crate) mod validate_repo;
 
 use crate::{friendly_version, Args};
 use chrono::{DateTime, Utc};
@@ -39,7 +40,7 @@ lazy_static! {
 pub(crate) struct RepoArgs {
     // Metadata about the update
     #[structopt(long)]
-    /// Use this named repo from Infra.toml
+    /// Use this named repo infrastructure from Infra.toml
     repo: String,
     #[structopt(long)]
     /// The architecture of the repo and the update being added
@@ -254,8 +255,9 @@ where
 /// If the infra config has a repo section defined for the given repo, and it has metadata base and
 /// targets URLs defined, returns those URLs, otherwise None.
 fn repo_urls<'a>(
-    repo_args: &RepoArgs,
     repo_config: &'a RepoConfig,
+    variant: &str,
+    arch: &str,
 ) -> Result<Option<(Url, &'a Url)>> {
     // Check if both URLs are set
     if let Some(metadata_base_url) = repo_config.metadata_base_url.as_ref() {
@@ -265,10 +267,8 @@ fn repo_urls<'a>(
             } else {
                 "/"
             };
-            let metadata_url_str = format!(
-                "{}{}{}/{}",
-                metadata_base_url, base_slash, repo_args.variant, repo_args.arch
-            );
+            let metadata_url_str =
+                format!("{}{}{}/{}", metadata_base_url, base_slash, variant, arch);
             let metadata_url = Url::parse(&metadata_url_str).context(error::ParseUrl {
                 input: &metadata_url_str,
             })?;
@@ -351,7 +351,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
         .join(&repo_args.arch);
     let targets_out_dir = repo_args.outdir.join("targets");
 
-    // If the given metadata directory exists, throw an error.  We dont want to overwrite a user's
+    // If the given metadata directory exists, throw an error.  We don't want to overwrite a user's
     // existing repository.  (The targets directory is shared, so it's fine if that exists.)
     ensure!(
         !Path::exists(&metadata_out_dir),
@@ -381,7 +381,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
         })?;
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
-    let maybe_urls = repo_urls(&repo_args, &repo_config)?;
+    let maybe_urls = repo_urls(&repo_config, &repo_args.variant, &repo_args.arch)?;
     let workdir = tempdir().context(error::TempDir)?;
     let transport = RepoTransport::default();
     let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref()
@@ -603,6 +603,9 @@ mod error {
 
         #[snafu(display("Infra.toml is missing {}", missing))]
         MissingConfig { missing: String },
+
+        #[snafu(display("Repo URLs not specified for repo '{}'", repo))]
+        MissingRepoUrls { repo: String },
 
         #[snafu(display("Failed to create new repo editor: {}", source))]
         NewEditor { source: tough::error::Error },

@@ -3,6 +3,7 @@
 
 Currently implemented:
 * building repos, whether starting from an existing repo or from scratch
+* validating repos by loading them and retrieving their targets
 * registering and copying EC2 AMIs
 * Marking EC2 AMIs public (or private again)
 * setting SSM parameters based on built AMIs
@@ -41,6 +42,14 @@ fn run() -> Result<()> {
 
     match args.subcommand {
         SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::Repo),
+        SubCommand::ValidateRepo(ref validate_repo_args) => {
+            let mut rt = Runtime::new().context(error::Runtime)?;
+            rt.block_on(async {
+                repo::validate_repo::run(&args, &validate_repo_args)
+                    .await
+                    .context(error::ValidateRepo)
+            })
+        }
         SubCommand::Ami(ref ami_args) => {
             let mut rt = Runtime::new().context(error::Runtime)?;
             rt.block_on(async { aws::ami::run(&args, &ami_args).await.context(error::Ami) })
@@ -94,6 +103,7 @@ struct Args {
 #[derive(Debug, StructOpt)]
 enum SubCommand {
     Repo(repo::RepoArgs),
+    ValidateRepo(repo::validate_repo::ValidateRepoArgs),
 
     Ami(aws::ami::AmiArgs),
     PublishAmi(aws::publish_ami::PublishArgs),
@@ -137,6 +147,11 @@ mod error {
 
         #[snafu(display("Failed to build repo: {}", source))]
         Repo { source: crate::repo::Error },
+
+        #[snafu(display("Failed to validate repository: {}", source))]
+        ValidateRepo {
+            source: crate::repo::validate_repo::Error,
+        },
 
         #[snafu(display("Failed to create async runtime: {}", source))]
         Runtime { source: std::io::Error },
