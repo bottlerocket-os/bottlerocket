@@ -1,0 +1,17 @@
+[package]
+name = "e2fsprogs"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.45.6/e2fsprogs-1.45.6.tar.xz"
+sha512 = "f3abfb6fe7ef632bb81152e2127d601cadd3fa93162178576a1d5ed82c2286627184b207b85a5b2a1793db0addf0885dfc3b9523bb340443224caf9c6d613b84"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+util-linux = { path = "../util-linux" }
