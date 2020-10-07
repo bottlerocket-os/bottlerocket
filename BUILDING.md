@@ -64,7 +64,10 @@ cargo make
 ```
 
 This will build an image for the default variant, `aws-k8s-1.17`.
-All packages will be built in turn, and then compiled into an `img` file in the `build/` directory.
+All packages will be built in turn, and then compiled into an `img` file in the `build/images/` directory.
+
+The version number in [Release.toml](Release.toml) will be used in naming the file, and will be used inside the image as the release version.
+If you're planning on [publishing your build](PUBLISHING.md), you may want to change the version.
 
 To build an image for a different variant, run:
 
@@ -72,36 +75,38 @@ To build an image for a different variant, run:
 cargo make -e BUILDSYS_VARIANT=my-variant-here
 ```
 
+To build an image for a different architecture, run:
+
+```
+cargo make -e BUILDSYS_ARCH=my-arch-here
+```
+
+(You can use variant and arch arguments together, too.)
+
 ### Register an AMI
 
 To use the image in Amazon EC2, we need to register the image as an AMI.
-The `bin/amiize.sh` script does this for you.
 
-The script has some assumptions about your setup, in particular that you:
-  * have [aws-cli](https://aws.amazon.com/cli/) set up, and that its default profile can create and control EC2 resources
-  * have [coldsnap](https://github.com/awslabs/coldsnap/) installed to upload snapshots
-  * have a few other common tools installed, like `jq` and `du`
-
-First, decompress the images.
-(Note: these filenames assume an `x86_64` architecture and `aws-k8s-1.17` [variant](README.md).)
+For a simple start, pick an [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions), then run:
 
 ```
-lz4 -d build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64.img.lz4 && \
-lz4 -d build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64-data.img.lz4
+cargo make ami -e PUBLISH_REGIONS=your-region-here
 ```
 
-Next, register an AMI:
+Your new AMI ID will be printed after it's registered.
+
+If you built your image for a different architecture or variant, just use the same arguments here:
 
 ```
-bin/amiize.sh --name YOUR-AMI-NAME-HERE \
-              --arch x86_64 \
-              --region us-west-2 \
-              --root-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64.img \
-              --data-image build/images/x86_64-aws-k8s-1.17/latest/bottlerocket-aws-k8s-1.17-x86_64-data.img
+cargo make ami -e PUBLISH_REGIONS=your-region-here -e BUILDSYS_VARIANT=my-variant-here
 ```
 
-Your new AMI ID will be printed at the end.
+(There's a lot more detail on building and managing AMIs in the [PUBLISHING](PUBLISHING.md) guide.)
 
 ## Use your image
 
 See the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setup guide for Amazon ECS](QUICKSTART-ECS.md) for information on running Bottlerocket images.
+
+## Publish your image
+
+See the [PUBLISHING](PUBLISHING.md) guide for information on deploying Bottlerocket images and repositories.

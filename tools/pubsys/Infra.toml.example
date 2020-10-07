@@ -29,7 +29,7 @@ signing_keys = { file = { path = "/home/user/key.pem" } }
 # If these URLs are uncommented, the repo will be pulled and used as a starting
 # point, and your images (and related files) will be added as a new update in
 # the created repo.  Otherwise, we build a new repo from scratch.
-metadata_base_url = "https://example.com/metadata/"
+metadata_base_url = "https://example.com/"
 targets_url = "https://example.com/targets/"
 
 [aws]

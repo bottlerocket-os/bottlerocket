@@ -57,17 +57,24 @@ Our supported architectures include `x86_64` and `aarch64` (written as `arm64` i
 
 :walking: :running:
 
-To build your own Bottlerocket images, please see [BUILDING](BUILDING.md).
-It describes:
-* how to build an image
-* how to register an EC2 AMI from an image
-
 Bottlerocket is best used with a container orchestrator.
 To get started with Kubernetes, please see [QUICKSTART-EKS](QUICKSTART-EKS.md).
 To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
 These guides describe:
 * how to set up a cluster with the orchestrator, so your Bottlerocket instance can run containers
 * how to launch a Bottlerocket instance in EC2
+
+To build your own Bottlerocket images, please see [BUILDING](BUILDING.md).
+It describes:
+* how to build an image
+* how to register an EC2 AMI from an image
+
+To publish your built Bottlerocket images, please see [PUBLISHING](PUBLISHING.md).
+It describes:
+* how to make TUF repos including your image
+* how to copy your AMI across regions
+* how to mark your AMIs public or grant access to specific accounts
+* how to make your AMIs discoverable using [SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
 
 ## Exploration
 
