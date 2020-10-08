@@ -1,3 +1,79 @@
+# v1.0.2 (2020-10-13)
+
+## Breaking changes (for build process only)
+
+* pubsys: automate setup of role and key ([#1133], [#1146])
+* Store repos under repo name so you can build multiple ([#1135])
+
+**Note:** these changes do not impact users of Bottlerocket AMIs or repos, only those who build Bottlerocket themselves.
+If you use an `Infra.toml` file to automate publishing, you'll need to update the format of the file.
+The root role and signing key definitions now live inside a repo definition, rather than at the top level of the file.
+Please see the updated [Infra.toml.example](tools/pubsys/Infra.toml.example) file for a commented explanation of the new role and key configuration.
+
+## OS changes
+
+* Add aws-k8s-1.18 variant with Kubernetes 1.18 ([#1150])
+* Update kernel to 5.4.50-25.83 ([#1148])
+* Update glibc to 2.32 ([#1092])
+* Add e2fsprogs ([#1147])
+* pluto: add regional map of pause container source accounts ([#1142])
+* Add option to enable spot instance draining ([#1100], **thanks @mkulke!**)
+* Add 2.root.json + pubsys KMS support ([#1122])
+* docker: add default nofiles ulimits for containers ([#1119])
+* Fix AVC denial for`docker run --init` ([#1085])
+
+## Build changes
+
+* Pass Go module proxy variables through docker-go ([#1121])
+* Set buildmode to pie and drop pie and debuginfo patches for Kubernetes ([#1103], **thanks @bnrjee!**)
+* pubsys: use requested size for volume, keeping snapshot to minimum size ([#1118])
+* Switch to SDK v0.13.0 ([#1092])
+* Add `cargo make grant-ami` and `revoke-ami` tasks ([#1087])
+* Allow specifying AMI name with PUBLISH_AMI_NAME ([#1091])
+* Makefile.toml: clean up clean actions ([#1089])
+* pubsys: check for copied AMIs in parallel ([#1086])
+
+## Documentation changes
+
+* Add PUBLISHING.md guide explaining pubsys and related tools ([#1138])
+* README: relocate update API instructions and example ([#1124], [#1127])
+* Fix grammar issues in README.md ([#1098], **thanks @jweissig!**)
+* Add documentation for the aws-ecs-1 variant ([#1053])
+* Update suggested Kubernetes version in sample eksctl config files ([#1090])
+* Update BUILDING.md to incorporate dependencies ([#1107], **thanks @troyaws!**)
+
+
+[#1053]: https://github.com/bottlerocket-os/bottlerocket/pull/1053
+[#1084]: https://github.com/bottlerocket-os/bottlerocket/pull/1084
+[#1085]: https://github.com/bottlerocket-os/bottlerocket/pull/1085
+[#1086]: https://github.com/bottlerocket-os/bottlerocket/pull/1086
+[#1087]: https://github.com/bottlerocket-os/bottlerocket/pull/1087
+[#1089]: https://github.com/bottlerocket-os/bottlerocket/pull/1089
+[#1090]: https://github.com/bottlerocket-os/bottlerocket/pull/1090
+[#1091]: https://github.com/bottlerocket-os/bottlerocket/pull/1091
+[#1092]: https://github.com/bottlerocket-os/bottlerocket/pull/1092
+[#1094]: https://github.com/bottlerocket-os/bottlerocket/pull/1094
+[#1098]: https://github.com/bottlerocket-os/bottlerocket/pull/1098
+[#1100]: https://github.com/bottlerocket-os/bottlerocket/pull/1100
+[#1103]: https://github.com/bottlerocket-os/bottlerocket/pull/1103
+[#1107]: https://github.com/bottlerocket-os/bottlerocket/pull/1107
+[#1109]: https://github.com/bottlerocket-os/bottlerocket/pull/1109
+[#1118]: https://github.com/bottlerocket-os/bottlerocket/pull/1118
+[#1119]: https://github.com/bottlerocket-os/bottlerocket/pull/1119
+[#1121]: https://github.com/bottlerocket-os/bottlerocket/pull/1121
+[#1122]: https://github.com/bottlerocket-os/bottlerocket/pull/1122
+[#1124]: https://github.com/bottlerocket-os/bottlerocket/pull/1124
+[#1127]: https://github.com/bottlerocket-os/bottlerocket/pull/1127
+[#1133]: https://github.com/bottlerocket-os/bottlerocket/pull/1133
+[#1135]: https://github.com/bottlerocket-os/bottlerocket/pull/1135
+[#1138]: https://github.com/bottlerocket-os/bottlerocket/pull/1138
+[#1142]: https://github.com/bottlerocket-os/bottlerocket/pull/1142
+[#1146]: https://github.com/bottlerocket-os/bottlerocket/pull/1146
+[#1147]: https://github.com/bottlerocket-os/bottlerocket/pull/1147
+[#1148]: https://github.com/bottlerocket-os/bottlerocket/pull/1148
+[#1149]: https://github.com/bottlerocket-os/bottlerocket/pull/1149
+[#1150]: https://github.com/bottlerocket-os/bottlerocket/pull/1150
+
 # v1.0.1 (2020-09-03)
 
 ## Security fixes
