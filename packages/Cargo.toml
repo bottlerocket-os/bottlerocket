@@ -76,3 +76,6 @@ members = [
 [profile.dev]
 debug = false
 opt-level = 'z'
+
+[profile.dev.build-override]
+opt-level = 'z'
