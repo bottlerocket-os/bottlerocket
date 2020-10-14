@@ -32,6 +32,8 @@ members = [
 
     "bottlerocket-release",
 
+    "ghostdog",
+
     "growpart",
 
     "logdog",

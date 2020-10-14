@@ -1,0 +1,27 @@
+# ephemeral storage links: /dev/disk/ephemeral
+
+ACTION=="remove", GOTO="ephemeral_storage_end"
+SUBSYSTEM!="block", GOTO="ephemeral_storage_end"
+ENV{DEVTYPE}!="disk", GOTO="ephemeral_storage_end"
+
+# Known sources of ephemeral disks:
+# - EC2 instance types with instance storage volumes
+# - KVM VMs with additional virtio disks
+KERNEL!="nvme*|vd*", GOTO="ephemeral_storage_end"
+
+# We can't be sure that devices with similar kernel names are all ephemeral.
+# Our udev helper checks for known system partitions to classify the device.
+IMPORT{program}=="/usr/bin/ghostdog scan $devnode"
+ENV{BOTTLEROCKET_DEVICE_TYPE}!="ephemeral", GOTO="ephemeral_storage_end"
+
+# EBS volumes will show up as "Amazon Elastic Block Store", but we expect these
+# to be either system volumes or managed by the EBS CSI driver.
+KERNEL=="nvme*", ATTRS{model}=="Amazon EC2 NVMe Instance Storage*", ENV{ID_SERIAL}=="?*", \
+  SYMLINK+="disk/ephemeral/nvme-$env{ID_SERIAL}"
+
+# Fow now, virtio support is meant to enable local development, so only create
+# links if the serial matches a specific prefix.
+KERNEL=="vd*", ENV{ID_SERIAL}=="eph*", \
+  SYMLINK+="disk/ephemeral/virtio-$env{ID_SERIAL}"
+
+LABEL="ephemeral_storage_end"

@@ -11,6 +11,7 @@ source-groups = [
     "api",
     "bottlerocket-release",
     "parse-datetime",
+    "ghostdog",
     "growpart",
     "updater",
     "webpki-roots-shim",

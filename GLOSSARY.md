@@ -8,6 +8,7 @@
 * [**early-boot-config**](sources/api/early-boot-config): A program run at boot to read platform-specific data, such as EC2 user data, and send requested configuration to the API.
 * **gptprio:** A structure of bits in GPT partition headers that specifies priority, tries remaining, and whether the partition booted successfully before.
   signpost sets these and GRUB uses them to determine which partition set to boot.
+* [**ghostdog**](sources/ghostdog): A program used to manage ephemeral disks.
 * [**growpart**](sources/growpart): A program used to expand disk partitions upon boot.
 * **host containers**: Containers that run in a separate instance of containerd than "user" containers spawned by an orchestrator (e.g. Kubernetes).
   Used for system maintenance and connectivity.

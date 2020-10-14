@@ -38,6 +38,7 @@ Requires: %{_cross_os}libgcc
 Requires: %{_cross_os}libstd-rust
 Requires: %{_cross_os}filesystem
 Requires: %{_cross_os}glibc
+Requires: %{_cross_os}ghostdog
 Requires: %{_cross_os}growpart
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
