@@ -8,9 +8,13 @@ extern crate log;
 mod helpers;
 
 use handlebars::Handlebars;
+use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use serde::de::DeserializeOwned;
 use snafu::ResultExt;
 use std::path::Path;
+
+// https://url.spec.whatwg.org/#query-percent-encode-set
+const ENCODE_QUERY_CHARS: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'#').add(b'<').add(b'>');
 
 pub mod error {
     use http::StatusCode;
@@ -66,10 +70,11 @@ where
     S3: AsRef<str>,
 {
     let mut uri = uri.as_ref().to_string();
-    // Simplest query string handling; parameters come from API responses so we trust them enough
-    // to send back
+    // Add (escaped) query parameter, if given
     if let Some((query_param, query_arg)) = query {
-        uri = format!("{}?{}={}", uri, query_param.as_ref(), query_arg.as_ref());
+        let query_raw = format!("{}={}", query_param.as_ref(), query_arg.as_ref());
+        let query_escaped = utf8_percent_encode(&query_raw, ENCODE_QUERY_CHARS);
+        uri = format!("{}?{}", uri, query_escaped);
     }
 
     let method = "GET";

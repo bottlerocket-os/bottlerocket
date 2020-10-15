@@ -18,6 +18,7 @@ http = "0.2"
 lazy_static = "1.4"
 log = "0.4"
 models = { path = "../../models" }
+percent-encoding = "2.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 snafu = "0.6"

@@ -2230,6 +2230,7 @@ dependencies = [
  "lazy_static",
  "log",
  "models",
+ "percent-encoding",
  "serde",
  "serde_json",
  "snafu",
