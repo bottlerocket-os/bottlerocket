@@ -622,6 +622,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2df960f5d869b2dd8532793fde43eb5427cceb126c929747a26823ab0eeb536"
 
 [[package]]
+name = "corndog"
+version = "0.1.0"
+dependencies = [
+ "apiclient",
+ "cargo-readme",
+ "http",
+ "log",
+ "models",
+ "serde",
+ "serde_json",
+ "simplelog",
+ "snafu",
+]
+
+[[package]]
 name = "crc"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

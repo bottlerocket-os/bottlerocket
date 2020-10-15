@@ -4,6 +4,7 @@
 * [**bork**](sources/api/bork): A setting generator called by sundog to generate the random seed for updog, determining where the host falls in the update order.
 * [**buildsys**](tools/buildsys): A build tool that runs package and image builds inside containers.
   cargo-make starts the build of each package, each of which calls buildsys, which in turn starts a Docker-based build using the SDK image.
+* [**corndog**](sources/api/corndog): A program that sets kernel sysctl values based on API settings.
 * [**early-boot-config**](sources/api/early-boot-config): A program run at boot to read platform-specific data, such as EC2 user data, and send requested configuration to the API.
 * **gptprio:** A structure of bits in GPT partition headers that specifies priority, tries remaining, and whether the partition booted successfully before.
   signpost sets these and GRUB uses them to determine which partition set to boot.

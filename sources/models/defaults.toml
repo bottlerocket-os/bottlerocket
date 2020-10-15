@@ -92,3 +92,12 @@ template-path = "/usr/share/templates/chrony-conf"
 
 [metadata.settings.ntp]
 affected-services = ["chronyd"]
+
+# Kernel
+
+[services.sysctl]
+configuration-files = []
+restart-commands = ["/usr/bin/corndog"]
+
+[metadata.settings.kernel.sysctl]
+affected-services = ["sysctl"]

@@ -77,6 +77,12 @@ Summary: Dynamic setting generator for updog
 %description -n %{_cross_os}bork
 %{summary}.
 
+%package -n %{_cross_os}corndog
+Summary: Bottlerocket sysctl helper
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}corndog
+%{summary}.
+
 %package -n %{_cross_os}schnauzer
 Summary: Setting generator for templated settings values.
 %description -n %{_cross_os}schnauzer
@@ -185,6 +191,7 @@ mkdir bin
     -p updog \
     -p logdog \
     -p growpart \
+    -p corndog \
 %if "%{_cross_variant}" == "aws-ecs-1"
     -p ecs-settings-applier \
 %endif
@@ -203,7 +210,7 @@ done
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  early-boot-config netdog sundog schnauzer pluto bork \
+  early-boot-config netdog sundog schnauzer pluto bork corndog \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
   migrator \
@@ -286,6 +293,9 @@ install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.co
 
 %files -n %{_cross_os}netdog
 %{_cross_bindir}/netdog
+
+%files -n %{_cross_os}corndog
+%{_cross_bindir}/corndog
 
 %files -n %{_cross_os}sundog
 %{_cross_bindir}/sundog

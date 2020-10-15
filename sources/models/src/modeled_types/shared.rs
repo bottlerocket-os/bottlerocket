@@ -1,3 +1,5 @@
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
 use super::error;
@@ -245,10 +247,7 @@ mod test_url {
 
     #[test]
     fn bad_urls() {
-        for err in &[
-            "how are you",
-            "weird@",
-        ] {
+        for err in &["how are you", "weird@"] {
             Url::try_from(*err).unwrap_err();
         }
     }
@@ -417,6 +416,117 @@ mod test_dns_domain {
             "[2001:db8::ff00:42:8329]",
         ] {
             assert!(DNSDomain::try_from(*err).is_err());
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// SysctlKey represents a string that is a valid Linux sysctl key; keys must be representable as
+/// filesystem paths, and are generally kept to lowercase_underscored_names separated with '.' or
+/// '/'.  SysctlKey stores the original string and makes it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct SysctlKey {
+    inner: String,
+}
+
+lazy_static! {
+    /// Pattern matching the name of a sysctl key.  Must be representable as a path; we'll go a bit
+    /// further and enforce a basic pattern that would match all known keys, plus some leeway.
+    pub(crate) static ref SYSCTL_KEY: Regex = Regex::new(r"^[a-zA-Z0-9./_-]{1,128}$").unwrap();
+}
+
+impl TryFrom<&str> for SysctlKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        // Basic directory traversal checks; corndog also checks
+        ensure!(
+            !input.contains(".."),
+            error::InvalidSysctlKey {
+                input,
+                msg: format!("must not contain '..'"),
+            }
+        );
+        ensure!(
+            !input.starts_with('.') && !input.starts_with('/'),
+            error::InvalidSysctlKey {
+                input,
+                msg: format!("must not start with '.' or '/'"),
+            }
+        );
+        ensure!(
+            SYSCTL_KEY.is_match(input),
+            error::InvalidSysctlKey {
+                input,
+                msg: format!("must match pattern {}", *SYSCTL_KEY),
+            }
+        );
+        Ok(SysctlKey {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(SysctlKey, "SysctlKey");
+
+#[cfg(test)]
+mod test_sysctl_key {
+    use super::SysctlKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_sysctl_key() {
+        for ok in &[
+            // Longest real one
+            "net/ipv4/conf/enp0s42f3/igmpv3_unsolicited_report_interval",
+            // Dots or slashes OK
+            "net.ipv4.conf.enp0s42f3.igmpv3_unsolicited_report_interval",
+            // Mixed dots/slashes isn't supported by sysctl(8), but it's unambiguous
+            "net/ipv4.conf.enp0s42f3/igmpv3_unsolicited_report_interval",
+            // Shortest real one
+            "fs/aio-nr",
+            // Shortest allowed
+            "a",
+            // Longest allowed
+            &"a".repeat(128),
+            // All allowed characters
+            "-./0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        ] {
+            SysctlKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn invalid_sysctl_key() {
+        for err in &[
+            // Too long
+            &"a".repeat(129),
+            // Too short,
+            "",
+            // Sneaky sneaky
+            "hi/../../there",
+            "../hi",
+            "/../hi",
+            // Invalid characters
+            "!",
+            "@",
+            "#",
+            "$",
+            "%",
+            "^",
+            "&",
+            "*",
+            "(",
+            ")",
+            "\"",
+            "'",
+            "\\",
+            "|",
+            "~",
+            "`",
+        ] {
+            SysctlKey::try_from(*err).unwrap_err();
         }
     }
 }
