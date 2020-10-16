@@ -92,11 +92,12 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let mut amis = HashMap::new();
 
     info!(
-        "Using infra config from path: {}",
+        "Checking for infra config at path: {}",
         args.infra_config_path.display()
     );
-    let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
-    trace!("Parsed infra config: {:?}", infra_config);
+    let infra_config =
+        InfraConfig::from_path_or_default(&args.infra_config_path).context(error::Config)?;
+    trace!("Using infra config: {:?}", infra_config);
 
     let aws = infra_config.aws.unwrap_or_else(|| Default::default());
 
