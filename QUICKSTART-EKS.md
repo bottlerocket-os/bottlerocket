@@ -286,7 +286,8 @@ For the instance to be able to communicate with the EKS cluster control plane an
 Run the following command:
 
 ```
-aws ec2 describe-security-groups --filters 'Name=tag:Name,Values=*bottlerocket*' \
+aws ec2 describe-security-groups --region us-west-2 \
+  --filters 'Name=tag:Name,Values=*bottlerocket*' \
   --query "SecurityGroups[*].{Name:GroupName,ID:GroupId}"
 ```
 
