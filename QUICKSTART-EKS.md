@@ -154,10 +154,8 @@ You can set up a new cluster like this:
 eksctl create cluster --region us-west-2 --name bottlerocket
 ```
 
-Now that the cluster is created, we can have `eksctl` create the configuration for `kubectl`:
-```
-eksctl utils write-kubeconfig --region us-west-2 --name bottlerocket
-```
+This will automatically add a "context" so `kubectl` knows how to interact with your cluster, and it'll set that context as your default.
+You can see your contexts (clusters) using `kubectl config get-contexts` and change your current one with `kubectl config use-context 'NEW-CONTEXT-HERE'`.
 
 ### Cluster info
 
