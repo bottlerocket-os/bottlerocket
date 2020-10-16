@@ -98,6 +98,15 @@ PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH
 [tasks.setup]
 script = [
 '''
+# Ensure we use a supported architecture
+case "${BUILDSYS_ARCH}" in
+   x86_64|aarch64) ;;
+   *)
+      echo "Unrecognized architecture '${BUILDSYS_ARCH}'; please use 'x86_64 or 'aarch64'"
+      exit 1
+      ;;
+esac
+
 mkdir -p ${BUILDSYS_BUILD_DIR}
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
 mkdir -p ${BUILDSYS_PACKAGES_DIR}
@@ -437,16 +446,6 @@ fi
 lz4 -df "${rootlz4}" "${root_image}"
 lz4 -df "${datalz4}" "${data_image}"
 
-# Canonicalize architecture identifier to the value recognized by EC2.
-case "${BUILDSYS_ARCH,,}" in
-   arm64|aarch64)
-      arch=arm64 ;;
-   x86_64|amd64)
-      arch=x86_64 ;;
-   *)
-      arch="${BUILDSYS_ARCH}" ;;
-esac
-
 ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
 ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-amis.json"
 
@@ -462,7 +461,7 @@ pubsys \
    ${PUBLISH_ROOT_VOLUME_SIZE:+--root-volume-size "${PUBLISH_ROOT_VOLUME_SIZE}"} \
    --data-volume-size "${PUBLISH_DATA_VOLUME_SIZE}" \
    \
-   --arch "${arch}" \
+   --arch "${BUILDSYS_ARCH}" \
    --name "${ami_name}" \
    --description "${PUBLISH_AMI_DESCRIPTION:-${ami_name}}" \
    \
