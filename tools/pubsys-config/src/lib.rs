@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use url::Url;
 
 /// Configuration needed to load and create repos
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct InfraConfig {
     // Repo subcommand config
@@ -23,13 +23,26 @@ pub struct InfraConfig {
 
 impl InfraConfig {
     /// Deserializes an InfraConfig from a given path
-    pub fn from_path<P>(path: P) -> Result<InfraConfig>
+    pub fn from_path<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
     {
         let path = path.as_ref();
         let infra_config_str = fs::read_to_string(path).context(error::File { path })?;
         toml::from_str(&infra_config_str).context(error::InvalidToml { path })
+    }
+
+    /// Deserializes an InfraConfig from a given path, if it exists, otherwise builds a default
+    /// config
+    pub fn from_path_or_default<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        if path.as_ref().exists() {
+            Self::from_path(path)
+        } else {
+            Ok(Self::default())
+        }
     }
 }
 
@@ -94,7 +107,7 @@ impl TryFrom<SigningKeyConfig> for Url {
 }
 
 /// Represents a Bottlerocket repo's location and the metadata needed to update the repo
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RepoConfig {
     pub root_role_url: Option<Url>,

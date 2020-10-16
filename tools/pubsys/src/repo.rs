@@ -363,22 +363,29 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     // Build repo   =^..^=   =^..^=   =^..^=   =^..^=
 
     info!(
-        "Using infra config from path: {}",
+        "Checking for infra config at path: {}",
         args.infra_config_path.display()
     );
-    let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
-    trace!("Parsed infra config: {:?}", infra_config);
+    let infra_config =
+        InfraConfig::from_path_or_default(&args.infra_config_path).context(error::Config)?;
+    trace!("Using infra config: {:?}", infra_config);
 
-    let repo_config = infra_config
+    // If the user has the requested (or "default") repo defined in their Infra.toml, use it,
+    // otherwise use a default config.
+    let default_repo_config = RepoConfig::default();
+    let repo_config = if let Some(repo_config) = infra_config
         .repo
         .as_ref()
-        .context(error::MissingConfig {
-            missing: "repo section",
-        })?
-        .get(&repo_args.repo)
-        .context(error::MissingConfig {
-            missing: format!("definition for repo {}", &repo_args.repo),
-        })?;
+        .and_then(|repo_section| repo_section.get(&repo_args.repo))
+        .map(|repo| {
+            info!("Using repo '{}' from Infra.toml", repo_args.repo);
+            repo
+        }) {
+        repo_config
+    } else {
+        info!("Didn't find repo '{}' in Infra.toml, using default configuration", repo_args.repo);
+        &default_repo_config
+    };
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
     let maybe_urls = repo_urls(&repo_args, &repo_config)?;
