@@ -348,6 +348,18 @@ These settings can be changed at any time.
 
 * `settings.ntp.time-servers`: A list of NTP servers used to set and verify the system time.
 
+#### Kernel settings
+
+* `settings.kernel.sysctl`: Key/value pairs representing Linux kernel parameters.
+  Remember to quote keys (since they often contain ".") and to quote all values.
+  * Example user data for setting up sysctl:
+    ```
+    [settings.kernel.sysctl]
+    "user.max_user_namespaces" = "16384"
+    "vm.max_map_count" = "262144"
+    ```
+
+
 #### Host containers settings
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).
 * `settings.host-containers.admin.enabled`: Whether the admin container is enabled.
