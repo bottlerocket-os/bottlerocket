@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 # Register partitioned root and data images as an AMI in EC2.
 # Only registers with HVM virtualization type and GP2 EBS volume type.
 
@@ -34,17 +36,15 @@ VOLUME_TYPE="gp2"
 SRIOV_FLAG="--sriov-net-support simple"
 ENA_FLAG="--ena-support"
 
+WRITE_OUTPUT_DIR=""
+
+
 # Check for required tools
-for tool in jq aws du coldsnap; do
-   what="$(command -v "${tool}")"
-   if [ "${what:0:1}" = "/" ] && [ -x "${what}" ]; then
-      : # absolute path we can execute; all good
-   elif [ -n "${what}" ]; then
-      : # builtin or function we can execute; weird but allow flexibility
-   else
-      echo "** Can't find executable '${tool}'" >&2
-      exit 2
-   fi
+for tool in jq aws awk bc coldsnap; do
+  if ! command -v "${tool}" > /dev/null; then
+     echo "** Can't find executable '${tool}'" >&2
+     exit 2
+  fi
 done
 
 
@@ -125,7 +125,7 @@ parse_args() {
    required_arg "--arch" "${ARCH}"
 
    # Validate and canonicalize architecture identifier.
-   case "${ARCH,,}" in
+   case "${ARCH}" in
       arm64|aarch64)
          ARCH=arm64
          ;;
@@ -150,14 +150,15 @@ parse_args() {
    fi
 
    # Defaults
-   if [ -z "${DESCRIPTION}" ] ; then
-      DESCRIPTION="${NAME}"
-   fi
+   DESCRIPTION="${DESCRIPTION:-${NAME}}"
    # ROOT_VOLUME_SIZE and DATA_VOLUME_SIZE are defaulted below,
    # after we calculate image size
 }
 
 cleanup() {
+   root_snapshot="${root_snapshot:-}"
+   data_snapshot="${data_snapshot:-}"
+
    # Clean up snapshots if we failed to make an AMI from them
    if [ -n "${root_snapshot}" ]; then
       echo "Deleting root snapshot ${root_snapshot} from failed attempt"
@@ -233,7 +234,7 @@ check_return() {
    local rc="${1:?}"
    local msg="${2:?}"
 
-   if [ -z "${rc}" ] || [ -z "${msg}" ] || [ -n "${3}" ]; then
+   if [ -z "${rc}" ] || [ -z "${msg}" ]; then
       # Developer error, don't continue
       echo '** Usage: check_return RC "message"' >&2
       exit 2
@@ -261,6 +262,11 @@ write_output() {
     echo -n "$value" > "${WRITE_OUTPUT_DIR}/${name}"
 }
 
+file_size() {
+   local bytes=$(ls -l $1 | awk '/d|-/{printf("%i\n",$5)}')
+   echo "($bytes + (1024*1024*1024) - 1)/(1024*1024*1024)" | bc
+}
+
 
 # =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -269,8 +275,7 @@ write_output() {
 parse_args "${@}"
 
 echo "Checking if AMI already exists with name '${NAME}'"
-registered_ami="$(find_ami "${NAME}")"
-if [ -n "${registered_ami}" ]; then
+if find_ami "${NAME}" >/dev/null; then
    echo "Warning! ${registered_ami} ${NAME} already exists in ${REGION}!" >&2
    exit 1
 fi
@@ -279,7 +284,7 @@ fi
 # 2G      bottlerocket-aws-k8s-1.17-x86_64.img
 # 8G      bottlerocket-aws-k8s-1.17-x86_64-data.img
 # This is overridden by --root-volume-size and --data-volume-size if you pass those options.
-root_image_size=$(du --apparent-size --block-size=G "${ROOT_IMAGE}" | sed -r 's,^([0-9]+)G\t.*,\1,')
+root_image_size=$(file_size "${ROOT_IMAGE}")
 if [ ! "${root_image_size}" -gt 0 ]; then
    echo "* Couldn't find the size of the root image!" >&2
    exit 1
@@ -287,7 +292,7 @@ fi
 
 ROOT_VOLUME_SIZE="${ROOT_VOLUME_SIZE:-${root_image_size}}"
 
-data_image_size=$(du --apparent-size --block-size=G "${DATA_IMAGE}" | sed -r 's,^([0-9]+)G\t.*,\1,')
+data_image_size=$(file_size "${DATA_IMAGE}")
 if [ ! "${data_image_size}" -gt 0 ]; then
    echo "* Couldn't find the size of the data image!" >&2
    exit 1
@@ -304,18 +309,14 @@ fi
 
 # Main workflow - upload snapshots and register an AMI from them.
 
-root_snapshot="$(coldsnap upload "${ROOT_IMAGE}")"
+root_snapshot="$(coldsnap --region "${REGION}" upload "${ROOT_IMAGE}")"
 valid_resource_id snap "${root_snapshot}"
-check_return ${?} "creating snapshot of new root volume failed!"
 
-data_snapshot="$(coldsnap upload "${DATA_IMAGE}")"
+data_snapshot="$(coldsnap --region "${REGION}" upload "${DATA_IMAGE}")"
 valid_resource_id snap "${data_snapshot}"
-check_return ${?} "creating snapshot of new data volume failed!"
 
-coldsnap wait "${root_snapshot}"
-check_return ${?} "failed waiting for root volume availability"
-coldsnap wait "${data_snapshot}"
-check_return ${?} "failed waiting for data volume availability"
+coldsnap --region "${REGION}" wait "${root_snapshot}"
+coldsnap --region "${REGION}" wait "${data_snapshot}"
 
 write_output "root_snapshot_id" "$root_snapshot"
 write_output "data_snapshot_id" "$data_snapshot"
@@ -334,7 +335,6 @@ registered_ami=$(aws --region "${REGION}" ec2 register-image \
                                  ${data_snapshot} ${DATA_VOLUME_SIZE})" \
    --name "${NAME}" \
    --description "${DESCRIPTION}")
-check_return ${?} "AMI registration failed!"
 
 # So we don't try to delete the snapshots behind our new AMI
 unset root_snapshot data_snapshot
