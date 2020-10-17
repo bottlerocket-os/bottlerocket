@@ -1,4 +1,4 @@
-From 2c7e1e97cd82ed7c20f63d1842cd26de37b53f34 Mon Sep 17 00:00:00 2001
+From d37bf45e3f00f4a3c87a0b6c6bbbf19a54fd0957 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 7 Jul 2020 22:38:20 +0000
 Subject: [PATCH 9004/9005] machine-id-setup: generate stable ID under Xen
@@ -10,7 +10,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/man/machine-id.xml b/man/machine-id.xml
-index ebee065..8150bdb 100644
+index bd55366..6a58b9d 100644
 --- a/man/machine-id.xml
 +++ b/man/machine-id.xml
 @@ -100,7 +100,8 @@
@@ -24,7 +24,7 @@ index ebee065..8150bdb 100644
      <para>After the machine ID is established,
      <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 diff --git a/src/core/machine-id-setup.c b/src/core/machine-id-setup.c
-index 284b77c..275daf5 100644
+index f76b82a..d2024ee 100644
 --- a/src/core/machine-id-setup.c
 +++ b/src/core/machine-id-setup.c
 @@ -73,6 +73,16 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
@@ -45,5 +45,5 @@ index 284b77c..275daf5 100644
          }
  
 -- 
-2.21.0
+2.26.2
 
