@@ -36,6 +36,7 @@ fn notify_unix_socket_ready() -> Result<()> {
         ensure!(
             Command::new("systemd-notify")
                 .arg("--ready")
+                .arg("--no-block")
                 .status()
                 .context(error::SystemdNotify)?
                 .success(),
