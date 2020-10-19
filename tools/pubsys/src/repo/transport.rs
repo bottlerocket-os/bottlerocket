@@ -23,7 +23,7 @@ pub(crate) struct RepoTransport {
 }
 
 impl Transport for RepoTransport {
-    type Stream = Box<dyn Read>;
+    type Stream = Box<dyn Read + Send>;
     type Error = error::Error;
 
     fn fetch(&self, url: Url) -> std::result::Result<Self::Stream, Self::Error> {

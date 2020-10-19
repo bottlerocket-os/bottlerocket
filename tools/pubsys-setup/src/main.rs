@@ -32,7 +32,7 @@ struct Args {
     infra_config_path: PathBuf,
 
     #[structopt(long)]
-    /// Use this named repo from Infra.toml
+    /// Use this named repo infrastructure from Infra.toml
     repo: String,
 
     #[structopt(long, parse(from_os_str))]
