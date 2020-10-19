@@ -29,6 +29,7 @@ members = [
     "api/migration/migrations/v1.0.0/ecr-helper-admin",
     "api/migration/migrations/v1.0.0/ecr-helper-control",
     "api/migration/migrations/v1.0.2/add-enable-spot-instance-draining",
+    "api/migration/migrations/v1.0.3/add-sysctl",
 
     "bottlerocket-release",
 

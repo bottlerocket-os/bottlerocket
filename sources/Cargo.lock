@@ -271,6 +271,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-sysctl"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-version-lock-ignore-waves"
 version = "0.1.0"
 dependencies = [
@@ -1527,6 +1534,7 @@ dependencies = [
  "apiserver",
  "bottlerocket-release",
  "handlebars",
+ "maplit",
  "schnauzer",
  "serde",
  "serde_json",
