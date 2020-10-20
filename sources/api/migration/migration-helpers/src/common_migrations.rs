@@ -54,6 +54,74 @@ impl Migration for AddSettingMigration {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+/// We use this migration when we add a cluster of settings under a prefix and want to make sure
+/// they're removed before we go back to old versions that don't understand them.  Normally you'd
+/// use AddSettingsMigration since you know the key names, but this is useful for user-defined
+/// keys, for example in a map like settings.kernel.sysctl or settings.host-containers.
+pub struct AddPrefixMigration(pub &'static str);
+
+impl Migration for AddPrefixMigration {
+    /// New versions must either have a default for the settings or generate them; we don't need to
+    /// do anything.
+    fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        println!(
+            "AddPrefixMigration({:?}) has no work to do on upgrade.",
+            self.0
+        );
+        Ok(input)
+    }
+
+    /// Older versions don't know about the settings; we remove them so that old versions don't see
+    /// them and fail deserialization.  (The settings must be defaulted or generated in new versions,
+    /// and safe to remove.)
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        let settings = input
+            .data
+            .keys()
+            .filter(|k| k.starts_with(self.0))
+            .cloned()
+            .collect::<Vec<_>>();
+        for setting in settings {
+            if let Some(data) = input.data.remove(&setting) {
+                println!("Removed {}, which was set to '{}'", setting, data);
+            }
+        }
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_add_prefix_migration {
+    use super::AddPrefixMigration;
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use std::collections::HashMap;
+
+    #[test]
+    fn works() {
+        let data = MigrationData {
+            data: hashmap! {
+                "keep.me.a".into() => 0.into(),
+                "remove.me.b".into() => 0.into(),
+                "keep.this.c".into() => 0.into(),
+                "remove.me.d.e".into() => 0.into(),
+            },
+            metadata: HashMap::new(),
+        };
+        // Run backward, e.g. downgrade, to test that the right keys are removed
+        let result = AddPrefixMigration("remove.me").backward(data).unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "keep.me.a".into() => 0.into(),
+                "keep.this.c".into() => 0.into(),
+            }
+        );
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// We use this migration when we remove settings from the model, so the new version doesn't see
 /// them and error.
 pub struct RemoveSettingsMigration<'a>(pub &'a [&'static str]);

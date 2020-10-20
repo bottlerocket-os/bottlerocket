@@ -10,3 +10,4 @@ version = "1.0.2"
 "(0.5.0, 1.0.0)" = ["migrate_v1.0.0_ecr-helper-admin.lz4", "migrate_v1.0.0_ecr-helper-control.lz4"]
 "(1.0.0, 1.0.1)" = []
 "(1.0.1, 1.0.2)" = ["migrate_v1.0.2_add-enable-spot-instance-draining.lz4"]
+"(1.0.2, 1.0.3)" = ["migrate_v1.0.3_add-sysctl.lz4"]
