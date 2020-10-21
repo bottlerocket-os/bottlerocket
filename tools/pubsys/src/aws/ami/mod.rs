@@ -6,7 +6,7 @@ mod snapshot;
 pub(crate) mod wait;
 
 use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots};
-use crate::aws::{client::build_client, region_from_string};
+use crate::aws::{client::build_client, parse_arch, region_from_string};
 use crate::Args;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
@@ -48,7 +48,7 @@ pub(crate) struct AmiArgs {
     data_volume_size: i64,
 
     /// The architecture of the machine image
-    #[structopt(short = "a", long)]
+    #[structopt(short = "a", long, parse(try_from_str = parse_arch))]
     arch: String,
 
     /// The desired AMI name
