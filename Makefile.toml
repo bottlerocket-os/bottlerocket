@@ -117,8 +117,14 @@ mkdir -p ${BUILDSYS_BUILD_DIR}
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
 mkdir -p ${BUILDSYS_PACKAGES_DIR}
 mkdir -p ${GO_MOD_CACHE}
+'''
+]
 
-for cmd in bash curl docker gunzip lz4 ; do
+[tasks.setup-build]
+dependencies = ["setup"]
+script = [
+'''
+for cmd in curl docker gunzip lz4; do
   if ! command -v ${cmd} >/dev/null 2>&1 ; then
     echo "required program '${cmd}' not found" >&2
     exit 1
@@ -135,7 +141,7 @@ dependencies = [
 ]
 
 [tasks.fetch-sdk]
-dependencies = ["setup"]
+dependencies = ["setup-build"]
 script_runner = "bash"
 script = [
 '''
@@ -166,7 +172,7 @@ chmod -R o+r ${CARGO_HOME}
 ]
 
 [tasks.fetch-vendored]
-dependencies = ["setup", "fetch-sdk"]
+dependencies = ["fetch-sdk"]
 script = [
 '''
 ${BUILDSYS_TOOLS_DIR}/docker-go \
@@ -178,7 +184,7 @@ ${BUILDSYS_TOOLS_DIR}/docker-go \
 ]
 
 [tasks.unit-tests]
-dependencies = ["setup", "fetch-sdk", "fetch-sources", "fetch-vendored"]
+dependencies = ["fetch-sdk", "fetch-sources", "fetch-vendored"]
 script = [
 '''
 export VARIANT="${BUILDSYS_VARIANT}"
@@ -199,7 +205,7 @@ ${BUILDSYS_TOOLS_DIR}/docker-go \
 ]
 
 [tasks.build-tools]
-dependencies = ["setup", "fetch"]
+dependencies = ["fetch"]
 script = [
 '''
 cargo install \
@@ -509,7 +515,7 @@ pubsys \
 # Rather than depend on "build", which currently rebuilds images each run, we
 # depend on publish-tools and check for the image files below to save time.
 # This does mean that `cargo make` must be run before `cargo make ami`.
-dependencies = ["publish-tools"]
+dependencies = ["setup-build", "publish-tools"]
 script_runner = "bash"
 script = [
 '''
