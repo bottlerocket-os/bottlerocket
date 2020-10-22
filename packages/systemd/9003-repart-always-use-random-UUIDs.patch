@@ -1,4 +1,4 @@
-From b080e8af77c4484a3fdd40c599454b69e5a193a5 Mon Sep 17 00:00:00 2001
+From dee2b33e3d7969210078d483f6575a347904bdff Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 16 Apr 2020 15:10:41 +0000
 Subject: [PATCH 9003/9005] repart: always use random UUIDs
@@ -22,10 +22,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 14 insertions(+), 90 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index fc216d2..eb28daa 100644
+index dbbddb6..09fe7b6 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1305,8 +1305,7 @@ substs.set('DEFAULT_DNS_OVER_TLS_MODE', default_dns_over_tls)
+@@ -1357,8 +1357,7 @@ substs.set('DEFAULT_LLMNR_MODE', default_llmnr)
  
  want_repart = get_option('repart')
  if want_repart != 'false'
@@ -36,7 +36,7 @@ index fc216d2..eb28daa 100644
                  error('repart support was requested, but dependencies are not available')
          endif
 diff --git a/src/partition/repart.c b/src/partition/repart.c
-index 3e52f26..93f6834 100644
+index 2e5f5d1..1ce24e3 100644
 --- a/src/partition/repart.c
 +++ b/src/partition/repart.c
 @@ -13,9 +13,6 @@
@@ -49,7 +49,7 @@ index 3e52f26..93f6834 100644
  #include "sd-id128.h"
  
  #include "alloc-util.h"
-@@ -1143,26 +1140,18 @@ static int fdisk_set_disklabel_id_by_uuid(struct fdisk_context *c, sd_id128_t id
+@@ -1191,26 +1188,18 @@ static int fdisk_set_disklabel_id_by_uuid(struct fdisk_context *c, sd_id128_t id
  #define DISK_UUID_TOKEN "disk-uuid"
  
  static int disk_acquire_uuid(Context *context, sd_id128_t *ret) {
@@ -83,7 +83,7 @@ index 3e52f26..93f6834 100644
          return 0;
  }
  
-@@ -2073,83 +2062,19 @@ static int context_wipe_and_discard(Context *context, bool from_scratch) {
+@@ -2184,83 +2173,19 @@ static int context_copy_blocks(Context *context) {
  }
  
  static int partition_acquire_uuid(Context *context, Partition *p, sd_id128_t *ret) {
@@ -174,5 +174,5 @@ index 3e52f26..93f6834 100644
  }
  
 -- 
-2.21.0
+2.26.2
 

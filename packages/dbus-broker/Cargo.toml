@@ -9,12 +9,11 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/bus1/dbus-broker/releases/download/v23/dbus-broker-23.tar.xz"
-sha512 = "b9431a9733342d4b6214a6a35ad05d3278ab2c8cfdc35537dba86ba9ee3f59eef4e31687c2fe8a6444072eaf8384bc71a41617fec0539a8c00be9eae0efa9832"
+url = "https://github.com/bus1/dbus-broker/releases/download/v24/dbus-broker-24.tar.xz"
+sha512 = "7fbe6c689eff27ec842bb9d839a418abc356b026bb0a54dfa8b680a655409aa1ea4cb90655a6b04561a88c6e703cacf8800fddfe1abc21e7ee60db2dac1c2db9"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
-libcap = { path = "../libcap" }
 libexpat = { path = "../libexpat" }
 libselinux = { path = "../libselinux" }
 systemd = { path = "../systemd" }

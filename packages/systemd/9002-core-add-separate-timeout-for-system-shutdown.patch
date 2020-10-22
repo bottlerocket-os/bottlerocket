@@ -1,4 +1,4 @@
-From adcae5edbf78586335a64744dca2df6449537953 Mon Sep 17 00:00:00 2001
+From 0626e5d7b323a62b251ef66742b3b65d4531eacf Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 10 Mar 2020 20:30:10 +0000
 Subject: [PATCH 9002/9005] core: add separate timeout for system shutdown
@@ -33,10 +33,10 @@ index 970654a..9251bb9 100644
  #define DEFAULT_UNIX_MAX_DGRAM_QLEN 512UL
  
 diff --git a/src/core/main.c b/src/core/main.c
-index 3c6b66e..f2e9776 100644
+index 4a37697..619bad4 100644
 --- a/src/core/main.c
 +++ b/src/core/main.c
-@@ -114,6 +114,7 @@ static ExecOutput arg_default_std_error;
+@@ -121,6 +121,7 @@ static ExecOutput arg_default_std_error;
  static usec_t arg_default_restart_usec;
  static usec_t arg_default_timeout_start_usec;
  static usec_t arg_default_timeout_stop_usec;
@@ -44,7 +44,7 @@ index 3c6b66e..f2e9776 100644
  static usec_t arg_default_timeout_abort_usec;
  static bool arg_default_timeout_abort_set;
  static usec_t arg_default_start_limit_interval;
-@@ -1398,7 +1399,7 @@ static int become_shutdown(
+@@ -1468,7 +1469,7 @@ static int become_shutdown(
          env_block = strv_copy(environ);
  
          xsprintf(log_level, "%d", log_get_max_level());
@@ -53,7 +53,7 @@ index 3c6b66e..f2e9776 100644
  
          switch (log_get_target()) {
  
-@@ -2151,6 +2152,7 @@ static void reset_arguments(void) {
+@@ -2282,6 +2283,7 @@ static void reset_arguments(void) {
          arg_default_restart_usec = DEFAULT_RESTART_USEC;
          arg_default_timeout_start_usec = DEFAULT_TIMEOUT_USEC;
          arg_default_timeout_stop_usec = DEFAULT_TIMEOUT_USEC;
@@ -62,5 +62,5 @@ index 3c6b66e..f2e9776 100644
          arg_default_timeout_abort_set = false;
          arg_default_start_limit_interval = DEFAULT_START_LIMIT_INTERVAL;
 -- 
-2.21.0
+2.26.2
 
