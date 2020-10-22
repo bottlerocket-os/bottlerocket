@@ -172,7 +172,7 @@ eksctl get cluster --region us-west-2 --name bottlerocket -o json \
    | jq --raw-output '.[] | "[settings.kubernetes]\napi-server = \"" + .Endpoint + "\"\ncluster-certificate =\"" + .CertificateAuthority.Data + "\"\ncluster-name = \"bottlerocket\""' > userdata.toml
 ```
 
-This will save the TOML-formmated configuration data into a file named `userdata.toml`.
+This will save the TOML-formatted configuration data into a file named `userdata.toml`.
 This will be used at the end, in the instance launch command.
 
 #### Subnet info
