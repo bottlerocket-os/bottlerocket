@@ -361,10 +361,6 @@ pubsys-setup \
 '''
 ]
 
-[tasks.publish-setup-without-key]
-env = { "ALLOW_MISSING_KEY" = "true" }
-run_task = "publish-setup"
-
 # Builds a local repository based on the 'latest' built targets.  Uses pubsys
 # to create a repo under /build/repos, named after the arch/variant/version,
 # containing subdirectories for the repo metadata and targets.
@@ -433,7 +429,8 @@ ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_OUTPUT_DIR%/*}/latest"
 ]
 
 [tasks.validate-repo]
-dependencies = ["publish-setup-without-key", "publish-tools"]
+env = { "ALLOW_MISSING_KEY" = "true" }
+dependencies = ["publish-setup", "publish-tools"]
 script_runner = "bash"
 script = [
 '''
@@ -460,7 +457,8 @@ pubsys \
 ]
 
 [tasks.check-repo-expirations]
-dependencies = ["publish-setup-without-key", "publish-tools"]
+env = { "ALLOW_MISSING_KEY" = "true" }
+dependencies = ["publish-setup", "publish-tools"]
 script_runner = "bash"
 script = [
 '''
