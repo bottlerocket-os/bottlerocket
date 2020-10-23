@@ -32,6 +32,10 @@ Patch1001: 1001-cri-reduce-logging-when-no-errors-have-occurred.patch
 Patch2001: 2001-selinux-add-DefaultLabels-helper.patch
 Patch2002: 2002-cri-use-default-SELinux-labels-as-a-fallback.patch
 
+# Local patch for CRI to override the default RLIMIT_NOFILE.
+# TODO: submit this upstream, including a unit test.
+Patch3001: 3001-cri-set-default-RLIMIT_NOFILE.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
