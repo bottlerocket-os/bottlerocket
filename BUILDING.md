@@ -14,11 +14,11 @@ The build process artifacts and resulting images can consume in excess of 80GB i
 
 #### Linux
 
-The build system requires certain operating system packages to be installed.  
+The build system requires certain operating system packages to be installed.
 
 Ensure the following OS packages are installed:
 
-##### Ubuntu 
+##### Ubuntu
 
 ```
 apt install build-essential libssl-dev pkg-config
