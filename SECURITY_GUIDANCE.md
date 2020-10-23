@@ -17,6 +17,7 @@ We provide these recommendations, along with [details](#details) and [examples](
 | [Limit use of privileged SELinux labels](#limit-use-of-privileged-selinux-labels)                   | Important |
 | [Limit access to system mounts](#limit-access-to-system-mounts)                                     | Important |
 | [Limit access to host namespaces](#limit-access-to-host-namespaces)                                 | Important |
+| [Limit access to block devices](#limit-access-to-block-devices)                                     | Important |
 | [Do not run containers as UID 0](#do-not-run-containers-as-uid-0)                                   | Moderate  |
 
 ## Details
@@ -177,6 +178,23 @@ Sharing the host PID namespace also enables access to the host filesystem throug
 This can bypass intended restrictions for system mounts.
 
 We recommend limiting access to all host namespaces.
+
+### Limit access to block devices
+
+Direct access to block devices can be used to bypass abstractions such as filesystems and caches.
+This is useful for databases and storage applications that want full control over the data layout on disk.
+
+The order in which the kernel enumerates block devices is inconsistent and subject to change.
+To avoid referring to the wrong device, Linux distributions use links under `/dev/disk` to map predictable identifiers to specific devices.
+Bottlerocket relies on partition type GUIDs and partition names to discover its devices.
+
+Orchestrators offer ways to associate block devices with containers.
+For example, Kubernetes allows pods to claim a "block mode" volume and mount the device to a desired path.
+Containers with direct access to a block device can alter the partition table or modify the filesystem metadata.
+If the same partition type or partition name is used for another device, the `/dev/disk` link may point to the wrong device.
+This could compromise the integrity of the host.
+
+We recommend limiting access to block devices.
 
 ### Do not run containers as UID 0
 

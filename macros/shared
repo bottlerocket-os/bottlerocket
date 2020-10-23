@@ -50,6 +50,7 @@
 %_cross_sysctldir %{_cross_rootdir}%{_sysctldir}
 %_cross_templatedir %{_cross_datadir}/templates
 %_cross_usrsrc %{_cross_prefix}/src
+%_cross_udevrulesdir %{_cross_rootdir}%{_udevrulesdir}
 %_cross_licensedir %{_cross_datadir}/licenses
 %_defaultlicensedir %{_cross_licensedir}
 %_uncross_name %(name=%{name}; echo ${name#%{_cross_os}})
