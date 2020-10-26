@@ -256,10 +256,7 @@ impl AwsDataProvider {
 
     /// Fetches the instance identity, returning a SettingsJson representing the values from the
     /// document which we'd like to send to the API - currently just region.
-    fn identity_document(
-        client: &Client,
-        session_token: &str,
-    ) -> Result<Option<SettingsJson>> {
+    fn identity_document(client: &Client, session_token: &str) -> Result<Option<SettingsJson>> {
         let desc = "instance identity document";
         let uri = Self::IDENTITY_DOCUMENT_ENDPOINT;
         let file = Self::IDENTITY_DOCUMENT_FILE;
@@ -402,7 +399,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -424,6 +421,7 @@ fn run() -> Result<()> {
         trace!("Request body: {}", settings_json.json);
         let (code, response_body) =
             apiclient::raw_request(&args.socket_path, uri, method, Some(settings_json.json))
+                .await
                 .context(error::APIRequest { method, uri })?;
         ensure!(
             code.is_success(),
@@ -449,8 +447,9 @@ fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

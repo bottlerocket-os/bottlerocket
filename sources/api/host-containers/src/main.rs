@@ -105,7 +105,9 @@ mod error {
 type Result<T> = std::result::Result<T, error::Error>;
 
 /// Query the API for the currently defined host containers
-fn get_host_containers<P>(socket_path: P) -> Result<HashMap<Identifier, model::ContainerImage>>
+async fn get_host_containers<P>(
+    socket_path: P,
+) -> Result<HashMap<Identifier, model::ContainerImage>>
 where
     P: AsRef<Path>,
 {
@@ -114,6 +116,7 @@ where
     let method = "GET";
     let uri = API_SETTINGS_URI;
     let (code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
+        .await
         .context(error::APIRequest { method, uri })?;
     ensure!(
         code.is_success(),
@@ -305,7 +308,7 @@ where
     Ok(())
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
@@ -315,7 +318,7 @@ fn run() -> Result<()> {
     info!("host-containers started");
 
     let mut failed = 0usize;
-    let host_containers = get_host_containers(args.socket_path)?;
+    let host_containers = get_host_containers(args.socket_path).await?;
     for (name, image_details) in host_containers.iter() {
         // Continue to handle other host containers if we fail one
         if let Err(e) = handle_host_container(name, image_details) {
@@ -338,8 +341,9 @@ fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

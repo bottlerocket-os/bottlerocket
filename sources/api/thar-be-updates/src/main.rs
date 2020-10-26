@@ -182,7 +182,7 @@ macro_rules! fork_and_return {
 
 /// Spawns updog process to get list of updates and check if any of them can be updated to.
 /// Returns true if there is an available update, returns false otherwise.
-fn refresh(status: &mut UpdateStatus, socket_path: &str) -> Result<bool> {
+async fn refresh(status: &mut UpdateStatus, socket_path: &str) -> Result<bool> {
     fork_and_return!({
         debug!("Spawning 'updog whats'");
         let output = Command::new("updog")
@@ -196,7 +196,9 @@ fn refresh(status: &mut UpdateStatus, socket_path: &str) -> Result<bool> {
         }
         let update_info: Vec<update_metadata::Update> =
             serde_json::from_slice(&output.stdout).context(error::UpdateInfo)?;
-        status.update_available_updates(socket_path, update_info)
+        status
+            .update_available_updates(socket_path, update_info)
+            .await
     })
 }
 
@@ -257,7 +259,7 @@ fn deactivate(status: &mut UpdateStatus) -> Result<()> {
 }
 
 /// Given the update command, this drives the update state machine.
-fn drive_state_machine(
+async fn drive_state_machine(
     update_status: &mut UpdateStatus,
     operation: &UpdateCommand,
     socket_path: &str,
@@ -265,7 +267,7 @@ fn drive_state_machine(
     let new_state = match (operation, update_status.update_state()) {
         (UpdateCommand::Refresh, UpdateState::Idle)
         | (UpdateCommand::Refresh, UpdateState::Available) => {
-            if refresh(update_status, socket_path)? {
+            if refresh(update_status, socket_path).await? {
                 // Transitions state to `Available` if there is an available update
                 UpdateState::Available
             } else {
@@ -275,7 +277,7 @@ fn drive_state_machine(
         }
         // Refreshing the list of updates is allowed under every update state
         (UpdateCommand::Refresh, _) => {
-            refresh(update_status, socket_path)?;
+            refresh(update_status, socket_path).await?;
             // No need to transition state here as we're already beyond `Available`
             update_status.update_state().to_owned()
         }
@@ -326,7 +328,7 @@ fn drive_state_machine(
     Ok(())
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -347,7 +349,7 @@ fn run() -> Result<()> {
         initialize_update_status()?;
     }
     let mut update_status = get_update_status(&lockfile)?;
-    drive_state_machine(&mut update_status, &args.subcommand, &args.socket_path)?;
+    drive_state_machine(&mut update_status, &args.subcommand, &args.socket_path).await?;
     write_update_status(&update_status)?;
     Ok(())
 }
@@ -364,8 +366,9 @@ fn match_error_to_exit_status(err: Error) -> i32 {
     .unwrap_or(1)
 }
 
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         std::process::exit(match_error_to_exit_status(e));
     }

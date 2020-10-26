@@ -53,19 +53,21 @@ struct ECSConfig {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-pub(crate) fn main() {
-    if let Err(e) = run() {
+pub(crate) async fn main() -> () {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // Get all settings values for config file templates
     debug!("Requesting settings values");
-    let settings = schnauzer::get_settings(&args.socket_path).context(error::Settings)?;
+    let settings = schnauzer::get_settings(&args.socket_path)
+        .await
+        .context(error::Settings)?;
 
     debug!("settings = {:#?}", settings.settings);
     let ecs = settings

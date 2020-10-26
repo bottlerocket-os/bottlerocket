@@ -58,11 +58,11 @@ mod error {
 /// commit if there's a blip in retrieval or parsing of the pending
 /// settings.  We know the system won't be functional without a commit,
 /// but we can live without logging what was committed.
-fn check_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &str) {
+async fn check_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &str) {
     let uri = format!("{}?tx={}", API_PENDING_URI_BASE, transaction);
 
     debug!("GET-ing {} to determine if there are pending settings", uri);
-    let get_result = apiclient::raw_request(socket_path.as_ref(), &uri, "GET", None);
+    let get_result = apiclient::raw_request(socket_path.as_ref(), &uri, "GET", None).await;
     let response_body = match get_result {
         Ok((code, response_body)) => {
             if !code.is_success() {
@@ -93,11 +93,11 @@ fn check_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &str) {
 }
 
 /// Commits pending settings to live.
-fn commit_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &str) -> Result<()> {
+async fn commit_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &str) -> Result<()> {
     let uri = format!("{}?tx={}", API_COMMIT_URI_BASE, transaction);
     debug!("POST-ing to {} to move pending settings to live", uri);
 
-    if let Err(e) = apiclient::raw_request(socket_path.as_ref(), &uri, "POST", None) {
+    if let Err(e) = apiclient::raw_request(socket_path.as_ref(), &uri, "POST", None).await {
         match e {
             // Some types of response errors are OK for this use.
             apiclient::Error::ResponseStatus { code, body, .. } => {
@@ -198,7 +198,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -207,10 +207,10 @@ fn run() -> Result<()> {
         .context(error::Logger)?;
 
     info!("Checking pending settings.");
-    check_pending_settings(&args.socket_path, &args.transaction);
+    check_pending_settings(&args.socket_path, &args.transaction).await;
 
     info!("Committing settings.");
-    commit_pending_settings(&args.socket_path, &args.transaction)?;
+    commit_pending_settings(&args.socket_path, &args.transaction).await?;
 
     Ok(())
 }
@@ -218,8 +218,9 @@ fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

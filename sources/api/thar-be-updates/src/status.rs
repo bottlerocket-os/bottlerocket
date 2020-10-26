@@ -242,7 +242,7 @@ impl UpdateStatus {
 
     /// Checks the list of updates to for an available update.
     /// If the 'version-lock'ed version is available returns true. Otherwise returns false
-    pub fn update_available_updates(
+    pub async fn update_available_updates(
         &mut self,
         socket_path: &str,
         updates: Vec<update_metadata::Update>,
@@ -254,6 +254,7 @@ impl UpdateStatus {
         let uri = "/settings";
         let method = "GET";
         let (code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
+            .await
             .context(error::APIRequest { method, uri })?;
         ensure!(
             code.is_success(),

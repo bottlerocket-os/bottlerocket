@@ -116,11 +116,11 @@ enum SettingState {
 impl SettingState {
     /// Query the datastore for a given setting and return the corresponding
     /// SettingState.
-    fn query<S>(setting: S) -> Result<Self>
+    async fn query<S>(setting: S) -> Result<Self>
     where
         S: AsRef<str>,
     {
-        match query_setting_value(&setting)?.as_ref() {
+        match query_setting_value(&setting).await?.as_ref() {
             "true" => Ok(SettingState::Enabled),
             "false" => Ok(SettingState::Disabled),
             other => {
@@ -140,7 +140,7 @@ impl SettingState {
 // We can then serialize this structure to a map of
 // dotted.key.setting -> value. Using this map we can get the setting value.
 // FIXME remove this when we have an API client.
-fn query_setting_value<S>(key_str: S) -> Result<String>
+async fn query_setting_value<S>(key_str: S) -> Result<String>
 where
     S: AsRef<str>,
 {
@@ -150,6 +150,7 @@ where
 
     let uri = format!("{}?keys={}", API_SETTINGS_URI, key_str);
     let (code, response_body) = apiclient::raw_request(DEFAULT_API_SOCKET, &uri, "GET", None)
+        .await
         .context(error::APIRequest {
             method: "GET",
             uri: uri.to_string(),
@@ -320,7 +321,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -332,7 +333,7 @@ fn run() -> Result<()> {
 
     let systemd_unit = SystemdUnit::new(&args.systemd_unit);
 
-    match SettingState::query(args.setting)? {
+    match SettingState::query(args.setting).await? {
         SettingState::Enabled => {
             info!("Starting and enabling unit {}", &args.systemd_unit);
             systemd_daemon_reload()?;
@@ -354,8 +355,9 @@ fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

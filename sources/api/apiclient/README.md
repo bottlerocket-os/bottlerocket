@@ -44,8 +44,7 @@ apiclient -m GET -u /tx
 
 ## apiclient library
 
-The apiclient library provides simple, synchronous methods to query an HTTP API over a
-Unix-domain socket.
+The apiclient library provides simple methods to query an HTTP API over a Unix-domain socket.
 
 The `raw_request` method takes care of the basics of making an HTTP request on a Unix-domain
 socket, and requires you to specify the socket path, the URI (including query string), the
