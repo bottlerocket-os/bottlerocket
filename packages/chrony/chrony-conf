@@ -6,3 +6,4 @@ makestep 1.0 3
 dumponexit
 dumpdir /var/lib/chrony
 user chrony
+rtcsync
