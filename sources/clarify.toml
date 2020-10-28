@@ -82,3 +82,9 @@ license-files = [
     { path = "LICENSE", hash = 0xbd0eed23 },
     { path = "third_party/fiat/LICENSE", hash = 0xdad0527d },
 ]
+
+[clarify.tokio-macros]
+expression = "MIT"
+license-files = [
+    { path = "LICENSE", hash = 0xff97fcac },
+]

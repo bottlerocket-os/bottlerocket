@@ -88,10 +88,11 @@ type Result<T> = std::result::Result<T, error::Error>;
 
 /// Returns the value of a metadata key for a given data key, erroring if the value is not a
 /// string or is empty.
-fn get_metadata(key: &str, meta: &str) -> Result<String> {
+async fn get_metadata(key: &str, meta: &str) -> Result<String> {
     let uri = &format!("{}{}?keys={}", API_METADATA_URI_BASE, meta, key);
     let method = "GET";
     let (code, response_body) = apiclient::raw_request(DEFAULT_API_SOCKET, &uri, method, None)
+        .await
         .context(error::APIRequest { method, uri })?;
     ensure!(
         code.is_success(),
@@ -141,12 +142,14 @@ fn parse_args(mut args: env::Args) -> String {
     arg
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
 
     let registry = schnauzer::build_template_registry().context(error::BuildTemplateRegistry)?;
-    let template = get_metadata(&setting_name, "templates")?;
-    let settings = schnauzer::get_settings(DEFAULT_API_SOCKET).context(error::GetSettings)?;
+    let template = get_metadata(&setting_name, "templates").await?;
+    let settings = schnauzer::get_settings(DEFAULT_API_SOCKET)
+        .await
+        .context(error::GetSettings)?;
 
     let setting =
         registry
@@ -168,8 +171,9 @@ fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

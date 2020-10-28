@@ -670,6 +670,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -781,6 +782,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
  "toml",
 ]
 
@@ -809,6 +811,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -1225,6 +1228,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -2299,6 +2303,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -2399,6 +2404,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -2413,6 +2419,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -2601,6 +2608,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -2685,6 +2693,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -2710,6 +2719,7 @@ dependencies = [
  "simplelog",
  "snafu",
  "tempfile",
+ "tokio",
  "update_metadata",
 ]
 
@@ -2766,7 +2776,19 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "slab",
+ "tokio-macros",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0c3acc6aa564495a0f2e1d59fab677cd7f81a19994cfc7f3ad0e64301560389"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

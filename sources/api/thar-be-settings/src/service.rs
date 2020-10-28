@@ -11,7 +11,7 @@ use crate::{error, Result};
 /// Wrapper for the multiple functions needed to go from
 /// a list of changed settings to a Services map
 #[allow(clippy::implicit_hasher)]
-pub fn get_affected_services<P>(
+pub async fn get_affected_services<P>(
     socket_path: P,
     settings_limit: Option<HashSet<String>>,
 ) -> Result<model::Services>
@@ -20,7 +20,7 @@ where
 {
     let service_limit = if let Some(settings_limit) = settings_limit {
         let setting_to_service_map =
-            get_affected_service_map(socket_path.as_ref(), settings_limit)?;
+            get_affected_service_map(socket_path.as_ref(), settings_limit).await?;
         if setting_to_service_map.is_empty() {
             return Ok(HashMap::new());
         }
@@ -32,7 +32,7 @@ where
         None
     };
 
-    let services = get_service_metadata(socket_path.as_ref(), service_limit)?;
+    let services = get_service_metadata(socket_path.as_ref(), service_limit).await?;
 
     Ok(services)
 }
@@ -40,7 +40,7 @@ where
 /// Gather the services affected for each setting into a map, or if `settings_limit` is None, all
 /// services
 #[allow(clippy::implicit_hasher)]
-fn get_affected_service_map<P>(
+async fn get_affected_service_map<P>(
     socket_path: P,
     settings: HashSet<String>,
 ) -> Result<HashMap<String, Vec<String>>>
@@ -54,7 +54,9 @@ where
     let uri = "/metadata/affected-services";
 
     let setting_to_services_map: HashMap<String, Vec<String>> =
-        schnauzer::get_json(socket_path, uri, Some(query)).context(error::GetJson { uri })?;
+        schnauzer::get_json(socket_path, uri, Some(query))
+            .await
+            .context(error::GetJson { uri })?;
     trace!("API response: {:?}", &setting_to_services_map);
 
     Ok(setting_to_services_map)
@@ -80,7 +82,7 @@ fn get_affected_service_names(
 }
 
 /// Gather the metadata for each Service affected
-fn get_service_metadata<P>(
+async fn get_service_metadata<P>(
     socket_path: P,
     services_limit: Option<HashSet<String>>,
 ) -> Result<model::Services>
@@ -93,8 +95,9 @@ where
     // Query the API for affected service metadata
     debug!("Querying API for affected service metadata");
     let uri = "/services";
-    let service_map: model::Services =
-        schnauzer::get_json(socket_path, uri, query).context(error::GetJson { uri })?;
+    let service_map: model::Services = schnauzer::get_json(socket_path, uri, query)
+        .await
+        .context(error::GetJson { uri })?;
     trace!("Service metadata: {:?}", &service_map);
 
     Ok(service_map)
@@ -177,8 +180,7 @@ mod test {
             ]
         );
 
-        let expected_output =
-            hashset! {"example".to_string(), "barbaz".to_string()};
+        let expected_output = hashset! {"example".to_string(), "barbaz".to_string()};
 
         assert_eq!(get_affected_service_names(input_map), expected_output)
     }

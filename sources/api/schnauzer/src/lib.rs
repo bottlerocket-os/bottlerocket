@@ -56,7 +56,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 
 /// Simple helper that extends the API client, abstracting the repeated request logic and
 /// deserialization from JSON.
-pub fn get_json<T, P, S1, S2, S3>(
+pub async fn get_json<T, P, S1, S2, S3>(
     socket_path: P,
     uri: S1,
     // Query parameter name, query parameter value
@@ -80,6 +80,7 @@ where
     let method = "GET";
     trace!("{}ing from {}", method, uri);
     let (code, response_body) = apiclient::raw_request(socket_path, &uri, method, None)
+        .await
         .context(error::APIRequest { method, uri: &uri })?;
 
     if !code.is_success() {
@@ -98,12 +99,13 @@ where
 
 /// Requests all settings from the API so they can be used as the data source for a handlebars
 /// templating call.
-pub fn get_settings<P>(socket_path: P) -> Result<model::Model>
+pub async fn get_settings<P>(socket_path: P) -> Result<model::Model>
 where
     P: AsRef<Path>,
 {
     debug!("Querying API for settings data");
-    let settings: model::Model = get_json(&socket_path, "/", None as Option<(String, String)>)?;
+    let settings: model::Model =
+        get_json(&socket_path, "/", None as Option<(String, String)>).await?;
     trace!("Model values: {:?}", settings);
 
     Ok(settings)

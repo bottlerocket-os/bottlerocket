@@ -25,7 +25,7 @@ struct Args {
 }
 
 /// Main entry point.
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
@@ -33,7 +33,7 @@ fn run() -> Result<()> {
         .context(error::Logger)?;
 
     // If the user has sysctl settings, apply them.
-    let model = get_model(args.socket_path)?;
+    let model = get_model(args.socket_path).await?;
     if let Some(settings) = model.settings {
         if let Some(kernel) = settings.kernel {
             if let Some(sysctls) = kernel.sysctl {
@@ -47,7 +47,7 @@ fn run() -> Result<()> {
 }
 
 /// Retrieve the current model from the API.
-fn get_model<P>(socket_path: P) -> Result<model::Model>
+async fn get_model<P>(socket_path: P) -> Result<model::Model>
 where
     P: AsRef<Path>,
 {
@@ -55,6 +55,7 @@ where
     let method = "GET";
     trace!("{}ing from {}", method, uri);
     let (code, response_body) = apiclient::raw_request(socket_path, &uri, method, None)
+        .await
         .context(error::APIRequest { method, uri })?;
 
     if !code.is_success() {
@@ -159,8 +160,9 @@ fn parse_args(args: env::Args) -> Args {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

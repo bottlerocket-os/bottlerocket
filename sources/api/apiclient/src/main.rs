@@ -50,10 +50,10 @@ fn parse_args(args: env::Args) -> Args {
             "-v" | "--verbose" => verbosity += 1,
 
             "-s" | "--socket-path" => {
-                socket_path = Some(
-                    iter.next()
-                        .unwrap_or_else(|| usage_msg("Did not give argument to -s | --socket-path")),
-                )
+                socket_path =
+                    Some(iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to -s | --socket-path")
+                    }))
             }
 
             "-X" | "-m" | "--method" => {
@@ -90,11 +90,11 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn run() -> Result<(), Box<dyn std::error::Error>> {
+async fn run() -> apiclient::Result<()> {
     let args = parse_args(env::args());
 
     let (status, body) =
-        apiclient::raw_request(args.socket_path, args.uri, args.method, args.data)?;
+        apiclient::raw_request(args.socket_path, args.uri, args.method, args.data).await?;
 
     if args.verbosity > 3 {
         eprintln!("{}", status);
@@ -108,8 +108,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

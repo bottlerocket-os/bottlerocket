@@ -28,6 +28,9 @@ signpost = { path = "../../updater/signpost" }
 simplelog = "0.8.0"
 snafu = "0.6.8"
 tempfile = "3.1.0"
+tokio = { version = "0.2", default-features = false, features = ["macros", "rt-threaded"] }
+# When hyper updates to tokio 0.3:
+#tokio = { version = "0.3", default-features = false, features = ["macros", "rt-multi-thread"] }
 update_metadata = { path = "../../updater/update_metadata" }
 
 [build-dependencies]

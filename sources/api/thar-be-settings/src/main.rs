@@ -114,13 +114,13 @@ fn parse_args(args: env::Args) -> Args {
 
 /// Render and write config files to disk.  If `files_limit` is Some, only
 /// write those files, otherwise write all known files.
-fn write_config_files(
+async fn write_config_files(
     args: &Args,
     files_limit: Option<HashSet<String>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Create a vec of ConfigFile structs from the list of changed services
     info!("Requesting configuration file data for affected services");
-    let config_files = config::get_affected_config_files(&args.socket_path, files_limit)?;
+    let config_files = config::get_affected_config_files(&args.socket_path, files_limit).await?;
     trace!("Found config files: {:?}", config_files);
 
     // Build the template registry from config file metadata
@@ -141,7 +141,7 @@ fn write_config_files(
 
     // Get all settings values for config file templates
     debug!("Requesting settings values");
-    let settings = schnauzer::get_settings(&args.socket_path)?;
+    let settings = schnauzer::get_settings(&args.socket_path).await?;
 
     // Ensure all files render properly
     info!("Rendering config files...");
@@ -158,7 +158,7 @@ fn write_config_files(
     Ok(())
 }
 
-fn run() -> Result<(), Box<dyn std::error::Error>> {
+async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -180,7 +180,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 &changed_settings
             );
             let services =
-                service::get_affected_services(&args.socket_path, Some(changed_settings))?;
+                service::get_affected_services(&args.socket_path, Some(changed_settings)).await?;
             trace!("Found services: {:?}", services);
             if services.is_empty() {
                 info!("No services are affected, exiting...");
@@ -191,7 +191,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             let config_file_names = config::get_config_file_names(&services);
 
             if !config_file_names.is_empty() {
-                write_config_files(&args, Some(config_file_names))?;
+                write_config_files(&args, Some(config_file_names)).await?;
             }
 
             // Now go bounce the affected services
@@ -199,10 +199,10 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             service::restart_services(services)?;
         }
         RunMode::All => {
-            write_config_files(&args, None)?;
+            write_config_files(&args, None).await?;
 
             info!("Restarting all services...");
-            let services = service::get_affected_services(&args.socket_path, None)?;
+            let services = service::get_affected_services(&args.socket_path, None).await?;
             trace!("Found services: {:?}", services);
             service::restart_services(services)?;
         }
@@ -214,8 +214,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }
