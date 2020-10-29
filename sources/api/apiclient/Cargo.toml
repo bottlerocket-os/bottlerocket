@@ -18,6 +18,7 @@ snafu = "0.6"
 tokio = { version = "0.2", default-features = false, features = ["macros", "rt-threaded"] }
 # When hyper updates to tokio 0.3:
 #tokio = { version = "0.3", default-features = false, features = ["macros", "rt-multi-thread"] }
+unindent = "0.1"
 
 [build-dependencies]
 cargo-readme = "3.1"
