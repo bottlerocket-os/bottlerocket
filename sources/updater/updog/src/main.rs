@@ -5,7 +5,7 @@ mod error;
 mod transport;
 
 use crate::error::Result;
-use crate::transport::{HttpQueryRepo, HttpQueryTransport};
+use crate::transport::{HttpQueryTransport, QueryParams};
 use bottlerocket_release::BottlerocketRelease;
 use chrono::Utc;
 use model::modeled_types::FriendlyVersion;
@@ -22,9 +22,9 @@ use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use std::thread;
-use tempfile::TempDir;
-use tough::{ExpirationEnforcement, Limits, Repository, Settings};
+use tough::{Repository, RepositoryLoader};
 use update_metadata::{find_migrations, load_manifest, Manifest, Update};
+use url::Url;
 
 #[cfg(target_arch = "x86_64")]
 const TARGET_ARCH: &str = "x86_64";
@@ -112,27 +112,23 @@ fn load_config() -> Result<Config> {
     Ok(config)
 }
 
-fn load_repository<'a>(
-    transport: &'a HttpQueryTransport,
-    config: &'a Config,
-    tough_datastore: &'a Path,
-) -> Result<HttpQueryRepo<'a>> {
+fn load_repository(transport: HttpQueryTransport, config: &Config) -> Result<Repository> {
     fs::create_dir_all(METADATA_PATH).context(error::CreateMetadataCache {
         path: METADATA_PATH,
     })?;
-    Repository::load(
-        transport,
-        Settings {
-            root: File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
-                path: TRUSTED_ROOT_PATH,
-            })?,
-            datastore: tough_datastore,
-            metadata_base_url: &config.metadata_base_url,
-            targets_base_url: &config.targets_base_url,
-            limits: Limits::default(),
-            expiration_enforcement: ExpirationEnforcement::Safe,
-        },
+    RepositoryLoader::new(
+        File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
+            path: TRUSTED_ROOT_PATH,
+        })?,
+        Url::parse(&config.metadata_base_url).context(error::UrlParse {
+            url: &config.metadata_base_url,
+        })?,
+        Url::parse(&config.targets_base_url).context(error::UrlParse {
+            url: &config.targets_base_url,
+        })?,
     )
+    .transport(transport)
+    .load()
     .context(error::Metadata)
 }
 
@@ -211,7 +207,7 @@ fn update_required<'a>(
 }
 
 fn write_target_to_disk<P: AsRef<Path>>(
-    repository: &HttpQueryRepo<'_>,
+    repository: &Repository,
     target: &str,
     disk_path: P,
 ) -> Result<()> {
@@ -236,8 +232,8 @@ fn write_target_to_disk<P: AsRef<Path>>(
 /// Store required migrations for an update in persistent storage. All intermediate migrations
 /// between the current version and the target version must be retrieved.
 fn retrieve_migrations(
-    repository: &HttpQueryRepo<'_>,
-    transport: &HttpQueryTransport,
+    repository: &Repository,
+    query_params: &mut QueryParams,
     manifest: &Manifest,
     update: &Update,
     current_version: &Version,
@@ -263,15 +259,11 @@ fn retrieve_migrations(
         .cache(METADATA_PATH, MIGRATION_PATH, Some(&targets), true)
         .context(error::RepoCacheMigrations)?;
     // Set a query parameter listing the required migrations
-    transport
-        .queries_get_mut()
-        .context(error::TransportBorrow)?
-        .push(("migrations".to_owned(), targets.join(",")));
-
+    query_params.add("migrations", targets.join(","));
     Ok(())
 }
 
-fn update_image(update: &Update, repository: &HttpQueryRepo<'_>) -> Result<()> {
+fn update_image(update: &Update, repository: &Repository) -> Result<()> {
     let mut gpt_state = State::load().context(error::PartitionTableRead)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
@@ -308,16 +300,12 @@ fn revert_update_flags() -> Result<()> {
 }
 
 fn set_common_query_params(
-    transport: &HttpQueryTransport,
+    query_params: &mut QueryParams,
     current_version: &Version,
     config: &Config,
 ) -> Result<()> {
-    let mut transport_borrow = transport
-        .queries_get_mut()
-        .context(error::TransportBorrow)?;
-
-    transport_borrow.push((String::from("version"), current_version.to_string()));
-    transport_borrow.push((String::from("seed"), config.seed.to_string()));
+    query_params.add("version", current_version.to_string());
+    query_params.add("seed", config.seed.to_string());
 
     Ok(())
 }
@@ -485,9 +473,11 @@ fn main_inner() -> Result<()> {
     let current_release = BottlerocketRelease::new().context(error::ReleaseVersion)?;
     let variant = arguments.variant.unwrap_or(current_release.variant_id);
     let transport = HttpQueryTransport::new();
-    set_common_query_params(&transport, &current_release.version_id, &config)?;
-    let tough_datastore = TempDir::new().context(error::CreateTempDir)?;
-    let repository = load_repository(&transport, &config, tough_datastore.path())?;
+    // get a shared pointer to the transport's query_params so we can add metrics information to
+    // the transport's HTTP calls.
+    let mut query_params = transport.query_params();
+    set_common_query_params(&mut query_params, &current_release.version_id, &config)?;
+    let repository = load_repository(transport, &config)?;
     let manifest = load_manifest(&repository)?;
     let ignore_waves = arguments.ignore_waves || config.ignore_waves;
     match command {
@@ -526,15 +516,10 @@ fn main_inner() -> Result<()> {
                 arguments.force_version,
             )? {
                 eprintln!("Starting update to {}", u.version);
-
-                transport
-                    .queries_get_mut()
-                    .context(error::TransportBorrow)?
-                    .push((String::from("target"), u.version.to_string()));
-
+                query_params.add("target", u.version.to_string());
                 retrieve_migrations(
                     &repository,
-                    &transport,
+                    &mut query_params,
                     &manifest,
                     u,
                     &current_release.version_id,

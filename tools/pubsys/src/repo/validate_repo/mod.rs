@@ -1,7 +1,6 @@
 //! The validate_repo module owns the 'validate-repo' subcommand and provides methods for validating
 //! a given TUF repository by attempting to load the repository and download its targets.
 
-use super::RepoTransport;
 use crate::repo::{error as repo_error, repo_urls};
 use crate::Args;
 use futures::future::join_all;
@@ -12,8 +11,7 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use tempfile::tempdir;
-use tough::{ExpirationEnforcement, Limits, Repository, Settings};
+use tough::{Repository, RepositoryLoader};
 use url::Url;
 
 /// Validates a set of TUF repositories
@@ -40,21 +38,12 @@ pub(crate) struct ValidateRepoArgs {
     validate_targets: bool,
 }
 
-/// Retrieves listed targets and attempt to download them for validation purposes
-async fn retrieve_targets<T: 'static>(
-    repo: &Repository<'_, T>,
-) -> Result<(), Error>
-where
-    T: tough::Transport,
-    <T as tough::Transport>::Stream: std::marker::Send,
-{
+/// Retrieves listed targets and attempts to download them for validation purposes
+async fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
     let targets = &repo.targets().signed.targets;
 
     let mut tasks = Vec::new();
-    for target in targets
-        .keys()
-        .cloned()
-    {
+    for target in targets.keys().cloned() {
         let target = target.to_string();
         let mut reader = repo
             .read_target(&target)
@@ -81,27 +70,21 @@ where
 }
 
 async fn validate_repo(
-    transport: &RepoTransport,
     root_role_path: &PathBuf,
     metadata_url: Url,
     targets_url: &Url,
     validate_targets: bool,
 ) -> Result<(), Error> {
-    // Create a temporary directory where the TUF client can store metadata
-    let workdir = tempdir().context(repo_error::TempDir)?;
-    let settings = Settings {
-        root: File::open(root_role_path).context(repo_error::File {
+    // Load the repository
+    let repo = RepositoryLoader::new(
+        File::open(root_role_path).context(repo_error::File {
             path: root_role_path,
         })?,
-        datastore: workdir.path(),
-        metadata_base_url: metadata_url.as_str(),
-        targets_base_url: targets_url.as_str(),
-        limits: Limits::default(),
-        expiration_enforcement: ExpirationEnforcement::Safe,
-    };
-
-    // Load the repository
-    let repo = Repository::load(transport, settings).context(repo_error::RepoLoad {
+        metadata_url.clone(),
+        targets_url.clone(),
+    )
+    .load()
+    .context(repo_error::RepoLoad {
         metadata_base_url: metadata_url.clone(),
     })?;
     info!("Loaded TUF repo: {}", metadata_url);
@@ -133,7 +116,6 @@ pub(crate) async fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> R
             missing: format!("definition for repo {}", &validate_repo_args.repo),
         })?;
 
-    let transport = RepoTransport::default();
     let repo_urls = repo_urls(
         &repo_config,
         &validate_repo_args.variant,
@@ -143,7 +125,6 @@ pub(crate) async fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> R
         repo: &validate_repo_args.repo,
     })?;
     validate_repo(
-        &transport,
         &validate_repo_args.root_role_path,
         repo_urls.0,
         repo_urls.1,

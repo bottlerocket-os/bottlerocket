@@ -1,61 +1,77 @@
-use std::cell::{BorrowMutError, RefCell};
-use tough::{HttpTransport, Repository, Transport};
+use std::sync::{Arc, RwLock};
+
+use log::error;
+use tough::{HttpTransport, Transport, TransportError};
 use url::Url;
 
-#[derive(Debug)]
+/// A shared pointer to a list of query params that the transport will add to HTTP calls.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct QueryParams(Arc<RwLock<Vec<(String, String)>>>);
+
+/// A `tough` `Transport` that allows us to add query parameters to HTTP calls.
+#[derive(Debug, Clone)]
 #[allow(clippy::module_name_repetitions)]
-pub struct HttpQueryTransport {
+pub(crate) struct HttpQueryTransport {
     pub inner: HttpTransport,
-    parameters: RefCell<Vec<(String, String)>>,
+    parameters: QueryParams,
+}
+
+impl QueryParams {
+    pub(crate) fn add_params_to_url(&self, mut url: Url) -> Url {
+        let mut params = match self.0.write() {
+            Err(e) => {
+                // a thread died while holding a lock to the params. unlikely to occur.
+                error!("unable to add query params to HTTP call: {}", e);
+                return url;
+            }
+            Ok(lock_result) => lock_result,
+        };
+        params.sort_by(|(a, _), (b, _)| a.cmp(b));
+        url.query_pairs_mut().extend_pairs(params.iter());
+        url
+    }
+
+    pub(crate) fn add<S1, S2>(&self, key: S1, val: S2) -> ()
+    where
+        S1: Into<String>,
+        S2: Into<String>,
+    {
+        let mut params = match self.0.write() {
+            Err(e) => {
+                // a thread died while holding a lock to the params. unlikely to occur.
+                error!(
+                    "unable to add query param '{}={}': {}",
+                    key.into(),
+                    val.into(),
+                    e
+                );
+                return;
+            }
+            Ok(lock_result) => lock_result,
+        };
+        params.push((key.into(), val.into()))
+    }
 }
 
 impl HttpQueryTransport {
     pub fn new() -> Self {
         Self {
-            inner: HttpTransport::new(),
-            parameters: RefCell::new(vec![]),
+            inner: HttpTransport::default(),
+            parameters: QueryParams::default(),
         }
     }
 
-    /// Try to borrow a mutable reference to parameters; returns an error if
-    /// a borrow is already active
-    pub fn queries_get_mut(
-        &self,
-    ) -> Result<std::cell::RefMut<'_, Vec<(String, String)>>, BorrowMutError> {
-        self.parameters.try_borrow_mut()
-    }
-
-    /// Set the query string appended to tough requests, sorting the queries
-    /// by key name first
-    fn set_query_string(&self, mut url: Url) -> Url {
-        if let Ok(mut queries) = self.parameters.try_borrow_mut() {
-            queries.sort_by(|(a,_), (b,_)| a.cmp(b));
-
-            for (key, val) in queries.iter() {
-                url.query_pairs_mut().append_pair(&key, &val);
-            }
-        } else {
-            // We can't sort the actual data at the moment, but we can sort
-            // what we append to the URL.
-            let mut queries = self.parameters.borrow().clone();
-            queries.sort_by(|(a,_), (b,_)| a.cmp(b));
-
-            for (key, val) in queries {
-                url.query_pairs_mut().append_pair(&key, &val);
-            }
-        }
-
-        url
+    /// Obtain a shared pointer to the query params for this transport.
+    pub fn query_params(&self) -> QueryParams {
+        QueryParams(Arc::clone(&self.parameters.0))
     }
 }
 
-pub type HttpQueryRepo<'a> = Repository<'a, HttpQueryTransport>;
-
 impl Transport for HttpQueryTransport {
-    type Stream = <HttpTransport as Transport>::Stream;
-    type Error = <HttpTransport as Transport>::Error;
-
-    fn fetch(&self, url: Url) -> Result<Self::Stream, Self::Error> {
-        self.inner.fetch(self.set_query_string(url))
+    fn fetch(
+        &self,
+        url: Url,
+    ) -> std::result::Result<Box<dyn std::io::Read + Send>, TransportError> {
+        self.inner.fetch(self.parameters.add_params_to_url(url))
     }
 }

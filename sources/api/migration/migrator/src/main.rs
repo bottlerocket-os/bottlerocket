@@ -38,9 +38,9 @@ use std::os::unix::fs::symlink;
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process;
-use tempfile::TempDir;
-use tough::{ExpirationEnforcement, Limits};
+use tough::{ExpirationEnforcement, FilesystemTransport, RepositoryLoader};
 use update_metadata::load_manifest;
+use url::Url;
 
 mod args;
 mod direction;
@@ -113,7 +113,26 @@ pub(crate) fn run(args: &Args) -> Result<()> {
             process::exit(0);
         });
 
-    // Prepare to load the locally cached TUF repository to obtain the manifest. Part of using a
+    // create URLs from the metadata and targets directory paths
+    let metadata_base_url = Url::from_directory_path(&args.metadata_directory).map_err(|_| {
+        error::Error::DirectoryUrl {
+            path: args.metadata_directory.clone(),
+        }
+    })?;
+    let targets_base_url =
+        url::Url::from_directory_path(&args.migration_directory).map_err(|_| {
+            error::Error::DirectoryUrl {
+                path: args.migration_directory.clone(),
+            }
+        })?;
+
+    // open a reader to the root.json file
+    let root_file = File::open(&args.root_path).with_context(|| error::OpenRoot {
+        path: args.root_path.clone(),
+    })?;
+
+    // We will load the locally cached TUF repository to obtain the manifest. The Repository is
+    // loaded using a `TempDir` for its internal Datastore (this is the default). Part of using a
     // `TempDir` is disabling timestamp checking, because we want an instance to still come up and
     // run migrations regardless of the how the system time relates to what we have cached (for
     // example if someone runs an update, then shuts down the instance for several weeks, beyond the
@@ -121,41 +140,21 @@ pub(crate) fn run(args: &Args) -> Result<()> {
     // use a `TempDir` because see no value in keeping a datastore around. The latest  known
     // versions of the repository metadata will always be the versions of repository metadata we
     // have cached on the disk. More info at `ExpirationEnforcement::Unsafe` below.
-    let tough_datastore = TempDir::new().context(error::CreateToughTempDir)?;
-    let metadata_url = url::Url::from_directory_path(&args.metadata_directory).map_err(|_| {
-        error::Error::DirectoryUrl {
-            path: args.metadata_directory.clone(),
-        }
-    })?;
-    let migrations_url =
-        url::Url::from_directory_path(&args.migration_directory).map_err(|_| {
-            error::Error::DirectoryUrl {
-                path: args.migration_directory.clone(),
-            }
-        })?;
+
     // Failure to load the TUF repo at the expected location is a serious issue because updog should
     // always create a TUF repo that contains at least the manifest, even if there are no migrations.
-    let repo = tough::Repository::load(
-        &tough::FilesystemTransport,
-        tough::Settings {
-            root: File::open(&args.root_path).context(error::OpenRoot {
-                path: args.root_path.clone(),
-            })?,
-            datastore: tough_datastore.path(),
-            metadata_base_url: metadata_url.as_str(),
-            targets_base_url: migrations_url.as_str(),
-            limits: Limits::default(),
-            // The threats TUF mitigates are more than the threats we are attempting to mitigate
-            // here by caching signatures for migrations locally and using them after a reboot but
-            // prior to Internet connectivity. We are caching the TUF repo and use it while offline
-            // after a reboot to mitigate binaries being added or modified in the migrations
-            // directory; the TUF repo is simply a code signing method we already have in place,
-            // even if it's not one that initially makes sense for this use case. So, we don't care
-            // if the targets expired between updog downloading them and now.
-            expiration_enforcement: ExpirationEnforcement::Unsafe,
-        },
-    )
-    .context(error::RepoLoad)?;
+    let repo = RepositoryLoader::new(root_file, metadata_base_url, targets_base_url)
+        .transport(FilesystemTransport)
+        // The threats TUF mitigates are more than the threats we are attempting to mitigate
+        // here by caching signatures for migrations locally and using them after a reboot but
+        // prior to Internet connectivity. We are caching the TUF repo and use it while offline
+        // after a reboot to mitigate binaries being added or modified in the migrations
+        // directory; the TUF repo is simply a code signing method we already have in place,
+        // even if it's not one that initially makes sense for this use case. So, we don't care
+        // if the targets expired between updog downloading them and now.
+        .expiration_enforcement(ExpirationEnforcement::Unsafe)
+        .load()
+        .context(error::RepoLoad)?;
     let manifest = load_manifest(&repo).context(error::LoadManifest)?;
     let migrations =
         update_metadata::find_migrations(&current_version, &args.migrate_to_version, &manifest)
@@ -222,7 +221,7 @@ where
 /// The given data store is used as a starting point; each migration is given the output of the
 /// previous migration, and the final output becomes the new data store.
 fn run_migrations<P, S>(
-    repository: &tough::Repository<'_, tough::FilesystemTransport>,
+    repository: &tough::Repository,
     direction: Direction,
     migrations: &[S],
     source_datastore: P,

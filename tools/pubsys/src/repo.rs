@@ -2,7 +2,6 @@
 
 pub(crate) mod check_expirations;
 pub(crate) mod refresh_repo;
-mod transport;
 pub(crate) mod validate_repo;
 
 use crate::{friendly_version, Args};
@@ -18,17 +17,16 @@ use std::fs::{self, File};
 use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
-use tempfile::{tempdir, NamedTempFile};
+use tempfile::NamedTempFile;
 use tough::{
     editor::signed::PathExists,
     editor::RepositoryEditor,
     key_source::{KeySource, LocalKeySource},
     schema::Target,
-    ExpirationEnforcement, Limits, Repository, Settings,
+    RepositoryLoader, TransportErrorKind,
 };
 use tough_kms::{KmsKeySource, KmsSigningAlgorithm};
 use tough_ssm::SsmKeySource;
-use transport::RepoTransport;
 use update_metadata::{Images, Manifest, Release, UpdateWaves};
 use url::Url;
 
@@ -187,8 +185,8 @@ fn update_manifest(repo_args: &RepoArgs, manifest: &mut Manifest) -> Result<()> 
 
 /// Set expirations of all non-root role metadata based on a given `RepoExpirationPolicy` and an
 /// expiration start time
-fn set_expirations<'a>(
-    editor: &mut RepositoryEditor<'a, RepoTransport>,
+fn set_expirations(
+    editor: &mut RepositoryEditor,
     expiration_policy: &RepoExpirationPolicy,
     expiration_start_time: DateTime<Utc>,
 ) -> Result<()> {
@@ -211,7 +209,7 @@ fn set_expirations<'a>(
 }
 
 /// Set versions of all role metadata; the version will be the UNIX timestamp of the current time.
-fn set_versions<'a>(editor: &mut RepositoryEditor<'a, RepoTransport>) -> Result<()> {
+fn set_versions(editor: &mut RepositoryEditor) -> Result<()> {
     let seconds = Utc::now().timestamp();
     let unsigned_seconds = seconds.try_into().expect("System clock before 1970??");
     let version = NonZeroU64::new(unsigned_seconds).expect("System clock exactly 1970??");
@@ -228,7 +226,7 @@ fn set_versions<'a>(editor: &mut RepositoryEditor<'a, RepoTransport>) -> Result<
 /// Adds targets, expirations, and version to the RepositoryEditor
 fn update_editor<'a, P>(
     repo_args: &'a RepoArgs,
-    editor: &mut RepositoryEditor<'a, RepoTransport>,
+    editor: &mut RepositoryEditor,
     targets: impl Iterator<Item = &'a PathBuf>,
     manifest_path: P,
 ) -> Result<()>
@@ -328,30 +326,25 @@ fn repo_urls<'a>(
 /// that the repo does not exist.
 fn load_editor_and_manifest<'a, P>(
     root_role_path: P,
-    transport: &'a RepoTransport,
-    datastore: &'a Path,
     metadata_url: &'a Url,
     targets_url: &'a Url,
-) -> Result<Option<(RepositoryEditor<'a, RepoTransport>, Manifest)>>
+) -> Result<Option<(RepositoryEditor, Manifest)>>
 where
     P: AsRef<Path>,
 {
     let root_role_path = root_role_path.as_ref();
 
-    // Create a temporary directory where the TUF client can store metadata
-    let settings = Settings {
-        root: File::open(root_role_path).context(error::File {
+    // Try to load the repo...
+    let repo_load_result = RepositoryLoader::new(
+        File::open(root_role_path).context(error::File {
             path: root_role_path,
         })?,
-        datastore,
-        metadata_base_url: metadata_url.as_str(),
-        targets_base_url: targets_url.as_str(),
-        limits: Limits::default(),
-        expiration_enforcement: ExpirationEnforcement::Safe,
-    };
+        metadata_url.clone(),
+        targets_url.clone(),
+    )
+    .load();
 
-    // Try to load the repo...
-    match Repository::load(transport, settings) {
+    match repo_load_result {
         // If we load it successfully, build an editor and manifest from it.
         Ok(repo) => {
             let reader = repo
@@ -374,14 +367,23 @@ where
         // If we fail to load, but we only failed because the repo doesn't exist yet, then start
         // fresh by signalling that there is no known repo.  Otherwise, fail hard.
         Err(e) => {
-            if transport.repo_not_found.get() {
+            if is_file_not_found_error(&e) {
                 Ok(None)
             } else {
                 Err(e).with_context(|| error::RepoLoad {
                     metadata_base_url: metadata_url.clone(),
-                })?
+                })
             }
         }
+    }
+}
+
+/// Inspects the `tough` error to see if it is a `Transport` error, and if so, is it `FileNotFound`.
+fn is_file_not_found_error(e: &tough::error::Error) -> bool {
+    if let tough::error::Error::Transport { source, .. } = e {
+        matches!(source.kind(), TransportErrorKind::FileNotFound)
+    } else {
+        false
     }
 }
 
@@ -443,24 +445,19 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
         }) {
         repo_config
     } else {
-        info!("Didn't find repo '{}' in Infra.toml, using default configuration", repo_args.repo);
+        info!(
+            "Didn't find repo '{}' in Infra.toml, using default configuration",
+            repo_args.repo
+        );
         &default_repo_config
     };
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
     let maybe_urls = repo_urls(&repo_config, &repo_args.variant, &repo_args.arch)?;
-    let workdir = tempdir().context(error::TempDir)?;
-    let transport = RepoTransport::default();
     let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref()
     {
         info!("Found metadata and target URLs, loading existing repository");
-        match load_editor_and_manifest(
-            &repo_args.root_role_path,
-            &transport,
-            workdir.path(),
-            &metadata_url,
-            &targets_url,
-        )? {
+        match load_editor_and_manifest(&repo_args.root_role_path, &metadata_url, &targets_url)? {
             Some((editor, manifest)) => (editor, manifest),
             None => {
                 info!(
@@ -728,9 +725,6 @@ mod error {
             wave_policy_path: PathBuf,
             source: update_metadata::error::Error,
         },
-
-        #[snafu(display("Failed to create tempdir: {}", source))]
-        TempDir { source: io::Error },
 
         #[snafu(display("Failed to create temporary file: {}", source))]
         TempFile { source: io::Error },
