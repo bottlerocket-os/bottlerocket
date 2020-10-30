@@ -1,12 +1,33 @@
 use std::env;
 use std::process;
+use unindent::unindent;
 
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
+const DEFAULT_METHOD: &str = "GET";
 
-/// Stores user-supplied arguments.
+/// Stores user-supplied global arguments.
+#[derive(Debug)]
 struct Args {
     verbosity: usize,
     socket_path: String,
+}
+
+impl Default for Args {
+    fn default() -> Self {
+        Self {
+            verbosity: 3,
+            socket_path: DEFAULT_API_SOCKET.to_string(),
+        }
+    }
+}
+
+/// Stores the usage mode specified by the user as a subcommand.
+enum Subcommand {
+    Raw(RawArgs),
+}
+
+/// Stores user-supplied arguments for the 'raw' subcommand.
+struct RawArgs {
     method: String,
     uri: String,
     data: Option<String>,
@@ -14,19 +35,25 @@ struct Args {
 
 /// Informs the user about proper usage of the program and exits.
 fn usage() -> ! {
-    let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
-    eprintln!(
-        r"Usage: {}
-            (-u | --uri) URI
-            [ (-X | -m | --method) METHOD ]
-            [ (-d | --data) DATA ]
-            [ (-s | --socket-path) PATH ]
-            [ -v | --verbose ... ]
+    let msg = &format!(
+        r"Usage: apiclient [SUBCOMMAND] [OPTION]...
 
-    Method defaults to GET
-    Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET
+        Global options:
+            -s, --socket-path PATH     Override the server socket path.  Default: {socket}
+            -v, --verbose              Print extra information like HTTP status code.
+
+        Subcommands:
+            raw                        Makes an HTTP request to the server.
+                                       'raw' is the default subcommand and may be omitted.
+
+        raw options:
+            -u, --uri URI              Required; URI to request from the server, e.g. /tx
+            -m, -X, --method METHOD    HTTP method to use in request.  Default: {method}
+            -d, --data DATA            Data to include in the request body.  Default: empty",
+        socket = DEFAULT_API_SOCKET,
+        method = DEFAULT_METHOD,
     );
+    eprintln!("{}", unindent(msg));
     process::exit(2);
 }
 
@@ -37,25 +64,48 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 }
 
 /// Parses user arguments into an Args structure.
-fn parse_args(args: env::Args) -> Args {
-    let mut socket_path = None;
-    let mut verbosity = 3; // default to INFO
+fn parse_args(args: env::Args) -> (Args, Subcommand) {
+    let mut global_args = Args::default();
+    let mut subcommand = None;
+    let mut subcommand_args = Vec::new();
+
+    let mut iter = args.into_iter().skip(1);
+    while let Some(arg) = iter.next() {
+        match arg.as_ref() {
+            "-h" | "--help" => usage(),
+
+            // Global args
+            "-v" | "--verbose" => global_args.verbosity += 1,
+
+            "-s" | "--socket-path" => {
+                global_args.socket_path = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to -s | --socket-path"))
+            }
+
+            // Subcommands
+            "raw" if subcommand.is_none() && !arg.starts_with('-') => subcommand = Some(arg),
+
+            // Other arguments are passed to the subcommand parser
+            _ => subcommand_args.push(arg),
+        }
+    }
+
+    match subcommand.as_deref() {
+        // Default subcommand is 'raw'
+        None | Some("raw") => return (global_args, parse_raw_args(subcommand_args)),
+        _ => usage_msg("Missing or unknown subcommand"),
+    }
+}
+
+fn parse_raw_args(args: Vec<String>) -> Subcommand {
     let mut method = None;
     let mut uri = None;
     let mut data = None;
 
-    let mut iter = args.skip(1);
+    let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
-            "-v" | "--verbose" => verbosity += 1,
-
-            "-s" | "--socket-path" => {
-                socket_path =
-                    Some(iter.next().unwrap_or_else(|| {
-                        usage_msg("Did not give argument to -s | --socket-path")
-                    }))
-            }
-
             "-X" | "-m" | "--method" => {
                 method = Some(
                     iter.next()
@@ -77,31 +127,34 @@ fn parse_args(args: env::Args) -> Args {
                 )
             }
 
-            _ => usage(),
+            x => usage_msg(&format!("Unknown argument '{}'", x)),
         }
     }
 
-    Args {
-        verbosity,
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
-        method: method.unwrap_or_else(|| "GET".to_string()),
-        uri: uri.unwrap_or_else(|| usage()),
+    Subcommand::Raw(RawArgs {
+        method: method.unwrap_or_else(|| DEFAULT_METHOD.to_string()),
+        uri: uri.unwrap_or_else(|| usage_msg("Missing required argument '--uri'")),
         data,
-    }
+    })
 }
 
 async fn run() -> apiclient::Result<()> {
-    let args = parse_args(env::args());
+    let (args, subcommand) = parse_args(env::args());
 
-    let (status, body) =
-        apiclient::raw_request(args.socket_path, args.uri, args.method, args.data).await?;
+    match subcommand {
+        Subcommand::Raw(raw) => {
+            let (status, body) =
+                apiclient::raw_request(args.socket_path, raw.uri, raw.method, raw.data).await?;
 
-    if args.verbosity > 3 {
-        eprintln!("{}", status);
+            if args.verbosity > 3 {
+                eprintln!("{}", status);
+            }
+            if !body.is_empty() {
+                println!("{}", body);
+            }
+        }
     }
-    if !body.is_empty() {
-        println!("{}", body);
-    }
+
     Ok(())
 }
 
