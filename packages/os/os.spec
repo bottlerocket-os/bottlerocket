@@ -206,14 +206,20 @@ mkdir bin
 %endif
     %{nil}
 
+# Next, build components that should be static.
+# * apiclient, because it needs to run from containers that don't have the same libraries available.
+# * migrations, because they need to run after a system update where available libraries can change.
+
+# First we find the migrations in the source tree.  We assume the directory name is the same as the crate name.
+migrations=()
+for migration in $(find %{_builddir}/sources/api/migration/migrations/* -mindepth 1 -maxdepth 1 -type d); do
+    migrations+=("-p $(basename ${migration})")
+done
+# Build static binaries.
 %cargo_build_static --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiclient \
+    ${migrations[*]} \
     %{nil}
-
-# Build the migrations
-for crate in $(find %{_builddir}/sources/api/migration/migrations -name 'Cargo.toml'); do
-    %cargo_build_static --manifest-path "${crate}"
-done
 
 %install
 install -d %{buildroot}%{_cross_bindir}
