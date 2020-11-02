@@ -142,7 +142,7 @@ fn run() -> Result<()> {
 
                 Url::from_file_path(&args.default_key_path)
                     .ok()
-                    .context(error::FileUrl {
+                    .context(error::FileToUrl {
                         path: args.default_key_path,
                     })?
             };
@@ -222,10 +222,19 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
                     );
                 } else {
                     // Download the root role by URL and verify its checksum before writing it.
-                    let root_role_data = reqwest::blocking::get(url.clone())
-                        .with_context(|| error::GetUrl { url: url.clone() })?
-                        .text()
-                        .with_context(|| error::GetUrl { url: url.clone() })?;
+                    let root_role_data = if url.scheme() == "file" {
+                        // reqwest won't fetch a file URL, so just read the file.
+                        let path = url
+                            .to_file_path()
+                            .ok()
+                            .with_context(|| error::UrlToFile { url: url.clone() })?;
+                        fs::read_to_string(&path).context(error::ReadFile { path: &path })?
+                    } else {
+                        reqwest::blocking::get(url.clone())
+                            .with_context(|| error::GetUrl { url: url.clone() })?
+                            .text()
+                            .with_context(|| error::GetUrl { url: url.clone() })?
+                    };
 
                     let mut d = Sha512::new();
                     d.update(&root_role_data);
@@ -281,7 +290,7 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
     }
     if key_url.is_none() && args.default_key_path.exists() {
         key_url = Some(Url::from_file_path(&args.default_key_path).ok().context(
-            error::FileUrl {
+            error::FileToUrl {
                 path: &args.default_key_path,
             },
         )?);
@@ -319,7 +328,7 @@ mod error {
         Config { source: pubsys_config::Error },
 
         #[snafu(display("Path not valid as a URL: {}", path.display()))]
-        FileUrl { path: PathBuf },
+        FileToUrl { path: PathBuf },
 
         #[snafu(display("Failed to fetch URL '{}': {}", url, source))]
         GetUrl { url: Url, source: reqwest::Error },
@@ -354,6 +363,9 @@ mod error {
         #[snafu(display("Failed to set permissions on {}: {}", path.display(), source))]
         SetMode { path: PathBuf, source: io::Error },
 
+        #[snafu(display("Unable to build URL from signing key for repo '{}'", repo))]
+        SigningKeyUrl { repo: String },
+
         #[snafu(display("Failed to create temp file for {}: {}", purpose, source))]
         TempFileCreate { purpose: String, source: io::Error },
 
@@ -369,8 +381,8 @@ mod error {
         #[snafu(display("Failed to start tuftool: {}", source))]
         TuftoolSpawn { source: io::Error },
 
-        #[snafu(display("Unable to build URL from signing key for repo '{}'", repo))]
-        SigningKeyUrl { repo: String },
+        #[snafu(display("URL not valid as a path: {}", url))]
+        UrlToFile { url: Url },
 
         #[snafu(display("Failed to write '{}': {}", path.display(), source))]
         WriteFile { path: PathBuf, source: io::Error },
