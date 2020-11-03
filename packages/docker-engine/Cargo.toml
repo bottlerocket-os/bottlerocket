@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/docker/engine/archive/v19.03.12/engine-19.03.12.tar.gz"
-sha512 = "51632ca8cff03440e3b76ad3e7f06b9c6275c776f4c4f9dc88cd7f5aa9b8aa8cb16ce2b3702426cb93f3714265a6cd28d4ba31612db37199e2915821b9ee8fd4"
+url = "https://github.com/moby/moby/archive/v19.03.13/moby-19.03.13.tar.gz"
+sha512 = "b034ba2d00f944bc57f44858f95f4db5960930e2fb3efe41183ed88a6f29fcb60ea007b0b28705a00b467ba38da557654c5611c6ef6731361802936568879698"
 
 [[package.metadata.build-package.external-files]]
 path = "awslogs_update_aws-sdk-go_to_support_imdsv2.patch.bz2"
