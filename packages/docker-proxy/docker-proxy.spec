@@ -8,7 +8,7 @@
 %global _dwz_low_mem_die_limit 0
 
 Name: %{_cross_os}docker-proxy
-Version: 18.09.9
+Version: 19.03.13
 Release: 1%{?dist}
 Summary: Docker CLI
 # mostly Apache-2.0, client/mflag is BSD-3-Clause
