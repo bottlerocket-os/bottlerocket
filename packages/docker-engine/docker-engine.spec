@@ -62,7 +62,7 @@ export BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null
 export PLATFORM="Docker Engine - Community"
 chmod +x ./hack/make/.go-autogen
 ./hack/make/.go-autogen
-go build -buildmode pie -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
+go build -buildmode=pie -ldflags=-linkmode=external -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
 
 %install
 install -d %{buildroot}%{_cross_bindir}

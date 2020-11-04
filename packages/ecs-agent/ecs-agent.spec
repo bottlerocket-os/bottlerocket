@@ -62,8 +62,8 @@ LD_PAUSE_CONTAINER_TAG="-X github.com/aws/amazon-ecs-agent/agent/config.DefaultP
 LD_VERSION="-X github.com/aws/amazon-ecs-agent/agent/version.Version=%{gover}"
 LD_GIT_REV="-X github.com/aws/amazon-ecs-agent/agent/version.GitShortHash=%{gitrev}"
 go build -a \
-  -buildmode pie \
-  -ldflags "${LD_PAUSE_CONTAINER_NAME} ${LD_PAUSE_CONTAINER_TAG} ${LD_VERSION} ${LD_GIT_REV}" \
+  -buildmode=pie \
+  -ldflags "-linkmode=external ${LD_PAUSE_CONTAINER_NAME} ${LD_PAUSE_CONTAINER_TAG} ${LD_VERSION} ${LD_GIT_REV}" \
   -o amazon-ecs-agent \
   ./agent
 

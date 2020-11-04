@@ -62,7 +62,7 @@ for bin in \
   containerd-shim-runc-v2 \
   ctr ;
 do
-  go build -buildmode pie -tags="${BUILDTAGS}" -o ${bin} %{goimport}/cmd/${bin}
+  go build -buildmode=pie -ldflags=-linkmode=external -tags="${BUILDTAGS}" -o ${bin} %{goimport}/cmd/${bin}
 done
 
 %install

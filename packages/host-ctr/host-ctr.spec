@@ -26,7 +26,7 @@ popd
 
 %build
 %set_cross_go_flags
-go build -buildmode=pie -o host-ctr ./cmd/host-ctr
+go build -buildmode=pie -ldflags=-linkmode=external -o host-ctr ./cmd/host-ctr
 
 %install
 install -d %{buildroot}%{_cross_bindir}
