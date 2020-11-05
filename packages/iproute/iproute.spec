@@ -1,5 +1,5 @@
 Name: %{_cross_os}iproute
-Version: 5.7.0
+Version: 5.9.0
 Release: 1%{?dist}
 Summary: Tools for advanced IP routing and network device configuration
 License: GPL-2.0-or-later AND GPL-2.0-only

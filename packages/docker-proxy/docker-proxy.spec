@@ -1,12 +1,14 @@
 %global goproject github.com/docker
 %global gorepo libnetwork
 %global goimport %{goproject}/%{gorepo}
-%global commit 48722da498b202dfed2eb4299dfcfbdf8b75392d
+# Use the libnetwork commit listed in this file for the docker version we ship:
+# https://github.com/moby/moby/blob/DOCKER-VERSION-HERE/vendor.conf
+%global commit 026aabaa659832804b01754aaadd2c0f420c68b6
 
 %global _dwz_low_mem_die_limit 0
 
 Name: %{_cross_os}docker-proxy
-Version: 18.09.9
+Version: 19.03.13
 Release: 1%{?dist}
 Summary: Docker CLI
 # mostly Apache-2.0, client/mflag is BSD-3-Clause
@@ -14,7 +16,6 @@ License: Apache-2.0 AND BSD-3-Clause
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
 Source1000: clarify.toml
-Patch1: 0001-bridge-Fix-hwaddr-set-race-between-us-and-udev.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel

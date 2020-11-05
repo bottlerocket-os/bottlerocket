@@ -1,5 +1,5 @@
 Name: %{_cross_os}chrony
-Version: 3.5.1
+Version: 4.0
 Release: 1%{?dist}
 Summary: A versatile implementation of the Network Time Protocol
 License: GPL-2.0-only
@@ -16,19 +16,6 @@ BuildRequires: %{_cross_os}ncurses-devel
 BuildRequires: %{_cross_os}readline-devel
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libseccomp
-
-# Patches taken from upstream
-
-# Update seccomp filter to work with glibc 2.31
-# Reworked version of
-# https://git.tuxfamily.org/chrony/chrony.git/patch/sys_linux.c?id=02ada36838e48942dd1ecd0513c3449fcf9135df
-Patch0: 0001-sys_linux-add-support-for-TCP-sockets.patch
-# https://git.tuxfamily.org/chrony/chrony.git/patch/sys_linux.c?id=429c4468b0058d9c2e2fffbf6660b0f1581af6af
-Patch1: 0002-sys_linux-allow-F_GETFL-in-seccomp-filter.patch
-# https://git.tuxfamily.org/chrony/chrony.git/patch/sys_linux.c?id=0cf506c92967c84f9ed83ba9e1be946a7fda6425
-Patch2: 0003-sys_linux-allow-clock_adjtime-in-seccomp-filter.patch
-# https://git.tuxfamily.org/chrony/chrony.git/patch/sys_linux.c?id=994409a03697b8df68115342dc8d1e7ceeeb40bd
-Patch3: 0004-sys_linux-allow-renameat2-in-seccomp-filter.patch
 
 %description
 %{summary}.
