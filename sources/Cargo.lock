@@ -3260,7 +3260,6 @@ dependencies = [
  "chrono",
  "log",
  "lz4",
- "migrator",
  "models",
  "rand",
  "reqwest",

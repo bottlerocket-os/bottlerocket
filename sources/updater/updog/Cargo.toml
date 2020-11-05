@@ -27,7 +27,6 @@ toml = "0.5.1"
 tough = { version = "0.8", features = ["http"] }
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
-migrator = { path = "../../api/migration/migrator" }
 url = "2.1.0"
 signal-hook = "0.1.13"
 models = { path = "../../models" }
