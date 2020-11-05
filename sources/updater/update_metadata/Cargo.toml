@@ -13,7 +13,7 @@ chrono = { version = "0.4.9", features = ["serde"] }
 parse-datetime = { path = "../../parse-datetime" }
 rand = "0.7.0"
 regex = "1.1"
-semver = { version = "0.10.0", features = ["serde"] }
+semver = { version = "0.11.0", features = ["serde"] }
 serde = { version = "1.0.100", features = ["derive"] }
 serde_json = "1.0.40"
 serde_plain = "0.3.0"

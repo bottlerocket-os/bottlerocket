@@ -15,7 +15,7 @@ log = "0.4"
 lz4 = "1.23.1"
 rand = "0.7.0"
 reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
-semver = "0.10.0"
+semver = "0.11.0"
 serde = { version = "1.0.100", features = ["derive"] }
 serde_json = "1.0.40"
 serde_plain = "0.3.0"

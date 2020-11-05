@@ -164,7 +164,7 @@ fn write_update_status(update_status: &UpdateStatus) -> Result<()> {
 /// This macros encapsulates the boilerplate code for dispatching the update command in a forked process
 macro_rules! fork_and_return {
     ($child_process:block) => {
-        match fork() {
+        match unsafe { fork() } {
             Ok(ForkResult::Parent { child, .. }) => {
                 debug!("forked child pid: {}", child);
                 // Exit immediately as the parent

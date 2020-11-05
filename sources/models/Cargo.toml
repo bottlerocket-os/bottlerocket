@@ -10,12 +10,12 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-base64 = "0.12"
+base64 = "0.13"
 bottlerocket-release = { path = "../bottlerocket-release" }
 lazy_static = "1.2"
 model-derive = { path = "model-derive" }
 regex = "1.1"
-semver = "0.10.0"
+semver = "0.11.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_plain = "0.3.0"
 snafu = "0.6"

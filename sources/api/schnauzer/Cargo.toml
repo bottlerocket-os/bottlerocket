@@ -11,7 +11,7 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient" }
-base64 = "0.12"
+base64 = "0.13"
 bottlerocket-release = { path = "../../bottlerocket-release" }
 handlebars = "3.0"
 http = "0.2"
