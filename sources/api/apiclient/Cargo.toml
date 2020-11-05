@@ -10,7 +10,6 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-futures = "0.3"
 http = "0.2"
 hyper = { version = "0.13", default-features = false }
 hyper-unix-connector = "0.1"
