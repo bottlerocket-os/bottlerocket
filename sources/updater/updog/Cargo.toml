@@ -15,7 +15,7 @@ log = "0.4"
 lz4 = "1.23.1"
 rand = "0.7.0"
 reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
-semver = "0.10.0"
+semver = "0.11.0"
 serde = { version = "1.0.100", features = ["derive"] }
 serde_json = "1.0.40"
 serde_plain = "0.3.0"
@@ -27,7 +27,6 @@ toml = "0.5.1"
 tough = { version = "0.8", features = ["http"] }
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
-migrator = { path = "../../api/migration/migrator" }
 url = "2.1.0"
 signal-hook = "0.1.13"
 models = { path = "../../models" }
