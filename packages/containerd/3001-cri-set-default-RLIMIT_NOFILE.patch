@@ -1,0 +1,88 @@
+From 64deef11da4cf532ea9d82cc499f5174a8907e29 Mon Sep 17 00:00:00 2001
+From: Zac Mrowicki <mrowicki@amazon.com>
+Date: Thu, 22 Oct 2020 20:44:38 +0000
+Subject: [PATCH] cri: set default RLIMIT_NOFILE
+
+The `cri` plugin currently inherits the limit from the default OCI spec
+or the containerd process.  This change sets the default hard
+RLIMIT_NOFILE to 1048576 and the soft limit to 65536 in the OCI spec for
+any container spawned using `cri`.
+---
+ vendor/github.com/containerd/cri/pkg/config/config.go |  8 ++++++++
+ .../containerd/cri/pkg/containerd/opts/spec.go        | 11 +++++++++++
+ .../containerd/cri/pkg/server/container_create.go     | 11 +++++++++++
+ 3 files changed, 30 insertions(+)
+
+diff --git a/vendor/github.com/containerd/cri/pkg/config/config.go b/vendor/github.com/containerd/cri/pkg/config/config.go
+index 7c5f9eb..772bf28 100644
+--- a/vendor/github.com/containerd/cri/pkg/config/config.go
++++ b/vendor/github.com/containerd/cri/pkg/config/config.go
+@@ -204,6 +204,12 @@ type PluginConfig struct {
+ 	// DisableProcMount disables Kubernetes ProcMount support. This MUST be set to `true`
+ 	// when using containerd with Kubernetes <=1.11.
+ 	DisableProcMount bool `toml:"disable_proc_mount" json:"disableProcMount"`
++	// ProcessRLimitNoFileSoft sets the soft limit of maximum file
++	// descriptors each container process can use.
++	ProcessRLimitNoFileSoft int `toml:"process_rlimit_no_file_soft" json:"process_rlimit_no_file_soft"`
++	// ProcessRLimitNoFileHard sets the hard limit of maximum file
++	// descriptors each container process can use.
++	ProcessRLimitNoFileHard int `toml:"process_rlimit_no_file_hard" json:"process_rlimit_no_file_hard"`
+ }
+ 
+ // X509KeyPairStreaming contains the x509 configuration for streaming
+@@ -271,6 +277,8 @@ func DefaultConfig() PluginConfig {
+ 		},
+ 		MaxConcurrentDownloads: 3,
+ 		DisableProcMount:       false,
++		ProcessRLimitNoFileSoft:    65536,
++		ProcessRLimitNoFileHard:    1048576,
+ 	}
+ }
+ 
+diff --git a/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go b/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go
+index 0da421a..445c279 100644
+--- a/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go
++++ b/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go
+@@ -48,6 +48,17 @@ const (
+ 	DefaultSandboxCPUshares = 2
+ )
+ 
++// WithProcessRLimits sets the RLimits for this container process
++func WithProcessRLimits(rlimits []runtimespec.POSIXRlimit) oci.SpecOpts {
++	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
++		if s.Process == nil {
++			s.Process = &runtimespec.Process{}
++		}
++		s.Process.Rlimits = rlimits
++		return nil
++	}
++}
++
+ // WithAdditionalGIDs adds any additional groups listed for a particular user in the
+ // /etc/groups file of the image's root filesystem to the OCI spec's additionalGids array.
+ func WithAdditionalGIDs(userstr string) oci.SpecOpts {
+diff --git a/vendor/github.com/containerd/cri/pkg/server/container_create.go b/vendor/github.com/containerd/cri/pkg/server/container_create.go
+index d35fff3..c665973 100644
+--- a/vendor/github.com/containerd/cri/pkg/server/container_create.go
++++ b/vendor/github.com/containerd/cri/pkg/server/container_create.go
+@@ -335,6 +335,17 @@ func (c *criService) generateContainerSpec(id string, sandboxID string, sandboxP
+ 		// this will be set based on the security context below
+ 		oci.WithNewPrivileges,
+ 	}
++
++	// Override the default oci.Spec RLIMIT_NOFILE
++	var rlimits = []runtimespec.POSIXRlimit {
++		{
++			Type: "RLIMIT_NOFILE",
++			Hard: uint64(c.config.PluginConfig.ProcessRLimitNoFileHard),
++			Soft: uint64(c.config.PluginConfig.ProcessRLimitNoFileSoft),
++		},
++	}
++	specOpts = append(specOpts, customopts.WithProcessRLimits(rlimits))
++
+ 	if config.GetWorkingDir() != "" {
+ 		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
+ 	} else if imageConfig.WorkingDir != "" {
+-- 
+2.21.0
+
