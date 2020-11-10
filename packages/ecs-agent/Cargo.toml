@@ -10,8 +10,8 @@ path = "pkg.rs"
 
 # ECS agent
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/aws/amazon-ecs-agent/archive/v1.43.0/amazon-ecs-agent-v1.43.0.tar.gz"
-sha512 = "820155428875f98d76ac369e9db2d1e4190d8fa91aaf448ba91a9bf268685891c4993c57e5217025702c8f954bc6c94f22cbb73e38867d3fcbdcf0b0b075a1b7"
+url = "https://github.com/aws/amazon-ecs-agent/archive/v1.47.0/amazon-ecs-agent-v1.47.0.tar.gz"
+sha512 = "bc1c47b766003d636206ff24ae96924259a96b83e30fd8cd2804b82c8e42b14d1386e36035d250bf48ae9ab384bbe6510ab251cdba29ec82ae67e25009ea3f03"
 
 # TODO: Package the CNI plugins
 # The ECS agent repository includes two CNI plugins as git submodules.  git
