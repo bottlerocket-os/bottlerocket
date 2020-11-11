@@ -10,7 +10,7 @@ publish = false
 async-trait = "0.1.36"
 chrono = "0.4"
 clap = "2.33"
-coldsnap = "0.1"
+coldsnap = { version = "0.2", default-features = false, features = ["rusoto-rustls"]}
 pubsys-config = { path = "../pubsys-config/" }
 futures = "0.3.5"
 indicatif = "0.15.0"
@@ -19,13 +19,13 @@ log = "0.4"
 parse-datetime = { path = "../../sources/parse-datetime" }
 # Need to bring in reqwest with a TLS feature so tough can support TLS repos.
 reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
-rusoto_core = "0.45.0"
+rusoto_core = { version = "0.45.0", default-features = false, features = ["rustls"] }
 rusoto_credential = "0.45.0"
-rusoto_ebs = "0.45.0"
-rusoto_ec2 = "0.45.0"
+rusoto_ebs = { version = "0.45.0", default-features = false, features = ["rustls"] }
+rusoto_ec2 = { version = "0.45.0", default-features = false, features = ["rustls"] }
 rusoto_signature = "0.45.0"
-rusoto_ssm = "0.45.0"
-rusoto_sts = "0.45.0"
+rusoto_ssm = { version = "0.45.0", default-features = false, features = ["rustls"] }
+rusoto_sts = { version = "0.45.0", default-features = false, features = ["rustls"] }
 simplelog = "0.8"
 snafu = "0.6"
 semver = "0.11.0"
