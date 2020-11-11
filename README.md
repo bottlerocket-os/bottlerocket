@@ -344,6 +344,27 @@ These settings can be changed at any time.
 * `settings.updates.version-lock`: Controls the version that will be selected when you issue an update request.  Can be locked to a specific version like `v1.0.0`, or `latest` to take the latest available version.  Defaults to `latest`.
 * `settings.updates.ignore-waves`: Updates are rolled out in waves to reduce the impact of issues.  For testing purposes, you can set this to `true` to ignore those waves and update immediately.
 
+#### Network settings
+
+##### Proxy settings
+
+These settings will configure the proxying behavior of the following services:
+* For all variants:
+    * [containerd.service](packages/containerd/containerd.service)
+    * [host-containerd.service](packages/host-ctr/host-containerd.service)
+* For Kubernetes variants:
+    * [kubelet.service](packages/kubernetes-1.18/kubelet.service)
+* For the ECS variant:
+    * [docker.service](packages/docker-engine/docker.service)
+    * [ecs.service](packages/ecs-agent/ecs.service)
+
+* `settings.network.https-proxy`: The HTTPS proxy server to be used by services listed above.
+* `settings.network.no-proxy`: A list of hosts that are excluded from proxying.
+
+The no-proxy list will automatically include entries for localhost.
+
+If you're running a Kubernetes variant, the no-proxy list will automatically include the Kubernetes API server endpoint and other commonly used Kubernetes DNS suffixes to facilitate intra-cluster networking.
+
 #### Time settings
 
 * `settings.ntp.time-servers`: A list of NTP servers used to set and verify the system time.

@@ -22,7 +22,7 @@ template-path = "/usr/share/templates/motd"
 # Container runtime.
 
 [services.containerd]
-configuration-files = ["containerd-config-toml"]
+configuration-files = ["containerd-config-toml", "proxy-env"]
 restart-commands = ["/bin/systemctl try-restart containerd.service"]
 
 [configuration-files.containerd-config-toml]
@@ -32,7 +32,7 @@ template-path = "/usr/share/templates/containerd-config-toml"
 # Host-container runtime
 
 [services.host-containerd]
-configuration-files = []
+configuration-files = ["proxy-env"]
 restart-commands = ["/bin/systemctl try-restart host-containerd.service"]
 
 # Updates.
@@ -82,6 +82,15 @@ restart-commands = ["/usr/bin/host-containers"]
 
 [metadata.settings.host-containers]
 affected-services = ["host-containers"]
+
+# Network
+
+[configuration-files.proxy-env]
+path = "/etc/network/proxy.env"
+template-path = "/usr/share/templates/proxy-env"
+
+[metadata.settings.network]
+affected-services = ["containerd", "host-containerd"]
 
 # NTP
 

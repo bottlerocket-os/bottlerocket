@@ -5,7 +5,7 @@ template-path = "/usr/share/templates/containerd-config-toml_aws-k8s"
 # Kubernetes.
 
 [services.kubernetes]
-configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt"]
+configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt", "proxy-env"]
 restart-commands = ["/bin/systemctl try-restart kubelet.service"]
 
 [configuration-files.kubelet-env]
@@ -36,3 +36,8 @@ affected-services = ["kubernetes", "containerd"]
 
 [settings.kubernetes]
 cluster-domain = "cluster.local"
+
+
+# Network
+[metadata.settings.network]
+affected-services = ["containerd", "kubernetes", "host-containerd"]

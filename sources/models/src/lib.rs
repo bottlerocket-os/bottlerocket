@@ -140,6 +140,14 @@ struct ContainerImage {
     superpowered: bool,
 }
 
+// Network settings. These settings will affect host service components' network behavior
+#[model]
+struct NetworkSettings {
+    https_proxy: Url,
+    // We allow some flexibility in NO_PROXY values because different services support different formats.
+    no_proxy: Vec<SingleLineString>,
+}
+
 // NTP settings
 #[model]
 struct NtpSettings {

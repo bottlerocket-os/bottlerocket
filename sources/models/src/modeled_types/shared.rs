@@ -240,6 +240,9 @@ mod test_url {
             "http://localhost",
             "localhost/path",
             "localhost",
+            "localhost:8080",
+            ".internal",
+            ".cluster.local"
         ] {
             Url::try_from(*ok).unwrap();
         }

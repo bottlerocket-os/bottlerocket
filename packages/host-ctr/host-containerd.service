@@ -5,6 +5,7 @@ After=network-online.target configured.target
 Wants=network-online.target configured.target
 
 [Service]
+EnvironmentFile=/etc/network/proxy.env
 ExecStart=/usr/bin/containerd --config /etc/host-containerd/config.toml
 Type=notify
 Delegate=yes
