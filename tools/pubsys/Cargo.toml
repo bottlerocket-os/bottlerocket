@@ -36,7 +36,7 @@ tinytemplate = "1.1"
 tokio = { version = "0.2.21", features = ["time"] }
 toml = "0.5"
 tough = { version = "0.9", features = ["http"] }
-tough-kms = "0.1"
+tough-kms = "0.1.1"
 tough-ssm = "0.4"
 update_metadata = { path = "../../sources/updater/update_metadata/" }
 url = { version = "2.1.0", features = ["serde"] }

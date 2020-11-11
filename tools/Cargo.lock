@@ -1623,14 +1623,14 @@ dependencies = [
 
 [[package]]
 name = "rusoto_kms"
-version = "0.44.0"
+version = "0.45.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c5a083f44d08db76d4deedd7527bb215dd008fa08f4b1d8ca40071522bdbcb7"
+checksum = "111b99b940b1b02f5a98a5fcc96467a24ab899c43c1caff60d4a863342798c6e"
 dependencies = [
  "async-trait",
  "bytes",
  "futures",
- "rusoto_core 0.44.0",
+ "rusoto_core 0.45.0",
  "serde",
  "serde_json",
 ]
@@ -2413,15 +2413,15 @@ dependencies = [
 
 [[package]]
 name = "tough-kms"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90d5273998150708e8639464e4fe21eba7afbf7372f57f4d7ae0dabffd3d8dab"
+checksum = "cfb9491d4cc35dafcb72c69254c27da97bad4d5796305ffe9974ed1f470ffc39"
 dependencies = [
  "bytes",
  "pem",
  "ring",
- "rusoto_core 0.44.0",
- "rusoto_credential 0.44.0",
+ "rusoto_core 0.45.0",
+ "rusoto_credential 0.45.0",
  "rusoto_kms",
  "snafu",
  "tokio",
