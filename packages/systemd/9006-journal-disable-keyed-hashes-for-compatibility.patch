@@ -1,0 +1,38 @@
+From 3d93e3d1e9bae766e6c436e9fbf4b156fcc44bca Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Thu, 12 Nov 2020 16:18:15 +0000
+Subject: [PATCH 9006/9006] journal: disable keyed hashes for compatibility
+
+Otherwise the journal is not readable by older versions of systemd.
+
+This is applied as a patch so it will fail to apply when upstream
+removes the environment variable override.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/journal/journal-file.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/src/journal/journal-file.c b/src/journal/journal-file.c
+index cdcded2..abfa14c 100644
+--- a/src/journal/journal-file.c
++++ b/src/journal/journal-file.c
+@@ -3390,13 +3390,12 @@ int journal_file_open(
+ #endif
+         };
+ 
+-        /* We turn on keyed hashes by default, but provide an environment variable to turn them off, if
+-         * people really want that */
++        /* Turn off keyed hashes by default. */
+         r = getenv_bool("SYSTEMD_JOURNAL_KEYED_HASH");
+         if (r < 0) {
+                 if (r != -ENXIO)
+                         log_debug_errno(r, "Failed to parse $SYSTEMD_JOURNAL_KEYED_HASH environment variable, ignoring.");
+-                f->keyed_hash = true;
++                f->keyed_hash = false;
+         } else
+                 f->keyed_hash = r;
+ 
+-- 
+2.26.2
+
