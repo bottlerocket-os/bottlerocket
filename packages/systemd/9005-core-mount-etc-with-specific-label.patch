@@ -1,7 +1,7 @@
-From 322a02dd4bd9bfe17bacb4dd1e792a5293c18342 Mon Sep 17 00:00:00 2001
+From f7d3e4c5d991d910b6d73d357908dbf9fa6a631b Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 9 Jul 2020 20:00:36 +0000
-Subject: [PATCH 9005/9005] core: mount /etc with specific label
+Subject: [PATCH 9005/9006] core: mount /etc with specific label
 
 The filesystem is mounted after we load the SELinux policy, so we can
 apply the label we need to restrict access.

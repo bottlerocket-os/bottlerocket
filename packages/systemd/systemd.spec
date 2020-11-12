@@ -30,6 +30,11 @@ Patch9004: 9004-machine-id-setup-generate-stable-ID-under-Xen.patch
 # Local patch to handle mounting /etc with our SELinux label.
 Patch9005: 9005-core-mount-etc-with-specific-label.patch
 
+# Local patch to disable the keyed hashes feature in the journal, which
+# makes it unreadable by older versions of systemd. Can be dropped once
+# there's sufficiently broad adoption of systemd >= 246.
+Patch9006: 9006-journal-disable-keyed-hashes-for-compatibility.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
