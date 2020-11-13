@@ -40,6 +40,9 @@ Patch3001: 3001-cri-set-default-RLIMIT_NOFILE.patch
 Patch4001: 4001-Exit-signal-forward-if-process-not-found.patch
 Patch4002: 4002-Ignore-SIGURG-signals-in-signal-forwarder.patch
 
+# Upstream patch; can drop when we move to 1.4.1
+Patch5001: 5001-Always-consume-shim-logs.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
