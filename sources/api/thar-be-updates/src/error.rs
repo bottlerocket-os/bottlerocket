@@ -148,6 +148,9 @@ pub enum Error {
 
     #[snafu(display("Logger setup error: {}", source))]
     Logger { source: simplelog::TermLogError },
+
+    #[snafu(display("Unable to create a tokio runtime: {}", source))]
+    Runtime { source: std::io::Error },
 }
 
 /// Map errors to specific exit codes to return to caller
