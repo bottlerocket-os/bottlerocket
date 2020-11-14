@@ -40,6 +40,7 @@ Requires: %{_cross_os}containerd
 Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}iptables
 Requires: %{_cross_os}systemd
+Requires: %{_cross_os}procps
 
 %description
 %{summary}.
