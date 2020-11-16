@@ -347,9 +347,13 @@ fn run() -> Result<()> {
         initialize_update_status()?;
     }
     let mut update_status = get_update_status(&lockfile)?;
-    drive_state_machine(&mut update_status, &args.subcommand, &args.socket_path)?;
+
+    // The commands inside drive_state_machine update the update_status object (hence &mut) to
+    // reflect success or failure, and we want to reflect that in our status file regardless of
+    // success, so we store the result rather than returning early here.
+    let result = drive_state_machine(&mut update_status, &args.subcommand, &args.socket_path);
     write_update_status(&update_status)?;
-    Ok(())
+    result
 }
 
 fn match_error_to_exit_status(err: Error) -> i32 {
