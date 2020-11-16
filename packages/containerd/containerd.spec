@@ -36,6 +36,10 @@ Patch2002: 2002-cri-use-default-SELinux-labels-as-a-fallback.patch
 # TODO: submit this upstream, including a unit test.
 Patch3001: 3001-cri-set-default-RLIMIT_NOFILE.patch
 
+# Upstream patches; can drop when we move to 1.4.1
+Patch4001: 4001-Exit-signal-forward-if-process-not-found.patch
+Patch4002: 4002-Ignore-SIGURG-signals-in-signal-forwarder.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
