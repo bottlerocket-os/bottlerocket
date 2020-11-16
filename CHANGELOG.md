@@ -1,3 +1,53 @@
+# v1.0.3 (2020-11-19)
+
+## OS Changes
+* Support setting Linux kernel parameters (sysctl) via settings (see README) ([#1158], [#1171])
+* Create links under `/dev/disk/ephemeral` for ephemeral storage devices ([#1173])
+* Set default RLIMIT_NOFILE in CRI to 65536 soft limit and a 1048576 hard limit ([#1180])
+* Add rtcsync directive to chrony config file ([#1184], **thanks @errm!**)
+* Add `/etc/ssl/certs` symlink to the CA certificate bundle for compatibility with the cluster autoscaler ([#1207])
+* Add procps dependency to docker-engine so that `docker top` works ([#1210])
+
+## Build Changes
+* Align optimization level for crate and dependency builds ([#1155])
+* pubsys no longer requires an Infra.toml file for basic usage ([#1166])
+* Makefile: Check that $BUILDSYS_ARCH has a supported value ([#1167])
+* Build migrations in parallel ([#1192])
+* Allow file URLs for role in pubsys-setup ([#1194])
+* Update Rust dependencies ([#1196])
+* Update SDK to v0.14.0 ([#1198])
+* Fix an occasional issue with KMS signing in pubsys ([#1205])
+* Backport selected fixes from containerd 1.4 ([#1216])
+* Update third-party package dependencies ([#1176], [#1195])
+* Switch to SDK v0.14.0 ([#1198])
+
+## Documentation Changes
+* Nits and fixes ([#1170], [#1179])
+* Add missing prerequisites for building Bottlerocket ([#1191])
+
+[#1158]: https://github.com/bottlerocket-os/bottlerocket/pull/1158
+[#1171]: https://github.com/bottlerocket-os/bottlerocket/pull/1171
+[#1173]: https://github.com/bottlerocket-os/bottlerocket/pull/1173
+[#1176]: https://github.com/bottlerocket-os/bottlerocket/pull/1176
+[#1180]: https://github.com/bottlerocket-os/bottlerocket/pull/1180
+[#1184]: https://github.com/bottlerocket-os/bottlerocket/pull/1184
+[#1195]: https://github.com/bottlerocket-os/bottlerocket/pull/1195
+[#1207]: https://github.com/bottlerocket-os/bottlerocket/pull/1207
+[#1155]: https://github.com/bottlerocket-os/bottlerocket/pull/1155
+[#1166]: https://github.com/bottlerocket-os/bottlerocket/pull/1166
+[#1167]: https://github.com/bottlerocket-os/bottlerocket/pull/1167
+[#1192]: https://github.com/bottlerocket-os/bottlerocket/pull/1192
+[#1194]: https://github.com/bottlerocket-os/bottlerocket/pull/1194
+[#1196]: https://github.com/bottlerocket-os/bottlerocket/pull/1196
+[#1198]: https://github.com/bottlerocket-os/bottlerocket/pull/1198
+[#1205]: https://github.com/bottlerocket-os/bottlerocket/pull/1205
+[#1170]: https://github.com/bottlerocket-os/bottlerocket/pull/1170
+[#1179]: https://github.com/bottlerocket-os/bottlerocket/pull/1179
+[#1191]: https://github.com/bottlerocket-os/bottlerocket/pull/1191
+[#1210]: https://github.com/bottlerocket-os/bottlerocket/pull/1210
+[#1216]: https://github.com/bottlerocket-os/bottlerocket/pull/1216
+[#1198]: https://github.com/bottlerocket-os/bottlerocket/pull/1198
+
 # v1.0.2 (2020-10-13)
 
 ## Breaking changes (for build process only)
