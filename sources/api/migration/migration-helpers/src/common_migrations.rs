@@ -54,18 +54,19 @@ impl Migration for AddSettingMigration {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// We use this migration when we add a cluster of settings under a prefix and want to make sure
-/// they're removed before we go back to old versions that don't understand them.  Normally you'd
-/// use AddSettingsMigration since you know the key names, but this is useful for user-defined
-/// keys, for example in a map like settings.kernel.sysctl or settings.host-containers.
-pub struct AddPrefixMigration(pub &'static str);
+/// We use this migration when we add a cluster of settings under known prefixes and want to make
+/// sure they're removed before we go back to old versions that don't understand them.  Normally
+/// you'd use AddSettingsMigration since you know the key names, but this is useful for
+/// user-defined keys, for example in a map like settings.kernel.sysctl or
+/// settings.host-containers.
+pub struct AddPrefixesMigration(pub Vec<&'static str>);
 
-impl Migration for AddPrefixMigration {
+impl Migration for AddPrefixesMigration {
     /// New versions must either have a default for the settings or generate them; we don't need to
     /// do anything.
     fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
         println!(
-            "AddPrefixMigration({:?}) has no work to do on upgrade.",
+            "AddPrefixesMigration({:?}) has no work to do on upgrade.",
             self.0
         );
         Ok(input)
@@ -78,7 +79,7 @@ impl Migration for AddPrefixMigration {
         let settings = input
             .data
             .keys()
-            .filter(|k| k.starts_with(self.0))
+            .filter(|k| self.0.iter().any(|prefix| k.starts_with(prefix)))
             .cloned()
             .collect::<Vec<_>>();
         for setting in settings {
@@ -91,14 +92,14 @@ impl Migration for AddPrefixMigration {
 }
 
 #[cfg(test)]
-mod test_add_prefix_migration {
-    use super::AddPrefixMigration;
+mod test_add_prefixes_migration {
+    use super::AddPrefixesMigration;
     use crate::{Migration, MigrationData};
     use maplit::hashmap;
     use std::collections::HashMap;
 
     #[test]
-    fn works() {
+    fn single() {
         let data = MigrationData {
             data: hashmap! {
                 "keep.me.a".into() => 0.into(),
@@ -109,12 +110,64 @@ mod test_add_prefix_migration {
             metadata: HashMap::new(),
         };
         // Run backward, e.g. downgrade, to test that the right keys are removed
-        let result = AddPrefixMigration("remove.me").backward(data).unwrap();
+        let result = AddPrefixesMigration(vec!["remove.me"])
+            .backward(data)
+            .unwrap();
         assert_eq!(
             result.data,
             hashmap! {
                 "keep.me.a".into() => 0.into(),
                 "keep.this.c".into() => 0.into(),
+            }
+        );
+    }
+
+    #[test]
+    fn multiple() {
+        let data = MigrationData {
+            data: hashmap! {
+                "keep.me.a".into() => 0.into(),
+                "remove.me.b".into() => 0.into(),
+                "keep.this.c".into() => 0.into(),
+                "remove.this.d.e".into() => 0.into(),
+            },
+            metadata: HashMap::new(),
+        };
+        // Run backward, e.g. downgrade, to test that the right keys are removed
+        let result = AddPrefixesMigration(vec!["remove.me", "remove.this"])
+            .backward(data)
+            .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "keep.me.a".into() => 0.into(),
+                "keep.this.c".into() => 0.into(),
+            }
+        );
+    }
+
+    #[test]
+    fn no_match() {
+        let data = MigrationData {
+            data: hashmap! {
+                "keep.me.a".into() => 0.into(),
+                "remove.me.b".into() => 0.into(),
+                "keep.this.c".into() => 0.into(),
+                "remove.this.d.e".into() => 0.into(),
+            },
+            metadata: HashMap::new(),
+        };
+        // Run backward, e.g. downgrade, to test that the right keys are removed
+        let result = AddPrefixesMigration(vec!["not.found", "nor.this"])
+            .backward(data)
+            .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "keep.me.a".into() => 0.into(),
+                "remove.me.b".into() => 0.into(),
+                "keep.this.c".into() => 0.into(),
+                "remove.this.d.e".into() => 0.into(),
             }
         );
     }
