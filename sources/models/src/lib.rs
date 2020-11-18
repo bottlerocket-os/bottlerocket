@@ -88,7 +88,7 @@ use std::net::Ipv4Addr;
 use crate::modeled_types::{
     DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion,
     KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue,
-    SingleLineString, SysctlKey, Url, ValidBase64,
+    Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
 };
 
 // Kubernetes related settings. The dynamic settings are retrieved from
@@ -149,6 +149,7 @@ struct NtpSettings {
 // Kernel settings
 #[model]
 struct KernelSettings {
+    lockdown: Lockdown,
     // Values are almost always a single line and often just an integer... but not always.
     sysctl: HashMap<SysctlKey, String>,
 }

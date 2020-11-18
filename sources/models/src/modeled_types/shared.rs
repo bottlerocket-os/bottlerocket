@@ -530,3 +530,28 @@ mod test_sysctl_key {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// Lockdown represents a string that is a valid Linux kernel lockdown mode name.  It stores the
+/// original string and makes it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Lockdown {
+    inner: String,
+}
+
+impl TryFrom<&str> for Lockdown {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        ensure!(
+            matches!(input, "none" | "integrity" | "confidentiality"),
+            error::InvalidLockdown { input }
+        );
+        Ok(Lockdown {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(Lockdown, "Lockdown");

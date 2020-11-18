@@ -48,6 +48,9 @@ pub mod error {
         #[snafu(display("Invalid domain name '{}': {}", input, msg))]
         InvalidDomainName { input: String, msg: String },
 
+        #[snafu(display("Invalid Linux lockdown mode '{}'", input))]
+        InvalidLockdown { input: String },
+
         #[snafu(display("Invalid sysctl key '{}': {}", input, msg))]
         InvalidSysctlKey { input: String, msg: String },
 

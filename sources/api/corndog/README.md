@@ -3,7 +3,9 @@
 Current version: 0.1.0
 
 corndog is a delicious way to get at the meat inside the kernels.
-It sets kernel sysctl values based on key/value pairs in `settings.kernel.sysctl`.
+It sets kernel-related settings, for example:
+* sysctl values, based on key/value pairs in `settings.kernel.sysctl`
+* lockdown mode, based on the value of `settings.kernel.lockdown`
 
 ## Colophon
 

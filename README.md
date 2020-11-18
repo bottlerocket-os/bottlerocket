@@ -350,6 +350,10 @@ These settings can be changed at any time.
 
 #### Kernel settings
 
+* `settings.kernel.lockdown`: This allows further restrictions on what the Linux kernel will allow, for example preventing the loading of unsigned modules.
+  May be set to "none" (the default), "integrity", or "confidentiality".
+  **Important note:** this setting cannot be lowered (toward 'none') at runtime.
+  You must reboot for a change to a lower level to take effect.
 * `settings.kernel.sysctl`: Key/value pairs representing Linux kernel parameters.
   Remember to quote keys (since they often contain ".") and to quote all values.
   * Example user data for setting up sysctl:
