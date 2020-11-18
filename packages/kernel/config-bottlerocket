@@ -47,3 +47,6 @@ CONFIG_IKHEADERS=y
 
 # BTF debug info at /sys/kernel/btf/vmlinux
 CONFIG_DEBUG_INFO_BTF=y
+
+# Enable support for the kernel lockdown security module.
+CONFIG_SECURITY_LOCKDOWN_LSM=y
