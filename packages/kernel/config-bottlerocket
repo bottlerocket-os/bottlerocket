@@ -38,6 +38,12 @@ CONFIG_SECURITY_SELINUX_DEVELOP=n
 # rather than the protection requested by userspace.
 CONFIG_SECURITY_SELINUX_CHECKREQPROT_VALUE=0
 
+# Enable support for the kernel lockdown security module.
+CONFIG_SECURITY_LOCKDOWN_LSM=y
+
+# Enable zstd compression for squashfs.
+CONFIG_SQUASHFS_ZSTD=y
+
 # enable /proc/config.gz
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y
@@ -47,6 +53,3 @@ CONFIG_IKHEADERS=y
 
 # BTF debug info at /sys/kernel/btf/vmlinux
 CONFIG_DEBUG_INFO_BTF=y
-
-# Enable support for the kernel lockdown security module.
-CONFIG_SECURITY_LOCKDOWN_LSM=y
