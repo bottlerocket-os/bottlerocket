@@ -38,7 +38,7 @@ async fn run() -> Result<()> {
         if let Some(kernel) = settings.kernel {
             if let Some(sysctls) = kernel.sysctl {
                 debug!("Applying sysctls: {:#?}", sysctls);
-                set_sysctls(sysctls)?;
+                set_sysctls(sysctls);
             }
         }
     }
@@ -85,7 +85,7 @@ where
 
 /// Applies the requested sysctls to the system.  The keys are used to generate the appropriate
 /// path, and the value its contents.
-fn set_sysctls<K>(sysctls: HashMap<K, String>) -> Result<()>
+fn set_sysctls<K>(sysctls: HashMap<K, String>)
 where
     K: AsRef<str>,
 {
@@ -100,7 +100,6 @@ where
             error!("Failed to write sysctl value '{}': {}", key, e);
         }
     }
-    Ok(())
 }
 
 /// Print a usage message in the event a bad argument is given.
