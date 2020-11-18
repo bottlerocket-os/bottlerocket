@@ -35,6 +35,12 @@ Requires: %{_cross_os}filesystem
 %description devel
 %{summary}.
 
+%package archive
+Summary: Archived Linux kernel source for module building
+
+%description archive
+%{summary}.
+
 %package modules
 Summary: Modules for the Linux kernel
 
@@ -167,7 +173,15 @@ mkdir -p src_squashfs/%{version}
 tar c -T kernel_devel_files | tar x -C src_squashfs/%{version}
 mksquashfs src_squashfs kernel-devel.squashfs ${SQUASHFS_OPTS}
 
+# Create a tarball of the same files, for use outside the running system.
+# In theory we could extract these files with `unsquashfs`, but we do not want
+# to require it to be installed on the build host, and it errors out when run
+# inside Docker unless the limit for open files is lowered.
+tar cf kernel-devel.tar src_squashfs/%{version} --transform='s|src_squashfs/%{version}|kernel-devel|'
+xz -T0 kernel-devel.tar
+
 install -D kernel-devel.squashfs %{buildroot}%{_cross_datadir}/bottlerocket/kernel-devel.squashfs
+install -D kernel-devel.tar.xz %{buildroot}%{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
 install -d %{buildroot}%{kernel_sourcedir}
 
 # Replace the incorrect links from modules_install. These will be bound
@@ -215,5 +229,8 @@ ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
 %files devel
 %dir %{kernel_sourcedir}
 %{_cross_datadir}/bottlerocket/kernel-devel.squashfs
+
+%files archive
+%{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
 
 %changelog
