@@ -85,6 +85,12 @@ pub enum Error {
     NewKey {
         source: apiserver::datastore::error::Error,
     },
+
+    #[snafu(display("Setting '{}' contains non-string item: {:?}", setting, data))]
+    ReplaceListContents {
+        setting: String,
+        data: Vec<serde_json::Value>,
+    },
 }
 
 /// Result alias containing our Error type.

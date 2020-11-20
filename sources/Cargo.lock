@@ -274,6 +274,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-lockdown"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-sysctl"
 version = "0.1.0"
 dependencies = [
@@ -2795,6 +2802,13 @@ dependencies = [
  "quote",
  "syn",
  "unicode-xid",
+]
+
+[[package]]
+name = "sysctl-subcommand"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]
