@@ -18,6 +18,8 @@ use hyper_unix_connector::{UnixClient, Uri};
 use snafu::{ensure, ResultExt};
 use std::path::Path;
 
+pub mod update;
+
 mod error {
     use snafu::Snafu;
 
@@ -34,7 +36,7 @@ mod error {
         ResponseStatus {
             method: String,
             code: http::StatusCode,
-            uri: http::uri::Uri,
+            uri: String,
             body: String,
         },
 
@@ -74,6 +76,36 @@ where
     S1: AsRef<str>,
     S2: AsRef<str>,
 {
+    let (status, body) = raw_request_unchecked(&socket_path, &uri, &method, data).await?;
+
+    // Error if the response status is in not in the 2xx range.
+    ensure!(
+        status.is_success(),
+        error::ResponseStatus {
+            method: method.as_ref(),
+            code: status,
+            uri: uri.as_ref(),
+            body,
+        }
+    );
+
+    Ok((status, body))
+}
+
+/// Works exactly like raw_request in making an HTTP request over a Unix-domain socket, but doesn't
+/// check that the returned status code represents success.  This can be useful if you have to
+/// handle specific error codes, rather than inspecting the Error type of raw_request.
+pub async fn raw_request_unchecked<P, S1, S2>(
+    socket_path: P,
+    uri: S1,
+    method: S2,
+    data: Option<String>,
+) -> Result<(http::StatusCode, String)>
+where
+    P: AsRef<Path>,
+    S1: AsRef<str>,
+    S2: AsRef<str>,
+{
     let method = method.as_ref();
 
     // We talk over a local Unix-domain socket to the server.
@@ -102,17 +134,6 @@ where
         .await
         .context(error::ResponseBodyRead)?;
     let body = String::from_utf8(body_bytes.to_vec()).context(error::NonUtf8Response)?;
-
-    // Error if the response status is in not in the 2xx range.
-    ensure!(
-        status.is_success(),
-        error::ResponseStatus {
-            method,
-            code: status,
-            uri,
-            body,
-        }
-    );
 
     Ok((status, body))
 }
