@@ -1,4 +1,4 @@
-version = "1.0.3"
+version = "1.0.4"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -11,3 +11,4 @@ version = "1.0.3"
 "(1.0.0, 1.0.1)" = []
 "(1.0.1, 1.0.2)" = ["migrate_v1.0.2_add-enable-spot-instance-draining.lz4"]
 "(1.0.2, 1.0.3)" = ["migrate_v1.0.3_add-sysctl.lz4"]
+"(1.0.3, 1.0.4)" = []

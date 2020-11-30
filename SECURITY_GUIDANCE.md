@@ -170,6 +170,10 @@ Network namespaces provide isolation for network resources such as IP addresses,
 Containers that share the host network namespace can connect to services listening on the host loopback addresses `127.0.0.1` and `::1`.
 These services are not otherwise reachable from the network.
 
+Sharing the network namespace also enables access to abstract sockets.
+Containers that share the host network namespace can send messages to processes on the host which expose APIs over abstract sockets.
+This can bypass intended restrictions for API access.
+
 PID namespaces provide isolation for the process ID number space.
 Containers that share the host PID namespace can interact with processes running on the host.
 This includes the ability to send signals to those processes, which may interfere with system functionality.
