@@ -1,3 +1,11 @@
+# v1.0.4 (2020-11-30)
+
+## Security fixes
+
+* Patch containerd for CVE-2020-15257 ([f3677c1406][f3677c1406])
+
+[f3677c1406]: https://github.com/bottlerocket-os/bottlerocket/commit/f3677c1406139240d2bca6b275799953ced5a5f
+
 # v1.0.3 (2020-11-19)
 
 ## OS Changes
