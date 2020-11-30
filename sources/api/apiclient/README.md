@@ -37,6 +37,15 @@ apiclient update apply --check --reboot
 
 > Note that available updates are controlled by your settings under `settings.updates`; see [README](../../../README.md#updates-settings) for details.
 
+### Reboot mode
+
+This will reboot the system.
+You should use this after updating if you didn't specify the `--reboot` flag.
+
+```
+apiclient reboot
+```
+
 ### Raw mode
 
 Raw mode lets you make HTTP requests to a UNIX socket.
@@ -77,8 +86,8 @@ apiclient raw -m GET -u /tx
 
 ## apiclient library
 
-The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
-the documentation for the [`update`] submodule for high-level helpers.
+The apiclient library provides high-level methods to interact with the Bottlerocket API.
+See the documentation for submodules like [`reboot`] and [`update`] for high-level helpers.
 
 For more control, and to handle APIs without high-level wrappers, there are also 'raw' methods
 to query an HTTP API over a Unix-domain socket.

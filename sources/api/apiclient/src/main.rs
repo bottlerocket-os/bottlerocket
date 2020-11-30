@@ -2,7 +2,7 @@
 //! API, for example an `update` subcommand that wraps the individual API calls needed to update
 //! the host.  There's also a low-level `raw` subcommand for direct interaction.
 
-use apiclient::update;
+use apiclient::{reboot, update};
 use log::{info, log_enabled, trace, warn};
 use simplelog::{ConfigBuilder as LogConfigBuilder, LevelFilter, TermLogger, TerminalMode};
 use snafu::ResultExt;
@@ -287,18 +287,6 @@ fn parse_cancel_args(args: Vec<String>) -> UpdateSubcommand {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// Requests a reboot through the API.
-async fn reboot(args: &Args) -> Result<()> {
-    let uri = "/actions/reboot";
-    let method = "POST";
-    let (_status, _body) = apiclient::raw_request(&args.socket_path, uri, method, None)
-        .await
-        .context(error::Request { uri, method })?;
-
-    info!("Rebooting, goodbye...");
-    Ok(())
-}
-
 /// Requests an update status check through the API, printing the updated status, in a pretty
 /// format if possible.
 async fn check(args: &Args) -> Result<String> {
@@ -353,7 +341,9 @@ async fn run() -> Result<()> {
         }
 
         Subcommand::Reboot(_reboot) => {
-            reboot(&args).await?;
+            reboot::reboot(&args.socket_path)
+                .await
+                .context(error::Reboot)?;
         }
 
         Subcommand::Update(subcommand) => match subcommand {
@@ -378,7 +368,9 @@ async fn run() -> Result<()> {
                 // If the user requested it, and if we applied an update, reboot.  (update::apply
                 // will fail if no update was available or it couldn't apply the update.)
                 if apply.reboot {
-                    reboot(&args).await?;
+                    reboot::reboot(&args.socket_path)
+                        .await
+                        .context(error::Reboot)?;
                 } else {
                     info!("Update has been applied and will take effect on next reboot.");
                 }
@@ -407,7 +399,7 @@ async fn main() {
 }
 
 mod error {
-    use apiclient::update;
+    use apiclient::{reboot, update};
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
@@ -424,6 +416,9 @@ mod error {
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
+
+        #[snafu(display("Failed to reboot: {}", source))]
+        Reboot { source: reboot::Error },
 
         #[snafu(display("Failed {} request to '{}': {}", method, uri, source))]
         Request {

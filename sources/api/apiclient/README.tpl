@@ -37,6 +37,15 @@ apiclient update apply --check --reboot
 
 > Note that available updates are controlled by your settings under `settings.updates`; see [README](../../../README.md#updates-settings) for details.
 
+### Reboot mode
+
+This will reboot the system.
+You should use this after updating if you didn't specify the `--reboot` flag.
+
+```
+apiclient reboot
+```
+
 ### Raw mode
 
 Raw mode lets you make HTTP requests to a UNIX socket.
