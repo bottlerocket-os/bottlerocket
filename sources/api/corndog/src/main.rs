@@ -1,11 +1,13 @@
 /*!
 corndog is a delicious way to get at the meat inside the kernels.
-It sets kernel sysctl values based on key/value pairs in `settings.kernel.sysctl`.
+It sets kernel-related settings, for example:
+* sysctl values, based on key/value pairs in `settings.kernel.sysctl`
+* lockdown mode, based on the value of `settings.kernel.lockdown`
 */
 
 #![deny(rust_2018_idioms)]
 
-use log::{debug, error, trace};
+use log::{debug, error, info, trace, warn};
 use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::ResultExt;
 use std::collections::HashMap;
@@ -17,9 +19,11 @@ use std::{env, process};
 
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const SYSCTL_PATH_PREFIX: &str = "/proc/sys";
+const LOCKDOWN_PATH: &str = "/sys/kernel/security/lockdown";
 
 /// Store the args we receive on the command line.
 struct Args {
+    subcommand: String,
     log_level: LevelFilter,
     socket_path: String,
 }
@@ -32,19 +36,32 @@ async fn run() -> Result<()> {
     TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
         .context(error::Logger)?;
 
-    // If the user has sysctl settings, apply them.
+    // If the user has kernel settings, apply them.
     let model = get_model(args.socket_path).await?;
     if let Some(settings) = model.settings {
         if let Some(kernel) = settings.kernel {
-            if let Some(sysctls) = kernel.sysctl {
-                debug!("Applying sysctls: {:#?}", sysctls);
-                set_sysctls(sysctls)?;
+            match args.subcommand.as_ref() {
+                "sysctl" => {
+                    if let Some(sysctls) = kernel.sysctl {
+                        debug!("Applying sysctls: {:#?}", sysctls);
+                        set_sysctls(sysctls);
+                    }
+                }
+                "lockdown" => {
+                    if let Some(lockdown) = kernel.lockdown {
+                        debug!("Setting lockdown: {:#?}", lockdown);
+                        set_lockdown(&lockdown)?;
+                    }
+                }
+                _ => usage_msg(format!("Unknown subcommand '{}'", args.subcommand)), // should be unreachable
             }
         }
     }
 
     Ok(())
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 /// Retrieve the current model from the API.
 async fn get_model<P>(socket_path: P) -> Result<model::Model>
@@ -85,7 +102,7 @@ where
 
 /// Applies the requested sysctls to the system.  The keys are used to generate the appropriate
 /// path, and the value its contents.
-fn set_sysctls<K>(sysctls: HashMap<K, String>) -> Result<()>
+fn set_sysctls<K>(sysctls: HashMap<K, String>)
 where
     K: AsRef<str>,
 {
@@ -100,16 +117,70 @@ where
             error!("Failed to write sysctl value '{}': {}", key, e);
         }
     }
-    Ok(())
 }
+
+/// Sets the requested lockdown mode in the kernel.
+///
+/// The Linux kernel won't allow lowering the lockdown setting, but we want to allow users to
+/// change the Bottlerocket setting and reboot for it to take effect.  Changing the Bottlerocket
+/// setting means this code will run to write it out, but it wouldn't be able to convince the
+/// kernel.  So, we just warn the user rather than trying to write and causing a failure that could
+/// prevent the rest of a settings-changing transaction from going through.  We'll run again after
+/// reboot to set lockdown as it was requested.
+fn set_lockdown(lockdown: &str) -> Result<()> {
+    let current_raw = fs::read_to_string(LOCKDOWN_PATH).unwrap_or_else(|_| "unknown".to_string());
+    let current = parse_kernel_setting(&current_raw);
+    trace!("Parsed lockdown setting '{}' to '{}'", current_raw, current);
+
+    // The kernel doesn't allow rewriting the current value.
+    if current == lockdown {
+        info!("Requested lockdown setting is already in effect.");
+        return Ok(());
+    // As described above, the kernel doesn't allow lowering the value.
+    } else if current == "confidentiality" || (current == "integrity" && lockdown == "none") {
+        warn!("Can't lower lockdown setting at runtime; please reboot for it to take effect.",);
+        return Ok(());
+    }
+
+    fs::write(LOCKDOWN_PATH, lockdown).context(error::Lockdown { current, lockdown })
+}
+
+/// The Linux kernel provides human-readable output like `[none] integrity confidentiality` when
+/// you read settings from virtual files like /sys/kernel/security/lockdown.  This parses out the
+/// current value of the setting from that human-readable output.
+///
+/// There are also some files that only output the current value without the other options, so we
+/// return the output as-is (except for trimming whitespace) if there are no brackets.
+fn parse_kernel_setting(setting: &str) -> &str {
+    let mut setting = setting.trim();
+    // Take after the '['
+    if let Some(idx) = setting.find('[') {
+        if setting.len() > idx + 1 {
+            setting = &setting[idx + 1..];
+        }
+    }
+    // Take before the ']'
+    if let Some(idx) = setting.find(']') {
+        setting = &setting[..idx];
+    }
+    setting
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 /// Print a usage message in the event a bad argument is given.
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
-        r"Usage: {}
-            [ --socket-path PATH ]
-            [ --log-level trace|debug|info|warn|error ]
+        r"Usage: {} SUBCOMMAND [ ARGUMENTS... ]
+
+    Subcommands:
+        sysctl
+        lockdown
+
+    Global arguments:
+        --socket-path PATH
+        --log-level trace|debug|info|warn|error
 
     Socket path defaults to {}",
         program_name, DEFAULT_API_SOCKET,
@@ -127,6 +198,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 fn parse_args(args: env::Args) -> Args {
     let mut log_level = None;
     let mut socket_path = None;
+    let mut subcommand = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -147,11 +219,14 @@ fn parse_args(args: env::Args) -> Args {
                 )
             }
 
+            "sysctl" | "lockdown" => subcommand = Some(arg),
+
             _ => usage(),
         }
     }
 
     Args {
+        subcommand: subcommand.unwrap_or_else(|| usage_msg("Must specify a subcommand.")),
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
     }
@@ -168,9 +243,12 @@ async fn main() {
     }
 }
 
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 mod error {
     use http::StatusCode;
     use snafu::Snafu;
+    use std::io;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
@@ -188,6 +266,18 @@ mod error {
             uri: String,
             code: StatusCode,
             response_body: String,
+        },
+
+        #[snafu(display(
+            "Failed to change lockdown from '{}' to '{}': {}",
+            current,
+            lockdown,
+            source
+        ))]
+        Lockdown {
+            current: String,
+            lockdown: String,
+            source: io::Error,
         },
 
         #[snafu(display("Logger setup error: {}", source))]
@@ -217,6 +307,31 @@ mod test {
         assert_eq!(
             sysctl_path("../../root/file").to_string_lossy(),
             format!("{}/root/file", SYSCTL_PATH_PREFIX)
+        );
+    }
+
+    #[test]
+    fn brackets() {
+        assert_eq!(
+            "none",
+            parse_kernel_setting("[none] integrity confidentiality")
+        );
+        assert_eq!(
+            "integrity",
+            parse_kernel_setting("none [integrity] confidentiality\n")
+        );
+        assert_eq!(
+            "confidentiality",
+            parse_kernel_setting("none integrity [confidentiality]")
+        );
+    }
+
+    #[test]
+    fn no_brackets() {
+        assert_eq!("none", parse_kernel_setting("none"));
+        assert_eq!(
+            "none integrity confidentiality",
+            parse_kernel_setting("none integrity confidentiality\n")
         );
     }
 }

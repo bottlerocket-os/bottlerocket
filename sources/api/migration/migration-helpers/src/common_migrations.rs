@@ -290,6 +290,242 @@ impl Migration for ReplaceStringMigration {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+/// We use this migration when we replace a setting that contains a list of string values.
+// String is the only type we use today, and handling multiple value types is more complicated than
+// we need at the moment.  Allowing &[serde_json::Value] seems nice, but it would allow arbitrary
+// data transformations that the API model would then fail to load.
+pub struct ReplaceListMigration {
+    pub setting: &'static str,
+    pub old_vals: &'static [&'static str],
+    pub new_vals: &'static [&'static str],
+}
+
+impl Migration for ReplaceListMigration {
+    fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        if let Some(data) = input.data.get_mut(self.setting) {
+            match data {
+                serde_json::Value::Array(data) => {
+                    // We only handle string lists; convert each value to a str we can compare.
+                    let list: Vec<&str> = data
+                        .iter()
+                        .map(|v| v.as_str())
+                        .collect::<Option<Vec<&str>>>()
+                        .with_context(|| error::ReplaceListContents {
+                            setting: self.setting,
+                            data: data.clone(),
+                        })?;
+
+                    if list == self.old_vals {
+                        // Convert back to the original type so we can store it.
+                        *data = self.new_vals.iter().map(|s| (*s).into()).collect();
+                        println!(
+                            "Changed value of '{}' from {:?} to {:?} on upgrade",
+                            self.setting, self.old_vals, self.new_vals
+                        );
+                    } else {
+                        println!("'{}' is not set to {:?}, leaving alone", self.setting, list);
+                    }
+                }
+                _ => {
+                    println!(
+                        "'{}' is set to non-list value '{}'; ReplaceListMigration only handles lists",
+                        self.setting, data
+                    );
+                }
+            }
+        } else {
+            println!("Found no '{}' to change on upgrade", self.setting);
+        }
+        Ok(input)
+    }
+
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        if let Some(data) = input.data.get_mut(self.setting) {
+            match data {
+                serde_json::Value::Array(data) => {
+                    // We only handle string lists; convert each value to a str we can compare.
+                    let list: Vec<&str> = data
+                        .iter()
+                        .map(|v| v.as_str())
+                        .collect::<Option<Vec<&str>>>()
+                        .with_context(|| error::ReplaceListContents {
+                            setting: self.setting,
+                            data: data.clone(),
+                        })?;
+
+                    if list == self.new_vals {
+                        // Convert back to the original type so we can store it.
+                        *data = self.old_vals.iter().map(|s| (*s).into()).collect();
+                        println!(
+                            "Changed value of '{}' from {:?} to {:?} on downgrade",
+                            self.setting, self.new_vals, self.old_vals
+                        );
+                    } else {
+                        println!("'{}' is not set to {:?}, leaving alone", self.setting, list);
+                    }
+                }
+                _ => {
+                    println!(
+                        "'{}' is set to non-list value '{}'; ReplaceListMigration only handles lists",
+                        self.setting, data
+                    );
+                }
+            }
+        } else {
+            println!("Found no '{}' to change on downgrade", self.setting);
+        }
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_replace_list {
+    use super::ReplaceListMigration;
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use std::collections::HashMap;
+
+    #[test]
+    fn single() {
+        let data = MigrationData {
+            data: hashmap! {
+                "hi".into() => vec!["there"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = ReplaceListMigration {
+            setting: "hi",
+            old_vals: &["there"],
+            new_vals: &["sup"],
+        }
+        .forward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "hi".into() => vec!["sup"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn backward() {
+        let data = MigrationData {
+            data: hashmap! {
+                "hi".into() => vec!["there"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = ReplaceListMigration {
+            setting: "hi",
+            old_vals: &["sup"],
+            new_vals: &["there"],
+        }
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "hi".into() => vec!["sup"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn multiple() {
+        let data = MigrationData {
+            data: hashmap! {
+                "hi".into() => vec!["there", "you"].into(),
+                "ignored".into() => vec!["no", "change"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = ReplaceListMigration {
+            setting: "hi",
+            old_vals: &["there", "you"],
+            new_vals: &["sup", "hey"],
+        }
+        .forward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "hi".into() => vec!["sup", "hey"].into(),
+                "ignored".into() => vec!["no", "change"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn no_match() {
+        let data = MigrationData {
+            data: hashmap! {
+                "hi".into() => vec!["no", "change"].into(),
+                "hi2".into() => vec!["no", "change"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = ReplaceListMigration {
+            setting: "hi",
+            old_vals: &["there"],
+            new_vals: &["sup", "hey"],
+        }
+        .forward(data)
+        .unwrap();
+        // No change
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "hi".into() => vec!["no", "change"].into(),
+                "hi2".into() => vec!["no", "change"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn not_list() {
+        let data = MigrationData {
+            data: hashmap! {
+                "hi".into() => "just a string, not a list".into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = ReplaceListMigration {
+            setting: "hi",
+            old_vals: &["there"],
+            new_vals: &["sup", "hey"],
+        }
+        .forward(data)
+        .unwrap();
+        // No change
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "hi".into() => "just a string, not a list".into(),
+            }
+        );
+    }
+
+    #[test]
+    fn not_string() {
+        let data = MigrationData {
+            data: hashmap! {
+                "hi".into() => vec![0].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        ReplaceListMigration {
+            setting: "hi",
+            old_vals: &["there"],
+            new_vals: &["sup", "hey"],
+        }
+        .forward(data)
+        .unwrap_err();
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// We use this migration when we replace an existing template for generating some setting.
 pub struct ReplaceTemplateMigration {
     pub setting: &'static str,

@@ -95,9 +95,19 @@ affected-services = ["chronyd"]
 
 # Kernel
 
+[settings.kernel]
+lockdown = "none"
+
 [services.sysctl]
 configuration-files = []
-restart-commands = ["/usr/bin/corndog"]
+restart-commands = ["/usr/bin/corndog sysctl"]
 
 [metadata.settings.kernel.sysctl]
 affected-services = ["sysctl"]
+
+[services.lockdown]
+configuration-files = []
+restart-commands = ["/usr/bin/corndog lockdown"]
+
+[metadata.settings.kernel.lockdown]
+affected-services = ["lockdown"]
