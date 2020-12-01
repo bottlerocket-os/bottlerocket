@@ -7,6 +7,7 @@ BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
 BUILDSYS_IMAGES_DIR = "${BUILDSYS_BUILD_DIR}/images"
+BUILDSYS_ARCHIVES_DIR = "${BUILDSYS_BUILD_DIR}/archives"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
@@ -80,8 +81,9 @@ DOCKER_BUILDKIT = "1"
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
 
-# Depends on ${BUILDSYS_ARCH}.
+# Depends on ${BUILDSYS_ARCH} and ${BUILDSYS_SDK_VERSION}.
 BUILDSYS_SDK_IMAGE = { script = [ "echo bottlerocket/sdk-${BUILDSYS_ARCH}:v${BUILDSYS_SDK_VERSION}-$(uname -m)" ] }
+BUILDSYS_TOOLCHAIN = { script = [ "echo bottlerocket/toolchain-${BUILDSYS_ARCH}:v${BUILDSYS_SDK_VERSION}-${BUILDSYS_ARCH}" ] }
 
 # Depends on ${BUILDSYS_JOBS}.
 CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
@@ -153,7 +155,7 @@ set -o pipefail
 if ! docker image inspect ${BUILDSYS_SDK_IMAGE} >/dev/null 2>&1 ; then
   # Let curl resolve the certificates instead of the tasks resolved bundle.
   unset SSL_CERT_FILE SSL_CERT_DIR
-  if ! curl https://${BUILDSYS_SDK_SITE}/${BUILDSYS_SDK_IMAGE}.tar.gz \
+  if ! curl --silent --fail --show-error https://${BUILDSYS_SDK_SITE}/${BUILDSYS_SDK_IMAGE}.tar.gz \
        | gunzip | docker load ; then
     echo "failed to load '${BUILDSYS_SDK_IMAGE}'" >&2
     exit 1
@@ -261,6 +263,63 @@ cargo build \
   --all
 '''
 ]
+
+[tasks.build-kmod-kit]
+dependencies = ["build-packages"]
+script = [
+'''
+mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
+kmod_kit="${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
+rm -f "${BUILDSYS_ARCHIVES_DIR}/${kmod_kit}.tar.xz"
+
+# Find the most recent kernel archive. If we have more than one, we want the
+# last one that was built.
+kernel_archive="$(find "${BUILDSYS_PACKAGES_DIR}" \
+  -type f -name '*-'"${BUILDSYS_ARCH}"'-kernel-archive-*.rpm' \
+  -printf '%T@ %f\n' | sort -r | awk 'NR==1{print $2}')"
+
+prepare_kmod_kit="
+set -e -o pipefail
+
+mkdir /tmp/${kmod_kit}
+
+# Retrieve the toolchain and kernel archives.
+curl --silent --fail --show-error --output /tmp/${kmod_kit}/toolchain.tar.xz \
+  https://${BUILDSYS_SDK_SITE}/${BUILDSYS_TOOLCHAIN}.tar.xz
+find ./rpms -name "${kernel_archive}" \
+  -exec rpm2cpio {} \; | cpio -idmu --quiet
+find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/${kmod_kit} \;
+
+# Extract them into the same directory.
+pushd /tmp/${kmod_kit} >/dev/null
+tar xf kernel-devel.tar.xz
+rm kernel-devel.tar.xz
+tar xf toolchain.tar.xz
+rm toolchain.tar.xz
+popd >/dev/null
+
+# Merge them together into a unified archive.
+pushd /tmp >/dev/null
+tar cf ${kmod_kit}.tar ${kmod_kit}
+xz -T0 ${kmod_kit}.tar
+popd >/dev/null
+
+mv /tmp/${kmod_kit}.tar.xz ./archives
+"
+
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -v "${BUILDSYS_PACKAGES_DIR}":/home/builder/rpms \
+  -v "${BUILDSYS_ARCHIVES_DIR}":/home/builder/archives \
+  -w /home/builder \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash -c "${prepare_kmod_kit}"
+'''
+]
+
+[tasks.build-archives]
+dependencies = ["build-kmod-kit"]
 
 [tasks.build-variant]
 dependencies = ["build-packages"]
@@ -774,6 +833,7 @@ pubsys \
 dependencies = [
   "clean-sources",
   "clean-packages",
+  "clean-archives",
   "clean-images",
   "clean-repos",
 ]
@@ -799,6 +859,14 @@ for ws in packages; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -rf ${BUILDSYS_PACKAGES_DIR}
+'''
+]
+
+[tasks.clean-archives]
+script_runner = "bash"
+script = [
+'''
+rm -rf ${BUILDSYS_ARCHIVES_DIR}
 '''
 ]
 

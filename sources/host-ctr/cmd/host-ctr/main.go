@@ -402,7 +402,7 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 				Source:      "/lib/modules",
 			},
 			{
-				Options:     []string{"rbind", "ro"},
+				Options:     []string{"rbind", "rw"},
 				Destination: "/usr/src/kernels",
 				Source:      "/usr/src/kernels",
 			},

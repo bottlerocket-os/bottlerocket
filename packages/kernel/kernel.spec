@@ -9,7 +9,13 @@ URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
 Source0: https://cdn.amazonlinux.com/blobstore/195cb5ec07623ef7be724bd99bd49eda17ebe7ad82d752d0e39b096de5411500/kernel-5.4.68-34.125.amzn2.src.rpm
 Source100: config-bottlerocket
+
+# Make Lustre FSx work with a newer GCC.
 Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
+
+# Help out-of-tree module builds run `make prepare` automatically.
+Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
+
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
@@ -27,6 +33,12 @@ Summary: Configured Linux kernel source for module building
 Requires: %{_cross_os}filesystem
 
 %description devel
+%{summary}.
+
+%package archive
+Summary: Archived Linux kernel source for module building
+
+%description archive
 %{summary}.
 
 %package modules
@@ -84,36 +96,92 @@ find %{buildroot}%{_cross_prefix} \
    \( -name .install -o -name .check -o \
       -name ..install.cmd -o -name ..check.cmd \) -delete
 
-# files for external module compilation
+# For out-of-tree kmod builds, we need to support the following targets:
+#   make scripts -> make prepare -> make modules
+#
+# This requires enough of the kernel tree to build host programs under the
+# "scripts" and "tools" directories.
+
+# Any existing ELF objects will not work properly if we're cross-compiling for
+# a different architecture, so get rid of them to avoid confusing errors.
+find arch scripts tools -type f -executable \
+  -exec sh -c "head -c4 {} | grep -q ELF && rm {}" \;
+
+# We don't need to include these files.
+find -type f \( -name \*.cmd -o -name \*.gitignore \) -delete
+
+# Avoid an OpenSSL dependency by stubbing out options for module signing and
+# trusted keyrings, so `sign-file` and `extract-cert` won't be built. External
+# kernel modules do not have access to the keys they would need to make use of
+# these tools.
+sed -i \
+  -e 's,$(CONFIG_MODULE_SIG_FORMAT),n,g' \
+  -e 's,$(CONFIG_SYSTEM_TRUSTED_KEYRING),n,g' \
+  scripts/Makefile
+
 (
-  find * -name Kbuild\* -type f -print  \
-    -o -name Kconfig\* -type f -print \
-    -o -name Makefile\* -type f -print \
-    -o -name module.lds -type f -print \
-    -o -name Platform -type f -print
-  find arch/*/include/ include/ -type f -o -type l
-  find scripts/ -executable -type f
-  find scripts/ ! \( -name Makefile\* -o -name Kbuild\* \) -type f
+  find * \
+    -type f \
+    \( -name Build\* -o -name Kbuild\* -o -name Kconfig\* -o -name Makefile\* \) \
+    -print
+
+  find arch/%{_cross_karch}/ \
+    -type f \
+    \( -name module.lds -o -name vmlinux.lds.S -o -name Platform -o -name \*.tbl \) \
+    -print
+
+  find arch/%{_cross_karch}/{include,lib}/ -type f ! -name \*.o ! -name \*.o.d -print
+  echo arch/%{_cross_karch}/kernel/asm-offsets.s
+  echo lib/vdso/gettimeofday.c
+
+  for d in \
+    arch/%{_cross_karch}/tools \
+    arch/%{_cross_karch}/kernel/vdso ; do
+    [ -d "${d}" ] && find "${d}/" -type f -print
+  done
+
+  find include -type f -print
+  find scripts -type f ! -name \*.l ! -name \*.y ! -name \*.o -print
+
+  find tools/{arch/%{_cross_karch},include,objtool,scripts}/ -type f ! -name \*.o -print
+  echo tools/build/fixdep.c
+  find tools/lib/subcmd -type f -print
+  find tools/lib/{ctype,string,str_error_r}.c
+
+  echo kernel/bounds.c
+  echo kernel/time/timeconst.bc
+  echo security/selinux/include/classmap.h
+  echo security/selinux/include/initial_sid_to_string.h
+
   echo .config
   echo Module.symvers
   echo System.map
 ) | sort -u > kernel_devel_files
 
-# remove x86 intermediate files like generated/asm/.syscalls_32.h.cmd
-sed -i '/asm\/.*\.cmd$/d' kernel_devel_files
+# Create squashfs of kernel-devel files (ie. /usr/src/kernels/<version>).
+#
+# -no-exports:
+# The filesystem does not need to be exported via NFS.
+#
+# -all-root:
+# Make all files owned by root rather than the build user.
+#
+# -comp zstd:
+# zstd offers compression ratios like xz and decompression speeds like lz4.
+SQUASHFS_OPTS="-no-exports -all-root -comp zstd"
+mkdir -p src_squashfs/%{version}
+tar c -T kernel_devel_files | tar x -C src_squashfs/%{version}
+mksquashfs src_squashfs kernel-devel.squashfs ${SQUASHFS_OPTS}
 
-## Create squashfs of kernel-devel files (ie. /usr/src/kernels/<version>)
-mkdir src_squashfs
-for file in $(cat kernel_devel_files); do
-  install -D ${file} src_squashfs/%{version}/${file}
-done
-# if we have it, include objtool (not all arches support it yet)
-if [ "%{_cross_karch}" == "x86"  ]; then
-  install -D tools/objtool/objtool src_squashfs/%{version}/tools/objtool/objtool
-fi
+# Create a tarball of the same files, for use outside the running system.
+# In theory we could extract these files with `unsquashfs`, but we do not want
+# to require it to be installed on the build host, and it errors out when run
+# inside Docker unless the limit for open files is lowered.
+tar cf kernel-devel.tar src_squashfs/%{version} --transform='s|src_squashfs/%{version}|kernel-devel|'
+xz -T0 kernel-devel.tar
 
-mksquashfs src_squashfs kernel-devel.squashfs
 install -D kernel-devel.squashfs %{buildroot}%{_cross_datadir}/bottlerocket/kernel-devel.squashfs
+install -D kernel-devel.tar.xz %{buildroot}%{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
 install -d %{buildroot}%{kernel_sourcedir}
 
 # Replace the incorrect links from modules_install. These will be bound
@@ -161,5 +229,8 @@ ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
 %files devel
 %dir %{kernel_sourcedir}
 %{_cross_datadir}/bottlerocket/kernel-devel.squashfs
+
+%files archive
+%{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
 
 %changelog

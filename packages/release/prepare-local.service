@@ -36,6 +36,14 @@ ExecStart=/usr/bin/mount \
 ExecStart=/usr/lib/systemd/systemd-growfs ${LOCAL_DIR}
 ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt
 
+# Create the directories we need to set up a read-write overlayfs for the kernel
+# development sources.
+ExecStart=/usr/bin/rm -rf ${LOCAL_DIR}/var/lib/kernel-devel
+ExecStart=/usr/bin/mkdir -p \
+    ${LOCAL_DIR}/var/lib/kernel-devel/lower \
+    ${LOCAL_DIR}/var/lib/kernel-devel/upper \
+    ${LOCAL_DIR}/var/lib/kernel-devel/work
+
 RemainAfterExit=true
 StandardError=journal+console
 
