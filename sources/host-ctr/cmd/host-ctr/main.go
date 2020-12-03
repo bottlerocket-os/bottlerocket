@@ -173,65 +173,73 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		}
 	}
 
-	// Clean up target container if it already exists before starting container
-	// task.
-	if err := deleteCtrIfExists(ctx, client, containerID); err != nil {
-		return err
+	// Check if the target container already exists. If it does, take over the helm to manage it.
+	container, err := client.LoadContainer(ctx, containerID)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			log.G(ctx).WithField("ctr-id", containerID).Info("Container does not exist, proceeding to create it")
+		} else {
+			log.G(ctx).WithField("ctr-id", containerID).WithError(err).Error("failed to retrieve list of containers")
+			return err
+		}
 	}
 
-	// Get the cgroup path of the systemd service
-	cgroupPath, err := cgroups.GetOwnCgroup("name=systemd")
-	if err != nil {
-		log.G(ctx).WithError(err).Error("failed to discover systemd cgroup path")
-		return err
-	}
+	// If the container doesn't already exist, create it
+	if container == nil {
+		// Get the cgroup path of the systemd service
+		cgroupPath, err := cgroups.GetOwnCgroup("name=systemd")
+		if err != nil {
+			log.G(ctx).WithError(err).Error("failed to discover systemd cgroup path")
+			return err
+		}
 
-	// Set up the container spec. See `withSuperpowered` for conditional options
-	// set when configured as superpowered.
-	ctrOpts := containerd.WithNewSpec(
-		oci.WithImageConfig(img),
-		oci.WithHostNamespace(runtimespec.NetworkNamespace),
-		oci.WithHostHostsFile,
-		oci.WithHostResolvconf,
-		// Launch the container under the systemd unit's cgroup
-		oci.WithCgroup(cgroupPath),
-		// Mount in the API socket for the Bottlerocket API server, and the API
-		// client used to interact with it
-		oci.WithMounts([]runtimespec.Mount{
-			{
-				Options:     []string{"bind", "rw"},
-				Destination: "/run/api.sock",
-				Source:      "/run/api.sock",
-			},
-			// Mount in the apiclient to make API calls to the Bottlerocket API server
-			{
-				Options:     []string{"bind", "ro"},
-				Destination: "/usr/local/bin/apiclient",
-				Source:      "/usr/bin/apiclient",
-			},
-			// Mount in the persistent storage location for this container
-			{
-				Options:     []string{"rbind", "rw"},
-				Destination: "/.bottlerocket/host-containers/" + containerID,
-				Source:      "/local/host-containers/" + containerID,
-			}}),
-		// Mount the rootfs with an SELinux label that makes it writable
-		withMountLabel("system_u:object_r:state_t:s0"),
-		// Include conditional options for superpowered containers.
-		withSuperpowered(superpowered),
-	)
+		// Set up the container spec. See `withSuperpowered` for conditional options
+		// set when configured as superpowered.
+		ctrOpts := containerd.WithNewSpec(
+			oci.WithImageConfig(img),
+			oci.WithHostNamespace(runtimespec.NetworkNamespace),
+			oci.WithHostHostsFile,
+			oci.WithHostResolvconf,
+			// Launch the container under the systemd unit's cgroup
+			oci.WithCgroup(cgroupPath),
+			// Mount in the API socket for the Bottlerocket API server, and the API
+			// client used to interact with it
+			oci.WithMounts([]runtimespec.Mount{
+				{
+					Options:     []string{"bind", "rw"},
+					Destination: "/run/api.sock",
+					Source:      "/run/api.sock",
+				},
+				// Mount in the apiclient to make API calls to the Bottlerocket API server
+				{
+					Options:     []string{"bind", "ro"},
+					Destination: "/usr/local/bin/apiclient",
+					Source:      "/usr/bin/apiclient",
+				},
+				// Mount in the persistent storage location for this container
+				{
+					Options:     []string{"rbind", "rw"},
+					Destination: "/.bottlerocket/host-containers/" + containerID,
+					Source:      "/local/host-containers/" + containerID,
+				}}),
+			// Mount the rootfs with an SELinux label that makes it writable
+			withMountLabel("system_u:object_r:state_t:s0"),
+			// Include conditional options for superpowered containers.
+			withSuperpowered(superpowered),
+		)
 
-	// Create and start the container.
-	container, err := client.NewContainer(
-		ctx,
-		containerID,
-		containerd.WithImage(img),
-		containerd.WithNewSnapshot(containerID+"-snapshot", img),
-		ctrOpts,
-	)
-	if err != nil {
-		log.G(ctx).WithError(err).WithField("img", img.Name).Error("failed to create container")
-		return err
+		// Create the container.
+		container, err = client.NewContainer(
+			ctx,
+			containerID,
+			containerd.WithImage(img),
+			containerd.WithNewSnapshot(containerID+"-snapshot", img),
+			ctrOpts,
+		)
+		if err != nil {
+			log.G(ctx).WithError(err).WithField("img", img.Name).Error("failed to create container")
+			return err
+		}
 	}
 	defer func() {
 		// Clean up the container as program wraps up.
@@ -243,11 +251,52 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		}
 	}()
 
-	// Create the container task
-	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
+	// Check if the container task already exists. If it does, try to manage it.
+	task, err := container.Task(ctx, cio.NewAttach(cio.WithStdio))
 	if err != nil {
-		log.G(ctx).WithError(err).Error("failed to create container task")
-		return err
+		if errdefs.IsNotFound(err) {
+			log.G(ctx).WithField("container-id", containerID).Info("container task does not exist, proceeding to create it")
+		} else {
+			log.G(ctx).WithField("container-id", containerID).WithError(err).Error("failed to retrieve container task")
+			return err
+		}
+	}
+	// If the container doesn't already exist, create it
+	taskAlreadyRunning := false
+	if task == nil {
+		// Create the container task
+		task, err = container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
+		if err != nil {
+			log.G(ctx).WithError(err).Error("failed to create container task")
+			return err
+		}
+	} else {
+		// Check the container task process status and see if it's already running.
+		taskStatus, err := task.Status(ctx)
+		if err != nil {
+			log.G(ctx).WithError(err).Error("failed to retrieve container task status")
+			return err
+		}
+		log.G(ctx).WithField("task status", taskStatus.Status).Info("found existing container task")
+
+		// If the task isn't running (it's in some weird state like `Paused`), we should replace it with a new task.
+		if taskStatus.Status != containerd.Running {
+			_, err := task.Delete(ctx, containerd.WithProcessKill)
+			if err != nil {
+				log.G(ctx).WithError(err).Error("failed to delete existing container task")
+				return err
+			}
+			log.G(ctx).Info("killed existing container task to replace it with a new task")
+			// Recreate the container task
+			task, err = container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
+			if err != nil {
+				log.G(ctx).WithError(err).Error("failed to create container task")
+				return err
+			}
+		} else {
+			log.G(ctx).Info("container task is still running, proceeding to monitor it")
+			taskAlreadyRunning = true
+		}
 	}
 	defer func() {
 		// Clean up the container's task as program wraps up.
@@ -259,20 +308,20 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		}
 	}()
 
-	// Call Wait before calling Start to ensure the task's status notifications
-	// are received.
+	// Call `Wait` to ensure the task's status notifications are received.
 	exitStatusC, err := task.Wait(context.TODO())
 	if err != nil {
 		log.G(ctx).WithError(err).Error("unexpected error during container task setup")
 		return err
 	}
-
-	// Execute the target container's task.
-	if err := task.Start(ctx); err != nil {
-		log.G(ctx).WithError(err).Error("failed to start container task")
-		return err
+	if !taskAlreadyRunning {
+		// Execute the target container's task.
+		if err := task.Start(ctx); err != nil {
+			log.G(ctx).WithError(err).Error("failed to start container task")
+			return err
+		}
+		log.G(ctx).Info("successfully started container task")
 	}
-	log.G(ctx).Info("successfully started container task")
 
 	// Block until an OS signal (e.g. SIGTERM, SIGINT) is received or the
 	// container task finishes and exits on its own.
@@ -420,48 +469,6 @@ func newContainerdClient(ctx context.Context, containerdSocket string, namespace
 	}
 
 	return client, nil
-}
-
-// deleteCtrIfExists cleans up an existing container. This involves killing its
-// task then deleting it and its snapshot when any exist.
-func deleteCtrIfExists(ctx context.Context, client *containerd.Client, targetCtr string) error {
-	existingCtr, err := client.LoadContainer(ctx, targetCtr)
-	if err != nil {
-		if errdefs.IsNotFound(err) {
-			log.G(ctx).WithField("container-id", targetCtr).Info("no clean up necessary, proceeding")
-			return nil
-		}
-		log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to retrieve list of containers")
-		return err
-	}
-	if existingCtr != nil {
-		log.G(ctx).WithField("container-id", targetCtr).Info("container already exists, deleting")
-		// Kill task associated with existing container if it exists
-		existingTask, err := existingCtr.Task(ctx, nil)
-		if err != nil {
-			// No associated task found, proceed to delete existing container
-			if errdefs.IsNotFound(err) {
-				log.G(ctx).WithField("container-id", targetCtr).Info("no task associated with existing container")
-			} else {
-				log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to retrieve task associated with existing container")
-				return err
-			}
-		}
-		if existingTask != nil {
-			_, err := existingTask.Delete(ctx, containerd.WithProcessKill)
-			if err != nil {
-				log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to delete existing container task")
-				return err
-			}
-			log.G(ctx).WithField("container-id", targetCtr).Info("killed existing container task")
-		}
-		if err := existingCtr.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
-			log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to delete existing container")
-			return err
-		}
-		log.G(ctx).WithField("container-id", targetCtr).Info("deleted existing container")
-	}
-	return nil
 }
 
 // withMountLabel configures the mount with the provided SELinux label.
