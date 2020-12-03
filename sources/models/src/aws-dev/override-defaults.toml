@@ -1,3 +1,8 @@
 [configuration-files.containerd-config-toml]
 # No override to path
 template-path = "/usr/share/templates/containerd-config-toml_aws-dev"
+
+# Docker
+[services.docker]
+restart-commands = ["/bin/systemctl try-restart docker.service"]
+configuration-files = []
