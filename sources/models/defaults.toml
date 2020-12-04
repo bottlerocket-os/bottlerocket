@@ -23,11 +23,17 @@ template-path = "/usr/share/templates/motd"
 
 [services.containerd]
 configuration-files = ["containerd-config-toml"]
-restart-commands = []
+restart-commands = ["/bin/systemctl try-restart containerd.service"]
 
 [configuration-files.containerd-config-toml]
 path = "/etc/containerd/config.toml"
 template-path = "/usr/share/templates/containerd-config-toml"
+
+# Host-container runtime
+
+[services.host-containerd]
+configuration-files = []
+restart-commands = ["/bin/systemctl try-restart host-containerd.service"]
 
 # Updates.
 

@@ -2,6 +2,11 @@
 # No override to path
 template-path = "/usr/share/templates/containerd-config-toml_aws-ecs-1"
 
+# Docker
+[services.docker]
+restart-commands = ["/bin/systemctl try-restart docker.service"]
+configuration-files = []
+
 # ECS
 [services.ecs]
 restart-commands = ["/usr/bin/ecs-settings-applier", "/bin/systemctl try-reload-or-restart ecs.service"]

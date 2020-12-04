@@ -6,7 +6,7 @@ template-path = "/usr/share/templates/containerd-config-toml_aws-k8s"
 
 [services.kubernetes]
 configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt"]
-restart-commands = []
+restart-commands = ["/bin/systemctl try-restart kubelet.service"]
 
 [configuration-files.kubelet-env]
 path = "/etc/kubernetes/kubelet/env"
