@@ -10,12 +10,15 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
+datastore = { path = "../datastore" }
 http = "0.2"
 hyper = { version = "0.13", default-features = false }
 hyper-unix-connector = "0.1"
 # when we update hyper to 0.14+ and tokio to 1
 # hyper-unix-connector = "0.2"
 log = "0.4"
+models = { path = "../../models" }
+rand = "0.8"
 serde_json = "1.0"
 simplelog = "0.9"
 snafu = "0.6"
