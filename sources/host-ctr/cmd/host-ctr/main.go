@@ -129,6 +129,21 @@ func App() *cli.App {
 				return pullImageOnly(containerdSocket, namespace, source)
 			},
 		},
+		{
+			Name:  "clean-up",
+			Usage: "delete specified container's resources if it exists",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "container-id",
+					Usage:       "the id of the container to clean up",
+					Destination: &containerID,
+					Required:    true,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return cleanUp(containerdSocket, namespace, containerID)
+			},
+		},
 	}
 
 	return app
@@ -404,6 +419,58 @@ func pullImageOnly(containerdSocket string, namespace string, source string) err
 			log.G(ctx).WithField("ref", ref).Error(err)
 			return err
 		}
+	}
+
+	return nil
+}
+
+// cleanUp checks if the specified container exists and attempts to clean it up
+func cleanUp(containerdSocket string, namespace string, containerID string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = namespaces.WithNamespace(ctx, namespace)
+
+	client, err := newContainerdClient(ctx, containerdSocket, namespace)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	container, err := client.LoadContainer(ctx, containerID)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			log.G(ctx).WithField("container-id", containerID).Info("container does not exist, no clean up necessary")
+			return nil
+		}
+		log.G(ctx).WithField("container-id", containerID).WithError(err).Error("failed to retrieve list of containers")
+		return err
+	}
+	if container != nil {
+		log.G(ctx).WithField("container-id", containerID).Info("container exists, deleting")
+		// Kill task associated with existing container if it exists
+		task, err := container.Task(ctx, nil)
+		if err != nil {
+			// No associated task found, proceed to delete existing container
+			if errdefs.IsNotFound(err) {
+				log.G(ctx).WithField("container-id", containerID).Info("no task associated with existing container")
+			} else {
+				log.G(ctx).WithField("container-id", containerID).WithError(err).Error("failed to retrieve task associated with existing container")
+				return err
+			}
+		}
+		if task != nil {
+			_, err := task.Delete(ctx, containerd.WithProcessKill)
+			if err != nil {
+				log.G(ctx).WithField("container-id", containerID).WithError(err).Error("failed to delete existing container task")
+				return err
+			}
+			log.G(ctx).WithField("container-id", containerID).Info("killed existing container task")
+		}
+		if err := container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
+			log.G(ctx).WithField("container-id", containerID).WithError(err).Error("failed to delete existing container")
+			return err
+		}
+		log.G(ctx).WithField("container-id", containerID).Info("deleted existing container")
 	}
 
 	return nil
