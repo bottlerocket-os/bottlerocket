@@ -66,16 +66,21 @@ In general, the process of using the update API looks like this:
 You refresh the list of known updates, then apply one to the system.
 Calls to `/updates/status` will tell you the current state and give more details on any errors.
 
+`apiclient` understands this workflow and automates the calls for most use cases.
+See the [apiclient README](../api/apiclient/README.md) for details.
+
 ### Walkthrough
+
+If you don't want to use the simpler update mode available in [apiclient](../api/apiclient/README.md), or you just want to control what's going on at a lower level, read on.
 
 First, refresh the list of available updates:
 ```
-apiclient -u /actions/refresh-updates -m POST
+apiclient raw -u /actions/refresh-updates -m POST
 ```
 
 Now you can see the list of available updates, along with the chosen update, according to your `version-lock` [setting](../../README.md#updates-settings):
 ```
-apiclient -u /updates/status
+apiclient raw -u /updates/status
 ```
 
 This will return the current update status in JSON format. The status should look something like the following (pretty-printed):
@@ -113,22 +118,22 @@ You can see that we're running `v0.3.2` in the active partition, and that `v0.4.
 If you're happy with that selection, you can request that the update be downloaded and applied to disk.
 (The update will remain inactive until you make the `activate-update` call below.)
 ```
-apiclient -u /actions/prepare-update -m POST
+apiclient raw -u /actions/prepare-update -m POST
 ```
 
 After you request that the update be prepared, you can check the update status again until it reflects the new version in the staging partition.
 ```
-apiclient -u /updates/status
+apiclient raw -u /updates/status
 ```
 
 If the staging partition shows the new version, you can proceed to "activate" the update.
 This means that as soon as the host is rebooted it will try to run the new version.
 (If the new version can't boot, we automatically flip back to the old version.)
 ```
-apiclient -u /actions/activate-update -m POST
+apiclient raw -u /actions/activate-update -m POST
 ```
 
 You can reboot the host with:
 ```
-apiclient -u /actions/reboot -m POST
+apiclient raw -u /actions/reboot -m POST
 ```

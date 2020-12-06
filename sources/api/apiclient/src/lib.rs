@@ -1,13 +1,14 @@
 #![deny(rust_2018_idioms)]
 
-//! The apiclient library provides simple methods to query an HTTP API over a Unix-domain socket.
+//! The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
+//! the documentation for the [`update`] submodule for high-level helpers.
+//!
+//! For more control, and to handle APIs without high-level wrappers, there are also 'raw' methods
+//! to query an HTTP API over a Unix-domain socket.
 //!
 //! The `raw_request` method takes care of the basics of making an HTTP request on a Unix-domain
 //! socket, and requires you to specify the socket path, the URI (including query string), the
 //! HTTP method, and any request body data.
-//!
-//! In the future, we intend to add methods that understand the Bottlerocket API and help more with common
-//! types of requests.
 
 // Think "reqwest" but for Unix-domain sockets.  Would be nice to use the simpler reqwest instead
 // of hyper, but it lacks Unix-domain socket support:
