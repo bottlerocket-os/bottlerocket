@@ -30,6 +30,7 @@ const API_SETTINGS_URI: &str = "/settings";
 const ENV_FILE_DIR: &str = "/etc/host-containers";
 
 const SYSTEMCTL_BIN: &str = "/bin/systemctl";
+const HOST_CTR_BIN: &str = "/bin/host-ctr";
 
 mod error {
     use http::StatusCode;
@@ -90,9 +91,9 @@ mod error {
             source: std::io::Error,
         },
 
-        #[snafu(display("Systemd command failed - stderr: {}",
-                        std::str::from_utf8(&output.stderr).unwrap_or_else(|_| "<invalid UTF-8>")))]
-        SystemdCommandFailure { output: Output },
+        #[snafu(display("'{}' failed - stderr: {}",
+                        bin_path, std::str::from_utf8(&output.stderr).unwrap_or_else(|_| "<invalid UTF-8>")))]
+        CommandFailure { bin_path: String, output: Output },
 
         #[snafu(display("Failed to manage {} of {} host containers", failed, tried))]
         ManageContainersFailed { failed: usize, tried: usize },
@@ -145,25 +146,62 @@ impl<'a> SystemdUnit<'a> {
         SystemdUnit { unit }
     }
 
+    fn is_enabled(&self) -> Result<bool> {
+        match command(SYSTEMCTL_BIN, &["is-enabled", &self.unit]) {
+            Ok(()) => Ok(true),
+            Err(e) => {
+                // If the systemd unit is not enabled, then `systemctl is-enabled` will return a
+                // non-zero exit code.
+                match e {
+                    error::Error::CommandFailure { .. } => Ok(false),
+                    _ => {
+                        // Otherwise, we return the error
+                        Err(e)
+                    }
+                }
+            }
+        }
+    }
+
+    fn is_active(&self) -> Result<bool> {
+        match command(SYSTEMCTL_BIN, &["is-active", &self.unit]) {
+            Ok(()) => Ok(true),
+            Err(e) => {
+                // If the systemd unit is not active(running), then `systemctl is-active` will
+                // return a non-zero exit code.
+                match e {
+                    error::Error::CommandFailure { .. } => Ok(false),
+                    _ => {
+                        // Otherwise, we return the error
+                        Err(e)
+                    }
+                }
+            }
+        }
+    }
+
     fn enable_and_start(&self) -> Result<()> {
         // We enable/start units with --no-block to work around cyclic dependency issues at boot
         // time.  It would probably be better to give systemd more of a chance to tell us that
         // something failed to start, if dependencies can be resolved in another way.
-        systemctl(&["enable", &self.unit, "--now", "--no-block"])
+        command(
+            SYSTEMCTL_BIN,
+            &["enable", &self.unit, "--now", "--no-block"],
+        )
     }
 
     fn disable_and_stop(&self) -> Result<()> {
-        systemctl(&["disable", &self.unit, "--now"])
+        command(SYSTEMCTL_BIN, &["disable", &self.unit, "--now"])
     }
 }
 
-/// Wrapper around process::Command for systemctl that adds error checking.
-fn systemctl<I, S>(args: I) -> Result<()>
+/// Wrapper around process::Command that adds error checking.
+fn command<I, S>(bin_path: &str, args: I) -> Result<()>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let mut command = Command::new(SYSTEMCTL_BIN);
+    let mut command = Command::new(bin_path);
     command.args(args);
     let output = command
         .output()
@@ -174,7 +212,7 @@ where
 
     ensure!(
         output.status.success(),
-        error::SystemdCommandFailure { output }
+        error::CommandFailure { bin_path, output }
     );
     Ok(())
 }
@@ -298,11 +336,27 @@ where
     // Now start/stop the container according to the 'enabled' setting
     let unit_name = format!("host-containers@{}.service", name);
     let systemd_unit = SystemdUnit::new(&unit_name);
+    let host_containerd_unit = SystemdUnit::new("host-containerd.service");
 
     if enabled {
+        // If this particular host-container was previously disabled. Let's make sure there's no
+        // lingering container tasks left over previously that host-ctr might bind to.
+        // We want to ensure we're running the host-container with the latest configuration.
+        //
+        // We only attempt to do this only if host-containerd is active and running
+        if host_containerd_unit.is_active()? && !systemd_unit.is_enabled()? {
+            command(HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
+        }
         systemd_unit.enable_and_start()?;
     } else {
         systemd_unit.disable_and_stop()?;
+
+        // Ensure there's no lingering host-container after it's been disabled.
+        //
+        // We only attempt to do this only if host-containerd is active and running
+        if host_containerd_unit.is_active()? {
+            command(HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
+        }
     }
 
     Ok(())
