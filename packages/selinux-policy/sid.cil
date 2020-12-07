@@ -30,41 +30,49 @@
 (sid scmp_packet)
 (sid devnull)
 
-; The order of ISIDs must match the kernel's order.
+; The order of ISIDs must match the kernel's order, for now.
 (sidorder (
    kernel security unlabeled fs file file_labels init any_socket port
    netif netmsg node igmp_packet icmp_socket tcp_socket sysctl_modprobe
    sysctl sysctl_fs sysctl_kernel sysctl_net sysctl_net_unix sysctl_vm
    sysctl_dev kmod policy scmp_packet devnull))
 
-; We associate the same context with all ISIDs, with two exceptions.
-; "unlabeled" is used for entities with an invalid context, such as
-; a file labeled on a different system. "file" is used for entities
-; that have no context at all, such as a file with no label.
+; Apply the "kernel" context for kernel and SELinux-related entities.
 (sidcontext kernel kernel)
 (sidcontext security kernel)
-(sidcontext unlabeled unlabeled)
-(sidcontext fs kernel)
-(sidcontext file unlabeled)
-(sidcontext file_labels kernel)
-(sidcontext init kernel)
-(sidcontext any_socket kernel)
-(sidcontext port kernel)
-(sidcontext netif kernel)
-(sidcontext netmsg kernel)
-(sidcontext node kernel)
-(sidcontext igmp_packet kernel)
-(sidcontext icmp_socket kernel)
-(sidcontext tcp_socket kernel)
-(sidcontext sysctl_modprobe kernel)
-(sidcontext sysctl kernel)
-(sidcontext sysctl_fs kernel)
-(sidcontext sysctl_kernel kernel)
-(sidcontext sysctl_net kernel)
-(sidcontext sysctl_net_unix kernel)
-(sidcontext sysctl_vm kernel)
-(sidcontext sysctl_dev kernel)
-(sidcontext kmod kernel)
-(sidcontext policy kernel)
-(sidcontext scmp_packet kernel)
 (sidcontext devnull kernel)
+
+; Apply the "unlabeled" context for entities with an invalid context,
+; and for files with no context at all, which are treated the same.
+(sidcontext unlabeled unlabeled)
+(sidcontext file unlabeled)
+
+; Apply the "any" context for entities like sockets, ports, and
+; network interfaces if they are otherwise unlabeled.
+(sidcontext any_socket any)
+(sidcontext port any)
+(sidcontext netif any)
+(sidcontext netmsg any)
+(sidcontext node any)
+
+; Most of the initial SIDs have never been used, or are no longer used.
+; We use the placeholder "unused" context for all of these, since the
+; policy isn't allowed to omit them yet. We'll need a 5.7+ kernel and
+; updated userspace tools first.
+(sidcontext fs unused)
+(sidcontext file_labels unused)
+(sidcontext init unused)
+(sidcontext igmp_packet unused)
+(sidcontext icmp_socket unused)
+(sidcontext tcp_socket unused)
+(sidcontext sysctl_modprobe unused)
+(sidcontext sysctl unused)
+(sidcontext sysctl_fs unused)
+(sidcontext sysctl_kernel unused)
+(sidcontext sysctl_net unused)
+(sidcontext sysctl_net_unix unused)
+(sidcontext sysctl_vm unused)
+(sidcontext sysctl_dev unused)
+(sidcontext kmod unused)
+(sidcontext policy unused)
+(sidcontext scmp_packet unused)

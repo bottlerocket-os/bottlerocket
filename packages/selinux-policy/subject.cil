@@ -8,6 +8,11 @@
 (roletype system_r kernel_t)
 (context kernel (system_u system_r kernel_t s0))
 
+; Unused ISIDs.
+(type unused_t)
+(roletype system_r unused_t)
+(context unused (system_u system_r unused_t s0))
+
 ; PID 1.
 (type init_t)
 (roletype system_r init_t)
