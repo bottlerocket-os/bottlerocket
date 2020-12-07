@@ -89,7 +89,7 @@
 (classpermissionset relabel_fifo_file (
   fifo_file (relabelfrom relabelto)))
 (classpermissionset relabel_filesystem (
-  filesystem (associate relabelfrom relabelto)))
+  filesystem (relabelfrom relabelto)))
 (classpermissionset relabel_kernel_service (
   kernel_service (create_files_as)))
 

@@ -171,6 +171,14 @@
 ; Untrusted components are not allowed to relabel files.
 (neverallow untrusted_s global (files (relabel)))
 
+; All object labels can be used for files on filesystems that have
+; the same label, and for files on ephemeral storage.
+(allow all_o self (filesystem (associate)))
+(allow all_o ephemeral_o (filesystem (associate)))
+
+; Protected object labels can also be used on local storage.
+(allow protected_o local_t (filesystem (associate)))
+
 ; Containers are allowed to relax security constraints, since we
 ; don't control what code they run or how it's built.
 (allow container_s self (processes (relax)))
