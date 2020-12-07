@@ -148,7 +148,7 @@ veritysetup_output="$(veritysetup format \
     "${ROOT_IMAGE}" "${VERITY_IMAGE}" \
     | tee /dev/stderr)"
 if ! stat -c %s "${VERITY_IMAGE}" | grep -q '^8388608$'; then
-    "verity partition is larger than expected (4M)"
+    echo "verity partition is larger than expected (8M)"
     exit 1
 fi
 VERITY_DATA_4K_BLOCKS="$(grep '^Data blocks:' <<<$veritysetup_output | awk '{ print $NF }')"
