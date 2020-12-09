@@ -30,7 +30,7 @@ func (hook *LogSplitHook) Fire(entry *logrus.Entry) error {
 	return nil
 }
 
-// Returns the log levels this hook is being applied to
+// Levels returns the log levels this hook is being applied to
 func (hook *LogSplitHook) Levels() []logrus.Level {
 	return hook.levels
 }
