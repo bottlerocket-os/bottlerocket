@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -25,6 +24,7 @@ import (
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 )
 
 // Expecting to match ECR image names of the form:
@@ -45,47 +45,100 @@ func init() {
 }
 
 func main() {
-	os.Exit(_main())
+	app := App()
+	if err := app.Run(os.Args); err != nil {
+		log.L.Fatalf("%v", err)
+	}
 }
 
-func _main() int {
-	// Parse command-line arguments
+// App sets up a cli.App with `host-ctr`'s flags and subcommands
+func App() *cli.App {
+	// Command-line arguments
 	var (
 		containerID      string
 		source           string
 		containerdSocket string
 		namespace        string
 		superpowered     bool
-		pullImageOnly    bool
 	)
 
-	flag.StringVar(&containerID, "ctr-id", "", "The ID of the container to be started")
-	flag.StringVar(&source, "source", "", "The image to be pulled")
-	flag.BoolVar(&superpowered, "superpowered", false, "Specifies whether to launch the container in `superpowered` mode or not")
-	flag.BoolVar(&pullImageOnly, "pull-image-only", false, "Only pull and unpack the container image, do not start any container task")
-	flag.StringVar(&containerdSocket, "containerd-socket", "/run/host-containerd/containerd.sock", "Specifies the path to the containerd socket. Defaults to `/run/host-containerd/containerd.sock`")
-	flag.StringVar(&namespace, "namespace", "default", "Specifies the containerd namespace")
+	app := cli.NewApp()
+	app.Name = "host-ctr"
+	app.Usage = "manage host containers"
 
-	flag.Parse()
-
-	// Image source must always be provided.
-	if source == "" {
-		log.L.Error("source image must be provided")
-		flag.Usage()
-		return 2
+	// Global options
+	app.Flags = []cli.Flag{
+		&cli.StringFlag{
+			Name:        "containerd-socket",
+			Aliases:     []string{"s"},
+			Usage:       "path to the containerd socket",
+			Value:       "/run/host-containerd/containerd.sock",
+			Destination: &containerdSocket,
+		},
+		&cli.StringFlag{
+			Name:        "namespace",
+			Aliases:     []string{"n"},
+			Usage:       "the containerd namespace to operate in",
+			Value:       "default",
+			Destination: &namespace,
+		},
 	}
 
-	// Container ID must be provided unless the goal is to pull an image.
-	if containerID == "" && !pullImageOnly {
-		log.L.Error("container ID must be provided")
-		flag.Usage()
-		return 2
+	// Subcommands
+	app.Commands = []*cli.Command{
+		{
+			Name:  "run",
+			Usage: "run host container with the specified image",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "source",
+					Usage:       "the image source",
+					Destination: &source,
+					Required:    true,
+				},
+				&cli.StringFlag{
+					Name:        "container-id",
+					Usage:       "the id of the container to manage",
+					Destination: &containerID,
+					Required:    true,
+				},
+				&cli.BoolFlag{
+					Name:        "superpowered",
+					Usage:       "specifies whether to create the container with `superpowered` privileges",
+					Destination: &superpowered,
+					Value:       false,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return runCtr(containerdSocket, namespace, containerID, source, superpowered)
+			},
+		},
+		{
+			Name:        "pull-image",
+			Usage:       "pull the specified container image",
+			Description: "pull the specified container image to make it available in the containerd image store",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "source",
+					Usage:       "the image source",
+					Destination: &source,
+					Required:    true,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return pullImageOnly(containerdSocket, namespace, source)
+			},
+		},
 	}
 
+	return app
+}
+
+func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
 	ctx = namespaces.WithNamespace(ctx, namespace)
+
 	go func(ctx context.Context, cancel context.CancelFunc) {
 		// Set up channel on which to send signal notifications.
 		// We must use a buffered channel or risk missing the signal
@@ -93,88 +146,44 @@ func _main() int {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		for sigrecv := range c {
-			log.G(ctx).Info("Received signal: ", sigrecv)
+			log.G(ctx).Info("received signal: ", sigrecv)
 			cancel()
 		}
 	}(ctx, cancel)
 
-	// Setup containerd client using provided socket.
-	client, err := containerd.New(containerdSocket, containerd.WithDefaultNamespace(namespace))
+	client, err := newContainerdClient(ctx, containerdSocket, namespace)
 	if err != nil {
-		log.G(ctx).
-			WithError(err).
-			WithField("socket", containerdSocket).
-			WithField("namespace", namespace).
-			Error("Failed to connect to containerd")
-		return 1
+		return err
 	}
 	defer client.Close()
 
 	// Parse the source ref if it looks like an ECR ref.
-	ref := source
-	isECRImage := ecrRegex.MatchString(ref)
+	isECRImage := ecrRegex.MatchString(source)
+	var img containerd.Image
 	if isECRImage {
-		ecrRef, err := ecr.ParseImageURI(ref)
+		img, err = pullECRImage(ctx, source, client)
 		if err != nil {
-			log.G(ctx).WithError(err).WithField("source", source).Error("Failed to parse ECR reference")
-			return 1
+			return err
 		}
-		ref = ecrRef.Canonical()
-		log.G(ctx).
-			WithField("source", source).
-			WithField("ref", ref).
-			Debug("Parsed ECR reference from URI")
-	}
-
-	img, err := pullImage(ctx, ref, client)
-	if err != nil {
-		log.G(ctx).WithField("ref", ref).Error(err)
-		return 1
-	}
-
-	// When the image is from ECR, the image reference will be converted from
-	// its ref format. This is of the form of `"ecr.aws/" + ECR repository ARN +
-	// label/digest`.
-	//
-	// See the resolver for details on this format -
-	// https://github.com/awslabs/amazon-ecr-containerd-resolver.
-	//
-	// If the image was pulled from ECR, add `source` ref pointing to the same
-	// image so other clients can locate it using both `source` and the parsed
-	// ECR ref.
-	if isECRImage {
-		// Add additional `source` tag on ECR image for other clients.
-		log.G(ctx).
-			WithField("ref", ref).
-			WithField("source", source).
-			Debug("Adding source tag on pulled image")
-		if err := tagImage(ctx, ref, source, client); err != nil {
-			log.G(ctx).
-				WithError(err).
-				WithField("source", source).
-				WithField("ref", ref).
-				Error("Failed to add source tag on pulled image")
-			return 1
+	} else {
+		img, err = pullImage(ctx, source, client)
+		if err != nil {
+			log.G(ctx).WithField("ref", source).Error(err)
+			return err
 		}
-	}
-
-	// If we're only pulling and unpacking the image, we're done here.
-	if pullImageOnly {
-		log.G(ctx).Info("Not starting host container, pull-image-only mode specified")
-		return 0
 	}
 
 	// Clean up target container if it already exists before starting container
 	// task.
 	if err := deleteCtrIfExists(ctx, client, containerID); err != nil {
-		return 1
+		return err
 	}
 
 	// Get the cgroup path of the systemd service
 	cgroupPath, err := cgroups.GetOwnCgroup("name=systemd")
 	if err != nil {
-		log.G(ctx).WithError(err).Error("Failed to discover systemd cgroup path")
-		return 1
+		log.G(ctx).WithError(err).Error("failed to discover systemd cgroup path")
+		return err
 	}
 
 	// Set up the container spec. See `withSuperpowered` for conditional options
@@ -221,8 +230,8 @@ func _main() int {
 		ctrOpts,
 	)
 	if err != nil {
-		log.G(ctx).WithError(err).WithField("img", img.Name).Error("Failed to create container")
-		return 1
+		log.G(ctx).WithError(err).WithField("img", img.Name).Error("failed to create container")
+		return err
 	}
 	defer func() {
 		// Clean up the container as program wraps up.
@@ -230,15 +239,15 @@ func _main() int {
 		defer cancel()
 		err := container.Delete(cleanup, containerd.WithSnapshotCleanup)
 		if err != nil {
-			log.G(cleanup).WithError(err).Error("Failed to cleanup container")
+			log.G(cleanup).WithError(err).Error("failed to cleanup container")
 		}
 	}()
 
 	// Create the container task
 	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
 	if err != nil {
-		log.G(ctx).WithError(err).Error("Failed to create container task")
-		return 1
+		log.G(ctx).WithError(err).Error("failed to create container task")
+		return err
 	}
 	defer func() {
 		// Clean up the container's task as program wraps up.
@@ -246,7 +255,7 @@ func _main() int {
 		defer cancel()
 		_, err := task.Delete(cleanup)
 		if err != nil {
-			log.G(cleanup).WithError(err).Error("Failed to delete container task")
+			log.G(cleanup).WithError(err).Error("failed to delete container task")
 		}
 	}()
 
@@ -254,16 +263,16 @@ func _main() int {
 	// are received.
 	exitStatusC, err := task.Wait(context.TODO())
 	if err != nil {
-		log.G(ctx).WithError(err).Error("Unexpected error during container task setup.")
-		return 1
+		log.G(ctx).WithError(err).Error("unexpected error during container task setup")
+		return err
 	}
 
 	// Execute the target container's task.
 	if err := task.Start(ctx); err != nil {
-		log.G(ctx).WithError(err).Error("Failed to start container task")
-		return 1
+		log.G(ctx).WithError(err).Error("failed to start container task")
+		return err
 	}
-	log.G(ctx).Info("Successfully started container task")
+	log.G(ctx).Info("successfully started container task")
 
 	// Block until an OS signal (e.g. SIGTERM, SIGINT) is received or the
 	// container task finishes and exits on its own.
@@ -278,8 +287,8 @@ func _main() int {
 	case <-ctx.Done():
 		// SIGTERM the container task and get its exit status
 		if err := task.Kill(ctrCtx, syscall.SIGTERM); err != nil {
-			log.G(ctrCtx).WithError(err).Error("Failed to send SIGTERM to container")
-			return 1
+			log.G(ctrCtx).WithError(err).Error("failed to send SIGTERM to container")
+			return err
 		}
 		// Wait for 20 seconds and see check if container task exited
 		const gracePeriod = 20 * time.Second
@@ -301,8 +310,8 @@ func _main() int {
 			err := task.Kill(killCtx, syscall.SIGKILL)
 			cancel()
 			if err != nil {
-				log.G(ctrCtx).WithError(err).Error("Failed to SIGKILL container process, timed out")
-				return 1
+				log.G(ctrCtx).WithError(err).Error("failed to SIGKILL container process, timed out")
+				return err
 			}
 
 			status = <-exitStatusC
@@ -312,11 +321,105 @@ func _main() int {
 	}
 	code, _, err := status.Result()
 	if err != nil {
-		log.G(ctrCtx).WithError(err).Error("Failed to get container task exit status")
-		return 1
+		log.G(ctrCtx).WithError(err).Error("failed to get container task exit status")
+		return err
 	}
-	log.G(ctrCtx).WithField("code", code).Info("Container task exited")
-	return int(code)
+	log.G(ctrCtx).WithField("code", code).Info("container task exited")
+
+	return nil
+}
+
+// pullImageOnly pulls the specified container image
+func pullImageOnly(containerdSocket string, namespace string, source string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = namespaces.WithNamespace(ctx, namespace)
+
+	client, err := newContainerdClient(ctx, containerdSocket, namespace)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	// Parse the source ref if it looks like an ECR ref.
+	isECRImage := ecrRegex.MatchString(source)
+	ref := source
+	if isECRImage {
+		_, err = pullECRImage(ctx, source, client)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = pullImage(ctx, ref, client)
+		if err != nil {
+			log.G(ctx).WithField("ref", ref).Error(err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+// pullECRImage does some additional conversions before resolving the image reference and pulls the image.
+func pullECRImage(ctx context.Context, source string, client *containerd.Client) (containerd.Image, error) {
+	ref := source
+	ecrRef, err := ecr.ParseImageURI(ref)
+	if err != nil {
+		log.G(ctx).WithError(err).WithField("source", source).Error("failed to parse ECR reference")
+		return nil, err
+	}
+
+	ref = ecrRef.Canonical()
+	log.G(ctx).
+		WithField("ref", ref).
+		WithField("source", source).
+		Debug("parsed ECR reference from URI")
+
+	img, err := pullImage(ctx, ref, client)
+	if err != nil {
+		log.G(ctx).WithField("ref", ref).Error(err)
+		return nil, err
+	}
+
+	// When the image is from ECR, the image reference will be converted from
+	// its ref format. This is of the form of `"ecr.aws/" + ECR repository ARN +
+	// label/digest`.
+	//
+	// See the resolver for details on this format -
+	// https://github.com/awslabs/amazon-ecr-containerd-resolver.
+	//
+	// If the image was pulled from ECR, add `source` ref pointing to the same
+	// image so other clients can locate it using both `source` and the parsed
+	// ECR ref.
+	log.G(ctx).
+		WithField("ref", ref).
+		WithField("source", source).
+		Debug("adding source tag on pulled image")
+	if err := tagImage(ctx, ref, source, client); err != nil {
+		log.G(ctx).
+			WithError(err).
+			WithField("source", source).
+			WithField("ref", ref).
+			Error("failed to add source tag on pulled image")
+		return nil, err
+	}
+
+	return img, nil
+}
+
+// newContainerdClient creates a new containerd client connected to the specified containerd socket.
+func newContainerdClient(ctx context.Context, containerdSocket string, namespace string) (*containerd.Client, error) {
+	client, err := containerd.New(containerdSocket, containerd.WithDefaultNamespace(namespace))
+	if err != nil {
+		log.G(ctx).
+			WithError(err).
+			WithField("socket", containerdSocket).
+			WithField("namespace", namespace).
+			Error("failed to connect to containerd")
+		return nil, err
+	}
+
+	return client, nil
 }
 
 // deleteCtrIfExists cleans up an existing container. This involves killing its
@@ -325,38 +428,38 @@ func deleteCtrIfExists(ctx context.Context, client *containerd.Client, targetCtr
 	existingCtr, err := client.LoadContainer(ctx, targetCtr)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
-			log.G(ctx).WithField("ctr-id", targetCtr).Info("No clean up necessary, proceeding")
+			log.G(ctx).WithField("container-id", targetCtr).Info("no clean up necessary, proceeding")
 			return nil
 		}
-		log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to retrieve list of containers")
+		log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to retrieve list of containers")
 		return err
 	}
 	if existingCtr != nil {
-		log.G(ctx).WithField("ctr-id", targetCtr).Info("Container already exists, deleting")
+		log.G(ctx).WithField("container-id", targetCtr).Info("container already exists, deleting")
 		// Kill task associated with existing container if it exists
 		existingTask, err := existingCtr.Task(ctx, nil)
 		if err != nil {
 			// No associated task found, proceed to delete existing container
 			if errdefs.IsNotFound(err) {
-				log.G(ctx).WithField("ctr-id", targetCtr).Info("No task associated with existing container")
+				log.G(ctx).WithField("container-id", targetCtr).Info("no task associated with existing container")
 			} else {
-				log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to retrieve task associated with existing container")
+				log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to retrieve task associated with existing container")
 				return err
 			}
 		}
 		if existingTask != nil {
 			_, err := existingTask.Delete(ctx, containerd.WithProcessKill)
 			if err != nil {
-				log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to delete existing container task")
+				log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to delete existing container task")
 				return err
 			}
-			log.G(ctx).WithField("ctr-id", targetCtr).Info("Killed existing container task")
+			log.G(ctx).WithField("container-id", targetCtr).Info("killed existing container task")
 		}
 		if err := existingCtr.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
-			log.G(ctx).WithField("ctr-id", targetCtr).WithError(err).Error("Failed to delete existing container")
+			log.G(ctx).WithField("container-id", targetCtr).WithError(err).Error("failed to delete existing container")
 			return err
 		}
-		log.G(ctx).WithField("ctr-id", targetCtr).Info("Deleted existing container")
+		log.G(ctx).WithField("container-id", targetCtr).Info("deleted existing container")
 	}
 	return nil
 }
@@ -432,7 +535,7 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 			withDynamicResolver(ctx, source),
 			containerd.WithSchema1Conversion)
 		if err == nil {
-			log.G(ctx).WithField("img", img.Name()).Info("Pulled successfully")
+			log.G(ctx).WithField("img", img.Name()).Info("pulled image successfully")
 			break
 		}
 		if retryAttempts >= maxRetryAttempts {
@@ -440,7 +543,7 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 		}
 		// Add a random jitter between 2 - 6 seconds to the retry interval
 		retryIntervalWithJitter := retryInterval + time.Duration(rand.Int31n(jitterPeakAmplitude))*time.Millisecond + jitterLowerBound*time.Millisecond
-		log.G(ctx).WithError(err).Warnf("Failed to pull image. Waiting %s before retrying...", retryIntervalWithJitter)
+		log.G(ctx).WithError(err).Warnf("failed to pull image. waiting %s before retrying...", retryIntervalWithJitter)
 		timer := time.NewTimer(retryIntervalWithJitter)
 		select {
 		case <-timer.C:
@@ -454,7 +557,7 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 		}
 	}
 
-	log.G(ctx).WithField("img", img.Name()).Info("Unpacking...")
+	log.G(ctx).WithField("img", img.Name()).Info("unpacking image...")
 	if err := img.Unpack(ctx, containerd.DefaultSnapshotter); err != nil {
 		return nil, errors.Wrap(err, "failed to unpack image")
 	}
@@ -469,7 +572,7 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 // https://github.com/containerd/containerd/blob/d80513ee8a6995bc7889c93e7858ddbbc51f063d/cmd/ctr/commands/images/tag.go#L67-L86
 //
 func tagImage(ctx context.Context, imageName string, newImageName string, client *containerd.Client) error {
-	log.G(ctx).WithField("imageName", newImageName).Info("Tagging image")
+	log.G(ctx).WithField("img", newImageName).Info("tagging image")
 	// Retrieve image information
 	imageService := client.ImageService()
 	image, err := imageService.Get(ctx, imageName)
@@ -508,7 +611,7 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 		if err != nil {
 			return errors.Wrap(err, "Failed to create ECR resolver")
 		}
-		log.G(ctx).WithField("ref", ref).Info("Pulling with Amazon ECR Resolver")
+		log.G(ctx).WithField("ref", ref).Info("pulling with Amazon ECR Resolver")
 		c.Resolver = resolver
 		return nil
 	}
