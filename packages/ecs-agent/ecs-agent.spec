@@ -18,16 +18,16 @@ Summary: Amazon Elastic Container Service agent
 License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/amazon-ecs-agent-v%{gover}.tar.gz
-Source1: ecs.service
-Source2: ecs-tmpfiles.conf
-Source3: ecs-sysctl.conf
-Source4: ecs.config
-Source5: pause-image-VERSION
-Source6: pause-config.json
-Source7: pause-manifest.json
-Source8: pause-repositories
+Source101: ecs.service
+Source102: ecs-tmpfiles.conf
+Source103: ecs-sysctl.conf
+Source104: ecs.config
+Source105: pause-image-VERSION
+Source106: pause-config.json
+Source107: pause-manifest.json
+Source108: pause-repositories
 # Bottlerocket-specific - version data can be set with linker options
-Source9: version.go
+Source109: version.go
 
 # Bottlerocket-specific - filesystem location of the pause image
 Patch0001: 0001-bottlerocket-default-filesystem-locations.patch
@@ -54,7 +54,7 @@ Requires: %{_cross_os}iptables
 # Replace upstream's version.go to support build-time values from ldflags. This
 # avoids maintenance of patches that use always changing version-control tokens
 # in its replacement.
-cp %{S:9} "agent/version/version.go"
+cp %{S:109} "agent/version/version.go"
 
 %build
 # Build the agent
@@ -84,11 +84,11 @@ go build -a \
   mkdir -p image/rootfs
   %tar_cf image/rootfs/layer.tar -C rootfs .
   DIGEST=$(sha256sum image/rootfs/layer.tar | sed -e 's/ .*//')
-  install -m 0644 %{S:5} image/rootfs/VERSION
-  install -m 0644 %{S:6} image/config.json
+  install -m 0644 %{S:105} image/rootfs/VERSION
+  install -m 0644 %{S:106} image/config.json
   sed -i "s/~~digest~~/${DIGEST}/" image/config.json
-  install -m 0644 %{S:7} image/manifest.json
-  install -m 0644 %{S:8} image/repositories
+  install -m 0644 %{S:107} image/manifest.json
+  install -m 0644 %{S:108} image/repositories
   %tar_cf ../../amazon-ecs-pause.tar -C image .
 )
 
@@ -96,10 +96,10 @@ go build -a \
 install -D -p -m 0755 amazon-ecs-agent %{buildroot}%{_cross_bindir}/amazon-ecs-agent
 install -D -p -m 0644 amazon-ecs-pause.tar %{buildroot}%{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
 
-install -D -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/ecs.service
-install -D -p -m 0644 %{S:2} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
-install -D -p -m 0644 %{S:3} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
-install -D -p -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/ecs.config
+install -D -p -m 0644 %{S:101} %{buildroot}%{_cross_unitdir}/ecs.service
+install -D -p -m 0644 %{S:102} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
+install -D -p -m 0644 %{S:103} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
+install -D -p -m 0644 %{S:104} %{buildroot}%{_cross_templatedir}/ecs.config
 
 %cross_scan_attribution go-vendor agent/vendor
 
