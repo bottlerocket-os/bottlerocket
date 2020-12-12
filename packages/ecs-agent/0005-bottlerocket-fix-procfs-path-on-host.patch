@@ -1,0 +1,31 @@
+From 946f81a14b25d538abc57183a1f45aacea2daffa Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Fri, 26 Mar 2021 17:48:28 -0700
+Subject: [PATCH 5/5] bottlerocket: fix procfs path on host
+
+Bottlerocket runs the ECS agent directly on the host rather than in a
+container.  In other environments, the ECS agent runs in a container
+with `/host` mounted as the host's root filesystem and can read the
+host's `procfs` at `/host/proc`.  Because Bottlerocket does not run the
+ECS agent in a container, the ECS agent can directly read the host's
+`procfs` at `/proc`.
+---
+ agent/ecscni/types.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/agent/ecscni/types.go b/agent/ecscni/types.go
+index 8561eb51b..957aa3877 100644
+--- a/agent/ecscni/types.go
++++ b/agent/ecscni/types.go
+@@ -38,7 +38,7 @@ const (
+ 	ecsSubnet = "169.254.172.0/22"
+ 
+ 	// NetnsFormat is used to construct the path to cotainer network namespace
+-	NetnsFormat = "/host/proc/%s/ns/net"
++	NetnsFormat = "/proc/%s/ns/net"
+ 	// ECSIPAMPluginName is the binary of the ipam plugin
+ 	ECSIPAMPluginName = "ecs-ipam"
+ 	// ECSBridgePluginName is the binary of the bridge plugin
+-- 
+2.31.0
+

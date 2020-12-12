@@ -1,10 +1,15 @@
-%global goproject github.com/aws
-%global gorepo amazon-ecs-agent
-%global goimport %{goproject}/%{gorepo}
+%global agent_goproject github.com/aws
+%global agent_gorepo amazon-ecs-agent
+%global agent_goimport %{agent_goproject}/%{agent_gorepo}
 
-%global gover 1.51.0
+%global agent_gover 1.51.0
 # git rev-parse --short=8
-%global gitrev 5c821610
+%global agent_gitrev 5c821610
+
+%global ecscni_goproject github.com/aws
+%global ecscni_gorepo amazon-ecs-cni-plugins
+%global ecscni_goimport %{ecscni_goproject}/%{ecscni_gorepo}
+%global ecscni_gitrev 55b2ae77ee0bf22321b14f2d4ebbcc04f77322e1
 
 # Construct reproducible tar archives
 # See https://reproducible-builds.org/docs/archives/
@@ -12,12 +17,13 @@
 %global tar_cf tar --sort=name --mtime="@%{source_date_epoch}" --owner=0 --group=0 --numeric-owner -cf
 
 Name: %{_cross_os}ecs-agent
-Version: %{gover}
+Version: %{agent_gover}
 Release: 1%{?dist}
 Summary: Amazon Elastic Container Service agent
 License: Apache-2.0
-URL: https://%{goimport}
-Source0: https://%{goimport}/archive/v%{gover}/amazon-ecs-agent-v%{gover}.tar.gz
+URL: https://%{agent_goimport}
+Source0: https://%{agent_goimport}/archive/v%{agent_gover}/%{agent_gorepo}-v%{agent_gover}.tar.gz
+Source1: https://%{ecscni_goimport}/archive/%{ecscni_gitrev}/%{ecscni_gorepo}.tar.gz
 Source101: ecs.service
 Source102: ecs-tmpfiles.conf
 Source103: ecs-sysctl.conf
@@ -29,6 +35,12 @@ Source108: pause-repositories
 # Bottlerocket-specific - version data can be set with linker options
 Source109: version.go
 
+# Patches are numbered according to which source they apply to
+# Patches 0000 - 0999 apply to Source0
+# Patches 1000 - 1999 apply to Source1
+# Patches 2000 - 2999 apply to Source2
+# See the %prep section for the implementation of this logic
+
 # Bottlerocket-specific - filesystem location of the pause image
 Patch0001: 0001-bottlerocket-default-filesystem-locations.patch
 
@@ -39,6 +51,15 @@ Patch0002: 0002-bottlerocket-remove-unsupported-capabilities.patch
 # https://github.com/aws/amazon-ecs-agent/pull/2588
 Patch0003: 0003-bottlerocket-bind-introspection-to-localhost.patch
 
+# Bottlerocket-specific - remove unsupported CNI plugins
+Patch0004: 0004-bottlerocket-remove-unsupported-CNI-plugins.patch
+
+# Bottlerocket-specific - fix procfs path for non-containerized ECS agent
+Patch0005: 0005-bottlerocket-fix-procfs-path-on-host.patch
+
+# Bottlerocket-specific - filesystem location for ECS CNI plugins
+Patch1001: 1001-bottlerocket-default-filesystem-locations.patch
+
 BuildRequires: %{_cross_os}glibc-devel
 
 Requires: %{_cross_os}docker-engine
@@ -48,23 +69,70 @@ Requires: %{_cross_os}iptables
 %{summary}.
 
 %prep
-%autosetup -Sgit -n %{gorepo}-%{gover} -p1
-%cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
+# After prep runs, the directory setup looks like this:
+# %{_builddir} [root]
+# └── %{name}-%{version} [created by setup]
+#     ├── amazon-ecs-agent-%{agent_gover} [top level of Source0]
+#     │   └── [unpacked sources]
+#     ├── amazon-ecs-cni-plugins-%{ecscni_gitrev} [top level of Source1]
+#     │   └── [unpacked sources]
+#     └── GOPATH
+#         └── src/github.com/aws
+#             ├── amazon-ecs-agent [symlink]
+#             └── amazon-ecs-cni-plugins [symlink]
 
+# Extract Source0, which has a top-level directory of
+# %{agent_gorepo}-%{agent_gover}
+# -c: Create directory (%{name}-%{version})
+# -q: Unpack quietly
+%setup -c -q
+# Change to the directory that we unpacked
+cd %{agent_gorepo}-%{agent_gover}
+# Set up git so we can apply patches
+# This is included in autosetup, but not autopatch
+%global __scm git
+%__scm_setup_git
+# Apply patches up to 0999
+%autopatch -M 0999
 # Replace upstream's version.go to support build-time values from ldflags. This
 # avoids maintenance of patches that use always changing version-control tokens
 # in its replacement.
 cp %{S:109} "agent/version/version.go"
 
+# Extract Source1, which has a top-level directory of
+# %{ecscni_gorepo}-%{ecscni_gitrev}
+# -T: Do not perform default archive unpack (i.e., skip Source0)
+# -D: Do not delete directory before unpacking sources (i.e., don't delete
+#     unpacked Source0)
+# -a: Unpack after changing into the directory
+# -q: Unpack quietly
+# See http://ftp.rpm.org/max-rpm/s1-rpm-inside-macros.html
+%setup -T -D -a 1 -q
+# Change to the directory that we unpacked
+cd %{ecscni_gorepo}-%{ecscni_gitrev}
+# Set up git so we can apply patches
+# This is included in autosetup, but not autopatch
+%__scm_setup_git
+# Apply patches from 1000 to 1999
+%autopatch -m 1000 -M 1999
+
+cd ../
+# Symlink amazon-ecs-agent-%{agent_gover} to the GOPATH location
+%cross_go_setup %{name}-%{version}/%{agent_gorepo}-%{agent_gover} %{agent_goproject} %{agent_goimport}
+# Symlink amazon-ecs-cni-plugins-%{ecscni_gitrev} to the GOPATH location
+%cross_go_setup %{name}-%{version}/%{ecscni_gorepo}-%{ecscni_gitrev} %{ecscni_goproject} %{ecscni_goimport}
+
 %build
+BUILD_TOP=$(pwd -P)
 # Build the agent
-%cross_go_configure %{goimport}
+# cross_go_configure cd's to the correct GOPATH location
+%cross_go_configure %{agent_goimport}
 PAUSE_CONTAINER_IMAGE_NAME="amazon/amazon-ecs-pause"
 PAUSE_CONTAINER_IMAGE_TAG="bottlerocket"
 LD_PAUSE_CONTAINER_NAME="-X github.com/aws/amazon-ecs-agent/agent/config.DefaultPauseContainerImageName=${PAUSE_CONTAINER_IMAGE_NAME}"
 LD_PAUSE_CONTAINER_TAG="-X github.com/aws/amazon-ecs-agent/agent/config.DefaultPauseContainerTag=${PAUSE_CONTAINER_IMAGE_TAG}"
-LD_VERSION="-X github.com/aws/amazon-ecs-agent/agent/version.Version=%{gover}"
-LD_GIT_REV="-X github.com/aws/amazon-ecs-agent/agent/version.GitShortHash=%{gitrev}"
+LD_VERSION="-X github.com/aws/amazon-ecs-agent/agent/version.Version=%{agent_gover}"
+LD_GIT_REV="-X github.com/aws/amazon-ecs-agent/agent/version.GitShortHash=%{agent_gitrev}"
 go build -a \
   -buildmode=pie \
   -ldflags "-linkmode=external ${LD_PAUSE_CONTAINER_NAME} ${LD_PAUSE_CONTAINER_TAG} ${LD_VERSION} ${LD_GIT_REV}" \
@@ -92,22 +160,76 @@ go build -a \
   %tar_cf ../../amazon-ecs-pause.tar -C image .
 )
 
+cd "${BUILD_TOP}"
+
+# Build the ECS CNI plugins
+# cross_go_configure cd's to the correct GOPATH location
+%cross_go_configure %{ecscni_goimport}
+LD_ECS_CNI_VERSION="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.Version=$(cat VERSION)"
+ECS_CNI_HASH="%{ecscni_gitrev}"
+LD_ECS_CNI_SHORT_HASH="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.GitShortHash=${ECS_CNI_HASH::8}"
+LD_ECS_CNI_PORCELAIN="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.GitPorcelain=0"
+go build -a \
+  -buildmode=pie \
+  -ldflags "-linkmode=external ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
+  -o ecs-eni \
+  ./plugins/eni
+go build -a \
+  -buildmode=pie \
+  -ldflags "-linkmode=external ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
+  -o ecs-ipam \
+  ./plugins/ipam
+go build -a \
+  -buildmode=pie \
+  -ldflags "-linkmode=external ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
+  -o ecs-bridge \
+  ./plugins/ecs-bridge
+
 %install
-install -D -p -m 0755 amazon-ecs-agent %{buildroot}%{_cross_bindir}/amazon-ecs-agent
-install -D -p -m 0644 amazon-ecs-pause.tar %{buildroot}%{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
+install -D -p -m 0755 %{agent_gorepo}-%{agent_gover}/amazon-ecs-agent %{buildroot}%{_cross_bindir}/amazon-ecs-agent
+install -D -p -m 0644 %{agent_gorepo}-%{agent_gover}/amazon-ecs-pause.tar %{buildroot}%{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
+install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-bridge %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-bridge
+install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-eni
+install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-ipam %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 
 install -D -p -m 0644 %{S:101} %{buildroot}%{_cross_unitdir}/ecs.service
 install -D -p -m 0644 %{S:102} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
 install -D -p -m 0644 %{S:103} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
 install -D -p -m 0644 %{S:104} %{buildroot}%{_cross_templatedir}/ecs.config
 
-%cross_scan_attribution go-vendor agent/vendor
+# Prepare license and vendor information so it can be co-installable
+mv %{ecscni_gorepo}-%{ecscni_gitrev}/LICENSE %{ecscni_gorepo}-%{ecscni_gitrev}/LICENSE.%{ecscni_gorepo}
+# Move vendor folder into a single directory so cross_scan_attribution can run once
+mkdir go-vendor
+mv %{agent_gorepo}-%{agent_gover}/agent/vendor go-vendor/%{agent_gorepo}
+mv %{ecscni_gorepo}-%{ecscni_gitrev}/vendor go-vendor/%{ecscni_gorepo}
+%cross_scan_attribution go-vendor go-vendor
 
 %files
+# License and attribution files are installed into /usr/share/licenses with a
+# directory structure as follows:
+# /usr/share/licenses/ecs-agent/
+# ├── attribution.txt
+# ├── LICENSE
+# ├── LICENSE.amazon-ecs-cni-plugins
+# ├── NOTICE
+# ├── THIRD-PARTY
+# └── vendor
+#     ├── amazon-ecs-agent
+#     │ └── ...
+#     └── amazon-ecs-cni-plugins
+#       └── ...
 %{_cross_attribution_file}
 %{_cross_attribution_vendor_dir}
-%license LICENSE NOTICE THIRD-PARTY
+%license %{agent_gorepo}-%{agent_gover}/LICENSE
+%license %{agent_gorepo}-%{agent_gover}/NOTICE
+%license %{agent_gorepo}-%{agent_gover}/THIRD-PARTY
+%license %{ecscni_gorepo}-%{ecscni_gitrev}/LICENSE.%{ecscni_gorepo}
+
 %{_cross_bindir}/amazon-ecs-agent
+%{_cross_libexecdir}/amazon-ecs-agent/ecs-bridge
+%{_cross_libexecdir}/amazon-ecs-agent/ecs-eni
+%{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 %{_cross_unitdir}/ecs.service
 %{_cross_tmpfilesdir}/ecs.conf
 %{_cross_sysctldir}/90-ecs.conf

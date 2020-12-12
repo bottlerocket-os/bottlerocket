@@ -15,7 +15,7 @@ work items for the ECS agent.
   are both currently unsupported.
   * The log path of CNI plugins - currently all of them are defaulting to the
     container path of the log directory bind mount, e.g.
-    https://github.com/aws/amazon-ecs-cni-plugins/blob/0c6216c60401232805e50e31d4040ae84b0b23cf/plugins/eni/main.go#L32
+    https://github.com/aws/amazon-ecs-cni-plugins/blob/55b2ae77ee0bf22321b14f2d4ebbcc04f77322e1/plugins/eni/main.go#L32
     https://github.com/aws/amazon-ecs-agent/blob/master/agent/ecscni/plugin.go?rgh-link-date=2020-07-25T00%3A20%3A16Z#L39
   * The path to the process's network namespace handle is currently hardcoded
     to the container path of the procfs bind mount

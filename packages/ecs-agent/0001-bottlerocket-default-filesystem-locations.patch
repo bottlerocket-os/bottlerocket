@@ -27,7 +27,7 @@ index c17b271a..a3993550 100644
  
  	// defaultCNIPluginsPath is the default path where cni binaries are located
 -	defaultCNIPluginsPath = "/amazon-ecs-cni-plugins"
-+	defaultCNIPluginsPath = "/usr/lib/amazon-ecs-agent/cni-plugins"
++	defaultCNIPluginsPath = "/usr/libexec/amazon-ecs-agent"
  
  	// DefaultMinSupportedCNIVersion denotes the minimum version of cni spec required
  	DefaultMinSupportedCNIVersion = "0.3.0"
