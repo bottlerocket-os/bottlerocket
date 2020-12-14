@@ -20,7 +20,6 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	"github.com/opencontainers/runc/libcontainer/cgroups"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -201,13 +200,6 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 
 	// If the container doesn't already exist, create it
 	if container == nil {
-		// Get the cgroup path of the systemd service
-		cgroupPath, err := cgroups.GetOwnCgroup("name=systemd")
-		if err != nil {
-			log.G(ctx).WithError(err).Error("failed to discover systemd cgroup path")
-			return err
-		}
-
 		// Set up the container spec. See `withSuperpowered` for conditional options
 		// set when configured as superpowered.
 		ctrOpts := containerd.WithNewSpec(
@@ -215,8 +207,6 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 			oci.WithHostNamespace(runtimespec.NetworkNamespace),
 			oci.WithHostHostsFile,
 			oci.WithHostResolvconf,
-			// Launch the container under the systemd unit's cgroup
-			oci.WithCgroup(cgroupPath),
 			// Mount in the API socket for the Bottlerocket API server, and the API
 			// client used to interact with it
 			oci.WithMounts([]runtimespec.Mount{
