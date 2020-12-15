@@ -14,7 +14,7 @@ require (
 	github.com/containerd/ttrpc v1.0.2 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/opencontainers/runc v1.0.0-rc8
+	github.com/opencontainers/runc v1.0.0-rc8 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2
 	github.com/opencontainers/selinux v1.6.0
 	github.com/pkg/errors v0.9.1
