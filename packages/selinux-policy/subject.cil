@@ -8,6 +8,11 @@
 (roletype system_r kernel_t)
 (context kernel (system_u system_r kernel_t s0))
 
+; Unused ISIDs.
+(type unused_t)
+(roletype system_r unused_t)
+(context unused (system_u system_r unused_t s0))
+
 ; PID 1.
 (type init_t)
 (roletype system_r init_t)
@@ -67,7 +72,7 @@
 
 ; Subjects that are treated as a trusted part of the OS.
 (typeattribute trusted_s)
-(typeattributeset trusted_s (not (untrusted_s)))
+(typeattributeset trusted_s (xor (all_s) (untrusted_s)))
 
 ; Subjects that are part of the OS, but confined through policy.
 (typeattribute confined_s)
@@ -75,7 +80,7 @@
 
 ; Subjects that are not confined by policy.
 (typeattribute unconfined_s)
-(typeattributeset unconfined_s (not (confined_s)))
+(typeattributeset unconfined_s (xor (all_s) (confined_s)))
 
 ; Subjects that are not part of the OS.
 (typeattribute other_s)
@@ -91,7 +96,7 @@
 
 ; Subjects that are shipped with the OS.
 (typeattribute host_s)
-(typeattributeset host_s (not container_s))
+(typeattributeset host_s (xor (all_s) (container_s)))
 
 ; Subjects that are allowed to manage the API datastore.
 (typeattribute api_s)
