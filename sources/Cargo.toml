@@ -32,6 +32,7 @@ members = [
     "api/migration/migrations/v1.0.3/add-sysctl",
     "api/migration/migrations/v1.0.5/add-lockdown",
     "api/migration/migrations/v1.0.5/sysctl-subcommand",
+    "api/migration/migrations/v1.0.5/add-user-data",
 
     "bottlerocket-release",
 

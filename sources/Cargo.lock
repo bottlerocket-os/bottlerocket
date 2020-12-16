@@ -288,6 +288,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-user-data"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-version-lock-ignore-waves"
 version = "0.1.0"
 dependencies = [
@@ -1256,6 +1263,7 @@ name = "host-containers"
 version = "0.1.0"
 dependencies = [
  "apiclient",
+ "base64 0.13.0",
  "cargo-readme",
  "http",
  "log",

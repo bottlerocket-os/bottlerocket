@@ -378,6 +378,9 @@ These settings can be changed at any time.
 Beyond just changing the settings above to affect the `admin` and `control` containers, you can add and remove host containers entirely.
 As long as you define the three fields above -- `source` with a URI, and `enabled` and `superpowered` with true/false -- you can add host containers with an API call or user data.
 
+You can optionally define a `user-data` field with arbitrary base64-encoded data, which will be made available in the container at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME/user-data`.
+(It was inspired by instance user data, but is entirely separate; it can be any data your host container feels like interpreting.)
+
 Here's an example of adding a custom host container with API calls:
 ```
 apiclient -u /settings -X PATCH -d '{"host-containers": {"custom": {"source": "MY-CONTAINER-URI", "enabled": true, "superpowered": false}}}'
