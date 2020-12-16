@@ -2,9 +2,9 @@
 %global gorepo amazon-ecs-agent
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.47.0
+%global gover 1.48.1
 # git rev-parse --short=8
-%global gitrev 1489adfa
+%global gitrev e9b600d2
 
 # Construct reproducible tar archives
 # See https://reproducible-builds.org/docs/archives/
@@ -74,11 +74,13 @@ go build -a \
 # Build the pause container
 (
   set -x
-  cd misc/pause-container/buildPause
-  mkdir -p rootfs/usr/bin
-  make BIN=rootfs/usr/bin/pause GCC=%{_cross_triple}-musl-gcc CFLAGS="%{_cross_cflags} -static"
+  cd misc/pause-container/
 
-  # Construct image
+  # Build static pause executable for container image.
+  mkdir -p rootfs/usr/bin
+  %{_cross_triple}-musl-gcc ${_cross_cflags} -static pause.c -o rootfs/usr/bin/pause
+
+  # Construct container image.
   mkdir -p image/rootfs
   %tar_cf image/rootfs/layer.tar -C rootfs .
   DIGEST=$(sha256sum image/rootfs/layer.tar | sed -e 's/ .*//')
@@ -87,7 +89,7 @@ go build -a \
   sed -i "s/~~digest~~/${DIGEST}/" image/config.json
   install -m 0644 %{S:7} image/manifest.json
   install -m 0644 %{S:8} image/repositories
-  %tar_cf ../../../amazon-ecs-pause.tar -C image .
+  %tar_cf ../../amazon-ecs-pause.tar -C image .
 )
 
 %install
