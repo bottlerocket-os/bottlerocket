@@ -26,19 +26,18 @@ Source5: pause-image-VERSION
 Source6: pause-config.json
 Source7: pause-manifest.json
 Source8: pause-repositories
+# Bottlerocket-specific - version data can be set with linker options
+Source9: version.go
 
 # Bottlerocket-specific - filesystem location of the pause image
 Patch0001: 0001-bottlerocket-default-filesystem-locations.patch
 
-# Bottlerocket-specific - version data can be set with linker options
-Patch0002: 0002-bottlerocket-version-values-settable-with-linker.patch
-
 # Bottlerocket-specific - remove unsupported capabilities
-Patch0003: 0003-bottlerocket-remove-unsupported-capabilities.patch
+Patch0002: 0002-bottlerocket-remove-unsupported-capabilities.patch
 
 # bind introspection to localhost
 # https://github.com/aws/amazon-ecs-agent/pull/2588
-Patch0004: 0004-bottlerocket-bind-introspection-to-localhost.patch 
+Patch0003: 0003-bottlerocket-bind-introspection-to-localhost.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 
@@ -51,6 +50,11 @@ Requires: %{_cross_os}iptables
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
 %cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
+
+# Replace upstream's version.go to support build-time values from ldflags. This
+# avoids maintenance of patches that use always changing version-control tokens
+# in its replacement.
+cp %{S:9} "agent/version/version.go"
 
 %build
 # Build the agent
