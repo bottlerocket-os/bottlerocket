@@ -4,6 +4,7 @@
 
 %global gover 1.3.7
 %global rpmver %{gover}
+%global gitrev 8fba4e9a7d01810a393d5d25a3621dc101981175
 
 %global _dwz_low_mem_die_limit 0
 
@@ -65,6 +66,8 @@ Requires: %{_cross_os}systemd
 %build
 %cross_go_configure %{goimport}
 export BUILDTAGS="no_btrfs seccomp selinux"
+export LD_VERSION="-X github.com/containerd/containerd/version.Version=%{gover}+bottlerocket"
+export LD_REVISION="-X github.com/containerd/containerd/version.Revision=%{gitrev}"
 for bin in \
   containerd \
   containerd-shim \
@@ -72,7 +75,12 @@ for bin in \
   containerd-shim-runc-v2 \
   ctr ;
 do
-  go build -buildmode=pie -ldflags=-linkmode=external -tags="${BUILDTAGS}" -o ${bin} %{goimport}/cmd/${bin}
+  go build \
+     -buildmode=pie \
+     -ldflags="-linkmode=external ${LD_VERSION} ${LD_REVISION}" \
+     -tags="${BUILDTAGS}" \
+     -o ${bin} \
+     %{goimport}/cmd/${bin}
 done
 
 %install
