@@ -6,7 +6,7 @@ use snafu::ResultExt;
 use std::collections::HashMap;
 
 use crate::{error, MigrationData, Result};
-use apiserver::datastore::{
+use datastore::{
     deserialize_scalar, serialization::to_pairs_with_prefix, serialize_scalar, Committed,
     DataStore, Key, KeyType,
 };
@@ -22,7 +22,9 @@ pub(crate) fn get_input_data<D: DataStore>(
 ) -> Result<MigrationData> {
     let raw_data = datastore
         .get_prefix("", committed)
-        .with_context(|| error::GetData { committed: committed.clone() })?;
+        .with_context(|| error::GetData {
+            committed: committed.clone(),
+        })?;
 
     let mut data = HashMap::new();
     for (data_key, value_str) in raw_data.into_iter() {

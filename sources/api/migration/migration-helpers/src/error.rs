@@ -2,16 +2,12 @@
 
 use snafu::Snafu;
 
-use apiserver::datastore;
-
 /// Error contains the errors that can happen in the migration helper functions and in migrations.
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
 pub enum Error {
     #[snafu(display("Unable to get system release data: {}", source))]
-    BottlerocketRelease {
-        source: bottlerocket_release::Error,
-    },
+    BottlerocketRelease { source: bottlerocket_release::Error },
 
     #[snafu(display("Unable to get {:?} data for migration: {}", committed, source))]
     GetData {
@@ -32,7 +28,9 @@ pub enum Error {
     Serialize { source: datastore::ScalarError },
 
     #[snafu(display("Unable to serialize release data: {}", source))]
-    SerializeRelease { source: datastore::serialization::Error },
+    SerializeRelease {
+        source: datastore::serialization::Error,
+    },
 
     #[snafu(display("Unable to write to data store: {}", source))]
     DataStoreWrite { source: datastore::Error },
@@ -78,13 +76,11 @@ pub enum Error {
 
     #[snafu(display("Unable to deserialize datastore data: {}", source))]
     DeserializeDatastore {
-        source: apiserver::datastore::deserialization::Error,
+        source: datastore::deserialization::Error,
     },
 
     #[snafu(display("Unable to create new key: {}", source))]
-    NewKey {
-        source: apiserver::datastore::error::Error,
-    },
+    NewKey { source: datastore::error::Error },
 
     #[snafu(display("Setting '{}' contains non-string item: {:?}", setting, data))]
     ReplaceListContents {

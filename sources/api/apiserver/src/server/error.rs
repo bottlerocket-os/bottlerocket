@@ -1,4 +1,4 @@
-use crate::datastore::{self, deserialization, serialization};
+use datastore::{self, deserialization, serialization};
 use nix::unistd::Gid;
 use snafu::Snafu;
 use std::io;
@@ -55,9 +55,7 @@ pub enum Error {
     CommitWithNoPending,
 
     #[snafu(display("Unable to get OS release data: {}", source))]
-    ReleaseData {
-        source: bottlerocket_release::Error,
-    },
+    ReleaseData { source: bottlerocket_release::Error },
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 

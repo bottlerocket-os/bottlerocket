@@ -8,13 +8,11 @@ use std::collections::{HashMap, HashSet};
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use crate::datastore::deserialization::{from_map, from_map_with_prefix};
-use crate::datastore::serialization::to_pairs;
-use crate::datastore::{
-    deserialize_scalar, Committed, DataStore, Key, KeyType, ScalarError, Value,
-};
 use crate::server::error::{self, Result};
 use actix_web::HttpResponse;
+use datastore::deserialization::{from_map, from_map_with_prefix};
+use datastore::serialization::to_pairs;
+use datastore::{deserialize_scalar, Committed, DataStore, Key, KeyType, ScalarError, Value};
 use model::{ConfigurationFiles, Services, Settings};
 use num::FromPrimitive;
 use std::os::unix::process::ExitStatusExt;
@@ -385,7 +383,7 @@ pub(crate) fn dispatch_update_command(args: &[&str]) -> Result<HttpResponse> {
         .status()
         .context(error::UpdateDispatcher)?;
     if status.success() {
-        return Ok(HttpResponse::NoContent().finish())
+        return Ok(HttpResponse::NoContent().finish());
     }
     let exit_status = match status.code() {
         Some(code) => code,
@@ -406,8 +404,8 @@ pub(crate) fn dispatch_update_command(args: &[&str]) -> Result<HttpResponse> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::datastore::memory::MemoryDataStore;
-    use crate::datastore::{Committed, DataStore, Key, KeyType};
+    use datastore::memory::MemoryDataStore;
+    use datastore::{Committed, DataStore, Key, KeyType};
     use maplit::{hashmap, hashset};
     use model::Service;
     use std::convert::TryInto;

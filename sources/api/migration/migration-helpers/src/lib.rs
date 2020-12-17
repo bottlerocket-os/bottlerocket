@@ -13,7 +13,7 @@
 
 mod args;
 pub mod common_migrations;
-mod datastore;
+mod datastore_helper;
 pub mod error;
 
 use snafu::ResultExt;
@@ -21,11 +21,11 @@ use std::collections::HashMap;
 use std::env;
 use std::fmt;
 
-use apiserver::datastore::{Committed, Value};
-pub use apiserver::datastore::{DataStore, FilesystemDataStore};
+use datastore::{Committed, Value};
+pub use datastore::{DataStore, FilesystemDataStore};
 
 use args::{parse_args, Args};
-use datastore::{get_input_data, set_output_data};
+use datastore_helper::{get_input_data, set_output_data};
 pub use error::Result;
 
 /// The data store implementation currently in use.  Used by the simpler `migrate` interface; can
@@ -92,7 +92,9 @@ pub fn run_migration(mut migration: impl Migration, args: &Args) -> Result<()> {
 
     // Run for live data and for each pending transaction
     let mut committeds = vec![Committed::Live];
-    let transactions = source.list_transactions().context(error::ListTransactions)?;
+    let transactions = source
+        .list_transactions()
+        .context(error::ListTransactions)?;
     committeds.extend(transactions.into_iter().map(|tx| Committed::Pending { tx }));
 
     for committed in committeds {

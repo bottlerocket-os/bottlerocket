@@ -356,6 +356,7 @@ dependencies = [
  "actix-web",
  "bottlerocket-release",
  "cargo-readme",
+ "datastore",
  "fs2",
  "futures",
  "http",
@@ -783,6 +784,22 @@ dependencies = [
  "darling_core",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "datastore"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+ "libc",
+ "log",
+ "maplit",
+ "percent-encoding",
+ "serde",
+ "serde_json",
+ "snafu",
+ "toml",
+ "walkdir",
 ]
 
 [[package]]
@@ -1622,8 +1639,8 @@ dependencies = [
 name = "migration-helpers"
 version = "0.1.0"
 dependencies = [
- "apiserver",
  "bottlerocket-release",
+ "datastore",
  "handlebars",
  "maplit",
  "schnauzer",
@@ -2495,8 +2512,8 @@ name = "servicedog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "apiserver",
  "cargo-readme",
+ "datastore",
  "http",
  "log",
  "models",
@@ -2716,9 +2733,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 name = "storewolf"
 version = "0.1.0"
 dependencies = [
- "apiserver",
  "bottlerocket-release",
  "cargo-readme",
+ "datastore",
  "log",
  "models",
  "rand",
@@ -2769,8 +2786,8 @@ name = "sundog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "apiserver",
  "cargo-readme",
+ "datastore",
  "http",
  "log",
  "models",

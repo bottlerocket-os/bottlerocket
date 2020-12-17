@@ -1,7 +1,7 @@
 use serde::de;
 use snafu::{IntoError, NoneError as NoSource, Snafu};
 
-use crate::datastore::{Error as DataStoreError, ScalarError};
+use crate::{Error as DataStoreError, ScalarError};
 
 /// Potential errors from deserialization.
 #[derive(Debug, Snafu)]

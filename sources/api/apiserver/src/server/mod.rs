@@ -5,11 +5,11 @@ mod controller;
 mod error;
 pub use error::Error;
 
-use crate::datastore::{Committed, FilesystemDataStore, Key, Value};
 use actix_web::{
     error::ResponseError, web, App, FromRequest, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use bottlerocket_release::BottlerocketRelease;
+use datastore::{Committed, FilesystemDataStore, Key, Value};
 use error::Result;
 use fs2::FileExt;
 use futures::future;
@@ -76,16 +76,15 @@ where
             // ResponseError implementation.  This configuration of the Json extractor allows us to
             // add the error message into the response.
             .app_data(web::Json::<Settings>::configure(|cfg| {
-                cfg.error_handler(|err, _req| HttpResponse::BadRequest().body(err.to_string()).into())
+                cfg.error_handler(|err, _req| {
+                    HttpResponse::BadRequest().body(err.to_string()).into()
+                })
             }))
-
             // This makes the data store available to API methods merely by having a Data
             // parameter.
             .app_data(shared_datastore.clone())
-
             // Retrieve the full API model; not all data is writable, so we only support GET.
             .route("/", web::get().to(get_model))
-
             .service(
                 web::scope("/settings")
                     .route("", web::get().to(get_settings))
@@ -161,7 +160,12 @@ async fn get_model(data: web::Data<SharedDataStore>) -> Result<ModelResponse> {
     let configuration_files = Some(controller::get_configuration_files(&*datastore)?);
     let os = Some(controller::get_os_info()?);
 
-    let model = Model {settings, services, configuration_files, os};
+    let model = Model {
+        settings,
+        services,
+        configuration_files,
+        os,
+    };
     Ok(ModelResponse(model))
 }
 
