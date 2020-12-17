@@ -10,8 +10,8 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-apiserver = { path = "../apiserver" }
 bottlerocket-release = { path = "../../bottlerocket-release" }
+datastore = { path = "../datastore" }
 log = "0.4"
 models = { path = "../../models" }
 rand = { version = "0.7", default-features = false, features = ["std"] }

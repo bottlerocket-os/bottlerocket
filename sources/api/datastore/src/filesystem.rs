@@ -4,6 +4,7 @@
 //! Data is kept in files with paths resembling the keys, e.g. a/b/c for a.b.c, and metadata is
 //! kept in a suffixed file next to the data, e.g. a/b/c.meta for metadata "meta" about a.b.c
 
+use log::{debug, error, trace};
 use percent_encoding::{percent_decode_str, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};

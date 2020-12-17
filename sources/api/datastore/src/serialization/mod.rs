@@ -7,10 +7,11 @@ mod pairs;
 pub use error::{Error, Result};
 pub use pairs::{to_pairs, to_pairs_with_prefix};
 
+use log::{debug, trace};
 use serde::{ser, Serialize};
 use snafu::{IntoError, NoneError as NoSource};
 
-use crate::datastore::{Key, KeyType};
+use crate::{Key, KeyType};
 
 // Below are serializers not specific to the pairs module that could be used for other serializers.
 // For example, a 'keys' serializer that just returns a set of keys, without associated data.

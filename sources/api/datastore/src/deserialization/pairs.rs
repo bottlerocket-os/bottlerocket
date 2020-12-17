@@ -31,6 +31,7 @@
 //! the field to our "path" string.  In the example above, when we're looking at field "c", path
 //! would be "a.b", so we know we should look for "a.b.c" in our input mapping.
 
+use log::{error, trace};
 use serde::de::{value::MapDeserializer, IntoDeserializer, Visitor};
 use serde::{forward_to_deserialize_any, Deserialize};
 use snafu::ResultExt;
@@ -39,7 +40,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
 
 use super::{error, Error, Result};
-use crate::datastore::{deserializer_for_scalar, Key, KeyType, ScalarDeserializer};
+use crate::{deserializer_for_scalar, Key, KeyType, ScalarDeserializer};
 
 /// This is the primary interface to deserialization.  We turn the input map into the requested
 /// output type, assuming all non-Option fields are provided, etc.
@@ -408,7 +409,7 @@ where
 #[cfg(test)]
 mod test {
     use super::{from_map, from_map_with_prefix};
-    use crate::datastore::{deserialization::Error, Key, KeyType};
+    use crate::{deserialization::Error, Key, KeyType};
 
     use maplit::hashmap;
     use serde::Deserialize;

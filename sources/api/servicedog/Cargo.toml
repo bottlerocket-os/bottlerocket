@@ -11,7 +11,7 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient" }
-apiserver = { path = "../apiserver" }
+datastore = { path = "../datastore" }
 http = "0.2"
 log = "0.4"
 models = { path = "../../models" }

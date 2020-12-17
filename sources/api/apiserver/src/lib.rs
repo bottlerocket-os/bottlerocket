@@ -52,18 +52,13 @@ The current data store implementation maps keys to filesystem paths and stores t
 Metadata about a data key is stored in a file at the data key path + "." + the metadata key.
 The default data store location is `/var/lib/bottlerocket/datastore/current`, and the filesystem format makes it fairly easy to inspect.
 
-## Serialization and deserialization
-
-The `datastore::serialization` module provides code to serialize Rust types into a mapping of datastore-acceptable keys (a.b.c) and values.
-
-The `datastore::deserialization` module provides code to deserialize datastore-acceptable keys (a.b.c) and values into Rust types.
+For more detail, see [datastore](../datastore).
 
 # Current limitations
 
 * Data store locking is coarse; read requests can happen in parallel, but a write request will block everything else.
 * There's no support for rolling back commits.
 * There are no metrics.
-* `datastore::serialization` can't handle complex types under lists; it assumes lists can be serialized as scalars.
 
 # Example usage
 
@@ -79,7 +74,6 @@ See `../../apiclient/README.md` for client examples.
 #[macro_use]
 extern crate log;
 
-pub mod datastore;
 pub mod server;
 
 pub use server::serve;

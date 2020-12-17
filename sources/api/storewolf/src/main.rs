@@ -22,9 +22,9 @@ use std::str::FromStr;
 use std::{env, fs, process};
 use toml::{map::Entry, Value};
 
-use apiserver::datastore::key::{Key, KeyType};
-use apiserver::datastore::serialization::{to_pairs, to_pairs_with_prefix};
-use apiserver::datastore::{self, DataStore, FilesystemDataStore, ScalarError};
+use datastore::key::{Key, KeyType};
+use datastore::serialization::{to_pairs, to_pairs_with_prefix};
+use datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use model::modeled_types::SingleLineString;
 
 // FIXME Get these from configuration in the future
@@ -35,8 +35,8 @@ mod error {
     use std::io;
     use std::path::PathBuf;
 
-    use apiserver::datastore::key::KeyType;
-    use apiserver::datastore::{self, serialization, ScalarError};
+    use datastore::key::KeyType;
+    use datastore::{self, serialization, ScalarError};
     use model::modeled_types::error::Error as ModeledTypesError;
     use snafu::Snafu;
 

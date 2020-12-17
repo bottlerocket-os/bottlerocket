@@ -1,5 +1,6 @@
 // Note: this only allows reading and writing UTF-8 keys and values; is that OK?
 
+use log::trace;
 use serde::{Serialize, Serializer};
 use snafu::ensure;
 use std::fmt;

@@ -1,5 +1,4 @@
 use crate::{error, Metadata, Migration, MigrationData, Result};
-use apiserver::datastore;
 use serde::Serialize;
 use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
@@ -244,7 +243,10 @@ impl Migration for ReplaceStringMigration {
                             self.setting, self.old_val, self.new_val
                         );
                     } else {
-                        println!("'{}' is not set to '{}', leaving alone", self.setting, self.old_val);
+                        println!(
+                            "'{}' is not set to '{}', leaving alone",
+                            self.setting, self.old_val
+                        );
                     }
                 }
                 _ => {
@@ -271,7 +273,10 @@ impl Migration for ReplaceStringMigration {
                             self.setting, self.new_val, self.old_val
                         );
                     } else {
-                        println!("'{}' is not set to '{}', leaving alone", self.setting, self.new_val);
+                        println!(
+                            "'{}' is not set to '{}', leaving alone",
+                            self.setting, self.new_val
+                        );
                     }
                 }
                 _ => {
@@ -584,11 +589,8 @@ impl ReplaceTemplateMigration {
             .context(error::DeserializeDatastore)?;
         // Same for "os.*"
         let os_data: HashMap<String, serde_json::Value> =
-            datastore::deserialization::from_map_with_prefix(
-                Some("os".to_string()),
-                &datastore,
-            )
-            .context(error::DeserializeDatastore)?;
+            datastore::deserialization::from_map_with_prefix(Some("os".to_string()), &datastore)
+                .context(error::DeserializeDatastore)?;
 
         let mut structured_data = HashMap::new();
         structured_data.insert("settings", settings_data);

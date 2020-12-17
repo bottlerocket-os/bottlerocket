@@ -25,8 +25,8 @@ use std::ffi::OsStr;
 use std::process::{self, Command};
 use std::str::FromStr;
 
-use apiserver::datastore::serialization::to_pairs_with_prefix;
-use apiserver::datastore::{Key, KeyType};
+use datastore::serialization::to_pairs_with_prefix;
+use datastore::{Key, KeyType};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
@@ -39,7 +39,7 @@ mod error {
     use snafu::Snafu;
     use std::process::{Command, Output};
 
-    use apiserver::datastore::{self, serialization};
+    use datastore::{self, serialization};
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]

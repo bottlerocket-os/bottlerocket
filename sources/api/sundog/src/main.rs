@@ -20,8 +20,8 @@ use std::path::Path;
 use std::process;
 use std::str::{self, FromStr};
 
-use apiserver::datastore::serialization::to_pairs_with_prefix;
-use apiserver::datastore::{self, deserialization, Key, KeyType};
+use datastore::serialization::to_pairs_with_prefix;
+use datastore::{self, deserialization, Key, KeyType};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
@@ -35,7 +35,7 @@ mod error {
     use http::StatusCode;
     use snafu::Snafu;
 
-    use apiserver::datastore::{self, deserialization, serialization, KeyType};
+    use datastore::{self, deserialization, serialization, KeyType};
 
     /// Potential errors during dynamic settings retrieval
     #[derive(Debug, Snafu)]

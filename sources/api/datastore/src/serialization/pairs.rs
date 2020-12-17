@@ -1,18 +1,20 @@
-//! The goal of this module is to be able to turn the settings in 'model' into a form that can be
-//! easily written to our data store, key by key, since we will often receive arbitrary subsets of
-//! the valid keys.  We use serde to help walk through the structure, and use the Serializer's
-//! associated types to keep track of where we are in the tree of nested structures.
+//! The goal of this module is to be able to turn serializable structures, primarily the API model,
+//! into a form that can be easily written to our data store, key by key, since we will often
+//! receive arbitrary subsets of the valid keys.  We use serde to help walk through the structure,
+//! and use the Serializer's associated types to keep track of where we are in the tree of nested
+//! structures.
 
 //! The serialization pattern below could be used for other structures as well, but we're starting
-//! out by orienting it toward settings.  As such, data types are oriented around TOML/JSON types,
-//! to be sure we support the various forms of input/output we care about.
+//! out by orienting it toward the API model.  As such, data types are oriented around TOML/JSON
+//! types, to be sure we support the various forms of input/output we care about.
 
+use log::trace;
 use serde::{ser, Serialize};
 use snafu::{IntoError, NoneError as NoSource, OptionExt, ResultExt};
 use std::collections::HashMap;
 
 use super::{error, Error, MapKeySerializer, Result};
-use crate::datastore::{serialize_scalar, Key, KeyType, ScalarError};
+use crate::{serialize_scalar, Key, KeyType, ScalarError};
 
 /// This is the primary interface to our serialization.  We turn anything implementing Serialize
 /// into pairs of datastore keys and serialized values.  For example, a nested struct like this:
@@ -383,7 +385,7 @@ impl<'a> ser::SerializeSeq for FlatSerializer<'a> {
 #[cfg(test)]
 mod test {
     use super::{to_pairs, to_pairs_with_prefix};
-    use crate::datastore::{Key, KeyType};
+    use crate::{Key, KeyType};
     use maplit::hashmap;
     use serde::Serialize;
 
