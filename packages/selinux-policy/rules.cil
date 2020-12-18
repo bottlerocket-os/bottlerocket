@@ -117,10 +117,11 @@
 ; "local" files and directories on /local.
 (allow unconfined_s local_t (files (mutate mount)))
 
-; Subjects that control the OS can write to and manage mounts
-; for "state" files and directories on /local. Our runtimes
-; also need to be able to perform these operations so that
+; Subjects that control the OS, including helpers spawned by apiserver, can
+; write to and manage mounts for "state" files and directories on /local.
+; Our runtimes also need to be able to perform these operations so that
 ; they can launch host containers.
+(allow api_s state_t (files (mutate mount)))
 (allow control_s state_t (files (mutate mount)))
 (allow runtime_s state_t (files (mutate mount)))
 
