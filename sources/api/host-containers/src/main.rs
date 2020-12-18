@@ -1,9 +1,14 @@
 /*!
 # Background
 
-host-containers is a tool that queries the API for the currently enabled host containers and
-ensures the relevant systemd service is enabled/started or disabled/stopped for each one depending
-on its 'enabled' flag.
+host-containers ensures that host containers are running as defined in system settings.
+
+It queries the API for their settings, then configures the system by:
+* creating a user-data file in the host container's persistent storage area, if a base64-encoded
+  user-data setting is set for the host container.  (The decoded contents are available to the
+  container at /.bottlerocket/host-containers/NAME/user-data)
+* creating an environment file used by a host-container-specific instance of a systemd service
+* ensuring the host container's systemd service is enabled/started or disabled/stopped
 */
 
 #![deny(rust_2018_idioms)]
@@ -28,6 +33,7 @@ use model::modeled_types::Identifier;
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_SETTINGS_URI: &str = "/settings";
 const ENV_FILE_DIR: &str = "/etc/host-containers";
+const PERSISTENT_STORAGE_BASE_DIR: &str = "/local/host-containers";
 
 const SYSTEMCTL_BIN: &str = "/bin/systemctl";
 const HOST_CTR_BIN: &str = "/bin/host-ctr";
@@ -100,6 +106,24 @@ mod error {
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: simplelog::TermLogError },
+
+        #[snafu(display("Unable to base64 decode user-data '{}': '{}'", base64_string, source))]
+        Base64Decode {
+            base64_string: String,
+            source: base64::DecodeError,
+        },
+
+        #[snafu(display("Failed to create directory '{}': '{}'", dir.display(), source))]
+        Mkdir {
+            dir: PathBuf,
+            source: std::io::Error,
+        },
+
+        #[snafu(display("Failed to write user-data for host container '{}': {}", name, source))]
+        UserDataWrite {
+            name: String,
+            source: std::io::Error,
+        },
     }
 }
 
@@ -310,6 +334,7 @@ fn handle_host_container<S>(name: S, image_details: &model::ContainerImage) -> R
 where
     S: AsRef<str>,
 {
+    // Get basic settings, as retrieved from API.
     let name = name.as_ref();
     let source = image_details.source.as_ref().context(error::MissingField {
         name,
@@ -328,6 +353,19 @@ where
         "Handling host container '{}' which is enabled: {}",
         name, enabled
     );
+
+    // If user data was specified, unencode it and write it out before we start the container.
+    if let Some(user_data) = &image_details.user_data {
+        let decoded_bytes = base64::decode(user_data.as_bytes()).context(error::Base64Decode {
+            base64_string: user_data.as_ref(),
+        })?;
+
+        let dir = Path::new(PERSISTENT_STORAGE_BASE_DIR).join(name);
+        fs::create_dir_all(&dir).context(error::Mkdir { dir: &dir })?;
+
+        let path = dir.join("user-data");
+        fs::write(path, decoded_bytes).context(error::UserDataWrite { name })?;
+    }
 
     // Write the environment file needed for the systemd service to have details about this
     // specific host container

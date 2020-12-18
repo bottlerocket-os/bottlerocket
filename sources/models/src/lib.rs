@@ -138,6 +138,7 @@ struct ContainerImage {
     source: Url,
     enabled: bool,
     superpowered: bool,
+    user_data: ValidBase64,
 }
 
 // NTP settings
