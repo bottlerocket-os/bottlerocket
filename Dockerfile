@@ -1,13 +1,24 @@
 # syntax=docker/dockerfile:1.1.3-experimental
+# This Dockerfile has two sections which are used to build rpm.spec packages and to create
+# Bottlerocket images, respectively. They are marked as Section 1 and Section 2. buildsys
+# uses Section 1 during build-package calls and Section 2 during build-variant calls.
+#
+# Several commands start with RUN --mount=target=/host, which mounts the docker build
+# context (which in practice is the root of the Bottlerocket repository) as a read-only
+# filesystem at /host.
 
 ARG SDK
 FROM ${SDK} as sdk
 
+############################################################################################
+# Section 1: The following build stages are used to build rpm.spec packages
+
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
 # The experimental cache mount type doesn't expand arguments, so our choices are limited.
-# We can either reuse the same cache for all builds, which triggers overlayfs errors if
-# the builds run in parallel, or we can use a new cache for each build, which defeats the
-# purpose. We work around the limitation by materializing a per-build stage that can be
-# used as the source of the cache.
+# We can either reuse the same cache for all builds, which triggers overlayfs errors if the
+# builds run in parallel, or we can use a new cache for each build, which defeats the
+# purpose. We work around the limitation by materializing a per-build stage that can be used
+# as the source of the cache.
 FROM scratch AS cache
 ARG PACKAGE
 ARG ARCH
@@ -17,18 +28,17 @@ COPY --chown=1000:1000 --from=sdk /tmp /cache
 # Ensure the ARG variables are used in the layer to prevent reuse by other builds.
 COPY --chown=1000:1000 .dockerignore /cache/.${PACKAGE}.${ARCH}.${TOKEN}
 
-# Some builds need to modify files in the source directory, for example Rust
-# software using build.rs to generate code.  The source directory is mounted in
-# using "--mount=source" which is owned by root, and we need to modify it as
-# the builder user.  To get around this, we can use a "cache" mount, which we
-# just won't share or reuse.  We mount a cache into the location we need to
-# change, and in some cases, set up symlinks so that it looks like a normal
-# part of the source tree.  (This is like a tmpfs mount, but cache mounts have
-# more flexibility - you can specify a source to set them up beforehand,
-# specify uid/gid, etc.)  This cache is also variant-specific (in addition to
-# package and arch, like the one above) for cases where we need to build
-# differently per variant; the cache will be empty if you change
-# BUILDSYS_VARIANT.
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Some builds need to modify files in the source directory, for example Rust software using
+# build.rs to generate code.  The source directory is mounted in using "--mount=source"
+# which is owned by root, and we need to modify it as the builder user.  To get around this,
+# we can use a "cache" mount, which we just won't share or reuse.  We mount a cache into the
+# location we need to change, and in some cases, set up symlinks so that it looks like a
+# normal part of the source tree.  (This is like a tmpfs mount, but cache mounts have more
+# flexibility - you can specify a source to set them up beforehand, specify uid/gid, etc.)
+# This cache is also variant-specific (in addition to package and arch, like the one above)
+# for cases where we need to build differently per variant; the cache will be empty if you
+# change BUILDSYS_VARIANT.
 FROM scratch AS variantcache
 ARG PACKAGE
 ARG ARCH
@@ -39,6 +49,8 @@ COPY --chown=1000:1000 --from=sdk /tmp /variantcache
 # Ensure the ARG variables are used in the layer to prevent reuse by other builds.
 COPY --chown=1000:1000 .dockerignore /variantcache/.${PACKAGE}.${ARCH}.${VARIANT}.${TOKEN}
 
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Builds an RPM package from a spec file.
 FROM sdk AS rpmbuild
 ARG PACKAGE
 ARG ARCH
@@ -78,8 +90,8 @@ RUN --mount=target=/host \
         --nogpgcheck \
         builddep rpmbuild/SPECS/${PACKAGE}.spec
 
-# We use the "nocache" writable space to generate code where necessary, like
-# the variant-specific models.
+# We use the "nocache" writable space to generate code where necessary, like the variant-
+# specific models.
 USER builder
 RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=type=cache,target=/home/builder/.cache,from=cache,source=/cache \
@@ -88,9 +100,18 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=source=sources,target=/home/builder/rpmbuild/BUILD/sources \
     rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
 
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Copies RPM packages from the previous stage to their expected location so that buildsys
+# can find them and copy them out.
 FROM scratch AS package
 COPY --from=rpmbuild /home/builder/rpmbuild/RPMS/*/*.rpm /output/
 
+############################################################################################
+# Section 2: The following build stages are used to create a Bottlerocket image once all of
+# the rpm files have been created by repeatedly using Section 1.
+
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Creates an RPM repository from packages created in Section 1.
 FROM sdk AS repobuild
 ARG PACKAGES
 ARG ARCH
@@ -101,7 +122,10 @@ USER root
 RUN --mount=target=/host \
     mkdir -p /local/rpms /local/migrations ./rpmbuild/RPMS \
     && ln -s /host/build/rpms/*.rpm ./rpmbuild/RPMS \
-    && find /host/build/rpms/ -maxdepth 1 -type f -name "bottlerocket-${ARCH}-migrations-*.rpm" -not -iname '*debuginfo*' -exec cp '{}' '/local/migrations/' ';' \
+    && find /host/build/rpms/ -maxdepth 1 -type f \
+        -name "bottlerocket-${ARCH}-migrations-*.rpm" \
+        -not -iname '*debuginfo*' \
+        -exec cp '{}' '/local/migrations/' ';' \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
@@ -120,6 +144,8 @@ RUN --mount=target=/host \
     && createrepo_c /local/rpms \
     && echo ${NOCACHE}
 
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Builds a Bottlerocket image.
 FROM repobuild as imgbuild
 ARG ARCH
 ARG VERSION_ID
@@ -136,6 +162,8 @@ RUN --mount=target=/host \
       --output-dir=/local/output \
     && echo ${NOCACHE}
 
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Creates an archive of the datastore migrations.
 FROM repobuild as migrationbuild
 ARG ARCH
 ARG VERSION_ID
@@ -152,6 +180,9 @@ RUN --mount=target=/host \
       --output-dir=/local/output \
     && echo ${NOCACHE}
 
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Copies the build artifacts (Bottlerocket image files and migrations) to their expected
+# location so that buildsys can find them and copy them out.
 FROM scratch AS variant
 COPY --from=imgbuild /local/output/* /output/
 COPY --from=migrationbuild /local/output/* /output/
