@@ -10,6 +10,7 @@ StartLimitIntervalSec=60s
 
 [Service]
 Type=notify
+EnvironmentFile=/etc/network/proxy.env
 ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
 ExecReload=/bin/kill -s HUP $MAINPID
 Delegate=yes

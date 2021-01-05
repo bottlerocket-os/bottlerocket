@@ -13,6 +13,7 @@ Source98: release-systemd-system.conf
 Source99: release-tmpfiles.conf
 
 Source200: motd.template
+Source201: proxy-env
 
 Source1000: eth0.xml
 Source1002: configured.target
@@ -122,6 +123,7 @@ install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
+install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
@@ -142,5 +144,6 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 %{_cross_unitdir}/var-lib-bottlerocket.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/motd
+%{_cross_templatedir}/proxy-env
 
 %changelog

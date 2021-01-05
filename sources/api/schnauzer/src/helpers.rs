@@ -8,6 +8,7 @@ use serde_json::value::Value;
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use url::Url;
 
 lazy_static! {
     /// A map to tell us which registry to pull ECR images from for a given region.
@@ -132,6 +133,21 @@ mod error {
             template: String,
             source: std::io::Error,
         },
+
+        #[snafu(display(
+            "Expected an absolute URL, got '{}' in template '{}': '{}'",
+            url_str,
+            template,
+            source
+        ))]
+        UrlParse {
+            url_str: String,
+            template: String,
+            source: url::ParseError,
+        },
+
+        #[snafu(display("URL '{}' is missing host component", url_str))]
+        UrlHost { url_str: String },
     }
 
     // Handlebars helpers are required to return a RenderError.
@@ -459,6 +475,40 @@ pub fn ecr_prefix(
         .with_context(|| error::TemplateWrite {
             template: template_name.to_owned(),
         })?;
+
+    Ok(())
+}
+
+/// `host` takes an absolute URL and trims it down and returns its host.
+pub fn host(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting host helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 1)?;
+
+    let url_val = get_param(helper, 0)?;
+    let url_str = url_val
+        .as_str()
+        .with_context(|| error::InvalidTemplateValue {
+            expected: "string",
+            value: url_val.to_owned(),
+            template: template_name.to_owned(),
+        })?;
+    let url = Url::parse(url_str).context(error::UrlParse {
+        url_str,
+        template: template_name,
+    })?;
+    let url_host = url.host_str().context(error::UrlHost { url_str })?;
+
+    // write it to the template
+    out.write(&url_host).with_context(|| error::TemplateWrite {
+        template: template_name.to_owned(),
+    })?;
 
     Ok(())
 }
@@ -821,5 +871,64 @@ mod test_ecr_registry {
         )
         .unwrap();
         assert_eq!(result, EXPECTED_URL_XY_ZTOWN_1);
+    }
+}
+
+#[cfg(test)]
+mod test_host {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("host", Box::new(host));
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn not_absolute_url() {
+        assert!(setup_and_render_template(
+            "{{ host url_setting }}",
+            &json!({"url_setting": "example.com"}),
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn https() {
+        let result = setup_and_render_template(
+            "{{ host url_setting }}",
+            &json!({"url_setting": "https://example.example.com/example/example"}),
+        )
+        .unwrap();
+        assert_eq!(result, "example.example.com");
+    }
+
+    #[test]
+    fn http() {
+        let result = setup_and_render_template(
+            "{{ host url_setting }}",
+            &json!({"url_setting": "http://example.com"}),
+        )
+        .unwrap();
+        assert_eq!(result, "example.com");
+    }
+
+    #[test]
+    fn unknown_scheme() {
+        let result = setup_and_render_template(
+            "{{ host url_setting }}",
+            &json!({"url_setting": "foo://example.com"}),
+        )
+        .unwrap();
+        assert_eq!(result, "example.com");
     }
 }

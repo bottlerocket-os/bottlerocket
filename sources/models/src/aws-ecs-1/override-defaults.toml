@@ -5,7 +5,7 @@ template-path = "/usr/share/templates/containerd-config-toml_aws-ecs-1"
 # Docker
 [services.docker]
 restart-commands = ["/bin/systemctl try-restart docker.service"]
-configuration-files = []
+configuration-files = ["proxy-env"]
 
 # ECS
 [services.ecs]
@@ -23,3 +23,7 @@ affected-services = ["ecs"]
 allow-privileged-containers = false
 logging-drivers = ["json-file", "awslogs", "none"]
 loglevel = "info"
+
+# Network
+[metadata.settings.network]
+affected-services = ["containerd", "docker", "ecs", "host-containerd"]

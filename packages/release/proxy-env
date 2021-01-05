@@ -1,0 +1,6 @@
+{{#if settings.network.https-proxy}}
+HTTPS_PROXY={{settings.network.https-proxy}}
+https_proxy={{settings.network.https-proxy}}
+{{/if}}
+NO_PROXY={{#each settings.network.no-proxy}}{{this}},{{/each}}localhost,127.0.0.1{{#if settings.kubernetes.api-server}},{{host settings.kubernetes.api-server}}{{/if}}{{#if settings.kubernetes.cluster-domain}},.{{settings.kubernetes.cluster-domain}}{{/if}}
+no_proxy={{#each settings.network.no-proxy}}{{this}},{{/each}}localhost,127.0.0.1{{#if settings.kubernetes.api-server}},{{host settings.kubernetes.api-server}}{{/if}}{{#if settings.kubernetes.cluster-domain}},.{{settings.kubernetes.cluster-domain}}{{/if}}
