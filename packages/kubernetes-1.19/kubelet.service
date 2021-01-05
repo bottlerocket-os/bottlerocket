@@ -25,7 +25,6 @@ ExecStart=/usr/bin/kubelet \
     --network-plugin cni \
     --root-dir /var/lib/kubelet \
     --cert-dir /var/lib/kubelet/pki \
-    --volume-plugin-dir /var/lib/kubelet/plugins/volume/exec \
     --node-ip ${NODE_IP} \
     --node-labels "${NODE_LABELS}" \
     --register-with-taints "${NODE_TAINTS}" \
