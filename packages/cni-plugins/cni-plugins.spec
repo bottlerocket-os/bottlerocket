@@ -2,7 +2,7 @@
 %global gorepo plugins
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 0.8.7
+%global gover 0.9.0
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -58,5 +58,6 @@ install -p -m 0755 bin/* %{buildroot}%{_cross_factorydir}/opt/cni/bin
 %{_cross_factorydir}/opt/cni/bin/static
 %{_cross_factorydir}/opt/cni/bin/tuning
 %{_cross_factorydir}/opt/cni/bin/vlan
+%{_cross_factorydir}/opt/cni/bin/vrf
 
 %changelog
