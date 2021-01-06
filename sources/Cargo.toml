@@ -34,6 +34,9 @@ members = [
     "api/migration/migrations/v1.0.5/add-lockdown",
     "api/migration/migrations/v1.0.5/sysctl-subcommand",
     "api/migration/migrations/v1.0.5/add-user-data",
+    "api/migration/migrations/v1.0.5/add-network-settings",
+    "api/migration/migrations/v1.0.5/add-proxy-restart",
+    "api/migration/migrations/v1.0.5/add-proxy-services",
 
     "bottlerocket-release",
 
