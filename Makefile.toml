@@ -22,7 +22,7 @@ BUILDSYS_VARIANT = "aws-k8s-1.17"
 # Product name used for file and directory naming
 BUILDSYS_NAME = "bottlerocket"
 # SDK version used for building
-BUILDSYS_SDK_VERSION="0.14.0"
+BUILDSYS_SDK_VERSION="0.15.0"
 # Site for fetching the SDK
 BUILDSYS_SDK_SITE="cache.bottlerocket.aws"
 
