@@ -58,7 +58,11 @@ pub fn create_new_datastore<P: AsRef<Path>>(
     };
 
     // Create random string to append to the end of the new datastore path
-    let random_id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
+    let random_id: String = thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(16)
+        .map(char::from)
+        .collect();
 
     // Build the various paths to which we'll symlink
 

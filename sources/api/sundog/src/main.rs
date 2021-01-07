@@ -148,7 +148,7 @@ mod error {
         },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
     }
 }
 

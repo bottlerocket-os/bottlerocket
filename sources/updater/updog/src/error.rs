@@ -68,7 +68,7 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Logger setup error: {}", source))]
-    Logger { source: simplelog::TermLogError },
+    Logger { source: log::SetLoggerError },
 
     #[snafu(display("Could not mark inactive partition for boot: {}", source))]
     InactivePartitionUpgrade { source: signpost::Error },

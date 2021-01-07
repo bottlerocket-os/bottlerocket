@@ -13,7 +13,7 @@ dns-lookup = "1.0"
 ipnet = { version = "2.0", features = ["serde"] }
 envy = "0.4"
 lazy_static = "1.2"
-rand = { version = "0.7", default-features = false, features = ["std"] }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_plain = "0.3.0"

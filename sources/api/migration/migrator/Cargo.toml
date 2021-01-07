@@ -15,10 +15,10 @@ log = "0.4"
 lz4 = "1.23.1"
 nix = "0.19"
 pentacle = "1.0.0"
-rand = { version = "0.7", default-features = false, features = ["std"] }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1.1"
 semver = "0.11"
-simplelog = "0.8"
+simplelog = "0.9"
 snafu = "0.6"
 tempfile = "3.1.0"
 tough = "0.8"

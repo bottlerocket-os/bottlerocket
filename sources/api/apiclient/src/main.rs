@@ -423,7 +423,7 @@ mod error {
         Check { source: update::Error },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
 
         #[snafu(display("Failed {} request to '{}': {}", method, uri, source))]
         Request {
