@@ -341,7 +341,7 @@ mod error {
         },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
 
         #[snafu(display("'{}' repo has root role but no key.  You wouldn't be able to update a repo without the matching key.  To continue, pass '-e ALLOW_MISSING_KEY=true'", repo))]
         MissingKey { repo: String },
