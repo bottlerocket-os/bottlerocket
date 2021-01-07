@@ -12,6 +12,11 @@ You can skip to the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setu
 
 The build process artifacts and resulting images can consume in excess of 80GB in the local directory.
 
+The build process is also fairly demanding on your CPU, since we build all included software from scratch.
+(The first time.  Package builds are cached, and only changes are built afterward.)
+The build scales well to 32+ cores.
+The first time you build, the fastest machines can take about 12 minutes while slower machines with only a couple cores can take 3-4 hours.
+
 #### Linux
 
 The build system requires certain operating system packages to be installed.
