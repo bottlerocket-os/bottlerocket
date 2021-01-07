@@ -2,7 +2,7 @@
 %global _cross_allow_rpath 1
 
 Name: %{_cross_os}systemd
-Version: 246
+Version: 247
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
@@ -34,6 +34,11 @@ Patch9005: 9005-core-mount-etc-with-specific-label.patch
 # makes it unreadable by older versions of systemd. Can be dropped once
 # there's sufficiently broad adoption of systemd >= 246.
 Patch9006: 9006-journal-disable-keyed-hashes-for-compatibility.patch
+
+# We need `prefix` to be configurable for our own packaging so we can avoid
+# dependencies on the host OS.
+Patch9007: 9007-pkg-config-make-prefix-overridable-again.patch
+Patch9008: 9008-pkg-config-stop-hardcoding-prefix-to-usr.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -219,6 +224,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %{_cross_bindir}/systemd-cat
 %{_cross_bindir}/systemd-cgls
 %{_cross_bindir}/systemd-cgtop
+%{_cross_bindir}/systemd-dissect
 %{_cross_bindir}/systemd-delta
 %{_cross_bindir}/systemd-detect-virt
 %{_cross_bindir}/systemd-escape
@@ -237,6 +243,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %{_cross_bindir}/systemd-tty-ask-password-agent
 %{_cross_bindir}/systemd-umount
 %{_cross_bindir}/udevadm
+%exclude %{_cross_bindir}/oomctl
 %exclude %{_cross_bindir}/kernel-install
 
 %{_cross_sbindir}/halt
@@ -266,6 +273,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %{_cross_tmpfilesdir}/*
 %exclude %{_cross_tmpfilesdir}/legacy.conf
 
+%exclude %{_cross_sysconfdir}/oomd.conf
 %exclude %{_cross_sysconfdir}/systemd/
 %exclude %{_cross_sysconfdir}/udev/
 %exclude %{_cross_sysconfdir}/X11
@@ -285,7 +293,6 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %exclude %{_cross_docdir}
 %exclude %{_cross_localedir}
 %exclude %{_cross_localstatedir}/log/README
-%exclude %{_cross_rundir}
 
 %exclude %{_cross_bindir}/systemd-ask-password
 %exclude %{_cross_bindir}/systemd-tty-ask-password-agent
@@ -305,6 +312,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 %exclude %{_cross_unitdir}/systemd-ask-password-console.service
 %exclude %{_cross_unitdir}/systemd-ask-password-console.path
 %exclude %{_cross_unitdir}/systemd-ask-password-wall.path
+%exclude %{_cross_unitdir}/systemd-oomd.service
 %exclude %{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
 %exclude %{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
 
