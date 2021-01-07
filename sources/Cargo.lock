@@ -281,6 +281,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-network-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "add-proxy-restart"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "add-proxy-services"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-sysctl"
 version = "0.1.0"
 dependencies = [
