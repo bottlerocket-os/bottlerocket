@@ -1,0 +1,77 @@
+From 43460991812f41748d2ebbb846e3d956b40b26ae Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sat, 18 May 2019 16:57:12 +0000
+Subject: [PATCH 1/4] always set relevant variables for cross compiling
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ hack/lib/golang.sh | 52 ++++++++++++++++++++++++++--------------------
+ 1 file changed, 30 insertions(+), 22 deletions(-)
+
+diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
+index e9c3b066..14c15994 100755
+--- a/hack/lib/golang.sh
++++ b/hack/lib/golang.sh
+@@ -394,29 +394,37 @@ kube::golang::set_platform_envs() {
+   export GOOS=${platform%/*}
+   export GOARCH=${platform##*/}
+ 
+-  # Do not set CC when building natively on a platform, only if cross-compiling from linux/amd64
+-  if [[ $(kube::golang::host_platform) == "linux/amd64" ]]; then
+-    # Dynamic CGO linking for other server architectures than linux/amd64 goes here
+-    # If you want to include support for more server platforms than these, add arch-specific gcc names here
+-    case "${platform}" in
+-      "linux/arm")
+-        export CGO_ENABLED=1
+-        export CC=arm-linux-gnueabihf-gcc
+-        ;;
+-      "linux/arm64")
+-        export CGO_ENABLED=1
+-        export CC=aarch64-linux-gnu-gcc
+-        ;;
+-      "linux/ppc64le")
+-        export CGO_ENABLED=1
+-        export CC=powerpc64le-linux-gnu-gcc
+-        ;;
+-      "linux/s390x")
+-        export CGO_ENABLED=1
+-        export CC=s390x-linux-gnu-gcc
+-        ;;
+-    esac
++  # Apply standard values for CGO_ENABLED and CC unless KUBE_BUILD_PLATFORMS is set.
++  if [ -z "${KUBE_BUILD_PLATFORMS}" ] ; then
++      export CGO_ENABLED=0
++      export CC=gcc
++      return
+   fi
++
++  # Dynamic CGO linking for other server architectures goes here
++  # If you want to include support for more server platforms than these, add arch-specific gcc names here
++  case "${platform}" in
++    "linux/amd64")
++      export CGO_ENABLED=1
++      export CC=x86_64-bottlerocket-linux-gnu-gcc
++      ;;
++    "linux/arm")
++      export CGO_ENABLED=1
++      export CC=arm-bottlerocket-linux-gnueabihf-gcc
++      ;;
++    "linux/arm64")
++      export CGO_ENABLED=1
++      export CC=aarch64-bottlerocket-linux-gnu-gcc
++      ;;
++    "linux/ppc64le")
++      export CGO_ENABLED=1
++      export CC=powerpc64le-bottlerocket-linux-gnu-gcc
++      ;;
++    "linux/s390x")
++      export CGO_ENABLED=1
++      export CC=s390x-bottlerocket-linux-gnu-gcc
++      ;;
++  esac
+ }
+ 
+ kube::golang::unset_platform_envs() {
+-- 
+2.21.0
+

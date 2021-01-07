@@ -239,6 +239,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubernetes-1_19"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libacl"
 version = "0.1.0"
 dependencies = [
