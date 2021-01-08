@@ -1,5 +1,5 @@
 Name: %{_cross_os}socat
-Version: 1.7.3.4
+Version: 1.7.4.0
 Release: 1%{?dist}
 Summary: Transfer data between two channels
 License: GPL-2.0-only

@@ -14,8 +14,8 @@ package-name = "kubernetes-1.17"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes/kubernetes/archive/v1.17.13/kubernetes-1.17.13.tar.gz"
-sha512 = "eaebc7d649a2a53f2a7bae8fe70ccd469f8f983a2d14148f86e86a05d66a40ce8b71d4422e653966daf4c86ccd353693cc0e9bfe3a44b5259239d047a20ddb7a"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.17.16/kubernetes-1.17.16.tar.gz"
+sha512 = "848b6334dbea5f6d714b22825538f5ae73c242fa31c63963bb94d7b43e3c1cbd27f89627af2ec5f6c6e581c29b85c4c3a859e2b4dae0f082b11b7a8b6f2dbecf"
 
 # This is a large patch, so we don't want to check it into the repo.  It's like
 # https://github.com/kubernetes/kubernetes/commit/a94346bef9806a135ebcfda03672966c336c1c17

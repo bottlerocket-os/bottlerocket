@@ -1,12 +1,12 @@
 Name: %{_cross_os}ca-certificates
-Version: 2020.10.14
+Version: 2020.12.08
 Release: 1%{?dist}
 Summary: CA certificates extracted from Mozilla
 License: MPL-2.0
 # Note: You can see changes here:
 # https://hg.mozilla.org/projects/nss/log/tip/lib/ckfw/builtins/certdata.txt
 URL: https://curl.haxx.se/docs/caextract.html
-Source0: https://curl.haxx.se/ca/cacert-2020-10-14.pem
+Source0: https://curl.haxx.se/ca/cacert-2020-12-08.pem
 Source1: ca-certificates-tmpfiles.conf
 
 %description

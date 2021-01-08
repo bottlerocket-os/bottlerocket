@@ -1,5 +1,5 @@
 Name: %{_cross_os}tcpdump
-Version: 4.9.3
+Version: 4.99.0
 Release: 1%{?dist}
 Summary: Network monitoring tool
 License: BSD-3-Clause
