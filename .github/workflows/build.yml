@@ -2,6 +2,8 @@ name: Build
 on:
   pull_request:
     branches: [develop]
+    paths-ignore: 
+      - '**.md'
 jobs:
   build:
     runs-on: [self-hosted, linux, x64]
