@@ -33,7 +33,7 @@ mod error {
         Server { source: apiserver::server::Error },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
     }
 }
 

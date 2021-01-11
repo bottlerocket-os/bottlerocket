@@ -105,7 +105,7 @@ mod error {
         ManageContainersFailed { failed: usize, tried: usize },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
 
         #[snafu(display("Unable to base64 decode user-data '{}': '{}'", base64_string, source))]
         Base64Decode {

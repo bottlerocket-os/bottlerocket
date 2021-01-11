@@ -101,7 +101,7 @@ mod error {
         SystemdCommandFailure { output: Output },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
     }
 }
 

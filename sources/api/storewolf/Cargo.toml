@@ -14,9 +14,9 @@ bottlerocket-release = { path = "../../bottlerocket-release" }
 datastore = { path = "../datastore" }
 log = "0.4"
 models = { path = "../../models" }
-rand = { version = "0.7", default-features = false, features = ["std"] }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 semver = "0.11"
-simplelog = "0.8"
+simplelog = "0.9"
 snafu = "0.6"
 toml = "0.5"
 

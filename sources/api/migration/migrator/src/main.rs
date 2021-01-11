@@ -185,7 +185,11 @@ pub(crate) fn run(args: &Args) -> Result<()> {
 /// Generates a random ID, affectionately known as a 'rando', that can be used to avoid timing
 /// issues and identify unique migration attempts.
 fn rando() -> String {
-    thread_rng().sample_iter(&Alphanumeric).take(16).collect()
+    thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(16)
+        .map(char::from)
+        .collect()
 }
 
 /// Generates a path for a new data store, given the path of the existing data store,

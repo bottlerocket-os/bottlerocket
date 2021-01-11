@@ -21,7 +21,7 @@ mod error {
     #[snafu(visibility = "pub(super)")]
     pub(super) enum Error {
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
 
         #[snafu(display("Failure to read template '{}' from '{}': {}", name, path.display(), source))]
         TemplateRegister {

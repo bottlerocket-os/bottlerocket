@@ -1,6 +1,6 @@
 [package]
 name = "webpki-roots"
-version = "0.19.0"
+version = "0.20.0"
 authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 edition = "2018"

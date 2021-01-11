@@ -13,12 +13,12 @@ exclude = ["README.md"]
 apiclient = { path = "../apiclient" }
 handlebars = "3.0"
 http = "0.2"
-itertools = "0.9"
+itertools = "0.10"
 log = "0.4"
 models = { path = "../../models" }
 schnauzer = { path = "../schnauzer" }
 serde_json = "1"
-simplelog = "0.8"
+simplelog = "0.9"
 snafu = "0.6"
 tokio = { version = "0.2", default-features = false, features = ["macros", "rt-threaded"] }
 # When hyper updates to tokio 0.3:

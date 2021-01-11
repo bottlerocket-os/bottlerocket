@@ -14,7 +14,7 @@ path = "src/lib.rs"
 proc-macro = true
 
 [dependencies]
-darling = "0.10"
+darling = "0.12"
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "1.0", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }

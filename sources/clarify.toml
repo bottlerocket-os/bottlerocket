@@ -1,3 +1,10 @@
+[clarify.actix-macros]
+expression = "MIT OR Apache-2.0"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0xe11aded0 },
+    { path = "LICENSE-MIT", hash = 0x6427cfb9 },
+]
+
 [clarify.backtrace-sys]
 # backtrace-sys is MIT/Apache-2.0, libbacktrace is BSD-3-Clause
 expression = "(MIT OR Apache-2.0) AND BSD-3-Clause"
