@@ -2,9 +2,9 @@
 %global gorepo amazon-ecs-agent
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.43.0
+%global gover 1.48.1
 # git rev-parse --short=8
-%global gitrev 1ebf0604
+%global gitrev e9b600d2
 
 # Construct reproducible tar archives
 # See https://reproducible-builds.org/docs/archives/
@@ -26,19 +26,18 @@ Source5: pause-image-VERSION
 Source6: pause-config.json
 Source7: pause-manifest.json
 Source8: pause-repositories
+# Bottlerocket-specific - version data can be set with linker options
+Source9: version.go
 
 # Bottlerocket-specific - filesystem location of the pause image
 Patch0001: 0001-bottlerocket-default-filesystem-locations.patch
 
-# Bottlerocket-specific - version data can be set with linker options
-Patch0002: 0002-bottlerocket-version-values-settable-with-linker.patch
-
 # Bottlerocket-specific - remove unsupported capabilities
-Patch0003: 0003-bottlerocket-remove-unsupported-capabilities.patch
+Patch0002: 0002-bottlerocket-remove-unsupported-capabilities.patch
 
 # bind introspection to localhost
 # https://github.com/aws/amazon-ecs-agent/pull/2588
-Patch0004: 0004-bottlerocket-bind-introspection-to-localhost.patch 
+Patch0003: 0003-bottlerocket-bind-introspection-to-localhost.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 
@@ -51,6 +50,11 @@ Requires: %{_cross_os}iptables
 %prep
 %autosetup -Sgit -n %{gorepo}-%{gover} -p1
 %cross_go_setup %{gorepo}-%{gover} %{goproject} %{goimport}
+
+# Replace upstream's version.go to support build-time values from ldflags. This
+# avoids maintenance of patches that use always changing version-control tokens
+# in its replacement.
+cp %{S:9} "agent/version/version.go"
 
 %build
 # Build the agent
@@ -70,11 +74,13 @@ go build -a \
 # Build the pause container
 (
   set -x
-  cd misc/pause-container/buildPause
-  mkdir -p rootfs/usr/bin
-  make BIN=rootfs/usr/bin/pause GCC=%{_cross_triple}-musl-gcc CFLAGS="%{_cross_cflags} -static"
+  cd misc/pause-container/
 
-  # Construct image
+  # Build static pause executable for container image.
+  mkdir -p rootfs/usr/bin
+  %{_cross_triple}-musl-gcc ${_cross_cflags} -static pause.c -o rootfs/usr/bin/pause
+
+  # Construct container image.
   mkdir -p image/rootfs
   %tar_cf image/rootfs/layer.tar -C rootfs .
   DIGEST=$(sha256sum image/rootfs/layer.tar | sed -e 's/ .*//')
@@ -83,7 +89,7 @@ go build -a \
   sed -i "s/~~digest~~/${DIGEST}/" image/config.json
   install -m 0644 %{S:7} image/manifest.json
   install -m 0644 %{S:8} image/repositories
-  %tar_cf ../../../amazon-ecs-pause.tar -C image .
+  %tar_cf ../../amazon-ecs-pause.tar -C image .
 )
 
 %install

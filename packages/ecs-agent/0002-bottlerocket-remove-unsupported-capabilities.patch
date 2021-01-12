@@ -1,17 +1,17 @@
-From 5d5517422621691341d0f3c9ecee2f314d0adc02 Mon Sep 17 00:00:00 2001
+From d67e321edca612faa9cced5f6d556dd338cdb4c9 Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Wed, 19 Aug 2020 00:44:07 -0700
-Subject: [PATCH 3/3] bottlerocket: remove unsupported capabilities
+Subject: [PATCH 3/4] bottlerocket: remove unsupported capabilities
 
 ---
  agent/app/agent_capability.go | 18 +++++++++---------
  1 file changed, 9 insertions(+), 9 deletions(-)
 
 diff --git a/agent/app/agent_capability.go b/agent/app/agent_capability.go
-index 09e01825..a7c36cfd 100644
+index cf71d6a6..ac6768dc 100644
 --- a/agent/app/agent_capability.go
 +++ b/agent/app/agent_capability.go
-@@ -186,33 +186,33 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+@@ -189,33 +189,33 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
  	capabilities = agent.appendPIDAndIPCNamespaceSharingCapabilities(capabilities)
  
  	// ecs agent version 1.26.0 supports aws-appmesh cni plugin
@@ -52,8 +52,8 @@ index 09e01825..a7c36cfd 100644
 +	//	capabilities = agent.appendEFSVolumePluginCapabilities(capabilities, cap)
 +	// }
  
- 	return capabilities, nil
- }
+ 	// support fsxWindowsFileServer on ecs capabilities
+ 	capabilities = agent.appendFSxWindowsFileServerCapabilities(capabilities)
 -- 
-2.28.0
+2.23.3
 
