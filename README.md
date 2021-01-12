@@ -33,7 +33,9 @@ You can look at [existing issues](https://github.com/bottlerocket-os/bottlerocke
 If not, you can select from a few templates and get some guidance on the type of information that would be most helpful.
 [Contact us with a new issue here.](https://github.com/bottlerocket-os/bottlerocket/issues/new/choose)
 
-We don't have other communication channels set up quite yet, but don't worry about making an issue!
+If you just have questions about Bottlerocket, please feel free to [start or join a discussion](https://github.com/bottlerocket-os/bottlerocket/discussions).
+
+We don't have other communication channels set up quite yet, but don't worry about making an issue or a discussion thread!
 You can let us know about things that seem difficult, or even ways you might like to help.
 
 ## Variants
