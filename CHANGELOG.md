@@ -1,3 +1,63 @@
+# v1.0.5 (2021-01-15)
+
+**Note for aws-ecs-1 variant**: due to a change in the ECS agent's data store schema, the aws-ecs-1 variant cannot be downgraded after updating to v1.0.5.
+Attempts to downgrade may result in inconsistencies between ECS and the Bottlerocket container instance.
+
+## OS Changes
+
+* Add aws-k8s-1.19 variant with Kubernetes 1.19 ([#1256])
+* Update ecs-agent to 1.48.1 ([#1201])
+* Add high-level update subcommands to apiclient ([#1219], [#1232])
+* Add kernel lockdown settings ([#1223])
+* Add restart-commands for docker, kubelet, containerd ([#1231], [#1262], [#1258])
+* Add proper restarts for host-containers ([#1230], [#1235], [#1242], [#1258])
+* Fix SELinux policy ([#1236])
+* Set version and revision strings for containerd ([#1248])
+* Add host-container user-data setting ([#1244], [#1247])
+* Add network proxy settings ([#1204], [#1262], [#1258])
+* Update kernel to 5.4.80-40.140 ([#1257])
+* Update third-party software packages ([#1264])
+* Update Rust dependencies ([#1267])
+
+## Build Changes
+
+* Improve support for out-of-tree kernel modules ([#1220])
+* Fix message in partition size check condition ([#1233], **thanks @pranavek!**)
+* Split the datastore module into its own crate ([#1249])
+* Update SDK to v0.15.0 ([#1263])
+
+## Documentation Changes
+
+* Add documentation comments to Dockerfile ([#1254])
+* Add a note about CPU usage during builds ([#1266])
+
+[#1201]: https://github.com/bottlerocket-os/bottlerocket/pull/1201
+[#1204]: https://github.com/bottlerocket-os/bottlerocket/pull/1204
+[#1219]: https://github.com/bottlerocket-os/bottlerocket/pull/1219
+[#1220]: https://github.com/bottlerocket-os/bottlerocket/pull/1220
+[#1223]: https://github.com/bottlerocket-os/bottlerocket/pull/1223
+[#1230]: https://github.com/bottlerocket-os/bottlerocket/pull/1230
+[#1231]: https://github.com/bottlerocket-os/bottlerocket/pull/1231
+[#1232]: https://github.com/bottlerocket-os/bottlerocket/pull/1232
+[#1233]: https://github.com/bottlerocket-os/bottlerocket/pull/1233
+[#1235]: https://github.com/bottlerocket-os/bottlerocket/pull/1235
+[#1236]: https://github.com/bottlerocket-os/bottlerocket/pull/1236
+[#1242]: https://github.com/bottlerocket-os/bottlerocket/pull/1242
+[#1244]: https://github.com/bottlerocket-os/bottlerocket/pull/1244
+[#1247]: https://github.com/bottlerocket-os/bottlerocket/pull/1247
+[#1248]: https://github.com/bottlerocket-os/bottlerocket/pull/1248
+[#1249]: https://github.com/bottlerocket-os/bottlerocket/pull/1249
+[#1254]: https://github.com/bottlerocket-os/bottlerocket/pull/1254
+[#1256]: https://github.com/bottlerocket-os/bottlerocket/pull/1256
+[#1257]: https://github.com/bottlerocket-os/bottlerocket/pull/1257
+[#1258]: https://github.com/bottlerocket-os/bottlerocket/pull/1258
+[#1259]: https://github.com/bottlerocket-os/bottlerocket/pull/1259
+[#1262]: https://github.com/bottlerocket-os/bottlerocket/pull/1262
+[#1263]: https://github.com/bottlerocket-os/bottlerocket/pull/1263
+[#1264]: https://github.com/bottlerocket-os/bottlerocket/pull/1264
+[#1266]: https://github.com/bottlerocket-os/bottlerocket/pull/1266
+[#1267]: https://github.com/bottlerocket-os/bottlerocket/pull/1267
+
 # v1.0.4 (2020-11-30)
 
 ## Security fixes
