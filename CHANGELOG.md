@@ -8,7 +8,7 @@ Attempts to downgrade may result in inconsistencies between ECS and the Bottlero
 * Add aws-k8s-1.19 variant with Kubernetes 1.19 ([#1256])
 * Update ecs-agent to 1.48.1 ([#1201])
 * Add high-level update subcommands to apiclient ([#1219], [#1232])
-* Add kernel lockdown settings ([#1223])
+* Add kernel lockdown settings ([#1223], [#1279])
 * Add restart-commands for docker, kubelet, containerd ([#1231], [#1262], [#1258])
 * Add proper restarts for host-containers ([#1230], [#1235], [#1242], [#1258])
 * Fix SELinux policy ([#1236])
@@ -25,11 +25,13 @@ Attempts to downgrade may result in inconsistencies between ECS and the Bottlero
 * Fix message in partition size check condition ([#1233], **thanks @pranavek!**)
 * Split the datastore module into its own crate ([#1249])
 * Update SDK to v0.15.0 ([#1263])
+* Update Github Actions to ignore changes that only include .md files ([#1274])
 
 ## Documentation Changes
 
 * Add documentation comments to Dockerfile ([#1254])
 * Add a note about CPU usage during builds ([#1266])
+* Update README to point to discussions ([#1273])
 
 [#1201]: https://github.com/bottlerocket-os/bottlerocket/pull/1201
 [#1204]: https://github.com/bottlerocket-os/bottlerocket/pull/1204
@@ -57,6 +59,9 @@ Attempts to downgrade may result in inconsistencies between ECS and the Bottlero
 [#1264]: https://github.com/bottlerocket-os/bottlerocket/pull/1264
 [#1266]: https://github.com/bottlerocket-os/bottlerocket/pull/1266
 [#1267]: https://github.com/bottlerocket-os/bottlerocket/pull/1267
+[#1273]: https://github.com/bottlerocket-os/bottlerocket/pull/1273
+[#1274]: https://github.com/bottlerocket-os/bottlerocket/pull/1274
+[#1279]: https://github.com/bottlerocket-os/bottlerocket/pull/1279
 
 # v1.0.4 (2020-11-30)
 
