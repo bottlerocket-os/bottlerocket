@@ -41,6 +41,10 @@ CONFIG_SECURITY_SELINUX_CHECKREQPROT_VALUE=0
 # Enable support for the kernel lockdown security module.
 CONFIG_SECURITY_LOCKDOWN_LSM=y
 
+# Enable lockdown early so that if the option is present on the
+# kernel command line, it can be enforced.
+CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
+
 # Enable zstd compression for squashfs.
 CONFIG_SQUASHFS_ZSTD=y
 
