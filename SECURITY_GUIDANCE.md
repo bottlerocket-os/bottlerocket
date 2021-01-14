@@ -13,6 +13,7 @@ We provide these recommendations, along with [details](#details) and [examples](
 | [Restrict access to the host API socket](#restrict-access-to-the-host-api-socket)                   | Critical  |
 | [Restrict access to the container runtime socket](#restrict-access-to-the-container-runtime-socket) | Critical  |
 | [Design for host replacement](#design-for-host-replacement)                                         | Important |
+| [Enable kernel lockdown](#enable-kernel-lockdown)                                                   | Important |
 | [Limit use of host containers](#limit-use-of-host-containers)                                       | Important |
 | [Limit use of privileged SELinux labels](#limit-use-of-privileged-selinux-labels)                   | Important |
 | [Limit access to system mounts](#limit-access-to-system-mounts)                                     | Important |
@@ -103,6 +104,28 @@ The exposed kernel interface can be minimized through techniques such as seccomp
 If the kernel is ever compromised through a local exploit, then other defenses may break down.
 
 We recommend designing for periodic host replacement even with automated updates enabled.
+
+### Enable kernel lockdown
+
+The security mechanisms in Bottlerocket ultimately depend on the kernel for enforcement.
+This includes access controls such as capabilities and SELinux, and integrity checks such as dm-verity.
+Modifications to the running kernel could bypass or subvert these mechanisms.
+
+Bottlerocket enables the Lockdown security module and offers settings to choose from one of three modes.
+
+The first mode, "none", effectively disables the protection.
+This is the default in today's [variants](variants/) of Bottlerocket, for compatibility with existing deployments.
+
+The second mode, "integrity", blocks most ways to overwrite the kernel's memory and modify its code.
+This will become the default in future variants.
+Enabling this mode will prevent unsigned kernel modules from being loaded.
+
+The third mode, "confidentiality", stops most ways of reading the kernel's memory from userspace.
+The goal is to protect secrets that may be stored in the kernel, such as keys used to detect modification while the system is offline.
+Bottlerocket does not make use of the secrets that this mode is meant to protect.
+Enabling this mode will break BPF, perf, and any other tools that rely on reading kernel memory.
+
+We recommend enabling kernel lockdown in "integrity" mode.
 
 ### Limit use of host containers
 
@@ -223,6 +246,11 @@ These settings can passed as [user data](https://docs.aws.amazon.com/AWSEC2/late
 They apply to any Bottlerocket variant.
 
 ```
+# Enable kernel lockdown in "integrity" mode.
+# This prevents modifications to the running kernel, even by privileged users.
+[settings.kernel]
+lockdown = "integrity"
+
 # The admin host container provides SSH access and runs with "superpowers".
 # It is disabled by default, but can be disabled explicitly.
 [settings.host-containers.admin]
