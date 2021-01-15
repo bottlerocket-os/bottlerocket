@@ -9,8 +9,10 @@ early-boot-config sends provider-specific platform data to the Bottlerocket API.
 For most providers this means configuration from user data and platform metadata, taken from
 something like an instance metadata service.
 
-Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be taken from files in
-/etc/early-boot-config instead, if available, for testing purposes.
+This program is conditionally compiled to include the appropriate data providers for a specific
+Bottlerocket platform.  Currently, Amazon EC2 is supported through the IMDSv2 HTTP API.  For
+development variants, data will be taken from files in /etc/early-boot-config instead, if
+available, for testing purposes.
 
 ## Colophon
 

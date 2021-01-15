@@ -6,8 +6,10 @@ early-boot-config sends provider-specific platform data to the Bottlerocket API.
 For most providers this means configuration from user data and platform metadata, taken from
 something like an instance metadata service.
 
-Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be taken from files in
-/etc/early-boot-config instead, if available, for testing purposes.
+This program is conditionally compiled to include the appropriate data providers for a specific
+Bottlerocket platform.  Currently, Amazon EC2 is supported through the IMDSv2 HTTP API.  For
+development variants, data will be taken from files in /etc/early-boot-config instead, if
+available, for testing purposes.
 */
 
 #![deny(rust_2018_idioms)]
@@ -138,14 +140,15 @@ trait PlatformDataProvider {
 }
 
 /// Unit struct for AWS so we can implement the PlatformDataProvider trait.
+#[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
 struct AwsDataProvider;
 
+#[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
 impl AwsDataProvider {
     // Currently only able to get fetch session tokens from `latest`
     // FIXME Pin to a date version that supports IMDSv2 once such a date version is available.
     const IMDS_TOKEN_ENDPOINT: &'static str = "http://169.254.169.254/latest/api/token";
 
-    const USER_DATA_FILE: &'static str = "/etc/early-boot-config/user-data";
     const USER_DATA_ENDPOINT: &'static str = "http://169.254.169.254/2018-09-24/user-data";
     const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/early-boot-config/identity-document";
     const IDENTITY_DOCUMENT_ENDPOINT: &'static str =
@@ -174,18 +177,11 @@ impl AwsDataProvider {
     /// IMDS returns a 404 if no user data was given, for example; we return Ok(None) to represent
     /// this, otherwise Ok(Some(body)) with the response body.
     fn fetch_imds(
-        file: &str,
         client: &Client,
         session_token: &str,
         uri: &str,
         description: &str,
     ) -> Result<Option<String>> {
-        if Path::new(file).exists() {
-            info!("{} file found at {}, using it", description, file);
-            return Ok(Some(
-                fs::read_to_string(file).context(error::InputFileRead { path: file })?,
-            ));
-        }
         debug!("Requesting {} from {}", description, uri);
         let response = client
             .get(uri)
@@ -234,9 +230,8 @@ impl AwsDataProvider {
     fn user_data(client: &Client, session_token: &str) -> Result<Option<SettingsJson>> {
         let desc = "user data";
         let uri = Self::USER_DATA_ENDPOINT;
-        let file = Self::USER_DATA_FILE;
 
-        let user_data_str = match Self::fetch_imds(file, client, session_token, uri, desc) {
+        let user_data_str = match Self::fetch_imds(client, session_token, uri, desc) {
             Err(e) => return Err(e),
             Ok(None) => return Ok(None),
             Ok(Some(s)) => s,
@@ -261,10 +256,15 @@ impl AwsDataProvider {
         let uri = Self::IDENTITY_DOCUMENT_ENDPOINT;
         let file = Self::IDENTITY_DOCUMENT_FILE;
 
-        let iid_str = match Self::fetch_imds(file, client, session_token, uri, desc) {
-            Err(e) => return Err(e),
-            Ok(None) => return Ok(None),
-            Ok(Some(s)) => s,
+        let iid_str = if Path::new(file).exists() {
+            info!("{} found at {}, using it", desc, file);
+            fs::read_to_string(file).context(error::InputFileRead { path: file })?
+        } else {
+            match Self::fetch_imds(client, session_token, uri, desc) {
+                Err(e) => return Err(e),
+                Ok(None) => return Ok(None),
+                Ok(Some(s)) => s,
+            }
         };
         trace!("Received instance identity document: {}", iid_str);
 
@@ -280,6 +280,7 @@ impl AwsDataProvider {
     }
 }
 
+#[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
 impl PlatformDataProvider for AwsDataProvider {
     /// Return settings changes from the instance identity document and user data.
     fn platform_data(&self) -> Result<Vec<SettingsJson>> {
@@ -306,11 +307,59 @@ impl PlatformDataProvider for AwsDataProvider {
     }
 }
 
-/// This function determines which provider we're currently running on.
+#[cfg(bottlerocket_platform = "aws-dev")]
+struct LocalFileDataProvider;
+
+#[cfg(bottlerocket_platform = "aws-dev")]
+impl LocalFileDataProvider {
+    const USER_DATA_FILE: &'static str = "/etc/early-boot-config/user-data";
+}
+
+#[cfg(bottlerocket_platform = "aws-dev")]
+impl PlatformDataProvider for LocalFileDataProvider {
+    /// Return settings changes from the instance identity document and user data.
+    fn platform_data(&self) -> Result<Vec<SettingsJson>> {
+        let mut output = Vec::new();
+
+        let user_data_str =
+            fs::read_to_string(Self::USER_DATA_FILE).context(error::InputFileRead {
+                path: Self::USER_DATA_FILE,
+            })?;
+
+        // Remove outer "settings" layer before sending to API
+        let mut val: toml::Value =
+            toml::from_str(&user_data_str).context(error::TOMLUserDataParse)?;
+        let table = val.as_table_mut().context(error::UserDataNotTomlTable)?;
+        let inner = table
+            .remove("settings")
+            .context(error::UserDataMissingSettings)?;
+
+        match SettingsJson::from_val(&inner, "user data").map(|s| Some(s)) {
+            Err(e) => return Err(e),
+            Ok(None) => warn!("No user data found."),
+            Ok(Some(s)) => output.push(s),
+        }
+        Ok(output)
+    }
+}
+
+/// This function returns the appropriate data provider for this variant. It exists primarily to
+/// keep the ugly bits of conditional compilation out of the main function.
 fn find_provider() -> Result<Box<dyn PlatformDataProvider>> {
-    // FIXME: We need to decide what we're going to do with this in the future; ask each
-    // provider if they should be used?  In what order?
-    Ok(Box::new(AwsDataProvider))
+    #[cfg(bottlerocket_platform = "aws")]
+    {
+        Ok(Box::new(AwsDataProvider))
+    }
+
+    #[cfg(bottlerocket_platform = "aws-dev")]
+    {
+        if Path::new(LocalFileDataProvider::USER_DATA_FILE).exists() {
+            info!("{} exists, using it", LocalFileDataProvider::USER_DATA_FILE);
+            Ok(Box::new(LocalFileDataProvider))
+        } else {
+            Ok(Box::new(AwsDataProvider))
+        }
+    }
 }
 
 /// SettingsJson represents a change that a provider would like to make in the API.
@@ -410,7 +459,6 @@ async fn run() -> Result<()> {
     info!("early-boot-config started");
 
     // Figure out the current provider
-    info!("Detecting platform data provider");
     let data_provider = find_provider()?;
 
     info!("Retrieving platform-specific data");
