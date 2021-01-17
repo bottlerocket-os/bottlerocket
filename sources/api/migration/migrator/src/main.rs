@@ -29,7 +29,7 @@ use error::Result;
 use nix::{dir::Dir, fcntl::OFlag, sys::stat::Mode, unistd::fsync};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use semver::Version;
-use simplelog::{Config as LogConfig, TermLogger, TerminalMode};
+use simplelog::{Config as LogConfig, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashSet;
 use std::env;
@@ -53,8 +53,8 @@ mod test;
 // https://github.com/shepmaster/snafu/issues/110
 fn main() {
     let args = Args::from_env(env::args());
-    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
-    if let Err(e) = TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed) {
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    if let Err(e) = SimpleLogger::init(args.log_level, LogConfig::default()) {
         eprintln!("{}", e);
         process::exit(1);
     }

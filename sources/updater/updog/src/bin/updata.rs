@@ -10,7 +10,7 @@ extern crate log;
 use crate::error::Result;
 use chrono::{DateTime, Utc};
 use semver::Version;
-use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::fs;
 use std::path::PathBuf;
@@ -251,8 +251,8 @@ enum Command {
 }
 
 fn main_inner() -> Result<()> {
-    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
-    TermLogger::init(LevelFilter::Info, LogConfig::default(), TerminalMode::Mixed)
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    SimpleLogger::init(LevelFilter::Info, LogConfig::default())
         .context(error::Logger)?;
 
     match Command::from_args() {
