@@ -10,6 +10,54 @@ There's also a low-level `raw` subcommand for direct interaction with the HTTP A
 It talks to the Bottlerocket socket by default.
 It can be pointed to another socket using `--socket-path`, for example for local testing.
 
+### Set mode
+
+This allows you to change settings on the system.
+
+After the settings are changed, they'll be committed and applied.
+For example, if you change an NTP setting, the NTP configuration will be updated and the daemon will be restarted.
+
+#### Key=value input
+
+There are two input methods.
+The simpler method looks like this:
+
+```
+apiclient set settings.x.y.z=VALUE
+```
+
+The "settings." prefix on the setting names is optional; this makes it easy to copy and paste settings from documentation, but you can skip the prefix when typing them manually.
+Here's an example call:
+
+```
+apiclient set kernel.lockdown=integrity motd="hi there"
+```
+
+If you're changing a setting whose name requires quoting, please quote the whole key=value argument, so the inner quotes aren't eaten by the shell:
+
+```
+apiclient set 'kubernetes.node-labels."my.label"=hello'
+```
+
+#### JSON input
+
+This simpler key=value form is convenient for most changes, but sometimes you'll want to specify input in JSON form.
+This can be useful if you have multiple changes within a subsection:
+
+```
+apiclient set --json '{"kernel": {"sysctl": {"vm.max_map_count": "262144", "user.max_user_namespaces": "16384"}}}'
+```
+
+It can also be useful if your desired value is "complex" or looks like a different type.
+For example, the "vm.max_map_count" value set above looks like an integer, but the kernel requires a string, so it has to be specified in JSON form and as a string.
+
+As another example, if you want settings.motd to be "42", running `apiclient set motd=42` would fail because `42` is seen as an integer, and motd is a string.
+You can use JSON form to set it:
+
+```
+apiclient set --json '{"motd": "42"}'
+```
+
 ### Update mode
 
 To start, you can check what updates are available:
@@ -36,6 +84,15 @@ apiclient update apply --check --reboot
 ```
 
 > Note that available updates are controlled by your settings under `settings.updates`; see [README](../../../README.md#updates-settings) for details.
+
+### Reboot mode
+
+This will reboot the system.
+You should use this after updating if you didn't specify the `--reboot` flag.
+
+```
+apiclient reboot
+```
 
 ### Raw mode
 
