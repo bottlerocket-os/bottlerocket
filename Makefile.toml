@@ -449,7 +449,7 @@ run_task = "publish-setup"
 # Rather than depend on "build", which currently rebuilds images each run, we
 # check for the image files below to save time.  This does mean that `cargo
 # make` must be run before `cargo make repo`.
-dependencies = ["publish-setup", "publish-tools"]
+dependencies = ["publish-setup", "publish-tools", "build-archives"]
 script_runner = "bash"
 script = [
 '''
@@ -470,14 +470,19 @@ if [ ! -s "${bootlz4}" ] || [ ! -s "${rootlz4}" ] || [ ! -s "${hashlz4}" ]; then
    exit 1
 fi
 
+COPY_REPO_TARGETS=()
+
 # TODO: only add migrations from Release.toml, not all
 MIGRATIONS_DIR="$(mktemp -d)"
 tar xpf "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-migrations.tar" -C "${MIGRATIONS_DIR}"
-ADD_MIGRATION_TARGETS=()
 for file in ${MIGRATIONS_DIR}/*; do
    [ -e "${file}" ] || continue
-   ADD_MIGRATION_TARGETS+=("--copy-target ${file}")
+   COPY_REPO_TARGETS+=("--copy-target ${file}")
 done
+
+# Include the kmod kit in the repo so it's easier to build out-of-tree kernel
+# modules for a given release.
+LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
 
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
@@ -492,7 +497,8 @@ pubsys \
    --boot-image "${bootlz4}" \
    --root-image "${rootlz4}" \
    --hash-image "${hashlz4}" \
-   ${ADD_MIGRATION_TARGETS[*]} \
+   ${LINK_REPO_TARGETS[*]} \
+   ${COPY_REPO_TARGETS[*]} \
    \
    --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
    --release-config-path "${BUILDSYS_RELEASE_CONFIG_PATH}" \
