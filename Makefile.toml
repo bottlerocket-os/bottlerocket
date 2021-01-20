@@ -107,6 +107,10 @@ PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${PUBLISH_REPO}/${BUILDSYS_N
 # The default name of registered AMIs; override by setting PUBLISH_AMI_NAME.
 PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 
+# The name of the kmod kit archive, used to ease building out-of-tree kernel modules.
+BUILDSYS_KMOD_KIT = "${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
+BUILDSYS_KMOD_KIT_PATH="${BUILDSYS_ARCHIVES_DIR}/${BUILDSYS_KMOD_KIT}.tar.xz"
+
 [tasks.setup]
 script = [
 '''
@@ -270,9 +274,6 @@ script_runner = "bash"
 script = [
 '''
 mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
-kmod_kit="${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
-kmod_kit_path="${BUILDSYS_ARCHIVES_DIR}/${kmod_kit}.tar.xz"
-
 
 # Find the most recent kernel archive. If we have more than one, we want the
 # last one that was built.
@@ -285,27 +286,27 @@ if [ "${?}" -ne 0 ] || [ -z "${kernel_archive}" ] || [ ! -s "${kernel_archive}" 
   exit 1
 fi
 
-if [ -s "${kmod_kit_path}" ] && [ "${kmod_kit_path}" -nt "${kernel_archive}" ]; then
-  echo "Existing kmod kit ${kmod_kit_path} is newer than kernel archive ${kernel_archive}; skipping build."
+if [ -s "${BUILDSYS_KMOD_KIT_PATH}" ] && [ "${BUILDSYS_KMOD_KIT_PATH}" -nt "${kernel_archive}" ]; then
+  echo "Existing kmod kit ${BUILDSYS_KMOD_KIT_PATH} is newer than kernel archive ${kernel_archive}; skipping build."
   exit 0
 fi
 
 prepare_kmod_kit="
 set -e -o pipefail
 
-mkdir -p /tmp/kit/${kmod_kit} /tmp/extract
+mkdir -p /tmp/kit/${BUILDSYS_KMOD_KIT} /tmp/extract
 
 # Retrieve the toolchain and kernel archives.
 pushd /tmp/extract >/dev/null
-curl --silent --fail --show-error --output /tmp/kit/${kmod_kit}/toolchain.tar.xz \
+curl --silent --fail --show-error --output /tmp/kit/${BUILDSYS_KMOD_KIT}/toolchain.tar.xz \
   https://${BUILDSYS_SDK_SITE}/${BUILDSYS_TOOLCHAIN}.tar.xz
 find /tmp/rpms -name "${kernel_archive##*/}" \
   -exec rpm2cpio {} \; | cpio -idmu --quiet
-find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/kit/${kmod_kit} \;
+find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/kit/${BUILDSYS_KMOD_KIT} \;
 popd >/dev/null
 
 # Extract them into the same directory.
-pushd /tmp/kit/${kmod_kit} >/dev/null
+pushd /tmp/kit/${BUILDSYS_KMOD_KIT} >/dev/null
 tar xf kernel-devel.tar.xz
 rm kernel-devel.tar.xz
 tar xf toolchain.tar.xz
@@ -314,11 +315,11 @@ popd >/dev/null
 
 # Merge them together into a unified archive.
 pushd /tmp/kit >/dev/null
-tar cf ${kmod_kit}.tar ${kmod_kit}
-xz -T0 ${kmod_kit}.tar
+tar cf ${BUILDSYS_KMOD_KIT}.tar ${BUILDSYS_KMOD_KIT}
+xz -T0 ${BUILDSYS_KMOD_KIT}.tar
 popd >/dev/null
 
-mv /tmp/kit/${kmod_kit}.tar.xz /tmp/archives
+mv /tmp/kit/${BUILDSYS_KMOD_KIT}.tar.xz /tmp/archives
 "
 
 docker run --rm \
