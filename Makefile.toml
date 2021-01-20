@@ -6,6 +6,7 @@ BUILDSYS_ARCH = { script = ["uname -m"] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
+BUILDSYS_STATE_DIR = "${BUILDSYS_BUILD_DIR}/state"
 BUILDSYS_IMAGES_DIR = "${BUILDSYS_BUILD_DIR}/images"
 BUILDSYS_ARCHIVES_DIR = "${BUILDSYS_BUILD_DIR}/archives"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
@@ -126,6 +127,7 @@ esac
 mkdir -p ${BUILDSYS_BUILD_DIR}
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
 mkdir -p ${BUILDSYS_PACKAGES_DIR}
+mkdir -p ${BUILDSYS_STATE_DIR}
 mkdir -p ${GO_MOD_CACHE}
 '''
 ]
@@ -856,6 +858,7 @@ dependencies = [
   "clean-archives",
   "clean-images",
   "clean-repos",
+  "clean-state",
 ]
 
 [tasks.clean-sources]
@@ -903,6 +906,14 @@ script_runner = "bash"
 script = [
 '''
 rm -rf ${PUBLISH_REPO_BASE_DIR}
+'''
+]
+
+[tasks.clean-state]
+script_runner = "bash"
+script = [
+'''
+rm -rf ${BUILDSYS_STATE_DIR}
 '''
 ]
 
