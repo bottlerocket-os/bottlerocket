@@ -119,3 +119,50 @@ See the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setup guide for 
 ## Publish your image
 
 See the [PUBLISHING](PUBLISHING.md) guide for information on deploying Bottlerocket images and repositories.
+
+## Building out-of-tree kernel modules
+
+To further extend Bottlerocket, you may want to build extra kernel modules.
+The specifics of building an out-of-tree module will vary by project, but the first step is to download the "kmod kit" that contains the kernel headers and toolchain you'll need to use.
+
+### Downloading the kmod kit
+
+kmod kits are included in the official Bottlerocket repos starting with Bottlerocket v1.0.6.
+Let's say you want to download the kit for building x86_64 modules for v1.0.6 and variant aws-k8s-1.18.
+
+First, you need tuftool:
+```bash
+cargo install tuftool
+```
+
+Next, you need the Bottlerocket root role, which is used by tuftool to verify the kmod kit.
+This will download and verify the root role itself:
+```bash
+curl -O "https://cache.bottlerocket.aws/root.json"
+sha512sum -c <<<"90393204232a1ad6b0a45528b1f7df1a3e37493b1e05b1c149f081849a292c8dafb4ea5f7ee17bcc664e35f66e37e4cfa4aae9de7a2a28aa31ae6ac3d9bea4d5  root.json"
+```
+
+Next, set your desired parameters, and download the kmod kit:
+```bash
+ARCH=x86_64
+VERSION=v1.0.6
+VARIANT=aws-k8s-1.18
+
+tuftool download . --target-name ${VARIANT}-${ARCH}-kmod-kit-${VERSION}.tar.xz \
+   --root ./root.json \
+   --metadata-url "https://updates.bottlerocket.aws/2020-07-07/${VARIANT}/${ARCH}/" \
+   --targets-url "https://updates.bottlerocket.aws/targets/"
+```
+
+### Using the kmod kit
+
+To use the kmod kit, extract it, and update your PATH to use its toolchain:
+```bash
+tar xf "${VARIANT}-${ARCH}-kmod-kit-${VERSION}.tar.xz"
+
+export CROSS_COMPILE="${ARCH}-bottlerocket-linux-musl-"
+export KERNELDIR="${PWD}/${VARIANT}-${ARCH}-kmod-kit-${VERSION}/kernel-devel
+export PATH="${PWD}/${VARIANT}-${ARCH}-kmod-kit-${VERSION}/toolchain/usr/bin:${PATH}"
+```
+
+Now you can compile modules against the kernel headers in `${KERNELDIR}`.
