@@ -3,22 +3,35 @@
 set -eu -o pipefail
 shopt -qs failglob
 
+OUTPUT_FMT="raw"
+
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
       --package-dir=*) PACKAGE_DIR="${optarg}" ;;
       --output-dir=*) OUTPUT_DIR="${optarg}" ;;
+      --output-fmt=*) OUTPUT_FMT="${optarg}" ;;
    esac
 done
+
+case "${OUTPUT_FMT}" in
+   raw|vmdk) ;;
+   *)
+      echo "unexpected image output format '${OUTPUT_FMT}'" >&2
+      exit 1
+      ;;
+esac
 
 mkdir -p "${OUTPUT_DIR}"
 
 FILENAME_PREFIX="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}"
-DISK_IMAGE_NAME="${FILENAME_PREFIX}.img.lz4"
+
+DISK_IMAGE_BASENAME="${FILENAME_PREFIX}"
+DATA_IMAGE_BASENAME="${FILENAME_PREFIX}-data"
+
 BOOT_IMAGE_NAME="${FILENAME_PREFIX}-boot.ext4.lz4"
 VERITY_IMAGE_NAME="${FILENAME_PREFIX}-root.verity.lz4"
 ROOT_IMAGE_NAME="${FILENAME_PREFIX}-root.ext4.lz4"
-DATA_IMAGE_NAME="${FILENAME_PREFIX}-data.img.lz4"
 
 DISK_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
@@ -206,14 +219,23 @@ dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek=1
 sgdisk -v "${DISK_IMAGE}"
 sgdisk -v "${DATA_IMAGE}"
 
-lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
-lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_NAME}"
+if [[ ${OUTPUT_FMT} == "raw" ]]; then
+  lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.img.lz4"
+  lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+  chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.img.lz4" \
+    "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
+  # Stream optimization is required for creating an Open Virtual Appliance (OVA)
+  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.vmdk"
+  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+  chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.vmdk" \
+    "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+fi
+
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
 lz4 -9vc "${VERITY_IMAGE}" >"${OUTPUT_DIR}/${VERITY_IMAGE_NAME}"
 lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
-chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${DATA_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
+chown 1000:1000 "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${VERITY_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
 

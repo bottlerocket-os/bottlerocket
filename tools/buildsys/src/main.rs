@@ -166,7 +166,8 @@ fn build_variant() -> Result<()> {
         ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParse)?;
 
     if let Some(packages) = manifest.included_packages() {
-        VariantBuilder::build(&packages).context(error::BuildAttempt)?;
+        let image_format = manifest.image_format();
+        VariantBuilder::build(&packages, image_format).context(error::BuildAttempt)?;
     } else {
         println!("cargo:warning=No included packages in manifest. Skipping variant build.");
     }

@@ -152,7 +152,8 @@ ARG VERSION_ID
 ARG BUILD_ID
 ARG NOCACHE
 ARG VARIANT
-ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID}
+ARG IMAGE_FORMAT
+ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} IMAGE_FORMAT=${IMAGE_FORMAT}
 WORKDIR /root
 
 USER root
@@ -160,6 +161,7 @@ RUN --mount=target=/host \
     /host/tools/rpm2img \
       --package-dir=/local/rpms \
       --output-dir=/local/output \
+      --output-fmt=${IMAGE_FORMAT} \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
