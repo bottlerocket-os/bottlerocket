@@ -281,17 +281,19 @@ kernel_archive="$(find "${BUILDSYS_PACKAGES_DIR}" \
 prepare_kmod_kit="
 set -e -o pipefail
 
-mkdir /tmp/${kmod_kit}
+mkdir -p /tmp/kit/${kmod_kit} /tmp/extract
 
 # Retrieve the toolchain and kernel archives.
-curl --silent --fail --show-error --output /tmp/${kmod_kit}/toolchain.tar.xz \
+pushd /tmp/extract >/dev/null
+curl --silent --fail --show-error --output /tmp/kit/${kmod_kit}/toolchain.tar.xz \
   https://${BUILDSYS_SDK_SITE}/${BUILDSYS_TOOLCHAIN}.tar.xz
-find ./rpms -name "${kernel_archive}" \
+find /tmp/rpms -name "${kernel_archive}" \
   -exec rpm2cpio {} \; | cpio -idmu --quiet
-find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/${kmod_kit} \;
+find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/kit/${kmod_kit} \;
+popd >/dev/null
 
 # Extract them into the same directory.
-pushd /tmp/${kmod_kit} >/dev/null
+pushd /tmp/kit/${kmod_kit} >/dev/null
 tar xf kernel-devel.tar.xz
 rm kernel-devel.tar.xz
 tar xf toolchain.tar.xz
@@ -299,20 +301,19 @@ rm toolchain.tar.xz
 popd >/dev/null
 
 # Merge them together into a unified archive.
-pushd /tmp >/dev/null
+pushd /tmp/kit >/dev/null
 tar cf ${kmod_kit}.tar ${kmod_kit}
 xz -T0 ${kmod_kit}.tar
 popd >/dev/null
 
-mv /tmp/${kmod_kit}.tar.xz ./archives
+mv /tmp/kit/${kmod_kit}.tar.xz /tmp/archives
 "
 
 docker run --rm \
   --user "$(id -u):$(id -g)" \
   --security-opt label:disable \
-  -v "${BUILDSYS_PACKAGES_DIR}":/home/builder/rpms \
-  -v "${BUILDSYS_ARCHIVES_DIR}":/home/builder/archives \
-  -w /home/builder \
+  -v "${BUILDSYS_PACKAGES_DIR}":/tmp/rpms \
+  -v "${BUILDSYS_ARCHIVES_DIR}":/tmp/archives \
   "${BUILDSYS_SDK_IMAGE}" \
   bash -c "${prepare_kmod_kit}"
 '''
