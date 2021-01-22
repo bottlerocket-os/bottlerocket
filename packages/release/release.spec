@@ -25,6 +25,9 @@ Source1008: opt.mount
 Source1009: var-lib-bottlerocket.mount
 Source1010: etc-cni.mount
 
+# CD-ROM mount
+Source1015: media-cdrom.mount
+
 # Mounts that require build-time edits.
 Source1020: var-lib-kernel-devel-lower.mount.in
 Source1021: usr-src-kernels.mount.in
@@ -104,7 +107,7 @@ EOF
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} \
+  %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1015} \
   %{buildroot}%{_cross_unitdir}
 
 LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/lower)
@@ -138,6 +141,7 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
 %{_cross_unitdir}/etc-cni.mount
+%{_cross_unitdir}/media-cdrom.mount
 %{_cross_unitdir}/*-lower.mount
 %{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/*-licenses.mount
