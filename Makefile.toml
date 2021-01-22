@@ -266,17 +266,29 @@ cargo build \
 
 [tasks.build-kmod-kit]
 dependencies = ["build-packages"]
+script_runner = "bash"
 script = [
 '''
 mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
 kmod_kit="${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
-rm -f "${BUILDSYS_ARCHIVES_DIR}/${kmod_kit}.tar.xz"
+kmod_kit_path="${BUILDSYS_ARCHIVES_DIR}/${kmod_kit}.tar.xz"
+
 
 # Find the most recent kernel archive. If we have more than one, we want the
 # last one that was built.
 kernel_archive="$(find "${BUILDSYS_PACKAGES_DIR}" \
   -type f -name '*-'"${BUILDSYS_ARCH}"'-kernel-archive-*.rpm' \
-  -printf '%T@ %f\n' | sort -r | awk 'NR==1{print $2}')"
+  -printf '%T@ %p\n' | sort -r | awk 'NR==1{print $2}')"
+
+if [ "${?}" -ne 0 ] || [ -z "${kernel_archive}" ] || [ ! -s "${kernel_archive}" ]; then
+  echo "Unable to find latest kernel archive for ${BUILDSYS_ARCH} in ${BUILDSYS_PACKAGES_DIR}"
+  exit 1
+fi
+
+if [ -s "${kmod_kit_path}" ] && [ "${kmod_kit_path}" -nt "${kernel_archive}" ]; then
+  echo "Existing kmod kit ${kmod_kit_path} is newer than kernel archive ${kernel_archive}; skipping build."
+  exit 0
+fi
 
 prepare_kmod_kit="
 set -e -o pipefail
@@ -287,7 +299,7 @@ mkdir -p /tmp/kit/${kmod_kit} /tmp/extract
 pushd /tmp/extract >/dev/null
 curl --silent --fail --show-error --output /tmp/kit/${kmod_kit}/toolchain.tar.xz \
   https://${BUILDSYS_SDK_SITE}/${BUILDSYS_TOOLCHAIN}.tar.xz
-find /tmp/rpms -name "${kernel_archive}" \
+find /tmp/rpms -name "${kernel_archive##*/}" \
   -exec rpm2cpio {} \; | cpio -idmu --quiet
 find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/kit/${kmod_kit} \;
 popd >/dev/null
