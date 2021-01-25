@@ -1,7 +1,6 @@
 //! The check_expirations module owns the 'check-repo-expirations' subcommand and provide methods for
 //! checking the metadata expirations of a given TUF repository.
 
-use super::RepoTransport;
 use crate::repo::{error as repo_error, repo_urls};
 use crate::Args;
 use chrono::{DateTime, Utc};
@@ -13,8 +12,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use tempfile::tempdir;
-use tough::{ExpirationEnforcement, Limits, Repository, Settings};
+use tough::{ExpirationEnforcement, Repository, RepositoryLoader};
 use url::Url;
 
 /// Checks for metadata expirations for a set of TUF repositories
@@ -42,13 +40,10 @@ pub(crate) struct CheckExpirationsArgs {
 }
 
 /// Checks for upcoming role expirations, gathering them in a map of role to expiration datetime.
-fn find_upcoming_metadata_expiration<T>(
-    repo: &Repository<'_, T>,
+fn find_upcoming_metadata_expiration(
+    repo: &Repository,
     end_date: DateTime<Utc>,
-) -> HashMap<tough::schema::RoleType, DateTime<Utc>>
-where
-    T: tough::Transport,
-{
+) -> HashMap<tough::schema::RoleType, DateTime<Utc>> {
     let mut expirations = HashMap::new();
     info!(
         "Looking for metadata expirations happening from now to {}",
@@ -80,28 +75,23 @@ where
 }
 
 fn check_expirations(
-    transport: &RepoTransport,
     root_role_path: &PathBuf,
     metadata_url: &Url,
     targets_url: &Url,
     expiration_limit: DateTime<Utc>,
 ) -> Result<()> {
-    // Create a temporary directory where the TUF client can store metadata
-    let workdir = tempdir().context(repo_error::TempDir)?;
-    let settings = Settings {
-        root: File::open(root_role_path).context(repo_error::File {
+    // Load the repository
+    let repo = RepositoryLoader::new(
+        File::open(root_role_path).context(repo_error::File {
             path: root_role_path,
         })?,
-        datastore: workdir.path(),
-        metadata_base_url: metadata_url.as_str(),
-        targets_base_url: targets_url.as_str(),
-        limits: Limits::default(),
-        // We're gonna check the expiration ourselves
-        expiration_enforcement: ExpirationEnforcement::Unsafe,
-    };
-
-    // Load the repository
-    let repo = Repository::load(transport, settings).context(repo_error::RepoLoad {
+        metadata_url.clone(),
+        targets_url.clone(),
+    )
+    // We're gonna check the expiration ourselves
+    .expiration_enforcement(ExpirationEnforcement::Unsafe)
+    .load()
+    .context(repo_error::RepoLoad {
         metadata_base_url: metadata_url.clone(),
     })?;
     info!("Loaded TUF repo:\t{}", metadata_url);
@@ -158,7 +148,6 @@ pub(crate) fn run(args: &Args, check_expirations_args: &CheckExpirationsArgs) ->
             missing: format!("definition for repo {}", &check_expirations_args.repo),
         })?;
 
-    let transport = RepoTransport::default();
     let repo_urls = repo_urls(
         &repo_config,
         &check_expirations_args.variant,
@@ -168,7 +157,6 @@ pub(crate) fn run(args: &Args, check_expirations_args: &CheckExpirationsArgs) ->
         repo: &check_expirations_args.repo,
     })?;
     check_expirations(
-        &transport,
         &check_expirations_args.root_role_path,
         &repo_urls.0,
         repo_urls.1,

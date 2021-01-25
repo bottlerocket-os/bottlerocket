@@ -1,7 +1,6 @@
 //! The refresh_repo module owns the 'refresh-repo' subcommand and provide methods for
 //! refreshing and re-signing the metadata files of a given TUF repository.
 
-use super::RepoTransport;
 use crate::repo::{
     error as repo_error, get_signing_key_source, repo_urls, set_expirations, set_versions,
 };
@@ -15,10 +14,9 @@ use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
-use tempfile::tempdir;
 use tough::editor::RepositoryEditor;
 use tough::key_source::KeySource;
-use tough::{ExpirationEnforcement, Limits, Repository, Settings};
+use tough::{ExpirationEnforcement, RepositoryLoader};
 use url::Url;
 
 lazy_static! {
@@ -59,7 +57,6 @@ pub(crate) struct RefreshRepoArgs {
 }
 
 fn refresh_repo(
-    transport: &RepoTransport,
     root_role_path: &PathBuf,
     metadata_out_dir: &PathBuf,
     metadata_url: &Url,
@@ -77,25 +74,23 @@ fn refresh_repo(
         }
     );
 
-    // Create a temporary directory where the TUF client can store metadata
-    let workdir = tempdir().context(repo_error::TempDir)?;
-    let settings = Settings {
-        root: File::open(root_role_path).context(repo_error::File {
-            path: root_role_path,
-        })?,
-        datastore: workdir.path(),
-        metadata_base_url: metadata_url.as_str(),
-        targets_base_url: targets_url.as_str(),
-        limits: Limits::default(),
-        expiration_enforcement: if unsafe_refresh {
-            ExpirationEnforcement::Unsafe
-        } else {
-            ExpirationEnforcement::Safe
-        },
+    let expiration_enforcement = if unsafe_refresh {
+        ExpirationEnforcement::Unsafe
+    } else {
+        ExpirationEnforcement::Safe
     };
 
     // Load the repository and get the repo editor for it
-    let repo = Repository::load(transport, settings).context(repo_error::RepoLoad {
+    let repo = RepositoryLoader::new(
+        File::open(root_role_path).context(repo_error::File {
+            path: root_role_path,
+        })?,
+        metadata_url.clone(),
+        targets_url.clone(),
+    )
+    .expiration_enforcement(expiration_enforcement)
+    .load()
+    .context(repo_error::RepoLoad {
         metadata_base_url: metadata_url.clone(),
     })?;
     let mut repo_editor =
@@ -167,7 +162,6 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
         RepoExpirationPolicy::from_path(&refresh_repo_args.repo_expiration_policy_path)
             .context(repo_error::Config)?;
 
-    let transport = RepoTransport::default();
     let repo_urls = repo_urls(
         &repo_config,
         &refresh_repo_args.variant,
@@ -177,7 +171,6 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
         repo: &refresh_repo_args.repo,
     })?;
     refresh_repo(
-        &transport,
         &refresh_repo_args.root_role_path,
         &refresh_repo_args
             .outdir

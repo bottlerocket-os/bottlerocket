@@ -20,8 +20,7 @@ regex = "1.1"
 semver = "0.11"
 simplelog = "0.9"
 snafu = "0.6"
-tempfile = "3.1.0"
-tough = "0.8"
+tough = "0.10"
 update_metadata = { path = "../../../updater/update_metadata" }
 url = "2.1.1"
 
@@ -31,6 +30,7 @@ cargo-readme = "3.1"
 [dev-dependencies]
 chrono = "0.4.11"
 storewolf = { path = "../../storewolf" }
+tempfile = "3.1.0"
 
 [[bin]]
 name = "migrator"

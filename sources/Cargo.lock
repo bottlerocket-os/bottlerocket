@@ -884,6 +884,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
+name = "dyn-clone"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee2626afccd7561a06cf1367e2950c4718ea04565e20fb5029b6c7d8ad09abcf"
+
+[[package]]
 name = "early-boot-config"
 version = "0.1.0"
 dependencies = [
@@ -3178,11 +3184,12 @@ dependencies = [
 
 [[package]]
 name = "tough"
-version = "0.8.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71b8d86994e9da2233fc30c54223bc448a15bdb782f8060c66107fc6b88619ba"
+checksum = "7dc3534fa46badec98ac633028f47a3cea590e9c9a63d85bd15a0436f8b6eb94"
 dependencies = [
  "chrono",
+ "dyn-clone",
  "globset",
  "hex",
  "log",
@@ -3194,6 +3201,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "snafu",
+ "tempfile",
  "untrusted",
  "url",
  "walkdir",

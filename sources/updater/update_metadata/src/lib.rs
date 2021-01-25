@@ -444,7 +444,7 @@ fn find_migrations_forward(
     Ok(targets)
 }
 
-pub fn load_manifest<T: tough::Transport>(repository: &tough::Repository<T>) -> Result<Manifest> {
+pub fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
     let target = "manifest.json";
     serde_json::from_reader(
         repository
