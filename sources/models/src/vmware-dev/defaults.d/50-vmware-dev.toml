@@ -1,0 +1,18 @@
+[configuration-files.containerd-config-toml]
+# No override to path
+template-path = "/usr/share/templates/containerd-config-toml_vmware-dev"
+
+# Docker
+[services.docker]
+restart-commands = ["/bin/systemctl try-restart docker.service"]
+configuration-files = ["proxy-env"]
+
+# Network
+[metadata.settings.network]
+affected-services = ["containerd", "docker", "host-containerd"]
+
+# NTP
+# Use a public endpoint, don't assume any local ones.
+[settings.ntp]
+time-servers = ["2.amazon.pool.ntp.org"]
+
