@@ -29,6 +29,7 @@ mkdir -p %{buildroot}%{_cross_mandir}
 mkdir -p %{buildroot}%{_cross_localstatedir}
 mkdir -p %{buildroot}/{boot,dev,proc,root,run,sys,tmp}
 mkdir -p %{buildroot}/{home,local,media,mnt,opt,srv}
+mkdir -p %{buildroot}/media/cdrom
 
 ln -s .%{_cross_prefix} %{buildroot}%{_prefix}
 ln -s .%{_cross_bindir} %{buildroot}/bin
