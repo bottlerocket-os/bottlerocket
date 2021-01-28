@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -11,6 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecrpublic"
 	"github.com/awslabs/amazon-ecr-containerd-resolver/ecr"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -20,6 +24,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/remotes/docker"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -664,19 +669,68 @@ func tagImage(ctx context.Context, imageName string, newImageName string, client
 
 // withDynamicResolver provides an initialized resolver for use with ref.
 func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
-	if !strings.HasPrefix(ref, "ecr.aws/") {
-		// not handled here
-		return func(_ *containerd.Client, _ *containerd.RemoteContext) error { return nil }
-	}
+	noOp := func(_ *containerd.Client, _ *containerd.RemoteContext) error { return nil }
 
-	return func(_ *containerd.Client, c *containerd.RemoteContext) error {
-		// Create the ECR resolver
-		resolver, err := ecr.NewResolver()
-		if err != nil {
-			return errors.Wrap(err, "Failed to create ECR resolver")
+	switch {
+	// For ECR registries, we need to use the Amazon ECR resolver
+	case strings.HasPrefix(ref, "ecr.aws/"):
+		return func(_ *containerd.Client, c *containerd.RemoteContext) error {
+			// Create the Amazon ECR resolver
+			resolver, err := ecr.NewResolver()
+			if err != nil {
+				return errors.Wrap(err, "Failed to create ECR resolver")
+			}
+			log.G(ctx).WithField("ref", ref).Info("pulling with Amazon ECR Resolver")
+			c.Resolver = resolver
+			return nil
 		}
-		log.G(ctx).WithField("ref", ref).Info("pulling with Amazon ECR Resolver")
-		c.Resolver = resolver
-		return nil
+	// For Amazon ECR Public registries, we should try and fetch credentials before resolving the image reference
+	case strings.HasPrefix(ref, "public.ecr.aws/"):
+		// Try to get credentials for authenticated pulls from ECR Public
+		session := session.Must(session.NewSession())
+		// The ECR Public API is only available in us-east-1 today
+		publicConfig := aws.NewConfig().WithRegion("us-east-1")
+		client := ecrpublic.New(session, publicConfig)
+		output, err := client.GetAuthorizationToken(&ecrpublic.GetAuthorizationTokenInput{})
+		if err != nil {
+			log.G(ctx).Warn("ecr-public: failed to get authorization token, falling back to default resolver (unauthenticated pull)")
+			return noOp
+		}
+		if output == nil || output.AuthorizationData == nil {
+			log.G(ctx).Warn("ecr-public: missing AuthorizationData in ECR Public GetAuthorizationToken response, falling back to default resolver (unauthenticated pull)")
+			return noOp
+		}
+		authToken, err := base64.StdEncoding.DecodeString(aws.StringValue(output.AuthorizationData.AuthorizationToken))
+		if err != nil {
+			log.G(ctx).Warn("ecr-public: unable to decode authorization token, falling back to default resolver (unauthenticated pull)")
+			return noOp
+		}
+		tokens := strings.SplitN(string(authToken), ":", 2)
+		if len(tokens) != 2 {
+			log.G(ctx).Warn("ecr-public: invalid credentials decoded from authorization token, falling back to default resolver (unauthenticated pull)")
+			return noOp
+		}
+		// Use the fetched authorization credentials to resolve the image
+		authOpt := docker.WithAuthCreds(func(host string) (string, string, error) {
+			// Double-check to make sure the we're doing this for an ECR Public registry
+			if host != "public.ecr.aws" {
+				return "", "", errors.New("ecr-public: expected image to start with public.ecr.aws")
+			}
+			return tokens[0], tokens[1], nil
+		})
+		authorizer := docker.NewDockerAuthorizer(authOpt)
+		resolverOpt := docker.ResolverOptions{
+			Hosts: docker.ConfigureDefaultRegistries(docker.WithAuthorizer(authorizer)),
+		}
+
+		return func(_ *containerd.Client, c *containerd.RemoteContext) error {
+			resolver := docker.NewResolver(resolverOpt)
+			log.G(ctx).WithField("ref", ref).Info("pulling from ECR Public")
+			c.Resolver = resolver
+			return nil
+		}
+	default:
+		// For all other registries
+		return noOp
 	}
 }

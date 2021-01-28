@@ -12,8 +12,8 @@ github.com/Microsoft/hcsshim v0.8.9/go.mod h1:5692vkUqntj1idxauYlpoINNKeqCiG6Sg3
 github.com/Microsoft/hcsshim v0.8.10 h1:k5wTrpnVU2/xv8ZuzGkbXVd3js5zJ8RnumPo5RxiIxU=
 github.com/Microsoft/hcsshim v0.8.10/go.mod h1:g5uw8EV2mAlzqe94tfNBNdr89fnbD/n3HV0OhsddkmM=
 github.com/aws/aws-sdk-go v1.32.13/go.mod h1:5zCpMtNQVjRREroY7sYe8lOMRSxkhG6MZveU8YkpAk0=
-github.com/aws/aws-sdk-go v1.35.25 h1:0+UC6ZquMOLvYABoz0olShCAe+M9oKllgPfr2hnv9zE=
-github.com/aws/aws-sdk-go v1.35.25/go.mod h1:tlPOdRjfxPBpNIwqDj61rmsnA85v9jc0Ps9+muhnW+k=
+github.com/aws/aws-sdk-go v1.37.0 h1:GzFnhOIsrGyQ69s7VgqtrG2BG8v7X7vwB3Xpbd/DBBk=
+github.com/aws/aws-sdk-go v1.37.0/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20200922205237-bbd7175f7bd0 h1:mxzIxXHpy2nmQH1FG/5y0Mr1LRk7RqzwBB+cKe0YwmQ=
 github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20200922205237-bbd7175f7bd0/go.mod h1:KuTNnZvgS7awNYUpeTkWpvz3GZoj6GNkwr/Mn2TCF8Y=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
