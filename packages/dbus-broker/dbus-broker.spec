@@ -1,5 +1,5 @@
 Name: %{_cross_os}dbus-broker
-Version: 24
+Version: 26
 Release: 1%{?dist}
 Summary: D-BUS message broker
 License: Apache-2.0

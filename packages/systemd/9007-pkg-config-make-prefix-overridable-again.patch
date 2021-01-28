@@ -1,0 +1,77 @@
+From c5bda93ca9c502ff982323a1645b55f37a88e9b9 Mon Sep 17 00:00:00 2001
+From: Jan Tojnar <jtojnar@gmail.com>
+Date: Sat, 2 Jan 2021 02:46:33 +0100
+Subject: [PATCH] pkg-config: make prefix overridable again
+
+While we don't support prefix being != /usr, and this is hardcoded
+all over the place, variables in pkg-config file are expected
+to have overridable base directory.
+
+This is important for at least the following two use cases:
+
+- Installing projects to non-FHS package-specific prefixes for Nix-style
+  package managers. Of course, it is then their responsibility
+  to ensure systemd can find the service files.
+- Installing to local path for development purposes.
+  This is a compromise between running a program from a build directory,
+  and running it fully installed to system prefix.
+
+You will not want to write to system prefix in either case.
+
+For more information, see also
+https://www.bassi.io/articles/2018/03/15/pkg-config-and-paths/
+
+Fixes https://github.com/systemd/systemd/issues/18082
+
+Partially reverts 6e65df89c348242dbd10036abc7dd5e8181cf733
+---
+ src/core/systemd.pc.in | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/core/systemd.pc.in b/src/core/systemd.pc.in
+index f2c045511d..b5cc8f94a5 100644
+--- a/src/core/systemd.pc.in
++++ b/src/core/systemd.pc.in
+@@ -26,10 +26,10 @@ systemdsystemunitdir=${systemd_system_unit_dir}
+ systemd_system_preset_dir=${rootprefix}/lib/systemd/system-preset
+ systemdsystempresetdir=${systemd_system_preset_dir}
+ 
+-systemd_user_unit_dir=/usr/lib/systemd/user
++systemd_user_unit_dir=${prefix}/lib/systemd/user
+ systemduserunitdir=${systemd_user_unit_dir}
+ 
+-systemd_user_preset_dir=/usr/lib/systemd/user-preset
++systemd_user_preset_dir=${prefix}/lib/systemd/user-preset
+ systemduserpresetdir=${systemd_user_preset_dir}
+ 
+ systemd_system_conf_dir=${sysconfdir}/systemd/system
+@@ -47,7 +47,7 @@ systemduserunitpath=${systemd_user_unit_path}
+ systemd_system_generator_dir=${root_prefix}/lib/systemd/system-generators
+ systemdsystemgeneratordir=${systemd_system_generator_dir}
+ 
+-systemd_user_generator_dir=/usr/lib/systemd/user-generators
++systemd_user_generator_dir=${prefix}/lib/systemd/user-generators
+ systemdusergeneratordir=${systemd_user_generator_dir}
+ 
+ systemd_system_generator_path=/run/systemd/system-generators:/etc/systemd/system-generators:/usr/local/lib/systemd/system-generators:${systemd_system_generator_dir}
+@@ -62,7 +62,7 @@ systemdsleepdir=${systemd_sleep_dir}
+ systemd_shutdown_dir=${root_prefix}/lib/systemd/system-shutdown
+ systemdshutdowndir=${systemd_shutdown_dir}
+ 
+-tmpfiles_dir=/usr/lib/tmpfiles.d
++tmpfiles_dir=${prefix}/lib/tmpfiles.d
+ tmpfilesdir=${tmpfiles_dir}
+ 
+ sysusers_dir=${rootprefix}/lib/sysusers.d
+@@ -77,7 +77,7 @@ binfmtdir=${binfmt_dir}
+ modules_load_dir=${rootprefix}/lib/modules-load.d
+ modulesloaddir=${modules_load_dir}
+ 
+-catalog_dir=/usr/lib/systemd/catalog
++catalog_dir=${prefix}/lib/systemd/catalog
+ catalogdir=${catalog_dir}
+ 
+ system_uid_max=@SYSTEM_UID_MAX@
+-- 
+2.17.1
+
