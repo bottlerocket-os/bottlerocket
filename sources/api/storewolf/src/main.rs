@@ -27,7 +27,6 @@ use datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use model::modeled_types::SingleLineString;
 
-// FIXME Get these from configuration in the future
 // Shared transaction used by boot-time services.
 const TRANSACTION: &str = "bottlerocket-launch";
 
