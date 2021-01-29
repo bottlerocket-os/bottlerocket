@@ -3,22 +3,35 @@
 set -eu -o pipefail
 shopt -qs failglob
 
+OUTPUT_FMT="raw"
+
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
       --package-dir=*) PACKAGE_DIR="${optarg}" ;;
       --output-dir=*) OUTPUT_DIR="${optarg}" ;;
+      --output-fmt=*) OUTPUT_FMT="${optarg}" ;;
    esac
 done
+
+case "${OUTPUT_FMT}" in
+   raw|vmdk) ;;
+   *)
+      echo "unexpected image output format '${OUTPUT_FMT}'" >&2
+      exit 1
+      ;;
+esac
 
 mkdir -p "${OUTPUT_DIR}"
 
 FILENAME_PREFIX="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}"
-DISK_IMAGE_NAME="${FILENAME_PREFIX}.img.lz4"
+
+DISK_IMAGE_BASENAME="${FILENAME_PREFIX}"
+DATA_IMAGE_BASENAME="${FILENAME_PREFIX}-data"
+
 BOOT_IMAGE_NAME="${FILENAME_PREFIX}-boot.ext4.lz4"
 VERITY_IMAGE_NAME="${FILENAME_PREFIX}-root.verity.lz4"
 ROOT_IMAGE_NAME="${FILENAME_PREFIX}-root.ext4.lz4"
-DATA_IMAGE_NAME="${FILENAME_PREFIX}-data.img.lz4"
 
 DISK_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
@@ -90,13 +103,13 @@ rm -rf "${ROOT_MOUNT}"/var/lib "${ROOT_MOUNT}"/usr/share/licenses/*
 if [[ "${ARCH}" == "x86_64" ]]; then
   SYS_ROOT="x86_64-bottlerocket-linux-gnu/sys-root"
   # MBR and BIOS-BOOT
-  echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
+  echo "(hd0) ${DISK_IMAGE}" > "${ROOT_MOUNT}/boot/grub/device.map"
   "${ROOT_MOUNT}/sbin/grub-bios-setup" \
      --directory="${ROOT_MOUNT}/boot/grub" \
      --device-map="${ROOT_MOUNT}/boot/grub/device.map" \
      --root="hd0" \
      --skip-fs-probe \
-     ${DISK_IMAGE}
+     "${DISK_IMAGE}"
 
   rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
 else
@@ -104,29 +117,29 @@ else
   # For aarch64 we need an EFI partition instead, formatted
   # FAT32 with the .efi binary at the correct path, eg /efi/boot.
   # grub-mkimage has put bootaa64.efi at /boot/efi/EFI/BOOT
-  mv ${ROOT_MOUNT}/boot/efi/* "${EFI_MOUNT}"
+  mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
 
   # The 'recommended' size for the EFI partition is 100MB but our aarch64.efi
   # only takes up around 700KB, so this will suffice for now.
-  dd if=/dev/zero of=${EFI_IMAGE} bs=1M count=4
+  dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count=4
   mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((4*2048))
-  mmd -i ${EFI_IMAGE} ::/EFI
-  mmd -i ${EFI_IMAGE} ::/EFI/BOOT
-  mcopy -i ${EFI_IMAGE} ${EFI_MOUNT}/EFI/BOOT/bootaa64.efi ::/EFI/BOOT
+  mmd -i "${EFI_IMAGE}" ::/EFI
+  mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
+  mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT/bootaa64.efi" ::/EFI/BOOT
   dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=1
 
   # Create the grub directory which grub-bios-setup would have otherwise done.
-  mkdir -p ${ROOT_MOUNT}/boot/grub
+  mkdir -p "${ROOT_MOUNT}/boot/grub"
 fi
 
 # Now that we're done messing with /, move /boot out of it
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # Set the Bottlerocket variant, version, and build-id
-echo "PRETTY_NAME=\"Bottlerocket OS ${VERSION_ID}\"" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
-echo "VARIANT_ID=${VARIANT}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
-echo "VERSION_ID=${VERSION_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
-echo "BUILD_ID=${BUILD_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
+echo "PRETTY_NAME=\"Bottlerocket OS ${VERSION_ID}\"" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+echo "VARIANT_ID=${VARIANT}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+echo "VERSION_ID=${VERSION_ID}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+echo "BUILD_ID=${BUILD_ID}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
 
 # BOTTLEROCKET-ROOT-A
 mkdir -p "${ROOT_MOUNT}/lost+found"
@@ -159,7 +172,7 @@ veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
 dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=965
 
 # write GRUB config
-cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
+cat <<EOF > "${BOOT_MOUNT}/grub/grub.cfg"
 set default="0"
 set timeout="0"
 
@@ -206,14 +219,23 @@ dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek=1
 sgdisk -v "${DISK_IMAGE}"
 sgdisk -v "${DATA_IMAGE}"
 
-lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_NAME}"
-lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_NAME}"
+if [[ ${OUTPUT_FMT} == "raw" ]]; then
+  lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.img.lz4"
+  lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+  chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.img.lz4" \
+    "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
+  # Stream optimization is required for creating an Open Virtual Appliance (OVA)
+  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.vmdk"
+  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+  chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.vmdk" \
+    "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+fi
+
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
 lz4 -9vc "${VERITY_IMAGE}" >"${OUTPUT_DIR}/${VERITY_IMAGE_NAME}"
 lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
-chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${DATA_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
+chown 1000:1000 "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${VERITY_IMAGE_NAME}" \
     "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
 

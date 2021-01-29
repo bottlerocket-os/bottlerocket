@@ -383,18 +383,11 @@ dependencies = ["build-variant"]
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
-ln -snf ../${BUILDSYS_NAME_FULL}.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}.img.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-data.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-data.img.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-boot.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-boot.ext4.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-root.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-root.ext4.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-root.verity.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-root.verity.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-migrations.tar \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-migrations.tar
+for artifact in ${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}*; do
+  file_name="${artifact##*/}"
+  link_name="${file_name/${BUILDSYS_NAME_FULL}/${BUILDSYS_NAME_VARIANT}}"
+  ln -snf "../${file_name}" "${BUILDSYS_OUTPUT_DIR}/latest/${link_name}"
+done
 '''
 ]
 

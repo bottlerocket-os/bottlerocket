@@ -19,6 +19,8 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use walkdir::{DirEntry, WalkDir};
 
+use crate::manifest::ImageFormat;
+
 /*
 There's a bug in BuildKit that can lead to a build failure during parallel
 `docker build` executions:
@@ -46,7 +48,7 @@ impl PackageBuilder {
         let arch = getenv("BUILDSYS_ARCH")?;
         let output_dir: PathBuf = getenv("BUILDSYS_PACKAGES_DIR")?.into();
 
-        // We do *not* want to rebuild most packages when the variant changes, becauses most aren't
+        // We do *not* want to rebuild most packages when the variant changes, because most aren't
         // affected; packages that care about variant should "echo cargo:rerun-if-env-changed=VAR"
         // themselves in the package's spec file.
         let var = "BUILDSYS_VARIANT";
@@ -82,7 +84,7 @@ pub(crate) struct VariantBuilder;
 
 impl VariantBuilder {
     /// Build a variant with the specified packages installed.
-    pub(crate) fn build(packages: &[String]) -> Result<Self> {
+    pub(crate) fn build(packages: &[String], image_format: Option<&ImageFormat>) -> Result<Self> {
         // We want PACKAGES to be a value that contains spaces, since that's
         // easier to work with in the shell than other forms of structured data.
         let packages = packages.join("|");
@@ -91,6 +93,10 @@ impl VariantBuilder {
         let version_image = getenv("BUILDSYS_VERSION_IMAGE")?;
         let version_build = getenv("BUILDSYS_VERSION_BUILD")?;
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
+        let image_format = match image_format {
+            Some(ImageFormat::Raw) | None => String::from("raw"),
+            Some(ImageFormat::Vmdk) => String::from("vmdk"),
+        };
 
         // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
@@ -101,12 +107,14 @@ impl VariantBuilder {
              --build-arg ARCH={arch} \
              --build-arg VARIANT={variant} \
              --build-arg VERSION_ID={version_image} \
-             --build-arg BUILD_ID={version_build}",
+             --build-arg BUILD_ID={version_build} \
+             --build-arg IMAGE_FORMAT={image_format}",
             packages = packages,
             arch = arch,
             variant = variant,
             version_image = version_image,
             version_build = version_build,
+            image_format = image_format,
         );
         let tag = format!(
             "buildsys-var-{variant}-{arch}",
