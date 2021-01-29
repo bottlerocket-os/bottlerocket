@@ -11,11 +11,13 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient" }
+base64 = "0.13"
 http = "0.2"
 log = "0.4"
 reqwest = { version = "0.10", default-features = false, features = ["blocking"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
+serde-xml-rs = "0.4.1"
 simplelog = "0.9"
 snafu = "0.6"
 tokio = { version = "0.2", default-features = false, features = ["macros", "rt-threaded"] }
