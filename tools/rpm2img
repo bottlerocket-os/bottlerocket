@@ -103,13 +103,13 @@ rm -rf "${ROOT_MOUNT}"/var/lib "${ROOT_MOUNT}"/usr/share/licenses/*
 if [[ "${ARCH}" == "x86_64" ]]; then
   SYS_ROOT="x86_64-bottlerocket-linux-gnu/sys-root"
   # MBR and BIOS-BOOT
-  echo "(hd0) ${DISK_IMAGE}" > ${ROOT_MOUNT}/boot/grub/device.map
+  echo "(hd0) ${DISK_IMAGE}" > "${ROOT_MOUNT}/boot/grub/device.map"
   "${ROOT_MOUNT}/sbin/grub-bios-setup" \
      --directory="${ROOT_MOUNT}/boot/grub" \
      --device-map="${ROOT_MOUNT}/boot/grub/device.map" \
      --root="hd0" \
      --skip-fs-probe \
-     ${DISK_IMAGE}
+     "${DISK_IMAGE}"
 
   rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
 else
@@ -117,29 +117,29 @@ else
   # For aarch64 we need an EFI partition instead, formatted
   # FAT32 with the .efi binary at the correct path, eg /efi/boot.
   # grub-mkimage has put bootaa64.efi at /boot/efi/EFI/BOOT
-  mv ${ROOT_MOUNT}/boot/efi/* "${EFI_MOUNT}"
+  mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
 
   # The 'recommended' size for the EFI partition is 100MB but our aarch64.efi
   # only takes up around 700KB, so this will suffice for now.
-  dd if=/dev/zero of=${EFI_IMAGE} bs=1M count=4
+  dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count=4
   mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((4*2048))
-  mmd -i ${EFI_IMAGE} ::/EFI
-  mmd -i ${EFI_IMAGE} ::/EFI/BOOT
-  mcopy -i ${EFI_IMAGE} ${EFI_MOUNT}/EFI/BOOT/bootaa64.efi ::/EFI/BOOT
+  mmd -i "${EFI_IMAGE}" ::/EFI
+  mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
+  mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT/bootaa64.efi" ::/EFI/BOOT
   dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=1
 
   # Create the grub directory which grub-bios-setup would have otherwise done.
-  mkdir -p ${ROOT_MOUNT}/boot/grub
+  mkdir -p "${ROOT_MOUNT}/boot/grub"
 fi
 
 # Now that we're done messing with /, move /boot out of it
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # Set the Bottlerocket variant, version, and build-id
-echo "PRETTY_NAME=\"Bottlerocket OS ${VERSION_ID}\"" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
-echo "VARIANT_ID=${VARIANT}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
-echo "VERSION_ID=${VERSION_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
-echo "BUILD_ID=${BUILD_ID}" >> ${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release
+echo "PRETTY_NAME=\"Bottlerocket OS ${VERSION_ID}\"" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+echo "VARIANT_ID=${VARIANT}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+echo "VERSION_ID=${VERSION_ID}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+echo "BUILD_ID=${BUILD_ID}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
 
 # BOTTLEROCKET-ROOT-A
 mkdir -p "${ROOT_MOUNT}/lost+found"
@@ -172,7 +172,7 @@ veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
 dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=965
 
 # write GRUB config
-cat <<EOF > ${BOOT_MOUNT}/grub/grub.cfg
+cat <<EOF > "${BOOT_MOUNT}/grub/grub.cfg"
 set default="0"
 set timeout="0"
 
