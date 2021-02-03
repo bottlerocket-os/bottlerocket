@@ -1,0 +1,65 @@
+From 42f3871864a49f492d7a3f014ea3930c5f20b14d Mon Sep 17 00:00:00 2001
+From: Brian Goff <cpuguy83@gmail.com>
+Date: Wed, 9 Sep 2020 16:42:35 -0700
+Subject: [PATCH] Always consume shim logs
+
+These fifos fill up if unconsumed, so always consume them.
+
+Signed-off-by: Brian Goff <cpuguy83@gmail.com>
+(cherry picked from commit dab7bd0c4549a6a012004326f7415770c23afde4)
+Signed-off-by: Derek McGowan <derek@mcg.dev>
+---
+ runtime/v1/shim/client/client.go | 31 +++++++++++++++++--------------
+ 1 file changed, 17 insertions(+), 14 deletions(-)
+
+diff --git a/runtime/v1/shim/client/client.go b/runtime/v1/shim/client/client.go
+index 562ee6ca48..9653454afc 100644
+--- a/runtime/v1/shim/client/client.go
++++ b/runtime/v1/shim/client/client.go
+@@ -22,6 +22,7 @@ import (
+ 	"context"
+ 	"fmt"
+ 	"io"
++	"io/ioutil"
+ 	"net"
+ 	"os"
+ 	"os/exec"
+@@ -67,22 +68,24 @@ func WithStart(binary, address, daemonAddress, cgroup string, debug bool, exitHa
+ 		}
+ 		defer f.Close()
+ 
+-		var stdoutLog io.ReadWriteCloser
+-		var stderrLog io.ReadWriteCloser
+-		if debug {
+-			stdoutLog, err = v1.OpenShimStdoutLog(ctx, config.WorkDir)
+-			if err != nil {
+-				return nil, nil, errors.Wrapf(err, "failed to create stdout log")
+-			}
+-
+-			stderrLog, err = v1.OpenShimStderrLog(ctx, config.WorkDir)
+-			if err != nil {
+-				return nil, nil, errors.Wrapf(err, "failed to create stderr log")
+-			}
++		stdoutCopy := ioutil.Discard
++		stderrCopy := ioutil.Discard
++		stdoutLog, err := v1.OpenShimStdoutLog(ctx, config.WorkDir)
++		if err != nil {
++			return nil, nil, errors.Wrapf(err, "failed to create stdout log")
++		}
+ 
+-			go io.Copy(os.Stdout, stdoutLog)
+-			go io.Copy(os.Stderr, stderrLog)
++		stderrLog, err := v1.OpenShimStderrLog(ctx, config.WorkDir)
++		if err != nil {
++			return nil, nil, errors.Wrapf(err, "failed to create stderr log")
+ 		}
++		if debug {
++			stdoutCopy = os.Stdout
++			stderrCopy = os.Stderr
++		}
++
++		go io.Copy(stdoutCopy, stdoutLog)
++		go io.Copy(stderrCopy, stderrLog)
+ 
+ 		cmd, err := newCommand(binary, daemonAddress, debug, config, f, stdoutLog, stderrLog)
+ 		if err != nil {

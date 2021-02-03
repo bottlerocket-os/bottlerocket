@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Environment>
+    <PropertySection>
+        <Property key="foo" value="bar"/>
+        <!-- The user data value is the base64 encoded string 'settings.motd = "hello"' -->
+        <Property key="user-data" value="c2V0dGluZ3MubW90ZCA9ICJoZWxsbyI="/>
+    </PropertySection>
+
+</Environment>

@@ -9,9 +9,9 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-path = "iputils-s20190709.tar.gz"
-url = "https://github.com/iputils/iputils/archive/s20190709.tar.gz"
-sha512 = "5db18ac49fa46ed810da4d508e78f4baf2d5c07e7f923eb49d005ad8745743d8861e5788b34a7e37fb7261cee7ddfb768b737eee9d200502ea53537142cac6b5"
+path = "iputils-s20200821.tar.gz"
+url = "https://github.com/iputils/iputils/archive/s20200821.tar.gz"
+sha512 = "4a57c3637cdd9aab2600682774e27370716cbdf1c7ac8ae61bf86c21c08701a5b697792df4aa95309b196eaa74f3cb6b2836a40f04da0e602156e982ac99d8c9"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

@@ -147,7 +147,10 @@ pub enum Error {
     ActivePartition,
 
     #[snafu(display("Logger setup error: {}", source))]
-    Logger { source: simplelog::TermLogError },
+    Logger { source: log::SetLoggerError },
+
+    #[snafu(display("Unable to create a tokio runtime: {}", source))]
+    Runtime { source: std::io::Error },
 }
 
 /// Map errors to specific exit codes to return to caller

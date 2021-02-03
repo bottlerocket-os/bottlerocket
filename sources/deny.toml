@@ -11,7 +11,7 @@ confidence-threshold = 0.93
 
 allow = [
     "Apache-2.0",
-    "BSD-2-Clause",
+    #"BSD-2-Clause", # OK but currently unused; commenting to prevent warning
     "BSD-3-Clause",
     "BSL-1.0",
     #"CC0-1.0",  # OK but currently unused; commenting to prevent warning

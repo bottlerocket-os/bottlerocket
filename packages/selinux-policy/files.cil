@@ -1,5 +1,5 @@
 ; Permission groups for files.
-(classmap files (relabel mount relax enter load mutate watch))
+(classmap files (relabel mount relax enter load mutate block))
 
 ; Permission group for relabeling files.
 (classmapping files relabel relabel_file)
@@ -45,15 +45,14 @@
 (classmapping files load load_filesystem)
 (classmapping files load load_fd)
 
-; Permission group for watching files.
-(classmapping files watch watch_file)
-(classmapping files watch watch_dir)
-(classmapping files watch watch_lnk_file)
-(classmapping files watch watch_chr_file)
-(classmapping files watch watch_blk_file)
-(classmapping files watch watch_sock_file)
-(classmapping files watch watch_fifo_file)
-(classmapping files watch watch_filesystem)
+; Permission group for blocking access to files.
+(classmapping files block block_file)
+(classmapping files block block_dir)
+(classmapping files block block_lnk_file)
+(classmapping files block block_chr_file)
+(classmapping files block block_blk_file)
+(classmapping files block block_sock_file)
+(classmapping files block block_fifo_file)
 
 ; Permission group for mutating files.
 (classmapping files mutate mutate_file)
@@ -89,7 +88,7 @@
 (classpermissionset relabel_fifo_file (
   fifo_file (relabelfrom relabelto)))
 (classpermissionset relabel_filesystem (
-  filesystem (associate relabelfrom relabelto)))
+  filesystem (relabelfrom relabelto)))
 (classpermissionset relabel_kernel_service (
   kernel_service (create_files_as)))
 
@@ -159,49 +158,61 @@
 (classpermission load_filesystem)
 (classpermission load_fd)
 (classpermissionset load_file (
-  file (execute getattr ioctl map open read execute_no_trans)))
+  file (
+    execute getattr ioctl map open read execute_no_trans
+    watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_dir (
-  dir (execute getattr ioctl map open read search)))
+  dir (
+    execute getattr ioctl map open read search
+    watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_lnk_file (
-  lnk_file (execute ioctl getattr map open read)))
+  lnk_file (
+    execute ioctl getattr map open read
+    watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_chr_file (
-  chr_file (execute ioctl getattr map open read)))
+  chr_file (
+    execute ioctl getattr map open read
+    watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_blk_file (
-  blk_file (execute ioctl getattr map open read)))
+  blk_file (
+    execute ioctl getattr map open read
+    watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_sock_file (
-  sock_file (execute ioctl getattr map open read)))
+  sock_file (
+    execute ioctl getattr map open read
+    watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_fifo_file (
-  fifo_file (execute ioctl getattr map open read)))
+  fifo_file (
+    execute ioctl getattr map open read
+    watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_filesystem (
-  filesystem (getattr quotaget)))
+  filesystem (
+    getattr quotaget watch)))
 (classpermissionset load_fd (
   fd (use)))
 
-; Sets of permissions for watching file objects.
-(classpermission watch_file)
-(classpermission watch_dir)
-(classpermission watch_lnk_file)
-(classpermission watch_chr_file)
-(classpermission watch_blk_file)
-(classpermission watch_sock_file)
-(classpermission watch_fifo_file)
-(classpermission watch_filesystem)
-(classpermissionset watch_file (
-  file (watch watch_mount watch_reads watch_sb watch_with_perm)))
-(classpermissionset watch_dir (
-  dir (watch watch_mount watch_reads watch_sb watch_with_perm)))
-(classpermissionset watch_lnk_file (
-  lnk_file (watch watch_mount watch_reads watch_sb watch_with_perm)))
-(classpermissionset watch_chr_file (
-  chr_file (watch watch_mount watch_reads watch_sb watch_with_perm)))
-(classpermissionset watch_blk_file (
-  blk_file (watch watch_mount watch_reads watch_sb watch_with_perm)))
-(classpermissionset watch_sock_file (
-  sock_file (watch watch_mount watch_reads watch_sb watch_with_perm)))
-(classpermissionset watch_fifo_file (
-  fifo_file (watch watch_mount watch_reads watch_sb watch_with_perm)))
-(classpermissionset watch_filesystem (
-  filesystem (watch)))
+; Sets of permissions for blocking access to file objects.
+(classpermission block_file)
+(classpermission block_dir)
+(classpermission block_lnk_file)
+(classpermission block_chr_file)
+(classpermission block_blk_file)
+(classpermission block_sock_file)
+(classpermission block_fifo_file)
+(classpermissionset block_file (
+  file (watch_with_perm)))
+(classpermissionset block_dir (
+  dir (watch_with_perm)))
+(classpermissionset block_lnk_file (
+  lnk_file (watch_with_perm)))
+(classpermissionset block_chr_file (
+  chr_file (watch_with_perm)))
+(classpermissionset block_blk_file (
+  blk_file (watch_with_perm)))
+(classpermissionset block_sock_file (
+  sock_file (watch_with_perm)))
+(classpermissionset block_fifo_file (
+  fifo_file (watch_with_perm)))
 
 ; Sets of permissions for mutating file objects, which includes all
 ; actions that are not covered by other policy restrictions.

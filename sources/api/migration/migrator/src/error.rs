@@ -13,9 +13,6 @@ pub(crate) enum Error {
     #[snafu(display("Internal error: {}", msg))]
     Internal { msg: String },
 
-    #[snafu(display("Unable to create tempdir for tough datastore: '{}'", source))]
-    CreateToughTempDir { source: std::io::Error },
-
     #[snafu(display("Data store path '{}' contains invalid UTF-8", path.display()))]
     DataStorePathNotUTF8 { path: PathBuf },
 

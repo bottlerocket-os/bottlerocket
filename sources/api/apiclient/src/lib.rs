@@ -1,36 +1,34 @@
 #![deny(rust_2018_idioms)]
 
-//! The apiclient library provides simple, synchronous methods to query an HTTP API over a
-//! Unix-domain socket.
+//! The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
+//! the documentation for submodules [`reboot`], [`set`], and [`update`] for high-level helpers.
+//!
+//! For more control, and to handle APIs without high-level wrappers, there are also 'raw' methods
+//! to query an HTTP API over a Unix-domain socket.
 //!
 //! The `raw_request` method takes care of the basics of making an HTTP request on a Unix-domain
 //! socket, and requires you to specify the socket path, the URI (including query string), the
 //! HTTP method, and any request body data.
-//!
-//! In the future, we intend to add methods that understand the Bottlerocket API and help more with common
-//! types of requests.
 
 // Think "reqwest" but for Unix-domain sockets.  Would be nice to use the simpler reqwest instead
 // of hyper, but it lacks Unix-domain socket support:
 // https://github.com/seanmonstar/reqwest/issues/39
 
-use futures::TryStreamExt;
-use hyper::{header, Body, Client, Request};
+use hyper::{body, header, Body, Client, Request};
 use hyper_unix_connector::{UnixClient, Uri};
 use snafu::{ensure, ResultExt};
 use std::path::Path;
-use tokio::runtime::Runtime;
+
+pub mod reboot;
+pub mod set;
+pub mod update;
 
 mod error {
     use snafu::Snafu;
-    use std::io;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub enum Error {
-        #[snafu(display("Failed to initialize client: {}", source))]
-        ClientSetup { source: io::Error },
-
         #[snafu(display("Failed to build request: {}", source))]
         RequestSetup { source: http::Error },
 
@@ -41,7 +39,7 @@ mod error {
         ResponseStatus {
             method: String,
             code: http::StatusCode,
-            uri: http::uri::Uri,
+            uri: String,
             body: String,
         },
 
@@ -70,7 +68,37 @@ pub type Result<T> = std::result::Result<T, error::Error>;
 /// responses as an error; `StatusCode` has various methods to help check.
 ///
 /// If we failed to talk to the server, returns Err.
-pub fn raw_request<P, S1, S2>(
+pub async fn raw_request<P, S1, S2>(
+    socket_path: P,
+    uri: S1,
+    method: S2,
+    data: Option<String>,
+) -> Result<(http::StatusCode, String)>
+where
+    P: AsRef<Path>,
+    S1: AsRef<str>,
+    S2: AsRef<str>,
+{
+    let (status, body) = raw_request_unchecked(&socket_path, &uri, &method, data).await?;
+
+    // Error if the response status is in not in the 2xx range.
+    ensure!(
+        status.is_success(),
+        error::ResponseStatus {
+            method: method.as_ref(),
+            code: status,
+            uri: uri.as_ref(),
+            body,
+        }
+    );
+
+    Ok((status, body))
+}
+
+/// Works exactly like raw_request in making an HTTP request over a Unix-domain socket, but doesn't
+/// check that the returned status code represents success.  This can be useful if you have to
+/// handle specific error codes, rather than inspecting the Error type of raw_request.
+pub async fn raw_request_unchecked<P, S1, S2>(
     socket_path: P,
     uri: S1,
     method: S2,
@@ -83,17 +111,16 @@ where
 {
     let method = method.as_ref();
 
+    // We talk over a local Unix-domain socket to the server.
+    let client = Client::builder().build::<_, ::hyper::Body>(UnixClient);
+    let uri: hyper::Uri = Uri::new(socket_path, uri.as_ref()).into();
+
+    // Build request.
     let request_data = if let Some(data) = data {
         Body::from(data)
     } else {
         Body::empty()
     };
-    let uri: hyper::Uri = Uri::new(socket_path, uri.as_ref()).into();
-
-    let mut runtime = Runtime::new().context(error::ClientSetup)?;
-
-    let client = Client::builder().build::<_, ::hyper::Body>(UnixClient);
-
     let request = Request::builder()
         .method(method)
         .uri(&uri)
@@ -101,35 +128,15 @@ where
         .body(Body::from(request_data))
         .context(error::RequestSetup)?;
 
-    // `block_on` is what waits on the asynchronous response future and returns a real response;
-    // it's the simplest way to switch to a synchronous mode.
-    //
-    // hyper's "into_parts" method splits the response into two parts: (1) the head, which we have
-    // immediately, and (2) the body, which may be streamed back in chunks.  Therefore, the second
-    // return value here is another future.
-    let (head, body_stream) = runtime
-        .block_on(client.request(request))
-        .context(error::RequestSend)?
-        .into_parts();
+    // Send request.
+    let res = client.request(request).await.context(error::RequestSend)?;
+    let status = res.status();
 
-    // Wait on the second future (the streaming body) and concatenate all the pieces together so we
-    // have a single response body.  We make sure the result is a string; we assume that we're not
-    // handling binary data.
-    let body_bytes: Vec<u8> = runtime
-        .block_on(body_stream.map_ok(|bytes| bytes.to_vec()).try_concat())
+    // Read streaming response body into a string.
+    let body_bytes = body::to_bytes(res.into_body())
+        .await
         .context(error::ResponseBodyRead)?;
-    let body = String::from_utf8(body_bytes).context(error::NonUtf8Response)?;
+    let body = String::from_utf8(body_bytes.to_vec()).context(error::NonUtf8Response)?;
 
-    // Error if the response status is in not in the 2xx range.
-    ensure!(
-        head.status.is_success(),
-        error::ResponseStatus {
-            method,
-            code: head.status,
-            uri,
-            body,
-        }
-    );
-
-    Ok((head.status, body))
+    Ok((status, body))
 }

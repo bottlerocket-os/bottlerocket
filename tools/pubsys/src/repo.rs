@@ -1,13 +1,15 @@
 //! The repo module owns the 'repo' subcommand and controls the process of building a repository.
 
-mod transport;
+pub(crate) mod check_expirations;
+pub(crate) mod refresh_repo;
+pub(crate) mod validate_repo;
 
-use crate::config::{InfraConfig, RepoExpirationPolicy, SigningKeyConfig};
 use crate::{friendly_version, Args};
 use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use log::{debug, info, trace};
 use parse_datetime::parse_datetime;
+use pubsys_config::{InfraConfig, RepoConfig, RepoExpirationPolicy, SigningKeyConfig};
 use semver::Version;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::convert::TryInto;
@@ -15,17 +17,16 @@ use std::fs::{self, File};
 use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
-use tempfile::{tempdir, NamedTempFile};
+use tempfile::NamedTempFile;
 use tough::{
     editor::signed::PathExists,
     editor::RepositoryEditor,
     key_source::{KeySource, LocalKeySource},
     schema::Target,
-    ExpirationEnforcement, Limits, Repository, Settings,
+    RepositoryLoader, TransportErrorKind,
 };
 use tough_kms::{KmsKeySource, KmsSigningAlgorithm};
 use tough_ssm::SsmKeySource;
-use transport::RepoTransport;
 use update_metadata::{Images, Manifest, Release, UpdateWaves};
 use url::Url;
 
@@ -39,7 +40,7 @@ lazy_static! {
 pub(crate) struct RepoArgs {
     // Metadata about the update
     #[structopt(long)]
-    /// Use this named repo from Infra.toml
+    /// Use this named repo infrastructure from Infra.toml
     repo: String,
     #[structopt(long)]
     /// The architecture of the repo and the update being added
@@ -75,21 +76,23 @@ pub(crate) struct RepoArgs {
     /// Path to file that defines when repo metadata should expire
     repo_expiration_policy_path: PathBuf,
 
-    // Policies that pubsys passes on to other tools
+    // Configuration that pubsys passes on to other tools
     #[structopt(long, parse(from_os_str))]
     /// Path to Release.toml
     release_config_path: PathBuf,
     #[structopt(long, parse(from_os_str))]
     /// Path to file that defines when this update will become available
     wave_policy_path: PathBuf,
+    #[structopt(long, parse(from_os_str))]
+    /// Path to root.json for this repo
+    root_role_path: PathBuf,
+    #[structopt(long, parse(from_os_str))]
+    /// If we generated a local key, we'll find it here; used if Infra.toml has no key defined
+    default_key_path: PathBuf,
 
     #[structopt(long, parse(try_from_str = parse_datetime))]
     /// When the waves and expiration timer will start; RFC3339 date or "in X hours/days/weeks"
     release_start_time: Option<DateTime<Utc>>,
-
-    #[structopt(long)]
-    /// Use this named key from Infra.toml
-    signing_key: String,
 
     #[structopt(long, parse(from_os_str))]
     /// Where to store the created repo
@@ -180,10 +183,50 @@ fn update_manifest(repo_args: &RepoArgs, manifest: &mut Manifest) -> Result<()> 
     Ok(())
 }
 
+/// Set expirations of all non-root role metadata based on a given `RepoExpirationPolicy` and an
+/// expiration start time
+fn set_expirations(
+    editor: &mut RepositoryEditor,
+    expiration_policy: &RepoExpirationPolicy,
+    expiration_start_time: DateTime<Utc>,
+) -> Result<()> {
+    let snapshot_expiration = expiration_start_time + expiration_policy.snapshot_expiration;
+    let targets_expiration = expiration_start_time + expiration_policy.targets_expiration;
+    let timestamp_expiration = expiration_start_time + expiration_policy.timestamp_expiration;
+    info!(
+        "Setting non-root metadata expiration times:\n\tsnapshot:  {}\n\ttargets:   {}\n\ttimestamp: {}",
+        snapshot_expiration, targets_expiration, timestamp_expiration
+    );
+    editor
+        .snapshot_expires(snapshot_expiration)
+        .targets_expires(targets_expiration)
+        .context(error::SetTargetsExpiration {
+            expiration: targets_expiration,
+        })?
+        .timestamp_expires(timestamp_expiration);
+
+    Ok(())
+}
+
+/// Set versions of all role metadata; the version will be the UNIX timestamp of the current time.
+fn set_versions(editor: &mut RepositoryEditor) -> Result<()> {
+    let seconds = Utc::now().timestamp();
+    let unsigned_seconds = seconds.try_into().expect("System clock before 1970??");
+    let version = NonZeroU64::new(unsigned_seconds).expect("System clock exactly 1970??");
+    debug!("Repo version: {}", version);
+    editor
+        .snapshot_version(version)
+        .targets_version(version)
+        .context(error::SetTargetsVersion { version })?
+        .timestamp_version(version);
+
+    Ok(())
+}
+
 /// Adds targets, expirations, and version to the RepositoryEditor
 fn update_editor<'a, P>(
     repo_args: &'a RepoArgs,
-    editor: &mut RepositoryEditor<'a, RepoTransport>,
+    editor: &mut RepositoryEditor,
     targets: impl Iterator<Item = &'a PathBuf>,
     manifest_path: P,
 ) -> Result<()>
@@ -203,7 +246,11 @@ where
         path: manifest_path.as_ref(),
     })?;
     debug!("Adding target for manifest.json");
-    editor.add_target("manifest.json", manifest_target).context(error::AddTarget { path: "manifest.json" })?;
+    editor
+        .add_target("manifest.json", manifest_target)
+        .context(error::AddTarget {
+            path: "manifest.json",
+        })?;
 
     // Add expirations   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -248,20 +295,10 @@ where
 /// If the infra config has a repo section defined for the given repo, and it has metadata base and
 /// targets URLs defined, returns those URLs, otherwise None.
 fn repo_urls<'a>(
-    repo_args: &RepoArgs,
-    infra_config: &'a InfraConfig,
+    repo_config: &'a RepoConfig,
+    variant: &str,
+    arch: &str,
 ) -> Result<Option<(Url, &'a Url)>> {
-    let repo_config = infra_config
-        .repo
-        .as_ref()
-        .context(error::MissingConfig {
-            missing: "repo section",
-        })?
-        .get(&repo_args.repo)
-        .context(error::MissingConfig {
-            missing: format!("definition for repo {}", &repo_args.repo),
-        })?;
-
     // Check if both URLs are set
     if let Some(metadata_base_url) = repo_config.metadata_base_url.as_ref() {
         if let Some(targets_url) = repo_config.targets_url.as_ref() {
@@ -270,10 +307,8 @@ fn repo_urls<'a>(
             } else {
                 "/"
             };
-            let metadata_url_str = format!(
-                "{}{}{}/{}",
-                metadata_base_url, base_slash, repo_args.variant, repo_args.arch
-            );
+            let metadata_url_str =
+                format!("{}{}{}/{}", metadata_base_url, base_slash, variant, arch);
             let metadata_url = Url::parse(&metadata_url_str).context(error::ParseUrl {
                 input: &metadata_url_str,
             })?;
@@ -291,30 +326,25 @@ fn repo_urls<'a>(
 /// that the repo does not exist.
 fn load_editor_and_manifest<'a, P>(
     root_role_path: P,
-    transport: &'a RepoTransport,
-    datastore: &'a Path,
     metadata_url: &'a Url,
     targets_url: &'a Url,
-) -> Result<Option<(RepositoryEditor<'a, RepoTransport>, Manifest)>>
+) -> Result<Option<(RepositoryEditor, Manifest)>>
 where
     P: AsRef<Path>,
 {
     let root_role_path = root_role_path.as_ref();
 
-    // Create a temporary directory where the TUF client can store metadata
-    let settings = Settings {
-        root: File::open(root_role_path).context(error::File {
+    // Try to load the repo...
+    let repo_load_result = RepositoryLoader::new(
+        File::open(root_role_path).context(error::File {
             path: root_role_path,
         })?,
-        datastore,
-        metadata_base_url: metadata_url.as_str(),
-        targets_base_url: targets_url.as_str(),
-        limits: Limits::default(),
-        expiration_enforcement: ExpirationEnforcement::Safe,
-    };
+        metadata_url.clone(),
+        targets_url.clone(),
+    )
+    .load();
 
-    // Try to load the repo...
-    match Repository::load(transport, settings) {
+    match repo_load_result {
         // If we load it successfully, build an editor and manifest from it.
         Ok(repo) => {
             let reader = repo
@@ -337,14 +367,41 @@ where
         // If we fail to load, but we only failed because the repo doesn't exist yet, then start
         // fresh by signalling that there is no known repo.  Otherwise, fail hard.
         Err(e) => {
-            if transport.repo_not_found.get() {
+            if is_file_not_found_error(&e) {
                 Ok(None)
             } else {
                 Err(e).with_context(|| error::RepoLoad {
                     metadata_base_url: metadata_url.clone(),
-                })?
+                })
             }
         }
+    }
+}
+
+/// Inspects the `tough` error to see if it is a `Transport` error, and if so, is it `FileNotFound`.
+fn is_file_not_found_error(e: &tough::error::Error) -> bool {
+    if let tough::error::Error::Transport { source, .. } = e {
+        matches!(source.kind(), TransportErrorKind::FileNotFound)
+    } else {
+        false
+    }
+}
+
+/// Gets the corresponding `KeySource` according to the signing key config from Infra.toml
+fn get_signing_key_source(signing_key_config: &SigningKeyConfig) -> Box<dyn KeySource> {
+    match signing_key_config {
+        SigningKeyConfig::file { path } => Box::new(LocalKeySource { path: path.clone() }),
+        SigningKeyConfig::kms { key_id } => Box::new(KmsKeySource {
+            profile: None,
+            key_id: key_id.clone(),
+            client: None,
+            signing_algorithm: KmsSigningAlgorithm::RsassaPssSha256,
+        }),
+        SigningKeyConfig::ssm { parameter } => Box::new(SsmKeySource {
+            profile: None,
+            parameter_name: parameter.clone(),
+            key_id: None,
+        }),
     }
 }
 
@@ -356,7 +413,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
         .join(&repo_args.arch);
     let targets_out_dir = repo_args.outdir.join("targets");
 
-    // If the given metadata directory exists, throw an error.  We dont want to overwrite a user's
+    // If the given metadata directory exists, throw an error.  We don't want to overwrite a user's
     // existing repository.  (The targets directory is shared, so it's fine if that exists.)
     ensure!(
         !Path::exists(&metadata_out_dir),
@@ -368,25 +425,39 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     // Build repo   =^..^=   =^..^=   =^..^=   =^..^=
 
     info!(
-        "Using infra config from path: {}",
+        "Checking for infra config at path: {}",
         args.infra_config_path.display()
     );
-    let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
-    trace!("Parsed infra config: {:?}", infra_config);
-    let root_role_path = infra_config
-        .root_role_path
+    let infra_config =
+        InfraConfig::from_path_or_default(&args.infra_config_path).context(error::Config)?;
+    trace!("Using infra config: {:?}", infra_config);
+
+    // If the user has the requested (or "default") repo defined in their Infra.toml, use it,
+    // otherwise use a default config.
+    let default_repo_config = RepoConfig::default();
+    let repo_config = if let Some(repo_config) = infra_config
+        .repo
         .as_ref()
-        .context(error::MissingConfig {
-            missing: "root_role_path",
-        })?;
+        .and_then(|repo_section| repo_section.get(&repo_args.repo))
+        .map(|repo| {
+            info!("Using repo '{}' from Infra.toml", repo_args.repo);
+            repo
+        }) {
+        repo_config
+    } else {
+        info!(
+            "Didn't find repo '{}' in Infra.toml, using default configuration",
+            repo_args.repo
+        );
+        &default_repo_config
+    };
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
-    let maybe_urls = repo_urls(&repo_args, &infra_config)?;
-    let workdir = tempdir().context(error::TempDir)?;
-    let transport = RepoTransport::default();
-    let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref() {
+    let maybe_urls = repo_urls(&repo_config, &repo_args.variant, &repo_args.arch)?;
+    let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref()
+    {
         info!("Found metadata and target URLs, loading existing repository");
-        match load_editor_and_manifest(root_role_path, &transport, workdir.path(), &metadata_url, &targets_url)? {
+        match load_editor_and_manifest(&repo_args.root_role_path, &metadata_url, &targets_url)? {
             Some((editor, manifest)) => (editor, manifest),
             None => {
                 info!(
@@ -394,7 +465,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
                     metadata_url
                 );
                 (
-                    RepositoryEditor::new(root_role_path).context(error::NewEditor)?,
+                    RepositoryEditor::new(&repo_args.root_role_path).context(error::NewEditor)?,
                     Manifest::default(),
                 )
             }
@@ -402,7 +473,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     } else {
         info!("Did not find metadata and target URLs in infra config, creating a new repository");
         (
-            RepositoryEditor::new(root_role_path).context(error::NewEditor)?,
+            RepositoryEditor::new(&repo_args.root_role_path).context(error::NewEditor)?,
             Manifest::default(),
         )
     };
@@ -430,30 +501,22 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
 
     // Sign repo   =^..^=   =^..^=   =^..^=   =^..^=
 
-    let signing_key_config = infra_config
-        .signing_keys
-        .as_ref()
-        .context(error::MissingConfig {
-            missing: "signing_keys",
-        })?
-        .get(&repo_args.signing_key)
-        .context(error::MissingConfig {
-            missing: format!("profile {} in signing_keys", &repo_args.signing_key),
-        })?;
+    // Check if we have a signing key defined in Infra.toml; if not, we'll fall back to the
+    // generated local key.
+    let signing_key_config = repo_config.signing_keys.as_ref();
 
-    let key_source: Box<dyn KeySource> = match signing_key_config {
-        SigningKeyConfig::file { path } => Box::new(LocalKeySource { path: path.clone() }),
-        SigningKeyConfig::kms { key_id } => Box::new(KmsKeySource {
-            profile: None,
-            key_id: key_id.clone(),
-            client: None,
-            signing_algorithm: KmsSigningAlgorithm::RsassaPssSha256,
-        }),
-        SigningKeyConfig::ssm { parameter } => Box::new(SsmKeySource {
-            profile: None,
-            parameter_name: parameter.clone(),
-            key_id: None,
-        }),
+    let key_source = if let Some(signing_key_config) = signing_key_config {
+        get_signing_key_source(signing_key_config)
+    } else {
+        ensure!(
+            repo_args.default_key_path.exists(),
+            error::MissingConfig {
+                missing: "signing_keys in repo config, and we found no local key",
+            }
+        );
+        Box::new(LocalKeySource {
+            path: repo_args.default_key_path.clone(),
+        })
     };
 
     let signed_repo = editor.sign(&[key_source]).context(error::RepoSign)?;
@@ -557,7 +620,7 @@ mod error {
         },
 
         #[snafu(display("Error reading config: {}", source))]
-        Config { source: crate::config::Error },
+        Config { source: pubsys_config::Error },
 
         #[snafu(display("Failed to create directory '{}': {}", path.display(), source))]
         CreateDir { path: PathBuf, source: io::Error },
@@ -592,6 +655,9 @@ mod error {
 
         #[snafu(display("Infra.toml is missing {}", missing))]
         MissingConfig { missing: String },
+
+        #[snafu(display("Repo URLs not specified for repo '{}'", repo))]
+        MissingRepoUrls { repo: String },
 
         #[snafu(display("Failed to create new repo editor: {}", source))]
         NewEditor { source: tough::error::Error },
@@ -659,9 +725,6 @@ mod error {
             wave_policy_path: PathBuf,
             source: update_metadata::error::Error,
         },
-
-        #[snafu(display("Failed to create tempdir: {}", source))]
-        TempDir { source: io::Error },
 
         #[snafu(display("Failed to create temporary file: {}", source))]
         TempFile { source: io::Error },

@@ -1,4 +1,4 @@
-use crate::datastore::{self, deserialization, serialization};
+use datastore::{self, deserialization, serialization};
 use nix::unistd::Gid;
 use snafu::Snafu;
 use std::io;
@@ -55,9 +55,7 @@ pub enum Error {
     CommitWithNoPending,
 
     #[snafu(display("Unable to get OS release data: {}", source))]
-    ReleaseData {
-        source: bottlerocket_release::Error,
-    },
+    ReleaseData { source: bottlerocket_release::Error },
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -120,12 +118,8 @@ pub enum Error {
     #[snafu(display("Unable to start shutdown: {}", source))]
     Shutdown { source: io::Error },
 
-    #[snafu(display(
-        "Failed to reboot, exit code: {}, stderr: {}",
-        exit_code,
-        String::from_utf8_lossy(stderr)
-    ))]
-    Reboot { exit_code: i32, stderr: Vec<u8> },
+    #[snafu(display("Failed to reboot, exit code: {}, stderr: {}", exit_code, stderr))]
+    Reboot { exit_code: i32, stderr: String },
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 

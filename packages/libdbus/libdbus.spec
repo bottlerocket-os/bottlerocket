@@ -49,7 +49,9 @@ rm -rf %{buildroot}%{_cross_docdir}/dbus/examples
 %{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_bindir}
-%exclude %{_cross_datadir}
+%exclude %{_cross_datadir}/dbus-1
+%exclude %{_cross_datadir}/doc
+%exclude %{_cross_datadir}/xml
 %exclude %{_cross_libexecdir}
 %exclude %{_cross_sysconfdir}
 
@@ -57,9 +59,9 @@ rm -rf %{buildroot}%{_cross_docdir}/dbus/examples
 %{_cross_libdir}/*.a
 %{_cross_libdir}/*.so
 %dir %{_cross_libdir}/dbus-1.0
-%{_cross_libdir}/dbus-1.0
+%{_cross_libdir}/dbus-1.0/*
 %dir %{_cross_includedir}/dbus-1.0
-%{_cross_includedir}/dbus-1.0
+%{_cross_includedir}/dbus-1.0/*
 %{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/*.la
 %exclude %{_cross_libdir}/cmake

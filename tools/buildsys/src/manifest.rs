@@ -110,6 +110,11 @@ impl ManifestInfo {
             .and_then(|b| b.included_packages.as_ref())
     }
 
+    /// Convenience method to return the image format override, if any.
+    pub(crate) fn image_format(&self) -> Option<&ImageFormat> {
+        self.build_variant().and_then(|b| b.image_format.as_ref())
+    }
+
     /// Helper methods to navigate the series of optional struct fields.
     fn build_package(&self) -> Option<&BuildPackage> {
         self.package
@@ -152,6 +157,14 @@ pub(crate) struct BuildPackage {
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct BuildVariant {
     pub(crate) included_packages: Option<Vec<String>>,
+    pub(crate) image_format: Option<ImageFormat>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum ImageFormat {
+    Raw,
+    Vmdk,
 }
 
 #[derive(Deserialize, Debug)]

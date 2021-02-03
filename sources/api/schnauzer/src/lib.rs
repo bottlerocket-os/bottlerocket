@@ -8,9 +8,13 @@ extern crate log;
 mod helpers;
 
 use handlebars::Handlebars;
+use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use serde::de::DeserializeOwned;
 use snafu::ResultExt;
 use std::path::Path;
+
+// https://url.spec.whatwg.org/#query-percent-encode-set
+const ENCODE_QUERY_CHARS: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'#').add(b'<').add(b'>');
 
 pub mod error {
     use http::StatusCode;
@@ -52,7 +56,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 
 /// Simple helper that extends the API client, abstracting the repeated request logic and
 /// deserialization from JSON.
-pub fn get_json<T, P, S1, S2, S3>(
+pub async fn get_json<T, P, S1, S2, S3>(
     socket_path: P,
     uri: S1,
     // Query parameter name, query parameter value
@@ -66,15 +70,17 @@ where
     S3: AsRef<str>,
 {
     let mut uri = uri.as_ref().to_string();
-    // Simplest query string handling; parameters come from API responses so we trust them enough
-    // to send back
+    // Add (escaped) query parameter, if given
     if let Some((query_param, query_arg)) = query {
-        uri = format!("{}?{}={}", uri, query_param.as_ref(), query_arg.as_ref());
+        let query_raw = format!("{}={}", query_param.as_ref(), query_arg.as_ref());
+        let query_escaped = utf8_percent_encode(&query_raw, ENCODE_QUERY_CHARS);
+        uri = format!("{}?{}", uri, query_escaped);
     }
 
     let method = "GET";
     trace!("{}ing from {}", method, uri);
     let (code, response_body) = apiclient::raw_request(socket_path, &uri, method, None)
+        .await
         .context(error::APIRequest { method, uri: &uri })?;
 
     if !code.is_success() {
@@ -93,12 +99,13 @@ where
 
 /// Requests all settings from the API so they can be used as the data source for a handlebars
 /// templating call.
-pub fn get_settings<P>(socket_path: P) -> Result<model::Model>
+pub async fn get_settings<P>(socket_path: P) -> Result<model::Model>
 where
     P: AsRef<Path>,
 {
     debug!("Querying API for settings data");
-    let settings: model::Model = get_json(&socket_path, "/", None as Option<(String, String)>)?;
+    let settings: model::Model =
+        get_json(&socket_path, "/", None as Option<(String, String)>).await?;
     trace!("Model values: {:?}", settings);
 
     Ok(settings)
@@ -115,6 +122,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("join_map", Box::new(helpers::join_map));
     template_registry.register_helper("default", Box::new(helpers::default));
     template_registry.register_helper("ecr-prefix", Box::new(helpers::ecr_prefix));
+    template_registry.register_helper("host", Box::new(helpers::host));
 
     Ok(template_registry)
 }

@@ -2,7 +2,7 @@
 %global gorepo plugins
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 0.8.6
+%global gover 0.9.0
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -28,7 +28,7 @@ Requires: %{_cross_os}iptables
 %build
 %cross_go_configure %{goimport}
 for d in $(find plugins -mindepth 2 -maxdepth 2 -type d ! -name windows) ; do
-  go build -buildmode pie -o "bin/${d##*/}" %{goimport}/${d}
+  go build -buildmode=pie -ldflags=-linkmode=external -o "bin/${d##*/}" %{goimport}/${d}
 done
 
 %install
@@ -58,5 +58,6 @@ install -p -m 0755 bin/* %{buildroot}%{_cross_factorydir}/opt/cni/bin
 %{_cross_factorydir}/opt/cni/bin/static
 %{_cross_factorydir}/opt/cni/bin/tuning
 %{_cross_factorydir}/opt/cni/bin/vlan
+%{_cross_factorydir}/opt/cni/bin/vrf
 
 %changelog

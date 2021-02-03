@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.pcre.org/pub/pcre/pcre2-10.35.tar.bz2"
-sha512 = "ecfb8d48e219daff02874783b7b436fe7d70d8471e44eb66e1e29abb7b0aa67547e6b5fba7058b074ac90eef265ece7d12728f80afdda45b6b8124435f4561fd"
+url = "https://ftp.pcre.org/pub/pcre/pcre2-10.36.tar.bz2"
+sha512 = "fc2a920562c80c3d31cedd94028fab55314ae0fb168cac7178f286c344a11fc514939edc3b83b8e0b57c872db4e595fd5530fd1d4b8c779be629553e9ec965a3"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

@@ -1,0 +1,22 @@
+[package]
+# This is the aws-k8s-1.19 variant.  "." is not allowed in crate names, but we
+# don't use this crate name anywhere.
+name = "aws-k8s-1_19"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[package.metadata.build-variant]
+included-packages = [
+    "aws-iam-authenticator",
+    "cni",
+    "cni-plugins",
+    "kubelet-1.19",
+    "release",
+]
+
+[lib]
+path = "lib.rs"

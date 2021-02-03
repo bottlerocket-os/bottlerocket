@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Define a bogus namespace -->
+<Environment xmlns:oe="http://foobarbaz.com">
+    <PropertySection>
+        <Property oe:key="foo" oe:value="1234"/>
+        <!-- The user data value is the base64 encoded string 'settings.motd = "hello"' -->
+        <Property oe:key="user-data" oe:value="c2V0dGluZ3MubW90ZCA9ICJoZWxsbyI="/>
+    </PropertySection>
+
+</Environment>

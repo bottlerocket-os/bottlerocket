@@ -2,8 +2,9 @@
 mod ecs;
 
 #[cfg(variant = "aws-ecs-1")]
-fn main() {
-    ecs::main()
+#[tokio::main]
+async fn main() {
+    ecs::main().await
 }
 
 #[cfg(not(variant = "aws-ecs-1"))]

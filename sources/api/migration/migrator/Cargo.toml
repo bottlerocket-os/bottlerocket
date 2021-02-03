@@ -13,15 +13,14 @@ exclude = ["README.md"]
 bottlerocket-release = { path = "../../../bottlerocket-release" }
 log = "0.4"
 lz4 = "1.23.1"
-nix = "0.18"
-pentacle = "0.2.0"
-rand = { version = "0.7", default-features = false, features = ["std"] }
+nix = "0.19"
+pentacle = "1.0.0"
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1.1"
-semver = "0.10"
-simplelog = "0.8"
+semver = "0.11"
+simplelog = "0.9"
 snafu = "0.6"
-tempfile = "3.1.0"
-tough = "0.8"
+tough = "0.10"
 update_metadata = { path = "../../../updater/update_metadata" }
 url = "2.1.1"
 
@@ -31,6 +30,7 @@ cargo-readme = "3.1"
 [dev-dependencies]
 chrono = "0.4.11"
 storewolf = { path = "../../storewolf" }
+tempfile = "3.1.0"
 
 [[bin]]
 name = "migrator"

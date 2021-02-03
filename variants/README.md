@@ -29,21 +29,35 @@ Information about API settings for variants can be found in the [models](../sour
 The [aws-k8s-1.15](aws-k8s-1.15/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 
-This variant is compatible with Kubernetes 1.14, 1.15, and 1.16 clusters.
+This variant is compatible with Kubernetes 1.15, 1.16, and 1.17 clusters.
 
 ### aws-k8s-1.16: Kubernetes 1.16 node
 
 The [aws-k8s-1.16](aws-k8s-1.16/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 
-This variant is compatible with Kubernetes 1.15, 1.16, and 1.17 clusters.
+This variant is compatible with Kubernetes 1.16, 1.17, and 1.18 clusters.
 
 ### aws-k8s-1.17: Kubernetes 1.17 node
 
 The [aws-k8s-1.17](aws-k8s-1.17/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 
-This variant is compatible with Kubernetes 1.16, 1.17, and 1.18 clusters.
+This variant is compatible with Kubernetes 1.17, 1.18, and 1.19 clusters.
+
+### aws-k8s-1.18: Kubernetes 1.18 node
+
+The [aws-k8s-1.18](aws-k8s-1.18/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.18, 1.19, and 1.20 clusters.
+
+### aws-k8s-1.19: Kubernetes 1.19 node
+
+The [aws-k8s-1.19](aws-k8s-1.19/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.19, 1.20, and 1.21 clusters.
 
 ### aws-ecs-1: Amazon ECS container instance
 

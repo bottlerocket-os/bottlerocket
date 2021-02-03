@@ -1,5 +1,5 @@
 Name: %{_cross_os}iptables
-Version: 1.8.5
+Version: 1.8.6
 Release: 1%{?dist}
 Summary: Tools for managing Linux kernel packet filtering capabilities
 License: GPL-2.0-or-later AND GPL-2.0-only
@@ -71,6 +71,7 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %{_cross_libdir}/xtables/*.so
 %exclude %{_cross_mandir}/*
 %exclude %{_cross_datadir}/xtables/pf.os
+%exclude %{_cross_sbindir}/iptables-apply
 %exclude %{_cross_sbindir}/ip6tables-apply
 %exclude %{_cross_sbindir}/nfnl_osf
 

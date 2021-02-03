@@ -1,0 +1,104 @@
+From 1850de7af9edd5a40e9be1c6e2b925ac993274fa Mon Sep 17 00:00:00 2001
+From: Brian Goff <cpuguy83@gmail.com>
+Date: Fri, 4 Sep 2020 15:57:30 -0700
+Subject: [PATCH 2/2] Ignore SIGURG signals in signal forwarder
+
+Starting with go1.14, the go runtime hijacks SIGURG but with no way to
+not send to other signal handlers.
+
+In practice, we get this signal frequently.
+I found this while testing out go1.15 with ctr and multiple execs with
+only `echo hello`. When the process exits quickly, if the previous
+commit is not applied, you end up with an error message that it couldn't
+forward SIGURG to the container (due to the process being gone).
+
+Signed-off-by: Brian Goff <cpuguy83@gmail.com>
+(cherry picked from commit 899b4e3cb55b8e3f41d5b26d312d7c29a5b53b09)
+Signed-off-by: Sebastiaan van Stijn <github@gone.nl>
+---
+ cmd/ctr/commands/signals.go          |  4 ++++
+ cmd/ctr/commands/signals_linux.go    | 27 +++++++++++++++++++++++++++
+ cmd/ctr/commands/signals_notlinux.go | 25 +++++++++++++++++++++++++
+ 3 files changed, 56 insertions(+)
+ create mode 100644 cmd/ctr/commands/signals_linux.go
+ create mode 100644 cmd/ctr/commands/signals_notlinux.go
+
+diff --git a/cmd/ctr/commands/signals.go b/cmd/ctr/commands/signals.go
+index d0c1daa9b5..311608c26c 100644
+--- a/cmd/ctr/commands/signals.go
++++ b/cmd/ctr/commands/signals.go
+@@ -37,6 +37,10 @@ func ForwardAllSignals(ctx gocontext.Context, task killer) chan os.Signal {
+ 	signal.Notify(sigc)
+ 	go func() {
+ 		for s := range sigc {
++			if canIgnoreSignal(s) {
++				logrus.Debugf("Ignoring signal %s", s)
++				continue
++			}
+ 			logrus.Debug("forwarding signal ", s)
+ 			if err := task.Kill(ctx, s.(syscall.Signal)); err != nil {
+ 				if errdefs.IsNotFound(err) {
+diff --git a/cmd/ctr/commands/signals_linux.go b/cmd/ctr/commands/signals_linux.go
+new file mode 100644
+index 0000000000..f41abfcfd3
+--- /dev/null
++++ b/cmd/ctr/commands/signals_linux.go
+@@ -0,0 +1,27 @@
++/*
++   Copyright The containerd Authors.
++
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++       http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License.
++*/
++
++package commands
++
++import (
++	"os"
++
++	"golang.org/x/sys/unix"
++)
++
++func canIgnoreSignal(s os.Signal) bool {
++	return s == unix.SIGURG
++}
+diff --git a/cmd/ctr/commands/signals_notlinux.go b/cmd/ctr/commands/signals_notlinux.go
+new file mode 100644
+index 0000000000..6a9dccbc4e
+--- /dev/null
++++ b/cmd/ctr/commands/signals_notlinux.go
+@@ -0,0 +1,25 @@
++//+build !linux
++
++/*
++   Copyright The containerd Authors.
++
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++       http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License.
++*/
++
++package commands
++
++import "os"
++
++func canIgnoreSignal(_ os.Signal) bool {
++	return false
++}

@@ -1,0 +1,43 @@
+[Unit]
+Description=Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=containerd.service configured.target
+Wants=configured.target
+BindsTo=containerd.service
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/kubernetes/kubelet/env
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
+# Pull the pause container image before starting `kubelet` so `containerd/cri` wouldn't have to
+ExecStartPre=/usr/bin/host-ctr \
+    --containerd-socket=/run/dockershim.sock \
+    --namespace=k8s.io \
+    pull-image \
+    --source=${POD_INFRA_CONTAINER_IMAGE}
+ExecStart=/usr/bin/kubelet \
+    --cloud-provider aws \
+    --config /etc/kubernetes/kubelet/config \
+    --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
+    --container-runtime=remote \
+    --container-runtime-endpoint=unix:///run/dockershim.sock \
+    --containerd=/run/dockershim.sock \
+    --network-plugin cni \
+    --root-dir /var/lib/kubelet \
+    --cert-dir /var/lib/kubelet/pki \
+    --node-ip ${NODE_IP} \
+    --node-labels "${NODE_LABELS}" \
+    --register-with-taints "${NODE_TAINTS}" \
+    --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}
+
+Restart=on-failure
+RestartForceExitStatus=SIGPIPE
+RestartSec=5
+Delegate=yes
+KillMode=process
+CPUAccounting=true
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target
+RequiredBy=mark-successful-boot.service

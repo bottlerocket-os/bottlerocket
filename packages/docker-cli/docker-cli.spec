@@ -2,7 +2,7 @@
 %global gorepo cli
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 19.03.12
+%global gover 19.03.14
 %global rpmver %{gover}
 %global gitrev 0ed913b885c8919944a2e4c8d0b80a318a8dd48b
 
@@ -36,8 +36,8 @@ LD_PLATFORM="-X \"github.com/docker/cli/cli/version.PlatformName=Docker Engine -
 BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null | sed -e 's/ /T/')
 LD_BUILDTIME="-X github.com/docker/cli/cli/version.BuildTime=${BUILDTIME}"
 go build \
-  -buildmode pie \
-  -ldflags "${LD_VERSION} ${LD_GIT_REV} ${LD_PLATFORM} ${LD_BUILDTIME}" \
+  -buildmode=pie \
+  -ldflags "-linkmode=external ${LD_VERSION} ${LD_GIT_REV} ${LD_PLATFORM} ${LD_BUILDTIME}" \
   -o docker \
   %{goimport}/cmd/docker
 

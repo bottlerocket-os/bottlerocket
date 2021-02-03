@@ -1,7 +1,7 @@
-From 1a01454412e31e37eeb96162623aef1f387598f2 Mon Sep 17 00:00:00 2001
+From d3a3e03afcefdecc17a13f76af0ff05dc1993c6a Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Wed, 8 Jul 2020 11:18:35 -0700
-Subject: [PATCH 1/2] bottlerocket: default filesystem locations
+Subject: [PATCH 1/4] bottlerocket: default filesystem locations
 
 ---
  agent/config/config.go      | 6 +++---
@@ -10,7 +10,7 @@ Subject: [PATCH 1/2] bottlerocket: default filesystem locations
  3 files changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/agent/config/config.go b/agent/config/config.go
-index 65b57970..bb179392 100644
+index c17b271a..a3993550 100644
 --- a/agent/config/config.go
 +++ b/agent/config/config.go
 @@ -51,7 +51,7 @@ const (
@@ -22,7 +22,7 @@ index 65b57970..bb179392 100644
  
  	// DefaultClusterName is the name of the default cluster.
  	DefaultClusterName = "default"
-@@ -115,13 +115,13 @@ const (
+@@ -118,13 +118,13 @@ const (
  	minimumNumImagesToDeletePerCycle = 1
  
  	// defaultCNIPluginsPath is the default path where cni binaries are located
@@ -39,7 +39,7 @@ index 65b57970..bb179392 100644
  	// DefaultTaskMetadataSteadyStateRate is set as 40. This is arrived from our benchmarking
  	// results where task endpoint can handle 4000 rps effectively. Here, 100 containers
 diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
-index 085846ae..6783ed0f 100644
+index a5a62547..e8dc1e52 100644
 --- a/agent/config/config_unix.go
 +++ b/agent/config/config_unix.go
 @@ -27,7 +27,7 @@ const (
@@ -78,5 +78,5 @@ index 6eccff6a..324307cd 100644
  
  var readFile = ioutil.ReadFile
 -- 
-2.28.0
+2.23.3
 

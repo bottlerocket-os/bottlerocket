@@ -1,0 +1,59 @@
+From d67e321edca612faa9cced5f6d556dd338cdb4c9 Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Wed, 19 Aug 2020 00:44:07 -0700
+Subject: [PATCH 3/4] bottlerocket: remove unsupported capabilities
+
+---
+ agent/app/agent_capability.go | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/agent/app/agent_capability.go b/agent/app/agent_capability.go
+index cf71d6a6..ac6768dc 100644
+--- a/agent/app/agent_capability.go
++++ b/agent/app/agent_capability.go
+@@ -189,33 +189,33 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+ 	capabilities = agent.appendPIDAndIPCNamespaceSharingCapabilities(capabilities)
+ 
+ 	// ecs agent version 1.26.0 supports aws-appmesh cni plugin
+-	capabilities = agent.appendAppMeshCapabilities(capabilities)
++	// capabilities = agent.appendAppMeshCapabilities(capabilities)
+ 
+ 	// support elastic inference in agent
+-	capabilities = agent.appendTaskEIACapabilities(capabilities)
++	// capabilities = agent.appendTaskEIACapabilities(capabilities)
+ 
+ 	// support aws router capabilities for fluentd
+-	capabilities = agent.appendFirelensFluentdCapabilities(capabilities)
++	// capabilities = agent.appendFirelensFluentdCapabilities(capabilities)
+ 
+ 	// support aws router capabilities for fluentbit
+-	capabilities = agent.appendFirelensFluentbitCapabilities(capabilities)
++	// capabilities = agent.appendFirelensFluentbitCapabilities(capabilities)
+ 
+ 	// support aws router capabilities for log driver router
+-	capabilities = agent.appendFirelensLoggingDriverCapabilities(capabilities)
++	// capabilities = agent.appendFirelensLoggingDriverCapabilities(capabilities)
+ 
+ 	// support efs on ecs capabilities
+ 	capabilities = agent.appendEFSCapabilities(capabilities)
+ 
+ 	// support external firelens config
+-	capabilities = agent.appendFirelensConfigCapabilities(capabilities)
++	// capabilities = agent.appendFirelensConfigCapabilities(capabilities)
+ 
+ 	// support GMSA capabilities
+ 	capabilities = agent.appendGMSACapabilities(capabilities)
+ 
+ 	// support efs auth on ecs capabilities
+-	for _, cap := range agent.cfg.VolumePluginCapabilities {
+-		capabilities = agent.appendEFSVolumePluginCapabilities(capabilities, cap)
+-	}
++	// for _, cap := range agent.cfg.VolumePluginCapabilities {
++	//	capabilities = agent.appendEFSVolumePluginCapabilities(capabilities, cap)
++	// }
+ 
+ 	// support fsxWindowsFileServer on ecs capabilities
+ 	capabilities = agent.appendFSxWindowsFileServerCapabilities(capabilities)
+-- 
+2.23.3
+

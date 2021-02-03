@@ -355,7 +355,7 @@ mod error {
             missing: String,
         },
 
-        #[snafu(display("Failed to {} of {} parameters; see above", failure_count, total_count))]
+        #[snafu(display("Failed to set {} of {} parameters; see above", failure_count, total_count))]
         SetParameters {
             failure_count: usize,
             total_count: usize,
@@ -365,9 +365,7 @@ mod error {
             "SSM requests throttled too many times, went beyond our max interval {:?}",
             max_interval
         ))]
-        Throttled {
-            max_interval: Duration,
-        },
+        Throttled { max_interval: Duration },
 
         #[snafu(display("Failed to validate all changes; see above."))]
         ValidateParameters,

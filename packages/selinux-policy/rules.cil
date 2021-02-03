@@ -97,79 +97,84 @@
 
 ; All subjects are allowed to write to objects with their own label.
 ; This includes files like the ones under /proc/self.
-; They can also set watches on those objects.
-(allow all_s self (files (mutate watch)))
+(allow all_s self (files (mutate)))
 
-; All subjects are allowed to write to, set watches for, and manage
-; mounts for "ephemeral" objects, such as files in /mnt and /tmp.
-(allow all_s ephemeral_o (files (mutate watch mount)))
+; All subjects are allowed to write to and manage mounts for
+; "ephemeral" objects, such as files in /mnt and /tmp.
+(allow all_s ephemeral_o (files (mutate mount)))
 
-; Trusted subjects are allowed to write to, set watches for, and
-; manage mounts for "dynamic" files in /etc.
-(allow trusted_s dynamic_o (files (mutate watch mount)))
+; Trusted subjects are allowed to write to and manage mounts
+; for "dynamic" files in /etc.
+(allow trusted_s dynamic_o (files (mutate mount)))
 
 ; wicked calls netdog which writes /etc/resolv.conf.
 (allow network_t etc_t (files (mutate)))
 
 ; Other subjects cannot modify these "dynamic" files.
-(neverallow other_s dynamic_o (files (mutate watch mount)))
+(neverallow other_s dynamic_o (files (mutate mount)))
 
-; Most subjects are allowed to write to, set watches for, and manage
-; mounts for "local" files and directories on /local.
-(allow unconfined_s local_t (files (mutate watch mount)))
+; Most subjects are allowed to write to and manage mounts for
+; "local" files and directories on /local.
+(allow unconfined_s local_t (files (mutate mount)))
 
-; Subjects that control the OS can write to, set watches for, and
-; manage mounts for "state" files and directories on /local. Our
-; runtimes also need to be able to perform these operations so that
+; Subjects that control the OS, including helpers spawned by apiserver, can
+; write to and manage mounts for "state" files and directories on /local.
+; Our runtimes also need to be able to perform these operations so that
 ; they can launch host containers.
-(allow control_s state_t (files (mutate watch mount)))
-(allow runtime_s state_t (files (mutate watch mount)))
+(allow api_s state_t (files (mutate mount)))
+(allow control_s state_t (files (mutate mount)))
+(allow runtime_s state_t (files (mutate mount)))
 
 ; Untrusted subjects cannot modify the "state" files.
-(neverallow untrusted_s state_t (files (mutate watch mount)))
+(neverallow untrusted_s state_t (files (mutate mount)))
 
 ; Confined subjects cannot modify either "state" or "local" files.
-(neverallow confined_s local_t (files (mutate watch mount)))
-(neverallow confined_s state_t (files (mutate watch mount)))
+(neverallow confined_s local_t (files (mutate mount)))
+(neverallow confined_s state_t (files (mutate mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))
 
-; Trusted components can set watches on immutable files, since we
-; expect this behavior from systemd.
-(allow trusted_s immutable_o (files (watch)))
-
-; dbus-broker watches /usr/share/dbus-1/system.d.
-(allow bus_t os_t (files (watch)))
-
 ; Only specific components can write to these objects, as they
 ; provide a means to persist changes across container restarts
-; and reboots. We also restrict the ability to set watches as
-; this can be used to block access for other processes.
-(allow api_s private_t (files (mutate watch)))
-(allow clock_s measure_t (files (mutate watch)))
-(allow network_s lease_t (files (mutate watch)))
-(allow runtime_s cache_t (files (mutate watch)))
+; and reboots.
+(allow api_s private_t (files (mutate)))
+(allow clock_s measure_t (files (mutate)))
+(allow network_s lease_t (files (mutate)))
+(allow runtime_s cache_t (files (mutate)))
 
 ; Other components should not be permitted to modify these files,
-; set watches for them, or to manage mounts for these directories.
-(neverallow other_s protected_o (files (mutate watch mount)))
-(neverallow other_s immutable_o (files (watch)))
+; or to manage mounts for these directories.
+(neverallow other_s protected_o (files (mutate mount)))
 
 ; Only the API server and specific components can use the API
 ; socket, as this provides a means to escalate privileges and
 ; persist changes.
-(allow api_s api_socket_t (files (mutate watch)))
-(allow control_s api_socket_t (files (mutate watch)))
+(allow api_s api_socket_t (files (mutate)))
+(allow control_s api_socket_t (files (mutate)))
 
 ; Untrusted components are not allowed to use the API socket.
-(neverallow untrusted_s api_socket_t (files (mutate watch)))
+(neverallow untrusted_s api_socket_t (files (mutate)))
 
 ; Only trusted components are allowed to relabel files.
 (allow trusted_s global (files (relabel)))
 
 ; Untrusted components are not allowed to relabel files.
 (neverallow untrusted_s global (files (relabel)))
+
+; No components are allowed to block access to files by using
+; fanotify permission events. Fanotify only sends events for
+; accesses from within the mount namespace, so it's unlikely to
+; be useful for containers, and we don't use it in the host.
+(neverallow all_s global (files (block)))
+
+; All object labels can be used for files on filesystems that have
+; the same label, and for files on ephemeral storage.
+(allow all_o self (filesystem (associate)))
+(allow all_o ephemeral_o (filesystem (associate)))
+
+; Protected object labels can also be used on local storage.
+(allow protected_o local_t (filesystem (associate)))
 
 ; Containers are allowed to relax security constraints, since we
 ; don't control what code they run or how it's built.

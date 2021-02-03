@@ -5,11 +5,11 @@ use crate::aws::ami::wait::{self, wait_for_ami};
 use crate::aws::ami::Image;
 use crate::aws::client::build_client;
 use crate::aws::region_from_string;
-use crate::config::InfraConfig;
 use crate::Args;
 use futures::future::{join, ready};
 use futures::stream::{self, StreamExt};
 use log::{debug, error, info, trace};
+use pubsys_config::InfraConfig;
 use rusoto_core::{Region, RusotoError};
 use rusoto_ec2::{
     DescribeImagesRequest, Ec2, Ec2Client, ModifyImageAttributeRequest,
@@ -86,11 +86,12 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     );
 
     info!(
-        "Using infra config from path: {}",
+        "Checking for infra config at path: {}",
         args.infra_config_path.display()
     );
-    let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
-    trace!("Parsed infra config: {:?}", infra_config);
+    let infra_config =
+        InfraConfig::from_path_or_default(&args.infra_config_path).context(error::Config)?;
+    trace!("Using infra config: {:?}", infra_config);
 
     let aws = infra_config.aws.unwrap_or_else(Default::default);
 
@@ -519,7 +520,7 @@ mod error {
 
         #[snafu(display("Error reading config: {}", source))]
         Config {
-            source: crate::config::Error,
+            source: pubsys_config::Error,
         },
 
         #[snafu(display("Failed to describe images in {}: {}", region, source))]

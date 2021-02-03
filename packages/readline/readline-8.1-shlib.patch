@@ -1,0 +1,31 @@
+diff --git a/shlib/Makefile.in b/shlib/Makefile.in
+index d138524..b68b0cc 100644
+--- a/shlib/Makefile.in
++++ b/shlib/Makefile.in
+@@ -178,7 +178,7 @@ $(SHARED_READLINE):	$(SHARED_OBJ)
+ 
+ $(SHARED_HISTORY):	$(SHARED_HISTOBJ) xmalloc.so xfree.so
+ 	$(RM) $@
+-	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} ${SHLIB_XLDFLAGS} -o $@ $(SHARED_HISTOBJ) xmalloc.so xfree.so $(SHLIB_LIBS)
++	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} ${SHLIB_XLDFLAGS} -o $@ $(SHARED_HISTOBJ) xmalloc.so xfree.so
+ 
+ # Since tilde.c is shared between readline and bash, make sure we compile 
+ # it with the right flags when it's built as part of readline
+diff --git a/support/shobj-conf b/support/shobj-conf
+index 5a3f977..0668a33 100644
+--- a/support/shobj-conf
++++ b/support/shobj-conf
+@@ -126,10 +126,11 @@ sunos5*|solaris2*)
+ linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*|dragonfly*)
+ 	SHOBJ_CFLAGS=-fPIC
+ 	SHOBJ_LD='${CC}'
+-	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
++	SHOBJ_LDFLAGS='$(CFLAGS) -shared -Wl,-soname,$@'
+ 
+-	SHLIB_XLDFLAGS='-Wl,-rpath,$(libdir) -Wl,-soname,`basename $@ $(SHLIB_MINOR)`'
++	SHLIB_XLDFLAGS='-Wl,-soname,`basename $@ $(SHLIB_MINOR)`'
+ 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
++	SHLIB_LIBS='-ltinfo'
+ 	;;
+ 
+ # Darwin/MacOS X

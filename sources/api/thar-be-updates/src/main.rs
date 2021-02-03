@@ -164,7 +164,7 @@ fn write_update_status(update_status: &UpdateStatus) -> Result<()> {
 /// This macros encapsulates the boilerplate code for dispatching the update command in a forked process
 macro_rules! fork_and_return {
     ($child_process:block) => {
-        match fork() {
+        match unsafe { fork() } {
             Ok(ForkResult::Parent { child, .. }) => {
                 debug!("forked child pid: {}", child);
                 // Exit immediately as the parent
@@ -347,9 +347,13 @@ fn run() -> Result<()> {
         initialize_update_status()?;
     }
     let mut update_status = get_update_status(&lockfile)?;
-    drive_state_machine(&mut update_status, &args.subcommand, &args.socket_path)?;
+
+    // The commands inside drive_state_machine update the update_status object (hence &mut) to
+    // reflect success or failure, and we want to reflect that in our status file regardless of
+    // success, so we store the result rather than returning early here.
+    let result = drive_state_machine(&mut update_status, &args.subcommand, &args.socket_path);
     write_update_status(&update_status)?;
-    Ok(())
+    result
 }
 
 fn match_error_to_exit_status(err: Error) -> i32 {
@@ -364,6 +368,8 @@ fn match_error_to_exit_status(err: Error) -> i32 {
     .unwrap_or(1)
 }
 
+// Note: don't use tokio::main here, or a similar process-wide async runtime.  We rely on forking
+// for long-running update-related actions, and tokio's threaded runtime doesn't play well.
 fn main() {
     if let Err(e) = run() {
         eprintln!("{}", e);

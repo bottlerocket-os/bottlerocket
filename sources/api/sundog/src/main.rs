@@ -20,8 +20,8 @@ use std::path::Path;
 use std::process;
 use std::str::{self, FromStr};
 
-use apiserver::datastore::serialization::to_pairs_with_prefix;
-use apiserver::datastore::{self, deserialization, Key, KeyType};
+use datastore::serialization::to_pairs_with_prefix;
+use datastore::{self, deserialization, Key, KeyType};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
@@ -35,7 +35,7 @@ mod error {
     use http::StatusCode;
     use snafu::Snafu;
 
-    use apiserver::datastore::{self, deserialization, serialization, KeyType};
+    use datastore::{self, deserialization, serialization, KeyType};
 
     /// Potential errors during dynamic settings retrieval
     #[derive(Debug, Snafu)]
@@ -148,7 +148,7 @@ mod error {
         },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
     }
 }
 
@@ -157,7 +157,7 @@ use error::SundogError;
 type Result<T> = std::result::Result<T, SundogError>;
 
 /// Request the setting generators from the API.
-fn get_setting_generators<S>(socket_path: S) -> Result<HashMap<String, String>>
+async fn get_setting_generators<S>(socket_path: S) -> Result<HashMap<String, String>>
 where
     S: AsRef<str>,
 {
@@ -165,6 +165,7 @@ where
 
     debug!("Requesting setting generators from API");
     let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
+        .await
         .context(error::APIRequest { method: "GET", uri })?;
     ensure!(
         code.is_success(),
@@ -184,7 +185,7 @@ where
 }
 
 /// Given a list of settings, query the API for any that are currently set.
-fn get_populated_settings<P>(socket_path: P, to_query: Vec<&str>) -> Result<HashSet<Key>>
+async fn get_populated_settings<P>(socket_path: P, to_query: Vec<&str>) -> Result<HashSet<Key>>
 where
     P: AsRef<Path>,
 {
@@ -197,6 +198,7 @@ where
     let uri = &format!("{}?keys={}", API_SETTINGS_URI, query);
 
     let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
+        .await
         .context(error::APIRequest { method: "GET", uri })?;
     ensure!(
         code.is_success(),
@@ -227,7 +229,7 @@ where
 }
 
 /// Run the setting generators and collect the output
-fn get_dynamic_settings<P>(
+async fn get_dynamic_settings<P>(
     socket_path: P,
     generators: HashMap<String, String>,
 ) -> Result<model::Settings>
@@ -241,7 +243,7 @@ where
     // `generators` keys are setting names in the proper dotted
     // format, i.e. "settings.kubernetes.node-ip"
     let settings_to_query: Vec<&str> = generators.keys().map(|s| s.as_ref()).collect();
-    let populated_settings = get_populated_settings(&socket_path, settings_to_query)?;
+    let populated_settings = get_populated_settings(&socket_path, settings_to_query).await?;
 
     // For each generator, run it and capture the output
     for (setting_str, generator) in generators {
@@ -353,7 +355,7 @@ where
 }
 
 /// Send the settings to the datastore through the API
-fn set_settings<S>(socket_path: S, settings: model::Settings) -> Result<()>
+async fn set_settings<S>(socket_path: S, settings: model::Settings) -> Result<()>
 where
     S: AsRef<str>,
 {
@@ -365,6 +367,7 @@ where
     trace!("Settings to {} to {}: {}", method, uri, &request_body);
     let (code, response_body) =
         apiclient::raw_request(socket_path.as_ref(), uri, method, Some(request_body))
+            .await
             .context(error::APIRequest { method, uri })?;
     ensure!(
         code.is_success(),
@@ -439,7 +442,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
@@ -450,17 +453,17 @@ fn run() -> Result<()> {
     info!("Sundog started");
 
     info!("Retrieving setting generators");
-    let generators = get_setting_generators(&args.socket_path)?;
+    let generators = get_setting_generators(&args.socket_path).await?;
     if generators.is_empty() {
         info!("No settings to generate, exiting");
         process::exit(0)
     }
 
     info!("Retrieving settings values");
-    let settings = get_dynamic_settings(&args.socket_path, generators)?;
+    let settings = get_dynamic_settings(&args.socket_path, generators).await?;
 
     info!("Sending settings values to the API");
-    set_settings(&args.socket_path, settings)?;
+    set_settings(&args.socket_path, settings).await?;
 
     Ok(())
 }
@@ -468,8 +471,9 @@ fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

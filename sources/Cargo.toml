@@ -3,6 +3,8 @@ members = [
     "api/apiserver",
     "api/apiclient",
     "api/bork",
+    "api/corndog",
+    "api/datastore",
     "api/early-boot-config",
     "api/ecs-settings-applier",
     "api/netdog",
@@ -27,8 +29,18 @@ members = [
     "api/migration/migrations/v0.5.0/add-cluster-domain",
     "api/migration/migrations/v1.0.0/ecr-helper-admin",
     "api/migration/migrations/v1.0.0/ecr-helper-control",
+    "api/migration/migrations/v1.0.2/add-enable-spot-instance-draining",
+    "api/migration/migrations/v1.0.3/add-sysctl",
+    "api/migration/migrations/v1.0.5/add-lockdown",
+    "api/migration/migrations/v1.0.5/sysctl-subcommand",
+    "api/migration/migrations/v1.0.5/add-user-data",
+    "api/migration/migrations/v1.0.5/add-network-settings",
+    "api/migration/migrations/v1.0.5/add-proxy-restart",
+    "api/migration/migrations/v1.0.5/add-proxy-services",
 
     "bottlerocket-release",
+
+    "ghostdog",
 
     "growpart",
 

@@ -1,5 +1,5 @@
 Name: %{_cross_os}dbus-broker
-Version: 23
+Version: 26
 Release: 1%{?dist}
 Summary: D-BUS message broker
 License: Apache-2.0
@@ -11,11 +11,9 @@ Source3: dbus-sysusers.conf
 Source4: dbus-broker.service
 BuildRequires: meson
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libexpat-devel
 BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}systemd-devel
-Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libexpat
 Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}systemd

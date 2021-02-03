@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 /// Query the API for ConfigurationFile data
 #[allow(clippy::implicit_hasher)]
-pub fn get_affected_config_files<P>(
+pub async fn get_affected_config_files<P>(
     socket_path: P,
     files_limit: Option<HashSet<String>>,
 ) -> Result<model::ConfigurationFiles>
@@ -19,8 +19,9 @@ where
 
     debug!("Querying API for configuration file metadata");
     let uri = "/configuration-files";
-    let config_files: model::ConfigurationFiles =
-        schnauzer::get_json(socket_path, uri, query).context(error::GetJson { uri })?;
+    let config_files: model::ConfigurationFiles = schnauzer::get_json(socket_path, uri, query)
+        .await
+        .context(error::GetJson { uri })?;
 
     Ok(config_files)
 }

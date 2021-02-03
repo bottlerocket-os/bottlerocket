@@ -90,7 +90,6 @@ name = "dbus-broker"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "libcap",
  "libexpat",
  "libselinux",
  "systemd",
@@ -124,6 +123,14 @@ name = "docker-proxy"
 version = "0.1.0"
 dependencies = [
  "glibc",
+]
+
+[[package]]
+name = "e2fsprogs"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "util-linux",
 ]
 
 [[package]]
@@ -219,6 +226,20 @@ dependencies = [
 
 [[package]]
 name = "kubernetes-1_17"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_18"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_19"
 version = "0.1.0"
 dependencies = [
  "glibc",

@@ -13,16 +13,25 @@ Source98: release-systemd-system.conf
 Source99: release-tmpfiles.conf
 
 Source200: motd.template
+Source201: proxy-env
 
 Source1000: eth0.xml
 Source1002: configured.target
+
+# Mounts for writable local storage.
 Source1006: prepare-local.service
 Source1007: var.mount
 Source1008: opt.mount
-Source1009: usr-src-kernels.mount.in
-Source1010: var-lib-bottlerocket.mount
-Source1011: usr-share-licenses.mount.in
-Source1012: etc-cni.mount
+Source1009: var-lib-bottlerocket.mount
+Source1010: etc-cni.mount
+
+# CD-ROM mount
+Source1015: media-cdrom.mount
+
+# Mounts that require build-time edits.
+Source1020: var-lib-kernel-devel-lower.mount.in
+Source1021: usr-src-kernels.mount.in
+Source1022: usr-share-licenses.mount.in
 
 BuildArch: noarch
 Requires: %{_cross_os}acpid
@@ -33,10 +42,12 @@ Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}dbus-broker
+Requires: %{_cross_os}e2fsprogs
 Requires: %{_cross_os}libgcc
 Requires: %{_cross_os}libstd-rust
 Requires: %{_cross_os}filesystem
 Requires: %{_cross_os}glibc
+Requires: %{_cross_os}ghostdog
 Requires: %{_cross_os}growpart
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
@@ -47,6 +58,7 @@ Requires: %{_cross_os}bork
 Requires: %{_cross_os}early-boot-config
 Requires: %{_cross_os}schnauzer
 Requires: %{_cross_os}netdog
+Requires: %{_cross_os}corndog
 Requires: %{_cross_os}selinux-policy
 Requires: %{_cross_os}policycoreutils
 Requires: %{_cross_os}signpost
@@ -95,19 +107,26 @@ EOF
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1010} %{S:1012} \
+  %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1015} \
   %{buildroot}%{_cross_unitdir}
+
+LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/lower)
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1020} > ${LOWERPATH}.mount
+install -p -m 0644 ${LOWERPATH}.mount %{buildroot}%{_cross_unitdir}
+
 # Mounting on usr/src/kernels requires using the real path: %{_cross_usrsrc}/kernels
 KERNELPATH=$(systemd-escape --path %{_cross_usrsrc}/kernels)
-sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1009} > ${KERNELPATH}.mount
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1021} > ${KERNELPATH}.mount
 install -p -m 0644 ${KERNELPATH}.mount %{buildroot}%{_cross_unitdir}
 
+# Mounting on usr/share/licenses requires using the real path: %{_cross_datadir}/licenses
 LICENSEPATH=$(systemd-escape --path %{_cross_licensedir})
-sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1011} > ${LICENSEPATH}.mount
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1022} > ${LICENSEPATH}.mount
 install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
+install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
@@ -122,10 +141,13 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
 %{_cross_unitdir}/etc-cni.mount
+%{_cross_unitdir}/media-cdrom.mount
+%{_cross_unitdir}/*-lower.mount
 %{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/*-licenses.mount
 %{_cross_unitdir}/var-lib-bottlerocket.mount
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/motd
+%{_cross_templatedir}/proxy-env
 
 %changelog

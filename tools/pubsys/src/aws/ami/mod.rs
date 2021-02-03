@@ -6,12 +6,12 @@ mod snapshot;
 pub(crate) mod wait;
 
 use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots};
-use crate::aws::{client::build_client, region_from_string};
-use crate::config::{AwsConfig, InfraConfig};
+use crate::aws::{client::build_client, parse_arch, region_from_string};
 use crate::Args;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
 use log::{error, info, trace};
+use pubsys_config::{AwsConfig, InfraConfig};
 use register::{get_ami_id, register_image, RegisteredIds};
 use rusoto_core::{Region, RusotoError};
 use rusoto_ebs::EbsClient;
@@ -48,7 +48,7 @@ pub(crate) struct AmiArgs {
     data_volume_size: i64,
 
     /// The architecture of the machine image
-    #[structopt(short = "a", long)]
+    #[structopt(short = "a", long, parse(try_from_str = parse_arch))]
     arch: String,
 
     /// The desired AMI name
@@ -92,11 +92,12 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let mut amis = HashMap::new();
 
     info!(
-        "Using infra config from path: {}",
+        "Checking for infra config at path: {}",
         args.infra_config_path.display()
     );
-    let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
-    trace!("Parsed infra config: {:?}", infra_config);
+    let infra_config =
+        InfraConfig::from_path_or_default(&args.infra_config_path).context(error::Config)?;
+    trace!("Using infra config: {:?}", infra_config);
 
     let aws = infra_config.aws.unwrap_or_else(|| Default::default());
 
@@ -166,13 +167,18 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         };
         (found_ids, true)
     } else {
-        let new_ids = register_image(ami_args, base_region.name(), base_ebs_client, &base_ec2_client)
-            .await
-            .context(error::RegisterImage {
-                name: &ami_args.name,
-                arch: &ami_args.arch,
-                region: base_region.name(),
-            })?;
+        let new_ids = register_image(
+            ami_args,
+            base_region.name(),
+            base_ebs_client,
+            &base_ec2_client,
+        )
+        .await
+        .context(error::RegisterImage {
+            name: &ami_args.name,
+            arch: &ami_args.arch,
+            region: base_region.name(),
+        })?;
         info!(
             "Registered AMI '{}' in {}: {}",
             ami_args.name,
@@ -483,7 +489,7 @@ mod error {
 
         #[snafu(display("Error reading config: {}", source))]
         Config {
-            source: crate::config::Error,
+            source: pubsys_config::Error,
         },
 
         #[snafu(display("Failed to create file '{}': {}", path.display(), source))]

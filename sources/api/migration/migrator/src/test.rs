@@ -138,7 +138,9 @@ fn create_test_repo() -> TestRepo {
     let one = std::num::NonZeroU64::new(1).unwrap();
     editor
         .targets_version(one)
+        .unwrap()
         .targets_expires(long_ago)
+        .unwrap()
         .snapshot_version(one)
         .snapshot_expires(long_ago)
         .timestamp_version(one)
@@ -154,10 +156,12 @@ fn create_test_repo() -> TestRepo {
         })
         .for_each(|dir_entry_result| {
             let dir_entry = dir_entry_result.unwrap();
-            editor.add_target(
-                dir_entry.file_name().to_str().unwrap().into(),
-                tough::schema::Target::from_path(dir_entry.path()).unwrap(),
-            );
+            editor
+                .add_target(
+                    dir_entry.file_name().to_str().unwrap().into(),
+                    tough::schema::Target::from_path(dir_entry.path()).unwrap(),
+                )
+                .unwrap();
         });
     let signed_repo = editor
         .sign(&[Box::new(tough::key_source::LocalKeySource { path: pem() })])

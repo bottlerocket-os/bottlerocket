@@ -1,13 +1,14 @@
 [Unit]
-Description=Kernel Development Sources
+Description=Kernel Development Sources (Read-Write)
 Conflicts=umount.target
+RequiresMountsFor=/var/lib/kernel-devel/lower
 Before=local-fs.target umount.target
 
 [Mount]
-What=PREFIX/share/bottlerocket/kernel-devel.squashfs
+What=overlay
 Where=PREFIX/src/kernels
-Type=squashfs
-Options=defaults,ro,loop,noatime,nosuid,nodev,context=system_u:object_r:os_t:s0
+Type=overlay
+Options=noatime,nosuid,nodev,lowerdir=/var/lib/kernel-devel/lower,upperdir=/var/lib/kernel-devel/upper,workdir=/var/lib/kernel-devel/work,context=system_u:object_r:local_t:s0
 
 [Install]
 WantedBy=local-fs.target

@@ -11,6 +11,7 @@ Restart=on-failure
 RestartPreventExitStatus=5
 RestartSec=1s
 EnvironmentFile=-/etc/ecs/ecs.config
+EnvironmentFile=/etc/network/proxy.env
 Environment=ECS_CHECKPOINT=true
 ExecStartPre=/sbin/iptables -t nat -A PREROUTING -d 169.254.170.2/32 \
  -p tcp -m tcp --dport 80 -j DNAT --to-destination 127.0.0.1:51679

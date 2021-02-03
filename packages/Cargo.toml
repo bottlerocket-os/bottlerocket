@@ -15,6 +15,7 @@ members = [
     "docker-engine",
     "docker-init",
     "docker-proxy",
+    "e2fsprogs",
     "ecs-agent",
     "filesystem",
     "findutils",
@@ -29,6 +30,8 @@ members = [
     "kubernetes-1.15",
     "kubernetes-1.16",
     "kubernetes-1.17",
+    "kubernetes-1.18",
+    "kubernetes-1.19",
     "libacl",
     "libattr",
     "libaudit",
@@ -73,4 +76,7 @@ members = [
 
 [profile.dev]
 debug = false
+opt-level = 'z'
+
+[profile.dev.build-override]
 opt-level = 'z'

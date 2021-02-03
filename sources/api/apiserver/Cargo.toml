@@ -10,22 +10,22 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-actix-rt = "1.0.0"
-actix-web = { version = "2.0.0", default-features = false }
+actix-web = { version = "3.2.0", default-features = false }
 bottlerocket-release = { path = "../../bottlerocket-release" }
+datastore = { path = "../datastore" }
 fs2 = "0.4.3"
 futures = { version = "0.3", default-features = false }
 http = "0.2.1"
 libc = "0.2"
 log = "0.4"
 models = { path = "../../models" }
-nix = "0.18.0"
+nix = "0.19.0"
 num = "0.3.0"
 percent-encoding = "2.1"
-semver = "0.10"
+semver = "0.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-simplelog = "0.8"
+simplelog = "0.9"
 snafu = "0.6"
 thar-be-updates = { path = "../thar-be-updates" }
 walkdir = "2.2"

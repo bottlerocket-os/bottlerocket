@@ -33,7 +33,9 @@ You can look at [existing issues](https://github.com/bottlerocket-os/bottlerocke
 If not, you can select from a few templates and get some guidance on the type of information that would be most helpful.
 [Contact us with a new issue here.](https://github.com/bottlerocket-os/bottlerocket/issues/new/choose)
 
-We don't have other communication channels set up quite yet, but don't worry about making an issue!
+If you just have questions about Bottlerocket, please feel free to [start or join a discussion](https://github.com/bottlerocket-os/bottlerocket/discussions).
+
+We don't have other communication channels set up quite yet, but don't worry about making an issue or a discussion thread!
 You can let us know about things that seem difficult, or even ways you might like to help.
 
 ## Variants
@@ -57,17 +59,24 @@ Our supported architectures include `x86_64` and `aarch64` (written as `arm64` i
 
 :walking: :running:
 
-To build your own Bottlerocket images, please see [BUILDING](BUILDING.md).
-It describes:
-* how to build an image
-* how to register an EC2 AMI from an image
-
 Bottlerocket is best used with a container orchestrator.
 To get started with Kubernetes, please see [QUICKSTART-EKS](QUICKSTART-EKS.md).
 To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
 These guides describe:
 * how to set up a cluster with the orchestrator, so your Bottlerocket instance can run containers
 * how to launch a Bottlerocket instance in EC2
+
+To build your own Bottlerocket images, please see [BUILDING](BUILDING.md).
+It describes:
+* how to build an image
+* how to register an EC2 AMI from an image
+
+To publish your built Bottlerocket images, please see [PUBLISHING](PUBLISHING.md).
+It describes:
+* how to make TUF repos including your image
+* how to copy your AMI across regions
+* how to mark your AMIs public or grant access to specific accounts
+* how to make your AMIs discoverable using [SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
 
 ## Exploration
 
@@ -327,6 +336,7 @@ These settings can be changed at any time.
   Bottlerocket sets this value to false by default. 
 * `settings.ecs.loglevel`: The level of verbosity for the ECS agent's logs.
   Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
+* `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
 
 #### Updates settings
 
@@ -336,9 +346,46 @@ These settings can be changed at any time.
 * `settings.updates.version-lock`: Controls the version that will be selected when you issue an update request.  Can be locked to a specific version like `v1.0.0`, or `latest` to take the latest available version.  Defaults to `latest`.
 * `settings.updates.ignore-waves`: Updates are rolled out in waves to reduce the impact of issues.  For testing purposes, you can set this to `true` to ignore those waves and update immediately.
 
+#### Network settings
+
+##### Proxy settings
+
+These settings will configure the proxying behavior of the following services:
+* For all variants:
+    * [containerd.service](packages/containerd/containerd.service)
+    * [host-containerd.service](packages/host-ctr/host-containerd.service)
+* For Kubernetes variants:
+    * [kubelet.service](packages/kubernetes-1.18/kubelet.service)
+* For the ECS variant:
+    * [docker.service](packages/docker-engine/docker.service)
+    * [ecs.service](packages/ecs-agent/ecs.service)
+
+* `settings.network.https-proxy`: The HTTPS proxy server to be used by services listed above.
+* `settings.network.no-proxy`: A list of hosts that are excluded from proxying.
+
+The no-proxy list will automatically include entries for localhost.
+
+If you're running a Kubernetes variant, the no-proxy list will automatically include the Kubernetes API server endpoint and other commonly used Kubernetes DNS suffixes to facilitate intra-cluster networking.
+
 #### Time settings
 
 * `settings.ntp.time-servers`: A list of NTP servers used to set and verify the system time.
+
+#### Kernel settings
+
+* `settings.kernel.lockdown`: This allows further restrictions on what the Linux kernel will allow, for example preventing the loading of unsigned modules.
+  May be set to "none" (the default), "integrity", or "confidentiality".
+  **Important note:** this setting cannot be lowered (toward 'none') at runtime.
+  You must reboot for a change to a lower level to take effect.
+* `settings.kernel.sysctl`: Key/value pairs representing Linux kernel parameters.
+  Remember to quote keys (since they often contain ".") and to quote all values.
+  * Example user data for setting up sysctl:
+    ```
+    [settings.kernel.sysctl]
+    "user.max_user_namespaces" = "16384"
+    "vm.max_map_count" = "262144"
+    ```
+
 
 #### Host containers settings
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).
@@ -353,6 +400,9 @@ These settings can be changed at any time.
 [`admin`](https://github.com/bottlerocket-os/bottlerocket-admin-container) and [`control`](https://github.com/bottlerocket-os/bottlerocket-control-container) are our default host containers, but you're free to change this.
 Beyond just changing the settings above to affect the `admin` and `control` containers, you can add and remove host containers entirely.
 As long as you define the three fields above -- `source` with a URI, and `enabled` and `superpowered` with true/false -- you can add host containers with an API call or user data.
+
+You can optionally define a `user-data` field with arbitrary base64-encoded data, which will be made available in the container at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME/user-data`.
+(It was inspired by instance user data, but is entirely separate; it can be any data your host container feels like interpreting.)
 
 Here's an example of adding a custom host container with API calls:
 ```

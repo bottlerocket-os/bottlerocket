@@ -27,7 +27,7 @@ Requires: %{_cross_os}iptables
 
 %build
 %cross_go_configure %{goimport}
-go build -buildmode pie -o "bin/cnitool" %{goimport}/cnitool
+go build -buildmode=pie -ldflags=-linkmode=external -o "bin/cnitool" %{goimport}/cnitool
 
 %install
 install -d %{buildroot}%{_cross_factorydir}/opt/cni/bin

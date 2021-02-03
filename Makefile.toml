@@ -6,7 +6,9 @@ BUILDSYS_ARCH = { script = ["uname -m"] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
+BUILDSYS_STATE_DIR = "${BUILDSYS_BUILD_DIR}/state"
 BUILDSYS_IMAGES_DIR = "${BUILDSYS_BUILD_DIR}/images"
+BUILDSYS_ARCHIVES_DIR = "${BUILDSYS_BUILD_DIR}/archives"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
@@ -20,6 +22,10 @@ BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print
 BUILDSYS_VARIANT = "aws-k8s-1.17"
 # Product name used for file and directory naming
 BUILDSYS_NAME = "bottlerocket"
+# SDK version used for building
+BUILDSYS_SDK_VERSION="0.15.0"
+# Site for fetching the SDK
+BUILDSYS_SDK_SITE="cache.bottlerocket.aws"
 
 # These can be overridden with -e to change configuration for pubsys (`cargo
 # make repo`).  In addition, you can set RELEASE_START_TIME to determine when
@@ -31,8 +37,6 @@ PUBLISH_WAVE_POLICY_PATH = "${BUILDSYS_ROOT_DIR}/sources/updater/waves/default-w
 PUBLISH_INFRA_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Infra.toml"
 # Default repo to read from PUBLISH_INFRA_CONFIG_PATH
 PUBLISH_REPO = "default"
-# Default signing key to use from PUBLISH_INFRA_CONFIG_PATH
-PUBLISH_KEY = "default"
 
 # The size in GiB of the data volume in the block device mapping of registered
 # AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
@@ -43,6 +47,12 @@ PUBLISH_DATA_VOLUME_SIZE = "20"
 # that will be published to SSM when you run `cargo make ssm`.  See
 # tools/pubsys/policies/ssm/README.md for more information.
 PUBLISH_SSM_TEMPLATES_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/ssm/defaults.toml"
+
+# Specifies whether to validate all targets when validating TUF repositories
+REPO_VALIDATE_TARGETS = "true"
+# Specifies the timeframe to look for upcoming repository metadata expirations
+REPO_METADATA_EXPIRING_WITHIN = "3 days"
+# When refreshing repositories, you can set REPO_UNSAFE_REFRESH=true to refresh repositories that have expired metadata files.
 
 # You can also set PUBLISH_REGIONS to override the list of regions from
 # Infra.toml for AMI and SSM commands; it's a comma-separated list like
@@ -72,8 +82,9 @@ DOCKER_BUILDKIT = "1"
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
 
-# Depends on ${BUILDSYS_ARCH}.
-BUILDSYS_SDK_IMAGE = { script = [ "echo bottlerocket/sdk-${BUILDSYS_ARCH}:v0.13.0-$(uname -m)" ] }
+# Depends on ${BUILDSYS_ARCH} and ${BUILDSYS_SDK_VERSION}.
+BUILDSYS_SDK_IMAGE = { script = [ "echo bottlerocket/sdk-${BUILDSYS_ARCH}:v${BUILDSYS_SDK_VERSION}-$(uname -m)" ] }
+BUILDSYS_TOOLCHAIN = { script = [ "echo bottlerocket/toolchain-${BUILDSYS_ARCH}:v${BUILDSYS_SDK_VERSION}-${BUILDSYS_ARCH}" ] }
 
 # Depends on ${BUILDSYS_JOBS}.
 CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
@@ -87,21 +98,45 @@ BUILDSYS_VERSION_FULL="${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 BUILDSYS_NAME_VARIANT="${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
 BUILDSYS_NAME_VERSION="${BUILDSYS_NAME}-${BUILDSYS_VERSION_FULL}"
 BUILDSYS_NAME_FULL="${BUILDSYS_NAME_VARIANT}-${BUILDSYS_VERSION_FULL}"
+# Path to repo-specific root role.
+PUBLISH_REPO_ROOT_JSON = "${BUILDSYS_ROOT_DIR}/roles/${PUBLISH_REPO}.root.json"
+# If you don't specify a signing key in Infra.toml, we generate one at this path.
+PUBLISH_REPO_KEY = "${BUILDSYS_ROOT_DIR}/keys/${PUBLISH_REPO}.pem"
 # Repo directories have subdirectories for variant/arch, so we only want version here.
 PUBLISH_REPO_BASE_DIR = "${BUILDSYS_BUILD_DIR}/repos"
-PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${BUILDSYS_NAME_VERSION}"
+PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${PUBLISH_REPO}/${BUILDSYS_NAME_VERSION}"
 # The default name of registered AMIs; override by setting PUBLISH_AMI_NAME.
 PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
+
+# The name of the kmod kit archive, used to ease building out-of-tree kernel modules.
+BUILDSYS_KMOD_KIT = "${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
+BUILDSYS_KMOD_KIT_PATH="${BUILDSYS_ARCHIVES_DIR}/${BUILDSYS_KMOD_KIT}.tar.xz"
 
 [tasks.setup]
 script = [
 '''
+# Ensure we use a supported architecture
+case "${BUILDSYS_ARCH}" in
+   x86_64|aarch64) ;;
+   *)
+      echo "Unrecognized architecture '${BUILDSYS_ARCH}'; please use 'x86_64 or 'aarch64'"
+      exit 1
+      ;;
+esac
+
 mkdir -p ${BUILDSYS_BUILD_DIR}
 mkdir -p ${BUILDSYS_OUTPUT_DIR}
 mkdir -p ${BUILDSYS_PACKAGES_DIR}
+mkdir -p ${BUILDSYS_STATE_DIR}
 mkdir -p ${GO_MOD_CACHE}
+'''
+]
 
-for cmd in bash curl docker gunzip lz4 ; do
+[tasks.setup-build]
+dependencies = ["setup"]
+script = [
+'''
+for cmd in curl docker gunzip lz4; do
   if ! command -v ${cmd} >/dev/null 2>&1 ; then
     echo "required program '${cmd}' not found" >&2
     exit 1
@@ -118,7 +153,7 @@ dependencies = [
 ]
 
 [tasks.fetch-sdk]
-dependencies = ["setup"]
+dependencies = ["setup-build"]
 script_runner = "bash"
 script = [
 '''
@@ -126,7 +161,7 @@ set -o pipefail
 if ! docker image inspect ${BUILDSYS_SDK_IMAGE} >/dev/null 2>&1 ; then
   # Let curl resolve the certificates instead of the tasks resolved bundle.
   unset SSL_CERT_FILE SSL_CERT_DIR
-  if ! curl https://cache.bottlerocket.aws/${BUILDSYS_SDK_IMAGE}.tar.gz \
+  if ! curl --silent --fail --show-error https://${BUILDSYS_SDK_SITE}/${BUILDSYS_SDK_IMAGE}.tar.gz \
        | gunzip | docker load ; then
     echo "failed to load '${BUILDSYS_SDK_IMAGE}'" >&2
     exit 1
@@ -149,7 +184,7 @@ chmod -R o+r ${CARGO_HOME}
 ]
 
 [tasks.fetch-vendored]
-dependencies = ["setup", "fetch-sdk"]
+dependencies = ["fetch-sdk"]
 script = [
 '''
 ${BUILDSYS_TOOLS_DIR}/docker-go \
@@ -161,7 +196,7 @@ ${BUILDSYS_TOOLS_DIR}/docker-go \
 ]
 
 [tasks.unit-tests]
-dependencies = ["setup", "fetch-sdk", "fetch-sources", "fetch-vendored"]
+dependencies = ["fetch-sdk", "fetch-sources", "fetch-vendored"]
 script = [
 '''
 export VARIANT="${BUILDSYS_VARIANT}"
@@ -182,12 +217,27 @@ ${BUILDSYS_TOOLS_DIR}/docker-go \
 ]
 
 [tasks.build-tools]
-dependencies = ["setup", "fetch"]
+dependencies = ["fetch"]
 script = [
 '''
 cargo install \
   ${CARGO_MAKE_CARGO_ARGS} \
   --path tools/buildsys \
+  --root tools \
+  --force \
+  --quiet
+'''
+]
+
+# Note: this is separate from publish-tools because publish-tools takes a while
+# to build and isn't needed to build an image.
+[tasks.publish-setup-tools]
+dependencies = ["setup", "fetch-sources", "tuftool"]
+script = [
+'''
+cargo install \
+  ${CARGO_MAKE_CARGO_ARGS} \
+  --path tools/pubsys-setup \
   --root tools \
   --force \
   --quiet
@@ -208,7 +258,7 @@ cargo install \
 ]
 
 [tasks.build-packages]
-dependencies = ["build-tools"]
+dependencies = ["build-tools", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
@@ -219,6 +269,73 @@ cargo build \
   --all
 '''
 ]
+
+[tasks.build-kmod-kit]
+dependencies = ["build-packages"]
+script_runner = "bash"
+script = [
+'''
+mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
+
+# Find the most recent kernel archive. If we have more than one, we want the
+# last one that was built.
+kernel_archive="$(find "${BUILDSYS_PACKAGES_DIR}" \
+  -type f -name '*-'"${BUILDSYS_ARCH}"'-kernel-archive-*.rpm' \
+  -printf '%T@ %p\n' | sort -r | awk 'NR==1{print $2}')"
+
+if [ "${?}" -ne 0 ] || [ -z "${kernel_archive}" ] || [ ! -s "${kernel_archive}" ]; then
+  echo "Unable to find latest kernel archive for ${BUILDSYS_ARCH} in ${BUILDSYS_PACKAGES_DIR}"
+  exit 1
+fi
+
+if [ -s "${BUILDSYS_KMOD_KIT_PATH}" ] && [ "${BUILDSYS_KMOD_KIT_PATH}" -nt "${kernel_archive}" ]; then
+  echo "Existing kmod kit ${BUILDSYS_KMOD_KIT_PATH} is newer than kernel archive ${kernel_archive}; skipping build."
+  exit 0
+fi
+
+prepare_kmod_kit="
+set -e -o pipefail
+
+mkdir -p /tmp/kit/${BUILDSYS_KMOD_KIT} /tmp/extract
+
+# Retrieve the toolchain and kernel archives.
+pushd /tmp/extract >/dev/null
+curl --silent --fail --show-error --output /tmp/kit/${BUILDSYS_KMOD_KIT}/toolchain.tar.xz \
+  https://${BUILDSYS_SDK_SITE}/${BUILDSYS_TOOLCHAIN}.tar.xz
+find /tmp/rpms -name "${kernel_archive##*/}" \
+  -exec rpm2cpio {} \; | cpio -idmu --quiet
+find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/kit/${BUILDSYS_KMOD_KIT} \;
+popd >/dev/null
+
+# Extract them into the same directory.
+pushd /tmp/kit/${BUILDSYS_KMOD_KIT} >/dev/null
+tar xf kernel-devel.tar.xz
+rm kernel-devel.tar.xz
+tar xf toolchain.tar.xz
+rm toolchain.tar.xz
+popd >/dev/null
+
+# Merge them together into a unified archive.
+pushd /tmp/kit >/dev/null
+tar cf ${BUILDSYS_KMOD_KIT}.tar ${BUILDSYS_KMOD_KIT}
+xz -T0 ${BUILDSYS_KMOD_KIT}.tar
+popd >/dev/null
+
+mv /tmp/kit/${BUILDSYS_KMOD_KIT}.tar.xz /tmp/archives
+"
+
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -v "${BUILDSYS_PACKAGES_DIR}":/tmp/rpms \
+  -v "${BUILDSYS_ARCHIVES_DIR}":/tmp/archives \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash -c "${prepare_kmod_kit}"
+'''
+]
+
+[tasks.build-archives]
+dependencies = ["build-kmod-kit"]
 
 [tasks.build-variant]
 dependencies = ["build-packages"]
@@ -244,8 +361,7 @@ script = [
 '''
 [ "${BUILDSYS_ALLOW_FAILED_LICENSE_CHECK}" = "true" ] && set +e
 (cd sources && cargo deny check --disable-fetch licenses)
-(cd tools/buildsys && cargo deny check --disable-fetch licenses)
-(cd tools/pubsys && cargo deny check --disable-fetch licenses)
+(cd tools && cargo deny check --disable-fetch licenses)
 set -e
 '''
 ]
@@ -267,18 +383,11 @@ dependencies = ["build-variant"]
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
-ln -snf ../${BUILDSYS_NAME_FULL}.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}.img.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-data.img.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-data.img.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-boot.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-boot.ext4.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-root.ext4.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-root.ext4.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-root.verity.lz4 \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-root.verity.lz4
-ln -snf ../${BUILDSYS_NAME_FULL}-migrations.tar \
-  ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-migrations.tar
+for artifact in ${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}*; do
+  file_name="${artifact##*/}"
+  link_name="${file_name/${BUILDSYS_NAME_FULL}/${BUILDSYS_NAME_VARIANT}}"
+  ln -snf "../${file_name}" "${BUILDSYS_OUTPUT_DIR}/latest/${link_name}"
+done
 '''
 ]
 
@@ -293,6 +402,41 @@ dependencies = [
 [tasks.world]
 alias = "build"
 
+[tasks.tuftool]
+script = [
+'''
+cargo install \
+  --jobs ${BUILDSYS_JOBS} \
+  --root tools \
+  --quiet \
+  tuftool
+'''
+]
+
+[tasks.publish-setup]
+dependencies = ["publish-setup-tools"]
+script = [
+'''
+set -e
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+if [ "${ALLOW_MISSING_KEY}" = "true" ]; then
+   ALLOW_MISSING_KEY_ARG="--allow-missing-key"
+fi
+
+pubsys-setup \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --default-key-path "${PUBLISH_REPO_KEY}" \
+   --repo "${PUBLISH_REPO}" \
+   ${ALLOW_MISSING_KEY_ARG}
+'''
+]
+
+[tasks.publish-setup-without-key]
+env = { "ALLOW_MISSING_KEY" = "true" }
+run_task = "publish-setup"
+
 # Builds a local repository based on the 'latest' built targets.  Uses pubsys
 # to create a repo under /build/repos, named after the arch/variant/version,
 # containing subdirectories for the repo metadata and targets.
@@ -300,7 +444,7 @@ alias = "build"
 # Rather than depend on "build", which currently rebuilds images each run, we
 # check for the image files below to save time.  This does mean that `cargo
 # make` must be run before `cargo make repo`.
-dependencies = ["publish-tools"]
+dependencies = ["publish-setup", "publish-tools", "build-archives"]
 script_runner = "bash"
 script = [
 '''
@@ -321,14 +465,19 @@ if [ ! -s "${bootlz4}" ] || [ ! -s "${rootlz4}" ] || [ ! -s "${hashlz4}" ]; then
    exit 1
 fi
 
+COPY_REPO_TARGETS=()
+
 # TODO: only add migrations from Release.toml, not all
 MIGRATIONS_DIR="$(mktemp -d)"
 tar xpf "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-migrations.tar" -C "${MIGRATIONS_DIR}"
-ADD_MIGRATION_TARGETS=()
 for file in ${MIGRATIONS_DIR}/*; do
    [ -e "${file}" ] || continue
-   ADD_MIGRATION_TARGETS+=("--copy-target ${file}")
+   COPY_REPO_TARGETS+=("--copy-target ${file}")
 done
+
+# Include the kmod kit in the repo so it's easier to build out-of-tree kernel
+# modules for a given release.
+LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
 
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
@@ -343,7 +492,8 @@ pubsys \
    --boot-image "${bootlz4}" \
    --root-image "${rootlz4}" \
    --hash-image "${hashlz4}" \
-   ${ADD_MIGRATION_TARGETS[*]} \
+   ${LINK_REPO_TARGETS[*]} \
+   ${COPY_REPO_TARGETS[*]} \
    \
    --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
    --release-config-path "${BUILDSYS_RELEASE_CONFIG_PATH}" \
@@ -351,10 +501,91 @@ pubsys \
    \
    ${RELEASE_START_TIME:+--release-start-time ${RELEASE_START_TIME}} \
    \
-   --signing-key "${PUBLISH_KEY}" \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --default-key-path "${PUBLISH_REPO_KEY}" \
+   \
    --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
 
-ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_BASE_DIR}/latest"
+ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_OUTPUT_DIR%/*}/latest"
+'''
+]
+
+[tasks.validate-repo]
+dependencies = ["publish-setup-without-key", "publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+if [ "${REPO_VALIDATE_TARGETS}" = "true" ]; then
+   REPO_VALIDATE_TARGETS_ARG="--validate-targets"
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   validate-repo \
+   \
+   --repo "${PUBLISH_REPO}" \
+   --arch "${BUILDSYS_ARCH}" \
+   --variant "${BUILDSYS_VARIANT}" \
+   \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   ${REPO_VALIDATE_TARGETS_ARG}
+'''
+]
+
+[tasks.check-repo-expirations]
+dependencies = ["publish-setup-without-key", "publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   check-repo-expirations \
+   \
+   --repo "${PUBLISH_REPO}" \
+   --arch "${BUILDSYS_ARCH}" \
+   --variant "${BUILDSYS_VARIANT}" \
+   \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --expiration-limit "${REPO_METADATA_EXPIRING_WITHIN}"
+'''
+]
+
+[tasks.refresh-repo]
+dependencies = ["publish-setup", "publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+if [ "${REPO_UNSAFE_REFRESH}" = "true" ]; then
+   REPO_UNSAFE_REFRESH_ARG="--unsafe-refresh"
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   refresh-repo \
+   \
+   --repo "${PUBLISH_REPO}" \
+   --arch "${BUILDSYS_ARCH}" \
+   --variant "${BUILDSYS_VARIANT}" \
+   \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
+   ${REPO_UNSAFE_REFRESH_ARG} \
+   --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
 '''
 ]
 
@@ -362,7 +593,7 @@ ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_BASE_DIR}/latest"
 # Rather than depend on "build", which currently rebuilds images each run, we
 # depend on publish-tools and check for the image files below to save time.
 # This does mean that `cargo make` must be run before `cargo make ami`.
-dependencies = ["publish-tools"]
+dependencies = ["setup-build", "publish-tools"]
 script_runner = "bash"
 script = [
 '''
@@ -388,16 +619,6 @@ fi
 lz4 -df "${rootlz4}" "${root_image}"
 lz4 -df "${datalz4}" "${data_image}"
 
-# Canonicalize architecture identifier to the value recognized by EC2.
-case "${BUILDSYS_ARCH,,}" in
-   arm64|aarch64)
-      arch=arm64 ;;
-   x86_64|amd64)
-      arch=x86_64 ;;
-   *)
-      arch="${BUILDSYS_ARCH}" ;;
-esac
-
 ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
 ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-amis.json"
 
@@ -413,7 +634,7 @@ pubsys \
    ${PUBLISH_ROOT_VOLUME_SIZE:+--root-volume-size "${PUBLISH_ROOT_VOLUME_SIZE}"} \
    --data-volume-size "${PUBLISH_DATA_VOLUME_SIZE}" \
    \
-   --arch "${arch}" \
+   --arch "${BUILDSYS_ARCH}" \
    --name "${ami_name}" \
    --description "${PUBLISH_AMI_DESCRIPTION:-${ami_name}}" \
    \
@@ -627,8 +848,10 @@ pubsys \
 dependencies = [
   "clean-sources",
   "clean-packages",
+  "clean-archives",
   "clean-images",
   "clean-repos",
+  "clean-state",
 ]
 
 [tasks.clean-sources]
@@ -655,6 +878,14 @@ rm -rf ${BUILDSYS_PACKAGES_DIR}
 '''
 ]
 
+[tasks.clean-archives]
+script_runner = "bash"
+script = [
+'''
+rm -rf ${BUILDSYS_ARCHIVES_DIR}
+'''
+]
+
 [tasks.clean-images]
 script_runner = "bash"
 script = [
@@ -668,6 +899,14 @@ script_runner = "bash"
 script = [
 '''
 rm -rf ${PUBLISH_REPO_BASE_DIR}
+'''
+]
+
+[tasks.clean-state]
+script_runner = "bash"
+script = [
+'''
+rm -rf ${BUILDSYS_STATE_DIR}
 '''
 ]
 

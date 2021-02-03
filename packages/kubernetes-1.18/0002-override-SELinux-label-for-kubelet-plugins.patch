@@ -1,0 +1,24 @@
+From 03c21553cbd554761302f49f4e3e5c1d78a209cc Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 17 Mar 2020 20:14:31 +0000
+Subject: [PATCH 4/4] override SELinux label for kubelet plugins
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ pkg/kubelet/config/defaults.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/kubelet/config/defaults.go b/pkg/kubelet/config/defaults.go
+index 6c1e4ebf..1bce6b86 100644
+--- a/pkg/kubelet/config/defaults.go
++++ b/pkg/kubelet/config/defaults.go
+@@ -26,5 +26,5 @@ const (
+ 	DefaultKubeletContainersDirName          = "containers"
+ 	DefaultKubeletPluginContainersDirName    = "plugin-containers"
+ 	DefaultKubeletPodResourcesDirName        = "pod-resources"
+-	KubeletPluginsDirSELinuxLabel            = "system_u:object_r:container_file_t:s0"
++	KubeletPluginsDirSELinuxLabel            = "system_u:object_r:local_t:s0"
+ )
+-- 
+2.21.0
+

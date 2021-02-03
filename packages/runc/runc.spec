@@ -35,7 +35,7 @@ Requires: %{_cross_os}libseccomp
 %build
 %cross_go_configure %{goimport}
 export BUILDTAGS="ambient seccomp selinux"
-go build -buildmode pie -tags="${BUILDTAGS}" -o bin/runc .
+go build -buildmode=pie -ldflags=-linkmode=external -tags="${BUILDTAGS}" -o bin/runc .
 
 %install
 install -d %{buildroot}%{_cross_bindir}

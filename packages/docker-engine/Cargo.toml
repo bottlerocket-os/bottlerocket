@@ -9,13 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/docker/engine/archive/v19.03.12/engine-19.03.12.tar.gz"
-sha512 = "51632ca8cff03440e3b76ad3e7f06b9c6275c776f4c4f9dc88cd7f5aa9b8aa8cb16ce2b3702426cb93f3714265a6cd28d4ba31612db37199e2915821b9ee8fd4"
-
-[[package.metadata.build-package.external-files]]
-path = "awslogs_update_aws-sdk-go_to_support_imdsv2.patch.bz2"
-url = "https://github.com/docker/engine/commit/44a8e10bfc794dbbc4011a62fa8ba71d948d13cf.patch"
-sha512 = "36a775f5bcaf45616fcb27de1296035c6a1377f0a8b52ca5fa4e2b978b637693c04450553bc32f6d7fbd34ef1beb2aa8d05f98482290f34b5605ecec08a8465e"
+url = "https://github.com/moby/moby/archive/v19.03.14/moby-19.03.14.tar.gz"
+sha512 = "9ba589a2199ee272af50b60168a117a707c1fe0bfb039c8e4c0a9df68055add13b68b28e0937fdfeb9c42ec0e2936ac9ca3a671ff946d2d3f3e9d1bfe00ed6d1"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

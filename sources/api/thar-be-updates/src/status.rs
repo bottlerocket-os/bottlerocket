@@ -5,11 +5,12 @@ use chrono::{DateTime, Utc};
 use model::modeled_types::FriendlyVersion;
 use serde::{Deserialize, Serialize};
 use signpost::State;
-use snafu::{ensure, OptionExt, ResultExt};
+use snafu::{OptionExt, ResultExt};
 use std::convert::TryInto;
 use std::fs::File;
 use std::os::unix::process::ExitStatusExt;
 use std::process::Output;
+use tokio::runtime::Runtime;
 
 pub const UPDATE_LOCKFILE: &str = "/run/lock/thar-be-updates.lock";
 pub const UPDATE_STATUS_FILE: &str = "/run/cache/thar-be-updates/status.json";
@@ -104,6 +105,24 @@ pub fn get_update_status(_lockfile: &File) -> Result<UpdateStatus> {
             path: UPDATE_STATUS_FILE,
         })?,
     )
+}
+
+/// Retrieves settings from the API.
+///
+/// NOTE: this function creates its own tokio runtime to make the async apiclient call.  It should
+/// not be called if you're running another tokio runtime.  The program structure requires forking
+/// to handle long-running update actions, and the tokio runtime uses threading, which generally
+/// isn't safe over forks; instead, we create and drop one here for the short period we need it.
+fn get_settings(socket_path: &str) -> Result<serde_json::Value> {
+    let uri = "/settings";
+    let method = "GET";
+
+    let mut rt = Runtime::new().context(error::Runtime)?;
+    let try_response_body =
+        rt.block_on(async { apiclient::raw_request(&socket_path, uri, method, None).await });
+    let (_code, response_body) = try_response_body.context(error::APIRequest { method, uri })?;
+
+    serde_json::from_str(&response_body).context(error::ResponseJson { uri })
 }
 
 // This is how the UpdateStatus is stored on disk
@@ -251,21 +270,7 @@ impl UpdateStatus {
         self.available_updates = updates.iter().map(|u| u.version.to_owned()).collect();
         // Check if the 'version-lock'ed update is available as the 'chosen' update
         // Retrieve the 'version-lock' setting
-        let uri = "/settings";
-        let method = "GET";
-        let (code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
-            .context(error::APIRequest { method, uri })?;
-        ensure!(
-            code.is_success(),
-            error::APIResponse {
-                method,
-                uri,
-                code,
-                response_body,
-            }
-        );
-        let settings: serde_json::Value =
-            serde_json::from_str(&response_body).context(error::ResponseJson { uri })?;
+        let settings = get_settings(socket_path)?;
         let locked_version: FriendlyVersion = serde_json::from_value(
             settings["updates"]["version-lock"].to_owned(),
         )
