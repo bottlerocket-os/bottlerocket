@@ -234,8 +234,16 @@ There are two ways to point your hosts at your own repo - at build time or at ru
 If you're maintaining your own fork of Bottlerocket, you'd probably want to change the settings at build time, so you don't have to change settings for every host you launch.
 If you're just running a few hosts, or don't want to maintain a fork, then it's easier to change settings at run time.
 
-To change your repo URLs at build time, you would change the `settings.updates.targets-base-url` and `metadata.settings.updates.metadata-base-url.template` settings in [sources/models/defaults.toml](sources/models/defaults.toml).
-This file contains the default settings that will be applied to the host at startup, meaning any host you run already knows to look at your repo.
+To change your repo URLs at build time, you would change the `settings.updates.targets-base-url` and `metadata.settings.updates.metadata-base-url.template` settings.
+
+The default settings are defined in TOML files.
+First, open the directory for your variant under [sources/models/src/](sources/models/src/).
+Then, open the `defaults.d` directory.
+Here, you can have any number of TOML files, or symlinks to shared TOML files, that define your default settings.
+Later files override earlier ones.
+For an example, take a look at the [aws-ecs-1 defaults](sources/models/src/aws-ecs-1/defaults.d/).
+
+These default settings will be applied to your hosts at startup, meaning any host you run would already know to look at your repo.
 (You'll probably want to commit your changes into your fork of the repo; we're working on ways of making it easier to maintain your own model and settings without a fork.)
 
 The easiest way to change your repo URLs at run time is to include the settings changes in user data.

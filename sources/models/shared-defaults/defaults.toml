@@ -1,6 +1,6 @@
-# Here we define default values for the settings in the API model.
-# Variant builds can override or supplement these in
-# src/VARIANT/override-defaults.toml.
+# Here we define a common set of default settings for most variants.
+# A variant includes these by symlinking this file into its `defaults.d` directory.
+# It can override these settings in any file listed after that in the directory.
 
 # The structures, fields, and types here need to match those of the API model,
 # as defined in src/VARIANT/mod.rs.
@@ -59,22 +59,6 @@ affected-services = ["updog"]
 seed.setting-generator = "bork seed"
 
 # HostContainers
-
-[settings.host-containers.admin]
-enabled = false
-superpowered = true
-
-[metadata.settings.host-containers.admin.source]
-setting-generator = "schnauzer settings.host-containers.admin.source"
-template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.5.2"
-
-[settings.host-containers.control]
-enabled = true
-superpowered = false
-
-[metadata.settings.host-containers.control.source]
-setting-generator = "schnauzer settings.host-containers.control.source"
-template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.4.1"
 
 [services.host-containers]
 configuration-files = []

@@ -13,44 +13,46 @@ This `Settings` essentially becomes the schema for the variant's data store.
 
 At the field level, standard Rust types can be used, or ["modeled types"](src/modeled_types) that add input validation.
 
-Default values are specified in [defaults.toml](defaults.toml) and can be overridden by each variant.
+Default values are specified in .toml files in each variant's `defaults.d` directory under [src](src).
+(For example, see the [aws-ecs-1 defaults](src/aws-ecs-1/defaults.d/).)
+Entries are sorted by filename, and later entries take precedence.
 
 The `#[model]` attribute on Settings and its sub-structs reduces duplication and adds some required metadata; see [its docs](model-derive/) for details.
 
 ## aws-k8s-1.15: Kubernetes 1.15
 
 * [Model](src/aws-k8s-1.15/mod.rs)
-* [Overridden defaults](src/aws-k8s-1.15/override-defaults.toml)
+* [Default settings](src/aws-k8s-1.15/defaults.d/)
 
 ## aws-k8s-1.16: Kubernetes 1.16
 
 * [Model](src/aws-k8s-1.16/mod.rs)
-* [Overridden defaults](src/aws-k8s-1.16/override-defaults.toml)
+* [Default settings](src/aws-k8s-1.16/defaults.d/)
 
 ## aws-k8s-1.17: Kubernetes 1.17
 
 * [Model](src/aws-k8s-1.17/mod.rs)
-* [Overridden defaults](src/aws-k8s-1.17/override-defaults.toml)
+* [Default settings](src/aws-k8s-1.17/defaults.d/)
 
 ## aws-k8s-1.18: Kubernetes 1.18
 
 * [Model](src/aws-k8s-1.18/mod.rs)
-* [Overridden defaults](src/aws-k8s-1.18/override-defaults.toml)
+* [Default settings](src/aws-k8s-1.18/defaults.d/)
 
 ## aws-k8s-1.19: Kubernetes 1.19
 
 * [Model](src/aws-k8s-1.19/mod.rs)
-* [Overridden defaults](src/aws-k8s-1.19/override-defaults.toml)
+* [Default settings](src/aws-k8s-1.19/defaults.d/)
 
 ## aws-ecs-1: Amazon ECS
 
 * [Model](src/aws-ecs-1/mod.rs)
-* [Overridden defaults](src/aws-ecs-1/override-defaults.toml)
+* [Default settings](src/aws-ecs-1/defaults.d/)
 
 ## aws-dev: Development build
 
 * [Model](src/aws-dev/mod.rs)
-* [Overridden defaults](src/aws-dev/override-defaults.toml)
+* [Default settings](src/aws-dev/defaults.d/)
 
 # This directory
 

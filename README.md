@@ -262,7 +262,7 @@ motd = "my own value!"
 
 Here we'll describe each setting you can change.
 
-**Note:** You can see the default values (for any settings that are not generated at runtime) by looking at [defaults.toml](sources/models/defaults.toml).
+**Note:** You can see the default values (for any settings that are not generated at runtime) by looking in the `defaults.d` directory for a variant, for example [aws-ecs-1](sources/models/src/aws-ecs-1/defaults.d/).
 
 When you're sending settings to the API, or receiving settings from the API, they're in a structured JSON format.
 This allows modification of any number of keys at once.

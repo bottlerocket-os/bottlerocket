@@ -6,8 +6,8 @@ Current version: 0.1.0
 
 storewolf creates the filesystem datastore used by the API system.
 
-It creates the datastore at a provided path and populates any default
-settings given in the defaults.toml file, unless they already exist.
+It creates the datastore at a provided path and populates any default settings, as given in the
+TOML files of the current variant's `defaults.d` directory, unless the datastore already exists.
 
 ## Colophon
 

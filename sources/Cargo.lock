@@ -1667,6 +1667,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
+name = "merge-toml"
+version = "0.1.0"
+dependencies = [
+ "snafu",
+ "toml",
+]
+
+[[package]]
 name = "migrate-admin-container-v0-5-0"
 version = "0.1.0"
 dependencies = [
@@ -2846,12 +2854,14 @@ dependencies = [
  "cargo-readme",
  "datastore",
  "log",
+ "merge-toml",
  "models",
  "rand 0.8.1",
  "semver 0.11.0",
  "simplelog",
  "snafu",
  "toml",
+ "walkdir",
 ]
 
 [[package]]
