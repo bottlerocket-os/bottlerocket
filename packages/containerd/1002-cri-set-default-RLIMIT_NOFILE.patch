@@ -1,26 +1,27 @@
-From 64deef11da4cf532ea9d82cc499f5174a8907e29 Mon Sep 17 00:00:00 2001
+From f6cb04298ec80f137d42689c18087e5ba942f98d Mon Sep 17 00:00:00 2001
 From: Zac Mrowicki <mrowicki@amazon.com>
 Date: Thu, 22 Oct 2020 20:44:38 +0000
-Subject: [PATCH] cri: set default RLIMIT_NOFILE
+Subject: [PATCH 1002/1002] cri: set default RLIMIT_NOFILE
 
 The `cri` plugin currently inherits the limit from the default OCI spec
 or the containerd process.  This change sets the default hard
 RLIMIT_NOFILE to 1048576 and the soft limit to 65536 in the OCI spec for
 any container spawned using `cri`.
 ---
- vendor/github.com/containerd/cri/pkg/config/config.go |  8 ++++++++
- .../containerd/cri/pkg/containerd/opts/spec.go        | 11 +++++++++++
- .../containerd/cri/pkg/server/container_create.go     | 11 +++++++++++
- 3 files changed, 30 insertions(+)
+ vendor/github.com/containerd/cri/pkg/config/config.go |  6 ++++++
+ .../containerd/cri/pkg/config/config_unix.go          |  2 ++
+ .../containerd/cri/pkg/containerd/opts/spec_unix.go   | 11 +++++++++++
+ .../cri/pkg/server/container_create_unix.go           | 11 +++++++++++
+ 4 files changed, 30 insertions(+)
 
 diff --git a/vendor/github.com/containerd/cri/pkg/config/config.go b/vendor/github.com/containerd/cri/pkg/config/config.go
-index 7c5f9eb..772bf28 100644
+index a0c86fa76..f8f914fed 100644
 --- a/vendor/github.com/containerd/cri/pkg/config/config.go
 +++ b/vendor/github.com/containerd/cri/pkg/config/config.go
-@@ -204,6 +204,12 @@ type PluginConfig struct {
- 	// DisableProcMount disables Kubernetes ProcMount support. This MUST be set to `true`
- 	// when using containerd with Kubernetes <=1.11.
- 	DisableProcMount bool `toml:"disable_proc_mount" json:"disableProcMount"`
+@@ -252,6 +252,12 @@ type PluginConfig struct {
+ 	// isolation, security and early detection of issues in the mount configuration when using
+ 	// ReadOnlyRootFilesystem since containers won't silently mount a temporary volume.
+ 	IgnoreImageDefinedVolumes bool `toml:"ignore_image_defined_volumes" json:"ignoreImageDefinedVolumes"`
 +	// ProcessRLimitNoFileSoft sets the soft limit of maximum file
 +	// descriptors each container process can use.
 +	ProcessRLimitNoFileSoft int `toml:"process_rlimit_no_file_soft" json:"process_rlimit_no_file_soft"`
@@ -30,21 +31,24 @@ index 7c5f9eb..772bf28 100644
  }
  
  // X509KeyPairStreaming contains the x509 configuration for streaming
-@@ -271,6 +277,8 @@ func DefaultConfig() PluginConfig {
- 		},
- 		MaxConcurrentDownloads: 3,
- 		DisableProcMount:       false,
-+		ProcessRLimitNoFileSoft:    65536,
-+		ProcessRLimitNoFileHard:    1048576,
+diff --git a/vendor/github.com/containerd/cri/pkg/config/config_unix.go b/vendor/github.com/containerd/cri/pkg/config/config_unix.go
+index 62ea66207..72d556103 100644
+--- a/vendor/github.com/containerd/cri/pkg/config/config_unix.go
++++ b/vendor/github.com/containerd/cri/pkg/config/config_unix.go
+@@ -72,5 +72,7 @@ func DefaultConfig() PluginConfig {
+ 		TolerateMissingHugetlbController: true,
+ 		DisableHugetlbController:         true,
+ 		IgnoreImageDefinedVolumes:        false,
++		ProcessRLimitNoFileSoft:          65536,
++		ProcessRLimitNoFileHard:          1048576,
  	}
  }
- 
-diff --git a/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go b/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go
-index 0da421a..445c279 100644
---- a/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go
-+++ b/vendor/github.com/containerd/cri/pkg/containerd/opts/spec.go
-@@ -48,6 +48,17 @@ const (
- 	DefaultSandboxCPUshares = 2
+diff --git a/vendor/github.com/containerd/cri/pkg/containerd/opts/spec_unix.go b/vendor/github.com/containerd/cri/pkg/containerd/opts/spec_unix.go
+index d644962d5..559dd1c5f 100644
+--- a/vendor/github.com/containerd/cri/pkg/containerd/opts/spec_unix.go
++++ b/vendor/github.com/containerd/cri/pkg/containerd/opts/spec_unix.go
+@@ -46,6 +46,17 @@ import (
+ 	"github.com/containerd/cri/pkg/util"
  )
  
 +// WithProcessRLimits sets the RLimits for this container process
@@ -61,11 +65,11 @@ index 0da421a..445c279 100644
  // WithAdditionalGIDs adds any additional groups listed for a particular user in the
  // /etc/groups file of the image's root filesystem to the OCI spec's additionalGids array.
  func WithAdditionalGIDs(userstr string) oci.SpecOpts {
-diff --git a/vendor/github.com/containerd/cri/pkg/server/container_create.go b/vendor/github.com/containerd/cri/pkg/server/container_create.go
-index d35fff3..c665973 100644
---- a/vendor/github.com/containerd/cri/pkg/server/container_create.go
-+++ b/vendor/github.com/containerd/cri/pkg/server/container_create.go
-@@ -335,6 +335,17 @@ func (c *criService) generateContainerSpec(id string, sandboxID string, sandboxP
+diff --git a/vendor/github.com/containerd/cri/pkg/server/container_create_unix.go b/vendor/github.com/containerd/cri/pkg/server/container_create_unix.go
+index 6ebebf9ad..0e089b48a 100644
+--- a/vendor/github.com/containerd/cri/pkg/server/container_create_unix.go
++++ b/vendor/github.com/containerd/cri/pkg/server/container_create_unix.go
+@@ -123,6 +123,17 @@ func (c *criService) containerSpec(id string, sandboxID string, sandboxPid uint3
  		// this will be set based on the security context below
  		oci.WithNewPrivileges,
  	}
@@ -84,5 +88,5 @@ index d35fff3..c665973 100644
  		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
  	} else if imageConfig.WorkingDir != "" {
 -- 
-2.21.0
+2.26.2
 
