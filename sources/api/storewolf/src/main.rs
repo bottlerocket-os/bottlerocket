@@ -98,9 +98,6 @@ mod error {
         #[snafu(display("Unable to write metadata to the datastore: {}", source))]
         WriteMetadata { source: datastore::Error },
 
-        #[snafu(display("Data store link '{}' points to /", path.display()))]
-        DataStoreLinkToRoot { path: PathBuf },
-
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
