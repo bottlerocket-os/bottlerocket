@@ -1,9 +1,13 @@
 [Service]
 ExecStart=
 ExecStart=/usr/bin/kubelet \
+{{~#unless settings.kubernetes.standalone-mode}}
     --cloud-provider aws \
-    --config /etc/kubernetes/kubelet/config \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
+{{~else}}
+    --cloud-provider "" \
+{{~/unless}}
+    --config /etc/kubernetes/kubelet/config \
     --container-runtime=remote \
     --container-runtime-endpoint=unix:///run/dockershim.sock \
     --containerd=/run/dockershim.sock \

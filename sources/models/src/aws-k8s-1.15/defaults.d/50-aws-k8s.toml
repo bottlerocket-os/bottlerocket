@@ -51,6 +51,7 @@ affected-services = ["kubernetes", "containerd"]
 
 [settings.kubernetes]
 cluster-domain = "cluster.local"
+standalone-mode = false
 
 # Metrics
 [settings.metrics]

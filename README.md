@@ -303,8 +303,10 @@ The following settings can be optionally set to customize the node labels and ta
 
 The following settings are optional and allow you to further configure your cluster.
 * `settings.kubernetes.cluster-domain`: The DNS domain for this cluster, allowing all Kubernetes-run containers to search this domain before the host's search domains.  Defaults to `cluster.local`.
+* `settings.kubernetes.standalone-mode`: Whether to run the kubelet in standalone mode, without connecting to an API server.  Defaults to `false`.
 
 You can also optionally specify static pods for your node with the following settings.
+Static pods can be particularly useful when running in standalone mode.
 * `settings.kubernetes.static-pods.<custom identifier>.manifest`: A base64-encoded pod manifest.
 * `settings.kubernetes.static-pods.<custom identifier>.enabled`: Whether the static pod is enabled.
 
