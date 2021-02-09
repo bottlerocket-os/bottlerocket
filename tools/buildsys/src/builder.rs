@@ -93,6 +93,7 @@ impl VariantBuilder {
         let version_image = getenv("BUILDSYS_VERSION_IMAGE")?;
         let version_build = getenv("BUILDSYS_VERSION_BUILD")?;
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
+        let image_name = getenv("BUILDSYS_NAME")?;
         let image_format = match image_format {
             Some(ImageFormat::Raw) | None => String::from("raw"),
             Some(ImageFormat::Vmdk) => String::from("vmdk"),
@@ -108,12 +109,14 @@ impl VariantBuilder {
              --build-arg VARIANT={variant} \
              --build-arg VERSION_ID={version_image} \
              --build-arg BUILD_ID={version_build} \
+             --build-arg IMAGE_NAME={image_name} \
              --build-arg IMAGE_FORMAT={image_format}",
             packages = packages,
             arch = arch,
             variant = variant,
             version_image = version_image,
             version_build = version_build,
+            image_name = image_name,
             image_format = image_format,
         );
         let tag = format!(
