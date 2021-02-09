@@ -31,3 +31,4 @@ configMapAndSecretChangeDetectionStrategy: Cache
 tlsCipherSuites:
 - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 maxPods: {{default 110 settings.kubernetes.max-pods}}
+staticPodPath: "/etc/kubernetes/static-pods/"

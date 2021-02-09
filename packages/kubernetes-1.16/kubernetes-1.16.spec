@@ -20,6 +20,7 @@ Source2: kubelet-env
 Source3: kubelet-config
 Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
+Source6: kubernetes-tmpfiles.conf
 Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
 
@@ -75,6 +76,9 @@ install -m 0644 %{S:3} %{buildroot}%{_cross_templatedir}/kubelet-config
 install -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/kubelet-kubeconfig
 install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:6} %{buildroot}%{_cross_tmpfilesdir}/kubernetes.conf
+
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files -n %{_cross_os}kubelet-1.16
@@ -88,5 +92,6 @@ install -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/kubernetes-ca-crt
 %{_cross_templatedir}/kubelet-config
 %{_cross_templatedir}/kubelet-kubeconfig
 %{_cross_templatedir}/kubernetes-ca-crt
+%{_cross_tmpfilesdir}/kubernetes.conf
 
 %changelog
