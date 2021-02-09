@@ -42,6 +42,9 @@ pub mod error {
         #[snafu(display("{} given invalid input: {}", thing, input))]
         BigPattern { thing: String, input: String },
 
+        #[snafu(display("Invalid Kubernetes authentication mode '{}'", input))]
+        InvalidAuthenticationMode { input: String },
+
         #[snafu(display("Given invalid cluster name '{}': {}", name, msg))]
         InvalidClusterName { name: String, msg: String },
 

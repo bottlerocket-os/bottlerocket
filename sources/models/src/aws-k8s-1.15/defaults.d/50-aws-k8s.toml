@@ -9,6 +9,7 @@ configuration-files = [
   "kubelet-env",
   "kubelet-config",
   "kubelet-kubeconfig",
+  "kubelet-bootstrap-kubeconfig",
   "kubelet-exec-start-conf",
   "kubernetes-ca-crt",
   "proxy-env",
@@ -31,6 +32,10 @@ template-path = "/usr/share/templates/kubelet-config"
 path = "/etc/kubernetes/kubelet/kubeconfig"
 template-path = "/usr/share/templates/kubelet-kubeconfig"
 
+[configuration-files.kubelet-bootstrap-kubeconfig]
+path = "/etc/kubernetes/kubelet/bootstrap-kubeconfig"
+template-path = "/usr/share/templates/kubelet-bootstrap-kubeconfig"
+
 [configuration-files.kubernetes-ca-crt]
 path = "/etc/kubernetes/pki/ca.crt"
 template-path = "/usr/share/templates/kubernetes-ca-crt"
@@ -52,6 +57,7 @@ affected-services = ["kubernetes", "containerd"]
 [settings.kubernetes]
 cluster-domain = "cluster.local"
 standalone-mode = false
+authentication-mode = "aws"
 
 # Metrics
 [settings.metrics]

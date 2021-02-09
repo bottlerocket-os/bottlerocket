@@ -4,6 +4,9 @@ ExecStart=/usr/bin/kubelet \
 {{~#unless settings.kubernetes.standalone-mode}}
     --cloud-provider aws \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
+{{~#if (eq settings.kubernetes.authentication-mode "tls")}}
+    --bootstrap-kubeconfig /etc/kubernetes/kubelet/bootstrap-kubeconfig \
+{{~/if}}
 {{~else}}
     --cloud-provider "" \
 {{~/unless}}
