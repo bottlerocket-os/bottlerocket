@@ -24,7 +24,7 @@ It's described in context in the [API server docs](apiserver/).
 
 Users can access the API through the `apiclient` binary.
 It's available in Bottlerocket, whether you're accessing it through a control channel like SSM or the admin container.
-(See the top-level [README](../../) for information about those.)
+(See the top-level [README](../../README.md#exploration) for information about those.)
 
 Rust code can use the `apiclient` library to make requests to the Unix-domain socket of the [apiserver](#apiserver).
 
