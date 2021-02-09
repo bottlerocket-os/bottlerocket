@@ -42,7 +42,8 @@ const IMDS_INSTANCE_TYPE_ENDPOINT: &str =
 const IMDS_INSTANCE_IDENTITY_DOCUMENT_ENDPOINT: &str =
     "http://169.254.169.254/2018-09-24/dynamic/instance-identity/document";
 
-const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
+// const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
+const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods-custom-networking";
 
 const PAUSE_CONTAINER_VERSION: &str = "3.1";
 lazy_static! {
