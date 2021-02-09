@@ -1,0 +1,15 @@
+[settings.host-containers.admin]
+enabled = false
+superpowered = true
+
+[metadata.settings.host-containers.admin.source]
+setting-generator = "schnauzer settings.host-containers.admin.source"
+template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.5.2"
+
+[settings.host-containers.control]
+enabled = true
+superpowered = false
+
+[metadata.settings.host-containers.control.source]
+setting-generator = "schnauzer settings.host-containers.control.source"
+template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.4.1"
