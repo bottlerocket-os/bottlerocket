@@ -1,4 +1,5 @@
 %global _cross_first_party 1
+%global _is_k8s_variant %(if echo %{_cross_variant} | grep -q "k8s"; then echo 1; else echo 0; fi)
 %undefine _debugsource_packages
 
 Name: %{_cross_os}os
@@ -182,6 +183,14 @@ Summary: Settings generator for ECS
 %{summary}.
 %endif
 
+%if %{_is_k8s_variant}
+%package -n %{_cross_os}static-pods
+Summary: Manages user-defined K8S static pods
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}static-pods
+%{summary}.
+%endif
+
 %prep
 %setup -T -c
 %cargo_prep
@@ -213,6 +222,9 @@ mkdir bin
 %if "%{_cross_variant}" == "aws-ecs-1"
     -p ecs-settings-applier \
 %endif
+%if %{_is_k8s_variant}
+    -p static-pods \
+%endif
     %{nil}
 
 # Next, build components that should be static.
@@ -242,6 +254,9 @@ for p in \
   ghostdog \
 %if "%{_cross_variant}" == "aws-ecs-1"
   ecs-settings-applier \
+%endif
+%if %{_is_k8s_variant}
+  static-pods \
 %endif
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
@@ -401,6 +416,11 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %if "%{_cross_variant}" == "aws-ecs-1"
 %files -n %{_cross_os}ecs-settings-applier
 %{_cross_bindir}/ecs-settings-applier
+%endif
+
+%if %{_is_k8s_variant}
+%files -n %{_cross_os}static-pods
+%{_cross_bindir}/static-pods
 %endif
 
 %changelog

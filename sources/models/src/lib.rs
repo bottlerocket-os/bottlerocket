@@ -93,10 +93,17 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion,
+    DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, Identifier,
     KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue,
     Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
 };
+
+// Kubernetes static pod manifest settings
+#[model]
+struct StaticPod {
+    enabled: bool,
+    manifest: ValidBase64,
+}
 
 // Kubernetes related settings. The dynamic settings are retrieved from
 // IMDS via Sundog's child "Pluto".
@@ -108,6 +115,7 @@ struct KubernetesSettings {
     api_server: Url,
     node_labels: HashMap<KubernetesLabelKey, KubernetesLabelValue>,
     node_taints: HashMap<KubernetesLabelKey, KubernetesTaintValue>,
+    static_pods: HashMap<Identifier, StaticPod>,
 
     // Dynamic settings.
     max_pods: u32,

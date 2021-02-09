@@ -13,6 +13,7 @@ members = [
     "api/pluto",
     "api/servicedog",
     "api/host-containers",
+    "api/static-pods",
     "api/storewolf",
     "api/thar-be-settings",
     "api/thar-be-updates",

@@ -2895,6 +2895,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "static-pods"
+version = "0.1.0"
+dependencies = [
+ "base64 0.13.0",
+ "cargo-readme",
+ "log",
+ "models",
+ "schnauzer",
+ "serde",
+ "serde_json",
+ "simplelog",
+ "snafu",
+ "tokio",
+]
+
+[[package]]
 name = "stdweb"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
