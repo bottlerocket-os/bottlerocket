@@ -60,6 +60,11 @@
 (roletype object_r local_t)
 (context local (system_u object_r local_t s0))
 
+; Alias "container_file_t" to "local_t" for compatibility with
+; the container-selinux policy.
+(typealias container_file_t)
+(typealiasactual container_file_t local_t)
+
 ; Files for the API components.
 (type private_t)
 (roletype object_r private_t)
@@ -74,6 +79,11 @@
 (type cache_t)
 (roletype object_r cache_t)
 (context cache (system_u object_r cache_t s0))
+
+; Alias "container_ro_file_t" to "cache_t" for compatibility with
+; the container-selinux policy.
+(typealias container_ro_file_t)
+(typealiasactual container_ro_file_t cache_t)
 
 ; Files for saved DHCP leases.
 (type lease_t)
