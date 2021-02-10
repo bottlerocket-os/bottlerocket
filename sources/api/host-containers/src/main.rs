@@ -76,9 +76,6 @@ mod error {
             source: serde_json::Error,
         },
 
-        #[snafu(display("settings.host_containers missing in API response"))]
-        MissingSettings {},
-
         #[snafu(display("Host containers '{}' missing field '{}'", name, field))]
         MissingField { name: String, field: String },
 
@@ -157,7 +154,8 @@ where
     let settings: model::Settings =
         serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })?;
 
-    settings.host_containers.context(error::MissingSettings)
+    // If host containers aren't defined, return an empty map
+    Ok(settings.host_containers.unwrap_or_default())
 }
 
 /// SystemdUnit stores the systemd unit being manipulated
