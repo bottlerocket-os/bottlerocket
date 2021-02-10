@@ -22,14 +22,13 @@ Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
 Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
-Patch2: 0002-override-SELinux-label-for-kubelet-plugins.patch
 
 # Fix builds in $GOPATH when using Go 1.13 - drop when we catch up in v1.17.0
 # https://github.com/kubernetes/kubernetes/commit/8618c09
-Patch3: 0003-opt-out-of-module-mode-for-builds.patch
+Patch2: 0002-opt-out-of-module-mode-for-builds.patch
 
-Patch4: 0004-kubelet-block-non-forwarded-packets.patch
-Patch5: 0005-include-etc-hosts-in-eviction-calc.patch
+Patch3: 0003-kubelet-block-non-forwarded-packets.patch
+Patch4: 0004-include-etc-hosts-in-eviction-calc.patch
 
 BuildRequires: git
 BuildRequires: rsync

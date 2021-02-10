@@ -1,7 +1,7 @@
-From 43460991812f41748d2ebbb846e3d956b40b26ae Mon Sep 17 00:00:00 2001
+From f655cc39ba3aef7792a013f765c429ede69cfd97 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 18 May 2019 16:57:12 +0000
-Subject: [PATCH 1/4] always set relevant variables for cross compiling
+Subject: [PATCH] always set relevant variables for cross compiling
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
@@ -73,5 +73,5 @@ index e9c3b066..14c15994 100755
  
  kube::golang::unset_platform_envs() {
 -- 
-2.21.0
+2.26.2
 
