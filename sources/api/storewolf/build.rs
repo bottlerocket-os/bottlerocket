@@ -23,6 +23,9 @@ fn main() -> Result<()> {
     generate_readme();
     generate_defaults_toml()?;
 
+    // Reflect that we need to rerun if variant has changed to pick up the new default settings.
+    println!("cargo:rerun-if-env-changed=VARIANT");
+
     Ok(())
 }
 
@@ -68,6 +71,10 @@ fn generate_defaults_toml() -> Result<()> {
     let mut defaults = Value::Table(Map::new());
     for entry in walker {
         let entry = entry.context(error::ListFiles { dir: DEFAULTS_DIR })?;
+
+        // Reflect that we need to rerun if any of the default settings files have changed.
+        println!("cargo:rerun-if-changed={}", entry.path().display());
+
         let data = fs::read_to_string(entry.path()).context(error::File {
             op: "read",
             path: entry.path(),
