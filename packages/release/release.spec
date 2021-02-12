@@ -63,7 +63,6 @@ Requires: %{_cross_os}selinux-policy
 Requires: %{_cross_os}policycoreutils
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}sundog
-Requires: %{_cross_os}pluto
 Requires: %{_cross_os}storewolf
 Requires: %{_cross_os}host-containers
 Requires: %{_cross_os}settings-committer

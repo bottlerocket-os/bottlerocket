@@ -74,7 +74,9 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 Summary: Updates settings dynamically based on user-specified generators
 Requires: %{_cross_os}apiserver = %{version}-%{release}
 Requires: %{_cross_os}schnauzer = %{version}-%{release}
+%if %{_is_k8s_variant}
 Requires: %{_cross_os}pluto = %{version}-%{release}
+%endif
 Requires: %{_cross_os}bork = %{version}-%{release}
 %description -n %{_cross_os}sundog
 %{summary}.
@@ -93,11 +95,6 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %package -n %{_cross_os}schnauzer
 Summary: Setting generator for templated settings values.
 %description -n %{_cross_os}schnauzer
-%{summary}.
-
-%package -n %{_cross_os}pluto
-Summary: Dynamic setting generator for kubernetes
-%description -n %{_cross_os}pluto
 %{summary}.
 
 %package -n %{_cross_os}thar-be-settings
@@ -184,6 +181,11 @@ Summary: Settings generator for ECS
 %endif
 
 %if %{_is_k8s_variant}
+%package -n %{_cross_os}pluto
+Summary: Dynamic setting generator for kubernetes
+%description -n %{_cross_os}pluto
+%{summary}.
+
 %package -n %{_cross_os}static-pods
 Summary: Manages user-defined K8S static pods
 Requires: %{_cross_os}apiserver = %{version}-%{release}
@@ -203,7 +205,6 @@ mkdir bin
     -p netdog \
     -p sundog \
     -p schnauzer \
-    -p pluto \
     -p bork \
     -p thar-be-settings \
     -p thar-be-updates \
@@ -223,6 +224,7 @@ mkdir bin
     -p ecs-settings-applier \
 %endif
 %if %{_is_k8s_variant}
+    -p pluto \
     -p static-pods \
 %endif
     %{nil}
@@ -246,7 +248,7 @@ done
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  early-boot-config netdog sundog schnauzer pluto bork corndog \
+  early-boot-config netdog sundog schnauzer bork corndog \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
   migrator \
@@ -256,7 +258,7 @@ for p in \
   ecs-settings-applier \
 %endif
 %if %{_is_k8s_variant}
-  static-pods \
+  pluto static-pods \
 %endif
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
@@ -292,8 +294,10 @@ install -d %{buildroot}%{_cross_datadir}/bottlerocket
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysusersdir}/api.conf
 
+%if %{_is_k8s_variant}
 install -d %{buildroot}%{_cross_datadir}/eks
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_datadir}/eks
+%endif
 
 install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
@@ -346,11 +350,6 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 
 %files -n %{_cross_os}schnauzer
 %{_cross_bindir}/schnauzer
-
-%files -n %{_cross_os}pluto
-%{_cross_bindir}/pluto
-%dir %{_cross_datadir}/eks
-%{_cross_datadir}/eks/eni-max-pods
 
 %files -n %{_cross_os}bork
 %{_cross_bindir}/bork
@@ -419,6 +418,11 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %endif
 
 %if %{_is_k8s_variant}
+%files -n %{_cross_os}pluto
+%{_cross_bindir}/pluto
+%dir %{_cross_datadir}/eks
+%{_cross_datadir}/eks/eni-max-pods
+
 %files -n %{_cross_os}static-pods
 %{_cross_bindir}/static-pods
 %endif

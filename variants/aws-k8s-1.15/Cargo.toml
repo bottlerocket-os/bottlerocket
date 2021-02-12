@@ -16,7 +16,8 @@ included-packages = [
     "cni-plugins",
     "kubelet-1.15",
     "release",
-    "static-pods"
+    "static-pods",
+    "pluto"
 ]
 
 [lib]
