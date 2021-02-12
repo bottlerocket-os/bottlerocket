@@ -93,6 +93,9 @@ impl VariantBuilder {
         let version_image = getenv("BUILDSYS_VERSION_IMAGE")?;
         let version_build = getenv("BUILDSYS_VERSION_BUILD")?;
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
+        // We expect users' PRETTY_NAME values to contain spaces for things like "Bottlerocket OS"
+        // and so we need to transform them the same way as PACKAGES above.
+        let pretty_name = getenv("BUILDSYS_PRETTY_NAME")?.replace(' ', "|");
         let image_name = getenv("BUILDSYS_NAME")?;
         let image_format = match image_format {
             Some(ImageFormat::Raw) | None => String::from("raw"),
@@ -109,6 +112,7 @@ impl VariantBuilder {
              --build-arg VARIANT={variant} \
              --build-arg VERSION_ID={version_image} \
              --build-arg BUILD_ID={version_build} \
+             --build-arg PRETTY_NAME={pretty_name} \
              --build-arg IMAGE_NAME={image_name} \
              --build-arg IMAGE_FORMAT={image_format}",
             packages = packages,
@@ -116,6 +120,7 @@ impl VariantBuilder {
             variant = variant,
             version_image = version_image,
             version_build = version_build,
+            pretty_name = pretty_name,
             image_name = image_name,
             image_format = image_format,
         );
