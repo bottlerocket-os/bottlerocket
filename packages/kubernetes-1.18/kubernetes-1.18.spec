@@ -22,7 +22,6 @@ Source4: kubelet-kubeconfig
 Source5: kubernetes-ca-crt
 Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
-Patch2: 0002-override-SELinux-label-for-kubelet-plugins.patch
 
 BuildRequires: git
 BuildRequires: rsync

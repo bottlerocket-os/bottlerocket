@@ -58,6 +58,11 @@
 (roletype system_r control_t)
 (context control (system_u system_r control_t s0))
 
+; Alias "spc_t" to "control_t" for compatibility with the
+; container-selinux policy.
+(typealias spc_t)
+(typealiasactual spc_t control_t)
+
 ; Processes that run inside highly privileged containers.
 (type super_t)
 (roletype system_r super_t)
