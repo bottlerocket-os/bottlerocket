@@ -37,6 +37,9 @@ affected-services = ["kubernetes", "containerd"]
 [settings.kubernetes]
 cluster-domain = "cluster.local"
 
+# Metrics
+[settings.metrics]
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet"]
 
 # Network
 [metadata.settings.network]

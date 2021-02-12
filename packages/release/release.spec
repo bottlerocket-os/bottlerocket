@@ -72,6 +72,7 @@ Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}migration
 Requires: %{_cross_os}updog
+Requires: %{_cross_os}metricdog
 Requires: %{_cross_os}logdog
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}wicked

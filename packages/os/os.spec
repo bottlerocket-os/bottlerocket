@@ -20,6 +20,7 @@ Source3: eni-max-pods
 #SourceX: root.json
 
 Source5: updog-toml
+Source6: metricdog-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -30,6 +31,8 @@ Source105: settings-applier.service
 Source106: migrator.service
 Source107: host-containers@.service
 Source110: mark-successful-boot.service
+Source111: metricdog.service
+Source112: metricdog.timer
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -157,6 +160,11 @@ Summary: Bottlerocket updater CLI
 %description -n %{_cross_os}updog
 not much what's up with you
 
+%package -n %{_cross_os}metricdog
+Summary: Bottlerocket health metrics sender
+%description -n %{_cross_os}metricdog
+%{summary}.
+
 %package -n %{_cross_os}logdog
 Summary: Bottlerocket log extractor
 %description -n %{_cross_os}logdog
@@ -198,6 +206,7 @@ mkdir bin
     -p signpost \
     -p updog \
     -p logdog \
+    -p metricdog \
     -p ghostdog \
     -p growpart \
     -p corndog \
@@ -229,7 +238,7 @@ for p in \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
   migrator \
-  signpost updog logdog \
+  signpost updog metricdog logdog \
   ghostdog \
 %if "%{_cross_variant}" == "aws-ecs-1"
   ecs-settings-applier \
@@ -275,12 +284,12 @@ install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
 
 install -d %{buildroot}%{_cross_templatedir}
-install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:5} %{S:6} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
-  %{S:106} %{S:107} %{S:110} \
+  %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
@@ -378,6 +387,13 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_datadir}/updog
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/updog-toml
+
+%files -n %{_cross_os}metricdog
+%{_cross_bindir}/metricdog
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/metricdog-toml
+%{_cross_unitdir}/metricdog.service
+%{_cross_unitdir}/metricdog.timer
 
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog

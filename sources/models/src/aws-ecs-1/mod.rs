@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use crate::modeled_types::Identifier;
 use crate::{
-    AwsSettings, ContainerImage, ECSSettings, KernelSettings, NetworkSettings, NtpSettings, UpdatesSettings,
+    AwsSettings, ContainerImage, ECSSettings, KernelSettings, MetricsSettings, NetworkSettings,
+    NtpSettings, UpdatesSettings,
 };
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
@@ -19,4 +20,5 @@ struct Settings {
     kernel: KernelSettings,
     aws: AwsSettings,
     ecs: ECSSettings,
+    metrics: MetricsSettings,
 }

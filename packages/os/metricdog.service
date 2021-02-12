@@ -1,0 +1,9 @@
+[Unit]
+Description=Send a Metricdog Ping
+
+[Service]
+Type=oneshot
+RemainAfterExit=false
+StandardError=journal+console
+ExecStart=/usr/bin/metricdog send-health-ping
+TimeoutStartSec=30s

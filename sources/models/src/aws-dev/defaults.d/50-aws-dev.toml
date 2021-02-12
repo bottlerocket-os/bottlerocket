@@ -7,6 +7,11 @@ template-path = "/usr/share/templates/containerd-config-toml_aws-dev"
 restart-commands = ["/bin/systemctl try-restart docker.service"]
 configuration-files = ["proxy-env"]
 
+# Metrics
+[settings.metrics]
+send-metrics = false
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "docker"]
+
 # Network
 [metadata.settings.network]
 affected-services = ["containerd", "docker", "host-containerd"]

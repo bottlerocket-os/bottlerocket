@@ -31,6 +31,14 @@ license-files = [
     { path = "LICENSE-THIRD-PARTY", hash = 0x7e40bc60 },
 ]
 
+[clarify.crossbeam-channel]
+expression = "(MIT OR Apache-2.0) AND BSD-2-Clause-FreeBSD"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0x24b54f4b },
+    { path = "LICENSE-MIT", hash = 0xbc436f08 },
+    { path = "LICENSE-THIRD-PARTY", hash = 0xc6242648 },
+]
+
 [clarify.lz4-sys]
 # The lz4-sys crate's license is listed as MIT.
 #
@@ -73,6 +81,18 @@ license-files = [
 ]
 skip-files = [
     "src/testdata/LICENSE", # we aren't using the test data
+]
+
+[clarify.regex-automata]
+expression = "Unlicense OR MIT"
+license-files = [
+    { path = "COPYING", hash = 0x969f37d8 },
+    { path = "LICENSE-MIT", hash = 0x616d8a83 },
+    { path = "UNLICENSE", hash = 0x87b84020 },
+]
+skip-files = [
+    "data/fowler-tests/LICENSE", # we aren't using the test data
+    "data/tests/fowler/LICENSE",
 ]
 
 [clarify.regex-syntax]

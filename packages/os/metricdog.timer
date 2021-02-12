@@ -1,0 +1,19 @@
+[Unit]
+Description=Scheduled Metricdog Pings
+
+[Timer]
+# Don't run missed executions
+Persistent=false
+# Run 120 seconds after startup
+OnStartupSec=120
+# Run every 6 hours thereafter
+OnUnitActiveSec=21600
+# Don't fire at exactly the same second across machines started together.
+RandomizedDelaySec=3600
+# We don't want to extend the startup report too long after the requested time.
+AccuracySec=10
+# File describing job to execute
+Unit=metricdog.service
+
+[Install]
+WantedBy=timers.target
