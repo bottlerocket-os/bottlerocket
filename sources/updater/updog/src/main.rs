@@ -8,6 +8,7 @@ use crate::error::Result;
 use crate::transport::{HttpQueryTransport, QueryParams};
 use bottlerocket_release::BottlerocketRelease;
 use chrono::Utc;
+use log::debug;
 use model::modeled_types::FriendlyVersion;
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -59,6 +60,8 @@ struct Config {
     seed: u32,
     version_lock: String,
     ignore_waves: bool,
+    https_proxy: Option<String>,
+    no_proxy: Option<Vec<String>>,
     // TODO API sourced configuration, eg.
     // blacklist: Option<Vec<Version>>,
     // mode: Option<{Automatic, Managed, Disabled}>
@@ -453,6 +456,50 @@ fn initiate_reboot() -> Result<()> {
     Ok(())
 }
 
+/// Our underlying HTTP client, reqwest, supports proxies by reading the HTTPS_PROXY and NO_PROXY
+/// environment variables. Bottlerocket services can source proxy.env before running, but updog is
+/// not a service, so we read these values from the config file and add them to the environment
+/// here.
+fn set_https_proxy_environment_variables(
+    https_proxy: &Option<String>,
+    no_proxy: &Option<Vec<String>>,
+) -> Result<()> {
+    let proxy = match https_proxy {
+        Some(s) if !s.is_empty() => s.to_owned(),
+        // without https_proxy, no_proxy does nothing, so we are done
+        _ => return Ok(()),
+    };
+
+    // TODO - remove this workaround, https://github.com/bottlerocket-os/bottlerocket/issues/1332
+    // reqwest needs a URL protocol scheme to be present, but other implementations assume
+    // `http://` as the scheme when none is present. We need to check the `HTTPS_PROXY` env and
+    // reset it with `http://` when no scheme is present. This workaround will no longer be needed
+    // when both bottlerocket and tough are using reqwest >= 0.11.1.
+    let proxy = if Url::parse(&proxy).is_ok() {
+        // the proxy value is OK, it has a scheme
+        debug!("setting HTTPS_PROXY={}", proxy);
+        proxy
+    } else {
+        // try prepending the default scheme
+        let prepended = format!("http://{}", proxy);
+        // now we expect a valid URL
+        let _ = Url::parse(&prepended).context(error::Proxy { proxy })?;
+        // now we know we have a string that will work with reqwest
+        debug!("prepended https:// and setting HTTPS_PROXY={}", prepended);
+        prepended
+    };
+
+    std::env::set_var("HTTPS_PROXY", &proxy);
+    if let Some(no_proxy) = no_proxy {
+        if !no_proxy.is_empty() {
+            let no_proxy_string = no_proxy.join(",");
+            debug!("setting NO_PROXY={}", no_proxy_string);
+            std::env::set_var("NO_PROXY", &no_proxy_string);
+        }
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_lines)]
 fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
@@ -469,6 +516,7 @@ fn main_inner() -> Result<()> {
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
     let config = load_config()?;
+    set_https_proxy_environment_variables(&config.https_proxy, &config.no_proxy)?;
     let current_release = BottlerocketRelease::new().context(error::ReleaseVersion)?;
     let variant = arguments.variant.unwrap_or(current_release.variant_id);
     let transport = HttpQueryTransport::new();
@@ -628,6 +676,8 @@ mod tests {
             seed: 123,
             version_lock: "latest".to_string(),
             ignore_waves: false,
+            https_proxy: None,
+            no_proxy: None,
         };
         let version = Version::parse("1.18.0").unwrap();
         let variant = String::from("bottlerocket-aws-eks");
@@ -659,6 +709,8 @@ mod tests {
             seed: 1487,
             version_lock: "latest".to_string(),
             ignore_waves: false,
+            https_proxy: None,
+            no_proxy: None,
         };
 
         let version = Version::parse("0.1.3").unwrap();
@@ -695,6 +747,8 @@ mod tests {
             seed: 123,
             version_lock: "latest".to_string(),
             ignore_waves: false,
+            https_proxy: None,
+            no_proxy: None,
         };
 
         let version = Version::parse("1.10.0").unwrap();
@@ -735,6 +789,8 @@ mod tests {
             seed: 123,
             version_lock: "latest".to_string(),
             ignore_waves: false,
+            https_proxy: None,
+            no_proxy: None,
         };
 
         let version = Version::parse("1.10.0").unwrap();
@@ -816,6 +872,8 @@ mod tests {
             seed: first_wave_seed,
             version_lock: "latest".to_string(),
             ignore_waves: false,
+            https_proxy: None,
+            no_proxy: None,
         };
 
         // Two waves; the 1st wave that starts immediately, and the final wave which starts in one hour

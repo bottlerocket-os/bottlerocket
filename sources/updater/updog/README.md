@@ -47,3 +47,8 @@ Starting update to 0.1.4
 ** Updating immediately **
 Update applied: aws-k8s-1.15 0.1.4
 ```
+
+## Proxy Support
+
+The `network.https-proxy` and `network.no-proxy` settings are taken from updog's config file.
+These will override the environment variables `HTTPS_PROXY` and `NO_PROXY`.

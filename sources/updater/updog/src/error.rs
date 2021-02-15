@@ -109,6 +109,13 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Unable to parse proxy setting '{}': {}", proxy, source))]
+    Proxy {
+        proxy: String,
+        source: url::ParseError,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Failed to reboot: {}", source))]
     RebootFailure {
         source: std::io::Error,
