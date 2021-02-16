@@ -380,6 +380,7 @@ done
 
 [tasks.link-variant]
 dependencies = ["build-variant"]
+script_runner = "bash"
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
