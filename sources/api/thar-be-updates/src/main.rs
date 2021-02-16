@@ -20,7 +20,7 @@ use fs2::FileExt;
 use log::{debug, warn};
 use nix::unistd::{fork, ForkResult};
 use num_traits::cast::ToPrimitive;
-use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
 use std::fs::File;
@@ -330,8 +330,8 @@ fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
-    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    SimpleLogger::init(args.log_level, LogConfig::default())
         .context(error::Logger)?;
 
     // Open the lockfile for concurrency control, create it if it doesn't exist

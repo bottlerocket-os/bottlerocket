@@ -27,7 +27,7 @@ mod aws;
 mod repo;
 
 use semver::Version;
-use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::path::PathBuf;
 use std::process;
@@ -38,8 +38,8 @@ fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
-    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
-    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    SimpleLogger::init(args.log_level, LogConfig::default())
         .context(error::Logger)?;
 
     match args.subcommand {
@@ -144,7 +144,7 @@ mod error {
         Ami { source: crate::aws::ami::Error },
 
         #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: simplelog::TermLogError },
+        Logger { source: log::SetLoggerError },
 
         #[snafu(display("Failed to publish AMI: {}", source))]
         PublishAmi {

@@ -8,7 +8,7 @@ It sets kernel-related settings, for example:
 #![deny(rust_2018_idioms)]
 
 use log::{debug, error, info, trace, warn};
-use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::collections::HashMap;
 use std::fs;
@@ -32,8 +32,8 @@ struct Args {
 async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
-    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
-    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    SimpleLogger::init(args.log_level, LogConfig::default())
         .context(error::Logger)?;
 
     // If the user has kernel settings, apply them.

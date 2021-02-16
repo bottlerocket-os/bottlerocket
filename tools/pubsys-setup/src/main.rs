@@ -9,7 +9,7 @@ existing role.
 use log::{debug, info, trace, warn};
 use pubsys_config::InfraConfig;
 use sha2::{Digest, Sha512};
-use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::convert::TryFrom;
 use std::fs;
@@ -75,8 +75,8 @@ fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
-    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
-    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    SimpleLogger::init(args.log_level, LogConfig::default())
         .context(error::Logger)?;
 
     // Make /roles and /keys directories, if they don't exist, so we can write generated files.

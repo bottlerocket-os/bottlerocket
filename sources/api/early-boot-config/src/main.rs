@@ -15,7 +15,7 @@ Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be ta
 #[macro_use]
 extern crate log;
 
-use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, ResultExt};
 use std::fs;
 use std::str::FromStr;
@@ -128,8 +128,8 @@ async fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = parse_args(env::args());
 
-    // TerminalMode::Mixed will send errors to stderr and anything less to stdout.
-    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Mixed)
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    SimpleLogger::init(args.log_level, LogConfig::default())
         .context(error::Logger)?;
 
     info!("early-boot-config started");
