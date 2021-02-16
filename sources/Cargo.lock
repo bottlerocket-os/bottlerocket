@@ -302,6 +302,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-static-pods"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-sysctl"
 version = "0.1.0"
 dependencies = [

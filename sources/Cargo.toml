@@ -39,6 +39,7 @@ members = [
     "api/migration/migrations/v1.0.5/add-proxy-restart",
     "api/migration/migrations/v1.0.5/add-proxy-services",
     "api/migration/migrations/v1.0.6/metricdog-init",
+    "api/migration/migrations/v1.0.6/add-static-pods",
 
     "bottlerocket-release",
 
