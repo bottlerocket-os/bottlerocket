@@ -45,8 +45,7 @@ Seccomp filters can be used to allow access to a subset of syscalls.
 Bottlerocket uses `containerd` as the container runtime which provides [a default seccomp profile](https://github.com/containerd/containerd/blob/master/contrib/seccomp/seccomp_default.go).
 
 SELinux labels are part of mandatory access controls, which impose constraints after discretionary access controls are checked.
-Bottlerocket runs all containers with the unprivileged `container_t` label today.
-However, privileged containers may run with the privileged `super_t` label in the future.
+Bottlerocket runs unprivileged containers with the restrictive `container_t` label.
 
 Orchestrators provide ways to disable these protections:
 * Docker can run containers with the `--privileged` flag
@@ -158,9 +157,12 @@ These changes are called "transitions".
 The SELinux policy for Bottlerocket defines special transition rules for container runtimes.
 
 A container runtime can transition a child processes to any of these labels:
-* `container_t` (the default, for ordinary containers)
-* `control_t` (for containers that need to access the API)
-* `super_t` (for "superpowered" containers)
+* `container_t` (the default for ordinary containers)
+* `control_t` (the default for privileged containers)
+* `super_t` (opt-in for "superpowered" containers)
+
+The `control_t` and `super_t` labels allow writes to the API socket.
+The `super_t` label allows modifications to any file or directory on the host OS.
 
 Some orchestrators allow SELinux labels to be defined in the container specification, including Kubernetes and Amazon ECS.
 If `control_t` or `super_t` is specified in this way, it will override the default transition rules and the container will run with additional privileges.

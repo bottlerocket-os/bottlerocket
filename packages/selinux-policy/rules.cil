@@ -53,13 +53,16 @@
 (allow init_t runtime_t (processes (transform)))
 (allow runtime_t runtime_exec_t (file (entrypoint)))
 
-; `runc` starts container processes as "container_t" by default, but
-; it can use other "container" subject labels like "super_t".
-; Unlike the above transitions, this depends on correct labeling for
-; objects on local storage.
-(typetransition runtime_t local_t process container_t)
-(typetransition runtime_t cache_t process container_t)
-(typetransition runtime_t state_t process container_t)
+; `runc` starts container processes as "control_t" by default, but it
+; can use other "container" subject labels like "container_t". This
+; depends on correct labeling for objects on local storage.
+;
+; Runtimes that use the Go SELinux library will override this label
+; with the "process" label from the `lxc_contexts` when launching
+; unprivileged containers, unless automatic labeling is disabled.
+(typetransition runtime_t local_t process control_t)
+(typetransition runtime_t cache_t process control_t)
+(typetransition runtime_t state_t process control_t)
 (allow runtime_t container_s (processes (transform)))
 (allow container_s local_t (file (entrypoint)))
 (allow container_s cache_t (file (entrypoint)))

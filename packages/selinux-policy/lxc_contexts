@@ -1,3 +1,12 @@
+# Runtimes that use the Go SELinux implementation, such as Docker and
+# the containerd CRI plugin, will apply the 'process' label to the
+# initial process for unprivileged containers, unless the option for
+# automatic labeling is disabled.
 process = "system_u:system_r:container_t:s0"
+
+# The 'file' label should always be applied to the container's root
+# filesystem, regardless of privileged status or automatic labeling.
 file = "system_u:object_r:local_t:s0"
+
+# The 'ro_file' label is not currently used by the above runtimes.
 ro_file = "system_u:object_r:cache_t:s0"
