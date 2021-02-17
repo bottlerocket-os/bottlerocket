@@ -11,11 +11,15 @@ use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process;
 
+const VARIANT_LINK: &str = "src/variant/current";
+const MOD_LINK: &str = "src/variant/mod.rs";
 const VARIANT_ENV: &str = "VARIANT";
 
 fn main() {
     // Tell cargo when we have to rerun, regardless of early-exit below.
     println!("cargo:rerun-if-env-changed={}", VARIANT_ENV);
+    println!("cargo:rerun-if-changed={}", VARIANT_LINK);
+    println!("cargo:rerun-if-changed={}", MOD_LINK);
 
     // This build.rs runs once as a build-dependency of storewolf, and again as a (regular)
     // dependency of storewolf.  There's no reason to do this work twice.
@@ -53,7 +57,6 @@ fn link_current_variant() {
     });
 
     // Point to the source for the requested variant
-    let variant_link = "src/variant/current";
     let variant_target = format!("../{}", variant);
 
     // Make sure requested variant exists
@@ -64,17 +67,16 @@ fn link_current_variant() {
     }
 
     // Create the symlink for the following `cargo build` to use for its source code
-    symlink_force(&variant_target, variant_link).unwrap_or_else(|e| {
-        eprintln!("Failed to create symlink at '{}' pointing to '{}' - we need this to support different API models for different variants.  Error: {}", variant_link, variant_target, e);
+    symlink_force(&variant_target, VARIANT_LINK).unwrap_or_else(|e| {
+        eprintln!("Failed to create symlink at '{}' pointing to '{}' - we need this to support different API models for different variants.  Error: {}", VARIANT_LINK, variant_target, e);
         process::exit(1);
     });
 
     // Also create the link for mod.rs so Rust can import source from the "current" link
     // created above.
-    let mod_link = "src/variant/mod.rs";
     let mod_target = "../variant_mod.rs";
-    symlink_force(&mod_target, mod_link).unwrap_or_else(|e| {
-        eprintln!("Failed to create symlink at '{}' pointing to '{}' - we need this to build a Rust module structure through the `current` link.  Error: {}", mod_link, mod_target, e);
+    symlink_force(&mod_target, MOD_LINK).unwrap_or_else(|e| {
+        eprintln!("Failed to create symlink at '{}' pointing to '{}' - we need this to build a Rust module structure through the `current` link.  Error: {}", MOD_LINK, mod_target, e);
         process::exit(1);
     });
 }
