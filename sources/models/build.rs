@@ -11,6 +11,23 @@ use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process;
 
+const VARIANT_ENV: &str = "VARIANT";
+
+fn main() {
+    // Tell cargo when we have to rerun, regardless of early-exit below.
+    println!("cargo:rerun-if-env-changed={}", VARIANT_ENV);
+
+    // This build.rs runs once as a build-dependency of storewolf, and again as a (regular)
+    // dependency of storewolf.  There's no reason to do this work twice.
+    if env::var("CARGO_CFG_TARGET_VENDOR").unwrap_or_else(|_| String::new()) == "bottlerocket" {
+        println!("cargo:warning=Already ran model build.rs for host, skipping for target");
+        process::exit(0);
+    }
+
+    generate_readme();
+    link_current_variant();
+}
+
 fn symlink_force<P1, P2>(target: P1, link: P2) -> io::Result<()>
 where
     P1: AsRef<Path>,
@@ -30,10 +47,8 @@ fn link_current_variant() {
     // The VARIANT variable is originally BUILDSYS_VARIANT, set in the top-level Makefile.toml,
     // and is passed through as VARIANT by the top-level Dockerfile.  It represents which OS
     // variant we're building, and therefore which API model to use.
-    let var = "VARIANT";
-    println!("cargo:rerun-if-env-changed={}", var);
-    let variant = env::var(var).unwrap_or_else(|_| {
-        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in variants/, for example \"aws-k8s-1.17\".", var);
+    let variant = env::var(VARIANT_ENV).unwrap_or_else(|_| {
+        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in variants/, for example \"aws-k8s-1.17\".", VARIANT_ENV);
         process::exit(1);
     });
 
@@ -44,7 +59,7 @@ fn link_current_variant() {
     // Make sure requested variant exists
     let variant_path = format!("src/{}", variant);
     if !Path::new(&variant_path).exists() {
-        eprintln!("The environment variable {} should refer to a directory under sources/models/src with an API model, but it's set to '{}' which doesn't exist", var, variant);
+        eprintln!("The environment variable {} should refer to a directory under sources/models/src with an API model, but it's set to '{}' which doesn't exist", VARIANT_ENV, variant);
         process::exit(1);
     }
 
@@ -88,9 +103,4 @@ fn generate_readme() {
 
     let mut readme = File::create("README.md").unwrap();
     readme.write_all(content.as_bytes()).unwrap();
-}
-
-fn main() {
-    generate_readme();
-    link_current_variant();
 }
