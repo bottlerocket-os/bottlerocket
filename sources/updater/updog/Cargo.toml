@@ -27,8 +27,7 @@ tough = { version = "0.10", features = ["http"] }
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
 url = "2.1.0"
-# TODO - update signal-hook to the latest version. https://github.com/bottlerocket-os/bottlerocket/issues/1268
-signal-hook = "0.1.13"
+signal-hook = "0.3"
 models = { path = "../../models" }
 
 [dev-dependencies]

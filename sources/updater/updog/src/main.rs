@@ -12,7 +12,8 @@ use log::debug;
 use model::modeled_types::FriendlyVersion;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use signal_hook::{iterator::Signals, SIGTERM};
+use signal_hook::consts::SIGTERM;
+use signal_hook::iterator::Signals;
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
@@ -435,10 +436,10 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
 
 fn initiate_reboot() -> Result<()> {
     // Set up signal handler for termination signals
-    let signals = Signals::new(&[SIGTERM]).context(error::Signal)?;
-    let signals_bg = signals.clone();
+    let mut signals = Signals::new(&[SIGTERM]).context(error::Signal)?;
+    let signals_handle = signals.handle();
     thread::spawn(move || {
-        for _sig in signals_bg.forever() {
+        for _sig in signals.forever() {
             // Ignore termination signals in case updog gets terminated
             // before getting to exit normally by itself after invoking
             // `shutdown -r` to complete the update.
@@ -450,7 +451,7 @@ fn initiate_reboot() -> Result<()> {
         .context(error::RebootFailure)
     {
         // Kill the signal handling thread
-        signals.close();
+        signals_handle.close();
         return Err(err);
     }
     Ok(())
@@ -506,11 +507,7 @@ fn main_inner() -> Result<()> {
     let arguments = parse_args(std::env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(
-        arguments.log_level,
-        LogConfig::default(),
-    )
-    .context(error::Logger)?;
+    SimpleLogger::init(arguments.log_level, LogConfig::default()).context(error::Logger)?;
 
     let command =
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
