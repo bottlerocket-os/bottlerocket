@@ -4,6 +4,7 @@
 //
 // See README.md to understand the symlink setup.
 
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, Write};
@@ -32,21 +33,6 @@ fn main() {
     link_current_variant();
 }
 
-fn symlink_force<P1, P2>(target: P1, link: P2) -> io::Result<()>
-where
-    P1: AsRef<Path>,
-    P2: AsRef<Path>,
-{
-    // Remove link if it already exists
-    if let Err(e) = fs::remove_file(&link) {
-        if e.kind() != io::ErrorKind::NotFound {
-            return Err(e);
-        }
-    }
-    // Link to requested target
-    symlink(&target, &link)
-}
-
 fn link_current_variant() {
     // The VARIANT variable is originally BUILDSYS_VARIANT, set in the top-level Makefile.toml,
     // and is passed through as VARIANT by the top-level Dockerfile.  It represents which OS
@@ -67,7 +53,7 @@ fn link_current_variant() {
     }
 
     // Create the symlink for the following `cargo build` to use for its source code
-    symlink_force(&variant_target, VARIANT_LINK).unwrap_or_else(|e| {
+    symlink_safe(&variant_target, VARIANT_LINK).unwrap_or_else(|e| {
         eprintln!("Failed to create symlink at '{}' pointing to '{}' - we need this to support different API models for different variants.  Error: {}", VARIANT_LINK, variant_target, e);
         process::exit(1);
     });
@@ -75,7 +61,7 @@ fn link_current_variant() {
     // Also create the link for mod.rs so Rust can import source from the "current" link
     // created above.
     let mod_target = "../variant_mod.rs";
-    symlink_force(&mod_target, MOD_LINK).unwrap_or_else(|e| {
+    symlink_safe(&mod_target, MOD_LINK).unwrap_or_else(|e| {
         eprintln!("Failed to create symlink at '{}' pointing to '{}' - we need this to build a Rust module structure through the `current` link.  Error: {}", MOD_LINK, mod_target, e);
         process::exit(1);
     });
@@ -105,4 +91,34 @@ fn generate_readme() {
 
     let mut readme = File::create("README.md").unwrap();
     readme.write_all(content.as_bytes()).unwrap();
+}
+
+// Creates the requested symlink through an atomic swap, so it doesn't matter if the link path
+// already exists or not; like --force but fewer worries about reentrancy and retries.
+fn symlink_safe<P1, P2>(target: P1, link: P2) -> io::Result<()>
+where
+    P1: AsRef<Path>,
+    P2: AsRef<Path>,
+{
+    // Create the link at a temporary path.
+    let temp_link = link.as_ref().with_file_name(format!(".{}", rando()));
+    symlink(&target, &temp_link)?;
+
+    // Swap the temporary link into the real location
+    if let Err(e) = fs::rename(&temp_link, &link) {
+        // If we couldn't, for whatever reason, clean up the temporary path and return the error.
+        let _ = fs::remove_file(&temp_link);
+        return Err(e);
+    }
+
+    Ok(())
+}
+
+// Generates a random ID, affectionately known as a 'rando'.
+fn rando() -> String {
+    thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(16)
+        .map(char::from)
+        .collect()
 }
