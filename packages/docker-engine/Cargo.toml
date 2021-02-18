@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/moby/moby/archive/v19.03.14/moby-19.03.14.tar.gz"
-sha512 = "9ba589a2199ee272af50b60168a117a707c1fe0bfb039c8e4c0a9df68055add13b68b28e0937fdfeb9c42ec0e2936ac9ca3a671ff946d2d3f3e9d1bfe00ed6d1"
+url = "https://github.com/moby/moby/archive/v19.03.15/moby-19.03.15.tar.gz"
+sha512 = "20e2a418e95f4575081afb2f898d9a6d37812a4c2976a8adff52c186672282cb3fdef1dd126fb2e90cbb09a559f719150e8e94fbf2a160e49bb64448872b5653"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
