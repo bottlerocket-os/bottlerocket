@@ -58,23 +58,19 @@ impl PackageBuilder {
         let var = "PUBLISH_REPO";
         let repo = env::var(var).context(error::Environment { var })?;
 
-        let build_args = format!(
-            "--build-arg PACKAGE={package} \
-             --build-arg ARCH={arch} \
-             --build-arg VARIANT={variant} \
-             --build-arg REPO={repo}",
-            package = package,
-            arch = arch,
-            variant = variant,
-            repo = repo,
-        );
+        let mut args = Vec::new();
+        args.build_arg("PACKAGE", package);
+        args.build_arg("ARCH", &arch);
+        args.build_arg("VARIANT", variant);
+        args.build_arg("REPO", repo);
+
         let tag = format!(
             "buildsys-pkg-{package}-{arch}",
             package = package,
             arch = arch,
         );
 
-        build(BuildType::Package, &package, &build_args, &tag, &output_dir)?;
+        build(BuildType::Package, &package, args, &tag, &output_dir)?;
 
         Ok(Self)
     }
@@ -85,56 +81,44 @@ pub(crate) struct VariantBuilder;
 impl VariantBuilder {
     /// Build a variant with the specified packages installed.
     pub(crate) fn build(packages: &[String], image_format: Option<&ImageFormat>) -> Result<Self> {
-        // We want PACKAGES to be a value that contains spaces, since that's
-        // easier to work with in the shell than other forms of structured data.
-        let packages = packages.join("|");
-        let arch = getenv("BUILDSYS_ARCH")?;
-        let variant = getenv("BUILDSYS_VARIANT")?;
-        let version_image = getenv("BUILDSYS_VERSION_IMAGE")?;
-        let version_build = getenv("BUILDSYS_VERSION_BUILD")?;
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
-        // We expect users' PRETTY_NAME values to contain spaces for things like "Bottlerocket OS"
-        // and so we need to transform them the same way as PACKAGES above.
-        let pretty_name = getenv("BUILDSYS_PRETTY_NAME")?.replace(' ', "|");
-        let image_name = getenv("BUILDSYS_NAME")?;
-        let image_format = match image_format {
-            Some(ImageFormat::Raw) | None => String::from("raw"),
-            Some(ImageFormat::Vmdk) => String::from("vmdk"),
-        };
+
+        let variant = getenv("BUILDSYS_VARIANT")?;
+        let arch = getenv("BUILDSYS_ARCH")?;
+
+        let mut args = Vec::new();
+        args.build_arg("PACKAGES", packages.join(" "));
+        args.build_arg("ARCH", &arch);
+        args.build_arg("VARIANT", &variant);
+        args.build_arg("VERSION_ID", getenv("BUILDSYS_VERSION_IMAGE")?);
+        args.build_arg("BUILD_ID", getenv("BUILDSYS_VERSION_BUILD")?);
+        args.build_arg("PRETTY_NAME", getenv("BUILDSYS_PRETTY_NAME")?);
+        args.build_arg("IMAGE_NAME", getenv("BUILDSYS_NAME")?);
+        args.build_arg(
+            "IMAGE_FORMAT",
+            match image_format {
+                Some(ImageFormat::Raw) | None => "raw",
+                Some(ImageFormat::Vmdk) => "vmdk",
+            },
+        );
 
         // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
         getenv("BUILDSYS_TIMESTAMP")?;
 
-        let build_args = format!(
-            "--build-arg PACKAGES={packages} \
-             --build-arg ARCH={arch} \
-             --build-arg VARIANT={variant} \
-             --build-arg VERSION_ID={version_image} \
-             --build-arg BUILD_ID={version_build} \
-             --build-arg PRETTY_NAME={pretty_name} \
-             --build-arg IMAGE_NAME={image_name} \
-             --build-arg IMAGE_FORMAT={image_format}",
-            packages = packages,
-            arch = arch,
-            variant = variant,
-            version_image = version_image,
-            version_build = version_build,
-            pretty_name = pretty_name,
-            image_name = image_name,
-            image_format = image_format,
-        );
         let tag = format!(
             "buildsys-var-{variant}-{arch}",
             variant = variant,
             arch = arch
         );
 
-        build(BuildType::Variant, &variant, &build_args, &tag, &output_dir)?;
+        build(BuildType::Variant, &variant, args, &tag, &output_dir)?;
 
         Ok(Self)
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 enum BuildType {
     Package,
@@ -145,7 +129,7 @@ enum BuildType {
 fn build(
     kind: BuildType,
     what: &str,
-    build_args: &str,
+    build_args: Vec<String>,
     tag: &str,
     output_dir: &PathBuf,
 ) -> Result<()> {
@@ -162,14 +146,9 @@ fn build(
 
     // Our SDK image is picked by the external `cargo make` invocation.
     let sdk = getenv("BUILDSYS_SDK_IMAGE")?;
-    let sdk_args = format!("--build-arg SDK={}", sdk);
 
     // Avoid using a cached layer from a previous build.
     let nocache = rand::thread_rng().gen::<u32>();
-    let nocache_args = format!("--build-arg NOCACHE={}", nocache);
-
-    // Avoid using a cached layer from a concurrent build in another checkout.
-    let token_args = format!("--build-arg TOKEN={}", token);
 
     // Create a directory for tracking outputs before we move them into position.
     let build_dir = create_build_dir(&kind, &what)?;
@@ -182,27 +161,26 @@ fn build(
         BuildType::Variant => "variant",
     };
 
-    let build = args(format!(
+    let mut build = format!(
         "build . \
-         --network none \
-         --target {target} \
-         {build_args} \
-         {sdk_args} \
-         {nocache_args} \
-         {token_args} \
-         --tag {tag}",
+        --network none \
+        --target {target} \
+        --tag {tag}",
         target = target,
-        build_args = build_args,
-        sdk_args = sdk_args,
-        nocache_args = nocache_args,
-        token_args = token_args,
         tag = tag,
-    ));
+    )
+    .split_string();
 
-    let create = args(format!("create --name {tag} {tag} true", tag = tag));
-    let cp = args(format!("cp {}:/output/. {}", tag, build_dir.display()));
-    let rm = args(format!("rm --force {}", tag));
-    let rmi = args(format!("rmi --force {}", tag));
+    build.extend(build_args);
+    build.build_arg("SDK", sdk);
+    build.build_arg("NOCACHE", nocache.to_string());
+    // Avoid using a cached layer from a concurrent build in another checkout.
+    build.build_arg("TOKEN", token);
+
+    let create = format!("create --name {} {} true", tag, tag).split_string();
+    let cp = format!("cp {}:/output/. {}", tag, build_dir.display()).split_string();
+    let rm = format!("rm --force {}", tag).split_string();
+    let rmi = format!("rmi --force {}", tag).split_string();
 
     // Clean up the stopped container if it exists.
     let _ = docker(&rm, Retry::No);
@@ -283,19 +261,7 @@ enum Retry<'a> {
     },
 }
 
-/// Convert an argument string into a collection of positional arguments.
-fn args<S>(input: S) -> Vec<String>
-where
-    S: AsRef<str>,
-{
-    // Treat "|" as a placeholder that indicates where the argument should
-    // contain spaces after we split on whitespace.
-    input
-        .as_ref()
-        .split_whitespace()
-        .map(|s| s.replace("|", " "))
-        .collect()
-}
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 /// Create a directory for build artifacts.
 fn create_build_dir(kind: &BuildType, name: &str) -> Result<PathBuf> {
@@ -411,4 +377,42 @@ where
 fn getenv(var: &str) -> Result<String> {
     println!("cargo:rerun-if-env-changed={}", var);
     env::var(var).context(error::Environment { var })
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// Helper trait for constructing buildkit --build-arg arguments.
+trait BuildArg {
+    fn build_arg<S1, S2>(&mut self, key: S1, value: S2)
+    where
+        S1: AsRef<str>,
+        S2: AsRef<str>;
+}
+
+impl BuildArg for Vec<String> {
+    fn build_arg<S1, S2>(&mut self, key: S1, value: S2)
+    where
+        S1: AsRef<str>,
+        S2: AsRef<str>,
+    {
+        self.push("--build-arg".to_string());
+        self.push(format!("{}={}", key.as_ref(), value.as_ref()));
+    }
+}
+
+/// Helper trait for splitting a string on spaces into owned Strings.
+///
+/// If you need an element with internal spaces, you should handle that separately, for example
+/// with BuildArg.
+trait SplitString {
+    fn split_string(&self) -> Vec<String>;
+}
+
+impl<S> SplitString for S
+where
+    S: AsRef<str>,
+{
+    fn split_string(&self) -> Vec<String> {
+        self.as_ref().split(' ').map(String::from).collect()
+    }
 }
