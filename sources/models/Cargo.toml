@@ -24,6 +24,7 @@ url = "2.1"
 
 [build-dependencies]
 cargo-readme = "3.1"
+rand = "0.8"
 
 [lib]
 # We're picking the current *model* with build.rs, so users shouldn't think

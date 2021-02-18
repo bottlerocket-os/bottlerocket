@@ -1916,6 +1916,7 @@ dependencies = [
  "cargo-readme",
  "lazy_static",
  "model-derive",
+ "rand 0.8.1",
  "regex",
  "semver 0.11.0",
  "serde",
