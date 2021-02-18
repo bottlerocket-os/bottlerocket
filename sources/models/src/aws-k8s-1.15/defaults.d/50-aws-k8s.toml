@@ -41,6 +41,13 @@ cluster-domain = "cluster.local"
 [settings.metrics]
 service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet"]
 
+[services.static-pods]
+configuration-files = []
+restart-commands = ["/usr/bin/static-pods"]
+
+[metadata.settings.kubernetes.static-pods]
+affected-services = ["static-pods"]
+
 # Network
 [metadata.settings.network]
 affected-services = ["containerd", "kubernetes", "host-containerd"]

@@ -13,6 +13,7 @@ members = [
     "api/pluto",
     "api/servicedog",
     "api/host-containers",
+    "api/static-pods",
     "api/storewolf",
     "api/thar-be-settings",
     "api/thar-be-updates",
@@ -38,6 +39,7 @@ members = [
     "api/migration/migrations/v1.0.5/add-proxy-restart",
     "api/migration/migrations/v1.0.5/add-proxy-services",
     "api/migration/migrations/v1.0.6/metricdog-init",
+    "api/migration/migrations/v1.0.6/add-static-pods",
 
     "bottlerocket-release",
 

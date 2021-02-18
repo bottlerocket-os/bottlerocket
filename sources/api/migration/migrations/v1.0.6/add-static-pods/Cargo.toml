@@ -1,0 +1,12 @@
+[package]
+name = "add-static-pods"
+version = "0.1.0"
+authors = ["Erikson Tung <etung@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers" }

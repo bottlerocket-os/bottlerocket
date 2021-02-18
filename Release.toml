@@ -20,5 +20,5 @@ version = "1.0.5"
     "migrate_v1.0.5_add-proxy-restart.lz4",
     "migrate_v1.0.5_add-proxy-services.lz4"
 ]
-"(1.0.5, 1.0.6)" = ["migrate_v1.0.6_metricdog-init.lz4"]
+"(1.0.5, 1.0.6)" = ["migrate_v1.0.6_metricdog-init.lz4", "migrate_v1.0.6_add-static-pods.lz4"]
 
