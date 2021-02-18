@@ -14,13 +14,14 @@
   Used for system maintenance and connectivity.
 * [**host-ctr**](sources/host-ctr): The program started by `host-containers@.service` for each host container.
   Its job is to start the specified host container on the “host” instance of containerd, which is separate from the “user” instance of containerd used for Kubernetes pods.
-* [**logdog**](sources/logdog): A program that one can use to collect logs when things go wrong. 
+* [**logdog**](sources/logdog): A program that one can use to collect logs when things go wrong.
 * [**metricdog**](sources/metricdog): A program that sends anonymous health pings.
 * [**model**](sources/models): The API system has a data model defined for each variant, and this model is used by other programs to serialize and deserialize requests while maintaining safety around data types.
 * [**netdog**](sources/api/netdog): A program called by wicked to retrieve and write out network configuration from DHCP.
 * [**pluto**](sources/api/pluto): A setting generator called by sundog to find networking settings required by Kubernetes.
 * [**schnauzer**](sources/api/schnauzer): A setting generator called by sundog to build setting values that contain template variables referencing other settings.
 * **setting generator**: A binary that generates the default value of a setting.
+* [**shibaken**](sources/api/shibaken): A setting generator called by sundog to populate the admin container's user-data with public keys from IMDS, when running in AWS.
 * [**signpost**](sources/updater/signpost): A program used to manipulate the GPT header of the OS disk; fields in the header are used by GRUB to determine the partition set we should boot from.
 * [**storewolf**](sources/api/storewolf): A program that sets up the data store for the API upon boot.
 * [**sundog**](sources/api/sundog): A program run during boot that generates any settings that depend on runtime system information.
