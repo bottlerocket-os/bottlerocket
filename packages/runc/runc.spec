@@ -1,24 +1,21 @@
 %global goproject github.com/opencontainers
 %global gorepo runc
 %global goimport %{goproject}/%{gorepo}
-%global commit ff819c7e9184c13b7c2607fe6c30ae19403a7aff
-%global shortcommit ff819c7
+%global commit 12644e614e25b05da6fd08a38ffa0cfe1903fdec
+%global shortcommit 12644e6
 
-%global gover 1.0.0-rc92
-%global rpmver 1.0.0~rc92
+%global gover 1.0.0-rc93
+%global rpmver 1.0.0~rc93
 
 %global _dwz_low_mem_die_limit 0
 
 Name: %{_cross_os}%{gorepo}
 Version: %{rpmver}
-Release: 2.%{shortcommit}%{?dist}
+Release: 1.%{shortcommit}%{?dist}
 Summary: CLI for running Open Containers
 License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
-
-# TODO: see if this can go upstream
-Patch0001: 0001-do-not-label-dev-mqueue.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
@@ -34,8 +31,14 @@ Requires: %{_cross_os}libseccomp
 
 %build
 %cross_go_configure %{goimport}
+export LD_VERSION="-X main.version=%{gover}+bottlerocket"
+export LD_COMMIT="-X main.gitCommit=%{commit}"
 export BUILDTAGS="ambient seccomp selinux"
-go build -buildmode=pie -ldflags=-linkmode=external -tags="${BUILDTAGS}" -o bin/runc .
+go build \
+  -buildmode=pie \
+  -ldflags="-linkmode=external ${LD_VERSION} ${LD_COMMIT}" \
+  -tags="${BUILDTAGS}" \
+  -o bin/runc .
 
 %install
 install -d %{buildroot}%{_cross_bindir}
