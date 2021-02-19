@@ -29,6 +29,9 @@ Patch1001: 1001-cri-reduce-logging-when-no-errors-have-occurred.patch
 # TODO: submit this upstream, including a unit test.
 Patch1002: 1002-cri-set-default-RLIMIT_NOFILE.patch
 
+# TODO: rework this so it's suitable for upstream.
+Patch1003: 1003-cri-relabel-volumes-after-copying-source-files.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel

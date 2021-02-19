@@ -1,7 +1,7 @@
-From f6cb04298ec80f137d42689c18087e5ba942f98d Mon Sep 17 00:00:00 2001
+From 2223c4f21880a3fe7086008f0db665da55ee1d44 Mon Sep 17 00:00:00 2001
 From: Zac Mrowicki <mrowicki@amazon.com>
 Date: Thu, 22 Oct 2020 20:44:38 +0000
-Subject: [PATCH 1002/1002] cri: set default RLIMIT_NOFILE
+Subject: [PATCH 1002/1003] cri: set default RLIMIT_NOFILE
 
 The `cri` plugin currently inherits the limit from the default OCI spec
 or the containerd process.  This change sets the default hard

@@ -1,7 +1,7 @@
-From bc5b05e893c4f95057d881e5a7676d221ad14588 Mon Sep 17 00:00:00 2001
+From 4cbd7bccb089e6954f687b270b4383a16cfc6dec Mon Sep 17 00:00:00 2001
 From: Matt Briggs <brigmatt@amazon.com>
 Date: Wed, 1 Apr 2020 16:55:04 -0700
-Subject: [PATCH 1001/1002] cri: reduce logging when no errors have occurred
+Subject: [PATCH 1001/1003] cri: reduce logging when no errors have occurred
 
 ---
  .../containerd/cri/pkg/server/container_execsync.go           | 3 ++-
