@@ -14,8 +14,8 @@ package-name = "kubernetes-1.18"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes/kubernetes/archive/v1.18.14/kubernetes-1.18.14.tar.gz"
-sha512 = "e19b834db4920db6b466662a8c001ecaad7a7bee6c4faef871bbc3f528e10b0b4c9fc6f3ac065953ce625db0ede98d76536cf3158b4fb241725115febb141946"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.18.16/kubernetes-1.18.16.tar.gz"
+sha512 = "f525577f0e55736c6702663c9de9a54e7ece5701f334948ec56b2d0d5041e54b5fdc440dfbfede5e886c2b30c2223eba4d2da7131e58c48043cfa75513f7f59f"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
