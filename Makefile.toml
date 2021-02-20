@@ -22,6 +22,10 @@ BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print
 BUILDSYS_VARIANT = "aws-k8s-1.17"
 # Product name used for file and directory naming
 BUILDSYS_NAME = "bottlerocket"
+# "Pretty" name used to identify OS in os-release, bootloader, etc.
+# If you're building a Bottlerocket remix, you'd want to set this to something like
+# "Bottlerocket Remix by ${CORP}" or "${CORP}'s Bottlerocket Remix"
+BUILDSYS_PRETTY_NAME = "Bottlerocket OS"
 # SDK version used for building
 BUILDSYS_SDK_VERSION="0.15.0"
 # Site for fetching the SDK

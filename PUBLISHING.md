@@ -4,7 +4,8 @@ This guide will walk you through deploying a Bottlerocket image, and if desired,
 It currently focuses on deploying to AWS, though the tooling is built to support other platforms in the future.
 
 Remember to look at the [TRADEMARKS](TRADEMARKS.md) guide to understand naming concerns.
-You can pass `-e BUILDSYS_NAME=my-name` to `cargo make` commands to change the default name, which is used in file and AMI names.
+You can pass `-e BUILDSYS_NAME=my-name` to `cargo make` commands to change the default "short" name, which is used in file and AMI names.
+You can pass `-e BUILDSYS_PRETTY_NAME="My Name"` to `cargo make` commands to change the default "pretty" name, which is used in the os-release file and some menus.
 
 We'll assume you've been through the [BUILDING](BUILDING.md) guide to make an image.
 
