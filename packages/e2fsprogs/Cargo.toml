@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.45.6/e2fsprogs-1.45.6.tar.xz"
-sha512 = "f3abfb6fe7ef632bb81152e2127d601cadd3fa93162178576a1d5ed82c2286627184b207b85a5b2a1793db0addf0885dfc3b9523bb340443224caf9c6d613b84"
+url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.46.1/e2fsprogs-1.46.1.tar.xz"
+sha512 = "fe6aa55b62f183633872209cd69cf6be0753d5a430542a7c73dbbd428e5fa93b5df7efa7507bb60f9f90a1c61cb8f5cf10665675eea8bd72aad3d04dd2dae15c"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
