@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://gitlab.com/procps-ng/procps/-/archive/v3.3.16/procps-v3.3.16.tar.gz"
-sha512 = "40ed713afbca979265b0c0f582b9eb0a8def429c78430d21d6c115d5481e3bc6e7c051771313faf2efbb6f09010cce879aed55e82ea55d78279e9c0a1f793337"
+url = "https://gitlab.com/procps-ng/procps/-/archive/v3.3.17/procps-v3.3.17.tar.gz"
+sha512 = "070076cf6bbbd8b6b342af361035f11d9c7381c5d1e2e430a5f2584ff55656254e8f863a40ca75a38870a5007d1b22a0d452bef13fa0ab89e4bf9676826fd788"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
