@@ -1,5 +1,5 @@
 Name: %{_cross_os}iptables
-Version: 1.8.6
+Version: 1.8.7
 Release: 1%{?dist}
 Summary: Tools for managing Linux kernel packet filtering capabilities
 License: GPL-2.0-or-later AND GPL-2.0-only
