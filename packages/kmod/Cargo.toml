@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-27.tar.xz"
-sha512 = "e0513094935333fca1fb4c3e3493b232507a579ab00a6457cc9ed3e928363d05aad80634fb65a8287a336bf9895194c7be8ddc41bb088a6c2cca44fc1bfbdb6c"
+url = "https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-28.tar.xz"
+sha512 = "50646dc72675a5e17b01e327e3d41b972f18aaeac20c8b00983c4d099c6218f35c32c184a833a2d7f716755d6a86851c90913d2835874cef933bdc4a9722df9a"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
