@@ -5,8 +5,20 @@ template-path = "/usr/share/templates/containerd-config-toml_aws-k8s"
 # Kubernetes.
 
 [services.kubernetes]
-configuration-files = ["kubelet-env", "kubelet-config", "kubelet-kubeconfig", "kubernetes-ca-crt", "proxy-env"]
-restart-commands = ["/bin/systemctl try-restart kubelet.service"]
+configuration-files = [
+  "kubelet-env",
+  "kubelet-config",
+  "kubelet-kubeconfig",
+  "kubelet-bootstrap-kubeconfig",
+  "kubelet-exec-start-conf",
+  "kubernetes-ca-crt",
+  "proxy-env",
+]
+
+restart-commands = [
+  "/usr/bin/systemctl daemon-reload",
+  "/usr/bin/systemctl try-restart kubelet.service"
+]
 
 [configuration-files.kubelet-env]
 path = "/etc/kubernetes/kubelet/env"
@@ -20,9 +32,17 @@ template-path = "/usr/share/templates/kubelet-config"
 path = "/etc/kubernetes/kubelet/kubeconfig"
 template-path = "/usr/share/templates/kubelet-kubeconfig"
 
+[configuration-files.kubelet-bootstrap-kubeconfig]
+path = "/etc/kubernetes/kubelet/bootstrap-kubeconfig"
+template-path = "/usr/share/templates/kubelet-bootstrap-kubeconfig"
+
 [configuration-files.kubernetes-ca-crt]
 path = "/etc/kubernetes/pki/ca.crt"
 template-path = "/usr/share/templates/kubernetes-ca-crt"
+
+[configuration-files.kubelet-exec-start-conf]
+path = "/etc/systemd/system/kubelet.service.d/exec-start.conf"
+template-path = "/usr/share/templates/kubelet-exec-start-conf"
 
 [metadata.settings.kubernetes]
 max-pods.setting-generator = "pluto max-pods"
@@ -36,6 +56,8 @@ affected-services = ["kubernetes", "containerd"]
 
 [settings.kubernetes]
 cluster-domain = "cluster.local"
+standalone-mode = false
+authentication-mode = "aws"
 
 # Metrics
 [settings.metrics]

@@ -40,6 +40,8 @@ members = [
     "api/migration/migrations/v1.0.5/add-proxy-services",
     "api/migration/migrations/v1.0.6/metricdog-init",
     "api/migration/migrations/v1.0.6/add-static-pods",
+    "api/migration/migrations/v1.0.6/kubelet-standalone-tls-settings",
+    "api/migration/migrations/v1.0.6/kubelet-standalone-tls-services",
 
     "bottlerocket-release",
 

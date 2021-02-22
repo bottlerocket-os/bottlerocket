@@ -337,3 +337,103 @@ mod test_kubernetes_cluster_name {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesAuthenticationMode represents a string that is a valid authentication mode for the
+/// kubelet.  It stores the original string and makes it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesAuthenticationMode {
+    inner: String,
+}
+
+impl TryFrom<&str> for KubernetesAuthenticationMode {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        ensure!(
+            matches!(input, "aws" | "tls" ),
+            error::InvalidAuthenticationMode { input }
+        );
+        Ok(KubernetesAuthenticationMode {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesAuthenticationMode, "KubernetesAuthenticationMode");
+
+#[cfg(test)]
+mod test_kubernetes_authentication_mode {
+    use super::KubernetesAuthenticationMode;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_modes() {
+        for ok in &["aws", "tls"] {
+            KubernetesAuthenticationMode::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_modes() {
+        for err in &["", "anonymous"] {
+            KubernetesAuthenticationMode::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesBootstrapToken represents a string that is a valid bootstrap token for Kubernetes.
+/// It stores the original string and makes it accessible through standard traits.
+// https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesBootstrapToken {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref KUBERNETES_BOOTSTRAP_TOKEN: Regex = Regex::new(
+        r"^[a-z0-9]{6}\.[a-z0-9]{16}$").unwrap();
+}
+
+impl TryFrom<&str> for KubernetesBootstrapToken {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            KUBERNETES_BOOTSTRAP_TOKEN.is_match(input),
+            error::Pattern {
+                thing: "Kubernetes bootstrap token",
+                pattern: KUBERNETES_BOOTSTRAP_TOKEN.clone(),
+                input
+            }
+        );
+        Ok(KubernetesBootstrapToken {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesBootstrapToken, "KubernetesBootstrapToken");
+
+#[cfg(test)]
+mod test_kubernetes_bootstrap_token {
+    use super::KubernetesBootstrapToken;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_tokens() {
+        for ok in &["abcdef.0123456789abcdef", "07401b.f395accd246ae52d"] {
+            KubernetesBootstrapToken::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_names() {
+        for err in &["", "ABCDEF.0123456789ABCDEF", "secret", &"a".repeat(23)] {
+            KubernetesBootstrapToken::try_from(*err).unwrap_err();
+        }
+    }
+}

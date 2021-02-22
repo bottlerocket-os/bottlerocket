@@ -99,7 +99,8 @@ use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
     DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, Identifier,
-    KubernetesClusterName, KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue,
+    KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesClusterName,
+    KubernetesLabelKey, KubernetesLabelValue, KubernetesTaintValue,
     Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
 };
 
@@ -114,15 +115,21 @@ struct StaticPod {
 // IMDS via Sundog's child "Pluto".
 #[model]
 struct KubernetesSettings {
-    // Settings we require the user to specify, likely via user data.
+    // Settings that must be specified via user data or through API requests.  Not all settings are
+    // useful for all modes. For example, in standalone mode the user does not need to specify any
+    // cluster information, and the bootstrap token is only needed for TLS authentication mode.
     cluster_name: KubernetesClusterName,
     cluster_certificate: ValidBase64,
     api_server: Url,
     node_labels: HashMap<KubernetesLabelKey, KubernetesLabelValue>,
     node_taints: HashMap<KubernetesLabelKey, KubernetesTaintValue>,
     static_pods: HashMap<Identifier, StaticPod>,
+    authentication_mode: KubernetesAuthenticationMode,
+    bootstrap_token: KubernetesBootstrapToken,
+    standalone_mode: bool,
 
-    // Dynamic settings.
+    // Settings where we generate a value based on the runtime environment.  The user can specify a
+    // value to override the generated one, but typically would not.
     max_pods: u32,
     cluster_dns_ip: Ipv4Addr,
     cluster_domain: DNSDomain,

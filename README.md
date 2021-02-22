@@ -303,8 +303,12 @@ The following settings can be optionally set to customize the node labels and ta
 
 The following settings are optional and allow you to further configure your cluster.
 * `settings.kubernetes.cluster-domain`: The DNS domain for this cluster, allowing all Kubernetes-run containers to search this domain before the host's search domains.  Defaults to `cluster.local`.
+* `settings.kubernetes.standalone-mode`: Whether to run the kubelet in standalone mode, without connecting to an API server.  Defaults to `false`.
+* `settings.kubernetes.authentication-mode`: Which authentication method the kubelet should use to connect to the API server, and for incoming requests.  Defaults to `aws` for AWS variants, and `tls` for other variants.
+* `settings.kubernetes.bootstrap-token`: The token to use for [TLS bootstrapping](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/).  This is only used with the `tls` authentication mode, and is otherwise ignored.
 
 You can also optionally specify static pods for your node with the following settings.
+Static pods can be particularly useful when running in standalone mode.
 * `settings.kubernetes.static-pods.<custom identifier>.manifest`: A base64-encoded pod manifest.
 * `settings.kubernetes.static-pods.<custom identifier>.enabled`: Whether the static pod is enabled.
 
