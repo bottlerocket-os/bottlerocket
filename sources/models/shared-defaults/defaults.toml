@@ -70,8 +70,8 @@ send-metrics = true
 service-checks = ["apiserver", "chronyd", "containerd", "host-containerd"]
 
 [services.metricdog]
-configuration-files = ["metricdog-toml"]
-restart-commands = []
+configuration-files = ["metricdog-toml", "proxy-env"]
+restart-commands = ["/bin/systemctl try-restart metricdog.service"]
 
 [configuration-files.metricdog-toml]
 path = "/etc/metricdog.toml"

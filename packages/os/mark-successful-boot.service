@@ -5,6 +5,7 @@ After=multi-user.target
 # and include "RequiredBy=mark-successful-boot.service" in its [Install] section.
 
 [Service]
+EnvironmentFile=/etc/network/proxy.env
 Type=oneshot
 RemainAfterExit=true
 ExecStart=/bin/signpost mark-successful-boot

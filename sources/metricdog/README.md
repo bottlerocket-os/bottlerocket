@@ -10,6 +10,13 @@ It does so by sending key-value pairs as query params in an HTTP GET request.
 Metricdog also has the ability to check that a list of critical services is running.
 It does so using `systemctl` and reports services that are not healthy.
 
+#### Proxy Support
+
+Metricdog respects the environment variables `HTTPS_PROXY` and `NO_PROXY` to determine whether or
+not its traffic should be proxied. These are set with the `network.http-proxy` and `network.noproxy`
+settings when Metricdog is invoked by systemd. If you run Metricdog manually, you would need to
+seed the environment with these variables manually.
+
 ## What it Sends
 
 #### The standard set of metrics:

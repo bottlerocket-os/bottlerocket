@@ -2,6 +2,7 @@
 Description=Send a Metricdog Ping
 
 [Service]
+EnvironmentFile=/etc/network/proxy.env
 Type=oneshot
 RemainAfterExit=false
 StandardError=journal+console
