@@ -3,3 +3,9 @@ targets_base_url = "{{settings.updates.targets-base-url}}"
 seed = {{settings.updates.seed}}
 version_lock = "{{settings.updates.version-lock}}"
 ignore_waves = {{settings.updates.ignore-waves}}
+{{~#if settings.network.https-proxy}}
+https_proxy="{{settings.network.https-proxy}}"
+{{~/if}}
+{{~#if settings.network.no-proxy}}
+no_proxy=[{{join_array ", " settings.network.no-proxy}}]
+{{~/if}}
