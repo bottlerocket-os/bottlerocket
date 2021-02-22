@@ -29,6 +29,8 @@ authorization:
 clusterDomain: {{settings.kubernetes.cluster-domain}}
 clusterDNS:
 - {{settings.kubernetes.cluster-dns-ip}}
+evictionHard:
+  {{join_map ": " "\n  " "no-fail-if-missing" settings.kubernetes.eviction-hard}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd

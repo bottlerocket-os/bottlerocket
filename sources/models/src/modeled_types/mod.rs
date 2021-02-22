@@ -62,6 +62,8 @@ pub mod error {
             field: String,
             source: serde_plain::Error,
         },
+        #[snafu(display("Invalid eviction hard '{}': {}", input, msg))]
+        InvalideEvictionHard { input: String, msg: String },
     }
 }
 

@@ -437,3 +437,120 @@ mod test_kubernetes_bootstrap_token {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// EvictionHardKey represents a string that contains a valid Kubernetes eviction hard
+/// signal. There are few valid eviction hard signals [memory.available], [nodefs.available],
+/// [imagefs.available], and [nodefs.inodesFree].
+/// https://kubernetes.io/docs/tasks/administer-cluster/out-of-resource/
+
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct EvictionHardKey {
+    inner: String,
+}
+
+impl TryFrom<&str> for EvictionHardKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        let evitionsignal = vec![
+            "memory.available","nodefs.available",
+            "nodefs.inodesFree","imagefs.available",
+            "imagefs.inodesFree","pid.available"
+            ];
+
+        ensure!(
+            evitionsignal.contains(&input),
+            error::InvalideEvictionHard {
+                input,
+                msg: format!("must be one of designated signals"),
+            }
+        );
+
+        Ok(EvictionHardKey {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(EvictionHardKey, "EvictionHardKey");
+
+#[cfg(test)]
+mod test_kubernetes_eviction_hard_key {
+    use super::EvictionHardKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_eviction_hard_key() {
+        for ok in &[
+            "memory.available",
+            "nodefs.available",
+            "nodefs.inodesFree",
+            "imagefs.available",
+            "imagefs.inodesFree",
+            "pid.available",
+            ] {
+            EvictionHardKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_eviction_hard_key() {
+        for err in &["", "storage.available", ".bad", "bad.", &"a".repeat(64)] {
+            EvictionHardKey::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// EvictionHardValue represents a string that contains a valid Kubernetes eviction threshold quantity
+/// An eviction threshold can be expressed as Gi/Mi or a percentage using the % token
+/// https://kubernetes.io/docs/tasks/administer-cluster/out-of-resource/
+
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct EvictionHardValue {
+    inner: String,
+}
+
+impl TryFrom<&str> for EvictionHardValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+
+        ensure!(
+            input.ends_with("Gi") || input.ends_with("Mi") || input.ends_with("%"),
+            error::InvalideEvictionHard {
+                input,
+                msg: format!("must be ends with Gi, Mi, or %"),
+            }
+        );
+
+        Ok(EvictionHardValue {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(EvictionHardValue, "EvictionHardValue");
+
+#[cfg(test)]
+mod test_kubernetes_eviction_hard_value {
+    use super::EvictionHardValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_eviction_hard_value() {
+        for ok in &["10Gi", "500Mi", "30%"] {
+            EvictionHardValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_eviction_hard_value() {
+        for err in &["", "bad", "100", &"a".repeat(64)] {
+            EvictionHardValue::try_from(*err).unwrap_err();
+        }
+    }
+}
