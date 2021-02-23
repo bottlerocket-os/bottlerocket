@@ -79,10 +79,11 @@ cargo make revoke-ami -e REVOKE_FROM_USERS=0123456789,9876543210
 
 ## Build a repo
 
+> NOTE: If you intend to replace hosts rather than update them, you don't need to build an update repository.
+
 Bottlerocket uses [TUF repositories](https://theupdateframework.io/overview/) to make system updates available to hosts.
 You can read more about how Bottlerocket uses TUF in the [updater README](sources/updater/README.md#tuf-and-tough).
 
-If you plan to update hosts rather than replace them, you'll need to make a repo.
 Initially, the repo will only contain the image you just built.
 Later, when you build updates, you can [add them to the repo](#configuring-your-repo-location), which allows your hosts to update to new versions.
 (If you don't have an `Infra.toml` file, it will always try to build a brand new repo.)
