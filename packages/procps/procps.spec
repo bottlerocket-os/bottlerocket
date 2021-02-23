@@ -1,5 +1,5 @@
 Name: %{_cross_os}procps
-Version: 3.3.16
+Version: 3.3.17
 Release: 1%{?dist}
 Summary: A set of process monitoring tools
 License: GPL-2.0-or-later AND LGPL-2.1-or-later
@@ -51,6 +51,7 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %{_cross_bindir}/pmap
 %{_cross_bindir}/ps
 %{_cross_bindir}/pwdx
+%{_cross_bindir}/pwait
 %{_cross_bindir}/skill
 %{_cross_bindir}/snice
 %{_cross_bindir}/tload
