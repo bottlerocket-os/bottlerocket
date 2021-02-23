@@ -496,13 +496,6 @@ name = "selinux-policy"
 version = "0.1.0"
 
 [[package]]
-name = "socat"
-version = "0.1.0"
-dependencies = [
- "glibc",
-]
-
-[[package]]
 name = "strace"
 version = "0.1.0"
 dependencies = [

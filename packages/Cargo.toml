@@ -65,7 +65,6 @@ members = [
     "release",
     "runc",
     "selinux-policy",
-    "socat",
     "strace",
     "systemd",
     "tcpdump",
