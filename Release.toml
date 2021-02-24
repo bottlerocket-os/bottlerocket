@@ -27,4 +27,5 @@ version = "1.0.5"
     "migrate_v1.0.6_kubelet-standalone-tls-services.lz4",
     "migrate_v1.0.6_control-container-v0-4-2.lz4",
     "migrate_v1.0.6_add-shibaken.lz4",
+    "migrate_v1.0.6_admin-container-v0-6-0.lz4",
 ]
