@@ -2,13 +2,13 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
+use super::error;
 use serde::de::Error as _;
-use snafu::ensure;
+use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
 use std::ops::Deref;
-use super::error;
 
 /// KubernetesName represents a string that contains a valid Kubernetes resource name.  It stores
 /// the original string and makes it accessible through standard traits.
@@ -365,7 +365,7 @@ impl TryFrom<&str> for KubernetesAuthenticationMode {
 
     fn try_from(input: &str) -> Result<Self, error::Error> {
         ensure!(
-            matches!(input, "aws" | "tls" ),
+            matches!(input, "aws" | "tls"),
             error::InvalidAuthenticationMode { input }
         );
         Ok(KubernetesAuthenticationMode {
@@ -407,8 +407,8 @@ pub struct KubernetesBootstrapToken {
 }
 
 lazy_static! {
-    pub(crate) static ref KUBERNETES_BOOTSTRAP_TOKEN: Regex = Regex::new(
-        r"^[a-z0-9]{6}\.[a-z0-9]{16}$").unwrap();
+    pub(crate) static ref KUBERNETES_BOOTSTRAP_TOKEN: Regex =
+        Regex::new(r"^[a-z0-9]{6}\.[a-z0-9]{16}$").unwrap();
 }
 
 impl TryFrom<&str> for KubernetesBootstrapToken {
@@ -447,6 +447,160 @@ mod test_kubernetes_bootstrap_token {
     fn bad_names() {
         for err in &["", "ABCDEF.0123456789ABCDEF", "secret", &"a".repeat(23)] {
             KubernetesBootstrapToken::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesEvictionHardKey represents a string that contains a valid Kubernetes eviction hard key.
+/// https://kubernetes.io/docs/tasks/administer-cluster/out-of-resource/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesEvictionHardKey {
+    inner: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum EvictionSignal {
+    #[serde(rename = "memory.available")]
+    MemoryAvailable,
+    #[serde(rename = "nodefs.available")]
+    NodefsAvailable,
+    #[serde(rename = "nodefs.inodesFree")]
+    NodefsInodesFree,
+    #[serde(rename = "imagefs.available")]
+    ImagefsAvailable,
+    #[serde(rename = "imagefs.inodesFree")]
+    ImagefsInodesFree,
+    #[serde(rename = "pid.available")]
+    PidAvailable,
+}
+
+impl TryFrom<&str> for KubernetesEvictionHardKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<EvictionSignal>(&input).context(error::InvalidPlainValue {
+            field: "Eviction Hard key",
+        })?;
+        Ok(KubernetesEvictionHardKey {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(KubernetesEvictionHardKey, "KubernetesEvictionHardKey");
+
+#[cfg(test)]
+mod test_kubernetes_eviction_hard_key {
+    use super::KubernetesEvictionHardKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_eviction_hard_key() {
+        for ok in &[
+            "memory.available",
+            "nodefs.available",
+            "nodefs.inodesFree",
+            "imagefs.available",
+            "imagefs.inodesFree",
+            "pid.available",
+        ] {
+            KubernetesEvictionHardKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_eviction_hard_key() {
+        for err in &["", "storage.available", ".bad", "bad.", &"a".repeat(64)] {
+            KubernetesEvictionHardKey::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesThresholdValue represents a string that contains a valid kubernetes threshold value.
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesThresholdValue {
+    inner: String,
+}
+
+// Regular expression of Kubernetes quantity. i.e. 128974848, 129e6, 129M, 123Mi
+lazy_static! {
+    pub(crate) static ref KUBERNETES_QUANTITY: Regex = Regex::new(
+        r"(?x)
+        # format1 for scientific notations (e.g. 123e4) or:
+        ^([+-]?[0-9.]+)((e)?[0-9]*)$ |
+        # format2 for values with unit suffixes [EPTGMK] and [EiPiTiGiMiKi] (e.g. 100K or 100Ki),
+        # or no units (e.g. 100) or:
+        ^([+-]?[0-9.]+)((E|P|T|G|M|K)i?)?$ |
+        # format3 for values with unit suffixes [numk] (e.g. 100n 1000k)
+        ^([+-]?[0-9.]+)(n|u|m|k)?$
+   "
+    )
+    .unwrap();
+}
+
+impl TryFrom<&str> for KubernetesThresholdValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        if input.ends_with("%") {
+            let input_f32 = input[..input.len() - 1]
+                .parse::<f32>()
+                .context(error::InvalidPercentage { input })?;
+            ensure!(
+                (0.0..100.0).contains(&input_f32),
+                error::InvalidThresholdPercentage { input }
+            )
+        } else {
+            ensure!(
+                KUBERNETES_QUANTITY.is_match(input),
+                error::Pattern {
+                    thing: "Kubernetes quantity",
+                    pattern: KUBERNETES_QUANTITY.clone(),
+                    input
+                }
+            );
+        };
+
+        Ok(KubernetesThresholdValue {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(KubernetesThresholdValue, "KubernetesThresholdValue");
+
+#[cfg(test)]
+mod test_kubernetes_threshold_value {
+    use super::KubernetesThresholdValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_kubernetes_threshold_value() {
+        for ok in &[
+            "10%", "129e6", "10Mi", "1024M", "1Gi", "120Ki", "1Ti", "1000n", "100m",
+        ] {
+            KubernetesThresholdValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_kubernetes_threshold_value() {
+        for err in &[
+            "",
+            "anything%",
+            "12ki",
+            "100e23m",
+            "1100KTi",
+            "100Kiii",
+            "1000i",
+            &"a".repeat(64),
+        ] {
+            KubernetesThresholdValue::try_from(*err).unwrap_err();
         }
     }
 }

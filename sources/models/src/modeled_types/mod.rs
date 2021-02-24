@@ -62,6 +62,15 @@ pub mod error {
             field: String,
             source: serde_plain::Error,
         },
+
+        #[snafu(display("Invalid Kubernetes threshold percentage value '{}'", input))]
+        InvalidThresholdPercentage { input: String },
+
+        #[snafu(display("Invalid percentage value '{}'", input))]
+        InvalidPercentage {
+            input: String,
+            source: std::num::ParseFloatError,
+        },
     }
 }
 
