@@ -304,6 +304,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-shibaken"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-static-pods"
 version = "0.1.0"
 dependencies = [
@@ -2821,6 +2828,20 @@ name = "shell-words"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6fa3938c99da4914afedd13bf3d79bcb6c277d1b2c398d23257a304d9e1b074"
+
+[[package]]
+name = "shibaken"
+version = "0.1.0"
+dependencies = [
+ "base64 0.13.0",
+ "cargo-readme",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "simplelog",
+ "snafu",
+]
 
 [[package]]
 name = "signal-hook"

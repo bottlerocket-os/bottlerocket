@@ -739,3 +739,106 @@ impl Migration for ReplaceTemplateMigration {
         Ok(input)
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// We use this migration when we add metadata and want to make sure they're removed before we go
+/// back to old versions that don't understand them.
+#[derive(Debug)]
+pub struct SettingMetadata {
+    pub setting: &'static str,
+    pub metadata: &'static [&'static str],
+}
+
+pub struct AddMetadataMigration(pub &'static [SettingMetadata]);
+
+impl Migration for AddMetadataMigration {
+    /// New versions must have the metadata already defined in defaults.
+    fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        println!(
+            "AddMetadataMigration({:?}) has no work to do on upgrade.",
+            &self.0
+        );
+        Ok(input)
+    }
+
+    /// Older versions might break with certain settings metadata (such as with setting-generators)
+    /// so we need to remove them.
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        for setting_metadata in self.0 {
+            if let Some(found_metadata) = input.metadata.get_mut(setting_metadata.setting) {
+                for metadata in setting_metadata.metadata {
+                    if let Some(metadata_value) = found_metadata.remove(*metadata) {
+                        println!(
+                            "Removed {}, which was set to '{}'",
+                            metadata, metadata_value
+                        );
+                    } else {
+                        println!(
+                            "Found no metadata '{}' to remove on setting '{}'",
+                            metadata, setting_metadata.setting
+                        );
+                    }
+                }
+            } else {
+                println!(
+                    "Found no metadata for '{}' setting",
+                    setting_metadata.setting
+                );
+            }
+        }
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_add_metadata {
+    use super::{AddMetadataMigration, SettingMetadata};
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use std::collections::HashMap;
+
+    #[test]
+    fn backward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi".into() => hashmap!{"there".into() => "whatever".into()},
+            },
+        };
+        let result = AddMetadataMigration(&[SettingMetadata {
+            setting: "hi",
+            metadata: &["there"],
+        }])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "hi".into() => HashMap::new().into(),
+            }
+        );
+    }
+
+    #[test]
+    fn backward_noop() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi".into() => hashmap!{"sup".into() => "wassup".into()},
+            },
+        };
+        let result = AddMetadataMigration(&[SettingMetadata {
+            setting: "hi",
+            metadata: &["there"],
+        }])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "hi".into() => hashmap!{"sup".into() => "wassup".into()},
+            }
+        );
+    }
+}

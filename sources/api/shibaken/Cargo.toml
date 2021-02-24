@@ -1,0 +1,22 @@
+[package]
+name = "shibaken"
+version = "0.1.0"
+authors = ["Patrick J.P. Culp <jpculp@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+base64 = "0.13"
+log = "0.4"
+reqwest = { version = "0.10", default-features = false, features = ["blocking"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1"
+simplelog = "0.9"
+snafu = "0.6"
+
+[build-dependencies]
+cargo-readme = "3.1"

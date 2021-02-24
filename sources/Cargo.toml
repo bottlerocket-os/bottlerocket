@@ -20,6 +20,7 @@ members = [
     "api/settings-committer",
     "api/migration/migrator",
     "api/migration/migration-helpers",
+    "api/shibaken",
 
     # "api/migration/migrations/vX.Y.Z/...
     "api/migration/migrations/v0.3.2/migrate-admin-container-v0-5-0",
@@ -43,6 +44,7 @@ members = [
     "api/migration/migrations/v1.0.6/kubelet-standalone-tls-settings",
     "api/migration/migrations/v1.0.6/kubelet-standalone-tls-services",
     "api/migration/migrations/v1.0.6/control-container-v0-4-2",
+    "api/migration/migrations/v1.0.6/add-shibaken",
 
     "bottlerocket-release",
 

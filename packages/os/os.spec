@@ -78,6 +78,7 @@ Requires: %{_cross_os}schnauzer = %{version}-%{release}
 Requires: %{_cross_os}pluto = %{version}-%{release}
 %endif
 Requires: %{_cross_os}bork = %{version}-%{release}
+Requires: %{_cross_os}shibaken = %{version}-%{release}
 %description -n %{_cross_os}sundog
 %{summary}.
 
@@ -95,6 +96,11 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %package -n %{_cross_os}schnauzer
 Summary: Setting generator for templated settings values.
 %description -n %{_cross_os}schnauzer
+%{summary}.
+
+%package -n %{_cross_os}shibaken
+Summary: Setting generator for populating admin container user-data from IMDS.
+%description -n %{_cross_os}shibaken
 %{summary}.
 
 %package -n %{_cross_os}thar-be-settings
@@ -206,6 +212,7 @@ mkdir bin
     -p sundog \
     -p schnauzer \
     -p bork \
+    -p shibaken \
     -p thar-be-settings \
     -p thar-be-updates \
     -p servicedog \
@@ -248,7 +255,7 @@ done
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  early-boot-config netdog sundog schnauzer bork corndog \
+  early-boot-config netdog sundog schnauzer bork shibaken corndog \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
   migrator \
@@ -353,6 +360,9 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 
 %files -n %{_cross_os}bork
 %{_cross_bindir}/bork
+
+%files -n %{_cross_os}shibaken
+%{_cross_bindir}/shibaken
 
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
