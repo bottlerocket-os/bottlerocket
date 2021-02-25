@@ -28,7 +28,7 @@
 * Specify bash in link-variant task for use of bash features ([#1323])
 * Fix invalid symlinks when the BUILDSYS_NAME variable is set ([#1312])
 * Track and clean output files for builds ([#1291])
-* Update third-party software packages ([#1340], [#1336], [#1334], [#1333], [#1335], [#1190], [#1265], [#1315], [#1352])
+* Update third-party software packages ([#1340], [#1336], [#1334], [#1333], [#1335], [#1190], [#1265], [#1315], [#1352], [#1356])
 
 ## Documentation Changes
 
@@ -78,6 +78,7 @@
 [#1347]: (https://github.com/bottlerocket-os/bottlerocket/pull/1347)
 [#1352]: (https://github.com/bottlerocket-os/bottlerocket/pull/1352)
 [#1353]: (https://github.com/bottlerocket-os/bottlerocket/pull/1353)
+[#1356]: (https://github.com/bottlerocket-os/bottlerocket/pull/1356)
 [#19]: (https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/19)
 
 # v1.0.5 (2021-01-15)
