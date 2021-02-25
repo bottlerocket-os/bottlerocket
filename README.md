@@ -288,7 +288,7 @@ You should [specify them in user data](#using-user-data).
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
-The following settings can be optionally set to customize the node labels and taints. 
+The following settings can be optionally set to customize the node labels and taints.
 * `settings.kubernetes.node-labels`: [Labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) in the form of key, value pairs added when registering the node in the cluster.
 * `settings.kubernetes.node-taints`: [Taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) in the form of key, value and effect entries added when registering the node in the cluster.
   * Example user data for setting up labels and taints:
@@ -341,7 +341,7 @@ These settings can be changed at any time.
   Bottlerocket enables the `json-file`, `awslogs`, and `none` drivers by default.
 * `settings.ecs.allow-privileged-containers`: Whether launching privileged containers is allowed on the container instance.
   If this value is set to false, privileged containers are not permitted.
-  Bottlerocket sets this value to false by default. 
+  Bottlerocket sets this value to false by default.
 * `settings.ecs.loglevel`: The level of verbosity for the ECS agent's logs.
   Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
 * `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
@@ -411,6 +411,8 @@ As long as you define the three fields above -- `source` with a URI, and `enable
 
 You can optionally define a `user-data` field with arbitrary base64-encoded data, which will be made available in the container at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME/user-data`.
 (It was inspired by instance user data, but is entirely separate; it can be any data your host container feels like interpreting.)
+
+Keep in mind that the default admin container (since Bottlerocket v1.0.6) relies on `user-data` to store SSH keys.  You can set `user-data` to [customize the keys](https://github.com/bottlerocket-os/bottlerocket-admin-container/#authenticating-with-the-admin-container), or you can use it for your own purposes in a custom container.
 
 Here's an example of adding a custom host container with API calls:
 ```
