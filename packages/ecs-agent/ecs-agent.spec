@@ -2,9 +2,9 @@
 %global gorepo amazon-ecs-agent
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.48.1
+%global gover 1.50.2
 # git rev-parse --short=8
-%global gitrev e9b600d2
+%global gitrev 5be7aa08
 
 # Construct reproducible tar archives
 # See https://reproducible-builds.org/docs/archives/
