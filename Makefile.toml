@@ -329,6 +329,7 @@ mv /tmp/kit/${BUILDSYS_KMOD_KIT}.tar.xz /tmp/archives
 "
 
 docker run --rm \
+  --network=host \
   --user "$(id -u):$(id -g)" \
   --security-opt label:disable \
   -v "${BUILDSYS_PACKAGES_DIR}":/tmp/rpms \
