@@ -6,7 +6,7 @@
 * Add a vmware-dev variant ([#1292], [#1288], [#1290])
 * Add Kubernetes static pods support ([#1317])
 * Add high-level 'set' subcommand for changing settings using apiclient ([#1278])
-* Allow admin container to use SSH public keys from user data ([#1331], [#19])
+* Allow admin container to use SSH public keys from user data ([#1331], [#1358], [#19])
 * Add support for kubelet in standalone mode and TLS auth ([#1338])
 * Add https-proxy and no-proxy settings to updog ([#1324])
 * Add support for pulling host-containers from ECR Public ([#1296])
@@ -80,6 +80,7 @@
 [#1353]: (https://github.com/bottlerocket-os/bottlerocket/pull/1353)
 [#1356]: (https://github.com/bottlerocket-os/bottlerocket/pull/1356)
 [#1357]: (https://github.com/bottlerocket-os/bottlerocket/pull/1357)
+[#1358]: (https://github.com/bottlerocket-os/bottlerocket/pull/1358)
 [#19]: (https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/19)
 
 # v1.0.5 (2021-01-15)

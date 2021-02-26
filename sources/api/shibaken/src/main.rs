@@ -60,17 +60,23 @@ fn fetch_imds_session_token(client: &Client) -> Result<String> {
     Ok(imds_session_token)
 }
 
-/// Helper to fetch data from IMDS. Taken from pluto.
-fn get_text_from_imds(client: &Client, uri: &str, session_token: &str) -> Result<String> {
-    client
+/// Helper to fetch data from IMDS. Inspired by pluto.
+fn fetch_from_imds(client: &Client, uri: &str, session_token: &str) -> Result<Option<String>> {
+    let response = client
         .get(uri)
         .header("X-aws-ec2-metadata-token", session_token)
         .send()
-        .context(error::ImdsRequest { method: "GET", uri })?
-        .error_for_status()
-        .context(error::ImdsResponse { uri })?
-        .text()
-        .context(error::ImdsText { uri })
+        .context(error::ImdsRequest { method: "GET", uri })?;
+    if response.status().as_u16() == 404 {
+        return Ok(None);
+    }
+    Ok(Some(
+        response
+            .error_for_status()
+            .context(error::ImdsResponse { uri })?
+            .text()
+            .context(error::ImdsText { uri })?,
+    ))
 }
 
 /// Returns a list of public keys.
@@ -81,9 +87,15 @@ fn fetch_public_keys_from_imds() -> Result<Vec<String>> {
 
     info!("Fetching list of available public keys from IMDS");
     // Returns a list of available public keys as '0=my-public-key'
-    let public_key_list =
-        get_text_from_imds(&client, IMDS_PUBLIC_KEY_BASE_URI, &imds_session_token)?;
-    debug!("available public keys '{}'", &public_key_list);
+    let public_key_list = if let Some(public_key_list) =
+        fetch_from_imds(&client, IMDS_PUBLIC_KEY_BASE_URI, &imds_session_token)?
+    {
+        debug!("available public keys '{}'", &public_key_list);
+        public_key_list
+    } else {
+        debug!("no available public keys");
+        return Ok(Vec::new());
+    };
 
     info!("Generating uris to fetch text of available public keys");
     let public_key_uris = build_public_key_uris(&public_key_list);
@@ -91,7 +103,8 @@ fn fetch_public_keys_from_imds() -> Result<Vec<String>> {
     info!("Fetching public keys from IMDS");
     let mut public_keys = Vec::new();
     for uri in public_key_uris {
-        let public_key_text = get_text_from_imds(&client, &uri, &imds_session_token)?;
+        let public_key_text = fetch_from_imds(&client, &uri, &imds_session_token)?
+            .context(error::KeyNotFound { uri })?;
         let public_key = public_key_text.trim_end();
         // Simple check to see if the text is probably an ssh key.
         if public_key.starts_with("ssh") {
@@ -264,6 +277,9 @@ mod error {
 
         #[snafu(display("Error getting text response from {}: {}", uri, source))]
         ImdsText { uri: String, source: reqwest::Error },
+
+        #[snafu(display("Error retrieving key from {}", uri))]
+        KeyNotFound { uri: String },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
