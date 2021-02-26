@@ -20,7 +20,7 @@
 ## Build Changes
 
 * Add the ability to output vmdk via qemu-img ([#1289])
-* Add support for kmod kits to ease building of third-party kernel modules ([#1287], [#1286], [#1285])
+* Add support for kmod kits to ease building of third-party kernel modules ([#1287], [#1286], [#1285],[#1357])
 * storewolf: Declare dependencies on model and defaults files ([#1319])
 * storewolf: Refactor default settings files to allow sharing ([#1303], [#1329])
 * Switch from TermLogger to SimpleLogger ([#1282], **thanks @hencrice!**)
@@ -79,6 +79,7 @@
 [#1352]: (https://github.com/bottlerocket-os/bottlerocket/pull/1352)
 [#1353]: (https://github.com/bottlerocket-os/bottlerocket/pull/1353)
 [#1356]: (https://github.com/bottlerocket-os/bottlerocket/pull/1356)
+[#1357]: (https://github.com/bottlerocket-os/bottlerocket/pull/1357)
 [#19]: (https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/19)
 
 # v1.0.5 (2021-01-15)
