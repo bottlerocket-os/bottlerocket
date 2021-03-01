@@ -25,6 +25,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/remotes/docker"
+	"github.com/containerd/containerd/runtime/v2/runc/options"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -244,6 +245,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 			containerID,
 			containerd.WithImage(img),
 			containerd.WithNewSnapshot(containerID+"-snapshot", img),
+			containerd.WithRuntime("io.containerd.runc.v2", &options.Options{
+				Root: "/run/host-containerd/runc",
+			}),
 			ctrOpts,
 		)
 		if err != nil {
