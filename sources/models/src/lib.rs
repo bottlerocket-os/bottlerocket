@@ -130,6 +130,7 @@ struct KubernetesSettings {
     standalone_mode: bool,
     eviction_hard: HashMap<KubernetesEvictionHardKey, KubernetesThresholdValue>,
     kube_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
+    allowed_unsafe_sysctls: Vec<SingleLineString>,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

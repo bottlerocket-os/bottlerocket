@@ -325,6 +325,11 @@ The following settings are optional and allow you to further configure your clus
     [settings.kubernetes.eviction-hard]
     "memory.available" = "15%"
     ```
+* `settings.kubernetes.allowed-unsafe-sysctls`: Enables specified list of unsafe sysctls.
+  * Example user data for setting up allowed unsafe sysctls:
+    ```
+    allowed-unsafe-sysctls = ["net.core.somaxconn", "net.ipv4.ip_local_port_range"]
+    ```
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.
