@@ -59,6 +59,12 @@ aws ssm get-parameters --region us-west-2 \
 You can replace the architecture (`x86_64`) and region (`us-west-2`) to look for other images.
 If you know a specific Bottlerocket version you'd like to use, you can replace `latest` with that version.
 
+For example, to find the `1.0.0` version of the `aws-ecs-1` variant for the `arm64` architecture (also known as `aarch64`) in the `eu-west-1` region, you can use the following command:
+
+```
+aws ssm get-parameter --region eu-west-1 --name "/aws/service/bottlerocket/aws-ecs-1/arm64/1.0.0/image_id" --query Parameter.Value --output text
+```
+
 You can also see all available parameters
 [through the web console](https://us-west-2.console.aws.amazon.com/systems-manager/parameters/#list_parameter_filters=Path:Recursive:%2Faws%2Fservice%2Fbottlerocket).
 
