@@ -20,7 +20,7 @@
 ## Build Changes
 
 * Add the ability to output vmdk via qemu-img ([#1289])
-* Add support for kmod kits to ease building of third-party kernel modules ([#1287], [#1286], [#1285],[#1357])
+* Add support for kmod kits to ease building of third-party kernel modules ([#1287], [#1286], [#1285], [#1357])
 * storewolf: Declare dependencies on model and defaults files ([#1319])
 * storewolf: Refactor default settings files to allow sharing ([#1303], [#1329])
 * Switch from TermLogger to SimpleLogger ([#1282], **thanks @hencrice!**)
@@ -36,52 +36,52 @@
 * Clarify use case for update repos ([#1339])
 * Fix broken link from API docs to top-level docs ([#1306])
 
-[#1006]: (https://github.com/bottlerocket-os/bottlerocket/pull/1006)
-[#1190]: (https://github.com/bottlerocket-os/bottlerocket/pull/1190)
-[#1265]: (https://github.com/bottlerocket-os/bottlerocket/pull/1265)
-[#1278]: (https://github.com/bottlerocket-os/bottlerocket/pull/1278)
-[#1281]: (https://github.com/bottlerocket-os/bottlerocket/pull/1281)
-[#1282]: (https://github.com/bottlerocket-os/bottlerocket/pull/1282)
-[#1285]: (https://github.com/bottlerocket-os/bottlerocket/pull/1285)
-[#1286]: (https://github.com/bottlerocket-os/bottlerocket/pull/1286)
-[#1287]: (https://github.com/bottlerocket-os/bottlerocket/pull/1287)
-[#1288]: (https://github.com/bottlerocket-os/bottlerocket/pull/1288)
-[#1289]: (https://github.com/bottlerocket-os/bottlerocket/pull/1289)
-[#1290]: (https://github.com/bottlerocket-os/bottlerocket/pull/1290)
-[#1291]: (https://github.com/bottlerocket-os/bottlerocket/pull/1291)
-[#1292]: (https://github.com/bottlerocket-os/bottlerocket/pull/1292)
-[#1296]: (https://github.com/bottlerocket-os/bottlerocket/pull/1296)
-[#1303]: (https://github.com/bottlerocket-os/bottlerocket/pull/1303)
-[#1306]: (https://github.com/bottlerocket-os/bottlerocket/pull/1306)
-[#1312]: (https://github.com/bottlerocket-os/bottlerocket/pull/1312)
-[#1315]: (https://github.com/bottlerocket-os/bottlerocket/pull/1315)
-[#1316]: (https://github.com/bottlerocket-os/bottlerocket/pull/1316)
-[#1317]: (https://github.com/bottlerocket-os/bottlerocket/pull/1317)
-[#1318]: (https://github.com/bottlerocket-os/bottlerocket/pull/1318)
-[#1319]: (https://github.com/bottlerocket-os/bottlerocket/pull/1319)
-[#1322]: (https://github.com/bottlerocket-os/bottlerocket/pull/1322)
-[#1323]: (https://github.com/bottlerocket-os/bottlerocket/pull/1323)
-[#1324]: (https://github.com/bottlerocket-os/bottlerocket/pull/1324)
-[#1327]: (https://github.com/bottlerocket-os/bottlerocket/pull/1327)
-[#1329]: (https://github.com/bottlerocket-os/bottlerocket/pull/1329)
-[#1330]: (https://github.com/bottlerocket-os/bottlerocket/pull/1330)
-[#1331]: (https://github.com/bottlerocket-os/bottlerocket/pull/1331)
-[#1333]: (https://github.com/bottlerocket-os/bottlerocket/pull/1333)
-[#1334]: (https://github.com/bottlerocket-os/bottlerocket/pull/1334)
-[#1335]: (https://github.com/bottlerocket-os/bottlerocket/pull/1335)
-[#1336]: (https://github.com/bottlerocket-os/bottlerocket/pull/1336)
-[#1337]: (https://github.com/bottlerocket-os/bottlerocket/pull/1337)
-[#1338]: (https://github.com/bottlerocket-os/bottlerocket/pull/1338)
-[#1339]: (https://github.com/bottlerocket-os/bottlerocket/pull/1339)
-[#1340]: (https://github.com/bottlerocket-os/bottlerocket/pull/1340)
-[#1344]: (https://github.com/bottlerocket-os/bottlerocket/pull/1344)
-[#1347]: (https://github.com/bottlerocket-os/bottlerocket/pull/1347)
-[#1352]: (https://github.com/bottlerocket-os/bottlerocket/pull/1352)
-[#1353]: (https://github.com/bottlerocket-os/bottlerocket/pull/1353)
-[#1356]: (https://github.com/bottlerocket-os/bottlerocket/pull/1356)
-[#1357]: (https://github.com/bottlerocket-os/bottlerocket/pull/1357)
-[#1358]: (https://github.com/bottlerocket-os/bottlerocket/pull/1358)
-[#19]: (https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/19)
+[#1006]: https://github.com/bottlerocket-os/bottlerocket/pull/1006
+[#1190]: https://github.com/bottlerocket-os/bottlerocket/pull/1190
+[#1265]: https://github.com/bottlerocket-os/bottlerocket/pull/1265
+[#1278]: https://github.com/bottlerocket-os/bottlerocket/pull/1278
+[#1281]: https://github.com/bottlerocket-os/bottlerocket/pull/1281
+[#1282]: https://github.com/bottlerocket-os/bottlerocket/pull/1282
+[#1285]: https://github.com/bottlerocket-os/bottlerocket/pull/1285
+[#1286]: https://github.com/bottlerocket-os/bottlerocket/pull/1286
+[#1287]: https://github.com/bottlerocket-os/bottlerocket/pull/1287
+[#1288]: https://github.com/bottlerocket-os/bottlerocket/pull/1288
+[#1289]: https://github.com/bottlerocket-os/bottlerocket/pull/1289
+[#1290]: https://github.com/bottlerocket-os/bottlerocket/pull/1290
+[#1291]: https://github.com/bottlerocket-os/bottlerocket/pull/1291
+[#1292]: https://github.com/bottlerocket-os/bottlerocket/pull/1292
+[#1296]: https://github.com/bottlerocket-os/bottlerocket/pull/1296
+[#1303]: https://github.com/bottlerocket-os/bottlerocket/pull/1303
+[#1306]: https://github.com/bottlerocket-os/bottlerocket/pull/1306
+[#1312]: https://github.com/bottlerocket-os/bottlerocket/pull/1312
+[#1315]: https://github.com/bottlerocket-os/bottlerocket/pull/1315
+[#1316]: https://github.com/bottlerocket-os/bottlerocket/pull/1316
+[#1317]: https://github.com/bottlerocket-os/bottlerocket/pull/1317
+[#1318]: https://github.com/bottlerocket-os/bottlerocket/pull/1318
+[#1319]: https://github.com/bottlerocket-os/bottlerocket/pull/1319
+[#1322]: https://github.com/bottlerocket-os/bottlerocket/pull/1322
+[#1323]: https://github.com/bottlerocket-os/bottlerocket/pull/1323
+[#1324]: https://github.com/bottlerocket-os/bottlerocket/pull/1324
+[#1327]: https://github.com/bottlerocket-os/bottlerocket/pull/1327
+[#1329]: https://github.com/bottlerocket-os/bottlerocket/pull/1329
+[#1330]: https://github.com/bottlerocket-os/bottlerocket/pull/1330
+[#1331]: https://github.com/bottlerocket-os/bottlerocket/pull/1331
+[#1333]: https://github.com/bottlerocket-os/bottlerocket/pull/1333
+[#1334]: https://github.com/bottlerocket-os/bottlerocket/pull/1334
+[#1335]: https://github.com/bottlerocket-os/bottlerocket/pull/1335
+[#1336]: https://github.com/bottlerocket-os/bottlerocket/pull/1336
+[#1337]: https://github.com/bottlerocket-os/bottlerocket/pull/1337
+[#1338]: https://github.com/bottlerocket-os/bottlerocket/pull/1338
+[#1339]: https://github.com/bottlerocket-os/bottlerocket/pull/1339
+[#1340]: https://github.com/bottlerocket-os/bottlerocket/pull/1340
+[#1344]: https://github.com/bottlerocket-os/bottlerocket/pull/1344
+[#1347]: https://github.com/bottlerocket-os/bottlerocket/pull/1347
+[#1352]: https://github.com/bottlerocket-os/bottlerocket/pull/1352
+[#1353]: https://github.com/bottlerocket-os/bottlerocket/pull/1353
+[#1356]: https://github.com/bottlerocket-os/bottlerocket/pull/1356
+[#1357]: https://github.com/bottlerocket-os/bottlerocket/pull/1357
+[#1358]: https://github.com/bottlerocket-os/bottlerocket/pull/1358
+[#19]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/19
 
 # v1.0.5 (2021-01-15)
 
