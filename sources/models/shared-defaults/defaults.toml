@@ -58,25 +58,6 @@ template-path = "/usr/share/templates/updog-toml"
 affected-services = ["updog"]
 seed.setting-generator = "bork seed"
 
-# Metrics
-
-[settings.metrics]
-# the URL to which anonymous health metrics will be sent
-metrics-url = "https://metrics.bottlerocket.aws/v1/metrics"
-# whether or not health metrics will be sent. set to false to opt-out
-send-metrics = true
-# the list of services that are checked to determine if a host is healthy,
-# overridden in each variant to list services critical to that variant
-service-checks = ["apiserver", "chronyd", "containerd", "host-containerd"]
-
-[services.metricdog]
-configuration-files = ["metricdog-toml", "proxy-env"]
-restart-commands = ["/bin/systemctl try-restart metricdog.service"]
-
-[configuration-files.metricdog-toml]
-path = "/etc/metricdog.toml"
-template-path = "/usr/share/templates/metricdog-toml"
-
 # HostContainers
 
 [services.host-containers]
