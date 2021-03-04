@@ -97,8 +97,7 @@ If you'd like even more control over your setup, something that eksctl can't (ye
 
 ### Finding an AMI
 
-You can either build an AMI yourself using [our guide](BUILDING.md), or use an official AMI provided by Amazon.
-The currently supported regions are:
+Amazon provides official AMIs in the following AWS regions:
 
 ```
 af-south-1

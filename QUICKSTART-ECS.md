@@ -36,8 +36,7 @@ aws ecs --region us-west-2 create-cluster --cluster-name bottlerocket
 
 ## Finding an AMI
 
-You can either build an AMI yourself using [our guide](BUILDING.md), or use an official AMI provided by Amazon.
-The currently supported regions are:
+Amazon provides official AMIs in the following AWS regions:
 
 ```
 af-south-1
