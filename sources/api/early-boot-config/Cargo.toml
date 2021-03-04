@@ -12,6 +12,7 @@ exclude = ["README.md"]
 [dependencies]
 apiclient = { path = "../apiclient" }
 base64 = "0.13"
+flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
 http = "0.2"
 log = "0.4"
 reqwest = { version = "0.10", default-features = false, features = ["blocking"] }
@@ -27,3 +28,7 @@ toml = "0.5"
 
 [build-dependencies]
 cargo-readme = "3.1"
+
+[dev-dependencies]
+hex-literal = "0.3"
+lazy_static = "1.4"

@@ -21,6 +21,7 @@ use std::fs;
 use std::str::FromStr;
 use std::{env, process};
 
+mod compression;
 mod provider;
 mod settings;
 use crate::provider::PlatformDataProvider;
