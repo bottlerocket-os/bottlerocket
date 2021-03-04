@@ -1,6 +1,7 @@
 //! The aws module implements the `PlatformDataProvider` trait for gathering userdata on AWS.
 
 use super::{PlatformDataProvider, SettingsJson};
+use crate::compression::expand_slice_maybe;
 use http::StatusCode;
 use reqwest::blocking::Client;
 use serde_json::json;
@@ -48,7 +49,7 @@ impl AwsDataProvider {
         session_token: &str,
         uri: &str,
         description: &str,
-    ) -> Result<Option<String>> {
+    ) -> Result<Option<Vec<u8>>> {
         debug!("Requesting {} from {}", description, uri);
         let response = client
             .get(uri)
@@ -57,15 +58,35 @@ impl AwsDataProvider {
             .context(error::Request { method: "GET", uri })?;
         trace!("IMDS response: {:?}", &response);
 
+        // IMDS data can be larger than we'd want to log (50k+ compressed) so we don't necessarily
+        // want to show the whole thing, and don't want to show binary data.
+        fn response_string(response: &[u8]) -> String {
+            // arbitrary max len; would be nice to print the start of the data if it's
+            // uncompressed, but we'd need to break slice at a safe point for UTF-8, and without
+            // reading in the whole thing like String::from_utf8.
+            if response.len() > 2048 {
+                "<very long>".to_string()
+            } else if let Ok(s) = String::from_utf8(response.into()) {
+                s
+            } else {
+                "<binary>".to_string()
+            }
+        }
+
         match response.status() {
             code @ StatusCode::OK => {
                 info!("Received {}", description);
-                let response_body = response.text().context(error::ResponseBody {
-                    method: "GET",
-                    uri,
-                    code,
-                })?;
-                trace!("Response text: {:?}", &response_body);
+                let response_body = response
+                    .bytes()
+                    .context(error::ResponseBody {
+                        method: "GET",
+                        uri,
+                        code,
+                    })?
+                    .to_vec();
+
+                let response_str = response_string(&response_body);
+                trace!("Response: {:?}", response_str);
 
                 Ok(Some(response_body))
             }
@@ -74,18 +95,24 @@ impl AwsDataProvider {
             StatusCode::NOT_FOUND => Ok(None),
 
             code @ _ => {
-                let response_body = response.text().context(error::ResponseBody {
-                    method: "GET",
-                    uri,
-                    code,
-                })?;
-                trace!("Response text: {:?}", &response_body);
+                let response_body = response
+                    .bytes()
+                    .context(error::ResponseBody {
+                        method: "GET",
+                        uri,
+                        code,
+                    })?
+                    .to_vec();
+
+                let response_str = response_string(&response_body);
+
+                trace!("Response: {:?}", response_str);
 
                 error::Response {
                     method: "GET",
                     uri,
                     code,
-                    response_body,
+                    response_body: response_str,
                 }
                 .fail()
             }
@@ -98,11 +125,13 @@ impl AwsDataProvider {
         let desc = "user data";
         let uri = Self::USER_DATA_ENDPOINT;
 
-        let user_data_str = match Self::fetch_imds(client, session_token, uri, desc) {
+        let user_data_raw = match Self::fetch_imds(client, session_token, uri, desc) {
             Err(e) => return Err(e),
             Ok(None) => return Ok(None),
             Ok(Some(s)) => s,
         };
+        let user_data_str = expand_slice_maybe(&user_data_raw)
+            .context(error::Decompression { what: "user data" })?;
         trace!("Received user data: {}", user_data_str);
 
         // Remove outer "settings" layer before sending to API
@@ -131,7 +160,9 @@ impl AwsDataProvider {
             match Self::fetch_imds(client, session_token, uri, desc) {
                 Err(e) => return Err(e),
                 Ok(None) => return Ok(None),
-                Ok(Some(s)) => s,
+                Ok(Some(raw)) => {
+                    expand_slice_maybe(&raw).context(error::Decompression { what: "user data" })?
+                }
             }
         };
         trace!("Received instance identity document: {}", iid_str);
@@ -197,6 +228,9 @@ mod error {
     pub(crate) enum Error {
         #[snafu(display("Response '{}' from '{}': {}", get_bad_status_code(&source), uri, source))]
         BadResponse { uri: String, source: reqwest::Error },
+
+        #[snafu(display("Failed to decompress {}: {}", what, source))]
+        Decompression { what: String, source: io::Error },
 
         #[snafu(display("Error deserializing from JSON: {}", source))]
         DeserializeJson { source: serde_json::error::Error },
