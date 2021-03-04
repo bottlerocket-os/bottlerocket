@@ -36,37 +36,61 @@ aws ecs --region us-west-2 create-cluster --cluster-name bottlerocket
 
 ## Finding an AMI
 
-You can either use an official AMI provided by Amazon or build an AMI yourself using
-[our guide](https://github.com/bottlerocket-os/bottlerocket/blob/develop/BUILDING.md).
+Amazon provides official AMIs in the following AWS regions:
 
-The official AMI IDs are stored in
-[public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
-To find the `aws-ecs-1` variant for the `x86_64` architecture in the `us-west-2` region, you can use the following command:
+```
+af-south-1
+ap-east-1
+ap-northeast-1
+ap-northeast-2
+ap-south-1
+ap-southeast-1
+ap-southeast-2
+ca-central-1
+eu-central-1
+eu-north-1
+eu-south-1
+eu-west-1
+eu-west-2
+eu-west-3
+me-south-1
+sa-east-1
+us-east-1
+us-east-2
+us-west-1
+us-west-2
+```
+
+The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
+The parameter names look like this: `/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_id`
+
+Just change the variant (`aws-ecs-1`) and architecture (`x86_64`) to the ones you want to use.
+Supported variants and architectures are described in the [README](README.md#variants).
+For the purposes of SSM parameters, the valid architecture names are `x86_64` and `arm64` (also known as `aarch64`).
+Also, if you know a specific Bottlerocket version you'd like to use, for example `1.0.6`, you can replace `latest` with that version.
+
+Once you have the parameter name you want to use, the easiest way to use it is to pass it directly to EC2.
+Just prefix the parameter name with `resolve:ssm:` and EC2 will fetch the current value for you.
+(You can also use this method for CloudFormation and other services that launch EC2 instances for you.)
+
+For example, to use the parameter above, you would pass this as the AMI ID in your launch request: `resolve:ssm:/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_id`
+
+#### Manually querying SSM
+
+If you prefer to fetch the AMI ID yourself, you can use [aws-cli](https://aws.amazon.com/cli/) on the command line.
+To fetch the example parameter above, for the us-west-2 region, you could run this:
 
 ```
 aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_id" --query Parameter.Value --output text
 ```
 
 If you have `jq` and would like a bit more information, try this:
-
 ```
 aws ssm get-parameters --region us-west-2 \
    --names "/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_id" \
            "/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_version" \
    --output json | jq -r '.Parameters | .[] | "\(.Name): \(.Value) (updated \(.LastModifiedDate | gmtime | strftime("%c")) UTC)"'
 ```
-
-You can replace the architecture (`x86_64`) and region (`us-west-2`) to look for other images.
-If you know a specific Bottlerocket version you'd like to use, you can replace `latest` with that version.
-
-For example, to find the `1.0.0` version of the `aws-ecs-1` variant for the `arm64` architecture (also known as `aarch64`) in the `eu-west-1` region, you can use the following command:
-
-```
-aws ssm get-parameter --region eu-west-1 --name "/aws/service/bottlerocket/aws-ecs-1/arm64/1.0.0/image_id" --query Parameter.Value --output text
-```
-
-You can also see all available parameters
-[through the web console](https://us-west-2.console.aws.amazon.com/systems-manager/parameters/#list_parameter_filters=Path:Recursive:%2Faws%2Fservice%2Fbottlerocket).
 
 ## Launching your first instance
 
