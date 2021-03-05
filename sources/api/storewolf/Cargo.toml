@@ -26,8 +26,8 @@ merge-toml = { path = "merge-toml" }
 # We have a models build-dep because we read default settings from the models
 # directory and need its build.rs to run first; we also reflect the dependency
 # with cargo:rerun-if-changed statements in our build.rs.  The models build.rs
-# runs twice, once for the above dependency and once for this build-dependency;
-# there's a check in models build.rs to skip running the second time.
+# runs twice, once for the above dependency and once for this build-dependency,
+# so it's important that it remains reentrant.
 models = { path = "../../models" }
 snafu = "0.6"
 toml = "0.5"
