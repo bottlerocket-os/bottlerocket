@@ -205,6 +205,35 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 
 %build
 mkdir bin
+
+# We want to build some components statically:
+# * apiclient, because it needs to run from containers that don't have the same libraries available.
+# * migrations, because they need to run after a system update where available libraries can change.
+#
+# Most of our components don't need to be static, though.  This means we run cargo once for static
+# and once for non-static.  There's a long tail of crate builds for each of these that can be
+# mitigated by running them in parallel, saving a fair amount of time.  To do this, we kick off the
+# static build in the background, run the non-static (main) build in the foreground, and then wait
+# for the static build and print its output afterward.  A failure of either will stop the build.
+
+# For static builds, first we find the migrations in the source tree.  We assume the directory name
+# is the same as the crate name.
+migrations=()
+for migration in $(find %{_builddir}/sources/api/migration/migrations/* -mindepth 1 -maxdepth 1 -type d); do
+    migrations+=("-p $(basename ${migration})")
+done
+# Store the output so we can print it after waiting for the backgrounded job.
+static_output="$(mktemp)"
+# Build static binaries in the background.
+%cargo_build_static --manifest-path %{_builddir}/sources/Cargo.toml \
+    -p apiclient \
+    ${migrations[*]} \
+    >> ${static_output} 2>&1 &
+# Save the PID so we can wait for it later.
+static_pid="$!"
+
+# Run non-static builds in the foreground.
+echo "** Output from non-static builds:"
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiserver \
     -p early-boot-config \
@@ -236,20 +265,13 @@ mkdir bin
 %endif
     %{nil}
 
-# Next, build components that should be static.
-# * apiclient, because it needs to run from containers that don't have the same libraries available.
-# * migrations, because they need to run after a system update where available libraries can change.
-
-# First we find the migrations in the source tree.  We assume the directory name is the same as the crate name.
-migrations=()
-for migration in $(find %{_builddir}/sources/api/migration/migrations/* -mindepth 1 -maxdepth 1 -type d); do
-    migrations+=("-p $(basename ${migration})")
-done
-# Build static binaries.
-%cargo_build_static --manifest-path %{_builddir}/sources/Cargo.toml \
-    -p apiclient \
-    ${migrations[*]} \
-    %{nil}
+# Wait for static builds from the background, if they're not already done.
+set +e; wait "${static_pid}"; static_rc="${?}"; set -e
+echo -e "\n** Output from static builds:"
+cat "${static_output}"
+if [ "${static_rc}" -ne 0 ]; then
+   exit "${static_rc}"
+fi
 
 %install
 install -d %{buildroot}%{_cross_bindir}
