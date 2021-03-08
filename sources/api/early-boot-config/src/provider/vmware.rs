@@ -1,5 +1,5 @@
-//! The cdrom module implements the `PlatformDataProvider` trait for gathering userdata from a
-//! mounted CDRom.
+//! The vmware module implements the `PlatformDataProvider` trait for gathering userdata on VMWare
+//! via mounted CDRom or the guestinfo interface
 
 use super::{PlatformDataProvider, SettingsJson};
 use crate::compression::{expand_file_maybe, expand_slice_maybe, OptionalCompressionReader};
@@ -11,9 +11,9 @@ use std::io::BufReader;
 use std::iter::FromIterator;
 use std::path::Path;
 
-pub(crate) struct CdromDataProvider;
+pub(crate) struct VmwareDataProvider;
 
-impl CdromDataProvider {
+impl VmwareDataProvider {
     // This program expects that the CD-ROM is already mounted.  Mounting happens elsewhere in a
     // systemd unit file
     const CD_ROM_MOUNT: &'static str = "/media/cdrom";
@@ -134,7 +134,7 @@ impl CdromDataProvider {
     }
 }
 
-impl PlatformDataProvider for CdromDataProvider {
+impl PlatformDataProvider for VmwareDataProvider {
     fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
 
@@ -229,7 +229,7 @@ mod test {
         let xml = test_data().join("namespaced_keys.xml");
         let expected_user_data = "settings.motd = \"hello\"";
 
-        let actual_user_data = CdromDataProvider::ovf_user_data(xml).unwrap();
+        let actual_user_data = VmwareDataProvider::ovf_user_data(xml).unwrap();
 
         assert_eq!(actual_user_data, expected_user_data)
     }
@@ -239,7 +239,7 @@ mod test {
         let xml = test_data().join("ovf-env.xml");
         let expected_user_data = "settings.motd = \"hello\"";
 
-        let actual_user_data = CdromDataProvider::ovf_user_data(xml).unwrap();
+        let actual_user_data = VmwareDataProvider::ovf_user_data(xml).unwrap();
 
         assert_eq!(actual_user_data, expected_user_data)
     }

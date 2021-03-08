@@ -60,7 +60,7 @@ fn create_provider() -> Result<Box<dyn PlatformDataProvider>> {
 
     #[cfg(bottlerocket_platform = "vmware")]
     {
-        Ok(Box::new(provider::cdrom::CdromDataProvider))
+        Ok(Box::new(provider::vmware::VmwareDataProvider))
     }
 }
 
@@ -130,8 +130,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     info!("early-boot-config started");
 

@@ -9,7 +9,7 @@ pub(crate) mod aws;
 pub(crate) mod local_file;
 
 #[cfg(bottlerocket_platform = "vmware")]
-pub(crate) mod cdrom;
+pub(crate) mod vmware;
 
 /// Support for new platforms can be added by implementing this trait.
 pub(crate) trait PlatformDataProvider {
