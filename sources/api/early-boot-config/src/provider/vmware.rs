@@ -4,7 +4,7 @@
 use super::{PlatformDataProvider, SettingsJson};
 use crate::compression::{expand_file_maybe, expand_slice_maybe, OptionalCompressionReader};
 use serde::Deserialize;
-use snafu::{ensure, OptionExt, ResultExt};
+use snafu::{ensure, ResultExt};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::BufReader;
@@ -50,7 +50,7 @@ impl VmwareDataProvider {
         // format
         info!("'{}' exists, using it", user_data_file.display());
         let user_data_str = match user_data_file.extension().and_then(OsStr::to_str) {
-            Some("xml") | Some("XML") => Self::ovf_user_data(user_data_file)?,
+            Some("xml") | Some("XML") => Self::ovf_user_data(&user_data_file)?,
             // Since we only look for a specific list of file names, we should never find a file
             // with an extension we don't understand.
             Some(_) => unreachable!(),
@@ -78,15 +78,12 @@ impl VmwareDataProvider {
             );
         }
 
-        // Remove outer "settings" layer before sending to API
-        let mut val: toml::Value =
-            toml::from_str(&user_data_str).context(error::TOMLUserDataParse)?;
-        let table = val.as_table_mut().context(error::UserDataNotTomlTable)?;
-        let inner = table
-            .remove("settings")
-            .context(error::UserDataMissingSettings)?;
+        let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
+            error::SettingsToJSON {
+                from: user_data_file.display().to_string(),
+            },
+        )?;
 
-        let json = SettingsJson::from_val(&inner, "user data").context(error::SettingsToJSON)?;
         Ok(Some(json))
     }
 
@@ -190,20 +187,14 @@ mod error {
         #[snafu(display("Unable to read input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
 
-        #[snafu(display("Error serializing TOML to JSON: {}", source))]
-        SettingsToJSON { source: serde_json::error::Error },
-
-        #[snafu(display("Error parsing TOML user data: {}", source))]
-        TOMLUserDataParse { source: toml::de::Error },
+        #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
+        SettingsToJSON {
+            from: String,
+            source: crate::settings::Error,
+        },
 
         #[snafu(display("Found multiple user data files in '{}', expected 1", location))]
         UserDataFileCount { location: String },
-
-        #[snafu(display("TOML data did not contain 'settings' section"))]
-        UserDataMissingSettings,
-
-        #[snafu(display("Data is not a TOML table"))]
-        UserDataNotTomlTable,
 
         #[snafu(display("Unable to deserialize XML from: '{}': {}", path.display(), source))]
         XmlDeserialize {
