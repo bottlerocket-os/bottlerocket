@@ -39,13 +39,12 @@ fn run() -> Result<()> {
     let args = Args::from_args();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     match args.subcommand {
         SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::Repo),
         SubCommand::ValidateRepo(ref validate_repo_args) => {
-            let mut rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::Runtime)?;
             rt.block_on(async {
                 repo::validate_repo::run(&args, &validate_repo_args)
                     .await
@@ -60,11 +59,11 @@ fn run() -> Result<()> {
             repo::refresh_repo::run(&args, &refresh_repo_args).context(error::RefreshRepo)
         }
         SubCommand::Ami(ref ami_args) => {
-            let mut rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::Runtime)?;
             rt.block_on(async { aws::ami::run(&args, &ami_args).await.context(error::Ami) })
         }
         SubCommand::PublishAmi(ref publish_args) => {
-            let mut rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::Runtime)?;
             rt.block_on(async {
                 aws::publish_ami::run(&args, &publish_args)
                     .await
@@ -72,11 +71,11 @@ fn run() -> Result<()> {
             })
         }
         SubCommand::Ssm(ref ssm_args) => {
-            let mut rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::Runtime)?;
             rt.block_on(async { aws::ssm::run(&args, &ssm_args).await.context(error::Ssm) })
         }
         SubCommand::PromoteSsm(ref promote_args) => {
-            let mut rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::Runtime)?;
             rt.block_on(async {
                 aws::promote_ssm::run(&args, &promote_args)
                     .await
