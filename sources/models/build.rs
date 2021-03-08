@@ -17,17 +17,11 @@ const MOD_LINK: &str = "src/variant/mod.rs";
 const VARIANT_ENV: &str = "VARIANT";
 
 fn main() {
-    // Tell cargo when we have to rerun, regardless of early-exit below.
+    // Tell cargo when we have to rerun; we always want variant links to be correct, especially
+    // after changing the variant we're building for.
     println!("cargo:rerun-if-env-changed={}", VARIANT_ENV);
     println!("cargo:rerun-if-changed={}", VARIANT_LINK);
     println!("cargo:rerun-if-changed={}", MOD_LINK);
-
-    // This build.rs runs once as a build-dependency of storewolf, and again as a (regular)
-    // dependency of storewolf.  There's no reason to do this work twice.
-    if env::var("CARGO_CFG_TARGET_VENDOR").unwrap_or_else(|_| String::new()) == "bottlerocket" {
-        println!("cargo:warning=Already ran model build.rs for host, skipping for target");
-        process::exit(0);
-    }
 
     generate_readme();
     link_current_variant();
