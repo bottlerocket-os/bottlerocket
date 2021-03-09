@@ -258,6 +258,9 @@ Here's the user data to change the message of the day setting, as we did in the 
 motd = "my own value!"
 ```
 
+If your user data is over the size limit of the platform (e.g. 16KiB for EC2) you can compress the contents with gzip.
+(With [aws-cli](https://aws.amazon.com/cli/), you can use `--user-data fileb:///path/to/gz-file` to pass binary data.)
+
 ### Description of settings
 
 Here we'll describe each setting you can change.

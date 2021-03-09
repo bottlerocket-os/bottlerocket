@@ -2,8 +2,8 @@
 //! local file
 
 use super::{PlatformDataProvider, SettingsJson};
+use crate::compression::expand_file_maybe;
 use snafu::{OptionExt, ResultExt};
-use std::fs;
 
 pub(crate) struct LocalFileDataProvider;
 
@@ -16,8 +16,9 @@ impl PlatformDataProvider for LocalFileDataProvider {
         let mut output = Vec::new();
         info!("'{}' exists, using it", Self::USER_DATA_FILE);
 
+        // Read the file, decompressing it if compressed.
         let user_data_str =
-            fs::read_to_string(Self::USER_DATA_FILE).context(error::InputFileRead {
+            expand_file_maybe(Self::USER_DATA_FILE).context(error::InputFileRead {
                 path: Self::USER_DATA_FILE,
             })?;
 

@@ -2,11 +2,13 @@
 //! mounted CDRom.
 
 use super::{PlatformDataProvider, SettingsJson};
+use crate::compression::{expand_file_maybe, expand_slice_maybe, OptionalCompressionReader};
 use serde::Deserialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::ffi::OsStr;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::BufReader;
+use std::iter::FromIterator;
 use std::path::Path;
 
 pub(crate) struct CdromDataProvider;
@@ -52,15 +54,29 @@ impl CdromDataProvider {
             // Since we only look for a specific list of file names, we should never find a file
             // with an extension we don't understand.
             Some(_) => unreachable!(),
-            None => fs::read_to_string(&user_data_file).context(error::InputFileRead {
-                path: user_data_file,
-            })?,
+            None => {
+                // Read the file, decompressing it if compressed.
+                expand_file_maybe(&user_data_file).context(error::InputFileRead {
+                    path: &user_data_file,
+                })?
+            }
         };
 
         if user_data_str.is_empty() {
             return Ok(None);
         }
-        trace!("Received user data: {}", user_data_str);
+
+        // User data could be 700MB compressed!  Eek!  :)
+        if user_data_str.len() <= 2048 {
+            trace!("Received user data: {}", user_data_str);
+        } else {
+            trace!(
+                "Received long user data, starts with: {}",
+                // (this isn't perfect because chars aren't grapheme clusters, but will error
+                // toward printing the whole input, which is fine)
+                String::from_iter(user_data_str.chars().take(2048))
+            );
+        }
 
         // Remove outer "settings" layer before sending to API
         let mut val: toml::Value =
@@ -83,7 +99,7 @@ impl CdromDataProvider {
     fn ovf_user_data<P: AsRef<Path>>(path: P) -> Result<String> {
         let path = path.as_ref();
         let file = File::open(path).context(error::InputFileRead { path })?;
-        let reader = BufReader::new(file);
+        let reader = OptionalCompressionReader::new(BufReader::new(file));
 
         // Deserialize the OVF file, dropping everything we don't care about
         let ovf: Environment =
@@ -109,12 +125,12 @@ impl CdromDataProvider {
             base64_string: base64_str.to_string(),
         })?;
 
-        // Create a valid utf8 str
-        let decoded = std::str::from_utf8(&decoded_bytes).context(error::InvalidUTF8 {
-            base64_string: base64_str.to_string(),
+        // Decompress the data if it's compressed
+        let decoded = expand_slice_maybe(&decoded_bytes).context(error::Decompression {
+            what: "OVF user data",
         })?;
 
-        Ok(decoded.to_string())
+        Ok(decoded)
     }
 }
 
@@ -168,18 +184,11 @@ mod error {
             source: base64::DecodeError,
         },
 
+        #[snafu(display("Failed to decompress {}: {}", what, source))]
+        Decompression { what: String, source: io::Error },
+
         #[snafu(display("Unable to read input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
-
-        #[snafu(display(
-            "Invalid (non-utf8) output from base64 string '{}': {}",
-            base64_string,
-            source
-        ))]
-        InvalidUTF8 {
-            base64_string: String,
-            source: std::str::Utf8Error,
-        },
 
         #[snafu(display("Error serializing TOML to JSON: {}", source))]
         SettingsToJSON { source: serde_json::error::Error },
