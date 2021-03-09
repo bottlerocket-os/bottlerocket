@@ -565,7 +565,7 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 		oci.WithPrivileged,
 		oci.WithNewPrivileges,
 		oci.WithSelinuxLabel("system_u:system_r:super_t:s0"),
-		withAllDevicesAllowed,
+		oci.WithAllDevicesAllowed,
 		oci.WithMounts([]runtimespec.Mount{
 			{
 				Options:     []string{"rbind", "ro"},

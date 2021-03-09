@@ -12,7 +12,6 @@ Requires: %{_cross_os}containerd
 Source10: host-containerd.service
 Source11: host-containerd-tmpfiles.conf
 Source12: host-containerd-config.toml
-Patch1: 0001-Use-spec-s-mountLabel-when-mounting-the-rootfs.patch
 
 %description
 %{summary}.
@@ -20,9 +19,6 @@ Patch1: 0001-Use-spec-s-mountLabel-when-mounting-the-rootfs.patch
 %prep
 %setup -T -c
 cp -r %{_builddir}/sources/%{workspace_name}/* .
-pushd vendor/github.com/containerd/containerd
-%patch1 -p1
-popd
 
 %build
 %set_cross_go_flags
