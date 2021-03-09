@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -65,6 +66,7 @@ func App() *cli.App {
 		containerdSocket string
 		namespace        string
 		superpowered     bool
+		cType            string
 	)
 
 	app := cli.NewApp()
@@ -113,9 +115,15 @@ func App() *cli.App {
 					Destination: &superpowered,
 					Value:       false,
 				},
+				&cli.StringFlag{
+					Name:        "container-type",
+					Usage:       "specifies one of: [host, bootstrap]",
+					Destination: &cType,
+					Value:       "host",
+				},
 			},
 			Action: func(c *cli.Context) error {
-				return runCtr(containerdSocket, namespace, containerID, source, superpowered)
+				return runCtr(containerdSocket, namespace, containerID, source, superpowered, containerType(cType))
 			},
 		},
 		{
@@ -154,7 +162,59 @@ func App() *cli.App {
 	return app
 }
 
-func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool) error {
+// Used to define valid container types
+type containerType string
+
+const (
+	host      containerType = "host"
+	bootstrap containerType = "bootstrap"
+)
+
+// IsValid returns true if an invalid type is valid
+func (ct containerType) IsValid() bool {
+	switch ct {
+	case host, bootstrap:
+		return true
+	}
+
+	return false
+}
+
+// PersistentDir returns the persistent base directory for the container type
+func (ct containerType) PersistentDir() string {
+	switch ct {
+	case host:
+		return "host-containers"
+	case bootstrap:
+		return "bootstrap-containers"
+	}
+
+	return ""
+}
+
+// Prefix returns the prefix for the container type
+func (ct containerType) Prefix() string {
+	switch ct {
+	case bootstrap:
+		return "boot."
+	case host:
+		return ""
+	}
+
+	return ""
+}
+
+func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool, cType containerType) error {
+	// Check if the containerType provided is valid
+	if !cType.IsValid() {
+		return errors.New("Invalid container type")
+	}
+
+	// Return error if caller tries to setup bootstrap container as superpowered
+	if cType == bootstrap && superpowered {
+		return errors.New("Bootstrap containers can't be superpowered")
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = namespaces.WithNamespace(ctx, namespace)
@@ -193,6 +253,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		}
 	}
 
+	prefix := cType.Prefix()
+	containerName := containerID
+	containerID = prefix + containerID
 	// Check if the target container already exists. If it does, take over the helm to manage it.
 	container, err := client.LoadContainer(ctx, containerID)
 	if err != nil {
@@ -206,6 +269,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 
 	// If the container doesn't already exist, create it
 	if container == nil {
+		// Set the destination name for the container persistent storage location
+		persistentDir := cType.PersistentDir()
+
 		// Set up the container spec. See `withSuperpowered` for conditional options
 		// set when configured as superpowered.
 		ctrOpts := containerd.WithNewSpec(
@@ -230,11 +296,13 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 			// Pass proxy environment variables to this container
 			withProxyEnv(),
 			// Mount in the persistent storage location for this container
-			withPersistentStorage(containerID),
+			withPersistentStorage(containerName, persistentDir),
 			// Mount the rootfs with an SELinux label that makes it writable
 			withMountLabel("system_u:object_r:state_t:s0"),
 			// Include conditional options for superpowered containers.
 			withSuperpowered(superpowered),
+			// Mount the rootfs if superpowered or bootstrap
+			withRootFilesystemMounts(superpowered || cType == bootstrap),
 		)
 
 		// Create the container.
@@ -385,7 +453,13 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		log.G(ctrCtx).WithError(err).Error("failed to get container task exit status")
 		return err
 	}
+
 	log.G(ctrCtx).WithField("code", code).Info("container task exited")
+
+	// Return error if container exists with non-zero status
+	if code != 0 {
+		return errors.New(fmt.Sprintf("Container %s exited with non-zero status", containerID))
+	}
 
 	return nil
 }
@@ -564,6 +638,19 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 		oci.WithNewPrivileges,
 		oci.WithSelinuxLabel("system_u:system_r:super_t:s0"),
 		oci.WithAllDevicesAllowed,
+	)
+}
+
+// withRootFileSystemMounts adds container options to mount the root filesystem
+func withRootFilesystemMounts(mountRootFilesystem bool) oci.SpecOpts {
+	// if mountRootFilesystem, return a no-op SpecOpts function
+	if !mountRootFilesystem {
+		return func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
+			return nil
+		}
+	}
+
+	return oci.Compose(
 		oci.WithMounts([]runtimespec.Mount{
 			{
 				Options:     []string{"rbind", "ro"},
@@ -584,7 +671,8 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 				Options:     []string{"rbind"},
 				Destination: "/sys/kernel/debug",
 				Source:      "/sys/kernel/debug",
-			}}),
+			},
+		}),
 	)
 }
 
@@ -592,17 +680,17 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 // (legacy location) and a generically named `current` dir. The `current` dir was added for easier
 // referencing in Dockerfiles and scripts. If a host container is also named `current` this function
 // will only add a single `current` mount to the spec.
-func withPersistentStorage(containerID string) oci.SpecOpts {
+func withPersistentStorage(containerID string, persistentDir string) oci.SpecOpts {
 	var persistentMounts = []runtimespec.Mount{{
 		Options:     []string{"rbind", "rw"},
-		Destination: "/.bottlerocket/host-containers/" + containerID,
-		Source:      "/local/host-containers/" + containerID,
+		Destination: fmt.Sprintf("/.bottlerocket/%s/%s", persistentDir, containerID),
+		Source:      fmt.Sprintf("/local/%s/%s", persistentDir, containerID),
 	}}
 	if containerID != "current" {
 		persistentMounts = append(persistentMounts, runtimespec.Mount{
 			Options:     []string{"rbind", "rw"},
-			Destination: "/.bottlerocket/host-containers/current",
-			Source:      "/local/host-containers/" + containerID,
+			Destination: fmt.Sprintf("/.bottlerocket/%s/current", persistentDir),
+			Source:      fmt.Sprintf("/local/%s/%s", persistentDir, containerID),
 		})
 	}
 	return oci.Compose(oci.WithMounts(persistentMounts))
