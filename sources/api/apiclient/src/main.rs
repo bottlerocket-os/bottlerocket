@@ -67,25 +67,25 @@ enum SetArgs {
 /// Stores the 'update' subcommand specified by the user.
 #[derive(Debug)]
 enum UpdateSubcommand {
-    Check(CheckArgs),
-    Apply(ApplyArgs),
-    Cancel(CancelArgs),
+    Check(UpdateCheckArgs),
+    Apply(UpdateApplyArgs),
+    Cancel(UpdateCancelArgs),
 }
 
 /// Stores user-supplied arguments for the 'update check' subcommand.
 #[derive(Debug)]
-struct CheckArgs {}
+struct UpdateCheckArgs {}
 
 /// Stores user-supplied arguments for the 'update apply' subcommand.
 #[derive(Debug)]
-struct ApplyArgs {
+struct UpdateApplyArgs {
     check: bool,
     reboot: bool,
 }
 
 /// Stores user-supplied arguments for the 'update cancel' subcommand.
 #[derive(Debug)]
-struct CancelArgs {}
+struct UpdateCancelArgs {}
 
 /// Informs the user about proper usage of the program and exits.
 fn usage() -> ! {
@@ -355,9 +355,9 @@ fn parse_update_args(args: Vec<String>) -> Subcommand {
     }
 
     let update = match subcommand.as_deref() {
-        Some("check") => parse_check_args(subcommand_args),
-        Some("apply") => parse_apply_args(subcommand_args),
-        Some("cancel") => parse_cancel_args(subcommand_args),
+        Some("check") => parse_update_check_args(subcommand_args),
+        Some("apply") => parse_update_apply_args(subcommand_args),
+        Some("cancel") => parse_update_cancel_args(subcommand_args),
         _ => usage_msg("Missing or unknown subcommand for 'update'"),
     };
 
@@ -365,15 +365,15 @@ fn parse_update_args(args: Vec<String>) -> Subcommand {
 }
 
 /// Parses arguments for the 'update check' subcommand.
-fn parse_check_args(args: Vec<String>) -> UpdateSubcommand {
+fn parse_update_check_args(args: Vec<String>) -> UpdateSubcommand {
     if !args.is_empty() {
         usage_msg(&format!("Unknown arguments: {}", args.join(", ")));
     }
-    UpdateSubcommand::Check(CheckArgs {})
+    UpdateSubcommand::Check(UpdateCheckArgs {})
 }
 
 /// Parses arguments for the 'update apply' subcommand.
-fn parse_apply_args(args: Vec<String>) -> UpdateSubcommand {
+fn parse_update_apply_args(args: Vec<String>) -> UpdateSubcommand {
     let mut check = false;
     let mut reboot = false;
 
@@ -387,15 +387,15 @@ fn parse_apply_args(args: Vec<String>) -> UpdateSubcommand {
         }
     }
 
-    UpdateSubcommand::Apply(ApplyArgs { check, reboot })
+    UpdateSubcommand::Apply(UpdateApplyArgs { check, reboot })
 }
 
 /// Parses arguments for the 'update cancel' subcommand.
-fn parse_cancel_args(args: Vec<String>) -> UpdateSubcommand {
+fn parse_update_cancel_args(args: Vec<String>) -> UpdateSubcommand {
     if !args.is_empty() {
         usage_msg(&format!("Unknown arguments: {}", args.join(", ")));
     }
-    UpdateSubcommand::Cancel(CancelArgs {})
+    UpdateSubcommand::Cancel(UpdateCancelArgs {})
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -406,7 +406,7 @@ fn parse_cancel_args(args: Vec<String>) -> UpdateSubcommand {
 async fn check(args: &Args) -> Result<String> {
     let output = update::check(&args.socket_path)
         .await
-        .context(error::Check)?;
+        .context(error::UpdateCheck)?;
 
     match serde_json::from_str::<serde_json::Value>(&output) {
         Ok(value) => println!("{:#}", value),
@@ -541,7 +541,7 @@ async fn run() -> Result<()> {
 
                 update::apply(&args.socket_path)
                     .await
-                    .context(error::Apply)?;
+                    .context(error::UpdateApply)?;
 
                 // If the user requested it, and if we applied an update, reboot.  (update::apply
                 // will fail if no update was available or it couldn't apply the update.)
@@ -557,7 +557,7 @@ async fn run() -> Result<()> {
             UpdateSubcommand::Cancel(_cancel) => {
                 update::cancel(&args.socket_path)
                     .await
-                    .context(error::Cancel)?;
+                    .context(error::UpdateCancel)?;
             }
         },
     }
@@ -583,15 +583,6 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub enum Error {
-        #[snafu(display("Failed to apply update: {}", source))]
-        Apply { source: update::Error },
-
-        #[snafu(display("Failed to cancel update: {}", source))]
-        Cancel { source: update::Error },
-
-        #[snafu(display("Failed to check for updates: {}", source))]
-        Check { source: update::Error },
-
         #[snafu(display("Unable to deserialize input JSON into model: {}", source))]
         DeserializeJson { source: serde_json::Error },
 
@@ -621,6 +612,15 @@ mod error {
 
         #[snafu(display("Failed to change settings: {}", source))]
         Set { source: set::Error },
+
+        #[snafu(display("Failed to apply update: {}", source))]
+        UpdateApply { source: update::Error },
+
+        #[snafu(display("Failed to cancel update: {}", source))]
+        UpdateCancel { source: update::Error },
+
+        #[snafu(display("Failed to check for updates: {}", source))]
+        UpdateCheck { source: update::Error },
     }
 }
 type Result<T> = std::result::Result<T, error::Error>;
