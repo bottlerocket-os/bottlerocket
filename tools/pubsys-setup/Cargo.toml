@@ -10,7 +10,7 @@ publish = false
 hex = "0.4.0"
 log = "0.4"
 pubsys-config = { path = "../pubsys-config/" }
-reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
+reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
 sha2 = "0.9"
 shell-words = "1.0"
 simplelog = "0.9"

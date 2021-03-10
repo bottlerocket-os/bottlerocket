@@ -10,7 +10,7 @@ publish = false
 async-trait = "0.1.36"
 chrono = "0.4"
 clap = "2.33"
-coldsnap = { version = "0.2", default-features = false, features = ["rusoto-rustls"]}
+coldsnap = { version = "0.3", default-features = false, features = ["rusoto-rustls"]}
 pubsys-config = { path = "../pubsys-config/" }
 futures = "0.3.5"
 indicatif = "0.15.0"
@@ -18,14 +18,14 @@ lazy_static = "1.4"
 log = "0.4"
 parse-datetime = { path = "../../sources/parse-datetime" }
 # Need to bring in reqwest with a TLS feature so tough can support TLS repos.
-reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
-rusoto_core = { version = "0.45.0", default-features = false, features = ["rustls"] }
-rusoto_credential = "0.45.0"
-rusoto_ebs = { version = "0.45.0", default-features = false, features = ["rustls"] }
-rusoto_ec2 = { version = "0.45.0", default-features = false, features = ["rustls"] }
-rusoto_signature = "0.45.0"
-rusoto_ssm = { version = "0.45.0", default-features = false, features = ["rustls"] }
-rusoto_sts = { version = "0.45.0", default-features = false, features = ["rustls"] }
+reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
+rusoto_core = { version = "0.46.0", default-features = false, features = ["rustls"] }
+rusoto_credential = "0.46.0"
+rusoto_ebs = { version = "0.46.0", default-features = false, features = ["rustls"] }
+rusoto_ec2 = { version = "0.46.0", default-features = false, features = ["rustls"] }
+rusoto_signature = "0.46.0"
+rusoto_ssm = { version = "0.46.0", default-features = false, features = ["rustls"] }
+rusoto_sts = { version = "0.46.0", default-features = false, features = ["rustls"] }
 simplelog = "0.9.0"
 snafu = "0.6"
 semver = "0.11.0"
@@ -33,11 +33,12 @@ serde = { version = "1.0", features = ["derive"]  }
 serde_json = "1.0"
 structopt = { version = "0.3", default-features = false  }
 tinytemplate = "1.1"
-tokio = { version = "0.2.21", features = ["time"] }
+tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["time"] }
 toml = "0.5"
-tough = { version = "0.10", features = ["http"] }
-tough-kms = "0.2"
-tough-ssm = "0.5"
+tough = { version = "0.11", features = ["http"] }
+tough-kms = "0.3"
+tough-ssm = "0.6"
 update_metadata = { path = "../../sources/updater/update_metadata/" }
 url = { version = "2.1.0", features = ["serde"] }
 tempfile = "3.1"

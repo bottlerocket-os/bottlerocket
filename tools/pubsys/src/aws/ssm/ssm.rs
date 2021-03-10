@@ -12,7 +12,6 @@ use rusoto_ssm::{
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
-use tokio::time::throttle;
 
 /// Fetches the values of the given SSM keys using the given clients
 // TODO: We can batch GET requests so throttling is less likely here, but if we need to handle
@@ -220,7 +219,10 @@ pub(crate) async fn set_parameters(
         // need the region again here.)
         let mut throttled_streams = Vec::new();
         for (_region, request_list) in regional_requests {
-            throttled_streams.push(throttle(request_interval, stream::iter(request_list)));
+            throttled_streams.push(Box::pin(tokio_stream::StreamExt::throttle(
+                stream::iter(request_list),
+                request_interval,
+            )));
         }
 
         // Run all regions in parallel and wait for responses.
@@ -355,7 +357,11 @@ mod error {
             missing: String,
         },
 
-        #[snafu(display("Failed to set {} of {} parameters; see above", failure_count, total_count))]
+        #[snafu(display(
+            "Failed to set {} of {} parameters; see above",
+            failure_count,
+            total_count
+        ))]
         SetParameters {
             failure_count: usize,
             total_count: usize,
