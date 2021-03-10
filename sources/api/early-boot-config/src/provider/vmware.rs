@@ -8,8 +8,11 @@ use snafu::{ensure, ResultExt};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Cursor;
+use std::io::Read;
 use std::iter::FromIterator;
 use std::path::Path;
+use std::str;
 
 pub(crate) struct VmwareDataProvider;
 
@@ -26,9 +29,15 @@ impl VmwareDataProvider {
         "OVF_ENV.XML",
     ];
 
-    /// Given the list of acceptable filenames, ensure only 1 exists and parse
-    /// it for user data
-    fn user_data() -> Result<Option<SettingsJson>> {
+    // The fields in which user data and its encoding are stored in guestinfo
+    const GUESTINFO_USERDATA: &'static str = "guestinfo.userdata";
+    const GUESTINFO_USERDATA_ENCODING: &'static str = "guestinfo.userdata.encoding";
+
+    /// Read and decode user data from files via mounted CD-ROM
+    fn cdrom_user_data() -> Result<Option<SettingsJson>> {
+        // Given the list of acceptable filenames, ensure only 1 exists and parse
+        // it for user data
+        info!("Attempting to retrieve user data from mounted CD-ROM");
         let mut user_data_files = Self::USER_DATA_FILENAMES
             .iter()
             .map(|filename| Path::new(Self::CD_ROM_MOUNT).join(filename))
@@ -78,7 +87,7 @@ impl VmwareDataProvider {
             );
         }
 
-        let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
+        let json = SettingsJson::from_toml_str(&user_data_str, "user data from CD-ROM").context(
             error::SettingsToJSON {
                 from: user_data_file.display().to_string(),
             },
@@ -129,19 +138,141 @@ impl VmwareDataProvider {
 
         Ok(decoded)
     }
+
+    /// Read and decode user data based on values retrieved from the guestinfo interface
+    fn guestinfo_user_data() -> Result<Option<SettingsJson>> {
+        info!("Attempting to retrieve user data via guestinfo interface");
+
+        // It would be extremely odd to get here and not be on VMWare, but check anyway
+        ensure!(vmw_backdoor::is_vmware_cpu(), error::NotVmware);
+
+        // `guestinfo.userdata.encoding` informs us how to handle the data in the
+        // `guestinfo.userdata` field
+        let maybe_encoding = Self::backdoor_get_bytes(Self::GUESTINFO_USERDATA_ENCODING)?;
+        let user_data_encoding: UserDataEncoding = match maybe_encoding {
+            Some(val) => {
+                let encoding_str = String::from_utf8(val).context(error::InvalidUtf8 {
+                    what: Self::GUESTINFO_USERDATA_ENCODING,
+                })?;
+                info!("Found user data encoding: {}", encoding_str);
+
+                serde_plain::from_str(&encoding_str).context(error::UnknownEncoding {
+                    encoding: encoding_str,
+                })?
+            }
+
+            // The cloudinit VMware guestinfo data provider assumes any user data without an
+            // associated encoding means raw data is being passed.  We will follow suit here.
+            None => {
+                warn!(
+                    "'{}' unset, assuming raw user data",
+                    Self::GUESTINFO_USERDATA_ENCODING
+                );
+                UserDataEncoding::Raw
+            }
+        };
+
+        let user_data_bytes = match Self::backdoor_get_bytes(Self::GUESTINFO_USERDATA)? {
+            Some(val) => val,
+            None => return Ok(None),
+        };
+
+        let user_data_string = match user_data_encoding {
+            // gzip+base64 is gzip'ed user data that is base64 encoded
+            UserDataEncoding::Base64 | UserDataEncoding::GzipBase64 => {
+                info!("Decoding user data");
+                let mut reader = Cursor::new(user_data_bytes);
+                let decoder = base64::read::DecoderReader::new(&mut reader, base64::STANDARD);
+
+                // Decompresses the data if it is gzip'ed
+                let mut output = String::new();
+                let mut compression_reader = OptionalCompressionReader::new(decoder);
+                compression_reader
+                    .read_to_string(&mut output)
+                    .context(error::Decompression {
+                        what: "guestinfo user data",
+                    })?;
+                output
+            }
+
+            UserDataEncoding::Raw => {
+                String::from_utf8(user_data_bytes).context(error::InvalidUtf8 {
+                    what: Self::GUESTINFO_USERDATA,
+                })?
+            }
+        };
+
+        let json = SettingsJson::from_toml_str(&user_data_string, "user data from guestinfo")
+            .context(error::SettingsToJSON { from: "guestinfo" })?;
+        Ok(Some(json))
+    }
+
+    /// Request a key's value from guestinfo
+    fn backdoor_get_bytes(key: &str) -> Result<Option<Vec<u8>>> {
+        // Probe and access the VMWare backdoor.  `kernel lockdown(7)` may block "privileged"
+        // mode because of its use of `iopl()`.  According the the bug report below, in theory
+        // "privileged" mode is more reliable than "unprivileged" but both provide access to
+        // the same data so we fall back to "unprivileged" if the first call fails.
+        // https://github.com/lucab/vmw_backdoor-rs/issues/6
+        let mut backdoor = vmw_backdoor::probe_backdoor_privileged()
+            .or_else(|e| {
+                warn!(
+                    "Unable to access guestinfo via privileged mode, using unprivileged: {}",
+                    e
+                );
+                vmw_backdoor::probe_backdoor()
+            })
+            .context(error::Backdoor {
+                op: "probe and acquire access",
+            })?;
+
+        let mut erpc = backdoor.open_enhanced_chan().context(error::Backdoor {
+            op: "open eRPC channel",
+        })?;
+
+        erpc.get_guestinfo(key.as_bytes())
+            .context(error::GuestInfo { what: key })
+    }
 }
 
 impl PlatformDataProvider for VmwareDataProvider {
     fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
 
-        match Self::user_data() {
-            Err(e) => return Err(e).map_err(Into::into),
-            Ok(None) => warn!("No user data found."),
-            Ok(Some(s)) => output.push(s),
+        // Look at the CD-ROM for user data first, and then...
+        match Self::cdrom_user_data()? {
+            Some(s) => output.push(s),
+            None => warn!("No user data found via CD-ROM"),
         }
+
+        // check guestinfo.  If guestinfo is populated, it will override any earlier settings
+        // found via CD-ROM
+        match Self::guestinfo_user_data()? {
+            Some(s) => output.push(s),
+            None => warn!("No user data found via guestinfo"),
+        }
+
         Ok(output)
     }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=
+
+// Acceptable user data encodings
+// When case-insensitive de/serialization is finalized, that's what we would want to use
+// here instead of aliases: https://github.com/serde-rs/serde/pull/1902
+#[derive(Debug, Deserialize)]
+enum UserDataEncoding {
+    #[serde(alias = "b64")]
+    #[serde(alias = "B64")]
+    #[serde(alias = "base64")]
+    Base64,
+    #[serde(alias = "gz+b64")]
+    #[serde(alias = "Gz+B64")]
+    #[serde(alias = "gzip+base64")]
+    #[serde(alias = "Gzip+Base64")]
+    GzipBase64,
+    Raw,
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=
@@ -175,6 +306,12 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(crate) enum Error {
+        #[snafu(display("VMware backdoor: failed to '{}': '{}'", op, source))]
+        Backdoor {
+            op: String,
+            source: vmw_backdoor::VmwError,
+        },
+
         #[snafu(display("Unable to base64 decode string '{}': '{}'", base64_string, source))]
         Base64Decode {
             base64_string: String,
@@ -184,13 +321,36 @@ mod error {
         #[snafu(display("Failed to decompress {}: {}", what, source))]
         Decompression { what: String, source: io::Error },
 
+        #[snafu(display("Failed to fetch key '{}' from guestinfo: {}", what, source))]
+        GuestInfo {
+            what: String,
+            source: vmw_backdoor::VmwError,
+        },
+
         #[snafu(display("Unable to read input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
+
+        #[snafu(display("'{}' contains invalid utf-8: {}", what, source))]
+        InvalidUtf8 {
+            what: String,
+            source: std::string::FromUtf8Error,
+        },
+
+        #[snafu(display(
+            "Unable to read user data from guestinfo, this is not a VMWare virtual CPU"
+        ))]
+        NotVmware,
 
         #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
         SettingsToJSON {
             from: String,
             source: crate::settings::Error,
+        },
+
+        #[snafu(display("Unknown user data encoding: '{}': {}", encoding, source))]
+        UnknownEncoding {
+            encoding: String,
+            source: serde_plain::Error,
         },
 
         #[snafu(display("Found multiple user data files in '{}', expected 1", location))]
