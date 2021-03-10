@@ -6,7 +6,7 @@
 // library calls based on the given flags, etc.)  The library modules contain the code for talking
 // to the API, which is intended to be reusable by other crates.
 
-use apiclient::{reboot, set, update};
+use apiclient::{apply, reboot, set, update};
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
 use simplelog::{ConfigBuilder as LogConfigBuilder, LevelFilter, TermLogger, TerminalMode};
@@ -39,10 +39,17 @@ impl Default for Args {
 /// Stores the usage mode specified by the user as a subcommand.
 #[derive(Debug)]
 enum Subcommand {
+    Apply(ApplyArgs),
     Raw(RawArgs),
     Reboot(RebootArgs),
     Set(SetArgs),
     Update(UpdateSubcommand),
+}
+
+/// Stores user-supplied arguments for the 'apply' subcommand.
+#[derive(Debug)]
+struct ApplyArgs {
+    uris: Vec<String>,
 }
 
 /// Stores user-supplied arguments for the 'raw' subcommand.
@@ -101,6 +108,7 @@ fn usage() -> ! {
         Subcommands:
             raw                        Makes an HTTP request and prints the response on stdout.
                                        'raw' is the default subcommand and may be omitted.
+            apply                      Applies settings from TOML files at given URIs.
             set                        Changes settings and applies them to the system.
             update check               Prints information about available updates.
             update apply               Applies available updates.
@@ -111,6 +119,10 @@ fn usage() -> ! {
             -u, --uri URI              Required; URI to request from the server, e.g. /tx
             -m, -X, --method METHOD    HTTP method to use in request.  Default: {method}
             -d, --data DATA            Data to include in the request body.  Default: empty
+
+        apply options:
+            URI [URI ...]              The list of URIs to TOML settings files that you want to
+                                       apply to the system.
 
         reboot options:
             None.
@@ -182,7 +194,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
             }
 
             // Subcommands
-            "raw" | "reboot" | "set" | "update"
+            "raw" | "apply" | "reboot" | "set" | "update"
                 if subcommand.is_none() && !arg.starts_with('-') =>
             {
                 subcommand = Some(arg)
@@ -196,6 +208,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
     match subcommand.as_deref() {
         // Default subcommand is 'raw'
         None | Some("raw") => return (global_args, parse_raw_args(subcommand_args)),
+        Some("apply") => return (global_args, parse_apply_args(subcommand_args)),
         Some("reboot") => return (global_args, parse_reboot_args(subcommand_args)),
         Some("set") => return (global_args, parse_set_args(subcommand_args)),
         Some("update") => return (global_args, parse_update_args(subcommand_args)),
@@ -243,6 +256,24 @@ fn parse_raw_args(args: Vec<String>) -> Subcommand {
         uri: uri.unwrap_or_else(|| usage_msg("Missing required argument '--uri'")),
         data,
     })
+}
+
+/// Parses arguments for the 'apply' subcommand.
+fn parse_apply_args(args: Vec<String>) -> Subcommand {
+    let mut uris = Vec::new();
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg {
+            x if x.starts_with("-") => {
+                usage_msg("apiclient apply takes no parameters, just a list of URIs.")
+            }
+
+            x => uris.push(x),
+        }
+    }
+
+    Subcommand::Apply(ApplyArgs { uris })
 }
 
 /// Parses arguments for the 'reboot' subcommand.
@@ -492,6 +523,12 @@ async fn run() -> Result<()> {
             }
         }
 
+        Subcommand::Apply(apply) => {
+            apply::apply(&args.socket_path, apply.uris)
+                .await
+                .context(error::Apply)?;
+        }
+
         Subcommand::Reboot(_reboot) => {
             reboot::reboot(&args.socket_path)
                 .await
@@ -577,12 +614,15 @@ async fn main() {
 }
 
 mod error {
-    use apiclient::{reboot, set, update};
+    use apiclient::{apply, reboot, set, update};
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub enum Error {
+        #[snafu(display("Failed to apply settings: {}", source))]
+        Apply { source: apply::Error },
+
         #[snafu(display("Unable to deserialize input JSON into model: {}", source))]
         DeserializeJson { source: serde_json::Error },
 

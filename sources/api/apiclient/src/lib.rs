@@ -16,9 +16,11 @@
 
 use hyper::{body, header, Body, Client, Request};
 use hyper_unix_connector::{UnixClient, Uri};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use snafu::{ensure, ResultExt};
 use std::path::Path;
 
+pub mod apply;
 pub mod reboot;
 pub mod set;
 pub mod update;
@@ -139,4 +141,13 @@ where
     let body = String::from_utf8(body_bytes.to_vec()).context(error::NonUtf8Response)?;
 
     Ok((status, body))
+}
+
+/// Generates a random ID, affectionately known as a 'rando'.
+pub(crate) fn rando() -> String {
+    thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(16)
+        .map(char::from)
+        .collect()
 }

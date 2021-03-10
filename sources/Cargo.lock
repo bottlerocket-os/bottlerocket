@@ -390,17 +390,22 @@ version = "0.1.0"
 dependencies = [
  "cargo-readme",
  "datastore",
+ "futures",
  "http",
  "hyper",
  "hyper-unix-connector",
  "log",
  "models",
  "rand 0.8.3",
+ "reqwest",
+ "serde",
  "serde_json",
  "simplelog",
  "snafu",
  "tokio",
+ "toml",
  "unindent",
+ "url",
 ]
 
 [[package]]
@@ -2916,6 +2921,8 @@ checksum = "eab12d3c261b2308b0d80c26fffb58d17eba81a4be97890101f416b478c79ca7"
 dependencies = [
  "backtrace",
  "doc-comment",
+ "futures-core",
+ "pin-project 0.4.27",
  "snafu-derive",
 ]
 
