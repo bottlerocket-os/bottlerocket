@@ -1,11 +1,11 @@
 // Automatically generate README.md from rustdoc.
 
 use std::env;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-fn generate_readme() {
+fn main() {
     // Check for environment variable "SKIP_README". If it is set,
     // skip README generation
     if env::var_os("SKIP_README").is_some() {
@@ -29,17 +29,4 @@ fn generate_readme() {
 
     let mut readme = File::create("README.md").unwrap();
     readme.write_all(content.as_bytes()).unwrap();
-}
-
-fn generate_constants() {
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-    let contents = format!("const ARCH: &str = \"{}\";", arch);
-    let path = Path::new(&out_dir).join("constants.rs");
-    fs::write(path, contents).unwrap();
-}
-
-fn main() {
-    generate_readme();
-    generate_constants();
 }
