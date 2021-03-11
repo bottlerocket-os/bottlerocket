@@ -6,13 +6,18 @@
 extern crate log;
 
 use libc::gid_t;
-use nix::unistd::Gid;
+use nix::{
+    sys::wait::{waitpid, WaitPidFlag, WaitStatus},
+    unistd::{Gid, Pid},
+};
+use signal_hook::{consts::SIGCHLD, iterator::Signals};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, ResultExt};
 use std::env;
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
+use std::thread;
 
 use apiserver::serve;
 
@@ -31,6 +36,9 @@ mod error {
 
         #[snafu(display("{}", source))]
         Server { source: apiserver::server::Error },
+
+        #[snafu(display("Failed to set up signal handler: {}", source))]
+        Signal { source: std::io::Error },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
@@ -131,14 +139,45 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     // Make sure the datastore exists
     ensure!(
         Path::new(&args.datastore_path).exists(),
         error::NonexistentDatastore
     );
+
+    // We need to handle some actions asynchronously without holding up API clients, like invoking
+    // thar-be-settings to apply changes to the system, so we fork them off and don't wait for
+    // their status or output at that point.  Instead, when we receive a SIGCHLD signal telling us
+    // that child processes have exited, we wait for them in this thread so that they don't become
+    // zombie processes.
+    let mut signals = Signals::new(&[SIGCHLD]).context(error::Signal)?;
+    thread::spawn(move || {
+        for signal in signals.forever() {
+            match signal {
+                SIGCHLD => {
+                    // We loop as long as we have children to reap.
+                    loop {
+                        if let Ok(status) = waitpid(Pid::from_raw(-1), Some(WaitPidFlag::WNOHANG)) {
+                            // You can get a CHLD signal in other scenarios, even if a child is
+                            // still running; we only want to continue if we're making progress
+                            // with reaping exited children.  Otherwise, stop and wait for another
+                            // signal.
+                            if !matches!(status, WaitStatus::Exited(..)) {
+                                break;
+                            }
+                        } else {
+                            // There's not much we can do to recover from an error in waiting, so
+                            // we'll just try again next loop.
+                            break;
+                        }
+                    }
+                }
+                _ => {} // this space for rent!
+            }
+        }
+    });
 
     // Each request makes its own handle to the datastore; there's no locking or
     // synchronization yet.  Therefore, only use 1 thread for safety.

@@ -424,6 +424,7 @@ dependencies = [
  "semver 0.11.0",
  "serde",
  "serde_json",
+ "signal-hook",
  "simplelog",
  "snafu",
  "thar-be-updates",
@@ -2855,9 +2856,9 @@ dependencies = [
 
 [[package]]
 name = "signal-hook"
-version = "0.3.4"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "780f5e3fe0c66f67197236097d89de1e86216f1f6fdeaf47c442f854ab46c240"
+checksum = "6aa894ef3fade0ee7243422f4fbbd6c2b48e6de767e621d37ef65f2310f53cea"
 dependencies = [
  "libc",
  "signal-hook-registry",
