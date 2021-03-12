@@ -83,6 +83,11 @@ install -m 0644 %{S:7} %{buildroot}%{_cross_templatedir}/kubelet-bootstrap-kubec
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:8} %{buildroot}%{_cross_tmpfilesdir}/kubernetes.conf
 
+install -d %{buildroot}%{_cross_libexecdir}/kubernetes
+ln -rs \
+  %{buildroot}%{_sharedstatedir}/kubelet/plugins \
+  %{buildroot}%{_cross_libexecdir}/kubernetes/kubelet-plugins
+
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files -n %{_cross_os}kubelet-1.17
@@ -99,5 +104,7 @@ install -p -m 0644 %{S:8} %{buildroot}%{_cross_tmpfilesdir}/kubernetes.conf
 %{_cross_templatedir}/kubelet-exec-start-conf
 %{_cross_templatedir}/kubernetes-ca-crt
 %{_cross_tmpfilesdir}/kubernetes.conf
+%dir %{_cross_libexecdir}/kubernetes
+%{_cross_libexecdir}/kubernetes/kubelet-plugins
 
 %changelog
