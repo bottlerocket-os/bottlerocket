@@ -110,3 +110,12 @@ restart-commands = ["/usr/bin/corndog lockdown"]
 
 [metadata.settings.kernel.lockdown]
 affected-services = ["lockdown"]
+
+# Bootstrap Containers
+
+[services.bootstrap-containers]
+configuration-files = []
+restart-commands = ["/usr/bin/bootstrap-containers create-containers"]
+
+[metadata.settings.bootstrap-containers]
+affected-services = ["bootstrap-containers"]

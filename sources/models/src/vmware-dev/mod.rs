@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::modeled_types::Identifier;
-use crate::{ContainerImage, KernelSettings, NetworkSettings, NtpSettings, UpdatesSettings};
+use crate::{
+    BootstrapContainer, ContainerImage, KernelSettings, NetworkSettings, NtpSettings,
+    UpdatesSettings,
+};
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
 // that uses its name in serialization; internal structures use the field name that points to it
@@ -12,6 +15,7 @@ struct Settings {
     motd: String,
     updates: UpdatesSettings,
     host_containers: HashMap<Identifier, ContainerImage>,
+    bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
     ntp: NtpSettings,
     network: NetworkSettings,
     kernel: KernelSettings,
