@@ -9,11 +9,12 @@ use chrono::{DateTime, Utc};
 use parse_datetime::parse_offset;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use snafu::{ensure, OptionExt, ResultExt};
+use snafu::{ensure, ResultExt};
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fs;
 use std::fs::File;
+use std::io::Read;
 use std::ops::Bound::{Excluded, Included};
 use std::path::Path;
 
@@ -140,6 +141,11 @@ pub fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
 }
 
 impl Manifest {
+    /// Parses a `Manifest` from JSON, which is presented by a `Read` object.
+    pub fn from_json<R: Read>(r: R) -> Result<Self> {
+        serde_json::from_reader(r).context(error::ManifestParse)
+    }
+
     pub fn add_update(
         &mut self,
         image_version: Version,
@@ -442,17 +448,6 @@ fn find_migrations_forward(
         }
     }
     Ok(targets)
-}
-
-pub fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
-    let target = "manifest.json";
-    serde_json::from_reader(
-        repository
-            .read_target(target)
-            .context(error::ManifestLoad)?
-            .context(error::ManifestNotFound)?,
-    )
-    .context(error::ManifestParse)
 }
 
 #[cfg(test)]

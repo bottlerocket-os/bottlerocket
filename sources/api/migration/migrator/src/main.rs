@@ -39,7 +39,7 @@ use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process;
 use tough::{ExpirationEnforcement, FilesystemTransport, RepositoryLoader};
-use update_metadata::load_manifest;
+use update_metadata::Manifest;
 use url::Url;
 
 mod args;
@@ -155,7 +155,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
         .expiration_enforcement(ExpirationEnforcement::Unsafe)
         .load()
         .context(error::RepoLoad)?;
-    let manifest = load_manifest(&repo).context(error::LoadManifest)?;
+    let manifest = load_manifest(&repo)?;
     let migrations =
         update_metadata::find_migrations(&current_version, &args.migrate_to_version, &manifest)
             .context(error::FindMigrations)?;
@@ -476,4 +476,15 @@ where
     });
 
     Ok(())
+}
+
+fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
+    let target = "manifest.json";
+    Manifest::from_json(
+        repository
+            .read_target(target)
+            .context(error::ManifestLoad)?
+            .context(error::ManifestNotFound)?,
+    )
+    .context(error::ManifestParse)
 }

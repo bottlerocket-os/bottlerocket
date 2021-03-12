@@ -25,7 +25,7 @@ use std::process;
 use std::str::FromStr;
 use std::thread;
 use tough::{Repository, RepositoryLoader};
-use update_metadata::{find_migrations, load_manifest, Manifest, Update};
+use update_metadata::{find_migrations, Manifest, Update};
 use url::Url;
 
 #[cfg(target_arch = "x86_64")]
@@ -599,6 +599,17 @@ fn main_inner() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
+    let target = "manifest.json";
+    Manifest::from_json(
+        repository
+            .read_target(target)
+            .context(error::ManifestLoad)?
+            .context(error::ManifestNotFound)?,
+    )
+    .context(error::ManifestParse)
 }
 
 fn main() -> ! {
