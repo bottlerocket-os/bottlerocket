@@ -1,8 +1,14 @@
 [Unit]
 Description=User-specified setting generators
-# Need network access to support commands talking to IMDS.
+# Needs network access to support commands talking to IMDS.
 After=network-online.target apiserver.service early-boot-config.service
-Requires=network-online.target apiserver.service
+Requires=early-boot-config.service
+# We don't want to restart the unit if the network goes offline or apiserver restarts
+Wants=network-online.target apiserver.service
+# Block manual interactions with this service, since it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
 
 [Service]
 Type=oneshot
@@ -13,4 +19,4 @@ RemainAfterExit=true
 StandardError=journal+console
 
 [Install]
-WantedBy=multi-user.target
+RequiredBy=preconfigured.target

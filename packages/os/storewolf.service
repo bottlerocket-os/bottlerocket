@@ -2,6 +2,10 @@
 Description=Datastore creator
 After=migrator.service
 Requires=migrator.service
+# Block manual interactions with this service, since it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
 
 [Service]
 Type=oneshot
@@ -10,4 +14,4 @@ RemainAfterExit=true
 StandardError=journal+console
 
 [Install]
-WantedBy=multi-user.target
+RequiredBy=preconfigured.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=Isolates configured.target
+After=preconfigured.target
+Requires=preconfigured.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl set-default configured
+ExecStart=/usr/bin/systemctl isolate default
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=preconfigured.target

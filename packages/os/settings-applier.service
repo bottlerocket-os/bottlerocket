@@ -1,8 +1,13 @@
 [Unit]
 Description=Applies settings to create config files
 After=storewolf.service sundog.service early-boot-config.service apiserver.service
-Requires=apiserver.service
-Wants=storewolf.service sundog.service early-boot-config.service
+Requires=storewolf.service sundog.service early-boot-config.service
+# We don't want to restart the unit if apiserver restarts
+Wants=apiserver.service
+# Block manual interactions with this service, since it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
 
 [Service]
 Type=oneshot
@@ -12,4 +17,4 @@ RemainAfterExit=true
 StandardError=journal+console
 
 [Install]
-WantedBy=multi-user.target
+RequiredBy=preconfigured.target

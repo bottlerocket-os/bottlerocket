@@ -1,7 +1,7 @@
 [Unit]
 Description=Amazon Elastic Container Service - container agent
 Documentation=https://aws.amazon.com/documentation/ecs/
-Requires=docker.service configured.target
+Requires=docker.service
 After=docker.service configured.target
 Wants=network-online.target configured.target
 

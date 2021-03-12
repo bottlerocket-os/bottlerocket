@@ -34,6 +34,7 @@ Source107: host-containers@.service
 Source110: mark-successful-boot.service
 Source111: metricdog.service
 Source112: metricdog.timer
+Source113: send-boot-success.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -337,7 +338,7 @@ install -p -m 0644 %{S:5} %{S:6} %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
-  %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
+  %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} %{S:113}\
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
@@ -440,6 +441,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_templatedir}/metricdog-toml
 %{_cross_unitdir}/metricdog.service
 %{_cross_unitdir}/metricdog.timer
+%{_cross_unitdir}/send-boot-success.service
 
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog

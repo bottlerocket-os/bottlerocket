@@ -1,5 +1,8 @@
 [Unit]
-Description=Bottlerocket user and dynamic configuration complete
-After=settings-applier.service
-Requires=settings-applier.service early-boot-config.service
+Description=Bottlerocket final configuration complete
+After=preconfigured.target
+Requires=preconfigured.target
 AllowIsolate=yes
+
+[Install]
+RequiredBy=multi-user.target

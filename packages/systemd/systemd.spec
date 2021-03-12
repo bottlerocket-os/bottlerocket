@@ -212,6 +212,13 @@ install -p -m 0644 %{S:3} %{buildroot}%{_cross_libdir}/systemd/journald.conf.d/j
 # with container networking by attempting to manage veth devices.
 rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 
+# Remove default, multi-user and graphical targets provided by systemd,
+# we override default/multi-user in the release spec and graphical
+# is never used
+rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/default.target
+rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/multi-user.target
+rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/graphical.target
+
 %files
 %license LICENSE.GPL2 LICENSE.LGPL2.1
 %{_cross_attribution_file}

@@ -1,0 +1,16 @@
+[Unit]
+Description=Send boot success
+# The unit depends on 'configured.target' since Metricdog indirectly
+# depends on the proxy.env file created by settings-applier in the
+# preconfigured target
+After=network-online.target configured.target
+Wants=network-online.target configured.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+EnvironmentFile=/etc/network/proxy.env
+ExecStart=-/usr/bin/metricdog send-boot-success
+
+[Install]
+WantedBy=multi-user.target

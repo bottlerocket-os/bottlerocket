@@ -170,7 +170,7 @@ impl<'a> SystemdUnit<'a> {
 
     fn is_enabled(&self) -> Result<bool> {
         match command(SYSTEMCTL_BIN, &["is-enabled", &self.unit]) {
-            Ok(()) => Ok(true),
+            Ok(_) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not enabled, then `systemctl is-enabled` will return a
                 // non-zero exit code.
@@ -187,7 +187,7 @@ impl<'a> SystemdUnit<'a> {
 
     fn is_active(&self) -> Result<bool> {
         match command(SYSTEMCTL_BIN, &["is-active", &self.unit]) {
-            Ok(()) => Ok(true),
+            Ok(_) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not active(running), then `systemctl is-active` will
                 // return a non-zero exit code.
@@ -202,23 +202,33 @@ impl<'a> SystemdUnit<'a> {
         }
     }
 
+    fn enable(&self) -> Result<()> {
+        command(SYSTEMCTL_BIN, &["enable", &self.unit])?;
+
+        Ok(())
+    }
+
     fn enable_and_start(&self) -> Result<()> {
-        // We enable/start units with --no-block to work around cyclic dependency issues at boot
-        // time.  It would probably be better to give systemd more of a chance to tell us that
-        // something failed to start, if dependencies can be resolved in another way.
         command(
             SYSTEMCTL_BIN,
             &["enable", &self.unit, "--now", "--no-block"],
-        )
+        )?;
+
+        Ok(())
     }
 
     fn disable_and_stop(&self) -> Result<()> {
-        command(SYSTEMCTL_BIN, &["disable", &self.unit, "--now"])
+        command(
+            SYSTEMCTL_BIN,
+            &["disable", &self.unit, "--now", "--no-block"],
+        )?;
+
+        Ok(())
     }
 }
 
 /// Wrapper around process::Command that adds error checking.
-fn command<I, S>(bin_path: &str, args: I) -> Result<()>
+fn command<I, S>(bin_path: &str, args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -229,14 +239,16 @@ where
         .output()
         .context(error::ExecutionFailure { command })?;
 
-    trace!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+
+    trace!("stdout: {}", stdout);
     trace!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     ensure!(
         output.status.success(),
         error::CommandFailure { bin_path, output }
     );
-    Ok(())
+    Ok(stdout)
 }
 
 /// Write out the EnvironmentFile that systemd uses to fill in arguments to host-ctr
@@ -352,14 +364,15 @@ where
         name, enabled
     );
 
+    // Create the directory regardless if user data was provided for the container
+    let dir = Path::new(PERSISTENT_STORAGE_BASE_DIR).join(name);
+    fs::create_dir_all(&dir).context(error::Mkdir { dir: &dir })?;
+
     // If user data was specified, unencode it and write it out before we start the container.
     if let Some(user_data) = &image_details.user_data {
         let decoded_bytes = base64::decode(user_data.as_bytes()).context(error::Base64Decode {
             base64_string: user_data.as_ref(),
         })?;
-
-        let dir = Path::new(PERSISTENT_STORAGE_BASE_DIR).join(name);
-        fs::create_dir_all(&dir).context(error::Mkdir { dir: &dir })?;
 
         let path = dir.join("user-data");
         fs::write(path, decoded_bytes).context(error::UserDataWrite { name })?;
@@ -383,7 +396,19 @@ where
         if host_containerd_unit.is_active()? && !systemd_unit.is_enabled()? {
             command(HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
         }
-        systemd_unit.enable_and_start()?;
+
+        // Only start the host container if the systemd target is 'multi-user', otherwise
+        // it will start before the system is fully configured
+        match command(SYSTEMCTL_BIN, &["get-default"])?.trim().as_ref() {
+            "multi-user.target" => {
+                debug!("Enabling and starting container: '{}'", unit_name);
+                systemd_unit.enable_and_start()?
+            },
+            _ => {
+                debug!("Enabling: '{}'", unit_name);
+                systemd_unit.enable()?
+            }
+        };
     } else {
         systemd_unit.disable_and_stop()?;
 
