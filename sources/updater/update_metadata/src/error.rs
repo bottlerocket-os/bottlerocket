@@ -62,9 +62,6 @@ pub enum Error {
     #[snafu(display("Duplicate version key: {}", key))]
     DuplicateVersionKey { backtrace: Backtrace, key: String },
 
-    #[snafu(display("Manifest not found in repository"))]
-    ManifestNotFound { backtrace: Backtrace },
-
     #[snafu(display("Failed to parse manifest file: {}", source))]
     ManifestParse {
         source: serde_json::Error,
@@ -89,12 +86,6 @@ pub enum Error {
     FileWrite {
         path: PathBuf,
         source: std::io::Error,
-        backtrace: Backtrace,
-    },
-
-    #[snafu(display("Manifest load error: {}", source))]
-    ManifestLoad {
-        source: tough::error::Error,
         backtrace: Backtrace,
     },
 

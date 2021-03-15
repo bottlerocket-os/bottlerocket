@@ -66,6 +66,21 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Manifest load error: {}", source))]
+    ManifestLoad {
+        source: tough::error::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("Manifest not found in repository"))]
+    ManifestNotFound { backtrace: Backtrace },
+
+    #[snafu(display("Error parsing manifest: {}", source))]
+    ManifestParse {
+        source: update_metadata::error::Error,
+        backtrace: Backtrace,
+    },
+
     #[snafu(display("Metadata error: {}", source))]
     Metadata {
         source: tough::error::Error,

@@ -3571,7 +3571,6 @@ dependencies = [
  "serde_plain",
  "snafu",
  "toml",
- "tough",
 ]
 
 [[package]]

@@ -70,11 +70,6 @@ pub(crate) enum Error {
     #[snafu(display("Failed listing migration directory '{}': {}", dir.display(), source))]
     ListMigrations { dir: PathBuf, source: io::Error },
 
-    #[snafu(display("Error loading manifest: {}", source))]
-    LoadManifest {
-        source: update_metadata::error::Error,
-    },
-
     #[snafu(display("Error loading migration '{}': {}", migration, source))]
     LoadMigration {
         migration: String,
@@ -85,6 +80,17 @@ pub(crate) enum Error {
     Lz4Decode {
         migration: String,
         source: std::io::Error,
+    },
+
+    #[snafu(display("Error loading manifest: {}", source))]
+    ManifestLoad { source: tough::error::Error },
+
+    #[snafu(display("Manifest not found in repository"))]
+    ManifestNotFound,
+
+    #[snafu(display("Error parsing manifest: {}", source))]
+    ManifestParse {
+        source: update_metadata::error::Error,
     },
 
     #[snafu(display("Migration '{}' not found", migration))]

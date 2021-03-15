@@ -1102,7 +1102,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml",
- "tough 0.11.0",
+ "tough",
  "tough-kms",
  "tough-ssm",
  "update_metadata",
@@ -2045,30 +2045,6 @@ dependencies = [
 
 [[package]]
 name = "tough"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dc3534fa46badec98ac633028f47a3cea590e9c9a63d85bd15a0436f8b6eb94"
-dependencies = [
- "chrono",
- "dyn-clone",
- "globset",
- "hex",
- "log",
- "olpc-cjson",
- "pem",
- "ring",
- "serde",
- "serde_json",
- "serde_plain",
- "snafu",
- "tempfile",
- "untrusted",
- "url",
- "walkdir",
-]
-
-[[package]]
-name = "tough"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "203cc46930159ea049e9308ca0e31815bb57f761e6345fa5d42dbcbd06c1809c"
@@ -2105,7 +2081,7 @@ dependencies = [
  "rusoto_kms",
  "snafu",
  "tokio",
- "tough 0.11.0",
+ "tough",
 ]
 
 [[package]]
@@ -2121,7 +2097,7 @@ dependencies = [
  "serde_json",
  "snafu",
  "tokio",
- "tough 0.11.0",
+ "tough",
 ]
 
 [[package]]
@@ -2223,7 +2199,6 @@ dependencies = [
  "serde_plain",
  "snafu",
  "toml",
- "tough 0.10.0",
 ]
 
 [[package]]
