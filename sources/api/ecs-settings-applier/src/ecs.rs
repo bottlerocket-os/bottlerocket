@@ -17,7 +17,6 @@ use std::{env, process};
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
 const VARIANT_ATTRIBUTE_NAME: &str = "bottlerocket.variant";
-const VERSION_ATTRIBUTE_NAME: &str = "bottlerocket.version";
 
 #[derive(Serialize, Debug, Default)]
 #[serde(rename_all = "PascalCase")]
@@ -102,10 +101,6 @@ async fn run() -> Result<()> {
         config
             .instance_attributes
             .insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
-        config.instance_attributes.insert(
-            VERSION_ATTRIBUTE_NAME.to_string(),
-            os.version_id.to_string(),
-        );
     }
     if let Some(attributes) = ecs.instance_attributes {
         for (key, value) in attributes {
