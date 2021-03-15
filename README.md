@@ -46,10 +46,19 @@ We’re excited to get early feedback and to continue working on more use cases!
 Bottlerocket is architected such that different cloud environments and container orchestrators can be supported in the future.
 A build of Bottlerocket that supports different features or integration characteristics is known as a 'variant'.
 The artifacts of a build will include the architecture and variant name.
-For example, an `x86_64` build of the `aws-k8s-1.17` variant will produce an image named `bottlerocket-aws-k8s-1.17-x86_64-<version>-<commit>.img`.
+For example, an `x86_64` build of the `aws-k8s-1.19` variant will produce an image named `bottlerocket-aws-k8s-1.19-x86_64-<version>-<commit>.img`.
 
-Our first supported variants, `aws-k8s-1.15`, `aws-k8s-1.16`, and `aws-k8s-1.17`, support EKS as described above.
-We also have a new `aws-ecs-1` variant designed to work with ECS.
+The following variants support EKS, as described above:
+
+- `aws-k8s-1.15`
+- `aws-k8s-1.16`
+- `aws-k8s-1.17`
+- `aws-k8s-1.18`
+- `aws-k8s-1.19`
+
+We also have a variant designed to work with ECS, currently in preview:
+
+- `aws-ecs-1`
 
 ## Architectures
 

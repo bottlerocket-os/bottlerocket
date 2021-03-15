@@ -14,11 +14,11 @@ value = "{image_id}"
 The `name` and `value` can contain template variables that will be replaced with information from the current build and from the AMI registered from that build.
 
 The available variables include:
-* `variant`, for example "aws-k8s-1.17"
+* `variant`, for example "aws-ecs-1"
 * `arch`, for example "x86_64" or "arm64".
   * Note: "amd64" and "aarch64" are mapped to "x86_64" and "arm64", respectively, to match the names used by EC2.
 * `image_id`, for example "ami-0123456789abcdef0"
-* `image_name`, for example "bottlerocket-aws-k8s-1.17-x86_64-v0.5.0-e0ddf1b"
+* `image_name`, for example "bottlerocket-aws-ecs-1-x86_64-v0.5.0-e0ddf1b"
 * `image_version`, for example "0.5.0-e0ddf1b"
 * `region`, for example "us-west-2"
 

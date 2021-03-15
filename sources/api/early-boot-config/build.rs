@@ -23,7 +23,7 @@ fn main() {
             eprintln!(
             "For local builds, you must set the 'VARIANT' environment variable so we know which data \
             provider to build. Valid values are the directories in models/src/variants/, for \
-            example 'aws-k8s-1.17'."
+            example 'aws-ecs-1'."
             );
             process::exit(1);
         }

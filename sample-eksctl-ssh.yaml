@@ -5,7 +5,7 @@ kind: ClusterConfig
 metadata:
   name: bottlerocket
   region: us-west-2
-  version: '1.17'
+  version: '1.19'
 
 nodeGroups:
   - name: ng-bottlerocket

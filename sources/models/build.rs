@@ -32,7 +32,7 @@ fn link_current_variant() {
     // and is passed through as VARIANT by the top-level Dockerfile.  It represents which OS
     // variant we're building, and therefore which API model to use.
     let variant = env::var(VARIANT_ENV).unwrap_or_else(|_| {
-        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in variants/, for example \"aws-k8s-1.17\".", VARIANT_ENV);
+        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in variants/, for example \"aws-ecs-1\".", VARIANT_ENV);
         process::exit(1);
     });
 
