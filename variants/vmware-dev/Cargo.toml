@@ -8,6 +8,7 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [package.metadata.build-variant]
+image-format = "vmdk"
 included-packages = [
 # core
     "release",
