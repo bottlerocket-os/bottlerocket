@@ -14,15 +14,15 @@ const ENV_VARIANT: &str = "VARIANT";
 /// Creates a file, `conf/current/logdog.conf` which is a symlink to a file with `logdog` commands
 /// for the current variant. Whatever the value of the `VARIANT` environment variable is, this
 /// function requires a file at `conf/logdog.$VARIANT.conf` and points to it from the `logdog.conf`
-/// symlink. For example, if the variant is `aws-k8s-1.17` then `conf/current/logdog.conf` will
-/// point to `conf/logdog.aws-k8s-1.17.conf`.
+/// symlink. For example, if the variant is `aws-ecs-1` then `conf/current/logdog.conf` will
+/// point to `conf/logdog.aws-ecs-1.conf`.
 fn symlink_variant() {
     println!("cargo:rerun-if-env-changed={}", ENV_VARIANT);
     let variant = env::var(ENV_VARIANT).unwrap_or_else(|_| {
         eprintln!(
             "For local builds, you must set the {} environment variable so we know which logdog \
             commands to build. Valid values are the directories in models/src/variants/, for \
-            example 'aws-k8s-1.17'.",
+            example 'aws-ecs-1'.",
             ENV_VARIANT
         );
         process::exit(1);

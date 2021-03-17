@@ -123,9 +123,9 @@ us-west-2
 ```
 
 The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
-The parameter names look like this: `/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_id`
+The parameter names look like this: `/aws/service/bottlerocket/aws-k8s-1.19/x86_64/latest/image_id`
 
-Just change the variant (`aws-k8s-1.17`) and architecture (`x86_64`) to the ones you want to use.
+Just change the variant (`aws-k8s-1.19`) and architecture (`x86_64`) to the ones you want to use.
 Supported variants and architectures are described in the [README](README.md#variants).
 For the purposes of SSM parameters, the valid architecture names are `x86_64` and `arm64` (also known as `aarch64`).
 Also, if you know a specific Bottlerocket version you'd like to use, for example `1.0.6`, you can replace `latest` with that version.
@@ -134,7 +134,7 @@ Once you have the parameter name you want to use, the easiest way to use it is t
 (You can also use this method for CloudFormation and other services that launch EC2 instances for you.)
 Just prefix the parameter name with `resolve:ssm:` and EC2 will fetch the current value for you.
 
-For example, to use the parameter above, you would pass this as the AMI ID in your launch request: `resolve:ssm:/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_id`
+For example, to use the parameter above, you would pass this as the AMI ID in your launch request: `resolve:ssm:/aws/service/bottlerocket/aws-k8s-1.19/x86_64/latest/image_id`
 
 #### Manually querying SSM
 
@@ -142,14 +142,14 @@ If you prefer to fetch the AMI ID yourself, you can use [aws-cli](https://aws.am
 To fetch the example parameter above, for the us-west-2 region, you could run this:
 
 ```
-aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_id" --query Parameter.Value --output text
+aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-k8s-1.19/x86_64/latest/image_id" --query Parameter.Value --output text
 ```
 
 If you have `jq` and would like a bit more information, try this:
 ```
 aws ssm get-parameters --region us-west-2 \
-   --names "/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_id" \
-           "/aws/service/bottlerocket/aws-k8s-1.17/x86_64/latest/image_version" \
+   --names "/aws/service/bottlerocket/aws-k8s-1.19/x86_64/latest/image_id" \
+           "/aws/service/bottlerocket/aws-k8s-1.19/x86_64/latest/image_version" \
    --output json | jq -r '.Parameters | .[] | "\(.Name): \(.Value) (updated \(.LastModifiedDate | gmtime | strftime("%c")) UTC)"'
 ```
 

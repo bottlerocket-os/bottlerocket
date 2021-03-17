@@ -250,12 +250,12 @@ These default settings will be applied to your hosts at startup, meaning any hos
 
 The easiest way to change your repo URLs at run time is to include the settings changes in user data.
 This method is covered [in README](README.md#using-user-data).
-For example, if you built the `aws-k8s-1.17` variant for `x86_64` and uploaded to the public S3 bucket `my-bucket`, your URLs could look like:
+For example, if you built the `aws-k8s-1.19` variant for `x86_64` and uploaded to the public S3 bucket `my-bucket`, your URLs could look like:
 
 ```toml
 [settings.updates]
 targets-base-url = "https://my-bucket.s3-us-west-2.amazonaws.com/targets/"
-metadata-base-url = "https://my-bucket.s3-us-west-2.amazonaws.com/aws-k8s-1.17/x86_64/"
+metadata-base-url = "https://my-bucket.s3-us-west-2.amazonaws.com/aws-k8s-1.19/x86_64/"
 ```
 
 ### Waves
@@ -353,7 +353,7 @@ This isn't very discoverable yet, but it's useful for testing.
 As an example, a parameter might look like this:
 
 ```
-/your/prefix/here/aws-k8s-1.17/x86_64/1.0.1-dafe3b16/image_id
+/your/prefix/here/aws-k8s-1.19/x86_64/1.0.1-dafe3b16/image_id
 ```
 
 Once you're satisfied with your image and parameters, you can promote the parameters to simpler names (for example, "latest") using the [instructions below](#promoting-ssm-parameters).
@@ -395,12 +395,12 @@ cargo make promote-ssm -e SSM_TARGET=latest
 This will copy the fully versioned parameter from earlier, something like:
 
 ```
-/your/prefix/here/aws-k8s-1.17/x86_64/1.0.1-dafe3b16/image_id
+/your/prefix/here/aws-k8s-1.19/x86_64/1.0.1-dafe3b16/image_id
 ```
 
 ...to a simpler parameter name:
 ```
-/your/prefix/here/aws-k8s-1.17/x86_64/latest/image_id
+/your/prefix/here/aws-k8s-1.19/x86_64/latest/image_id
 ```
 
 You can then use this parameter name to get the latest AMI ID.
