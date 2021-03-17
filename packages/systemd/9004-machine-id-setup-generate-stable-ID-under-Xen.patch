@@ -1,7 +1,7 @@
-From a659db335da0bf8e27c851fe3f8ae30c7c0f5eaf Mon Sep 17 00:00:00 2001
+From f201fcb17276d84a22332cde915f8c3ffac63c51 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 7 Jul 2020 22:38:20 +0000
-Subject: [PATCH 9004/9006] machine-id-setup: generate stable ID under Xen
+Subject: [PATCH 9004/9007] machine-id-setup: generate stable ID under Xen
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
@@ -10,10 +10,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/man/machine-id.xml b/man/machine-id.xml
-index bd55366..6a58b9d 100644
+index f61634f..06aa223 100644
 --- a/man/machine-id.xml
 +++ b/man/machine-id.xml
-@@ -100,7 +100,8 @@
+@@ -101,7 +101,8 @@
      to use the D-Bus machine ID from <filename>/var/lib/dbus/machine-id</filename>, the
      value of the kernel command line option <varname>container_uuid</varname>, the KVM DMI
      <filename>product_uuid</filename> or the devicetree <filename>vm,uuid</filename>
@@ -24,10 +24,10 @@ index bd55366..6a58b9d 100644
      <para>After the machine ID is established,
      <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 diff --git a/src/core/machine-id-setup.c b/src/core/machine-id-setup.c
-index f76b82a..d2024ee 100644
+index 6d15f9c..aa9609f 100644
 --- a/src/core/machine-id-setup.c
 +++ b/src/core/machine-id-setup.c
-@@ -73,6 +73,16 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
+@@ -75,6 +75,16 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
                                  log_info("Initializing machine ID from KVM UUID.");
                                  return 0;
                          }
@@ -45,5 +45,5 @@ index f76b82a..d2024ee 100644
          }
  
 -- 
-2.26.2
+2.21.3
 
