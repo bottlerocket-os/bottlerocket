@@ -1,3 +1,22 @@
+# v1.0.7 (2021-03-17)
+
+## Security fixes
+
+* containerd: update to 1.4.4 ([#1401])
+
+## OS Changes
+
+* systemd: update to 247.4 to fix segfault in some cases ([#1400])
+* apiserver: reap exited child processes ([#1384])
+* host-ctr: specify non-colliding runc root ([#1359])
+* updog: update signal-hook dependency ([#1328])
+
+[#1328]: https://github.com/bottlerocket-os/bottlerocket/pull/1328
+[#1359]: https://github.com/bottlerocket-os/bottlerocket/pull/1359
+[#1384]: https://github.com/bottlerocket-os/bottlerocket/pull/1384
+[#1400]: https://github.com/bottlerocket-os/bottlerocket/pull/1400
+[#1401]: https://github.com/bottlerocket-os/bottlerocket/pull/1401
+
 # v1.0.6 (2021-03-02)
 
 ## OS Changes
