@@ -2,12 +2,12 @@
 %global _cross_allow_rpath 1
 
 Name: %{_cross_os}systemd
-Version: 247
+Version: 247.4
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
 URL: https://www.freedesktop.org/wiki/Software/systemd
-Source0: https://github.com/systemd/systemd/archive/v%{version}/systemd-%{version}.tar.gz
+Source0: https://github.com/systemd/systemd-stable/archive/v%{version}/systemd-stable-%{version}.tar.gz
 Source1: var-run-tmpfiles.conf
 Source2: systemd-modules-load.conf
 Source3: journald.conf
@@ -37,8 +37,7 @@ Patch9006: 9006-journal-disable-keyed-hashes-for-compatibility.patch
 
 # We need `prefix` to be configurable for our own packaging so we can avoid
 # dependencies on the host OS.
-Patch9007: 9007-pkg-config-make-prefix-overridable-again.patch
-Patch9008: 9008-pkg-config-stop-hardcoding-prefix-to-usr.patch
+Patch9007: 9007-pkg-config-stop-hardcoding-prefix-to-usr.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -84,7 +83,7 @@ Requires: %{name}
 %{summary}.
 
 %prep
-%autosetup -n systemd-%{version} -p1
+%autosetup -n systemd-stable-%{version} -p1
 
 %build
 CONFIGURE_OPTS=(

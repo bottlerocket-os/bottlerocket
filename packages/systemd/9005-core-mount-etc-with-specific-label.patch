@@ -1,7 +1,7 @@
-From f7d3e4c5d991d910b6d73d357908dbf9fa6a631b Mon Sep 17 00:00:00 2001
+From 71d1fce8c9c3f1787add39625221bfe09140a572 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 9 Jul 2020 20:00:36 +0000
-Subject: [PATCH 9005/9006] core: mount /etc with specific label
+Subject: [PATCH 9005/9007] core: mount /etc with specific label
 
 The filesystem is mounted after we load the SELinux policy, so we can
 apply the label we need to restrict access.
@@ -12,10 +12,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/src/core/mount-setup.c b/src/core/mount-setup.c
-index feb88f3..ce2ae73 100644
+index 915b101..38c1a29 100644
 --- a/src/core/mount-setup.c
 +++ b/src/core/mount-setup.c
-@@ -75,6 +75,8 @@ static const MountPoint mount_table[] = {
+@@ -76,6 +76,8 @@ static const MountPoint mount_table[] = {
          { "tmpfs",       "/dev/shm",                  "tmpfs",      "mode=1777,smackfsroot=*",                 MS_NOSUID|MS_NODEV|MS_STRICTATIME,
            mac_smack_use, MNT_FATAL                  },
  #endif
@@ -25,5 +25,5 @@ index feb88f3..ce2ae73 100644
            NULL,          MNT_FATAL|MNT_IN_CONTAINER },
          { "devpts",      "/dev/pts",                  "devpts",     "mode=620,gid=" STRINGIFY(TTY_GID),        MS_NOSUID|MS_NOEXEC,
 -- 
-2.26.2
+2.21.3
 
