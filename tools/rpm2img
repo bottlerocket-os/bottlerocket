@@ -24,7 +24,7 @@ esac
 
 mkdir -p "${OUTPUT_DIR}"
 
-FILENAME_PREFIX="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}"
+FILENAME_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}"
 
 DISK_IMAGE_BASENAME="${FILENAME_PREFIX}"
 DATA_IMAGE_BASENAME="${FILENAME_PREFIX}-data"
@@ -178,7 +178,7 @@ set timeout="0"
 
 menuentry "Bottlerocket OS ${VERSION_ID}" {
    linux (\$root)/vmlinuz root=/dev/dm-0 rootwait ro \\
-       console=tty0 console=ttyS0 random.trust_cpu=on selinux=1 enforcing=1 \\
+       console=tty0 console=ttyAMA0 random.trust_cpu=on selinux=1 8250.nr_uarts=1 enforcing=1 \\
        systemd.log_target=journal-or-kmsg systemd.log_color=0 net.ifnames=0 \\
        biosdevname=0 dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\
        dm-mod.create="root,,,ro,0 $VERITY_DATA_512B_BLOCKS verity $VERITY_VERSION PARTUUID=\$boot_uuid/PARTNROFF=1 PARTUUID=\$boot_uuid/PARTNROFF=2 \\
