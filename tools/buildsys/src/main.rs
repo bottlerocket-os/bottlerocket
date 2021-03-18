@@ -16,10 +16,10 @@ mod spec;
 
 use builder::{PackageBuilder, VariantBuilder};
 use cache::LookasideCache;
-use manifest::ManifestInfo;
+use manifest::{ManifestInfo, SupportedArch};
 use project::ProjectInfo;
 use serde::Deserialize;
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use spec::SpecInfo;
 use std::env;
 use std::path::PathBuf;
@@ -55,6 +55,22 @@ mod error {
         Environment {
             var: String,
             source: std::env::VarError,
+        },
+
+        #[snafu(display("Unknown architecture: '{}'", arch))]
+        UnknownArch {
+            arch: String,
+            source: serde_plain::Error,
+        },
+
+        #[snafu(display(
+            "Unsupported architecture {}, this variant supports {}",
+            arch,
+            supported_arches.join(", ")
+        ))]
+        UnsupportedArch {
+            arch: String,
+            supported_arches: Vec<String>,
         },
     }
 }
@@ -102,10 +118,17 @@ fn run() -> Result<()> {
 }
 
 fn build_package() -> Result<()> {
-    let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest_file = "Cargo.toml";
     println!("cargo:rerun-if-changed={}", manifest_file);
 
+    let root_dir: PathBuf = getenv("BUILDSYS_ROOT_DIR")?.into();
+    let variant = getenv("BUILDSYS_VARIANT")?;
+    let variant_manifest_path = root_dir.join("variants").join(variant).join(manifest_file);
+    let variant_manifest =
+        ManifestInfo::new(variant_manifest_path).context(error::ManifestParse)?;
+    supported_arch(&variant_manifest)?;
+
+    let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest =
         ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParse)?;
 
@@ -165,6 +188,8 @@ fn build_variant() -> Result<()> {
     let manifest =
         ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParse)?;
 
+    supported_arch(&manifest)?;
+
     if let Some(packages) = manifest.included_packages() {
         let image_format = manifest.image_format();
         VariantBuilder::build(&packages, image_format).context(error::BuildAttempt)?;
@@ -172,6 +197,27 @@ fn build_variant() -> Result<()> {
         println!("cargo:warning=No included packages in manifest. Skipping variant build.");
     }
 
+    Ok(())
+}
+
+/// Ensure that the current arch is supported by the current variant
+fn supported_arch(manifest: &ManifestInfo) -> Result<()> {
+    if let Some(supported_arches) = manifest.supported_arches() {
+        let arch = getenv("BUILDSYS_ARCH")?;
+        let current_arch: SupportedArch =
+            serde_plain::from_str(&arch).context(error::UnknownArch { arch: &arch })?;
+
+        ensure!(
+            supported_arches.contains(&current_arch),
+            error::UnsupportedArch {
+                arch: &arch,
+                supported_arches: supported_arches
+                    .into_iter()
+                    .map(|a| a.to_string())
+                    .collect::<Vec<String>>()
+            }
+        )
+    }
     Ok(())
 }
 
