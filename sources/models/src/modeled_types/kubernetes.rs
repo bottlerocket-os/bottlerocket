@@ -223,12 +223,14 @@ pub struct KubernetesTaintValue {
 lazy_static! {
     pub(crate) static ref KUBERNETES_TAINT_VALUE: Regex = Regex::new(
         r"(?x)^
-       [[:alnum:]]  # at least one alphanumeric
        (
-           ([[:alnum:]._-]{0,61})?  # more characters allowed in middle
-           [[:alnum:]]  # have to end with alphanumeric
-       )?
-       :  # separate the label value from the effect
+          [[:alnum:]]  # values have to start with alphanumeric if they're specified
+          (
+             ([[:alnum:]._-]{0,61})?  # more characters allowed in middle
+             [[:alnum:]]  # values have to end with alphanumeric
+          )?  # only the first alphanumeric is required, further chars optional
+       )? # the taint value is optional
+       :  # separate the taint value from the effect
        [[:alnum:]]{1,253}  # effect
    $"
     )
@@ -266,6 +268,9 @@ mod test_kubernetes_taint_value {
             "value:NoSchedule",
             "value:PreferNoSchedule",
             "value:NoExecute",
+            ":NoSchedule",
+            "a:NoSchedule",
+            "a-b:NoSchedule",
         ] {
             KubernetesTaintValue::try_from(*ok).unwrap();
         }
@@ -273,7 +278,15 @@ mod test_kubernetes_taint_value {
 
     #[test]
     fn bad_values() {
-        for err in &[".bad", "bad.", &"a".repeat(254), "value:", ":effect"] {
+        for err in &[
+            ".bad",
+            "bad.",
+            &"a".repeat(254),
+            "value:",
+            ":",
+            "-a:NoSchedule",
+            "a-:NoSchedule",
+        ] {
             KubernetesTaintValue::try_from(*err).unwrap_err();
         }
     }
