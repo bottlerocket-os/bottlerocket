@@ -49,7 +49,7 @@ enum Subcommand {
 /// Stores user-supplied arguments for the 'apply' subcommand.
 #[derive(Debug)]
 struct ApplyArgs {
-    uris: Vec<String>,
+    input_sources: Vec<String>,
 }
 
 /// Stores user-supplied arguments for the 'raw' subcommand.
@@ -108,7 +108,8 @@ fn usage() -> ! {
         Subcommands:
             raw                        Makes an HTTP request and prints the response on stdout.
                                        'raw' is the default subcommand and may be omitted.
-            apply                      Applies settings from TOML/JSON files at given URIs.
+            apply                      Applies settings from TOML/JSON files at given URIs,
+                                       or from stdin.
             set                        Changes settings and applies them to the system.
             update check               Prints information about available updates.
             update apply               Applies available updates.
@@ -121,8 +122,9 @@ fn usage() -> ! {
             -d, --data DATA            Data to include in the request body.  Default: empty
 
         apply options:
-            URI [URI ...]              The list of URIs to TOML or JSON settings files that you
-                                       want to apply to the system.
+            [ URI ...]                 The list of URIs to TOML or JSON settings files that you
+                                       want to apply to the system.  If no URI is specified, or
+                                       if "-" is given, reads from stdin.
 
         reboot options:
             None.
@@ -260,20 +262,26 @@ fn parse_raw_args(args: Vec<String>) -> Subcommand {
 
 /// Parses arguments for the 'apply' subcommand.
 fn parse_apply_args(args: Vec<String>) -> Subcommand {
-    let mut uris = Vec::new();
+    let mut input_sources = Vec::new();
 
     let mut iter = args.into_iter();
     while let Some(arg) = iter.next() {
         match arg {
-            x if x.starts_with("-") => {
+            // Allow "-" for stdin, but we have no other parameters.
+            x if x.starts_with("-") && x != "-" => {
                 usage_msg("apiclient apply takes no parameters, just a list of URIs.")
             }
 
-            x => uris.push(x),
+            x => input_sources.push(x),
         }
     }
 
-    Subcommand::Apply(ApplyArgs { uris })
+    if input_sources.is_empty() {
+        // Read from stdin if no URIs were given.
+        input_sources.push("-".to_string());
+    }
+
+    Subcommand::Apply(ApplyArgs { input_sources })
 }
 
 /// Parses arguments for the 'reboot' subcommand.
@@ -524,7 +532,7 @@ async fn run() -> Result<()> {
         }
 
         Subcommand::Apply(apply) => {
-            apply::apply(&args.socket_path, apply.uris)
+            apply::apply(&args.socket_path, apply.input_sources)
                 .await
                 .context(error::Apply)?;
         }

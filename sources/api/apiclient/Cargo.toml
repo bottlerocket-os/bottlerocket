@@ -25,9 +25,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 simplelog = "0.9"
 snafu = { version = "0.6", features = ["futures"] }
-tokio = { version = "0.2", default-features = false, features = ["fs", "macros", "rt-threaded", "time"] }
+tokio = { version = "0.2", default-features = false, features = ["fs", "io-std", "macros", "rt-threaded", "time"] }
 # When we update hyper to 0.14+ which has tokio 1:
-#tokio = { version = "1", default-features = false, features = ["fs", "macros", "rt-multi-thread", "time"] }
+#tokio = { version = "1", default-features = false, features = ["fs", "io-std", "macros", "rt-multi-thread", "time"] }
 toml = "0.5"
 unindent = "0.1"
 url = "2.2.1"
