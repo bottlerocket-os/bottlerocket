@@ -108,7 +108,7 @@ fn usage() -> ! {
         Subcommands:
             raw                        Makes an HTTP request and prints the response on stdout.
                                        'raw' is the default subcommand and may be omitted.
-            apply                      Applies settings from TOML files at given URIs.
+            apply                      Applies settings from TOML/JSON files at given URIs.
             set                        Changes settings and applies them to the system.
             update check               Prints information about available updates.
             update apply               Applies available updates.
@@ -121,8 +121,8 @@ fn usage() -> ! {
             -d, --data DATA            Data to include in the request body.  Default: empty
 
         apply options:
-            URI [URI ...]              The list of URIs to TOML settings files that you want to
-                                       apply to the system.
+            URI [URI ...]              The list of URIs to TOML or JSON settings files that you
+                                       want to apply to the system.
 
         reboot options:
             None.

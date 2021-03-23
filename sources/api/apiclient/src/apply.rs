@@ -1,6 +1,6 @@
 //! This module allows application of settings from given URIs.  The files at the URIs are expected
-//! to be TOML settings files, in the same format as user data.  The URIs are pulled and applied to
-//! the API server in a single transaction.
+//! to be TOML settings files, in the same format as user data, or the JSON equivalent.  The URIs
+//! are pulled and applied to the API server in a single transaction.
 
 use crate::rando;
 use futures::future::{join, ready, TryFutureExt};
@@ -10,7 +10,7 @@ use serde::de::{Deserialize, IntoDeserializer};
 use snafu::{futures::try_future::TryFutureExt as SnafuTryFutureExt, OptionExt, ResultExt};
 use std::path::Path;
 
-/// Downloads TOML settings files from the requested URIs, then commits them in a single
+/// Downloads TOML or JSON settings files from the requested URIs, then commits them in a single
 /// transaction and applies them to the system.
 pub async fn apply<P>(socket_path: P, uris: Vec<String>) -> Result<()>
 where
@@ -30,11 +30,11 @@ where
     let get_request_stream = stream::iter(get_requests).buffered(4);
     let get_responses: Vec<(&String, Result<String>)> = get_request_stream.collect().await;
 
-    // Reformat the responses from TOML to (model-verified) JSON we can send to the API.
+    // Reformat the responses to (model-verified) JSON we can send to the API.
     let mut changes = Vec::with_capacity(get_responses.len());
     for (uri, get_response) in get_responses {
-        let toml = get_response?;
-        let json = format_change(&toml, &uri)?;
+        let response = get_response?;
+        let json = format_change(&response, &uri)?;
         changes.push((uri, json));
     }
 
@@ -96,18 +96,26 @@ where
     }
 }
 
-/// Takes a string of TOML settings data, verifies that it fits the model, and reserializes it to
-/// JSON for sending to the API.
-fn format_change(toml: &str, input_uri: &str) -> Result<String> {
-    // Parse the input as (arbitrary) TOML.
-    let toml_val: toml::Value =
-        toml::from_str(&toml).context(error::TomlDeserialize { input_uri })?;
-
-    // We need JSON for the API.  serde lets us convert between Deserialize-able types by reusing
-    // the deserializer.  Turn the TOML value into a JSON value.
-    let d = toml_val.into_deserializer();
-    let mut json_val =
-        serde_json::Value::deserialize(d).context(error::TomlDeserialize { input_uri })?;
+/// Takes a string of TOML or JSON settings data, verifies that it fits the model, and reserializes
+/// it to JSON for sending to the API.
+fn format_change(input: &str, input_uri: &str) -> Result<String> {
+    // Try to parse the input as (arbitrary) TOML.  If that fails, try to parse it as JSON.
+    let mut json_val = match toml::from_str::<toml::Value>(&input) {
+        Ok(toml_val) => {
+            // We need JSON for the API.  serde lets us convert between Deserialize-able types by
+            // reusing the deserializer.  Turn the TOML value into a JSON value.
+            let d = toml_val.into_deserializer();
+            serde_json::Value::deserialize(d).context(error::TomlToJson { input_uri })?
+        }
+        Err(toml_err) => {
+            // TOML failed, try JSON; include the toml parsing error, because if they intended to
+            // give TOML we should still tell them what was wrong with it.
+            serde_json::from_str(&input).context(error::InputType {
+                input_uri,
+                toml_err,
+            })
+        }?,
+    };
 
     // Remove outer "settings" layer before sending to API or deserializing it into the model,
     // neither of which expects it.
@@ -145,6 +153,18 @@ mod error {
         FileUri { input: String },
 
         #[snafu(display(
+            "Input '{}' is not valid TOML or JSON.  (TOML error: {})  (JSON error: {})",
+            input_uri,
+            toml_err,
+            source
+        ))]
+        InputType {
+            input_uri: String,
+            toml_err: toml::de::Error,
+            source: serde_json::Error,
+        },
+
+        #[snafu(display(
             "Failed to serialize settings from '{}' to JSON: {}",
             input_uri,
             source
@@ -170,7 +190,7 @@ mod error {
             source: serde_json::Error,
         },
 
-        #[snafu(display("Settings from '{}' are not a TOML table", input_uri))]
+        #[snafu(display("Settings from '{}' are not a TOML table / JSON object", input_uri))]
         ModelType { input_uri: String },
 
         #[snafu(display(
@@ -194,8 +214,12 @@ mod error {
             source: reqwest::Error,
         },
 
-        #[snafu(display("Failed to parse settings from '{}' as TOML: {}", input_uri, source))]
-        TomlDeserialize {
+        #[snafu(display(
+            "Failed to translate TOML from '{}' to JSON for API: {}",
+            input_uri,
+            source
+        ))]
+        TomlToJson {
             input_uri: String,
             source: toml::de::Error,
         },
