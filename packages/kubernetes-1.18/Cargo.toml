@@ -17,5 +17,12 @@ path = "pkg.rs"
 url = "https://github.com/kubernetes/kubernetes/archive/v1.18.17/kubernetes-1.18.17.tar.gz"
 sha512 = "5d8ae2fb8a962b8a09b58667d57114a4c75c2b7ae75c9ba0f8b68fccd0f58a3cdb44288a71fbd2f528fe93e280c6b95ea57fe0bbf1b2203aec9fd39fc7fd3f79"
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+conntrack-tools = { path = "../conntrack-tools" }
+containerd = { path = "../containerd" }
+findutils = { path = "../findutils" }

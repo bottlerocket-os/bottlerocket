@@ -18,5 +18,11 @@ sha512 = "355c6ddc157266e13dfd4665670612cd2983bcdaa7598c12203361ff7987937a18b4c4
 # archive does not include submodules, so the tarball above does not include
 # the source of those plugins.
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+docker-engine = { path = "../docker-engine" }
+iptables = { path = "../iptables" }

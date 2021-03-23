@@ -43,6 +43,7 @@ name = "cni"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "iptables",
 ]
 
 [[package]]
@@ -50,6 +51,7 @@ name = "cni-plugins"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "iptables",
 ]
 
 [[package]]
@@ -69,8 +71,11 @@ dependencies = [
 name = "containerd"
 version = "0.1.0"
 dependencies = [
+ "cni-plugins",
  "glibc",
  "libseccomp",
+ "runc",
+ "systemd",
 ]
 
 [[package]]
@@ -106,8 +111,11 @@ dependencies = [
 name = "docker-engine"
 version = "0.1.0"
 dependencies = [
+ "containerd",
  "glibc",
+ "iptables",
  "libseccomp",
+ "procps",
  "systemd",
 ]
 
@@ -137,7 +145,9 @@ dependencies = [
 name = "ecs-agent"
 version = "0.1.0"
 dependencies = [
+ "docker-engine",
  "glibc",
+ "iptables",
 ]
 
 [[package]]
@@ -167,6 +177,7 @@ dependencies = [
 name = "host-ctr"
 version = "0.1.0"
 dependencies = [
+ "containerd",
  "glibc",
 ]
 
@@ -202,6 +213,9 @@ dependencies = [
 [[package]]
 name = "kernel"
 version = "0.1.0"
+dependencies = [
+ "filesystem",
+]
 
 [[package]]
 name = "kmod"
@@ -214,6 +228,9 @@ dependencies = [
 name = "kubernetes-1_16"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -221,6 +238,9 @@ dependencies = [
 name = "kubernetes-1_17"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -228,6 +248,9 @@ dependencies = [
 name = "kubernetes-1_18"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -235,6 +258,9 @@ dependencies = [
 name = "kubernetes-1_19"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -428,7 +454,9 @@ dependencies = [
 name = "login"
 version = "0.0.1"
 dependencies = [
+ "bash",
  "glibc",
+ "systemd",
 ]
 
 [[package]]
@@ -443,6 +471,7 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "host-ctr",
 ]
 
 [[package]]
@@ -475,6 +504,28 @@ dependencies = [
 [[package]]
 name = "release"
 version = "0.0.0"
+dependencies = [
+ "acpid",
+ "ca-certificates",
+ "chrony",
+ "coreutils",
+ "dbus-broker",
+ "e2fsprogs",
+ "filesystem",
+ "glibc",
+ "grub",
+ "iproute",
+ "kernel",
+ "libaudit",
+ "libgcc",
+ "libstd-rust",
+ "os",
+ "policycoreutils",
+ "selinux-policy",
+ "systemd",
+ "util-linux",
+ "wicked",
+]
 
 [[package]]
 name = "runc"

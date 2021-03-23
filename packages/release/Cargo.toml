@@ -7,3 +7,30 @@ build = "build.rs"
 
 [lib]
 path = "pkg.rs"
+
+# RPM BuildRequires
+[build-dependencies]
+# None
+
+# RPM Requires
+[dependencies]
+acpid = { path = "../acpid" }
+ca-certificates = { path = "../ca-certificates" }
+chrony = { path = "../chrony" }
+coreutils = { path = "../coreutils" }
+dbus-broker = { path = "../dbus-broker" }
+e2fsprogs = { path = "../e2fsprogs" }
+filesystem = { path = "../filesystem" }
+glibc = { path = "../glibc" }
+grub = { path = "../grub" }
+iproute = { path = "../iproute" }
+kernel = { path = "../kernel" }
+libaudit = { path = "../libaudit" }
+libgcc = { path = "../libgcc" }
+libstd-rust = { path = "../libstd-rust" }
+os = { path = "../os" }
+policycoreutils = { path = "../policycoreutils" }
+selinux-policy = { path = "../selinux-policy" }
+systemd = { path = "../systemd" }
+util-linux = { path = "../util-linux" }
+wicked = { path = "../wicked" }

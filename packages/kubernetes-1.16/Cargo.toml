@@ -25,5 +25,12 @@ path = "aws-sdk-go-1.28.2.patch.bz2"
 url = "file:///aws-sdk-go-1.28.2.patch.bz2"
 sha512 = "221cc4a0e0c88ae96daadccb4ec3799f1a36c9df77f83f2cb6bb7fe7123880958e7cc12bb9bf91de9cfee5f17502e5873efbd492e9b2eaf5fed519f5614017fd"
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+conntrack-tools = { path = "../conntrack-tools" }
+containerd = { path = "../containerd" }
+findutils = { path = "../findutils" }

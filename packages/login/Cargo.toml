@@ -8,5 +8,11 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+bash = { path = "../bash" }
+systemd = { path = "../systemd" }
