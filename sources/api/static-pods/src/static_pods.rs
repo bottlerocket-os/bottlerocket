@@ -11,21 +11,23 @@ It queries for all existing static pod settings, then configures the system as f
 * If the pod is disabled, it ensures the manifest file is removed from the pod manifest path.
 */
 
+use model::modeled_types::Identifier;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::str::FromStr;
-
-use model::modeled_types::Identifier;
+use tempfile::{NamedTempFile, TempDir};
 
 // FIXME Get from configuration in the future
 const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 
 const STATIC_POD_DIR: &str = "/etc/kubernetes/static-pods";
+const ETC_KUBE_DIR: &str = "/etc/kubernetes";
 
 type Result<T> = std::result::Result<T, error::Error>;
 
@@ -54,13 +56,32 @@ where
     S2: AsRef<[u8]>,
 {
     let name = name.as_ref();
+    let manifest = manifest.as_ref();
 
-    let dir = Path::new(STATIC_POD_DIR);
-    fs::create_dir_all(&dir).context(error::Mkdir { dir: &dir })?;
-    let path = dir.join(name);
-    // Create the file if it does not exist, completely replace its contents
-    // if it does (constitutes an update).
-    fs::write(path, manifest).context(error::ManifestWrite { name })?;
+    let target_dir = Path::new(STATIC_POD_DIR);
+    fs::create_dir_all(&target_dir).context(error::Mkdir { dir: &target_dir })?;
+
+    // Create a temporary directory adjacent to the static pods directory. This directory will be
+    // automatically cleaned-up as soon as it goes out of scope.
+    let tmp_dir = TempDir::new_in(ETC_KUBE_DIR).context(error::CreateTempdir)?;
+
+    // Create the pod manifest file as a temporary file in an adjacent temp directory first and
+    // finish writing to it before swapping any files out in the target static pods directory.
+    let mut temp_manifest_file =
+        NamedTempFile::new_in(tmp_dir.path()).context(error::CreateTempfile)?;
+    temp_manifest_file
+        .write(manifest)
+        .context(error::ManifestWrite { name })?;
+
+    let target_path = target_dir.join(name);
+    debug!(
+        "Writing static pod manifest file to '{}'",
+        target_path.display()
+    );
+    // Create the file if it does not exist. If it does exist, atomically replace it.
+    temp_manifest_file
+        .persist(&target_path)
+        .context(error::PersistPodManifest { path: target_path })?;
 
     Ok(())
 }
@@ -276,6 +297,18 @@ mod error {
         ManifestDelete {
             name: String,
             source: std::io::Error,
+        },
+
+        #[snafu(display("Failed to create temporary directory for pod manifests: {}", source))]
+        CreateTempdir { source: std::io::Error },
+
+        #[snafu(display("Failed to create tempfile for writing pod manifest: {}", source))]
+        CreateTempfile { source: std::io::Error },
+
+        #[snafu(display("Failed to create pod manifest file '{}': {}", path.display(), source))]
+        PersistPodManifest {
+            path: PathBuf,
+            source: tempfile::PersistError,
         },
     }
 }
