@@ -40,6 +40,7 @@ yum install make automake gcc openssl openssl-devel pkg-config lz4 perl-FindBin 
 
 The build system is based on the Rust language.
 We recommend you install the latest stable Rust using [rustup](https://rustup.rs/), either from the official site or your development host's package manager.
+Rust 1.51.0 or higher is required.
 
 To organize build tasks, we use [cargo-make](https://sagiegurari.github.io/cargo-make/).
 We also use [cargo-deny](https://github.com/EmbarkStudios/cargo-deny) during the build process.

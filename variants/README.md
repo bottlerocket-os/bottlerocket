@@ -122,11 +122,17 @@ included-packages = [
 
 [lib]
 path = "lib.rs"
+
+[build-dependencies]
+"my-agent" = { path = "../../packages/my-agent" }
+"release" = { path = "../../packages/release" }
 ```
 
 The [package.metadata](https://doc.rust-lang.org/cargo/reference/manifest.html#the-metadata-table-optional) table is ignored by Cargo and interpreted by our `buildsys` tool.
 
 It contains an `included-packages` list which specifies the packages to install when building the image.
+In the `[build-dependencies]` section, we specify the packages that need to be built, which is sometimes slightly different than `included-packages`.
+This populates the Cargo build graph with all of the RPM packages that need to be built before the variant can be constructed.
 Variants should almost always include the `release` package.
 This pulls in the other core packages and includes essential configuration and services.
 

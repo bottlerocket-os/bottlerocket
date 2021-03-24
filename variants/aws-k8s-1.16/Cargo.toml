@@ -20,3 +20,10 @@ included-packages = [
 
 [lib]
 path = "lib.rs"
+
+[build-dependencies]
+"aws-iam-authenticator" = { path = "../../packages/aws-iam-authenticator" }
+"cni" = { path = "../../packages/cni" }
+"cni-plugins" = { path = "../../packages/cni-plugins" }
+"kubernetes-1_16" = { path = "../../packages/kubernetes-1.16" }
+"release" = { path = "../../packages/release" }

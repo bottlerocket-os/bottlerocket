@@ -184,7 +184,7 @@ dependencies = ["setup"]
 script_runner = "bash"
 script = [
 '''
-for ws in sources packages variants/* tools; do
+for ws in sources variants tools; do
   [ -d "${ws}" ] || continue
   cargo fetch --locked --manifest-path ${ws}/Cargo.toml
 done
@@ -266,21 +266,33 @@ cargo install \
 '''
 ]
 
-[tasks.build-packages]
+# Builds a package including its build-time and runtime dependency packages.
+[tasks.build-package]
 dependencies = ["build-tools", "publish-setup"]
+script_runner = "bash"
 script = [
 '''
+set -e
+if [ -z "${PACKAGE}" ]; then
+    echo "The PACKAGE environment variable must be set. For example:"
+    echo "cargo make build-package -e PACKAGE=kernel"
+    exit 1
+fi
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path packages/Cargo.toml \
-  --all
+  --manifest-path "variants/Cargo.toml" \
+  --package "${PACKAGE}"
 '''
 ]
 
+[tasks.build-kernel]
+env = { "PACKAGE" = "kernel" }
+run_task = "build-package"
+
 [tasks.build-kmod-kit]
-dependencies = ["build-packages"]
+dependencies = ["build-kernel"]
 script_runner = "bash"
 script = [
 '''
@@ -348,7 +360,7 @@ docker run --rm \
 dependencies = ["build-kmod-kit", "build-ova"]
 
 [tasks.build-variant]
-dependencies = ["build-packages"]
+dependencies = ["build-tools", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
@@ -429,9 +441,6 @@ tar -cf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${manifest}" "${ov
 mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_ARCHIVES_DIR}"
 '''
 ]
-
-[tasks.world-packages]
-alias = "build-packages"
 
 [tasks.world-variant]
 alias = "build-variant"
@@ -963,7 +972,7 @@ rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
 script_runner = "bash"
 script = [
 '''
-for ws in packages; do
+for ws in variants; do
   [ -d "${ws}" ] || continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done

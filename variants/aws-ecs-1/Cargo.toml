@@ -20,3 +20,14 @@ included-packages = [
 
 [lib]
 path = "lib.rs"
+
+[build-dependencies]
+# core
+release = { path = "../../packages/release" }
+# docker
+docker-cli = { path = "../../packages/docker-cli" }
+docker-engine = { path = "../../packages/docker-engine" }
+docker-init = { path = "../../packages/docker-init" }
+docker-proxy = { path = "../../packages/docker-proxy" }
+# ecs
+ecs-agent = { path = "../../packages/ecs-agent" }

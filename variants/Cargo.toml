@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    "aws-dev",
+    "aws-ecs-1",
+    "aws-k8s-1.16",
+    "aws-k8s-1.17",
+    "aws-k8s-1.18",
+    "aws-k8s-1.19",
+    "vmware-dev",
+]
+
+[profile.dev]
+debug = false
+opt-level = 'z'
+
+[profile.dev.build-override]
+opt-level = 'z'
