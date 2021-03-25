@@ -1,4 +1,4 @@
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use crate::rando;
 use snafu::ResultExt;
 use std::path::Path;
 
@@ -29,15 +29,6 @@ where
         .context(error::Request { uri, method })?;
 
     Ok(())
-}
-
-/// Generates a random ID, affectionately known as a 'rando'.
-fn rando() -> String {
-    thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(16)
-        .map(char::from)
-        .collect()
 }
 
 mod error {

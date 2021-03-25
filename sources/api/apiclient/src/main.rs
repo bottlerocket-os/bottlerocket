@@ -6,7 +6,7 @@
 // library calls based on the given flags, etc.)  The library modules contain the code for talking
 // to the API, which is intended to be reusable by other crates.
 
-use apiclient::{reboot, set, update};
+use apiclient::{apply, reboot, set, update};
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
 use simplelog::{ConfigBuilder as LogConfigBuilder, LevelFilter, TermLogger, TerminalMode};
@@ -39,10 +39,17 @@ impl Default for Args {
 /// Stores the usage mode specified by the user as a subcommand.
 #[derive(Debug)]
 enum Subcommand {
+    Apply(ApplyArgs),
     Raw(RawArgs),
     Reboot(RebootArgs),
     Set(SetArgs),
     Update(UpdateSubcommand),
+}
+
+/// Stores user-supplied arguments for the 'apply' subcommand.
+#[derive(Debug)]
+struct ApplyArgs {
+    input_sources: Vec<String>,
 }
 
 /// Stores user-supplied arguments for the 'raw' subcommand.
@@ -67,25 +74,25 @@ enum SetArgs {
 /// Stores the 'update' subcommand specified by the user.
 #[derive(Debug)]
 enum UpdateSubcommand {
-    Check(CheckArgs),
-    Apply(ApplyArgs),
-    Cancel(CancelArgs),
+    Check(UpdateCheckArgs),
+    Apply(UpdateApplyArgs),
+    Cancel(UpdateCancelArgs),
 }
 
 /// Stores user-supplied arguments for the 'update check' subcommand.
 #[derive(Debug)]
-struct CheckArgs {}
+struct UpdateCheckArgs {}
 
 /// Stores user-supplied arguments for the 'update apply' subcommand.
 #[derive(Debug)]
-struct ApplyArgs {
+struct UpdateApplyArgs {
     check: bool,
     reboot: bool,
 }
 
 /// Stores user-supplied arguments for the 'update cancel' subcommand.
 #[derive(Debug)]
-struct CancelArgs {}
+struct UpdateCancelArgs {}
 
 /// Informs the user about proper usage of the program and exits.
 fn usage() -> ! {
@@ -101,6 +108,8 @@ fn usage() -> ! {
         Subcommands:
             raw                        Makes an HTTP request and prints the response on stdout.
                                        'raw' is the default subcommand and may be omitted.
+            apply                      Applies settings from TOML/JSON files at given URIs,
+                                       or from stdin.
             set                        Changes settings and applies them to the system.
             update check               Prints information about available updates.
             update apply               Applies available updates.
@@ -111,6 +120,11 @@ fn usage() -> ! {
             -u, --uri URI              Required; URI to request from the server, e.g. /tx
             -m, -X, --method METHOD    HTTP method to use in request.  Default: {method}
             -d, --data DATA            Data to include in the request body.  Default: empty
+
+        apply options:
+            [ URI ...]                 The list of URIs to TOML or JSON settings files that you
+                                       want to apply to the system.  If no URI is specified, or
+                                       if "-" is given, reads from stdin.
 
         reboot options:
             None.
@@ -182,7 +196,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
             }
 
             // Subcommands
-            "raw" | "reboot" | "set" | "update"
+            "raw" | "apply" | "reboot" | "set" | "update"
                 if subcommand.is_none() && !arg.starts_with('-') =>
             {
                 subcommand = Some(arg)
@@ -196,6 +210,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
     match subcommand.as_deref() {
         // Default subcommand is 'raw'
         None | Some("raw") => return (global_args, parse_raw_args(subcommand_args)),
+        Some("apply") => return (global_args, parse_apply_args(subcommand_args)),
         Some("reboot") => return (global_args, parse_reboot_args(subcommand_args)),
         Some("set") => return (global_args, parse_set_args(subcommand_args)),
         Some("update") => return (global_args, parse_update_args(subcommand_args)),
@@ -243,6 +258,30 @@ fn parse_raw_args(args: Vec<String>) -> Subcommand {
         uri: uri.unwrap_or_else(|| usage_msg("Missing required argument '--uri'")),
         data,
     })
+}
+
+/// Parses arguments for the 'apply' subcommand.
+fn parse_apply_args(args: Vec<String>) -> Subcommand {
+    let mut input_sources = Vec::new();
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg {
+            // Allow "-" for stdin, but we have no other parameters.
+            x if x.starts_with("-") && x != "-" => {
+                usage_msg("apiclient apply takes no parameters, just a list of URIs.")
+            }
+
+            x => input_sources.push(x),
+        }
+    }
+
+    if input_sources.is_empty() {
+        // Read from stdin if no URIs were given.
+        input_sources.push("-".to_string());
+    }
+
+    Subcommand::Apply(ApplyArgs { input_sources })
 }
 
 /// Parses arguments for the 'reboot' subcommand.
@@ -355,9 +394,9 @@ fn parse_update_args(args: Vec<String>) -> Subcommand {
     }
 
     let update = match subcommand.as_deref() {
-        Some("check") => parse_check_args(subcommand_args),
-        Some("apply") => parse_apply_args(subcommand_args),
-        Some("cancel") => parse_cancel_args(subcommand_args),
+        Some("check") => parse_update_check_args(subcommand_args),
+        Some("apply") => parse_update_apply_args(subcommand_args),
+        Some("cancel") => parse_update_cancel_args(subcommand_args),
         _ => usage_msg("Missing or unknown subcommand for 'update'"),
     };
 
@@ -365,15 +404,15 @@ fn parse_update_args(args: Vec<String>) -> Subcommand {
 }
 
 /// Parses arguments for the 'update check' subcommand.
-fn parse_check_args(args: Vec<String>) -> UpdateSubcommand {
+fn parse_update_check_args(args: Vec<String>) -> UpdateSubcommand {
     if !args.is_empty() {
         usage_msg(&format!("Unknown arguments: {}", args.join(", ")));
     }
-    UpdateSubcommand::Check(CheckArgs {})
+    UpdateSubcommand::Check(UpdateCheckArgs {})
 }
 
 /// Parses arguments for the 'update apply' subcommand.
-fn parse_apply_args(args: Vec<String>) -> UpdateSubcommand {
+fn parse_update_apply_args(args: Vec<String>) -> UpdateSubcommand {
     let mut check = false;
     let mut reboot = false;
 
@@ -387,15 +426,15 @@ fn parse_apply_args(args: Vec<String>) -> UpdateSubcommand {
         }
     }
 
-    UpdateSubcommand::Apply(ApplyArgs { check, reboot })
+    UpdateSubcommand::Apply(UpdateApplyArgs { check, reboot })
 }
 
 /// Parses arguments for the 'update cancel' subcommand.
-fn parse_cancel_args(args: Vec<String>) -> UpdateSubcommand {
+fn parse_update_cancel_args(args: Vec<String>) -> UpdateSubcommand {
     if !args.is_empty() {
         usage_msg(&format!("Unknown arguments: {}", args.join(", ")));
     }
-    UpdateSubcommand::Cancel(CancelArgs {})
+    UpdateSubcommand::Cancel(UpdateCancelArgs {})
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -406,7 +445,7 @@ fn parse_cancel_args(args: Vec<String>) -> UpdateSubcommand {
 async fn check(args: &Args) -> Result<String> {
     let output = update::check(&args.socket_path)
         .await
-        .context(error::Check)?;
+        .context(error::UpdateCheck)?;
 
     match serde_json::from_str::<serde_json::Value>(&output) {
         Ok(value) => println!("{:#}", value),
@@ -492,6 +531,12 @@ async fn run() -> Result<()> {
             }
         }
 
+        Subcommand::Apply(apply) => {
+            apply::apply(&args.socket_path, apply.input_sources)
+                .await
+                .context(error::Apply)?;
+        }
+
         Subcommand::Reboot(_reboot) => {
             reboot::reboot(&args.socket_path)
                 .await
@@ -541,7 +586,7 @@ async fn run() -> Result<()> {
 
                 update::apply(&args.socket_path)
                     .await
-                    .context(error::Apply)?;
+                    .context(error::UpdateApply)?;
 
                 // If the user requested it, and if we applied an update, reboot.  (update::apply
                 // will fail if no update was available or it couldn't apply the update.)
@@ -557,7 +602,7 @@ async fn run() -> Result<()> {
             UpdateSubcommand::Cancel(_cancel) => {
                 update::cancel(&args.socket_path)
                     .await
-                    .context(error::Cancel)?;
+                    .context(error::UpdateCancel)?;
             }
         },
     }
@@ -577,20 +622,14 @@ async fn main() {
 }
 
 mod error {
-    use apiclient::{reboot, set, update};
+    use apiclient::{apply, reboot, set, update};
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub enum Error {
-        #[snafu(display("Failed to apply update: {}", source))]
-        Apply { source: update::Error },
-
-        #[snafu(display("Failed to cancel update: {}", source))]
-        Cancel { source: update::Error },
-
-        #[snafu(display("Failed to check for updates: {}", source))]
-        Check { source: update::Error },
+        #[snafu(display("Failed to apply settings: {}", source))]
+        Apply { source: apply::Error },
 
         #[snafu(display("Unable to deserialize input JSON into model: {}", source))]
         DeserializeJson { source: serde_json::Error },
@@ -621,6 +660,15 @@ mod error {
 
         #[snafu(display("Failed to change settings: {}", source))]
         Set { source: set::Error },
+
+        #[snafu(display("Failed to apply update: {}", source))]
+        UpdateApply { source: update::Error },
+
+        #[snafu(display("Failed to cancel update: {}", source))]
+        UpdateCancel { source: update::Error },
+
+        #[snafu(display("Failed to check for updates: {}", source))]
+        UpdateCheck { source: update::Error },
     }
 }
 type Result<T> = std::result::Result<T, error::Error>;
