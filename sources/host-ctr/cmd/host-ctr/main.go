@@ -213,6 +213,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 			oci.WithHostNamespace(runtimespec.NetworkNamespace),
 			oci.WithHostHostsFile,
 			oci.WithHostResolvconf,
+			// Set environment variable for host containers to reference their name.
+			// This is essential for containers to reference their persistent storage location.
+			oci.WithEnv([]string{"HOST_CONTAINER_NAME=" + containerID}),
 			// Mount in the API socket for the Bottlerocket API server, and the API
 			// client used to interact with it
 			oci.WithMounts([]runtimespec.Mount{
