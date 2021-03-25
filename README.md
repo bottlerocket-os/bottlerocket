@@ -171,26 +171,35 @@ For the ECS preview variant of Bottlerocket, we recommend updating hosts using o
 
 #### Update API
 
-The [Bottlerocket API](#api) includes methods for checking and starting system updates.  You can read more about the update APIs in our [update system documentation](sources/updater/README.md#update-api).
+The [Bottlerocket API](#api) includes methods for checking and starting system updates.
+You can read more about the update APIs in our [update system documentation](sources/updater/README.md#update-api).
 
-#### Updog
+apiclient knows how to handle those update APIs for you, and you can run it from the [control](#control-container) or [admin](#admin-container) containers.
 
-You can update Bottlerocket using a CLI tool, `updog`, if you [connect through the admin container](#admin-container).
-
-Here's how you can see whether there's an update:
-
+To see what updates are available:
 ```
-updog check-update
+apiclient update check
 ```
+If an update is available, it will show up in the `chosen_update` field.
+The `available_updates` field will show the full list of available versions, including older versions, because Bottlerocket supports safely rolling back.
 
-Here's how you initiate an update:
-
+To apply the latest update:
 ```
-updog update
-reboot
+apiclient update apply
 ```
 
-(If you know what you're doing and want to update *now*, you can run `updog update --reboot --now`)
+The next time you reboot, you'll start up in the new version, and system configuration will be automatically [migrated](sources/api/migration/).
+To reboot right away:
+```
+apiclient reboot
+```
+
+If you're confident about updating, the `apiclient update apply` command has `--check` and `--reboot` flags to combine the above actions, so you can accomplish all of the above steps like this:
+```
+apiclient update apply --check --reboot
+```
+
+See the [apiclient documentation](sources/api/apiclient/) for more details.
 
 #### Bottlerocket Update Operator
 
@@ -205,6 +214,8 @@ If the update is not functional for a given container workload, you can do a man
 signpost rollback-to-inactive
 reboot
 ```
+
+This doesn't require any external communication, so it's quicker than `apiclient`, and it's made to be as reliable as possible.
 
 ## Settings
 
