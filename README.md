@@ -145,8 +145,7 @@ enable-admin-container
 If you're using a custom control container, or want to make the API calls directly, you can enable the admin container like this instead:
 
 ```
-apiclient -u /settings -m PATCH -d '{"host-containers": {"admin": {"enabled": true}}}'
-apiclient -u /tx/commit_and_apply -m POST
+apiclient set host-containers.admin.enabled=true
 ```
 
 Once you're in the admin container, you can run `sheltie` to get a full root shell in the Bottlerocket host.
@@ -227,33 +226,13 @@ For example, here's an abbreviated response:
 {"motd":"...", {"kubernetes": ...}}
 ```
 
-You can change settings by sending back the same type of JSON data in a PATCH request.
-This can include any number of settings changes.
+You can change settings like this:
 ```
-apiclient -m PATCH -u /settings -d '{"motd": "my own value!"}'
-```
-
-This will *stage* the setting in a "pending" area - a transaction.
-You can see all your pending settings like this:
-```
-apiclient -u /tx
+apiclient set motd="hi there" kubernetes.node-labels.environment=test
 ```
 
-To *commit* the settings, and let the system apply them to any relevant configuration files or services, do this:
-```
-apiclient -m POST -u /tx/commit_and_apply
-```
-
-Behind the scenes, these commands are working with the "default" transaction.
-This keeps the interface simple.
-System services use their own transactions, so you don't have to worry about conflicts.
-For example, there's a "bottlerocket-launch" transaction used to coordinate changes at startup.
-
-If you want to group sets of changes yourself, pick a transaction name and append a `tx` parameter to the URLs above.
-For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` and `POST` to `/tx/commit_and_apply?tx=FOO`.
-(Transactions are created automatically when used, and are cleaned up on reboot.)
-
-For more details on using the client, see the [apiclient documentation](sources/api/apiclient/).
+You can also use a JSON input mode to help change many related settings at once, and a "raw" mode if you want more control over how the settings are committed and applied to the system.
+See the [apiclient README](sources/api/apiclient/) for details.
 
 #### Using user data
 
@@ -428,8 +407,10 @@ Keep in mind that the default admin container (since Bottlerocket v1.0.6) relies
 
 Here's an example of adding a custom host container with API calls:
 ```
-apiclient -u /settings -X PATCH -d '{"host-containers": {"custom": {"source": "MY-CONTAINER-URI", "enabled": true, "superpowered": false}}}'
-apiclient -u /tx/commit_and_apply -X POST
+apiclient set \
+   host-containers.custom.source=MY-CONTAINER-URI \
+   host-containers.custom.enabled=true \
+   host-containers.custom.superpowered=false
 ```
 
 Here's the same example, but with the settings you'd add to user data:
