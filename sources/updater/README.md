@@ -2,10 +2,11 @@
 This document describes the Bottlerocket update system and its components, namely;
 
 - [tough](#tuf-and-tough): implementation of "The Update Framework" (TUF)
-- [updog](#updog): update client that interfaces with a TUF repository to find and apply updates
+- [Bottlerocket update API](#update-api): allows for checking and starting system updates from TUF repo
+- [apiclient](../api/apiclient/README.md): automates interactions with the update API
+- [updog](#whats-updog): low-level client that interfaces with a TUF repository to find and apply updates
 - [signpost](#signpost): helper tool to update partition priority flags
 - [Bottlerocket update operator (brupop)](https://github.com/bottlerocket-os/bottlerocket-update-operator): an optional component that coordinates node updates with the rest of the cluster
-- [Bottlerocket update API](#update-api): a set of API calls for checking and starting system updates
 
 ![Update overview](update-system.png)
 ## TUF and tough
@@ -30,9 +31,12 @@ For Bottlerocket this includes a 'manifest.json' file and any update images or m
 Update metadata and files can be found by requesting and verifying these metadata files in order, and then requesting the manifest.json target which describes all available updates.
 Any file listed in the manifest is also a TUF 'target' listed in targets.json and can only be downloaded via the TUF repository, preventing the client from downloading untrusted data.
 
-## Updog
-Updog is the client tool that interacts with a 'The Update Framework' (TUF) repository to download and write updates to a Bottlerocket partition.
+## What's Updog
+[Updog](updog/) is a low-level update client, used behind the scenes by the update API, that interacts with a 'The Update Framework' (TUF) repository to download and write updates to a Bottlerocket partition.
 Updog will parse the manifest.json file from the TUF repository and will update to a new image if the following criteria are satisfied:
+
+(Most users should use [apiclient](../api/apiclient/README.md) to control updates, rather than using updog directly.)
+
 ### Version & Variant
 By default Updog only considers updates resulting in a version increase; downgrades are possible by using the `--image` option to force a specific version.
 Updog will respect the `max_version` field in the update manifest and refuse to update beyond it.
