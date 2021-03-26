@@ -10,6 +10,23 @@ There's also a low-level `raw` subcommand for direct interaction with the HTTP A
 It talks to the Bottlerocket socket by default.
 It can be pointed to another socket using `--socket-path`, for example for local testing.
 
+The most important use is probably checking your current settings:
+
+```
+apiclient -u /settings
+```
+
+You can also request the values of specific settings using `keys`:
+```
+apiclient -u /settings?keys=settings.motd,settings.kernel.lockdown
+```
+
+Or, request all settings whose names start with a given `prefix`.
+(Note: here, the prefix should not start with "settings." since it's assumed.)
+```
+apiclient -u /settings?prefix=host-containers.admin
+```
+
 ### Set mode
 
 This allows you to change settings on the system.
@@ -109,28 +126,44 @@ Specify the data after `-d` or `--data`.
 
 To see verbose response data, including the HTTP status code, use `-v` or `--verbose`.
 
-#### Examples
+#### Raw mode walkthrough
 
-Getting settings:
-
-```
-apiclient raw -m GET -u /settings
-```
-
-Changing settings:
+To fetch the current settings:
 
 ```
-apiclient raw -X PATCH -u /settings -d '{"motd": "my own value!"}'
+apiclient raw -u /settings
+```
+
+This will return all of the current settings in JSON format.
+For example, here's an abbreviated response:
+```
+{"motd":"...", {"kubernetes": ...}}
+
+You can change settings by sending back the same type of JSON data in a PATCH request.
+This can include any number of settings changes.
+```
+apiclient raw -m PATCH -u /settings -d '{"motd": "my own value!"}'
+```
+
+This will *stage* the setting in a "pending" area - a transaction.
+You can see all your pending settings like this:
+```
+apiclient raw -u /tx
+```
+
+To *commit* the settings, and let the system apply them to any relevant configuration files or services, do this:
+```
 apiclient raw -m POST -u /tx/commit_and_apply
 ```
 
-You can also check what you've changed but not commited by looking at the pending transaction:
+Behind the scenes, these commands are working with the "default" transaction.
+This keeps the interface simple.
+System services use their own transactions, so you don't have to worry about conflicts.
+For example, there's a "bottlerocket-launch" transaction used to coordinate changes at startup.
 
-```
-apiclient raw -m GET -u /tx
-```
-
-(You can group changes into transactions by adding a parameter like `?tx=FOO` to the calls above.)
+If you want to group sets of changes yourself, pick a transaction name and append a `tx` parameter to the URLs above.
+For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` and `POST` to `/tx/commit_and_apply?tx=FOO`.
+(Transactions are created automatically when used, and are cleaned up on reboot.)
 
 ## apiclient library
 
