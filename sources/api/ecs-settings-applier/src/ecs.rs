@@ -33,6 +33,9 @@ struct ECSConfig {
     #[serde(skip_serializing_if = "std::vec::Vec::is_empty")]
     available_logging_drivers: Vec<String>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    spot_instance_draining_enabled: Option<bool>,
+
     #[serde(rename = "TaskIAMRoleEnabled")]
     task_iam_role_enabled: bool,
 
@@ -45,8 +48,8 @@ struct ECSConfig {
     #[serde(rename = "OverrideAWSLogsExecutionRole")]
     override_awslogs_execution_role: bool,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    spot_instance_draining_enabled: Option<bool>,
+    #[serde(rename = "TaskENIEnabled")]
+    task_eni_enabled: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -95,6 +98,9 @@ async fn run() -> Result<()> {
         // Always supported with Docker newer than v17.11.0
         // See https://github.com/docker/engine/commit/c7cc9d67590dd11343336c121e3629924a9894e9
         override_awslogs_execution_role: true,
+
+        // awsvpc mode is always available
+        task_eni_enabled: true,
         ..Default::default()
     };
     if let Some(os) = settings.os {
