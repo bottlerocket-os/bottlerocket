@@ -1,9 +1,7 @@
 /.git
 /.gomodcache
-/build/**/*.img
-/build/**/*.lz4
-/build/**/*.xz
-/build/**/*.tar
-/build/**/*-debuginfo-*.rpm
-/build/**/*-debugsource-*.rpm
+/build/*
+!/build/rpms/*.rpm
+/build/rpms/*-debuginfo-*.rpm
+/build/rpms/*-debugsource-*.rpm
 **/target/*
