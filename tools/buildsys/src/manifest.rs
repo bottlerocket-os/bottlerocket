@@ -163,6 +163,7 @@ pub(crate) struct BuildVariant {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ImageFormat {
+    Qcow2,
     Raw,
     Vmdk,
 }
