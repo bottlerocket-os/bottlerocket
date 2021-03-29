@@ -604,3 +604,122 @@ mod test_kubernetes_threshold_value {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesReservedResourceKey represents a string that contains a valid Kubernetes kubeReserved
+/// and systemReserved resources i.e. cpu, memory.
+/// https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesReservedResourceKey {
+    inner: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ReservedResources {
+    Cpu,
+    Memory,
+    #[serde(rename = "ephemeral-storage")]
+    EphemeralStorage,
+}
+
+impl TryFrom<&str> for KubernetesReservedResourceKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ReservedResources>(&input).context(error::InvalidPlainValue {
+            field: "Reserved sources key",
+        })?;
+        Ok(KubernetesReservedResourceKey {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(
+    KubernetesReservedResourceKey,
+    "KubernetesReservedResourceKey"
+);
+
+#[cfg(test)]
+mod test_reserved_resources_key {
+    use super::KubernetesReservedResourceKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_reserved_resources_key() {
+        for ok in &["cpu", "memory", "ephemeral-storage"] {
+            KubernetesReservedResourceKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_reserved_resources_key() {
+        for err in &["", "cpa", ".bad", "bad.", &"a".repeat(64)] {
+            KubernetesReservedResourceKey::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+/// // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesQuantityValue represents a string that contains a valid kubernetes quantity value.
+/// https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesQuantityValue {
+    inner: String,
+}
+
+impl TryFrom<&str> for KubernetesQuantityValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            KUBERNETES_QUANTITY.is_match(input),
+            error::Pattern {
+                thing: "Kubernetes quantity",
+                pattern: KUBERNETES_QUANTITY.clone(),
+                input
+            }
+        );
+
+        Ok(KubernetesQuantityValue {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(KubernetesQuantityValue, "KubernetesQuantityValue");
+
+#[cfg(test)]
+mod test_kubernetes_quantity_value {
+    use super::KubernetesQuantityValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_kubernetes_quantity_value() {
+        for ok in &[
+            "129e6", "10Mi", "1024M", "1Gi", "120Ki", "1Ti", "1000n", "100m",
+        ] {
+            KubernetesQuantityValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_kubernetes_quantity_value() {
+        for err in &[
+            "",
+            "12%",
+            "anything%",
+            "12ki",
+            "100e23m",
+            "1100KTi",
+            "100Kiii",
+            "1000i",
+            &"a".repeat(64),
+        ] {
+            KubernetesQuantityValue::try_from(*err).unwrap_err();
+        }
+    }
+}

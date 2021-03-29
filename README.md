@@ -336,6 +336,11 @@ The following settings are set for you automatically by [pluto](sources/api/) ba
 * `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
+* `settings.kubernetes.kube-reserved`: Resources reserved for node components.
+  * Bottlerocket provides default values for the resources by [schnauzer](sources/api/):
+    * `cpu`: in millicores from the total number of vCPUs available on the instance.
+    * `memory`: in mebibytes from the max num of pods on the instance. `memory_to_reserve = max_num_pods * 11 + 255`.
+    * `ephemeral-storage`: defaults to `1Gi`.
 
 #### Amazon ECS settings
 

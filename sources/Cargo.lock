@@ -2654,6 +2654,7 @@ dependencies = [
  "lazy_static",
  "log",
  "models",
+ "num_cpus",
  "percent-encoding",
  "serde",
  "serde_json",
