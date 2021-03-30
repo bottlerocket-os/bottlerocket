@@ -345,7 +345,7 @@ docker run --rm \
 ]
 
 [tasks.build-archives]
-dependencies = ["build-kmod-kit"]
+dependencies = ["build-kmod-kit", "build-ova"]
 
 [tasks.build-variant]
 dependencies = ["build-packages"]
@@ -560,6 +560,17 @@ done
 # Include the kmod kit in the repo so it's easier to build out-of-tree kernel
 # modules for a given release.
 LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
+
+# Ensure we link an OVA if an OVF template exists (in which case we should have
+# built an OVA)
+if [ -s "${BUILDSYS_OVF_TEMPLATE}" ]; then
+   if [ -s "${BUILDSYS_OVA_PATH}" ]; then
+      LINK_REPO_TARGETS+=("--link-target ${BUILDSYS_OVA_PATH}")
+   else
+      echo "An OVA doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL}. An OVA is required to build a repo" >&2
+      exit 1
+   fi
+fi
 
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
