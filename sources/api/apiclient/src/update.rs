@@ -249,7 +249,7 @@ where
                 (wait.max_attempts * wait.between_attempts) - (attempt * wait.between_attempts)
             );
         }
-        time::delay_for(wait.between_attempts).await; // time::sleep in tokio v0.3
+        time::sleep(wait.between_attempts).await;
         waited += wait.between_attempts;
 
         // Get updated status to see if anything's changed.

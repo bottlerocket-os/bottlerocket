@@ -12,7 +12,6 @@ use bottlerocket_release::BottlerocketRelease;
 use datastore::{Committed, FilesystemDataStore, Key, Value};
 use error::Result;
 use fs2::FileExt;
-use futures::future;
 use http::StatusCode;
 use log::info;
 use model::{ConfigurationFiles, Model, Services, Settings};
@@ -518,17 +517,14 @@ struct SharedDataStore {
 macro_rules! impl_responder_for {
     ($for:ident, $self:ident, $serialize_expr:expr) => (
         impl Responder for $for {
-            type Error = error::Error;
-            type Future = future::Ready<Result<HttpResponse>>;
-
-            fn respond_to($self, _req: &HttpRequest) -> Self::Future {
+            fn respond_to($self, _req: &HttpRequest) -> HttpResponse {
                 let body = match serde_json::to_string(&$serialize_expr) {
                     Ok(s) => s,
-                    Err(e) => return future::ready(Err(e).context(error::ResponseSerialization)),
+                    Err(e) => return Error::ResponseSerialization { source: e }.error_response(),
                 };
-                future::ready(Ok(HttpResponse::Ok()
+                HttpResponse::Ok()
                     .content_type("application/json")
-                    .body(body)))
+                    .body(body)
             }
         }
     )
