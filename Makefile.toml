@@ -116,6 +116,11 @@ PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH
 BUILDSYS_KMOD_KIT = "${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
 BUILDSYS_KMOD_KIT_PATH="${BUILDSYS_ARCHIVES_DIR}/${BUILDSYS_KMOD_KIT}.tar.xz"
 
+# The name of the OVA bundle that will be built if the current variant builds VMDK artifacts
+BUILDSYS_OVA = "${BUILDSYS_NAME_FULL}.ova"
+BUILDSYS_OVA_PATH="${BUILDSYS_ARCHIVES_DIR}/${BUILDSYS_OVA}"
+BUILDSYS_OVF_TEMPLATE="${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/template.ovf"
+
 [tasks.setup]
 script = [
 '''
@@ -351,6 +356,77 @@ cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path variants/${BUILDSYS_VARIANT}/Cargo.toml
+'''
+]
+
+[tasks.build-ova]
+script_runner = "bash"
+script = [
+'''
+set -e -o pipefail
+
+cleanup() {
+   [ -n "${ova_tmp_dir}" ] && rm -rf "${ova_tmp_dir}"
+}
+trap 'cleanup' EXIT
+
+root_vmdk_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.vmdk"
+data_vmdk_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.vmdk"
+ova_tmp_dir="$(mktemp -d)"
+ovf="${BUILDSYS_NAME_FULL}.ovf"
+manifest="${BUILDSYS_NAME_FULL}.mf"
+
+# Short circuit if neither VMDK images nor an OVF template exist
+if [ ! -s "${BUILDSYS_OVF_TEMPLATE}" ] && \
+   [[ ! -s "${root_vmdk_path}" || ! -s "${data_vmdk_path}" ]]; then
+   echo "No OVF template or VMDK images, skipping OVA build"
+   exit 0
+fi
+
+# Warn the user if VMDK's exist but an OVF template does not.  Assume we do not
+# need to build an OVA in this case
+if [ ! -s "${BUILDSYS_OVF_TEMPLATE}" ] && \
+   [[ -s "${root_vmdk_path}" || -s "${data_vmdk_path}" ]]; then
+   echo "VMDK images exist, but OVF template '${BUILDSYS_OVF_TEMPLATE}' doesn't exist, skipping OVA build"
+   exit 0
+fi
+
+# If an OVF template exists but either of the images do not exist, fail
+if [ -s "${BUILDSYS_OVF_TEMPLATE}" ] && \
+   [[ ! -s "${root_vmdk_path}" || ! -s  "${data_vmdk_path}" ]]; then
+   echo "OVF template exists but VMDK images don't exist for the current version/commit - ${BUILDSYS_VERSION_FULL}. Unable to build an OVA" >&2
+   exit 1
+fi
+
+# Don't build a new OVA if the current one is newer than the images
+if [ -s "${BUILDSYS_OVA_PATH}" ] && \
+   [ "${BUILDSYS_OVA_PATH}" -nt "${root_vmdk_path}" ] && \
+   [ "${BUILDSYS_OVA_PATH}" -nt "${data_vmdk_path}" ]; then
+   echo "Existing OVA ${BUILDSYS_OVA_PATH} is newer than VMDKs for ${BUILDSYS_NAME_FULL}; skipping OVA build."
+   exit 0
+fi
+
+mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
+
+# Create the OVF with the correct values
+sed "${BUILDSYS_OVF_TEMPLATE}" \
+   -e "s/{{ROOT_DISK}}/${root_vmdk_path##*/}/g" \
+   -e "s/{{DATA_DISK}}/${data_vmdk_path##*/}/g" \
+   > "${ova_tmp_dir}/${ovf}"
+
+# Create the manifest file with the SHA's of the VMDK's and the OVF
+root_sha256="$(sha256sum ${root_vmdk_path} | awk '{print $1}')"
+data_sha256="$(sha256sum ${data_vmdk_path} | awk '{print $1}')"
+ovf_sha256="$(sha256sum ${ova_tmp_dir}/${ovf} | awk '{print $1}')"
+echo "SHA256(${root_vmdk_path##*/})= ${root_sha256}" > "${ova_tmp_dir}/${manifest}"
+echo "SHA256(${data_vmdk_path##*/})= ${data_sha256}" >> "${ova_tmp_dir}/${manifest}"
+echo "SHA256(${ovf})= ${ovf_sha256}" >> "${ova_tmp_dir}/${manifest}"
+
+cp "${root_vmdk_path}" "${ova_tmp_dir}"
+cp "${data_vmdk_path}" "${ova_tmp_dir}"
+
+tar -cf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${manifest}" "${ovf}" "${root_vmdk_path##*/}" "${data_vmdk_path##*/}"
+mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_ARCHIVES_DIR}"
 '''
 ]
 
