@@ -227,6 +227,8 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 					Destination: "/usr/local/bin/apiclient",
 					Source:      "/usr/bin/apiclient",
 				}}),
+			// Pass proxy environment variables to this container
+			withProxyEnv(),
 			// Mount in the persistent storage location for this container
 			withPersistentStorage(containerID),
 			// Mount the rootfs with an SELinux label that makes it writable
@@ -604,6 +606,22 @@ func withPersistentStorage(containerID string) oci.SpecOpts {
 		})
 	}
 	return oci.Compose(oci.WithMounts(persistentMounts))
+}
+
+// withProxyEnv reads proxy environment variables and returns a spec option for passing said proxy environment variables
+func withProxyEnv() oci.SpecOpts {
+	noOp := func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error { return nil }
+	httpsProxy, httpsProxySet := os.LookupEnv("HTTPS_PROXY")
+	noProxy, noProxySet := os.LookupEnv("NO_PROXY")
+	withHttpsProxy := noOp
+	withNoProxy := noOp
+	if httpsProxySet {
+		withHttpsProxy = oci.WithEnv([]string{"HTTPS_PROXY=" + httpsProxy, "https_proxy=" + httpsProxy})
+	}
+	if noProxySet {
+		withNoProxy = oci.WithEnv([]string{"NO_PROXY=" + noProxy, "no_proxy=" + noProxy})
+	}
+	return oci.Compose(withHttpsProxy, withNoProxy)
 }
 
 // pullImage pulls an image from the specified source.

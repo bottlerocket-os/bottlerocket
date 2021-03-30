@@ -72,4 +72,4 @@ affected-services = ["static-pods"]
 
 # Network
 [metadata.settings.network]
-affected-services = ["containerd", "kubernetes", "host-containerd"]
+affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]

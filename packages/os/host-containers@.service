@@ -5,6 +5,7 @@ Wants=host-containerd.service
 
 [Service]
 Type=simple
+EnvironmentFile=/etc/network/proxy.env
 EnvironmentFile=/etc/host-containers/%i.env
 Environment=LOCAL_DIR=/local
 # Create directories for container persistent storage

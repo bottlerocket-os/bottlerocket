@@ -9,7 +9,7 @@ configuration-files = ["proxy-env"]
 
 # Network
 [metadata.settings.network]
-affected-services = ["containerd", "docker", "host-containerd"]
+affected-services = ["containerd", "docker", "host-containerd", "host-containers"]
 
 # NTP
 # Use a public endpoint, don't assume any local ones.
