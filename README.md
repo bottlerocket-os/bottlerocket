@@ -411,7 +411,7 @@ If you're running a Kubernetes variant, the no-proxy list will automatically inc
 Beyond just changing the settings above to affect the `admin` and `control` containers, you can add and remove host containers entirely.
 As long as you define the three fields above -- `source` with a URI, and `enabled` and `superpowered` with true/false -- you can add host containers with an API call or user data.
 
-You can optionally define a `user-data` field with arbitrary base64-encoded data, which will be made available in the container at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME/user-data`.
+You can optionally define a `user-data` field with arbitrary base64-encoded data, which will be made available in the container at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME/user-data` and (since Bottlerocket v1.0.8) `/.bottlerocket/host-containers/current/user-data`.
 (It was inspired by instance user data, but is entirely separate; it can be any data your host container feels like interpreting.)
 
 Keep in mind that the default admin container (since Bottlerocket v1.0.6) relies on `user-data` to store SSH keys.  You can set `user-data` to [customize the keys](https://github.com/bottlerocket-os/bottlerocket-admin-container/#authenticating-with-the-admin-container), or you can use it for your own purposes in a custom container.
@@ -436,7 +436,8 @@ If the `enabled` flag is `true`, it will be started automatically.
 
 All host containers will have the `apiclient` binary available at `/usr/local/bin/apiclient` so they're able to [interact with the API](#using-the-api-client).
 
-In addition, all host containers come with persistent storage at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME` that is persisted across reboots and container start/stop cycles.
+In addition, all host containers come with persistent storage that survives reboots and container start/stop cycles.
+It's available at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME` and (since Bottlerocket v1.0.8) `/.bottlerocket/host-containers/current`.
 The default `admin` host-container, for example, stores its SSH host keys under `/.bottlerocket/host-containers/admin/etc/ssh/`.
 
 There are a few important caveats to understand about host containers:

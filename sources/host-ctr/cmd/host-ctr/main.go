@@ -226,13 +226,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 					Options:     []string{"bind", "ro"},
 					Destination: "/usr/local/bin/apiclient",
 					Source:      "/usr/bin/apiclient",
-				},
-				// Mount in the persistent storage location for this container
-				{
-					Options:     []string{"rbind", "rw"},
-					Destination: "/.bottlerocket/host-containers/" + containerID,
-					Source:      "/local/host-containers/" + containerID,
 				}}),
+			// Mount in the persistent storage location for this container
+			withPersistentStorage(containerID),
 			// Mount the rootfs with an SELinux label that makes it writable
 			withMountLabel("system_u:object_r:state_t:s0"),
 			// Include conditional options for superpowered containers.
@@ -588,6 +584,26 @@ func withSuperpowered(superpowered bool) oci.SpecOpts {
 				Source:      "/sys/kernel/debug",
 			}}),
 	)
+}
+
+// withPersistentStorage add persistent storage location that matches the container name
+// (legacy location) and a generically named `current` dir. The `current` dir was added for easier
+// referencing in Dockerfiles and scripts. If a host container is also named `current` this function
+// will only add a single `current` mount to the spec.
+func withPersistentStorage(containerID string) oci.SpecOpts {
+	var persistentMounts = []runtimespec.Mount{{
+		Options:     []string{"rbind", "rw"},
+		Destination: "/.bottlerocket/host-containers/" + containerID,
+		Source:      "/local/host-containers/" + containerID,
+	}}
+	if containerID != "current" {
+		persistentMounts = append(persistentMounts, runtimespec.Mount{
+			Options:     []string{"rbind", "rw"},
+			Destination: "/.bottlerocket/host-containers/current",
+			Source:      "/local/host-containers/" + containerID,
+		})
+	}
+	return oci.Compose(oci.WithMounts(persistentMounts))
 }
 
 // pullImage pulls an image from the specified source.
