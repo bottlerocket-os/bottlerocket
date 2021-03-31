@@ -2,6 +2,8 @@
 Description=Host container: %i
 After=host-containerd.service
 Wants=host-containerd.service
+StartLimitBurst=5
+StartLimitIntervalSec=300s
 
 [Service]
 Type=simple
