@@ -220,8 +220,10 @@
 (allow trusted_s global (systems (manage)))
 
 ; dbus-broker implements DBUS and uses SELinux for access control.
+; It also queries systemd for job status.
 (allow bus_t global (dbus (all)))
 (allow bus_t global (security (compute_av)))
+(allow bus_t init_t (system (status)))
 
 ; wicked needs DBUS for IPC.
 (allow network_t bus_t (dbus (all)))
