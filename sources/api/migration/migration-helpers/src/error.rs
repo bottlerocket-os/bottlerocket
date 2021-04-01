@@ -87,6 +87,18 @@ pub enum Error {
         setting: String,
         data: Vec<serde_json::Value>,
     },
+
+    #[snafu(display(
+        "Metadata '{}' for setting '{}' contains non-string item: {:?}",
+        metadata,
+        setting,
+        data
+    ))]
+    ReplaceMetadataListContents {
+        setting: String,
+        metadata: String,
+        data: Vec<serde_json::Value>,
+    },
 }
 
 /// Result alias containing our Error type.
