@@ -98,6 +98,7 @@ impl VariantBuilder {
             "IMAGE_FORMAT",
             match image_format {
                 Some(ImageFormat::Raw) | None => "raw",
+                Some(ImageFormat::Qcow2) => "qcow2",
                 Some(ImageFormat::Vmdk) => "vmdk",
             },
         );

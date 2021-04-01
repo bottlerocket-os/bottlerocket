@@ -15,7 +15,7 @@ for opt in "$@"; do
 done
 
 case "${OUTPUT_FMT}" in
-   raw|vmdk) ;;
+   raw|qcow2|vmdk) ;;
    *)
       echo "unexpected image output format '${OUTPUT_FMT}'" >&2
       exit 1
@@ -222,22 +222,20 @@ sgdisk -v "${DATA_IMAGE}"
 if [[ ${OUTPUT_FMT} == "raw" ]]; then
   lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.img.lz4"
   lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
-  chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.img.lz4" \
-    "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+elif [[ ${OUTPUT_FMT} == "qcow2" ]]; then
+  qemu-img convert -f raw -O qcow2 "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.qcow2"
+  qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.qcow2"
 elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
   # Stream optimization is required for creating an Open Virtual Appliance (OVA)
   qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.vmdk"
   qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
-  chown 1000:1000 "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.vmdk" \
-    "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
 fi
 
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
 lz4 -9vc "${VERITY_IMAGE}" >"${OUTPUT_DIR}/${VERITY_IMAGE_NAME}"
 lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
-chown 1000:1000 "${OUTPUT_DIR}/${BOOT_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${VERITY_IMAGE_NAME}" \
-    "${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
+
+find "${OUTPUT_DIR}" -type f -print -exec chown 1000:1000 {} \;
 
 # Clean up temporary files to reduce size of layer.
 rm -f "${PACKAGE_DIR}"/*.rpm
