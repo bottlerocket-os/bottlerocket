@@ -89,6 +89,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_20"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kubernetes-1_20",
+ "release",
+]
+
+[[package]]
 name = "bash"
 version = "0.1.0"
 dependencies = [
@@ -330,6 +341,16 @@ dependencies = [
 
 [[package]]
 name = "kubernetes-1_19"
+version = "0.1.0"
+dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_20"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
