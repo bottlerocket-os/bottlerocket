@@ -2399,6 +2399,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxy-affect-host-containers"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

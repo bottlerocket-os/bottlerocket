@@ -33,4 +33,5 @@ version = "1.0.7"
 "(1.0.7, 1.0.8)" = [
     "migrate_v1.0.8_kubelet-eviction-hard.lz4",
     "migrate_v1.0.8_kubelet-unsafe-sysctl-kube-reserved.lz4",
+    "migrate_v1.0.8_proxy-affect-host-containers.lz4",
 ]
