@@ -35,4 +35,5 @@ version = "1.0.7"
     "migrate_v1.0.8_kubelet-unsafe-sysctl-kube-reserved.lz4",
     "migrate_v1.0.8_proxy-affect-host-containers.lz4",
     "migrate_v1.0.8_control-container-v0-5-0.lz4",
+    "migrate_v1.0.8_admin-container-v0-7-0.lz4",
 ]
