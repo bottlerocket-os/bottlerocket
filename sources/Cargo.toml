@@ -49,6 +49,7 @@ members = [
     "api/migration/migrations/v1.0.8/kubelet-eviction-hard",
     "api/migration/migrations/v1.0.8/kubelet-unsafe-sysctl-kube-reserved",
     "api/migration/migrations/v1.0.8/proxy-affect-host-containers",
+    "api/migration/migrations/v1.0.8/control-container-v0-5-0",
 
     "bottlerocket-release",
 
