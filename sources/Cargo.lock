@@ -361,6 +361,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "admin-container-v0-6-1"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "0.7.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
