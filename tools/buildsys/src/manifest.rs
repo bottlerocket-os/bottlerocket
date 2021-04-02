@@ -65,6 +65,8 @@ use error::Result;
 
 use serde::Deserialize;
 use snafu::ResultExt;
+use std::collections::HashSet;
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -115,6 +117,12 @@ impl ManifestInfo {
         self.build_variant().and_then(|b| b.image_format.as_ref())
     }
 
+    /// Convenience method to return the supported architectures for this variant.
+    pub(crate) fn supported_arches(&self) -> Option<&HashSet<SupportedArch>> {
+        self.build_variant()
+            .and_then(|b| b.supported_arches.as_ref())
+    }
+
     /// Helper methods to navigate the series of optional struct fields.
     fn build_package(&self) -> Option<&BuildPackage> {
         self.package
@@ -158,6 +166,7 @@ pub(crate) struct BuildPackage {
 pub(crate) struct BuildVariant {
     pub(crate) included_packages: Option<Vec<String>>,
     pub(crate) image_format: Option<ImageFormat>,
+    pub(crate) supported_arches: Option<HashSet<SupportedArch>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -168,10 +177,26 @@ pub(crate) enum ImageFormat {
     Vmdk,
 }
 
+#[derive(Deserialize, Debug, PartialEq, Eq, Hash)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum SupportedArch {
+    X86_64,
+    Aarch64,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct ExternalFile {
     pub(crate) path: Option<PathBuf>,
     pub(crate) sha512: String,
     pub(crate) url: String,
+}
+
+impl fmt::Display for SupportedArch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            SupportedArch::X86_64 => write!(f, "x86_64"),
+            SupportedArch::Aarch64 => write!(f, "aarch64"),
+        }
+    }
 }

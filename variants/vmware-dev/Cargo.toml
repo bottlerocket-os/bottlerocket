@@ -9,6 +9,7 @@ exclude = ["README.md"]
 
 [package.metadata.build-variant]
 image-format = "vmdk"
+supported-arches = ["x86_64"]
 included-packages = [
 # core
     "release",
