@@ -9,4 +9,4 @@ ExecStart=/usr/bin/apiserver --datastore-path /var/lib/bottlerocket/datastore/cu
 StandardError=journal+console
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=preconfigured.target

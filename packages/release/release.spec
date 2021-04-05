@@ -16,7 +16,11 @@ Source200: motd.template
 Source201: proxy-env
 
 Source1000: eth0.xml
+Source1001: multi-user.target
 Source1002: configured.target
+Source1003: preconfigured.target
+Source1004: activate-configured.service
+Source1005: activate-multi-user.service
 
 # Mounts for writable local storage.
 Source1006: prepare-local.service
@@ -108,7 +112,8 @@ EOF
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:1002} %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1015} \
+  %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} \
+  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1015} \
   %{buildroot}%{_cross_unitdir}
 
 LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/lower)
@@ -129,6 +134,8 @@ install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 
+ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
+
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
@@ -138,6 +145,11 @@ install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 %{_cross_libdir}/os-release
 %{_cross_libdir}/systemd/system.conf.d/80-release.conf
 %{_cross_unitdir}/configured.target
+%{_cross_unitdir}/preconfigured.target
+%{_cross_unitdir}/multi-user.target
+%{_cross_unitdir}/default.target
+%{_cross_unitdir}/activate-configured.service
+%{_cross_unitdir}/activate-multi-user.service
 %{_cross_unitdir}/prepare-local.service
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount

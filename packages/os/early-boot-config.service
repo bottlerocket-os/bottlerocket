@@ -1,11 +1,18 @@
 [Unit]
 Description=Bottlerocket userdata configuration system
 # Need network online to talk to IMDS.
-After=network-online.target apiserver.service
-Requires=network-online.target apiserver.service
+After=network-online.target apiserver.service storewolf.service
+# Don't restart the unit if the network goes offline or apiserver restarts
+Wants=apiserver.service network-online.target
+# Don't start the unit if storewolf.service fails
+Requires=storewolf.service
 # We only want to run once, at first boot.  This file is created by early-boot-config
 # after a successful run.
 ConditionPathExists=!/var/lib/bottlerocket/early-boot-config.ran
+# Block manual interactions with this service, since it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
 
 [Service]
 Type=oneshot
@@ -14,4 +21,4 @@ RemainAfterExit=true
 StandardError=journal+console
 
 [Install]
-WantedBy=multi-user.target
+RequiredBy=preconfigured.target

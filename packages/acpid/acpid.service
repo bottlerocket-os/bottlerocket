@@ -6,4 +6,4 @@ Type=forking
 ExecStart=/usr/sbin/acpid -c /usr/lib/acpid/events
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=preconfigured.target

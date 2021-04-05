@@ -1,0 +1,11 @@
+[Unit]
+Description=Bottlerocket initial configuration complete
+AllowIsolate=yes
+After=basic.target
+Requires=basic.target
+# Prevent manually starting/stopping the target
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Install]
+RequiredBy=configured.target multi-user.target

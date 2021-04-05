@@ -1,8 +1,8 @@
 [Unit]
 Description=containerd runtime for host containers
 Documentation=https://containerd.io
-After=network-online.target configured.target
-Wants=network-online.target configured.target
+After=network-online.target preconfigured.target
+Wants=network-online.target preconfigured.target
 
 [Service]
 EnvironmentFile=/etc/network/proxy.env
@@ -19,4 +19,4 @@ LimitNOFILE=infinity
 TasksMax=infinity
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=configured.target

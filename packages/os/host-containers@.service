@@ -7,8 +7,6 @@ Wants=host-containerd.service
 Type=simple
 EnvironmentFile=/etc/host-containers/%i.env
 Environment=LOCAL_DIR=/local
-# Create directories for container persistent storage
-ExecStartPre=/usr/bin/mkdir -m 1777 -p ${LOCAL_DIR}/host-containers/%i
 ExecStart=/usr/bin/host-ctr run \
     --container-id='%i' \
     --source='${CTR_SOURCE}' \

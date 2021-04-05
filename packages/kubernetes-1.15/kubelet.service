@@ -29,4 +29,3 @@ MemoryAccounting=true
 
 [Install]
 WantedBy=multi-user.target
-RequiredBy=mark-successful-boot.service

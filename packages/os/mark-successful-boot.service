@@ -1,15 +1,18 @@
 [Unit]
 Description=Call signpost to mark the boot as successful after all required targets are met.
-After=multi-user.target
-# Each service that must start correctly in order for a boot to be successful should be of type "notify"
-# and include "RequiredBy=mark-successful-boot.service" in its [Install] section.
+# This unit is in charge of updating the partitions on successful boots. Use other service
+# units instead of adding more `ExecStart*` lines to prevent indirect dependencies on
+# other units not listed in the `RequiredBy` section.
+Requires=migrator.service
+# Block manual interactions with this service, manually running it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
 
 [Service]
-EnvironmentFile=/etc/network/proxy.env
 Type=oneshot
 RemainAfterExit=true
 ExecStart=/bin/signpost mark-successful-boot
-ExecStartPost=-/usr/bin/metricdog send-boot-success
 
 [Install]
-WantedBy=multi-user.target
+RequiredBy=preconfigured.target
