@@ -30,3 +30,7 @@ version = "1.0.7"
     "migrate_v1.0.6_admin-container-v0-6-0.lz4",
 ]
 "(1.0.6, 1.0.7)" = []
+"(1.0.7, 1.0.8)" = [
+    "migrate_v1.0.8_kubelet-eviction-hard.lz4",
+    "migrate_v1.0.8_kubelet-unsafe-sysctl-kube-reserved.lz4",
+]

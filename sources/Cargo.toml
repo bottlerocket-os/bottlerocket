@@ -46,6 +46,8 @@ members = [
     "api/migration/migrations/v1.0.6/control-container-v0-4-2",
     "api/migration/migrations/v1.0.6/add-shibaken",
     "api/migration/migrations/v1.0.6/admin-container-v0-6-0",
+    "api/migration/migrations/v1.0.8/kubelet-eviction-hard",
+    "api/migration/migrations/v1.0.8/kubelet-unsafe-sysctl-kube-reserved",
 
     "bottlerocket-release",
 

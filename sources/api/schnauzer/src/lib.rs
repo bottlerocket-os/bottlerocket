@@ -124,6 +124,11 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("ecr-prefix", Box::new(helpers::ecr_prefix));
     template_registry.register_helper("host", Box::new(helpers::host));
     template_registry.register_helper("join_array", Box::new(helpers::join_array));
+    template_registry.register_helper("kube_reserve_cpu", Box::new(helpers::kube_reserve_cpu));
+    template_registry.register_helper(
+        "kube_reserve_memory",
+        Box::new(helpers::kube_reserve_memory),
+    );
 
     Ok(template_registry)
 }

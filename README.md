@@ -308,6 +308,18 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.standalone-mode`: Whether to run the kubelet in standalone mode, without connecting to an API server.  Defaults to `false`.
 * `settings.kubernetes.authentication-mode`: Which authentication method the kubelet should use to connect to the API server, and for incoming requests.  Defaults to `aws` for AWS variants, and `tls` for other variants.
 * `settings.kubernetes.bootstrap-token`: The token to use for [TLS bootstrapping](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/).  This is only used with the `tls` authentication mode, and is otherwise ignored.
+* `settings.kubernetes.eviction-hard`: The signals and thresholds that trigger pod eviction.
+  Remember to quote signals (since they all contain ".") and to quote all values.
+  * Example user data for setting up eviction hard:
+    ```
+    [settings.kubernetes.eviction-hard]
+    "memory.available" = "15%"
+    ```
+* `settings.kubernetes.allowed-unsafe-sysctls`: Enables specified list of unsafe sysctls.
+  * Example user data for setting up allowed unsafe sysctls:
+    ```
+    allowed-unsafe-sysctls = ["net.core.somaxconn", "net.ipv4.ip_local_port_range"]
+    ```
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.
@@ -319,6 +331,11 @@ The following settings are set for you automatically by [pluto](sources/api/) ba
 * `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
+* `settings.kubernetes.kube-reserved`: Resources reserved for node components.
+  * Bottlerocket provides default values for the resources by [schnauzer](sources/api/):
+    * `cpu`: in millicores from the total number of vCPUs available on the instance.
+    * `memory`: in mebibytes from the max num of pods on the instance. `memory_to_reserve = max_num_pods * 11 + 255`.
+    * `ephemeral-storage`: defaults to `1Gi`.
 
 #### Amazon ECS settings
 

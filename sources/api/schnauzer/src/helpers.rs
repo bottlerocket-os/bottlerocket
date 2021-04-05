@@ -4,10 +4,12 @@
 
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError};
 use lazy_static::lazy_static;
+use num_cpus;
 use serde_json::value::Value;
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use url::Url;
 
 lazy_static! {
@@ -43,6 +45,19 @@ lazy_static! {
 /// containers from here.
 const ECR_FALLBACK_REGION: &str = "us-east-1";
 const ECR_FALLBACK_REGISTRY: &str = "328549459982";
+
+/// The amount of CPU to reserve
+/// We are using these CPU ranges from GKE
+/// (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
+/// 6% of the first core
+/// 1% of the next core (up to 2 cores)
+/// 0.5% of the next 2 cores (up to 4 cores)
+/// 0.25% of any cores above 4 cores
+const KUBE_RESERVE_1_CORE: f32 = 60.0;
+const KUBE_RESERVE_2_CORES: f32 = KUBE_RESERVE_1_CORE + 10.0;
+const KUBE_RESERVE_3_CORES: f32 = KUBE_RESERVE_2_CORES + 5.0;
+const KUBE_RESERVE_4_CORES: f32 = KUBE_RESERVE_3_CORES + 5.0;
+const KUBE_RESERVE_ADDITIONAL: f32 = 2.5;
 
 /// Potential errors during helper execution
 mod error {
@@ -160,6 +175,19 @@ mod error {
 
         #[snafu(display("URL '{}' is missing host component", url_str))]
         UrlHost { url_str: String },
+
+        #[snafu(display("Failed to convert {} {} to {}", what, number, target))]
+        ConvertNumber {
+            what: String,
+            number: String,
+            target: String,
+        },
+
+        #[snafu(display("Failed to convert usize {} to u16: {}", number, source))]
+        ConvertUsizeToU16 {
+            number: usize,
+            source: std::num::TryFromIntError,
+        },
     }
 
     // Handlebars helpers are required to return a RenderError.
@@ -170,6 +198,8 @@ mod error {
         }
     }
 }
+
+use error::TemplateHelperError;
 
 /// `base64_decode` decodes base64 encoded text at template render time.
 /// It takes a single variable as a parameter: {{base64_decode var}}
@@ -592,6 +622,120 @@ pub fn join_array(
     Ok(())
 }
 
+/// kube_reserve_memory and kube_reserve_cpu are taken from EKS' calculations.
+/// https://github.com/awslabs/amazon-eks-ami/blob/db28da15d2b696bc08ac3aacc9675694f4a69933/files/bootstrap.sh
+
+/// Calculates the amount of memory to reserve for kubeReserved in mebibytes.
+/// Formula: memory_to_reserve = max_num_pods * 11 + 255 is taken from
+/// https://github.com/awslabs/amazon-eks-ami/pull/419#issuecomment-609985305
+pub fn kube_reserve_memory(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting kube_reserve_memory helper");
+    let template_name = template_name(renderctx);
+    trace!("Template name: {}", &template_name);
+
+    trace!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 2)?;
+
+    let max_num_pods_val = get_param(helper, 0)?;
+    let max_num_pods = match max_num_pods_val {
+        Value::Number(n) => n,
+
+        _ => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidTemplateValue {
+                    expected: "number",
+                    value: max_num_pods_val.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            ))
+        }
+    };
+    let max_num_pods = max_num_pods
+        .as_u64()
+        .with_context(|| error::ConvertNumber {
+            what: "number of pods",
+            number: max_num_pods.to_string(),
+            target: "u64",
+        })?;
+
+    // Calculates the amount of memory to reserve
+    let memory_to_reserve_value = get_param(helper, 1)?;
+    let memory_to_reserve = match memory_to_reserve_value {
+        Value::Number(n) => n.to_string(),
+        Value::String(s) => s.to_string(),
+        // If no value is set, use the given default.
+        Value::Null => { format!("{}Mi", (max_num_pods * 11 + 255).to_string()) }.to_string(),
+        // composite types unsupported
+        _ => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidTemplateValue {
+                    expected: "scalar",
+                    value: memory_to_reserve_value.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            ))
+        }
+    };
+
+    // write it to the template
+    out.write(&memory_to_reserve)
+        .with_context(|| error::TemplateWrite {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
+/// Get the amount of CPU to reserve for kubeReserved in millicores
+pub fn kube_reserve_cpu(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting kube_reserve_cpu helper");
+    let template_name = template_name(renderctx);
+    trace!("Template name: {}", &template_name);
+
+    trace!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 1)?;
+
+    // Calculates the amount of CPU to reserve
+    let num_cores = num_cpus::get();
+    let cpu_to_reserve_value = get_param(helper, 0)?;
+    let cpu_to_reserve = match cpu_to_reserve_value {
+        Value::Number(n) => n.to_string(),
+        Value::String(s) => s.to_string(),
+        // If no value is set, use the given default.
+        Value::Null => kube_cpu_helper(num_cores)?,
+        // composite types unsupported
+        _ => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidTemplateValue {
+                    expected: "scalar",
+                    value: cpu_to_reserve_value.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            ))
+        }
+    };
+
+    // write it to the template
+    out.write(&cpu_to_reserve)
+        .with_context(|| error::TemplateWrite {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 // helpers to the helpers
 
@@ -644,6 +788,24 @@ fn ecr_registry<S: AsRef<str>>(region: S) -> String {
         Some(registry_id) => (region.as_ref(), *registry_id),
     };
     format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region)
+}
+
+/// Calculates and returns the amount of CPU to reserve
+fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError>{
+    let num_cores = u16::try_from(num_cores).context(error::ConvertUsizeToU16 { number: num_cores })?;
+    let millicores_unit = "m";
+    let cpu_to_reserve = match num_cores {
+        0 => 0.0,
+        1 => KUBE_RESERVE_1_CORE,
+        2 => KUBE_RESERVE_2_CORES,
+        3 => KUBE_RESERVE_3_CORES,
+        4 => KUBE_RESERVE_4_CORES,
+        _ => {
+            let num_cores = f32::from(num_cores);
+            KUBE_RESERVE_4_CORES + ((num_cores - 4.0) * KUBE_RESERVE_ADDITIONAL)
+        }
+    };
+    Ok(format!("{}{}", cpu_to_reserve.floor().to_string(), millicores_unit))
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -1077,5 +1239,123 @@ mod test_join_array {
                 .unwrap();
         let expected = r#""a", "", "c""#;
         assert_eq!(result, expected);
+    }
+}
+
+#[cfg(test)]
+mod test_kube_reserve_memory {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("kube_reserve_memory", Box::new(kube_reserve_memory));
+
+        registry.render_template(tmpl, data)
+    }
+
+    const TEMPLATE: &str = r#""{{kube_reserve_memory  max-pods kube-reserved-memory}}""#;
+
+    #[test]
+    fn have_settings_1024_mi() {
+        let result = setup_and_render_template(
+            TEMPLATE,
+            &json!({"max-pods": 29, "kube-reserved-memory": "1024Mi"}),
+        )
+        .unwrap();
+        assert_eq!(result, "\"1024Mi\"");
+    }
+
+    #[test]
+    fn no_settings_max_pods_0() {
+        let result =
+            setup_and_render_template(TEMPLATE, &json!({"max-pods": 0, "no-settings": "hi"}))
+                .unwrap();
+        assert_eq!(result, "\"255Mi\"");
+    }
+
+    #[test]
+    fn no_settings_max_pods_29() {
+        let result =
+            setup_and_render_template(TEMPLATE, &json!({"max-pods": 29, "no-settings": "hi"}))
+                .unwrap();
+        assert_eq!(result, "\"574Mi\"");
+    }
+
+    #[test]
+    fn max_pods_not_number() {
+        setup_and_render_template(
+            TEMPLATE,
+            &json!({"settings": {"kubernetes": {"max-pods": "ten"}}}),
+        )
+        .unwrap_err();
+    }
+}
+
+#[cfg(test)]
+mod test_kube_reserve_cpu {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("kube_reserve_cpu", Box::new(kube_reserve_cpu));
+
+        registry.render_template(tmpl, data)
+    }
+
+    const TEMPLATE: &str = r#"{{kube_reserve_cpu settings.kubernetes.kube-reserved.cpu}}"#;
+
+    #[test]
+    fn kube_reserve_cpu_ok() {
+        setup_and_render_template(TEMPLATE, &json!({"not-the-setting": "hi"})).unwrap();
+        assert!(true);
+    }
+
+    #[test]
+    fn kube_reserve_cpu_30_m() {
+        let result = setup_and_render_template(
+            TEMPLATE,
+            &json!({"settings": {"kubernetes": {"kube-reserved": {"cpu": "30m"}}}}),
+        )
+        .unwrap();
+        assert_eq!(result, "30m");
+    }
+}
+#[cfg(test)]
+mod test_kube_cpu_helper {
+    use crate::helpers::kube_cpu_helper;
+    use std::collections::HashMap;
+
+    #[test]
+    fn kube_cpu_helper_ok() {
+        let mut cpu_reserved: HashMap<usize, &str> = HashMap::new();
+        cpu_reserved.insert(0, "0m");
+        cpu_reserved.insert(1, "60m");
+        cpu_reserved.insert(2, "70m");
+        cpu_reserved.insert(3, "75m");
+        cpu_reserved.insert(4, "80m");
+        cpu_reserved.insert(5, "82m");
+        cpu_reserved.insert(6, "85m");
+        cpu_reserved.insert(47, "187m");
+        cpu_reserved.insert(48, "190m");
+
+        for (num_cpus, expected_millicores) in cpu_reserved.into_iter() {
+            assert_eq!(kube_cpu_helper(num_cpus).unwrap(), expected_millicores);
+        }
     }
 }
