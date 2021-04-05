@@ -394,6 +394,16 @@ The no-proxy list will automatically include entries for localhost.
 
 If you're running a Kubernetes variant, the no-proxy list will automatically include the Kubernetes API server endpoint and other commonly used Kubernetes DNS suffixes to facilitate intra-cluster networking.
 
+#### Metrics settings
+
+By default, Bottlerocket sends anonymous metrics when it boots, and once every six hours.
+This can be disabled by setting `send-metrics` to false.
+Here are the metrics settings:
+
+* `settings.metrics.metrics-url`: The endpoint to which metrics will be sent. The default is `https://metrics.bottlerocket.aws/v1/metrics`.
+* `settings.metrics.send-metrics`: Whether Bottlerocket will send anonymous metrics.
+* `settings.metrics.service-checks`: A list of systemd services that will be checked to determine whether a host is healthy.
+
 #### Time settings
 
 * `settings.ntp.time-servers`: A list of NTP servers used to set and verify the system time.
