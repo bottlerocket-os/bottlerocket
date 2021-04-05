@@ -964,10 +964,12 @@ dependencies = [
  "serde",
  "serde-xml-rs",
  "serde_json",
+ "serde_plain",
  "simplelog",
  "snafu",
  "tokio",
  "toml",
+ "vmw_backdoor",
 ]
 
 [[package]]
@@ -1046,6 +1048,27 @@ dependencies = [
  "rustversion",
  "syn",
  "synstructure",
+]
+
+[[package]]
+name = "errno"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa68f2fb9cae9d37c9b2b3584aba698a2e97f72d7aef7b9f7aa71d8b54ce46fe"
+dependencies = [
+ "errno-dragonfly",
+ "libc",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "errno-dragonfly"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14ca354e36190500e1e1fb267c647932382b54053c50b14970856c0b00a35067"
+dependencies = [
+ "gcc",
+ "libc",
 ]
 
 [[package]]
@@ -1220,6 +1243,12 @@ checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
 dependencies = [
  "byteorder",
 ]
+
+[[package]]
+name = "gcc"
+version = "0.3.55"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
 
 [[package]]
 name = "generic-array"
@@ -3646,6 +3675,20 @@ name = "version_check"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5a972e5669d67ba988ce3dc826706fb0a8b01471c088cb0b6110b805cc36aed"
+
+[[package]]
+name = "vmw_backdoor"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "782273e25af43e3b255d00a72a22311feacabf9482bcbab26a8a03aae9197867"
+dependencies = [
+ "cc",
+ "cfg-if 0.1.10",
+ "errno",
+ "libc",
+ "log",
+ "thiserror",
+]
 
 [[package]]
 name = "void"

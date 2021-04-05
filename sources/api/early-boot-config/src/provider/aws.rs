@@ -134,15 +134,11 @@ impl AwsDataProvider {
             .context(error::Decompression { what: "user data" })?;
         trace!("Received user data: {}", user_data_str);
 
-        // Remove outer "settings" layer before sending to API
-        let mut val: toml::Value =
-            toml::from_str(&user_data_str).context(error::TOMLUserDataParse)?;
-        let table = val.as_table_mut().context(error::UserDataNotTomlTable)?;
-        let inner = table
-            .remove("settings")
-            .context(error::UserDataMissingSettings)?;
-
-        let json = SettingsJson::from_val(&inner, desc).context(error::SettingsToJSON)?;
+        let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
+            error::SettingsToJSON {
+                from: "instance user data",
+            },
+        )?;
         Ok(Some(json))
     }
 
@@ -175,7 +171,9 @@ impl AwsDataProvider {
             .context(error::IdentityDocMissingData { missing: "region" })?;
         let val = json!({ "aws": {"region": region} });
 
-        let json = SettingsJson::from_val(&val, desc).context(error::SettingsToJSON)?;
+        let json = SettingsJson::from_val(&val, desc).context(error::SettingsToJSON {
+            from: "instance identity document",
+        })?;
         Ok(Some(json))
     }
 }
@@ -270,17 +268,11 @@ mod error {
             source: reqwest::Error,
         },
 
-        #[snafu(display("Error serializing TOML to JSON: {}", source))]
-        SettingsToJSON { source: serde_json::error::Error },
-
-        #[snafu(display("Error parsing TOML user data: {}", source))]
-        TOMLUserDataParse { source: toml::de::Error },
-
-        #[snafu(display("TOML data did not contain 'settings' section"))]
-        UserDataMissingSettings,
-
-        #[snafu(display("Data is not a TOML table"))]
-        UserDataNotTomlTable,
+        #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
+        SettingsToJSON {
+            from: String,
+            source: crate::settings::Error,
+        },
     }
 }
 

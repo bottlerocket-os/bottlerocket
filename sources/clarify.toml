@@ -115,3 +115,12 @@ expression = "MIT"
 license-files = [
     { path = "LICENSE", hash = 0xff97fcac },
 ]
+
+[clarify.vmw_backdoor]
+expression = "MIT OR Apache-2.0"
+license-files = [
+    { path = "COPYRIGHT", hash = 0xac8571aa },
+    { path = "LICENSE-APACHE-2.0", hash = 0x18785531 },
+    { path = "LICENSE-MIT", hash = 0x28392cf3 },
+]
+
