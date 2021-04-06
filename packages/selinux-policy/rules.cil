@@ -1,16 +1,17 @@
 ; Deny any action that is not defined by the policy.
 (handleunknown deny)
 
-; Define the set of all subject and object types, to allow certain
-; actions to be whitelisted or blacklisted for everything.
+; Define the set of all subject and object types, to allow certain actions to
+; be allowed or denied for everything.
 (typeattribute global)
 (typeattributeset global ((all_s) (all_o)))
 
+; Define a subset of these types which are considered public.
+(typeattribute public)
+(typeattributeset public (xor (global) (restricted_o)))
+
 ; All subjects are allowed to use the label they already have.
 (allow all_s self (processes (transform)))
-
-; All subjects are allowed to read and execute all files.
-(allow all_s global (files (load)))
 
 ; All subjects are allowed to interact with processes in
 ; most ways without policy restrictions.
@@ -62,11 +63,11 @@
 ; unprivileged containers, unless automatic labeling is disabled.
 (typetransition runtime_t local_t process control_t)
 (typetransition runtime_t cache_t process control_t)
-(typetransition runtime_t state_t process control_t)
+(typetransition runtime_t secret_t process control_t)
 (allow runtime_t container_s (processes (transform)))
 (allow container_s local_t (file (entrypoint)))
 (allow container_s cache_t (file (entrypoint)))
-(allow container_s state_t (file (entrypoint)))
+(allow container_s secret_t (file (entrypoint)))
 
 ; Also allow entry to container domains through `docker-init`, which
 ; is mounted from the root filesystem and used as the init process.
@@ -92,11 +93,23 @@
 (typetransition runtime_t local_t dir "overlay2" cache_t)
 
 ; If a system process creates a directory for host container state, it
-; receives the "state_t" label.
-(typetransition system_t local_t dir "host-containers" state_t)
+; receives the "secret_t" label.
+(typetransition system_t local_t dir "host-containers" secret_t)
 
 ; The socket for the API server gets the "api_socket_t" label.
 (typetransition api_t any_t sock_file "api.sock" api_socket_t)
+
+; All subjects can describe anything.
+(allow all_s global (files (describe)))
+
+; All subjects can read from anything that's public.
+(allow all_s public (files (load)))
+
+; Trusted subjects can read from anything at all.
+(allow trusted_s global (files (load)))
+
+; Untrusted subjects cannot read from restricted objects.
+(neverallow untrusted_s restricted_o (files (load)))
 
 ; All subjects are allowed to write to objects with their own label.
 ; This includes files like the ones under /proc/self.
@@ -121,19 +134,25 @@
 (allow unconfined_s local_t (files (mutate mount)))
 
 ; Subjects that control the OS, including helpers spawned by apiserver, can
-; write to and manage mounts for "state" files and directories on /local.
+; write to and manage mounts for "secret" files and directories on /local.
 ; Our runtimes also need to be able to perform these operations so that
 ; they can launch host containers.
-(allow api_s state_t (files (mutate mount)))
+(allow api_s secret_t (files (mutate mount)))
+(allow control_s secret_t (files (mutate mount)))
+(allow runtime_s secret_t (files (mutate mount)))
+
+; Subjects that control the OS can write to and manage mounts for "state"
+; files and directories on /local.
 (allow control_s state_t (files (mutate mount)))
-(allow runtime_s state_t (files (mutate mount)))
 
-; Untrusted subjects cannot modify the "state" files.
+; Untrusted subjects cannot modify "state" or "secret" files.
 (neverallow untrusted_s state_t (files (mutate mount)))
+(neverallow untrusted_s secret_t (files (mutate mount)))
 
-; Confined subjects cannot modify either "state" or "local" files.
+; Confined subjects cannot modify "state", "secret", or "local" files.
 (neverallow confined_s local_t (files (mutate mount)))
 (neverallow confined_s state_t (files (mutate mount)))
+(neverallow confined_s secret_t (files (mutate mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))

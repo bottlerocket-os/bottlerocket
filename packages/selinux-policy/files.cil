@@ -1,5 +1,5 @@
 ; Permission groups for files.
-(classmap files (relabel mount relax enter load mutate block))
+(classmap files (relabel mount relax enter describe load mutate block))
 
 ; Permission group for relabeling files.
 (classmapping files relabel relabel_file)
@@ -33,6 +33,16 @@
 
 ; Permission group for using files as entry points.
 (classmapping files enter enter_file)
+
+; Permission group for describing files.
+(classmapping files describe describe_file)
+(classmapping files describe describe_dir)
+(classmapping files describe describe_lnk_file)
+(classmapping files describe describe_chr_file)
+(classmapping files describe describe_blk_file)
+(classmapping files describe describe_sock_file)
+(classmapping files describe describe_fifo_file)
+(classmapping files describe describe_filesystem)
 
 ; Permission group for reading and executing files.
 (classmapping files load load_file)
@@ -146,6 +156,32 @@
 (classpermissionset enter_file (
   file (entrypoint)))
 
+; Sets of permissions for describing file objects.
+(classpermission describe_file)
+(classpermission describe_dir)
+(classpermission describe_lnk_file)
+(classpermission describe_chr_file)
+(classpermission describe_blk_file)
+(classpermission describe_sock_file)
+(classpermission describe_fifo_file)
+(classpermission describe_filesystem)
+(classpermissionset describe_file (
+  file (getattr)))
+(classpermissionset describe_dir (
+  dir (getattr)))
+(classpermissionset describe_lnk_file (
+  lnk_file (getattr)))
+(classpermissionset describe_chr_file (
+  chr_file (getattr)))
+(classpermissionset describe_blk_file (
+  blk_file (getattr)))
+(classpermissionset describe_sock_file (
+  sock_file (getattr)))
+(classpermissionset describe_fifo_file (
+  fifo_file (getattr)))
+(classpermissionset describe_filesystem (
+  filesystem (getattr quotaget)))
+
 ; Sets of permissions for read-only actions that do not affect the
 ; integrity of file objects.
 (classpermission load_file)
@@ -159,35 +195,34 @@
 (classpermission load_fd)
 (classpermissionset load_file (
   file (
-    execute getattr ioctl map open read execute_no_trans
+    execute ioctl map open read execute_no_trans
     watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_dir (
   dir (
-    execute getattr ioctl map open read search
+    execute ioctl map open read search
     watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_lnk_file (
   lnk_file (
-    execute ioctl getattr map open read
+    execute ioctl map open read
     watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_chr_file (
   chr_file (
-    execute ioctl getattr map open read
+    execute ioctl map open read
     watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_blk_file (
   blk_file (
-    execute ioctl getattr map open read
+    execute ioctl map open read
     watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_sock_file (
   sock_file (
-    execute ioctl getattr map open read
+    execute ioctl map open read
     watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_fifo_file (
   fifo_file (
-    execute ioctl getattr map open read
+    execute ioctl map open read
     watch watch_mount watch_reads watch_sb)))
 (classpermissionset load_filesystem (
-  filesystem (
-    getattr quotaget watch)))
+  filesystem (watch)))
 (classpermissionset load_fd (
   fd (use)))
 
