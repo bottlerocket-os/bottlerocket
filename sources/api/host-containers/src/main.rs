@@ -140,7 +140,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 /// Query the API for the currently defined host containers
 async fn get_host_containers<P>(
     socket_path: P,
-) -> Result<HashMap<Identifier, model::ContainerImage>>
+) -> Result<HashMap<Identifier, model::HostContainer>>
 where
     P: AsRef<Path>,
 {
@@ -351,7 +351,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn handle_host_container<S>(name: S, image_details: &model::ContainerImage) -> Result<()>
+fn handle_host_container<S>(name: S, image_details: &model::HostContainer) -> Result<()>
 where
     S: AsRef<str>,
 {

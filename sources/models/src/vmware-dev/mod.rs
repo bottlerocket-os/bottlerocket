@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::modeled_types::Identifier;
 use crate::{
-    BootstrapContainer, ContainerImage, KernelSettings, NetworkSettings, NtpSettings,
+    BootstrapContainer, HostContainer, KernelSettings, NetworkSettings, NtpSettings,
     UpdatesSettings,
 };
 
@@ -14,7 +14,7 @@ use crate::{
 struct Settings {
     motd: String,
     updates: UpdatesSettings,
-    host_containers: HashMap<Identifier, ContainerImage>,
+    host_containers: HashMap<Identifier, HostContainer>,
     bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
     ntp: NtpSettings,
     network: NetworkSettings,
