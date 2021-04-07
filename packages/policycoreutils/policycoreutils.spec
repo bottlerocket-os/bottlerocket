@@ -1,10 +1,10 @@
 Name: %{_cross_os}policycoreutils
-Version: 3.1
+Version: 3.2
 Release: 1%{?dist}
 Summary: A set of SELinux policy tools
 License: GPL-2.0-only
 URL: https://github.com/SELinuxProject/
-Source0: https://github.com/SELinuxProject/selinux/releases/download/20200710/policycoreutils-%{version}.tar.gz
+Source0: https://github.com/SELinuxProject/selinux/releases/download/%{version}/policycoreutils-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libsemanage-devel
@@ -40,13 +40,15 @@ done
 for dir in load_policy semodule sestatus setfiles ; do
   %make_install -C ${dir}
 done
+# remove unneeded compatibility symlink
+rm %{buildroot}%{_cross_sbindir}/sestatus
 
 %files
 %license COPYING
 %{_cross_attribution_file}
 %{_cross_sbindir}/load_policy
 %{_cross_sbindir}/semodule
-%{_cross_sbindir}/sestatus
+%{_cross_bindir}/sestatus
 %{_cross_sbindir}/setfiles
 %exclude %{_cross_sbindir}/genhomedircon
 %exclude %{_cross_sbindir}/restorecon
