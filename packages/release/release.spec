@@ -81,6 +81,7 @@ Requires: %{_cross_os}logdog
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}wicked
 Requires: %{_cross_os}os
+Requires: %{_cross_os}bootstrap-containers
 
 %description
 %{summary}.

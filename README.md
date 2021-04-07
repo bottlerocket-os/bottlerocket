@@ -478,6 +478,46 @@ We use it for the control container because it needs to be available early to gi
 
 Be careful, and make sure you have a similar low-level use case before reaching for host containers.
 
+#### Bootstrap containers settings
+* `settings.bootstrap-containers.<name>.source`: the image for the container
+* `settings.bootstrap-containers.<name>.mode`: the mode of the container, it could be one of `off`, `once` or `always`. See below for a description of modes.
+* `settings.bootstrap-containers.<name>.essential`: whether or not the container should fail the boot process, defaults to `false`
+* `settings.bootstrap-containers.<name>.user-data`: field with arbitrary base64-encoded data
+
+Bootstrap containers are host containers that can be used to "bootstrap" the host before services like ECS Agent, Kubernetes, and Docker start.
+
+Bootstrap containers are very similar to normal host containers; they come with persistent storage and with optional user data.
+Unlike normal host containers, bootstrap containers can't be treated as `superpowered` containers.
+However, these containers have access to the underlying root filesystem on `/.bottlerocket/rootfs`.
+Bootstrap containers are set up to run after the systemd `configured.target` unit is active.
+The containers' systemd unit depends on this target (and not on any of the bootstrap containers' peers) which means that bootstrap containers will not execute in a deterministic order
+The boot process will "wait" for as long as the bootstrap containers run.
+Bootstrap containers configured with `essential=true` will stop the boot process if they exit code is a non-zero value.
+
+Bootstrap containers have three different modes:
+
+* `always`: with this setting, the container is executed on every boot.
+* `off`: the container won't run
+* `once`: with this setting, the container only runs on the first boot where the container is defined. Upon completion, the mode is changed to `off`.
+
+Here's an example of adding a bootstrap container with API calls:
+
+```
+apiclient set \
+   bootstrap-containers.bootstrap.source=MY-CONTAINER-URI \
+   bootstrap-containers.bootstrap.mode=once \
+   bootstrap-containers.bootstrap.essential=true
+```
+
+Here's the same example, but with the settings you'd add to user data:
+
+```
+[settings.bootstrap-containers.bootstrap]
+source = "MY-CONTAINER-URI"
+mode = "once"
+essential = true
+```
+
 #### Platform-specific settings
 
 Platform-specific settings are automatically set at boot time by [early-boot-config](sources/api/early-boot-config) based on metadata available on the running platform.

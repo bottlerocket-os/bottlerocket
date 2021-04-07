@@ -45,6 +45,9 @@ pub mod error {
         #[snafu(display("Invalid Kubernetes authentication mode '{}'", input))]
         InvalidAuthenticationMode { input: String },
 
+        #[snafu(display("Invalid bootstrap container mode '{}'", input))]
+        InvalidBootstrapContainerMode { input: String },
+
         #[snafu(display("Given invalid cluster name '{}': {}", name, msg))]
         InvalidClusterName { name: String, msg: String },
 
@@ -144,6 +147,24 @@ macro_rules! string_impls_for {
         impl From<$for> for String {
             fn from(x: $for) -> Self {
                 x.inner
+            }
+        }
+
+        impl PartialEq<str> for $for {
+            fn eq(&self, other: &str) -> bool {
+                &self.inner == other
+            }
+        }
+
+        impl PartialEq<String> for $for {
+            fn eq(&self, other: &String) -> bool {
+                &self.inner == other
+            }
+        }
+
+        impl PartialEq<&str> for $for {
+            fn eq(&self, other: &&str) -> bool {
+                &self.inner == other
             }
         }
     };

@@ -262,6 +262,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-bootstrap-containers"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-cluster-domain"
 version = "0.1.0"
 dependencies = [
@@ -614,6 +621,24 @@ name = "block-party"
 version = "0.1.0"
 dependencies = [
  "snafu",
+]
+
+[[package]]
+name = "bootstrap-containers"
+version = "0.1.0"
+dependencies = [
+ "apiclient",
+ "base64 0.13.0",
+ "cargo-readme",
+ "datastore",
+ "http",
+ "log",
+ "models",
+ "serde",
+ "serde_json",
+ "simplelog",
+ "snafu",
+ "tokio",
 ]
 
 [[package]]

@@ -1,0 +1,22 @@
+[Unit]
+Description=bootstrap container %i
+Before=configured.target
+After=host-containerd.service
+Wants=host-containers.service
+# Block manual interactions with bootstrap containers, since they should only be
+# started by systemd
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/bootstrap-containers/%i.env
+ExecStart=/usr/bin/host-ctr run \
+    --container-id='%i' \
+    --source='${CTR_SOURCE}' \
+    --container-type='bootstrap'
+ExecStartPost=/usr/bin/bootstrap-containers mark-bootstrap \
+    --container-id '%i' \
+    --mode '${CTR_MODE}'
+RemainAfterExit=true
+StandardError=journal+console

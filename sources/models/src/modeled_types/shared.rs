@@ -140,16 +140,17 @@ pub struct Identifier {
     inner: String,
 }
 
+const CONTAINERD_ID_LENGTH: usize = 76;
+
 impl TryFrom<&str> for Identifier {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        ensure!(
-            input
-                .chars()
-                .all(|c| (c.is_ascii() && c.is_alphanumeric()) || c == '-'),
-            error::InvalidIdentifier { input }
-        );
+        let valid_identifier = input
+            .chars()
+            .all(|c| (c.is_ascii() && c.is_alphanumeric()) || c == '-')
+            && input.len() <= CONTAINERD_ID_LENGTH;
+        ensure!(valid_identifier, error::InvalidIdentifier { input });
         Ok(Identifier {
             inner: input.to_string(),
         })
@@ -160,7 +161,7 @@ string_impls_for!(Identifier, "Identifier");
 
 #[cfg(test)]
 mod test_valid_identifier {
-    use super::Identifier;
+    use super::{Identifier, CONTAINERD_ID_LENGTH};
     use std::convert::TryFrom;
 
     #[test]
@@ -171,6 +172,7 @@ mod test_valid_identifier {
         assert!(Identifier::try_from("hello-1234").is_ok());
         assert!(Identifier::try_from("--------").is_ok());
         assert!(Identifier::try_from("11111111").is_ok());
+        assert!(Identifier::try_from(vec!["X"; CONTAINERD_ID_LENGTH].join("")).is_ok());
     }
 
     #[test]
@@ -182,6 +184,7 @@ mod test_valid_identifier {
         assert!(Identifier::try_from("hello_world").is_err());
         assert!(Identifier::try_from("タール").is_err());
         assert!(Identifier::try_from("💝").is_err());
+        assert!(Identifier::try_from(vec!["X"; CONTAINERD_ID_LENGTH + 1].join("")).is_err());
     }
 }
 
@@ -242,7 +245,7 @@ mod test_url {
             "localhost",
             "localhost:8080",
             ".internal",
-            ".cluster.local"
+            ".cluster.local",
         ] {
             Url::try_from(*ok).unwrap();
         }
@@ -558,3 +561,52 @@ impl TryFrom<&str> for Lockdown {
 }
 
 string_impls_for!(Lockdown, "Lockdown");
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct BootstrapContainerMode {
+    inner: String,
+}
+
+impl TryFrom<&str> for BootstrapContainerMode {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        ensure!(
+            matches!(input, "off" | "once" | "always"),
+            error::InvalidBootstrapContainerMode { input }
+        );
+        Ok(BootstrapContainerMode {
+            inner: input.to_string(),
+        })
+    }
+}
+
+impl Default for BootstrapContainerMode {
+    fn default() -> Self {
+        BootstrapContainerMode {
+            inner: "off".to_string(),
+        }
+    }
+}
+
+string_impls_for!(BootstrapContainerMode, "BootstrapContainerMode");
+
+#[cfg(test)]
+mod test_valid_container_mode {
+    use super::BootstrapContainerMode;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_container_mode() {
+        for ok in &["off", "once", "always"] {
+            assert!(BootstrapContainerMode::try_from(*ok).is_ok());
+        }
+    }
+
+    #[test]
+    fn invalid_container_mode() {
+        assert!(BootstrapContainerMode::try_from("invalid").is_err());
+    }
+}

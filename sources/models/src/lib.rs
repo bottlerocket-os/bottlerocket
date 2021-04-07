@@ -98,11 +98,11 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, Identifier,
-    KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesClusterName,
-    KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue, KubernetesQuantityValue,
-    KubernetesReservedResourceKey, KubernetesTaintValue, KubernetesThresholdValue, Lockdown,
-    SingleLineString, SysctlKey, Url, ValidBase64,
+    BootstrapContainerMode, DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
+    FriendlyVersion, Identifier, KubernetesAuthenticationMode, KubernetesBootstrapToken,
+    KubernetesClusterName, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
+    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
+    KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
 };
 
 // Kubernetes static pod manifest settings
@@ -165,7 +165,7 @@ struct UpdatesSettings {
 }
 
 #[model]
-struct ContainerImage {
+struct HostContainer {
     source: Url,
     enabled: bool,
     superpowered: bool,
@@ -240,4 +240,14 @@ struct Metadata {
     key: SingleLineString,
     md: SingleLineString,
     val: toml::Value,
+}
+
+///// Bootstrap Containers
+
+#[model]
+struct BootstrapContainer {
+    source: Url,
+    mode: BootstrapContainerMode,
+    user_data: ValidBase64,
+    essential: bool,
 }

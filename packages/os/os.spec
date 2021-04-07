@@ -35,11 +35,13 @@ Source110: mark-successful-boot.service
 Source111: metricdog.service
 Source112: metricdog.timer
 Source113: send-boot-success.service
+Source114: bootstrap-containers@.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
 Source201: host-containers-tmpfiles.conf
 Source202: thar-be-updates-tmpfiles.conf
+Source203: bootstrap-containers-tmpfiles.conf
 
 # 3xx sources: udev rules
 Source300: ephemeral-storage.rules
@@ -200,6 +202,12 @@ Requires: %{_cross_os}apiserver = %{version}-%{release}
 %{summary}.
 %endif
 
+%package -n %{_cross_os}bootstrap-containers
+Summary: Manages bootstrap-containers
+Requires: %{_cross_os}apiserver = %{version}-%{release}
+%description -n %{_cross_os}bootstrap-containers
+%{summary}.
+
 %prep
 %setup -T -c
 %cargo_prep
@@ -257,6 +265,7 @@ echo "** Output from non-static builds:"
     -p ghostdog \
     -p growpart \
     -p corndog \
+    -p bootstrap-containers \
 %if "%{_cross_variant}" == "aws-ecs-1"
     -p ecs-settings-applier \
 %endif
@@ -283,7 +292,7 @@ for p in \
   storewolf settings-committer \
   migrator \
   signpost updog metricdog logdog \
-  ghostdog \
+  ghostdog bootstrap-containers \
 %if "%{_cross_variant}" == "aws-ecs-1"
   ecs-settings-applier \
 %endif
@@ -338,13 +347,15 @@ install -p -m 0644 %{S:5} %{S:6} %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
-  %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} %{S:113}\
+  %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
+  %{S:113} %{S:114} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.conf
+install -p -m 0644 %{S:203} %{buildroot}%{_cross_tmpfilesdir}/bootstrap-containers.conf
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
@@ -460,5 +471,10 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}static-pods
 %{_cross_bindir}/static-pods
 %endif
+
+%files -n %{_cross_os}bootstrap-containers
+%{_cross_bindir}/bootstrap-containers
+%{_cross_unitdir}/bootstrap-containers@.service
+%{_cross_tmpfilesdir}/bootstrap-containers.conf
 
 %changelog
