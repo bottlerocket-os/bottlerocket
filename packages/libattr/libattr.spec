@@ -1,10 +1,10 @@
 Name: %{_cross_os}libattr
-Version: 2.4.48
+Version: 2.5.1
 Release: 1%{?dist}
 Summary: Library for extended attribute support
 License: LGPL-2.1-or-later
 URL: https://savannah.nongnu.org/projects/attr
-Source0: https://download-mirror.savannah.gnu.org/releases/attr/attr-%{version}.tar.gz
+Source0: https://download-mirror.savannah.gnu.org/releases/attr/attr-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
 
 %description
