@@ -842,3 +842,306 @@ mod test_add_metadata {
         );
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// We use this migration when we need to replace metadata that contain lists of string values;
+/// for example, when a release changes the list of 'affected-services' associated with a setting.
+// String is the only type we use today, and handling multiple value types is more complicated than
+// we need at the moment.  Allowing &[serde_json::Value] seems nice, but it would allow arbitrary
+// data transformations that the API model would then fail to load.
+
+pub struct MetadataListReplacement {
+    pub setting: &'static str,
+    pub metadata: &'static str,
+    pub old_vals: &'static [&'static str],
+    pub new_vals: &'static [&'static str],
+}
+
+pub struct ReplaceMetadataListsMigration(pub Vec<MetadataListReplacement>);
+
+impl Migration for ReplaceMetadataListsMigration {
+    fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        for replacement in &self.0 {
+            if let Some(found_metadata) = input.metadata.get_mut(replacement.setting) {
+                if let Some(metadata_data) = found_metadata.get_mut(replacement.metadata) {
+                    match metadata_data {
+                        serde_json::Value::Array(data) => {
+                            // We only handle string lists; convert each value to a str we can compare.
+                            let list: Vec<&str> = data
+                                .iter()
+                                .map(|v| v.as_str())
+                                .collect::<Option<Vec<&str>>>()
+                                .with_context(|| error::ReplaceMetadataListContents {
+                                    setting: replacement.setting,
+                                    metadata: replacement.metadata,
+                                    data: data.clone(),
+                                })?;
+
+                            if list == replacement.old_vals {
+                                // Convert back to the original type so we can store it.
+                                *data = replacement.new_vals.iter().map(|s| (*s).into()).collect();
+                                println!(
+                                    "Changed value of metadata '{}' for setting '{}' from {:?} to {:?} on upgrade",
+                                    replacement.metadata,
+                                    replacement.setting,
+                                    replacement.old_vals,
+                                    replacement.new_vals
+                                );
+                            } else {
+                                println!(
+                                    "Metadata '{}' for setting '{}' is not set to {:?}, leaving alone",
+                                    replacement.metadata, replacement.setting, list
+                                );
+                            }
+                        }
+                        _ => {
+                            println!(
+                                "'Metadata '{}' for setting '{}' is set to non-list value '{}'; ReplaceMetadataListsMigration only handles lists",
+                                replacement.metadata, replacement.setting, metadata_data
+                            );
+                        }
+                    }
+                } else {
+                    println!(
+                        "Found no metadata '{}' for setting '{}'",
+                        replacement.metadata, replacement.setting
+                    );
+                }
+            } else {
+                println!("Found no metadata for '{}' setting", replacement.setting);
+            }
+        }
+        Ok(input)
+    }
+
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        for replacement in &self.0 {
+            if let Some(found_metadata) = input.metadata.get_mut(replacement.setting) {
+                if let Some(metadata_data) = found_metadata.get_mut(replacement.metadata) {
+                    match metadata_data {
+                        serde_json::Value::Array(data) => {
+                            // We only handle string lists; convert each value to a str we can compare.
+                            let list: Vec<&str> = data
+                                .iter()
+                                .map(|v| v.as_str())
+                                .collect::<Option<Vec<&str>>>()
+                                .with_context(|| error::ReplaceMetadataListContents {
+                                    setting: replacement.setting,
+                                    metadata: replacement.metadata,
+                                    data: data.clone(),
+                                })?;
+
+                            if list == replacement.new_vals {
+                                // Convert back to the original type so we can store it.
+                                *data = replacement.old_vals.iter().map(|s| (*s).into()).collect();
+                                println!(
+                                    "Changed value of metadata '{}' for setting '{}' from {:?} to {:?} on downgrade",
+                                    replacement.metadata,
+                                    replacement.setting,
+                                    replacement.new_vals,
+                                    replacement.old_vals
+                                );
+                            } else {
+                                println!(
+                                    "Metadata '{}' for setting '{}' is not set to {:?}, leaving alone",
+                                    replacement.metadata, replacement.setting, list
+                                );
+                            }
+                        }
+                        _ => {
+                            println!(
+                                "'Metadata '{}' for setting '{}' is set to non-list value '{}'; ReplaceMetadataListsMigration only handles lists",
+                                replacement.metadata, replacement.setting, metadata_data
+                            );
+                        }
+                    }
+                } else {
+                    println!(
+                        "Found no metadata '{}' for setting '{}'",
+                        replacement.metadata, replacement.setting
+                    );
+                }
+            } else {
+                println!("Found no metadata for '{}' setting", replacement.setting);
+            }
+        }
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_replace_metadata_list {
+    use super::{MetadataListReplacement, ReplaceMetadataListsMigration};
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use std::collections::HashMap;
+
+    #[test]
+    fn single_forward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "sunny".into() => hashmap!{"affected-service".into() => vec!["ice", "cube"].into()},
+            },
+        };
+        let result = ReplaceMetadataListsMigration(vec![MetadataListReplacement {
+            setting: "sunny",
+            metadata: "affected-service",
+            old_vals: &["ice", "cube"],
+            new_vals: &["warm", "water"],
+        }])
+        .forward(data)
+        .unwrap();
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "sunny".into() =>hashmap!{"affected-service".into() => vec!["warm", "water"].into()},
+            }
+        );
+    }
+
+    #[test]
+    fn single_backward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "freezing".into() => hashmap!{"affected-service".into() => vec!["warm", "water"].into()},
+            },
+        };
+        let result = ReplaceMetadataListsMigration(vec![MetadataListReplacement {
+            setting: "freezing",
+            metadata: "affected-service",
+            old_vals: &["ice", "cube"],
+            new_vals: &["warm", "water"],
+        }])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "freezing".into() =>hashmap!{"affected-service".into() => vec!["ice", "cube"].into()},
+            }
+        );
+    }
+
+    #[test]
+    fn multiple_forward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "greeting".into() => hashmap!{"hi".into() => vec!["konichiwa", "privet"].into()},
+                "goodbye".into() => hashmap!{"bye".into() => vec!["spokoynoy nochi", "do svidaniya"].into()},
+                "ignored".into() => hashmap!{"sad".into() => vec!["no", "change"].into()},
+            },
+        };
+        let result = ReplaceMetadataListsMigration(vec![
+            MetadataListReplacement {
+                setting: "greeting",
+                metadata: "hi",
+                old_vals: &["konichiwa", "privet"],
+                new_vals: &["aloha", "annyeong"],
+            },
+            MetadataListReplacement {
+                setting: "goodbye",
+                metadata: "bye",
+                old_vals: &["spokoynoy nochi", "do svidaniya"],
+                new_vals: &["annyeong", "aloha"],
+            },
+        ])
+        .forward(data)
+        .unwrap();
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "greeting".into() => hashmap!{"hi".into() => vec!["aloha", "annyeong"].into()},
+                "goodbye".into() => hashmap!{"bye".into() => vec!["annyeong", "aloha"].into()},
+                "ignored".into() => hashmap!{"sad".into() => vec!["no", "change"].into()},
+            }
+        );
+    }
+
+    #[test]
+    fn no_match() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi1".into() => hashmap!{"hello?".into() => vec!["konichiwa", "privet"].into()},
+                "hi2".into() => hashmap!{"goodbye?".into() => vec!["spokoynoy nochi", "do svidaniya"].into()},
+            },
+        };
+        let result = ReplaceMetadataListsMigration(vec![
+            MetadataListReplacement {
+                setting: "hi1",
+                metadata: "not hello",
+                old_vals: &["hey?"],
+                new_vals: &["whats", "up"],
+            },
+            MetadataListReplacement {
+                setting: "hi1",
+                metadata: "hello?",
+                old_vals: &["goodbye", "not match"],
+                new_vals: &["whats", "up"],
+            },
+            MetadataListReplacement {
+                setting: "hi3",
+                metadata: "no",
+                old_vals: &["goodbye", "not match"],
+                new_vals: &["whats", "up"],
+            },
+        ])
+        .forward(data)
+        .unwrap();
+        // No change
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "hi1".into() => hashmap!{"hello?".into() => vec!["konichiwa", "privet"].into()},
+                "hi2".into() => hashmap!{"goodbye?".into() => vec!["spokoynoy nochi", "do svidaniya"].into()},
+            }
+        );
+    }
+
+    #[test]
+    fn not_list() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi".into() => hashmap!{"whats going on".into() => "just a string, not a list".into()},
+            },
+        };
+        let result = ReplaceMetadataListsMigration(vec![MetadataListReplacement {
+            setting: "hi",
+            metadata: "whats going on",
+            old_vals: &["there"],
+            new_vals: &["sup", "hey"],
+        }])
+        .forward(data)
+        .unwrap();
+        // No change
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "hi".into() => hashmap!{"whats going on".into() => "just a string, not a list".into()},
+            }
+        );
+    }
+
+    #[test]
+    fn not_string() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi".into() => hashmap!{"whats going on".into() => vec![0].into()},
+            },
+        };
+        ReplaceMetadataListsMigration(vec![MetadataListReplacement {
+            setting: "hi",
+            metadata: "whats going on",
+            old_vals: &["why"],
+            new_vals: &["sup", "hey"],
+        }])
+        .forward(data)
+        .unwrap_err();
+    }
+}
