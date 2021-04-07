@@ -442,9 +442,6 @@ mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_ARCHIVES_DIR}"
 '''
 ]
 
-[tasks.world-variant]
-alias = "build-variant"
-
 [tasks.check-licenses]
 dependencies = ["fetch"]
 script = [
@@ -489,9 +486,6 @@ dependencies = [
     "build-variant",
     "link-variant",
 ]
-
-[tasks.world]
-alias = "build"
 
 [tasks.tuftool]
 script = [
