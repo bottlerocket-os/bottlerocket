@@ -10,12 +10,21 @@
 (typeattribute public)
 (typeattributeset public (xor (global) (restricted_o)))
 
+; All subjects are allowed to describe all processes.
+(allow all_s all_s (processes (describe)))
+
 ; All subjects are allowed to use the label they already have.
 (allow all_s self (processes (transform)))
 
-; All subjects are allowed to interact with processes in
-; most ways without policy restrictions.
-(allow all_s global (processes (interact)))
+; All subjects are allowed to interact with their own processes in most ways
+; without policy restrictions.
+(allow all_s self (processes (interact)))
+
+; Only trusted components can interact with all processes.
+(allow trusted_s all_s (processes (interact)))
+
+; Untrusted components cannot interact with trusted processes.
+(neverallow untrusted_s trusted_s (processes (interact)))
 
 ; PID 1 starts as "kernel_t" and becomes "init_t".
 (typetransition kernel_t init_exec_t process init_t)
