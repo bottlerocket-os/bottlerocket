@@ -23,6 +23,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fmt::Write;
 use std::fs;
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
@@ -118,6 +119,16 @@ mod error {
 
         #[snafu(display("Failed to write user-data for host container '{}': {}", name, source))]
         UserDataWrite {
+            name: String,
+            source: std::io::Error,
+        },
+
+        #[snafu(display(
+            "Failed to chmod host container '{}' storage directory: {}",
+            name,
+            source
+        ))]
+        SetPermissions {
             name: String,
             source: std::io::Error,
         },
@@ -367,6 +378,8 @@ where
     // Create the directory regardless if user data was provided for the container
     let dir = Path::new(PERSISTENT_STORAGE_BASE_DIR).join(name);
     fs::create_dir_all(&dir).context(error::Mkdir { dir: &dir })?;
+    fs::set_permissions(&dir, fs::Permissions::from_mode(0o700))
+        .context(error::SetPermissions { name })?;
 
     // If user data was specified, unencode it and write it out before we start the container.
     if let Some(user_data) = &image_details.user_data {
