@@ -9,9 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-path = "expat-2.2.10.tar.gz"
-url = "https://github.com/libexpat/libexpat/archive/R_2_2_10.tar.gz#/expat-2.2.10.tar.gz"
-sha512 = "5f2d00ead20139aae89910cc08246cf15f7562af2a4fe1b37ebe4c1500a71d9f0a655ebc43f10164ac846be3186ff43f2b94287b18d2a3af882cbd0a1de41a36"
+url = "https://github.com/libexpat/libexpat/releases/download/R_2_3_0/expat-2.3.0.tar.xz"
+sha512 = "dde8a9a094b18d795a0e86ca4aa68488b352dc67019e0d669e8b910ed149628de4c2a49bc3a5b832f624319336a01f9e4debe03433a43e1c420f36356d886820"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
