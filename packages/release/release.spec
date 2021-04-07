@@ -39,8 +39,6 @@ Source1022: usr-share-licenses.mount.in
 
 BuildArch: noarch
 Requires: %{_cross_os}acpid
-Requires: %{_cross_os}apiclient
-Requires: %{_cross_os}apiserver
 Requires: %{_cross_os}audit
 Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
@@ -51,37 +49,17 @@ Requires: %{_cross_os}libgcc
 Requires: %{_cross_os}libstd-rust
 Requires: %{_cross_os}filesystem
 Requires: %{_cross_os}glibc
-Requires: %{_cross_os}ghostdog
-Requires: %{_cross_os}growpart
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}kernel
 Requires: %{_cross_os}kernel-modules
 Requires: %{_cross_os}kernel-devel
-Requires: %{_cross_os}bork
-Requires: %{_cross_os}early-boot-config
-Requires: %{_cross_os}schnauzer
-Requires: %{_cross_os}netdog
-Requires: %{_cross_os}corndog
 Requires: %{_cross_os}selinux-policy
 Requires: %{_cross_os}policycoreutils
-Requires: %{_cross_os}signpost
-Requires: %{_cross_os}sundog
-Requires: %{_cross_os}shibaken
-Requires: %{_cross_os}storewolf
-Requires: %{_cross_os}host-containers
-Requires: %{_cross_os}settings-committer
 Requires: %{_cross_os}systemd
-Requires: %{_cross_os}thar-be-settings
-Requires: %{_cross_os}thar-be-updates
-Requires: %{_cross_os}migration
-Requires: %{_cross_os}updog
-Requires: %{_cross_os}metricdog
-Requires: %{_cross_os}logdog
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}wicked
 Requires: %{_cross_os}os
-Requires: %{_cross_os}bootstrap-containers
 
 %description
 %{summary}.

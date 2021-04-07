@@ -14,10 +14,8 @@ included-packages = [
     "docker-engine",
     "docker-init",
     "docker-proxy",
-
 # ecs
     "ecs-agent",
-    "ecs-settings-applier"
 ]
 
 [lib]
