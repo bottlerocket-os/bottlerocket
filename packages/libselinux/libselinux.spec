@@ -1,10 +1,10 @@
 Name: %{_cross_os}libselinux
-Version: 3.1
+Version: 3.2
 Release: 1%{?dist}
 Summary: Library for SELinux
 License: LicenseRef-SELinux-PD
 URL: https://github.com/SELinuxProject/
-Source0: https://github.com/SELinuxProject/selinux/releases/download/20200710/libselinux-%{version}.tar.gz
+Source0: https://github.com/SELinuxProject/selinux/releases/download/%{version}/libselinux-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libpcre-devel
 BuildRequires: %{_cross_os}libsepol-devel
