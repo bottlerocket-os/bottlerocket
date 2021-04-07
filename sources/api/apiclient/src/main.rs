@@ -9,7 +9,9 @@
 use apiclient::{apply, reboot, set, update};
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
-use simplelog::{ConfigBuilder as LogConfigBuilder, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{
+    ColorChoice, ConfigBuilder as LogConfigBuilder, LevelFilter, TermLogger, TerminalMode,
+};
 use snafu::ResultExt;
 use std::collections::HashMap;
 use std::env;
@@ -508,6 +510,7 @@ async fn run() -> Result<()> {
             .add_filter_allow_str("apiclient")
             .build(),
         TerminalMode::Stderr,
+        ColorChoice::Auto,
     )
     .context(error::Logger)?;
 

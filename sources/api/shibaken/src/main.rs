@@ -14,7 +14,7 @@ AWS instance metadata service (IMDS).
 use log::{debug, info, warn};
 use reqwest::blocking::Client;
 use serde::Serialize;
-use simplelog::{Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
+use simplelog::{ColorChoice, Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::{OptionExt, ResultExt};
 use std::str::FromStr;
 use std::{env, process};
@@ -200,8 +200,13 @@ fn run() -> Result<()> {
 
     // TerminalMode::Stderr will send all logs to stderr, as sundog only expects the json output of
     // the setting on stdout.
-    TermLogger::init(args.log_level, LogConfig::default(), TerminalMode::Stderr)
-        .context(error::Logger)?;
+    TermLogger::init(
+        args.log_level,
+        LogConfig::default(),
+        TerminalMode::Stderr,
+        ColorChoice::Auto,
+    )
+    .context(error::Logger)?;
 
     info!("shibaken started");
 
