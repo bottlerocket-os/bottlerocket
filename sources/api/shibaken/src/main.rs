@@ -32,6 +32,7 @@ struct UserData {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
 struct Ssh {
     authorized_keys: Vec<String>,
 }
