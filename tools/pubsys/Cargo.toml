@@ -26,7 +26,7 @@ rusoto_ec2 = { version = "0.46.0", default-features = false, features = ["rustls
 rusoto_signature = "0.46.0"
 rusoto_ssm = { version = "0.46.0", default-features = false, features = ["rustls"] }
 rusoto_sts = { version = "0.46.0", default-features = false, features = ["rustls"] }
-simplelog = "0.9.0"
+simplelog = "0.10.0"
 snafu = "0.6"
 semver = "0.11.0"
 serde = { version = "1.0", features = ["derive"]  }
