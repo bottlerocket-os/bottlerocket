@@ -124,3 +124,10 @@ license-files = [
     { path = "LICENSE-MIT", hash = 0x28392cf3 },
 ]
 
+[clarify.typenum]
+expression = "MIT OR Apache-2.0"
+license-files = [
+    { path = "LICENSE", hash = 0xa4618a29 },
+    { path = "LICENSE-MIT", hash = 0xb9f15462 },
+    { path = "LICENSE-APACHE", hash = 0x91d5a0a7 },
+]
