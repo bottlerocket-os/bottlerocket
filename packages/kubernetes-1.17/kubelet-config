@@ -42,7 +42,6 @@ kubeReserved:
   cpu: "{{kube_reserve_cpu settings.kubernetes.kube-reserved.cpu}}"
   memory: "{{kube_reserve_memory settings.kubernetes.max-pods settings.kubernetes.kube-reserved.memory}}"
   ephemeral-storage: "{{default "1Gi" settings.kubernetes.kube-reserved.ephemeral-storage}}"
-cpuManagerPolicy: "static"
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 cgroupDriver: systemd
