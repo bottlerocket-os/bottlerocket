@@ -1,4 +1,4 @@
-%global unversion 2_2_10
+%global unversion 2_3_0
 
 Name: %{_cross_os}libexpat
 Version: %(echo %{unversion} | sed 's/_/./g')
@@ -6,7 +6,7 @@ Release: 1%{?dist}
 Summary: Library for XML parsing
 License: MIT
 URL: https://libexpat.github.io/
-Source0: https://github.com/libexpat/libexpat/archive/R_%{unversion}.tar.gz#/expat-%{version}.tar.gz
+Source0: https://github.com/libexpat/libexpat/releases/download/R_%{unversion}/expat-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
 
 %description
@@ -20,8 +20,7 @@ Requires: %{name}
 %{summary}.
 
 %prep
-%autosetup -n libexpat-R_%{unversion}/expat -p1
-./buildconf.sh
+%autosetup -n expat-%{version} -p1
 
 %build
 %cross_configure \
@@ -45,5 +44,6 @@ Requires: %{name}
 %{_cross_includedir}/*.h
 %{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/*.la
+%exclude %{_cross_libdir}/cmake
 
 %changelog
