@@ -128,7 +128,7 @@ impl VmwareDataProvider {
 
         // Base64 decode the &str
         let decoded_bytes = base64::decode(&base64_str).context(error::Base64Decode {
-            base64_string: base64_str.to_string(),
+            what: "OVF user data",
         })?;
 
         // Decompress the data if it's compressed
@@ -312,9 +312,9 @@ mod error {
             source: vmw_backdoor::VmwError,
         },
 
-        #[snafu(display("Unable to base64 decode string '{}': '{}'", base64_string, source))]
+        #[snafu(display("Unable to decode base64 in {}: '{}'", what, source))]
         Base64Decode {
-            base64_string: String,
+            what: String,
             source: base64::DecodeError,
         },
 

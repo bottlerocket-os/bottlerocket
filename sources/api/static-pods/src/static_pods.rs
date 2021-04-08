@@ -117,9 +117,7 @@ where
             field: "manifest",
         })?;
 
-        let manifest = base64::decode(manifest.as_bytes()).context(error::Base64Decode {
-            base64_string: manifest.as_ref(),
-        })?;
+        let manifest = base64::decode(manifest.as_bytes()).context(error::Base64Decode { name })?;
 
         info!("Writing static pod '{}' to '{}'", name, STATIC_POD_DIR);
 
@@ -271,9 +269,10 @@ mod error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
-        #[snafu(display("Unable to base64 decode manifest '{}': '{}'", base64_string, source))]
+        #[snafu(display(
+            "Unable to decode base64 in static pod '{}' manifest: {}", name, source))]
         Base64Decode {
-            base64_string: String,
+            name: String,
             source: base64::DecodeError,
         },
 
