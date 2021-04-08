@@ -298,7 +298,7 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 			// Mount in the persistent storage location for this container
 			withPersistentStorage(containerName, persistentDir),
 			// Mount the rootfs with an SELinux label that makes it writable
-			withMountLabel("system_u:object_r:state_t:s0"),
+			withMountLabel("system_u:object_r:secret_t:s0"),
 			// Include conditional options for superpowered containers.
 			withSuperpowered(superpowered),
 			// Mount the rootfs if superpowered or bootstrap

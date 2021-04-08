@@ -100,6 +100,11 @@
 (roletype object_r state_t)
 (context state (system_u object_r state_t s0))
 
+; Files for saved system secrets.
+(type secret_t)
+(roletype object_r secret_t)
+(context secret (system_u object_r secret_t s0))
+
 ; Files that are mount points for external filesystems.
 (type external_t)
 (roletype object_r external_t)
@@ -112,7 +117,11 @@
 ; Protected objects are files on local storage with special rules.
 (typeattribute protected_o)
 (typeattributeset protected_o (
-  cache_t private_t lease_t measure_t state_t))
+  cache_t private_t lease_t measure_t secret_t state_t))
+
+; Restricted objects are files that cannot be read by all processes.
+(typeattribute restricted_o)
+(typeattributeset restricted_o (private_t secret_t))
 
 ; Immutable objects reside on read-only storage.
 (typeattribute immutable_o)
@@ -132,6 +141,6 @@
   os_t init_exec_t api_exec_t clock_exec_t
   network_exec_t bus_exec_t runtime_exec_t
   any_t etc_t unlabeled_t external_t
-  local_t private_t cache_t
+  local_t private_t secret_t cache_t
   lease_t measure_t state_t
   api_socket_t))
