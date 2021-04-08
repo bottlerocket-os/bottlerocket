@@ -285,7 +285,8 @@ where
     // If user data was specified, decode it and write it out
     if let Some(user_data) = &container_details.user_data {
         debug!("Decoding user data for container '{}'", name);
-        let decoded_bytes = base64::decode(user_data.as_bytes()).context(error::Base64Decode)?;
+        let decoded_bytes =
+            base64::decode(user_data.as_bytes()).context(error::Base64Decode { name })?;
 
         let path = dir.join("user-data");
         debug!("Storing user data in {}", path.display());
@@ -606,8 +607,13 @@ mod error {
             source: apiclient::Error,
         },
 
-        #[snafu(display("Unable to base64 decode user-data: '{}'", source))]
+        #[snafu(display(
+            "Unable to decode base64 in user data of bootstrap container '{}': '{}'",
+            name,
+            source
+        ))]
         Base64Decode {
+            name: String,
             source: base64::DecodeError,
         },
 

@@ -131,14 +131,8 @@ mod error {
         ))]
         MissingTemplateData { template: String },
 
-        #[snafu(display(
-            "Unable to base64 decode string '{}' in template '{}': '{}'",
-            base64_string,
-            template,
-            source
-        ))]
+        #[snafu(display("Unable to decode base64 in template '{}': '{}'", template, source))]
         Base64Decode {
-            base64_string: String,
             template: String,
             source: base64::DecodeError,
         },
@@ -239,7 +233,6 @@ pub fn base64_decode(
 
     // Base64 decode the &str
     let decoded_bytes = base64::decode(&base64_str).context(error::Base64Decode {
-        base64_string: base64_str.to_string(),
         template: template_name.to_owned(),
     })?;
 

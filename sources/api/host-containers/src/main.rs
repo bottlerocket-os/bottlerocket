@@ -105,9 +105,9 @@ mod error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
-        #[snafu(display("Unable to base64 decode user-data '{}': '{}'", base64_string, source))]
+        #[snafu(display("Unable to base64 decode user-data for container '{}': '{}'", name, source))]
         Base64Decode {
-            base64_string: String,
+            name: String,
             source: base64::DecodeError,
         },
 
@@ -383,9 +383,7 @@ where
 
     // If user data was specified, unencode it and write it out before we start the container.
     if let Some(user_data) = &image_details.user_data {
-        let decoded_bytes = base64::decode(user_data.as_bytes()).context(error::Base64Decode {
-            base64_string: user_data.as_ref(),
-        })?;
+        let decoded_bytes = base64::decode(user_data.as_bytes()).context(error::Base64Decode { name })?;
 
         let path = dir.join("user-data");
         fs::write(path, decoded_bytes).context(error::UserDataWrite { name })?;
