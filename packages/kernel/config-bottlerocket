@@ -57,3 +57,7 @@ CONFIG_IKHEADERS=y
 
 # BTF debug info at /sys/kernel/btf/vmlinux
 CONFIG_DEBUG_INFO_BTF=y
+
+# We don't want to extend the kernel command line with any upstream defaults;
+# Bottlerocket uses a fairly custom setup that needs tight control over it.
+CONFIG_CMDLINE_EXTEND=n
