@@ -24,13 +24,6 @@ Information about API settings for variants can be found in the [models](../sour
 
 ## Variants
 
-### aws-k8s-1.15: Kubernetes 1.15 node
-
-The [aws-k8s-1.15](aws-k8s-1.15/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.15, 1.16, and 1.17 clusters.
-
 ### aws-k8s-1.16: Kubernetes 1.16 node
 
 The [aws-k8s-1.16](aws-k8s-1.16/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -75,6 +68,17 @@ User data will be read from IMDS.
 The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMWare guest.
 It includes tools for troubleshooting as well as Docker for running containers.
 User data will be read from a mounted CD-ROM, either from a file named "user-data" or from an OVF file.
+
+### Deprecated variants
+
+#### aws-k8s-1.15: Kubernetes 1.15 node
+
+The [aws-k8s-1.15](aws-k8s-1.15/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.15, 1.16, and 1.17 clusters.
+
+Upstream support for Kubernetes 1.15 has ended and this variant will no longer be supported in Bottlerocket releases.
 
 ## Development
 
