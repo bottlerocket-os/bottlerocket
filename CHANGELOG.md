@@ -1,3 +1,106 @@
+# v1.0.8 (2021-04-12)
+
+## Deprecation Notice
+
+Bottlerocket 1.0.8 is the last release where we plan to support the Kubernetes 1.15 variant, `aws-k8s-1.15`.
+Kubernetes 1.15 is no longer receiving support upstream.
+We recommend replacing `aws-k8s-1.15` nodes with a later variant, preferably `aws-k8s-1.19` if your cluster supports it.
+See [this issue](https://github.com/bottlerocket-os/bottlerocket/issues/1478) for more details.
+
+## OS Changes
+
+* Support additional kubelet arguments: kube-reserved, eviction-hard, cpu-manager-policy, and allow-unsafe-sysctls ([#1388], [#1472], [#1465])
+* Expand file and process restrictions in the SELinux policy ([#1464])
+* Add support for bootstrap containers ([#1387], [#1423])
+* Make host containers inherit proxy env vars ([#1432])
+* Allow gzip compression of user data ([#1366])
+* Add 'apply' mode to apiclient for applying settings from URIs ([#1391])
+* Add compat symlink for kubelet volume plugins ([#1417])
+* Remove bottlerocket.version attribute from ECS agent settings ([#1395])
+* Make Kubernetes taint values optional ([#1406])
+* Add guestinfo to available VMWare user data retrieval methods ([#1393])
+* Include source of invalid base64 data in error messages ([#1469])
+* Update eni-max-pods data file ([#1468])
+* Update default host container versions ([#1443], [#1441], [#1466])
+* Fix avc denial for dbus-broker ([#1434])
+* Fix case of outputted JSON keys in host container user data ([#1439])
+* Set mode of host container persistent storage directory after creation ([#1463])
+* Add "current" persistent storage location for host containers ([#1416])
+* Write static-pods manifest to tempfile before persisting it ([#1409])
+
+## Build Changes
+
+* Update default variant to aws-k8s-1.19 ([#1394])
+* Update third-party packages ([#1460])
+* Update Rust dependencies ([#1461], [#1462])
+* Update dependencies of host-ctr ([#1371])
+* Add support for specifying a variant's supported architectures ([#1431])
+* Build OVA packages and include them in repos ([#1428])
+* Add support for qcow2 as an image format ([#1425]) (Thanks, @mikalstill!)
+* Prevent unneeded artifacts from being copied through build process ([#1426])
+* Change image format for vmware-dev variant to vmdk ([#1397])
+* Remove tough dependency from update_metadata ([#1390])
+* Remove generate_constants logic from build.rs of parse-datetime ([#1376])
+* In the tools workspace, update to tokio v1, reqwest v0.11, and tough v0.11 ([#1370])
+* Run static and non-static Rust builds in parallel ([#1368])
+* Disable CMDLINE_EXTEND kernel configuration ([#1473])
+
+## Documentation Changes
+
+* Document metrics settings in README ([#1449])
+* Fix broken links for symlinked files in models README ([#1444])
+* Document `apiclient update` as primary CLI update method ([#1421])
+* Use `apiclient set` in introductory documentation, explain raw mode separately ([#1418])
+* Prefer resolve:ssm: parameters for simplicity in QUICKSTART ([#1363])
+* Update quickstart guides to have arm64 examples ([#1360])
+* Document the deprecation of the aws-k8s-1.15 variant ([#1476])
+
+[#1360]: https://github.com/bottlerocket-os/bottlerocket/pull/1360
+[#1363]: https://github.com/bottlerocket-os/bottlerocket/pull/1363
+[#1366]: https://github.com/bottlerocket-os/bottlerocket/pull/1366
+[#1368]: https://github.com/bottlerocket-os/bottlerocket/pull/1368
+[#1370]: https://github.com/bottlerocket-os/bottlerocket/pull/1370
+[#1371]: https://github.com/bottlerocket-os/bottlerocket/pull/1371
+[#1376]: https://github.com/bottlerocket-os/bottlerocket/pull/1376
+[#1387]: https://github.com/bottlerocket-os/bottlerocket/pull/1387
+[#1388]: https://github.com/bottlerocket-os/bottlerocket/pull/1388
+[#1390]: https://github.com/bottlerocket-os/bottlerocket/pull/1390
+[#1391]: https://github.com/bottlerocket-os/bottlerocket/pull/1391
+[#1393]: https://github.com/bottlerocket-os/bottlerocket/pull/1393
+[#1394]: https://github.com/bottlerocket-os/bottlerocket/pull/1394
+[#1395]: https://github.com/bottlerocket-os/bottlerocket/pull/1395
+[#1397]: https://github.com/bottlerocket-os/bottlerocket/pull/1397
+[#1406]: https://github.com/bottlerocket-os/bottlerocket/pull/1406
+[#1409]: https://github.com/bottlerocket-os/bottlerocket/pull/1409
+[#1416]: https://github.com/bottlerocket-os/bottlerocket/pull/1416
+[#1417]: https://github.com/bottlerocket-os/bottlerocket/pull/1417
+[#1418]: https://github.com/bottlerocket-os/bottlerocket/pull/1418
+[#1421]: https://github.com/bottlerocket-os/bottlerocket/pull/1421
+[#1423]: https://github.com/bottlerocket-os/bottlerocket/pull/1423
+[#1425]: https://github.com/bottlerocket-os/bottlerocket/pull/1425
+[#1426]: https://github.com/bottlerocket-os/bottlerocket/pull/1426
+[#1428]: https://github.com/bottlerocket-os/bottlerocket/pull/1428
+[#1431]: https://github.com/bottlerocket-os/bottlerocket/pull/1431
+[#1432]: https://github.com/bottlerocket-os/bottlerocket/pull/1432
+[#1434]: https://github.com/bottlerocket-os/bottlerocket/pull/1434
+[#1439]: https://github.com/bottlerocket-os/bottlerocket/pull/1439
+[#1441]: https://github.com/bottlerocket-os/bottlerocket/pull/1441
+[#1443]: https://github.com/bottlerocket-os/bottlerocket/pull/1443
+[#1444]: https://github.com/bottlerocket-os/bottlerocket/pull/1444
+[#1449]: https://github.com/bottlerocket-os/bottlerocket/pull/1449
+[#1460]: https://github.com/bottlerocket-os/bottlerocket/pull/1460
+[#1461]: https://github.com/bottlerocket-os/bottlerocket/pull/1461
+[#1462]: https://github.com/bottlerocket-os/bottlerocket/pull/1462
+[#1463]: https://github.com/bottlerocket-os/bottlerocket/pull/1463
+[#1464]: https://github.com/bottlerocket-os/bottlerocket/pull/1464
+[#1465]: https://github.com/bottlerocket-os/bottlerocket/pull/1465
+[#1466]: https://github.com/bottlerocket-os/bottlerocket/pull/1466
+[#1468]: https://github.com/bottlerocket-os/bottlerocket/pull/1468
+[#1469]: https://github.com/bottlerocket-os/bottlerocket/pull/1469
+[#1472]: https://github.com/bottlerocket-os/bottlerocket/pull/1472
+[#1473]: https://github.com/bottlerocket-os/bottlerocket/pull/1473
+[#1476]: https://github.com/bottlerocket-os/bottlerocket/pull/1476
+
 # v1.0.7 (2021-03-17)
 
 ## Security fixes
