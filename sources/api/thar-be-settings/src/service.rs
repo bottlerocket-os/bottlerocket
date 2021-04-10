@@ -1,46 +1,94 @@
-use snafu::{ensure, OptionExt, ResultExt};
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::path::Path;
-use std::process;
-
-use itertools::join;
-
 use crate::{error, Result};
+use itertools::join;
+use snafu::{ensure, OptionExt, ResultExt};
+use std::collections::{HashMap, HashSet};
+use std::path::Path;
+use std::process::Command;
 
-/// Wrapper for the multiple functions needed to go from
-/// a list of changed settings to a Services map
-#[allow(clippy::implicit_hasher)]
+// TODO: thar-be-settings isn't used as a library; declare its modules in main rather than lib so
+// we don't have to expose helper types like this just so we can call related functions in main.
+/// The `Services` type is an augmented version of `model::Services` that also stores the list of
+/// settings that were changed and that are relevant to each service.
+#[derive(Debug, Default)]
+pub struct Services(pub HashMap<String, Service>);
+/// The `Service` type stores the original `model::Service` and the list of settings that have
+/// changed that are relevant to that service.
+#[derive(Debug)]
+pub struct Service {
+    /// The specific list of settings that changed and are relevant to this service.  Will be None
+    /// if the program is running for *all* services, like at startup.
+    pub changed_settings: Option<HashSet<String>>,
+    /// The model's representation of this service.
+    pub model: model::Service,
+}
+
+impl Services {
+    /// Convert from the model's representation of all services to our own, adding in the lists of
+    /// changed settings, if appropriate; pass None if the program is running for *all* services.
+    pub fn from_model_services(
+        input: model::Services,
+        mut all_changed_settings: Option<HashMap<String, HashSet<String>>>,
+    ) -> Self {
+        let mut output = HashMap::new();
+        for (name, model) in input {
+            let changed_settings = all_changed_settings.as_mut().and_then(|s| s.remove(&name));
+            output.insert(
+                name,
+                Service {
+                    changed_settings,
+                    model,
+                },
+            );
+        }
+        Self(output)
+    }
+}
+
+/// Returns a `Services` reflecting the set of services affected by the given changed settings in
+/// `settings_limit`.  If `settings_limit` is None, reflects all known services.
 pub async fn get_affected_services<P>(
     socket_path: P,
     settings_limit: Option<HashSet<String>>,
-) -> Result<model::Services>
+) -> Result<Services>
 where
     P: AsRef<Path>,
 {
-    let service_limit = if let Some(settings_limit) = settings_limit {
-        let setting_to_service_map =
-            get_affected_service_map(socket_path.as_ref(), settings_limit).await?;
-        if setting_to_service_map.is_empty() {
-            return Ok(HashMap::new());
+    let services: Services;
+    if let Some(settings_limit) = settings_limit {
+        // Get the list of affected services for each setting
+        let affected_services =
+            get_affected_service_metadata(socket_path.as_ref(), settings_limit).await?;
+        if affected_services.is_empty() {
+            return Ok(Services::default());
         }
 
-        let service_names = get_affected_service_names(setting_to_service_map);
-        Some(service_names)
-    } else {
-        // No limit, we want all services.
-        None
-    };
+        // Pull out the names of the services so we can ask the API about them.
+        let service_names = affected_services.values().flatten().collect();
+        // Ask the API for its metadata about the affected services.
+        let service_meta = get_service_metadata(socket_path.as_ref(), Some(service_names)).await?;
 
-    let services = get_service_metadata(socket_path.as_ref(), service_limit).await?;
+        // Reverse the mapping, getting the list of changed settings for each service
+        let mut changed_settings = HashMap::new();
+        for (setting, services) in affected_services {
+            for service in services {
+                let settings = changed_settings.entry(service).or_insert_with(HashSet::new);
+                settings.insert(setting.clone());
+            }
+        }
+
+        services = Services::from_model_services(service_meta, Some(changed_settings));
+    } else {
+        // If there was no settings limit, get data for all services.
+        let service_meta = get_service_metadata(socket_path.as_ref(), None).await?;
+        services = Services::from_model_services(service_meta, None);
+    }
 
     Ok(services)
 }
 
-/// Gather the services affected for each setting into a map, or if `settings_limit` is None, all
-/// services
+/// Ask the API which services are affected by the given list of settings.
 #[allow(clippy::implicit_hasher)]
-async fn get_affected_service_map<P>(
+async fn get_affected_service_metadata<P>(
     socket_path: P,
     settings: HashSet<String>,
 ) -> Result<HashMap<String, Vec<String>>>
@@ -62,29 +110,11 @@ where
     Ok(setting_to_services_map)
 }
 
-/// Given a map of Setting to affected Service name, return a
-/// HashSet of affected service names
-fn get_affected_service_names(
-    setting_to_service_map: HashMap<String, Vec<String>>,
-) -> HashSet<String> {
-    // Build a HashSet of names of affected services
-    debug!("Building set of affected services");
-    let mut service_set: HashSet<String> = HashSet::new();
-    for (_, service_list) in setting_to_service_map {
-        for service_name in service_list {
-            debug!("Found {}", &service_name);
-            service_set.insert(service_name);
-        }
-    }
-
-    trace!("Affected service names: {:?}", service_set);
-    service_set
-}
-
-/// Gather the metadata for each Service affected
+/// Ask the API for metadata about the given list of services, or all services if `services_limit`
+/// is None.
 async fn get_service_metadata<P>(
     socket_path: P,
-    services_limit: Option<HashSet<String>>,
+    services_limit: Option<HashSet<&String>>,
 ) -> Result<model::Services>
 where
     P: AsRef<Path>,
@@ -104,8 +134,8 @@ where
 }
 
 /// Call the `restart()` method on each Service in a Services object
-pub fn restart_services(services: model::Services) -> Result<()> {
-    for (name, service) in services {
+pub fn restart_services(services: Services) -> Result<()> {
+    for (name, service) in services.0 {
         debug!("Checking for restart-commands for {}", name);
         service.restart()?;
     }
@@ -119,9 +149,11 @@ trait ServiceRestart {
     fn restart(&self) -> Result<()>;
 }
 
-impl ServiceRestart for model::Service {
+impl ServiceRestart for Service {
     fn restart(&self) -> Result<()> {
-        for restart_command in self.restart_commands.iter() {
+        let restart_commands = &self.model.restart_commands;
+        info!("restart commands {:?}", restart_commands);
+        for restart_command in restart_commands {
             // Split on space, assume the first item is the command
             // and the rest are args.
             debug!("Restart command: {:?}", &restart_command);
@@ -135,8 +167,14 @@ impl ServiceRestart for model::Service {
             trace!("Args: {:?}", &command_strings);
 
             // Go execute the restart command
-            let result = process::Command::new(command)
-                .args(command_strings)
+            let mut process_command = Command::new(command);
+            process_command.args(command_strings);
+            if let Some(ref changed_settings) = self.changed_settings {
+                if !changed_settings.is_empty() {
+                    process_command.env("CHANGED_SETTINGS", join(changed_settings, " "));
+                }
+            }
+            let result = process_command
                 .output()
                 .context(error::CommandExecutionFailure {
                     command: restart_command.as_str(),
@@ -160,28 +198,5 @@ impl ServiceRestart for model::Service {
             );
         }
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use maplit::{hashmap, hashset};
-
-    #[test]
-    fn test_get_affected_service_names() {
-        let input_map = hashmap!(
-            "settings.example".to_string() => vec![
-                "example".to_string(),
-            ],
-            "settings.foobar".to_string() => vec![
-                "example".to_string(),
-                "barbaz".to_string()
-            ]
-        );
-
-        let expected_output = hashset! {"example".to_string(), "barbaz".to_string()};
-
-        assert_eq!(get_affected_service_names(input_map), expected_output)
     }
 }
