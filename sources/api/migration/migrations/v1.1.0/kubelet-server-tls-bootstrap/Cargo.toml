@@ -1,0 +1,10 @@
+[package]
+name = "kubelet-server-tls-bootstrap"
+version = "0.1.0"
+authors = ["Erikson Tung <etung@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers" }
