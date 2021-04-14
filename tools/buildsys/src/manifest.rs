@@ -58,6 +58,30 @@ variant-sensitive = true
 [package.metadata.build-variant]
 included-packages = ["release"]
 ```
+
+`image-format` is the desired format of the built image.
+This can be `raw` (the default), `vmdk`, or `qcow2`.
+```
+[package.metadata.build-variant]
+image-format = "vmdk"
+```
+
+`supported-arches` is the list of architectures the variant is able to run on.
+The values can be `x86_64` and `aarch64`.
+If not specified, the variant can run on any of those architectures.
+```
+[package.metadata.build-variant]
+supported-arches = ["x86_64"]
+```
+
+`kernel-parameters` is a list of extra parameters to be added to the kernel command line.
+The given parameters are inserted at the start of the command line.
+```
+[package.metadata.build-variant]
+kernel-parameters = [
+   "console=ttyS42",
+]
+```
 */
 
 pub(crate) mod error;
