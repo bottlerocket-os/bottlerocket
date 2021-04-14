@@ -123,6 +123,12 @@ impl ManifestInfo {
             .and_then(|b| b.supported_arches.as_ref())
     }
 
+    /// Convenience method to return the kernel parameters for this variant.
+    pub(crate) fn kernel_parameters(&self) -> Option<&Vec<String>> {
+        self.build_variant()
+            .and_then(|b| b.kernel_parameters.as_ref())
+    }
+
     /// Helper methods to navigate the series of optional struct fields.
     fn build_package(&self) -> Option<&BuildPackage> {
         self.package
@@ -167,6 +173,7 @@ pub(crate) struct BuildVariant {
     pub(crate) included_packages: Option<Vec<String>>,
     pub(crate) image_format: Option<ImageFormat>,
     pub(crate) supported_arches: Option<HashSet<SupportedArch>>,
+    pub(crate) kernel_parameters: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]
