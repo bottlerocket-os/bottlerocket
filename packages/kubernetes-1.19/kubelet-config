@@ -27,8 +27,10 @@ authorization:
     cacheUnauthorizedTTL: 30s
 {{~/if}}
 clusterDomain: {{settings.kubernetes.cluster-domain}}
+{{~#if settings.kubernetes.cluster-dns-ip}}
 clusterDNS:
 - {{settings.kubernetes.cluster-dns-ip}}
+{{~/if}}
 {{~#if settings.kubernetes.eviction-hard}}
 evictionHard:
   {{~#each settings.kubernetes.eviction-hard}}
