@@ -180,6 +180,7 @@ CROSS_COMPILATION_CONF_EOF\
   GOFLAGS="-mod=vendor"; export GOFLAGS ; \
   GOPROXY="off"; export GOPROXY ; \
   GOSUMDB="off"; export GOSUMDB ; \
+  GO111MODULE="auto"; export GO111MODULE ; \
 
 %cross_go_setup() \
   mkdir -p GOPATH/src/%2 ; \
