@@ -50,12 +50,14 @@ kubeReserved:
   ephemeral-storage: "{{default "1Gi" settings.kubernetes.kube-reserved.ephemeral-storage}}"
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
+readOnlyPort: 0
 cgroupDriver: systemd
 cgroupRoot: "/"
 runtimeRequestTimeout: 15m
 featureGates:
   RotateKubeletServerCertificate: true
   CSIMigration: false
+protectKernelDefaults: true
 serializeImagePulls: false
 serverTLSBootstrap: true
 configMapAndSecretChangeDetectionStrategy: Cache
