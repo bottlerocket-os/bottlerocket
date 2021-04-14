@@ -119,14 +119,14 @@ grub2-mkimage \
   -O "%{_cross_grub_tuple}" \
   -o "%{buildroot}%{_cross_grubdir}/%{_cross_grub_image}" \
   -p "%{_cross_grub_prefix}" \
-%if %{_cross_arch} == x86_64
+%if "%{_cross_arch}" == "x86_64"
   biosdisk \
 %else
   efi_gop \
 %endif
   configfile echo ext2 gptprio linux normal part_gpt reboot sleep
 
-%if %{_cross_arch} == x86_64
+%if "%{_cross_arch}" == "x86_64"
 install -m 0644 ./grub-core/boot.img \
   %{buildroot}%{_cross_grubdir}/boot.img
 %endif
@@ -135,7 +135,7 @@ install -m 0644 ./grub-core/boot.img \
 %license COPYING COPYING.unicode
 %{_cross_attribution_file}
 %dir %{_cross_grubdir}
-%if %{_cross_arch} == x86_64
+%if "%{_cross_arch}" == "x86_64"
 %{_cross_grubdir}/boot.img
 %endif
 %{_cross_grubdir}/%{_cross_grub_image}
