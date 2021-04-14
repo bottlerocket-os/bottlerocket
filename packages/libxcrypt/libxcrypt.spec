@@ -1,5 +1,5 @@
 Name: %{_cross_os}libxcrypt
-Version: 4.4.17
+Version: 4.4.18
 Release: 1%{?dist}
 Summary: Extended crypt library for descrypt, md5crypt, bcrypt, and others
 License: LGPL-2.1-or-later
