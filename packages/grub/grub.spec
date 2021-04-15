@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%global __strip %{_bindir}/strip
+%global __strip %{_bindir}/true
 
 Name: %{_cross_os}grub
 Version: 2.04
