@@ -211,13 +211,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kubernetes-1_15"
-version = "0.1.0"
-dependencies = [
- "glibc",
-]
-
-[[package]]
 name = "kubernetes-1_16"
 version = "0.1.0"
 dependencies = [
