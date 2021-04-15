@@ -27,9 +27,9 @@ BUILDSYS_NAME = "bottlerocket"
 # "Bottlerocket Remix by ${CORP}" or "${CORP}'s Bottlerocket Remix"
 BUILDSYS_PRETTY_NAME = "Bottlerocket OS"
 # SDK version used for building
-BUILDSYS_SDK_VERSION="0.15.0"
+BUILDSYS_SDK_VERSION="v0.20.0"
 # Site for fetching the SDK
-BUILDSYS_SDK_SITE="cache.bottlerocket.aws"
+BUILDSYS_REGISTRY="public.ecr.aws/bottlerocket"
 
 # These can be overridden with -e to change configuration for pubsys (`cargo
 # make repo`).  In addition, you can set RELEASE_START_TIME to determine when
@@ -86,9 +86,9 @@ DOCKER_BUILDKIT = "1"
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
 
-# Depends on ${BUILDSYS_ARCH} and ${BUILDSYS_SDK_VERSION}.
-BUILDSYS_SDK_IMAGE = { script = [ "echo bottlerocket/sdk-${BUILDSYS_ARCH}:v${BUILDSYS_SDK_VERSION}-$(uname -m)" ] }
-BUILDSYS_TOOLCHAIN = { script = [ "echo bottlerocket/toolchain-${BUILDSYS_ARCH}:v${BUILDSYS_SDK_VERSION}-${BUILDSYS_ARCH}" ] }
+# Depends on ${BUILDSYS_REGISTRY}, ${BUILDSYS_ARCH} and ${BUILDSYS_SDK_VERSION}.
+BUILDSYS_SDK_IMAGE = { script = [ "echo ${BUILDSYS_REGISTRY}/bottlerocket-sdk-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
+BUILDSYS_TOOLCHAIN = { script = [ "echo ${BUILDSYS_REGISTRY}/bottlerocket-toolchain-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
 
 # Depends on ${BUILDSYS_JOBS}.
 CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
@@ -145,7 +145,7 @@ mkdir -p ${GO_MOD_CACHE}
 dependencies = ["setup"]
 script = [
 '''
-for cmd in curl docker gunzip lz4; do
+for cmd in docker gzip lz4; do
   if ! command -v ${cmd} >/dev/null 2>&1 ; then
     echo "required program '${cmd}' not found" >&2
     exit 1
@@ -157,6 +157,7 @@ done
 [tasks.fetch]
 dependencies = [
   "fetch-sdk",
+  "fetch-toolchain",
   "fetch-sources",
   "fetch-vendored",
 ]
@@ -166,15 +167,40 @@ dependencies = ["setup-build"]
 script_runner = "bash"
 script = [
 '''
-set -o pipefail
-if ! docker image inspect ${BUILDSYS_SDK_IMAGE} >/dev/null 2>&1 ; then
-  # Let curl resolve the certificates instead of the tasks resolved bundle.
-  unset SSL_CERT_FILE SSL_CERT_DIR
-  if ! curl --silent --fail --show-error https://${BUILDSYS_SDK_SITE}/${BUILDSYS_SDK_IMAGE}.tar.gz \
-       | gunzip | docker load ; then
-    echo "failed to load '${BUILDSYS_SDK_IMAGE}'" >&2
+if ! docker image inspect "${BUILDSYS_SDK_IMAGE}" >/dev/null 2>&1 ; then
+  if ! docker pull "${BUILDSYS_SDK_IMAGE}" ; then
+    echo "failed to pull '${BUILDSYS_SDK_IMAGE}'" >&2
     exit 1
   fi
+fi
+'''
+]
+
+[tasks.fetch-toolchain]
+dependencies = ["setup-build"]
+script_runner = "bash"
+script = [
+'''
+if docker image inspect "${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH}" >/dev/null 2>&1 ; then
+  exit 0
+fi
+
+case "${BUILDSYS_ARCH}" in
+  x86_64) docker_arch="amd64" ;;
+  aarch64) docker_arch="arm64" ;;
+esac
+
+# We want the image with the target's native toolchain, rather than one that matches the
+# host architecture.
+if ! docker pull --platform "${docker_arch}" "${BUILDSYS_TOOLCHAIN}" ; then
+  echo "could not pull '${BUILDSYS_TOOLCHAIN}' for ${docker_arch}" >&2
+  exit 1
+fi
+
+# Apply a tag to distinguish the image from other architectures.
+if ! docker tag "${BUILDSYS_TOOLCHAIN}" "${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH}" ; then
+  echo "could not tag '${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH}'" >&2
+  exit 1
 fi
 '''
 ]
@@ -320,6 +346,24 @@ script = [
 '''
 mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
 
+toolchain="toolchain-${BUILDSYS_SDK_VERSION}.${BUILDSYS_ARCH}.tar.gz"
+if [ ! -s "${BUILDSYS_ARCHIVES_DIR}/${toolchain}" ] ; then
+  if ! docker create --name "${toolchain}" \
+      ${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH} true >/dev/null 2>&1 ; then
+    echo "could not create toolchain container" >&2
+    exit 1
+  fi
+  if ! docker cp "${toolchain}":toolchain - \
+      | gzip --fast > "${BUILDSYS_ARCHIVES_DIR}/${toolchain}" ; then
+    echo "could not extract toolchain from container" >&2
+    exit 1
+  fi
+  if ! docker rm -f "${toolchain}" >/dev/null 2>&1 ; then
+    echo "could not remove toolchain container" >&2
+    exit 1
+  fi
+fi
+
 # Find the most recent kernel archive. If we have more than one, we want the
 # last one that was built.
 kernel_archive="$(find "${BUILDSYS_PACKAGES_DIR}" \
@@ -343,8 +387,6 @@ mkdir -p /tmp/kit/${BUILDSYS_KMOD_KIT} /tmp/extract
 
 # Retrieve the toolchain and kernel archives.
 pushd /tmp/extract >/dev/null
-curl --silent --fail --show-error --output /tmp/kit/${BUILDSYS_KMOD_KIT}/toolchain.tar.xz \
-  https://${BUILDSYS_SDK_SITE}/${BUILDSYS_TOOLCHAIN}.tar.xz
 find /tmp/rpms -name "${kernel_archive##*/}" \
   -exec rpm2cpio {} \; | cpio -idmu --quiet
 find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/kit/${BUILDSYS_KMOD_KIT} \;
@@ -354,8 +396,7 @@ popd >/dev/null
 pushd /tmp/kit/${BUILDSYS_KMOD_KIT} >/dev/null
 tar xf kernel-devel.tar.xz
 rm kernel-devel.tar.xz
-tar xf toolchain.tar.xz
-rm toolchain.tar.xz
+tar xf /tmp/archives/${toolchain}
 popd >/dev/null
 
 # Merge them together into a unified archive.
@@ -468,10 +509,22 @@ mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_ARCHIVES_DIR}"
 dependencies = ["fetch"]
 script = [
 '''
-[ "${BUILDSYS_ALLOW_FAILED_LICENSE_CHECK}" = "true" ] && set +e
-(cd sources && cargo deny check --disable-fetch licenses)
-(cd tools && cargo deny check --disable-fetch licenses)
-set -e
+run_cargo_deny="
+(cd /tmp/sources && cargo deny check --disable-fetch licenses)
+(cd /tmp/tools && cargo deny check --disable-fetch licenses)
+"
+set +e
+docker run --rm \
+  --network=none \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -e CARGO_HOME="/tmp/.cargo" \
+  -v "${CARGO_HOME}":/tmp/.cargo \
+  -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
+  -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash -c "${run_cargo_deny}"
+[ "${?}" -eq 0 ] || [ "${BUILDSYS_ALLOW_FAILED_LICENSE_CHECK}" = "true" ]
 '''
 ]
 
