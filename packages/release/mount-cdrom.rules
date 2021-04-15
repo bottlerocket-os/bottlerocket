@@ -1,0 +1,8 @@
+ACTION!="change", GOTO="mount_cdrom_end"
+SUBSYSTEM!="block", GOTO="mount_cdrom_end"
+KERNEL!="sr[0-9]*|vdisk*|xvd*", GOTO="mount_cdrom_end"
+ENV{DEVTYPE}!="disk", GOTO="mount_cdrom_end"
+# If media is present, we want to mount the CD-ROM.
+ENV{ID_CDROM}=="1", ENV{ID_CDROM_MEDIA}=="1", ENV{ID_FS_TYPE}=="iso9660", \
+  ENV{SYSTEMD_WANTS}="media-cdrom.mount"
+LABEL="mount_cdrom_end"

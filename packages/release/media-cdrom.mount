@@ -3,7 +3,7 @@ Description=CD-ROM mount (/media/cdrom)
 # Only run this unit if /dev/cdrom exists and is tracked via systemd. (systemd
 # ships with a udev rule to tag and symlink the first suspected cdrom device to
 # /dev/cdrom)
-Requires=dev-cdrom.device
+BindsTo=dev-cdrom.device
 After=dev-cdrom.device
 DefaultDependencies=no
 Conflicts=umount.target
@@ -13,9 +13,4 @@ Before=local-fs.target umount.target
 What=/dev/cdrom
 Where=/media/cdrom
 Type=iso9660
-Options=defaults,noexec
-
-[Install]
-# This dependency ensures that systemd attempts to run this unit if the device
-# exists.
-WantedBy=dev-cdrom.device
+Options=ro,defaults,noexec

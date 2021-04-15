@@ -29,8 +29,9 @@ Source1008: opt.mount
 Source1009: var-lib-bottlerocket.mount
 Source1010: etc-cni.mount
 
-# CD-ROM mount
+# CD-ROM mount & associated udev rules
 Source1015: media-cdrom.mount
+Source1016: mount-cdrom.rules
 
 # Mounts that require build-time edits.
 Source1020: var-lib-kernel-devel-lower.mount.in
@@ -113,6 +114,9 @@ install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 
+install -d %{buildroot}%{_cross_udevrulesdir}
+install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
+
 ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 
 %files
@@ -141,5 +145,6 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/motd
 %{_cross_templatedir}/proxy-env
+%{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 %changelog
