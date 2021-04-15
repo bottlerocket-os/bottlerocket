@@ -1733,6 +1733,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-server-tls-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-standalone-tls-services"
 version = "0.1.0"
 dependencies = [
