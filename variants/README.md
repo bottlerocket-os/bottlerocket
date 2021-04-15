@@ -73,10 +73,11 @@ User data will be read from a mounted CD-ROM, either from a file named "user-dat
 
 #### aws-k8s-1.15: Kubernetes 1.15 node
 
-The [aws-k8s-1.15](aws-k8s-1.15/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+The aws-k8s-1.15 variant included the packages needed to run a Kubernetes node in AWS.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 
-This variant is compatible with Kubernetes 1.15, 1.16, and 1.17 clusters.
+This variant was compatible with Kubernetes 1.15, 1.16, and 1.17 clusters.
+It reached end-of-life on May 3, 2021.
 
 Upstream support for Kubernetes 1.15 has ended and this variant will no longer be supported in Bottlerocket releases.
 
