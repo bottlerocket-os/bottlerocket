@@ -20,6 +20,7 @@ lazy_static! {
         m.insert("ap-east-1", "375569722642");
         m.insert("ap-northeast-1", "328549459982");
         m.insert("ap-northeast-2", "328549459982");
+        m.insert("ap-northeast-3", "328549459982");
         m.insert("ap-south-1", "328549459982");
         m.insert("ap-southeast-1", "328549459982");
         m.insert("ap-southeast-2", "328549459982");
