@@ -63,7 +63,6 @@ lazy_static! {
         m.insert("eu-central-1", "602401143452");
         m.insert("eu-north-1", "602401143452");
         m.insert("eu-south-1", "590381155156");
-        m.insert("eu-south-1", "590381155156");
         m.insert("eu-west-1", "602401143452");
         m.insert("eu-west-2", "602401143452");
         m.insert("eu-west-3", "602401143452");
