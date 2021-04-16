@@ -64,6 +64,8 @@
 ; Label local state directories.
 (filecon "/local/host-containers" any secret)
 (filecon "/local/host-containers/.*" any secret)
+(filecon "/local/bootstrap-containers" any secret)
+(filecon "/local/bootstrap-containers/.*" any secret)
 (filecon "/var/lib/chrony" any measure)
 (filecon "/var/lib/chrony/.*" any measure)
 (filecon "/var/lib/systemd" any state)
