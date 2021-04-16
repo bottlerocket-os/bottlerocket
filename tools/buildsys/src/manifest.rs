@@ -58,6 +58,30 @@ variant-sensitive = true
 [package.metadata.build-variant]
 included-packages = ["release"]
 ```
+
+`image-format` is the desired format of the built image.
+This can be `raw` (the default), `vmdk`, or `qcow2`.
+```
+[package.metadata.build-variant]
+image-format = "vmdk"
+```
+
+`supported-arches` is the list of architectures the variant is able to run on.
+The values can be `x86_64` and `aarch64`.
+If not specified, the variant can run on any of those architectures.
+```
+[package.metadata.build-variant]
+supported-arches = ["x86_64"]
+```
+
+`kernel-parameters` is a list of extra parameters to be added to the kernel command line.
+The given parameters are inserted at the start of the command line.
+```
+[package.metadata.build-variant]
+kernel-parameters = [
+   "console=ttyS42",
+]
+```
 */
 
 pub(crate) mod error;
@@ -123,6 +147,12 @@ impl ManifestInfo {
             .and_then(|b| b.supported_arches.as_ref())
     }
 
+    /// Convenience method to return the kernel parameters for this variant.
+    pub(crate) fn kernel_parameters(&self) -> Option<&Vec<String>> {
+        self.build_variant()
+            .and_then(|b| b.kernel_parameters.as_ref())
+    }
+
     /// Helper methods to navigate the series of optional struct fields.
     fn build_package(&self) -> Option<&BuildPackage> {
         self.package
@@ -167,6 +197,7 @@ pub(crate) struct BuildVariant {
     pub(crate) included_packages: Option<Vec<String>>,
     pub(crate) image_format: Option<ImageFormat>,
     pub(crate) supported_arches: Option<HashSet<SupportedArch>>,
+    pub(crate) kernel_parameters: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]

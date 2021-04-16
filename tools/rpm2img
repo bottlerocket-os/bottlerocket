@@ -177,7 +177,9 @@ set default="0"
 set timeout="0"
 
 menuentry "${PRETTY_NAME} ${VERSION_ID}" {
-   linux (\$root)/vmlinuz root=/dev/dm-0 rootwait ro \\
+   linux (\$root)/vmlinuz \\
+       ${KERNEL_PARAMETERS} \\
+       root=/dev/dm-0 rootwait ro \\
        console=tty0 console=ttyS0 random.trust_cpu=on selinux=1 enforcing=1 \\
        systemd.log_target=journal-or-kmsg systemd.log_color=0 net.ifnames=0 \\
        biosdevname=0 dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\

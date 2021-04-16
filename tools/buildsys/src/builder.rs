@@ -80,7 +80,11 @@ pub(crate) struct VariantBuilder;
 
 impl VariantBuilder {
     /// Build a variant with the specified packages installed.
-    pub(crate) fn build(packages: &[String], image_format: Option<&ImageFormat>) -> Result<Self> {
+    pub(crate) fn build(
+        packages: &[String],
+        image_format: Option<&ImageFormat>,
+        kernel_parameters: Option<&Vec<String>>,
+    ) -> Result<Self> {
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
 
         let variant = getenv("BUILDSYS_VARIANT")?;
@@ -101,6 +105,12 @@ impl VariantBuilder {
                 Some(ImageFormat::Qcow2) => "qcow2",
                 Some(ImageFormat::Vmdk) => "vmdk",
             },
+        );
+        args.build_arg(
+            "KERNEL_PARAMETERS",
+            kernel_parameters
+                .map(|v| v.join(" "))
+                .unwrap_or_else(|| "".to_string()),
         );
 
         // Always rebuild variants since they are located in a different workspace,
