@@ -266,9 +266,31 @@ cargo install \
 '''
 ]
 
+# We need Cargo version 1.51 or higher in order to build a workspace's
+# dependency during build-package
+[tasks.check-cargo-version]
+script_runner = "bash"
+script = [
+'''
+set -euo pipefail
+cargo_version=$(cargo --version | awk '{print $2}')
+strarr=(${cargo_version//./ })
+cargo_major="${strarr[0]}"
+cargo_minor="${strarr[1]}"
+if [ "${cargo_major}" -gt "1" ] ; then
+  # cargo is version 2 or higher, so it's higher than 1.51
+  exit 0
+fi
+if [ "${cargo_minor}" -lt "51" ] ; then
+  echo "Error: Cargo 1.51.0 or greater is required, your version is ${cargo_version}" >&2
+  exit 1
+fi
+'''
+]
+
 # Builds a package including its build-time and runtime dependency packages.
 [tasks.build-package]
-dependencies = ["build-tools", "publish-setup"]
+dependencies = ["check-cargo-version", "build-tools", "publish-setup"]
 script_runner = "bash"
 script = [
 '''
