@@ -18,5 +18,7 @@
 (classmapping systems use (cap_userns (all)))
 (classmapping systems use (cap2_userns (not (mac_override mac_admin))))
 (classmapping systems use (key (all)))
+(classmapping systems use (lockdown (all)))
+(classmapping systems use (perf_event (all)))
 (classmapping systems use (
   system (not (halt reboot status start stop enable disable reload))))

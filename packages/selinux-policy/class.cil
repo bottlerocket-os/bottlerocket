@@ -27,7 +27,7 @@
 
 (common capability2 (
   mac_override mac_admin syslog wake_alarm block_suspend
-  audit_read))
+  audit_read perfmon bpf checkpoint_restore))
 (classcommon capability2 capability2)
 (classcommon cap2_userns capability2)
 
@@ -232,6 +232,8 @@
 (class kernel_service (use_as_override create_files_as))
 (class binder (impersonate call set_context_mgr transfer))
 (class bpf (map_create map_read map_write prog_load prog_run))
+(class perf_event (open cpu kernel tracepoint read write))
+(class lockdown (integrity confidentiality))
 
 ; Match the kernel's class order.
 (classorder (
@@ -256,7 +258,8 @@
   bluetooth_socket iucv_socket rxrpc_socket isdn_socket
   phonet_socket ieee802154_socket caif_socket alg_socket
   nfc_socket vsock_socket kcm_socket qipcrtr_socket smc_socket
-  infiniband_pkey infiniband_endport bpf xdp_socket))
+  infiniband_pkey infiniband_endport bpf xdp_socket
+  perf_event lockdown))
 
 ; Add permissions for SELinux-aware applications.
 ; This includes systemd and dbus-broker.
