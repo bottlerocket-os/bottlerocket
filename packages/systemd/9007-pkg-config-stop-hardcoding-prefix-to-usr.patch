@@ -1,7 +1,7 @@
-From 247d2b76343f839cf7c03d58f7e08b608ad6d402 Mon Sep 17 00:00:00 2001
+From 0551622158173ffd60367805b7e1dbd75b2ead0f Mon Sep 17 00:00:00 2001
 From: Erikson Tung <etung@amazon.com>
 Date: Wed, 27 Jan 2021 14:43:47 -0800
-Subject: [PATCH 9007/9007] pkg-config: stop hardcoding prefix to /usr
+Subject: [PATCH 9007/9008] pkg-config: stop hardcoding prefix to /usr
 
 While we ensure /usr points to the sys-root at runtime, for Bottlerocket's
 packaging we need to be careful to avoid dependencies on the host OS so
@@ -24,5 +24,5 @@ index b5cc8f9..ec4992b 100644
  rootprefix=${root_prefix}
  sysconf_dir=@sysconfdir@
 -- 
-2.21.3
+2.30.2
 

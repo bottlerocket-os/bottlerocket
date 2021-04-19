@@ -1,7 +1,7 @@
-From f504b52791a80b07c1d2d835614532ff6eb0060f Mon Sep 17 00:00:00 2001
+From 4aa9be06f1765b7c5f74447aad09b888127b6429 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 12 Nov 2020 16:18:15 +0000
-Subject: [PATCH 9006/9007] journal: disable keyed hashes for compatibility
+Subject: [PATCH 9006/9008] journal: disable keyed hashes for compatibility
 
 Otherwise the journal is not readable by older versions of systemd.
 
@@ -34,5 +34,5 @@ index 6bee5da..791145e 100644
                  f->keyed_hash = r;
  
 -- 
-2.21.3
+2.30.2
 

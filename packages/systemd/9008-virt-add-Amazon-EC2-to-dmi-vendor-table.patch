@@ -1,0 +1,31 @@
+From be47b1641896bd83c571925c8ad6b8119cffbc3b Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Wed, 21 Apr 2021 00:46:32 +0000
+Subject: [PATCH 9008/9008] virt: add "Amazon EC2" to dmi vendor table
+
+Systemd fails to detect the dmi vendor for ARM EC2 instances, and uses
+the random machine id generator instead of a consistent ID after each
+boot. To fix the problem, this commit adds "Amazon EC2" key to the dmi
+vendor table, and maps it to `VIRTUALIZATION_KVM`, so that a consistent
+machine ID is used after reboots.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ src/basic/virt.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/basic/virt.c b/src/basic/virt.c
+index 7d78a40..36b470e 100644
+--- a/src/basic/virt.c
++++ b/src/basic/virt.c
+@@ -158,6 +158,7 @@ static int detect_vm_dmi(void) {
+                 { "Parallels",           VIRTUALIZATION_PARALLELS },
+                 /* https://wiki.freebsd.org/bhyve */
+                 { "BHYVE",               VIRTUALIZATION_BHYVE     },
++                { "Amazon EC2",          VIRTUALIZATION_KVM       },
+         };
+         unsigned i;
+         int r;
+-- 
+2.30.2
+

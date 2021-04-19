@@ -39,6 +39,10 @@ Patch9006: 9006-journal-disable-keyed-hashes-for-compatibility.patch
 # dependencies on the host OS.
 Patch9007: 9007-pkg-config-stop-hardcoding-prefix-to-usr.patch
 
+# Local patch to let systemd recognize ARM EC2 instances as `VIRTUALIZATION_KVM`,
+# so it can generate the correct machine id
+Patch9008: 9008-virt-add-Amazon-EC2-to-dmi-vendor-table.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
