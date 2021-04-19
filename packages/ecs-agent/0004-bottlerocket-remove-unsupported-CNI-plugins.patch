@@ -1,0 +1,25 @@
+From a9b47eefff71b9beff19b0cdb2abbc7d17909c13 Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Fri, 26 Mar 2021 17:05:21 -0700
+Subject: [PATCH 4/5] bottlerocket: remove unsupported CNI plugins
+
+Bottlerocket is enabling support for awsvpc mode, but not AppMesh yet.
+---
+ agent/app/agent_unix.go | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/agent/app/agent_unix.go b/agent/app/agent_unix.go
+index 42c947015..917a61ecc 100644
+--- a/agent/app/agent_unix.go
++++ b/agent/app/agent_unix.go
+@@ -48,7 +48,6 @@ const initPID = 1
+ var awsVPCCNIPlugins = []string{ecscni.ECSENIPluginName,
+ 	ecscni.ECSBridgePluginName,
+ 	ecscni.ECSIPAMPluginName,
+-	ecscni.ECSAppMeshPluginName,
+ 	ecscni.ECSBranchENIPluginName,
+ }
+ 
+-- 
+2.31.1
+

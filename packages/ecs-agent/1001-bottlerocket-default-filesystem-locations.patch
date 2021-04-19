@@ -1,0 +1,67 @@
+From 17d96b85504988622545e08cdf0c3b2563f662d4 Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Fri, 26 Mar 2021 16:07:25 -0700
+Subject: [PATCH] bottlerocket: default filesystem locations
+
+---
+ plugins/ecs-bridge/main.go    | 2 +-
+ plugins/eni/main.go           | 2 +-
+ plugins/ipam/config/config.go | 2 +-
+ plugins/ipam/main.go          | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/plugins/ecs-bridge/main.go b/plugins/ecs-bridge/main.go
+index 9ea2c8b..3495eeb 100644
+--- a/plugins/ecs-bridge/main.go
++++ b/plugins/ecs-bridge/main.go
+@@ -29,7 +29,7 @@ import (
+ )
+ 
+ const (
+-	defaultLogFilePath = "/log/ecs-cni-bridge-plugin.log"
++	defaultLogFilePath = "/var/log/ecs/ecs-cni-bridge-plugin.log"
+ )
+ 
+ func init() {
+diff --git a/plugins/eni/main.go b/plugins/eni/main.go
+index ad81cfc..f483bd9 100644
+--- a/plugins/eni/main.go
++++ b/plugins/eni/main.go
+@@ -29,7 +29,7 @@ import (
+ )
+ 
+ const (
+-	defaultLogFilePath = "/log/ecs-cni-eni-plugin.log"
++	defaultLogFilePath = "/var/log/ecs/ecs-cni-eni-plugin.log"
+ )
+ 
+ func init() {
+diff --git a/plugins/ipam/config/config.go b/plugins/ipam/config/config.go
+index 7a4378f..f1b9c93 100644
+--- a/plugins/ipam/config/config.go
++++ b/plugins/ipam/config/config.go
+@@ -31,7 +31,7 @@ const (
+ 	EnvIpamTimeout           = "IPAM_DB_CONNECTION_TIMEOUT"
+ 	LastKnownIPKey           = "lastKnownIP"
+ 	GatewayValue             = "GateWay"
+-	DefaultDBPath            = "/data/eni-ipam.db"
++	DefaultDBPath            = "/var/lib/ecs/eni-ipam.db"
+ 	BucketName               = "IPAM"
+ 	DefaultConnectionTimeout = 5 * time.Second
+ )
+diff --git a/plugins/ipam/main.go b/plugins/ipam/main.go
+index dadabb0..f0906dd 100644
+--- a/plugins/ipam/main.go
++++ b/plugins/ipam/main.go
+@@ -28,7 +28,7 @@ import (
+ )
+ 
+ const (
+-	defaultLogFilePath = "/log/ecs-cni-ipam-plugin.log"
++	defaultLogFilePath = "/var/log/ecs/ecs-cni-ipam-plugin.log"
+ )
+ 
+ func main() {
+-- 
+2.31.0
+
