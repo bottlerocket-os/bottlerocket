@@ -52,7 +52,6 @@ Requires: %{_cross_os}filesystem
 Requires: %{_cross_os}glibc
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}iproute
-Requires: %{_cross_os}kernel-5.4
 Requires: %{_cross_os}selinux-policy
 Requires: %{_cross_os}policycoreutils
 Requires: %{_cross_os}systemd
