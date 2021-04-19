@@ -1,0 +1,19 @@
+[settings.kubernetes]
+cluster-domain = "cluster.local"
+standalone-mode = false
+authentication-mode = "tls"
+pod-infra-container-image = "k8s.gcr.io/pause:3.2"
+server-tls-bootstrap = false
+cloud-provider = "external"
+
+[metadata.settings.kubernetes]
+node-ip.setting-generator = "netdog node-ip"
+affected-services = ["kubernetes"]
+
+# Metrics
+[settings.metrics]
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet", "vmtoolsd"]
+
+# Network
+[metadata.settings.network]
+affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]

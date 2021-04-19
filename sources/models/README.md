@@ -62,6 +62,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/vmware-dev/mod.rs)
 * [Default settings](src/vmware-dev/defaults.d/)
 
+### vmware-k8s-1.20: VMware Kubernetes 1.20
+
+* [Model](src/vmware-k8s-1.20/mod.rs)
+* [Default settings](src/vmware-k8s-1.20/defaults.d/)
+
 ## This directory
 
 We use `build.rs` to symlink the proper API model source code for Cargo to build.
