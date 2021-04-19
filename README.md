@@ -308,6 +308,7 @@ The following settings can be optionally set to customize the node labels and ta
 The following settings are optional and allow you to further configure your cluster.
 * `settings.kubernetes.cluster-domain`: The DNS domain for this cluster, allowing all Kubernetes-run containers to search this domain before the host's search domains.  Defaults to `cluster.local`.
 * `settings.kubernetes.standalone-mode`: Whether to run the kubelet in standalone mode, without connecting to an API server.  Defaults to `false`.
+* `settings.kubernetes.cloud-provider`: The cloud provider for this cluster. Defaults to `aws` for AWS variants, and `external` for other variants.
 * `settings.kubernetes.authentication-mode`: Which authentication method the kubelet should use to connect to the API server, and for incoming requests.  Defaults to `aws` for AWS variants, and `tls` for other variants.
 * `settings.kubernetes.server-tls-bootstrap`: Enables or disables server certificate bootstrap.  When enabled, the kubelet will request a certificate from the certificates.k8s.io API.  This requires an approver to approve the certificate signing requests (CSR).  Defaults to `true`.
 * `settings.kubernetes.bootstrap-token`: The token to use for [TLS bootstrapping](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/).  This is only used with the `tls` authentication mode, and is otherwise ignored.
