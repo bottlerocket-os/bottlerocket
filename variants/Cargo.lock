@@ -296,7 +296,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "kernel"
+name = "kernel-5_4"
 version = "0.1.0"
 dependencies = [
  "filesystem",
@@ -610,7 +610,7 @@ dependencies = [
  "glibc",
  "grub",
  "iproute",
- "kernel",
+ "kernel-5_4",
  "libaudit",
  "libgcc",
  "libstd-rust",

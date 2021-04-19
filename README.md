@@ -578,7 +578,7 @@ We use RPM package definitions to build and install individual packages into an 
 RPM itself is not in the image - it's just a common and convenient package definition format.
 
 We currently package the following major third-party components:
-* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [packaging](packages/kernel/))
+* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [packaging](packages/kernel-5.4/))
 * glibc ([background](https://www.gnu.org/software/libc/), [packaging](packages/glibc/))
 * Buildroot as build toolchain ([background](https://buildroot.org/), via the [SDK](https://github.com/bottlerocket-os/bottlerocket-sdk))
 * GRUB, with patches for partition flip updates ([background](https://www.gnu.org/software/grub/), [packaging](packages/grub/))
