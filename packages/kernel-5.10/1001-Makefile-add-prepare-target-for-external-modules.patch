@@ -1,0 +1,50 @@
+From b6d859b7089dd68d3186f2a088823c322ad4852e Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Mon, 19 Apr 2021 18:46:04 +0000
+Subject: [PATCH] Makefile: add prepare target for external modules
+
+We need to ensure that native versions of programs like `objtool` are
+built before trying to build out-of-tree modules, or else the build
+will fail.
+
+Unlike other distributions, we cannot include these programs in our
+kernel-devel archive, because we rely on cross-compilation: these are
+"host" programs and may not match the architecture of the target.
+
+Ideally, out-of-tree builds would run `make prepare` first, so that
+these programs could be compiled in the normal fashion. We ship all
+the files needed for this to work. However, this requirement is
+specific to our use case, and DKMS does not support it.
+
+Adding a minimal prepare target to the dependency graph causes the
+programs to be built automatically and improves compatibility with
+existing solutions.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ Makefile | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 1d4a50ebe3b7..b9347d1e69e2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1719,6 +1719,15 @@ else # KBUILD_EXTMOD
+ KBUILD_BUILTIN :=
+ KBUILD_MODULES := 1
+ 
++PHONY += modules_prepare
++modules_prepare: $(objtool_target)
++	$(Q)$(MAKE) $(build)=scripts/basic
++	$(Q)$(MAKE) $(build)=scripts/dtc
++	$(Q)$(MAKE) $(build)=scripts/mod
++	$(Q)$(MAKE) $(build)=scripts
++
++prepare: modules_prepare
++
+ build-dirs := $(KBUILD_EXTMOD)
+ PHONY += modules
+ modules: $(MODORDER)
+-- 
+2.21.3
+

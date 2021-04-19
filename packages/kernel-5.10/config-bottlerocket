@@ -1,0 +1,63 @@
+# Because Bottlerocket does not have an initramfs, modules required to mount
+# the root filesystem must be set to y.
+
+# The root filesystem is ext4
+CONFIG_EXT4_FS=y
+
+# NVMe for EC2 Nitro platforms (C5, M5, and later)
+CONFIG_BLK_DEV_NVME=y
+CONFIG_NVME_CORE=y
+
+# Xen blkfront for Xen-based EC2 platforms
+CONFIG_XEN_BLKDEV_FRONTEND=y
+
+# virtio for local testing with QEMU
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_PCI=y
+
+# dm-verity and enabling it on the kernel command line
+CONFIG_BLK_DEV_DM=y
+CONFIG_DAX=y
+CONFIG_DM_INIT=y
+CONFIG_DM_VERITY=y
+
+# yama LSM for ptrace restrictions
+CONFIG_SECURITY_YAMA=y
+
+# Do not allow SELinux to be disabled at boot.
+CONFIG_SECURITY_SELINUX_BOOTPARAM=n
+
+# Do not allow SELinux to be disabled at runtime.
+CONFIG_SECURITY_SELINUX_DISABLE=n
+
+# Do not allow SELinux to use `enforcing=0` behavior.
+CONFIG_SECURITY_SELINUX_DEVELOP=n
+
+# Check the protection applied by the kernel for mmap and mprotect,
+# rather than the protection requested by userspace.
+CONFIG_SECURITY_SELINUX_CHECKREQPROT_VALUE=0
+
+# Enable support for the kernel lockdown security module.
+CONFIG_SECURITY_LOCKDOWN_LSM=y
+
+# Enable lockdown early so that if the option is present on the
+# kernel command line, it can be enforced.
+CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
+
+# Enable zstd compression for squashfs.
+CONFIG_SQUASHFS_ZSTD=y
+
+# enable /proc/config.gz
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+
+# kernel headers at /sys/kernel/kheaders.tar.xz
+CONFIG_IKHEADERS=y
+
+# BTF debug info at /sys/kernel/btf/vmlinux
+CONFIG_DEBUG_INFO_BTF=y
+
+# We don't want to extend the kernel command line with any upstream defaults;
+# Bottlerocket uses a fairly custom setup that needs tight control over it.
+CONFIG_CMDLINE_EXTEND=n
