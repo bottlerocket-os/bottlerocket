@@ -59,6 +59,7 @@ cluster-domain = "cluster.local"
 standalone-mode = false
 authentication-mode = "aws"
 server-tls-bootstrap = true
+cloud-provider = "aws"
 
 # Metrics
 [settings.metrics]

@@ -723,3 +723,48 @@ mod test_kubernetes_quantity_value {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesCloudProvider represents a string that is a valid cloud provider for the
+/// kubelet.  It stores the original string and makes it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesCloudProvider {
+    inner: String,
+}
+
+impl TryFrom<&str> for KubernetesCloudProvider {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        ensure!(
+            matches!(input, "aws" | "external"),
+            error::InvalidAuthenticationMode { input }
+        );
+        Ok(KubernetesCloudProvider {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesCloudProvider, "KubernetesCloudProvider");
+
+#[cfg(test)]
+mod test_kubernetes_cloud_provider {
+    use super::KubernetesCloudProvider;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_modes() {
+        for ok in &["aws", "external"] {
+            KubernetesCloudProvider::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_modes() {
+        for err in &["", "internal"] {
+            KubernetesCloudProvider::try_from(*err).unwrap_err();
+        }
+    }
+}

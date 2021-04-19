@@ -2,7 +2,7 @@
 ExecStart=
 ExecStart=/usr/bin/kubelet \
 {{~#unless settings.kubernetes.standalone-mode}}
-    --cloud-provider aws \
+    --cloud-provider {{default "external" settings.kubernetes.cloud-provider}} \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
 {{~#if (eq settings.kubernetes.authentication-mode "tls")}}
     --bootstrap-kubeconfig /etc/kubernetes/kubelet/bootstrap-kubeconfig \

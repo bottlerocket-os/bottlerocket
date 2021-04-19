@@ -95,9 +95,10 @@ use std::net::Ipv4Addr;
 use crate::modeled_types::{
     BootstrapContainerMode, DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     FriendlyVersion, Identifier, KubernetesAuthenticationMode, KubernetesBootstrapToken,
-    KubernetesClusterName, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
-    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
+    KubernetesCloudProvider, KubernetesClusterName, KubernetesEvictionHardKey, KubernetesLabelKey,
+    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
+    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url,
+    ValidBase64,
 };
 
 // Kubernetes static pod manifest settings
@@ -127,6 +128,7 @@ struct KubernetesSettings {
     kube_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     allowed_unsafe_sysctls: Vec<SingleLineString>,
     server_tls_bootstrap: bool,
+    cloud_provider: KubernetesCloudProvider,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
