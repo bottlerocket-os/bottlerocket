@@ -8,10 +8,84 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-dev"
+version = "0.1.0"
+dependencies = [
+ "chrony",
+ "docker-cli",
+ "docker-engine",
+ "docker-init",
+ "docker-proxy",
+ "findutils",
+ "iputils",
+ "login",
+ "procps",
+ "release",
+ "strace",
+ "tcpdump",
+]
+
+[[package]]
+name = "aws-ecs-1"
+version = "0.1.0"
+dependencies = [
+ "docker-cli",
+ "docker-engine",
+ "docker-init",
+ "docker-proxy",
+ "ecs-agent",
+ "release",
+]
+
+[[package]]
 name = "aws-iam-authenticator"
 version = "0.1.0"
 dependencies = [
  "glibc",
+]
+
+[[package]]
+name = "aws-k8s-1_16"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kubernetes-1_16",
+ "release",
+]
+
+[[package]]
+name = "aws-k8s-1_17"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kubernetes-1_17",
+ "release",
+]
+
+[[package]]
+name = "aws-k8s-1_18"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kubernetes-1_18",
+ "release",
+]
+
+[[package]]
+name = "aws-k8s-1_19"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kubernetes-1_19",
+ "release",
 ]
 
 [[package]]
@@ -43,6 +117,7 @@ name = "cni"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "iptables",
 ]
 
 [[package]]
@@ -50,6 +125,7 @@ name = "cni-plugins"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "iptables",
 ]
 
 [[package]]
@@ -69,8 +145,11 @@ dependencies = [
 name = "containerd"
 version = "0.1.0"
 dependencies = [
+ "cni-plugins",
  "glibc",
  "libseccomp",
+ "runc",
+ "systemd",
 ]
 
 [[package]]
@@ -106,8 +185,11 @@ dependencies = [
 name = "docker-engine"
 version = "0.1.0"
 dependencies = [
+ "containerd",
  "glibc",
+ "iptables",
  "libseccomp",
+ "procps",
  "systemd",
 ]
 
@@ -137,7 +219,9 @@ dependencies = [
 name = "ecs-agent"
 version = "0.1.0"
 dependencies = [
+ "docker-engine",
  "glibc",
+ "iptables",
 ]
 
 [[package]]
@@ -167,6 +251,7 @@ dependencies = [
 name = "host-ctr"
 version = "0.1.0"
 dependencies = [
+ "containerd",
  "glibc",
 ]
 
@@ -202,6 +287,9 @@ dependencies = [
 [[package]]
 name = "kernel"
 version = "0.1.0"
+dependencies = [
+ "filesystem",
+]
 
 [[package]]
 name = "kmod"
@@ -214,6 +302,9 @@ dependencies = [
 name = "kubernetes-1_16"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -221,6 +312,9 @@ dependencies = [
 name = "kubernetes-1_17"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -228,6 +322,9 @@ dependencies = [
 name = "kubernetes-1_18"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -235,6 +332,9 @@ dependencies = [
 name = "kubernetes-1_19"
 version = "0.1.0"
 dependencies = [
+ "conntrack-tools",
+ "containerd",
+ "findutils",
  "glibc",
 ]
 
@@ -428,7 +528,9 @@ dependencies = [
 name = "login"
 version = "0.0.1"
 dependencies = [
+ "bash",
  "glibc",
+ "systemd",
 ]
 
 [[package]]
@@ -443,6 +545,7 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "host-ctr",
 ]
 
 [[package]]
@@ -475,6 +578,28 @@ dependencies = [
 [[package]]
 name = "release"
 version = "0.0.0"
+dependencies = [
+ "acpid",
+ "ca-certificates",
+ "chrony",
+ "coreutils",
+ "dbus-broker",
+ "e2fsprogs",
+ "filesystem",
+ "glibc",
+ "grub",
+ "iproute",
+ "kernel",
+ "libaudit",
+ "libgcc",
+ "libstd-rust",
+ "os",
+ "policycoreutils",
+ "selinux-policy",
+ "systemd",
+ "util-linux",
+ "wicked",
+]
 
 [[package]]
 name = "runc"
@@ -527,6 +652,24 @@ dependencies = [
  "libselinux",
  "libxcrypt",
  "ncurses",
+]
+
+[[package]]
+name = "vmware-dev"
+version = "0.1.0"
+dependencies = [
+ "chrony",
+ "docker-cli",
+ "docker-engine",
+ "docker-init",
+ "docker-proxy",
+ "findutils",
+ "iputils",
+ "login",
+ "procps",
+ "release",
+ "strace",
+ "tcpdump",
 ]
 
 [[package]]

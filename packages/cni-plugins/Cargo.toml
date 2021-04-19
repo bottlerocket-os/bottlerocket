@@ -12,5 +12,10 @@ path = "pkg.rs"
 url = "https://github.com/containernetworking/plugins/archive/v0.9.1/plugins-0.9.1.tar.gz"
 sha512 = "24e8fcedbff2ae7a83aa96085b546b164de6a0884d593e3b5386e9d2de3c4d9a215db9e9405332020cc45c371709a32b600e263e4f8dee62c51adafdc0180f24"
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+iptables = { path = "../iptables" }

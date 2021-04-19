@@ -12,7 +12,14 @@ path = "pkg.rs"
 url = "https://github.com/moby/moby/archive/v19.03.15/moby-19.03.15.tar.gz"
 sha512 = "20e2a418e95f4575081afb2f898d9a6d37812a4c2976a8adff52c186672282cb3fdef1dd126fb2e90cbb09a559f719150e8e94fbf2a160e49bb64448872b5653"
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
 libseccomp = { path = "../libseccomp" }
 systemd = { path = "../systemd" }
+
+# RPM Requires
+[dependencies]
+containerd = { path = "../containerd" }
+iptables = { path = "../iptables" }
+procps = { path = "../procps" }

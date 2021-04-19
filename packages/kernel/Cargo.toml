@@ -12,3 +12,11 @@ path = "pkg.rs"
 # Use latest-srpm-url.sh to get this.
 url = "https://cdn.amazonlinux.com/blobstore/c9c16a56ef978680bd95df30d81add144807ffe0c43def257038586bb6b52388/kernel-5.4.105-48.177.amzn2.src.rpm"
 sha512 = "ef506706434bc94df6e845e5262c8d022ebb91ff6bc6a71ac656851c0de66d81392acedb9be39b2be4724f106df21d3b58de71387410e103e4b05a48fa955059"
+
+# RPM BuildRequires
+[build-dependencies]
+# Provided by Bottlerocket SDK
+
+# RPM Requires
+[dependencies]
+filesystem = { path = "../filesystem" }

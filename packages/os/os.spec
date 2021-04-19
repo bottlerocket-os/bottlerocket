@@ -47,6 +47,37 @@ Source203: bootstrap-containers-tmpfiles.conf
 Source300: ephemeral-storage.rules
 
 BuildRequires: %{_cross_os}glibc-devel
+Requires: %{_cross_os}apiclient
+Requires: %{_cross_os}apiserver
+Requires: %{_cross_os}bootstrap-containers
+Requires: %{_cross_os}bork
+Requires: %{_cross_os}corndog
+Requires: %{_cross_os}early-boot-config
+Requires: %{_cross_os}ghostdog
+Requires: %{_cross_os}growpart
+Requires: %{_cross_os}host-containers
+Requires: %{_cross_os}logdog
+Requires: %{_cross_os}metricdog
+Requires: %{_cross_os}migration
+Requires: %{_cross_os}netdog
+Requires: %{_cross_os}schnauzer
+Requires: %{_cross_os}settings-committer
+Requires: %{_cross_os}shibaken
+Requires: %{_cross_os}signpost
+Requires: %{_cross_os}storewolf
+Requires: %{_cross_os}sundog
+Requires: %{_cross_os}thar-be-settings
+Requires: %{_cross_os}thar-be-updates
+Requires: %{_cross_os}updog
+
+%if %{_is_k8s_variant}
+Requires: %{_cross_os}pluto
+Requires: %{_cross_os}static-pods
+%endif
+
+%if "%{_cross_variant}" == "aws-ecs-1"
+Requires: %{_cross_os}ecs-settings-applier
+%endif
 
 %description
 %{summary}.
@@ -63,25 +94,16 @@ Summary: Bottlerocket API client
 
 %package -n %{_cross_os}early-boot-config
 Summary: Bottlerocket userdata configuration system
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}early-boot-config
 %{summary}.
 
 %package -n %{_cross_os}netdog
 Summary: Bottlerocket network configuration helper
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}netdog
 %{summary}.
 
 %package -n %{_cross_os}sundog
 Summary: Updates settings dynamically based on user-specified generators
-Requires: %{_cross_os}apiserver = %{version}-%{release}
-Requires: %{_cross_os}schnauzer = %{version}-%{release}
-%if %{_is_k8s_variant}
-Requires: %{_cross_os}pluto = %{version}-%{release}
-%endif
-Requires: %{_cross_os}bork = %{version}-%{release}
-Requires: %{_cross_os}shibaken = %{version}-%{release}
 %description -n %{_cross_os}sundog
 %{summary}.
 
@@ -92,7 +114,6 @@ Summary: Dynamic setting generator for updog
 
 %package -n %{_cross_os}corndog
 Summary: Bottlerocket sysctl helper
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}corndog
 %{summary}.
 
@@ -108,38 +129,32 @@ Summary: Setting generator for populating admin container user-data from IMDS.
 
 %package -n %{_cross_os}thar-be-settings
 Summary: Applies changed settings to a Bottlerocket system
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}thar-be-settings
 %{summary}.
 
 %package -n %{_cross_os}thar-be-updates
 Summary: Dispatches Bottlerocket update commands
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}thar-be-updates
 %{summary}.
 
 %package -n %{_cross_os}servicedog
 Summary: Manipulates systemd units based on setting changes
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}servicedog
 %{summary}.
 
 %package -n %{_cross_os}host-containers
 Summary: Manages system- and user-defined host containers
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 Requires: %{_cross_os}host-ctr
 %description -n %{_cross_os}host-containers
 %{summary}.
 
 %package -n %{_cross_os}storewolf
 Summary: Data store creator
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}storewolf
 %{summary}.
 
 %package -n %{_cross_os}migration
 Summary: Tools to migrate version formats
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}migration
 
 %package -n %{_cross_os}settings-committer
@@ -197,14 +212,12 @@ Summary: Dynamic setting generator for kubernetes
 
 %package -n %{_cross_os}static-pods
 Summary: Manages user-defined K8S static pods
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}static-pods
 %{summary}.
 %endif
 
 %package -n %{_cross_os}bootstrap-containers
 Summary: Manages bootstrap-containers
-Requires: %{_cross_os}apiserver = %{version}-%{release}
 %description -n %{_cross_os}bootstrap-containers
 %{summary}.
 

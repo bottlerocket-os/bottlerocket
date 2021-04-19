@@ -25,5 +25,11 @@ sha512 = "42e2dad0741f02a3b0d675c0f512557a118cef6df7e9d989a35c73d02484912d800453
 url = "https://github.com/aws/amazon-vpc-cni-plugins/archive/a21d3a41f922e14c19387713df66be3e4ee1e1f6/amazon-vpc-cni-plugins.tar.gz"
 sha512 = "86011a1d7a8d4a2fe824c9eea6ad2ef9394059475ffa421c3636afd4f4031d60898992022e34ce2b1e9594fa79766f747a6c239e26be5d71fe96addc46bf7f54"
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+docker-engine = { path = "../docker-engine" }
+iptables = { path = "../iptables" }

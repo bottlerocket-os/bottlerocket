@@ -23,5 +23,10 @@ source-groups = [
 [lib]
 path = "pkg.rs"
 
+# RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+host-ctr = { path = "../host-ctr" }
