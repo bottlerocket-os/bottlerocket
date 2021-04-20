@@ -101,9 +101,10 @@
 ; ... docker's image layers
 (typetransition runtime_t local_t dir "overlay2" cache_t)
 
-; If a system process creates a directory for host container state, it
-; receives the "secret_t" label.
+; If a system process creates a directory for host or bootstrap container
+; state, it receives the "secret_t" label.
 (typetransition system_t local_t dir "host-containers" secret_t)
+(typetransition system_t local_t dir "bootstrap-containers" secret_t)
 
 ; The socket for the API server gets the "api_socket_t" label.
 (typetransition api_t any_t sock_file "api.sock" api_socket_t)
