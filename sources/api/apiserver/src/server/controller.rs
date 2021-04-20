@@ -346,6 +346,8 @@ where
         // Start config applier
         debug!("Launching thar-be-settings to apply changes");
         let mut cmd = Command::new("/usr/bin/thar-be-settings")
+            // Ask it to fork itself so we don't block the API
+            .arg("--daemon")
             .stdin(Stdio::piped())
             // FIXME where to send output?
             //.stdout()
@@ -360,19 +362,44 @@ where
             .context(error::ConfigApplierStdin)?
             .write_all(cmd_input.as_bytes())
             .context(error::ConfigApplierWrite)?;
+
+        // The config applier forks quickly; this wait ensures we don't get a zombie from its
+        // initial process.  Its child is reparented to init and init waits for that one.
+        let status = cmd.wait().context(error::ConfigApplierWait)?;
+        // Similarly, this is just checking that it was able to fork, not checking its work.
+        ensure!(
+            status.success(),
+            error::ConfigApplierFork {
+                code: status
+                    .code()
+                    .map(|i| i.to_string())
+                    .unwrap_or_else(|| "unknown".to_string()),
+            }
+        );
     } else {
         // Start config applier
+        // (See comments above about daemonizing and checking the fork result; we don't need a
+        // separate wait() here because we don't pass any stdin, status() does it for us.)
         debug!("Launching thar-be-settings to apply any and all changes");
-        Command::new("/usr/bin/thar-be-settings")
+        let status = Command::new("/usr/bin/thar-be-settings")
+            .arg("--daemon")
             .arg("--all")
             // FIXME where to send output?
             //.stdout()
             //.stderr()
-            .spawn()
+            .status()
             .context(error::ConfigApplierStart)?;
+        ensure!(
+            status.success(),
+            error::ConfigApplierFork {
+                code: status
+                    .code()
+                    .map(|i| i.to_string())
+                    .unwrap_or_else(|| "unknown".to_string()),
+            }
+        );
     }
 
-    // Leave config applier to run in the background; we can't wait for it
     Ok(())
 }
 

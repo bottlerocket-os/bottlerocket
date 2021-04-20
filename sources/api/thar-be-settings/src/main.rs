@@ -1,12 +1,14 @@
 #[macro_use]
 extern crate log;
 
+use nix::unistd::{fork, ForkResult};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::collections::HashSet;
 use std::env;
 use std::process;
 use std::str::FromStr;
+use tokio::runtime::Runtime;
 
 use thar_be_settings::{config, get_changed_settings, service};
 
@@ -43,6 +45,7 @@ enum RunMode {
 
 /// Store the args we receive on the command line
 struct Args {
+    daemon: bool,
     log_level: LevelFilter,
     mode: RunMode,
     socket_path: String,
@@ -54,6 +57,7 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             [ --all ]
+            [ --daemon ]
             [ --socket-path PATH ]
             [ --log-level trace|debug|info|warn|error ]
 
@@ -61,6 +65,9 @@ fn usage() -> ! {
     services will have their restart-commands run.  Otherwise, settings keys
     will be read from stdin; only files related to those keys will be written,
     and only services related to those keys will be restarted.
+
+    If --daemon is given, thar-be-settings will fork and do its work in a new
+    process; this is useful to prevent blocking an API call.
 
     Socket path defaults to {}",
         program_name, DEFAULT_API_SOCKET,
@@ -76,6 +83,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
+    let mut daemon = false;
     let mut log_level = None;
     let mut mode = RunMode::SpecificKeys;
     let mut socket_path = None;
@@ -84,6 +92,8 @@ fn parse_args(args: env::Args) -> Args {
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
             "--all" => mode = RunMode::All,
+
+            "--daemon" => daemon = true,
 
             "--log-level" => {
                 let log_level_str = iter
@@ -106,6 +116,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
+        daemon,
         mode,
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
@@ -158,13 +169,9 @@ async fn write_config_files(
     Ok(())
 }
 
-async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    // Parse and store the args passed to the program
-    let args = parse_args(env::args());
-
+async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     info!("thar-be-settings started");
 
@@ -214,9 +221,32 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+//
+// In this binary, we also have to do a bit more processing before we get to the "business logic."
+// This program is used to apply settings given to the API, but we don't want to block the API, so
+// there's a --daemon argument that makes us fork before doing the work.  This also prevents zombie
+// processes, since it's simpler to let init wait for our corpse than to make apiserver wait.  To
+// determine whether that's wanted, we have to parse args, and then do the fork if requested.
+//
+// Also, it's not safe to fork within a tokio runtime, so we can't use tokio::main, and have to
+// create the runtime manually before we start the business logic in run().
+fn main() {
+    // Parse and store the args passed to the program
+    let args = parse_args(env::args());
+
+    if args.daemon {
+        match unsafe { fork() } {
+            Ok(ForkResult::Child) => {} // continue
+            Ok(ForkResult::Parent { .. }) => process::exit(0),
+            Err(e) => {
+                eprintln!("Failed to fork child: {}", e);
+                process::exit(1);
+            }
+        }
+    }
+
+    let mut rt = Runtime::new().expect("Failed to create tokio runtime");
+    if let Err(e) = rt.block_on(async { run(args).await }) {
         eprintln!("{}", e);
         process::exit(1);
     }

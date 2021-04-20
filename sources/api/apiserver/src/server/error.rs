@@ -106,11 +106,20 @@ pub enum Error {
         source: serde_json::Error,
     },
 
+    #[snafu(display("Config applier was unable to fork child, returned {}", code))]
+    ConfigApplierFork { code: String },
+
     #[snafu(display("Unable to start config applier: {} ", source))]
     ConfigApplierStart { source: io::Error },
 
     #[snafu(display("Unable to use config applier, couldn't get stdin"))]
     ConfigApplierStdin {},
+
+    #[snafu(display(
+        "Waiting on config applier failed; something else may have awaited it: {} ",
+        source
+    ))]
+    ConfigApplierWait { source: io::Error },
 
     #[snafu(display("Unable to send input to config applier: {}", source))]
     ConfigApplierWrite { source: io::Error },

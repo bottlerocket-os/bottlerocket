@@ -3304,6 +3304,7 @@ dependencies = [
  "log",
  "maplit",
  "models",
+ "nix 0.20.0",
  "schnauzer",
  "serde_json",
  "simplelog",
