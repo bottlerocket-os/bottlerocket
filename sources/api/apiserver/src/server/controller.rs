@@ -372,8 +372,7 @@ where
             .context(error::ConfigApplierStart)?;
     }
 
-    // Leave config applier to run in the background; we can't wait for it.
-    // The apiserver binary waits for any exited children so they don't become zombies.
+    // Leave config applier to run in the background; we can't wait for it
     Ok(())
 }
 
