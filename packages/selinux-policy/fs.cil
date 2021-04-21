@@ -76,6 +76,8 @@
 (filecon "/var/log/journal/.*" any state)
 (filecon "/var/lib/selinux" any state)
 (filecon "/var/lib/selinux/.*" any state)
+(filecon "/var/lib/netdog" any lease)
+(filecon "/var/lib/netdog/.*" any lease)
 
 ; Label kernel filesystem mounts.
 (filecon "/proc" any any)

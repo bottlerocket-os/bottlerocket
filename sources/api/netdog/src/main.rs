@@ -1,9 +1,11 @@
 /*!
 # Introduction
 
-netdog is a small helper program for wicked, to apply network settings received from DHCP.
+netdog is a small helper program for wicked, to apply network settings received from DHCP.  It also
+contains a subcommand `node-ip` that returns the node's current IP address in JSON format; this
+subcommand is intended for use as a settings generator.
 
-It generates `/etc/resolv.conf` and sets the hostname.
+It generates `/etc/resolv.conf`, sets the hostname, and persists the current IP to file.
 */
 
 // TODO:
@@ -25,7 +27,7 @@ use regex::Regex;
 use serde::Deserialize;
 use snafu::ResultExt;
 use std::collections::BTreeSet;
-use std::fmt::Write;
+use std::fmt::{self, Write};
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::net::IpAddr;
@@ -34,6 +36,7 @@ use std::{env, process};
 
 static RESOLV_CONF: &str = "/etc/resolv.conf";
 static KERNEL_HOSTNAME: &str = "/proc/sys/kernel/hostname";
+static CURRENT_IP: &str = "/var/lib/netdog/current_ip";
 
 // Matches wicked's shell-like syntax for DHCP lease variables:
 //     FOO='BAR' -> key=FOO, val=BAR
@@ -70,16 +73,39 @@ mod error {
 
         #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
         HostnameWriteFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to write current IP to '{}': {}", path.display(), source))]
+        CurrentIpWriteFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to read current IP data in '{}': {}", path.display(), source))]
+        CurrentIpReadFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Error serializing to JSON: '{}': {}", output, source))]
+        JsonSerialize {
+            output: String,
+            source: serde_json::error::Error,
+        },
     }
 }
 
 type Result<T> = std::result::Result<T, error::Error>;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 enum SubCommand {
     Install,
     Remove,
+    NodeIp,
+}
+
+impl fmt::Display for SubCommand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            SubCommand::Install => write!(f, "install"),
+            SubCommand::Remove => write!(f, "remove"),
+            SubCommand::NodeIp => write!(f, "node-ip"),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -104,7 +130,6 @@ enum InterfaceFamily {
 /// Stores user-supplied arguments.
 #[derive(Debug)]
 struct Args {
-    sub_command: SubCommand,
     interface_name: InterfaceName,
     interface_type: InterfaceType,
     interface_family: InterfaceFamily,
@@ -129,7 +154,9 @@ fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
         r"Usage: {}
-            COMMAND
+            [ node-ip | install | remove ]
+
+            Required for 'install' and 'remove' subcommands:
               -i INTERFACE_NAME
               -t INTERFACE_TYPE
               -f INTERFACE_FAMILY
@@ -145,16 +172,19 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
     usage();
 }
 
-/// Parses user arguments into an Args structure.
-fn parse_args(args: env::Args) -> Result<Args> {
+/// Parses user arguments into a Subcommand and an Args structure.
+fn parse_args(args: env::Args) -> Result<(SubCommand, Option<Args>)> {
     let mut iter = args.skip(1);
     let value = iter
         .next()
         .unwrap_or_else(|| usage_msg("Did not specify command"));
-    let sub_command = Some(
-        serde_plain::from_str::<SubCommand>(&value)
-            .unwrap_or_else(|_| usage_msg(format!("Unknown command {}", value))),
-    );
+    let sub_command = serde_plain::from_str::<SubCommand>(&value)
+        .unwrap_or_else(|_| usage_msg(format!("Unknown command {}", value)));
+
+    // The `node-ip` subcommand doesn't require any arguments
+    if sub_command == SubCommand::NodeIp {
+        return Ok((sub_command, None));
+    };
 
     let mut interface_name = None;
     let mut interface_type = None;
@@ -203,13 +233,15 @@ fn parse_args(args: env::Args) -> Result<Args> {
         }
     }
 
-    Ok(Args {
-        sub_command: sub_command.unwrap_or_else(|| usage()),
-        interface_name: interface_name.unwrap_or_else(|| usage()),
-        interface_type: interface_type.unwrap_or_else(|| usage()),
-        interface_family: interface_family.unwrap_or_else(|| usage()),
-        data_file: data_file.unwrap_or_else(|| usage()),
-    })
+    Ok((
+        sub_command,
+        Some(Args {
+            interface_name: interface_name.unwrap_or_else(|| usage()),
+            interface_type: interface_type.unwrap_or_else(|| usage()),
+            interface_family: interface_family.unwrap_or_else(|| usage()),
+            data_file: data_file.unwrap_or_else(|| usage()),
+        }),
+    ))
 }
 
 /// Parse lease data file into a LeaseInfo structure.
@@ -268,6 +300,11 @@ fn update_hostname(ip: &IpNet) -> Result<()> {
     Ok(())
 }
 
+/// Persist the current IP address to file
+fn write_current_ip(ip: &IpAddr) -> Result<()> {
+    fs::write(CURRENT_IP, ip.to_string()).context(error::CurrentIpWriteFailed { path: CURRENT_IP })
+}
+
 fn install(args: &Args) -> Result<()> {
     match (
         &args.interface_name,
@@ -281,6 +318,7 @@ fn install(args: &Args) -> Result<()> {
             let mut dns_servers: Vec<_> = info.dns_servers.iter().collect();
             dns_servers.shuffle(&mut thread_rng());
             write_resolv_conf(&dns_servers, &info.dns_search)?;
+            write_current_ip(&info.ip_address.addr())?;
             update_hostname(&info.ip_address)?;
         }
         _ => eprintln!("Unhandled 'install' command: {:?}", &args),
@@ -299,11 +337,25 @@ fn remove(args: &Args) -> Result<()> {
     Ok(())
 }
 
+/// Return the current IP address as JSON (intended for use as a settings generator)
+fn node_ip() -> Result<()> {
+    let ip =
+        fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
+    // sundog expects JSON-serialized output
+    let output = serde_json::to_string(&ip).context(error::JsonSerialize { output: ip })?;
+    println!("{}", output);
+    Ok(())
+}
+
 fn run() -> Result<()> {
-    let args = parse_args(env::args())?;
-    match args.sub_command {
-        SubCommand::Install => install(&args)?,
-        SubCommand::Remove => remove(&args)?,
+    match parse_args(env::args())? {
+        (SubCommand::NodeIp, None) => node_ip()?,
+        (SubCommand::NodeIp, Some(_)) => {
+            usage_msg("Subcommand 'node-ip' doesn't support arguments")
+        }
+        (SubCommand::Install, Some(args)) => install(&args)?,
+        (SubCommand::Remove, Some(args)) => remove(&args)?,
+        (subcommand, None) => usage_msg(format!("Subcommand '{}' requires arguments", subcommand)),
     }
     Ok(())
 }

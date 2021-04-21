@@ -42,6 +42,7 @@ Source200: migration-tmpfiles.conf
 Source201: host-containers-tmpfiles.conf
 Source202: thar-be-updates-tmpfiles.conf
 Source203: bootstrap-containers-tmpfiles.conf
+Source204: netdog-tmpfiles.conf
 
 # 3xx sources: udev rules
 Source300: ephemeral-storage.rules
@@ -369,6 +370,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.conf
 install -p -m 0644 %{S:203} %{buildroot}%{_cross_tmpfilesdir}/bootstrap-containers.conf
+install -p -m 0644 %{S:204} %{buildroot}%{_cross_tmpfilesdir}/netdog.conf
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
@@ -394,6 +396,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 
 %files -n %{_cross_os}netdog
 %{_cross_bindir}/netdog
+%{_cross_tmpfilesdir}/netdog.conf
 
 %files -n %{_cross_os}corndog
 %{_cross_bindir}/corndog
