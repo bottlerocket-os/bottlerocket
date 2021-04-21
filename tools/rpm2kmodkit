@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# Create an archive of kernel development sources and toolchain.
+set -eu -o pipefail
+
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --archive-dir=*) ARCHIVE_DIR="${optarg}" ;;
+      --toolchain-dir=*) TOOLCHAIN_DIR="${optarg}" ;;
+      --output-dir=*) OUTPUT_DIR="${optarg}" ;;
+   esac
+done
+
+# Use a friendly name for the top-level directory inside the archive.
+KMOD_KIT="${VARIANT}-${ARCH}-kmod-kit-v${VERSION_ID}"
+
+# Use the build ID within the filename, to align with our build's expectations.
+KMOD_KIT_FULL="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}-kmod-kit"
+
+EXTRACT_DIR="$(mktemp -d)"
+KIT_DIR="$(mktemp -d)"
+mkdir -p "${OUTPUT_DIR}" "${KIT_DIR}/${KMOD_KIT}"
+
+# Extract any RPMs and find the kernel development archive.
+pushd "${EXTRACT_DIR}" >/dev/null
+find "${ARCHIVE_DIR}" -type f -name '*.rpm' \
+  -exec rpm2cpio {} \; | cpio -idm --quiet
+find -name 'kernel-devel.tar.xz' \
+  -exec mv {} "${KIT_DIR}/${KMOD_KIT}" \;
+popd >/dev/null
+
+# Extract it and copy in the toolchain.
+pushd "${KIT_DIR}/${KMOD_KIT}" >/dev/null
+tar xf kernel-devel.tar.xz
+rm kernel-devel.tar.xz
+cp -a "${TOOLCHAIN_DIR}" toolchain
+popd >/dev/null
+
+# Merge them together into a unified archive.
+pushd "${KIT_DIR}" >/dev/null
+tar cf "${OUTPUT_DIR}/${KMOD_KIT_FULL}.tar" "${KMOD_KIT}"
+xz -T0 "${OUTPUT_DIR}/${KMOD_KIT_FULL}.tar"
+popd >/dev/null
+
+rm -rf "${EXTRACT_DIR}" "${KIT_DIR}"

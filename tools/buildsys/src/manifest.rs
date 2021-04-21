@@ -215,6 +215,16 @@ pub(crate) enum SupportedArch {
     Aarch64,
 }
 
+/// Map a Linux architecture into the corresponding Docker architecture.
+impl SupportedArch {
+    pub(crate) fn goarch(&self) -> &'static str {
+        match self {
+            SupportedArch::X86_64 => "amd64",
+            SupportedArch::Aarch64 => "arm64",
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct ExternalFile {

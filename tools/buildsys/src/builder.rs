@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::manifest::ImageFormat;
+use crate::manifest::{ImageFormat, SupportedArch};
 
 /*
 There's a bug in BuildKit that can lead to a build failure during parallel
@@ -45,8 +45,11 @@ pub(crate) struct PackageBuilder;
 impl PackageBuilder {
     /// Build RPMs for the specified package.
     pub(crate) fn build(package: &str) -> Result<Self> {
-        let arch = getenv("BUILDSYS_ARCH")?;
         let output_dir: PathBuf = getenv("BUILDSYS_PACKAGES_DIR")?.into();
+        let arch = getenv("BUILDSYS_ARCH")?;
+        let goarch = serde_plain::from_str::<SupportedArch>(&arch)
+            .context(error::UnsupportedArch { arch: &arch })?
+            .goarch();
 
         // We do *not* want to rebuild most packages when the variant changes, because most aren't
         // affected; packages that care about variant should "echo cargo:rerun-if-env-changed=VAR"
@@ -61,6 +64,7 @@ impl PackageBuilder {
         let mut args = Vec::new();
         args.build_arg("PACKAGE", package);
         args.build_arg("ARCH", &arch);
+        args.build_arg("GOARCH", &goarch);
         args.build_arg("VARIANT", variant);
         args.build_arg("REPO", repo);
 
@@ -89,10 +93,14 @@ impl VariantBuilder {
 
         let variant = getenv("BUILDSYS_VARIANT")?;
         let arch = getenv("BUILDSYS_ARCH")?;
+        let goarch = serde_plain::from_str::<SupportedArch>(&arch)
+            .context(error::UnsupportedArch { arch: &arch })?
+            .goarch();
 
         let mut args = Vec::new();
         args.build_arg("PACKAGES", packages.join(" "));
         args.build_arg("ARCH", &arch);
+        args.build_arg("GOARCH", &goarch);
         args.build_arg("VARIANT", &variant);
         args.build_arg("VERSION_ID", getenv("BUILDSYS_VERSION_IMAGE")?);
         args.build_arg("BUILD_ID", getenv("BUILDSYS_VERSION_BUILD")?);
@@ -155,8 +163,9 @@ fn build(
     let token = &digest[..12];
     let tag = format!("{}-{}", tag, token);
 
-    // Our SDK image is picked by the external `cargo make` invocation.
+    // Our SDK and toolchain are picked by the external `cargo make` invocation.
     let sdk = getenv("BUILDSYS_SDK_IMAGE")?;
+    let toolchain = getenv("BUILDSYS_TOOLCHAIN")?;
 
     // Avoid using a cached layer from a previous build.
     let nocache = rand::thread_rng().gen::<u32>();
@@ -184,6 +193,7 @@ fn build(
 
     build.extend(build_args);
     build.build_arg("SDK", sdk);
+    build.build_arg("TOOLCHAIN", toolchain);
     build.build_arg("NOCACHE", nocache.to_string());
     // Avoid using a cached layer from a concurrent build in another checkout.
     build.build_arg("TOKEN", token);
