@@ -1,7 +1,7 @@
-From 4a649efbfabfffba80924646b5bbbe46be12549f Mon Sep 17 00:00:00 2001
+From f59750b48ee9dfc33a451629add411eba967e643 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 16 Apr 2020 15:10:41 +0000
-Subject: [PATCH 9003/9007] repart: always use random UUIDs
+Subject: [PATCH 9003/9008] repart: always use random UUIDs
 
 We would like to avoid adding OpenSSL to the base OS, and for our use
 case we do not need the UUIDs assigned to disks or partitions to be
@@ -36,7 +36,7 @@ index 580964c..781b0a2 100644
                  error('repart support was requested, but dependencies are not available')
          endif
 diff --git a/src/partition/repart.c b/src/partition/repart.c
-index 6db413e..f771c33 100644
+index 6d7e519..dfc2c79 100644
 --- a/src/partition/repart.c
 +++ b/src/partition/repart.c
 @@ -13,9 +13,6 @@
@@ -176,5 +176,5 @@ index 6db413e..f771c33 100644
  }
  
 -- 
-2.21.3
+2.30.2
 

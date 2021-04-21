@@ -1,7 +1,7 @@
-From f201fcb17276d84a22332cde915f8c3ffac63c51 Mon Sep 17 00:00:00 2001
+From ee634296cdf5470521bddee3ce082b848696fc62 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 7 Jul 2020 22:38:20 +0000
-Subject: [PATCH 9004/9007] machine-id-setup: generate stable ID under Xen
+Subject: [PATCH 9004/9008] machine-id-setup: generate stable ID under Xen
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
@@ -45,5 +45,5 @@ index 6d15f9c..aa9609f 100644
          }
  
 -- 
-2.21.3
+2.30.2
 

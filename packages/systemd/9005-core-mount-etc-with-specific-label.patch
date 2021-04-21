@@ -1,7 +1,7 @@
-From 71d1fce8c9c3f1787add39625221bfe09140a572 Mon Sep 17 00:00:00 2001
+From 1da3740ea90f03f8357c165e8e409e4ff2f48830 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 9 Jul 2020 20:00:36 +0000
-Subject: [PATCH 9005/9007] core: mount /etc with specific label
+Subject: [PATCH 9005/9008] core: mount /etc with specific label
 
 The filesystem is mounted after we load the SELinux policy, so we can
 apply the label we need to restrict access.
@@ -25,5 +25,5 @@ index 915b101..38c1a29 100644
            NULL,          MNT_FATAL|MNT_IN_CONTAINER },
          { "devpts",      "/dev/pts",                  "devpts",     "mode=620,gid=" STRINGIFY(TTY_GID),        MS_NOSUID|MS_NOEXEC,
 -- 
-2.21.3
+2.30.2
 
