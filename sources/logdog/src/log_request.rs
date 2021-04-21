@@ -9,13 +9,16 @@
 //! these provide the list of log requests that `logdog` will run.
 
 use crate::error::{self, Result};
+use glob::glob;
 use reqwest::blocking::{Client, Response};
 use snafu::{ensure, OptionExt, ResultExt};
+use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use url::Url;
+use walkdir::WalkDir;
 
 /// The `logdog` log requests that all variants have in common.
 const COMMON_REQUESTS: &str = include_str!("../conf/logdog.common.conf");
@@ -33,11 +36,12 @@ pub(crate) fn log_requests() -> Vec<&'static str> {
         .collect()
 }
 
-/// A logdog `LogRequest` is in the format `mode filename instructions`. `mode` specifies what type
-/// of command it is, e.g. `exec ` for a command or `http` for an HTTP get request. `filename` is
-/// the name of the output file. `instructions` is any additional information needed.  For example,
-/// an `exec` request'ss instructions will include the program and program arguments. An `http`
-/// request's instructions will be the URL.
+/// A logdog `LogRequest` represents a line from the config file. It starts with a "mode" that
+/// specifies what type of request it is, e.g. `exec ` for a command or `http` for an HTTP get
+/// request. Some modes then require a `filename` that determines where the data will be saved in
+/// the output tarball.  The final field is `instructions` which is any additional information
+/// needed by the given mode.  For example, an `exec` requests' instructions will include the
+/// program and program arguments. An `http` request's instructions will be the URL.
 ///
 /// # Examples
 ///
@@ -61,11 +65,18 @@ pub(crate) fn log_requests() -> Vec<&'static str> {
 /// ```text
 /// file some-conf /etc/some/conf
 /// ```
+///
+/// This request will copy files with a known prefix into the tarball; this can be useful for dated
+/// log files, for example.
+///
+/// ```text
+/// glob /var/log/my-app.log*
+/// ```
 #[derive(Debug, Clone)]
 struct LogRequest<'a> {
-    /// The log request mode. For example `exec`, `http`, or `file`.
+    /// The log request mode. For example `exec`, `http`, `file`, or `glob`.
     mode: &'a str,
-    /// The filename that the logs will be written to.
+    /// The filename that the logs will be written to, if appropriate for the mode.
     filename: &'a str,
     /// Any additional instructions or commands needed to fulfill the log request. For example, with
     /// `exec` this will be a program invocation like `echo hello world`. For an `http` request this
@@ -91,19 +102,30 @@ where
     P: AsRef<Path>,
 {
     let request = request.as_ref();
-    // get the first and second token: i.e. mode and output filename, put the remainder of the
-    // log request into the instructions field (or default to an empty string).
     let mut iter = request.splitn(3, ' ');
-    let req = LogRequest {
-        mode: iter.next().context(error::ModeMissing)?,
-        filename: iter.next().context(error::FilenameMissing { request })?,
-        instructions: iter.next().unwrap_or(""),
+    let mode = iter.next().context(error::ModeMissing)?;
+    let req = if mode == "glob" {
+        // for glob request format is "glob <pattern>"
+        LogRequest {
+            mode,
+            filename: "",
+            instructions: iter.next().context(error::PatternMissing)?,
+        }
+    } else {
+        // Get the second token (output filename) and put the remainder of the
+        // log request into the instructions field (or default to an empty string).
+        LogRequest {
+            mode,
+            filename: iter.next().context(error::FilenameMissing { request })?,
+            instructions: iter.next().unwrap_or(""),
+        }
     };
     // execute the log request with the correct handler based on the mode field.
     match req.mode {
         "exec" => handle_exec_request(&req, tempdir)?,
         "http" | "https" => handle_http_request(&req, tempdir)?,
         "file" => handle_file_request(&req, tempdir)?,
+        "glob" => handle_glob_request(&req, tempdir)?,
         unmatched => {
             return Err(error::Error::UnhandledRequest {
                 mode: unmatched.into(),
@@ -205,11 +227,105 @@ where
     Ok(())
 }
 
+/// Copies all files matching the glob pattern given by `request.instructions` to the tempdir with filename and path
+/// same as source file.
+fn handle_glob_request<P>(request: &LogRequest<'_>, tempdir: P) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    let mut files = HashSet::new();
+    let glob_paths = glob(request.instructions).context(error::ParseGlobPattern {
+        pattern: request.instructions,
+    })?;
+    for entry in glob_paths {
+        if let Ok(path) = entry {
+            if path.is_dir() {
+                // iterate the directory and sub-directory to get all file paths
+                for candidate in WalkDir::new(&path) {
+                    if let Ok(e) = candidate {
+                        if e.path().is_file() {
+                            files.insert(e.into_path());
+                        }
+                    }
+                }
+            } else {
+                files.insert(path);
+            }
+        }
+    }
+    for src_filepath in &files {
+        // with glob pattern there are chances of multiple targets with same name, therefore
+        // we maintain source file path and name in destination directory.
+        // Eg. src file path "/a/b/file" will be converted to "dest_dir/a/b/file"
+        let relative_path = src_filepath
+            .strip_prefix("/")
+            .unwrap_or(src_filepath.as_path());
+        let dest_filepath = tempdir.as_ref().join(relative_path);
+        let dest_dir_path = dest_filepath.parent().context(error::RootAsFile)?;
+        // create directories in dest file path if it does not exist
+        fs::create_dir_all(dest_dir_path).context(error::CreateOutputDirectory {
+            path: dest_dir_path,
+        })?;
+        let _ = fs::copy(&src_filepath, &dest_filepath).with_context(|| error::FileCopy {
+            request: request.to_string(),
+            from: src_filepath.to_str().unwrap_or("<unknown>"),
+            to: &dest_filepath,
+        })?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use crate::log_request::handle_log_request;
+    use std::fs;
     use std::fs::write;
+    use std::path::PathBuf;
     use tempfile::TempDir;
+
+    // adds a sub directory and some files to temp directory for file request tests
+    fn create_source_dir(dir: &TempDir) {
+        let filenames_content = [
+            ("foo.source", "1"),
+            ("bar.source", "2"),
+            ("for-bar.log", "3"),
+        ];
+        // add files to temp directory
+        for entry in filenames_content.iter() {
+            let filepath = dir.path().join(entry.0);
+            write(&filepath, entry.1).unwrap();
+        }
+
+        let subdir_name_depth1 = "depth1";
+        // create sub directory
+        let subdir_path_depth1 = dir.path().join(subdir_name_depth1);
+        fs::create_dir(&subdir_path_depth1).unwrap();
+        // Add files to sub directory
+        for entry in filenames_content.iter() {
+            let filepath = subdir_path_depth1.join(entry.0);
+            write(&filepath, entry.1).unwrap();
+        }
+
+        let subdir_name_depth2 = "depth2";
+        // create sub directory
+        let subdir_path_depth2 = subdir_path_depth1.join(subdir_name_depth2);
+        fs::create_dir(&subdir_path_depth2).unwrap();
+        // Add files to sub directory
+        for entry in filenames_content.iter() {
+            let filepath = subdir_path_depth2.join(entry.0);
+            write(&filepath, entry.1).unwrap();
+        }
+    }
+
+    fn get_dest_filepath(src_dir: &TempDir, filepath: &str) -> PathBuf {
+        src_dir.path().strip_prefix("/").unwrap().join(filepath)
+    }
+
+    fn assert_file_match(dest_dir: &TempDir, filepath: PathBuf, want: &str) {
+        let outfile = dest_dir.path().join(filepath);
+        let got = std::fs::read_to_string(&outfile).unwrap();
+        assert_eq!(got, want);
+    }
 
     #[test]
     fn file_request() {
@@ -234,5 +350,109 @@ mod test {
         let outfile = outdir.path().join("output-file.txt");
         let got = std::fs::read_to_string(&outfile).unwrap();
         assert_eq!(got, want);
+    }
+
+    #[test]
+    // ensures single file pattern works
+    fn glob_single_file_pattern_request() {
+        let source_dir = TempDir::new().unwrap();
+        create_source_dir(&source_dir);
+        let outdir = TempDir::new().unwrap();
+        let request = format!("glob {}/foo.source", source_dir.path().display());
+        handle_log_request(&request, outdir.path()).unwrap();
+        assert_file_match(&outdir, get_dest_filepath(&source_dir, "foo.source"), "1");
+    }
+
+    #[test]
+    // ensures multiple file pattern works
+    fn glob_multiple_files_pattern_request() {
+        let source_dir = TempDir::new().unwrap();
+        create_source_dir(&source_dir);
+        let outdir = TempDir::new().unwrap();
+        let request = format!("glob {}/*.source", source_dir.path().display());
+        handle_log_request(&request, outdir.path()).unwrap();
+        assert_file_match(&outdir, get_dest_filepath(&source_dir, "foo.source"), "1");
+        assert_file_match(&outdir, get_dest_filepath(&source_dir, "bar.source"), "2");
+    }
+
+    #[test]
+    // ensures multiple file in nested directory pattern works
+    fn glob_nested_file_pattern_request() {
+        let source_dir = TempDir::new().unwrap();
+        create_source_dir(&source_dir);
+        let outdir = TempDir::new().unwrap();
+        let request = format!("glob {}/**/*.source", source_dir.path().display());
+        handle_log_request(&request, outdir.path()).unwrap();
+        assert_file_match(&outdir, get_dest_filepath(&source_dir, "foo.source"), "1");
+        assert_file_match(&outdir, get_dest_filepath(&source_dir, "bar.source"), "2");
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/foo.source"),
+            "1",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/bar.source"),
+            "2",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/depth2/foo.source"),
+            "1",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/depth2/bar.source"),
+            "2",
+        );
+    }
+
+    #[test]
+    // ensures directory pattern works
+    fn glob_dir_pattern_request() {
+        let source_dir = TempDir::new().unwrap();
+        create_source_dir(&source_dir);
+        let outdir = TempDir::new().unwrap();
+        let request = format!("glob {}/**/", source_dir.path().display());
+        handle_log_request(&request, outdir.path()).unwrap();
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/foo.source"),
+            "1",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/bar.source"),
+            "2",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/for-bar.log"),
+            "3",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/depth2/foo.source"),
+            "1",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/depth2/bar.source"),
+            "2",
+        );
+        assert_file_match(
+            &outdir,
+            get_dest_filepath(&source_dir, "depth1/depth2/for-bar.log"),
+            "3",
+        );
+    }
+
+    #[test]
+    // ensure if pattern is empty it should not panic
+    fn glob_empty_pattern_request() {
+        let outdir = TempDir::new().unwrap();
+        let request = "glob";
+        let err = handle_log_request(&request, outdir.path()).unwrap_err();
+        assert!(matches!(err, crate::error::Error::PatternMissing {}));
     }
 }

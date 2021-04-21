@@ -10,12 +10,14 @@ exclude = ["README.md"]
 
 [dependencies]
 flate2 = "1.0"
+glob = "0.3"
 reqwest = { version = "0.10.1", default-features = false, features = ["blocking", "rustls-tls"] }
 shell-words = "1.0.0"
 snafu = { version = "0.6", features = ["backtraces-impl-backtrace-crate"] }
 tar = { version = "0.4", default-features = false }
 tempfile = { version = "3.1.0", default-features = false }
 url = "2.1.1"
+walkdir = "2.3"
 
 [build-dependencies]
 cargo-readme = "3.1"
