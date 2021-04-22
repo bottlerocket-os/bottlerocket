@@ -7,10 +7,16 @@ Wants=host-containers.service
 # started by systemd
 RefuseManualStart=true
 RefuseManualStop=true
+# If a sentinel file exists for this bootstrap container, it means we should skip
+# since we've run this bootstrap container already.
+ConditionPathExists=!/run/bootstrap-containers/%i.ran
 
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/bootstrap-containers/%i.env
+# Create a sentinel file to mark that we've run
+ExecStart=/usr/bin/touch /run/bootstrap-containers/%i.ran
+# Run the bootstrap container
 ExecStart=/usr/bin/host-ctr run \
     --container-id='%i' \
     --source='${CTR_SOURCE}' \
