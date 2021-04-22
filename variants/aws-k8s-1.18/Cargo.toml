@@ -10,6 +10,10 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [package.metadata.build-variant]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0",
+]
 included-packages = [
     "aws-iam-authenticator",
     "cni",
