@@ -17,4 +17,9 @@
   <ipv4:dhcp>
     <enabled>true</enabled>
   </ipv4:dhcp>
+
+  <ipv6:dhcp>
+    <enabled>true</enabled>
+    <defer-timeout>1</defer-timeout>
+  </ipv6:dhcp>
 </interface>
