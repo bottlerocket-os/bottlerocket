@@ -17,6 +17,9 @@ License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
 
+Patch1001: 1001-runc-ensure-the-scratch-pipe-is-read-during-ExportBPF.patch
+Patch1002: 1002-runc-make-test-specific-to-disassembleFilter-function.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
