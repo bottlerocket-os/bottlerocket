@@ -105,7 +105,11 @@ mod error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
-        #[snafu(display("Unable to base64 decode user-data for container '{}': '{}'", name, source))]
+        #[snafu(display(
+            "Unable to base64 decode user-data for container '{}': '{}'",
+            name,
+            source
+        ))]
         Base64Decode {
             name: String,
             source: base64::DecodeError,
@@ -138,9 +142,7 @@ mod error {
 type Result<T> = std::result::Result<T, error::Error>;
 
 /// Query the API for the currently defined host containers
-async fn get_host_containers<P>(
-    socket_path: P,
-) -> Result<HashMap<Identifier, model::HostContainer>>
+async fn get_host_containers<P>(socket_path: P) -> Result<HashMap<Identifier, model::HostContainer>>
 where
     P: AsRef<Path>,
 {
@@ -383,7 +385,8 @@ where
 
     // If user data was specified, unencode it and write it out before we start the container.
     if let Some(user_data) = &image_details.user_data {
-        let decoded_bytes = base64::decode(user_data.as_bytes()).context(error::Base64Decode { name })?;
+        let decoded_bytes =
+            base64::decode(user_data.as_bytes()).context(error::Base64Decode { name })?;
 
         let path = dir.join("user-data");
         fs::write(path, decoded_bytes).context(error::UserDataWrite { name })?;
@@ -414,7 +417,7 @@ where
             "multi-user.target" => {
                 debug!("Enabling and starting container: '{}'", unit_name);
                 systemd_unit.enable_and_start()?
-            },
+            }
             _ => {
                 debug!("Enabling: '{}'", unit_name);
                 systemd_unit.enable()?
@@ -438,8 +441,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     info!("host-containers started");
 
