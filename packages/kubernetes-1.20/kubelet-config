@@ -1,0 +1,71 @@
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+{{~#if settings.kubernetes.standalone-mode}}
+address: 127.0.0.1
+authentication:
+  anonymous:
+    enabled: true
+  webhook:
+    enabled: false
+authorization:
+  mode: AlwaysAllow
+{{~else}}
+address: 0.0.0.0
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 2m0s
+    enabled: true
+  x509:
+    clientCAFile: "/etc/kubernetes/pki/ca.crt"
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 5m0s
+    cacheUnauthorizedTTL: 30s
+{{~/if}}
+clusterDomain: {{settings.kubernetes.cluster-domain}}
+{{~#if settings.kubernetes.cluster-dns-ip}}
+clusterDNS:
+- {{settings.kubernetes.cluster-dns-ip}}
+{{~/if}}
+{{~#if settings.kubernetes.eviction-hard}}
+evictionHard:
+  {{~#each settings.kubernetes.eviction-hard}}
+  {{@key}}: "{{this}}"
+  {{~/each}}
+{{~/if}}
+{{~#if settings.kubernetes.allowed-unsafe-sysctls}}
+allowedUnsafeSysctls: {{settings.kubernetes.allowed-unsafe-sysctls}}
+{{~/if}}
+kubeReserved:
+  cpu: "{{kube_reserve_cpu settings.kubernetes.kube-reserved.cpu}}"
+  {{~#if settings.kubernetes.kube-reserved.memory}}
+  memory: "{{settings.kubernetes.kube-reserved.memory}}"
+  {{~else}}
+  {{~#if settings.kubernetes.max-pods}}
+  memory: "{{kube_reserve_memory settings.kubernetes.max-pods settings.kubernetes.kube-reserved.memory}}"
+  {{~/if}}
+  {{~/if}}
+  ephemeral-storage: "{{default "1Gi" settings.kubernetes.kube-reserved.ephemeral-storage}}"
+cpuManagerPolicy: "static"
+resolvConf: "/etc/resolv.conf"
+hairpinMode: hairpin-veth
+readOnlyPort: 0
+cgroupDriver: systemd
+cgroupRoot: "/"
+runtimeRequestTimeout: 15m
+featureGates:
+  RotateKubeletServerCertificate: true
+  CSIMigration: false
+protectKernelDefaults: true
+serializeImagePulls: false
+serverTLSBootstrap: {{settings.kubernetes.server-tls-bootstrap}}
+configMapAndSecretChangeDetectionStrategy: Cache
+tlsCipherSuites:
+- TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+volumePluginDir: "/var/lib/kubelet/plugins/volume/exec"
+maxPods: {{default 110 settings.kubernetes.max-pods}}
+staticPodPath: "/etc/kubernetes/static-pods/"
