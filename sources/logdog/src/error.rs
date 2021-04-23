@@ -124,6 +124,15 @@ pub(crate) enum Error {
     #[snafu(display("Empty command."))]
     ModeMissing {},
 
+    #[snafu(display("Error parsing glob pattern '{}': {}", pattern, source))]
+    ParseGlobPattern {
+        pattern: String,
+        source: glob::PatternError,
+    },
+
+    #[snafu(display("The logdog configuration has a 'glob' line with no glob instructions."))]
+    PatternMissing {},
+
     #[snafu(display("Cannot write to / as a file."))]
     RootAsFile { backtrace: Backtrace },
 
