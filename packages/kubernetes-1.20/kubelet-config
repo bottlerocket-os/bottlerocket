@@ -40,6 +40,9 @@ evictionHard:
 {{~#if settings.kubernetes.allowed-unsafe-sysctls}}
 allowedUnsafeSysctls: {{settings.kubernetes.allowed-unsafe-sysctls}}
 {{~/if}}
+{{~#if settings.kubernetes.registry-qps}}
+registryPullQPS: {{settings.kubernetes.registry-qps}}
+{{~/if}}
 kubeReserved:
   cpu: "{{kube_reserve_cpu settings.kubernetes.kube-reserved.cpu}}"
   {{~#if settings.kubernetes.kube-reserved.memory}}

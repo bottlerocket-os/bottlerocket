@@ -134,6 +134,7 @@ struct KubernetesSettings {
     allowed_unsafe_sysctls: Vec<SingleLineString>,
     server_tls_bootstrap: bool,
     cloud_provider: KubernetesCloudProvider,
+    registry_qps: i32,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
