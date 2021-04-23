@@ -6,6 +6,10 @@ publish = false
 build = "build.rs"
 
 [package.metadata.build-variant]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0",
+]
 included-packages = [
 # core
     "release",
