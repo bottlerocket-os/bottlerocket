@@ -38,6 +38,7 @@ Requires: %{_cross_os}e2fsprogs-libs
   --enable-elf-shlibs \
   --enable-symlink-install \
   --enable-relative-symlinks \
+  --enable-resizer \
   --disable-backtrace \
   --disable-debugfs \
   --disable-defrag \
@@ -48,7 +49,6 @@ Requires: %{_cross_os}e2fsprogs-libs
   --disable-libblkid \
   --disable-libuuid \
   --disable-nls \
-  --disable-resizer \
   --disable-rpath \
   --disable-tdb \
   --disable-uuidd \
@@ -84,6 +84,7 @@ install -p -m 0644 %{S:11} %{buildroot}%{_cross_tmpfilesdir}/e2fsprogs.conf
 %{_cross_sbindir}/mkfs.ext2
 %{_cross_sbindir}/mkfs.ext3
 %{_cross_sbindir}/mkfs.ext4
+%{_cross_sbindir}/resize2fs
 %{_cross_sbindir}/tune2fs
 %{_cross_factorydir}%{_cross_sysconfdir}/mke2fs.conf
 %{_cross_tmpfilesdir}/e2fsprogs.conf
