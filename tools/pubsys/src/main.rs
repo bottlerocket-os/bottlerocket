@@ -44,12 +44,7 @@ fn run() -> Result<()> {
     match args.subcommand {
         SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::Repo),
         SubCommand::ValidateRepo(ref validate_repo_args) => {
-            let rt = Runtime::new().context(error::Runtime)?;
-            rt.block_on(async {
-                repo::validate_repo::run(&args, &validate_repo_args)
-                    .await
-                    .context(error::ValidateRepo)
-            })
+            repo::validate_repo::run(&args, &validate_repo_args).context(error::ValidateRepo)
         }
         SubCommand::CheckRepoExpirations(ref check_expirations_args) => {
             repo::check_expirations::run(&args, &check_expirations_args)

@@ -3,13 +3,13 @@
 
 use crate::repo::{error as repo_error, repo_urls};
 use crate::Args;
-use futures::future::join_all;
 use log::{info, trace};
 use pubsys_config::InfraConfig;
 use snafu::{OptionExt, ResultExt};
 use std::fs::File;
 use std::io;
 use std::path::PathBuf;
+use std::thread::spawn;
 use structopt::StructOpt;
 use tough::{Repository, RepositoryLoader};
 use url::Url;
@@ -39,7 +39,7 @@ pub(crate) struct ValidateRepoArgs {
 }
 
 /// Retrieves listed targets and attempts to download them for validation purposes
-async fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
+fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
     let targets = &repo.targets().signed.targets;
 
     let mut tasks = Vec::new();
@@ -54,22 +54,35 @@ async fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
                 target: target.to_string(),
             })?;
         info!("Downloading target: {}", target);
-        tasks.push(tokio::spawn(async move {
+        // TODO - limit threads https://github.com/bottlerocket-os/bottlerocket/issues/1522
+        tasks.push(spawn(move || {
             // tough's `Read` implementation validates the target as it's being downloaded
             io::copy(&mut reader, &mut io::sink()).context(error::TargetDownload {
                 target: target.to_string(),
             })
         }));
     }
-    let results = join_all(tasks).await;
-    for result in results {
-        result.context(error::Join)??;
+
+    // ensure that we join all threads before checking the results
+    let mut results = Vec::new();
+    for task in tasks {
+        let result = task.join().map_err(|e| error::Error::Join {
+            // the join function is returning an error type that does not implement error or display
+            inner: format!("{:?}", e),
+        })?;
+        results.push(result);
     }
 
+    // check all results and return the first error we see
+    for result in results {
+        result?;
+    }
+
+    // no errors were found, the targets are validated
     Ok(())
 }
 
-async fn validate_repo(
+fn validate_repo(
     root_role_path: &PathBuf,
     metadata_url: Url,
     targets_url: &Url,
@@ -90,14 +103,14 @@ async fn validate_repo(
     info!("Loaded TUF repo: {}", metadata_url);
     if validate_targets {
         // Try retrieving listed targets
-        retrieve_targets(&repo).await?;
+        retrieve_targets(&repo)?;
     }
 
     Ok(())
 }
 
 /// Common entrypoint from main()
-pub(crate) async fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> Result<(), Error> {
+pub(crate) fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> Result<(), Error> {
     info!(
         "Using infra config from path: {}",
         args.infra_config_path.display()
@@ -130,7 +143,6 @@ pub(crate) async fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> R
         repo_urls.1,
         validate_repo_args.validate_targets,
     )
-    .await
 }
 
 mod error {
@@ -152,8 +164,8 @@ mod error {
         #[snafu(display("Missing target: {}", target))]
         TargetMissing { target: String },
 
-        #[snafu(display("Failed to spawn task for fetching target: {}", source))]
-        Join { source: tokio::task::JoinError },
+        #[snafu(display("Failed to join thread: {}", inner))]
+        Join { inner: String },
     }
 }
 pub(crate) use error::Error;
