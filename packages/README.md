@@ -227,23 +227,13 @@ $ rpmspec \
 
 ### Next Steps
 
-After the above files are in place, the package must be added to the `packages` workspace.
-
-Open `packages/Cargo.toml` in your editor and update the `members` list.
-```
-[workspace]
-members = [
-    ...
-    "libwoof",
-    ...
-]
-```
-
-Next, run `cargo generate-lockfile` to refresh `Cargo.lock`.
+The variants workspace's `Cargo.lock` may be affected by adding a package.
+`cd` into the `variants` directory at the root of the repository and run `cargo generate-lockfile` to refresh `Cargo.lock`.
 
 To build your package, run the following command in the top-level Bottlerocket directory.
-```
-cargo make
+
+```sh
+cargo make build-package -e PACKAGE=libwoof
 ```
 
-This will build all packages, including your new one.
+This will build your package and its dependencies.
