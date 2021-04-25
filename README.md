@@ -326,6 +326,7 @@ The following settings are optional and allow you to further configure your clus
     allowed-unsafe-sysctls = ["net.core.somaxconn", "net.ipv4.ip_local_port_range"]
     ```
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
+* `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.

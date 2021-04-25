@@ -43,6 +43,9 @@ allowedUnsafeSysctls: {{settings.kubernetes.allowed-unsafe-sysctls}}
 {{~#if settings.kubernetes.registry-qps}}
 registryPullQPS: {{settings.kubernetes.registry-qps}}
 {{~/if}}
+{{~#if settings.kubernetes.registry-burst}}
+registryBurst: {{settings.kubernetes.registry-burst}}
+{{~/if}}
 kubeReserved:
   cpu: "{{kube_reserve_cpu settings.kubernetes.kube-reserved.cpu}}"
   {{~#if settings.kubernetes.kube-reserved.memory}}
