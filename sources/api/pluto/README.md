@@ -12,7 +12,6 @@ It makes calls to IMDS to get meta data:
 
 - Cluster DNS
 - Node IP
-- POD Infra Container Image
 
 ## Colophon 
 

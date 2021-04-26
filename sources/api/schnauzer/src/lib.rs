@@ -122,7 +122,9 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("join_map", Box::new(helpers::join_map));
     template_registry.register_helper("default", Box::new(helpers::default));
     template_registry.register_helper("ecr-prefix", Box::new(helpers::ecr_prefix));
+    template_registry.register_helper("pause-prefix", Box::new(helpers::pause_prefix));
     template_registry.register_helper("host", Box::new(helpers::host));
+    template_registry.register_helper("goarch", Box::new(helpers::goarch));
     template_registry.register_helper("join_array", Box::new(helpers::join_array));
     template_registry.register_helper("kube_reserve_cpu", Box::new(helpers::kube_reserve_cpu));
     template_registry.register_helper(

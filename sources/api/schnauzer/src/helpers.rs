@@ -47,6 +47,44 @@ lazy_static! {
 const ECR_FALLBACK_REGION: &str = "us-east-1";
 const ECR_FALLBACK_REGISTRY: &str = "328549459982";
 
+lazy_static! {
+    /// A map to tell us which registry to pull pause container images from for a given region.
+    static ref PAUSE_CONTAINER_MAP: HashMap<&'static str, &'static str> = {
+        let mut m = HashMap::new();
+        m.insert("af-south-1", "877085696533");
+        m.insert("ap-east-1", "800184023465");
+        m.insert("ap-northeast-1", "602401143452");
+        m.insert("ap-northeast-2", "602401143452");
+        m.insert("ap-northeast-3", "602401143452");
+        m.insert("ap-south-1", "602401143452");
+        m.insert("ap-southeast-1", "602401143452");
+        m.insert("ap-southeast-2", "602401143452");
+        m.insert("ca-central-1", "602401143452");
+        m.insert("cn-north-1", "918309763551");
+        m.insert("cn-northwest-1", "961992271922");
+        m.insert("eu-central-1", "602401143452");
+        m.insert("eu-north-1", "602401143452");
+        m.insert("eu-south-1", "590381155156");
+        m.insert("eu-west-1", "602401143452");
+        m.insert("eu-west-2", "602401143452");
+        m.insert("eu-west-3", "602401143452");
+        m.insert("me-south-1", "558608220178");
+        m.insert("sa-east-1", "602401143452");
+        m.insert("us-east-1", "602401143452");
+        m.insert("us-east-2", "602401143452");
+        m.insert("us-gov-east-1", "151742754352");
+        m.insert("us-gov-west-1", "013241004608");
+        m.insert("us-west-1", "602401143452");
+        m.insert("us-west-2", "602401143452");
+        m
+    };
+}
+
+/// But if there is a region that does not exist in our map (for example a new
+/// region is created or being tested), then we will fall back to this.
+const PAUSE_FALLBACK_REGISTRY: &str = "602401143452";
+const PAUSE_FALLBACK_REGION: &str = "us-east-1";
+
 /// The amount of CPU to reserve
 /// We are using these CPU ranges from GKE
 /// (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
@@ -155,6 +193,9 @@ mod error {
             template: String,
             source: std::io::Error,
         },
+
+        #[snafu(display("Unknown architecture '{}' given to goarch helper", given))]
+        UnknownArch { given: String },
 
         #[snafu(display(
             "Expected an absolute URL, got '{}' in template '{}': '{}'",
@@ -515,6 +556,59 @@ pub fn ecr_prefix(
     Ok(())
 }
 
+/// The `pause-prefix` helper is used to map an AWS region to the correct pause
+/// container registry.
+///
+/// Because the repo URL includes the the registry number, we created this helper
+/// to lookup the correct registry number for a given region.
+///
+/// This helper takes the AWS region as its only parameter, and returns the
+/// fully qualified domain name to the correct registry.
+///
+/// # Fallback
+///
+/// If we do not have the region in our map, a fallback region and registry number
+/// are returned.  This would allow a version of Bottlerocket to run in a new region
+/// before this map has been updated.
+///
+/// # Example
+///
+/// In this example the registry number for the region will be returned.
+/// `{{ pause-prefix settings.aws.region }}`
+///
+/// This would result in something like:
+/// `602401143452.dkr.ecr.eu-central-1.amazonaws.com`
+pub fn pause_prefix(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting pause prefix helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 1)?;
+
+    // get the region parameter, which is probably given by the template value
+    // settings.aws.region. regardless, we expect it to be a string.
+    let aws_region = get_param(helper, 0)?;
+    let aws_region = aws_region.as_str().with_context(|| error::EcrRegion {
+        value: aws_region.to_owned(),
+        template: template_name,
+    })?;
+
+    // construct the registry fqdn
+    let pause_registry = pause_registry(aws_region);
+
+    // write it to the template
+    out.write(&pause_registry)
+        .with_context(|| error::TemplateWrite {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
 /// `host` takes an absolute URL and trims it down and returns its host.
 pub fn host(
     helper: &Helper<'_, '_>,
@@ -543,6 +637,51 @@ pub fn host(
 
     // write it to the template
     out.write(&url_host).with_context(|| error::TemplateWrite {
+        template: template_name.to_owned(),
+    })?;
+
+    Ok(())
+}
+
+/// `goarch` takes one parameter, the name of a machine architecture, and converts it to the "Go"
+/// form, so named because its use in golang popularized it elsewhere.
+///
+/// The canonical architecture names in Bottlerocket are things like "x86_64" and "aarch64"; goarch
+/// converts these to "amd64" and "arm64", etc.
+pub fn goarch(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting goarch helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 1)?;
+
+    // Retrieve the given arch string
+    let arch_val = get_param(helper, 0)?;
+    let arch_str = arch_val
+        .as_str()
+        .with_context(|| error::InvalidTemplateValue {
+            expected: "string",
+            value: arch_val.to_owned(),
+            template: template_name.to_owned(),
+        })?;
+
+    // Transform the arch string
+    let goarch = match arch_str {
+        "x86_64" | "amd64" => "amd64",
+        "aarch64" | "arm64" => "arm64",
+        _ => {
+            return Err(RenderError::from(error::TemplateHelperError::UnknownArch {
+                given: arch_str.to_string(),
+            }))
+        }
+    };
+
+    // write it to the template
+    out.write(&goarch).with_context(|| error::TemplateWrite {
         template: template_name.to_owned(),
     })?;
 
@@ -779,6 +918,17 @@ fn ecr_registry<S: AsRef<str>>(region: S) -> String {
     // lookup the ecr registry ID or fallback to the default region and id
     let (region, registry_id) = match ECR_MAP.borrow().get(region.as_ref()) {
         None => (ECR_FALLBACK_REGION, ECR_FALLBACK_REGISTRY),
+        Some(registry_id) => (region.as_ref(), *registry_id),
+    };
+    format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region)
+}
+
+/// Constructs the fully qualified domain name for the pause container (pod infra
+/// container) for the given region. Returns a default if the region is not mapped.
+fn pause_registry<S: AsRef<str>>(region: S) -> String {
+    // lookup the registry ID or fallback to the default region and id
+    let (region, registry_id) = match PAUSE_CONTAINER_MAP.borrow().get(region.as_ref()) {
+        None => (PAUSE_FALLBACK_REGION, PAUSE_FALLBACK_REGISTRY),
         Some(registry_id) => (region.as_ref(), *registry_id),
     };
     format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region)
@@ -1110,6 +1260,67 @@ mod test_ecr_registry {
 }
 
 #[cfg(test)]
+mod test_pause_registry {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("pause-prefix", Box::new(pause_prefix));
+
+        registry.render_template(tmpl, data)
+    }
+
+    const CONTAINER_TEMPLATE: &str = "{{ pause-prefix settings.aws.region }}/container:tag";
+
+    const EXPECTED_URL_EU_CENTRAL_1: &str =
+        "602401143452.dkr.ecr.eu-central-1.amazonaws.com/container:tag";
+
+    const EXPECTED_URL_AF_SOUTH_1: &str =
+        "877085696533.dkr.ecr.af-south-1.amazonaws.com/container:tag";
+
+    const EXPECTED_URL_XY_ZTOWN_1: &str =
+        "602401143452.dkr.ecr.us-east-1.amazonaws.com/container:tag";
+
+    #[test]
+    fn url_eu_central_1() {
+        let result = setup_and_render_template(
+            CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "eu-central-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_EU_CENTRAL_1);
+    }
+
+    #[test]
+    fn url_af_south_1() {
+        let result = setup_and_render_template(
+            CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "af-south-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_AF_SOUTH_1);
+    }
+
+    #[test]
+    fn url_fallback() {
+        let result = setup_and_render_template(
+            CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "xy-ztown-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_XY_ZTOWN_1);
+    }
+}
+
+#[cfg(test)]
 mod test_host {
     use super::*;
     use handlebars::TemplateRenderError;
@@ -1165,6 +1376,49 @@ mod test_host {
         )
         .unwrap();
         assert_eq!(result, "example.com");
+    }
+}
+
+#[cfg(test)]
+mod test_goarch {
+    use super::*;
+    use handlebars::TemplateRenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("goarch", Box::new(goarch));
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn good_arches() {
+        for (arch, expected) in &[
+            ("x86_64", "amd64"),
+            ("amd64", "amd64"),
+            ("aarch64", "arm64"),
+            ("arm64", "arm64"),
+        ] {
+            let result =
+                setup_and_render_template("{{ goarch os.arch }}", &json!({"os": {"arch": arch}}))
+                    .unwrap();
+            assert_eq!(result, *expected);
+        }
+    }
+
+    #[test]
+    fn bad_arches() {
+        for bad_arch in &["", "amdarm", "x86", "aarch32"] {
+            setup_and_render_template("{{ goarch os.arch }}", &json!({ "os": {"arch": bad_arch }}))
+                .unwrap_err();
+        }
     }
 }
 

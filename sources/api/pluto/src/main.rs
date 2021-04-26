@@ -11,12 +11,9 @@ It makes calls to IMDS to get meta data:
 
 - Cluster DNS
 - Node IP
-- POD Infra Container Image
 */
 
-use lazy_static::lazy_static;
 use reqwest::blocking::Client;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::string::String;
@@ -39,49 +36,8 @@ const IMDS_MAC_ENDPOINT: &str =
     "http://169.254.169.254/2018-09-24/meta-data/network/interfaces/macs";
 const IMDS_INSTANCE_TYPE_ENDPOINT: &str =
     "http://169.254.169.254/2018-09-24/meta-data/instance-type";
-const IMDS_INSTANCE_IDENTITY_DOCUMENT_ENDPOINT: &str =
-    "http://169.254.169.254/2018-09-24/dynamic/instance-identity/document";
 
 const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
-
-const PAUSE_CONTAINER_VERSION: &str = "3.1";
-lazy_static! {
-    /// A map to tell us which account to pull pause container images from for a given region.
-    static ref PAUSE_CONTAINER_ACCOUNT: HashMap<&'static str, &'static str> = {
-        let mut m = HashMap::new();
-        m.insert("af-south-1", "877085696533");
-        m.insert("ap-east-1", "800184023465");
-        m.insert("ap-northeast-1", "602401143452");
-        m.insert("ap-northeast-2", "602401143452");
-        m.insert("ap-northeast-3", "602401143452");
-        m.insert("ap-south-1", "602401143452");
-        m.insert("ap-southeast-1", "602401143452");
-        m.insert("ap-southeast-2", "602401143452");
-        m.insert("ca-central-1", "602401143452");
-        m.insert("cn-north-1", "918309763551");
-        m.insert("cn-northwest-1", "961992271922");
-        m.insert("eu-central-1", "602401143452");
-        m.insert("eu-north-1", "602401143452");
-        m.insert("eu-south-1", "590381155156");
-        m.insert("eu-west-1", "602401143452");
-        m.insert("eu-west-2", "602401143452");
-        m.insert("eu-west-3", "602401143452");
-        m.insert("me-south-1", "558608220178");
-        m.insert("sa-east-1", "602401143452");
-        m.insert("us-east-1", "602401143452");
-        m.insert("us-east-2", "602401143452");
-        m.insert("us-gov-east-1", "151742754352");
-        m.insert("us-gov-west-1", "013241004608");
-        m.insert("us-west-1", "602401143452");
-        m.insert("us-west-2", "602401143452");
-        m
-    };
-}
-
-/// But if there is a region that does not exist in our map (for example a new
-/// region is created or being tested), then we will fall back to this.
-const PAUSE_FALLBACK_ACCOUNT: &str = "602401143452";
-const PAUSE_FALLBACK_REGION: &str = "us-east-1";
 
 mod error {
     use snafu::Snafu;
@@ -228,53 +184,11 @@ fn get_node_ip(client: &Client, session_token: &str) -> Result<String> {
     get_text_from_imds(&client, IMDS_NODE_IPV4_ENDPOINT, session_token)
 }
 
-fn get_pod_infra_container_image(client: &Client, session_token: &str) -> Result<String> {
-    // Get the region from the correct location.
-    let uri = IMDS_INSTANCE_IDENTITY_DOCUMENT_ENDPOINT;
-    let iid_text = get_text_from_imds(&client, uri, session_token)?;
-    let iid_json: serde_json::Value =
-        serde_json::from_str(&iid_text).context(error::ImdsJson { uri })?;
-    let region = iid_json["region"]
-        .as_str()
-        .context(error::MissingRegion { uri })?;
-
-    pause_container_uri(region)
-}
-
-/// Returns the machine architecture.
-fn arch() -> Result<&'static str> {
-    if cfg!(target_arch = "x86_64") {
-        Ok("amd64")
-    } else if cfg!(target_arch = "aarch64") {
-        Ok("arm64")
-    } else {
-        error::UnknownArchitecture.fail()
-    }
-}
-
-/// Constructs the URI of the pause container image for the given region.  Returns a URI for the
-/// default region/account if the region is not mapped.
-fn pause_container_uri(region: &str) -> Result<String> {
-    // Look up the pause container account, or fall back to the default ID and region
-    let (region, account) = match PAUSE_CONTAINER_ACCOUNT.get(&region) {
-        Some(account) => (region, *account),
-        None => (PAUSE_FALLBACK_REGION, PAUSE_FALLBACK_ACCOUNT),
-    };
-
-    Ok(format!(
-        "{}.dkr.ecr.{}.amazonaws.com/eks/pause-{}:{}",
-        account,
-        region,
-        arch()?,
-        PAUSE_CONTAINER_VERSION
-    ))
-}
-
 /// Print usage message.
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
-        r"Usage: {} [max-pods | cluster-dns-ip | node-ip | pod-infra-container-image]",
+        r"Usage: {} [max-pods | cluster-dns-ip | node-ip]",
         program_name
     );
     process::exit(1);
@@ -304,7 +218,6 @@ fn run() -> Result<()> {
     let setting = match setting_name.as_ref() {
         "cluster-dns-ip" => get_cluster_dns_ip(&client, &imds_session_token),
         "node-ip" => get_node_ip(&client, &imds_session_token),
-        "pod-infra-container-image" => get_pod_infra_container_image(&client, &imds_session_token),
 
         // If we want to specify a reasonable default in a template, we can exit 2 to tell
         // sundog to skip this setting.
@@ -340,46 +253,5 @@ fn main() {
     if let Err(e) = run() {
         eprintln!("{}", e);
         process::exit(1);
-    }
-}
-
-#[cfg(test)]
-mod test_pause_container_account {
-    use super::{arch, pause_container_uri, PAUSE_CONTAINER_VERSION};
-
-    #[test]
-    fn url_eu_west_1() {
-        assert_eq!(
-            pause_container_uri("eu-west-1").unwrap(),
-            format!(
-                "602401143452.dkr.ecr.eu-west-1.amazonaws.com/eks/pause-{}:{}",
-                arch().unwrap(),
-                PAUSE_CONTAINER_VERSION
-            )
-        );
-    }
-
-    #[test]
-    fn url_af_south_1() {
-        assert_eq!(
-            pause_container_uri("af-south-1").unwrap(),
-            format!(
-                "877085696533.dkr.ecr.af-south-1.amazonaws.com/eks/pause-{}:{}",
-                arch().unwrap(),
-                PAUSE_CONTAINER_VERSION
-            )
-        );
-    }
-
-    #[test]
-    fn url_fallback() {
-        assert_eq!(
-            pause_container_uri("xy-ztown-1").unwrap(),
-            format!(
-                "602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/pause-{}:{}",
-                arch().unwrap(),
-                PAUSE_CONTAINER_VERSION
-            )
-        );
     }
 }
