@@ -43,12 +43,10 @@ We recommend you install the latest stable Rust using [rustup](https://rustup.rs
 Rust 1.51.0 or higher is required.
 
 To organize build tasks, we use [cargo-make](https://sagiegurari.github.io/cargo-make/).
-We also use [cargo-deny](https://github.com/EmbarkStudios/cargo-deny) during the build process.
-To get these, run:
+To get it, run:
 
 ```
 cargo install cargo-make
-cargo install cargo-deny --version 0.6.2
 ```
 
 #### Docker
