@@ -41,4 +41,5 @@ version = "1.0.8"
 "(1.0.8, 1.1.0)" = [
     "migrate_v1.1.0_kubelet-server-tls-bootstrap.lz4",
     "migrate_v1.1.0_kubelet-cloud-provider.lz4",
+    "migrate_v1.1.0_kubelet-registry-qps-registry-burst.lz4",
 ]

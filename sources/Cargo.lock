@@ -1745,6 +1745,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-registry-qps-registry-burst"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-server-tls-bootstrap"
 version = "0.1.0"
 dependencies = [
