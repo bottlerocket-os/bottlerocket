@@ -1,0 +1,16 @@
+[package]
+name = "libz"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://www.zlib.net/zlib-1.2.11.tar.xz"
+sha512 = "b7f50ada138c7f93eb7eb1631efccd1d9f03a5e77b6c13c8b757017b2d462e19d2d3e01c50fad60a4ae1bc86d431f6f94c72c11ff410c25121e571953017cb67"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
