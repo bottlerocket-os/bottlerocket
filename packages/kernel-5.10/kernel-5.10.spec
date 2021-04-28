@@ -31,7 +31,6 @@ Requires: %{name}-devel = %{version}-%{release}
 
 %package devel
 Summary: Configured Linux kernel source for module building
-Requires: %{_cross_os}filesystem
 
 %description devel
 %{summary}.

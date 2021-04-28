@@ -309,9 +309,6 @@ version = "0.1.0"
 [[package]]
 name = "kernel-5_4"
 version = "0.1.0"
-dependencies = [
- "filesystem",
-]
 
 [[package]]
 name = "kmod"

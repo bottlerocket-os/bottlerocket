@@ -19,7 +19,3 @@ sha512 = "ef506706434bc94df6e845e5262c8d022ebb91ff6bc6a71ac656851c0de66d81392ace
 # RPM BuildRequires
 [build-dependencies]
 # Provided by Bottlerocket SDK
-
-# RPM Requires
-[dependencies]
-filesystem = { path = "../filesystem" }
