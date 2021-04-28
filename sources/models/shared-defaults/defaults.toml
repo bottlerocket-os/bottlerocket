@@ -94,9 +94,6 @@ affected-services = ["chronyd"]
 
 # Kernel
 
-[settings.kernel]
-lockdown = "none"
-
 [services.sysctl]
 configuration-files = []
 restart-commands = ["/usr/bin/corndog sysctl"]

@@ -1,0 +1,3 @@
+# Kernel
+[settings.kernel]
+lockdown = "none"
