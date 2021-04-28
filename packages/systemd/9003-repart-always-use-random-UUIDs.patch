@@ -1,4 +1,4 @@
-From f59750b48ee9dfc33a451629add411eba967e643 Mon Sep 17 00:00:00 2001
+From de6bf41d3da21515ff34152c8a9fb6ae23a028c2 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 16 Apr 2020 15:10:41 +0000
 Subject: [PATCH 9003/9008] repart: always use random UUIDs
@@ -22,10 +22,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 14 insertions(+), 92 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 580964c..781b0a2 100644
+index f406d59..c16b50c 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1375,8 +1375,7 @@ substs.set('DEFAULT_LLMNR_MODE', default_llmnr)
+@@ -1374,8 +1374,7 @@ substs.set('DEFAULT_LLMNR_MODE', default_llmnr)
  
  want_repart = get_option('repart')
  if want_repart != 'false'
@@ -36,7 +36,7 @@ index 580964c..781b0a2 100644
                  error('repart support was requested, but dependencies are not available')
          endif
 diff --git a/src/partition/repart.c b/src/partition/repart.c
-index 6d7e519..dfc2c79 100644
+index 6db413e..f771c33 100644
 --- a/src/partition/repart.c
 +++ b/src/partition/repart.c
 @@ -13,9 +13,6 @@

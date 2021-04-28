@@ -1,4 +1,4 @@
-From 4aa9be06f1765b7c5f74447aad09b888127b6429 Mon Sep 17 00:00:00 2001
+From e01966709aa6beeb85df234be0e75eb9722778ba Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 12 Nov 2020 16:18:15 +0000
 Subject: [PATCH 9006/9008] journal: disable keyed hashes for compatibility
@@ -14,10 +14,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/src/journal/journal-file.c b/src/journal/journal-file.c
-index 6bee5da..791145e 100644
+index 1dbe818..531b9df 100644
 --- a/src/journal/journal-file.c
 +++ b/src/journal/journal-file.c
-@@ -3463,13 +3463,12 @@ int journal_file_open(
+@@ -3383,13 +3383,12 @@ int journal_file_open(
  #endif
          };
  

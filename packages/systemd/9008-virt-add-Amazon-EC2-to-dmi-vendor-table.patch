@@ -1,4 +1,4 @@
-From be47b1641896bd83c571925c8ad6b8119cffbc3b Mon Sep 17 00:00:00 2001
+From 7dd380c3c32d7c3c3bd90d494dbbb9fa0e3ab1fb Mon Sep 17 00:00:00 2001
 From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 Date: Wed, 21 Apr 2021 00:46:32 +0000
 Subject: [PATCH 9008/9008] virt: add "Amazon EC2" to dmi vendor table
@@ -15,7 +15,7 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/src/basic/virt.c b/src/basic/virt.c
-index 7d78a40..36b470e 100644
+index 1b90f4b..364e7c6 100644
 --- a/src/basic/virt.c
 +++ b/src/basic/virt.c
 @@ -158,6 +158,7 @@ static int detect_vm_dmi(void) {

@@ -25,7 +25,7 @@ Patch9003: 9003-repart-always-use-random-UUIDs.patch
 
 # TODO: this could be submitted upstream as well, but needs to account for
 # the dom0 case first, where the UUID is all zeroes and hence not unique.
-Patch9004: 9004-machine-id-setup-generate-stable-ID-under-Xen.patch
+Patch9004: 9004-machine-id-setup-generate-stable-ID-under-Xen-and-VM.patch
 
 # Local patch to handle mounting /etc with our SELinux label.
 Patch9005: 9005-core-mount-etc-with-specific-label.patch

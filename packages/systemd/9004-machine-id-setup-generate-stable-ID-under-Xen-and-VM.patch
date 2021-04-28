@@ -1,0 +1,80 @@
+From 59744095bbd3fa229fabae98ee11c4e5e6502a8b Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Tue, 7 Jul 2020 22:38:20 +0000
+Subject: [PATCH 9004/9008] machine-id-setup: generate stable ID under Xen and
+ VMWare
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ man/machine-id.xml          |  3 ++-
+ src/core/machine-id-setup.c | 26 +++++++++++++++++++++++++-
+ 2 files changed, 27 insertions(+), 2 deletions(-)
+
+diff --git a/man/machine-id.xml b/man/machine-id.xml
+index f61634f..06aa223 100644
+--- a/man/machine-id.xml
++++ b/man/machine-id.xml
+@@ -101,7 +101,8 @@
+     to use the D-Bus machine ID from <filename>/var/lib/dbus/machine-id</filename>, the
+     value of the kernel command line option <varname>container_uuid</varname>, the KVM DMI
+     <filename>product_uuid</filename> or the devicetree <filename>vm,uuid</filename>
+-    (on KVM systems), and finally a randomly generated UUID.</para>
++    (on KVM systems), the hypervisor UUID from <filename>/sys/hypervisor/uuid</filename>
++    (under Xen), and finally a randomly generated UUID.</para>
+ 
+     <para>After the machine ID is established,
+     <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+diff --git a/src/core/machine-id-setup.c b/src/core/machine-id-setup.c
+index 6d15f9c..16f8b8c 100644
+--- a/src/core/machine-id-setup.c
++++ b/src/core/machine-id-setup.c
+@@ -31,6 +31,8 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
+         const char *dbus_machine_id;
+         _cleanup_close_ int fd = -1;
+         int r;
++        int virtualization_type;
++
+ 
+         assert(ret);
+ 
+@@ -60,7 +62,11 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
+                                 return 0;
+                         }
+ 
+-                } else if (detect_vm() == VIRTUALIZATION_KVM) {
++                }
++
++                virtualization_type = detect_vm();
++
++                if (virtualization_type == VIRTUALIZATION_KVM) {
+ 
+                         /* If we are not running in a container, see if we are
+                          * running in qemu/kvm and a machine ID was passed in
+@@ -75,6 +81,24 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
+                                 log_info("Initializing machine ID from KVM UUID.");
+                                 return 0;
+                         }
++
++                } else if (virtualization_type == VIRTUALIZATION_XEN) {
++
++                        /* If we're running under Xen, check for a UUID from
++                         * the hypervisor. */
++
++                        if (id128_read("/sys/hypervisor/uuid", ID128_UUID, ret) >= 0) {
++                                log_info("Initializing machine ID from Xen UUID.");
++                                return 0;
++                        }
++                } else if (virtualization_type == VIRTUALIZATION_VMWARE) {
++                        /* If we're running under VMware, attempt to use the
++                         * product uuid. */
++
++                        if (id128_read("/sys/class/dmi/id/product_uuid", ID128_UUID, ret) >= 0) {
++                                log_info("Initializing machine ID from VMware UUID.");
++                                return 0;
++                        }
+                 }
+         }
+ 
+-- 
+2.30.2
+
