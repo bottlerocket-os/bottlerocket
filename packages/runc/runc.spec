@@ -20,6 +20,13 @@ Source0: https://%{goimport}/archive/%{commit}/%{gorepo}-%{commit}.tar.gz
 Patch1001: 1001-runc-ensure-the-scratch-pipe-is-read-during-ExportBPF.patch
 Patch1002: 1002-runc-make-test-specific-to-disassembleFilter-function.patch
 
+# CVE-2021-30465 + rc93 backports
+Patch0001: rc93-0001-libct-newInit-Config-nit.patch
+Patch0002: rc93-0002-libct-rootfs-introduce-and-use-mountConfig.patch
+Patch0003: rc93-0003-libct-rootfs-mountCgroupV2-minor-refactor.patch
+Patch0004: rc93-0004-Fix-cgroup2-mount-for-rootless-case.patch
+Patch0005: rc93-0005-rootfs-add-mount-destination-validation.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
