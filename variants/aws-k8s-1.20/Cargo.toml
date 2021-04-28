@@ -21,7 +21,6 @@ included-packages = [
 kernel-parameters = [
     "console=tty0",
     "console=ttyS0",
-    "systemd.unified_cgroup_hierarchy=1",
 ]
 
 [lib]
