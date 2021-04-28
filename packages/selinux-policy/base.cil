@@ -50,3 +50,7 @@
 ; "no new privs" bit enabled, or when the executable is on a "nosuid"
 ; filesystem.
 (policycap "nnp_nosuid_transition")
+
+; Enable policy to label symlinks on kernel file systems using
+; "genfscon" statements, as with directories and files.
+(policycap "genfs_seclabel_symlinks")

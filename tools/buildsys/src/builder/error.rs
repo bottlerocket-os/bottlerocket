@@ -52,6 +52,12 @@ pub(crate) enum Error {
         var: String,
         source: std::env::VarError,
     },
+
+    #[snafu(display("Unsupported architecture '{}'", arch))]
+    UnsupportedArch {
+        arch: String,
+        source: serde_plain::Error,
+    },
 }
 
 pub(super) type Result<T> = std::result::Result<T, Error>;

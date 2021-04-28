@@ -18,6 +18,7 @@ included-packages = [
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
+    "kernel-5.4",
     "kubelet-1.18",
     "release",
 ]
@@ -26,8 +27,9 @@ included-packages = [
 path = "lib.rs"
 
 [build-dependencies]
-"aws-iam-authenticator" = { path = "../../packages/aws-iam-authenticator" }
-"cni" = { path = "../../packages/cni" }
-"cni-plugins" = { path = "../../packages/cni-plugins" }
-"kubernetes-1_18" = { path = "../../packages/kubernetes-1.18" }
-"release" = { path = "../../packages/release" }
+aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
+cni = { path = "../../packages/cni" }
+cni-plugins = { path = "../../packages/cni-plugins" }
+kernel-5_4 = { path = "../../packages/kernel-5.4" }
+kubernetes-1_18 = { path = "../../packages/kubernetes-1.18" }
+release = { path = "../../packages/release" }

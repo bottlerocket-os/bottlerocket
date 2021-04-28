@@ -24,7 +24,6 @@ filesystem = { path = "../filesystem" }
 glibc = { path = "../glibc" }
 grub = { path = "../grub" }
 iproute = { path = "../iproute" }
-kernel = { path = "../kernel" }
 libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }
 libstd-rust = { path = "../libstd-rust" }

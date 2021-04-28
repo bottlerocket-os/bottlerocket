@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 
-Name: %{_cross_os}kernel
+Name: %{_cross_os}kernel-5.4
 Version: 5.4.105
 Release: 1%{?dist}
 Summary: The Linux kernel
@@ -22,6 +22,10 @@ BuildRequires: hostname
 BuildRequires: kmod
 BuildRequires: openssl-devel
 
+# Pull in expected modules and development files.
+Requires: %{name}-modules = %{version}-%{release}
+Requires: %{name}-devel = %{version}-%{release}
+
 %global kernel_sourcedir %{_cross_usrsrc}/kernels
 %global kernel_libdir %{_cross_libdir}/modules/%{version}
 
@@ -30,7 +34,6 @@ BuildRequires: openssl-devel
 
 %package devel
 Summary: Configured Linux kernel source for module building
-Requires: %{_cross_os}filesystem
 
 %description devel
 %{summary}.

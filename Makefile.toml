@@ -114,7 +114,7 @@ PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH
 
 # The name of the kmod kit archive, used to ease building out-of-tree kernel modules.
 BUILDSYS_KMOD_KIT = "${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
-BUILDSYS_KMOD_KIT_PATH="${BUILDSYS_ARCHIVES_DIR}/${BUILDSYS_KMOD_KIT}.tar.xz"
+BUILDSYS_KMOD_KIT_PATH="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_KMOD_KIT}.tar.xz"
 
 # The name of the OVA bundle that will be built if the current variant builds VMDK artifacts
 BUILDSYS_OVA = "${BUILDSYS_NAME_FULL}.ova"
@@ -335,92 +335,8 @@ cargo build \
 '''
 ]
 
-[tasks.build-kernel]
-env = { "PACKAGE" = "kernel" }
-run_task = "build-package"
-
-[tasks.build-kmod-kit]
-dependencies = ["build-kernel"]
-script_runner = "bash"
-script = [
-'''
-mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
-
-toolchain="toolchain-${BUILDSYS_SDK_VERSION}.${BUILDSYS_ARCH}.tar.gz"
-if [ ! -s "${BUILDSYS_ARCHIVES_DIR}/${toolchain}" ] ; then
-  if ! docker create --name "${toolchain}" \
-      ${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH} true >/dev/null 2>&1 ; then
-    echo "could not create toolchain container" >&2
-    exit 1
-  fi
-  if ! docker cp "${toolchain}":toolchain - \
-      | gzip --fast > "${BUILDSYS_ARCHIVES_DIR}/${toolchain}" ; then
-    echo "could not extract toolchain from container" >&2
-    exit 1
-  fi
-  if ! docker rm -f "${toolchain}" >/dev/null 2>&1 ; then
-    echo "could not remove toolchain container" >&2
-    exit 1
-  fi
-fi
-
-# Find the most recent kernel archive. If we have more than one, we want the
-# last one that was built.
-kernel_archive="$(find "${BUILDSYS_PACKAGES_DIR}" \
-  -type f -name '*-'"${BUILDSYS_ARCH}"'-kernel-archive-*.rpm' \
-  -printf '%T@ %p\n' | sort -r | awk 'NR==1{print $2}')"
-
-if [ "${?}" -ne 0 ] || [ -z "${kernel_archive}" ] || [ ! -s "${kernel_archive}" ]; then
-  echo "Unable to find latest kernel archive for ${BUILDSYS_ARCH} in ${BUILDSYS_PACKAGES_DIR}"
-  exit 1
-fi
-
-if [ -s "${BUILDSYS_KMOD_KIT_PATH}" ] && [ "${BUILDSYS_KMOD_KIT_PATH}" -nt "${kernel_archive}" ]; then
-  echo "Existing kmod kit ${BUILDSYS_KMOD_KIT_PATH} is newer than kernel archive ${kernel_archive}; skipping build."
-  exit 0
-fi
-
-prepare_kmod_kit="
-set -e -o pipefail
-
-mkdir -p /tmp/kit/${BUILDSYS_KMOD_KIT} /tmp/extract
-
-# Retrieve the toolchain and kernel archives.
-pushd /tmp/extract >/dev/null
-find /tmp/rpms -name "${kernel_archive##*/}" \
-  -exec rpm2cpio {} \; | cpio -idmu --quiet
-find -name 'kernel-devel.tar.xz' -exec mv {} /tmp/kit/${BUILDSYS_KMOD_KIT} \;
-popd >/dev/null
-
-# Extract them into the same directory.
-pushd /tmp/kit/${BUILDSYS_KMOD_KIT} >/dev/null
-tar xf kernel-devel.tar.xz
-rm kernel-devel.tar.xz
-tar xf /tmp/archives/${toolchain}
-popd >/dev/null
-
-# Merge them together into a unified archive.
-pushd /tmp/kit >/dev/null
-tar cf ${BUILDSYS_KMOD_KIT}.tar ${BUILDSYS_KMOD_KIT}
-xz -T0 ${BUILDSYS_KMOD_KIT}.tar
-popd >/dev/null
-
-mv /tmp/kit/${BUILDSYS_KMOD_KIT}.tar.xz /tmp/archives
-"
-
-docker run --rm \
-  --network=host \
-  --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
-  -v "${BUILDSYS_PACKAGES_DIR}":/tmp/rpms \
-  -v "${BUILDSYS_ARCHIVES_DIR}":/tmp/archives \
-  "${BUILDSYS_SDK_IMAGE}" \
-  bash -c "${prepare_kmod_kit}"
-'''
-]
-
 [tasks.build-archives]
-dependencies = ["build-kmod-kit", "build-ova"]
+dependencies = ["build-ova"]
 
 [tasks.build-variant]
 dependencies = ["build-tools", "publish-setup"]
@@ -532,7 +448,9 @@ docker run --rm \
 dependencies = ["fetch"]
 script = [
 '''
-for link in ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}*; do
+for link in \
+    ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}* \
+    ${BUILDSYS_OUTPUT_DIR}/latest/*-kmod-kit-* ; do
   if [ -L "${link}" ]; then
     rm ${link}
   fi
@@ -551,6 +469,8 @@ for artifact in ${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}*; do
   link_name="${file_name/${BUILDSYS_NAME_FULL}/${BUILDSYS_NAME_VARIANT}}"
   ln -snf "../${file_name}" "${BUILDSYS_OUTPUT_DIR}/latest/${link_name}"
 done
+ln -snf "../${BUILDSYS_NAME_FULL}-kmod-kit.tar.xz" \
+  "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_KMOD_KIT}.tar.xz"
 '''
 ]
 

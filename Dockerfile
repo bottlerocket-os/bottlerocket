@@ -8,7 +8,12 @@
 # filesystem at /host.
 
 ARG SDK
+ARG TOOLCHAIN
+ARG ARCH
+ARG GOARCH
+
 FROM ${SDK} as sdk
+FROM --platform=linux/${GOARCH} ${TOOLCHAIN}-${ARCH} as toolchain
 
 ############################################################################################
 # Section 1: The following build stages are used to build rpm.spec packages
@@ -120,12 +125,16 @@ WORKDIR /root
 
 USER root
 RUN --mount=target=/host \
-    mkdir -p /local/rpms /local/migrations ./rpmbuild/RPMS \
+    mkdir -p /local/rpms /local/migrations /local/archives ./rpmbuild/RPMS \
     && ln -s /host/build/rpms/*.rpm ./rpmbuild/RPMS \
     && find /host/build/rpms/ -maxdepth 1 -type f \
         -name "bottlerocket-${ARCH}-migrations-*.rpm" \
         -not -iname '*debuginfo*' \
         -exec cp '{}' '/local/migrations/' ';' \
+    && KERNEL="$(printf "%s\n" ${PACKAGES} | awk '/^kernel-/{print $1}')" \
+    && find /host/build/rpms/ -maxdepth 1 -type f \
+        -name "bottlerocket-${ARCH}-${KERNEL}-archive-*.rpm" \
+        -exec cp '{}' '/local/archives/' ';' \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
@@ -186,8 +195,30 @@ RUN --mount=target=/host \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
-# Copies the build artifacts (Bottlerocket image files and migrations) to their expected
-# location so that buildsys can find them and copy them out.
+# Creates an archive of kernel development sources and toolchain.
+FROM repobuild as kmodkitbuild
+ARG ARCH
+ARG VERSION_ID
+ARG BUILD_ID
+ARG NOCACHE
+ARG VARIANT
+ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID}
+
+USER root
+COPY --from=toolchain /toolchain /local/toolchain
+
+WORKDIR /tmp
+RUN --mount=target=/host \
+    /host/tools/rpm2kmodkit \
+      --archive-dir=/local/archives \
+      --toolchain-dir=/local/toolchain \
+      --output-dir=/local/output \
+    && echo ${NOCACHE}
+
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Copies the build artifacts (Bottlerocket image files, migrations, and kmod kit) to their
+# expected location so that buildsys can find them and copy them out.
 FROM scratch AS variant
 COPY --from=imgbuild /local/output/* /output/
 COPY --from=migrationbuild /local/output/* /output/
+COPY --from=kmodkitbuild /local/output/* /output/

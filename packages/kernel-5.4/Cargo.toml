@@ -1,9 +1,12 @@
 [package]
-name = "kernel"
+name = "kernel-5_4"
 version = "0.1.0"
 edition = "2018"
 publish = false
 build = "build.rs"
+
+[package.metadata.build-package]
+package-name = "kernel-5.4"
 
 [lib]
 path = "pkg.rs"
@@ -16,7 +19,3 @@ sha512 = "ef506706434bc94df6e845e5262c8d022ebb91ff6bc6a71ac656851c0de66d81392ace
 # RPM BuildRequires
 [build-dependencies]
 # Provided by Bottlerocket SDK
-
-# RPM Requires
-[dependencies]
-filesystem = { path = "../filesystem" }

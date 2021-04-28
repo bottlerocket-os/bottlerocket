@@ -13,6 +13,7 @@ kernel-parameters = [
 included-packages = [
 # core
     "release",
+    "kernel-5.4",
 # docker
     "docker-cli",
     "docker-engine",
@@ -28,6 +29,7 @@ path = "lib.rs"
 [build-dependencies]
 # core
 release = { path = "../../packages/release" }
+kernel-5_4 = { path = "../../packages/kernel-5.4" }
 # docker
 docker-cli = { path = "../../packages/docker-cli" }
 docker-engine = { path = "../../packages/docker-engine" }
