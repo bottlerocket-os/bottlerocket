@@ -31,6 +31,7 @@ Requires: %{name}
   --disable-ducktype-docs \
   --disable-tests \
   --disable-xml-docs \
+  --disable-selinux \
   --disable-systemd \
   --with-xml=expat \
 
