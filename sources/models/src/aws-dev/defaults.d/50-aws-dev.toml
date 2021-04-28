@@ -1,6 +1,6 @@
 [configuration-files.containerd-config-toml]
 # No override to path
-template-path = "/usr/share/templates/containerd-config-toml_aws-dev"
+template-path = "/usr/share/templates/containerd-config-toml_basic"
 
 # Docker
 [services.docker]

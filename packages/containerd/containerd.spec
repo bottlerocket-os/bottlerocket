@@ -16,11 +16,9 @@ License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1: containerd.service
-Source2: containerd-config-toml_aws-k8s
-Source3: containerd-config-toml_aws-dev
-Source4: containerd-config-toml_aws-ecs-1
+Source2: containerd-config-toml_k8s
+Source3: containerd-config-toml_basic
 Source5: containerd-tmpfiles.conf
-Source6: containerd-config-toml_vmware-dev
 Source1000: clarify.toml
 
 # TODO: submit this upstream.
@@ -84,7 +82,7 @@ install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/containerd.service
 
 install -d %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
-install -p -m 0644 %{S:2} %{S:3} %{S:4} %{S:6} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:2} %{S:3} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
