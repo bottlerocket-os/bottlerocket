@@ -8,7 +8,6 @@ BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
 BUILDSYS_STATE_DIR = "${BUILDSYS_BUILD_DIR}/state"
 BUILDSYS_IMAGES_DIR = "${BUILDSYS_BUILD_DIR}/images"
-BUILDSYS_ARCHIVES_DIR = "${BUILDSYS_BUILD_DIR}/archives"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
@@ -113,13 +112,13 @@ PUBLISH_REPO_OUTPUT_DIR = "${PUBLISH_REPO_BASE_DIR}/${PUBLISH_REPO}/${BUILDSYS_N
 PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 
 # The name of the kmod kit archive, used to ease building out-of-tree kernel modules.
-BUILDSYS_KMOD_KIT = "${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}"
-BUILDSYS_KMOD_KIT_PATH="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_KMOD_KIT}.tar.xz"
+BUILDSYS_KMOD_KIT = "${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}.tar.xz"
+BUILDSYS_KMOD_KIT_PATH = "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_KMOD_KIT}"
 
 # The name of the OVA bundle that will be built if the current variant builds VMDK artifacts
-BUILDSYS_OVA = "${BUILDSYS_NAME_FULL}.ova"
-BUILDSYS_OVA_PATH="${BUILDSYS_ARCHIVES_DIR}/${BUILDSYS_OVA}"
-BUILDSYS_OVF_TEMPLATE="${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/template.ovf"
+BUILDSYS_OVA = "${BUILDSYS_NAME_VARIANT}-v${BUILDSYS_VERSION_IMAGE}.ova"
+BUILDSYS_OVA_PATH = "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_OVA}"
+BUILDSYS_OVF_TEMPLATE = "${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/template.ovf"
 
 [tasks.setup]
 script = [
@@ -335,9 +334,6 @@ cargo build \
 '''
 ]
 
-[tasks.build-archives]
-dependencies = ["build-ova"]
-
 [tasks.build-variant]
 dependencies = ["build-tools", "publish-setup"]
 script = [
@@ -389,16 +385,6 @@ if [ -s "${BUILDSYS_OVF_TEMPLATE}" ] && \
    exit 1
 fi
 
-# Don't build a new OVA if the current one is newer than the images
-if [ -s "${BUILDSYS_OVA_PATH}" ] && \
-   [ "${BUILDSYS_OVA_PATH}" -nt "${root_vmdk_path}" ] && \
-   [ "${BUILDSYS_OVA_PATH}" -nt "${data_vmdk_path}" ]; then
-   echo "Existing OVA ${BUILDSYS_OVA_PATH} is newer than VMDKs for ${BUILDSYS_NAME_FULL}; skipping OVA build."
-   exit 0
-fi
-
-mkdir -p "${BUILDSYS_ARCHIVES_DIR}"
-
 # Create the OVF with the correct values
 sed "${BUILDSYS_OVF_TEMPLATE}" \
    -e "s/{{ROOT_DISK}}/${root_vmdk_path##*/}/g" \
@@ -417,7 +403,7 @@ cp "${root_vmdk_path}" "${ova_tmp_dir}"
 cp "${data_vmdk_path}" "${ova_tmp_dir}"
 
 tar -cf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${manifest}" "${ovf}" "${root_vmdk_path##*/}" "${data_vmdk_path##*/}"
-mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_ARCHIVES_DIR}"
+mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova"
 '''
 ]
 
@@ -450,7 +436,8 @@ script = [
 '''
 for link in \
     ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}* \
-    ${BUILDSYS_OUTPUT_DIR}/latest/*-kmod-kit-* ; do
+    ${BUILDSYS_OUTPUT_DIR}/latest/*-kmod-kit-* \
+    ${BUILDSYS_OUTPUT_DIR}/latest/*.ova ; do
   if [ -L "${link}" ]; then
     rm ${link}
   fi
@@ -464,13 +451,15 @@ script_runner = "bash"
 script = [
 '''
 mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
-for artifact in ${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}*; do
+for artifact in ${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}* ; do
   file_name="${artifact##*/}"
   link_name="${file_name/${BUILDSYS_NAME_FULL}/${BUILDSYS_NAME_VARIANT}}"
   ln -snf "../${file_name}" "${BUILDSYS_OUTPUT_DIR}/latest/${link_name}"
 done
-ln -snf "../${BUILDSYS_NAME_FULL}-kmod-kit.tar.xz" \
-  "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_KMOD_KIT}.tar.xz"
+ln -snf "../${BUILDSYS_NAME_FULL}-kmod-kit.tar.xz" "${BUILDSYS_KMOD_KIT_PATH}"
+if [ -s "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova" ] ; then
+  ln -snf "../${BUILDSYS_NAME_FULL}.ova" "${BUILDSYS_OVA_PATH}"
+fi
 '''
 ]
 
@@ -479,6 +468,7 @@ dependencies = [
     "link-clean",
     "check-licenses",
     "build-variant",
+    "build-ova",
     "link-variant",
 ]
 
@@ -524,7 +514,7 @@ run_task = "publish-setup"
 # Rather than depend on "build", which currently rebuilds images each run, we
 # check for the image files below to save time.  This does mean that `cargo
 # make` must be run before `cargo make repo`.
-dependencies = ["publish-setup", "publish-tools", "build-archives"]
+dependencies = ["publish-setup", "publish-tools"]
 script_runner = "bash"
 script = [
 '''
@@ -939,7 +929,6 @@ pubsys \
 dependencies = [
   "clean-sources",
   "clean-packages",
-  "clean-archives",
   "clean-images",
   "clean-repos",
   "clean-state",
@@ -966,14 +955,6 @@ for ws in variants; do
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -rf ${BUILDSYS_PACKAGES_DIR}
-'''
-]
-
-[tasks.clean-archives]
-script_runner = "bash"
-script = [
-'''
-rm -rf ${BUILDSYS_ARCHIVES_DIR}
 '''
 ]
 
