@@ -554,6 +554,13 @@ name = "libstd-rust"
 version = "0.1.0"
 
 [[package]]
+name = "libtirpc"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libxcrypt"
 version = "0.1.0"
 dependencies = [
