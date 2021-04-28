@@ -432,6 +432,18 @@ name = "libgcc"
 version = "0.1.0"
 
 [[package]]
+name = "libglib"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libffi",
+ "libpcre",
+ "libselinux",
+ "libz",
+ "util-linux",
+]
+
+[[package]]
 name = "libiw"
 version = "0.1.0"
 dependencies = [
@@ -562,6 +574,13 @@ dependencies = [
 
 [[package]]
 name = "libxcrypt"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "libz"
 version = "0.1.0"
 dependencies = [
  "glibc",
