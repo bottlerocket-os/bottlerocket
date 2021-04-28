@@ -46,6 +46,9 @@ registryPullQPS: {{settings.kubernetes.registry-qps}}
 {{~#if settings.kubernetes.registry-burst}}
 registryBurst: {{settings.kubernetes.registry-burst}}
 {{~/if}}
+{{~#if settings.kubernetes.event-burst includeZero=true}}
+eventBurst: {{settings.kubernetes.event-burst}}
+{{~/if}}
 kubeReserved:
   cpu: "{{kube_reserve_cpu settings.kubernetes.kube-reserved.cpu}}"
   {{~#if settings.kubernetes.kube-reserved.memory}}
