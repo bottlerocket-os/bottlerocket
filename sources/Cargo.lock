@@ -1390,6 +1390,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-event-qps-event-burst"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-registry-qps-registry-burst"
 version = "0.1.0"
 dependencies = [
