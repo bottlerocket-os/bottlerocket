@@ -113,10 +113,10 @@ Modifications to the running kernel could bypass or subvert these mechanisms.
 Bottlerocket enables the Lockdown security module and offers settings to choose from one of three modes.
 
 The first mode, "none", effectively disables the protection.
-This is the default in today's [variants](variants/) of Bottlerocket, for compatibility with existing deployments.
+This is the default in older [variants](variants/) of Bottlerocket, for compatibility with existing deployments.
 
 The second mode, "integrity", blocks most ways to overwrite the kernel's memory and modify its code.
-This will become the default in future variants.
+This is the default in newer variants.
 Enabling this mode will prevent unsigned kernel modules from being loaded.
 
 The third mode, "confidentiality", stops most ways of reading the kernel's memory from userspace.
