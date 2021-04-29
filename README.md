@@ -4,7 +4,7 @@ Welcome to Bottlerocket!
 
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
 
-If you’re ready to jump right in, read our [QUICKSTART for Kubernetes](QUICKSTART-EKS.md) to try Bottlerocket in an Amazon EKS cluster or our [QUICKSTART for Amazon ECS](QUICKSTART-ECS.md) to try Bottlerocket in an Amazon ECS cluster.
+If you’re ready to jump right in, read one of our setup guides for running Bottlerocket in [Amazon EKS](QUICKSTART-EKS.md), [Amazon ECS](QUICKSTART-ECS.md), or [VMware](QUICKSTART-VMWARE.md).
 
 Bottlerocket focuses on security and maintainability, providing a reliable, consistent, and safe platform for container-based workloads.
 This is a reflection of what we've learned building operating systems and services at Amazon.
@@ -76,11 +76,12 @@ Our supported architectures include `x86_64` and `aarch64` (written as `arm64` i
 :walking: :running:
 
 Bottlerocket is best used with a container orchestrator.
-To get started with Kubernetes, please see [QUICKSTART-EKS](QUICKSTART-EKS.md).
+To get started with Kubernetes in Amazon EKS, please see [QUICKSTART-EKS](QUICKSTART-EKS.md).
+To get started with Kubernetes in VMware, please see [QUICKSTART-VMWARE](QUICKSTART-VMWARE.md).
 To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
 These guides describe:
 * how to set up a cluster with the orchestrator, so your Bottlerocket instance can run containers
-* how to launch a Bottlerocket instance in EC2
+* how to launch a Bottlerocket instance in EC2 or VMware
 
 To build your own Bottlerocket images, please see [BUILDING](BUILDING.md).
 It describes:
@@ -112,7 +113,9 @@ Bottlerocket has a ["control" container](https://github.com/bottlerocket-os/bott
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
 (You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).)
 
-You need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART-EKS.md#enabling-ssm).
+In AWS, you need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART-EKS.md#enabling-ssm).
+Outside of AWS, you can use [AWS Systems Manager for hybrid environments](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managedinstances.html).
+There's more detail about hybrid environments in the [control container documentation](https://github.com/bottlerocket-os/bottlerocket-control-container/#connecting-to-aws-systems-manager-ssm).
 
 Once the instance is started, you can start a session:
 
@@ -134,6 +137,7 @@ To do even more, read the next section about the [admin container](#admin-contai
 
 Bottlerocket has an [administrative container](https://github.com/bottlerocket-os/bottlerocket-admin-container), disabled by default, that runs outside of the orchestrator in a separate instance of containerd.
 This container has an SSH server that lets you log in as `ec2-user` using your EC2-registered SSH key.
+Outside of AWS, you can [pass in your own SSH keys](https://github.com/bottlerocket-os/bottlerocket-admin-container#authenticating-with-the-admin-container).
 (You can easily replace this admin container with your own just by changing the URI; see [Settings](#settings).
 
 To enable the container, you can change the setting in user data when starting Bottlerocket, for example EC2 instance user data:
@@ -289,13 +293,20 @@ In this format, "settings.kubernetes.cluster-name" refers to the same key as in 
 
 #### Kubernetes settings
 
-See the [setup guide](QUICKSTART-EKS.md) for much more detail on setting up Bottlerocket and Kubernetes.
+See the [EKS setup guide](QUICKSTART-EKS.md) for much more detail on setting up Bottlerocket and Kubernetes in AWS EKS.
+For more details about running Bottlerocket as a Kubernetes worker node in VMware, see the [VMware setup guide](QUICKSTART-VMWARE.md).
 
 The following settings must be specified in order to join a Kubernetes cluster.
 You should [specify them in user data](#using-user-data).
-* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART-EKS.md) uses "bottlerocket".
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
+
+For Kubernetes variants in AWS, you must also specify:
+* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART-EKS.md) uses "bottlerocket".
+
+For Kubernetes variants in VMware, you must specify:
+* `settings.kubernetes.cluster-dns-ip`: The IP of the DNS service running in the cluster.
+* `settings.kubernetes.bootstrap-token`: The token used for [TLS bootstrapping](https://kubernetes.io/docs/reference/command-line-tools-refe    rence/kubelet-tls-bootstrapping/).
 
 The following settings can be optionally set to customize the node labels and taints. Remember to quote keys (since they often contain ".") and to quote all values.
 * `settings.kubernetes.node-labels`: [Labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) in the form of key, value pairs added when registering the node in the cluster.
@@ -341,9 +352,9 @@ Static pods can be particularly useful when running in standalone mode.
 * `settings.kubernetes.static-pods.<custom identifier>.manifest`: A base64-encoded pod manifest.
 * `settings.kubernetes.static-pods.<custom identifier>.enabled`: Whether the static pod is enabled.
 
-The following settings are set for you automatically by [pluto](sources/api/) based on runtime instance information, but you can override them if you know what you're doing!
-* `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
-* `settings.kubernetes.cluster-dns-ip`: The CIDR block of the primary network interface.
+For Kubernetes variants in AWS and VMware, the following are set for you automatically, but you can override them if you know what you're doing!
+In AWS, [pluto](sources/api/) sets these based on runtime instance information.
+In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on [default values](sources/models/src/vmware-k8s-1.20/defaults.d/).
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 * `settings.kubernetes.kube-reserved`: Resources reserved for node components.
@@ -351,6 +362,10 @@ The following settings are set for you automatically by [pluto](sources/api/) ba
     * `cpu`: in millicores from the total number of vCPUs available on the instance.
     * `memory`: in mebibytes from the max num of pods on the instance. `memory_to_reserve = max_num_pods * 11 + 255`.
     * `ephemeral-storage`: defaults to `1Gi`.
+
+For Kubernetes variants in AWS, the following settings are set for you automatically by [pluto](sources/api/).
+* `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
+* `settings.kubernetes.cluster-dns-ip`: Derived from the EKS IPV4 Service CIDR or the CIDR block of the primary network interface.
 
 #### Amazon ECS settings
 
