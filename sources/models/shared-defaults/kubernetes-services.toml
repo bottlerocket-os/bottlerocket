@@ -1,9 +1,3 @@
-[configuration-files.containerd-config-toml]
-# No override to path
-template-path = "/usr/share/templates/containerd-config-toml_k8s"
-
-# Kubernetes.
-
 [services.kubernetes]
 configuration-files = [
   "kubelet-env",
@@ -14,7 +8,6 @@ configuration-files = [
   "kubernetes-ca-crt",
   "proxy-env",
 ]
-
 restart-commands = [
   "/usr/bin/systemctl daemon-reload",
   "/usr/bin/systemctl try-restart kubelet.service"
@@ -44,34 +37,9 @@ template-path = "/usr/share/templates/kubernetes-ca-crt"
 path = "/etc/systemd/system/kubelet.service.d/exec-start.conf"
 template-path = "/usr/share/templates/kubelet-exec-start-conf"
 
-[metadata.settings.kubernetes]
-max-pods.setting-generator = "pluto max-pods"
-cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
-node-ip.setting-generator = "pluto node-ip"
-affected-services = ["kubernetes"]
-
-[metadata.settings.kubernetes.pod-infra-container-image]
-setting-generator = "pluto pod-infra-container-image"
-affected-services = ["kubernetes", "containerd"]
-
-[settings.kubernetes]
-cluster-domain = "cluster.local"
-standalone-mode = false
-authentication-mode = "aws"
-server-tls-bootstrap = true
-cloud-provider = "aws"
-
-# Metrics
-[settings.metrics]
-service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet"]
-
 [services.static-pods]
 configuration-files = []
 restart-commands = ["/usr/bin/static-pods"]
 
 [metadata.settings.kubernetes.static-pods]
 affected-services = ["static-pods"]
-
-# Network
-[metadata.settings.network]
-affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]
