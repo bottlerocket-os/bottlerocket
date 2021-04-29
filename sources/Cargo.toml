@@ -55,6 +55,7 @@ members = [
     "api/migration/migrations/v1.0.8/add-bootstrap-containers",
     "api/migration/migrations/v1.1.0/kubelet-server-tls-bootstrap",
     "api/migration/migrations/v1.1.0/kubelet-cloud-provider",
+    "api/migration/migrations/v1.1.0/kubelet-registry-qps-registry-burst",
 
     "bottlerocket-release",
 
