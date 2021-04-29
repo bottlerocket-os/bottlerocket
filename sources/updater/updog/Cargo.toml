@@ -14,7 +14,7 @@ chrono = "0.4.9"
 log = "0.4"
 lz4 = "1.23.1"
 rand = "0.8"
-reqwest = { version = "0.10.1", default-features = false, features = ["rustls-tls", "blocking"] }
+reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
 semver = "0.11.0"
 serde = { version = "1.0.100", features = ["derive"] }
 serde_json = "1.0.40"
@@ -23,7 +23,7 @@ signpost = { path = "../signpost" }
 simplelog = "0.10"
 snafu = "0.6.0"
 toml = "0.5.1"
-tough = { version = "0.10", features = ["http"] }
+tough = { version = "0.11", features = ["http"] }
 update_metadata = { path = "../update_metadata" }
 structopt = "0.3"
 url = "2.1.0"

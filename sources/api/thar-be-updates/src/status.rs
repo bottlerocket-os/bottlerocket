@@ -117,7 +117,7 @@ fn get_settings(socket_path: &str) -> Result<serde_json::Value> {
     let uri = "/settings";
     let method = "GET";
 
-    let mut rt = Runtime::new().context(error::Runtime)?;
+    let rt = Runtime::new().context(error::Runtime)?;
     let try_response_body =
         rt.block_on(async { apiclient::raw_request(&socket_path, uri, method, None).await });
     let (_code, response_body) = try_response_body.context(error::APIRequest { method, uri })?;

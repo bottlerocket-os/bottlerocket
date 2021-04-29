@@ -1,8 +1,8 @@
 [clarify.actix-macros]
 expression = "MIT OR Apache-2.0"
 license-files = [
-    { path = "LICENSE-APACHE", hash = 0xe11aded0 },
-    { path = "LICENSE-MIT", hash = 0x6427cfb9 },
+    { path = "LICENSE-APACHE", hash = 0x671c8ae7 },
+    { path = "LICENSE-MIT", hash = 0xda536e85 },
 ]
 
 [clarify.backtrace-sys]
@@ -113,7 +113,7 @@ license-files = [
 [clarify.tokio-macros]
 expression = "MIT"
 license-files = [
-    { path = "LICENSE", hash = 0xff97fcac },
+    { path = "LICENSE", hash = 0x288c17e1 },
 ]
 
 [clarify.vmw_backdoor]
