@@ -144,6 +144,7 @@ struct KubernetesSettings {
     event_qps: i32,
     event_burst: i32,
     kube_api_qps: i32,
+    kube_api_burst: i32,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

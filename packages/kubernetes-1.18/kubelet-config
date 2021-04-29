@@ -55,6 +55,9 @@ eventBurst: {{settings.kubernetes.event-burst}}
 {{~#if settings.kubernetes.kube-api-qps includeZero=true}}
 kubeAPIQPS: {{settings.kubernetes.kube-api-qps}}
 {{~/if}}
+{{~#if settings.kubernetes.kube-api-burst includeZero=true}}
+kubeAPIBurst: {{settings.kubernetes.kube-api-burst}}
+{{~/if}}
 kubeReserved:
   cpu: "{{kube_reserve_cpu settings.kubernetes.kube-reserved.cpu}}"
   {{~#if settings.kubernetes.kube-reserved.memory}}
