@@ -1,4 +1,4 @@
-From 1da3740ea90f03f8357c165e8e409e4ff2f48830 Mon Sep 17 00:00:00 2001
+From 02a6f0a9c8f4dd758eb0754bae2dadb5579f0a2f Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 9 Jul 2020 20:00:36 +0000
 Subject: [PATCH 9005/9008] core: mount /etc with specific label
