@@ -242,7 +242,7 @@ mkdir bin
 # For static builds, first we find the migrations in the source tree.  We assume the directory name
 # is the same as the crate name.
 migrations=()
-for migration in $(find %{_builddir}/sources/api/migration/migrations/* -mindepth 1 -maxdepth 1 -type d); do
+for migration in $(find %{_builddir}/sources/api/migration/migrations/v[0-9]* -mindepth 1 -maxdepth 1 -type d); do
     migrations+=("-p $(basename ${migration})")
 done
 # Store the output so we can print it after waiting for the backgrounded job.
@@ -327,7 +327,7 @@ for p in growpart ; do
 done
 
 install -d %{buildroot}%{_cross_datadir}/migrations
-for version_path in %{_builddir}/sources/api/migration/migrations/*; do
+for version_path in %{_builddir}/sources/api/migration/migrations/v[0-9]*; do
   [ -e "${version_path}" ] || continue
   for migration_path in "${version_path}"/*; do
     [ -e "${migration_path}" ] || continue
