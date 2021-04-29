@@ -1,4 +1,4 @@
-//! The vmware module implements the `PlatformDataProvider` trait for gathering userdata on VMWare
+//! The vmware module implements the `PlatformDataProvider` trait for gathering userdata on VMware
 //! via mounted CDRom or the guestinfo interface
 
 use super::{PlatformDataProvider, SettingsJson};
@@ -97,7 +97,7 @@ impl VmwareDataProvider {
     }
 
     /// Read and base64 decode user data contained in an OVF file
-    // In VMWare, user data is supplied to the host via an XML file.  Within
+    // In VMware, user data is supplied to the host via an XML file.  Within
     // the XML file, there is a `PropertySection` that contains `Property` elements
     // with attributes.  User data is base64 encoded inside a `Property` element with
     // the attribute "user-data".
@@ -143,7 +143,7 @@ impl VmwareDataProvider {
     fn guestinfo_user_data() -> Result<Option<SettingsJson>> {
         info!("Attempting to retrieve user data via guestinfo interface");
 
-        // It would be extremely odd to get here and not be on VMWare, but check anyway
+        // It would be extremely odd to get here and not be on VMware, but check anyway
         ensure!(vmw_backdoor::is_vmware_cpu(), error::NotVmware);
 
         // `guestinfo.userdata.encoding` informs us how to handle the data in the
@@ -209,7 +209,7 @@ impl VmwareDataProvider {
 
     /// Request a key's value from guestinfo
     fn backdoor_get_bytes(key: &str) -> Result<Option<Vec<u8>>> {
-        // Probe and access the VMWare backdoor.  `kernel lockdown(7)` may block "privileged"
+        // Probe and access the VMware backdoor.  `kernel lockdown(7)` may block "privileged"
         // mode because of its use of `iopl()`.  According the the bug report below, in theory
         // "privileged" mode is more reliable than "unprivileged" but both provide access to
         // the same data so we fall back to "unprivileged" if the first call fails.
@@ -337,7 +337,7 @@ mod error {
         },
 
         #[snafu(display(
-            "Unable to read user data from guestinfo, this is not a VMWare virtual CPU"
+            "Unable to read user data from guestinfo, this is not a VMware virtual CPU"
         ))]
         NotVmware,
 

@@ -54,7 +54,7 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-dev/mod.rs)
 * [Default settings](src/aws-dev/defaults.d/)
 
-## vmware-dev: VMWare development build
+## vmware-dev: VMware development build
 
 * [Model](src/vmware-dev/mod.rs)
 * [Default settings](src/vmware-dev/defaults.d/)
