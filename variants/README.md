@@ -70,9 +70,9 @@ The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local developm
 It includes tools for troubleshooting as well as Docker for running containers.
 User data will be read from IMDS.
 
-### vmware-dev: VMWare development build
+### vmware-dev: VMware development build
 
-The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMWare guest.
+The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMware guest.
 It includes tools for troubleshooting as well as Docker for running containers.
 User data will be read from a mounted CD-ROM, either from a file named "user-data" or from an OVF file.
 
