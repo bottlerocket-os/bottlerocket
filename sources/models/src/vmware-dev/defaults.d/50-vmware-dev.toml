@@ -1,3 +1,8 @@
+# Metrics
+[settings.metrics]
+send-metrics = false
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "docker"]
+
 # Network
 [metadata.settings.network]
 affected-services = ["containerd", "docker", "host-containerd", "host-containers"]
@@ -6,4 +11,3 @@ affected-services = ["containerd", "docker", "host-containerd", "host-containers
 # Use a public endpoint, don't assume any local ones.
 [settings.ntp]
 time-servers = ["2.amazon.pool.ntp.org"]
-
