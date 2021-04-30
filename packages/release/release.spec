@@ -50,8 +50,9 @@ Requires: %{_cross_os}e2fsprogs
 Requires: %{_cross_os}libgcc
 Requires: %{_cross_os}libstd-rust
 Requires: %{_cross_os}filesystem
-Requires: %{_cross_os}grep
+Requires: %{_cross_os}findutils
 Requires: %{_cross_os}glibc
+Requires: %{_cross_os}grep
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}host-ctr
 Requires: %{_cross_os}iproute

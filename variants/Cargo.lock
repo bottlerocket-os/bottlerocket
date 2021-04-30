@@ -16,7 +16,6 @@ dependencies = [
  "docker-engine",
  "docker-init",
  "docker-proxy",
- "findutils",
  "iputils",
  "kernel-5_10",
  "login",
@@ -321,7 +320,6 @@ name = "kubernetes-1_16"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "findutils",
  "glibc",
 ]
 
@@ -330,7 +328,6 @@ name = "kubernetes-1_17"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "findutils",
  "glibc",
 ]
 
@@ -339,7 +336,6 @@ name = "kubernetes-1_18"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "findutils",
  "glibc",
 ]
 
@@ -348,7 +344,6 @@ name = "kubernetes-1_19"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "findutils",
  "glibc",
 ]
 
@@ -357,7 +352,6 @@ name = "kubernetes-1_20"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "findutils",
  "glibc",
 ]
 
@@ -652,6 +646,7 @@ dependencies = [
  "dbus-broker",
  "e2fsprogs",
  "filesystem",
+ "findutils",
  "glibc",
  "grep",
  "grub",
@@ -731,7 +726,6 @@ dependencies = [
  "docker-engine",
  "docker-init",
  "docker-proxy",
- "findutils",
  "iputils",
  "kernel-5_10",
  "login",

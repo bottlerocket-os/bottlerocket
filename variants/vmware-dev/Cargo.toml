@@ -25,7 +25,6 @@ included-packages = [
     "docker-init",
     "docker-proxy",
 # tools
-    "findutils",
     "login",
     "iputils",
     "procps",
@@ -48,7 +47,6 @@ docker-engine = { path = "../../packages/docker-engine" }
 docker-init = { path = "../../packages/docker-init" }
 docker-proxy = { path = "../../packages/docker-proxy" }
 # tools
-findutils = { path = "../../packages/findutils" }
 login = { path = "../../packages/login" }
 iputils = { path = "../../packages/iputils" }
 procps = { path = "../../packages/procps" }

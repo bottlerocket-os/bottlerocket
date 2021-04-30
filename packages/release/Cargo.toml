@@ -22,6 +22,7 @@ coreutils = { path = "../coreutils" }
 dbus-broker = { path = "../dbus-broker" }
 e2fsprogs = { path = "../e2fsprogs" }
 filesystem = { path = "../filesystem" }
+findutils = { path = "../findutils" }
 glibc = { path = "../glibc" }
 grep = { path = "../grep" }
 grub = { path = "../grub" }
