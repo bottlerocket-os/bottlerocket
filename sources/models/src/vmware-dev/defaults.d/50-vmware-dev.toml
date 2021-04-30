@@ -6,8 +6,3 @@ service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "dock
 # Network
 [metadata.settings.network]
 affected-services = ["containerd", "docker", "host-containerd", "host-containers"]
-
-# NTP
-# Use a public endpoint, don't assume any local ones.
-[settings.ntp]
-time-servers = ["2.amazon.pool.ntp.org"]

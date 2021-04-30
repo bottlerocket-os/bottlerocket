@@ -1,0 +1,3 @@
+# Use a public endpoint, don't assume any local ones.
+[settings.ntp]
+time-servers = ["2.amazon.pool.ntp.org"]
