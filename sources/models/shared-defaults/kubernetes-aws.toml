@@ -1,0 +1,22 @@
+[settings.kubernetes]
+cluster-domain = "cluster.local"
+standalone-mode = false
+authentication-mode = "aws"
+server-tls-bootstrap = true
+cloud-provider = "aws"
+
+[metadata.settings.kubernetes]
+max-pods.setting-generator = "pluto max-pods"
+cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
+node-ip.setting-generator = "pluto node-ip"
+affected-services = ["kubernetes"]
+
+[metadata.settings.kubernetes.pod-infra-container-image]
+setting-generator = "pluto pod-infra-container-image"
+affected-services = ["kubernetes", "containerd"]
+
+[settings.metrics]
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet"]
+
+[metadata.settings.network]
+affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]

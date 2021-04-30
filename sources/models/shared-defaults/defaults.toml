@@ -27,7 +27,7 @@ restart-commands = ["/bin/systemctl try-restart containerd.service"]
 
 [configuration-files.containerd-config-toml]
 path = "/etc/containerd/config.toml"
-template-path = "/usr/share/templates/containerd-config-toml"
+template-path = "/usr/share/templates/containerd-config-toml_basic"
 
 # Host-container runtime
 

@@ -1,0 +1,3 @@
+[services.docker]
+restart-commands = ["/bin/systemctl try-restart docker.service"]
+configuration-files = ["proxy-env"]
