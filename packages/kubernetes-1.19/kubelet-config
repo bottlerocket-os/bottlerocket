@@ -40,10 +40,10 @@ evictionHard:
 {{~#if settings.kubernetes.allowed-unsafe-sysctls}}
 allowedUnsafeSysctls: {{settings.kubernetes.allowed-unsafe-sysctls}}
 {{~/if}}
-{{~#if settings.kubernetes.registry-qps}}
+{{~#if settings.kubernetes.registry-qps includeZero=true}}
 registryPullQPS: {{settings.kubernetes.registry-qps}}
 {{~/if}}
-{{~#if settings.kubernetes.registry-burst}}
+{{~#if settings.kubernetes.registry-burst includeZero=true}}
 registryBurst: {{settings.kubernetes.registry-burst}}
 {{~/if}}
 {{~#if settings.kubernetes.event-qps includeZero=true}}
