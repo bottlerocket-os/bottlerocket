@@ -165,7 +165,6 @@ version = "0.1.0"
 dependencies = [
  "cni-plugins",
  "glibc",
- "libseccomp",
  "runc",
  "systemd",
 ]

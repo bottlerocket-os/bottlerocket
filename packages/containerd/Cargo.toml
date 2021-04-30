@@ -15,7 +15,6 @@ sha512 = "f09930d19f53381d86cf522954458ecc949f15a0c6a49f990bdb61fe19afee07535633
 # RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
-libseccomp = { path = "../libseccomp" }
 
 # RPM Requires
 [dependencies]
