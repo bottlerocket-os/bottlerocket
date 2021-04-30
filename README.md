@@ -293,7 +293,7 @@ You should [specify them in user data](#using-user-data).
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
-The following settings can be optionally set to customize the node labels and taints.
+The following settings can be optionally set to customize the node labels and taints. Remember to quote keys (since they often contain ".") and to quote all values.
 * `settings.kubernetes.node-labels`: [Labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) in the form of key, value pairs added when registering the node in the cluster.
 * `settings.kubernetes.node-taints`: [Taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) in the form of key, value and effect entries added when registering the node in the cluster.
   * Example user data for setting up labels and taints:
