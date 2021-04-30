@@ -38,6 +38,9 @@ static DOCKER_BUILD_FRONTEND_ERROR: &str = concat!(
     r#"frontend grpc server closed unexpectedly"#
 );
 
+/* We also see sporadic CI failures with only this error message. */
+static UNEXPECTED_EOF_ERROR: &str = "unexpected EOF";
+
 static DOCKER_BUILD_MAX_ATTEMPTS: NonZeroU16 = nonzero!(10u16);
 
 pub(crate) struct PackageBuilder;
@@ -210,12 +213,12 @@ fn build(
     let _ = docker(&rmi, Retry::No);
 
     // Build the image, which builds the artifacts we want.
-    // Work around a transient, known failure case with Docker.
+    // Work around transient, known failure cases with Docker.
     docker(
         &build,
         Retry::Yes {
             attempts: DOCKER_BUILD_MAX_ATTEMPTS,
-            messages: &[DOCKER_BUILD_FRONTEND_ERROR],
+            messages: &[DOCKER_BUILD_FRONTEND_ERROR, UNEXPECTED_EOF_ERROR],
         },
     )?;
 
