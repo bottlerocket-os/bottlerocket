@@ -372,10 +372,8 @@ where
         field: "superpowered",
     })?;
 
-    info!(
-        "Handling host container '{}' which is enabled: {}",
-        name, enabled
-    );
+    info!("Host container '{}' is enabled: {}, superpowered: {}, with source: {}",
+          name, enabled, superpowered, source);
 
     // Create the directory regardless if user data was provided for the container
     let dir = Path::new(PERSISTENT_STORAGE_BASE_DIR).join(name);
@@ -437,8 +435,36 @@ where
     Ok(())
 }
 
+fn is_container_affected(settings: &[&str], container_name: &str) -> bool {
+    if settings.is_empty() {
+        // it means that Bottlerocket is booting - all containers need to be started
+        info!("Handling host container '{}' during full configuration process", container_name);
+        return true;
+    }
+
+    let setting_prefix = "settings.host-containers.";
+    let container_prefix = format!("{}{}.", setting_prefix, container_name);
+
+    for setting in settings {
+        if setting.starts_with(&container_prefix) {
+            info!("Handling host container '{}' because it's directly affected by changed setting '{}' (and maybe others)", container_name, setting);
+            return true;
+        }
+        if !setting.starts_with(&setting_prefix) {
+            // if its some other setting, return true for all host-containers, example: network
+            info!("Handling host container '{}' because it's indirectly affected by changed setting '{}' (and maybe others)", container_name, setting);
+            return true;
+        }
+    }
+    info!("Not handling host container '{}', no changed settings affect it", container_name);
+    return false;
+}
+
 async fn run() -> Result<()> {
     let args = parse_args(env::args());
+    // this env var is passed by thar-be-settings
+    let changed_settings_env = env::var("CHANGED_SETTINGS").unwrap_or("".to_string());
+    let changed_settings: Vec<&str> = changed_settings_env.split_whitespace().collect();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
     SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
@@ -448,10 +474,13 @@ async fn run() -> Result<()> {
     let mut failed = 0usize;
     let host_containers = get_host_containers(args.socket_path).await?;
     for (name, image_details) in host_containers.iter() {
-        // Continue to handle other host containers if we fail one
-        if let Err(e) = handle_host_container(name, image_details) {
-            failed += 1;
-            error!("Failed to handle host container '{}': {}", &name, e);
+        // handle all host containers during startup
+        // handle the host container that has settings changed during restart
+        if is_container_affected(&changed_settings, name.as_ref()) {
+            if let Err(e) = handle_host_container(name, image_details) {
+                failed += 1;
+                error!("Failed to handle host container '{}': {}", &name, e);
+            }
         }
     }
 

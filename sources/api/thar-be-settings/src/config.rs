@@ -1,3 +1,4 @@
+use crate::service::Services;
 use crate::{error, Result};
 use itertools::join;
 use snafu::ResultExt;
@@ -28,11 +29,11 @@ where
 
 /// Given a map of Service objects, return a HashSet of
 /// affected configuration file names
-pub fn get_config_file_names(services: &model::Services) -> HashSet<String> {
+pub fn get_config_file_names(services: &Services) -> HashSet<String> {
     debug!("Building set of affected configuration file names");
     let mut config_file_set = HashSet::new();
-    for service in services.values() {
-        for file in service.configuration_files.iter() {
+    for service in services.0.values() {
+        for file in &service.model.configuration_files {
             config_file_set.insert(file.to_string());
         }
     }
@@ -117,6 +118,7 @@ impl RenderedConfigFile {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::service::Services;
     use maplit::{hashmap, hashset};
     use std::convert::TryInto;
 
@@ -132,9 +134,10 @@ mod test {
                 restart_commands: vec!["echo hi".to_string()]
             },
         );
+        let services = Services::from_model_services(input_map, None);
 
         let expected_output = hashset! {"file1".to_string(), "file2".to_string() };
 
-        assert_eq!(get_config_file_names(&input_map), expected_output)
+        assert_eq!(get_config_file_names(&services), expected_output)
     }
 }

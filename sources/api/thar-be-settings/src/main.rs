@@ -189,7 +189,7 @@ async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
             let services =
                 service::get_affected_services(&args.socket_path, Some(changed_settings)).await?;
             trace!("Found services: {:?}", services);
-            if services.is_empty() {
+            if services.0.is_empty() {
                 info!("No services are affected, exiting...");
                 process::exit(0)
             }
