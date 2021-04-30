@@ -24,6 +24,7 @@ filesystem = { path = "../filesystem" }
 glibc = { path = "../glibc" }
 grep = { path = "../grep" }
 grub = { path = "../grub" }
+host-ctr = { path = "../host-ctr" }
 iproute = { path = "../iproute" }
 libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }

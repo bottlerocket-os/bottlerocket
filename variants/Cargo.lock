@@ -622,7 +622,6 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "host-ctr",
 ]
 
 [[package]]
@@ -666,6 +665,7 @@ dependencies = [
  "glibc",
  "grep",
  "grub",
+ "host-ctr",
  "iproute",
  "libaudit",
  "libgcc",
