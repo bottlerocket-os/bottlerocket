@@ -59,6 +59,7 @@ Requires: %{_cross_os}iproute
 Requires: %{_cross_os}iptables
 Requires: %{_cross_os}selinux-policy
 Requires: %{_cross_os}policycoreutils
+Requires: %{_cross_os}procps
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}wicked

@@ -19,7 +19,6 @@ dependencies = [
  "iputils",
  "kernel-5_10",
  "login",
- "procps",
  "release",
  "strace",
  "tcpdump",
@@ -199,7 +198,6 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libseccomp",
- "procps",
  "systemd",
 ]
 
@@ -658,6 +656,7 @@ dependencies = [
  "libstd-rust",
  "os",
  "policycoreutils",
+ "procps",
  "selinux-policy",
  "systemd",
  "util-linux",
@@ -730,7 +729,6 @@ dependencies = [
  "kernel-5_10",
  "login",
  "open-vm-tools",
- "procps",
  "release",
  "strace",
  "tcpdump",

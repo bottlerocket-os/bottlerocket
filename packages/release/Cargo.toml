@@ -34,6 +34,7 @@ libgcc = { path = "../libgcc" }
 libstd-rust = { path = "../libstd-rust" }
 os = { path = "../os" }
 policycoreutils = { path = "../policycoreutils" }
+procps = { path = "../procps" }
 selinux-policy = { path = "../selinux-policy" }
 systemd = { path = "../systemd" }
 util-linux = { path = "../util-linux" }
