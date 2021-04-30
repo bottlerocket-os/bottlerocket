@@ -317,7 +317,6 @@ dependencies = [
 name = "kubernetes-1_16"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
  "glibc",
 ]
 
@@ -325,7 +324,6 @@ dependencies = [
 name = "kubernetes-1_17"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
  "glibc",
 ]
 
@@ -333,7 +331,6 @@ dependencies = [
 name = "kubernetes-1_18"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
  "glibc",
 ]
 
@@ -341,7 +338,6 @@ dependencies = [
 name = "kubernetes-1_19"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
  "glibc",
 ]
 
@@ -349,7 +345,6 @@ dependencies = [
 name = "kubernetes-1_20"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
  "glibc",
 ]
 
@@ -639,6 +634,7 @@ dependencies = [
  "acpid",
  "ca-certificates",
  "chrony",
+ "conntrack-tools",
  "containerd",
  "coreutils",
  "dbus-broker",

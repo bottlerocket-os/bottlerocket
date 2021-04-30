@@ -17,6 +17,7 @@ path = "pkg.rs"
 acpid = { path = "../acpid" }
 ca-certificates = { path = "../ca-certificates" }
 chrony = { path = "../chrony" }
+conntrack-tools = { path = "../conntrack-tools" }
 containerd = { path = "../containerd" }
 coreutils = { path = "../coreutils" }
 dbus-broker = { path = "../dbus-broker" }
