@@ -738,6 +738,7 @@ dependencies = [
  "iputils",
  "kernel-5_10",
  "login",
+ "open-vm-tools",
  "procps",
  "release",
  "strace",
