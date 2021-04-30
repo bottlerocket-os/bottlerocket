@@ -1,0 +1,19 @@
+[package]
+name = "open-vm-tools"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/vmware/open-vm-tools/releases/download/stable-11.2.5/open-vm-tools-11.2.5-17337674.tar.gz"
+sha512 = "b6d4bc6522418ec7a881752181ad9240e535854df492e758abf3996c6afe245466ffbff60cc1b6cdff5cf731b5769c9f9cb96aed29f0b788d0eef05f91fcf8ab"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libglib = { path = "../libglib" }
+libtirpc = { path = "../libtirpc" }
+libxcrypt = { path = "../libxcrypt" }

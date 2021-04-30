@@ -1,0 +1,10 @@
+[Unit]
+Description=VMware Tools service
+Documentation=https://github.com/vmware/open-vm-tools
+ConditionVirtualization=vmware
+
+[Service]
+ExecStart=/usr/bin/vmtoolsd
+
+[Install]
+WantedBy=multi-user.target

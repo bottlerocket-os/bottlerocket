@@ -603,6 +603,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "open-vm-tools"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libglib",
+ "libtirpc",
+ "libxcrypt",
+]
+
+[[package]]
 name = "os"
 version = "0.1.0"
 dependencies = [
