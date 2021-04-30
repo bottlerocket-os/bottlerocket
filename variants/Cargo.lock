@@ -166,7 +166,6 @@ dependencies = [
  "cni-plugins",
  "glibc",
  "runc",
- "systemd",
 ]
 
 [[package]]

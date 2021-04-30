@@ -34,7 +34,6 @@ BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}cni-plugins
 Requires: %{_cross_os}runc
-Requires: %{_cross_os}systemd
 
 %description
 %{summary}.

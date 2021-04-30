@@ -20,4 +20,3 @@ glibc = { path = "../glibc" }
 [dependencies]
 cni-plugins = { path = "../cni-plugins" }
 runc = { path = "../runc" }
-systemd = { path = "../systemd" }
