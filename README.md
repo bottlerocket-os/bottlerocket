@@ -299,11 +299,11 @@ The following settings can be optionally set to customize the node labels and ta
   * Example user data for setting up labels and taints:
     ```
     [settings.kubernetes.node-labels]
-    label1 = "foo"
-    label2 = "bar"
+    "label1" = "foo"
+    "label2" = "bar"
     [settings.kubernetes.node-taints]
-    dedicated = "experimental:PreferNoSchedule"
-    special = "true:NoSchedule"
+    "dedicated" = "experimental:PreferNoSchedule"
+    "special" = "true:NoSchedule"
     ```
 
 The following settings are optional and allow you to further configure your cluster.
