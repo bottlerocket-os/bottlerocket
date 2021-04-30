@@ -32,4 +32,5 @@ glibc = { path = "../glibc" }
 # RPM Requires
 [dependencies]
 docker-engine = { path = "../docker-engine" }
-iptables = { path = "../iptables" }
+# `iptables` is only needed at runtime, and is pulled in by `release`.
+# iptables = { path = "../iptables" }

@@ -20,7 +20,8 @@ systemd = { path = "../systemd" }
 
 # RPM Requires
 [dependencies]
-# `containerd` is only needed at runtime, and is pulled in by `release`.
+# `containerd` and `iptables` are only needed at runtime, and are pulled in by
+# `release`.
 # containerd = { path = "../containerd" }
-iptables = { path = "../iptables" }
+# iptables = { path = "../iptables" }
 procps = { path = "../procps" }

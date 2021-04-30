@@ -27,6 +27,7 @@ grep = { path = "../grep" }
 grub = { path = "../grub" }
 host-ctr = { path = "../host-ctr" }
 iproute = { path = "../iproute" }
+iptables = { path = "../iptables" }
 libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }
 libstd-rust = { path = "../libstd-rust" }
