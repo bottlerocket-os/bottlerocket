@@ -17,6 +17,7 @@ path = "pkg.rs"
 acpid = { path = "../acpid" }
 ca-certificates = { path = "../ca-certificates" }
 chrony = { path = "../chrony" }
+containerd = { path = "../containerd" }
 coreutils = { path = "../coreutils" }
 dbus-broker = { path = "../dbus-broker" }
 e2fsprogs = { path = "../e2fsprogs" }

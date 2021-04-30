@@ -24,5 +24,6 @@ glibc = { path = "../glibc" }
 # RPM Requires
 [dependencies]
 conntrack-tools = { path = "../conntrack-tools" }
-containerd = { path = "../containerd" }
+# `containerd` is only needed at runtime, and is pulled in by `release`.
+# containerd = { path = "../containerd" }
 findutils = { path = "../findutils" }

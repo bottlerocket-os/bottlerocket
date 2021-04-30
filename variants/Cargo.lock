@@ -200,7 +200,6 @@ dependencies = [
 name = "docker-engine"
 version = "0.1.0"
 dependencies = [
- "containerd",
  "glibc",
  "iptables",
  "libseccomp",
@@ -274,7 +273,6 @@ dependencies = [
 name = "host-ctr"
 version = "0.1.0"
 dependencies = [
- "containerd",
  "glibc",
 ]
 
@@ -327,7 +325,6 @@ name = "kubernetes-1_16"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "containerd",
  "findutils",
  "glibc",
 ]
@@ -337,7 +334,6 @@ name = "kubernetes-1_17"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "containerd",
  "findutils",
  "glibc",
 ]
@@ -347,7 +343,6 @@ name = "kubernetes-1_18"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "containerd",
  "findutils",
  "glibc",
 ]
@@ -357,7 +352,6 @@ name = "kubernetes-1_19"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "containerd",
  "findutils",
  "glibc",
 ]
@@ -367,7 +361,6 @@ name = "kubernetes-1_20"
 version = "0.1.0"
 dependencies = [
  "conntrack-tools",
- "containerd",
  "findutils",
  "glibc",
 ]
@@ -658,6 +651,7 @@ dependencies = [
  "acpid",
  "ca-certificates",
  "chrony",
+ "containerd",
  "coreutils",
  "dbus-broker",
  "e2fsprogs",

@@ -43,6 +43,7 @@ Requires: %{_cross_os}acpid
 Requires: %{_cross_os}audit
 Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
+Requires: %{_cross_os}containerd
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}dbus-broker
 Requires: %{_cross_os}e2fsprogs
