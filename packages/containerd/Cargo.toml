@@ -18,5 +18,4 @@ glibc = { path = "../glibc" }
 
 # RPM Requires
 [dependencies]
-cni-plugins = { path = "../cni-plugins" }
 runc = { path = "../runc" }

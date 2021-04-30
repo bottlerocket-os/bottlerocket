@@ -32,7 +32,6 @@ Patch1003: 1003-cri-relabel-volumes-after-copying-source-files.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}cni-plugins
 Requires: %{_cross_os}runc
 
 %description

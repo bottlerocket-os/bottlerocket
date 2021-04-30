@@ -163,7 +163,6 @@ dependencies = [
 name = "containerd"
 version = "0.1.0"
 dependencies = [
- "cni-plugins",
  "glibc",
  "runc",
 ]
