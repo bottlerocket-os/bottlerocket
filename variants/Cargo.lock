@@ -421,8 +421,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "libffi"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libgcc"
 version = "0.1.0"
+
+[[package]]
+name = "libglib"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libffi",
+ "libpcre",
+ "libselinux",
+ "libz",
+ "util-linux",
+]
 
 [[package]]
 name = "libiw"
@@ -547,7 +566,21 @@ name = "libstd-rust"
 version = "0.1.0"
 
 [[package]]
+name = "libtirpc"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libxcrypt"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "libz"
 version = "0.1.0"
 dependencies = [
  "glibc",
@@ -567,6 +600,16 @@ name = "ncurses"
 version = "0.1.0"
 dependencies = [
  "glibc",
+]
+
+[[package]]
+name = "open-vm-tools"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libglib",
+ "libtirpc",
+ "libxcrypt",
 ]
 
 [[package]]
@@ -695,6 +738,7 @@ dependencies = [
  "iputils",
  "kernel-5_10",
  "login",
+ "open-vm-tools",
  "procps",
  "release",
  "strace",

@@ -1,7 +1,7 @@
 # Metrics
 [settings.metrics]
 send-metrics = false
-service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "docker"]
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "docker", "vmtoolsd"]
 
 # Network
 [metadata.settings.network]

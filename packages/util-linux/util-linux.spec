@@ -55,6 +55,7 @@ Requires: %{_cross_os}libfdisk
 %package -n %{_cross_os}libmount
 Summary: Device mounting library
 License: LGPL-2.1-or-later
+Requires: %{_cross_os}libblkid
 Requires: %{_cross_os}libselinux
 
 %description -n %{_cross_os}libmount
@@ -63,6 +64,7 @@ Requires: %{_cross_os}libselinux
 %package -n %{_cross_os}libmount-devel
 Summary: Files for development using the device mounting library
 License: LGPL-2.1-or-later
+Requires: %{_cross_os}libblkid-devel
 Requires: %{_cross_os}libmount
 
 %description -n %{_cross_os}libmount-devel

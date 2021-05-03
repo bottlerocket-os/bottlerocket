@@ -1,0 +1,21 @@
+[package]
+name = "libglib"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://download.gnome.org/sources/glib/2.68/glib-2.68.1.tar.xz"
+sha512 = "f705cda6f1b4b0acc5fe8d21b60994ca0ec6de39c6722f4f01cbe0ece30eacb7271d3cb29067e638e0204a3cefa2df1e535f273b72330455e185b544cebc2ab0"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libffi = { path = "../libffi" }
+libpcre = { path = "../libpcre" }
+libselinux = { path = "../libselinux" }
+libz = { path = "../libz" }
+util-linux = { path = "../util-linux" }
