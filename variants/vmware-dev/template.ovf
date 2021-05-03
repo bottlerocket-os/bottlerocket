@@ -81,6 +81,7 @@
       </Item>
       <vmw:Config ovf:required="false" vmw:key="bootOptions.efiSecureBootEnabled" vmw:value="false"/>
       <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="bios"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="disk.enableUUID" vmw:value="true"/>
     </VirtualHardwareSection>
   </VirtualSystem>
 </Envelope>
