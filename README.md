@@ -331,6 +331,8 @@ The following settings are optional and allow you to further configure your clus
     ```
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
+* `settings.kubernetes.event-qps`: The maximum event creations per second.
+* `settings.kubernetes.event-burst`: The maximum size of a burst of event creations.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.

@@ -141,6 +141,8 @@ struct KubernetesSettings {
     cloud_provider: KubernetesCloudProvider,
     registry_qps: i32,
     registry_burst: i32,
+    event_qps: i32,
+    event_burst: i32,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
