@@ -82,6 +82,8 @@
       <vmw:Config ovf:required="false" vmw:key="bootOptions.efiSecureBootEnabled" vmw:value="false"/>
       <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="bios"/>
       <vmw:ExtraConfig ovf:required="false" vmw:key="disk.enableUUID" vmw:value="true"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="bios.bootOrder" vmw:value="hdd"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="bios.hddOrder" vmw:value="nvme0:1"/>
     </VirtualHardwareSection>
   </VirtualSystem>
 </Envelope>
