@@ -1,3 +1,145 @@
+# v1.1.0 (2021-05-07)
+
+## Deprecation Notice
+
+The Kubernetes 1.16 variant, `aws-k8s-1.16`, will lose support in July, 2021.
+Kubernetes 1.16 is no longer receiving support upstream.
+We recommend replacing `aws-k8s-1.16` nodes with a later variant, preferably `aws-k8s-1.19` if your cluster supports it.
+See [this issue](https://github.com/bottlerocket-os/bottlerocket/issues/1552) for more details.
+
+## Important Notes
+
+### New variants with new defaults
+
+This release introduces two new variants, `aws-k8s-1.20` and `vmware-k8s-1.20`.
+We plan for all new variants, including these, to contain the following changes:
+* The kernel is Linux 5.10 rather than 5.4.
+* The kernel lockdown mode is set to "integrity" rather than "none".
+
+The ECS preview variant, `aws-ecs-1`, has also been updated with these changes.
+
+Existing `aws-k8s` variants will not receive these changes as they could affect existing workloads.
+
+### ECS task networking
+
+The `aws-ecs-1` variant now supports the `awsvpc` mode of [ECS task networking](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-networking.html).
+This allocates an elastic network interface and private IP address to each task.
+
+## OS Changes
+
+* Add Linux kernel 5.10 for use in new variants ([#1526])
+* Add aws-k8s-1.20 variant with Kubernetes 1.20 support ([#1437], [#1533])
+* Add vmware-k8s-1.20 variant with Kubernetes 1.20 for VMware ([#1511], [#1529], [#1523], [#1502], [#1554])
+* Remove aws-k8s-1.15 variant ([#1487], [#1492])
+* Constrain ephemeral port range ([#1560])
+* Support awsvpc networking mode in ECS ([#1246])
+* Add settings for QPS and burst limits of Kubernetes registry pulls, event records, and API ([#1527], [#1532], [#1541])
+* Add setting to allow configuration of Kubernetes TLS bootstrap ([#1485])
+* Add setting for configuring Kubernetes cloudProvider to allow usage outside AWS ([#1494])
+* Make Kubernetes cluster-dns-ip optional to support usage outside of AWS ([#1482])
+* Change parameters to support healthy CIS scan ([#1295]) (Thanks, @felipeac!)
+* Generate stable machine IDs for VMware and ARM KVM guests ([#1506], [#1537])
+* Enable "integrity" kernel lockdown mode for aws-ecs-1 preview variant ([#1530])
+* Remove override for default service start timeout ([#1483])
+* Restrict access to bootstrap container user data with SELinux ([#1496])
+* Split SELinux policy rules for trusted subjects ([#1558])
+* Add symlink to allow usage of secrets store CSI drivers ([#1544])
+* Prevent bootstrap containers from restarting ([#1508])
+* Add udev rules to mount CD-ROM only when media is present ([#1516])
+* Add resize2fs binary to sbin ([#1519]) (Thanks, @samjo-nyang!)
+* Only restart a host container if affected by settings change ([#1480])
+* Support file patterns when specifying log files in logdog ([#1509])
+* Daemonize thar-be-settings to avoid zombie processes ([#1507])
+* Add support for AWS region ap-northeast-3: Osaka ([#1504])
+* Generate pause container URI with standard template variables ([#1551])
+* Get cluster DNS IP from cluster when available ([#1547])
+
+## Build Changes
+
+* Use kernel 5.10 in aws-ecs-1 variant ([#1555])
+* Build only the packages needed for the current variant ([#1408], [#1520])
+* Use a friendly name for VMware OVA files in build outputs ([#1535])
+* Update SDK to 0.21.0 ([#1497], [#1529])
+* Allow variants to specify extra kernel parameters ([#1491])
+* Move kernel console settings to variant definitions ([#1513])
+* Update vmw_backdoor dependency ([#1498]) (Thanks, @lucab!)
+* Archive old migrations ([#1540])
+* Refactor default settings and containerd configs to shared files ([#1538], [#1542])
+* Check cargo version at start of build so we have a clear error when it's too low ([#1503])
+* Fix concurrency issue in validate-repo that led to hangs ([#1521])
+* Update third-party package dependencies ([#1543], [#1556])
+* Update Rust dependencies in the tools/ workspace ([#1548])
+* Update tokio-related Rust dependencies in the sources/ workspace ([#1479])
+* Add upstream runc patches addressing container scheduling failure ([#1546])
+* Retry builds on known BuildKit internal errors ([#1557], [#1561])
+
+## Documentation Changes
+
+* Document the deprecation of the aws-k8s-1.15 variant ([#1476])
+* Document the need to quote most Kubernetes labels/taints ([#1550]) (Thanks, @ellistarn!)
+* Fix VMware spelling and document user data sources ([#1534])
+
+[#1246]: https://github.com/bottlerocket-os/bottlerocket/pull/1246
+[#1295]: https://github.com/bottlerocket-os/bottlerocket/pull/1295
+[#1408]: https://github.com/bottlerocket-os/bottlerocket/pull/1408
+[#1437]: https://github.com/bottlerocket-os/bottlerocket/pull/1437
+[#1476]: https://github.com/bottlerocket-os/bottlerocket/pull/1476
+[#1477]: https://github.com/bottlerocket-os/bottlerocket/pull/1477
+[#1479]: https://github.com/bottlerocket-os/bottlerocket/pull/1479
+[#1480]: https://github.com/bottlerocket-os/bottlerocket/pull/1480
+[#1482]: https://github.com/bottlerocket-os/bottlerocket/pull/1482
+[#1483]: https://github.com/bottlerocket-os/bottlerocket/pull/1483
+[#1485]: https://github.com/bottlerocket-os/bottlerocket/pull/1485
+[#1486]: https://github.com/bottlerocket-os/bottlerocket/pull/1486
+[#1487]: https://github.com/bottlerocket-os/bottlerocket/pull/1487
+[#1491]: https://github.com/bottlerocket-os/bottlerocket/pull/1491
+[#1492]: https://github.com/bottlerocket-os/bottlerocket/pull/1492
+[#1494]: https://github.com/bottlerocket-os/bottlerocket/pull/1494
+[#1496]: https://github.com/bottlerocket-os/bottlerocket/pull/1496
+[#1497]: https://github.com/bottlerocket-os/bottlerocket/pull/1497
+[#1498]: https://github.com/bottlerocket-os/bottlerocket/pull/1498
+[#1502]: https://github.com/bottlerocket-os/bottlerocket/pull/1502
+[#1503]: https://github.com/bottlerocket-os/bottlerocket/pull/1503
+[#1504]: https://github.com/bottlerocket-os/bottlerocket/pull/1504
+[#1506]: https://github.com/bottlerocket-os/bottlerocket/pull/1506
+[#1507]: https://github.com/bottlerocket-os/bottlerocket/pull/1507
+[#1508]: https://github.com/bottlerocket-os/bottlerocket/pull/1508
+[#1509]: https://github.com/bottlerocket-os/bottlerocket/pull/1509
+[#1511]: https://github.com/bottlerocket-os/bottlerocket/pull/1511
+[#1513]: https://github.com/bottlerocket-os/bottlerocket/pull/1513
+[#1516]: https://github.com/bottlerocket-os/bottlerocket/pull/1516
+[#1519]: https://github.com/bottlerocket-os/bottlerocket/pull/1519
+[#1520]: https://github.com/bottlerocket-os/bottlerocket/pull/1520
+[#1521]: https://github.com/bottlerocket-os/bottlerocket/pull/1521
+[#1523]: https://github.com/bottlerocket-os/bottlerocket/pull/1523
+[#1526]: https://github.com/bottlerocket-os/bottlerocket/pull/1526
+[#1527]: https://github.com/bottlerocket-os/bottlerocket/pull/1527
+[#1529]: https://github.com/bottlerocket-os/bottlerocket/pull/1529
+[#1530]: https://github.com/bottlerocket-os/bottlerocket/pull/1530
+[#1532]: https://github.com/bottlerocket-os/bottlerocket/pull/1532
+[#1533]: https://github.com/bottlerocket-os/bottlerocket/pull/1533
+[#1534]: https://github.com/bottlerocket-os/bottlerocket/pull/1534
+[#1535]: https://github.com/bottlerocket-os/bottlerocket/pull/1535
+[#1537]: https://github.com/bottlerocket-os/bottlerocket/pull/1537
+[#1538]: https://github.com/bottlerocket-os/bottlerocket/pull/1538
+[#1540]: https://github.com/bottlerocket-os/bottlerocket/pull/1540
+[#1541]: https://github.com/bottlerocket-os/bottlerocket/pull/1541
+[#1542]: https://github.com/bottlerocket-os/bottlerocket/pull/1542
+[#1543]: https://github.com/bottlerocket-os/bottlerocket/pull/1543
+[#1544]: https://github.com/bottlerocket-os/bottlerocket/pull/1544
+[#1546]: https://github.com/bottlerocket-os/bottlerocket/pull/1546
+[#1547]: https://github.com/bottlerocket-os/bottlerocket/pull/1547
+[#1548]: https://github.com/bottlerocket-os/bottlerocket/pull/1548
+[#1550]: https://github.com/bottlerocket-os/bottlerocket/pull/1550
+[#1551]: https://github.com/bottlerocket-os/bottlerocket/pull/1551
+[#1554]: https://github.com/bottlerocket-os/bottlerocket/pull/1554
+[#1555]: https://github.com/bottlerocket-os/bottlerocket/pull/1555
+[#1556]: https://github.com/bottlerocket-os/bottlerocket/pull/1556
+[#1557]: https://github.com/bottlerocket-os/bottlerocket/pull/1557
+[#1558]: https://github.com/bottlerocket-os/bottlerocket/pull/1558
+[#1560]: https://github.com/bottlerocket-os/bottlerocket/pull/1560
+[#1561]: https://github.com/bottlerocket-os/bottlerocket/pull/1561
+
 # v1.0.8 (2021-04-12)
 
 ## Deprecation Notice
