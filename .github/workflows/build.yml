@@ -20,6 +20,9 @@ jobs:
           - variant: vmware-dev
             arch: x86_64
             supported: false
+          - variant: vmware-k8s-1.20
+            arch: x86_64
+            supported: true
       fail-fast: false
     steps:
       - uses: actions/checkout@v2

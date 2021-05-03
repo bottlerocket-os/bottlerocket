@@ -77,6 +77,15 @@ It includes tools for troubleshooting as well as Docker for running containers.
 User data will be read from a mounted CD-ROM (from a file named "user-data" or from an OVF file), and from VMware's guestinfo interface.
 If user data exists at both places, settings read from guestinfo will override identical settings from CD-ROM.
 
+### vmware-k8s-1.20: VMware Kubernetes 1.20 node
+
+The [vmware-k8s-1.20](vmware-k8s-1.20/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
+It supports self-hosted clusters.
+User data will be read from a mounted CD-ROM (from a file named "user-data" or from an OVF file), and from VMware's guestinfo interface.
+If user data exists at both places, settings read from guestinfo will override identical settings from CD-ROM.
+
+This variant is compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
+
 ### Deprecated variants
 
 #### aws-k8s-1.15: Kubernetes 1.15 node

@@ -60,6 +60,10 @@ We also have a variant designed to work with ECS, currently in preview:
 
 - `aws-ecs-1`
 
+Another variant we have in preview is designed to be a Kubernetes worker node in VMware:
+
+- `vmware-k8s-1.20`
+
 The `aws-k8s-1.15` variant is deprecated and will no longer be supported in Bottlerocket releases.
 We recommend users replace `aws-k8s-1.15` nodes with the [latest variant compatible with their cluster](variants/).
 
