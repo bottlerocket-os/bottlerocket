@@ -26,7 +26,7 @@
       <System>
         <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
         <vssd:InstanceID>0</vssd:InstanceID>
-        <vssd:VirtualSystemType>vmx-14</vssd:VirtualSystemType>
+        <vssd:VirtualSystemType>vmx-15</vssd:VirtualSystemType>
       </System>
       <Item>
         <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
@@ -81,6 +81,9 @@
       </Item>
       <vmw:Config ovf:required="false" vmw:key="bootOptions.efiSecureBootEnabled" vmw:value="false"/>
       <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="bios"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="disk.enableUUID" vmw:value="true"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="bios.bootOrder" vmw:value="hdd"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="bios.hddOrder" vmw:value="nvme0:1"/>
     </VirtualHardwareSection>
   </VirtualSystem>
 </Envelope>
