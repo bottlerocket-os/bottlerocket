@@ -6,6 +6,15 @@ use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
+    // TODO: Replace this approach when the build system supports ideas like "variant
+    // tags": https://github.com/bottlerocket-os/bottlerocket/issues/1260
+    println!("cargo:rerun-if-env-changed=VARIANT");
+    if let Ok(variant) = env::var("VARIANT") {
+        if variant.starts_with("aws-k8s") {
+            println!("cargo:rustc-cfg=aws_k8s_variant");
+        }
+    }
+
     // Check for environment variable "SKIP_README". If it is set,
     // skip README generation
     if env::var_os("SKIP_README").is_some() {
