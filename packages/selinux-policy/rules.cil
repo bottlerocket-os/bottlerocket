@@ -20,11 +20,11 @@
 ; without policy restrictions.
 (allow all_s self (processes (interact)))
 
-; Only trusted components can interact with all processes.
-(allow trusted_s all_s (processes (interact)))
+; Only privileged components can interact with all processes.
+(allow privileged_s all_s (processes (interact)))
 
-; Untrusted components cannot interact with trusted processes.
-(neverallow untrusted_s trusted_s (processes (interact)))
+; Unprivileged components cannot interact with privileged processes.
+(neverallow unprivileged_s privileged_s (processes (interact)))
 
 ; PID 1 starts as "kernel_t" and becomes "init_t".
 (typetransition kernel_t init_exec_t process init_t)
@@ -115,11 +115,11 @@
 ; All subjects can read from anything that's public.
 (allow all_s public (files (load)))
 
-; Trusted subjects can read from anything at all.
-(allow trusted_s global (files (load)))
+; Privileged subjects can read from anything at all.
+(allow privileged_s global (files (load)))
 
-; Untrusted subjects cannot read from restricted objects.
-(neverallow untrusted_s restricted_o (files (load)))
+; Unprivileged subjects cannot read from restricted objects.
+(neverallow unprivileged_s restricted_o (files (load)))
 
 ; All subjects are allowed to write to objects with their own label.
 ; This includes files like the ones under /proc/self.
@@ -155,9 +155,9 @@
 ; files and directories on /local.
 (allow control_s state_t (files (mutate mount)))
 
-; Untrusted subjects cannot modify "state" or "secret" files.
-(neverallow untrusted_s state_t (files (mutate mount)))
-(neverallow untrusted_s secret_t (files (mutate mount)))
+; Unprivileged subjects cannot modify "state" or "secret" files.
+(neverallow unprivileged_s state_t (files (mutate mount)))
+(neverallow unprivileged_s secret_t (files (mutate mount)))
 
 ; Confined subjects cannot modify "state", "secret", or "local" files.
 (neverallow confined_s local_t (files (mutate mount)))
@@ -185,8 +185,8 @@
 (allow api_s api_socket_t (files (mutate)))
 (allow control_s api_socket_t (files (mutate)))
 
-; Untrusted components are not allowed to use the API socket.
-(neverallow untrusted_s api_socket_t (files (mutate)))
+; Unprivileged components are not allowed to use the API socket.
+(neverallow unprivileged_s api_socket_t (files (mutate)))
 
 ; Only trusted components are allowed to relabel files.
 (allow trusted_s global (files (relabel)))
