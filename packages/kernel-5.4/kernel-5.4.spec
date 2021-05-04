@@ -2,12 +2,12 @@
 
 Name: %{_cross_os}kernel-5.4
 Version: 5.4.110
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/b5b3738a3efe0842f6b4db451c2bc1bbeafb1857a10ec508081e75b52681f13e/kernel-5.4.110-54.182.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/30c599278ce31259b6ad8fcfb05d25c9bdbbdce8398f0ca686e70c36e7b4986b/kernel-5.4.110-54.189.amzn2.src.rpm
 Source100: config-bottlerocket
 
 # Make Lustre FSx work with a newer GCC.
