@@ -45,4 +45,5 @@ version = "1.0.8"
     "migrate_v1.1.0_shared-containerd-configs.lz4",
     "migrate_v1.1.0_kubelet-event-qps-event-burst.lz4",
     "migrate_v1.1.0_schnauzer-paws.lz4",
+    "migrate_v1.1.0_kubelet-kube-api-qps-kube-api-burst.lz4",
 ]
