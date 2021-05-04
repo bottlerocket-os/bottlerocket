@@ -8,8 +8,10 @@ pub(crate) mod error;
 use error::Result;
 
 use duct::cmd;
+use lazy_static::lazy_static;
 use nonzero_ext::nonzero;
 use rand::Rng;
+use regex::Regex;
 use sha2::{Digest, Sha512};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
@@ -32,11 +34,23 @@ the bug is fixed there will be many older versions of Docker in the wild.
 The failure has an exit code of 1, which is too generic to be helpful. All we
 can do is check the output for the error's signature, and retry if we find it.
 */
-static DOCKER_BUILD_FRONTEND_ERROR: &str = concat!(
-    r#"failed to solve with frontend dockerfile.v0: "#,
-    r#"failed to solve with frontend gateway.v0: "#,
-    r#"frontend grpc server closed unexpectedly"#
-);
+lazy_static! {
+    static ref DOCKER_BUILD_FRONTEND_ERROR: Regex = Regex::new(concat!(
+        r#"failed to solve with frontend dockerfile.v0: "#,
+        r#"failed to solve with frontend gateway.v0: "#,
+        r#"frontend grpc server closed unexpectedly"#
+    ))
+    .unwrap();
+}
+
+/*
+We also see sporadic CI failures with only this error message.
+We use (?m) for multi-line mode so we can match the message on a line of its own without splitting
+the output ourselves; we match the regexes against the whole of stdout.
+*/
+lazy_static! {
+    static ref UNEXPECTED_EOF_ERROR: Regex = Regex::new("(?m)^unexpected EOF$").unwrap();
+}
 
 static DOCKER_BUILD_MAX_ATTEMPTS: NonZeroU16 = nonzero!(10u16);
 
@@ -210,12 +224,12 @@ fn build(
     let _ = docker(&rmi, Retry::No);
 
     // Build the image, which builds the artifacts we want.
-    // Work around a transient, known failure case with Docker.
+    // Work around transient, known failure cases with Docker.
     docker(
         &build,
         Retry::Yes {
             attempts: DOCKER_BUILD_MAX_ATTEMPTS,
-            messages: &[DOCKER_BUILD_FRONTEND_ERROR],
+            messages: &[&*DOCKER_BUILD_FRONTEND_ERROR, &*UNEXPECTED_EOF_ERROR],
         },
     )?;
 
@@ -240,7 +254,7 @@ fn build(
 /// Run `docker` with the specified arguments.
 fn docker(args: &[String], retry: Retry) -> Result<Output> {
     let mut max_attempts: u16 = 1;
-    let mut retry_messages: &[&str] = &[];
+    let mut retry_messages: &[&Regex] = &[];
     if let Retry::Yes { attempts, messages } = retry {
         max_attempts = attempts.into();
         retry_messages = messages;
@@ -262,7 +276,7 @@ fn docker(args: &[String], retry: Retry) -> Result<Output> {
         }
 
         ensure!(
-            retry_messages.iter().any(|&m| stdout.contains(m)) && attempt < max_attempts,
+            retry_messages.iter().any(|m| m.is_match(&stdout)) && attempt < max_attempts,
             error::DockerExecution {
                 args: &args.join(" ")
             }
@@ -278,7 +292,7 @@ enum Retry<'a> {
     No,
     Yes {
         attempts: NonZeroU16,
-        messages: &'a [&'a str],
+        messages: &'a [&'static Regex],
     },
 }
 
