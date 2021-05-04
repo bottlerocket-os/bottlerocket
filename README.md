@@ -120,8 +120,8 @@ There's more detail about hybrid environments in the [control container document
 Once the instance is started, you can start a session:
 
 * Go to AWS SSM's [Session Manager](https://console.aws.amazon.com/systems-manager/session-manager/sessions)
-* Select “Start session” and choose your Bottlerocket instance
-* Select “Start session” again to get a shell
+* Select "Start session" and choose your Bottlerocket instance
+* Select "Start session" again to get a shell
 
 If you prefer a command-line tool, you can start a session with a recent [AWS CLI](https://aws.amazon.com/cli/) and the [session-manager-plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
 Then you'd be able to start a session using only your instance ID, like this:
