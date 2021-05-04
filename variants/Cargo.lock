@@ -35,7 +35,7 @@ dependencies = [
  "docker-init",
  "docker-proxy",
  "ecs-agent",
- "kernel-5_4",
+ "kernel-5_10",
  "release",
 ]
 
