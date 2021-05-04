@@ -147,8 +147,10 @@ version = "0.1.0"
 dependencies = [
  "duct",
  "hex",
+ "lazy_static",
  "nonzero_ext",
  "rand",
+ "regex",
  "reqwest",
  "serde",
  "serde_plain",
