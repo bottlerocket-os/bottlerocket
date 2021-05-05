@@ -22,6 +22,7 @@ dbus-broker = { path = "../dbus-broker" }
 e2fsprogs = { path = "../e2fsprogs" }
 filesystem = { path = "../filesystem" }
 glibc = { path = "../glibc" }
+grep = { path = "../grep" }
 grub = { path = "../grub" }
 iproute = { path = "../iproute" }
 libaudit = { path = "../libaudit" }
