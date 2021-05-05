@@ -75,9 +75,13 @@
   network_t clock_t bus_t runtime_t
   container_t control_t super_t))
 
+; Subjects that are treated as a privileged part of the OS.
+(typeattribute privileged_s)
+(typeattributeset privileged_s (xor (all_s) (unprivileged_s)))
+
 ; Subjects that are treated as a trusted part of the OS.
 (typeattribute trusted_s)
-(typeattributeset trusted_s (xor (all_s) (untrusted_s)))
+(typeattributeset trusted_s (xor (privileged_s) (control_t)))
 
 ; Subjects that are part of the OS, but confined through policy.
 (typeattribute confined_s)
@@ -91,9 +95,13 @@
 (typeattribute other_s)
 (typeattributeset other_s (container_t))
 
+; Subjects that are not treated as a privileged part of the OS.
+(typeattribute unprivileged_s)
+(typeattributeset unprivileged_s (confined_s other_s))
+
 ; Subjects that are not treated as a trusted part of the OS.
 (typeattribute untrusted_s)
-(typeattributeset untrusted_s (confined_s other_s))
+(typeattributeset untrusted_s (xor (all_s) (trusted_s)))
 
 ; Subjects that are started from containers.
 (typeattribute container_s)
