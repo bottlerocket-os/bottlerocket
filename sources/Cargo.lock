@@ -2167,6 +2167,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 
 [[package]]
+name = "prairiedog"
+version = "0.1.0"
+dependencies = [
+ "argh",
+ "cargo-readme",
+ "log",
+ "nix 0.20.0",
+ "signpost",
+ "simplelog",
+ "snafu",
+]
+
+[[package]]
 name = "proc-macro-error"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

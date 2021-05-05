@@ -11,6 +11,8 @@ exclude = ["README.md"]
 kernel-parameters = [
     "console=tty0",
     "console=ttyS0",
+    # Only reserve if there are at least 2GB
+    "crashkernel=2G-:256M"
 ]
 included-packages = [
 # core

@@ -1,0 +1,16 @@
+[Unit]
+Description=Disable kexec load syscalls
+RefuseManualStart=true
+RefuseManualStop=true
+After=load-crash-kernel.service
+
+[Service]
+Type=oneshot
+# Set the kernel setting using sysctl since this is
+# a security setting we are trying to enforce
+ExecStart=/sbin/sysctl kernel.kexec_load_disabled=1
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=preconfigured.target

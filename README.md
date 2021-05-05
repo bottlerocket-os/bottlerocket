@@ -583,6 +583,17 @@ ssh -i YOUR_KEY_FILE \
 
 For a list of what is collected, see the logdog [command list](sources/logdog/src/log_request.rs).
 
+### Kdump Support
+
+Bottlerocket provides support to collect kernel crash dumps whenever the system kernel panics.
+Once this happens, both the dmesg log and vmcore dump are stored at `/var/log/kdump`, and the system reboots.
+
+There are a few important caveats about the provided kdump support:
+
+* Currently, only vmware variants have kdump support enabled
+* The system kernel will reserve 256MB for the crash kernel, only when the host has at least 2GB of memory; the reserved space won't be available for processes running in the host
+* The crash kernel will only be loaded when the `crashkernel` parameter is present in the kernel's cmdline and if there is memory reserved for it
+
 ## Details
 
 ### Security
@@ -657,7 +668,7 @@ For more details, see the [API system documentation](sources/api/).
 
 ### Default Volumes
 
-Bottlerocket operates with two default storage volumes. 
+Bottlerocket operates with two default storage volumes.
 * The root device, `/dev/xvda`, holds the active and passive [partition sets](#updates-1).
   It also contains the bootloader, the dm-verity hash tree for verifying the [immutable root filesystem](SECURITY_FEATURES.md#immutable-rootfs-backed-by-dm-verity), and the data store for the Bottlerocket API.
 * The data device, `/dex/xvdb`, is used as persistent storage for container images, container orchestration, [host-containers](#Custom-host-containers), and [bootstrap containers](#Bootstrap-containers-settings).

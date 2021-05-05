@@ -23,11 +23,10 @@ Source1004: activate-configured.service
 Source1005: activate-multi-user.service
 
 # Mounts for writable local storage.
-Source1006: prepare-local.service
-Source1007: var.mount
-Source1008: opt.mount
-Source1009: var-lib-bottlerocket.mount
-Source1010: etc-cni.mount
+Source1006: var.mount
+Source1007: opt.mount
+Source1008: var-lib-bottlerocket.mount
+Source1009: etc-cni.mount
 
 # CD-ROM mount & associated udev rules
 Source1015: media-cdrom.mount
@@ -37,6 +36,15 @@ Source1016: mount-cdrom.rules
 Source1020: var-lib-kernel-devel-lower.mount.in
 Source1021: usr-src-kernels.mount.in
 Source1022: usr-share-licenses.mount.in
+
+# Mounts that require helper programs
+Source1040: prepare-boot.service
+Source1041: prepare-local.service
+
+# Services for kdump support
+Source1060: capture-kernel-dump.service
+Source1061: disable-kexec-load.service
+Source1062: load-crash-kernel.service
 
 BuildArch: noarch
 Requires: %{_cross_os}acpid
@@ -58,13 +66,15 @@ Requires: %{_cross_os}grub
 Requires: %{_cross_os}host-ctr
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}iptables
-Requires: %{_cross_os}selinux-policy
+Requires: %{_cross_os}kexec-tools
+Requires: %{_cross_os}makedumpfile
+Requires: %{_cross_os}os
 Requires: %{_cross_os}policycoreutils
 Requires: %{_cross_os}procps
+Requires: %{_cross_os}selinux-policy
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}wicked
-Requires: %{_cross_os}os
 
 %description
 %{summary}.
@@ -97,7 +107,8 @@ EOF
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} \
-  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1015} \
+  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1015} \
+  %{S:1040} %{S:1041} %{S:1060} %{S:1061} %{S:1062} \
   %{buildroot}%{_cross_unitdir}
 
 LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/lower)
@@ -137,6 +148,10 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_unitdir}/default.target
 %{_cross_unitdir}/activate-configured.service
 %{_cross_unitdir}/activate-multi-user.service
+%{_cross_unitdir}/disable-kexec-load.service
+%{_cross_unitdir}/capture-kernel-dump.service
+%{_cross_unitdir}/load-crash-kernel.service
+%{_cross_unitdir}/prepare-boot.service
 %{_cross_unitdir}/prepare-local.service
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount

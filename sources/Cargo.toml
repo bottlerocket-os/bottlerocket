@@ -41,6 +41,8 @@ members = [
 
     "growpart",
 
+    "prairiedog",
+
     "metricdog",
 
     "logdog",
