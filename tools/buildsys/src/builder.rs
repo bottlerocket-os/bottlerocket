@@ -44,6 +44,21 @@ lazy_static! {
 }
 
 /*
+There's a similar bug that's fixed in new releases of BuildKit but still in the wild in popular
+versions of Docker/BuildKit:
+   https://github.com/moby/buildkit/issues/1468
+*/
+lazy_static! {
+    static ref DOCKER_BUILD_DEAD_RECORD_ERROR: Regex = Regex::new(concat!(
+        r#"failed to solve with frontend dockerfile.v0: "#,
+        r#"failed to solve with frontend gateway.v0: "#,
+        r#"rpc error: code = Unknown desc = failed to build LLB: "#,
+        r#"failed to get dead record"#,
+    ))
+    .unwrap();
+}
+
+/*
 We also see sporadic CI failures with only this error message.
 We use (?m) for multi-line mode so we can match the message on a line of its own without splitting
 the output ourselves; we match the regexes against the whole of stdout.
@@ -229,7 +244,11 @@ fn build(
         &build,
         Retry::Yes {
             attempts: DOCKER_BUILD_MAX_ATTEMPTS,
-            messages: &[&*DOCKER_BUILD_FRONTEND_ERROR, &*UNEXPECTED_EOF_ERROR],
+            messages: &[
+                &*DOCKER_BUILD_FRONTEND_ERROR,
+                &*DOCKER_BUILD_DEAD_RECORD_ERROR,
+                &*UNEXPECTED_EOF_ERROR,
+            ],
         },
     )?;
 
