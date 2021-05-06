@@ -57,6 +57,7 @@ members = [
 [profile.release]
 debug = true
 
-# This replaces webpki-roots with a shim that reads from the ca-certificates package
+# This replaces webpki-roots with a shim that reads from the ca-certificates package. See
+# webpki-roots-shim/Cargo.toml for more information about using the right version number.
 [patch.crates-io.webpki-roots]
 path = "webpki-roots-shim"

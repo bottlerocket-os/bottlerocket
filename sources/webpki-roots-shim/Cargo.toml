@@ -1,5 +1,14 @@
 [package]
 name = "webpki-roots"
+# This version number is important because it determines whether or not our shim gets used by the
+# patch statement in the sources workspace's Cargo.toml.
+#
+# At the time of this writing, reqwest is the only crate in sources/Cargo.lock that depends on
+# webpki-roots. When reqwest is updated, the version here should be updated to exactly match the one
+# that reqwest is using.
+#
+# You should also double-check sources/Cargo.lock to make sure there aren't two versions of
+# webpki-roots being used (which would mean that one of them came from crates.io instead of here).
 version = "0.21.1"
 authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
 license = "Apache-2.0 OR MIT"
