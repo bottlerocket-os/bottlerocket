@@ -6,10 +6,11 @@ use crate::Args;
 use log::{info, trace};
 use pubsys_config::InfraConfig;
 use snafu::{OptionExt, ResultExt};
+use std::cmp::min;
 use std::fs::File;
 use std::io;
 use std::path::PathBuf;
-use std::thread::spawn;
+use std::sync::mpsc;
 use structopt::StructOpt;
 use tough::{Repository, RepositoryLoader};
 use url::Url;
@@ -38,13 +39,25 @@ pub(crate) struct ValidateRepoArgs {
     validate_targets: bool,
 }
 
-/// Retrieves listed targets and attempts to download them for validation purposes
+/// If we are on a machine with a large number of cores, then we limit the number of simultaneous
+/// downloads to this arbitrarily chosen maximum.
+const MAX_DOWNLOAD_THREADS: usize = 16;
+
+/// Retrieves listed targets and attempts to download them for validation purposes. We use a Rayon
+/// thread pool instead of tokio for async execution because `reqwest::blocking` creates a tokio
+/// runtime (and multiple tokio runtimes are not supported).
 fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
     let targets = &repo.targets().signed.targets;
+    let thread_pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(min(num_cpus::get(), MAX_DOWNLOAD_THREADS))
+        .build()
+        .context(error::ThreadPool)?;
 
-    let mut tasks = Vec::new();
+    // create the channels through which our download results will be passed
+    let (tx, rx) = mpsc::channel();
+
     for target in targets.keys().cloned() {
-        let target = target.to_string();
+        let tx = tx.clone();
         let mut reader = repo
             .read_target(&target)
             .with_context(|| repo_error::ReadTarget {
@@ -54,24 +67,22 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
                 target: target.to_string(),
             })?;
         info!("Downloading target: {}", target);
-        // TODO - limit threads https://github.com/bottlerocket-os/bottlerocket/issues/1522
-        tasks.push(spawn(move || {
-            // tough's `Read` implementation validates the target as it's being downloaded
-            io::copy(&mut reader, &mut io::sink()).context(error::TargetDownload {
-                target: target.to_string(),
+        thread_pool.spawn(move || {
+            tx.send({
+                // tough's `Read` implementation validates the target as it's being downloaded
+                io::copy(&mut reader, &mut io::sink()).context(error::TargetDownload {
+                    target: target.to_string(),
+                })
             })
-        }));
+            // inability to send on this channel is unrecoverable
+            .unwrap();
+        });
     }
+    // close all senders
+    drop(tx);
 
-    // ensure that we join all threads before checking the results
-    let mut results = Vec::new();
-    for task in tasks {
-        let result = task.join().map_err(|e| error::Error::Join {
-            // the join function is returning an error type that does not implement error or display
-            inner: format!("{:?}", e),
-        })?;
-        results.push(result);
-    }
+    // block and await all downloads
+    let results: Vec<Result<u64, error::Error>> = rx.into_iter().collect();
 
     // check all results and return the first error we see
     for result in results {
@@ -164,8 +175,8 @@ mod error {
         #[snafu(display("Missing target: {}", target))]
         TargetMissing { target: String },
 
-        #[snafu(display("Failed to join thread: {}", inner))]
-        Join { inner: String },
+        #[snafu(display("Unable to create thread pool: {}", source))]
+        ThreadPool { source: rayon::ThreadPoolBuildError },
     }
 }
 pub(crate) use error::Error;
