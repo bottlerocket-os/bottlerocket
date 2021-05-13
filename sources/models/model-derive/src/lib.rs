@@ -130,7 +130,10 @@ impl VisitMut for ModelHelper {
             } else {
                 parse_quote!(#[derive(Debug, PartialEq, Serialize, Deserialize)])
             };
-            node.attrs.push(attr);
+            // Rust 1.52 added a legacy_derive_helpers warning (soon to be an error) that yells if
+            // you use an attribute macro before the derive macro that introduces it.  We should
+            // always put derive macros at the start of the list to avoid this.
+            node.attrs.insert(0, attr);
         }
 
         // Let the default implementation do its thing, recursively.
