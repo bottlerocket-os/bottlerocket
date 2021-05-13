@@ -259,6 +259,14 @@ name = "glibc"
 version = "0.1.0"
 
 [[package]]
+name = "grep"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libpcre",
+]
+
+[[package]]
 name = "grub"
 version = "0.1.0"
 dependencies = [
@@ -659,6 +667,7 @@ dependencies = [
  "e2fsprogs",
  "filesystem",
  "glibc",
+ "grep",
  "grub",
  "iproute",
  "libaudit",
