@@ -43,19 +43,9 @@ const MARKER_FILE: &str = "/var/lib/bottlerocket/early-boot-config.ran";
 /// This function returns the appropriate data provider for this variant. It exists primarily to
 /// keep the ugly bits of conditional compilation out of the main function.
 fn create_provider() -> Result<Box<dyn PlatformDataProvider>> {
-    #[cfg(bottlerocket_platform = "aws")]
+    #[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
     {
         Ok(Box::new(provider::aws::AwsDataProvider))
-    }
-
-    #[cfg(bottlerocket_platform = "aws-dev")]
-    {
-        use std::path::Path;
-        if Path::new(provider::local_file::LocalFileDataProvider::USER_DATA_FILE).exists() {
-            Ok(Box::new(provider::local_file::LocalFileDataProvider))
-        } else {
-            Ok(Box::new(provider::aws::AwsDataProvider))
-        }
     }
 
     #[cfg(bottlerocket_platform = "vmware")]

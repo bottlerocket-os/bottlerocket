@@ -1,42 +1,35 @@
-//! The local_file module implements the `PlatformDataProvider` trait for gathering userdata from
-//! local file
+//! The local_file module provides a method for gathering userdata from local file
 
-use super::{PlatformDataProvider, SettingsJson};
+use super::SettingsJson;
 use crate::compression::expand_file_maybe;
-use async_trait::async_trait;
 use snafu::ResultExt;
+use std::path::Path;
 
-pub(crate) struct LocalFileDataProvider;
+pub(crate) const USER_DATA_FILE: &'static str = "/etc/early-boot-config/user-data";
 
-impl LocalFileDataProvider {
-    pub(crate) const USER_DATA_FILE: &'static str = "/etc/early-boot-config/user-data";
-}
-
-#[async_trait]
-impl PlatformDataProvider for LocalFileDataProvider {
-    async fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
-        let mut output = Vec::new();
-        info!("'{}' exists, using it", Self::USER_DATA_FILE);
-
-        // Read the file, decompressing it if compressed.
-        let user_data_str =
-            expand_file_maybe(Self::USER_DATA_FILE).context(error::InputFileRead {
-                path: Self::USER_DATA_FILE,
-            })?;
-
-        if user_data_str.is_empty() {
-            return Ok(output);
-        }
-
-        let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
-            error::SettingsToJSON {
-                from: Self::USER_DATA_FILE,
-            },
-        )?;
-        output.push(json);
-
-        Ok(output)
+pub(crate) fn local_file_user_data(
+) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
+    if !Path::new(USER_DATA_FILE).exists() {
+        return Ok(None);
     }
+    info!("'{}' exists, using it", USER_DATA_FILE);
+
+    // Read the file, decompressing it if compressed.
+    let user_data_str = expand_file_maybe(USER_DATA_FILE).context(error::InputFileRead {
+        path: USER_DATA_FILE,
+    })?;
+
+    if user_data_str.is_empty() {
+        return Ok(None);
+    }
+
+    let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
+        error::SettingsToJSON {
+            from: USER_DATA_FILE,
+        },
+    )?;
+
+    Ok(Some(json))
 }
 
 mod error {
