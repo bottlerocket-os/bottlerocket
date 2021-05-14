@@ -15,7 +15,7 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tough::editor::RepositoryEditor;
-use tough::key_source::KeySource;
+use tough::key_source::{KeySource, LocalKeySource};
 use tough::{ExpirationEnforcement, RepositoryLoader};
 use url::Url;
 
@@ -41,6 +41,10 @@ pub(crate) struct RefreshRepoArgs {
     #[structopt(long, parse(from_os_str))]
     /// Path to root.json for this repo
     root_role_path: PathBuf,
+
+    #[structopt(long, parse(from_os_str))]
+    /// If we generated a local key, we'll find it here; used if Infra.toml has no key defined
+    default_key_path: PathBuf,
 
     #[structopt(long, parse(from_os_str))]
     /// Path to file that defines when repo non-root metadata should expire
@@ -143,15 +147,23 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
             missing: format!("definition for repo {}", &refresh_repo_args.repo),
         })?;
 
-    // Get signing key config from repository configuration
-    let signing_key_config =
-        repo_config
-            .signing_keys
-            .as_ref()
-            .context(repo_error::MissingConfig {
-                missing: "signing_keys",
-            })?;
-    let key_source = get_signing_key_source(signing_key_config);
+    // Check if we have a signing key defined in Infra.toml; if not, we'll fall back to the
+    // generated local key.
+    let signing_key_config = repo_config.signing_keys.as_ref();
+
+    let key_source = if let Some(signing_key_config) = signing_key_config {
+        get_signing_key_source(signing_key_config)
+    } else {
+        ensure!(
+            refresh_repo_args.default_key_path.exists(),
+            repo_error::MissingConfig {
+                missing: "signing_keys in repo config, and we found no local key",
+            }
+        );
+        Box::new(LocalKeySource {
+            path: refresh_repo_args.default_key_path.clone(),
+        })
+    };
 
     // Get the expiration policy
     info!(
