@@ -664,6 +664,7 @@ pubsys \
    --variant "${BUILDSYS_VARIANT}" \
    \
    --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
+   --default-key-path "${PUBLISH_REPO_KEY}" \
    --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
    ${REPO_UNSAFE_REFRESH_ARG} \
    --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
