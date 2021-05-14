@@ -24,7 +24,7 @@ use std::{env, process};
 mod compression;
 mod provider;
 mod settings;
-use crate::provider::PlatformDataProvider;
+use crate::provider::{Platform, PlatformDataProvider};
 
 // TODO
 // Tests!
@@ -39,20 +39,6 @@ const TRANSACTION: &str = "bottlerocket-launch";
 // ConditionPathExists that will prevent it from running again if this file exists.
 // We create it after running successfully.
 const MARKER_FILE: &str = "/var/lib/bottlerocket/early-boot-config.ran";
-
-/// This function returns the appropriate data provider for this variant. It exists primarily to
-/// keep the ugly bits of conditional compilation out of the main function.
-fn create_provider() -> Result<Box<dyn PlatformDataProvider>> {
-    #[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
-    {
-        Ok(Box::new(provider::aws::AwsDataProvider))
-    }
-
-    #[cfg(bottlerocket_platform = "vmware")]
-    {
-        Ok(Box::new(provider::vmware::VmwareDataProvider))
-    }
-}
 
 /// Store the args we receive on the command line
 #[derive(Debug)]
@@ -124,13 +110,10 @@ async fn run() -> Result<()> {
 
     info!("early-boot-config started");
 
-    // Figure out the current provider
-    let data_provider = create_provider()?;
-
     info!("Retrieving platform-specific data");
     let uri = &format!("{}?tx={}", API_SETTINGS_URI, TRANSACTION);
     let method = "PATCH";
-    for settings_json in data_provider
+    for settings_json in Platform
         .platform_data()
         .await
         .context(error::ProviderError)?
