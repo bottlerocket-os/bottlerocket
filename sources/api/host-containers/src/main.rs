@@ -363,14 +363,8 @@ where
         name,
         field: "source",
     })?;
-    let enabled = image_details.enabled.context(error::MissingField {
-        name,
-        field: "enabled",
-    })?;
-    let superpowered = image_details.superpowered.context(error::MissingField {
-        name,
-        field: "superpowered",
-    })?;
+    let enabled = image_details.enabled.unwrap_or(false);
+    let superpowered = image_details.superpowered.unwrap_or(false);
 
     info!("Host container '{}' is enabled: {}, superpowered: {}, with source: {}",
           name, enabled, superpowered, source);
