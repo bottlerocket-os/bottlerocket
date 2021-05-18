@@ -32,11 +32,7 @@ Patch1003: 1003-cri-relabel-volumes-after-copying-source-files.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}libseccomp-devel
-Requires: %{_cross_os}cni-plugins
-Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}runc
-Requires: %{_cross_os}systemd
 
 %description
 %{summary}.
@@ -47,7 +43,7 @@ Requires: %{_cross_os}systemd
 
 %build
 %cross_go_configure %{goimport}
-export BUILDTAGS="no_btrfs seccomp selinux"
+export BUILDTAGS="no_btrfs selinux"
 export LD_VERSION="-X github.com/containerd/containerd/version.Version=%{gover}+bottlerocket"
 export LD_REVISION="-X github.com/containerd/containerd/version.Revision=%{gitrev}"
 for bin in \

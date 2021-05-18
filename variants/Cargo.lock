@@ -16,11 +16,9 @@ dependencies = [
  "docker-engine",
  "docker-init",
  "docker-proxy",
- "findutils",
  "iputils",
  "kernel-5_10",
  "login",
- "procps",
  "release",
  "strace",
  "tcpdump",
@@ -135,7 +133,6 @@ name = "cni"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "iptables",
 ]
 
 [[package]]
@@ -143,7 +140,6 @@ name = "cni-plugins"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "iptables",
 ]
 
 [[package]]
@@ -163,11 +159,8 @@ dependencies = [
 name = "containerd"
 version = "0.1.0"
 dependencies = [
- "cni-plugins",
  "glibc",
- "libseccomp",
  "runc",
- "systemd",
 ]
 
 [[package]]
@@ -203,11 +196,8 @@ dependencies = [
 name = "docker-engine"
 version = "0.1.0"
 dependencies = [
- "containerd",
  "glibc",
- "iptables",
  "libseccomp",
- "procps",
  "systemd",
 ]
 
@@ -237,9 +227,7 @@ dependencies = [
 name = "ecs-agent"
 version = "0.1.0"
 dependencies = [
- "docker-engine",
  "glibc",
- "iptables",
 ]
 
 [[package]]
@@ -277,7 +265,6 @@ dependencies = [
 name = "host-ctr"
 version = "0.1.0"
 dependencies = [
- "containerd",
  "glibc",
 ]
 
@@ -329,9 +316,6 @@ dependencies = [
 name = "kubernetes-1_16"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
- "containerd",
- "findutils",
  "glibc",
 ]
 
@@ -339,9 +323,6 @@ dependencies = [
 name = "kubernetes-1_17"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
- "containerd",
- "findutils",
  "glibc",
 ]
 
@@ -349,9 +330,6 @@ dependencies = [
 name = "kubernetes-1_18"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
- "containerd",
- "findutils",
  "glibc",
 ]
 
@@ -359,9 +337,6 @@ dependencies = [
 name = "kubernetes-1_19"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
- "containerd",
- "findutils",
  "glibc",
 ]
 
@@ -369,9 +344,6 @@ dependencies = [
 name = "kubernetes-1_20"
 version = "0.1.0"
 dependencies = [
- "conntrack-tools",
- "containerd",
- "findutils",
  "glibc",
 ]
 
@@ -625,7 +597,6 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "host-ctr",
 ]
 
 [[package]]
@@ -662,19 +633,25 @@ dependencies = [
  "acpid",
  "ca-certificates",
  "chrony",
+ "conntrack-tools",
+ "containerd",
  "coreutils",
  "dbus-broker",
  "e2fsprogs",
  "filesystem",
+ "findutils",
  "glibc",
  "grep",
  "grub",
+ "host-ctr",
  "iproute",
+ "iptables",
  "libaudit",
  "libgcc",
  "libstd-rust",
  "os",
  "policycoreutils",
+ "procps",
  "selinux-policy",
  "systemd",
  "util-linux",
@@ -743,12 +720,10 @@ dependencies = [
  "docker-engine",
  "docker-init",
  "docker-proxy",
- "findutils",
  "iputils",
  "kernel-5_10",
  "login",
  "open-vm-tools",
- "procps",
  "release",
  "strace",
  "tcpdump",

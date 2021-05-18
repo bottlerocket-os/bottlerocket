@@ -29,4 +29,6 @@ glibc = { path = "../glibc" }
 
 # RPM Requires
 [dependencies]
-host-ctr = { path = "../host-ctr" }
+# We depend on `host-ctr` for host containers functionality, but only need it
+# at runtime, and expect it to be pulled in by way of the `release` package.
+# host-ctr = { path = "../host-ctr" }
