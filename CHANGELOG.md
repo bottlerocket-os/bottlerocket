@@ -1,3 +1,11 @@
+# v1.1.1 (2021-05-19)
+
+## Security fixes
+
+* Patch runc for CVE-2021-30465 ([232c5741ecec][232c5741ecec])
+
+[232c5741ecec]: https://github.com/bottlerocket-os/bottlerocket/commit/232c5741ecec1b903df3e56922bda03eecb2c02a
+
 # v1.1.0 (2021-05-07)
 
 ## Deprecation Notice
