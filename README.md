@@ -652,3 +652,10 @@ See [Settings](#settings) above for examples and to understand what you can conf
 The server and client are the user-facing components of the API system, but there are a number of other components that work together to make sure your settings are applied, and that they survive upgrades of Bottlerocket.
 
 For more details, see the [API system documentation](sources/api/).
+
+### Default Volumes
+
+Bottlerocket operates with two default storage volumes. 
+* The root device, `/dev/xvda`, holds the active and passive [partition sets](#updates-1).
+  It also contains the bootloader, the dm-verity hash tree for verifying the [immutable root filesystem](SECURITY_FEATURES.md#immutable-rootfs-backed-by-dm-verity), and the data store for the Bottlerocket API.
+* The data device, `/dex/xvdb`, is used as persistent storage for container images, container orchestration, [host-containers](#Custom-host-containers), and [bootstrap containers](#Bootstrap-containers-settings).
