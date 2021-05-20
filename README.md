@@ -346,6 +346,8 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.event-burst`: The maximum size of a burst of event creations.
 * `settings.kubernetes.kube-api-qps`: The QPS to use while talking with kubernetes apiserver.
 * `settings.kubernetes.kube-api-burst`: The burst to allow while talking with kubernetes.
+* `settings.kubernetes.container-log-max-size`: The maximum size of container log file before it is rotated.
+* `settings.kubernetes.container-log-max-files`: The maximum number of container log files that can be present for a container.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.

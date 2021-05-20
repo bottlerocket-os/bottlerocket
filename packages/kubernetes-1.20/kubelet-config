@@ -87,3 +87,9 @@ tlsCipherSuites:
 volumePluginDir: "/var/lib/kubelet/plugins/volume/exec"
 maxPods: {{default 110 settings.kubernetes.max-pods}}
 staticPodPath: "/etc/kubernetes/static-pods/"
+{{~#if settings.kubernetes.container-log-max-size includeZero=true}}
+containerLogMaxSize: {{settings.kubernetes.container-log-max-size}}
+{{~/if}}
+{{~#if settings.kubernetes.container-log-max-files includeZero=true}}
+containerLogMaxFiles: {{settings.kubernetes.container-log-max-files}}
+{{~/if}}
