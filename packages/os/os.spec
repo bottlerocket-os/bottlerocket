@@ -64,7 +64,6 @@ Requires: %{_cross_os}migration
 Requires: %{_cross_os}netdog
 Requires: %{_cross_os}schnauzer
 Requires: %{_cross_os}settings-committer
-Requires: %{_cross_os}shibaken
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}storewolf
 Requires: %{_cross_os}sundog
@@ -77,6 +76,10 @@ Requires: %{_cross_os}updog
 Requires: %{_cross_os}pluto
 %endif
 Requires: %{_cross_os}static-pods
+%endif
+
+%if %{_is_aws_variant}
+Requires: %{_cross_os}shibaken
 %endif
 
 %if "%{_cross_variant}" == "aws-ecs-1"
@@ -124,11 +127,6 @@ Summary: Bottlerocket sysctl helper
 %package -n %{_cross_os}schnauzer
 Summary: Setting generator for templated settings values.
 %description -n %{_cross_os}schnauzer
-%{summary}.
-
-%package -n %{_cross_os}shibaken
-Summary: Setting generator for populating admin container user-data from IMDS.
-%description -n %{_cross_os}shibaken
 %{summary}.
 
 %package -n %{_cross_os}thar-be-settings
@@ -222,6 +220,13 @@ Summary: Manages user-defined K8S static pods
 %{summary}.
 %endif
 
+%if %{_is_aws_variant}
+%package -n %{_cross_os}shibaken
+Summary: Setting generator for populating admin container user-data from IMDS.
+%description -n %{_cross_os}shibaken
+%{summary}.
+%endif
+
 %package -n %{_cross_os}bootstrap-containers
 Summary: Manages bootstrap-containers
 %description -n %{_cross_os}bootstrap-containers
@@ -269,7 +274,6 @@ echo "** Output from non-static builds:"
     -p sundog \
     -p schnauzer \
     -p bork \
-    -p shibaken \
     -p thar-be-settings \
     -p thar-be-updates \
     -p servicedog \
@@ -287,6 +291,9 @@ echo "** Output from non-static builds:"
     -p bootstrap-containers \
 %if "%{_cross_variant}" == "aws-ecs-1"
     -p ecs-settings-applier \
+%endif
+%if %{_is_aws_variant}
+    -p shibaken \
 %endif
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
@@ -308,7 +315,7 @@ fi
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  early-boot-config netdog sundog schnauzer bork shibaken corndog \
+  early-boot-config netdog sundog schnauzer bork corndog \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
   migrator \
@@ -316,6 +323,9 @@ for p in \
   ghostdog bootstrap-containers \
 %if "%{_cross_variant}" == "aws-ecs-1"
   ecs-settings-applier \
+%endif
+%if %{_is_aws_variant}
+  shibaken \
 %endif
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
@@ -423,9 +433,6 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}bork
 %{_cross_bindir}/bork
 
-%files -n %{_cross_os}shibaken
-%{_cross_bindir}/shibaken
-
 %files -n %{_cross_os}thar-be-settings
 %{_cross_bindir}/thar-be-settings
 %{_cross_unitdir}/settings-applier.service
@@ -488,6 +495,11 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %if "%{_cross_variant}" == "aws-ecs-1"
 %files -n %{_cross_os}ecs-settings-applier
 %{_cross_bindir}/ecs-settings-applier
+%endif
+
+%if %{_is_aws_variant}
+%files -n %{_cross_os}shibaken
+%{_cross_bindir}/shibaken
 %endif
 
 %if %{_is_k8s_variant}
