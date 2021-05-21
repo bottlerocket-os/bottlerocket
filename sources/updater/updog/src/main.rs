@@ -471,25 +471,6 @@ fn set_https_proxy_environment_variables(
         _ => return Ok(()),
     };
 
-    // TODO - remove this workaround, https://github.com/bottlerocket-os/bottlerocket/issues/1332
-    // reqwest needs a URL protocol scheme to be present, but other implementations assume
-    // `http://` as the scheme when none is present. We need to check the `HTTPS_PROXY` env and
-    // reset it with `http://` when no scheme is present. This workaround will no longer be needed
-    // when both bottlerocket and tough are using reqwest >= 0.11.1.
-    let proxy = if Url::parse(&proxy).is_ok() {
-        // the proxy value is OK, it has a scheme
-        debug!("setting HTTPS_PROXY={}", proxy);
-        proxy
-    } else {
-        // try prepending the default scheme
-        let prepended = format!("http://{}", proxy);
-        // now we expect a valid URL
-        let _ = Url::parse(&prepended).context(error::Proxy { proxy })?;
-        // now we know we have a string that will work with reqwest
-        debug!("prepended https:// and setting HTTPS_PROXY={}", prepended);
-        prepended
-    };
-
     std::env::set_var("HTTPS_PROXY", &proxy);
     if let Some(no_proxy) = no_proxy {
         if !no_proxy.is_empty() {
