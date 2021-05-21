@@ -18,6 +18,7 @@ source-groups = [
     "webpki-roots-shim",
     "logdog",
     "models",
+    "imdsclient"
 ]
 
 [lib]

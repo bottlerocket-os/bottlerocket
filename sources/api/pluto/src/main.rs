@@ -36,7 +36,7 @@ reasonable default is available.
 mod api;
 mod eks;
 
-use reqwest::Client;
+use imdsclient::ImdsClient;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -48,32 +48,11 @@ const DEFAULT_DNS_CLUSTER_IP: &str = "10.100.0.10";
 // If our CIDR block begins with "10." this is our DNS.
 const DEFAULT_10_RANGE_DNS_CLUSTER_IP: &str = "172.20.0.10";
 
-// Instance Meta Data Service
-const IMDS_BASE_URL: &str = "http://169.254.169.254/2018-09-24";
-// Currently only able to get fetch session tokens from `latest`
-// FIXME Pin to a date version that supports IMDSv2 once such a date version is available.
-const IMDS_SESSION_TOKEN_ENDPOINT: &str = "http://169.254.169.254/latest/api/token";
-const IMDS_NODE_IPV4_ENDPOINT: &str = "http://169.254.169.254/2018-09-24/meta-data/local-ipv4";
-const IMDS_MAC_ENDPOINT: &str =
-    "http://169.254.169.254/2018-09-24/meta-data/network/interfaces/macs";
-const IMDS_INSTANCE_TYPE_ENDPOINT: &str =
-    "http://169.254.169.254/2018-09-24/meta-data/instance-type";
-
 const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
 
 mod error {
     use crate::eks;
     use snafu::Snafu;
-
-    // Taken from sundog.
-    fn code(source: &reqwest::Error) -> String {
-        source
-            .status()
-            .as_ref()
-            .map(|i| i.as_str())
-            .unwrap_or("Unknown")
-            .to_string()
-    }
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
@@ -81,18 +60,14 @@ mod error {
         #[snafu(display("Unable to parse CIDR '{}': {}", cidr, reason))]
         CidrParse { cidr: String, reason: String },
 
-        #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
-        ImdsRequest {
-            method: String,
-            uri: String,
-            source: reqwest::Error,
-        },
+        #[snafu(display("IMDS request failed: {}", source))]
+        ImdsRequest { source: imdsclient::Error },
 
-        #[snafu(display("Error '{}' from '{}': {}", code(&source), uri, source))]
-        ImdsResponse { uri: String, source: reqwest::Error },
+        #[snafu(display("IMDS client failed: {}", source))]
+        ImdsClient { source: imdsclient::Error },
 
-        #[snafu(display("Error getting text response from {}: {}", uri, source))]
-        ImdsText { uri: String, source: reqwest::Error },
+        #[snafu(display("IMDS request failed: No '{}' found", what))]
+        ImdsNone { what: String },
 
         #[snafu(display("Error deserializing response into JSON from {}: {}", uri, source))]
         ImdsJson {
@@ -109,12 +84,6 @@ mod error {
             output: String,
             source: serde_json::error::Error,
         },
-
-        #[snafu(display("Missing MAC address from IMDS: {}", uri))]
-        MissingMac { uri: String },
-
-        #[snafu(display("Invalid machine architecture, not one of 'x86_64' or 'aarch64'"))]
-        UnknownArchitecture,
 
         #[snafu(display("{}", source))]
         EksError { source: eks::Error },
@@ -146,23 +115,14 @@ use error::PlutoError;
 
 type Result<T> = std::result::Result<T, PlutoError>;
 
-async fn get_text_from_imds(client: &Client, uri: &str, session_token: &str) -> Result<String> {
-    client
-        .get(uri)
-        .header("X-aws-ec2-metadata-token", session_token)
-        .send()
+async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
+    let instance_type = client
+        .fetch_identity_document()
         .await
-        .context(error::ImdsRequest { method: "GET", uri })?
-        .error_for_status()
-        .context(error::ImdsResponse { uri })?
-        .text()
-        .await
-        .context(error::ImdsText { uri })
-}
+        .context(error::ImdsRequest)?
+        .instance_type()
+        .to_string();
 
-async fn get_max_pods(client: &Client, session_token: &str) -> Result<String> {
-    let instance_type =
-        get_text_from_imds(&client, IMDS_INSTANCE_TYPE_ENDPOINT, session_token).await?;
     // Find the corresponding maximum number of pods supported by this instance type
     let file = BufReader::new(
         File::open(ENI_MAX_PODS_PATH).context(error::EniMaxPodsFile {
@@ -187,7 +147,7 @@ async fn get_max_pods(client: &Client, session_token: &str) -> Result<String> {
 /// the `serviceIPv4CIDR`. If that works, it returns the expected cluster DNS IP address which is
 /// obtained by substituting `10` for the last octet. If the EKS call is not successful, it falls
 /// back to using IMDS MAC CIDR blocks to return one of two default addresses.
-async fn get_cluster_dns_ip(client: &Client, session_token: &str) -> Result<String> {
+async fn get_cluster_dns_ip(client: &mut ImdsClient) -> Result<String> {
     // try calling eks describe-cluster to figure out the dns cluster ip
     if let Some(dns_ip) = get_dns_from_eks().await {
         // we were able to calculate the dns ip from the cidr range we received from eks
@@ -196,7 +156,7 @@ async fn get_cluster_dns_ip(client: &Client, session_token: &str) -> Result<Stri
 
     // we were unable to obtain or parse the cidr range from eks, fallback to one of two default
     // values based on the cidr range of our primary network interface
-    get_cluster_dns_from_imds_mac(client, session_token).await
+    get_cluster_dns_from_imds_mac(client).await
 }
 
 /// Gets the Service IPV4 CIDR setting from EKS and parses it to calculate the cluster DNS IP.
@@ -242,20 +202,31 @@ fn get_dns_from_cidr(cidr: &str) -> Result<String> {
 
 /// Gets gets the the first VPC IPV4 CIDR block from IMDS. If it starts with `10`, returns
 /// `10.100.0.10`, otherwise returns `172.20.0.10`
-async fn get_cluster_dns_from_imds_mac(client: &Client, session_token: &str) -> Result<String> {
-    let uri = IMDS_MAC_ENDPOINT;
-    let macs = get_text_from_imds(&client, uri, session_token).await?;
-    // Take the first (primary) MAC address. Others will exist from attached ENIs.
-    let mac = macs.split('\n').next().context(error::MissingMac { uri })?;
+async fn get_cluster_dns_from_imds_mac(client: &mut ImdsClient) -> Result<String> {
+    // Take the first (primary) MAC address. Others may exist from attached ENIs.
+    let mac = client
+        .fetch_mac_addresses()
+        .await
+        .context(error::ImdsRequest)?
+        .first()
+        .context(error::ImdsNone {
+            what: "mac addresses",
+        })?
+        .clone();
 
-    // Infer the cluster DNS based on our CIDR blocks.
-    let mac_cidr_blocks_uri = format!(
-        "{}/meta-data/network/interfaces/macs/{}/vpc-ipv4-cidr-blocks",
-        IMDS_BASE_URL, mac
-    );
-    let mac_cidr_blocks = get_text_from_imds(&client, &mac_cidr_blocks_uri, session_token).await?;
+    // Take the first CIDR block for the primary MAC.
+    let cidr_block = client
+        .fetch_cidr_blocks_for_mac(&mac)
+        .await
+        .context(error::ImdsRequest)?
+        .first()
+        .context(error::ImdsNone {
+            what: "CIDR blocks",
+        })?
+        .clone();
 
-    let dns = if mac_cidr_blocks.starts_with("10.") {
+    // Infer the cluster DNS based on the CIDR block.
+    let dns = if cidr_block.starts_with("10.") {
         DEFAULT_10_RANGE_DNS_CLUSTER_IP
     } else {
         DEFAULT_DNS_CLUSTER_IP
@@ -264,8 +235,11 @@ async fn get_cluster_dns_from_imds_mac(client: &Client, session_token: &str) -> 
     Ok(dns)
 }
 
-async fn get_node_ip(client: &Client, session_token: &str) -> Result<String> {
-    get_text_from_imds(&client, IMDS_NODE_IPV4_ENDPOINT, session_token).await
+async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
+    client
+        .fetch_local_ipv4_address()
+        .await
+        .context(error::ImdsRequest)
 }
 
 /// Print usage message.
@@ -285,28 +259,14 @@ fn parse_args(mut args: env::Args) -> String {
 
 async fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
-    let client = Client::new();
-
-    // Use IMDSv2 for accessing instance metadata
-    let uri = IMDS_SESSION_TOKEN_ENDPOINT;
-    let imds_session_token = client
-        .put(uri)
-        .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
-        .send()
-        .await
-        .context(error::ImdsRequest { method: "PUT", uri })?
-        .error_for_status()
-        .context(error::ImdsResponse { uri })?
-        .text()
-        .await
-        .context(error::ImdsText { uri })?;
+    let mut client = ImdsClient::new().await.context(error::ImdsClient)?;
 
     let setting = match setting_name.as_ref() {
-        "cluster-dns-ip" => get_cluster_dns_ip(&client, &imds_session_token).await,
-        "node-ip" => get_node_ip(&client, &imds_session_token).await,
+        "cluster-dns-ip" => get_cluster_dns_ip(&mut client).await,
+        "node-ip" => get_node_ip(&mut client).await,
         // If we want to specify a reasonable default in a template, we can exit 2 to tell
         // sundog to skip this setting.
-        "max-pods" => get_max_pods(&client, &imds_session_token)
+        "max-pods" => get_max_pods(&mut client)
             .await
             .map_err(|_| process::exit(2)),
 

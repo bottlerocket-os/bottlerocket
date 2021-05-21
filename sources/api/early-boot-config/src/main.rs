@@ -142,6 +142,7 @@ async fn run() -> Result<()> {
     let method = "PATCH";
     for settings_json in data_provider
         .platform_data()
+        .await
         .context(error::ProviderError)?
     {
         // Don't send an empty request to the API

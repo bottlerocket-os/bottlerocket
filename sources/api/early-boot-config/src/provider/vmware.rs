@@ -3,6 +3,7 @@
 
 use super::{PlatformDataProvider, SettingsJson};
 use crate::compression::{expand_file_maybe, expand_slice_maybe, OptionalCompressionReader};
+use async_trait::async_trait;
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
 use std::ffi::OsStr;
@@ -235,8 +236,9 @@ impl VmwareDataProvider {
     }
 }
 
+#[async_trait]
 impl PlatformDataProvider for VmwareDataProvider {
-    fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
+    async fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
 
         // Look at the CD-ROM for user data first, and then...

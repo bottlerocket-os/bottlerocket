@@ -329,6 +329,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "781f336cc9826dbaddb9754cb5db61e64cab4f69668bd19dcc4a0394a86f4cb1"
 
 [[package]]
+name = "async-stream"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a26cb53174ddd320edfff199a853f93d571f48eeb4dde75e67a9a3dbb7b7e5e"
+dependencies = [
+ "async-stream-impl",
+ "futures-core",
+]
+
+[[package]]
+name = "async-stream-impl"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db134ba52475c060f3329a8ef0f8786d6b872ed01515d4b79c162e5798da1340"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -836,14 +857,15 @@ name = "early-boot-config"
 version = "0.1.0"
 dependencies = [
  "apiclient",
+ "async-trait",
  "base64",
  "cargo-readme",
  "flate2",
  "hex-literal",
  "http",
+ "imdsclient",
  "lazy_static",
  "log",
- "reqwest",
  "serde",
  "serde-xml-rs",
  "serde_json",
@@ -1397,6 +1419,24 @@ dependencies = [
  "matches",
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "imdsclient"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+ "http",
+ "httptest",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "simplelog",
+ "snafu",
+ "tokio",
+ "tokio-test",
+ "url",
 ]
 
 [[package]]
@@ -2105,8 +2145,8 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "cargo-readme",
+ "imdsclient",
  "models",
- "reqwest",
  "rusoto_core",
  "rusoto_eks",
  "serde_json",
@@ -2742,12 +2782,13 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "cargo-readme",
+ "imdsclient",
  "log",
- "reqwest",
  "serde",
  "serde_json",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -3249,6 +3290,30 @@ dependencies = [
  "rustls",
  "tokio",
  "webpki",
+]
+
+[[package]]
+name = "tokio-stream"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e177a5d8c3bf36de9ebe6d58537d8879e964332f93fb3339e43f618c81361af0"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
+name = "tokio-test"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f58403903e94d4bc56805e46597fced893410b2e753e229d3f7f22423ea03f67"
+dependencies = [
+ "async-stream",
+ "bytes",
+ "futures-core",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
