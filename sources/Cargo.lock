@@ -857,14 +857,15 @@ name = "early-boot-config"
 version = "0.1.0"
 dependencies = [
  "apiclient",
+ "async-trait",
  "base64",
  "cargo-readme",
  "flate2",
  "hex-literal",
  "http",
+ "imdsclient",
  "lazy_static",
  "log",
- "reqwest",
  "serde",
  "serde-xml-rs",
  "serde_json",

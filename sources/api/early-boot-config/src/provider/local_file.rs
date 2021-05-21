@@ -3,6 +3,7 @@
 
 use super::{PlatformDataProvider, SettingsJson};
 use crate::compression::expand_file_maybe;
+use async_trait::async_trait;
 use snafu::ResultExt;
 
 pub(crate) struct LocalFileDataProvider;
@@ -11,8 +12,9 @@ impl LocalFileDataProvider {
     pub(crate) const USER_DATA_FILE: &'static str = "/etc/early-boot-config/user-data";
 }
 
+#[async_trait]
 impl PlatformDataProvider for LocalFileDataProvider {
-    fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
+    async fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
         info!("'{}' exists, using it", Self::USER_DATA_FILE);
 
