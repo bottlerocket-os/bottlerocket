@@ -245,7 +245,7 @@ fn main() {
         }
     }
 
-    let mut rt = Runtime::new().expect("Failed to create tokio runtime");
+    let rt = Runtime::new().expect("Failed to create tokio runtime");
     if let Err(e) = rt.block_on(async { run(args).await }) {
         eprintln!("{}", e);
         process::exit(1);
