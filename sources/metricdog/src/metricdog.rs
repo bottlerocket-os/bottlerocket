@@ -140,7 +140,6 @@ impl Metricdog {
 
     fn send_get_request(url: Url, timeout_sec: Option<u64>) -> Result<()> {
         debug!("sending: {}", url.as_str());
-        fix_https_proxy_env();
         let client = Client::builder()
             .timeout(Duration::from_secs(
                 timeout_sec.unwrap_or(DEFAULT_TIMEOUT_SECONDS),
@@ -155,32 +154,5 @@ impl Metricdog {
             .error_for_status()
             .context(error::HttpResponse { url })?;
         Ok(())
-    }
-}
-
-/// reqwest needs a URL protocol scheme to be present, but other implementations assume
-/// `http://` as the scheme when none is present. We need to check the `HTTPS_PROXY` env and
-/// reset it with `http://` when no scheme is present. This can be removed when we are using
-/// reqwest >= 0.11.1
-// TODO - remove this workaround, see https://github.com/bottlerocket-os/bottlerocket/issues/1332
-fn fix_https_proxy_env() {
-    let proxy = match std::env::var("HTTPS_PROXY") {
-        Ok(s) if !s.is_empty() => s,
-        _ => return,
-    };
-
-    // try to parse it as a URL. if it works, a scheme is present
-    if Url::parse(&proxy).is_ok() {
-        return;
-    }
-
-    // since the URL could not be parsed, try parsing with http:// prepended
-    let proxy = format!("http://{}", proxy);
-
-    // use URL again to see if the proxy value is now valid
-    if Url::parse(&proxy).is_ok() {
-        debug!("Adding a scheme to HTTPS_PROXY: '{}'", proxy);
-        // success, so let's change the HTTPS_PROXY value for the sake of reqwest
-        std::env::set_var("HTTPS_PROXY", proxy);
     }
 }
