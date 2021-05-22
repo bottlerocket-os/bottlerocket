@@ -31,6 +31,7 @@ members = [
     "api/migration/migrations/v1.1.0/kubelet-event-qps-event-burst",
     "api/migration/migrations/v1.1.0/schnauzer-paws",
     "api/migration/migrations/v1.1.0/kubelet-kube-api-qps-kube-api-burst",
+    "api/migration/migrations/v1.1.2/kubelet-container-log",
 
     "bottlerocket-release",
 
