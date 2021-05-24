@@ -528,7 +528,10 @@ Bootstrap containers are host containers that can be used to "bootstrap" the hos
 
 Bootstrap containers are very similar to normal host containers; they come with persistent storage and with optional user data.
 Unlike normal host containers, bootstrap containers can't be treated as `superpowered` containers.
-However, these containers have access to the underlying root filesystem on `/.bottlerocket/rootfs`.
+However, bootstrap containers do have additional permissions that normal host containers do not have.
+Bootstrap containers have access to the underlying root filesystem on `/.bottlerocket/rootfs` as well as to all the devices in the host, and they are set up with the `CAP_SYS_ADMIN` capability.
+This allows bootstrap containers to create files, directories, and mounts that are visible to the host.
+
 Bootstrap containers are set up to run after the systemd `configured.target` unit is active.
 The containers' systemd unit depends on this target (and not on any of the bootstrap containers' peers) which means that bootstrap containers will not execute in a deterministic order
 The boot process will "wait" for as long as the bootstrap containers run.
@@ -557,6 +560,11 @@ source = "MY-CONTAINER-URI"
 mode = "once"
 essential = true
 ```
+
+##### Mount propagations in bootstrap and superpowered containers
+Both bootstrap and superpowered host containers are configured with the `/.bottlerocket/rootfs/mnt` bind mount that points to `/mnt` in the host, which itself is a bind mount of `/local/mnt`.
+This bind mount is set up with shared propagations, so any new mount point created underneath `/.bottlerocket/rootfs/mnt` in any bootstrap or superpowered host container will propagate across mount namespaces.
+You can use this feature to configure ephemeral disks attached to your hosts that you may want to use on your workloads.
 
 #### Platform-specific settings
 

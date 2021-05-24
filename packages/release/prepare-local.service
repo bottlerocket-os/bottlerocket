@@ -34,7 +34,7 @@ ExecStart=/usr/bin/mount \
 # After the mount is active, we grow the filesystem to fill the resized partition,
 # and ensure that it has the directories we need for subsequent mounts.
 ExecStart=/usr/lib/systemd/systemd-growfs ${LOCAL_DIR}
-ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt
+ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt ${LOCAL_DIR}/mnt
 
 # Create the directories we need to set up a read-write overlayfs for the kernel
 # development sources.

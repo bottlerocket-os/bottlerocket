@@ -1,0 +1,16 @@
+[Unit]
+Description=Mnt Directory (/mnt)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+Wants=prepare-local.service
+After=prepare-local.service
+
+[Mount]
+What=/local/mnt
+Where=/mnt
+Type=none
+Options=rbind,rshared
+
+[Install]
+WantedBy=local-fs.target
