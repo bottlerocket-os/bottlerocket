@@ -1430,7 +1430,6 @@ dependencies = [
  "httptest",
  "log",
  "reqwest",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",

@@ -21,7 +21,10 @@ impl AwsDataProvider {
     /// Fetches user data, which is expected to be in TOML form and contain a `[settings]` section,
     /// returning a SettingsJson representing the inside of that section.
     async fn user_data(client: &mut ImdsClient) -> Result<Option<SettingsJson>> {
-        let user_data_raw = client.fetch_userdata().await.context(error::ImdsRequest)?;
+        let user_data_raw = match client.fetch_userdata().await.context(error::ImdsRequest)? {
+            Some(user_data_raw) => user_data_raw,
+            None => return Ok(None),
+        };
         let user_data_str = expand_slice_maybe(&user_data_raw)
             .context(error::Decompression { what: "user data" })?;
         trace!("Received user data: {}", user_data_str);
@@ -55,11 +58,10 @@ impl AwsDataProvider {
                 .to_owned()
         } else {
             client
-                .fetch_identity_document()
+                .fetch_region()
                 .await
                 .context(error::ImdsRequest)?
-                .region()
-                .to_owned()
+                .context(error::ImdsMissingRegion)?
         };
         trace!(
             "Retrieved region from instance identity document: {}",
@@ -132,6 +134,9 @@ mod error {
 
         #[snafu(display("Unable to read input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
+
+        #[snafu(display("IMDS request failed: missing region"))]
+        ImdsMissingRegion {},
 
         #[snafu(display("IMDS request failed: {}", source))]
         ImdsRequest { source: imdsclient::Error },
