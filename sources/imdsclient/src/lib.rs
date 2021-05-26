@@ -11,8 +11,8 @@ This method is useful for specifying things like a pinned date for the IMDS sche
 use http::StatusCode;
 use log::{debug, info, trace, warn};
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use snafu::{ensure, ResultExt};
+use serde_json::Value;
+use snafu::{ensure, OptionExt, ResultExt};
 use std::time::Duration;
 use tokio::time;
 
@@ -28,25 +28,6 @@ pub struct ImdsClient {
     client: Client,
     imds_base_uri: String,
     session_token: String,
-}
-
-/// This is the return type when querying for the IMDS identity document, which contains information
-/// such as region and instance_type. We only include the fields that we are using in Bottlerocket.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct IdentityDocument {
-    region: String,
-    instance_type: String,
-}
-
-impl IdentityDocument {
-    pub fn region(&self) -> &str {
-        self.region.as_str()
-    }
-
-    pub fn instance_type(&self) -> &str {
-        self.instance_type.as_str()
-    }
 }
 
 impl ImdsClient {
@@ -65,57 +46,74 @@ impl ImdsClient {
     }
 
     /// Gets `user-data` from IMDS. The user-data may be either a UTF-8 string or compressed bytes.
-    pub async fn fetch_userdata(&mut self) -> Result<Vec<u8>> {
+    pub async fn fetch_userdata(&mut self) -> Result<Option<Vec<u8>>> {
         self.fetch_imds(PINNED_SCHEMA, "user-data").await
     }
 
-    /// Returns the 'identity document' with fields like region and instance_type.
-    pub async fn fetch_identity_document(&mut self) -> Result<IdentityDocument> {
+    /// Returns the region described in the identity document.
+    pub async fn fetch_region(&mut self) -> Result<Option<String>> {
         let target = "dynamic/instance-identity/document";
-        let response = self.fetch_bytes(target).await?;
-        let identity_document: IdentityDocument =
-            serde_json::from_slice(&response).context(error::Serde)?;
-        Ok(identity_document)
+        let response = match self.fetch_bytes(target).await? {
+            Some(response) => response,
+            None => return Ok(None),
+        };
+        let identity_document: Value = serde_json::from_slice(&response).context(error::Serde)?;
+        let region = identity_document
+            .get("region")
+            .and_then(|value| value.as_str())
+            .map(|region| region.to_string());
+        Ok(region)
     }
 
     /// Returns the list of network interface mac addresses.
-    pub async fn fetch_mac_addresses(&mut self) -> Result<Vec<String>> {
+    pub async fn fetch_mac_addresses(&mut self) -> Result<Option<Vec<String>>> {
         let macs_target = "meta-data/network/interfaces/macs";
-        let macs = self.fetch_string(&macs_target).await?;
-        Ok(macs.split('\n').map(|s| s.to_string()).collect())
+        let macs = self
+            .fetch_string(&macs_target)
+            .await?
+            .map(|macs| macs.lines().map(|s| s.to_string()).collect());
+        Ok(macs)
     }
 
     /// Gets the list of CIDR blocks for a given network interface `mac` address.
-    pub async fn fetch_cidr_blocks_for_mac(&mut self, mac: &str) -> Result<Vec<String>> {
+    pub async fn fetch_cidr_blocks_for_mac(&mut self, mac: &str) -> Result<Option<Vec<String>>> {
         // Infer the cluster DNS based on our CIDR blocks.
         let mac_cidr_blocks_target = format!(
             "meta-data/network/interfaces/macs/{}/vpc-ipv4-cidr-blocks",
             mac
         );
-        let cidr_blocks = self.fetch_string(&mac_cidr_blocks_target).await?;
-        Ok(cidr_blocks.split('\n').map(|s| s.to_string()).collect())
+        let cidr_blocks = self
+            .fetch_string(&mac_cidr_blocks_target)
+            .await?
+            .map(|cidr_blocks| cidr_blocks.lines().map(|s| s.to_string()).collect());
+        Ok(cidr_blocks)
     }
 
     /// Gets the local IPV4 address from instance metadata.
-    pub async fn fetch_local_ipv4_address(&mut self) -> Result<String> {
+    pub async fn fetch_local_ipv4_address(&mut self) -> Result<Option<String>> {
         let node_ip_target = "meta-data/local-ipv4";
         self.fetch_string(&node_ip_target).await
     }
 
+    /// Gets the instance-type from instance metadata.
+    pub async fn fetch_instance_type(&mut self) -> Result<Option<String>> {
+        let instance_type_target = "meta-data/instance-type";
+        self.fetch_string(&instance_type_target).await
+    }
+
     /// Returns a list of public ssh keys skipping any keys that do not start with 'ssh'.
-    pub async fn fetch_public_ssh_keys(&mut self) -> Result<Vec<String>> {
+    pub async fn fetch_public_ssh_keys(&mut self) -> Result<Option<Vec<String>>> {
         info!("Fetching list of available public keys from IMDS");
         // Returns a list of available public keys as '0=my-public-key'
-        let public_key_list = match self.fetch_string("meta-data/public-keys").await {
-            Err(error::Error::NotFound { uri: _ }) => {
-                // this is OK, it just means there are no keys
+        let public_key_list = match self.fetch_string("meta-data/public-keys").await? {
+            Some(public_key_list) => {
+                debug!("available public keys '{}'", &public_key_list);
+                public_key_list
+            }
+            None => {
                 debug!("no available public keys");
-                return Ok(Vec::new());
+                return Ok(None);
             }
-            Err(e) => {
-                return Err(e);
-            }
-            Ok(value) => value,
         };
 
         debug!("available public keys '{}'", &public_key_list);
@@ -132,7 +130,10 @@ impl ImdsClient {
                 &public_key_targets.len()
             );
 
-            let public_key_text = self.fetch_string(&target).await?;
+            let public_key_text = self
+                .fetch_string(&target)
+                .await?
+                .context(error::KeyNotFound { target })?;
             let public_key = public_key_text.trim_end();
             // Simple check to see if the text is probably an ssh key.
             if public_key.starts_with("ssh") {
@@ -149,11 +150,11 @@ impl ImdsClient {
         if public_keys.is_empty() {
             warn!("No valid keys found");
         }
-        Ok(public_keys)
+        Ok(Some(public_keys))
     }
 
     /// Helper to fetch bytes from IMDS using the pinned schema version.
-    async fn fetch_bytes<S>(&mut self, end_target: S) -> Result<Vec<u8>>
+    async fn fetch_bytes<S>(&mut self, end_target: S) -> Result<Option<Vec<u8>>>
     where
         S: AsRef<str>,
     {
@@ -161,16 +162,24 @@ impl ImdsClient {
     }
 
     /// Helper to fetch a string from IMDS using the pinned schema version.
-    async fn fetch_string<S>(&mut self, end_target: S) -> Result<String>
+    async fn fetch_string<S>(&mut self, end_target: S) -> Result<Option<String>>
     where
         S: AsRef<str>,
     {
-        let response_body = self.fetch_imds(PINNED_SCHEMA, end_target).await?;
-        Ok(String::from_utf8(response_body).context(error::NonUtf8Response)?)
+        match self.fetch_imds(PINNED_SCHEMA, end_target).await? {
+            Some(response_body) => Ok(Some(
+                String::from_utf8(response_body).context(error::NonUtf8Response)?,
+            )),
+            None => Ok(None),
+        }
     }
 
     /// Fetch data from IMDS.
-    async fn fetch_imds<S1, S2>(&mut self, schema_version: S1, target: S2) -> Result<Vec<u8>>
+    async fn fetch_imds<S1, S2>(
+        &mut self,
+        schema_version: S1,
+        target: S2,
+    ) -> Result<Option<Vec<u8>>>
     where
         S1: AsRef<str>,
         S2: AsRef<str>,
@@ -218,11 +227,11 @@ impl ImdsClient {
                     let response_str = printable_string(&response_body);
                     trace!("Response: {:?}", response_str);
 
-                    return Ok(response_body);
+                    return Ok(Some(response_body));
                 }
 
                 // IMDS returns 404 if no user data is given, or if IMDS is disabled
-                StatusCode::NOT_FOUND => return Err(error::Error::NotFound { uri }),
+                StatusCode::NOT_FOUND => return Ok(None),
 
                 // IMDS returns 401 if the session token is expired or invalid
                 StatusCode::UNAUTHORIZED => {
@@ -358,11 +367,11 @@ mod error {
         #[snafu(display("IMDS session failed: {}", source))]
         FailedSession { source: reqwest::Error },
 
+        #[snafu(display("Error retrieving key from {}", target))]
+        KeyNotFound { target: String },
+
         #[snafu(display("Response was not UTF-8: {}", source))]
         NonUtf8Response { source: std::string::FromUtf8Error },
-
-        #[snafu(display("404 file not found fetching '{}'", uri))]
-        NotFound { uri: String },
 
         #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
         Request {
@@ -461,7 +470,7 @@ mod test {
             .fetch_imds(schema_version, target)
             .await
             .unwrap();
-        assert_eq!(imds_data, response_body.as_bytes().to_vec());
+        assert_eq!(imds_data, Some(response_body.as_bytes().to_vec()));
     }
 
     #[tokio::test]
@@ -493,8 +502,11 @@ mod test {
             ),
         );
         let mut imds_client = ImdsClient::new_impl(base_uri).await.unwrap();
-        let result = imds_client.fetch_imds(schema_version, target).await;
-        assert!(matches!(result, Err(error::Error::NotFound { .. })));
+        let imds_data = imds_client
+            .fetch_imds(schema_version, target)
+            .await
+            .unwrap();
+        assert_eq!(imds_data, None);
     }
 
     #[tokio::test]
@@ -599,7 +611,7 @@ mod test {
         );
         let mut imds_client = ImdsClient::new_impl(base_uri).await.unwrap();
         let imds_data = imds_client.fetch_string(end_target).await.unwrap();
-        assert_eq!(imds_data, response_body.to_string());
+        assert_eq!(imds_data, Some(response_body.to_string()));
     }
 
     #[tokio::test]
@@ -634,7 +646,7 @@ mod test {
         );
         let mut imds_client = ImdsClient::new_impl(base_uri).await.unwrap();
         let imds_data = imds_client.fetch_bytes(end_target).await.unwrap();
-        assert_eq!(imds_data, response_body.as_bytes().to_vec());
+        assert_eq!(imds_data, Some(response_body.as_bytes().to_vec()));
     }
 
     #[tokio::test]
@@ -668,7 +680,7 @@ mod test {
         );
         let mut imds_client = ImdsClient::new_impl(base_uri).await.unwrap();
         let imds_data = imds_client.fetch_userdata().await.unwrap();
-        assert_eq!(imds_data, response_body.as_bytes().to_vec());
+        assert_eq!(imds_data, Some(response_body.as_bytes().to_vec()));
     }
 
     #[test]

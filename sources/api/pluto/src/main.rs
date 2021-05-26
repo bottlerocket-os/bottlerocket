@@ -117,11 +117,12 @@ type Result<T> = std::result::Result<T, PlutoError>;
 
 async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
     let instance_type = client
-        .fetch_identity_document()
+        .fetch_instance_type()
         .await
         .context(error::ImdsRequest)?
-        .instance_type()
-        .to_string();
+        .context(error::ImdsNone {
+            what: "instance_type",
+        })?;
 
     // Find the corresponding maximum number of pods supported by this instance type
     let file = BufReader::new(
@@ -208,6 +209,9 @@ async fn get_cluster_dns_from_imds_mac(client: &mut ImdsClient) -> Result<String
         .fetch_mac_addresses()
         .await
         .context(error::ImdsRequest)?
+        .context(error::ImdsNone {
+            what: "mac addresses",
+        })?
         .first()
         .context(error::ImdsNone {
             what: "mac addresses",
@@ -219,6 +223,9 @@ async fn get_cluster_dns_from_imds_mac(client: &mut ImdsClient) -> Result<String
         .fetch_cidr_blocks_for_mac(&mac)
         .await
         .context(error::ImdsRequest)?
+        .context(error::ImdsNone {
+            what: "CIDR blocks",
+        })?
         .first()
         .context(error::ImdsNone {
             what: "CIDR blocks",
@@ -239,7 +246,8 @@ async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
     client
         .fetch_local_ipv4_address()
         .await
-        .context(error::ImdsRequest)
+        .context(error::ImdsRequest)?
+        .context(error::ImdsNone { what: "node ip" })
 }
 
 /// Print usage message.

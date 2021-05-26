@@ -43,10 +43,12 @@ impl UserData {
 async fn fetch_public_keys_from_imds() -> Result<Vec<String>> {
     info!("Connecting to IMDS");
     let mut client = ImdsClient::new().await.context(error::ImdsClient)?;
-    client
+    let public_keys = client
         .fetch_public_ssh_keys()
         .await
-        .context(error::ImdsClient)
+        .context(error::ImdsClient)?
+        .unwrap_or_else(Vec::new);
+    Ok(public_keys)
 }
 
 /// Store the args we receive on the command line.
