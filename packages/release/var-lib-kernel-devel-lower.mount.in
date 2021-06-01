@@ -12,4 +12,4 @@ Type=squashfs
 Options=defaults,ro,loop,noatime,nosuid,nodev,context=system_u:object_r:os_t:s0
 
 [Install]
-WantedBy=local-fs.target
+WantedBy=preconfigured.target

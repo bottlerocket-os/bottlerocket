@@ -11,4 +11,4 @@ Type=overlay
 Options=noatime,nosuid,nodev,lowerdir=/var/lib/kernel-devel/lower,upperdir=/var/lib/kernel-devel/upper,workdir=/var/lib/kernel-devel/work,context=system_u:object_r:local_t:s0
 
 [Install]
-WantedBy=local-fs.target
+WantedBy=preconfigured.target
