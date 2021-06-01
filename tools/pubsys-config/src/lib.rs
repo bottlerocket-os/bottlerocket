@@ -1,5 +1,7 @@
 //! The config module owns the definition and loading process for our configuration sources.
+pub mod vmware;
 
+use crate::vmware::VmwareConfig;
 use chrono::Duration;
 use parse_datetime::parse_offset;
 use serde::{Deserialize, Deserializer};
@@ -19,6 +21,9 @@ pub struct InfraConfig {
 
     // Config for AWS specific subcommands
     pub aws: Option<AwsConfig>,
+
+    // Config for VMware specific subcommands
+    pub vmware: Option<VmwareConfig>,
 }
 
 impl InfraConfig {
@@ -168,6 +173,9 @@ mod error {
             path: PathBuf,
             source: toml::de::Error,
         },
+
+        #[snafu(display("Missing config: {}", what))]
+        MissingConfig { what: String },
     }
 }
 pub use error::Error;

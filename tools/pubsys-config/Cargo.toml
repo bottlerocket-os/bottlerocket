@@ -8,6 +8,9 @@ publish = false
 
 [dependencies]
 chrono = "0.4"
+home = "0.5"
+lazy_static = "1.4"
+log = "0.4"
 parse-datetime = { path = "../../sources/parse-datetime" }
 serde = { version = "1.0", features = ["derive"]  }
 snafu = "0.6"
