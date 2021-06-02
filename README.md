@@ -50,7 +50,6 @@ For example, an `x86_64` build of the `aws-k8s-1.19` variant will produce an ima
 
 The following variants support EKS, as described above:
 
-- `aws-k8s-1.16`
 - `aws-k8s-1.17`
 - `aws-k8s-1.18`
 - `aws-k8s-1.19`
@@ -64,8 +63,9 @@ Another variant we have in preview is designed to be a Kubernetes worker node in
 
 - `vmware-k8s-1.20`
 
-The `aws-k8s-1.15` variant is deprecated and will no longer be supported in Bottlerocket releases.
-We recommend users replace `aws-k8s-1.15` nodes with the [latest variant compatible with their cluster](variants/).
+The `aws-k8s-1.16` variant is deprecated and will no longer be supported in Bottlerocket releases after June, 2021.
+The `aws-k8s-1.15` variant is no longer supported.
+We recommend users replace `aws-k8s-1.15` and `aws-k8s-1.16` nodes with the [latest variant compatible with their cluster](variants/).
 
 ## Architectures
 
