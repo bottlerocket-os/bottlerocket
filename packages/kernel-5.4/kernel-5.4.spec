@@ -12,6 +12,10 @@ Source100: config-bottlerocket
 
 # Make Lustre FSx work with a newer GCC.
 Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
+# Required patches for kdump support
+Patch0002: 0002-x86-purgatory-Add-fno-stack-protector.patch
+Patch0003: 0003-arm64-kexec_file-add-crash-dump-support.patch
+Patch0004: 0004-libfdt-include-fdt_addresses.c.patch
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch

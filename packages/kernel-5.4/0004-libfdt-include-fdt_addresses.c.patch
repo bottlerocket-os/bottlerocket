@@ -1,0 +1,44 @@
+From c273a2bd8aa81b72e48736c3aa51f7ffeae39925 Mon Sep 17 00:00:00 2001
+From: AKASHI Takahiro <takahiro.akashi@linaro.org>
+Date: Mon, 9 Dec 2019 12:03:44 +0900
+Subject: [PATCH] libfdt: include fdt_addresses.c
+
+In the implementation of kexec_file_loaded-based kdump for arm64,
+fdt_appendprop_addrrange() will be needed.
+
+So include fdt_addresses.c in making libfdt.
+
+Signed-off-by: AKASHI Takahiro <takahiro.akashi@linaro.org>
+Cc: Rob Herring <robh+dt@kernel.org>
+Cc: Frank Rowand <frowand.list@gmail.com>
+Signed-off-by: Will Deacon <will@kernel.org>
+---
+ lib/Makefile        | 2 +-
+ lib/fdt_addresses.c | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+ create mode 100644 lib/fdt_addresses.c
+
+diff --git a/lib/Makefile b/lib/Makefile
+index 93217d44237f..c20b1debe9b4 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -223,7 +223,7 @@ KASAN_SANITIZE_stackdepot.o := n
+ KCOV_INSTRUMENT_stackdepot.o := n
+ 
+ libfdt_files = fdt.o fdt_ro.o fdt_wip.o fdt_rw.o fdt_sw.o fdt_strerror.o \
+-	       fdt_empty_tree.o
++	       fdt_empty_tree.o fdt_addresses.o
+ $(foreach file, $(libfdt_files), \
+ 	$(eval CFLAGS_$(file) = -I $(srctree)/scripts/dtc/libfdt))
+ lib-$(CONFIG_LIBFDT) += $(libfdt_files)
+diff --git a/lib/fdt_addresses.c b/lib/fdt_addresses.c
+new file mode 100644
+index 000000000000..23610bcf390b
+--- /dev/null
++++ b/lib/fdt_addresses.c
+@@ -0,0 +1,2 @@
++#include <linux/libfdt_env.h>
++#include "../scripts/dtc/libfdt/fdt_addresses.c"
+-- 
+2.30.2
+
