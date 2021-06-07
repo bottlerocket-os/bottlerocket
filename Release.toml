@@ -50,4 +50,5 @@ version = "1.1.1"
 "(1.1.0, 1.1.1)" = []
 "(1.1.1, 1.1.2)" = [
     "migrate_v1.1.2_kubelet-container-log.lz4",
+    "migrate_v1.1.2_kubelet-system-reserved.lz4",
 ]

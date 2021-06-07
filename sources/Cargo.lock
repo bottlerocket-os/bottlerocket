@@ -1555,6 +1555,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-system-reserved"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "language-tags"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
