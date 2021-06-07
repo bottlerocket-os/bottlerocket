@@ -21,5 +21,8 @@
   <ipv6:dhcp>
     <enabled>true</enabled>
     <defer-timeout>1</defer-timeout>
+    <flags>
+      <optional />
+    </flags>
   </ipv6:dhcp>
 </interface>
