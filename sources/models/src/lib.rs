@@ -136,6 +136,7 @@ struct KubernetesSettings {
     standalone_mode: bool,
     eviction_hard: HashMap<KubernetesEvictionHardKey, KubernetesThresholdValue>,
     kube_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
+    system_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     allowed_unsafe_sysctls: Vec<SingleLineString>,
     server_tls_bootstrap: bool,
     cloud_provider: KubernetesCloudProvider,

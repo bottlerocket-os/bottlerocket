@@ -68,6 +68,12 @@ kubeReserved:
   {{~/if}}
   {{~/if}}
   ephemeral-storage: "{{default "1Gi" settings.kubernetes.kube-reserved.ephemeral-storage}}"
+{{~#if settings.kubernetes.system-reserved}}
+systemReserved:
+  {{~#each settings.kubernetes.system-reserved}}
+  {{@key}}: "{{this}}"
+  {{~/each}}
+{{~/if}}
 cpuManagerPolicy: "static"
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth

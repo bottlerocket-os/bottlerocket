@@ -340,6 +340,14 @@ The following settings are optional and allow you to further configure your clus
     ```
     allowed-unsafe-sysctls = ["net.core.somaxconn", "net.ipv4.ip_local_port_range"]
     ```
+* `settings.kubernetes.system-reserved`: Resources reserved for system components.
+  * Example user data for setting up system reserved:
+    ```
+    [settings.kubernetes.system-reserved]
+    cpu = "10m"
+    memory = "100Mi"
+    ephemeral-storage= "1Gi"
+    ```
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
 * `settings.kubernetes.event-qps`: The maximum event creations per second.
