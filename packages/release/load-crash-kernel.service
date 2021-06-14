@@ -1,0 +1,17 @@
+[Unit]
+Description=Load crash kernel
+ConditionKernelCommandLine=crashkernel
+ConditionPathExists=!/proc/vmcore
+RefuseManualStart=true
+RefuseManualStop=true
+Requires=prepare-boot.service
+After=prepare-boot.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/prairiedog load-crash-kernel
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=preconfigured.target

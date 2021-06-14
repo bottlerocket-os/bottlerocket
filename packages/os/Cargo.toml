@@ -13,6 +13,7 @@ source-groups = [
     "metricdog",
     "parse-datetime",
     "ghostdog",
+    "prairiedog",
     "growpart",
     "updater",
     "webpki-roots-shim",
@@ -30,6 +31,10 @@ glibc = { path = "../glibc" }
 
 # RPM Requires
 [dependencies]
-# We depend on `host-ctr` for host containers functionality, but only need it
-# at runtime, and expect it to be pulled in by way of the `release` package.
+# We depend on these packages at runtime, and are expected to be pulled in
+# by way of the `release` package.
+# `host-ctr` for host containers functionality
 # host-ctr = { path = "../host-ctr" }
+# kexec-tools and makedumpfile required for prairiedog functionality
+# kexec-tools = { path = "../kexec-tools" }
+# makedumpfile = { path = "../makedumpfile" }

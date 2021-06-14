@@ -189,7 +189,12 @@ menuentry "${PRETTY_NAME} ${VERSION_ID}" {
 EOF
 
 # BOTTLEROCKET-BOOT-A
+mkdir -p "${BOOT_MOUNT}/lost+found"
+BOOT_LABELS=$(setfiles -n -d -F -m -r "${BOOT_MOUNT}" \
+    "${SELINUX_FILE_CONTEXTS}" "${BOOT_MOUNT}" \
+  | awk -v root="${BOOT_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_set", $1, "security.selinux", $4}')
 mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 40M
+echo "${BOOT_LABELS}" | debugfs -w -f - "${BOOT_IMAGE}"
 resize2fs -M "${BOOT_IMAGE}"
 dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=5
 

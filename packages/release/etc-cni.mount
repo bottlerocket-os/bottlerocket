@@ -11,4 +11,4 @@ Type=tmpfs
 Options=nosuid,nodev,noexec,noatime
 
 [Install]
-WantedBy=local-fs.target
+WantedBy=preconfigured.target

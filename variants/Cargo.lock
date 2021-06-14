@@ -306,6 +306,13 @@ name = "kernel-5_4"
 version = "0.1.0"
 
 [[package]]
+name = "kexec-tools"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "kmod"
 version = "0.1.0"
 dependencies = [
@@ -391,6 +398,14 @@ dependencies = [
  "glibc",
  "libcap",
  "libexpat",
+]
+
+[[package]]
+name = "libelf"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libz",
 ]
 
 [[package]]
@@ -576,6 +591,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "makedumpfile"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libbzip2",
+ "libelf",
+ "libz",
+]
+
+[[package]]
 name = "ncurses"
 version = "0.1.0"
 dependencies = [
@@ -646,9 +671,11 @@ dependencies = [
  "host-ctr",
  "iproute",
  "iptables",
+ "kexec-tools",
  "libaudit",
  "libgcc",
  "libstd-rust",
+ "makedumpfile",
  "os",
  "policycoreutils",
  "procps",

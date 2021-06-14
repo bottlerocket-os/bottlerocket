@@ -62,6 +62,7 @@ Requires: %{_cross_os}logdog
 Requires: %{_cross_os}metricdog
 Requires: %{_cross_os}migration
 Requires: %{_cross_os}netdog
+Requires: %{_cross_os}prairiedog
 Requires: %{_cross_os}schnauzer
 Requires: %{_cross_os}settings-committer
 Requires: %{_cross_os}signpost
@@ -199,6 +200,14 @@ Summary: Thar data store migrations
 %description -n %{_cross_os}migrations
 %{summary}.
 
+%package -n %{_cross_os}prairiedog
+Summary: Tools for kdump support
+Requires: %{_cross_os}kexec-tools
+Requires: %{_cross_os}makedumpfile
+%description -n %{_cross_os}prairiedog
+%{summary}.
+
+
 %if "%{_cross_variant}" == "aws-ecs-1"
 %package -n %{_cross_os}ecs-settings-applier
 Summary: Settings generator for ECS
@@ -289,6 +298,7 @@ echo "** Output from non-static builds:"
     -p growpart \
     -p corndog \
     -p bootstrap-containers \
+    -p prairiedog \
 %if "%{_cross_variant}" == "aws-ecs-1"
     -p ecs-settings-applier \
 %endif
@@ -318,7 +328,7 @@ for p in \
   early-boot-config netdog sundog schnauzer bork corndog \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
-  migrator \
+  migrator prairiedog \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
 %if "%{_cross_variant}" == "aws-ecs-1"
@@ -513,6 +523,9 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}static-pods
 %{_cross_bindir}/static-pods
 %endif
+
+%files -n %{_cross_os}prairiedog
+%{_cross_bindir}/prairiedog
 
 %files -n %{_cross_os}bootstrap-containers
 %{_cross_bindir}/bootstrap-containers

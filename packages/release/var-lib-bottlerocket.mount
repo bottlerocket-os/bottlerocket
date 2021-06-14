@@ -12,4 +12,4 @@ Type=ext4
 Options=defaults,noatime,nosuid,nodev,context=system_u:object_r:private_t:s0
 
 [Install]
-WantedBy=local-fs.target
+WantedBy=preconfigured.target

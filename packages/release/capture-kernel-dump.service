@@ -1,0 +1,11 @@
+[Unit]
+Description=Capture dump after kernel crash
+DefaultDependencies=no
+Requires=local-fs.target systemd-sysusers.service systemd-udevd.service systemd-udev-trigger.service systemd-tmpfiles-setup.service systemd-tmpfiles-setup-dev.service
+After=local-fs.target systemd-sysusers.service systemd-udevd.service systemd-udev-trigger.service systemd-tmpfiles-setup.service systemd-tmpfiles-setup-dev.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/prairiedog capture-dump
+ExecStopPost=/usr/bin/systemctl reboot
+StandardError=journal+console

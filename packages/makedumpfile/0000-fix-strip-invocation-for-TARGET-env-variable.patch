@@ -1,0 +1,25 @@
+From acedb0fbaabaef778380560b1524a3d4e3a459e8 Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Thu, 27 May 2021 19:02:52 +0000
+Subject: [PATCH] fix strip invocation for TARGET env variable
+
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 6fa00bc..6c02afb 100644
+--- a/Makefile
++++ b/Makefile
+@@ -17,7 +17,7 @@ CFLAGS_ARCH := $(CFLAGS_BASE)
+ HOST_ARCH := $(shell uname -m)
+ # Use TARGET as the target architecture if specified.
+ # Defaults to uname -m
+-ifeq ($(strip($TARGET)),)
++ifeq ($(strip $(TARGET)),)
+ TARGET := $(HOST_ARCH)
+ endif
+ 
+-- 
+2.30.2
+

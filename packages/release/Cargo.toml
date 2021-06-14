@@ -30,9 +30,11 @@ grub = { path = "../grub" }
 host-ctr = { path = "../host-ctr" }
 iproute = { path = "../iproute" }
 iptables = { path = "../iptables" }
+kexec-tools = { path = "../../packages/kexec-tools" }
 libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }
 libstd-rust = { path = "../libstd-rust" }
+makedumpfile = { path = "../../packages/makedumpfile" }
 os = { path = "../os" }
 policycoreutils = { path = "../policycoreutils" }
 procps = { path = "../procps" }
