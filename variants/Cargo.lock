@@ -105,6 +105,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_21"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-5_10",
+ "kubernetes-1_21",
+ "release",
+]
+
+[[package]]
 name = "bash"
 version = "0.1.0"
 dependencies = [
@@ -349,6 +361,13 @@ dependencies = [
 
 [[package]]
 name = "kubernetes-1_20"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_21"
 version = "0.1.0"
 dependencies = [
  "glibc",

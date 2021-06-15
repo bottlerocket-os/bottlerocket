@@ -54,6 +54,7 @@ The following variants support EKS, as described above:
 - `aws-k8s-1.18`
 - `aws-k8s-1.19`
 - `aws-k8s-1.20`
+- `aws-k8s-1.21`
 
 We also have a variant designed to work with ECS, currently in preview:
 
