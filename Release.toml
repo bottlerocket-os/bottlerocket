@@ -52,4 +52,5 @@ version = "1.1.1"
     "migrate_v1.1.2_kubelet-container-log.lz4",
     "migrate_v1.1.2_kubelet-system-reserved.lz4",
     "migrate_v1.1.2_admin-container-v0-7-1.lz4",
+    "migrate_v1.1.2_control-container-v0-5-1.lz4",
 ]
