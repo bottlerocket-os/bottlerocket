@@ -10,6 +10,7 @@ members = [
     "aws-k8s-1.21",
     "vmware-dev",
     "vmware-k8s-1.20",
+    "vmware-k8s-1.21",
 ]
 
 [profile.dev]

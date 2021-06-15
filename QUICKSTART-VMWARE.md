@@ -1,6 +1,6 @@
 # Using Bottlerocket as a Kubernetes worker node with VMware
 
-> The [VMware variant](variants/README.md#vmware-k8s-120-vmware-kubernetes-120-node) is currently in preview phase and we're looking for [feedback](https://github.com/bottlerocket-os/bottlerocket#contact-us).
+> The [VMware variants](variants/README.md#vmware-k8s-121-vmware-kubernetes-121-node) are currently in preview phase and we're looking for [feedback](https://github.com/bottlerocket-os/bottlerocket#contact-us).
 > Please try it out and let us know what you think!
 
 This quickstart will walk through joining a Bottlerocket VM guest to an existing Kubernetes cluster running in VMware.
@@ -47,7 +47,7 @@ sha512sum -c <<<"90393204232a1ad6b0a45528b1f7df1a3e37493b1e05b1c149f081849a292c8
 Next, set your desired version and variant, and download the OVA:
 ```
 VERSION="v1.1.0"
-VARIANT="vmware-k8s-1.20"
+VARIANT="vmware-k8s-1.21"
 OVA="bottlerocket-${VARIANT}-x86_64-${VERSION}.ova"
 
 tuftool download . --target-name "${OVA}" \
