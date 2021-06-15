@@ -2,9 +2,9 @@
 %global gorepo cli
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 19.03.15
+%global gover 20.10.4
 %global rpmver %{gover}
-%global gitrev eeec7e566a2d8e9c30b141bad529d54f2d46c71c
+%global gitrev d3cb89ee53287cf9214ad5fbc9a111190f607c72
 
 %global source_date_epoch 1492525740
 
@@ -16,7 +16,7 @@ Release: 1%{?dist}
 Summary: Docker CLI
 License: Apache-2.0
 URL: https://%{goimport}
-Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
+Source0: https://%{goimport}/archive/v%{gover}/cli-%{gover}.tar.gz
 Source1000: clarify.toml
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel

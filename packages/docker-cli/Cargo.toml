@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/docker/cli/archive/v19.03.15/cli-19.03.15.tar.gz"
-sha512 = "163f67a11b1d976eb91c84e59eb1fabf3f26b360ac726bb0bedb9a1532ef807b665f7461f52f6b236cb8af955af042466070800cd4d09b7a6b90092daf718b41"
+url = "https://github.com/docker/cli/archive/v20.10.4/cli-20.10.4.tar.gz"
+sha512 = "861f69657ac3eede228983b7d845ce98c81f4b0aa601aab37024d3f21cf1ca73a182d33bdde8fb9ad89e4954c3903dc4ec2b81fcf7364941a7c38a80ea410e34"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
