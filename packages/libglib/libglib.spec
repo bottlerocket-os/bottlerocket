@@ -1,5 +1,5 @@
 Name: %{_cross_os}libglib
-Version: 2.68.1
+Version: 2.68.3
 Release: 1%{?dist}
 Summary: The GLib libraries
 License: LGPL-2.1-or-later
