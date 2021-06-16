@@ -272,38 +272,30 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		// Set the destination name for the container persistent storage location
 		persistentDir := cType.PersistentDir()
 
-		// Set up the container spec. See `withSuperpowered` for conditional options
-		// set when configured as superpowered.
-		ctrOpts := containerd.WithNewSpec(
+		specOpts := []oci.SpecOpts{
 			oci.WithImageConfig(img),
 			oci.WithHostNamespace(runtimespec.NetworkNamespace),
 			oci.WithHostHostsFile,
 			oci.WithHostResolvconf,
-			// Mount in the API socket for the Bottlerocket API server, and the API
-			// client used to interact with it
-			oci.WithMounts([]runtimespec.Mount{
-				{
-					Options:     []string{"bind", "rw"},
-					Destination: "/run/api.sock",
-					Source:      "/run/api.sock",
-				},
-				// Mount in the apiclient to make API calls to the Bottlerocket API server
-				{
-					Options:     []string{"bind", "ro"},
-					Destination: "/usr/local/bin/apiclient",
-					Source:      "/usr/bin/apiclient",
-				}}),
 			// Pass proxy environment variables to this container
 			withProxyEnv(),
-			// Mount in the persistent storage location for this container
-			withPersistentStorage(containerName, persistentDir),
-			// Mount the rootfs with an SELinux label that makes it writable
+			// Add a default set of mounts regardless of the container type
+			withDefaultMounts(containerName, persistentDir),
+			// Mount the container's rootfs with an SELinux label that makes it writable
 			withMountLabel("system_u:object_r:secret_t:s0"),
-			// Include conditional options for superpowered containers.
-			withSuperpowered(superpowered),
-			// Mount the rootfs if superpowered or bootstrap
-			withRootFilesystemMounts(superpowered || cType == bootstrap),
-		)
+		}
+
+		// Select the set of specOpts based on the container type
+		switch {
+		case superpowered:
+			specOpts = append(specOpts, withSuperpowered())
+		case cType == bootstrap:
+			specOpts = append(specOpts, withBootstrap())
+		default:
+			specOpts = append(specOpts, withDefault())
+		}
+
+		ctrOpts := containerd.WithNewSpec(specOpts...)
 
 		// Create the container.
 		container, err = client.NewContainer(
@@ -609,6 +601,48 @@ func newContainerdClient(ctx context.Context, containerdSocket string, namespace
 	return client, nil
 }
 
+// withSuperpowered adds container options to grant administrative privileges
+func withSuperpowered() oci.SpecOpts {
+	return oci.Compose(
+		withPrivilegedMounts(),
+		withRootFsShared(),
+		oci.WithHostNamespace(runtimespec.PIDNamespace),
+		oci.WithParentCgroupDevices,
+		oci.WithPrivileged,
+		oci.WithNewPrivileges,
+		oci.WithSelinuxLabel("system_u:system_r:super_t:s0"),
+		oci.WithAllDevicesAllowed,
+	)
+}
+
+// withBootstrap adds container options to grant read-write access to the underlying
+// root filesystem, as well as to manage the devices attached to the
+// host
+func withBootstrap() oci.SpecOpts {
+	return oci.Compose(
+		withPrivilegedMounts(),
+		withRootFsShared(),
+		oci.WithSelinuxLabel("system_u:system_r:control_t:s0"),
+		// Bootstrap containers don't require all "privileges", we only add the
+		// `CAP_SYS_ADMIN` capability. `WithDefaultProfile` will create the proper
+		// seccomp profile based on the container's capabilities.
+		oci.WithAddedCapabilities([]string{"CAP_SYS_ADMIN"}),
+		seccomp.WithDefaultProfile(),
+		oci.WithAllDevicesAllowed,
+	)
+}
+
+// withDefault adds container options for non-privileged containers
+func withDefault() oci.SpecOpts {
+	return oci.Compose(
+		oci.WithSelinuxLabel("system_u:system_r:control_t:s0"),
+		// Non-privileged containers only have access to a subset of the devices
+		oci.WithDefaultUnixDevices,
+		// No additional capabilities required for non-privileged containers
+		seccomp.WithDefaultProfile(),
+	)
+}
+
 // withMountLabel configures the mount with the provided SELinux label.
 func withMountLabel(label string) oci.SpecOpts {
 	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
@@ -619,81 +653,132 @@ func withMountLabel(label string) oci.SpecOpts {
 	}
 }
 
-// withSuperpowered add container options granting administrative privileges
-// when it's `superpowered`.
-func withSuperpowered(superpowered bool) oci.SpecOpts {
-	if !superpowered {
-		// Set the `control_t` process label so the host container can
-		// interact with the API and modify its local state files.
-		return oci.Compose(
-			seccomp.WithDefaultProfile(),
-			oci.WithSelinuxLabel("system_u:system_r:control_t:s0"),
-		)
+// withDefaultMounts adds the mount configurations required in all container types,
+// all default mounts are set up with rprivate propagations
+func withDefaultMounts(containerID string, persistentDir string) oci.SpecOpts {
+	var mounts = []runtimespec.Mount{
+		// Local persistent storage for the container
+		{
+			Options:     []string{"rbind", "rw"},
+			Destination: fmt.Sprintf("/.bottlerocket/%s/%s", persistentDir, containerID),
+			Source:      fmt.Sprintf("/local/%s/%s", persistentDir, containerID),
+		},
+		// Mount in the API socket for the Bottlerocket API server, and the API
+		// client used to interact with it
+		{
+			Options:     []string{"bind", "rw"},
+			Destination: "/run/api.sock",
+			Source:      "/run/api.sock",
+		},
+		// Mount in the apiclient to make API calls to the Bottlerocket API server
+		{
+			Options:     []string{"bind", "ro"},
+			Destination: "/usr/local/bin/apiclient",
+			Source:      "/usr/bin/apiclient",
+		},
+		// Cgroup filesystem for this container
+		{
+			Destination: "/sys/fs/cgroup",
+			Type:        "cgroup",
+			Source:      "cgroup",
+			Options:     []string{"ro", "nosuid", "noexec", "nodev"},
+		},
 	}
 
-	return oci.Compose(
-		oci.WithHostNamespace(runtimespec.PIDNamespace),
-		oci.WithParentCgroupDevices,
-		oci.WithPrivileged,
-		oci.WithNewPrivileges,
-		oci.WithSelinuxLabel("system_u:system_r:super_t:s0"),
-		oci.WithAllDevicesAllowed,
-	)
-}
-
-// withRootFileSystemMounts adds container options to mount the root filesystem
-func withRootFilesystemMounts(mountRootFilesystem bool) oci.SpecOpts {
-	// if mountRootFilesystem, return a no-op SpecOpts function
-	if !mountRootFilesystem {
-		return func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
-			return nil
-		}
-	}
-
-	return oci.Compose(
-		oci.WithMounts([]runtimespec.Mount{
-			{
-				Options:     []string{"rbind", "ro"},
-				Destination: "/.bottlerocket/rootfs",
-				Source:      "/",
-			},
-			{
-				Options:     []string{"rbind", "ro"},
-				Destination: "/lib/modules",
-				Source:      "/lib/modules",
-			},
-			{
-				Options:     []string{"rbind", "rw"},
-				Destination: "/usr/src/kernels",
-				Source:      "/usr/src/kernels",
-			},
-			{
-				Options:     []string{"rbind"},
-				Destination: "/sys/kernel/debug",
-				Source:      "/sys/kernel/debug",
-			},
-		}),
-	)
-}
-
-// withPersistentStorage add persistent storage location that matches the container name
-// (legacy location) and a generically named `current` dir. The `current` dir was added for easier
-// referencing in Dockerfiles and scripts. If a host container is also named `current` this function
-// will only add a single `current` mount to the spec.
-func withPersistentStorage(containerID string, persistentDir string) oci.SpecOpts {
-	var persistentMounts = []runtimespec.Mount{{
-		Options:     []string{"rbind", "rw"},
-		Destination: fmt.Sprintf("/.bottlerocket/%s/%s", persistentDir, containerID),
-		Source:      fmt.Sprintf("/local/%s/%s", persistentDir, containerID),
-	}}
+	// The `current` dir was added for easier referencing in Dockerfiles and scripts.
+	// If a host container is also named `current`, only add a single `current` mount
+	// to the spec.
 	if containerID != "current" {
-		persistentMounts = append(persistentMounts, runtimespec.Mount{
+		mounts = append(mounts, runtimespec.Mount{
 			Options:     []string{"rbind", "rw"},
 			Destination: fmt.Sprintf("/.bottlerocket/%s/current", persistentDir),
 			Source:      fmt.Sprintf("/local/%s/%s", persistentDir, containerID),
 		})
 	}
-	return oci.Compose(oci.WithMounts(persistentMounts))
+
+	// Use withMounts to make sure all mounts have rprivate propagations
+	return withMounts(mounts)
+}
+
+// withPrivilegedMounts adds options to grant access to the host root filesystem
+func withPrivilegedMounts() oci.SpecOpts {
+	// Use withMounts to force rprivate when no propagation configurations
+	// are set
+	return withMounts([]runtimespec.Mount{
+		{
+			Options:     []string{"rbind", "ro"},
+			Destination: "/.bottlerocket/rootfs",
+			Source:      "/",
+			Type:        "bind",
+		},
+		{
+			Options:     []string{"rbind", "ro"},
+			Destination: "/lib/modules",
+			Source:      "/lib/modules",
+			Type:        "bind",
+		},
+		{
+			Options:     []string{"rbind", "rw"},
+			Destination: "/usr/src/kernels",
+			Source:      "/usr/src/kernels",
+			Type:        "bind",
+		},
+		{
+			Options:     []string{"rbind"},
+			Destination: "/sys/kernel/debug",
+			Source:      "/sys/kernel/debug",
+			Type:        "bind",
+		},
+		// Use shared propagations so mounts in this mount point propagate
+		// across the peer group
+		{
+			Options:     []string{"rbind", "rshared"},
+			Destination: "/.bottlerocket/rootfs/mnt",
+			Source:      "/mnt",
+			Type:        "bind",
+		},
+	})
+}
+
+// withMounts sets the mounts' propagations as rprivate only when the
+// mounts' options don't have propagations settings
+func withMounts(mounts []runtimespec.Mount) oci.SpecOpts {
+	finalMounts := []runtimespec.Mount{}
+
+	for _, mount := range mounts {
+		// Only set rprivate when no propagations are configured for
+		// the mount
+		if !hasPropagation(mount) {
+			// Update the local mount copy instead of the original
+			mount.Options = append(mount.Options, "rprivate")
+		}
+		finalMounts = append(finalMounts, mount)
+	}
+
+	return oci.WithMounts(finalMounts)
+}
+
+// hasPropagation checks if the mount has propagation options
+func hasPropagation(mount runtimespec.Mount) bool {
+	// Propagations can be shared, rshared, private, rprivate, slave, rslave
+	for _, option := range mount.Options {
+		switch option {
+		case "shared", "rshared", "private", "rprivate", "slave", "rslave":
+			return true
+		}
+	}
+
+	return false
+}
+
+// withRootFsShared sets the rootfs mount propagation as `rshared`
+func withRootFsShared() oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
+		if s.Linux != nil {
+			s.Linux.RootfsPropagation = "rshared"
+		}
+		return nil
+	}
 }
 
 // withProxyEnv reads proxy environment variables and returns a spec option for passing said proxy environment variables
