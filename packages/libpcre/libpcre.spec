@@ -1,5 +1,5 @@
 Name: %{_cross_os}libpcre
-Version: 10.36
+Version: 10.37
 Release: 1%{?dist}
 Summary: Library for regular expressions
 License: BSD-3-Clause
