@@ -1,4 +1,4 @@
-From a9b47eefff71b9beff19b0cdb2abbc7d17909c13 Mon Sep 17 00:00:00 2001
+From 58a3f6b6b64db3054c225e1081d66273a9fc2a2b Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 26 Mar 2021 17:05:21 -0700
 Subject: [PATCH 4/5] bottlerocket: remove unsupported CNI plugins
@@ -21,5 +21,5 @@ index 42c947015..917a61ecc 100644
  }
  
 -- 
-2.31.1
+2.32.0
 

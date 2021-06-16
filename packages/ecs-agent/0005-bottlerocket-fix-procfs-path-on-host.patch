@@ -1,4 +1,4 @@
-From 946f81a14b25d538abc57183a1f45aacea2daffa Mon Sep 17 00:00:00 2001
+From a07bc91f65387a0c4472796a9c673e52596a601f Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 26 Mar 2021 17:48:28 -0700
 Subject: [PATCH 5/5] bottlerocket: fix procfs path on host
@@ -27,5 +27,5 @@ index 8561eb51b..957aa3877 100644
  	ECSIPAMPluginName = "ecs-ipam"
  	// ECSBridgePluginName is the binary of the bridge plugin
 -- 
-2.31.1
+2.32.0
 
