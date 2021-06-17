@@ -1436,7 +1436,6 @@ dependencies = [
  "log",
  "reqwest",
  "serde_json",
- "simplelog",
  "snafu",
  "tokio",
  "tokio-test",
