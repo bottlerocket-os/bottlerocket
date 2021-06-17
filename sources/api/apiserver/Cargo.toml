@@ -19,7 +19,7 @@ http = "0.2.1"
 libc = "0.2"
 log = "0.4"
 models = { path = "../../models" }
-nix = "0.20.0"
+nix = "0.21"
 num = "0.4"
 percent-encoding = "2.1"
 semver = "1.0"

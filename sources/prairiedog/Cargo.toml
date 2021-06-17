@@ -11,7 +11,7 @@ exclude = ["README.md"]
 [dependencies]
 argh = "0.1.3"
 log = "0.4"
-nix = "0.20.0"
+nix = "0.21"
 signpost = { path = "../updater/signpost" }
 simplelog = "0.10"
 snafu = "0.6"

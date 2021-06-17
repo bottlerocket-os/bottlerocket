@@ -13,7 +13,7 @@ exclude = ["README.md"]
 bottlerocket-release = { path = "../../../bottlerocket-release" }
 log = "0.4"
 lz4 = "1.23.1"
-nix = "0.20.0"
+nix = "0.21"
 pentacle = "1.0.0"
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1.1"
