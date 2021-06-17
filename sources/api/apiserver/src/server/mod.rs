@@ -6,7 +6,8 @@ mod error;
 pub use error::Error;
 
 use actix_web::{
-    error::ResponseError, web, App, FromRequest, HttpRequest, HttpResponse, HttpServer, Responder,
+    body::Body, error::ResponseError, web, App, BaseHttpResponse, FromRequest, HttpRequest,
+    HttpResponse, HttpServer, Responder,
 };
 use bottlerocket_release::BottlerocketRelease;
 use datastore::{Committed, FilesystemDataStore, Key, Value};
@@ -75,9 +76,7 @@ where
             // ResponseError implementation.  This configuration of the Json extractor allows us to
             // add the error message into the response.
             .app_data(web::Json::<Settings>::configure(|cfg| {
-                cfg.error_handler(|err, _req| {
-                    HttpResponse::BadRequest().body(err.to_string()).into()
-                })
+                cfg.error_handler(|err, _req| actix_web::Error::from(err))
             }))
             // This makes the data store available to API methods merely by having a Data
             // parameter.
@@ -444,64 +443,62 @@ fn transaction_name(query: &web::Query<HashMap<String, String>>) -> &str {
 // Can also override `render_response` if we want to change headers, content type, etc.
 impl ResponseError for error::Error {
     /// Maps our error types to the HTTP error code they should return.
-    fn error_response(&self) -> HttpResponse {
+    fn error_response(&self) -> BaseHttpResponse<Body> {
         use error::Error::*;
-        match self {
+        let status_code = match self {
             // 400 Bad Request
-            MissingInput { .. } => HttpResponse::BadRequest(),
-            EmptyInput { .. } => HttpResponse::BadRequest(),
-            NewKey { .. } => HttpResponse::BadRequest(),
+            MissingInput { .. } => StatusCode::BAD_REQUEST,
+            EmptyInput { .. } => StatusCode::BAD_REQUEST,
+            NewKey { .. } => StatusCode::BAD_REQUEST,
 
             // 404 Not Found
-            MissingData { .. } => HttpResponse::NotFound(),
-            ListKeys { .. } => HttpResponse::NotFound(),
-            UpdateDoesNotExist { .. } => HttpResponse::NotFound(),
-            NoStagedImage { .. } => HttpResponse::NotFound(),
-            UninitializedUpdateStatus { .. } => HttpResponse::NotFound(),
+            MissingData { .. } => StatusCode::NOT_FOUND,
+            ListKeys { .. } => StatusCode::NOT_FOUND,
+            UpdateDoesNotExist { .. } => StatusCode::NOT_FOUND,
+            NoStagedImage { .. } => StatusCode::NOT_FOUND,
+            UninitializedUpdateStatus { .. } => StatusCode::NOT_FOUND,
 
             // 422 Unprocessable Entity
-            CommitWithNoPending => HttpResponse::UnprocessableEntity(),
+            CommitWithNoPending => StatusCode::UNPROCESSABLE_ENTITY,
 
             // 423 Locked
-            UpdateShareLock { .. } => HttpResponse::build(StatusCode::LOCKED),
-            UpdateLockHeld { .. } => HttpResponse::build(StatusCode::LOCKED),
+            UpdateShareLock { .. } => StatusCode::LOCKED,
+            UpdateLockHeld { .. } => StatusCode::LOCKED,
 
             // 409 Conflict
-            DisallowCommand { .. } => HttpResponse::Conflict(),
+            DisallowCommand { .. } => StatusCode::CONFLICT,
 
             // 500 Internal Server Error
-            DataStoreLock => HttpResponse::InternalServerError(),
-            ResponseSerialization { .. } => HttpResponse::InternalServerError(),
-            BindSocket { .. } => HttpResponse::InternalServerError(),
-            ServerStart { .. } => HttpResponse::InternalServerError(),
-            ListedKeyNotPresent { .. } => HttpResponse::InternalServerError(),
-            DataStore { .. } => HttpResponse::InternalServerError(),
-            Deserialization { .. } => HttpResponse::InternalServerError(),
-            DataStoreSerialization { .. } => HttpResponse::InternalServerError(),
-            CommandSerialization { .. } => HttpResponse::InternalServerError(),
-            InvalidMetadata { .. } => HttpResponse::InternalServerError(),
-            ConfigApplierFork { .. } => HttpResponse::InternalServerError(),
-            ConfigApplierStart { .. } => HttpResponse::InternalServerError(),
-            ConfigApplierStdin {} => HttpResponse::InternalServerError(),
-            ConfigApplierWait { .. } => HttpResponse::InternalServerError(),
-            ConfigApplierWrite { .. } => HttpResponse::InternalServerError(),
-            SystemdNotify { .. } => HttpResponse::InternalServerError(),
-            SystemdNotifyStatus {} => HttpResponse::InternalServerError(),
-            SetPermissions { .. } => HttpResponse::InternalServerError(),
-            SetGroup { .. } => HttpResponse::InternalServerError(),
-            ReleaseData { .. } => HttpResponse::InternalServerError(),
-            Shutdown { .. } => HttpResponse::InternalServerError(),
-            Reboot { .. } => HttpResponse::InternalServerError(),
-            UpdateDispatcher { .. } => HttpResponse::InternalServerError(),
-            UpdateError { .. } => HttpResponse::InternalServerError(),
-            UpdateStatusParse { .. } => HttpResponse::InternalServerError(),
-            UpdateInfoParse { .. } => HttpResponse::InternalServerError(),
-            UpdateLockOpen { .. } => HttpResponse::InternalServerError(),
-        }
-        // Include the error message in the response, and for all error types.  The Bottlerocket
-        // API is only exposed locally, and only on the host filesystem and to authorized
-        // containers, so we're not worried about exposing error details.
-        .body(self.to_string())
+            DataStoreLock => StatusCode::INTERNAL_SERVER_ERROR,
+            ResponseSerialization { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            BindSocket { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ServerStart { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ListedKeyNotPresent { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            DataStore { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            Deserialization { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            DataStoreSerialization { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            CommandSerialization { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            InvalidMetadata { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ConfigApplierFork { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ConfigApplierStart { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ConfigApplierStdin {} => StatusCode::INTERNAL_SERVER_ERROR,
+            ConfigApplierWait { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ConfigApplierWrite { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            SystemdNotify { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            SystemdNotifyStatus {} => StatusCode::INTERNAL_SERVER_ERROR,
+            SetPermissions { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            SetGroup { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ReleaseData { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            Shutdown { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            Reboot { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            UpdateDispatcher { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            UpdateError { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            UpdateStatusParse { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            UpdateInfoParse { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            UpdateLockOpen { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+
+        BaseHttpResponse::new(status_code)
     }
 }
 
@@ -520,7 +517,7 @@ macro_rules! impl_responder_for {
             fn respond_to($self, _req: &HttpRequest) -> HttpResponse {
                 let body = match serde_json::to_string(&$serialize_expr) {
                     Ok(s) => s,
-                    Err(e) => return Error::ResponseSerialization { source: e }.error_response(),
+                    Err(e) => return Error::ResponseSerialization { source: e }.into(),
                 };
                 HttpResponse::Ok()
                     .content_type("application/json")

@@ -1,3 +1,4 @@
+use actix_web::{HttpResponseBuilder, ResponseError};
 use datastore::{self, deserialization, serialization};
 use nix::unistd::Gid;
 use snafu::Snafu;
@@ -175,3 +176,12 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl From<Error> for actix_web::HttpResponse {
+    fn from(e: Error) -> Self {
+        // Include the error message in the response.  The Bottlerocket API is only
+        // exposed locally, and only on the host filesystem and to authorized containers,
+        // so we're not worried about exposing error details.
+        HttpResponseBuilder::new(e.status_code()).body(format!("{}", e))
+    }
+}
