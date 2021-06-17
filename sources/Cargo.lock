@@ -886,7 +886,6 @@ version = "0.1.0"
 dependencies = [
  "cargo-readme",
  "log",
- "models",
  "schnauzer",
  "serde",
  "serde_json",
