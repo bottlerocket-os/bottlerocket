@@ -1,4 +1,4 @@
-From a2815ebd53727361b9baf3e268cc3f0cc7be8717 Mon Sep 17 00:00:00 2001
+From b1b730a48bfb2164b08ffa4a862f2c7621b44b28 Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 21 Aug 2020 11:07:32 -0700
 Subject: [PATCH 3/5] bottlerocket: bind introspection to localhost
@@ -21,5 +21,5 @@ index 07f138a22..bda910f7f 100644
  		ReadTimeout:  readTimeout,
  		WriteTimeout: writeTimeout,
 -- 
-2.31.1
+2.32.0
 

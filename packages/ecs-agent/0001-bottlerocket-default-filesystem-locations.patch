@@ -1,4 +1,4 @@
-From 4ff09d279118bdb6b23233b9fe4d690d42e920df Mon Sep 17 00:00:00 2001
+From c6cbf43d62a587b7a7672b726c4513005c9b77e8 Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Wed, 8 Jul 2020 11:18:35 -0700
 Subject: [PATCH 1/5] bottlerocket: default filesystem locations
@@ -11,7 +11,7 @@ Subject: [PATCH 1/5] bottlerocket: default filesystem locations
  4 files changed, 9 insertions(+), 9 deletions(-)
 
 diff --git a/agent/config/config.go b/agent/config/config.go
-index b2fb2f76b..5bc67c352 100644
+index 3178c63f2..810eb31b4 100644
 --- a/agent/config/config.go
 +++ b/agent/config/config.go
 @@ -51,7 +51,7 @@ const (
@@ -40,7 +40,7 @@ index b2fb2f76b..5bc67c352 100644
  	// DefaultTaskMetadataSteadyStateRate is set as 40. This is arrived from our benchmarking
  	// results where task endpoint can handle 4000 rps effectively. Here, 100 containers
 diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
-index 5eaac5dee..c01f84ffe 100644
+index 080f18c4d..ef14970ce 100644
 --- a/agent/config/config_unix.go
 +++ b/agent/config/config_unix.go
 @@ -27,7 +27,7 @@ const (
@@ -92,5 +92,5 @@ index 6eccff6ac..324307cd3 100644
  
  var readFile = ioutil.ReadFile
 -- 
-2.31.1
+2.32.0
 
