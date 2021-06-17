@@ -289,7 +289,7 @@ dependencies = [
  "nix 0.20.0",
  "num",
  "percent-encoding",
- "semver 0.11.0",
+ "semver 1.0.3",
  "serde",
  "serde_json",
  "simplelog",
@@ -495,7 +495,7 @@ dependencies = [
  "cargo-readme",
  "envy",
  "log",
- "semver 0.11.0",
+ "semver 1.0.3",
  "serde",
  "snafu",
 ]
@@ -1729,7 +1729,7 @@ dependencies = [
  "pentacle",
  "rand",
  "regex",
- "semver 0.11.0",
+ "semver 1.0.3",
  "simplelog",
  "snafu",
  "storewolf",
@@ -1799,7 +1799,7 @@ dependencies = [
  "model-derive",
  "rand",
  "regex",
- "semver 0.11.0",
+ "semver 1.0.3",
  "serde",
  "serde_plain",
  "snafu",
@@ -2619,16 +2619,15 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
- "semver-parser 0.7.0",
+ "semver-parser",
 ]
 
 [[package]]
 name = "semver"
-version = "0.11.0"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f301af10236f6df4160f7c3f04eec6dbc70ace82d23326abad5edee88801c6b6"
+checksum = "5f3aac57ee7f3272d8395c6e4f502f434f0e289fcd62876f70daa008c20dcabe"
 dependencies = [
- "semver-parser 0.10.2",
  "serde",
 ]
 
@@ -2637,15 +2636,6 @@ name = "semver-parser"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
-
-[[package]]
-name = "semver-parser"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00b0bef5b7f9e0df16536d3961cfb6e84331c065b4066afb39768d0e319411f7"
-dependencies = [
- "pest",
-]
 
 [[package]]
 name = "serde"
@@ -3015,7 +3005,7 @@ dependencies = [
  "merge-toml",
  "models",
  "rand",
- "semver 0.11.0",
+ "semver 1.0.3",
  "simplelog",
  "snafu",
  "toml",
@@ -3181,7 +3171,7 @@ dependencies = [
  "nix 0.20.0",
  "num-derive",
  "num-traits",
- "semver 0.11.0",
+ "semver 1.0.3",
  "serde",
  "serde_json",
  "serde_plain",
@@ -3489,7 +3479,7 @@ dependencies = [
  "chrono",
  "parse-datetime",
  "regex",
- "semver 0.11.0",
+ "semver 1.0.3",
  "serde",
  "serde_json",
  "serde_plain",
@@ -3508,7 +3498,7 @@ dependencies = [
  "models",
  "rand",
  "reqwest",
- "semver 0.11.0",
+ "semver 1.0.3",
  "serde",
  "serde_json",
  "serde_plain",

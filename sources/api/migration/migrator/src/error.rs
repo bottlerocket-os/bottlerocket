@@ -33,13 +33,13 @@ pub(crate) enum Error {
     #[snafu(display("Data store path '{}' contains invalid version: {}", path.display(), source))]
     InvalidDataStoreVersion {
         path: PathBuf,
-        source: semver::SemVerError,
+        source: semver::Error,
     },
 
     #[snafu(display("Migration '{}' contains invalid version: {}", path.display(), source))]
     InvalidMigrationVersion {
         path: PathBuf,
-        source: semver::SemVerError,
+        source: semver::Error,
     },
 
     #[snafu(display("Data store for new version {} already exists at {}", version, path.display()))]

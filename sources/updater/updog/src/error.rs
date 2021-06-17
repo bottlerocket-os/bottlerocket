@@ -16,7 +16,7 @@ pub(crate) enum Error {
     ))]
     BadVersion {
         version_str: String,
-        source: semver::SemVerError,
+        source: semver::Error,
     },
 
     #[snafu(display("Bad version string '{}' in config: {}", version_str, source))]
