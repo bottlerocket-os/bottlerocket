@@ -1,5 +1,5 @@
 Name: %{_cross_os}libtirpc
-Version: 1.3.1
+Version: 1.3.2
 Release: 1%{?dist}
 Summary: Library for RPC
 License: BSD-3-Clause

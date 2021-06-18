@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/opencontainers/runc/archive/12644e614e25b05da6fd08a38ffa0cfe1903fdec/runc-12644e614e25b05da6fd08a38ffa0cfe1903fdec.tar.gz"
-sha512 = "babfd3ef2d18c27ba64c147037e8b48a3c9c42ed39af1cd83d887d9827f224b0de89233a61de0de81276059ed96a3e050abec4d550b20bd6905731a541266f42"
+url = "https://github.com/opencontainers/runc/archive/b9ee9c6314599f1b4a7f497e1f1f856fe433d3b7/runc-b9ee9c6314599f1b4a7f497e1f1f856fe433d3b7.tar.gz"
+sha512 = "ebc67bbc825aa6d7a51e9504d3b4f41794861c06a18288395c035c1b6929e9fb1bae0dcf1b14d9120b651f4a63fdcd6ce8e575a2e84bf819d0d0d1d1cb4e2bae"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

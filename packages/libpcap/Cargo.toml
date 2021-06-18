@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "http://www.tcpdump.org/release/libpcap-1.10.0.tar.gz"
-sha512 = "007710386ff3435ef97fc99293076eae3c39b424e986141184c712b0285f8589357a1b25085f7eba28730de04312042c724d193934a399797e95a56f5301da7f"
+url = "http://www.tcpdump.org/release/libpcap-1.10.1.tar.gz"
+sha512 = "56c314f19c2b857742bf8abcb1e78066986aaa95cec339b75a3c8b70a9fa2b5167da98708352f9ec97a1cea2700cfb4e040bda108d58ac46cec9b7deab88d171"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

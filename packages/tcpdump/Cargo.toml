@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "http://www.tcpdump.org/release/tcpdump-4.99.0.tar.gz"
-sha512 = "03a434ec41c0026f237bc1e7a928b7ce67dbc342a8d982caded93d987bd356faf706a9d884231bd94f5e2a8580499fe95a28728e37a6672e371a1501ec5d6f79"
+url = "http://www.tcpdump.org/release/tcpdump-4.99.1.tar.gz"
+sha512 = "53d31355e1a6ef5a65bb3bf72454169fc80adf973a327a5768840e6ccf0550fbeb3c8a41f959635076d871df0619680321910a3a97879607f481cdaa8b7ceda7"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

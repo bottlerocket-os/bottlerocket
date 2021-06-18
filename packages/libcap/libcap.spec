@@ -1,5 +1,5 @@
 Name: %{_cross_os}libcap
-Version: 2.49
+Version: 2.50
 Release: 1%{?dist}
 Summary: Library for getting and setting POSIX.1e capabilities
 License: GPL-2.0-only OR BSD-3-Clause

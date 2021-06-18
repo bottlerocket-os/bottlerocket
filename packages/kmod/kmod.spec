@@ -1,5 +1,5 @@
 Name: %{_cross_os}kmod
-Version: 28
+Version: 29
 Release: 1%{?dist}
 Summary: Tools for kernel module loading and unloading
 License: GPL-2.0-or-later AND LGPL-2.1-or-later

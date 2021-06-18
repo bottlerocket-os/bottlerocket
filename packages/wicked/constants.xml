@@ -179,16 +179,17 @@
   <repeater value="5"/>
   <secondary value="6"/>
   <monitor value="7"/>
+  <mesh value="8"/>
+  <p2p value="9"/>
 </define>
 <define name="builtin-wireless-security" type="uint32" constraint="enum">
   <default value="0"/>
   <restricted value="1"/>
   <open value="2"/>
 </define>
-<define name="builtin-wireless-auth" type="uint32" constraint="enum">
-  <default value="0"/>
-  <wpa1 value="1"/>
-  <wpa2 value="2"/>
+<define name="builtin-wireless-auth-proto" type="uint32" constraint="enum">
+  <wpa value="0"/>
+  <wpa2 value="1"/>
 </define>
 <define name="builtin-wireless-auth-algo" type="uint32" constraint="enum">
   <open value="1"/>
@@ -203,6 +204,13 @@
   <wrap value="4"/>
   <ccmp value="5"/>
   <wep104 value="6"/>
+  <ccmp-256 value="7"/>
+  <gcmp-256 value="8"/>
+  <gcmp value="9"/>
+  <aes-128-cmac value="10"/>
+  <bip-gmac-128 value="11"/>
+  <bip-gmac-256 value="12"/>
+  <bip-cmac-256 value="13"/>
 </define>
 <define name="builtin-key-mgmt" type="uint32" constraint="enum">
   <none value="0"/>
@@ -210,6 +218,23 @@
   <wpa-psk value="2"/>
   <ieee802-1x value="3"/>
   <proprietary value="4"/>
+  <ft-psk value="5"/>
+  <ft-eap value="6"/>
+  <ft-eap-sha384 value="7"/>
+  <wpa-psk-sha256 value="8"/>
+  <wpa-eap-sha256 value="9"/>
+  <sae value="10"/>
+  <ft-sae value="11"/>
+  <wps value="12"/>
+  <wpa-eap-suite-b value="13"/>
+  <wpa-eap-suite-b-192 value="14"/>
+  <osem value="15"/>
+  <fils-sha256 value="16"/>
+  <fils-sha384 value="17"/>
+  <ft-fils-sha256 value="18"/>
+  <ft-fils-sha384 value="19"/>
+  <owe value="20"/>
+  <dpp value="21"/>
 </define>
 <define name="builtin-eap-method" type="uint32" constraint="enum">
   <none value="0"/>
@@ -236,7 +261,12 @@
   <aka_prime value="21"/>
   <sim value="22"/>
 </define>
-
+<define name="builtin-wireless-assoc-state" type="uint32" constraint="enum">
+  <not-associated value="0"/>
+  <associating value="1"/>
+  <authenticating value="2"/>
+  <established value="3"/>
+</define>
 
 <!-- The same as above, except as a bitmask (to express the list of supported modes) -->
 <define name="builtin-wireless-security-mask" type="uint32" constraint="bitmap">
@@ -244,10 +274,9 @@
   <restricted bit="1"/>
   <open bit="2"/>
 </define>
-<define name="builtin-wireless-auth-mask" type="uint32" constraint="bitmap">
-  <default bit="0"/>
-  <wpa1 bit="1"/>
-  <wpa2 bit="2"/>
+<define name="builtin-wireless-auth-proto-mask" type="uint32" constraint="bitmap">
+  <wpa bit="0"/>
+  <wpa2 bit="1"/>
 </define>
 <define name="builtin-wireless-auth-algo-mask" type="uint32" constraint="bitmap">
   <open bit="1"/>
@@ -262,13 +291,37 @@
   <wrap bit="4"/>
   <ccmp bit="5"/>
   <wep104 bit="6"/>
+  <ccmp-256 bit="7"/>
+  <gcmp-256 bit="8"/>
+  <gcmp bit="9"/>
+  <aes-128-cmac bit="10"/>
+  <bip-gmac-128 bit="11"/>
+  <bip-gmac-256 bit="12"/>
+  <bip-cmac-256 bit="13"/>
 </define>
-<define name="builtin-key-mgmt-mask" type="uint32" constraint="bitmap">
+<define name="builtin-wireless-key-mgmt-mask" type="uint32" constraint="bitmap">
   <none bit="0"/>
   <wpa-eap bit="1"/>
   <wpa-psk bit="2"/>
   <ieee802-1x bit="3"/>
   <proprietary bit="4"/>
+  <ft-psk bit="5"/>
+  <ft-eap bit="6"/>
+  <ft-eap-sha384 bit="7"/>
+  <wpa-psk-sha256 bit="8"/>
+  <wpa-eap-sha256 bit="9"/>
+  <sae bit="10"/>
+  <ft-sae bit="11"/>
+  <wps bit="12"/>
+  <wpa-eap-suite-b bit="13"/>
+  <wpa-eap-suite-b-192 bit="14"/>
+  <osem bit="15"/>
+  <fils-sha256 bit="16"/>
+  <fils-sha384 bit="17"/>
+  <ft-fils-sha256 bit="18"/>
+  <ft-fils-sha384 bit="19"/>
+  <owe bit="20"/>
+  <dpp bit="21"/>
 </define>
 <define name="builtin-eap-method-mask" type="uint32" constraint="bitmap">
   <none bit="0"/>
@@ -295,7 +348,23 @@
   <aka_prime bit="21"/>
   <sim bit="22"/>
 </define>
-
+<define name="builtin-wireless-oper-mode-mask" type="uint32" constraint="bitmap">
+  <unknown bit="0"/>
+  <auto bit="1"/>
+  <ad-hoc bit="2"/>
+  <infrastructure bit="3"/>
+  <ap bit="4"/>
+  <repeater bit="5"/>
+  <secondary bit="6"/>
+  <monitor bit="7"/>
+  <mesh bit="8"/>
+  <p2p bit="9"/>
+</define>
+<define name="builtin-wireless-scan-mode-mask" type="uint32" constraint="bitmap">
+  <active bit="0"/>
+  <passive bit="1"/>
+  <ssid bit="2"/>
+</define>
 
 <!-- Built-in bonding modes -->
 <define name="builtin-bonding-mode" type="uint32" constraint="enum">
