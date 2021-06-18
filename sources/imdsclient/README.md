@@ -2,11 +2,19 @@
 
 Current version: 0.1.0
 
-The imdsclient library provides high-level methods to interact with the AWS Instance Metadata Service.
-The high-level methods provided are [`fetch_dynamic`], [`fetch_metadata`], and [`fetch_userdata`].
+`imdsclient` provides high-level methods to interact with the AWS Instance Metadata Service (IMDS).
 
-For more control, and to query IMDS without high-level wrappers, there is also a [`fetch_imds`] method.
-This method is useful for specifying things like a pinned date for the IMDS schema version.
+The library uses IMDSv2 (session-oriented) requests over a pinned schema to guarantee compatibility.
+Session tokens are fetched automatically and refreshed if the request receives a `401` response.
+
+Each public method is explicitly targeted and return either bytes or a `String`.
+
+For example, if we need a piece of metadata, like `instance_type`, a method `fetch_instance_type`,
+will create an IMDSv2 session _(if one does not already exist)_ and send a request to:
+
+`http://169.254.169.254/2021-01-03/meta-data/instance-type`
+
+The result is returned as a `String` _(ex. m5.large)_.
 
 ## Colophon
 
