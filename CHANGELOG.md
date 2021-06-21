@@ -1,3 +1,78 @@
+# v1.1.2 (2021-06-25)
+
+With this release, the aws-ecs-1 variant has graduated from preview status and is now generally available.
+It's been updated to include Docker 20.10.
+:tada:
+
+## OS Changes
+
+* Add aws-k8s-1.21 variant with Kubernetes 1.21 support ([#1612])
+* Add settings for configuring kubelet containerLogMaxFiles and containerLogMaxSize ([#1589]) (Thanks, @samjo-nyang!)
+* Add settings for configuring kubelet systemReserved ([#1606])
+* Add kdump support, enabled by default in VMware variants ([#1596])
+* In host containers, allow mount propagations from privileged containers ([#1601])
+* Mark ipv6 lease as optional for eth0 ([#1602])
+* Add recommended device filters to open-vm-tools ([#1603])
+* In host container definitions, default "enabled" and "superpowered" to false ([#1580])
+* Allow pubsys refresh-repo to use default key path ([#1575])
+* Update default host containers ([#1609])
+
+## Build Changes
+
+* Add grep package to all variants ([#1562])
+* Update Rust dependencies ([#1623], [#1574])
+* Update third-party packages ([#1619], [#1616], [#1625])
+* In GitHub Actions, pin rust toolchain to match version in SDK ([#1621])
+* Add imdsclient library for querying IMDS ([#1372], [#1598], [#1610])
+* Remove reqwest proxy workaround in metricdog and updog ([#1592])
+* Simplify conditional compilation in early-boot-config ([#1576])
+* Only build shibaken for aws variants ([#1591])
+* Silence tokio mut warning in thar-be-settings ([#1593])
+* Refactor package and variant dependencies ([#1549])
+* Add derive attributes at start of list in model-derive ([#1572])
+* Limit threads during pubsys validate-repo ([#1564])
+
+## Documentation Changes
+
+* Document the deprecation of the aws-k8s-1.16 variant ([#1600])
+* Update README for VMware and add a QUICKSTART-VMWARE ([#1559])
+* Add ap-northeast-3 to supported region list ([#1566])
+* Add details about the two default Bottlerocket volumes to README ([#1588])
+* Document webpki-roots version in webpki-roots-shim ([#1565])
+
+[#1372]: https://github.com/bottlerocket-os/bottlerocket/pull/1372
+[#1549]: https://github.com/bottlerocket-os/bottlerocket/pull/1549
+[#1559]: https://github.com/bottlerocket-os/bottlerocket/pull/1559
+[#1562]: https://github.com/bottlerocket-os/bottlerocket/pull/1562
+[#1564]: https://github.com/bottlerocket-os/bottlerocket/pull/1564
+[#1565]: https://github.com/bottlerocket-os/bottlerocket/pull/1565
+[#1566]: https://github.com/bottlerocket-os/bottlerocket/pull/1566
+[#1572]: https://github.com/bottlerocket-os/bottlerocket/pull/1572
+[#1574]: https://github.com/bottlerocket-os/bottlerocket/pull/1574
+[#1575]: https://github.com/bottlerocket-os/bottlerocket/pull/1575
+[#1576]: https://github.com/bottlerocket-os/bottlerocket/pull/1576
+[#1580]: https://github.com/bottlerocket-os/bottlerocket/pull/1580
+[#1588]: https://github.com/bottlerocket-os/bottlerocket/pull/1588
+[#1589]: https://github.com/bottlerocket-os/bottlerocket/pull/1589
+[#1591]: https://github.com/bottlerocket-os/bottlerocket/pull/1591
+[#1592]: https://github.com/bottlerocket-os/bottlerocket/pull/1592
+[#1593]: https://github.com/bottlerocket-os/bottlerocket/pull/1593
+[#1596]: https://github.com/bottlerocket-os/bottlerocket/pull/1596
+[#1598]: https://github.com/bottlerocket-os/bottlerocket/pull/1598
+[#1600]: https://github.com/bottlerocket-os/bottlerocket/pull/1600
+[#1601]: https://github.com/bottlerocket-os/bottlerocket/pull/1601
+[#1602]: https://github.com/bottlerocket-os/bottlerocket/pull/1602
+[#1603]: https://github.com/bottlerocket-os/bottlerocket/pull/1603
+[#1606]: https://github.com/bottlerocket-os/bottlerocket/pull/1606
+[#1609]: https://github.com/bottlerocket-os/bottlerocket/pull/1609
+[#1610]: https://github.com/bottlerocket-os/bottlerocket/pull/1610
+[#1612]: https://github.com/bottlerocket-os/bottlerocket/pull/1612
+[#1616]: https://github.com/bottlerocket-os/bottlerocket/pull/1616
+[#1619]: https://github.com/bottlerocket-os/bottlerocket/pull/1619
+[#1621]: https://github.com/bottlerocket-os/bottlerocket/pull/1621
+[#1623]: https://github.com/bottlerocket-os/bottlerocket/pull/1623
+[#1625]: https://github.com/bottlerocket-os/bottlerocket/pull/1625
+
 # v1.1.1 (2021-05-19)
 
 ## Security fixes
