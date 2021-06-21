@@ -52,6 +52,13 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
 
+### aws-k8s-1.21: Kubernetes 1.21 node
+
+The [aws-k8s-1.21](aws-k8s-1.21/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
+
 ### aws-ecs-1: Amazon ECS container instance
 
 The [aws-ecs-1](aws-ecs-1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
@@ -78,6 +85,15 @@ User data will be read from a mounted CD-ROM (from a file named "user-data" or f
 If user data exists at both places, settings read from guestinfo will override identical settings from CD-ROM.
 
 This variant is compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
+
+### vmware-k8s-1.21: VMware Kubernetes 1.21 node
+
+The [vmware-k8s-1.21](vmware-k8s-1.21/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
+It supports self-hosted clusters.
+User data will be read from a mounted CD-ROM (from a file named "user-data" or from an OVF file), and from VMware's guestinfo interface.
+If user data exists at both places, settings read from guestinfo will override identical settings from CD-ROM.
+
+This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
 
 ### Deprecated variants
 

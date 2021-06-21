@@ -54,14 +54,16 @@ The following variants support EKS, as described above:
 - `aws-k8s-1.18`
 - `aws-k8s-1.19`
 - `aws-k8s-1.20`
+- `aws-k8s-1.21`
 
 We also have a variant designed to work with ECS, currently in preview:
 
 - `aws-ecs-1`
 
-Another variant we have in preview is designed to be a Kubernetes worker node in VMware:
+Other variants we have in preview are designed to be Kubernetes worker nodes in VMware:
 
 - `vmware-k8s-1.20`
+- `vmware-k8s-1.21`
 
 The `aws-k8s-1.16` variant is deprecated and will no longer be supported in Bottlerocket releases after June, 2021.
 The `aws-k8s-1.15` variant is no longer supported.
@@ -364,7 +366,7 @@ Static pods can be particularly useful when running in standalone mode.
 
 For Kubernetes variants in AWS and VMware, the following are set for you automatically, but you can override them if you know what you're doing!
 In AWS, [pluto](sources/api/) sets these based on runtime instance information.
-In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on [default values](sources/models/src/vmware-k8s-1.20/defaults.d/).
+In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on [default values](sources/models/src/vmware-k8s-1.21/defaults.d/).
 * `settings.kubernetes.node-ip`: The IPv4 address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 * `settings.kubernetes.kube-reserved`: Resources reserved for node components.

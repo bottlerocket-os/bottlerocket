@@ -45,7 +45,12 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 ### aws-k8s-1.20: Kubernetes 1.20
 
 * [Model](src/aws-k8s-1.19/mod.rs)
-* [Default settings](src/aws-k8s-1.20/defaults.d/)
+* [Default settings](src/aws-k8s-1.21/defaults.d/)
+
+### aws-k8s-1.21: Kubernetes 1.21
+
+* [Model](src/aws-k8s-1.19/mod.rs)
+* [Default settings](src/aws-k8s-1.21/defaults.d/)
 
 ### aws-ecs-1: Amazon ECS
 
@@ -64,8 +69,13 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ### vmware-k8s-1.20: VMware Kubernetes 1.20
 
-* [Model](src/vmware-k8s-1.20/mod.rs)
-* [Default settings](src/vmware-k8s-1.20/defaults.d/)
+* [Model](src/vmware-k8s-1.21/mod.rs)
+* [Default settings](src/vmware-k8s-1.21/defaults.d/)
+
+### vmware-k8s-1.21: VMware Kubernetes 1.21
+
+* [Model](src/vmware-k8s-1.21/mod.rs)
+* [Default settings](src/vmware-k8s-1.21/defaults.d/)
 
 ## This directory
 
