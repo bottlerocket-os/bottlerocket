@@ -3,12 +3,12 @@
 %global goimport %{goproject}/%{gorepo}
 # Use the libnetwork commit listed in this file for the docker version we ship:
 # https://github.com/moby/moby/blob/DOCKER-VERSION-HERE/vendor.conf
-%global commit 55e924b8a84231a065879156c0de95aefc5f5435
+%global commit fa125a3512ee0f6187721c88582bf8c4378bd4d7
 
 %global _dwz_low_mem_die_limit 0
 
 Name: %{_cross_os}docker-proxy
-Version: 19.03.15
+Version: 20.10.04
 Release: 1%{?dist}
 Summary: Docker CLI
 # mostly Apache-2.0, client/mflag is BSD-3-Clause

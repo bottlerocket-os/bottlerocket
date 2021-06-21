@@ -3,9 +3,9 @@
 %global goorg github.com/docker
 %global goimport %{goorg}/docker
 
-%global gover 19.03.15
+%global gover 20.10.4
 %global rpmver %{gover}
-%global gitrev 420b1d36250f9cfdc561f086f25a213ecb669b6f
+%global gitrev 363e9a88a11be517d9e8c65c998ff56f774eb4dc
 
 %global source_date_epoch 1363394400
 
@@ -44,7 +44,7 @@ Requires: %{_cross_os}procps
 
 %build
 %cross_go_configure %{goimport}
-BUILDTAGS="autogen journald selinux seccomp"
+BUILDTAGS="journald selinux seccomp"
 BUILDTAGS+=" exclude_graphdriver_btrfs"
 BUILDTAGS+=" exclude_graphdriver_devicemapper"
 BUILDTAGS+=" exclude_graphdriver_vfs"
@@ -54,9 +54,8 @@ export VERSION=%{gover}
 export GITCOMMIT=%{gitrev}
 export BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null | sed -e 's/ /T/')
 export PLATFORM="Docker Engine - Community"
-chmod +x ./hack/make/.go-autogen
-./hack/make/.go-autogen
-go build -buildmode=pie -ldflags=-linkmode=external -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
+source ./hack/make/.go-autogen
+go build -buildmode=pie -ldflags="-linkmode=external ${LDFLAGS}" -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
 
 %install
 install -d %{buildroot}%{_cross_bindir}
