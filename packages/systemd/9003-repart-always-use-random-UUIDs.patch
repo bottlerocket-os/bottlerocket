@@ -1,7 +1,7 @@
-From de6bf41d3da21515ff34152c8a9fb6ae23a028c2 Mon Sep 17 00:00:00 2001
+From 129c0ceeab9874ef5f2116a581a132e13d43b896 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 16 Apr 2020 15:10:41 +0000
-Subject: [PATCH 9003/9008] repart: always use random UUIDs
+Subject: [PATCH 9003/9009] repart: always use random UUIDs
 
 We would like to avoid adding OpenSSL to the base OS, and for our use
 case we do not need the UUIDs assigned to disks or partitions to be
@@ -22,10 +22,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 14 insertions(+), 92 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index f406d59..c16b50c 100644
+index f0e28cc..8be80c9 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1374,8 +1374,7 @@ substs.set('DEFAULT_LLMNR_MODE', default_llmnr)
+@@ -1380,8 +1380,7 @@ substs.set('DEFAULT_LLMNR_MODE', default_llmnr)
  
  want_repart = get_option('repart')
  if want_repart != 'false'
@@ -36,7 +36,7 @@ index f406d59..c16b50c 100644
                  error('repart support was requested, but dependencies are not available')
          endif
 diff --git a/src/partition/repart.c b/src/partition/repart.c
-index 6db413e..f771c33 100644
+index b11f43c..023a00e 100644
 --- a/src/partition/repart.c
 +++ b/src/partition/repart.c
 @@ -13,9 +13,6 @@
@@ -49,7 +49,7 @@ index 6db413e..f771c33 100644
  #include "sd-id128.h"
  
  #include "alloc-util.h"
-@@ -1347,28 +1344,18 @@ static int fdisk_set_disklabel_id_by_uuid(struct fdisk_context *c, sd_id128_t id
+@@ -1350,28 +1347,18 @@ static int fdisk_set_disklabel_id_by_uuid(struct fdisk_context *c, sd_id128_t id
  }
  
  static int derive_uuid(sd_id128_t base, const char *token, sd_id128_t *ret) {
@@ -85,7 +85,7 @@ index 6db413e..f771c33 100644
          return 0;
  }
  
-@@ -2810,83 +2797,19 @@ static int context_mkfs(Context *context) {
+@@ -2818,83 +2805,19 @@ static int context_mkfs(Context *context) {
  }
  
  static int partition_acquire_uuid(Context *context, Partition *p, sd_id128_t *ret) {
@@ -176,5 +176,5 @@ index 6db413e..f771c33 100644
  }
  
 -- 
-2.30.2
+2.21.3
 

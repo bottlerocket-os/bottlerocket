@@ -1,7 +1,7 @@
-From e01966709aa6beeb85df234be0e75eb9722778ba Mon Sep 17 00:00:00 2001
+From 22f287486b107994fd9105d539821056cf708407 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 12 Nov 2020 16:18:15 +0000
-Subject: [PATCH 9006/9008] journal: disable keyed hashes for compatibility
+Subject: [PATCH 9006/9009] journal: disable keyed hashes for compatibility
 
 Otherwise the journal is not readable by older versions of systemd.
 
@@ -14,10 +14,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/src/journal/journal-file.c b/src/journal/journal-file.c
-index 1dbe818..531b9df 100644
+index 6bee5da..791145e 100644
 --- a/src/journal/journal-file.c
 +++ b/src/journal/journal-file.c
-@@ -3383,13 +3383,12 @@ int journal_file_open(
+@@ -3463,13 +3463,12 @@ int journal_file_open(
  #endif
          };
  
@@ -34,5 +34,5 @@ index 1dbe818..531b9df 100644
                  f->keyed_hash = r;
  
 -- 
-2.30.2
+2.21.3
 

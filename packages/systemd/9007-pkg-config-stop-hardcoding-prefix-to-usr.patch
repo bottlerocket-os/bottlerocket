@@ -1,7 +1,7 @@
-From f15c27de1ba9c3f841359f25d945d67a9eb8c396 Mon Sep 17 00:00:00 2001
+From 52940a257782a1dca2e72f210675f89f99c33bc0 Mon Sep 17 00:00:00 2001
 From: Erikson Tung <etung@amazon.com>
 Date: Wed, 27 Jan 2021 14:43:47 -0800
-Subject: [PATCH 9007/9008] pkg-config: stop hardcoding prefix to /usr
+Subject: [PATCH 9007/9009] pkg-config: stop hardcoding prefix to /usr
 
 While we ensure /usr points to the sys-root at runtime, for Bottlerocket's
 packaging we need to be careful to avoid dependencies on the host OS so
@@ -11,7 +11,7 @@ the prefix needs to be configurable.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/core/systemd.pc.in b/src/core/systemd.pc.in
-index f2c0455..c50821b 100644
+index b5cc8f9..ec4992b 100644
 --- a/src/core/systemd.pc.in
 +++ b/src/core/systemd.pc.in
 @@ -11,7 +11,7 @@
@@ -24,5 +24,5 @@ index f2c0455..c50821b 100644
  rootprefix=${root_prefix}
  sysconf_dir=@sysconfdir@
 -- 
-2.30.2
+2.21.3
 

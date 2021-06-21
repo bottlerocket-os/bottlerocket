@@ -1,7 +1,7 @@
-From 91604d466e49e8529482336a979b990a9588b722 Mon Sep 17 00:00:00 2001
+From f244800c56fb8daa7de89ed4edb085fe0e6ffc47 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 17 Sep 2019 01:35:51 +0000
-Subject: [PATCH 9001/9008] use absolute path for /var/run symlink
+Subject: [PATCH 9001/9009] use absolute path for /var/run symlink
 
 Otherwise the symlink may be broken if /var is a bind mount from
 somewhere else.
@@ -25,5 +25,5 @@ index 0e2c509..6716540 100644
  d /var/log 0755 - - -
  m4_ifdef(`ENABLE_UTMP',
 -- 
-2.30.2
+2.21.3
 

@@ -1,7 +1,7 @@
-From 6931413055f6f9a70f906f6a2df8a24e901a47e5 Mon Sep 17 00:00:00 2001
+From 916d64e020a4f1bd8fffebad15410d232de1190d Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 10 Mar 2020 20:30:10 +0000
-Subject: [PATCH 9002/9008] core: add separate timeout for system shutdown
+Subject: [PATCH 9002/9009] core: add separate timeout for system shutdown
 
 There is an existing setting for this (DefaultTimeoutStopUSec), but
 changing it has no effect because `reset_arguments()` is called just
@@ -62,5 +62,5 @@ index a280b75..de946a0 100644
          arg_default_timeout_abort_set = false;
          arg_default_start_limit_interval = DEFAULT_START_LIMIT_INTERVAL;
 -- 
-2.30.2
+2.21.3
 

@@ -43,6 +43,9 @@ Patch9007: 9007-pkg-config-stop-hardcoding-prefix-to-usr.patch
 # so it can generate the correct machine id
 Patch9008: 9008-virt-add-Amazon-EC2-to-dmi-vendor-table.patch
 
+# Local patch to stop overriding rp_filter defaults with wildcard values.
+Patch9009: 9009-sysctl-do-not-set-rp_filter-via-wildcard.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
