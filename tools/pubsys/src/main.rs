@@ -120,7 +120,7 @@ enum SubCommand {
 /// Parses a SemVer, stripping a leading 'v' if present
 pub(crate) fn friendly_version(
     mut version_str: &str,
-) -> std::result::Result<Version, semver::SemVerError> {
+) -> std::result::Result<Version, semver::Error> {
     if version_str.starts_with('v') {
         version_str = &version_str[1..];
     };

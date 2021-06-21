@@ -122,7 +122,7 @@ pub enum Error {
     #[snafu(display("Failed to parse version string '{}' into semver version", version))]
     SemVer {
         version: String,
-        source: semver::SemVerError,
+        source: semver::Error,
     },
 
     #[snafu(display("Invalid state transition from {:?} to {:?}", from, to))]

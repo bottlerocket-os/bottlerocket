@@ -27,7 +27,7 @@ pub enum Error {
     BadVersion {
         backtrace: Backtrace,
         key: String,
-        source: semver::SemVerError,
+        source: semver::Error,
     },
 
     #[snafu(display("Could not parse OS versions: {}", key))]

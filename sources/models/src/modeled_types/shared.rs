@@ -295,7 +295,7 @@ impl TryFrom<&str> for FriendlyVersion {
 }
 
 impl TryFrom<FriendlyVersion> for semver::Version {
-    type Error = semver::SemVerError;
+    type Error = semver::Error;
 
     fn try_from(input: FriendlyVersion) -> Result<semver::Version, Self::Error> {
         // If the string begins with a 'v', skip it before conversion
@@ -313,7 +313,7 @@ string_impls_for!(FriendlyVersion, "FriendlyVersion");
 #[cfg(test)]
 mod test_version {
     use super::FriendlyVersion;
-    use semver::{SemVerError, Version};
+    use semver::Version;
     use std::convert::TryFrom;
     use std::convert::TryInto;
 
@@ -326,8 +326,6 @@ mod test_version {
             "v1.0.1-alpha",
             "1.0.2-alpha+1.0",
             "v1.0.2-alpha+1.0",
-            "1.0.3-beta.1.01",
-            "v1.0.3-beta.1.01",
             "1.1.0-rc.1.1",
             "v1.1.0-rc.1.1",
             "latest",
@@ -346,9 +344,19 @@ mod test_version {
 
     #[test]
     fn bad_version_string() {
-        for err in &["hi", "1.0", "1", "v", "v1", "v1.0", "vv1.1.0"] {
+        for err in &[
+            "hi",
+            "1.0",
+            "1",
+            "v",
+            "v1",
+            "v1.0",
+            "vv1.1.0",
+            "1.0.3-beta.1.01",
+            "v1.0.3-beta.1.01",
+        ] {
             FriendlyVersion::try_from(*err).unwrap_err();
-            let res: Result<Version, SemVerError> = Version::try_from(FriendlyVersion {
+            let res: Result<Version, semver::Error> = Version::try_from(FriendlyVersion {
                 inner: err.to_string(),
             });
             res.unwrap_err();

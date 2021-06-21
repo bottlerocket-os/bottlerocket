@@ -1,8 +1,22 @@
 [clarify.actix-macros]
 expression = "MIT OR Apache-2.0"
 license-files = [
-    { path = "LICENSE-APACHE", hash = 0x671c8ae7 },
-    { path = "LICENSE-MIT", hash = 0xda536e85 },
+    { path = "LICENSE-APACHE", hash = 0x31de3fcd },
+    { path = "LICENSE-MIT", hash = 0xfeb1e4a7 },
+]
+
+[clarify.actix-codec]
+expression = "MIT OR Apache-2.0"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0x31de3fcd },
+    { path = "LICENSE-MIT", hash = 0xfeb1e4a7 },
+]
+
+[clarify.actix-http]
+expression = "MIT OR Apache-2.0"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0x31de3fcd },
+    { path = "LICENSE-MIT", hash = 0xfeb1e4a7 },
 ]
 
 [clarify.backtrace-sys]
@@ -36,7 +50,7 @@ expression = "(MIT OR Apache-2.0) AND BSD-2-Clause-FreeBSD"
 license-files = [
     { path = "LICENSE-APACHE", hash = 0x24b54f4b },
     { path = "LICENSE-MIT", hash = 0xbc436f08 },
-    { path = "LICENSE-THIRD-PARTY", hash = 0xc6242648 },
+    { path = "LICENSE-THIRD-PARTY", hash = 0x847bf39 },
 ]
 
 [clarify.lz4-sys]
@@ -113,7 +127,7 @@ license-files = [
 [clarify.tokio-macros]
 expression = "MIT"
 license-files = [
-    { path = "LICENSE", hash = 0x288c17e1 },
+    { path = "LICENSE", hash = 0x28d2b8db },
 ]
 
 [clarify.vmw_backdoor]
