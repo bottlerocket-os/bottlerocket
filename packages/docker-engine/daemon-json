@@ -7,4 +7,7 @@
   "data-root": "/var/lib/docker",
   "selinux-enabled": true,
   "default-ulimits": { "nofile": { "Name": "nofile", "Soft": 1024, "Hard": 4096 } }
+  {{~#if settings.container-registry.mirrors.[docker.io]}},
+  "registry-mirrors": [{{join_array ", " settings.container-registry.mirrors.[docker.io]}}]
+  {{~/if}}
 }
