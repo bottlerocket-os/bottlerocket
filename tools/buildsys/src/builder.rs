@@ -103,7 +103,7 @@ impl PackageBuilder {
             arch = arch,
         );
 
-        build(BuildType::Package, &package, args, &tag, &output_dir)?;
+        build(BuildType::Package, &package, &arch, args, &tag, &output_dir)?;
 
         Ok(Self)
     }
@@ -160,7 +160,7 @@ impl VariantBuilder {
             arch = arch
         );
 
-        build(BuildType::Variant, &variant, args, &tag, &output_dir)?;
+        build(BuildType::Variant, &variant, &arch, args, &tag, &output_dir)?;
 
         Ok(Self)
     }
@@ -177,6 +177,7 @@ enum BuildType {
 fn build(
     kind: BuildType,
     what: &str,
+    arch: &str,
     build_args: Vec<String>,
     tag: &str,
     output_dir: &PathBuf,
@@ -200,7 +201,7 @@ fn build(
     let nocache = rand::thread_rng().gen::<u32>();
 
     // Create a directory for tracking outputs before we move them into position.
-    let build_dir = create_build_dir(&kind, &what)?;
+    let build_dir = create_build_dir(&kind, &what, &arch)?;
 
     // Clean up any previous outputs we have tracked.
     clean_build_files(&build_dir, &output_dir)?;
@@ -318,13 +319,13 @@ enum Retry<'a> {
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 /// Create a directory for build artifacts.
-fn create_build_dir(kind: &BuildType, name: &str) -> Result<PathBuf> {
+fn create_build_dir(kind: &BuildType, name: &str, arch: &str) -> Result<PathBuf> {
     let prefix = match kind {
         BuildType::Package => "packages",
         BuildType::Variant => "variants",
     };
 
-    let path = [&getenv("BUILDSYS_STATE_DIR")?, prefix, name]
+    let path = [&getenv("BUILDSYS_STATE_DIR")?, arch, prefix, name]
         .iter()
         .collect();
 

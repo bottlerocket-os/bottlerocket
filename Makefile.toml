@@ -325,7 +325,13 @@ if [ -z "${PACKAGE}" ]; then
     echo "cargo make build-package -e PACKAGE=kernel"
     exit 1
 fi
+
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+# Save built artifacts for each architecture.  We don't set this everywhere
+# because we build host tools with cargo as well, like buildsys and pubsys.
+export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
+
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
@@ -339,6 +345,11 @@ dependencies = ["build-tools", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+# Save built artifacts for each architecture.  We don't set this everywhere
+# because we build host tools with cargo as well, like buildsys and pubsys.
+export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
+
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
