@@ -1544,6 +1544,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-cpu-manager-state"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "snafu",
+]
+
+[[package]]
 name = "kubelet-event-qps-event-burst"
 version = "0.1.0"
 dependencies = [

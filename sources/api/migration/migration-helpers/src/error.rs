@@ -1,6 +1,7 @@
 //! Contains the Error and Result types used by the migration helper functions and migrations.
 
 use snafu::Snafu;
+use std::path::PathBuf;
 
 /// Error contains the errors that can happen in the migration helper functions and in migrations.
 #[derive(Debug, Snafu)]
@@ -98,6 +99,12 @@ pub enum Error {
         setting: String,
         metadata: String,
         data: Vec<serde_json::Value>,
+    },
+
+    #[snafu(display("Failed to delete file '{}': '{}'", path.display(), source))]
+    RemoveFile {
+        path: PathBuf,
+        source: std::io::Error,
     },
 }
 
