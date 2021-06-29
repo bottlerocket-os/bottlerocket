@@ -2,6 +2,7 @@
 
 With this release, the aws-ecs-1 variant has graduated from preview status and is now generally available.
 It's been updated to include Docker 20.10.
+The new [Bottlerocket ECS Updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater/) is available to help provide automated updates.
 :tada:
 
 ## OS Changes

@@ -29,8 +29,11 @@ Bottlerocket includes many [security features](SECURITY_FEATURES.md) to mitigate
 These countermeasures serve to reduce the reliability of exploits and to raise their cost.
 However, it is always better to patch vulnerabilities than to rely on mitigations alone.
 
-We provide [a Kubernetes operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates to Bottlerocket.
+For our Kubernetes variants, we provide [a Kubernetes operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates to Bottlerocket.
 We recommend deploying it on your Kubernetes clusters.
+
+For our ECS variant, we provide [an updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater) for automated updates to Bottlerocket.
+We recommend deploying it on your ECS clusters.
 
 ### Avoid containers with elevated privileges
 

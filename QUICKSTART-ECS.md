@@ -1,9 +1,5 @@
 # Using a Bottlerocket AMI with Amazon ECS
 
-> The [ECS variant](variants/README.md#aws-ecs-1-amazon-ecs-container-instance) of Bottlerocket is currently in a developer preview phase and we're looking for your
-> [feedback](https://github.com/bottlerocket-os/bottlerocket#contact-us).
-> We'd love for you to try it out!
-
 [Amazon Elastic Container Service (Amazon ECS)](https://ecs.aws) is a highly scalable, fast container management service that makes it easy to run, stop, and manage containers on a cluster.
 Your containers are defined in a task definition which you use to run individual tasks or as a service.
 

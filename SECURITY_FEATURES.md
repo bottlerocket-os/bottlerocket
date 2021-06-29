@@ -41,12 +41,24 @@ Using partition sets and modeled settings removes the dependency on correct loca
 There is no package manager database or shared filesystem tree that can become corrupted and make the process non-deterministic.
 
 Our philosophy for variants is that the right time for an unexpected major version update to the kernel or orchestrator agent is "never".
+
+#### Kubernetes variants
+
 Each Kubernetes variant will be supported for approximately one year after it is first released.
 This follows the [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) support policy.
 Newer LTS releases of the kernel may be introduced in newer variants, but not in older ones.
 
 We provide [a Kubernetes operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates to Bottlerocket.
 We recommend deploying it on your Kubernetes clusters.
+
+#### ECS variant
+
+We currently have a single variant for Amazon ECS.
+Newer LTS releases of the kernel may be introduced in newer variants, but not in the current one.
+
+We provide [an updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater) for automated updates to Bottlerocket.
+We recommend deploying it on your ECS clusters.
+
 
 ### Immutable rootfs backed by dm-verity
 

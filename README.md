@@ -56,11 +56,11 @@ The following variants support EKS, as described above:
 - `aws-k8s-1.20`
 - `aws-k8s-1.21`
 
-We also have a variant designed to work with ECS, currently in preview:
+The following variant supports ECS:
 
 - `aws-ecs-1`
 
-Other variants we have in preview are designed to be Kubernetes worker nodes in VMware:
+We also have variants in preview status that are designed to be Kubernetes worker nodes in VMware:
 
 - `vmware-k8s-1.20`
 - `vmware-k8s-1.21`
@@ -175,11 +175,13 @@ For more details, see the [update system documentation](sources/updater/).
 ### Update methods
 
 There are several ways of updating your Bottlerocket hosts.
+We provide tools for automatically updating hosts, as well as an API for direct control of updates.
+
+#### Automated updates
 
 For EKS variants of Bottlerocket, we recommend using the [Bottlerocket update operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates.
-You can also use one of the methods below for direct control of updates.
 
-For the ECS preview variant of Bottlerocket, we recommend updating hosts using one of the methods below, until further automation is ready.
+For the ECS variant of Bottlerocket, we recommend using the [Bottlerocket ECS updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater/) for automated updates.
 
 #### Update API
 
@@ -212,10 +214,6 @@ apiclient update apply --check --reboot
 ```
 
 See the [apiclient documentation](sources/api/apiclient/) for more details.
-
-#### Bottlerocket Update Operator
-
-If you are running the Kubernetes variant of Bottlerocket, you can use the [Bottlerocket update operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) to automate Bottlerocket updates.
 
 ### Update rollback
 
