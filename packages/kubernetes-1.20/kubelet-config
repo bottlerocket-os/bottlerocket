@@ -74,7 +74,7 @@ systemReserved:
   {{@key}}: "{{this}}"
   {{~/each}}
 {{~/if}}
-cpuManagerPolicy: "static"
+cpuManagerPolicy: {{default "none" settings.kubernetes.cpu-manager-policy}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 readOnlyPort: 0

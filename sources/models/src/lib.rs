@@ -113,7 +113,7 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    BootstrapContainerMode, DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
+    BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     FriendlyVersion, Identifier, KubernetesAuthenticationMode, KubernetesBootstrapToken,
     KubernetesCloudProvider, KubernetesClusterName, KubernetesEvictionHardKey, KubernetesLabelKey,
     KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
@@ -158,6 +158,7 @@ struct KubernetesSettings {
     kube_api_burst: i32,
     container_log_max_size: KubernetesQuantityValue,
     container_log_max_files: i32,
+    cpu_manager_policy: CpuManagerPolicy,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

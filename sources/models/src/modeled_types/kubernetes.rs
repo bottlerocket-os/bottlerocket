@@ -768,3 +768,52 @@ mod test_kubernetes_cloud_provider {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// CpuManagerPolicy represents a string that contains a valid cpu management policy. Default: none
+/// https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct CpuManagerPolicy {
+    inner: String,
+}
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ValidCpuManagerPolicy {
+    Static,
+    None,
+}
+
+impl TryFrom<&str> for CpuManagerPolicy {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ValidCpuManagerPolicy>(&input).context(
+            error::InvalidCpuManagerPolicy { input })?;
+        Ok(CpuManagerPolicy {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(CpuManagerPolicy, "CpuManagerPolicy");
+
+#[cfg(test)]
+mod test_cpu_manager_policy {
+    use super::CpuManagerPolicy;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_cpu_manager_policy() {
+        for ok in &["static", "none"] {
+            CpuManagerPolicy::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_cpu_manager_policy() {
+        for err in &["", "bad", "100", &"a".repeat(64)] {
+            CpuManagerPolicy::try_from(*err).unwrap_err();
+        }
+    }
+}
