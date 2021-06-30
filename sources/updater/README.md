@@ -6,7 +6,8 @@ This document describes the Bottlerocket update system and its components, namel
 - [apiclient](../api/apiclient/README.md): automates interactions with the update API
 - [updog](#whats-updog): low-level client that interfaces with a TUF repository to find and apply updates
 - [signpost](#signpost): helper tool to update partition priority flags
-- [Bottlerocket update operator (brupop)](https://github.com/bottlerocket-os/bottlerocket-update-operator): an optional component that coordinates node updates with the rest of the cluster
+- [Bottlerocket update operator (brupop)](https://github.com/bottlerocket-os/bottlerocket-update-operator): an optional component that coordinates node updates with the rest of the Kubernetes cluster
+- [Bottlerocket ECS updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater): an optional component that coordinates container instance updates with the rest of the ECS cluster
 
 ![Update overview](update-system.png)
 ## TUF and tough
