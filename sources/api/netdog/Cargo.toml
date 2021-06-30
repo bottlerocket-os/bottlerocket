@@ -9,6 +9,7 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
+argh = "0.1.4"
 dns-lookup = "1.0"
 ipnet = { version = "2.0", features = ["serde"] }
 envy = "0.4"

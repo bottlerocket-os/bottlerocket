@@ -1853,6 +1853,7 @@ dependencies = [
 name = "netdog"
 version = "0.1.0"
 dependencies = [
+ "argh",
  "cargo-readme",
  "dns-lookup",
  "envy",
