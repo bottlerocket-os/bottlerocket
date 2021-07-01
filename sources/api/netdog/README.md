@@ -12,6 +12,8 @@ It contains two subcommands meant for use as settings generators:
 * `generate-hostname`: returns the node's hostname in JSON format (it is the resolved IP or the IP
   in format "ip-x-x-x-x" if resolving fails)
 
+The subcommand `set-hostname` sets the hostname for the system.
+
 ## Colophon
 
 This text was generated using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/main.rs`.
