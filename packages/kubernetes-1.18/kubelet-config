@@ -75,6 +75,9 @@ systemReserved:
   {{~/each}}
 {{~/if}}
 cpuManagerPolicy: {{default "none" settings.kubernetes.cpu-manager-policy}}
+{{~#if settings.kubernetes.cpu-manager-reconcile-period}}
+cpuManagerReconcilePeriod: {{settings.kubernetes.cpu-manager-reconcile-period}}
+{{~/if}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 readOnlyPort: 0

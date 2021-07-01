@@ -80,6 +80,9 @@ pub mod error {
             input: String,
             source: serde_plain::Error,
         },
+
+        #[snafu(display("Invalid Kubernetes duration value '{}'", input))]
+        InvalidKubernetesDurationValue { input: String },
     }
 }
 

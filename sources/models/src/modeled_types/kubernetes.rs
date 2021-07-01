@@ -817,3 +817,76 @@ mod test_cpu_manager_policy {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesDurationValue represents a string that contains a valid Kubernetes duration value.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KubernetesDurationValue {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref KUBERNETES_DURATION_VALUE: Regex = Regex::new(
+        r"^(([0-9]+\.)?[0-9]+h)?(([0-9]+\.)?[0-9]+m)?(([0-9]+\.)?[0-9]+s)?(([0-9]+\.)?[0-9]+ms)?$"
+    )
+    .unwrap();
+}
+
+impl TryFrom<&str> for KubernetesDurationValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            !input.is_empty(),
+            error::InvalidKubernetesDurationValue { input }
+        );
+        ensure!(
+            KUBERNETES_DURATION_VALUE.is_match(input),
+            error::InvalidKubernetesDurationValue { input }
+        );
+        Ok(KubernetesDurationValue {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KubernetesDurationValue, "KubernetesDurationValue");
+
+#[cfg(test)]
+mod test_kubernetes_duration_value {
+    use super::KubernetesDurationValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_tokens() {
+        for ok in &[
+            "9ms",
+            "99s",
+            "20m",
+            "1h",
+            "1h2m3s10ms",
+            "4m5s10ms",
+            "2h3s10ms",
+            "1.5h3.5m",
+        ] {
+            KubernetesDurationValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_names() {
+        for err in &[
+            "",
+            "100",
+            "...3ms",
+            "1..5s",
+            "ten second",
+            "1m2h",
+            "9ns",
+            &"a".repeat(23),
+        ] {
+            KubernetesDurationValue::try_from(*err).unwrap_err();
+        }
+    }
+}

@@ -359,6 +359,7 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.container-log-max-size`: The maximum size of container log file before it is rotated.
 * `settings.kubernetes.container-log-max-files`: The maximum number of container log files that can be present for a container.
 * `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`. If you want to allow pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node, you can set this setting to `static`. You should reboot if you change this setting after startup - try `apiclient reboot`.
+* `settings.kubernetes.cpu-manager-reconcile-period`: Specifies the CPU manager reconcile period, which controls how often updated CPU assignments are written to cgroupfs. The value is a duration like `30s` for 30 seconds or `1h5m` for 1 hour and 5 minutes.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.

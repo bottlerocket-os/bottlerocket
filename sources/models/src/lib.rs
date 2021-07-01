@@ -115,7 +115,7 @@ use std::net::Ipv4Addr;
 use crate::modeled_types::{
     BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     FriendlyVersion, Identifier, KubernetesAuthenticationMode, KubernetesBootstrapToken,
-    KubernetesCloudProvider, KubernetesClusterName, KubernetesEvictionHardKey, KubernetesLabelKey,
+    KubernetesCloudProvider, KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
     KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
     KubernetesTaintValue, KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url,
     ValidBase64,
@@ -159,6 +159,7 @@ struct KubernetesSettings {
     container_log_max_size: KubernetesQuantityValue,
     container_log_max_files: i32,
     cpu_manager_policy: CpuManagerPolicy,
+    cpu_manager_reconcile_period: KubernetesDurationValue,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
