@@ -102,6 +102,7 @@ enum SubCommand {
     Remove(RemoveArgs),
     NodeIp(NodeIpArgs),
     GenerateHostname(GenerateHostnameArgs),
+    SetHostname(SetHostnameArgs),
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -169,6 +170,15 @@ struct NodeIpArgs {}
 #[argh(subcommand, name = "generate-hostname")]
 /// Generate hostname from DNS reverse lookup or use current IP
 struct GenerateHostnameArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "set-hostname")]
+/// Write hostname to disk
+struct SetHostnameArgs {
+    #[argh(option)]
+    /// hostname for the system
+    hostname: String,
+}
 
 /// Parse lease data file into a LeaseInfo structure.
 fn parse_lease_info<P>(lease_file: P) -> Result<LeaseInfo>
@@ -303,6 +313,14 @@ where
     Ok(())
 }
 
+/// Persist the hostname to disk
+fn set_hostname(args: SetHostnameArgs) -> Result<()> {
+    fs::write(KERNEL_HOSTNAME, args.hostname).context(error::HostnameWriteFailed {
+        path: KERNEL_HOSTNAME,
+    })?;
+    Ok(())
+}
+
 fn run() -> Result<()> {
     let args: Args = argh::from_env();
     match args.subcommand {
@@ -310,6 +328,7 @@ fn run() -> Result<()> {
         SubCommand::Remove(args) => remove(args)?,
         SubCommand::NodeIp(_) => node_ip()?,
         SubCommand::GenerateHostname(_) => generate_hostname()?,
+        SubCommand::SetHostname(args) => set_hostname(args)?,
     }
     Ok(())
 }
