@@ -1,11 +1,13 @@
 /*!
 # Introduction
 
-netdog is a small helper program for wicked, to apply network settings received from DHCP.  It also
-contains a subcommand `node-ip` that returns the node's current IP address in JSON format; this
-subcommand is intended for use as a settings generator.
+netdog is a small helper program for wicked, to apply network settings received from DHCP.  It
+generates `/etc/resolv.conf`, generates and sets the hostname, and persists the current IP to file.
 
-It generates `/etc/resolv.conf`, sets the hostname, and persists the current IP to file.
+It contains two subcommands meant for use as settings generators:
+* `node-ip`: returns the node's current IP address in JSON format
+* `generate-hostname`: returns the node's hostname in JSON format (it is the resolved IP or the IP
+  in format "ip-x-x-x-x" if resolving fails)
 */
 
 // TODO:
@@ -28,7 +30,7 @@ use lazy_static::lazy_static;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::collections::BTreeSet;
 use std::fmt::Write;
@@ -37,6 +39,7 @@ use std::io::{BufRead, BufReader};
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::process;
+use std::str::FromStr;
 
 static RESOLV_CONF: &str = "/etc/resolv.conf";
 static KERNEL_HOSTNAME: &str = "/proc/sys/kernel/hostname";
@@ -98,6 +101,7 @@ enum SubCommand {
     Install(InstallArgs),
     Remove(RemoveArgs),
     NodeIp(NodeIpArgs),
+    GenerateHostname(GenerateHostnameArgs),
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -150,6 +154,11 @@ struct RemoveArgs {
 #[argh(subcommand, name = "node-ip")]
 /// Return the current IP address
 struct NodeIpArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "generate-hostname")]
+/// Generate hostname from DNS reverse lookup or use current IP
+struct GenerateHostnameArgs {}
 
 /// Parse lease data file into a LeaseInfo structure.
 fn parse_lease_info<P>(lease_file: P) -> Result<LeaseInfo>
@@ -249,7 +258,45 @@ fn node_ip() -> Result<()> {
     let ip =
         fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
     // sundog expects JSON-serialized output
-    let output = serde_json::to_string(&ip).context(error::JsonSerialize { output: ip })?;
+    Ok(print_json(ip)?)
+}
+
+/// Attempt to resolve assigned IP address, if unsuccessful use "ip-X-X-X-X" where X's are the
+/// octets of the IP.  For example, IP address 1.2.3.4 becomes the hostname "ip-1-2-3-4".  No dots
+/// in the hostname (hopefully) avoids any confusion for programs that may read this value.
+///
+/// The result is returned as JSON. (intended for use as a settings generator)
+fn generate_hostname() -> Result<()> {
+    let ip_string =
+        fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
+    let ip = IpAddr::from_str(&ip_string).context(error::IpFromString { ip: &ip_string })?;
+    let hostname = match lookup_addr(&ip) {
+        Ok(hostname) => {
+            // if `lookup_addr()` returns the same IP as we passed it we didn't resolve anything,
+            // so return the string "ip-x-x-x-x" in this case
+            if hostname == ip_string {
+                format!("ip-{}", ip_string.replace(".", "-"))
+            } else {
+                hostname
+            }
+        }
+        Err(e) => {
+            eprintln!("Reverse DNS lookup failed: {}", e);
+            format!("ip-{}", ip_string.replace(".", "-"))
+        }
+    };
+
+    // sundog expects JSON-serialized output
+    Ok(print_json(hostname)?)
+}
+
+/// Helper function that serializes the input to JSON and prints it
+fn print_json<S>(val: S) -> Result<()>
+where
+    S: AsRef<str> + Serialize,
+{
+    let val = val.as_ref();
+    let output = serde_json::to_string(val).context(error::JsonSerialize { output: val })?;
     println!("{}", output);
     Ok(())
 }
@@ -260,6 +307,7 @@ fn run() -> Result<()> {
         SubCommand::Install(args) => install(args)?,
         SubCommand::Remove(args) => remove(args)?,
         SubCommand::NodeIp(_) => node_ip()?,
+        SubCommand::GenerateHostname(_) => generate_hostname()?,
     }
     Ok(())
 }
@@ -303,6 +351,12 @@ mod error {
 
         #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
         HostnameWriteFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Invalid IP address '{}': {}", ip, source))]
+        IpFromString {
+            ip: String,
+            source: std::net::AddrParseError,
+        },
 
         #[snafu(display("Failed to write current IP to '{}': {}", path.display(), source))]
         CurrentIpWriteFailed { path: PathBuf, source: io::Error },
