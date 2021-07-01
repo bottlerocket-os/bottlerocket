@@ -1,0 +1,14 @@
+[Unit]
+Description=Sets the hostname
+After=settings-applier.service
+Requires=settings-applier.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/network/hostname.env
+ExecStart=/usr/bin/netdog set-hostname '${HOSTNAME}'
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=preconfigured.target

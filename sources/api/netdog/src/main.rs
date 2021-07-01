@@ -2,7 +2,8 @@
 # Introduction
 
 netdog is a small helper program for wicked, to apply network settings received from DHCP.  It
-generates `/etc/resolv.conf`, generates and sets the hostname, and persists the current IP to file.
+generates `/etc/resolv.conf`, generates and sets the hostname, and persists the current IP to a
+file.
 
 It contains two subcommands meant for use as settings generators:
 * `node-ip`: returns the node's current IP address in JSON format
@@ -218,16 +219,6 @@ fn write_resolv_conf(dns_servers: &[&IpAddr], dns_search: &Option<Vec<String>>) 
     Ok(())
 }
 
-/// Resolve assigned IP address and persist the result as hostname.
-fn update_hostname(ip: &IpNet) -> Result<()> {
-    let host =
-        lookup_addr(&ip.addr()).with_context(|| error::HostnameLookupFailed { ip: ip.addr() })?;
-    fs::write(KERNEL_HOSTNAME, host).context(error::HostnameWriteFailed {
-        path: KERNEL_HOSTNAME,
-    })?;
-    Ok(())
-}
-
 /// Persist the current IP address to file
 fn write_current_ip(ip: &IpAddr) -> Result<()> {
     fs::write(CURRENT_IP, ip.to_string()).context(error::CurrentIpWriteFailed { path: CURRENT_IP })
@@ -247,7 +238,6 @@ fn install(args: InstallArgs) -> Result<()> {
             dns_servers.shuffle(&mut thread_rng());
             write_resolv_conf(&dns_servers, &info.dns_search)?;
             write_current_ip(&info.ip_address.addr())?;
-            update_hostname(&info.ip_address)?;
         }
         _ => eprintln!("Unhandled 'install' command: {:?}", &args),
     }
@@ -348,7 +338,6 @@ mod error {
     use envy;
     use snafu::Snafu;
     use std::io;
-    use std::net::IpAddr;
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
@@ -366,9 +355,6 @@ mod error {
 
         #[snafu(display("Failed to write resolver configuration to '{}': {}", path.display(), source))]
         ResolvConfWriteFailed { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Failed to resolve '{}' to hostname: {}", ip, source))]
-        HostnameLookupFailed { ip: IpAddr, source: io::Error },
 
         #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
         HostnameWriteFailed { path: PathBuf, source: io::Error },

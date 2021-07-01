@@ -5,7 +5,8 @@ Current version: 0.1.0
 ## Introduction
 
 netdog is a small helper program for wicked, to apply network settings received from DHCP.  It
-generates `/etc/resolv.conf`, generates and sets the hostname, and persists the current IP to file.
+generates `/etc/resolv.conf`, generates and sets the hostname, and persists the current IP to a
+file.
 
 It contains two subcommands meant for use as settings generators:
 * `node-ip`: returns the node's current IP address in JSON format

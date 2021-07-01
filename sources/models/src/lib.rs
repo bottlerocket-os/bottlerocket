@@ -108,12 +108,13 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 
 use crate::modeled_types::{
-    BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
-    FriendlyVersion, Identifier, KubernetesAuthenticationMode, KubernetesBootstrapToken,
-    KubernetesCloudProvider, KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
-    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
-    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url,
-    ValidBase64,
+    BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey,
+    ECSAttributeValue, FriendlyVersion, Identifier, KubernetesAuthenticationMode,
+    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterName,
+    KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
+    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
+    KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
+    ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -199,6 +200,7 @@ struct HostContainer {
 // Network settings. These settings will affect host service components' network behavior
 #[model]
 struct NetworkSettings {
+    hostname: ValidLinuxHostname,
     https_proxy: Url,
     // We allow some flexibility in NO_PROXY values because different services support different formats.
     no_proxy: Vec<SingleLineString>,
