@@ -1544,6 +1544,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-cpu-manager"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-cpu-manager-state"
 version = "0.1.0"
 dependencies = [
