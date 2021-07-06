@@ -146,7 +146,7 @@ struct LeaseInfo {
     #[serde(rename = "dnsdomain")]
     dns_domain: Option<String>,
     #[serde(rename = "dnssearch")]
-    dns_search: Option<String>,
+    dns_search: Option<Vec<String>>,
 }
 
 /// Informs the user about proper usage of the program and exits.
@@ -275,11 +275,11 @@ where
 }
 
 /// Write resolver configuration for libc.
-fn write_resolv_conf(dns_servers: &[&IpAddr], dns_search: &Option<String>) -> Result<()> {
+fn write_resolv_conf(dns_servers: &[&IpAddr], dns_search: &Option<Vec<String>>) -> Result<()> {
     let mut output = String::new();
 
     if let Some(s) = dns_search {
-        writeln!(output, "search {}", s).context(error::ResolvConfBuildFailed)?;
+        writeln!(output, "search {}", s.join(" ")).context(error::ResolvConfBuildFailed)?;
     }
 
     for n in dns_servers {
