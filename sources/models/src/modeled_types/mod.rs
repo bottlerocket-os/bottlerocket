@@ -74,6 +74,15 @@ pub mod error {
             input: String,
             source: std::num::ParseFloatError,
         },
+
+        #[snafu(display("Invalid Cpu Manager policy '{}'", input))]
+        InvalidCpuManagerPolicy {
+            input: String,
+            source: serde_plain::Error,
+        },
+
+        #[snafu(display("Invalid Kubernetes duration value '{}'", input))]
+        InvalidKubernetesDurationValue { input: String },
     }
 }
 
