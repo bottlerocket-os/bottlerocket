@@ -1,3 +1,36 @@
+# v1.1.3 (2021-07-12)
+
+Note: in the Bottlerocket v1.0.8 release, for the aws-k8s-1.20 and aws-k8s-1.21 variants, we set the default Kubernetes CPU manager policy to "static".
+We heard from several users that this breaks usage of the Fluent Bit log processor.
+In Bottlerocket v1.1.3, we've changed the default back to "none", but have added a setting so you can use the "static" policy if desired.
+To do so, set `settings.kubernetes.cpu-manager-policy` to "static".
+To do this in user data, for example, pass the following:
+
+```toml
+[settings.kubernetes]
+cpu-manager-policy = "static"
+```
+
+## OS Changes
+
+* Fix parsing of lists of values in domain name search field of DHCP option sets ([#1646], **thanks @hypnoce!**)
+* Add setting for configuring Kubernetes CPU manager policy and reconcile policy  ([#1638])
+
+## Build Changes
+
+* Update SDK to 0.22.0 ([#1640])
+* Store build artifacts per architecture ([#1630])
+
+## Documentation Changes
+
+* Update references to the ECS variant for GA release ([#1637])
+
+[#1630]: https://github.com/bottlerocket-os/bottlerocket/pull/1630
+[#1637]: https://github.com/bottlerocket-os/bottlerocket/pull/1637
+[#1638]: https://github.com/bottlerocket-os/bottlerocket/pull/1638
+[#1640]: https://github.com/bottlerocket-os/bottlerocket/pull/1640
+[#1646]: https://github.com/bottlerocket-os/bottlerocket/pull/1646
+
 # v1.1.2 (2021-06-25)
 
 With this release, the aws-ecs-1 variant has graduated from preview status and is now generally available.
