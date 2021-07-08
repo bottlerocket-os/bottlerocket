@@ -50,3 +50,35 @@ ssm_prefix = "/your/prefix/here"
 # If specified, we assume this role before making any API calls in this region.
 # (This is assumed after the "global" aws.role, if that is also specified.)
 role = "arn:aws:iam::012345678901:role/assume-regional"
+
+[vmware]
+# A list of datacenter names to which you would like to upload an OVA.  These
+# are "friendly" names, and do not need to be the actual name of the
+# software-defined datacenter, but can be.  For example, you may have have
+# multiple vSphere instances with datacenters that still carry the default
+# "SDDC-Datacenter" name; this field allows you to differentiate them.
+datacenters = ["north", "south"]
+
+# ***
+# GOVC_* environment variables set in the current environment override any
+# configuration set in the sections below!
+# ***
+
+# Optional common configuration
+# This configuration allow values to be set in a single place if they are common in 
+# multiple datacenters.  They can be overridden in the datacenter's block below.
+[vmware.common]
+network = "a_network"
+
+# Datacenter specific configuration
+# This specifies all of the values necessary to communicate with this
+# datacenter via `govc`.  Each value maps directly to the GOVC_* environment
+# variable in the corresponding comment.  If any of these values is missing and
+# isn't in the environment, we will look for them in `vmware.common`.
+[vmware.datacenter.north]
+vsphere_url = "https://vcenter.1234.vmwarevmc.com" # GOVC_URL
+datacenter = "SDDC-Datacenter" # GOVC_DATACENTER
+datastore = "WorkloadDatastore" # GOVC_DATASTORE
+network = "sddc-cgw-network-1" # GOVC_NETWORK
+folder = "my_folder" # GOVC_FOLDER
+resource_pool = "/SDDC-Datacenter/host/Cluster/Resources/Compute-ResourcePool" # GOVC_RESOURCE_POOL

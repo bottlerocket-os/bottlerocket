@@ -25,6 +25,7 @@ Configuration comes from:
 
 mod aws;
 mod repo;
+mod vmware;
 
 use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
@@ -77,6 +78,9 @@ fn run() -> Result<()> {
                     .context(error::PromoteSsm)
             })
         }
+        SubCommand::UploadOva(ref upload_args) => {
+            vmware::upload_ova::run(&args, &upload_args).context(error::UploadOva)
+        }
     }
 }
 
@@ -115,6 +119,8 @@ enum SubCommand {
 
     Ssm(aws::ssm::SsmArgs),
     PromoteSsm(aws::promote_ssm::PromoteArgs),
+
+    UploadOva(vmware::upload_ova::UploadArgs),
 }
 
 /// Parses a SemVer, stripping a leading 'v' if present
@@ -173,6 +179,11 @@ mod error {
 
         #[snafu(display("Failed to update SSM: {}", source))]
         Ssm { source: crate::aws::ssm::Error },
+
+        #[snafu(display("Failed to upload OVA: {}", source))]
+        UploadOva {
+            source: crate::vmware::upload_ova::Error,
+        },
     }
 }
 type Result<T> = std::result::Result<T, error::Error>;

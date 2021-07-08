@@ -1,0 +1,16 @@
+\{
+  "DiskProvisioning": "flat",
+  "IPAllocationPolicy": "dhcpPolicy",
+  "IPProtocol": "IPv4",
+  "NetworkMapping": [
+    \{
+      "Name": "VM Network",
+      "Network": "{ network }"
+    }
+  ],
+  "MarkAsTemplate": { mark_as_template },
+  "PowerOn": false,
+  "InjectOvfEnv": false,
+  "WaitForIP": false,
+  "Name": null
+}

@@ -64,6 +64,15 @@ REPO_METADATA_EXPIRING_WITHIN = "3 days"
 # You can use ALLOW_CLOBBER=true with the `ssm` task to make it overwrite existing values.
 # (This is not required with `promote-ssm` because the intent of promotion is overwriting.)
 
+# This can be overridden to provide a custom import spec for a VMware OVA.
+# Using configuration from Infra.toml, we substitute the correct value for
+# network, and whether or not to mark a VM as a template
+VMWARE_IMPORT_SPEC_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/support/vmware/import_spec.template"
+
+# You can set VMWARE_DATACENTERS to override the list of datacenters from
+# Infra.toml for VMware commands; it's a comma-separated list like
+# "datacenter1,datacenter2"
+
 # Disallow pulling directly Upstream URLs when lookaside cache results in MISSes as a fallback.
 # To use the upstream source as fallback, override this on the command line and set it to 'true'
 BUILDSYS_UPSTREAM_SOURCE_FALLBACK = "false"
@@ -119,6 +128,9 @@ BUILDSYS_KMOD_KIT_PATH = "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_KMOD_KIT}"
 BUILDSYS_OVA = "${BUILDSYS_NAME_VARIANT}-v${BUILDSYS_VERSION_IMAGE}.ova"
 BUILDSYS_OVA_PATH = "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_OVA}"
 BUILDSYS_OVF_TEMPLATE = "${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/template.ovf"
+
+# The default name of uploaded OVAs; override by setting VMWARE_VM_NAME
+VMWARE_VM_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 
 [tasks.setup]
 script = [
@@ -936,6 +948,56 @@ pubsys \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
 '''
 ]
+
+[tasks._upload-ova-base]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the image files below to save time.
+# This does mean that `cargo make` must be run before 
+# `cargo make _upload-ova-base`.
+dependencies = ["setup-build", "publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+ova_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova"
+if [ ! -s "${ova_path}" ]; then
+   echo "An OVA doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
+   exit 1
+fi
+
+vm_name="${VMWARE_VM_NAME:-${VMWARE_VM_NAME_DEFAULT}}"
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   upload-ova \
+   \
+   --ova "${ova_path}" \
+   --spec "${VMWARE_IMPORT_SPEC_PATH}" \
+   --name "${vm_name}" \
+   \
+   ${MARK_OVA_AS_TEMPLATE:+--mark-as-template} \
+   \
+   ${VMWARE_DATACENTERS:+--datacenters "${VMWARE_DATACENTERS}"}
+'''
+]
+
+# This task runs `_upload-ova-base` which will upload the OVA and *not* mark it
+# as a template
+[tasks.upload-ova]
+script_runner = "bash"
+extend = "_upload-ova-base"
+
+# This task runs `_upload-ova-base` with the environment variable
+# `MARK_OVA_AS_TEMPLATE` set, which will upload the OVA *and* mark it as a
+# template
+[tasks.vmware-template]
+script_runner = "bash"
+env = { "MARK_OVA_AS_TEMPLATE" = "true" }
+extend = "_upload-ova-base"
 
 [tasks.clean]
 dependencies = [
