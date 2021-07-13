@@ -1,0 +1,4 @@
+# This file provides a manual way to clear out github actions caches for Bottlerocket tools.
+# Any change to this file will cause the cache to miss. increment the number below by 1 if
+# you need to clear the caches.
+0

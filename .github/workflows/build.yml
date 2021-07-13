@@ -29,7 +29,28 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
+      # This speeds up the publish-test script, which would otherwise need to
+      # build tuftool and pubsys every time, saving several minutes.  We don't
+      # cache CARGO_HOME because that's shared with the OS build.
+      - name: Cache Bottlerocket tools build artifacts
+        uses: actions/cache@v2
+        with:
+          path: |
+            tools/bin
+            tools/.crates.toml
+            tools/.crates2.json
+            tools/target
+          # You can edit the .github/tools_cache_bust file if you need to clear the cache
+          key: ${{ hashFiles('.github/tools_cache_bust') }}-${{ runner.os }}-${{ hashFiles('tools/Cargo.lock') }}
+          restore-keys: |
+            ${{ hashFiles('.github/tools_cache_bust') }}-${{ runner.os }}-
       - run: rustup toolchain install 1.53.0 && rustup default 1.53.0
       - run: cargo install --version 0.30.0 cargo-make
+      - run: cargo install --version 0.6.2 cargo-sweep
+      - run: |
+          cargo sweep -i -r tools/
+          cargo sweep -t 7 -r tools/
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} -e BUILDSYS_ARCH=${{ matrix.arch }} -e BUILDSYS_JOBS=12
+      # The following step is for validating pubsys related tasks
+      - run: VARIANT=${{ matrix.variant }} ARCH=${{ matrix.arch }} .github/publish-test.sh
