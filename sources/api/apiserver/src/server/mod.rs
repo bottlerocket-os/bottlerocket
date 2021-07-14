@@ -443,7 +443,7 @@ fn transaction_name(query: &web::Query<HashMap<String, String>>) -> &str {
 // Can also override `render_response` if we want to change headers, content type, etc.
 impl ResponseError for error::Error {
     /// Maps our error types to the HTTP error code they should return.
-    fn error_response(&self) -> BaseHttpResponse<Body> {
+    fn error_response(&self) -> HttpResponse<Body> {
         use error::Error::*;
         let status_code = match self {
             // 400 Bad Request
@@ -498,7 +498,7 @@ impl ResponseError for error::Error {
             UpdateLockOpen { .. } => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
-        BaseHttpResponse::new(status_code)
+        HttpResponse::new(status_code)
     }
 }
 
