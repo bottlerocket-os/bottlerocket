@@ -70,6 +70,7 @@
 (filecon "/var/lib/chrony/.*" any measure)
 (filecon "/var/lib/systemd" any state)
 (filecon "/var/lib/systemd/.*" any state)
+(filecon "/var/lib/systemd/random-seed" any secret)
 (filecon "/var/lib/wicked" any lease)
 (filecon "/var/lib/wicked/.*" any lease)
 (filecon "/var/log/journal" any state)
