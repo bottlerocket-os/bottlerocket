@@ -4,6 +4,7 @@ members = [
     "api/apiclient",
     "api/bootstrap-containers",
     "api/bork",
+    "api/certdog",
     "api/corndog",
     "api/datastore",
     "api/early-boot-config",
@@ -39,6 +40,7 @@ members = [
     "api/migration/migrations/v1.1.3/kubelet-cpu-manager",
     "api/migration/migrations/v1.1.5/hostname-setting",
     "api/migration/migrations/v1.1.5/hostname-setting-metadata",
+    "api/migration/migrations/v1.2.0/add-custom-certificates",
 
     "bottlerocket-release",
 

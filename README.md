@@ -471,6 +471,36 @@ Here are the metrics settings:
     "vm.max_map_count" = "262144"
     ```
 
+#### Custom CA certificates settings
+
+By defualt, Bottlerocket ships with the Mozilla CA certificate store, but you can add self-signed certificates through the API using these settings:
+
+* `settings.pki.<bundle-name>.data`: Base64-encoded PEM-formatted certificates bundle; it can contain more than one certificate
+* `settings.pki.<bundle-name>.trusted`: Whether the certificates in the bundle are trusted; defaults to `false` when not provided
+
+Here's an example of adding a bundle of self-signed certificates as user data:
+
+```toml
+[settings.pki.my-trusted-bundle]
+data="W3N..."
+trusted=true
+
+[settings.pki.dont-trust-these]
+data="W3N..."
+trusted=false
+```
+
+Here's the same example but using API calls:
+
+```sh
+apiclient set \
+  pki.my-trusted-bundle.data="W3N..." \
+  pki.my-trusted-bundle.trusted=true  \
+  pki.dont-trust-these.data="N3W..."  \
+  pki.dont-trust-there.trusted=false
+```
+
+You can use this method from within a [bootstrap container](#bootstrap-containers-settings), if your user data is over the size limit of the platform.
 
 #### Host containers settings
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).

@@ -10,6 +10,10 @@ pub mod error {
     use regex::Regex;
     use snafu::Snafu;
 
+    // x509_parser::pem::Pem::parse_x509 returns an Err<X509Error>, which is a bit
+    // verbose. Declaring a type to simplify it.
+    type PEMToX509ParseError = x509_parser::nom::Err<x509_parser::error::X509Error>;
+
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub enum Error {
@@ -86,6 +90,17 @@ pub mod error {
 
         #[snafu(display("Invalid Kubernetes duration value '{}'", input))]
         InvalidKubernetesDurationValue { input: String },
+
+        #[snafu(display("Invalid x509 certificate: {}", source))]
+        InvalidX509Certificate { source: PEMToX509ParseError },
+
+        #[snafu(display("Invalid PEM object: {}", source))]
+        InvalidPEM {
+            source: x509_parser::error::PEMError,
+        },
+
+        #[snafu(display("No valid certificate found in bundle"))]
+        NoCertificatesFound {},
     }
 }
 
