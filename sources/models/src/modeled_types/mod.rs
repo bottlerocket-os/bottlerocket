@@ -9,6 +9,7 @@
 pub mod error {
     use regex::Regex;
     use snafu::Snafu;
+    use x509_parser;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
@@ -83,6 +84,16 @@ pub mod error {
 
         #[snafu(display("Invalid Kubernetes duration value '{}'", input))]
         InvalidKubernetesDurationValue { input: String },
+
+        #[snafu(display("Invalid x509 certificate: {}", source))]
+        InvalidX509Certificate {
+            source: x509_parser::nom::Err<x509_parser::error::X509Error>,
+        },
+
+        #[snafu(display("Invalid PEM object: {}", source))]
+        InvalidPEM {
+            source: x509_parser::error::PEMError,
+        },
     }
 }
 
