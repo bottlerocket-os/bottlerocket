@@ -890,3 +890,52 @@ mod test_kubernetes_duration_value {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// TopologyManagerScope represents a string that contains a valid topology management scope. Default: container
+/// https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct TopologyManagerScope {
+    inner: String,
+}
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ValidTopologyManagerScope {
+    Container,
+    Pod,
+}
+
+impl TryFrom<&str> for TopologyManagerScope {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ValidTopologyManagerScope>(&input).context(
+            error::InvalidTopologyManagerScope { input })?;
+        Ok(TopologyManagerScope {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(TopologyManagerScope, "TopologyManagerScope");
+
+#[cfg(test)]
+mod test_topology_manager_scope {
+    use super::TopologyManagerScope;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_topology_manager_scope() {
+        for ok in &["container", "pod"] {
+            TopologyManagerScope::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_topology_manager_scope() {
+        for err in &["", "bad", "100", &"a".repeat(64)] {
+            TopologyManagerScope::try_from(*err).unwrap_err();
+        }
+    }
+}

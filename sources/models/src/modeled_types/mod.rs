@@ -83,6 +83,12 @@ pub mod error {
 
         #[snafu(display("Invalid Kubernetes duration value '{}'", input))]
         InvalidKubernetesDurationValue { input: String },
+
+        #[snafu(display("Invalid Topology Manager Scope '{}'", input))]
+        InvalidTopologyManagerScope {
+            input: String,
+            source: serde_plain::Error,
+        },
     }
 }
 
