@@ -484,7 +484,7 @@ done'''
 ]
 
 [tasks.build-tools]
-dependencies = ["fetch"]
+dependencies = ["setup", "fetch-sources"]
 script = [
 '''
 cargo install \
@@ -616,7 +616,7 @@ docker run --rm \
 
 # Builds a package including its build-time and runtime dependency packages.
 [tasks.build-package]
-dependencies = ["check-cargo-version", "build-tools", "publish-setup", "fetch-licenses"]
+dependencies = ["check-cargo-version", "fetch-sdk", "build-tools", "publish-setup", "fetch-licenses"]
 script_runner = "bash"
 script = [
 '''
@@ -649,7 +649,7 @@ cargo build \
 ]
 
 [tasks.build-variant]
-dependencies = ["build-tools", "publish-setup"]
+dependencies = ["fetch-sdk", "build-tools", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
