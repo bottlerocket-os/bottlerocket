@@ -29,7 +29,7 @@ mod error {
         TemplateRegister {
             name: String,
             path: PathBuf,
-            source: handlebars::TemplateFileError,
+            source: handlebars::TemplateError,
         },
     }
 }

@@ -134,3 +134,47 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
 
     Ok(template_registry)
 }
+
+#[cfg(test)]
+mod test {
+    use handlebars::Handlebars;
+    use serde_json::json;
+
+    #[test]
+    fn render_whitespace() {
+        let registry = Handlebars::new();
+        // Similar to a proxy configuration file whose rendering behavior changed in handlebars 4.
+        let tmpl = r###"
+{{#if p}}
+VAR1={{p}}
+VAR2={{p}}
+{{/if}}
+LIST_UPPER={{#each a}}{{this}},{{/each}}x,y{{#if b}},{{b}}{{/if}}{{#if c}},.{{c}}{{/if}}
+list_lower={{#each a}}{{this}},{{/each}}x,y{{#if b}},{{b}}{{/if}}{{#if c}},.{{c}}{{/if}}
+        "###;
+        let data = json!({"a": ["a1", "a2"], "b": "b1", "c": "c1", "p": "hi"});
+        let expected = r###"
+VAR1=hi
+VAR2=hi
+LIST_UPPER=a1,a2,x,y,b1,.c1
+list_lower=a1,a2,x,y,b1,.c1
+        "###;
+
+        let result = registry.render_template(&tmpl, &data).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn render_newline() {
+        let registry = Handlebars::new();
+        // Another simple check for whitespace behavior changes in handlebars 4.
+        let tmpl = r###"{{#if a}}x{{/if}}
+y"###;
+        let data = json!({ "a": true});
+        let expected = "x
+y";
+
+        let result = registry.render_template(&tmpl, &data).unwrap();
+        assert_eq!(result, expected);
+    }
+}

@@ -30,9 +30,9 @@ SystemdCgroup = true
 bin_dir = "/opt/cni/bin"
 conf_dir = "/etc/cni/net.d"
 
-{{~#if settings.container-registry.mirrors}}
-{{~#each settings.container-registry.mirrors}}
+{{#if settings.container-registry.mirrors}}
+{{#each settings.container-registry.mirrors}}
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{@key}}"]
 endpoint = [{{join_array ", " this }}]
-{{~/each}}
-{{~/if}}
+{{/each}}
+{{/if}}

@@ -1301,9 +1301,9 @@ dependencies = [
 
 [[package]]
 name = "handlebars"
-version = "3.5.5"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4498fc115fa7d34de968184e473529abb40eeb6be8bc5f7faba3d08c316cb3e3"
+checksum = "72a0ffab8c36d0436114310c7e10b59b3307e650ddfabf6d006028e29a70c6e6"
 dependencies = [
  "log",
  "pest",

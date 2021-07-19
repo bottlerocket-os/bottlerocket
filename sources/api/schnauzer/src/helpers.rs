@@ -957,13 +957,13 @@ fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError>{
 #[cfg(test)]
 mod test_base64_decode {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1011,13 +1011,13 @@ mod test_base64_decode {
 #[cfg(test)]
 mod test_join_map {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1108,13 +1108,13 @@ mod test_join_map {
 #[cfg(test)]
 mod test_default {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1200,13 +1200,13 @@ mod test_default {
 #[cfg(test)]
 mod test_ecr_registry {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1262,13 +1262,13 @@ mod test_ecr_registry {
 #[cfg(test)]
 mod test_pause_registry {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1323,13 +1323,13 @@ mod test_pause_registry {
 #[cfg(test)]
 mod test_host {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1382,13 +1382,13 @@ mod test_host {
 #[cfg(test)]
 mod test_goarch {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1425,13 +1425,13 @@ mod test_goarch {
 #[cfg(test)]
 mod test_join_array {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1493,13 +1493,13 @@ mod test_join_array {
 #[cfg(test)]
 mod test_kube_reserve_memory {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {
@@ -1550,13 +1550,13 @@ mod test_kube_reserve_memory {
 #[cfg(test)]
 mod test_kube_reserve_cpu {
     use super::*;
-    use handlebars::TemplateRenderError;
+    use handlebars::RenderError;
     use serde::Serialize;
     use serde_json::json;
 
     // A thin wrapper around the handlebars render_template method that includes
     // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, TemplateRenderError>
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
     where
         T: Serialize,
     {

@@ -69,7 +69,7 @@ pub enum Error {
     #[snafu(display("Unable to render template string '{}': {}", template, source))]
     RenderTemplate {
         template: String,
-        source: handlebars::TemplateRenderError,
+        source: handlebars::RenderError,
     },
 
     #[snafu(display("'{}' is set to non-string value", setting))]

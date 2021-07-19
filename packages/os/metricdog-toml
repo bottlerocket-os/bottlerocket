@@ -4,8 +4,8 @@ service_checks = [{{join_array ", " settings.metrics.service-checks}}]
 seed = {{settings.updates.seed}}
 version_lock = "{{settings.updates.version-lock}}"
 ignore_waves = {{settings.updates.ignore-waves}}
-{{~#if settings.aws.region}}
+{{#if settings.aws.region}}
 region = "{{settings.aws.region}}"
-{{~else}}
+{{else}}
 region = "global"
-{{~/if}}
+{{/if}}

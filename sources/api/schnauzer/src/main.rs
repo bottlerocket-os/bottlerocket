@@ -80,7 +80,7 @@ mod error {
         RenderTemplate {
             setting_name: String,
             template: String,
-            source: handlebars::TemplateRenderError,
+            source: handlebars::RenderError,
         },
     }
 }
