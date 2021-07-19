@@ -89,6 +89,12 @@ pub mod error {
             input: String,
             source: serde_plain::Error,
         },
+
+        #[snafu(display("Invalid Topology Manager Policy '{}'", input))]
+        InvalidTopologyManagerPolicy {
+            input: String,
+            source: serde_plain::Error,
+        },
     }
 }
 

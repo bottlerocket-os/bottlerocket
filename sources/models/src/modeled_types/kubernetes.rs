@@ -939,3 +939,56 @@ mod test_topology_manager_scope {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// TopologyManagerPolicy represents a string that contains a valid topology management policy. Default: none
+/// https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct TopologyManagerPolicy {
+    inner: String,
+}
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum ValidTopologyManagerPolicy {
+    None,
+    Restricted,
+    #[serde(rename = "best-effort")]
+    BestEffort,
+    #[serde(rename = "single-numa-node")]
+    SingleNumaNode,
+}
+
+impl TryFrom<&str> for TopologyManagerPolicy {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ValidTopologyManagerPolicy>(&input).context(
+            error::InvalidTopologyManagerPolicy { input })?;
+        Ok(TopologyManagerPolicy {
+            inner: input.to_string(),
+        })
+    }
+}
+string_impls_for!(TopologyManagerPolicy, "TopologyManagerPolicy");
+
+#[cfg(test)]
+mod test_topology_manager_policy {
+    use super::TopologyManagerPolicy;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_topology_manager_policy() {
+        for ok in &["none", "restricted", "best-effort", "single-numa-node" ] {
+            TopologyManagerPolicy::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_topology_manager_policy() {
+        for err in &["", "bad", "100", &"a".repeat(64)] {
+            TopologyManagerPolicy::try_from(*err).unwrap_err();
+        }
+    }
+}
