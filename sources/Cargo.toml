@@ -37,6 +37,7 @@ members = [
     "api/migration/migrations/v1.1.2/control-container-v0-5-1",
     "api/migration/migrations/v1.1.3/kubelet-cpu-manager-state",
     "api/migration/migrations/v1.1.3/kubelet-cpu-manager",
+    "api/migration/migrations/v1.2.0/kubelet-topology-manager",
 
     "bottlerocket-release",
 
