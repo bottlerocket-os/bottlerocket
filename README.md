@@ -357,6 +357,7 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.container-log-max-files`: The maximum number of container log files that can be present for a container.
 * `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`. If you want to allow pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node, you can set this setting to `static`. You should reboot if you change this setting after startup - try `apiclient reboot`.
 * `settings.kubernetes.cpu-manager-reconcile-period`: Specifies the CPU manager reconcile period, which controls how often updated CPU assignments are written to cgroupfs. The value is a duration like `30s` for 30 seconds or `1h5m` for 1 hour and 5 minutes.
+* `settings.kubernetes.topology-manager-policy`: Specifies the topology manager policy. Possible values are `none`, `restricted`, `best-effort`, and `single-numa-node`. Defaults to `none`.
 * `settings.kubernetes.topology-manager-scope`: Specifies the topology manager scope. Possible values are `container` and `pod`. Defaults to `container`. If you want to group all containers in a pod to a common set of NUMA nodes, you can set this setting to `pod`.
 
 You can also optionally specify static pods for your node with the following settings.

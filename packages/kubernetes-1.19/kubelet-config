@@ -81,6 +81,9 @@ cpuManagerReconcilePeriod: {{settings.kubernetes.cpu-manager-reconcile-period}}
 {{~#if settings.kubernetes.topology-manager-scope}}
 topologyManagerScope: {{settings.kubernetes.topology-manager-scope}}
 {{~/if}}
+{{~#if settings.kubernetes.topology-manager-policy}}
+topologyManagerPolicy: {{settings.kubernetes.topology-manager-policy}}
+{{~/if}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 readOnlyPort: 0
