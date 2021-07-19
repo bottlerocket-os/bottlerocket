@@ -101,6 +101,12 @@ pub mod error {
 
         #[snafu(display("No valid certificate found in bundle"))]
         NoCertificatesFound {},
+
+        #[snafu(display("Invalid topology manager scope '{}'", input))]
+        InvalidTopologyManagerScope {
+            input: String,
+            source: serde_plain::Error,
+        },
     }
 }
 
