@@ -1,0 +1,47 @@
+# This workflow caches build artifacts for cargo tools and Bottlerocket tools so other workflows won't have to build them
+# every time.
+# The cache should only be inherited by workflows initiated from pull-requests against the develop branch.
+name: Cache
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/**'
+      - 'tools/buildsys/**'
+      - 'tools/pubsys*/**'
+      - '!tools/pubsys/policies/**'
+      - '!tools/pubsys/**.example'
+      - '!tools/pubsys/**.template'
+      - 'tools/Cargo.lock'
+jobs:
+  cache:
+    runs-on: [self-hosted, linux, x64]
+    continue-on-error: true
+    steps:
+      - run: |
+          echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo
+            tools/bin
+            tools/.crates.toml
+            tools/.crates2.json
+            tools/target
+          # You can edit the .github/cache_bust file if you need to clear the cache
+          key: ${{ hashFiles('.github/cache_bust') }}-${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
+          restore-keys: |
+            key: ${{ hashFiles('.github/cache_bust') }}-${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-
+      - run: rustup toolchain install 1.53.0 && rustup default 1.53.0
+      - run: cargo install --locked --version 0.30.0 cargo-make
+      - run: cargo install --locked --version 0.6.3 --no-default-features --features ci-autoclean cargo-cache
+      - run: cargo install --locked --version 0.6.2 cargo-sweep
+      - run: |
+          cargo sweep -i -r tools/
+          cargo sweep -t 7 -r tools/
+      - run: cargo make publish-setup-tools
+      - run: cargo make publish-tools
+      - run: cargo make build-tools
+      # This cleans the cargo cache in ~/.cargo
+      - run: cargo-cache
