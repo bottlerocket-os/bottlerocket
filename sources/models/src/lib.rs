@@ -118,7 +118,7 @@ use crate::modeled_types::{
     KubernetesCloudProvider, KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
     KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
     KubernetesTaintValue, KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url,
-    ValidBase64,
+    ValidBase64, TopologyManagerPolicy, TopologyManagerScope,
 };
 
 // Kubernetes static pod manifest settings
@@ -160,6 +160,8 @@ struct KubernetesSettings {
     container_log_max_files: i32,
     cpu_manager_policy: CpuManagerPolicy,
     cpu_manager_reconcile_period: KubernetesDurationValue,
+    topology_manager_scope: TopologyManagerScope,
+    topology_manager_policy: TopologyManagerPolicy,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
