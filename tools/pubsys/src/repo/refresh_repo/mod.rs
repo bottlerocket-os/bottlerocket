@@ -152,7 +152,7 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
     let signing_key_config = repo_config.signing_keys.as_ref();
 
     let key_source = if let Some(signing_key_config) = signing_key_config {
-        get_signing_key_source(signing_key_config)
+        get_signing_key_source(signing_key_config)?
     } else {
         ensure!(
             refresh_repo_args.default_key_path.exists(),

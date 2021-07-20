@@ -4,16 +4,17 @@ pub mod vmware;
 use crate::vmware::VmwareConfig;
 use chrono::Duration;
 use parse_datetime::parse_offset;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use snafu::ResultExt;
 use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
 use std::fs;
+use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use url::Url;
 
 /// Configuration needed to load and create repos
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct InfraConfig {
     // Repo subcommand config
@@ -49,10 +50,31 @@ impl InfraConfig {
             Ok(Self::default())
         }
     }
+
+    /// Deserializes an InfraConfig from a Infra.lock file at a given path
+    pub fn from_lock_path<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
+        let infra_config_str = fs::read_to_string(path).context(error::File { path })?;
+        serde_yaml::from_str(&infra_config_str).context(error::InvalidLock { path })
+    }
+}
+
+/// S3-specific TUF infrastructure configuration
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
+pub struct S3Config {
+    pub region: Option<String>,
+    #[serde(default)]
+    pub s3_prefix: String,
+    pub vpc_endpoint_id: Option<String>,
+    pub stack_arn: Option<String>,
+    pub bucket_name: Option<String>,
 }
 
 /// AWS-specific infrastructure configuration
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct AwsConfig {
     #[serde(default)]
@@ -62,10 +84,11 @@ pub struct AwsConfig {
     #[serde(default)]
     pub region: HashMap<String, AwsRegionConfig>,
     pub ssm_prefix: Option<String>,
+    pub s3: Option<HashMap<String, S3Config>>,
 }
 
 /// AWS region-specific configuration
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct AwsRegionConfig {
     pub role: Option<String>,
@@ -76,12 +99,33 @@ pub struct AwsRegionConfig {
 // These variant names are lowercase because they have to match the text in Infra.toml, and it's
 // more common for TOML config to be lowercase.
 #[allow(non_camel_case_types)]
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub enum SigningKeyConfig {
-    file { path: PathBuf },
-    kms { key_id: String },
-    ssm { parameter: String },
+    file {
+        path: PathBuf,
+    },
+    kms {
+        key_id: Option<String>,
+        #[serde(flatten)]
+        config: Option<KMSKeyConfig>,
+    },
+    ssm {
+        parameter: String,
+    },
+}
+
+/// AWS region-specific configuration
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+//#[serde(deny_unknown_fields)]
+pub struct KMSKeyConfig {
+    #[serde(default)]
+    pub available_keys: HashMap<String, String>,
+    pub key_alias: Option<String>,
+    #[serde(default)]
+    pub regions: VecDeque<String>,
+    #[serde(default)]
+    pub key_stack_arns: HashMap<String, String>,
 }
 
 impl TryFrom<SigningKeyConfig> for Url {
@@ -91,8 +135,9 @@ impl TryFrom<SigningKeyConfig> for Url {
             SigningKeyConfig::file { path } => Url::from_file_path(path),
             // We don't support passing profiles to tough in the name of the key/parameter, so for
             // KMS and SSM we prepend a slash if there isn't one present.
-            SigningKeyConfig::kms { key_id } => {
-                let key_id = if key_id.starts_with('/') {
+            SigningKeyConfig::kms { key_id, .. } => {
+                let mut key_id = key_id.unwrap_or_else(Default::default);
+                key_id = if key_id.starts_with('/') {
                     key_id.to_string()
                 } else {
                     format!("/{}", key_id)
@@ -112,16 +157,18 @@ impl TryFrom<SigningKeyConfig> for Url {
 }
 
 /// Represents a Bottlerocket repo's location and the metadata needed to update the repo
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct RepoConfig {
     pub root_role_url: Option<Url>,
     pub root_role_sha512: Option<String>,
-
     pub signing_keys: Option<SigningKeyConfig>,
-
+    pub root_keys: Option<SigningKeyConfig>,
     pub metadata_base_url: Option<Url>,
     pub targets_url: Option<Url>,
+    pub file_hosting_config_name: Option<String>,
+    pub root_key_threshold: Option<NonZeroUsize>,
+    pub pub_key_threshold: Option<NonZeroUsize>,
 }
 
 /// How long it takes for each metadata type to expire
@@ -172,6 +219,12 @@ mod error {
         InvalidToml {
             path: PathBuf,
             source: toml::de::Error,
+        },
+
+        #[snafu(display("Invalid lock file at '{}': {}", path.display(), source))]
+        InvalidLock {
+            path: PathBuf,
+            source: serde_yaml::Error,
         },
 
         #[snafu(display("Missing config: {}", what))]

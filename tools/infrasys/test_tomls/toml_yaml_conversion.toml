@@ -1,0 +1,12 @@
+[repo.default] 
+   file_hosting_config_name = "TUF-Repo-S3-Buck"
+   signing_keys = { kms = { available_keys = { "e4a8f7fe-2272-4e51-bc3e-3f719c77eb31" = "us-west-1" } } }
+   root_keys = { kms = { available_keys = { "e4a8f7fe-2272-4e51-bc3e-3f719c77eb31" = "us-west-1" } } }
+   root_key_threshold = 1
+   pub_key_threshold = 1
+   
+[aws] 
+    [aws.s3.TUF-Repo-S3-Buck]
+    region = "us-west-2"
+    vpc_endpoint_id = "vpc-12345" 
+    s3_prefix = "/my-bottlerocket-remix" 

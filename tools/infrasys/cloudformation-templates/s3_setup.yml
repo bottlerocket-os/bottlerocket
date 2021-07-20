@@ -1,0 +1,25 @@
+Resources:
+  TUFRepoBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain 
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      AccessControl: LogDeliveryWrite 
+      MetricsConfigurations:
+        - Id: BucketMetrics
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      
+Outputs: 
+  BucketName:
+    Value: !Ref TUFRepoBucket
+  RDN:
+     Value: !GetAtt TUFRepoBucket.RegionalDomainName

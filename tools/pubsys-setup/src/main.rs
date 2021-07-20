@@ -76,8 +76,7 @@ fn run() -> Result<()> {
     let args = Args::from_args();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     // Make /roles and /keys directories, if they don't exist, so we can write generated files.
     let role_dir = args.root_role_path.parent().context(error::Path {

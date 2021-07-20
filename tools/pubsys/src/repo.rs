@@ -388,20 +388,22 @@ fn is_file_not_found_error(e: &tough::error::Error) -> bool {
 }
 
 /// Gets the corresponding `KeySource` according to the signing key config from Infra.toml
-fn get_signing_key_source(signing_key_config: &SigningKeyConfig) -> Box<dyn KeySource> {
+fn get_signing_key_source(signing_key_config: &SigningKeyConfig) -> Result<Box<dyn KeySource>> {
     match signing_key_config {
-        SigningKeyConfig::file { path } => Box::new(LocalKeySource { path: path.clone() }),
-        SigningKeyConfig::kms { key_id } => Box::new(KmsKeySource {
+        SigningKeyConfig::file { path } => Ok(Box::new(LocalKeySource { path: path.clone() })),
+        SigningKeyConfig::kms { key_id, .. } => Ok(Box::new(KmsKeySource {
             profile: None,
-            key_id: key_id.clone(),
+            key_id: key_id
+                .clone()
+                .context(error::MissingConfig { missing: "key_id" })?,
             client: None,
             signing_algorithm: KmsSigningAlgorithm::RsassaPssSha256,
-        }),
-        SigningKeyConfig::ssm { parameter } => Box::new(SsmKeySource {
+        })),
+        SigningKeyConfig::ssm { parameter } => Ok(Box::new(SsmKeySource {
             profile: None,
             parameter_name: parameter.clone(),
             key_id: None,
-        }),
+        })),
     }
 }
 
@@ -506,7 +508,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     let signing_key_config = repo_config.signing_keys.as_ref();
 
     let key_source = if let Some(signing_key_config) = signing_key_config {
-        get_signing_key_source(signing_key_config)
+        get_signing_key_source(signing_key_config)?
     } else {
         ensure!(
             repo_args.default_key_path.exists(),
