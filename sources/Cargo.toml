@@ -37,6 +37,8 @@ members = [
     "api/migration/migrations/v1.1.2/control-container-v0-5-1",
     "api/migration/migrations/v1.1.3/kubelet-cpu-manager-state",
     "api/migration/migrations/v1.1.3/kubelet-cpu-manager",
+    "api/migration/migrations/v1.1.4/container-registry-mirrors",
+    "api/migration/migrations/v1.1.4/docker-daemon-config-restart",
 
     "bottlerocket-release",
 
