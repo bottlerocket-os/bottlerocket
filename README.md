@@ -417,6 +417,14 @@ These settings can be changed at any time.
 
 #### Network settings
 
+* 'settings.network.hostname': The desired hostname of the system.
+  **Important note for all Kubernetes variants:** This setting should only be set via user data!
+  Changing this setting at runtime can cause issues with kubelet as hostname is closely tied to the identity of the system for both registration and certificates/authorization purposes.
+  For AWS variants, changing this setting will cause issues with kubelet registration.
+
+If this setting isn't set we attempt to use DNS reverse lookup for the hostname.
+If the lookup is unsuccessful, the IP of the node is used in the format `ip-X-X-X-X`.
+
 ##### Proxy settings
 
 These settings will configure the proxying behavior of the following services:

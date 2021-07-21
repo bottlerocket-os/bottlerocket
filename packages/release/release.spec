@@ -14,6 +14,7 @@ Source99: release-tmpfiles.conf
 
 Source200: motd.template
 Source201: proxy-env
+Source202: hostname.template
 
 Source1000: eth0.xml
 Source1001: multi-user.target
@@ -129,6 +130,7 @@ install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
+install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/hostname
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
@@ -166,6 +168,7 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/motd
 %{_cross_templatedir}/proxy-env
+%{_cross_templatedir}/hostname
 %{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 %changelog

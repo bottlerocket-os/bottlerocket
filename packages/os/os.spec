@@ -37,6 +37,7 @@ Source111: metricdog.service
 Source112: metricdog.timer
 Source113: send-boot-success.service
 Source114: bootstrap-containers@.service
+Source115: set-hostname.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -394,7 +395,7 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
-  %{S:113} %{S:114} \
+  %{S:113} %{S:114} %{S:115} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
@@ -531,5 +532,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_bindir}/bootstrap-containers
 %{_cross_unitdir}/bootstrap-containers@.service
 %{_cross_tmpfilesdir}/bootstrap-containers.conf
+
+%{_cross_unitdir}/set-hostname.service
 
 %changelog

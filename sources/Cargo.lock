@@ -1314,6 +1314,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "hostname-setting"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "hostname-setting-metadata"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "http"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1853,6 +1867,7 @@ dependencies = [
 name = "netdog"
 version = "0.1.0"
 dependencies = [
+ "argh",
  "cargo-readme",
  "dns-lookup",
  "envy",

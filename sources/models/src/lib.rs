@@ -204,6 +204,7 @@ struct HostContainer {
 // Network settings. These settings will affect host service components' network behavior
 #[model]
 struct NetworkSettings {
+    hostname: SingleLineString,
     https_proxy: Url,
     // We allow some flexibility in NO_PROXY values because different services support different formats.
     no_proxy: Vec<SingleLineString>,
