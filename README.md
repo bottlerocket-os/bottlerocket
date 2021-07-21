@@ -65,8 +65,7 @@ We also have variants in preview status that are designed to be Kubernetes worke
 - `vmware-k8s-1.20`
 - `vmware-k8s-1.21`
 
-The `aws-k8s-1.16` variant is deprecated and will no longer be supported in Bottlerocket releases after June, 2021.
-The `aws-k8s-1.15` variant is no longer supported.
+The `aws-k8s-1.15` and `aws-k8s-1.16` variants are no longer supported.
 We recommend users replace `aws-k8s-1.15` and `aws-k8s-1.16` nodes with the [latest variant compatible with their cluster](variants/).
 
 ## Architectures

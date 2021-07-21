@@ -1,3 +1,0 @@
-{{~#if settings.kubernetes.cluster-certificate~}}
-{{base64_decode settings.kubernetes.cluster-certificate}}
-{{~/if~}}
