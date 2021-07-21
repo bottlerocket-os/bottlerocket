@@ -12,6 +12,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
 use url::Host;
+use x509_parser;
 
 /// ValidBase64 can only be created by deserializing from valid base64 text.  It stores the
 /// original text, not the decoded form.  Its purpose is input validation, namely being used as a
@@ -616,5 +617,67 @@ mod test_valid_container_mode {
     #[test]
     fn invalid_container_mode() {
         assert!(BootstrapContainerMode::try_from("invalid").is_err());
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct PEMCertificateString {
+    inner: String,
+}
+
+impl TryFrom<&str> for PEMCertificateString {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        // Empty strings are valid to allow deleting bundles
+        if input.trim().len() == 0 {
+            return Ok(PEMCertificateString {
+                inner: input.to_string(),
+            });
+        }
+        let decoded_bytes = base64::decode(input).context(error::InvalidBase64)?;
+        // Validate each certificate in the bundle
+        for (_, pem) in x509_parser::pem::Pem::iter_from_buffer(&decoded_bytes).enumerate() {
+            // Parse buffer into a PEM object, then to a x509 certificate
+            let pem = pem.context(error::InvalidPEM)?;
+            pem.parse_x509().context(error::InvalidX509Certificate)?;
+        }
+
+        Ok(PEMCertificateString {
+            inner: input.to_string(),
+        })
+    }
+}
+
+impl Default for PEMCertificateString {
+    fn default() -> Self {
+        PEMCertificateString {
+            inner: "".to_string(),
+        }
+    }
+}
+
+string_impls_for!(PEMCertificateString, "PEMCertificateString");
+
+#[cfg(test)]
+mod test_valid_pem_certificate_string {
+    use super::PEMCertificateString;
+    use std::convert::TryFrom;
+
+    static TEST_PEM: &str = include_str!("../../fixtures/test-pem");
+
+    #[test]
+    fn valid_pem_certificate() {
+        assert!(PEMCertificateString::try_from(TEST_PEM).is_ok());
+        assert!(PEMCertificateString::try_from("").is_ok());
+    }
+
+    #[test]
+    fn invalid_pem_certificate() {
+        assert!(PEMCertificateString::try_from(
+            "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tIGJhZCAtLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+        )
+        .is_err());
     }
 }
