@@ -1,3 +1,17 @@
+# v1.1.4 (2021-07-23)
+
+## Security fixes
+
+* Update containerd to 1.4.8 ([#1661])
+* Update systemd to 247.8 ([#1662])
+* Update 5.4 and 5.10 kernels ([#1665])
+* Set permissions to root-only for /var/lib/systemd/random-seed ([#1656])
+
+[#1656]: https://github.com/bottlerocket-os/bottlerocket/pull/1656
+[#1661]: https://github.com/bottlerocket-os/bottlerocket/pull/1661
+[#1662]: https://github.com/bottlerocket-os/bottlerocket/pull/1662
+[#1665]: https://github.com/bottlerocket-os/bottlerocket/pull/1665
+
 # v1.1.3 (2021-07-12)
 
 Note: in the Bottlerocket v1.0.8 release, for the aws-k8s-1.20 and aws-k8s-1.21 variants, we set the default Kubernetes CPU manager policy to "static".
