@@ -329,6 +329,7 @@ name = "kmod"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "libzstd",
 ]
 
 [[package]]
@@ -595,6 +596,13 @@ dependencies = [
 
 [[package]]
 name = "libz"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "libzstd"
 version = "0.1.0"
 dependencies = [
  "glibc",
