@@ -8,4 +8,4 @@ template-path = "/usr/share/templates/docker-daemon-json"
 
 # Image registries
 [metadata.settings.container-registry]
-affected-services = ["docker"]
+affected-services = ["docker", "host-containers", "bootstrap-containers"]

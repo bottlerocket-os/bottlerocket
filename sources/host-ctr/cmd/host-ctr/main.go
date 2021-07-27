@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net/url"
 	"os"
 	"os/signal"
 	"regexp"
@@ -66,6 +67,7 @@ func App() *cli.App {
 		containerdSocket string
 		namespace        string
 		superpowered     bool
+		registryConfig   string
 		cType            string
 	)
 
@@ -116,6 +118,11 @@ func App() *cli.App {
 					Value:       false,
 				},
 				&cli.StringFlag{
+					Name:        "registry-config",
+					Usage:       "path to image registry configuration",
+					Destination: &registryConfig,
+				},
+				&cli.StringFlag{
 					Name:        "container-type",
 					Usage:       "specifies one of: [host, bootstrap]",
 					Destination: &cType,
@@ -123,7 +130,7 @@ func App() *cli.App {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				return runCtr(containerdSocket, namespace, containerID, source, superpowered, containerType(cType))
+				return runCtr(containerdSocket, namespace, containerID, source, superpowered, registryConfig, containerType(cType))
 			},
 		},
 		{
@@ -137,9 +144,14 @@ func App() *cli.App {
 					Destination: &source,
 					Required:    true,
 				},
+				&cli.StringFlag{
+					Name:        "registry-config",
+					Usage:       "path to image registry configuration",
+					Destination: &registryConfig,
+				},
 			},
 			Action: func(c *cli.Context) error {
-				return pullImageOnly(containerdSocket, namespace, source)
+				return pullImageOnly(containerdSocket, namespace, source, registryConfig)
 			},
 		},
 		{
@@ -204,7 +216,7 @@ func (ct containerType) Prefix() string {
 	return ""
 }
 
-func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool, cType containerType) error {
+func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool, registryConfigPath string, cType containerType) error {
 	// Check if the containerType provided is valid
 	if !cType.IsValid() {
 		return errors.New("Invalid container type")
@@ -241,12 +253,12 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 	isECRImage := ecrRegex.MatchString(source)
 	var img containerd.Image
 	if isECRImage {
-		img, err = pullECRImage(ctx, source, client)
+		img, err = pullECRImage(ctx, source, client, registryConfigPath)
 		if err != nil {
 			return err
 		}
 	} else {
-		img, err = pullImage(ctx, source, client)
+		img, err = pullImage(ctx, source, client, registryConfigPath)
 		if err != nil {
 			log.G(ctx).WithField("ref", source).Error(err)
 			return err
@@ -457,7 +469,7 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 }
 
 // pullImageOnly pulls the specified container image
-func pullImageOnly(containerdSocket string, namespace string, source string) error {
+func pullImageOnly(containerdSocket string, namespace string, source string, registryConfigPath string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = namespaces.WithNamespace(ctx, namespace)
@@ -472,12 +484,12 @@ func pullImageOnly(containerdSocket string, namespace string, source string) err
 	isECRImage := ecrRegex.MatchString(source)
 	ref := source
 	if isECRImage {
-		_, err = pullECRImage(ctx, source, client)
+		_, err = pullECRImage(ctx, source, client, registryConfigPath)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = pullImage(ctx, ref, client)
+		_, err = pullImage(ctx, ref, client, registryConfigPath)
 		if err != nil {
 			log.G(ctx).WithField("ref", ref).Error(err)
 			return err
@@ -540,7 +552,7 @@ func cleanUp(containerdSocket string, namespace string, containerID string) erro
 }
 
 // pullECRImage does some additional conversions before resolving the image reference and pulls the image.
-func pullECRImage(ctx context.Context, source string, client *containerd.Client) (containerd.Image, error) {
+func pullECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string) (containerd.Image, error) {
 	ref := source
 	ecrRef, err := ecr.ParseImageURI(ref)
 	if err != nil {
@@ -554,7 +566,7 @@ func pullECRImage(ctx context.Context, source string, client *containerd.Client)
 		WithField("source", source).
 		Debug("parsed ECR reference from URI")
 
-	img, err := pullImage(ctx, ref, client)
+	img, err := pullImage(ctx, ref, client, registryConfigPath)
 	if err != nil {
 		log.G(ctx).WithField("ref", ref).Error(err)
 		return nil, err
@@ -798,7 +810,21 @@ func withProxyEnv() oci.SpecOpts {
 }
 
 // pullImage pulls an image from the specified source.
-func pullImage(ctx context.Context, source string, client *containerd.Client) (containerd.Image, error) {
+func pullImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string) (containerd.Image, error) {
+	// Handle registry config
+	var registryConfig *RegistryConfig
+	if registryConfigPath != "" {
+		var err error
+		registryConfig, err = NewRegistryConfig(registryConfigPath)
+		if err != nil {
+			log.G(ctx).
+				WithError(err).
+				WithField("registry-config", registryConfigPath).
+				Error("failed to read registry config")
+			return nil, err
+		}
+	}
+
 	// Pull the image
 	// Retry with exponential backoff when failures occur, maximum retry duration will not exceed 31 seconds
 	const maxRetryAttempts = 5
@@ -812,7 +838,7 @@ func pullImage(ctx context.Context, source string, client *containerd.Client) (c
 	for {
 		var err error
 		img, err = client.Pull(ctx, source,
-			withDynamicResolver(ctx, source),
+			withDynamicResolver(ctx, source, registryConfig),
 			containerd.WithSchema1Conversion)
 		if err == nil {
 			log.G(ctx).WithField("img", img.Name()).Info("pulled image successfully")
@@ -879,11 +905,22 @@ func tagImage(ctx context.Context, imageName string, newImageName string, client
 }
 
 // withDynamicResolver provides an initialized resolver for use with ref.
-func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
-	noOp := func(_ *containerd.Client, _ *containerd.RemoteContext) error { return nil }
+func withDynamicResolver(ctx context.Context, ref string, registryConfig *RegistryConfig) containerd.RemoteOpt {
+	defaultResolver := func(_ *containerd.Client, _ *containerd.RemoteContext) error { return nil }
+	if registryConfig != nil {
+		defaultResolver = func(_ *containerd.Client, c *containerd.RemoteContext) error {
+			resolver := docker.NewResolver(docker.ResolverOptions{
+				Hosts: registryHosts(registryConfig, docker.NewDockerAuthorizer()),
+			})
+			c.Resolver = resolver
+			return nil
+		}
+	}
 
 	switch {
-	// For ECR registries, we need to use the Amazon ECR resolver
+	// For private ECR registries, we need to use the Amazon ECR resolver.
+	// Currently we're unable to support image registry configuration with the ECR resolver.
+	// FIXME Track upstream `amazon-ecr-containerd-resolver` support for image registry configuration.
 	case strings.HasPrefix(ref, "ecr.aws/"):
 		return func(_ *containerd.Client, c *containerd.RemoteContext) error {
 			// Create the Amazon ECR resolver
@@ -905,21 +942,21 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 		output, err := client.GetAuthorizationToken(&ecrpublic.GetAuthorizationTokenInput{})
 		if err != nil {
 			log.G(ctx).Warn("ecr-public: failed to get authorization token, falling back to default resolver (unauthenticated pull)")
-			return noOp
+			return defaultResolver
 		}
 		if output == nil || output.AuthorizationData == nil {
 			log.G(ctx).Warn("ecr-public: missing AuthorizationData in ECR Public GetAuthorizationToken response, falling back to default resolver (unauthenticated pull)")
-			return noOp
+			return defaultResolver
 		}
 		authToken, err := base64.StdEncoding.DecodeString(aws.StringValue(output.AuthorizationData.AuthorizationToken))
 		if err != nil {
 			log.G(ctx).Warn("ecr-public: unable to decode authorization token, falling back to default resolver (unauthenticated pull)")
-			return noOp
+			return defaultResolver
 		}
 		tokens := strings.SplitN(string(authToken), ":", 2)
 		if len(tokens) != 2 {
 			log.G(ctx).Warn("ecr-public: invalid credentials decoded from authorization token, falling back to default resolver (unauthenticated pull)")
-			return noOp
+			return defaultResolver
 		}
 		// Use the fetched authorization credentials to resolve the image
 		authOpt := docker.WithAuthCreds(func(host string) (string, string, error) {
@@ -931,7 +968,7 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 		})
 		authorizer := docker.NewDockerAuthorizer(authOpt)
 		resolverOpt := docker.ResolverOptions{
-			Hosts: docker.ConfigureDefaultRegistries(docker.WithAuthorizer(authorizer)),
+			Hosts: registryHosts(registryConfig, authorizer),
 		}
 
 		return func(_ *containerd.Client, c *containerd.RemoteContext) error {
@@ -942,6 +979,55 @@ func withDynamicResolver(ctx context.Context, ref string) containerd.RemoteOpt {
 		}
 	default:
 		// For all other registries
-		return noOp
+		return defaultResolver
+	}
+}
+
+// registryHosts returns the registry hosts to be used by the resolver.
+// Heavily borrowed from containerd CRI plugin's implementation with the auth related configuration omitted.
+// See https://github.com/containerd/cri/blob/f6026296a3991010429db91e7e677f9c9d4861ab/pkg/server/image_pull.go#L314-L315
+// FIXME Replace this once there's a public containerd client interface that supports registry mirrors
+func registryHosts(registryConfig *RegistryConfig, authorizer docker.Authorizer) docker.RegistryHosts {
+	return func(host string) ([]docker.RegistryHost, error) {
+		var (
+			registries []docker.RegistryHost
+			endpoints  []string
+		)
+		if _, ok := registryConfig.Mirrors[host]; ok {
+			endpoints = registryConfig.Mirrors[host].Endpoints
+		} else {
+			endpoints = registryConfig.Mirrors["*"].Endpoints
+		}
+		defaultHost, err := docker.DefaultHost(host)
+		if err != nil {
+			return nil, errors.Wrap(err, "get default host")
+		}
+		endpoints = append(endpoints, defaultHost)
+
+		for _, endpoint := range endpoints {
+			// Prefix the endpoint with an appropriate URL scheme if the endpoint does not have one.
+			if !strings.Contains(endpoint, "://") {
+				if endpoint == "localhost" || endpoint == "127.0.0.1" || endpoint == "::1" {
+					endpoint = "http://" + endpoint
+				} else {
+					endpoint = "https://" + endpoint
+				}
+			}
+			url, err := url.Parse(endpoint)
+			if err != nil {
+				return nil, errors.Wrapf(err, "parse registry endpoint %q from mirrors", endpoint)
+			}
+			if url.Path == "" {
+				url.Path = "/v2"
+			}
+			registries = append(registries, docker.RegistryHost{
+				Authorizer:   authorizer,
+				Host:         url.Host,
+				Scheme:       url.Scheme,
+				Path:         url.Path,
+				Capabilities: docker.HostCapabilityResolve | docker.HostCapabilityPull,
+			})
+		}
+		return registries, nil
 	}
 }

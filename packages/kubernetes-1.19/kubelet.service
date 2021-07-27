@@ -15,7 +15,8 @@ ExecStartPre=/usr/bin/host-ctr \
     --containerd-socket=/run/dockershim.sock \
     --namespace=k8s.io \
     pull-image \
-    --source=${POD_INFRA_CONTAINER_IMAGE}
+    --source=${POD_INFRA_CONTAINER_IMAGE} \
+    --registry-config=/etc/host-containers/host-ctr.toml
 # Must be overridden by a drop-in file or `kubelet` won't start
 ExecStart=/usr/bin/false
 

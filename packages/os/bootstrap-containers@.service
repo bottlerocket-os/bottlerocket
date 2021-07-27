@@ -20,7 +20,8 @@ ExecStart=/usr/bin/touch /run/bootstrap-containers/%i.ran
 ExecStart=/usr/bin/host-ctr run \
     --container-id='%i' \
     --source='${CTR_SOURCE}' \
-    --container-type='bootstrap'
+    --container-type='bootstrap' \
+    --registry-config=/etc/host-containers/host-ctr.toml
 ExecStartPost=/usr/bin/bootstrap-containers mark-bootstrap \
     --container-id '%i' \
     --mode '${CTR_MODE}'

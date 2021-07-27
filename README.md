@@ -410,7 +410,7 @@ These settings can be changed at any time.
 
 #### Container image registry settings
 
-The following setting is optional and allows you to configure image registry mirrors and pull-through caches for your orchestrated containers.
+The following setting is optional and allows you to configure image registry mirrors and pull-through caches for your containers.
 * `settings.container-registry.mirrors`: A mapping of container image registry to a list of image registry URL endpoints.  When pulling an image from a registry, the container runtime will try the endpoints one by one and use the first working one.
   (Docker and containerd will still try the default registry URL if the mirrors fail.)
   * Example user data for setting up image registry mirrors:
@@ -420,6 +420,8 @@ The following setting is optional and allows you to configure image registry mir
   "gcr.io" = ["https://<my-gcr-mirror-host>","http://<my-gcr-mirror-host-2>"]
   ```
   If you use a Bottlerocket variant that uses Docker as the container runtime, like `aws-ecs-1`, you should be aware that Docker only supports pull-through caches for images from Docker Hub (docker.io).  Mirrors for other registries are ignored in this case.
+
+For [host-container](#host-containers-settings) and [bootstrap-container](#bootstrap-containers-settings) images from Amazon ECR private repositories, registry mirrors are currently unsupported.
 
 #### Updates settings
 

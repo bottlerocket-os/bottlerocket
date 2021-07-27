@@ -23,6 +23,7 @@ Source3: eni-max-pods
 
 Source5: updog-toml
 Source6: metricdog-toml
+Source7: host-ctr-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -394,7 +395,7 @@ install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
 
 install -d %{buildroot}%{_cross_templatedir}
-install -p -m 0644 %{S:5} %{S:6} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:5} %{S:6} %{S:7} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
@@ -464,6 +465,8 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_bindir}/host-containers
 %{_cross_unitdir}/host-containers@.service
 %{_cross_tmpfilesdir}/host-containers.conf
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/host-ctr-toml
 
 %files -n %{_cross_os}storewolf
 %{_cross_bindir}/storewolf

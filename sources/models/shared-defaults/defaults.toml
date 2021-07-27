@@ -61,8 +61,12 @@ seed.setting-generator = "bork seed"
 # HostContainers
 
 [services.host-containers]
-configuration-files = []
+configuration-files = ["host-ctr-toml"]
 restart-commands = ["/usr/bin/host-containers"]
+
+[configuration-files.host-ctr-toml]
+path = "/etc/host-containers/host-ctr.toml"
+template-path = "/usr/share/templates/host-ctr-toml"
 
 [metadata.settings.host-containers]
 affected-services = ["host-containers"]
@@ -123,7 +127,7 @@ affected-services = ["lockdown"]
 # Bootstrap Containers
 
 [services.bootstrap-containers]
-configuration-files = []
+configuration-files = ["host-ctr-toml"]
 restart-commands = ["/usr/bin/bootstrap-containers create-containers"]
 
 [metadata.settings.bootstrap-containers]
