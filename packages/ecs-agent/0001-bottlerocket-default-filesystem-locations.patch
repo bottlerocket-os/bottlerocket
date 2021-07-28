@@ -61,19 +61,32 @@ index 080f18c4d..ef14970ce 100644
  		DataDirOnHost:                       "/var/lib/ecs",
  		DisableMetrics:                      BooleanDefaultFalse{Value: ExplicitlyDisabled},
  		ReservedMemory:                      0,
-diff --git a/agent/ecscni/plugin.go b/agent/ecscni/plugin.go
-index 192cfccaa..93f56f3ae 100644
---- a/agent/ecscni/plugin.go
-+++ b/agent/ecscni/plugin.go
-@@ -36,7 +36,7 @@ const (
- 	currentECSCNIVersion      = "2020.09.0"
- 	currentECSCNIGitHash      = "55b2ae77ee0bf22321b14f2d4ebbcc04f77322e1"
- 	currentVPCCNIGitHash      = "a21d3a41f922e14c19387713df66be3e4ee1e1f6"
--	vpcCNIPluginPath          = "/log/vpc-branch-eni.log"
-+	vpcCNIPluginPath          = "/var/log/ecs/vpc-branch-eni.log"
+diff --git a/agent/ecscni/plugin_linux.go b/agent/ecscni/plugin_linux.go
+index 6fc0111d..d3ef6641 100644
+--- a/agent/ecscni/plugin_linux.go
++++ b/agent/ecscni/plugin_linux.go
+@@ -32,7 +32,7 @@ import (
+ const (
  	vpcCNIPluginInterfaceType = "vlan"
+ 	// vpcCNIPluginPath is the path of the cni plugin's log file.
+-	vpcCNIPluginPath = "/log/vpc-branch-eni.log"
++	vpcCNIPluginPath = "/var/log/ecs/vpc-branch-eni.log"
  )
  
+ // newCNIGuard returns a new instance of CNI guard for the CNI client.
+diff --git a/agent/ecscni/plugin_unsupported.go b/agent/ecscni/plugin_unsupported.go
+index 6289877a..fcebedfe 100644
+--- a/agent/ecscni/plugin_unsupported.go
++++ b/agent/ecscni/plugin_unsupported.go
+@@ -25,7 +25,7 @@ import (
+ 
+ const (
+ 	// vpcCNIPluginPath is the path of the cni plugin's log file.
+-	vpcCNIPluginPath = "/log/vpc-branch-eni.log"
++	vpcCNIPluginPath = "/var/log/ecs/vpc-branch-eni.log"
+ )
+ 
+ // newCNIGuard returns a new instance of CNI guard for the CNI client.
 diff --git a/agent/utils/license.go b/agent/utils/license.go
 index 6eccff6ac..324307cd3 100644
 --- a/agent/utils/license.go

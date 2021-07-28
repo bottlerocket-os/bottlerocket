@@ -10,8 +10,8 @@ path = "pkg.rs"
 
 # ECS agent
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/aws/amazon-ecs-agent/archive/v1.53.0/amazon-ecs-agent-v1.53.0.tar.gz"
-sha512 = "9619291b19ed38b423b8788fce11c03be6fc6c28023fe3c7442824347b84b2250890f1c44832d23a5adea8646f57f656920fa20063eab5f3e7b7c235e7b98691"
+url = "https://github.com/aws/amazon-ecs-agent/archive/v1.54.1/amazon-ecs-agent-v1.54.1.tar.gz"
+sha512 = "b3f92920ce327ff5a6d77268f927882d25097da65813d4f4c60787772109aa49952ec4130f83bfd00bf77ee86af1e60ca0b0967c02276126ccc378c954bc6047"
 
 # The ECS agent repository includes two CNI plugins as git submodules.  git
 # archive does not include submodules, so the tarball above does not include
@@ -22,8 +22,8 @@ url = "https://github.com/aws/amazon-ecs-cni-plugins/archive/55b2ae77ee0bf22321b
 sha512 = "42e2dad0741f02a3b0d675c0f512557a118cef6df7e9d989a35c73d02484912d800453148abbf6d8424c5e40d2662745a9aef4a68cb2f610d9defc976e394f1f"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/aws/amazon-vpc-cni-plugins/archive/a21d3a41f922e14c19387713df66be3e4ee1e1f6/amazon-vpc-cni-plugins.tar.gz"
-sha512 = "86011a1d7a8d4a2fe824c9eea6ad2ef9394059475ffa421c3636afd4f4031d60898992022e34ce2b1e9594fa79766f747a6c239e26be5d71fe96addc46bf7f54"
+url = "https://github.com/aws/amazon-vpc-cni-plugins/archive/199bfc65cced4951cbb6a38e6e828afa8c2b023c/amazon-vpc-cni-plugins.tar.gz"
+sha512 = "ee1c2230c43fa7b8b9a25319bd334abfc08210ea8956ccc4525fe936b48b22b85df778823138d58687e847762b436daa0e0ba69c210a00b173f9b933f656386d"
 
 # RPM BuildRequires
 [build-dependencies]

@@ -2,9 +2,9 @@
 %global agent_gorepo amazon-ecs-agent
 %global agent_goimport %{agent_goproject}/%{agent_gorepo}
 
-%global agent_gover 1.53.0
+%global agent_gover 1.54.1
 # git rev-parse --short=8
-%global agent_gitrev 225bc3a5
+%global agent_gitrev 3e20420f
 
 %global ecscni_goproject github.com/aws
 %global ecscni_gorepo amazon-ecs-cni-plugins
@@ -14,7 +14,7 @@
 %global vpccni_goproject github.com/aws
 %global vpccni_gorepo amazon-vpc-cni-plugins
 %global vpccni_goimport %{vpccni_goproject}/%{vpccni_gorepo}
-%global vpccni_gitrev a21d3a41f922e14c19387713df66be3e4ee1e1f6
+%global vpccni_gitrev 199bfc65cced4951cbb6a38e6e828afa8c2b023c
 %global vpccni_gover 1.2
 
 # Construct reproducible tar archives
