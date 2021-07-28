@@ -9,5 +9,5 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://curl.haxx.se/ca/cacert-2021-05-25.pem"
-sha512 = "dcf1a7ad2c9f49f794fb7b927a4c04dd3d25afcd99fe2f7b89be50c986aa2c7964fb785a6eb053f6639996c8b5b93d2364369b0f68c3e483de132f68299c7f0a"
+url = "https://curl.haxx.se/ca/cacert-2021-07-05.pem"
+sha512 = "881183c7fed512cab763a6145f0e07c5bcdc143589baf433f7ba92223d215f18f48782fcfc04860db0671849e2ceeecedf6704f77148f588e17c4cd9a34cc8f8"
