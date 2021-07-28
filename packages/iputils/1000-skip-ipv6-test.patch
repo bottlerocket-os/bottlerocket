@@ -1,0 +1,13 @@
+diff --git iputils.orig/ping/meson.build iputils/ping/meson.build
+index 1e678ec..eedd04b 100644
+--- iputils.orig/ping/meson.build
++++ iputils/ping/meson.build
+@@ -35,7 +35,7 @@ endif
+ # https://github.com/actions/virtual-environments/issues/668
+ ipv6_dst = []
+ ipv6_switch = []
+-r = run_command('ip', '-6', 'a')
++r = run_command('/bin/false')
+ if r.stdout().strip().contains('::1')
+   message('IPv6 enabled')
+   ipv6_dst = [ '::1' ]

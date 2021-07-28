@@ -1,10 +1,17 @@
 Name: %{_cross_os}iputils
-Version: 20210202
+Version: 20210722
 Release: 1%{?dist}
 Summary: A set of network monitoring tools
 License: GPL-2.0-or-later AND BSD-3-Clause
 URL: https://github.com/iputils/iputils
 Source0: https://github.com/iputils/iputils/archive/%{version}.tar.gz#/iputils-%{version}.tar.gz
+
+# iputils' IPv6 testing requires iproute for 'ip' to check whether IPv6 is
+# enabled, since they switchd to GitHub Actions CI where it's not.  Skip IPv6
+# testing rather than adding an iproute requirement.
+# Note: After version 20210722, this check moved into ping/test/meson.build, so
+# the patch will need to be rebased in the next update.
+Patch1000: 1000-skip-ipv6-test.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
