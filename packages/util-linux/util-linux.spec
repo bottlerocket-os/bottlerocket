@@ -1,10 +1,20 @@
+%global majorminor 2.37
+%global version %{majorminor}.1
+
 Name: %{_cross_os}util-linux
-Version: 2.36
+Version: %{version}
 Release: 1%{?dist}
 Summary: A collection of basic system utilities
 License: BSD-3-Clause AND BSD-4-Clause-UC AND GPL-1.0-or-later AND GPL-2.0-only AND GPL-2.0-or-later AND GPL-3.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT
 URL: http://en.wikipedia.org/wiki/Util-linux
-Source0: https://www.kernel.org/pub/linux/utils/util-linux/v%{version}/util-linux-%{version}.tar.xz
+Source0: https://www.kernel.org/pub/linux/utils/util-linux/v%{majorminor}/util-linux-%{version}.tar.xz
+
+# Note: remove the autogen.sh call when we no longer patch anything in the
+# build system.
+
+# Retain compatibility with kernels <5.8
+Patch1000: 1000-libmount-kernel-compat.patch
+
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libselinux-devel
@@ -106,6 +116,9 @@ Requires: %{_cross_os}libuuid
 cp Documentation/licenses/COPYING.* .
 
 %build
+# We have patches that touch the build system, so we need to regenerate
+./autogen.sh
+
 %cross_configure \
   --disable-makeinstall-chown \
   --disable-nls \
@@ -185,6 +198,7 @@ done
 %{_cross_bindir}/renice
 %{_cross_bindir}/setsid
 %{_cross_bindir}/taskset
+%{_cross_bindir}/uclampset
 %{_cross_bindir}/umount
 %{_cross_bindir}/unshare
 %{_cross_bindir}/uuidgen

@@ -1,0 +1,373 @@
+commit eccd0130d33cf2348f68d8f83c93909e8b50805d
+Author: Tom Kirchner <tjk@amazon.com>
+Date:   Wed Jul 28 15:38:26 2021 -0700
+
+    Revert "libmount: remove read-mountinfo workaround"
+    
+    This reverts commit 57898c3a7ee8fc5933cddd4526bb3980bef85a02.
+
+diff --git a/configure.ac b/configure.ac
+index bc9549daf..1c003585b 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -528,6 +528,7 @@ AC_CHECK_FUNCS([ \
+ 	__fpending \
+ 	__fpurge \
+ 	fpurge \
++	fmemopen \
+ 	fsync \
+ 	getdomainname \
+ 	getdtablesize \
+diff --git a/libmount/src/mountP.h b/libmount/src/mountP.h
+index d43a83541..9b40457ab 100644
+--- a/libmount/src/mountP.h
++++ b/libmount/src/mountP.h
+@@ -98,6 +98,7 @@ extern int mnt_valid_tagname(const char *tagname);
+ extern int append_string(char **a, const char *b);
+ 
+ extern const char *mnt_statfs_get_fstype(struct statfs *vfs);
++extern int is_procfs_fd(int fd);
+ extern int is_file_empty(const char *name);
+ 
+ extern int mnt_is_readonly(const char *path)
+@@ -123,6 +124,7 @@ extern void mnt_free_filesystems(char **filesystems);
+ extern char *mnt_get_kernel_cmdline_option(const char *name);
+ extern int mnt_stat_mountpoint(const char *target, struct stat *st);
+ extern int mnt_lstat_mountpoint(const char *target, struct stat *st);
++extern FILE *mnt_get_procfs_memstream(int fd, char **membuf);
+ 
+ /* tab.c */
+ extern int is_mountinfo(struct libmnt_table *tb);
+diff --git a/libmount/src/tab_parse.c b/libmount/src/tab_parse.c
+index 917779ab6..ba90b7087 100644
+--- a/libmount/src/tab_parse.c
++++ b/libmount/src/tab_parse.c
+@@ -696,15 +696,7 @@ static int kernel_fs_postparse(struct libmnt_table *tb,
+ 	return rc;
+ }
+ 
+-/**
+- * mnt_table_parse_stream:
+- * @tb: tab pointer
+- * @f: file stream
+- * @filename: filename used for debug and error messages
+- *
+- * Returns: 0 on success, negative number in case of error.
+- */
+-int mnt_table_parse_stream(struct libmnt_table *tb, FILE *f, const char *filename)
++static int __table_parse_stream(struct libmnt_table *tb, FILE *f, const char *filename)
+ {
+ 	int rc = -1;
+ 	int flags = 0;
+@@ -785,6 +777,40 @@ err:
+ 	return rc;
+ }
+ 
++/**
++ * mnt_table_parse_stream:
++ * @tb: tab pointer
++ * @f: file stream
++ * @filename: filename used for debug and error messages
++ *
++ * Returns: 0 on success, negative number in case of error.
++ */
++int mnt_table_parse_stream(struct libmnt_table *tb, FILE *f, const char *filename)
++{
++	int fd, rc;
++	FILE *memf = NULL;
++	char *membuf = NULL;
++
++	/*
++	 * For /proc/#/{mountinfo,mount} we read all file to memory and use it
++	 * as memory stream. For more details see mnt_read_procfs_file().
++	 */
++	if ((fd = fileno(f)) >= 0
++	    && (tb->fmt == MNT_FMT_GUESS ||
++		tb->fmt == MNT_FMT_MOUNTINFO ||
++		tb->fmt == MNT_FMT_MTAB)
++	    && is_procfs_fd(fd)
++	    && (memf = mnt_get_procfs_memstream(fd, &membuf))) {
++
++		rc = __table_parse_stream(tb, memf, filename);
++		fclose(memf);
++		free(membuf);
++	} else
++		rc = __table_parse_stream(tb, f, filename);
++
++	return rc;
++}
++
+ /**
+  * mnt_table_parse_file:
+  * @tb: tab pointer
+@@ -800,18 +826,49 @@ err:
+ int mnt_table_parse_file(struct libmnt_table *tb, const char *filename)
+ {
+ 	FILE *f;
+-	int rc;
++	int rc, fd = -1;
+ 
+ 	if (!filename || !tb)
+ 		return -EINVAL;
+ 
+-	f = fopen(filename, "r" UL_CLOEXECSTR);
++	/*
++	 * Try to use read()+poll() to realiably read all
++	 * /proc/#/{mount,mountinfo} file to memory
++	 */
++	if (tb->fmt != MNT_FMT_SWAPS
++	    && strncmp(filename, "/proc/", 6) == 0) {
++
++		FILE *memf;
++		char *membuf = NULL;
++
++		fd = open(filename, O_RDONLY|O_CLOEXEC);
++		if (fd < 0) {
++			rc = -errno;
++			goto done;
++		}
++		memf = mnt_get_procfs_memstream(fd, &membuf);
++		if (memf) {
++			rc = __table_parse_stream(tb, memf, filename);
++
++			fclose(memf);
++			free(membuf);
++			close(fd);
++			goto done;
++		}
++		/* else fallback to fopen/fdopen() */
++	}
++
++	if (fd >= 0)
++		f = fdopen(fd, "r" UL_CLOEXECSTR);
++	else
++		f = fopen(filename, "r" UL_CLOEXECSTR);
++
+ 	if (f) {
+-		rc = mnt_table_parse_stream(tb, f, filename);
++		rc = __table_parse_stream(tb, f, filename);
+ 		fclose(f);
+ 	} else
+ 		rc = -errno;
+-
++done:
+ 	DBG(TAB, ul_debugobj(tb, "parsing done [filename=%s, rc=%d]", filename, rc));
+ 	return rc;
+ }
+@@ -868,7 +925,7 @@ static int __mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
+ 
+ 		f = fopen_at(dd, d->d_name, O_RDONLY|O_CLOEXEC, "r" UL_CLOEXECSTR);
+ 		if (f) {
+-			mnt_table_parse_stream(tb, f, d->d_name);
++			__table_parse_stream(tb, f, d->d_name);
+ 			fclose(f);
+ 		}
+ 	}
+@@ -909,7 +966,7 @@ static int __mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
+ 		f = fopen_at(dirfd(dir), d->d_name,
+ 				O_RDONLY|O_CLOEXEC, "r" UL_CLOEXECSTR);
+ 		if (f) {
+-			mnt_table_parse_stream(tb, f, d->d_name);
++			__table_parse_stream(tb, f, d->d_name);
+ 			fclose(f);
+ 		}
+ 	}
+diff --git a/libmount/src/utils.c b/libmount/src/utils.c
+index 35afce32c..b8dcab235 100644
+--- a/libmount/src/utils.c
++++ b/libmount/src/utils.c
+@@ -19,6 +19,7 @@
+ #include <fcntl.h>
+ #include <pwd.h>
+ #include <grp.h>
++#include <poll.h>
+ #include <blkid.h>
+ 
+ #include "strutils.h"
+@@ -449,6 +450,13 @@ const char *mnt_statfs_get_fstype(struct statfs *vfs)
+ 	return NULL;
+ }
+ 
++int is_procfs_fd(int fd)
++{
++	struct statfs sfs;
++
++	return fstatfs(fd, &sfs) == 0 && sfs.f_type == STATFS_PROC_MAGIC;
++}
++
+ /**
+  * mnt_match_fstype:
+  * @type: filesystem type
+@@ -1168,7 +1176,164 @@ done:
+ 	return 1;
+ }
+ 
++#if defined(HAVE_FMEMOPEN) || defined(TEST_PROGRAM)
++
++/*
++ * This function tries to minimize possible races when we read
++ * /proc/#/{mountinfo,mount} files.
++ *
++ * The idea is to minimize number of read()s and check by poll() that during
++ * the read the mount table has not been modified. If yes, than re-read it
++ * (with some limitations to avoid never ending loop).
++ *
++ * Returns: <0 error, 0 success, 1 too many attempts
++ */
++static int read_procfs_file(int fd, char **buf, size_t *bufsiz)
++{
++	size_t bufmax = 0;
++	int rc = 0, tries = 0, ninters = 0;
++	char *bufptr = NULL;
++
++	assert(buf);
++	assert(bufsiz);
++
++	*bufsiz = 0;
++	*buf = NULL;
++
++	do {
++		ssize_t ret;
++
++		if (!bufptr || bufmax == *bufsiz) {
++			char *tmp;
++
++			bufmax = bufmax ? bufmax * 2 : (16 * 1024);
++			tmp = realloc(*buf, bufmax);
++			if (!tmp)
++				break;
++			*buf = tmp;
++			bufptr = tmp + *bufsiz;
++		}
++
++		errno = 0;
++		ret = read(fd, bufptr, bufmax - *bufsiz);
++
++		if (ret < 0) {
++			/* error */
++			if ((errno == EAGAIN || errno == EINTR) && (ninters++ < 5)) {
++				xusleep(200000);
++				continue;
++			}
++			break;
++
++		} if (ret > 0) {
++			/* success -- verify no event during read */
++			struct pollfd fds[] = {
++				{ .fd = fd, .events = POLLPRI }
++			};
++
++			rc = poll(fds, 1, 0);
++			if (rc < 0)
++				break;		/* poll() error */
++			if (rc > 0) {
++				/* event -- read all again */
++				if (lseek(fd, 0, SEEK_SET) != 0)
++					break;
++				*bufsiz = 0;
++				bufptr = *buf;
++				tries++;
++
++				if (tries > 10)
++					/* busy system? -- wait */
++					xusleep(10000);
++				continue;
++			}
++
++			/* successful read() without active poll() */
++			(*bufsiz) += (size_t) ret;
++			bufptr += ret;
++			tries = ninters = 0;
++		} else {
++			/* end-of-file */
++			goto success;
++		}
++	} while (tries <= 100);
++
++	rc = errno ? -errno : 1;
++	free(*buf);
++	return rc;
++
++success:
++	return 0;
++}
++
++/*
++ * Create FILE stream for data from read_procfs_file()
++ */
++FILE *mnt_get_procfs_memstream(int fd, char **membuf)
++{
++	size_t sz = 0;
++	off_t cur;
++
++	*membuf = NULL;
++
++	/* in case of error, rewind to the original position */
++	cur = lseek(fd, 0, SEEK_CUR);
++
++	if (read_procfs_file(fd, membuf, &sz) == 0 && sz > 0) {
++		FILE *memf = fmemopen(*membuf, sz, "r");
++		if (memf)
++			return memf;	/* success */
++
++		free(*membuf);
++		*membuf = NULL;
++	}
++
++	/* error */
++	if (cur != (off_t) -1)
++		lseek(fd, cur, SEEK_SET);
++	return NULL;
++}
++#else
++FILE *mnt_get_procfs_memstream(int fd __attribute((__unused__)),
++		               char **membuf __attribute((__unused__)))
++{
++	return NULL;
++}
++#endif /* HAVE_FMEMOPEN */
++
++
+ #ifdef TEST_PROGRAM
++static int test_proc_read(struct libmnt_test *ts, int argc, char *argv[])
++{
++	char *buf = NULL;
++	char *filename = argv[1];
++	size_t bufsiz = 0;
++	int rc = 0, fd = open(filename, O_RDONLY);
++
++	if (fd <= 0) {
++		warn("%s: cannot open", filename);
++		return -errno;
++	}
++
++	rc = read_procfs_file(fd, &buf, &bufsiz);
++	close(fd);
++
++	switch (rc) {
++	case 0:
++		fwrite(buf, 1, bufsiz, stdout);
++		free(buf);
++		break;
++	case 1:
++		warnx("too many attempts");
++		break;
++	default:
++		warn("%s: cannot read", filename);
++		break;
++	}
++
++	return rc;
++}
++
+ static int test_match_fstype(struct libmnt_test *ts, int argc, char *argv[])
+ {
+ 	char *type = argv[1];
+@@ -1350,6 +1515,7 @@ int main(int argc, char *argv[])
+ 	{ "--guess-root",    test_guess_root,      "[<maj:min>]" },
+ 	{ "--mkdir",         test_mkdir,           "<path>" },
+ 	{ "--statfs-type",   test_statfs_type,     "<path>" },
++	{ "--read-procfs",   test_proc_read,       "<path>" },
+ 
+ 	{ NULL }
+ 	};
