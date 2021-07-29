@@ -1,11 +1,16 @@
 /*!
 # Introduction
 
-netdog is a small helper program for wicked, to apply network settings received from DHCP.  It also
-contains a subcommand `node-ip` that returns the node's current IP address in JSON format; this
-subcommand is intended for use as a settings generator.
+netdog is a small helper program for wicked, to apply network settings received from DHCP.  It
+generates `/etc/resolv.conf`, generates and sets the hostname, and persists the current IP to a
+file.
 
-It generates `/etc/resolv.conf`, sets the hostname, and persists the current IP to file.
+It contains two subcommands meant for use as settings generators:
+* `node-ip`: returns the node's current IP address in JSON format
+* `generate-hostname`: returns the node's hostname in JSON format (it is the resolved IP or the IP
+  in format "ip-x-x-x-x" if resolving fails)
+
+The subcommand `set-hostname` sets the hostname for the system.
 */
 
 // TODO:
@@ -17,6 +22,10 @@ It generates `/etc/resolv.conf`, sets the hostname, and persists the current IP 
 
 #![deny(rust_2018_idioms)]
 
+#[macro_use]
+extern crate serde_plain;
+
+use argh::FromArgs;
 use dns_lookup::lookup_addr;
 use envy;
 use ipnet::IpNet;
@@ -24,15 +33,16 @@ use lazy_static::lazy_static;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::collections::BTreeSet;
-use std::fmt::{self, Write};
+use std::fmt::Write;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
-use std::{env, process};
+use std::process;
+use std::str::FromStr;
 
 static RESOLV_CONF: &str = "/etc/resolv.conf";
 static KERNEL_HOSTNAME: &str = "/proc/sys/kernel/hostname";
@@ -42,98 +52,6 @@ static CURRENT_IP: &str = "/var/lib/netdog/current_ip";
 //     FOO='BAR' -> key=FOO, val=BAR
 lazy_static! {
     static ref LEASE_PARAM: Regex = Regex::new(r"^(?P<key>[A-Z]+)='(?P<val>.+)'$").unwrap();
-}
-
-/// Potential errors during netdog execution
-mod error {
-    use envy;
-    use snafu::Snafu;
-    use std::io;
-    use std::net::IpAddr;
-    use std::path::PathBuf;
-
-    #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
-    #[allow(clippy::enum_variant_names)]
-    pub(super) enum Error {
-        #[snafu(display("Failed to read lease data in '{}': {}", path.display(), source))]
-        LeaseReadFailed { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Failed to parse lease data in '{}': {}", path.display(), source))]
-        LeaseParseFailed { path: PathBuf, source: envy::Error },
-
-        #[snafu(display("Failed to build resolver configuration: {}", source))]
-        ResolvConfBuildFailed { source: std::fmt::Error },
-
-        #[snafu(display("Failed to write resolver configuration to '{}': {}", path.display(), source))]
-        ResolvConfWriteFailed { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Failed to resolve '{}' to hostname: {}", ip, source))]
-        HostnameLookupFailed { ip: IpAddr, source: io::Error },
-
-        #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
-        HostnameWriteFailed { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Failed to write current IP to '{}': {}", path.display(), source))]
-        CurrentIpWriteFailed { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Failed to read current IP data in '{}': {}", path.display(), source))]
-        CurrentIpReadFailed { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Error serializing to JSON: '{}': {}", output, source))]
-        JsonSerialize {
-            output: String,
-            source: serde_json::error::Error,
-        },
-    }
-}
-
-type Result<T> = std::result::Result<T, error::Error>;
-
-#[derive(Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-enum SubCommand {
-    Install,
-    Remove,
-    NodeIp,
-}
-
-impl fmt::Display for SubCommand {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            SubCommand::Install => write!(f, "install"),
-            SubCommand::Remove => write!(f, "remove"),
-            SubCommand::NodeIp => write!(f, "node-ip"),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-enum InterfaceName {
-    Eth0,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-enum InterfaceType {
-    Dhcp,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-enum InterfaceFamily {
-    Ipv4,
-    Ipv6,
-}
-
-/// Stores user-supplied arguments.
-#[derive(Debug)]
-struct Args {
-    interface_name: InterfaceName,
-    interface_type: InterfaceType,
-    interface_family: InterfaceFamily,
-    data_file: PathBuf,
 }
 
 /// Stores fields extracted from a DHCP lease.
@@ -149,99 +67,110 @@ struct LeaseInfo {
     dns_search: Option<Vec<String>>,
 }
 
-/// Informs the user about proper usage of the program and exits.
-fn usage() -> ! {
-    let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
-    eprintln!(
-        r"Usage: {}
-            [ node-ip | install | remove ]
-
-            Required for 'install' and 'remove' subcommands:
-              -i INTERFACE_NAME
-              -t INTERFACE_TYPE
-              -f INTERFACE_FAMILY
-              DATA_FILE",
-        program_name
-    );
-    process::exit(2);
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum InterfaceName {
+    Eth0,
 }
 
-/// Prints a more specific message before exiting through usage().
-fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
-    eprintln!("{}\n", msg.as_ref());
-    usage();
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum InterfaceType {
+    Dhcp,
 }
 
-/// Parses user arguments into a Subcommand and an Args structure.
-fn parse_args(args: env::Args) -> Result<(SubCommand, Option<Args>)> {
-    let mut iter = args.skip(1);
-    let value = iter
-        .next()
-        .unwrap_or_else(|| usage_msg("Did not specify command"));
-    let sub_command = serde_plain::from_str::<SubCommand>(&value)
-        .unwrap_or_else(|_| usage_msg(format!("Unknown command {}", value)));
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum InterfaceFamily {
+    Ipv4,
+    Ipv6,
+}
 
-    // The `node-ip` subcommand doesn't require any arguments
-    if sub_command == SubCommand::NodeIp {
-        return Ok((sub_command, None));
-    };
+// Implement `from_str()` so argh can attempt to deserialize args into their proper types
+forward_from_str_to_serde!(InterfaceName);
+forward_from_str_to_serde!(InterfaceType);
+forward_from_str_to_serde!(InterfaceFamily);
 
-    let mut interface_name = None;
-    let mut interface_type = None;
-    let mut interface_family = None;
-    let mut data_file = None;
+/// Stores user-supplied arguments.
+#[derive(FromArgs, PartialEq, Debug)]
+struct Args {
+    #[argh(subcommand)]
+    subcommand: SubCommand,
+}
 
-    while let Some(arg) = iter.next() {
-        match arg.as_ref() {
-            "-i" => {
-                let value = iter
-                    .next()
-                    .unwrap_or_else(|| usage_msg("Did not give argument to -i"));
-                interface_name = Some(
-                    serde_plain::from_str::<InterfaceName>(&value)
-                        .unwrap_or_else(|_| usage_msg(format!("Unknown interface name {}", value))),
-                );
-            }
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand)]
+enum SubCommand {
+    Install(InstallArgs),
+    Remove(RemoveArgs),
+    NodeIp(NodeIpArgs),
+    GenerateHostname(GenerateHostnameArgs),
+    SetHostname(SetHostnameArgs),
+}
 
-            "-t" => {
-                let value = iter
-                    .next()
-                    .unwrap_or_else(|| usage_msg("Did not give argument to -t"));
-                interface_type = Some(
-                    serde_plain::from_str::<InterfaceType>(&value)
-                        .unwrap_or_else(|_| usage_msg(format!("Unknown interface type {}", value))),
-                );
-            }
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "install")]
+/// Write resolv.conf and current IP to disk
+struct InstallArgs {
+    #[argh(option, short = 'i')]
+    /// name of the network interface
+    interface_name: InterfaceName,
 
-            "-f" => {
-                let value = iter
-                    .next()
-                    .unwrap_or_else(|| usage_msg("Did not give argument to -f"));
-                interface_family = Some(
-                    serde_plain::from_str::<InterfaceFamily>(&value).unwrap_or_else(|_| {
-                        usage_msg(format!("Unknown interface family {}", value))
-                    }),
-                );
-            }
+    #[argh(option, short = 't')]
+    /// network interface type
+    interface_type: InterfaceType,
 
-            // `wicked` may call this with "info" as the final argument, so if
-            // we already have a data file then we're done.
-            p => match data_file {
-                None => data_file = Some(PathBuf::from(p)),
-                Some(_) => break,
-            },
-        }
-    }
+    #[argh(option, short = 'f')]
+    /// network interface family (ipv4/6)
+    interface_family: InterfaceFamily,
 
-    Ok((
-        sub_command,
-        Some(Args {
-            interface_name: interface_name.unwrap_or_else(|| usage()),
-            interface_type: interface_type.unwrap_or_else(|| usage()),
-            interface_family: interface_family.unwrap_or_else(|| usage()),
-            data_file: data_file.unwrap_or_else(|| usage()),
-        }),
-    ))
+    #[argh(positional)]
+    /// lease info data file
+    data_file: PathBuf,
+
+    #[argh(positional)]
+    // wicked adds `info` to the call to this program.  We don't do anything with it but must
+    // be able to parse the option to avoid failing
+    /// ignored
+    info: Option<String>,
+}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "remove")]
+// `wicked` calls `remove` with the below args and failing to parse them can cause an error in
+// `wicked`.
+/// Does nothing
+struct RemoveArgs {
+    #[argh(option, short = 'i')]
+    /// name of the network interface
+    interface_name: InterfaceName,
+
+    #[argh(option, short = 't')]
+    /// network interface type
+    interface_type: InterfaceType,
+
+    #[argh(option, short = 'f')]
+    /// network interface family (ipv4/6)
+    interface_family: InterfaceFamily,
+}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "node-ip")]
+/// Return the current IP address
+struct NodeIpArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "generate-hostname")]
+/// Generate hostname from DNS reverse lookup or use current IP
+struct GenerateHostnameArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "set-hostname")]
+/// Sets the hostname
+struct SetHostnameArgs {
+    #[argh(positional)]
+    /// hostname for the system
+    hostname: String,
 }
 
 /// Parse lease data file into a LeaseInfo structure.
@@ -290,22 +219,12 @@ fn write_resolv_conf(dns_servers: &[&IpAddr], dns_search: &Option<Vec<String>>) 
     Ok(())
 }
 
-/// Resolve assigned IP address and persist the result as hostname.
-fn update_hostname(ip: &IpNet) -> Result<()> {
-    let host =
-        lookup_addr(&ip.addr()).with_context(|| error::HostnameLookupFailed { ip: ip.addr() })?;
-    fs::write(KERNEL_HOSTNAME, host).context(error::HostnameWriteFailed {
-        path: KERNEL_HOSTNAME,
-    })?;
-    Ok(())
-}
-
 /// Persist the current IP address to file
 fn write_current_ip(ip: &IpAddr) -> Result<()> {
     fs::write(CURRENT_IP, ip.to_string()).context(error::CurrentIpWriteFailed { path: CURRENT_IP })
 }
 
-fn install(args: &Args) -> Result<()> {
+fn install(args: InstallArgs) -> Result<()> {
     match (
         &args.interface_name,
         &args.interface_type,
@@ -319,14 +238,13 @@ fn install(args: &Args) -> Result<()> {
             dns_servers.shuffle(&mut thread_rng());
             write_resolv_conf(&dns_servers, &info.dns_search)?;
             write_current_ip(&info.ip_address.addr())?;
-            update_hostname(&info.ip_address)?;
         }
         _ => eprintln!("Unhandled 'install' command: {:?}", &args),
     }
     Ok(())
 }
 
-fn remove(args: &Args) -> Result<()> {
+fn remove(args: RemoveArgs) -> Result<()> {
     match (
         &args.interface_name,
         &args.interface_type,
@@ -342,20 +260,65 @@ fn node_ip() -> Result<()> {
     let ip =
         fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
     // sundog expects JSON-serialized output
-    let output = serde_json::to_string(&ip).context(error::JsonSerialize { output: ip })?;
+    Ok(print_json(ip)?)
+}
+
+/// Attempt to resolve assigned IP address, if unsuccessful use "ip-X-X-X-X" where X's are the
+/// octets of the IP.  For example, IP address 1.2.3.4 becomes the hostname "ip-1-2-3-4".  No dots
+/// in the hostname (hopefully) avoids any confusion for programs that may read this value.
+///
+/// The result is returned as JSON. (intended for use as a settings generator)
+fn generate_hostname() -> Result<()> {
+    let ip_string =
+        fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
+    let ip = IpAddr::from_str(&ip_string).context(error::IpFromString { ip: &ip_string })?;
+    let hostname = match lookup_addr(&ip) {
+        Ok(hostname) => {
+            // if `lookup_addr()` returns the same IP as we passed it we didn't resolve anything,
+            // so return the string "ip-x-x-x-x" in this case
+            if hostname == ip_string {
+                format!("ip-{}", ip_string.replace(".", "-"))
+            } else {
+                hostname
+            }
+        }
+        Err(e) => {
+            eprintln!("Reverse DNS lookup failed: {}", e);
+            format!("ip-{}", ip_string.replace(".", "-"))
+        }
+    };
+
+    // sundog expects JSON-serialized output
+    Ok(print_json(hostname)?)
+}
+
+/// Helper function that serializes the input to JSON and prints it
+fn print_json<S>(val: S) -> Result<()>
+where
+    S: AsRef<str> + Serialize,
+{
+    let val = val.as_ref();
+    let output = serde_json::to_string(val).context(error::JsonSerialize { output: val })?;
     println!("{}", output);
     Ok(())
 }
 
+/// Sets the hostname for the system
+fn set_hostname(args: SetHostnameArgs) -> Result<()> {
+    fs::write(KERNEL_HOSTNAME, args.hostname).context(error::HostnameWriteFailed {
+        path: KERNEL_HOSTNAME,
+    })?;
+    Ok(())
+}
+
 fn run() -> Result<()> {
-    match parse_args(env::args())? {
-        (SubCommand::NodeIp, None) => node_ip()?,
-        (SubCommand::NodeIp, Some(_)) => {
-            usage_msg("Subcommand 'node-ip' doesn't support arguments")
-        }
-        (SubCommand::Install, Some(args)) => install(&args)?,
-        (SubCommand::Remove, Some(args)) => remove(&args)?,
-        (subcommand, None) => usage_msg(format!("Subcommand '{}' requires arguments", subcommand)),
+    let args: Args = argh::from_env();
+    match args.subcommand {
+        SubCommand::Install(args) => install(args)?,
+        SubCommand::Remove(args) => remove(args)?,
+        SubCommand::NodeIp(_) => node_ip()?,
+        SubCommand::GenerateHostname(_) => generate_hostname()?,
+        SubCommand::SetHostname(args) => set_hostname(args)?,
     }
     Ok(())
 }
@@ -369,3 +332,51 @@ fn main() {
         process::exit(1);
     }
 }
+
+/// Potential errors during netdog execution
+mod error {
+    use envy;
+    use snafu::Snafu;
+    use std::io;
+    use std::path::PathBuf;
+
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility = "pub(super)")]
+    #[allow(clippy::enum_variant_names)]
+    pub(super) enum Error {
+        #[snafu(display("Failed to read lease data in '{}': {}", path.display(), source))]
+        LeaseReadFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to parse lease data in '{}': {}", path.display(), source))]
+        LeaseParseFailed { path: PathBuf, source: envy::Error },
+
+        #[snafu(display("Failed to build resolver configuration: {}", source))]
+        ResolvConfBuildFailed { source: std::fmt::Error },
+
+        #[snafu(display("Failed to write resolver configuration to '{}': {}", path.display(), source))]
+        ResolvConfWriteFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
+        HostnameWriteFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Invalid IP address '{}': {}", ip, source))]
+        IpFromString {
+            ip: String,
+            source: std::net::AddrParseError,
+        },
+
+        #[snafu(display("Failed to write current IP to '{}': {}", path.display(), source))]
+        CurrentIpWriteFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to read current IP data in '{}': {}", path.display(), source))]
+        CurrentIpReadFailed { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Error serializing to JSON: '{}': {}", output, source))]
+        JsonSerialize {
+            output: String,
+            source: serde_json::error::Error,
+        },
+    }
+}
+
+type Result<T> = std::result::Result<T, error::Error>;

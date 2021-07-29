@@ -130,6 +130,105 @@ mod test_single_line_string {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+/// ValidLinuxHostname represents a string that contains a valid Linux hostname as defined by
+/// https://man7.org/linux/man-pages/man7/hostname.7.html.  It stores the original form and makes
+/// it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct ValidLinuxHostname {
+    inner: String,
+}
+
+lazy_static! {
+    // According to the man page above, hostnames must be between 1-253 characters long consisting
+    // of characters [0-9a-z.-].
+    pub(crate) static ref VALID_LINUX_HOSTNAME: Regex = Regex::new(r"^[0-9a-z.-]{1,253}$").unwrap();
+}
+
+impl TryFrom<&str> for ValidLinuxHostname {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            VALID_LINUX_HOSTNAME.is_match(input),
+            error::InvalidLinuxHostname {
+                input,
+                msg: "must only be [0-9a-z.-], and 1-253 chars long"
+            }
+        );
+
+        // Though the man page doesn't explicitly disallow hostnames that start with dots, dots are
+        // used as separators so starting with a separator would imply an empty domain, which isn't
+        // allowed (must be at least one character).
+        ensure!(
+            !input.starts_with("-") && !input.starts_with("."),
+            error::InvalidLinuxHostname {
+                input,
+                msg: "must not start with '-' or '.'"
+            }
+        );
+
+        // Each segment must be from 1-63 chars long and shouldn't start with "-"
+        ensure!(
+            input
+                .split(".")
+                .all(|x| x.len() >= 1 && x.len() <= 63 && !x.starts_with("-")),
+            error::InvalidLinuxHostname {
+                input,
+                msg: "segment is less than 1 or greater than 63 chars"
+            }
+        );
+
+        Ok(Self {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(ValidLinuxHostname, "ValidLinuxHostname");
+
+#[cfg(test)]
+mod test_valid_linux_hostname {
+    use super::ValidLinuxHostname;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_linux_hostname() {
+        assert!(ValidLinuxHostname::try_from("hello").is_ok());
+        assert!(ValidLinuxHostname::try_from("hello1234567890").is_ok());
+
+        let segment_limit = std::iter::repeat("a").take(63).collect::<String>();
+        assert!(ValidLinuxHostname::try_from(segment_limit.clone()).is_ok());
+
+        let segment = std::iter::repeat("a").take(61).collect::<String>();
+        let long_name = format!(
+            "{}.{}.{}.{}",
+            &segment_limit, &segment_limit, &segment_limit, &segment
+        );
+        assert!(ValidLinuxHostname::try_from(long_name).is_ok());
+    }
+
+    #[test]
+    fn invalid_linux_hostname() {
+        assert!(ValidLinuxHostname::try_from(" ").is_err());
+        assert!(ValidLinuxHostname::try_from("-a").is_err());
+        assert!(ValidLinuxHostname::try_from(".a").is_err());
+        assert!(ValidLinuxHostname::try_from("@a").is_err());
+        assert!(ValidLinuxHostname::try_from("a..a").is_err());
+        assert!(ValidLinuxHostname::try_from("a.a.-a.a1234").is_err());
+
+        let long_segment = std::iter::repeat("a").take(64).collect::<String>();
+        assert!(ValidLinuxHostname::try_from(long_segment.clone()).is_err());
+
+        let long_name = format!(
+            "{}.{}.{}.{}",
+            &long_segment, &long_segment, &long_segment, &long_segment
+        );
+        assert!(ValidLinuxHostname::try_from(long_name).is_err());
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// Identifier can only be created by deserializing from a string that contains
 /// ASCII alphanumeric characters, plus hyphens, which we use as our standard word separator
 /// character in user-facing identifiers. It stores the original form and makes it accessible

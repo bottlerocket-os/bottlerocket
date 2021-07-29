@@ -14,6 +14,7 @@ Source99: release-tmpfiles.conf
 
 Source200: motd.template
 Source201: proxy-env
+Source202: hostname-env
 
 Source1000: eth0.xml
 Source1001: multi-user.target
@@ -21,6 +22,7 @@ Source1002: configured.target
 Source1003: preconfigured.target
 Source1004: activate-configured.service
 Source1005: activate-multi-user.service
+Source1011: set-hostname.service
 
 # Mounts for writable local storage.
 Source1006: var.mount
@@ -108,7 +110,7 @@ EOF
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} \
-  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} \
+  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1011} \
   %{S:1015} %{S:1040} %{S:1041} %{S:1060} %{S:1061} %{S:1062} \
   %{buildroot}%{_cross_unitdir}
 
@@ -129,6 +131,7 @@ install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
+install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/hostname-env
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
@@ -163,9 +166,11 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/*-licenses.mount
 %{_cross_unitdir}/var-lib-bottlerocket.mount
+%{_cross_unitdir}/set-hostname.service
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/motd
 %{_cross_templatedir}/proxy-env
+%{_cross_templatedir}/hostname-env
 %{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 %changelog
