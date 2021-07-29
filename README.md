@@ -522,7 +522,7 @@ There are a few important caveats to understand about host containers:
 * If you set `superpowered` to true, they'll essentially have root access to the host.
 
 Because of these caveats, host containers are only intended for special use cases.
-We use it for the control container because it needs to be available early to give you access to the OS, and we use it for the admin container because it needs high levels of privilege and because you need it to debug when orchestration isn't working.
+We use them for the control container because it needs to be available early to give you access to the OS, and for the admin container because it needs high levels of privilege and because you need it to debug when orchestration isn't working.
 
 Be careful, and make sure you have a similar low-level use case before reaching for host containers.
 
@@ -541,7 +541,7 @@ Bootstrap containers have access to the underlying root filesystem on `/.bottler
 This allows bootstrap containers to create files, directories, and mounts that are visible to the host.
 
 Bootstrap containers are set up to run after the systemd `configured.target` unit is active.
-The containers' systemd unit depends on this target (and not on any of the bootstrap containers' peers) which means that bootstrap containers will not execute in a deterministic order
+The containers' systemd unit depends on this target (and not on any of the bootstrap containers' peers) which means that bootstrap containers will not execute in a deterministic order.
 The boot process will "wait" for as long as the bootstrap containers run.
 Bootstrap containers configured with `essential=true` will stop the boot process if they exit code is a non-zero value.
 
