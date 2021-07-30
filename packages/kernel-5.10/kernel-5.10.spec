@@ -12,6 +12,9 @@ Source100: config-bottlerocket
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
+# Add zstd support for compressed kernel modules
+Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
+Patch2001: 2001-kbuild-add-support-for-zstd-compressed-modules.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
