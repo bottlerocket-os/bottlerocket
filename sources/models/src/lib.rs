@@ -113,8 +113,8 @@ use crate::modeled_types::{
     KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterName,
     KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
     KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, Lockdown, SingleLineString, SysctlKey, Url, ValidBase64,
-    ValidLinuxHostname,
+    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey, Url,
+    ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -276,4 +276,11 @@ struct BootstrapContainer {
     mode: BootstrapContainerMode,
     user_data: ValidBase64,
     essential: bool,
+}
+
+///// PEM Certificates
+#[model]
+struct PemCertificate {
+    data: PemCertificateString,
+    trusted: bool,
 }

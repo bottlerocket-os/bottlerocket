@@ -54,6 +54,7 @@ Requires: %{_cross_os}apiserver
 Requires: %{_cross_os}bootstrap-containers
 Requires: %{_cross_os}bork
 Requires: %{_cross_os}corndog
+Requires: %{_cross_os}certdog
 Requires: %{_cross_os}early-boot-config
 Requires: %{_cross_os}ghostdog
 Requires: %{_cross_os}growpart
@@ -207,6 +208,10 @@ Requires: %{_cross_os}makedumpfile
 %description -n %{_cross_os}prairiedog
 %{summary}.
 
+%package -n %{_cross_os}certdog
+Summary: Bottlerocket certificates handler
+%description -n %{_cross_os}certdog
+%{summary}.
 
 %if "%{_cross_variant}" == "aws-ecs-1"
 %package -n %{_cross_os}ecs-settings-applier
@@ -299,6 +304,7 @@ echo "** Output from non-static builds:"
     -p corndog \
     -p bootstrap-containers \
     -p prairiedog \
+    -p certdog \
 %if "%{_cross_variant}" == "aws-ecs-1"
     -p ecs-settings-applier \
 %endif
@@ -328,7 +334,7 @@ for p in \
   early-boot-config netdog sundog schnauzer bork corndog \
   thar-be-settings thar-be-updates servicedog host-containers \
   storewolf settings-committer \
-  migrator prairiedog \
+  migrator prairiedog certdog \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
 %if "%{_cross_variant}" == "aws-ecs-1"
@@ -526,6 +532,9 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 
 %files -n %{_cross_os}prairiedog
 %{_cross_bindir}/prairiedog
+
+%files -n %{_cross_os}certdog
+%{_cross_bindir}/certdog
 
 %files -n %{_cross_os}bootstrap-containers
 %{_cross_bindir}/bootstrap-containers

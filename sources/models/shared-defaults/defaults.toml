@@ -128,3 +128,12 @@ restart-commands = ["/usr/bin/bootstrap-containers create-containers"]
 
 [metadata.settings.bootstrap-containers]
 affected-services = ["bootstrap-containers"]
+
+# Certdog
+
+[services.pki]
+configuration-files = []
+restart-commands = ["/usr/bin/certdog"]
+
+[metadata.settings.pki]
+affected-services = ["pki"]

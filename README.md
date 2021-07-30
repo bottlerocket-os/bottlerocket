@@ -471,6 +471,36 @@ Here are the metrics settings:
     "vm.max_map_count" = "262144"
     ```
 
+#### Custom CA certificates settings
+
+By defualt, Bottlerocket ships with the Mozilla CA certificate store, but you can add self-signed certificates through the API using these settings:
+
+* `settings.pki.<bundle-name>.data`: Base64-encoded PEM-formatted certificates bundle; it can contain more than one certificate
+* `settings.pki.<bundle-name>.trusted`: Whether the certificates in the bundle are trusted; defaults to `false` when not provided
+
+Here's an example of adding a bundle of self-signed certificates as user data:
+
+```toml
+[settings.pki.my-trusted-bundle]
+data="W3N..."
+trusted=true
+
+[settings.pki.dont-trust-these]
+data="W3N..."
+trusted=false
+```
+
+Here's the same example but using API calls:
+
+```sh
+apiclient set \
+  pki.my-trusted-bundle.data="W3N..." \
+  pki.my-trusted-bundle.trusted=true  \
+  pki.dont-trust-these.data="N3W..."  \
+  pki.dont-trust-there.trusted=false
+```
+
+You can use this method from within a [bootstrap container](#bootstrap-containers-settings), if your user data is over the size limit of the platform.
 
 #### Host containers settings
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).
@@ -522,7 +552,7 @@ There are a few important caveats to understand about host containers:
 * If you set `superpowered` to true, they'll essentially have root access to the host.
 
 Because of these caveats, host containers are only intended for special use cases.
-We use it for the control container because it needs to be available early to give you access to the OS, and we use it for the admin container because it needs high levels of privilege and because you need it to debug when orchestration isn't working.
+We use them for the control container because it needs to be available early to give you access to the OS, and for the admin container because it needs high levels of privilege and because you need it to debug when orchestration isn't working.
 
 Be careful, and make sure you have a similar low-level use case before reaching for host containers.
 
@@ -541,7 +571,7 @@ Bootstrap containers have access to the underlying root filesystem on `/.bottler
 This allows bootstrap containers to create files, directories, and mounts that are visible to the host.
 
 Bootstrap containers are set up to run after the systemd `configured.target` unit is active.
-The containers' systemd unit depends on this target (and not on any of the bootstrap containers' peers) which means that bootstrap containers will not execute in a deterministic order
+The containers' systemd unit depends on this target (and not on any of the bootstrap containers' peers) which means that bootstrap containers will not execute in a deterministic order.
 The boot process will "wait" for as long as the bootstrap containers run.
 Bootstrap containers configured with `essential=true` will stop the boot process if they exit code is a non-zero value.
 
