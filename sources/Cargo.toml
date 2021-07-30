@@ -38,8 +38,8 @@ members = [
     "api/migration/migrations/v1.1.2/control-container-v0-5-1",
     "api/migration/migrations/v1.1.3/kubelet-cpu-manager-state",
     "api/migration/migrations/v1.1.3/kubelet-cpu-manager",
-    "api/migration/migrations/v1.1.5/hostname-setting",
-    "api/migration/migrations/v1.1.5/hostname-setting-metadata",
+    "api/migration/migrations/v1.2.0/hostname-setting",
+    "api/migration/migrations/v1.2.0/hostname-setting-metadata",
     "api/migration/migrations/v1.2.0/add-custom-certificates",
 
     "bottlerocket-release",
