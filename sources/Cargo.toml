@@ -41,6 +41,7 @@ members = [
     "api/migration/migrations/v1.2.0/hostname-setting",
     "api/migration/migrations/v1.2.0/hostname-setting-metadata",
     "api/migration/migrations/v1.2.0/add-custom-certificates",
+    "api/migration/migrations/v1.2.0/kubelet-topology-manager",
 
     "bottlerocket-release",
 
