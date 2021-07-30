@@ -15,7 +15,7 @@ serde_json = "1"
 schnauzer = { path = "../schnauzer" }
 log = "0.4"
 snafu = "0.6"
-tokio = { version = "1", default-features = false, features = ["macros", "rt-multi-thread"] }
+tokio = { version = "~1.8", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 
 [build-dependencies]
 cargo-readme = "3.1"
