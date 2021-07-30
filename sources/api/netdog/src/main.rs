@@ -257,10 +257,13 @@ fn remove(args: RemoveArgs) -> Result<()> {
 
 /// Return the current IP address as JSON (intended for use as a settings generator)
 fn node_ip() -> Result<()> {
-    let ip =
+    let ip_string =
         fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
+    // Validate that we read a proper IP address
+    let _ = IpAddr::from_str(&ip_string).context(error::IpFromString { ip: &ip_string })?;
+
     // sundog expects JSON-serialized output
-    Ok(print_json(ip)?)
+    Ok(print_json(ip_string)?)
 }
 
 /// Attempt to resolve assigned IP address, if unsuccessful use "ip-X-X-X-X" where X's are the
