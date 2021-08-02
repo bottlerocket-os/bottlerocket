@@ -613,6 +613,7 @@ dependencies = [
  "argh",
  "base64",
  "cargo-readme",
+ "der-parser",
  "http",
  "log",
  "models",
@@ -868,9 +869,9 @@ dependencies = [
 
 [[package]]
 name = "der-parser"
-version = "5.1.1"
+version = "5.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc78bc286418c19333af99233e74abe9d38254d51d8dcc4f571aeb11d25ad194"
+checksum = "120842c2385dea19347e2f6e31caa5dced5ba8afdfacaac16c59465fdd1168f2"
 dependencies = [
  "der-oid-macro",
  "nom",
