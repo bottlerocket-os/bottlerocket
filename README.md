@@ -46,7 +46,7 @@ We’re excited to get early feedback and to continue working on more use cases!
 Bottlerocket is architected such that different cloud environments and container orchestrators can be supported in the future.
 A build of Bottlerocket that supports different features or integration characteristics is known as a 'variant'.
 The artifacts of a build will include the architecture and variant name.
-For example, an `x86_64` build of the `aws-k8s-1.19` variant will produce an image named `bottlerocket-aws-k8s-1.19-x86_64-<version>-<commit>.img`.
+For example, an `x86_64` build of the `aws-k8s-1.21` variant will produce an image named `bottlerocket-aws-k8s-1.21-x86_64-<version>-<commit>.img`.
 
 The following variants support EKS, as described above:
 
@@ -694,7 +694,7 @@ We currently package the following major third-party components:
 * systemd as init ([background](https://en.wikipedia.org/wiki/Systemd), [packaging](packages/systemd/))
 * wicked for networking ([background](https://github.com/openSUSE/wicked), [packaging](packages/wicked/))
 * containerd ([background](https://containerd.io/), [packaging](packages/containerd/))
-* Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes-1.19/))
+* Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes-1.21/))
 * aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](packages/aws-iam-authenticator/))
 * Amazon ECS agent ([background](https://github.com/aws/amazon-ecs-agent), [packaging](packages/ecs-agent/))
 
