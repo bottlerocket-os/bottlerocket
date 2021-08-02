@@ -1,10 +1,11 @@
 [Unit]
 Description=containerd container runtime
 Documentation=https://containerd.io
-After=network-online.target configured.target
-Wants=network-online.target configured.target
+After=network-online.target configured.target runtime.slice
+Wants=network-online.target configured.target runtime.slice
 
 [Service]
+Slice=runtime.slice
 EnvironmentFile=/etc/network/proxy.env
 ExecStart=/usr/bin/containerd
 Type=notify

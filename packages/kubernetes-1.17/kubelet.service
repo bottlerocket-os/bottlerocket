@@ -6,6 +6,7 @@ Wants=configured.target
 BindsTo=containerd.service
 
 [Service]
+Slice=runtime.slice
 Type=notify
 EnvironmentFile=/etc/network/proxy.env
 EnvironmentFile=/etc/kubernetes/kubelet/env
