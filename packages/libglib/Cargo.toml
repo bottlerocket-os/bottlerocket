@@ -15,7 +15,6 @@ sha512 = "fb120105c4cb582491a53a0e4c61fe4bdd1f94b279bb7c362afd591369ede50a196c70
 [build-dependencies]
 glibc = { path = "../glibc" }
 libffi = { path = "../libffi" }
-libpcre = { path = "../libpcre" }
 libselinux = { path = "../libselinux" }
 libz = { path = "../libz" }
 util-linux = { path = "../util-linux" }

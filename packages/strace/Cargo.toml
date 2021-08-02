@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://strace.io/files/5.12/strace-5.12.tar.xz"
-sha512 = "289cf82da4c69270458953b45d09c8eb05a6624898d3ac493c3ec293cd5ad07205084ad0af021dab2be9c0dc53f0301816113a746d96c78780b79231a185e7c9"
+url = "https://strace.io/files/5.13/strace-5.13.tar.xz"
+sha512 = "ba8b0eae396fa2b762bf17cbcdcd84b0660b2a5d5e7e9caf098ef3414a87fd28d4140dd10136483f35904560e5044e40be2bf6117462868a360306d62887c8ed"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

@@ -9,12 +9,10 @@ BuildRequires: meson
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libffi-devel
 BuildRequires: %{_cross_os}libmount-devel
-BuildRequires: %{_cross_os}libpcre-devel
 BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libz-devel
 Requires: %{_cross_os}libffi
 Requires: %{_cross_os}libmount
-Requires: %{_cross_os}libpcre
 Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libz
 

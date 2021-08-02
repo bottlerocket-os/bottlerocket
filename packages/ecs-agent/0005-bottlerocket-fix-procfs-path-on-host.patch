@@ -10,22 +10,22 @@ host's `procfs` at `/host/proc`.  Because Bottlerocket does not run the
 ECS agent in a container, the ECS agent can directly read the host's
 `procfs` at `/proc`.
 ---
- agent/ecscni/types.go | 2 +-
+ agent/ecscni/types_linux.go | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/agent/ecscni/types.go b/agent/ecscni/types.go
-index 8561eb51b..957aa3877 100644
---- a/agent/ecscni/types.go
-+++ b/agent/ecscni/types.go
-@@ -38,7 +38,7 @@ const (
- 	ecsSubnet = "169.254.172.0/22"
- 
+diff --git a/agent/ecscni/types_linux.go b/agent/ecscni/types_linux.go
+index 06a134f4..3705ad24 100644
+--- a/agent/ecscni/types_linux.go
++++ b/agent/ecscni/types_linux.go
+@@ -39,7 +39,7 @@ const (
+ 	// ECSBranchENIPluginName is the binary of the branch-eni plugin
+ 	ECSBranchENIPluginName = "vpc-branch-eni"
  	// NetnsFormat is used to construct the path to cotainer network namespace
 -	NetnsFormat = "/host/proc/%s/ns/net"
 +	NetnsFormat = "/proc/%s/ns/net"
- 	// ECSIPAMPluginName is the binary of the ipam plugin
- 	ECSIPAMPluginName = "ecs-ipam"
- 	// ECSBridgePluginName is the binary of the bridge plugin
+ )
+ 
+ //IPAMNetworkConfig is the config format accepted by the plugin
 -- 
 2.32.0
 

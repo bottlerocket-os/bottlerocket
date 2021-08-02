@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-2.50.tar.gz"
-sha512 = "ef9659df65875ef4e987666337d99f4b93a6db5f108c9c885d9b835cba49ee750961ec83cd25f497b01158eb063e1a0675cfd451487c7e90936753e669743bbf"
+url = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-2.51.tar.gz"
+sha512 = "032f52468323af68cc5cc1d9adcbf61bae962887d475b995629ea22428fbd6e4722599497394cccdb8443381d257187eb2ce80866b009ae84cd8cd45fd616716"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

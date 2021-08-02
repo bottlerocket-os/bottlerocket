@@ -1,5 +1,5 @@
 Name: %{_cross_os}libffi
-Version: 3.3
+Version: 3.4.2
 Release: 1%{?dist}
 Summary: Library for FFI
 License: MIT
