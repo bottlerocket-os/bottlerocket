@@ -68,6 +68,7 @@ kubeReserved:
   {{~/if}}
   {{~/if}}
   ephemeral-storage: "{{default "1Gi" settings.kubernetes.kube-reserved.ephemeral-storage}}"
+kubeReservedCgroup: "/runtime"
 {{~#if settings.kubernetes.system-reserved}}
 systemReserved:
   {{~#each settings.kubernetes.system-reserved}}
