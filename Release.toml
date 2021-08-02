@@ -66,4 +66,5 @@ version = "1.1.4"
     "migrate_v1.2.0_kubelet-topology-manager.lz4",
     "migrate_v1.2.0_container-registry-mirrors.lz4",
     "migrate_v1.2.0_container-registry-config-restarts.lz4",
+    "migrate_v1.2.0_admin-container-v0-7-2.lz4",
 ]
