@@ -9,8 +9,10 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/opencontainers/selinux v1.8.2 // indirect
+	github.com/pelletier/go-toml v1.9.3
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
+	github.com/stretchr/testify v1.5.1
 	github.com/urfave/cli/v2 v2.3.0
 )
 

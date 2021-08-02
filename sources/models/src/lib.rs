@@ -179,6 +179,12 @@ struct ECSSettings {
     enable_spot_instance_draining: bool,
 }
 
+// Image registry settings for the container runtimes.
+#[model]
+struct RegistrySettings {
+    mirrors: HashMap<SingleLineString, Vec<Url>>,
+}
+
 // Update settings. Taken from userdata. The 'seed' setting is generated
 // by the "Bork" settings generator at runtime.
 #[model]

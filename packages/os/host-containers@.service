@@ -11,7 +11,8 @@ Environment=LOCAL_DIR=/local
 ExecStart=/usr/bin/host-ctr run \
     --container-id='%i' \
     --source='${CTR_SOURCE}' \
-    --superpowered='${CTR_SUPERPOWERED}'
+    --superpowered='${CTR_SUPERPOWERED}' \
+    --registry-config=/etc/host-containers/host-ctr.toml
 Restart=always
 RestartSec=45
 TimeoutStopSec=60

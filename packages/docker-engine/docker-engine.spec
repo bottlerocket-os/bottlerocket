@@ -21,8 +21,7 @@ Source0: https://%{repo}/archive/v%{gover}/%{project}-%{gover}.tar.gz
 Source1: docker.service
 Source2: docker.socket
 Source3: docker-sysusers.conf
-Source4: daemon.json
-Source5: docker-tmpfiles.conf
+Source4: daemon-json
 Source1000: clarify.toml
 
 BuildRequires: git
@@ -68,11 +67,8 @@ install -p -m 0644 %{S:2} %{buildroot}%{_cross_unitdir}/docker.socket
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_sysusersdir}/docker.conf
 
-install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/docker
-install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/docker/daemon.json
-
-install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/docker.conf
+install -d %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:4} %{buildroot}%{_cross_templatedir}/docker-daemon-json
 
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
@@ -83,7 +79,6 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/docker.conf
 %{_cross_unitdir}/docker.service
 %{_cross_unitdir}/docker.socket
 %{_cross_sysusersdir}/docker.conf
-%{_cross_factorydir}%{_cross_sysconfdir}/docker
-%{_cross_tmpfilesdir}/docker.conf
+%{_cross_templatedir}/docker-daemon-json
 
 %changelog
