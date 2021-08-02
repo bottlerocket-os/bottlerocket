@@ -61,14 +61,3 @@ CONFIG_DEBUG_INFO_BTF=y
 # We don't want to extend the kernel command line with any upstream defaults;
 # Bottlerocket uses a fairly custom setup that needs tight control over it.
 CONFIG_CMDLINE_EXTEND=n
-
-# Enable ZSTD kernel image compression
-CONFIG_HAVE_KERNEL_ZSTD=y
-CONFIG_KERNEL_ZSTD=y
-CONFIG_ZSTD_COMPRESS=y
-CONFIG_ZSTD_DECOMPRESS=y
-CONFIG_DECOMPRESS_ZSTD=y
-
-# Enable ZSTD modules compression
-CONFIG_MODULE_COMPRESS=y
-CONFIG_MODULE_COMPRESS_ZSTD=y

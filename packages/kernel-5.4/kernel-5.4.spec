@@ -12,7 +12,6 @@ Source100: config-bottlerocket
 
 # Make Lustre FSx work with a newer GCC.
 Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
-
 # Required patches for kdump support
 Patch0002: 0002-x86-purgatory-Add-fno-stack-protector.patch
 Patch0003: 0003-arm64-kexec_file-add-crash-dump-support.patch
@@ -20,17 +19,6 @@ Patch0004: 0004-libfdt-include-fdt_addresses.c.patch
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
-
-# Add zstd support for compressed kernel
-Patch2000: 2000-lib-Prepare-zstd-for-preboot-environment-improve-per.patch
-Patch2001: 2001-lib-Add-zstd-support-to-decompress.patch
-Patch2002: 2002-init-Add-support-for-zstd-compressed-kernel.patch
-Patch2003: 2003-x86-Bump-ZO_z_extra_bytes-margin-for-zstd.patch
-Patch2004: 2004-x86-Add-support-for-ZSTD-compressed-kernel.patch
-Patch2005: 2005-.gitignore-Add-ZSTD-compressed-files.patch
-# Add zstd support for compressed kernel modules
-Patch2006: 2006-kbuild-move-module-strip-compression-code-into-scrip.patch
-Patch2007: 2007-kbuild-add-support-for-zstd-compressed-modules.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
