@@ -1,7 +1,7 @@
-From 59744095bbd3fa229fabae98ee11c4e5e6502a8b Mon Sep 17 00:00:00 2001
+From 3b74d210606fc150e1a6173c463c08a9cc85f1e4 Mon Sep 17 00:00:00 2001
 From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 Date: Tue, 7 Jul 2020 22:38:20 +0000
-Subject: [PATCH 9004/9008] machine-id-setup: generate stable ID under Xen and
+Subject: [PATCH 9004/9009] machine-id-setup: generate stable ID under Xen and
  VMWare
 
 Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
@@ -76,5 +76,5 @@ index 6d15f9c..16f8b8c 100644
          }
  
 -- 
-2.30.2
+2.21.3
 
