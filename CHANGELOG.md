@@ -1,3 +1,49 @@
+# v1.2.0 (2021-08-06)
+
+## OS Changes
+
+* Add settings for kubelet topologyManagerPolicy and topologyManagerScope ([#1659])
+* Add support for container image registry mirrors ([#1629])
+* Add support for custom CA certificates ([#1654])
+* Add a setting for configuring hostname ([#1664], [#1680])
+* Avoid wildcard for applying rp_filter to interfaces ([#1677])
+* Update default admin container to v0.7.2 ([#1685])
+
+## Build Changes
+
+* Add support for zstd compressed kernel ([#1668], [#1689])
+* Add support for uploading OVAs to VMware ([#1622])
+* Update default built variant to aws-k8s-1.21 ([#1686])
+* Remove aws-k8s-1.16 variant ([#1658])
+* Move migrations from v1.1.5 to v1.2.0 ([#1682])
+* Update third-party packages ([#1676])
+* Update host-ctr dependencies ([#1669])
+* Update Rust dependencies ([#1655], [#1683], [#1687])
+
+## Documentation Changes
+
+* Fix typo in README ([#1652], **thanks @faultymonk!**)
+
+[#1622]: https://github.com/bottlerocket-os/bottlerocket/pull/1622
+[#1629]: https://github.com/bottlerocket-os/bottlerocket/pull/1629
+[#1652]: https://github.com/bottlerocket-os/bottlerocket/pull/1652
+[#1654]: https://github.com/bottlerocket-os/bottlerocket/pull/1654
+[#1655]: https://github.com/bottlerocket-os/bottlerocket/pull/1655
+[#1658]: https://github.com/bottlerocket-os/bottlerocket/pull/1658
+[#1659]: https://github.com/bottlerocket-os/bottlerocket/pull/1659
+[#1664]: https://github.com/bottlerocket-os/bottlerocket/pull/1664
+[#1668]: https://github.com/bottlerocket-os/bottlerocket/pull/1668
+[#1669]: https://github.com/bottlerocket-os/bottlerocket/pull/1669
+[#1676]: https://github.com/bottlerocket-os/bottlerocket/pull/1676
+[#1677]: https://github.com/bottlerocket-os/bottlerocket/pull/1677
+[#1680]: https://github.com/bottlerocket-os/bottlerocket/pull/1680
+[#1682]: https://github.com/bottlerocket-os/bottlerocket/pull/1682
+[#1683]: https://github.com/bottlerocket-os/bottlerocket/pull/1683
+[#1685]: https://github.com/bottlerocket-os/bottlerocket/pull/1685
+[#1686]: https://github.com/bottlerocket-os/bottlerocket/pull/1686
+[#1687]: https://github.com/bottlerocket-os/bottlerocket/pull/1687
+[#1689]: https://github.com/bottlerocket-os/bottlerocket/pull/1689
+
 # v1.1.4 (2021-07-23)
 
 ## Security fixes
