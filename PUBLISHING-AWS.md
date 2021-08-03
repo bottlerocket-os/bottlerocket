@@ -86,7 +86,7 @@ This isn't very discoverable yet, but it's useful for testing.
 As an example, a parameter might look like this:
 
 ```
-/your/prefix/here/aws-k8s-1.19/x86_64/1.0.1-dafe3b16/image_id
+/your/prefix/here/aws-k8s-1.21/x86_64/1.0.1-dafe3b16/image_id
 ```
 
 Once you're satisfied with your image and parameters, you can promote the parameters to simpler names (for example, "latest") using the [instructions below](#promoting-ssm-parameters).
@@ -128,12 +128,12 @@ cargo make promote-ssm -e SSM_TARGET=latest
 This will copy the fully versioned parameter from earlier, something like:
 
 ```
-/your/prefix/here/aws-k8s-1.19/x86_64/1.0.1-dafe3b16/image_id
+/your/prefix/here/aws-k8s-1.21/x86_64/1.0.1-dafe3b16/image_id
 ```
 
 ...to a simpler parameter name:
 ```
-/your/prefix/here/aws-k8s-1.19/x86_64/latest/image_id
+/your/prefix/here/aws-k8s-1.21/x86_64/latest/image_id
 ```
 
 You can then use this parameter name to get the latest AMI ID.
