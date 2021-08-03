@@ -44,6 +44,7 @@ members = [
     "api/migration/migrations/v1.2.0/kubelet-topology-manager",
     "api/migration/migrations/v1.2.0/container-registry-mirrors",
     "api/migration/migrations/v1.2.0/container-registry-config-restarts",
+    "api/migration/migrations/v1.2.0/admin-container-v0-7-2",
 
     "bottlerocket-release",
 
