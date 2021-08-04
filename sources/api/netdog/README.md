@@ -10,8 +10,7 @@ file.
 
 It contains two subcommands meant for use as settings generators:
 * `node-ip`: returns the node's current IP address in JSON format
-* `generate-hostname`: returns the node's hostname in JSON format (it is the resolved IP or the IP
-  in format "ip-x-x-x-x" if resolving fails)
+* `generate-hostname`: returns the node's hostname in JSON format. If the lookup is unsuccessful, the IP of the node is used.
 
 The subcommand `set-hostname` sets the hostname for the system.
 

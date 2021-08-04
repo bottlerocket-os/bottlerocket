@@ -7,8 +7,7 @@ file.
 
 It contains two subcommands meant for use as settings generators:
 * `node-ip`: returns the node's current IP address in JSON format
-* `generate-hostname`: returns the node's hostname in JSON format (it is the resolved IP or the IP
-  in format "ip-x-x-x-x" if resolving fails)
+* `generate-hostname`: returns the node's hostname in JSON format. If the lookup is unsuccessful, the IP of the node is used.
 
 The subcommand `set-hostname` sets the hostname for the system.
 */
@@ -266,9 +265,7 @@ fn node_ip() -> Result<()> {
     Ok(print_json(ip_string)?)
 }
 
-/// Attempt to resolve assigned IP address, if unsuccessful use "ip-X-X-X-X" where X's are the
-/// octets of the IP.  For example, IP address 1.2.3.4 becomes the hostname "ip-1-2-3-4".  No dots
-/// in the hostname (hopefully) avoids any confusion for programs that may read this value.
+/// Attempt to resolve assigned IP address, if unsuccessful use the IP as the hostname.
 ///
 /// The result is returned as JSON. (intended for use as a settings generator)
 fn generate_hostname() -> Result<()> {
@@ -276,18 +273,10 @@ fn generate_hostname() -> Result<()> {
         fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
     let ip = IpAddr::from_str(&ip_string).context(error::IpFromString { ip: &ip_string })?;
     let hostname = match lookup_addr(&ip) {
-        Ok(hostname) => {
-            // if `lookup_addr()` returns the same IP as we passed it we didn't resolve anything,
-            // so return the string "ip-x-x-x-x" in this case
-            if hostname == ip_string {
-                format!("ip-{}", ip_string.replace(".", "-"))
-            } else {
-                hostname
-            }
-        }
+        Ok(hostname) => hostname,
         Err(e) => {
             eprintln!("Reverse DNS lookup failed: {}", e);
-            format!("ip-{}", ip_string.replace(".", "-"))
+            ip_string
         }
     };
 
