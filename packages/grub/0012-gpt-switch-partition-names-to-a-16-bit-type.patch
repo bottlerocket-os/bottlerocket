@@ -1,4 +1,4 @@
-From de8ed5eacc471e74e32a70257261ef83cb8b9adc Mon Sep 17 00:00:00 2001
+From d424d55607bdfbbd0f5f0a220ea582ff88106931 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 27 Nov 2014 14:54:27 -0800
 Subject: [PATCH] gpt: switch partition names to a 16 bit type
@@ -10,7 +10,7 @@ string practical.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index f2b3630e4..1d065df99 100644
+index dc1bcca..a44c0d5 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -92,7 +92,7 @@ struct grub_gpt_partentry
@@ -19,6 +19,9 @@ index f2b3630e4..1d065df99 100644
    grub_uint64_t attrib;
 -  char name[72];
 +  grub_uint16_t name[36];
- } GRUB_PACKED;
+ } GRUB_PACKED  __attribute__ ((aligned(8)));
  
  enum grub_gpt_part_attr_offset
+-- 
+2.21.3
+

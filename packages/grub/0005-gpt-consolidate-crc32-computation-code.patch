@@ -1,4 +1,4 @@
-From 39351efcb1aab82bb86052d21f07308429414a83 Mon Sep 17 00:00:00 2001
+From a0481ec20cd8f99f973385b6dcacff6201aa5661 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Sat, 18 Oct 2014 18:18:17 -0700
 Subject: [PATCH] gpt: consolidate crc32 computation code
@@ -10,7 +10,7 @@ keep this rather common operation easy to use.
  1 file changed, 24 insertions(+), 19 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 01df7f3e8..43a150942 100644
+index 01df7f3..43a1509 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -32,22 +32,17 @@ static grub_uint8_t grub_gpt_magic[] = GRUB_GPT_HEADER_MAGIC;
@@ -114,3 +114,6 @@ index 01df7f3e8..43a150942 100644
    return grub_errno;
  }
  
+-- 
+2.21.3
+

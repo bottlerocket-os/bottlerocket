@@ -1,4 +1,4 @@
-From 81126be2c4ee13b747586e15797a9c5505c0ce0b Mon Sep 17 00:00:00 2001
+From 09b0254a01a4433bd6d58e0c7386e750834b19d5 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Tue, 23 Aug 2016 13:09:14 -0700
 Subject: [PATCH] gpt: prefer disk size from header over firmware
@@ -15,7 +15,7 @@ the error as best we can and move on.
  2 files changed, 55 insertions(+), 5 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 205779192..f0c71bde1 100644
+index 2057791..f0c71bd 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -394,13 +394,21 @@ grub_gpt_read_backup (grub_disk_t disk, grub_gpt_t gpt)
@@ -46,7 +46,7 @@ index 205779192..f0c71bde1 100644
    grub_dprintf ("gpt", "reading backup GPT from sector 0x%llx\n",
  		(unsigned long long) sector);
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index 9cf3414c2..218b18697 100644
+index 9cf3414..218b186 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -544,6 +544,46 @@ repair_test (void)
@@ -112,3 +112,6 @@ index 9cf3414c2..218b18697 100644
    grub_test_unregister ("gpt_search_part_label_test");
    grub_test_unregister ("gpt_search_part_uuid_test");
    grub_test_unregister ("gpt_search_disk_uuid_test");
+-- 
+2.21.3
+

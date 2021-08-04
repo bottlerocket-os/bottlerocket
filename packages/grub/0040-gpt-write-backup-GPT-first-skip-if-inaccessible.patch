@@ -1,4 +1,4 @@
-From a789bc5ac9133b0c25dfbfa6d39c7c35a1115dfd Mon Sep 17 00:00:00 2001
+From 114dc2c20130ebe232fb52f02ddb14d06a6ac890 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 22 Sep 2016 11:18:42 -0700
 Subject: [PATCH] gpt: write backup GPT first, skip if inaccessible.
@@ -20,7 +20,7 @@ will take care of repairing the backup.
  1 file changed, 24 insertions(+), 4 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 430404848..c3e3a25f9 100644
+index 4304048..c3e3a25 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -729,19 +729,39 @@ grub_gpt_write_table (grub_disk_t disk, grub_gpt_t gpt,
@@ -67,3 +67,6 @@ index 430404848..c3e3a25f9 100644
    return GRUB_ERR_NONE;
  }
  
+-- 
+2.21.3
+

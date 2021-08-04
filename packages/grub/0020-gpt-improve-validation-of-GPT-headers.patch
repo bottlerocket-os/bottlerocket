@@ -1,4 +1,4 @@
-From 3670a0019adb31fd9f849b5128a629e0e89a9bba Mon Sep 17 00:00:00 2001
+From 4a037b26a09886e33f281e968f0be4545a6d2c57 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 10 Aug 2016 18:26:03 -0700
 Subject: [PATCH] gpt: improve validation of GPT headers
@@ -10,7 +10,7 @@ the chance of corrupting weird locations on disk.
  1 file changed, 48 insertions(+)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index c2821b563..f83fe29ac 100644
+index c2821b5..f83fe29 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -224,6 +224,7 @@ grub_gpt_header_check (struct grub_gpt_header *gpt,
@@ -99,3 +99,6 @@ index c2821b563..f83fe29ac 100644
    gpt->status |= GRUB_GPT_BACKUP_HEADER_VALID;
    return GRUB_ERR_NONE;
  }
+-- 
+2.21.3
+

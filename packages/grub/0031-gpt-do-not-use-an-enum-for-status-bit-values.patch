@@ -1,4 +1,4 @@
-From 603feacb39091f9f4e01fe4a4160f0f320b03fe5 Mon Sep 17 00:00:00 2001
+From 16c295c98aebfe855b7cd169420fa659dfb8d327 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 21 Sep 2016 13:22:06 -0700
 Subject: [PATCH] gpt: do not use an enum for status bit values
@@ -8,7 +8,7 @@ Subject: [PATCH] gpt: do not use an enum for status bit values
  1 file changed, 9 insertions(+), 10 deletions(-)
 
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 226e09978..92b606cd9 100644
+index b7fbb7a..d94b93a 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -151,15 +151,14 @@ grub_gpt_partition_map_iterate (grub_disk_t disk,
@@ -44,3 +44,6 @@ index 226e09978..92b606cd9 100644
  
    /* Protective or hybrid MBR.  */
    struct grub_msdos_partition_mbr mbr;
+-- 
+2.21.3
+

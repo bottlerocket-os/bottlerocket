@@ -1,4 +1,4 @@
-From 821cdddd98bdc3879fb7580c225c3a89282873e7 Mon Sep 17 00:00:00 2001
+From ad528de92162a7aaa2666782c5cd18a9ab14d7e2 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Mon, 3 Nov 2014 17:14:37 -0800
 Subject: [PATCH] gpt: new gptprio.next command for selecting priority based
@@ -25,10 +25,10 @@ Signed-off-by: iliana destroyer of worlds <iweller@amazon.com>
  create mode 100644 tests/gptprio_test.in
 
 diff --git a/Makefile.util.def b/Makefile.util.def
-index 6ed541c1c..a2b84ec4b 100644
+index a2ca51d..eb4bc90 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
-@@ -1181,6 +1181,12 @@ script = {
+@@ -1294,6 +1294,12 @@ script = {
    common = tests/gptrepair_test.in;
  };
  
@@ -42,10 +42,10 @@ index 6ed541c1c..a2b84ec4b 100644
    testcase;
    name = file_filter_test;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 43ce166db..615b00226 100644
+index 72d485f..78c64a8 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -898,6 +898,11 @@ module = {
+@@ -937,6 +937,11 @@ module = {
    common = commands/gptrepair.c;
  };
  
@@ -59,7 +59,7 @@ index 43ce166db..615b00226 100644
    common = lib/gpt.c;
 diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
 new file mode 100644
-index 000000000..1e2e06cef
+index 0000000..1e2e06c
 --- /dev/null
 +++ b/grub-core/commands/gptprio.c
 @@ -0,0 +1,238 @@
@@ -302,7 +302,7 @@ index 000000000..1e2e06cef
 +  grub_unregister_extcmd (cmd_next);
 +}
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 8183a1f30..8a6e56af4 100644
+index d13ea0b..fc4f0f5 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -53,6 +53,10 @@ typedef struct grub_gpt_guid grub_gpt_part_guid_t;
@@ -318,7 +318,7 @@ index 8183a1f30..8a6e56af4 100644
  
 @@ -87,6 +91,51 @@ struct grub_gpt_partentry
    char name[72];
- } GRUB_PACKED;
+ } GRUB_PACKED  __attribute__ ((aligned(8)));
  
 +enum grub_gpt_part_attr_offset
 +{
@@ -370,7 +370,7 @@ index 8183a1f30..8a6e56af4 100644
  grub_gpt_partition_map_iterate (grub_disk_t disk,
 diff --git a/tests/gptprio_test.in b/tests/gptprio_test.in
 new file mode 100644
-index 000000000..f4aea0dc9
+index 0000000..f4aea0d
 --- /dev/null
 +++ b/tests/gptprio_test.in
 @@ -0,0 +1,150 @@
@@ -524,3 +524,6 @@ index 000000000..f4aea0dc9
 +check_next 4 1 0 1
 +check_prio 2 3 0 0
 +check_prio 3 2 0 0
+-- 
+2.21.3
+

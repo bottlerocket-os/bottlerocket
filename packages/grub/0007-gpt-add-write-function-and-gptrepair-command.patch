@@ -1,4 +1,4 @@
-From cb285d07b1b20c2ae081913cd3002cd97c8dd385 Mon Sep 17 00:00:00 2001
+From b6fdf2155967411d35ebf7667f0495ec741ad055 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Sun, 19 Oct 2014 14:21:29 -0700
 Subject: [PATCH] gpt: add write function and gptrepair command
@@ -19,10 +19,10 @@ not support writing.
  create mode 100644 tests/gptrepair_test.in
 
 diff --git a/Makefile.util.def b/Makefile.util.def
-index af8a008e2..6ed541c1c 100644
+index c7efe17..a2ca51d 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
-@@ -1175,6 +1175,12 @@ script = {
+@@ -1288,6 +1288,12 @@ script = {
    common = tests/grub_cmd_tr.in;
  };
  
@@ -36,10 +36,10 @@ index af8a008e2..6ed541c1c 100644
    testcase;
    name = file_filter_test;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 95dba2d26..43ce166db 100644
+index 3443e9c..72d485f 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -893,6 +893,11 @@ module = {
+@@ -932,6 +932,11 @@ module = {
    common = commands/gptsync.c;
  };
  
@@ -53,7 +53,7 @@ index 95dba2d26..43ce166db 100644
    common = lib/gpt.c;
 diff --git a/grub-core/commands/gptrepair.c b/grub-core/commands/gptrepair.c
 new file mode 100644
-index 000000000..38392fd8f
+index 0000000..38392fd
 --- /dev/null
 +++ b/grub-core/commands/gptrepair.c
 @@ -0,0 +1,116 @@
@@ -174,7 +174,7 @@ index 000000000..38392fd8f
 +  grub_unregister_command (cmd);
 +}
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 2d61df488..67ffdf703 100644
+index 2d61df4..67ffdf7 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -357,10 +357,46 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
@@ -229,7 +229,7 @@ index 2d61df488..67ffdf703 100644
    return GRUB_ERR_NONE;
  }
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index f367fe50d..a483f710a 100644
+index b45acbd..5c2b535 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -103,6 +103,11 @@ typedef enum grub_gpt_status
@@ -256,7 +256,7 @@ index f367fe50d..a483f710a 100644
  grub_err_t grub_gpt_pmbr_check (struct grub_msdos_partition_mbr *mbr);
 diff --git a/tests/gptrepair_test.in b/tests/gptrepair_test.in
 new file mode 100644
-index 000000000..80b2de633
+index 0000000..80b2de6
 --- /dev/null
 +++ b/tests/gptrepair_test.in
 @@ -0,0 +1,102 @@
@@ -362,3 +362,6 @@ index 000000000..80b2de633
 +do_repair
 +cmp "${img1}" "${img2}"
 +echo
+-- 
+2.21.3
+

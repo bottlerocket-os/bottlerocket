@@ -1,4 +1,4 @@
-From 6c9c0a2011b748d239e6f8f8426426323920f50a Mon Sep 17 00:00:00 2001
+From 48243011b5cffdbfb49c2b3d377754459a0a46a3 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 21 Sep 2016 16:02:53 -0700
 Subject: [PATCH] gpt: report all revalidation errors
@@ -10,7 +10,7 @@ the existing error onto the stack so the user will be told what is bad.
  1 file changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index b93cedea1..f6f853309 100644
+index b93cede..f6f8533 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -676,13 +676,19 @@ grub_gpt_update_checksums (grub_gpt_t gpt)
@@ -35,3 +35,6 @@ index b93cedea1..f6f853309 100644
  
    gpt->status |= (GRUB_GPT_BACKUP_HEADER_VALID |
  		  GRUB_GPT_BACKUP_ENTRIES_VALID);
+-- 
+2.21.3
+

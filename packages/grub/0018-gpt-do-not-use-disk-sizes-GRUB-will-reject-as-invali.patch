@@ -1,4 +1,4 @@
-From 2009646dc28e1a20b71d176040e9222f5c62d231 Mon Sep 17 00:00:00 2001
+From 2d1291ab5c4c814b961c1dc8f3a6541bf9aa8d32 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Mon, 25 Jul 2016 14:59:29 -0700
 Subject: [PATCH] gpt: do not use disk sizes GRUB will reject as invalid later
@@ -12,7 +12,7 @@ the usual way with the special GRUB_DISK_SIZE_UNKNOWN value.
  1 file changed, 24 insertions(+), 2 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index e162bafd3..3e17f2771 100644
+index e162baf..3e17f27 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -143,6 +143,28 @@ grub_gpt_size_to_sectors (grub_gpt_t gpt, grub_size_t size)
@@ -62,3 +62,6 @@ index e162bafd3..3e17f2771 100644
      backup_header = disk->total_sectors - 1;
  
    backup_entries = backup_header -
+-- 
+2.21.3
+

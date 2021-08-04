@@ -1,4 +1,4 @@
-From 025b3591c95200132256b44d15048a26bf558c40 Mon Sep 17 00:00:00 2001
+From 6563a1739f3ae9e06002682b4455f78df67fbf32 Mon Sep 17 00:00:00 2001
 From: Alex Crawford <alex.crawford@coreos.com>
 Date: Mon, 31 Aug 2015 15:23:39 -0700
 Subject: [PATCH] gpt: minor cleanup
@@ -9,7 +9,7 @@ Subject: [PATCH] gpt: minor cleanup
  2 files changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index dc2dec43a..ae72b026c 100644
+index 7b04080..1eb2f7b 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -229,7 +229,7 @@ grub_err_t grub_gpt_header_check (struct grub_gpt_header *gpt,
@@ -22,7 +22,7 @@ index dc2dec43a..ae72b026c 100644
  
  #endif /* ! GRUB_GPT_PARTITION_HEADER */
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index deb55a926..7a1af46e1 100644
+index deb55a9..7a1af46 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -538,7 +538,7 @@ repair_test (void)
@@ -64,3 +64,6 @@ index deb55a926..7a1af46e1 100644
 +  grub_test_unregister ("gpt_search_part_uuid_test");
    grub_fini_all ();
  }
+-- 
+2.21.3
+

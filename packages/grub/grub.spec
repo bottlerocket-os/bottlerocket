@@ -4,13 +4,17 @@
 %global efidir /boot/efi/EFI/BOOT
 %global biosdir /boot/grub
 
+# This is specific to the upstream source RPM, and will likely need to be
+# updated for each new version.
+%global gnulib_fixes gnulib-fixes-0e9febb5e
+
 Name: %{_cross_os}grub
-Version: 2.04
+Version: 2.06
 Release: 1%{?dist}
 Summary: Bootloader with support for Linux and more
 License: GPL-3.0-or-later AND Unicode-DFS-2015
 URL: https://www.gnu.org/software/grub/
-Source0: https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
+Source0: https://cdn.amazonlinux.com/blobstore/a2f920abd554c7ab22af43c720198abcf5f78828c0543a0d7c65c654610eab26/grub2-2.06-2.amzn2.0.1.src.rpm
 Source1: core.cfg
 Patch0001: 0001-setup-Add-root-device-argument-to-grub-setup.patch
 Patch0002: 0002-gpt-start-new-GPT-module.patch
@@ -78,8 +82,34 @@ Summary: Tools for the bootloader with support for Linux and more
 %{summary}.
 
 %prep
-%autosetup -n grub-%{version} -p1
+rpm2cpio %{S:0} | cpio -iu grub-%{version}.tar.xz \
+  bootstrap bootstrap.conf \
+  gitignore %{gnulib_fixes}.tar.gz \
+  "*.patch"
+
+# Mimic prep from upstream spec to prepare for patching.
+tar -xof grub-%{version}.tar.xz; rm grub-%{version}.tar.xz
+%setup -TDn grub-%{version}
+mv ../bootstrap{,.conf} .
+mv ../gitignore .gitignore
+tar -xof ../%{gnulib_fixes}.tar.gz; rm ../%{gnulib_fixes}.tar.gz
+mv %{gnulib_fixes} gnulib
+pushd gnulib
+patch -p1 < ../../gnulib-amzn2-cflags.patch
+rm ../../gnulib-amzn2-cflags.patch
+popd
 cp unicode/COPYING COPYING.unicode
+rm -f configure
+
+# Apply upstream and local patches.
+git init
+git config user.email 'user@localhost'
+git config user.name 'user'
+git add .
+git commit -a -q -m "base"
+git am --whitespace=nowarn ../*.patch %{patches}
+
+./bootstrap
 ./autogen.sh
 
 %global grub_cflags -pipe -fno-stack-protector -fno-strict-aliasing
@@ -108,7 +138,9 @@ pushd bios-build
   --host="%{_build}" \
   --target="i386" \
   --with-platform="pc" \
+  --with-utils=host \
   --disable-grub-mkfont \
+  --disable-rpm-sort \
   --disable-werror \
   --enable-efiemu=no \
   --enable-device-mapper=no \
@@ -127,7 +159,9 @@ pushd efi-build
   --host="%{_build}" \
   --target="%{_cross_arch}" \
   --with-platform="efi" \
+  --with-utils=host \
   --disable-grub-mkfont \
+  --disable-rpm-sort \
   --disable-werror \
   --enable-efiemu=no \
   --enable-device-mapper=no \
@@ -178,9 +212,12 @@ popd
 %dir %{efidir}
 %{efidir}/%{_cross_grub_efi_image}
 %{_cross_sbindir}/grub-bios-setup
+%exclude %{_cross_bashdir}
 %exclude %{_cross_infodir}
+%exclude %{_cross_libexecdir}
 %exclude %{_cross_localedir}
 %exclude %{_cross_sysconfdir}
+%exclude %{_cross_unitdir}
 
 %files modules
 %dir %{_cross_libdir}/grub
@@ -203,14 +240,18 @@ popd
 %{_cross_bindir}/grub-render-label
 %{_cross_bindir}/grub-script-check
 %{_cross_bindir}/grub-syslinux2cfg
+%{_cross_sbindir}/grub-get-kernel-settings
 %{_cross_sbindir}/grub-install
 %{_cross_sbindir}/grub-macbless
 %{_cross_sbindir}/grub-mkconfig
 %{_cross_sbindir}/grub-ofpathname
 %{_cross_sbindir}/grub-probe
 %{_cross_sbindir}/grub-reboot
+%{_cross_sbindir}/grub-set-bootflag
 %{_cross_sbindir}/grub-set-default
+%{_cross_sbindir}/grub-set-password
 %{_cross_sbindir}/grub-sparc64-setup
+%{_cross_sbindir}/grub-switch-to-blscfg
 
 %dir %{_cross_datadir}/grub
 %{_cross_datadir}/grub/grub-mkconfig_lib

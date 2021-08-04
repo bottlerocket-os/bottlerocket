@@ -1,4 +1,4 @@
-From b78d543b0ab493f6bd20f2e5d101fc11c9357faf Mon Sep 17 00:00:00 2001
+From 42ad151307ad12ca85ae1865f4abc79d25673ae3 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Sat, 18 Oct 2014 16:46:17 -0700
 Subject: [PATCH] gpt: record size of of the entries table
@@ -11,7 +11,7 @@ to disk. Restructure the entries reading code to flow a little better.
  2 files changed, 27 insertions(+), 31 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 705bd77f9..01df7f3e8 100644
+index 705bd77..01df7f3 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -153,7 +153,7 @@ grub_gpt_read_backup (grub_disk_t disk, grub_gpt_t gpt)
@@ -110,7 +110,7 @@ index 705bd77f9..01df7f3e8 100644
  fail:
    grub_gpt_free (gpt);
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 6d678fae2..451b02a89 100644
+index 1101d85..21ea08d 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -106,7 +106,9 @@ typedef enum grub_gpt_status
@@ -132,3 +132,6 @@ index 6d678fae2..451b02a89 100644
  
    /* Logarithm of sector size, in case GPT and disk driver disagree.  */
    unsigned int log_sector_size;
+-- 
+2.21.3
+

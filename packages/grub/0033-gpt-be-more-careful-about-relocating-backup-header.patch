@@ -1,4 +1,4 @@
-From 527a976a1f18bf536d460b6c7e6b3704ad52ecac Mon Sep 17 00:00:00 2001
+From 53e4e887d6ca11fc302bae2c417ecab94ced1252 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 21 Sep 2016 13:52:52 -0700
 Subject: [PATCH] gpt: be more careful about relocating backup header
@@ -15,7 +15,7 @@ location is good enough and leave it as-is.
  1 file changed, 10 insertions(+), 6 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 3c6ff3540..35e65d8d9 100644
+index 3c6ff35..35e65d8 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -599,7 +599,17 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
@@ -49,3 +49,6 @@ index 3c6ff3540..35e65d8d9 100644
    backup_entries = backup_header -
      grub_gpt_size_to_sectors (gpt, gpt->entries_size);
    grub_dprintf ("gpt", "backup GPT entries will be located at 0x%llx\n",
+-- 
+2.21.3
+

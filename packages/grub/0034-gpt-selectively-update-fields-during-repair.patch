@@ -1,4 +1,4 @@
-From 2fd4959a6ca0575e4f69042c2034705ec460702a Mon Sep 17 00:00:00 2001
+From d1eb127676eb180eaf211d3a6cd9806a3e30c734 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 21 Sep 2016 14:33:48 -0700
 Subject: [PATCH] gpt: selectively update fields during repair
@@ -9,7 +9,7 @@ Just a little cleanup/refactor to skip touching data we don't need to.
  1 file changed, 12 insertions(+), 16 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 35e65d8d9..03e807b25 100644
+index 35e65d8..03e807b 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -584,8 +584,6 @@ grub_gpt_get_partentry (grub_gpt_t gpt, grub_uint32_t n)
@@ -73,3 +73,6 @@ index 35e65d8d9..03e807b25 100644
    /* Recompute checksums.  */
    if (grub_gpt_update_checksums (gpt))
      return grub_errno;
+-- 
+2.21.3
+
