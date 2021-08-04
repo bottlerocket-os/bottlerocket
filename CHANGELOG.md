@@ -5,7 +5,7 @@
 * Add settings for kubelet topologyManagerPolicy and topologyManagerScope ([#1659])
 * Add support for container image registry mirrors ([#1629])
 * Add support for custom CA certificates ([#1654])
-* Add a setting for configuring hostname ([#1664], [#1680])
+* Add a setting for configuring hostname ([#1664], [#1680], [#1693])
 * Avoid wildcard for applying rp_filter to interfaces ([#1677])
 * Update default admin container to v0.7.2 ([#1685])
 
@@ -43,6 +43,7 @@
 [#1686]: https://github.com/bottlerocket-os/bottlerocket/pull/1686
 [#1687]: https://github.com/bottlerocket-os/bottlerocket/pull/1687
 [#1689]: https://github.com/bottlerocket-os/bottlerocket/pull/1689
+[#1693]: https://github.com/bottlerocket-os/bottlerocket/pull/1693
 
 # v1.1.4 (2021-07-23)
 
