@@ -438,7 +438,7 @@ For [host-container](#host-containers-settings) and [bootstrap-container](#boots
 
 Most users don't need to change this setting as the following defaults work for the majority of use cases.
 If this setting isn't set we attempt to use DNS reverse lookup for the hostname.
-If the lookup is unsuccessful, the IP of the node is used in the format `ip-X-X-X-X`.
+If the lookup is unsuccessful, the IP of the node is used.
 
 ##### Proxy settings
 
