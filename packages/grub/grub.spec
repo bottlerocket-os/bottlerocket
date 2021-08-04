@@ -1,6 +1,9 @@
 %global debug_package %{nil}
 %global __strip %{_bindir}/true
 
+%global efidir /boot/efi/EFI/BOOT
+%global biosdir /boot/grub
+
 Name: %{_cross_os}grub
 Version: 2.04
 Release: 1%{?dist}
@@ -77,9 +80,11 @@ Summary: Tools for the bootloader with support for Linux and more
 %prep
 %autosetup -n grub-%{version} -p1
 cp unicode/COPYING COPYING.unicode
+./autogen.sh
 
 %global grub_cflags -pipe -fno-stack-protector -fno-strict-aliasing
 %global grub_ldflags -static
+%global _configure ../configure
 
 %build
 export \
@@ -93,52 +98,85 @@ export \
   TARGET_STRIP="%{_cross_target}-strip" \
   PYTHON="python3" \
 
-./autogen.sh
+%if "%{_cross_arch}" == "x86_64"
+mkdir bios-build
+pushd bios-build
+
 %cross_configure \
   CFLAGS="" \
   LDFLAGS="" \
   --host="%{_build}" \
-  --target="%{_cross_grub_target}" \
-  --with-platform="%{_cross_grub_platform}" \
+  --target="i386" \
+  --with-platform="pc" \
   --disable-grub-mkfont \
+  --disable-werror \
   --enable-efiemu=no \
   --enable-device-mapper=no \
   --enable-libzfs=no \
-  --disable-werror \
 
 %make_build
+popd
+%endif
+
+mkdir efi-build
+pushd efi-build
+
+%cross_configure \
+  CFLAGS="" \
+  LDFLAGS="" \
+  --host="%{_build}" \
+  --target="%{_cross_arch}" \
+  --with-platform="efi" \
+  --disable-grub-mkfont \
+  --disable-werror \
+  --enable-efiemu=no \
+  --enable-device-mapper=no \
+  --enable-libzfs=no \
+
+%make_build
+popd
 
 %install
+MODS="configfile echo ext2 gptprio linux normal part_gpt reboot sleep"
+
+%if "%{_cross_arch}" == "x86_64"
+pushd bios-build
 %make_install
-
-mkdir -p %{buildroot}%{_cross_grubdir}
-
+mkdir -p %{buildroot}%{biosdir}
 grub2-mkimage \
   -c %{SOURCE1} \
   -d ./grub-core/ \
-  -O "%{_cross_grub_tuple}" \
-  -o "%{buildroot}%{_cross_grubdir}/%{_cross_grub_image}" \
-  -p "%{_cross_grub_prefix}" \
-%if "%{_cross_arch}" == "x86_64"
-  biosdisk \
-%else
-  efi_gop \
-%endif
-  configfile echo ext2 gptprio linux normal part_gpt reboot sleep
-
-%if "%{_cross_arch}" == "x86_64"
+  -O "i386-pc" \
+  -o "%{buildroot}%{biosdir}/core.img" \
+  -p "(hd0,gpt2)/boot/grub" \
+  biosdisk ${MODS}
 install -m 0644 ./grub-core/boot.img \
-  %{buildroot}%{_cross_grubdir}/boot.img
+  %{buildroot}%{biosdir}/boot.img
+popd
 %endif
+
+pushd efi-build
+%make_install
+mkdir -p %{buildroot}%{efidir}
+grub2-mkimage \
+  -c %{SOURCE1} \
+  -d ./grub-core/ \
+  -O "%{_cross_grub_efi_format}" \
+  -o "%{buildroot}%{efidir}/%{_cross_grub_efi_image}" \
+  -p "/EFI/BOOT" \
+  efi_gop ${MODS}
+popd
 
 %files
 %license COPYING COPYING.unicode
 %{_cross_attribution_file}
-%dir %{_cross_grubdir}
 %if "%{_cross_arch}" == "x86_64"
-%{_cross_grubdir}/boot.img
+%dir %{biosdir}
+%{biosdir}/boot.img
+%{biosdir}/core.img
 %endif
-%{_cross_grubdir}/%{_cross_grub_image}
+%dir %{efidir}
+%{efidir}/%{_cross_grub_efi_image}
 %{_cross_sbindir}/grub-bios-setup
 %exclude %{_cross_infodir}
 %exclude %{_cross_localedir}
@@ -146,8 +184,7 @@ install -m 0644 ./grub-core/boot.img \
 
 %files modules
 %dir %{_cross_libdir}/grub
-%dir %{_cross_libdir}/grub/%{_cross_grub_tuple}
-%{_cross_libdir}/grub/%{_cross_grub_tuple}/*
+%{_cross_libdir}/grub/*
 
 %files tools
 %{_cross_bindir}/grub-editenv
