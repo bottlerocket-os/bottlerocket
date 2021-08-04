@@ -74,6 +74,7 @@ systemReserved:
   {{~#each settings.kubernetes.system-reserved}}
   {{@key}}: "{{this}}"
   {{~/each}}
+systemReservedCgroup: "/system"
 {{~/if}}
 cpuManagerPolicy: {{default "none" settings.kubernetes.cpu-manager-policy}}
 {{~#if settings.kubernetes.cpu-manager-reconcile-period}}
