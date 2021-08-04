@@ -15,7 +15,8 @@ Summary: Bootloader with support for Linux and more
 License: GPL-3.0-or-later AND Unicode-DFS-2015
 URL: https://www.gnu.org/software/grub/
 Source0: https://cdn.amazonlinux.com/blobstore/a2f920abd554c7ab22af43c720198abcf5f78828c0543a0d7c65c654610eab26/grub2-2.06-2.amzn2.0.1.src.rpm
-Source1: core.cfg
+Source1: bios.cfg
+Source2: efi.cfg
 Patch0001: 0001-setup-Add-root-device-argument-to-grub-setup.patch
 Patch0002: 0002-gpt-start-new-GPT-module.patch
 Patch0003: 0003-gpt-rename-misnamed-header-location-fields.patch
@@ -178,12 +179,12 @@ pushd bios-build
 %make_install
 mkdir -p %{buildroot}%{biosdir}
 grub2-mkimage \
-  -c %{SOURCE1} \
+  -c %{S:1} \
   -d ./grub-core/ \
   -O "i386-pc" \
   -o "%{buildroot}%{biosdir}/core.img" \
   -p "(hd0,gpt2)/boot/grub" \
-  biosdisk ${MODS}
+  biosdisk serial ${MODS}
 install -m 0644 ./grub-core/boot.img \
   %{buildroot}%{biosdir}/boot.img
 popd
@@ -193,7 +194,7 @@ pushd efi-build
 %make_install
 mkdir -p %{buildroot}%{efidir}
 grub2-mkimage \
-  -c %{SOURCE1} \
+  -c %{S:2} \
   -d ./grub-core/ \
   -O "%{_cross_grub_efi_format}" \
   -o "%{buildroot}%{efidir}/%{_cross_grub_efi_image}" \
