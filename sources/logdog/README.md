@@ -10,7 +10,7 @@ into a tarball for easy export.
 Usage example:
 ```rust
 $ logdog
-logs are at: /tmp/bottlerocket-logs.tar.gz
+logs are at: /var/log/support/bottlerocket-logs.tar.gz
 ```
 
 ## Logs

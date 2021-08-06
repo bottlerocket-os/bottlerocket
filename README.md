@@ -642,14 +642,14 @@ sudo sheltie
 logdog
 ```
 
-This will write an archive of the logs to `/tmp/bottlerocket-logs.tar.gz`.
+This will write an archive of the logs to `/var/log/support/bottlerocket-logs.tar.gz`.
 You can use SSH to retrieve the file.
 Once you have exited from the Bottlerocket host, run a command like:
 
 ```bash
 ssh -i YOUR_KEY_FILE \
     ec2-user@YOUR_HOST \
-    "cat /.bottlerocket/rootfs/tmp/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
+    "cat /.bottlerocket/rootfs/var/log/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
 ```
 
 For a list of what is collected, see the logdog [command list](sources/logdog/src/log_request.rs).
