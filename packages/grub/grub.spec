@@ -172,7 +172,7 @@ pushd efi-build
 popd
 
 %install
-MODS="configfile echo ext2 gptprio linux normal part_gpt reboot sleep"
+MODS="configfile echo ext2 gptprio linux normal part_gpt reboot sleep zstd"
 
 %if "%{_cross_arch}" == "x86_64"
 pushd bios-build
