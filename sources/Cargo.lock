@@ -200,13 +200,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "add-custom-certificates"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -220,20 +213,6 @@ name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
-
-[[package]]
-name = "admin-container-v0-7-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "admin-container-v0-7-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
 
 [[package]]
 name = "ahash"
@@ -679,27 +658,6 @@ name = "const_fn"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f92cfa0fd5690b3cf8c1ef2cabbd9b7ef22fa53cf5e1f92b05103f6d5d1cf6e7"
-
-[[package]]
-name = "container-registry-config-restarts"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "container-registry-mirrors"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "control-container-v0-5-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
 
 [[package]]
 name = "convert_case"
@@ -1419,20 +1377,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hostname-setting"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "hostname-setting-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "http"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1647,77 +1591,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83bdfbace3a0e81a4253f73b49e960b053e396a11012cbd49b9b74d6a2b67062"
 dependencies = [
  "wasm-bindgen",
-]
-
-[[package]]
-name = "kubelet-cloud-provider"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-container-log"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-cpu-manager"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-cpu-manager-state"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "snafu",
-]
-
-[[package]]
-name = "kubelet-event-qps-event-burst"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-kube-api-qps-kube-api-burst"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-registry-qps-registry-burst"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-server-tls-bootstrap"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-system-reserved"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-topology-manager"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -2815,14 +2688,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "schnauzer-paws"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3041,15 +2906,6 @@ dependencies = [
  "cpufeatures",
  "digest 0.9.0",
  "opaque-debug 0.3.0",
-]
-
-[[package]]
-name = "shared-containerd-configs"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "migration-helpers",
- "serde_json",
 ]
 
 [[package]]
