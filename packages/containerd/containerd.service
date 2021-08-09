@@ -5,6 +5,7 @@ After=network-online.target configured.target
 Wants=network-online.target configured.target
 
 [Service]
+Slice=runtime.slice
 EnvironmentFile=/etc/network/proxy.env
 ExecStart=/usr/bin/containerd
 Type=notify
