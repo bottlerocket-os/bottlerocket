@@ -105,7 +105,7 @@ pub use variant::*;
 use model_derive::model;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::net::Ipv4Addr;
+use std::net::IpAddr;
 
 use crate::modeled_types::{
     BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey,
@@ -162,9 +162,9 @@ struct KubernetesSettings {
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
     max_pods: u32,
-    cluster_dns_ip: Ipv4Addr,
+    cluster_dns_ip: IpAddr,
     cluster_domain: DNSDomain,
-    node_ip: Ipv4Addr,
+    node_ip: IpAddr,
     pod_infra_container_image: SingleLineString,
 }
 

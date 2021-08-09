@@ -1,12 +1,13 @@
 pub(super) use inner::{get_aws_k8s_info, Error};
+use std::net::IpAddr;
 
 /// The result type for the [`api`] module.
 pub(super) type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Default)]
 pub(crate) struct AwsK8sInfo {
     pub(crate) region: String,
     pub(crate) cluster_name: String,
+    pub(crate) cluster_dns_ip: Option<IpAddr>,
 }
 
 /// This code is the 'actual' implementation compiled when the `sources` workspace is being compiled
@@ -49,6 +50,9 @@ mod inner {
     /// Gets the info that we need to know about the EKS cluster from the Bottlerocket API.
     pub(crate) async fn get_aws_k8s_info() -> Result<AwsK8sInfo> {
         let settings = get_settings().await?;
+        let kubernetes = settings.kubernetes.context(Missing {
+            setting: "kubernetes",
+        })?;
         Ok(AwsK8sInfo {
             region: settings
                 .aws
@@ -56,16 +60,13 @@ mod inner {
                 .region
                 .context(Missing { setting: "region" })?
                 .into(),
-            cluster_name: settings
-                .kubernetes
-                .context(Missing {
-                    setting: "kubernetes",
-                })?
+            cluster_name: kubernetes
                 .cluster_name
                 .context(Missing {
                     setting: "cluster-name",
                 })?
                 .into(),
+            cluster_dns_ip: kubernetes.cluster_dns_ip,
         })
     }
 }

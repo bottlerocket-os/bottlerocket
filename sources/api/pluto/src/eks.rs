@@ -1,8 +1,10 @@
 use rusoto_core::region::ParseRegionError;
 use rusoto_core::{Region, RusotoError};
-use rusoto_eks::{DescribeClusterError, Eks, EksClient};
+use rusoto_eks::{DescribeClusterError, Eks, EksClient, KubernetesNetworkConfigResponse};
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::str::FromStr;
+
+pub(crate) type ClusterNetworkConfig = KubernetesNetworkConfigResponse;
 
 #[derive(Debug, Snafu)]
 pub(super) enum Error {
@@ -23,14 +25,18 @@ pub(super) enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-/// Returns the cluster's [serviceIPv4CIDR] DNS IP by calling the EKS API.
-/// (https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigRequest.html)
-pub(super) async fn get_cluster_cidr(region: &str, cluster: &str) -> Result<String> {
+/// Returns the cluster's [kubernetesNetworkConfig] by calling the EKS API.
+/// (https://docs.aws.amazon.com/eks/latest/APIReference/API_KubernetesNetworkConfigResponse.html)
+pub(super) async fn get_cluster_network_config(
+    region: &str,
+    cluster: &str,
+) -> Result<ClusterNetworkConfig> {
     let parsed_region = Region::from_str(region).context(RegionParse { region })?;
     let client = EksClient::new(parsed_region);
     let describe_cluster = rusoto_eks::DescribeClusterRequest {
         name: cluster.to_owned(),
     };
+
     client
         .describe_cluster(describe_cluster)
         .await
@@ -40,9 +46,5 @@ pub(super) async fn get_cluster_cidr(region: &str, cluster: &str) -> Result<Stri
         .kubernetes_network_config
         .context(Missing {
             field: "kubernetes_network_config",
-        })?
-        .service_ipv_4_cidr
-        .context(Missing {
-            field: "service_ipv_4_cidr",
         })
 }
