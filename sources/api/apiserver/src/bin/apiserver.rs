@@ -139,8 +139,9 @@ async fn run() -> Result<()> {
         error::NonexistentDatastore
     );
 
-    // Each request makes its own handle to the datastore; there's no locking or
-    // synchronization yet.  Therefore, only use 1 thread for safety.
+    // Access to the data store is controlled through a RwLock, allowing many readers, but a
+    // writer will block all other access.  We don't expect any real load, though, as the API
+    // is only used by the owner of the host.
     let threads = 1;
 
     let threads_suffix = match threads {
