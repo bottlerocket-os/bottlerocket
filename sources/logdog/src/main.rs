@@ -7,7 +7,7 @@ into a tarball for easy export.
 Usage example:
 ```
 $ logdog
-logs are at: /tmp/bottlerocket-logs.tar.gz
+logs are at: /var/log/support/bottlerocket-logs.tar.gz
 ```
 
 # Logs
@@ -39,6 +39,7 @@ use tempfile::TempDir;
 
 const ERROR_FILENAME: &str = "logdog.errors";
 const OUTPUT_FILENAME: &str = "bottlerocket-logs.tar.gz";
+const OUTPUT_DIRNAME: &str = "/var/log/support";
 const TARBALL_DIRNAME: &str = "bottlerocket-logs";
 
 /// Prints a usage message in the event a bad arg is passed.
@@ -77,7 +78,7 @@ fn parse_args(args: env::Args) -> PathBuf {
 
     match output_arg {
         Some(path) => PathBuf::from(path),
-        None => env::temp_dir().as_path().join(OUTPUT_FILENAME),
+        None => PathBuf::from(OUTPUT_DIRNAME).join(OUTPUT_FILENAME),
     }
 }
 
