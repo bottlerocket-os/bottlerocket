@@ -10,6 +10,7 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
+constants = { path = "../../constants" }
 datastore = { path = "../datastore" }
 futures = { version = "0.3", default-features = false }
 http = "0.2"

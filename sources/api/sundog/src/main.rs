@@ -19,16 +19,11 @@ use std::env;
 use std::path::Path;
 use std::process;
 use std::str::{self, FromStr};
+use constants;
 
 use datastore::serialization::to_pairs_with_prefix;
 use datastore::{self, deserialization, Key, KeyType};
 
-// FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-const API_SETTINGS_URI: &str = "/settings";
-const API_SETTING_GENERATORS_URI: &str = "/metadata/setting-generators";
-// We change settings in the shared transaction used by boot-time services.
-const TRANSACTION: &str = "bottlerocket-launch";
 
 /// Potential errors during Sundog execution
 mod error {
@@ -161,7 +156,7 @@ async fn get_setting_generators<S>(socket_path: S) -> Result<HashMap<String, Str
 where
     S: AsRef<str>,
 {
-    let uri = API_SETTING_GENERATORS_URI;
+    let uri = constants::API_SETTINGS_GENERATORS_URI;
 
     debug!("Requesting setting generators from API");
     let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
@@ -195,7 +190,7 @@ where
 
     // Build the query string and the URI containing that query.
     let query = to_query.join(",");
-    let uri = &format!("{}?keys={}", API_SETTINGS_URI, query);
+    let uri = &format!("{}?keys={}", constants::API_SETTINGS_URI, query);
 
     let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
         .await
@@ -362,7 +357,7 @@ where
     // Serialize our Settings struct to the JSON wire format
     let request_body = serde_json::to_string(&settings).context(error::SerializeRequest)?;
 
-    let uri = &format!("{}?tx={}", API_SETTINGS_URI, TRANSACTION);
+    let uri = &format!("{}?tx={}", constants::API_SETTINGS_URI, constants::LAUNCH_TRANSACTION);
     let method = "PATCH";
     trace!("Settings to {} to {}: {}", method, uri, &request_body);
     let (code, response_body) =
@@ -397,7 +392,7 @@ fn usage() -> ! {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET,
+        program_name, constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -438,7 +433,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
 

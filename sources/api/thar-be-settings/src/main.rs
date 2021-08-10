@@ -9,11 +9,9 @@ use std::env;
 use std::process;
 use std::str::FromStr;
 use tokio::runtime::Runtime;
+use constants;
 
 use thar_be_settings::{config, get_changed_settings, service};
-
-// FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 
 mod error {
     use snafu::Snafu;
@@ -70,7 +68,7 @@ fn usage() -> ! {
     process; this is useful to prevent blocking an API call.
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET,
+        program_name, constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -119,7 +117,7 @@ fn parse_args(args: env::Args) -> Args {
         daemon,
         mode,
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
 

@@ -16,8 +16,8 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::String;
 use std::{env, process};
+use constants;
 
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const SYSCTL_PATH_PREFIX: &str = "/proc/sys";
 const LOCKDOWN_PATH: &str = "/sys/kernel/security/lockdown";
 
@@ -183,7 +183,7 @@ fn usage() -> ! {
         --log-level trace|debug|info|warn|error
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET,
+        program_name, constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -228,7 +228,7 @@ fn parse_args(args: env::Args) -> Args {
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage_msg("Must specify a subcommand.")),
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
 

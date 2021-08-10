@@ -11,6 +11,7 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient" }
+constants = { path = "../../constants" }
 snafu = "0.6"
 http = "0.2"
 log = "0.4"

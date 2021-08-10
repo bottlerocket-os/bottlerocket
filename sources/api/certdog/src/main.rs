@@ -20,12 +20,10 @@ use std::io::{BufRead, Seek};
 use std::path::Path;
 use std::process;
 use x509_parser;
+use constants;
 
 use model::modeled_types::Identifier;
 
-// FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-const API_SETTINGS_URI: &str = "/settings";
 // Read from the source in `/usr/share/factory` not the copy in `/etc`
 const DEFAULT_SOURCE_BUNDLE: &str = "/usr/share/factory/etc/pki/tls/certs/ca-bundle.crt";
 // This file is first created with tmpfilesd configurations
@@ -42,7 +40,7 @@ struct Args {
     #[argh(option, default = "LevelFilter::Info", short = 'l')]
     /// log-level trace|debug|info|warn|error
     log_level: LevelFilter,
-    #[argh(option, default = "DEFAULT_API_SOCKET.to_string()", short = 's')]
+    #[argh(option, default = "constants::API_SOCKET.to_string()", short = 's')]
     /// socket-path path to apiserver socket
     socket_path: String,
     #[argh(option, default = "DEFAULT_TRUSTED_STORE.to_string()", short = 't')]
@@ -67,7 +65,7 @@ where
     debug!("Querying the API for settings");
 
     let method = "GET";
-    let uri = API_SETTINGS_URI;
+    let uri = constants::API_SETTINGS_URI;
     let (_code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
         .await
         .context(error::APIRequest { method, uri })?;

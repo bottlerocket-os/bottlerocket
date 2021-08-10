@@ -254,6 +254,7 @@ name = "apiclient"
 version = "0.1.0"
 dependencies = [
  "cargo-readme",
+ "constants",
  "datastore",
  "futures",
  "http",
@@ -489,6 +490,7 @@ dependencies = [
  "apiclient",
  "base64",
  "cargo-readme",
+ "constants",
  "datastore",
  "http",
  "log",
@@ -506,13 +508,6 @@ version = "0.1.0"
 dependencies = [
  "rand",
  "serde_json",
-]
-
-[[package]]
-name = "bottlerocket-constants"
-version = "0.1.0"
-dependencies = [
- "cargo-readme",
 ]
 
 [[package]]
@@ -606,6 +601,7 @@ dependencies = [
  "argh",
  "base64",
  "cargo-readme",
+ "constants",
  "der-parser",
  "http",
  "log",
@@ -667,6 +663,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f92cfa0fd5690b3cf8c1ef2cabbd9b7ef22fa53cf5e1f92b05103f6d5d1cf6e7"
 
 [[package]]
+name = "constants"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -694,6 +697,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "cargo-readme",
+ "constants",
  "http",
  "log",
  "models",
@@ -942,6 +946,7 @@ dependencies = [
  "async-trait",
  "base64",
  "cargo-readme",
+ "constants",
  "flate2",
  "hex-literal",
  "http",
@@ -964,6 +969,7 @@ name = "ecs-settings-applier"
 version = "0.1.0"
 dependencies = [
  "cargo-readme",
+ "constants",
  "log",
  "schnauzer",
  "serde",
@@ -1373,6 +1379,7 @@ dependencies = [
  "apiclient",
  "base64",
  "cargo-readme",
+ "constants",
  "http",
  "log",
  "models",
@@ -2255,6 +2262,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "cargo-readme",
+ "constants",
  "imdsclient",
  "models",
  "rusoto_core",
@@ -2680,6 +2688,7 @@ dependencies = [
  "base64",
  "bottlerocket-release",
  "cargo-readme",
+ "constants",
  "handlebars",
  "http",
  "lazy_static",
@@ -2845,6 +2854,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "cargo-readme",
+ "constants",
  "datastore",
  "http",
  "log",
@@ -2862,6 +2872,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "cargo-readme",
+ "constants",
  "http",
  "log",
  "serde",
@@ -3063,6 +3074,7 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "cargo-readme",
+ "constants",
  "log",
  "models",
  "schnauzer",
@@ -3135,6 +3147,7 @@ version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
  "cargo-readme",
+ "constants",
  "datastore",
  "log",
  "merge-toml",
@@ -3195,6 +3208,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "cargo-readme",
+ "constants",
  "datastore",
  "http",
  "log",
@@ -3283,6 +3297,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "cargo-readme",
+ "constants",
  "handlebars",
  "http",
  "itertools",
@@ -3305,6 +3320,7 @@ dependencies = [
  "bottlerocket-release",
  "cargo-readme",
  "chrono",
+ "constants",
  "fs2",
  "http",
  "log",

@@ -17,12 +17,10 @@ use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::str::FromStr;
 use std::{collections::HashMap, env, process};
+use constants;
 
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_PENDING_URI_BASE: &str = "/tx";
 const API_COMMIT_URI_BASE: &str = "/tx/commit";
-// By default we commit settings from a shared transaction used by boot-time services.
-const DEFAULT_TRANSACTION: &str = "bottlerocket-launch";
 
 type Result<T> = std::result::Result<T, error::SettingsCommitterError>;
 
@@ -144,7 +142,7 @@ fn usage() -> ! {
 
     Transaction defaults to {}
     Socket path defaults to {}",
-        program_name, DEFAULT_TRANSACTION, DEFAULT_API_SOCKET
+        program_name, constants::LAUNCH_TRANSACTION, constants::API_SOCKET
     );
     process::exit(2);
 }
@@ -192,9 +190,9 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
-        transaction: transaction.unwrap_or_else(|| DEFAULT_TRANSACTION.to_string()),
+        transaction: transaction.unwrap_or_else(|| constants::LAUNCH_TRANSACTION.to_string()),
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
 

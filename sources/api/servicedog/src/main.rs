@@ -24,15 +24,10 @@ use std::env;
 use std::ffi::OsStr;
 use std::process::{self, Command};
 use std::str::FromStr;
+use constants;
 
 use datastore::serialization::to_pairs_with_prefix;
 use datastore::{Key, KeyType};
-
-// FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-const API_SETTINGS_URI: &str = "/settings";
-
-const SYSTEMCTL_BIN: &str = "/bin/systemctl";
 
 mod error {
     use http::StatusCode;
@@ -148,8 +143,8 @@ where
     let key = Key::new(KeyType::Data, key_str).context(error::InvalidKey { key: key_str })?;
     debug!("Querying the API for setting: {}", key_str);
 
-    let uri = format!("{}?keys={}", API_SETTINGS_URI, key_str);
-    let (code, response_body) = apiclient::raw_request(DEFAULT_API_SOCKET, &uri, "GET", None)
+    let uri = format!("{}?keys={}", constants::API_SETTINGS_URI, key_str);
+    let (code, response_body) = apiclient::raw_request(constants::API_SOCKET, &uri, "GET", None)
         .await
         .context(error::APIRequest {
             method: "GET",
@@ -238,7 +233,7 @@ where
     // a `Command` whereas `.args()` returns a `&mut Command`. We use
     // `Command` in our error reporting, which does not play nice with
     // mutable references.
-    let mut command = Command::new(SYSTEMCTL_BIN);
+    let mut command = Command::new(constants::SYSTEMCTL_BIN);
     command.args(args);
     let output = command
         .output()

@@ -16,10 +16,7 @@ pub(crate) struct AwsK8sInfo {
 mod inner {
     use super::*;
     use snafu::{OptionExt, ResultExt, Snafu};
-
-    // FIXME Get these from configuration in the future
-    const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-    const SETTINGS_URI: &str = "/settings";
+    use constants;
 
     #[derive(Debug, Snafu)]
     pub(crate) enum Error {
@@ -38,10 +35,11 @@ mod inner {
 
     /// Gets the Bottlerocket settings from the API and deserializes them into a struct.
     async fn get_settings() -> Result<model::Settings> {
+        let uri = constants::API_SETTINGS_URI;
         let (_status, response_body) =
-            apiclient::raw_request(DEFAULT_API_SOCKET, SETTINGS_URI, "GET", None)
+            apiclient::raw_request(constants::API_SOCKET, uri, "GET", None)
                 .await
-                .context(ApiClient { uri: SETTINGS_URI })?;
+                .context(ApiClient { uri })?;
 
         serde_json::from_str(&response_body).context(SettingsJson)
     }

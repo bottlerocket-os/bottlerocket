@@ -19,9 +19,9 @@ use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::string::String;
 use std::{env, process};
+use constants;
 
 // Setting generators do not require dynamic socket paths at this moment.
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const API_METADATA_URI_BASE: &str = "/metadata/";
 
 mod error {
@@ -91,7 +91,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 async fn get_metadata(key: &str, meta: &str) -> Result<String> {
     let uri = &format!("{}{}?keys={}", API_METADATA_URI_BASE, meta, key);
     let method = "GET";
-    let (code, response_body) = apiclient::raw_request(DEFAULT_API_SOCKET, &uri, method, None)
+    let (code, response_body) = apiclient::raw_request(constants::API_SOCKET, &uri, method, None)
         .await
         .context(error::APIRequest { method, uri })?;
     ensure!(
@@ -147,7 +147,7 @@ async fn run() -> Result<()> {
 
     let registry = schnauzer::build_template_registry().context(error::BuildTemplateRegistry)?;
     let template = get_metadata(&setting_name, "templates").await?;
-    let settings = schnauzer::get_settings(DEFAULT_API_SOCKET)
+    let settings = schnauzer::get_settings(constants::API_SOCKET)
         .await
         .context(error::GetSettings)?;
 

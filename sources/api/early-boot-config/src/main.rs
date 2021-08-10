@@ -20,6 +20,7 @@ use snafu::{ensure, ResultExt};
 use std::fs;
 use std::str::FromStr;
 use std::{env, process};
+use constants;
 
 mod compression;
 mod provider;
@@ -28,12 +29,6 @@ use crate::provider::{Platform, PlatformDataProvider};
 
 // TODO
 // Tests!
-
-// FIXME Get these from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-const API_SETTINGS_URI: &str = "/settings";
-// We change settings in the shared transaction used by boot-time services.
-const TRANSACTION: &str = "bottlerocket-launch";
 
 // We only want to run early-boot-config once, at first boot.  Our systemd unit file has a
 // ConditionPathExists that will prevent it from running again if this file exists.
@@ -56,7 +51,7 @@ fn usage() -> ! {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET,
+        program_name, constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -97,7 +92,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
 
@@ -111,7 +106,7 @@ async fn run() -> Result<()> {
     info!("early-boot-config started");
 
     info!("Retrieving platform-specific data");
-    let uri = &format!("{}?tx={}", API_SETTINGS_URI, TRANSACTION);
+    let uri = &format!("{}?tx={}", constants::API_SETTINGS_URI, constants::LAUNCH_TRANSACTION);
     let method = "PATCH";
     for settings_json in Platform
         .platform_data()

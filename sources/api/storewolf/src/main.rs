@@ -26,8 +26,7 @@ use datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use model::modeled_types::SingleLineString;
 
-// Shared transaction used by boot-time services.
-const TRANSACTION: &str = "bottlerocket-launch";
+use constants;
 
 mod error {
     use std::io;
@@ -285,7 +284,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
             &settings_to_write
         );
         let pending = datastore::Committed::Pending {
-            tx: TRANSACTION.to_string(),
+            tx: constants::LAUNCH_TRANSACTION.to_string(),
         };
         datastore
             .set_keys(&settings_to_write, &pending)
@@ -456,8 +455,7 @@ fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     info!("Storewolf started");
 

@@ -11,6 +11,7 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient" }
+constants = { path = "../../constants" }
 handlebars = "4.1"
 http = "0.2"
 itertools = "0.10"

@@ -13,8 +13,8 @@ use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
 use std::{env, process};
+use constants;
 
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
 const VARIANT_ATTRIBUTE_NAME: &str = "bottlerocket.variant";
 
@@ -153,7 +153,7 @@ fn parse_args(args: env::Args) -> Args {
         }
     }
     Args {
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
 
@@ -171,7 +171,7 @@ fn usage() -> ! {
             [ (-s | --socket-path) PATH ]
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET
+        program_name, constants::API_SOCKET
     );
     process::exit(2);
 }
