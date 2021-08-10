@@ -509,6 +509,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bottlerocket-constants"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+]
+
+[[package]]
 name = "bottlerocket-release"
 version = "0.1.0"
 dependencies = [
