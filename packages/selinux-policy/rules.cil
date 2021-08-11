@@ -200,6 +200,9 @@
 ; be useful for containers, and we don't use it in the host.
 (neverallow all_s global (files (block)))
 
+; All subject labels can be used for files on /proc.
+(allow all_s proc_t (filesystem (associate)))
+
 ; All object labels can be used for files on filesystems that have
 ; the same label, and for files on ephemeral storage.
 (allow all_o self (filesystem (associate)))

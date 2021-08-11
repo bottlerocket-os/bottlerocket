@@ -26,7 +26,7 @@
 (genfscon debugfs / any)
 (genfscon kvmfs / any)
 (genfscon nsfs / any)
-(genfscon proc / any)
+(genfscon proc / proc)
 (genfscon pstore / any)
 (genfscon ramfs / any)
 (genfscon rootfs / any)
@@ -81,7 +81,7 @@
 (filecon "/var/lib/netdog/.*" any lease)
 
 ; Label kernel filesystem mounts.
-(filecon "/proc" any any)
+(filecon "/proc" any proc)
 (filecon "/proc/.*" any ())
 (filecon "/sys" any any)
 (filecon "/sys/.*" any ())
