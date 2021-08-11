@@ -85,11 +85,6 @@
 ; Allow containers to communicate with runtimes via pipes.
 (allow container_s runtime_t (files (mutate)))
 
-; If a trusted process creates a file or directory when the parent
-; directory has no label, it receives the "local_t" label.
-(typetransition trusted_s unlabeled_t file local_t)
-(typetransition trusted_s unlabeled_t dir local_t)
-
 ; If a runtime process creates a directory for cached container archives
 ; or snapshot layers on local storage, it receives the "cache_t" label.
 ; ... containerd's pristine archives

@@ -97,7 +97,8 @@
 (filecon "/run/.*" any ())
 
 ; Label external filesystem mounts.
-(filecon "/mnt" any external)
+(filecon "/mnt" any local)
 (filecon "/mnt/.*" any ())
-(filecon "/media" any external)
+(filecon "/media" any local)
+(filecon "/media/cdrom" any local)
 (filecon "/media/.*" any ())

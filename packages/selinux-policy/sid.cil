@@ -42,10 +42,10 @@
 (sidcontext security kernel)
 (sidcontext devnull kernel)
 
-; Apply the "unlabeled" context for entities with an invalid context,
-; and for files with no context at all, which are treated the same.
-(sidcontext unlabeled unlabeled)
-(sidcontext file unlabeled)
+; Apply the "local" context for entities with an invalid context, and
+; for files with no context at all, which are treated the same.
+(sidcontext unlabeled local)
+(sidcontext file local)
 
 ; Apply the "any" context for entities like sockets, ports, and
 ; network interfaces if they are otherwise unlabeled.
