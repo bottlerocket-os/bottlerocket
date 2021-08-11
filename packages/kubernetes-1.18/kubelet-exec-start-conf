@@ -1,15 +1,15 @@
 [Service]
 ExecStart=
 ExecStart=/usr/bin/kubelet \
-{{~#unless settings.kubernetes.standalone-mode}}
+{{#unless settings.kubernetes.standalone-mode}}
     --cloud-provider {{default "external" settings.kubernetes.cloud-provider}} \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
-{{~#if (eq settings.kubernetes.authentication-mode "tls")}}
+{{#if (eq settings.kubernetes.authentication-mode "tls")}}
     --bootstrap-kubeconfig /etc/kubernetes/kubelet/bootstrap-kubeconfig \
-{{~/if}}
-{{~else}}
+{{/if}}
+{{else}}
     --cloud-provider "" \
-{{~/unless}}
+{{/unless}}
     --config /etc/kubernetes/kubelet/config \
     --container-runtime=remote \
     --container-runtime-endpoint=unix:///run/dockershim.sock \

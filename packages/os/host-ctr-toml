@@ -1,6 +1,6 @@
-{{~#if settings.container-registry.mirrors}}
-{{~#each settings.container-registry.mirrors}}
+{{#if settings.container-registry.mirrors}}
+{{#each settings.container-registry.mirrors}}
 [mirrors."{{@key}}"]
 endpoints = [{{join_array ", " this }}]
-{{~/each}}
-{{~/if}}
+{{/each}}
+{{/if}}
