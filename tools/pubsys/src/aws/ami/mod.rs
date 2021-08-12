@@ -10,7 +10,7 @@ use crate::aws::{client::build_client, parse_arch, region_from_string};
 use crate::Args;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
-use log::{error, info, trace};
+use log::{error, info, trace, warn};
 use pubsys_config::{AwsConfig, InfraConfig};
 use register::{get_ami_id, register_image, RegisteredIds};
 use rusoto_core::{Region, RusotoError};
@@ -149,7 +149,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     })?;
 
     let (ids_of_image, already_registered) = if let Some(found_id) = maybe_id {
-        info!(
+        warn!(
             "Found '{}' already registered in {}: {}",
             ami_args.name,
             base_region.name(),

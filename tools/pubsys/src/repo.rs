@@ -7,7 +7,7 @@ pub(crate) mod validate_repo;
 use crate::{friendly_version, Args};
 use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
-use log::{debug, info, trace};
+use log::{debug, info, trace, warn};
 use parse_datetime::parse_datetime;
 use pubsys_config::{InfraConfig, RepoConfig, RepoExpirationPolicy, SigningKeyConfig};
 use semver::Version;
@@ -460,7 +460,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
         match load_editor_and_manifest(&repo_args.root_role_path, &metadata_url, &targets_url)? {
             Some((editor, manifest)) => (editor, manifest),
             None => {
-                info!(
+                warn!(
                     "Did not find repo at '{}', starting a new one",
                     metadata_url
                 );
