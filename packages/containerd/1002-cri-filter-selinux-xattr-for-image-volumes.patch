@@ -1,0 +1,36 @@
+From 8dee99fc7d006d65fa4e4c0c9c250c8d868e8122 Mon Sep 17 00:00:00 2001
+From: Jacob Blain Christen <jacob@rancher.com>
+Date: Thu, 12 Aug 2021 23:11:08 +0000
+Subject: [PATCH 1002/1002] cri: filter selinux xattr for image volumes
+
+Exclude the `security.selinux` xattr when copying content from layer
+storage for image volumes. This allows for the already correct label at
+the target location to be applied to the copied content, thus enabling
+containers to write to volumes that they implicitly expect to be able
+to write to.
+
+- Fixes containerd/containerd#5090
+- See rancher/rke2#690
+
+Signed-off-by: Jacob Blain Christen <jacob@rancher.com>
+(cherry picked from commit ab5ac85ea3de6f872a025fe69d0214bc5be0bb74)
+[removed continuity changes from PR #5104; not needed in 1.5]
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ pkg/cri/opts/container.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/cri/opts/container.go b/pkg/cri/opts/container.go
+index 517d0c2..472104b 100644
+--- a/pkg/cri/opts/container.go
++++ b/pkg/cri/opts/container.go
+@@ -115,5 +115,5 @@ func copyExistingContents(source, destination string) error {
+ 	if len(dstList) != 0 {
+ 		return errors.Errorf("volume at %q is not initially empty", destination)
+ 	}
+-	return fs.CopyDir(destination, source)
++	return fs.CopyDir(destination, source, fs.WithXAttrExclude("security.selinux"))
+ }
+-- 
+2.21.3
+
