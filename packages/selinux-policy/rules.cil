@@ -70,11 +70,11 @@
 ; Runtimes that use the Go SELinux library will override this label
 ; with the "process" label from the `lxc_contexts` when launching
 ; unprivileged containers, unless automatic labeling is disabled.
-(typetransition runtime_t local_t process control_t)
+(typetransition runtime_t data_t process control_t)
 (typetransition runtime_t cache_t process control_t)
 (typetransition runtime_t secret_t process control_t)
 (allow runtime_t container_s (processes (transform)))
-(allow container_s local_t (file (entrypoint)))
+(allow container_s data_t (file (entrypoint)))
 (allow container_s cache_t (file (entrypoint)))
 (allow container_s secret_t (file (entrypoint)))
 
@@ -135,8 +135,8 @@
 (neverallow other_s dynamic_o (files (mutate mount)))
 
 ; Most subjects are allowed to write to and manage mounts for
-; "local" files and directories on /local.
-(allow unconfined_s local_t (files (mutate mount)))
+; most of the files and directories on /local.
+(allow unconfined_s shared_o (files (mutate mount)))
 
 ; Subjects that control the OS, including helpers spawned by apiserver, can
 ; write to and manage mounts for "secret" files and directories on /local.
@@ -154,8 +154,8 @@
 (neverallow unprivileged_s state_t (files (mutate mount)))
 (neverallow unprivileged_s secret_t (files (mutate mount)))
 
-; Confined subjects cannot modify "state", "secret", or "local" files.
-(neverallow confined_s local_t (files (mutate mount)))
+; Confined subjects cannot modify "state", "secret", or "shared" files.
+(neverallow confined_s shared_o (files (mutate mount)))
 (neverallow confined_s state_t (files (mutate mount)))
 (neverallow confined_s secret_t (files (mutate mount)))
 
@@ -203,8 +203,12 @@
 (allow all_o self (filesystem (associate)))
 (allow all_o ephemeral_o (filesystem (associate)))
 
-; Protected object labels can also be used on local storage.
+; Protected object labels can be used on local storage.
 (allow protected_o local_t (filesystem (associate)))
+
+; The data object label can also be used, so that volume types like
+; emptyDir can be relabeled on behalf of containers.
+(allow data_t local_t (filesystem (associate)))
 
 ; Containers are allowed to relax security constraints, since we
 ; don't control what code they run or how it's built.

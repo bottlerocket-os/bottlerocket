@@ -67,8 +67,14 @@
 (typealiasactual external_t local_t)
 (typealiasactual unlabeled_t local_t)
 
-; Alias "container_file_t" to "local_t" for compatibility with
-; the container-selinux policy.
+; Files created by containers, or on their behalf.
+(type data_t)
+(roletype object_r data_t)
+(context data (system_u object_r data_t s0))
+
+; Alias "container_file_t" to "local_t" for compatibility with the
+; container-selinux policy. Ideally it would be aliased to `data_t`
+; but then kubelet applies the wrong label to plugin directories.
 (typealias container_file_t)
 (typealiasactual container_file_t local_t)
 
@@ -116,6 +122,10 @@
 (typeattribute dynamic_o)
 (typeattributeset dynamic_o (etc_t))
 
+; Shared objects are files on local storage for containers.
+(typeattribute shared_o)
+(typeattributeset shared_o (local_t data_t))
+
 ; Protected objects are files on local storage with special rules.
 (typeattribute protected_o)
 (typeattributeset protected_o (
@@ -141,6 +151,6 @@
   os_t init_exec_t api_exec_t clock_exec_t
   network_exec_t bus_exec_t runtime_exec_t
   any_t etc_t proc_t
-  local_t private_t secret_t cache_t
+  local_t data_t private_t secret_t cache_t
   lease_t measure_t state_t
   api_socket_t))
