@@ -1,4 +1,4 @@
-From aa6b435ee13658a7eced13ebbe9be25567ee019a Mon Sep 17 00:00:00 2001
+From 9963416869afbe7fa9e671fa6ffd0871aec994f8 Mon Sep 17 00:00:00 2001
 From: Alex Crawford <alex.crawford@coreos.com>
 Date: Mon, 31 Aug 2015 15:15:48 -0700
 Subject: [PATCH] gpt: add search by disk uuid command
@@ -17,10 +17,10 @@ Subject: [PATCH] gpt: add search by disk uuid command
  create mode 100644 grub-core/commands/search_disk_uuid.c
 
 diff --git a/Makefile.util.def b/Makefile.util.def
-index b63a2963c..65cbfc081 100644
+index 8f74405..33ce60d 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
-@@ -1289,6 +1289,7 @@ program = {
+@@ -1408,6 +1408,7 @@ program = {
    common = tests/lib/unit_test.c;
    common = grub-core/commands/search_part_label.c;
    common = grub-core/commands/search_part_uuid.c;
@@ -29,10 +29,10 @@ index b63a2963c..65cbfc081 100644
    common = grub-core/kern/emu/hostfs.c;
    common = grub-core/lib/gpt.c;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 9964d42fe..79b24c187 100644
+index fb4b1a1..b9c0494 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -1105,6 +1105,11 @@ module = {
+@@ -1146,6 +1146,11 @@ module = {
    common = commands/search_part_label.c;
  };
  
@@ -45,7 +45,7 @@ index 9964d42fe..79b24c187 100644
    name = setpci;
    common = commands/setpci.c;
 diff --git a/grub-core/commands/search.c b/grub-core/commands/search.c
-index 4ad72c5b4..fd411ce3e 100644
+index 4ad72c5..fd411ce 100644
 --- a/grub-core/commands/search.c
 +++ b/grub-core/commands/search.c
 @@ -30,7 +30,8 @@
@@ -113,7 +113,7 @@ index 4ad72c5b4..fd411ce3e 100644
  #endif
 diff --git a/grub-core/commands/search_disk_uuid.c b/grub-core/commands/search_disk_uuid.c
 new file mode 100644
-index 000000000..fba96f6b8
+index 0000000..fba96f6
 --- /dev/null
 +++ b/grub-core/commands/search_disk_uuid.c
 @@ -0,0 +1,5 @@
@@ -123,7 +123,7 @@ index 000000000..fba96f6b8
 +#define HELP_MESSAGE N_("Search devices by disk UUID. If VARIABLE is specified, the first device found is set to a variable.")
 +#include "search.c"
 diff --git a/grub-core/commands/search_wrap.c b/grub-core/commands/search_wrap.c
-index e3ff756df..d931c56c5 100644
+index d357454..fc149cd 100644
 --- a/grub-core/commands/search_wrap.c
 +++ b/grub-core/commands/search_wrap.c
 @@ -40,6 +40,8 @@ static const struct grub_arg_option options[] =
@@ -154,7 +154,7 @@ index e3ff756df..d931c56c5 100644
      grub_search_fs_file (id, var, state[SEARCH_NO_FLOPPY].set, 
  			 hints, nhints);
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index aedc4f7a1..e162bafd3 100644
+index aedc4f7..e162baf 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -108,6 +108,27 @@ grub_gpt_part_uuid (grub_device_t device, char **uuid)
@@ -186,7 +186,7 @@ index aedc4f7a1..e162bafd3 100644
  grub_gpt_size_to_sectors (grub_gpt_t gpt, grub_size_t size)
  {
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index ae72b026c..2ca063ad9 100644
+index 1eb2f7b..16fdd7f 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -232,4 +232,8 @@ grub_err_t grub_gpt_part_label (grub_device_t device, char **label);
@@ -199,7 +199,7 @@ index ae72b026c..2ca063ad9 100644
 +
  #endif /* ! GRUB_GPT_PARTITION_HEADER */
 diff --git a/include/grub/search.h b/include/grub/search.h
-index c2f40abe9..7f69d25d1 100644
+index c2f40ab..7f69d25 100644
 --- a/include/grub/search.h
 +++ b/include/grub/search.h
 @@ -29,5 +29,7 @@ void grub_search_part_uuid (const char *key, const char *var, int no_floppy,
@@ -211,7 +211,7 @@ index c2f40abe9..7f69d25d1 100644
  
  #endif
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index 7a1af46e1..60f601729 100644
+index 7a1af46..60f6017 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -614,6 +614,37 @@ search_part_uuid_test (void)
@@ -267,3 +267,6 @@ index 7a1af46e1..60f601729 100644
 +  grub_test_unregister ("gpt_search_disk_uuid_test");
    grub_fini_all ();
  }
+-- 
+2.21.3
+

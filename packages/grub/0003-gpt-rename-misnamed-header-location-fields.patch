@@ -1,4 +1,4 @@
-From eb194ecfc9137233703e530fa0411bc86405469b Mon Sep 17 00:00:00 2001
+From 7bf95046b9123cd7d57df6dee81cbbd75ca722f6 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Sat, 18 Oct 2014 15:39:13 -0700
 Subject: [PATCH] gpt: rename misnamed header location fields
@@ -13,7 +13,7 @@ field names are backwards for the backup header.
  3 files changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index a308e8537..705bd77f9 100644
+index a308e85..705bd77 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -137,7 +137,7 @@ grub_gpt_read_backup (grub_disk_t disk, grub_gpt_t gpt)
@@ -26,7 +26,7 @@ index a308e8537..705bd77f9 100644
      return grub_error (GRUB_ERR_NOT_IMPLEMENTED_YET,
  		       "Unable to locate backup GPT");
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index ee9eb0b95..6d678fae2 100644
+index 8cffe16..1101d85 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -64,8 +64,8 @@ struct grub_gpt_header
@@ -41,7 +41,7 @@ index ee9eb0b95..6d678fae2 100644
    grub_uint64_t end;
    grub_uint8_t guid[16];
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index a824cd967..4d70868af 100644
+index a824cd9..4d70868 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -94,8 +94,8 @@ static const struct grub_gpt_header example_primary = {
@@ -66,3 +66,6 @@ index a824cd967..4d70868af 100644
    .start = grub_cpu_to_le64_compile_time (DATA_START_SECTOR),
    .end = grub_cpu_to_le64_compile_time (DATA_END_SECTOR),
    .guid = {0xad, 0x31, 0xc1, 0x69, 0xd6, 0x67, 0xc6, 0x46,
+-- 
+2.21.3
+

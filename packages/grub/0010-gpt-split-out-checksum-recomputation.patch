@@ -1,4 +1,4 @@
-From 344f0a5304c6962bbafaf218380d6d00cc18a252 Mon Sep 17 00:00:00 2001
+From f6e5e2723069e684b13bc90c7d252f49037e505e Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Sat, 15 Nov 2014 13:27:13 -0800
 Subject: [PATCH] gpt: split out checksum recomputation
@@ -10,7 +10,7 @@ For basic data modifications the full repair function is overkill.
  2 files changed, 23 insertions(+), 10 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 67ffdf703..198234071 100644
+index 67ffdf7..1982340 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -293,7 +293,6 @@ grub_err_t
@@ -71,7 +71,7 @@ index 67ffdf703..198234071 100644
  }
  
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 8a6e56af4..f5197b8ae 100644
+index fc4f0f5..7fbdf4c 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -200,6 +200,9 @@ grub_gpt_t grub_gpt_read (grub_disk_t disk);
@@ -84,3 +84,6 @@ index 8a6e56af4..f5197b8ae 100644
  /* Write headers and entry tables back to disk.  */
  grub_err_t grub_gpt_write (grub_disk_t disk, grub_gpt_t gpt);
  
+-- 
+2.21.3
+

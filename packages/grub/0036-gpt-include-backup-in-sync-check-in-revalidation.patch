@@ -1,4 +1,4 @@
-From a17e4e799fbcb64ea2379a8886a97de74a521bf6 Mon Sep 17 00:00:00 2001
+From 23ce2d3a2b0422c725b1cfb0c61fccba595f8b9b Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 21 Sep 2016 15:01:09 -0700
 Subject: [PATCH] gpt: include backup-in-sync check in revalidation
@@ -8,7 +8,7 @@ Subject: [PATCH] gpt: include backup-in-sync check in revalidation
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 3ac2987c6..c27bcc510 100644
+index 3ac2987..c27bcc5 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -372,6 +372,11 @@ grub_gpt_check_backup (grub_gpt_t gpt)
@@ -35,3 +35,6 @@ index 3ac2987c6..c27bcc510 100644
    gpt->status |= GRUB_GPT_BACKUP_HEADER_VALID;
    return GRUB_ERR_NONE;
  }
+-- 
+2.21.3
+

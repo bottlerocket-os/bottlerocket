@@ -1,4 +1,4 @@
-From ea2059a5db3f2c74216d30e4d509f477edaf0a42 Mon Sep 17 00:00:00 2001
+From 7ed137907dfccfcd738ec7371ded51af39d48006 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Fri, 31 Jul 2015 15:03:11 -0700
 Subject: [PATCH] gpt: clean up little-endian crc32 computation
@@ -11,7 +11,7 @@ Subject: [PATCH] gpt: clean up little-endian crc32 computation
  1 file changed, 13 insertions(+), 38 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 10a4b852d..aedc4f7a1 100644
+index 10a4b85..aedc4f7 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -122,45 +122,29 @@ grub_gpt_size_to_sectors (grub_gpt_t gpt, grub_size_t size)
@@ -111,3 +111,6 @@ index 10a4b852d..aedc4f7a1 100644
  
    return GRUB_ERR_NONE;
  }
+-- 
+2.21.3
+

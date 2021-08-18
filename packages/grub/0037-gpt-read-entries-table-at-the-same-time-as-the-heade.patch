@@ -1,4 +1,4 @@
-From d3661baf7287febdf4afef788f71bc654653de2b Mon Sep 17 00:00:00 2001
+From d9f966bfcdfbe8fe1ccb08c512e26a9deae4f60c Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 21 Sep 2016 15:29:55 -0700
 Subject: [PATCH] gpt: read entries table at the same time as the header
@@ -11,7 +11,7 @@ they are equal if the crc32 matches.
  1 file changed, 41 insertions(+), 28 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index c27bcc510..b93cedea1 100644
+index c27bcc5..b93cede 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -32,6 +32,11 @@ GRUB_MOD_LICENSE ("GPLv3+");
@@ -129,3 +129,6 @@ index c27bcc510..b93cedea1 100644
      grub_errno = GRUB_ERR_NONE;
    else
      goto fail;
+-- 
+2.21.3
+

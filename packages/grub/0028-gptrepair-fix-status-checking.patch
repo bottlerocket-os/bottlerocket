@@ -1,4 +1,4 @@
-From 1edd283385b1c07a0fd88e7db46d89490de0648d Mon Sep 17 00:00:00 2001
+From 0969dfbba2274221ece397dc4dedfb9b03f8577b Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Tue, 20 Sep 2016 13:06:05 -0700
 Subject: [PATCH] gptrepair: fix status checking
@@ -9,7 +9,7 @@ None of these status bit checks were correct. Fix and simplify.
  1 file changed, 11 insertions(+), 17 deletions(-)
 
 diff --git a/grub-core/commands/gptrepair.c b/grub-core/commands/gptrepair.c
-index 38392fd8f..66ac3f7c7 100644
+index 38392fd..66ac3f7 100644
 --- a/grub-core/commands/gptrepair.c
 +++ b/grub-core/commands/gptrepair.c
 @@ -46,8 +46,6 @@ grub_cmd_gptrepair (grub_command_t cmd __attribute__ ((unused)),
@@ -62,3 +62,6 @@ index 38392fd8f..66ac3f7c7 100644
  
  done:
    if (gpt)
+-- 
+2.21.3
+

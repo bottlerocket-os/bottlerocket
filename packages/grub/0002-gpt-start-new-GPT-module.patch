@@ -1,4 +1,4 @@
-From 46217d1569b652fe38169a788a079b373cf6c91f Mon Sep 17 00:00:00 2001
+From 6635d2ce6f2b2a0be4049af3ce271cdab3fbd97b Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Sun, 28 Sep 2014 21:26:21 -0700
 Subject: [PATCH] gpt: start new GPT module
@@ -20,10 +20,10 @@ The current code does nothing more than read and verify the table.
  create mode 100644 tests/gpt_unit_test.c
 
 diff --git a/Makefile.util.def b/Makefile.util.def
-index 969d32f00..af8a008e2 100644
+index 3f191aa..c7efe17 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
-@@ -1270,6 +1270,22 @@ program = {
+@@ -1389,6 +1389,22 @@ program = {
    ldadd = '$(LIBDEVMAPPER) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
  };
  
@@ -47,10 +47,10 @@ index 969d32f00..af8a008e2 100644
    name = grub-menulst2cfg;
    mansection = 1;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 474a63e68..95dba2d26 100644
+index 9cff83f..3443e9c 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -893,6 +893,11 @@ module = {
+@@ -932,6 +932,11 @@ module = {
    common = commands/gptsync.c;
  };
  
@@ -64,7 +64,7 @@ index 474a63e68..95dba2d26 100644
    nopc = commands/halt.c;
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
 new file mode 100644
-index 000000000..a308e8537
+index 0000000..a308e85
 --- /dev/null
 +++ b/grub-core/lib/gpt.c
 @@ -0,0 +1,288 @@
@@ -357,7 +357,7 @@ index 000000000..a308e8537
 +  grub_free (gpt);
 +}
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 7a93f4329..ee9eb0b95 100644
+index 8212697..8cffe16 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -21,6 +21,7 @@
@@ -383,7 +383,7 @@ index 7a93f4329..ee9eb0b95 100644
    grub_uint8_t magic[8];
 @@ -78,10 +85,63 @@ struct grub_gpt_partentry
    char name[72];
- } GRUB_PACKED;
+ } GRUB_PACKED  __attribute__ ((aligned(8)));
  
 +/* Basic GPT partmap module.  */
  grub_err_t
@@ -447,7 +447,7 @@ index 7a93f4329..ee9eb0b95 100644
  #endif /* ! GRUB_GPT_PARTITION_HEADER */
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
 new file mode 100644
-index 000000000..a824cd967
+index 0000000..a824cd9
 --- /dev/null
 +++ b/tests/gpt_unit_test.c
 @@ -0,0 +1,467 @@
@@ -918,3 +918,6 @@ index 000000000..a824cd967
 +  grub_test_unregister ("gpt_read_fallback_test");
 +  grub_fini_all ();
 +}
+-- 
+2.21.3
+

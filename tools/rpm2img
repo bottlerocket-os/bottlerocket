@@ -60,36 +60,53 @@ VERITY_HASH_BLOCK_SIZE=4096
 # for the boot partition, where we set gptprio bits in the GUID-specific use
 # field, but we might as well do it for all of them.
 BOTTLEROCKET_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
-EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 BOTTLEROCKET_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
 BOTTLEROCKET_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
 BOTTLEROCKET_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
 BOTTLEROCKET_PRIVATE_TYPECODE="440408bb-eb0b-4328-a6e5-a29038fad706"
 BOTTLEROCKET_DATA_TYPECODE="626f7474-6c65-6474-6861-726d61726b73"
 
-if [[ "${ARCH}" == "x86_64" ]]; then
-  FIRM_NAME="BIOS-BOOT"
-  BOTTLEROCKET_FIRM_TYPECODE="ef02"
-else
-  FIRM_NAME="EFI_BOOT"
-  BOTTLEROCKET_FIRM_TYPECODE="${EFI_SYSTEM_TYPECODE}"
-fi
+# Under BIOS, the firmware will transfer control to the MBR on the boot device,
+# which will pass control to the GRUB stage 2 binary written to the BIOS boot
+# partition. The BIOS does not attach any significance to this partition type,
+# but GRUB knows to install itself there when we run `grub-bios-setup`.
+BIOS_BOOT_TYPECODE="ef02"
+
+# Under EFI, the firmware will find the EFI system partition and execute the
+# program at a platform-defined path like `bootx64.efi`. The partition type
+# must match what the firmware expects.
+EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+
+# Whichever entry point is used for booting the system, it's important to note
+# that only one build of GRUB is involved - the one that's installed below when
+# we run this script. GRUB understands the GPT priorities scheme we use to find
+# the active boot partition; EFI and BIOS firmware does not. This is why we do
+# not update GRUB during our system updates; we would have no way to revert to
+# an earlier copy of the bootloader if it failed to boot.
+#
+# We may eventually want to have an active/passive scheme for EFI partitions,
+# to allow for potential GRUB and shim updates on EFI platforms in cases where
+# we need to deliver security fixes. For now, add a placeholder partition type
+# and reserve space for an alternate bank.
+EFI_BACKUP_TYPECODE="B39CE39C-0A00-B4AB-2D11-F18F8237A21C"
 
 truncate -s 2G "${DISK_IMAGE}"
-# boot: 40M + root: 920M + hash: 10M + reserved: 30M = 1000M
+# efi: 5M + boot: 40M + root: 920M + hash: 10M + reserved: 25M = 1000M
 # boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
 # partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
 sgdisk --clear \
    -n 0:2005M:2047M -c 0:"BOTTLEROCKET-PRIVATE"    -t 0:"${BOTTLEROCKET_PRIVATE_TYPECODE}" \
-   -n 0:1975M:0     -c 0:"BOTTLEROCKET-RESERVED-B" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
-   -n 0:1965M:0     -c 0:"BOTTLEROCKET-HASH-B"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
-   -n 0:1045M:0     -c 0:"BOTTLEROCKET-ROOT-B"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
-   -n 0:1005M:0     -c 0:"BOTTLEROCKET-BOOT-B"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
-   -n 0:975M:0      -c 0:"BOTTLEROCKET-RESERVED-A" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
-   -n 0:965M:0      -c 0:"BOTTLEROCKET-HASH-A"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
-   -n 0:45M:0       -c 0:"BOTTLEROCKET-ROOT-A"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
-   -n 0:5M:0        -c 0:"BOTTLEROCKET-BOOT-A"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
-   -n 0:1M:0        -c 0:"${FIRM_NAME}"    -t 0:"${BOTTLEROCKET_FIRM_TYPECODE}" \
+   -n 0:1980M:0     -c 0:"BOTTLEROCKET-RESERVED-B" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
+   -n 0:1970M:0     -c 0:"BOTTLEROCKET-HASH-B"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
+   -n 0:1050M:0     -c 0:"BOTTLEROCKET-ROOT-B"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
+   -n 0:1010M:0     -c 0:"BOTTLEROCKET-BOOT-B"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
+   -n 0:1005M:0     -c 0:"EFI-BACKUP"              -t 0:"${EFI_BACKUP_TYPECODE}" \
+   -n 0:980M:0      -c 0:"BOTTLEROCKET-RESERVED-A" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
+   -n 0:970M:0      -c 0:"BOTTLEROCKET-HASH-A"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
+   -n 0:50M:0       -c 0:"BOTTLEROCKET-ROOT-A"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
+   -n 0:10M:0       -c 0:"BOTTLEROCKET-BOOT-A"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
+   -n 0:5M:0        -c 0:"EFI-SYSTEM"              -t 0:"${EFI_SYSTEM_TYPECODE}" \
+   -n 0:1M:0        -c 0:"BIOS-BOOT"               -t 0:"${BIOS_BOOT_TYPECODE}" \
    --sort --print "${DISK_IMAGE}"
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
@@ -101,7 +118,6 @@ mksquashfs \
 rm -rf "${ROOT_MOUNT}"/var/lib "${ROOT_MOUNT}"/usr/share/licenses/*
 
 if [[ "${ARCH}" == "x86_64" ]]; then
-  SYS_ROOT="x86_64-bottlerocket-linux-gnu/sys-root"
   # MBR and BIOS-BOOT
   echo "(hd0) ${DISK_IMAGE}" > "${ROOT_MOUNT}/boot/grub/device.map"
   "${ROOT_MOUNT}/sbin/grub-bios-setup" \
@@ -112,30 +128,30 @@ if [[ "${ARCH}" == "x86_64" ]]; then
      "${DISK_IMAGE}"
 
   rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
-else
-  SYS_ROOT="aarch64-bottlerocket-linux-gnu/sys-root"
-  # For aarch64 we need an EFI partition instead, formatted
-  # FAT32 with the .efi binary at the correct path, eg /efi/boot.
-  # grub-mkimage has put bootaa64.efi at /boot/efi/EFI/BOOT
-  mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
-
-  # The 'recommended' size for the EFI partition is 100MB but our aarch64.efi
-  # only takes up around 700KB, so this will suffice for now.
-  dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count=4
-  mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((4*2048))
-  mmd -i "${EFI_IMAGE}" ::/EFI
-  mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
-  mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT/bootaa64.efi" ::/EFI/BOOT
-  dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=1
-
-  # Create the grub directory which grub-bios-setup would have otherwise done.
-  mkdir -p "${ROOT_MOUNT}/boot/grub"
 fi
+
+# We also need an EFI partition, formatted FAT32 with the
+# EFI binary at the correct path, eg /efi/boot. The grub
+# package has placed the image in /boot/efi/EFI/BOOT.
+mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
+
+# The 'recommended' size for the EFI partition is 100MB but our EFI
+# images are under 1MB, so this will suffice for now.
+dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count=5
+mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((5*2048))
+mmd -i "${EFI_IMAGE}" ::/EFI
+mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
+mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT"/*.efi ::/EFI/BOOT
+dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=5
+
+# Ensure that the grub directory exists.
+mkdir -p "${ROOT_MOUNT}/boot/grub"
 
 # Now that we're done messing with /, move /boot out of it
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # Set the Bottlerocket variant, version, and build-id
+SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
 echo "PRETTY_NAME=\"${PRETTY_NAME} ${VERSION_ID}\"" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
 echo "VARIANT_ID=${VARIANT}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
 echo "VERSION_ID=${VERSION_ID}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
@@ -149,7 +165,7 @@ ROOT_LABELS=$(setfiles -n -d -F -m -r "${ROOT_MOUNT}" \
 mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 920M
 echo "${ROOT_LABELS}" | debugfs -w -f - "${ROOT_IMAGE}"
 resize2fs -M "${ROOT_IMAGE}"
-dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=45
+dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=50
 
 # BOTTLEROCKET-VERITY-A
 truncate -s 8M "${VERITY_IMAGE}"
@@ -169,7 +185,7 @@ VERITY_DATA_512B_BLOCKS="$(($VERITY_DATA_4K_BLOCKS * 8))"
 VERITY_ROOT_HASH="$(grep '^Root hash:' <<<$veritysetup_output | awk '{ print $NF }')"
 VERITY_SALT="$(grep '^Salt:' <<<$veritysetup_output | awk '{ print $NF }')"
 veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
-dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=965
+dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=970
 
 # write GRUB config
 cat <<EOF > "${BOOT_MOUNT}/grub/grub.cfg"
@@ -196,7 +212,7 @@ BOOT_LABELS=$(setfiles -n -d -F -m -r "${BOOT_MOUNT}" \
 mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 40M
 echo "${BOOT_LABELS}" | debugfs -w -f - "${BOOT_IMAGE}"
 resize2fs -M "${BOOT_IMAGE}"
-dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=5
+dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=10
 
 # BOTTLEROCKET-PRIVATE
 

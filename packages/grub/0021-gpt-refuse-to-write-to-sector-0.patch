@@ -1,4 +1,4 @@
-From 2ebc9802edf1656597d8f6d7f9cc557dae08d4b2 Mon Sep 17 00:00:00 2001
+From d81aa092c0eb91ec618a6f0879426e8fcbdae0d4 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 11 Aug 2016 15:02:21 -0700
 Subject: [PATCH] gpt: refuse to write to sector 0
@@ -8,7 +8,7 @@ Subject: [PATCH] gpt: refuse to write to sector 0
  1 file changed, 7 insertions(+)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index f83fe29ac..b7449911a 100644
+index f83fe29..b744991 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -626,10 +626,17 @@ grub_gpt_write_table (grub_disk_t disk, grub_gpt_t gpt,
@@ -29,3 +29,6 @@ index f83fe29ac..b7449911a 100644
    if (grub_disk_write (disk, addr, 0, gpt->entries_size, gpt->entries))
      return grub_errno;
  
+-- 
+2.21.3
+

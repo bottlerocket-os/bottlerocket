@@ -1,4 +1,4 @@
-From 9e925f4ccaf5d7137f58152598d75381b6bbefe8 Mon Sep 17 00:00:00 2001
+From b6ae405132d795bfbb405dbf15fcb5721428b435 Mon Sep 17 00:00:00 2001
 From: iliana destroyer of worlds <iweller@amazon.com>
 Date: Thu, 28 Mar 2019 16:28:41 -0700
 Subject: [PATCH] gptprio: Use Bottlerocket boot partition type GUID
@@ -11,7 +11,7 @@ Signed-off-by: iliana destroyer of worlds <iweller@amazon.com>
  3 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
-index 8908d8bed..3678d1018 100644
+index 8908d8b..761aea4 100644
 --- a/grub-core/commands/gptprio.c
 +++ b/grub-core/commands/gptprio.c
 @@ -162,7 +162,7 @@ grub_cmd_next (grub_extcmd_context_t ctxt, int argc, char **args)
@@ -24,7 +24,7 @@ index 8908d8bed..3678d1018 100644
    if (!state[NEXT_SET_DEVICE].set || !state[NEXT_SET_UUID].set)
      {
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 726b98c00..88ad02a44 100644
+index 797692c..2bbfd33 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -61,9 +61,9 @@ char * grub_gpt_guid_to_str (grub_gpt_guid_t *guid);
@@ -41,7 +41,7 @@ index 726b98c00..88ad02a44 100644
  #define GRUB_GPT_HEADER_MAGIC \
    { 0x45, 0x46, 0x49, 0x20, 0x50, 0x41, 0x52, 0x54 }
 diff --git a/tests/gptprio_test.in b/tests/gptprio_test.in
-index c5cf0f3b7..9df4dd350 100644
+index c5cf0f3..9df4dd3 100644
 --- a/tests/gptprio_test.in
 +++ b/tests/gptprio_test.in
 @@ -59,7 +59,7 @@ esac
@@ -53,3 +53,6 @@ index c5cf0f3b7..9df4dd350 100644
  declare -a prio_uuid
  prio_uuid[2]="9b003904-d006-4ab3-97f1-73f547b7af1a"
  prio_uuid[3]="1aa5a658-5b02-414d-9b71-f7e6c151f0cd"
+-- 
+2.21.3
+

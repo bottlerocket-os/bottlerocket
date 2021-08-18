@@ -1,4 +1,4 @@
-From 14d7fb113f2c89b3df8b6ed7b0fa001084704d6b Mon Sep 17 00:00:00 2001
+From d5520178578153d5b1c79bfba014d388acc6cf75 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 30 Oct 2014 20:55:21 -0700
 Subject: [PATCH] gpt: add a new generic GUID type
@@ -15,7 +15,7 @@ Signed-off-by: iliana destroyer of worlds <iweller@amazon.com>
  2 files changed, 24 insertions(+), 22 deletions(-)
 
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index a483f710a..8183a1f30 100644
+index 5c2b535..d13ea0b 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -23,33 +23,35 @@
@@ -79,7 +79,7 @@ index a483f710a..8183a1f30 100644
    grub_uint32_t maxpart;
    grub_uint32_t partentry_size;
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index 83198bebf..86e4364a5 100644
+index 83198be..86e4364 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -99,8 +99,8 @@ static const struct grub_gpt_header example_primary = {
@@ -120,3 +120,6 @@ index 83198bebf..86e4364a5 100644
    grub_gpt_header_check (&backup, GRUB_DISK_SECTOR_BITS);
    grub_test_assert (grub_errno == GRUB_ERR_BAD_PART_TABLE,
  		    "unexpected error: %s", grub_errmsg);
+-- 
+2.21.3
+

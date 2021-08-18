@@ -1,4 +1,4 @@
-From 266c58dedddb5b927528052db1e3b21a892cfc0d Mon Sep 17 00:00:00 2001
+From f5639101bd80e1246a155b7d1b576efb6fe716f4 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 24 Aug 2016 16:14:20 -0700
 Subject: [PATCH] gpt: fix partition table indexing and validation
@@ -16,7 +16,7 @@ for the sake of safety we need to do this by the spec.
  4 files changed, 176 insertions(+), 12 deletions(-)
 
 diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
-index 2021cb200..eebca7a09 100644
+index 2021cb2..eebca7a 100644
 --- a/grub-core/commands/gptprio.c
 +++ b/grub-core/commands/gptprio.c
 @@ -78,7 +78,7 @@ grub_find_next (const char *disk_name,
@@ -41,7 +41,7 @@ index 2021cb200..eebca7a09 100644
  	{
  	  unsigned int priority, tries_left, successful, old_priority = 0;
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 0daf3f8de..205779192 100644
+index 0daf3f8..2057791 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -207,6 +207,13 @@ grub_gpt_pmbr_check (struct grub_msdos_partition_mbr *mbr)
@@ -141,7 +141,7 @@ index 0daf3f8de..205779192 100644
  grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
  {
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 2ca063ad9..b354fd5f4 100644
+index 16fdd7f..1a215f8 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -186,8 +186,10 @@ struct grub_gpt
@@ -170,7 +170,7 @@ index 2ca063ad9..b354fd5f4 100644
  grub_err_t grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt);
  
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index 60f601729..9cf3414c2 100644
+index 60f6017..9cf3414 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -40,6 +40,13 @@
@@ -321,3 +321,6 @@ index 60f601729..9cf3414c2 100644
    grub_test_unregister ("gpt_search_part_label_test");
    grub_test_unregister ("gpt_search_part_uuid_test");
    grub_test_unregister ("gpt_search_disk_uuid_test");
+-- 
+2.21.3
+

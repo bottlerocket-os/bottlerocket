@@ -1,4 +1,4 @@
-From e1db8ebe4d10b34817f1e9837f2eb8d6e29a0dd6 Mon Sep 17 00:00:00 2001
+From 974f79ff5cfff8b37f6377d55c2e090f9c5c6251 Mon Sep 17 00:00:00 2001
 From: Vito Caputo <vito.caputo@coreos.com>
 Date: Thu, 25 Aug 2016 17:21:18 -0700
 Subject: [PATCH] gpt: add helper for picking a valid header
@@ -9,7 +9,7 @@ Eliminate some repetition in primary vs. backup header acquisition.
  1 file changed, 20 insertions(+), 12 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index f0c71bde1..2550ed87c 100644
+index f0c71bd..2550ed8 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -108,21 +108,32 @@ grub_gpt_part_uuid (grub_device_t device, char **uuid)
@@ -66,3 +66,6 @@ index f0c71bde1..2550ed87c 100644
      return NULL;
  
    if (n >= grub_le_to_cpu32 (header->maxpart))
+-- 
+2.21.3
+

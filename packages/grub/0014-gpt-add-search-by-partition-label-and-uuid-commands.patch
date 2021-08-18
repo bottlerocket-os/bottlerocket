@@ -1,4 +1,4 @@
-From 5ca51d1d60b6a692fc679b3cc0236cec0a66e1aa Mon Sep 17 00:00:00 2001
+From 0fceffa51b087c1f3f19f470f08e9378d71ddb2d Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 27 Nov 2014 16:34:21 -0800
 Subject: [PATCH] gpt: add search by partition label and uuid commands
@@ -20,10 +20,10 @@ Builds on the existing filesystem search code. Only for GPT right now.
  create mode 100644 grub-core/commands/search_part_uuid.c
 
 diff --git a/Makefile.util.def b/Makefile.util.def
-index a2b84ec4b..b63a2963c 100644
+index eb4bc90..8f74405 100644
 --- a/Makefile.util.def
 +++ b/Makefile.util.def
-@@ -1287,6 +1287,8 @@ program = {
+@@ -1406,6 +1406,8 @@ program = {
    name = gpt_unit_test;
    common = tests/gpt_unit_test.c;
    common = tests/lib/unit_test.c;
@@ -33,10 +33,10 @@ index a2b84ec4b..b63a2963c 100644
    common = grub-core/kern/emu/hostfs.c;
    common = grub-core/lib/gpt.c;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 615b00226..9964d42fe 100644
+index 78c64a8..fb4b1a1 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -1095,6 +1095,16 @@ module = {
+@@ -1136,6 +1136,16 @@ module = {
    common = commands/search_label.c;
  };
  
@@ -54,7 +54,7 @@ index 615b00226..9964d42fe 100644
    name = setpci;
    common = commands/setpci.c;
 diff --git a/grub-core/commands/search.c b/grub-core/commands/search.c
-index ed090b3af..4ad72c5b4 100644
+index ed090b3..4ad72c5 100644
 --- a/grub-core/commands/search.c
 +++ b/grub-core/commands/search.c
 @@ -30,6 +30,9 @@
@@ -136,7 +136,7 @@ index ed090b3af..4ad72c5b4 100644
  #else
 diff --git a/grub-core/commands/search_part_label.c b/grub-core/commands/search_part_label.c
 new file mode 100644
-index 000000000..ca906cbd9
+index 0000000..ca906cb
 --- /dev/null
 +++ b/grub-core/commands/search_part_label.c
 @@ -0,0 +1,5 @@
@@ -147,7 +147,7 @@ index 000000000..ca906cbd9
 +#include "search.c"
 diff --git a/grub-core/commands/search_part_uuid.c b/grub-core/commands/search_part_uuid.c
 new file mode 100644
-index 000000000..2d1d3d0d7
+index 0000000..2d1d3d0
 --- /dev/null
 +++ b/grub-core/commands/search_part_uuid.c
 @@ -0,0 +1,5 @@
@@ -157,7 +157,7 @@ index 000000000..2d1d3d0d7
 +#define HELP_MESSAGE N_("Search devices by partition UUID. If VARIABLE is specified, the first device found is set to a variable.")
 +#include "search.c"
 diff --git a/grub-core/commands/search_wrap.c b/grub-core/commands/search_wrap.c
-index d7fd26b94..e3ff756df 100644
+index 47fc8eb..d357454 100644
 --- a/grub-core/commands/search_wrap.c
 +++ b/grub-core/commands/search_wrap.c
 @@ -36,6 +36,10 @@ static const struct grub_arg_option options[] =
@@ -194,7 +194,7 @@ index d7fd26b94..e3ff756df 100644
      grub_search_fs_file (id, var, state[SEARCH_NO_FLOPPY].set, 
  			 hints, nhints);
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 9a1835b84..10a4b852d 100644
+index 9a1835b..10a4b85 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -18,7 +18,9 @@
@@ -277,7 +277,7 @@ index 9a1835b84..10a4b852d 100644
  grub_gpt_size_to_sectors (grub_gpt_t gpt, grub_size_t size)
  {
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index 1d065df99..dc2dec43a 100644
+index a44c0d5..7b04080 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -49,6 +49,10 @@ char * grub_gpt_guid_to_str (grub_gpt_guid_t *guid);
@@ -309,7 +309,7 @@ index 1d065df99..dc2dec43a 100644
 +
  #endif /* ! GRUB_GPT_PARTITION_HEADER */
 diff --git a/include/grub/search.h b/include/grub/search.h
-index d80347df3..c2f40abe9 100644
+index d80347d..c2f40ab 100644
 --- a/include/grub/search.h
 +++ b/include/grub/search.h
 @@ -25,5 +25,9 @@ void grub_search_fs_uuid (const char *key, const char *var, int no_floppy,
@@ -323,7 +323,7 @@ index d80347df3..c2f40abe9 100644
  
  #endif
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index 5692a5a52..deb55a926 100644
+index 5692a5a..deb55a9 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -21,10 +21,12 @@
@@ -441,3 +441,6 @@ index 5692a5a52..deb55a926 100644
 +  grub_test_unregister ("gpt_search_uuid_test");
    grub_fini_all ();
  }
+-- 
+2.21.3
+

@@ -1,4 +1,4 @@
-From 8fb347e03236e927e3a2a1134923854a39a03c4b Mon Sep 17 00:00:00 2001
+From acc91512edec9cae77efc51df8418ae9fdba4a0e Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 10 Aug 2016 18:26:03 -0700
 Subject: [PATCH] gpt: add verbose debug logging
@@ -8,7 +8,7 @@ Subject: [PATCH] gpt: add verbose debug logging
  1 file changed, 109 insertions(+), 8 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 3e17f2771..c2821b563 100644
+index 3e17f27..c2821b5 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -207,6 +207,18 @@ grub_gpt_pmbr_check (struct grub_msdos_partition_mbr *mbr)
@@ -249,3 +249,6 @@ index 3e17f2771..c2821b563 100644
    if (grub_gpt_write_table (disk, gpt, &gpt->backup))
      return grub_errno;
  
+-- 
+2.21.3
+

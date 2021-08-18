@@ -1,4 +1,4 @@
-From 19f4319c4f68b416433265a104e49520486419cc Mon Sep 17 00:00:00 2001
+From 564616c70c7a914f385cfa36e0bb214cf75723a3 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 27 Nov 2014 15:49:57 -0800
 Subject: [PATCH] tests: add some partitions to the gpt unit test data
@@ -8,7 +8,7 @@ Subject: [PATCH] tests: add some partitions to the gpt unit test data
  1 file changed, 55 insertions(+), 10 deletions(-)
 
 diff --git a/tests/gpt_unit_test.c b/tests/gpt_unit_test.c
-index 86e4364a5..5692a5a52 100644
+index 86e4364..5692a5a 100644
 --- a/tests/gpt_unit_test.c
 +++ b/tests/gpt_unit_test.c
 @@ -89,12 +89,12 @@ struct test_data
@@ -122,3 +122,6 @@ index 86e4364a5..5692a5a52 100644
  
    return gpt;
  }
+-- 
+2.21.3
+

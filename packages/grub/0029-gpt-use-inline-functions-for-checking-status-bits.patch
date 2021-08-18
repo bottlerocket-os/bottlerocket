@@ -1,4 +1,4 @@
-From babffa21b389bdb7cca50df69ac94d623890a70e Mon Sep 17 00:00:00 2001
+From 7f6fb19999b3b825a9c04cee20c8c1dee1590813 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Tue, 20 Sep 2016 12:43:01 -0700
 Subject: [PATCH] gpt: use inline functions for checking status bits
@@ -12,7 +12,7 @@ This should prevent bugs like 6078f836 and 4268f3da.
  4 files changed, 39 insertions(+), 13 deletions(-)
 
 diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
-index eebca7a09..59bc4fd09 100644
+index eebca7a..59bc4fd 100644
 --- a/grub-core/commands/gptprio.c
 +++ b/grub-core/commands/gptprio.c
 @@ -91,7 +91,7 @@ grub_find_next (const char *disk_name,
@@ -25,7 +25,7 @@ index eebca7a09..59bc4fd09 100644
        goto done;
  
 diff --git a/grub-core/commands/gptrepair.c b/grub-core/commands/gptrepair.c
-index 66ac3f7c7..c17c7346c 100644
+index 66ac3f7..c17c734 100644
 --- a/grub-core/commands/gptrepair.c
 +++ b/grub-core/commands/gptrepair.c
 @@ -65,16 +65,16 @@ grub_cmd_gptrepair (grub_command_t cmd __attribute__ ((unused)),
@@ -49,7 +49,7 @@ index 66ac3f7c7..c17c7346c 100644
  
    if (grub_gpt_repair (dev->disk, gpt))
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 2550ed87c..3e077c497 100644
+index 2550ed8..3e077c4 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -638,10 +638,15 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
@@ -79,7 +79,7 @@ index 2550ed87c..3e077c497 100644
  
    grub_dprintf ("gpt", "writing primary GPT to %s\n", disk->name);
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index b354fd5f4..226e09978 100644
+index 1a215f8..b7fbb7a 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -161,13 +161,6 @@ typedef enum grub_gpt_status
@@ -131,3 +131,6 @@ index b354fd5f4..226e09978 100644
  /* Translate GPT sectors to GRUB's 512 byte block addresses.  */
  static inline grub_disk_addr_t
  grub_gpt_sector_to_addr (grub_gpt_t gpt, grub_uint64_t sector)
+-- 
+2.21.3
+

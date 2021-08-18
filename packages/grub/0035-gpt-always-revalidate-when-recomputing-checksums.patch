@@ -1,4 +1,4 @@
-From 04deacdc8d85855b3bb85bcd7c02f71b05ee2bec Mon Sep 17 00:00:00 2001
+From 6065f2a049bfe5f8ef6f90b77d2f8ab738004c50 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Wed, 21 Sep 2016 14:55:19 -0700
 Subject: [PATCH] gpt: always revalidate when recomputing checksums
@@ -11,7 +11,7 @@ appropriate state.
  1 file changed, 18 insertions(+), 14 deletions(-)
 
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 03e807b25..3ac2987c6 100644
+index 03e807b..3ac2987 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -630,23 +630,9 @@ grub_gpt_repair (grub_disk_t disk, grub_gpt_t gpt)
@@ -70,3 +70,6 @@ index 03e807b25..3ac2987c6 100644
    return GRUB_ERR_NONE;
  }
  
+-- 
+2.21.3
+

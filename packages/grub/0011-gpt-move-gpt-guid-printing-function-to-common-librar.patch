@@ -1,4 +1,4 @@
-From 415fc53d5282e848e64096aeb90a628488ab2c94 Mon Sep 17 00:00:00 2001
+From 44c916ad1a8ae8fbd3743f269fd13cc677a932da Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 27 Nov 2014 12:55:53 -0800
 Subject: [PATCH] gpt: move gpt guid printing function to common library
@@ -10,7 +10,7 @@ Subject: [PATCH] gpt: move gpt guid printing function to common library
  3 files changed, 19 insertions(+), 14 deletions(-)
 
 diff --git a/grub-core/commands/gptprio.c b/grub-core/commands/gptprio.c
-index 1e2e06cef..24157477c 100644
+index 1e2e06c..2415747 100644
 --- a/grub-core/commands/gptprio.c
 +++ b/grub-core/commands/gptprio.c
 @@ -141,20 +141,8 @@ grub_find_next (const char *disk_name,
@@ -37,7 +37,7 @@ index 1e2e06cef..24157477c 100644
  
    grub_errno = GRUB_ERR_NONE;
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
-index 198234071..9a1835b84 100644
+index 1982340..9a1835b 100644
 --- a/grub-core/lib/gpt.c
 +++ b/grub-core/lib/gpt.c
 @@ -31,6 +31,19 @@ GRUB_MOD_LICENSE ("GPLv3+");
@@ -61,7 +61,7 @@ index 198234071..9a1835b84 100644
  grub_gpt_size_to_sectors (grub_gpt_t gpt, grub_size_t size)
  {
 diff --git a/include/grub/gpt_partition.h b/include/grub/gpt_partition.h
-index f5197b8ae..f2b3630e4 100644
+index 7fbdf4c..dc1bcca 100644
 --- a/include/grub/gpt_partition.h
 +++ b/include/grub/gpt_partition.h
 @@ -33,6 +33,10 @@ struct grub_gpt_guid
@@ -75,3 +75,6 @@ index f5197b8ae..f2b3630e4 100644
  #define GRUB_GPT_GUID_INIT(a, b, c, d1, d2, d3, d4, d5, d6, d7, d8)  \
    {					\
      grub_cpu_to_le32_compile_time (a),	\
+-- 
+2.21.3
+
