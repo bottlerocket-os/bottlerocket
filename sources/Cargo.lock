@@ -1038,6 +1038,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "etc-hosts-service"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1388,6 +1395,13 @@ dependencies = [
  "simplelog",
  "snafu",
  "tokio",
+]
+
+[[package]]
+name = "hostname-affects-etc-hosts"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]
