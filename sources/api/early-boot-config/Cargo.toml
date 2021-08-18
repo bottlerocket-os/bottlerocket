@@ -13,6 +13,7 @@ exclude = ["README.md"]
 apiclient = { path = "../apiclient" }
 async-trait = "0.1.36"
 base64 = "0.13"
+constants = { path = "../../constants" }
 flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
 http = "0.2"
 imdsclient = { path = "../../imdsclient" }

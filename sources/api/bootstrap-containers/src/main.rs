@@ -87,20 +87,14 @@ use std::fs;
 use std::path::Path;
 use std::process::{self, Command};
 use std::str::FromStr;
+use constants;
 
 use model::modeled_types::{BootstrapContainerMode, Identifier};
-
-// FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-const API_SETTINGS_URI: &str = "/settings";
 
 const ENV_FILE_DIR: &str = "/etc/bootstrap-containers";
 const DROPIN_FILE_DIR: &str = "/etc/systemd/system";
 const PERSISTENT_STORAGE_DIR: &str = "/local/bootstrap-containers";
 const DROP_IN_FILENAME: &str = "overrides.conf";
-
-const SYSTEMCTL_BIN: &str = "/bin/systemctl";
-const HOST_CTR_BIN: &str = "/bin/host-ctr";
 
 /// Stores user-supplied global arguments
 #[derive(Debug)]
@@ -113,7 +107,7 @@ impl Default for Args {
     fn default() -> Self {
         Self {
             log_level: LevelFilter::Info,
-            socket_path: DEFAULT_API_SOCKET.to_string(),
+            socket_path: constants::API_SOCKET.to_string(),
         }
     }
 }
@@ -150,7 +144,7 @@ fn usage() {
         --mode MODE
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET,
+        program_name, constants::API_SOCKET,
     );
 }
 
@@ -313,7 +307,7 @@ where
         if host_containerd_unit.is_active()? {
             debug!("Cleaning up container '{}'", name);
             command(
-                HOST_CTR_BIN,
+                constants::HOST_CTR_BIN,
                 &[
                     "clean-up",
                     "--container-id",
@@ -327,7 +321,7 @@ where
         // Clean up any left over tasks, before the container is enabled
         if host_containerd_unit.is_active()? && !systemd_unit.is_enabled()? {
             command(
-                HOST_CTR_BIN,
+                constants::HOST_CTR_BIN,
                 &[
                     "clean-up",
                     "--container-id",
@@ -397,7 +391,7 @@ where
     debug!("Querying the API for settings");
 
     let method = "GET";
-    let uri = API_SETTINGS_URI;
+    let uri = constants::API_SETTINGS_URI;
     let (_code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
         .await
         .context(error::APIRequest { method, uri })?;
@@ -422,7 +416,7 @@ impl<'a> SystemdUnit<'a> {
     }
 
     fn is_enabled(&self) -> Result<bool> {
-        match command(SYSTEMCTL_BIN, &["is-enabled", &self.unit]) {
+        match command(constants::SYSTEMCTL_BIN, &["is-enabled", &self.unit]) {
             Ok(()) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not enabled, then `systemctl is-enabled` will return a
@@ -439,7 +433,7 @@ impl<'a> SystemdUnit<'a> {
     }
 
     fn is_active(&self) -> Result<bool> {
-        match command(SYSTEMCTL_BIN, &["is-active", &self.unit]) {
+        match command(constants::SYSTEMCTL_BIN, &["is-active", &self.unit]) {
             Ok(()) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not active(running), then `systemctl is-active` will
@@ -458,13 +452,13 @@ impl<'a> SystemdUnit<'a> {
     fn enable(&self) -> Result<()> {
         // Only enable the unit, since it will be started once systemd reaches the `preconfigured`
         // target
-        command(SYSTEMCTL_BIN, &["enable", &self.unit])
+        command(constants::SYSTEMCTL_BIN, &["enable", &self.unit])
     }
 
     fn disable(&self) -> Result<()> {
         // Bootstrap containers won't be up by the time the user sends configurations through
         // `apiclient`, so there is no need to add `--now` to stop them
-        command(SYSTEMCTL_BIN, &["disable", &self.unit])
+        command(constants::SYSTEMCTL_BIN, &["disable", &self.unit])
     }
 }
 

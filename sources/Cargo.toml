@@ -51,6 +51,8 @@ members = [
     "updater/updog",
 
     "webpki-roots-shim",
+
+    "constants"
 ]
 
 [profile.release]

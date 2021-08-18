@@ -16,6 +16,7 @@ thar-be-updates uses a lockfile to control read/write access to the disks and th
 
 */
 
+use constants;
 use fs2::FileExt;
 use log::{debug, warn};
 use nix::unistd::{fork, ForkResult};
@@ -35,9 +36,6 @@ use thar_be_updates::status::{
     get_update_status, UpdateCommand, UpdateState, UpdateStatus, UPDATE_LOCKFILE,
     UPDATE_STATUS_FILE,
 };
-
-// FIXME Get this from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 
 const UPDATE_STATUS_DIR: &str = "/run/cache/thar-be-updates";
 
@@ -64,7 +62,8 @@ fn usage() -> ! {
             Global options:
                     [ --socket-path PATH ]    Bottlerocket API socket path (default {})
                     [ --log-level trace|debug|info|warn|error ]  (default info)",
-        program_name, DEFAULT_API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -114,7 +113,7 @@ fn parse_args(args: std::env::Args) -> Args {
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage()),
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.to_string()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
 
@@ -331,8 +330,7 @@ fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     // Open the lockfile for concurrency control, create it if it doesn't exist
     let lockfile = File::create(UPDATE_LOCKFILE).context(error::UpdateLockFile {

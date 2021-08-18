@@ -13,6 +13,7 @@ exclude = ["README.md"]
 apiclient = { path = "../apiclient" }
 argh = "0.1.3"
 base64 = "0.13"
+constants = { path = "../../constants" }
 # x509-parser depends on der-parser ^5.0.  5.1.1 contains breaking changes.
 # The 5.1.1 release isn't in the master branch; those changes are instead in a
 # 6.0.0 release, more clearly implying breaking changes.  Lock to 5.1.0.

@@ -23,9 +23,6 @@ use std::process;
 use std::str::FromStr;
 use tempfile::{NamedTempFile, TempDir};
 
-// FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-
 const STATIC_POD_DIR: &str = "/etc/kubernetes/static-pods";
 const ETC_KUBE_DIR: &str = "/etc/kubernetes";
 
@@ -178,7 +175,7 @@ fn usage() {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET,
+        program_name, constants::API_SOCKET,
     );
 }
 
@@ -221,7 +218,7 @@ fn parse_args(args: env::Args) -> Result<Args> {
 
     Ok(Args {
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.into()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.into()),
     })
 }
 

@@ -27,17 +27,12 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
+use constants;
 
 use model::modeled_types::Identifier;
 
-// FIXME Get from configuration in the future
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
-const API_SETTINGS_URI: &str = "/settings";
 const ENV_FILE_DIR: &str = "/etc/host-containers";
 const PERSISTENT_STORAGE_BASE_DIR: &str = "/local/host-containers";
-
-const SYSTEMCTL_BIN: &str = "/bin/systemctl";
-const HOST_CTR_BIN: &str = "/bin/host-ctr";
 
 mod error {
     use http::StatusCode;
@@ -149,7 +144,7 @@ where
     debug!("Querying the API for settings");
 
     let method = "GET";
-    let uri = API_SETTINGS_URI;
+    let uri = constants::API_SETTINGS_URI;
     let (code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
         .await
         .context(error::APIRequest { method, uri })?;
@@ -182,7 +177,7 @@ impl<'a> SystemdUnit<'a> {
     }
 
     fn is_enabled(&self) -> Result<bool> {
-        match command(SYSTEMCTL_BIN, &["is-enabled", &self.unit]) {
+        match command(constants::SYSTEMCTL_BIN, &["is-enabled", &self.unit]) {
             Ok(_) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not enabled, then `systemctl is-enabled` will return a
@@ -199,7 +194,7 @@ impl<'a> SystemdUnit<'a> {
     }
 
     fn is_active(&self) -> Result<bool> {
-        match command(SYSTEMCTL_BIN, &["is-active", &self.unit]) {
+        match command(constants::SYSTEMCTL_BIN, &["is-active", &self.unit]) {
             Ok(_) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not active(running), then `systemctl is-active` will
@@ -216,14 +211,14 @@ impl<'a> SystemdUnit<'a> {
     }
 
     fn enable(&self) -> Result<()> {
-        command(SYSTEMCTL_BIN, &["enable", &self.unit])?;
+        command(constants::SYSTEMCTL_BIN, &["enable", &self.unit])?;
 
         Ok(())
     }
 
     fn enable_and_start(&self) -> Result<()> {
         command(
-            SYSTEMCTL_BIN,
+            constants::SYSTEMCTL_BIN,
             &["enable", &self.unit, "--now", "--no-block"],
         )?;
 
@@ -232,7 +227,7 @@ impl<'a> SystemdUnit<'a> {
 
     fn disable_and_stop(&self) -> Result<()> {
         command(
-            SYSTEMCTL_BIN,
+            constants::SYSTEMCTL_BIN,
             &["disable", &self.unit, "--now", "--no-block"],
         )?;
 
@@ -307,7 +302,7 @@ fn usage() -> ! {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, DEFAULT_API_SOCKET,
+        program_name, constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -349,7 +344,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| DEFAULT_API_SOCKET.into()),
+        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.into()),
     }
 }
 
@@ -400,12 +395,12 @@ where
         //
         // We only attempt to do this only if host-containerd is active and running
         if host_containerd_unit.is_active()? && !systemd_unit.is_enabled()? {
-            command(HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
+            command(constants::HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
         }
 
         // Only start the host container if the systemd target is 'multi-user', otherwise
         // it will start before the system is fully configured
-        match command(SYSTEMCTL_BIN, &["get-default"])?.trim().as_ref() {
+        match command(constants::SYSTEMCTL_BIN, &["get-default"])?.trim().as_ref() {
             "multi-user.target" => {
                 debug!("Enabling and starting container: '{}'", unit_name);
                 systemd_unit.enable_and_start()?
@@ -422,7 +417,7 @@ where
         //
         // We only attempt to do this only if host-containerd is active and running
         if host_containerd_unit.is_active()? {
-            command(HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
+            command(constants::HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
         }
     }
 

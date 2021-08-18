@@ -18,8 +18,8 @@ use std::env;
 use std::process;
 use std::str::FromStr;
 use unindent::unindent;
+use constants;
 
-const DEFAULT_API_SOCKET: &str = "/run/api.sock";
 const DEFAULT_METHOD: &str = "GET";
 
 /// Stores user-supplied global arguments.
@@ -33,7 +33,7 @@ impl Default for Args {
     fn default() -> Self {
         Self {
             log_level: LevelFilter::Info,
-            socket_path: DEFAULT_API_SOCKET.to_string(),
+            socket_path: constants::API_SOCKET.to_string(),
         }
     }
 }
@@ -151,7 +151,7 @@ fn usage() -> ! {
 
         update cancel options:
             None."#,
-        socket = DEFAULT_API_SOCKET,
+        socket = constants::API_SOCKET,
         method = DEFAULT_METHOD,
     );
     eprintln!("{}", unindent(msg));

@@ -11,6 +11,7 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient" }
+constants = { path = "../../constants" }
 imdsclient = { path = "../../imdsclient" }
 models = { path = "../../models" }
 rusoto_core = { version = "0.47", default-features = false, features = ["rustls"] }

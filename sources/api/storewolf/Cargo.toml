@@ -10,6 +10,7 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
+constants = { path = "../../constants" }
 bottlerocket-release = { path = "../../bottlerocket-release" }
 datastore = { path = "../datastore" }
 log = "0.4"

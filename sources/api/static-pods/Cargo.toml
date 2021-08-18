@@ -10,6 +10,7 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
+constants = { path = "../../constants" }
 base64 = "0.13"
 log = "0.4"
 models = { path = "../../models" }
