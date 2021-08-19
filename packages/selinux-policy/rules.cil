@@ -57,8 +57,6 @@
 (allow bus_t bus_exec_t (file (entrypoint)))
 
 ; PID 1 starts container runtimes as "runtime_t".
-; The level range is adjusted to span all categories at the same time,
-; to support Docker's use of MCS labels.
 (typetransition init_t runtime_exec_t process runtime_t)
 (allow init_t runtime_t (processes (transform)))
 (allow runtime_t runtime_exec_t (file (entrypoint)))
@@ -77,6 +75,12 @@
 (allow container_s data_t (file (entrypoint)))
 (allow container_s cache_t (file (entrypoint)))
 (allow container_s secret_t (file (entrypoint)))
+
+; Adjust the level range to span all categories, since privileged
+; containers won't get an MCS pair assigned.
+(rangetransition runtime_t data_t process s0-s0)
+(rangetransition runtime_t cache_t process s0-s0)
+(rangetransition runtime_t secret_t process s0-s0)
 
 ; Also allow entry to container domains through `docker-init`, which
 ; is mounted from the root filesystem and used as the init process.
