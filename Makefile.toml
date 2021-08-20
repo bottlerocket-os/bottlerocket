@@ -425,7 +425,12 @@ echo "SHA256(${ovf})= ${ovf_sha256}" >> "${ova_tmp_dir}/${manifest}"
 cp "${root_vmdk_path}" "${ova_tmp_dir}"
 cp "${data_vmdk_path}" "${ova_tmp_dir}"
 
-tar -cf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${manifest}" "${ovf}" "${root_vmdk_path##*/}" "${data_vmdk_path##*/}"
+# According to the OVF spec:
+# https://www.dmtf.org/sites/default/files/standards/documents/DSP0243_2.1.1.pdf,
+# the OVF must be first in the tar bundle.  Manifest is next, and then the
+# files must fall in the same order as listed in the References section of the
+# OVF file
+tar -cf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${ovf}" "${manifest}" "${root_vmdk_path##*/}" "${data_vmdk_path##*/}"
 mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova"
 '''
 ]
