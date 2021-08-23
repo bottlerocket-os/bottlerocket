@@ -118,6 +118,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     // but isn't provided in the data given to the renderer
     template_registry.set_strict_mode(true);
 
+    // Prefer snake case for helper names (we accidentally created a few with kabob case)
     template_registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
     template_registry.register_helper("join_map", Box::new(helpers::join_map));
     template_registry.register_helper("default", Box::new(helpers::default));
@@ -130,6 +131,10 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper(
         "kube_reserve_memory",
         Box::new(helpers::kube_reserve_memory),
+    );
+    template_registry.register_helper(
+        "add_unresolvable_hostname",
+        Box::new(helpers::add_unresolvable_hostname),
     );
 
     Ok(template_registry)

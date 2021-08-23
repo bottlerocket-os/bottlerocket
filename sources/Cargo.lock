@@ -2689,6 +2689,7 @@ dependencies = [
  "bottlerocket-release",
  "cargo-readme",
  "constants",
+ "dns-lookup",
  "handlebars",
  "http",
  "lazy_static",
