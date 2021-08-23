@@ -2,9 +2,9 @@
 %global gorepo containerd
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.4.8
+%global gover 1.5.5
 %global rpmver %{gover}
-%global gitrev 7eba5930496d9bbe375fdf71603e610ad737d2b2
+%global gitrev 72cec4be58a9eb6b2910f5d10f1c01ca47d231c0
 
 %global _dwz_low_mem_die_limit 0
 
@@ -21,14 +21,11 @@ Source3: containerd-config-toml_basic
 Source5: containerd-tmpfiles.conf
 Source1000: clarify.toml
 
-# TODO: submit this upstream.
-Patch1001: 1001-cri-reduce-logging-when-no-errors-have-occurred.patch
-
 # TODO: submit this upstream, including a unit test.
-Patch1002: 1002-cri-set-default-RLIMIT_NOFILE.patch
+Patch1001: 1001-cri-set-default-RLIMIT_NOFILE.patch
 
-# TODO: rework this so it's suitable for upstream.
-Patch1003: 1003-cri-relabel-volumes-after-copying-source-files.patch
+# TODO: drop this when https://github.com/containerd/containerd/pull/5104/ is merged
+Patch1002: 1002-cri-filter-selinux-xattr-for-image-volumes.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel

@@ -1,0 +1,95 @@
+From 072eb5f273434e577025caa9b076b3eec01931bb Mon Sep 17 00:00:00 2001
+From: Zac Mrowicki <mrowicki@amazon.com>
+Date: Thu, 12 Aug 2021 22:48:44 +0000
+Subject: [PATCH 1001/1002] cri: set default RLIMIT_NOFILE
+
+The `cri` plugin currently inherits the limit from the default OCI spec
+or the containerd process.  This change sets the default hard
+RLIMIT_NOFILE to 1048576 and the soft limit to 65536 in the OCI spec for
+any container spawned using `cri`.
+
+[ported to containerd 1.5]
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ pkg/cri/config/config.go                 |  6 ++++++
+ pkg/cri/config/config_unix.go            |  2 ++
+ pkg/cri/opts/spec_linux.go               | 11 +++++++++++
+ pkg/cri/server/container_create_linux.go | 11 +++++++++++
+ 4 files changed, 30 insertions(+)
+
+diff --git a/pkg/cri/config/config.go b/pkg/cri/config/config.go
+index e6f13f9..b10fe06 100644
+--- a/pkg/cri/config/config.go
++++ b/pkg/cri/config/config.go
+@@ -266,6 +266,12 @@ type PluginConfig struct {
+ 	// of being placed under the hardcoded directory /var/run/netns. Changing this setting requires
+ 	// that all containers are deleted.
+ 	NetNSMountsUnderStateDir bool `toml:"netns_mounts_under_state_dir" json:"netnsMountsUnderStateDir"`
++	// ProcessRLimitNoFileSoft sets the soft limit of maximum file
++	// descriptors each container process can use.
++	ProcessRLimitNoFileSoft int `toml:"process_rlimit_no_file_soft" json:"process_rlimit_no_file_soft"`
++	// ProcessRLimitNoFileHard sets the hard limit of maximum file
++	// descriptors each container process can use.
++	ProcessRLimitNoFileHard int `toml:"process_rlimit_no_file_hard" json:"process_rlimit_no_file_hard"`
+ }
+ 
+ // X509KeyPairStreaming contains the x509 configuration for streaming
+diff --git a/pkg/cri/config/config_unix.go b/pkg/cri/config/config_unix.go
+index 3ca1232..b0e0395 100644
+--- a/pkg/cri/config/config_unix.go
++++ b/pkg/cri/config/config_unix.go
+@@ -103,5 +103,7 @@ func DefaultConfig() PluginConfig {
+ 		ImageDecryption: ImageDecryption{
+ 			KeyModel: KeyModelNode,
+ 		},
++		ProcessRLimitNoFileSoft:          65536,
++		ProcessRLimitNoFileHard:          1048576,
+ 	}
+ }
+diff --git a/pkg/cri/opts/spec_linux.go b/pkg/cri/opts/spec_linux.go
+index c5ec3df..282307a 100644
+--- a/pkg/cri/opts/spec_linux.go
++++ b/pkg/cri/opts/spec_linux.go
+@@ -43,6 +43,17 @@ import (
+ 	osinterface "github.com/containerd/containerd/pkg/os"
+ )
+ 
++// WithProcessRLimits sets the RLimits for this container process
++func WithProcessRLimits(rlimits []runtimespec.POSIXRlimit) oci.SpecOpts {
++	return func(ctx context.Context, client oci.Client, c *containers.Container, s *runtimespec.Spec) (err error) {
++		if s.Process == nil {
++			s.Process = &runtimespec.Process{}
++		}
++		s.Process.Rlimits = rlimits
++		return nil
++	}
++}
++
+ // WithAdditionalGIDs adds any additional groups listed for a particular user in the
+ // /etc/groups file of the image's root filesystem to the OCI spec's additionalGids array.
+ func WithAdditionalGIDs(userstr string) oci.SpecOpts {
+diff --git a/pkg/cri/server/container_create_linux.go b/pkg/cri/server/container_create_linux.go
+index 26386e9..a05f16d 100644
+--- a/pkg/cri/server/container_create_linux.go
++++ b/pkg/cri/server/container_create_linux.go
+@@ -137,6 +137,17 @@ func (c *criService) containerSpec(
+ 		// this will be set based on the security context below
+ 		oci.WithNewPrivileges,
+ 	)
++
++	// Override the default oci.Spec RLIMIT_NOFILE
++	var rlimits = []runtimespec.POSIXRlimit {
++		{
++			Type: "RLIMIT_NOFILE",
++			Hard: uint64(c.config.PluginConfig.ProcessRLimitNoFileHard),
++			Soft: uint64(c.config.PluginConfig.ProcessRLimitNoFileSoft),
++		},
++	}
++	specOpts = append(specOpts, customopts.WithProcessRLimits(rlimits))
++
+ 	if config.GetWorkingDir() != "" {
+ 		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
+ 	} else if imageConfig.WorkingDir != "" {
+-- 
+2.21.3
+
