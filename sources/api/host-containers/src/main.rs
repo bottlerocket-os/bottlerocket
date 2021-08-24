@@ -233,6 +233,15 @@ impl<'a> SystemdUnit<'a> {
 
         Ok(())
     }
+
+    fn try_reload_or_restart(&self) -> Result<()> {
+        command(
+            constants::SYSTEMCTL_BIN,
+            &["try-reload-or-restart", &self.unit],
+        )?;
+
+        Ok(())
+    }
 }
 
 /// Wrapper around process::Command that adds error checking.
@@ -402,8 +411,14 @@ where
         // it will start before the system is fully configured
         match command(constants::SYSTEMCTL_BIN, &["get-default"])?.trim().as_ref() {
             "multi-user.target" => {
-                debug!("Enabling and starting container: '{}'", unit_name);
-                systemd_unit.enable_and_start()?
+                if systemd_unit.is_active()? {
+                    debug!("Stopping and starting host container: '{}'", unit_name);
+                    systemd_unit.try_reload_or_restart()?
+                }
+                else {
+                    debug!("Enabling and starting container: '{}'", unit_name);
+                    systemd_unit.enable_and_start()?
+                }
             }
             _ => {
                 debug!("Enabling: '{}'", unit_name);
