@@ -3,9 +3,10 @@ pub mod vmware;
 
 use crate::vmware::VmwareConfig;
 use chrono::Duration;
+use log::info;
 use parse_datetime::parse_offset;
 use serde::{Deserialize, Deserializer, Serialize};
-use snafu::ResultExt;
+use snafu::{OptionExt, ResultExt};
 use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
 use std::fs;
@@ -38,6 +39,16 @@ impl InfraConfig {
         toml::from_str(&infra_config_str).context(error::InvalidToml { path })
     }
 
+    /// Deserializes an InfraConfig from a Infra.lock file at a given path
+    pub fn from_lock_path<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
+        let infra_config_str = fs::read_to_string(path).context(error::File { path })?;
+        serde_yaml::from_str(&infra_config_str).context(error::InvalidLock { path })
+    }
+
     /// Deserializes an InfraConfig from a given path, if it exists, otherwise builds a default
     /// config
     pub fn from_path_or_default<P>(path: P) -> Result<Self>
@@ -51,14 +62,51 @@ impl InfraConfig {
         }
     }
 
-    /// Deserializes an InfraConfig from a Infra.lock file at a given path
-    pub fn from_lock_path<P>(path: P) -> Result<Self>
+    /// Deserializes an InfraConfig from Infra.lock, if it exists, otherwise uses Infra.toml
+    /// If the default flag is true, will create a default config if Infra.toml doesn't exist
+    pub fn from_path_or_lock(path: &Path, default: bool) -> Result<Self> {
+        let lock_path = Self::compute_lock_path(&path)?;
+        if lock_path.exists() {
+            info!(
+                "Found infra config at path: {}",
+                lock_path.display()
+            );
+            Self::from_lock_path(lock_path)
+        } else if default {
+            Self::from_path_or_default(&path)
+        } else {
+            info!(
+                "Found infra config at path: {}",
+                path.display()
+            );
+            Self::from_path(&path)
+        }
+    }
+
+    /// Looks for a file named `Infra.lock` in the same directory as the file named by
+    /// `infra_config_path`. Returns true if the `Infra.lock` file exists, or if `infra_config_path`
+    /// exists. Returns an error if the directory of `infra_config_path` cannot be found.
+    pub fn lock_or_infra_config_exists<P>(infra_config_path: P) -> Result<bool>
     where
         P: AsRef<Path>,
     {
-        let path = path.as_ref();
-        let infra_config_str = fs::read_to_string(path).context(error::File { path })?;
-        serde_yaml::from_str(&infra_config_str).context(error::InvalidLock { path })
+        let lock_path = Self::compute_lock_path(&infra_config_path)?;
+        Ok(lock_path.exists() || infra_config_path.as_ref().exists())
+    }
+
+    /// Returns the file path to a file named `Infra.lock` in the same directory as the file named
+    /// by `infra_config_path`.
+    pub fn compute_lock_path<P>(infra_config_path: P) -> Result<PathBuf>
+    where
+        P: AsRef<Path>,
+    {
+        Ok(infra_config_path
+            .as_ref()
+            .parent()
+            .context(error::Parent {
+                path: infra_config_path.as_ref(),
+            })?
+            .join("Infra.lock"))
     }
 }
 
@@ -229,6 +277,9 @@ mod error {
 
         #[snafu(display("Missing config: {}", what))]
         MissingConfig { what: String },
+
+        #[snafu(display("Failed to get parent of path: {}", path.display()))]
+        Parent { path: PathBuf },
     }
 }
 pub use error::Error;

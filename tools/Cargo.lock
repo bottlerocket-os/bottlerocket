@@ -1169,6 +1169,7 @@ dependencies = [
  "rusoto_credential",
  "rusoto_ebs",
  "rusoto_ec2",
+ "rusoto_kms",
  "rusoto_signature",
  "rusoto_ssm",
  "rusoto_sts",

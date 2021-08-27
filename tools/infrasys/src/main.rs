@@ -75,10 +75,7 @@ fn run() -> Result<()> {
 }
 
 fn check_infra_lock(toml_path: &Path) -> Result<()> {
-    let lock_path = toml_path
-        .parent()
-        .context(error::Parent { path: toml_path })?
-        .join("Infra.lock");
+    let lock_path = InfraConfig::compute_lock_path(toml_path).context(error::Config)?;
 
     ensure!(!lock_path.is_file(), {
         error!(
