@@ -1,0 +1,15 @@
+[Unit]
+Description=Send signal to CloudFormation Stack
+After=network-online.target settings-applier.service
+Requires=settings-applier.service
+Wants=network-online.target
+# We only want to run once, at first boot. This file is created by cfsignal
+# after a successful run.
+ConditionPathExists=!/var/lib/bottlerocket/cfsignal.ran
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/cfsignal
+
+[Install]
+WantedBy=preconfigured.target

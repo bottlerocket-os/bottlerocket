@@ -419,6 +419,13 @@ These settings can be changed at any time.
   Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
 * `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
 
+#### CloudFormation signal helper settings
+
+For AWS variants, these settings allow you to set up CloudFormation signaling to indicate whether Bottlerocket hosts running in EC2 have been successfully created or updated:
+* `settings.cloudformation.should-signal`: Whether to check status and send signal. Defaults to `false`. If set to `true`, both `stack-name` and `logical-resource-id` need to be specified.
+* `settings.cloudformation.stack-name`: Name of the CloudFormation Stack to signal.
+* `settings.cloudformation.logical-resource-id`: The logical ID of the AutoScalingGroup resource that you want to signal.
+
 #### OCI Hooks settings
 
 Bottlerocket allows you to opt-in to use additional [OCI hooks](https://github.com/opencontainers/runtime-spec/blob/main/runtime.md#lifecycle) for your orchestrated containers.

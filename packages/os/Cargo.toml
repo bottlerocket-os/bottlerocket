@@ -22,7 +22,8 @@ source-groups = [
     "imdsclient",
     "retry-read",
     "shimpei",
-    "driverdog"
+    "driverdog",
+    "cfsignal",
 ]
 
 [lib]

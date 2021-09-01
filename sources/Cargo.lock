@@ -216,6 +216,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-cfsignal"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -647,6 +654,23 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "cfsignal"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+ "hyper",
+ "imdsclient",
+ "log",
+ "rusoto_cloudformation",
+ "rusoto_core",
+ "serde",
+ "simplelog",
+ "snafu",
+ "tokio",
+ "toml",
+]
 
 [[package]]
 name = "chrono"
@@ -2656,6 +2680,20 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi",
+]
+
+[[package]]
+name = "rusoto_cloudformation"
+version = "0.47.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e00db4cfcfc14725c720d881443f2c17607bd80aa20fecd1382a5936cc2db05d"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures",
+ "rusoto_core",
+ "serde_urlencoded",
+ "xml-rs",
 ]
 
 [[package]]

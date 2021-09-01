@@ -157,6 +157,12 @@ impl ImdsClient {
         self.fetch_string(&instance_type_target).await
     }
 
+    /// Gets the instance-id from instance metadata.
+    pub async fn fetch_instance_id(&mut self) -> Result<Option<String>> {
+        let instance_type_target = "meta-data/instance-id";
+        self.fetch_string(&instance_type_target).await
+    }
+
     /// Returns a list of public ssh keys skipping any keys that do not start with 'ssh'.
     pub async fn fetch_public_ssh_keys(&mut self) -> Result<Option<Vec<String>>> {
         info!("Fetching list of available public keys from IMDS");

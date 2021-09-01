@@ -1,0 +1,15 @@
+[settings.cloudformation]
+should-signal = false
+stack-name = ""
+logical-resource-id = ""
+
+[services.cfsignal]
+configuration-files = ["cfsignal-toml"]
+restart-commands = ["/bin/systemctl try-restart cfsignal.service"]
+
+[configuration-files.cfsignal-toml]
+path = "/etc/cfsignal.toml"
+template-path = "/usr/share/templates/cfsignal-toml"
+
+[metadata.settings.cloudformation]
+affected-services = ["cfsignal"]
