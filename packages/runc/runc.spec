@@ -1,15 +1,14 @@
 %global goproject github.com/opencontainers
 %global gorepo runc
 %global goimport %{goproject}/%{gorepo}
-%global commit 4144b63817ebcc5b358fc2c8ef95f7cddd709aa7
-%global shortcommit 4144b63
-%global gover 1.0.1
+%global commit 52b36a2dd837e8462de8e01458bf02cf9eea47dd
+%global gover 1.0.2
 
 %global _dwz_low_mem_die_limit 0
 
 Name: %{_cross_os}%{gorepo}
 Version: %{gover}
-Release: 1.%{shortcommit}%{?dist}
+Release: 1%{?dist}
 Summary: CLI for running Open Containers
 License: Apache-2.0
 URL: https://%{goimport}
