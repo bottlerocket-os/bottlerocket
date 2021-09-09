@@ -1,0 +1,38 @@
+From 3a48da47a91ccc6f5de260574809e7a44551b876 Mon Sep 17 00:00:00 2001
+From: Siddhesh Poyarekar <siddhesh@sourceware.org>
+Date: Tue, 3 Aug 2021 21:10:20 +0530
+Subject: [PATCH 02/26] gconv_parseconfdir: Fix memory leak
+
+The allocated `conf` would leak if we have to skip over the file due
+to the underlying filesystem not supporting dt_type.
+
+Reviewed-by: Arjun Shankar <arjun@redhat.com>
+(cherry picked from commit 5f9b78fe35d08739b6da1e5b356786d41116c108)
+---
+ iconv/gconv_parseconfdir.h | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/iconv/gconv_parseconfdir.h b/iconv/gconv_parseconfdir.h
+index a4153e54c6..2f062689ec 100644
+--- a/iconv/gconv_parseconfdir.h
++++ b/iconv/gconv_parseconfdir.h
+@@ -153,12 +153,11 @@ gconv_parseconfdir (const char *dir, size_t dir_len)
+ 	      struct stat64 st;
+ 	      if (asprintf (&conf, "%s/%s", buf, ent->d_name) < 0)
+ 		continue;
+-	      if (ent->d_type == DT_UNKNOWN
+-		  && (lstat64 (conf, &st) == -1
+-		      || !S_ISREG (st.st_mode)))
+-		continue;
+ 
+-	      found |= read_conf_file (conf, dir, dir_len);
++	      if (ent->d_type != DT_UNKNOWN
++		  || (lstat64 (conf, &st) != -1 && S_ISREG (st.st_mode)))
++		found |= read_conf_file (conf, dir, dir_len);
++
+ 	      free (conf);
+ 	    }
+ 	}
+-- 
+2.21.3
+

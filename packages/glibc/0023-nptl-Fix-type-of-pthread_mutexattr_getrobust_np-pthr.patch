@@ -1,0 +1,51 @@
+From 8b8a1d0b7375c547ae905917a03743ed6759c5bc Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 21 Sep 2021 07:12:56 +0200
+Subject: [PATCH 23/26] nptl: Fix type of pthread_mutexattr_getrobust_np,
+ pthread_mutexattr_setrobust_np (bug 28036)
+
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+Tested-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit f3e664563361dc17530113b3205998d1f19dc4d9)
+---
+ NEWS                   | 1 +
+ sysdeps/nptl/pthread.h | 4 ++--
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index 00fae31e92..a0c27ecf55 100644
+--- a/NEWS
++++ b/NEWS
+@@ -11,6 +11,7 @@ The following bugs are resolved with this release:
+ 
+   [12889] nptl: Fix race between pthread_kill and thread exit
+   [19193] nptl: pthread_kill, pthread_cancel should not fail after exit
++  [28036] Incorrect types for pthread_mutexattr_set/getrobust_np
+   [28182] _TIME_BITS=64 in C++ has issues with fcntl, ioctl, prctl
+ 
+ 
+diff --git a/sysdeps/nptl/pthread.h b/sysdeps/nptl/pthread.h
+index f1b7f2bdc6..43146e91c9 100644
+--- a/sysdeps/nptl/pthread.h
++++ b/sysdeps/nptl/pthread.h
+@@ -933,7 +933,7 @@ extern int pthread_mutexattr_getrobust (const pthread_mutexattr_t *__attr,
+ # ifdef __USE_GNU
+ #  ifdef __REDIRECT_NTH
+ extern int __REDIRECT_NTH (pthread_mutexattr_getrobust_np,
+-			   (pthread_mutex_t *, int *),
++			   (pthread_mutexattr_t *, int *),
+ 			   pthread_mutexattr_getrobust) __nonnull ((1))
+   __attribute_deprecated_msg__ ("\
+ pthread_mutexattr_getrobust_np is deprecated, use pthread_mutexattr_getrobust");
+@@ -949,7 +949,7 @@ extern int pthread_mutexattr_setrobust (pthread_mutexattr_t *__attr,
+ # ifdef __USE_GNU
+ #  ifdef __REDIRECT_NTH
+ extern int __REDIRECT_NTH (pthread_mutexattr_setrobust_np,
+-			   (pthread_mutex_t *, int),
++			   (pthread_mutexattr_t *, int),
+ 			   pthread_mutexattr_setrobust) __nonnull ((1))
+   __attribute_deprecated_msg__ ("\
+ pthread_mutexattr_setrobust_np is deprecated, use pthread_mutexattr_setrobust");
+-- 
+2.21.3
+

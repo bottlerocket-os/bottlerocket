@@ -1,0 +1,1437 @@
+commit 466f2be6c08070e9113ae2fdc7acd5d8828cba50
+Author: Carlos O'Donell <carlos@redhat.com>
+Date:   Wed Sep 1 15:19:19 2021 -0400
+
+    Add generic C.UTF-8 locale (Bug 17318)
+    
+    We add a new C.UTF-8 locale. This locale is not builtin to glibc, but
+    is provided as a distinct locale. The locale provides full support for
+    UTF-8 and this includes full code point sorting via STRCMP-based
+    collation (strcmp or wcscmp).
+    
+    The collation uses a new keyword 'codepoint_collation' which drops all
+    collation rules and generates an empty zero rules collation to enable
+    STRCMP usage in collation. This ensures that we get full code point
+    sorting for C.UTF-8 with a minimal 1406 bytes of overhead (LC_COLLATE
+    structure information and ASCII collating tables).
+    
+    The new locale is added to SUPPORTED. Minimal test data for specific
+    code points (minus those not supported by collate-test) is provided in
+    C.UTF-8.in, and this verifies code point sorting is working reasonably
+    across the range. The locale was tested manually with the full set of
+    code points without failure.
+    
+    The locale is harmonized with locales already shipping in various
+    downstream distributions. A new tst-iconv9 test is added which verifies
+    the C.UTF-8 locale is generally usable.
+    
+    Testing for fnmatch, regexec, and recomp is provided by extending
+    bug-regex1, bugregex19, bug-regex4, bug-regex6, transbug, tst-fnmatch,
+    tst-regcomp-truncated, and tst-regex to use C.UTF-8.
+    
+    Tested on x86_64 or i686 without regression.
+    
+    Reviewed-by: Florian Weimer <fweimer@redhat.com>
+
+diff --git a/iconv/Makefile b/iconv/Makefile
+index 07d77c9ecaafba1f..9993f2d3f3cd7498 100644
+--- a/iconv/Makefile
++++ b/iconv/Makefile
+@@ -43,8 +43,19 @@ CFLAGS-charmap.c += -DCHARMAP_PATH='"$(i18ndir)/charmaps"' \
+ CFLAGS-linereader.c += -DNO_TRANSLITERATION
+ CFLAGS-simple-hash.c += -I../locale
+ 
+-tests	= tst-iconv1 tst-iconv2 tst-iconv3 tst-iconv4 tst-iconv5 tst-iconv6 \
+-	  tst-iconv7 tst-iconv8 tst-iconv-mt tst-iconv-opt
++tests = \
++	tst-iconv1 \
++	tst-iconv2 \
++	tst-iconv3 \
++	tst-iconv4 \
++	tst-iconv5 \
++	tst-iconv6 \
++	tst-iconv7 \
++	tst-iconv8 \
++	tst-iconv9 \
++	tst-iconv-mt \
++	tst-iconv-opt \
++	# tests
+ 
+ others		= iconv_prog iconvconfig
+ install-others-programs	= $(inst_bindir)/iconv
+@@ -83,10 +94,15 @@ endif
+ include ../Rules
+ 
+ ifeq ($(run-built-tests),yes)
+-LOCALES := en_US.UTF-8
++# We have to generate locales (list sorted alphabetically)
++LOCALES := \
++	C.UTF-8 \
++	en_US.UTF-8 \
++	# LOCALES
+ include ../gen-locales.mk
+ 
+ $(objpfx)tst-iconv-opt.out: $(gen-locales)
++$(objpfx)tst-iconv9.out: $(gen-locales)
+ endif
+ 
+ $(inst_bindir)/iconv: $(objpfx)iconv_prog $(+force)
+diff --git a/iconv/tst-iconv9.c b/iconv/tst-iconv9.c
+new file mode 100644
+index 0000000000000000..c46b1833d87b8e55
+--- /dev/null
++++ b/iconv/tst-iconv9.c
+@@ -0,0 +1,87 @@
++/* Verify that using C.UTF-8 works.
++
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <iconv.h>
++#include <stddef.h>
++#include <stdio.h>
++#include <string.h>
++#include <support/support.h>
++#include <support/check.h>
++
++/* This test does two things:
++   (1) Verify that we have likely included translit_combining in C.UTF-8.
++   (2) Verify default_missing is '?' as expected.  */
++
++/* ISO-8859-1 encoding of "für".  */
++char iso88591_in[] = { 0x66, 0xfc, 0x72, 0x0 };
++/* ASCII transliteration is "fur" with C.UTF-8 translit_combining.  */
++char ascii_exp[] = { 0x66, 0x75, 0x72, 0x0 };
++
++/* First 3-byte UTF-8 code point.  */
++char utf8_in[] = { 0xe0, 0xa0, 0x80, 0x0 };
++/* There is no ASCII transliteration for SAMARITAN LETTER ALAF
++   so we get default_missing used which is '?'.  */
++char default_missing_exp[] = { 0x3f, 0x0 };
++
++static int
++do_test (void)
++{
++  char ascii_out[5];
++  iconv_t cd;
++  char *inbuf;
++  char *outbuf;
++  size_t inbytes;
++  size_t outbytes;
++  size_t n;
++
++  /* The C.UTF-8 locale should include translit_combining, which provides
++     the transliteration for "LATIN SMALL LETTER U WITH DIAERESIS" which
++     is not provided by locale/C-translit.h.in.  */
++  xsetlocale (LC_ALL, "C.UTF-8");
++
++  /* From ISO-8859-1 to ASCII.  */
++  cd = iconv_open ("ASCII//TRANSLIT,IGNORE", "ISO-8859-1");
++  TEST_VERIFY (cd != (iconv_t) -1);
++  inbuf = iso88591_in;
++  inbytes = 3;
++  outbuf = ascii_out;
++  outbytes = 3;
++  n = iconv (cd, &inbuf, &inbytes, &outbuf, &outbytes);
++  TEST_VERIFY (n != -1);
++  *outbuf = '\0';
++  TEST_COMPARE_BLOB (ascii_out, 3, ascii_exp, 3);
++  TEST_VERIFY (iconv_close (cd) == 0);
++
++  /* From UTF-8 to ASCII.  */
++  cd = iconv_open ("ASCII//TRANSLIT,IGNORE", "UTF-8");
++  TEST_VERIFY (cd != (iconv_t) -1);
++  inbuf = utf8_in;
++  inbytes = 3;
++  outbuf = ascii_out;
++  outbytes = 3;
++  n = iconv (cd, &inbuf, &inbytes, &outbuf, &outbytes);
++  TEST_VERIFY (n != -1);
++  *outbuf = '\0';
++  TEST_COMPARE_BLOB (ascii_out, 1, default_missing_exp, 1);
++  TEST_VERIFY (iconv_close (cd) == 0);
++
++  return 0;
++}
++
++#include <support/test-driver.c>
+diff --git a/localedata/C.UTF-8.in b/localedata/C.UTF-8.in
+new file mode 100644
+index 0000000000000000..c31dcc2aa045ee61
+--- /dev/null
++++ b/localedata/C.UTF-8.in
+@@ -0,0 +1,157 @@
++ ; <U1>
++ ; <U2>
++ ; <U3>
++ ; <U4>
++ ; <U5>
++ ; <U6>
++ ; <U7>
++ ; <U8>
++ ; <UE>
++ ; <UF>
++ ; <U10>
++ ; <U11>
++ ; <U12>
++ ; <U13>
++ ; <U14>
++ ; <U15>
++ ; <U16>
++ ; <U17>
++ ; <U18>
++ ; <U19>
++ ; <U1A>
++ ; <U1B>
++ ; <U1C>
++ ; <U1D>
++ ; <U1E>
++ ; <U1F>
++! ; <U21>
++" ; <U22>
++# ; <U23>
++$ ; <U24>
++% ; <U25>
++& ; <U26>
++' ; <U27>
++) ; <U29>
++* ; <U2A>
+++ ; <U2B>
++, ; <U2C>
++- ; <U2D>
++. ; <U2E>
++/ ; <U2F>
++0 ; <U30>
++1 ; <U31>
++2 ; <U32>
++3 ; <U33>
++4 ; <U34>
++5 ; <U35>
++6 ; <U36>
++7 ; <U37>
++8 ; <U38>
++9 ; <U39>
++< ; <U3C>
++= ; <U3D>
++> ; <U3E>
++? ; <U3F>
++@ ; <U40>
++A ; <U41>
++B ; <U42>
++C ; <U43>
++D ; <U44>
++E ; <U45>
++F ; <U46>
++G ; <U47>
++H ; <U48>
++I ; <U49>
++J ; <U4A>
++K ; <U4B>
++L ; <U4C>
++M ; <U4D>
++N ; <U4E>
++O ; <U4F>
++P ; <U50>
++Q ; <U51>
++R ; <U52>
++S ; <U53>
++T ; <U54>
++U ; <U55>
++V ; <U56>
++W ; <U57>
++X ; <U58>
++Y ; <U59>
++Z ; <U5A>
++[ ; <U5B>
++\ ; <U5C>
++] ; <U5D>
++^ ; <U5E>
++_ ; <U5F>
++` ; <U60>
++a ; <U61>
++b ; <U62>
++c ; <U63>
++d ; <U64>
++e ; <U65>
++f ; <U66>
++g ; <U67>
++h ; <U68>
++i ; <U69>
++j ; <U6A>
++k ; <U6B>
++l ; <U6C>
++m ; <U6D>
++n ; <U6E>
++o ; <U6F>
++p ; <U70>
++q ; <U71>
++r ; <U72>
++s ; <U73>
++t ; <U74>
++u ; <U75>
++v ; <U76>
++w ; <U77>
++x ; <U78>
++y ; <U79>
++z ; <U7A>
++{ ; <U7B>
++| ; <U7C>
++} ; <U7D>
++~ ; <U7E>
++ ; <U7F>
++ ; <U80>
++ÿ ; <UFF>
++Ā ; <U100>
++࿿ ; <UFFF>
++က ; <U1000>
++� ; <UFFFD>
++￿ ; <UFFFF>
++𐀀 ; <U10000>
++🿿 ; <U1FFFF>
++𠀀 ; <U20000>
++𯿿 ; <U2FFFF>
++𰀀 ; <U30000>
++𿿾 ; <U3FFFE>
++񀀀 ; <U40000>
++񏿿 ; <U4FFFF>
++񐀀 ; <U50000>
++񟿿 ; <U5FFFF>
++񠀀 ; <U60000>
++񯿿 ; <U6FFFF>
++񰀀 ; <U70000>
++񿿿 ; <U7FFFF>
++򀀀 ; <U80000>
++򏿿 ; <U8FFFF>
++򐀀 ; <U90000>
++򟿿 ; <U9FFFF>
++򠀀 ; <UA0000>
++򯿿 ; <UAFFFF>
++򰀀 ; <UB0000>
++򿿿 ; <UBFFFF>
++󀀁 ; <UC0001>
++󏿌 ; <UCFFCC>
++󐀎 ; <UD000E>
++󟿿 ; <UDFFFF>
++󠀁 ; <UE0001>
++󯿿 ; <UEFFFF>
++󰀁 ; <UF0001>
++󿿿 ; <UFFFFF>
++􀀁 ; <U100001>
++􏿿 ; <U10FFFF>
+diff --git a/localedata/Makefile b/localedata/Makefile
+index 0341528b0407ae3b..c9dd5a954e8194cc 100644
+--- a/localedata/Makefile
++++ b/localedata/Makefile
+@@ -47,6 +47,7 @@ test-input := \
+ 	bg_BG.UTF-8 \
+ 	br_FR.UTF-8 \
+ 	bs_BA.UTF-8 \
++	C.UTF-8 \
+ 	ckb_IQ.UTF-8 \
+ 	cmn_TW.UTF-8 \
+ 	crh_UA.UTF-8 \
+@@ -206,6 +207,7 @@ LOCALES := \
+ 	bg_BG.UTF-8 \
+ 	br_FR.UTF-8 \
+ 	bs_BA.UTF-8 \
++	C.UTF-8 \
+ 	ckb_IQ.UTF-8 \
+ 	cmn_TW.UTF-8 \
+ 	crh_UA.UTF-8 \
+diff --git a/localedata/SUPPORTED b/localedata/SUPPORTED
+index 34f7a7c3fe2b6526..546ce6cea16a8fdb 100644
+--- a/localedata/SUPPORTED
++++ b/localedata/SUPPORTED
+@@ -79,6 +79,7 @@ brx_IN/UTF-8 \
+ bs_BA.UTF-8/UTF-8 \
+ bs_BA/ISO-8859-2 \
+ byn_ER/UTF-8 \
++C.UTF-8/UTF-8 \
+ ca_AD.UTF-8/UTF-8 \
+ ca_AD/ISO-8859-15 \
+ ca_ES.UTF-8/UTF-8 \
+diff --git a/localedata/locales/C b/localedata/locales/C
+new file mode 100644
+index 0000000000000000..ca801c79cf7e953e
+--- /dev/null
++++ b/localedata/locales/C
+@@ -0,0 +1,194 @@
++escape_char /
++comment_char %
++% Locale for C locale in UTF-8
++
++LC_IDENTIFICATION
++title      "C locale"
++source     ""
++address    ""
++contact    ""
++email      "bug-glibc-locales@gnu.org"
++tel        ""
++fax        ""
++language   ""
++territory  ""
++revision   "2.0"
++date       "2020-06-28"
++category  "i18n:2012";LC_IDENTIFICATION
++category  "i18n:2012";LC_CTYPE
++category  "i18n:2012";LC_COLLATE
++category  "i18n:2012";LC_TIME
++category  "i18n:2012";LC_NUMERIC
++category  "i18n:2012";LC_MONETARY
++category  "i18n:2012";LC_MESSAGES
++category  "i18n:2012";LC_PAPER
++category  "i18n:2012";LC_NAME
++category  "i18n:2012";LC_ADDRESS
++category  "i18n:2012";LC_TELEPHONE
++category  "i18n:2012";LC_MEASUREMENT
++END LC_IDENTIFICATION
++
++LC_CTYPE
++% Include only the i18n character type classes without any of the
++% transliteration that i18n uses by default.
++copy "i18n_ctype"
++
++% Include the neutral transliterations.  The builtin C and
++% POSIX locales have +1600 transliterations that are built into
++% the locales, and these are a superset of those.
++translit_start
++include "translit_neutral";""
++% We must use '?' for default_missing because the transliteration
++% framework includes it directly into the output and so it must
++% be compatible with ASCII if that is the target character set.
++default_missing <U003F>
++translit_end
++
++% Include the transliterations that can convert combined characters.
++% These are generally expected by users.
++translit_start
++include "translit_combining";""
++translit_end
++
++END LC_CTYPE
++
++LC_COLLATE
++% The keyword 'codepoint_collation' in any part of any LC_COLLATE
++% immediately discards all collation information and causes the
++% locale to use strcmp/wcscmp for collation comparison.  This is
++% exactly what is needed for C (ASCII) or C.UTF-8.
++codepoint_collation
++END LC_COLLATE
++
++LC_MONETARY
++
++% This is the 14652 i18n fdcc-set definition for the LC_MONETARY
++% category (except for the int_curr_symbol and currency_symbol, they are
++% empty in the 14652 i18n fdcc-set definition and also empty in
++% glibc/locale/C-monetary.c.).
++int_curr_symbol     ""
++currency_symbol     ""
++mon_decimal_point   "."
++mon_thousands_sep   ""
++mon_grouping        -1
++positive_sign       ""
++negative_sign       "-"
++int_frac_digits     -1
++frac_digits         -1
++p_cs_precedes       -1
++int_p_sep_by_space  -1
++p_sep_by_space      -1
++n_cs_precedes       -1
++int_n_sep_by_space  -1
++n_sep_by_space      -1
++p_sign_posn         -1
++n_sign_posn         -1
++%
++END LC_MONETARY
++
++LC_NUMERIC
++% This is the POSIX Locale definition for
++% the LC_NUMERIC category.
++%
++decimal_point   "."
++thousands_sep   ""
++grouping        -1
++END LC_NUMERIC
++
++LC_TIME
++% This is the POSIX Locale definition for the LC_TIME category with the
++% exception that time is per ISO 8601 and 24-hour.
++%
++% Abbreviated weekday names (%a)
++abday       "Sun";"Mon";"Tue";"Wed";"Thu";"Fri";"Sat"
++
++% Full weekday names (%A)
++day         "Sunday";"Monday";"Tuesday";"Wednesday";"Thursday";/
++            "Friday";"Saturday"
++
++% Abbreviated month names (%b)
++abmon       "Jan";"Feb";"Mar";"Apr";"May";"Jun";"Jul";"Aug";"Sep";/
++            "Oct";"Nov";"Dec"
++
++% Full month names (%B)
++mon         "January";"February";"March";"April";"May";"June";"July";/
++            "August";"September";"October";"November";"December"
++
++% Week description, consists of three fields:
++% 1. Number of days in a week.
++% 2. Gregorian date that is a first weekday (19971130 for Sunday, 19971201 for Monday).
++% 3. The weekday number to be contained in the first week of the year.
++%
++% ISO 8601 conforming applications should use the values 7, 19971201 (a
++% Monday), and 4 (Thursday), respectively.
++week    7;19971201;4
++first_weekday	1
++first_workday	2
++
++% Appropriate date and time representation (%c)
++d_t_fmt "%a %b %e %H:%M:%S %Y"
++
++% Appropriate date representation (%x)
++d_fmt   "%m/%d/%y"
++
++% Appropriate time representation (%X)
++t_fmt   "%H:%M:%S"
++
++% Appropriate AM/PM time representation (%r)
++t_fmt_ampm "%I:%M:%S %p"
++
++% Equivalent of AM/PM (%p)
++am_pm	"AM";"PM"
++
++% Appropriate date representation (date(1))
++date_fmt	"%a %b %e %H:%M:%S %Z %Y"
++END LC_TIME
++
++LC_MESSAGES
++% This is the POSIX Locale definition for
++% the LC_NUMERIC category.
++%
++yesexpr "^[yY]"
++noexpr  "^[nN]"
++yesstr  "Yes"
++nostr   "No"
++END LC_MESSAGES
++
++LC_PAPER
++% This is the ISO/IEC 14652 "i18n" definition for
++% the LC_PAPER category.
++% (A4 paper, this is also used in the built in C/POSIX
++% locale in glibc/locale/C-paper.c)
++height   297
++width    210
++END LC_PAPER
++
++LC_NAME
++% This is the ISO/IEC 14652 "i18n" definition for
++% the LC_NAME category.
++% (also used in the built in C/POSIX locale in glibc/locale/C-name.c)
++name_fmt    "%p%t%g%t%m%t%f"
++END LC_NAME
++
++LC_ADDRESS
++% This is the ISO/IEC 14652 "i18n" definition for
++% the LC_ADDRESS category.
++% (also used in the built in C/POSIX locale in glibc/locale/C-address.c)
++postal_fmt    "%a%N%f%N%d%N%b%N%s %h %e %r%N%C-%z %T%N%c%N"
++END LC_ADDRESS
++
++LC_TELEPHONE
++% This is the ISO/IEC 14652 "i18n" definition for
++% the LC_TELEPHONE category.
++% "+%c %a %l"
++tel_int_fmt    "+%c %a %l"
++% (also used in the built in C/POSIX locale in glibc/locale/C-telephone.c)
++END LC_TELEPHONE
++
++LC_MEASUREMENT
++% This is the ISO/IEC 14652 "i18n" definition for
++% the LC_MEASUREMENT category.
++% (same as in the built in C/POSIX locale in glibc/locale/C-measurement.c)
++%metric
++measurement    1
++END LC_MEASUREMENT
+diff --git a/posix/Makefile b/posix/Makefile
+index 059efb3cd2706cbe..a5229777eeb0e067 100644
+--- a/posix/Makefile
++++ b/posix/Makefile
+@@ -190,9 +190,19 @@ $(objpfx)wordexp-tst.out: wordexp-tst.sh $(objpfx)wordexp-test
+ 	$(evaluate-test)
+ endif
+ 
+-LOCALES := cs_CZ.UTF-8 da_DK.ISO-8859-1 de_DE.ISO-8859-1 de_DE.UTF-8 \
+-	   en_US.UTF-8 es_US.ISO-8859-1 es_US.UTF-8 ja_JP.EUC-JP tr_TR.UTF-8 \
+-	   cs_CZ.ISO-8859-2
++LOCALES := \
++	cs_CZ.ISO-8859-2 \
++	cs_CZ.UTF-8 \
++	C.UTF-8 \
++	da_DK.ISO-8859-1 \
++	de_DE.ISO-8859-1 \
++	de_DE.UTF-8 \
++	en_US.UTF-8 \
++	es_US.ISO-8859-1 \
++	es_US.UTF-8 \
++	ja_JP.EUC-JP \
++	tr_TR.UTF-8 \
++	# LOCALES
+ include ../gen-locales.mk
+ 
+ $(objpfx)bug-regex1.out: $(gen-locales)
+diff --git a/posix/bug-regex1.c b/posix/bug-regex1.c
+index 38eb543951862492..7e9f4ec430a95631 100644
+--- a/posix/bug-regex1.c
++++ b/posix/bug-regex1.c
+@@ -41,6 +41,26 @@ main (void)
+ 	puts (" -> OK");
+     }
+ 
++  puts ("in C.UTF-8 locale");
++  setlocale (LC_ALL, "C.UTF-8");
++  s = re_compile_pattern ("[an\371]*n", 7, &regex);
++  if (s != NULL)
++    {
++      puts ("re_compile_pattern return non-NULL value");
++      result = 1;
++    }
++  else
++    {
++      match = re_match (&regex, "an", 2, 0, &regs);
++      if (match != 2)
++	{
++	  printf ("re_match returned %d, expected 2\n", match);
++	  result = 1;
++	}
++      else
++	puts (" -> OK");
++    }
++
+   puts ("in de_DE.ISO-8859-1 locale");
+   setlocale (LC_ALL, "de_DE.ISO-8859-1");
+   s = re_compile_pattern ("[an�]*n", 7, &regex);
+diff --git a/posix/bug-regex19.c b/posix/bug-regex19.c
+index b3fee0a7302c3263..e00ff60a14f994bf 100644
+--- a/posix/bug-regex19.c
++++ b/posix/bug-regex19.c
+@@ -25,6 +25,7 @@
+ #include <string.h>
+ #include <locale.h>
+ #include <libc-diag.h>
++#include <support/support.h>
+ 
+ #define BRE RE_SYNTAX_POSIX_BASIC
+ #define ERE RE_SYNTAX_POSIX_EXTENDED
+@@ -407,8 +408,8 @@ do_mb_tests (const struct test_s *test)
+   return 0;
+ }
+ 
+-int
+-main (void)
++static int
++do_test (void)
+ {
+   size_t i;
+   int ret = 0;
+@@ -417,20 +418,17 @@ main (void)
+ 
+   for (i = 0; i < sizeof (tests) / sizeof (tests[0]); ++i)
+     {
+-      if (setlocale (LC_ALL, "de_DE.ISO-8859-1") == NULL)
+-	{
+-	  puts ("setlocale de_DE.ISO-8859-1 failed");
+-	  ret = 1;
+-	}
++      xsetlocale (LC_ALL, "de_DE.ISO-8859-1");
+       ret |= do_one_test (&tests[i], "");
+-      if (setlocale (LC_ALL, "de_DE.UTF-8") == NULL)
+-	{
+-	  puts ("setlocale de_DE.UTF-8 failed");
+-	  ret = 1;
+-	}
++      xsetlocale (LC_ALL, "de_DE.UTF-8");
++      ret |= do_one_test (&tests[i], "UTF-8 ");
++      ret |= do_mb_tests (&tests[i]);
++      xsetlocale (LC_ALL, "C.UTF-8");
+       ret |= do_one_test (&tests[i], "UTF-8 ");
+       ret |= do_mb_tests (&tests[i]);
+     }
+ 
+   return ret;
+ }
++
++#include <support/test-driver.c>
+diff --git a/posix/bug-regex4.c b/posix/bug-regex4.c
+index 8d5ae11567889301..6475833c525176b2 100644
+--- a/posix/bug-regex4.c
++++ b/posix/bug-regex4.c
+@@ -32,8 +32,33 @@ main (void)
+ 
+   memset (&regex, '\0', sizeof (regex));
+ 
++  printf ("INFO: Checking C.\n");
+   setlocale (LC_ALL, "C");
+ 
++  s = re_compile_pattern ("ab[cde]", 7, &regex);
++  if (s != NULL)
++    {
++      puts ("re_compile_pattern returned non-NULL value");
++      result = 1;
++    }
++  else
++    {
++      match[0] = re_search_2 (&regex, "xyabez", 6, "", 0, 1, 5, NULL, 6);
++      match[1] = re_search_2 (&regex, NULL, 0, "abc", 3, 0, 3, NULL, 3);
++      match[2] = re_search_2 (&regex, "xya", 3, "bd", 2, 2, 3, NULL, 5);
++      if (match[0] != 2 || match[1] != 0 || match[2] != 2)
++	{
++	  printf ("re_search_2 returned %d,%d,%d, expected 2,0,2\n",
++		  match[0], match[1], match[2]);
++	  result = 1;
++	}
++      else
++	puts (" -> OK");
++    }
++
++  printf ("INFO: Checking C.UTF-8.\n");
++  setlocale (LC_ALL, "C.UTF-8");
++
+   s = re_compile_pattern ("ab[cde]", 7, &regex);
+   if (s != NULL)
+     {
+diff --git a/posix/bug-regex6.c b/posix/bug-regex6.c
+index 2bdf2126a49ee99b..0929b69b83c91e5e 100644
+--- a/posix/bug-regex6.c
++++ b/posix/bug-regex6.c
+@@ -30,7 +30,7 @@ main (int argc, char *argv[])
+   regex_t re;
+   regmatch_t mat[10];
+   int i, j, ret = 0;
+-  const char *locales[] = { "C", "de_DE.UTF-8" };
++  const char *locales[] = { "C", "C.UTF-8", "de_DE.UTF-8" };
+   const char *string = "http://www.regex.com/pattern/matching.html#intro";
+   regmatch_t expect[10] = {
+     { 0, 48 }, { 0, 5 }, { 0, 4 }, { 5, 20 }, { 7, 20 }, { 20, 42 },
+diff --git a/posix/transbug.c b/posix/transbug.c
+index d0983b4d44d04fd2..b240177cf72326ff 100644
+--- a/posix/transbug.c
++++ b/posix/transbug.c
+@@ -116,16 +116,32 @@ do_test (void)
+   static const char lower[] = "[[:lower:]]+";
+   static const char upper[] = "[[:upper:]]+";
+   struct re_registers regs[4];
++  int result = 0;
+ 
++#define CHECK(exp) \
++  if (exp) { puts (#exp); result = 1; }
++
++  printf ("INFO: Checking C.\n");
+   setlocale (LC_ALL, "C");
+ 
+   (void) re_set_syntax (RE_SYNTAX_GNU_AWK);
+ 
+-  int result;
+-#define CHECK(exp) \
+-  if (exp) { puts (#exp); result = 1; }
++  result |= run_test (lower, regs);
++  result |= run_test (upper, &regs[2]);
++  if (! result)
++    {
++      CHECK (regs[0].start[0] != regs[2].start[0]);
++      CHECK (regs[0].end[0] != regs[2].end[0]);
++      CHECK (regs[1].start[0] != regs[3].start[0]);
++      CHECK (regs[1].end[0] != regs[3].end[0]);
++    }
++
++  printf ("INFO: Checking C.UTF-8.\n");
++  setlocale (LC_ALL, "C.UTF-8");
++
++  (void) re_set_syntax (RE_SYNTAX_GNU_AWK);
+ 
+-  result = run_test (lower, regs);
++  result |= run_test (lower, regs);
+   result |= run_test (upper, &regs[2]);
+   if (! result)
+     {
+diff --git a/posix/tst-fnmatch.input b/posix/tst-fnmatch.input
+index 67aac5aadafd8aeb..6ff5318032e0afb2 100644
+--- a/posix/tst-fnmatch.input
++++ b/posix/tst-fnmatch.input
+@@ -472,6 +472,397 @@ C		"\\"			"[Z-\\]]"	       0
+ C		"]"			"[Z-\\]]"	       0
+ C		"-"			"[Z-\\]]"	       NOMATCH
+ 
++# B.6 004(C)
++C.UTF-8		 "!#%+,-./01234567889"	"!#%+,-./01234567889"  0
++C.UTF-8		 ":;=@ABCDEFGHIJKLMNO"	":;=@ABCDEFGHIJKLMNO"  0
++C.UTF-8		 "PQRSTUVWXYZ]abcdefg"	"PQRSTUVWXYZ]abcdefg"  0
++C.UTF-8		 "hijklmnopqrstuvwxyz"	"hijklmnopqrstuvwxyz"  0
++C.UTF-8		 "^_{}~"		"^_{}~"		       0
++
++# B.6 005(C)
++C.UTF-8		 "\"$&'()"		"\\\"\\$\\&\\'\\(\\)"  0
++C.UTF-8		 "*?[\\`|"		"\\*\\?\\[\\\\\\`\\|"  0
++C.UTF-8		 "<>"			"\\<\\>"	       0
++
++# B.6 006(C)
++C.UTF-8		 "?*["			"[?*[][?*[][?*[]"      0
++C.UTF-8		 "a/b"			"?/b"		       0
++
++# B.6 007(C)
++C.UTF-8		 "a/b"			"a?b"		       0
++C.UTF-8		 "a/b"			"a/?"		       0
++C.UTF-8		 "aa/b"			"?/b"		       NOMATCH
++C.UTF-8		 "aa/b"			"a?b"		       NOMATCH
++C.UTF-8		 "a/bb"			"a/?"		       NOMATCH
++
++# B.6 009(C)
++C.UTF-8		 "abc"			"[abc]"		       NOMATCH
++C.UTF-8		 "x"			"[abc]"		       NOMATCH
++C.UTF-8		 "a"			"[abc]"		       0
++C.UTF-8		 "["			"[[abc]"	       0
++C.UTF-8		 "a"			"[][abc]"	       0
++C.UTF-8		 "a]"			"[]a]]"		       0
++
++# B.6 010(C)
++C.UTF-8		 "xyz"			"[!abc]"	       NOMATCH
++C.UTF-8		 "x"			"[!abc]"	       0
++C.UTF-8		 "a"			"[!abc]"	       NOMATCH
++
++# B.6 011(C)
++C.UTF-8		 "]"			"[][abc]"	       0
++C.UTF-8		 "abc]"			"[][abc]"	       NOMATCH
++C.UTF-8		 "[]abc"		"[][]abc"	       NOMATCH
++C.UTF-8		 "]"			"[!]]"		       NOMATCH
++C.UTF-8		 "aa]"			"[!]a]"		       NOMATCH
++C.UTF-8		 "]"			"[!a]"		       0
++C.UTF-8		 "]]"			"[!a]]"		       0
++
++# B.6 012(C)
++C.UTF-8		 "a"			"[[.a.]]"	       0
++C.UTF-8		 "-"			"[[.-.]]"	       0
++C.UTF-8		 "-"			"[[.-.][.].]]"	       0
++C.UTF-8		 "-"			"[[.].][.-.]]"	       0
++C.UTF-8		 "-"			"[[.-.][=u=]]"	       0
++C.UTF-8		 "-"			"[[.-.][:alpha:]]"     0
++C.UTF-8		 "a"			"[![.a.]]"	       NOMATCH
++
++# B.6 013(C)
++C.UTF-8		 "a"			"[[.b.]]"	       NOMATCH
++C.UTF-8		 "a"			"[[.b.][.c.]]"	       NOMATCH
++C.UTF-8		 "a"			"[[.b.][=b=]]"	       NOMATCH
++
++
++# B.6 015(C)
++C.UTF-8		 "a"			"[[=a=]]"	       0
++C.UTF-8		 "b"			"[[=a=]b]"	       0
++C.UTF-8		 "b"			"[[=a=][=b=]]"	       0
++C.UTF-8		 "a"			"[[=a=][=b=]]"	       0
++C.UTF-8		 "a"			"[[=a=][.b.]]"	       0
++C.UTF-8		 "a"			"[[=a=][:digit:]]"     0
++
++# B.6 016(C)
++C.UTF-8		 "="			"[[=a=]b]"	       NOMATCH
++C.UTF-8		 "]"			"[[=a=]b]"	       NOMATCH
++C.UTF-8		 "a"			"[[=b=][=c=]]"	       NOMATCH
++C.UTF-8		 "a"			"[[=b=][.].]]"	       NOMATCH
++C.UTF-8		 "a"			"[[=b=][:digit:]]"     NOMATCH
++
++# B.6 017(C)
++C.UTF-8		 "a"			"[[:alnum:]]"	       0
++C.UTF-8		 "a"			"[![:alnum:]]"	       NOMATCH
++C.UTF-8		 "-"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "a]a"			"[[:alnum:]]a"	       NOMATCH
++C.UTF-8		 "-"			"[[:alnum:]-]"	       0
++C.UTF-8		 "aa"			"[[:alnum:]]a"	       0
++C.UTF-8		 "-"			"[![:alnum:]]"	       0
++C.UTF-8		 "]"			"[!][:alnum:]]"	       NOMATCH
++C.UTF-8		 "["			"[![:alnum:][]"	       NOMATCH
++C.UTF-8		 "a"			"[[:alnum:]]"	       0
++C.UTF-8		 "b"			"[[:alnum:]]"	       0
++C.UTF-8		 "c"			"[[:alnum:]]"	       0
++C.UTF-8		 "d"			"[[:alnum:]]"	       0
++C.UTF-8		 "e"			"[[:alnum:]]"	       0
++C.UTF-8		 "f"			"[[:alnum:]]"	       0
++C.UTF-8		 "g"			"[[:alnum:]]"	       0
++C.UTF-8		 "h"			"[[:alnum:]]"	       0
++C.UTF-8		 "i"			"[[:alnum:]]"	       0
++C.UTF-8		 "j"			"[[:alnum:]]"	       0
++C.UTF-8		 "k"			"[[:alnum:]]"	       0
++C.UTF-8		 "l"			"[[:alnum:]]"	       0
++C.UTF-8		 "m"			"[[:alnum:]]"	       0
++C.UTF-8		 "n"			"[[:alnum:]]"	       0
++C.UTF-8		 "o"			"[[:alnum:]]"	       0
++C.UTF-8		 "p"			"[[:alnum:]]"	       0
++C.UTF-8		 "q"			"[[:alnum:]]"	       0
++C.UTF-8		 "r"			"[[:alnum:]]"	       0
++C.UTF-8		 "s"			"[[:alnum:]]"	       0
++C.UTF-8		 "t"			"[[:alnum:]]"	       0
++C.UTF-8		 "u"			"[[:alnum:]]"	       0
++C.UTF-8		 "v"			"[[:alnum:]]"	       0
++C.UTF-8		 "w"			"[[:alnum:]]"	       0
++C.UTF-8		 "x"			"[[:alnum:]]"	       0
++C.UTF-8		 "y"			"[[:alnum:]]"	       0
++C.UTF-8		 "z"			"[[:alnum:]]"	       0
++C.UTF-8		 "A"			"[[:alnum:]]"	       0
++C.UTF-8		 "B"			"[[:alnum:]]"	       0
++C.UTF-8		 "C"			"[[:alnum:]]"	       0
++C.UTF-8		 "D"			"[[:alnum:]]"	       0
++C.UTF-8		 "E"			"[[:alnum:]]"	       0
++C.UTF-8		 "F"			"[[:alnum:]]"	       0
++C.UTF-8		 "G"			"[[:alnum:]]"	       0
++C.UTF-8		 "H"			"[[:alnum:]]"	       0
++C.UTF-8		 "I"			"[[:alnum:]]"	       0
++C.UTF-8		 "J"			"[[:alnum:]]"	       0
++C.UTF-8		 "K"			"[[:alnum:]]"	       0
++C.UTF-8		 "L"			"[[:alnum:]]"	       0
++C.UTF-8		 "M"			"[[:alnum:]]"	       0
++C.UTF-8		 "N"			"[[:alnum:]]"	       0
++C.UTF-8		 "O"			"[[:alnum:]]"	       0
++C.UTF-8		 "P"			"[[:alnum:]]"	       0
++C.UTF-8		 "Q"			"[[:alnum:]]"	       0
++C.UTF-8		 "R"			"[[:alnum:]]"	       0
++C.UTF-8		 "S"			"[[:alnum:]]"	       0
++C.UTF-8		 "T"			"[[:alnum:]]"	       0
++C.UTF-8		 "U"			"[[:alnum:]]"	       0
++C.UTF-8		 "V"			"[[:alnum:]]"	       0
++C.UTF-8		 "W"			"[[:alnum:]]"	       0
++C.UTF-8		 "X"			"[[:alnum:]]"	       0
++C.UTF-8		 "Y"			"[[:alnum:]]"	       0
++C.UTF-8		 "Z"			"[[:alnum:]]"	       0
++C.UTF-8		 "0"			"[[:alnum:]]"	       0
++C.UTF-8		 "1"			"[[:alnum:]]"	       0
++C.UTF-8		 "2"			"[[:alnum:]]"	       0
++C.UTF-8		 "3"			"[[:alnum:]]"	       0
++C.UTF-8		 "4"			"[[:alnum:]]"	       0
++C.UTF-8		 "5"			"[[:alnum:]]"	       0
++C.UTF-8		 "6"			"[[:alnum:]]"	       0
++C.UTF-8		 "7"			"[[:alnum:]]"	       0
++C.UTF-8		 "8"			"[[:alnum:]]"	       0
++C.UTF-8		 "9"			"[[:alnum:]]"	       0
++C.UTF-8		 "!"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "#"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "%"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "+"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 ","			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "-"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "."			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "/"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 ":"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 ";"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "="			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "@"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "["			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "\\"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "]"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "^"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "_"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "{"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "}"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "~"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "\""			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "$"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "&"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "'"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "("			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 ")"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "*"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "?"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "`"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "|"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "<"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 ">"			"[[:alnum:]]"	       NOMATCH
++C.UTF-8		 "\t"			"[[:cntrl:]]"	       0
++C.UTF-8		 "t"			"[[:cntrl:]]"	       NOMATCH
++C.UTF-8		 "t"			"[[:lower:]]"	       0
++C.UTF-8		 "\t"			"[[:lower:]]"	       NOMATCH
++C.UTF-8		 "T"			"[[:lower:]]"	       NOMATCH
++C.UTF-8		 "\t"			"[[:space:]]"	       0
++C.UTF-8		 "t"			"[[:space:]]"	       NOMATCH
++C.UTF-8		 "t"			"[[:alpha:]]"	       0
++C.UTF-8		 "\t"			"[[:alpha:]]"	       NOMATCH
++C.UTF-8		 "0"			"[[:digit:]]"	       0
++C.UTF-8		 "\t"			"[[:digit:]]"	       NOMATCH
++C.UTF-8		 "t"			"[[:digit:]]"	       NOMATCH
++C.UTF-8		 "\t"			"[[:print:]]"	       NOMATCH
++C.UTF-8		 "t"			"[[:print:]]"	       0
++C.UTF-8		 "T"			"[[:upper:]]"	       0
++C.UTF-8		 "\t"			"[[:upper:]]"	       NOMATCH
++C.UTF-8		 "t"			"[[:upper:]]"	       NOMATCH
++C.UTF-8		 "\t"			"[[:blank:]]"	       0
++C.UTF-8		 "t"			"[[:blank:]]"	       NOMATCH
++C.UTF-8		 "\t"			"[[:graph:]]"	       NOMATCH
++C.UTF-8		 "t"			"[[:graph:]]"	       0
++C.UTF-8		 "."			"[[:punct:]]"	       0
++C.UTF-8		 "t"			"[[:punct:]]"	       NOMATCH
++C.UTF-8		 "\t"			"[[:punct:]]"	       NOMATCH
++C.UTF-8		 "0"			"[[:xdigit:]]"	       0
++C.UTF-8		 "\t"			"[[:xdigit:]]"	       NOMATCH
++C.UTF-8		 "a"			"[[:xdigit:]]"	       0
++C.UTF-8		 "A"			"[[:xdigit:]]"	       0
++C.UTF-8		 "t"			"[[:xdigit:]]"	       NOMATCH
++C.UTF-8		 "a"			"[[alpha]]"	       NOMATCH
++C.UTF-8		 "a"			"[[alpha:]]"	       NOMATCH
++C.UTF-8		 "a]"			"[[alpha]]"	       0
++C.UTF-8		 "a]"			"[[alpha:]]"	       0
++C.UTF-8		 "a"			"[[:alpha:][.b.]]"     0
++C.UTF-8		 "a"			"[[:alpha:][=b=]]"     0
++C.UTF-8		 "a"			"[[:alpha:][:digit:]]" 0
++C.UTF-8		 "a"			"[[:digit:][:alpha:]]" 0
++
++# B.6 018(C)
++C.UTF-8		 "a"			"[a-c]"		       0
++C.UTF-8		 "b"			"[a-c]"		       0
++C.UTF-8		 "c"			"[a-c]"		       0
++C.UTF-8		 "a"			"[b-c]"		       NOMATCH
++C.UTF-8		 "d"			"[b-c]"		       NOMATCH
++C.UTF-8		 "B"			"[a-c]"		       NOMATCH
++C.UTF-8		 "b"			"[A-C]"		       NOMATCH
++C.UTF-8		 ""			"[a-c]"		       NOMATCH
++C.UTF-8		 "as"			"[a-ca-z]"	       NOMATCH
++C.UTF-8		 "a"			"[[.a.]-c]"	       0
++C.UTF-8		 "a"			"[a-[.c.]]"	       0
++C.UTF-8		 "a"			"[[.a.]-[.c.]]"	       0
++C.UTF-8		 "b"			"[[.a.]-c]"	       0
++C.UTF-8		 "b"			"[a-[.c.]]"	       0
++C.UTF-8		 "b"			"[[.a.]-[.c.]]"	       0
++C.UTF-8		 "c"			"[[.a.]-c]"	       0
++C.UTF-8		 "c"			"[a-[.c.]]"	       0
++C.UTF-8		 "c"			"[[.a.]-[.c.]]"	       0
++C.UTF-8		 "d"			"[[.a.]-c]"	       NOMATCH
++C.UTF-8		 "d"			"[a-[.c.]]"	       NOMATCH
++C.UTF-8		 "d"			"[[.a.]-[.c.]]"	       NOMATCH
++
++# B.6 019(C)
++C.UTF-8		 "a"			"[c-a]"		       NOMATCH
++C.UTF-8		 "a"			"[[.c.]-a]"	       NOMATCH
++C.UTF-8		 "a"			"[c-[.a.]]"	       NOMATCH
++C.UTF-8		 "a"			"[[.c.]-[.a.]]"	       NOMATCH
++C.UTF-8		 "c"			"[c-a]"		       NOMATCH
++C.UTF-8		 "c"			"[[.c.]-a]"	       NOMATCH
++C.UTF-8		 "c"			"[c-[.a.]]"	       NOMATCH
++C.UTF-8		 "c"			"[[.c.]-[.a.]]"	       NOMATCH
++
++# B.6 020(C)
++C.UTF-8		 "a"			"[a-c0-9]"	       0
++C.UTF-8		 "d"			"[a-c0-9]"	       NOMATCH
++C.UTF-8		 "B"			"[a-c0-9]"	       NOMATCH
++
++# B.6 021(C)
++C.UTF-8		 "-"			"[-a]"		       0
++C.UTF-8		 "a"			"[-b]"		       NOMATCH
++C.UTF-8		 "-"			"[!-a]"		       NOMATCH
++C.UTF-8		 "a"			"[!-b]"		       0
++C.UTF-8		 "-"			"[a-c-0-9]"	       0
++C.UTF-8		 "b"			"[a-c-0-9]"	       0
++C.UTF-8		 "a:"			"a[0-9-a]"	       NOMATCH
++C.UTF-8		 "a:"			"a[09-a]"	       0
++
++# B.6 024(C)
++C.UTF-8		 ""			"*"		       0
++C.UTF-8		 "asd/sdf"		"*"		       0
++
++# B.6 025(C)
++C.UTF-8		 "as"			"[a-c][a-z]"	       0
++C.UTF-8		 "as"			"??"		       0
++
++# B.6 026(C)
++C.UTF-8		 "asd/sdf"		"as*df"		       0
++C.UTF-8		 "asd/sdf"		"as*"		       0
++C.UTF-8		 "asd/sdf"		"*df"		       0
++C.UTF-8		 "asd/sdf"		"as*dg"		       NOMATCH
++C.UTF-8		 "asdf"			"as*df"		       0
++C.UTF-8		 "asdf"			"as*df?"	       NOMATCH
++C.UTF-8		 "asdf"			"as*??"		       0
++C.UTF-8		 "asdf"			"a*???"		       0
++C.UTF-8		 "asdf"			"*????"		       0
++C.UTF-8		 "asdf"			"????*"		       0
++C.UTF-8		 "asdf"			"??*?"		       0
++
++# B.6 027(C)
++C.UTF-8		 "/"			"/"		       0
++C.UTF-8		 "/"			"/*"		       0
++C.UTF-8		 "/"			"*/"		       0
++C.UTF-8		 "/"			"/?"		       NOMATCH
++C.UTF-8		 "/"			"?/"		       NOMATCH
++C.UTF-8		 "/"			"?"		       0
++C.UTF-8		 "."			"?"		       0
++C.UTF-8		 "/."			"??"		       0
++C.UTF-8		 "/"			"[!a-c]"	       0
++C.UTF-8		 "."			"[!a-c]"	       0
++
++# B.6 029(C)
++C.UTF-8		 "/"			"/"		       0       PATHNAME
++C.UTF-8		 "//"			"//"		       0       PATHNAME
++C.UTF-8		 "/.a"			"/*"		       0       PATHNAME
++C.UTF-8		 "/.a"			"/?a"		       0       PATHNAME
++C.UTF-8		 "/.a"			"/[!a-z]a"	       0       PATHNAME
++C.UTF-8		 "/.a/.b"		"/*/?b"		       0       PATHNAME
++
++# B.6 030(C)
++C.UTF-8		 "/"			"?"		       NOMATCH PATHNAME
++C.UTF-8		 "/"			"*"		       NOMATCH PATHNAME
++C.UTF-8		 "a/b"			"a?b"		       NOMATCH PATHNAME
++C.UTF-8		 "/.a/.b"		"/*b"		       NOMATCH PATHNAME
++
++# B.6 031(C)
++C.UTF-8		 "/$"			"\\/\\$"	       0
++C.UTF-8		 "/["			"\\/\\["	       0
++C.UTF-8		 "/["			"\\/["		       0
++C.UTF-8		 "/[]"			"\\/\\[]"	       0
++
++# B.6 032(C)
++C.UTF-8		 "/$"			"\\/\\$"	       NOMATCH NOESCAPE
++C.UTF-8		 "/\\$"			"\\/\\$"	       NOMATCH NOESCAPE
++C.UTF-8		 "\\/\\$"		"\\/\\$"	       0       NOESCAPE
++
++# B.6 033(C)
++C.UTF-8		 ".asd"			".*"		       0       PERIOD
++C.UTF-8		 "/.asd"		"*"		       0       PERIOD
++C.UTF-8		 "/as/.df"		"*/?*f"		       0       PERIOD
++C.UTF-8		 "..asd"		".[!a-z]*"	       0       PERIOD
++
++# B.6 034(C)
++C.UTF-8		 ".asd"			"*"		       NOMATCH PERIOD
++C.UTF-8		 ".asd"			"?asd"		       NOMATCH PERIOD
++C.UTF-8		 ".asd"			"[!a-z]*"	       NOMATCH PERIOD
++
++# B.6 035(C)
++C.UTF-8		 "/."			"/."		       0       PATHNAME|PERIOD
++C.UTF-8		 "/.a./.b."		"/.*/.*"	       0       PATHNAME|PERIOD
++C.UTF-8		 "/.a./.b."		"/.??/.??"	       0       PATHNAME|PERIOD
++
++# B.6 036(C)
++C.UTF-8		 "/."			"*"		       NOMATCH PATHNAME|PERIOD
++C.UTF-8		 "/."			"/*"		       NOMATCH PATHNAME|PERIOD
++C.UTF-8		 "/."			"/?"		       NOMATCH PATHNAME|PERIOD
++C.UTF-8		 "/."			"/[!a-z]"	       NOMATCH PATHNAME|PERIOD
++C.UTF-8		 "/a./.b."		"/*/*"		       NOMATCH PATHNAME|PERIOD
++C.UTF-8		 "/a./.b."		"/??/???"	       NOMATCH PATHNAME|PERIOD
++
++# Some home-grown tests.
++C.UTF-8		"foobar"		"foo*[abc]z"	       NOMATCH
++C.UTF-8		"foobaz"		"foo*[abc][xyz]"       0
++C.UTF-8		"foobaz"		"foo?*[abc][xyz]"      0
++C.UTF-8		"foobaz"		"foo?*[abc][x/yz]"     0
++C.UTF-8		"foobaz"		"foo?*[abc]/[xyz]"     NOMATCH PATHNAME
++C.UTF-8		"a"			"a/"                   NOMATCH PATHNAME
++C.UTF-8		"a/"			"a"		       NOMATCH PATHNAME
++C.UTF-8		"//a"			"/a"		       NOMATCH PATHNAME
++C.UTF-8		"/a"			"//a"		       NOMATCH PATHNAME
++C.UTF-8		"az"			"[a-]z"		       0
++C.UTF-8		"bz"			"[ab-]z"	       0
++C.UTF-8		"cz"			"[ab-]z"	       NOMATCH
++C.UTF-8		"-z"			"[ab-]z"	       0
++C.UTF-8		"az"			"[-a]z"		       0
++C.UTF-8		"bz"			"[-ab]z"	       0
++C.UTF-8		"cz"			"[-ab]z"	       NOMATCH
++C.UTF-8		"-z"			"[-ab]z"	       0
++C.UTF-8		"\\"			"[\\\\-a]"	       0
++C.UTF-8		"_"			"[\\\\-a]"	       0
++C.UTF-8		"a"			"[\\\\-a]"	       0
++C.UTF-8		"-"			"[\\\\-a]"	       NOMATCH
++C.UTF-8		"\\"			"[\\]-a]"	       NOMATCH
++C.UTF-8		"_"			"[\\]-a]"	       0
++C.UTF-8		"a"			"[\\]-a]"	       0
++C.UTF-8		"]"			"[\\]-a]"	       0
++C.UTF-8		"-"			"[\\]-a]"	       NOMATCH
++C.UTF-8		"\\"			"[!\\\\-a]"	       NOMATCH
++C.UTF-8		"_"			"[!\\\\-a]"	       NOMATCH
++C.UTF-8		"a"			"[!\\\\-a]"	       NOMATCH
++C.UTF-8		"-"			"[!\\\\-a]"	       0
++C.UTF-8		"!"			"[\\!-]"	       0
++C.UTF-8		"-"			"[\\!-]"	       0
++C.UTF-8		"\\"			"[\\!-]"	       NOMATCH
++C.UTF-8		"Z"			"[Z-\\\\]"	       0
++C.UTF-8		"["			"[Z-\\\\]"	       0
++C.UTF-8		"\\"			"[Z-\\\\]"	       0
++C.UTF-8		"-"			"[Z-\\\\]"	       NOMATCH
++C.UTF-8		"Z"			"[Z-\\]]"	       0
++C.UTF-8		"["			"[Z-\\]]"	       0
++C.UTF-8		"\\"			"[Z-\\]]"	       0
++C.UTF-8		"]"			"[Z-\\]]"	       0
++C.UTF-8		"-"			"[Z-\\]]"	       NOMATCH
++
+ # Following are tests outside the scope of IEEE 2003.2 since they are using
+ # locales other than the C locale.  The main focus of the tests is on the
+ # handling of ranges and the recognition of character (vs bytes).
+@@ -677,7 +1068,6 @@ C		 "x/y"			"*"		       0       PATHNAME|LEADING_DIR
+ C		 "x/y/z"		"*"		       0       PATHNAME|LEADING_DIR
+ C		 "x"			"*x"		       0       PATHNAME|LEADING_DIR
+ 
+-en_US.UTF-8	 "\366.csv"		"*.csv"                0
+ C		 "x/y"			"*x"		       0       PATHNAME|LEADING_DIR
+ C		 "x/y/z"		"*x"		       0       PATHNAME|LEADING_DIR
+ C		 "x"			"x*"		       0       PATHNAME|LEADING_DIR
+@@ -693,6 +1083,33 @@ C		 "x"			"x?y"		       NOMATCH PATHNAME|LEADING_DIR
+ C		 "x/y"			"x?y"		       NOMATCH PATHNAME|LEADING_DIR
+ C		 "x/y/z"		"x?y"		       NOMATCH PATHNAME|LEADING_DIR
+ 
++# Duplicate the "Test of GNU extensions." tests but for C.UTF-8.
++C.UTF-8		 "x"			"x"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y"			"x"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y/z"		"x"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x"			"*"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y"			"*"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y/z"		"*"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x"			"*x"		       0       PATHNAME|LEADING_DIR
++
++C.UTF-8		 "x/y"			"*x"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y/z"		"*x"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x"			"x*"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y"			"x*"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y/z"		"x*"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x"			"a"		       NOMATCH PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y"			"a"		       NOMATCH PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y/z"		"a"		       NOMATCH PATHNAME|LEADING_DIR
++C.UTF-8		 "x"			"x/y"		       NOMATCH PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y"			"x/y"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y/z"		"x/y"		       0       PATHNAME|LEADING_DIR
++C.UTF-8		 "x"			"x?y"		       NOMATCH PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y"			"x?y"		       NOMATCH PATHNAME|LEADING_DIR
++C.UTF-8		 "x/y/z"		"x?y"		       NOMATCH PATHNAME|LEADING_DIR
++
++# Bug 14185
++en_US.UTF-8	 "\366.csv"		"*.csv"                0
++
+ # ksh style matching.
+ C		"abcd"			"?@(a|b)*@(c)d"	       0       EXTMATCH
+ C		"/dev/udp/129.22.8.102/45" "/dev/@(tcp|udp)/*/*" 0     PATHNAME|EXTMATCH
+@@ -822,3 +1239,133 @@ C		""			""		       0
+ C		""			""		       0       EXTMATCH
+ C		""			"*([abc])"	       0       EXTMATCH
+ C		""			"?([abc])"	       0       EXTMATCH
++
++# Duplicate the "ksh style matching." for C.UTF-8.
++C.UTF-8		"abcd"			"?@(a|b)*@(c)d"	       0       EXTMATCH
++C.UTF-8		"/dev/udp/129.22.8.102/45" "/dev/@(tcp|udp)/*/*" 0     PATHNAME|EXTMATCH
++C.UTF-8		"12"			"[1-9]*([0-9])"        0       EXTMATCH
++C.UTF-8		"12abc"			"[1-9]*([0-9])"        NOMATCH EXTMATCH
++C.UTF-8		"1"			"[1-9]*([0-9])"	       0       EXTMATCH
++C.UTF-8		"07"			"+([0-7])"	       0       EXTMATCH
++C.UTF-8		"0377"			"+([0-7])"	       0       EXTMATCH
++C.UTF-8		"09"			"+([0-7])"	       NOMATCH EXTMATCH
++C.UTF-8		"paragraph"		"para@(chute|graph)"   0       EXTMATCH
++C.UTF-8		"paramour"		"para@(chute|graph)"   NOMATCH EXTMATCH
++C.UTF-8		"para991"		"para?([345]|99)1"     0       EXTMATCH
++C.UTF-8		"para381"		"para?([345]|99)1"     NOMATCH EXTMATCH
++C.UTF-8		"paragraph"		"para*([0-9])"	       NOMATCH EXTMATCH
++C.UTF-8		"para"			"para*([0-9])"	       0       EXTMATCH
++C.UTF-8		"para13829383746592"	"para*([0-9])"	       0       EXTMATCH
++C.UTF-8		"paragraph"		"para+([0-9])"	       NOMATCH EXTMATCH
++C.UTF-8		"para"			"para+([0-9])"	       NOMATCH EXTMATCH
++C.UTF-8		"para987346523"		"para+([0-9])"	       0       EXTMATCH
++C.UTF-8		"paragraph"		"para!(*.[0-9])"       0       EXTMATCH
++C.UTF-8		"para.38"		"para!(*.[0-9])"       0       EXTMATCH
++C.UTF-8		"para.graph"		"para!(*.[0-9])"       0       EXTMATCH
++C.UTF-8		"para39"		"para!(*.[0-9])"       0       EXTMATCH
++C.UTF-8		""			"*(0|1|3|5|7|9)"       0       EXTMATCH
++C.UTF-8		"137577991"		"*(0|1|3|5|7|9)"       0       EXTMATCH
++C.UTF-8		"2468"			"*(0|1|3|5|7|9)"       NOMATCH EXTMATCH
++C.UTF-8		"1358"			"*(0|1|3|5|7|9)"       NOMATCH EXTMATCH
++C.UTF-8		"file.c"		"*.c?(c)"	       0       EXTMATCH
++C.UTF-8		"file.C"		"*.c?(c)"	       NOMATCH EXTMATCH
++C.UTF-8		"file.cc"		"*.c?(c)"	       0       EXTMATCH
++C.UTF-8		"file.ccc"		"*.c?(c)"	       NOMATCH EXTMATCH
++C.UTF-8		"parse.y"		"!(*.c|*.h|Makefile.in|config*|README)" 0 EXTMATCH
++C.UTF-8		"shell.c"		"!(*.c|*.h|Makefile.in|config*|README)" NOMATCH EXTMATCH
++C.UTF-8		"Makefile"		"!(*.c|*.h|Makefile.in|config*|README)" 0 EXTMATCH
++C.UTF-8		"VMS.FILE;1"		"*\;[1-9]*([0-9])"     0       EXTMATCH
++C.UTF-8		"VMS.FILE;0"		"*\;[1-9]*([0-9])"     NOMATCH EXTMATCH
++C.UTF-8		"VMS.FILE;"		"*\;[1-9]*([0-9])"     NOMATCH EXTMATCH
++C.UTF-8		"VMS.FILE;139"		"*\;[1-9]*([0-9])"     0       EXTMATCH
++C.UTF-8		"VMS.FILE;1N"		"*\;[1-9]*([0-9])"     NOMATCH EXTMATCH
++C.UTF-8		"abcfefg"		"ab**(e|f)"	       0       EXTMATCH
++C.UTF-8		"abcfefg"		"ab**(e|f)g"	       0       EXTMATCH
++C.UTF-8		"ab"			"ab*+(e|f)"	       NOMATCH EXTMATCH
++C.UTF-8		"abef"			"ab***ef"	       0       EXTMATCH
++C.UTF-8		"abef"			"ab**"		       0       EXTMATCH
++C.UTF-8		"fofo"			"*(f*(o))"	       0       EXTMATCH
++C.UTF-8		"ffo"			"*(f*(o))"	       0       EXTMATCH
++C.UTF-8		"foooofo"		"*(f*(o))"	       0       EXTMATCH
++C.UTF-8		"foooofof"		"*(f*(o))"	       0       EXTMATCH
++C.UTF-8		"fooofoofofooo"		"*(f*(o))"	       0       EXTMATCH
++C.UTF-8		"foooofof"		"*(f+(o))"	       NOMATCH EXTMATCH
++C.UTF-8		"xfoooofof"		"*(f*(o))"	       NOMATCH EXTMATCH
++C.UTF-8		"foooofofx"		"*(f*(o))"	       NOMATCH EXTMATCH
++C.UTF-8		"ofxoofxo"		"*(*(of*(o)x)o)"       0       EXTMATCH
++C.UTF-8		"ofooofoofofooo"	"*(f*(o))"	       NOMATCH EXTMATCH
++C.UTF-8		"foooxfooxfoxfooox"	"*(f*(o)x)"	       0       EXTMATCH
++C.UTF-8		"foooxfooxofoxfooox"	"*(f*(o)x)"	       NOMATCH EXTMATCH
++C.UTF-8		"foooxfooxfxfooox"	"*(f*(o)x)"	       0       EXTMATCH
++C.UTF-8		"ofxoofxo"		"*(*(of*(o)x)o)"       0       EXTMATCH
++C.UTF-8		"ofoooxoofxo"		"*(*(of*(o)x)o)"       0       EXTMATCH
++C.UTF-8		"ofoooxoofxoofoooxoofxo" "*(*(of*(o)x)o)"      0       EXTMATCH
++C.UTF-8		"ofoooxoofxoofoooxoofxoo" "*(*(of*(o)x)o)"     0       EXTMATCH
++C.UTF-8		"ofoooxoofxoofoooxoofxofo" "*(*(of*(o)x)o)"    NOMATCH EXTMATCH
++C.UTF-8		"ofoooxoofxoofoooxoofxooofxofxo" "*(*(of*(o)x)o)" 0    EXTMATCH
++C.UTF-8		"aac"			"*(@(a))a@(c)"	       0       EXTMATCH
++C.UTF-8		"ac"			"*(@(a))a@(c)"	       0       EXTMATCH
++C.UTF-8		"c"			"*(@(a))a@(c)"	       NOMATCH EXTMATCH
++C.UTF-8		"aaac"			"*(@(a))a@(c)"	       0       EXTMATCH
++C.UTF-8		"baaac"			"*(@(a))a@(c)"	       NOMATCH EXTMATCH
++C.UTF-8		"abcd"			"?@(a|b)*@(c)d"	       0       EXTMATCH
++C.UTF-8		"abcd"			"@(ab|a*@(b))*(c)d"    0       EXTMATCH
++C.UTF-8		"acd"			"@(ab|a*(b))*(c)d"     0       EXTMATCH
++C.UTF-8		"abbcd"			"@(ab|a*(b))*(c)d"     0       EXTMATCH
++C.UTF-8		"effgz"			"@(b+(c)d|e*(f)g?|?(h)i@(j|k))" 0 EXTMATCH
++C.UTF-8		"efgz"			"@(b+(c)d|e*(f)g?|?(h)i@(j|k))" 0 EXTMATCH
++C.UTF-8		"egz"			"@(b+(c)d|e*(f)g?|?(h)i@(j|k))" 0 EXTMATCH
++C.UTF-8		"egzefffgzbcdij"	"*(b+(c)d|e*(f)g?|?(h)i@(j|k))" 0 EXTMATCH
++C.UTF-8		"egz"			"@(b+(c)d|e+(f)g?|?(h)i@(j|k))" NOMATCH EXTMATCH
++C.UTF-8		"ofoofo"		"*(of+(o))"	       0       EXTMATCH
++C.UTF-8		"oxfoxoxfox"		"*(oxf+(ox))"	       0       EXTMATCH
++C.UTF-8		"oxfoxfox"		"*(oxf+(ox))"	       NOMATCH EXTMATCH
++C.UTF-8		"ofoofo"		"*(of+(o)|f)"	       0       EXTMATCH
++C.UTF-8		"foofoofo"		"@(foo|f|fo)*(f|of+(o))" 0     EXTMATCH
++C.UTF-8		"oofooofo"		"*(of|oof+(o))"	       0       EXTMATCH
++C.UTF-8		"fffooofoooooffoofffooofff" "*(*(f)*(o))"      0       EXTMATCH
++C.UTF-8		"fofoofoofofoo"		"*(fo|foo)"	       0       EXTMATCH
++C.UTF-8		"foo"			"!(x)"		       0       EXTMATCH
++C.UTF-8		"foo"			"!(x)*"		       0       EXTMATCH
++C.UTF-8		"foo"			"!(foo)"	       NOMATCH EXTMATCH
++C.UTF-8		"foo"			"!(foo)*"	       0       EXTMATCH
++C.UTF-8		"foobar"		"!(foo)"	       0       EXTMATCH
++C.UTF-8		"foobar"		"!(foo)*"	       0       EXTMATCH
++C.UTF-8		"moo.cow"		"!(*.*).!(*.*)"	       0       EXTMATCH
++C.UTF-8		"mad.moo.cow"		"!(*.*).!(*.*)"	       NOMATCH EXTMATCH
++C.UTF-8		"mucca.pazza"		"mu!(*(c))?.pa!(*(z))?" NOMATCH EXTMATCH
++C.UTF-8		"fff"			"!(f)"		       0       EXTMATCH
++C.UTF-8		"fff"			"*(!(f))"	       0       EXTMATCH
++C.UTF-8		"fff"			"+(!(f))"	       0       EXTMATCH
++C.UTF-8		"ooo"			"!(f)"		       0       EXTMATCH
++C.UTF-8		"ooo"			"*(!(f))"	       0       EXTMATCH
++C.UTF-8		"ooo"			"+(!(f))"	       0       EXTMATCH
++C.UTF-8		"foo"			"!(f)"		       0       EXTMATCH
++C.UTF-8		"foo"			"*(!(f))"	       0       EXTMATCH
++C.UTF-8		"foo"			"+(!(f))"	       0       EXTMATCH
++C.UTF-8		"f"			"!(f)"		       NOMATCH EXTMATCH
++C.UTF-8		"f"			"*(!(f))"	       NOMATCH EXTMATCH
++C.UTF-8		"f"			"+(!(f))"	       NOMATCH EXTMATCH
++C.UTF-8		"foot"			"@(!(z*)|*x)"	       0       EXTMATCH
++C.UTF-8		"zoot"			"@(!(z*)|*x)"	       NOMATCH EXTMATCH
++C.UTF-8		"foox"			"@(!(z*)|*x)"	       0       EXTMATCH
++C.UTF-8		"zoox"			"@(!(z*)|*x)"	       0       EXTMATCH
++C.UTF-8		"foo"			"*(!(foo))"	       0       EXTMATCH
++C.UTF-8		"foob"			"!(foo)b*"	       NOMATCH EXTMATCH
++C.UTF-8		"foobb"			"!(foo)b*"	       0       EXTMATCH
++C.UTF-8		"["			"*([a[])"	       0       EXTMATCH
++C.UTF-8		"]"			"*([]a[])"	       0       EXTMATCH
++C.UTF-8		"a"			"*([]a[])"	       0       EXTMATCH
++C.UTF-8		"b"			"*([!]a[])"	       0       EXTMATCH
++C.UTF-8		"["			"*([!]a[]|[[])"	       0       EXTMATCH
++C.UTF-8		"]"			"*([!]a[]|[]])"	       0       EXTMATCH
++C.UTF-8		"["			"!([!]a[])"	       0       EXTMATCH
++C.UTF-8		"]"			"!([!]a[])"	       0       EXTMATCH
++C.UTF-8		")"			"*([)])"	       0       EXTMATCH
++C.UTF-8		"*"			"*([*(])"	       0       EXTMATCH
++C.UTF-8		"abcd"			"*!(|a)cd"	       0       EXTMATCH
++C.UTF-8		"ab/.a"			"+([abc])/*"	       NOMATCH EXTMATCH|PATHNAME|PERIOD
++C.UTF-8		""			""		       0
++C.UTF-8		""			""		       0       EXTMATCH
++C.UTF-8		""			"*([abc])"	       0       EXTMATCH
++C.UTF-8		""			"?([abc])"	       0       EXTMATCH
+diff --git a/posix/tst-regcomp-truncated.c b/posix/tst-regcomp-truncated.c
+index 84195fcd2ec153b8..da3f97799e37c607 100644
+--- a/posix/tst-regcomp-truncated.c
++++ b/posix/tst-regcomp-truncated.c
+@@ -37,6 +37,7 @@
+ static const char locales[][17] =
+   {
+     "C",
++    "C.UTF-8",
+     "en_US.UTF-8",
+     "de_DE.ISO-8859-1",
+   };
+diff --git a/posix/tst-regex.c b/posix/tst-regex.c
+index e7c2b05e8666a16e..531128de2a9176fa 100644
+--- a/posix/tst-regex.c
++++ b/posix/tst-regex.c
+@@ -32,6 +32,7 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <regex.h>
++#include <support/support.h>
+ 
+ 
+ #if defined _POSIX_CPUTIME && _POSIX_CPUTIME >= 0
+@@ -58,7 +59,7 @@ do_test (void)
+   const char *file;
+   int fd;
+   struct stat st;
+-  int result;
++  int result = 0;
+   char *inmem;
+   char *outmem;
+   size_t inlen;
+@@ -123,7 +124,7 @@ do_test (void)
+ 
+   /* Run the actual tests.  All tests are run in a single-byte and a
+      multi-byte locale.  */
+-  result = test_expr ("[äáàâéèêíìîñöóòôüúùû]", 4, 4);
++  result |= test_expr ("[äáàâéèêíìîñöóòôüúùû]", 4, 4);
+   result |= test_expr ("G.ran", 2, 3);
+   result |= test_expr ("G.\\{1\\}ran", 2, 3);
+   result |= test_expr ("G.*ran", 3, 44);
+@@ -143,19 +144,33 @@ do_test (void)
+ static int
+ test_expr (const char *expr, int expected, int expectedicase)
+ {
+-  int result;
++  int result = 0;
+   char *inmem;
+   char *outmem;
+   size_t inlen;
+   size_t outlen;
+   char *uexpr;
+ 
+-  /* First test: search with an UTF-8 locale.  */
+-  if (setlocale (LC_ALL, "de_DE.UTF-8") == NULL)
+-    error (EXIT_FAILURE, 0, "cannot set locale de_DE.UTF-8");
++  /* First test: search with basic C.UTF-8 locale.  */
++  printf ("INFO: Testing C.UTF-8.\n");
++  xsetlocale (LC_ALL, "C.UTF-8");
+ 
+   printf ("\nTest \"%s\" with multi-byte locale\n", expr);
+-  result = run_test (expr, mem, memlen, 0, expected);
++  result |= run_test (expr, mem, memlen, 0, expected);
++  printf ("\nTest \"%s\" with multi-byte locale, case insensitive\n", expr);
++  result |= run_test (expr, mem, memlen, 1, expectedicase);
++  printf ("\nTest \"%s\" backwards with multi-byte locale\n", expr);
++  result |= run_test_backwards (expr, mem, memlen, 0, expected);
++  printf ("\nTest \"%s\" backwards with multi-byte locale, case insensitive\n",
++	  expr);
++  result |= run_test_backwards (expr, mem, memlen, 1, expectedicase);
++
++  /* Second test: search with an UTF-8 locale.  */
++  printf ("INFO: Testing de_DE.UTF-8.\n");
++  xsetlocale (LC_ALL, "de_DE.UTF-8");
++
++  printf ("\nTest \"%s\" with multi-byte locale\n", expr);
++  result |= run_test (expr, mem, memlen, 0, expected);
+   printf ("\nTest \"%s\" with multi-byte locale, case insensitive\n", expr);
+   result |= run_test (expr, mem, memlen, 1, expectedicase);
+   printf ("\nTest \"%s\" backwards with multi-byte locale\n", expr);
+@@ -165,8 +180,8 @@ test_expr (const char *expr, int expected, int expectedicase)
+   result |= run_test_backwards (expr, mem, memlen, 1, expectedicase);
+ 
+   /* Second test: search with an ISO-8859-1 locale.  */
+-  if (setlocale (LC_ALL, "de_DE.ISO-8859-1") == NULL)
+-    error (EXIT_FAILURE, 0, "cannot set locale de_DE.ISO-8859-1");
++  printf ("INFO: Testing de_DE.ISO-8859-1.\n");
++  xsetlocale (LC_ALL, "de_DE.ISO-8859-1");
+ 
+   inmem = (char *) expr;
+   inlen = strlen (expr);

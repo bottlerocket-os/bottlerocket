@@ -1,0 +1,31 @@
+From 007d699d0e0d0957eead78ad252ad592656284de Mon Sep 17 00:00:00 2001
+From: Joseph Myers <joseph@codesourcery.com>
+Date: Tue, 7 Sep 2021 13:08:38 +0000
+Subject: [PATCH 17/26] Use Linux 5.14 in build-many-glibcs.py
+
+This patch makes build-many-glibcs.py use Linux 5.14.
+
+Tested with build-many-glibcs.py (host-libraries, compilers and glibcs
+builds).
+
+(cherry picked from commit 4e04a47208e1712fcf202a6d9831f0900d575225)
+---
+ scripts/build-many-glibcs.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/build-many-glibcs.py b/scripts/build-many-glibcs.py
+index 5a77af90a6..86537fa800 100755
+--- a/scripts/build-many-glibcs.py
++++ b/scripts/build-many-glibcs.py
+@@ -782,7 +782,7 @@ class Context(object):
+                             'gcc': 'vcs-11',
+                             'glibc': 'vcs-mainline',
+                             'gmp': '6.2.1',
+-                            'linux': '5.13',
++                            'linux': '5.14',
+                             'mpc': '1.2.1',
+                             'mpfr': '4.1.0',
+                             'mig': 'vcs-mainline',
+-- 
+2.21.3
+

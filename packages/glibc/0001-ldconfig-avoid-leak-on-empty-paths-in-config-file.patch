@@ -1,0 +1,31 @@
+From 0b03996304f86d6dba8f0d4b7048b9bb7186f17d Mon Sep 17 00:00:00 2001
+From: Siddhesh Poyarekar <siddhesh@sourceware.org>
+Date: Tue, 3 Aug 2021 21:10:10 +0530
+Subject: [PATCH 01/26] ldconfig: avoid leak on empty paths in config file
+
+Reviewed-by: Arjun Shankar <arjun@redhat.com>
+(cherry picked from commit b0234d79e7d82475d1666f25326ec045c045b3ed)
+---
+ elf/ldconfig.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/elf/ldconfig.c b/elf/ldconfig.c
+index 1037e8d0cf..b8893637f8 100644
+--- a/elf/ldconfig.c
++++ b/elf/ldconfig.c
+@@ -503,7 +503,11 @@ add_dir_1 (const char *line, const char *from_file, int from_line)
+     entry->path[--i] = '\0';
+ 
+   if (i == 0)
+-    return;
++    {
++      free (entry->path);
++      free (entry);
++      return;
++    }
+ 
+   char *path = entry->path;
+   if (opt_chroot != NULL)
+-- 
+2.21.3
+

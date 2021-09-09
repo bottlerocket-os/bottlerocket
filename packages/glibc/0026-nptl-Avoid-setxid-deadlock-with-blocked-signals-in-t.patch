@@ -1,0 +1,151 @@
+From 33adeaa3e2b9143c38884bc5aa65ded222ed274e Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Thu, 23 Sep 2021 09:55:54 +0200
+Subject: [PATCH 26/26] nptl: Avoid setxid deadlock with blocked signals in
+ thread exit [BZ #28361]
+
+As part of the fix for bug 12889, signals are blocked during
+thread exit, so that application code cannot run on the thread that
+is about to exit.  This would cause problems if the application
+expected signals to be delivered after the signal handler revealed
+the thread to still exist, despite pthread_kill can no longer be used
+to send signals to it.  However, glibc internally uses the SIGSETXID
+signal in a way that is incompatible with signal blocking, due to the
+way the setxid handshake delays thread exit until the setxid operation
+has completed.  With a blocked SIGSETXID, the handshake can never
+complete, causing a deadlock.
+
+As a band-aid, restore the previous handshake protocol by not blocking
+SIGSETXID during thread exit.
+
+The new test sysdeps/pthread/tst-pthread-setuid-loop.c is based on
+a downstream test by Martin Osvald.
+
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+Tested-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit 2849e2f53311b66853cb5159b64cba2bddbfb854)
+---
+ NEWS                                      |  1 +
+ nptl/pthread_create.c                     | 12 ++++-
+ sysdeps/pthread/Makefile                  |  1 +
+ sysdeps/pthread/tst-pthread-setuid-loop.c | 61 +++++++++++++++++++++++
+ 4 files changed, 73 insertions(+), 2 deletions(-)
+ create mode 100644 sysdeps/pthread/tst-pthread-setuid-loop.c
+
+diff --git a/NEWS b/NEWS
+index a0c27ecf55..cccbf11ad9 100644
+--- a/NEWS
++++ b/NEWS
+@@ -13,6 +13,7 @@ The following bugs are resolved with this release:
+   [19193] nptl: pthread_kill, pthread_cancel should not fail after exit
+   [28036] Incorrect types for pthread_mutexattr_set/getrobust_np
+   [28182] _TIME_BITS=64 in C++ has issues with fcntl, ioctl, prctl
++  [28361] nptl: Avoid setxid deadlock with blocked signals in thread exit
+ 
+ 
+ Version 2.34
+diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
+index 33b426fc68..bc213f0bc4 100644
+--- a/nptl/pthread_create.c
++++ b/nptl/pthread_create.c
+@@ -488,8 +488,16 @@ start_thread (void *arg)
+ 
+   /* This prevents sending a signal from this thread to itself during
+      its final stages.  This must come after the exit call above
+-     because atexit handlers must not run with signals blocked.  */
+-  __libc_signal_block_all (NULL);
++     because atexit handlers must not run with signals blocked.
++
++     Do not block SIGSETXID.  The setxid handshake below expects the
++     signal to be delivered.  (SIGSETXID cannot run application code,
++     nor does it use pthread_kill.)  Reuse the pd->sigmask space for
++     computing the signal mask, to save stack space.  */
++  __sigfillset (&pd->sigmask);
++  __sigdelset (&pd->sigmask, SIGSETXID);
++  INTERNAL_SYSCALL_CALL (rt_sigprocmask, SIG_BLOCK, &pd->sigmask, NULL,
++			 __NSIG_BYTES);
+ 
+   /* Tell __pthread_kill_internal that this thread is about to exit.
+      If there is a __pthread_kill_internal in progress, this delays
+diff --git a/sysdeps/pthread/Makefile b/sysdeps/pthread/Makefile
+index 48dba717a1..d4bd2d4e3e 100644
+--- a/sysdeps/pthread/Makefile
++++ b/sysdeps/pthread/Makefile
+@@ -118,6 +118,7 @@ tests += tst-cnd-basic tst-mtx-trylock tst-cnd-broadcast \
+ 	 tst-unload \
+ 	 tst-unwind-thread \
+ 	 tst-pt-vfork1 tst-pt-vfork2 tst-vfork1x tst-vfork2x \
++	 tst-pthread-setuid-loop \
+ 	 tst-pthread_cancel-exited \
+ 	 tst-pthread_cancel-select-loop \
+ 	 tst-pthread_kill-exited \
+diff --git a/sysdeps/pthread/tst-pthread-setuid-loop.c b/sysdeps/pthread/tst-pthread-setuid-loop.c
+new file mode 100644
+index 0000000000..fda2a49b7f
+--- /dev/null
++++ b/sysdeps/pthread/tst-pthread-setuid-loop.c
+@@ -0,0 +1,61 @@
++/* Test that setuid, pthread_create, thread exit do not deadlock (bug 28361).
++   Copyright (C) 2021 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <support/check.h>
++#include <support/xthread.h>
++#include <unistd.h>
++
++/* How many threads to launch during each iteration.  */
++enum { threads = 4 };
++
++/* How many iterations to perform.  This value seems to reproduce
++   bug 28361 in a bout one in three runs.  */
++enum { iterations = 5000 };
++
++/* Cache of the real user ID used by setuid_thread.  */
++static uid_t uid;
++
++/* Start routine for the threads.  */
++static void *
++setuid_thread (void *closure)
++{
++  TEST_COMPARE (setuid (uid), 0);
++  return NULL;
++}
++
++static int
++do_test (void)
++{
++  /* The setxid machinery is still invoked even if the UID is
++     unchanged.  (The kernel might reset other credentials as part of
++     the system call.)  */
++  uid = getuid ();
++
++  for (int i = 0; i < iterations; ++i)
++    {
++      pthread_t thread_ids[threads];
++      for (int j = 0; j < threads; ++j)
++        thread_ids[j] = xpthread_create (NULL, setuid_thread, NULL);
++      for (int j = 0; j < threads; ++j)
++        xpthread_join (thread_ids[j]);
++    }
++
++  return 0;
++}
++
++#include <support/test-driver.c>
+-- 
+2.21.3
+
