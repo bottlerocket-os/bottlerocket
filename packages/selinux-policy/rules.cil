@@ -187,11 +187,17 @@
 ; Unprivileged components are not allowed to use the API socket.
 (neverallow unprivileged_s api_socket_t (files (mutate)))
 
-; Only trusted components are allowed to relabel files.
+; Only trusted components are allowed to relabel all files.
 (allow trusted_s global (files (relabel)))
 
-; Untrusted components are not allowed to relabel files.
-(neverallow untrusted_s global (files (relabel)))
+; Containers are allowed to "relabel" constrained files, but are
+; governed by additional MCS constraints that require the old and
+; new labels to match exactly.
+(allow container_s constrained_o (files (relabel)))
+
+; Untrusted components are not allowed to relabel most files.
+(neverallow untrusted_s all_s (files (relabel)))
+(neverallow untrusted_s unconstrained_o (files (relabel)))
 
 ; No components are allowed to block access to files by using
 ; fanotify permission events. Fanotify only sends events for

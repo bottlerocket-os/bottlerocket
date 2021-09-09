@@ -1,0 +1,107 @@
+; SELinux dominance rules are somewhat involved but the usage below
+; is straightforward. A quick summary of the relevant details:
+;
+; * s0:c0,c1 (source) dominates s0:c1 (target) since it has two
+;   categories, one of which is c1
+; * s0:c0.c4 (source) dominates s0:c1 (target) since it has a range of
+;   categories, from c0 to c4, which includes c1
+; * s0:c0,c1 (source) neither dominates or is dominated by s0:c1,c2
+;   (target) since only one of the two categories is shared
+; * s0:c0,c1 (source) likewise does not dominate s0:c2,c3 (target)
+;   since neither of the categories is shared
+;
+; In practice, the container runtime will assign two categories at
+; random to each unprivileged container, such that no container has a
+; level that dominates or is dominated by any other. We refer to the
+; two random categories as an MCS pair.
+
+; All the `(dom h1 h2)` checks below can be read as testing whether
+; an unprivileged process running in a container is interacting with
+; its own processes, or reading and writing to its own files.
+;
+; Privileged containers are left alone by the container runtime and
+; inherit the default level, which covers the range of categories -
+; `s0-s0:c0.1023`. They would also pass the dominance check. However,
+; since we have privileged subjects that run outside of containers,
+; we check for that with `(eq t1 privileged_s)`.
+;
+; The current policy attempts to avoid propagating MCS pairs to types
+; that are not `data_t`, but that was not previously done and we may
+; encounter labels like `system_u:object_r:local_t:s0:cX,cY`. The
+; `(eq t2 unconstrained_o)` check is intended to preserve access to
+; these files after an upgrade.
+;
+; Actions that change the label of a process or file are restricted
+; to trusted processes, unless the new label is identical to the old
+; one. This allows programs that attempt to sync all file attributes
+; to work while preserving the intended access restrictions.
+
+; =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+; Restrict file reads unless one of these conditions is met:
+; * the source dominates the target
+; * the source context is a privileged subject (e.g. `control_t`)
+; * the target context is for a subject (e.g. /proc/<pid>/<file>)
+; * the target context is for an unconstrained object
+
+(mlsconstrain (files (load))
+  (or (dom h1 h2)
+      (or (eq t1 privileged_s)
+          (or (eq t2 all_s)
+              (eq t2 unconstrained_o)))))
+
+; Restrict file writes unless one of these conditions is met:
+; * the source dominates the target
+; * the source context is for a privileged subject (e.g. `control_t`)
+; * the target context is for an unconstrained object
+
+(mlsconstrain (files (mutate))
+  (or (dom h1 h2)
+      (or (eq t1 privileged_s)
+          (eq t2 unconstrained_o))))
+
+; Restrict file transitions unless one of these conditions is met:
+; * the new label exactly matches the old label
+; * the process context is trusted
+
+(mlsvalidatetrans files
+  (or (eq t3 trusted_s)
+      (and (and (and (and
+           (eq u1 u2)
+           (eq r1 r2))
+           (eq t1 t2))
+           (eq h1 h2))
+           (eq l1 l2))))
+
+; =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+; Restrict process interactions unless one of these conditions is met:
+; * the source dominates the target
+; * the source context is for a privileged subject (e.g. `control_t`)
+
+(mlsconstrain (processes (interact))
+  (or (dom h1 h2)
+      (eq t1 privileged_s)))
+
+; Restrict process transitions unless one of these conditions is met:
+; * the new label exactly matches the old label
+; * the source context is for a trusted subject
+
+(mlsconstrain (processes (transform))
+  (or (eq t1 trusted_s)
+      (and (and (and (and
+           (eq u1 u2)
+           (eq r1 r2))
+           (eq t1 t2))
+           (eq h1 h2))
+           (eq l1 l2))))
+
+; =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+; Restrict system interactions unless one of these conditions is met:
+; * the source dominates the target
+; * the source context is for a privileged subject (e.g. `control_t`)
+
+(mlsconstrain (systems (use))
+  (or (dom h1 h2)
+      (eq t1 privileged_s)))
