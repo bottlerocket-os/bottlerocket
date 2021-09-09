@@ -10,7 +10,6 @@ After=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
 Type=oneshot
 Environment=BOTTLEROCKET_DATA=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
 Environment=LOCAL_DIR=/local
-Environment=CONTEXT="system_u:object_r:local_t:s0"
 
 # To "grow" the partition, we delete it and recreate it at the larger size, then
 # write it back to the device. udevd observes the write via inotify, and tells
@@ -28,7 +27,7 @@ ExecStart=/usr/sbin/growpart ${BOTTLEROCKET_DATA}
 # depend on the link, and would immediately transition to the failed state when the
 # link is removed. systemd will create local.mount for us as a side effect.
 ExecStart=/usr/bin/mount \
-    -o defaults,noatime,nosuid,nodev,fscontext="${CONTEXT}",defcontext="${CONTEXT}",rootcontext="${CONTEXT}" \
+    -o defaults,noatime,nosuid,nodev \
     ${BOTTLEROCKET_DATA} ${LOCAL_DIR}
 
 # After the mount is active, we grow the filesystem to fill the resized partition,

@@ -57,8 +57,6 @@
 (allow bus_t bus_exec_t (file (entrypoint)))
 
 ; PID 1 starts container runtimes as "runtime_t".
-; The level range is adjusted to span all categories at the same time,
-; to support Docker's use of MCS labels.
 (typetransition init_t runtime_exec_t process runtime_t)
 (allow init_t runtime_t (processes (transform)))
 (allow runtime_t runtime_exec_t (file (entrypoint)))
@@ -70,13 +68,19 @@
 ; Runtimes that use the Go SELinux library will override this label
 ; with the "process" label from the `lxc_contexts` when launching
 ; unprivileged containers, unless automatic labeling is disabled.
-(typetransition runtime_t local_t process control_t)
+(typetransition runtime_t data_t process control_t)
 (typetransition runtime_t cache_t process control_t)
 (typetransition runtime_t secret_t process control_t)
 (allow runtime_t container_s (processes (transform)))
-(allow container_s local_t (file (entrypoint)))
+(allow container_s data_t (file (entrypoint)))
 (allow container_s cache_t (file (entrypoint)))
 (allow container_s secret_t (file (entrypoint)))
+
+; Adjust the level range to span all categories, since privileged
+; containers won't get an MCS pair assigned.
+(rangetransition runtime_t data_t process s0-s0)
+(rangetransition runtime_t cache_t process s0-s0)
+(rangetransition runtime_t secret_t process s0-s0)
 
 ; Also allow entry to container domains through `docker-init`, which
 ; is mounted from the root filesystem and used as the init process.
@@ -84,11 +88,6 @@
 
 ; Allow containers to communicate with runtimes via pipes.
 (allow container_s runtime_t (files (mutate)))
-
-; If a trusted process creates a file or directory when the parent
-; directory has no label, it receives the "local_t" label.
-(typetransition trusted_s unlabeled_t file local_t)
-(typetransition trusted_s unlabeled_t dir local_t)
 
 ; If a runtime process creates a directory for cached container archives
 ; or snapshot layers on local storage, it receives the "cache_t" label.
@@ -140,8 +139,8 @@
 (neverallow other_s dynamic_o (files (mutate mount)))
 
 ; Most subjects are allowed to write to and manage mounts for
-; "local" files and directories on /local.
-(allow unconfined_s local_t (files (mutate mount)))
+; most of the files and directories on /local.
+(allow unconfined_s shared_o (files (mutate mount)))
 
 ; Subjects that control the OS, including helpers spawned by apiserver, can
 ; write to and manage mounts for "secret" files and directories on /local.
@@ -159,8 +158,8 @@
 (neverallow unprivileged_s state_t (files (mutate mount)))
 (neverallow unprivileged_s secret_t (files (mutate mount)))
 
-; Confined subjects cannot modify "state", "secret", or "local" files.
-(neverallow confined_s local_t (files (mutate mount)))
+; Confined subjects cannot modify "state", "secret", or "shared" files.
+(neverallow confined_s shared_o (files (mutate mount)))
 (neverallow confined_s state_t (files (mutate mount)))
 (neverallow confined_s secret_t (files (mutate mount)))
 
@@ -200,13 +199,20 @@
 ; be useful for containers, and we don't use it in the host.
 (neverallow all_s global (files (block)))
 
+; All subject labels can be used for files on /proc.
+(allow all_s proc_t (filesystem (associate)))
+
 ; All object labels can be used for files on filesystems that have
 ; the same label, and for files on ephemeral storage.
 (allow all_o self (filesystem (associate)))
 (allow all_o ephemeral_o (filesystem (associate)))
 
-; Protected object labels can also be used on local storage.
+; Protected object labels can be used on local storage.
 (allow protected_o local_t (filesystem (associate)))
+
+; The data object label can also be used, so that volume types like
+; emptyDir can be relabeled on behalf of containers.
+(allow data_t local_t (filesystem (associate)))
 
 ; Containers are allowed to relax security constraints, since we
 ; don't control what code they run or how it's built.

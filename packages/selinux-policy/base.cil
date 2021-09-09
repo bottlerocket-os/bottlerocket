@@ -28,6 +28,13 @@
 (userlevel system_u s0-s0)
 (userrange system_u s0-s0)
 
+; Take the context from the target file rather than the source
+; process when computing the level for new file objects. We can
+; expect the directory where files are created to have the right
+; range of categories applied, but the process creating the file
+; may be privileged and have the full range or no range at all.
+(defaultrange files target low-high)
+
 ; Enable policy to use consolidated network peer controls. This
 ; avoids a function call to the compatibility mode helper, and
 ; will be faster when no network labeling rules are defined.

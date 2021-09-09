@@ -622,7 +622,7 @@ func withSuperpowered() oci.SpecOpts {
 		oci.WithParentCgroupDevices,
 		oci.WithPrivileged,
 		oci.WithNewPrivileges,
-		oci.WithSelinuxLabel("system_u:system_r:super_t:s0"),
+		oci.WithSelinuxLabel("system_u:system_r:super_t:s0-s0:c0.c1023"),
 		oci.WithAllDevicesAllowed,
 	)
 }
@@ -634,7 +634,7 @@ func withBootstrap() oci.SpecOpts {
 	return oci.Compose(
 		withPrivilegedMounts(),
 		withRootFsShared(),
-		oci.WithSelinuxLabel("system_u:system_r:control_t:s0"),
+		oci.WithSelinuxLabel("system_u:system_r:control_t:s0-s0:c0.c1023"),
 		// Bootstrap containers don't require all "privileges", we only add the
 		// `CAP_SYS_ADMIN` capability. `WithDefaultProfile` will create the proper
 		// seccomp profile based on the container's capabilities.
@@ -647,7 +647,7 @@ func withBootstrap() oci.SpecOpts {
 // withDefault adds container options for non-privileged containers
 func withDefault() oci.SpecOpts {
 	return oci.Compose(
-		oci.WithSelinuxLabel("system_u:system_r:control_t:s0"),
+		oci.WithSelinuxLabel("system_u:system_r:control_t:s0-s0:c0.c1023"),
 		// Non-privileged containers only have access to a subset of the devices
 		oci.WithDefaultUnixDevices,
 		// No additional capabilities required for non-privileged containers
