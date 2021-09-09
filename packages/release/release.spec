@@ -6,7 +6,6 @@ Release: 0%{?dist}
 Summary: Bottlerocket release
 License: Apache-2.0 OR MIT
 
-Source10: hosts
 Source11: nsswitch.conf
 Source97: release-sysctl.conf
 Source98: release-systemd-system.conf
@@ -15,6 +14,7 @@ Source99: release-tmpfiles.conf
 Source200: motd.template
 Source201: proxy-env
 Source202: hostname-env
+Source203: hosts.template
 
 Source1000: eth0.xml
 Source1001: multi-user.target
@@ -91,7 +91,7 @@ Requires: %{_cross_os}wicked
 
 %install
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
-install -p -m 0644 %{S:10} %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
+install -p -m 0644 %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 install -p -m 0644 %{S:1000} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
@@ -135,6 +135,7 @@ install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/hostname-env
+install -p -m 0644 %{S:203} %{buildroot}%{_cross_templatedir}/hosts
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
@@ -142,7 +143,6 @@ install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.r
 ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 
 %files
-%{_cross_factorydir}%{_cross_sysconfdir}/hosts
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig/eth0.xml
 %{_cross_sysctldir}/80-release.conf
@@ -175,6 +175,7 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_templatedir}/motd
 %{_cross_templatedir}/proxy-env
 %{_cross_templatedir}/hostname-env
+%{_cross_templatedir}/hosts
 %{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 %changelog

@@ -2,6 +2,7 @@
 // be registered with the Handlebars library to assist in manipulating
 // text at render time.
 
+use dns_lookup::lookup_host;
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError};
 use lazy_static::lazy_static;
 use num_cpus;
@@ -10,6 +11,7 @@ use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use url::Url;
 
 lazy_static! {
@@ -97,6 +99,9 @@ const KUBE_RESERVE_2_CORES: f32 = KUBE_RESERVE_1_CORE + 10.0;
 const KUBE_RESERVE_3_CORES: f32 = KUBE_RESERVE_2_CORES + 5.0;
 const KUBE_RESERVE_4_CORES: f32 = KUBE_RESERVE_3_CORES + 5.0;
 const KUBE_RESERVE_ADDITIONAL: f32 = 2.5;
+
+const IPV4_LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+const IPV6_LOCALHOST: IpAddr = IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1));
 
 /// Potential errors during helper execution
 mod error {
@@ -869,6 +874,77 @@ pub fn kube_reserve_cpu(
     Ok(())
 }
 
+/// Attempts to resolve the current hostname in DNS.  If unsuccessful, returns an entry formatted
+/// for `/etc/hosts` that aliases the hostname to both the IPV4/6 localhost addresses.
+pub fn add_unresolvable_hostname(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    // To give context to our errors, get the template name, if available.
+    trace!("Starting base64_decode helper");
+    let template_name = template_name(renderctx);
+    trace!("Template name: {}", &template_name);
+
+    // Check number of parameters, must be exactly one
+    trace!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 1)?;
+
+    // Get the resolved key out of the template (param(0)). value() returns
+    // a serde_json::Value
+    let hostname_value = helper
+        .param(0)
+        .map(|v| v.value())
+        .context(error::Internal {
+            msg: "Found no params after confirming there is one param",
+        })?;
+    trace!("Hostname value from template: {}", hostname_value);
+
+    // Create an &str from the serde_json::Value
+    let hostname_str = hostname_value
+        .as_str()
+        .context(error::InvalidTemplateValue {
+            expected: "string",
+            value: hostname_value.to_owned(),
+            template: template_name.to_owned(),
+        })?;
+    trace!("Hostname string from template: {}", hostname_str);
+
+    // Attempt to resolve the hostname
+    let hostname_resolveable = match lookup_host(hostname_str) {
+        Ok(ip_list) => {
+            // If the list of IPs is empty or resolves to localhost, consider the hostname
+            // unresolvable
+            let resolves_to_localhost = ip_list
+                .iter()
+                .any(|ip| ip == &IPV4_LOCALHOST || ip == &IPV6_LOCALHOST);
+            if ip_list.is_empty() || resolves_to_localhost {
+                false
+            } else {
+                true
+            }
+        }
+        Err(e) => {
+            trace!("DNS hostname lookup failed: {},", e);
+            false
+        }
+    };
+
+    // Only write an entry to the template if the hostname is unresolvable
+    if !hostname_resolveable {
+        let ipv4_entry = format!("{} {}", IPV4_LOCALHOST, hostname_str);
+        let ipv6_entry = format!("{} {}", IPV6_LOCALHOST, hostname_str);
+        let entries = format!("{}\n{}", ipv4_entry, ipv6_entry);
+
+        out.write(&entries).context(error::TemplateWrite {
+            template: template_name.to_owned(),
+        })?;
+    }
+    Ok(())
+}
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 // helpers to the helpers
 
@@ -935,8 +1011,9 @@ fn pause_registry<S: AsRef<str>>(region: S) -> String {
 }
 
 /// Calculates and returns the amount of CPU to reserve
-fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError>{
-    let num_cores = u16::try_from(num_cores).context(error::ConvertUsizeToU16 { number: num_cores })?;
+fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError> {
+    let num_cores =
+        u16::try_from(num_cores).context(error::ConvertUsizeToU16 { number: num_cores })?;
     let millicores_unit = "m";
     let cpu_to_reserve = match num_cores {
         0 => 0.0,
@@ -949,7 +1026,11 @@ fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError>{
             KUBE_RESERVE_4_CORES + ((num_cores - 4.0) * KUBE_RESERVE_ADDITIONAL)
         }
     };
-    Ok(format!("{}{}", cpu_to_reserve.floor().to_string(), millicores_unit))
+    Ok(format!(
+        "{}{}",
+        cpu_to_reserve.floor().to_string(),
+        millicores_unit
+    ))
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -1605,5 +1686,52 @@ mod test_kube_cpu_helper {
         for (num_cpus, expected_millicores) in cpu_reserved.into_iter() {
             assert_eq!(kube_cpu_helper(num_cpus).unwrap(), expected_millicores);
         }
+    }
+}
+
+#[cfg(test)]
+mod test_add_unresolvable_hostname {
+    use super::*;
+    use handlebars::RenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper(
+            "add_unresolvable_hostname",
+            Box::new(add_unresolvable_hostname),
+        );
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn resolves_to_localhost_renders_entries() {
+        let result = setup_and_render_template(
+            "{{add_unresolvable_hostname name}}",
+            &json!({"name": "localhost"}),
+        )
+        .unwrap();
+        assert_eq!(
+            result,
+            "127.0.0.1 localhost
+::1 localhost"
+        )
+    }
+
+    #[test]
+    fn resolvable_hostname_renders_nothing() {
+        let result = setup_and_render_template(
+            "{{add_unresolvable_hostname name}}",
+            &json!({"name": "amazon.com"}),
+        )
+        .unwrap();
+        assert_eq!(result, "")
     }
 }

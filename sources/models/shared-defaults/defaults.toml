@@ -81,7 +81,7 @@ template-path = "/usr/share/templates/proxy-env"
 affected-services = ["containerd", "host-containerd", "host-containers"]
 
 [metadata.settings.network.hostname]
-affected-services = ["hostname"]
+affected-services = ["hostname", "hosts"]
 setting-generator = "netdog generate-hostname"
 
 [services.hostname]
@@ -91,6 +91,14 @@ restart-commands = ["/bin/systemctl try-restart set-hostname.service"]
 [configuration-files.hostname]
 path = "/etc/network/hostname.env"
 template-path = "/usr/share/templates/hostname-env"
+
+[services.hosts]
+configuration-files = ["hosts"]
+restart-commands = []
+
+[configuration-files.hosts]
+path = "/etc/hosts"
+template-path = "/usr/share/templates/hosts"
 
 # NTP
 

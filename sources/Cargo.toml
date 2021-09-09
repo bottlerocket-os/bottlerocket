@@ -24,8 +24,9 @@ members = [
     "api/migration/migration-helpers",
     "api/shibaken",
 
-    # "api/migration/migrations/vX.Y.Z/...
-    # (all migrations currently archived; replace this line with new ones)
+    # "api/migration/migrations/vX.Y.Z/..."
+    "api/migration/migrations/v1.2.1/etc-hosts-service",
+    "api/migration/migrations/v1.2.1/hostname-affects-etc-hosts",
 
     "bottlerocket-release",
 
