@@ -1,0 +1,32 @@
+# The following represents a set of update waves that rolls out more slowly
+# than default. The deployment lasts for 13 days, and gradually increases the
+# nodes updated at once.
+[[waves]]
+start_after = '1 hour'
+fleet_percentage = 1
+
+[[waves]]
+start_after = '1 day'
+fleet_percentage = 5
+
+[[waves]]
+start_after = '3 days'
+fleet_percentage = 15
+
+[[waves]]
+start_after = '7 days'
+fleet_percentage = 40
+
+[[waves]]
+start_after = '9 days'
+fleet_percentage = 60
+
+[[waves]]
+start_after = '12 days'
+fleet_percentage = 90
+
+# Last 10 percent of the hosts will update immediately after 13 days since the start of
+# deployment. Unlike the other waves, there will be no velocity control.
+[[waves]]
+start_after = '13 days'
+fleet_percentage = 100
