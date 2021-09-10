@@ -26,6 +26,7 @@ rusoto_core = { version = "0.47.0", default-features = false, features = ["rustl
 rusoto_credential = "0.47.0"
 rusoto_ebs = { version = "0.47.0", default-features = false, features = ["rustls"] }
 rusoto_ec2 = { version = "0.47.0", default-features = false, features = ["rustls"] }
+rusoto_kms = { version = "0.47.0", default-features = false, features = ["rustls"] }
 rusoto_signature = "0.47.0"
 rusoto_ssm = { version = "0.47.0", default-features = false, features = ["rustls"] }
 rusoto_sts = { version = "0.47.0", default-features = false, features = ["rustls"] }

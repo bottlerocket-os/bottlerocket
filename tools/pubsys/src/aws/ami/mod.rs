@@ -91,12 +91,9 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
 async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>> {
     let mut amis = HashMap::new();
 
-    info!(
-        "Checking for infra config at path: {}",
-        args.infra_config_path.display()
-    );
+    // If a lock file exists, use that, otherwise use Infra.toml or default
     let infra_config =
-        InfraConfig::from_path_or_default(&args.infra_config_path).context(error::Config)?;
+        InfraConfig::from_path_or_lock(&args.infra_config_path, true).context(error::Config)?;
     trace!("Using infra config: {:?}", infra_config);
 
     let aws = infra_config.aws.unwrap_or_else(|| Default::default());

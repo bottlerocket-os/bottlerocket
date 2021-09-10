@@ -52,11 +52,10 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
 
     // Setup   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-    info!(
-        "Using infra config from path: {}",
-        args.infra_config_path.display()
-    );
-    let infra_config = InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
+    // If a lock file exists, use that, otherwise use Infra.toml
+    let infra_config =
+        InfraConfig::from_path_or_lock(&args.infra_config_path, false).context(error::Config)?;
+
     trace!("Parsed infra config: {:#?}", infra_config);
     let aws = infra_config.aws.unwrap_or_else(Default::default);
     let ssm_prefix = aws.ssm_prefix.as_deref().unwrap_or_else(|| "");

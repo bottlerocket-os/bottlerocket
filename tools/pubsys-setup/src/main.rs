@@ -76,8 +76,7 @@ fn run() -> Result<()> {
     let args = Args::from_args();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     // Make /roles and /keys directories, if they don't exist, so we can write generated files.
     let role_dir = args.root_role_path.parent().context(error::Path {
@@ -178,14 +177,9 @@ fn run() -> Result<()> {
 fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)> {
     let (mut root_role_path, mut key_url) = (None, None);
 
-    if args.infra_config_path.exists() {
-        info!(
-            "Found infra config at path: {}",
-            args.infra_config_path.display()
-        );
-
-        let infra_config =
-            InfraConfig::from_path(&args.infra_config_path).context(error::Config)?;
+    if InfraConfig::lock_or_infra_config_exists(&args.infra_config_path).context(error::Config)? {
+        let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
+            .context(error::Config)?;
         trace!("Parsed infra config: {:?}", infra_config);
 
         // Check whether the user has the relevant repo defined in their Infra.toml.

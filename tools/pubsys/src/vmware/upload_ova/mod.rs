@@ -45,13 +45,9 @@ pub(crate) struct UploadArgs {
 
 /// Common entrypoint from main()
 pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
-    // Get infra config
-    info!(
-        "Checking for infra config at path: {}",
-        args.infra_config_path.display()
-    );
-    let infra_config =
-        InfraConfig::from_path_or_default(&args.infra_config_path).context(error::InfraConfig)?;
+    // If a lock file exists, use that, otherwise use Infra.toml or default
+    let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, true)
+        .context(error::InfraConfig)?;
     trace!("Using infra config: {:?}", infra_config);
 
     let vmware = infra_config

@@ -1,0 +1,30 @@
+Parameters:
+  Alias:
+    Description: "Required. Alias for KMS key to be created"
+    Type: String
+
+Resources:
+  KMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      KeySpec: RSA_3072
+      KeyUsage: SIGN_VERIFY
+      KeyPolicy:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: "kms:*"
+            Resource: "*"
+
+  KMSKeyAlias:
+    Type: AWS::KMS::Alias
+    DependsOn:
+      - KMSKey
+    Properties:
+      AliasName: !Sub "alias/${Alias}"
+      TargetKeyId: !Ref KMSKey
+
+Outputs: 
+  KeyId:
+     Value: !GetAtt KMSKey.Arn

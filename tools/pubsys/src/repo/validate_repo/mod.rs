@@ -122,12 +122,9 @@ fn validate_repo(
 
 /// Common entrypoint from main()
 pub(crate) fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> Result<(), Error> {
-    info!(
-        "Using infra config from path: {}",
-        args.infra_config_path.display()
-    );
-    let infra_config =
-        InfraConfig::from_path(&args.infra_config_path).context(repo_error::Config)?;
+    // If a lock file exists, use that, otherwise use Infra.toml
+    let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
+        .context(repo_error::Config)?;
     trace!("Parsed infra config: {:?}", infra_config);
     let repo_config = infra_config
         .repo

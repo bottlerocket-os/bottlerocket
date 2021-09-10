@@ -290,6 +290,19 @@ cargo install \
 '''
 ]
 
+[tasks.infra-tools]
+dependencies = ["setup", "fetch-sources", "tuftool"]
+script = [
+'''
+cargo install \
+  ${CARGO_MAKE_CARGO_ARGS} \
+  --path tools/infrasys \
+  --root tools \
+  --force \
+  --quiet
+'''
+]
+
 [tasks.publish-tools]
 dependencies = ["setup", "fetch-sources"]
 script = [
@@ -508,6 +521,22 @@ cargo install \
   --root tools \
   --quiet \
   tuftool
+'''
+]
+
+[tasks.create-infra]
+dependencies = ["infra-tools"]
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+infrasys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}"  \
+   \
+   create-infra \
+   --root-role-path "${PUBLISH_REPO_ROOT_JSON}"
 '''
 ]
 

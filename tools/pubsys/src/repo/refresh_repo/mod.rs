@@ -128,12 +128,9 @@ fn refresh_repo(
 
 /// Common entrypoint from main()
 pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<(), Error> {
-    info!(
-        "Using infra config from path: {}",
-        args.infra_config_path.display()
-    );
-    let infra_config =
-        InfraConfig::from_path(&args.infra_config_path).context(repo_error::Config)?;
+    // If a lock file exists, use that, otherwise use Infra.toml
+    let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
+        .context(repo_error::Config)?;
     trace!("Parsed infra config: {:?}", infra_config);
 
     let repo_config = infra_config
@@ -152,7 +149,7 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
     let signing_key_config = repo_config.signing_keys.as_ref();
 
     let key_source = if let Some(signing_key_config) = signing_key_config {
-        get_signing_key_source(signing_key_config)
+        get_signing_key_source(signing_key_config)?
     } else {
         ensure!(
             refresh_repo_args.default_key_path.exists(),

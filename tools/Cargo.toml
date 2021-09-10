@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "infrasys",
     "buildsys",
     "pubsys",
     "pubsys-config",
