@@ -46,7 +46,7 @@ sha512sum -c <<<"90393204232a1ad6b0a45528b1f7df1a3e37493b1e05b1c149f081849a292c8
 
 Next, set your desired version and variant, and download the OVA:
 ```
-VERSION="v1.1.0"
+VERSION="v1.2.0"
 VARIANT="vmware-k8s-1.21"
 OVA="bottlerocket-${VARIANT}-x86_64-${VERSION}.ova"
 
