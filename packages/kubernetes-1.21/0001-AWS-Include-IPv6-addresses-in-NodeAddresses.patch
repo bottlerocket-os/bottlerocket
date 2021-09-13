@@ -1,0 +1,202 @@
+From f8ea814e2d459a900bfb5e6f613dbe521b31515b Mon Sep 17 00:00:00 2001
+From: Angus Lees <gus@inodes.org>
+Date: Thu, 19 Nov 2020 17:34:07 +1100
+Subject: [PATCH] AWS: Include IPv6 addresses in NodeAddresses
+
+---
+ .../k8s.io/legacy-cloud-providers/aws/aws.go  | 52 +++++++++++++++++++
+ .../legacy-cloud-providers/aws/aws_fakes.go   |  8 +++
+ .../legacy-cloud-providers/aws/aws_test.go    | 24 ++++++---
+ 3 files changed, 78 insertions(+), 6 deletions(-)
+
+diff --git a/staging/src/k8s.io/legacy-cloud-providers/aws/aws.go b/staging/src/k8s.io/legacy-cloud-providers/aws/aws.go
+index c74eef1199f..ee773f063cb 100644
+--- a/staging/src/k8s.io/legacy-cloud-providers/aws/aws.go
++++ b/staging/src/k8s.io/legacy-cloud-providers/aws/aws.go
+@@ -24,6 +24,7 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"net"
++	"net/http"
+ 	"path"
+ 	"regexp"
+ 	"sort"
+@@ -1439,6 +1440,17 @@ func (c *Cloud) HasClusterID() bool {
+ 	return len(c.tagging.clusterID()) > 0
+ }
+ 
++// isAWSNotFound returns true if the error was caused by an AWS API 404 response.
++func isAWSNotFound(err error) bool {
++	if err != nil {
++		var aerr awserr.RequestFailure
++		if errors.As(err, &aerr) {
++			return aerr.StatusCode() == http.StatusNotFound
++		}
++	}
++	return false
++}
++
+ // NodeAddresses is an implementation of Instances.NodeAddresses.
+ func (c *Cloud) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
+ 	if c.selfAWSInstance.nodeName == name || len(name) == 0 {
+@@ -1493,6 +1505,27 @@ func (c *Cloud) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.No
+ 			}
+ 		}
+ 
++		// IPv6. Ordered after IPv4 addresses, so legacy code can continue to just use the "first" address in a dual-stack cluster.
++		for _, macID := range macIDs {
++			ipPath := path.Join("network/interfaces/macs/", macID, "ipv6s")
++			ips, err := c.metadata.GetMetadata(ipPath)
++			if err != nil {
++				if isAWSNotFound(err) {
++					// No IPv6 configured. Not an error, just a disappointment.
++					continue
++				}
++				return nil, fmt.Errorf("error querying AWS metadata for %q: %q", ipPath, err)
++			}
++
++			for _, ip := range strings.Split(ips, "\n") {
++				if ip == "" {
++					continue
++				}
++				// NB: "Internal" is actually about intra-cluster reachability, and not public vs private.
++				addresses = append(addresses, v1.NodeAddress{Type: v1.NodeInternalIP, Address: ip})
++			}
++		}
++
+ 		externalIP, err := c.metadata.GetMetadata("public-ipv4")
+ 		if err != nil {
+ 			//TODO: It would be nice to be able to determine the reason for the failure,
+@@ -1582,6 +1615,25 @@ func extractNodeAddresses(instance *ec2.Instance) ([]v1.NodeAddress, error) {
+ 		}
+ 	}
+ 
++	// IPv6. Ordered after IPv4 addresses, so legacy code can continue to just use the "first" address.
++	for _, networkInterface := range instance.NetworkInterfaces {
++		// skip network interfaces that are not currently in use
++		if aws.StringValue(networkInterface.Status) != ec2.NetworkInterfaceStatusInUse {
++			continue
++		}
++
++		for _, addr6 := range networkInterface.Ipv6Addresses {
++			if ipAddress := aws.StringValue(addr6.Ipv6Address); ipAddress != "" {
++				ip := net.ParseIP(ipAddress)
++				if ip == nil {
++					return nil, fmt.Errorf("EC2 instance had invalid IPv6 address: %s (%q)", aws.StringValue(instance.InstanceId), ipAddress)
++				}
++				// NB: "Internal" is actually about intra-cluster reachability, and not public vs private.
++				addresses = append(addresses, v1.NodeAddress{Type: v1.NodeInternalIP, Address: ip.String()})
++			}
++		}
++	}
++
+ 	// TODO: Other IP addresses (multiple ips)?
+ 	publicIPAddress := aws.StringValue(instance.PublicIpAddress)
+ 	if publicIPAddress != "" {
+diff --git a/staging/src/k8s.io/legacy-cloud-providers/aws/aws_fakes.go b/staging/src/k8s.io/legacy-cloud-providers/aws/aws_fakes.go
+index 0113c55554f..500a81a696a 100644
+--- a/staging/src/k8s.io/legacy-cloud-providers/aws/aws_fakes.go
++++ b/staging/src/k8s.io/legacy-cloud-providers/aws/aws_fakes.go
+@@ -39,6 +39,7 @@ type FakeAWSServices struct {
+ 	selfInstance                *ec2.Instance
+ 	networkInterfacesMacs       []string
+ 	networkInterfacesPrivateIPs [][]string
++	networkInterfacesIPv6s      [][]string
+ 	networkInterfacesVpcIDs     []string
+ 
+ 	ec2      FakeEC2
+@@ -374,6 +375,13 @@ func (m *FakeMetadata) GetMetadata(key string) (string, error) {
+ 				}
+ 			}
+ 		}
++		if len(keySplit) == 5 && keySplit[4] == "ipv6s" {
++			for i, macElem := range m.aws.networkInterfacesMacs {
++				if macParam == macElem {
++					return strings.Join(m.aws.networkInterfacesIPv6s[i], "/\n"), nil
++				}
++			}
++		}
+ 
+ 		return "", nil
+ 	}
+diff --git a/staging/src/k8s.io/legacy-cloud-providers/aws/aws_test.go b/staging/src/k8s.io/legacy-cloud-providers/aws/aws_test.go
+index 56fd43dd12c..40c570d7bf6 100644
+--- a/staging/src/k8s.io/legacy-cloud-providers/aws/aws_test.go
++++ b/staging/src/k8s.io/legacy-cloud-providers/aws/aws_test.go
+@@ -583,7 +583,7 @@ func testHasNodeAddress(t *testing.T, addrs []v1.NodeAddress, addressType v1.Nod
+ 	t.Errorf("Did not find expected address: %s:%s in %v", addressType, address, addrs)
+ }
+ 
+-func makeInstance(num int, privateIP, publicIP, privateDNSName, publicDNSName string, setNetInterface bool) ec2.Instance {
++func makeInstance(num int, privateIP, publicIP, ipv6IP, privateDNSName, publicDNSName string, setNetInterface bool) ec2.Instance {
+ 	var tag ec2.Tag
+ 	tag.Key = aws.String(TagNameKubernetesClusterLegacy)
+ 	tag.Value = aws.String(TestClusterID)
+@@ -613,6 +613,14 @@ func makeInstance(num int, privateIP, publicIP, privateDNSName, publicDNSName st
+ 				},
+ 			},
+ 		}
++
++		if ipv6IP != "" {
++			instance.NetworkInterfaces[0].Ipv6Addresses = []*ec2.InstanceIpv6Address{
++				{
++					Ipv6Address: aws.String(ipv6IP),
++				},
++			}
++		}
+ 	}
+ 	return instance
+ }
+@@ -620,9 +628,9 @@ func makeInstance(num int, privateIP, publicIP, privateDNSName, publicDNSName st
+ func TestNodeAddresses(t *testing.T) {
+ 	// Note instance0 and instance1 have the same name
+ 	// (we test that this produces an error)
+-	instance0 := makeInstance(0, "192.168.0.1", "1.2.3.4", "instance-same.ec2.internal", "instance-same.ec2.external", true)
+-	instance1 := makeInstance(1, "192.168.0.2", "", "instance-same.ec2.internal", "", false)
+-	instance2 := makeInstance(2, "192.168.0.1", "1.2.3.4", "instance-other.ec2.internal", "", false)
++	instance0 := makeInstance(0, "192.168.0.1", "1.2.3.4", "2001:db8::1", "instance-same.ec2.internal", "instance-same.ec2.external", true)
++	instance1 := makeInstance(1, "192.168.0.2", "", "", "instance-same.ec2.internal", "", false)
++	instance2 := makeInstance(2, "192.168.0.1", "1.2.3.4", "", "instance-other.ec2.internal", "", false)
+ 	instances := []*ec2.Instance{&instance0, &instance1, &instance2}
+ 
+ 	aws1, _ := mockInstancesResp(&instance0, []*ec2.Instance{&instance0})
+@@ -644,23 +652,25 @@ func TestNodeAddresses(t *testing.T) {
+ 	if err3 != nil {
+ 		t.Errorf("Should not error when instance found")
+ 	}
+-	if len(addrs3) != 5 {
++	if len(addrs3) != 6 {
+ 		t.Errorf("Should return exactly 5 NodeAddresses")
+ 	}
+ 	testHasNodeAddress(t, addrs3, v1.NodeInternalIP, "192.168.0.1")
+ 	testHasNodeAddress(t, addrs3, v1.NodeExternalIP, "1.2.3.4")
++	testHasNodeAddress(t, addrs3, v1.NodeInternalIP, "2001:db8::1")
+ 	testHasNodeAddress(t, addrs3, v1.NodeExternalDNS, "instance-same.ec2.external")
+ 	testHasNodeAddress(t, addrs3, v1.NodeInternalDNS, "instance-same.ec2.internal")
+ 	testHasNodeAddress(t, addrs3, v1.NodeHostName, "instance-same.ec2.internal")
+ }
+ 
+ func TestNodeAddressesWithMetadata(t *testing.T) {
+-	instance := makeInstance(0, "", "2.3.4.5", "instance.ec2.internal", "", false)
++	instance := makeInstance(0, "", "2.3.4.5", "", "instance.ec2.internal", "", false)
+ 	instances := []*ec2.Instance{&instance}
+ 	awsCloud, awsServices := mockInstancesResp(&instance, instances)
+ 
+ 	awsServices.networkInterfacesMacs = []string{"0a:77:89:f3:9c:f6", "0a:26:64:c4:6a:48"}
+ 	awsServices.networkInterfacesPrivateIPs = [][]string{{"192.168.0.1"}, {"192.168.0.2"}}
++	awsServices.networkInterfacesIPv6s = [][]string{{"2001:db8:1::1"}, {"2001:db8:1::2"}}
+ 	addrs, err := awsCloud.NodeAddresses(context.TODO(), "")
+ 	if err != nil {
+ 		t.Errorf("unexpected error: %v", err)
+@@ -668,6 +678,8 @@ func TestNodeAddressesWithMetadata(t *testing.T) {
+ 	testHasNodeAddress(t, addrs, v1.NodeInternalIP, "192.168.0.1")
+ 	testHasNodeAddress(t, addrs, v1.NodeInternalIP, "192.168.0.2")
+ 	testHasNodeAddress(t, addrs, v1.NodeExternalIP, "2.3.4.5")
++	testHasNodeAddress(t, addrs, v1.NodeInternalIP, "2001:db8:1::1")
++	testHasNodeAddress(t, addrs, v1.NodeInternalIP, "2001:db8:1::2")
+ 	var index1, index2 int
+ 	for i, addr := range addrs {
+ 		if addr.Type == v1.NodeInternalIP && addr.Address == "192.168.0.1" {
+-- 
+2.17.1
+

@@ -36,6 +36,8 @@ Source8: kubernetes-tmpfiles.conf
 Source9: kubelet-sysctl.conf
 Source1000: clarify.toml
 
+Patch0001: 0001-AWS-Include-IPv6-addresses-in-NodeAddresses.patch
+
 BuildRequires: git
 BuildRequires: rsync
 BuildRequires: %{_cross_os}glibc-devel
