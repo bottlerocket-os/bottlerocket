@@ -159,7 +159,7 @@ dependencies = [
  "regex",
  "reqwest",
  "serde",
- "serde_plain",
+ "serde_plain 1.0.0",
  "sha2",
  "snafu",
  "toml",
@@ -1716,6 +1716,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_plain"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95455e7e29fada2052e72170af226fbe368a4ca33dee847875325d9fdb133858"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_urlencoded"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2061,7 +2070,7 @@ dependencies = [
  "ring",
  "serde",
  "serde_json",
- "serde_plain",
+ "serde_plain 0.3.0",
  "snafu",
  "tempfile",
  "untrusted",
@@ -2188,7 +2197,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "serde_plain",
+ "serde_plain 1.0.0",
  "snafu",
  "toml",
 ]
