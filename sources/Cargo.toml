@@ -27,6 +27,7 @@ members = [
     # "api/migration/migrations/vX.Y.Z/..."
     "api/migration/migrations/v1.3.0/etc-hosts-service",
     "api/migration/migrations/v1.3.0/hostname-affects-etc-hosts",
+    "api/migration/migrations/v1.3.0/control-container-v0-5-2",
 
     "bottlerocket-release",
 
