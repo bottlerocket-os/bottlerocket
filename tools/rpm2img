@@ -152,10 +152,15 @@ mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # Set the Bottlerocket variant, version, and build-id
 SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
-echo "PRETTY_NAME=\"${PRETTY_NAME} ${VERSION_ID}\"" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
-echo "VARIANT_ID=${VARIANT}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
-echo "VERSION_ID=${VERSION_ID}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
-echo "BUILD_ID=${BUILD_ID}" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+cat <<EOF >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
+PRETTY_NAME="${PRETTY_NAME} ${VERSION_ID}"
+VARIANT_ID=${VARIANT}
+VERSION_ID=${VERSION_ID}
+BUILD_ID=${BUILD_ID}
+HOME_URL="https://github.com/bottlerocket-os/bottlerocket"
+SUPPORT_URL="https://github.com/bottlerocket-os/bottlerocket/discussions"
+BUG_REPORT_URL="https://github.com/bottlerocket-os/bottlerocket/issues"
+EOF
 
 # BOTTLEROCKET-ROOT-A
 mkdir -p "${ROOT_MOUNT}/lost+found"
