@@ -51,6 +51,13 @@ reads BUILDSYS_VARIANT.)
 variant-sensitive = true
 ```
 
+`releases-url` is ignored by buildsys, but can be used by packager maintainers
+to indicate a good URL for checking whether the software has had a new release.
+```
+[package.metadata.build-package]
+releases-url = "https://www.example.com/releases"
+```
+
 ## Metadata for variants
 
 `included-packages` is a list of packages that should be included in a variant.
@@ -187,6 +194,7 @@ struct Metadata {
 pub(crate) struct BuildPackage {
     pub(crate) external_files: Option<Vec<ExternalFile>>,
     pub(crate) package_name: Option<String>,
+    pub(crate) releases_url: Option<String>,
     pub(crate) source_groups: Option<Vec<PathBuf>>,
     pub(crate) variant_sensitive: Option<bool>,
 }
