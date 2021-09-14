@@ -152,8 +152,10 @@ mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
 
 # Set the Bottlerocket variant, version, and build-id
 SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
+VERSION="${VERSION_ID} (${VARIANT})"
 cat <<EOF >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/lib/os-release"
-PRETTY_NAME="${PRETTY_NAME} ${VERSION_ID}"
+VERSION="${VERSION}"
+PRETTY_NAME="${PRETTY_NAME} ${VERSION}"
 VARIANT_ID=${VARIANT}
 VERSION_ID=${VERSION_ID}
 BUILD_ID=${BUILD_ID}
