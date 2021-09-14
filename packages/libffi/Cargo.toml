@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/libffi/libffi/releases/"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/libffi/libffi/releases/download/v3.4.2/libffi-3.4.2.tar.gz"
 sha512 = "31bad35251bf5c0adb998c88ff065085ca6105cf22071b9bd4b5d5d69db4fadf16cadeec9baca944c4bb97b619b035bb8279de8794b922531fddeb0779eb7fb1"

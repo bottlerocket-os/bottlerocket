@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "http://kernel.org/pub/linux/utils/net/iproute2"
+
 [[package.metadata.build-package.external-files]]
 url = "http://kernel.org/pub/linux/utils/net/iproute2/iproute2-5.9.0.tar.xz"
 sha512 = "bce59b0e8d876f10f94926be7f2a7cda0de15db04fabedfe938649d486ca6d6d222523d1661b8b36ea50e35369a4730938d6ebeb80577ac0522a3432037bcd50"

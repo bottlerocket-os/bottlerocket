@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://ftp.gnu.org/gnu/readline"
+
 [[package.metadata.build-package.external-files]]
 url = "https://ftp.gnu.org/gnu/readline/readline-8.1.tar.gz"
 sha512 = "27790d0461da3093a7fee6e89a51dcab5dc61928ec42e9228ab36493b17220641d5e481ea3d8fee5ee0044c70bf960f55c7d3f1a704cf6b9c42e5c269b797e00"

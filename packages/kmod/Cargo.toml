@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://www.kernel.org/pub/linux/utils/kernel/kmod"
+
 [[package.metadata.build-package.external-files]]
 url = "https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-29.tar.xz"
 sha512 = "557cdcaec75e5a1ceea2d10862c944e9a65ef54f6ee9da6dc98ce4582418fdc9958aab2e14a84807db61daf36ec4fcdc23a36376c39d5dc31d1823ca7cd47998"

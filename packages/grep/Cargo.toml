@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://mirrors.kernel.org/gnu/grep"
+
 [[package.metadata.build-package.external-files]]
 url = "https://mirrors.kernel.org/gnu/grep/grep-3.6.tar.xz"
 sha512 = "8934544a19ded61344d83ff2cab501e86f17f8ae338892e0c36c2d2d8e63c76817840a0071ef5e3fcbca9115eba8a1aae0e4c46b024e75cd9a2e3bd05f933d90"

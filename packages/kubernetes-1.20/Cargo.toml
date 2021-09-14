@@ -7,11 +7,12 @@ edition = "2018"
 publish = false
 build = "build.rs"
 
-[package.metadata.build-package]
-package-name = "kubernetes-1.20"
-
 [lib]
 path = "pkg.rs"
+
+[package.metadata.build-package]
+package-name = "kubernetes-1.20"
+releases-url = "https://github.com/kubernetes/kubernetes/releases"
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/kubernetes/kubernetes/archive/v1.20.9/kubernetes-1.20.9.tar.gz"

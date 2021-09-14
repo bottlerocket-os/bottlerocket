@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/vmware/open-vm-tools/releases/"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/vmware/open-vm-tools/releases/download/stable-11.3.0/open-vm-tools-11.3.0-18090558.tar.gz"
 sha512 = "36fa4fc309e57f49f1000abe8ca48aaf8bda67cd0ef3fd25ed0dfc12e2dd88e5a2bc8dae69abbadb44b2fa5195802f9925681a452f54916daa268adb20e8c8cd"

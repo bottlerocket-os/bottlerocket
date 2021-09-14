@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://sourceware.org/elfutils/ftp/"
+
 [[package.metadata.build-package.external-files]]
 url = "https://sourceware.org/elfutils/ftp/0.185/elfutils-0.185.tar.bz2"
 sha512 = "34de0de1355b11740e036e0fc64f2fc063587c8eb121b19216ee5548d3f0f268d8fc3995176c47190466b9d881007cfa11a9d01e9a50e38af6119492bf8bb47f"

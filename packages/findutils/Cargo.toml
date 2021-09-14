@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://ftp.gnu.org/pub/gnu/findutils"
+
 [[package.metadata.build-package.external-files]]
 url = "https://ftp.gnu.org/pub/gnu/findutils/findutils-4.8.0.tar.xz"
 sha512 = "eaa2da304dbeb2cd659b9210ac37da1bde4cd665c12a818eca98541c5ed5cba1050641fc0c39c0a446a5a7a87a8d654df0e0e6b0cee21752ea485188c9f1071e"

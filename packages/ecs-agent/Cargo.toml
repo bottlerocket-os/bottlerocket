@@ -9,6 +9,9 @@ build = "build.rs"
 path = "pkg.rs"
 
 # ECS agent
+[package.metadata.build-package]
+releases-url = "https://github.com/aws/amazon-ecs-agent/releases"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/aws/amazon-ecs-agent/archive/v1.54.1/amazon-ecs-agent-v1.54.1.tar.gz"
 sha512 = "b3f92920ce327ff5a6d77268f927882d25097da65813d4f4c60787772109aa49952ec4130f83bfd00bf77ee86af1e60ca0b0967c02276126ccc378c954bc6047"

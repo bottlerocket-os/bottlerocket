@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://netfilter.org/projects/libnetfilter_cttimeout/files"
+
 [[package.metadata.build-package.external-files]]
 url = "https://netfilter.org/projects/libnetfilter_cttimeout/files/libnetfilter_cttimeout-1.0.0.tar.bz2"
 sha512 = "d64f592be022d02b6e6627470f9aed75114b0c7177012d31d868ee7eb39fca330a7638c9a209ff489d4a8c0549b8fcfd33582c6d36ee519b920cf27429301c85"

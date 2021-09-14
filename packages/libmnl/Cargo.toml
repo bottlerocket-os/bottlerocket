@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "http://netfilter.org/projects/libmnl/files"
+
 [[package.metadata.build-package.external-files]]
 url = "http://netfilter.org/projects/libmnl/files/libmnl-1.0.4.tar.bz2"
 sha512 = "e2bbfb688fe41913d53c74ba7ec95b4e88ee2c52b556b8608185f2fcbd629665423a3b37f877f84426ba257cf6040fa701539d67166b00b8e3e2dfde6831a2f9"

@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://www.netfilter.org/projects/conntrack-tools/files"
+
 [[package.metadata.build-package.external-files]]
 url = "https://www.netfilter.org/projects/conntrack-tools/files/conntrack-tools-1.4.6.tar.bz2"
 sha512 = "a48260308a12b11b584fcf4658ec2c4c1adb2801c9cf9a73fc259e5c30d2fbe401aca21e931972413f03e415f98fbf9bd678d2126faa6c6d5748e8a652e58f1a"

@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/makedumpfile/makedumpfile/releases"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/makedumpfile/makedumpfile/archive/1.6.9/makedumpfile-1.6.9.tar.gz"
 sha512 = "9982985498ae641d390c3b87d92aecd263a502f1a4a9e96e145d86d8778b9e778e4ee98034ef4dbe12ed5586c57278917ea5f3c9ae2989ad1ac051215e03b3d9"

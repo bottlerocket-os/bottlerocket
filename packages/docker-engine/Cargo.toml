@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/moby/moby/releases"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/moby/moby/archive/v20.10.7/moby-20.10.7.tar.gz"
 sha512 = "2341faa3ebb903d74fa434712fce45e7acf0423710b97cdca11e3999db2819c4385d9a7fb3850925592f20f02c6261edbade6c9d6a2fefbc32f05a6b44ec3073"

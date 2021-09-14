@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/docker/libnetwork/releases"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/docker/libnetwork/archive/fa125a3512ee0f6187721c88582bf8c4378bd4d7/libnetwork-fa125a3512ee0f6187721c88582bf8c4378bd4d7.tar.gz"
 sha512 = "dd583218fbeba8aeac2e4143369ad55a3e6c15d64f198f73e3656a80d0281a4374fb3be7bc05b01425461bf830762aa2c950da68ed0e3ae5884643e9d178c69e"

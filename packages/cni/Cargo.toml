@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/containernetworking/cni/releases"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/containernetworking/cni/archive/v0.8.1/cni-0.8.1.tar.gz"
 sha512 = "b869e76806c6e259743715831ddf5754a56e79fa7f25435e54e3f0648700e473e5778630e592f5c5d181058e74c7542aeac5c4f3d8cd26b83f7758bb186f43e9"
