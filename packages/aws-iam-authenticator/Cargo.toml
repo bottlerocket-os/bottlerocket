@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.5.2/aws-iam-authenticator-0.5.2.tar.gz"
 sha512 = "a16a630096ed3223d156e1586f02ffcfcf256f12530ba565f5f1f649c83418cd71ea66c554c9e1edd1b44dd745d9393f4ed4c63c62677ae973e9bd9a1a24fe5b"

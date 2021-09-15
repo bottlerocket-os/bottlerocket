@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/bus1/dbus-broker/releases/"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/bus1/dbus-broker/releases/download/v29/dbus-broker-29.tar.xz"
 sha512 = "ef0b59cacef2918cb94bdf8d91a1211a8f635f9059416938248febc67bfd82a3a2a32517af81df56590b1c742aeac2a22ad656153293012ecad4667588df0b1c"

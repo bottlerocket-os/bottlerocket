@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "http://www.tcpdump.org/release"
+
 [[package.metadata.build-package.external-files]]
 url = "http://www.tcpdump.org/release/tcpdump-4.99.1.tar.gz"
 sha512 = "53d31355e1a6ef5a65bb3bf72454169fc80adf973a327a5768840e6ccf0550fbeb3c8a41f959635076d871df0619680321910a3a97879607f481cdaa8b7ceda7"

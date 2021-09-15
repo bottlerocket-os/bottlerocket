@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://download.gnome.org/sources/glib"
+
 [[package.metadata.build-package.external-files]]
 url = "https://download.gnome.org/sources/glib/2.68/glib-2.68.3.tar.xz"
 sha512 = "fb120105c4cb582491a53a0e4c61fe4bdd1f94b279bb7c362afd591369ede50a196c706375564ededf3550d4062a285b038e20b605e6d5dfe36f5d208f4bad3f"

@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://curl.se/docs/caextract.html"
+
 [[package.metadata.build-package.external-files]]
 url = "https://curl.haxx.se/ca/cacert-2021-07-05.pem"
 sha512 = "881183c7fed512cab763a6145f0e07c5bcdc143589baf433f7ba92223d215f18f48782fcfc04860db0671849e2ceeecedf6704f77148f588e17c4cd9a34cc8f8"

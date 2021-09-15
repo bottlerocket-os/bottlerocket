@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://ftp.gnu.org/gnu/glibc"
+
 [[package.metadata.build-package.external-files]]
 url = "https://ftp.gnu.org/gnu/glibc/glibc-2.33.tar.xz"
 sha512 = "4cb5777b68b22b746cc51669e0e9282b43c83f6944e42656e6db7195ebb68f2f9260f130fdeb4e3cfc64efae4f58d96c43d388f52be1eb024ca448084684abdb"

@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "http://www.tcpdump.org/release"
+
 [[package.metadata.build-package.external-files]]
 url = "http://www.tcpdump.org/release/libpcap-1.10.1.tar.gz"
 sha512 = "56c314f19c2b857742bf8abcb1e78066986aaa95cec339b75a3c8b70a9fa2b5167da98708352f9ec97a1cea2700cfb4e040bda108d58ac46cec9b7deab88d171"

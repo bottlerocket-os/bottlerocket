@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://strace.io/files"
+
 [[package.metadata.build-package.external-files]]
 url = "https://strace.io/files/5.13/strace-5.13.tar.xz"
 sha512 = "ba8b0eae396fa2b762bf17cbcdcd84b0660b2a5d5e7e9caf098ef3414a87fd28d4140dd10136483f35904560e5044e40be2bf6117462868a360306d62887c8ed"

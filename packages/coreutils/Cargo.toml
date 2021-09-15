@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://ftp.gnu.org/gnu/coreutils"
+
 [[package.metadata.build-package.external-files]]
 url = "https://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.xz"
 sha512 = "1c8f3584efd61b4b02e7ac5db8e103b63cfb2063432caaf1e64cb2dcc56d8c657d1133bbf10bd41468d6a1f31142e6caa81d16ae68fa3e6e84075c253613a145"

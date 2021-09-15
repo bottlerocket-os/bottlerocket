@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs"
+
 [[package.metadata.build-package.external-files]]
 url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.46.3/e2fsprogs-1.46.3.tar.xz"
 sha512 = "27da6e38d3463e7a283dacfb88a3210dd6d8c63f4d990db879f63bdf503aaa5c447ef0ccc566b71526c12a8ab0a7a6529014b1010be300ad56a6ad5ce9066196"

@@ -8,6 +8,9 @@ build = "build.rs"
 [lib]
 path = "pkg.rs"
 
+[package.metadata.build-package]
+releases-url = "https://github.com/SELinuxProject/selinux/releases/"
+
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/SELinuxProject/selinux/releases/download/3.2/libsemanage-3.2.tar.gz"
 sha512 = "6ad670bb298b1bab506217b12a3fda5d2209f4387a11410f0c1b65f765ffb579b0d70795dee19048909e0b72ef904fc318be60d5a01f80ab12742ce07647a084"
