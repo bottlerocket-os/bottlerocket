@@ -33,8 +33,8 @@ impl ServiceCheck for MockCheck {
     }
 }
 
-// dynamically create a config file where we can set server port, list of services, and send_metrics
-fn create_config_file_contents(port: u16, services: &[&str], send_metrics: bool) -> String {
+// dynamically create a config file where we can set server address, list of services, and send_metrics
+fn create_config_file_contents(metrics_url: &str, services: &[&str], send_metrics: bool) -> String {
     let svcs = services
         .iter()
         .map(|&s| format!("\"{}\"", s))
@@ -42,7 +42,7 @@ fn create_config_file_contents(port: u16, services: &[&str], send_metrics: bool)
         .join(", ");
     format!(
         r#"
-    metrics_url = "http://localhost:{}/metrics"
+    metrics_url = "{}"
     send_metrics = {}
     service_checks = [{}]
     region = "us-west-2"
@@ -50,19 +50,19 @@ fn create_config_file_contents(port: u16, services: &[&str], send_metrics: bool)
     version_lock = "v0.1.2"
     ignore_waves = false
     "#,
-        port, send_metrics, svcs
+        metrics_url, send_metrics, svcs
     )
 }
 
 // create the config and os-release files in a tempdir and return the tempdir
-fn create_test_files(port: u16, services: &[&str], send_metrics: bool) -> TempDir {
+fn create_test_files(metrics_url: &str, services: &[&str], send_metrics: bool) -> TempDir {
     let t = TempDir::new().unwrap();
     write(
-        PathBuf::from(config_path(&t)),
-        create_config_file_contents(port, services, send_metrics),
+        config_path(&t),
+        create_config_file_contents(metrics_url, services, send_metrics),
     )
     .unwrap();
-    write(PathBuf::from(os_release_path(&t)), OS_RELEASE).unwrap();
+    write(os_release_path(&t), OS_RELEASE).unwrap();
     t
 }
 
@@ -88,8 +88,8 @@ fn send_boot_success() {
         Expectation::matching(request::method_path("GET", "/metrics"))
             .respond_with(status_code(200)),
     );
-    let port = server.addr().port();
-    let tempdir = create_test_files(port, &["a", "b"], true);
+    let metrics_url = server.url_str("/metrics");
+    let tempdir = create_test_files(&metrics_url, &["a", "b"], true);
     let args = Arguments {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
@@ -109,8 +109,8 @@ fn opt_out() {
             .times(0)
             .respond_with(status_code(200)),
     );
-    let port = server.addr().port();
-    let tempdir = create_test_files(port, &[], false);
+    let metrics_url = server.url_str("/metrics");
+    let tempdir = create_test_files(&metrics_url, &[], false);
     let args = Arguments {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
@@ -123,8 +123,8 @@ fn opt_out() {
 #[test]
 /// assert that send-boot-success exits without error even when there is no HTTP server
 fn send_boot_success_no_server() {
-    let port = 0;
-    let tempdir = create_test_files(port, &[], true);
+    let metrics_url = "http://localhost:0/metrics";
+    let tempdir = create_test_files(metrics_url, &[], true);
     let args = Arguments {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
@@ -142,8 +142,8 @@ fn send_boot_success_404() {
         Expectation::matching(request::method_path("GET", "/metrics"))
             .respond_with(status_code(404)),
     );
-    let port = server.addr().port();
-    let tempdir = create_test_files(port, &[], true);
+    let metrics_url = server.url_str("/metrics");
+    let tempdir = create_test_files(&metrics_url, &[], true);
     let args = Arguments {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
@@ -163,8 +163,8 @@ fn send_health_ping() {
         request::query(url_decoded(contains(("failed_services", "afailed:1")))),
     ];
     server.expect(Expectation::matching(matcher).respond_with(status_code(200)));
-    let port = server.addr().port();
-    let tempdir = create_test_files(port, &["afailed", "b"], true);
+    let metrics_url = server.url_str("/metrics");
+    let tempdir = create_test_files(&metrics_url, &["afailed", "b"], true);
     let args = Arguments {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,

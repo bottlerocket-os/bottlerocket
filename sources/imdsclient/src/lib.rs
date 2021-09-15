@@ -366,7 +366,7 @@ mod error {
     #[snafu(visibility = "pub(super)")]
 
     pub enum Error {
-        #[snafu(display("Response '{}' from '{}': {}", get_status_code(&source), uri, source))]
+        #[snafu(display("Response '{}' from '{}': {}", get_status_code(source), uri, source))]
         BadResponse { uri: String, source: reqwest::Error },
 
         #[snafu(display("IMDS fetch failed after {} attempts", attempt))]
@@ -426,8 +426,7 @@ mod test {
     #[tokio::test]
     async fn new_imds_client() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         server.expect(
             Expectation::matching(request::method_path("PUT", "/latest/api/token"))
@@ -445,8 +444,7 @@ mod test {
     #[tokio::test]
     async fn fetch_imds() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         let schema_version = "latest";
         let target = "meta-data/instance-type";
@@ -484,8 +482,7 @@ mod test {
     #[tokio::test]
     async fn fetch_imds_notfound() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         let schema_version = "latest";
         let target = "meta-data/instance-type";
@@ -520,8 +517,7 @@ mod test {
     #[tokio::test]
     async fn fetch_imds_unauthorized() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         let schema_version = "latest";
         let target = "meta-data/instance-type";
@@ -555,8 +551,7 @@ mod test {
     #[tokio::test]
     async fn fetch_imds_timeout() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         let schema_version = "latest";
         let target = "meta-data/instance-type";
@@ -590,8 +585,7 @@ mod test {
     #[tokio::test]
     async fn fetch_string() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         let end_target = "meta-data/instance-type";
         let response_code = 200;
@@ -625,8 +619,7 @@ mod test {
     #[tokio::test]
     async fn fetch_bytes() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         let end_target = "dynamic/instance-identity/document";
         let response_code = 200;
@@ -660,8 +653,7 @@ mod test {
     #[tokio::test]
     async fn fetch_userdata() {
         let server = Server::run();
-        let port = server.addr().port();
-        let base_uri = format!("http://localhost:{}", port);
+        let base_uri = format!("http://{}", server.addr());
         let token = "some+token";
         let response_code = 200;
         let response_body = r#"settings.motd = "Welcome to Bottlerocket!""#;

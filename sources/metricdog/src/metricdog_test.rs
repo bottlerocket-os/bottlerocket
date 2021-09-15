@@ -60,10 +60,10 @@ fn send_healthy_ping() {
         request::query(url_decoded(contains(("is_healthy", "true")))),
     ];
     server.expect(Expectation::matching(matcher).respond_with(status_code(200)));
-    let port = server.addr().port();
+    let metrics_url = server.url_str("/metrics");
     let metricdog = Metricdog::from_parts(
         Config {
-            metrics_url: format!("http://localhost:{}/metrics", port),
+            metrics_url,
             send_metrics: true,
             service_checks: vec![
                 String::from("service_a"),
@@ -101,10 +101,10 @@ fn send_unhealthy_ping() {
         request::query(url_decoded(contains(("is_healthy", "false")))),
     ];
     server.expect(Expectation::matching(matcher).respond_with(status_code(200)));
-    let port = server.addr().port();
+    let metrics_url = server.url_str("/metrics");
     let metricdog = Metricdog::from_parts(
         Config {
-            metrics_url: format!("http://localhost:{}/metrics", port),
+            metrics_url,
             send_metrics: true,
             // note that these are out-of-order sort order to ensure that failed services are sorted
             // in the url.
@@ -139,10 +139,10 @@ fn send_boot_success() {
         request::query(url_decoded(contains(("seed", "2041")))),
     ];
     server.expect(Expectation::matching(matcher).respond_with(status_code(200)));
-    let port = server.addr().port();
+    let metrics_url = server.url_str("/metrics");
     let metricdog = Metricdog::from_parts(
         Config {
-            metrics_url: format!("http://localhost:{}/metrics", port),
+            metrics_url,
             send_metrics: true,
             service_checks: vec![
                 String::from("service_afail2"),
