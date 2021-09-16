@@ -1447,9 +1447,9 @@ checksum = "494b4d60369511e7dea41cf646832512a94e542f68bb9c49e54518e0f468eb47"
 
 [[package]]
 name = "httptest"
-version = "0.15.2"
+version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7c2365a7fb6261670a6bba56577393002429769138605771113bf3b2599c272"
+checksum = "5858cc7b673d0397ffd4cdee93f11eb2fa08a2b0b5e35ae03d6b480a4abe171d"
 dependencies = [
  "bstr",
  "bytes",
