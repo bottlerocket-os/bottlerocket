@@ -9,8 +9,6 @@
 (classmapping files relabel relabel_blk_file)
 (classmapping files relabel relabel_sock_file)
 (classmapping files relabel relabel_fifo_file)
-(classmapping files relabel relabel_filesystem)
-(classmapping files relabel relabel_kernel_service)
 
 ; Permission group for mounts.
 (classmapping files mount mount_file)
@@ -81,8 +79,6 @@
 (classpermission relabel_blk_file)
 (classpermission relabel_sock_file)
 (classpermission relabel_fifo_file)
-(classpermission relabel_filesystem)
-(classpermission relabel_kernel_service)
 (classpermissionset relabel_file (
   file (relabelfrom relabelto)))
 (classpermissionset relabel_dir (
@@ -97,10 +93,6 @@
   sock_file (relabelfrom relabelto)))
 (classpermissionset relabel_fifo_file (
   fifo_file (relabelfrom relabelto)))
-(classpermissionset relabel_filesystem (
-  filesystem (relabelfrom relabelto)))
-(classpermissionset relabel_kernel_service (
-  kernel_service (create_files_as)))
 
 ; Sets of permissions for mounts.
 (classpermission mount_file)

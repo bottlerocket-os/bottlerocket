@@ -5,6 +5,8 @@
 (classmapping systems manage (capability2 (mac_override mac_admin)))
 (classmapping systems manage (cap2_userns (mac_override mac_admin)))
 (classmapping systems manage (dbus (all)))
+(classmapping systems manage (filesystem (relabelfrom relabelto)))
+(classmapping systems manage (kernel_service (all)))
 (classmapping systems manage (security (all)))
 (classmapping systems manage (service (all)))
 (classmapping systems manage (
