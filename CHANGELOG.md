@@ -1,3 +1,11 @@
+# v1.2.1 (2021-09-16)
+
+## Security fixes
+
+* Update Kubernetes for CVE-2021-25741 ([#1753])
+
+[#1753]: https://github.com/bottlerocket-os/bottlerocket/pull/1753
+
 # v1.2.0 (2021-08-06)
 
 ## OS Changes
