@@ -26,6 +26,7 @@ Source8: kubernetes-tmpfiles.conf
 Source9: kubelet-sysctl.conf
 Source1000: clarify.toml
 Patch1: 0001-always-set-relevant-variables-for-cross-compiling.patch
+Patch50: 0050-k8s-1.17-CVE-2021-25741.patch
 
 # Update aws-sdk-go for IMDSv2 support
 Patch100: aws-sdk-go-1.28.2_k8s-1.17.8.patch.bz2
