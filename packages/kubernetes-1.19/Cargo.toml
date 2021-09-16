@@ -14,8 +14,8 @@ package-name = "kubernetes-1.19"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes/kubernetes/archive/v1.19.13/kubernetes-1.19.13.tar.gz"
-sha512 = "d5bece5cdc399c5132c959b5f53431427893a2bc37c3f475df73c2f846e4c51b961b092c3099c1f1f42de2cdde782bf62c404b9cc44fc69cecfee2c7765b7509"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.19.15/kubernetes-1.19.15.tar.gz"
+sha512 = "cdef25ab050df79a5fce824721920fedead8326b83b5134ef534a8b8671b58a122bd49598981cd86bdd6ab46fdc8b55ccee5fd9e4c725ddf261bf4178f264e0a"
 
 # RPM BuildRequires
 [build-dependencies]
