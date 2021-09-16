@@ -1,0 +1,624 @@
+From db8a9200fc396b83a693ef0ff2e6baff6b1eaea9 Mon Sep 17 00:00:00 2001
+From: Manu Gupta <mgpta@amazon.com>
+Date: Mon, 23 Aug 2021 16:01:52 -0700
+Subject: [PATCH] -- EKS Patch -- Pass additional flags to subpath mount to
+ avoid flakes in certain conditions
+
+PR: https://github.com/kubernetes/kubernetes/pull/104340
+
+Backport upstream fix to 1.18.
+
+In-compatible change:
+1. klog/v2 is not present in EKS 1.18; so klog v1 is used.
+
+Other notes:
+1. In volume, a new MounterInterface is introduced and this is
+used for subPaths.
+2. When sensitive options are provided, the MounterInterface's
+MountSensitiveWithFlags is called for both systemd and non-systemd
+related services.
+3. A fakeMounter is introduced for testing and ensuring that the build
+   does not break.
+4. The scope of the CR is limited to windows and linux. It will throw
+an errUtilsMountUnsupported Error for other operating sytems.
+
+Signed-off-by: Jackson West <jgw@amazon.com>
+---
+ cmd/kubelet/app/server.go                     |   3 +-
+ pkg/volume/util/subpath/BUILD                 |  21 +-
+ .../util/subpath/subpath_fake_mounter.go      |  47 ++++
+ pkg/volume/util/subpath/subpath_linux.go      |   9 +-
+ pkg/volume/util/subpath/subpath_linux_test.go |   6 +-
+ pkg/volume/util/subpath/subpath_mount.go      |  36 +++
+ .../util/subpath/subpath_mount_linux.go       | 216 ++++++++++++++++++
+ .../util/subpath/subpath_mount_unsupported.go |  48 ++++
+ .../util/subpath/subpath_mount_windows.go     |  47 ++++
+ 9 files changed, 412 insertions(+), 21 deletions(-)
+ create mode 100644 pkg/volume/util/subpath/subpath_fake_mounter.go
+ create mode 100644 pkg/volume/util/subpath/subpath_mount.go
+ create mode 100644 pkg/volume/util/subpath/subpath_mount_linux.go
+ create mode 100644 pkg/volume/util/subpath/subpath_mount_unsupported.go
+ create mode 100644 pkg/volume/util/subpath/subpath_mount_windows.go
+
+diff --git a/cmd/kubelet/app/server.go b/cmd/kubelet/app/server.go
+index e49381d3bee..3b2e75b6299 100644
+--- a/cmd/kubelet/app/server.go
++++ b/cmd/kubelet/app/server.go
+@@ -372,7 +372,8 @@ func UnsecuredDependencies(s *options.KubeletServer, featureGate featuregate.Fea
+ 	}
+ 
+ 	mounter := mount.New(s.ExperimentalMounterPath)
+-	subpather := subpath.New(mounter)
++	subPathMounter := subpath.NewMounter(mounter, s.ExperimentalMounterPath)
++	subpather := subpath.New(subPathMounter)
+ 	hu := hostutil.NewHostUtil()
+ 	var pluginRunner = exec.New()
+ 
+diff --git a/pkg/volume/util/subpath/BUILD b/pkg/volume/util/subpath/BUILD
+index 3830dc9ae00..564db078c3f 100644
+--- a/pkg/volume/util/subpath/BUILD
++++ b/pkg/volume/util/subpath/BUILD
+@@ -4,62 +4,57 @@ go_library(
+     name = "go_default_library",
+     srcs = [
+         "subpath.go",
++        "subpath_fake_mounter.go",
+         "subpath_linux.go",
++        "subpath_mount.go",
++        "subpath_mount_linux.go",
++        "subpath_mount_unsupported.go",
++        "subpath_mount_windows.go",
+         "subpath_unsupported.go",
+         "subpath_windows.go",
+     ],
+     importpath = "k8s.io/kubernetes/pkg/volume/util/subpath",
+     visibility = ["//visibility:public"],
+-    deps = select({
++    deps = [
++        "//vendor/k8s.io/utils/mount:go_default_library",
++    ] + select({
+         "@io_bazel_rules_go//go/platform:android": [
+             "//vendor/golang.org/x/sys/unix:go_default_library",
+             "//vendor/k8s.io/klog:go_default_library",
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:darwin": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:dragonfly": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:freebsd": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:ios": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:linux": [
+             "//vendor/golang.org/x/sys/unix:go_default_library",
+             "//vendor/k8s.io/klog:go_default_library",
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:nacl": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:netbsd": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:openbsd": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:plan9": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:solaris": [
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:windows": [
+             "//vendor/k8s.io/klog:go_default_library",
+-            "//vendor/k8s.io/utils/mount:go_default_library",
+             "//vendor/k8s.io/utils/nsenter:go_default_library",
+         ],
+         "//conditions:default": [],
+diff --git a/pkg/volume/util/subpath/subpath_fake_mounter.go b/pkg/volume/util/subpath/subpath_fake_mounter.go
+new file mode 100644
+index 00000000000..cf54209f5ff
+--- /dev/null
++++ b/pkg/volume/util/subpath/subpath_fake_mounter.go
+@@ -0,0 +1,47 @@
++/*
++Copyright 2021 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package subpath
++
++import (
++	mountutils "k8s.io/utils/mount"
++)
++
++// FakeMounter implements MountInterface for tests.
++type FakeMounter struct {
++	*mountutils.FakeMounter
++}
++
++var _ MountInterface = &FakeMounter{}
++
++// NewFakeMounter returns a FakeMounter struct that implements Interface and is
++// suitable for testing purposes.
++func NewFakeMounter(mps []mountutils.MountPoint) *FakeMounter {
++	return &FakeMounter{
++		FakeMounter: &mountutils.FakeMounter{
++			MountPoints: mps,
++		},
++	}
++}
++
++// MountSensitiveWithFlags records the mount event and updates the in-memory mount points for FakeMounter
++// sensitiveOptions to be passed in a separate parameter from the normal
++// mount options and ensures the sensitiveOptions are never logged. This
++// method should be used by callers that pass sensitive material (like
++// passwords) as mount options.
++func (f *FakeMounter) MountSensitiveWithFlags(source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error {
++	return f.MountSensitive(source, target, fstype, options, sensitiveOptions)
++}
+diff --git a/pkg/volume/util/subpath/subpath_linux.go b/pkg/volume/util/subpath/subpath_linux.go
+index 0663a72c50d..e72050d076d 100644
+--- a/pkg/volume/util/subpath/subpath_linux.go
++++ b/pkg/volume/util/subpath/subpath_linux.go
+@@ -43,11 +43,11 @@ const (
+ )
+ 
+ type subpath struct {
+-	mounter mount.Interface
++	mounter MountInterface
+ }
+ 
+ // New returns a subpath.Interface for the current system
+-func New(mounter mount.Interface) Interface {
++func New(mounter MountInterface) Interface {
+ 	return &subpath{
+ 		mounter: mounter,
+ 	}
+@@ -147,7 +147,7 @@ func getSubpathBindTarget(subpath Subpath) string {
+ 	return filepath.Join(subpath.PodDir, containerSubPathDirectoryName, subpath.VolumeName, subpath.ContainerName, strconv.Itoa(subpath.VolumeMountIndex))
+ }
+ 
+-func doBindSubPath(mounter mount.Interface, subpath Subpath) (hostPath string, err error) {
++func doBindSubPath(mounter MountInterface, subpath Subpath) (hostPath string, err error) {
+ 	// Linux, kubelet runs on the host:
+ 	// - safely open the subpath
+ 	// - bind-mount /proc/<pid of kubelet>/fd/<fd> to subpath target
+@@ -196,8 +196,9 @@ func doBindSubPath(mounter mount.Interface, subpath Subpath) (hostPath string, e
+ 
+ 	// Do the bind mount
+ 	options := []string{"bind"}
++	mountFlags := []string{"--no-canonicalize"}
+ 	klog.V(5).Infof("bind mounting %q at %q", mountSource, bindPathTarget)
+-	if err = mounter.Mount(mountSource, bindPathTarget, "" /*fstype*/, options); err != nil {
++	if err = mounter.MountSensitiveWithFlags(mountSource, bindPathTarget, "" /*fstype*/, options, nil /* sensitiveOptions */, mountFlags); err != nil {
+ 		return "", fmt.Errorf("error mounting %s: %s", subpath.Path, err)
+ 	}
+ 	success = true
+diff --git a/pkg/volume/util/subpath/subpath_linux_test.go b/pkg/volume/util/subpath/subpath_linux_test.go
+index 154d761e6bf..ca4dd5331d4 100644
+--- a/pkg/volume/util/subpath/subpath_linux_test.go
++++ b/pkg/volume/util/subpath/subpath_linux_test.go
+@@ -611,7 +611,7 @@ func TestCleanSubPaths(t *testing.T) {
+ 			t.Fatalf("failed to prepare test %q: %v", test.name, err.Error())
+ 		}
+ 
+-		fm := mount.NewFakeMounter(mounts)
++		fm := NewFakeMounter(mounts)
+ 		fm.UnmountFunc = test.unmount
+ 
+ 		err = doCleanSubPaths(fm, base, testVol)
+@@ -636,12 +636,12 @@ var (
+ 	testSubpath   = 1
+ )
+ 
+-func setupFakeMounter(testMounts []string) *mount.FakeMounter {
++func setupFakeMounter(testMounts []string) *FakeMounter {
+ 	mounts := []mount.MountPoint{}
+ 	for _, mountPoint := range testMounts {
+ 		mounts = append(mounts, mount.MountPoint{Device: "/foo", Path: mountPoint})
+ 	}
+-	return mount.NewFakeMounter(mounts)
++	return NewFakeMounter(mounts)
+ }
+ 
+ func getTestPaths(base string) (string, string) {
+diff --git a/pkg/volume/util/subpath/subpath_mount.go b/pkg/volume/util/subpath/subpath_mount.go
+new file mode 100644
+index 00000000000..a8ad8c228a1
+--- /dev/null
++++ b/pkg/volume/util/subpath/subpath_mount.go
+@@ -0,0 +1,36 @@
++/*
++Copyright 2021 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++// TODO(thockin): This whole pkg is pretty linux-centric.  As soon as we have
++// an alternate platform, we will need to abstract further.
++
++package subpath
++
++import (
++	"k8s.io/utils/mount"
++)
++
++// MountInterface defines the set of methods to allow for mount operations on a system.
++type MountInterface interface {
++	mount.Interface
++
++	// MountSensitiveWithFlags is the same as MountSensitive() with additional mount flags
++	MountSensitiveWithFlags(source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error
++}
++
++// Compile-time check to ensure all Mounter implementations satisfy
++// the mount interface.
++var _ MountInterface = &Mounter{}
+diff --git a/pkg/volume/util/subpath/subpath_mount_linux.go b/pkg/volume/util/subpath/subpath_mount_linux.go
+new file mode 100644
+index 00000000000..f7f03ad1fa7
+--- /dev/null
++++ b/pkg/volume/util/subpath/subpath_mount_linux.go
+@@ -0,0 +1,216 @@
++// +build linux
++
++/*
++Copyright 2021 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package subpath
++
++import (
++	"fmt"
++	"k8s.io/klog"
++	"os/exec"
++	"strings"
++
++	mountutils "k8s.io/utils/mount"
++)
++
++const (
++	// Default mount command if mounter path is not specified.
++	defaultMountCommand = "mount"
++	// Log message where sensitive mount options were removed
++	sensitiveOptionsRemoved = "<masked>"
++)
++
++// Mounter provides the subpath implementation of mount.Interface
++// for the linux platform.  This implementation assumes that the
++// kubelet is running in the host's root mount namespace.
++type Mounter struct {
++	mountutils.Interface
++	mounterPath string
++	withSystemd bool
++}
++
++// NewMounter returns a MountInterface for the current system.
++// It provides options to override the default mounter behavior.
++// mounterPath allows using an alternative to `/bin/mount` for mounting.
++func NewMounter(mounter mountutils.Interface, mounterPath string) MountInterface {
++	return &Mounter{
++		Interface:   mounter,
++		mounterPath: mounterPath,
++		withSystemd: detectSystemd(),
++	}
++}
++
++// MountSensitiveWithFlags is the same as MountSensitive() with additional mount flags
++func (mounter *Mounter) MountSensitiveWithFlags(source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error {
++	// Path to mounter binary if containerized mounter is needed. Otherwise, it is set to empty.
++	// All Linux distros are expected to be shipped with a mount utility that a support bind mounts.
++	mounterPath := ""
++	bind, bindOpts, bindRemountOpts, bindRemountOptsSensitive := mountutils.MakeBindOptsSensitive(options, sensitiveOptions)
++	if bind {
++		err := mounter.doMount(mounterPath, defaultMountCommand, source, target, fstype, bindOpts, bindRemountOptsSensitive, mountFlags)
++		if err != nil {
++			return err
++		}
++		return mounter.doMount(mounterPath, defaultMountCommand, source, target, fstype, bindRemountOpts, bindRemountOptsSensitive, mountFlags)
++	}
++	// The list of filesystems that require containerized mounter on GCI image cluster
++	fsTypesNeedMounter := map[string]struct{}{
++		"nfs":       {},
++		"glusterfs": {},
++		"ceph":      {},
++		"cifs":      {},
++	}
++	if _, ok := fsTypesNeedMounter[fstype]; ok {
++		mounterPath = mounter.mounterPath
++	}
++	return mounter.doMount(mounterPath, defaultMountCommand, source, target, fstype, options, sensitiveOptions, mountFlags)
++}
++
++// doMount runs the mount command. mounterPath is the path to mounter binary if containerized mounter is used.
++// sensitiveOptions is an extension of options except they will not be logged (because they may contain sensitive material)
++// mountFlags are additional flags used in the mount command that are not related with fstype and mount options
++func (mounter *Mounter) doMount(mounterPath string, mountCmd string, source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error {
++	mountArgs, mountArgsLogStr := makeMountArgsSensitiveWithMountFlags(source, target, fstype, options, sensitiveOptions, mountFlags)
++	if len(mounterPath) > 0 {
++		mountArgs = append([]string{mountCmd}, mountArgs...)
++		mountArgsLogStr = mountCmd + " " + mountArgsLogStr
++		mountCmd = mounterPath
++	}
++
++	if mounter.withSystemd {
++		// Try to run mount via systemd-run --scope. This will escape the
++		// service where kubelet runs and any fuse daemons will be started in a
++		// specific scope. kubelet service than can be restarted without killing
++		// these fuse daemons.
++		//
++		// Complete command line (when mounterPath is not used):
++		// systemd-run --description=... --scope -- mount -t <type> <what> <where>
++		//
++		// Expected flow:
++		// * systemd-run creates a transient scope (=~ cgroup) and executes its
++		//   argument (/bin/mount) there.
++		// * mount does its job, forks a fuse daemon if necessary and finishes.
++		//   (systemd-run --scope finishes at this point, returning mount's exit
++		//   code and stdout/stderr - thats one of --scope benefits).
++		// * systemd keeps the fuse daemon running in the scope (i.e. in its own
++		//   cgroup) until the fuse daemon dies (another --scope benefit).
++		//   Kubelet service can be restarted and the fuse daemon survives.
++		// * When the fuse daemon dies (e.g. during unmount) systemd removes the
++		//   scope automatically.
++		//
++		// systemd-mount is not used because it's too new for older distros
++		// (CentOS 7, Debian Jessie).
++		mountCmd, mountArgs, mountArgsLogStr = mountutils.AddSystemdScopeSensitive("systemd-run", target, mountCmd, mountArgs, mountArgsLogStr)
++		// } else {
++		// No systemd-run on the host (or we failed to check it), assume kubelet
++		// does not run as a systemd service.
++		// No code here, mountCmd and mountArgs are already populated.
++	}
++
++	// Logging with sensitive mount options removed.
++	klog.V(4).Infof("Mounting cmd (%s) with arguments (%s)", mountCmd, mountArgsLogStr)
++	command := exec.Command(mountCmd, mountArgs...)
++	output, err := command.CombinedOutput()
++	if err != nil {
++		klog.Errorf("Mount failed: %v\nMounting command: %s\nMounting arguments: %s\nOutput: %s\n", err, mountCmd, mountArgsLogStr, string(output))
++		return fmt.Errorf("mount failed: %v\nMounting command: %s\nMounting arguments: %s\nOutput: %s",
++			err, mountCmd, mountArgsLogStr, string(output))
++	}
++	return err
++}
++
++// detectSystemd returns true if OS runs with systemd as init. When not sure
++// (permission errors, ...), it returns false.
++// There may be different ways how to detect systemd, this one makes sure that
++// systemd-runs (needed by Mount()) works.
++func detectSystemd() bool {
++	if _, err := exec.LookPath("systemd-run"); err != nil {
++		klog.V(2).Infof("Detected OS without systemd")
++		return false
++	}
++	// Try to run systemd-run --scope /bin/true, that should be enough
++	// to make sure that systemd is really running and not just installed,
++	// which happens when running in a container with a systemd-based image
++	// but with different pid 1.
++	cmd := exec.Command("systemd-run", "--description=Kubernetes systemd probe", "--scope", "true")
++	output, err := cmd.CombinedOutput()
++	if err != nil {
++		klog.V(2).Infof("Cannot run systemd-run, assuming non-systemd OS")
++		klog.V(4).Infof("systemd-run failed with: %v", err)
++		klog.V(4).Infof("systemd-run output: %s", string(output))
++		return false
++	}
++	klog.V(2).Infof("Detected OS with systemd")
++	return true
++}
++
++// makeMountArgsSensitiveWithMountFlags makes the arguments to the mount(8) command.
++// sensitiveOptions is an extension of options except they will not be logged (because they may contain sensitive material)
++// mountFlags are additional mount flags that are not related with the fstype and mount options
++func makeMountArgsSensitiveWithMountFlags(source, target, fstype string, options []string, sensitiveOptions []string, mountFlags []string) (mountArgs []string, mountArgsLogStr string) {
++	// Build mount command as follows:
++	//   mount [$mountFlags] [-t $fstype] [-o $options] [$source] $target
++	mountArgs = []string{}
++	mountArgsLogStr = ""
++
++	mountArgs = append(mountArgs, mountFlags...)
++	mountArgsLogStr += strings.Join(mountFlags, " ")
++
++	if len(fstype) > 0 {
++		mountArgs = append(mountArgs, "-t", fstype)
++		mountArgsLogStr += strings.Join(mountArgs, " ")
++	}
++	if len(options) > 0 || len(sensitiveOptions) > 0 {
++		combinedOptions := []string{}
++		combinedOptions = append(combinedOptions, options...)
++		combinedOptions = append(combinedOptions, sensitiveOptions...)
++		mountArgs = append(mountArgs, "-o", strings.Join(combinedOptions, ","))
++		// exclude sensitiveOptions from log string
++		mountArgsLogStr += " -o " + sanitizedOptionsForLogging(options, sensitiveOptions)
++	}
++	if len(source) > 0 {
++		mountArgs = append(mountArgs, source)
++		mountArgsLogStr += " " + source
++	}
++	mountArgs = append(mountArgs, target)
++	mountArgsLogStr += " " + target
++
++	return mountArgs, mountArgsLogStr
++}
++
++// sanitizedOptionsForLogging will return a comma separated string containing
++// options and sensitiveOptions. Each entry in sensitiveOptions will be
++// replaced with the string sensitiveOptionsRemoved
++// e.g. o1,o2,<masked>,<masked>
++func sanitizedOptionsForLogging(options []string, sensitiveOptions []string) string {
++	separator := ""
++	if len(options) > 0 && len(sensitiveOptions) > 0 {
++		separator = ","
++	}
++
++	sensitiveOptionsStart := ""
++	sensitiveOptionsEnd := ""
++	if len(sensitiveOptions) > 0 {
++		sensitiveOptionsStart = strings.Repeat(sensitiveOptionsRemoved+",", len(sensitiveOptions)-1)
++		sensitiveOptionsEnd = sensitiveOptionsRemoved
++	}
++
++	return strings.Join(options, ",") +
++		separator +
++		sensitiveOptionsStart +
++		sensitiveOptionsEnd
++}
+diff --git a/pkg/volume/util/subpath/subpath_mount_unsupported.go b/pkg/volume/util/subpath/subpath_mount_unsupported.go
+new file mode 100644
+index 00000000000..16dcd053396
+--- /dev/null
++++ b/pkg/volume/util/subpath/subpath_mount_unsupported.go
+@@ -0,0 +1,48 @@
++// +build !linux,!windows
++
++/*
++Copyright 2021 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package subpath
++
++import (
++	"errors"
++
++	"k8s.io/utils/mount"
++)
++
++// Mounter implements mount.Interface for unsupported platforms
++type Mounter struct {
++	mount.Interface
++	mounterPath string
++}
++
++var errUtilsMountUnsupported = errors.New("utils/mount on this platform is not supported")
++
++// NewMounter returns a MountInterface for the current system.
++// It provides options to override the default mounter behavior.
++// mounterPath allows using an alternative to `/bin/mount` for mounting.
++func NewMounter(mounter mount.Interface, mounterPath string) MountInterface {
++	return &Mounter{
++		Interface:   mounter,
++		mounterPath: mounterPath,
++	}
++}
++
++// MountSensitiveWithFlags is the same as MountSensitive() with additional mount flags
++func (mounter *Mounter) MountSensitiveWithFlags(source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error {
++	return errUtilsMountUnsupported
++}
+diff --git a/pkg/volume/util/subpath/subpath_mount_windows.go b/pkg/volume/util/subpath/subpath_mount_windows.go
+new file mode 100644
+index 00000000000..b8feefc8c6a
+--- /dev/null
++++ b/pkg/volume/util/subpath/subpath_mount_windows.go
+@@ -0,0 +1,47 @@
++// +build windows
++
++/*
++Copyright 2021 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package subpath
++
++import (
++	"k8s.io/utils/mount"
++)
++
++// Mounter provides the subpath implementation of mount.Interface
++// for the windows platform.  This implementation assumes that the
++// kubelet is running in the host's root mount namespace.
++type Mounter struct {
++	mount.Interface
++	mounterPath string
++}
++
++// NewMounter returns a MountInterface for the current system.
++// It provides options to override the default mounter behavior.
++// mounterPath allows using an alternative to `/bin/mount` for mounting.
++func NewMounter(mounter mount.Interface, mounterPath string) MountInterface {
++	return &Mounter{
++		Interface:   mounter,
++		mounterPath: mounterPath,
++	}
++}
++
++// MountSensitiveWithFlags is the same as MountSensitive() with additional mount flags but
++// because mountFlags are linux mount(8) flags this method is the same as MountSensitive() in Windows
++func (mounter *Mounter) MountSensitiveWithFlags(source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error {
++	return mounter.MountSensitive(source, target, fstype, options, sensitiveOptions)
++}
+-- 
+2.33.0
+
