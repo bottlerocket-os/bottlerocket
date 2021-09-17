@@ -1,5 +1,5 @@
 %global majorminor 2.37
-%global version %{majorminor}.1
+%global version %{majorminor}.2
 
 Name: %{_cross_os}util-linux
 Version: %{version}
