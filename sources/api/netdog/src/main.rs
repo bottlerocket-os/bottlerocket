@@ -86,9 +86,9 @@ enum InterfaceFamily {
 }
 
 // Implement `from_str()` so argh can attempt to deserialize args into their proper types
-forward_from_str_to_serde!(InterfaceName);
-forward_from_str_to_serde!(InterfaceType);
-forward_from_str_to_serde!(InterfaceFamily);
+derive_fromstr_from_deserialize!(InterfaceName);
+derive_fromstr_from_deserialize!(InterfaceType);
+derive_fromstr_from_deserialize!(InterfaceFamily);
 
 /// Stores user-supplied arguments.
 #[derive(FromArgs, PartialEq, Debug)]

@@ -17,7 +17,7 @@ model-derive = { path = "model-derive" }
 regex = "1.1"
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-serde_plain = "0.3.0"
+serde_plain = "1.0"
 snafu = "0.6"
 toml = "0.5"
 x509-parser = "0.9.2"
