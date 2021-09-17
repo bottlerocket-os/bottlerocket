@@ -1,5 +1,5 @@
 Name: %{_cross_os}libcap
-Version: 2.51
+Version: 2.57
 Release: 1%{?dist}
 Summary: Library for getting and setting POSIX.1e capabilities
 License: GPL-2.0-only OR BSD-3-Clause
@@ -28,7 +28,8 @@ Requires: %{name}
 
 %build
 make \
-  CC="%{_cross_target}-gcc" CFLAGS="%{_cross_cflags}" \
+  CC="%{_cross_target}-gcc" \
+  CFLAGS="%{_cross_cflags} -fPIC" \
   BUILD_CC="gcc" BUILD_CFLAGS="%{optflags}" \
   prefix=%{_cross_prefix} lib=%{_cross_lib} \
   LIBDIR=%{_cross_libdir} SBINDIR=%{_cross_sbindir} \
