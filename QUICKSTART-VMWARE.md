@@ -41,7 +41,7 @@ The following will download and verify the root role itself:
 
 ```
 curl -O "https://cache.bottlerocket.aws/root.json"
-sha512sum -c <<<"90393204232a1ad6b0a45528b1f7df1a3e37493b1e05b1c149f081849a292c8dafb4ea5f7ee17bcc664e35f66e37e4cfa4aae9de7a2a28aa31ae6ac3d9bea4d5  root.json"
+sha512sum -c <<<"e9b1ea5f9b4f95c9b55edada4238bf00b12845aa98bdd2d3edb63ff82a03ada19444546337ec6d6806cbf329027cf49f7fde31f54d551c5e02acbed7efe75785  root.json"
 ```
 
 Next, set your desired version and variant, and download the OVA:
