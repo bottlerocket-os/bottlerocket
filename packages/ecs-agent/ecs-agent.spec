@@ -2,9 +2,9 @@
 %global agent_gorepo amazon-ecs-agent
 %global agent_goimport %{agent_goproject}/%{agent_gorepo}
 
-%global agent_gover 1.54.1
+%global agent_gover 1.55.2
 # git rev-parse --short=8
-%global agent_gitrev 3e20420f
+%global agent_gitrev 50274232
 
 %global ecscni_goproject github.com/aws
 %global ecscni_gorepo amazon-ecs-cni-plugins

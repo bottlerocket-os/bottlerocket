@@ -1,6 +1,6 @@
-diff -ru libcap-2.42.orig/Makefile libcap-2.42/Makefile
---- libcap-2.42.orig/Makefile	2020-08-01 18:41:45.000000000 -0700
-+++ libcap-2.42/Makefile	2020-08-06 20:05:07.354210736 -0700
+diff -Nurd libcap-2.57.orig/Makefile libcap-2.57/Makefile
+--- libcap-2.57.orig/Makefile	2021-09-09 13:57:36.000000000 -0700
++++ libcap-2.57/Makefile	2021-09-17 14:47:21.493628663 -0700
 @@ -17,7 +17,6 @@
  	$(MAKE) -C go $@
  	rm -f cap/go.sum
@@ -8,4 +8,4 @@ diff -ru libcap-2.42.orig/Makefile libcap-2.42/Makefile
 -	$(MAKE) -C tests $@
  	$(MAKE) -C progs $@
  	$(MAKE) -C doc $@
- 	$(MAKE) -C kdebug $@
+ 

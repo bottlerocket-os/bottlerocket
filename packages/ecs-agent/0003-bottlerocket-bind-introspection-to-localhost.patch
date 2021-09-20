@@ -8,18 +8,18 @@ Subject: [PATCH 3/5] bottlerocket: bind introspection to localhost
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/agent/handlers/introspection_server_setup.go b/agent/handlers/introspection_server_setup.go
-index 07f138a22..bda910f7f 100644
+index 3ca0ecc7..b7f70e92 100644
 --- a/agent/handlers/introspection_server_setup.go
 +++ b/agent/handlers/introspection_server_setup.go
-@@ -56,7 +56,7 @@ func introspectionServerSetup(containerInstanceArn *string, taskEngine handlersu
- 	loggingServeMux.Handle("/", LoggingHandler{serverMux})
- 
+@@ -88,7 +88,7 @@ func introspectionServerSetup(containerInstanceArn *string, taskEngine handlersu
+ 		wTimeout = writeTimeoutForPprof
+ 	}
  	server := &http.Server{
 -		Addr:         ":" + strconv.Itoa(config.AgentIntrospectionPort),
 +		Addr:         "127.0.0.1:" + strconv.Itoa(config.AgentIntrospectionPort),
  		Handler:      loggingServeMux,
  		ReadTimeout:  readTimeout,
- 		WriteTimeout: writeTimeout,
+ 		WriteTimeout: wTimeout,
 -- 
 2.32.0
 

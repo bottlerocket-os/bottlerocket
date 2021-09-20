@@ -43,16 +43,20 @@ diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
 index 080f18c4d..ef14970ce 100644
 --- a/agent/config/config_unix.go
 +++ b/agent/config/config_unix.go
-@@ -27,7 +27,7 @@ const (
+@@ -27,10 +27,10 @@ const (
  	// AgentCredentialsAddress is used to serve the credentials for tasks.
  	AgentCredentialsAddress = "" // this is left blank right now for net=bridge
  	// defaultAuditLogFile specifies the default audit log filename
 -	defaultCredentialsAuditLogFile = "/log/audit.log"
 +	defaultCredentialsAuditLogFile = "/var/log/ecs/audit.log"
+ 
+ 	// defaultRuntimeStatsLogFile stores the path where the golang runtime stats are periodically logged
+-	defaultRuntimeStatsLogFile = `/log/agent-runtime-stats.log`
++	defaultRuntimeStatsLogFile = `/var/log/ecs/agent-runtime-stats.log`
+ 
  	// DefaultTaskCgroupPrefix is default cgroup prefix for ECS tasks
  	DefaultTaskCgroupPrefix = "/ecs"
- 
-@@ -52,7 +52,7 @@ func DefaultConfig() Config {
+@@ -56,7 +56,7 @@ func DefaultConfig() Config {
  		DockerEndpoint:                      "unix:///var/run/docker.sock",
  		ReservedPorts:                       []uint16{SSHPort, DockerReservedPort, DockerReservedSSLPort, AgentIntrospectionPort, AgentCredentialsPort},
  		ReservedPortsUDP:                    []uint16{},
