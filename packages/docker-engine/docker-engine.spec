@@ -27,6 +27,9 @@ Source1000: clarify.toml
 # CVE-2021-41091
 Patch0001: 0001-Lock-down-docker-root-dir-perms.patch
 
+# CVE-2021-41089
+Patch0002: 0002-chrootarchive-don-t-create-parent-dirs-outside-of-ch.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel

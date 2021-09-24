@@ -1,0 +1,49 @@
+From 80f1169eca587305759829e626cebd2a434664f6 Mon Sep 17 00:00:00 2001
+From: Tonis Tiigi <tonistiigi@gmail.com>
+Date: Wed, 19 May 2021 16:51:35 -0700
+Subject: [PATCH 2/2] chrootarchive: don't create parent dirs outside of chroot
+
+If chroot is used with a special root directory then create
+destination directory within chroot. This works automatically
+already due to extractor creating parent paths and is only
+used currently with cp where parent paths are actually required
+and error will be shown to user before reaching this point.
+
+Signed-off-by: Tonis Tiigi <tonistiigi@gmail.com>
+(cherry picked from commit 52d285184068998c22632bfb869f6294b5613a58)
+Signed-off-by: Brian Goff <cpuguy83@gmail.com>
+---
+ pkg/chrootarchive/archive.go | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/pkg/chrootarchive/archive.go b/pkg/chrootarchive/archive.go
+index 83ed0c6b2f..d11cbdf277 100644
+--- a/pkg/chrootarchive/archive.go
++++ b/pkg/chrootarchive/archive.go
+@@ -74,13 +74,17 @@ func untarHandler(tarArchive io.Reader, dest string, options *archive.TarOptions
+ 		options.ExcludePatterns = []string{}
+ 	}
+ 
+-	idMapping := idtools.NewIDMappingsFromMaps(options.UIDMaps, options.GIDMaps)
+-	rootIDs := idMapping.RootPair()
++	// If dest is inside a root then directory is created within chroot by extractor.
++	// This case is only currently used by cp.
++	if dest == root {
++		idMapping := idtools.NewIDMappingsFromMaps(options.UIDMaps, options.GIDMaps)
++		rootIDs := idMapping.RootPair()
+ 
+-	dest = filepath.Clean(dest)
+-	if _, err := os.Stat(dest); os.IsNotExist(err) {
+-		if err := idtools.MkdirAllAndChownNew(dest, 0755, rootIDs); err != nil {
+-			return err
++		dest = filepath.Clean(dest)
++		if _, err := os.Stat(dest); os.IsNotExist(err) {
++			if err := idtools.MkdirAllAndChownNew(dest, 0755, rootIDs); err != nil {
++				return err
++			}
+ 		}
+ 	}
+ 
+-- 
+2.33.0
+
