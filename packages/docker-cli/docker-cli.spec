@@ -18,6 +18,10 @@ License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/cli-%{gover}.tar.gz
 Source1000: clarify.toml
+
+# CVE-2021-41092
+Patch0001: 0001-registry-ensure-default-auth-config-has-address.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 
