@@ -27,6 +27,11 @@ Patch1001: 1001-cri-set-default-RLIMIT_NOFILE.patch
 # TODO: drop this when https://github.com/containerd/containerd/pull/5104/ is merged
 Patch1002: 1002-cri-filter-selinux-xattr-for-image-volumes.patch
 
+# CVE-2021-41103
+Patch2001: 0001-v2-runtime-reduce-permissions-for-bundle-dir.patch
+Patch2002: 0002-v1-runtime-reduce-permissions-for-bundle-dir.patch
+Patch2003: 0003-btrfs-reduce-permissions-on-plugin-directories.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}runc
