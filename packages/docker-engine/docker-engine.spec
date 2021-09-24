@@ -24,6 +24,9 @@ Source3: docker-sysusers.conf
 Source4: daemon-json
 Source1000: clarify.toml
 
+# CVE-2021-41091
+Patch0001: 0001-Lock-down-docker-root-dir-perms.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
