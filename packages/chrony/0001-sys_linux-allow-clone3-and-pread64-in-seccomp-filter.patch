@@ -1,0 +1,35 @@
+From bbbd80bf03223f181d4abf5c8e5fe6136ab6129a Mon Sep 17 00:00:00 2001
+From: Miroslav Lichvar <mlichvar@redhat.com>
+Date: Mon, 9 Aug 2021 11:48:21 +0200
+Subject: [PATCH] sys_linux: allow clone3 and pread64 in seccomp filter
+
+These seem to be needed with the latest glibc.
+---
+ sys_linux.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/sys_linux.c b/sys_linux.c
+index 50c0843..2b53f72 100644
+--- a/sys_linux.c
++++ b/sys_linux.c
+@@ -503,6 +503,9 @@ SYS_Linux_EnableSystemCallFilter(int level, SYS_ProcessContext context)
+ 
+     /* Process */
+     SCMP_SYS(clone),
++#ifdef __NR_clone3
++    SCMP_SYS(clone3),
++#endif
+     SCMP_SYS(exit),
+     SCMP_SYS(exit_group),
+     SCMP_SYS(getpid),
+@@ -595,6 +598,7 @@ SYS_Linux_EnableSystemCallFilter(int level, SYS_ProcessContext context)
+ #ifdef __NR_ppoll_time64
+     SCMP_SYS(ppoll_time64),
+ #endif
++    SCMP_SYS(pread64),
+     SCMP_SYS(pselect6),
+ #ifdef __NR_pselect6_time64
+     SCMP_SYS(pselect6_time64),
+-- 
+2.21.3
+
