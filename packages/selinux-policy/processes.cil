@@ -8,8 +8,6 @@
     setfscreate setkeycreate setsockcreate)))
 (classmapping processes transform (
   process2 (nnp_transition nosuid_transition)))
-(classmapping processes transform (
-  kernel_service (use_as_override)))
 
 (classmapping processes describe (
   process (

@@ -21,6 +21,7 @@ Source9: networks.cil
 Source10: ipcs.cil
 Source11: systems.cil
 Source12: rules.cil
+Source13: mcs.cil
 
 # Helpers for generating CIL
 Source50: catgen.sh
@@ -42,7 +43,7 @@ BuildRequires: secilc
 cp -p \
   %{S:0} %{S:1} %{S:2} %{S:3} %{S:4} %{S:5} \
   %{S:6} %{S:7} %{S:8} %{S:9} %{S:10} %{S:11} \
-  %{S:12} .
+  %{S:12} %{S:13} .
 
 %build
 %{_sourcedir}/catgen.sh > category.cil

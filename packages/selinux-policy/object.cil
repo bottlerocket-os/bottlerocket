@@ -126,6 +126,14 @@
 (typeattribute shared_o)
 (typeattributeset shared_o (local_t data_t))
 
+; Constrained objects are files where MCS constraints apply.
+(typeattribute constrained_o)
+(typeattributeset constrained_o (data_t))
+
+; Unconstrained objects are not affected by MCS constraints.
+(typeattribute unconstrained_o)
+(typeattributeset unconstrained_o (xor (all_o) (constrained_o)))
+
 ; Protected objects are files on local storage with special rules.
 (typeattribute protected_o)
 (typeattributeset protected_o (
