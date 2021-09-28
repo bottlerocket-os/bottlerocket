@@ -15,7 +15,7 @@ It uses IMDS to get information such as:
 
 It uses EKS to get information such as:
 
-- Service IPV4 CIDR
+- Service IP CIDR
 
 It uses the Bottlerocket API to get information such as:
 

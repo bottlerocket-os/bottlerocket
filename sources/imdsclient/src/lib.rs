@@ -103,6 +103,28 @@ impl ImdsClient {
         self.fetch_string(&node_ip_target).await
     }
 
+    /// Gets the IPV6 address associated with the primary network interface from instance metadata.
+    pub async fn fetch_primary_ipv6_address(&mut self) -> Result<Option<String>> {
+        // Get the mac address for the primary network interface
+        let mac = self
+            .fetch_mac_addresses()
+            .await?
+            .context(error::MacAddresses)?
+            .first()
+            .context(error::MacAddresses)?
+            .clone();
+
+        // Get the IPv6 addresses associated with the primary network interface
+        let ipv6_address_target = format!("meta-data/network/interfaces/macs/{}/ipv6s", mac);
+
+        let ipv6_address = self
+            .fetch_string(&ipv6_address_target)
+            .await?
+            .map(|ipv6_addresses| ipv6_addresses.lines().next().map(|s| s.to_string()))
+            .flatten();
+        Ok(ipv6_address)
+    }
+
     /// Gets the instance-type from instance metadata.
     pub async fn fetch_instance_type(&mut self) -> Result<Option<String>> {
         let instance_type_target = "meta-data/instance-type";
@@ -377,6 +399,9 @@ mod error {
 
         #[snafu(display("Error retrieving key from {}", target))]
         KeyNotFound { target: String },
+
+        #[snafu(display("No mac addresses found"))]
+        MacAddresses,
 
         #[snafu(display("Response was not UTF-8: {}", source))]
         NonUtf8Response { source: std::string::FromUtf8Error },

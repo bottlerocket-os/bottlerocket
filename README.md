@@ -368,7 +368,7 @@ Static pods can be particularly useful when running in standalone mode.
 For Kubernetes variants in AWS and VMware, the following are set for you automatically, but you can override them if you know what you're doing!
 In AWS, [pluto](sources/api/) sets these based on runtime instance information.
 In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on [default values](sources/models/src/vmware-k8s-1.21/defaults.d/).
-* `settings.kubernetes.node-ip`: The IPv4 address of this node.
+* `settings.kubernetes.node-ip`: The IP address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 * `settings.kubernetes.kube-reserved`: Resources reserved for node components.
   * Bottlerocket provides default values for the resources by [schnauzer](sources/api/):
@@ -378,7 +378,7 @@ In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on
 
 For Kubernetes variants in AWS, the following settings are set for you automatically by [pluto](sources/api/).
 * `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
-* `settings.kubernetes.cluster-dns-ip`: Derived from the EKS IPV4 Service CIDR or the CIDR block of the primary network interface.
+* `settings.kubernetes.cluster-dns-ip`: Derived from the EKS Service IP CIDR or the CIDR block of the primary network interface.
 
 #### Amazon ECS settings
 

@@ -14,7 +14,7 @@ It uses IMDS to get information such as:
 
 It uses EKS to get information such as:
 
-- Service IPV4 CIDR
+- Service IP CIDR
 
 It uses the Bottlerocket API to get information such as:
 
@@ -40,6 +40,8 @@ use imdsclient::ImdsClient;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::net::IpAddr;
+use std::str::FromStr;
 use std::string::String;
 use std::{env, process};
 
@@ -51,14 +53,31 @@ const DEFAULT_10_RANGE_DNS_CLUSTER_IP: &str = "172.20.0.10";
 const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
 
 mod error {
+    use crate::api;
     use crate::eks;
     use snafu::Snafu;
+    use std::net::AddrParseError;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
     pub(super) enum PlutoError {
+        #[snafu(display(
+            "Unable to retrieve cluster name and AWS region from Bottlerocket API: {}",
+            source
+        ))]
+        AwsInfo { source: api::Error },
+
+        #[snafu(display("Missing field '{}' in EKS network config response", field))]
+        MissingNetworkConfig { field: &'static str },
+
         #[snafu(display("Unable to parse CIDR '{}': {}", cidr, reason))]
         CidrParse { cidr: String, reason: String },
+
+        #[snafu(display("Unable to parse IP '{}': {}", ip, source))]
+        BadIp { ip: String, source: AddrParseError },
+
+        #[snafu(display("No IP address found for this host"))]
+        NoIp,
 
         #[snafu(display("IMDS request failed: {}", source))]
         ImdsRequest { source: imdsclient::Error },
@@ -144,42 +163,31 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
     error::NoInstanceTypeMaxPods { instance_type }.fail()
 }
 
-/// Returns the cluster's DNS IPV4 address. First it attempts to call EKS describe-cluster to find
-/// the `serviceIPv4CIDR`. If that works, it returns the expected cluster DNS IP address which is
-/// obtained by substituting `10` for the last octet. If the EKS call is not successful, it falls
-/// back to using IMDS MAC CIDR blocks to return one of two default addresses.
+/// Returns the cluster's DNS address.
+///
+/// For IPv4 clusters, first it attempts to call EKS describe-cluster to find the `serviceIpv4Cidr`.
+/// If that works, it returns the expected cluster DNS IP address which is obtained by substituting
+/// `10` for the last octet. If the EKS call is not successful, it falls back to using IMDS MAC CIDR
+/// blocks to return one of two default addresses.
 async fn get_cluster_dns_ip(client: &mut ImdsClient) -> Result<String> {
-    // try calling eks describe-cluster to figure out the dns cluster ip
-    if let Some(dns_ip) = get_dns_from_eks().await {
-        // we were able to calculate the dns ip from the cidr range we received from eks
-        return Ok(dns_ip);
-    }
-
-    // we were unable to obtain or parse the cidr range from eks, fallback to one of two default
-    // values based on the cidr range of our primary network interface
-    get_cluster_dns_from_imds_mac(client).await
-}
-
-/// Gets the Service IPV4 CIDR setting from EKS and parses it to calculate the cluster DNS IP.
-/// Prints the error and returns `None` if anything goes wrong.
-async fn get_dns_from_eks() -> Option<String> {
-    let aws_k8s_info = match api::get_aws_k8s_info().await {
-        Ok(value) => value,
-        Err(e) => {
-            eprintln!(
-                "Unable to get region and cluster name from Bottlerocket API, using default DNS IP: {}",
-                e
-            );
-            return None;
+    // Retrieve the kubernetes network configuration for the EKS cluster
+    if let Ok(aws_k8s_info) = api::get_aws_k8s_info().await.context(error::AwsInfo) {
+        if let Ok(config) =
+            eks::get_cluster_network_config(&aws_k8s_info.region, &aws_k8s_info.cluster_name)
+                .await
+                .context(error::EksError)
+        {
+            // Derive cluster-dns-ip from the service IPv4 CIDR
+            if let Some(ipv4_cidr) = config.service_ipv_4_cidr {
+                if let Ok(dns_ip) = get_dns_from_ipv4_cidr(&ipv4_cidr) {
+                    return Ok(dns_ip);
+                }
+            }
         }
-    };
-
-    eks::get_cluster_cidr(&aws_k8s_info.region, &aws_k8s_info.cluster_name)
-        .await
-        .context(error::EksError)
-        .and_then(|cidr| get_dns_from_cidr(&cidr))
-        .map_err(|e| eprintln!("Unable to parse CIDR from EKS, using default DNS IP: {}", e))
-        .ok()
+    }
+    // If we were unable to obtain or parse the cidr range from EKS, fallback to one of two default
+    // values based on the IPv4 cidr range of our primary network interface
+    get_ipv4_cluster_dns_ip_from_imds_mac(client).await
 }
 
 /// Replicates [this] logic from the EKS AMI:
@@ -188,7 +196,7 @@ async fn get_dns_from_eks() -> Option<String> {
 /// DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
 /// ```
 /// [this]: https://github.com/awslabs/amazon-eks-ami/blob/732b6b2/files/bootstrap.sh#L335
-fn get_dns_from_cidr(cidr: &str) -> Result<String> {
+fn get_dns_from_ipv4_cidr(cidr: &str) -> Result<String> {
     let mut split: Vec<&str> = cidr.split('.').collect();
     ensure!(
         split.len() == 4,
@@ -203,7 +211,7 @@ fn get_dns_from_cidr(cidr: &str) -> Result<String> {
 
 /// Gets gets the the first VPC IPV4 CIDR block from IMDS. If it starts with `10`, returns
 /// `10.100.0.10`, otherwise returns `172.20.0.10`
-async fn get_cluster_dns_from_imds_mac(client: &mut ImdsClient) -> Result<String> {
+async fn get_ipv4_cluster_dns_ip_from_imds_mac(client: &mut ImdsClient) -> Result<String> {
     // Take the first (primary) MAC address. Others may exist from attached ENIs.
     let mac = client
         .fetch_mac_addresses()
@@ -242,12 +250,38 @@ async fn get_cluster_dns_from_imds_mac(client: &mut ImdsClient) -> Result<String
     Ok(dns)
 }
 
+/// Gets the IP address that should be associated with the node.
 async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
-    client
-        .fetch_local_ipv4_address()
-        .await
-        .context(error::ImdsRequest)?
-        .context(error::ImdsNone { what: "node ip" })
+    // Retrieve the user specified cluster DNS IP if it's specified, otherwise use the pluto-generated
+    // cluster DNS IP
+    let aws_k8s_info = api::get_aws_k8s_info().await.context(error::AwsInfo)?;
+    let cluster_dns_ip = if let Some(ip) = aws_k8s_info.cluster_dns_ip {
+        ip.to_owned()
+    } else {
+        let ip = get_cluster_dns_ip(client).await?;
+        IpAddr::from_str(ip.as_str()).context(error::BadIp { ip })?
+    };
+
+    // If the cluster DNS IP is an IPv4 address, retrieve the IPv4 address for the instance.
+    // If the cluster DNS IP is an IPv6 address, retrieve the IPv6 address for the instance.
+    match cluster_dns_ip {
+        IpAddr::V4(_) => client
+            .fetch_local_ipv4_address()
+            .await
+            .context(error::ImdsRequest)?
+            .context(error::ImdsNone {
+                what: "node ipv4 address",
+            }),
+        IpAddr::V6(_) => {
+            return Ok(client
+                .fetch_primary_ipv6_address()
+                .await
+                .context(error::ImdsRequest)?
+                .context(error::ImdsNone {
+                    what: "ipv6s associated with primary network interface",
+                })?);
+        }
+    }
 }
 
 /// Print usage message.
@@ -316,13 +350,13 @@ async fn main() {
 fn test_get_dns_from_cidr_ok() {
     let input = "123.456.789.0/123";
     let expected = "123.456.789.10";
-    let actual = get_dns_from_cidr(input).unwrap();
+    let actual = get_dns_from_ipv4_cidr(input).unwrap();
     assert_eq!(expected, actual);
 }
 
 #[test]
 fn test_get_dns_from_cidr_err() {
     let input = "123_456_789_0/123";
-    let result = get_dns_from_cidr(input);
+    let result = get_dns_from_ipv4_cidr(input);
     assert!(result.is_err());
 }
