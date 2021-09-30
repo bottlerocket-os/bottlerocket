@@ -453,7 +453,11 @@ These settings will configure the proxying behavior of the following services:
     * [ecs.service](packages/ecs-agent/ecs.service)
 
 * `settings.network.https-proxy`: The HTTPS proxy server to be used by services listed above.
-* `settings.network.no-proxy`: A list of hosts that are excluded from proxying.
+* `settings.network.no-proxy`: A list of hosts that are excluded from proxying.  
+   Example: 
+   ```
+   settings.network.no-proxy = ["localhost","127.0.0.1"]
+   ```
 
 The no-proxy list will automatically include entries for localhost.
 
