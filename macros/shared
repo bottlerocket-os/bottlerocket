@@ -102,6 +102,7 @@ pkgconfig = '/usr/bin/pkg-config'\
 c_args = [%{_cross_c_args}]\
 c_link_args = [%{_cross_c_link_args}]\
 pkg_config_libdir = '%{_cross_pkgconfigdir}'\
+needs_exe_wrapper = true\
 [host_machine]\
 system = 'linux'\
 cpu_family ='%{_cross_cpu_family}'\
