@@ -42,7 +42,7 @@ GitHub provides additional documentation on [forking a repository](https://help.
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on.
-As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/bottlerocket-os/bottlerocket/labels/help%20wanted) issues is a great place to start.
+As this repository uses GitHub issue [labels](https://github.com/bottlerocket-os/bottlerocket/labels), looking at any ['status/helpwelcome'](https://github.com/bottlerocket-os/bottlerocket/labels/status%2Fhelpwelcome) issues is a great place to start.
 
 
 ## Code of Conduct
