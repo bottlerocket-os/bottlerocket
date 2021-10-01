@@ -1,0 +1,92 @@
+From 31902ae639d6a50e768a85f1cd2a17e56b8463c2 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Fri, 6 Aug 2021 09:51:38 +0200
+Subject: [PATCH 06/26] Linux: Fix fcntl, ioctl, prctl redirects for
+ _TIME_BITS=64 (bug 28182)
+
+__REDIRECT and __THROW are not compatible with C++ due to the ordering of the
+__asm__ alias and the throw specifier. __REDIRECT_NTH has to be used
+instead.
+
+Fixes commit 8a40aff86ba5f64a3a84883e539cb67b ("io: Add time64 alias
+for fcntl"), commit 82c395d91ea4f69120d453aeec398e30 ("misc: Add
+time64 alias for ioctl"), commit b39ffab860cd743a82c91946619f1b8158
+("Linux: Add time64 alias for prctl").
+
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit c87fcacc50505d550f1bb038382bcc7ea73a5926)
+---
+ NEWS                                | 7 +++++++
+ io/fcntl.h                          | 8 ++++----
+ misc/sys/ioctl.h                    | 4 ++--
+ sysdeps/unix/sysv/linux/sys/prctl.h | 2 +-
+ 4 files changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index 3c610744c9..89e20cf062 100644
+--- a/NEWS
++++ b/NEWS
+@@ -5,6 +5,13 @@ See the end for copying conditions.
+ Please send GNU C library bug reports via <https://sourceware.org/bugzilla/>
+ using `glibc' in the "product" field.
+ 
++Version 2.34.1
++
++The following bugs are resolved with this release:
++
++  [28182] _TIME_BITS=64 in C++ has issues with fcntl, ioctl, prctl
++
++
+ Version 2.34
+ 
+ Major new features:
+diff --git a/io/fcntl.h b/io/fcntl.h
+index 8917a73b42..1c96f98f4d 100644
+--- a/io/fcntl.h
++++ b/io/fcntl.h
+@@ -187,10 +187,10 @@ extern int fcntl64 (int __fd, int __cmd, ...);
+ # endif
+ #else /* __USE_TIME_BITS64 */
+ # ifdef __REDIRECT
+-extern int __REDIRECT (fcntl, (int __fd, int __request, ...),
+-		       __fcntl_time64)  __THROW;
+-extern int __REDIRECT (fcntl64, (int __fd, int __request, ...),
+-		       __fcntl_time64)  __THROW;
++extern int __REDIRECT_NTH (fcntl, (int __fd, int __request, ...),
++			   __fcntl_time64);
++extern int __REDIRECT_NTH (fcntl64, (int __fd, int __request, ...),
++			   __fcntl_time64);
+ # else
+ extern int __fcntl_time64 (int __fd, int __request, ...) __THROW;
+ #  define fcntl64 __fcntl_time64
+diff --git a/misc/sys/ioctl.h b/misc/sys/ioctl.h
+index 6884d9925f..9945c1e918 100644
+--- a/misc/sys/ioctl.h
++++ b/misc/sys/ioctl.h
+@@ -42,8 +42,8 @@ __BEGIN_DECLS
+ extern int ioctl (int __fd, unsigned long int __request, ...) __THROW;
+ #else
+ # ifdef __REDIRECT
+-extern int __REDIRECT (ioctl, (int __fd, unsigned long int __request, ...),
+-		       __ioctl_time64) __THROW;
++extern int __REDIRECT_NTH (ioctl, (int __fd, unsigned long int __request, ...),
++			   __ioctl_time64);
+ # else
+ extern int __ioctl_time64 (int __fd, unsigned long int __request, ...) __THROW;
+ #  define ioctl __ioctl_time64
+diff --git a/sysdeps/unix/sysv/linux/sys/prctl.h b/sysdeps/unix/sysv/linux/sys/prctl.h
+index db88938b3a..f0e0d2f27f 100644
+--- a/sysdeps/unix/sysv/linux/sys/prctl.h
++++ b/sysdeps/unix/sysv/linux/sys/prctl.h
+@@ -42,7 +42,7 @@ __BEGIN_DECLS
+ extern int prctl (int __option, ...) __THROW;
+ #else
+ # ifdef __REDIRECT
+-extern int __REDIRECT (prctl, (int __option, ...), __prctl_time64) __THROW;
++extern int __REDIRECT_NTH (prctl, (int __option, ...), __prctl_time64);
+ # else
+ extern int __prctl_time64 (int __option,d ...) __THROW;
+ #  define ioctl __prctl_time64
+-- 
+2.21.3
+

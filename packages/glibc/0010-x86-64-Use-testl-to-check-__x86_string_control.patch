@@ -1,0 +1,39 @@
+From f2413f2710d5d5cc884b413b83fcf8198e3717fa Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Sat, 28 Aug 2021 06:10:38 -0700
+Subject: [PATCH 10/26] x86-64: Use testl to check __x86_string_control
+
+Use testl, instead of andl, to check __x86_string_control to avoid
+updating __x86_string_control.
+
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit 3c8b9879cab6d41787bc5b14c1748f62fd6d0e5f)
+---
+ sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S b/sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S
+index 9f02624375..abde8438d4 100644
+--- a/sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S
++++ b/sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S
+@@ -325,7 +325,7 @@ L(movsb):
+ 	/* Avoid slow backward REP MOVSB.  */
+ 	jb	L(more_8x_vec_backward)
+ # if AVOID_SHORT_DISTANCE_REP_MOVSB
+-	andl	$X86_STRING_CONTROL_AVOID_SHORT_DISTANCE_REP_MOVSB, __x86_string_control(%rip)
++	testl	$X86_STRING_CONTROL_AVOID_SHORT_DISTANCE_REP_MOVSB, __x86_string_control(%rip)
+ 	jz	3f
+ 	movq	%rdi, %rcx
+ 	subq	%rsi, %rcx
+@@ -333,7 +333,7 @@ L(movsb):
+ # endif
+ 1:
+ # if AVOID_SHORT_DISTANCE_REP_MOVSB
+-	andl	$X86_STRING_CONTROL_AVOID_SHORT_DISTANCE_REP_MOVSB, __x86_string_control(%rip)
++	testl	$X86_STRING_CONTROL_AVOID_SHORT_DISTANCE_REP_MOVSB, __x86_string_control(%rip)
+ 	jz	3f
+ 	movq	%rsi, %rcx
+ 	subq	%rdi, %rcx
+-- 
+2.21.3
+

@@ -1,0 +1,30 @@
+From 9acab0bba6a5a57323b1f94bf95b21618a9e5aa4 Mon Sep 17 00:00:00 2001
+From: Arjun Shankar <arjun@redhat.com>
+Date: Fri, 20 Aug 2021 16:24:05 +0200
+Subject: [PATCH 09/26] elf: Fix missing colon in LD_SHOW_AUXV output [BZ
+ #28253]
+
+This commit adds a missing colon in the AT_MINSIGSTKSZ entry in
+the _dl_show_auxv function.
+
+(cherry picked from commit 82fbcd7118d760492e2ecc9fa291e358b9ba0361)
+---
+ elf/dl-sysdep.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/elf/dl-sysdep.c b/elf/dl-sysdep.c
+index d47bef1340..2c684c2db2 100644
+--- a/elf/dl-sysdep.c
++++ b/elf/dl-sysdep.c
+@@ -317,7 +317,7 @@ _dl_show_auxv (void)
+ 	  [AT_SYSINFO_EHDR - 2] =	{ "SYSINFO_EHDR:      0x", hex },
+ 	  [AT_RANDOM - 2] =		{ "RANDOM:            0x", hex },
+ 	  [AT_HWCAP2 - 2] =		{ "HWCAP2:            0x", hex },
+-	  [AT_MINSIGSTKSZ - 2] =	{ "MINSIGSTKSZ        ", dec },
++	  [AT_MINSIGSTKSZ - 2] =	{ "MINSIGSTKSZ:       ", dec },
+ 	  [AT_L1I_CACHESIZE - 2] =	{ "L1I_CACHESIZE:     ", dec },
+ 	  [AT_L1I_CACHEGEOMETRY - 2] =	{ "L1I_CACHEGEOMETRY: 0x", hex },
+ 	  [AT_L1D_CACHESIZE - 2] =	{ "L1D_CACHESIZE:     ", dec },
+-- 
+2.21.3
+

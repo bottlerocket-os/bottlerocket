@@ -65,6 +65,10 @@ cp third_party/forked/golang/LICENSE LICENSE.golang
 cp third_party/forked/golang/PATENTS PATENTS.golang
 
 %build
+# Build codegen programs with the host toolchain.
+make generated_files
+
+# Build kubelet with the target toolchain.
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
 export %{kube_cc}
 export GOLDFLAGS="-buildmode=pie -linkmode=external"

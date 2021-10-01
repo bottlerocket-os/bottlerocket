@@ -1,0 +1,407 @@
+From 005bafcf5b8a85d4c82831401f052747e160a7e8 Mon Sep 17 00:00:00 2001
+From: Joseph Myers <joseph@codesourcery.com>
+Date: Wed, 8 Sep 2021 12:42:06 +0000
+Subject: [PATCH 18/26] Update syscall lists for Linux 5.14
+
+Linux 5.14 has two new syscalls, memfd_secret (on some architectures
+only) and quotactl_fd.  Update syscall-names.list and regenerate the
+arch-syscall.h headers with build-many-glibcs.py update-syscalls.
+
+Tested with build-many-glibcs.py.
+
+(cherry picked from commit 89dc0372a9055e7ef86fe19be6201fa0b16b2f0e)
+---
+ sysdeps/unix/sysv/linux/aarch64/arch-syscall.h           | 2 ++
+ sysdeps/unix/sysv/linux/alpha/arch-syscall.h             | 1 +
+ sysdeps/unix/sysv/linux/arc/arch-syscall.h               | 1 +
+ sysdeps/unix/sysv/linux/arm/arch-syscall.h               | 1 +
+ sysdeps/unix/sysv/linux/csky/arch-syscall.h              | 1 +
+ sysdeps/unix/sysv/linux/hppa/arch-syscall.h              | 1 +
+ sysdeps/unix/sysv/linux/i386/arch-syscall.h              | 2 ++
+ sysdeps/unix/sysv/linux/ia64/arch-syscall.h              | 1 +
+ sysdeps/unix/sysv/linux/m68k/arch-syscall.h              | 1 +
+ sysdeps/unix/sysv/linux/microblaze/arch-syscall.h        | 1 +
+ sysdeps/unix/sysv/linux/mips/mips32/arch-syscall.h       | 1 +
+ sysdeps/unix/sysv/linux/mips/mips64/n32/arch-syscall.h   | 1 +
+ sysdeps/unix/sysv/linux/mips/mips64/n64/arch-syscall.h   | 1 +
+ sysdeps/unix/sysv/linux/nios2/arch-syscall.h             | 1 +
+ sysdeps/unix/sysv/linux/powerpc/powerpc32/arch-syscall.h | 1 +
+ sysdeps/unix/sysv/linux/powerpc/powerpc64/arch-syscall.h | 1 +
+ sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h        | 1 +
+ sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h        | 1 +
+ sysdeps/unix/sysv/linux/s390/s390-32/arch-syscall.h      | 1 +
+ sysdeps/unix/sysv/linux/s390/s390-64/arch-syscall.h      | 1 +
+ sysdeps/unix/sysv/linux/sh/arch-syscall.h                | 1 +
+ sysdeps/unix/sysv/linux/sparc/sparc32/arch-syscall.h     | 1 +
+ sysdeps/unix/sysv/linux/sparc/sparc64/arch-syscall.h     | 1 +
+ sysdeps/unix/sysv/linux/syscall-names.list               | 6 ++++--
+ sysdeps/unix/sysv/linux/x86_64/64/arch-syscall.h         | 2 ++
+ sysdeps/unix/sysv/linux/x86_64/x32/arch-syscall.h        | 2 ++
+ 26 files changed, 33 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/aarch64/arch-syscall.h b/sysdeps/unix/sysv/linux/aarch64/arch-syscall.h
+index e9eb707d0a..bedab1abba 100644
+--- a/sysdeps/unix/sysv/linux/aarch64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/aarch64/arch-syscall.h
+@@ -126,6 +126,7 @@
+ #define __NR_mbind 235
+ #define __NR_membarrier 283
+ #define __NR_memfd_create 279
++#define __NR_memfd_secret 447
+ #define __NR_migrate_pages 238
+ #define __NR_mincore 232
+ #define __NR_mkdirat 34
+@@ -187,6 +188,7 @@
+ #define __NR_pwritev 70
+ #define __NR_pwritev2 287
+ #define __NR_quotactl 60
++#define __NR_quotactl_fd 443
+ #define __NR_read 63
+ #define __NR_readahead 213
+ #define __NR_readlinkat 78
+diff --git a/sysdeps/unix/sysv/linux/alpha/arch-syscall.h b/sysdeps/unix/sysv/linux/alpha/arch-syscall.h
+index bd6b7d4003..91354ed9e2 100644
+--- a/sysdeps/unix/sysv/linux/alpha/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/alpha/arch-syscall.h
+@@ -337,6 +337,7 @@
+ #define __NR_pwritev2 521
+ #define __NR_query_module 347
+ #define __NR_quotactl 148
++#define __NR_quotactl_fd 553
+ #define __NR_read 3
+ #define __NR_readahead 379
+ #define __NR_readlink 58
+diff --git a/sysdeps/unix/sysv/linux/arc/arch-syscall.h b/sysdeps/unix/sysv/linux/arc/arch-syscall.h
+index 10650549c1..ff5c7eb36d 100644
+--- a/sysdeps/unix/sysv/linux/arc/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/arc/arch-syscall.h
+@@ -190,6 +190,7 @@
+ #define __NR_pwritev 70
+ #define __NR_pwritev2 287
+ #define __NR_quotactl 60
++#define __NR_quotactl_fd 443
+ #define __NR_read 63
+ #define __NR_readahead 213
+ #define __NR_readlinkat 78
+diff --git a/sysdeps/unix/sysv/linux/arm/arch-syscall.h b/sysdeps/unix/sysv/linux/arm/arch-syscall.h
+index 85c9b236ce..5772333cee 100644
+--- a/sysdeps/unix/sysv/linux/arm/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/arm/arch-syscall.h
+@@ -244,6 +244,7 @@
+ #define __NR_pwritev 362
+ #define __NR_pwritev2 393
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 225
+ #define __NR_readlink 85
+diff --git a/sysdeps/unix/sysv/linux/csky/arch-syscall.h b/sysdeps/unix/sysv/linux/csky/arch-syscall.h
+index 24b0d1f94e..4af6d6202f 100644
+--- a/sysdeps/unix/sysv/linux/csky/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/csky/arch-syscall.h
+@@ -199,6 +199,7 @@
+ #define __NR_pwritev 70
+ #define __NR_pwritev2 287
+ #define __NR_quotactl 60
++#define __NR_quotactl_fd 443
+ #define __NR_read 63
+ #define __NR_readahead 213
+ #define __NR_readlinkat 78
+diff --git a/sysdeps/unix/sysv/linux/hppa/arch-syscall.h b/sysdeps/unix/sysv/linux/hppa/arch-syscall.h
+index feb70abc3e..b07fc8549d 100644
+--- a/sysdeps/unix/sysv/linux/hppa/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/hppa/arch-syscall.h
+@@ -231,6 +231,7 @@
+ #define __NR_pwritev 316
+ #define __NR_pwritev2 348
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 207
+ #define __NR_readlink 85
+diff --git a/sysdeps/unix/sysv/linux/i386/arch-syscall.h b/sysdeps/unix/sysv/linux/i386/arch-syscall.h
+index 3b1894a79b..6e4264698b 100644
+--- a/sysdeps/unix/sysv/linux/i386/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/i386/arch-syscall.h
+@@ -183,6 +183,7 @@
+ #define __NR_mbind 274
+ #define __NR_membarrier 375
+ #define __NR_memfd_create 356
++#define __NR_memfd_secret 447
+ #define __NR_migrate_pages 294
+ #define __NR_mincore 218
+ #define __NR_mkdir 39
+@@ -266,6 +267,7 @@
+ #define __NR_pwritev2 379
+ #define __NR_query_module 167
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 225
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/ia64/arch-syscall.h b/sysdeps/unix/sysv/linux/ia64/arch-syscall.h
+index fb388a5fa4..1ca706d721 100644
+--- a/sysdeps/unix/sysv/linux/ia64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/ia64/arch-syscall.h
+@@ -218,6 +218,7 @@
+ #define __NR_pwritev 1320
+ #define __NR_pwritev2 1349
+ #define __NR_quotactl 1137
++#define __NR_quotactl_fd 1467
+ #define __NR_read 1026
+ #define __NR_readahead 1216
+ #define __NR_readlink 1092
+diff --git a/sysdeps/unix/sysv/linux/m68k/arch-syscall.h b/sysdeps/unix/sysv/linux/m68k/arch-syscall.h
+index 7bc8c4af92..2f10f71f90 100644
+--- a/sysdeps/unix/sysv/linux/m68k/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/m68k/arch-syscall.h
+@@ -254,6 +254,7 @@
+ #define __NR_pwritev2 378
+ #define __NR_query_module 167
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 240
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/microblaze/arch-syscall.h b/sysdeps/unix/sysv/linux/microblaze/arch-syscall.h
+index cf560d3af4..0607a4dfa6 100644
+--- a/sysdeps/unix/sysv/linux/microblaze/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/microblaze/arch-syscall.h
+@@ -266,6 +266,7 @@
+ #define __NR_pwritev2 394
+ #define __NR_query_module 167
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 225
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/mips/mips32/arch-syscall.h b/sysdeps/unix/sysv/linux/mips/mips32/arch-syscall.h
+index f346460f48..0055eec0b1 100644
+--- a/sysdeps/unix/sysv/linux/mips/mips32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/mips/mips32/arch-syscall.h
+@@ -251,6 +251,7 @@
+ #define __NR_pwritev2 4362
+ #define __NR_query_module 4187
+ #define __NR_quotactl 4131
++#define __NR_quotactl_fd 4443
+ #define __NR_read 4003
+ #define __NR_readahead 4223
+ #define __NR_readdir 4089
+diff --git a/sysdeps/unix/sysv/linux/mips/mips64/n32/arch-syscall.h b/sysdeps/unix/sysv/linux/mips/mips64/n32/arch-syscall.h
+index 38ed84997a..8e8e9f91cc 100644
+--- a/sysdeps/unix/sysv/linux/mips/mips64/n32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/mips/mips64/n32/arch-syscall.h
+@@ -232,6 +232,7 @@
+ #define __NR_pwritev2 6326
+ #define __NR_query_module 6171
+ #define __NR_quotactl 6172
++#define __NR_quotactl_fd 6443
+ #define __NR_read 6000
+ #define __NR_readahead 6179
+ #define __NR_readlink 6087
+diff --git a/sysdeps/unix/sysv/linux/mips/mips64/n64/arch-syscall.h b/sysdeps/unix/sysv/linux/mips/mips64/n64/arch-syscall.h
+index e6a10c8421..ebd1545f80 100644
+--- a/sysdeps/unix/sysv/linux/mips/mips64/n64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/mips/mips64/n64/arch-syscall.h
+@@ -219,6 +219,7 @@
+ #define __NR_pwritev2 5322
+ #define __NR_query_module 5171
+ #define __NR_quotactl 5172
++#define __NR_quotactl_fd 5443
+ #define __NR_read 5000
+ #define __NR_readahead 5179
+ #define __NR_readlink 5087
+diff --git a/sysdeps/unix/sysv/linux/nios2/arch-syscall.h b/sysdeps/unix/sysv/linux/nios2/arch-syscall.h
+index 5314890289..2b530b1f88 100644
+--- a/sysdeps/unix/sysv/linux/nios2/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/nios2/arch-syscall.h
+@@ -198,6 +198,7 @@
+ #define __NR_pwritev 70
+ #define __NR_pwritev2 287
+ #define __NR_quotactl 60
++#define __NR_quotactl_fd 443
+ #define __NR_read 63
+ #define __NR_readahead 213
+ #define __NR_readlinkat 78
+diff --git a/sysdeps/unix/sysv/linux/powerpc/powerpc32/arch-syscall.h b/sysdeps/unix/sysv/linux/powerpc/powerpc32/arch-syscall.h
+index b5b0758532..a32984a9c1 100644
+--- a/sysdeps/unix/sysv/linux/powerpc/powerpc32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/powerpc/powerpc32/arch-syscall.h
+@@ -260,6 +260,7 @@
+ #define __NR_pwritev2 381
+ #define __NR_query_module 166
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 191
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/powerpc/powerpc64/arch-syscall.h b/sysdeps/unix/sysv/linux/powerpc/powerpc64/arch-syscall.h
+index c77435ca61..b01e464fb9 100644
+--- a/sysdeps/unix/sysv/linux/powerpc/powerpc64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/powerpc/powerpc64/arch-syscall.h
+@@ -243,6 +243,7 @@
+ #define __NR_pwritev2 381
+ #define __NR_query_module 166
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 191
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h b/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h
+index 70854bb9e3..24d0a2c455 100644
+--- a/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h
+@@ -179,6 +179,7 @@
+ #define __NR_pwritev 70
+ #define __NR_pwritev2 287
+ #define __NR_quotactl 60
++#define __NR_quotactl_fd 443
+ #define __NR_read 63
+ #define __NR_readahead 213
+ #define __NR_readlinkat 78
+diff --git a/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h b/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h
+index 83b9f31aba..e526c89ae7 100644
+--- a/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h
+@@ -187,6 +187,7 @@
+ #define __NR_pwritev 70
+ #define __NR_pwritev2 287
+ #define __NR_quotactl 60
++#define __NR_quotactl_fd 443
+ #define __NR_read 63
+ #define __NR_readahead 213
+ #define __NR_readlinkat 78
+diff --git a/sysdeps/unix/sysv/linux/s390/s390-32/arch-syscall.h b/sysdeps/unix/sysv/linux/s390/s390-32/arch-syscall.h
+index b224c4aad4..d4c7b101b6 100644
+--- a/sysdeps/unix/sysv/linux/s390/s390-32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/s390/s390-32/arch-syscall.h
+@@ -251,6 +251,7 @@
+ #define __NR_pwritev2 377
+ #define __NR_query_module 167
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 222
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/s390/s390-64/arch-syscall.h b/sysdeps/unix/sysv/linux/s390/s390-64/arch-syscall.h
+index 59864af125..bd8c78d705 100644
+--- a/sysdeps/unix/sysv/linux/s390/s390-64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/s390/s390-64/arch-syscall.h
+@@ -221,6 +221,7 @@
+ #define __NR_pwritev2 377
+ #define __NR_query_module 167
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 222
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/sh/arch-syscall.h b/sysdeps/unix/sysv/linux/sh/arch-syscall.h
+index 23612c9092..3b6ac3d084 100644
+--- a/sysdeps/unix/sysv/linux/sh/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/sh/arch-syscall.h
+@@ -246,6 +246,7 @@
+ #define __NR_pwritev 334
+ #define __NR_pwritev2 382
+ #define __NR_quotactl 131
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 225
+ #define __NR_readdir 89
+diff --git a/sysdeps/unix/sysv/linux/sparc/sparc32/arch-syscall.h b/sysdeps/unix/sysv/linux/sparc/sparc32/arch-syscall.h
+index 380cddb2d8..35221a707e 100644
+--- a/sysdeps/unix/sysv/linux/sparc/sparc32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/sparc/sparc32/arch-syscall.h
+@@ -252,6 +252,7 @@
+ #define __NR_pwritev2 359
+ #define __NR_query_module 184
+ #define __NR_quotactl 165
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 205
+ #define __NR_readdir 204
+diff --git a/sysdeps/unix/sysv/linux/sparc/sparc64/arch-syscall.h b/sysdeps/unix/sysv/linux/sparc/sparc64/arch-syscall.h
+index 2175eeb6ed..5ba2b20509 100644
+--- a/sysdeps/unix/sysv/linux/sparc/sparc64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/sparc/sparc64/arch-syscall.h
+@@ -231,6 +231,7 @@
+ #define __NR_pwritev2 359
+ #define __NR_query_module 184
+ #define __NR_quotactl 165
++#define __NR_quotactl_fd 443
+ #define __NR_read 3
+ #define __NR_readahead 205
+ #define __NR_readdir 204
+diff --git a/sysdeps/unix/sysv/linux/syscall-names.list b/sysdeps/unix/sysv/linux/syscall-names.list
+index 89c5895b9b..fd98893b0e 100644
+--- a/sysdeps/unix/sysv/linux/syscall-names.list
++++ b/sysdeps/unix/sysv/linux/syscall-names.list
+@@ -21,8 +21,8 @@
+ # This file can list all potential system calls.  The names are only
+ # used if the installed kernel headers also provide them.
+ 
+-# The list of system calls is current as of Linux 5.13.
+-kernel 5.13
++# The list of system calls is current as of Linux 5.14.
++kernel 5.14
+ 
+ FAST_atomic_update
+ FAST_cmpxchg
+@@ -247,6 +247,7 @@ madvise
+ mbind
+ membarrier
+ memfd_create
++memfd_secret
+ memory_ordering
+ migrate_pages
+ mincore
+@@ -452,6 +453,7 @@ pwritev
+ pwritev2
+ query_module
+ quotactl
++quotactl_fd
+ read
+ readahead
+ readdir
+diff --git a/sysdeps/unix/sysv/linux/x86_64/64/arch-syscall.h b/sysdeps/unix/sysv/linux/x86_64/64/arch-syscall.h
+index 8e028eb62b..26d6ac68a6 100644
+--- a/sysdeps/unix/sysv/linux/x86_64/64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/x86_64/64/arch-syscall.h
+@@ -154,6 +154,7 @@
+ #define __NR_mbind 237
+ #define __NR_membarrier 324
+ #define __NR_memfd_create 319
++#define __NR_memfd_secret 447
+ #define __NR_migrate_pages 256
+ #define __NR_mincore 27
+ #define __NR_mkdir 83
+@@ -224,6 +225,7 @@
+ #define __NR_pwritev2 328
+ #define __NR_query_module 178
+ #define __NR_quotactl 179
++#define __NR_quotactl_fd 443
+ #define __NR_read 0
+ #define __NR_readahead 187
+ #define __NR_readlink 89
+diff --git a/sysdeps/unix/sysv/linux/x86_64/x32/arch-syscall.h b/sysdeps/unix/sysv/linux/x86_64/x32/arch-syscall.h
+index 004feb53f1..36847783f6 100644
+--- a/sysdeps/unix/sysv/linux/x86_64/x32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/x86_64/x32/arch-syscall.h
+@@ -148,6 +148,7 @@
+ #define __NR_mbind 1073742061
+ #define __NR_membarrier 1073742148
+ #define __NR_memfd_create 1073742143
++#define __NR_memfd_secret 1073742271
+ #define __NR_migrate_pages 1073742080
+ #define __NR_mincore 1073741851
+ #define __NR_mkdir 1073741907
+@@ -216,6 +217,7 @@
+ #define __NR_pwritev 1073742359
+ #define __NR_pwritev2 1073742371
+ #define __NR_quotactl 1073742003
++#define __NR_quotactl_fd 1073742267
+ #define __NR_read 1073741824
+ #define __NR_readahead 1073742011
+ #define __NR_readlink 1073741913
+-- 
+2.21.3
+
