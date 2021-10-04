@@ -456,6 +456,7 @@ These settings will configure the proxying behavior of the following services:
 * `settings.network.no-proxy`: A list of hosts that are excluded from proxying.  
    Example: 
    ```
+   settings.network.https-proxy = "1.2.3.4"
    settings.network.no-proxy = ["localhost","127.0.0.1"]
    ```
 
