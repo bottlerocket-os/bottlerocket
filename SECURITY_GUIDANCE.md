@@ -71,6 +71,8 @@ It is labeled `api_socket_t`, so only processes with privileged SELinux labels c
 Write access to this socket will grant full control over system configuration.
 This includes the ability to define an arbitrary source for a host container, and to run that container with "superpowers" that bypass other restrictions.
 These "superpowers" are described [below](#limit-use-of-host-containers).
+For Kubernetes variants, it also includes the ability to define and run static pods.
+These are managed directly by `kubelet` and are not subject to admission controllers that enforce security policies for the cluster.
 
 We recommend blocking access to the API socket from containers managed by the orchestrator.
 The "control" host container can be used to modify settings when needed.
