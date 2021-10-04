@@ -1,3 +1,93 @@
+# v1.3.0 (2021-10-06)
+
+## Deprecation Notice
+
+The Kubernetes 1.17 variant, `aws-k8s-1.17`, will lose support in November, 2021.
+Kubernetes 1.17 is no longer receiving support upstream.
+We recommend replacing `aws-k8s-1.17` nodes with a later variant, preferably `aws-k8s-1.21` if your cluster supports it.
+See [this issue](https://github.com/bottlerocket-os/bottlerocket/issues/1772) for more details.
+
+## Security Fixes
+
+* Apply patches to docker and containerd for CVE-2021-41089, CVE-2021-41091, CVE-2021-41092, and CVE-2021-41103 ([#1769])
+
+## OS Changes
+
+* Add MCS constraints to the SELinux policy ([#1733])
+* Support IPv6 in kubelet and pluto ([#1710])
+* Add region flag to aws-iam-authenticator command ([#1762])
+* Restart modified host containers ([#1722])
+* Add more detail to /etc/os-release ([#1749])
+* Add an entry to `/etc/hosts` for the current hostname ([#1713], [#1746])
+* Update default control container to v0.5.2 ([#1730])
+* Fix various SELinux policy issues ([#1729])
+* Update eni-max-pods with new instance types ([#1724], thanks @samjo-nyang!)
+* Add cilium device filters to open-vm-tools ([#1718])
+* Implement hybrid boot support for x86_64 ([#1701])
+* Include `/var/log/kdump` in logdog tarballs ([#1695])
+* Use runtime.slice and system.slice cgroup settings in k8s variants ([#1684], thanks @cyrus-mc!)
+
+## Build Changes
+
+* Update third-party packages ([#1701], [#1716], [#1732], [#1755], [#1763], [#1767])
+* Update Rust dependencies ([#1707], [#1750], [#1751])
+* Add wave definition for slow deployment ([#1734])
+* Add 'infrasys' for creating TUF infra in AWS ([#1723])
+* Make OVF file first in the OVA bundle ([#1719])
+* Raise pubsys messages to 'warn' if AMI exists or repo doesn't ([#1708])
+* Add constants crate ([#1709])
+* Add release URLs to package definitions ([#1748])
+* Add *.src.rpm to packages/.gitignore ([#1768])
+* Archive old migrations ([#1699])
+
+## Documentation Changes
+
+* Mention static pods in the security guidance around API access ([#1766])
+* Fix link to issue labels ([#1764], thanks @andrewhsu!)
+* Fix broken link for TLS bootstrapping ([#1758])
+* Update hash for v3 root.json ([#1757])
+* Update example version to v1.2.0 in QUICKSTART-VMWARE ([#1741], thanks @yuvalk!)
+* Clarify default kernel lockdown settings per variant ([#1704])
+
+[#1684]: https://github.com/bottlerocket-os/bottlerocket/pull/1684
+[#1695]: https://github.com/bottlerocket-os/bottlerocket/pull/1695
+[#1699]: https://github.com/bottlerocket-os/bottlerocket/pull/1699
+[#1701]: https://github.com/bottlerocket-os/bottlerocket/pull/1701
+[#1701]: https://github.com/bottlerocket-os/bottlerocket/pull/1701
+[#1704]: https://github.com/bottlerocket-os/bottlerocket/pull/1704
+[#1707]: https://github.com/bottlerocket-os/bottlerocket/pull/1707
+[#1708]: https://github.com/bottlerocket-os/bottlerocket/pull/1708
+[#1709]: https://github.com/bottlerocket-os/bottlerocket/pull/1709
+[#1710]: https://github.com/bottlerocket-os/bottlerocket/pull/1710
+[#1713]: https://github.com/bottlerocket-os/bottlerocket/pull/1713
+[#1716]: https://github.com/bottlerocket-os/bottlerocket/pull/1716
+[#1718]: https://github.com/bottlerocket-os/bottlerocket/pull/1718
+[#1719]: https://github.com/bottlerocket-os/bottlerocket/pull/1719
+[#1722]: https://github.com/bottlerocket-os/bottlerocket/pull/1722
+[#1723]: https://github.com/bottlerocket-os/bottlerocket/pull/1723
+[#1724]: https://github.com/bottlerocket-os/bottlerocket/pull/1724
+[#1729]: https://github.com/bottlerocket-os/bottlerocket/pull/1729
+[#1730]: https://github.com/bottlerocket-os/bottlerocket/pull/1730
+[#1732]: https://github.com/bottlerocket-os/bottlerocket/pull/1732
+[#1733]: https://github.com/bottlerocket-os/bottlerocket/pull/1733
+[#1734]: https://github.com/bottlerocket-os/bottlerocket/pull/1734
+[#1741]: https://github.com/bottlerocket-os/bottlerocket/pull/1741
+[#1746]: https://github.com/bottlerocket-os/bottlerocket/pull/1746
+[#1748]: https://github.com/bottlerocket-os/bottlerocket/pull/1748
+[#1749]: https://github.com/bottlerocket-os/bottlerocket/pull/1749
+[#1750]: https://github.com/bottlerocket-os/bottlerocket/pull/1750
+[#1751]: https://github.com/bottlerocket-os/bottlerocket/pull/1751
+[#1755]: https://github.com/bottlerocket-os/bottlerocket/pull/1755
+[#1757]: https://github.com/bottlerocket-os/bottlerocket/pull/1757
+[#1758]: https://github.com/bottlerocket-os/bottlerocket/pull/1758
+[#1762]: https://github.com/bottlerocket-os/bottlerocket/pull/1762
+[#1763]: https://github.com/bottlerocket-os/bottlerocket/pull/1763
+[#1764]: https://github.com/bottlerocket-os/bottlerocket/pull/1764
+[#1766]: https://github.com/bottlerocket-os/bottlerocket/pull/1766
+[#1767]: https://github.com/bottlerocket-os/bottlerocket/pull/1767
+[#1768]: https://github.com/bottlerocket-os/bottlerocket/pull/1768
+[#1769]: https://github.com/bottlerocket-os/bottlerocket/pull/1769
+
 # v1.2.1 (2021-09-16)
 
 ## Security fixes
