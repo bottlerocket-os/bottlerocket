@@ -1,0 +1,133 @@
+From 42d1c02750b3631402da3973e5f36b76c8c934f4 Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Wed, 21 Jul 2021 17:59:42 -0700
+Subject: [PATCH] registry: ensure default auth config has address
+
+Signed-off-by: Samuel Karp <skarp@amazon.com>
+---
+ cli/command/registry.go       | 15 +++++++--------
+ cli/command/registry/login.go | 13 +++++--------
+ cli/command/registry_test.go  | 16 +++++++++++++++-
+ 3 files changed, 27 insertions(+), 17 deletions(-)
+
+diff --git a/cli/command/registry.go b/cli/command/registry.go
+index e6311c8bf..68e3dd36e 100644
+--- a/cli/command/registry.go
++++ b/cli/command/registry.go
+@@ -63,17 +63,14 @@ func RegistryAuthenticationPrivilegedFunc(cli Cli, index *registrytypes.IndexInf
+ 		indexServer := registry.GetAuthConfigKey(index)
+ 		isDefaultRegistry := indexServer == ElectAuthServer(context.Background(), cli)
+ 		authConfig, err := GetDefaultAuthConfig(cli, true, indexServer, isDefaultRegistry)
+-		if authConfig == nil {
+-			authConfig = &types.AuthConfig{}
+-		}
+ 		if err != nil {
+ 			fmt.Fprintf(cli.Err(), "Unable to retrieve stored credentials for %s, error: %s.\n", indexServer, err)
+ 		}
+-		err = ConfigureAuth(cli, "", "", authConfig, isDefaultRegistry)
++		err = ConfigureAuth(cli, "", "", &authConfig, isDefaultRegistry)
+ 		if err != nil {
+ 			return "", err
+ 		}
+-		return EncodeAuthToBase64(*authConfig)
++		return EncodeAuthToBase64(authConfig)
+ 	}
+ }
+ 
+@@ -92,7 +89,7 @@ func ResolveAuthConfig(ctx context.Context, cli Cli, index *registrytypes.IndexI
+ 
+ // GetDefaultAuthConfig gets the default auth config given a serverAddress
+ // If credentials for given serverAddress exists in the credential store, the configuration will be populated with values in it
+-func GetDefaultAuthConfig(cli Cli, checkCredStore bool, serverAddress string, isDefaultRegistry bool) (*types.AuthConfig, error) {
++func GetDefaultAuthConfig(cli Cli, checkCredStore bool, serverAddress string, isDefaultRegistry bool) (types.AuthConfig, error) {
+ 	if !isDefaultRegistry {
+ 		serverAddress = registry.ConvertToHostname(serverAddress)
+ 	}
+@@ -101,13 +98,15 @@ func GetDefaultAuthConfig(cli Cli, checkCredStore bool, serverAddress string, is
+ 	if checkCredStore {
+ 		authconfig, err = cli.ConfigFile().GetAuthConfig(serverAddress)
+ 		if err != nil {
+-			return nil, err
++			return types.AuthConfig{
++				ServerAddress: serverAddress,
++			}, err
+ 		}
+ 	}
+ 	authconfig.ServerAddress = serverAddress
+ 	authconfig.IdentityToken = ""
+ 	res := types.AuthConfig(authconfig)
+-	return &res, nil
++	return res, nil
+ }
+ 
+ // ConfigureAuth handles prompting of user's username and password if needed
+diff --git a/cli/command/registry/login.go b/cli/command/registry/login.go
+index 61dd90c33..3820c414b 100644
+--- a/cli/command/registry/login.go
++++ b/cli/command/registry/login.go
+@@ -114,22 +114,19 @@ func runLogin(dockerCli command.Cli, opts loginOptions) error { //nolint: gocycl
+ 	var response registrytypes.AuthenticateOKBody
+ 	isDefaultRegistry := serverAddress == authServer
+ 	authConfig, err := command.GetDefaultAuthConfig(dockerCli, opts.user == "" && opts.password == "", serverAddress, isDefaultRegistry)
+-	if authConfig == nil {
+-		authConfig = &types.AuthConfig{}
+-	}
+ 	if err == nil && authConfig.Username != "" && authConfig.Password != "" {
+-		response, err = loginWithCredStoreCreds(ctx, dockerCli, authConfig)
++		response, err = loginWithCredStoreCreds(ctx, dockerCli, &authConfig)
+ 	}
+ 	if err != nil || authConfig.Username == "" || authConfig.Password == "" {
+-		err = command.ConfigureAuth(dockerCli, opts.user, opts.password, authConfig, isDefaultRegistry)
++		err = command.ConfigureAuth(dockerCli, opts.user, opts.password, &authConfig, isDefaultRegistry)
+ 		if err != nil {
+ 			return err
+ 		}
+ 
+-		response, err = clnt.RegistryLogin(ctx, *authConfig)
++		response, err = clnt.RegistryLogin(ctx, authConfig)
+ 		if err != nil && client.IsErrConnectionFailed(err) {
+ 			// If the server isn't responding (yet) attempt to login purely client side
+-			response, err = loginClientSide(ctx, *authConfig)
++			response, err = loginClientSide(ctx, authConfig)
+ 		}
+ 		// If we (still) have an error, give up
+ 		if err != nil {
+@@ -152,7 +149,7 @@ func runLogin(dockerCli command.Cli, opts loginOptions) error { //nolint: gocycl
+ 		}
+ 	}
+ 
+-	if err := creds.Store(configtypes.AuthConfig(*authConfig)); err != nil {
++	if err := creds.Store(configtypes.AuthConfig(authConfig)); err != nil {
+ 		return errors.Errorf("Error saving credentials: %v", err)
+ 	}
+ 
+diff --git a/cli/command/registry_test.go b/cli/command/registry_test.go
+index ae7c3ac05..f98589fed 100644
+--- a/cli/command/registry_test.go
++++ b/cli/command/registry_test.go
+@@ -145,7 +145,21 @@ func TestGetDefaultAuthConfig(t *testing.T) {
+ 			assert.Check(t, is.Equal(tc.expectedErr, err.Error()))
+ 		} else {
+ 			assert.NilError(t, err)
+-			assert.Check(t, is.DeepEqual(tc.expectedAuthConfig, *authconfig))
++			assert.Check(t, is.DeepEqual(tc.expectedAuthConfig, authconfig))
+ 		}
+ 	}
+ }
++
++func TestGetDefaultAuthConfig_HelperError(t *testing.T) {
++	cli := test.NewFakeCli(&fakeClient{})
++	errBuf := new(bytes.Buffer)
++	cli.SetErr(errBuf)
++	cli.ConfigFile().CredentialsStore = "fake-does-not-exist"
++	serverAddress := "test-server-address"
++	expectedAuthConfig := types.AuthConfig{
++		ServerAddress: serverAddress,
++	}
++	authconfig, err := GetDefaultAuthConfig(cli, true, serverAddress, serverAddress == "https://index.docker.io/v1/")
++	assert.Check(t, is.DeepEqual(expectedAuthConfig, authconfig))
++	assert.Check(t, is.ErrorContains(err, "docker-credential-fake-does-not-exist"))
++}
+-- 
+2.33.0
+
