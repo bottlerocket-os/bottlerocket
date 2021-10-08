@@ -606,6 +606,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "oci-add-hooks"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "open-vm-tools"
 version = "0.1.0"
 dependencies = [
@@ -674,6 +681,7 @@ dependencies = [
  "libgcc",
  "libstd-rust",
  "makedumpfile",
+ "oci-add-hooks",
  "os",
  "policycoreutils",
  "procps",
