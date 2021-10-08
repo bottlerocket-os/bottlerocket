@@ -1,0 +1,23 @@
+[package]
+name = "nvidia-container-toolkit"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/NVIDIA/nvidia-container-toolkit/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/NVIDIA/nvidia-container-toolkit/archive/v1.7.0/v1.7.0.tar.gz"
+sha512 = "7bc3601ca5cca5b3ad7f30f9c2453d41452b425811d37209c20b7f375d557666a1369d756b52a007406996758b09d47635f2e8628bf363298ec247cb3d3f8845"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libnvidia-container = { path = "../libnvidia-container" }
+# This package depends on `shimpei`, but it is built in the `os` package
+# which is expected to be pulled in
+# os = { path = "../os" }
