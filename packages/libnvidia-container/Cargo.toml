@@ -1,0 +1,26 @@
+[package]
+name = "libnvidia-container"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/NVIDIA/libnvidia-container/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/NVIDIA/libnvidia-container/archive/v1.7.0.tar.gz"
+sha512 = "cb2bedc7f3278c56f9da003257ea1c16116ac52cc4a792e4bdfc7e1739a5504436b61db65abb159f4bd4702d961ebd4c455605ce5e9daac00a2ab282a1b1348f"
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/NVIDIA/nvidia-modprobe/archive/495.44/nvidia-modprobe-495.44.tar.gz"
+sha512 = "67486ed1b17c8962786e13880910bb2b1938206a0fd76b360ddef7faf80ee0c941a2e3fbc73fa92a92009e2c54130dce17a466c8079537a981a2fed09c07e4c9"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libelf = { path = "../libelf" }
+libcap = { path = "../libcap" }
+libseccomp = { path = "../libseccomp" }
+libtirpc = { path = "../libtirpc" }
