@@ -7,6 +7,7 @@ Wants=network-online.target configured.target
 [Service]
 Slice=runtime.slice
 EnvironmentFile=/etc/network/proxy.env
+EnvironmentFile=-/etc/containerd/nvidia.env
 ExecStart=/usr/bin/containerd
 Type=notify
 Delegate=yes
