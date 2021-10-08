@@ -1,0 +1,50 @@
+From e84335c28beaf0d9eab6861f6ae3bc72556f4439 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Mon, 20 Sep 2021 23:41:28 +0000
+Subject: [PATCH 1/4] use shared libtirpc
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ Makefile | 11 ++---------
+ 1 file changed, 2 insertions(+), 9 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index c281b8f..60a27f1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -141,9 +141,8 @@ else
+ LIB_LDLIBS_STATIC  += -l:libelf.a
+ endif
+ ifeq ($(WITH_TIRPC), yes)
+-LIB_CPPFLAGS       += -isystem $(DEPS_DIR)$(includedir)/tirpc -DWITH_TIRPC
+-LIB_LDLIBS_STATIC  += -l:libtirpc.a
+-LIB_LDLIBS_SHARED  += -lpthread
++LIB_CPPFLAGS       += -DWITH_TIRPC
++LIB_LDLIBS_SHARED  += -ltirpc
+ endif
+ ifeq ($(WITH_SECCOMP), yes)
+ LIB_CPPFLAGS       += -DWITH_SECCOMP $(shell pkg-config --cflags libseccomp)
+@@ -235,9 +234,6 @@ deps: $(LIB_RPC_SRCS) $(BUILD_DEFS)
+ ifeq ($(WITH_LIBELF), no)
+ 	$(MAKE) -f $(MAKE_DIR)/elftoolchain.mk install
+ endif
+-ifeq ($(WITH_TIRPC), yes)
+-	$(MAKE) -f $(MAKE_DIR)/libtirpc.mk install
+-endif
+ 
+ install: all
+ 	$(INSTALL) -d -m 755 $(addprefix $(DESTDIR),$(includedir) $(bindir) $(libdir) $(docdir) $(libdbgdir) $(pkgconfdir))
+@@ -283,9 +279,6 @@ depsclean:
+ ifeq ($(WITH_LIBELF), no)
+ 	-$(MAKE) -f $(MAKE_DIR)/elftoolchain.mk clean
+ endif
+-ifeq ($(WITH_TIRPC), yes)
+-	-$(MAKE) -f $(MAKE_DIR)/libtirpc.mk clean
+-endif
+ 
+ mostlyclean:
+ 	$(RM) $(LIB_OBJS) $(LIB_STATIC_OBJ) $(BIN_OBJS) $(DEPENDENCIES)
+-- 
+2.31.1
+
