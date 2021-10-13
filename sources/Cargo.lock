@@ -1707,14 +1707,20 @@ dependencies = [
 name = "logdog"
 version = "0.1.0"
 dependencies = [
+ "apiclient",
  "cargo-readme",
+ "constants",
+ "datastore",
  "flate2",
  "glob",
+ "models",
  "reqwest",
+ "serde_json",
  "shell-words",
  "snafu",
  "tar",
  "tempfile",
+ "tokio",
  "url",
  "walkdir",
 ]

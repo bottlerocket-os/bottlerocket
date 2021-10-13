@@ -9,7 +9,9 @@
 //! these provide the list of log requests that `logdog` will run.
 
 use crate::error::{self, Result};
-use glob::glob;
+use datastore::deserialization::from_map;
+use datastore::serialization::to_pairs;
+use glob::{glob, Pattern};
 use reqwest::blocking::{Client, Response};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashSet;
@@ -24,6 +26,15 @@ use walkdir::WalkDir;
 const COMMON_REQUESTS: &str = include_str!("../conf/logdog.common.conf");
 /// The `logdog` log requests that are specific to the current variant.
 const VARIANT_REQUESTS: &str = include_str!("../conf/current/logdog.conf");
+
+/// Patterns to filter from settings output.  These follow the Unix shell style pattern outlined
+/// here: https://docs.rs/glob/0.3.0/glob/struct.Pattern.html.
+const SENSITIVE_SETTINGS_PATTERNS: &[&str] = &[
+    "*.user-data",
+    "settings.kubernetes.bootstrap-token",
+    // Can contain a username:password component
+    "settings.network.https-proxy",
+];
 
 /// Returns the list of log requests to run by combining `VARIANT_REQUESTS` and `COMMON_REQUESTS`.
 /// These are read at compile time from files named `logdog.conf` and `logdog.common.conf`
@@ -96,7 +107,7 @@ impl ToString for LogRequest<'_> {
 }
 
 /// Runs a `LogRequest` and writes its output to a file in `tempdir`.
-pub(crate) fn handle_log_request<S, P>(request: S, tempdir: P) -> Result<()>
+pub(crate) async fn handle_log_request<S, P>(request: S, tempdir: P) -> Result<()>
 where
     S: AsRef<str>,
     P: AsRef<Path>,
@@ -122,6 +133,7 @@ where
     };
     // execute the log request with the correct handler based on the mode field.
     match req.mode {
+        "settings" => handle_settings_request(&req, tempdir).await?,
         "exec" => handle_exec_request(&req, tempdir)?,
         "http" | "https" => handle_http_request(&req, tempdir)?,
         "file" => handle_file_request(&req, tempdir)?,
@@ -134,6 +146,40 @@ where
         }
     }
     Ok(())
+}
+
+/// Requests settings from the API, filters them, and writes the output to `tempdir`
+async fn handle_settings_request<P>(request: &LogRequest<'_>, tempdir: P) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    let settings = get_settings().await?;
+    let mut settings_map = to_pairs(&settings).context(error::SerializeSettings)?;
+
+    // Filter all settings that match any of the "sensitive" patterns
+    for pattern in SENSITIVE_SETTINGS_PATTERNS {
+        let pattern =
+            Pattern::new(pattern).context(error::ParseGlobPattern { pattern: *pattern })?;
+        settings_map.retain(|k, _| !pattern.matches(k.name().as_str()))
+    }
+
+    // Serialize the map back to a `Settings` to remove the escaping so it writes nicely to file
+    let settings: model::Settings = from_map(&settings_map).context(error::DeserializeSettings)?;
+    let outpath = tempdir.as_ref().join(request.filename);
+    let outfile = File::create(&outpath).context(error::FileCreate { path: &outpath })?;
+    serde_json::to_writer_pretty(&outfile, &settings)
+        .context(error::FileWrite { path: &outpath })?;
+    Ok(())
+}
+
+/// Uses `apiclient` to request all settings from the apiserver and deserializes into a `Settings`
+async fn get_settings() -> Result<model::Settings> {
+    let uri = constants::API_SETTINGS_URI;
+    let (_status, response_body) = apiclient::raw_request(constants::API_SOCKET, uri, "GET", None)
+        .await
+        .context(error::ApiClient { uri })?;
+
+    serde_json::from_str(&response_body).context(error::SettingsJson)
 }
 
 /// Runs an `exec` `LogRequest`'s `instructions` and writes its output to to `tempdir`.
@@ -327,62 +373,62 @@ mod test {
         assert_eq!(got, want);
     }
 
-    #[test]
-    fn file_request() {
+    #[tokio::test]
+    async fn file_request() {
         let source_dir = TempDir::new().unwrap();
         let source_filepath = source_dir.path().join("foo-bar.source");
         let want = "123";
         write(&source_filepath, want).unwrap();
         let request = format!("file foo-bar {}", source_filepath.display());
         let outdir = TempDir::new().unwrap();
-        handle_log_request(&request, outdir.path()).unwrap();
+        handle_log_request(&request, outdir.path()).await.unwrap();
         let outfile = outdir.path().join("foo-bar");
         let got = std::fs::read_to_string(&outfile).unwrap();
         assert_eq!(got, want);
     }
 
-    #[test]
-    fn exec_request() {
+    #[tokio::test]
+    async fn exec_request() {
         let want = "hello world! \"quoted\"\n";
         let request = r#"exec output-file.txt echo 'hello' "world!" "\"quoted\"""#;
         let outdir = TempDir::new().unwrap();
-        handle_log_request(&request, outdir.path()).unwrap();
+        handle_log_request(&request, outdir.path()).await.unwrap();
         let outfile = outdir.path().join("output-file.txt");
         let got = std::fs::read_to_string(&outfile).unwrap();
         assert_eq!(got, want);
     }
 
-    #[test]
+    #[tokio::test]
     // ensures single file pattern works
-    fn glob_single_file_pattern_request() {
+    async fn glob_single_file_pattern_request() {
         let source_dir = TempDir::new().unwrap();
         create_source_dir(&source_dir);
         let outdir = TempDir::new().unwrap();
         let request = format!("glob {}/foo.source", source_dir.path().display());
-        handle_log_request(&request, outdir.path()).unwrap();
+        handle_log_request(&request, outdir.path()).await.unwrap();
         assert_file_match(&outdir, get_dest_filepath(&source_dir, "foo.source"), "1");
     }
 
-    #[test]
+    #[tokio::test]
     // ensures multiple file pattern works
-    fn glob_multiple_files_pattern_request() {
+    async fn glob_multiple_files_pattern_request() {
         let source_dir = TempDir::new().unwrap();
         create_source_dir(&source_dir);
         let outdir = TempDir::new().unwrap();
         let request = format!("glob {}/*.source", source_dir.path().display());
-        handle_log_request(&request, outdir.path()).unwrap();
+        handle_log_request(&request, outdir.path()).await.unwrap();
         assert_file_match(&outdir, get_dest_filepath(&source_dir, "foo.source"), "1");
         assert_file_match(&outdir, get_dest_filepath(&source_dir, "bar.source"), "2");
     }
 
-    #[test]
+    #[tokio::test]
     // ensures multiple file in nested directory pattern works
-    fn glob_nested_file_pattern_request() {
+    async fn glob_nested_file_pattern_request() {
         let source_dir = TempDir::new().unwrap();
         create_source_dir(&source_dir);
         let outdir = TempDir::new().unwrap();
         let request = format!("glob {}/**/*.source", source_dir.path().display());
-        handle_log_request(&request, outdir.path()).unwrap();
+        handle_log_request(&request, outdir.path()).await.unwrap();
         assert_file_match(&outdir, get_dest_filepath(&source_dir, "foo.source"), "1");
         assert_file_match(&outdir, get_dest_filepath(&source_dir, "bar.source"), "2");
         assert_file_match(
@@ -407,14 +453,14 @@ mod test {
         );
     }
 
-    #[test]
+    #[tokio::test]
     // ensures directory pattern works
-    fn glob_dir_pattern_request() {
+    async fn glob_dir_pattern_request() {
         let source_dir = TempDir::new().unwrap();
         create_source_dir(&source_dir);
         let outdir = TempDir::new().unwrap();
         let request = format!("glob {}/**/", source_dir.path().display());
-        handle_log_request(&request, outdir.path()).unwrap();
+        handle_log_request(&request, outdir.path()).await.unwrap();
         assert_file_match(
             &outdir,
             get_dest_filepath(&source_dir, "depth1/foo.source"),
@@ -447,12 +493,14 @@ mod test {
         );
     }
 
-    #[test]
+    #[tokio::test]
     // ensure if pattern is empty it should not panic
-    fn glob_empty_pattern_request() {
+    async fn glob_empty_pattern_request() {
         let outdir = TempDir::new().unwrap();
         let request = "glob";
-        let err = handle_log_request(&request, outdir.path()).unwrap_err();
+        let err = handle_log_request(&request, outdir.path())
+            .await
+            .unwrap_err();
         assert!(matches!(err, crate::error::Error::PatternMissing {}));
     }
 }

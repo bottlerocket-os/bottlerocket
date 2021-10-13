@@ -86,7 +86,7 @@ fn parse_args(args: env::Args) -> PathBuf {
 /// noted in the file named by `ERROR_FILENAME`. Note: In the case of `exec` log requests, non-zero
 /// exit codes are not considered errors and the command's stdout and stderr will be still be
 /// written.
-pub(crate) fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: P) -> Result<()> {
+pub(crate) async fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: P) -> Result<()> {
     // if a command fails, we will pipe its error here and continue.
     let outdir = outdir.as_ref();
     let error_path = outdir.join(crate::ERROR_FILENAME);
@@ -97,7 +97,7 @@ pub(crate) fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: P) -> 
     for &log_request in log_requests {
         // show the user what command we are running
         println!("Running: {}", log_request);
-        if let Err(e) = handle_log_request(log_request, &outdir) {
+        if let Err(e) = handle_log_request(log_request, &outdir).await {
             // ignore the error, but make note of it in the error file.
             write!(
                 &mut error_file,
@@ -113,18 +113,19 @@ pub(crate) fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: P) -> 
 }
 
 /// Runs the bulk of the program's logic, main wraps this.
-fn run(outfile: &Path, commands: &[&str]) -> Result<()> {
+async fn run(outfile: &Path, commands: &[&str]) -> Result<()> {
     let temp_dir = TempDir::new().context(error::TempDirCreate)?;
-    collect_logs(&commands, &temp_dir.path().to_path_buf())?;
+    collect_logs(&commands, &temp_dir.path().to_path_buf()).await?;
     create_tarball(&temp_dir.path().to_path_buf(), &outfile)?;
     println!("logs are at: {}", outfile.display());
     Ok(())
 }
 
-fn main() -> ! {
+#[tokio::main]
+async fn main() -> ! {
     let outpath = parse_args(env::args());
     let log_requests = log_requests();
-    process::exit(match run(&outpath, &log_requests) {
+    process::exit(match run(&outpath, &log_requests).await {
         Ok(()) => 0,
         Err(err) => {
             eprintln!("{}", err);
@@ -147,14 +148,14 @@ mod tests {
     use std::fs::File;
     use tar::Archive;
 
-    #[test]
-    fn test_program() {
+    #[tokio::test]
+    async fn test_program() {
         let output_tempdir = TempDir::new().unwrap();
         let outfile = output_tempdir.path().join("logstest");
 
         // we assume that `echo` will not do something unexpected on the machine running this test.
         let commands = vec!["exec hello.txt echo hello world"];
-        run(&outfile, &commands).unwrap();
+        run(&outfile, &commands).await.unwrap();
 
         // this function will panic if the given path is not found in the tarball.
         let find = |path_to_find: &PathBuf| {
