@@ -10,10 +10,10 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-apiclient = { path = "../apiclient" }
-constants = { path = "../../constants" }
-imdsclient = { path = "../../imdsclient" }
-models = { path = "../../models" }
+apiclient = { path = "../apiclient", version = "0.1.0" }
+constants = { path = "../../constants", version = "0.1.0" }
+imdsclient = { path = "../../imdsclient", version = "0.1.0" }
+models = { path = "../../models", version = "0.1.0" }
 rusoto_core = { version = "0.47", default-features = false, features = ["rustls"] }
 rusoto_eks = { version = "0.47", default-features = false, features = ["rustls"] }
 serde_json = "1"

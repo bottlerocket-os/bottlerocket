@@ -10,7 +10,7 @@ exclude = ["README.md"]
 
 [dependencies]
 chrono = { version = "0.4.9", features = ["serde"] }
-parse-datetime = { path = "../../parse-datetime" }
+parse-datetime = { path = "../../parse-datetime", version = "0.1.0" }
 regex = "1.1"
 semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0.100", features = ["derive"] }

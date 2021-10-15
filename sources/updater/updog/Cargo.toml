@@ -9,7 +9,7 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-bottlerocket-release = { path = "../../bottlerocket-release" }
+bottlerocket-release = { path = "../../bottlerocket-release", version = "0.1.0" }
 chrono = "0.4.9"
 log = "0.4"
 lz4 = "1.23.1"
@@ -19,16 +19,16 @@ semver = "1.0"
 serde = { version = "1.0.100", features = ["derive"] }
 serde_json = "1.0.40"
 serde_plain = "1.0"
-signpost = { path = "../signpost" }
+signpost = { path = "../signpost", version = "0.1.0" }
 simplelog = "0.10"
 snafu = "0.6.0"
 toml = "0.5.1"
 tough = { version = "0.11", features = ["http"] }
-update_metadata = { path = "../update_metadata" }
+update_metadata = { path = "../update_metadata", version = "0.1.0" }
 structopt = "0.3"
 url = "2.1.0"
 signal-hook = "0.3"
-models = { path = "../../models" }
+models = { path = "../../models", version = "0.1.0" }
 
 [dev-dependencies]
 tempfile = "3.1.0"

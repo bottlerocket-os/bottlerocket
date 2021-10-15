@@ -10,8 +10,8 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-constants = { path = "../../constants" }
-datastore = { path = "../datastore" }
+constants = { path = "../../constants", version = "0.1.0" }
+datastore = { path = "../datastore", version = "0.1.0" }
 futures = { version = "0.3", default-features = false }
 http = "0.2"
 # Ensure we use exactly hyper 0.14.2 which is the last version that does not emit a cdylib
@@ -19,7 +19,7 @@ http = "0.2"
 hyper = { version = "=0.14.2", default-features = false, features = [ "client", "http1", "http2" ] }
 hyper-unix-connector = "0.2"
 log = "0.4"
-models = { path = "../../models" }
+models = { path = "../../models", version = "0.1.0" }
 rand = "0.8"
 reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }

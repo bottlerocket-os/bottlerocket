@@ -498,8 +498,8 @@ dependencies = ["fetch"]
 script = [
 '''
 run_cargo_deny="
-(cd /tmp/sources && cargo deny check --disable-fetch licenses)
-(cd /tmp/tools && cargo deny check --disable-fetch licenses)
+(cd /tmp/sources && cargo deny --all-features check --disable-fetch licenses bans sources) &&
+(cd /tmp/tools && cargo deny --all-features check --disable-fetch licenses bans sources)
 "
 set +e
 docker run --rm \

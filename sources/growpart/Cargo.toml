@@ -12,7 +12,7 @@ exclude = ["README.md"]
 gptman = { version = "0.6.1", default-features = false }
 snafu = "0.6"
 libc = "0.2"
-block-party = { path = "../updater/block-party" }
+block-party = { path = "../updater/block-party", version = "0.1.0" }
 inotify = "0.9"
 
 [build-dependencies]

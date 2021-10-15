@@ -35,3 +35,37 @@ expression = "ISC"
 license-files = [
     { path = "LICENSE", hash = 0x001c7e6c },
 ]
+
+[bans]
+# Deny multiple versions or wildcard dependencies.
+multiple-versions = "deny"
+wildcards = "deny"
+
+skip = [
+    # older version used by gptman 0.6.5
+    { name = "nix", version = "0.17.0" },
+
+    # newer version used by model-derive and darling
+    # older version used by clap 2.33.3, via cargo-readme and structopt
+    { name = "strsim", version = "0.8.0" },
+
+    # older version used by hyper 0.14.2
+    { name = "socket2", version = "0.3.19" },
+
+    # older version used by tough 0.11.2
+    { name = "serde_plain", version = "0.3.0" },
+]
+
+skip-tree = [
+    # handlebars dependency, uses older versions of SHA-1 and its dependencies
+    { name = "pest_meta", version = "2.1.3" },
+
+    # actix-http uses older and newer versions of crates like rustc_version and
+    # semver, for build vs. runtime dependencies.
+    { name = "actix-http", version = "3.0.0-beta.10" },
+]
+
+[sources]
+# Deny crates from unknown registries or git repositories.
+unknown-registry = "deny"
+unknown-git = "deny"
