@@ -233,7 +233,7 @@ impl Key {
     /// separate from quoting; if a character isn't valid, it isn't valid quoted, either.
     fn valid_character(c: char) -> bool {
         match c {
-            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '/' => true,
+            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '/' | '*' => true,
             _ => false,
         }
     }
@@ -455,7 +455,7 @@ mod test {
 
     #[test]
     fn key_with_special_chars_ok() {
-        data_and_meta!(|t| assert!(Key::new(t, "a-b_c").is_ok()));
+        data_and_meta!(|t| assert!(Key::new(t, "a-b_c*").is_ok()));
     }
 
     #[test]

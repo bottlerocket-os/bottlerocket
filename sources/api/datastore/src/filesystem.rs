@@ -603,6 +603,24 @@ mod test {
     }
 
     #[test]
+    fn wonky_data_path() {
+        let f = FilesystemDataStore::new("/base");
+        let key = Key::new(KeyType::Data, "a.b.c.*.d").unwrap();
+
+        let tx = "test transaction";
+        let pending = f
+            .data_path(&key, &Committed::Pending { tx: tx.into() })
+            .unwrap();
+        assert_eq!(
+            pending.into_os_string(),
+            "/base/pending/test%20transaction/a/b/c/%2A/d"
+        );
+
+        let live = f.data_path(&key, &Committed::Live).unwrap();
+        assert_eq!(live.into_os_string(), "/base/live/a/b/c/%2A/d");
+    }
+
+    #[test]
     fn metadata_path() {
         let f = FilesystemDataStore::new("/base");
         let data_key = Key::new(KeyType::Data, "a.b.c").unwrap();
@@ -629,6 +647,7 @@ mod test {
         assert_eq!(encode_path_component("a.b"), "a%2Eb");
         assert_eq!(encode_path_component("a/b"), "a%2Fb");
         assert_eq!(encode_path_component("a b%c<d>e"), "a%20b%25c%3Cd%3Ee");
+        assert_eq!(encode_path_component("a.b.*"), "a%2Eb%2E%2A");
     }
 
     #[test]
@@ -640,6 +659,7 @@ mod test {
             decode_path_component("a%20b%25c%3Cd%3Ee", "").unwrap(),
             "a b%c<d>e"
         );
+        assert_eq!(decode_path_component("a%2Eb%2E%2A", "").unwrap(), "a.b.*");
 
         // Invalid UTF-8
         decode_path_component("%C3%28", "").unwrap_err();
