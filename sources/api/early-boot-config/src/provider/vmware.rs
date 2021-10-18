@@ -238,7 +238,9 @@ impl VmwareDataProvider {
 
 #[async_trait]
 impl PlatformDataProvider for VmwareDataProvider {
-    async fn platform_data(&self) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
+    async fn platform_data(
+        &self,
+    ) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
 
         // Look at the CD-ROM for user data first, and then...

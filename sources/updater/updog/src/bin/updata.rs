@@ -252,8 +252,7 @@ enum Command {
 
 fn main_inner() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(LevelFilter::Info, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::Logger)?;
 
     match Command::from_args() {
         Command::Init(args) => {

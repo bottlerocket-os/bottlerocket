@@ -15,12 +15,12 @@ Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be ta
 #[macro_use]
 extern crate log;
 
+use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, ResultExt};
 use std::fs;
 use std::str::FromStr;
 use std::{env, process};
-use constants;
 
 mod compression;
 mod provider;
@@ -51,7 +51,8 @@ fn usage() -> ! {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -106,7 +107,11 @@ async fn run() -> Result<()> {
     info!("early-boot-config started");
 
     info!("Retrieving platform-specific data");
-    let uri = &format!("{}?tx={}", constants::API_SETTINGS_URI, constants::LAUNCH_TRANSACTION);
+    let uri = &format!(
+        "{}?tx={}",
+        constants::API_SETTINGS_URI,
+        constants::LAUNCH_TRANSACTION
+    );
     let method = "PATCH";
     for settings_json in Platform
         .platform_data()

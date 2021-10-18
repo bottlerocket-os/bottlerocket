@@ -15,11 +15,11 @@ If the returned value is "baz", our generated value will be "foo-baz".
 
 #![deny(rust_2018_idioms)]
 
+use constants;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::string::String;
 use std::{env, process};
-use constants;
 
 // Setting generators do not require dynamic socket paths at this moment.
 const API_METADATA_URI_BASE: &str = "/metadata/";

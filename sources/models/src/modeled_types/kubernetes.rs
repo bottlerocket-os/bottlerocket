@@ -789,8 +789,8 @@ impl TryFrom<&str> for CpuManagerPolicy {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ValidCpuManagerPolicy>(&input).context(
-            error::InvalidCpuManagerPolicy { input })?;
+        serde_plain::from_str::<ValidCpuManagerPolicy>(&input)
+            .context(error::InvalidCpuManagerPolicy { input })?;
         Ok(CpuManagerPolicy {
             inner: input.to_string(),
         })
@@ -911,8 +911,8 @@ impl TryFrom<&str> for TopologyManagerScope {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ValidTopologyManagerScope>(&input).context(
-            error::InvalidTopologyManagerScope { input })?;
+        serde_plain::from_str::<ValidTopologyManagerScope>(&input)
+            .context(error::InvalidTopologyManagerScope { input })?;
         Ok(TopologyManagerScope {
             inner: input.to_string(),
         })
@@ -964,8 +964,8 @@ impl TryFrom<&str> for TopologyManagerPolicy {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ValidTopologyManagerPolicy>(&input).context(
-            error::InvalidTopologyManagerPolicy { input })?;
+        serde_plain::from_str::<ValidTopologyManagerPolicy>(&input)
+            .context(error::InvalidTopologyManagerPolicy { input })?;
         Ok(TopologyManagerPolicy {
             inner: input.to_string(),
         })
@@ -980,7 +980,7 @@ mod test_topology_manager_policy {
 
     #[test]
     fn good_topology_manager_policy() {
-        for ok in &["none", "restricted", "best-effort", "single-numa-node" ] {
+        for ok in &["none", "restricted", "best-effort", "single-numa-node"] {
             TopologyManagerPolicy::try_from(*ok).unwrap();
         }
     }

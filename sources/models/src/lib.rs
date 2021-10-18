@@ -113,8 +113,8 @@ use crate::modeled_types::{
     KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterName,
     KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
     KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey, Url,
-    ValidBase64, ValidLinuxHostname, TopologyManagerPolicy, TopologyManagerScope,
+    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey,
+    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings

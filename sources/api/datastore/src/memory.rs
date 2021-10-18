@@ -30,7 +30,7 @@ impl MemoryDataStore {
     fn dataset(&self, committed: &Committed) -> Option<&HashMap<Key, String>> {
         match committed {
             Committed::Live => Some(&self.live),
-            Committed::Pending { tx } => self.pending.get(tx)
+            Committed::Pending { tx } => self.pending.get(tx),
         }
     }
 
@@ -195,7 +195,10 @@ mod test {
         let k = Key::new(KeyType::Data, "memtest").unwrap();
         let v = "memvalue";
         m.set_key(&k, v, &Committed::Live).unwrap();
-        assert_eq!(m.get_key(&k, &Committed::Live).unwrap(), Some(v.to_string()));
+        assert_eq!(
+            m.get_key(&k, &Committed::Live).unwrap(),
+            Some(v.to_string())
+        );
 
         let mdkey = Key::new(KeyType::Meta, "testmd").unwrap();
         let md = "mdval";

@@ -6,8 +6,8 @@ mod error;
 pub use error::Error;
 
 use actix_web::{
-    body::Body, error::ResponseError, web, App, FromRequest, HttpRequest,
-    HttpResponse, HttpServer, Responder,
+    body::Body, error::ResponseError, web, App, FromRequest, HttpRequest, HttpResponse, HttpServer,
+    Responder,
 };
 use bottlerocket_release::BottlerocketRelease;
 use datastore::{Committed, FilesystemDataStore, Key, Value};

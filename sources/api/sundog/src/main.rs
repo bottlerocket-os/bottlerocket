@@ -12,6 +12,7 @@ The output is collected and sent to a known Bottlerocket API server endpoint.
 #[macro_use]
 extern crate log;
 
+use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -19,11 +20,9 @@ use std::env;
 use std::path::Path;
 use std::process;
 use std::str::{self, FromStr};
-use constants;
 
 use datastore::serialization::to_pairs_with_prefix;
 use datastore::{self, deserialization, Key, KeyType};
-
 
 /// Potential errors during Sundog execution
 mod error {
@@ -357,7 +356,11 @@ where
     // Serialize our Settings struct to the JSON wire format
     let request_body = serde_json::to_string(&settings).context(error::SerializeRequest)?;
 
-    let uri = &format!("{}?tx={}", constants::API_SETTINGS_URI, constants::LAUNCH_TRANSACTION);
+    let uri = &format!(
+        "{}?tx={}",
+        constants::API_SETTINGS_URI,
+        constants::LAUNCH_TRANSACTION
+    );
     let method = "PATCH";
     trace!("Settings to {} to {}: {}", method, uri, &request_body);
     let (code, response_body) =
@@ -392,7 +395,8 @@ fn usage() -> ! {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -442,8 +446,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     info!("Sundog started");
 

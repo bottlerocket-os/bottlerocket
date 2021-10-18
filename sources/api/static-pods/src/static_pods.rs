@@ -175,7 +175,8 @@ fn usage() {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
 }
 
@@ -267,7 +268,10 @@ mod error {
         Logger { source: log::SetLoggerError },
 
         #[snafu(display(
-            "Unable to decode base64 in static pod '{}' manifest: {}", name, source))]
+            "Unable to decode base64 in static pod '{}' manifest: {}",
+            name,
+            source
+        ))]
         Base64Decode {
             name: String,
             source: base64::DecodeError,

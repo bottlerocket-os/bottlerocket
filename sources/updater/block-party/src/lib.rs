@@ -31,7 +31,7 @@ mod error {
         /// The target of a link ends in `..`
         LinkTargetFileName {
             /// Contains the invalid link path.
-            path: PathBuf
+            path: PathBuf,
         },
 
         #[snafu(display("Cannot parse {} as major/minor numbers: {}", path.display(), source))]
@@ -51,7 +51,7 @@ mod error {
         /// of colons.
         MajorMinorLen {
             /// Contains the path which in turn contains an invalid major/minor string.
-            path: PathBuf
+            path: PathBuf,
         },
 
         #[snafu(display("Unable to read device name through link at {}: {} ", path.display(), source))]
@@ -60,7 +60,7 @@ mod error {
             /// Contains the path we failed to read.
             path: PathBuf,
             /// The source error describing the read failure.
-            source: io::Error
+            source: io::Error,
         },
 
         #[snafu(display("Unable to read filesystem metadata of {}: {} ", path.display(), source))]
@@ -69,7 +69,7 @@ mod error {
             /// Contains the path for which we failed to read metadata.
             path: PathBuf,
             /// The source error describing the read failure.
-            source: io::Error
+            source: io::Error,
         },
 
         #[snafu(display("Unable to read file {}: {} ", path.display(), source))]
@@ -78,7 +78,7 @@ mod error {
             /// Contains the path we failed to read.
             path: PathBuf,
             /// The source error describing the read failure.
-            source: io::Error
+            source: io::Error,
         },
 
         #[snafu(display("Unable to list directory {}: {} ", path.display(), source))]
@@ -87,7 +87,7 @@ mod error {
             /// Contains the directory we failed to list.
             path: PathBuf,
             /// The source error describing the list failure.
-            source: io::Error
+            source: io::Error,
         },
 
         #[snafu(display("Unable to read directory entry in {}: {} ", path.display(), source))]
@@ -96,7 +96,7 @@ mod error {
             /// Contains the directory with an entry we failed to read.
             path: PathBuf,
             /// The source error describing the read failure.
-            source: io::Error
+            source: io::Error,
         },
     }
 }
@@ -262,11 +262,9 @@ impl Iterator for LowerIter {
     type Item = Result<BlockDevice>;
 
     fn next(&mut self) -> Option<Result<BlockDevice>> {
-        self.iter
-            .next()
-            .map(|entry| {
-                let entry = entry.context(error::ReadDirectoryEntry { path: &self.path })?;
-                BlockDevice::from_major_minor_in_file(entry.path().join("dev"))
-            })
+        self.iter.next().map(|entry| {
+            let entry = entry.context(error::ReadDirectoryEntry { path: &self.path })?;
+            BlockDevice::from_major_minor_in_file(entry.path().join("dev"))
+        })
     }
 }
