@@ -5,8 +5,8 @@ use std::net::IpAddr;
 pub(super) type Result<T> = std::result::Result<T, Error>;
 
 pub(crate) struct AwsK8sInfo {
-    pub(crate) region: String,
-    pub(crate) cluster_name: String,
+    pub(crate) region: Option<String>,
+    pub(crate) cluster_name: Option<String>,
     pub(crate) cluster_dns_ip: Option<IpAddr>,
 }
 
@@ -16,8 +16,8 @@ pub(crate) struct AwsK8sInfo {
 #[cfg(aws_k8s_variant)]
 mod inner {
     use super::*;
-    use snafu::{OptionExt, ResultExt, Snafu};
     use constants;
+    use snafu::{ResultExt, Snafu};
 
     #[derive(Debug, Snafu)]
     pub(crate) enum Error {
@@ -26,9 +26,6 @@ mod inner {
             source: apiclient::Error,
             uri: String,
         },
-
-        #[snafu(display("The '{}' setting is missing", setting))]
-        Missing { setting: String },
 
         #[snafu(display("Unable to deserialize Bottlerocket settings: {}", source))]
         SettingsJson { source: serde_json::Error },
@@ -48,23 +45,17 @@ mod inner {
     /// Gets the info that we need to know about the EKS cluster from the Bottlerocket API.
     pub(crate) async fn get_aws_k8s_info() -> Result<AwsK8sInfo> {
         let settings = get_settings().await?;
-        let kubernetes = settings.kubernetes.context(Missing {
-            setting: "kubernetes",
-        })?;
         Ok(AwsK8sInfo {
-            region: settings
-                .aws
-                .context(Missing { setting: "aws" })?
-                .region
-                .context(Missing { setting: "region" })?
-                .into(),
-            cluster_name: kubernetes
-                .cluster_name
-                .context(Missing {
-                    setting: "cluster-name",
-                })?
-                .into(),
-            cluster_dns_ip: kubernetes.cluster_dns_ip,
+            region: settings.aws.and_then(|a| a.region).map(|s| s.into()),
+            cluster_name: settings
+                .kubernetes
+                .as_ref()
+                .and_then(|k| k.cluster_name.clone())
+                .map(|s| s.into()),
+            cluster_dns_ip: settings
+                .kubernetes
+                .and_then(|k| k.cluster_dns_ip)
+                .map(|s| s.into()),
         })
     }
 }

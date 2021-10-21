@@ -172,15 +172,17 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
 async fn get_cluster_dns_ip(client: &mut ImdsClient) -> Result<String> {
     // Retrieve the kubernetes network configuration for the EKS cluster
     if let Ok(aws_k8s_info) = api::get_aws_k8s_info().await.context(error::AwsInfo) {
-        if let Ok(config) =
-            eks::get_cluster_network_config(&aws_k8s_info.region, &aws_k8s_info.cluster_name)
+        if let (Some(region), Some(cluster_name)) = (aws_k8s_info.region, aws_k8s_info.cluster_name)
+        {
+            if let Ok(config) = eks::get_cluster_network_config(&region, &cluster_name)
                 .await
                 .context(error::EksError)
-        {
-            // Derive cluster-dns-ip from the service IPv4 CIDR
-            if let Some(ipv4_cidr) = config.service_ipv_4_cidr {
-                if let Ok(dns_ip) = get_dns_from_ipv4_cidr(&ipv4_cidr) {
-                    return Ok(dns_ip);
+            {
+                // Derive cluster-dns-ip from the service IPv4 CIDR
+                if let Some(ipv4_cidr) = config.service_ipv_4_cidr {
+                    if let Ok(dns_ip) = get_dns_from_ipv4_cidr(&ipv4_cidr) {
+                        return Ok(dns_ip);
+                    }
                 }
             }
         }
@@ -273,13 +275,13 @@ async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
                 what: "node ipv4 address",
             }),
         IpAddr::V6(_) => {
-            return Ok(client
+            return client
                 .fetch_primary_ipv6_address()
                 .await
                 .context(error::ImdsRequest)?
                 .context(error::ImdsNone {
                     what: "ipv6s associated with primary network interface",
-                })?);
+                });
         }
     }
 }
