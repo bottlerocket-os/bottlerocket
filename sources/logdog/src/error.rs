@@ -3,12 +3,19 @@
 use std::io;
 use std::path::PathBuf;
 
+use datastore::{deserialization, serialization};
 use reqwest::Url;
 use snafu::{Backtrace, Snafu};
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
+    #[snafu(display("Error calling Bottlerocket API '{}': {}", uri, source))]
+    ApiClient {
+        source: apiclient::Error,
+        uri: String,
+    },
+
     #[snafu(display("Error creating the command stderr file '{}': {}", path.display(), source))]
     CommandErrFile {
         source: io::Error,
@@ -57,6 +64,9 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Error deserializing Settings: {} ", source))]
+    DeserializeSettings { source: deserialization::Error },
+
     #[snafu(display("Error creating the error file '{}': {}", path.display(), source))]
     ErrorFile {
         source: io::Error,
@@ -69,6 +79,12 @@ pub(crate) enum Error {
         source: io::Error,
         path: PathBuf,
         backtrace: Backtrace,
+    },
+
+    #[snafu(display("Unable to create file '{}': {}", path.display(), source))]
+    FileCreate {
+        source: std::io::Error,
+        path: PathBuf,
     },
 
     #[snafu(display("Unable to copy file from '{}' to '{}' for request '{}': {}", from, to.display(), request, source))]
@@ -84,6 +100,12 @@ pub(crate) enum Error {
 
     #[snafu(display("Output filename is missing in request: '{}'", request))]
     FilenameMissing { request: String },
+
+    #[snafu(display("Unable to write to file '{}': {}", path.display(), source))]
+    FileWrite {
+        source: serde_json::Error,
+        path: PathBuf,
+    },
 
     #[snafu(display("Unable to create HTTP client for '{}': {}", url, source))]
     HttpClient { url: Url, source: reqwest::Error },
@@ -135,6 +157,12 @@ pub(crate) enum Error {
 
     #[snafu(display("Cannot write to / as a file."))]
     RootAsFile { backtrace: Backtrace },
+
+    #[snafu(display("Error serializing Settings: {} ", source))]
+    SerializeSettings { source: serialization::Error },
+
+    #[snafu(display("Unable to deserialize Bottlerocket settings: {}", source))]
+    SettingsJson { source: serde_json::Error },
 
     #[snafu(display("Error closing the tarball '{}': {}", path.display(), source))]
     TarballClose {

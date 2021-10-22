@@ -9,13 +9,19 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
+apiclient = { path = "../api/apiclient" }
+constants = { path = "../constants" }
+datastore = { path = "../api/datastore" }
 flate2 = "1.0"
 glob = "0.3"
+models = { path = "../models" }
 reqwest = { version = "0.11.1", default-features = false, features = ["blocking", "rustls-tls"] }
+serde_json = "1"
 shell-words = "1.0.0"
 snafu = { version = "0.6", features = ["backtraces-impl-backtrace-crate"] }
 tar = { version = "0.4", default-features = false }
 tempfile = { version = "3.1.0", default-features = false }
+tokio = { version = "~1.8", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 url = "2.1.1"
 walkdir = "2.3"
 
