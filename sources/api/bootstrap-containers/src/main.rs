@@ -75,6 +75,7 @@ journalctl -u bootstrap-containers@bear.service
 #[macro_use]
 extern crate log;
 
+use constants;
 use datastore::{serialize_scalar, Key, KeyType};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -87,7 +88,6 @@ use std::fs;
 use std::path::Path;
 use std::process::{self, Command};
 use std::str::FromStr;
-use constants;
 
 use model::modeled_types::{BootstrapContainerMode, Identifier};
 
@@ -144,7 +144,8 @@ fn usage() {
         --mode MODE
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
 }
 

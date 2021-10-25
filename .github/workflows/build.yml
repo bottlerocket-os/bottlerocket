@@ -32,4 +32,5 @@ jobs:
       - run: rustup toolchain install 1.53.0 && rustup default 1.53.0
       - run: cargo install --version 0.30.0 cargo-make
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
+      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-fmt
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} -e BUILDSYS_ARCH=${{ matrix.arch }} -e BUILDSYS_JOBS=12

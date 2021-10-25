@@ -18,13 +18,13 @@ As its very last step, service dog calls `systemd daemon-reload` to ensure all c
 #[macro_use]
 extern crate log;
 
+use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::env;
 use std::ffi::OsStr;
 use std::process::{self, Command};
 use std::str::FromStr;
-use constants;
 
 use datastore::serialization::to_pairs_with_prefix;
 use datastore::{Key, KeyType};
@@ -321,8 +321,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     info!("servicedog started for unit {}", &args.systemd_unit);
 

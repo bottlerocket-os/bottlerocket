@@ -7,6 +7,7 @@
 // to the API, which is intended to be reusable by other crates.
 
 use apiclient::{apply, reboot, set, update};
+use constants;
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
 use simplelog::{
@@ -18,7 +19,6 @@ use std::env;
 use std::process;
 use std::str::FromStr;
 use unindent::unindent;
-use constants;
 
 const DEFAULT_METHOD: &str = "GET";
 

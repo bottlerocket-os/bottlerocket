@@ -7,13 +7,13 @@ The configuration file for ECS is a JSON-formatted document with conditionally-d
 embedded lists.  The structure and names of fields in the document can be found
 [here](https://github.com/aws/amazon-ecs-agent/blob/a250409cf5eb4ad84a7b889023f1e4d2e274b7ab/agent/config/types.go).
 */
+use constants;
 use log::debug;
 use serde::Serialize;
 use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
 use std::{env, process};
-use constants;
 
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
 const VARIANT_ATTRIBUTE_NAME: &str = "bottlerocket.variant";
@@ -171,7 +171,8 @@ fn usage() -> ! {
             [ (-s | --socket-path) PATH ]
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET
+        program_name,
+        constants::API_SOCKET
     );
     process::exit(2);
 }

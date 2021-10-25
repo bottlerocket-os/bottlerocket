@@ -100,7 +100,10 @@ impl State {
                 .path())
         };
 
-        let boot_partition_nums = [nth_guid(BOTTLEROCKET_BOOT, 0)?, nth_guid(BOTTLEROCKET_BOOT, 1)?];
+        let boot_partition_nums = [
+            nth_guid(BOTTLEROCKET_BOOT, 0)?,
+            nth_guid(BOTTLEROCKET_BOOT, 1)?,
+        ];
         let sets = [
             PartitionSet {
                 boot: device_from_part_num(boot_partition_nums[0])?,

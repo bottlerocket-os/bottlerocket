@@ -13,11 +13,11 @@ The `--transaction` argument can be used to specify another transaction.
 #[macro_use]
 extern crate log;
 
+use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::str::FromStr;
 use std::{collections::HashMap, env, process};
-use constants;
 
 const API_PENDING_URI_BASE: &str = "/tx";
 const API_COMMIT_URI_BASE: &str = "/tx/commit";
@@ -142,7 +142,9 @@ fn usage() -> ! {
 
     Transaction defaults to {}
     Socket path defaults to {}",
-        program_name, constants::LAUNCH_TRANSACTION, constants::API_SOCKET
+        program_name,
+        constants::LAUNCH_TRANSACTION,
+        constants::API_SOCKET
     );
     process::exit(2);
 }
@@ -201,8 +203,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     info!("Checking pending settings.");
     check_pending_settings(&args.socket_path, &args.transaction).await;

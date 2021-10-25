@@ -7,6 +7,7 @@ It sets kernel-related settings, for example:
 
 #![deny(rust_2018_idioms)]
 
+use constants;
 use log::{debug, error, info, trace, warn};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
@@ -16,7 +17,6 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::String;
 use std::{env, process};
-use constants;
 
 const SYSCTL_PATH_PREFIX: &str = "/proc/sys";
 const LOCKDOWN_PATH: &str = "/sys/kernel/security/lockdown";
@@ -33,8 +33,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default())
-        .context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
 
     // If the user has kernel settings, apply them.
     let model = get_model(args.socket_path).await?;
@@ -183,7 +182,8 @@ fn usage() -> ! {
         --log-level trace|debug|info|warn|error
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
     process::exit(2);
 }

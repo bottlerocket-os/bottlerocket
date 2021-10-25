@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate log;
 
+use constants;
 use nix::unistd::{fork, ForkResult};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
@@ -9,7 +10,6 @@ use std::env;
 use std::process;
 use std::str::FromStr;
 use tokio::runtime::Runtime;
-use constants;
 
 use thar_be_settings::{config, get_changed_settings, service};
 
@@ -68,7 +68,8 @@ fn usage() -> ! {
     process; this is useful to prevent blocking an API call.
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
     process::exit(2);
 }

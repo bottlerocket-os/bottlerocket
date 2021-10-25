@@ -10,6 +10,7 @@
 extern crate log;
 
 use argh::FromArgs;
+use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::collections::HashMap;
@@ -20,7 +21,6 @@ use std::io::{BufRead, Seek};
 use std::path::Path;
 use std::process;
 use x509_parser;
-use constants;
 
 use model::modeled_types::Identifier;
 
@@ -295,12 +295,12 @@ type Result<T> = std::result::Result<T, error::Error>;
 
 #[cfg(test)]
 mod test_certdog {
+    use super::*;
     use model;
     use model::modeled_types::{Identifier, PemCertificateString};
     use std::collections::HashMap;
     use std::convert::TryFrom;
     use std::fs::File;
-    use super::*;
 
     static TEST_PEM: &str = include_str!("../../../models/tests/data/test-pem");
 

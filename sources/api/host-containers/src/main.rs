@@ -16,6 +16,7 @@ It queries the API for their settings, then configures the system by:
 #[macro_use]
 extern crate log;
 
+use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
@@ -27,7 +28,6 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
-use constants;
 
 use model::modeled_types::Identifier;
 
@@ -311,7 +311,8 @@ fn usage() -> ! {
             [ --log-level trace|debug|info|warn|error ]
 
     Socket path defaults to {}",
-        program_name, constants::API_SOCKET,
+        program_name,
+        constants::API_SOCKET,
     );
     process::exit(2);
 }
@@ -370,8 +371,10 @@ where
     let enabled = image_details.enabled.unwrap_or(false);
     let superpowered = image_details.superpowered.unwrap_or(false);
 
-    info!("Host container '{}' is enabled: {}, superpowered: {}, with source: {}",
-          name, enabled, superpowered, source);
+    info!(
+        "Host container '{}' is enabled: {}, superpowered: {}, with source: {}",
+        name, enabled, superpowered, source
+    );
 
     // Create the directory regardless if user data was provided for the container
     let dir = Path::new(PERSISTENT_STORAGE_BASE_DIR).join(name);
@@ -404,18 +407,23 @@ where
         //
         // We only attempt to do this only if host-containerd is active and running
         if host_containerd_unit.is_active()? && !systemd_unit.is_enabled()? {
-            command(constants::HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
+            command(
+                constants::HOST_CTR_BIN,
+                &["clean-up", "--container-id", name],
+            )?;
         }
 
         // Only start the host container if the systemd target is 'multi-user', otherwise
         // it will start before the system is fully configured
-        match command(constants::SYSTEMCTL_BIN, &["get-default"])?.trim().as_ref() {
+        match command(constants::SYSTEMCTL_BIN, &["get-default"])?
+            .trim()
+            .as_ref()
+        {
             "multi-user.target" => {
                 if systemd_unit.is_active()? {
                     debug!("Stopping and starting host container: '{}'", unit_name);
                     systemd_unit.try_reload_or_restart()?
-                }
-                else {
+                } else {
                     debug!("Enabling and starting container: '{}'", unit_name);
                     systemd_unit.enable_and_start()?
                 }
@@ -432,7 +440,10 @@ where
         //
         // We only attempt to do this only if host-containerd is active and running
         if host_containerd_unit.is_active()? {
-            command(constants::HOST_CTR_BIN, &["clean-up", "--container-id", name])?;
+            command(
+                constants::HOST_CTR_BIN,
+                &["clean-up", "--container-id", name],
+            )?;
         }
     }
 
@@ -442,7 +453,10 @@ where
 fn is_container_affected(settings: &[&str], container_name: &str) -> bool {
     if settings.is_empty() {
         // it means that Bottlerocket is booting - all containers need to be started
-        info!("Handling host container '{}' during full configuration process", container_name);
+        info!(
+            "Handling host container '{}' during full configuration process",
+            container_name
+        );
         return true;
     }
 
@@ -460,7 +474,10 @@ fn is_container_affected(settings: &[&str], container_name: &str) -> bool {
             return true;
         }
     }
-    info!("Not handling host container '{}', no changed settings affect it", container_name);
+    info!(
+        "Not handling host container '{}', no changed settings affect it",
+        container_name
+    );
     return false;
 }
 
