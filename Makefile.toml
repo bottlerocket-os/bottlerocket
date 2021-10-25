@@ -90,6 +90,12 @@ CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
 DOCKER_BUILDKIT = "1"
 
+# This is the filename suffix for operations that write out AMI information to
+# file.  It can be overridden with -e in situations where a user is using
+# multiple `Infra.toml` files for publishing to different places, and wants to
+# write AMI information to specifically named files.
+AMI_DATA_FILE_SUFFIX = "amis.json"
+
 [env.development]
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
@@ -758,8 +764,8 @@ fi
 lz4 -df "${rootlz4}" "${root_image}"
 lz4 -df "${datalz4}" "${data_image}"
 
-ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
-ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-amis.json"
+ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-${AMI_DATA_FILE_SUFFIX}"
 
 ami_name="${PUBLISH_AMI_NAME:-${PUBLISH_AMI_NAME_DEFAULT}}"
 
@@ -798,7 +804,7 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -828,7 +834,7 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -863,7 +869,7 @@ if [ -z "${GRANT_TO_USERS}" ] && [ -z "${GRANT_TO_GROUPS}" ]; then
    exit 1
 fi
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -899,7 +905,7 @@ if [ -z "${REVOKE_FROM_USERS}" ] && [ -z "${REVOKE_FROM_GROUPS}" ]; then
    exit 1
 fi
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -930,7 +936,7 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-amis.json"
+ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
