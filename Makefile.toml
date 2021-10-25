@@ -612,6 +612,14 @@ done
 # modules for a given release.
 LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
 
+# Include the root and data disk images in the repo if they exist
+os_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+data_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+if [ -s "${os_disk_img}" ] && [ -s "${data_disk_img}" ]; then
+   LINK_REPO_TARGETS+=("--link-target ${os_disk_img}")
+   LINK_REPO_TARGETS+=("--link-target ${data_disk_img}")
+fi
+
 # Ensure we link an OVA if an OVF template exists (in which case we should have
 # built an OVA)
 if [ -s "${BUILDSYS_OVF_TEMPLATE}" ]; then
