@@ -47,6 +47,8 @@ members = [
 
     "parse-datetime",
 
+    "retry-read",
+
     "updater/block-party",
     "updater/signpost",
     "updater/update_metadata",
