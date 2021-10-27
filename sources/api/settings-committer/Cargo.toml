@@ -10,8 +10,8 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-apiclient = { path = "../apiclient" }
-constants = { path = "../../constants" }
+apiclient = { path = "../apiclient", version = "0.1.0" }
+constants = { path = "../../constants", version = "0.1.0" }
 snafu = "0.6"
 http = "0.2"
 log = "0.4"

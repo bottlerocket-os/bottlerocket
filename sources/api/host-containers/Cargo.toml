@@ -10,12 +10,12 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-apiclient = { path = "../apiclient" }
+apiclient = { path = "../apiclient", version = "0.1.0" }
 base64 = "0.13"
-constants = { path = "../../constants" }
+constants = { path = "../../constants", version = "0.1.0" }
 http = "0.2"
 log = "0.4"
-models = { path = "../../models" }
+models = { path = "../../models", version = "0.1.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 simplelog = "0.10"

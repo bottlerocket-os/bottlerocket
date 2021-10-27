@@ -12,13 +12,13 @@ chrono = "0.4"
 clap = "2.33"
 coldsnap = { version = "0.3", default-features = false, features = ["rusoto-rustls"]}
 duct = "0.13.0"
-pubsys-config = { path = "../pubsys-config/" }
+pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 futures = "0.3.5"
 indicatif = "0.16.0"
 lazy_static = "1.4"
 log = "0.4"
 num_cpus = "1"
-parse-datetime = { path = "../../sources/parse-datetime" }
+parse-datetime = { path = "../../sources/parse-datetime", version = "0.1.0" }
 rayon = "1"
 # Need to bring in reqwest with a TLS feature so tough can support TLS repos.
 reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
@@ -43,6 +43,6 @@ toml = "0.5"
 tough = { version = "0.11", features = ["http"] }
 tough-kms = "0.3"
 tough-ssm = "0.6"
-update_metadata = { path = "../../sources/updater/update_metadata/" }
+update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1.0" }
 url = { version = "2.1.0", features = ["serde"] }
 tempfile = "3.1"

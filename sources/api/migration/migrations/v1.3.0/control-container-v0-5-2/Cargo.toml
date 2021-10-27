@@ -9,4 +9,4 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-migration-helpers = { path = "../../../migration-helpers" }
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0" }

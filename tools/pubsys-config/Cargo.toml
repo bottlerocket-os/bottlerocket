@@ -11,7 +11,7 @@ chrono = "0.4"
 home = "0.5"
 lazy_static = "1.4"
 log = "0.4"
-parse-datetime = { path = "../../sources/parse-datetime" }
+parse-datetime = { path = "../../sources/parse-datetime", version = "0.1.0" }
 serde = { version = "1.0", features = ["derive"]  }
 serde_yaml = "0.8.17"
 snafu = "0.6"

@@ -9,12 +9,12 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-apiclient = { path = "../api/apiclient" }
-constants = { path = "../constants" }
-datastore = { path = "../api/datastore" }
+apiclient = { path = "../api/apiclient", version = "0.1.0" }
+constants = { path = "../constants", version = "0.1.0" }
+datastore = { path = "../api/datastore", version = "0.1.0" }
 flate2 = "1.0"
 glob = "0.3"
-models = { path = "../models" }
+models = { path = "../models", version = "0.1.0" }
 reqwest = { version = "0.11.1", default-features = false, features = ["blocking", "rustls-tls"] }
 serde_json = "1"
 shell-words = "1.0.0"

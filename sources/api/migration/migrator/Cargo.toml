@@ -10,7 +10,7 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-bottlerocket-release = { path = "../../../bottlerocket-release" }
+bottlerocket-release = { path = "../../../bottlerocket-release", version = "0.1.0" }
 log = "0.4"
 lz4 = "1.23.1"
 nix = "0.22"
@@ -21,7 +21,7 @@ semver = "1.0"
 simplelog = "0.10"
 snafu = "0.6"
 tough = "0.11"
-update_metadata = { path = "../../../updater/update_metadata" }
+update_metadata = { path = "../../../updater/update_metadata", version = "0.1.0" }
 url = "2.1.1"
 
 [build-dependencies]
@@ -29,7 +29,7 @@ cargo-readme = "3.1"
 
 [dev-dependencies]
 chrono = "0.4.11"
-storewolf = { path = "../../storewolf" }
+storewolf = { path = "../../storewolf", version = "0.1.0" }
 tempfile = "3.1.0"
 
 [[bin]]
