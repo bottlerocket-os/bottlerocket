@@ -1,0 +1,7 @@
+[[mirrors]]
+registry = "*"
+endpoint = ["hello"]
+
+[[mirrors]]
+registry = "example"
+endpoint = [ "hello", "hellohello"]

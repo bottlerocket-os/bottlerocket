@@ -96,6 +96,9 @@ pub mod modeled_types;
 // The "variant" module is just a directory where we symlink in the user's requested build
 // variant; each variant defines a top-level Settings structure and we re-export the current one.
 mod variant;
+// The "de" module contains custom deserialization trait implementation for models.
+mod de;
+
 pub use variant::*;
 
 // Below, we define common structures used in the API surface; specific variants build a Settings
@@ -107,6 +110,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
 
+use crate::de::deserialize_mirrors;
 use crate::modeled_types::{
     BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey,
     ECSAttributeValue, FriendlyVersion, Identifier, KubernetesAuthenticationMode,
@@ -179,10 +183,17 @@ struct ECSSettings {
     enable_spot_instance_draining: bool,
 }
 
+#[model]
+struct RegistryMirror {
+    registry: SingleLineString,
+    endpoint: Vec<Url>,
+}
+
 // Image registry settings for the container runtimes.
 #[model]
 struct RegistrySettings {
-    mirrors: HashMap<SingleLineString, Vec<Url>>,
+    #[serde(deserialize_with = "deserialize_mirrors")]
+    mirrors: Vec<RegistryMirror>,
 }
 
 // Update settings. Taken from userdata. The 'seed' setting is generated
