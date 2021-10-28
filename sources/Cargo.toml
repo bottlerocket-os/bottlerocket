@@ -28,6 +28,7 @@ members = [
     "api/migration/migrations/v1.3.0/etc-hosts-service",
     "api/migration/migrations/v1.3.0/hostname-affects-etc-hosts",
     "api/migration/migrations/v1.3.0/control-container-v0-5-2",
+    "api/migration/migrations/v1.4.0/registry-mirror-representation",
 
     "bottlerocket-release",
 
