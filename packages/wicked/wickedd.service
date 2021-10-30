@@ -1,0 +1,18 @@
+[Unit]
+Description=wicked network management service daemon
+Requisite=dbus.service
+Wants=wickedd-nanny.service wickedd-dhcp6.service wickedd-dhcp4.service systemd-udev-settle.service
+After=local-fs.target dbus.service network-pre.target systemd-udev-settle.service
+Before=wickedd-nanny.service wicked.service network.target
+
+[Service]
+Type=notify
+LimitCORE=infinity
+ExecStart=/usr/sbin/wickedd --systemd --foreground
+StandardError=null
+Restart=on-abort
+
+[Install]
+Also=wickedd-nanny.service
+Also=wickedd-dhcp4.service
+Also=wickedd-dhcp6.service

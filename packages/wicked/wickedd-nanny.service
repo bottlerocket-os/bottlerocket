@@ -1,0 +1,13 @@
+[Unit]
+Description=wicked network nanny service
+Requisite=dbus.service
+After=local-fs.target dbus.service network-pre.target wickedd.service
+Before=wicked.service network.target
+PartOf=wickedd.service
+
+[Service]
+Type=notify
+LimitCORE=infinity
+ExecStart=/usr/sbin/wickedd-nanny --systemd --foreground
+StandardError=null
+Restart=on-abort

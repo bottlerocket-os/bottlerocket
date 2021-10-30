@@ -26,6 +26,13 @@ Source12: common.xml
 Source13: nanny.xml
 Source14: server.xml
 
+# Override service units to make it easier to pass new options.
+Source20: wicked.service
+Source21: wickedd.service
+Source22: wickedd-dhcp4.service
+Source23: wickedd-dhcp6.service
+Source24: wickedd-nanny.service
+
 %if %{without bootstrap}
 Source99: constants.xml
 %endif
@@ -89,6 +96,10 @@ install -p -m 0644 %{S:11} %{S:12} %{S:13} %{S:14} \
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:10} %{buildroot}%{_cross_tmpfilesdir}/wicked.conf
 
+rm -f %{buildroot}%{_cross_unitdir}/*.service
+install -p -m 0644 %{S:20} %{S:21} %{S:22} %{S:23} %{S:24} \
+  %{buildroot}%{_cross_unitdir}
+
 %if %{without bootstrap}
 # install our pre-generated constants
 install -p -m 0644 %{S:99} %{buildroot}%{_cross_datadir}/wicked/schema/constants.xml
@@ -106,10 +117,20 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_datadir}/wicked/schema/constants
 %exclude %{_cross_sbindir}/mkconst
 %endif
 %dir %{_cross_libexecdir}/wicked
-%{_cross_libexecdir}/wicked/*
+%dir %{_cross_libexecdir}/wicked/bin
+%{_cross_libexecdir}/wicked/bin/wickedd-dhcp4
+%{_cross_libexecdir}/wicked/bin/wickedd-dhcp6
 %{_cross_libdir}/libwicked-%{version}.so
-%{_cross_unitdir}/wicked*.service
-%{_cross_datadir}/dbus-1/system.d/*.conf
+%{_cross_unitdir}/wicked.service
+%{_cross_unitdir}/wickedd.service
+%{_cross_unitdir}/wickedd-dhcp4.service
+%{_cross_unitdir}/wickedd-dhcp6.service
+%{_cross_unitdir}/wickedd-nanny.service
+%{_cross_datadir}/dbus-1/system.d/org.opensuse.Network.DHCP4.conf
+%{_cross_datadir}/dbus-1/system.d/org.opensuse.Network.DHCP6.conf
+%{_cross_datadir}/dbus-1/system.d/org.opensuse.Network.Nanny.conf
+%{_cross_datadir}/dbus-1/system.d/org.opensuse.Network.conf
+%exclude %{_cross_datadir}/dbus-1/system.d/org.opensuse.Network.AUTO4.conf
 %dir %{_cross_datadir}/wicked
 %{_cross_datadir}/wicked/*
 %if %{without bootstrap}
