@@ -203,6 +203,7 @@ menuentry "${PRETTY_NAME} ${VERSION_ID}" {
    linux (\$root)/vmlinuz root=/dev/dm-0 \\
        ${KERNEL_PARAMETERS} \\
        rootwait ro \\
+       raid=noautodetect \\
        random.trust_cpu=on selinux=1 enforcing=1 \\
        systemd.log_target=journal-or-kmsg systemd.log_color=0 net.ifnames=0 \\
        biosdevname=0 dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\
