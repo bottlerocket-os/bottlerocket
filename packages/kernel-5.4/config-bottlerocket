@@ -73,3 +73,9 @@ CONFIG_KERNEL_ZSTD=y
 CONFIG_ZSTD_COMPRESS=y
 CONFIG_ZSTD_DECOMPRESS=y
 CONFIG_DECOMPRESS_ZSTD=y
+
+# Load i8042 controller, keyboard, and mouse as modules, to avoid waiting for
+# them before mounting the root device.
+CONFIG_SERIO_I8042=m
+CONFIG_KEYBOARD_ATKBD=m
+CONFIG_MOUSE_PS2=m
