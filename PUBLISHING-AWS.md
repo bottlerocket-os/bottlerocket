@@ -30,13 +30,13 @@ If you want to change the name or description of your AMI, you can add on `-e PU
 If you use different accounts to make and test your AMIs, you can grant access to specific accounts like this:
 
 ```shell
-cargo make grant-ami -e GRANT_TO_USERS=0123456789,9876543210
+cargo make -e GRANT_TO_USERS=0123456789,9876543210 grant-ami
 ```
 
 (Later, if you need to revoke access, you can do this:)
 
 ```shell
-cargo make revoke-ami -e REVOKE_FROM_USERS=0123456789,9876543210
+cargo make -e REVOKE_FROM_USERS=0123456789,9876543210 revoke-ami
 ```
 
 > Note: similar to `cargo make ami`, you can specify `PUBLISH_REGIONS` on the command line if you don't want to make an `Infra.toml` config.
@@ -94,7 +94,7 @@ Once you're satisfied with your image and parameters, you can promote the parame
 Note: if you want to customize the SSM parameters that get set, you can copy and modify the existing template file, then point to your file like this:
 
 ```shell
-cargo make ssm -e PUBLISH_SSM_TEMPLATES_PATH=/my/template/path
+cargo make -e PUBLISH_SSM_TEMPLATES_PATH=/my/template/path ssm
 ```
 
 ### Making your AMIs public
@@ -122,7 +122,7 @@ The SSM parameter names include version numbers, which is handy for testing, but
 Once we're satisfied, we can promote the SSM parameters to simpler names.
 
 ```shell
-cargo make promote-ssm -e SSM_TARGET=latest
+cargo make -e SSM_TARGET=latest promote-ssm
 ```
 
 This will copy the fully versioned parameter from earlier, something like:
