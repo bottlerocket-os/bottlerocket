@@ -3,8 +3,9 @@
 //! Currently gzip compression is supported.
 
 use flate2::read::GzDecoder;
+use retry_read::RetryRead;
 use std::fs::File;
-use std::io::{BufReader, Chain, Cursor, ErrorKind, Read, Result, Take};
+use std::io::{BufReader, Chain, Cursor, Read, Result, Take};
 use std::path::Path;
 
 /// "File magic" that indicates file type is stored in a few bytes at the start at the start of the
@@ -115,42 +116,6 @@ impl<R: Read> Read for OptionalCompressionReader<R> {
             CompressionType::None(ref mut r) => r.read(buf),
             CompressionType::Gz(ref mut r) => r.read(buf),
         }
-    }
-}
-
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
-
-/// This trait represents a `Read` operation where we want to retry after standard interruptions
-/// (unlike `read()`) but also need to know the number of bytes we read (unlike `read_exact()`).
-trait RetryRead<R> {
-    fn retry_read(&mut self, buf: &mut [u8]) -> Result<usize>;
-}
-
-impl<R: Read> RetryRead<R> for R {
-    // This implementation is based on stdlib Read::read_exact, but hitting EOF isn't a failure, we
-    // just want to return the number of bytes we could read.
-    fn retry_read(&mut self, mut buf: &mut [u8]) -> Result<usize> {
-        let mut count = 0;
-
-        // Read until we have no more space in the output buffer
-        while !buf.is_empty() {
-            match self.read(buf) {
-                // No bytes left, done
-                Ok(0) => break,
-                // Read n bytes, slide ahead n in the output buffer and read more
-                Ok(n) => {
-                    count += n;
-                    let tmp = buf;
-                    buf = &mut tmp[n..];
-                }
-                // Retry on interrupt
-                Err(e) if e.kind() == ErrorKind::Interrupted => {}
-                // Other failures are fatal
-                Err(e) => return Err(e),
-            }
-        }
-
-        Ok(count)
     }
 }
 

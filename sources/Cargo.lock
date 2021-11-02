@@ -962,6 +962,7 @@ dependencies = [
  "imdsclient",
  "lazy_static",
  "log",
+ "retry-read",
  "serde",
  "serde-xml-rs",
  "serde_json",
@@ -2519,6 +2520,13 @@ dependencies = [
  "web-sys",
  "webpki-roots",
  "winreg",
+]
+
+[[package]]
+name = "retry-read"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
 ]
 
 [[package]]
