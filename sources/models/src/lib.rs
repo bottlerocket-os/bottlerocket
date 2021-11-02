@@ -98,6 +98,9 @@ pub mod modeled_types;
 mod variant;
 pub use variant::*;
 
+// Types used to communicate between client and server for 'apiclient exec'.
+pub mod exec;
+
 // Below, we define common structures used in the API surface; specific variants build a Settings
 // structure based on these, and that's what gets exposed via the API.  (Specific variants' models
 // are in subdirectories and linked into place by build.rs at variant/current.)

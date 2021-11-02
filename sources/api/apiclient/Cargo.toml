@@ -13,20 +13,27 @@ exclude = ["README.md"]
 constants = { path = "../../constants", version = "0.1.0" }
 datastore = { path = "../datastore", version = "0.1.0" }
 futures = { version = "0.3", default-features = false }
+futures-channel = { version = "0.3", default-features = false }
 http = "0.2"
+httparse = "1.5"
 # Ensure we use exactly hyper 0.14.2 which is the last version that does not emit a cdylib
 # See this issue for tracking https://github.com/bottlerocket-os/bottlerocket/issues/1471
 hyper = { version = "=0.14.2", default-features = false, features = [ "client", "http1", "http2" ] }
 hyper-unix-connector = "0.2"
+libc = "0.2"
 log = "0.4"
 models = { path = "../../models", version = "0.1.0" }
+nix = "0.22"
 rand = "0.8"
 reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls"] }
+retry-read = { path = "../../retry-read", version = "0.1.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+signal-hook = "0.3"
 simplelog = "0.10"
 snafu = { version = "0.6", features = ["futures"] }
-tokio = { version = "~1.8", default-features = false, features = ["fs", "io-std", "macros", "rt-multi-thread", "time"] }  # LTS
+tokio = { version = "~1.8", default-features = false, features = ["fs", "io-std", "io-util", "macros", "rt-multi-thread", "time"] }  # LTS
+tokio-tungstenite = { version = "0.15", default-features = false, features = ["connect"] }
 toml = "0.5"
 unindent = "0.1"
 url = "2.2.1"

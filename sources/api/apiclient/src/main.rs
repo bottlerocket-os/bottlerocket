@@ -6,7 +6,7 @@
 // library calls based on the given flags, etc.)  The library modules contain the code for talking
 // to the API, which is intended to be reusable by other crates.
 
-use apiclient::{apply, reboot, set, update};
+use apiclient::{apply, exec, reboot, set, update};
 use constants;
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
@@ -16,6 +16,7 @@ use simplelog::{
 use snafu::ResultExt;
 use std::collections::HashMap;
 use std::env;
+use std::ffi::OsString;
 use std::process;
 use std::str::FromStr;
 use unindent::unindent;
@@ -42,6 +43,7 @@ impl Default for Args {
 #[derive(Debug)]
 enum Subcommand {
     Apply(ApplyArgs),
+    Exec(ExecArgs),
     Raw(RawArgs),
     Reboot(RebootArgs),
     Set(SetArgs),
@@ -52,6 +54,14 @@ enum Subcommand {
 #[derive(Debug)]
 struct ApplyArgs {
     input_sources: Vec<String>,
+}
+
+/// Stores user-supplied arguments for the 'exec' subcommand.
+#[derive(Debug)]
+struct ExecArgs {
+    command: Vec<OsString>,
+    target: String,
+    tty: Option<bool>,
 }
 
 /// Stores user-supplied arguments for the 'raw' subcommand.
@@ -117,6 +127,7 @@ fn usage() -> ! {
             update apply               Applies available updates.
             update cancel              Deactivates an applied update.
             reboot                     Reboots the host.
+            exec                       Execute a command in a host container.
 
         raw options:
             -u, --uri URI              Required; URI to request from the server, e.g. /tx
@@ -150,7 +161,15 @@ fn usage() -> ! {
             -r, --reboot               Automatically reboot if an update was found and applied.
 
         update cancel options:
-            None."#,
+            None.
+
+        exec options:
+            -t, --tty                  Force the server to run the program in a pseudoterminal.
+            -T, --no-tty               Force the server not to run the program in a pseudoterminal.
+
+            TARGET                     Required; the name of the container in which to run the command.
+            COMMAND                    Required; the command to run.
+            [ ARG ...]                 Any desired arguments to the command."#,
         socket = constants::API_SOCKET,
         method = DEFAULT_METHOD,
     );
@@ -198,7 +217,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
             }
 
             // Subcommands
-            "raw" | "apply" | "reboot" | "set" | "update"
+            "raw" | "apply" | "exec" | "reboot" | "set" | "update"
                 if subcommand.is_none() && !arg.starts_with('-') =>
             {
                 subcommand = Some(arg)
@@ -213,6 +232,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
         // Default subcommand is 'raw'
         None | Some("raw") => return (global_args, parse_raw_args(subcommand_args)),
         Some("apply") => return (global_args, parse_apply_args(subcommand_args)),
+        Some("exec") => return (global_args, parse_exec_args(subcommand_args)),
         Some("reboot") => return (global_args, parse_reboot_args(subcommand_args)),
         Some("set") => return (global_args, parse_set_args(subcommand_args)),
         Some("update") => return (global_args, parse_update_args(subcommand_args)),
@@ -284,6 +304,47 @@ fn parse_apply_args(args: Vec<String>) -> Subcommand {
     }
 
     Subcommand::Apply(ApplyArgs { input_sources })
+}
+
+/// Parses arguments for the 'exec' subcommand.
+fn parse_exec_args(args: Vec<String>) -> Subcommand {
+    let mut command = vec![];
+    let mut target = None;
+    let mut tty = None;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_ref() {
+            // Check for our own arguments, but stop once we start to see the user's command; we
+            // don't want to intercept its own arguments.
+            "-t" | "--tty" if command.is_empty() => {
+                tty = Some(true);
+            }
+            "-T" | "--no-tty" if command.is_empty() => {
+                tty = Some(false);
+            }
+            x if x.starts_with('-') && command.is_empty() => {
+                usage_msg(&format!("Unknown argument '{}'", x))
+            }
+
+            // Target is the first arg we see.
+            _ if target.is_none() => target = Some(arg),
+            // Anything remaining goes to the command.
+            _ => command.push(arg.into()),
+        }
+    }
+
+    // (check target here because it's clearer to error about it before an error about a missing command)
+    let target = target.unwrap_or_else(|| usage_msg("Missing required argument 'target'"));
+    if command.is_empty() {
+        usage_msg("Must specify a command for 'exec' to run.");
+    }
+
+    Subcommand::Exec(ExecArgs {
+        command,
+        target,
+        tty,
+    })
 }
 
 /// Parses arguments for the 'reboot' subcommand.
@@ -540,6 +601,12 @@ async fn run() -> Result<()> {
                 .context(error::Apply)?;
         }
 
+        Subcommand::Exec(exec) => {
+            exec::exec(&args.socket_path, exec.command, exec.target, exec.tty)
+                .await
+                .context(error::Exec)?;
+        }
+
         Subcommand::Reboot(_reboot) => {
             reboot::reboot(&args.socket_path)
                 .await
@@ -625,12 +692,12 @@ async fn main() {
 }
 
 mod error {
-    use apiclient::{apply, reboot, set, update};
+    use apiclient::{apply, exec, reboot, set, update};
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility = "pub(super)")]
-    pub enum Error {
+    pub(crate) enum Error {
         #[snafu(display("Failed to apply settings: {}", source))]
         Apply { source: apply::Error },
 
@@ -644,6 +711,9 @@ mod error {
         DeserializeMap {
             source: datastore::deserialization::Error,
         },
+
+        #[snafu(display("Failed to exec: {}", source))]
+        Exec { source: exec::Error },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },

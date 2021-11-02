@@ -3,6 +3,8 @@
 
 mod controller;
 mod error;
+mod exec;
+
 pub use error::Error;
 
 use actix_web::{
@@ -23,7 +25,7 @@ use std::env;
 use std::fs::{set_permissions, File, Permissions};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::process::ExitStatusExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync;
 use thar_be_updates::status::{UpdateStatus, UPDATE_LOCKFILE};
@@ -54,21 +56,24 @@ fn notify_unix_socket_ready() -> Result<()> {
 /// This is the primary interface of the module.  It defines the server and application that actix
 /// spawns for requests.  It creates a shared datastore handle that can be used by handler methods
 /// to interface with the controller.
-pub async fn serve<P1, P2>(
+pub async fn serve<P1, P2, P3>(
     socket_path: P1,
     datastore_path: P2,
     threads: usize,
     socket_gid: Option<Gid>,
+    exec_socket_path: P3,
 ) -> Result<()>
 where
     P1: AsRef<Path>,
     P2: AsRef<Path>,
+    P3: Into<PathBuf>,
 {
     // SharedData gives us a convenient way to make data available to handler methods when it
     // doesn't come from the request itself.  It's easier than the ownership tricks required to
     // pass parameters to the handler methods.
     let shared_data = web::Data::new(SharedData {
         ds: sync::RwLock::new(FilesystemDataStore::new(datastore_path)),
+        exec_socket_path: exec_socket_path.into(),
     });
 
     let http_server = HttpServer::new(move || {
@@ -125,6 +130,7 @@ where
                     .route("/deactivate-update", web::post().to(deactivate_update)),
             )
             .service(web::scope("/updates").route("/status", web::get().to(get_update_status)))
+            .service(web::resource("/exec").route(web::get().to(exec::ws_exec)))
     })
     .workers(threads)
     .bind_uds(socket_path.as_ref())
@@ -509,6 +515,7 @@ impl ResponseError for error::Error {
 /// in the request.
 pub(crate) struct SharedData {
     ds: sync::RwLock<FilesystemDataStore>,
+    exec_socket_path: PathBuf,
 }
 
 /// Helper macro for implementing the actix-web Responder trait for a type.

@@ -3,6 +3,30 @@
 version = 3
 
 [[package]]
+name = "actix"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3720d0064a0ce5c0de7bd93bdb0a6caebab2a9b5668746145d7b3b0c5da02914"
+dependencies = [
+ "actix-rt",
+ "actix_derive",
+ "bitflags",
+ "bytes",
+ "crossbeam-channel",
+ "futures-core",
+ "futures-sink",
+ "futures-task",
+ "futures-util",
+ "log",
+ "once_cell",
+ "parking_lot",
+ "pin-project-lite",
+ "smallvec",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
 name = "actix-codec"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -190,12 +214,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-web-actors"
+version = "4.0.0-beta.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00b43c8e03f1877bc010316de455ee479aa0de0ae0717d49041db5f38fa192de"
+dependencies = [
+ "actix",
+ "actix-codec",
+ "actix-http",
+ "actix-web",
+ "bytes",
+ "bytestring",
+ "futures-core",
+ "pin-project 1.0.8",
+ "tokio",
+]
+
+[[package]]
 name = "actix-web-codegen"
 version = "0.5.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a11fd6f322120a74b23327e778ef0a4950b1f44a2b76468a69316a150f5c6dd"
 dependencies = [
  "actix-router",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "actix_derive"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d44b8fee1ced9671ba043476deddef739dd0959bf77030b26b738cc591737a7"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn",
@@ -259,18 +311,25 @@ dependencies = [
  "constants",
  "datastore",
  "futures",
+ "futures-channel",
  "http",
+ "httparse",
  "hyper",
  "hyper-unix-connector",
+ "libc",
  "log",
  "models",
+ "nix 0.22.1",
  "rand",
  "reqwest",
+ "retry-read",
  "serde",
  "serde_json",
+ "signal-hook",
  "simplelog",
  "snafu",
  "tokio",
+ "tokio-tungstenite",
  "toml",
  "unindent",
  "url",
@@ -280,8 +339,11 @@ dependencies = [
 name = "apiserver"
 version = "0.1.0"
 dependencies = [
+ "actix",
  "actix-web",
+ "actix-web-actors",
  "bottlerocket-release",
+ "bytes",
  "cargo-readme",
  "datastore",
  "fs2",
@@ -294,6 +356,7 @@ dependencies = [
  "nix 0.22.1",
  "num",
  "percent-encoding",
+ "rand",
  "semver 1.0.4",
  "serde",
  "serde_json",
@@ -1905,6 +1968,7 @@ dependencies = [
  "bottlerocket-release",
  "cargo-readme",
  "lazy_static",
+ "libc",
  "model-derive",
  "rand",
  "regex",
@@ -3546,6 +3610,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-tungstenite"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "511de3f85caf1c98983545490c3d09685fa8eb634e57eec22bb4db271f46cbd8"
+dependencies = [
+ "futures-util",
+ "log",
+ "pin-project 1.0.8",
+ "tokio",
+ "tungstenite",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3624,6 +3701,25 @@ name = "try-lock"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
+
+[[package]]
+name = "tungstenite"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0b2d8558abd2e276b0a8df5c05a2ec762609344191e5fd23e292c910e9165b5"
+dependencies = [
+ "base64",
+ "byteorder",
+ "bytes",
+ "http",
+ "httparse",
+ "log",
+ "rand",
+ "sha-1 0.9.8",
+ "thiserror",
+ "url",
+ "utf-8",
+]
 
 [[package]]
 name = "typenum"
@@ -3735,6 +3831,12 @@ dependencies = [
  "matches",
  "percent-encoding",
 ]
+
+[[package]]
+name = "utf-8"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
 
 [[package]]
 name = "vec_map"
