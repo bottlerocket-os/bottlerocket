@@ -1,6 +1,7 @@
 %global _cross_first_party 1
 %global _is_k8s_variant %(if echo %{_cross_variant} | grep -Fqw "k8s"; then echo 1; else echo 0; fi)
 %global _is_aws_variant %(if echo %{_cross_variant} | grep -Fqw "aws"; then echo 1; else echo 0; fi)
+%global _is_vendor_variant %(if echo %{_cross_variant} | grep -Fqw "nvidia"; then echo 1; else echo 0; fi)
 %undefine _debugsource_packages
 
 Name: %{_cross_os}os
@@ -39,6 +40,8 @@ Source111: metricdog.service
 Source112: metricdog.timer
 Source113: send-boot-success.service
 Source114: bootstrap-containers@.service
+Source115: link-kernel-modules.service
+Source116: load-kernel-modules.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -89,6 +92,10 @@ Requires: %{_cross_os}shibaken
 
 %if "%{_cross_variant}" == "aws-ecs-1"
 Requires: %{_cross_os}ecs-settings-applier
+%endif
+
+%if %{_is_vendor_variant}
+Requires: %{_cross_os}driverdog
 %endif
 
 %description
@@ -251,6 +258,14 @@ Requires: %{_cross_os}hotdog
 %description -n %{_cross_os}shimpei
 %{summary}.
 
+%if %{_is_vendor_variant}
+%package -n %{_cross_os}driverdog
+Summary: Tool to load additional drivers
+Requires: %{_cross_os}binutils
+%description -n %{_cross_os}driverdog
+%{summary}.
+%endif
+
 %package -n %{_cross_os}bootstrap-containers
 Summary: Manages bootstrap-containers
 %description -n %{_cross_os}bootstrap-containers
@@ -328,6 +343,9 @@ echo "** Output from non-static builds:"
 %endif
     -p static-pods \
 %endif
+%if %{_is_vendor_variant}
+    -p driverdog \
+%endif
     %{nil}
 
 # Wait for static builds from the background, if they're not already done.
@@ -360,6 +378,9 @@ for p in \
   pluto \
 %endif
   static-pods \
+%endif
+%if %{_is_vendor_variant}
+  driverdog \
 %endif
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
@@ -413,6 +434,9 @@ install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
   %{S:113} %{S:114} \
+%if %{_is_vendor_variant}
+  %{S:115} %{S:116} \
+%endif
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
@@ -538,6 +562,13 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_bindir}/pluto
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
+%endif
+
+%if %{_is_vendor_variant}
+%files -n %{_cross_os}driverdog
+%{_cross_bindir}/driverdog
+%{_cross_unitdir}/link-kernel-modules.service
+%{_cross_unitdir}/load-kernel-modules.service
 %endif
 
 %files -n %{_cross_os}static-pods

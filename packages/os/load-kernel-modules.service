@@ -1,0 +1,17 @@
+[Unit]
+Description=Load additional kernel modules
+After=link-kernel-modules.service
+Requires=link-kernel-modules.service
+# Disable manual restarts to prevent loading kernel modules
+# that weren't linked by the running system
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/driverdog load-modules
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=preconfigured.target

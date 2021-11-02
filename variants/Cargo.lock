@@ -102,6 +102,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "binutils"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libz",
+]
+
+[[package]]
 name = "ca-certificates"
 version = "0.1.0"
 
@@ -673,6 +681,7 @@ name = "release"
 version = "0.0.0"
 dependencies = [
  "acpid",
+ "binutils",
  "ca-certificates",
  "chrony",
  "conntrack-tools",

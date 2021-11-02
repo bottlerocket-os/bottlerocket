@@ -15,6 +15,7 @@ path = "pkg.rs"
 # RPM Requires
 [dependencies]
 acpid = { path = "../acpid" }
+binutils = { path = "../binutils" }
 ca-certificates = { path = "../ca-certificates" }
 chrony = { path = "../chrony" }
 conntrack-tools = { path = "../conntrack-tools" }
