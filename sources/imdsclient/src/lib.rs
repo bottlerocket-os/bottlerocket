@@ -225,10 +225,10 @@ impl ImdsClient {
         let max_attempts: u8 = 3;
         loop {
             attempt += 1;
+            ensure!(attempt <= max_attempts, error::FailedFetchIMDS { attempt });
             if attempt > 1 {
-                time::sleep(Duration::from_millis(100)).await;
+                time::sleep(Duration::from_secs(1)).await;
             }
-            ensure!(attempt <= max_attempts, error::FailedFetch { attempt });
             let response = self
                 .client
                 .get(&uri)
@@ -351,23 +351,36 @@ fn build_public_key_targets(public_key_list: &str) -> Vec<String> {
 /// Helper to fetch an IMDSv2 session token that is valid for 60 seconds.
 async fn fetch_token(client: &Client, imds_base_uri: &str) -> Result<String> {
     let uri = format!("{}/{}", imds_base_uri, SESSION_TARGET);
-    let response = client
-        .put(&uri)
-        .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
-        .send()
-        .await
-        .context(error::Request {
-            method: "PUT",
-            uri: &uri,
-        })?
-        .error_for_status()
-        .context(error::BadResponse { uri: &uri })?;
-    let code = response.status();
-    response.text().await.context(error::ResponseBody {
-        method: "PUT",
-        uri,
-        code,
-    })
+    let mut attempt: u8 = 0;
+    let max_attempts: u8 = 3;
+    loop {
+        attempt += 1;
+        ensure!(attempt <= max_attempts, error::FailedFetchToken { attempt });
+        if attempt > 1 {
+            time::sleep(Duration::from_secs(5)).await;
+        }
+        let response = client
+            .put(&uri)
+            .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
+            .send()
+            .await
+            .context(error::Request {
+                method: "PUT",
+                uri: &uri,
+            })?;
+
+        let code = response.status();
+        if code == StatusCode::OK {
+            return response.text().await.context(error::ResponseBody {
+                method: "PUT",
+                uri: &uri,
+                code,
+            });
+        } else {
+            info!("Retrying token request");
+            continue;
+        }
+    }
 }
 
 mod error {
@@ -392,7 +405,10 @@ mod error {
         BadResponse { uri: String, source: reqwest::Error },
 
         #[snafu(display("IMDS fetch failed after {} attempts", attempt))]
-        FailedFetch { attempt: u8 },
+        FailedFetchIMDS { attempt: u8 },
+
+        #[snafu(display("Failed to fetch IMDSv2 session token after {} attempts", attempt))]
+        FailedFetchToken { attempt: u8 },
 
         #[snafu(display("IMDS session failed: {}", source))]
         FailedSession { source: reqwest::Error },
@@ -605,6 +621,20 @@ mod test {
             .fetch_imds(schema_version, target)
             .await
             .is_err());
+    }
+
+    #[tokio::test]
+    async fn fetch_token_timeout() {
+        let server = Server::run();
+        let base_uri = format!("http://{}", server.addr());
+        let response_code = 408;
+        server.expect(
+            Expectation::matching(request::method_path("PUT", "/latest/api/token"))
+                .times(3)
+                .respond_with(status_code(response_code)),
+        );
+        let client = Client::new();
+        assert!(fetch_token(&client, &base_uri).await.is_err());
     }
 
     #[tokio::test]
