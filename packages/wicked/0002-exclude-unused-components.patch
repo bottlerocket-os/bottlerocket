@@ -1,4 +1,4 @@
-From 07708281e6caae63d207e3640a1a92f4b8c9474f Mon Sep 17 00:00:00 2001
+From 73a6d2a91625771f2b3c87651fe234ac4dae4e75 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 10 Aug 2019 04:53:31 +0000
 Subject: [PATCH 2/3] exclude unused components
@@ -14,7 +14,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index 8f6bffc..fcac7be 100644
+index 8f6bffc..2fa645a 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -6,7 +6,7 @@ MAINTAINERCLEANFILES		= Makefile.in aclocal.m4 config.guess config.*   \
@@ -22,10 +22,10 @@ index 8f6bffc..fcac7be 100644
  
  SUBDIRS				= include src util schema client server nanny \
 -				  autoip4 dhcp4 dhcp6 etc extensions man doc testing
-+				  autoip4 dhcp4 dhcp6 etc
++				  dhcp4 dhcp6 etc
  
  
  pkgconfig_DATA			= wicked.pc
 -- 
-2.21.0
+2.21.3
 

@@ -1,4 +1,4 @@
-From 859c79f5df14d9cff3383b6ee2709080f38b88c4 Mon Sep 17 00:00:00 2001
+From d108d9eee746b0d9a03f8fd124cbf651da9ba254 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 10 Aug 2019 18:31:42 +0000
 Subject: [PATCH 3/3] ship mkconst and schema sources for runtime use
@@ -44,5 +44,5 @@ index 2af1435..bb9697e 100644
  AM_CPPFLAGS			= -I$(top_srcdir)/src	\
  				  -I$(top_srcdir)/include
 -- 
-2.21.0
+2.21.3
 

@@ -1,0 +1,13 @@
+[Unit]
+Description=wicked DHCPv6 supplicant service
+Requisite=dbus.service
+After=local-fs.target dbus.service network-pre.target
+Before=wickedd.service wicked.service network.target
+PartOf=wickedd.service
+
+[Service]
+Type=notify
+LimitCORE=infinity
+ExecStart=/usr/libexec/wicked/bin/wickedd-dhcp6 --systemd --foreground
+StandardError=null
+Restart=on-abort
