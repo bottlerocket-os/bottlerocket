@@ -400,3 +400,13 @@ paths:
           description: "Server error"
         423:
           description: "Update write lock held. Try again in a moment"
+
+  /exec:
+    get:
+      summary: "Request exec WebSocket"
+      operationId: "exec"
+      responses:
+        101:
+          description: "Connection upgraded to WebSocket"
+        500:
+          description: "Server error"

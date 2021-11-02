@@ -133,6 +133,11 @@ aws ssm start-session --target INSTANCE_ID
 
 With the [default control container](https://github.com/bottlerocket-os/bottlerocket-control-container), you can make [API calls](#api) to configure and manage your Bottlerocket host.
 To do even more, read the next section about the [admin container](#admin-container).
+If you've enabled the admin container, you can access it from the control container like this:
+
+```
+apiclient exec admin bash
+```
 
 ### Admin container
 
@@ -158,6 +163,12 @@ If you're using a custom control container, or want to make the API calls direct
 
 ```
 apiclient set host-containers.admin.enabled=true
+```
+
+Once you've enabled the admin container, you can either access it through SSH or from the control container like this:
+
+```
+apiclient exec admin bash
 ```
 
 Once you're in the admin container, you can run `sheltie` to get a full root shell in the Bottlerocket host.
@@ -557,6 +568,12 @@ superpowered = false
 If the `enabled` flag is `true`, it will be started automatically.
 
 All host containers will have the `apiclient` binary available at `/usr/local/bin/apiclient` so they're able to [interact with the API](#using-the-api-client).
+You can also use `apiclient` to run programs in other host containers.
+For example, to access the admin container:
+
+```
+apiclient exec admin bash
+```
 
 In addition, all host containers come with persistent storage that survives reboots and container start/stop cycles.
 It's available at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME` and (since Bottlerocket v1.0.8) `/.bottlerocket/host-containers/current`.
@@ -635,7 +652,7 @@ AWS-specific settings are automatically set based on calls to the Instance MetaD
 ### Logs
 
 You can use `logdog` through the [admin container](#admin-container) to obtain an archive of log files from your Bottlerocket host.
-SSH to the Bottlerocket host, then run:
+SSH to the Bottlerocket host or `apiclient exec admin bash` to access the admin container, then run:
 
 ```bash
 sudo sheltie
@@ -651,6 +668,8 @@ ssh -i YOUR_KEY_FILE \
     ec2-user@YOUR_HOST \
     "cat /.bottlerocket/rootfs/var/log/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
 ```
+
+(If your instance isn't accessible through SSH, you can use [SSH over SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html).)
 
 For a list of what is collected, see the logdog [command list](sources/logdog/src/log_request.rs).
 
@@ -732,6 +751,8 @@ If you start a virtual machine, like an EC2 instance, it will read TOML-formatte
 This way, you can configure your Bottlerocket instance without having to make API calls after launch.
 
 See [Settings](#settings) above for examples and to understand what you can configure.
+
+You can also access host containers through the API using [apiclient exec](sources/api/apiclient/README.md#exec-mode).
 
 The server and client are the user-facing components of the API system, but there are a number of other components that work together to make sure your settings are applied, and that they survive upgrades of Bottlerocket.
 
