@@ -369,3 +369,17 @@ Once it launches, you should be able to run pods on your Bottlerocket instance u
 
 For example, to run busybox:
 `kubectl run -i -t busybox --image=busybox --restart=Never`
+
+### aws-k8s-1.21-nvidia variant
+
+The `aws-k8s-1.21-nvidia` variant includes the required packages and configurations to leverage NVIDIA GPUs.
+It comes with the [NVIDIA Tesla driver](https://docs.nvidia.com/datacenter/tesla/drivers/index.html) along with the libraries required by the [CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) included in your orchestrated containers.
+It also includes the [NVIDIA k8s device plugin](https://github.com/NVIDIA/k8s-device-plugin).
+If you already have a daemonset for the device plugin in your cluster, you may need to use taints and tolerations to keep it from running on Bottlerocket nodes.
+
+Additional NVIDIA tools such as [DCGM](https://github.com/NVIDIA/dcgm-exporter) and [GPU Feature Discovery](https://github.com/NVIDIA/gpu-feature-discovery) will work as expected.
+You can install them in your cluster by following the `helm install` instructions provided for each project.
+
+The [GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/getting-started.html#install-nvidia-gpu-operator) can also be used to install these tools.
+However, it is cumbersome to select the right subset of features to avoid conflicts with the software included in the variant.
+Therefore we recommend installing the tools individually if they are required.

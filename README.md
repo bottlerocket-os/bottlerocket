@@ -54,6 +54,7 @@ The following variants support EKS, as described above:
 - `aws-k8s-1.19`
 - `aws-k8s-1.20`
 - `aws-k8s-1.21`
+- `aws-k8s-1.21-nvidia`
 
 The following variant supports ECS:
 

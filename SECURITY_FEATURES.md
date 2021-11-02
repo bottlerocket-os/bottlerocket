@@ -134,6 +134,8 @@ All binaries are linked with the following options:
 
 Together these enable [full RELRO support](https://www.redhat.com/en/blog/hardening-elf-binaries-using-relocation-read-only-relro) which makes [ROP](https://en.wikipedia.org/wiki/Return-oriented_programming) attacks more difficult to execute.
 
+**Note:** Certain variants, such as the ones for NVIDIA, include precompiled binaries that may not have been built with these hardening flags.
+
 ### SELinux enabled in enforcing mode
 
 Bottlerocket enables SELinux by default, sets it to enforcing mode, and loads the policy during boot.
