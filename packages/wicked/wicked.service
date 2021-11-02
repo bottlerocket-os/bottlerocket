@@ -8,7 +8,7 @@ Before=network-online.target network.target
 Type=oneshot
 RemainAfterExit=yes
 LimitCORE=infinity
-ExecStart=/usr/sbin/wicked --systemd ifup all
+ExecStart=/usr/sbin/wicked --systemd ifup --timeout 300 all
 ExecStop=/usr/sbin/wicked --systemd ifdown all
 ExecReload=/usr/sbin/wicked --systemd ifreload all
 
