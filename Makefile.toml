@@ -392,7 +392,7 @@ script = [
 set -e
 if [ -z "${PACKAGE}" ]; then
     echo "The PACKAGE environment variable must be set. For example:"
-    echo "cargo make build-package -e PACKAGE=kernel"
+    echo "cargo make -e PACKAGE=kernel build-package"
     exit 1
 fi
 
@@ -1031,7 +1031,7 @@ pubsys \
 [tasks._upload-ova-base]
 # Rather than depend on "build", which currently rebuilds images each run, we
 # depend on publish-tools and check for the image files below to save time.
-# This does mean that `cargo make` must be run before 
+# This does mean that `cargo make` must be run before
 # `cargo make _upload-ova-base`.
 dependencies = ["setup-build", "publish-tools"]
 script_runner = "bash"

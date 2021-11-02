@@ -98,15 +98,17 @@ To use the image in Amazon EC2, we need to register the image as an AMI.
 For a simple start, pick an [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions), then run:
 
 ```
-cargo make ami -e PUBLISH_REGIONS=your-region-here
+cargo make -e PUBLISH_REGIONS=your-region-here ami
 ```
+
+Note that the task ("ami") must come **after** the arguments to `cargo make` that are specified with `-e`.
 
 Your new AMI ID will be printed after it's registered.
 
 If you built your image for a different architecture or variant, just use the same arguments here:
 
 ```
-cargo make ami -e PUBLISH_REGIONS=your-region-here -e BUILDSYS_VARIANT=my-variant-here
+cargo make -e PUBLISH_REGIONS=your-region-here -e BUILDSYS_VARIANT=my-variant-here ami
 ```
 
 (There's a lot more detail on building and managing AMIs in the [PUBLISHING](PUBLISHING.md) guide.)

@@ -46,13 +46,13 @@ datacenters = ["foo", "bar"]
 Then you can easily upload your OVA, specifying the variant you wish to upload (currently only VMware variants).
 
 ```shell
-cargo make upload-ova -e BUILDSYS_VARIANT=vmware-k8s-1.20
+cargo make -e BUILDSYS_VARIANT=vmware-k8s-1.20 upload-ova
 ```
 
 If you would like to upload your OVA as a VM template, you can do this in a single step:
 
 ```shell
-cargo make vmware-template -e BUILDSYS_VARIANT=vmware-k8s-1.20
+cargo make -e BUILDSYS_VARIANT=vmware-k8s-1.20 vmware-template
 ```
 
 You can override the list of datacenters to upload to by specifying `VMWARE_DATACENTERS`:

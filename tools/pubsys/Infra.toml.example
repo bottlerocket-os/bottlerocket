@@ -3,7 +3,7 @@
 # at the root of the repo, then edit the settings below to match your use case.
 
 # You can have any number of repos defined and build a specific one by running like this:
-#     cargo make repo -e PUBLISH_REPO=myrepo
+#     cargo make -e PUBLISH_REPO=myrepo repo
 [repo.default]
 # URL to your root role JSON file; can be a file:// URL for local files.  If
 # you don't specify one here, a file will be generated for you under /roles.
@@ -65,7 +65,7 @@ datacenters = ["north", "south"]
 # ***
 
 # Optional common configuration
-# This configuration allow values to be set in a single place if they are common in 
+# This configuration allow values to be set in a single place if they are common in
 # multiple datacenters.  They can be overridden in the datacenter's block below.
 [vmware.common]
 network = "a_network"

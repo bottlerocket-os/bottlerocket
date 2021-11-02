@@ -233,7 +233,7 @@ The variants workspace's `Cargo.lock` may be affected by adding a package.
 To build your package, run the following command in the top-level Bottlerocket directory.
 
 ```sh
-cargo make build-package -e PACKAGE=libwoof
+cargo make -e PACKAGE=libwoof build-package
 ```
 
 This will build your package and its dependencies.

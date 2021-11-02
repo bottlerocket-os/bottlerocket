@@ -35,7 +35,7 @@ cargo make -e BUILDSYS_VARIANT=my-variant -e BUILDSYS_ARCH=my-arch
 ...then you can then build a repo for it like this:
 
 ```shell
-cargo make repo -e BUILDSYS_VARIANT=my-variant -e BUILDSYS_ARCH=my-arch
+cargo make -e BUILDSYS_VARIANT=my-variant -e BUILDSYS_ARCH=my-arch repo
 ```
 
 ## Publishing your image
@@ -75,7 +75,7 @@ RELEASE_START_TIME="$(date '+%Y-%m-%dT%H:%M:%S%:z' -d 'Monday 10am')"
 Now we can create the repo using that time:
 
 ```shell
-cargo make repo -e "RELEASE_START_TIME=${RELEASE_START_TIME}"
+cargo make -e "RELEASE_START_TIME=${RELEASE_START_TIME}" repo
 ```
 
 ### Roles and keys
@@ -249,7 +249,7 @@ If you want to use a different policy, pass `-e PUBLISH_WAVE_POLICY_PATH=sources
 For example, to use the accelerated schedule:
 
 ```shell
-cargo make repo -e PUBLISH_WAVE_POLICY_PATH=sources/updater/waves/accelerated-waves.toml
+cargo make -e PUBLISH_WAVE_POLICY_PATH=sources/updater/waves/accelerated-waves.toml repo
 ```
 
 To learn more about waves, check out the [README](sources/updater/waves).
@@ -263,7 +263,7 @@ The [default policy](tools/pubsys/policies/repo-expiration/2w-2w-1w.toml) sets t
 If you want to use different expiration policy, you can copy and modify the existing policy, then point to your file like this:
 
 ```shell
-cargo make repo -e PUBLISH_EXPIRATION_POLICY_PATH=/my/policy/path
+cargo make -e PUBLISH_EXPIRATION_POLICY_PATH=/my/policy/path repo
 ```
 
 **Note:** remember to update your repo before the expiration date.
