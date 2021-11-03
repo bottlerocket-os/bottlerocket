@@ -39,6 +39,8 @@ lazy_static! {
         m.insert("us-east-2", "328549459982");
         m.insert("us-west-1", "328549459982");
         m.insert("us-west-2", "328549459982");
+        m.insert("us-gov-west-1", "347163068887");
+        m.insert("us-gov-east-1", "388230364387");
         m
     };
 }
