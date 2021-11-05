@@ -30,6 +30,12 @@ Patch0001: 0001-Lock-down-docker-root-dir-perms.patch
 # CVE-2021-41089
 Patch0002: 0002-chrootarchive-don-t-create-parent-dirs-outside-of-ch.patch
 
+# CVE-2021-41190
+Patch0003: 1001-vendor-update-github.com-docker-distribution.patch
+Patch0004: 1002-vendor-update-github.com-containerd-containerd.patch
+Patch0005: 1003-distribution-validate-blob-type.patch
+Patch0006: 1004-vendor-github.com-moby-buildkit-v0.8.3-4-gbc07.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
