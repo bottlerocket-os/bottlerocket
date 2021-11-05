@@ -1,0 +1,251 @@
+From 833407fbff446771e26d6a381897f2c7ae24677e Mon Sep 17 00:00:00 2001
+From: Samuel Karp <skarp@amazon.com>
+Date: Wed, 20 Oct 2021 14:43:16 -0700
+Subject: [PATCH 1/2] images: validate document type before unmarshal
+
+Signed-off-by: Samuel Karp <skarp@amazon.com>
+(cherry picked from commit eb9ba7ed8d46d48fb22362f9d91fff6fb837e37e)
+Signed-off-by: Samuel Karp <skarp@amazon.com>
+---
+ images/image.go      |  55 +++++++++++++++++++
+ images/image_test.go | 127 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 182 insertions(+)
+ create mode 100644 images/image_test.go
+
+diff --git a/images/image.go b/images/image.go
+index 27384c16d..2e5cd61c9 100644
+--- a/images/image.go
++++ b/images/image.go
+@@ -19,6 +19,7 @@ package images
+ import (
+ 	"context"
+ 	"encoding/json"
++	"fmt"
+ 	"sort"
+ 	"time"
+ 
+@@ -154,6 +155,10 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
+ 				return nil, err
+ 			}
+ 
++			if err := validateMediaType(p, desc.MediaType); err != nil {
++				return nil, errors.Wrapf(err, "manifest: invalid desc %s", desc.Digest)
++			}
++
+ 			var manifest ocispec.Manifest
+ 			if err := json.Unmarshal(p, &manifest); err != nil {
+ 				return nil, err
+@@ -194,6 +199,10 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
+ 				return nil, err
+ 			}
+ 
++			if err := validateMediaType(p, desc.MediaType); err != nil {
++				return nil, errors.Wrapf(err, "manifest: invalid desc %s", desc.Digest)
++			}
++
+ 			var idx ocispec.Index
+ 			if err := json.Unmarshal(p, &idx); err != nil {
+ 				return nil, err
+@@ -336,6 +345,10 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
+ 			return nil, err
+ 		}
+ 
++		if err := validateMediaType(p, desc.MediaType); err != nil {
++			return nil, errors.Wrapf(err, "children: invalid desc %s", desc.Digest)
++		}
++
+ 		// TODO(stevvooe): We just assume oci manifest, for now. There may be
+ 		// subtle differences from the docker version.
+ 		var manifest ocispec.Manifest
+@@ -351,6 +364,10 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
+ 			return nil, err
+ 		}
+ 
++		if err := validateMediaType(p, desc.MediaType); err != nil {
++			return nil, errors.Wrapf(err, "children: invalid desc %s", desc.Digest)
++		}
++
+ 		var index ocispec.Index
+ 		if err := json.Unmarshal(p, &index); err != nil {
+ 			return nil, err
+@@ -368,6 +385,44 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
+ 	return descs, nil
+ }
+ 
++// unknownDocument represents a manifest, manifest list, or index that has not
++// yet been validated.
++type unknownDocument struct {
++	MediaType string          `json:"mediaType,omitempty"`
++	Config    json.RawMessage `json:"config,omitempty"`
++	Layers    json.RawMessage `json:"layers,omitempty"`
++	Manifests json.RawMessage `json:"manifests,omitempty"`
++	FSLayers  json.RawMessage `json:"fsLayers,omitempty"` // schema 1
++}
++
++// validateMediaType returns an error if the byte slice is invalid JSON or if
++// the media type identifies the blob as one format but it contains elements of
++// another format.
++func validateMediaType(b []byte, mt string) error {
++	var doc unknownDocument
++	if err := json.Unmarshal(b, &doc); err != nil {
++		return err
++	}
++	if len(doc.FSLayers) != 0 {
++		return fmt.Errorf("media-type: schema 1 not supported")
++	}
++	switch mt {
++	case MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest:
++		if len(doc.Manifests) != 0 ||
++			doc.MediaType == MediaTypeDockerSchema2ManifestList ||
++			doc.MediaType == ocispec.MediaTypeImageIndex {
++			return fmt.Errorf("media-type: expected manifest but found index (%s)", mt)
++		}
++	case MediaTypeDockerSchema2ManifestList, ocispec.MediaTypeImageIndex:
++		if len(doc.Config) != 0 || len(doc.Layers) != 0 ||
++			doc.MediaType == MediaTypeDockerSchema2Manifest ||
++			doc.MediaType == ocispec.MediaTypeImageManifest {
++			return fmt.Errorf("media-type: expected index but found manifest (%s)", mt)
++		}
++	}
++	return nil
++}
++
+ // RootFS returns the unpacked diffids that make up and images rootfs.
+ //
+ // These are used to verify that a set of layers unpacked to the expected
+diff --git a/images/image_test.go b/images/image_test.go
+new file mode 100644
+index 000000000..87c84ab05
+--- /dev/null
++++ b/images/image_test.go
+@@ -0,0 +1,127 @@
++/*
++   Copyright The containerd Authors.
++
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++       http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License.
++*/
++
++package images
++
++import (
++	"encoding/json"
++	"testing"
++
++	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestValidateMediaType(t *testing.T) {
++	docTests := []struct {
++		mt    string
++		index bool
++	}{
++		{MediaTypeDockerSchema2Manifest, false},
++		{ocispec.MediaTypeImageManifest, false},
++		{MediaTypeDockerSchema2ManifestList, true},
++		{ocispec.MediaTypeImageIndex, true},
++	}
++	for _, tc := range docTests {
++		t.Run("manifest-"+tc.mt, func(t *testing.T) {
++			manifest := ocispec.Manifest{
++				Config: ocispec.Descriptor{Size: 1},
++				Layers: []ocispec.Descriptor{{Size: 2}},
++			}
++			b, err := json.Marshal(manifest)
++			require.NoError(t, err, "failed to marshal manifest")
++
++			err = validateMediaType(b, tc.mt)
++			if tc.index {
++				assert.Error(t, err, "manifest should not be a valid index")
++			} else {
++				assert.NoError(t, err, "manifest should be valid")
++			}
++		})
++		t.Run("index-"+tc.mt, func(t *testing.T) {
++			index := ocispec.Index{
++				Manifests: []ocispec.Descriptor{{Size: 1}},
++			}
++			b, err := json.Marshal(index)
++			require.NoError(t, err, "failed to marshal index")
++
++			err = validateMediaType(b, tc.mt)
++			if tc.index {
++				assert.NoError(t, err, "index should be valid")
++			} else {
++				assert.Error(t, err, "index should not be a valid manifest")
++			}
++		})
++	}
++
++	mtTests := []struct {
++		mt      string
++		valid   []string
++		invalid []string
++	}{{
++		MediaTypeDockerSchema2Manifest,
++		[]string{MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest},
++		[]string{MediaTypeDockerSchema2ManifestList, ocispec.MediaTypeImageIndex},
++	}, {
++		ocispec.MediaTypeImageManifest,
++		[]string{MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest},
++		[]string{MediaTypeDockerSchema2ManifestList, ocispec.MediaTypeImageIndex},
++	}, {
++		MediaTypeDockerSchema2ManifestList,
++		[]string{MediaTypeDockerSchema2ManifestList, ocispec.MediaTypeImageIndex},
++		[]string{MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest},
++	}, {
++		ocispec.MediaTypeImageIndex,
++		[]string{MediaTypeDockerSchema2ManifestList, ocispec.MediaTypeImageIndex},
++		[]string{MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest},
++	}}
++	for _, tc := range mtTests {
++		for _, v := range tc.valid {
++			t.Run("valid-"+tc.mt+"-"+v, func(t *testing.T) {
++				doc := struct {
++					MediaType string `json:"mediaType"`
++				}{MediaType: v}
++				b, err := json.Marshal(doc)
++				require.NoError(t, err, "failed to marshal document")
++
++				err = validateMediaType(b, tc.mt)
++				assert.NoError(t, err, "document should be valid")
++			})
++		}
++		for _, iv := range tc.invalid {
++			t.Run("invalid-"+tc.mt+"-"+iv, func(t *testing.T) {
++				doc := struct {
++					MediaType string `json:"mediaType"`
++				}{MediaType: iv}
++				b, err := json.Marshal(doc)
++				require.NoError(t, err, "failed to marshal document")
++
++				err = validateMediaType(b, tc.mt)
++				assert.Error(t, err, "document should not be valid")
++			})
++		}
++	}
++	t.Run("schema1", func(t *testing.T) {
++		doc := struct {
++			FSLayers []string `json:"fsLayers"`
++		}{FSLayers: []string{"1"}}
++		b, err := json.Marshal(doc)
++		require.NoError(t, err, "failed to marshal document")
++
++		err = validateMediaType(b, "")
++		assert.Error(t, err, "document should not be valid")
++	})
++}
+-- 
+2.33.1
+
