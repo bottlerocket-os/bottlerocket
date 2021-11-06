@@ -30,6 +30,7 @@ Source1007: opt.mount
 Source1008: var-lib-bottlerocket.mount
 Source1009: etc-cni.mount
 Source1010: mnt.mount
+Source1012: opt-cni-bin.mount
 
 # CD-ROM mount & associated udev rules
 Source1015: media-cdrom.mount
@@ -116,7 +117,7 @@ EOF
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} \
-  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1011} \
+  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} \
   %{S:1015} %{S:1040} %{S:1041} %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
   %{buildroot}%{_cross_unitdir}
 
@@ -171,6 +172,7 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_unitdir}/opt.mount
 %{_cross_unitdir}/mnt.mount
 %{_cross_unitdir}/etc-cni.mount
+%{_cross_unitdir}/opt-cni-bin.mount
 %{_cross_unitdir}/media-cdrom.mount
 %{_cross_unitdir}/*-lower.mount
 %{_cross_unitdir}/*-kernels.mount

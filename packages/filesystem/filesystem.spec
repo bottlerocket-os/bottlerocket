@@ -20,7 +20,7 @@ mkdir -p %{buildroot}%{_cross_prefix}
 mkdir -p %{buildroot}%{_cross_bindir}
 mkdir -p %{buildroot}%{_cross_sbindir}
 mkdir -p %{buildroot}%{_cross_libdir}
-mkdir -p %{buildroot}%{_cross_libexecdir}
+mkdir -p %{buildroot}%{_cross_libexecdir}/cni/bin
 mkdir -p %{buildroot}%{_cross_includedir}
 mkdir -p %{buildroot}%{_cross_sysconfdir}
 mkdir -p %{buildroot}%{_cross_datadir}
