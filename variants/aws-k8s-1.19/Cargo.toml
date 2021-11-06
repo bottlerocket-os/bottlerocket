@@ -12,7 +12,7 @@ exclude = ["README.md"]
 [package.metadata.build-variant]
 kernel-parameters = [
     "console=tty0",
-    "console=ttyS0",
+    "console=ttyS0,115200n8",
 ]
 included-packages = [
     "aws-iam-authenticator",
