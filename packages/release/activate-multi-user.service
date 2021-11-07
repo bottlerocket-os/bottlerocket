@@ -6,7 +6,7 @@ Requires=configured.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/systemctl set-default multi-user
-ExecStart=/usr/bin/systemctl isolate default
+ExecStart=/usr/bin/systemctl isolate default --no-block
 RemainAfterExit=true
 StandardError=journal+console
 
