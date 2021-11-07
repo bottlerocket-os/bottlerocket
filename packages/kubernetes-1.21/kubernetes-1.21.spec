@@ -71,6 +71,7 @@ make generated_files
 # Build kubelet with the target toolchain.
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
 export %{kube_cc}
+export GOFLAGS='-tags=dockerless'
 export GOLDFLAGS="-buildmode=pie -linkmode=external"
 make WHAT="cmd/kubelet"
 
