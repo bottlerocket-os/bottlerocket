@@ -1,0 +1,30 @@
+From a9e6198232b38a778471f986ee416cb78d41e728 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Mon, 8 Nov 2021 05:13:35 +0000
+Subject: [PATCH 1004/1004] adjust safeguard for dhcp6 defer timeout
+
+For low timeout values, such as one second, we could sometimes wait
+twice as long as expected if the timer fired early. If we're within
+one second of the deadline, consider it done.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/dhcp6/fsm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/dhcp6/fsm.c b/src/dhcp6/fsm.c
+index b3284f6..690e365 100644
+--- a/src/dhcp6/fsm.c
++++ b/src/dhcp6/fsm.c
+@@ -563,7 +563,7 @@ ni_dhcp6_fsm_timeout(ni_dhcp6_device_t *dev)
+ 			/* Do we still need this safeguard? */
+ 			deadline = ni_dhcp6_remaining_time(&dev->start_time,
+ 						dev->config->defer_timeout);
+-			if (deadline) {
++			if (deadline > 1) {
+ 				deadline *= 1000;
+ 				ni_dhcp6_fsm_set_timeout_msec(dev, deadline);
+ 				dev->fsm.fail_on_timeout = 0;
+-- 
+2.21.3
+

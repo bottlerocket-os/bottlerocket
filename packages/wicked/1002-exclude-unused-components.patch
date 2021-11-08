@@ -1,7 +1,7 @@
 From 73a6d2a91625771f2b3c87651fe234ac4dae4e75 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 10 Aug 2019 04:53:31 +0000
-Subject: [PATCH 2/3] exclude unused components
+Subject: [PATCH 1002/1004] exclude unused components
 
 The extensions are all shell scripts, which we don't support. The docs
 require a native helper program to generate, which doesn't work. While
