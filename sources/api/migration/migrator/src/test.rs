@@ -158,7 +158,7 @@ fn create_test_repo() -> TestRepo {
             let dir_entry = dir_entry_result.unwrap();
             editor
                 .add_target(
-                    dir_entry.file_name().to_str().unwrap().into(),
+                    dir_entry.file_name().to_str().unwrap(),
                     tough::schema::Target::from_path(dir_entry.path()).unwrap(),
                 )
                 .unwrap();

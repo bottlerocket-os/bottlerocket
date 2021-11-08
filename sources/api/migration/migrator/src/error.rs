@@ -70,6 +70,12 @@ pub(crate) enum Error {
     #[snafu(display("Failed listing migration directory '{}': {}", dir.display(), source))]
     ListMigrations { dir: PathBuf, source: io::Error },
 
+    #[snafu(display("Invalid target name '{}': {}", target, source))]
+    TargetName {
+        target: String,
+        source: tough::error::Error,
+    },
+
     #[snafu(display("Error loading migration '{}': {}", migration, source))]
     LoadMigration {
         migration: String,

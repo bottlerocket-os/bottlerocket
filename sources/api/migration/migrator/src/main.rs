@@ -32,6 +32,7 @@ use semver::Version;
 use simplelog::{Config as LogConfig, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashSet;
+use std::convert::TryInto;
 use std::env;
 use std::fs::{self, File};
 use std::os::unix::fs::symlink;
@@ -243,14 +244,24 @@ where
 
     for migration in migrations {
         let migration = migration.as_ref();
+        let migration = migration
+            .try_into()
+            .context(error::TargetName { target: migration })?;
+
         // get the migration from the repo
         let lz4_bytes = repository
-            .read_target(migration)
-            .context(error::LoadMigration { migration })?
-            .context(error::MigrationNotFound { migration })?;
+            .read_target(&migration)
+            .context(error::LoadMigration {
+                migration: migration.raw(),
+            })?
+            .context(error::MigrationNotFound {
+                migration: migration.raw(),
+            })?;
 
         // Add an LZ4 decoder so the bytes will be deflated on read
-        let mut reader = lz4::Decoder::new(lz4_bytes).context(error::Lz4Decode { migration })?;
+        let mut reader = lz4::Decoder::new(lz4_bytes).context(error::Lz4Decode {
+            migration: migration.raw(),
+        })?;
 
         // Create a sealed command with pentacle, so we can run the verified bytes from memory
         let mut command =
@@ -480,9 +491,10 @@ where
 
 fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
     let target = "manifest.json";
+    let target = target.try_into().context(error::TargetName { target })?;
     Manifest::from_json(
         repository
-            .read_target(target)
+            .read_target(&target)
             .context(error::ManifestLoad)?
             .context(error::ManifestNotFound)?,
     )

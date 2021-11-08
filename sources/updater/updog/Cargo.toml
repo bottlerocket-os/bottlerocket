@@ -23,7 +23,7 @@ signpost = { path = "../signpost", version = "0.1.0" }
 simplelog = "0.10"
 snafu = "0.6.0"
 toml = "0.5.1"
-tough = { version = "0.11", features = ["http"] }
+tough = { version = "0.12", features = ["http"] }
 update_metadata = { path = "../update_metadata", version = "0.1.0" }
 structopt = "0.3"
 url = "2.1.0"

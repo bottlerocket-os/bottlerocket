@@ -1029,7 +1029,7 @@ dependencies = [
  "serde",
  "serde-xml-rs",
  "serde_json",
- "serde_plain 1.0.0",
+ "serde_plain",
  "simplelog",
  "snafu",
  "tokio",
@@ -1975,7 +1975,7 @@ dependencies = [
  "regex",
  "semver 1.0.4",
  "serde",
- "serde_plain 1.0.0",
+ "serde_plain",
  "snafu",
  "toml",
  "url",
@@ -1996,7 +1996,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "serde_plain 1.0.0",
+ "serde_plain",
  "snafu",
 ]
 
@@ -2239,10 +2239,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf547ad0c65e31259204bd90935776d1c693cec2f4ff7abb7a1bbbd40dfe58"
 
 [[package]]
+name = "path-absolutize"
+version = "3.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b288298a7a3a7b42539e3181ba590d32f2d91237b0691ed5f103875c754b3bf5"
+dependencies = [
+ "path-dedot",
+]
+
+[[package]]
+name = "path-dedot"
+version = "3.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bfa72956f6be8524f7f7e2b07972dda393cb0008a6df4451f658b7e1bd1af80"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "pem"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd56cbd21fea48d0c440b41cd69c589faacade08c992d9a54e471b79d0fd13eb"
+dependencies = [
+ "base64",
+ "once_cell",
+ "regex",
+]
+
+[[package]]
+name = "pem"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06673860db84d02a63942fa69cd9543f2624a5df3aea7f33173048fa7ad5cf1a"
 dependencies = [
  "base64",
  "once_cell",
@@ -2941,15 +2970,6 @@ dependencies = [
 
 [[package]]
 name = "serde_plain"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "625fb0da2b006092b426a94acc1611bec52f2ec27bb27b266a9f93c29ee38eda"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde_plain"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95455e7e29fada2052e72170af226fbe368a4ca33dee847875325d9fdb133858"
@@ -3102,7 +3122,7 @@ dependencies = [
  "gptman",
  "hex-literal",
  "serde",
- "serde_plain 1.0.0",
+ "serde_plain",
  "snafu",
 ]
 
@@ -3452,7 +3472,7 @@ dependencies = [
  "semver 1.0.4",
  "serde",
  "serde_json",
- "serde_plain 1.0.0",
+ "serde_plain",
  "signpost",
  "simplelog",
  "snafu",
@@ -3648,9 +3668,9 @@ dependencies = [
 
 [[package]]
 name = "tough"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d69a5b5cc9cb23cf307914e176d28c346a9655bc7a7aac395e1d69924d134f1"
+checksum = "99488309ba53ee931b6ccda1cde07feaab95f214d328e3a7244c0f7563b5909f"
 dependencies = [
  "chrono",
  "dyn-clone",
@@ -3658,12 +3678,14 @@ dependencies = [
  "hex",
  "log",
  "olpc-cjson",
- "pem",
+ "path-absolutize",
+ "pem 1.0.1",
+ "percent-encoding",
  "reqwest",
  "ring",
  "serde",
  "serde_json",
- "serde_plain 0.3.0",
+ "serde_plain",
  "snafu",
  "tempfile",
  "untrusted",
@@ -3789,7 +3811,7 @@ dependencies = [
  "semver 1.0.4",
  "serde",
  "serde_json",
- "serde_plain 1.0.0",
+ "serde_plain",
  "snafu",
  "toml",
 ]
@@ -3808,7 +3830,7 @@ dependencies = [
  "semver 1.0.4",
  "serde",
  "serde_json",
- "serde_plain 1.0.0",
+ "serde_plain",
  "signal-hook",
  "signpost",
  "simplelog",
@@ -3992,7 +4014,7 @@ version = "0.21.1"
 dependencies = [
  "lazy_static",
  "log",
- "pem",
+ "pem 0.8.3",
  "webpki",
 ]
 
