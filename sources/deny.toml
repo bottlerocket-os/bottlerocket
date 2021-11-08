@@ -54,6 +54,9 @@ skip = [
 
     # older version used by webpki-roots 0.21.1
     { name = "pem", version = "0.8.3" },
+
+    # older version used by chrono 0.4.19
+    { name = "time", version = "0.1.43" },
 ]
 
 skip-tree = [

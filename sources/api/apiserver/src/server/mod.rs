@@ -8,8 +8,7 @@ mod exec;
 pub use error::Error;
 
 use actix_web::{
-    body::Body, error::ResponseError, web, App, FromRequest, HttpRequest, HttpResponse, HttpServer,
-    Responder,
+    body::Body, error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use bottlerocket_release::BottlerocketRelease;
 use datastore::{Committed, FilesystemDataStore, Key, Value};
@@ -78,14 +77,6 @@ where
 
     let http_server = HttpServer::new(move || {
         App::new()
-            // In our implementation of ResponseError on our own error type below, we include the
-            // error message in the response for debugging purposes.  If actix rejects a request
-            // early because it doesn't fit our model, though, it doesn't even get to the
-            // ResponseError implementation.  This configuration of the Json extractor allows us to
-            // add the error message into the response.
-            .app_data(web::Json::<Settings>::configure(|cfg| {
-                cfg.error_handler(|err, _req| actix_web::Error::from(err))
-            }))
             // This makes the data store available to API methods merely by having a Data
             // parameter.
             .app_data(shared_data.clone())
@@ -507,7 +498,7 @@ impl ResponseError for error::Error {
             UpdateLockOpen { .. } => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
-        HttpResponse::new(status_code)
+        HttpResponse::build(status_code).body(self.to_string())
     }
 }
 
