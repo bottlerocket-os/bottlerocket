@@ -61,17 +61,17 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
         let mut reader = repo
             .read_target(&target)
             .with_context(|| repo_error::ReadTarget {
-                target: target.to_string(),
+                target: target.raw(),
             })?
             .with_context(|| error::TargetMissing {
-                target: target.to_string(),
+                target: target.raw(),
             })?;
-        info!("Downloading target: {}", target);
+        info!("Downloading target: {}", target.raw());
         thread_pool.spawn(move || {
             tx.send({
                 // tough's `Read` implementation validates the target as it's being downloaded
                 io::copy(&mut reader, &mut io::sink()).context(error::TargetDownload {
-                    target: target.to_string(),
+                    target: target.raw(),
                 })
             })
             // inability to send on this channel is unrecoverable

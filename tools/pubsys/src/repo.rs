@@ -352,10 +352,14 @@ where
     match repo_load_result {
         // If we load it successfully, build an editor and manifest from it.
         Ok(repo) => {
+            let target = "manifest.json";
+            let target = target
+                .try_into()
+                .context(error::ParseTargetName { target })?;
             let reader = repo
-                .read_target("manifest.json")
+                .read_target(&target)
                 .context(error::ReadTarget {
-                    target: "manifest.json",
+                    target: target.raw(),
                 })?
                 .with_context(|| error::NoManifest {
                     metadata_url: metadata_url.clone(),
@@ -553,13 +557,17 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
 
     // Copy manifest with proper name instead of tempfile name
     debug!("Copying manifest.json into {}", targets_out_dir.display());
+    let target = "manifest.json";
+    let target = target
+        .try_into()
+        .context(error::ParseTargetName { target })?;
     signed_repo
         .copy_target(
             &manifest_path,
             &targets_out_dir,
             // We should never have matching manifests from different repos
             PathExists::Fail,
-            Some("manifest.json"),
+            Some(&target),
         )
         .context(error::CopyTarget {
             target: &manifest_path,
@@ -704,6 +712,12 @@ mod error {
 
         #[snafu(display("Failed to read target '{}' from repo: {}", target, source))]
         ReadTarget {
+            target: String,
+            source: tough::error::Error,
+        },
+
+        #[snafu(display("Failed to parse target name from string '{}': {}", target, source))]
+        ParseTargetName {
             target: String,
             source: tough::error::Error,
         },
