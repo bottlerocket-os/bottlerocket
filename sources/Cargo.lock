@@ -319,7 +319,7 @@ dependencies = [
  "libc",
  "log",
  "models",
- "nix 0.22.1",
+ "nix 0.23.0",
  "rand",
  "reqwest",
  "retry-read",
@@ -353,7 +353,7 @@ dependencies = [
  "log",
  "maplit",
  "models",
- "nix 0.22.1",
+ "nix 0.23.0",
  "num",
  "percent-encoding",
  "rand",
@@ -495,9 +495,9 @@ checksum = "dcb6dd1c2376d2e096796e234a70e17e94cc2d5d54ff8ce42b28cef1d0d359a4"
 
 [[package]]
 name = "bitflags"
-version = "1.2.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitvec"
@@ -1727,9 +1727,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.101"
+version = "0.2.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cb00336871be5ed2c8ed44b60ae9959dc5b9f08539422ed43f09e34ecaeba21"
+checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
 
 [[package]]
 name = "local-channel"
@@ -1897,7 +1897,7 @@ dependencies = [
  "chrono",
  "log",
  "lz4",
- "nix 0.22.1",
+ "nix 0.23.0",
  "pentacle",
  "rand",
  "regex",
@@ -2015,9 +2015,9 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.22.1"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7555d6c7164cc913be1ce7f95cbecdabda61eb2ccd89008524af306fb7f5031"
+checksum = "f305c2c2e4c39a82f7bf0bf65fb557f9070ce06781d4f2454295cc34b1c43188"
 dependencies = [
  "bitflags",
  "cc",
@@ -2389,7 +2389,7 @@ dependencies = [
  "argh",
  "cargo-readme",
  "log",
- "nix 0.22.1",
+ "nix 0.23.0",
  "signpost",
  "simplelog",
  "snafu",
@@ -3425,7 +3425,7 @@ dependencies = [
  "log",
  "maplit",
  "models",
- "nix 0.22.1",
+ "nix 0.23.0",
  "schnauzer",
  "serde_json",
  "simplelog",
@@ -3446,7 +3446,7 @@ dependencies = [
  "http",
  "log",
  "models",
- "nix 0.22.1",
+ "nix 0.23.0",
  "num-derive",
  "num-traits",
  "semver 1.0.4",

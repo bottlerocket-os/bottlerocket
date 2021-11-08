@@ -23,7 +23,7 @@ hyper-unix-connector = "0.2"
 libc = "0.2"
 log = "0.4"
 models = { path = "../../models", version = "0.1.0" }
-nix = "0.22"
+nix = "0.23"
 rand = "0.8"
 reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls"] }
 retry-read = { path = "../../retry-read", version = "0.1.0" }
