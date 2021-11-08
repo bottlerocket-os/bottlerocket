@@ -52,6 +52,9 @@ Source1062: load-crash-kernel.service
 # systemd cgroups/slices
 Source1080: runtime.slice
 
+# Drop-in units to override defaults
+Source1100: systemd-tmpfiles-setup-service-debug.conf
+
 BuildArch: noarch
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}audit
@@ -117,6 +120,10 @@ install -p -m 0644 \
   %{S:1015} %{S:1040} %{S:1041} %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
   %{buildroot}%{_cross_unitdir}
 
+install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
+install -p -m 0644 %{S:1100} \
+  %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
+
 LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/lower)
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1020} > ${LOWERPATH}.mount
 install -p -m 0644 ${LOWERPATH}.mount %{buildroot}%{_cross_unitdir}
@@ -171,6 +178,8 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_unitdir}/var-lib-bottlerocket.mount
 %{_cross_unitdir}/runtime.slice
 %{_cross_unitdir}/set-hostname.service
+%dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
+%{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/motd
 %{_cross_templatedir}/proxy-env
