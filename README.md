@@ -50,7 +50,6 @@ For example, an `x86_64` build of the `aws-k8s-1.21` variant will produce an ima
 
 The following variants support EKS, as described above:
 
-- `aws-k8s-1.17`
 - `aws-k8s-1.18`
 - `aws-k8s-1.19`
 - `aws-k8s-1.20`
@@ -65,8 +64,8 @@ We also have variants in preview status that are designed to be Kubernetes worke
 - `vmware-k8s-1.20`
 - `vmware-k8s-1.21`
 
-The `aws-k8s-1.15` and `aws-k8s-1.16` variants are no longer supported.
-We recommend users replace `aws-k8s-1.15` and `aws-k8s-1.16` nodes with the [latest variant compatible with their cluster](variants/).
+The `aws-k8s-1.15`, `aws-k8s-1.16`, and `aws-k8s-1.17` variants are no longer supported.
+We recommend users replace `aws-k8s-1.15`, `aws-k8s-1.16`, and `aws-k8s-1.17` nodes with the [latest variant compatible with their cluster](variants/).
 
 ## Architectures
 
