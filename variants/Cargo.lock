@@ -45,18 +45,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-k8s-1_17"
-version = "0.1.0"
-dependencies = [
- "aws-iam-authenticator",
- "cni",
- "cni-plugins",
- "kernel-5_4",
- "kubernetes-1_17",
- "release",
-]
-
-[[package]]
 name = "aws-k8s-1_18"
 version = "0.1.0"
 dependencies = [
@@ -318,13 +306,6 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libzstd",
-]
-
-[[package]]
-name = "kubernetes-1_17"
-version = "0.1.0"
-dependencies = [
- "glibc",
 ]
 
 [[package]]
