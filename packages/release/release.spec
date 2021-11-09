@@ -124,7 +124,7 @@ install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 install -p -m 0644 %{S:1100} \
   %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 
-LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/lower)
+LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/.overlay/lower)
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1020} > ${LOWERPATH}.mount
 install -p -m 0644 ${LOWERPATH}.mount %{buildroot}%{_cross_unitdir}
 
