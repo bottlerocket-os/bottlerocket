@@ -1,5 +1,5 @@
 Name: %{_cross_os}libsepol
-Version: 3.2
+Version: 3.3
 Release: 1%{?dist}
 Summary: Library for SELinux policy manipulation
 License: LGPL-2.1-or-later
