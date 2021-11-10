@@ -1,3 +1,55 @@
+# v1.4.0 (2021-11-12)
+
+## OS Changes
+
+* Add 'apiclient exec' for running commands in host containers ([#1802], [#1790])
+* Improve boot performance ([#1809])
+* Add support for wildcard container registry mirrors ([#1791])
+* Wait up to 300s for a DHCP lease at boot ([#1800])
+* Retry if fetching the IMDS session token fails ([#1801])
+* Add ECR account IDs for pulling host containers in GovCloud ([#1793])
+* Filter sensitive API settings from `logdog` dump ([#1777])
+* Fix kubelet standalone mode ([#1783])
+
+## Build Changes
+
+* Remove aws-k8s-1.17 variant ([#1807])
+* Update Bottlerocket SDK to 0.23 ([#1779])
+* Update third-party packages ([#1816])
+* Update Rust dependencies ([#1810])
+* Update Go dependencies of `host-ctr` ([#1775], [#1774])
+* Prevent spurious rebuilds of the model package ([#1808])
+* Add disk image files to TUF repo ([#1787])
+* Vendor wicked service units ([#1798])
+* Add CI check for Rust code formatting ([#1782])
+* Allow overriding the AMI data file suffix ([#1784])
+
+## Documentation Changes
+
+* Update cargo-make commands to work with newest cargo-make ([#1797])
+
+[#1774]: https://github.com/bottlerocket-os/bottlerocket/pull/1774
+[#1775]: https://github.com/bottlerocket-os/bottlerocket/pull/1775
+[#1777]: https://github.com/bottlerocket-os/bottlerocket/pull/1777
+[#1779]: https://github.com/bottlerocket-os/bottlerocket/pull/1779
+[#1782]: https://github.com/bottlerocket-os/bottlerocket/pull/1782
+[#1783]: https://github.com/bottlerocket-os/bottlerocket/pull/1783
+[#1784]: https://github.com/bottlerocket-os/bottlerocket/pull/1784
+[#1787]: https://github.com/bottlerocket-os/bottlerocket/pull/1787
+[#1790]: https://github.com/bottlerocket-os/bottlerocket/pull/1790
+[#1791]: https://github.com/bottlerocket-os/bottlerocket/pull/1791
+[#1793]: https://github.com/bottlerocket-os/bottlerocket/pull/1793
+[#1797]: https://github.com/bottlerocket-os/bottlerocket/pull/1797
+[#1798]: https://github.com/bottlerocket-os/bottlerocket/pull/1798
+[#1800]: https://github.com/bottlerocket-os/bottlerocket/pull/1800
+[#1801]: https://github.com/bottlerocket-os/bottlerocket/pull/1801
+[#1802]: https://github.com/bottlerocket-os/bottlerocket/pull/1802
+[#1807]: https://github.com/bottlerocket-os/bottlerocket/pull/1807
+[#1808]: https://github.com/bottlerocket-os/bottlerocket/pull/1808
+[#1809]: https://github.com/bottlerocket-os/bottlerocket/pull/1809
+[#1810]: https://github.com/bottlerocket-os/bottlerocket/pull/1810
+[#1816]: https://github.com/bottlerocket-os/bottlerocket/pull/1816
+
 # v1.3.0 (2021-10-06)
 
 ## Deprecation Notice
