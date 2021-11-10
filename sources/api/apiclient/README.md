@@ -4,8 +4,9 @@ Current version: 0.1.0
 
 ## apiclient binary
 
-The `apiclient` binary provides some high-level, synchronous methods of interacting with the API, for example an `update` subcommand that wraps the individual API calls needed to update the host.
-There's also a low-level `raw` subcommand for direct interaction with the HTTP API.
+The `apiclient` binary provides high-level methods to interact with the Bottlerocket API.
+There's a [set](#set-mode) subcommand for changing settings, an [update](#update-mode) subcommand for updating the host, and an [exec](#exec-mode) subcommand for running commands in host containers.
+There's also a low-level [raw](#raw-mode) subcommand for direct interaction with the HTTP API.
 
 It talks to the Bottlerocket socket by default.
 It can be pointed to another socket using `--socket-path`, for example for local testing.
@@ -111,6 +112,29 @@ You should use this after updating if you didn't specify the `--reboot` flag.
 apiclient reboot
 ```
 
+### Exec mode
+
+This mode lets you run commands in host containers.
+This can be helpful for debugging, particularly if it's hard to access a host container in your configuration, for example getting to the admin container without SSH access.
+
+You can think of it like a slim `ssh` that reuses the communication channel and authorization we already have with the API.
+
+Just tell it the container to run in and the command you want to run.
+For example, if you used SSM to get into the control container and want to access the admin container:
+```
+apiclient exec admin bash
+```
+
+You can also run noninteractive commands, and redirect output, so you can use it to copy files between containers:
+```
+apiclient exec admin cat /file > file
+```
+
+This works OK because apiclient detects if you have a TTY by checking if stdout and stdin are connected to TTYs.
+If that doesn't work for your use case, you can pass `-t`/`--tty` to specifically request a TTY, or `-T`/`--no-tty` to request no TTY.
+
+See the [exec documentation](../api-exec.md) for more detail on how this feature works.
+
 ### Raw mode
 
 Raw mode lets you make HTTP requests to a UNIX socket.
@@ -168,7 +192,8 @@ For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` a
 ## apiclient library
 
 The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
-the documentation for submodules [`reboot`], [`set`], and [`update`] for high-level helpers.
+the documentation for submodules [`apply`], [`exec`], [`reboot`], [`set`], and [`update`] for
+high-level helpers.
 
 For more control, and to handle APIs without high-level wrappers, there are also 'raw' methods
 to query an HTTP API over a Unix-domain socket.

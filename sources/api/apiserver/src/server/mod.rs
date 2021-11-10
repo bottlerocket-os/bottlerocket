@@ -3,6 +3,8 @@
 
 mod controller;
 mod error;
+mod exec;
+
 pub use error::Error;
 
 use actix_web::{
@@ -23,7 +25,7 @@ use std::env;
 use std::fs::{set_permissions, File, Permissions};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::process::ExitStatusExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync;
 use thar_be_updates::status::{UpdateStatus, UPDATE_LOCKFILE};
@@ -54,18 +56,24 @@ fn notify_unix_socket_ready() -> Result<()> {
 /// This is the primary interface of the module.  It defines the server and application that actix
 /// spawns for requests.  It creates a shared datastore handle that can be used by handler methods
 /// to interface with the controller.
-pub async fn serve<P1, P2>(
+pub async fn serve<P1, P2, P3>(
     socket_path: P1,
     datastore_path: P2,
     threads: usize,
     socket_gid: Option<Gid>,
+    exec_socket_path: P3,
 ) -> Result<()>
 where
     P1: AsRef<Path>,
     P2: AsRef<Path>,
+    P3: Into<PathBuf>,
 {
-    let shared_datastore = web::Data::new(SharedDataStore {
+    // SharedData gives us a convenient way to make data available to handler methods when it
+    // doesn't come from the request itself.  It's easier than the ownership tricks required to
+    // pass parameters to the handler methods.
+    let shared_data = web::Data::new(SharedData {
         ds: sync::RwLock::new(FilesystemDataStore::new(datastore_path)),
+        exec_socket_path: exec_socket_path.into(),
     });
 
     let http_server = HttpServer::new(move || {
@@ -80,7 +88,7 @@ where
             }))
             // This makes the data store available to API methods merely by having a Data
             // parameter.
-            .app_data(shared_datastore.clone())
+            .app_data(shared_data.clone())
             // Retrieve the full API model; not all data is writable, so we only support GET.
             .route("/", web::get().to(get_model))
             .service(
@@ -122,6 +130,7 @@ where
                     .route("/deactivate-update", web::post().to(deactivate_update)),
             )
             .service(web::scope("/updates").route("/status", web::get().to(get_update_status)))
+            .service(web::resource("/exec").route(web::get().to(exec::ws_exec)))
     })
     .workers(threads)
     .bind_uds(socket_path.as_ref())
@@ -150,7 +159,7 @@ where
 // Handler methods called by the router
 
 /// Returns all data in the API model.
-async fn get_model(data: web::Data<SharedDataStore>) -> Result<ModelResponse> {
+async fn get_model(data: web::Data<SharedData>) -> Result<ModelResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
 
     let settings = Some(controller::get_settings(&*datastore, &Committed::Live)?);
@@ -173,7 +182,7 @@ async fn get_model(data: web::Data<SharedDataStore>) -> Result<ModelResponse> {
 /// parameters, return the subset of matching settings.
 async fn get_settings(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<SettingsResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
 
@@ -197,7 +206,7 @@ async fn get_settings(
 async fn patch_settings(
     settings: web::Json<Settings>,
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<HttpResponse> {
     let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
@@ -205,7 +214,7 @@ async fn patch_settings(
     Ok(HttpResponse::NoContent().finish()) // 204
 }
 
-async fn get_transaction_list(data: web::Data<SharedDataStore>) -> Result<TransactionListResponse> {
+async fn get_transaction_list(data: web::Data<SharedData>) -> Result<TransactionListResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
     let data = controller::list_transactions(&*datastore)?;
     Ok(TransactionListResponse(data))
@@ -214,7 +223,7 @@ async fn get_transaction_list(data: web::Data<SharedDataStore>) -> Result<Transa
 /// Get any pending settings in the given transaction, or the "default" transaction if unspecified.
 async fn get_transaction(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<SettingsResponse> {
     let transaction = transaction_name(&query);
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
@@ -225,7 +234,7 @@ async fn get_transaction(
 /// Delete the given transaction, or the "default" transaction if unspecified.
 async fn delete_transaction(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<ChangedKeysResponse> {
     let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
@@ -237,7 +246,7 @@ async fn delete_transaction(
 /// to the live data store.  Returns the list of changed keys.
 async fn commit_transaction(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<ChangedKeysResponse> {
     let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
@@ -269,7 +278,7 @@ async fn apply_changes(query: web::Query<HashMap<String, String>>) -> Result<Htt
 /// transaction if unspecified.
 async fn commit_transaction_and_apply(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<ChangedKeysResponse> {
     let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
@@ -293,7 +302,7 @@ async fn get_os_info() -> Result<BottlerocketReleaseResponse> {
 /// Get the affected services for a list of data keys
 async fn get_affected_services(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<MetadataResponse> {
     if let Some(keys_str) = query.get("keys") {
         let data_keys = comma_separated("keys", keys_str)?;
@@ -308,7 +317,7 @@ async fn get_affected_services(
 }
 
 /// Get all settings that have setting-generator metadata
-async fn get_setting_generators(data: web::Data<SharedDataStore>) -> Result<MetadataResponse> {
+async fn get_setting_generators(data: web::Data<SharedData>) -> Result<MetadataResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
     let resp = controller::get_metadata_for_all_data_keys(&*datastore, "setting-generator")?;
     Ok(MetadataResponse(resp))
@@ -317,7 +326,7 @@ async fn get_setting_generators(data: web::Data<SharedDataStore>) -> Result<Meta
 /// Get the template metadata for a list of data keys
 async fn get_templates(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<MetadataResponse> {
     if let Some(keys_str) = query.get("keys") {
         let data_keys = comma_separated("keys", keys_str)?;
@@ -333,7 +342,7 @@ async fn get_templates(
 /// Get all services, or if 'names' is specified, services with those names
 async fn get_services(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<ServicesResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
 
@@ -350,7 +359,7 @@ async fn get_services(
 /// Get all configuration files, or if 'names' is specified, configuration files with those names
 async fn get_configuration_files(
     query: web::Query<HashMap<String, String>>,
-    data: web::Data<SharedDataStore>,
+    data: web::Data<SharedData>,
 ) -> Result<ConfigurationFilesResponse> {
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
 
@@ -502,8 +511,11 @@ impl ResponseError for error::Error {
     }
 }
 
-struct SharedDataStore {
+/// SharedData is responsible for any data needed by web handlers that isn't provided by the client
+/// in the request.
+pub(crate) struct SharedData {
     ds: sync::RwLock<FilesystemDataStore>,
+    exec_socket_path: PathBuf,
 }
 
 /// Helper macro for implementing the actix-web Responder trait for a type.

@@ -16,7 +16,11 @@ use std::str::FromStr;
 
 use apiserver::serve;
 
+/// By default, this is where we create the Unix-domain socket that exposes our API.
 const DEFAULT_BIND_PATH: &str = "/run/api.sock";
+/// By default, when the user requests that we run a process via /exec, we run the process through
+/// this containerd socket.
+const DEFAULT_EXEC_SOCKET: &str = "/run/host-containerd/containerd.sock";
 
 type Result<T> = std::result::Result<T, error::Error>;
 
@@ -43,6 +47,7 @@ struct Args {
     log_level: LevelFilter,
     socket_gid: Option<Gid>,
     socket_path: String,
+    exec_socket_path: String,
 }
 
 /// Informs the user about proper usage of the program and exits.
@@ -53,11 +58,13 @@ fn usage() -> ! {
             --datastore-path PATH
             [ --socket-path PATH ]
             [ --socket-gid GROUP_ID ]
+            [ --exec-socket-path PATH ]
             [ --no-color ]
             [ --log-level trace|debug|info|warn|error ]
 
-    Socket path defaults to {}",
-        program_name, DEFAULT_BIND_PATH
+    --socket-path defaults to {}
+    --exec-socket-path (for apiclient exec) defaults to {}",
+        program_name, DEFAULT_BIND_PATH, DEFAULT_EXEC_SOCKET
     );
     process::exit(2);
 }
@@ -74,6 +81,7 @@ fn parse_args(args: env::Args) -> Args {
     let mut log_level = None;
     let mut socket_gid = None;
     let mut socket_path = None;
+    let mut exec_socket_path = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -114,6 +122,13 @@ fn parse_args(args: env::Args) -> Args {
                 socket_gid = Some(Gid::from_raw(gid));
             }
 
+            "--exec-socket-path" => {
+                exec_socket_path =
+                    Some(iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --exec-socket-path")
+                    }))
+            }
+
             _ => usage(),
         }
     }
@@ -123,6 +138,7 @@ fn parse_args(args: env::Args) -> Args {
         datastore_path: datastore_path.unwrap_or_else(|| usage()),
         log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_BIND_PATH.to_string()),
+        exec_socket_path: exec_socket_path.unwrap_or_else(|| DEFAULT_EXEC_SOCKET.to_string()),
     }
 }
 
@@ -139,8 +155,10 @@ async fn run() -> Result<()> {
         error::NonexistentDatastore
     );
 
-    // Each request makes its own handle to the datastore; there's no locking or
-    // synchronization yet.  Therefore, only use 1 thread for safety.
+    // Access to the data store is controlled through a RwLock, allowing many readers, but a
+    // writer will block all other access.  We don't expect any real load, though, as the API
+    // is only used by the owner of the host.  Note that WebSocket requests like /exec are
+    // automatically handled in new threads and won't block others.
     let threads = 1;
 
     let threads_suffix = match threads {
@@ -157,6 +175,7 @@ async fn run() -> Result<()> {
         &args.datastore_path,
         threads,
         args.socket_gid,
+        args.exec_socket_path,
     )
     .await
     .context(error::Server)
