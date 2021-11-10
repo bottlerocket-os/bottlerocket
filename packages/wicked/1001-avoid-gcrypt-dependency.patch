@@ -1,7 +1,7 @@
 From d7c3d65bf98d3695bfb2a831b1a6b3c65aa2a9fd Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Fri, 9 Aug 2019 16:39:28 +0000
-Subject: [PATCH 1/3] avoid gcrypt dependency
+Subject: [PATCH 1001/1004] avoid gcrypt dependency
 
 gcrypt is only used for its implementations of SHA-1 and MD5, in order
 to generate UUIDs to fingerprint the XML configuration files. These

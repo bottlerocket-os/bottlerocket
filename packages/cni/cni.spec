@@ -30,13 +30,12 @@ Requires: %{_cross_os}iptables
 go build -buildmode=pie -ldflags=-linkmode=external -o "bin/cnitool" %{goimport}/cnitool
 
 %install
-install -d %{buildroot}%{_cross_factorydir}/opt/cni/bin
-install -p -m 0755 bin/cnitool %{buildroot}%{_cross_factorydir}/opt/cni/bin
+install -d %{buildroot}%{_cross_libexecdir}/cni/bin
+install -p -m 0755 bin/cnitool %{buildroot}%{_cross_libexecdir}/cni/bin
 
 %files
 %license LICENSE
 %{_cross_attribution_file}
-%dir %{_cross_factorydir}/opt/cni/bin
-%{_cross_factorydir}/opt/cni/bin/cnitool
+%{_cross_libexecdir}/cni/bin/cnitool
 
 %changelog

@@ -39,9 +39,17 @@ ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt ${LOCAL_DIR}/mnt
 # development sources.
 ExecStart=/usr/bin/rm -rf ${LOCAL_DIR}/var/lib/kernel-devel
 ExecStart=/usr/bin/mkdir -p \
-    ${LOCAL_DIR}/var/lib/kernel-devel/lower \
-    ${LOCAL_DIR}/var/lib/kernel-devel/upper \
-    ${LOCAL_DIR}/var/lib/kernel-devel/work
+    ${LOCAL_DIR}/var/lib/kernel-devel/.overlay/lower \
+    ${LOCAL_DIR}/var/lib/kernel-devel/.overlay/upper \
+    ${LOCAL_DIR}/var/lib/kernel-devel/.overlay/work
+
+# Create the directories we need to set up a read-write overlayfs for any CNI
+# plugin binaries.
+ExecStart=/usr/bin/rm -rf ${LOCAL_DIR}/opt/cni ${LOCAL_DIR}/var/lib/cni-plugins
+ExecStart=/usr/bin/mkdir -p \
+    ${LOCAL_DIR}/opt/cni/bin \
+    ${LOCAL_DIR}/var/lib/cni-plugins/.overlay/upper \
+    ${LOCAL_DIR}/var/lib/cni-plugins/.overlay/work \
 
 RemainAfterExit=true
 StandardError=journal+console

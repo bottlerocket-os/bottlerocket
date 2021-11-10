@@ -40,9 +40,10 @@ Source99: constants.xml
 # upstream fixes
 
 # local hacks
-Patch101: 0001-avoid-gcrypt-dependency.patch
-Patch102: 0002-exclude-unused-components.patch
-Patch103: 0003-ship-mkconst-and-schema-sources-for-runtime-use.patch
+Patch1001: 1001-avoid-gcrypt-dependency.patch
+Patch1002: 1002-exclude-unused-components.patch
+Patch1003: 1003-ship-mkconst-and-schema-sources-for-runtime-use.patch
+Patch1004: 1004-adjust-safeguard-for-dhcp6-defer-timeout.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libdbus-devel

@@ -8,6 +8,6 @@ PartOf=wickedd.service
 [Service]
 Type=notify
 LimitCORE=infinity
-ExecStart=/usr/libexec/wicked/bin/wickedd-dhcp4 --systemd --foreground
+ExecStart=/usr/libexec/wicked/bin/wickedd-dhcp4 --systemd --foreground --log-level debug --debug most
 StandardError=null
 Restart=on-abort

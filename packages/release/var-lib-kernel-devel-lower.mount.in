@@ -7,7 +7,7 @@ Before=local-fs.target umount.target
 
 [Mount]
 What=PREFIX/share/bottlerocket/kernel-devel.squashfs
-Where=/var/lib/kernel-devel/lower
+Where=/var/lib/kernel-devel/.overlay/lower
 Type=squashfs
 Options=defaults,ro,loop,noatime,nosuid,nodev,context=system_u:object_r:os_t:s0
 

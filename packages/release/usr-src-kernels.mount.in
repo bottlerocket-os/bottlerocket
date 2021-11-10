@@ -1,14 +1,14 @@
 [Unit]
 Description=Kernel Development Sources (Read-Write)
 Conflicts=umount.target
-RequiresMountsFor=/var/lib/kernel-devel/lower
+RequiresMountsFor=/var/lib/kernel-devel/.overlay/lower
 Before=local-fs.target umount.target
 
 [Mount]
 What=overlay
 Where=PREFIX/src/kernels
 Type=overlay
-Options=noatime,nosuid,nodev,lowerdir=/var/lib/kernel-devel/lower,upperdir=/var/lib/kernel-devel/upper,workdir=/var/lib/kernel-devel/work,context=system_u:object_r:state_t:s0
+Options=noatime,nosuid,nodev,lowerdir=/var/lib/kernel-devel/.overlay/lower,upperdir=/var/lib/kernel-devel/.overlay/upper,workdir=/var/lib/kernel-devel/.overlay/work,context=system_u:object_r:state_t:s0
 
 [Install]
 WantedBy=preconfigured.target

@@ -32,8 +32,8 @@ for d in $(find plugins -mindepth 2 -maxdepth 2 -type d ! -name windows) ; do
 done
 
 %install
-install -d %{buildroot}%{_cross_factorydir}/opt/cni/bin
-install -p -m 0755 bin/* %{buildroot}%{_cross_factorydir}/opt/cni/bin
+install -d %{buildroot}%{_cross_libexecdir}/cni/bin
+install -p -m 0755 bin/* %{buildroot}%{_cross_libexecdir}/cni/bin
 
 %cross_scan_attribution go-vendor vendor
 
@@ -41,23 +41,22 @@ install -p -m 0755 bin/* %{buildroot}%{_cross_factorydir}/opt/cni/bin
 %license LICENSE
 %{_cross_attribution_file}
 %{_cross_attribution_vendor_dir}
-%dir %{_cross_factorydir}/opt/cni/bin
-%{_cross_factorydir}/opt/cni/bin/loopback
-%{_cross_factorydir}/opt/cni/bin/bandwidth
-%{_cross_factorydir}/opt/cni/bin/bridge
-%{_cross_factorydir}/opt/cni/bin/dhcp
-%{_cross_factorydir}/opt/cni/bin/firewall
-%{_cross_factorydir}/opt/cni/bin/flannel
-%{_cross_factorydir}/opt/cni/bin/host-device
-%{_cross_factorydir}/opt/cni/bin/host-local
-%{_cross_factorydir}/opt/cni/bin/ipvlan
-%{_cross_factorydir}/opt/cni/bin/macvlan
-%{_cross_factorydir}/opt/cni/bin/portmap
-%{_cross_factorydir}/opt/cni/bin/ptp
-%{_cross_factorydir}/opt/cni/bin/sbr
-%{_cross_factorydir}/opt/cni/bin/static
-%{_cross_factorydir}/opt/cni/bin/tuning
-%{_cross_factorydir}/opt/cni/bin/vlan
-%{_cross_factorydir}/opt/cni/bin/vrf
+%{_cross_libexecdir}/cni/bin/loopback
+%{_cross_libexecdir}/cni/bin/bandwidth
+%{_cross_libexecdir}/cni/bin/bridge
+%{_cross_libexecdir}/cni/bin/dhcp
+%{_cross_libexecdir}/cni/bin/firewall
+%{_cross_libexecdir}/cni/bin/flannel
+%{_cross_libexecdir}/cni/bin/host-device
+%{_cross_libexecdir}/cni/bin/host-local
+%{_cross_libexecdir}/cni/bin/ipvlan
+%{_cross_libexecdir}/cni/bin/macvlan
+%{_cross_libexecdir}/cni/bin/portmap
+%{_cross_libexecdir}/cni/bin/ptp
+%{_cross_libexecdir}/cni/bin/sbr
+%{_cross_libexecdir}/cni/bin/static
+%{_cross_libexecdir}/cni/bin/tuning
+%{_cross_libexecdir}/cni/bin/vlan
+%{_cross_libexecdir}/cni/bin/vrf
 
 %changelog

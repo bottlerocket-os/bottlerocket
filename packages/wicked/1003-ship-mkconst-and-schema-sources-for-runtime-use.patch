@@ -1,7 +1,7 @@
 From d108d9eee746b0d9a03f8fd124cbf651da9ba254 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 10 Aug 2019 18:31:42 +0000
-Subject: [PATCH 3/3] ship mkconst and schema sources for runtime use
+Subject: [PATCH 1003/1004] ship mkconst and schema sources for runtime use
 
 `mkconst` needs to be compiled for the host architecture, but relies
 on most of the sources in wicked and needs all of the same libraries.
