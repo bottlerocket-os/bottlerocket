@@ -1,12 +1,10 @@
 Name: %{_cross_os}coreutils
-Version: 8.32
+Version: 9.0
 Release: 1%{?dist}
 Summary: A set of basic GNU tools
 License: GPL-3.0-or-later
 URL: https://www.gnu.org/software/coreutils/
 Source0: https://ftp.gnu.org/gnu/coreutils/coreutils-%{version}.tar.xz
-Patch0: 0001-ls-restore-8.31-behavior-on-removed-directories.patch
-Patch1: 0002-ls-improve-removed-directory-test.patch
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libacl-devel
 BuildRequires: %{_cross_os}libattr-devel
