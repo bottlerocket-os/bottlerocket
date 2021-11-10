@@ -59,7 +59,9 @@ members = [
 
     "webpki-roots-shim",
 
-    "constants"
+    "constants",
+
+    "shimpei"
 ]
 
 [profile.release]

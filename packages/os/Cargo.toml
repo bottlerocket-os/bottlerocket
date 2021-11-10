@@ -21,6 +21,7 @@ source-groups = [
     "models",
     "imdsclient",
     "retry-read",
+    "shimpei"
 ]
 
 [lib]
@@ -39,3 +40,5 @@ glibc = { path = "../glibc" }
 # kexec-tools and makedumpfile required for prairiedog functionality
 # kexec-tools = { path = "../kexec-tools" }
 # makedumpfile = { path = "../makedumpfile" }
+# oci-add-hooks required for shimpei functionality
+# oci-add-hooks = { path = "../oci-add-hooks" }
