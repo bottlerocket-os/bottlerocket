@@ -26,6 +26,7 @@ url = "2.1"
 
 [build-dependencies]
 cargo-readme = "3.1"
+filetime = "0.2"
 rand = "0.8"
 
 [lib]
