@@ -1,5 +1,5 @@
 Name: %{_cross_os}libglib
-Version: 2.70.0
+Version: 2.70.1
 Release: 1%{?dist}
 Summary: The GLib libraries
 # glib2 is LGPL-2.1-only
