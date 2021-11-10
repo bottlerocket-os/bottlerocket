@@ -66,6 +66,12 @@ pub(crate) enum Error {
         backtrace: Backtrace,
     },
 
+    #[snafu(display("Invalid target name '{}': {}", target, source))]
+    TargetName {
+        target: String,
+        source: tough::error::Error,
+    },
+
     #[snafu(display("Manifest load error: {}", source))]
     ManifestLoad {
         source: tough::error::Error,

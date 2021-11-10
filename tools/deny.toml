@@ -46,10 +46,7 @@ license-files = [
 multiple-versions = "deny"
 wildcards = "deny"
 
-skip = [
-    # older version required by tough 0.11.2
-    { name = "serde_plain", version = "0.3.0" },
-]
+skip = []
 
 [sources]
 # Deny crates from unknown registries or git repositories.

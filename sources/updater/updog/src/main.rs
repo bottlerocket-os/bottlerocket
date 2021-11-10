@@ -215,13 +215,18 @@ fn write_target_to_disk<P: AsRef<Path>>(
     target: &str,
     disk_path: P,
 ) -> Result<()> {
+    let target = target.try_into().context(error::TargetName { target })?;
     let reader = repository
-        .read_target(target)
+        .read_target(&target)
         .context(error::Metadata)?
-        .context(error::TargetNotFound { target })?;
+        .context(error::TargetNotFound {
+            target: target.raw(),
+        })?;
     // Note: the file extension for the compression type we're using should be removed in
     // retrieve_migrations below.
-    let mut reader = lz4::Decoder::new(reader).context(error::Lz4Decode { target })?;
+    let mut reader = lz4::Decoder::new(reader).context(error::Lz4Decode {
+        target: target.raw(),
+    })?;
     let mut f = OpenOptions::new()
         .write(true)
         .create(true)
@@ -584,9 +589,10 @@ fn main_inner() -> Result<()> {
 
 fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
     let target = "manifest.json";
+    let target = target.try_into().context(error::TargetName { target })?;
     Manifest::from_json(
         repository
-            .read_target(target)
+            .read_target(&target)
             .context(error::ManifestLoad)?
             .context(error::ManifestNotFound)?,
     )

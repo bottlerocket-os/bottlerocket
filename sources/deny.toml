@@ -52,8 +52,11 @@ skip = [
     # older version used by hyper 0.14.2
     { name = "socket2", version = "0.3.19" },
 
-    # older version used by tough 0.11.2
-    { name = "serde_plain", version = "0.3.0" },
+    # older version used by webpki-roots 0.21.1
+    { name = "pem", version = "0.8.3" },
+
+    # older version used by chrono 0.4.19
+    { name = "time", version = "0.1.43" },
 ]
 
 skip-tree = [

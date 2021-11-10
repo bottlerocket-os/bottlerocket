@@ -13,14 +13,14 @@ exclude = ["README.md"]
 bottlerocket-release = { path = "../../../bottlerocket-release", version = "0.1.0" }
 log = "0.4"
 lz4 = "1.23.1"
-nix = "0.22"
+nix = "0.23"
 pentacle = "1.0.0"
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1.1"
 semver = "1.0"
 simplelog = "0.10"
 snafu = "0.6"
-tough = "0.11"
+tough = "0.12"
 update_metadata = { path = "../../../updater/update_metadata", version = "0.1.0" }
 url = "2.1.1"
 
