@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "http://downloads.sourceforge.net/acpid2"
 
 [[package.metadata.build-package.external-files]]
-url = "http://downloads.sourceforge.net/acpid2/acpid-2.0.32.tar.xz"
-sha512 = "c7afffdf9818504e1ac03b0ad693a05f772bfd07af9808262b3b6bb82ca4dabe6253c94e6dc59e5be6f0da9e815e8bcf2d3e16f02b23d0248b6bad4509e78be7"
+url = "http://downloads.sourceforge.net/acpid2/acpid-2.0.33.tar.xz"
+sha512 = "491a58c62fcad44dc57cbd9294437fbc215c2ec99a030286601cd1956ea504e723e61b11b315983073d66aace1997bc40e6421475f6073298f60b8dcda2add75"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

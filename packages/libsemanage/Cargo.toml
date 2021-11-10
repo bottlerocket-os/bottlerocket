@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/SELinuxProject/selinux/releases/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/SELinuxProject/selinux/releases/download/3.2/libsemanage-3.2.tar.gz"
-sha512 = "6ad670bb298b1bab506217b12a3fda5d2209f4387a11410f0c1b65f765ffb579b0d70795dee19048909e0b72ef904fc318be60d5a01f80ab12742ce07647a084"
+url = "https://github.com/SELinuxProject/selinux/releases/download/3.3/libsemanage-3.3.tar.gz"
+sha512 = "6026d9773c0886436ad801bc0c8beac888b6fb62034edeb863192dea4b6ef34a88e080758820fe635a20e048ac666beee505a0f946258f18571709cca5228aad"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

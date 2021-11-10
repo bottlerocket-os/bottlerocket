@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/SELinuxProject/selinux/releases/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/SELinuxProject/selinux/releases/download/3.2/libsepol-3.2.tar.gz"
-sha512 = "1a6b3489ff766958a4b444b9be63a794267243aed303d3e7d87278f11be492dbf603a0c8181c4c5e01cb0e1ceb43810a77f738f0b9bd1d7d2be67053f9c67a6f"
+url = "https://github.com/SELinuxProject/selinux/releases/download/3.3/libsepol-3.3.tar.gz"
+sha512 = "fb6bb69f8e43a911a1a9cbd791593215386e93cb9292e003f5d8efe6e86e0ce5d0287e95d52fe2fbce518a618beaf9b1135aea0d04eaebcdbd8c6d07ee67b500"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

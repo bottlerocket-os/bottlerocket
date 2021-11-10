@@ -1,7 +1,7 @@
-%global buildver 18090558
+%global buildver 18557794
 
 Name: %{_cross_os}open-vm-tools
-Version: 11.3.0
+Version: 11.3.5
 Release: 1%{?dist}
 Summary: Tools for VMware
 License: LGPL-2.1-or-later
@@ -102,7 +102,6 @@ find %{buildroot} -name '*.la' -delete
 %exclude %{_cross_bindir}/vmware-rpctool
 %exclude %{_cross_bindir}/vmware-xferlogs
 %exclude %{_cross_bindir}/vmware-hgfsclient
-%exclude %{_cross_sbindir}/mount.vmhgfs
 %exclude %{_cross_sysconfdir}
 %exclude %{_cross_udevrulesdir}
 

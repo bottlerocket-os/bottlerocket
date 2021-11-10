@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/systemd/systemd-stable/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/systemd/systemd-stable/archive/v247.9/systemd-stable-247.9.tar.gz"
-sha512 = "61cd36bec931a3550c9d25abd86d12b031d55cebf3c31eb08805947484aa93d215e3d12227cd41131a26c2a6024a74b1fef5cd4929e6240f916279bfbfc67116"
+url = "https://github.com/systemd/systemd-stable/archive/v247.10/systemd-stable-247.10.tar.gz"
+sha512 = "5f8acf8aaa190e7d8e0acf3060cdf7d52133e67529946b989d1c0df058af73f606391a5da0bcd68586f8c018b52e0ca1013ff554757ee10392fd25b8bd0cad12"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

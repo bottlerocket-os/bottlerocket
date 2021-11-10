@@ -1,22 +1,17 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.4
-Version: 5.4.141
+Version: 5.4.149
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/9e8b76ee271c50b0190e45d6b3fb69263afc7c8be8c1c3aafc4e663f997a0232/kernel-5.4.141-67.229.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/a068a12de784cc571656e680fbd3213773032b6b4d3c940b37b9db664fb7be52/kernel-5.4.149-73.259.amzn2.src.rpm
 Source100: config-bottlerocket
 
 # Make Lustre FSx work with a newer GCC.
 Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
-
-# Required patches for kdump support
-Patch0002: 0002-x86-purgatory-Add-fno-stack-protector.patch
-Patch0003: 0003-arm64-kexec_file-add-crash-dump-support.patch
-Patch0004: 0004-libfdt-include-fdt_addresses.c.patch
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch

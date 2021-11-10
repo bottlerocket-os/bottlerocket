@@ -1,5 +1,5 @@
 Name: %{_cross_os}libselinux
-Version: 3.2
+Version: 3.3
 Release: 1%{?dist}
 Summary: Library for SELinux
 License: LicenseRef-SELinux-PD

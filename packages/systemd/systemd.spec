@@ -2,7 +2,7 @@
 %global _cross_allow_rpath 1
 
 Name: %{_cross_os}systemd
-Version: 247.9
+Version: 247.10
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later

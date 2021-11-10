@@ -1,5 +1,5 @@
 Name: %{_cross_os}acpid
-Version: 2.0.32
+Version: 2.0.33
 Release: 1%{?dist}
 Summary: ACPI event daemon
 License: GPL-2.0-or-later

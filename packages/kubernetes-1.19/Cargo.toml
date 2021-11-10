@@ -15,8 +15,8 @@ package-name = "kubernetes-1.19"
 releases-url = "https://github.com/kubernetes/kubernetes/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes/kubernetes/archive/v1.19.15/kubernetes-1.19.15.tar.gz"
-sha512 = "cdef25ab050df79a5fce824721920fedead8326b83b5134ef534a8b8671b58a122bd49598981cd86bdd6ab46fdc8b55ccee5fd9e4c725ddf261bf4178f264e0a"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.19.16/kubernetes-1.19.16.tar.gz"
+sha512 = "1d8c082bd90f27d149cd0575911647749ed7baf17215aaa29ef01421fc1cbabb6dbc8d2dd61c023465d87c61854bd2f1ed941e91941f4e3667b49595a00e46f6"
 
 # RPM BuildRequires
 [build-dependencies]
