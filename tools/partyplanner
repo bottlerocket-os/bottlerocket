@@ -1,0 +1,211 @@
+#!/bin/bash
+
+###############################################################################
+# Section 1: partition type GUIDs
+
+# Define partition type GUIDs for all OS-managed partitions. This is required
+# for the boot partition, where we set gptprio bits in the GUID-specific use
+# field, but we might as well do it for all of them.
+BOTTLEROCKET_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
+BOTTLEROCKET_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
+BOTTLEROCKET_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
+BOTTLEROCKET_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
+BOTTLEROCKET_PRIVATE_TYPECODE="440408bb-eb0b-4328-a6e5-a29038fad706"
+BOTTLEROCKET_DATA_TYPECODE="626f7474-6c65-6474-6861-726d61726b73"
+
+# Under BIOS, the firmware will transfer control to the MBR on the boot device,
+# which will pass control to the GRUB stage 2 binary written to the BIOS boot
+# partition. The BIOS does not attach any significance to this partition type,
+# but GRUB knows to install itself there when we run `grub-bios-setup`.
+BIOS_BOOT_TYPECODE="ef02"
+
+# Under EFI, the firmware will find the EFI system partition and execute the
+# program at a platform-defined path like `bootx64.efi`. The partition type
+# must match what the firmware expects.
+EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+
+# Whichever entry point is used for booting the system, it's important to note
+# that only one build of GRUB is involved - the one that's installed during the
+# image build.
+
+# GRUB understands the GPT priorities scheme we use to find the active boot
+# partition; EFI and BIOS firmware does not. This is why we do not update GRUB
+# during our system updates; we would have no way to revert to an earlier copy
+# of the bootloader if it failed to boot.
+#
+# We may eventually want to have an active/passive scheme for EFI partitions,
+# to allow for potential GRUB and shim updates on EFI platforms in cases where
+# we need to deliver security fixes. For now, add a placeholder partition type
+# for an alternate bank.
+EFI_BACKUP_TYPECODE="B39CE39C-0A00-B4AB-2D11-F18F8237A21C"
+
+###############################################################################
+# Section 2: fixed size partitions and reservations
+
+# The GPT header and footer each take up 32 sectors, but we reserve a full MiB
+# so that partitions can all be aligned on MiB boundaries.
+GPT_MIB="1" # two per disk
+
+# The BIOS partition is only used on x86 platforms, and only needs to be large
+# enough for the GRUB stage 2. Increasing its size will reduce the size of the
+# "private" and "reserved" partitions. This should be relatively safe since we
+# don't apply image updates to those partitions.
+BIOS_MIB="4" # one per disk
+
+# The GPT and BIOS reservations are fixed overhead that will be deducted from
+# the space nominally given to the private partition used to persist settings.
+OVERHEAD_MIB="$((GPT_MIB * 2 + BIOS_MIB))"
+
+# The 'recommended' size for the EFI partition is 100MB but our EFI images are
+# under 1MB, so this will suffice for now. It would be possible to increase the
+# EFI partition size by taking space from the "reserved" area below.
+EFI_MIB="5" # one per bank
+
+###############################################################################
+# Section 3: variable sized partitions
+
+# These partitions scale based on image size. The scaling factors are chosen so
+# that we end up with the same partition sizes for the banks on a 2 GiB image,
+# which was the only image size we historically supported.
+#
+# !!! WARNING !!!
+#
+# Increasing any of these constants is very likely break systems on update,
+# since the corresponding partitions are adjacent on disk and have no room to
+# grow.
+BOOT_SCALE_FACTOR="20"
+ROOT_SCALE_FACTOR="460"
+HASH_SCALE_FACTOR="5"
+RESERVE_SCALE_FACTOR="15"
+PRIVATE_SCALE_FACTOR="24"
+
+###############################################################################
+# Section 4: ASCII art gallery
+
+# Layout for a 1 GiB OS image. Sizes marked with (*) scale with overall image
+# size, based on the constant factors above.
+
+#          +---------------------------------+
+#  Prelude | GPT header               1 MiB  | 5 MiB
+#          | BIOS boot partition      4 MiB  | Fixed size.
+#          +---------------------------------+
+#          | EFI system partition     5 MiB  |
+#          | Boot partition A        20 MiB* | (image size - prelude - postlude) / 2
+#   Bank A | Root partition A       460 MiB* | Example: (1 GiB - 5 MiB - 19 MiB) / 2
+#          | Hash partition A         5 MiB* |          500 MiB
+#          | Reserved partition A    10 MiB* |
+#          +---------------------------------+
+#          | EFI backup partition     5 MiB  |
+#          | Boot partition B        20 MiB* | (image size - prelude - postlude) / 2
+#   Bank B | Root partition B       460 MiB* | Example: (1 GiB - 5 MiB - 19 MiB) / 2
+#          | Hash partition B         5 MiB* |          500 MiB
+#          | Reserved partition B    10 MiB* |
+#          +---------------------------------+
+#          | Private partition       18 MiB* | (image size * 24 as MiB) - prelude
+# Postlude | GPT footer               1 MiB  | GPT is fixed, private partition grows.
+#          +---------------------------------+
+
+##############################################################################
+# Section 5: library functions
+
+# Populate the caller's tables with sizes and offsets for known partitions.
+set_partition_sizes() {
+  local disk_image_gib data_image_gib
+  local -n pp_size pp_offset
+  disk_image_gib="${1:?}"
+  data_image_gib="${2:?}"
+
+  # Table for partition sizes, in MiB.
+  pp_size="${3:?}"
+
+  # Table for partition offsets from start of disk, in MiB.
+  pp_offset="${4:?}"
+
+  # Most of the partitions on the main image scale with the overall size.
+  local boot_mib root_mib hash_mib reserved_mib private_mib
+  boot_mib="$((disk_image_gib * BOOT_SCALE_FACTOR))"
+  root_mib="$((disk_image_gib * ROOT_SCALE_FACTOR))"
+  hash_mib="$((disk_image_gib * HASH_SCALE_FACTOR))"
+
+  # Reserved space is everything left in the bank after the other partitions
+  # are scaled, minus the fixed 5 MiB EFI partition in that bank.
+  reserved_mib=$((disk_image_gib * RESERVE_SCALE_FACTOR - EFI_MIB))
+
+  # Private space scales per GiB, minus the BIOS and GPT partition overhead.
+  private_mib=$((disk_image_gib * PRIVATE_SCALE_FACTOR - OVERHEAD_MIB))
+
+  # Skip the GPT label at start of disk.
+  local offset
+  ((offset = 1))
+
+  pp_offset["BIOS"]="${offset}"
+  pp_size["BIOS"]="${BIOS_MIB}"
+  ((offset += BIOS_MIB))
+
+  for bank in A B ; do
+    pp_offset["EFI-${bank}"]="${offset}"
+    pp_size["EFI-${bank}"]="${EFI_MIB}"
+    ((offset += EFI_MIB))
+
+    pp_offset["BOOT-${bank}"]="${offset}"
+    pp_size["BOOT-${bank}"]="${boot_mib}"
+    ((offset += boot_mib))
+
+    pp_offset["ROOT-${bank}"]="${offset}"
+    pp_size["ROOT-${bank}"]="${root_mib}"
+    ((offset += root_mib))
+
+    pp_offset["HASH-${bank}"]="${offset}"
+    pp_size["HASH-${bank}"]="${hash_mib}"
+    ((offset += hash_mib))
+
+    pp_offset["RESERVED-${bank}"]="${offset}"
+    pp_size["RESERVED-${bank}"]="${reserved_mib}"
+    ((offset += reserved_mib))
+  done
+
+  pp_offset["PRIVATE"]="${offset}"
+  pp_size["PRIVATE"]="${private_mib}"
+  ((offset += private_mib))
+
+  # The data image is relatively easy to plan, at least until we add support
+  # for unified images. The first and last MiB are reserved for the GPT labels,
+  # and the remainder is for the lone "data" partition.
+  pp_size["DATA"]="$((data_image_gib * 1024 - GPT_MIB * 2))"
+  pp_offset["DATA"]="1"
+}
+
+# Populate the caller's table with labels for known partitions.
+set_partition_labels() {
+  local -n pp_label
+  pp_label="${1:?}"
+  pp_label["BIOS"]="BIOS-BOOT"
+  pp_label["DATA"]="BOTTLEROCKET-DATA"
+  pp_label["EFI-A"]="EFI-SYSTEM"
+  pp_label["EFI-B"]="EFI-BACKUP"
+  pp_label["PRIVATE"]="BOTTLEROCKET-PRIVATE"
+  for part in BOOT ROOT HASH RESERVED ; do
+    for bank in A B ; do
+      pp_label["${part}-${bank}"]="BOTTLEROCKET-${part}-${bank}"
+    done
+  done
+}
+
+# Populate the caller's table with GPT type codes for known partitions.
+set_partition_types() {
+  local -n pp_type
+  pp_type="${1:?}"
+  pp_type["BIOS"]="${BIOS_BOOT_TYPECODE}"
+  pp_type["DATA"]="${BOTTLEROCKET_DATA_TYPECODE}"
+  pp_type["EFI-A"]="${EFI_SYSTEM_TYPECODE}"
+  pp_type["EFI-B"]="${EFI_BACKUP_TYPECODE}"
+  pp_type["PRIVATE"]="${BOTTLEROCKET_PRIVATE_TYPECODE}"
+  local typecode
+  for part in BOOT ROOT HASH RESERVED ; do
+    for bank in A B ; do
+        typecode="BOTTLEROCKET_${part}_TYPECODE"
+        typecode="${!typecode}"
+        pp_type["${part}-${bank}"]="${typecode}"
+    done
+  done
+}

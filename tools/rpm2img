@@ -3,6 +3,10 @@
 set -eu -o pipefail
 shopt -qs failglob
 
+# import the partition helper functions
+# shellcheck source=partyplanner
+. "${0%/*}/partyplanner"
+
 OUTPUT_FMT="raw"
 
 for opt in "$@"; do
@@ -33,6 +37,9 @@ BOOT_IMAGE_NAME="${FILENAME_PREFIX}-boot.ext4.lz4"
 VERITY_IMAGE_NAME="${FILENAME_PREFIX}-root.verity.lz4"
 ROOT_IMAGE_NAME="${FILENAME_PREFIX}-root.ext4.lz4"
 
+DISK_IMAGE_SIZE_GIB="2"
+DATA_IMAGE_SIZE_GIB="1"
+
 DISK_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
 VERITY_IMAGE="$(mktemp)"
@@ -56,58 +63,44 @@ VERITY_HASH_ALGORITHM=sha256
 VERITY_DATA_BLOCK_SIZE=4096
 VERITY_HASH_BLOCK_SIZE=4096
 
-# Define partition type GUIDs for all OS-managed partitions. This is required
-# for the boot partition, where we set gptprio bits in the GUID-specific use
-# field, but we might as well do it for all of them.
-BOTTLEROCKET_BOOT_TYPECODE="6b636168-7420-6568-2070-6c616e657421"
-BOTTLEROCKET_ROOT_TYPECODE="5526016a-1a97-4ea4-b39a-b7c8c6ca4502"
-BOTTLEROCKET_HASH_TYPECODE="598f10af-c955-4456-6a99-7720068a6cea"
-BOTTLEROCKET_RESERVED_TYPECODE="0c5d99a5-d331-4147-baef-08e2b855bdc9"
-BOTTLEROCKET_PRIVATE_TYPECODE="440408bb-eb0b-4328-a6e5-a29038fad706"
-BOTTLEROCKET_DATA_TYPECODE="626f7474-6c65-6474-6861-726d61726b73"
+truncate -s "${DISK_IMAGE_SIZE_GIB}"G "${DISK_IMAGE}"
 
-# Under BIOS, the firmware will transfer control to the MBR on the boot device,
-# which will pass control to the GRUB stage 2 binary written to the BIOS boot
-# partition. The BIOS does not attach any significance to this partition type,
-# but GRUB knows to install itself there when we run `grub-bios-setup`.
-BIOS_BOOT_TYPECODE="ef02"
+declare -A partlabel parttype partsize partoff
+set_partition_sizes \
+  "${DISK_IMAGE_SIZE_GIB}" "${DATA_IMAGE_SIZE_GIB}" \
+  partsize partoff
+set_partition_labels partlabel
+set_partition_types parttype
 
-# Under EFI, the firmware will find the EFI system partition and execute the
-# program at a platform-defined path like `bootx64.efi`. The partition type
-# must match what the firmware expects.
-EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+declare -a partargs
+for part in \
+  BIOS \
+  EFI-A BOOT-A ROOT-A HASH-A RESERVED-A \
+  EFI-B BOOT-B ROOT-B HASH-B RESERVED-B \
+  PRIVATE ;
+do
+  # Each partition is aligned to a 1 MiB boundary, and extends to the sector
+  # before the next partition starts. Specify the end point in sectors so we
+  # can subtract a sector to fix the off-by-one error that comes from adding
+  # start and size together. (1 MiB contains 2048 512-byte sectors.)
+  part_start="${partoff[${part}]}"
+  part_end="$((part_start + partsize[${part}]))"
+  part_end="$((part_end * 2048 - 1))"
 
-# Whichever entry point is used for booting the system, it's important to note
-# that only one build of GRUB is involved - the one that's installed below when
-# we run this script. GRUB understands the GPT priorities scheme we use to find
-# the active boot partition; EFI and BIOS firmware does not. This is why we do
-# not update GRUB during our system updates; we would have no way to revert to
-# an earlier copy of the bootloader if it failed to boot.
-#
-# We may eventually want to have an active/passive scheme for EFI partitions,
-# to allow for potential GRUB and shim updates on EFI platforms in cases where
-# we need to deliver security fixes. For now, add a placeholder partition type
-# and reserve space for an alternate bank.
-EFI_BACKUP_TYPECODE="B39CE39C-0A00-B4AB-2D11-F18F8237A21C"
+  partargs+=(-n "0:${part_start}M:${part_end}")
+  partargs+=(-c "0:${partlabel[${part}]}")
+  partargs+=(-t "0:${parttype[${part}]}")
 
-truncate -s 2G "${DISK_IMAGE}"
-# efi: 5M + boot: 40M + root: 920M + hash: 10M + reserved: 25M = 1000M
-# boot partition attributes (-A): 48 = gptprio priority bit; 56 = gptprio successful bit
-# partitions are backwards so that we don't make things inconsistent when specifying a wrong end sector :)
-sgdisk --clear \
-   -n 0:2005M:2047M -c 0:"BOTTLEROCKET-PRIVATE"    -t 0:"${BOTTLEROCKET_PRIVATE_TYPECODE}" \
-   -n 0:1980M:0     -c 0:"BOTTLEROCKET-RESERVED-B" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
-   -n 0:1970M:0     -c 0:"BOTTLEROCKET-HASH-B"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
-   -n 0:1050M:0     -c 0:"BOTTLEROCKET-ROOT-B"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
-   -n 0:1010M:0     -c 0:"BOTTLEROCKET-BOOT-B"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"clear":48 -A 0:"clear":56 \
-   -n 0:1005M:0     -c 0:"EFI-BACKUP"              -t 0:"${EFI_BACKUP_TYPECODE}" \
-   -n 0:980M:0      -c 0:"BOTTLEROCKET-RESERVED-A" -t 0:"${BOTTLEROCKET_RESERVED_TYPECODE}" \
-   -n 0:970M:0      -c 0:"BOTTLEROCKET-HASH-A"     -t 0:"${BOTTLEROCKET_HASH_TYPECODE}" \
-   -n 0:50M:0       -c 0:"BOTTLEROCKET-ROOT-A"     -t 0:"${BOTTLEROCKET_ROOT_TYPECODE}" \
-   -n 0:10M:0       -c 0:"BOTTLEROCKET-BOOT-A"     -t 0:"${BOTTLEROCKET_BOOT_TYPECODE}" -A 0:"set":48 -A 0:"set":56 \
-   -n 0:5M:0        -c 0:"EFI-SYSTEM"              -t 0:"${EFI_SYSTEM_TYPECODE}" \
-   -n 0:1M:0        -c 0:"BIOS-BOOT"               -t 0:"${BIOS_BOOT_TYPECODE}" \
-   --sort --print "${DISK_IMAGE}"
+  # Boot partition attributes:
+  #  48 = gptprio priority bit
+  #  56 = gptprio successful bit
+  case "${part}" in
+    BOOT-A) partargs+=(-A 0:"set":48 -A 0:"set":56) ;;
+    BOOT-B) partargs+=(-A 0:"clear":48 -A 0:"clear":56) ;;
+  esac
+done
+
+sgdisk --clear "${partargs[@]}" --sort --print "${DISK_IMAGE}"
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 install -p -m 0644 /host/{COPYRIGHT,LICENSE-APACHE,LICENSE-MIT} "${ROOT_MOUNT}"/usr/share/licenses/
@@ -135,14 +128,12 @@ fi
 # package has placed the image in /boot/efi/EFI/BOOT.
 mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
 
-# The 'recommended' size for the EFI partition is 100MB but our EFI
-# images are under 1MB, so this will suffice for now.
-dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count=5
-mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((5*2048))
+dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count="${partsize[EFI-A]}"
+mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((partsize[EFI-A] * 2048))
 mmd -i "${EFI_IMAGE}" ::/EFI
 mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
 mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT"/*.efi ::/EFI/BOOT
-dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=5
+dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[EFI-A]}"
 
 # Ensure that the grub directory exists.
 mkdir -p "${ROOT_MOUNT}/boot/grub"
@@ -169,13 +160,14 @@ mkdir -p "${ROOT_MOUNT}/lost+found"
 ROOT_LABELS=$(setfiles -n -d -F -m -r "${ROOT_MOUNT}" \
     "${SELINUX_FILE_CONTEXTS}" "${ROOT_MOUNT}" \
     | awk -v root="${ROOT_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_set", $1, "security.selinux", $4}')
-mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" 920M
+mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" "${partsize[ROOT-A]}M"
 echo "${ROOT_LABELS}" | debugfs -w -f - "${ROOT_IMAGE}"
 resize2fs -M "${ROOT_IMAGE}"
-dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=50
+dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[ROOT-A]}"
 
 # BOTTLEROCKET-VERITY-A
-truncate -s 8M "${VERITY_IMAGE}"
+veritypart_mib="${partsize[HASH-A]}"
+truncate -s "${veritypart_mib}M" "${VERITY_IMAGE}"
 veritysetup_output="$(veritysetup format \
     --format "$VERITY_VERSION" \
     --hash "$VERITY_HASH_ALGORITHM" \
@@ -183,16 +175,18 @@ veritysetup_output="$(veritysetup format \
     --hash-block-size "$VERITY_HASH_BLOCK_SIZE" \
     "${ROOT_IMAGE}" "${VERITY_IMAGE}" \
     | tee /dev/stderr)"
-if ! stat -c %s "${VERITY_IMAGE}" | grep -q '^8388608$'; then
-    echo "verity partition is larger than expected (8M)"
+verityimage_size="$(stat -c %s "${VERITY_IMAGE}")"
+veritypart_bytes="$((veritypart_mib * 1024 * 1024))"
+if [ "${verityimage_size}" -gt "${veritypart_bytes}" ] ; then
+    echo "verity content is larger than partition (${veritypart_mib}M)"
     exit 1
 fi
-VERITY_DATA_4K_BLOCKS="$(grep '^Data blocks:' <<<$veritysetup_output | awk '{ print $NF }')"
-VERITY_DATA_512B_BLOCKS="$(($VERITY_DATA_4K_BLOCKS * 8))"
-VERITY_ROOT_HASH="$(grep '^Root hash:' <<<$veritysetup_output | awk '{ print $NF }')"
-VERITY_SALT="$(grep '^Salt:' <<<$veritysetup_output | awk '{ print $NF }')"
+VERITY_DATA_4K_BLOCKS="$(grep '^Data blocks:' <<<"${veritysetup_output}" | awk '{ print $NF }')"
+VERITY_DATA_512B_BLOCKS="$((VERITY_DATA_4K_BLOCKS * 8))"
+VERITY_ROOT_HASH="$(grep '^Root hash:' <<<"${veritysetup_output}" | awk '{ print $NF }')"
+VERITY_SALT="$(grep '^Salt:' <<<"${veritysetup_output}" | awk '{ print $NF }')"
 veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
-dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=970
+dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[HASH-A]}"
 
 # write GRUB config
 cat <<EOF > "${BOOT_MOUNT}/grub/grub.cfg"
@@ -217,10 +211,10 @@ mkdir -p "${BOOT_MOUNT}/lost+found"
 BOOT_LABELS=$(setfiles -n -d -F -m -r "${BOOT_MOUNT}" \
     "${SELINUX_FILE_CONTEXTS}" "${BOOT_MOUNT}" \
   | awk -v root="${BOOT_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_set", $1, "security.selinux", $4}')
-mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" 40M
+mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" "${partsize[BOOT-A]}M"
 echo "${BOOT_LABELS}" | debugfs -w -f - "${BOOT_IMAGE}"
 resize2fs -M "${BOOT_IMAGE}"
-dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=10
+dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[BOOT-A]}"
 
 # BOTTLEROCKET-PRIVATE
 
@@ -229,23 +223,28 @@ dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=10
 # - adjust the inode ratio since we expect lots of small files
 # - retain the inode size to allow most settings to be stored inline
 # - retain the block size to handle worse-case alignment for hardware
-mkfs.ext4 -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" 42M
-dd if="${PRIVATE_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek=2005
+mkfs.ext4 -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" "${partsize[PRIVATE]}M"
+dd if="${PRIVATE_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRIVATE]}"
 
 # BOTTLEROCKET-DATA
-truncate -s 1G "${DATA_IMAGE}"
+truncate -s "${DATA_IMAGE_SIZE_GIB}"G "${DATA_IMAGE}"
+data_start="${partoff[DATA]}"
+data_end=$((data_start + partsize[DATA]))
+data_end=$((data_end * 2048 - 1))
 sgdisk --clear \
-   -n 0:1M:1023M -c 0:"BOTTLEROCKET-DATA" -t 0:"${BOTTLEROCKET_DATA_TYPECODE}" \
-   --sort --print "${DATA_IMAGE}"
+  -n "0:${data_start}M:${data_end}" \
+  -c "0:${partlabel[DATA]}" \
+  -t "0:${parttype[DATA]}" \
+  --sort --print "${DATA_IMAGE}"
 # If we build on a host with SELinux enabled, we could end up with labels that
 # do not match our policy. Since we allow replacing the data volume at runtime,
 # we can't count on these labels being correct in any case, and it's better to
 # remove them all.
 UNLABELED=$(find "${DATA_MOUNT}" \
     | awk -v root="${DATA_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_rm", $1, "security.selinux"}')
-mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" 1022M
+mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" "${partsize[DATA]}M"
 echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
-dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek=1
+dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA]}"
 
 sgdisk -v "${DISK_IMAGE}"
 sgdisk -v "${DATA_IMAGE}"
