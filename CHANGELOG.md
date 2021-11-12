@@ -4,7 +4,7 @@
 
 * Add 'apiclient exec' for running commands in host containers ([#1802], [#1790])
 * Improve boot performance ([#1809])
-* Add support for wildcard container registry mirrors ([#1791])
+* Add support for wildcard container registry mirrors ([#1791], [#1818])
 * Wait up to 300s for a DHCP lease at boot ([#1800])
 * Retry if fetching the IMDS session token fails ([#1801])
 * Add ECR account IDs for pulling host containers in GovCloud ([#1793])
@@ -49,6 +49,7 @@
 [#1809]: https://github.com/bottlerocket-os/bottlerocket/pull/1809
 [#1810]: https://github.com/bottlerocket-os/bottlerocket/pull/1810
 [#1816]: https://github.com/bottlerocket-os/bottlerocket/pull/1816
+[#1818]: https://github.com/bottlerocket-os/bottlerocket/pull/1818
 
 # v1.3.0 (2021-10-06)
 
