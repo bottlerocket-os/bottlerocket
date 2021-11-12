@@ -2,8 +2,22 @@ name: Build
 on:
   pull_request:
     branches: [develop]
+    # Here we list file types that don't affect the build and don't need to use
+    # up our Actions runners.
     paths-ignore: 
+      # draw.io (diagrams.net) files, the source of png images for docs
+      - '**.drawio'
+      # Example configuration files
+      - '**.example'
+      # Markdown documentation
       - '**.md'
+      # Images for documentation
+      - '**.png'
+      # Templates for README files
+      - '**.tpl'
+      # Sample config files and OpenAPI docs
+      - '**.yaml'
+
 jobs:
   build:
     runs-on: [self-hosted, linux, x64]
