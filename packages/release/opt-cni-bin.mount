@@ -1,7 +1,7 @@
 [Unit]
 Description=CNI Plugin Directory (/opt/cni/bin)
 Conflicts=umount.target
-RequiresMountsFor=/var
+RequiresMountsFor=/var /opt
 Before=local-fs.target umount.target
 
 [Mount]
