@@ -162,6 +162,7 @@ This will return all of the current settings in JSON format.
 For example, here's an abbreviated response:
 ```
 {"motd":"...", {"kubernetes": ...}}
+```
 
 You can change settings by sending back the same type of JSON data in a PATCH request.
 This can include any number of settings changes.
