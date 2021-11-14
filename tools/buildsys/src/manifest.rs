@@ -66,11 +66,30 @@ releases-url = "https://www.example.com/releases"
 included-packages = ["release"]
 ```
 
-`image-format` is the desired format of the built image.
+`image-format` is the desired format for the built images.
 This can be `raw` (the default), `vmdk`, or `qcow2`.
 ```
 [package.metadata.build-variant]
 image-format = "vmdk"
+```
+
+`image-layout` is the desired layout for the built images.
+
+`os-image-size-gib` is the desired size of the "os" disk image in GiB.
+The specified size will be automatically divided into two banks, where each
+bank contains the set of partitions needed for in-place upgrades. Roughly 40%
+will be available for each root filesystem partition, with the rest allocated
+to other essential system partitions.
+
+`data-image-size-gib` is the desired size of the "data" disk image in GiB.
+The full size will be used for the single data partition, except for the 2 MiB
+overhead for the GPT labels and partition alignment. The data partition will be
+automatically resized to fill the disk on boot, so it is usually not necessary
+to increase this value.
+```
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 2
+data-image-size-gib = 1
 ```
 
 `supported-arches` is the list of architectures the variant is able to run on.
@@ -100,6 +119,9 @@ use std::collections::HashSet;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+static DEFAULT_OS_IMAGE_SIZE_GIB: u32 = 2;
+static DEFAULT_DATA_IMAGE_SIZE_GIB: u32 = 1;
 
 /// The nested structures here are somewhat complex, but they make it trivial
 /// to deserialize the structure we expect to find in the manifest.
@@ -146,6 +168,11 @@ impl ManifestInfo {
     /// Convenience method to return the image format override, if any.
     pub(crate) fn image_format(&self) -> Option<&ImageFormat> {
         self.build_variant().and_then(|b| b.image_format.as_ref())
+    }
+
+    /// Convenience method to return the image layout, if specified.
+    pub(crate) fn image_layout(&self) -> Option<&ImageLayout> {
+        self.build_variant().and_then(|b| b.image_layout.as_ref())
     }
 
     /// Convenience method to return the supported architectures for this variant.
@@ -204,6 +231,7 @@ pub(crate) struct BuildPackage {
 pub(crate) struct BuildVariant {
     pub(crate) included_packages: Option<Vec<String>>,
     pub(crate) image_format: Option<ImageFormat>,
+    pub(crate) image_layout: Option<ImageLayout>,
     pub(crate) supported_arches: Option<HashSet<SupportedArch>>,
     pub(crate) kernel_parameters: Option<Vec<String>>,
 }
@@ -214,6 +242,34 @@ pub(crate) enum ImageFormat {
     Qcow2,
     Raw,
     Vmdk,
+}
+
+#[derive(Deserialize, Debug, Copy, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) struct ImageLayout {
+    #[serde(default = "ImageLayout::default_os_image_size_gib")]
+    pub(crate) os_image_size_gib: u32,
+    #[serde(default = "ImageLayout::default_data_image_size_gib")]
+    pub(crate) data_image_size_gib: u32,
+}
+
+impl ImageLayout {
+    fn default_os_image_size_gib() -> u32 {
+        DEFAULT_OS_IMAGE_SIZE_GIB
+    }
+
+    fn default_data_image_size_gib() -> u32 {
+        DEFAULT_DATA_IMAGE_SIZE_GIB
+    }
+}
+
+impl Default for ImageLayout {
+    fn default() -> Self {
+        Self {
+            os_image_size_gib: Self::default_os_image_size_gib(),
+            data_image_size_gib: Self::default_data_image_size_gib(),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq, Hash)]

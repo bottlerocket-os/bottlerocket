@@ -110,9 +110,9 @@ PRIVATE_SCALE_FACTOR="24"
 
 # Populate the caller's tables with sizes and offsets for known partitions.
 set_partition_sizes() {
-  local disk_image_gib data_image_gib
+  local os_image_gib data_image_gib
   local -n pp_size pp_offset
-  disk_image_gib="${1:?}"
+  os_image_gib="${1:?}"
   data_image_gib="${2:?}"
 
   # Table for partition sizes, in MiB.
@@ -123,16 +123,16 @@ set_partition_sizes() {
 
   # Most of the partitions on the main image scale with the overall size.
   local boot_mib root_mib hash_mib reserved_mib private_mib
-  boot_mib="$((disk_image_gib * BOOT_SCALE_FACTOR))"
-  root_mib="$((disk_image_gib * ROOT_SCALE_FACTOR))"
-  hash_mib="$((disk_image_gib * HASH_SCALE_FACTOR))"
+  boot_mib="$((os_image_gib * BOOT_SCALE_FACTOR))"
+  root_mib="$((os_image_gib * ROOT_SCALE_FACTOR))"
+  hash_mib="$((os_image_gib * HASH_SCALE_FACTOR))"
 
   # Reserved space is everything left in the bank after the other partitions
   # are scaled, minus the fixed 5 MiB EFI partition in that bank.
-  reserved_mib=$((disk_image_gib * RESERVE_SCALE_FACTOR - EFI_MIB))
+  reserved_mib=$((os_image_gib * RESERVE_SCALE_FACTOR - EFI_MIB))
 
   # Private space scales per GiB, minus the BIOS and GPT partition overhead.
-  private_mib=$((disk_image_gib * PRIVATE_SCALE_FACTOR - OVERHEAD_MIB))
+  private_mib=$((os_image_gib * PRIVATE_SCALE_FACTOR - OVERHEAD_MIB))
 
   # Skip the GPT label at start of disk.
   local offset

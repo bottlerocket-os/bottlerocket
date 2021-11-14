@@ -15,6 +15,8 @@ for opt in "$@"; do
       --package-dir=*) PACKAGE_DIR="${optarg}" ;;
       --output-dir=*) OUTPUT_DIR="${optarg}" ;;
       --output-fmt=*) OUTPUT_FMT="${optarg}" ;;
+      --os-image-size-gib=*) OS_IMAGE_SIZE_GIB="${optarg}" ;;
+      --data-image-size-gib=*) DATA_IMAGE_SIZE_GIB="${optarg}" ;;
    esac
 done
 
@@ -30,17 +32,14 @@ mkdir -p "${OUTPUT_DIR}"
 
 FILENAME_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}"
 
-DISK_IMAGE_BASENAME="${FILENAME_PREFIX}"
+OS_IMAGE_BASENAME="${FILENAME_PREFIX}"
 DATA_IMAGE_BASENAME="${FILENAME_PREFIX}-data"
 
 BOOT_IMAGE_NAME="${FILENAME_PREFIX}-boot.ext4.lz4"
 VERITY_IMAGE_NAME="${FILENAME_PREFIX}-root.verity.lz4"
 ROOT_IMAGE_NAME="${FILENAME_PREFIX}-root.ext4.lz4"
 
-DISK_IMAGE_SIZE_GIB="2"
-DATA_IMAGE_SIZE_GIB="1"
-
-DISK_IMAGE="$(mktemp)"
+OS_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
 VERITY_IMAGE="$(mktemp)"
 ROOT_IMAGE="$(mktemp)"
@@ -63,11 +62,11 @@ VERITY_HASH_ALGORITHM=sha256
 VERITY_DATA_BLOCK_SIZE=4096
 VERITY_HASH_BLOCK_SIZE=4096
 
-truncate -s "${DISK_IMAGE_SIZE_GIB}"G "${DISK_IMAGE}"
+truncate -s "${OS_IMAGE_SIZE_GIB}"G "${OS_IMAGE}"
 
 declare -A partlabel parttype partsize partoff
 set_partition_sizes \
-  "${DISK_IMAGE_SIZE_GIB}" "${DATA_IMAGE_SIZE_GIB}" \
+  "${OS_IMAGE_SIZE_GIB}" "${DATA_IMAGE_SIZE_GIB}" \
   partsize partoff
 set_partition_labels partlabel
 set_partition_types parttype
@@ -100,7 +99,7 @@ do
   esac
 done
 
-sgdisk --clear "${partargs[@]}" --sort --print "${DISK_IMAGE}"
+sgdisk --clear "${partargs[@]}" --sort --print "${OS_IMAGE}"
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 install -p -m 0644 /host/{COPYRIGHT,LICENSE-APACHE,LICENSE-MIT} "${ROOT_MOUNT}"/usr/share/licenses/
@@ -112,13 +111,13 @@ rm -rf "${ROOT_MOUNT}"/var/lib "${ROOT_MOUNT}"/usr/share/licenses/*
 
 if [[ "${ARCH}" == "x86_64" ]]; then
   # MBR and BIOS-BOOT
-  echo "(hd0) ${DISK_IMAGE}" > "${ROOT_MOUNT}/boot/grub/device.map"
+  echo "(hd0) ${OS_IMAGE}" > "${ROOT_MOUNT}/boot/grub/device.map"
   "${ROOT_MOUNT}/sbin/grub-bios-setup" \
      --directory="${ROOT_MOUNT}/boot/grub" \
      --device-map="${ROOT_MOUNT}/boot/grub/device.map" \
      --root="hd0" \
      --skip-fs-probe \
-     "${DISK_IMAGE}"
+     "${OS_IMAGE}"
 
   rm -vf "${ROOT_MOUNT}"/boot/grub/* "${ROOT_MOUNT}"/sbin/grub*
 fi
@@ -133,7 +132,7 @@ mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((partsize[EFI-A] * 2048))
 mmd -i "${EFI_IMAGE}" ::/EFI
 mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
 mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT"/*.efi ::/EFI/BOOT
-dd if="${EFI_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[EFI-A]}"
+dd if="${EFI_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[EFI-A]}"
 
 # Ensure that the grub directory exists.
 mkdir -p "${ROOT_MOUNT}/boot/grub"
@@ -163,7 +162,7 @@ ROOT_LABELS=$(setfiles -n -d -F -m -r "${ROOT_MOUNT}" \
 mkfs.ext4 -O ^has_journal -b "${VERITY_DATA_BLOCK_SIZE}" -d "${ROOT_MOUNT}" "${ROOT_IMAGE}" "${partsize[ROOT-A]}M"
 echo "${ROOT_LABELS}" | debugfs -w -f - "${ROOT_IMAGE}"
 resize2fs -M "${ROOT_IMAGE}"
-dd if="${ROOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[ROOT-A]}"
+dd if="${ROOT_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[ROOT-A]}"
 
 # BOTTLEROCKET-VERITY-A
 veritypart_mib="${partsize[HASH-A]}"
@@ -186,7 +185,7 @@ VERITY_DATA_512B_BLOCKS="$((VERITY_DATA_4K_BLOCKS * 8))"
 VERITY_ROOT_HASH="$(grep '^Root hash:' <<<"${veritysetup_output}" | awk '{ print $NF }')"
 VERITY_SALT="$(grep '^Salt:' <<<"${veritysetup_output}" | awk '{ print $NF }')"
 veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
-dd if="${VERITY_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[HASH-A]}"
+dd if="${VERITY_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[HASH-A]}"
 
 # write GRUB config
 cat <<EOF > "${BOOT_MOUNT}/grub/grub.cfg"
@@ -214,7 +213,7 @@ BOOT_LABELS=$(setfiles -n -d -F -m -r "${BOOT_MOUNT}" \
 mkfs.ext4 -O ^has_journal -d "${BOOT_MOUNT}" "${BOOT_IMAGE}" "${partsize[BOOT-A]}M"
 echo "${BOOT_LABELS}" | debugfs -w -f - "${BOOT_IMAGE}"
 resize2fs -M "${BOOT_IMAGE}"
-dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[BOOT-A]}"
+dd if="${BOOT_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[BOOT-A]}"
 
 # BOTTLEROCKET-PRIVATE
 
@@ -224,7 +223,7 @@ dd if="${BOOT_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[BOOT
 # - retain the inode size to allow most settings to be stored inline
 # - retain the block size to handle worse-case alignment for hardware
 mkfs.ext4 -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" "${partsize[PRIVATE]}M"
-dd if="${PRIVATE_IMAGE}" of="${DISK_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRIVATE]}"
+dd if="${PRIVATE_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRIVATE]}"
 
 # BOTTLEROCKET-DATA
 truncate -s "${DATA_IMAGE_SIZE_GIB}"G "${DATA_IMAGE}"
@@ -246,18 +245,18 @@ mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" "${partsize[DATA]}M"
 echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
 dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA]}"
 
-sgdisk -v "${DISK_IMAGE}"
+sgdisk -v "${OS_IMAGE}"
 sgdisk -v "${DATA_IMAGE}"
 
 if [[ ${OUTPUT_FMT} == "raw" ]]; then
-  lz4 -vc "${DISK_IMAGE}" >"${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.img.lz4"
+  lz4 -vc "${OS_IMAGE}" >"${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.img.lz4"
   lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
 elif [[ ${OUTPUT_FMT} == "qcow2" ]]; then
-  qemu-img convert -f raw -O qcow2 "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.qcow2"
+  qemu-img convert -f raw -O qcow2 "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.qcow2"
   qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.qcow2"
 elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
   # Stream optimization is required for creating an Open Virtual Appliance (OVA)
-  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DISK_IMAGE}" "${OUTPUT_DIR}/${DISK_IMAGE_BASENAME}.vmdk"
+  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.vmdk"
   qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
 fi
 

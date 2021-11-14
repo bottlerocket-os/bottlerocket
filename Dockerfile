@@ -164,8 +164,12 @@ ARG VARIANT
 ARG PRETTY_NAME
 ARG IMAGE_NAME
 ARG IMAGE_FORMAT
+ARG OS_IMAGE_SIZE_GIB
+ARG DATA_IMAGE_SIZE_GIB
 ARG KERNEL_PARAMETERS
-ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} PRETTY_NAME=${PRETTY_NAME} IMAGE_NAME=${IMAGE_NAME} IMAGE_FORMAT=${IMAGE_FORMAT} KERNEL_PARAMETERS=${KERNEL_PARAMETERS}
+ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} \
+    PRETTY_NAME=${PRETTY_NAME} IMAGE_NAME=${IMAGE_NAME} \
+    KERNEL_PARAMETERS=${KERNEL_PARAMETERS}
 WORKDIR /root
 
 USER root
@@ -174,6 +178,8 @@ RUN --mount=target=/host \
       --package-dir=/local/rpms \
       --output-dir=/local/output \
       --output-fmt=${IMAGE_FORMAT} \
+      --os-image-size-gib=${OS_IMAGE_SIZE_GIB} \
+      --data-image-size-gib=${DATA_IMAGE_SIZE_GIB} \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
