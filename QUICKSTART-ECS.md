@@ -56,6 +56,8 @@ us-east-1
 us-east-2
 us-west-1
 us-west-2
+us-gov-east-1
+us-gov-west-1
 ```
 
 The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).

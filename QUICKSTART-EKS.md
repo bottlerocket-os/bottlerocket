@@ -121,6 +121,8 @@ us-east-1
 us-east-2
 us-west-1
 us-west-2
+us-gov-east-1
+us-gov-west-1
 ```
 
 The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
@@ -156,7 +158,12 @@ aws ssm get-parameters --region us-west-2 \
 
 ### Cluster setup
 
-*Note:* most commands will have a region argument; make sure to change it if you don't want to set up in us-west-2.
+*Note:* most commands will have a region argument; make sure to change it if you don't want to set up in us-west-2. 
+Also be aware that when operating in GovCloud the IAM ARNs will need to be updated to the following: `arn:aws-us-gov`.   
+For example:  
+ `arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy`   
+ will be updated to:  
+ `arn:aws-us-gov:iam::aws:policy/AmazonEKSWorkerNodePolicy`.
 
 You can set up a new cluster like this:
 
