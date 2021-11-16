@@ -56,7 +56,7 @@ impl DiskPart {
         let current = &gpt[part];
         let partition_name = current.partition_name.clone();
         let partition_type_guid = current.partition_type_guid;
-        let unique_parition_guid = current.unique_parition_guid;
+        let unique_partition_guid = current.unique_partition_guid;
         let path = &self.device;
 
         // Remove all existing partitions so that the space shows up as free.
@@ -82,7 +82,7 @@ impl DiskPart {
             attribute_bits: 0,
             partition_name,
             partition_type_guid,
-            unique_parition_guid,
+            unique_partition_guid,
         };
 
         Ok(())
@@ -96,6 +96,11 @@ impl DiskPart {
             .write(true)
             .open(path)
             .context(error::DeviceOpen { path })?;
+
+        self.gpt
+            .header
+            .update_from(&mut f, self.gpt.sector_size)
+            .context(error::UpdateGeometry { path })?;
 
         self.gpt
             .write_into(&mut f)
