@@ -33,6 +33,14 @@ BuildRequires: hostname
 BuildRequires: kmod
 BuildRequires: openssl-devel
 
+# CPU microcode updates are included as "extra firmware" so the files don't
+# need to be installed on the root filesystem. However, we want the license and
+# attribution files to be available in the usual place.
+%if "%{_cross_arch}" == "x86_64"
+BuildRequires: %{_cross_os}microcode
+Requires: %{_cross_os}microcode-licenses
+%endif
+
 # Pull in expected modules and development files.
 Requires: %{name}-modules = %{version}-%{release}
 Requires: %{name}-devel = %{version}-%{release}
@@ -77,10 +85,24 @@ for patch in ../*.patch; do
 done
 # Patches listed in this spec (Patch0001...)
 %autopatch -p1
+
+%if "%{_cross_arch}" == "x86_64"
+microcode="$(find %{_cross_libdir}/firmware -type f -path '*/*-ucode/*' -printf '%%P ')"
+cat <<EOF > ../config-microcode
+CONFIG_EXTRA_FIRMWARE="${microcode}"
+CONFIG_EXTRA_FIRMWARE_DIR="%{_cross_libdir}/firmware"
+EOF
+%endif
+
 KCONFIG_CONFIG="arch/%{_cross_karch}/configs/%{_cross_vendor}_defconfig" \
-    ARCH="%{_cross_karch}" \
-    scripts/kconfig/merge_config.sh ../config-%{_cross_arch} %{SOURCE100}
-rm -f ../config-%{_cross_arch} ../*.patch
+ARCH="%{_cross_karch}" \
+scripts/kconfig/merge_config.sh \
+  ../config-%{_cross_arch} \
+%if "%{_cross_arch}" == "x86_64"
+  ../config-microcode \
+%endif
+  %{SOURCE100}
+rm -f ../config-* ../*.patch
 
 %global kmake \
 make -s\\\

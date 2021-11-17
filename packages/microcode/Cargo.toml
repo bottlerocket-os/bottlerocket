@@ -1,0 +1,19 @@
+[package]
+name = "microcode"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+# Use latest-srpm-urls.sh to get these.
+
+[[package.metadata.build-package.external-files]]
+url = "https://cdn.amazonlinux.com/blobstore/6d7f707779f6aff41c89bad00f7abe69dc70919cee29a8d3e5060f8070efe71d/linux-firmware-20200421-79.git78c0348.amzn2.src.rpm"
+sha512 = "d5a62eca6ddd7ff322574f17359681d03a733acc51c334127f291af5d5e39fcdf821c073ddcd977b2ca088cd95d35dc31db2001ca4c312a62dcbd4ea935434fd"
+
+[[package.metadata.build-package.external-files]]
+url = "https://cdn.amazonlinux.com/blobstore/76e8f9f15ec2b27c70aff3ca15a28df51790b25c73fc8dc1bf1f28a9069b15e8/microcode_ctl-2.1-47.amzn2.0.9.src.rpm"
+sha512 = "e1347139d1edbd52d2619d970ba0f03500ba7367d071bb30ab3d209e44b3ff63000fcaa681f7352c79f7d5d2f0753130161b42b0eab7aab97b5b4fc4bfaa1b3b"

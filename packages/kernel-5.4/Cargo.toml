@@ -16,6 +16,5 @@ path = "pkg.rs"
 url = "https://cdn.amazonlinux.com/blobstore/a068a12de784cc571656e680fbd3213773032b6b4d3c940b37b9db664fb7be52/kernel-5.4.149-73.259.amzn2.src.rpm"
 sha512 = "d7b86a37257fe02e8fda360397371662215dd916f4f6e82a9c9174bec385dd7347197baa17ba9666dd31f7b41472cde6fc293f431098a53526de1b86a71bb386"
 
-# RPM BuildRequires
 [build-dependencies]
-# Provided by Bottlerocket SDK
+microcode = { path = "../microcode" }
