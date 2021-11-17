@@ -1,3 +1,18 @@
+# v1.4.1 (2021-11-18)
+
+## Security Fixes
+
+* Apply patches to docker and containerd for CVE-2021-41190 ([#1832], [#1833])
+
+## Build Changes
+
+* Update Bottlerocket SDK to 0.23.1 ([#1831])
+
+[#1831]: https://github.com/bottlerocket-os/bottlerocket/pull/1831
+[#1832]: https://github.com/bottlerocket-os/bottlerocket/pull/1832
+[#1833]: https://github.com/bottlerocket-os/bottlerocket/pull/1833
+
+
 # v1.4.0 (2021-11-12)
 
 ## OS Changes
