@@ -32,6 +32,10 @@ Patch2001: 0001-v2-runtime-reduce-permissions-for-bundle-dir.patch
 Patch2002: 0002-v1-runtime-reduce-permissions-for-bundle-dir.patch
 Patch2003: 0003-btrfs-reduce-permissions-on-plugin-directories.patch
 
+# CVE-2021-41190
+Patch2004: 0004-images-validate-document-type-before-unmarshal.patch
+Patch2005: 0005-schema1-reject-ambiguous-documents.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}runc
