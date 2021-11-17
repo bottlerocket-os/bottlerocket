@@ -134,7 +134,7 @@ mod test {
         gpt[1] = GPTPartitionEntry {
             partition_name: partition_name.into(),
             partition_type_guid: partition_type,
-            unique_parition_guid: [0xff; 16],
+            unique_partition_guid: [0xff; 16],
             starting_lba: gpt.header.first_usable_lba,
             ending_lba: gpt.header.last_usable_lba,
             attribute_bits: 0,

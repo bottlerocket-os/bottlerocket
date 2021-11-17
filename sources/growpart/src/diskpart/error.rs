@@ -42,6 +42,12 @@ pub enum Error {
         count: usize,
     },
 
+    #[snafu(display("Failed to update geometry for '{}': {}", path.display(), source))]
+    UpdateGeometry {
+        path: std::path::PathBuf,
+        source: gptman::Error,
+    },
+
     #[snafu(display("Failed to write partition table to '{}': {}", path.display(), source))]
     WritePartitionTable {
         path: std::path::PathBuf,
