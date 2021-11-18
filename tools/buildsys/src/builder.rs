@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::manifest::{ImageFormat, SupportedArch};
+use crate::manifest::{ImageFormat, ImageLayout, SupportedArch};
 
 /*
 There's a bug in BuildKit that can lead to a build failure during parallel
@@ -116,6 +116,7 @@ impl VariantBuilder {
     pub(crate) fn build(
         packages: &[String],
         image_format: Option<&ImageFormat>,
+        image_layout: Option<&ImageLayout>,
         kernel_parameters: Option<&Vec<String>>,
     ) -> Result<Self> {
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
@@ -125,6 +126,12 @@ impl VariantBuilder {
         let goarch = serde_plain::from_str::<SupportedArch>(&arch)
             .context(error::UnsupportedArch { arch: &arch })?
             .goarch();
+
+        let image_layout = image_layout.cloned().unwrap_or_default();
+        let ImageLayout {
+            os_image_size_gib,
+            data_image_size_gib,
+        } = image_layout;
 
         let mut args = Vec::new();
         args.build_arg("PACKAGES", packages.join(" "));
@@ -143,6 +150,8 @@ impl VariantBuilder {
                 Some(ImageFormat::Vmdk) => "vmdk",
             },
         );
+        args.build_arg("OS_IMAGE_SIZE_GIB", format!("{}", os_image_size_gib));
+        args.build_arg("DATA_IMAGE_SIZE_GIB", format!("{}", data_image_size_gib));
         args.build_arg(
             "KERNEL_PARAMETERS",
             kernel_parameters
