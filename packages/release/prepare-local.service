@@ -1,44 +1,20 @@
 [Unit]
 Description=Prepare Local Directory (/local)
 DefaultDependencies=no
-
-# We need udev to create /dev/disk/by-partlabel/BOTTLEROCKET-DATA first.
-Wants=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
-After=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
+RequiresMountsFor=/local
 
 [Service]
 Type=oneshot
-Environment=BOTTLEROCKET_DATA=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
 Environment=LOCAL_DIR=/local
 
-# To "grow" the partition, we delete it and recreate it at the larger size, then
-# write it back to the device. udevd observes the write via inotify, and tells
-# the kernel to reload the partition table. This causes the partition link to be
-# deleted and then recreated.
-ExecStart=/usr/sbin/growpart ${BOTTLEROCKET_DATA}
-
-# If the GPT label was not already at the end of the disk, the first pass will
-# write it there, but any additional sectors beyond the original position were
-# not included in the resized partition. Now that the kernel has reloaded the
-# partition table, the second pass can find and use those sectors.
-ExecStart=/usr/sbin/growpart ${BOTTLEROCKET_DATA}
-
-# The above note means we can't have a "normal" mount unit here, because it would
-# depend on the link, and would immediately transition to the failed state when the
-# link is removed. systemd will create local.mount for us as a side effect.
-ExecStart=/usr/bin/mount \
-    -o defaults,noatime,nosuid,nodev \
-    ${BOTTLEROCKET_DATA} ${LOCAL_DIR}
-
-# After the mount is active, we grow the filesystem to fill the resized partition,
-# and ensure that it has the directories we need for subsequent mounts.
-ExecStart=/usr/lib/systemd/systemd-growfs ${LOCAL_DIR}
+# Create the directories we need for our bind mounts.
 ExecStart=/usr/bin/mkdir -p ${LOCAL_DIR}/var ${LOCAL_DIR}/opt ${LOCAL_DIR}/mnt
 
 # Create the directories we need to set up a read-write overlayfs for the kernel
-# development sources and the kernel modules
-ExecStart=/usr/bin/rm -rf ${LOCAL_DIR}/var/lib/kernel-devel \
-    %{LOCAL_DIR}/var/lib/kernel-modules
+# development sources and kernel modules.
+ExecStart=/usr/bin/rm -rf \
+    ${LOCAL_DIR}/var/lib/kernel-devel \
+    ${LOCAL_DIR}/var/lib/kernel-modules
 ExecStart=/usr/bin/mkdir -p \
     ${LOCAL_DIR}/var/lib/kernel-devel/.overlay/lower \
     ${LOCAL_DIR}/var/lib/kernel-devel/.overlay/upper \
@@ -48,11 +24,13 @@ ExecStart=/usr/bin/mkdir -p \
 
 # Create the directories we need to set up a read-write overlayfs for any CNI
 # plugin binaries.
-ExecStart=/usr/bin/rm -rf ${LOCAL_DIR}/opt/cni ${LOCAL_DIR}/var/lib/cni-plugins
+ExecStart=/usr/bin/rm -rf \
+    ${LOCAL_DIR}/opt/cni \
+    ${LOCAL_DIR}/var/lib/cni-plugins
 ExecStart=/usr/bin/mkdir -p \
     ${LOCAL_DIR}/opt/cni/bin \
     ${LOCAL_DIR}/var/lib/cni-plugins/.overlay/upper \
-    ${LOCAL_DIR}/var/lib/cni-plugins/.overlay/work \
+    ${LOCAL_DIR}/var/lib/cni-plugins/.overlay/work
 
 RemainAfterExit=true
 StandardError=journal+console

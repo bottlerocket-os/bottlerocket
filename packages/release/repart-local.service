@@ -1,0 +1,29 @@
+[Unit]
+Description=Resize Data Partition
+DefaultDependencies=no
+Conflicts=shutdown.target
+Wants=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
+After=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
+
+# Ensure the device is mounted first, to avoid racing with the unit that tries
+# to mount it since the symlink can disappear if the partition is resized.
+RequiresMountsFor=/local
+
+[Service]
+Type=oneshot
+
+# Resize the partition, whether or not it resides on the same disk as /.
+ExecStart=/usr/bin/systemd-repart --dry-run=no /dev/disk/by-partlabel/BOTTLEROCKET-DATA
+
+# Grow the filesystem to fill the partition. Doing this in another unit could
+# introduce a race if the underlying block device is not ready after resizing.
+ExecStart=/usr/lib/systemd/systemd-growfs /local
+
+RemainAfterExit=true
+StandardError=journal+console
+
+# systemd-repart returns 77 if there's no existing GPT partition table
+SuccessExitStatus=77
+
+[Install]
+WantedBy=local-fs.target
