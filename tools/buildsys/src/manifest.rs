@@ -86,10 +86,15 @@ The full size will be used for the single data partition, except for the 2 MiB
 overhead for the GPT labels and partition alignment. The data partition will be
 automatically resized to fill the disk on boot, so it is usually not necessary
 to increase this value.
+
+`partition-plan` is the desired strategy for image partitioning.
+This can be `split` (the default) for "os" and "data" images backed by separate
+volumes, or `unified` to have "os" and "data" share the same volume.
 ```
 [package.metadata.build-variant.image-layout]
 os-image-size-gib = 2
 data-image-size-gib = 1
+partition-plan = "split"
 ```
 
 `supported-arches` is the list of architectures the variant is able to run on.
@@ -119,9 +124,6 @@ use std::collections::HashSet;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
-
-static DEFAULT_OS_IMAGE_SIZE_GIB: u32 = 2;
-static DEFAULT_DATA_IMAGE_SIZE_GIB: u32 = 1;
 
 /// The nested structures here are somewhat complex, but they make it trivial
 /// to deserialize the structure we expect to find in the manifest.
@@ -251,7 +253,15 @@ pub(crate) struct ImageLayout {
     pub(crate) os_image_size_gib: u32,
     #[serde(default = "ImageLayout::default_data_image_size_gib")]
     pub(crate) data_image_size_gib: u32,
+    #[serde(default = "ImageLayout::default_partition_plan")]
+    pub(crate) partition_plan: PartitionPlan,
 }
+
+/// These are the historical defaults for all variants, before we added support
+/// for customizing these properties.
+static DEFAULT_OS_IMAGE_SIZE_GIB: u32 = 2;
+static DEFAULT_DATA_IMAGE_SIZE_GIB: u32 = 1;
+static DEFAULT_PARTITION_PLAN: PartitionPlan = PartitionPlan::Split;
 
 impl ImageLayout {
     fn default_os_image_size_gib() -> u32 {
@@ -261,6 +271,10 @@ impl ImageLayout {
     fn default_data_image_size_gib() -> u32 {
         DEFAULT_DATA_IMAGE_SIZE_GIB
     }
+
+    fn default_partition_plan() -> PartitionPlan {
+        DEFAULT_PARTITION_PLAN
+    }
 }
 
 impl Default for ImageLayout {
@@ -268,8 +282,16 @@ impl Default for ImageLayout {
         Self {
             os_image_size_gib: Self::default_os_image_size_gib(),
             data_image_size_gib: Self::default_data_image_size_gib(),
+            partition_plan: Self::default_partition_plan(),
         }
     }
+}
+
+#[derive(Deserialize, Debug, Copy, Clone)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum PartitionPlan {
+    Split,
+    Unified,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq, Hash)]

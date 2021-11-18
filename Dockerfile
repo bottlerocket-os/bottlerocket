@@ -166,6 +166,7 @@ ARG IMAGE_NAME
 ARG IMAGE_FORMAT
 ARG OS_IMAGE_SIZE_GIB
 ARG DATA_IMAGE_SIZE_GIB
+ARG PARTITION_PLAN
 ARG KERNEL_PARAMETERS
 ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} \
     PRETTY_NAME=${PRETTY_NAME} IMAGE_NAME=${IMAGE_NAME} \
@@ -177,9 +178,10 @@ RUN --mount=target=/host \
     /host/tools/rpm2img \
       --package-dir=/local/rpms \
       --output-dir=/local/output \
-      --output-fmt=${IMAGE_FORMAT} \
-      --os-image-size-gib=${OS_IMAGE_SIZE_GIB} \
-      --data-image-size-gib=${DATA_IMAGE_SIZE_GIB} \
+      --output-fmt="${IMAGE_FORMAT}" \
+      --os-image-size-gib="${OS_IMAGE_SIZE_GIB}" \
+      --data-image-size-gib="${DATA_IMAGE_SIZE_GIB}" \
+      --partition-plan="${PARTITION_PLAN}" \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=

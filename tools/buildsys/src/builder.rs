@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::manifest::{ImageFormat, ImageLayout, SupportedArch};
+use crate::manifest::{ImageFormat, ImageLayout, PartitionPlan, SupportedArch};
 
 /*
 There's a bug in BuildKit that can lead to a build failure during parallel
@@ -131,6 +131,7 @@ impl VariantBuilder {
         let ImageLayout {
             os_image_size_gib,
             data_image_size_gib,
+            partition_plan,
         } = image_layout;
 
         let mut args = Vec::new();
@@ -152,6 +153,13 @@ impl VariantBuilder {
         );
         args.build_arg("OS_IMAGE_SIZE_GIB", format!("{}", os_image_size_gib));
         args.build_arg("DATA_IMAGE_SIZE_GIB", format!("{}", data_image_size_gib));
+        args.build_arg(
+            "PARTITION_PLAN",
+            match partition_plan {
+                PartitionPlan::Split => "split",
+                PartitionPlan::Unified => "unified",
+            },
+        );
         args.build_arg(
             "KERNEL_PARAMETERS",
             kernel_parameters
