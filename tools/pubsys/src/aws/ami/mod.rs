@@ -37,7 +37,7 @@ pub(crate) struct AmiArgs {
 
     /// Path to the image containing the data volume
     #[structopt(short = "d", long, parse(from_os_str))]
-    data_image: PathBuf,
+    data_image: Option<PathBuf>,
 
     /// Desired root volume size in gibibytes
     #[structopt(long)]
@@ -45,7 +45,7 @@ pub(crate) struct AmiArgs {
 
     /// Desired data volume size in gibibytes
     #[structopt(long)]
-    data_volume_size: i64,
+    data_volume_size: Option<i64>,
 
     /// The architecture of the machine image
     #[structopt(short = "a", long, parse(try_from_str = parse_arch))]

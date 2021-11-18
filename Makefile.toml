@@ -45,6 +45,12 @@ PUBLISH_REPO = "default"
 # AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
 # volume size; by default it's the image size, rounded up.)
 PUBLISH_DATA_VOLUME_SIZE = "20"
+
+# For images using a "unified" layout where both OS and data partitions are in
+# the same image, the root / data distinction doesn't make sense, but we still
+# have an idea of how big the overall volume should be to have "enough" space.
+PUBLISH_UNIFIED_VOLUME_SIZE = "22"
+
 # This can be overridden with -e to change the path to the file containing SSM
 # parameter templates.  This file determines the parameter names and values
 # that will be published to SSM when you run `cargo make ssm`.  See
@@ -438,57 +444,140 @@ cleanup() {
 }
 trap 'cleanup' EXIT
 
+measure_image() {
+   local image
+   image="${1:?}"
+   # Can't count on "realpath" availability, so assume an absolute image path underneath
+   # our build root directory.
+   image=".${image#${BUILDSYS_ROOT_DIR}}"
+   docker run --rm \
+      --network=none \
+      --user "$(id -u):$(id -g)" \
+      --security-opt label:disable \
+      -v "${BUILDSYS_ROOT_DIR}/build":/tmp/build \
+      "${BUILDSYS_SDK_IMAGE}" \
+      bash -c "set -o pipefail ; cd /tmp; qemu-img measure ${image} | awk '/required size/{print \$NF}'"
+}
+
 root_vmdk_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.vmdk"
 data_vmdk_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.vmdk"
 ova_tmp_dir="$(mktemp -d)"
 ovf="${BUILDSYS_NAME_FULL}.ovf"
 manifest="${BUILDSYS_NAME_FULL}.mf"
 
-# Short circuit if neither VMDK images nor an OVF template exist
-if [ ! -s "${BUILDSYS_OVF_TEMPLATE}" ] && \
-   [[ ! -s "${root_vmdk_path}" || ! -s "${data_vmdk_path}" ]]; then
-   echo "No OVF template or VMDK images, skipping OVA build"
-   exit 0
+# Short circuit if no OVF template exists.
+if [ ! -s "${BUILDSYS_OVF_TEMPLATE}" ] ; then
+   if [ ! -s "${root_vmdk_path}" ]; then
+      # If no VMDK exists either, there's nothing to do.
+      echo "No OVF template or VMDK images, skipping OVA build"
+      exit 0
+   else
+      # Warn the user if a VMDK exists but an OVF template does not.  Assume we do not
+      # need to build an OVA in this case
+      echo "VMDK image found, but OVF template '${BUILDSYS_OVF_TEMPLATE}' doesn't exist, skipping OVA build"
+      exit 0
+   fi
 fi
 
-# Warn the user if VMDK's exist but an OVF template does not.  Assume we do not
-# need to build an OVA in this case
-if [ ! -s "${BUILDSYS_OVF_TEMPLATE}" ] && \
-   [[ -s "${root_vmdk_path}" || -s "${data_vmdk_path}" ]]; then
-   echo "VMDK images exist, but OVF template '${BUILDSYS_OVF_TEMPLATE}' doesn't exist, skipping OVA build"
-   exit 0
-fi
-
-# If an OVF template exists but either of the images do not exist, fail
-if [ -s "${BUILDSYS_OVF_TEMPLATE}" ] && \
-   [[ ! -s "${root_vmdk_path}" || ! -s  "${data_vmdk_path}" ]]; then
-   echo "OVF template exists but VMDK images don't exist for the current version/commit - ${BUILDSYS_VERSION_FULL}. Unable to build an OVA" >&2
+# OVF templates all expect at least one disk.
+if [ ! -s "${root_vmdk_path}" ] ; then
+   echo "OVF template exists but VMDK root image doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL}." >&2
+   echo "Unable to build an OVA" >&2
    exit 1
+fi
+
+# If the template expects a data disk, make sure the image exists - it might not if we
+# built the variant with the "unified" layout.
+if grep -Fq '{{DATA_DISK}}' ${BUILDSYS_OVF_TEMPLATE} && [ ! -s "${data_vmdk_path}" ] ; then
+   echo "OVF template has data disk but VMDK data image doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL}." >&2
+   echo "Unable to build an OVA" >&2
+   exit 1
+fi
+
+# If the template doesn't expect a data disk, make sure the image doesn't exist - it
+# might if we built the variant with the "split" layout.
+if ! grep -Fq '{{DATA_DISK}}' ${BUILDSYS_OVF_TEMPLATE} && [ -s "${data_vmdk_path}" ] ; then
+   echo "OVF template does not have data disk but VMDK data image exists for the current version/commit - ${BUILDSYS_VERSION_FULL}." >&2
+   echo "Unable to build an OVA" >&2
+   exit 1
+fi
+
+is_split="no"
+if [ -s "${data_vmdk_path}" ] ; then
+   is_split="yes"
+fi
+
+bytes_in_gib="$((1024 * 1024 * 1024))"
+root_image_size_bytes="$(measure_image "${root_vmdk_path}")"
+root_image_size_gib="$((root_image_size_bytes / bytes_in_gib))"
+if [ "${is_split}" == "yes" ] ; then
+   # If an optional root volume size is given, it must be larger than the root image.
+   if [ -n "${PUBLISH_ROOT_VOLUME_SIZE}" ] ; then
+      if [ "${PUBLISH_ROOT_VOLUME_SIZE}" -lt "${root_image_size_gib}" ] ; then
+         echo "Root image is larger than the given volume size - pass '-e PUBLISH_ROOT_VOLUME_SIZE=${root_image_size_gib}' to fix" >&2
+         exit 1
+      fi
+      root_image_size_bytes="$((PUBLISH_ROOT_VOLUME_SIZE * bytes_in_gib))"
+   fi
+   data_image_size_bytes="$(measure_image "${data_vmdk_path}")"
+   data_image_size_gib="$((data_image_size_bytes / bytes_in_gib))"
+   if [ "${PUBLISH_DATA_VOLUME_SIZE}" -lt "${data_image_size_gib}" ] ; then
+      echo "Data image is larger than the given volume size - pass '-e PUBLISH_DATA_VOLUME_SIZE=${data_image_size_gib}' to fix" >&2
+      exit 1
+   fi
+   data_image_size_bytes="$((PUBLISH_DATA_VOLUME_SIZE * bytes_in_gib))"
+else # unified
+   if [ "${PUBLISH_UNIFIED_VOLUME_SIZE}" -lt "${root_image_size_gib}" ] ; then
+      echo "Unified image is larger than the given volume size - pass '-e PUBLISH_UNIFIED_VOLUME_SIZE=${root_image_size_gib}' to fix" >&2
+      exit 1
+   fi
+   root_image_size_bytes="$((PUBLISH_UNIFIED_VOLUME_SIZE * bytes_in_gib))"
+   data_image_size_bytes="0"
 fi
 
 # Create the OVF with the correct values
 sed "${BUILDSYS_OVF_TEMPLATE}" \
    -e "s/{{ROOT_DISK}}/${root_vmdk_path##*/}/g" \
    -e "s/{{DATA_DISK}}/${data_vmdk_path##*/}/g" \
+   -e "s/{{ROOT_DISK_BYTES}}/${root_image_size_bytes}/g" \
+   -e "s/{{DATA_DISK_BYTES}}/${data_image_size_bytes}/g" \
    > "${ova_tmp_dir}/${ovf}"
+
+# Make sure we replaced all the '{{...}}' fields with real values.
+if grep -F -e '{{' -e '}}' "${ova_tmp_dir}/${ovf}" ; then
+   echo "Failed to fully render the OVF template" >&2
+   exit 1
+fi
 
 # Create the manifest file with the SHA's of the VMDK's and the OVF
 root_sha256="$(sha256sum ${root_vmdk_path} | awk '{print $1}')"
-data_sha256="$(sha256sum ${data_vmdk_path} | awk '{print $1}')"
-ovf_sha256="$(sha256sum ${ova_tmp_dir}/${ovf} | awk '{print $1}')"
+if [ "${is_split}" == "yes" ] ; then
+   data_sha256="$(sha256sum ${data_vmdk_path} | awk '{print $1}')"
+fi
+
 echo "SHA256(${root_vmdk_path##*/})= ${root_sha256}" > "${ova_tmp_dir}/${manifest}"
-echo "SHA256(${data_vmdk_path##*/})= ${data_sha256}" >> "${ova_tmp_dir}/${manifest}"
+if [ "${is_split}" == "yes" ] ; then
+   echo "SHA256(${data_vmdk_path##*/})= ${data_sha256}" >> "${ova_tmp_dir}/${manifest}"
+fi
+
+ovf_sha256="$(sha256sum ${ova_tmp_dir}/${ovf} | awk '{print $1}')"
 echo "SHA256(${ovf})= ${ovf_sha256}" >> "${ova_tmp_dir}/${manifest}"
 
 cp "${root_vmdk_path}" "${ova_tmp_dir}"
-cp "${data_vmdk_path}" "${ova_tmp_dir}"
+if [ "${is_split}" == "yes" ] ; then
+   cp "${data_vmdk_path}" "${ova_tmp_dir}"
+fi
 
 # According to the OVF spec:
 # https://www.dmtf.org/sites/default/files/standards/documents/DSP0243_2.1.1.pdf,
 # the OVF must be first in the tar bundle.  Manifest is next, and then the
 # files must fall in the same order as listed in the References section of the
 # OVF file
-tar -cf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${ovf}" "${manifest}" "${root_vmdk_path##*/}" "${data_vmdk_path##*/}"
+tar -cf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${ovf}" "${manifest}" "${root_vmdk_path##*/}"
+if [ "${is_split}" == "yes" ] ; then
+   tar -rf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${data_vmdk_path##*/}"
+fi
+
 mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova"
 '''
 ]
@@ -653,9 +742,12 @@ LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
 
 # Include the root and data disk images in the repo if they exist
 os_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
-data_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
-if [ -s "${os_disk_img}" ] && [ -s "${data_disk_img}" ]; then
+if [ -s "${os_disk_img}" ] ; then
    LINK_REPO_TARGETS+=("--link-target ${os_disk_img}")
+fi
+
+data_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+if [ -s "${data_disk_img}" ]; then
    LINK_REPO_TARGETS+=("--link-target ${data_disk_img}")
 fi
 
@@ -794,22 +886,60 @@ set -e
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
 cleanup() {
-   [ -f "${root_image}" ] && rm -f "${root_image}"
-   [ -f "${data_image}" ] && rm -f "${data_image}"
+   ([ -f "${root_image}" ] && rm -f "${root_image}") ||:
+   ([ -f "${data_image}" ] && rm -f "${data_image}") ||:
 }
 trap 'cleanup' EXIT
 
-# Unlz4 the root / data images
+# Unlz4 the root image, and the data image if present
 rootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
 root_image="${rootlz4%.lz4}"
-datalz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
-data_image="${datalz4%.lz4}"
-if [ ! -s "${rootlz4}" ] || [ ! -s "${datalz4}" ]; then
-   echo "Image files don't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
+if [ ! -s "${rootlz4}" ]; then
+   echo "Image file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
    exit 1
 fi
 lz4 -df "${rootlz4}" "${root_image}"
-lz4 -df "${datalz4}" "${data_image}"
+
+datalz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+data_image="${datalz4%.lz4}"
+
+# We will only have a data image if the variant uses the "split" format.
+is_split="no"
+if [ -s "${datalz4}" ] ; then
+   lz4 -df "${datalz4}" "${data_image}"
+   is_split="yes"
+fi
+
+bytes_in_gib="$((1024 * 1024 * 1024))"
+root_image_size_gib="$(($(stat -c %s "${root_image}") / bytes_in_gib))"
+if [ "${is_split}" == "yes" ] ; then
+   # If an optional root volume size is given, it must be larger than the root image.
+   if [ -n "${PUBLISH_ROOT_VOLUME_SIZE}" ] && [ "${PUBLISH_ROOT_VOLUME_SIZE}" -lt "${root_image_size_gib}" ] ; then
+      echo "Root image is larger than the given volume size - pass '-e PUBLISH_ROOT_VOLUME_SIZE=${root_image_size_gib}' to fix" >&2
+      exit 1
+   fi
+   data_image_size_gib="$(($(stat -c %s "${data_image}") / bytes_in_gib))"
+   if [ "${PUBLISH_DATA_VOLUME_SIZE}" -lt "${data_image_size_gib}" ] ; then
+      echo "Data image is larger than the given volume size - pass '-e PUBLISH_DATA_VOLUME_SIZE=${data_image_size_gib}' to fix" >&2
+      exit 1
+   fi
+else # unified
+   if [ "${PUBLISH_UNIFIED_VOLUME_SIZE}" -lt "${root_image_size_gib}" ] ; then
+      echo "Unified image is larger than the given volume size - pass '-e PUBLISH_UNIFIED_VOLUME_SIZE=${root_image_size_gib}' to fix" >&2
+      exit 1
+   fi
+fi
+
+root_volume_args=(--root-image "${root_image}")
+data_volume_args=()
+if [ "${is_split}" == "yes" ] ; then
+   # Pass the root volume size if specified, otherwise it defaults to the size of the image.
+   root_volume_args+=(${PUBLISH_ROOT_VOLUME_SIZE:+--root-volume-size "${PUBLISH_ROOT_VOLUME_SIZE}"})
+   # Pass the data image to register as a snapshot, and its desired size.
+   data_volume_args+=(--data-image "${data_image}" --data-volume-size "${PUBLISH_DATA_VOLUME_SIZE}")
+else # unified
+   root_volume_args+=(--root-volume-size "${PUBLISH_UNIFIED_VOLUME_SIZE}")
+fi
 
 ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-${AMI_DATA_FILE_SUFFIX}"
@@ -821,10 +951,8 @@ pubsys \
    \
    ami \
    \
-   --root-image "${root_image}" \
-   --data-image "${data_image}" \
-   ${PUBLISH_ROOT_VOLUME_SIZE:+--root-volume-size "${PUBLISH_ROOT_VOLUME_SIZE}"} \
-   --data-volume-size "${PUBLISH_DATA_VOLUME_SIZE}" \
+   "${root_volume_args[@]}" \
+   "${data_volume_args[@]}" \
    \
    --arch "${BUILDSYS_ARCH}" \
    --name "${ami_name}" \
@@ -1101,6 +1229,7 @@ script = [
 '''
 for ws in sources variants/* tools/{buildsys,pubsys}; do
   [ -d "${ws}" ] || continue
+  [ "${ws}" == "variants/shared" ] && continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
 rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
