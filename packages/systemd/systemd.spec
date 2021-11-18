@@ -326,6 +326,7 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/graphical.target
 %exclude %{_cross_unitdir}/systemd-ask-password-console.path
 %exclude %{_cross_unitdir}/systemd-ask-password-wall.path
 %exclude %{_cross_unitdir}/systemd-oomd.service
+%exclude %{_cross_unitdir}/systemd-repart.service
 %exclude %{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
 %exclude %{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
 
