@@ -179,6 +179,13 @@ paths:
     get:
       summary: "Get OS information such as version, variant, and architecture"
       operationId: "get_os_info"
+      parameters:
+        - in: query
+          name: prefix
+          description: "Specific key prefix to query"
+          schema:
+            type: string
+          required: false
       responses:
         200:
           description: "Successful request"
@@ -279,6 +286,12 @@ paths:
           style: form
           explode: false
           required: false
+        - in: query
+          name: prefix
+          description: "Specific key prefix to query. This parameter will be ignored if 'names' is also supplied"
+          schema:
+            type: string
+          required: false
       responses:
         200:
           description: "Successful request"
@@ -304,6 +317,13 @@ paths:
           # `style: form` and `explode: false` format parameters as such:  /configuration-files?names=file1,file2
           style: form
           explode: false
+          required: false
+      parameters:
+        - in: query
+          name: prefix
+          description: "Specific key prefix to query. This parameter will be ignored if 'names' is also supplied"
+          schema:
+            type: string
           required: false
       responses:
         200:

@@ -10,7 +10,6 @@ pub use error::Error;
 use actix_web::{
     body::Body, error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
-use bottlerocket_release::BottlerocketRelease;
 use datastore::{Committed, FilesystemDataStore, Key, Value};
 use error::Result;
 use fs2::FileExt;
@@ -149,10 +148,27 @@ where
 
 // Handler methods called by the router
 
-/// Returns all data in the API model.
-async fn get_model(data: web::Data<SharedData>) -> Result<ModelResponse> {
+/// Returns all data in the API model.  If you pass a 'prefix' query string, only field names
+/// starting with that prefix will be included.  For example, a prefix of "settings." only returns
+/// settings.  Returns a ModelResponse, which contains a serde_json Value instead of a Model so
+/// that we can include only matched fields; this is necessary because the 'os' field contains a
+/// BottlerocketRelease whose fields aren't optional.  (Its other users depend on those fields.)
+async fn get_model(
+    query: web::Query<HashMap<String, String>>,
+    data: web::Data<SharedData>,
+) -> Result<ModelResponse> {
+    // When we query settings, services, etc., we query differently if the user gave a prefix - it
+    // means they only want keys that start with their given prefix.  Prefix queries are more
+    // forgiving because it's normal to return empty results if the prefix didn't match anything,
+    // whereas without prefix matching, we should always have some data to return.  The logic is
+    // fairly different, so we branch early.
+    if let Some(prefix) = query.get("prefix") {
+        return get_model_prefix(data, prefix).await;
+    }
+
     let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
 
+    // Fetch all the data and build a Model.
     let settings = Some(controller::get_settings(&*datastore, &Committed::Live)?);
     let services = Some(controller::get_services(&*datastore)?);
     let configuration_files = Some(controller::get_configuration_files(&*datastore)?);
@@ -164,7 +180,58 @@ async fn get_model(data: web::Data<SharedData>) -> Result<ModelResponse> {
         configuration_files,
         os,
     };
-    Ok(ModelResponse(model))
+
+    // Turn the Model into a Value so we can match the type used when fetching by prefix.
+    let val = serde_json::to_value(model).expect("struct to value can't fail");
+
+    Ok(ModelResponse(val))
+}
+
+/// Helper for get_model that handles the case of matching a user-specified prefix.
+async fn get_model_prefix(data: web::Data<SharedData>, prefix: &str) -> Result<ModelResponse> {
+    if prefix.is_empty() {
+        return error::EmptyInput { input: "prefix" }.fail();
+    }
+
+    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+
+    // Fetch all the data.
+    // Note that we don't add a prefix (for example "settings.") to the given prefix before passing
+    // it to _prefix methods, like we do in get_settings, because here we're fetching the whole
+    // model, not just settings.
+    let settings = controller::get_settings_prefix(&*datastore, prefix, &Committed::Live)?;
+    let services = controller::get_services_prefix(&*datastore, prefix)?;
+    let configuration_files = controller::get_configuration_files_prefix(&*datastore, prefix)?;
+
+    // Build a Model, but exclude 'os' for now.  BottlerocketRelease's fields aren't Option (for
+    // good reason - its other users rely on them) so we can't make a BottlerocketRelease with only
+    // some fields based on a prefix match.
+    let model = Model {
+        settings,
+        services,
+        configuration_files,
+        os: None,
+    };
+
+    // Turn the Model into a Value so we can insert an "os" value with filtered fields.
+    let mut val = serde_json::to_value(model).expect("struct to value can't fail");
+
+    // If the user gave a prefix unrelated to os, this will return None and so we'll leave the None
+    // in the model.  Otherwise it'll give us back a Value that's like a BottlerocketRelease but
+    // with only the fields matching the prefix.
+    if let Some(os) = controller::get_os_prefix(prefix)? {
+        // Structs are Objects in serde_json, which have a map of field -> value inside.  We
+        // destructure to get it by value, instead of as_object() which gives references.
+        let mut map = match val {
+            Value::Object(map) => map,
+            _ => panic!("structs are always objects"),
+        };
+        // Insert the filtered result and turn the map back into a Value.
+        map.insert("os".to_string(), os);
+        val = map.into();
+    }
+
+    Ok(ModelResponse(val))
 }
 
 // actix-web doesn't support Query for enums, so we use a HashMap and check for the expected keys
@@ -180,12 +247,18 @@ async fn get_settings(
     let settings = if let Some(keys_str) = query.get("keys") {
         let keys = comma_separated("keys", keys_str)?;
         controller::get_settings_keys(&*datastore, &keys, &Committed::Live)
-    } else if let Some(prefix_str) = query.get("prefix") {
-        if prefix_str.is_empty() {
+    } else if let Some(mut prefix) = query.get("prefix") {
+        if prefix.is_empty() {
             return error::EmptyInput { input: "prefix" }.fail();
         }
-        // Note: the prefix should not include "settings."
-        controller::get_settings_prefix(&*datastore, prefix_str, &Committed::Live)
+        // When retrieving from /settings, the settings prefix is implied, so we add it if it
+        // wasn't given.
+        let with_prefix = format!("settings.{}", prefix);
+        if !prefix.starts_with("settings") {
+            prefix = &with_prefix;
+        }
+        controller::get_settings_prefix(&*datastore, prefix, &Committed::Live)
+            .map(|opt| opt.unwrap_or_else(|| Settings::default()))
     } else {
         controller::get_settings(&*datastore, &Committed::Live)
     }?;
@@ -286,8 +359,29 @@ async fn commit_transaction_and_apply(
     Ok(ChangedKeysResponse(changes))
 }
 
-async fn get_os_info() -> Result<BottlerocketReleaseResponse> {
-    Ok(BottlerocketReleaseResponse(controller::get_os_info()?))
+/// Returns information about the OS image, like variant and version.  If you pass a 'prefix' query
+/// string, only field names starting with that prefix will be included.  Returns a
+/// BottlerocketReleaseResponse, which contains a serde_json Value instead of a BottlerocketRelease
+/// so that we can include only matched fields.
+async fn get_os_info(
+    query: web::Query<HashMap<String, String>>,
+) -> Result<BottlerocketReleaseResponse> {
+    let os = if let Some(mut prefix) = query.get("prefix") {
+        if prefix.is_empty() {
+            return error::EmptyInput { input: "prefix" }.fail();
+        }
+        // When retrieving from /os, the "os" prefix is implied, so we add it if it wasn't given.
+        let with_prefix = format!("os.{}", prefix);
+        if !prefix.starts_with("os") {
+            prefix = &with_prefix;
+        }
+        controller::get_os_prefix(prefix)?.unwrap_or_else(|| Value::Object(serde_json::Map::new()))
+    } else {
+        let os = controller::get_os_info()?;
+        serde_json::to_value(os).expect("struct to value can't fail")
+    };
+
+    Ok(BottlerocketReleaseResponse(os))
 }
 
 /// Get the affected services for a list of data keys
@@ -330,7 +424,8 @@ async fn get_templates(
     }
 }
 
-/// Get all services, or if 'names' is specified, services with those names
+/// Get all services, or if 'names' is specified, services with those names.  If you pass a
+/// 'prefix' query string, only services starting with that prefix will be included.
 async fn get_services(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedData>,
@@ -340,6 +435,18 @@ async fn get_services(
     let resp = if let Some(names_str) = query.get("names") {
         let names = comma_separated("names", names_str)?;
         controller::get_services_names(&*datastore, &names, &Committed::Live)
+    } else if let Some(mut prefix) = query.get("prefix") {
+        if prefix.is_empty() {
+            return error::EmptyInput { input: "prefix" }.fail();
+        }
+        // When retrieving from /services, the services prefix is implied, so we add it if it
+        // wasn't given.
+        let with_prefix = format!("services.{}", prefix);
+        if !prefix.starts_with("services") {
+            prefix = &with_prefix;
+        }
+        controller::get_services_prefix(&*datastore, prefix)
+            .map(|opt| opt.unwrap_or_else(|| Services::default()))
     } else {
         controller::get_services(&*datastore)
     }?;
@@ -347,7 +454,9 @@ async fn get_services(
     Ok(ServicesResponse(resp))
 }
 
-/// Get all configuration files, or if 'names' is specified, configuration files with those names
+/// Get all configuration files, or if 'names' is specified, configuration files with those names.
+/// If you pass a 'prefix' query string, only configuration files starting with that prefix will be
+/// included.
 async fn get_configuration_files(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedData>,
@@ -357,6 +466,18 @@ async fn get_configuration_files(
     let resp = if let Some(names_str) = query.get("names") {
         let names = comma_separated("names", names_str)?;
         controller::get_configuration_files_names(&*datastore, &names, &Committed::Live)
+    } else if let Some(mut prefix) = query.get("prefix") {
+        if prefix.is_empty() {
+            return error::EmptyInput { input: "prefix" }.fail();
+        }
+        // When retrieving from /configuration-files, the configuration-files prefix is implied, so
+        // we add it if it wasn't given.
+        let with_prefix = format!("configuration-files.{}", prefix);
+        if !prefix.starts_with("configuration-files") {
+            prefix = &with_prefix;
+        }
+        controller::get_configuration_files_prefix(&*datastore, prefix)
+            .map(|opt| opt.unwrap_or_else(|| ConfigurationFiles::default()))
     } else {
         controller::get_configuration_files(&*datastore)
     }?;
@@ -530,16 +651,31 @@ macro_rules! impl_responder_for {
     )
 }
 
-/// This lets us respond from our handler methods with a Model (or Result<Model>)
-struct ModelResponse(Model);
+/// This lets us respond from our handler methods with a model (or Result<model>), where "model" is
+/// a serde_json::Value corresponding to the Model struct.
+///
+/// This contains a serde_json::Value instead of a Model to support prefix queries; if the user
+/// gives a prefix that doesn't match all BottlerocketRelease fields, we can't construct a
+/// BottlerocketRelease since its fields aren't Option; using a Value lets us return the same
+/// structure, just not including fields the user doesn't want to see.  (Trying to deserialize
+/// those results into a Model/BottlerocketRelease would fail, so it's just intended for viewing.)
+struct ModelResponse(serde_json::Value);
 impl_responder_for!(ModelResponse, self, self.0);
 
 /// This lets us respond from our handler methods with a Settings (or Result<Settings>)
 struct SettingsResponse(Settings);
 impl_responder_for!(SettingsResponse, self, self.0);
 
-/// This lets us respond from our handler methods with a BottlerocketRelease (or Result<BottlerocketRelease>)
-struct BottlerocketReleaseResponse(BottlerocketRelease);
+/// This lets us respond from our handler methods with a release (or Result<release>), where
+/// "release" is a serde_json::Value corresponding to the BottlerocketRelease struct.
+///
+/// This contains a serde_json::Value instead of a BottlerocketRelease to support prefix queries;
+/// if the user gives a prefix that doesn't match all BottlerocketRelease fields, we can't
+/// construct a BottlerocketRelease since its fields aren't Option; using a Value lets us return
+/// the same structure, just not including fields the user doesn't want to see.  (Trying to
+/// deserialize those results into a BottlerocketRelease would fail, so it's just intended for
+/// viewing.)
+struct BottlerocketReleaseResponse(serde_json::Value);
 impl_responder_for!(BottlerocketReleaseResponse, self, self.0);
 
 /// This lets us respond from our handler methods with a HashMap (or Result<HashMap>) for metadata
