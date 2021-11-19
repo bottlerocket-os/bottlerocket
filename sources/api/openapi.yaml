@@ -12,6 +12,27 @@ servers:
   description: The production API server
 
 paths:
+  /:
+    get:
+      summary: "Get current model, including settings, services, configuration files, and os info"
+      operationId: "get_model"
+      parameters:
+        - in: query
+          name: prefix
+          description: "Specific key prefix to query"
+          schema:
+            type: string
+          required: false
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                $ref: "Model"
+        500:
+          description: "Server error"
+
   /settings:
     get:
       summary: "Get current settings"
