@@ -14,18 +14,17 @@ It can be pointed to another socket using `--socket-path`, for example for local
 The most important use is probably checking your current settings:
 
 ```
-apiclient -u /settings
+apiclient get settings
 ```
 
-You can also request the values of specific settings using `keys`:
+`get` will request all settings whose names start with the given prefix, so you can drill down into specific areas of interest:
 ```
-apiclient -u /settings?keys=settings.motd,settings.kernel.lockdown
+apiclient get settings.host-containers.admin
 ```
 
-Or, request all settings whose names start with a given `prefix`.
-(Note: here, the prefix should not start with "settings." since it's assumed.)
+Or, request some specific settings:
 ```
-apiclient -u /settings?prefix=host-containers.admin
+apiclient get settings.motd settings.kernel.lockdown
 ```
 
 ### Set mode
@@ -193,8 +192,8 @@ For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` a
 ## apiclient library
 
 The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
-the documentation for submodules [`apply`], [`exec`], [`reboot`], [`set`], and [`update`] for
-high-level helpers.
+the documentation for submodules [`apply`], [`exec`], [`get`], [`reboot`], [`set`], and
+[`update`] for high-level helpers.
 
 For more control, and to handle APIs without high-level wrappers, there are also 'raw' methods
 to query an HTTP API over a Unix-domain socket.

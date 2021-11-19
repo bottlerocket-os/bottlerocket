@@ -1,8 +1,8 @@
 #![deny(rust_2018_idioms)]
 
 //! The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
-//! the documentation for submodules [`apply`], [`exec`], [`reboot`], [`set`], and [`update`] for
-//! high-level helpers.
+//! the documentation for submodules [`apply`], [`exec`], [`get`], [`reboot`], [`set`], and
+//! [`update`] for high-level helpers.
 //!
 //! For more control, and to handle APIs without high-level wrappers, there are also 'raw' methods
 //! to query an HTTP API over a Unix-domain socket.
@@ -23,6 +23,7 @@ use std::path::Path;
 
 pub mod apply;
 pub mod exec;
+pub mod get;
 pub mod reboot;
 pub mod set;
 pub mod update;

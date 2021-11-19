@@ -248,7 +248,7 @@ Here we'll describe the settings you can configure on your Bottlerocket instance
 
 You can see the current settings with an API request:
 ```
-apiclient -u /settings
+apiclient get settings
 ```
 
 This will return all of the current settings in JSON format.

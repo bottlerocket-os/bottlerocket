@@ -14,18 +14,17 @@ It can be pointed to another socket using `--socket-path`, for example for local
 The most important use is probably checking your current settings:
 
 ```
-apiclient -u /settings
+apiclient get settings
 ```
 
-You can also request the values of specific settings using `keys`:
+`get` will request all settings whose names start with the given prefix, so you can drill down into specific areas of interest:
 ```
-apiclient -u /settings?keys=settings.motd,settings.kernel.lockdown
+apiclient get settings.host-containers.admin
 ```
 
-Or, request all settings whose names start with a given `prefix`.
-(Note: here, the prefix should not start with "settings." since it's assumed.)
+Or, request some specific settings:
 ```
-apiclient -u /settings?prefix=host-containers.admin
+apiclient get settings.motd settings.kernel.lockdown
 ```
 
 ### Set mode
