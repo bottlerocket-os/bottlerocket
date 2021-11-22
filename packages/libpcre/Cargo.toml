@@ -9,10 +9,10 @@ build = "build.rs"
 path = "pkg.rs"
 
 [package.metadata.build-package]
-releases-url = "https://ftp.pcre.org/pub/pcre"
+releases-url = "https://github.com/PhilipHazel/pcre2/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.pcre.org/pub/pcre/pcre2-10.37.tar.bz2"
+url = "https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.37/pcre2-10.37.tar.bz2"
 sha512 = "69f4bf4736b986e0fc855eedb292efe72a0df2e803bc0e61a6cf47775eed433bb1b2f28d7e641591ef4603d47beb543a64ed0eef9538d00f0746bc3435c143ec"
 
 [build-dependencies]
