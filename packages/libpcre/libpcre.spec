@@ -4,7 +4,7 @@ Release: 1%{?dist}
 Summary: Library for regular expressions
 License: BSD-3-Clause
 URL: https://www.pcre.org/
-Source0: https://ftp.pcre.org/pub/pcre/pcre2-%{version}.tar.bz2
+Source0: https://github.com/PhilipHazel/pcre2/releases/download/pcre2-%{version}/pcre2-%{version}.tar.bz2
 BuildRequires: %{_cross_os}glibc-devel
 
 %description

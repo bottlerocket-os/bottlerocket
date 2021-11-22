@@ -16,7 +16,7 @@ url = "https://download.gnome.org/sources/glib/2.70/glib-2.70.1.tar.xz"
 sha512 = "639317c98ab72ad853608ab4d395484daff135c0222556c51ca93fd8533c5759db14478beda964e4feb02bb2737a46a4eda25063f98a9c6ba6ae4bc5d74bf5e1"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.pcre.org/pub/pcre/pcre-8.37.tar.bz2"
+url = "https://downloads.sourceforge.net/pcre/pcre-8.37.tar.bz2"
 sha512 = "19344c9add2ebbd26c528505d07d3b028d79bc3e6103d51453a449cebd76bc76f5bc7ddd9ef0de41f98c50be74a2d9a65db539ed60f1add1086d99bde8a81466"
 
 [[package.metadata.build-package.external-files]]
