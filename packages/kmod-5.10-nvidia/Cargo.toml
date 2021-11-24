@@ -1,0 +1,24 @@
+[package]
+name = "kmod-5_10-nvidia"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+package-name = "kmod-5.10-nvidia"
+
+[[package.metadata.build-package.external-files]]
+url = "https://us.download.nvidia.com/tesla/470.82.01/NVIDIA-Linux-x86_64-470.82.01.run"
+sha512 = "86eac5e2d4fae5525a9332b77da58c0c12e76a35db023a2b14de7d9615b20ba4850a04fa189189c0dcf712f1f343fee98b954aaa6e9b83a959de3c3b8259c7c2"
+
+[[package.metadata.build-package.external-files]]
+url = "https://us.download.nvidia.com/tesla/470.82.01/NVIDIA-Linux-aarch64-470.82.01.run"
+sha512 = "62c4adf6fa3c3474c3a09c08ed8056d4e9d00a90effa3851add10d6b2603c23f9986c32ace2e1b2ed7b735779430d634856a06e93af41431db439dfc79503cd8"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+kernel-5_10 = { path = "../kernel-5.10" }
