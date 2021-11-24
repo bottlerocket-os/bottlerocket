@@ -1588,6 +1588,7 @@ dependencies = [
  "serde_json",
  "snafu",
  "tokio",
+ "tokio-retry",
  "tokio-test",
  "url",
 ]
@@ -3440,6 +3441,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tokio-retry"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f57eb36ecbe0fc510036adff84824dd3c24bb781e21bfa67b69d556aa85214f"
+dependencies = [
+ "pin-project 1.0.8",
+ "rand",
+ "tokio",
 ]
 
 [[package]]
