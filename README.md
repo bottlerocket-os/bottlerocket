@@ -505,7 +505,7 @@ Here are the metrics settings:
 
 #### Custom CA certificates settings
 
-By defualt, Bottlerocket ships with the Mozilla CA certificate store, but you can add self-signed certificates through the API using these settings:
+By default, Bottlerocket ships with the Mozilla CA certificate store, but you can add self-signed certificates through the API using these settings:
 
 * `settings.pki.<bundle-name>.data`: Base64-encoded PEM-formatted certificates bundle; it can contain more than one certificate
 * `settings.pki.<bundle-name>.trusted`: Whether the certificates in the bundle are trusted; defaults to `false` when not provided
