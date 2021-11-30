@@ -6,7 +6,7 @@
 // library calls based on the given flags, etc.)  The library modules contain the code for talking
 // to the API, which is intended to be reusable by other crates.
 
-use apiclient::{apply, exec, reboot, set, update};
+use apiclient::{apply, exec, get, reboot, set, update};
 use constants;
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
@@ -44,6 +44,7 @@ impl Default for Args {
 enum Subcommand {
     Apply(ApplyArgs),
     Exec(ExecArgs),
+    Get(GetArgs),
     Raw(RawArgs),
     Reboot(RebootArgs),
     Set(SetArgs),
@@ -62,6 +63,13 @@ struct ExecArgs {
     command: Vec<OsString>,
     target: String,
     tty: Option<bool>,
+}
+
+/// Stores user-supplied arguments for the 'get' subcommand.
+#[derive(Debug)]
+enum GetArgs {
+    Prefixes(Vec<String>),
+    Uri(String),
 }
 
 /// Stores user-supplied arguments for the 'raw' subcommand.
@@ -122,6 +130,7 @@ fn usage() -> ! {
                                        'raw' is the default subcommand and may be omitted.
             apply                      Applies settings from TOML/JSON files at given URIs,
                                        or from stdin.
+            get                        Retrieve and print settings.
             set                        Changes settings and applies them to the system.
             update check               Prints information about available updates.
             update apply               Applies available updates.
@@ -141,6 +150,14 @@ fn usage() -> ! {
 
         reboot options:
             None.
+
+        get options:
+            [ PREFIX [PREFIX ...] ]    The settings you want to get.  Full settings names work fine,
+                                       or you can specify prefixes to fetch all settings under them.
+            [ /desired-uri ]           The API URI to fetch.  Cannot be specified with prefixes.
+
+                                       If neither prefixes nor URI are specified, get will show
+                                       settings and OS info.
 
         set options:
             KEY=VALUE [KEY=VALUE ...]  The settings you want to set.  For example:
@@ -217,7 +234,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
             }
 
             // Subcommands
-            "raw" | "apply" | "exec" | "reboot" | "set" | "update"
+            "raw" | "apply" | "exec" | "get" | "reboot" | "set" | "update"
                 if subcommand.is_none() && !arg.starts_with('-') =>
             {
                 subcommand = Some(arg)
@@ -233,6 +250,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
         None | Some("raw") => return (global_args, parse_raw_args(subcommand_args)),
         Some("apply") => return (global_args, parse_apply_args(subcommand_args)),
         Some("exec") => return (global_args, parse_exec_args(subcommand_args)),
+        Some("get") => return (global_args, parse_get_args(subcommand_args)),
         Some("reboot") => return (global_args, parse_reboot_args(subcommand_args)),
         Some("set") => return (global_args, parse_set_args(subcommand_args)),
         Some("update") => return (global_args, parse_update_args(subcommand_args)),
@@ -345,6 +363,46 @@ fn parse_exec_args(args: Vec<String>) -> Subcommand {
         target,
         tty,
     })
+}
+
+/// Parses arguments for the 'get' subcommand.
+fn parse_get_args(args: Vec<String>) -> Subcommand {
+    let mut prefixes = vec![];
+    let mut uri = None;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match &arg {
+            x if x.starts_with('-') => usage_msg(&format!("Unknown argument '{}'", x)),
+
+            x if x.starts_with('/') => {
+                if let Some(_existing_val) = uri.replace(arg) {
+                    usage_msg("You can only specify one URI.");
+                }
+            }
+
+            // All other arguments are settings prefixes to fetch.
+            _ => prefixes.push(arg),
+        }
+    }
+
+    if let Some(uri) = uri {
+        if !prefixes.is_empty() {
+            usage_msg("You can specify prefixes or a URI, but not both.");
+        }
+        Subcommand::Get(GetArgs::Uri(uri))
+    } else if !prefixes.is_empty() {
+        if uri.is_some() {
+            usage_msg("You can specify prefixes or a URI, but not both.");
+        }
+        Subcommand::Get(GetArgs::Prefixes(prefixes))
+    } else {
+        // A reasonable default is showing OS info and settings.
+        Subcommand::Get(GetArgs::Prefixes(vec![
+            "os.".to_string(),
+            "settings.".to_string(),
+        ]))
+    }
 }
 
 /// Parses arguments for the 'reboot' subcommand.
@@ -607,6 +665,17 @@ async fn run() -> Result<()> {
                 .context(error::Exec)?;
         }
 
+        Subcommand::Get(get) => {
+            let result = match get {
+                GetArgs::Uri(uri) => get::get_uri(&args.socket_path, uri).await,
+                GetArgs::Prefixes(prefixes) => get::get_prefixes(&args.socket_path, prefixes).await,
+            };
+            let value = result.context(error::Get)?;
+            let pretty =
+                serde_json::to_string_pretty(&value).expect("JSON Value already validated as JSON");
+            println!("{}", pretty);
+        }
+
         Subcommand::Reboot(_reboot) => {
             reboot::reboot(&args.socket_path)
                 .await
@@ -692,7 +761,7 @@ async fn main() {
 }
 
 mod error {
-    use apiclient::{apply, exec, reboot, set, update};
+    use apiclient::{apply, exec, get, reboot, set, update};
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
@@ -714,6 +783,9 @@ mod error {
 
         #[snafu(display("Failed to exec: {}", source))]
         Exec { source: exec::Error },
+
+        #[snafu(display("Failed to get settings: {}", source))]
+        Get { source: get::Error },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },

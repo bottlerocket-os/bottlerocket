@@ -85,7 +85,7 @@ apiclient raw -u /actions/refresh-updates -m POST
 
 Now you can see the list of available updates, along with the chosen update, according to your `version-lock` [setting](../../README.md#updates-settings):
 ```
-apiclient raw -u /updates/status
+apiclient get /updates/status
 ```
 
 This will return the current update status in JSON format. The status should look something like the following (pretty-printed):
@@ -128,7 +128,7 @@ apiclient raw -u /actions/prepare-update -m POST
 
 After you request that the update be prepared, you can check the update status again until it reflects the new version in the staging partition.
 ```
-apiclient raw -u /updates/status
+apiclient get /updates/status
 ```
 
 If the staging partition shows the new version, you can proceed to "activate" the update.
