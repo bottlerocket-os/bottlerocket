@@ -55,6 +55,29 @@ pub(crate) fn delete_transaction<D: DataStore>(
         })
 }
 
+/// check_prefix is a helper for get_*_prefix functions that determines what prefix to use when
+/// checking whether settings match the prefix.  Pass in the prefix that was given in the API
+/// request, and the expected prefix of settings in the subject area (like "settings." or
+/// "services.") and it will return the prefix you should use to filter, or None if the prefix
+/// can't match.
+fn check_prefix<'a>(given: &'a str, expected: &'static str) -> Option<&'a str> {
+    if expected.starts_with(given) {
+        // Example: expected "settings." and given "se" - return "settings." since querying for
+        // "se" can be ambiguous with other values ("services") that can't be deserialized into a
+        // Settings.
+        return Some(expected);
+    }
+
+    if given.starts_with(expected) {
+        // Example: expected "settings." and given "settings.motd" - return the more specific
+        // "settings.motd" so the user only gets what they clearly want to see.
+        return Some(given);
+    }
+
+    // No overlap, we won't find any data and should return early.
+    return None;
+}
+
 /// Build a Settings based on the data in the datastore.  Errors if no settings are found.
 pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: &Committed) -> Result<Settings> {
     get_prefix(datastore, committed, "settings.", None)
@@ -68,18 +91,65 @@ pub(crate) fn get_settings_prefix<D: DataStore, S: AsRef<str>>(
     datastore: &D,
     prefix: S,
     committed: &Committed,
-) -> Result<Settings> {
-    let prefix = "settings.".to_string() + prefix.as_ref();
+) -> Result<Option<Settings>> {
+    // Return early if the prefix can't match settings.  (This is important because get_model
+    // checks all of our model types using the same given prefix.)
+    let prefix = match check_prefix(prefix.as_ref(), "settings.") {
+        Some(prefix) => prefix,
+        None => return Ok(None),
+    };
+
     get_prefix(datastore, committed, &prefix, None)
         .transpose()
         // None is OK here - they could ask for a prefix we don't have
-        .unwrap_or_else(|| Ok(Settings::default()))
+        .unwrap_or_else(|| Ok(None))
 }
 
 // The "os" APIs don't deal with the data store at all, they just read a release field.
 /// Build a BottlerocketRelease using the bottlerocket-release library.
 pub(crate) fn get_os_info() -> Result<BottlerocketRelease> {
     BottlerocketRelease::new().context(error::ReleaseData)
+}
+
+/// Build a BottlerocketRelease using the bottlerocket-release library, returning only the fields
+/// that start with the given prefix.  If the prefix was meant for another structure, we return
+/// None, making it easier to decide whether to include an empty structure in API results.
+pub(crate) fn get_os_prefix<S>(prefix: S) -> Result<Option<serde_json::Value>>
+where
+    S: AsRef<str>,
+{
+    let prefix = prefix.as_ref();
+
+    // Return early if the prefix can't match os data.  (This is important because get_model checks
+    // all of our model types using the same given prefix.)
+    let prefix = match check_prefix(prefix.as_ref(), "os.") {
+        Some(prefix) => prefix,
+        None => return Ok(None),
+    };
+
+    // We're not using the data store here, there are no dotted keys, we're just matching against
+    // field names.  Strip off the structure-level prefix.
+    let field_prefix = prefix.trim_start_matches("os.");
+
+    let os = BottlerocketRelease::new().context(error::ReleaseData)?;
+
+    // Turn into a serde Value we can manipulate.
+    let val = serde_json::to_value(os).expect("struct to value can't fail");
+
+    // Structs are Objects in serde_json, which have a map of field -> value inside.  We
+    // destructure to get it by value, instead of as_object() which gives references.
+    let map = match val {
+        Value::Object(map) => map,
+        _ => panic!("structs are always objects"),
+    };
+
+    // Keep the fields whose names match the requested prefix.
+    let filtered = map
+        .into_iter()
+        .filter(|(field_name, _val)| field_name.starts_with(field_prefix))
+        .collect();
+
+    Ok(Some(filtered))
 }
 
 /// Build a Services based on the data in the datastore.
@@ -95,6 +165,32 @@ pub(crate) fn get_services<D: DataStore>(datastore: &D) -> Result<Services> {
     .context(error::MissingData { prefix: "services" })?
 }
 
+/// Build a Services based on the data in the datastore, returning only the fields that start with
+/// the given prefix.  If the prefix was meant for another structure, we return None, making it
+/// easier to decide whether to include an empty structure in API results.
+pub(crate) fn get_services_prefix<D, S>(datastore: &D, prefix: S) -> Result<Option<Services>>
+where
+    D: DataStore,
+    S: AsRef<str>,
+{
+    // Return early if the prefix can't match services.  (This is important because get_model
+    // checks all of our model types using the same given prefix.)
+    let prefix = match check_prefix(prefix.as_ref(), "services.") {
+        Some(prefix) => prefix,
+        None => return Ok(None),
+    };
+
+    get_prefix(
+        datastore,
+        &Committed::Live,
+        prefix,
+        Some("services".to_string()),
+    )
+    .transpose()
+    // None is OK here - they could ask for a prefix we don't have
+    .unwrap_or_else(|| Ok(None))
+}
+
 /// Build a ConfigurationFiles based on the data in the datastore.
 pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<ConfigurationFiles> {
     get_prefix(
@@ -108,6 +204,35 @@ pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<Con
     .context(error::MissingData {
         prefix: "configuration-files",
     })?
+}
+
+/// Build a ConfigurationFiles based on the data in the datastore, returning only the fields that
+/// start with the given prefix.  If the prefix was meant for another structure, we return None,
+/// making it easier to decide whether to include an empty structure in API results.
+pub(crate) fn get_configuration_files_prefix<D, S>(
+    datastore: &D,
+    prefix: S,
+) -> Result<Option<ConfigurationFiles>>
+where
+    D: DataStore,
+    S: AsRef<str>,
+{
+    // Return early if the prefix can't match configuration-files.  (This is important because
+    // get_model checks all of our model types using the same given prefix.)
+    let prefix = match check_prefix(prefix.as_ref(), "configuration-files.") {
+        Some(prefix) => prefix,
+        None => return Ok(None),
+    };
+
+    get_prefix(
+        datastore,
+        &Committed::Live,
+        prefix,
+        Some("configuration-files".to_string()),
+    )
+    .transpose()
+    // None is OK here - they could ask for a prefix we don't have
+    .unwrap_or_else(|| Ok(None))
 }
 
 /// Helper to get data from the datastore, starting with the given find_prefix, and deserialize it
@@ -434,7 +559,7 @@ mod test {
     use datastore::memory::MemoryDataStore;
     use datastore::{Committed, DataStore, Key, KeyType};
     use maplit::{hashmap, hashset};
-    use model::Service;
+    use model::{ConfigurationFile, Service};
     use std::convert::TryInto;
 
     #[test]
@@ -464,15 +589,26 @@ mod test {
         )
         .unwrap();
 
-        // Retrieve with helper
-        let settings = get_settings_prefix(&ds, "", &Committed::Live).unwrap();
+        // Retrieve with short prefix OK
+        let settings = get_settings_prefix(&ds, "settings.", &Committed::Live)
+            .unwrap() // Result Ok
+            .unwrap(); // got Some result
         assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
 
-        let settings = get_settings_prefix(&ds, "mot", &Committed::Live).unwrap();
+        // Retrieve with more specific prefix OK
+        let settings = get_settings_prefix(&ds, "settings.mot", &Committed::Live)
+            .unwrap() // Result Ok
+            .unwrap(); // got Some result
         assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
 
-        let settings = get_settings_prefix(&ds, "motdxxx", &Committed::Live).unwrap();
-        assert_eq!(settings.motd, None);
+        // No match should return None; the "view" layer of the API, in mod.rs, turns this into an
+        // empty object if desired.
+        let settings = get_settings_prefix(&ds, "settings.motdxxx", &Committed::Live).unwrap();
+        assert_eq!(settings, None);
+
+        // Unrelated prefix should return None
+        let settings = get_settings_prefix(&ds, "xyz", &Committed::Live).unwrap();
+        assert_eq!(settings, None);
     }
 
     #[test]
@@ -527,6 +663,88 @@ mod test {
                 restart_commands: vec!["echo hi".to_string()]
             })
         );
+    }
+
+    #[test]
+    fn get_services_prefix_works() {
+        let mut ds = MemoryDataStore::new();
+        // Set directly with data store
+        ds.set_key(
+            &Key::new(KeyType::Data, "services.foo.configuration-files").unwrap(),
+            "[\"file1\"]",
+            &Committed::Live,
+        )
+        .unwrap();
+        ds.set_key(
+            &Key::new(KeyType::Data, "services.foo.restart-commands").unwrap(),
+            "[\"echo hi\"]",
+            &Committed::Live,
+        )
+        .unwrap();
+
+        // Retrieve built service OK
+        let prefix = "services.foo";
+        let services = get_services_prefix(&ds, &prefix)
+            .unwrap() // Result Ok
+            .unwrap(); // got Some result
+        assert_eq!(
+            services,
+            hashmap!("foo".to_string() => Service {
+                configuration_files: vec!["file1".try_into().unwrap()],
+                restart_commands: vec!["echo hi".to_string()]
+            })
+        );
+
+        // No match returns None
+        let prefix = "services.bar";
+        let services = get_services_prefix(&ds, &prefix).unwrap();
+        assert_eq!(services, None);
+
+        // Unrelated prefix returns None
+        let prefix = "settings";
+        let services = get_services_prefix(&ds, &prefix).unwrap();
+        assert_eq!(services, None);
+    }
+
+    #[test]
+    fn get_configuration_files_prefix_works() {
+        let mut ds = MemoryDataStore::new();
+        // Set directly with data store
+        ds.set_key(
+            &Key::new(KeyType::Data, "configuration-files.foo.path").unwrap(),
+            "\"file\"",
+            &Committed::Live,
+        )
+        .unwrap();
+        ds.set_key(
+            &Key::new(KeyType::Data, "configuration-files.foo.template-path").unwrap(),
+            "\"template\"",
+            &Committed::Live,
+        )
+        .unwrap();
+
+        // Retrieve built configuration file OK
+        let prefix = "configuration-files.foo";
+        let configuration_files = get_configuration_files_prefix(&ds, &prefix)
+            .unwrap() // Result Ok
+            .unwrap(); // got Some result
+        assert_eq!(
+            configuration_files,
+            hashmap!("foo".to_string() => ConfigurationFile {
+                path: "file".try_into().unwrap(),
+                template_path: "template".try_into().unwrap(),
+            })
+        );
+
+        // No match returns None
+        let prefix = "configuration-files.bar";
+        let configuration_files = get_configuration_files_prefix(&ds, &prefix).unwrap();
+        assert_eq!(configuration_files, None);
+
+        // Unrelated prefix returns None
+        let prefix = "settings";
+        let configuration_files = get_configuration_files_prefix(&ds, &prefix).unwrap();
+        assert_eq!(configuration_files, None);
     }
 
     #[test]
