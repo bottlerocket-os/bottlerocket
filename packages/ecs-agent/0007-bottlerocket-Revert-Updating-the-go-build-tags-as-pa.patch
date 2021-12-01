@@ -1,0 +1,131 @@
+From 094533eddd935954f115f36090e2feb571792be8 Mon Sep 17 00:00:00 2001
+From: "Sean P. Kelly" <seankell@amazon.com>
+Date: Wed, 1 Dec 2021 19:56:25 +0000
+Subject: [PATCH 2/2] bottlerocket: Revert "Updating the go build tags as part
+ of Linux Golang upgrade"
+
+This reverts commit 5ddc83b4f4225116770f87e47f6447c8accc5f38.
+---
+ agent/engine/execcmd/manager_init_task.go              | 2 +-
+ agent/engine/execcmd/manager_init_task_test.go         | 2 +-
+ agent/engine/execcmd/manager_init_task_windows.go      | 2 +-
+ agent/engine/execcmd/manager_init_task_windows_test.go | 2 +-
+ agent/engine/execcmd/manager_linux.go                  | 2 +-
+ agent/engine/execcmd/manager_start.go                  | 2 +-
+ agent/engine/execcmd/manager_start_test.go             | 2 +-
+ agent/engine/execcmd/manager_start_windows.go          | 3 +--
+ agent/engine/execcmd/manager_start_windows_test.go     | 2 +-
+ agent/engine/execcmd/manager_windows.go                | 2 +-
+ 10 files changed, 10 insertions(+), 11 deletions(-)
+
+diff --git a/agent/engine/execcmd/manager_init_task.go b/agent/engine/execcmd/manager_init_task.go
+index e588baac..24808342 100644
+--- a/agent/engine/execcmd/manager_init_task.go
++++ b/agent/engine/execcmd/manager_init_task.go
+@@ -1,4 +1,4 @@
+-//go:build linux || windows
++// +build linux windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_init_task_test.go b/agent/engine/execcmd/manager_init_task_test.go
+index 3fe2912e..7c4548a1 100644
+--- a/agent/engine/execcmd/manager_init_task_test.go
++++ b/agent/engine/execcmd/manager_init_task_test.go
+@@ -1,4 +1,4 @@
+-//go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_init_task_windows.go b/agent/engine/execcmd/manager_init_task_windows.go
+index 39dedf02..08bcc62f 100644
+--- a/agent/engine/execcmd/manager_init_task_windows.go
++++ b/agent/engine/execcmd/manager_init_task_windows.go
+@@ -1,4 +1,4 @@
+-//go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_init_task_windows_test.go b/agent/engine/execcmd/manager_init_task_windows_test.go
+index f1a5e89b..0bc6f08a 100644
+--- a/agent/engine/execcmd/manager_init_task_windows_test.go
++++ b/agent/engine/execcmd/manager_init_task_windows_test.go
+@@ -1,4 +1,4 @@
+-//go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_linux.go b/agent/engine/execcmd/manager_linux.go
+index 706d5da3..5984eceb 100644
+--- a/agent/engine/execcmd/manager_linux.go
++++ b/agent/engine/execcmd/manager_linux.go
+@@ -1,4 +1,4 @@
+-//go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_start.go b/agent/engine/execcmd/manager_start.go
+index b1a46d18..57890c49 100644
+--- a/agent/engine/execcmd/manager_start.go
++++ b/agent/engine/execcmd/manager_start.go
+@@ -1,4 +1,4 @@
+-//go:build linux || windows
++// +build linux windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_start_test.go b/agent/engine/execcmd/manager_start_test.go
+index 7f369eef..3810ed25 100644
+--- a/agent/engine/execcmd/manager_start_test.go
++++ b/agent/engine/execcmd/manager_start_test.go
+@@ -1,4 +1,4 @@
+-//go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_start_windows.go b/agent/engine/execcmd/manager_start_windows.go
+index a111ec92..a02ef67c 100644
+--- a/agent/engine/execcmd/manager_start_windows.go
++++ b/agent/engine/execcmd/manager_start_windows.go
+@@ -1,4 +1,4 @@
+-//go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+@@ -12,7 +12,6 @@
+ // on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ // express or implied. See the License for the specific language governing
+ // permissions and limitations under the License.
+-
+ package execcmd
+ 
+ import apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
+diff --git a/agent/engine/execcmd/manager_start_windows_test.go b/agent/engine/execcmd/manager_start_windows_test.go
+index c64c0963..dec0d085 100644
+--- a/agent/engine/execcmd/manager_start_windows_test.go
++++ b/agent/engine/execcmd/manager_start_windows_test.go
+@@ -1,4 +1,4 @@
+-//go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_windows.go b/agent/engine/execcmd/manager_windows.go
+index ad364756..085b52bb 100644
+--- a/agent/engine/execcmd/manager_windows.go
++++ b/agent/engine/execcmd/manager_windows.go
+@@ -1,4 +1,4 @@
+-//go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+-- 
+2.32.0
+

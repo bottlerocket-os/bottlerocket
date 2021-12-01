@@ -3,9 +3,9 @@
 %global goorg github.com/docker
 %global goimport %{goorg}/docker
 
-%global gover 20.10.7
+%global gover 20.10.11
 %global rpmver %{gover}
-%global gitrev b0f5bc36fea9dfb9672e1e9b1278ebab797b9ee0
+%global gitrev 847da184ad5048b27f5bdf9d53d070f731b43180
 
 %global source_date_epoch 1363394400
 
@@ -23,18 +23,6 @@ Source2: docker.socket
 Source3: docker-sysusers.conf
 Source4: daemon-json
 Source1000: clarify.toml
-
-# CVE-2021-41091
-Patch0001: 0001-Lock-down-docker-root-dir-perms.patch
-
-# CVE-2021-41089
-Patch0002: 0002-chrootarchive-don-t-create-parent-dirs-outside-of-ch.patch
-
-# CVE-2021-41190
-Patch0003: 1001-vendor-update-github.com-docker-distribution.patch
-Patch0004: 1002-vendor-update-github.com-containerd-containerd.patch
-Patch0005: 1003-distribution-validate-blob-type.patch
-Patch0006: 1004-vendor-github.com-moby-buildkit-v0.8.3-4-gbc07.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel

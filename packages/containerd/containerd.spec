@@ -2,9 +2,9 @@
 %global gorepo containerd
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.5.5
+%global gover 1.5.8
 %global rpmver %{gover}
-%global gitrev 72cec4be58a9eb6b2910f5d10f1c01ca47d231c0
+%global gitrev 1e5ef943eb76627a6d3b6de8cd1ef6537f393a71
 
 %global _dwz_low_mem_die_limit 0
 
@@ -23,18 +23,6 @@ Source1000: clarify.toml
 
 # TODO: submit this upstream, including a unit test.
 Patch1001: 1001-cri-set-default-RLIMIT_NOFILE.patch
-
-# TODO: drop this when https://github.com/containerd/containerd/pull/5104/ is merged
-Patch1002: 1002-cri-filter-selinux-xattr-for-image-volumes.patch
-
-# CVE-2021-41103
-Patch2001: 0001-v2-runtime-reduce-permissions-for-bundle-dir.patch
-Patch2002: 0002-v1-runtime-reduce-permissions-for-bundle-dir.patch
-Patch2003: 0003-btrfs-reduce-permissions-on-plugin-directories.patch
-
-# CVE-2021-41190
-Patch2004: 0004-images-validate-document-type-before-unmarshal.patch
-Patch2005: 0005-schema1-reject-ambiguous-documents.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel

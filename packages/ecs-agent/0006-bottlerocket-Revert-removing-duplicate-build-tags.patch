@@ -1,0 +1,3523 @@
+From 4f2d5933ef3192983fc4f6c81323488df1286f0d Mon Sep 17 00:00:00 2001
+From: "Sean P. Kelly" <seankell@amazon.com>
+Date: Wed, 1 Dec 2021 19:49:43 +0000
+Subject: [PATCH] bottlerocket: Revert "removing duplicate build tags"
+
+This reverts commit 225e27c676c7b12a9db20fec46396c00629ad3df.
+---
+ agent/acs/client/acs_client_test.go                            | 1 +
+ agent/acs/client/acs_error_test.go                             | 1 +
+ agent/acs/handler/acs_handler_test.go                          | 1 +
+ agent/acs/handler/attach_eni_handler_common_test.go            | 1 +
+ agent/acs/handler/attach_instance_eni_handler_test.go          | 1 +
+ agent/acs/handler/attach_task_eni_handler_test.go              | 1 +
+ agent/acs/handler/heartbeat_handler_test.go                    | 1 +
+ agent/acs/handler/payload_handler_test.go                      | 1 +
+ agent/acs/handler/refresh_credentials_handler_test.go          | 1 +
+ agent/acs/handler/task_manifest_handler_test.go                | 1 +
+ agent/acs/update_handler/updater_test.go                       | 1 +
+ agent/api/appmesh/appmesh_test.go                              | 1 +
+ agent/api/container/container_test.go                          | 1 +
+ agent/api/container/container_unix.go                          | 1 +
+ agent/api/container/container_windows.go                       | 1 +
+ agent/api/container/container_windows_test.go                  | 1 +
+ agent/api/container/containeroverrides_test.go                 | 1 +
+ agent/api/container/containertype_test.go                      | 1 +
+ agent/api/container/port_binding_test.go                       | 1 +
+ agent/api/container/status/containerstatus_test.go             | 1 +
+ agent/api/container/status/managedagentstatus_test.go          | 1 +
+ agent/api/container/transitiondependency_test.go               | 1 +
+ agent/api/container/transport_test.go                          | 1 +
+ agent/api/ecsclient/client_test.go                             | 1 +
+ agent/api/ecsclient/retry_handler_test.go                      | 1 +
+ agent/api/ecsclient/utils_amd64_test.go                        | 1 +
+ agent/api/ecsclient/utils_arm64_test.go                        | 1 +
+ agent/api/eni/eni_test.go                                      | 1 +
+ agent/api/eni/eniattachment_test.go                            | 1 +
+ agent/api/eni/enistatus_test.go                                | 1 +
+ agent/api/statechange_test.go                                  | 1 +
+ agent/api/task/association_test.go                             | 1 +
+ agent/api/task/status/statusmapping_test.go                    | 1 +
+ agent/api/task/status/taskstatus_test.go                       | 1 +
+ agent/api/task/task_linux.go                                   | 1 +
+ agent/api/task/task_linux_test.go                              | 1 +
+ agent/api/task/task_test.go                                    | 1 +
+ agent/api/task/task_test_utils.go                              | 1 +
+ agent/api/task/task_unsupported.go                             | 1 +
+ agent/api/task/task_windows.go                                 | 1 +
+ agent/api/task/task_windows_test.go                            | 1 +
+ agent/api/task/taskvolume_test.go                              | 1 +
+ agent/api/task/taskvolume_windows_test.go                      | 1 +
+ agent/api/task/types_unmarshal_test.go                         | 1 +
+ agent/api/task/util_test.go                                    | 1 +
+ agent/api/testutils/container_equal_test.go                    | 1 +
+ agent/api/testutils/task_equal_test.go                         | 1 +
+ agent/app/agent_capability_test.go                             | 1 +
+ agent/app/agent_capability_unix.go                             | 1 +
+ agent/app/agent_capability_unix_test.go                        | 1 +
+ agent/app/agent_capability_unspecified.go                      | 1 +
+ agent/app/agent_capability_windows.go                          | 1 +
+ agent/app/agent_capability_windows_test.go                     | 1 +
+ agent/app/agent_compatibility_linux.go                         | 1 +
+ agent/app/agent_compatibility_linux_test.go                    | 1 +
+ agent/app/agent_compatibility_unspecified.go                   | 1 +
+ agent/app/agent_integ_test.go                                  | 1 +
+ agent/app/agent_test.go                                        | 1 +
+ agent/app/agent_unix.go                                        | 1 +
+ agent/app/agent_unix_test.go                                   | 1 +
+ agent/app/agent_unspecified.go                                 | 1 +
+ agent/app/agent_windows.go                                     | 1 +
+ agent/app/agent_windows_test.go                                | 1 +
+ agent/app/data_test.go                                         | 1 +
+ agent/asm/asm_test.go                                          | 1 +
+ agent/async/lru_cache_test.go                                  | 1 +
+ agent/config/conditional_test.go                               | 1 +
+ agent/config/config_test.go                                    | 1 +
+ agent/config/config_unix.go                                    | 1 +
+ agent/config/config_unix_test.go                               | 1 +
+ agent/config/config_windows.go                                 | 1 +
+ agent/config/config_windows_test.go                            | 1 +
+ agent/config/const_linux.go                                    | 1 +
+ agent/config/const_unknown.go                                  | 1 +
+ agent/config/const_windows.go                                  | 1 +
+ agent/config/os_family_windows.go                              | 1 +
+ agent/config/os_family_windows_test.go                         | 1 +
+ agent/config/parse_linux.go                                    | 1 +
+ agent/config/parse_unsupported.go                              | 1 +
+ agent/config/parse_windows.go                                  | 1 +
+ agent/config/parse_windows_test.go                             | 1 +
+ agent/config/sensitive_test.go                                 | 1 +
+ agent/config/types_unix.go                                     | 1 +
+ agent/config/types_windows.go                                  | 1 +
+ agent/containermetadata/manager_test.go                        | 1 +
+ agent/containermetadata/manager_unix_test.go                   | 1 +
+ agent/containermetadata/manager_windows_test.go                | 1 +
+ agent/containermetadata/parse_metadata_test.go                 | 1 +
+ agent/containermetadata/types_test.go                          | 1 +
+ agent/containermetadata/utils_test.go                          | 1 +
+ agent/containermetadata/write_metadata_test.go                 | 1 +
+ agent/containermetadata/write_metadata_unix.go                 | 1 +
+ agent/containermetadata/write_metadata_unix_test.go            | 1 +
+ agent/containermetadata/write_metadata_windows.go              | 1 +
+ agent/containermetadata/write_metadata_windows_test.go         | 1 +
+ agent/credentials/instancecreds/instancecreds_test.go          | 1 +
+ agent/credentials/manager_test.go                              | 1 +
+ .../providers/rotating_shared_credentials_provider_test.go     | 1 +
+ agent/data/client_test.go                                      | 1 +
+ agent/data/container_client_test.go                            | 1 +
+ agent/data/eniattachment_client_test.go                        | 1 +
+ agent/data/helpers_test.go                                     | 1 +
+ agent/data/imagestate_client_test.go                           | 1 +
+ agent/data/metadata_client_test.go                             | 1 +
+ agent/data/task_client_test.go                                 | 1 +
+ agent/dockerclient/dockerapi/docker_client_test.go             | 1 +
+ agent/dockerclient/dockerapi/docker_events_buffer_test.go      | 1 +
+ agent/dockerclient/dockerapi/errors_test.go                    | 1 +
+ .../dockerclient/dockerapi/inactivity_timeout_handler_test.go  | 1 +
+ agent/dockerclient/dockerapi_compare_versions_test.go          | 1 +
+ agent/dockerclient/dockerauth/dockerauth_test.go               | 1 +
+ agent/dockerclient/dockerauth/ecr_test.go                      | 1 +
+ agent/dockerclient/sdkclientfactory/sdkclientfactory_test.go   | 1 +
+ .../sdkclientfactory/sdkclientfactory_unix_test.go             | 1 +
+ .../sdkclientfactory/sdkclientfactory_windows_test.go          | 1 +
+ agent/dockerclient/sdkclientfactory/versionsupport_unix.go     | 1 +
+ agent/dockerclient/sdkclientfactory/versionsupport_windows.go  | 1 +
+ agent/ec2/ec2_client_test.go                                   | 1 +
+ agent/ec2/ec2_metadata_client_test.go                          | 1 +
+ agent/ecr/client_test.go                                       | 1 +
+ agent/ecr/factory_test.go                                      | 1 +
+ agent/ecscni/namespace_helper_linux.go                         | 1 +
+ agent/ecscni/namespace_helper_unsupported.go                   | 1 +
+ agent/ecscni/namespace_helper_windows.go                       | 1 +
+ agent/ecscni/namespace_helper_windows_test.go                  | 1 +
+ agent/ecscni/netconfig_linux.go                                | 1 +
+ agent/ecscni/netconfig_windows.go                              | 1 +
+ agent/ecscni/netconfig_windows_test.go                         | 1 +
+ agent/ecscni/plugin_linux.go                                   | 1 +
+ agent/ecscni/plugin_linux_test.go                              | 1 +
+ agent/ecscni/plugin_test.go                                    | 1 +
+ agent/ecscni/plugin_unsupported.go                             | 1 +
+ agent/ecscni/plugin_windows.go                                 | 1 +
+ agent/ecscni/plugin_windows_test.go                            | 1 +
+ agent/ecscni/types_linux.go                                    | 1 +
+ agent/ecscni/types_windows.go                                  | 1 +
+ agent/engine/common_integ_test.go                              | 1 +
+ agent/engine/common_unix_integ_test.go                         | 2 ++
+ agent/engine/data_test.go                                      | 1 +
+ agent/engine/dependencygraph/graph_test.go                     | 1 +
+ agent/engine/dependencygraph/graph_unix_test.go                | 1 +
+ agent/engine/docker_image_manager_data_test.go                 | 1 +
+ agent/engine/docker_image_manager_integ_test.go                | 1 +
+ agent/engine/docker_image_manager_test.go                      | 1 +
+ agent/engine/docker_image_manager_unix_integ_test.go           | 1 +
+ agent/engine/docker_image_manager_windows_integ_test.go        | 1 +
+ agent/engine/docker_task_engine_linux.go                       | 1 +
+ agent/engine/docker_task_engine_linux_test.go                  | 1 +
+ agent/engine/docker_task_engine_test.go                        | 1 +
+ agent/engine/docker_task_engine_unsupported.go                 | 1 +
+ agent/engine/docker_task_engine_windows.go                     | 1 +
+ agent/engine/docker_task_engine_windows_test.go                | 1 +
+ agent/engine/dockerstate/dockerstate_test.go                   | 1 +
+ agent/engine/dockerstate/json_test.go                          | 1 +
+ agent/engine/dockerstate/testutils/json_test.go                | 1 +
+ agent/engine/engine_integ_test.go                              | 1 +
+ agent/engine/engine_sudo_linux_integ_test.go                   | 1 +
+ agent/engine/engine_unix_integ_test.go                         | 1 +
+ agent/engine/engine_windows_integ_test.go                      | 1 +
+ agent/engine/execcmd/manager_init_task_linux.go                | 1 +
+ agent/engine/execcmd/manager_init_task_linux_test.go           | 1 +
+ agent/engine/execcmd/manager_start_linux.go                    | 1 +
+ agent/engine/execcmd/manager_start_linux_test.go               | 1 +
+ agent/engine/execcmd/manager_unsupported.go                    | 3 ++-
+ agent/engine/ordering_integ_test.go                            | 1 +
+ agent/engine/ordering_integ_unix_test.go                       | 1 +
+ agent/engine/ordering_integ_windows_test.go                    | 1 +
+ agent/engine/task_manager_data_test.go                         | 1 +
+ agent/engine/task_manager_test.go                              | 1 +
+ agent/engine/task_manager_unix_test.go                         | 1 +
+ agent/eni/iphelperwrapper/iphelper_windows.go                  | 1 +
+ agent/eni/iphelperwrapper/iphelper_windows_test.go             | 1 +
+ agent/eni/iphelperwrapper/mibIpInterfaceRow_windows.go         | 1 +
+ agent/eni/netlinkwrapper/netlink_linux.go                      | 1 +
+ agent/eni/networkutils/utils_linux.go                          | 1 +
+ agent/eni/networkutils/utils_linux_test.go                     | 1 +
+ agent/eni/networkutils/utils_windows.go                        | 1 +
+ agent/eni/networkutils/utils_windows_test.go                   | 1 +
+ agent/eni/pause/error_test.go                                  | 1 +
+ agent/eni/pause/load_test.go                                   | 1 +
+ agent/eni/pause/pause_linux.go                                 | 1 +
+ agent/eni/pause/pause_linux_test.go                            | 1 +
+ agent/eni/pause/pause_unsupported.go                           | 1 +
+ agent/eni/pause/pause_windows.go                               | 1 +
+ agent/eni/udevwrapper/udev_linux.go                            | 1 +
+ agent/eni/udevwrapper/udev_unsupported.go                      | 1 +
+ agent/eni/watcher/watcher_linux.go                             | 1 +
+ agent/eni/watcher/watcher_linux_test.go                        | 1 +
+ agent/eni/watcher/watcher_test.go                              | 1 +
+ agent/eni/watcher/watcher_unsupported.go                       | 1 +
+ agent/eni/watcher/watcher_windows.go                           | 1 +
+ agent/eni/watcher/watcher_windows_test.go                      | 1 +
+ agent/eventhandler/attachment_handler_test.go                  | 1 +
+ agent/eventhandler/handler_test.go                             | 1 +
+ agent/eventhandler/task_handler_test.go                        | 1 +
+ agent/eventhandler/task_handler_types_test.go                  | 1 +
+ agent/eventstream/eventstream_test.go                          | 1 +
+ agent/fsx/fsx_test.go                                          | 1 +
+ agent/gogenerate/awssdk.go                                     | 1 +
+ agent/gpu/generate_mocks.go                                    | 1 +
+ agent/gpu/nvidia_gpu_manager_unix.go                           | 1 +
+ agent/gpu/nvidia_gpu_manager_unix_test.go                      | 1 +
+ agent/handlers/introspection_server_setup_test.go              | 1 +
+ agent/handlers/task_server_setup_test.go                       | 1 +
+ agent/handlers/utils/helpers_test.go                           | 1 +
+ agent/handlers/v1/license_handler_test.go                      | 1 +
+ agent/handlers/v1/response_test.go                             | 1 +
+ agent/handlers/v2/response_test.go                             | 1 +
+ agent/handlers/v2/stats_response_test.go                       | 1 +
+ agent/handlers/v3/response_test.go                             | 1 +
+ agent/handlers/v4/response_test.go                             | 1 +
+ agent/httpclient/httpclient_test.go                            | 1 +
+ agent/logger/audit/audit_log_test.go                           | 1 +
+ agent/logger/buffer_pool_test.go                               | 1 +
+ agent/logger/eventlog_windows.go                               | 1 +
+ agent/logger/format_test.go                                    | 1 +
+ agent/logger/global_test.go                                    | 1 +
+ agent/logger/log_init_test.go                                  | 1 +
+ agent/logger/log_test.go                                       | 1 +
+ agent/logger/log_unix_test.go                                  | 1 +
+ agent/logger/log_windows_test.go                               | 1 +
+ agent/logger/platform_unix.go                                  | 1 +
+ agent/logger/structured_logger_test.go                         | 1 +
+ agent/metrics/metrics_test.go                                  | 1 +
+ agent/s3/s3_test.go                                            | 1 +
+ agent/sighandlers/debug_handler.go                             | 1 +
+ agent/sighandlers/debug_handler_windows.go                     | 1 +
+ agent/sighandlers/termination_handler_test.go                  | 1 +
+ agent/ssm/ssm_test.go                                          | 1 +
+ agent/statemanager/dependencies/dependencies_windows.go        | 1 +
+ agent/statemanager/helper_unix_test.go                         | 1 +
+ agent/statemanager/helper_windows_test.go                      | 1 +
+ agent/statemanager/state_manager_test.go                       | 1 +
+ agent/statemanager/state_manager_unix.go                       | 1 +
+ agent/statemanager/state_manager_unix_test.go                  | 1 +
+ agent/statemanager/state_manager_win_test.go                   | 1 +
+ agent/statemanager/state_manager_windows.go                    | 1 +
+ agent/statemanager/state_manager_windows_test.go               | 1 +
+ agent/stats/common_unix_test.go                                | 1 +
+ agent/stats/common_windows_test.go                             | 1 +
+ agent/stats/container_test.go                                  | 1 +
+ agent/stats/engine_integ_test.go                               | 1 +
+ agent/stats/engine_test.go                                     | 1 +
+ agent/stats/engine_unix_integ_test.go                          | 1 +
+ agent/stats/engine_unix_test.go                                | 1 +
+ agent/stats/queue_test.go                                      | 1 +
+ agent/stats/task_linux.go                                      | 1 +
+ agent/stats/task_linux_test.go                                 | 1 +
+ agent/stats/task_unspecified.go                                | 1 +
+ agent/stats/utils_test.go                                      | 1 +
+ agent/stats/utils_unix.go                                      | 1 +
+ agent/stats/utils_unix_test.go                                 | 1 +
+ agent/stats/utils_windows.go                                   | 1 +
+ agent/stats/utils_windows_test.go                              | 1 +
+ agent/taskresource/asmauth/asmauth_test.go                     | 1 +
+ agent/taskresource/asmauth/asmauthstatus_test.go               | 1 +
+ agent/taskresource/asmsecret/asmsecret_test.go                 | 1 +
+ agent/taskresource/asmsecret/asmsecretstatus_test.go           | 1 +
+ agent/taskresource/cgroup/cgroup.go                            | 1 +
+ agent/taskresource/cgroup/cgroup_test.go                       | 1 +
+ agent/taskresource/cgroup/cgroup_unsupported.go                | 1 +
+ agent/taskresource/cgroup/cgroupstatus.go                      | 1 +
+ agent/taskresource/cgroup/cgroupstatus_test.go                 | 1 +
+ agent/taskresource/cgroup/control/cgroup_controller_linux.go   | 1 +
+ .../cgroup/control/cgroup_controller_linux_test.go             | 1 +
+ agent/taskresource/cgroup/control/factory/factory_linux.go     | 1 +
+ .../cgroup/control/factory/generate_mocks_linux.go             | 1 +
+ agent/taskresource/cgroup/control/generate_mocks_linux.go      | 1 +
+ agent/taskresource/cgroup/control/init_linux.go                | 1 +
+ agent/taskresource/cgroup/control/init_linux_test.go           | 1 +
+ agent/taskresource/cgroup/control/types_linux.go               | 1 +
+ .../taskresource/credentialspec/credentialspec_unsupported.go  | 1 +
+ agent/taskresource/credentialspec/credentialspec_windows.go    | 1 +
+ .../taskresource/credentialspec/credentialspec_windows_test.go | 1 +
+ agent/taskresource/envFiles/envfile_test.go                    | 1 +
+ agent/taskresource/envFiles/envfilestatus_test.go              | 1 +
+ agent/taskresource/firelens/firelens_unimplemented.go          | 1 +
+ agent/taskresource/firelens/firelens_unix.go                   | 1 +
+ agent/taskresource/firelens/firelens_unix_test.go              | 1 +
+ agent/taskresource/firelens/firelensconfig_unix.go             | 1 +
+ agent/taskresource/firelens/firelensconfig_unix_test.go        | 1 +
+ agent/taskresource/firelens/firelensstatus_test.go             | 1 +
+ agent/taskresource/firelens/json_unix.go                       | 1 +
+ agent/taskresource/firelens/json_unix_test.go                  | 1 +
+ .../fsxwindowsfileserver/fsxwindowsfileserver_unsupported.go   | 1 +
+ .../fsxwindowsfileserver/fsxwindowsfileserver_windows.go       | 1 +
+ .../fsxwindowsfileserver/fsxwindowsfileserver_windows_test.go  | 1 +
+ .../fsxwindowsfileserver/fsxwindowsfileserverstatus_test.go    | 1 +
+ agent/taskresource/ssmsecret/ssmsecret_test.go                 | 1 +
+ agent/taskresource/ssmsecret/ssmsecretstatus_test.go           | 1 +
+ agent/taskresource/types/types_linux_test.go                   | 1 +
+ agent/taskresource/types/types_test.go                         | 1 +
+ agent/taskresource/types_unix.go                               | 1 +
+ agent/taskresource/types_unsupported.go                        | 1 +
+ agent/taskresource/types_windows.go                            | 1 +
+ agent/taskresource/volume/dockervolume_test.go                 | 1 +
+ agent/taskresource/volume/volumestatus_test.go                 | 1 +
+ agent/tcs/client/client_test.go                                | 1 +
+ agent/tcs/handler/handler_test.go                              | 1 +
+ agent/tcs/handler/types_test.go                                | 1 +
+ agent/tools.go                                                 | 1 +
+ agent/utils/compare_versions_test.go                           | 1 +
+ agent/utils/cpuinfo.go                                         | 1 +
+ agent/utils/cpuinfo_test.go                                    | 1 +
+ agent/utils/json_test.go                                       | 1 +
+ agent/utils/license_test.go                                    | 1 +
+ agent/utils/nswrapper/ns_linux.go                              | 1 +
+ agent/utils/retry/backoff_test.go                              | 1 +
+ agent/utils/retry/exponential_backoff_test.go                  | 1 +
+ agent/utils/retry/retry_test.go                                | 1 +
+ agent/utils/sync/sequential_waitgroup_test.go                  | 1 +
+ agent/utils/ticker_test.go                                     | 1 +
+ agent/utils/utils_linux.go                                     | 1 +
+ agent/utils/utils_linux_test.go                                | 1 +
+ agent/utils/utils_test.go                                      | 1 +
+ agent/utils/utils_unsupported.go                               | 1 +
+ agent/utils/utils_windows.go                                   | 1 +
+ agent/utils/utils_windows_test.go                              | 1 +
+ agent/wsclient/client_test.go                                  | 1 +
+ 319 files changed, 321 insertions(+), 1 deletion(-)
+
+diff --git a/agent/acs/client/acs_client_test.go b/agent/acs/client/acs_client_test.go
+index 6e56e84f..9efa8abe 100644
+--- a/agent/acs/client/acs_client_test.go
++++ b/agent/acs/client/acs_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/client/acs_error_test.go b/agent/acs/client/acs_error_test.go
+index c8c63104..1ba77736 100644
+--- a/agent/acs/client/acs_error_test.go
++++ b/agent/acs/client/acs_error_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/acs_handler_test.go b/agent/acs/handler/acs_handler_test.go
+index b086a86a..ed25e268 100644
+--- a/agent/acs/handler/acs_handler_test.go
++++ b/agent/acs/handler/acs_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/attach_eni_handler_common_test.go b/agent/acs/handler/attach_eni_handler_common_test.go
+index 6453ebc0..fddbf3f8 100644
+--- a/agent/acs/handler/attach_eni_handler_common_test.go
++++ b/agent/acs/handler/attach_eni_handler_common_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/attach_instance_eni_handler_test.go b/agent/acs/handler/attach_instance_eni_handler_test.go
+index 0a51baef..b834eddb 100644
+--- a/agent/acs/handler/attach_instance_eni_handler_test.go
++++ b/agent/acs/handler/attach_instance_eni_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/attach_task_eni_handler_test.go b/agent/acs/handler/attach_task_eni_handler_test.go
+index fbe240e7..cdcda4bd 100644
+--- a/agent/acs/handler/attach_task_eni_handler_test.go
++++ b/agent/acs/handler/attach_task_eni_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/heartbeat_handler_test.go b/agent/acs/handler/heartbeat_handler_test.go
+index ac3a7eb7..176de61a 100644
+--- a/agent/acs/handler/heartbeat_handler_test.go
++++ b/agent/acs/handler/heartbeat_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/payload_handler_test.go b/agent/acs/handler/payload_handler_test.go
+index b265efb9..5f96f911 100644
+--- a/agent/acs/handler/payload_handler_test.go
++++ b/agent/acs/handler/payload_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/refresh_credentials_handler_test.go b/agent/acs/handler/refresh_credentials_handler_test.go
+index d7fa8f88..a87df989 100644
+--- a/agent/acs/handler/refresh_credentials_handler_test.go
++++ b/agent/acs/handler/refresh_credentials_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/handler/task_manifest_handler_test.go b/agent/acs/handler/task_manifest_handler_test.go
+index 545bb46c..cce4b9c2 100644
+--- a/agent/acs/handler/task_manifest_handler_test.go
++++ b/agent/acs/handler/task_manifest_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/acs/update_handler/updater_test.go b/agent/acs/update_handler/updater_test.go
+index adeff445..48d53621 100644
+--- a/agent/acs/update_handler/updater_test.go
++++ b/agent/acs/update_handler/updater_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/appmesh/appmesh_test.go b/agent/api/appmesh/appmesh_test.go
+index 846c9036..90614996 100644
+--- a/agent/api/appmesh/appmesh_test.go
++++ b/agent/api/appmesh/appmesh_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/container_test.go b/agent/api/container/container_test.go
+index 76d248b1..5aa8f2a7 100644
+--- a/agent/api/container/container_test.go
++++ b/agent/api/container/container_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/container_unix.go b/agent/api/container/container_unix.go
+index a105be71..defdaf30 100644
+--- a/agent/api/container/container_unix.go
++++ b/agent/api/container/container_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/container_windows.go b/agent/api/container/container_windows.go
+index 3b81dbb5..f481aaab 100644
+--- a/agent/api/container/container_windows.go
++++ b/agent/api/container/container_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/container_windows_test.go b/agent/api/container/container_windows_test.go
+index 89aa2f08..669019ad 100644
+--- a/agent/api/container/container_windows_test.go
++++ b/agent/api/container/container_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/containeroverrides_test.go b/agent/api/container/containeroverrides_test.go
+index c7479c7d..da40ea00 100644
+--- a/agent/api/container/containeroverrides_test.go
++++ b/agent/api/container/containeroverrides_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/containertype_test.go b/agent/api/container/containertype_test.go
+index 41298acf..5681df63 100644
+--- a/agent/api/container/containertype_test.go
++++ b/agent/api/container/containertype_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/port_binding_test.go b/agent/api/container/port_binding_test.go
+index 5648e4f0..603490dd 100644
+--- a/agent/api/container/port_binding_test.go
++++ b/agent/api/container/port_binding_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/status/containerstatus_test.go b/agent/api/container/status/containerstatus_test.go
+index 10cd9b94..0016f1cf 100644
+--- a/agent/api/container/status/containerstatus_test.go
++++ b/agent/api/container/status/containerstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/status/managedagentstatus_test.go b/agent/api/container/status/managedagentstatus_test.go
+index 15131236..332c11d1 100644
+--- a/agent/api/container/status/managedagentstatus_test.go
++++ b/agent/api/container/status/managedagentstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/transitiondependency_test.go b/agent/api/container/transitiondependency_test.go
+index 093f8dbc..e4466988 100644
+--- a/agent/api/container/transitiondependency_test.go
++++ b/agent/api/container/transitiondependency_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/container/transport_test.go b/agent/api/container/transport_test.go
+index 5e230054..2f21240e 100644
+--- a/agent/api/container/transport_test.go
++++ b/agent/api/container/transport_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/ecsclient/client_test.go b/agent/api/ecsclient/client_test.go
+index 2457c809..5060ae60 100644
+--- a/agent/api/ecsclient/client_test.go
++++ b/agent/api/ecsclient/client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/ecsclient/retry_handler_test.go b/agent/api/ecsclient/retry_handler_test.go
+index 24f523a0..2194355f 100644
+--- a/agent/api/ecsclient/retry_handler_test.go
++++ b/agent/api/ecsclient/retry_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/ecsclient/utils_amd64_test.go b/agent/api/ecsclient/utils_amd64_test.go
+index 7ecd0e2b..5bb95300 100644
+--- a/agent/api/ecsclient/utils_amd64_test.go
++++ b/agent/api/ecsclient/utils_amd64_test.go
+@@ -1,4 +1,5 @@
+ //go:build amd64 && unit
++// +build amd64,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/ecsclient/utils_arm64_test.go b/agent/api/ecsclient/utils_arm64_test.go
+index 37d680ad..1a46f134 100644
+--- a/agent/api/ecsclient/utils_arm64_test.go
++++ b/agent/api/ecsclient/utils_arm64_test.go
+@@ -1,4 +1,5 @@
+ //go:build arm64 && unit
++// +build arm64,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/eni/eni_test.go b/agent/api/eni/eni_test.go
+index 11b4a3fe..2ed2f0b3 100644
+--- a/agent/api/eni/eni_test.go
++++ b/agent/api/eni/eni_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/eni/eniattachment_test.go b/agent/api/eni/eniattachment_test.go
+index 4c188fd5..6f46caec 100644
+--- a/agent/api/eni/eniattachment_test.go
++++ b/agent/api/eni/eniattachment_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/eni/enistatus_test.go b/agent/api/eni/enistatus_test.go
+index c76acc3b..1f42345a 100644
+--- a/agent/api/eni/enistatus_test.go
++++ b/agent/api/eni/enistatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/statechange_test.go b/agent/api/statechange_test.go
+index 72ed57f0..42657e16 100644
+--- a/agent/api/statechange_test.go
++++ b/agent/api/statechange_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/association_test.go b/agent/api/task/association_test.go
+index a3056eae..0544af0a 100644
+--- a/agent/api/task/association_test.go
++++ b/agent/api/task/association_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/status/statusmapping_test.go b/agent/api/task/status/statusmapping_test.go
+index a4f345f3..0d5c757b 100644
+--- a/agent/api/task/status/statusmapping_test.go
++++ b/agent/api/task/status/statusmapping_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/status/taskstatus_test.go b/agent/api/task/status/taskstatus_test.go
+index 270223be..4a993858 100644
+--- a/agent/api/task/status/taskstatus_test.go
++++ b/agent/api/task/status/taskstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/task_linux.go b/agent/api/task/task_linux.go
+index 40016268..b3bd47a7 100644
+--- a/agent/api/task/task_linux.go
++++ b/agent/api/task/task_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/task_linux_test.go b/agent/api/task/task_linux_test.go
+index a241ee5d..de1c38e9 100644
+--- a/agent/api/task/task_linux_test.go
++++ b/agent/api/task/task_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/task_test.go b/agent/api/task/task_test.go
+index bc80206e..b7eaa320 100644
+--- a/agent/api/task/task_test.go
++++ b/agent/api/task/task_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/task_test_utils.go b/agent/api/task/task_test_utils.go
+index 66707a2b..d8c3ec97 100644
+--- a/agent/api/task/task_test_utils.go
++++ b/agent/api/task/task_test_utils.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/task_unsupported.go b/agent/api/task/task_unsupported.go
+index 33c3636e..8ea6cb31 100644
+--- a/agent/api/task/task_unsupported.go
++++ b/agent/api/task/task_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/task_windows.go b/agent/api/task/task_windows.go
+index 766a4855..178049da 100644
+--- a/agent/api/task/task_windows.go
++++ b/agent/api/task/task_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/task_windows_test.go b/agent/api/task/task_windows_test.go
+index cde35b42..78e8122f 100644
+--- a/agent/api/task/task_windows_test.go
++++ b/agent/api/task/task_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/taskvolume_test.go b/agent/api/task/taskvolume_test.go
+index dac7a2bf..737dd8e1 100644
+--- a/agent/api/task/taskvolume_test.go
++++ b/agent/api/task/taskvolume_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/taskvolume_windows_test.go b/agent/api/task/taskvolume_windows_test.go
+index b85bcb44..2d02669b 100644
+--- a/agent/api/task/taskvolume_windows_test.go
++++ b/agent/api/task/taskvolume_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/types_unmarshal_test.go b/agent/api/task/types_unmarshal_test.go
+index 04890be8..bd2c3d06 100644
+--- a/agent/api/task/types_unmarshal_test.go
++++ b/agent/api/task/types_unmarshal_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/task/util_test.go b/agent/api/task/util_test.go
+index 1b17240e..8c440971 100644
+--- a/agent/api/task/util_test.go
++++ b/agent/api/task/util_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/testutils/container_equal_test.go b/agent/api/testutils/container_equal_test.go
+index b1162560..5e7a90e5 100644
+--- a/agent/api/testutils/container_equal_test.go
++++ b/agent/api/testutils/container_equal_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/api/testutils/task_equal_test.go b/agent/api/testutils/task_equal_test.go
+index 069e583e..68300334 100644
+--- a/agent/api/testutils/task_equal_test.go
++++ b/agent/api/testutils/task_equal_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_capability_test.go b/agent/app/agent_capability_test.go
+index 0753f391..a0e558e6 100644
+--- a/agent/app/agent_capability_test.go
++++ b/agent/app/agent_capability_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_capability_unix.go b/agent/app/agent_capability_unix.go
+index b7fed896..f7c2b318 100644
+--- a/agent/app/agent_capability_unix.go
++++ b/agent/app/agent_capability_unix.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_capability_unix_test.go b/agent/app/agent_capability_unix_test.go
+index 98f281d7..fc476506 100644
+--- a/agent/app/agent_capability_unix_test.go
++++ b/agent/app/agent_capability_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_capability_unspecified.go b/agent/app/agent_capability_unspecified.go
+index 28cfb80d..de0c37f8 100644
+--- a/agent/app/agent_capability_unspecified.go
++++ b/agent/app/agent_capability_unspecified.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_capability_windows.go b/agent/app/agent_capability_windows.go
+index 99225922..749b0c3a 100644
+--- a/agent/app/agent_capability_windows.go
++++ b/agent/app/agent_capability_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_capability_windows_test.go b/agent/app/agent_capability_windows_test.go
+index 747a4db3..c5568537 100644
+--- a/agent/app/agent_capability_windows_test.go
++++ b/agent/app/agent_capability_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_compatibility_linux.go b/agent/app/agent_compatibility_linux.go
+index 4c493ff1..716b91f8 100644
+--- a/agent/app/agent_compatibility_linux.go
++++ b/agent/app/agent_compatibility_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_compatibility_linux_test.go b/agent/app/agent_compatibility_linux_test.go
+index f20c4af0..d1ef20e9 100644
+--- a/agent/app/agent_compatibility_linux_test.go
++++ b/agent/app/agent_compatibility_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_compatibility_unspecified.go b/agent/app/agent_compatibility_unspecified.go
+index dce18e76..0911e725 100644
+--- a/agent/app/agent_compatibility_unspecified.go
++++ b/agent/app/agent_compatibility_unspecified.go
+@@ -1,4 +1,5 @@
+ //go:build !linux
++// +build !linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_integ_test.go b/agent/app/agent_integ_test.go
+index a158a739..416b1077 100644
+--- a/agent/app/agent_integ_test.go
++++ b/agent/app/agent_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build integration
++// +build integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_test.go b/agent/app/agent_test.go
+index e12cecad..b8ae1ed0 100644
+--- a/agent/app/agent_test.go
++++ b/agent/app/agent_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_unix.go b/agent/app/agent_unix.go
+index 9dda0d1b..8858bcee 100644
+--- a/agent/app/agent_unix.go
++++ b/agent/app/agent_unix.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_unix_test.go b/agent/app/agent_unix_test.go
+index 25933a72..e67d49f3 100644
+--- a/agent/app/agent_unix_test.go
++++ b/agent/app/agent_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_unspecified.go b/agent/app/agent_unspecified.go
+index 34bf5d35..876bfefd 100644
+--- a/agent/app/agent_unspecified.go
++++ b/agent/app/agent_unspecified.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_windows.go b/agent/app/agent_windows.go
+index 5f1421e5..673736a1 100644
+--- a/agent/app/agent_windows.go
++++ b/agent/app/agent_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/agent_windows_test.go b/agent/app/agent_windows_test.go
+index 55952d01..fa71c244 100644
+--- a/agent/app/agent_windows_test.go
++++ b/agent/app/agent_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/app/data_test.go b/agent/app/data_test.go
+index d201f49e..db9c88be 100644
+--- a/agent/app/data_test.go
++++ b/agent/app/data_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/asm/asm_test.go b/agent/asm/asm_test.go
+index d3e18bfd..95bb3cfc 100644
+--- a/agent/asm/asm_test.go
++++ b/agent/asm/asm_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/async/lru_cache_test.go b/agent/async/lru_cache_test.go
+index 12591307..7e863acd 100644
+--- a/agent/async/lru_cache_test.go
++++ b/agent/async/lru_cache_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/conditional_test.go b/agent/config/conditional_test.go
+index 601bf94e..e9cda03b 100644
+--- a/agent/config/conditional_test.go
++++ b/agent/config/conditional_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/config_test.go b/agent/config/config_test.go
+index 1664cf17..ca267eac 100644
+--- a/agent/config/config_test.go
++++ b/agent/config/config_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
+index 506c67f7..f70efc0d 100644
+--- a/agent/config/config_unix.go
++++ b/agent/config/config_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/config_unix_test.go b/agent/config/config_unix_test.go
+index d39a0966..e35d9bbf 100644
+--- a/agent/config/config_unix_test.go
++++ b/agent/config/config_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && unit
++// +build !windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/config_windows.go b/agent/config/config_windows.go
+index 181c9545..d35ec960 100644
+--- a/agent/config/config_windows.go
++++ b/agent/config/config_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/config_windows_test.go b/agent/config/config_windows_test.go
+index f4ad9898..f2c4a323 100644
+--- a/agent/config/config_windows_test.go
++++ b/agent/config/config_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/const_linux.go b/agent/config/const_linux.go
+index 2b9289e1..1ea8885b 100644
+--- a/agent/config/const_linux.go
++++ b/agent/config/const_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/const_unknown.go b/agent/config/const_unknown.go
+index 37f31d03..53841f47 100644
+--- a/agent/config/const_unknown.go
++++ b/agent/config/const_unknown.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && !linux
++// +build !windows,!linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/const_windows.go b/agent/config/const_windows.go
+index 71ab60ce..3606476f 100644
+--- a/agent/config/const_windows.go
++++ b/agent/config/const_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/os_family_windows.go b/agent/config/os_family_windows.go
+index 5bc773a7..d7b2218d 100644
+--- a/agent/config/os_family_windows.go
++++ b/agent/config/os_family_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/os_family_windows_test.go b/agent/config/os_family_windows_test.go
+index 68e14f16..9b6208cd 100644
+--- a/agent/config/os_family_windows_test.go
++++ b/agent/config/os_family_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/parse_linux.go b/agent/config/parse_linux.go
+index 255163de..5ab45d3c 100644
+--- a/agent/config/parse_linux.go
++++ b/agent/config/parse_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/parse_unsupported.go b/agent/config/parse_unsupported.go
+index 732fae35..45d71156 100644
+--- a/agent/config/parse_unsupported.go
++++ b/agent/config/parse_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/parse_windows.go b/agent/config/parse_windows.go
+index fbdc2ade..6040cb5d 100644
+--- a/agent/config/parse_windows.go
++++ b/agent/config/parse_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/parse_windows_test.go b/agent/config/parse_windows_test.go
+index 618ae726..d4604840 100644
+--- a/agent/config/parse_windows_test.go
++++ b/agent/config/parse_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/sensitive_test.go b/agent/config/sensitive_test.go
+index a5c00fe6..f0f13b2a 100644
+--- a/agent/config/sensitive_test.go
++++ b/agent/config/sensitive_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/types_unix.go b/agent/config/types_unix.go
+index 887e35ea..164fa4aa 100644
+--- a/agent/config/types_unix.go
++++ b/agent/config/types_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/config/types_windows.go b/agent/config/types_windows.go
+index 90ca8b25..df04eeda 100644
+--- a/agent/config/types_windows.go
++++ b/agent/config/types_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/manager_test.go b/agent/containermetadata/manager_test.go
+index cfb1f7b1..737dbf55 100644
+--- a/agent/containermetadata/manager_test.go
++++ b/agent/containermetadata/manager_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/manager_unix_test.go b/agent/containermetadata/manager_unix_test.go
+index 2c787e40..ad3399cc 100644
+--- a/agent/containermetadata/manager_unix_test.go
++++ b/agent/containermetadata/manager_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit && !windows
++// +build unit,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/manager_windows_test.go b/agent/containermetadata/manager_windows_test.go
+index 8174b4a0..296f5621 100644
+--- a/agent/containermetadata/manager_windows_test.go
++++ b/agent/containermetadata/manager_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit && windows
++// +build unit,windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/parse_metadata_test.go b/agent/containermetadata/parse_metadata_test.go
+index 73770de9..7a3357f7 100644
+--- a/agent/containermetadata/parse_metadata_test.go
++++ b/agent/containermetadata/parse_metadata_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/types_test.go b/agent/containermetadata/types_test.go
+index 12b25486..5aebbd84 100644
+--- a/agent/containermetadata/types_test.go
++++ b/agent/containermetadata/types_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/utils_test.go b/agent/containermetadata/utils_test.go
+index dba39d36..df3ad60c 100644
+--- a/agent/containermetadata/utils_test.go
++++ b/agent/containermetadata/utils_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/write_metadata_test.go b/agent/containermetadata/write_metadata_test.go
+index b3ab5e0b..adeeb1c8 100644
+--- a/agent/containermetadata/write_metadata_test.go
++++ b/agent/containermetadata/write_metadata_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/write_metadata_unix.go b/agent/containermetadata/write_metadata_unix.go
+index d3b32dde..1c9e7990 100644
+--- a/agent/containermetadata/write_metadata_unix.go
++++ b/agent/containermetadata/write_metadata_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/write_metadata_unix_test.go b/agent/containermetadata/write_metadata_unix_test.go
+index 9603e71f..5d6eb54e 100644
+--- a/agent/containermetadata/write_metadata_unix_test.go
++++ b/agent/containermetadata/write_metadata_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit && !windows
++// +build unit,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/write_metadata_windows.go b/agent/containermetadata/write_metadata_windows.go
+index 357ff630..85efa3c6 100644
+--- a/agent/containermetadata/write_metadata_windows.go
++++ b/agent/containermetadata/write_metadata_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/containermetadata/write_metadata_windows_test.go b/agent/containermetadata/write_metadata_windows_test.go
+index 2e86c31b..3a906b3d 100644
+--- a/agent/containermetadata/write_metadata_windows_test.go
++++ b/agent/containermetadata/write_metadata_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit && windows
++// +build unit,windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/credentials/instancecreds/instancecreds_test.go b/agent/credentials/instancecreds/instancecreds_test.go
+index 4c4f6428..7632faa2 100644
+--- a/agent/credentials/instancecreds/instancecreds_test.go
++++ b/agent/credentials/instancecreds/instancecreds_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/credentials/manager_test.go b/agent/credentials/manager_test.go
+index b30284c0..40f3ca75 100644
+--- a/agent/credentials/manager_test.go
++++ b/agent/credentials/manager_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/credentials/providers/rotating_shared_credentials_provider_test.go b/agent/credentials/providers/rotating_shared_credentials_provider_test.go
+index 404701cf..246adc66 100644
+--- a/agent/credentials/providers/rotating_shared_credentials_provider_test.go
++++ b/agent/credentials/providers/rotating_shared_credentials_provider_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/data/client_test.go b/agent/data/client_test.go
+index 27b8a399..ab5d0d91 100644
+--- a/agent/data/client_test.go
++++ b/agent/data/client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/data/container_client_test.go b/agent/data/container_client_test.go
+index 9d1c325c..cd11908a 100644
+--- a/agent/data/container_client_test.go
++++ b/agent/data/container_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/data/eniattachment_client_test.go b/agent/data/eniattachment_client_test.go
+index 58fbd80a..cac248e8 100644
+--- a/agent/data/eniattachment_client_test.go
++++ b/agent/data/eniattachment_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/data/helpers_test.go b/agent/data/helpers_test.go
+index efae4878..fad4799a 100644
+--- a/agent/data/helpers_test.go
++++ b/agent/data/helpers_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/data/imagestate_client_test.go b/agent/data/imagestate_client_test.go
+index c5ddaacb..69619131 100644
+--- a/agent/data/imagestate_client_test.go
++++ b/agent/data/imagestate_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/data/metadata_client_test.go b/agent/data/metadata_client_test.go
+index 6d5b3272..f9a6b754 100644
+--- a/agent/data/metadata_client_test.go
++++ b/agent/data/metadata_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/data/task_client_test.go b/agent/data/task_client_test.go
+index 5134b1ed..6d727827 100644
+--- a/agent/data/task_client_test.go
++++ b/agent/data/task_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/dockerapi/docker_client_test.go b/agent/dockerclient/dockerapi/docker_client_test.go
+index 5f9c7676..6375d607 100644
+--- a/agent/dockerclient/dockerapi/docker_client_test.go
++++ b/agent/dockerclient/dockerapi/docker_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/dockerapi/docker_events_buffer_test.go b/agent/dockerclient/dockerapi/docker_events_buffer_test.go
+index 1f9042fd..4ca0003f 100644
+--- a/agent/dockerclient/dockerapi/docker_events_buffer_test.go
++++ b/agent/dockerclient/dockerapi/docker_events_buffer_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/dockerapi/errors_test.go b/agent/dockerclient/dockerapi/errors_test.go
+index 6aa59375..1bdd65a1 100644
+--- a/agent/dockerclient/dockerapi/errors_test.go
++++ b/agent/dockerclient/dockerapi/errors_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/dockerapi/inactivity_timeout_handler_test.go b/agent/dockerclient/dockerapi/inactivity_timeout_handler_test.go
+index 4fb9e5b2..eaea8ec1 100644
+--- a/agent/dockerclient/dockerapi/inactivity_timeout_handler_test.go
++++ b/agent/dockerclient/dockerapi/inactivity_timeout_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/dockerapi_compare_versions_test.go b/agent/dockerclient/dockerapi_compare_versions_test.go
+index 792e4b94..46e077ef 100644
+--- a/agent/dockerclient/dockerapi_compare_versions_test.go
++++ b/agent/dockerclient/dockerapi_compare_versions_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/dockerauth/dockerauth_test.go b/agent/dockerclient/dockerauth/dockerauth_test.go
+index f8fa5072..f1d9fb01 100644
+--- a/agent/dockerclient/dockerauth/dockerauth_test.go
++++ b/agent/dockerclient/dockerauth/dockerauth_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/dockerauth/ecr_test.go b/agent/dockerclient/dockerauth/ecr_test.go
+index 2f6ca978..d394421d 100644
+--- a/agent/dockerclient/dockerauth/ecr_test.go
++++ b/agent/dockerclient/dockerauth/ecr_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/sdkclientfactory/sdkclientfactory_test.go b/agent/dockerclient/sdkclientfactory/sdkclientfactory_test.go
+index e983af5f..bc6664d6 100644
+--- a/agent/dockerclient/sdkclientfactory/sdkclientfactory_test.go
++++ b/agent/dockerclient/sdkclientfactory/sdkclientfactory_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/sdkclientfactory/sdkclientfactory_unix_test.go b/agent/dockerclient/sdkclientfactory/sdkclientfactory_unix_test.go
+index 82d4732f..4c88e871 100644
+--- a/agent/dockerclient/sdkclientfactory/sdkclientfactory_unix_test.go
++++ b/agent/dockerclient/sdkclientfactory/sdkclientfactory_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit && !windows
++// +build unit,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/sdkclientfactory/sdkclientfactory_windows_test.go b/agent/dockerclient/sdkclientfactory/sdkclientfactory_windows_test.go
+index 3c0effd4..23aba519 100644
+--- a/agent/dockerclient/sdkclientfactory/sdkclientfactory_windows_test.go
++++ b/agent/dockerclient/sdkclientfactory/sdkclientfactory_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit && windows
++// +build unit,windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/sdkclientfactory/versionsupport_unix.go b/agent/dockerclient/sdkclientfactory/versionsupport_unix.go
+index 884dc94c..9117a7d7 100644
+--- a/agent/dockerclient/sdkclientfactory/versionsupport_unix.go
++++ b/agent/dockerclient/sdkclientfactory/versionsupport_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/dockerclient/sdkclientfactory/versionsupport_windows.go b/agent/dockerclient/sdkclientfactory/versionsupport_windows.go
+index 5857b085..afc83054 100644
+--- a/agent/dockerclient/sdkclientfactory/versionsupport_windows.go
++++ b/agent/dockerclient/sdkclientfactory/versionsupport_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ec2/ec2_client_test.go b/agent/ec2/ec2_client_test.go
+index 089b487a..00ed5d5c 100644
+--- a/agent/ec2/ec2_client_test.go
++++ b/agent/ec2/ec2_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ec2/ec2_metadata_client_test.go b/agent/ec2/ec2_metadata_client_test.go
+index ed87ad10..d583e368 100644
+--- a/agent/ec2/ec2_metadata_client_test.go
++++ b/agent/ec2/ec2_metadata_client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecr/client_test.go b/agent/ecr/client_test.go
+index d56d8332..17e729b6 100644
+--- a/agent/ecr/client_test.go
++++ b/agent/ecr/client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecr/factory_test.go b/agent/ecr/factory_test.go
+index 5eac709a..324ec90e 100644
+--- a/agent/ecr/factory_test.go
++++ b/agent/ecr/factory_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/namespace_helper_linux.go b/agent/ecscni/namespace_helper_linux.go
+index ff508cfd..7f4479ef 100644
+--- a/agent/ecscni/namespace_helper_linux.go
++++ b/agent/ecscni/namespace_helper_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/namespace_helper_unsupported.go b/agent/ecscni/namespace_helper_unsupported.go
+index 19d5666d..bc10fce1 100644
+--- a/agent/ecscni/namespace_helper_unsupported.go
++++ b/agent/ecscni/namespace_helper_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/namespace_helper_windows.go b/agent/ecscni/namespace_helper_windows.go
+index 763dcc4a..a552e148 100644
+--- a/agent/ecscni/namespace_helper_windows.go
++++ b/agent/ecscni/namespace_helper_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/namespace_helper_windows_test.go b/agent/ecscni/namespace_helper_windows_test.go
+index 8d430017..a777d39a 100644
+--- a/agent/ecscni/namespace_helper_windows_test.go
++++ b/agent/ecscni/namespace_helper_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/netconfig_linux.go b/agent/ecscni/netconfig_linux.go
+index b9596d97..283e8a68 100644
+--- a/agent/ecscni/netconfig_linux.go
++++ b/agent/ecscni/netconfig_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/netconfig_windows.go b/agent/ecscni/netconfig_windows.go
+index 2949379f..4d266d7e 100644
+--- a/agent/ecscni/netconfig_windows.go
++++ b/agent/ecscni/netconfig_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/netconfig_windows_test.go b/agent/ecscni/netconfig_windows_test.go
+index 86a35953..4f81fa9b 100644
+--- a/agent/ecscni/netconfig_windows_test.go
++++ b/agent/ecscni/netconfig_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/plugin_linux.go b/agent/ecscni/plugin_linux.go
+index df9f86c8..aa56d0a6 100644
+--- a/agent/ecscni/plugin_linux.go
++++ b/agent/ecscni/plugin_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/plugin_linux_test.go b/agent/ecscni/plugin_linux_test.go
+index e7744fa6..be2e0efc 100644
+--- a/agent/ecscni/plugin_linux_test.go
++++ b/agent/ecscni/plugin_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/plugin_test.go b/agent/ecscni/plugin_test.go
+index 963b5eeb..764220f3 100644
+--- a/agent/ecscni/plugin_test.go
++++ b/agent/ecscni/plugin_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/plugin_unsupported.go b/agent/ecscni/plugin_unsupported.go
+index 67b2ba87..e156b75c 100644
+--- a/agent/ecscni/plugin_unsupported.go
++++ b/agent/ecscni/plugin_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/plugin_windows.go b/agent/ecscni/plugin_windows.go
+index 948715e9..4aed39d1 100644
+--- a/agent/ecscni/plugin_windows.go
++++ b/agent/ecscni/plugin_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/plugin_windows_test.go b/agent/ecscni/plugin_windows_test.go
+index e82541f7..04420ba7 100644
+--- a/agent/ecscni/plugin_windows_test.go
++++ b/agent/ecscni/plugin_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/types_linux.go b/agent/ecscni/types_linux.go
+index 1a07be23..2ad65834 100644
+--- a/agent/ecscni/types_linux.go
++++ b/agent/ecscni/types_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ecscni/types_windows.go b/agent/ecscni/types_windows.go
+index 61871805..4a2218f2 100644
+--- a/agent/ecscni/types_windows.go
++++ b/agent/ecscni/types_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/common_integ_test.go b/agent/engine/common_integ_test.go
+index 1e6b65ec..73d9c7e4 100644
+--- a/agent/engine/common_integ_test.go
++++ b/agent/engine/common_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build sudo || integration
++// +build sudo integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/common_unix_integ_test.go b/agent/engine/common_unix_integ_test.go
+index 53d81706..0b83295f 100644
+--- a/agent/engine/common_unix_integ_test.go
++++ b/agent/engine/common_unix_integ_test.go
+@@ -1,4 +1,6 @@
+ //go:build linux && (sudo || integration)
++// +build linux
++// +build sudo integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/data_test.go b/agent/engine/data_test.go
+index 7b29e975..049c190d 100644
+--- a/agent/engine/data_test.go
++++ b/agent/engine/data_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/dependencygraph/graph_test.go b/agent/engine/dependencygraph/graph_test.go
+index bf3fad7a..af6d8d21 100644
+--- a/agent/engine/dependencygraph/graph_test.go
++++ b/agent/engine/dependencygraph/graph_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/dependencygraph/graph_unix_test.go b/agent/engine/dependencygraph/graph_unix_test.go
+index b777d4be..0c173e59 100644
+--- a/agent/engine/dependencygraph/graph_unix_test.go
++++ b/agent/engine/dependencygraph/graph_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_image_manager_data_test.go b/agent/engine/docker_image_manager_data_test.go
+index 05354ec8..d322d52f 100644
+--- a/agent/engine/docker_image_manager_data_test.go
++++ b/agent/engine/docker_image_manager_data_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_image_manager_integ_test.go b/agent/engine/docker_image_manager_integ_test.go
+index 1cd64a07..bea1debe 100644
+--- a/agent/engine/docker_image_manager_integ_test.go
++++ b/agent/engine/docker_image_manager_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build integration
++// +build integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_image_manager_test.go b/agent/engine/docker_image_manager_test.go
+index 06662ea9..91ca9a9e 100644
+--- a/agent/engine/docker_image_manager_test.go
++++ b/agent/engine/docker_image_manager_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_image_manager_unix_integ_test.go b/agent/engine/docker_image_manager_unix_integ_test.go
+index 849b9127..b9871ebb 100644
+--- a/agent/engine/docker_image_manager_unix_integ_test.go
++++ b/agent/engine/docker_image_manager_unix_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && integration
++// +build !windows,integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_image_manager_windows_integ_test.go b/agent/engine/docker_image_manager_windows_integ_test.go
+index cade2206..77a53c7c 100644
+--- a/agent/engine/docker_image_manager_windows_integ_test.go
++++ b/agent/engine/docker_image_manager_windows_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && integration
++// +build windows,integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_task_engine_linux.go b/agent/engine/docker_task_engine_linux.go
+index 1d27300f..56298a6b 100644
+--- a/agent/engine/docker_task_engine_linux.go
++++ b/agent/engine/docker_task_engine_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_task_engine_linux_test.go b/agent/engine/docker_task_engine_linux_test.go
+index 120eae89..37e912e2 100644
+--- a/agent/engine/docker_task_engine_linux_test.go
++++ b/agent/engine/docker_task_engine_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_task_engine_test.go b/agent/engine/docker_task_engine_test.go
+index 86f9980d..22abbdec 100644
+--- a/agent/engine/docker_task_engine_test.go
++++ b/agent/engine/docker_task_engine_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_task_engine_unsupported.go b/agent/engine/docker_task_engine_unsupported.go
+index cebf2985..c59db83f 100644
+--- a/agent/engine/docker_task_engine_unsupported.go
++++ b/agent/engine/docker_task_engine_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_task_engine_windows.go b/agent/engine/docker_task_engine_windows.go
+index 1e64df89..2c11a08d 100644
+--- a/agent/engine/docker_task_engine_windows.go
++++ b/agent/engine/docker_task_engine_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/docker_task_engine_windows_test.go b/agent/engine/docker_task_engine_windows_test.go
+index e11e7e67..4adbe809 100644
+--- a/agent/engine/docker_task_engine_windows_test.go
++++ b/agent/engine/docker_task_engine_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/dockerstate/dockerstate_test.go b/agent/engine/dockerstate/dockerstate_test.go
+index fc5c94d5..7fe6a5ba 100644
+--- a/agent/engine/dockerstate/dockerstate_test.go
++++ b/agent/engine/dockerstate/dockerstate_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/dockerstate/json_test.go b/agent/engine/dockerstate/json_test.go
+index 7a1f26ee..c584c357 100644
+--- a/agent/engine/dockerstate/json_test.go
++++ b/agent/engine/dockerstate/json_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/dockerstate/testutils/json_test.go b/agent/engine/dockerstate/testutils/json_test.go
+index adeb0fa1..158eb2a2 100644
+--- a/agent/engine/dockerstate/testutils/json_test.go
++++ b/agent/engine/dockerstate/testutils/json_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/engine_integ_test.go b/agent/engine/engine_integ_test.go
+index b6d543a2..09d4b384 100644
+--- a/agent/engine/engine_integ_test.go
++++ b/agent/engine/engine_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build integration
++// +build integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/engine_sudo_linux_integ_test.go b/agent/engine/engine_sudo_linux_integ_test.go
+index 2eec610d..ef735ecc 100644
+--- a/agent/engine/engine_sudo_linux_integ_test.go
++++ b/agent/engine/engine_sudo_linux_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && sudo
++// +build linux,sudo
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/engine_unix_integ_test.go b/agent/engine/engine_unix_integ_test.go
+index 9aa7a25e..4e771f3e 100644
+--- a/agent/engine/engine_unix_integ_test.go
++++ b/agent/engine/engine_unix_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && integration
++// +build !windows,integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/engine_windows_integ_test.go b/agent/engine/engine_windows_integ_test.go
+index 59bae72a..4f263505 100644
+--- a/agent/engine/engine_windows_integ_test.go
++++ b/agent/engine/engine_windows_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && integration
++// +build windows,integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_init_task_linux.go b/agent/engine/execcmd/manager_init_task_linux.go
+index 6398bf9b..05af1582 100644
+--- a/agent/engine/execcmd/manager_init_task_linux.go
++++ b/agent/engine/execcmd/manager_init_task_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_init_task_linux_test.go b/agent/engine/execcmd/manager_init_task_linux_test.go
+index cb242d99..564e58ba 100644
+--- a/agent/engine/execcmd/manager_init_task_linux_test.go
++++ b/agent/engine/execcmd/manager_init_task_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_start_linux.go b/agent/engine/execcmd/manager_start_linux.go
+index b98634c8..774c3435 100644
+--- a/agent/engine/execcmd/manager_start_linux.go
++++ b/agent/engine/execcmd/manager_start_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_start_linux_test.go b/agent/engine/execcmd/manager_start_linux_test.go
+index 2613f9ab..061617a6 100644
+--- a/agent/engine/execcmd/manager_start_linux_test.go
++++ b/agent/engine/execcmd/manager_start_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/execcmd/manager_unsupported.go b/agent/engine/execcmd/manager_unsupported.go
+index 4a8124c3..2ec46aca 100644
+--- a/agent/engine/execcmd/manager_unsupported.go
++++ b/agent/engine/execcmd/manager_unsupported.go
+@@ -1,4 +1,5 @@
+-//go:build !linux && !windows
++//go:build !linux
++// +build !linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/ordering_integ_test.go b/agent/engine/ordering_integ_test.go
+index 25e787e3..31162998 100644
+--- a/agent/engine/ordering_integ_test.go
++++ b/agent/engine/ordering_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build integration
++// +build integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/ordering_integ_unix_test.go b/agent/engine/ordering_integ_unix_test.go
+index 2f8d0a2b..1878e4bd 100644
+--- a/agent/engine/ordering_integ_unix_test.go
++++ b/agent/engine/ordering_integ_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build integration && !windows
++// +build integration,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/ordering_integ_windows_test.go b/agent/engine/ordering_integ_windows_test.go
+index 89a1515c..b411c377 100644
+--- a/agent/engine/ordering_integ_windows_test.go
++++ b/agent/engine/ordering_integ_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && integration
++// +build windows,integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/task_manager_data_test.go b/agent/engine/task_manager_data_test.go
+index a60ebaa6..f6726d7b 100644
+--- a/agent/engine/task_manager_data_test.go
++++ b/agent/engine/task_manager_data_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/task_manager_test.go b/agent/engine/task_manager_test.go
+index 1ab79ddf..4b4f0838 100644
+--- a/agent/engine/task_manager_test.go
++++ b/agent/engine/task_manager_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/engine/task_manager_unix_test.go b/agent/engine/task_manager_unix_test.go
+index 47665655..03d22797 100644
+--- a/agent/engine/task_manager_unix_test.go
++++ b/agent/engine/task_manager_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/iphelperwrapper/iphelper_windows.go b/agent/eni/iphelperwrapper/iphelper_windows.go
+index 1c77ff19..6bf45de2 100644
+--- a/agent/eni/iphelperwrapper/iphelper_windows.go
++++ b/agent/eni/iphelperwrapper/iphelper_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/iphelperwrapper/iphelper_windows_test.go b/agent/eni/iphelperwrapper/iphelper_windows_test.go
+index d0628291..adbd8aa4 100644
+--- a/agent/eni/iphelperwrapper/iphelper_windows_test.go
++++ b/agent/eni/iphelperwrapper/iphelper_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/iphelperwrapper/mibIpInterfaceRow_windows.go b/agent/eni/iphelperwrapper/mibIpInterfaceRow_windows.go
+index c27c5bee..1112094b 100644
+--- a/agent/eni/iphelperwrapper/mibIpInterfaceRow_windows.go
++++ b/agent/eni/iphelperwrapper/mibIpInterfaceRow_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/netlinkwrapper/netlink_linux.go b/agent/eni/netlinkwrapper/netlink_linux.go
+index 54f14be1..74713472 100644
+--- a/agent/eni/netlinkwrapper/netlink_linux.go
++++ b/agent/eni/netlinkwrapper/netlink_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/networkutils/utils_linux.go b/agent/eni/networkutils/utils_linux.go
+index 9a04d2c5..10a7a212 100644
+--- a/agent/eni/networkutils/utils_linux.go
++++ b/agent/eni/networkutils/utils_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/networkutils/utils_linux_test.go b/agent/eni/networkutils/utils_linux_test.go
+index f94e1242..39e5f771 100644
+--- a/agent/eni/networkutils/utils_linux_test.go
++++ b/agent/eni/networkutils/utils_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/networkutils/utils_windows.go b/agent/eni/networkutils/utils_windows.go
+index 402e4a39..4c4e68d3 100644
+--- a/agent/eni/networkutils/utils_windows.go
++++ b/agent/eni/networkutils/utils_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/networkutils/utils_windows_test.go b/agent/eni/networkutils/utils_windows_test.go
+index 352cccc7..755ccb35 100644
+--- a/agent/eni/networkutils/utils_windows_test.go
++++ b/agent/eni/networkutils/utils_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/pause/error_test.go b/agent/eni/pause/error_test.go
+index 5a7cad12..72de9f05 100644
+--- a/agent/eni/pause/error_test.go
++++ b/agent/eni/pause/error_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/pause/load_test.go b/agent/eni/pause/load_test.go
+index 32a88e0c..3203a923 100644
+--- a/agent/eni/pause/load_test.go
++++ b/agent/eni/pause/load_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/pause/pause_linux.go b/agent/eni/pause/pause_linux.go
+index c983c24a..cb983ccc 100644
+--- a/agent/eni/pause/pause_linux.go
++++ b/agent/eni/pause/pause_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/pause/pause_linux_test.go b/agent/eni/pause/pause_linux_test.go
+index 6cb77251..00ad512f 100644
+--- a/agent/eni/pause/pause_linux_test.go
++++ b/agent/eni/pause/pause_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/pause/pause_unsupported.go b/agent/eni/pause/pause_unsupported.go
+index bc5eafd7..8616f5fb 100644
+--- a/agent/eni/pause/pause_unsupported.go
++++ b/agent/eni/pause/pause_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/pause/pause_windows.go b/agent/eni/pause/pause_windows.go
+index 9f640857..05eac213 100644
+--- a/agent/eni/pause/pause_windows.go
++++ b/agent/eni/pause/pause_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/udevwrapper/udev_linux.go b/agent/eni/udevwrapper/udev_linux.go
+index 32cf01f4..9d696c9f 100644
+--- a/agent/eni/udevwrapper/udev_linux.go
++++ b/agent/eni/udevwrapper/udev_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/udevwrapper/udev_unsupported.go b/agent/eni/udevwrapper/udev_unsupported.go
+index 09c70ab7..452edf7a 100644
+--- a/agent/eni/udevwrapper/udev_unsupported.go
++++ b/agent/eni/udevwrapper/udev_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux
++// +build !linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/watcher/watcher_linux.go b/agent/eni/watcher/watcher_linux.go
+index 795bf91c..b94d8242 100644
+--- a/agent/eni/watcher/watcher_linux.go
++++ b/agent/eni/watcher/watcher_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/watcher/watcher_linux_test.go b/agent/eni/watcher/watcher_linux_test.go
+index ce17f13b..469555b4 100644
+--- a/agent/eni/watcher/watcher_linux_test.go
++++ b/agent/eni/watcher/watcher_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/watcher/watcher_test.go b/agent/eni/watcher/watcher_test.go
+index 9fda7494..9bd90c17 100644
+--- a/agent/eni/watcher/watcher_test.go
++++ b/agent/eni/watcher/watcher_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/watcher/watcher_unsupported.go b/agent/eni/watcher/watcher_unsupported.go
+index 222653c8..7adae3c5 100644
+--- a/agent/eni/watcher/watcher_unsupported.go
++++ b/agent/eni/watcher/watcher_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/watcher/watcher_windows.go b/agent/eni/watcher/watcher_windows.go
+index 3a712955..04e6a1fd 100644
+--- a/agent/eni/watcher/watcher_windows.go
++++ b/agent/eni/watcher/watcher_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eni/watcher/watcher_windows_test.go b/agent/eni/watcher/watcher_windows_test.go
+index 97d5c772..8313d07e 100644
+--- a/agent/eni/watcher/watcher_windows_test.go
++++ b/agent/eni/watcher/watcher_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eventhandler/attachment_handler_test.go b/agent/eventhandler/attachment_handler_test.go
+index 3ddadb7f..3a5303e0 100644
+--- a/agent/eventhandler/attachment_handler_test.go
++++ b/agent/eventhandler/attachment_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eventhandler/handler_test.go b/agent/eventhandler/handler_test.go
+index 1698b372..1d85fa99 100644
+--- a/agent/eventhandler/handler_test.go
++++ b/agent/eventhandler/handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eventhandler/task_handler_test.go b/agent/eventhandler/task_handler_test.go
+index 4c9ded19..ba1277e0 100644
+--- a/agent/eventhandler/task_handler_test.go
++++ b/agent/eventhandler/task_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eventhandler/task_handler_types_test.go b/agent/eventhandler/task_handler_types_test.go
+index e745249e..b9bad21c 100644
+--- a/agent/eventhandler/task_handler_types_test.go
++++ b/agent/eventhandler/task_handler_types_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/eventstream/eventstream_test.go b/agent/eventstream/eventstream_test.go
+index 032e10f3..1b9e5768 100644
+--- a/agent/eventstream/eventstream_test.go
++++ b/agent/eventstream/eventstream_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/fsx/fsx_test.go b/agent/fsx/fsx_test.go
+index c2987443..e7e9349b 100644
+--- a/agent/fsx/fsx_test.go
++++ b/agent/fsx/fsx_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/gogenerate/awssdk.go b/agent/gogenerate/awssdk.go
+index fee08b8d..fbd8706a 100644
+--- a/agent/gogenerate/awssdk.go
++++ b/agent/gogenerate/awssdk.go
+@@ -1,4 +1,5 @@
+ //go:build codegen
++// +build codegen
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/gpu/generate_mocks.go b/agent/gpu/generate_mocks.go
+index 26dadfa7..f609d8ff 100644
+--- a/agent/gpu/generate_mocks.go
++++ b/agent/gpu/generate_mocks.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/gpu/nvidia_gpu_manager_unix.go b/agent/gpu/nvidia_gpu_manager_unix.go
+index 9c5b385e..c18d6d20 100644
+--- a/agent/gpu/nvidia_gpu_manager_unix.go
++++ b/agent/gpu/nvidia_gpu_manager_unix.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/gpu/nvidia_gpu_manager_unix_test.go b/agent/gpu/nvidia_gpu_manager_unix_test.go
+index 70b674a8..ededb252 100644
+--- a/agent/gpu/nvidia_gpu_manager_unix_test.go
++++ b/agent/gpu/nvidia_gpu_manager_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/introspection_server_setup_test.go b/agent/handlers/introspection_server_setup_test.go
+index d8a90bbf..e6d0b4c3 100644
+--- a/agent/handlers/introspection_server_setup_test.go
++++ b/agent/handlers/introspection_server_setup_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/task_server_setup_test.go b/agent/handlers/task_server_setup_test.go
+index 46ae12d8..b0e62e07 100644
+--- a/agent/handlers/task_server_setup_test.go
++++ b/agent/handlers/task_server_setup_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/utils/helpers_test.go b/agent/handlers/utils/helpers_test.go
+index 1b691a82..7be7c9c5 100644
+--- a/agent/handlers/utils/helpers_test.go
++++ b/agent/handlers/utils/helpers_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/v1/license_handler_test.go b/agent/handlers/v1/license_handler_test.go
+index 51c7b94e..13812bd9 100644
+--- a/agent/handlers/v1/license_handler_test.go
++++ b/agent/handlers/v1/license_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/v1/response_test.go b/agent/handlers/v1/response_test.go
+index 34bfff87..2d6ac6de 100644
+--- a/agent/handlers/v1/response_test.go
++++ b/agent/handlers/v1/response_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/v2/response_test.go b/agent/handlers/v2/response_test.go
+index 718dcd74..3fea7f23 100644
+--- a/agent/handlers/v2/response_test.go
++++ b/agent/handlers/v2/response_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/v2/stats_response_test.go b/agent/handlers/v2/stats_response_test.go
+index b3ca475b..b1d2635d 100644
+--- a/agent/handlers/v2/stats_response_test.go
++++ b/agent/handlers/v2/stats_response_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/v3/response_test.go b/agent/handlers/v3/response_test.go
+index 3039a57a..38d5b278 100644
+--- a/agent/handlers/v3/response_test.go
++++ b/agent/handlers/v3/response_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/handlers/v4/response_test.go b/agent/handlers/v4/response_test.go
+index e99b5243..103eaf6a 100644
+--- a/agent/handlers/v4/response_test.go
++++ b/agent/handlers/v4/response_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/httpclient/httpclient_test.go b/agent/httpclient/httpclient_test.go
+index 362722da..e8967718 100644
+--- a/agent/httpclient/httpclient_test.go
++++ b/agent/httpclient/httpclient_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/audit/audit_log_test.go b/agent/logger/audit/audit_log_test.go
+index f2a6b530..c88ea4ee 100644
+--- a/agent/logger/audit/audit_log_test.go
++++ b/agent/logger/audit/audit_log_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/buffer_pool_test.go b/agent/logger/buffer_pool_test.go
+index 9cca77e8..9eeb9797 100644
+--- a/agent/logger/buffer_pool_test.go
++++ b/agent/logger/buffer_pool_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/eventlog_windows.go b/agent/logger/eventlog_windows.go
+index f920da0c..f72539c1 100644
+--- a/agent/logger/eventlog_windows.go
++++ b/agent/logger/eventlog_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/format_test.go b/agent/logger/format_test.go
+index 80e43d58..91445da5 100644
+--- a/agent/logger/format_test.go
++++ b/agent/logger/format_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/global_test.go b/agent/logger/global_test.go
+index 032a9691..05435114 100644
+--- a/agent/logger/global_test.go
++++ b/agent/logger/global_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/log_init_test.go b/agent/logger/log_init_test.go
+index 0148f1db..496c1b07 100644
+--- a/agent/logger/log_init_test.go
++++ b/agent/logger/log_init_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit || integration
++// +build unit integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/log_test.go b/agent/logger/log_test.go
+index 61e6747a..8d25cd43 100644
+--- a/agent/logger/log_test.go
++++ b/agent/logger/log_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/log_unix_test.go b/agent/logger/log_unix_test.go
+index 64be35cf..0b063d18 100644
+--- a/agent/logger/log_unix_test.go
++++ b/agent/logger/log_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && unit
++// +build !windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/log_windows_test.go b/agent/logger/log_windows_test.go
+index 9f2fe12c..c763d595 100644
+--- a/agent/logger/log_windows_test.go
++++ b/agent/logger/log_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/platform_unix.go b/agent/logger/platform_unix.go
+index 8b8ef812..85cb4385 100644
+--- a/agent/logger/platform_unix.go
++++ b/agent/logger/platform_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/logger/structured_logger_test.go b/agent/logger/structured_logger_test.go
+index d51c2a76..94e1bd8d 100644
+--- a/agent/logger/structured_logger_test.go
++++ b/agent/logger/structured_logger_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/metrics/metrics_test.go b/agent/metrics/metrics_test.go
+index 6f454da9..e9271853 100644
+--- a/agent/metrics/metrics_test.go
++++ b/agent/metrics/metrics_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/s3/s3_test.go b/agent/s3/s3_test.go
+index 636bd8cc..b44a2216 100644
+--- a/agent/s3/s3_test.go
++++ b/agent/s3/s3_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/sighandlers/debug_handler.go b/agent/sighandlers/debug_handler.go
+index cdb15a47..790e61b1 100644
+--- a/agent/sighandlers/debug_handler.go
++++ b/agent/sighandlers/debug_handler.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/sighandlers/debug_handler_windows.go b/agent/sighandlers/debug_handler_windows.go
+index 27f38305..2c414848 100644
+--- a/agent/sighandlers/debug_handler_windows.go
++++ b/agent/sighandlers/debug_handler_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/sighandlers/termination_handler_test.go b/agent/sighandlers/termination_handler_test.go
+index 86369e27..610ae69b 100644
+--- a/agent/sighandlers/termination_handler_test.go
++++ b/agent/sighandlers/termination_handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/ssm/ssm_test.go b/agent/ssm/ssm_test.go
+index 4028b8c5..2699083b 100644
+--- a/agent/ssm/ssm_test.go
++++ b/agent/ssm/ssm_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/dependencies/dependencies_windows.go b/agent/statemanager/dependencies/dependencies_windows.go
+index 7d920a24..709bcf0d 100644
+--- a/agent/statemanager/dependencies/dependencies_windows.go
++++ b/agent/statemanager/dependencies/dependencies_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/helper_unix_test.go b/agent/statemanager/helper_unix_test.go
+index f141753b..9c164e1f 100644
+--- a/agent/statemanager/helper_unix_test.go
++++ b/agent/statemanager/helper_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && unit
++// +build !windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/helper_windows_test.go b/agent/statemanager/helper_windows_test.go
+index 4d4539c7..178cc6b0 100644
+--- a/agent/statemanager/helper_windows_test.go
++++ b/agent/statemanager/helper_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/state_manager_test.go b/agent/statemanager/state_manager_test.go
+index bec7cec5..b4d297ca 100644
+--- a/agent/statemanager/state_manager_test.go
++++ b/agent/statemanager/state_manager_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/state_manager_unix.go b/agent/statemanager/state_manager_unix.go
+index 7bd207fe..ddf9ebfe 100644
+--- a/agent/statemanager/state_manager_unix.go
++++ b/agent/statemanager/state_manager_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/state_manager_unix_test.go b/agent/statemanager/state_manager_unix_test.go
+index 209422b4..0b72687d 100644
+--- a/agent/statemanager/state_manager_unix_test.go
++++ b/agent/statemanager/state_manager_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/state_manager_win_test.go b/agent/statemanager/state_manager_win_test.go
+index 68bf2a18..33abcdcc 100644
+--- a/agent/statemanager/state_manager_win_test.go
++++ b/agent/statemanager/state_manager_win_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/state_manager_windows.go b/agent/statemanager/state_manager_windows.go
+index cc79d160..09362c5f 100644
+--- a/agent/statemanager/state_manager_windows.go
++++ b/agent/statemanager/state_manager_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/statemanager/state_manager_windows_test.go b/agent/statemanager/state_manager_windows_test.go
+index b347501f..0d31c4b8 100644
+--- a/agent/statemanager/state_manager_windows_test.go
++++ b/agent/statemanager/state_manager_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/common_unix_test.go b/agent/stats/common_unix_test.go
+index fe488de2..92836421 100644
+--- a/agent/stats/common_unix_test.go
++++ b/agent/stats/common_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/common_windows_test.go b/agent/stats/common_windows_test.go
+index 349aec3f..e818904a 100644
+--- a/agent/stats/common_windows_test.go
++++ b/agent/stats/common_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/container_test.go b/agent/stats/container_test.go
+index 9adfb90e..bba649b0 100644
+--- a/agent/stats/container_test.go
++++ b/agent/stats/container_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/engine_integ_test.go b/agent/stats/engine_integ_test.go
+index fa344c9b..05918a3b 100644
+--- a/agent/stats/engine_integ_test.go
++++ b/agent/stats/engine_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build integration
++// +build integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/engine_test.go b/agent/stats/engine_test.go
+index 00a03076..cafe17ea 100644
+--- a/agent/stats/engine_test.go
++++ b/agent/stats/engine_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/engine_unix_integ_test.go b/agent/stats/engine_unix_integ_test.go
+index 578e5719..152b1d91 100644
+--- a/agent/stats/engine_unix_integ_test.go
++++ b/agent/stats/engine_unix_integ_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && integration
++// +build !windows,integration
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/engine_unix_test.go b/agent/stats/engine_unix_test.go
+index 657c9999..073f5195 100644
+--- a/agent/stats/engine_unix_test.go
++++ b/agent/stats/engine_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/queue_test.go b/agent/stats/queue_test.go
+index d727b774..919c5a35 100644
+--- a/agent/stats/queue_test.go
++++ b/agent/stats/queue_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/task_linux.go b/agent/stats/task_linux.go
+index e617d790..edc81271 100644
+--- a/agent/stats/task_linux.go
++++ b/agent/stats/task_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/task_linux_test.go b/agent/stats/task_linux_test.go
+index 45f70140..5e553a56 100644
+--- a/agent/stats/task_linux_test.go
++++ b/agent/stats/task_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/task_unspecified.go b/agent/stats/task_unspecified.go
+index b23fcdf9..1e73e997 100644
+--- a/agent/stats/task_unspecified.go
++++ b/agent/stats/task_unspecified.go
+@@ -1,4 +1,5 @@
+ //go:build !linux
++// +build !linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/utils_test.go b/agent/stats/utils_test.go
+index 3210c0ee..bdca0e16 100644
+--- a/agent/stats/utils_test.go
++++ b/agent/stats/utils_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/utils_unix.go b/agent/stats/utils_unix.go
+index c89bf5af..28dbcc5f 100644
+--- a/agent/stats/utils_unix.go
++++ b/agent/stats/utils_unix.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/utils_unix_test.go b/agent/stats/utils_unix_test.go
+index 84fa3a83..414554cb 100644
+--- a/agent/stats/utils_unix_test.go
++++ b/agent/stats/utils_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build !windows && unit
++// +build !windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/utils_windows.go b/agent/stats/utils_windows.go
+index b8b202ff..9e054572 100644
+--- a/agent/stats/utils_windows.go
++++ b/agent/stats/utils_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/stats/utils_windows_test.go b/agent/stats/utils_windows_test.go
+index 792c500e..6d611bb2 100644
+--- a/agent/stats/utils_windows_test.go
++++ b/agent/stats/utils_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/asmauth/asmauth_test.go b/agent/taskresource/asmauth/asmauth_test.go
+index 09c032e9..73f14fba 100644
+--- a/agent/taskresource/asmauth/asmauth_test.go
++++ b/agent/taskresource/asmauth/asmauth_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/asmauth/asmauthstatus_test.go b/agent/taskresource/asmauth/asmauthstatus_test.go
+index 54882cb7..e35218bf 100644
+--- a/agent/taskresource/asmauth/asmauthstatus_test.go
++++ b/agent/taskresource/asmauth/asmauthstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/asmsecret/asmsecret_test.go b/agent/taskresource/asmsecret/asmsecret_test.go
+index 59fbd012..d1b093a5 100644
+--- a/agent/taskresource/asmsecret/asmsecret_test.go
++++ b/agent/taskresource/asmsecret/asmsecret_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/asmsecret/asmsecretstatus_test.go b/agent/taskresource/asmsecret/asmsecretstatus_test.go
+index dac469c8..b779aea9 100644
+--- a/agent/taskresource/asmsecret/asmsecretstatus_test.go
++++ b/agent/taskresource/asmsecret/asmsecretstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/cgroup.go b/agent/taskresource/cgroup/cgroup.go
+index e4ebcdc7..6fe0a820 100644
+--- a/agent/taskresource/cgroup/cgroup.go
++++ b/agent/taskresource/cgroup/cgroup.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/cgroup_test.go b/agent/taskresource/cgroup/cgroup_test.go
+index 7aa409a5..f37accd6 100644
+--- a/agent/taskresource/cgroup/cgroup_test.go
++++ b/agent/taskresource/cgroup/cgroup_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/cgroup_unsupported.go b/agent/taskresource/cgroup/cgroup_unsupported.go
+index 6208687b..544130a6 100644
+--- a/agent/taskresource/cgroup/cgroup_unsupported.go
++++ b/agent/taskresource/cgroup/cgroup_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux
++// +build !linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/cgroupstatus.go b/agent/taskresource/cgroup/cgroupstatus.go
+index 156e7ac6..6e6e0df8 100644
+--- a/agent/taskresource/cgroup/cgroupstatus.go
++++ b/agent/taskresource/cgroup/cgroupstatus.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/cgroupstatus_test.go b/agent/taskresource/cgroup/cgroupstatus_test.go
+index 482e4535..065b3df2 100644
+--- a/agent/taskresource/cgroup/cgroupstatus_test.go
++++ b/agent/taskresource/cgroup/cgroupstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/cgroup_controller_linux.go b/agent/taskresource/cgroup/control/cgroup_controller_linux.go
+index 915363b1..18542c35 100644
+--- a/agent/taskresource/cgroup/control/cgroup_controller_linux.go
++++ b/agent/taskresource/cgroup/control/cgroup_controller_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/cgroup_controller_linux_test.go b/agent/taskresource/cgroup/control/cgroup_controller_linux_test.go
+index 027f5912..9e46dfa3 100644
+--- a/agent/taskresource/cgroup/control/cgroup_controller_linux_test.go
++++ b/agent/taskresource/cgroup/control/cgroup_controller_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/factory/factory_linux.go b/agent/taskresource/cgroup/control/factory/factory_linux.go
+index 6e9e3f89..6ce587e7 100644
+--- a/agent/taskresource/cgroup/control/factory/factory_linux.go
++++ b/agent/taskresource/cgroup/control/factory/factory_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/factory/generate_mocks_linux.go b/agent/taskresource/cgroup/control/factory/generate_mocks_linux.go
+index 31143cc3..e36c74e5 100644
+--- a/agent/taskresource/cgroup/control/factory/generate_mocks_linux.go
++++ b/agent/taskresource/cgroup/control/factory/generate_mocks_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/generate_mocks_linux.go b/agent/taskresource/cgroup/control/generate_mocks_linux.go
+index 38219dc0..7b7a341a 100644
+--- a/agent/taskresource/cgroup/control/generate_mocks_linux.go
++++ b/agent/taskresource/cgroup/control/generate_mocks_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/init_linux.go b/agent/taskresource/cgroup/control/init_linux.go
+index f06a15ca..f71eebbf 100644
+--- a/agent/taskresource/cgroup/control/init_linux.go
++++ b/agent/taskresource/cgroup/control/init_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/init_linux_test.go b/agent/taskresource/cgroup/control/init_linux_test.go
+index fc218362..6d0a3d27 100644
+--- a/agent/taskresource/cgroup/control/init_linux_test.go
++++ b/agent/taskresource/cgroup/control/init_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/cgroup/control/types_linux.go b/agent/taskresource/cgroup/control/types_linux.go
+index d6c08426..50a6a6df 100644
+--- a/agent/taskresource/cgroup/control/types_linux.go
++++ b/agent/taskresource/cgroup/control/types_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/credentialspec/credentialspec_unsupported.go b/agent/taskresource/credentialspec/credentialspec_unsupported.go
+index fc48ea5e..62ac2555 100644
+--- a/agent/taskresource/credentialspec/credentialspec_unsupported.go
++++ b/agent/taskresource/credentialspec/credentialspec_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/credentialspec/credentialspec_windows.go b/agent/taskresource/credentialspec/credentialspec_windows.go
+index 72ac9d22..b7b69d92 100644
+--- a/agent/taskresource/credentialspec/credentialspec_windows.go
++++ b/agent/taskresource/credentialspec/credentialspec_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/credentialspec/credentialspec_windows_test.go b/agent/taskresource/credentialspec/credentialspec_windows_test.go
+index dfe6a49a..3741dca2 100644
+--- a/agent/taskresource/credentialspec/credentialspec_windows_test.go
++++ b/agent/taskresource/credentialspec/credentialspec_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/envFiles/envfile_test.go b/agent/taskresource/envFiles/envfile_test.go
+index ad7943c1..6e15702d 100644
+--- a/agent/taskresource/envFiles/envfile_test.go
++++ b/agent/taskresource/envFiles/envfile_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/envFiles/envfilestatus_test.go b/agent/taskresource/envFiles/envfilestatus_test.go
+index 1bbbb7a0..2c87ad70 100644
+--- a/agent/taskresource/envFiles/envfilestatus_test.go
++++ b/agent/taskresource/envFiles/envfilestatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/firelens_unimplemented.go b/agent/taskresource/firelens/firelens_unimplemented.go
+index b6a69a67..36adcf28 100644
+--- a/agent/taskresource/firelens/firelens_unimplemented.go
++++ b/agent/taskresource/firelens/firelens_unimplemented.go
+@@ -1,4 +1,5 @@
+ //go:build !linux
++// +build !linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/firelens_unix.go b/agent/taskresource/firelens/firelens_unix.go
+index 1646ed71..7c53139f 100644
+--- a/agent/taskresource/firelens/firelens_unix.go
++++ b/agent/taskresource/firelens/firelens_unix.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/firelens_unix_test.go b/agent/taskresource/firelens/firelens_unix_test.go
+index a4573152..d7cf8624 100644
+--- a/agent/taskresource/firelens/firelens_unix_test.go
++++ b/agent/taskresource/firelens/firelens_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/firelensconfig_unix.go b/agent/taskresource/firelens/firelensconfig_unix.go
+index 1ed4d75b..dbc1709d 100644
+--- a/agent/taskresource/firelens/firelensconfig_unix.go
++++ b/agent/taskresource/firelens/firelensconfig_unix.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/firelensconfig_unix_test.go b/agent/taskresource/firelens/firelensconfig_unix_test.go
+index 9fed0fae..1a18f0cf 100644
+--- a/agent/taskresource/firelens/firelensconfig_unix_test.go
++++ b/agent/taskresource/firelens/firelensconfig_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/firelensstatus_test.go b/agent/taskresource/firelens/firelensstatus_test.go
+index d128f54a..5a171aa5 100644
+--- a/agent/taskresource/firelens/firelensstatus_test.go
++++ b/agent/taskresource/firelens/firelensstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/json_unix.go b/agent/taskresource/firelens/json_unix.go
+index 8ee89d2c..ba3d8c6b 100644
+--- a/agent/taskresource/firelens/json_unix.go
++++ b/agent/taskresource/firelens/json_unix.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/firelens/json_unix_test.go b/agent/taskresource/firelens/json_unix_test.go
+index 4cd5ba12..dec3cdbf 100644
+--- a/agent/taskresource/firelens/json_unix_test.go
++++ b/agent/taskresource/firelens/json_unix_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_unsupported.go b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_unsupported.go
+index 6d45f55d..1e2bee5e 100644
+--- a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_unsupported.go
++++ b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !windows
++// +build !windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows.go b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows.go
+index 1350d520..cd2175c5 100644
+--- a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows.go
++++ b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows_test.go b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows_test.go
+index 0d369c76..e55116ad 100644
+--- a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows_test.go
++++ b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserver_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserverstatus_test.go b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserverstatus_test.go
+index 276d29e3..0f9e0bce 100644
+--- a/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserverstatus_test.go
++++ b/agent/taskresource/fsxwindowsfileserver/fsxwindowsfileserverstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/ssmsecret/ssmsecret_test.go b/agent/taskresource/ssmsecret/ssmsecret_test.go
+index 8c530bc0..de1f13f4 100644
+--- a/agent/taskresource/ssmsecret/ssmsecret_test.go
++++ b/agent/taskresource/ssmsecret/ssmsecret_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/ssmsecret/ssmsecretstatus_test.go b/agent/taskresource/ssmsecret/ssmsecretstatus_test.go
+index 3e1722fb..4a86aea2 100644
+--- a/agent/taskresource/ssmsecret/ssmsecretstatus_test.go
++++ b/agent/taskresource/ssmsecret/ssmsecretstatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/types/types_linux_test.go b/agent/taskresource/types/types_linux_test.go
+index 7f3a683a..a5facfa1 100644
+--- a/agent/taskresource/types/types_linux_test.go
++++ b/agent/taskresource/types/types_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/types/types_test.go b/agent/taskresource/types/types_test.go
+index f90c4754..98553b83 100644
+--- a/agent/taskresource/types/types_test.go
++++ b/agent/taskresource/types/types_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/types_unix.go b/agent/taskresource/types_unix.go
+index bf9489b8..a509a9d9 100644
+--- a/agent/taskresource/types_unix.go
++++ b/agent/taskresource/types_unix.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/types_unsupported.go b/agent/taskresource/types_unsupported.go
+index 106d78d4..749ff5b8 100644
+--- a/agent/taskresource/types_unsupported.go
++++ b/agent/taskresource/types_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/types_windows.go b/agent/taskresource/types_windows.go
+index f189f231..810f57f3 100644
+--- a/agent/taskresource/types_windows.go
++++ b/agent/taskresource/types_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/volume/dockervolume_test.go b/agent/taskresource/volume/dockervolume_test.go
+index 2b7b5f29..952c0774 100644
+--- a/agent/taskresource/volume/dockervolume_test.go
++++ b/agent/taskresource/volume/dockervolume_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/taskresource/volume/volumestatus_test.go b/agent/taskresource/volume/volumestatus_test.go
+index f2bbc093..4fb1fc92 100644
+--- a/agent/taskresource/volume/volumestatus_test.go
++++ b/agent/taskresource/volume/volumestatus_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/tcs/client/client_test.go b/agent/tcs/client/client_test.go
+index 883b8c82..17a6110e 100644
+--- a/agent/tcs/client/client_test.go
++++ b/agent/tcs/client/client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/tcs/handler/handler_test.go b/agent/tcs/handler/handler_test.go
+index e815b148..3d5278fa 100644
+--- a/agent/tcs/handler/handler_test.go
++++ b/agent/tcs/handler/handler_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/tcs/handler/types_test.go b/agent/tcs/handler/types_test.go
+index 98ac4a09..6879f5c1 100644
+--- a/agent/tcs/handler/types_test.go
++++ b/agent/tcs/handler/types_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/tools.go b/agent/tools.go
+index bb248e6b..4a6061cd 100644
+--- a/agent/tools.go
++++ b/agent/tools.go
+@@ -1,4 +1,5 @@
+ //go:build tools
++// +build tools
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/compare_versions_test.go b/agent/utils/compare_versions_test.go
+index d9b7883d..b00b10b1 100644
+--- a/agent/utils/compare_versions_test.go
++++ b/agent/utils/compare_versions_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/cpuinfo.go b/agent/utils/cpuinfo.go
+index 39076804..0fa8f845 100644
+--- a/agent/utils/cpuinfo.go
++++ b/agent/utils/cpuinfo.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/cpuinfo_test.go b/agent/utils/cpuinfo_test.go
+index bf86ee28..d629ec94 100644
+--- a/agent/utils/cpuinfo_test.go
++++ b/agent/utils/cpuinfo_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/json_test.go b/agent/utils/json_test.go
+index 6e4c6803..b9746c2e 100644
+--- a/agent/utils/json_test.go
++++ b/agent/utils/json_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/license_test.go b/agent/utils/license_test.go
+index d66f674d..7403ce27 100644
+--- a/agent/utils/license_test.go
++++ b/agent/utils/license_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/nswrapper/ns_linux.go b/agent/utils/nswrapper/ns_linux.go
+index 03e7b2f6..630adfc5 100644
+--- a/agent/utils/nswrapper/ns_linux.go
++++ b/agent/utils/nswrapper/ns_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/retry/backoff_test.go b/agent/utils/retry/backoff_test.go
+index 23234965..d68ccde8 100644
+--- a/agent/utils/retry/backoff_test.go
++++ b/agent/utils/retry/backoff_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/retry/exponential_backoff_test.go b/agent/utils/retry/exponential_backoff_test.go
+index 7583eb9f..5571f490 100644
+--- a/agent/utils/retry/exponential_backoff_test.go
++++ b/agent/utils/retry/exponential_backoff_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/retry/retry_test.go b/agent/utils/retry/retry_test.go
+index 4a5546bc..c6533560 100644
+--- a/agent/utils/retry/retry_test.go
++++ b/agent/utils/retry/retry_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/sync/sequential_waitgroup_test.go b/agent/utils/sync/sequential_waitgroup_test.go
+index 31f713e2..ff289f36 100644
+--- a/agent/utils/sync/sequential_waitgroup_test.go
++++ b/agent/utils/sync/sequential_waitgroup_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/ticker_test.go b/agent/utils/ticker_test.go
+index 535eb629..6dc65e89 100644
+--- a/agent/utils/ticker_test.go
++++ b/agent/utils/ticker_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/utils_linux.go b/agent/utils/utils_linux.go
+index 281f4135..aaa2931a 100644
+--- a/agent/utils/utils_linux.go
++++ b/agent/utils/utils_linux.go
+@@ -1,4 +1,5 @@
+ //go:build linux
++// +build linux
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/utils_linux_test.go b/agent/utils/utils_linux_test.go
+index 73b24be1..ea369097 100644
+--- a/agent/utils/utils_linux_test.go
++++ b/agent/utils/utils_linux_test.go
+@@ -1,4 +1,5 @@
+ //go:build linux && unit
++// +build linux,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/utils_test.go b/agent/utils/utils_test.go
+index 0b3fd704..83fceab8 100644
+--- a/agent/utils/utils_test.go
++++ b/agent/utils/utils_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/utils_unsupported.go b/agent/utils/utils_unsupported.go
+index 6109dff4..cc93b15e 100644
+--- a/agent/utils/utils_unsupported.go
++++ b/agent/utils/utils_unsupported.go
+@@ -1,4 +1,5 @@
+ //go:build !linux && !windows
++// +build !linux,!windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/utils_windows.go b/agent/utils/utils_windows.go
+index 072df48b..938db186 100644
+--- a/agent/utils/utils_windows.go
++++ b/agent/utils/utils_windows.go
+@@ -1,4 +1,5 @@
+ //go:build windows
++// +build windows
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/utils/utils_windows_test.go b/agent/utils/utils_windows_test.go
+index ad22e500..6b09d902 100644
+--- a/agent/utils/utils_windows_test.go
++++ b/agent/utils/utils_windows_test.go
+@@ -1,4 +1,5 @@
+ //go:build windows && unit
++// +build windows,unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+diff --git a/agent/wsclient/client_test.go b/agent/wsclient/client_test.go
+index 8f66140b..54ee2aa7 100644
+--- a/agent/wsclient/client_test.go
++++ b/agent/wsclient/client_test.go
+@@ -1,4 +1,5 @@
+ //go:build unit
++// +build unit
+ 
+ // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ //
+-- 
+2.32.0
+
