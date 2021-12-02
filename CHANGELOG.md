@@ -1,3 +1,17 @@
+# v1.4.2 (2021-12-02)
+
+## Security Fixes
+
+* Update default [admin](https://github.com/bottlerocket-os/bottlerocket-admin-container/releases/tag/v0.7.3) and [control](https://github.com/bottlerocket-os/bottlerocket-control-container/releases/tag/v0.5.3) host containers to address CVE-2021-43527 ([#1852])
+* Update kernel-5.4 and kernel-5.10 to include recent security fixes. ([#1851])
+
+## Build Changes
+
+* Update containerd (to v1.5.8) and Docker (to v20.10.11) ([#1851])
+
+[#1851]: https://github.com/bottlerocket-os/bottlerocket/pull/1851
+[#1852]: https://github.com/bottlerocket-os/bottlerocket/pull/1852
+
 # v1.4.1 (2021-11-18)
 
 ## Security Fixes
