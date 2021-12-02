@@ -1,4 +1,4 @@
-version = "1.4.1"
+version = "1.4.2"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -78,3 +78,7 @@ version = "1.4.1"
     "migrate_v1.4.0_registry-mirror-representation.lz4",
 ]
 "(1.4.0, 1.4.1)" = []
+"(1.4.1, 1.4.2)" = [
+    "migrate_v1.4.2_admin-container-v0-7-3.lz4",
+    "migrate_v1.4.2_control-container-v0-5-3.lz4",
+]

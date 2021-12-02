@@ -1,17 +1,17 @@
-From ce165a2ddb2c9c177c5d363a93e3b02fc23884ee Mon Sep 17 00:00:00 2001
-From: Samuel Karp <skarp@amazon.com>
-Date: Wed, 19 Aug 2020 00:44:07 -0700
+From ab4d702e78c1730f96deb7662201630f60b77e8c Mon Sep 17 00:00:00 2001
+From: "Sean P. Kelly" <seankell@amazon.com>
+Date: Wed, 1 Dec 2021 19:19:52 +0000
 Subject: [PATCH 2/5] bottlerocket: remove unsupported capabilities
 
 ---
- agent/app/agent_capability.go | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ agent/app/agent_capability.go | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 
 diff --git a/agent/app/agent_capability.go b/agent/app/agent_capability.go
-index e05430c6d..227fc9462 100644
+index cc90dc8..a6a5891 100644
 --- a/agent/app/agent_capability.go
 +++ b/agent/app/agent_capability.go
-@@ -235,33 +235,33 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+@@ -231,36 +231,36 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
  	capabilities = agent.appendPIDAndIPCNamespaceSharingCapabilities(capabilities)
  
  	// ecs agent version 1.26.0 supports aws-appmesh cni plugin
@@ -33,6 +33,10 @@ index e05430c6d..227fc9462 100644
  	// support aws router capabilities for log driver router
 -	capabilities = agent.appendFirelensLoggingDriverCapabilities(capabilities)
 +	// capabilities = agent.appendFirelensLoggingDriverCapabilities(capabilities)
+ 
+ 	// support aws router capabilities for log driver router config
+-	capabilities = agent.appendFirelensLoggingDriverConfigCapabilities(capabilities)
++	// capabilities = agent.appendFirelensLoggingDriverConfigCapabilities(capabilities)
  
  	// support efs on ecs capabilities
  	capabilities = agent.appendEFSCapabilities(capabilities)
