@@ -12,13 +12,6 @@ It contains two subcommands meant for use as settings generators:
 The subcommand `set-hostname` sets the hostname for the system.
 */
 
-// TODO:
-// We should rework this to store info in the API and delegate rewriting of
-// files and any required process restarts to the existing machinery.
-// This is blocked on the ability to apply and commit settings in separate
-// transactions; otherwise a lease renewal while settings were being added
-// by other processes could cause them to be applied in an incomplete state.
-
 #![deny(rust_2018_idioms)]
 
 #[macro_use]
