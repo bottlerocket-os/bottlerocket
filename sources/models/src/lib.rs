@@ -64,6 +64,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/vmware-k8s-1.21/mod.rs)
 * [Default settings](src/vmware-k8s-1.21/defaults.d/)
 
+## metal-dev: Metal development build
+
+* [Model](src/metal-dev/mod.rs)
+* [Default settings](src/metal-dev/defaults.d/)
+
 # This directory
 
 We use `build.rs` to symlink the proper API model source code for Cargo to build.
