@@ -15,6 +15,7 @@ BuildRequires: %{_cross_os}libz-devel
 %package devel
 Summary: Files for development using the library for ELF files
 Requires: %{name}
+Requires: %{_cross_os}libz-devel
 
 %description devel
 %{summary}.
