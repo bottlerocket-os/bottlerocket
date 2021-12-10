@@ -6,6 +6,8 @@ License: LGPL-2.1-or-later AND (LGPL-2.1-or-later WITH GCC-exception-2.0) AND GP
 URL: http://www.gnu.org/software/glibc/
 Source0: https://ftp.gnu.org/gnu/glibc/glibc-%{version}.tar.xz
 Source1: glibc-tmpfiles.conf
+Source2: ld.so.conf
+Source3: ldconfig-service.conf
 
 # Upstream patches from 2.34 release branch:
 # ```
@@ -93,9 +95,13 @@ make %{?_smp_mflags} -O -r
 %install
 make -j1 install_root=%{buildroot} install -C build
 
-mkdir -p %{buildroot}%{_cross_tmpfilesdir}
 install -d %{buildroot}%{_cross_tmpfilesdir}
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
+install -d %{buildroot}%{_cross_unitdir}/ldconfig.service.d
+
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/glibc.conf
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
+install -p -m 0644 %{S:3} %{buildroot}%{_cross_unitdir}/ldconfig.service.d/ldconfig.conf
 
 truncate -s 0 %{buildroot}%{_cross_libdir}/gconv/gconv-modules
 chmod 644 %{buildroot}%{_cross_libdir}/gconv/gconv-modules
@@ -176,6 +182,12 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %exclude %{_cross_datadir}/i18n/locales/*
 %exclude %{_cross_datadir}/locale/*
 %exclude %{_cross_localstatedir}/db/Makefile
+
+%dir %{_cross_factorydir}
+%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf
+
+%dir %{_cross_unitdir}/ldconfig.service.d
+%{_cross_libdir}/systemd/system/ldconfig.service.d/ldconfig.conf
 
 %files devel
 %{_cross_libdir}/*.a
