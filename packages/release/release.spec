@@ -40,6 +40,7 @@ Source1016: mount-cdrom.rules
 Source1020: var-lib-kernel-devel-lower.mount.in
 Source1021: usr-src-kernels.mount.in
 Source1022: usr-share-licenses.mount.in
+Source1023: lib-modules.mount.in
 
 # Mounts that require helper programs
 Source1040: prepare-boot.service
@@ -139,6 +140,11 @@ LICENSEPATH=$(systemd-escape --path %{_cross_licensedir})
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1022} > ${LICENSEPATH}.mount
 install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
 
+# Mounting on lib/modules requires using the real path: %{_cross_libdir}/modules
+LIBDIRPATH=$(systemd-escape --path %{_cross_libdir})
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1023} > ${LIBDIRPATH}-modules.mount
+install -p -m 0644 ${LIBDIRPATH}-modules.mount %{buildroot}%{_cross_unitdir}
+
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
@@ -178,6 +184,7 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/*-licenses.mount
 %{_cross_unitdir}/var-lib-bottlerocket.mount
+%{_cross_unitdir}/*-modules.mount
 %{_cross_unitdir}/runtime.slice
 %{_cross_unitdir}/set-hostname.service
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d

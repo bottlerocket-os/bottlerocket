@@ -1,0 +1,16 @@
+[Unit]
+Description=Kernel Modules (Read-Write)
+Conflicts=umount.target
+Before=local-fs.target umount.target
+Wants=prepare-local.service
+After=prepare-local.service
+RequiresMountsFor=/var
+
+[Mount]
+What=overlay
+Where=PREFIX/lib/modules
+Type=overlay
+Options=noatime,nosuid,nodev,lowerdir=/lib/modules,upperdir=/var/lib/kernel-modules/.overlay/upper,workdir=/var/lib/kernel-modules/.overlay/work,context=system_u:object_r:state_t:s0
+
+[Install]
+WantedBy=local-fs.target
