@@ -85,7 +85,7 @@ impl PlatformDataProvider for AwsDataProvider {
     ) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
 
-        let mut client = ImdsClient::new().await.context(error::ImdsClient)?;
+        let mut client = ImdsClient::new();
 
         // Attempt to read from local file first on the `aws-dev` variant
         #[cfg(bottlerocket_platform = "aws-dev")]

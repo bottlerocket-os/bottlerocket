@@ -303,7 +303,7 @@ fn parse_args(mut args: env::Args) -> String {
 
 async fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
-    let mut client = ImdsClient::new().await.context(error::ImdsClient)?;
+    let mut client = ImdsClient::new();
 
     let setting = match setting_name.as_ref() {
         "cluster-dns-ip" => get_cluster_dns_ip(&mut client).await,

@@ -42,7 +42,7 @@ impl UserData {
 /// Returns a list of public keys.
 async fn fetch_public_keys_from_imds() -> Result<Vec<String>> {
     info!("Connecting to IMDS");
-    let mut client = ImdsClient::new().await.context(error::ImdsClient)?;
+    let mut client = ImdsClient::new();
     let public_keys = client
         .fetch_public_ssh_keys()
         .await
