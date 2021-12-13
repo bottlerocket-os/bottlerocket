@@ -21,6 +21,10 @@ ExecStart=/usr/bin/mkdir -p \
     ${LOCAL_DIR}/var/lib/kernel-devel/.overlay/work \
     ${LOCAL_DIR}/var/lib/kernel-modules/.overlay/upper \
     ${LOCAL_DIR}/var/lib/kernel-modules/.overlay/work
+ExecStart=/usr/sbin/setfiles -r ${LOCAL_DIR} \
+    -F /etc/selinux/fortified/contexts/files/file_contexts \
+    ${LOCAL_DIR}/var/lib/kernel-devel \
+    ${LOCAL_DIR}/var/lib/kernel-modules
 
 # Create the directories we need to set up a read-write overlayfs for any CNI
 # plugin binaries.
@@ -31,6 +35,9 @@ ExecStart=/usr/bin/mkdir -p \
     ${LOCAL_DIR}/opt/cni/bin \
     ${LOCAL_DIR}/var/lib/cni-plugins/.overlay/upper \
     ${LOCAL_DIR}/var/lib/cni-plugins/.overlay/work
+ExecStart=/usr/sbin/setfiles -r ${LOCAL_DIR} \
+    -F /etc/selinux/fortified/contexts/files/file_contexts \
+    ${LOCAL_DIR}/var/lib/cni-plugins
 
 RemainAfterExit=true
 StandardError=journal+console
