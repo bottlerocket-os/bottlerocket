@@ -3041,6 +3041,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "shimpei"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+ "log",
+ "nix 0.23.0",
+ "simplelog",
+ "snafu",
+]
+
+[[package]]
 name = "shlex"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

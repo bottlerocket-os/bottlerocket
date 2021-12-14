@@ -1,6 +1,7 @@
 %global _cross_first_party 1
 %global _is_k8s_variant %(if echo %{_cross_variant} | grep -Fqw "k8s"; then echo 1; else echo 0; fi)
 %global _is_aws_variant %(if echo %{_cross_variant} | grep -Fqw "aws"; then echo 1; else echo 0; fi)
+%global _is_vendor_variant %(if echo %{_cross_variant} | grep -Fqw "nvidia"; then echo 1; else echo 0; fi)
 %undefine _debugsource_packages
 
 Name: %{_cross_os}os
@@ -87,6 +88,10 @@ Requires: %{_cross_os}shibaken
 
 %if "%{_cross_variant}" == "aws-ecs-1"
 Requires: %{_cross_os}ecs-settings-applier
+%endif
+
+%if %{_is_vendor_variant}
+Requires: %{_cross_os}shimpei
 %endif
 
 %description
@@ -242,6 +247,14 @@ Summary: Setting generator for populating admin container user-data from IMDS.
 %{summary}.
 %endif
 
+%if %{_is_vendor_variant}
+%package -n %{_cross_os}shimpei
+Summary: OCI-compatible shim around oci-add-hooks
+Requires: %{_cross_os}oci-add-hooks
+%description -n %{_cross_os}shimpei
+%{summary}.
+%endif
+
 %package -n %{_cross_os}bootstrap-containers
 Summary: Manages bootstrap-containers
 %description -n %{_cross_os}bootstrap-containers
@@ -318,6 +331,9 @@ echo "** Output from non-static builds:"
 %endif
     -p static-pods \
 %endif
+%if %{_is_vendor_variant}
+    -p shimpei \
+%endif
     %{nil}
 
 # Wait for static builds from the background, if they're not already done.
@@ -349,6 +365,9 @@ for p in \
   pluto \
 %endif
   static-pods \
+%endif
+%if %{_is_vendor_variant}
+  shimpei \
 %endif
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
@@ -527,6 +546,11 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_bindir}/pluto
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
+%endif
+
+%if %{_is_vendor_variant}
+%files -n %{_cross_os}shimpei
+%{_cross_bindir}/shimpei
 %endif
 
 %files -n %{_cross_os}static-pods
