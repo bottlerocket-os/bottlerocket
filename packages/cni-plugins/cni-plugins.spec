@@ -28,7 +28,7 @@ Requires: %{_cross_os}iptables
 %build
 %cross_go_configure %{goimport}
 for d in $(find plugins -mindepth 2 -maxdepth 2 -type d ! -name windows) ; do
-  go build -buildmode=pie -ldflags=-linkmode=external -o "bin/${d##*/}" %{goimport}/${d}
+  go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o "bin/${d##*/}" %{goimport}/${d}
 done
 
 %install

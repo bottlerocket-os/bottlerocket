@@ -41,7 +41,7 @@ BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null | sed 
 LD_BUILDTIME="-X github.com/docker/cli/cli/version.BuildTime=${BUILDTIME}"
 go build \
   -buildmode=pie \
-  -ldflags "-linkmode=external ${LD_VERSION} ${LD_GIT_REV} ${LD_PLATFORM} ${LD_BUILDTIME}" \
+  -ldflags "${GOLDFLAGS} ${LD_VERSION} ${LD_GIT_REV} ${LD_PLATFORM} ${LD_BUILDTIME}" \
   -o docker \
   %{goimport}/cmd/docker
 

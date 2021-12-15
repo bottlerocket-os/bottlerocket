@@ -39,7 +39,7 @@ cp GOPATH/src/github.com/joeshaw/json-lossless/LICENSE LICENSE.json-lossless
 %build
 %cross_go_configure %{goimport}
 # We use `GO111MODULE=off` to force golang to look for the dependencies in the GOPATH
-GO111MODULE=off go build -buildmode=pie -ldflags "-linkmode=external" -o oci-add-hooks
+GO111MODULE=off go build -v -x -buildmode=pie -ldflags="${GOLDFLAGS}" -o oci-add-hooks
 
 %install
 install -d %{buildroot}%{_cross_bindir}

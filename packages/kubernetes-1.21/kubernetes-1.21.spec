@@ -72,7 +72,7 @@ make generated_files
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
 export %{kube_cc}
 export GOFLAGS='-tags=dockerless'
-export GOLDFLAGS="-buildmode=pie -linkmode=external"
+export GOLDFLAGS="-buildmode=pie -linkmode=external -compressdwarf=false"
 make WHAT="cmd/kubelet"
 
 %install

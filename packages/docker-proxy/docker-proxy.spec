@@ -31,7 +31,7 @@ cp client/mflag/LICENSE LICENSE.mflag
 
 %build
 %cross_go_configure %{goimport}
-go build -buildmode=pie -ldflags=-linkmode=external -o docker-proxy %{goimport}/cmd/proxy
+go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o docker-proxy %{goimport}/cmd/proxy
 
 %install
 install -d %{buildroot}%{_cross_bindir}

@@ -33,7 +33,7 @@ export LD_COMMIT="-X main.gitCommit=%{commit}"
 export BUILDTAGS="ambient seccomp selinux"
 go build \
   -buildmode=pie \
-  -ldflags="-linkmode=external ${LD_VERSION} ${LD_COMMIT}" \
+  -ldflags="${GOLDFLAGS} ${LD_VERSION} ${LD_COMMIT}" \
   -tags="${BUILDTAGS}" \
   -o bin/runc .
 

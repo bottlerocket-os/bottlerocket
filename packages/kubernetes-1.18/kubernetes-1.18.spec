@@ -60,7 +60,7 @@ cp third_party/intemp/LICENSE LICENSE.intemp
 %build
 %cross_go_configure %{goimport}
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
-export GOLDFLAGS="-buildmode=pie -linkmode=external"
+export GOLDFLAGS="-buildmode=pie -linkmode=external -compressdwarf=false"
 make WHAT="cmd/kubelet"
 
 %install
