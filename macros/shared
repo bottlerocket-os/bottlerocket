@@ -234,6 +234,5 @@ CROSS_COMPILATION_CONF_EOF\
 %_binary_payload w1.zstdio
 
 %__arch_install_post \
-  %{?!_cross_allow_rpath:/usr/lib/rpm/check-rpaths} \
   /usr/lib/rpm/check-buildroot \
   %cross_generate_attribution

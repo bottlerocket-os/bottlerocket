@@ -1,5 +1,5 @@
 # Skip check-rpaths since we expect them for systemd.
-%global _cross_allow_rpath 1
+%global __brp_check_rpaths %{nil}
 
 Name: %{_cross_os}systemd
 Version: 247.10
