@@ -6,6 +6,9 @@ Current version: 0.1.0
 
 The library uses IMDSv2 (session-oriented) requests over a pinned schema to guarantee compatibility.
 Session tokens are fetched automatically and refreshed if the request receives a `401` response.
+If an IMDS token fetch or query fails, the library will continue to retry with a fibonacci backoff
+strategy until it is successful or times out. The default timeout is 300s to match the ifup timeout
+set in wicked.service, but can configured using `.with_timeout` during client creation.
 
 Each public method is explicitly targeted and return either bytes or a `String`.
 
