@@ -28,6 +28,7 @@ glibc = { path = "../glibc" }
 grep = { path = "../grep" }
 grub = { path = "../grub" }
 host-ctr = { path = "../host-ctr" }
+hotdog = { path = "../hotdog" }
 iproute = { path = "../iproute" }
 iptables = { path = "../iptables" }
 kexec-tools = { path = "../../packages/kexec-tools" }

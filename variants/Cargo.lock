@@ -257,6 +257,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hotdog"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "iproute"
 version = "0.1.0"
 dependencies = [
@@ -674,6 +681,7 @@ dependencies = [
  "grep",
  "grub",
  "host-ctr",
+ "hotdog",
  "iproute",
  "iptables",
  "kexec-tools",
