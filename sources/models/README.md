@@ -72,6 +72,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/metal-dev/mod.rs)
 * [Default settings](src/metal-dev/defaults.d/)
 
+### metal-k8s-1.21: Metal Kubernetes 1.21
+
+* [Model](src/metal-k8s-1.21/mod.rs)
+* [Default settings](src/metal-k8s-1.21/defaults.d/)
+
 ## This directory
 
 We use `build.rs` to symlink the proper API model source code for Cargo to build.
