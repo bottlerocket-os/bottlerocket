@@ -576,6 +576,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "log4j2-hotpatch"
+version = "0.1.0"
+
+[[package]]
 name = "login"
 version = "0.0.1"
 dependencies = [

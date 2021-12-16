@@ -1,0 +1,14 @@
+[package]
+name = "log4j2-hotpatch"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/corretto/hotpatch-for-apache-log4j2/archive/1.3.0/1.3.0.tar.gz"
+path = "hotpatch-for-apache-log4j2-1.3.0.tar.gz"
+sha512 = "70b3e555ae728b1c8e87b80c9b180e1aba0dd01d0ec9632914cc8ecce9270b6dac78f9a91e9e48e05e7a718d6a7abcc02b8edc42d9a7d8d6893162de730b5a89"
