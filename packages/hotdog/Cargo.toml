@@ -1,0 +1,24 @@
+[package]
+name = "hotdog"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/bottlerocket-os/hotdog/archive/f300fb78dd9ffc555af1b284b3627d2f3f5d069e/hotdog-f300fb7.tar.gz"
+sha512 = "7406cbe5b78646613b78c075edf792f42bb16cd2b477dbf1fc219209d1da45762234bbf581856cc3cbe46836e4117431b74b57761eab3393f30ebea1ec889e3f"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/opencontainers/runtime-spec/archive/v1.0.2/runtime-spec-1.0.2.tar.gz"
+sha512 = "96676b702d02409d33a5c81886c4db4bf45283c628933c6f0f4c2ed0d7cc44fafe95249151d7dc2d1fc5225944d172cdb45fc2f2f5f9bb87531e93421933b664"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/golang/sys/archive/4abf325e0275e4ef0bdd441dcf497570f1419ab9/sys-4abf325.tar.gz"
+sha512 = "74c51b1eb48a0a31443f9cb7ee4e2d7550f2477cbc89fad3909f973f042c8bc2bfc378582847c498ce157c3c28d14a3b22d69e9220539dc5dd87a77bb7b407e3"
+
+[build-dependencies]
+glibc = { path = "../glibc" }

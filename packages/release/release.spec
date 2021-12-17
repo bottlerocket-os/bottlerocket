@@ -75,6 +75,7 @@ Requires: %{_cross_os}glibc
 Requires: %{_cross_os}grep
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}host-ctr
+Requires: %{_cross_os}hotdog
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}iptables
 Requires: %{_cross_os}kexec-tools
