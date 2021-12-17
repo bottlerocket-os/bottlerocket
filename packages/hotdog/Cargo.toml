@@ -22,3 +22,6 @@ sha512 = "74c51b1eb48a0a31443f9cb7ee4e2d7550f2477cbc89fad3909f973f042c8bc2bfc378
 
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+[dependencies]
+log4j2-hotpatch= { path = "../log4j2-hotpatch" }

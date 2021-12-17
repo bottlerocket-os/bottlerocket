@@ -26,6 +26,7 @@ Source1: https://github.com/opencontainers/runtime-spec/archive/v%{runtimespec}/
 Source2: https://github.com/golang/sys/archive/%{gosysrev}/sys-%{gosysrevshort}.tar.gz
 
 BuildRequires: %{_cross_os}glibc-devel
+Requires: %{_cross_os}log4j2-hotpatch
 
 %description
 %{summary}.

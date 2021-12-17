@@ -261,6 +261,7 @@ name = "hotdog"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "log4j2-hotpatch",
 ]
 
 [[package]]
