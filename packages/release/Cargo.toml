@@ -37,10 +37,6 @@ libgcc = { path = "../libgcc" }
 libstd-rust = { path = "../libstd-rust" }
 makedumpfile = { path = "../../packages/makedumpfile" }
 os = { path = "../os" }
-# We don't include `oci-add-hooks` in all variants, and its only consumer is
-# `shimpei` in the "os" package. However, we want to start the "os" package
-# build ASAP since it takes the most time. Since `oci-add-hooks` builds quickly,
-# it doesn't affect other variants very much even when it's not used.
 oci-add-hooks = { path = "../oci-add-hooks" }
 policycoreutils = { path = "../policycoreutils" }
 procps = { path = "../procps" }

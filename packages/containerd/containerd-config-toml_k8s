@@ -18,13 +18,14 @@ enable_selinux = true
 sandbox_image = "{{settings.kubernetes.pod-infra-container-image}}"
 
 [plugins."io.containerd.grpc.v1.cri".containerd]
-default_runtime_name = "runc"
+default_runtime_name = "shimpei"
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.shimpei]
 runtime_type = "io.containerd.runc.v2"
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.shimpei.options]
 SystemdCgroup = true
+BinaryName = "shimpei"
 
 [plugins."io.containerd.grpc.v1.cri".cni]
 bin_dir = "/opt/cni/bin"

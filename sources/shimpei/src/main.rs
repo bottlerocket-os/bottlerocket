@@ -21,7 +21,7 @@ use std::process;
 const RUNC_BIN_PATH: &str = "/usr/bin/runc";
 
 /// Path to hooks definitions
-const HOOK_CONFIG_BASE_PATH: &str = "/usr/share/oci-add-hooks";
+const HOOKS_CONFIG_BASE_PATH: &str = "/etc/shimpei";
 
 /// Path to oci-add-hooks
 const OCI_ADD_HOOKS: &str = "/usr/bin/oci-add-hooks";
@@ -30,7 +30,7 @@ fn run() -> Result<()> {
     setup_logger()?;
     let mut args = env::args();
     let prefix = args.next().context(error::MissingArg { what: "name" })?;
-    let hook_path = Path::new(HOOK_CONFIG_BASE_PATH).join(format!("{}-hook.json", prefix));
+    let hook_path = Path::new(HOOKS_CONFIG_BASE_PATH).join(format!("{}-hooks.json", prefix));
 
     let mut oci_add_hooks_args: Vec<CString> = vec![
         CString::new("oci-add-hooks").expect("Coulnd't create CString from 'oci-add-hooks'"),

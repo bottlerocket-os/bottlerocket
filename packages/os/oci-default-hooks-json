@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "prestart": [
+      {{#if settings.oci-hooks.log4j-hotpatch-enabled}}
+      { "path": "/usr/libexec/hotdog/hotdog-cc-hook" }
+      {{/if}}
+    ],
+    "poststart": [
+      {{#if settings.oci-hooks.log4j-hotpatch-enabled}}
+      { "path": "/usr/libexec/hotdog/hotdog-poststart-hook" }
+      {{/if}}
+    ]
+  }
+}
