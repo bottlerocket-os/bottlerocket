@@ -82,3 +82,7 @@ version = "1.4.2"
     "migrate_v1.4.2_admin-container-v0-7-3.lz4",
     "migrate_v1.4.2_control-container-v0-5-3.lz4",
 ]
+"(1.4.2, 1.5.0)" = [
+    "migrate_v1.5.0_oci-hooks-setting.lz4",
+    "migrate_v1.5.0_oci-hooks-setting-metadata.lz4",
+]

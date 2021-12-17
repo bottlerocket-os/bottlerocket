@@ -418,6 +418,13 @@ These settings can be changed at any time.
   Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
 * `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
 
+#### OCI Hooks settings
+
+Bottlerocket allows you to opt-in to use additional [OCI hooks](https://github.com/opencontainers/runtime-spec/blob/main/runtime.md#lifecycle) for your orchestrated containers.
+Once you opt-in to use additional OCI hooks, any new orchestrated containers will be configured with them, but existing containers won't be changed.
+
+* `settings.oci-hooks.log4j-hotpatch-enabled`: Enables the [hotdog OCI hooks](https://github.com/bottlerocket-os/hotdog), which are used to inject the [Log4j Hot Patch](https://github.com/corretto/hotpatch-for-apache-log4j2) into containers. Defaults to `false`.
+
 #### Container image registry settings
 
 The following setting is optional and allows you to configure image registry mirrors and pull-through caches for your containers.

@@ -301,3 +301,9 @@ struct PemCertificate {
     data: PemCertificateString,
     trusted: bool,
 }
+
+///// OCI hooks
+#[model]
+struct OciHooks {
+    log4j_hotpatch_enabled: bool,
+}

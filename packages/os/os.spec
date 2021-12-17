@@ -1,7 +1,6 @@
 %global _cross_first_party 1
 %global _is_k8s_variant %(if echo %{_cross_variant} | grep -Fqw "k8s"; then echo 1; else echo 0; fi)
 %global _is_aws_variant %(if echo %{_cross_variant} | grep -Fqw "aws"; then echo 1; else echo 0; fi)
-%global _is_vendor_variant %(if echo %{_cross_variant} | grep -Fqw "nvidia"; then echo 1; else echo 0; fi)
 %undefine _debugsource_packages
 
 Name: %{_cross_os}os
@@ -25,6 +24,7 @@ Source3: eni-max-pods
 Source5: updog-toml
 Source6: metricdog-toml
 Source7: host-ctr-toml
+Source8: oci-default-hooks-json
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -74,6 +74,7 @@ Requires: %{_cross_os}sundog
 Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}updog
+Requires: %{_cross_os}shimpei
 
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
@@ -88,10 +89,6 @@ Requires: %{_cross_os}shibaken
 
 %if "%{_cross_variant}" == "aws-ecs-1"
 Requires: %{_cross_os}ecs-settings-applier
-%endif
-
-%if %{_is_vendor_variant}
-Requires: %{_cross_os}shimpei
 %endif
 
 %description
@@ -247,13 +244,12 @@ Summary: Setting generator for populating admin container user-data from IMDS.
 %{summary}.
 %endif
 
-%if %{_is_vendor_variant}
 %package -n %{_cross_os}shimpei
 Summary: OCI-compatible shim around oci-add-hooks
 Requires: %{_cross_os}oci-add-hooks
+Requires: %{_cross_os}hotdog
 %description -n %{_cross_os}shimpei
 %{summary}.
-%endif
 
 %package -n %{_cross_os}bootstrap-containers
 Summary: Manages bootstrap-containers
@@ -319,6 +315,7 @@ echo "** Output from non-static builds:"
     -p bootstrap-containers \
     -p prairiedog \
     -p certdog \
+    -p shimpei \
 %if "%{_cross_variant}" == "aws-ecs-1"
     -p ecs-settings-applier \
 %endif
@@ -330,9 +327,6 @@ echo "** Output from non-static builds:"
     -p pluto \
 %endif
     -p static-pods \
-%endif
-%if %{_is_vendor_variant}
-    -p shimpei \
 %endif
     %{nil}
 
@@ -354,6 +348,7 @@ for p in \
   migrator prairiedog certdog \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
+  shimpei \
 %if "%{_cross_variant}" == "aws-ecs-1"
   ecs-settings-applier \
 %endif
@@ -365,9 +360,6 @@ for p in \
   pluto \
 %endif
   static-pods \
-%endif
-%if %{_is_vendor_variant}
-  shimpei \
 %endif
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
@@ -414,7 +406,7 @@ install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
 
 install -d %{buildroot}%{_cross_templatedir}
-install -p -m 0644 %{S:5} %{S:6} %{S:7} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
@@ -548,14 +540,13 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_datadir}/eks/eni-max-pods
 %endif
 
-%if %{_is_vendor_variant}
-%files -n %{_cross_os}shimpei
-%{_cross_bindir}/shimpei
-%endif
-
 %files -n %{_cross_os}static-pods
 %{_cross_bindir}/static-pods
 %endif
+
+%files -n %{_cross_os}shimpei
+%{_cross_bindir}/shimpei
+%{_cross_templatedir}/oci-default-hooks-json
 
 %files -n %{_cross_os}prairiedog
 %{_cross_bindir}/prairiedog
