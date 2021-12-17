@@ -1,0 +1,13 @@
+[settings.oci-hooks]
+log4j-hotpatch-enabled = false
+
+[metadata.settings.oci-hooks]
+affected-services = ["oci-hooks"]
+
+[services.oci-hooks]
+configuration-files = ["oci-hooks"]
+restart-commands = []
+
+[configuration-files.oci-hooks]
+path = "/etc/shimpei/shimpei-hooks.json"
+template-path = "/usr/share/templates/oci-default-hooks-json"
