@@ -80,6 +80,14 @@
 (filecon "/var/lib/netdog" any lease)
 (filecon "/var/lib/netdog/.*" any lease)
 
+; Label local directories for overlayfs mounts.
+(filecon "/var/lib/cni-plugins" any state)
+(filecon "/var/lib/cni-plugins/.*" any state)
+(filecon "/var/lib/kernel-devel" any state)
+(filecon "/var/lib/kernel-devel/.*" any state)
+(filecon "/var/lib/kernel-modules" any state)
+(filecon "/var/lib/kernel-modules/.*" any state)
+
 ; Label kernel filesystem mounts.
 (filecon "/proc" any proc)
 (filecon "/proc/.*" any ())

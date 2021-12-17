@@ -17,6 +17,7 @@ for opt in "$@"; do
       --output-fmt=*) OUTPUT_FMT="${optarg}" ;;
       --os-image-size-gib=*) OS_IMAGE_SIZE_GIB="${optarg}" ;;
       --data-image-size-gib=*) DATA_IMAGE_SIZE_GIB="${optarg}" ;;
+      --partition-plan=*) PARTITION_PLAN="${optarg}" ;;
    esac
 done
 
@@ -26,6 +27,14 @@ case "${OUTPUT_FMT}" in
       echo "unexpected image output format '${OUTPUT_FMT}'" >&2
       exit 1
       ;;
+esac
+
+case "${PARTITION_PLAN}" in
+  split|unified) ;;
+  *)
+    echo "unexpected partition plan '${PARTITION_PLAN}'" >&2
+    exit 1
+    ;;
 esac
 
 mkdir -p "${OUTPUT_DIR}"
@@ -62,11 +71,19 @@ VERITY_HASH_ALGORITHM=sha256
 VERITY_DATA_BLOCK_SIZE=4096
 VERITY_HASH_BLOCK_SIZE=4096
 
-truncate -s "${OS_IMAGE_SIZE_GIB}"G "${OS_IMAGE}"
+case "${PARTITION_PLAN}" in
+  split)
+    truncate -s "${OS_IMAGE_SIZE_GIB}G" "${OS_IMAGE}"
+    truncate -s "${DATA_IMAGE_SIZE_GIB}G" "${DATA_IMAGE}"
+    ;;
+  unified)
+    truncate -s "$((OS_IMAGE_SIZE_GIB + DATA_IMAGE_SIZE_GIB))G" "${OS_IMAGE}"
+    ;;
+esac
 
 declare -A partlabel parttype partsize partoff
 set_partition_sizes \
-  "${OS_IMAGE_SIZE_GIB}" "${DATA_IMAGE_SIZE_GIB}" \
+  "${OS_IMAGE_SIZE_GIB}" "${DATA_IMAGE_SIZE_GIB}" "${PARTITION_PLAN}" \
   partsize partoff
 set_partition_labels partlabel
 set_partition_types parttype
@@ -76,8 +93,13 @@ for part in \
   BIOS \
   EFI-A BOOT-A ROOT-A HASH-A RESERVED-A \
   EFI-B BOOT-B ROOT-B HASH-B RESERVED-B \
-  PRIVATE ;
+  PRIVATE DATA ;
 do
+  # We only append the data partition if we're using the unified layout.
+  if [ "${part}" == "DATA" ] && [ "${PARTITION_PLAN}" != "unified" ] ; then
+    continue
+  fi
+
   # Each partition is aligned to a 1 MiB boundary, and extends to the sector
   # before the next partition starts. Specify the end point in sectors so we
   # can subtract a sector to fix the off-by-one error that comes from adding
@@ -100,6 +122,18 @@ do
 done
 
 sgdisk --clear "${partargs[@]}" --sort --print "${OS_IMAGE}"
+
+# Partition the separate data disk, if we're using the split layout.
+if [ "${PARTITION_PLAN}" == "split" ] ; then
+  data_start="${partoff[DATA]}"
+  data_end=$((data_start + partsize[DATA]))
+  data_end=$((data_end * 2048 - 1))
+  sgdisk --clear \
+    -n "0:${data_start}M:${data_end}" \
+    -c "0:${partlabel[DATA]}" \
+    -t "0:${parttype[DATA]}" \
+    --sort --print "${DATA_IMAGE}"
+fi
 
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 install -p -m 0644 /host/{COPYRIGHT,LICENSE-APACHE,LICENSE-MIT} "${ROOT_MOUNT}"/usr/share/licenses/
@@ -226,15 +260,7 @@ mkfs.ext4 -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" "${partsize[PRIVATE]}M"
 dd if="${PRIVATE_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRIVATE]}"
 
 # BOTTLEROCKET-DATA
-truncate -s "${DATA_IMAGE_SIZE_GIB}"G "${DATA_IMAGE}"
-data_start="${partoff[DATA]}"
-data_end=$((data_start + partsize[DATA]))
-data_end=$((data_end * 2048 - 1))
-sgdisk --clear \
-  -n "0:${data_start}M:${data_end}" \
-  -c "0:${partlabel[DATA]}" \
-  -t "0:${parttype[DATA]}" \
-  --sort --print "${DATA_IMAGE}"
+
 # If we build on a host with SELinux enabled, we could end up with labels that
 # do not match our policy. Since we allow replacing the data volume at runtime,
 # we can't count on these labels being correct in any case, and it's better to
@@ -243,21 +269,34 @@ UNLABELED=$(find "${DATA_MOUNT}" \
     | awk -v root="${DATA_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_rm", $1, "security.selinux"}')
 mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" "${partsize[DATA]}M"
 echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
-dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA]}"
+case "${PARTITION_PLAN}" in
+  split)
+    dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA]}"
+    ;;
+  unified)
+    dd if="${BOTTLEROCKET_DATA}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA]}"
+    ;;
+esac
 
 sgdisk -v "${OS_IMAGE}"
-sgdisk -v "${DATA_IMAGE}"
+[ -s "${DATA_IMAGE}" ] && sgdisk -v "${DATA_IMAGE}"
 
 if [[ ${OUTPUT_FMT} == "raw" ]]; then
   lz4 -vc "${OS_IMAGE}" >"${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.img.lz4"
-  lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+  if [ -s "${DATA_IMAGE}" ] ; then
+    lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+  fi
 elif [[ ${OUTPUT_FMT} == "qcow2" ]]; then
   qemu-img convert -f raw -O qcow2 "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.qcow2"
-  qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.qcow2"
+  if [ -s "${DATA_IMAGE}" ] ; then
+    qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.qcow2"
+  fi
 elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
   # Stream optimization is required for creating an Open Virtual Appliance (OVA)
   qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.vmdk"
-  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+  if [ -s "${DATA_IMAGE}" ] ; then
+    qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+  fi
 fi
 
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"

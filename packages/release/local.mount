@@ -1,0 +1,14 @@
+[Unit]
+Description=Local Directory (/local)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+
+[Mount]
+What=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
+Where=/local
+Type=ext4
+Options=defaults,noatime,nosuid,nodev
+
+[Install]
+WantedBy=preconfigured.target

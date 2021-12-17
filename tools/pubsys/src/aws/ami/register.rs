@@ -32,10 +32,7 @@ async fn _register_image(
     ec2_client: &Ec2Client,
     cleanup_snapshot_ids: &mut Vec<String>,
 ) -> Result<RegisteredIds> {
-    debug!(
-        "Uploading root and data images into EBS snapshots in {}",
-        region
-    );
+    debug!("Uploading images into EBS snapshots in {}", region);
     let uploader = SnapshotUploader::new(ebs_client);
     let root_snapshot =
         snapshot_from_image(&ami_args.root_image, &uploader, None, ami_args.no_progress)
@@ -46,19 +43,19 @@ async fn _register_image(
             })?;
     cleanup_snapshot_ids.push(root_snapshot.clone());
 
-    let data_snapshot =
-        snapshot_from_image(&ami_args.data_image, &uploader, None, ami_args.no_progress)
+    let mut data_snapshot = None;
+    if let Some(data_image) = &ami_args.data_image {
+        let snapshot = snapshot_from_image(data_image, &uploader, None, ami_args.no_progress)
             .await
             .context(error::Snapshot {
                 path: &ami_args.root_image,
                 region,
             })?;
-    cleanup_snapshot_ids.push(data_snapshot.clone());
+        cleanup_snapshot_ids.push(snapshot.clone());
+        data_snapshot = Some(snapshot);
+    }
 
-    info!(
-        "Waiting for root and data snapshots to become available in {}",
-        region
-    );
+    info!("Waiting for snapshots to become available in {}", region);
     let waiter = SnapshotWaiter::new(ec2_client.clone());
     waiter
         .wait(&root_snapshot, Default::default())
@@ -66,12 +63,15 @@ async fn _register_image(
         .context(error::WaitSnapshot {
             snapshot_type: "root",
         })?;
-    waiter
-        .wait(&data_snapshot, Default::default())
-        .await
-        .context(error::WaitSnapshot {
-            snapshot_type: "data",
-        })?;
+
+    if let Some(ref data_snapshot) = data_snapshot {
+        waiter
+            .wait(&data_snapshot, Default::default())
+            .await
+            .context(error::WaitSnapshot {
+                snapshot_type: "data",
+            })?;
+    }
 
     // Prepare parameters for AMI registration request
     let root_bdm = BlockDeviceMapping {
@@ -86,16 +86,25 @@ async fn _register_image(
         ..Default::default()
     };
 
-    let mut data_bdm = root_bdm.clone();
-    data_bdm.device_name = Some(DATA_DEVICE_NAME.to_string());
-    if let Some(ebs) = data_bdm.ebs.as_mut() {
-        ebs.snapshot_id = Some(data_snapshot.clone());
-        ebs.volume_size = Some(ami_args.data_volume_size);
+    let mut data_bdm = None;
+    if let Some(ref data_snapshot) = data_snapshot {
+        let mut bdm = root_bdm.clone();
+        bdm.device_name = Some(DATA_DEVICE_NAME.to_string());
+        if let Some(ebs) = bdm.ebs.as_mut() {
+            ebs.snapshot_id = Some(data_snapshot.clone());
+            ebs.volume_size = ami_args.data_volume_size;
+        }
+        data_bdm = Some(bdm);
+    }
+
+    let mut block_device_mappings = vec![root_bdm];
+    if let Some(data_bdm) = data_bdm {
+        block_device_mappings.push(data_bdm);
     }
 
     let register_request = RegisterImageRequest {
         architecture: Some(ami_args.arch.clone()),
-        block_device_mappings: Some(vec![root_bdm, data_bdm]),
+        block_device_mappings: Some(block_device_mappings),
         description: ami_args.description.clone(),
         ena_support: Some(ENA),
         name: ami_args.name.clone(),
@@ -115,9 +124,14 @@ async fn _register_image(
         .image_id
         .context(error::MissingImageId { region })?;
 
+    let mut snapshot_ids = vec![root_snapshot];
+    if let Some(data_snapshot) = data_snapshot {
+        snapshot_ids.push(data_snapshot);
+    }
+
     Ok(RegisteredIds {
         image_id,
-        snapshot_ids: vec![root_snapshot, data_snapshot],
+        snapshot_ids,
     })
 }
 

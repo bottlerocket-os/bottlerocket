@@ -7,6 +7,7 @@ Summary: Bottlerocket release
 License: Apache-2.0 OR MIT
 
 Source11: nsswitch.conf
+Source96: release-repart-local.conf
 Source97: release-sysctl.conf
 Source98: release-systemd-system.conf
 Source99: release-tmpfiles.conf
@@ -31,6 +32,7 @@ Source1008: var-lib-bottlerocket.mount
 Source1009: etc-cni.mount
 Source1010: mnt.mount
 Source1012: opt-cni-bin.mount
+Source1013: local.mount
 
 # CD-ROM mount & associated udev rules
 Source1015: media-cdrom.mount
@@ -45,6 +47,7 @@ Source1023: lib-modules.mount.in
 # Mounts that require helper programs
 Source1040: prepare-boot.service
 Source1041: prepare-local.service
+Source1042: repart-local.service
 
 # Services for kdump support
 Source1060: capture-kernel-dump.service
@@ -102,6 +105,9 @@ install -p -m 0644 %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 install -p -m 0644 %{S:1000} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
 
+install -d %{buildroot}%{_cross_libdir}/repart.d
+install -p -m 0644 %{S:96} %{buildroot}%{_cross_libdir}/repart.d/80-local.conf
+
 install -d %{buildroot}%{_cross_sysctldir}
 install -p -m 0644 %{S:97} %{buildroot}%{_cross_sysctldir}/80-release.conf
 
@@ -118,9 +124,9 @@ EOF
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} \
-  %{S:1006} %{S:1007} %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} \
-  %{S:1015} %{S:1040} %{S:1041} %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
+  %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} %{S:1006} %{S:1007} \
+  %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} %{S:1013} %{S:1015} \
+  %{S:1040} %{S:1041} %{S:1042} %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
@@ -163,6 +169,8 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_sysctldir}/80-release.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/os-release
+%dir %{_cross_libdir}/repart.d
+%{_cross_libdir}/repart.d/80-local.conf
 %{_cross_libdir}/systemd/system.conf.d/80-release.conf
 %{_cross_unitdir}/configured.target
 %{_cross_unitdir}/preconfigured.target
@@ -175,12 +183,14 @@ ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/defau
 %{_cross_unitdir}/load-crash-kernel.service
 %{_cross_unitdir}/prepare-boot.service
 %{_cross_unitdir}/prepare-local.service
+%{_cross_unitdir}/repart-local.service
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
 %{_cross_unitdir}/mnt.mount
 %{_cross_unitdir}/etc-cni.mount
 %{_cross_unitdir}/opt-cni-bin.mount
 %{_cross_unitdir}/media-cdrom.mount
+%{_cross_unitdir}/local.mount
 %{_cross_unitdir}/*-lower.mount
 %{_cross_unitdir}/*-kernels.mount
 %{_cross_unitdir}/*-licenses.mount
