@@ -53,8 +53,9 @@ cargo install cargo-make
 
 Bottlerocket uses [Docker](https://docs.docker.com/install/#supported-platforms) to orchestrate package and image builds.
 
-We recommend Docker 19.03 or later.
+We recommend Docker 20.10.10 or later.
 Builds rely on Docker's integrated BuildKit support, which has received many fixes and improvements in newer versions.
+The default seccomp policy of older versions of Docker do not support the `clone3` syscall in recent versions of Fedora or Ubuntu, on which the Bottlerocket SDK is based.
 
 You'll need to have Docker installed and running, with your user account added to the `docker` group.
 Docker's [post-installation steps for Linux](https://docs.docker.com/install/linux/linux-postinstall/) will walk you through that.
