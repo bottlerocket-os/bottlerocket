@@ -48,14 +48,14 @@ ls -la GOPATH/src/golang.org/x/sys
 cp GOPATH/src/golang.org/x/sys/LICENSE LICENSE.golang-sys
 
 %build
+%cross_go_configure %{goimport}
+
 # Set CGO_ENABLED=0 to statically link hotdog-hotpath, since it runs inside containers that
 # may not have the glibc version used to compile it
 # Set `GO111MODULE=off` to force golang to look for the dependencies in the GOPATH
-export GOPATH=$PWD/GOPATH
 CGO_ENABLED=0 GO111MODULE=off go build -installsuffix cgo -a -ldflags "-s" -o hotdog-hotpatch ./cmd/hotdog-hotpatch
 
 # The oci hooks commands can be compiled as we usually compile golang packages
-%cross_go_configure %{goimport}
 for cmd in hotdog-cc-hook hotdog-poststart-hook; do
   GO111MODULE=off go build -buildmode=pie -ldflags "${GOLDFLAGS}" -o $cmd ./cmd/$cmd
 done
