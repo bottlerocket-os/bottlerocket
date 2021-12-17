@@ -57,7 +57,7 @@ cp third_party/intemp/LICENSE LICENSE.intemp
 %build
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
 export GOFLAGS='-tags=dockerless'
-export GOLDFLAGS="-buildmode=pie -linkmode=external"
+export GOLDFLAGS="-buildmode=pie -linkmode=external -compressdwarf=false"
 make WHAT="cmd/kubelet"
 
 %install

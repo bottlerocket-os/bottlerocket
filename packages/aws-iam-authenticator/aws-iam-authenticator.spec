@@ -26,7 +26,7 @@ BuildRequires: %{_cross_os}glibc-devel
 
 %build
 %set_cross_go_flags
-go build -buildmode=pie -ldflags=-linkmode=external -o aws-iam-authenticator ./cmd/aws-iam-authenticator
+go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o aws-iam-authenticator ./cmd/aws-iam-authenticator
 
 %install
 install -d %{buildroot}%{_cross_bindir}

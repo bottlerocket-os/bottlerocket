@@ -49,7 +49,7 @@ for bin in \
 do
   go build \
      -buildmode=pie \
-     -ldflags="-linkmode=external ${LD_VERSION} ${LD_REVISION}" \
+     -ldflags="${GOLDFLAGS} ${LD_VERSION} ${LD_REVISION}" \
      -tags="${BUILDTAGS}" \
      -o ${bin} \
      %{goimport}/cmd/${bin}

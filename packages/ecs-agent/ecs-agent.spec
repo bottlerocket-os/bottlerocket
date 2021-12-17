@@ -168,7 +168,7 @@ LD_VERSION="-X github.com/aws/amazon-ecs-agent/agent/version.Version=%{agent_gov
 LD_GIT_REV="-X github.com/aws/amazon-ecs-agent/agent/version.GitShortHash=%{agent_gitrev}"
 go build -a \
   -buildmode=pie \
-  -ldflags "-linkmode=external ${LD_PAUSE_CONTAINER_NAME} ${LD_PAUSE_CONTAINER_TAG} ${LD_VERSION} ${LD_GIT_REV}" \
+  -ldflags "${GOLDFLAGS} ${LD_PAUSE_CONTAINER_NAME} ${LD_PAUSE_CONTAINER_TAG} ${LD_VERSION} ${LD_GIT_REV}" \
   -o amazon-ecs-agent \
   ./agent
 
@@ -204,17 +204,17 @@ LD_ECS_CNI_SHORT_HASH="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.GitS
 LD_ECS_CNI_PORCELAIN="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.GitPorcelain=0"
 go build -a \
   -buildmode=pie \
-  -ldflags "-linkmode=external ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
+  -ldflags "${GOLDFLAGS} ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
   -o ecs-eni \
   ./plugins/eni
 go build -a \
   -buildmode=pie \
-  -ldflags "-linkmode=external ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
+  -ldflags "${GOLDFLAGS} ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
   -o ecs-ipam \
   ./plugins/ipam
 go build -a \
   -buildmode=pie \
-  -ldflags "-linkmode=external ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
+  -ldflags "${GOLDFLAGS} ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
   -o ecs-bridge \
   ./plugins/ecs-bridge
 
@@ -228,7 +228,7 @@ VPC_CNI_HASH="%{vpccni_gitrev}"
 LD_VPC_CNI_SHORT_HASH="-X github.com/aws/amazon-vpc-cni-plugins/version.GitShortHash=${VPC_CNI_HASH::8}"
 go build -a \
   -buildmode=pie \
-  -ldflags "-linkmode=external ${LD_VPC_CNI_VERSION} ${LD_VPC_CNI_SHORT_HASH} ${LD_VPC_CNI_PORCELAIN}" \
+  -ldflags "${GOLDFLAGS} ${LD_VPC_CNI_VERSION} ${LD_VPC_CNI_SHORT_HASH} ${LD_VPC_CNI_PORCELAIN}" \
   -mod=vendor \
   -o vpc-branch-eni \
   ./plugins/vpc-branch-eni

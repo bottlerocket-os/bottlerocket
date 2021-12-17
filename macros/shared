@@ -179,6 +179,7 @@ CROSS_COMPILATION_CONF_EOF\
   PKG_CONFIG_PATH="%{_cross_pkgconfigdir}" ; export PKG_CONFIG_PATH ; \
   PKG_CONFIG_ALLOW_CROSS=1 ; export PKG_CONFIG_ALLOW_CROSS ; \
   GOFLAGS="-mod=vendor"; export GOFLAGS ; \
+  GOLDFLAGS="-compressdwarf=false -linkmode=external" ; export GOLDFLAGS ; \
   GOPROXY="off"; export GOPROXY ; \
   GOSUMDB="off"; export GOSUMDB ; \
   GO111MODULE="auto"; export GO111MODULE ; \
@@ -233,6 +234,5 @@ CROSS_COMPILATION_CONF_EOF\
 %_binary_payload w1.zstdio
 
 %__arch_install_post \
-  %{?!_cross_allow_rpath:/usr/lib/rpm/check-rpaths} \
   /usr/lib/rpm/check-buildroot \
   %cross_generate_attribution

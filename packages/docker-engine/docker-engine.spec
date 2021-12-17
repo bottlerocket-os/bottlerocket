@@ -54,7 +54,7 @@ export GITCOMMIT=%{gitrev}
 export BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null | sed -e 's/ /T/')
 export PLATFORM="Docker Engine - Community"
 source ./hack/make/.go-autogen
-go build -buildmode=pie -ldflags="-linkmode=external ${LDFLAGS}" -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
+go build -buildmode=pie -ldflags="${GOLDFLAGS} ${LDFLAGS}" -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
 
 %install
 install -d %{buildroot}%{_cross_bindir}
