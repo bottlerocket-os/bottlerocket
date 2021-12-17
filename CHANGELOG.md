@@ -1,3 +1,36 @@
+# v1.5.0 (2021-12-17)
+
+## Security Enhancements
+* Add the ability to hotpatch log4j for CVE-2021-44228 in running containers ([#1872], [#1871], [#1869])
+
+## OS Changes
+* Enable configuration for OCI hooks in the container lifecycle ([#1868])
+* Retry all failed requests to IMDS ([#1841])
+* Enable node feature discovery for Kubernetes device plugins ([#1863])
+* Add `apiclient get` subcommand for simple API retrieval ([#1836])
+* Add support for CPU microcode updates ([#1827])
+* Consistently support API prefix queries ([#1835])
+
+## Build Changes
+* Add support for custom image sizes ([#1826])
+* Add support for unifying the OS and data partitions on a single disk ([#1870])
+
+## Documentation Changes
+* Fixed typo in the README ([#1847] thanks, PascalBourdier!)
+
+[#1826]:https://github.com/bottlerocket-os/bottlerocket/pull/1826
+[#1827]:https://github.com/bottlerocket-os/bottlerocket/pull/1827
+[#1835]:https://github.com/bottlerocket-os/bottlerocket/pull/1835
+[#1836]:https://github.com/bottlerocket-os/bottlerocket/pull/1836
+[#1841]:https://github.com/bottlerocket-os/bottlerocket/pull/1841
+[#1847]:https://github.com/bottlerocket-os/bottlerocket/pull/1847
+[#1863]:https://github.com/bottlerocket-os/bottlerocket/pull/1863
+[#1868]:https://github.com/bottlerocket-os/bottlerocket/pull/1868
+[#1869]:https://github.com/bottlerocket-os/bottlerocket/pull/1869
+[#1870]:https://github.com/bottlerocket-os/bottlerocket/pull/1870
+[#1871]:https://github.com/bottlerocket-os/bottlerocket/pull/1871
+[#1872]:https://github.com/bottlerocket-os/bottlerocket/pull/1872
+
 # v1.4.2 (2021-12-02)
 
 ## Security Fixes
