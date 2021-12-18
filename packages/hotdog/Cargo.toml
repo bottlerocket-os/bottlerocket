@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/bottlerocket-os/hotdog/archive/f300fb78dd9ffc555af1b284b3627d2f3f5d069e/hotdog-f300fb7.tar.gz"
-sha512 = "7406cbe5b78646613b78c075edf792f42bb16cd2b477dbf1fc219209d1da45762234bbf581856cc3cbe46836e4117431b74b57761eab3393f30ebea1ec889e3f"
+url = "https://github.com/bottlerocket-os/hotdog/archive/c32a7572e104d88e96ce2e6fbfb168387d289c80/hotdog-c32a757.tar.gz"
+sha512 = "1577bb4535b1c702788644f1793275a7a4ab2e2596c5e395d4b4e0124a833dc2b16d4ff8039dab6a92e75b3d09c003c70c6b1236f7efd30ad0cf94bb42f34c99"
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/opencontainers/runtime-spec/archive/v1.0.2/runtime-spec-1.0.2.tar.gz"

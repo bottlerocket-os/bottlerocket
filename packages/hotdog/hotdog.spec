@@ -7,7 +7,7 @@
 %global gorepo hotdog
 %global goimport %{goproject}/%{gorepo}
 
-%global gitrev f300fb78dd9ffc555af1b284b3627d2f3f5d069e
+%global gitrev c32a7572e104d88e96ce2e6fbfb168387d289c80
 %global shortrev %(c=%{gitrev}; echo ${c:0:7})
 
 %global gosysrev 4abf325e0275e4ef0bdd441dcf497570f1419ab9
