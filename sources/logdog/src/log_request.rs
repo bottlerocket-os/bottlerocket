@@ -68,7 +68,7 @@ pub(crate) fn log_requests() -> Vec<&'static str> {
 /// body to `example.txt`:
 ///
 /// ```text
-/// http exampe.txt http://example.com
+/// http example.txt http://example.com
 /// ```
 ///
 /// This request will copy a file from `/etc/some/conf` to a file name `some-conf`:
