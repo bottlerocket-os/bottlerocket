@@ -226,7 +226,7 @@ where
     where
         V: Visitor<'de>,
     {
-        // On the first iteraction for a struct, we won't have a prefix yet, unless the user called
+        // On the first interaction for a struct, we won't have a prefix yet, unless the user called
         // from_map_with_prefix and specified it.  We can make the prefix from the struct name.
         // (Recursive calls will have a path but no name, because we always treat nested structures
         // as maps, because we don't need any nested struct names and it lets us use the nice
