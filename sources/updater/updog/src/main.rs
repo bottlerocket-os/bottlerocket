@@ -89,12 +89,12 @@ SUBCOMMANDS:
     prepare                 Download update files and migration targets
 
     update                  Perform an update if available
-        [ -i | --image version ]      Update to a specfic image version
+        [ -i | --image version ]      Update to a specific image version
         [ -n | --now ]                Update immediately, ignoring any release schedule
         [ -r | --reboot ]             Reboot into new update on success
 
     update-image            Download & write an update but do not update flags
-        [ -i | --image version ]      Update to a specfic image version
+        [ -i | --image version ]      Update to a specific image version
         [ -n | --now ]                Update immediately, ignoring wave limits
         [ -t | --timestamp time ]     The timestamp to execute an update from
 
