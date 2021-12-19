@@ -129,7 +129,7 @@ where
     })?;
 
     // If the socket needs to be chowned to a group to grant further access, that can be passed
-    // as a paramter.
+    // as a parameter.
     if let Some(gid) = socket_gid {
         chown(socket_path.as_ref(), None, Some(gid)).context(error::SetGroup { gid })?;
     }
