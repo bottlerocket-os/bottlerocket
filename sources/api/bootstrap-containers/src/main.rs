@@ -11,7 +11,7 @@ It queries the API for their settings, then configures the system by:
 * creating an environment file used by a bootstrap-container-specific instance of a systemd service
 * creating a systemd drop-in configureation file used by a bootstrap-container-specific
 instance of a systemd service
-* ensuring that the bootstap container's systemd service is enabled/disabled for the next boot
+* ensuring that the bootstrap container's systemd service is enabled/disabled for the next boot
 
 # Examples
 Given a bootstrap container called `bear` with the following configuration:
