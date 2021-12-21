@@ -6,7 +6,7 @@
 [settings.host-containers.admin]
 enabled = false
 superpowered = true
-source = "public.ecr.aws/bottlerocket/bottlerocket-admin:v0.7.2"
+source = "public.ecr.aws/bottlerocket/bottlerocket-admin:v0.7.3"
 
 [settings.host-containers.control]
 enabled = false
