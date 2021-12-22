@@ -7,13 +7,17 @@
 %global gorepo hotdog
 %global goimport %{goproject}/%{gorepo}
 
-%global gitrev c32a7572e104d88e96ce2e6fbfb168387d289c80
+%global gitrev 3f2ca9275fae8db87409c3a0999aa2c8a4bd44d1
 %global shortrev %(c=%{gitrev}; echo ${c:0:7})
 
 %global gosysrev 4abf325e0275e4ef0bdd441dcf497570f1419ab9
 %global gosysrevshort %(c=%{gosysrev}; echo ${c:0:7})
 
 %global runtimespec 1.0.2
+
+%global goselinux 1.10.0
+
+%global libcap 1.2.62
 
 Name: %{_cross_os}hotdog
 Version: 1.0.0
@@ -24,6 +28,8 @@ URL: https://github.com/awslabs/oci-add-hooks
 Source0: https://%{goimport}/archive/%{gorev}/%{gorepo}-%{shortrev}.tar.gz
 Source1: https://github.com/opencontainers/runtime-spec/archive/v%{runtimespec}/runtime-spec-%{runtimespec}.tar.gz
 Source2: https://github.com/golang/sys/archive/%{gosysrev}/sys-%{gosysrevshort}.tar.gz
+Source3: https://github.com/opencontainers/selinux/archive/refs/tags/v%{goselinux}.tar.gz#/go-selinux-v%{goselinux}.tar.gz
+Source4: https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v%{libcap}.tar.gz#/libcap-v%{libcap}.tar.gz
 
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}log4j2-hotpatch
@@ -44,8 +50,15 @@ cp GOPATH/src/github.com/opencontainers/runtime-spec/LICENSE LICENSE.runtime-spe
 
 mkdir -p GOPATH/src/golang.org/x/sys
 tar -C GOPATH/src/golang.org/x/sys -xzf %{SOURCE2} --strip 1
-ls -la GOPATH/src/golang.org/x/sys
 cp GOPATH/src/golang.org/x/sys/LICENSE LICENSE.golang-sys
+
+mkdir -p GOPATH/src/github.com/opencontainers/selinux
+tar -C GOPATH/src/github.com/opencontainers/selinux -xzf %{SOURCE3} --strip 1
+cp GOPATH/src/github.com/opencontainers/selinux/LICENSE LICENSE.go-selinux
+
+mkdir -p GOPATH/src/kernel.org/pub/linux/libs/security/libcap
+tar -C GOPATH/src/kernel.org/pub/linux/libs/security/libcap -xzf %{SOURCE4} --strip 2
+cp GOPATH/src/kernel.org/pub/linux/libs/security/libcap/License LICENSE.libcap
 
 %build
 %cross_go_configure %{goimport}
@@ -71,7 +84,7 @@ for cmd in hotdog-cc-hook hotdog-poststart-hook; do
 done
 
 %files
-%license LICENSE LICENSE.runtime-spec LICENSE.golang-sys
+%license LICENSE LICENSE.runtime-spec LICENSE.golang-sys LICENSE.go-selinux LICENSE.libcap
 %{_cross_attribution_file}
 %dir %{_cross_libexecdir}/hotdog
 %dir %{_cross_datadir}/hotdog
