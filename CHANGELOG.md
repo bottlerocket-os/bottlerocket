@@ -1,3 +1,15 @@
+# v1.5.1 (2021-12-23)
+
+## Security Fixes
+* Update hotdog to the latest release. Hotdog now mimics the permissions of the target JVM process ([#1884])
+
+## OS Changes
+* Updated host containers to the latest version ([#1881], [#1882])
+
+[#1881]: https://github.com/bottlerocket-os/bottlerocket/pull/1881
+[#1882]: https://github.com/bottlerocket-os/bottlerocket/pull/1882
+[#1884]: https://github.com/bottlerocket-os/bottlerocket/pull/1884
+
 # v1.5.0 (2021-12-17)
 
 ## Security Enhancements
