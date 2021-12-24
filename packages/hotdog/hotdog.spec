@@ -20,7 +20,7 @@
 %global libcap 1.2.62
 
 Name: %{_cross_os}hotdog
-Version: 1.0.0
+Version: 1.0.1
 Release: 1%{?dist}
 Summary: Tool with OCI hooks to run the Log4j Hot Patch in containers
 License: Apache-2.0
