@@ -1,7 +1,7 @@
-From 916d64e020a4f1bd8fffebad15410d232de1190d Mon Sep 17 00:00:00 2001
+From ad9275dbf2cd0ef8a83cb96ea787ba6fc867a805 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 10 Mar 2020 20:30:10 +0000
-Subject: [PATCH 9002/9009] core: add separate timeout for system shutdown
+Subject: [PATCH 9002/9007] core: add separate timeout for system shutdown
 
 There is an existing setting for this (DefaultTimeoutStopUSec), but
 changing it has no effect because `reset_arguments()` is called just
@@ -19,7 +19,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/src/basic/def.h b/src/basic/def.h
-index 2e60abb..8ba399a 100644
+index eccee3d..3f5bef5 100644
 --- a/src/basic/def.h
 +++ b/src/basic/def.h
 @@ -13,6 +13,9 @@
@@ -33,10 +33,10 @@ index 2e60abb..8ba399a 100644
  #define DEFAULT_UNIX_MAX_DGRAM_QLEN 512UL
  
 diff --git a/src/core/main.c b/src/core/main.c
-index a280b75..de946a0 100644
+index 57aedb9..45fc78c 100644
 --- a/src/core/main.c
 +++ b/src/core/main.c
-@@ -123,6 +123,7 @@ static ExecOutput arg_default_std_error;
+@@ -131,6 +131,7 @@ static ExecOutput arg_default_std_error;
  static usec_t arg_default_restart_usec;
  static usec_t arg_default_timeout_start_usec;
  static usec_t arg_default_timeout_stop_usec;
@@ -44,7 +44,7 @@ index a280b75..de946a0 100644
  static usec_t arg_default_timeout_abort_usec;
  static bool arg_default_timeout_abort_set;
  static usec_t arg_default_start_limit_interval;
-@@ -1467,7 +1468,7 @@ static int become_shutdown(
+@@ -1552,7 +1553,7 @@ static int become_shutdown(
          env_block = strv_copy(environ);
  
          xsprintf(log_level, "%d", log_get_max_level());
@@ -53,7 +53,7 @@ index a280b75..de946a0 100644
  
          switch (log_get_target()) {
  
-@@ -2307,6 +2308,7 @@ static void reset_arguments(void) {
+@@ -2443,6 +2444,7 @@ static void reset_arguments(void) {
          arg_default_restart_usec = DEFAULT_RESTART_USEC;
          arg_default_timeout_start_usec = DEFAULT_TIMEOUT_USEC;
          arg_default_timeout_stop_usec = DEFAULT_TIMEOUT_USEC;
@@ -62,5 +62,5 @@ index a280b75..de946a0 100644
          arg_default_timeout_abort_set = false;
          arg_default_start_limit_interval = DEFAULT_START_LIMIT_INTERVAL;
 -- 
-2.21.3
+2.33.1
 

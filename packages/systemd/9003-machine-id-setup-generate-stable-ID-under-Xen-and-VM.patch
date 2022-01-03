@@ -1,0 +1,42 @@
+From 3c020b5accc81650da518f61f86b789cab4fed75 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Mon, 3 Jan 2022 21:57:11 +0000
+Subject: [PATCH 9003/9007] machine-id-setup: generate stable ID under Xen and
+ VMware
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/libsystemd/sd-id128/id128-util.c | 2 ++
+ src/shared/machine-id-setup.c        | 3 ++-
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/libsystemd/sd-id128/id128-util.c b/src/libsystemd/sd-id128/id128-util.c
+index 7c66d1c..edfebcb 100644
+--- a/src/libsystemd/sd-id128/id128-util.c
++++ b/src/libsystemd/sd-id128/id128-util.c
+@@ -220,6 +220,8 @@ int id128_get_product(sd_id128_t *ret) {
+         r = id128_read("/sys/class/dmi/id/product_uuid", ID128_UUID, &uuid);
+         if (r == -ENOENT)
+                 r = id128_read("/proc/device-tree/vm,uuid", ID128_UUID, &uuid);
++        if (r == -ENOENT)
++                r = id128_read("/sys/hypervisor/uuid", ID128_UUID, &uuid);
+         if (r < 0)
+                 return r;
+ 
+diff --git a/src/shared/machine-id-setup.c b/src/shared/machine-id-setup.c
+index e483675..809f1bc 100644
+--- a/src/shared/machine-id-setup.c
++++ b/src/shared/machine-id-setup.c
+@@ -60,7 +60,8 @@ static int generate_machine_id(const char *root, sd_id128_t *ret) {
+                                 return 0;
+                         }
+ 
+-                } else if (IN_SET(detect_vm(), VIRTUALIZATION_KVM, VIRTUALIZATION_AMAZON, VIRTUALIZATION_QEMU)) {
++                } else if (IN_SET(detect_vm(), VIRTUALIZATION_KVM, VIRTUALIZATION_AMAZON, VIRTUALIZATION_QEMU,
++                                  VIRTUALIZATION_XEN, VIRTUALIZATION_VMWARE)) {
+ 
+                         /* If we are not running in a container, see if we are running in a VM that provides
+                          * a system UUID via the SMBIOS/DMI interfaces.  Such environments include QEMU/KVM
+-- 
+2.33.1
+
