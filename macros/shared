@@ -98,9 +98,10 @@ cpp = '%{_cross_target}-g++'\
 ar = '%{_cross_target}-ar'\
 strip = '%{_cross_target}-strip'\
 pkgconfig = '/usr/bin/pkg-config'\
-[properties]\
+[built-in options]\
 c_args = [%{_cross_c_args}]\
 c_link_args = [%{_cross_c_link_args}]\
+[properties]\
 pkg_config_libdir = '%{_cross_pkgconfigdir}'\
 needs_exe_wrapper = true\
 [host_machine]\
