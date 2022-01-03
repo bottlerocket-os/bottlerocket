@@ -1,0 +1,231 @@
+From a41213fedbbf6436e8c2b647e72b3c2fc33f53b7 Mon Sep 17 00:00:00 2001
+From: Michael Crosby <michael@thepasture.io>
+Date: Tue, 9 Nov 2021 19:45:40 +0000
+Subject: [PATCH] only relabel cri managed host mounts
+
+Co-authored-by: Samuel Karp <skarp@amazon.com>
+Signed-off-by: Michael Crosby <michael@thepasture.io>
+Signed-off-by: Samuel Karp <skarp@amazon.com>
+(cherry picked from commit 9b0303913fcfa297f984d954c718541cf474107b)
+Signed-off-by: Samuel Karp <skarp@amazon.com>
+---
+ pkg/cri/opts/spec_linux.go                    | 24 ------
+ pkg/cri/server/container_create_linux.go      | 23 +++---
+ pkg/cri/server/container_create_linux_test.go | 77 +++++++++++--------
+ 3 files changed, 57 insertions(+), 67 deletions(-)
+
+diff --git a/pkg/cri/opts/spec_linux.go b/pkg/cri/opts/spec_linux.go
+index c5ec3dfdd..84c16b6f8 100644
+--- a/pkg/cri/opts/spec_linux.go
++++ b/pkg/cri/opts/spec_linux.go
+@@ -225,30 +225,6 @@ func WithMounts(osi osinterface.OS, config *runtime.ContainerConfig, extra []*ru
+ 	}
+ }
+ 
+-const (
+-	etcHosts       = "/etc/hosts"
+-	etcHostname    = "/etc/hostname"
+-	resolvConfPath = "/etc/resolv.conf"
+-)
+-
+-// WithRelabeledContainerMounts relabels the default container mounts for files in /etc
+-func WithRelabeledContainerMounts(mountLabel string) oci.SpecOpts {
+-	return func(ctx context.Context, client oci.Client, _ *containers.Container, s *runtimespec.Spec) (err error) {
+-		if mountLabel == "" {
+-			return nil
+-		}
+-		for _, m := range s.Mounts {
+-			switch m.Destination {
+-			case etcHosts, etcHostname, resolvConfPath:
+-				if err := label.Relabel(m.Source, mountLabel, false); err != nil {
+-					return err
+-				}
+-			}
+-		}
+-		return nil
+-	}
+-}
+-
+ // Ensure mount point on which path is mounted, is shared.
+ func ensureShared(path string, lookupMount func(string) (mount.Info, error)) error {
+ 	mountInfo, err := lookupMount(path)
+diff --git a/pkg/cri/server/container_create_linux.go b/pkg/cri/server/container_create_linux.go
+index 1ad2947b8..4c857dff7 100644
+--- a/pkg/cri/server/container_create_linux.go
++++ b/pkg/cri/server/container_create_linux.go
+@@ -68,18 +68,20 @@ func (c *criService) containerMounts(sandboxID string, config *runtime.Container
+ 		hostpath := c.getSandboxHostname(sandboxID)
+ 		if _, err := c.os.Stat(hostpath); err == nil {
+ 			mounts = append(mounts, &runtime.Mount{
+-				ContainerPath: etcHostname,
+-				HostPath:      hostpath,
+-				Readonly:      securityContext.GetReadonlyRootfs(),
++				ContainerPath:  etcHostname,
++				HostPath:       hostpath,
++				Readonly:       securityContext.GetReadonlyRootfs(),
++				SelinuxRelabel: true,
+ 			})
+ 		}
+ 	}
+ 
+ 	if !isInCRIMounts(etcHosts, config.GetMounts()) {
+ 		mounts = append(mounts, &runtime.Mount{
+-			ContainerPath: etcHosts,
+-			HostPath:      c.getSandboxHosts(sandboxID),
+-			Readonly:      securityContext.GetReadonlyRootfs(),
++			ContainerPath:  etcHosts,
++			HostPath:       c.getSandboxHosts(sandboxID),
++			Readonly:       securityContext.GetReadonlyRootfs(),
++			SelinuxRelabel: true,
+ 		})
+ 	}
+ 
+@@ -87,9 +89,10 @@ func (c *criService) containerMounts(sandboxID string, config *runtime.Container
+ 	// TODO: Need to figure out whether we should always mount it as read-only
+ 	if !isInCRIMounts(resolvConfPath, config.GetMounts()) {
+ 		mounts = append(mounts, &runtime.Mount{
+-			ContainerPath: resolvConfPath,
+-			HostPath:      c.getResolvPath(sandboxID),
+-			Readonly:      securityContext.GetReadonlyRootfs(),
++			ContainerPath:  resolvConfPath,
++			HostPath:       c.getResolvPath(sandboxID),
++			Readonly:       securityContext.GetReadonlyRootfs(),
++			SelinuxRelabel: true,
+ 		})
+ 	}
+ 
+@@ -192,7 +195,7 @@ func (c *criService) containerSpec(
+ 		}
+ 	}()
+ 
+-	specOpts = append(specOpts, customopts.WithMounts(c.os, config, extraMounts, mountLabel), customopts.WithRelabeledContainerMounts(mountLabel))
++	specOpts = append(specOpts, customopts.WithMounts(c.os, config, extraMounts, mountLabel))
+ 
+ 	if !c.config.DisableProcMount {
+ 		// Change the default masked/readonly paths to empty slices
+diff --git a/pkg/cri/server/container_create_linux_test.go b/pkg/cri/server/container_create_linux_test.go
+index 18d368344..881c8ecf7 100644
+--- a/pkg/cri/server/container_create_linux_test.go
++++ b/pkg/cri/server/container_create_linux_test.go
+@@ -450,19 +450,22 @@ func TestContainerMounts(t *testing.T) {
+ 			},
+ 			expectedMounts: []*runtime.Mount{
+ 				{
+-					ContainerPath: "/etc/hostname",
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hostname"),
+-					Readonly:      true,
++					ContainerPath:  "/etc/hostname",
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hostname"),
++					Readonly:       true,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+-					ContainerPath: "/etc/hosts",
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
+-					Readonly:      true,
++					ContainerPath:  "/etc/hosts",
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
++					Readonly:       true,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+-					ContainerPath: resolvConfPath,
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
+-					Readonly:      true,
++					ContainerPath:  resolvConfPath,
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
++					Readonly:       true,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+ 					ContainerPath:  "/dev/shm",
+@@ -476,19 +479,22 @@ func TestContainerMounts(t *testing.T) {
+ 			securityContext: &runtime.LinuxContainerSecurityContext{},
+ 			expectedMounts: []*runtime.Mount{
+ 				{
+-					ContainerPath: "/etc/hostname",
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hostname"),
+-					Readonly:      false,
++					ContainerPath:  "/etc/hostname",
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hostname"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+-					ContainerPath: "/etc/hosts",
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
+-					Readonly:      false,
++					ContainerPath:  "/etc/hosts",
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+-					ContainerPath: resolvConfPath,
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
+-					Readonly:      false,
++					ContainerPath:  resolvConfPath,
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+ 					ContainerPath:  "/dev/shm",
+@@ -504,19 +510,22 @@ func TestContainerMounts(t *testing.T) {
+ 			},
+ 			expectedMounts: []*runtime.Mount{
+ 				{
+-					ContainerPath: "/etc/hostname",
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hostname"),
+-					Readonly:      false,
++					ContainerPath:  "/etc/hostname",
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hostname"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+-					ContainerPath: "/etc/hosts",
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
+-					Readonly:      false,
++					ContainerPath:  "/etc/hosts",
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+-					ContainerPath: resolvConfPath,
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
+-					Readonly:      false,
++					ContainerPath:  resolvConfPath,
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+ 					ContainerPath: "/dev/shm",
+@@ -555,14 +564,16 @@ func TestContainerMounts(t *testing.T) {
+ 			securityContext: &runtime.LinuxContainerSecurityContext{},
+ 			expectedMounts: []*runtime.Mount{
+ 				{
+-					ContainerPath: "/etc/hosts",
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
+-					Readonly:      false,
++					ContainerPath:  "/etc/hosts",
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "hosts"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+-					ContainerPath: resolvConfPath,
+-					HostPath:      filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
+-					Readonly:      false,
++					ContainerPath:  resolvConfPath,
++					HostPath:       filepath.Join(testRootDir, sandboxesDir, testSandboxID, "resolv.conf"),
++					Readonly:       false,
++					SelinuxRelabel: true,
+ 				},
+ 				{
+ 					ContainerPath:  "/dev/shm",
+-- 
+2.34.1
+
