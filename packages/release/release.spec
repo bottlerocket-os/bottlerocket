@@ -161,7 +161,7 @@ install -p -m 0644 %{S:203} %{buildroot}%{_cross_templatedir}/hosts
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
 
-ln -s %{_cross_unitdir}/preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
+ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
