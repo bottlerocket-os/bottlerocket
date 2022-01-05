@@ -1,3 +1,10 @@
+# v1.5.2 (2022-01-05)
+
+## Security Fixes
+* Update containerd for CVE-2021-43816 ([8f085929588a][8f085929588a])
+
+[8f085929588a]: https://github.com/bottlerocket-os/bottlerocket/commit/8f085929588a3f0cd575f865dd6f04f96a97e923
+
 # v1.5.1 (2021-12-23)
 
 ## Security Fixes
