@@ -62,10 +62,10 @@ mod error {
         #[snafu(display("Default settings' metadata has unexpected types"))]
         DefaultsMetadataUnexpectedFormat {},
 
-        #[snafu(display("Error querying datstore for populated keys: {}", source))]
+        #[snafu(display("Error querying datastore for populated keys: {}", source))]
         QueryData { source: datastore::Error },
 
-        #[snafu(display("Error querying datstore for populated metadata: {}", source))]
+        #[snafu(display("Error querying datastore for populated metadata: {}", source))]
         QueryMetadata { source: datastore::Error },
 
         #[snafu(display("Error serializing {}: {} ", given, source))]

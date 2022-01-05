@@ -218,7 +218,7 @@ impl SystemdUnit {
 
 /// Calls `systemd daemon-reload` which reloads the systemd configuration.
 /// According to docs, this *shouldn't* be necessary but experience
-/// has show this isn't always the case. It shoudn't hurt to call it
+/// has show this isn't always the case. It shouldn't hurt to call it
 fn systemd_daemon_reload() -> Result<()> {
     systemctl(&["daemon-reload"])
 }

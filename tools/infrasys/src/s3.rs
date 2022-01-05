@@ -37,7 +37,7 @@ pub fn format_prefix(prefix: &str) -> String {
 /// Output: The stack_arn of the stack w/ the S3 bucket, the CFN allocated bucket name,
 /// and the bucket url (for the url fields in Infra.lock)
 pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String, String, String)> {
-    // TODO: Add support for accomodating pre-existing buckets (skip this creation process)
+    // TODO: Add support for accommodating pre-existing buckets (skip this creation process)
     let cfn_client = CloudFormationClient::new(
         Region::from_str(region).context(error::ParseRegion { what: region })?,
     );

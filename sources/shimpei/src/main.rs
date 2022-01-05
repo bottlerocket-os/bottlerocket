@@ -33,7 +33,7 @@ fn run() -> Result<()> {
     let hook_path = Path::new(HOOKS_CONFIG_BASE_PATH).join(format!("{}-hooks.json", prefix));
 
     let mut oci_add_hooks_args: Vec<CString> = vec![
-        CString::new("oci-add-hooks").expect("Coulnd't create CString from 'oci-add-hooks'"),
+        CString::new("oci-add-hooks").expect("Couldn't create CString from 'oci-add-hooks'"),
         CString::new("--hook-config-path")
             .expect("Couldn't create CString from '--hook-config-path'"),
         CString::new(hook_path.display().to_string()).context(error::InvalidString {

@@ -344,7 +344,7 @@ mod test_kubernetes_cluster_name {
     }
 
     #[test]
-    fn bad_alues() {
+    fn bad_values() {
         for err in &["", ".bad", "bad.", &"a".repeat(64)] {
             KubernetesClusterName::try_from(*err).unwrap_err();
         }

@@ -18,7 +18,7 @@ pub enum Error {
     },
 
     #[snafu(display(
-        "Recieved CREATE_FAILED status for CFN stack '{}' in '{}'",
+        "Received CREATE_FAILED status for CFN stack '{}' in '{}'",
         stack_name,
         region
     ))]
