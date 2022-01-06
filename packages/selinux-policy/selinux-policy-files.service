@@ -1,6 +1,8 @@
 [Unit]
 Description=Copy SELinux policy files
 DefaultDependencies=no
+RefuseManualStart=true
+RefuseManualStop=true
 
 [Service]
 Type=oneshot

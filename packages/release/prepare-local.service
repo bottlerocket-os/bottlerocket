@@ -1,7 +1,11 @@
 [Unit]
 Description=Prepare Local Directory (/local)
 DefaultDependencies=no
+After=selinux-policy-files.service
+Wants=selinux-policy-files.service
 RequiresMountsFor=/local
+RefuseManualStart=true
+RefuseManualStop=true
 
 [Service]
 Type=oneshot
