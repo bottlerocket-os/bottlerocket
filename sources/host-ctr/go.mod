@@ -8,13 +8,12 @@ require (
 	github.com/aws/aws-sdk-go v1.42.16
 	github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20211009021844-db7e6868925f
 	github.com/containerd/cgroups v1.0.2 // indirect
-	github.com/containerd/containerd v1.5.8
+	github.com/containerd/containerd v1.5.9
 	github.com/containerd/continuity v0.2.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/moby/sys/mountinfo v0.5.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/opencontainers/selinux v1.10.0 // indirect
 	github.com/pelletier/go-toml v1.9.4
