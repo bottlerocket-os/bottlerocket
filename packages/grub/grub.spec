@@ -178,7 +178,7 @@ MODS="configfile echo ext2 gptprio linux normal part_gpt reboot sleep zstd"
 pushd bios-build
 %make_install
 mkdir -p %{buildroot}%{biosdir}
-grub2-mkimage \
+%{buildroot}%{_cross_bindir}/grub-mkimage \
   -c %{S:1} \
   -d ./grub-core/ \
   -O "i386-pc" \
@@ -193,7 +193,7 @@ popd
 pushd efi-build
 %make_install
 mkdir -p %{buildroot}%{efidir}
-grub2-mkimage \
+%{buildroot}%{_cross_bindir}/grub-mkimage \
   -c %{S:2} \
   -d ./grub-core/ \
   -O "%{_cross_grub_efi_format}" \
