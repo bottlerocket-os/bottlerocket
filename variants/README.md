@@ -159,6 +159,11 @@ included-packages = [
     "my-agent",
 ]
 
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 8
+data-image-size-gib = 20
+partition-plan = "unified"
+
 [lib]
 path = "lib.rs"
 
@@ -174,6 +179,14 @@ In the `[build-dependencies]` section, we specify the packages that need to be b
 This populates the Cargo build graph with all of the RPM packages that need to be built before the variant can be constructed.
 Variants should almost always include the `release` package.
 This pulls in the other core packages and includes essential configuration and services.
+
+This variant includes the (optional) `image-layout` section, which allows the user to customize the layout of the image they are building.
+`os-image-size-gib` is the size of the "OS" disk image in GiB.
+`data-image-size-gib` is the size of the "data" disk image in GiB.
+Though we've done so here for sake of demonstration, resizing the "data" disk image isn't necessary as it expands to fill the disk on boot.
+`partition-plan` is the strategy used for image partitioning, with the options being "split" (the default) or "unified".
+The "split" partition strategy has separate volumes for "OS" and "data", while "unified" has "OS" and "data" on a single volume.
+See [the documentation](../tools/buildsys/src/manifest.rs) for the defaults and additional details.
 
 Be sure to include `publish = false` for all packages, as these are not standard crates and should never appear on [crates.io](https://crates.io/).
 
