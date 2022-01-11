@@ -34,6 +34,7 @@ members = [
     "api/migration/migrations/v1.5.0/oci-hooks-setting",
     "api/migration/migrations/v1.5.0/oci-hooks-setting-metadata",
     "api/migration/migrations/v1.5.1/control-container-v0-5-4",
+    "api/migration/migrations/v1.6.0/vmware-host-containers",
 
     "bottlerocket-release",
 
