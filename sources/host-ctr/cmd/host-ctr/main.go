@@ -695,6 +695,12 @@ func withDefaultMounts(containerID string, persistentDir string) oci.SpecOpts {
 			Source:      "cgroup",
 			Options:     []string{"ro", "nosuid", "noexec", "nodev"},
 		},
+		// Bottlerocket release information for the container
+		{
+			Options:     []string{"bind", "ro"},
+			Destination: fmt.Sprintf("/etc/bottlerocket-release"),
+			Source:      fmt.Sprintf("/etc/os-release"),
+		},
 	}
 
 	// The `current` dir was added for easier referencing in Dockerfiles and scripts.
