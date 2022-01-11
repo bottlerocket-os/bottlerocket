@@ -1,0 +1,17 @@
+[Unit]
+Description=Link additional kernel modules
+# Rerunning this service after the system is fully loaded will override
+# the already linked kernel modules. This doesn't affect the running system,
+# since kernel modules are linked early in the boot sequence, but we still
+# disable manual restarts to prevent unnecessary kernel modules rewrites.
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/driverdog link-modules
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=preconfigured.target

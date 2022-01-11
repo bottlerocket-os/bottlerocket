@@ -1005,6 +1005,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
+name = "driverdog"
+version = "0.1.0"
+dependencies = [
+ "argh",
+ "cargo-readme",
+ "log",
+ "serde",
+ "simplelog",
+ "snafu",
+ "tempfile",
+ "toml",
+]
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

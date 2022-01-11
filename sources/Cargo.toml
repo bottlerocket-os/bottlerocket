@@ -39,6 +39,8 @@ members = [
 
     "imdsclient",
 
+    "driverdog",
+
     "ghostdog",
 
     "growpart",
