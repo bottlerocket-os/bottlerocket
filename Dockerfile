@@ -68,6 +68,16 @@ WORKDIR /home/builder
 USER builder
 ENV PACKAGE=${PACKAGE} ARCH=${ARCH}
 COPY --chown=builder roles/${REPO}.root.json ./rpmbuild/BUILD/root.json
+# We attempt to copy `Licenses.toml` and `licenses` for the current build, otherwise
+# an empty file and a directory are created so that `bottlerocket-license-tool` will
+# fail with a more descriptive error message.
+RUN --mount=target=/host \
+  ( [ -f /host/Licenses.toml ] \
+  && cp /host/Licenses.toml ./rpmbuild/BUILD/ \
+  || touch ./rpmbuild/BUILD/Licenses.toml ) \
+  && ( [ -d /host/licenses ] \
+  && cp -r /host/licenses ./rpmbuild/BUILD/ \
+  || mkdir ./rpmbuild/BUILD/licenses )
 COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/ .
 RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \

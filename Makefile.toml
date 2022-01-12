@@ -57,6 +57,10 @@ PUBLISH_UNIFIED_VOLUME_SIZE = "22"
 # tools/pubsys/policies/ssm/README.md for more information.
 PUBLISH_SSM_TEMPLATES_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/ssm/defaults.toml"
 
+# This can be overriden with -e to change the source path
+# for the Licenses.toml file
+BUILDSYS_LICENSES_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Licenses.toml"
+
 # Specifies whether to validate all targets when validating TUF repositories
 REPO_VALIDATE_TARGETS = "true"
 # Specifies the timeframe to look for upcoming repository metadata expirations
@@ -88,6 +92,10 @@ BUILDSYS_UPSTREAM_SOURCE_FALLBACK = "false"
 # BUILDSYS_ALLOW_FAILED_LICENSE_CHECK=true` to allow the build to continue even
 # if the license check fails.
 BUILDSYS_ALLOW_FAILED_LICENSE_CHECK = "false"
+
+# Disallow pulling licenses from Upstream URLs. To fetch licenses from the upstream source,
+# override this on the command line and set it to 'true'
+BUILDSYS_UPSTREAM_LICENSE_FETCH= "false"
 
 # This controls how many `docker build` commands we'll invoke at once.
 BUILDSYS_JOBS = "8"
@@ -391,7 +399,7 @@ fi
 
 # Builds a package including its build-time and runtime dependency packages.
 [tasks.build-package]
-dependencies = ["check-cargo-version", "build-tools", "publish-setup"]
+dependencies = ["check-cargo-version", "build-tools", "publish-setup", "fetch-licenses"]
 script_runner = "bash"
 script = [
 '''
@@ -605,6 +613,44 @@ docker run --rm \
 '''
 ]
 
+[tasks.fetch-licenses]
+dependencies = ["fetch"]
+script = [
+'''
+if [ "${BUILDSYS_UPSTREAM_LICENSE_FETCH}" = "false" ]; then
+  echo "Skipping fetching licenses"
+  exit 0
+fi
+
+# Attempt copy Licenses.toml
+cp "${BUILDSYS_LICENSES_CONFIG_PATH}" "${BUILDSYS_ROOT_DIR}/Licenses.toml" 2>/dev/null \
+  || echo "Skipping copying file from ${BUILDSYS_LICENSES_CONFIG_PATH}"
+
+if [ ! -s "${BUILDSYS_ROOT_DIR}"/Licenses.toml ] ; then
+  echo "Not fetching licenses since 'Licenses.toml' doesn't exist"
+  exit 0
+fi
+
+mkdir -p "${BUILDSYS_ROOT_DIR}"/licenses
+
+run_fetch_licenses="
+bottlerocket-license-tool -l /tmp/Licenses.toml fetch /tmp/licenses
+"
+set +e
+
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -e CARGO_HOME="/tmp/.cargo" \
+  -v "${CARGO_HOME}":/tmp/.cargo \
+  -v "${BUILDSYS_ROOT_DIR}/licenses:/tmp/licenses" \
+  -v "${BUILDSYS_ROOT_DIR}/Licenses.toml:/tmp/Licenses.toml" \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash -c "${run_fetch_licenses}"
+'''
+]
+
+
 [tasks.link-clean]
 dependencies = ["fetch"]
 script = [
@@ -642,6 +688,7 @@ fi
 dependencies = [
     "link-clean",
     "check-licenses",
+    "fetch-licenses",
     "build-variant",
     "build-ova",
     "link-variant",

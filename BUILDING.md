@@ -92,6 +92,35 @@ cargo make -e BUILDSYS_ARCH=my-arch-here
 
 (You can use variant and arch arguments together, too.)
 
+#### Package licenses
+
+Most packages will include license files extracted from upstream source archives.
+However, in some rare cases there are multiple licenses that could apply to a package.
+Bottlerocket's build system uses the `Licenses.toml` file in conjuction with the `licenses` directory to configure the licenses used for such special packages.
+Here is an example of a simple `Licenses.toml` configuration file:
+
+```toml
+[package]
+spdx-id = "SPDX-ID"
+licenses = [
+  { path = "the-license.txt" }
+]
+```
+
+In the previous example, it is expected that the file `the-license.txt` is present in `licenses`.
+You can retrieve the licenses from a remote endpoint, or the local filesystem if you specify the `license-url` field:
+
+```toml
+[package]
+spdx-id = "SPDX-ID AND SPDX-ID-2" # Package with multiple licenses
+licenses = [
+  # This file is copied from a file system, and will be saved as `path`
+  { license-url = "file:///path/to/spdx-id-license.txt", path = "spdx-id-license.txt" },
+  # This file is fetched from an https endpoint, and will be saved as `path`
+  { license-url = "https://localhost/spdx-id-license-v2.txt", path = "spdx-id-license-2.txt" }
+]
+```
+
 ### Register an AMI
 
 To use the image in Amazon EC2, we need to register the image as an AMI.
