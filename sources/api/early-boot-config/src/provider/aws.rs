@@ -9,7 +9,6 @@ use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
 
-#[cfg(bottlerocket_platform = "aws-dev")]
 use crate::provider::local_file::{local_file_user_data, USER_DATA_FILE};
 
 /// Unit struct for AWS so we can implement the PlatformDataProvider trait.
@@ -87,25 +86,22 @@ impl PlatformDataProvider for AwsDataProvider {
 
         let mut client = ImdsClient::new();
 
-        // Attempt to read from local file first on the `aws-dev` variant
-        #[cfg(bottlerocket_platform = "aws-dev")]
-        {
-            match local_file_user_data()? {
-                None => warn!("No user data found via local file: {}", USER_DATA_FILE),
-                Some(s) => output.push(s),
-            }
+        // Attempt to read from local file first
+        match local_file_user_data()? {
+            Some(s) => output.push(s),
+            None => warn!("No user data found via local file: {}", USER_DATA_FILE),
         }
 
         // Instance identity doc next, so the user has a chance to override
         match Self::identity_document(&mut client).await? {
-            None => warn!("No instance identity document found."),
             Some(s) => output.push(s),
+            None => warn!("No instance identity document found."),
         }
 
         // Optional user-specified configuration / overrides
         match Self::user_data(&mut client).await? {
-            None => warn!("No user data found."),
             Some(s) => output.push(s),
+            None => warn!("No user data found."),
         }
 
         Ok(output)

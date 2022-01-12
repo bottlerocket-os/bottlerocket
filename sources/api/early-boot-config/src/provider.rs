@@ -3,12 +3,11 @@
 use crate::settings::SettingsJson;
 use async_trait::async_trait;
 
-#[cfg(any(bottlerocket_platform = "aws-dev", bottlerocket_platform = "metal"))]
 mod local_file;
 
-#[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
+#[cfg(bottlerocket_platform = "aws")]
 mod aws;
-#[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
+#[cfg(bottlerocket_platform = "aws")]
 pub(crate) use aws::AwsDataProvider as Platform;
 
 #[cfg(bottlerocket_platform = "vmware")]

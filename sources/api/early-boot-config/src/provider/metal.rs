@@ -16,8 +16,8 @@ impl PlatformDataProvider for MetalDataProvider {
         let mut output = Vec::new();
 
         match local_file_user_data()? {
-            None => warn!("No user data found via local file: {}", USER_DATA_FILE),
             Some(s) => output.push(s),
+            None => warn!("No user data found via local file: {}", USER_DATA_FILE),
         }
 
         Ok(output)
