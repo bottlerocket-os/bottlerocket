@@ -88,6 +88,12 @@ If user data exists at both places, settings read from guestinfo will override i
 
 This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
 
+### metal-dev: Metal development build
+
+The [metal-dev](metal-dev/Cargo.toml) variant has useful packages for local development of the OS and is intended to run bare metal.
+It includes tools for troubleshooting as well as Docker for running containers.
+User data will be read from `/var/lib/bottlerocket/user-data.toml`.
+
 ### Deprecated variants
 
 #### aws-k8s-1.15: Kubernetes 1.15 node

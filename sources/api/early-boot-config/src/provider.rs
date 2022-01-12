@@ -3,7 +3,7 @@
 use crate::settings::SettingsJson;
 use async_trait::async_trait;
 
-#[cfg(bottlerocket_platform = "aws-dev")]
+#[cfg(any(bottlerocket_platform = "aws-dev", bottlerocket_platform = "metal"))]
 mod local_file;
 
 #[cfg(any(bottlerocket_platform = "aws", bottlerocket_platform = "aws-dev"))]
@@ -15,6 +15,11 @@ pub(crate) use aws::AwsDataProvider as Platform;
 mod vmware;
 #[cfg(bottlerocket_platform = "vmware")]
 pub(crate) use vmware::VmwareDataProvider as Platform;
+
+#[cfg(bottlerocket_platform = "metal")]
+mod metal;
+#[cfg(bottlerocket_platform = "metal")]
+pub(crate) use metal::MetalDataProvider as Platform;
 
 /// Support for new platforms can be added by implementing this trait.
 #[async_trait]
