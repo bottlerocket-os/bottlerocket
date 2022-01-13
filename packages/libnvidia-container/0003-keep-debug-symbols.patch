@@ -1,0 +1,50 @@
+From db8ae6f5a08db43884b154be07a4b4506a65507d Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 21 Sep 2021 00:22:37 +0000
+Subject: [PATCH 3/4] keep debug symbols
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ Makefile | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 9d19d11..ad84d7f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -193,22 +193,14 @@ $(BIN_OBJS): %.o: %.c | shared
+ -include $(DEPENDENCIES)
+ 
+ $(LIB_SHARED): $(LIB_OBJS)
+-	$(MKDIR) -p $(DEBUG_DIR)
+ 	$(CC) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(LIB_LDFLAGS) $(OUTPUT_OPTION) $^ $(LIB_SCRIPT) $(LIB_LDLIBS)
+-	$(OBJCPY) --only-keep-debug $@ $(LIB_SONAME)
+-	$(OBJCPY) --add-gnu-debuglink=$(LIB_SONAME) $@
+-	$(MV) $(LIB_SONAME) $(DEBUG_DIR)
+-	$(STRIP) --strip-unneeded -R .comment $@
+ 
+ $(LIB_STATIC_OBJ): $(LIB_OBJS)
+ 	# FIXME Handle user-defined LDFLAGS and LDLIBS
+ 	$(LD) -d -r --exclude-libs ALL -L$(DEPS_DIR)$(libdir) $(OUTPUT_OPTION) $^ $(LIB_LDLIBS_STATIC)
+-	$(OBJCPY) --localize-hidden $@
+-	$(STRIP) --strip-unneeded -R .comment $@
+ 
+ $(BIN_NAME): $(BIN_OBJS)
+ 	$(CC) $(BIN_CFLAGS) $(BIN_CPPFLAGS) $(BIN_LDFLAGS) $(OUTPUT_OPTION) $^ $(BIN_SCRIPT) $(BIN_LDLIBS)
+-	$(STRIP) --strip-unneeded -R .comment $@
+ 
+ ##### Public rules #####
+ 
+@@ -244,8 +236,6 @@ install: all
+ 	$(INSTALL) -m 755 $(LIB_SHARED) $(DESTDIR)$(libdir)
+ 	$(LN) -sf $(LIB_SONAME) $(DESTDIR)$(libdir)/$(LIB_SYMLINK)
+ 	$(LDCONFIG) -n $(DESTDIR)$(libdir)
+-	# Install debugging symbols
+-	$(INSTALL) -m 644 $(DEBUG_DIR)/$(LIB_SONAME) $(DESTDIR)$(libdbgdir)
+ 	# Install configuration files
+ 	$(MAKE_DIR)/$(LIB_PKGCFG).in "$(strip $(VERSION))" "$(strip $(LIB_LDLIBS_SHARED))" > $(DESTDIR)$(pkgconfdir)/$(LIB_PKGCFG)
+ 	# Install binary files
+-- 
+2.31.1
+

@@ -1,0 +1,27 @@
+From e5a5f7877832ab255721d2e5971a85e0940043d2 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 21 Sep 2021 00:03:42 +0000
+Subject: [PATCH 2/4] use prefix from environment
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 60a27f1..9d19d11 100644
+--- a/Makefile
++++ b/Makefile
+@@ -23,7 +23,7 @@ WITH_SECCOMP ?= yes
+ 
+ ##### Global definitions #####
+ 
+-export prefix      = /usr/local
++export prefix      ?= /usr/local
+ export exec_prefix = $(prefix)
+ export bindir      = $(exec_prefix)/bin
+ export libdir      = $(exec_prefix)/lib
+-- 
+2.31.1
+

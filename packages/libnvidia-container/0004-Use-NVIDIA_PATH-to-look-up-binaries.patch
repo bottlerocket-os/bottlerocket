@@ -1,0 +1,28 @@
+From 6103d57aebf610ff552e9fb5a36c3bae66f23c0d Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Mon, 1 Nov 2021 16:18:19 +0000
+Subject: [PATCH 4/4] Use NVIDIA_PATH to look up binaries
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ src/nvc_info.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/nvc_info.c b/src/nvc_info.c
+index 3b3d2d5..99ff881 100644
+--- a/src/nvc_info.c
++++ b/src/nvc_info.c
+@@ -249,8 +249,8 @@ find_binary_paths(struct error *err, struct dxcore_context* dxcore, struct nvc_d
+         char path[PATH_MAX];
+         int rv = -1;
+ 
+-        if ((env = secure_getenv("PATH")) == NULL) {
+-                error_setx(err, "environment variable PATH not found");
++        if ((env = secure_getenv("NVIDIA_PATH")) == NULL && (env = secure_getenv("PATH")) == NULL) {
++                error_setx(err, "environment variables NVIDIA_PATH/PATH not found");
+                 return (-1);
+         }
+         if ((env = ptr = xstrdup(err, env)) == NULL)
+-- 
+2.31.1
+
