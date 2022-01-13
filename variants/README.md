@@ -22,6 +22,15 @@ A variant is essentially a list of packages to install, plus a model that define
 The documentation for [packages](../packages/) covers how to create a package.
 Information about API settings for variants can be found in the [models](../sources/models/) documentation.
 
+### User data
+Bottlerocket variants ingest TOML-formatted [user data](../README.md#using-user-data) from various sources in a predefined order.
+All variants first attempt to read user data from `/var/lib/bottlerocket/user-data.toml`.
+AWS variants then retrieve user data from IMDS.
+VMware variants will attempt to read user data from a mounted CD-ROM (from a file named "user-data" or from an OVF file), and then from VMware's guestinfo interface.
+
+If a setting is defined in more than one source, the value in later sources will override earlier values.
+For example, in a VMware variant, settings read from the guestinfo interface will override settings from CD-ROM, and settings from CD-ROM will override settings from the file.
+
 ## Variants
 
 ### aws-k8s-1.18: Kubernetes 1.18 node
@@ -67,15 +76,11 @@ User data will be read from IMDS.
 
 The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMware guest.
 It includes tools for troubleshooting as well as Docker for running containers.
-User data will be read from a mounted CD-ROM (from a file named "user-data" or from an OVF file), and from VMware's guestinfo interface.
-If user data exists at both places, settings read from guestinfo will override identical settings from CD-ROM.
 
 ### vmware-k8s-1.20: VMware Kubernetes 1.20 node
 
 The [vmware-k8s-1.20](vmware-k8s-1.20/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
 It supports self-hosted clusters.
-User data will be read from a mounted CD-ROM (from a file named "user-data" or from an OVF file), and from VMware's guestinfo interface.
-If user data exists at both places, settings read from guestinfo will override identical settings from CD-ROM.
 
 This variant is compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
 
@@ -83,8 +88,6 @@ This variant is compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
 
 The [vmware-k8s-1.21](vmware-k8s-1.21/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
 It supports self-hosted clusters.
-User data will be read from a mounted CD-ROM (from a file named "user-data" or from an OVF file), and from VMware's guestinfo interface.
-If user data exists at both places, settings read from guestinfo will override identical settings from CD-ROM.
 
 This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
 
@@ -92,7 +95,6 @@ This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
 
 The [metal-dev](metal-dev/Cargo.toml) variant has useful packages for local development of the OS and is intended to run bare metal.
 It includes tools for troubleshooting as well as Docker for running containers.
-User data will be read from `/var/lib/bottlerocket/user-data.toml`.
 
 ### Deprecated variants
 
