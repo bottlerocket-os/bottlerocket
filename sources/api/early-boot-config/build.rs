@@ -13,9 +13,7 @@ fn main() {
     // tags": https://github.com/bottlerocket-os/bottlerocket/issues/1260
     println!("cargo:rerun-if-env-changed=VARIANT");
     if let Ok(variant) = env::var("VARIANT") {
-        if variant == "aws-dev" {
-            println!("cargo:rustc-cfg=bottlerocket_platform=\"aws-dev\"");
-        } else if variant.starts_with("aws") {
+        if variant.starts_with("aws") {
             println!("cargo:rustc-cfg=bottlerocket_platform=\"aws\"");
         } else if variant.starts_with("vmware") {
             println!("cargo:rustc-cfg=bottlerocket_platform=\"vmware\"");

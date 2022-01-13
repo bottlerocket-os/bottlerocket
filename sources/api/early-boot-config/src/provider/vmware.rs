@@ -15,6 +15,8 @@ use std::iter::FromIterator;
 use std::path::Path;
 use std::str;
 
+use crate::provider::local_file::{local_file_user_data, USER_DATA_FILE};
+
 pub(crate) struct VmwareDataProvider;
 
 impl VmwareDataProvider {
@@ -243,13 +245,19 @@ impl PlatformDataProvider for VmwareDataProvider {
     ) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
 
-        // Look at the CD-ROM for user data first, and then...
+        // Attempt to read from local file first
+        match local_file_user_data()? {
+            Some(s) => output.push(s),
+            None => warn!("No user data found via local file: {}", USER_DATA_FILE),
+        }
+
+        // Then look at the CD-ROM for user data
         match Self::cdrom_user_data()? {
             Some(s) => output.push(s),
             None => warn!("No user data found via CD-ROM"),
         }
 
-        // check guestinfo.  If guestinfo is populated, it will override any earlier settings
+        // And finally, check guestinfo.  If guestinfo is populated, it will override any earlier settings
         // found via CD-ROM
         match Self::guestinfo_user_data()? {
             Some(s) => output.push(s),
