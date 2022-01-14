@@ -4,7 +4,7 @@ on:
     branches: [develop]
     # Here we list file types that don't affect the build and don't need to use
     # up our Actions runners.
-    paths-ignore: 
+    paths-ignore:
       # draw.io (diagrams.net) files, the source of png images for docs
       - '**.drawio'
       # Example configuration files
@@ -43,8 +43,8 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - run: rustup toolchain install 1.56.1 && rustup default 1.56.1
-      - run: cargo install --version 0.30.0 cargo-make
+      - run: rustup toolchain install 1.58.0 && rustup default 1.58.0
+      - run: cargo install --version 0.35.8 cargo-make
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-fmt
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} -e BUILDSYS_ARCH=${{ matrix.arch }} -e BUILDSYS_JOBS=12
