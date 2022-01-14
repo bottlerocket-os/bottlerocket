@@ -73,7 +73,7 @@ pub enum Error {
     },
 
     #[snafu(display("'{}' is set to non-string value", setting))]
-    NonStringSettingDataType { setting: &'static str },
+    NonStringSettingDataType { setting: String },
 
     #[snafu(display("Unable to deserialize datastore data: {}", source))]
     DeserializeDatastore {
