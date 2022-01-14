@@ -220,6 +220,7 @@ struct Metadata {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 pub(crate) struct BuildPackage {
     pub(crate) external_files: Option<Vec<ExternalFile>>,
     pub(crate) package_name: Option<String>,
