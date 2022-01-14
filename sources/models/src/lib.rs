@@ -113,7 +113,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
 
-use crate::de::deserialize_mirrors;
+use crate::de::{deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
     BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey,
     ECSAttributeValue, FriendlyVersion, Identifier, KubernetesAuthenticationMode,
@@ -142,7 +142,12 @@ struct KubernetesSettings {
     cluster_certificate: ValidBase64,
     api_server: Url,
     node_labels: HashMap<KubernetesLabelKey, KubernetesLabelValue>,
-    node_taints: HashMap<KubernetesLabelKey, KubernetesTaintValue>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_node_taints"
+    )]
+    node_taints: HashMap<KubernetesLabelKey, Vec<KubernetesTaintValue>>,
     static_pods: HashMap<Identifier, StaticPod>,
     authentication_mode: KubernetesAuthenticationMode,
     bootstrap_token: KubernetesBootstrapToken,

@@ -145,7 +145,7 @@ mod error {
         // handlebars::JsonValue is a serde_json::Value, which implements
         // the 'Display' trait and should provide valuable context
         #[snafu(display(
-            "Invalid base64 template value, expected {}, got '{}' in template {}",
+            "Invalid template value, expected {}, got '{}' in template {}",
             expected,
             value,
             template
@@ -439,6 +439,90 @@ pub fn join_map(
     out.write(&joined).context(error::TemplateWrite {
         template: template_name.to_owned(),
     })?;
+    Ok(())
+}
+/// `join_node_taints` is a specialized version of `join_map` that joins the kubernetes node taints
+/// setting in the correct format `kubelet` expects for its `--register-with-taints` option.
+///
+/// Example:
+///    {{ join_node_taints settings.kubernetes.node-taints }}
+///    ...where `settings.kubernetes.node-taints` is: {"key1": ["value1:NoSchedule","value1:NoExecute"], "key2": ["value2:NoSchedule"]}
+///    ...will produce: "key1=value1:NoSchedule,key1=value1:NoExecute,key2=value2:NoSchedule"
+pub fn join_node_taints(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting join_node_taints helper");
+    let template_name = template_name(renderctx);
+    trace!("Template name: {}", &template_name);
+
+    trace!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 1)?;
+
+    let node_taints_value = get_param(helper, 0)?;
+    // It's ok if there are no node-taints, output nothing
+    if !node_taints_value.is_object() {
+        return Ok(());
+    }
+
+    let node_taints = node_taints_value.as_object().context(error::Internal {
+        msg: "Already confirmed map is_object but as_object failed",
+    })?;
+    trace!("node taints to join: {:?}", node_taints);
+
+    // Join the key/value pairs for node taints
+    let mut pairs = Vec::new();
+    for (key, val_value) in node_taints.into_iter() {
+        match val_value {
+            Value::Array(values) => {
+                for taint_value in values {
+                    if let Some(taint_str) = taint_value.as_str() {
+                        pairs.push(format!("{}={}", key, taint_str));
+                    } else {
+                        return Err(RenderError::from(
+                            error::TemplateHelperError::InvalidTemplateValue {
+                                expected: "string",
+                                value: taint_value.to_owned(),
+                                template: template_name.to_owned(),
+                            },
+                        ));
+                    }
+                }
+            }
+            Value::Null => {
+                return Err(RenderError::from(
+                    error::TemplateHelperError::InvalidTemplateValue {
+                        expected: "non-null",
+                        value: val_value.to_owned(),
+                        template: template_name.to_owned(),
+                    },
+                ))
+            }
+            // all other types unsupported
+            _ => {
+                return Err(RenderError::from(
+                    error::TemplateHelperError::InvalidTemplateValue {
+                        expected: "sequence",
+                        value: val_value.to_owned(),
+                        template: template_name.to_owned(),
+                    },
+                ))
+            }
+        };
+    }
+
+    // Join all pairs with the given string.
+    let joined = pairs.join(",");
+    trace!("Joined output: {}", joined);
+
+    // Write the string out to the template
+    out.write(&joined).context(error::TemplateWrite {
+        template: template_name.to_owned(),
+    })?;
+
     Ok(())
 }
 
@@ -1185,6 +1269,62 @@ mod test_join_map {
         setup_and_render_template("{{join_map \"=\" \",\" \"sup\" map}}", &json!({}))
             // Invalid failure mode 'sup'
             .unwrap_err();
+    }
+}
+
+#[cfg(test)]
+mod test_join_node_taints {
+    use super::*;
+    use handlebars::RenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("join_node_taints", Box::new(join_node_taints));
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn basic() {
+        let result = setup_and_render_template(
+            "{{ join_node_taints map }}",
+            &json!({"map":{"key1": ["value1:NoSchedule"], "key2": ["value2:NoSchedule"]}}),
+        )
+        .unwrap();
+        assert_eq!(result, "key1=value1:NoSchedule,key2=value2:NoSchedule")
+    }
+
+    #[test]
+    fn none() {
+        let result = setup_and_render_template("{{ join_node_taints map }}", &json!({})).unwrap();
+        assert_eq!(result, "")
+    }
+
+    #[test]
+    fn empty_map() {
+        let result =
+            setup_and_render_template("{{ join_node_taints map }}", &json!({"map":{}})).unwrap();
+        assert_eq!(result, "")
+    }
+
+    #[test]
+    fn more_than_one() {
+        let result = setup_and_render_template(
+            "{{ join_node_taints map }}",
+            &json!({"map":{"key1": ["value1:NoSchedule","value1:NoExecute"], "key2": ["value2:NoSchedule"]}}),
+        )
+        .unwrap();
+        assert_eq!(
+            result,
+            "key1=value1:NoSchedule,key1=value1:NoExecute,key2=value2:NoSchedule"
+        )
     }
 }
 
