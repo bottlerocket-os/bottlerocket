@@ -593,7 +593,7 @@ The default `admin` host-container, for example, stores its SSH host keys under 
 There are a few important caveats to understand about host containers:
 * They're not orchestrated.  They only start or stop according to that `enabled` flag.
 * They run in a separate instance of containerd than the one used for orchestrated containers like Kubernetes pods.
-* They're not updated automatically.  You need to update the `source`, disable the container, commit those changes, then re-enable it.
+* They're not updated automatically.  You need to update the `source` and commit those changes.
 * If you set `superpowered` to true, they'll essentially have root access to the host.
 
 Because of these caveats, host containers are only intended for special use cases.
