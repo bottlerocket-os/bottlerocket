@@ -1,7 +1,7 @@
-From db8ae6f5a08db43884b154be07a4b4506a65507d Mon Sep 17 00:00:00 2001
+From b994aa569b2b84ed892e86b9610fb051286e0ab9 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 21 Sep 2021 00:22:37 +0000
-Subject: [PATCH 3/4] keep debug symbols
+Subject: [PATCH 3/5] keep debug symbols
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
@@ -10,10 +10,10 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 10 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 9d19d11..ad84d7f 100644
+index 9552ddd..34fb136 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -193,22 +193,14 @@ $(BIN_OBJS): %.o: %.c | shared
+@@ -200,22 +200,14 @@ $(BIN_OBJS): %.o: %.c | shared
  -include $(DEPENDENCIES)
  
  $(LIB_SHARED): $(LIB_OBJS)
@@ -36,7 +36,7 @@ index 9d19d11..ad84d7f 100644
  
  ##### Public rules #####
  
-@@ -244,8 +236,6 @@ install: all
+@@ -251,8 +243,6 @@ install: all
  	$(INSTALL) -m 755 $(LIB_SHARED) $(DESTDIR)$(libdir)
  	$(LN) -sf $(LIB_SONAME) $(DESTDIR)$(libdir)/$(LIB_SYMLINK)
  	$(LDCONFIG) -n $(DESTDIR)$(libdir)
@@ -46,5 +46,5 @@ index 9d19d11..ad84d7f 100644
  	$(MAKE_DIR)/$(LIB_PKGCFG).in "$(strip $(VERSION))" "$(strip $(LIB_LDLIBS_SHARED))" > $(DESTDIR)$(pkgconfdir)/$(LIB_PKGCFG)
  	# Install binary files
 -- 
-2.31.1
+2.33.1
 
