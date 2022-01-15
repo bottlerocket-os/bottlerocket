@@ -16,6 +16,7 @@ Patch0001: 0001-use-shared-libtirpc.patch
 Patch0002: 0002-use-prefix-from-environment.patch
 Patch0003: 0003-keep-debug-symbols.patch
 Patch0004: 0004-Use-NVIDIA_PATH-to-look-up-binaries.patch
+Patch0005: 0005-makefile-fix-symlinks-to-shared-library.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libelf-devel
@@ -68,6 +69,7 @@ export DESTDIR=%{buildroot} \\\
 %files
 %license NOTICE LICENSE
 %{_cross_attribution_file}
+%{_cross_libdir}/libnvidia-container.so
 %{_cross_libdir}/libnvidia-container.so.1
 %{_cross_libdir}/libnvidia-container.so.%{version}
 %{_cross_bindir}/nvidia-container-cli

@@ -1,0 +1,26 @@
+From 27170027de5fdfbfd752fa30d6f9b98cc4f9e4cd Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Tue, 18 Jan 2022 23:57:24 +0000
+Subject: [PATCH 5/5] makefile: fix symlinks to shared library
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 34fb136..1c3d9d2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -242,7 +242,7 @@ install: all
+ 	$(INSTALL) -m 644 $(LIB_STATIC) $(DESTDIR)$(libdir)
+ 	$(INSTALL) -m 755 $(LIB_SHARED) $(DESTDIR)$(libdir)
+ 	$(LN) -sf $(LIB_SONAME) $(DESTDIR)$(libdir)/$(LIB_SYMLINK)
+-	$(LDCONFIG) -n $(DESTDIR)$(libdir)
++	$(LN) -sf $(LIB_SHARED) $(DESTDIR)$(libdir)/$(LIB_SONAME)
+ 	# Install configuration files
+ 	$(MAKE_DIR)/$(LIB_PKGCFG).in "$(strip $(VERSION))" "$(strip $(LIB_LDLIBS_SHARED))" > $(DESTDIR)$(pkgconfdir)/$(LIB_PKGCFG)
+ 	# Install binary files
+-- 
+2.33.1
+
