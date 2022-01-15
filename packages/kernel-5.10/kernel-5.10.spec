@@ -171,7 +171,7 @@ sed -i \
   find tools/{arch/%{_cross_karch},include,objtool,scripts}/ -type f ! -name \*.o -print
   echo tools/build/fixdep.c
   find tools/lib/subcmd -type f -print
-  find tools/lib/{ctype,rbtree,string,str_error_r}.c
+  find tools/lib/{ctype,hweight,rbtree,string,str_error_r}.c
 
   echo kernel/bounds.c
   echo kernel/time/timeconst.bc
