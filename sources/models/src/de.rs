@@ -63,6 +63,12 @@ mod mirrors_tests {
     }
 
     #[test]
+    fn registry_mirrors_none_representation() {
+        let registry_settings = toml::from_str::<RegistrySettings>("").unwrap();
+        assert!(registry_settings.mirrors.is_none());
+    }
+
+    #[test]
     fn representation_equal() {
         assert_eq!(
             toml::from_str::<RegistrySettings>(TEST_MIRRORS_TABLE).unwrap(),

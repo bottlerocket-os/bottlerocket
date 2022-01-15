@@ -195,7 +195,11 @@ struct RegistryMirror {
 // Image registry settings for the container runtimes.
 #[model]
 struct RegistrySettings {
-    #[serde(deserialize_with = "deserialize_mirrors")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_mirrors"
+    )]
     mirrors: Vec<RegistryMirror>,
 }
 
