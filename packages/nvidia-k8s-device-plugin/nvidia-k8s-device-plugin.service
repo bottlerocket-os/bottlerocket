@@ -1,0 +1,17 @@
+[Unit]
+Description=Start NVIDIA kubernetes device plugin
+RefuseManualStart=true
+RefuseManualStop=true
+After=kubelet.service
+BindsTo=kubelet.service
+
+[Service]
+ExecStart=/usr/bin/nvidia-device-plugin
+Type=simple
+TimeoutSec=0
+RestartSec=2
+Restart=always
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
