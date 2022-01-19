@@ -1,8 +1,8 @@
-# Both containers are disabled by default in metal variants because the user
+# Both containers are disabled by default in off-AWS variants because the user
 # must supply user data in order to use the containers.  The admin container
 # isn't useful without SSH keys/CA certs, and the control container can only be
-# used with hybrid SSM off of AWS.  Metal variant users might not want to use
-# either of those options.
+# used with hybrid SSM off of AWS.  Users of off-AWS variants might not want to
+# use either of those options.
 [settings.host-containers.admin]
 enabled = false
 superpowered = true
