@@ -25,6 +25,8 @@ BUILDSYS_NAME = "bottlerocket"
 # If you're building a Bottlerocket remix, you'd want to set this to something like
 # "Bottlerocket Remix by ${CORP}" or "${CORP}'s Bottlerocket Remix"
 BUILDSYS_PRETTY_NAME = "Bottlerocket OS"
+# SDK name used for building
+BUILDSYS_SDK_NAME="bottlerocket"
 # SDK version used for building
 BUILDSYS_SDK_VERSION="v0.24.0"
 # Site for fetching the SDK
@@ -114,9 +116,10 @@ AMI_DATA_FILE_SUFFIX = "amis.json"
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
 
-# Depends on ${BUILDSYS_REGISTRY}, ${BUILDSYS_ARCH} and ${BUILDSYS_SDK_VERSION}.
-BUILDSYS_SDK_IMAGE = { script = [ "echo ${BUILDSYS_REGISTRY}/bottlerocket-sdk-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
-BUILDSYS_TOOLCHAIN = { script = [ "echo ${BUILDSYS_REGISTRY}/bottlerocket-toolchain-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
+# Depends on ${BUILDSYS_ARCH}, ${BUILDSYS_REGISTRY}, ${BUILDSYS_SDK_NAME}, and
+# ${BUILDSYS_SDK_VERSION}.
+BUILDSYS_SDK_IMAGE = { script = [ "echo ${BUILDSYS_REGISTRY}/${BUILDSYS_SDK_NAME}-sdk-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
+BUILDSYS_TOOLCHAIN = { script = [ "echo ${BUILDSYS_REGISTRY}/${BUILDSYS_SDK_NAME}-toolchain-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
 
 # Depends on ${BUILDSYS_JOBS}.
 CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
