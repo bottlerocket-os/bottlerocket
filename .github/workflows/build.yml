@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
-      - run: rustup toolchain install 1.58.0 && rustup default 1.58.0
+      - run: rustup toolchain install 1.58.1 && rustup default 1.58.1
       - run: cargo install --version 0.35.8 cargo-make
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-fmt
