@@ -121,6 +121,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     // Prefer snake case for helper names (we accidentally created a few with kabob case)
     template_registry.register_helper("base64_decode", Box::new(helpers::base64_decode));
     template_registry.register_helper("join_map", Box::new(helpers::join_map));
+    template_registry.register_helper("join_node_taints", Box::new(helpers::join_node_taints));
     template_registry.register_helper("default", Box::new(helpers::default));
     template_registry.register_helper("ecr-prefix", Box::new(helpers::ecr_prefix));
     template_registry.register_helper("pause-prefix", Box::new(helpers::pause_prefix));

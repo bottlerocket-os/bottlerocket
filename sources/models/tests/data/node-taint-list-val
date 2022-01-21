@@ -1,0 +1,3 @@
+[node-taints]
+"key1" = ["value1:NoSchedule","value1:NoExecute"]
+"key2" = "value2:NoSchedule"

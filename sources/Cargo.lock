@@ -2028,6 +2028,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "node-taints-representation"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "serde_json",
+ "snafu",
+]
+
+[[package]]
 name = "nom"
 version = "6.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
