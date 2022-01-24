@@ -1,0 +1,29 @@
+From 6c4a8c5d2154961398ffb83ff67619c4f95a3b30 Mon Sep 17 00:00:00 2001
+From: Jyoti Mahapatra <jyotima@amazon.com>
+Date: Sat, 22 Jan 2022 01:16:11 +0000
+Subject: [PATCH] Fix kubelet ipv6 address comparison
+The node ip provided to the node-ip in kubelet params and the one
+provided by cloud provider can differ in the ipv6 formating. String
+comparison won't work when the ips are the same but differ in
+formatting, eg. 2600:1f14:1d4:d101:0:0:0:ba3d and
+2600:1f14:1d4:d101::ba3d
+---
+ pkg/kubelet/nodestatus/setters.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/kubelet/nodestatus/setters.go b/pkg/kubelet/nodestatus/setters.go
+index 52f12178b66..1406fc55aa5 100644
+--- a/pkg/kubelet/nodestatus/setters.go
++++ b/pkg/kubelet/nodestatus/setters.go
+@@ -125,7 +125,7 @@ func NodeAddress(nodeIPs []net.IP, // typically Kubelet.nodeIPs
+ 
+ 				nodeIPTypes := make(map[v1.NodeAddressType]bool)
+ 				for _, nodeAddress := range cloudNodeAddresses {
+-					if nodeAddress.Address == nodeIP.String() {
++					if string(net.ParseIP(nodeAddress.Address)) == string(net.ParseIP(nodeIP.String())) {
+ 						enforcedNodeAddresses = append(enforcedNodeAddresses, v1.NodeAddress{Type: nodeAddress.Type, Address: nodeAddress.Address})
+ 						nodeIPTypes[nodeAddress.Type] = true
+ 					}
+-- 
+2.32.0
+

@@ -37,6 +37,7 @@ Source9: kubelet-sysctl.conf
 Source1000: clarify.toml
 
 Patch0001: 0001-AWS-Include-IPv6-addresses-in-NodeAddresses.patch
+Patch0002: 0002-Fix-kubelet-IPv6-address-comparison.patch
 
 BuildRequires: git
 BuildRequires: rsync
