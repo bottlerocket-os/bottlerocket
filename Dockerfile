@@ -83,6 +83,7 @@ RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \
    && echo "%_cross_variant ${VARIANT}" >> .rpmmacros \
    && echo "%_cross_repo_root_json %{_builddir}/root.json" >> .rpmmacros \
+   && echo "%_topdir /home/builder/rpmbuild" >> .rpmmacros \
    && rm ${ARCH} shared rust cargo \
    && mv *.spec rpmbuild/SPECS \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
