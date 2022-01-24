@@ -10,6 +10,7 @@ path = "pkg.rs"
 
 [package.metadata.build-package]
 package-name = "kmod-5.10-nvidia"
+releases-url = "https://docs.nvidia.com/datacenter/tesla/"
 
 [[package.metadata.build-package.external-files]]
 url = "https://us.download.nvidia.com/tesla/470.82.01/NVIDIA-Linux-x86_64-470.82.01.run"
