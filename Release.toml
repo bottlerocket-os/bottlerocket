@@ -90,7 +90,6 @@ version = "1.5.3"
     "migrate_v1.5.1_control-container-v0-5-4.lz4",
 ]
 "(1.5.1, 1.5.2)" = []
-"(1.5.2, 1.5.3)" = []
-"(1.5.3, 1.6.0)" = [
-    "migrate_v1.6.0_vmware-host-containers.lz4",
+"(1.5.2, 1.5.3)" = [
+    "migrate_v1.5.3_vmware-host-containers.lz4",
 ]
