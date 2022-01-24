@@ -9,7 +9,7 @@
 * Fix an issue which could impair nodes in Kubernetes 1.21 IPv6 clusters ([#1925])
 
 [#1898]: https://github.com/bottlerocket-os/bottlerocket/pull/1898
-[#1918]: https://github.com/bottlerocket-os/bottlerocket/pull/1915
+[#1918]: https://github.com/bottlerocket-os/bottlerocket/pull/1918
 [#1921]: https://github.com/bottlerocket-os/bottlerocket/pull/1921
 [#1925]: https://github.com/bottlerocket-os/bottlerocket/pull/1925
 
