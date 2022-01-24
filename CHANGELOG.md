@@ -1,3 +1,25 @@
+# v1.5.3 (2022-01-25)
+
+## Security Fixes
+* Update Bottlerocket SDK to 0.25.1 for Rust 1.58.1 ([#1918])
+* Update kernel-5.4 and kernel-5.10 to include recent security fixes ([#1921])
+* Migrate host-container to the latest version for vmware variants ([#1898])
+
+## OS Changes
+* Fix an issue which could impair nodes in Kubernetes 1.21 IPv6 clusters ([#1925])
+
+[#1898]: https://github.com/bottlerocket-os/bottlerocket/pull/1898
+[#1918]: https://github.com/bottlerocket-os/bottlerocket/pull/1915
+[#1921]: https://github.com/bottlerocket-os/bottlerocket/pull/1921
+[#1925]: https://github.com/bottlerocket-os/bottlerocket/pull/1925
+
+# v1.5.2 (2022-01-05)
+
+## Security Fixes
+* Update containerd for CVE-2021-43816 ([8f085929588a][8f085929588a])
+
+[8f085929588a]: https://github.com/bottlerocket-os/bottlerocket/commit/8f085929588a3f0cd575f865dd6f04f96a97e923
+
 # v1.5.1 (2021-12-23)
 
 ## Security Fixes
