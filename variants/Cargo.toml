@@ -8,6 +8,7 @@ members = [
     "aws-k8s-1.21",
     "metal-dev",
     "metal-k8s-1.21",
+    "aws-k8s-1.21-nvidia",
     "vmware-dev",
     "vmware-k8s-1.20",
     "vmware-k8s-1.21",

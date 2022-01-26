@@ -1,0 +1,3 @@
+C /etc/drivers/nvidia-tesla-__NVIDIA_VERSION__.toml
+C /etc/containerd/nvidia.env - - - - /usr/share/factory/nvidia/tesla/__NVIDIA_VERSION__/nvidia-path.env
+C /etc/ld.so.conf.d/nvidia-tesla-__NVIDIA_VERSION__.conf

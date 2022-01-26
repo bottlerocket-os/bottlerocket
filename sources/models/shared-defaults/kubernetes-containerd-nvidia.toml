@@ -1,0 +1,7 @@
+[configuration-files.containerd-config-toml]
+# No override to path
+template-path = "/usr/share/templates/containerd-config-toml_k8s_nvidia"
+
+# Image registries
+[metadata.settings.container-registry]
+affected-services = ["containerd", "host-containers", "bootstrap-containers"]
