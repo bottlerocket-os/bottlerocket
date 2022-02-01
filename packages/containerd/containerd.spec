@@ -2,9 +2,9 @@
 %global gorepo containerd
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.5.8
+%global gover 1.5.9
 %global rpmver %{gover}
-%global gitrev 1e5ef943eb76627a6d3b6de8cd1ef6537f393a71
+%global gitrev 1407cab509ff0d96baa4f0eb6ff9980270e6e620
 
 %global _dwz_low_mem_die_limit 0
 
@@ -24,9 +24,6 @@ Source1000: clarify.toml
 
 # TODO: submit this upstream, including a unit test.
 Patch1001: 1001-cri-set-default-RLIMIT_NOFILE.patch
-
-# CVE-2021-43816
-Patch2001: containerd-1.5-only-relabel-cri-managed-host-mounts.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
