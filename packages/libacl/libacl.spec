@@ -1,5 +1,5 @@
 Name: %{_cross_os}libacl
-Version: 2.2.53
+Version: 2.3.1
 Release: 1%{?dist}
 Summary: Library for access control list support
 License: LGPL-2.1-or-later
