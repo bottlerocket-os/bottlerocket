@@ -1,7 +1,7 @@
-From 73a6d2a91625771f2b3c87651fe234ac4dae4e75 Mon Sep 17 00:00:00 2001
+From ddd3d20d40b8df6c97312f8ad723ca543a08e046 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 10 Aug 2019 04:53:31 +0000
-Subject: [PATCH 1002/1004] exclude unused components
+Subject: [PATCH 2/4] exclude unused components
 
 The extensions are all shell scripts, which we don't support. The docs
 require a native helper program to generate, which doesn't work. While
@@ -14,7 +14,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index 8f6bffc..2fa645a 100644
+index 71c2fbb5..0278e40b 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -6,7 +6,7 @@ MAINTAINERCLEANFILES		= Makefile.in aclocal.m4 config.guess config.*   \
@@ -27,5 +27,5 @@ index 8f6bffc..2fa645a 100644
  
  pkgconfig_DATA			= wicked.pc
 -- 
-2.21.3
+2.32.0
 

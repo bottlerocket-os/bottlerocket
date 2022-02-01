@@ -1,7 +1,7 @@
-From d108d9eee746b0d9a03f8fd124cbf651da9ba254 Mon Sep 17 00:00:00 2001
+From 66a794b0eeda8c293e29614c2072f265586d8805 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 10 Aug 2019 18:31:42 +0000
-Subject: [PATCH 1003/1004] ship mkconst and schema sources for runtime use
+Subject: [PATCH 3/4] ship mkconst and schema sources for runtime use
 
 `mkconst` needs to be compiled for the host architecture, but relies
 on most of the sources in wicked and needs all of the same libraries.
@@ -17,7 +17,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/schema/Makefile.am b/schema/Makefile.am
-index 462dc04..03a4bcd 100644
+index 462dc044..03a4bcd3 100644
 --- a/schema/Makefile.am
 +++ b/schema/Makefile.am
 @@ -4,7 +4,7 @@ MAINTAINERCLEANFILES		= Makefile.in
@@ -30,7 +30,7 @@ index 462dc04..03a4bcd 100644
  wicked_schema_files		= \
  	addrconf.xml		\
 diff --git a/util/Makefile.am b/util/Makefile.am
-index 2af1435..bb9697e 100644
+index 2af1435b..bb9697e1 100644
 --- a/util/Makefile.am
 +++ b/util/Makefile.am
 @@ -2,7 +2,8 @@
@@ -44,5 +44,5 @@ index 2af1435..bb9697e 100644
  AM_CPPFLAGS			= -I$(top_srcdir)/src	\
  				  -I$(top_srcdir)/include
 -- 
-2.21.3
+2.32.0
 
