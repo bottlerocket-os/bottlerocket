@@ -12,8 +12,13 @@ path = "pkg.rs"
 releases-url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.5.2/aws-iam-authenticator-0.5.2.tar.gz"
-sha512 = "a16a630096ed3223d156e1586f02ffcfcf256f12530ba565f5f1f649c83418cd71ea66c554c9e1edd1b44dd745d9393f4ed4c63c62677ae973e9bd9a1a24fe5b"
+url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.5.3/aws-iam-authenticator-0.5.3.tar.gz"
+sha512 = "430af9fd04b9a94205a485281fb668f5bc18cdac569de0232fa98e08ebb0e08a8d233537bd3373a5f1e53cf529bc2050aebc34a4a53c8b29a831070e34213210"
+
+# This blob includes a patch which updates the vendored go dependencies of aws-iam-authenticator, which weren't updated upstream for the 0.5.3 release.
+[[package.metadata.build-package.external-files]]
+url = "https://cache.bottlerocket.aws/aws-iam-authenticator-0.5.3-Update-vendored-go-dependencies.patch/39c9ef0c143b4a6c1374c24cdd7a13a8f5662f206a3200f6d07224359ec0f8350e1456510e9c891fd2e01ac9d261b2d51239a03883b88f1936d8735a01d3bf5f/aws-iam-authenticator-0.5.3-Update-vendored-go-dependencies.patch"
+sha512 = "39c9ef0c143b4a6c1374c24cdd7a13a8f5662f206a3200f6d07224359ec0f8350e1456510e9c891fd2e01ac9d261b2d51239a03883b88f1936d8735a01d3bf5f"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

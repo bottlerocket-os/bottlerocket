@@ -2,7 +2,7 @@
 %global gorepo aws-iam-authenticator
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 0.5.2
+%global gover 0.5.3
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -15,6 +15,10 @@ License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
 Source1000: clarify.toml
+
+# 0.5.3 release did not include necessary vendored dependencies.
+Patch0001: aws-iam-authenticator-0.5.3-Update-vendored-go-dependencies.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 
