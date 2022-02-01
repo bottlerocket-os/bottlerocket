@@ -2813,7 +2813,7 @@ index b23fcdf9..1e73e997 100644
 --- a/agent/stats/task_unspecified.go
 +++ b/agent/stats/task_unspecified.go
 @@ -1,4 +1,5 @@
- //go:build !linux
+ //go:build !linux && !windows
 +// +build !linux
  
  // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
