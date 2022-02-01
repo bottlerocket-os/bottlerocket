@@ -1,5 +1,5 @@
 Name: %{_cross_os}libaudit
-Version: 3.0.6
+Version: 3.0.7
 Release: 1%{?dist}
 Summary: Library for the audit subsystem
 License: GPL-2.0-or-later AND LGPL-2.1-or-later
