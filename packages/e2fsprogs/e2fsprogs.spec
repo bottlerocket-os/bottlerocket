@@ -1,5 +1,5 @@
 Name: %{_cross_os}e2fsprogs
-Version: 1.46.4
+Version: 1.46.5
 Release: 1%{?dist}
 Summary: Tools for managing ext2, ext3, and ext4 file systems
 License: GPL-2.0-only AND LGPL-2.0-only AND LGPL-2.0-or-later AND BSD-3-Clause
