@@ -1,0 +1,35 @@
+From 5798f636260c14be4b14936d576a7dc2ccd2f88c Mon Sep 17 00:00:00 2001
+From: Erikson Tung <etung@amazon.com>
+Date: Fri, 28 Jan 2022 18:26:29 -0800
+Subject: [PATCH] parse IPv6 node address before comparing with node IP
+
+IPv6 formatting might differ between `node-ip` being provided to kubelet
+and the node address being provided by the cloud provider. Need to parse
+node address before comparison.
+
+See https://github.com/kubernetes/kubernetes/pull/107736/ for the
+equivalent fix for newer version of K8s (i.e. >v1.23)
+
+The change here does not use forked golang parsers because K8s v1.21.6
+does not have changes from https://github.com/kubernetes/kubernetes/commit/0cd75e8fec62a2531637e80bb950ac9983cac1b0
+and would be otherwise too cumbersome to carry as a patch.
+---
+ pkg/kubelet/nodestatus/setters.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/kubelet/nodestatus/setters.go b/pkg/kubelet/nodestatus/setters.go
+index 52f12178b66..cedf60eb951 100644
+--- a/pkg/kubelet/nodestatus/setters.go
++++ b/pkg/kubelet/nodestatus/setters.go
+@@ -125,7 +125,7 @@ func NodeAddress(nodeIPs []net.IP, // typically Kubelet.nodeIPs
+ 
+ 				nodeIPTypes := make(map[v1.NodeAddressType]bool)
+ 				for _, nodeAddress := range cloudNodeAddresses {
+-					if nodeAddress.Address == nodeIP.String() {
++					if net.ParseIP(nodeAddress.Address).Equal(nodeIP) {
+ 						enforcedNodeAddresses = append(enforcedNodeAddresses, v1.NodeAddress{Type: nodeAddress.Type, Address: nodeAddress.Address})
+ 						nodeIPTypes[nodeAddress.Type] = true
+ 					}
+-- 
+2.17.1
+
