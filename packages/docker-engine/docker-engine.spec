@@ -3,9 +3,9 @@
 %global goorg github.com/docker
 %global goimport %{goorg}/docker
 
-%global gover 20.10.11
+%global gover 20.10.12
 %global rpmver %{gover}
-%global gitrev 847da184ad5048b27f5bdf9d53d070f731b43180
+%global gitrev 459d0dfbbb51fb2423a43655e6c62368ec0f36c9
 
 %global source_date_epoch 1363394400
 
