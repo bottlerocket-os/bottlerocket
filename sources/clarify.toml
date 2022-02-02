@@ -53,6 +53,18 @@ license-files = [
     { path = "LICENSE-THIRD-PARTY", hash = 0x847bf39 },
 ]
 
+# https://github.com/hsivonen/encoding_rs The non-test code that isn't generated from the WHATWG data in this crate is
+# under Apache-2.0 OR MIT. Test code is under CC0.
+[clarify.encoding_rs]
+expression = "(Apache-2.0 OR MIT) AND BSD-3-Clause"
+license-files = [
+    { path = "COPYRIGHT", hash = 0x39f8ad31 },
+    { path = "LICENSE-APACHE", hash = 0x18785531 },
+    { path = "LICENSE-MIT", hash = 0xafaec4cb },
+    { path = "LICENSE-WHATWG", hash = 0xbcb87a0c },
+    { path = "COPYRIGHT", hash = 0x39f8ad31 },
+]
+
 [clarify.lz4-sys]
 # The lz4-sys crate's license is listed as MIT.
 #

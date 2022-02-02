@@ -22,6 +22,16 @@ allow = [
     "Zlib"
 ]
 
+# https://github.com/hsivonen/encoding_rs The non-test code that isn't generated from the WHATWG data in this crate is
+# under Apache-2.0 OR MIT. Test code is under CC0.
+[[licenses.clarify]]
+name = "encoding_rs"
+version = "0.8.30"
+expression = "(Apache-2.0 OR MIT) AND BSD-3-Clause"
+license-files = [
+    { path = "COPYRIGHT", hash = 0x39f8ad31 }
+]
+
 [[licenses.clarify]]
 name = "ring"
 expression = "MIT AND ISC AND OpenSSL"
@@ -67,8 +77,8 @@ skip-tree = [
     # semver, for build vs. runtime dependencies.
     { name = "actix-http", version = "3.0.0-rc.1" },
 
-    # snafu uses older versions of some crates, note we will update to snafu 0.7 soon
-    { name = "snafu", version = "0.6" },
+    # rusoto is using a different version of reqwest.
+    { name = "rusoto_core", version = "0.47.0" },
 ]
 
 [sources]
