@@ -184,7 +184,7 @@ async fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-#[actix_web::main]
+#[actix_rt::main]
 async fn main() {
     if let Err(e) = run().await {
         eprintln!("{}", e);

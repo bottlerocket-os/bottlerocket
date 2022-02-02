@@ -65,7 +65,10 @@ skip-tree = [
 
     # actix-http uses older and newer versions of crates like rustc_version and
     # semver, for build vs. runtime dependencies.
-    { name = "actix-http", version = "3.0.0-beta.10" },
+    { name = "actix-http", version = "3.0.0-rc.1" },
+
+    # snafu uses older versions of some crates, note we will update to snafu 0.7 soon
+    { name = "snafu", version = "0.6" },
 ]
 
 [sources]

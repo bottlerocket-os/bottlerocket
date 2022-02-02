@@ -8,7 +8,7 @@ mod exec;
 pub use error::Error;
 
 use actix_web::{
-    body::Body, error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    body::BoxBody, error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use datastore::{Committed, FilesystemDataStore, Key, Value};
 use error::Result;
@@ -564,7 +564,7 @@ fn transaction_name(query: &web::Query<HashMap<String, String>>) -> &str {
 // Can also override `render_response` if we want to change headers, content type, etc.
 impl ResponseError for error::Error {
     /// Maps our error types to the HTTP error code they should return.
-    fn error_response(&self) -> HttpResponse<Body> {
+    fn error_response(&self) -> HttpResponse {
         use error::Error::*;
         let status_code = match self {
             // 400 Bad Request
@@ -638,6 +638,7 @@ pub(crate) struct SharedData {
 macro_rules! impl_responder_for {
     ($for:ident, $self:ident, $serialize_expr:expr) => (
         impl Responder for $for {
+            type Body = BoxBody;
             fn respond_to($self, _req: &HttpRequest) -> HttpResponse {
                 let body = match serde_json::to_string(&$serialize_expr) {
                     Ok(s) => s,
