@@ -2,9 +2,9 @@
 %global gorepo cli
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 20.10.7
+%global gover 20.10.12
 %global rpmver %{gover}
-%global gitrev f0df35096d5f5e6b559b42c7fde6c65a2909f7c5
+%global gitrev e91ed5707e038b02af3b5120fa0835c5bedfd42e
 
 %global source_date_epoch 1492525740
 
@@ -18,9 +18,6 @@ License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/cli-%{gover}.tar.gz
 Source1000: clarify.toml
-
-# CVE-2021-41092
-Patch0001: 0001-registry-ensure-default-auth-config-has-address.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
