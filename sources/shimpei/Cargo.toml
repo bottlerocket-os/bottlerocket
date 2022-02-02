@@ -11,7 +11,7 @@ exclude = ["README.md"]
 [dependencies]
 log = "0.4"
 simplelog = "0.10"
-snafu = "0.6"
+snafu = "0.7"
 nix = "0.23"
 
 [build-dependencies]

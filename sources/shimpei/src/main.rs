@@ -29,24 +29,26 @@ const OCI_ADD_HOOKS: &str = "/usr/bin/oci-add-hooks";
 fn run() -> Result<()> {
     setup_logger()?;
     let mut args = env::args();
-    let prefix = args.next().context(error::MissingArg { what: "name" })?;
+    let prefix = args
+        .next()
+        .context(error::MissingArgSnafu { what: "name" })?;
     let hook_path = Path::new(HOOKS_CONFIG_BASE_PATH).join(format!("{}-hooks.json", prefix));
 
     let mut oci_add_hooks_args: Vec<CString> = vec![
         CString::new("oci-add-hooks").expect("Couldn't create CString from 'oci-add-hooks'"),
         CString::new("--hook-config-path")
             .expect("Couldn't create CString from '--hook-config-path'"),
-        CString::new(hook_path.display().to_string()).context(error::InvalidString {
+        CString::new(hook_path.display().to_string()).context(error::InvalidStringSnafu {
             input: hook_path.display().to_string(),
         })?,
         CString::new("--runtime-path").expect("Couldn't create CString from '--runtime-path'"),
-        CString::new(RUNC_BIN_PATH).context(error::InvalidString {
+        CString::new(RUNC_BIN_PATH).context(error::InvalidStringSnafu {
             input: RUNC_BIN_PATH.to_string(),
         })?,
     ];
     for arg in args {
         oci_add_hooks_args
-            .push(CString::new(arg.as_bytes()).context(error::InvalidString { input: arg })?);
+            .push(CString::new(arg.as_bytes()).context(error::InvalidStringSnafu { input: arg })?);
     }
 
     // Use the `execv` syscall instead of `std::process::Command`, since
@@ -54,12 +56,12 @@ fn run() -> Result<()> {
     // replacing the current process
 
     nix::unistd::execv(
-        &CString::new(OCI_ADD_HOOKS).context(error::InvalidString {
+        &CString::new(OCI_ADD_HOOKS).context(error::InvalidStringSnafu {
             input: OCI_ADD_HOOKS.to_string(),
         })?,
         &oci_add_hooks_args,
     )
-    .context(error::Execv {
+    .context(error::ExecvSnafu {
         program: OCI_ADD_HOOKS.to_string(),
     })?;
 
@@ -67,7 +69,7 @@ fn run() -> Result<()> {
 }
 
 fn setup_logger() -> Result<()> {
-    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::Logger)
+    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::LoggerSnafu)
 }
 
 fn main() {
@@ -82,7 +84,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Failed to setup logger: {}", source))]
         Logger { source: log::SetLoggerError },

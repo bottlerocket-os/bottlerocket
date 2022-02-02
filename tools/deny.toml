@@ -46,7 +46,10 @@ license-files = [
 multiple-versions = "deny"
 wildcards = "deny"
 
-skip = []
+skip-tree = [
+    # temporarily using a different version of snafu
+    { name = "parse-datetime", version = "0.1.0" },
+]
 
 [sources]
 # Deny crates from unknown registries or git repositories.

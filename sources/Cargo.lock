@@ -296,7 +296,7 @@ dependencies = [
  "serde_json",
  "signal-hook",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
  "tokio-tungstenite",
  "toml",
@@ -331,7 +331,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "thar-be-updates",
  "toml",
  "walkdir",
@@ -518,7 +518,7 @@ dependencies = [
 name = "block-party"
 version = "0.1.0"
 dependencies = [
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -536,7 +536,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -557,7 +557,7 @@ dependencies = [
  "log",
  "semver 1.0.4",
  "serde",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -640,7 +640,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tempfile",
  "tokio",
  "x509-parser",
@@ -744,7 +744,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -887,7 +887,7 @@ dependencies = [
  "percent-encoding",
  "serde",
  "serde_json",
- "snafu",
+ "snafu 0.7.0",
  "toml",
  "walkdir",
 ]
@@ -1007,7 +1007,7 @@ dependencies = [
  "log",
  "serde",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tempfile",
  "toml",
 ]
@@ -1039,7 +1039,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
  "toml",
  "vmw_backdoor",
@@ -1055,7 +1055,7 @@ dependencies = [
  "schnauzer",
  "serde",
  "serde_json",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -1313,7 +1313,7 @@ dependencies = [
  "hex-literal",
  "lazy_static",
  "signpost",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -1364,7 +1364,7 @@ dependencies = [
  "gptman",
  "inotify",
  "libc",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -1460,7 +1460,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -1549,7 +1549,7 @@ dependencies = [
  "httparse",
  "httpdate 0.3.2",
  "itoa 0.4.8",
- "pin-project 1.0.8",
+ "pin-project",
  "socket2 0.3.19",
  "tokio",
  "tower-service",
@@ -1583,7 +1583,7 @@ dependencies = [
  "anyhow",
  "hex",
  "hyper",
- "pin-project 1.0.8",
+ "pin-project",
  "tokio",
 ]
 
@@ -1614,7 +1614,7 @@ dependencies = [
  "log",
  "reqwest",
  "serde_json",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
  "tokio-retry",
  "tokio-test",
@@ -1782,7 +1782,7 @@ dependencies = [
  "reqwest",
  "serde_json",
  "shell-words",
- "snafu",
+ "snafu 0.7.0",
  "tar",
  "tempfile",
  "tokio",
@@ -1852,7 +1852,7 @@ dependencies = [
 name = "merge-toml"
 version = "0.1.0"
 dependencies = [
- "snafu",
+ "snafu 0.7.0",
  "toml",
 ]
 
@@ -1867,7 +1867,7 @@ dependencies = [
  "reqwest",
  "serde",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "structopt",
  "tempfile",
  "toml",
@@ -1885,7 +1885,7 @@ dependencies = [
  "schnauzer",
  "serde",
  "serde_json",
- "snafu",
+ "snafu 0.7.0",
  "toml",
 ]
 
@@ -1904,7 +1904,7 @@ dependencies = [
  "regex",
  "semver 1.0.4",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "storewolf",
  "tempfile",
  "tough",
@@ -1990,7 +1990,7 @@ dependencies = [
  "semver 1.0.4",
  "serde",
  "serde_plain",
- "snafu",
+ "snafu 0.7.0",
  "toml",
  "url",
  "x509-parser",
@@ -2011,7 +2011,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -2046,7 +2046,7 @@ version = "0.1.0"
 dependencies = [
  "migration-helpers",
  "serde_json",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -2266,7 +2266,7 @@ version = "0.1.0"
 dependencies = [
  "cargo-readme",
  "chrono",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -2376,31 +2376,11 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "0.4.28"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "918192b5c59119d51e0cd221f4d49dde9112824ba717369e903c97d076083d0f"
-dependencies = [
- "pin-project-internal 0.4.28",
-]
-
-[[package]]
-name = "pin-project"
 version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "576bc800220cc65dac09e99e97b08b358cfab6e17078de8dc5fee223bd2d0c08"
 dependencies = [
- "pin-project-internal 1.0.8",
-]
-
-[[package]]
-name = "pin-project-internal"
-version = "0.4.28"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3be26700300be6d9d23264c73211d8190e755b6b5ca7a1b28230025511b52a5e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "pin-project-internal",
 ]
 
 [[package]]
@@ -2438,7 +2418,7 @@ dependencies = [
  "rusoto_core",
  "rusoto_eks",
  "serde_json",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -2458,7 +2438,7 @@ dependencies = [
  "nix 0.23.0",
  "signpost",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -2870,7 +2850,7 @@ dependencies = [
  "percent-encoding",
  "serde",
  "serde_json",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
  "url",
 ]
@@ -3019,7 +2999,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -3035,7 +3015,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -3105,7 +3085,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -3117,7 +3097,7 @@ dependencies = [
  "log",
  "nix 0.23.0",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -3155,7 +3135,7 @@ dependencies = [
  "hex-literal",
  "serde",
  "serde_plain",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -3187,11 +3167,21 @@ version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eab12d3c261b2308b0d80c26fffb58d17eba81a4be97890101f416b478c79ca7"
 dependencies = [
+ "doc-comment",
+ "snafu-derive 0.6.10",
+]
+
+[[package]]
+name = "snafu"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eba135d2c579aa65364522eb78590cdf703176ef71ad4c32b00f58f7afb2df5"
+dependencies = [
  "backtrace",
  "doc-comment",
  "futures-core",
- "pin-project 0.4.28",
- "snafu-derive",
+ "pin-project",
+ "snafu-derive 0.7.0",
 ]
 
 [[package]]
@@ -3200,6 +3190,18 @@ version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1508efa03c362e23817f96cde18abed596a25219a8b2c66e8db33c03543d315b"
 dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "snafu-derive"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a7fe9b0669ef117c5cabc5549638528f36771f058ff977d7689deb517833a75"
+dependencies = [
+ "heck",
  "proc-macro2",
  "quote",
  "syn",
@@ -3245,7 +3247,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tempfile",
  "tokio",
 ]
@@ -3270,7 +3272,7 @@ dependencies = [
  "rand",
  "semver 1.0.4",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "toml",
  "walkdir",
 ]
@@ -3331,7 +3333,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -3411,7 +3413,7 @@ dependencies = [
  "schnauzer",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tokio",
 ]
 
@@ -3437,7 +3439,7 @@ dependencies = [
  "serde_plain",
  "signpost",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "tempfile",
  "tokio",
  "update_metadata",
@@ -3535,7 +3537,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f57eb36ecbe0fc510036adff84824dd3c24bb781e21bfa67b69d556aa85214f"
 dependencies = [
- "pin-project 1.0.8",
+ "pin-project",
  "rand",
  "tokio",
 ]
@@ -3583,7 +3585,7 @@ checksum = "511de3f85caf1c98983545490c3d09685fa8eb634e57eec22bb4db271f46cbd8"
 dependencies = [
  "futures-util",
  "log",
- "pin-project 1.0.8",
+ "pin-project",
  "tokio",
  "tungstenite",
 ]
@@ -3631,7 +3633,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu",
+ "snafu 0.6.10",
  "tempfile",
  "untrusted",
  "url",
@@ -3757,7 +3759,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu",
+ "snafu 0.7.0",
  "toml",
 ]
 
@@ -3779,7 +3781,7 @@ dependencies = [
  "signal-hook",
  "signpost",
  "simplelog",
- "snafu",
+ "snafu 0.7.0",
  "structopt",
  "tempfile",
  "toml",

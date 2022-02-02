@@ -41,7 +41,7 @@ fn run() -> Result<()> {
     match args.subcommand {
         SubCommand::Scan(scan_args) => {
             let path = scan_args.device;
-            let mut f = fs::File::open(&path).context(error::DeviceOpen { path })?;
+            let mut f = fs::File::open(&path).context(error::DeviceOpenSnafu { path })?;
             let device_type = find_device_type(&mut f)?;
             emit_device_type(&device_type);
         }
@@ -107,7 +107,7 @@ fn main() {
 mod error {
     use snafu::Snafu;
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Failed to open '{}': {}", path.display(), source))]
         DeviceOpen {

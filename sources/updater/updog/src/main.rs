@@ -111,29 +111,29 @@ GLOBAL OPTIONS:
 
 fn load_config() -> Result<Config> {
     let path = "/etc/updog.toml";
-    let s = fs::read_to_string(path).context(error::ConfigRead { path })?;
-    let config: Config = toml::from_str(&s).context(error::ConfigParse { path })?;
+    let s = fs::read_to_string(path).context(error::ConfigReadSnafu { path })?;
+    let config: Config = toml::from_str(&s).context(error::ConfigParseSnafu { path })?;
     Ok(config)
 }
 
 fn load_repository(transport: HttpQueryTransport, config: &Config) -> Result<Repository> {
-    fs::create_dir_all(METADATA_PATH).context(error::CreateMetadataCache {
+    fs::create_dir_all(METADATA_PATH).context(error::CreateMetadataCacheSnafu {
         path: METADATA_PATH,
     })?;
     RepositoryLoader::new(
-        File::open(TRUSTED_ROOT_PATH).context(error::OpenRoot {
+        File::open(TRUSTED_ROOT_PATH).context(error::OpenRootSnafu {
             path: TRUSTED_ROOT_PATH,
         })?,
-        Url::parse(&config.metadata_base_url).context(error::UrlParse {
+        Url::parse(&config.metadata_base_url).context(error::UrlParseSnafu {
             url: &config.metadata_base_url,
         })?,
-        Url::parse(&config.targets_base_url).context(error::UrlParse {
+        Url::parse(&config.targets_base_url).context(error::UrlParseSnafu {
             url: &config.targets_base_url,
         })?,
     )
     .transport(transport)
     .load()
-    .context(error::Metadata)
+    .context(error::MetadataSnafu)
 }
 
 fn applicable_updates<'a>(
@@ -181,15 +181,16 @@ fn update_required<'a>(
     if version_lock != "latest" {
         // Make sure the version string from the config is a valid version string that might be prefixed with 'v'
         let friendly_version_lock =
-            FriendlyVersion::try_from(version_lock).context(error::BadVersionConfig {
+            FriendlyVersion::try_from(version_lock).context(error::BadVersionConfigSnafu {
                 version_str: version_lock,
             })?;
         // Convert back to semver::Version
-        let semver_version_lock = friendly_version_lock
-            .try_into()
-            .context(error::BadVersion {
-                version_str: version_lock,
-            })?;
+        let semver_version_lock =
+            friendly_version_lock
+                .try_into()
+                .context(error::BadVersionSnafu {
+                    version_str: version_lock,
+                })?;
         // If the configured version-lock matches our current version, we won't update to the same version
         return if semver_version_lock == *version {
             Ok(None)
@@ -215,26 +216,28 @@ fn write_target_to_disk<P: AsRef<Path>>(
     target: &str,
     disk_path: P,
 ) -> Result<()> {
-    let target = target.try_into().context(error::TargetName { target })?;
+    let target = target
+        .try_into()
+        .context(error::TargetNameSnafu { target })?;
     let reader = repository
         .read_target(&target)
-        .context(error::Metadata)?
-        .context(error::TargetNotFound {
+        .context(error::MetadataSnafu)?
+        .context(error::TargetNotFoundSnafu {
             target: target.raw(),
         })?;
     // Note: the file extension for the compression type we're using should be removed in
     // retrieve_migrations below.
-    let mut reader = lz4::Decoder::new(reader).context(error::Lz4Decode {
+    let mut reader = lz4::Decoder::new(reader).context(error::Lz4DecodeSnafu {
         target: target.raw(),
     })?;
     let mut f = OpenOptions::new()
         .write(true)
         .create(true)
         .open(disk_path.as_ref())
-        .context(error::OpenPartition {
+        .context(error::OpenPartitionSnafu {
             path: disk_path.as_ref(),
         })?;
-    io::copy(&mut reader, &mut f).context(error::WriteUpdate)?;
+    io::copy(&mut reader, &mut f).context(error::WriteUpdateSnafu)?;
     Ok(())
 }
 
@@ -255,7 +258,7 @@ fn retrieve_migrations(
 
     let dir = Path::new(MIGRATION_PATH);
     if !dir.exists() {
-        fs::create_dir(&dir).context(error::DirCreate { path: &dir })?;
+        fs::create_dir(&dir).context(error::DirCreateSnafu { path: &dir })?;
     }
 
     // find the list of migrations in the manifest based on our from and to versions.
@@ -266,19 +269,19 @@ fn retrieve_migrations(
     targets.push("manifest.json".to_owned());
     repository
         .cache(METADATA_PATH, MIGRATION_PATH, Some(&targets), true)
-        .context(error::RepoCacheMigrations)?;
+        .context(error::RepoCacheMigrationsSnafu)?;
     // Set a query parameter listing the required migrations
     query_params.add("migrations", targets.join(","));
     Ok(())
 }
 
 fn update_image(update: &Update, repository: &Repository) -> Result<()> {
-    let mut gpt_state = State::load().context(error::PartitionTableRead)?;
+    let mut gpt_state = State::load().context(error::PartitionTableReadSnafu)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
     // overwrite the partition set with update data and don't want it to be used until we
     // know we're done with all components.
-    gpt_state.write().context(error::PartitionTableWrite)?;
+    gpt_state.write().context(error::PartitionTableWriteSnafu)?;
 
     let inactive = gpt_state.inactive_set();
 
@@ -288,23 +291,23 @@ fn update_image(update: &Update, repository: &Repository) -> Result<()> {
     write_target_to_disk(repository, &update.images.hash, &inactive.hash)?;
 
     gpt_state.mark_inactive_valid();
-    gpt_state.write().context(error::PartitionTableWrite)?;
+    gpt_state.write().context(error::PartitionTableWriteSnafu)?;
     Ok(())
 }
 
 fn update_flags() -> Result<()> {
-    let mut gpt_state = State::load().context(error::PartitionTableRead)?;
+    let mut gpt_state = State::load().context(error::PartitionTableReadSnafu)?;
     gpt_state
         .upgrade_to_inactive()
-        .context(error::InactivePartitionUpgrade)?;
-    gpt_state.write().context(error::PartitionTableWrite)?;
+        .context(error::InactivePartitionUpgradeSnafu)?;
+    gpt_state.write().context(error::PartitionTableWriteSnafu)?;
     Ok(())
 }
 
 fn revert_update_flags() -> Result<()> {
-    let mut gpt_state = State::load().context(error::PartitionTableRead)?;
+    let mut gpt_state = State::load().context(error::PartitionTableReadSnafu)?;
     gpt_state.cancel_upgrade();
-    gpt_state.write().context(error::PartitionTableWrite)?;
+    gpt_state.write().context(error::PartitionTableWriteSnafu)?;
     Ok(())
 }
 
@@ -331,7 +334,7 @@ fn list_updates(
     if json {
         println!(
             "{}",
-            serde_json::to_string_pretty(&updates).context(error::UpdateSerialize)?
+            serde_json::to_string_pretty(&updates).context(error::UpdateSerializeSnafu)?
         );
     } else {
         for u in updates {
@@ -431,7 +434,7 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
     if json {
         println!(
             "{}",
-            serde_json::to_string_pretty(&object).context(error::UpdateSerialize)?
+            serde_json::to_string_pretty(&object).context(error::UpdateSerializeSnafu)?
         );
     } else {
         println!("{}", string);
@@ -441,7 +444,7 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
 
 fn initiate_reboot() -> Result<()> {
     // Set up signal handler for termination signals
-    let mut signals = Signals::new(&[SIGTERM]).context(error::Signal)?;
+    let mut signals = Signals::new(&[SIGTERM]).context(error::SignalSnafu)?;
     let signals_handle = signals.handle();
     thread::spawn(move || {
         for _sig in signals.forever() {
@@ -453,7 +456,7 @@ fn initiate_reboot() -> Result<()> {
     if let Err(err) = process::Command::new("shutdown")
         .arg("-r")
         .status()
-        .context(error::RebootFailure)
+        .context(error::RebootFailureSnafu)
     {
         // Kill the signal handling thread
         signals_handle.close();
@@ -493,14 +496,14 @@ fn main_inner() -> Result<()> {
     let arguments = parse_args(std::env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(arguments.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(arguments.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     let command =
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
     let config = load_config()?;
     set_https_proxy_environment_variables(&config.https_proxy, &config.no_proxy)?;
-    let current_release = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+    let current_release = BottlerocketRelease::new().context(error::ReleaseVersionSnafu)?;
     let variant = arguments.variant.unwrap_or(current_release.variant_id);
     let transport = HttpQueryTransport::new();
     // get a shared pointer to the transport's query_params so we can add metrics information to
@@ -531,7 +534,7 @@ fn main_inner() -> Result<()> {
                 &config.version_lock,
                 arguments.force_version,
             )?
-            .context(error::UpdateNotAvailable)?;
+            .context(error::UpdateNotAvailableSnafu)?;
 
             output(arguments.json, &update, &fmt_full_version(&update))?;
         }
@@ -589,14 +592,16 @@ fn main_inner() -> Result<()> {
 
 fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
     let target = "manifest.json";
-    let target = target.try_into().context(error::TargetName { target })?;
+    let target = target
+        .try_into()
+        .context(error::TargetNameSnafu { target })?;
     Manifest::from_json(
         repository
             .read_target(&target)
-            .context(error::ManifestLoad)?
-            .context(error::ManifestNotFound)?,
+            .context(error::ManifestLoadSnafu)?
+            .context(error::ManifestNotFoundSnafu)?,
     )
-    .context(error::ManifestParse)
+    .context(error::ManifestParseSnafu)
 }
 
 fn main() -> ! {
@@ -836,7 +841,7 @@ mod tests {
         let path = "tests/data/example_2.json";
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         assert!(serde_json::to_string_pretty(&manifest)
-            .context(error::UpdateSerialize)
+            .context(error::UpdateSerializeSnafu)
             .is_ok());
     }
 

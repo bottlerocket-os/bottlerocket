@@ -24,7 +24,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     /// The error type for this library.
     pub enum Error {
         #[snafu(display("Target of {} ends in `..`", path.display()))]
@@ -121,10 +121,10 @@ impl BlockDevice {
     /// Creates a `BlockDevice` for a major/minor number.
     pub fn from_major_minor(major: u64, minor: u64) -> Result<Self> {
         let path = sys_path(major, minor);
-        let link_target = fs::read_link(&path).context(error::SysPathLinkRead { path })?;
+        let link_target = fs::read_link(&path).context(error::SysPathLinkReadSnafu { path })?;
         let device_name = link_target
             .file_name()
-            .context(error::LinkTargetFileName { path: &link_target })?
+            .context(error::LinkTargetFileNameSnafu { path: &link_target })?
             .to_owned();
 
         Ok(Self {
@@ -137,7 +137,7 @@ impl BlockDevice {
     /// Creates a `BlockDevice` from a path residing on a block device.
     pub fn from_device_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
-        let metadata = fs::metadata(path).context(error::PathMetadata { path })?;
+        let metadata = fs::metadata(path).context(error::PathMetadataSnafu { path })?;
         let major = metadata.st_dev() >> 8;
         let minor = metadata.st_dev() & 0xff;
         Ok(Self::from_major_minor(major, minor)?)
@@ -146,7 +146,7 @@ impl BlockDevice {
     /// Creates a `BlockDevice` from a special block device node.
     pub fn from_device_node<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
-        let metadata = fs::metadata(&path).context(error::PathMetadata { path })?;
+        let metadata = fs::metadata(&path).context(error::PathMetadataSnafu { path })?;
         let major = metadata.st_rdev() >> 8;
         let minor = metadata.st_rdev() & 0xff;
         Ok(Self::from_major_minor(major, minor)?)
@@ -155,15 +155,15 @@ impl BlockDevice {
     /// Creates a `BlockDevice` from the major:minor string from the file at `path`.
     fn from_major_minor_in_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
-        let s = fs::read_to_string(path).context(error::FileRead { path })?;
+        let s = fs::read_to_string(path).context(error::FileReadSnafu { path })?;
         let parts = s
             .trim()
             .splitn(2, ':')
             .map(u64::from_str)
             .collect::<std::result::Result<Vec<_>, _>>()
-            .context(error::MajorMinorParseInt { path })?;
+            .context(error::MajorMinorParseIntSnafu { path })?;
 
-        ensure!(parts.len() == 2, error::MajorMinorLen { path });
+        ensure!(parts.len() == 2, error::MajorMinorLenSnafu { path });
 
         Self::from_major_minor(parts[0], parts[1])
     }
@@ -184,9 +184,9 @@ impl BlockDevice {
     pub fn disk(&self) -> Result<Option<Self>> {
         // Globbing for /sys/block/*/{self.device_name}/dev
         for entry in
-            fs::read_dir("/sys/block").context(error::ListDirectory { path: "/sys/block" })?
+            fs::read_dir("/sys/block").context(error::ListDirectorySnafu { path: "/sys/block" })?
         {
-            let entry = entry.context(error::ReadDirectoryEntry { path: "/sys/block" })?;
+            let entry = entry.context(error::ReadDirectoryEntrySnafu { path: "/sys/block" })?;
             if entry.path().join(&self.device_name).exists() {
                 return Self::from_major_minor_in_file(entry.path().join("dev")).map(Some);
             }
@@ -203,8 +203,10 @@ impl BlockDevice {
     pub fn partition(&self, part_num: u32) -> Result<Option<Self>> {
         let sys_path = self.sys_path();
         // Globbing for /sys/dev/block/{major}:{minor}/*/partition
-        for entry in fs::read_dir(&sys_path).context(error::ListDirectory { path: &sys_path })? {
-            let entry = entry.context(error::ReadDirectoryEntry { path: &sys_path })?;
+        for entry in
+            fs::read_dir(&sys_path).context(error::ListDirectorySnafu { path: &sys_path })?
+        {
+            let entry = entry.context(error::ReadDirectoryEntrySnafu { path: &sys_path })?;
             if entry.path().is_dir() {
                 let partition_path = entry.path().join("partition");
                 let partition_str = match fs::read_to_string(&partition_path) {
@@ -212,7 +214,7 @@ impl BlockDevice {
                     Err(err) => match err.kind() {
                         io::ErrorKind::NotFound => continue,
                         _ => {
-                            return Err(err).context(error::FileRead {
+                            return Err(err).context(error::FileReadSnafu {
                                 path: partition_path,
                             })
                         }
@@ -233,7 +235,7 @@ impl BlockDevice {
     pub fn lower_devices(&self) -> Result<LowerIter> {
         let path = self.sys_path().join("slaves");
         fs::read_dir(&path)
-            .context(error::ListDirectory { path: &path })
+            .context(error::ListDirectorySnafu { path: &path })
             .map(move |iter| LowerIter { path, iter })
     }
 }
@@ -263,7 +265,7 @@ impl Iterator for LowerIter {
 
     fn next(&mut self) -> Option<Result<BlockDevice>> {
         self.iter.next().map(|entry| {
-            let entry = entry.context(error::ReadDirectoryEntry { path: &self.path })?;
+            let entry = entry.context(error::ReadDirectoryEntrySnafu { path: &self.path })?;
             BlockDevice::from_major_minor_in_file(entry.path().join("dev"))
         })
     }

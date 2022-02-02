@@ -33,7 +33,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     // If the user has kernel settings, apply them.
     let model = get_model(args.socket_path).await?;
@@ -72,10 +72,10 @@ where
     trace!("{}ing from {}", method, uri);
     let (code, response_body) = apiclient::raw_request(socket_path, &uri, method, None)
         .await
-        .context(error::APIRequest { method, uri })?;
+        .context(error::APIRequestSnafu { method, uri })?;
 
     if !code.is_success() {
-        return error::APIResponse {
+        return error::APIResponseSnafu {
             method,
             uri,
             code,
@@ -85,7 +85,7 @@ where
     }
     trace!("JSON response: {}", response_body);
 
-    serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })
+    serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })
 }
 
 fn sysctl_path<S>(name: S) -> PathBuf
@@ -141,7 +141,7 @@ fn set_lockdown(lockdown: &str) -> Result<()> {
         return Ok(());
     }
 
-    fs::write(LOCKDOWN_PATH, lockdown).context(error::Lockdown { current, lockdown })
+    fs::write(LOCKDOWN_PATH, lockdown).context(error::LockdownSnafu { current, lockdown })
 }
 
 /// The Linux kernel provides human-readable output like `[none] integrity confidentiality` when
@@ -251,7 +251,7 @@ mod error {
     use std::io;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error {}ing to {}: {}", method, uri, source))]
         APIRequest {

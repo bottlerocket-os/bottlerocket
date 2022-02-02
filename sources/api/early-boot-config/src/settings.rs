@@ -23,7 +23,7 @@ impl SettingsJson {
         S: Into<String>,
     {
         Ok(Self {
-            json: serde_json::to_string(&data).context(error::SettingsToJSON)?,
+            json: serde_json::to_string(&data).context(error::SettingsToJSONSnafu)?,
             desc: desc.into(),
         })
     }
@@ -39,11 +39,13 @@ impl SettingsJson {
         S2: Into<String>,
     {
         let mut val: toml::Value =
-            toml::from_str(&data.as_ref()).context(error::TOMLUserDataParse)?;
-        let table = val.as_table_mut().context(error::UserDataNotTomlTable)?;
+            toml::from_str(&data.as_ref()).context(error::TOMLUserDataParseSnafu)?;
+        let table = val
+            .as_table_mut()
+            .context(error::UserDataNotTomlTableSnafu)?;
         let inner = table
             .remove("settings")
-            .context(error::UserDataMissingSettings)?;
+            .context(error::UserDataMissingSettingsSnafu)?;
 
         SettingsJson::from_val(&inner, desc)
     }
@@ -53,7 +55,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(crate)")]
+    #[snafu(visibility(pub(crate)))]
     pub(crate) enum Error {
         #[snafu(display("Error serializing settings to JSON: {}", source))]
         SettingsToJSON { source: serde_json::error::Error },

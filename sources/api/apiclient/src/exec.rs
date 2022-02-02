@@ -66,12 +66,12 @@ where
     // interpreted and turned into signals, etc.  The Terminal type manages that for us, and resets
     // the terminal when it's dropped later.  We set this up first so that we don't unnecessarily
     // talk to the server if it fails.
-    let terminal = Terminal::new(tty).context(error::Terminal)?;
+    let terminal = Terminal::new(tty).context(error::TerminalSnafu)?;
 
     // Connect to the server over the Unix-domain socket and upgrade to a WebSocket.
     let ws_stream = websocket_connect(socket_path, "/exec")
         .await
-        .context(error::Connect)?;
+        .context(error::ConnectSnafu)?;
 
     // We're going to split the stream into write and read halves so we can manage them with
     // separate threads, which simplifies the use of blocking calls, not requiring a totally new
@@ -103,10 +103,11 @@ where
         tty: terminal.tty().clone(),
     };
     // Control messages go to the server in a text channel, so we serialize to JSON before sending.
-    let msg = serde_json::to_string(&ClientMessage::Initialize(init)).context(error::Serialize)?;
+    let msg =
+        serde_json::to_string(&ClientMessage::Initialize(init)).context(error::SerializeSnafu)?;
     ws_tx
         .unbounded_send(Message::Text(msg))
-        .context(error::SendMessage {
+        .context(error::SendMessageSnafu {
             kind: "initialization",
         })?;
 
@@ -255,7 +256,7 @@ impl ReadFromServer {
                         Message::Binary(data) => {
                             trace!("Received {} bytes of output from server", data.len());
                             let mut stdout = tokio::io::stdout();
-                            stdout.write_all(&data).await.context(error::WriteOutput)?;
+                            stdout.write_all(&data).await.context(error::WriteOutputSnafu)?;
                             // May not be a full line of output, so flush any bytes we got.  Failure here
                             // isn't worthy of stopping the whole process.
                             let _ = stdout.flush().await;
@@ -279,12 +280,12 @@ impl ReadFromServer {
                                 // anyway.
                                 let _ = ret_tx.unbounded_send(ret);
                             }
-                            return error::Close.fail();
+                            return error::CloseSnafu.fail();
                         }
                         // Text messages represent encoded control messages from the server.
                         Message::Text(raw_msg) => {
                             let server_message =
-                                serde_json::from_str(&raw_msg).context(error::Deserialize)?;
+                                serde_json::from_str(&raw_msg).context(error::DeserializeSnafu)?;
                             match server_message {
                                 // Capacity messages tell us how many messages the server is
                                 // willing to receive before it rejects us.
@@ -378,7 +379,7 @@ impl ReadFromUser {
                     messages_read += 1;
                     // Send the data to the server in a Binary message without encoding.
                     tx.unbounded_send(Message::Binary(Vec::from(buf)))
-                        .context(error::SendMessage { kind: "user input" })?;
+                        .context(error::SendMessageSnafu { kind: "user input" })?;
                 }
                 // We don't normally get Err, since the server will close connection first, but for
                 // completeness...
@@ -398,7 +399,7 @@ impl ReadFromUser {
                         return Ok(());
                     } else {
                         // Any error other than EOF is a real read error.
-                        Err(e).context(error::ReadFromUser)?
+                        Err(e).context(error::ReadFromUserSnafu)?
                     }
                 }
             }
@@ -420,7 +421,9 @@ impl ReadFromUser {
 
             // Read a batch of data at a time; 4k is a balanced number for small and large jobs.
             let mut buf = [0; 4096];
-            let count = stdin.retry_read(&mut buf).context(error::ReadFromUser)?;
+            let count = stdin
+                .retry_read(&mut buf)
+                .context(error::ReadFromUserSnafu)?;
             // A read of 0 indicates EOF, so we're done.
             if count == 0 {
                 break;
@@ -430,17 +433,17 @@ impl ReadFromUser {
             // Send the data to the server in a Binary message without encoding.
             let msg = Vec::from(&buf[..count]);
             tx.unbounded_send(Message::Binary(msg))
-                .context(error::SendMessage { kind: "user input" })?;
+                .context(error::SendMessageSnafu { kind: "user input" })?;
         }
         debug!("Finished reading input");
 
         // Send a ContentComplete message to the server so it can exit the process more cleanly.
         // This is more important than the TTY case; interactive use typically has users typing
         // exit, or quit, or ctrl-d... noninteractive programs typically wait for EOF.
-        let msg =
-            serde_json::to_string(&ClientMessage::ContentComplete).context(error::Serialize)?;
+        let msg = serde_json::to_string(&ClientMessage::ContentComplete)
+            .context(error::SerializeSnafu)?;
         tx.unbounded_send(Message::Text(msg))
-            .context(error::SendMessage {
+            .context(error::SendMessageSnafu {
                 kind: "content complete",
             })?;
 
@@ -464,7 +467,7 @@ impl ReadFromUser {
             let messages_outstanding =
                 messages_read
                     .checked_sub(messages_written)
-                    .context(error::ServerCount {
+                    .context(error::ServerCountSnafu {
                         messages_read,
                         messages_written,
                     })?;
@@ -588,8 +591,8 @@ impl HandleSignals {
         // Set up the signal handler; do this before starting a thread so we can die quickly on
         // failure.
         use signal::*;
-        let signals =
-            Signals::new(&[SIGWINCH, SIGTERM, SIGINT, SIGQUIT]).context(error::HandleSignals)?;
+        let signals = Signals::new(&[SIGWINCH, SIGTERM, SIGINT, SIGQUIT])
+            .context(error::HandleSignalsSnafu)?;
 
         debug!("Spawning thread to manage signals");
         thread::spawn(move || {
@@ -619,7 +622,7 @@ impl HandleSignals {
                     signal_tx
                         .send(signal)
                         .ok()
-                        .context(error::SendSignal { signal })?;
+                        .context(error::SendSignalSnafu { signal })?;
                     // The signal and our handler have done their job, it's not an error.
                     return Ok(());
                 }
@@ -668,7 +671,7 @@ mod error {
     use snafu::{IntoError, Snafu};
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         // This is used as a sort of marker; the user doesn't need wording about the connection
         // being closed because the process will end, and if because of an error, they'll see that.
@@ -726,7 +729,7 @@ mod error {
     // This allows for the nice usage of err_into() on our WebSocket stream.
     impl From<tokio_tungstenite::tungstenite::Error> for Error {
         fn from(e: tokio_tungstenite::tungstenite::Error) -> Self {
-            ReadWebSocket.into_error(e)
+            ReadWebSocketSnafu.into_error(e)
         }
     }
 }

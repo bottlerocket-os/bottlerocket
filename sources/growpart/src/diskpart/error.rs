@@ -1,7 +1,7 @@
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
+#[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("Failed to canonicalize link for '{}': {}", path.display(), source))]
     CanonicalizeLink {

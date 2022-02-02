@@ -4,7 +4,7 @@ use std::fmt;
 use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility(pub(crate)))]
 pub enum Error {
     #[snafu(display(
         "Active partition {} not in either detected partition set ({:?})",

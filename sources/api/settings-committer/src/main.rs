@@ -30,7 +30,7 @@ mod error {
 
     /// Potential errors during user data management.
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum SettingsCommitterError {
         #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {
@@ -103,7 +103,7 @@ async fn commit_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &st
                     info!("settings-committer found no settings changes to commit");
                     return Ok(());
                 } else {
-                    return error::APIResponse {
+                    return error::APIResponseSnafu {
                         method: "POST",
                         uri,
                         code,
@@ -114,7 +114,7 @@ async fn commit_pending_settings<S: AsRef<str>>(socket_path: S, transaction: &st
             }
             // Any other type of error means we couldn't even make the request.
             _ => {
-                return Err(e).context(error::APIRequest {
+                return Err(e).context(error::APIRequestSnafu {
                     method: "POST",
                     uri,
                 });
@@ -203,7 +203,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("Checking pending settings.");
     check_pending_settings(&args.socket_path, &args.transaction).await;

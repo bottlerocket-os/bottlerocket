@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 /// Error contains the errors that can happen in the migration helper functions and in migrations.
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
+#[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("Unable to get system release data: {}", source))]
     BottlerocketRelease { source: bottlerocket_release::Error },

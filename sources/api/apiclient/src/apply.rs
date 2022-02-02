@@ -49,7 +49,7 @@ where
         let method = "PATCH";
         let (_status, _body) = crate::raw_request(&socket_path, &uri, method, Some(json))
             .await
-            .context(error::Patch {
+            .context(error::PatchSnafu {
                 input_source,
                 uri,
                 method,
@@ -61,7 +61,7 @@ where
     let method = "POST";
     let (_status, _body) = crate::raw_request(&socket_path, &uri, method, None)
         .await
-        .context(error::CommitApply { uri })?;
+        .context(error::CommitApplySnafu { uri })?;
 
     Ok(())
 }
@@ -78,30 +78,30 @@ where
         let mut output = String::new();
         tokio::io::stdin()
             .read_to_string(&mut output)
-            .context(error::StdinRead)
+            .context(error::StdinReadSnafu)
             .await?;
         return Ok(output);
     }
 
     // Otherwise, the input should be a URI; parse it to know what kind.
     // Until reqwest handles file:// URIs: https://github.com/seanmonstar/reqwest/issues/178
-    let uri = Url::parse(&input_source).context(error::Uri {
+    let uri = Url::parse(&input_source).context(error::UriSnafu {
         input_source: &input_source,
     })?;
     if uri.scheme() == "file" {
         // Turn the URI to a file path, and return a future that reads it.
-        let path = uri.to_file_path().ok().context(error::FileUri {
+        let path = uri.to_file_path().ok().context(error::FileUriSnafu {
             input_source: &input_source,
         })?;
         tokio::fs::read_to_string(path)
-            .context(error::FileRead { input_source })
+            .context(error::FileReadSnafu { input_source })
             .await
     } else {
         // Return a future that contains the text of the (non-file) URI.
         reqwest::get(uri)
             .and_then(|response| ready(response.error_for_status()))
             .and_then(|response| response.text())
-            .context(error::Reqwest {
+            .context(error::ReqwestSnafu {
                 uri: input_source,
                 method: "GET",
             })
@@ -118,12 +118,12 @@ fn format_change(input: &str, input_source: &str) -> Result<String> {
             // We need JSON for the API.  serde lets us convert between Deserialize-able types by
             // reusing the deserializer.  Turn the TOML value into a JSON value.
             let d = toml_val.into_deserializer();
-            serde_json::Value::deserialize(d).context(error::TomlToJson { input_source })?
+            serde_json::Value::deserialize(d).context(error::TomlToJsonSnafu { input_source })?
         }
         Err(toml_err) => {
             // TOML failed, try JSON; include the toml parsing error, because if they intended to
             // give TOML we should still tell them what was wrong with it.
-            serde_json::from_str(&input).context(error::InputType {
+            serde_json::from_str(&input).context(error::InputTypeSnafu {
                 input_source,
                 toml_err,
             })
@@ -134,24 +134,24 @@ fn format_change(input: &str, input_source: &str) -> Result<String> {
     // neither of which expects it.
     let json_object = json_val
         .as_object_mut()
-        .context(error::ModelType { input_source })?;
+        .context(error::ModelTypeSnafu { input_source })?;
     let json_inner = json_object
         .remove("settings")
-        .context(error::MissingSettings { input_source })?;
+        .context(error::MissingSettingsSnafu { input_source })?;
 
     // Deserialize into the model to confirm the settings are valid.
     let _settings = model::Settings::deserialize(&json_inner)
-        .context(error::ModelDeserialize { input_source })?;
+        .context(error::ModelDeserializeSnafu { input_source })?;
 
     // Return JSON text we can send to the API.
-    serde_json::to_string(&json_inner).context(error::JsonSerialize { input_source })
+    serde_json::to_string(&json_inner).context(error::JsonSerializeSnafu { input_source })
 }
 
 mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed to commit combined settings to '{}': {}", uri, source))]
         CommitApply { uri: String, source: crate::Error },

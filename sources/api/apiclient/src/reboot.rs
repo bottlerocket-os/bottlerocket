@@ -11,7 +11,7 @@ where
     let method = "POST";
     let (_status, _body) = crate::raw_request(&socket_path, uri, method, None)
         .await
-        .context(error::Request { uri, method })?;
+        .context(error::RequestSnafu { uri, method })?;
 
     info!("Rebooting, goodbye...");
     Ok(())
@@ -21,7 +21,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed {} request to '{}': {}", method, uri, source))]
         Request {

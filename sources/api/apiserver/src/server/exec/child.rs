@@ -125,12 +125,12 @@ impl ChildHandles {
         command.env("TERM", "screen");
 
         debug!("Spawning command for exec request: {:?}", command);
-        let mut child = command.spawn().context(error::Spawn)?;
+        let mut child = command.spawn().context(error::SpawnSnafu)?;
 
         // `Command` returns pid as u32, but we want i32 to deal with nix.
         let pid_raw = i32::try_from(child.id())
             .ok()
-            .context(error::InvalidPid { given: child.id() })?;
+            .context(error::InvalidPidSnafu { given: child.id() })?;
         let pid = Pid::from_raw(pid_raw);
         debug!("Spawned child has pid {}", pid);
 
@@ -145,7 +145,7 @@ impl ChildHandles {
             // Now that the process is spawned, if we created a PTY, close its slave fd in the
             // parent process, or reads of the master side will block.
             if let Some(close_fd) = child_fds.close_fd {
-                close(close_fd).context(error::CloseFd)?;
+                close(close_fd).context(error::CloseFdSnafu)?;
             }
 
             // `ctr` doesn't (yet) send initial PTY size to containerd, requiring us to send a
@@ -168,7 +168,11 @@ impl ChildHandles {
             // available until after the child is spawned, so ChildFds can't do it.
             let write_fd = match child_fds.write_fd {
                 Some(write_fd) => write_fd,
-                None => child.stdin.take().context(error::NoStdin)?.into_raw_fd(),
+                None => child
+                    .stdin
+                    .take()
+                    .context(error::NoStdinSnafu)?
+                    .into_raw_fd(),
             };
 
             // Set up the thread that writes input from the WebSocket to the child.
@@ -270,9 +274,9 @@ impl ChildFds {
         // Create a PTY with openpty, starting with a size if the user gave one.
         let pty = if let Some(size) = tty_init.size {
             let size = WinSize::from(size);
-            openpty(Some(&size), None).context(error::OpenPty)?
+            openpty(Some(&size), None).context(error::OpenPtySnafu)?
         } else {
-            openpty(None, None).context(error::OpenPty)?
+            openpty(None, None).context(error::OpenPtySnafu)?
         };
         // The "master" end of a PTY represents a user typing at a physical terminal; we connect
         // that to the user over the WebSocket.  The "slave" end is connected to the process
@@ -324,7 +328,7 @@ impl ChildFds {
         // Instead, create an OS-level pipe; the child will write both stdout and stderr to one end
         // of the pipe and the parent will read from the other.  The child doesn't need access to
         // our end of the pipe so we use CLOEXEC to have it closed in the child automatically.
-        let (read_fd, write_fd) = pipe2(OFlag::O_CLOEXEC).context(error::CreatePipe)?;
+        let (read_fd, write_fd) = pipe2(OFlag::O_CLOEXEC).context(error::CreatePipeSnafu)?;
         // Make a duplicate for stderr.  dup() sets CLOEXEC for us.
         let write_fd_dup = dup(write_fd)?;
 
@@ -351,13 +355,13 @@ impl ChildFds {
 /// Set CLOEXEC on the given file descriptor so it's automatically closed in child processes.
 fn cloexec(fd: RawFd) -> Result<()> {
     // First, get the current settings.
-    let flags = fcntl(fd, FcntlArg::F_GETFD).context(error::Fcntl)?;
+    let flags = fcntl(fd, FcntlArg::F_GETFD).context(error::FcntlSnafu)?;
     // Turn the result into the nix type; can't fail, the bits just came from fcntl.
     let mut flags = FdFlag::from_bits(flags).expect("F_GETFD result not valid FdFlag?");
     // Set CLOEXEC.
     flags.set(FdFlag::FD_CLOEXEC, true);
     // Update the settings on the fd.
-    fcntl(fd, FcntlArg::F_SETFD(flags)).context(error::Fcntl)?;
+    fcntl(fd, FcntlArg::F_SETFD(flags)).context(error::FcntlSnafu)?;
     Ok(())
 }
 
@@ -368,7 +372,7 @@ fn dup(fd: RawFd) -> Result<RawFd> {
     let minimum_fd = 0;
     // Create the requested duplicate.  Use fcntl rather than unistd::dup so we can immediately set
     // CLOEXEC, automatically closing this FD in any child process.
-    fcntl(fd, FcntlArg::F_DUPFD_CLOEXEC(minimum_fd)).context(error::DupFd)
+    fcntl(fd, FcntlArg::F_DUPFD_CLOEXEC(minimum_fd)).context(error::DupFdSnafu)
 }
 
 /// WriteToChild is responsible for accepting user input from a channel connected to the WebSocket
@@ -581,7 +585,7 @@ mod error {
     use std::io;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display(
             "Failed to close file descriptor, which could lead to a hang: {}",

@@ -160,15 +160,15 @@ fn parse_args(args: env::Args) -> Result<(Args, Subcommand)> {
         match arg.as_ref() {
             // Global args
             "--log-level" => {
-                let log_level = iter.next().context(error::Usage {
+                let log_level = iter.next().context(error::UsageSnafu {
                     message: "Did not give argument to --log-level",
                 })?;
-                global_args.log_level =
-                    LevelFilter::from_str(&log_level).context(error::LogLevel { log_level })?;
+                global_args.log_level = LevelFilter::from_str(&log_level)
+                    .context(error::LogLevelSnafu { log_level })?;
             }
 
             "-s" | "--socket-path" => {
-                global_args.socket_path = iter.next().context(error::Usage {
+                global_args.socket_path = iter.next().context(error::UsageSnafu {
                     message: "Did not give argument to --socket-path",
                 })?
             }
@@ -189,13 +189,13 @@ fn parse_args(args: env::Args) -> Result<(Args, Subcommand)> {
         Some("create-containers") => Ok((global_args, Subcommand::CreateContainers {})),
         Some("mark-bootstrap") => Ok((global_args, parse_mark_bootstrap_args(subcommand_args)?)),
         None => {
-            return error::Usage {
+            return error::UsageSnafu {
                 message: format!("Missing subcommand"),
             }
             .fail()
         }
         Some(x) => {
-            return error::Usage {
+            return error::UsageSnafu {
                 message: format!("Unknown subcommand '{}'", x),
             }
             .fail()
@@ -212,19 +212,19 @@ fn parse_mark_bootstrap_args(args: Vec<String>) -> Result<Subcommand> {
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
             "--container-id" => {
-                container_id = Some(iter.next().context(error::Usage {
+                container_id = Some(iter.next().context(error::UsageSnafu {
                     message: "Did not give argument to --container-id",
                 })?);
             }
 
             "--mode" => {
-                mode = Some(iter.next().context(error::Usage {
+                mode = Some(iter.next().context(error::UsageSnafu {
                     message: "Did not give argument to --mode",
                 })?);
             }
 
             x => {
-                return error::Usage {
+                return error::UsageSnafu {
                     message: format!("Unexpected argument '{}'", x),
                 }
                 .fail()
@@ -232,11 +232,11 @@ fn parse_mark_bootstrap_args(args: Vec<String>) -> Result<Subcommand> {
         }
     }
 
-    let container_id = container_id.context(error::Usage {
+    let container_id = container_id.context(error::UsageSnafu {
         message: format!("Did not give argument to --container-id"),
     })?;
 
-    let mode = mode.context(error::Usage {
+    let mode = mode.context(error::UsageSnafu {
         message: format!("Did not give argument to --mode"),
     })?;
 
@@ -244,7 +244,7 @@ fn parse_mark_bootstrap_args(args: Vec<String>) -> Result<Subcommand> {
         container_id: container_id,
         // Fail if 'mode' is invalid
         mode: BootstrapContainerMode::try_from(mode.to_string())
-            .context(error::BootstrapContainerMode)?,
+            .context(error::BootstrapContainerModeSnafu)?,
     }))
 }
 
@@ -264,7 +264,7 @@ where
     let source = container_details
         .source
         .as_ref()
-        .context(error::MissingField {
+        .context(error::MissingFieldSnafu {
             name,
             field: "source",
         })?;
@@ -275,17 +275,17 @@ where
 
     // Create the directory regardless if user data was provided for the container
     let dir = Path::new(PERSISTENT_STORAGE_DIR).join(name);
-    fs::create_dir_all(&dir).context(error::Mkdir { dir: &dir })?;
+    fs::create_dir_all(&dir).context(error::MkdirSnafu { dir: &dir })?;
 
     // If user data was specified, decode it and write it out
     if let Some(user_data) = &container_details.user_data {
         debug!("Decoding user data for container '{}'", name);
         let decoded_bytes =
-            base64::decode(user_data.as_bytes()).context(error::Base64Decode { name })?;
+            base64::decode(user_data.as_bytes()).context(error::Base64DecodeSnafu { name })?;
 
         let path = dir.join("user-data");
         debug!("Storing user data in {}", path.display());
-        fs::write(path, decoded_bytes).context(error::UserDataWrite { name })?;
+        fs::write(path, decoded_bytes).context(error::UserDataWriteSnafu { name })?;
     }
 
     // Start/stop the container according to the 'mode' setting
@@ -352,15 +352,19 @@ where
     let env_path = Path::new(ENV_FILE_DIR).join(env_filename);
     let mut output = String::new();
 
-    writeln!(output, "CTR_SOURCE={}", source.as_ref()).context(error::WriteConfigurationValue {
-        value: source.as_ref(),
-    })?;
-    writeln!(output, "CTR_MODE={}", mode.as_ref()).context(error::WriteConfigurationValue {
-        value: mode.as_ref(),
-    })?;
+    writeln!(output, "CTR_SOURCE={}", source.as_ref()).context(
+        error::WriteConfigurationValueSnafu {
+            value: source.as_ref(),
+        },
+    )?;
+    writeln!(output, "CTR_MODE={}", mode.as_ref()).context(
+        error::WriteConfigurationValueSnafu {
+            value: mode.as_ref(),
+        },
+    )?;
 
     debug!("Writing environment file for unit '{}'", name);
-    fs::write(&env_path, output).context(error::WriteConfigurationFile { path: env_path })?;
+    fs::write(&env_path, output).context(error::WriteConfigurationFileSnafu { path: env_path })?;
 
     // Build unit's drop-in file, used to override the unit's configurations
     let mut output = String::new();
@@ -371,13 +375,14 @@ where
     // Override the type of dependency the `configured` target has in the unit
     let dependency = if essential { "RequiredBy" } else { "WantedBy" };
 
-    writeln!(output, "[Install]").context(error::WriteConfigurationValue { value: "[Install]" })?;
+    writeln!(output, "[Install]")
+        .context(error::WriteConfigurationValueSnafu { value: "[Install]" })?;
     writeln!(output, "{}=configured.target", dependency)
-        .context(error::WriteConfigurationValue { value: dependency })?;
+        .context(error::WriteConfigurationValueSnafu { value: dependency })?;
     debug!("Writing drop-in file for {}", name);
-    fs::create_dir_all(&drop_in_dir).context(error::Mkdir { dir: &drop_in_dir })?;
+    fs::create_dir_all(&drop_in_dir).context(error::MkdirSnafu { dir: &drop_in_dir })?;
     fs::write(&drop_in_path, output)
-        .context(error::WriteConfigurationFile { path: drop_in_path })?;
+        .context(error::WriteConfigurationFileSnafu { path: drop_in_path })?;
 
     Ok(())
 }
@@ -395,12 +400,12 @@ where
     let uri = constants::API_SETTINGS_URI;
     let (_code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
         .await
-        .context(error::APIRequest { method, uri })?;
+        .context(error::APIRequestSnafu { method, uri })?;
 
     // Build a Settings struct from the response string
     debug!("Deserializing response");
     let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })?;
+        serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })?;
 
     // If bootstrap containers aren't defined, return an empty map
     Ok(settings.bootstrap_containers.unwrap_or_default())
@@ -473,14 +478,14 @@ where
     command.args(args);
     let output = command
         .output()
-        .context(error::ExecutionFailure { command })?;
+        .context(error::ExecutionFailureSnafu { command })?;
 
     trace!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     trace!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     ensure!(
         output.status.success(),
-        error::CommandFailure { bin_path, output }
+        error::CommandFailureSnafu { bin_path, output }
     );
     Ok(())
 }
@@ -502,7 +507,7 @@ where
 
     ensure!(
         failed == 0,
-        error::ManageContainersFailed {
+        error::ManageContainersFailedSnafu {
             failed,
             tried: bootstrap_containers.len()
         }
@@ -527,19 +532,19 @@ where
     // the boot where it was created.
     if mode != "always" {
         let formatted = format!("settings.bootstrap-containers.{}.mode", container_id);
-        let key =
-            Key::new(KeyType::Data, &formatted).context(error::KeyFormat { key: formatted })?;
-        let value = serialize_scalar(&"off".to_string()).context(error::Serialize)?;
+        let key = Key::new(KeyType::Data, &formatted)
+            .context(error::KeyFormatSnafu { key: formatted })?;
+        let value = serialize_scalar(&"off".to_string()).context(error::SerializeSnafu)?;
 
         let mut map = HashMap::new();
         map.insert(key, value);
         let settings: model::Settings = datastore::deserialization::from_map(&map)
-            .context(error::SettingsDeserialize { settings: map })?;
+            .context(error::SettingsDeserializeSnafu { settings: map })?;
 
         info!("Turning off container '{}'", container_id);
         apiclient::set::set(socket_path, &settings)
             .await
-            .context(error::Set)?;
+            .context(error::SetSnafu)?;
     }
 
     Ok(())
@@ -549,7 +554,7 @@ async fn run() -> Result<()> {
     let (args, subcommand) = parse_args(env::args())?;
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("bootstrap-containers started");
 
@@ -593,7 +598,7 @@ mod error {
     use std::process::{Command, Output};
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {

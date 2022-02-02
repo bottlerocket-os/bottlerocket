@@ -8,7 +8,7 @@ use std::process::Output;
 
 /// Error contains the errors that can happen during migration.
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility(pub(crate)))]
 pub(crate) enum Error {
     #[snafu(display("Internal error: {}", msg))]
     Internal { msg: String },

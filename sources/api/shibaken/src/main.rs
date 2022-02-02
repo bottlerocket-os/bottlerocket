@@ -46,7 +46,7 @@ async fn fetch_public_keys_from_imds() -> Result<Vec<String>> {
     let public_keys = client
         .fetch_public_ssh_keys()
         .await
-        .context(error::ImdsClient)?
+        .context(error::ImdsClientSnafu)?
         .unwrap_or_else(Vec::new);
     Ok(public_keys)
 }
@@ -74,17 +74,17 @@ fn parse_args(args: env::Args) -> Result<Args> {
     while let Some(arg) = iter.next() {
         match arg.as_ref() {
             "--log-level" => {
-                let log_level_str = iter.next().context(error::Usage {
+                let log_level_str = iter.next().context(error::UsageSnafu {
                     message: "Did not give argument to --log-level",
                 })?;
                 log_level = Some(
                     LevelFilter::from_str(&log_level_str)
-                        .context(error::LogLevel { log_level_str })?,
+                        .context(error::LogLevelSnafu { log_level_str })?,
                 );
             }
 
             x => {
-                return error::Usage {
+                return error::UsageSnafu {
                     message: format!("unexpected argument '{}'", x),
                 }
                 .fail()
@@ -108,7 +108,7 @@ async fn run() -> Result<()> {
         TerminalMode::Stderr,
         ColorChoice::Auto,
     )
-    .context(error::Logger)?;
+    .context(error::LoggerSnafu)?;
 
     info!("shibaken started");
 
@@ -118,7 +118,7 @@ async fn run() -> Result<()> {
 
     info!("Generating user-data");
     // Serialize user_data to a JSON string that can be read by the admin container.
-    let user_data_json = serde_json::to_string(&user_data).context(error::SerializeJson)?;
+    let user_data_json = serde_json::to_string(&user_data).context(error::SerializeJsonSnafu)?;
     debug!("{}", &user_data_json);
 
     info!("Encoding user-data");
@@ -130,7 +130,7 @@ async fn run() -> Result<()> {
     info!("Outputting base64-encoded user-data");
     // sundog expects JSON-serialized output so that many types can be represented, allowing the
     // API model to use more accurate types.
-    let output = serde_json::to_string(&user_data_base64).context(error::SerializeJson)?;
+    let output = serde_json::to_string(&user_data_base64).context(error::SerializeJsonSnafu)?;
 
     println!("{}", output);
 
@@ -163,7 +163,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("IMDS request failed: {}", source))]
         ImdsRequest { source: imdsclient::Error },

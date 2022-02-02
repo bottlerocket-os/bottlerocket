@@ -37,7 +37,7 @@ where
 {
     let prefix = prefix.as_ref();
     let prefix_key = Key::new(KeyType::Data, prefix).map_err(|e| {
-        error::InvalidKey {
+        error::InvalidKeySnafu {
             msg: format!("Prefix '{}' not valid as Key: {}", prefix, e),
         }
         .into_error(NoSource)
@@ -84,17 +84,18 @@ impl<'a> Serializer<'a> {
 /// This helps us handle the cases where we have to have an existing prefix in order to output a
 /// value.  It creates an explanatory error if the given prefix is None.
 fn expect_prefix(maybe_prefix: Option<Key>, value: &str) -> Result<Key> {
-    maybe_prefix.context(error::MissingPrefix { value })
+    maybe_prefix.context(error::MissingPrefixSnafu { value })
 }
 
 /// Serializes a concrete value and saves it to the output, assuming we have a prefix.
 macro_rules! concrete_output {
     ($self:expr, $value:expr) => {
         trace!("Serializing scalar at prefix {:?}", $self.prefix);
-        let value =
-            serialize_scalar::<_, ScalarError>(&$value).with_context(|| error::Serialization {
+        let value = serialize_scalar::<_, ScalarError>(&$value).with_context(|_| {
+            error::SerializationSnafu {
                 given: format!("concrete value '{}'", $value),
-            })?;
+            }
+        })?;
         let prefix = expect_prefix($self.prefix, &value)?;
         $self.output.insert(prefix, value);
         return Ok(());
@@ -104,7 +105,7 @@ macro_rules! concrete_output {
 /// Several types are invalid for our serialization so we commonly need to return an error.  This
 /// simplifies the creation of that error, with a customizable message for the type.
 fn bad_type<T>(typename: &str) -> Result<T> {
-    error::InvalidType { typename }.fail()
+    error::InvalidTypeSnafu { typename }.fail()
 }
 
 #[rustfmt::skip]
@@ -157,7 +158,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
             None => {
                 trace!("Had no prefix, starting with struct name: {}", name);
                 let key = Key::from_segments(KeyType::Data, &[&name])
-                    .map_err(|e| error::InvalidKey {
+                    .map_err(|e| error::InvalidKeySnafu {
                         msg: format!("struct '{}' not valid as Key: {}", name, e)
                     }.into_error(NoSource))?;
                 Some(key)
@@ -209,7 +210,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
 fn key_append_or_create(old_prefix: &Option<Key>, key: &Key) -> Result<Key> {
     if let Some(old_prefix) = old_prefix {
         old_prefix.append_key(&key).map_err(|e| {
-            error::InvalidKey {
+            error::InvalidKeySnafu {
                 msg: format!(
                     "appending '{}' to '{}' is invalid as Key: {}",
                     key, old_prefix, e
@@ -249,7 +250,7 @@ impl<'a> ser::SerializeMap for Serializer<'a> {
         // Note: we use 'new', not 'from_segments', because we just serialized into a string,
         // meaning it's in quoted form.
         let key = Key::new(KeyType::Data, &key_str).map_err(|e| {
-            error::InvalidKey {
+            error::InvalidKeySnafu {
                 msg: format!("serialized map key '{}' not valid as Key: {}", &key_str, e),
             }
             .into_error(NoSource)
@@ -273,7 +274,7 @@ impl<'a> ser::SerializeMap for Serializer<'a> {
                 );
                 value.serialize(Serializer::new(self.output, Some(key)))
             }
-            None => error::Internal {
+            None => error::InternalSnafu {
                 msg: "Attempted to serialize value without key",
             }
             .fail(),
@@ -298,7 +299,7 @@ impl<'a> ser::SerializeStruct for Serializer<'a> {
         T: ?Sized + Serialize,
     {
         let key = Key::from_segments(KeyType::Data, &[&key_str]).map_err(|e| {
-            error::InvalidKey {
+            error::InvalidKeySnafu {
                 msg: format!("struct field '{}' not valid as Key: {}", key_str, e),
             }
             .into_error(NoSource)
@@ -356,10 +357,11 @@ impl<'a> ser::SerializeSeq for FlatSerializer<'a> {
         T: ?Sized + Serialize,
     {
         trace!("Serializing element of list");
-        self.list
-            .push(serde_json::to_string(value).context(error::Serialization {
+        self.list.push(
+            serde_json::to_string(value).context(error::SerializationSnafu {
                 given: "list element",
-            })?);
+            })?,
+        );
         Ok(())
     }
 
@@ -367,7 +369,7 @@ impl<'a> ser::SerializeSeq for FlatSerializer<'a> {
         let mut originals: Vec<serde_json::Value> = Vec::new();
         trace!("Deserializing elements of list");
         for original in self.list {
-            originals.push(original.parse().context(error::Deserialization {
+            originals.push(original.parse().context(error::DeserializationSnafu {
                 given: "list element",
             })?);
         }
@@ -375,7 +377,8 @@ impl<'a> ser::SerializeSeq for FlatSerializer<'a> {
         trace!("Serializing list");
         self.output.insert(
             self.prefix,
-            serde_json::to_string(&originals).context(error::Serialization { given: "list" })?,
+            serde_json::to_string(&originals)
+                .context(error::SerializationSnafu { given: "list" })?,
         );
 
         Ok(())

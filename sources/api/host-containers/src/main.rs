@@ -43,7 +43,7 @@ mod error {
     use std::process::{Command, Output};
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {
@@ -147,10 +147,10 @@ where
     let uri = constants::API_SETTINGS_URI;
     let (code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
         .await
-        .context(error::APIRequest { method, uri })?;
+        .context(error::APIRequestSnafu { method, uri })?;
     ensure!(
         code.is_success(),
-        error::APIResponse {
+        error::APIResponseSnafu {
             method,
             uri,
             code,
@@ -160,7 +160,7 @@ where
 
     // Build a Settings struct from the response string
     let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })?;
+        serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })?;
 
     // If host containers aren't defined, return an empty map
     Ok(settings.host_containers.unwrap_or_default())
@@ -254,7 +254,7 @@ where
     command.args(args);
     let output = command
         .output()
-        .context(error::ExecutionFailure { command })?;
+        .context(error::ExecutionFailureSnafu { command })?;
 
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
 
@@ -263,7 +263,7 @@ where
 
     ensure!(
         output.status.success(),
-        error::CommandFailure { bin_path, output }
+        error::CommandFailureSnafu { bin_path, output }
     );
     Ok(stdout)
 }
@@ -280,18 +280,19 @@ where
 
     let mut output = String::new();
     writeln!(output, "CTR_SUPERPOWERED={}", superpowered)
-        .context(error::EnvFileBuildFailed { name })?;
+        .context(error::EnvFileBuildFailedSnafu { name })?;
     writeln!(output, "CTR_SOURCE={}", source.as_ref())
-        .context(error::EnvFileBuildFailed { name })?;
+        .context(error::EnvFileBuildFailedSnafu { name })?;
 
     writeln!(
         output,
         "\n# Just for reference; service is enabled or disabled by host-containers service"
     )
-    .context(error::EnvFileBuildFailed { name })?;
-    writeln!(output, "# CTR_ENABLED={}", enabled).context(error::EnvFileBuildFailed { name })?;
+    .context(error::EnvFileBuildFailedSnafu { name })?;
+    writeln!(output, "# CTR_ENABLED={}", enabled)
+        .context(error::EnvFileBuildFailedSnafu { name })?;
 
-    fs::write(&path, output).context(error::EnvFileWriteFailed { path })?;
+    fs::write(&path, output).context(error::EnvFileWriteFailedSnafu { path })?;
 
     Ok(())
 }
@@ -364,10 +365,13 @@ where
 {
     // Get basic settings, as retrieved from API.
     let name = name.as_ref();
-    let source = image_details.source.as_ref().context(error::MissingField {
-        name,
-        field: "source",
-    })?;
+    let source = image_details
+        .source
+        .as_ref()
+        .context(error::MissingFieldSnafu {
+            name,
+            field: "source",
+        })?;
     let enabled = image_details.enabled.unwrap_or(false);
     let superpowered = image_details.superpowered.unwrap_or(false);
 
@@ -378,17 +382,17 @@ where
 
     // Create the directory regardless if user data was provided for the container
     let dir = Path::new(PERSISTENT_STORAGE_BASE_DIR).join(name);
-    fs::create_dir_all(&dir).context(error::Mkdir { dir: &dir })?;
+    fs::create_dir_all(&dir).context(error::MkdirSnafu { dir: &dir })?;
     fs::set_permissions(&dir, fs::Permissions::from_mode(0o700))
-        .context(error::SetPermissions { name })?;
+        .context(error::SetPermissionsSnafu { name })?;
 
     // If user data was specified, unencode it and write it out before we start the container.
     if let Some(user_data) = &image_details.user_data {
         let decoded_bytes =
-            base64::decode(user_data.as_bytes()).context(error::Base64Decode { name })?;
+            base64::decode(user_data.as_bytes()).context(error::Base64DecodeSnafu { name })?;
 
         let path = dir.join("user-data");
-        fs::write(path, decoded_bytes).context(error::UserDataWrite { name })?;
+        fs::write(path, decoded_bytes).context(error::UserDataWriteSnafu { name })?;
     }
 
     // Write the environment file needed for the systemd service to have details about this
@@ -488,7 +492,7 @@ async fn run() -> Result<()> {
     let changed_settings: Vec<&str> = changed_settings_env.split_whitespace().collect();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("host-containers started");
 
@@ -507,7 +511,7 @@ async fn run() -> Result<()> {
 
     ensure!(
         failed == 0,
-        error::ManageContainersFailed {
+        error::ManageContainersFailedSnafu {
             failed,
             tried: host_containers.len()
         }

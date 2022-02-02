@@ -36,7 +36,7 @@ impl TryFrom<&str> for ECSAttributeKey {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             ECS_ATTRIBUTE_KEY.is_match(input),
-            error::BigPattern {
+            error::BigPatternSnafu {
                 thing: "ECS attribute key",
                 input
             }
@@ -121,7 +121,7 @@ impl TryFrom<&str> for ECSAttributeValue {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             ECS_ATTRIBUTE_VALUE.is_match(input),
-            error::BigPattern {
+            error::BigPatternSnafu {
                 thing: "ECS attribute value",
                 input
             }
@@ -200,7 +200,7 @@ impl TryFrom<&str> for ECSAgentLogLevel {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ECSLogLevel>(&input).context(error::InvalidPlainValue {
+        serde_plain::from_str::<ECSLogLevel>(&input).context(error::InvalidPlainValueSnafu {
             field: "ecs.loglevel",
         })?;
         Ok(ECSAgentLogLevel {

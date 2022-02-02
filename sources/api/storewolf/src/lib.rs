@@ -17,7 +17,7 @@ pub mod error {
 
     /// Public error type for `libstorewolf`
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub")]
+    #[snafu(visibility(pub))]
     pub enum Error {
         #[snafu(display("Unable to create directory at '{}': {}", path.display(), source))]
         DirectoryCreation { path: PathBuf, source: io::Error },
@@ -52,7 +52,7 @@ pub fn create_new_datastore<P: AsRef<Path>>(
     let version = match version {
         Some(v) => v,
         None => {
-            let br = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+            let br = BottlerocketRelease::new().context(error::ReleaseVersionSnafu)?;
             br.version_id
         }
     };
@@ -89,25 +89,25 @@ pub fn create_new_datastore<P: AsRef<Path>>(
     let current_path = base_path.as_ref().join("current");
 
     // Create the path to the datastore, i.e /path/to/datastore/v1.5_0123456789abcdef
-    fs::create_dir_all(&data_store_path).context(error::DirectoryCreation {
+    fs::create_dir_all(&data_store_path).context(error::DirectoryCreationSnafu {
         path: &base_path.as_ref(),
     })?;
 
     // Build our symlink chain (See example in docstring above)
     // /path/to/datastore/v1.5.2 -> v1.5.2_0123456789abcdef
-    symlink(&data_store_filename, &patch_version_path).context(error::LinkCreate {
+    symlink(&data_store_filename, &patch_version_path).context(error::LinkCreateSnafu {
         path: &patch_version_path,
     })?;
     // /path/to/datastore/v1.5 -> v1.5.2
-    symlink(&patch_version_filename, &minor_version_path).context(error::LinkCreate {
+    symlink(&patch_version_filename, &minor_version_path).context(error::LinkCreateSnafu {
         path: &minor_version_path,
     })?;
     // /path/to/datastore/v1 -> v1.5
-    symlink(&minor_version_filename, &major_version_path).context(error::LinkCreate {
+    symlink(&minor_version_filename, &major_version_path).context(error::LinkCreateSnafu {
         path: &major_version_path,
     })?;
     // /path/to/datastore/current -> v1
-    symlink(&major_version_filename, &current_path).context(error::LinkCreate {
+    symlink(&major_version_filename, &current_path).context(error::LinkCreateSnafu {
         path: &current_path,
     })?;
     Ok(data_store_path)

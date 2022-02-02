@@ -161,7 +161,7 @@ dependencies = [
  "serde",
  "serde_plain",
  "sha2",
- "snafu",
+ "snafu 0.6.10",
  "toml",
  "url",
  "walkdir",
@@ -252,7 +252,7 @@ dependencies = [
  "rusoto_ec2",
  "rusoto_signature",
  "sha2",
- "snafu",
+ "snafu 0.6.10",
  "tempfile",
  "tokio",
 ]
@@ -792,7 +792,7 @@ dependencies = [
  "sha2",
  "shell-words",
  "simplelog",
- "snafu",
+ "snafu 0.6.10",
  "structopt",
  "tokio",
  "toml",
@@ -1064,7 +1064,7 @@ version = "0.1.0"
 dependencies = [
  "cargo-readme",
  "chrono",
- "snafu",
+ "snafu 0.7.0",
 ]
 
 [[package]]
@@ -1195,7 +1195,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu",
+ "snafu 0.6.10",
  "structopt",
  "tempfile",
  "tinytemplate",
@@ -1220,7 +1220,7 @@ dependencies = [
  "parse-datetime",
  "serde",
  "serde_yaml",
- "snafu",
+ "snafu 0.6.10",
  "toml",
  "url",
 ]
@@ -1236,7 +1236,7 @@ dependencies = [
  "sha2",
  "shell-words",
  "simplelog",
- "snafu",
+ "snafu 0.6.10",
  "structopt",
  "tempfile",
  "toml",
@@ -1833,7 +1833,18 @@ checksum = "eab12d3c261b2308b0d80c26fffb58d17eba81a4be97890101f416b478c79ca7"
 dependencies = [
  "backtrace",
  "doc-comment",
- "snafu-derive",
+ "snafu-derive 0.6.10",
+]
+
+[[package]]
+name = "snafu"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eba135d2c579aa65364522eb78590cdf703176ef71ad4c32b00f58f7afb2df5"
+dependencies = [
+ "backtrace",
+ "doc-comment",
+ "snafu-derive 0.7.0",
 ]
 
 [[package]]
@@ -1842,6 +1853,18 @@ version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1508efa03c362e23817f96cde18abed596a25219a8b2c66e8db33c03543d315b"
 dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "snafu-derive"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a7fe9b0669ef117c5cabc5549638528f36771f058ff977d7689deb517833a75"
+dependencies = [
+ "heck",
  "proc-macro2",
  "quote",
  "syn",
@@ -2083,7 +2106,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu",
+ "snafu 0.6.10",
  "tempfile",
  "untrusted",
  "url",
@@ -2101,7 +2124,7 @@ dependencies = [
  "rusoto_core",
  "rusoto_credential",
  "rusoto_kms",
- "snafu",
+ "snafu 0.6.10",
  "tokio",
  "tough",
 ]
@@ -2117,7 +2140,7 @@ dependencies = [
  "rusoto_ssm",
  "serde",
  "serde_json",
- "snafu",
+ "snafu 0.6.10",
  "tokio",
  "tough",
 ]
@@ -2210,7 +2233,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu",
+ "snafu 0.7.0",
  "toml",
 ]
 

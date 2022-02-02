@@ -90,7 +90,8 @@ impl ImdsClient {
             Some(response) => response,
             None => return Ok(None),
         };
-        let identity_document: Value = serde_json::from_slice(&response).context(error::Serde)?;
+        let identity_document: Value =
+            serde_json::from_slice(&response).context(error::SerdeSnafu)?;
         let region = identity_document
             .get("region")
             .and_then(|value| value.as_str())
@@ -134,9 +135,9 @@ impl ImdsClient {
         let mac = self
             .fetch_mac_addresses()
             .await?
-            .context(error::MacAddresses)?
+            .context(error::MacAddressesSnafu)?
             .first()
-            .context(error::MacAddresses)?
+            .context(error::MacAddressesSnafu)?
             .clone();
 
         // Get the IPv6 addresses associated with the primary network interface.
@@ -188,7 +189,7 @@ impl ImdsClient {
             let public_key_text = self
                 .fetch_string(&target)
                 .await?
-                .context(error::KeyNotFound { target })?;
+                .context(error::KeyNotFoundSnafu { target })?;
             let public_key = public_key_text.trim_end();
             // Simple check to see if the text is probably an ssh key.
             if public_key.starts_with("ssh") {
@@ -223,7 +224,7 @@ impl ImdsClient {
     {
         match self.fetch_imds(PINNED_SCHEMA, end_target).await? {
             Some(response_body) => Ok(Some(
-                String::from_utf8(response_body).context(error::NonUtf8Response)?,
+                String::from_utf8(response_body).context(error::NonUtf8ResponseSnafu)?,
             )),
             None => Ok(None),
         }
@@ -259,7 +260,7 @@ impl ImdsClient {
                     .header("X-aws-ec2-metadata-token", session_token)
                     .send()
                     .await
-                    .context(error::Request {
+                    .context(error::RequestSnafu {
                         method: "GET",
                         uri: &uri,
                     })?;
@@ -271,7 +272,7 @@ impl ImdsClient {
                         let response_body = response
                             .bytes()
                             .await
-                            .context(error::ResponseBody {
+                            .context(error::ResponseBodySnafu {
                                 method: "GET",
                                 uri: &uri,
                                 code,
@@ -291,14 +292,14 @@ impl ImdsClient {
                     StatusCode::UNAUTHORIZED => {
                         warn!("IMDS request unauthorized");
                         self.clear_token()?;
-                        error::TokenInvalid.fail()
+                        error::TokenInvalidSnafu.fail()
                     }
 
                     code => {
                         let response_body = response
                             .bytes()
                             .await
-                            .context(error::ResponseBody {
+                            .context(error::ResponseBodySnafu {
                                 method: "GET",
                                 uri: &uri,
                                 code,
@@ -309,7 +310,7 @@ impl ImdsClient {
 
                         trace!("Response: {:?}", response_str);
 
-                        error::Response {
+                        error::ResponseSnafu {
                             method: "GET",
                             uri: &uri,
                             code,
@@ -321,7 +322,7 @@ impl ImdsClient {
             }),
         )
         .await
-        .context(error::TimeoutFetchIMDS)?
+        .context(error::TimeoutFetchIMDSSnafu)?
     }
 
     /// Fetches a new session token and writes it to the current ImdsClient.
@@ -334,7 +335,7 @@ impl ImdsClient {
                     .map_err(|_| error::Error::FailedWriteToken {})? = Some(written_token.clone());
                 Ok(written_token)
             }
-            None => error::FailedWriteToken.fail(),
+            None => error::FailedWriteTokenSnafu.fail(),
         }
     }
 
@@ -415,15 +416,15 @@ async fn fetch_token(
                 .header("X-aws-ec2-metadata-token-ttl-seconds", "60")
                 .send()
                 .await
-                .context(error::Request {
+                .context(error::RequestSnafu {
                     method: "PUT",
                     uri: &uri,
                 })?;
 
             let code = response.status();
-            ensure!(code == StatusCode::OK, error::FailedFetchToken);
+            ensure!(code == StatusCode::OK, error::FailedFetchTokenSnafu);
 
-            let response_body = response.text().await.context(error::ResponseBody {
+            let response_body = response.text().await.context(error::ResponseBodySnafu {
                 method: "PUT",
                 uri: &uri,
                 code,
@@ -432,7 +433,7 @@ async fn fetch_token(
         }),
     )
     .await
-    .context(error::TimeoutFetchToken)?
+    .context(error::TimeoutFetchTokenSnafu)?
 }
 
 mod error {
@@ -450,7 +451,7 @@ mod error {
     }
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
 
     // snafu doesn't yet support the lifetimes used by std::sync::PoisonError.
     pub enum Error {

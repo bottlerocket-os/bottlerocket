@@ -107,7 +107,7 @@ impl Key {
         let prefix = prefix.as_ref();
         ensure!(
             prefix != self.name,
-            error::InvalidKey {
+            error::InvalidKeySnafu {
                 name: "",
                 msg: format!("strip_prefix of '{}' matches key", prefix)
             }
@@ -199,7 +199,7 @@ impl Key {
 
         ensure!(
             name.len() <= MAX_KEY_NAME_LENGTH,
-            error::KeyTooLong {
+            error::KeyTooLongSnafu {
                 name,
                 max: MAX_KEY_NAME_LENGTH,
             }
@@ -209,7 +209,7 @@ impl Key {
             KeyType::Data => {
                 ensure!(
                     segments.len() >= 1,
-                    error::InvalidKey {
+                    error::InvalidKeySnafu {
                         name,
                         msg: "data keys must have at least one segment",
                     }
@@ -218,7 +218,7 @@ impl Key {
             KeyType::Meta => {
                 ensure!(
                     segments.len() == 1,
-                    error::InvalidKey {
+                    error::InvalidKeySnafu {
                         name,
                         msg: "meta keys may only have one segment",
                     }
@@ -249,7 +249,7 @@ impl Key {
 
         ensure!(
             !name.is_empty(),
-            error::InvalidKey {
+            error::InvalidKeySnafu {
                 name,
                 msg: "cannot be empty",
             }
@@ -276,7 +276,7 @@ impl Key {
                     // Segments can't be empty.
                     ensure!(
                         !segment.is_empty(),
-                        error::InvalidKey {
+                        error::InvalidKeySnafu {
                             name,
                             msg: "empty key segment",
                         }
@@ -290,7 +290,7 @@ impl Key {
                 if Self::valid_character(c) {
                     segment.push(c);
                 } else {
-                    return error::InvalidKey {
+                    return error::InvalidKeySnafu {
                         name,
                         msg: format!("invalid character in key: '{}'", c),
                     }
@@ -301,14 +301,14 @@ impl Key {
 
         ensure!(
             !in_quotes,
-            error::InvalidKey {
+            error::InvalidKeySnafu {
                 name,
                 msg: "unbalanced quotes",
             }
         );
         ensure!(
             !segment.is_empty(),
-            error::InvalidKey {
+            error::InvalidKeySnafu {
                 name,
                 msg: "ends with separator",
             }
@@ -332,7 +332,7 @@ impl Key {
             for chr in segment.chars() {
                 ensure!(
                     chr == KEY_SEPARATOR || Self::valid_character(chr),
-                    error::InvalidKey {
+                    error::InvalidKeySnafu {
                         // Give an understandable key name in the error, even if it's invalid
                         name: segments.join("."),
                         msg: format!("Segment '{}' contains invalid character '{}'", segment, chr),

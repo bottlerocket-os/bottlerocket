@@ -27,7 +27,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Date argument '{}' is invalid: {}", input, msg))]
         DateArgInvalid { input: String, msg: &'static str },
@@ -70,7 +70,7 @@ pub fn parse_offset(input: &str) -> Result<Duration> {
     let mut parts: Vec<&str> = input.split_whitespace().collect();
     ensure!(
         parts.len() == 3 || parts.len() == 2,
-        error::DateArgInvalid {
+        error::DateArgInvalidSnafu {
             input,
             msg: "expected RFC 3339, or something like 'in 7 days' or '7 days'"
         }
@@ -82,21 +82,23 @@ pub fn parse_offset(input: &str) -> Result<Duration> {
     if let Some(prefix_str) = parts.pop() {
         ensure!(
             prefix_str == "in",
-            error::DateArgInvalid {
+            error::DateArgInvalidSnafu {
                 input,
                 msg: "expected prefix 'in', something like 'in 7 days'",
             }
         );
     }
 
-    let count: u32 = count_str.parse().context(error::DateArgCount { input })?;
+    let count: u32 = count_str
+        .parse()
+        .context(error::DateArgCountSnafu { input })?;
 
     let duration = match unit_str {
         "hour" | "hours" => Duration::hours(i64::from(count)),
         "day" | "days" => Duration::days(i64::from(count)),
         "week" | "weeks" => Duration::weeks(i64::from(count)),
         _ => {
-            return error::DateArgInvalid {
+            return error::DateArgInvalidSnafu {
                 input,
                 msg: "date argument's unit must be hours/days/weeks",
             }

@@ -24,8 +24,8 @@ impl Config {
 
     pub(crate) fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
-        let s = fs::read_to_string(path).context(error::ConfigRead { path })?;
-        let config: Config = toml::from_str(&s).context(error::ConfigParse { path })?;
+        let s = fs::read_to_string(path).context(error::ConfigReadSnafu { path })?;
+        let config: Config = toml::from_str(&s).context(error::ConfigParseSnafu { path })?;
         Ok(config)
     }
 }

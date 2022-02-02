@@ -31,7 +31,7 @@ pub(super) async fn get_cluster_network_config(
     region: &str,
     cluster: &str,
 ) -> Result<ClusterNetworkConfig> {
-    let parsed_region = Region::from_str(region).context(RegionParse { region })?;
+    let parsed_region = Region::from_str(region).context(RegionParseSnafu { region })?;
     let client = EksClient::new(parsed_region);
     let describe_cluster = rusoto_eks::DescribeClusterRequest {
         name: cluster.to_owned(),
@@ -40,11 +40,11 @@ pub(super) async fn get_cluster_network_config(
     client
         .describe_cluster(describe_cluster)
         .await
-        .context(DescribeCluster {})?
+        .context(DescribeClusterSnafu {})?
         .cluster
-        .context(Missing { field: "cluster" })?
+        .context(MissingSnafu { field: "cluster" })?
         .kubernetes_network_config
-        .context(Missing {
+        .context(MissingSnafu {
             field: "kubernetes_network_config",
         })
 }

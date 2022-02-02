@@ -18,7 +18,7 @@ models = { path = "../models", version = "0.1.0" }
 reqwest = { version = "0.11.1", default-features = false, features = ["blocking", "rustls-tls"] }
 serde_json = "1"
 shell-words = "1.0.0"
-snafu = { version = "0.6", features = ["backtraces-impl-backtrace-crate"] }
+snafu = { version = "0.7", features = ["backtraces-impl-backtrace-crate"] }
 tar = { version = "0.4", default-features = false }
 tempfile = { version = "3.1.0", default-features = false }
 tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS

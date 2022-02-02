@@ -29,7 +29,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error {}ing to {}: {}", method, uri, source))]
         APIRequest {
@@ -93,10 +93,10 @@ async fn get_metadata(key: &str, meta: &str) -> Result<String> {
     let method = "GET";
     let (code, response_body) = apiclient::raw_request(constants::API_SOCKET, &uri, method, None)
         .await
-        .context(error::APIRequest { method, uri })?;
+        .context(error::APIRequestSnafu { method, uri })?;
     ensure!(
         code.is_success(),
-        error::Response {
+        error::ResponseSnafu {
             method,
             uri,
             code,
@@ -106,22 +106,22 @@ async fn get_metadata(key: &str, meta: &str) -> Result<String> {
 
     // Metadata responses are of the form `{"data_key": METADATA}` so we pull out the value.
     let mut response_map: HashMap<String, serde_json::Value> =
-        serde_json::from_str(&response_body).context(error::DeserializeJson)?;
+        serde_json::from_str(&response_body).context(error::DeserializeJsonSnafu)?;
     let response_val = response_map
         .remove(key)
-        .context(error::MissingMetadata { meta, key })?;
+        .context(error::MissingMetadataSnafu { meta, key })?;
 
     // Ensure it's a non-empty string
     let response_str = response_val
         .as_str()
-        .with_context(|| error::MetadataWrongType {
+        .with_context(|| error::MetadataWrongTypeSnafu {
             meta,
             expected: "string",
             value: response_val.to_string(),
         })?;
     ensure!(
         !response_str.is_empty(),
-        error::MissingMetadata { meta, key }
+        error::MissingMetadataSnafu { meta, key }
     );
     Ok(response_str.to_string())
 }
@@ -145,24 +145,25 @@ fn parse_args(mut args: env::Args) -> String {
 async fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
 
-    let registry = schnauzer::build_template_registry().context(error::BuildTemplateRegistry)?;
+    let registry =
+        schnauzer::build_template_registry().context(error::BuildTemplateRegistrySnafu)?;
     let template = get_metadata(&setting_name, "templates").await?;
     let settings = schnauzer::get_settings(constants::API_SOCKET)
         .await
-        .context(error::GetSettings)?;
+        .context(error::GetSettingsSnafu)?;
 
     let setting =
         registry
             .render_template(&template, &settings)
-            .context(error::RenderTemplate {
+            .context(error::RenderTemplateSnafu {
                 setting_name,
                 template,
             })?;
 
     // sundog expects JSON-serialized output so that many types can be represented, allowing the
     // API model to use more accurate types.
-    let output =
-        serde_json::to_string(&setting).context(error::SerializeOutput { output: &setting })?;
+    let output = serde_json::to_string(&setting)
+        .context(error::SerializeOutputSnafu { output: &setting })?;
 
     println!("{}", output);
     Ok(())

@@ -171,12 +171,12 @@ where
     P: AsRef<Path>,
 {
     let lease_file = lease_file.as_ref();
-    let f = File::open(lease_file).context(error::LeaseReadFailed { path: lease_file })?;
+    let f = File::open(lease_file).context(error::LeaseReadFailedSnafu { path: lease_file })?;
     let f = BufReader::new(f);
 
     let mut env = Vec::new();
     for line in f.lines() {
-        let line = line.context(error::LeaseReadFailed { path: lease_file })?;
+        let line = line.context(error::LeaseReadFailedSnafu { path: lease_file })?;
         // We ignore any line that does not match the regex.
         for cap in LEASE_PARAM.captures_iter(&line) {
             let key = cap.name("key").map(|k| k.as_str());
@@ -192,7 +192,7 @@ where
     // feed in the key/value pairs from the lease file and get a `LeaseInfo` struct. If not all
     // expected values are present in the file, it will fail; any extra values are ignored.
     Ok(envy::from_iter::<_, LeaseInfo>(env)
-        .context(error::LeaseParseFailed { path: lease_file })?)
+        .context(error::LeaseParseFailedSnafu { path: lease_file })?)
 }
 
 /// Write resolver configuration for libc.
@@ -200,20 +200,22 @@ fn write_resolv_conf(dns_servers: &[&IpAddr], dns_search: &Option<Vec<String>>) 
     let mut output = String::new();
 
     if let Some(s) = dns_search {
-        writeln!(output, "search {}", s.join(" ")).context(error::ResolvConfBuildFailed)?;
+        writeln!(output, "search {}", s.join(" ")).context(error::ResolvConfBuildFailedSnafu)?;
     }
 
     for n in dns_servers {
-        writeln!(output, "nameserver {}", n).context(error::ResolvConfBuildFailed)?;
+        writeln!(output, "nameserver {}", n).context(error::ResolvConfBuildFailedSnafu)?;
     }
 
-    fs::write(RESOLV_CONF, output).context(error::ResolvConfWriteFailed { path: RESOLV_CONF })?;
+    fs::write(RESOLV_CONF, output)
+        .context(error::ResolvConfWriteFailedSnafu { path: RESOLV_CONF })?;
     Ok(())
 }
 
 /// Persist the current IP address to file
 fn write_current_ip(ip: &IpAddr) -> Result<()> {
-    fs::write(CURRENT_IP, ip.to_string()).context(error::CurrentIpWriteFailed { path: CURRENT_IP })
+    fs::write(CURRENT_IP, ip.to_string())
+        .context(error::CurrentIpWriteFailedSnafu { path: CURRENT_IP })
 }
 
 fn install(args: InstallArgs) -> Result<()> {
@@ -249,10 +251,10 @@ fn remove(args: RemoveArgs) -> Result<()> {
 
 /// Return the current IP address as JSON (intended for use as a settings generator)
 fn node_ip() -> Result<()> {
-    let ip_string =
-        fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
+    let ip_string = fs::read_to_string(CURRENT_IP)
+        .context(error::CurrentIpReadFailedSnafu { path: CURRENT_IP })?;
     // Validate that we read a proper IP address
-    let _ = IpAddr::from_str(&ip_string).context(error::IpFromString { ip: &ip_string })?;
+    let _ = IpAddr::from_str(&ip_string).context(error::IpFromStringSnafu { ip: &ip_string })?;
 
     // sundog expects JSON-serialized output
     Ok(print_json(ip_string)?)
@@ -262,9 +264,9 @@ fn node_ip() -> Result<()> {
 ///
 /// The result is returned as JSON. (intended for use as a settings generator)
 fn generate_hostname() -> Result<()> {
-    let ip_string =
-        fs::read_to_string(CURRENT_IP).context(error::CurrentIpReadFailed { path: CURRENT_IP })?;
-    let ip = IpAddr::from_str(&ip_string).context(error::IpFromString { ip: &ip_string })?;
+    let ip_string = fs::read_to_string(CURRENT_IP)
+        .context(error::CurrentIpReadFailedSnafu { path: CURRENT_IP })?;
+    let ip = IpAddr::from_str(&ip_string).context(error::IpFromStringSnafu { ip: &ip_string })?;
     let hostname = match lookup_addr(&ip) {
         Ok(hostname) => hostname,
         Err(e) => {
@@ -283,14 +285,14 @@ where
     S: AsRef<str> + Serialize,
 {
     let val = val.as_ref();
-    let output = serde_json::to_string(val).context(error::JsonSerialize { output: val })?;
+    let output = serde_json::to_string(val).context(error::JsonSerializeSnafu { output: val })?;
     println!("{}", output);
     Ok(())
 }
 
 /// Sets the hostname for the system
 fn set_hostname(args: SetHostnameArgs) -> Result<()> {
-    fs::write(KERNEL_HOSTNAME, args.hostname).context(error::HostnameWriteFailed {
+    fs::write(KERNEL_HOSTNAME, args.hostname).context(error::HostnameWriteFailedSnafu {
         path: KERNEL_HOSTNAME,
     })?;
     Ok(())
@@ -326,7 +328,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     #[allow(clippy::enum_variant_names)]
     pub(super) enum Error {
         #[snafu(display("Failed to read lease data in '{}': {}", path.display(), source))]

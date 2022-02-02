@@ -84,7 +84,7 @@ where
         &WaitPolicy::new(Duration::from_millis(500), 2 * 60 * 10),
     )
     .await
-    .context(error::PrepareUpdate)?;
+    .context(error::PrepareUpdateSnafu)?;
 
     info!("Setting the update active so it will apply on the next reboot...");
     let (_body, _status) = wait_request(
@@ -186,7 +186,7 @@ where
     // Fetch the initial status of the API so we know when it's changed.
     let (code, initial_body) = raw_request_unchecked(&socket_path, "/updates/status", "GET", None)
         .await
-        .context(error::GetStatus)?;
+        .context(error::GetStatusSnafu)?;
 
     // The timestamp is the primary field we use to notice a change.
     // The first call to the update API on a new system will return a 404, which is fine.
@@ -196,7 +196,7 @@ where
         response_field(&["most_recent_command", "timestamp"], &initial_body)
             .unwrap_or_else(|| "first call".to_string())
     } else {
-        return error::MissingStatus {
+        return error::MissingStatusSnafu {
             code,
             body: initial_body,
         }
@@ -207,7 +207,7 @@ where
     // Make the real request the user wanted.
     let (_code, response_body) = raw_request(&socket_path, &url, &method, data)
         .await
-        .context(error::Request { command_name })?;
+        .context(error::RequestSnafu { command_name })?;
 
     // Note: we've now made the real request the user asked for, and the rest is our bookkeeping to
     // wait for it to finish.  We're more careful with retries and don't want to early-exit with ?.
@@ -226,7 +226,7 @@ where
         attempt += 1;
         ensure!(
             attempt < wait.max_attempts,
-            error::TimedOut {
+            error::TimedOutSnafu {
                 waited: format!("{:?}", wait.between_attempts * wait.max_attempts),
                 method: method.as_ref(),
                 url: url.as_ref(),
@@ -234,7 +234,7 @@ where
         );
         ensure!(
             failures < max_failures,
-            error::StatusCheck {
+            error::StatusCheckSnafu {
                 failures,
                 method: method.as_ref(),
                 url: url.as_ref(),
@@ -296,7 +296,7 @@ where
             // If the command wasn't successful, give as much info as we can from the status.
             ensure!(
                 after_status == "Success",
-                error::Command {
+                error::CommandSnafu {
                     command_name,
                     stderr: response_field(&["most_recent_command", "stderr"], &status_body)
                         .unwrap_or_else(|| "<missing>".to_string()),
@@ -319,7 +319,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display(
             "{} attempt failed with status '{}' ({}): {}",

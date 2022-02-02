@@ -7,7 +7,7 @@ use std::path::PathBuf;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
+#[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("Failed to create tempfile for writing status: {}", source))]
     CreateTempfile { source: std::io::Error },

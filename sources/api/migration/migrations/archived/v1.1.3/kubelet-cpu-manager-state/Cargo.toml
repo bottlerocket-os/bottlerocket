@@ -10,4 +10,4 @@ exclude = ["README.md"]
 
 [dependencies]
 migration-helpers = { path = "../../../migration-helpers" }
-snafu = "0.6"
+snafu = "0.7"

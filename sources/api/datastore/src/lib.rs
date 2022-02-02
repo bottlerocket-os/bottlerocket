@@ -184,7 +184,7 @@ pub trait DataStore {
             trace!("Pulling value from datastore for key: {}", key);
             let value = self
                 .get_key(&key, committed)?
-                .context(error::ListedKeyNotPresent { key: key.name() })?;
+                .context(error::ListedKeyNotPresentSnafu { key: key.name() })?;
 
             result.insert(key, value);
         }
@@ -228,7 +228,7 @@ pub trait DataStore {
                     &data_key
                 );
                 let value = self.get_metadata(&meta_key, &data_key)?.context(
-                    error::ListedMetaNotPresent {
+                    error::ListedMetaNotPresentSnafu {
                         meta_key: meta_key.name(),
                         data_key: data_key.name(),
                     },

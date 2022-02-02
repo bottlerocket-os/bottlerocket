@@ -9,4 +9,4 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-snafu = "0.6.0"
+snafu = "0.7"

@@ -111,7 +111,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum TemplateHelperError {
         #[snafu(display(
             "Expected ecr helper to be called with either 'registry' or 'region', got '{}'",
@@ -267,33 +267,35 @@ pub fn base64_decode(
     let base64_value = helper
         .param(0)
         .map(|v| v.value())
-        .context(error::Internal {
+        .context(error::InternalSnafu {
             msg: "Found no params after confirming there is one param",
         })?;
     trace!("Base64 value from template: {}", base64_value);
 
     // Create an &str from the serde_json::Value
-    let base64_str = base64_value.as_str().context(error::InvalidTemplateValue {
-        expected: "string",
-        value: base64_value.to_owned(),
-        template: template_name.to_owned(),
-    })?;
+    let base64_str = base64_value
+        .as_str()
+        .context(error::InvalidTemplateValueSnafu {
+            expected: "string",
+            value: base64_value.to_owned(),
+            template: template_name.to_owned(),
+        })?;
     trace!("Base64 string from template: {}", base64_str);
 
     // Base64 decode the &str
-    let decoded_bytes = base64::decode(&base64_str).context(error::Base64Decode {
+    let decoded_bytes = base64::decode(&base64_str).context(error::Base64DecodeSnafu {
         template: template_name.to_owned(),
     })?;
 
     // Create a valid utf8 str
-    let decoded = std::str::from_utf8(&decoded_bytes).context(error::InvalidUTF8 {
+    let decoded = std::str::from_utf8(&decoded_bytes).context(error::InvalidUTF8Snafu {
         base64_string: base64_str.to_string(),
         template: template_name.to_owned(),
     })?;
     trace!("Decoded base64: {}", decoded);
 
     // Write the string out to the template
-    out.write(decoded).context(error::TemplateWrite {
+    out.write(decoded).context(error::TemplateWriteSnafu {
         template: template_name.to_owned(),
     })?;
     Ok(())
@@ -332,7 +334,7 @@ pub fn join_map(
     let join_key_val = get_param(helper, 0)?;
     let join_key = join_key_val
         .as_str()
-        .with_context(|| error::InvalidTemplateValue {
+        .with_context(|| error::InvalidTemplateValueSnafu {
             expected: "string",
             value: join_key_val.to_owned(),
             template: template_name.to_owned(),
@@ -342,7 +344,7 @@ pub fn join_map(
     let join_pairs_val = get_param(helper, 1)?;
     let join_pairs = join_pairs_val
         .as_str()
-        .with_context(|| error::InvalidTemplateValue {
+        .with_context(|| error::InvalidTemplateValueSnafu {
             expected: "string",
             value: join_pairs_val.to_owned(),
             template: template_name.to_owned(),
@@ -353,7 +355,7 @@ pub fn join_map(
     let fail_behavior_str =
         fail_behavior_val
             .as_str()
-            .with_context(|| error::InvalidTemplateValue {
+            .with_context(|| error::InvalidTemplateValueSnafu {
                 expected: "string",
                 value: join_pairs_val.to_owned(),
                 template: template_name.to_owned(),
@@ -390,7 +392,7 @@ pub fn join_map(
             return Ok(());
         }
     }
-    let map = map_value.as_object().context(error::Internal {
+    let map = map_value.as_object().context(error::InternalSnafu {
         msg: "Already confirmed map is_object but as_object failed",
     })?;
     trace!("Map to join: {:?}", map);
@@ -436,7 +438,7 @@ pub fn join_map(
     trace!("Joined output: {}", joined);
 
     // Write the string out to the template
-    out.write(&joined).context(error::TemplateWrite {
+    out.write(&joined).context(error::TemplateWriteSnafu {
         template: template_name.to_owned(),
     })?;
     Ok(())
@@ -468,9 +470,11 @@ pub fn join_node_taints(
         return Ok(());
     }
 
-    let node_taints = node_taints_value.as_object().context(error::Internal {
-        msg: "Already confirmed map is_object but as_object failed",
-    })?;
+    let node_taints = node_taints_value
+        .as_object()
+        .context(error::InternalSnafu {
+            msg: "Already confirmed map is_object but as_object failed",
+        })?;
     trace!("node taints to join: {:?}", node_taints);
 
     // Join the key/value pairs for node taints
@@ -519,7 +523,7 @@ pub fn join_node_taints(
     trace!("Joined output: {}", joined);
 
     // Write the string out to the template
-    out.write(&joined).context(error::TemplateWrite {
+    out.write(&joined).context(error::TemplateWriteSnafu {
         template: template_name.to_owned(),
     })?;
 
@@ -585,7 +589,7 @@ pub fn default(
     };
 
     // Write the string out to the template
-    out.write(&value).context(error::TemplateWrite {
+    out.write(&value).context(error::TemplateWriteSnafu {
         template: template_name.to_owned(),
     })?;
     Ok(())
@@ -630,7 +634,7 @@ pub fn ecr_prefix(
     // get the region parameter, which is probably given by the template value
     // settings.aws.region. regardless, we expect it to be a string.
     let aws_region = get_param(helper, 0)?;
-    let aws_region = aws_region.as_str().with_context(|| error::EcrRegion {
+    let aws_region = aws_region.as_str().with_context(|| error::EcrRegionSnafu {
         value: aws_region.to_owned(),
         template: template_name,
     })?;
@@ -640,7 +644,7 @@ pub fn ecr_prefix(
 
     // write it to the template
     out.write(&ecr_registry)
-        .with_context(|| error::TemplateWrite {
+        .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
 
@@ -683,7 +687,7 @@ pub fn pause_prefix(
     // get the region parameter, which is probably given by the template value
     // settings.aws.region. regardless, we expect it to be a string.
     let aws_region = get_param(helper, 0)?;
-    let aws_region = aws_region.as_str().with_context(|| error::EcrRegion {
+    let aws_region = aws_region.as_str().with_context(|| error::EcrRegionSnafu {
         value: aws_region.to_owned(),
         template: template_name,
     })?;
@@ -693,7 +697,7 @@ pub fn pause_prefix(
 
     // write it to the template
     out.write(&pause_registry)
-        .with_context(|| error::TemplateWrite {
+        .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
 
@@ -715,21 +719,22 @@ pub fn host(
     let url_val = get_param(helper, 0)?;
     let url_str = url_val
         .as_str()
-        .with_context(|| error::InvalidTemplateValue {
+        .with_context(|| error::InvalidTemplateValueSnafu {
             expected: "string",
             value: url_val.to_owned(),
             template: template_name.to_owned(),
         })?;
-    let url = Url::parse(url_str).context(error::UrlParse {
+    let url = Url::parse(url_str).context(error::UrlParseSnafu {
         url_str,
         template: template_name,
     })?;
-    let url_host = url.host_str().context(error::UrlHost { url_str })?;
+    let url_host = url.host_str().context(error::UrlHostSnafu { url_str })?;
 
     // write it to the template
-    out.write(&url_host).with_context(|| error::TemplateWrite {
-        template: template_name.to_owned(),
-    })?;
+    out.write(&url_host)
+        .with_context(|_| error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
 
     Ok(())
 }
@@ -754,7 +759,7 @@ pub fn goarch(
     let arch_val = get_param(helper, 0)?;
     let arch_str = arch_val
         .as_str()
-        .with_context(|| error::InvalidTemplateValue {
+        .with_context(|| error::InvalidTemplateValueSnafu {
             expected: "string",
             value: arch_val.to_owned(),
             template: template_name.to_owned(),
@@ -772,9 +777,10 @@ pub fn goarch(
     };
 
     // write it to the template
-    out.write(&goarch).with_context(|| error::TemplateWrite {
-        template: template_name.to_owned(),
-    })?;
+    out.write(&goarch)
+        .with_context(|_| error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
 
     Ok(())
 }
@@ -804,7 +810,7 @@ pub fn join_array(
     let delimiter_param = get_param(helper, 0)?;
     let delimiter = delimiter_param
         .as_str()
-        .with_context(|| error::JoinStringsWrongType {
+        .with_context(|| error::JoinStringsWrongTypeSnafu {
             expected_type: "string",
             value: delimiter_param.to_owned(),
             template: template_name,
@@ -814,7 +820,7 @@ pub fn join_array(
     let array_param = get_param(helper, 1)?;
     let array = array_param
         .as_array()
-        .with_context(|| error::JoinStringsWrongType {
+        .with_context(|| error::JoinStringsWrongTypeSnafu {
             expected_type: "array",
             value: array_param.to_owned(),
             template: template_name,
@@ -828,7 +834,7 @@ pub fn join_array(
         result.push_str(
             format!(
                 "\"{}\"",
-                value.as_str().context(error::JoinStringsWrongType {
+                value.as_str().context(error::JoinStringsWrongTypeSnafu {
                     expected_type: "string",
                     value: array.to_owned(),
                     template: template_name,
@@ -839,9 +845,10 @@ pub fn join_array(
     }
 
     // write it to the template
-    out.write(&result).with_context(|| error::TemplateWrite {
-        template: template_name.to_owned(),
-    })?;
+    out.write(&result)
+        .with_context(|_| error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
 
     Ok(())
 }
@@ -882,7 +889,7 @@ pub fn kube_reserve_memory(
     };
     let max_num_pods = max_num_pods
         .as_u64()
-        .with_context(|| error::ConvertNumber {
+        .with_context(|| error::ConvertNumberSnafu {
             what: "number of pods",
             number: max_num_pods.to_string(),
             target: "u64",
@@ -909,7 +916,7 @@ pub fn kube_reserve_memory(
 
     // write it to the template
     out.write(&memory_to_reserve)
-        .with_context(|| error::TemplateWrite {
+        .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
 
@@ -953,7 +960,7 @@ pub fn kube_reserve_cpu(
 
     // write it to the template
     out.write(&cpu_to_reserve)
-        .with_context(|| error::TemplateWrite {
+        .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
 
@@ -983,7 +990,7 @@ pub fn add_unresolvable_hostname(
     let hostname_value = helper
         .param(0)
         .map(|v| v.value())
-        .context(error::Internal {
+        .context(error::InternalSnafu {
             msg: "Found no params after confirming there is one param",
         })?;
     trace!("Hostname value from template: {}", hostname_value);
@@ -991,7 +998,7 @@ pub fn add_unresolvable_hostname(
     // Create an &str from the serde_json::Value
     let hostname_str = hostname_value
         .as_str()
-        .context(error::InvalidTemplateValue {
+        .context(error::InvalidTemplateValueSnafu {
             expected: "string",
             value: hostname_value.to_owned(),
             template: template_name.to_owned(),
@@ -1024,7 +1031,7 @@ pub fn add_unresolvable_hostname(
         let ipv6_entry = format!("{} {}", IPV6_LOCALHOST, hostname_str);
         let entries = format!("{}\n{}", ipv4_entry, ipv6_entry);
 
-        out.write(&entries).context(error::TemplateWrite {
+        out.write(&entries).context(error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
     }
@@ -1039,7 +1046,7 @@ fn get_param<'a>(helper: &'a Helper<'_, '_>, idx: usize) -> Result<&'a Value, Re
     Ok(helper
         .param(idx)
         .map(|v| v.value())
-        .context(error::MissingParam {
+        .context(error::MissingParamSnafu {
             index: idx,
             helper_name: helper.name(),
         })?)
@@ -1099,7 +1106,7 @@ fn pause_registry<S: AsRef<str>>(region: S) -> String {
 /// Calculates and returns the amount of CPU to reserve
 fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError> {
     let num_cores =
-        u16::try_from(num_cores).context(error::ConvertUsizeToU16 { number: num_cores })?;
+        u16::try_from(num_cores).context(error::ConvertUsizeToU16Snafu { number: num_cores })?;
     let millicores_unit = "m";
     let cpu_to_reserve = match num_cores {
         0 => 0.0,

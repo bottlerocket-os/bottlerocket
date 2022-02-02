@@ -35,13 +35,13 @@ pub fn get_changed_settings() -> Result<HashSet<String>> {
     let mut input = String::new();
     io::stdin()
         .read_to_string(&mut input)
-        .context(error::ReadInput { location: "stdin" })?;
+        .context(error::ReadInputSnafu { from: "stdin" })?;
     trace!("Raw input from stdin: {}", &input);
 
     // Settings should be a vec of strings
     debug!("Parsing stdin as JSON");
     let changed_settings: HashSet<String> =
-        serde_json::from_str(&input).context(error::InvalidInput {
+        serde_json::from_str(&input).context(error::InvalidInputSnafu {
             reason: "Input must be a JSON array of strings",
             input,
         })?;

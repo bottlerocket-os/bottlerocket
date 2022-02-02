@@ -18,25 +18,25 @@ where
     let outfile = outfile.as_ref();
 
     // ensure the output directory exists.
-    let outdir = outfile.parent().context(error::RootAsFile)?;
-    fs::create_dir_all(outdir).context(error::CreateOutputDirectory { path: outdir })?;
+    let outdir = outfile.parent().context(error::RootAsFileSnafu)?;
+    fs::create_dir_all(outdir).context(error::CreateOutputDirectorySnafu { path: outdir })?;
 
     // ensure the outfile will not be written to the input dir.
     ensure!(
         indir != outdir,
-        error::TarballOutputIsInInputDir { indir, outfile }
+        error::TarballOutputIsInInputDirSnafu { indir, outfile }
     );
 
     // compress files and create the tarball.
-    let tarfile = File::create(outfile).context(error::TarballFileCreate { path: outfile })?;
+    let tarfile = File::create(outfile).context(error::TarballFileCreateSnafu { path: outfile })?;
     let encoder = GzEncoder::new(tarfile, Compression::default());
     let mut tarball = tar::Builder::new(encoder);
     tarball
         .append_dir_all(crate::TARBALL_DIRNAME, indir)
-        .context(error::TarballWrite { path: outfile })?;
+        .context(error::TarballWriteSnafu { path: outfile })?;
     tarball
         .finish()
-        .context(error::TarballClose { path: indir })
+        .context(error::TarballCloseSnafu { path: indir })
 }
 
 #[cfg(test)]
