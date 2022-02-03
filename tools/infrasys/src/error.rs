@@ -3,7 +3,7 @@ use std::io;
 use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(super)")]
+#[snafu(visibility(pub(super)))]
 pub enum Error {
     #[snafu(display(
         "Failed to create CFN stack '{}' in '{}': {}",

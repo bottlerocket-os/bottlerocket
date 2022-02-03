@@ -82,7 +82,7 @@ fn check_expirations(
 ) -> Result<()> {
     // Load the repository
     let repo = RepositoryLoader::new(
-        File::open(root_role_path).context(repo_error::File {
+        File::open(root_role_path).context(repo_error::FileSnafu {
             path: root_role_path,
         })?,
         metadata_url.clone(),
@@ -91,7 +91,7 @@ fn check_expirations(
     // We're gonna check the expiration ourselves
     .expiration_enforcement(ExpirationEnforcement::Unsafe)
     .load()
-    .context(repo_error::RepoLoad {
+    .context(repo_error::RepoLoadSnafu {
         metadata_base_url: metadata_url.clone(),
     })?;
     info!("Loaded TUF repo:\t{}", metadata_url);
@@ -132,16 +132,16 @@ fn check_expirations(
 pub(crate) fn run(args: &Args, check_expirations_args: &CheckExpirationsArgs) -> Result<()> {
     // If a lock file exists, use that, otherwise use Infra.toml
     let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
-        .context(repo_error::Config)?;
+        .context(repo_error::ConfigSnafu)?;
     trace!("Parsed infra config: {:?}", infra_config);
     let repo_config = infra_config
         .repo
         .as_ref()
-        .context(repo_error::MissingConfig {
+        .context(repo_error::MissingConfigSnafu {
             missing: "repo section",
         })?
         .get(&check_expirations_args.repo)
-        .with_context(|| repo_error::MissingConfig {
+        .with_context(|| repo_error::MissingConfigSnafu {
             missing: format!("definition for repo {}", &check_expirations_args.repo),
         })?;
 
@@ -150,7 +150,7 @@ pub(crate) fn run(args: &Args, check_expirations_args: &CheckExpirationsArgs) ->
         &check_expirations_args.variant,
         &check_expirations_args.arch,
     )?
-    .context(repo_error::MissingRepoUrls {
+    .context(repo_error::MissingRepoUrlsSnafu {
         repo: &check_expirations_args.repo,
     })?;
     check_expirations(
@@ -168,7 +168,7 @@ mod error {
     use url::Url;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(context(false), display("{}", source))]
         Repo { source: crate::repo::Error },

@@ -14,7 +14,7 @@ reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tl
 sha2 = "0.9"
 shell-words = "1.0"
 simplelog = "0.10"
-snafu = "0.6"
+snafu = "0.7"
 structopt = { version = "0.3", default-features = false  }
 tempfile = "3.1"
 toml = "0.5"

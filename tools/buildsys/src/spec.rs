@@ -32,14 +32,14 @@ impl SpecInfo {
     /// "Parse" a spec file, extracting values of potential interest.
     fn parse<P: AsRef<Path>>(path: P) -> Result<(Vec<String>, Vec<String>)> {
         let path = path.as_ref();
-        let f = File::open(path).context(error::SpecFileRead { path })?;
+        let f = File::open(path).context(error::SpecFileReadSnafu { path })?;
         let f = BufReader::new(f);
 
         let mut sources = Vec::new();
         let mut patches = Vec::new();
 
         for line in f.lines() {
-            let line = line.context(error::SpecFileRead { path })?;
+            let line = line.context(error::SpecFileReadSnafu { path })?;
 
             let mut tokens = line.split_whitespace().collect::<VecDeque<&str>>();
             if let Some(t) = tokens.pop_front() {

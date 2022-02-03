@@ -14,16 +14,16 @@ macro_rules! tuftool {
     ($region:expr, $format_str:expr, $($format_arg:expr),*) => {
         let arg_str = format!($format_str, $($format_arg),*);
         trace!("tuftool arg string: {}", arg_str);
-        let args = shell_words::split(&arg_str).context(error::CommandSplit { command: &arg_str })?;
+        let args = shell_words::split(&arg_str).context(error::CommandSplitSnafu { command: &arg_str })?;
         trace!("tuftool split args: {:#?}", args);
 
         let status = Command::new("tuftool")
             .args(args)
             .env("AWS_REGION", $region)
             .status()
-            .context(error::TuftoolSpawn)?;
+            .context(error::TuftoolSpawnSnafu)?;
 
-        ensure!(status.success(), error::TuftoolResult {
+        ensure!(status.success(), error::TuftoolResultSnafu {
             command: arg_str,
             code: status.code().map(|i| i.to_string()).unwrap_or_else(|| "<unknown>".to_string())
         });
@@ -33,7 +33,7 @@ macro_rules! tuftool {
 pub fn check_root(root_role_path: &Path) -> Result<()> {
     ensure!(!root_role_path.is_file(), {
         warn!("Cowardly refusing to overwrite the existing root.json at {}. Please manually delete it and run again.", root_role_path.display());
-        error::FileExists {
+        error::FileExistsSnafu {
             path: root_role_path,
         }
     });
@@ -43,11 +43,11 @@ pub fn check_root(root_role_path: &Path) -> Result<()> {
 /// Creates the directory where root.json will live and creates root.json itself according to details specified in root-role-path
 pub fn create_root(root_role_path: &Path) -> Result<()> {
     // Make /roles and /keys directories, if they don't exist, so we can write generated files.
-    let role_dir = root_role_path.parent().context(error::InvalidPath {
+    let role_dir = root_role_path.parent().context(error::InvalidPathSnafu {
         path: root_role_path,
         thing: "root role",
     })?;
-    fs::create_dir_all(role_dir).context(error::Mkdir { path: role_dir })?;
+    fs::create_dir_all(role_dir).context(error::MkdirSnafu { path: role_dir })?;
     // Initialize root
     tuftool!(
         Region::default().name(),
@@ -75,7 +75,7 @@ pub fn add_keys(
         SigningKeyConfig::kms { key_id, config, .. } => add_keys_kms(
             &config
                 .as_ref()
-                .context(error::MissingConfig {
+                .context(error::MissingConfigSnafu {
                     missing: "config field for a kms key",
                 })?
                 .available_keys,
@@ -103,7 +103,7 @@ fn add_keys_kms(
 ) -> Result<()> {
     ensure!(
         (*available_keys).len() >= (*threshold).get(),
-        error::InvalidThreshold {
+        error::InvalidThresholdSnafu {
             threshold: threshold.to_string(),
             num_keys: (*available_keys).len(),
         }
@@ -160,7 +160,7 @@ fn add_keys_kms(
                     available_keys
                         .iter()
                         .next()
-                        .context(error::KeyCreation)?
+                        .context(error::KeyCreationSnafu)?
                         .0
                         .to_string(),
                 );
@@ -178,7 +178,7 @@ pub fn sign_root(signing_key_config: &SigningKeyConfig, filepath: &str) -> Resul
         SigningKeyConfig::kms { config, .. } => {
             for (keyid, region) in config
                 .as_ref()
-                .context(error::MissingConfig {
+                .context(error::MissingConfigSnafu {
                     missing: "KMS key details",
                 })?
                 .available_keys

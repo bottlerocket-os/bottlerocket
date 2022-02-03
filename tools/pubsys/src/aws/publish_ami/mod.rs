@@ -66,12 +66,12 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
         "Using AMI data from path: {}",
         publish_args.ami_input.display()
     );
-    let file = File::open(&publish_args.ami_input).context(error::File {
+    let file = File::open(&publish_args.ami_input).context(error::FileSnafu {
         op: "open",
         path: &publish_args.ami_input,
     })?;
     let mut ami_input: HashMap<String, Image> =
-        serde_json::from_reader(file).context(error::Deserialize {
+        serde_json::from_reader(file).context(error::DeserializeSnafu {
             path: &publish_args.ami_input,
         })?;
     trace!("Parsed AMI input: {:?}", ami_input);
@@ -80,14 +80,14 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     // file if a user created one manually, and they shouldn't be creating an empty file.
     ensure!(
         !ami_input.is_empty(),
-        error::Input {
+        error::InputSnafu {
             path: &publish_args.ami_input
         }
     );
 
     // If a lock file exists, use that, otherwise use Infra.toml or default
-    let infra_config =
-        InfraConfig::from_path_or_lock(&args.infra_config_path, true).context(error::Config)?;
+    let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, true)
+        .context(error::ConfigSnafu)?;
     trace!("Using infra config: {:?}", infra_config);
 
     let aws = infra_config.aws.unwrap_or_else(Default::default);
@@ -100,11 +100,11 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     };
     ensure!(
         !regions.is_empty(),
-        error::MissingConfig {
+        error::MissingConfigSnafu {
             missing: "aws.regions"
         }
     );
-    let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegion)?;
+    let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegionSnafu)?;
 
     // Check that the requested regions are a subset of the regions we *could* publish from the AMI
     // input JSON.
@@ -112,7 +112,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     let known_regions = HashSet::<&String>::from_iter(ami_input.keys());
     ensure!(
         requested_regions.is_subset(&known_regions),
-        error::UnknownRegions {
+        error::UnknownRegionsSnafu {
             regions: requested_regions
                 .difference(&known_regions)
                 .map(|s| s.to_string())
@@ -126,10 +126,10 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
         let image = ami_input
             .remove(&name)
             // This could only happen if someone removes the check above...
-            .with_context(|| error::UnknownRegions {
+            .with_context(|| error::UnknownRegionsSnafu {
                 regions: vec![name.clone()],
             })?;
-        let region = region_from_string(&name, &aws).context(error::ParseRegion)?;
+        let region = region_from_string(&name, &aws).context(error::ParseRegionSnafu)?;
         amis.insert(region, image);
     }
 
@@ -138,7 +138,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     let mut ec2_clients = HashMap::with_capacity(amis.len());
     for region in amis.keys() {
         let ec2_client =
-            build_client::<Ec2Client>(&region, &base_region, &aws).context(error::Client {
+            build_client::<Ec2Client>(&region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "EC2",
                 region: region.name(),
             })?;
@@ -162,7 +162,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
 
     // Make sure waits succeeded and AMIs are available.
     for ((region, image_id), wait_response) in wait_responses {
-        wait_response.context(error::WaitAmi {
+        wait_response.context(error::WaitAmiSnafu {
             id: &image_id,
             region: region.name(),
         })?;
@@ -209,25 +209,27 @@ pub(crate) async fn get_snapshots(
         ..Default::default()
     };
     let describe_response = ec2_client.describe_images(describe_request).await;
-    let describe_response = describe_response.context(error::DescribeImages {
+    let describe_response = describe_response.context(error::DescribeImagesSnafu {
         region: region.name(),
     })?;
 
     // Get the image description, ensuring we only have one.
-    let mut images = describe_response.images.context(error::MissingInResponse {
-        request_type: "DescribeImages",
-        missing: "images",
-    })?;
+    let mut images = describe_response
+        .images
+        .context(error::MissingInResponseSnafu {
+            request_type: "DescribeImages",
+            missing: "images",
+        })?;
     ensure!(
         !images.is_empty(),
-        error::MissingImage {
+        error::MissingImageSnafu {
             region: region.name(),
             image_id: image_id.to_string(),
         }
     );
     ensure!(
         images.len() == 1,
-        error::MultipleImages {
+        error::MultipleImagesSnafu {
             region: region.name(),
             images: images
                 .into_iter()
@@ -240,24 +242,24 @@ pub(crate) async fn get_snapshots(
     // Look into the block device mappings for snapshots.
     let bdms = image
         .block_device_mappings
-        .context(error::MissingInResponse {
+        .context(error::MissingInResponseSnafu {
             request_type: "DescribeImages",
             missing: "block_device_mappings",
         })?;
     ensure!(
         !bdms.is_empty(),
-        error::MissingInResponse {
+        error::MissingInResponseSnafu {
             request_type: "DescribeImages",
             missing: "non-empty block_device_mappings"
         }
     );
     let mut snapshot_ids = Vec::with_capacity(bdms.len());
     for bdm in bdms {
-        let ebs = bdm.ebs.context(error::MissingInResponse {
+        let ebs = bdm.ebs.context(error::MissingInResponseSnafu {
             request_type: "DescribeImages",
             missing: "ebs in block_device_mappings",
         })?;
-        let snapshot_id = ebs.snapshot_id.context(error::MissingInResponse {
+        let snapshot_id = ebs.snapshot_id.context(error::MissingInResponseSnafu {
             request_type: "DescribeImages",
             missing: "snapshot_id in block_device_mappings.ebs",
         })?;
@@ -332,7 +334,7 @@ pub(crate) async fn modify_snapshots(
     )> = request_stream.collect().await;
 
     for (snapshot_id, response) in responses {
-        response.context(error::ModifyImageAttribute {
+        response.context(error::ModifyImageAttributeSnafu {
             snapshot_id,
             region: region.name(),
         })?
@@ -399,7 +401,7 @@ pub(crate) async fn modify_regional_snapshots(
 
     ensure!(
         error_count == 0,
-        error::ModifySnapshotAttributes {
+        error::ModifySnapshotAttributesSnafu {
             error_count,
             success_count,
         }
@@ -430,7 +432,7 @@ pub(crate) async fn modify_image(
     ec2_client
         .modify_image_attribute(modify_image_request)
         .await
-        .context(error::ModifyImageAttributes {
+        .context(error::ModifyImageAttributesSnafu {
             image_id,
             region: region.name(),
         })
@@ -488,7 +490,7 @@ pub(crate) async fn modify_regional_images(
 
     ensure!(
         error_count == 0,
-        error::ModifyImagesAttributes {
+        error::ModifyImagesAttributesSnafu {
             error_count,
             success_count,
         }
@@ -506,7 +508,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Error creating {} client in {}: {}", client_type, region, source))]
         Client {

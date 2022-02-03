@@ -137,8 +137,9 @@ impl ManifestInfo {
     /// Extract the settings we understand from `Cargo.toml`.
     pub(crate) fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
-        let manifest_data = fs::read_to_string(path).context(error::ManifestFileRead { path })?;
-        toml::from_str(&manifest_data).context(error::ManifestFileLoad { path })
+        let manifest_data =
+            fs::read_to_string(path).context(error::ManifestFileReadSnafu { path })?;
+        toml::from_str(&manifest_data).context(error::ManifestFileLoadSnafu { path })
     }
 
     /// Convenience method to return the list of source groups.

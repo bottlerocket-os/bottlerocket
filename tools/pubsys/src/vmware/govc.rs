@@ -99,7 +99,7 @@ impl Govc {
 /// to run in the container.
 // The arguments are `&[&str]` in an attempt to be as flexible as possible for the caller
 fn docker_run(docker_env: &[&str], mount: Option<&[&str]>, command: &[&str]) -> Result<Output> {
-    let sdk = env::var("BUILDSYS_SDK_IMAGE").context(error::Environment {
+    let sdk = env::var("BUILDSYS_SDK_IMAGE").context(error::EnvironmentSnafu {
         var: "BUILDSYS_SDK_IMAGE",
     })?;
     trace!("SDK image: {}", sdk);
@@ -120,14 +120,14 @@ fn docker_run(docker_env: &[&str], mount: Option<&[&str]>, command: &[&str]) -> 
         .stdout_capture()
         .unchecked()
         .run()
-        .context(error::CommandStart)?;
+        .context(error::CommandStartSnafu)?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     trace!("{}", stdout);
     if output.status.success() {
         Ok(output)
     } else {
-        error::Docker { output: stdout }.fail()
+        error::DockerSnafu { output: stdout }.fail()
     }
 }
 
@@ -158,7 +158,7 @@ pub(crate) mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Failed to start command: {}", source))]
         CommandStart { source: std::io::Error },

@@ -40,46 +40,54 @@ fn run() -> Result<()> {
     let args = Args::from_args();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     match args.subcommand {
-        SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::Repo),
+        SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::RepoSnafu),
         SubCommand::ValidateRepo(ref validate_repo_args) => {
-            repo::validate_repo::run(&args, &validate_repo_args).context(error::ValidateRepo)
+            repo::validate_repo::run(&args, &validate_repo_args).context(error::ValidateRepoSnafu)
         }
         SubCommand::CheckRepoExpirations(ref check_expirations_args) => {
             repo::check_expirations::run(&args, &check_expirations_args)
-                .context(error::CheckExpirations)
+                .context(error::CheckExpirationsSnafu)
         }
         SubCommand::RefreshRepo(ref refresh_repo_args) => {
-            repo::refresh_repo::run(&args, &refresh_repo_args).context(error::RefreshRepo)
+            repo::refresh_repo::run(&args, &refresh_repo_args).context(error::RefreshRepoSnafu)
         }
         SubCommand::Ami(ref ami_args) => {
-            let rt = Runtime::new().context(error::Runtime)?;
-            rt.block_on(async { aws::ami::run(&args, &ami_args).await.context(error::Ami) })
+            let rt = Runtime::new().context(error::RuntimeSnafu)?;
+            rt.block_on(async {
+                aws::ami::run(&args, &ami_args)
+                    .await
+                    .context(error::AmiSnafu)
+            })
         }
         SubCommand::PublishAmi(ref publish_args) => {
-            let rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::publish_ami::run(&args, &publish_args)
                     .await
-                    .context(error::PublishAmi)
+                    .context(error::PublishAmiSnafu)
             })
         }
         SubCommand::Ssm(ref ssm_args) => {
-            let rt = Runtime::new().context(error::Runtime)?;
-            rt.block_on(async { aws::ssm::run(&args, &ssm_args).await.context(error::Ssm) })
+            let rt = Runtime::new().context(error::RuntimeSnafu)?;
+            rt.block_on(async {
+                aws::ssm::run(&args, &ssm_args)
+                    .await
+                    .context(error::SsmSnafu)
+            })
         }
         SubCommand::PromoteSsm(ref promote_args) => {
-            let rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::promote_ssm::run(&args, &promote_args)
                     .await
-                    .context(error::PromoteSsm)
+                    .context(error::PromoteSsmSnafu)
             })
         }
         SubCommand::UploadOva(ref upload_args) => {
-            vmware::upload_ova::run(&args, &upload_args).context(error::UploadOva)
+            vmware::upload_ova::run(&args, &upload_args).context(error::UploadOvaSnafu)
         }
     }
 }
@@ -138,7 +146,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Failed to build AMI: {}", source))]
         Ami { source: crate::aws::ami::Error },

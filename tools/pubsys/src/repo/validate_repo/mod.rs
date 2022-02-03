@@ -51,7 +51,7 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
     let thread_pool = rayon::ThreadPoolBuilder::new()
         .num_threads(min(num_cpus::get(), MAX_DOWNLOAD_THREADS))
         .build()
-        .context(error::ThreadPool)?;
+        .context(error::ThreadPoolSnafu)?;
 
     // create the channels through which our download results will be passed
     let (tx, rx) = mpsc::channel();
@@ -60,17 +60,17 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
         let tx = tx.clone();
         let mut reader = repo
             .read_target(&target)
-            .with_context(|| repo_error::ReadTarget {
+            .with_context(|_| repo_error::ReadTargetSnafu {
                 target: target.raw(),
             })?
-            .with_context(|| error::TargetMissing {
+            .with_context(|| error::TargetMissingSnafu {
                 target: target.raw(),
             })?;
         info!("Downloading target: {}", target.raw());
         thread_pool.spawn(move || {
             tx.send({
                 // tough's `Read` implementation validates the target as it's being downloaded
-                io::copy(&mut reader, &mut io::sink()).context(error::TargetDownload {
+                io::copy(&mut reader, &mut io::sink()).context(error::TargetDownloadSnafu {
                     target: target.raw(),
                 })
             })
@@ -101,14 +101,14 @@ fn validate_repo(
 ) -> Result<(), Error> {
     // Load the repository
     let repo = RepositoryLoader::new(
-        File::open(root_role_path).context(repo_error::File {
+        File::open(root_role_path).context(repo_error::FileSnafu {
             path: root_role_path,
         })?,
         metadata_url.clone(),
         targets_url.clone(),
     )
     .load()
-    .context(repo_error::RepoLoad {
+    .context(repo_error::RepoLoadSnafu {
         metadata_base_url: metadata_url.clone(),
     })?;
     info!("Loaded TUF repo: {}", metadata_url);
@@ -124,16 +124,16 @@ fn validate_repo(
 pub(crate) fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> Result<(), Error> {
     // If a lock file exists, use that, otherwise use Infra.toml
     let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
-        .context(repo_error::Config)?;
+        .context(repo_error::ConfigSnafu)?;
     trace!("Parsed infra config: {:?}", infra_config);
     let repo_config = infra_config
         .repo
         .as_ref()
-        .context(repo_error::MissingConfig {
+        .context(repo_error::MissingConfigSnafu {
             missing: "repo section",
         })?
         .get(&validate_repo_args.repo)
-        .context(repo_error::MissingConfig {
+        .context(repo_error::MissingConfigSnafu {
             missing: format!("definition for repo {}", &validate_repo_args.repo),
         })?;
 
@@ -142,7 +142,7 @@ pub(crate) fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> Result<
         &validate_repo_args.variant,
         &validate_repo_args.arch,
     )?
-    .context(repo_error::MissingRepoUrls {
+    .context(repo_error::MissingRepoUrlsSnafu {
         repo: &validate_repo_args.repo,
     })?;
     validate_repo(
@@ -158,7 +158,7 @@ mod error {
     use std::io;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Invalid percentage specified: {} is greater than 100", percentage))]
         InvalidPercentage { percentage: u8 },

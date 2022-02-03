@@ -94,7 +94,7 @@ impl DatacenterBuilder {
     /// value.
     pub fn build(self) -> Result<Datacenter> {
         let get_or_err =
-            |opt: Option<String>, what: &str| opt.context(error::MissingConfig { what });
+            |opt: Option<String>, what: &str| opt.context(error::MissingConfigSnafu { what });
 
         Ok(Datacenter {
             vsphere_url: get_or_err(self.vsphere_url, "vSphere URL")?,
@@ -133,8 +133,8 @@ impl DatacenterCredsConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let creds_config_str = fs::read_to_string(path).context(error::File { path })?;
-        toml::from_str(&creds_config_str).context(error::InvalidToml { path })
+        let creds_config_str = fs::read_to_string(path).context(error::FileSnafu { path })?;
+        toml::from_str(&creds_config_str).context(error::InvalidTomlSnafu { path })
     }
 }
 
@@ -169,7 +169,7 @@ impl DatacenterCredsBuilder {
     /// contains a value
     pub fn build(self) -> Result<DatacenterCreds> {
         let get_or_err =
-            |opt: Option<String>, what: &str| opt.context(error::MissingConfig { what });
+            |opt: Option<String>, what: &str| opt.context(error::MissingConfigSnafu { what });
 
         Ok(DatacenterCreds {
             username: get_or_err(self.username, "vSphere username")?,
@@ -202,7 +202,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed to read '{}': {}", path.display(), source))]
         File { path: PathBuf, source: io::Error },

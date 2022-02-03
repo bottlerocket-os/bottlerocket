@@ -18,7 +18,7 @@ pub async fn create_keys(signing_key_config: &mut SigningKeyConfig) -> Result<()
         SigningKeyConfig::kms { config, .. } => {
             config
                 .as_mut()
-                .context(error::MissingConfig {
+                .context(error::MissingConfigSnafu {
                     missing: "config field for a kms key",
                 })?
                 .create_kms_keys()
@@ -33,7 +33,7 @@ pub fn check_signing_key_config(signing_key_config: &SigningKeyConfig) -> Result
     match signing_key_config {
         SigningKeyConfig::file { .. } => (),
         SigningKeyConfig::kms { config, .. } => {
-            let config = config.as_ref().context(error::MissingConfig {
+            let config = config.as_ref().context(error::MissingConfigSnafu {
                 missing: "config field for a kms key",
             })?;
 
@@ -43,19 +43,19 @@ pub fn check_signing_key_config(signing_key_config: &SigningKeyConfig) -> Result
                 config.key_alias.as_ref(),
             ) {
                 // everything is unspecified (no way to allocate a key_id)
-                (true, true, None) => error::KeyConfig {
+                (true, true, None) => error::KeyConfigSnafu {
                     missing: "an available_key or region/key_alias",
                 }
                 .fail()?,
                 // regions is populated, but no key alias
                 // (it doesn't matter if available keys are listed or not)
-                (_, false, None) => error::KeyConfig {
+                (_, false, None) => error::KeyConfigSnafu {
                     missing: "key_alias",
                 }
                 .fail()?,
                 // key alias is populated, but no key regions to create keys in
                 // (it doesn't matter if available keys are listed or not)
-                (_, true, Some(..)) => error::KeyConfig { missing: "region" }.fail()?,
+                (_, true, Some(..)) => error::KeyConfigSnafu { missing: "region" }.fail()?,
                 _ => (),
             };
         }
@@ -85,19 +85,19 @@ impl KMSKeyConfigExt for KMSKeyConfig {
         for region in self.regions.iter() {
             let stack_name = format!(
                 "TUF-KMS-{}",
-                self.key_alias.as_ref().context(error::KeyConfig {
+                self.key_alias.as_ref().context(error::KeyConfigSnafu {
                     missing: "key_alias",
                 })?
             );
             let cfn_client = CloudFormationClient::new(
-                Region::from_str(region).context(error::ParseRegion { what: region })?,
+                Region::from_str(region).context(error::ParseRegionSnafu { what: region })?,
             );
             let cfn_filepath = format!(
                 "{}/infrasys/cloudformation-templates/kms_key_setup.yml",
                 shared::getenv("BUILDSYS_TOOLS_DIR")?
             );
             let cfn_template = fs::read_to_string(&cfn_filepath)
-                .context(error::FileRead { path: cfn_filepath })?;
+                .context(error::FileReadSnafu { path: cfn_filepath })?;
 
             let stack_result = cfn_client
                 .create_stack(CreateStackInput {
@@ -105,7 +105,7 @@ impl KMSKeyConfigExt for KMSKeyConfig {
                         "Alias".to_string(),
                         self.key_alias
                             .as_ref()
-                            .context(error::KeyConfig {
+                            .context(error::KeyConfigSnafu {
                                 missing: "key_alias",
                             })?
                             .to_string(),
@@ -115,7 +115,7 @@ impl KMSKeyConfigExt for KMSKeyConfig {
                     ..Default::default()
                 })
                 .await
-                .context(error::CreateStack {
+                .context(error::CreateStackSnafu {
                     stack_name: &stack_name,
                     region,
                 })?;
@@ -123,19 +123,20 @@ impl KMSKeyConfigExt for KMSKeyConfig {
             let stack_arn = stack_result
                 .clone()
                 .stack_id
-                .context(error::ParseResponse {
+                .context(error::ParseResponseSnafu {
                     what: "stack_id",
                     resource_name: &stack_name,
                 })?;
 
             let output_array = shared::get_stack_outputs(&cfn_client, &stack_name, region).await?;
-            let key_id = output_array[0]
-                .output_value
-                .as_ref()
-                .context(error::ParseResponse {
-                    what: "outputs[0].output_value (key id)",
-                    resource_name: stack_name,
-                })?;
+            let key_id =
+                output_array[0]
+                    .output_value
+                    .as_ref()
+                    .context(error::ParseResponseSnafu {
+                        what: "outputs[0].output_value (key id)",
+                        resource_name: stack_name,
+                    })?;
             self.available_keys
                 .insert(key_id.to_string(), region.to_string());
             self.key_stack_arns

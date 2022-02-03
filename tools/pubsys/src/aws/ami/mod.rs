@@ -78,8 +78,9 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
         Ok(amis) => {
             // Write the AMI IDs to file if requested
             if let Some(ref path) = ami_args.ami_output {
-                let file = File::create(path).context(error::FileCreate { path })?;
-                serde_json::to_writer_pretty(file, &amis).context(error::Serialize { path })?;
+                let file = File::create(path).context(error::FileCreateSnafu { path })?;
+                serde_json::to_writer_pretty(file, &amis)
+                    .context(error::SerializeSnafu { path })?;
                 info!("Wrote AMI data to {}", path.display());
             }
             Ok(())
@@ -92,8 +93,8 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let mut amis = HashMap::new();
 
     // If a lock file exists, use that, otherwise use Infra.toml or default
-    let infra_config =
-        InfraConfig::from_path_or_lock(&args.infra_config_path, true).context(error::Config)?;
+    let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, true)
+        .context(error::ConfigSnafu)?;
     trace!("Using infra config: {:?}", infra_config);
 
     let aws = infra_config.aws.unwrap_or_else(|| Default::default());
@@ -105,12 +106,12 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         aws.regions.clone().into()
     }
     .into_iter()
-    .map(|name| region_from_string(&name, &aws).context(error::ParseRegion))
+    .map(|name| region_from_string(&name, &aws).context(error::ParseRegionSnafu))
     .collect::<Result<Vec<Region>>>()?;
 
     ensure!(
         !regions.is_empty(),
-        error::MissingConfig {
+        error::MissingConfigSnafu {
             missing: "aws.regions"
         }
     );
@@ -119,16 +120,18 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let base_region = regions.remove(0);
 
     // Build EBS client for snapshot management, and EC2 client for registration
-    let base_ebs_client =
-        build_client::<EbsClient>(&base_region, &base_region, &aws).context(error::Client {
+    let base_ebs_client = build_client::<EbsClient>(&base_region, &base_region, &aws).context(
+        error::ClientSnafu {
             client_type: "EBS",
             region: base_region.name(),
-        })?;
-    let base_ec2_client =
-        build_client::<Ec2Client>(&base_region, &base_region, &aws).context(error::Client {
+        },
+    )?;
+    let base_ec2_client = build_client::<Ec2Client>(&base_region, &base_region, &aws).context(
+        error::ClientSnafu {
             client_type: "EC2",
             region: base_region.name(),
-        })?;
+        },
+    )?;
 
     // Check if the AMI already exists, in which case we can use the existing ID, otherwise we
     // register a new one.
@@ -139,7 +142,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         &base_ec2_client,
     )
     .await
-    .context(error::GetAmiId {
+    .context(error::GetAmiIdSnafu {
         name: &ami_args.name,
         arch: &ami_args.arch,
         region: base_region.name(),
@@ -154,7 +157,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         );
         let snapshot_ids = get_snapshots(&found_id, &base_region, &base_ec2_client)
             .await
-            .context(error::GetSnapshots {
+            .context(error::GetSnapshotsSnafu {
                 image_id: &found_id,
                 region: base_region.name(),
             })?;
@@ -171,7 +174,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             &base_ec2_client,
         )
         .await
-        .context(error::RegisterImage {
+        .context(error::RegisterImageSnafu {
             name: &ami_args.name,
             arch: &ami_args.arch,
             region: base_region.name(),
@@ -206,7 +209,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         &aws,
     )
     .await
-    .context(error::WaitAmi {
+    .context(error::WaitAmiSnafu {
         id: &ids_of_image.image_id,
         region: base_region.name(),
     })?;
@@ -220,18 +223,19 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 
     // Get the account ID used in the base region; we don't need to grant to it so we can remove it
     // from the list.
-    let base_sts_client =
-        build_client::<StsClient>(&base_region, &base_region, &aws).context(error::Client {
+    let base_sts_client = build_client::<StsClient>(&base_region, &base_region, &aws).context(
+        error::ClientSnafu {
             client_type: "STS",
             region: base_region.name(),
-        })?;
+        },
+    )?;
     let response = base_sts_client
         .get_caller_identity(GetCallerIdentityRequest {})
         .await
-        .context(error::GetCallerIdentity {
+        .context(error::GetCallerIdentitySnafu {
             region: base_region.name(),
         })?;
-    let base_account_id = response.account.context(error::MissingInResponse {
+    let base_account_id = response.account.context(error::MissingInResponseSnafu {
         request_type: "GetCallerIdentity",
         missing: "account",
     })?;
@@ -251,7 +255,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             &base_region,
         )
         .await
-        .context(error::GrantAccess {
+        .context(error::GrantAccessSnafu {
             thing: "snapshots",
             region: base_region.name(),
         })?;
@@ -265,7 +269,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             &base_region,
         )
         .await
-        .context(error::GrantAccess {
+        .context(error::GrantAccessSnafu {
             thing: "image",
             region: base_region.name(),
         })?;
@@ -276,7 +280,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let mut ec2_clients = HashMap::with_capacity(regions.len());
     for region in regions.iter() {
         let ec2_client =
-            build_client::<Ec2Client>(&region, &base_region, &aws).context(error::Client {
+            build_client::<Ec2Client>(&region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "EC2",
                 region: region.name(),
             })?;
@@ -299,7 +303,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     // If an AMI already existed, just add it to our list, otherwise prepare a copy request.
     let mut copy_requests = Vec::with_capacity(regions.len());
     for (region, get_response) in get_responses {
-        let get_response = get_response.context(error::GetAmiId {
+        let get_response = get_response.context(error::GetAmiIdSnafu {
             name: &ami_args.name,
             arch: &ami_args.arch,
             region: region.name(),
@@ -389,7 +393,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         }
     }
 
-    ensure!(!saw_error, error::AmiCopy);
+    ensure!(!saw_error, error::AmiCopySnafu);
 
     Ok(amis)
 }
@@ -425,7 +429,7 @@ async fn get_account_ids(
     let mut sts_clients = HashMap::with_capacity(regions.len());
     for region in regions.iter() {
         let sts_client =
-            build_client::<StsClient>(&region, &base_region, &aws).context(error::Client {
+            build_client::<StsClient>(&region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "STS",
                 region: region.name(),
             })?;
@@ -450,10 +454,10 @@ async fn get_account_ids(
     )> = request_stream.collect().await;
 
     for (region, response) in responses {
-        let response = response.context(error::GetCallerIdentity {
+        let response = response.context(error::GetCallerIdentitySnafu {
             region: region.name(),
         })?;
-        let account_id = response.account.context(error::MissingInResponse {
+        let account_id = response.account.context(error::MissingInResponseSnafu {
             request_type: "GetCallerIdentity",
             missing: "account",
         })?;
@@ -472,7 +476,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Some AMIs failed to copy, see above"))]
         AmiCopy,

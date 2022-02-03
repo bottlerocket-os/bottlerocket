@@ -14,7 +14,7 @@ pub enum KeyRole {
 
 /// Retrieve a BUILDSYS_* variable that we expect to be set in the environment
 pub fn getenv(var: &str) -> Result<String> {
-    env::var(var).context(error::Environment { var })
+    env::var(var).context(error::EnvironmentSnafu { var })
 }
 
 /// Generates a parameter type object used to specify parameters in CloudFormation templates
@@ -39,9 +39,9 @@ pub async fn get_stack_outputs(
             ..Default::default()
         })
         .await
-        .context(error::DescribeStack { stack_name, region })?
+        .context(error::DescribeStackSnafu { stack_name, region })?
         .stacks
-        .context(error::ParseResponse {
+        .context(error::ParseResponseSnafu {
             what: "stacks",
             resource_name: stack_name,
         })?[0]
@@ -54,11 +54,11 @@ pub async fn get_stack_outputs(
     while status != "CREATE_COMPLETE" {
         ensure!(
             max_attempts > 0,
-            error::CreateStackTimeout { stack_name, region }
+            error::CreateStackTimeoutSnafu { stack_name, region }
         );
         ensure!(
             status != "CREATE_FAILED",
-            error::CreateStackFailure { stack_name, region }
+            error::CreateStackFailureSnafu { stack_name, region }
         );
         info!(
             "Waiting for stack resources to be ready, current status is '{}'...",
@@ -71,9 +71,9 @@ pub async fn get_stack_outputs(
                 ..Default::default()
             })
             .await
-            .context(error::DescribeStack { stack_name, region })?
+            .context(error::DescribeStackSnafu { stack_name, region })?
             .stacks
-            .context(error::ParseResponse {
+            .context(error::ParseResponseSnafu {
                 what: "stacks",
                 resource_name: stack_name,
             })?[0]
@@ -82,7 +82,7 @@ pub async fn get_stack_outputs(
         max_attempts -= 1;
     }
 
-    let output_array = stack_outputs.outputs.context(error::ParseResponse {
+    let output_array = stack_outputs.outputs.context(error::ParseResponseSnafu {
         what: "outputs",
         resource_name: stack_name,
     })?;

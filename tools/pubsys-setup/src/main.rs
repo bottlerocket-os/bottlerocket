@@ -55,15 +55,15 @@ macro_rules! tuftool {
     ($format_str:expr, $($format_arg:expr),*) => {
         let arg_str = format!($format_str, $($format_arg),*);
         trace!("tuftool arg string: {}", arg_str);
-        let args = shell_words::split(&arg_str).context(error::CommandSplit { command: &arg_str })?;
+        let args = shell_words::split(&arg_str).context(error::CommandSplitSnafu { command: &arg_str })?;
         trace!("tuftool split args: {:#?}", args);
 
         let status = Command::new("tuftool")
             .args(args)
             .status()
-            .context(error::TuftoolSpawn)?;
+            .context(error::TuftoolSpawnSnafu)?;
 
-        ensure!(status.success(), error::TuftoolResult {
+        ensure!(status.success(), error::TuftoolResultSnafu {
             command: arg_str,
             code: status.code().map(|i| i.to_string()).unwrap_or_else(|| "<unknown>".to_string())
         });
@@ -76,19 +76,19 @@ fn run() -> Result<()> {
     let args = Args::from_args();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     // Make /roles and /keys directories, if they don't exist, so we can write generated files.
-    let role_dir = args.root_role_path.parent().context(error::Path {
+    let role_dir = args.root_role_path.parent().context(error::PathSnafu {
         path: &args.root_role_path,
         thing: "root role",
     })?;
-    let key_dir = args.default_key_path.parent().context(error::Path {
+    let key_dir = args.default_key_path.parent().context(error::PathSnafu {
         path: &args.default_key_path,
         thing: "key",
     })?;
-    fs::create_dir_all(role_dir).context(error::Mkdir { path: role_dir })?;
-    fs::create_dir_all(key_dir).context(error::Mkdir { path: key_dir })?;
+    fs::create_dir_all(role_dir).context(error::MkdirSnafu { path: role_dir })?;
+    fs::create_dir_all(key_dir).context(error::MkdirSnafu { path: key_dir })?;
 
     // Main branching logic for deciding whether to create role/key, use what we have, or error.
     match find_root_role_and_key(&args)? {
@@ -96,7 +96,7 @@ fn run() -> Result<()> {
         (Some(_root_role_path), None) => {
             ensure!(
                 args.allow_missing_key,
-                error::MissingKey { repo: args.repo }
+                error::MissingKeySnafu { repo: args.repo }
             );
             Ok(())
         }
@@ -109,7 +109,7 @@ fn run() -> Result<()> {
             }
 
             let temp_root_role =
-                NamedTempFile::new_in(&role_dir).context(error::TempFileCreate {
+                NamedTempFile::new_in(&role_dir).context(error::TempFileCreateSnafu {
                     purpose: "root role",
                 })?;
             let temp_root_role_path = temp_root_role.path().display();
@@ -141,7 +141,7 @@ fn run() -> Result<()> {
 
                 Url::from_file_path(&args.default_key_path)
                     .ok()
-                    .context(error::FileToUrl {
+                    .context(error::FileToUrlSnafu {
                         path: args.default_key_path,
                     })?
             };
@@ -151,7 +151,7 @@ fn run() -> Result<()> {
 
             temp_root_role
                 .persist_noclobber(&args.root_role_path)
-                .context(error::TempFilePersist {
+                .context(error::TempFilePersistSnafu {
                     path: &args.root_role_path,
                 })?;
 
@@ -163,7 +163,7 @@ fn run() -> Result<()> {
 
             // Root role files don't need to be secret.
             fs::set_permissions(&args.root_role_path, fs::Permissions::from_mode(0o644)).context(
-                error::SetMode {
+                error::SetModeSnafu {
                     path: &args.root_role_path,
                 },
             )?;
@@ -177,9 +177,11 @@ fn run() -> Result<()> {
 fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)> {
     let (mut root_role_path, mut key_url) = (None, None);
 
-    if InfraConfig::lock_or_infra_config_exists(&args.infra_config_path).context(error::Config)? {
+    if InfraConfig::lock_or_infra_config_exists(&args.infra_config_path)
+        .context(error::ConfigSnafu)?
+    {
         let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
-            .context(error::Config)?;
+            .context(error::ConfigSnafu)?;
         trace!("Parsed infra config: {:?}", infra_config);
 
         // Check whether the user has the relevant repo defined in their Infra.toml.
@@ -195,7 +197,7 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
                 // If it's already been downloaded, just confirm the checksum.
                 if args.root_role_path.exists() {
                     let root_role_data =
-                        fs::read_to_string(&args.root_role_path).context(error::ReadFile {
+                        fs::read_to_string(&args.root_role_path).context(error::ReadFileSnafu {
                             path: &args.root_role_path,
                         })?;
                     let mut d = Sha512::new();
@@ -204,7 +206,7 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
 
                     ensure!(
                         &digest == sha512,
-                        error::Hash {
+                        error::HashSnafu {
                             expected: sha512,
                             got: digest,
                             thing: args.root_role_path.to_string_lossy()
@@ -221,13 +223,13 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
                         let path = url
                             .to_file_path()
                             .ok()
-                            .with_context(|| error::UrlToFile { url: url.clone() })?;
-                        fs::read_to_string(&path).context(error::ReadFile { path: &path })?
+                            .with_context(|| error::UrlToFileSnafu { url: url.clone() })?;
+                        fs::read_to_string(&path).context(error::ReadFileSnafu { path: &path })?
                     } else {
                         reqwest::blocking::get(url.clone())
-                            .with_context(|| error::GetUrl { url: url.clone() })?
+                            .with_context(|_| error::GetUrlSnafu { url: url.clone() })?
                             .text()
-                            .with_context(|| error::GetUrl { url: url.clone() })?
+                            .with_context(|_| error::GetUrlSnafu { url: url.clone() })?
                     };
 
                     let mut d = Sha512::new();
@@ -236,7 +238,7 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
 
                     ensure!(
                         &digest == sha512,
-                        error::Hash {
+                        error::HashSnafu {
                             expected: sha512,
                             got: digest,
                             thing: url.to_string()
@@ -244,9 +246,11 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
                     );
 
                     // Write root role to expected path on disk.
-                    fs::write(&args.root_role_path, &root_role_data).context(error::WriteFile {
-                        path: &args.root_role_path,
-                    })?;
+                    fs::write(&args.root_role_path, &root_role_data).context(
+                        error::WriteFileSnafu {
+                            path: &args.root_role_path,
+                        },
+                    )?;
                     debug!("Downloaded root role to {}", args.root_role_path.display());
                 }
 
@@ -254,14 +258,14 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
             } else if repo_config.root_role_url.is_some() || repo_config.root_role_sha512.is_some()
             {
                 // Must specify both URL and checksum.
-                error::RootRoleConfig.fail()?;
+                error::RootRoleConfigSnafu.fail()?;
             }
 
             if let Some(key_config) = &repo_config.signing_keys {
                 key_url = Some(
                     Url::try_from(key_config.clone())
                         .ok()
-                        .context(error::SigningKeyUrl { repo: &args.repo })?,
+                        .context(error::SigningKeyUrlSnafu { repo: &args.repo })?,
                 );
             }
         } else {
@@ -284,7 +288,7 @@ fn find_root_role_and_key(args: &Args) -> Result<(Option<&PathBuf>, Option<Url>)
     }
     if key_url.is_none() && args.default_key_path.exists() {
         key_url = Some(Url::from_file_path(&args.default_key_path).ok().context(
-            error::FileToUrl {
+            error::FileToUrlSnafu {
                 path: &args.default_key_path,
             },
         )?);
@@ -310,7 +314,7 @@ mod error {
     use url::Url;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error splitting shell command - {} - input: {}", source, command))]
         CommandSplit {

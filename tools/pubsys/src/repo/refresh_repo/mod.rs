@@ -73,7 +73,7 @@ fn refresh_repo(
     // existing repository.
     ensure!(
         !Path::exists(&metadata_out_dir),
-        repo_error::RepoExists {
+        repo_error::RepoExistsSnafu {
             path: metadata_out_dir
         }
     );
@@ -86,7 +86,7 @@ fn refresh_repo(
 
     // Load the repository and get the repo editor for it
     let repo = RepositoryLoader::new(
-        File::open(root_role_path).context(repo_error::File {
+        File::open(root_role_path).context(repo_error::FileSnafu {
             path: root_role_path,
         })?,
         metadata_url.clone(),
@@ -94,11 +94,11 @@ fn refresh_repo(
     )
     .expiration_enforcement(expiration_enforcement)
     .load()
-    .context(repo_error::RepoLoad {
+    .context(repo_error::RepoLoadSnafu {
         metadata_base_url: metadata_url.clone(),
     })?;
-    let mut repo_editor =
-        RepositoryEditor::from_repo(&root_role_path, repo).context(repo_error::EditorFromRepo)?;
+    let mut repo_editor = RepositoryEditor::from_repo(&root_role_path, repo)
+        .context(repo_error::EditorFromRepoSnafu)?;
     info!("Loaded TUF repo: {}", metadata_url);
 
     // Refresh the expiration dates of all non-root metadata files
@@ -110,16 +110,16 @@ fn refresh_repo(
     // Sign the repository
     let signed_repo = repo_editor
         .sign(&[key_source])
-        .context(repo_error::RepoSign)?;
+        .context(repo_error::RepoSignSnafu)?;
 
     // Write out the metadata files for the repository
     info!("Writing repo metadata to: {}", metadata_out_dir.display());
-    fs::create_dir_all(&metadata_out_dir).context(repo_error::CreateDir {
+    fs::create_dir_all(&metadata_out_dir).context(repo_error::CreateDirSnafu {
         path: &metadata_out_dir,
     })?;
     signed_repo
         .write(&metadata_out_dir)
-        .context(repo_error::RepoWrite {
+        .context(repo_error::RepoWriteSnafu {
             path: &metadata_out_dir,
         })?;
 
@@ -130,17 +130,17 @@ fn refresh_repo(
 pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<(), Error> {
     // If a lock file exists, use that, otherwise use Infra.toml
     let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
-        .context(repo_error::Config)?;
+        .context(repo_error::ConfigSnafu)?;
     trace!("Parsed infra config: {:?}", infra_config);
 
     let repo_config = infra_config
         .repo
         .as_ref()
-        .context(repo_error::MissingConfig {
+        .context(repo_error::MissingConfigSnafu {
             missing: "repo section",
         })?
         .get(&refresh_repo_args.repo)
-        .context(repo_error::MissingConfig {
+        .context(repo_error::MissingConfigSnafu {
             missing: format!("definition for repo {}", &refresh_repo_args.repo),
         })?;
 
@@ -153,7 +153,7 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
     } else {
         ensure!(
             refresh_repo_args.default_key_path.exists(),
-            repo_error::MissingConfig {
+            repo_error::MissingConfigSnafu {
                 missing: "signing_keys in repo config, and we found no local key",
             }
         );
@@ -169,14 +169,14 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
     );
     let expiration =
         RepoExpirationPolicy::from_path(&refresh_repo_args.repo_expiration_policy_path)
-            .context(repo_error::Config)?;
+            .context(repo_error::ConfigSnafu)?;
 
     let repo_urls = repo_urls(
         &repo_config,
         &refresh_repo_args.variant,
         &refresh_repo_args.arch,
     )?
-    .context(repo_error::MissingRepoUrls {
+    .context(repo_error::MissingRepoUrlsSnafu {
         repo: &refresh_repo_args.repo,
     })?;
     refresh_repo(
@@ -200,7 +200,7 @@ mod error {
     use url::Url;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(context(false), display("{}", source))]
         Repo { source: crate::repo::Error },

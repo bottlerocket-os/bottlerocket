@@ -80,7 +80,7 @@ where
                     new_regions.insert(region.name().to_string());
                     continue;
                 } else {
-                    return Err(e).context(error::GetParameters {
+                    return Err(e).context(error::GetParametersSnafu {
                         region: region.name(),
                     });
                 }
@@ -95,7 +95,7 @@ where
         let total_count = valid_count + invalid_count;
         ensure!(
             total_count == expected_len,
-            error::MissingInResponse {
+            error::MissingInResponseSnafu {
                 region: region.name(),
                 request_type: "GetParameters",
                 missing: format!(
@@ -109,12 +109,12 @@ where
         if let Some(valid_parameters) = response.parameters {
             if !valid_parameters.is_empty() {
                 for parameter in valid_parameters {
-                    let name = parameter.name.context(error::MissingInResponse {
+                    let name = parameter.name.context(error::MissingInResponseSnafu {
                         region: region.name(),
                         request_type: "GetParameters",
                         missing: "parameter name",
                     })?;
-                    let value = parameter.value.context(error::MissingInResponse {
+                    let value = parameter.value.context(error::MissingInResponseSnafu {
                         region: region.name(),
                         request_type: "GetParameters",
                         missing: format!("value for parameter {}", name),
@@ -187,7 +187,7 @@ pub(crate) async fn set_parameters(
 
         ensure!(
             request_interval <= max_interval,
-            error::Throttled { max_interval }
+            error::ThrottledSnafu { max_interval }
         );
 
         // Build requests for parameters.  We need to group them by region so we can run each
@@ -284,7 +284,7 @@ pub(crate) async fn set_parameters(
                 );
             }
         }
-        return error::SetParameters {
+        return error::SetParametersSnafu {
             failure_count: failed_parameters.len(),
             total_count,
         }
@@ -330,7 +330,7 @@ pub(crate) async fn validate_parameters(
             success = false;
         }
     }
-    ensure!(success, error::ValidateParameters);
+    ensure!(success, error::ValidateParametersSnafu);
 
     Ok(())
 }
@@ -342,7 +342,7 @@ mod error {
     use std::time::Duration;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Failed to fetch SSM parameters in {}: {}", region, source))]
         GetParameters {

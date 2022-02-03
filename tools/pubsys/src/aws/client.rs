@@ -72,7 +72,7 @@ pub(crate) fn build_client<T: NewWith>(
         base_provider(&aws.profile)?,
     )?;
     Ok(T::new_with(
-        rusoto_core::HttpClient::new().context(error::HttpClient)?,
+        rusoto_core::HttpClient::new().context(error::HttpClientSnafu)?,
         provider,
         region.clone(),
     ))
@@ -106,7 +106,7 @@ where
     let mut provider = CredentialsProvider(Box::new(base_provider));
     for assume_role in assume_roles {
         let sts = StsClient::new_with(
-            HttpClient::new().context(error::HttpClient)?,
+            HttpClient::new().context(error::HttpClientSnafu)?,
             provider,
             sts_region.clone(),
         );
@@ -120,7 +120,7 @@ where
             None,                 // MFA serial
         );
         provider = CredentialsProvider(Box::new(
-            AutoRefreshingProvider::new(expiring_provider).context(error::Provider)?,
+            AutoRefreshingProvider::new(expiring_provider).context(error::ProviderSnafu)?,
         ));
     }
     Ok(provider)
@@ -130,12 +130,12 @@ where
 /// credentials mechanisms.
 fn base_provider(maybe_profile: &Option<String>) -> Result<CredentialsProvider> {
     if let Some(profile) = maybe_profile {
-        let mut p = ProfileProvider::new().context(error::Provider)?;
+        let mut p = ProfileProvider::new().context(error::ProviderSnafu)?;
         p.set_profile(profile);
         Ok(CredentialsProvider(Box::new(p)))
     } else {
         Ok(CredentialsProvider(Box::new(
-            DefaultCredentialsProvider::new().context(error::Provider)?,
+            DefaultCredentialsProvider::new().context(error::ProviderSnafu)?,
         )))
     }
 }
@@ -144,7 +144,7 @@ pub(crate) mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Failed to create HTTP client: {}", source))]
         HttpClient {
