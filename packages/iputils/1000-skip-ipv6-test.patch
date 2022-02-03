@@ -1,7 +1,7 @@
 diff --git iputils.orig/ping/meson.build iputils/ping/meson.build
 index 1e678ec..eedd04b 100644
---- iputils.orig/ping/meson.build
-+++ iputils/ping/meson.build
+--- iputils.orig/test/ping/meson.build
++++ iputils/ping/test/meson.build
 @@ -35,7 +35,7 @@ endif
  # https://github.com/actions/virtual-environments/issues/668
  ipv6_dst = []

@@ -1,7 +1,7 @@
-From d7c3d65bf98d3695bfb2a831b1a6b3c65aa2a9fd Mon Sep 17 00:00:00 2001
+From 86613c3486af4c01c3281b8064ffeaea1566732b Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Fri, 9 Aug 2019 16:39:28 +0000
-Subject: [PATCH 1001/1004] avoid gcrypt dependency
+Subject: [PATCH 1/4] avoid gcrypt dependency
 
 gcrypt is only used for its implementations of SHA-1 and MD5, in order
 to generate UUIDs to fingerprint the XML configuration files. These
@@ -20,7 +20,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  3 files changed, 15 insertions(+), 83 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 08df65c..b94dcf4 100644
+index 08df65ca..b94dcf48 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -242,14 +242,6 @@ AC_CHECK_LIB([anl], [getaddrinfo_a], [LIBANL_LIBS="-lanl"],[
@@ -39,7 +39,7 @@ index 08df65c..b94dcf4 100644
  PKG_CHECK_MODULES(LIBNL, [libnl-3.0 libnl-route-3.0])
  PKG_CHECK_MODULES(LIBDBUS, [dbus-1])
 diff --git a/src/hashcsum.c b/src/hashcsum.c
-index 4fc0dfc..eeb41ee 100644
+index 4fc0dfce..eeb41eee 100644
 --- a/src/hashcsum.c
 +++ b/src/hashcsum.c
 @@ -27,10 +27,12 @@
@@ -160,7 +160,7 @@ index 4fc0dfc..eeb41ee 100644
  }
  
 diff --git a/src/netinfo.c b/src/netinfo.c
-index 9598155..63bb6a9 100644
+index 9598155d..63bb6a9f 100644
 --- a/src/netinfo.c
 +++ b/src/netinfo.c
 @@ -33,7 +33,6 @@
@@ -227,5 +227,5 @@ index 9598155..63bb6a9 100644
  		if (appname == NULL) {
  			/* Backward compatible - for now.
 -- 
-2.21.3
+2.32.0
 

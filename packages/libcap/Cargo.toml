@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://sites.google.com/site/fullycapable/release-notes-for-libcap"
 
 [[package.metadata.build-package.external-files]]
-url = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-2.60.tar.gz"
-sha512 = "0c65e82f226451e4498c5f2594e54aa29b92e9e4362fa8e99a08d2b64dab956950e80eeb7d9b688f619ae507265201a63a024d2fc77829100901b3a96210194e"
+url = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-2.63.tar.gz"
+sha512 = "0db42bc9079c75b539fd7511531a2088ba37f8d4fe75799606976a3f36bc240c4b7c87402c4b71b9c455daed098a3ddaa31687d70ed45168d471df131e2898f1"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

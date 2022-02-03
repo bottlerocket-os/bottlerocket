@@ -1,5 +1,5 @@
 Name: %{_cross_os}chrony
-Version: 4.1
+Version: 4.2
 Release: 1%{?dist}
 Summary: A versatile implementation of the Network Time Protocol
 License: GPL-2.0-only
@@ -9,9 +9,6 @@ Source1: chronyd.service
 Source2: chrony-conf
 Source3: chrony-sysusers.conf
 Source4: chrony-tmpfiles.conf
-
-# Fix seccomp filter for glibc 2.34+
-Patch0001: 0001-sys_linux-allow-clone3-and-pread64-in-seccomp-filter.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel

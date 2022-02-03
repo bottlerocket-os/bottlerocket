@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://download.gnome.org/sources/glib"
 
 [[package.metadata.build-package.external-files]]
-url = "https://download.gnome.org/sources/glib/2.70/glib-2.70.1.tar.xz"
-sha512 = "639317c98ab72ad853608ab4d395484daff135c0222556c51ca93fd8533c5759db14478beda964e4feb02bb2737a46a4eda25063f98a9c6ba6ae4bc5d74bf5e1"
+url = "https://download.gnome.org/sources/glib/2.71/glib-2.71.1.tar.xz"
+sha512 = "eda37d883d27f63eef38a811ce824783d39c6454712d7b7e48507da5d53ff0aebbd05bdf82a6ae5395c0c09d4cdee8ac5ec27ba3d4ff868f146043906876d967"
 
 [[package.metadata.build-package.external-files]]
 url = "https://downloads.sourceforge.net/pcre/pcre-8.37.tar.bz2"
