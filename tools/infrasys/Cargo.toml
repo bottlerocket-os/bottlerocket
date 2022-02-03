@@ -17,9 +17,9 @@ rusoto_core = { version = "0.47", default-features = false, features = ["rustls"
 rusoto_s3 = { version = "0.47", default-features = false, features = ["rustls"] }
 serde_json = "1.0.66"
 serde_yaml = "0.8.17"
-sha2 = "0.9"
+sha2 = "0.10"
 shell-words = "1.0.0" 
-simplelog = "0.10.0"
+simplelog = "0.11"
 snafu = "0.7"
 structopt = { version = "0.3", default-features = false }  
 tokio = { version = "~1.8", default-features = false, features = ["macros", "rt-multi-thread"] } # LTS
