@@ -13,7 +13,7 @@ gptman = { version = "0.8.2", default-features = false }
 snafu = "0.7"
 libc = "0.2"
 block-party = { path = "../updater/block-party", version = "0.1.0" }
-inotify = "0.9"
+inotify = "0.10"
 
 [build-dependencies]
 cargo-readme = "3.1"

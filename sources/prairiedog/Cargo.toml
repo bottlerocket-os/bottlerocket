@@ -13,7 +13,7 @@ argh = "0.1.3"
 log = "0.4"
 nix = "0.23"
 signpost = { path = "../updater/signpost", version = "0.1.0" }
-simplelog = "0.10"
+simplelog = "0.11"
 snafu = "0.7"
 
 [build-dependencies]

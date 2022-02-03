@@ -10,7 +10,7 @@ exclude = ["README.md"]
 
 [dependencies]
 log = "0.4"
-simplelog = "0.10"
+simplelog = "0.11"
 snafu = "0.7"
 nix = "0.23"
 

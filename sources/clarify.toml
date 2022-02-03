@@ -90,6 +90,14 @@ skip-files = [
     "liblz4/tests/COPYING",
 ]
 
+[clarify.minimal-lexical]
+expression = "MIT OR Apache-2.0"
+license-files = [
+    { path = "LICENSE.md", hash = 0xfe66d806 },
+    { path = "LICENSE-APACHE", hash = 0x4fccb6b7 },
+    { path = "LICENSE-MIT", hash = 0x386ca1bc },
+]
+
 [clarify.pulldown-cmark]
 expression = "MIT"
 license-files = [
