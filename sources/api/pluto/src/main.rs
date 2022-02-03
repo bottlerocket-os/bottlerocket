@@ -59,7 +59,7 @@ mod error {
     use std::net::AddrParseError;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum PlutoError {
         #[snafu(display(
             "Unable to retrieve cluster name and AWS region from Bottlerocket API: {}",
@@ -138,19 +138,19 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
     let instance_type = client
         .fetch_instance_type()
         .await
-        .context(error::ImdsRequest)?
-        .context(error::ImdsNone {
+        .context(error::ImdsRequestSnafu)?
+        .context(error::ImdsNoneSnafu {
             what: "instance_type",
         })?;
 
     // Find the corresponding maximum number of pods supported by this instance type
-    let file = BufReader::new(
-        File::open(ENI_MAX_PODS_PATH).context(error::EniMaxPodsFile {
+    let file = BufReader::new(File::open(ENI_MAX_PODS_PATH).context(
+        error::EniMaxPodsFileSnafu {
             path: ENI_MAX_PODS_PATH,
-        })?,
-    );
+        },
+    )?);
     for line in file.lines() {
-        let line = line.context(error::IoReadLine)?;
+        let line = line.context(error::IoReadLineSnafu)?;
         // Skip the comments in the file
         if line.trim_start().starts_with('#') {
             continue;
@@ -160,7 +160,7 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
             return Ok(tokens[1].to_string());
         }
     }
-    error::NoInstanceTypeMaxPods { instance_type }.fail()
+    error::NoInstanceTypeMaxPodsSnafu { instance_type }.fail()
 }
 
 /// Returns the cluster's DNS address.
@@ -171,12 +171,12 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
 /// blocks to return one of two default addresses.
 async fn get_cluster_dns_ip(client: &mut ImdsClient) -> Result<String> {
     // Retrieve the kubernetes network configuration for the EKS cluster
-    if let Ok(aws_k8s_info) = api::get_aws_k8s_info().await.context(error::AwsInfo) {
+    if let Ok(aws_k8s_info) = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu) {
         if let (Some(region), Some(cluster_name)) = (aws_k8s_info.region, aws_k8s_info.cluster_name)
         {
             if let Ok(config) = eks::get_cluster_network_config(&region, &cluster_name)
                 .await
-                .context(error::EksError)
+                .context(error::EksSnafu)
             {
                 // Derive cluster-dns-ip from the service IPv4 CIDR
                 if let Some(ipv4_cidr) = config.service_ipv_4_cidr {
@@ -202,7 +202,7 @@ fn get_dns_from_ipv4_cidr(cidr: &str) -> Result<String> {
     let mut split: Vec<&str> = cidr.split('.').collect();
     ensure!(
         split.len() == 4,
-        error::CidrParse {
+        error::CidrParseSnafu {
             cidr,
             reason: format!("expected 4 components but found {}", split.len())
         }
@@ -218,12 +218,12 @@ async fn get_ipv4_cluster_dns_ip_from_imds_mac(client: &mut ImdsClient) -> Resul
     let mac = client
         .fetch_mac_addresses()
         .await
-        .context(error::ImdsRequest)?
-        .context(error::ImdsNone {
+        .context(error::ImdsRequestSnafu)?
+        .context(error::ImdsNoneSnafu {
             what: "mac addresses",
         })?
         .first()
-        .context(error::ImdsNone {
+        .context(error::ImdsNoneSnafu {
             what: "mac addresses",
         })?
         .clone();
@@ -232,12 +232,12 @@ async fn get_ipv4_cluster_dns_ip_from_imds_mac(client: &mut ImdsClient) -> Resul
     let cidr_block = client
         .fetch_cidr_blocks_for_mac(&mac)
         .await
-        .context(error::ImdsRequest)?
-        .context(error::ImdsNone {
+        .context(error::ImdsRequestSnafu)?
+        .context(error::ImdsNoneSnafu {
             what: "CIDR blocks",
         })?
         .first()
-        .context(error::ImdsNone {
+        .context(error::ImdsNoneSnafu {
             what: "CIDR blocks",
         })?
         .clone();
@@ -256,12 +256,12 @@ async fn get_ipv4_cluster_dns_ip_from_imds_mac(client: &mut ImdsClient) -> Resul
 async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
     // Retrieve the user specified cluster DNS IP if it's specified, otherwise use the pluto-generated
     // cluster DNS IP
-    let aws_k8s_info = api::get_aws_k8s_info().await.context(error::AwsInfo)?;
+    let aws_k8s_info = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
     let cluster_dns_ip = if let Some(ip) = aws_k8s_info.cluster_dns_ip {
         ip.to_owned()
     } else {
         let ip = get_cluster_dns_ip(client).await?;
-        IpAddr::from_str(ip.as_str()).context(error::BadIp { ip })?
+        IpAddr::from_str(ip.as_str()).context(error::BadIpSnafu { ip })?
     };
 
     // If the cluster DNS IP is an IPv4 address, retrieve the IPv4 address for the instance.
@@ -270,16 +270,16 @@ async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
         IpAddr::V4(_) => client
             .fetch_local_ipv4_address()
             .await
-            .context(error::ImdsRequest)?
-            .context(error::ImdsNone {
+            .context(error::ImdsRequestSnafu)?
+            .context(error::ImdsNoneSnafu {
                 what: "node ipv4 address",
             }),
         IpAddr::V6(_) => {
             return client
                 .fetch_primary_ipv6_address()
                 .await
-                .context(error::ImdsRequest)?
-                .context(error::ImdsNone {
+                .context(error::ImdsRequestSnafu)?
+                .context(error::ImdsNoneSnafu {
                     what: "ipv6s associated with primary network interface",
                 });
         }
@@ -325,13 +325,13 @@ async fn run() -> Result<()> {
         let max_pods = serde_json::to_string(
             &setting
                 .parse::<u32>()
-                .context(error::ParseToU32 { setting: &setting })?,
+                .context(error::ParseToU32Snafu { setting: &setting })?,
         )
-        .context(error::OutputJson { output: &setting })?;
+        .context(error::OutputJsonSnafu { output: &setting })?;
         println!("{}", max_pods);
     } else {
         let output =
-            serde_json::to_string(&setting).context(error::OutputJson { output: &setting })?;
+            serde_json::to_string(&setting).context(error::OutputJsonSnafu { output: &setting })?;
         println!("{}", output);
     }
     Ok(())

@@ -37,7 +37,7 @@ mod error {
     use datastore::{self, serialization};
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {
@@ -119,7 +119,7 @@ impl SettingState {
             "true" => Ok(SettingState::Enabled),
             "false" => Ok(SettingState::Disabled),
             other => {
-                return error::UnknownSettingState {
+                return error::UnknownSettingStateSnafu {
                     setting: setting.as_ref(),
                     state: other,
                 }
@@ -140,19 +140,19 @@ where
     S: AsRef<str>,
 {
     let key_str = key_str.as_ref();
-    let key = Key::new(KeyType::Data, key_str).context(error::InvalidKey { key: key_str })?;
+    let key = Key::new(KeyType::Data, key_str).context(error::InvalidKeySnafu { key: key_str })?;
     debug!("Querying the API for setting: {}", key_str);
 
     let uri = format!("{}?keys={}", constants::API_SETTINGS_URI, key_str);
     let (code, response_body) = apiclient::raw_request(constants::API_SOCKET, &uri, "GET", None)
         .await
-        .context(error::APIRequest {
+        .context(error::APIRequestSnafu {
             method: "GET",
             uri: uri.to_string(),
         })?;
     ensure!(
         code.is_success(),
-        error::APIResponse {
+        error::APIResponseSnafu {
             method: "GET",
             uri,
             code,
@@ -161,20 +161,20 @@ where
     );
 
     // Build a Settings struct from the response string
-    let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJson { method: "GET", uri })?;
+    let settings: model::Settings = serde_json::from_str(&response_body)
+        .context(error::ResponseJsonSnafu { method: "GET", uri })?;
 
     // Serialize the Settings struct into key/value pairs. This builds the dotted
     // string representation of the setting
     let setting_keypair =
-        to_pairs_with_prefix("settings", &settings).context(error::SerializeSettings)?;
+        to_pairs_with_prefix("settings", &settings).context(error::SerializeSettingsSnafu)?;
     debug!("Retrieved setting keypair: {:#?}", &setting_keypair);
 
     // (Hopefully) get the value from the map using the dotted string supplied
     // to the function
     Ok(setting_keypair
         .get(&key)
-        .context(error::NonexistentSetting { setting: key_str })?
+        .context(error::NonexistentSettingSnafu { setting: key_str })?
         .to_string())
 }
 
@@ -237,11 +237,11 @@ where
     command.args(args);
     let output = command
         .output()
-        .context(error::ExecutionFailure { command })?;
+        .context(error::ExecutionFailureSnafu { command })?;
 
     ensure!(
         output.status.success(),
-        error::SystemdCommandFailure { output }
+        error::SystemdCommandFailureSnafu { output }
     );
     Ok(())
 }
@@ -321,7 +321,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("servicedog started for unit {}", &args.systemd_unit);
 

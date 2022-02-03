@@ -27,7 +27,7 @@ pub(crate) async fn wait_for_ami(
         // Stop if we're over max, unless we're on a success streak, then give it some wiggle room.
         ensure!(
             (attempts - successes) <= max_attempts,
-            error::MaxAttempts {
+            error::MaxAttemptsSnafu {
                 id,
                 max_attempts,
                 region: region.name()
@@ -41,17 +41,15 @@ pub(crate) async fn wait_for_ami(
         // Use a new client each time so we have more confidence that different endpoints can see
         // the new AMI.
         let ec2_client =
-            build_client::<Ec2Client>(&region, &sts_region, &aws).context(error::Client {
+            build_client::<Ec2Client>(&region, &sts_region, &aws).context(error::ClientSnafu {
                 client_type: "EC2",
                 region: region.name(),
             })?;
-        let describe_response =
-            ec2_client
-                .describe_images(describe_request)
-                .await
-                .context(error::DescribeImages {
-                    region: region.name(),
-                })?;
+        let describe_response = ec2_client.describe_images(describe_request).await.context(
+            error::DescribeImagesSnafu {
+                region: region.name(),
+            },
+        )?;
         // The response contains an Option<Vec<Image>>, so we have to check that we got a
         // list at all, and then that the list contains the ID in question.
         if let Some(images) = describe_response.images {
@@ -76,7 +74,7 @@ pub(crate) async fn wait_for_ami(
                             !["invalid", "deregistered", "failed", "error"]
                                 .iter()
                                 .any(|e| e == found_state),
-                            error::State {
+                            error::StateSnafu {
                                 id,
                                 state: found_state,
                                 region: region.name()
@@ -113,7 +111,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Error creating {} client in {}: {}", client_type, region, source))]
         Client {

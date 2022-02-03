@@ -73,25 +73,27 @@ where
 
     // Find the current patch version link, which contains our full version number
     let current = datastore_dir.join("current");
-    let major =
-        datastore_dir.join(fs::read_link(&current).context(error::LinkRead { link: current })?);
-    let minor = datastore_dir.join(fs::read_link(&major).context(error::LinkRead { link: major })?);
-    let patch = datastore_dir.join(fs::read_link(&minor).context(error::LinkRead { link: minor })?);
+    let major = datastore_dir
+        .join(fs::read_link(&current).context(error::LinkReadSnafu { link: current })?);
+    let minor =
+        datastore_dir.join(fs::read_link(&major).context(error::LinkReadSnafu { link: major })?);
+    let patch =
+        datastore_dir.join(fs::read_link(&minor).context(error::LinkReadSnafu { link: minor })?);
 
     // Pull out the basename of the path, which contains the version
     let version_os_str = patch
         .file_name()
-        .context(error::DataStoreLinkToRoot { path: &patch })?;
+        .context(error::DataStoreLinkToRootSnafu { path: &patch })?;
     let mut version_str = version_os_str
         .to_str()
-        .context(error::DataStorePathNotUTF8 { path: &patch })?;
+        .context(error::DataStorePathNotUTF8Snafu { path: &patch })?;
 
     // Allow 'v' at the start so the links have clearer names for humans
     if version_str.starts_with('v') {
         version_str = &version_str[1..];
     }
 
-    Version::parse(version_str).context(error::InvalidDataStoreVersion { path: &patch })
+    Version::parse(version_str).context(error::InvalidDataStoreVersionSnafu { path: &patch })
 }
 
 pub(crate) fn run(args: &Args) -> Result<()> {
@@ -99,7 +101,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
     let datastore_dir = args
         .datastore_path
         .parent()
-        .context(error::DataStoreLinkToRoot {
+        .context(error::DataStoreLinkToRootSnafu {
             path: &args.datastore_path,
         })?;
 
@@ -128,7 +130,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
         })?;
 
     // open a reader to the root.json file
-    let root_file = File::open(&args.root_path).with_context(|| error::OpenRoot {
+    let root_file = File::open(&args.root_path).with_context(|_| error::OpenRootSnafu {
         path: args.root_path.clone(),
     })?;
 
@@ -155,11 +157,11 @@ pub(crate) fn run(args: &Args) -> Result<()> {
         // if the targets expired between updog downloading them and now.
         .expiration_enforcement(ExpirationEnforcement::Unsafe)
         .load()
-        .context(error::RepoLoad)?;
+        .context(error::RepoLoadSnafu)?;
     let manifest = load_manifest(&repo)?;
     let migrations =
         update_metadata::find_migrations(&current_version, &args.migrate_to_version, &manifest)
-            .context(error::FindMigrations)?;
+            .context(error::FindMigrationsSnafu)?;
 
     if migrations.is_empty() {
         // Not all new OS versions need to change the data store format.  If there's been no
@@ -203,7 +205,7 @@ where
         .with_file_name(format!("v{}_{}", new_version, rando()));
     ensure!(
         !to.exists(),
-        error::NewVersionAlreadyExists {
+        error::NewVersionAlreadyExistsSnafu {
             version: new_version.clone(),
             path: to
         }
@@ -246,26 +248,26 @@ where
         let migration = migration.as_ref();
         let migration = migration
             .try_into()
-            .context(error::TargetName { target: migration })?;
+            .context(error::TargetNameSnafu { target: migration })?;
 
         // get the migration from the repo
         let lz4_bytes = repository
             .read_target(&migration)
-            .context(error::LoadMigration {
+            .context(error::LoadMigrationSnafu {
                 migration: migration.raw(),
             })?
-            .context(error::MigrationNotFound {
+            .context(error::MigrationNotFoundSnafu {
                 migration: migration.raw(),
             })?;
 
         // Add an LZ4 decoder so the bytes will be deflated on read
-        let mut reader = lz4::Decoder::new(lz4_bytes).context(error::Lz4Decode {
+        let mut reader = lz4::Decoder::new(lz4_bytes).context(error::Lz4DecodeSnafu {
             migration: migration.raw(),
         })?;
 
         // Create a sealed command with pentacle, so we can run the verified bytes from memory
         let mut command =
-            pentacle::SealedCommand::new(&mut reader).context(error::SealMigration)?;
+            pentacle::SealedCommand::new(&mut reader).context(error::SealMigrationSnafu)?;
 
         // Point each migration in the right direction, and at the given data store.
         command.arg(direction.to_string());
@@ -285,7 +287,7 @@ where
 
         info!("Running migration command: {:?}", command);
 
-        let output = command.output().context(error::StartMigration)?;
+        let output = command.output().context(error::StartMigrationSnafu)?;
 
         if !output.stdout.is_empty() {
             debug!(
@@ -303,7 +305,10 @@ where
             debug!("No migration stderr");
         }
 
-        ensure!(output.status.success(), error::MigrationFailure { output });
+        ensure!(
+            output.status.success(),
+            error::MigrationFailureSnafu { output }
+        );
         source_datastore = &target_datastore;
     }
 
@@ -345,7 +350,7 @@ where
     let to_dir = to_datastore
         .as_ref()
         .parent()
-        .context(error::DataStoreLinkToRoot {
+        .context(error::DataStoreLinkToRootSnafu {
             path: to_datastore.as_ref(),
         })?;
     // We need a file descriptor for the directory so we can fsync after the symlink swap.
@@ -356,7 +361,7 @@ where
         // (mode doesn't matter for opening a directory)
         Mode::empty(),
     )
-    .context(error::DataStoreDirOpen { path: &to_dir })?;
+    .context(error::DataStoreDirOpenSnafu { path: &to_dir })?;
 
     // Get a unique temporary path in the directory; we need this to atomically swap.
     let temp_link = to_dir.join(rando());
@@ -386,22 +391,22 @@ where
     let to_target = to_datastore
         .as_ref()
         .file_name()
-        .context(error::DataStoreLinkToRoot {
+        .context(error::DataStoreLinkToRootSnafu {
             path: to_datastore.as_ref(),
         })?;
     let patch_target = patch_version_link
         .file_name()
-        .context(error::DataStoreLinkToRoot {
+        .context(error::DataStoreLinkToRootSnafu {
             path: to_datastore.as_ref(),
         })?;
     let minor_target = minor_version_link
         .file_name()
-        .context(error::DataStoreLinkToRoot {
+        .context(error::DataStoreLinkToRootSnafu {
             path: to_datastore.as_ref(),
         })?;
     let major_target = major_version_link
         .file_name()
-        .context(error::DataStoreLinkToRoot {
+        .context(error::DataStoreLinkToRootSnafu {
             path: to_datastore.as_ref(),
         })?;
 
@@ -416,10 +421,10 @@ where
     // Create a symlink from the patch version to the new data store.  We create it at a temporary
     // path so we can atomically swap it into the real path with a rename call.
     // This will point at, for example, /path/to/datastore/v1.5.2_0123456789abcdef
-    symlink(&to_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
+    symlink(&to_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the patch version link points to the new data
     // store copy.
-    fs::rename(&temp_link, &patch_version_link).context(error::LinkSwap {
+    fs::rename(&temp_link, &patch_version_link).context(error::LinkSwapSnafu {
         link: &patch_version_link,
     })?;
 
@@ -433,10 +438,10 @@ where
 
     // Create a symlink from the minor version to the new patch version.
     // This will point at, for example, /path/to/datastore/v1.5.2
-    symlink(&patch_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
+    symlink(&patch_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the minor version link points to the new patch
     // version.
-    fs::rename(&temp_link, &minor_version_link).context(error::LinkSwap {
+    fs::rename(&temp_link, &minor_version_link).context(error::LinkSwapSnafu {
         link: &minor_version_link,
     })?;
 
@@ -450,10 +455,10 @@ where
 
     // Create a symlink from the major version to the new minor version.
     // This will point at, for example, /path/to/datastore/v1.5
-    symlink(&minor_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
+    symlink(&minor_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the major version link points to the new minor
     // version.
-    fs::rename(&temp_link, &major_version_link).context(error::LinkSwap {
+    fs::rename(&temp_link, &major_version_link).context(error::LinkSwapSnafu {
         link: &major_version_link,
     })?;
 
@@ -467,9 +472,9 @@ where
 
     // Create a symlink from 'current' to the new major version.
     // This will point at, for example, /path/to/datastore/v1
-    symlink(&major_target, &temp_link).context(error::LinkCreate { path: &temp_link })?;
+    symlink(&major_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that 'current' points to the new major version.
-    fs::rename(&temp_link, &current_version_link).context(error::LinkSwap {
+    fs::rename(&temp_link, &current_version_link).context(error::LinkSwapSnafu {
         link: &current_version_link,
     })?;
 
@@ -491,12 +496,14 @@ where
 
 fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
     let target = "manifest.json";
-    let target = target.try_into().context(error::TargetName { target })?;
+    let target = target
+        .try_into()
+        .context(error::TargetNameSnafu { target })?;
     Manifest::from_json(
         repository
             .read_target(&target)
-            .context(error::ManifestLoad)?
-            .context(error::ManifestNotFound)?,
+            .context(error::ManifestLoadSnafu)?
+            .context(error::ManifestNotFoundSnafu)?,
     )
-    .context(error::ManifestParse)
+    .context(error::ManifestParseSnafu)
 }

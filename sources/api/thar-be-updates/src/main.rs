@@ -124,7 +124,7 @@ fn parse_args(args: std::env::Args) -> Args {
 fn lock_exclusive(lockfile: &File) -> Result<()> {
     lockfile
         .try_lock_exclusive()
-        .context(error::UpdateLockHeld {
+        .context(error::UpdateLockHeldSnafu {
             path: UPDATE_LOCKFILE,
         })?;
     debug!("Obtained exclusive lock");
@@ -144,9 +144,9 @@ fn write_update_status(update_status: &UpdateStatus) -> Result<()> {
     // Create the status file as a temporary file first and finish writing to it
     // before swapping the old status file out
     let status_file_tempfile =
-        NamedTempFile::new_in(UPDATE_STATUS_DIR).context(error::CreateTempfile)?;
+        NamedTempFile::new_in(UPDATE_STATUS_DIR).context(error::CreateTempfileSnafu)?;
     serde_json::to_writer_pretty(&status_file_tempfile, update_status).context(
-        error::StatusWrite {
+        error::StatusWriteSnafu {
             path: status_file_tempfile.path(),
         },
     )?;
@@ -154,7 +154,7 @@ fn write_update_status(update_status: &UpdateStatus) -> Result<()> {
     debug!("Updating status file in '{}'", UPDATE_STATUS_FILE);
     tempfile_path
         .persist(UPDATE_STATUS_FILE)
-        .context(error::CreateStatusFile {
+        .context(error::CreateStatusFileSnafu {
             path: UPDATE_STATUS_FILE,
         })?;
     Ok(())
@@ -173,7 +173,7 @@ macro_rules! fork_and_return {
             Ok(ForkResult::Child) => $child_process,
             Err(e) => {
                 eprintln!("{}", e);
-                error::Fork.fail()
+                error::ForkSnafu.fail()
             }
         }
     };
@@ -187,14 +187,14 @@ fn refresh(status: &mut UpdateStatus, socket_path: &str) -> Result<bool> {
         let output = Command::new("updog")
             .args(&["whats", "--all", "--json"])
             .output()
-            .context(error::Updog)?;
+            .context(error::UpdogSnafu)?;
         status.set_recent_command_info(UpdateCommand::Refresh, &output);
         if !output.status.success() {
             warn!("Failed to check for updates with updog");
             return Ok(false);
         }
         let update_info: Vec<update_metadata::Update> =
-            serde_json::from_slice(&output.stdout).context(error::UpdateInfo)?;
+            serde_json::from_slice(&output.stdout).context(error::UpdateInfoSnafu)?;
         status.update_available_updates(socket_path, update_info)
     })
 }
@@ -205,16 +205,16 @@ fn prepare(status: &mut UpdateStatus) -> Result<()> {
         debug!("Spawning 'updog update-image'");
         let chosen_update = status
             .chosen_update()
-            .context(error::UpdateDoesNotExist)?
+            .context(error::UpdateDoesNotExistSnafu)?
             .clone();
         let output = Command::new("updog")
             .arg("update-image")
             .output()
-            .context(error::Updog)?;
+            .context(error::UpdogSnafu)?;
         status.set_recent_command_info(UpdateCommand::Prepare, &output);
         if !output.status.success() {
             warn!("Failed to prepare the update with updog");
-            return error::PrepareUpdate.fail();
+            return error::PrepareUpdateSnafu.fail();
         }
         status.set_staging_partition_image_info(chosen_update);
         Ok(())
@@ -228,11 +228,11 @@ fn activate(status: &mut UpdateStatus) -> Result<()> {
         let output = Command::new("updog")
             .arg("update-apply")
             .output()
-            .context(error::Updog)?;
+            .context(error::UpdogSnafu)?;
         status.set_recent_command_info(UpdateCommand::Activate, &output);
         if !output.status.success() {
             warn!("Failed to activate the update with updog");
-            return error::ActivateUpdate.fail();
+            return error::ActivateUpdateSnafu.fail();
         }
         status.mark_staging_partition_next_to_boot()
     })
@@ -245,11 +245,11 @@ fn deactivate(status: &mut UpdateStatus) -> Result<()> {
         let output = Command::new("updog")
             .arg("update-revert")
             .output()
-            .context(error::Updog)?;
+            .context(error::UpdogSnafu)?;
         status.set_recent_command_info(UpdateCommand::Deactivate, &output);
         if !output.status.success() {
             warn!("Failed to deactivate the update with updog");
-            return error::DeactivateUpdate.fail();
+            return error::DeactivateUpdateSnafu.fail();
         }
         status.unmark_staging_partition_next_to_boot()
     })
@@ -284,7 +284,7 @@ fn drive_state_machine(
             // Make sure the chosen update exists
             ensure!(
                 update_status.chosen_update().is_some(),
-                error::UpdateDoesNotExist
+                error::UpdateDoesNotExistSnafu
             );
             prepare(update_status)?;
             // If we succeed in preparing the update, we transition to `Staged`
@@ -295,7 +295,7 @@ fn drive_state_machine(
             // Make sure there's an update image written to the inactive partition
             ensure!(
                 update_status.staging_partition().is_some(),
-                error::StagingPartition
+                error::StagingPartitionSnafu
             );
             activate(update_status)?;
             // If we succeed in activating the update, we transition to `Ready`
@@ -306,7 +306,7 @@ fn drive_state_machine(
             // Make sure there's an update image written to the inactive partition
             ensure!(
                 update_status.staging_partition().is_some(),
-                error::StagingPartition
+                error::StagingPartitionSnafu
             );
             deactivate(update_status)?;
             // If we succeed in deactivating the update, we transition to `Staged`
@@ -314,7 +314,7 @@ fn drive_state_machine(
         }
         // Everything else is disallowed
         _ => {
-            return error::DisallowCommand {
+            return error::DisallowCommandSnafu {
                 command: operation.clone(),
                 state: update_status.update_state().to_owned(),
             }
@@ -330,10 +330,10 @@ fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     // Open the lockfile for concurrency control, create it if it doesn't exist
-    let lockfile = File::create(UPDATE_LOCKFILE).context(error::UpdateLockFile {
+    let lockfile = File::create(UPDATE_LOCKFILE).context(error::UpdateLockFileSnafu {
         path: UPDATE_LOCKFILE,
     })?;
     // Obtain an exclusive lock for upcoming operations to the status file

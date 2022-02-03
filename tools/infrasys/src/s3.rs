@@ -39,7 +39,7 @@ pub fn format_prefix(prefix: &str) -> String {
 pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String, String, String)> {
     // TODO: Add support for accommodating pre-existing buckets (skip this creation process)
     let cfn_client = CloudFormationClient::new(
-        Region::from_str(region).context(error::ParseRegion { what: region })?,
+        Region::from_str(region).context(error::ParseRegionSnafu { what: region })?,
     );
     let cfn_filepath: PathBuf = format!(
         "{}/infrasys/cloudformation-templates/s3_setup.yml",
@@ -47,7 +47,7 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
     )
     .into();
     let cfn_template =
-        fs::read_to_string(&cfn_filepath).context(error::FileRead { path: cfn_filepath })?;
+        fs::read_to_string(&cfn_filepath).context(error::FileReadSnafu { path: cfn_filepath })?;
     let stack_result = cfn_client
         .create_stack(CreateStackInput {
             stack_name: stack_name.to_string(),
@@ -55,12 +55,12 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
             ..Default::default()
         })
         .await
-        .context(error::CreateStack { stack_name, region })?;
+        .context(error::CreateStackSnafu { stack_name, region })?;
     // We don't have to wait for successful stack creation to grab the stack ARN
     let stack_arn = stack_result
         .clone()
         .stack_id
-        .context(error::ParseResponse {
+        .context(error::ParseResponseSnafu {
             what: "stack_id",
             resource_name: stack_name,
         })?;
@@ -70,7 +70,7 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
     let bucket_name = output_array[0]
         .output_value
         .as_ref()
-        .context(error::ParseResponse {
+        .context(error::ParseResponseSnafu {
             what: "outputs[0].output_value (bucket name)",
             resource_name: stack_name,
         })?
@@ -78,7 +78,7 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
     let bucket_rdn = output_array[1]
         .output_value
         .as_ref()
-        .context(error::ParseResponse {
+        .context(error::ParseResponseSnafu {
             what: "outputs[1].output_value (bucket url)",
             resource_name: stack_name,
         })?
@@ -99,7 +99,7 @@ pub async fn add_bucket_policy(
 ) -> Result<()> {
     // Get old policy
     let s3_client =
-        S3Client::new(Region::from_str(region).context(error::ParseRegion { what: region })?);
+        S3Client::new(Region::from_str(region).context(error::ParseRegionSnafu { what: region })?);
     let mut policy: serde_json::Value = match s3_client
         .get_bucket_policy(GetBucketPolicyRequest {
             bucket: bucket_name.to_string(),
@@ -107,11 +107,11 @@ pub async fn add_bucket_policy(
         })
         .await
     {
-        Ok(output) => serde_json::from_str(&output.policy.context(error::ParseResponse {
+        Ok(output) => serde_json::from_str(&output.policy.context(error::ParseResponseSnafu {
             what: "policy",
             resource_name: bucket_name,
         })?)
-        .context(error::InvalidJson {
+        .context(error::InvalidJsonSnafu {
             what: format!("retrieved bucket policy for {}", &bucket_name),
         })?,
 
@@ -119,7 +119,7 @@ pub async fn add_bucket_policy(
             r#"{"Version": "2008-10-17",
                      "Statement": []}"#,
         )
-        .context(error::InvalidJson {
+        .context(error::InvalidJsonSnafu {
             what: format!("new bucket policy for {}", &bucket_name),
         })?,
     };
@@ -139,29 +139,29 @@ pub async fn add_bucket_policy(
                     }}"#,
         bucket_name, prefix, vpcid
     ))
-    .context(error::InvalidJson {
+    .context(error::InvalidJsonSnafu {
         what: format!("new bucket policy for {}", &bucket_name),
     })?;
 
     // Append new policy onto old one
     policy
         .get_mut("Statement")
-        .context(error::GetPolicyStatement { bucket_name })?
+        .context(error::GetPolicyStatementSnafu { bucket_name })?
         .as_array_mut()
-        .context(error::GetPolicyStatement { bucket_name })?
+        .context(error::GetPolicyStatementSnafu { bucket_name })?
         .push(new_bucket_policy);
 
     // Push the new policy as a string
     s3_client
         .put_bucket_policy(PutBucketPolicyRequest {
             bucket: bucket_name.to_string(),
-            policy: serde_json::to_string(&policy).context(error::InvalidJson {
+            policy: serde_json::to_string(&policy).context(error::InvalidJsonSnafu {
                 what: format!("new bucket policy for {}", &bucket_name),
             })?,
             ..Default::default()
         })
         .await
-        .context(error::PutPolicy { bucket_name })?;
+        .context(error::PutPolicySnafu { bucket_name })?;
 
     Ok(())
 }
@@ -177,13 +177,13 @@ pub async fn upload_file(
     file_path: &Path,
 ) -> Result<()> {
     let s3_client =
-        S3Client::new(Region::from_str(region).context(error::ParseRegion { what: region })?);
+        S3Client::new(Region::from_str(region).context(error::ParseRegionSnafu { what: region })?);
 
     // File --> Bytes
-    let mut file = File::open(file_path).context(error::FileOpen { path: file_path })?;
+    let mut file = File::open(file_path).context(error::FileOpenSnafu { path: file_path })?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)
-        .context(error::FileRead { path: file_path })?;
+        .context(error::FileReadSnafu { path: file_path })?;
 
     s3_client
         .put_object(PutObjectRequest {
@@ -193,7 +193,7 @@ pub async fn upload_file(
             ..Default::default()
         })
         .await
-        .context(error::PutObject { bucket_name })?;
+        .context(error::PutObjectSnafu { bucket_name })?;
 
     Ok(())
 }

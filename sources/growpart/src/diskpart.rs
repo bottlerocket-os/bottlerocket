@@ -34,7 +34,7 @@ impl DiskPart {
         let used_partitions = gpt.iter().filter(|(_num, part)| part.is_used()).count();
         ensure!(
             used_partitions == 1,
-            error::MultiplePartitions {
+            error::MultiplePartitionsSnafu {
                 path,
                 count: used_partitions
             }
@@ -61,7 +61,7 @@ impl DiskPart {
 
         // Remove all existing partitions so that the space shows up as free.
         gpt.remove(part)
-            .context(error::RemovePartition { part, path })?;
+            .context(error::RemovePartitionSnafu { part, path })?;
 
         // First usable LBA is just after the primary label. We want partitions aligned on 1 MB
         // boundaries, so the first one occurs at 2048 sectors.
@@ -71,7 +71,7 @@ impl DiskPart {
         // us the last LBA, which we must solve for next.
         let max_size: u64 = gpt
             .get_maximum_partition_size()
-            .context(error::FindMaxSize { path })?;
+            .context(error::FindMaxSizeSnafu { path })?;
 
         // We know the first LBA, and we know the sector count, so we can calculate the last LBA.
         let ending_lba = starting_lba + max_size - 1;
@@ -95,16 +95,16 @@ impl DiskPart {
         let mut f = fs::OpenOptions::new()
             .write(true)
             .open(path)
-            .context(error::DeviceOpen { path })?;
+            .context(error::DeviceOpenSnafu { path })?;
 
         self.gpt
             .header
             .update_from(&mut f, self.gpt.sector_size)
-            .context(error::UpdateGeometry { path })?;
+            .context(error::UpdateGeometrySnafu { path })?;
 
         self.gpt
             .write_into(&mut f)
-            .context(error::WritePartitionTable { path })?;
+            .context(error::WritePartitionTableSnafu { path })?;
 
         println!("wrote partition table to {}", path.display());
 
@@ -123,19 +123,21 @@ impl DiskPart {
     {
         let path = path.as_ref();
 
-        let partition_path = fs::canonicalize(path).context(error::CanonicalizeLink { path })?;
+        let partition_path =
+            fs::canonicalize(path).context(error::CanonicalizeLinkSnafu { path })?;
 
-        let partition_device =
-            BlockDevice::from_device_node(&partition_path).context(error::FindBlockDevice {
+        let partition_device = BlockDevice::from_device_node(&partition_path).context(
+            error::FindBlockDeviceSnafu {
                 path: &partition_path,
-            })?;
+            },
+        )?;
 
         let disk = partition_device
             .disk()
-            .context(error::FindDisk {
+            .context(error::FindDiskSnafu {
                 path: &partition_path,
             })?
-            .context(error::NotPartition {
+            .context(error::NotPartitionSnafu {
                 path: &partition_path,
             })?;
 
@@ -148,8 +150,8 @@ impl DiskPart {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let mut f = fs::File::open(path).context(error::DeviceOpen { path })?;
-        let gpt = GPT::find_from(&mut f).context(error::ReadPartitionTable { path })?;
+        let mut f = fs::File::open(path).context(error::DeviceOpenSnafu { path })?;
+        let gpt = GPT::find_from(&mut f).context(error::ReadPartitionTableSnafu { path })?;
         Ok(gpt)
     }
 }
@@ -167,18 +169,22 @@ impl WatchPart {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let dirname = path.parent().context(error::FindParentDirectory { path })?;
+        let dirname = path
+            .parent()
+            .context(error::FindParentDirectorySnafu { path })?;
 
-        let filename = path.file_name().context(error::FindFileName { path })?;
+        let filename = path
+            .file_name()
+            .context(error::FindFileNameSnafu { path })?;
         let filename = Path::new(filename).to_path_buf();
 
         // When the kernel reloads the partition table, we expect two events, when udev deletes and
         // then recreates the path. This isn't synchronized with our code, so to avoid races we need
         // to watch for both events.
-        let mut inotify = Inotify::init().context(error::InitInotify)?;
+        let mut inotify = Inotify::init().context(error::InitInotifySnafu)?;
         inotify
             .add_watch(&dirname, WatchMask::CREATE | WatchMask::DELETE)
-            .context(error::AddInotifyWatch)?;
+            .context(error::AddInotifyWatchSnafu)?;
 
         Ok(WatchPart { inotify, filename })
     }
@@ -193,7 +199,7 @@ impl WatchPart {
             let events = self
                 .inotify
                 .read_events_blocking(&mut buf)
-                .context(error::ReadInotifyEvents)?;
+                .context(error::ReadInotifyEventsSnafu)?;
 
             for event in events {
                 if let Some(event_file) = event.name {

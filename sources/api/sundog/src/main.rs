@@ -33,7 +33,7 @@ mod error {
 
     /// Potential errors during dynamic settings retrieval
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum SundogError {
         #[snafu(display("Failed to start generator '{}': {}", program, source))]
         CommandFailure {
@@ -160,10 +160,10 @@ where
     debug!("Requesting setting generators from API");
     let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
         .await
-        .context(error::APIRequest { method: "GET", uri })?;
+        .context(error::APIRequestSnafu { method: "GET", uri })?;
     ensure!(
         code.is_success(),
-        error::APIResponse {
+        error::APIResponseSnafu {
             method: "GET",
             uri,
             code,
@@ -171,8 +171,8 @@ where
         }
     );
 
-    let generators: HashMap<String, String> =
-        serde_json::from_str(&response_body).context(error::ResponseJson { method: "GET", uri })?;
+    let generators: HashMap<String, String> = serde_json::from_str(&response_body)
+        .context(error::ResponseJsonSnafu { method: "GET", uri })?;
     trace!("Generators: {:?}", &generators);
 
     Ok(generators)
@@ -193,10 +193,10 @@ where
 
     let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
         .await
-        .context(error::APIRequest { method: "GET", uri })?;
+        .context(error::APIRequestSnafu { method: "GET", uri })?;
     ensure!(
         code.is_success(),
-        error::APIResponse {
+        error::APIResponseSnafu {
             method: "GET",
             uri,
             code,
@@ -205,13 +205,13 @@ where
     );
 
     // Build a Settings struct from the response.
-    let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJson { method: "GET", uri })?;
+    let settings: model::Settings = serde_json::from_str(&response_body)
+        .context(error::ResponseJsonSnafu { method: "GET", uri })?;
 
     // Serialize the Settings struct into key/value pairs. This builds the dotted
     // string representation of the setting
     let settings_keypairs =
-        to_pairs_with_prefix("settings", &settings).context(error::SerializeSettings)?;
+        to_pairs_with_prefix("settings", &settings).context(error::SerializeSettingsSnafu)?;
 
     // Put the setting into our hashset of populated keys
     for (k, _) in settings_keypairs {
@@ -241,7 +241,7 @@ where
 
     // For each generator, run it and capture the output
     for (setting_str, generator) in generators {
-        let setting = Key::new(KeyType::Data, &setting_str).context(error::InvalidKey {
+        let setting = Key::new(KeyType::Data, &setting_str).context(error::InvalidKeySnafu {
             key_type: KeyType::Data,
             key: &setting_str,
         })?;
@@ -256,14 +256,14 @@ where
         // Split on space, assume the first item is the command
         // and the rest are args.
         let mut command_strings = generator.split_whitespace();
-        let command = command_strings.next().context(error::InvalidCommand {
+        let command = command_strings.next().context(error::InvalidCommandSnafu {
             command: generator.as_str(),
         })?;
 
         let result = process::Command::new(command)
             .args(command_strings)
             .output()
-            .context(error::CommandFailure {
+            .context(error::CommandFailureSnafu {
                 program: generator.as_str(),
             })?;
 
@@ -272,7 +272,7 @@ where
         match result.status.code() {
             Some(0) => {}
             Some(1) => {
-                return error::FailedSettingGenerator {
+                return error::FailedSettingGeneratorSnafu {
                     program: generator.as_str(),
                     code: 1.to_string(),
                     stderr: String::from_utf8_lossy(&result.stderr),
@@ -287,7 +287,7 @@ where
                 continue;
             }
             Some(x) => {
-                return error::UnexpectedReturnCode {
+                return error::UnexpectedReturnCodeSnafu {
                     program: generator.as_str(),
                     code: x.to_string(),
                     stderr: String::from_utf8_lossy(&result.stderr),
@@ -297,7 +297,7 @@ where
             // A process will return None if terminated by a signal, regard this as
             // a failure since we could have incomplete data
             None => {
-                return error::FailedSettingGenerator {
+                return error::FailedSettingGeneratorSnafu {
                     program: generator.as_str(),
                     code: "signal",
                     stderr: String::from_utf8_lossy(&result.stderr),
@@ -312,7 +312,7 @@ where
         //
         // First, we pull the raw string from the process output.
         let output_raw = str::from_utf8(&result.stdout)
-            .context(error::GeneratorOutput {
+            .context(error::GeneratorOutputSnafu {
                 program: generator.as_str(),
             })?
             .trim()
@@ -321,7 +321,7 @@ where
 
         // Next, we deserialize the text into a Value that can represent any JSON type.
         let output_value: serde_json::Value =
-            serde_json::from_str(&output_raw).context(error::CommandJson {
+            serde_json::from_str(&output_raw).context(error::CommandJsonSnafu {
                 generator: &generator,
                 input: &output_raw,
             })?;
@@ -332,7 +332,7 @@ where
         // We have to go through the round-trip of serialization because the data store
         // serialization format may not be the same as the format we choose for sundog.
         let serialized_output =
-            datastore::serialize_scalar(&output_value).context(error::SerializeScalar {
+            datastore::serialize_scalar(&output_value).context(error::SerializeScalarSnafu {
                 value: output_value,
             })?;
         trace!("Serialized output: {}", &serialized_output);
@@ -343,7 +343,7 @@ where
     // The API takes a properly nested Settings struct, so deserialize our map to a Settings
     // and ensure it is correct
     let settings_struct: model::Settings =
-        deserialization::from_map(&settings).context(error::Deserialize)?;
+        deserialization::from_map(&settings).context(error::DeserializeSnafu)?;
 
     Ok(settings_struct)
 }
@@ -354,7 +354,7 @@ where
     S: AsRef<str>,
 {
     // Serialize our Settings struct to the JSON wire format
-    let request_body = serde_json::to_string(&settings).context(error::SerializeRequest)?;
+    let request_body = serde_json::to_string(&settings).context(error::SerializeRequestSnafu)?;
 
     let uri = &format!(
         "{}?tx={}",
@@ -366,10 +366,10 @@ where
     let (code, response_body) =
         apiclient::raw_request(socket_path.as_ref(), uri, method, Some(request_body))
             .await
-            .context(error::APIRequest { method, uri })?;
+            .context(error::APIRequestSnafu { method, uri })?;
     ensure!(
         code.is_success(),
-        error::APIResponse {
+        error::APIResponseSnafu {
             method,
             uri,
             code,
@@ -446,7 +446,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("Sundog started");
 

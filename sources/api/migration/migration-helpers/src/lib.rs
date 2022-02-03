@@ -94,7 +94,7 @@ pub fn run_migration(mut migration: impl Migration, args: &Args) -> Result<()> {
     let mut committeds = vec![Committed::Live];
     let transactions = source
         .list_transactions()
-        .context(error::ListTransactions)?;
+        .context(error::ListTransactionsSnafu)?;
     committeds.extend(transactions.into_iter().map(|tx| Committed::Pending { tx }));
 
     for committed in committeds {

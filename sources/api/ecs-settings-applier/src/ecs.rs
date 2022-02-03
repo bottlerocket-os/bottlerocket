@@ -69,13 +69,13 @@ async fn run() -> Result<()> {
     debug!("Requesting settings values");
     let settings = schnauzer::get_settings(&args.socket_path)
         .await
-        .context(error::Settings)?;
+        .context(error::SettingsSnafu)?;
 
     debug!("settings = {:#?}", settings.settings);
     let ecs = settings
         .settings
         .and_then(|s| s.ecs)
-        .context(error::Model)?;
+        .context(error::ModelSnafu)?;
 
     let mut config = ECSConfig {
         cluster: ecs.cluster,
@@ -115,10 +115,10 @@ async fn run() -> Result<()> {
                 .insert(key.to_string(), value.to_string());
         }
     }
-    let serialized = serde_json::to_string(&config).context(error::Serialization)?;
+    let serialized = serde_json::to_string(&config).context(error::SerializationSnafu)?;
     debug!("serialized = {}", serialized);
 
-    write_to_disk(DEFAULT_ECS_CONFIG_PATH, serialized).context(error::FS {
+    write_to_disk(DEFAULT_ECS_CONFIG_PATH, serialized).context(error::FSSnafu {
         path: DEFAULT_ECS_CONFIG_PATH,
     })?;
     Ok(())
@@ -183,7 +183,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Failed to read settings: {}", source))]
         Settings {

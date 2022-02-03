@@ -61,7 +61,7 @@ impl Migration for ChangeNodeTaintsType {
                             .cloned()
                             .unwrap_or_default()
                             .as_str()
-                            .context(error::NonStringSettingDataType {
+                            .context(error::NonStringSettingDataTypeSnafu {
                                 setting: taint_key.to_string(),
                             })?
                             .to_string(),

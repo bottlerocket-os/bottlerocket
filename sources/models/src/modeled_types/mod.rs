@@ -15,7 +15,7 @@ pub mod error {
     type PEMToX509ParseError = x509_parser::nom::Err<x509_parser::error::X509Error>;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Can't create SingleLineString containing line terminator"))]
         StringContainsLineTerminator,

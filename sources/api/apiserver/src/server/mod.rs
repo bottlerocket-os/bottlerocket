@@ -8,7 +8,7 @@ mod exec;
 pub use error::Error;
 
 use actix_web::{
-    body::Body, error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    body::BoxBody, error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use datastore::{Committed, FilesystemDataStore, Key, Value};
 use error::Result;
@@ -38,9 +38,9 @@ fn notify_unix_socket_ready() -> Result<()> {
                 .arg("--ready")
                 .arg("--no-block")
                 .status()
-                .context(error::SystemdNotify)?
+                .context(error::SystemdNotifySnafu)?
                 .success(),
-            error::SystemdNotifyStatus
+            error::SystemdNotifyStatusSnafu
         );
         env::remove_var("NOTIFY_SOCKET");
     } else {
@@ -124,24 +124,24 @@ where
     })
     .workers(threads)
     .bind_uds(socket_path.as_ref())
-    .context(error::BindSocket {
+    .context(error::BindSocketSnafu {
         path: socket_path.as_ref(),
     })?;
 
     // If the socket needs to be chowned to a group to grant further access, that can be passed
     // as a parameter.
     if let Some(gid) = socket_gid {
-        chown(socket_path.as_ref(), None, Some(gid)).context(error::SetGroup { gid })?;
+        chown(socket_path.as_ref(), None, Some(gid)).context(error::SetGroupSnafu { gid })?;
     }
 
     let mode = 0o0660;
     let perms = Permissions::from_mode(mode);
-    set_permissions(socket_path.as_ref(), perms).context(error::SetPermissions { mode })?;
+    set_permissions(socket_path.as_ref(), perms).context(error::SetPermissionsSnafu { mode })?;
 
     // Notify system manager the UNIX socket has been initialized, so other service units can proceed
     notify_unix_socket_ready()?;
 
-    http_server.run().await.context(error::ServerStart)
+    http_server.run().await.context(error::ServerStartSnafu)
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -166,7 +166,7 @@ async fn get_model(
         return get_model_prefix(data, prefix).await;
     }
 
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
 
     // Fetch all the data and build a Model.
     let settings = Some(controller::get_settings(&*datastore, &Committed::Live)?);
@@ -190,10 +190,10 @@ async fn get_model(
 /// Helper for get_model that handles the case of matching a user-specified prefix.
 async fn get_model_prefix(data: web::Data<SharedData>, prefix: &str) -> Result<ModelResponse> {
     if prefix.is_empty() {
-        return error::EmptyInput { input: "prefix" }.fail();
+        return error::EmptyInputSnafu { input: "prefix" }.fail();
     }
 
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
 
     // Fetch all the data.
     // Note that we don't add a prefix (for example "settings.") to the given prefix before passing
@@ -242,14 +242,14 @@ async fn get_settings(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedData>,
 ) -> Result<SettingsResponse> {
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
 
     let settings = if let Some(keys_str) = query.get("keys") {
         let keys = comma_separated("keys", keys_str)?;
         controller::get_settings_keys(&*datastore, &keys, &Committed::Live)
     } else if let Some(mut prefix) = query.get("prefix") {
         if prefix.is_empty() {
-            return error::EmptyInput { input: "prefix" }.fail();
+            return error::EmptyInputSnafu { input: "prefix" }.fail();
         }
         // When retrieving from /settings, the settings prefix is implied, so we add it if it
         // wasn't given.
@@ -273,13 +273,13 @@ async fn patch_settings(
     data: web::Data<SharedData>,
 ) -> Result<HttpResponse> {
     let transaction = transaction_name(&query);
-    let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
+    let mut datastore = data.ds.write().ok().context(error::DataStoreLockSnafu)?;
     controller::set_settings(&mut *datastore, &settings, transaction)?;
     Ok(HttpResponse::NoContent().finish()) // 204
 }
 
 async fn get_transaction_list(data: web::Data<SharedData>) -> Result<TransactionListResponse> {
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
     let data = controller::list_transactions(&*datastore)?;
     Ok(TransactionListResponse(data))
 }
@@ -290,7 +290,7 @@ async fn get_transaction(
     data: web::Data<SharedData>,
 ) -> Result<SettingsResponse> {
     let transaction = transaction_name(&query);
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
     let data = controller::get_transaction(&*datastore, transaction)?;
     Ok(SettingsResponse(data))
 }
@@ -301,7 +301,7 @@ async fn delete_transaction(
     data: web::Data<SharedData>,
 ) -> Result<ChangedKeysResponse> {
     let transaction = transaction_name(&query);
-    let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
+    let mut datastore = data.ds.write().ok().context(error::DataStoreLockSnafu)?;
     let deleted = controller::delete_transaction(&mut *datastore, transaction)?;
     Ok(ChangedKeysResponse(deleted))
 }
@@ -313,12 +313,12 @@ async fn commit_transaction(
     data: web::Data<SharedData>,
 ) -> Result<ChangedKeysResponse> {
     let transaction = transaction_name(&query);
-    let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
+    let mut datastore = data.ds.write().ok().context(error::DataStoreLockSnafu)?;
 
     let changes = controller::commit_transaction(&mut *datastore, transaction)?;
 
     if changes.is_empty() {
-        return error::CommitWithNoPending.fail();
+        return error::CommitWithNoPendingSnafu.fail();
     }
 
     Ok(ChangedKeysResponse(changes))
@@ -345,12 +345,12 @@ async fn commit_transaction_and_apply(
     data: web::Data<SharedData>,
 ) -> Result<ChangedKeysResponse> {
     let transaction = transaction_name(&query);
-    let mut datastore = data.ds.write().ok().context(error::DataStoreLock)?;
+    let mut datastore = data.ds.write().ok().context(error::DataStoreLockSnafu)?;
 
     let changes = controller::commit_transaction(&mut *datastore, transaction)?;
 
     if changes.is_empty() {
-        return error::CommitWithNoPending.fail();
+        return error::CommitWithNoPendingSnafu.fail();
     }
 
     let key_names = changes.iter().map(|k| k.name()).collect();
@@ -368,7 +368,7 @@ async fn get_os_info(
 ) -> Result<BottlerocketReleaseResponse> {
     let os = if let Some(mut prefix) = query.get("prefix") {
         if prefix.is_empty() {
-            return error::EmptyInput { input: "prefix" }.fail();
+            return error::EmptyInputSnafu { input: "prefix" }.fail();
         }
         // When retrieving from /os, the "os" prefix is implied, so we add it if it wasn't given.
         let with_prefix = format!("os.{}", prefix);
@@ -391,19 +391,19 @@ async fn get_affected_services(
 ) -> Result<MetadataResponse> {
     if let Some(keys_str) = query.get("keys") {
         let data_keys = comma_separated("keys", keys_str)?;
-        let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+        let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
         let resp =
             controller::get_metadata_for_data_keys(&*datastore, "affected-services", &data_keys)?;
 
         Ok(MetadataResponse(resp))
     } else {
-        return error::MissingInput { input: "keys" }.fail();
+        return error::MissingInputSnafu { input: "keys" }.fail();
     }
 }
 
 /// Get all settings that have setting-generator metadata
 async fn get_setting_generators(data: web::Data<SharedData>) -> Result<MetadataResponse> {
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
     let resp = controller::get_metadata_for_all_data_keys(&*datastore, "setting-generator")?;
     Ok(MetadataResponse(resp))
 }
@@ -415,12 +415,12 @@ async fn get_templates(
 ) -> Result<MetadataResponse> {
     if let Some(keys_str) = query.get("keys") {
         let data_keys = comma_separated("keys", keys_str)?;
-        let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+        let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
         let resp = controller::get_metadata_for_data_keys(&*datastore, "template", &data_keys)?;
 
         Ok(MetadataResponse(resp))
     } else {
-        return error::MissingInput { input: "keys" }.fail();
+        return error::MissingInputSnafu { input: "keys" }.fail();
     }
 }
 
@@ -430,14 +430,14 @@ async fn get_services(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedData>,
 ) -> Result<ServicesResponse> {
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
 
     let resp = if let Some(names_str) = query.get("names") {
         let names = comma_separated("names", names_str)?;
         controller::get_services_names(&*datastore, &names, &Committed::Live)
     } else if let Some(mut prefix) = query.get("prefix") {
         if prefix.is_empty() {
-            return error::EmptyInput { input: "prefix" }.fail();
+            return error::EmptyInputSnafu { input: "prefix" }.fail();
         }
         // When retrieving from /services, the services prefix is implied, so we add it if it
         // wasn't given.
@@ -461,14 +461,14 @@ async fn get_configuration_files(
     query: web::Query<HashMap<String, String>>,
     data: web::Data<SharedData>,
 ) -> Result<ConfigurationFilesResponse> {
-    let datastore = data.ds.read().ok().context(error::DataStoreLock)?;
+    let datastore = data.ds.read().ok().context(error::DataStoreLockSnafu)?;
 
     let resp = if let Some(names_str) = query.get("names") {
         let names = comma_separated("names", names_str)?;
         controller::get_configuration_files_names(&*datastore, &names, &Committed::Live)
     } else if let Some(mut prefix) = query.get("prefix") {
         if prefix.is_empty() {
-            return error::EmptyInput { input: "prefix" }.fail();
+            return error::EmptyInputSnafu { input: "prefix" }.fail();
         }
         // When retrieving from /configuration-files, the configuration-files prefix is implied, so
         // we add it if it wasn't given.
@@ -487,16 +487,18 @@ async fn get_configuration_files(
 
 /// Get the update status from 'thar-be-updates'
 async fn get_update_status() -> Result<UpdateStatusResponse> {
-    let lockfile = File::create(UPDATE_LOCKFILE).context(error::UpdateLockOpen)?;
-    lockfile.try_lock_shared().context(error::UpdateShareLock)?;
+    let lockfile = File::create(UPDATE_LOCKFILE).context(error::UpdateLockOpenSnafu)?;
+    lockfile
+        .try_lock_shared()
+        .context(error::UpdateShareLockSnafu)?;
     let result = thar_be_updates::status::get_update_status(&lockfile);
     match result {
         Ok(update_status) => Ok(UpdateStatusResponse(update_status)),
         Err(e) => match e {
             thar_be_updates::error::Error::NoStatusFile { .. } => {
-                error::UninitializedUpdateStatus.fail()
+                error::UninitializedUpdateStatusSnafu.fail()
             }
-            _ => error::UpdateError.fail(),
+            _ => error::UpdateSnafu.fail(),
         },
     }
 }
@@ -528,10 +530,10 @@ async fn reboot() -> Result<HttpResponse> {
         .arg("-r")
         .arg("now")
         .output()
-        .context(error::Shutdown)?;
+        .context(error::ShutdownSnafu)?;
     ensure!(
         output.status.success(),
-        error::Reboot {
+        error::RebootSnafu {
             exit_code: match output.status.code() {
                 Some(code) => code,
                 None => output.status.signal().unwrap_or(1),
@@ -548,7 +550,7 @@ async fn reboot() -> Result<HttpResponse> {
 
 fn comma_separated<'a>(key_name: &'static str, input: &'a str) -> Result<HashSet<&'a str>> {
     if input.is_empty() {
-        return error::EmptyInput { input: key_name }.fail();
+        return error::EmptyInputSnafu { input: key_name }.fail();
     }
     Ok(input.split(',').collect())
 }
@@ -564,7 +566,7 @@ fn transaction_name(query: &web::Query<HashMap<String, String>>) -> &str {
 // Can also override `render_response` if we want to change headers, content type, etc.
 impl ResponseError for error::Error {
     /// Maps our error types to the HTTP error code they should return.
-    fn error_response(&self) -> HttpResponse<Body> {
+    fn error_response(&self) -> HttpResponse {
         use error::Error::*;
         let status_code = match self {
             // 400 Bad Request
@@ -638,6 +640,7 @@ pub(crate) struct SharedData {
 macro_rules! impl_responder_for {
     ($for:ident, $self:ident, $serialize_expr:expr) => (
         impl Responder for $for {
+            type Body = BoxBody;
             fn respond_to($self, _req: &HttpRequest) -> HttpResponse {
                 let body = match serde_json::to_string(&$serialize_expr) {
                     Ok(s) => s,

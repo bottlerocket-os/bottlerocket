@@ -104,7 +104,7 @@ where
     let setting_to_services_map: HashMap<String, Vec<String>> =
         schnauzer::get_json(socket_path, uri, Some(query))
             .await
-            .context(error::GetJson { uri })?;
+            .context(error::GetJsonSnafu { uri })?;
     trace!("API response: {:?}", &setting_to_services_map);
 
     Ok(setting_to_services_map)
@@ -127,7 +127,7 @@ where
     let uri = "/services";
     let service_map: model::Services = schnauzer::get_json(socket_path, uri, query)
         .await
-        .context(error::GetJson { uri })?;
+        .context(error::GetJsonSnafu { uri })?;
     trace!("Service metadata: {:?}", &service_map);
 
     Ok(service_map)
@@ -160,7 +160,7 @@ impl ServiceRestart for Service {
             let mut command_strings = restart_command.split(' ');
             let command = command_strings
                 .next()
-                .context(error::InvalidRestartCommand {
+                .context(error::InvalidRestartCommandSnafu {
                     command: restart_command.as_str(),
                 })?;
             trace!("Command: {}", &command);
@@ -176,14 +176,14 @@ impl ServiceRestart for Service {
             }
             let result = process_command
                 .output()
-                .context(error::CommandExecutionFailure {
+                .context(error::CommandExecutionFailureSnafu {
                     command: restart_command.as_str(),
                 })?;
 
             // If the restart command exited nonzero, call it a failure
             ensure!(
                 result.status.success(),
-                error::FailedRestartCommand {
+                error::FailedRestartCommandSnafu {
                     command: restart_command.as_str(),
                     stderr: String::from_utf8_lossy(&result.stderr),
                 }

@@ -14,7 +14,7 @@ gptman = { version = "0.8.2", default-features = false }
 hex-literal = "0.3.0"
 lazy_static = "1.2"
 signpost = { path = "../updater/signpost", version = "0.1.0" }
-snafu = "0.6"
+snafu = "0.7"
 
 [build-dependencies]
 cargo-readme = "3.1"

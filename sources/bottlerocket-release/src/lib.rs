@@ -37,7 +37,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Unable to read release file '{}': {}", path.display(), source))]
         ReadReleaseFile { path: PathBuf, source: io::Error },
@@ -60,7 +60,8 @@ impl BottlerocketRelease {
     {
         let path = path.as_ref();
 
-        let release_data = fs::read_to_string(path).context(error::ReadReleaseFile { path })?;
+        let release_data =
+            fs::read_to_string(path).context(error::ReadReleaseFileSnafu { path })?;
 
         // Split and process each line
         let mut pairs: Vec<(String, String)> = release_data
@@ -95,6 +96,6 @@ impl BottlerocketRelease {
         // Add information from other sources
         pairs.push(("arch".to_string(), ARCH.to_string()));
 
-        envy::from_iter(pairs).context(error::LoadReleaseData { path })
+        envy::from_iter(pairs).context(error::LoadReleaseDataSnafu { path })
     }
 }

@@ -28,7 +28,7 @@ impl TryFrom<&str> for KubernetesName {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_NAME.is_match(input),
-            error::Pattern {
+            error::PatternSnafu {
                 thing: "Kubernetes name",
                 pattern: KUBERNETES_NAME.clone(),
                 input
@@ -94,7 +94,7 @@ impl TryFrom<&str> for KubernetesLabelKey {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_LABEL_KEY.is_match(input),
-            error::BigPattern {
+            error::BigPatternSnafu {
                 thing: "Kubernetes label key",
                 input
             }
@@ -170,7 +170,7 @@ impl TryFrom<&str> for KubernetesLabelValue {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_LABEL_VALUE.is_match(input),
-            error::BigPattern {
+            error::BigPatternSnafu {
                 thing: "Kubernetes label value",
                 input
             }
@@ -243,7 +243,7 @@ impl TryFrom<&str> for KubernetesTaintValue {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_TAINT_VALUE.is_match(input),
-            error::BigPattern {
+            error::BigPatternSnafu {
                 thing: "Kubernetes taint value",
                 input
             }
@@ -310,14 +310,14 @@ impl TryFrom<&str> for KubernetesClusterName {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             !input.is_empty(),
-            error::InvalidClusterName {
+            error::InvalidClusterNameSnafu {
                 name: input,
                 msg: "must not be empty"
             }
         );
         ensure!(
             KubernetesLabelValue::try_from(input).is_ok(),
-            error::InvalidClusterName {
+            error::InvalidClusterNameSnafu {
                 name: input,
                 msg: "cluster names must be valid Kubernetes label values"
             }
@@ -366,7 +366,7 @@ impl TryFrom<&str> for KubernetesAuthenticationMode {
     fn try_from(input: &str) -> Result<Self, error::Error> {
         ensure!(
             matches!(input, "aws" | "tls"),
-            error::InvalidAuthenticationMode { input }
+            error::InvalidAuthenticationModeSnafu { input }
         );
         Ok(KubernetesAuthenticationMode {
             inner: input.to_string(),
@@ -417,7 +417,7 @@ impl TryFrom<&str> for KubernetesBootstrapToken {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_BOOTSTRAP_TOKEN.is_match(input),
-            error::Pattern {
+            error::PatternSnafu {
                 thing: "Kubernetes bootstrap token",
                 pattern: KUBERNETES_BOOTSTRAP_TOKEN.clone(),
                 input
@@ -482,7 +482,7 @@ impl TryFrom<&str> for KubernetesEvictionHardKey {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<EvictionSignal>(&input).context(error::InvalidPlainValue {
+        serde_plain::from_str::<EvictionSignal>(&input).context(error::InvalidPlainValueSnafu {
             field: "Eviction Hard key",
         })?;
         Ok(KubernetesEvictionHardKey {
@@ -551,15 +551,15 @@ impl TryFrom<&str> for KubernetesThresholdValue {
         if input.ends_with("%") {
             let input_f32 = input[..input.len() - 1]
                 .parse::<f32>()
-                .context(error::InvalidPercentage { input })?;
+                .context(error::InvalidPercentageSnafu { input })?;
             ensure!(
                 (0.0..100.0).contains(&input_f32),
-                error::InvalidThresholdPercentage { input }
+                error::InvalidThresholdPercentageSnafu { input }
             )
         } else {
             ensure!(
                 KUBERNETES_QUANTITY.is_match(input),
-                error::Pattern {
+                error::PatternSnafu {
                     thing: "Kubernetes quantity",
                     pattern: KUBERNETES_QUANTITY.clone(),
                     input
@@ -629,9 +629,11 @@ impl TryFrom<&str> for KubernetesReservedResourceKey {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ReservedResources>(&input).context(error::InvalidPlainValue {
-            field: "Reserved sources key",
-        })?;
+        serde_plain::from_str::<ReservedResources>(&input).context(
+            error::InvalidPlainValueSnafu {
+                field: "Reserved sources key",
+            },
+        )?;
         Ok(KubernetesReservedResourceKey {
             inner: input.to_string(),
         })
@@ -678,7 +680,7 @@ impl TryFrom<&str> for KubernetesQuantityValue {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_QUANTITY.is_match(input),
-            error::Pattern {
+            error::PatternSnafu {
                 thing: "Kubernetes quantity",
                 pattern: KUBERNETES_QUANTITY.clone(),
                 input
@@ -739,7 +741,7 @@ impl TryFrom<&str> for KubernetesCloudProvider {
     fn try_from(input: &str) -> Result<Self, error::Error> {
         ensure!(
             matches!(input, "aws" | "external"),
-            error::InvalidAuthenticationMode { input }
+            error::InvalidAuthenticationModeSnafu { input }
         );
         Ok(KubernetesCloudProvider {
             inner: input.to_string(),
@@ -790,7 +792,7 @@ impl TryFrom<&str> for CpuManagerPolicy {
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         serde_plain::from_str::<ValidCpuManagerPolicy>(&input)
-            .context(error::InvalidCpuManagerPolicy { input })?;
+            .context(error::InvalidCpuManagerPolicySnafu { input })?;
         Ok(CpuManagerPolicy {
             inner: input.to_string(),
         })
@@ -839,11 +841,11 @@ impl TryFrom<&str> for KubernetesDurationValue {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             !input.is_empty(),
-            error::InvalidKubernetesDurationValue { input }
+            error::InvalidKubernetesDurationValueSnafu { input }
         );
         ensure!(
             KUBERNETES_DURATION_VALUE.is_match(input),
-            error::InvalidKubernetesDurationValue { input }
+            error::InvalidKubernetesDurationValueSnafu { input }
         );
         Ok(KubernetesDurationValue {
             inner: input.to_string(),
@@ -912,7 +914,7 @@ impl TryFrom<&str> for TopologyManagerScope {
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         serde_plain::from_str::<ValidTopologyManagerScope>(&input)
-            .context(error::InvalidTopologyManagerScope { input })?;
+            .context(error::InvalidTopologyManagerScopeSnafu { input })?;
         Ok(TopologyManagerScope {
             inner: input.to_string(),
         })
@@ -965,7 +967,7 @@ impl TryFrom<&str> for TopologyManagerPolicy {
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         serde_plain::from_str::<ValidTopologyManagerPolicy>(&input)
-            .context(error::InvalidTopologyManagerPolicy { input })?;
+            .context(error::InvalidTopologyManagerPolicySnafu { input })?;
         Ok(TopologyManagerPolicy {
             inner: input.to_string(),
         })

@@ -31,13 +31,13 @@ where
     let progress_bar = build_progress_bar(no_progress, "Uploading snapshot");
     let filename = path
         .file_name()
-        .context(error::InvalidImagePath { path })?
+        .context(error::InvalidImagePathSnafu { path })?
         .to_string_lossy();
 
     uploader
         .upload_from_file(path, desired_size, Some(&filename), progress_bar)
         .await
-        .context(error::UploadSnapshot)
+        .context(error::UploadSnapshotSnafu)
 }
 
 mod error {
@@ -45,7 +45,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Invalid image path '{}'", path.display()))]
         InvalidImagePath { path: PathBuf },

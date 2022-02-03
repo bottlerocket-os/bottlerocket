@@ -6,7 +6,7 @@ use super::{serialization, ScalarError};
 
 /// Possible errors from datastore operations.
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
+#[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("Error serializing {}: {} ", given, source))]
     Serialization {

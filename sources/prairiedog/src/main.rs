@@ -90,14 +90,14 @@ where
     command.args(args);
     let output = command
         .output()
-        .context(error::ExecutionFailure { command })?;
+        .context(error::ExecutionFailureSnafu { command })?;
 
     trace!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     trace!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     ensure!(
         output.status.success(),
-        error::CommandFailure { bin_path, output }
+        error::CommandFailureSnafu { bin_path, output }
     );
 
     Ok(())
@@ -111,14 +111,14 @@ fn capture_dump() -> Result<()> {
     // Delete previous dumps, if they exist
     if Path::new(&kdump_file_path).exists() {
         info!("Deleting existing memory dump");
-        fs::remove_file(&kdump_file_path).context(error::RemoveFile {
+        fs::remove_file(&kdump_file_path).context(error::RemoveFileSnafu {
             path: &kdump_file_path,
         })?;
     }
 
     if Path::new(&dmesg_file_path).exists() {
         info!("Deleting existing dmesg dump");
-        fs::remove_file(&dmesg_file_path).context(error::RemoveFile {
+        fs::remove_file(&dmesg_file_path).context(error::RemoveFileSnafu {
             path: &dmesg_file_path,
         })?;
     }
@@ -158,7 +158,7 @@ fn capture_dump() -> Result<()> {
 // Mounts the active boot partition
 fn prepare_boot() -> Result<()> {
     // Get the current partitions state
-    let state = signpost::State::load().context(error::LoadState)?;
+    let state = signpost::State::load().context(error::LoadStateSnafu)?;
     let boot_partition_path = &state.active_set().boot;
     let flags = nix::mount::MsFlags::MS_RELATIME
         | nix::mount::MsFlags::MS_NOSUID
@@ -178,7 +178,7 @@ fn prepare_boot() -> Result<()> {
         flags,
         NONE,
     )
-    .context(error::Mount {
+    .context(error::MountSnafu {
         path: BOOT_MOUNT_PATH,
     })?;
 
@@ -192,7 +192,7 @@ fn prepare_boot() -> Result<()> {
         nix::mount::MsFlags::MS_PRIVATE,
         NONE,
     )
-    .context(error::SetupMount {
+    .context(error::SetupMountSnafu {
         path: BOOT_MOUNT_PATH,
     })?;
 
@@ -202,7 +202,7 @@ fn prepare_boot() -> Result<()> {
 /// Loads the crash kernel using kexec-tools
 fn load_crash_kernel() -> Result<()> {
     let kexec_crash_size_path = Path::new(KEXEC_CRASH_SIZE);
-    let kexec_crash_size = fs::read(kexec_crash_size_path).context(error::ReadFile {
+    let kexec_crash_size = fs::read(kexec_crash_size_path).context(error::ReadFileSnafu {
         path: kexec_crash_size_path,
     })?;
     let memory_allocated = String::from_utf8_lossy(&kexec_crash_size);
@@ -217,14 +217,14 @@ fn load_crash_kernel() -> Result<()> {
 
     let kexec_load_disabled_path = Path::new(KEXEC_LOAD_DISABLED);
     let kexec_load_disabled_value =
-        fs::read(kexec_load_disabled_path).context(error::ReadFile {
+        fs::read(kexec_load_disabled_path).context(error::ReadFileSnafu {
             path: kexec_load_disabled_path,
         })?;
     let kexec_load_disabled = String::from_utf8_lossy(&kexec_load_disabled_value).trim() == "1";
 
     // We provide a more useful message when `kexec_load_disabled` is set to 1
     if kexec_load_disabled {
-        return error::KexecLoadDisabled.fail();
+        return error::KexecLoadDisabledSnafu.fail();
     }
 
     // Conditionally add `irqpoll` depending on the architecture
@@ -259,14 +259,15 @@ fn setup_logger(args: &Args) -> Result<()> {
         // Write the logs to a file while capturing dumps, since the journal isn't available
         Subcommand::CaptureDump(_) => {
             let log_file_path = Path::new(KDUMP_LOGS_PATH).join(LOG_FILE);
-            let log_file = File::create(&log_file_path).context(error::WriteFile {
+            let log_file = File::create(&log_file_path).context(error::WriteFileSnafu {
                 path: log_file_path,
             })?;
 
-            WriteLogger::init(log_level, LogConfig::default(), log_file).context(error::Logger)?;
+            WriteLogger::init(log_level, LogConfig::default(), log_file)
+                .context(error::LoggerSnafu)?;
         }
         // SimpleLogger will send errors to stderr and anything less to stdout.
-        _ => SimpleLogger::init(log_level, LogConfig::default()).context(error::Logger)?,
+        _ => SimpleLogger::init(log_level, LogConfig::default()).context(error::LoggerSnafu)?,
     }
 
     Ok(())
@@ -299,7 +300,7 @@ mod error {
     use std::process::{Command, Output};
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("'{}' failed - stderr: {}",
                         bin_path, String::from_utf8_lossy(&output.stderr)))]

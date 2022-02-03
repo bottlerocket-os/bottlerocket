@@ -10,7 +10,7 @@ exclude = ["README.md"]
 
 [dependencies]
 chrono = "0.4.11"
-snafu = { version = "0.6.3", features = ["backtraces-impl-backtrace-crate"] }
+snafu = { version = "0.7", features = ["backtraces-impl-backtrace-crate"] }
 
 [build-dependencies]
 cargo-readme = "3.1"

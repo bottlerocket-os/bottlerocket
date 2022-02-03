@@ -9,7 +9,7 @@ use std::string::String;
 // We want server (router/handler) and controller errors together so it's easy to define response
 // error codes for all the high-level types of errors that could happen during a request.
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(super)")]
+#[snafu(visibility(pub(super)))]
 pub enum Error {
     // Systemd Notification errors
     #[snafu(display("Systemd notify error: {}", source))]

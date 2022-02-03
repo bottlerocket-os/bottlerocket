@@ -20,16 +20,20 @@ impl AwsDataProvider {
     /// Fetches user data, which is expected to be in TOML form and contain a `[settings]` section,
     /// returning a SettingsJson representing the inside of that section.
     async fn user_data(client: &mut ImdsClient) -> Result<Option<SettingsJson>> {
-        let user_data_raw = match client.fetch_userdata().await.context(error::ImdsRequest)? {
+        let user_data_raw = match client
+            .fetch_userdata()
+            .await
+            .context(error::ImdsRequestSnafu)?
+        {
             Some(user_data_raw) => user_data_raw,
             None => return Ok(None),
         };
         let user_data_str = expand_slice_maybe(&user_data_raw)
-            .context(error::Decompression { what: "user data" })?;
+            .context(error::DecompressionSnafu { what: "user data" })?;
         trace!("Received user data: {}", user_data_str);
 
         let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
-            error::SettingsToJSON {
+            error::SettingsToJSONSnafu {
                 from: "instance user data",
             },
         )?;
@@ -44,13 +48,14 @@ impl AwsDataProvider {
 
         let region = if Path::new(file).exists() {
             info!("{} found at {}, using it", desc, file);
-            let data = fs::read_to_string(file).context(error::InputFileRead { path: file })?;
+            let data =
+                fs::read_to_string(file).context(error::InputFileReadSnafu { path: file })?;
             let iid: serde_json::Value =
-                serde_json::from_str(&data).context(error::DeserializeJson)?;
+                serde_json::from_str(&data).context(error::DeserializeJsonSnafu)?;
             iid.get("region")
-                .context(error::IdentityDocMissingData { missing: "region" })?
+                .context(error::IdentityDocMissingDataSnafu { missing: "region" })?
                 .as_str()
-                .context(error::WrongType {
+                .context(error::WrongTypeSnafu {
                     field_name: "region",
                     expected_type: "string",
                 })?
@@ -59,8 +64,8 @@ impl AwsDataProvider {
             client
                 .fetch_region()
                 .await
-                .context(error::ImdsRequest)?
-                .context(error::ImdsMissingRegion)?
+                .context(error::ImdsRequestSnafu)?
+                .context(error::ImdsMissingRegionSnafu)?
         };
         trace!(
             "Retrieved region from instance identity document: {}",
@@ -69,7 +74,7 @@ impl AwsDataProvider {
 
         let val = json!({ "aws": {"region": region} });
 
-        let json = SettingsJson::from_val(&val, desc).context(error::SettingsToJSON {
+        let json = SettingsJson::from_val(&val, desc).context(error::SettingsToJSONSnafu {
             from: "instance identity document",
         })?;
         Ok(Some(json))
@@ -114,7 +119,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Failed to decompress {}: {}", what, source))]
         Decompression { what: String, source: io::Error },

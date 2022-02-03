@@ -32,7 +32,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed to build request: {}", source))]
         RequestSetup { source: http::Error },
@@ -89,7 +89,7 @@ where
     // Error if the response status is in not in the 2xx range.
     ensure!(
         status.is_success(),
-        error::ResponseStatus {
+        error::ResponseStatusSnafu {
             method: method.as_ref(),
             code: status,
             uri: uri.as_ref(),
@@ -131,17 +131,20 @@ where
         .uri(&uri)
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(request_data))
-        .context(error::RequestSetup)?;
+        .context(error::RequestSetupSnafu)?;
 
     // Send request.
-    let res = client.request(request).await.context(error::RequestSend)?;
+    let res = client
+        .request(request)
+        .await
+        .context(error::RequestSendSnafu)?;
     let status = res.status();
 
     // Read streaming response body into a string.
     let body_bytes = body::to_bytes(res.into_body())
         .await
-        .context(error::ResponseBodyRead)?;
-    let body = String::from_utf8(body_bytes.to_vec()).context(error::NonUtf8Response)?;
+        .context(error::ResponseBodyReadSnafu)?;
+    let body = String::from_utf8(body_bytes.to_vec()).context(error::NonUtf8ResponseSnafu)?;
 
     Ok((status, body))
 }

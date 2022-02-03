@@ -38,7 +38,7 @@ impl Metricdog {
         os_release: BottlerocketRelease,
         healthcheck: Box<dyn ServiceCheck>,
     ) -> Result<Self> {
-        let metrics_url = Url::from_str(&config.metrics_url).context(error::UrlParse {
+        let metrics_url = Url::from_str(&config.metrics_url).context(error::UrlParseSnafu {
             url: &config.metrics_url,
         })?;
         Ok(Self {
@@ -145,14 +145,14 @@ impl Metricdog {
                 timeout_sec.unwrap_or(DEFAULT_TIMEOUT_SECONDS),
             ))
             .build()
-            .context(error::HttpClient { url: url.clone() })?;
+            .context(error::HttpClientSnafu { url: url.clone() })?;
         let response = client
             .get(url.clone())
             .send()
-            .context(error::HttpSend { url: url.clone() })?;
+            .context(error::HttpSendSnafu { url: url.clone() })?;
         response
             .error_for_status()
-            .context(error::HttpResponse { url })?;
+            .context(error::HttpResponseSnafu { url })?;
         Ok(())
     }
 }

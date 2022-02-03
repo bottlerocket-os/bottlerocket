@@ -566,7 +566,7 @@ fn parse_update_cancel_args(args: Vec<String>) -> UpdateSubcommand {
 async fn check(args: &Args) -> Result<String> {
     let output = update::check(&args.socket_path)
         .await
-        .context(error::UpdateCheck)?;
+        .context(error::UpdateCheckSnafu)?;
 
     match serde_json::from_str::<serde_json::Value>(&output) {
         Ok(value) => println!("{:#}", value),
@@ -600,14 +600,14 @@ fn massage_set_input(input_map: HashMap<Key, String>) -> Result<HashMap<Key, Str
     let mut massaged_map = HashMap::with_capacity(input_map.len());
     for (key, in_val) in input_map {
         let serialized = if let Ok(b) = serde_json::from_str::<bool>(&in_val) {
-            serialize_scalar(&b).context(error::Serialize)?
+            serialize_scalar(&b).context(error::SerializeSnafu)?
         } else if let Ok(u) = serde_json::from_str::<u64>(&in_val) {
-            serialize_scalar(&u).context(error::Serialize)?
+            serialize_scalar(&u).context(error::SerializeSnafu)?
         } else if let Ok(f) = serde_json::from_str::<f64>(&in_val) {
-            serialize_scalar(&f).context(error::Serialize)?
+            serialize_scalar(&f).context(error::SerializeSnafu)?
         } else {
             // No deserialization, already a string, just serialize
-            serialize_scalar(&in_val).context(error::Serialize)?
+            serialize_scalar(&in_val).context(error::SerializeSnafu)?
         };
         massaged_map.insert(key, serialized);
     }
@@ -631,14 +631,14 @@ async fn run() -> Result<()> {
         TerminalMode::Stderr,
         ColorChoice::Auto,
     )
-    .context(error::Logger)?;
+    .context(error::LoggerSnafu)?;
 
     match subcommand {
         Subcommand::Raw(raw) => {
             let (status, body) =
                 apiclient::raw_request(&args.socket_path, &raw.uri, &raw.method, raw.data)
                     .await
-                    .context(error::Request {
+                    .context(error::RequestSnafu {
                         uri: &raw.uri,
                         method: &raw.method,
                     })?;
@@ -656,13 +656,13 @@ async fn run() -> Result<()> {
         Subcommand::Apply(apply) => {
             apply::apply(&args.socket_path, apply.input_sources)
                 .await
-                .context(error::Apply)?;
+                .context(error::ApplySnafu)?;
         }
 
         Subcommand::Exec(exec) => {
             exec::exec(&args.socket_path, exec.command, exec.target, exec.tty)
                 .await
-                .context(error::Exec)?;
+                .context(error::ExecSnafu)?;
         }
 
         Subcommand::Get(get) => {
@@ -670,7 +670,7 @@ async fn run() -> Result<()> {
                 GetArgs::Uri(uri) => get::get_uri(&args.socket_path, uri).await,
                 GetArgs::Prefixes(prefixes) => get::get_prefixes(&args.socket_path, prefixes).await,
             };
-            let value = result.context(error::Get)?;
+            let value = result.context(error::GetSnafu)?;
             let pretty =
                 serde_json::to_string_pretty(&value).expect("JSON Value already validated as JSON");
             println!("{}", pretty);
@@ -679,7 +679,7 @@ async fn run() -> Result<()> {
         Subcommand::Reboot(_reboot) => {
             reboot::reboot(&args.socket_path)
                 .await
-                .context(error::Reboot)?;
+                .context(error::RebootSnafu)?;
         }
 
         Subcommand::Set(set) => {
@@ -694,18 +694,18 @@ async fn run() -> Result<()> {
                     // The data store deserialization code understands how to turn the key names
                     // (a.b.c) and serialized values into the nested Settings structure.
                     settings = datastore::deserialization::from_map(&massaged_map)
-                        .context(error::DeserializeMap)?;
+                        .context(error::DeserializeMapSnafu)?;
                 }
                 SetArgs::Json(json) => {
                     // No processing to do on JSON input; the format determines the types.  serde
                     // can turn a Value into the nested Settings structure itself.
-                    settings = serde_json::from_value(json).context(error::DeserializeJson)?;
+                    settings = serde_json::from_value(json).context(error::DeserializeJsonSnafu)?;
                 }
             };
 
             set::set(&args.socket_path, &settings)
                 .await
-                .context(error::Set)?;
+                .context(error::SetSnafu)?;
         }
 
         Subcommand::Update(subcommand) => match subcommand {
@@ -725,14 +725,14 @@ async fn run() -> Result<()> {
 
                 update::apply(&args.socket_path)
                     .await
-                    .context(error::UpdateApply)?;
+                    .context(error::UpdateApplySnafu)?;
 
                 // If the user requested it, and if we applied an update, reboot.  (update::apply
                 // will fail if no update was available or it couldn't apply the update.)
                 if apply.reboot {
                     reboot::reboot(&args.socket_path)
                         .await
-                        .context(error::Reboot)?;
+                        .context(error::RebootSnafu)?;
                 } else {
                     info!("Update has been applied and will take effect on next reboot.");
                 }
@@ -741,7 +741,7 @@ async fn run() -> Result<()> {
             UpdateSubcommand::Cancel(_cancel) => {
                 update::cancel(&args.socket_path)
                     .await
-                    .context(error::UpdateCancel)?;
+                    .context(error::UpdateCancelSnafu)?;
             }
         },
     }
@@ -765,7 +765,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Failed to apply settings: {}", source))]
         Apply { source: apply::Error },

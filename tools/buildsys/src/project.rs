@@ -31,7 +31,7 @@ impl ProjectInfo {
             files.extend(
                 walker
                     .filter_entry(|e| !Self::ignored(e))
-                    .flat_map(|e| e.context(error::DirectoryWalk))
+                    .flat_map(|e| e.context(error::DirectoryWalkSnafu))
                     .map(|e| e.into_path())
                     .filter(|e| e.is_file()),
             );

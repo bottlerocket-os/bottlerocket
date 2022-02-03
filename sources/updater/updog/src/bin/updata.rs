@@ -159,11 +159,11 @@ impl WaveArgs {
     fn set(self) -> Result<()> {
         let mut manifest: Manifest = update_metadata::load_file(&self.file)?;
 
-        let wave_file = self.wave_file.context(error::WaveFileArg)?;
+        let wave_file = self.wave_file.context(error::WaveFileArgSnafu)?;
         let wave_str =
-            fs::read_to_string(&wave_file).context(error::ConfigRead { path: &wave_file })?;
+            fs::read_to_string(&wave_file).context(error::ConfigReadSnafu { path: &wave_file })?;
         let waves: UpdateWaves =
-            toml::from_str(&wave_str).context(error::ConfigParse { path: &wave_file })?;
+            toml::from_str(&wave_str).context(error::ConfigParseSnafu { path: &wave_file })?;
 
         let start_at = self.start_at.unwrap_or(Utc::now());
         let num_matching = manifest.set_waves(
@@ -200,9 +200,9 @@ impl MigrationArgs {
 
         // Load the file we will be reading from
         let release_data =
-            fs::read_to_string(&self.from).context(error::ConfigRead { path: &self.from })?;
+            fs::read_to_string(&self.from).context(error::ConfigReadSnafu { path: &self.from })?;
         let release: Release =
-            toml::from_str(&release_data).context(error::ReleaseParse { path: &self.from })?;
+            toml::from_str(&release_data).context(error::ReleaseParseSnafu { path: &self.from })?;
 
         // Replace the manifest 'migrations' section with the new data
         manifest.migrations = release.migrations;
@@ -252,7 +252,7 @@ enum Command {
 
 fn main_inner() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::LoggerSnafu)?;
 
     match Command::from_args() {
         Command::Init(args) => {
@@ -320,7 +320,7 @@ mod tests {
     // Ensure that we can update a blank manifest
     fn test_migration_copy() -> Result<()> {
         let release_path = "tests/data/release.toml";
-        let temp_manifest = NamedTempFile::new().context(error::TmpFileCreate)?;
+        let temp_manifest = NamedTempFile::new().context(error::TmpFileCreateSnafu)?;
 
         // Create a new blank manifest
         update_metadata::write_file(&temp_manifest.path(), &Manifest::default()).unwrap();
@@ -349,7 +349,7 @@ mod tests {
 
         // Write example data to temp manifest so we dont' overwrite the file
         // when we call MigrationsArgs.set() below
-        let temp_manifest = NamedTempFile::new().context(error::TmpFileCreate)?;
+        let temp_manifest = NamedTempFile::new().context(error::TmpFileCreateSnafu)?;
         let example_data = fs::read_to_string(&example_manifest).unwrap();
         fs::write(&temp_manifest, &example_data).unwrap();
 
@@ -372,7 +372,7 @@ mod tests {
 
     #[test]
     fn max_versions() -> Result<()> {
-        let tmpfd = NamedTempFile::new().context(error::TmpFileCreate)?;
+        let tmpfd = NamedTempFile::new().context(error::TmpFileCreateSnafu)?;
         update_metadata::write_file(tmpfd.path(), &Manifest::default()).unwrap();
         AddUpdateArgs {
             file: PathBuf::from(tmpfd.path()),

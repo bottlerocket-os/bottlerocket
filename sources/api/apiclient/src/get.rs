@@ -18,8 +18,8 @@ where
         let method = "GET";
         let (_status, body) = crate::raw_request(&socket_path, &uri, method, None)
             .await
-            .context(error::Request { uri, method })?;
-        let value = serde_json::from_str(&body).context(error::ResponseJson { body })?;
+            .context(error::RequestSnafu { uri, method })?;
+        let value = serde_json::from_str(&body).context(error::ResponseJsonSnafu { body })?;
         results.push(value);
     }
 
@@ -30,7 +30,7 @@ where
             merge_json(&mut merge_into, merge_from);
             merge_into
         })
-        .context(error::NoPrefixes)
+        .context(error::NoPrefixesSnafu)
 }
 
 /// Fetches the given URI from the API and returns the result as an untyped Value.
@@ -41,15 +41,15 @@ where
     let method = "GET";
     let (_status, body) = crate::raw_request(&socket_path, &uri, method, None)
         .await
-        .context(error::Request { uri, method })?;
-    serde_json::from_str(&body).context(error::ResponseJson { body })
+        .context(error::RequestSnafu { uri, method })?;
+    serde_json::from_str(&body).context(error::ResponseJsonSnafu { body })
 }
 
 mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Must give prefixes to query"))]
         NoPrefixes,

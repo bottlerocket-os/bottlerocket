@@ -22,7 +22,7 @@ where
     let uri = "/configuration-files";
     let config_files: model::ConfigurationFiles = schnauzer::get_json(socket_path, uri, query)
         .await
-        .context(error::GetJson { uri })?;
+        .context(error::GetJsonSnafu { uri })?;
 
     Ok(config_files)
 }
@@ -59,7 +59,7 @@ pub fn render_config_files(
 
         let try_rendered = registry.render(&name, &settings);
         if strict {
-            let rendered = try_rendered.context(error::TemplateRender { template: name })?;
+            let rendered = try_rendered.context(error::TemplateRenderSnafu { template: name })?;
             rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
         } else {
             match try_rendered {
@@ -102,13 +102,13 @@ impl RenderedConfigFile {
     /// Writes the rendered template at the proper location
     fn write_to_disk(&self) -> Result<()> {
         if let Some(dirname) = self.path.parent() {
-            fs::create_dir_all(dirname).context(error::TemplateWrite {
+            fs::create_dir_all(dirname).context(error::TemplateWriteSnafu {
                 path: dirname,
                 pathtype: "directory",
             })?;
         };
 
-        fs::write(&self.path, self.rendered.as_bytes()).context(error::TemplateWrite {
+        fs::write(&self.path, self.rendered.as_bytes()).context(error::TemplateWriteSnafu {
             path: &self.path,
             pathtype: "file",
         })

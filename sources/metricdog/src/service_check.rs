@@ -49,7 +49,7 @@ fn systemctl(args: &[&str]) -> Result<Outcome> {
     let output = Command::new("systemctl")
         .args(args)
         .output()
-        .with_context(|| error::Command {
+        .with_context(|_| error::CommandSnafu {
             command: "systemctl",
             args: args.iter().map(|&s| s.to_owned()).collect::<Vec<String>>(),
         })?;

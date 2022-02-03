@@ -35,8 +35,8 @@ impl InfraConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let infra_config_str = fs::read_to_string(path).context(error::File { path })?;
-        toml::from_str(&infra_config_str).context(error::InvalidToml { path })
+        let infra_config_str = fs::read_to_string(path).context(error::FileSnafu { path })?;
+        toml::from_str(&infra_config_str).context(error::InvalidTomlSnafu { path })
     }
 
     /// Deserializes an InfraConfig from a Infra.lock file at a given path
@@ -45,8 +45,8 @@ impl InfraConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let infra_config_str = fs::read_to_string(path).context(error::File { path })?;
-        serde_yaml::from_str(&infra_config_str).context(error::InvalidLock { path })
+        let infra_config_str = fs::read_to_string(path).context(error::FileSnafu { path })?;
+        serde_yaml::from_str(&infra_config_str).context(error::InvalidLockSnafu { path })
     }
 
     /// Deserializes an InfraConfig from a given path, if it exists, otherwise builds a default
@@ -97,7 +97,7 @@ impl InfraConfig {
         Ok(infra_config_path
             .as_ref()
             .parent()
-            .context(error::Parent {
+            .context(error::ParentSnafu {
                 path: infra_config_path.as_ref(),
             })?
             .join("Infra.lock"))
@@ -232,8 +232,8 @@ impl RepoExpirationPolicy {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let expiration_str = fs::read_to_string(path).context(error::File { path })?;
-        toml::from_str(&expiration_str).context(error::InvalidToml { path })
+        let expiration_str = fs::read_to_string(path).context(error::FileSnafu { path })?;
+        toml::from_str(&expiration_str).context(error::InvalidTomlSnafu { path })
     }
 }
 
@@ -252,7 +252,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed to read '{}': {}", path.display(), source))]
         File { path: PathBuf, source: io::Error },

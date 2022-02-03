@@ -112,7 +112,7 @@ pub(crate) fn main_inner(arguments: Arguments, service_check: Box<dyn ServiceChe
     } else {
         BottlerocketRelease::new()
     }
-    .context(error::BottlerocketRelease)?;
+    .context(error::BottlerocketReleaseSnafu)?;
 
     // instantiate the metricdog object
     let metricdog = Metricdog::from_parts(config, os_release, service_check)?;

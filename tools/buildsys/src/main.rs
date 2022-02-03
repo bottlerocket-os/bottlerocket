@@ -29,7 +29,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         ManifestParse {
             source: super::manifest::error::Error,
@@ -125,12 +125,12 @@ fn build_package() -> Result<()> {
     let variant = getenv("BUILDSYS_VARIANT")?;
     let variant_manifest_path = root_dir.join("variants").join(variant).join(manifest_file);
     let variant_manifest =
-        ManifestInfo::new(variant_manifest_path).context(error::ManifestParse)?;
+        ManifestInfo::new(variant_manifest_path).context(error::ManifestParseSnafu)?;
     supported_arch(&variant_manifest)?;
 
     let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest =
-        ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParse)?;
+        ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParseSnafu)?;
 
     // if manifest has package.metadata.build-package.variant-specific = true, then println rerun-if-env-changed
     if let Some(sensitive) = manifest.variant_sensitive() {
@@ -140,7 +140,7 @@ fn build_package() -> Result<()> {
     }
 
     if let Some(files) = manifest.external_files() {
-        LookasideCache::fetch(&files).context(error::ExternalFileFetch)?;
+        LookasideCache::fetch(&files).context(error::ExternalFileFetchSnafu)?;
     }
 
     if let Some(groups) = manifest.source_groups() {
@@ -149,7 +149,7 @@ fn build_package() -> Result<()> {
         println!("cargo:rerun-if-env-changed={}", var);
 
         let dirs = groups.iter().map(|d| root.join(d)).collect::<Vec<_>>();
-        let info = ProjectInfo::crawl(&dirs).context(error::ProjectCrawl)?;
+        let info = ProjectInfo::crawl(&dirs).context(error::ProjectCrawlSnafu)?;
         for f in info.files {
             println!("cargo:rerun-if-changed={}", f.display());
         }
@@ -165,7 +165,7 @@ fn build_package() -> Result<()> {
     let spec = format!("{}.spec", package);
     println!("cargo:rerun-if-changed={}", spec);
 
-    let info = SpecInfo::new(PathBuf::from(&spec)).context(error::SpecParse)?;
+    let info = SpecInfo::new(PathBuf::from(&spec)).context(error::SpecParseSnafu)?;
 
     for f in info.sources {
         println!("cargo:rerun-if-changed={}", f.display());
@@ -175,7 +175,7 @@ fn build_package() -> Result<()> {
         println!("cargo:rerun-if-changed={}", f.display());
     }
 
-    PackageBuilder::build(&package).context(error::BuildAttempt)?;
+    PackageBuilder::build(&package).context(error::BuildAttemptSnafu)?;
 
     Ok(())
 }
@@ -186,7 +186,7 @@ fn build_variant() -> Result<()> {
     println!("cargo:rerun-if-changed={}", manifest_file);
 
     let manifest =
-        ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParse)?;
+        ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParseSnafu)?;
 
     supported_arch(&manifest)?;
 
@@ -195,7 +195,7 @@ fn build_variant() -> Result<()> {
         let image_layout = manifest.image_layout();
         let kernel_parameters = manifest.kernel_parameters();
         VariantBuilder::build(&packages, image_format, image_layout, kernel_parameters)
-            .context(error::BuildAttempt)?;
+            .context(error::BuildAttemptSnafu)?;
     } else {
         println!("cargo:warning=No included packages in manifest. Skipping variant build.");
     }
@@ -208,11 +208,11 @@ fn supported_arch(manifest: &ManifestInfo) -> Result<()> {
     if let Some(supported_arches) = manifest.supported_arches() {
         let arch = getenv("BUILDSYS_ARCH")?;
         let current_arch: SupportedArch =
-            serde_plain::from_str(&arch).context(error::UnknownArch { arch: &arch })?;
+            serde_plain::from_str(&arch).context(error::UnknownArchSnafu { arch: &arch })?;
 
         ensure!(
             supported_arches.contains(&current_arch),
-            error::UnsupportedArch {
+            error::UnsupportedArchSnafu {
                 arch: &arch,
                 supported_arches: supported_arches
                     .into_iter()
@@ -226,5 +226,5 @@ fn supported_arch(manifest: &ManifestInfo) -> Result<()> {
 
 /// Retrieve a variable that we expect to be set in the environment.
 fn getenv(var: &str) -> Result<String> {
-    env::var(var).context(error::Environment { var })
+    env::var(var).context(error::EnvironmentSnafu { var })
 }

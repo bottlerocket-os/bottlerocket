@@ -8,7 +8,7 @@ use reqwest::Url;
 use snafu::{Backtrace, Snafu};
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility(pub(crate)))]
 pub(crate) enum Error {
     #[snafu(display("Error calling Bottlerocket API '{}': {}", uri, source))]
     ApiClient {

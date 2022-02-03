@@ -28,7 +28,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(crate)")]
+    #[snafu(visibility(pub(crate)))]
     pub(crate) enum Error {
         #[snafu(display("Datastore does not exist, did storewolf run?"))]
         NonexistentDatastore,
@@ -147,12 +147,12 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     // Make sure the datastore exists
     ensure!(
         Path::new(&args.datastore_path).exists(),
-        error::NonexistentDatastore
+        error::NonexistentDatastoreSnafu
     );
 
     // Access to the data store is controlled through a RwLock, allowing many readers, but a
@@ -178,13 +178,13 @@ async fn run() -> Result<()> {
         args.exec_socket_path,
     )
     .await
-    .context(error::Server)
+    .context(error::ServerSnafu)
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-#[actix_web::main]
+#[actix_rt::main]
 async fn main() {
     if let Err(e) = run().await {
         eprintln!("{}", e);

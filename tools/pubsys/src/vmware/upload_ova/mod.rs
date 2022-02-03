@@ -47,12 +47,12 @@ pub(crate) struct UploadArgs {
 pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
     // If a lock file exists, use that, otherwise use Infra.toml or default
     let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, true)
-        .context(error::InfraConfig)?;
+        .context(error::InfraConfigSnafu)?;
     trace!("Using infra config: {:?}", infra_config);
 
     let vmware = infra_config
         .vmware
-        .context(error::MissingConfig { missing: "vmware" })?;
+        .context(error::MissingConfigSnafu { missing: "vmware" })?;
 
     // If the user gave an override list of datacenters, use it, otherwise use what's in the config
     let upload_datacenters = if !upload_args.datacenters.is_empty() {
@@ -62,7 +62,7 @@ pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
     };
     ensure!(
         !upload_datacenters.is_empty(),
-        error::MissingConfig {
+        error::MissingConfigSnafu {
             missing: "vmware.datacenters"
         }
     );
@@ -74,7 +74,7 @@ pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
     let creds_file = if let Some(ref creds_file) = *VMWARE_CREDS_PATH {
         if creds_file.exists() {
             info!("Using vSphere credentials file at {}", creds_file.display());
-            DatacenterCredsConfig::from_path(creds_file).context(error::VmwareConfig)?
+            DatacenterCredsConfig::from_path(creds_file).context(error::VmwareConfigSnafu)?
         } else {
             info!("vSphere credentials file not found, will attempt to use environment");
             DatacenterCredsConfig::default()
@@ -90,13 +90,13 @@ pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
     let dc_common = vmware.common.as_ref();
 
     // Read the import spec as a template
-    let import_spec_str = fs::read_to_string(&upload_args.spec).context(error::File {
+    let import_spec_str = fs::read_to_string(&upload_args.spec).context(error::FileSnafu {
         action: "read",
         path: &upload_args.spec,
     })?;
     let mut tt = TinyTemplate::new();
     tt.add_template(SPEC_TEMPLATE_NAME, &import_spec_str)
-        .context(error::AddTemplate {
+        .context(error::AddTemplateSnafu {
             path: &upload_args.spec,
         })?;
 
@@ -117,7 +117,7 @@ pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
             .take_missing_from(dc_config)
             .take_missing_from(dc_common)
             .build()
-            .context(error::DatacenterBuild)?;
+            .context(error::DatacenterBuildSnafu)?;
 
         // Use a similar pattern here for credentials; start with environment variables and fill in
         // any missing items with the datacenter-specific credentials from file.
@@ -125,12 +125,12 @@ pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
         let creds: DatacenterCreds = creds_env
             .take_missing_from(dc_creds)
             .build()
-            .context(error::CredsBuild)?;
+            .context(error::CredsBuildSnafu)?;
 
         // Render the import spec with this datacenter's details and write to temp file
         let rendered_spec = render_spec(&tt, &datacenter.network, upload_args.mark_as_template)?;
-        let import_spec = NamedTempFile::new().context(error::TempFile)?;
-        fs::write(import_spec.path(), &rendered_spec).context(error::File {
+        let import_spec = NamedTempFile::new().context(error::TempFileSnafu)?;
+        fs::write(import_spec.path(), &rendered_spec).context(error::FileSnafu {
             action: "write",
             path: import_spec.path(),
         })?;
@@ -150,7 +150,7 @@ pub(crate) fn run(args: &Args, upload_args: &UploadArgs) -> Result<()> {
 
         Govc::new(datacenter, creds)
             .upload_ova(&upload_args.name, &upload_args.ova, import_spec)
-            .context(error::UploadOva)?;
+            .context(error::UploadOvaSnafu)?;
     }
 
     Ok(())
@@ -176,7 +176,7 @@ where
 
     Ok(tt
         .render(SPEC_TEMPLATE_NAME, &context)
-        .context(error::RenderTemplate)?)
+        .context(error::RenderTemplateSnafu)?)
 }
 
 mod error {
@@ -185,7 +185,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Error building template from '{}': {}", path.display(), source))]
         AddTemplate {

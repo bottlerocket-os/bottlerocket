@@ -30,7 +30,7 @@ where
     // WebSocket afterward.
     let response = UnixClient.call(uri).await.map_err(|e| {
         // hyper-unix-connector doesn't have its own error type; not worth bringing in 'anyhow'
-        error::Connect {
+        error::ConnectSnafu {
             socket: socket_path.as_ref(),
             message: e.to_string(),
         }
@@ -51,12 +51,12 @@ where
     // WebSocket stream that we can use to talk to the server, and the HTTP response.
     let (ws_stream, resp) = client_async(ws_request, response)
         .await
-        .context(error::Upgrade)?;
+        .context(error::UpgradeSnafu)?;
 
     // We only use the HTTP response to confirm that we switched protocols correctly.
     ensure!(
         resp.status() == StatusCode::SWITCHING_PROTOCOLS,
-        error::Protocol {
+        error::ProtocolSnafu {
             code: resp.status()
         }
     );
@@ -70,7 +70,7 @@ pub(crate) mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed to connect to server at {}: {}", socket.display(), message))]
         Connect { socket: PathBuf, message: String },

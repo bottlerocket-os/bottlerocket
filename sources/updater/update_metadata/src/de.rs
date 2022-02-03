@@ -21,10 +21,10 @@ where
     ) -> Result<(), error::Error> {
         let bound = key
             .parse::<u32>()
-            .context(error::BadBound { bound_str: key })?;
+            .context(error::BadBoundSnafu { bound_str: key })?;
         ensure!(
             map.insert(bound, time).is_none(),
-            error::DuplicateKeyId { keyid: bound }
+            error::DuplicateKeyIdSnafu { keyid: bound }
         );
         Ok(())
     }
@@ -74,7 +74,7 @@ where
                 }
             }
         }
-        error::BadDataVersionsFromTo { key }.fail()
+        error::BadDataVersionsFromToSnafu { key }.fail()
     }
 
     fn parse_tuple_key(
@@ -87,10 +87,10 @@ where
         if let (Ok(from), Ok(to)) = (serde_plain::from_str(from), serde_plain::from_str(to)) {
             ensure!(
                 map.insert((from, to), list).is_none(),
-                error::DuplicateVersionKey { key }
+                error::DuplicateVersionKeySnafu { key }
             );
         } else {
-            return error::BadDataVersionsFromTo {
+            return error::BadDataVersionsFromToSnafu {
                 key: format!("{}, {}", from, to),
             }
             .fail();

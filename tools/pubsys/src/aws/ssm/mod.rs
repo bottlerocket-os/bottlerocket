@@ -57,8 +57,8 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     // Setup   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     // If a lock file exists, use that, otherwise use Infra.toml
-    let infra_config =
-        InfraConfig::from_path_or_lock(&args.infra_config_path, false).context(error::Config)?;
+    let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
+        .context(error::ConfigSnafu)?;
     trace!("Parsed infra config: {:#?}", infra_config);
     let aws = infra_config.aws.unwrap_or_else(Default::default);
     let ssm_prefix = aws.ssm_prefix.as_deref().unwrap_or_else(|| "");
@@ -71,18 +71,18 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     };
     ensure!(
         !regions.is_empty(),
-        error::MissingConfig {
+        error::MissingConfigSnafu {
             missing: "aws.regions"
         }
     );
-    let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegion)?;
+    let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegionSnafu)?;
 
     let amis = parse_ami_input(&regions, &ssm_args, &aws)?;
 
     let mut ssm_clients = HashMap::with_capacity(amis.len());
     for region in amis.keys() {
         let ssm_client =
-            build_client::<SsmClient>(&region, &base_region, &aws).context(error::Client {
+            build_client::<SsmClient>(&region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "SSM",
                 region: region.name(),
             })?;
@@ -103,7 +103,7 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
         ssm_args.template_path.display()
     );
     let template_parameters = template::get_parameters(&ssm_args.template_path, &build_context)
-        .context(error::FindTemplates)?;
+        .context(error::FindTemplatesSnafu)?;
 
     if template_parameters.parameters.is_empty() {
         info!(
@@ -115,7 +115,7 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
 
     let new_parameters =
         template::render_parameters(template_parameters, amis, ssm_prefix, &build_context)
-            .context(error::RenderTemplates)?;
+            .context(error::RenderTemplatesSnafu)?;
     trace!("Generated templated parameters: {:#?}", new_parameters);
 
     // SSM get/compare   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -124,7 +124,7 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     let new_parameter_names: Vec<&SsmKey> = new_parameters.keys().collect();
     let current_parameters = ssm::get_parameters(&new_parameter_names, &ssm_clients)
         .await
-        .context(error::FetchSsm)?;
+        .context(error::FetchSsmSnafu)?;
     trace!("Current SSM parameters: {:#?}", current_parameters);
 
     // Show the difference between source and target parameters in SSM.
@@ -139,7 +139,7 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     if !ssm_args.allow_clobber {
         let current_keys: HashSet<&SsmKey> = current_parameters.keys().collect();
         let new_keys: HashSet<&SsmKey> = parameters_to_set.keys().collect();
-        ensure!(current_keys.is_disjoint(&new_keys), error::NoClobber);
+        ensure!(current_keys.is_disjoint(&new_keys), error::NoClobberSnafu);
     }
 
     // SSM set   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -147,12 +147,12 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     info!("Setting updated SSM parameters.");
     ssm::set_parameters(&parameters_to_set, &ssm_clients)
         .await
-        .context(error::SetSsm)?;
+        .context(error::SetSsmSnafu)?;
 
     info!("Validating whether live parameters in SSM reflect changes.");
     ssm::validate_parameters(&parameters_to_set, &ssm_clients)
         .await
-        .context(error::ValidateSsm)?;
+        .context(error::ValidateSsmSnafu)?;
 
     info!("All parameters match requested values.");
     Ok(())
@@ -195,12 +195,12 @@ fn parse_ami_input(
     aws: &AwsConfig,
 ) -> Result<HashMap<Region, Image>> {
     info!("Using AMI data from path: {}", ssm_args.ami_input.display());
-    let file = File::open(&ssm_args.ami_input).context(error::File {
+    let file = File::open(&ssm_args.ami_input).context(error::FileSnafu {
         op: "open",
         path: &ssm_args.ami_input,
     })?;
     let mut ami_input: HashMap<String, Image> =
-        serde_json::from_reader(file).context(error::Deserialize {
+        serde_json::from_reader(file).context(error::DeserializeSnafu {
             path: &ssm_args.ami_input,
         })?;
     trace!("Parsed AMI input: {:#?}", ami_input);
@@ -209,7 +209,7 @@ fn parse_ami_input(
     // file if a user created one manually, and they shouldn't be creating an empty file.
     ensure!(
         !ami_input.is_empty(),
-        error::Input {
+        error::InputSnafu {
             path: &ssm_args.ami_input
         }
     );
@@ -220,7 +220,7 @@ fn parse_ami_input(
     let known_regions = HashSet::<&String>::from_iter(ami_input.keys());
     ensure!(
         requested_regions.is_subset(&known_regions),
-        error::UnknownRegions {
+        error::UnknownRegionsSnafu {
             regions: requested_regions
                 .difference(&known_regions)
                 .map(|s| s.to_string())
@@ -234,10 +234,10 @@ fn parse_ami_input(
         let image = ami_input
             .remove(name)
             // This could only happen if someone removes the check above...
-            .with_context(|| error::UnknownRegions {
+            .with_context(|| error::UnknownRegionsSnafu {
                 regions: vec![name.clone()],
             })?;
-        let region = region_from_string(&name, &aws).context(error::ParseRegion)?;
+        let region = region_from_string(&name, &aws).context(error::ParseRegionSnafu)?;
         amis.insert(region, image);
     }
 
@@ -301,7 +301,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Error creating {} client in {}: {}", client_type, region, source))]
         Client {

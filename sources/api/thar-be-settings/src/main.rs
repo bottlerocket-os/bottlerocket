@@ -18,7 +18,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
@@ -143,7 +143,7 @@ async fn write_config_files(
         );
         template_registry
             .register_template_file(&name, metadata.template_path.as_ref())
-            .context(error::TemplateRegister {
+            .context(error::TemplateRegisterSnafu {
                 name: name.as_str(),
                 path: metadata.template_path.as_ref(),
             })?;
@@ -170,7 +170,7 @@ async fn write_config_files(
 
 async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("thar-be-settings started");
 

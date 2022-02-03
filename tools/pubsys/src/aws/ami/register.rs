@@ -37,7 +37,7 @@ async fn _register_image(
     let root_snapshot =
         snapshot_from_image(&ami_args.root_image, &uploader, None, ami_args.no_progress)
             .await
-            .context(error::Snapshot {
+            .context(error::SnapshotSnafu {
                 path: &ami_args.root_image,
                 region,
             })?;
@@ -47,7 +47,7 @@ async fn _register_image(
     if let Some(data_image) = &ami_args.data_image {
         let snapshot = snapshot_from_image(data_image, &uploader, None, ami_args.no_progress)
             .await
-            .context(error::Snapshot {
+            .context(error::SnapshotSnafu {
                 path: &ami_args.root_image,
                 region,
             })?;
@@ -60,7 +60,7 @@ async fn _register_image(
     waiter
         .wait(&root_snapshot, Default::default())
         .await
-        .context(error::WaitSnapshot {
+        .context(error::WaitSnapshotSnafu {
             snapshot_type: "root",
         })?;
 
@@ -68,7 +68,7 @@ async fn _register_image(
         waiter
             .wait(&data_snapshot, Default::default())
             .await
-            .context(error::WaitSnapshot {
+            .context(error::WaitSnapshotSnafu {
                 snapshot_type: "data",
             })?;
     }
@@ -118,11 +118,11 @@ async fn _register_image(
     let register_response = ec2_client
         .register_image(register_request)
         .await
-        .context(error::RegisterImage { region })?;
+        .context(error::RegisterImageSnafu { region })?;
 
     let image_id = register_response
         .image_id
-        .context(error::MissingImageId { region })?;
+        .context(error::MissingImageIdSnafu { region })?;
 
     let mut snapshot_ids = vec![root_snapshot];
     if let Some(data_snapshot) = data_snapshot {
@@ -207,14 +207,14 @@ where
     let describe_response = ec2_client
         .describe_images(describe_request)
         .await
-        .context(error::DescribeImages { region })?;
+        .context(error::DescribeImagesSnafu { region })?;
     if let Some(mut images) = describe_response.images {
         if images.is_empty() {
             return Ok(None);
         }
         ensure!(
             images.len() == 1,
-            error::MultipleImages {
+            error::MultipleImagesSnafu {
                 images: images
                     .into_iter()
                     .map(|i| i.image_id.unwrap_or_else(|| "<missing>".to_string()))
@@ -224,7 +224,9 @@ where
         let image = images.remove(0);
         // If there is an image but we couldn't find the ID of it, fail rather than returning None,
         // which would indicate no image.
-        let id = image.image_id.context(error::MissingImageId { region })?;
+        let id = image
+            .image_id
+            .context(error::MissingImageIdSnafu { region })?;
         Ok(Some(id))
     } else {
         Ok(None)
@@ -237,7 +239,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Failed to describe images in {}: {}", region, source))]
         DescribeImages {

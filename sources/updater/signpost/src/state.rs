@@ -43,34 +43,34 @@ impl State {
         // The root filesystem is a dm-verity device. We want to determine what disk and partition
         // the backing data is part of. Look up the device major and minor via stat(2):
         let root_fs = BlockDevice::from_device_path("/")
-            .context(error::BlockDeviceFromPath { device: "/" })?;
+            .context(error::BlockDeviceFromPathSnafu { device: "/" })?;
         // Get the first lower device from this one, and determine what disk it belongs to.
         let active_partition = root_fs
             .lower_devices()
             .and_then(|mut iter| iter.next().transpose())
-            .context(error::RootLowerDevices {
+            .context(error::RootLowerDevicesSnafu {
                 root: root_fs.path(),
             })?
-            .context(error::RootHasNoLowerDevices {
+            .context(error::RootHasNoLowerDevicesSnafu {
                 root: root_fs.path(),
             })?;
         let os_disk = active_partition
             .disk()
-            .context(error::DiskFromPartition {
+            .context(error::DiskFromPartitionSnafu {
                 device: root_fs.path(),
             })?
-            .context(error::RootNotPartition {
+            .context(error::RootNotPartitionSnafu {
                 device: root_fs.path(),
             })?;
         let active_partition = active_partition.path();
 
         // Parse the partition table on the disk.
-        let table = GPT::find_from(&mut File::open(os_disk.path()).context(error::Open {
+        let table = GPT::find_from(&mut File::open(os_disk.path()).context(error::OpenSnafu {
             path: os_disk.path(),
             what: "reading",
         })?)
         .map_err(error::GPTError)
-        .context(error::GPTFind {
+        .context(error::GPTFindSnafu {
             device: os_disk.path(),
         })?;
 
@@ -80,7 +80,7 @@ impl State {
                 .iter()
                 .filter(|(_, p)| p.partition_type_guid == guid)
                 .nth(n)
-                .context(error::PartitionMissingFromSet {
+                .context(error::PartitionMissingFromSetSnafu {
                     part_type: stringify!(guid),
                     set: if n == 0 { "A" } else { "B" },
                 })?
@@ -90,10 +90,10 @@ impl State {
         let device_from_part_num = |num| -> Result<PathBuf, Error> {
             Ok(os_disk
                 .partition(num)
-                .context(error::PartitionFromDisk {
+                .context(error::PartitionFromDiskSnafu {
                     device: os_disk.path(),
                 })?
-                .context(error::PartitionNotFoundOnDevice {
+                .context(error::PartitionNotFoundOnDeviceSnafu {
                     num,
                     device: os_disk.path(),
                 })?
@@ -124,7 +124,7 @@ impl State {
         } else if sets[1].contains(&active_partition) {
             SetSelect::B
         } else {
-            return error::ActiveNotInSet {
+            return error::ActiveNotInSetSnafu {
                 active_partition,
                 sets,
             }
@@ -223,13 +223,13 @@ impl State {
         let mut inactive_flags = self.gptprio(self.inactive());
         ensure!(
             inactive_flags.priority() == 0 && !inactive_flags.successful(),
-            error::InactiveAlreadyMarked {
+            error::InactiveAlreadyMarkedSnafu {
                 inactive: &self.os_disk
             }
         );
         ensure!(
             inactive_flags.tries_left() > 0,
-            error::InactiveNotValid {
+            error::InactiveNotValidSnafu {
                 inactive: &self.os_disk
             }
         );
@@ -265,7 +265,7 @@ impl State {
     pub fn rollback_to_inactive(&mut self) -> Result<(), Error> {
         let mut inactive_flags = self.gptprio(self.inactive());
         if !inactive_flags.will_boot() {
-            return error::InactiveInvalidRollback {
+            return error::InactiveInvalidRollbackSnafu {
                 priority: inactive_flags.priority(),
                 tries_left: inactive_flags.tries_left(),
                 successful: inactive_flags.successful(),
@@ -289,13 +289,13 @@ impl State {
                 &mut OpenOptions::new()
                     .write(true)
                     .open(self.os_disk())
-                    .context(error::Open {
+                    .context(error::OpenSnafu {
                         path: &self.os_disk,
                         what: "writing",
                     })?,
             )
             .map_err(error::GPTError)
-            .context(error::GPTWrite {
+            .context(error::GPTWriteSnafu {
                 device: &self.os_disk,
             })?;
         Ok(())

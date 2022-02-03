@@ -59,7 +59,7 @@ impl Terminal {
 
             // Get the current settings of the user's terminal so we can restore them later.
             let current_termios =
-                tcgetattr(STDOUT_FILENO).context(error::TermAttr { op: "get" })?;
+                tcgetattr(STDOUT_FILENO).context(error::TermAttrSnafu { op: "get" })?;
 
             debug!("Setting terminal to raw mode, sorry about the carriage returns");
             let mut new_termios = current_termios.clone();
@@ -70,7 +70,7 @@ impl Terminal {
             // We make the change 'NOW' because we don't expect any input/output yet, and so should
             // have nothing to FLUSH.
             tcsetattr(STDOUT_FILENO, SetArg::TCSANOW, &new_termios)
-                .context(error::TermAttr { op: "set" })?;
+                .context(error::TermAttrSnafu { op: "set" })?;
 
             orig_termios = Some(current_termios);
         }
@@ -100,7 +100,7 @@ pub(crate) mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Have TTY, but failed to {} terminal attributes: {}", op, source))]
         TermAttr { op: String, source: nix::Error },

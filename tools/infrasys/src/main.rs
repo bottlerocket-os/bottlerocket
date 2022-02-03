@@ -62,11 +62,11 @@ fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     match args.subcommand {
         SubCommand::CreateInfra(ref run_task_args) => {
-            let rt = Runtime::new().context(error::Runtime)?;
+            let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 create_infra(&args.infra_config_path, &run_task_args.root_role_path).await
             })
@@ -75,7 +75,7 @@ fn run() -> Result<()> {
 }
 
 fn check_infra_lock(toml_path: &Path) -> Result<()> {
-    let lock_path = InfraConfig::compute_lock_path(toml_path).context(error::Config)?;
+    let lock_path = InfraConfig::compute_lock_path(toml_path).context(error::ConfigSnafu)?;
 
     ensure!(!lock_path.is_file(), {
         error!(
@@ -83,7 +83,7 @@ fn check_infra_lock(toml_path: &Path) -> Result<()> {
             \nPlease clean up your TUF resources in AWS, delete Infra.lock, and run again.",
             lock_path.display()
         );
-        error::FileExists { path: lock_path }
+        error::FileExistsSnafu { path: lock_path }
     });
     Ok(())
 }
@@ -92,18 +92,18 @@ fn check_infra_lock(toml_path: &Path) -> Result<()> {
 async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
     check_infra_lock(toml_path)?;
     info!("Parsing Infra.toml...");
-    let mut infra_config = InfraConfig::from_path(toml_path).context(error::Config)?;
+    let mut infra_config = InfraConfig::from_path(toml_path).context(error::ConfigSnafu)?;
     let repos = infra_config
         .repo
         .as_mut()
-        .context(error::MissingConfig { missing: "repo" })?;
+        .context(error::MissingConfigSnafu { missing: "repo" })?;
     let s3_info_map = infra_config
         .aws
         .as_mut()
-        .context(error::MissingConfig { missing: "aws" })?
+        .context(error::MissingConfigSnafu { missing: "aws" })?
         .s3
         .as_mut()
-        .context(error::MissingConfig { missing: "aws.s3" })?;
+        .context(error::MissingConfigSnafu { missing: "aws.s3" })?;
 
     for (repo_name, repo_config) in repos.iter_mut() {
         // Validate repo_config and unwrap required optional data
@@ -135,7 +135,7 @@ async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
         if repo_info.metadata_base_url.is_none() {
             *repo_info.metadata_base_url = Some(
                 Url::parse(format!("https://{}{}/", &bucket_rdn, &repo_info.prefix).as_str())
-                    .context(error::ParseUrl { input: &bucket_rdn })?,
+                    .context(error::ParseUrlSnafu { input: &bucket_rdn })?,
             );
         }
         if repo_info.targets_url.is_none() {
@@ -143,7 +143,7 @@ async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
                 Url::parse(
                     format!("https://{}{}/targets/", &bucket_rdn, &repo_info.prefix).as_str(),
                 )
-                .context(error::ParseUrl { input: &bucket_rdn })?,
+                .context(error::ParseUrlSnafu { input: &bucket_rdn })?,
             );
         }
         if repo_info.root_role_url.is_none() {
@@ -151,10 +151,10 @@ async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
                 Url::parse(
                     format!("https://{}{}/root.json", &bucket_rdn, &repo_info.prefix).as_str(),
                 )
-                .context(error::ParseUrl { input: &bucket_rdn })?,
+                .context(error::ParseUrlSnafu { input: &bucket_rdn })?,
             );
         }
-        let root_role_data = fs::read_to_string(&root_role_path).context(error::FileRead {
+        let root_role_data = fs::read_to_string(&root_role_path).context(error::FileReadSnafu {
             path: root_role_path,
         })?;
         let mut d = Sha512::new();
@@ -165,15 +165,15 @@ async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
 
     // Generate Infra.lock
     info!("Writing Infra.lock...");
-    let yaml_string = serde_yaml::to_string(&infra_config).context(error::InvalidYaml)?;
+    let yaml_string = serde_yaml::to_string(&infra_config).context(error::InvalidYamlSnafu)?;
     fs::write(
         toml_path
             .parent()
-            .context(error::Parent { path: toml_path })?
+            .context(error::ParentSnafu { path: toml_path })?
             .join("Infra.lock"),
         yaml_string,
     )
-    .context(error::FileWrite { path: toml_path })?;
+    .context(error::FileWriteSnafu { path: toml_path })?;
 
     info!("Complete!");
     Ok(())
@@ -205,17 +205,17 @@ impl<'a> ValidRepoInfo<'a> {
             repo_config
                 .file_hosting_config_name
                 .as_ref()
-                .context(error::MissingConfig {
+                .context(error::MissingConfigSnafu {
                     missing: "file_hosting_config_name",
                 })?;
         let s3_info = s3_info_map
             .get_mut(s3_stack_name)
-            .context(error::MissingConfig {
+            .context(error::MissingConfigSnafu {
                 missing: format!("aws.s3 config with name {}", s3_stack_name),
             })?;
         Ok(ValidRepoInfo {
             s3_stack_name: s3_stack_name.to_string(),
-            s3_region: s3_info.region.as_ref().context(error::MissingConfig {
+            s3_region: s3_info.region.as_ref().context(error::MissingConfigSnafu {
                 missing: format!("region for '{}' s3 config", s3_stack_name),
             })?,
             bucket_name: &mut s3_info.bucket_name,
@@ -223,29 +223,29 @@ impl<'a> ValidRepoInfo<'a> {
             vpce_id: s3_info
                 .vpc_endpoint_id
                 .as_ref()
-                .context(error::MissingConfig {
+                .context(error::MissingConfigSnafu {
                     missing: format!("vpc_endpoint_id for '{}' s3 config", s3_stack_name),
                 })?,
             prefix: s3::format_prefix(&s3_info.s3_prefix),
             signing_keys: repo_config
                 .signing_keys
                 .as_mut()
-                .context(error::MissingConfig {
+                .context(error::MissingConfigSnafu {
                     missing: format!("signing_keys for '{}' repo config", repo_name),
                 })?,
             root_keys: repo_config
                 .root_keys
                 .as_mut()
-                .context(error::MissingConfig {
+                .context(error::MissingConfigSnafu {
                     missing: format!("root_keys for '{}' repo config", repo_name),
                 })?,
             root_key_threshold: repo_config.root_key_threshold.as_mut().context(
-                error::MissingConfig {
+                error::MissingConfigSnafu {
                     missing: format!("root_key_threshold for '{}' repo config", repo_name),
                 },
             )?,
             pub_key_threshold: repo_config.pub_key_threshold.as_ref().context(
-                error::MissingConfig {
+                error::MissingConfigSnafu {
                     missing: format!("pub_key_threshold for '{}' repo config", repo_name),
                 },
             )?,

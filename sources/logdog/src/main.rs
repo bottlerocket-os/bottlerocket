@@ -90,7 +90,7 @@ pub(crate) async fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: 
     // if a command fails, we will pipe its error here and continue.
     let outdir = outdir.as_ref();
     let error_path = outdir.join(crate::ERROR_FILENAME);
-    let mut error_file = File::create(&error_path).context(error::ErrorFile {
+    let mut error_file = File::create(&error_path).context(error::ErrorFileSnafu {
         path: error_path.clone(),
     })?;
 
@@ -104,7 +104,7 @@ pub(crate) async fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: 
                 "Error running command '{}': '{}'\n",
                 log_request, e
             )
-            .context(error::ErrorWrite {
+            .context(error::ErrorWriteSnafu {
                 path: error_path.clone(),
             })?;
         }
@@ -114,7 +114,7 @@ pub(crate) async fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: 
 
 /// Runs the bulk of the program's logic, main wraps this.
 async fn run(outfile: &Path, commands: &[&str]) -> Result<()> {
-    let temp_dir = TempDir::new().context(error::TempDirCreate)?;
+    let temp_dir = TempDir::new().context(error::TempDirCreateSnafu)?;
     collect_logs(&commands, &temp_dir.path().to_path_buf()).await?;
     create_tarball(&temp_dir.path().to_path_buf(), &outfile)?;
     println!("logs are at: {}", outfile.display());

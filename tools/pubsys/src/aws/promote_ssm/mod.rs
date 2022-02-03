@@ -53,8 +53,8 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     // Setup   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     // If a lock file exists, use that, otherwise use Infra.toml
-    let infra_config =
-        InfraConfig::from_path_or_lock(&args.infra_config_path, false).context(error::Config)?;
+    let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
+        .context(error::ConfigSnafu)?;
 
     trace!("Parsed infra config: {:#?}", infra_config);
     let aws = infra_config.aws.unwrap_or_else(Default::default);
@@ -67,12 +67,12 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
         aws.regions.clone().into()
     }
     .into_iter()
-    .map(|name| region_from_string(&name, &aws).context(error::ParseRegion))
+    .map(|name| region_from_string(&name, &aws).context(error::ParseRegionSnafu))
     .collect::<Result<Vec<Region>>>()?;
 
     ensure!(
         !regions.is_empty(),
-        error::MissingConfig {
+        error::MissingConfigSnafu {
             missing: "aws.regions"
         }
     );
@@ -81,7 +81,7 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     let mut ssm_clients = HashMap::with_capacity(regions.len());
     for region in &regions {
         let ssm_client =
-            build_client::<SsmClient>(region, &base_region, &aws).context(error::Client {
+            build_client::<SsmClient>(region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "SSM",
                 region: region.name(),
             })?;
@@ -111,7 +111,7 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     // in their naming
     let template_parameters =
         template::get_parameters(&promote_args.template_path, &source_build_context)
-            .context(error::FindTemplates)?;
+            .context(error::FindTemplatesSnafu)?;
 
     if template_parameters.parameters.is_empty() {
         info!(
@@ -126,10 +126,10 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     // from the same template, so we know what to copy.
     let source_parameter_map =
         template::render_parameter_names(&template_parameters, ssm_prefix, &source_build_context)
-            .context(error::RenderTemplates)?;
+            .context(error::RenderTemplatesSnafu)?;
     let target_parameter_map =
         template::render_parameter_names(&template_parameters, ssm_prefix, &target_build_context)
-            .context(error::RenderTemplates)?;
+            .context(error::RenderTemplatesSnafu)?;
 
     // Parameters are the same in each region, so we need to associate each region with each of
     // the parameter names so we can fetch them.
@@ -155,21 +155,21 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     info!("Getting current SSM parameters for source and target names");
     let current_source_parameters = ssm::get_parameters(&source_keys, &ssm_clients)
         .await
-        .context(error::FetchSsm)?;
+        .context(error::FetchSsmSnafu)?;
     trace!(
         "Current source SSM parameters: {:#?}",
         current_source_parameters
     );
     ensure!(
         !current_source_parameters.is_empty(),
-        error::EmptySource {
+        error::EmptySourceSnafu {
             version: &promote_args.source
         }
     );
 
     let current_target_parameters = ssm::get_parameters(&target_keys, &ssm_clients)
         .await
-        .context(error::FetchSsm)?;
+        .context(error::FetchSsmSnafu)?;
     trace!(
         "Current target SSM parameters: {:#?}",
         current_target_parameters
@@ -208,12 +208,12 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     info!("Setting updated SSM parameters.");
     ssm::set_parameters(&set_parameters, &ssm_clients)
         .await
-        .context(error::SetSsm)?;
+        .context(error::SetSsmSnafu)?;
 
     info!("Validating whether live parameters in SSM reflect changes.");
     ssm::validate_parameters(&set_parameters, &ssm_clients)
         .await
-        .context(error::ValidateSsm)?;
+        .context(error::ValidateSsmSnafu)?;
 
     info!("All parameters match requested values.");
     Ok(())
@@ -225,7 +225,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Error creating {} client in {}: {}", client_type, region, source))]
         Client {

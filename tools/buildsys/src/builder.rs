@@ -77,18 +77,18 @@ impl PackageBuilder {
         let output_dir: PathBuf = getenv("BUILDSYS_PACKAGES_DIR")?.into();
         let arch = getenv("BUILDSYS_ARCH")?;
         let goarch = serde_plain::from_str::<SupportedArch>(&arch)
-            .context(error::UnsupportedArch { arch: &arch })?
+            .context(error::UnsupportedArchSnafu { arch: &arch })?
             .goarch();
 
         // We do *not* want to rebuild most packages when the variant changes, because most aren't
         // affected; packages that care about variant should "echo cargo:rerun-if-env-changed=VAR"
         // themselves in the package's spec file.
         let var = "BUILDSYS_VARIANT";
-        let variant = env::var(var).context(error::Environment { var })?;
+        let variant = env::var(var).context(error::EnvironmentSnafu { var })?;
         // Same for repo, which is used to determine the correct root.json, which is only included
         // in the os package.
         let var = "PUBLISH_REPO";
-        let repo = env::var(var).context(error::Environment { var })?;
+        let repo = env::var(var).context(error::EnvironmentSnafu { var })?;
 
         let mut args = Vec::new();
         args.build_arg("PACKAGE", package);
@@ -124,7 +124,7 @@ impl VariantBuilder {
         let variant = getenv("BUILDSYS_VARIANT")?;
         let arch = getenv("BUILDSYS_ARCH")?;
         let goarch = serde_plain::from_str::<SupportedArch>(&arch)
-            .context(error::UnsupportedArch { arch: &arch })?
+            .context(error::UnsupportedArchSnafu { arch: &arch })?
             .goarch();
 
         let image_layout = image_layout.cloned().unwrap_or_default();
@@ -201,7 +201,7 @@ fn build(
 ) -> Result<()> {
     // Our Dockerfile is in the top-level directory.
     let root = getenv("BUILDSYS_ROOT_DIR")?;
-    env::set_current_dir(&root).context(error::DirectoryChange { path: &root })?;
+    env::set_current_dir(&root).context(error::DirectoryChangeSnafu { path: &root })?;
 
     // Compute a per-checkout prefix for the tag to avoid collisions.
     let mut d = Sha512::new();
@@ -304,7 +304,7 @@ fn docker(args: &[String], retry: Retry) -> Result<Output> {
             .stdout_capture()
             .unchecked()
             .run()
-            .context(error::CommandStart)?;
+            .context(error::CommandStartSnafu)?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         println!("{}", &stdout);
@@ -314,7 +314,7 @@ fn docker(args: &[String], retry: Retry) -> Result<Output> {
 
         ensure!(
             retry_messages.iter().any(|m| m.is_match(&stdout)) && attempt < max_attempts,
-            error::DockerExecution {
+            error::DockerExecutionSnafu {
                 args: &args.join(" ")
             }
         );
@@ -346,7 +346,7 @@ fn create_build_dir(kind: &BuildType, name: &str, arch: &str) -> Result<PathBuf>
         .iter()
         .collect();
 
-    fs::create_dir_all(&path).context(error::DirectoryCreate { path: &path })?;
+    fs::create_dir_all(&path).context(error::DirectoryCreateSnafu { path: &path })?;
 
     Ok(path)
 }
@@ -372,16 +372,16 @@ where
     for artifact_file in find_files(&build_dir, is_artifact) {
         let mut marker_file = artifact_file.clone().into_os_string();
         marker_file.push(MARKER_EXTENSION);
-        File::create(&marker_file).context(error::FileCreate { path: &marker_file })?;
+        File::create(&marker_file).context(error::FileCreateSnafu { path: &marker_file })?;
 
         let mut output_file: PathBuf = output_dir.as_ref().into();
         output_file.push(
             artifact_file
                 .file_name()
-                .context(error::BadFilename { path: &output_file })?,
+                .context(error::BadFilenameSnafu { path: &output_file })?,
         );
 
-        fs::rename(&artifact_file, &output_file).context(error::FileRename {
+        fs::rename(&artifact_file, &output_file).context(error::FileRenameSnafu {
             old_path: &artifact_file,
             new_path: &output_file,
         })?;
@@ -410,15 +410,17 @@ where
         output_file.push(
             marker_file
                 .file_name()
-                .context(error::BadFilename { path: &marker_file })?,
+                .context(error::BadFilenameSnafu { path: &marker_file })?,
         );
 
         output_file.set_extension("");
         if output_file.exists() {
-            std::fs::remove_file(&output_file).context(error::FileRemove { path: &output_file })?;
+            std::fs::remove_file(&output_file)
+                .context(error::FileRemoveSnafu { path: &output_file })?;
         }
 
-        std::fs::remove_file(&marker_file).context(error::FileRemove { path: &marker_file })?;
+        std::fs::remove_file(&marker_file)
+            .context(error::FileRemoveSnafu { path: &marker_file })?;
     }
 
     Ok(())
@@ -439,7 +441,7 @@ where
         .max_depth(1)
         .into_iter()
         .filter_entry(move |e| filter(e))
-        .flat_map(|e| e.context(error::DirectoryWalk))
+        .flat_map(|e| e.context(error::DirectoryWalkSnafu))
         .map(|e| e.into_path())
 }
 
@@ -448,7 +450,7 @@ where
 /// output.
 fn getenv(var: &str) -> Result<String> {
     println!("cargo:rerun-if-env-changed={}", var);
-    env::var(var).context(error::Environment { var })
+    env::var(var).context(error::EnvironmentSnafu { var })
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=

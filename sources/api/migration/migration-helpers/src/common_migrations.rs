@@ -320,7 +320,7 @@ impl Migration for ReplaceListsMigration {
                             .iter()
                             .map(|v| v.as_str())
                             .collect::<Option<Vec<&str>>>()
-                            .with_context(|| error::ReplaceListContents {
+                            .with_context(|| error::ReplaceListContentsSnafu {
                                 setting: replacement.setting,
                                 data: data.clone(),
                             })?;
@@ -363,7 +363,7 @@ impl Migration for ReplaceListsMigration {
                             .iter()
                             .map(|v| v.as_str())
                             .collect::<Option<Vec<&str>>>()
-                            .with_context(|| error::ReplaceListContents {
+                            .with_context(|| error::ReplaceListContentsSnafu {
                                 setting: replacement.setting,
                                 data: data.clone(),
                             })?;
@@ -594,7 +594,7 @@ impl ReplaceTemplateMigration {
             // The prefixes we want to make available; these each have to be deserialized below.
             if k.starts_with("settings.") || k.starts_with("os.") {
                 datastore.insert(
-                    datastore::Key::new(datastore::KeyType::Data, k).context(error::NewKey)?,
+                    datastore::Key::new(datastore::KeyType::Data, k).context(error::NewKeySnafu)?,
                     // We want the serialized form here, to work with the datastore deserialization code.
                     // to_string on a Value gives the serialized form.
                     v.to_string(),
@@ -609,11 +609,11 @@ impl ReplaceTemplateMigration {
                 Some("settings".to_string()),
                 &datastore,
             )
-            .context(error::DeserializeDatastore)?;
+            .context(error::DeserializeDatastoreSnafu)?;
         // Same for "os.*"
         let os_data: HashMap<String, serde_json::Value> =
             datastore::deserialization::from_map_with_prefix(Some("os".to_string()), &datastore)
-                .context(error::DeserializeDatastore)?;
+                .context(error::DeserializeDatastoreSnafu)?;
 
         let mut structured_data = HashMap::new();
         structured_data.insert("settings", settings_data);
@@ -647,20 +647,20 @@ impl ReplaceTemplateMigration {
                     "template".to_string(),
                     serde_json::Value::String(incoming_template.to_string()),
                 );
-                let registry =
-                    schnauzer::build_template_registry().context(error::BuildTemplateRegistry)?;
+                let registry = schnauzer::build_template_registry()
+                    .context(error::BuildTemplateRegistrySnafu)?;
                 // Structure the input migration data into its hierarchical representation needed by render_template
                 let input_data = self.structure_migration_data(&input.data)?;
                 // Generate settings data using the setting's outgoing template  so we can confirm
                 // it matches our expected value; if not, the user has changed it and we should stop.
                 let generated_old_data = registry
                     .render_template(template, &input_data)
-                    .context(error::RenderTemplate { template })?;
+                    .context(error::RenderTemplateSnafu { template })?;
                 if generated_old_data == *outgoing_setting_data {
                     // Generate settings data using the setting's incoming template
                     let generated_new_data = registry
                         .render_template(incoming_template, &input_data)
-                        .context(error::RenderTemplate { template })?;
+                        .context(error::RenderTemplateSnafu { template })?;
                     println!(
                         "Changing value of '{}' from '{}' to '{}'",
                         self.setting, outgoing_setting_data, generated_new_data
@@ -693,7 +693,7 @@ impl Migration for ReplaceTemplateMigration {
         if let Some(input_value) = input.data.get(self.setting) {
             let data = input_value
                 .as_str()
-                .context(error::NonStringSettingDataType {
+                .context(error::NonStringSettingDataTypeSnafu {
                     setting: self.setting,
                 })?;
             println!(
@@ -718,7 +718,7 @@ impl Migration for ReplaceTemplateMigration {
         if let Some(input_value) = input.data.get(self.setting) {
             let data = input_value
                 .as_str()
-                .context(error::NonStringSettingDataType {
+                .context(error::NonStringSettingDataTypeSnafu {
                     setting: self.setting,
                 })?;
             println!(
@@ -872,7 +872,7 @@ impl Migration for ReplaceMetadataListsMigration {
                                 .iter()
                                 .map(|v| v.as_str())
                                 .collect::<Option<Vec<&str>>>()
-                                .with_context(|| error::ReplaceMetadataListContents {
+                                .with_context(|| error::ReplaceMetadataListContentsSnafu {
                                     setting: replacement.setting,
                                     metadata: replacement.metadata,
                                     data: data.clone(),
@@ -926,7 +926,7 @@ impl Migration for ReplaceMetadataListsMigration {
                                 .iter()
                                 .map(|v| v.as_str())
                                 .collect::<Option<Vec<&str>>>()
-                                .with_context(|| error::ReplaceMetadataListContents {
+                                .with_context(|| error::ReplaceMetadataListContentsSnafu {
                                     setting: replacement.setting,
                                     metadata: replacement.metadata,
                                     data: data.clone(),

@@ -7,7 +7,7 @@ use update_metadata::error::Error as update_metadata_error;
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility(pub(crate)))]
 pub(crate) enum Error {
     #[snafu(display(
         "Failed to convert '{}' from FriendlyVersion to semver::Version: {}",

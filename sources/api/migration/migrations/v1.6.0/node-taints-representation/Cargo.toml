@@ -11,4 +11,4 @@ exclude = ["README.md"]
 [dependencies]
 migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
 serde_json = "1"
-snafu = "0.6"
+snafu = "0.7"

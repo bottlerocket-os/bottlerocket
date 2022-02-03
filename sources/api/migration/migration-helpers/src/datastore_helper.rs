@@ -22,7 +22,7 @@ pub(crate) fn get_input_data<D: DataStore>(
 ) -> Result<MigrationData> {
     let raw_data = datastore
         .get_prefix("", committed)
-        .with_context(|| error::GetData {
+        .with_context(|_| error::GetDataSnafu {
             committed: committed.clone(),
         })?;
 
@@ -35,16 +35,16 @@ pub(crate) fn get_input_data<D: DataStore>(
         // Deserialize values to Value so there's a consistent input type.  (We can't specify item
         // types because we'd have to know the model structure.)
         let value =
-            deserialize_scalar(&value_str).context(error::Deserialize { input: value_str })?;
+            deserialize_scalar(&value_str).context(error::DeserializeSnafu { input: value_str })?;
         data.insert(key_name.clone(), value);
     }
 
     // We also want to make "os.*" values, like variant and arch, available to migrations.
-    let release = BottlerocketRelease::new().context(error::BottlerocketRelease)?;
-    let os_pairs = to_pairs_with_prefix("os", &release).context(error::SerializeRelease)?;
+    let release = BottlerocketRelease::new().context(error::BottlerocketReleaseSnafu)?;
+    let os_pairs = to_pairs_with_prefix("os", &release).context(error::SerializeReleaseSnafu)?;
     for (data_key, value_str) in os_pairs.into_iter() {
         let value =
-            deserialize_scalar(&value_str).context(error::Deserialize { input: value_str })?;
+            deserialize_scalar(&value_str).context(error::DeserializeSnafu { input: value_str })?;
         data.insert(data_key.name().clone(), value);
     }
 
@@ -54,7 +54,7 @@ pub(crate) fn get_input_data<D: DataStore>(
     if let Committed::Live = committed {
         let raw_metadata = datastore
             .get_metadata_prefix("", &None as &Option<&str>)
-            .context(error::GetMetadata)?;
+            .context(error::GetMetadataSnafu)?;
         for (data_key, meta_map) in raw_metadata.into_iter() {
             // See notes above about storing key Strings and Values.
             let data_key_name = data_key.name();
@@ -64,7 +64,7 @@ pub(crate) fn get_input_data<D: DataStore>(
             for (metadata_key, value_str) in meta_map.into_iter() {
                 let metadata_key_name = metadata_key.name();
                 let value = deserialize_scalar(&value_str)
-                    .context(error::Deserialize { input: value_str })?;
+                    .context(error::DeserializeSnafu { input: value_str })?;
                 data_entry.insert(metadata_key_name.clone(), value);
             }
         }
@@ -85,11 +85,11 @@ pub(crate) fn set_output_data<D: DataStore>(
     let mut data = HashMap::new();
     for (data_key_name, raw_value) in &input.data {
         // See notes above about storing key Strings and Values.
-        let data_key = Key::new(KeyType::Data, data_key_name).context(error::InvalidKey {
+        let data_key = Key::new(KeyType::Data, data_key_name).context(error::InvalidKeySnafu {
             key_type: KeyType::Data,
             key: data_key_name,
         })?;
-        let value = serialize_scalar(raw_value).context(error::Serialize)?;
+        let value = serialize_scalar(raw_value).context(error::SerializeSnafu)?;
         data.insert(data_key, value);
     }
 
@@ -98,24 +98,24 @@ pub(crate) fn set_output_data<D: DataStore>(
     // * We're either about to reboot or just have, and the settings applier will run afterward
     datastore
         .set_keys(&data, committed)
-        .context(error::DataStoreWrite)?;
+        .context(error::DataStoreWriteSnafu)?;
 
     // Set metadata in a loop (currently no batch API)
     for (data_key_name, meta_map) in &input.metadata {
-        let data_key = Key::new(KeyType::Data, data_key_name).context(error::InvalidKey {
+        let data_key = Key::new(KeyType::Data, data_key_name).context(error::InvalidKeySnafu {
             key_type: KeyType::Data,
             key: data_key_name,
         })?;
         for (metadata_key_name, raw_value) in meta_map.into_iter() {
             let metadata_key =
-                Key::new(KeyType::Meta, metadata_key_name).context(error::InvalidKey {
+                Key::new(KeyType::Meta, metadata_key_name).context(error::InvalidKeySnafu {
                     key_type: KeyType::Meta,
                     key: metadata_key_name,
                 })?;
-            let value = serialize_scalar(&raw_value).context(error::Serialize)?;
+            let value = serialize_scalar(&raw_value).context(error::SerializeSnafu)?;
             datastore
                 .set_metadata(&metadata_key, &data_key, value)
-                .context(error::DataStoreWrite)?;
+                .context(error::DataStoreWriteSnafu)?;
         }
     }
 

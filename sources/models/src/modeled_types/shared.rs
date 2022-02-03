@@ -29,7 +29,7 @@ impl TryFrom<&str> for ValidBase64 {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        base64::decode(&input).context(error::InvalidBase64)?;
+        base64::decode(&input).context(error::InvalidBase64Snafu)?;
         Ok(ValidBase64 {
             inner: input.to_string(),
         })
@@ -87,7 +87,7 @@ impl TryFrom<&str> for SingleLineString {
 
         ensure!(
             !input.contains(&line_terminators[..]),
-            error::StringContainsLineTerminator
+            error::StringContainsLineTerminatorSnafu
         );
 
         Ok(Self {
@@ -151,7 +151,7 @@ impl TryFrom<&str> for ValidLinuxHostname {
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             VALID_LINUX_HOSTNAME.is_match(input),
-            error::InvalidLinuxHostname {
+            error::InvalidLinuxHostnameSnafu {
                 input,
                 msg: "must only be [0-9a-z.-], and 1-253 chars long"
             }
@@ -162,7 +162,7 @@ impl TryFrom<&str> for ValidLinuxHostname {
         // allowed (must be at least one character).
         ensure!(
             !input.starts_with("-") && !input.starts_with("."),
-            error::InvalidLinuxHostname {
+            error::InvalidLinuxHostnameSnafu {
                 input,
                 msg: "must not start with '-' or '.'"
             }
@@ -173,7 +173,7 @@ impl TryFrom<&str> for ValidLinuxHostname {
             input
                 .split(".")
                 .all(|x| x.len() >= 1 && x.len() <= 63 && !x.starts_with("-")),
-            error::InvalidLinuxHostname {
+            error::InvalidLinuxHostnameSnafu {
                 input,
                 msg: "segment is less than 1 or greater than 63 chars"
             }
@@ -250,7 +250,7 @@ impl TryFrom<&str> for Identifier {
             .chars()
             .all(|c| (c.is_ascii() && c.is_alphanumeric()) || c == '-')
             && input.len() <= CONTAINERD_ID_LENGTH;
-        ensure!(valid_identifier, error::InvalidIdentifier { input });
+        ensure!(valid_identifier, error::InvalidIdentifierSnafu { input });
         Ok(Identifier {
             inner: input.to_string(),
         })
@@ -317,7 +317,7 @@ impl TryFrom<&str> for Url {
                 });
             }
         }
-        error::InvalidUrl { input }.fail()
+        error::InvalidUrlSnafu { input }.fail()
     }
 }
 
@@ -390,7 +390,7 @@ impl TryFrom<&str> for FriendlyVersion {
                 inner: input.to_string(),
             });
         }
-        error::InvalidVersion { input }.fail()
+        error::InvalidVersionSnafu { input }.fail()
     }
 }
 
@@ -481,21 +481,21 @@ impl TryFrom<&str> for DNSDomain {
     fn try_from(input: &str) -> Result<Self, error::Error> {
         ensure!(
             !input.starts_with('.'),
-            error::InvalidDomainName {
+            error::InvalidDomainNameSnafu {
                 input: input,
                 msg: "must not start with '.'",
             }
         );
 
         let host = Host::parse(input).or_else(|e| {
-            error::InvalidDomainName {
+            error::InvalidDomainNameSnafu {
                 input: input,
                 msg: e.to_string(),
             }
             .fail()
         })?;
         match host {
-            Host::Ipv4(_) | Host::Ipv6(_) => error::InvalidDomainName {
+            Host::Ipv4(_) | Host::Ipv6(_) => error::InvalidDomainNameSnafu {
                 input: input,
                 msg: "IP address is not a valid domain name",
             }
@@ -557,21 +557,21 @@ impl TryFrom<&str> for SysctlKey {
         // Basic directory traversal checks; corndog also checks
         ensure!(
             !input.contains(".."),
-            error::InvalidSysctlKey {
+            error::InvalidSysctlKeySnafu {
                 input,
                 msg: format!("must not contain '..'"),
             }
         );
         ensure!(
             !input.starts_with('.') && !input.starts_with('/'),
-            error::InvalidSysctlKey {
+            error::InvalidSysctlKeySnafu {
                 input,
                 msg: format!("must not start with '.' or '/'"),
             }
         );
         ensure!(
             SYSCTL_KEY.is_match(input),
-            error::InvalidSysctlKey {
+            error::InvalidSysctlKeySnafu {
                 input,
                 msg: format!("must match pattern {}", *SYSCTL_KEY),
             }
@@ -660,7 +660,7 @@ impl TryFrom<&str> for Lockdown {
     fn try_from(input: &str) -> Result<Self, error::Error> {
         ensure!(
             matches!(input, "none" | "integrity" | "confidentiality"),
-            error::InvalidLockdown { input }
+            error::InvalidLockdownSnafu { input }
         );
         Ok(Lockdown {
             inner: input.to_string(),
@@ -683,7 +683,7 @@ impl TryFrom<&str> for BootstrapContainerMode {
     fn try_from(input: &str) -> Result<Self, error::Error> {
         ensure!(
             matches!(input, "off" | "once" | "always"),
-            error::InvalidBootstrapContainerMode { input }
+            error::InvalidBootstrapContainerModeSnafu { input }
         );
         Ok(BootstrapContainerMode {
             inner: input.to_string(),
@@ -735,20 +735,21 @@ impl TryFrom<&str> for PemCertificateString {
                 inner: input.to_string(),
             });
         }
-        let decoded_bytes = base64::decode(input).context(error::InvalidBase64)?;
+        let decoded_bytes = base64::decode(input).context(error::InvalidBase64Snafu)?;
         // Flag to check if the bundle doesn't contain any valid certificate
         let mut certs_found = false;
         // Validate each certificate in the bundle
         for (_, pem) in x509_parser::pem::Pem::iter_from_buffer(&decoded_bytes).enumerate() {
             // Parse buffer into a PEM object, then to a x509 certificate
-            let pem = pem.context(error::InvalidPEM)?;
-            pem.parse_x509().context(error::InvalidX509Certificate)?;
+            let pem = pem.context(error::InvalidPEMSnafu)?;
+            pem.parse_x509()
+                .context(error::InvalidX509CertificateSnafu)?;
             certs_found = true;
         }
 
         // No valid certificate found
         if !certs_found {
-            return error::NoCertificatesFound {}.fail();
+            return error::NoCertificatesFoundSnafu {}.fail();
         }
 
         Ok(PemCertificateString {

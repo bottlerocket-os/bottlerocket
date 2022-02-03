@@ -9,7 +9,7 @@ name = "webpki-roots"
 #
 # You should also double-check sources/Cargo.lock to make sure there aren't two versions of
 # webpki-roots being used (which would mean that one of them came from crates.io instead of here).
-version = "0.21.1"
+version = "0.22.2"
 authors = ["iliana destroyer of worlds <iweller@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 edition = "2018"

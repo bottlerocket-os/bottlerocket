@@ -15,7 +15,7 @@ pub(crate) fn local_file_user_data(
     info!("'{}' exists, using it", USER_DATA_FILE);
 
     // Read the file, decompressing it if compressed.
-    let user_data_str = expand_file_maybe(USER_DATA_FILE).context(error::InputFileRead {
+    let user_data_str = expand_file_maybe(USER_DATA_FILE).context(error::InputFileReadSnafu {
         path: USER_DATA_FILE,
     })?;
 
@@ -24,7 +24,7 @@ pub(crate) fn local_file_user_data(
     }
 
     let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
-        error::SettingsToJSON {
+        error::SettingsToJSONSnafu {
             from: USER_DATA_FILE,
         },
     )?;
@@ -38,7 +38,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Unable to read input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },

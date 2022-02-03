@@ -23,9 +23,11 @@ pub(crate) fn list_transactions<D>(datastore: &D) -> Result<HashSet<String>>
 where
     D: DataStore,
 {
-    datastore.list_transactions().context(error::DataStore {
-        op: "list_transactions",
-    })
+    datastore
+        .list_transactions()
+        .context(error::DataStoreSnafu {
+            op: "list_transactions",
+        })
 }
 
 /// Build a Settings based on pending data in the datastore; the Settings will be empty if there
@@ -50,7 +52,7 @@ pub(crate) fn delete_transaction<D: DataStore>(
 ) -> Result<HashSet<Key>> {
     datastore
         .delete_transaction(transaction)
-        .context(error::DataStore {
+        .context(error::DataStoreSnafu {
             op: "delete_pending",
         })
 }
@@ -83,7 +85,7 @@ pub(crate) fn get_settings<D: DataStore>(datastore: &D, committed: &Committed) -
     get_prefix(datastore, committed, "settings.", None)
         .transpose()
         // None is not OK here - we always have *some* settings
-        .context(error::MissingData { prefix: "settings" })?
+        .context(error::MissingDataSnafu { prefix: "settings" })?
 }
 
 /// Build a Settings based on the data in the datastore that begins with the given prefix.
@@ -108,7 +110,7 @@ pub(crate) fn get_settings_prefix<D: DataStore, S: AsRef<str>>(
 // The "os" APIs don't deal with the data store at all, they just read a release field.
 /// Build a BottlerocketRelease using the bottlerocket-release library.
 pub(crate) fn get_os_info() -> Result<BottlerocketRelease> {
-    BottlerocketRelease::new().context(error::ReleaseData)
+    BottlerocketRelease::new().context(error::ReleaseDataSnafu)
 }
 
 /// Build a BottlerocketRelease using the bottlerocket-release library, returning only the fields
@@ -131,7 +133,7 @@ where
     // field names.  Strip off the structure-level prefix.
     let field_prefix = prefix.trim_start_matches("os.");
 
-    let os = BottlerocketRelease::new().context(error::ReleaseData)?;
+    let os = BottlerocketRelease::new().context(error::ReleaseDataSnafu)?;
 
     // Turn into a serde Value we can manipulate.
     let val = serde_json::to_value(os).expect("struct to value can't fail");
@@ -162,7 +164,7 @@ pub(crate) fn get_services<D: DataStore>(datastore: &D) -> Result<Services> {
     )
     .transpose()
     // None is not OK here - we always have services
-    .context(error::MissingData { prefix: "services" })?
+    .context(error::MissingDataSnafu { prefix: "services" })?
 }
 
 /// Build a Services based on the data in the datastore, returning only the fields that start with
@@ -201,7 +203,7 @@ pub(crate) fn get_configuration_files<D: DataStore>(datastore: &D) -> Result<Con
     )
     .transpose()
     // None is not OK here - we always have configuration files
-    .context(error::MissingData {
+    .context(error::MissingDataSnafu {
         prefix: "configuration-files",
     })?
 }
@@ -254,14 +256,15 @@ where
 
     let data = datastore
         .get_prefix(find_prefix, committed)
-        .with_context(|| error::DataStore {
+        .with_context(|_| error::DataStoreSnafu {
             op: format!("get_prefix '{}' for {:?}", find_prefix, committed),
         })?;
     if data.is_empty() {
         return Ok(None);
     }
 
-    from_map_with_prefix(map_prefix, &data).context(error::Deserialization { given: find_prefix })
+    from_map_with_prefix(map_prefix, &data)
+        .context(error::DeserializationSnafu { given: find_prefix })
 }
 
 /// Build a Settings based on the data in the datastore for the given keys.
@@ -273,13 +276,13 @@ pub(crate) fn get_settings_keys<D: DataStore>(
     let mut data = HashMap::new();
     for key_str in keys {
         trace!("Pulling value from datastore for key: {}", key_str);
-        let key = Key::new(KeyType::Data, &key_str).context(error::NewKey {
+        let key = Key::new(KeyType::Data, &key_str).context(error::NewKeySnafu {
             key_type: "data",
             name: *key_str,
         })?;
         let value = match datastore
             .get_key(&key, committed)
-            .context(error::DataStore { op: "get_key" })?
+            .context(error::DataStoreSnafu { op: "get_key" })?
         {
             Some(v) => v,
             // TODO: confirm we want to skip requested keys if not populated, or error
@@ -288,7 +291,7 @@ pub(crate) fn get_settings_keys<D: DataStore>(
         data.insert(key, value);
     }
 
-    let settings = from_map(&data).context(error::Deserialization {
+    let settings = from_map(&data).context(error::DeserializationSnafu {
         given: "given keys",
     })?;
     Ok(settings)
@@ -337,19 +340,19 @@ where
 
         let item_data = datastore
             .get_prefix(&item_prefix, committed)
-            .with_context(|| error::DataStore {
+            .with_context(|_| error::DataStoreSnafu {
                 op: format!("get_prefix '{}' for {:?}", &item_prefix, committed),
             })?;
 
         ensure!(
             !item_data.is_empty(),
-            error::ListKeys {
+            error::ListKeysSnafu {
                 requested: item_prefix
             }
         );
 
         let item = from_map_with_prefix(Some(item_prefix.clone()), &item_data)
-            .context(error::Deserialization { given: item_prefix })?;
+            .context(error::DeserializationSnafu { given: item_prefix })?;
         result.insert(name.to_string(), item);
     }
 
@@ -363,13 +366,14 @@ pub(crate) fn set_settings<D: DataStore>(
     transaction: &str,
 ) -> Result<()> {
     trace!("Serializing Settings to write to data store");
-    let pairs = to_pairs(settings).context(error::DataStoreSerialization { given: "Settings" })?;
+    let pairs =
+        to_pairs(settings).context(error::DataStoreSerializationSnafu { given: "Settings" })?;
     let pending = Committed::Pending {
         tx: transaction.into(),
     };
     datastore
         .set_keys(&pairs, &pending)
-        .context(error::DataStore { op: "set_keys" })
+        .context(error::DataStoreSnafu { op: "set_keys" })
 }
 
 // This is not as nice as get_settings, which uses Serializer/Deserializer to properly use the
@@ -381,7 +385,7 @@ pub(crate) fn get_metadata_for_data_keys<D: DataStore, S: AsRef<str>>(
     data_key_strs: &HashSet<&str>,
 ) -> Result<HashMap<String, Value>> {
     trace!("Getting metadata '{}'", md_key_str.as_ref());
-    let md_key = Key::new(KeyType::Meta, md_key_str.as_ref()).context(error::NewKey {
+    let md_key = Key::new(KeyType::Meta, md_key_str.as_ref()).context(error::NewKeySnafu {
         key_type: "meta",
         name: md_key_str.as_ref(),
     })?;
@@ -389,7 +393,7 @@ pub(crate) fn get_metadata_for_data_keys<D: DataStore, S: AsRef<str>>(
     let mut result = HashMap::new();
     for data_key_str in data_key_strs {
         trace!("Pulling metadata from datastore for key: {}", data_key_str);
-        let data_key = Key::new(KeyType::Data, data_key_str).context(error::NewKey {
+        let data_key = Key::new(KeyType::Data, data_key_str).context(error::NewKeySnafu {
             key_type: "data",
             name: *data_key_str,
         })?;
@@ -404,7 +408,7 @@ pub(crate) fn get_metadata_for_data_keys<D: DataStore, S: AsRef<str>>(
         };
         trace!("Deserializing scalar from metadata");
         let value: Value = deserialize_scalar::<_, ScalarError>(&value_str)
-            .context(error::InvalidMetadata { key: md_key.name() })?;
+            .context(error::InvalidMetadataSnafu { key: md_key.name() })?;
         result.insert(data_key.to_string(), value);
     }
 
@@ -420,7 +424,7 @@ pub(crate) fn get_metadata_for_all_data_keys<D: DataStore, S: AsRef<str>>(
     trace!("Getting metadata '{}'", md_key_str.as_ref());
     let meta_map = datastore
         .get_metadata_prefix("", &Some(md_key_str))
-        .context(error::DataStore {
+        .context(error::DataStoreSnafu {
             op: "get_metadata_prefix",
         })?;
 
@@ -429,7 +433,7 @@ pub(crate) fn get_metadata_for_all_data_keys<D: DataStore, S: AsRef<str>>(
         for (meta_key, value_str) in metadata {
             trace!("Deserializing scalar from metadata");
             let value: Value = deserialize_scalar::<_, ScalarError>(&value_str).context(
-                error::InvalidMetadata {
+                error::InvalidMetadataSnafu {
                     key: meta_key.name(),
                 },
             )?;
@@ -446,7 +450,7 @@ where
 {
     datastore
         .commit_transaction(transaction)
-        .context(error::DataStore { op: "commit" })
+        .context(error::DataStoreSnafu { op: "commit" })
 }
 
 /// Launches the config applier to make appropriate changes to the system based on any settings
@@ -464,7 +468,7 @@ where
         // Prepare input to config applier; it uses the changed keys to update the right config
         trace!("Serializing the commit's changed keys: {:?}", keys_limit);
         let cmd_input =
-            serde_json::to_string(&keys_limit).context(error::CommandSerialization {
+            serde_json::to_string(&keys_limit).context(error::CommandSerializationSnafu {
                 given: "commit's changed keys",
             })?;
 
@@ -478,23 +482,23 @@ where
             //.stdout()
             //.stderr()
             .spawn()
-            .context(error::ConfigApplierStart)?;
+            .context(error::ConfigApplierStartSnafu)?;
 
         // Send changed keys to config applier
         trace!("Sending changed keys");
         cmd.stdin
             .as_mut()
-            .context(error::ConfigApplierStdin)?
+            .context(error::ConfigApplierStdinSnafu)?
             .write_all(cmd_input.as_bytes())
-            .context(error::ConfigApplierWrite)?;
+            .context(error::ConfigApplierWriteSnafu)?;
 
         // The config applier forks quickly; this wait ensures we don't get a zombie from its
         // initial process.  Its child is reparented to init and init waits for that one.
-        let status = cmd.wait().context(error::ConfigApplierWait)?;
+        let status = cmd.wait().context(error::ConfigApplierWaitSnafu)?;
         // Similarly, this is just checking that it was able to fork, not checking its work.
         ensure!(
             status.success(),
-            error::ConfigApplierFork {
+            error::ConfigApplierForkSnafu {
                 code: status
                     .code()
                     .map(|i| i.to_string())
@@ -513,10 +517,10 @@ where
             //.stdout()
             //.stderr()
             .status()
-            .context(error::ConfigApplierStart)?;
+            .context(error::ConfigApplierStartSnafu)?;
         ensure!(
             status.success(),
-            error::ConfigApplierFork {
+            error::ConfigApplierForkSnafu {
                 code: status
                     .code()
                     .map(|i| i.to_string())
@@ -533,7 +537,7 @@ pub(crate) fn dispatch_update_command(args: &[&str]) -> Result<HttpResponse> {
     let status = Command::new("/usr/bin/thar-be-updates")
         .args(args)
         .status()
-        .context(error::UpdateDispatcher)?;
+        .context(error::UpdateDispatcherSnafu)?;
     if status.success() {
         return Ok(HttpResponse::NoContent().finish());
     }

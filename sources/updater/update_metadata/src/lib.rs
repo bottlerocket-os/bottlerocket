@@ -69,8 +69,8 @@ impl UpdateWaves {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let wave_data = fs::read_to_string(path).context(error::FileRead { path })?;
-        toml::from_str(&wave_data).context(error::InvalidToml { path })
+        let wave_data = fs::read_to_string(path).context(error::FileReadSnafu { path })?;
+        toml::from_str(&wave_data).context(error::InvalidTomlSnafu { path })
     }
 }
 
@@ -124,26 +124,26 @@ impl Release {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let release_data = fs::read_to_string(path).context(error::FileRead { path })?;
-        toml::from_str(&release_data).context(error::InvalidToml { path })
+        let release_data = fs::read_to_string(path).context(error::FileReadSnafu { path })?;
+        toml::from_str(&release_data).context(error::InvalidTomlSnafu { path })
     }
 }
 
 pub fn load_file(path: &Path) -> Result<Manifest> {
-    let file = File::open(path).context(error::FileRead { path })?;
-    serde_json::from_reader(file).context(error::ManifestParse)
+    let file = File::open(path).context(error::FileReadSnafu { path })?;
+    serde_json::from_reader(file).context(error::ManifestParseSnafu)
 }
 
 pub fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
-    let manifest = serde_json::to_string_pretty(&manifest).context(error::UpdateSerialize)?;
-    fs::write(path, &manifest).context(error::FileWrite { path })?;
+    let manifest = serde_json::to_string_pretty(&manifest).context(error::UpdateSerializeSnafu)?;
+    fs::write(path, &manifest).context(error::FileWriteSnafu { path })?;
     Ok(())
 }
 
 impl Manifest {
     /// Parses a `Manifest` from JSON, which is presented by a `Read` object.
     pub fn from_json<R: Read>(r: R) -> Result<Self> {
-        serde_json::from_reader(r).context(error::ManifestParse)
+        serde_json::from_reader(r).context(error::ManifestParseSnafu)
     }
 
     pub fn add_update(
@@ -214,7 +214,7 @@ impl Manifest {
             let mut waves = update.waves.iter().peekable();
             while let Some(wave) = waves.next() {
                 if let Some(next) = waves.peek() {
-                    ensure!(wave.1 < next.1, error::WavesUnordered);
+                    ensure!(wave.1 < next.1, error::WavesUnorderedSnafu);
                 }
             }
         }
@@ -279,12 +279,12 @@ impl Manifest {
             for wave in &waves.waves {
                 ensure!(
                     wave.fleet_percentage > 0 && wave.fleet_percentage <= 100,
-                    error::InvalidFleetPercentage {
+                    error::InvalidFleetPercentageSnafu {
                         provided: wave.fleet_percentage
                     }
                 );
 
-                let offset = parse_offset(&wave.start_after).context(error::BadOffset {
+                let offset = parse_offset(&wave.start_after).context(error::BadOffsetSnafu {
                     offset: &wave.start_after,
                 })?;
                 update.waves.insert(seed, start_at + offset);
@@ -440,7 +440,7 @@ fn find_migrations_forward(
             }
             version = &transition.1;
         } else {
-            return error::MissingMigration {
+            return error::MissingMigrationSnafu {
                 current: version.clone(),
                 target: to.clone(),
             }

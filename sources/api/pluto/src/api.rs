@@ -37,9 +37,9 @@ mod inner {
         let (_status, response_body) =
             apiclient::raw_request(constants::API_SOCKET, uri, "GET", None)
                 .await
-                .context(ApiClient { uri })?;
+                .context(ApiClientSnafu { uri })?;
 
-        serde_json::from_str(&response_body).context(SettingsJson)
+        serde_json::from_str(&response_body).context(SettingsJsonSnafu)
     }
 
     /// Gets the info that we need to know about the EKS cluster from the Bottlerocket API.
@@ -77,6 +77,6 @@ mod inner {
     }
 
     pub(crate) async fn get_aws_k8s_info() -> Result<AwsK8sInfo> {
-        WrongVariant.fail()
+        WrongVariantSnafu.fail()
     }
 }

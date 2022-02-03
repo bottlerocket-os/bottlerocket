@@ -40,12 +40,12 @@ pub(crate) fn get_parameters(
     template_path: &Path,
     build_context: &BuildContext<'_>,
 ) -> Result<TemplateParameters> {
-    let templates_str = fs::read_to_string(&template_path).context(error::File {
+    let templates_str = fs::read_to_string(&template_path).context(error::FileSnafu {
         op: "read",
         path: &template_path,
     })?;
     let mut template_parameters: TemplateParameters =
-        toml::from_str(&templates_str).context(error::InvalidToml {
+        toml::from_str(&templates_str).context(error::InvalidTomlSnafu {
             path: &template_path,
         })?;
     trace!("Parsed templates: {:#?}", template_parameters);
@@ -54,7 +54,7 @@ pub(crate) fn get_parameters(
     // conditionals below, we allow that and just don't set any parameters.
     ensure!(
         !template_parameters.parameters.is_empty(),
-        error::NoTemplates {
+        error::NoTemplatesSnafu {
             path: template_path
         }
     );
@@ -101,17 +101,17 @@ pub(crate) fn render_parameters(
         for tp in &template_parameters.parameters {
             let mut tt = TinyTemplate::new();
             tt.add_template("name", &tp.name)
-                .context(error::AddTemplate { template: &tp.name })?;
+                .context(error::AddTemplateSnafu { template: &tp.name })?;
             tt.add_template("value", &tp.value)
-                .context(error::AddTemplate {
+                .context(error::AddTemplateSnafu {
                     template: &tp.value,
                 })?;
             let name_suffix = tt
                 .render("name", &context)
-                .context(error::RenderTemplate { template: &tp.name })?;
+                .context(error::RenderTemplateSnafu { template: &tp.name })?;
             let value = tt
                 .render("value", &context)
-                .context(error::RenderTemplate {
+                .context(error::RenderTemplateSnafu {
                     template: &tp.value,
                 })?;
 
@@ -137,10 +137,10 @@ pub(crate) fn render_parameter_names(
     for tp in &template_parameters.parameters {
         let mut tt = TinyTemplate::new();
         tt.add_template("name", &tp.name)
-            .context(error::AddTemplate { template: &tp.name })?;
+            .context(error::AddTemplateSnafu { template: &tp.name })?;
         let name_suffix = tt
             .render("name", &build_context)
-            .context(error::RenderTemplate { template: &tp.name })?;
+            .context(error::RenderTemplateSnafu { template: &tp.name })?;
         new_parameters.insert(tp.name.clone(), join_name(ssm_prefix, &name_suffix));
     }
 
@@ -164,7 +164,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Error building template from '{}': {}", template, source))]
         AddTemplate {

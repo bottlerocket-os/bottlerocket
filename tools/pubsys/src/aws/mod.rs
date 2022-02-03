@@ -19,7 +19,7 @@ fn region_from_string(name: &str, aws: &AwsConfig) -> Result<Region> {
             name: name.to_string(),
             endpoint,
         },
-        None => name.parse().context(error::ParseRegion { name })?,
+        None => name.parse().context(error::ParseRegionSnafu { name })?,
     })
 }
 
@@ -28,7 +28,7 @@ pub(crate) fn parse_arch(input: &str) -> Result<String> {
     match input {
         "x86_64" | "amd64" => Ok("x86_64".to_string()),
         "arm64" | "aarch64" => Ok("arm64".to_string()),
-        _ => error::ParseArch {
+        _ => error::ParseArchSnafu {
             input,
             msg: "unknown architecture",
         }
@@ -40,7 +40,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("Failed to parse arch '{}': {}", input, msg))]
         ParseArch { input: String, msg: String },

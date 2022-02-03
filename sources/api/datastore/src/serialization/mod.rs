@@ -31,7 +31,7 @@ impl MapKeySerializer {
 /// Most types are invalid map keys (only strings are OK) so we need to return an error in most
 /// cases.  This simplifies the creation of that error, with a customizable message for the type.
 fn bad_key<T>(typename: &str) -> Result<T> {
-    error::BadMapKey { typename }.fail()
+    error::BadMapKeySnafu { typename }.fail()
 }
 
 #[rustfmt::skip]
@@ -54,7 +54,7 @@ impl ser::Serializer for &MapKeySerializer {
         let key = Key::from_segments(KeyType::Data, &[value])
             .map_err(|e| {
                 debug!("MapKeySerializer got invalid key name: {}", value);
-                error::InvalidKey { msg: format!("{}", e) }.into_error(NoSource)
+                error::InvalidKeySnafu { msg: format!("{}", e) }.into_error(NoSource)
             })?;
         trace!("MapKeySerializer got OK key: {}", key);
         Ok(key.to_string())

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use url::Url;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility(pub(crate)))]
 pub(crate) enum Error {
     #[snafu(display("Unable to load Bottlerocket release info: '{}'", source))]
     BottlerocketRelease { source: bottlerocket_release::Error },

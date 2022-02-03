@@ -97,11 +97,11 @@ impl Default for UpdateStatus {
 /// This takes the update lock file as an parameter to signal to caller that the update
 /// lock needs to be obtained before calling this.
 pub fn get_update_status(_lockfile: &File) -> Result<UpdateStatus> {
-    let status_file = File::open(UPDATE_STATUS_FILE).context(error::NoStatusFile {
+    let status_file = File::open(UPDATE_STATUS_FILE).context(error::NoStatusFileSnafu {
         path: UPDATE_STATUS_FILE,
     })?;
     Ok(
-        serde_json::from_reader(status_file).context(error::StatusParse {
+        serde_json::from_reader(status_file).context(error::StatusParseSnafu {
             path: UPDATE_STATUS_FILE,
         })?,
     )
@@ -117,12 +117,13 @@ fn get_settings(socket_path: &str) -> Result<serde_json::Value> {
     let uri = "/settings";
     let method = "GET";
 
-    let rt = Runtime::new().context(error::Runtime)?;
+    let rt = Runtime::new().context(error::RuntimeSnafu)?;
     let try_response_body =
         rt.block_on(async { apiclient::raw_request(&socket_path, uri, method, None).await });
-    let (_code, response_body) = try_response_body.context(error::APIRequest { method, uri })?;
+    let (_code, response_body) =
+        try_response_body.context(error::APIRequestSnafu { method, uri })?;
 
-    serde_json::from_str(&response_body).context(error::ResponseJson { uri })
+    serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { uri })
 }
 
 // This is how the UpdateStatus is stored on disk
@@ -164,7 +165,7 @@ impl UpdateStatus {
     /// Updates the active partition set information
     pub fn update_active_partition_info(&mut self) -> Result<()> {
         // Get current OS release info to determine active partition image information
-        let os_info = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+        let os_info = BottlerocketRelease::new().context(error::ReleaseVersionSnafu)?;
         let active_image = UpdateImage {
             arch: os_info.arch,
             version: os_info.version_id,
@@ -173,9 +174,9 @@ impl UpdateStatus {
 
         // Get partition set information. We can infer the version of the image in the active
         // partition set by checking the os release information
-        let gpt_state = State::load().context(error::PartitionTableRead)?;
+        let gpt_state = State::load().context(error::PartitionTableReadSnafu)?;
         let active_set = gpt_state.active();
-        let next_set = gpt_state.next().context(error::NoneSetToBoot)?;
+        let next_set = gpt_state.next().context(error::NoneSetToBootSnafu)?;
         self.active_partition = Some(StagedImage {
             image: active_image,
             next_to_boot: active_set == next_set,
@@ -196,12 +197,12 @@ impl UpdateStatus {
         if let Some(staging_partition) = &mut self.staging_partition {
             staging_partition.set_next_to_boot(true);
         } else {
-            return error::StagingPartition {}.fail();
+            return error::StagingPartitionSnafu {}.fail();
         }
         if let Some(active_partition) = &mut self.active_partition {
             active_partition.set_next_to_boot(false);
         } else {
-            return error::ActivePartition {}.fail();
+            return error::ActivePartitionSnafu {}.fail();
         }
         Ok(())
     }
@@ -211,12 +212,12 @@ impl UpdateStatus {
         if let Some(staging_partition) = &mut self.staging_partition {
             staging_partition.set_next_to_boot(false);
         } else {
-            return error::StagingPartition {}.fail();
+            return error::StagingPartitionSnafu {}.fail();
         }
         if let Some(active_partition) = &mut self.active_partition {
             active_partition.set_next_to_boot(true);
         } else {
-            return error::ActivePartition {}.fail();
+            return error::ActivePartitionSnafu {}.fail();
         }
         Ok(())
     }
@@ -246,7 +247,7 @@ impl UpdateStatus {
     pub fn get_latest_update(
         updates: Vec<update_metadata::Update>,
     ) -> Result<Option<update_metadata::Update>> {
-        let os_info = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+        let os_info = BottlerocketRelease::new().context(error::ReleaseVersionSnafu)?;
         for update in updates {
             // If the current running version is greater than the max version ever published,
             // or moves us to a valid version <= the maximum version, update.
@@ -274,7 +275,7 @@ impl UpdateStatus {
         let locked_version: FriendlyVersion = serde_json::from_value(
             settings["updates"]["version-lock"].to_owned(),
         )
-        .context(error::GetSetting {
+        .context(error::GetSettingSnafu {
             setting: "/settings/updates/version-lock",
         })?;
 
@@ -289,11 +290,12 @@ impl UpdateStatus {
                 return Ok(true);
             }
         } else {
-            let chosen_version =
-                FriendlyVersion::try_into(locked_version.to_owned()).context(error::SemVer {
+            let chosen_version = FriendlyVersion::try_into(locked_version.to_owned()).context(
+                error::SemVerSnafu {
                     version: locked_version,
-                })?;
-            let os_info = BottlerocketRelease::new().context(error::ReleaseVersion)?;
+                },
+            )?;
+            let os_info = BottlerocketRelease::new().context(error::ReleaseVersionSnafu)?;
             if chosen_version != os_info.version_id {
                 for update in &updates {
                     if update.version == chosen_version {

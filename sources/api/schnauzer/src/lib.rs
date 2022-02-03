@@ -21,7 +21,7 @@ pub mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Error {}ing to {}: {}", method, uri, source))]
         APIRequest {
@@ -81,10 +81,10 @@ where
     trace!("{}ing from {}", method, uri);
     let (code, response_body) = apiclient::raw_request(socket_path, &uri, method, None)
         .await
-        .context(error::APIRequest { method, uri: &uri })?;
+        .context(error::APIRequestSnafu { method, uri: &uri })?;
 
     if !code.is_success() {
-        return error::APIResponse {
+        return error::APIResponseSnafu {
             method,
             uri,
             code,
@@ -94,7 +94,7 @@ where
     }
     trace!("JSON response: {}", response_body);
 
-    serde_json::from_str(&response_body).context(error::ResponseJson { method, uri })
+    serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })
 }
 
 /// Requests all settings from the API so they can be used as the data source for a handlebars

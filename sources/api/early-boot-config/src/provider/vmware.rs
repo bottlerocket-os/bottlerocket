@@ -53,8 +53,8 @@ impl VmwareDataProvider {
 
         ensure!(
             user_data_files.next().is_none(),
-            error::UserDataFileCount {
-                location: Self::CD_ROM_MOUNT
+            error::UserDataFileCountSnafu {
+                place: Self::CD_ROM_MOUNT
             }
         );
 
@@ -68,7 +68,7 @@ impl VmwareDataProvider {
             Some(_) => unreachable!(),
             None => {
                 // Read the file, decompressing it if compressed.
-                expand_file_maybe(&user_data_file).context(error::InputFileRead {
+                expand_file_maybe(&user_data_file).context(error::InputFileReadSnafu {
                     path: &user_data_file,
                 })?
             }
@@ -91,7 +91,7 @@ impl VmwareDataProvider {
         }
 
         let json = SettingsJson::from_toml_str(&user_data_str, "user data from CD-ROM").context(
-            error::SettingsToJSON {
+            error::SettingsToJsonSnafu {
                 from: user_data_file.display().to_string(),
             },
         )?;
@@ -107,12 +107,12 @@ impl VmwareDataProvider {
     // <Property key="user-data" value="1234abcd"/>
     fn ovf_user_data<P: AsRef<Path>>(path: P) -> Result<String> {
         let path = path.as_ref();
-        let file = File::open(path).context(error::InputFileRead { path })?;
+        let file = File::open(path).context(error::InputFileReadSnafu { path })?;
         let reader = OptionalCompressionReader::new(BufReader::new(file));
 
         // Deserialize the OVF file, dropping everything we don't care about
         let ovf: Environment =
-            serde_xml_rs::from_reader(reader).context(error::XmlDeserialize { path })?;
+            serde_xml_rs::from_reader(reader).context(error::XmlDeserializeSnafu { path })?;
 
         // We have seen the keys in the `Property` section be "namespaced" like "oe:key" or
         // "of:key".  Since we aren't trying to validate the schema beyond the presence of the
@@ -130,12 +130,12 @@ impl VmwareDataProvider {
         }
 
         // Base64 decode the &str
-        let decoded_bytes = base64::decode(&base64_str).context(error::Base64Decode {
+        let decoded_bytes = base64::decode(&base64_str).context(error::Base64DecodeSnafu {
             what: "OVF user data",
         })?;
 
         // Decompress the data if it's compressed
-        let decoded = expand_slice_maybe(&decoded_bytes).context(error::Decompression {
+        let decoded = expand_slice_maybe(&decoded_bytes).context(error::DecompressionSnafu {
             what: "OVF user data",
         })?;
 
@@ -147,19 +147,19 @@ impl VmwareDataProvider {
         info!("Attempting to retrieve user data via guestinfo interface");
 
         // It would be extremely odd to get here and not be on VMware, but check anyway
-        ensure!(vmw_backdoor::is_vmware_cpu(), error::NotVmware);
+        ensure!(vmw_backdoor::is_vmware_cpu(), error::NotVmwareSnafu);
 
         // `guestinfo.userdata.encoding` informs us how to handle the data in the
         // `guestinfo.userdata` field
         let maybe_encoding = Self::backdoor_get_bytes(Self::GUESTINFO_USERDATA_ENCODING)?;
         let user_data_encoding: UserDataEncoding = match maybe_encoding {
             Some(val) => {
-                let encoding_str = String::from_utf8(val).context(error::InvalidUtf8 {
+                let encoding_str = String::from_utf8(val).context(error::InvalidUtf8Snafu {
                     what: Self::GUESTINFO_USERDATA_ENCODING,
                 })?;
                 info!("Found user data encoding: {}", encoding_str);
 
-                serde_plain::from_str(&encoding_str).context(error::UnknownEncoding {
+                serde_plain::from_str(&encoding_str).context(error::UnknownEncodingSnafu {
                     encoding: encoding_str,
                 })?
             }
@@ -190,23 +190,23 @@ impl VmwareDataProvider {
                 // Decompresses the data if it is gzip'ed
                 let mut output = String::new();
                 let mut compression_reader = OptionalCompressionReader::new(decoder);
-                compression_reader
-                    .read_to_string(&mut output)
-                    .context(error::Decompression {
+                compression_reader.read_to_string(&mut output).context(
+                    error::DecompressionSnafu {
                         what: "guestinfo user data",
-                    })?;
+                    },
+                )?;
                 output
             }
 
             UserDataEncoding::Raw => {
-                String::from_utf8(user_data_bytes).context(error::InvalidUtf8 {
+                String::from_utf8(user_data_bytes).context(error::InvalidUtf8Snafu {
                     what: Self::GUESTINFO_USERDATA,
                 })?
             }
         };
 
         let json = SettingsJson::from_toml_str(&user_data_string, "user data from guestinfo")
-            .context(error::SettingsToJSON { from: "guestinfo" })?;
+            .context(error::SettingsToJsonSnafu { from: "guestinfo" })?;
         Ok(Some(json))
     }
 
@@ -225,16 +225,18 @@ impl VmwareDataProvider {
                 );
                 vmw_backdoor::probe_backdoor()
             })
-            .context(error::Backdoor {
+            .context(error::BackdoorSnafu {
                 op: "probe and acquire access",
             })?;
 
-        let mut erpc = backdoor.open_enhanced_chan().context(error::Backdoor {
-            op: "open eRPC channel",
-        })?;
+        let mut erpc = backdoor
+            .open_enhanced_chan()
+            .context(error::BackdoorSnafu {
+                op: "open eRPC channel",
+            })?;
 
         erpc.get_guestinfo(key.as_bytes())
-            .context(error::GuestInfo { what: key })
+            .context(error::GuestInfoSnafu { what: key })
     }
 }
 
@@ -316,7 +318,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(display("VMware backdoor: failed to '{}': '{}'", op, source))]
         Backdoor {
@@ -354,7 +356,7 @@ mod error {
         NotVmware,
 
         #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
-        SettingsToJSON {
+        SettingsToJson {
             from: String,
             source: crate::settings::Error,
         },
@@ -365,8 +367,8 @@ mod error {
             source: serde_plain::Error,
         },
 
-        #[snafu(display("Found multiple user data files in '{}', expected 1", location))]
-        UserDataFileCount { location: String },
+        #[snafu(display("Found multiple user data files in '{}', expected 1", place))]
+        UserDataFileCount { place: String },
 
         #[snafu(display("Unable to deserialize XML from: '{}': {}", path.display(), source))]
         XmlDeserialize {

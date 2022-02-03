@@ -5,11 +5,11 @@ use std::path::PathBuf;
 
 /// Potential errors during configuration application
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility(pub(crate)))]
 pub enum Error {
-    #[snafu(display("Failed to read changed settings from {}", location))]
+    #[snafu(display("Failed to read changed settings from {}", from))]
     ReadInput {
-        location: &'static str,
+        from: &'static str,
         source: io::Error,
     },
 

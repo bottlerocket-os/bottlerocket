@@ -39,7 +39,7 @@ mod error {
 
     /// Potential errors during execution
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum StorewolfError {
         #[snafu(display("Unable to clear pending transactions: {}", source))]
         DeletePending { source: io::Error },
@@ -164,14 +164,14 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
             // An array or string means we're ready to create a model::Metadata
             val @ toml::Value::Array(_) | val @ toml::Value::String(_) => {
                 // Get the metadata key from the end of the path
-                let md_key = path.pop().context(error::Internal {
+                let md_key = path.pop().context(error::InternalSnafu {
                     msg: "parse_metadata_toml found empty 'path' in the to_process vec - is 'metadata' not a Table?",
                 })?;
 
                 // Make sure that the path contains more than 1 item, i.e. ["settings", "motd"]
                 ensure!(
                     path.len() >= 1,
-                    error::Internal {
+                    error::InternalSnafu {
                         msg: format!(
                             "Cannot create empty metadata data key - is root not a Table?"
                         )
@@ -186,15 +186,17 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
                 );
 
                 // Ensure the metadata/data keys don't contain newline chars
-                let md = SingleLineString::try_from(md_key).context(error::SingleLineString)?;
-                let key = SingleLineString::try_from(data_key).context(error::SingleLineString)?;
+                let md =
+                    SingleLineString::try_from(md_key).context(error::SingleLineStringSnafu)?;
+                let key =
+                    SingleLineString::try_from(data_key).context(error::SingleLineStringSnafu)?;
 
                 // Create the Metadata struct
                 def_metadatas.push(model::Metadata { key, md, val })
             }
 
             // We don't recognize any other values yet, something is awry
-            _ => return error::DefaultsMetadataUnexpectedFormat {}.fail(),
+            _ => return error::DefaultsMetadataUnexpectedFormatSnafu {}.fail(),
         };
     }
     Ok(def_metadatas)
@@ -226,19 +228,19 @@ fn populate_default_datastore<P: AsRef<Path>>(
         debug!("Gathering existing data from the datastore");
         existing_metadata = datastore
             .list_populated_metadata("", &None as &Option<&str>)
-            .context(error::QueryMetadata)?;
+            .context(error::QueryMetadataSnafu)?;
         existing_data = datastore
             .list_populated_keys("", &datastore::Committed::Live)
-            .context(error::QueryData)?;
+            .context(error::QueryDataSnafu)?;
     } else {
         info!("Creating datastore at: {}", &live_path.display());
-        create_new_datastore(&base_path, version).context(error::DatastoreCreation)?;
+        create_new_datastore(&base_path, version).context(error::DatastoreCreationSnafu)?;
     }
 
     // Here we read in the merged settings file built by build.rs.
     let defaults_str = include_str!(concat!(env!("OUT_DIR"), "/defaults.toml"));
     let mut defaults_val: toml::Value =
-        toml::from_str(defaults_str).context(error::DefaultsFormatting {
+        toml::from_str(defaults_str).context(error::DefaultsFormattingSnafu {
             path: concat!(env!("OUT_DIR"), "/defaults.toml"),
         })?;
 
@@ -246,7 +248,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
     // of `shared_defaults_val`
     let table = defaults_val
         .as_table_mut()
-        .context(error::DefaultsNotTable)?;
+        .context(error::DefaultsNotTableSnafu)?;
     let maybe_metadata_val = table.remove("metadata");
     let maybe_settings_val = table.remove("settings");
 
@@ -257,7 +259,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
         debug!("Serializing default settings and writing new ones to datastore");
         let def_settings_table = def_settings_val
             .as_table()
-            .context(error::DefaultSettingsNotTable)?;
+            .context(error::DefaultSettingsNotTableSnafu)?;
 
         // The default settings were removed from the "settings" key of the
         // defaults table above. We still need them under a "settings" key
@@ -265,7 +267,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
         // "settings.foo.bar" and not just "foo.bar". We use a HashMap
         // to rebuild the nested structure.
         let def_settings = to_pairs_with_prefix("settings", &def_settings_table).context(
-            error::Serialization {
+            error::SerializationSnafu {
                 given: "default settings",
             },
         )?;
@@ -288,7 +290,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
         };
         datastore
             .set_keys(&settings_to_write, &pending)
-            .context(error::WriteKeys)?;
+            .context(error::WriteKeysSnafu)?;
     }
 
     // If we have metadata, write it out to the datastore in Live state
@@ -314,11 +316,11 @@ fn populate_default_datastore<P: AsRef<Path>>(
         let mut metadata_to_write = HashSet::new();
         for def_metadata in def_metadatas {
             let model::Metadata { key, md, val } = def_metadata;
-            let data_key = Key::new(KeyType::Data, &key).context(error::InvalidKey {
+            let data_key = Key::new(KeyType::Data, &key).context(error::InvalidKeySnafu {
                 key_type: KeyType::Data,
                 key,
             })?;
-            let md_key = Key::new(KeyType::Meta, &md).context(error::InvalidKey {
+            let md_key = Key::new(KeyType::Meta, &md).context(error::InvalidKeySnafu {
                 key_type: KeyType::Meta,
                 key: md,
             })?;
@@ -328,8 +330,8 @@ fn populate_default_datastore<P: AsRef<Path>>(
             let def_metadata_keypair = (&data_key, &md_key);
             if !existing_metadata.contains(&def_metadata_keypair) {
                 let value =
-                    datastore::serialize_scalar::<_, ScalarError>(&val).with_context(|| {
-                        error::SerializeScalar {
+                    datastore::serialize_scalar::<_, ScalarError>(&val).with_context(|_| {
+                        error::SerializeScalarSnafu {
                             given: format!("metadata value '{}'", val),
                         }
                     })?;
@@ -345,14 +347,14 @@ fn populate_default_datastore<P: AsRef<Path>>(
             let (md, key, val) = metadata;
             datastore
                 .set_metadata(&md, &key, val)
-                .context(error::WriteMetadata)?;
+                .context(error::WriteMetadataSnafu)?;
         }
     }
 
     // If any other defaults remain (configuration files, services, etc),
     // write them to the datastore in Live state
     debug!("Serializing other defaults and writing new ones to datastore");
-    let defaults = to_pairs(&defaults_val).context(error::Serialization {
+    let defaults = to_pairs(&defaults_val).context(error::SerializationSnafu {
         given: "other defaults",
     })?;
 
@@ -370,7 +372,7 @@ fn populate_default_datastore<P: AsRef<Path>>(
         );
         datastore
             .set_keys(&other_defaults_to_write, &datastore::Committed::Live)
-            .context(error::WriteKeys)?;
+            .context(error::WriteKeysSnafu)?;
     }
     Ok(())
 }
@@ -455,7 +457,7 @@ fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("Storewolf started");
 
@@ -467,7 +469,7 @@ fn run() -> Result<()> {
         // If there are no pending settings, the directory won't exist.
         // Ignore the error in this case.
         if e.kind() != io::ErrorKind::NotFound {
-            Err(e).context(error::DeletePending)?
+            Err(e).context(error::DeletePendingSnafu)?
         }
     }
 

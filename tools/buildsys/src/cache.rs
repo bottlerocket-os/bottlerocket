@@ -32,7 +32,7 @@ impl LookasideCache {
             let path = &f.path.as_ref().unwrap_or_else(|| &url_file_name);
             ensure!(
                 path.components().count() == 1,
-                error::ExternalFileName { path }
+                error::ExternalFileNameSnafu { path }
             );
 
             let hash = &f.sha512;
@@ -41,7 +41,7 @@ impl LookasideCache {
                     Ok(_) => continue,
                     Err(e) => {
                         eprintln!("{}", e);
-                        fs::remove_file(path).context(error::ExternalFileDelete { path })?;
+                        fs::remove_file(path).context(error::ExternalFileDeleteSnafu { path })?;
                     }
                 }
             }
@@ -53,7 +53,8 @@ impl LookasideCache {
             let url = format!("{}/{}/{}/{}", LOOKASIDE_CACHE.to_string(), name, hash, name);
             match Self::fetch_file(&url, &tmp, hash) {
                 Ok(_) => {
-                    fs::rename(&tmp, path).context(error::ExternalFileRename { path: &tmp })?;
+                    fs::rename(&tmp, path)
+                        .context(error::ExternalFileRenameSnafu { path: &tmp })?;
                     continue;
                 }
                 Err(e) => {
@@ -65,7 +66,7 @@ impl LookasideCache {
             if std::env::var("BUILDSYS_UPSTREAM_SOURCE_FALLBACK") == Ok("true".to_string()) {
                 println!("Fetching {:?} from upstream source", url_file_name);
                 Self::fetch_file(&f.url, &tmp, hash)?;
-                fs::rename(&tmp, path).context(error::ExternalFileRename { path: &tmp })?;
+                fs::rename(&tmp, path).context(error::ExternalFileRenameSnafu { path: &tmp })?;
             }
         }
 
@@ -76,48 +77,52 @@ impl LookasideCache {
     /// then verifies the contents against the SHA-512 hash provided.
     fn fetch_file<P: AsRef<Path>>(url: &str, path: P, hash: &str) -> Result<()> {
         let path = path.as_ref();
-        let mut resp = reqwest::blocking::get(url).context(error::ExternalFileRequest { url })?;
+        let mut resp =
+            reqwest::blocking::get(url).context(error::ExternalFileRequestSnafu { url })?;
         let status = resp.status();
         ensure!(
             status.is_success(),
-            error::ExternalFileFetch { url, status }
+            error::ExternalFileFetchSnafu { url, status }
         );
 
-        let f = File::create(path).context(error::ExternalFileOpen { path })?;
+        let f = File::create(path).context(error::ExternalFileOpenSnafu { path })?;
         let mut f = BufWriter::new(f);
         resp.copy_to(&mut f)
-            .context(error::ExternalFileSave { path })?;
+            .context(error::ExternalFileSaveSnafu { path })?;
         drop(f);
 
         match Self::verify_file(path, hash) {
             Ok(_) => Ok(()),
             Err(e) => {
-                fs::remove_file(path).context(error::ExternalFileDelete { path })?;
+                fs::remove_file(path).context(error::ExternalFileDeleteSnafu { path })?;
                 Err(e)
             }
         }
     }
 
     fn extract_file_name(url: &str) -> Result<PathBuf> {
-        let parsed = reqwest::Url::parse(url).context(error::ExternalFileUrl { url })?;
+        let parsed = reqwest::Url::parse(url).context(error::ExternalFileUrlSnafu { url })?;
         let name = parsed
             .path_segments()
-            .context(error::ExternalFileName { path: url })?
+            .context(error::ExternalFileNameSnafu { path: url })?
             .last()
-            .context(error::ExternalFileName { path: url })?;
+            .context(error::ExternalFileNameSnafu { path: url })?;
         Ok(name.into())
     }
 
     /// Reads a file from disk and compares it to the expected SHA-512 hash.
     fn verify_file<P: AsRef<Path>>(path: P, hash: &str) -> Result<()> {
         let path = path.as_ref();
-        let mut f = File::open(path).context(error::ExternalFileOpen { path })?;
+        let mut f = File::open(path).context(error::ExternalFileOpenSnafu { path })?;
         let mut d = Sha512::new();
 
-        io::copy(&mut f, &mut d).context(error::ExternalFileLoad { path })?;
+        io::copy(&mut f, &mut d).context(error::ExternalFileLoadSnafu { path })?;
         let digest = hex::encode(d.finalize());
 
-        ensure!(digest == hash, error::ExternalFileVerify { path, hash });
+        ensure!(
+            digest == hash,
+            error::ExternalFileVerifySnafu { path, hash }
+        );
         Ok(())
     }
 }

@@ -36,13 +36,13 @@ where
     debug!("Requesting settings values");
     let settings = schnauzer::get_settings(socket_path)
         .await
-        .context(error::RetrieveSettings)?
+        .context(error::RetrieveSettingsSnafu)?
         .settings
-        .context(error::MissingSettings)?;
+        .context(error::MissingSettingsSnafu)?;
 
     Ok(settings
         .kubernetes
-        .context(error::MissingSettings)?
+        .context(error::MissingSettingsSnafu)?
         .static_pods)
 }
 
@@ -56,19 +56,19 @@ where
     let manifest = manifest.as_ref();
 
     let target_dir = Path::new(STATIC_POD_DIR);
-    fs::create_dir_all(&target_dir).context(error::Mkdir { dir: &target_dir })?;
+    fs::create_dir_all(&target_dir).context(error::MkdirSnafu { dir: &target_dir })?;
 
     // Create a temporary directory adjacent to the static pods directory. This directory will be
     // automatically cleaned-up as soon as it goes out of scope.
-    let tmp_dir = TempDir::new_in(ETC_KUBE_DIR).context(error::CreateTempdir)?;
+    let tmp_dir = TempDir::new_in(ETC_KUBE_DIR).context(error::CreateTempdirSnafu)?;
 
     // Create the pod manifest file as a temporary file in an adjacent temp directory first and
     // finish writing to it before swapping any files out in the target static pods directory.
     let mut temp_manifest_file =
-        NamedTempFile::new_in(tmp_dir.path()).context(error::CreateTempfile)?;
+        NamedTempFile::new_in(tmp_dir.path()).context(error::CreateTempfileSnafu)?;
     temp_manifest_file
         .write(manifest)
-        .context(error::ManifestWrite { name })?;
+        .context(error::ManifestWriteSnafu { name })?;
 
     let target_path = target_dir.join(name);
     debug!(
@@ -78,7 +78,7 @@ where
     // Create the file if it does not exist. If it does exist, atomically replace it.
     temp_manifest_file
         .persist(&target_path)
-        .context(error::PersistPodManifest { path: target_path })?;
+        .context(error::PersistPodManifestSnafu { path: target_path })?;
 
     Ok(())
 }
@@ -91,7 +91,7 @@ where
     let name = name.as_ref();
     let path = Path::new(STATIC_POD_DIR).join(name);
     if path.exists() {
-        fs::remove_file(path).context(error::ManifestDelete { name })?;
+        fs::remove_file(path).context(error::ManifestDeleteSnafu { name })?;
     }
 
     Ok(())
@@ -103,18 +103,22 @@ where
 {
     // Get basic settings, as retrieved from API.
     let name = name.as_ref();
-    let enabled = pod_info.enabled.context(error::MissingField {
+    let enabled = pod_info.enabled.context(error::MissingFieldSnafu {
         name,
         field: "enabled",
     })?;
 
     if enabled {
-        let manifest = pod_info.manifest.as_ref().context(error::MissingField {
-            name,
-            field: "manifest",
-        })?;
+        let manifest = pod_info
+            .manifest
+            .as_ref()
+            .context(error::MissingFieldSnafu {
+                name,
+                field: "manifest",
+            })?;
 
-        let manifest = base64::decode(manifest.as_bytes()).context(error::Base64Decode { name })?;
+        let manifest =
+            base64::decode(manifest.as_bytes()).context(error::Base64DecodeSnafu { name })?;
 
         info!("Writing static pod '{}' to '{}'", name, STATIC_POD_DIR);
 
@@ -134,7 +138,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args())?;
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("static-pods started");
 
@@ -150,7 +154,7 @@ async fn run() -> Result<()> {
 
         ensure!(
             failed == 0,
-            error::ManageStaticPodsFailed {
+            error::ManageStaticPodsFailedSnafu {
                 failed,
                 tried: static_pods.len()
             }
@@ -247,7 +251,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("{}", message))]
         Usage { message: String },

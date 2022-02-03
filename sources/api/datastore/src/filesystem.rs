@@ -68,7 +68,7 @@ impl FilesystemDataStore {
         // Confirm no path traversal outside of base
         ensure!(
             path != *base_path && path.starts_with(base_path),
-            error::PathTraversal { name: key.name() }
+            error::PathTraversalSnafu { name: key.name() }
         );
 
         Ok(path)
@@ -91,9 +91,12 @@ impl FilesystemDataStore {
         // we don't think "a.b" is actually two segments, for example.
         // Metadata keys only have a single segment, and we encode that as a single path
         // component, so we don't need the quotes in the filename.
-        let raw_key_name = metadata_key.segments().get(0).context(error::Internal {
-            msg: "metadata key with no segments",
-        })?;
+        let raw_key_name = metadata_key
+            .segments()
+            .get(0)
+            .context(error::InternalSnafu {
+                msg: "metadata key with no segments",
+            })?;
 
         let encoded_meta = encode_path_component(raw_key_name);
         path_str.push(METADATA_KEY_PREFIX);
@@ -124,7 +127,7 @@ impl FilesystemDataStore {
             Ok(()) => {}
             Err(e) => {
                 if e.kind() != io::ErrorKind::NotFound {
-                    return Err(e).context(error::DeleteKey { path });
+                    return Err(e).context(error::DeleteKeySnafu { path });
                 }
             }
         }
@@ -192,7 +195,7 @@ where
         // decode_utf8 will only fail if someone messed with the filesystem contents directly
         // and created a filename that contains percent-encoded bytes that are invalid UTF-8.
         .ok()
-        .context(error::Corruption {
+        .context(error::CorruptionSnafu {
             path: path.as_ref(),
             msg: format!("invalid UTF-8 in encoded segment '{}'", segment),
         })
@@ -208,7 +211,7 @@ fn read_file_for_key(key: &Key, path: &Path) -> Result<Option<String>> {
                 return Ok(None);
             }
 
-            Err(e).context(error::KeyRead { key: key.name() })
+            Err(e).context(error::KeyReadSnafu { key: key.name() })
         }
     }
 }
@@ -217,15 +220,15 @@ fn read_file_for_key(key: &Key, path: &Path) -> Result<Option<String>> {
 /// arbitrarily dotted keys without needing to create fixed structure first.
 fn write_file_mkdir<S: AsRef<str>>(path: PathBuf, data: S) -> Result<()> {
     // create key prefix directory if necessary
-    let dirname = path.parent().with_context(|| error::Internal {
+    let dirname = path.parent().with_context(|| error::InternalSnafu {
         msg: format!(
             "Given path to write without proper prefix: {}",
             path.display()
         ),
     })?;
-    fs::create_dir_all(dirname).context(error::Io { path: dirname })?;
+    fs::create_dir_all(dirname).context(error::IoSnafu { path: dirname })?;
 
-    fs::write(&path, data.as_ref().as_bytes()).context(error::Io { path: &path })
+    fs::write(&path, data.as_ref().as_bytes()).context(error::IoSnafu { path: &path })
 }
 
 /// KeyPath represents the filesystem path to a data or metadata key, relative to the base path of
@@ -263,13 +266,13 @@ impl KeyPath {
         let key_path_raw = entry
             .path()
             .strip_prefix(strip_path_prefix)
-            .context(error::Path)?;
+            .context(error::PathSnafu)?;
         // If from_path doesn't think this is an OK key, we'll return Ok(None), otherwise the KeyPath
         Ok(Self::from_path(key_path_raw).ok())
     }
 
     fn from_path(path: &Path) -> Result<KeyPath> {
-        let path_str = path.to_str().context(error::Corruption {
+        let path_str = path.to_str().context(error::CorruptionSnafu {
             msg: "Non-UTF8 path",
             path,
         })?;
@@ -277,7 +280,7 @@ impl KeyPath {
         // Split the data and metadata parts.
         // Any dots in key names are encoded.
         let mut keys = path_str.splitn(2, '.');
-        let data_key_raw = keys.next().context(error::Internal {
+        let data_key_raw = keys.next().context(error::InternalSnafu {
             msg: "KeyPath given empty path",
         })?;
         // Turn the data path into a dotted key
@@ -326,7 +329,7 @@ fn find_populated_key_paths<S: AsRef<str>>(
         match committed {
             // No live keys; something must be wrong because we create a default datastore.
             Committed::Live => {
-                return error::Corruption {
+                return error::CorruptionSnafu {
                     msg: "Live datastore missing",
                     path: base,
                 }
@@ -357,7 +360,7 @@ fn find_populated_key_paths<S: AsRef<str>>(
 
     // For anything we find, confirm it matches the user's filters, and add it to results.
     for entry in walker {
-        let entry = entry.context(error::ListKeys)?;
+        let entry = entry.context(error::ListKeysSnafu)?;
         if let Some(kp) = KeyPath::from_entry(&entry, &base)? {
             if !kp.data_key.name().starts_with(prefix.as_ref()) {
                 trace!(
@@ -423,7 +426,7 @@ impl DataStore for FilesystemDataStore {
         let mut result = HashMap::new();
         for key_path in key_paths {
             let data_key = key_path.data_key;
-            let meta_key = key_path.metadata_key.context(error::Internal {
+            let meta_key = key_path.metadata_key.context(error::InternalSnafu {
                 msg: format!("Found meta key path with no dot: {}", data_key),
             })?;
 
@@ -504,7 +507,7 @@ impl DataStore for FilesystemDataStore {
         // Remove pending
         debug!("Removing old pending keys");
         let path = self.base_path(&pending);
-        fs::remove_dir_all(&path).context(error::Io { path })?;
+        fs::remove_dir_all(&path).context(error::IoSnafu { path })?;
 
         Ok(pending_keys)
     }
@@ -529,7 +532,7 @@ impl DataStore for FilesystemDataStore {
         if let Err(e) = fs::remove_dir_all(&path) {
             // If path doesn't exist, it's fine, we'll just return an empty list.
             if e.kind() != io::ErrorKind::NotFound {
-                return Err(e).context(error::Io { path });
+                return Err(e).context(error::IoSnafu { path });
             }
         }
 
@@ -560,14 +563,14 @@ impl DataStore for FilesystemDataStore {
                             break;
                         }
                     }
-                    return Err(e).context(error::ListKeys);
+                    return Err(e).context(error::ListKeysSnafu);
                 }
             };
 
             if entry.file_type().is_dir() {
                 // The directory name should be valid UTF-8, encoded by encode_path_component,
                 // or the data store has been corrupted.
-                let file_name = entry.file_name().to_str().context(error::Corruption {
+                let file_name = entry.file_name().to_str().context(error::CorruptionSnafu {
                     msg: "Non-UTF8 path",
                     path: entry.path(),
                 })?;

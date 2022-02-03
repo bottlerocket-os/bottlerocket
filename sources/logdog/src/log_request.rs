@@ -114,20 +114,22 @@ where
 {
     let request = request.as_ref();
     let mut iter = request.splitn(3, ' ');
-    let mode = iter.next().context(error::ModeMissing)?;
+    let mode = iter.next().context(error::ModeMissingSnafu)?;
     let req = if mode == "glob" {
         // for glob request format is "glob <pattern>"
         LogRequest {
             mode,
             filename: "",
-            instructions: iter.next().context(error::PatternMissing)?,
+            instructions: iter.next().context(error::PatternMissingSnafu)?,
         }
     } else {
         // Get the second token (output filename) and put the remainder of the
         // log request into the instructions field (or default to an empty string).
         LogRequest {
             mode,
-            filename: iter.next().context(error::FilenameMissing { request })?,
+            filename: iter
+                .next()
+                .context(error::FilenameMissingSnafu { request })?,
             instructions: iter.next().unwrap_or(""),
         }
     };
@@ -154,21 +156,22 @@ where
     P: AsRef<Path>,
 {
     let settings = get_settings().await?;
-    let mut settings_map = to_pairs(&settings).context(error::SerializeSettings)?;
+    let mut settings_map = to_pairs(&settings).context(error::SerializeSettingsSnafu)?;
 
     // Filter all settings that match any of the "sensitive" patterns
     for pattern in SENSITIVE_SETTINGS_PATTERNS {
         let pattern =
-            Pattern::new(pattern).context(error::ParseGlobPattern { pattern: *pattern })?;
+            Pattern::new(pattern).context(error::ParseGlobPatternSnafu { pattern: *pattern })?;
         settings_map.retain(|k, _| !pattern.matches(k.name().as_str()))
     }
 
     // Serialize the map back to a `Settings` to remove the escaping so it writes nicely to file
-    let settings: model::Settings = from_map(&settings_map).context(error::DeserializeSettings)?;
+    let settings: model::Settings =
+        from_map(&settings_map).context(error::DeserializeSettingsSnafu)?;
     let outpath = tempdir.as_ref().join(request.filename);
-    let outfile = File::create(&outpath).context(error::FileCreate { path: &outpath })?;
+    let outfile = File::create(&outpath).context(error::FileCreateSnafu { path: &outpath })?;
     serde_json::to_writer_pretty(&outfile, &settings)
-        .context(error::FileWrite { path: &outpath })?;
+        .context(error::FileWriteSnafu { path: &outpath })?;
     Ok(())
 }
 
@@ -177,9 +180,9 @@ async fn get_settings() -> Result<model::Settings> {
     let uri = constants::API_SETTINGS_URI;
     let (_status, response_body) = apiclient::raw_request(constants::API_SOCKET, uri, "GET", None)
         .await
-        .context(error::ApiClient { uri })?;
+        .context(error::ApiClientSnafu { uri })?;
 
-    serde_json::from_str(&response_body).context(error::SettingsJson)
+    serde_json::from_str(&response_body).context(error::SettingsJsonSnafu)
 }
 
 /// Runs an `exec` `LogRequest`'s `instructions` and writes its output to to `tempdir`.
@@ -187,27 +190,30 @@ fn handle_exec_request<P>(request: &LogRequest<'_>, tempdir: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    let split = shell_words::split(request.instructions).with_context(|| error::CommandParse {
-        command: request.to_string(),
-    })?;
-    let (command, args) = split.split_first().with_context(|| error::CommandMissing {
-        request: request.to_string(),
-    })?;
+    let split =
+        shell_words::split(request.instructions).with_context(|_| error::CommandParseSnafu {
+            command: request.to_string(),
+        })?;
+    let (command, args) = split
+        .split_first()
+        .with_context(|| error::CommandMissingSnafu {
+            request: request.to_string(),
+        })?;
     let outpath = tempdir.as_ref().join(request.filename);
-    let ofile = File::create(&outpath).context(error::CommandOutputFile { path: &outpath })?;
+    let ofile = File::create(&outpath).context(error::CommandOutputFileSnafu { path: &outpath })?;
     let stderr_file = ofile
         .try_clone()
-        .context(error::CommandErrFile { path: &outpath })?;
+        .context(error::CommandErrFileSnafu { path: &outpath })?;
     Command::new(command)
         .args(args)
         .stdout(Stdio::from(ofile))
         .stderr(Stdio::from(stderr_file))
         .spawn()
-        .with_context(|| error::CommandSpawn {
+        .with_context(|_| error::CommandSpawnSnafu {
             command: request.to_string(),
         })?
         .wait_with_output()
-        .with_context(|| error::CommandFinish {
+        .with_context(|_| error::CommandFinishSnafu {
             command: request.to_string(),
         })?;
     Ok(())
@@ -220,16 +226,18 @@ where
 {
     ensure!(
         !request.instructions.is_empty(),
-        error::HttpMissingUrl {
+        error::HttpMissingUrlSnafu {
             request: request.to_string(),
         }
     );
     let outpath = tempdir.as_ref().join(request.filename);
     let response = send_get_request(request.instructions)?;
-    let data = response.bytes().with_context(|| error::HttpResponseBytes {
-        request: request.to_string(),
-    })?;
-    fs::write(&outpath, &data).with_context(|| error::HttpWriteBytes {
+    let data = response
+        .bytes()
+        .with_context(|_| error::HttpResponseBytesSnafu {
+            request: request.to_string(),
+        })?;
+    fs::write(&outpath, &data).with_context(|_| error::HttpWriteBytesSnafu {
         request: request.to_string(),
         path: &outpath,
     })?;
@@ -238,17 +246,17 @@ where
 
 /// Uses the reqwest library to send a GET request to `URL` and returns the response.
 fn send_get_request(url: &str) -> Result<Response> {
-    let url = Url::parse(&url).context(error::HttpUrlParse { url })?;
+    let url = Url::parse(&url).context(error::HttpUrlParseSnafu { url })?;
     let client = Client::builder()
         .build()
-        .with_context(|| error::HttpClient { url: url.clone() })?;
+        .with_context(|_| error::HttpClientSnafu { url: url.clone() })?;
     let response = client
         .get(url.clone())
         .send()
-        .with_context(|| error::HttpSend { url: url.clone() })?;
+        .with_context(|_| error::HttpSendSnafu { url: url.clone() })?;
     let response = response
         .error_for_status()
-        .context(error::HttpResponse { url })?;
+        .context(error::HttpResponseSnafu { url })?;
     Ok(response)
 }
 
@@ -260,12 +268,12 @@ where
 {
     ensure!(
         !request.instructions.is_empty(),
-        error::FileFromEmpty {
+        error::FileFromEmptySnafu {
             request: request.to_string()
         }
     );
     let dest = tempdir.as_ref().join(request.filename);
-    let _ = fs::copy(&request.instructions, &dest).with_context(|| error::FileCopy {
+    let _ = fs::copy(&request.instructions, &dest).with_context(|_| error::FileCopySnafu {
         request: request.to_string(),
         from: request.instructions,
         to: &dest,
@@ -280,7 +288,7 @@ where
     P: AsRef<Path>,
 {
     let mut files = HashSet::new();
-    let glob_paths = glob(request.instructions).context(error::ParseGlobPattern {
+    let glob_paths = glob(request.instructions).context(error::ParseGlobPatternSnafu {
         pattern: request.instructions,
     })?;
     for entry in glob_paths {
@@ -307,12 +315,12 @@ where
             .strip_prefix("/")
             .unwrap_or(src_filepath.as_path());
         let dest_filepath = tempdir.as_ref().join(relative_path);
-        let dest_dir_path = dest_filepath.parent().context(error::RootAsFile)?;
+        let dest_dir_path = dest_filepath.parent().context(error::RootAsFileSnafu)?;
         // create directories in dest file path if it does not exist
-        fs::create_dir_all(dest_dir_path).context(error::CreateOutputDirectory {
+        fs::create_dir_all(dest_dir_path).context(error::CreateOutputDirectorySnafu {
             path: dest_dir_path,
         })?;
-        let _ = fs::copy(&src_filepath, &dest_filepath).with_context(|| error::FileCopy {
+        let _ = fs::copy(&src_filepath, &dest_filepath).with_context(|_| error::FileCopySnafu {
             request: request.to_string(),
             from: src_filepath.to_str().unwrap_or("<unknown>"),
             to: &dest_filepath,

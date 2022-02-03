@@ -102,7 +102,7 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("early-boot-config started");
 
@@ -116,7 +116,7 @@ async fn run() -> Result<()> {
     for settings_json in Platform
         .platform_data()
         .await
-        .context(error::ProviderError)?
+        .context(error::ProviderSnafu)?
     {
         // Don't send an empty request to the API
         if settings_json.json.is_empty() {
@@ -129,10 +129,10 @@ async fn run() -> Result<()> {
         let (code, response_body) =
             apiclient::raw_request(&args.socket_path, uri, method, Some(settings_json.json))
                 .await
-                .context(error::APIRequest { method, uri })?;
+                .context(error::APIRequestSnafu { method, uri })?;
         ensure!(
             code.is_success(),
-            error::Response {
+            error::ResponseSnafu {
                 method,
                 uri,
                 code,
@@ -167,7 +167,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error {}ing '{}': {}", method, uri, source))]
         APIRequest {

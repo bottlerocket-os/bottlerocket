@@ -70,24 +70,25 @@ fn generate_defaults_toml() -> Result<()> {
     // Merge the files into a single TOML value, in order.
     let mut defaults = Value::Table(Map::new());
     for entry in walker {
-        let entry = entry.context(error::ListFiles { dir: DEFAULTS_DIR })?;
+        let entry = entry.context(error::ListFilesSnafu { dir: DEFAULTS_DIR })?;
 
         // Reflect that we need to rerun if any of the default settings files have changed.
         println!("cargo:rerun-if-changed={}", entry.path().display());
 
-        let data = fs::read_to_string(entry.path()).context(error::File {
+        let data = fs::read_to_string(entry.path()).context(error::FileSnafu {
             op: "read",
             path: entry.path(),
         })?;
-        let value = toml::from_str(&data).context(error::TomlDeserialize { path: entry.path() })?;
-        merge_values(&mut defaults, &value).context(error::TomlMerge)?;
+        let value =
+            toml::from_str(&data).context(error::TomlDeserializeSnafu { path: entry.path() })?;
+        merge_values(&mut defaults, &value).context(error::TomlMergeSnafu)?;
     }
 
     // Serialize to disk for storewolf to read.
-    let data = toml::to_string(&defaults).context(error::TomlSerialize)?;
+    let data = toml::to_string(&defaults).context(error::TomlSerializeSnafu)?;
     let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR not set; are you not using cargo?");
     let path = Path::new(&out_dir).join("defaults.toml");
-    fs::write(&path, &data).context(error::File { op: "write", path })?;
+    fs::write(&path, &data).context(error::FileSnafu { op: "write", path })?;
 
     Ok(())
 }
@@ -97,7 +98,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Failed to {} {}: {}", op, path.display(), source))]
         File {

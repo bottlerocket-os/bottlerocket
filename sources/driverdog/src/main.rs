@@ -110,7 +110,7 @@ fn link_modules_sets(
     if let Some(target) = target {
         let driver_config = modules_sets
             .get(&target)
-            .context(error::MissingModuleSet { target })?;
+            .context(error::MissingModuleSetSnafu { target })?;
         link_modules(&driver_config, &kernel_version)?;
     } else {
         // Link all the modules sets if no target module was given
@@ -135,7 +135,7 @@ where
         .join(&kernel_version)
         .join(&driver_config.lib_modules_path);
     // Directory to store temp artifacts
-    let build_dir = tempfile::tempdir().context(error::TmpDir)?;
+    let build_dir = tempfile::tempdir().context(error::TmpDirSnafu)?;
     // This script is used to link the kernel module
     let common_module_script = Path::new(KERNEL_SOURCES)
         .join(&kernel_version)
@@ -190,7 +190,7 @@ where
         let object_file_path = build_dir.join(object_file);
         if !object_file_path.exists() {
             let from = driver_path.join(object_file);
-            fs::copy(&from, &object_file_path).context(error::Copy {
+            fs::copy(&from, &object_file_path).context(error::CopySnafu {
                 from: &from,
                 to: &object_file_path,
             })?;
@@ -207,7 +207,7 @@ where
         "-o".to_string(),
         kernel_module_path
             .to_str()
-            .context(error::InvalidModulePath {
+            .context(error::InvalidModulePathSnafu {
                 path: &kernel_module_path,
             })?
             .to_string(),
@@ -292,7 +292,7 @@ fn load_modules_sets(
     if let Some(target) = target {
         let driver_config = modules_sets
             .get(&target)
-            .context(error::MissingModuleSet { target })?;
+            .context(error::MissingModuleSetSnafu { target })?;
         load_modules(&driver_config)?
     }
     // Load all the modules sets if no target module was given
@@ -334,7 +334,7 @@ where
     command.args(args);
     let output = command
         .output()
-        .context(error::ExecutionFailure { command })?;
+        .context(error::ExecutionFailureSnafu { command })?;
 
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     trace!("stdout: {}", stdout);
@@ -342,7 +342,7 @@ where
 
     ensure!(
         output.status.success(),
-        error::CommandFailure { bin_path, output }
+        error::CommandFailureSnafu { bin_path, output }
     );
 
     Ok(stdout)
@@ -350,7 +350,7 @@ where
 
 fn setup_logger(args: &Args) -> Result<()> {
     let log_level = args.log_level.unwrap_or(LevelFilter::Info);
-    SimpleLogger::init(log_level, LogConfig::default()).context(error::Logger)
+    SimpleLogger::init(log_level, LogConfig::default()).context(error::LoggerSnafu)
 }
 
 fn run() -> Result<()> {
@@ -359,14 +359,17 @@ fn run() -> Result<()> {
     let driver_config_path = Path::new(&args.driver_config_path);
     let mut all_modules_sets: HashMap<String, DriverConfig> = HashMap::new();
 
-    for entry in driver_config_path.read_dir().context(error::ReadPath {
-        path: driver_config_path,
-    })? {
+    for entry in driver_config_path
+        .read_dir()
+        .context(error::ReadPathSnafu {
+            path: driver_config_path,
+        })?
+    {
         if let Ok(entry) = entry {
             let path = entry.path();
             let modules_sets: HashMap<String, DriverConfig> =
-                toml::from_slice(&fs::read(&path).context(error::ReadPath { path: &path })?)
-                    .context(error::Deserialize { path: &path })?;
+                toml::from_slice(&fs::read(&path).context(error::ReadPathSnafu { path: &path })?)
+                    .context(error::DeserializeSnafu { path: &path })?;
 
             all_modules_sets.extend(modules_sets);
         }
@@ -392,7 +395,7 @@ mod error {
     use std::process::{Command, Output};
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("'{}' failed - stderr: {}",
                         bin_path, String::from_utf8_lossy(&output.stderr)))]

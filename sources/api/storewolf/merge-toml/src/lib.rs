@@ -15,7 +15,10 @@ use toml::{map::Entry, Value};
 pub fn merge_values<'a>(merge_into: &'a mut Value, merge_from: &'a Value) -> Result<()> {
     // If the types of left and right don't match, we have inconsistent models, and shouldn't try
     // to merge them.
-    ensure!(merge_into.same_type(&merge_from), error::DataTypeMismatch);
+    ensure!(
+        merge_into.same_type(&merge_from),
+        error::DataTypeMismatchSnafu
+    );
 
     match merge_from {
         // If we see a scalar, we replace the left with the right.  We treat arrays like scalars so
@@ -55,7 +58,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Cannot merge mismatched data types in given TOML"))]
         DataTypeMismatch {},

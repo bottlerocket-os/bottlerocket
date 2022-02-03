@@ -16,17 +16,17 @@ where
     // Send the settings changes to the server.
     let uri = format!("/settings?tx={}", transaction);
     let method = "PATCH";
-    let request_body = serde_json::to_string(&settings).context(error::Serialize)?;
+    let request_body = serde_json::to_string(&settings).context(error::SerializeSnafu)?;
     let (_status, _body) = crate::raw_request(&socket_path, &uri, method, Some(request_body))
         .await
-        .context(error::Request { uri, method })?;
+        .context(error::RequestSnafu { uri, method })?;
 
     // Commit the transaction and apply it to the system.
     let uri = format!("/tx/commit_and_apply?tx={}", transaction);
     let method = "POST";
     let (_status, _body) = crate::raw_request(&socket_path, &uri, method, None)
         .await
-        .context(error::Request { uri, method })?;
+        .context(error::RequestSnafu { uri, method })?;
 
     Ok(())
 }
@@ -35,7 +35,7 @@ mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Unable to serialize data: {}", source))]
         Serialize { source: serde_json::Error },

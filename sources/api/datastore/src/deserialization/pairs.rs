@@ -88,7 +88,7 @@ where
     let key_prefix = match prefix {
         None => None,
         Some(ref p) => {
-            Some(Key::new(KeyType::Data, p).context(error::InvalidPrefix { prefix: p })?)
+            Some(Key::new(KeyType::Data, p).context(error::InvalidPrefixSnafu { prefix: p })?)
         }
     };
     let de = CompoundDeserializer::new(
@@ -132,7 +132,7 @@ where
                 trace!("Handing off to scalar deserializer for deserialize_any");
                 scalar_deserializer
                     .deserialize_any(visitor)
-                    .context(error::DeserializeScalar)
+                    .context(error::DeserializeScalarSnafu)
             }
             ValueDeserializer::Compound(compound_deserializer) => {
                 compound_deserializer.deserialize_map(visitor)
@@ -151,7 +151,7 @@ where
                 trace!("Handing off to scalar deserializer for deserialize_option");
                 scalar_deserializer
                     .deserialize_option(visitor)
-                    .context(error::DeserializeScalar)
+                    .context(error::DeserializeScalarSnafu)
             }
             ValueDeserializer::Compound(compound_deserializer) => {
                 compound_deserializer.deserialize_option(visitor)
@@ -206,7 +206,7 @@ where
 }
 
 fn bad_root<T>() -> Result<T> {
-    error::BadRoot.fail()
+    error::BadRootSnafu.fail()
 }
 
 impl<'de, K, S, BH> serde::de::Deserializer<'de> for CompoundDeserializer<'de, K, S, BH>
@@ -239,7 +239,7 @@ where
                     // this initial 'path' creation is the only place we take the struct name from
                     // serde, per above comment.
                     Key::from_segments(KeyType::Data, &[name.to_lowercase()])
-                        .context(error::InvalidPrefix { prefix: name })?,
+                        .context(error::InvalidPrefixSnafu { prefix: name })?,
                 );
             }
             trace!("Path after name check: {:?}", self.path);
@@ -254,7 +254,7 @@ where
             let mut new_keys = HashSet::new();
             for key in self.keys {
                 new_keys.insert(key.strip_prefix_segments(&path.segments()).context(
-                    error::StripPrefix {
+                    error::StripPrefixSnafu {
                         prefix: path.name(),
                         name: key.name(),
                     },

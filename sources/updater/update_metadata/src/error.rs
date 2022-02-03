@@ -7,7 +7,7 @@ use std::path::PathBuf;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(visibility(pub(crate)))]
 pub enum Error {
     #[snafu(display("Bad bound field: {}", bound_str))]
     BadBound {

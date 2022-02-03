@@ -68,12 +68,12 @@ where
     let uri = constants::API_SETTINGS_URI;
     let (_code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
         .await
-        .context(error::APIRequest { method, uri })?;
+        .context(error::APIRequestSnafu { method, uri })?;
 
     // Build a Settings struct from the response string
     debug!("Deserializing response");
     let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJson { uri })?;
+        serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { uri })?;
 
     split_bundles(settings.pki.unwrap_or_default())
 }
@@ -95,7 +95,7 @@ fn split_bundles(
         }
 
         let name = name.as_ref();
-        let decoded = base64::decode(data.as_bytes()).context(error::Base64Decode { name })?;
+        let decoded = base64::decode(data.as_bytes()).context(error::Base64DecodeSnafu { name })?;
         // Each record in the API could include one or more certificates
         let mut pems = pems_from_iter(x509_parser::pem::Pem::iter_from_buffer(&decoded))?;
 
@@ -127,7 +127,7 @@ where
     let trusted_store = trusted_store.as_ref();
 
     // The default bundle includes the certificates shipped with the OS
-    let default_bundle = fs::File::open(source_bundle).context(error::ReadSourceBundle {
+    let default_bundle = fs::File::open(source_bundle).context(error::ReadSourceBundleSnafu {
         path: source_bundle,
     })?;
     let reader = BufReader::new(default_bundle);
@@ -141,7 +141,7 @@ where
 
     // Write a PEM formatted bundle from trusted certificates
     fs::write(&trusted_store, pems_to_string(&trusted_bundle)?)
-        .context(error::UpdateTrustedStore)?;
+        .context(error::UpdateTrustedStoreSnafu)?;
 
     Ok(())
 }
@@ -153,7 +153,7 @@ where
 {
     let mut vec: Vec<x509_parser::pem::Pem> = Vec::new();
     for pem in iter {
-        let pem = pem.context(error::ParsePEM)?;
+        let pem = pem.context(error::ParsePEMSnafu)?;
         vec.push(pem);
     }
     Ok(vec)
@@ -164,7 +164,7 @@ fn pems_to_string(pems: &Vec<x509_parser::pem::Pem>) -> Result<String> {
     let mut out = String::new();
 
     for pem in pems {
-        writeln!(out, "{}", pem_to_string(pem)?).context(error::WritePemString)?;
+        writeln!(out, "{}", pem_to_string(pem)?).context(error::WritePemStringSnafu)?;
     }
 
     Ok(out)
@@ -176,17 +176,19 @@ fn pem_to_string(pem: &x509_parser::pem::Pem) -> Result<String> {
 
     // A comment will be added before the PEM formatted string to identify the certificate.
     if let Some(comment) = comment_for_pem(&pem)? {
-        writeln!(out, "# {}", comment).context(error::WritePemString)?;
+        writeln!(out, "# {}", comment).context(error::WritePemStringSnafu)?;
     }
 
-    writeln!(out, "{} {}{}", PEM_HEADER, pem.label, PEM_SUFFIX).context(error::WritePemString)?;
+    writeln!(out, "{} {}{}", PEM_HEADER, pem.label, PEM_SUFFIX)
+        .context(error::WritePemStringSnafu)?;
     let encoded = base64::encode(&pem.contents);
     let bytes = encoded.as_bytes();
     for chunk in bytes.chunks(64) {
         let chunk = String::from_utf8_lossy(chunk);
-        writeln!(out, "{}", chunk).context(error::WritePemString)?;
+        writeln!(out, "{}", chunk).context(error::WritePemStringSnafu)?;
     }
-    writeln!(out, "{} {}{}", PEM_FOOTER, pem.label, PEM_SUFFIX).context(error::WritePemString)?;
+    writeln!(out, "{} {}{}", PEM_FOOTER, pem.label, PEM_SUFFIX)
+        .context(error::WritePemStringSnafu)?;
 
     Ok(out)
 }
@@ -194,7 +196,7 @@ fn pem_to_string(pem: &x509_parser::pem::Pem) -> Result<String> {
 /// Returns a string from the common name, organizational unit or organization
 /// fields in the certificate
 fn comment_for_pem(pem: &x509_parser::pem::Pem) -> Result<Option<String>> {
-    let cert = pem.parse_x509().context(error::ParseX509Certificate)?;
+    let cert = pem.parse_x509().context(error::ParseX509CertificateSnafu)?;
     let subject = cert.tbs_certificate.subject;
     let comment = subject
         .iter_common_name()
@@ -211,7 +213,7 @@ async fn run() -> Result<()> {
     let args: Args = argh::from_env();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::Logger)?;
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("certdog started");
     let certificate_bundles = get_certificate_bundles(&args.socket_path).await?;
@@ -240,7 +242,7 @@ mod error {
     use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
-    #[snafu(visibility = "pub(super)")]
+    #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
         APIRequest {
