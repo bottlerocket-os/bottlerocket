@@ -42,6 +42,9 @@ PUBLISH_WAVE_POLICY_PATH = "${BUILDSYS_ROOT_DIR}/sources/updater/waves/default-w
 PUBLISH_INFRA_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Infra.toml"
 # Default repo to read from PUBLISH_INFRA_CONFIG_PATH
 PUBLISH_REPO = "default"
+# The version of tuftool (without the 'v') that we will install and use for
+# publishing-related steps
+PUBLISH_TUFTOOL_VERSION="0.7.1"
 
 # The size in GiB of the data volume in the block device mapping of registered
 # AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
@@ -704,6 +707,7 @@ cargo install \
   --jobs ${BUILDSYS_JOBS} \
   --root tools \
   --quiet \
+  --version ${PUBLISH_TUFTOOL_VERSION} \
   tuftool
 '''
 ]
