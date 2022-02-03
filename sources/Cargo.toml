@@ -36,6 +36,10 @@ members = [
     "api/migration/migrations/v1.5.1/control-container-v0-5-4",
     "api/migration/migrations/v1.5.3/vmware-host-containers",
     "api/migration/migrations/v1.6.0/node-taints-representation",
+    "api/migration/migrations/v1.6.0/aws-admin-container-v0-7-4",
+    "api/migration/migrations/v1.6.0/aws-control-container-v0-5-5",
+    "api/migration/migrations/v1.6.0/public-admin-container-v0-7-4",
+    "api/migration/migrations/v1.6.0/public-control-container-v0-5-5",
 
     "bottlerocket-release",
 
