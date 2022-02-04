@@ -1,3 +1,66 @@
+# v1.6.0 (2022-02-07)
+
+## Deprecation Notice
+
+The Kubernetes 1.18 variant, `aws-k8s-1.18`, will lose support in March 2022.
+Kubernetes 1.18 is no longer receiving support upstream.
+We recommend replacing `aws-k8s-1.18` nodes with a later variant, preferably `aws-k8s-1.21` if your cluster supports it.
+See [this issue](https://github.com/bottlerocket-os/bottlerocket/issues/1942) for more details.
+
+## Security Fixes
+
+* Apply patch to the kernel for CVE-2022-0492 ([#1943])
+
+## OS Changes
+* Add aws-k8s-1.21-nvidia variant with Nvidia driver support ([#1859], [#1860], [#1861], [#1862], [#1900], [#1912], [#1915], [#1916], [#1928])
+* Add metal-k8s-1.21 variant with support for running on bare metal ([#1904])
+* Update host containers to the latest version ([#1939])
+* Add driverdog, a configuration-driven utility for linking kernel modules at runtime ([#1867])
+* Kubernetes: Fix a potential inconsistency with IPv6 node-ip comparisons ([#1932])
+* Allow setting multiple Kubernetes node taints with the same key ([#1906])
+* Fix a bug which would prevent Bottlerocket from booting when setting `container-registry` to an empty table ([#1910])
+* Add `/etc/bottlerocket-release` to host containers ([#1883])
+* Send grub output to the local console on BIOS systems ([#1894])
+* Fix minor issues with systemd units ([#1889])
+
+## Build Changes
+* Update third-party packages ([#1936])
+* Update Rust dependencies ([#1940])
+* Update Go dependencies of `host-ctr` ([#1938])
+* Add the ability to fetch licenses at build time ([#1901])
+* Pin tuftool to a specific version ([#1940])
+
+## Documentation Changes
+* Add a no-proxy setting example to the README ([#1765] thanks, @mrajashree!)
+* Document variant `image-layout` options in the README ([#1896])
+
+
+[#1765]: https://github.com/bottlerocket-os/bottlerocket/pull/1765
+[#1859]: https://github.com/bottlerocket-os/bottlerocket/pull/1859
+[#1860]: https://github.com/bottlerocket-os/bottlerocket/pull/1860
+[#1861]: https://github.com/bottlerocket-os/bottlerocket/pull/1861
+[#1862]: https://github.com/bottlerocket-os/bottlerocket/pull/1862
+[#1867]: https://github.com/bottlerocket-os/bottlerocket/pull/1867
+[#1883]: https://github.com/bottlerocket-os/bottlerocket/pull/1883
+[#1889]: https://github.com/bottlerocket-os/bottlerocket/pull/1889
+[#1894]: https://github.com/bottlerocket-os/bottlerocket/pull/1894
+[#1896]: https://github.com/bottlerocket-os/bottlerocket/pull/1896
+[#1900]: https://github.com/bottlerocket-os/bottlerocket/pull/1900
+[#1901]: https://github.com/bottlerocket-os/bottlerocket/pull/1901
+[#1904]: https://github.com/bottlerocket-os/bottlerocket/pull/1904
+[#1906]: https://github.com/bottlerocket-os/bottlerocket/pull/1906
+[#1910]: https://github.com/bottlerocket-os/bottlerocket/pull/1910
+[#1912]: https://github.com/bottlerocket-os/bottlerocket/pull/1912
+[#1915]: https://github.com/bottlerocket-os/bottlerocket/pull/1915
+[#1916]: https://github.com/bottlerocket-os/bottlerocket/pull/1916
+[#1928]: https://github.com/bottlerocket-os/bottlerocket/pull/1928
+[#1932]: https://github.com/bottlerocket-os/bottlerocket/pull/1932
+[#1936]: https://github.com/bottlerocket-os/bottlerocket/pull/1936
+[#1938]: https://github.com/bottlerocket-os/bottlerocket/pull/1938
+[#1939]: https://github.com/bottlerocket-os/bottlerocket/pull/1939
+[#1940]: https://github.com/bottlerocket-os/bottlerocket/pull/1940
+[#1943]: https://github.com/bottlerocket-os/bottlerocket/pull/1943
+
 # v1.5.3 (2022-01-25)
 
 ## Security Fixes
