@@ -10,8 +10,12 @@ URL: https://www.kernel.org/
 Source0: https://cdn.amazonlinux.com/blobstore/c80d649c51b68fdb2bc126c326f83fed93ed242d675f978a9a0da4012e9789a5/kernel-5.10.93-87.444.amzn2.src.rpm
 Source100: config-bottlerocket
 
+# cgroup v1 release agent fix
+Patch0001: 0001-cgroup-v1-Require-capabilities-to-set-release_agent.patch
+
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
+
 # Add zstd support for compressed kernel modules
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
 Patch2001: 2001-kbuild-add-support-for-zstd-compressed-modules.patch

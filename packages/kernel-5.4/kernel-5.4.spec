@@ -10,8 +10,8 @@ URL: https://www.kernel.org/
 Source0: https://cdn.amazonlinux.com/blobstore/9d3d2fc3caf5bc68bcc257a426b1a3177f60f1acd62e27d772b58156c1b76e57/kernel-5.4.172-90.336.amzn2.src.rpm
 Source100: config-bottlerocket
 
-# Make Lustre FSx work with a newer GCC.
-Patch0001: 0001-lustrefsx-Disable-Werror-stringop-overflow.patch
+# cgroup v1 release agent fix
+Patch0001: 0001-cgroup-v1-Require-capabilities-to-set-release_agent.patch
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
@@ -26,6 +26,9 @@ Patch2005: 2005-.gitignore-Add-ZSTD-compressed-files.patch
 # Add zstd support for compressed kernel modules
 Patch2006: 2006-kbuild-move-module-strip-compression-code-into-scrip.patch
 Patch2007: 2007-kbuild-add-support-for-zstd-compressed-modules.patch
+
+# Make Lustre FSx work with a newer GCC.
+Patch3001: 3001-lustrefsx-Disable-Werror-stringop-overflow.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
