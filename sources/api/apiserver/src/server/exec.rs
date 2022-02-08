@@ -355,7 +355,8 @@ impl Handler<message::ProcessReturn> for WsExec {
         // they're just a u8.  If that assumption breaks for some reason, we don't have a
         // reasonable code to send to the user, so just give a 0.
         let code = u16::try_from(msg.code).unwrap_or(0);
-        stop(ctx, None::<String>, ws::CloseCode::Other(code));
+        // We send the process return code in the closing frame's reason message.
+        stop(ctx, Some(code.to_string()), ws::CloseCode::Normal);
     }
 }
 
