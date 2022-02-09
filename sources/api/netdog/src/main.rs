@@ -48,6 +48,7 @@ lazy_static! {
 
 /// Stores fields extracted from a DHCP lease.
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct LeaseInfo {
     #[serde(rename = "ipaddr")]
     ip_address: IpNet,
