@@ -139,7 +139,7 @@ func TestRegistryHosts(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			f := registryHosts(&tc.config, docker.NewDockerAuthorizer())
+			f := registryHosts(&tc.config, nil)
 			result, err := f(tc.host)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result)
@@ -155,7 +155,7 @@ func TestBadRegistryHosts(t *testing.T) {
 				Endpoints: []string{"$#%#$$#%#$"},
 			},
 		},
-	}, docker.NewDockerAuthorizer())
+	}, nil)
 	_, err := f("docker.io")
 	assert.Error(t, err)
 }
