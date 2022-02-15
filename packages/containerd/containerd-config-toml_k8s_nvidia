@@ -37,3 +37,25 @@ conf_dir = "/etc/cni/net.d"
 endpoint = [{{join_array ", " endpoint }}]
 {{/each}}
 {{/if}}
+
+{{#if settings.container-registry.credentials}}
+{{#each settings.container-registry.credentials}}
+{{#if (eq registry "docker.io" )~}}
+[plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
+{{else}}
+[plugins."io.containerd.grpc.v1.cri".registry.configs."{{registry}}".auth]
+{{/if}}
+{{#if username}}
+username = "{{{username}}}"
+{{/if}}
+{{#if password}}
+password = "{{{password}}}"
+{{/if}}
+{{#if auth}}
+auth = "{{{auth}}}"
+{{/if}}
+{{#if identitytoken}}
+identitytoken = "{{{identitytoken}}}"
+{{/if}}
+{{/each}}
+{{/if}}

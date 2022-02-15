@@ -202,6 +202,16 @@ struct RegistryMirror {
     endpoint: Vec<Url>,
 }
 
+#[model]
+struct RegistryCredential {
+    registry: SingleLineString,
+    username: SingleLineString,
+    password: SingleLineString,
+    // This is the base64 encoding of "username:password"
+    auth: ValidBase64,
+    identitytoken: SingleLineString,
+}
+
 // Image registry settings for the container runtimes.
 #[model]
 struct RegistrySettings {
@@ -211,6 +221,8 @@ struct RegistrySettings {
         deserialize_with = "deserialize_mirrors"
     )]
     mirrors: Vec<RegistryMirror>,
+    #[serde(alias = "creds", default, skip_serializing_if = "Option::is_none")]
+    credentials: Vec<RegistryCredential>,
 }
 
 // Update settings. Taken from userdata. The 'seed' setting is generated
