@@ -4,3 +4,25 @@
 endpoints = [{{join_array ", " endpoint }}]
 {{/each}}
 {{/if}}
+
+{{#if settings.container-registry.credentials}}
+{{#each settings.container-registry.credentials}}
+{{#if (eq registry "docker.io" )~}}
+[creds."registry-1.docker.io"]
+{{else}}
+[creds."{{registry}}"]
+{{/if}}
+{{#if username}}
+username = "{{{username}}}"
+{{/if}}
+{{#if password}}
+password = "{{{password}}}"
+{{/if}}
+{{#if auth}}
+auth = "{{{auth}}}"
+{{/if}}
+{{#if identitytoken}}
+identitytoken = "{{{identitytoken}}}"
+{{/if}}
+{{/each}}
+{{/if}}

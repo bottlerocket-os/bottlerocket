@@ -12,6 +12,7 @@ Requires: %{_cross_os}containerd
 Source10: host-containerd.service
 Source11: host-containerd-tmpfiles.conf
 Source12: host-containerd-config.toml
+Source1000: clarify.toml
 
 %description
 %{summary}.
@@ -37,7 +38,7 @@ install -p -m 0644 %{S:11} %{buildroot}%{_cross_tmpfilesdir}/host-containerd.con
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd
 install -p -m 0644 %{S:12} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/host-containerd/config.toml
 
-%cross_scan_attribution go-vendor vendor
+%cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files
 %{_cross_attribution_vendor_dir}

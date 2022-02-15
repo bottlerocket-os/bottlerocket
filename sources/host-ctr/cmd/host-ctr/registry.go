@@ -1,22 +1,37 @@
 package main
 
 import (
+	"net"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/containerd/containerd/pkg/cri/server"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"io/ioutil"
-	"net/url"
-	"strings"
+	runtime "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // Mirror contains the config related to the registry mirror
 type Mirror struct {
-	Endpoints []string
+	Endpoints []string `toml:"endpoints,omitempty"`
+}
+
+// Credential contains a registry credential
+type Credential struct {
+	Username      string `toml:"username,omitempty"`
+	Password      string `toml:"password,omitempty"`
+	Auth          string `toml:"auth,omitempty"`
+	IdentityToken string `toml:"identitytoken,omitempty"`
 }
 
 // RegistryConfig contains the config related to a image registry
 type RegistryConfig struct {
-	Mirrors map[string]Mirror
+	Mirrors     map[string]Mirror     `toml:"mirrors,omitempty"`
+	Credentials map[string]Credential `toml:"creds,omitempty"`
 }
 
 // NewRegistryConfig unmarshalls a registry configuration file and sets up a RegistryConfig
@@ -40,7 +55,7 @@ func registryHosts(registryConfig *RegistryConfig, authorizerOverride *docker.Au
 		var (
 			registries []docker.RegistryHost
 			endpoints  []string
-			authorizer docker.Authorizer
+			authConfig runtime.AuthConfig
 		)
 		// Set up endpoints for the registry
 		if _, ok := registryConfig.Mirrors[host]; ok {
@@ -70,8 +85,24 @@ func registryHosts(registryConfig *RegistryConfig, authorizerOverride *docker.Au
 			if url.Path == "" {
 				url.Path = "/v2"
 			}
+			var authorizer docker.Authorizer
 			if authorizerOverride == nil {
-				authorizer = docker.NewDockerAuthorizer()
+				// Set up auth for pulling from registry
+				var authOpts []docker.AuthorizerOpt
+				if _, ok := registryConfig.Credentials[defaultHost]; ok {
+					// Convert registry credentials config to runtime auth config, so it can be parsed by `ParseAuth`
+					authConfig.Username = registryConfig.Credentials[defaultHost].Username
+					authConfig.Password = registryConfig.Credentials[defaultHost].Password
+					authConfig.Auth = registryConfig.Credentials[defaultHost].Auth
+					authConfig.IdentityToken = registryConfig.Credentials[defaultHost].IdentityToken
+					authOpts = append(authOpts, docker.WithAuthClient(&http.Client{
+						Transport: newTransport(),
+					}))
+					authOpts = append(authOpts, docker.WithAuthCreds(func(host string) (string, string, error) {
+						return server.ParseAuth(&authConfig, host)
+					}))
+				}
+				authorizer = docker.NewDockerAuthorizer(authOpts...)
 			} else {
 				authorizer = *authorizerOverride
 			}
@@ -84,5 +115,23 @@ func registryHosts(registryConfig *RegistryConfig, authorizerOverride *docker.Au
 			})
 		}
 		return registries, nil
+	}
+}
+
+// newTransport is borrowed from containerd CRI plugin
+// See https://github.com/containerd/containerd/blob/1407cab509ff0d96baa4f0eb6ff9980270e6e620/pkg/cri/server/image_pull.go#L466-L481
+// FIXME Replace this once containerd creates a library that shares this code with ctr
+func newTransport() *http.Transport {
+	return &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:       30 * time.Second,
+			KeepAlive:     30 * time.Second,
+			FallbackDelay: 300 * time.Millisecond,
+		}).DialContext,
+		MaxIdleConns:          10,
+		IdleConnTimeout:       30 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 5 * time.Second,
 	}
 }
