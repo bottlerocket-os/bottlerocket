@@ -105,6 +105,13 @@ It supports self-hosted clusters.
 
 This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
 
+### vmware-k8s-1.22: VMware Kubernetes 1.22 node
+
+The [vmware-k8s-1.22](vmware-k8s-1.22/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
+It supports self-hosted clusters.
+
+This variant is compatible with Kubernetes 1.22, 1.23, and 1.24 clusters.
+
 ### metal-dev: Metal development build
 
 The [metal-dev](metal-dev/Cargo.toml) variant has useful packages for local development of the OS and is intended to run bare metal.
