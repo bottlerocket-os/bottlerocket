@@ -1,0 +1,33 @@
+[Unit]
+Description=Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=containerd.service configured.target
+Wants=configured.target
+BindsTo=containerd.service
+
+[Service]
+Slice=runtime.slice
+Type=notify
+EnvironmentFile=/etc/network/proxy.env
+EnvironmentFile=/etc/kubernetes/kubelet/env
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
+# Pull the pause container image before starting `kubelet` so `containerd/cri` wouldn't have to
+ExecStartPre=/usr/bin/host-ctr \
+    --containerd-socket=/run/dockershim.sock \
+    --namespace=k8s.io \
+    pull-image \
+    --source=${POD_INFRA_CONTAINER_IMAGE} \
+    --registry-config=/etc/host-containers/host-ctr.toml
+# Must be overridden by a drop-in file or `kubelet` won't start
+ExecStart=/usr/bin/false
+
+Restart=on-failure
+RestartForceExitStatus=SIGPIPE
+RestartSec=5
+Delegate=yes
+KillMode=process
+CPUAccounting=true
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target
