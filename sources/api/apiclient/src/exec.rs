@@ -178,19 +178,28 @@ where
     // Determine how to exit based on the information we got back from the server, or from a
     // local signal.
     if let Some(Some(ret)) = read_from_server.ret_rx.next().now_or_never() {
-        if !ret.reason.is_empty() {
-            warn!("Connection close reason: {}", ret.reason);
-        }
         match ret.code {
-            // We normally get a specific return code, but if we're told it's normal, go with it.
-            CloseCode::Normal => process::exit(0),
-            // This is the normal case where the server gives us the return code of the process.
-            // ("Bad" is called "Other" in other libraries... it's just a way of passing an int.)
-            CloseCode::Bad(code) => process::exit(i32::from(code)),
-            // We don't expect any other return codes in normal operation.  The server will send
+            // The connection is closing normally, we expect the process exit code in the reason message.
+            CloseCode::Normal => {
+                if !ret.reason.is_empty() {
+                    // This is the normal case where the server gives us the exit code of the process.
+                    if let Ok(exit_code) = ret.reason.parse::<u16>() {
+                        process::exit(i32::from(exit_code))
+                    }
+                }
+                // If there is no exit code in the reason message, we assume the worst and exit 1.
+                warn!("Connection close reason: {}", ret.reason);
+                process::exit(1)
+            }
+            // We don't expect any other CloseCode in normal operation.  The server will send
             // specific CloseCodes if the client disobeyed protocol, but we obey.  The server can
-            // also send a generic Error if it's unhealthy; such a message would be printed above.
-            _ => process::exit(1),
+            // also send a generic Error if it's unhealthy.
+            _ => {
+                if !ret.reason.is_empty() {
+                    warn!("Connection close reason: {}", ret.reason);
+                }
+                process::exit(1)
+            }
         }
     } else if let Some(Ok(signal)) = signal_ret {
         // Use shell-style return codes for signals.
