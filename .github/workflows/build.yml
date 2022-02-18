@@ -65,6 +65,14 @@ jobs:
             arch: aarch64
             supported: true
             fetch-upstream: "true"
+          - variant: aws-k8s-1.22-nvidia
+            arch: x86_64
+            supported: true
+            fetch-upstream: "true"
+          - variant: aws-k8s-1.22-nvidia
+            arch: aarch64
+            supported: true
+            fetch-upstream: "true"
       fail-fast: false
     steps:
       - uses: actions/checkout@v2

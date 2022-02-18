@@ -121,6 +121,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_22-nvidia"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-5_10",
+ "kmod-5_10-nvidia",
+ "kubernetes-1_22",
+ "nvidia-container-toolkit",
+ "release",
+]
+
+[[package]]
 name = "bash"
 version = "0.1.0"
 dependencies = [

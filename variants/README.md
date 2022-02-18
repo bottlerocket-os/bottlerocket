@@ -61,6 +61,13 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
 
+### aws-k8s-1.21-nvidia: Kubernetes 1.21 NVIDIA node
+
+The [aws-k8s-1.21-nvidia](aws-k8s-1.21-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
+
 ### aws-k8s-1.22: Kubernetes 1.22 node
 
 The [aws-k8s-1.22](aws-k8s-1.22/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -68,12 +75,12 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.22, 1.23, and 1.24 clusters.
 
-### aws-k8s-1.21-nvidia: Kubernetes 1.21 node
+### aws-k8s-1.22-nvidia: Kubernetes 1.22 NVIDIA node
 
-The [aws-k8s-1.21-nvidia](aws-k8s-1.21-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+The [aws-k8s-1.22-nvidia](aws-k8s-1.22-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
 It also includes the required packages to configure containers to leverage NVIDIA GPUs.
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-This variant is compatible with Kubernetes 1.21, 1.22, and 1.23 clusters.
+This variant is compatible with Kubernetes 1.22, 1.23, and 1.24 clusters.
 
 ### aws-ecs-1: Amazon ECS container instance
 

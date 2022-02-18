@@ -123,7 +123,7 @@ licenses = [
 
 #### NVIDIA variants
 
-If you want to build the `aws-k8s-1.21-nvidia` variant, you can follow these steps to prepare a `Licenses.toml` file using the [License for customer use of NVIDIA software](https://www.nvidia.com/en-us/drivers/nvidia-license/):
+If you want to build any of the NVIDIA variants, you can follow these steps to prepare a `Licenses.toml` file using the [License for customer use of NVIDIA software](https://www.nvidia.com/en-us/drivers/nvidia-license/):
 
 1. Create a `Licenses.toml` file in your Bottlerocket root directory, with the following content:
 
@@ -144,8 +144,9 @@ cargo make fetch-licenses -e BUILDSYS_UPSTREAM_LICENSE_FETCH=true
 3. Build your image, setting the `BUILDSYS_UPSTREAM_SOURCE_FALLBACK` flag to `true`, if you haven't cached the driver's sources:
 
 ```shell
+K8S_VERSION=1.22
 cargo make \
-  -e BUILDSYS_VARIANT=aws-k8s-1.21-nvidia \
+  -e BUILDSYS_VARIANT=aws-k8s-${K8S_VERSION}-nvidia \
   -e BUILDSYS_UPSTREAM_SOURCE_FALLBACK="true"
 ```
 
