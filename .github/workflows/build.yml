@@ -45,6 +45,10 @@ jobs:
             arch: x86_64
             supported: false
             fetch-upstream: "false"
+          - variant: metal-k8s-1.22
+            arch: x86_64
+            supported: false
+            fetch-upstream: "false"
           - variant: vmware-k8s-1.20
             arch: x86_64
             supported: true

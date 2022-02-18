@@ -1,0 +1,40 @@
+[package]
+# This is the metal-k8s-1.22 variant.  "." is not allowed in crate names, but
+# we don't use this crate name anywhere.
+name = "metal-k8s-1_22"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 4
+partition-plan = "unified"
+
+[package.metadata.build-variant]
+image-format = "raw"
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS1,115200n8",
+    # Only reserve if there are at least 2GB
+    "crashkernel=2G-:256M"
+]
+included-packages = [
+    "cni",
+    "cni-plugins",
+    "kernel-5.10",
+    "kubelet-1.22",
+    "release",
+]
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+cni = { path = "../../packages/cni" }
+cni-plugins = { path = "../../packages/cni-plugins" }
+kernel-5_10 = { path = "../../packages/kernel-5.10" }
+kubernetes-1_22 = { path = "../../packages/kubernetes-1.22" }
+release = { path = "../../packages/release" }
