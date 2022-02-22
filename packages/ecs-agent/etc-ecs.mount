@@ -1,0 +1,16 @@
+[Unit]
+Description=ECS agent Configuration Directory (/etc/ecs)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+After=selinux-policy-files.service
+Wants=selinux-policy-files.service
+
+[Mount]
+What=tmpfs
+Where=/etc/ecs
+Type=tmpfs
+Options=nosuid,nodev,noexec,noatime,context=system_u:object_r:secret_t:s0
+
+[Install]
+WantedBy=preconfigured.target

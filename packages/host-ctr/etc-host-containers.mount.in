@@ -1,0 +1,16 @@
+[Unit]
+Description=Host containers Configuration Directory (/etc/host-containers)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+After=selinux-policy-files.service
+Wants=selinux-policy-files.service
+
+[Mount]
+What=tmpfs
+Where=/etc/host-containers
+Type=tmpfs
+Options=nosuid,nodev,noexec,noatime,context=system_u:object_r:secret_t:s0
+
+[Install]
+WantedBy=preconfigured.target

@@ -42,6 +42,9 @@ Source108: pause-repositories
 # Bottlerocket-specific - version data can be set with linker options
 Source109: version.go
 
+# Mount for writing ECS agent configuration
+Source200: etc-ecs.mount
+
 # Patches are numbered according to which source they apply to
 # Patches 0000 - 0999 apply to Source0
 # Patches 1000 - 1999 apply to Source1
@@ -241,7 +244,9 @@ install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-eni %{buildroot}%{_c
 install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-ipam %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/vpc-branch-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
 
-install -D -p -m 0644 %{S:101} %{buildroot}%{_cross_unitdir}/ecs.service
+install -d %{buildroot}%{_cross_unitdir}
+install -D -p -m 0644 %{S:101} %{S:200} %{buildroot}%{_cross_unitdir}
+
 install -D -p -m 0644 %{S:102} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
 install -D -p -m 0644 %{S:103} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
 install -D -p -m 0644 %{S:104} %{buildroot}%{_cross_templatedir}/ecs.config
@@ -288,6 +293,7 @@ mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 %{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 %{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
 %{_cross_unitdir}/ecs.service
+%{_cross_unitdir}/etc-ecs.mount
 %{_cross_tmpfilesdir}/ecs.conf
 %{_cross_sysctldir}/90-ecs.conf
 %{_cross_templatedir}/ecs.config
