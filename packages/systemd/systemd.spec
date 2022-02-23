@@ -11,6 +11,7 @@ Source0: https://github.com/systemd/systemd-stable/archive/v%{version}/systemd-s
 Source1: var-run-tmpfiles.conf
 Source2: systemd-modules-load.conf
 Source3: journald.conf
+Source4: issue
 
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
@@ -225,6 +226,10 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/network/*
 rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/default.target
 rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/multi-user.target
 rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/graphical.target
+
+# Add art to the console
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
+install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/issue
 
 %files
 %license LICENSE.GPL2 LICENSE.LGPL2.1
