@@ -1,0 +1,253 @@
+From 123bd1ec66d2d7ea4683e9563bd94adc67f41544 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Fri, 11 Mar 2022 08:23:56 +0100
+Subject: [PATCH 28/28] nss: Protect against errno changes in function lookup
+ (bug 28953)
+
+dlopen may clobber errno.  The nss_test_errno module uses an ELF
+constructor to achieve that, but there could be internal errors
+during dlopen that cause this, too.  Therefore, the NSS framework
+has to guard against such errno clobbers.
+
+__nss_module_get_function is currently the only function that calls
+__nss_module_load, so it is sufficient to save and restore errno
+around this call.
+
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit 9bdf92c79d63b42f931101bb6df87129c408b0c4)
+---
+ NEWS                     |  1 +
+ nss/Makefile             | 15 ++++++++--
+ nss/nss_module.c         | 12 +++++++-
+ nss/nss_test_errno.c     | 58 ++++++++++++++++++++++++++++++++++++++
+ nss/tst-nss-test_errno.c | 61 ++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 143 insertions(+), 4 deletions(-)
+ create mode 100644 nss/nss_test_errno.c
+ create mode 100644 nss/tst-nss-test_errno.c
+
+diff --git a/NEWS b/NEWS
+index d11e2d9d31..aa1b337520 100644
+--- a/NEWS
++++ b/NEWS
+@@ -20,6 +20,7 @@ The following bugs are resolved with this release:
+     without /sys and /proc
+   [28896] strncmp-avx2-rtm and wcsncmp-avx2-rtm fallback on non-rtm
+     variants when avoiding overflow
++  [28953] nss: Protect against errno changes in function lookup
+ 
+ 
+ Version 2.35
+diff --git a/nss/Makefile b/nss/Makefile
+index 74e2c2426c..de439d4911 100644
+--- a/nss/Makefile
++++ b/nss/Makefile
+@@ -60,7 +60,8 @@ tests			= test-netdb test-digits-dots tst-nss-getpwent bug17079 \
+ 			  tst-nss-test1 \
+ 			  tst-nss-test2 \
+ 			  tst-nss-test4 \
+-			  tst-nss-test5
++			  tst-nss-test5 \
++			  tst-nss-test_errno
+ xtests			= bug-erange
+ 
+ tests-container = \
+@@ -132,7 +133,7 @@ libnss_compat-inhibit-o	= $(filter-out .os,$(object-suffixes))
+ ifeq ($(build-static-nss),yes)
+ tests-static		+= tst-nss-static
+ endif
+-extra-test-objs		+= nss_test1.os nss_test2.os
++extra-test-objs		+= nss_test1.os nss_test2.os nss_test_errno.os
+ 
+ include ../Rules
+ 
+@@ -166,19 +167,26 @@ rtld-tests-LDFLAGS += -Wl,--dynamic-list=nss_test.ver
+ 
+ libof-nss_test1 = extramodules
+ libof-nss_test2 = extramodules
++libof-nss_test_errno = extramodules
+ $(objpfx)/libnss_test1.so: $(objpfx)nss_test1.os $(link-libc-deps)
+ 	$(build-module)
+ $(objpfx)/libnss_test2.so: $(objpfx)nss_test2.os $(link-libc-deps)
+ 	$(build-module)
++$(objpfx)/libnss_test_errno.so: $(objpfx)nss_test_errno.os $(link-libc-deps)
++	$(build-module)
+ $(objpfx)nss_test2.os : nss_test1.c
+ # Use the nss_files suffix for these objects as well.
+ $(objpfx)/libnss_test1.so$(libnss_files.so-version): $(objpfx)/libnss_test1.so
+ 	$(make-link)
+ $(objpfx)/libnss_test2.so$(libnss_files.so-version): $(objpfx)/libnss_test2.so
+ 	$(make-link)
++$(objpfx)/libnss_test_errno.so$(libnss_files.so-version): \
++  $(objpfx)/libnss_test_errno.so
++	$(make-link)
+ $(patsubst %,$(objpfx)%.out,$(tests) $(tests-container)) : \
+ 	$(objpfx)/libnss_test1.so$(libnss_files.so-version) \
+-	$(objpfx)/libnss_test2.so$(libnss_files.so-version)
++	$(objpfx)/libnss_test2.so$(libnss_files.so-version) \
++	$(objpfx)/libnss_test_errno.so$(libnss_files.so-version)
+ 
+ ifeq (yes,$(have-thread-library))
+ $(objpfx)tst-cancel-getpwuid_r: $(shared-thread-library)
+@@ -194,3 +202,4 @@ LDFLAGS-tst-nss-test2 = -Wl,--disable-new-dtags
+ LDFLAGS-tst-nss-test3 = -Wl,--disable-new-dtags
+ LDFLAGS-tst-nss-test4 = -Wl,--disable-new-dtags
+ LDFLAGS-tst-nss-test5 = -Wl,--disable-new-dtags
++LDFLAGS-tst-nss-test_errno = -Wl,--disable-new-dtags
+diff --git a/nss/nss_module.c b/nss/nss_module.c
+index f9a1263e5a..f00bbd9e1a 100644
+--- a/nss/nss_module.c
++++ b/nss/nss_module.c
+@@ -330,8 +330,18 @@ name_search (const void *left, const void *right)
+ void *
+ __nss_module_get_function (struct nss_module *module, const char *name)
+ {
++  /* A successful dlopen might clobber errno.   */
++  int saved_errno = errno;
++
+   if (!__nss_module_load (module))
+-    return NULL;
++    {
++      /* Reporting module load failure is currently inaccurate.  See
++	 bug 22041.  Not changing errno is the conservative choice.  */
++      __set_errno (saved_errno);
++      return NULL;
++    }
++
++  __set_errno (saved_errno);
+ 
+   function_name *name_entry = bsearch (name, nss_function_name_array,
+                                        array_length (nss_function_name_array),
+diff --git a/nss/nss_test_errno.c b/nss/nss_test_errno.c
+new file mode 100644
+index 0000000000..680f8a07b9
+--- /dev/null
++++ b/nss/nss_test_errno.c
+@@ -0,0 +1,58 @@
++/* NSS service provider with errno clobber.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <errno.h>
++#include <nss.h>
++#include <stdlib.h>
++
++/* Catch misnamed and functions.  */
++#pragma GCC diagnostic error "-Wmissing-prototypes"
++NSS_DECLARE_MODULE_FUNCTIONS (test_errno)
++
++static void __attribute__ ((constructor))
++init (void)
++{
++  /* An arbitrary error code which is otherwise not used.  */
++  errno = ELIBBAD;
++}
++
++/* Lookup functions for pwd follow that do not return any data.  */
++
++/* Catch misnamed function definitions.  */
++
++enum nss_status
++_nss_test_errno_setpwent (int stayopen)
++{
++  setenv ("_nss_test_errno_setpwent", "yes", 1);
++  return NSS_STATUS_SUCCESS;
++}
++
++enum nss_status
++_nss_test_errno_getpwent_r (struct passwd *result,
++                            char *buffer, size_t size, int *errnop)
++{
++  setenv ("_nss_test_errno_getpwent_r", "yes", 1);
++  return NSS_STATUS_NOTFOUND;
++}
++
++enum nss_status
++_nss_test_errno_endpwent (void)
++{
++  setenv ("_nss_test_errno_endpwent", "yes", 1);
++  return NSS_STATUS_SUCCESS;
++}
+diff --git a/nss/tst-nss-test_errno.c b/nss/tst-nss-test_errno.c
+new file mode 100644
+index 0000000000..d2c42dd363
+--- /dev/null
++++ b/nss/tst-nss-test_errno.c
+@@ -0,0 +1,61 @@
++/* getpwent failure when dlopen clobbers errno (bug 28953).
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <nss.h>
++#include <support/check.h>
++#include <stdlib.h>
++#include <errno.h>
++#include <stdbool.h>
++#include <pwd.h>
++#include <string.h>
++
++static int
++do_test (void)
++{
++  __nss_configure_lookup ("passwd", "files test_errno");
++
++  errno = 0;
++  setpwent ();
++  TEST_COMPARE (errno, 0);
++
++  bool root_seen = false;
++  while (true)
++    {
++      errno = 0;
++      struct passwd *e = getpwent ();
++      if (e == NULL)
++        break;
++      if (strcmp (e->pw_name, "root"))
++        root_seen = true;
++    }
++
++  TEST_COMPARE (errno, 0);
++  TEST_VERIFY (root_seen);
++
++  errno = 0;
++  endpwent ();
++  TEST_COMPARE (errno, 0);
++
++  TEST_COMPARE_STRING (getenv ("_nss_test_errno_setpwent"), "yes");
++  TEST_COMPARE_STRING (getenv ("_nss_test_errno_getpwent_r"), "yes");
++  TEST_COMPARE_STRING (getenv ("_nss_test_errno_endpwent"), "yes");
++
++  return 0;
++}
++
++#include <support/test-driver.c>
+-- 
+2.33.1
+

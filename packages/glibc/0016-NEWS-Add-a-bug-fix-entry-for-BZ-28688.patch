@@ -1,0 +1,24 @@
+From a787325e8316830f8d9a118aac5afee3c0e75617 Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Thu, 24 Feb 2022 07:58:36 -0800
+Subject: [PATCH 16/28] NEWS: Add a bug fix entry for BZ #28688
+
+---
+ NEWS | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/NEWS b/NEWS
+index 008941555d..094a979afb 100644
+--- a/NEWS
++++ b/NEWS
+@@ -9,6 +9,7 @@ Version 2.35.1
+ 
+ The following bugs are resolved with this release:
+ 
++  [28838] FAIL: elf/tst-p_align3
+   [28850] linux: __get_nprocs_sched reads uninitialized memory from the stack
+   [28853] libc: tst-spawn6 changes current foreground process group
+     (breaks test isolation)
+-- 
+2.33.1
+

@@ -1,0 +1,147 @@
+From d2e4d2a38e4e7bc3ca407607e717b7f50b20c63f Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Wed, 2 Feb 2022 18:31:59 -0300
+Subject: [PATCH 02/28] posix: Fix tst-spawn6 terminal handling (BZ #28853)
+
+The test changes the current foreground process group, which might
+break testing depending of how the make check is issued.  For instance:
+
+  nohup make -j1 test t=posix/tst-spawn6 | less
+
+Will set 'make' and 'less' to be in the foreground process group in
+the current session.  When tst-spawn6 new child takes over it becomes
+the foreground process and 'less' is stopped and backgrounded which
+interrupts the 'make check' command.
+
+To fix it a pseudo-terminal is allocated, the test starts in new
+session (so there is no controlling terminal associated), and the
+pseudo-terminal is set as the controlling one (similar to what
+login_tty does).
+
+Checked on x86_64-linux-gnu.
+
+Tested-by: Carlos O'Donell <carlos@redhat.com>
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+
+(cherry picked from a9d35765728cbc5b66af5eeda5428298bccf9b69)
+---
+ NEWS               |  8 ++++++
+ posix/tst-spawn6.c | 62 ++++++++++++++++++++++++++++++++++++++--------
+ 2 files changed, 59 insertions(+), 11 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index faa7ec1871..b1aae94cfb 100644
+--- a/NEWS
++++ b/NEWS
+@@ -4,6 +4,14 @@ See the end for copying conditions.
+ 
+ Please send GNU C library bug reports via <https://sourceware.org/bugzilla/>
+ using `glibc' in the "product" field.
++
++Version 2.35.1
++
++The following bugs are resolved with this release:
++
++  [28853] libc: tst-spawn6 changes current foreground process group
++    (breaks test isolation)
++
+ 
+ Version 2.35
+ 
+diff --git a/posix/tst-spawn6.c b/posix/tst-spawn6.c
+index 911e90a461..044abd8535 100644
+--- a/posix/tst-spawn6.c
++++ b/posix/tst-spawn6.c
+@@ -29,7 +29,14 @@
+ #include <support/check.h>
+ #include <support/xunistd.h>
+ #include <sys/wait.h>
++#include <sys/ioctl.h>
+ #include <stdlib.h>
++#include <termios.h>
++
++#ifndef PATH_MAX
++# define PATH_MAX 1024
++#endif
++static char ptmxpath[PATH_MAX];
+ 
+ static int
+ handle_restart (const char *argv1, const char *argv2)
+@@ -115,7 +122,7 @@ run_subprogram (int argc, char *argv[], const posix_spawnattr_t *attr,
+ }
+ 
+ static int
+-do_test (int argc, char *argv[])
++run_test (int argc, char *argv[])
+ {
+   /* We must have either:
+      - four parameters left if called initially:
+@@ -127,16 +134,7 @@ do_test (int argc, char *argv[])
+        + --setgrpr             optional
+    */
+ 
+-  if (restart)
+-    return handle_restart (argv[1], argv[2]);
+-
+-  int tcfd = open64 (_PATH_TTY, O_RDONLY, 0600);
+-  if (tcfd == -1)
+-    {
+-      if (errno == ENXIO)
+-	FAIL_UNSUPPORTED ("terminal not available, skipping test");
+-      FAIL_EXIT1 ("open64 (\"%s\", 0x%x, 0600): %m", _PATH_TTY, O_RDONLY);
+-    }
++  int tcfd = xopen (ptmxpath, O_RDONLY, 0600);
+ 
+   /* Check setting the controlling terminal without changing the group.  */
+   {
+@@ -198,5 +196,47 @@ do_test (int argc, char *argv[])
+   return 0;
+ }
+ 
++static int
++do_test (int argc, char *argv[])
++{
++  if (restart)
++    return handle_restart (argv[1], argv[2]);
++
++  pid_t pid = xfork ();
++  if (pid == 0)
++    {
++      /* Create a pseudo-terminal to avoid interfering with the one using by
++	 test itself, creates a new session (so there is no controlling
++	 terminal), and set the pseudo-terminal as the controlling one.  */
++      int ptmx = posix_openpt (0);
++      if (ptmx == -1)
++	{
++	  if (errno == ENXIO)
++	    FAIL_UNSUPPORTED ("terminal not available, skipping test");
++	  FAIL_EXIT1 ("posix_openpt (0): %m");
++	}
++      TEST_VERIFY_EXIT (grantpt (ptmx) == 0);
++      TEST_VERIFY_EXIT (unlockpt (ptmx) == 0);
++
++      TEST_VERIFY_EXIT (setsid () != -1);
++      TEST_VERIFY_EXIT (ioctl (ptmx, TIOCSCTTY, NULL) == 0);
++      while (dup2 (ptmx, STDIN_FILENO) == -1 && errno == EBUSY)
++	;
++      while (dup2 (ptmx, STDOUT_FILENO) == -1 && errno == EBUSY)
++	;
++      while (dup2 (ptmx, STDERR_FILENO) == -1 && errno == EBUSY)
++	;
++      TEST_VERIFY_EXIT (ptsname_r (ptmx, ptmxpath, sizeof ptmxpath) == 0);
++      xclose (ptmx);
++
++      run_test (argc, argv);
++      _exit (0);
++    }
++  int status;
++  xwaitpid (pid, &status, 0);
++  TEST_VERIFY (WIFEXITED (status));
++  exit (0);
++}
++
+ #define TEST_FUNCTION_ARGV do_test
+ #include <support/test-driver.c>
+-- 
+2.33.1
+

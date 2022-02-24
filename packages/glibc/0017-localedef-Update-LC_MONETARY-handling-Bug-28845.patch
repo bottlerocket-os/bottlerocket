@@ -1,0 +1,302 @@
+From 3feecd80013c822a12d4b01c5c25e155dfbc6e2f Mon Sep 17 00:00:00 2001
+From: Carlos O'Donell <carlos@redhat.com>
+Date: Thu, 3 Feb 2022 16:51:59 -0500
+Subject: [PATCH 17/28] localedef: Update LC_MONETARY handling (Bug 28845)
+
+ISO C17, POSIX Issue 7, and ISO 30112 all allow the char*
+types to be empty strings i.e. "", integer or char values to
+be -1 or CHAR_MAX respectively, with the exception of
+decimal_point which must be non-empty in ISO C. Note that
+the defaults for mon_grouping vary, but are functionaly
+equivalent e.g. "\177" (no further grouping reuqired) vs.
+"" (no grouping defined for all groups).
+
+We include a broad comment talking about harmonizing ISO C,
+POSIX, ISO 30112, and the default C/POSIX locale for glibc.
+
+We reorder all setting based on locale/categories.def order.
+
+We soften all missing definitions from errors to warnings when
+defaults exist.
+
+Given that ISO C, POSIX and ISO 30112 allow the empty string
+we change LC_MONETARY handling of mon_decimal_point to allow
+the empty string.  If mon_decimal_point is not defined at all
+then we pick the existing legacy glibc default value of
+<U002E> i.e. ".".
+
+We also set the default for mon_thousands_sep_wc at the
+same time as mon_thousands_sep, but this is not a change in
+behaviour, it is always either a matching value or L'\0',
+but if in the future we change the default to a non-empty
+string we would need to update both at the same time.
+
+Tested on x86_64 and i686 without regressions.
+Tested with install-locale-archive target.
+Tested with install-locale-files target.
+
+Reviewed-by: DJ Delorie <dj@redhat.com>
+(cherry picked from commit 2ab8b74567dc0a9a3c98696e6444881997dd6c49)
+---
+ locale/programs/ld-monetary.c | 182 +++++++++++++++++++++++++++-------
+ 1 file changed, 146 insertions(+), 36 deletions(-)
+
+diff --git a/locale/programs/ld-monetary.c b/locale/programs/ld-monetary.c
+index 3b0412b405..18698bbe94 100644
+--- a/locale/programs/ld-monetary.c
++++ b/locale/programs/ld-monetary.c
+@@ -196,21 +196,105 @@ No definition for %s category found"), "LC_MONETARY");
+ 	}
+     }
+ 
++  /* Generally speaking there are 3 standards the define the default,
++     warning, and error behaviour of LC_MONETARY.  They are ISO/IEC TR 30112,
++     ISO/IEC 9899:2018 (ISO C17), and POSIX.1-2017.  Within 30112 we have the
++     definition of a standard i18n FDCC-set, which for LC_MONETARY has the
++     following default values:
++	int_curr_symbol		""
++	currency_symbol		""
++	mon_decimal_point	"<U002C>" i.e. ","
++	mon_thousand_sep	""
++	mon_grouping		"\177" i.e. CHAR_MAX
++	positive_sign		""
++	negative_sign		"<U002E>" i.e. "."
++	int_frac_digits		-1
++	frac_digits		-1
++	p_cs_precedes		-1
++	p_sep_by_space		-1
++	n_cs_precedes		-1
++	n_sep_by_space		-1
++	p_sign_posn		-1
++	n_sign_posn		-1
++    Under 30112 a keyword that is not provided implies an empty string ""
++    for string values or a -1 for integer values, and indicates the value
++    is unspecified with no default implied.  No errors are considered.
++    The exception is mon_grouping which is a string with a terminating
++    CHAR_MAX.
++    For POSIX Issue 7 we have:
++    https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap07.html
++    and again values not provided default to "" or -1, and indicate the value
++    is not available to the locale.  The exception is mon_grouping which is
++    a string with a terminating CHAR_MAX.  For the POSIX locale the values of
++    LC_MONETARY should be:
++	int_curr_symbol		""
++	currency_symbol		""
++	mon_decimal_point	""
++	mon_thousands_sep	""
++	mon_grouping		"\177" i.e. CHAR_MAX 
++	positive_sign		""
++	negative_sign		""
++	int_frac_digits		-1
++	frac_digits		-1
++	p_cs_precedes		-1
++	p_sep_by_space		-1
++	n_cs_precedes		-1
++	n_sep_by_space		-1
++	p_sign_posn		-1
++	n_sign_posn		-1
++	int_p_cs_precedes	-1
++	int_p_sep_by_space	-1
++	int_n_cs_precedes	-1
++	int_n_sep_by_space	-1
++	int_p_sign_posn		-1
++	int_n_sign_posn		-1
++    Like with 30112, POSIX also considers no error if the keywords are
++    missing, only that if the cateory as a whole is missing the referencing
++    of the category results in unspecified behaviour.
++    For ISO C17 there is no default value provided, but the localeconv
++    specification in 7.11.2.1 admits that members of char * type may point
++    to "" to indicate a value is not available or is of length zero.
++    The exception is decimal_point (not mon_decimal_point) which must be a
++    defined non-empty string.  The values of char, which are generally
++    mapped to integer values in 30112 and POSIX, must be non-negative
++    numbers that map to CHAR_MAX when a value is not available in the
++    locale.
++    In ISO C17 for the "C" locale all values are empty strings "", or
++    CHAR_MAX, with the exception of decimal_point which is "." (defined
++    in LC_NUMERIC).  ISO C17 makes no exception for mon_grouping like
++    30112 and POSIX, but a value of "" is functionally equivalent to
++    "\177" since neither defines a grouping (though the latter terminates
++    the grouping).
++
++    Lastly, we must consider the legacy C/POSIX locale that implemented
++    as a builtin in glibc and wether a default value mapping to the
++    C/POSIX locale may benefit the user from a compatibility perspective.
++
++    Thus given 30112, POSIX, ISO C, and the builtin C/POSIX locale we
++    need to pick appropriate defaults below.   */
++
++  /* The members of LC_MONETARY are handled in the order of their definition
++     in locale/categories.def.  Please keep them in that order.  */
++
++  /* The purpose of TEST_ELEM is to define a default value for the fields
++     in the category if the field was not defined in the cateory.  If the
++     category was present but we didn't see a definition for the field then
++     we also issue a warning, otherwise the only warning you get is the one
++     earlier when a default category is created (completely missing category).
++     This missing field warning is glibc-specific since no standard requires
++     this warning, but we consider it valuable to print a warning for all
++     missing fields in the category.  */
+ #define TEST_ELEM(cat, initval) \
+   if (monetary->cat == NULL)						      \
+     {									      \
+       if (! nothing)							      \
+-	record_error (0, 0, _("%s: field `%s' not defined"),		      \
+-		      "LC_MONETARY", #cat);				      \
++	record_warning (_("%s: field `%s' not defined"),		      \
++			"LC_MONETARY", #cat);				      \
+       monetary->cat = initval;						      \
+     }
+ 
++  /* Keyword: int_curr_symbol.  */
+   TEST_ELEM (int_curr_symbol, "");
+-  TEST_ELEM (currency_symbol, "");
+-  TEST_ELEM (mon_thousands_sep, "");
+-  TEST_ELEM (positive_sign, "");
+-  TEST_ELEM (negative_sign, "");
+-
+   /* The international currency symbol must come from ISO 4217.  */
+   if (monetary->int_curr_symbol != NULL)
+     {
+@@ -247,41 +331,63 @@ not correspond to a valid name in ISO 4217 [--no-warnings=intcurrsym]"),
+ 	}
+     }
+ 
+-  /* The decimal point must not be empty.  This is not said explicitly
+-     in POSIX but ANSI C (ISO/IEC 9899) says in 4.4.2.1 it has to be
+-     != "".  */
++  /* Keyword: currency_symbol */
++  TEST_ELEM (currency_symbol, "");
++
++  /* Keyword: mon_decimal_point */
++  /* ISO C17 7.11.2.1.3 explicitly allows mon_decimal_point to be the
++     empty string e.g. "".  This indicates the value is not available in the
++     current locale or is of zero length.  However, if the value was never
++     defined then we issue a warning and use a glibc-specific default.  ISO
++     30112 in the i18n FDCC-Set uses <U002C> ",", and POSIX Issue 7 in the
++     POSIX locale uses "".  It is specific to glibc that the default is <U002E>
++     "."; we retain this existing behaviour for backwards compatibility.  */
+   if (monetary->mon_decimal_point == NULL)
+     {
+       if (! nothing)
+-	record_error (0, 0, _("%s: field `%s' not defined"),
+-		      "LC_MONETARY", "mon_decimal_point");
++	record_warning (_("%s: field `%s' not defined, using defaults"),
++			"LC_MONETARY", "mon_decimal_point");
+       monetary->mon_decimal_point = ".";
+       monetary->mon_decimal_point_wc = L'.';
+     }
+-  else if (monetary->mon_decimal_point[0] == '\0' && ! be_quiet && ! nothing)
++
++  /* Keyword: mon_thousands_sep */
++  if (monetary->mon_thousands_sep == NULL)
+     {
+-      record_error (0, 0, _("\
+-%s: value for field `%s' must not be an empty string"),
+-		    "LC_MONETARY", "mon_decimal_point");
++      if (! nothing)
++	record_warning (_("%s: field `%s' not defined, using defaults"),
++			"LC_MONETARY", "mon_thousands_sep");
++      monetary->mon_thousands_sep = "";
++      monetary->mon_thousands_sep_wc = L'\0';
+     }
+ 
++  /* Keyword: mon_grouping */
+   if (monetary->mon_grouping_len == 0)
+     {
+       if (! nothing)
+-	record_error (0, 0, _("%s: field `%s' not defined"),
+-		      "LC_MONETARY", "mon_grouping");
+-
++	record_warning (_("%s: field `%s' not defined"),
++			"LC_MONETARY", "mon_grouping");
++      /* Missing entries are given 1 element in their bytearray with
++	 a value of CHAR_MAX which indicates that "No further grouping
++	 is to be performed" (functionally equivalent to ISO C's "C"
++	 locale default of ""). */
+       monetary->mon_grouping = (char *) "\177";
+       monetary->mon_grouping_len = 1;
+     }
+ 
++  /* Keyword: positive_sign */
++  TEST_ELEM (positive_sign, "");
++
++  /* Keyword: negative_sign */
++  TEST_ELEM (negative_sign, "");
++
+ #undef TEST_ELEM
+ #define TEST_ELEM(cat, min, max, initval) \
+   if (monetary->cat == -2)						      \
+     {									      \
+        if (! nothing)							      \
+-	 record_error (0, 0, _("%s: field `%s' not defined"),		      \
+-		       "LC_MONETARY", #cat);				      \
++	 record_warning (_("%s: field `%s' not defined"),		      \
++			 "LC_MONETARY", #cat);				      \
+        monetary->cat = initval;						      \
+     }									      \
+   else if ((monetary->cat < min || monetary->cat > max)			      \
+@@ -300,16 +406,11 @@ not correspond to a valid name in ISO 4217 [--no-warnings=intcurrsym]"),
+   TEST_ELEM (p_sign_posn, -1, 4, -1);
+   TEST_ELEM (n_sign_posn, -1, 4, -1);
+ 
+-  /* The non-POSIX.2 extensions are optional.  */
+-  if (monetary->duo_int_curr_symbol == NULL)
+-    monetary->duo_int_curr_symbol = monetary->int_curr_symbol;
+-  if (monetary->duo_currency_symbol == NULL)
+-    monetary->duo_currency_symbol = monetary->currency_symbol;
+-
+-  if (monetary->duo_int_frac_digits == -2)
+-    monetary->duo_int_frac_digits = monetary->int_frac_digits;
+-  if (monetary->duo_frac_digits == -2)
+-    monetary->duo_frac_digits = monetary->frac_digits;
++  /* Keyword: crncystr */
++  monetary->crncystr = (char *) xmalloc (strlen (monetary->currency_symbol)
++					 + 2);
++  monetary->crncystr[0] = monetary->p_cs_precedes ? '-' : '+';
++  strcpy (&monetary->crncystr[1], monetary->currency_symbol);
+ 
+ #undef TEST_ELEM
+ #define TEST_ELEM(cat, alt, min, max) \
+@@ -327,6 +428,17 @@ not correspond to a valid name in ISO 4217 [--no-warnings=intcurrsym]"),
+   TEST_ELEM (int_p_sign_posn, p_sign_posn, -1, 4);
+   TEST_ELEM (int_n_sign_posn, n_sign_posn, -1, 4);
+ 
++  /* The non-POSIX.2 extensions are optional.  */
++  if (monetary->duo_int_curr_symbol == NULL)
++    monetary->duo_int_curr_symbol = monetary->int_curr_symbol;
++  if (monetary->duo_currency_symbol == NULL)
++    monetary->duo_currency_symbol = monetary->currency_symbol;
++
++  if (monetary->duo_int_frac_digits == -2)
++    monetary->duo_int_frac_digits = monetary->int_frac_digits;
++  if (monetary->duo_frac_digits == -2)
++    monetary->duo_frac_digits = monetary->frac_digits;
++
+   TEST_ELEM (duo_p_cs_precedes, p_cs_precedes, -1, 1);
+   TEST_ELEM (duo_p_sep_by_space, p_sep_by_space, -1, 2);
+   TEST_ELEM (duo_n_cs_precedes, n_cs_precedes, -1, 1);
+@@ -349,17 +461,15 @@ not correspond to a valid name in ISO 4217 [--no-warnings=intcurrsym]"),
+   if (monetary->duo_valid_to == 0)
+     monetary->duo_valid_to = 99991231;
+ 
++  /* Keyword: conversion_rate */
+   if (monetary->conversion_rate[0] == 0)
+     {
+       monetary->conversion_rate[0] = 1;
+       monetary->conversion_rate[1] = 1;
+     }
+ 
+-  /* Create the crncystr entry.  */
+-  monetary->crncystr = (char *) xmalloc (strlen (monetary->currency_symbol)
+-					 + 2);
+-  monetary->crncystr[0] = monetary->p_cs_precedes ? '-' : '+';
+-  strcpy (&monetary->crncystr[1], monetary->currency_symbol);
++  /* A value for monetary-decimal-point-wc was set when
++     monetary_decimal_point was set, likewise for monetary-thousands-sep-wc.  */
+ }
+ 
+ 
+-- 
+2.33.1
+
