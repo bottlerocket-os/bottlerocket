@@ -1,0 +1,37 @@
+From d1d905b2fe66cb5c6f888256731ede6a918bb7c3 Mon Sep 17 00:00:00 2001
+From: ruiwen-zhao <ruiwen@google.com>
+Date: Fri, 11 Feb 2022 04:21:58 +0000
+Subject: [PATCH] Use fs.RootPath when mounting volumes
+
+Signed-off-by: Ruiwen Zhao <ruiwen@google.com>
+---
+ pkg/cri/opts/container.go | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/pkg/cri/opts/container.go b/pkg/cri/opts/container.go
+index 472104b04..5a4c94b88 100644
+--- a/pkg/cri/opts/container.go
++++ b/pkg/cri/opts/container.go
+@@ -20,7 +20,6 @@ import (
+ 	"context"
+ 	"io/ioutil"
+ 	"os"
+-	"path/filepath"
+ 
+ 	"github.com/containerd/containerd"
+ 	"github.com/containerd/containerd/containers"
+@@ -89,7 +88,10 @@ func WithVolumes(volumeMounts map[string]string) containerd.NewContainerOpts {
+ 		}()
+ 
+ 		for host, volume := range volumeMounts {
+-			src := filepath.Join(root, volume)
++			src, err := fs.RootPath(root, volume)
++			if err != nil {
++				return errors.Wrapf(err, "rootpath on root %s, volume %s", root, volume)
++			}
+ 			if _, err := os.Stat(src); err != nil {
+ 				if os.IsNotExist(err) {
+ 					// Skip copying directory if it does not exist.
+-- 
+2.35.1
+
