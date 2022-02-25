@@ -1,17 +1,14 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.4
-Version: 5.4.172
+Version: 5.4.176
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/9d3d2fc3caf5bc68bcc257a426b1a3177f60f1acd62e27d772b58156c1b76e57/kernel-5.4.172-90.336.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/32434003a841c9b7972e98167c4819504db24bb87f1a757a3d4bfc16f3c9e4e1/kernel-5.4.176-91.338.amzn2.src.rpm
 Source100: config-bottlerocket
-
-# cgroup v1 release agent fix
-Patch0001: 0001-cgroup-v1-Require-capabilities-to-set-release_agent.patch
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
