@@ -41,7 +41,7 @@ USER_DATA_DIR=/.bottlerocket/bootstrap-containers/current
 # This is the in-container view of where the host's `/var` can be accessed.
 HOST_VAR_DIR=/.bottlerocket/rootfs/var
 # The directory that'll be created by this bootstrap container
-MY_HOST_DIR=$VAR_DIR/lib/my_directory
+MY_HOST_DIR=$HOST_VAR_DIR/lib/my_directory
 # Create it!
 mkdir -p "$MY_HOST_DIR"
 # Write the user-data to stdout (to the journal) and to our new path:
