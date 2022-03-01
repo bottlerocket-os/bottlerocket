@@ -117,3 +117,6 @@ CONFIG_MOUSE_PS2=m
 
 # Add support for IPMI drivers
 CONFIG_IPMI_HANDLER=m
+
+# Add support for bootconfig
+CONFIG_BOOT_CONFIG=y
