@@ -453,6 +453,30 @@ When pulling an image from a registry, the container runtime will try the endpoi
 
 For [host-container](#host-containers-settings) and [bootstrap-container](#bootstrap-containers-settings) images from Amazon ECR private repositories, registry mirrors are currently unsupported.
 
+The following setting is optional and allows you to configure image registry credentials.
+* `settings.container-registry.credentials`: An array of container images registry credential settings. Each element specifies the registry and the credential information for said registry.
+The credential fields map to [containerd's registry credential fields](https://github.com/containerd/containerd/blob/v1.6.0/docs/cri/registry.md#configure-registry-credentials), which in turn map to the fields in `.docker/config.json`.
+It is recommended to programmatically set these settings via `apiclient` through the Bottlerocket control container and/or custom host-containers.
+  * An example `apiclient` call to set registry credentials for `gcr.io` and `docker.io` looks like this:
+  ```bash
+  apiclient set --json '{
+    "container-registry": {
+      "credentials": [
+        {
+          "registry": "gcr.io",
+          "username": "example_username",
+          "password": "example_password"
+        },
+        {
+          "registry": "docker.io",
+          "auth": "example_base64_encoded_auth_string"
+        }
+      ]
+    }
+  }'
+  ```
+In addition to the container runtime daemons, these credential settings will also apply to [host-container](#host-containers-settings) and [bootstrap-container](#bootstrap-containers-settings) image pulls as well.
+
 #### Updates settings
 
 * `settings.updates.metadata-base-url`: The common portion of all URIs used to download update metadata.
