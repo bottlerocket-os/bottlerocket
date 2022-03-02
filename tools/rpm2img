@@ -62,6 +62,7 @@ ROOT_MOUNT="$(mktemp -d)"
 BOOT_MOUNT="$(mktemp -d)"
 DATA_MOUNT="$(mktemp -d)"
 EFI_MOUNT="$(mktemp -d)"
+PRIVATE_MOUNT="$(mktemp -d)"
 
 SELINUX_ROOT="/etc/selinux"
 SELINUX_POLICY="fortified"
@@ -254,6 +255,16 @@ veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
 dd if="${VERITY_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[HASH-A]}"
 
 # write GRUB config
+GRUB_FEATURES_ARRAY=("${GRUB_FEATURES}")
+# If GRUB_SET_PRIVATE_VAR is set, include the parameters that support Boot Config
+if printf '%s\n' "${GRUB_FEATURES_ARRAY[@]}" | grep -Fxq 'GRUB_SET_PRIVATE_VAR' ; then
+   BOOTCONFIG='bootconfig'
+   INITRD='initrd ($private)/bootconfig.data'
+else
+   BOOTCONFIG=""
+   INITRD=""
+fi
+
 cat <<EOF > "${BOOT_MOUNT}/grub/grub.cfg"
 set default="0"
 set timeout="0"
@@ -261,6 +272,7 @@ set timeout="0"
 menuentry "${PRETTY_NAME} ${VERSION_ID}" {
    linux (\$root)/vmlinuz root=/dev/dm-0 \\
        ${KERNEL_PARAMETERS} \\
+       ${BOOTCONFIG} \\
        rootwait ro \\
        raid=noautodetect \\
        random.trust_cpu=on selinux=1 enforcing=1 \\
@@ -268,6 +280,7 @@ menuentry "${PRETTY_NAME} ${VERSION_ID}" {
        biosdevname=0 dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\
        dm-mod.create="root,,,ro,0 $VERITY_DATA_512B_BLOCKS verity $VERITY_VERSION PARTUUID=\$boot_uuid/PARTNROFF=1 PARTUUID=\$boot_uuid/PARTNROFF=2 \\
        $VERITY_DATA_BLOCK_SIZE $VERITY_HASH_BLOCK_SIZE $VERITY_DATA_4K_BLOCKS 1 $VERITY_HASH_ALGORITHM $VERITY_ROOT_HASH $VERITY_SALT 1 restart_on_corruption"
+   ${INITRD}
 }
 EOF
 
@@ -283,12 +296,15 @@ dd if="${BOOT_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[BOOT-A
 
 # BOTTLEROCKET-PRIVATE
 
+# Copy the empty bootconfig file into the image so grub doesn't pause and print
+# an error that the file doesn't exist
+cp /host/tools/empty-bootconfig.data "${PRIVATE_MOUNT}/bootconfig.data"
 # Targeted toward the current API server implementation.
 # Relative to the ext4 defaults, we:
 # - adjust the inode ratio since we expect lots of small files
 # - retain the inode size to allow most settings to be stored inline
 # - retain the block size to handle worse-case alignment for hardware
-mkfs.ext4 -b 4096 -i 4096 -I 256 "${PRIVATE_IMAGE}" "${partsize[PRIVATE]}M"
+mkfs.ext4 -b 4096 -i 4096 -I 256 -d "${PRIVATE_MOUNT}" "${PRIVATE_IMAGE}" "${partsize[PRIVATE]}M"
 dd if="${PRIVATE_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRIVATE]}"
 
 # BOTTLEROCKET-DATA
