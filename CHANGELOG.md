@@ -1,3 +1,13 @@
+# v1.6.1 (2022-03-02)
+
+## Security Fixes
+
+* Apply patch to containerd for CVE-2022-23648 ([0de1b39efa64][0de1b39efa64])
+* Update kernel-5.4 and kernel-5.10 to include recent security fixes ([#1973])
+
+[0de1b39efa64]: https://github.com/bottlerocket-os/bottlerocket/commit/0de1b39efa6437fa57388918e1554174ca2f02e4
+[#1973]: https://github.com/bottlerocket-os/bottlerocket/pull/1973
+
 # v1.6.0 (2022-02-07)
 
 ## Deprecation Notice
