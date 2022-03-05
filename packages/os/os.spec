@@ -26,6 +26,7 @@ Source5: updog-toml
 Source6: metricdog-toml
 Source7: host-ctr-toml
 Source8: oci-default-hooks-json
+Source9: cfsignal-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -42,6 +43,7 @@ Source113: send-boot-success.service
 Source114: bootstrap-containers@.service
 Source115: link-kernel-modules.service
 Source116: load-kernel-modules.service
+Source117: cfsignal.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -88,6 +90,7 @@ Requires: %{_cross_os}static-pods
 
 %if %{_is_aws_variant}
 Requires: %{_cross_os}shibaken
+Requires: %{_cross_os}cfsignal
 %endif
 
 %if "%{_cross_variant}" == "aws-ecs-1"
@@ -249,6 +252,11 @@ Summary: Manages user-defined K8S static pods
 Summary: Setting generator for populating admin container user-data from IMDS.
 %description -n %{_cross_os}shibaken
 %{summary}.
+
+%package -n %{_cross_os}cfsignal
+Summary: Bottlerocket CloudFormation Stack signaler
+%description -n %{_cross_os}cfsignal
+%{summary}.
 %endif
 
 %package -n %{_cross_os}shimpei
@@ -336,6 +344,7 @@ echo "** Output from non-static builds:"
 %endif
 %if %{_is_aws_variant}
     -p shibaken \
+    -p cfsignal \
 %endif
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
@@ -372,6 +381,7 @@ for p in \
 %endif
 %if %{_is_aws_variant}
   shibaken \
+  cfsignal \
 %endif
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
@@ -438,6 +448,11 @@ install -p -m 0644 \
   %{S:115} %{S:116} \
 %endif
   %{buildroot}%{_cross_unitdir}
+
+%if %{_is_aws_variant}
+install -p -m 0644 %{S:9} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:117} %{buildroot}%{_cross_unitdir}
+%endif
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
@@ -554,6 +569,12 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %if %{_is_aws_variant}
 %files -n %{_cross_os}shibaken
 %{_cross_bindir}/shibaken
+
+%files -n %{_cross_os}cfsignal
+%{_cross_bindir}/cfsignal
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/cfsignal-toml
+%{_cross_unitdir}/cfsignal.service
 %endif
 
 %if %{_is_k8s_variant}

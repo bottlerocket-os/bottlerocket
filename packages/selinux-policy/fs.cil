@@ -44,6 +44,7 @@
 (filecon "/.*/usr/bin/early-boot-config" file api_exec)
 (filecon "/.*/usr/bin/migrator" file api_exec)
 (filecon "/.*/usr/bin/storewolf" file api_exec)
+(filecon "/.*/usr/bin/cfsignal" file api_exec)
 (filecon "/.*/usr/bin/dbus-broker.*" file bus_exec)
 (filecon "/.*/usr/sbin/chronyd" file clock_exec)
 (filecon "/.*/usr/sbin/wicked.*" file network_exec)

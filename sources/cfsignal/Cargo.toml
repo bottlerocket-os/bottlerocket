@@ -1,0 +1,23 @@
+[package]
+name = "cfsignal"
+version = "0.1.0"
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+simplelog = "0.11"
+snafu = { version = "0.7" }
+toml = "0.5.1"
+tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }
+rusoto_core = { version = "0.47.0", default-features = false, features = ["rustls"] }
+rusoto_cloudformation = { version = "0.47.0", default-features = false, features = ["rustls"] }
+imdsclient = { path = "../imdsclient", version = "0.1.0" }
+hyper = "=0.14.2"
+
+[build-dependencies]
+cargo-readme = "3.1"

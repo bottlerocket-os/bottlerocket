@@ -270,6 +270,14 @@ struct MetricsSettings {
     service_checks: Vec<String>,
 }
 
+// CloudFormation settings
+#[model]
+struct CloudFormationSettings {
+    should_signal: bool,
+    stack_name: SingleLineString,
+    logical_resource_id: SingleLineString,
+}
+
 ///// Internal services
 
 // Note: Top-level objects that get returned from the API should have a "rename" attribute
