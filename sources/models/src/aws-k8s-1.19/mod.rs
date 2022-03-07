@@ -1,1 +1,1 @@
-../aws-k8s-1.21/mod.rs
+../aws-k8s-1.22/mod.rs

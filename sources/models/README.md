@@ -24,23 +24,38 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ### aws-k8s-1.18: Kubernetes 1.18
 
-* [Model](src/aws-k8s-1.21/mod.rs)
+* [Model](src/aws-k8s-1.22/mod.rs)
 * [Default settings](src/aws-k8s-1.19/defaults.d/)
 
 ### aws-k8s-1.19: Kubernetes 1.19
 
-* [Model](src/aws-k8s-1.21/mod.rs)
+* [Model](src/aws-k8s-1.22/mod.rs)
 * [Default settings](src/aws-k8s-1.19/defaults.d/)
 
 ### aws-k8s-1.20: Kubernetes 1.20
 
-* [Model](src/aws-k8s-1.21/mod.rs)
-* [Default settings](src/aws-k8s-1.21/defaults.d/)
+* [Model](src/aws-k8s-1.22/mod.rs)
+* [Default settings](src/aws-k8s-1.22/defaults.d/)
 
 ### aws-k8s-1.21: Kubernetes 1.21
 
-* [Model](src/aws-k8s-1.21/mod.rs)
-* [Default settings](src/aws-k8s-1.21/defaults.d/)
+* [Model](src/aws-k8s-1.22/mod.rs)
+* [Default settings](src/aws-k8s-1.22/defaults.d/)
+
+#### aws-k8s-1.21-nvidia: Kubernetes 1.21 NVIDIA
+
+* [Model](src/aws-k8s-1.22-nvidia/mod.rs)
+* [Default settings](src/aws-k8s-1.22-nvidia/defaults.d/)
+
+### aws-k8s-1.22: Kubernetes 1.22
+
+* [Model](src/aws-k8s-1.22/mod.rs)
+* [Default settings](src/aws-k8s-1.22/defaults.d/)
+
+#### aws-k8s-1.22-nvidia: Kubernetes 1.22 NVIDIA
+
+* [Model](src/aws-k8s-1.22-nvidia/mod.rs)
+* [Default settings](src/aws-k8s-1.22-nvidia/defaults.d/)
 
 ### aws-ecs-1: Amazon ECS
 
@@ -59,13 +74,18 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ### vmware-k8s-1.20: VMware Kubernetes 1.20
 
-* [Model](src/vmware-k8s-1.21/mod.rs)
-* [Default settings](src/vmware-k8s-1.21/defaults.d/)
+* [Model](src/vmware-k8s-1.22/mod.rs)
+* [Default settings](src/vmware-k8s-1.22/defaults.d/)
 
 ### vmware-k8s-1.21: VMware Kubernetes 1.21
 
-* [Model](src/vmware-k8s-1.21/mod.rs)
-* [Default settings](src/vmware-k8s-1.21/defaults.d/)
+* [Model](src/vmware-k8s-1.22/mod.rs)
+* [Default settings](src/vmware-k8s-1.22/defaults.d/)
+
+### vmware-k8s-1.22: VMware Kubernetes 1.22
+
+* [Model](src/vmware-k8s-1.22/mod.rs)
+* [Default settings](src/vmware-k8s-1.22/defaults.d/)
 
 ### metal-dev: Metal development build
 
@@ -74,8 +94,13 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ### metal-k8s-1.21: Metal Kubernetes 1.21
 
-* [Model](src/metal-k8s-1.21/mod.rs)
-* [Default settings](src/metal-k8s-1.21/defaults.d/)
+* [Model](src/metal-k8s-1.22/mod.rs)
+* [Default settings](src/metal-k8s-1.22/defaults.d/)
+
+### metal-k8s-1.22: Metal Kubernetes 1.22
+
+* [Model](src/metal-k8s-1.22/mod.rs)
+* [Default settings](src/metal-k8s-1.22/defaults.d/)
 
 ## This directory
 

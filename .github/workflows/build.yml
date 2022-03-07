@@ -24,7 +24,7 @@ jobs:
     continue-on-error: ${{ matrix.supported }}
     strategy:
       matrix:
-        variant: [aws-k8s-1.18, aws-k8s-1.19, aws-k8s-1.20, aws-k8s-1.21, aws-ecs-1]
+        variant: [aws-k8s-1.18, aws-k8s-1.19, aws-k8s-1.20, aws-k8s-1.21, aws-k8s-1.22, aws-ecs-1]
         arch: [x86_64, aarch64]
         supported: [true]
         fetch-upstream: ["false"]
@@ -45,6 +45,10 @@ jobs:
             arch: x86_64
             supported: false
             fetch-upstream: "false"
+          - variant: metal-k8s-1.22
+            arch: x86_64
+            supported: false
+            fetch-upstream: "false"
           - variant: vmware-k8s-1.20
             arch: x86_64
             supported: true
@@ -53,11 +57,23 @@ jobs:
             arch: x86_64
             supported: true
             fetch-upstream: "false"
+          - variant: vmware-k8s-1.22
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
           - variant: aws-k8s-1.21-nvidia
             arch: x86_64
             supported: true
             fetch-upstream: "true"
           - variant: aws-k8s-1.21-nvidia
+            arch: aarch64
+            supported: true
+            fetch-upstream: "true"
+          - variant: aws-k8s-1.22-nvidia
+            arch: x86_64
+            supported: true
+            fetch-upstream: "true"
+          - variant: aws-k8s-1.22-nvidia
             arch: aarch64
             supported: true
             fetch-upstream: "true"
