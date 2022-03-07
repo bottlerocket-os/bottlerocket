@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.4
-Version: 5.4.176
+Version: 5.4.181
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/32434003a841c9b7972e98167c4819504db24bb87f1a757a3d4bfc16f3c9e4e1/kernel-5.4.176-91.338.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/d8a7e800750161a038954b2685ca8c5fb0a0dac22057530c4c0233d60f06c2d3/kernel-5.4.181-99.354.amzn2.src.rpm
 Source100: config-bottlerocket
 
 # Help out-of-tree module builds run `make prepare` automatically.
@@ -23,9 +23,6 @@ Patch2005: 2005-.gitignore-Add-ZSTD-compressed-files.patch
 # Add zstd support for compressed kernel modules
 Patch2006: 2006-kbuild-move-module-strip-compression-code-into-scrip.patch
 Patch2007: 2007-kbuild-add-support-for-zstd-compressed-modules.patch
-
-# Make Lustre FSx work with a newer GCC.
-Patch3001: 3001-lustrefsx-Disable-Werror-stringop-overflow.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
