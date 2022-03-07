@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"net/url"
 	"os"
 	"os/signal"
 	"regexp"
@@ -916,7 +915,7 @@ func withDynamicResolver(ctx context.Context, ref string, registryConfig *Regist
 	if registryConfig != nil {
 		defaultResolver = func(_ *containerd.Client, c *containerd.RemoteContext) error {
 			resolver := docker.NewResolver(docker.ResolverOptions{
-				Hosts: registryHosts(registryConfig, docker.NewDockerAuthorizer()),
+				Hosts: registryHosts(registryConfig, nil),
 			})
 			c.Resolver = resolver
 			return nil
@@ -974,7 +973,7 @@ func withDynamicResolver(ctx context.Context, ref string, registryConfig *Regist
 		})
 		authorizer := docker.NewDockerAuthorizer(authOpt)
 		resolverOpt := docker.ResolverOptions{
-			Hosts: registryHosts(registryConfig, authorizer),
+			Hosts: registryHosts(registryConfig, &authorizer),
 		}
 
 		return func(_ *containerd.Client, c *containerd.RemoteContext) error {
@@ -986,54 +985,5 @@ func withDynamicResolver(ctx context.Context, ref string, registryConfig *Regist
 	default:
 		// For all other registries
 		return defaultResolver
-	}
-}
-
-// registryHosts returns the registry hosts to be used by the resolver.
-// Heavily borrowed from containerd CRI plugin's implementation with the auth related configuration omitted.
-// See https://github.com/containerd/cri/blob/f6026296a3991010429db91e7e677f9c9d4861ab/pkg/server/image_pull.go#L314-L315
-// FIXME Replace this once there's a public containerd client interface that supports registry mirrors
-func registryHosts(registryConfig *RegistryConfig, authorizer docker.Authorizer) docker.RegistryHosts {
-	return func(host string) ([]docker.RegistryHost, error) {
-		var (
-			registries []docker.RegistryHost
-			endpoints  []string
-		)
-		if _, ok := registryConfig.Mirrors[host]; ok {
-			endpoints = registryConfig.Mirrors[host].Endpoints
-		} else {
-			endpoints = registryConfig.Mirrors["*"].Endpoints
-		}
-		defaultHost, err := docker.DefaultHost(host)
-		if err != nil {
-			return nil, errors.Wrap(err, "get default host")
-		}
-		endpoints = append(endpoints, defaultHost)
-
-		for _, endpoint := range endpoints {
-			// Prefix the endpoint with an appropriate URL scheme if the endpoint does not have one.
-			if !strings.Contains(endpoint, "://") {
-				if endpoint == "localhost" || endpoint == "127.0.0.1" || endpoint == "::1" {
-					endpoint = "http://" + endpoint
-				} else {
-					endpoint = "https://" + endpoint
-				}
-			}
-			url, err := url.Parse(endpoint)
-			if err != nil {
-				return nil, errors.Wrapf(err, "parse registry endpoint %q from mirrors", endpoint)
-			}
-			if url.Path == "" {
-				url.Path = "/v2"
-			}
-			registries = append(registries, docker.RegistryHost{
-				Authorizer:   authorizer,
-				Host:         url.Host,
-				Scheme:       url.Scheme,
-				Path:         url.Path,
-				Capabilities: docker.HostCapabilityResolve | docker.HostCapabilityPull,
-			})
-		}
-		return registries, nil
 	}
 }

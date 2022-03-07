@@ -103,4 +103,6 @@ version = "1.6.1"
 "(1.6.0, 1.6.1)" = []
 "(1.6.1, 1.6.2)" = [
     "migrate_v1.6.2_add-cfsignal.lz4",
+    "migrate_v1.6.2_container-registry-credentials.lz4",
+    "migrate_v1.6.2_container-registry-credentials-metadata.lz4",
 ]

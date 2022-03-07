@@ -709,6 +709,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "container-registry-credentials"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "container-registry-credentials-metadata"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "control-container-v0-5-2"
 version = "0.1.0"
 dependencies = [

@@ -24,6 +24,7 @@ require (
 	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
 	google.golang.org/genproto v0.0.0-20220202230416-2a053f022f0d // indirect
 	google.golang.org/grpc v1.44.0 // indirect
+	k8s.io/cri-api v0.20.6
 )
 
 replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.6.0

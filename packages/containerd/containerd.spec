@@ -20,6 +20,10 @@ Source2: containerd-config-toml_k8s
 Source3: containerd-config-toml_basic
 Source4: containerd-config-toml_k8s_nvidia
 Source5: containerd-tmpfiles.conf
+
+# Mount for writing containerd configuration
+Source100: etc-containerd.mount
+
 Source1000: clarify.toml
 
 # TODO: submit this upstream, including a unit test.
@@ -72,7 +76,7 @@ do
 done
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/containerd.service
+install -p -m 0644 %{S:1} %{S:100} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
@@ -93,6 +97,7 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %{_cross_bindir}/containerd-shim-runc-v2
 %{_cross_bindir}/ctr
 %{_cross_unitdir}/containerd.service
+%{_cross_unitdir}/etc-containerd.mount
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/containerd
 %{_cross_templatedir}/containerd-config-toml*
 %{_cross_tmpfilesdir}/containerd.conf
