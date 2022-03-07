@@ -1,8 +1,5 @@
 # Using Bottlerocket as a Kubernetes worker node with VMware
 
-> The [VMware variants](variants/README.md#vmware-k8s-122-vmware-kubernetes-122-node) are currently in preview phase and we're looking for [feedback](https://github.com/bottlerocket-os/bottlerocket#contact-us).
-> Please try it out and let us know what you think!
-
 This quickstart will walk through joining a Bottlerocket VM guest to an existing Kubernetes cluster running in VMware.
 
 ## Prerequisites

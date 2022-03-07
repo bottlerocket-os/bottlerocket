@@ -60,7 +60,7 @@ The following variant supports ECS:
 
 - `aws-ecs-1`
 
-We also have variants in preview status that are designed to be Kubernetes worker nodes in VMware:
+We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
 - `vmware-k8s-1.20`
 - `vmware-k8s-1.21`
