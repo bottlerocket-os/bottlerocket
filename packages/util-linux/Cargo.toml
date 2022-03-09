@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://www.kernel.org/pub/linux/utils/util-linux"
 
 [[package.metadata.build-package.external-files]]
-url = "https://www.kernel.org/pub/linux/utils/util-linux/v2.37/util-linux-2.37.2.tar.xz"
-sha512 = "38f0fe820445e3bfa79550e6581c230f98c7661566ccc4daa51c7208a5f972c61b4e57dfc86bed074fdbc7c40bc79f856be8f6a05a8860c1c0cecc4208e8b81d"
+url = "https://www.kernel.org/pub/linux/utils/util-linux/v2.37/util-linux-2.37.4.tar.xz"
+sha512 = "ada2629b0a8e83ea83513e04f7b1ccceb3b8ab82acd119c5d8389d1abc48c92d0b591f39fb34b1fd65db3ab630f03a672a9f3dacf1a6e4f124bdb083fc1be6d7"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
