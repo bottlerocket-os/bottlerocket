@@ -84,8 +84,10 @@ CONFIG_EXTRA_FIRMWARE_DIR="%{_cross_libdir}/firmware"
 EOF
 %endif
 
+export ARCH="%{_cross_karch}"
+export CROSS_COMPILE="%{_cross_target}-"
+
 KCONFIG_CONFIG="arch/%{_cross_karch}/configs/%{_cross_vendor}_defconfig" \
-ARCH="%{_cross_karch}" \
 scripts/kconfig/merge_config.sh \
   ../config-%{_cross_arch} \
 %if "%{_cross_arch}" == "x86_64"
