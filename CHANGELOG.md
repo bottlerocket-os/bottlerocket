@@ -1,3 +1,40 @@
+# v1.6.2 (2022-03-08)
+
+With this release, the vmware-k8s variants have graduated from preview status and are now generally available.
+:tada:
+
+## Security Fixes
+
+* Update kernel-5.4 and kernel-5.10 to include recent security fixes ([a8e4a20ca7d1][a8e4a20ca7d1], [3d0c10abeecb][3d0c10abeecb])
+
+## OS Changes
+
+* Add support for Kubernetes 1.22 variants ([#1962])
+* Add settings support for registry credentials ([#1955])
+* Add support for AWS CloudFormation signaling ([#1728], thanks, @mello7tre!)
+* Add TCMU support to the kernel ([#1953], thanks, @cvlc!)
+* Fix issue with closing frame construction in apiserver ([#1948])
+
+## Build Changes
+
+* Fix dead code warning during build in netdog ([#1949])
+
+## Documentation Changes
+
+* Correct variable name in bootstrap-containers/README.md ([#1959], thanks, @dangen-effy!)
+* Add art to the console ([#1970])
+
+[a8e4a20ca7d1]: https://github.com/bottlerocket-os/bottlerocket/commit/a8e4a20ca7d1dde4e8b5f679e4e11d9687b6ef09
+[3d0c10abeecb]: https://github.com/bottlerocket-os/bottlerocket/commit/3d0c10abeecb9f69b6ec598fd5137cb146a46b6e
+[#1728]: https://github.com/bottlerocket-os/bottlerocket/pull/1728
+[#1948]: https://github.com/bottlerocket-os/bottlerocket/pull/1948
+[#1949]: https://github.com/bottlerocket-os/bottlerocket/pull/1949
+[#1953]: https://github.com/bottlerocket-os/bottlerocket/pull/1953
+[#1955]: https://github.com/bottlerocket-os/bottlerocket/pull/1955
+[#1959]: https://github.com/bottlerocket-os/bottlerocket/pull/1959
+[#1962]: https://github.com/bottlerocket-os/bottlerocket/pull/1962
+[#1970]: https://github.com/bottlerocket-os/bottlerocket/pull/1970
+
 # v1.6.1 (2022-03-02)
 
 ## Security Fixes
