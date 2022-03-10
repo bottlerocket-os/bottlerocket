@@ -8,6 +8,7 @@ shopt -qs failglob
 . "${0%/*}/partyplanner"
 
 OUTPUT_FMT="raw"
+BUILDER_ARCH="$(uname -m)"
 
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
@@ -135,7 +136,38 @@ if [ "${PARTITION_PLAN}" == "split" ] ; then
     --sort --print "${DATA_IMAGE}"
 fi
 
+INSTALL_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
+
+# inventory installed packages
+INVENTORY_QUERY="\{\"Name\":\"%{NAME}\"\
+,\"Publisher\":\"Bottlerocket\"\
+,\"Version\":\"${VERSION_ID}\"\
+,\"Release\":\"${BUILD_ID}\"\
+,\"InstalledTime\":\"${INSTALL_TIME}\"\
+,\"ApplicationType\":\"%{GROUP}\"\
+,\"Architecture\":\"%{ARCH}\"\
+,\"Url\":\"%{URL}\"\
+,\"Summary\":\"%{Summary}\"\}\n"
+
+mapfile -t installed_rpms <<< "$(rpm -qa --root "${ROOT_MOUNT}" \
+  --queryformat "${INVENTORY_QUERY}")"
+
+# wrap installed_rpms mapfile into json
+INVENTORY_DATA="$(jq --raw-output . <<<  "${installed_rpms[@]}")"
+# replace the package architecture with the target architecture (for cross-compiled builds)
+if [[ "${BUILDER_ARCH}" != "${ARCH}" ]]; then
+  INVENTORY_DATA="$(jq --arg BUILDER_ARCH "${BUILDER_ARCH}" --arg TARGET_ARCH "${ARCH}" \
+                  '(.Architecture) |= sub($BUILDER_ARCH; $TARGET_ARCH)' <<< "${INVENTORY_DATA}")"
+fi
+# remove the 'bottlerocket-<arch>-' prefix from package names
+INVENTORY_DATA="$(jq --arg PKG_PREFIX "bottlerocket-${ARCH}-" \
+                '(.Name) |= sub($PKG_PREFIX; "")' <<< "${INVENTORY_DATA}")"
+# sort by package name and add 'Content' as top-level
+INVENTORY_DATA="$(jq --slurp 'sort_by(.Name)' <<< "${INVENTORY_DATA}" | jq '{"Content": .}')"
+printf "%s\n" "${INVENTORY_DATA}" > "${ROOT_MOUNT}/usr/share/bottlerocket/application-inventory.json"
+
+# install licenses
 install -p -m 0644 /host/{COPYRIGHT,LICENSE-APACHE,LICENSE-MIT} "${ROOT_MOUNT}"/usr/share/licenses/
 mksquashfs \
   "${ROOT_MOUNT}"/usr/share/licenses \
