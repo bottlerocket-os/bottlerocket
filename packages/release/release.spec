@@ -60,6 +60,9 @@ Source1080: runtime.slice
 # Drop-in units to override defaults
 Source1100: systemd-tmpfiles-setup-service-debug.conf
 
+# systemd-udevd default link
+Source1200: 80-release.link
+
 BuildArch: noarch
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}audit
@@ -113,6 +116,9 @@ install -p -m 0644 %{S:97} %{buildroot}%{_cross_sysctldir}/80-release.conf
 
 install -d %{buildroot}%{_cross_libdir}/systemd/system.conf.d
 install -p -m 0644 %{S:98} %{buildroot}%{_cross_libdir}/systemd/system.conf.d/80-release.conf
+
+install -d %{buildroot}%{_cross_libdir}/systemd/network
+install -p -m 0644 %{S:1200} %{buildroot}%{_cross_libdir}/systemd/network/80-release.link
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
@@ -172,6 +178,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %dir %{_cross_libdir}/repart.d
 %{_cross_libdir}/repart.d/80-local.conf
 %{_cross_libdir}/systemd/system.conf.d/80-release.conf
+%{_cross_libdir}/systemd/network/80-release.link
 %{_cross_unitdir}/configured.target
 %{_cross_unitdir}/preconfigured.target
 %{_cross_unitdir}/multi-user.target

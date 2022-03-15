@@ -1,0 +1,11 @@
+[Match]
+OriginalName=*
+
+[Link]
+# Bottlerocket disables hwdb so don't include "database" in NamePolicy
+NamePolicy=keep kernel onboard slot path
+AlternativeNamesPolicy=onboard slot path
+
+# Applying a MAC address policy can confuse CNI plugins, which do
+# not expect addresses to change for devices like veth pairs.
+MACAddressPolicy=none
