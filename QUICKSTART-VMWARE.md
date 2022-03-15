@@ -46,8 +46,9 @@ Next, set your desired version and variant, and download the OVA:
 VERSION="v1.6.1"
 VARIANT="vmware-k8s-1.21"
 OVA="bottlerocket-${VARIANT}-x86_64-${VERSION}.ova"
+OUTDIR="${VARIANT}-${VERSION}"
 
-tuftool download . --target-name "${OVA}" \
+tuftool download "${OUTDIR}" --target-name "${OVA}" \
    --root ./root.json \
    --metadata-url "https://updates.bottlerocket.aws/2020-07-07/${VARIANT}/x86_64/" \
    --targets-url "https://updates.bottlerocket.aws/targets/"
@@ -59,7 +60,7 @@ Once you have downloaded the OVA, you can upload it to vSphere.
 
 The first command generates a spec file (`bottlerocket_spec.json` in this case) using the OVA and gives you few options for your deployment.
 ```
-govc import.spec "${OVA}" > bottlerocket_spec.json
+govc import.spec "${OUTDIR}/${OVA}" > bottlerocket_spec.json
 ```
 
 The spec will look similar to this:
@@ -90,7 +91,7 @@ jq --arg network "${GOVC_NETWORK}" \
   '.NetworkMapping[].Network = $network' \
   bottlerocket_spec.json > bottlerocket_spec_edit.json
 
-govc import.ova -options=bottlerocket_spec_edit.json -name="${VM_NAME}" "${OVA}"
+govc import.ova -options=bottlerocket_spec_edit.json -name="${VM_NAME}" "${OUTDIR}/${OVA}"
 ```
 
 Since we intend to run multiple identical VMs, let's mark the OVA you just uploaded as a template.
