@@ -33,6 +33,20 @@ url = "https://bar"
 sha512 = "123456"
 ```
 
+`go-mods` is a list of source archives that should be unpacked and have go
+modules downloaded into a vendor folder.
+```
+[[package.metadata.build-package.go-mods]]
+input = "foo.tar.gz"
+mod-dir = "foo-1.2.3"
+output-dir = "src"
+
+[[package.metadata.build-package.go-mods]]
+input = "bar.tar.gz"
+mod-dir = "bar-0.4.7"
+output-dir = "src"
+```
+
 `package-name` lets you override the package name in Cargo.toml; this is useful
 if you have a package with "." in its name, for example, which Cargo doesn't
 allow.  This means the directory name and spec file name can use your preferred
@@ -152,6 +166,10 @@ impl ManifestInfo {
         self.build_package().and_then(|b| b.external_files.as_ref())
     }
 
+    pub(crate) fn go_mods(&self) -> Option<&Vec<GoModule>> {
+        self.build_package().and_then(|b| b.go_mods.as_ref())
+    }
+
     /// Convenience method to return the package name override, if any.
     pub(crate) fn package_name(&self) -> Option<&String> {
         self.build_package().and_then(|b| b.package_name.as_ref())
@@ -224,6 +242,7 @@ struct Metadata {
 #[allow(dead_code)]
 pub(crate) struct BuildPackage {
     pub(crate) external_files: Option<Vec<ExternalFile>>,
+    pub(crate) go_mods: Option<Vec<GoModule>>,
     pub(crate) package_name: Option<String>,
     pub(crate) releases_url: Option<String>,
     pub(crate) source_groups: Option<Vec<PathBuf>>,
@@ -319,6 +338,14 @@ pub(crate) struct ExternalFile {
     pub(crate) path: Option<PathBuf>,
     pub(crate) sha512: String,
     pub(crate) url: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) struct GoModule {
+    pub(crate) input: Option<PathBuf>,
+    pub(crate) mod_dir: Option<PathBuf>,
+    pub(crate) output_dir: Option<PathBuf>,
 }
 
 impl fmt::Display for SupportedArch {

@@ -10,10 +10,12 @@ The implementation is closely tied to the top-level Dockerfile.
 */
 mod builder;
 mod cache;
+mod gomod;
 mod manifest;
 mod project;
 mod spec;
 
+use crate::gomod::GoMod;
 use builder::{PackageBuilder, VariantBuilder};
 use cache::LookasideCache;
 use manifest::{ManifestInfo, SupportedArch};
@@ -41,6 +43,10 @@ mod error {
 
         ExternalFileFetch {
             source: super::cache::error::Error,
+        },
+
+        GoMod {
+            source: super::gomod::error::Error,
         },
 
         ProjectCrawl {
@@ -153,6 +159,10 @@ fn build_package() -> Result<()> {
         for f in info.files {
             println!("cargo:rerun-if-changed={}", f.display());
         }
+    }
+
+    if let Some(mods) = manifest.go_mods() {
+        GoMod::vendor(&root_dir, &manifest_dir, &mods).context(error::GoModSnafu)?;
     }
 
     // Package developer can override name of package if desired, e.g. to name package with
