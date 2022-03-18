@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.42.45
 	github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20211009021844-db7e6868925f
 	github.com/containerd/cgroups v1.0.3 // indirect
-	github.com/containerd/containerd v1.5.9
+	github.com/containerd/containerd v1.5.10
 	github.com/containerd/continuity v0.2.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
