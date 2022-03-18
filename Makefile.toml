@@ -705,6 +705,7 @@ script = [
 '''
 cargo install \
   --jobs ${BUILDSYS_JOBS} \
+  --locked \
   --root tools \
   --quiet \
   --version ${PUBLISH_TUFTOOL_VERSION} \
