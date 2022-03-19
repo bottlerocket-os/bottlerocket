@@ -2,7 +2,7 @@
 %global __brp_check_rpaths %{nil}
 
 Name: %{_cross_os}systemd
-Version: 247.10
+Version: 250.4
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
@@ -21,31 +21,24 @@ Patch9001: 9001-use-absolute-path-for-var-run-symlink.patch
 # way to be configured at build time or during execution first.
 Patch9002: 9002-core-add-separate-timeout-for-system-shutdown.patch
 
-# Local patch to avoid an OpenSSL dependency that's otherwise not needed.
-Patch9003: 9003-repart-always-use-random-UUIDs.patch
-
 # TODO: this could be submitted upstream as well, but needs to account for
 # the dom0 case first, where the UUID is all zeroes and hence not unique.
-Patch9004: 9004-machine-id-setup-generate-stable-ID-under-Xen-and-VM.patch
+Patch9003: 9003-machine-id-setup-generate-stable-ID-under-Xen-and-VM.patch
 
 # Local patch to handle mounting /etc with our SELinux label.
-Patch9005: 9005-core-mount-etc-with-specific-label.patch
+Patch9004: 9004-mount-setup-mount-etc-with-specific-label.patch
 
 # Local patch to disable the keyed hashes feature in the journal, which
 # makes it unreadable by older versions of systemd. Can be dropped once
 # there's sufficiently broad adoption of systemd >= 246.
-Patch9006: 9006-journal-disable-keyed-hashes-for-compatibility.patch
+Patch9005: 9005-journal-disable-keyed-hashes-for-compatibility.patch
 
 # We need `prefix` to be configurable for our own packaging so we can avoid
 # dependencies on the host OS.
-Patch9007: 9007-pkg-config-stop-hardcoding-prefix-to-usr.patch
-
-# Local patch to let systemd recognize ARM EC2 instances as `VIRTUALIZATION_KVM`,
-# so it can generate the correct machine id
-Patch9008: 9008-virt-add-Amazon-EC2-to-dmi-vendor-table.patch
+Patch9006: 9006-pkg-config-stop-hardcoding-prefix-to-usr.patch
 
 # Local patch to stop overriding rp_filter defaults with wildcard values.
-Patch9009: 9009-sysctl-do-not-set-rp_filter-via-wildcard.patch
+Patch9007: 9007-sysctl-do-not-set-rp_filter-via-wildcard.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -95,17 +88,24 @@ Requires: %{name}
 
 %build
 CONFIGURE_OPTS=(
+ -Dmode=release
+
  -Dsplit-usr=false
  -Dsplit-bin=true
  -Drootprefix='%{_cross_prefix}'
  -Drootlibdir='%{_cross_libdir}'
  -Dlink-udev-shared=true
  -Dlink-systemctl-shared=true
+ -Dlink-networkd-shared=false
+ -Dlink-timesyncd-shared=false
+ -Dlink-boot-shared=false
  -Dstatic-libsystemd=false
  -Dstatic-libudev=false
 
- -Dsysvinit-path='%{_cross_sysconfdir}/init.d'
- -Dsysvrcnd-path='%{_cross_sysconfdir}/rc.d'
+ -Dsysvinit-path=''
+ -Dsysvrcnd-path=''
+ -Dinitrd=false
+ -Dnscd=false
 
  -Dutmp=false
  -Dhibernate=false
@@ -118,11 +118,13 @@ CONFIGURE_OPTS=(
  -Drepart=true
  -Dcoredump=false
  -Dpstore=true
+ -Doomd=false
  -Dlogind=false
  -Dhostnamed=false
  -Dlocaled=false
  -Dmachined=false
  -Dportabled=false
+ -Dsysext=false
  -Duserdb=false
  -Dhomed=false
  -Dnetworkd=false
@@ -143,14 +145,27 @@ CONFIGURE_OPTS=(
  -Dimportd=false
  -Dhwdb=false
  -Drfkill=false
+ -Dxdg-autostart=false
  -Dman=false
  -Dhtml=false
+ -Dtranslations=false
 
  -Dcertificate-root='%{_cross_sysconfdir}/ssl'
  -Dpkgconfigdatadir='%{_cross_pkgconfigdir}'
  -Dpkgconfiglibdir='%{_cross_pkgconfigdir}'
 
  -Ddefault-hierarchy=hybrid
+
+ -Dadm-group=false
+ -Dwheel-group=false
+
+ -Dgshadow=true
+
+ -Ddefault-dnssec=no
+ -Ddefault-mdns=no
+ -Ddefault-llmnr=no
+
+ -Dsupport-url="https://github.com/bottlerocket-os/bottlerocket/discussions"
 
  -Dseccomp=auto
  -Dselinux=auto
@@ -178,11 +193,14 @@ CONFIGURE_OPTS=(
  -Dgnutls=false
  -Dopenssl=false
  -Dp11kit=false
+ -Dlibfido2=false
+ -Dtpm2=false
  -Delfutils=false
  -Dzlib=false
  -Dbzip2=false
  -Dxz=false
  -Dlz4=false
+ -Dzstd=false
  -Dxkbcommon=false
  -Dpcre2=false
  -Dglib=false
@@ -195,10 +213,18 @@ CONFIGURE_OPTS=(
 
  -Dtests=false
  -Dslow-tests=false
+ -Dfuzz-tests=false
  -Dinstall-tests=false
+
+ -Durlify=false
+ -Dfexecve=false
 
  -Doss-fuzz=false
  -Dllvm-fuzz=false
+ -Dkernel-install=false
+ -Danalyze=true
+
+ -Dbpf-framework=false
 )
 
 %cross_meson "${CONFIGURE_OPTS[@]}"
@@ -242,6 +268,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_bindir}/systemd-cat
 %{_cross_bindir}/systemd-cgls
 %{_cross_bindir}/systemd-cgtop
+%{_cross_bindir}/systemd-creds
 %{_cross_bindir}/systemd-dissect
 %{_cross_bindir}/systemd-delta
 %{_cross_bindir}/systemd-detect-virt
@@ -261,16 +288,12 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_bindir}/systemd-tty-ask-password-agent
 %{_cross_bindir}/systemd-umount
 %{_cross_bindir}/udevadm
-%exclude %{_cross_bindir}/oomctl
-%exclude %{_cross_bindir}/kernel-install
 
 %{_cross_sbindir}/halt
 %{_cross_sbindir}/init
 %{_cross_sbindir}/poweroff
 %{_cross_sbindir}/reboot
-%{_cross_sbindir}/runlevel
 %{_cross_sbindir}/shutdown
-%{_cross_sbindir}/telinit
 
 %{_cross_libdir}/libsystemd.so.*
 %{_cross_libdir}/libudev.so.*
@@ -286,16 +309,13 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_libdir}/sysusers.d/*
 %{_cross_libdir}/systemd/*
 %{_cross_libdir}/udev/*
-%exclude %{_cross_libdir}/kernel/install.d
 
 %{_cross_tmpfilesdir}/*
-%exclude %{_cross_tmpfilesdir}/legacy.conf
+%exclude %{_cross_tmpfilesdir}/x11.conf
 
-%exclude %{_cross_sysconfdir}/oomd.conf
 %exclude %{_cross_sysconfdir}/systemd/
 %exclude %{_cross_sysconfdir}/udev/
 %exclude %{_cross_sysconfdir}/X11
-%exclude %{_cross_sysconfdir}/init.d
 %exclude %{_cross_sysconfdir}/xdg
 
 %{_cross_datadir}/dbus-1/*
@@ -309,8 +329,6 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/system-auth
 
 %exclude %{_cross_docdir}
-%exclude %{_cross_localedir}
-%exclude %{_cross_localstatedir}/log/README
 
 %exclude %{_cross_bindir}/systemd-ask-password
 %exclude %{_cross_bindir}/systemd-tty-ask-password-agent
@@ -318,6 +336,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %exclude %{_cross_libdir}/systemd/systemd-reply-password
 %exclude %{_cross_systemdgeneratordir}/systemd-debug-generator
 %exclude %{_cross_systemdgeneratordir}/systemd-getty-generator
+%exclude %{_cross_unitdir}/autovt@.service
 %exclude %{_cross_unitdir}/console-getty.service
 %exclude %{_cross_unitdir}/container-getty@.service
 %exclude %{_cross_unitdir}/debug-shell.service
@@ -330,7 +349,6 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %exclude %{_cross_unitdir}/systemd-ask-password-console.service
 %exclude %{_cross_unitdir}/systemd-ask-password-console.path
 %exclude %{_cross_unitdir}/systemd-ask-password-wall.path
-%exclude %{_cross_unitdir}/systemd-oomd.service
 %exclude %{_cross_unitdir}/systemd-repart.service
 %exclude %{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
 %exclude %{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
@@ -342,6 +360,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_libdir}/systemd/systemd-reply-password
 %{_cross_systemdgeneratordir}/systemd-debug-generator
 %{_cross_systemdgeneratordir}/systemd-getty-generator
+%{_cross_unitdir}/autovt@.service
 %{_cross_unitdir}/console-getty.service
 %{_cross_unitdir}/container-getty@.service
 %{_cross_unitdir}/debug-shell.service

@@ -1,7 +1,7 @@
-From 22f287486b107994fd9105d539821056cf708407 Mon Sep 17 00:00:00 2001
+From cedff283957de7bb7f01af87c5f68802436e4a55 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 12 Nov 2020 16:18:15 +0000
-Subject: [PATCH 9006/9009] journal: disable keyed hashes for compatibility
+Subject: [PATCH 9005/9007] journal: disable keyed hashes for compatibility
 
 Otherwise the journal is not readable by older versions of systemd.
 
@@ -10,14 +10,14 @@ removes the environment variable override.
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
- src/journal/journal-file.c | 5 ++---
+ src/libsystemd/sd-journal/journal-file.c | 5 ++---
  1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/src/journal/journal-file.c b/src/journal/journal-file.c
-index 6bee5da..791145e 100644
---- a/src/journal/journal-file.c
-+++ b/src/journal/journal-file.c
-@@ -3463,13 +3463,12 @@ int journal_file_open(
+diff --git a/src/libsystemd/sd-journal/journal-file.c b/src/libsystemd/sd-journal/journal-file.c
+index 505e4f7..d184ec6 100644
+--- a/src/libsystemd/sd-journal/journal-file.c
++++ b/src/libsystemd/sd-journal/journal-file.c
+@@ -3290,13 +3290,12 @@ int journal_file_open(
  #endif
          };
  
@@ -34,5 +34,5 @@ index 6bee5da..791145e 100644
                  f->keyed_hash = r;
  
 -- 
-2.21.3
+2.33.1
 
