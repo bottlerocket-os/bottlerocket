@@ -43,6 +43,8 @@ members = [
     "api/migration/migrations/v1.6.2/add-cfsignal",
     "api/migration/migrations/v1.6.2/container-registry-credentials",
     "api/migration/migrations/v1.6.2/container-registry-credentials-metadata",
+    "api/migration/migrations/v1.7.0/aws-admin-container-v0-8-0",
+    "api/migration/migrations/v1.7.0/public-admin-container-v0-8-0",
 
     "bottlerocket-release",
 

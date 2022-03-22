@@ -106,3 +106,7 @@ version = "1.6.2"
     "migrate_v1.6.2_container-registry-credentials.lz4",
     "migrate_v1.6.2_container-registry-credentials-metadata.lz4",
 ]
+"(1.6.2, 1.7.0)" = [
+    "migrate_v1.7.0_aws-admin-container-v0-8-0.lz4",
+    "migrate_v1.7.0_public-admin-container-v0-8-0.lz4",
+]
