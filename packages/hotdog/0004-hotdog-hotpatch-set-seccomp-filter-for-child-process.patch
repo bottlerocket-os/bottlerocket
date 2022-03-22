@@ -1,0 +1,436 @@
+From 1b1bcc334ff0ed06e5ac3c5fb7d2e7c8a764f8d1 Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Thu, 3 Feb 2022 22:56:45 +0000
+Subject: [PATCH 4/9] hotdog-hotpatch: set seccomp filter for child processes
+
+`hotdog-hotpatch` spawns multiple child processes to patch the running
+JVM processes. These processes should use the seccomp filter of the
+running container to prevent privilege escalation. Hotdog won't patch
+the JVM process if it fails to read or set the seccomp filters for the
+patching process.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Samuel Karp <skarp@amazon.com>
+---
+ cmd/hotdog-hotpatch/main.go       |  53 ++++++++++--
+ cmd/hotdog-poststart-hook/main.go |  23 ++++-
+ hotpatch.go                       |  36 ++++++--
+ process/utils.go                  |  56 +++++++++++++
+ seccomp/utils.go                  | 134 ++++++++++++++++++++++++++++++
+ 5 files changed, 286 insertions(+), 16 deletions(-)
+ create mode 100644 process/utils.go
+ create mode 100644 seccomp/utils.go
+
+diff --git a/cmd/hotdog-hotpatch/main.go b/cmd/hotdog-hotpatch/main.go
+index 18c52dd..711eb62 100644
+--- a/cmd/hotdog-hotpatch/main.go
++++ b/cmd/hotdog-hotpatch/main.go
+@@ -18,6 +18,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/bottlerocket/hotdog"
++	"github.com/bottlerocket/hotdog/seccomp"
+ 
+ 	"github.com/opencontainers/runtime-spec/specs-go"
+ 	"kernel.org/pub/linux/libs/security/libcap/cap"
+@@ -62,8 +63,19 @@ func main() {
+ 	}
+ }
+ 
++const setFilterArgs = "set-filter"
++
+ func _main() error {
+-	logFile, err := os.OpenFile(filepath.Join("/", "dev", "shm", "hotdog.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
++	if len(os.Args) > 2 && os.Args[1] == setFilterArgs {
++		return set_filters_main(os.Args[2:])
++	}
++	return hotpatch_main()
++}
++
++// hotpatch_main is the main function executed by the poststart hook, it
++// finds the processes to patch and applies the patch to them
++func hotpatch_main() error {
++	logFile, err := os.OpenFile(filepath.Join("/", "dev", "shm", "hotdog.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0655)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -75,7 +87,6 @@ func _main() error {
+ 		logger.Printf("Failed to constrain hotdog's capabilities: %v", err)
+ 		return err
+ 	}
+-
+ 	for _, d := range delays {
+ 		time.Sleep(d)
+ 		logger.Printf("Starting hotpatch after %v delay", d)
+@@ -90,6 +101,32 @@ func _main() error {
+ 	return nil
+ }
+ 
++// set_filters_main is the main function executed by hotdog-hotpatch's
++// reexec'ed process. It sets the seccomp filters for the forked process
++// before the final command is executed.
++func set_filters_main(args []string) error {
++	// Get the seccomp filters from the environment variable
++	filters, err := hotdog.GetFiltersFromEnv()
++	if err != nil {
++		return fmt.Errorf("failed to get filters from stdin: %v", err)
++	}
++	// Set the seccomp filters before launching the final command
++	if err := seccomp.SetSeccompFilters(filters); err != nil {
++		return fmt.Errorf("failed to set filters: %v", err)
++	}
++	// Execute the command passed as arguments in the reexecution of
++	// 'hotdog-hotpatch'. It should be safe to attempt to execute a binary
++	// in here, since the caller process should already have reduced
++	// capabilities, and a seccomp filter was already set at this point.
++	command := exec.Command(args[0], args[1:]...)
++	out, err := command.CombinedOutput()
++	if err != nil {
++		return fmt.Errorf("failed to execute command '%v': %s", args, string(out))
++	}
++	fmt.Print(string(out))
++	return nil
++}
++
+ // constrainHotdogCapabilities reduces the permission set available to the
+ // hotdog-hotpatch process itself.  Before launching other processes, this
+ // permission set should be further reduced.  In order to successfully apply
+@@ -188,7 +225,7 @@ func findJVMs() []*jvm {
+ 		}
+ 		versionOut, err := commandDroppedPrivs(exePath, []string{"-version"}, euid, egid, pid)
+ 		if err != nil {
+-			logger.Printf("Failed to execute %q for %d: %v", "java -version", pid, err)
++			logger.Printf("Failed to execute %q for %d: %v, %q", "java -version", pid, err, string(versionOut))
+ 			continue
+ 		}
+ 		jvms = append(jvms, &jvm{
+@@ -207,9 +244,13 @@ func findJVMs() []*jvm {
+ // we drop all capabilities in every set including the bounding set.  For
+ // programs run as UID 0, match the capability sets of the target process.
+ // This allows the kernel's PTRACE_MODE_READ_FSCREDS check to pass when the
+-// hotpatch attempts to find the JVM's socket by reading /proc/<pid>/root/.
++// hotpatch attempts to find the JVM's socket by reading /proc/<pid>/root/. The
++// seccomp filter of the target process is set for all programs.
+ func commandDroppedPrivs(name string, arg []string, uid, gid, targetPID int) ([]byte, error) {
+-	cmd := cap.NewLauncher(name, append([]string{name}, arg...), nil)
++	reexecPath := filepath.Join("/proc", "self", "exe")
++	// Create a launcher that reexecs hotdog-hotpatch, so that it can set the seccomp filters
++	// before launching the target command
++	cmd := cap.NewLauncher(reexecPath, append([]string{hotdog.HotpatchBinary, setFilterArgs, name}, arg...), nil)
+ 	if uid != 0 {
+ 		cmd.SetUID(uid)
+ 		cmd.SetMode(cap.ModeNoPriv)
+@@ -230,7 +271,7 @@ func commandDroppedPrivs(name string, arg []string, uid, gid, targetPID int) ([]
+ 	}()
+ 	cmd.Callback(func(attr *syscall.ProcAttr, i interface{}) error {
+ 		// Capture stdout/stderr, since we can't rely on the exec package to
+-		//do it for us here.
++		// do it for us here.
+ 		attr.Files[1] = pw.Fd()
+ 		attr.Files[2] = pw.Fd()
+ 
+diff --git a/cmd/hotdog-poststart-hook/main.go b/cmd/hotdog-poststart-hook/main.go
+index ac9d33c..d7768d0 100644
+--- a/cmd/hotdog-poststart-hook/main.go
++++ b/cmd/hotdog-poststart-hook/main.go
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/bottlerocket/hotdog"
+ 	"github.com/bottlerocket/hotdog/cgroups"
+ 	"github.com/bottlerocket/hotdog/hook"
++	"github.com/bottlerocket/hotdog/seccomp"
+ 
+ 	"github.com/opencontainers/runtime-spec/specs-go"
+ 	"github.com/opencontainers/selinux/go-selinux"
+@@ -33,15 +34,26 @@ func _main() error {
+ 		return err
+ 	}
+ 	targetPID := strconv.Itoa(state.Pid)
+-	runtime.LockOSThread()
+-	defer runtime.UnlockOSThread()
+-
+ 	// Silently exit if:
++	// - An error occurred while fetching the container's seccomp profile
+ 	// - The process fails to constrain itself
+ 	// - An error occurred while reading the container's capabilities
+ 	// - An error occurred while the hotpatch was applied
+ 	// We don't send these errors to the STDOUT because the runtime
+ 	// only reads it when the hook errors out
++
++	// Get the seccomp filters from the target container
++	filters, err := seccomp.GetSeccompFilter(state.Pid)
++	if err != nil {
++		return nil
++	}
++	filtersJSON, err := json.Marshal(filters)
++	if err != nil {
++		return nil
++	}
++
++	runtime.LockOSThread()
++	defer runtime.UnlockOSThread()
+ 	if err := constrainProcess(spec, targetPID); err != nil {
+ 		return nil
+ 	}
+@@ -53,7 +65,10 @@ func _main() error {
+ 		"-t", targetPID,
+ 		"-m", "-n", "-i", "-u", "-p",
+ 		filepath.Join(hotdog.ContainerDir, hotdog.HotpatchBinary))
+-	hotpatch.Env = []string{hotdog.EnvCapability + "=" + string(capJSON)}
++	hotpatch.Env = []string{
++		hotdog.EnvCapability + "=" + string(capJSON),
++		hotdog.EnvSeccompFilter + "=" + string(filtersJSON),
++	}
+ 	hotpatch.Start()
+ 	return nil
+ }
+diff --git a/hotpatch.go b/hotpatch.go
+index b53febc..bcd9a6d 100644
+--- a/hotpatch.go
++++ b/hotpatch.go
+@@ -1,10 +1,34 @@
+ package hotdog
+ 
++import (
++	"encoding/json"
++	"fmt"
++	"os"
++	"syscall"
++)
++
+ var (
+-	HostDir        = "/usr/share/hotdog"
+-	ContainerDir   = "/dev/shm/.hotdog"
+-	JDK8Class      = "Log4jHotPatch"
+-	PatchPath      = "Log4jHotPatch.jar"
+-	HotpatchBinary = "hotdog-hotpatch"
+-	EnvCapability  = "HOTDOG_CAPABILITIES"
++	HostDir          = "/usr/share/hotdog"
++	ContainerDir     = "/dev/shm/.hotdog"
++	JDK8Class        = "Log4jHotPatch"
++	PatchPath        = "Log4jHotPatch.jar"
++	HotpatchBinary   = "hotdog-hotpatch"
++	EnvCapability    = "HOTDOG_CAPABILITIES"
++	EnvSeccompFilter = "HOTDOG_SECCOMP_FILTER"
+ )
++
++// GetFiltersFromEnv reads and parses the seccomp filters passed as an
++// environment variable of the running process
++func GetFiltersFromEnv() ([][]syscall.SockFilter, error) {
++	filtersJSON := os.Getenv(EnvSeccompFilter)
++	// Only check if the environment variable was set, but don't fail if
++	// the filters array is empty
++	if len(filtersJSON) == 0 {
++		return nil, fmt.Errorf("No filters were passed in %s", EnvSeccompFilter)
++	}
++	var filters [][]syscall.SockFilter
++	if err := json.Unmarshal([]byte(filtersJSON), &filters); err != nil {
++		return nil, fmt.Errorf("Failed to unmarshal filters: %v", err)
++	}
++	return filters, nil
++}
+diff --git a/process/utils.go b/process/utils.go
+new file mode 100644
+index 0000000..dad4a7f
+--- /dev/null
++++ b/process/utils.go
+@@ -0,0 +1,56 @@
++package process
++
++import (
++	"bufio"
++	"os"
++	"path/filepath"
++	"strconv"
++	"strings"
++)
++
++const (
++	seccompStatus  = "Seccomp:"
++	seccompFilters = "Seccomp_filters:"
++)
++
++// ProcessStatus represents a process status
++type ProcessStatus struct {
++	State   int
++	Filters int
++}
++
++// ParseProcessStatus reads the '/proc/<pid>/status' file to retrieve
++// information about the target PID
++func ParseProcessStatus(targetPID int) (*ProcessStatus, error) {
++	f, err := os.OpenFile(filepath.Join("/proc", strconv.Itoa(targetPID), "status"), os.O_RDONLY, 0)
++	if err != nil {
++		return nil, err
++	}
++	defer f.Close()
++	s := bufio.NewScanner(f)
++	var filtersLine, stateLine string
++
++	for s.Scan() {
++		text := s.Text()
++		switch {
++		case strings.Contains(text, seccompStatus):
++			stateLine = strings.TrimSpace(text[len(seccompStatus):])
++		case strings.Contains(text, seccompFilters):
++			filtersLine = strings.TrimSpace(text[len(seccompFilters):])
++		}
++		if filtersLine != "" && stateLine != "" {
++			break
++		}
++	}
++
++	state, err := strconv.Atoi(stateLine)
++	if err != nil {
++		return nil, err
++	}
++	filters, err := strconv.Atoi(filtersLine)
++	if err != nil {
++		return nil, err
++	}
++
++	return &ProcessStatus{State: state, Filters: filters}, nil
++}
+diff --git a/seccomp/utils.go b/seccomp/utils.go
+new file mode 100644
+index 0000000..3790891
+--- /dev/null
++++ b/seccomp/utils.go
+@@ -0,0 +1,134 @@
++package seccomp
++
++import (
++	"fmt"
++	"syscall"
++	"unsafe"
++
++	"github.com/bottlerocket/hotdog/process"
++	"golang.org/x/sys/unix"
++)
++
++/// GetSeccompFilter reads the seccomp filters of the passed pid
++func GetSeccompFilter(targetPID int) (allFilters [][]syscall.SockFilter, err error) {
++	status, err := process.ParseProcessStatus(targetPID)
++	if err != nil {
++		return nil, err
++	}
++	// There isn't a filter to copy if the State isn't SECCOMP_MODE_FILTER
++	if status.State != unix.SECCOMP_MODE_FILTER {
++		return nil, nil
++	}
++	// Attach to the process via `PTRACE_SEIZE`, which doesn't stop
++	// the process right away unlike `PTRACE_ATTACH`
++	if err := ptraceSeize(targetPID); err != nil {
++		return nil, fmt.Errorf("got error while seizing process %d: %v", targetPID, err)
++	}
++	// Send the stop signal to traced process
++	if err := ptraceInterrupt(targetPID); err != nil {
++		return nil, fmt.Errorf("got error while interrupting process: %v", err)
++	}
++	// Wait for the process to change state
++	var waitStatus syscall.WaitStatus
++	_, err = syscall.Wait4(targetPID, &waitStatus, 0, nil)
++	if err != nil {
++		return nil, fmt.Errorf("got error while waiting for process: %v", err)
++	}
++	// Fail if the target process isn't stopped
++	if !waitStatus.Stopped() {
++		return nil, fmt.Errorf("expected process '%d' to be stopped")
++	}
++
++	// Only attempt to detach if the target process was interrupted
++	defer func() {
++		detachErr := syscall.PtraceDetach(targetPID)
++		if err == nil && detachErr != nil {
++			err = fmt.Errorf("Failed to detach: %v", detachErr)
++		}
++	}()
++
++	allFilters = make([][]syscall.SockFilter, status.Filters)
++	for i := 0; i < status.Filters; i++ {
++		// Get the filter size
++		sz, err := ptraceSeccompGetFilter(targetPID, i, nil)
++		if err != nil {
++			return nil, fmt.Errorf("got error while sizing the filter: %v", err)
++		}
++		// Get the filter data
++		seccompFilter := make([]syscall.SockFilter, sz)
++		_, err = ptraceSeccompGetFilter(targetPID, i, &seccompFilter[0])
++		if err != nil {
++			return nil, fmt.Errorf("got error while getting the filter data: %v", err)
++		}
++		allFilters[i] = seccompFilter
++	}
++
++	return allFilters, err
++}
++
++// SetSeccompFilters sets the seccomp filters for the running process
++func SetSeccompFilters(filters [][]syscall.SockFilter) error {
++	// Filters have to be set in reverse order, so the most recently installed
++	// filter is executed first:
++	// https://man7.org/linux/man-pages/man2/seccomp.2.html
++	sockFprogs := buildSockFprogs(filters)
++	for i := len(sockFprogs) - 1; i >= 0; i-- {
++		if err := unix.Prctl(unix.PR_SET_SECCOMP, unix.SECCOMP_MODE_FILTER, uintptr(unsafe.Pointer(&sockFprogs[i])), 0, 0); err != nil {
++			return err
++		}
++	}
++	return nil
++}
++
++// buildSockFprogs returns an array of syscall.SockFprog objects, from an
++// array of arrays of syscall.SockFilter
++func buildSockFprogs(filters [][]syscall.SockFilter) []syscall.SockFprog {
++	progs := make([]syscall.SockFprog, len(filters))
++	for i := 0; i < len(filters); i++ {
++		progs[i].Len = uint16(len(filters[i]))
++		progs[i].Filter = &filters[i][0]
++	}
++	return progs
++}
++
++// ptraceSeccompGetFilter retrieves the seccomp filters for the passed PID. The 'filter'
++// parameter is a pointer to the first element in an array of `syscall.SockFilter` objects.
++// https://man7.org/linux/man-pages/man2/ptrace.2.html
++func ptraceSeccompGetFilter(pid int, addr int, filter *syscall.SockFilter) (int, error) {
++	var filterPtr uintptr
++	if filter == nil {
++		filterPtr = 0
++	} else {
++		filterPtr = uintptr(unsafe.Pointer(filter))
++	}
++
++	sz, err := ptrace(unix.PTRACE_SECCOMP_GET_FILTER, pid, uintptr(addr), filterPtr)
++	if err != nil {
++		return 0, err
++	}
++	return int(sz), nil
++}
++
++// ptraceSeize attaches to the process specified in 'pid'. Unlike 'syscall.PtraceAttach',
++// ptraceSeize doesn't stop the process.
++// https://man7.org/linux/man-pages/man2/ptrace.2.html
++func ptraceSeize(pid int) error {
++	_, err := ptrace(unix.PTRACE_SEIZE, pid, uintptr(0), uintptr(unix.PTRACE_O_TRACESYSGOOD))
++	return err
++}
++
++// ptraceInterrupt stops the process specified in 'pid'.
++// https://man7.org/linux/man-pages/man2/ptrace.2.html
++func ptraceInterrupt(pid int) error {
++	_, err := ptrace(unix.PTRACE_INTERRUPT, pid, uintptr(0), uintptr(0))
++	return err
++}
++
++// Golang doesn't export a raw 'ptrace' syscall
++func ptrace(request int, pid int, addr uintptr, data uintptr) (int, error) {
++	sz, _, e1 := syscall.Syscall6(unix.SYS_PTRACE, uintptr(request), uintptr(pid), uintptr(addr), data, 0, 0)
++	if e1 != 0 {
++		return 0, e1
++	}
++	return int(sz), nil
++}
+-- 
+2.33.1
+

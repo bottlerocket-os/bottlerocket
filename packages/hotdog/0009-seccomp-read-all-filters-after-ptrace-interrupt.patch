@@ -1,0 +1,127 @@
+From 6a20cf8d2f9502cf45335e0753282f52e23ae92c Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Fri, 1 Apr 2022 02:07:26 +0000
+Subject: [PATCH 9/9] seccomp: read all filters after ptrace interrupt
+
+`/proc/<pid>/status` does not show the number of filters in kernels
+before 5.9, and in any case more filters could be added before the
+ptrace interrupt.
+
+To simplify, continue reading filters until the kernel indicates that
+no more are available.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Sean Kelly <seankell@amazon.com>
+---
+ process/utils.go | 26 +++++++++-----------------
+ seccomp/utils.go | 10 +++++++---
+ 2 files changed, 16 insertions(+), 20 deletions(-)
+
+diff --git a/process/utils.go b/process/utils.go
+index 4b54d3f..f43f133 100644
+--- a/process/utils.go
++++ b/process/utils.go
+@@ -13,18 +13,16 @@ import (
+ )
+ 
+ const (
+-	seccompStatus  = "Seccomp:"
+-	seccompFilters = "Seccomp_filters:"
+-	uid            = "Uid:"
+-	gid            = "Gid:"
++	seccompStatus = "Seccomp:"
++	uid           = "Uid:"
++	gid           = "Gid:"
+ )
+ 
+ // ProcessStatus represents a process status
+ type ProcessStatus struct {
+-	State   int
+-	Filters int
+-	Uid     int
+-	Gid     int
++	State int
++	Uid   int
++	Gid   int
+ }
+ 
+ // ParseProcessStatus reads the '/proc/<pid>/status' file to retrieve
+@@ -36,21 +34,19 @@ func ParseProcessStatus(targetPID int) (*ProcessStatus, error) {
+ 	}
+ 	defer f.Close()
+ 	s := bufio.NewScanner(f)
+-	var filtersLine, stateLine, uidLine, gidLine string
++	var stateLine, uidLine, gidLine string
+ 
+ 	for s.Scan() {
+ 		text := s.Text()
+ 		switch {
+ 		case strings.Contains(text, seccompStatus):
+ 			stateLine = strings.TrimSpace(text[len(seccompStatus):])
+-		case strings.Contains(text, seccompFilters):
+-			filtersLine = strings.TrimSpace(text[len(seccompFilters):])
+ 		case strings.Contains(text, uid):
+ 			uidLine = text[len(uid):]
+ 		case strings.Contains(text, gid):
+ 			gidLine = text[len(gid):]
+ 		}
+-		if filtersLine != "" && stateLine != "" && uidLine != "" && gidLine != "" {
++		if stateLine != "" && uidLine != "" && gidLine != "" {
+ 			break
+ 		}
+ 	}
+@@ -59,10 +55,6 @@ func ParseProcessStatus(targetPID int) (*ProcessStatus, error) {
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	filters, err := strconv.Atoi(filtersLine)
+-	if err != nil {
+-		return nil, err
+-	}
+ 	puid, err := parseIdLine(uidLine)
+ 	if err != nil {
+ 		return nil, err
+@@ -72,7 +64,7 @@ func ParseProcessStatus(targetPID int) (*ProcessStatus, error) {
+ 		return nil, err
+ 	}
+ 
+-	return &ProcessStatus{State: state, Filters: filters, Uid: puid, Gid: pgid}, nil
++	return &ProcessStatus{State: state, Uid: puid, Gid: pgid}, nil
+ }
+ 
+ // parseIdLine parses "Id"-like lines, read from the file
+diff --git a/seccomp/utils.go b/seccomp/utils.go
+index 3790891..a8e117a 100644
+--- a/seccomp/utils.go
++++ b/seccomp/utils.go
+@@ -47,11 +47,15 @@ func GetSeccompFilter(targetPID int) (allFilters [][]syscall.SockFilter, err err
+ 		}
+ 	}()
+ 
+-	allFilters = make([][]syscall.SockFilter, status.Filters)
+-	for i := 0; i < status.Filters; i++ {
++	for i := 0; ; i++ {
+ 		// Get the filter size
+ 		sz, err := ptraceSeccompGetFilter(targetPID, i, nil)
+ 		if err != nil {
++			// An ENOENT error means we are at the end of the filters list
++			if err == unix.ENOENT {
++				break
++			}
++			// Fail in any other error
+ 			return nil, fmt.Errorf("got error while sizing the filter: %v", err)
+ 		}
+ 		// Get the filter data
+@@ -60,7 +64,7 @@ func GetSeccompFilter(targetPID int) (allFilters [][]syscall.SockFilter, err err
+ 		if err != nil {
+ 			return nil, fmt.Errorf("got error while getting the filter data: %v", err)
+ 		}
+-		allFilters[i] = seccompFilter
++		allFilters = append(allFilters, seccompFilter)
+ 	}
+ 
+ 	return allFilters, err
+-- 
+2.33.1
+

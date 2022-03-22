@@ -1,0 +1,66 @@
+From 6ce5ac28431bfb18a0ba0233636e238fc18082d6 Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Wed, 23 Feb 2022 19:55:25 +0000
+Subject: [PATCH 1/9] poststart-hook: silently exit under certain conditions
+
+Since hotdog patches java processes on a best-effort basis, the hotdog
+poststart hook won't exit with a non-zero error code if:
+
+- The process fails to constrain itself
+- An error occurred while reading the container's capabilities
+- An error occurred while the hotpatch was applied
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Samuel Karp <skarp@amazon.com>
+---
+ cmd/hotdog-poststart-hook/main.go | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/cmd/hotdog-poststart-hook/main.go b/cmd/hotdog-poststart-hook/main.go
+index 49b3606..2e559d4 100644
+--- a/cmd/hotdog-poststart-hook/main.go
++++ b/cmd/hotdog-poststart-hook/main.go
+@@ -20,6 +20,7 @@ func main() {
+ }
+ 
+ func _main() error {
++	// Fail if an error occurs while the container's state or config are retrieved
+ 	state, err := hook.State()
+ 	if err != nil {
+ 		return err
+@@ -28,21 +29,28 @@ func _main() error {
+ 	if err != nil {
+ 		return err
+ 	}
++	// Silently exit if:
++	// - The process fails to constrain itself
++	// - An error occurred while reading the container's capabilities
++	// - An error occurred while the hotpatch was applied
++	// We don't send these errors to the STDOUT because the runtime
++	// only reads it when the hook errors out
+ 	if spec.Process.SelinuxLabel != "" {
+ 		runtime.LockOSThread()
+ 		defer runtime.UnlockOSThread()
+ 		if err := selinux.SetExecLabel(spec.Process.SelinuxLabel); err != nil {
+-			return err
++			return nil
+ 		}
+ 	}
+ 	capJSON, err := json.Marshal(spec.Process.Capabilities)
+ 	if err != nil {
+-		return err
++		return nil
+ 	}
+ 	hotpatch := exec.Command("nsenter",
+ 		"-t", strconv.Itoa(state.Pid),
+ 		"-m", "-n", "-i", "-u", "-p",
+ 		filepath.Join(hotdog.ContainerDir, hotdog.HotpatchBinary))
+ 	hotpatch.Env = []string{hotdog.EnvCapability + "=" + string(capJSON)}
+-	return hotpatch.Start()
++	hotpatch.Start()
++	return nil
+ }
+-- 
+2.33.1
+

@@ -1,0 +1,115 @@
+From c270fe0a2117a08c09247b3e761f986839f0712a Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Fri, 11 Feb 2022 01:42:51 +0000
+Subject: [PATCH 7/9] hotdog-hotpatch: constrain hook's file descriptors
+
+File descriptors now will be automatically closed after successful exec
+calls for the hotdog-hotpatch process and every spawned child process.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Samuel Karp <skarp@amazon.com>
+---
+ cmd/hotdog-hotpatch/main.go       |  9 +++++++++
+ cmd/hotdog-poststart-hook/main.go |  4 ++++
+ process/utils.go                  | 27 +++++++++++++++++++++++++++
+ 3 files changed, 40 insertions(+)
+
+diff --git a/cmd/hotdog-hotpatch/main.go b/cmd/hotdog-hotpatch/main.go
+index c62109b..68d5310 100644
+--- a/cmd/hotdog-hotpatch/main.go
++++ b/cmd/hotdog-hotpatch/main.go
+@@ -110,6 +110,10 @@ func set_filters_main(args []string) error {
+ 	if err != nil {
+ 		return fmt.Errorf("failed to get filters from stdin: %v", err)
+ 	}
++	// Constrain this process' file descriptors
++	if err := process.ConstrainFileDescriptors(); err != nil {
++		return fmt.Errorf("failed to contrain the process file descriptors: %v", err)
++	}
+ 	// Set the seccomp filters before launching the final command
+ 	if err := seccomp.SetSeccompFilters(filters); err != nil {
+ 		return fmt.Errorf("failed to set filters: %v", err)
+@@ -179,6 +183,11 @@ func constrainHotdogCapabilities() error {
+ 			}
+ 		}
+ 	}
++
++	logger.Printf("Constraining file descriptors")
++	if err := process.ConstrainFileDescriptors(); err != nil {
++		return fmt.Errorf("failed to contrain the process file descriptors: %v", err)
++	}
+ 	return nil
+ }
+ 
+diff --git a/cmd/hotdog-poststart-hook/main.go b/cmd/hotdog-poststart-hook/main.go
+index d7768d0..116b6e1 100644
+--- a/cmd/hotdog-poststart-hook/main.go
++++ b/cmd/hotdog-poststart-hook/main.go
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/bottlerocket/hotdog"
+ 	"github.com/bottlerocket/hotdog/cgroups"
+ 	"github.com/bottlerocket/hotdog/hook"
++	"github.com/bottlerocket/hotdog/process"
+ 	"github.com/bottlerocket/hotdog/seccomp"
+ 
+ 	"github.com/opencontainers/runtime-spec/specs-go"
+@@ -81,6 +82,9 @@ func constrainProcess(spec specs.Spec, targetPID string) error {
+ 	if err := cgroups.EnterCgroups(targetPID); err != nil {
+ 		return err
+ 	}
++	if err := process.ConstrainFileDescriptors(); err != nil {
++		return err
++	}
+ 	if spec.Process.SelinuxLabel != "" {
+ 		if err := selinux.SetExecLabel(spec.Process.SelinuxLabel); err != nil {
+ 			return err
+diff --git a/process/utils.go b/process/utils.go
+index 5f75807..4b54d3f 100644
+--- a/process/utils.go
++++ b/process/utils.go
+@@ -2,10 +2,14 @@ package process
+ 
+ import (
+ 	"bufio"
++	"fmt"
++	"io/ioutil"
+ 	"os"
+ 	"path/filepath"
+ 	"strconv"
+ 	"strings"
++
++	"golang.org/x/sys/unix"
+ )
+ 
+ const (
+@@ -78,3 +82,26 @@ func parseIdLine(line string) (int, error) {
+ 	str := strings.SplitN(line, "\t", 2)[0]
+ 	return strconv.Atoi(str)
+ }
++
++// ConstrainFileDescriptors sets the FD_CLOEXEC flag in all
++// the open file descriptors of the current process
++func ConstrainFileDescriptors() error {
++	pid := strconv.Itoa(os.Getpid())
++	files, err := ioutil.ReadDir("/proc/self/fd")
++	if err != nil {
++		return fmt.Errorf("failed to read /proc for %s", pid)
++	}
++	for _, file := range files {
++		fd, err := strconv.Atoi(file.Name())
++		if err != nil {
++			return fmt.Errorf("failed to transform file name: %v", file.Name())
++		}
++		_, err = unix.FcntlInt(uintptr(fd), unix.F_SETFD, unix.FD_CLOEXEC)
++		// `fcntl` returns `EBADF` when the file descriptor is no longer open,
++		// so we can silently ignore such errors
++		if err != nil && err != unix.EBADF {
++			return fmt.Errorf("failed to set FD_CLOEXEC in '%d': %v", fd, err)
++		}
++	}
++	return nil
++}
+-- 
+2.33.1
+
