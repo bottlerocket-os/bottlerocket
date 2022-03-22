@@ -1,0 +1,184 @@
+From d82d9cdff40492d46f75d5d12b3c9e2ac0c422fe Mon Sep 17 00:00:00 2001
+From: John David Anglin <danglin@gcc.gnu.org>
+Date: Tue, 22 Feb 2022 17:28:46 +0000
+Subject: [PATCH 23/28] hppa: Revise gettext trampoline design
+
+The current getcontext return trampoline is overly complex and it
+unnecessarily clobbers several registers.  By saving the context
+pointer (r26) in the context, __getcontext_ret can restore any
+registers not restored by setcontext.  This allows getcontext to
+save and restore the entire register context present when getcontext
+is entered.  We use the unused oR0 context slot for the return
+from __getcontext_ret.
+
+While this is not directly useful in C, it can be exploited in
+assembly code.  Registers r20, r23, r24 and r25 are not clobbered
+in the call path to getcontext.  This allows a small simplification
+of swapcontext.
+
+It also allows saving and restoring the 6-bit SAR register in the
+LSB of the oSAR context slot.  The getcontext flag value can be
+stored in the MSB of the oSAR slot.
+
+(cherry picked from commit 9e7e5fda38471e00d1190479ea91d7b08ae3e304)
+---
+ sysdeps/unix/sysv/linux/hppa/getcontext.S  | 50 ++++++++++++----------
+ sysdeps/unix/sysv/linux/hppa/setcontext.S  |  6 ++-
+ sysdeps/unix/sysv/linux/hppa/swapcontext.c | 10 ++---
+ 3 files changed, 35 insertions(+), 31 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/hppa/getcontext.S b/sysdeps/unix/sysv/linux/hppa/getcontext.S
+index 6470d73de5..dcdf986f2d 100644
+--- a/sysdeps/unix/sysv/linux/hppa/getcontext.S
++++ b/sysdeps/unix/sysv/linux/hppa/getcontext.S
+@@ -21,22 +21,28 @@
+ #include "ucontext_i.h"
+ 
+ 
+-	/* Trampoline function. Non-standard calling ABI.  */
++	/* Trampoline function.  Non-standard calling ABI.  */
+ 	/* Can not use ENTRY(__getcontext_ret) here.  */
+ 	.type	__getcontext_ret, @function
+ 	.hidden	__getcontext_ret
+ __getcontext_ret:
+ 	.proc
+ 	.callinfo FRAME=0,NO_CALLS
+-	/* r26-r23 contain original r3-r6, but because setcontext
+-	   does not reload r3-r6 (it's using them as temporaries)
+-	   we must save them elsewhere and swap them back in.  */
+-	copy	%r23, %r3
+-	copy	%r24, %r4
+-	copy	%r25, %r5
+-	copy	%r26, %r6
+-	/* r20 contains original return pointer.  */
+-	bv	0(%r20)
++	/* Because setcontext does not reload r3-r6 (it's using them
++	   as temporaries), we must load them ourself.  */
++	ldw	oR3(%r26), %r3
++	ldw	oR4(%r26), %r4
++	ldw	oR5(%r26), %r5
++	ldw	oR6(%r26), %r6
++
++	/* Also reload registers clobbered by $$dyncall.  */
++	ldw	oR21(%r26), %r21
++	ldw	oR22(%r26), %r22
++	ldw	oR31(%r26), %r31
++
++	/* oR0 contains original return pointer.  */
++	ldw	oR0(%r26), %rp
++	bv	0(%rp)
+ 	copy	%r0, %ret0
+ 	.procend
+ 	.size	__getcontext_ret, .-__getcontext_ret
+@@ -64,13 +70,13 @@ ENTRY(__getcontext)
+ 	stw	%r17, oR17(%r26)
+ 	stw	%r18, oR18(%r26)
+ 	stw	%r19, oR19(%r26)
+-	/* stw	%r20, oR20(%r26) - used for trampoline.  */
++	stw	%r20, oR20(%r26)
+ 	stw	%r21, oR21(%r26)
+ 	stw	%r22, oR22(%r26)
+-	/* stw	%r23, oR23(%r26) - used for trampoline.  */
+-	/* stw	%r24, oR24(%r26) - used for trampoline.  */
+-	/* stw	%r25, oR25(%r26) - used for trampoline.  */
+-	/* stw	%r26, oR26(%r26) - used for trampoline.  */
++	stw	%r23, oR23(%r26)
++	stw	%r24, oR24(%r26)
++	stw	%r25, oR25(%r26)
++	stw	%r26, oR26(%r26)
+ 	stw	%r27, oR27(%r26)
+ 	stw	%r28, oR28(%r26)
+ 	stw	%r29, oR29(%r26)
+@@ -89,7 +95,10 @@ ENTRY(__getcontext)
+ 	stw	%r0, oIASQ1(%r26)
+ 	stw	%r0, oIAOQ0(%r26)
+ 	stw	%r0, oIAOQ1(%r26)
+-	stw	%r0, oSAR(%r26) /* used as flag in swapcontext().  */
++
++	/* Save SAR register.  */
++	mfctl	%sar, %r1
++	stw	%r1, oSAR(%r26) /* MSB used as flag in swapcontext().  */
+ 
+ 
+ 	/* Store floating-point regs.  */
+@@ -141,13 +150,8 @@ ENTRY(__getcontext)
+ 	.cfi_offset 29, 4
+ 
+ 	/* Set up the trampoline registers.
+-	   r20, r23, r24, r25, r26 and r2 are clobbered
+-	   by call to getcontext() anyway. Reuse them.  */
+-	stw	%r2, oR20(%r26)
+-	stw	%r3, oR23(%r26)
+-	stw	%r4, oR24(%r26)
+-	stw	%r5, oR25(%r26)
+-	stw	%r6, oR26(%r26)
++	   Use oR0 context slot to save return value.  */
++	stw	%r2, oR0(%r26)
+ #ifdef PIC
+ 	addil	LT%__getcontext_ret, %r19
+ 	ldw     RT%__getcontext_ret(%r1), %r1
+diff --git a/sysdeps/unix/sysv/linux/hppa/setcontext.S b/sysdeps/unix/sysv/linux/hppa/setcontext.S
+index 5da01c2f35..dfa794ad5c 100644
+--- a/sysdeps/unix/sysv/linux/hppa/setcontext.S
++++ b/sysdeps/unix/sysv/linux/hppa/setcontext.S
+@@ -75,7 +75,7 @@ ENTRY(__setcontext)
+ 	ldw	oR18(%r3), %r18
+ 	ldw	oR19(%r3), %r19
+ 	ldw	oR20(%r3), %r20
+-	ldw	oR21(%r3), %r21
++	ldw	oR21(%r3), %r21 /* maybe clobbered by dyncall */
+ 	/* ldw	oR22(%r3), %r22 - dyncall arg.  */
+ 	ldw	oR23(%r3), %r23
+ 	ldw	oR24(%r3), %r24
+@@ -87,6 +87,10 @@ ENTRY(__setcontext)
+ 	ldw	oR30(%r3), %sp
+ 	/* ldw	oR31(%r3), %r31 - dyncall scratch register */
+ 
++	/* Restore SAR register.  */
++	ldw	oSAR(%r3), %r22
++	mtsar	%r22
++
+ 	/* Restore floating-point registers.  */
+ 	ldo	 oFPREGS31(%r3), %r22
+ 	fldds	  0(%r22), %fr31
+diff --git a/sysdeps/unix/sysv/linux/hppa/swapcontext.c b/sysdeps/unix/sysv/linux/hppa/swapcontext.c
+index 64adb9ee62..e5bf6c9933 100644
+--- a/sysdeps/unix/sysv/linux/hppa/swapcontext.c
++++ b/sysdeps/unix/sysv/linux/hppa/swapcontext.c
+@@ -25,10 +25,6 @@ extern int __setcontext (const ucontext_t *ucp);
+ int
+ __swapcontext (ucontext_t *oucp, const ucontext_t *ucp)
+ {
+-  /* Save ucp in stack argument slot.  */
+-  asm ("stw %r25,-40(%sp)");
+-  asm (".cfi_offset 25, -40");
+-
+   /* Save rp for debugger.  */
+   asm ("stw %rp,-20(%sp)");
+   asm (".cfi_offset 2, -20");
+@@ -59,7 +55,7 @@ __swapcontext (ucontext_t *oucp, const ucontext_t *ucp)
+   asm ("bv,n %r0(%rp)");
+ 
+   /* Load sc_sar flag.  */
+-  asm ("ldw %0(%%ret1),%%r20" : : "i" (oSAR));
++  asm ("ldb %0(%%ret1),%%r20" : : "i" (oSAR));
+ 
+   /* Return if oucp context has been reactivated.  */
+   asm ("or,= %r0,%r20,%r0");
+@@ -67,11 +63,11 @@ __swapcontext (ucontext_t *oucp, const ucontext_t *ucp)
+ 
+   /* Mark sc_sar flag.  */
+   asm ("1: ldi 1,%r20");
+-  asm ("stw %%r20,%0(%%ret1)" : : "i" (oSAR));
++  asm ("stb %%r20,%0(%%ret1)" : : "i" (oSAR));
+ 
+   /* Activate the machine context in ucp.  */
+   asm ("bl __setcontext,%rp");
+-  asm ("ldw -40(%sp),%r26");
++  asm ("ldw %0(%%ret1),%%r26" : : "i" (oR25));
+ 
+   /* Load return pointer.  */
+   asm ("ldw %0(%%ret1),%%rp" : : "i" (oR28));
+-- 
+2.33.1
+

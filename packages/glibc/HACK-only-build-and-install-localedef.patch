@@ -1,0 +1,65 @@
+From b6644fe81bac2f2b7d4be801a163341824ae1283 Mon Sep 17 00:00:00 2001
+From: Michael Olbrich <m.olbrich@pengutronix.de>
+Date: Mon, 21 May 2018 16:45:02 +0200
+Subject: [PATCH] HACK: only build and install localedef
+
+Signed-off-by: Michael Olbrich <m.olbrich@pengutronix.de>
+
+Upstream: https://git.pengutronix.de/cgit/ptxdist/plain/patches/localedef-glibc-2.27/0001-HACK-only-build-and-install-localedef.patch?id=47116f66f411d4dadfce42c2fdd6d41b351ccfd4
+Signed-off-by: Peter Seiderer <ps.report@gmx.net>
+---
+ Rules           | 14 ++++++++++----
+ locale/Makefile |  6 +++---
+ 2 files changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/Rules b/Rules
+index ac9455d6a7..da4e76523d 100644
+--- a/Rules
++++ b/Rules
+@@ -224,10 +224,16 @@ binaries-shared-notests = $(filter-out $(binaries-pie) $(binaries-static), \
+ 				       $(binaries-all-notests))
+ 
+ ifneq "$(strip $(binaries-shared-notests))" ""
+-$(addprefix $(objpfx),$(binaries-shared-notests)): %: %.o \
+-  $(sort $(filter $(common-objpfx)lib%,$(link-libc))) \
+-  $(addprefix $(csu-objpfx),start.o) $(+preinit) $(+postinit)
+-	$(+link)
++$(addprefix $(objpfx),$(binaries-shared-notests)): %: %.o
++	$(CC) -o $@ \
++	      $(sysdep-LDFLAGS) $(LDFLAGS) $(LDFLAGS-$(@F)) \
++	      $(combreloc-LDFLAGS) $(relro-LDFLAGS) $(hashstyle-LDFLAGS) \
++	      $(filter-out $(addprefix $(csu-objpfx),start.o \
++						     $(start-installed-name))\
++			   $(+preinit) \
++			   $(link-extra-libs) \
++			   $(common-objpfx)libc% $(+postinit),$^) \
++	      $(link-extra-libs)
+ endif
+ 
+ ifneq "$(strip $(binaries-shared-tests))" ""
+diff --git a/locale/Makefile b/locale/Makefile
+index c315683b3f..0666bcd8c8 100644
+--- a/locale/Makefile
++++ b/locale/Makefile
+@@ -33,15 +33,15 @@ categories	= ctype messages monetary numeric time paper name \
+ 		  address telephone measurement identification collate
+ aux		= $(categories:%=lc-%) $(categories:%=C-%) SYS_libc C_name \
+ 		  xlocale localename global-locale coll-lookup
+-others		= localedef locale
++others		= localedef
+ #others-static	= localedef locale
+-install-bin	= localedef locale
++install-bin	= localedef
+ extra-objs	= $(localedef-modules:=.o) $(localedef-aux:=.o) \
+ 		  $(locale-modules:=.o) $(lib-modules:=.o)
+ generated 	+= C-translit.h
+ before-compile	+= $(objpfx)C-translit.h
+ 
+-extra-libs	= libBrokenLocale
++#extra-libs	= libBrokenLocale
+ extra-libs-others = $(extra-libs)
+ 
+ libBrokenLocale-routines = broken_cur_max
+-- 
+2.33.1
+

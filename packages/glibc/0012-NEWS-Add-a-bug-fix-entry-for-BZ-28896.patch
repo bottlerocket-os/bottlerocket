@@ -1,0 +1,25 @@
+From 3226ffde07ae2bef3c2f57ad018829320f2922ee Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Fri, 18 Feb 2022 19:07:11 -0800
+Subject: [PATCH 12/28] NEWS: Add a bug fix entry for BZ #28896
+
+---
+ NEWS | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/NEWS b/NEWS
+index 04df0f4e8a..008941555d 100644
+--- a/NEWS
++++ b/NEWS
+@@ -16,6 +16,8 @@ The following bugs are resolved with this release:
+     __convert_scm_timestamps
+   [28865] linux: _SC_NPROCESSORS_CONF and _SC_NPROCESSORS_ONLN are inaccurate
+     without /sys and /proc
++  [28896] strncmp-avx2-rtm and wcsncmp-avx2-rtm fallback on non-rtm
++    variants when avoiding overflow
+ 
+ 
+ Version 2.35
+-- 
+2.33.1
+

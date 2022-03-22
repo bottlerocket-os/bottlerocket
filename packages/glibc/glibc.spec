@@ -1,5 +1,5 @@
 Name: %{_cross_os}glibc
-Version: 2.34
+Version: 2.35
 Release: 1%{?dist}
 Summary: The GNU libc libraries
 License: LGPL-2.1-or-later AND (LGPL-2.1-or-later WITH GCC-exception-2.0) AND GPL-2.0-or-later AND (GPL-2.0-or-later WITH GCC-exception-2.0) AND BSD-3-Clause AND ISC
@@ -9,42 +9,46 @@ Source1: glibc-tmpfiles.conf
 Source2: ld.so.conf
 Source3: ldconfig-service.conf
 
-# Upstream patches from 2.34 release branch:
+# We include this patch as a source file to have more control over how it's
+# applied and reverted during the build.
+Source99: HACK-only-build-and-install-localedef.patch
+
+# Upstream patches from 2.35 release branch:
 # ```
-# git checkout origin/release/2.34/master
-# git format-patch glibc-2.34..
+# git checkout origin/release/2.35/master
+# git format-patch glibc-2.35..
 # ```
-Patch0001: 0001-ldconfig-avoid-leak-on-empty-paths-in-config-file.patch
-Patch0002: 0002-gconv_parseconfdir-Fix-memory-leak.patch
-Patch0003: 0003-gaiconf_init-Avoid-double-free-in-label-and-preceden.patch
-Patch0004: 0004-copy_and_spawn_sgid-Avoid-double-calls-to-close.patch
-Patch0005: 0005-iconv_charmap-Close-output-file-when-done.patch
-Patch0006: 0006-Linux-Fix-fcntl-ioctl-prctl-redirects-for-_TIME_BITS.patch
-Patch0007: 0007-librt-fix-NULL-pointer-dereference-bug-28213.patch
-Patch0008: 0008-librt-add-test-bug-28213.patch
-Patch0009: 0009-elf-Fix-missing-colon-in-LD_SHOW_AUXV-output-BZ-2825.patch
-Patch0010: 0010-x86-64-Use-testl-to-check-__x86_string_control.patch
-Patch0011: 0011-MIPS-Setup-errno-for-f-l-xstat.patch
-Patch0012: 0012-support-Add-support_wait_for_thread_exit.patch
-Patch0013: 0013-nptl-pthread_kill-pthread_cancel-should-not-fail-aft.patch
-Patch0014: 0014-nptl-Fix-race-between-pthread_kill-and-thread-exit-b.patch
-Patch0015: 0015-iconvconfig-Fix-behaviour-with-prefix-BZ-28199.patch
-Patch0016: 0016-Fix-failing-nss-tst-nss-files-hosts-long-with-local-.patch
-Patch0017: 0017-Use-Linux-5.14-in-build-many-glibcs.py.patch
-Patch0018: 0018-Update-syscall-lists-for-Linux-5.14.patch
-Patch0019: 0019-Update-kernel-version-to-5.14-in-tst-mman-consts.py.patch
-Patch0020: 0020-Add-MADV_POPULATE_READ-and-MADV_POPULATE_WRITE-from-.patch
-Patch0021: 0021-posix-Fix-attribute-access-mode-on-getcwd-BZ-27476.patch
-Patch0022: 0022-nptl-pthread_kill-needs-to-return-ESRCH-for-old-prog.patch
-Patch0023: 0023-nptl-Fix-type-of-pthread_mutexattr_getrobust_np-pthr.patch
-Patch0024: 0024-support-Add-support_open_dev_null_range.patch
-Patch0025: 0025-Use-support_open_dev_null_range-io-tst-closefrom-mis.patch
-Patch0026: 0026-nptl-Avoid-setxid-deadlock-with-blocked-signals-in-t.patch
+Patch0001: 0001-Regenerate-configure.patch
+Patch0002: 0002-posix-Fix-tst-spawn6-terminal-handling-BZ-28853.patch
+Patch0003: 0003-linux-__get_nprocs_sched-do-not-feed-CPU_COUNT_S-wit.patch
+Patch0004: 0004-linux-Fix-missing-__convert_scm_timestamps-BZ-28860.patch
+Patch0005: 0005-Add-BZ-28860-reference-on-NEWS.patch
+Patch0006: 0006-linux-fix-accuracy-of-get_nprocs-and-get_nprocs_conf.patch
+Patch0007: 0007-linux-Use-socket-constants-time64.h-on-tst-socket-ti.patch
+Patch0008: 0008-string-Add-a-testcase-for-wcsncmp-with-SIZE_MAX-BZ-2.patch
+Patch0009: 0009-x86-Fallback-str-wcs-cmp-RTM-in-the-ncmp-overflow-ca.patch
+Patch0010: 0010-x86-Test-wcscmp-RTM-in-the-wcsncmp-overflow-case-BZ-.patch
+Patch0011: 0011-x86-Fix-TEST_NAME-to-make-it-a-string-in-tst-strncmp.patch
+Patch0012: 0012-NEWS-Add-a-bug-fix-entry-for-BZ-28896.patch
+Patch0013: 0013-elf-Check-invalid-hole-in-PT_LOAD-segments-BZ-28838.patch
+Patch0014: 0014-elf-Replace-tst-audit24bmod2.so-with-tst-audit24bmod.patch
+Patch0015: 0015-resolv-Fix-tst-resolv-tests-for-2.35-ABIs-and-later.patch
+Patch0016: 0016-NEWS-Add-a-bug-fix-entry-for-BZ-28688.patch
+Patch0017: 0017-localedef-Update-LC_MONETARY-handling-Bug-28845.patch
+Patch0018: 0018-localedata-Do-not-generate-output-if-warnings-were-p.patch
+Patch0019: 0019-localedef-Handle-symbolic-links-when-generating-loca.patch
+Patch0020: 0020-hppa-Fix-bind-now-audit-BZ-28857.patch
+Patch0021: 0021-Fix-elf-tst-audit2-on-hppa.patch
+Patch0022: 0022-hppa-Fix-swapcontext.patch
+Patch0023: 0023-hppa-Revise-gettext-trampoline-design.patch
+Patch0024: 0024-hppa-Fix-warnings-from-_dl_lookup_address.patch
+Patch0025: 0025-nptl-Fix-cleanups-for-stack-grows-up-BZ-28899.patch
+Patch0026: 0026-io-Add-fsync-call-in-tst-stat.patch
+Patch0027: 0027-nss-Do-not-mention-NSS-test-modules-in-gnu-lib-names.patch
+Patch0028: 0028-nss-Protect-against-errno-changes-in-function-lookup.patch
 
 # Fedora patches
-Patch1001: glibc-c-utf8-locale-1.patch
-Patch1002: glibc-c-utf8-locale-2.patch
-Patch1003: glibc-cs-path.patch
+Patch1001: glibc-cs-path.patch
 
 # Local patches
 Patch9001: 9001-move-ldconfig-cache-to-ephemeral-storage.patch
@@ -60,26 +64,18 @@ Requires: %{name}
 %{summary}.
 
 %prep
-%autosetup -n glibc-%{version} -p1
+%autosetup -Sgit -n glibc-%{version} -p1
 
-%build
-mkdir build
-cd build
-BUILDFLAGS="-O2 -g -Wp,-D_GLIBCXX_ASSERTIONS -fstack-clash-protection"
+%global glibc_configure %{shrink: \
+BUILDFLAGS="-O2 -g -Wp,-D_GLIBCXX_ASSERTIONS -fstack-clash-protection" \
 CFLAGS="${BUILDFLAGS}" CPPFLAGS="" CXXFLAGS="${BUILDFLAGS}" \
 ../configure \
   --prefix="%{_cross_prefix}" \
   --sysconfdir="%{_cross_sysconfdir}" \
   --localstatedir="%{_cross_localstatedir}" \
-  --target="%{_cross_target}" \
-  --host="%{_cross_target}" \
-  --build="%{_build}" \
-  --with-headers="%{_cross_includedir}" \
   --enable-bind-now \
-  --enable-kernel="5.4.0" \
   --enable-shared \
   --enable-stack-protector=strong \
-  --enable-static-pie \
   --disable-crypt \
   --disable-multi-arch \
   --disable-profile \
@@ -88,12 +84,52 @@ CFLAGS="${BUILDFLAGS}" CPPFLAGS="" CXXFLAGS="${BUILDFLAGS}" \
   --disable-tunables \
   --without-cvs \
   --without-gd \
-  --without-selinux \
+  --without-selinux
+  %{nil}}
 
+%build
+
+# First build the host tools we need, namely `localedef`. Apply a patch from
+# Buildroot that allows us to build just this program and not everything.
+patch -p1 < %{S:99}
+
+mkdir build
+pushd build
+%glibc_configure
+make %{?_smp_mflags} -O -r locale/others
+mv locale/localedef %{_builddir}/localedef
+popd
+
+# Remove the previous build, revert the patch, and verify that the tree is
+# clean, since we don't want to contaminate our target build.
+rm -rf build
+patch -p1 -R < %{S:99}
+git diff --quiet
+
+# Now build for the target. This is what will end up in the package, except
+# for the C.UTF-8 locale, which we need `localedef` to generate.
+mkdir build
+pushd build
+%glibc_configure \
+  --target="%{_cross_target}" \
+  --host="%{_cross_target}" \
+  --build="%{_build}" \
+  --with-headers="%{_cross_includedir}" \
+  --enable-kernel="5.4.0"
 make %{?_smp_mflags} -O -r
+popd
 
 %install
-make -j1 install_root=%{buildroot} install -C build
+pushd build
+make -j1 install_root=%{buildroot} install
+# By default, LOCALEDEF refers to the target binary, and is invoked by the
+# dynamic linker that was just built for the target. Neither will run on a
+# build host with a different architecture. The locale format is compatible
+# across architectures but not across glibc versions, so we can't rely on
+# the binary in the SDK and must use the one we built earlier.
+make -j1 install_root=%{buildroot} install-files-C.UTF-8/UTF-8 -C ../localedata objdir="$(pwd)" \
+  LOCALEDEF="I18NPATH=. GCONV_PATH=$(pwd)/../iconvdata LC_ALL=C %{_builddir}/localedef"
+popd
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
@@ -119,10 +155,10 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 
 %{_cross_bindir}/getconf
 %{_cross_bindir}/getent
-%{_cross_bindir}/ldd
-%exclude %{_cross_bindir}/catchsegv
 %exclude %{_cross_bindir}/gencat
 %exclude %{_cross_bindir}/iconv
+%exclude %{_cross_bindir}/ld.so
+%exclude %{_cross_bindir}/ldd
 %exclude %{_cross_bindir}/locale
 %exclude %{_cross_bindir}/localedef
 %exclude %{_cross_bindir}/makedb
@@ -143,7 +179,6 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 
 %{_cross_libdir}/ld-linux-*.so.*
 %{_cross_libdir}/libBrokenLocale.so.*
-%{_cross_libdir}/libSegFault.so
 %{_cross_libdir}/libanl.so.*
 %{_cross_libdir}/libc.so.*
 %{_cross_libdir}/libdl.so.*
@@ -174,6 +209,11 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %exclude %{_cross_libdir}/gconv/*.so
 %exclude %{_cross_libdir}/gconv/gconv-modules.d/*.conf
 
+%dir %{_cross_libdir}/locale
+%dir %{_cross_libdir}/locale/C.utf8
+%{_cross_libdir}/locale/C.utf8/LC_*
+
+%dir %{_cross_datadir}/i18n
 %dir %{_cross_datadir}/i18n/charmaps
 %dir %{_cross_datadir}/i18n/locales
 %dir %{_cross_datadir}/locale

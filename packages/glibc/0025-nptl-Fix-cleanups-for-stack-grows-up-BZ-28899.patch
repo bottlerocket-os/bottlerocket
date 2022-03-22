@@ -1,0 +1,32 @@
+From e30c1c73da3f220f5bf0063a1d0344f8280311e7 Mon Sep 17 00:00:00 2001
+From: John David Anglin <danglin@gcc.gnu.org>
+Date: Mon, 28 Feb 2022 15:47:38 +0000
+Subject: [PATCH 25/28] nptl: Fix cleanups for stack grows up [BZ# 28899]
+
+_STACK_GROWS_DOWN is defined to 0 when the stack grows up.  The
+code in unwind.c used `#ifdef _STACK_GROWS_DOWN' to selct the
+stack grows down define for FRAME_LEFT.  As a result, the
+_STACK_GROWS_DOWN define was always selected and cleanups were
+incorrectly sequenced when the stack grows up.
+
+(cherry picked from commit 2bbc694df279020a6620096d31c1e05c93966f9b)
+---
+ nptl/unwind.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/nptl/unwind.c b/nptl/unwind.c
+index c3563e3467..33b0d87579 100644
+--- a/nptl/unwind.c
++++ b/nptl/unwind.c
+@@ -25,7 +25,7 @@
+ #include <jmpbuf-unwind.h>
+ #include <shlib-compat.h>
+ 
+-#ifdef _STACK_GROWS_DOWN
++#if _STACK_GROWS_DOWN
+ # define FRAME_LEFT(frame, other, adj) \
+   ((uintptr_t) frame - adj >= (uintptr_t) other - adj)
+ #elif _STACK_GROWS_UP
+-- 
+2.33.1
+

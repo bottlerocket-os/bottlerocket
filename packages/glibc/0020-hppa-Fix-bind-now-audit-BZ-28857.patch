@@ -1,0 +1,137 @@
+From c60e6a458b8e2efc39c81d372a88d258009eb1b7 Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Fri, 4 Feb 2022 15:54:59 -0300
+Subject: [PATCH 20/28] hppa: Fix bind-now audit (BZ #28857)
+
+On hppa, a function pointer returned by la_symbind is actually a function
+descriptor has the plabel bit set (bit 30).  This must be cleared to get
+the actual address of the descriptor.  If the descriptor has been bound,
+the first word of the descriptor is the physical address of theA function,
+otherwise, the first word of the descriptor points to a trampoline in the
+PLT.
+
+This patch also adds a workaround on tests because on hppa (and it seems
+to be the only ABI I have see it), some shared library adds a dynamic PLT
+relocation to am empty symbol name:
+
+$ readelf -r elf/tst-audit25mod1.so
+[...]
+Relocation section '.rela.plt' at offset 0x464 contains 6 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+00002008  00000081 R_PARISC_IPLT                508
+[...]
+
+It breaks some assumptions on the test, where a symbol with an empty
+name ("") is passed on la_symbind.
+
+Checked on x86_64-linux-gnu and hppa-linux-gnu.
+
+(Cherry-pick picked from 9e94f57484a2aba0fe67ea2059b5843f651887c2)
+---
+ NEWS                        | 1 +
+ elf/Makefile                | 2 +-
+ elf/dl-audit.c              | 3 ++-
+ elf/tst-auditmod24a.c       | 4 +++-
+ elf/tst-auditmod24d.c       | 4 +++-
+ elf/tst-auditmod25.c        | 2 +-
+ sysdeps/hppa/dl-lookupcfg.h | 8 +++++---
+ 7 files changed, 16 insertions(+), 8 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index 094a979afb..d11e2d9d31 100644
+--- a/NEWS
++++ b/NEWS
+@@ -13,6 +13,7 @@ The following bugs are resolved with this release:
+   [28850] linux: __get_nprocs_sched reads uninitialized memory from the stack
+   [28853] libc: tst-spawn6 changes current foreground process group
+     (breaks test isolation)
++  [28857] libc: FAIL: elf/tst-audit24a
+   [28860] build: --enable-kernel=5.1.0 build fails because of missing
+     __convert_scm_timestamps
+   [28865] linux: _SC_NPROCESSORS_CONF and _SC_NPROCESSORS_ONLN are inaccurate
+diff --git a/elf/Makefile b/elf/Makefile
+index ac37159b89..b2bd03a9f6 100644
+--- a/elf/Makefile
++++ b/elf/Makefile
+@@ -2210,7 +2210,7 @@ $(objpfx)tst-audit24c.out: $(objpfx)tst-auditmod24c.so
+ $(objpfx)tst-audit24c: $(objpfx)tst-audit24amod1.so \
+ 		       $(objpfx)tst-audit24amod2.so
+ tst-audit24c-ENV = LD_BIND_NOW=1 LD_AUDIT=$(objpfx)tst-auditmod24c.so
+-LDFLAGS-tst-audit24b = -Wl,-z,lazy
++LDFLAGS-tst-audit24c = -Wl,-z,lazy
+ 
+ $(objpfx)tst-audit24d.out: $(objpfx)tst-auditmod24d.so
+ $(objpfx)tst-audit24d: $(objpfx)tst-audit24dmod1.so \
+diff --git a/elf/dl-audit.c b/elf/dl-audit.c
+index 794bfd45cd..efc0492474 100644
+--- a/elf/dl-audit.c
++++ b/elf/dl-audit.c
+@@ -257,7 +257,8 @@ _dl_audit_symbind (struct link_map *l, struct reloc_result *reloc_result,
+       reloc_result->flags = flags;
+     }
+ 
+-  DL_FIXUP_BINDNOW_RELOC (value, new_value, sym.st_value);
++  if (flags & LA_SYMB_ALTVALUE)
++    DL_FIXUP_BINDNOW_RELOC (value, new_value, sym.st_value);
+ }
+ 
+ void
+diff --git a/elf/tst-auditmod24a.c b/elf/tst-auditmod24a.c
+index d8e88f3984..3075dfae2f 100644
+--- a/elf/tst-auditmod24a.c
++++ b/elf/tst-auditmod24a.c
+@@ -110,5 +110,7 @@ la_symbind32 (Elf32_Sym *sym, unsigned int ndx,
+       return sym->st_value;
+     }
+ 
+-  abort ();
++  if (symname[0] != '\0')
++    abort ();
++  return sym->st_value;
+ }
+diff --git a/elf/tst-auditmod24d.c b/elf/tst-auditmod24d.c
+index 8c803ecc0a..badc6be451 100644
+--- a/elf/tst-auditmod24d.c
++++ b/elf/tst-auditmod24d.c
+@@ -116,5 +116,7 @@ la_symbind32 (Elf32_Sym *sym, unsigned int ndx,
+ 	}
+     }
+ 
+-  abort ();
++  if (symname[0] != '\0')
++    abort ();
++  return sym->st_value;
+ }
+diff --git a/elf/tst-auditmod25.c b/elf/tst-auditmod25.c
+index 526f5c54bc..20640a8daf 100644
+--- a/elf/tst-auditmod25.c
++++ b/elf/tst-auditmod25.c
+@@ -72,7 +72,7 @@ la_symbind32 (Elf32_Sym *sym, unsigned int ndx,
+ 	      unsigned int *flags, const char *symname)
+ #endif
+ {
+-  if (*refcook != -1 && *defcook != -1)
++  if (*refcook != -1 && *defcook != -1 && symname[0] != '\0')
+     fprintf (stderr, "la_symbind: %s %u\n", symname,
+ 	     *flags & (LA_SYMB_NOPLTENTER | LA_SYMB_NOPLTEXIT) ? 1 : 0);
+   return sym->st_value;
+diff --git a/sysdeps/hppa/dl-lookupcfg.h b/sysdeps/hppa/dl-lookupcfg.h
+index 8da2412fea..27d2cd5e0e 100644
+--- a/sysdeps/hppa/dl-lookupcfg.h
++++ b/sysdeps/hppa/dl-lookupcfg.h
+@@ -79,7 +79,9 @@ void attribute_hidden _dl_unmap (struct link_map *map);
+ /* Extract the code address from a fixup value */
+ #define DL_FIXUP_VALUE_CODE_ADDR(value) ((value).ip)
+ #define DL_FIXUP_VALUE_ADDR(value) ((uintptr_t) &(value))
+-#define DL_FIXUP_ADDR_VALUE(addr) (*(struct fdesc *) (addr))
++/* Clear the plabel bit to get the actual address of the descriptor.  */
++#define DL_FIXUP_ADDR_VALUE(addr) \
++  (*(DL_FIXUP_VALUE_TYPE *) ((uintptr_t) (addr) & ~2))
+ #define DL_FIXUP_BINDNOW_ADDR_VALUE(addr) (addr)
+-#define DL_FIXUP_BINDNOW_RELOC(value, new_value, st_value) \
+-  (*value) = *(struct fdesc *) (st_value)
++#define DL_FIXUP_BINDNOW_RELOC(value, new_value, st_value)	\
++  *(value) = *(DL_FIXUP_VALUE_TYPE *) ((uintptr_t) (new_value) & ~2)
+-- 
+2.33.1
+

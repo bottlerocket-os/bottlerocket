@@ -10,6 +10,9 @@ Source2: chrony-conf
 Source3: chrony-sysusers.conf
 Source4: chrony-tmpfiles.conf
 
+# needed for glibc 2.35
+Patch0001: 0001-sys_linux-allow-rseq-in-seccomp-filter.patch
+
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libseccomp-devel

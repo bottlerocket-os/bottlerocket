@@ -1,0 +1,153 @@
+From 2631d3b3a68108661deca311c3fc159a4ce62983 Mon Sep 17 00:00:00 2001
+From: John David Anglin <danglin@gcc.gnu.org>
+Date: Fri, 18 Feb 2022 20:38:25 +0000
+Subject: [PATCH 22/28] hppa: Fix swapcontext
+
+This change fixes the failure of stdlib/tst-setcontext2 and
+stdlib/tst-setcontext7 on hppa.  The implementation of swapcontext
+in C is broken.  C saves the return pointer (rp) and any non
+call-clobbered registers (in this case r3, r4 and r5) on the
+stack.  However, the setcontext call in swapcontext pops the
+stack and subsequent calls clobber the saved registers.  When
+the context in oucp is restored, both tests fault.
+
+Here we rewrite swapcontext in assembly code to avoid using
+the stack for register values that need to be used after
+restoration.  The getcontext and setcontext routines are
+revised to save and restore register ret1 for normal returns.
+We copy the oucp pointer to ret1.  This allows access to
+the old context after calling getcontext and setcontext.
+
+(cherry picked from commit 71b108d7eb33b2bf3e61d5e92d2a47f74c1f7d96)
+---
+ sysdeps/unix/sysv/linux/hppa/getcontext.S  |  3 ++
+ sysdeps/unix/sysv/linux/hppa/setcontext.S  |  3 ++
+ sysdeps/unix/sysv/linux/hppa/swapcontext.c | 59 +++++++++++++++++++---
+ 3 files changed, 58 insertions(+), 7 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/hppa/getcontext.S b/sysdeps/unix/sysv/linux/hppa/getcontext.S
+index 1e73587f13..6470d73de5 100644
+--- a/sysdeps/unix/sysv/linux/hppa/getcontext.S
++++ b/sysdeps/unix/sysv/linux/hppa/getcontext.S
+@@ -137,6 +137,8 @@ ENTRY(__getcontext)
+ 	stw	%r19, -32(%sp)
+ 	.cfi_offset 19, 32
+ #endif
++	stw	%ret1, -60(%sp)
++	.cfi_offset 29, 4
+ 
+ 	/* Set up the trampoline registers.
+ 	   r20, r23, r24, r25, r26 and r2 are clobbered
+@@ -167,6 +169,7 @@ ENTRY(__getcontext)
+ #ifdef PIC
+ 	ldw	-32(%sp), %r19
+ #endif
++	ldw	-60(%sp), %ret1
+ 	bv	%r0(%r2)
+ 	ldwm	-64(%sp), %r4
+ END(__getcontext)
+diff --git a/sysdeps/unix/sysv/linux/hppa/setcontext.S b/sysdeps/unix/sysv/linux/hppa/setcontext.S
+index bc4872c8e2..5da01c2f35 100644
+--- a/sysdeps/unix/sysv/linux/hppa/setcontext.S
++++ b/sysdeps/unix/sysv/linux/hppa/setcontext.S
+@@ -33,6 +33,8 @@ ENTRY(__setcontext)
+ 	stw	%r19, -32(%sp)
+ 	.cfi_offset 19, 32
+ #endif
++	stw	%ret1, -60(%sp)
++	.cfi_offset 29, 4
+ 
+ 	/* Save ucp.  */
+ 	copy	%r26, %r3
+@@ -154,6 +156,7 @@ ENTRY(__setcontext)
+ #ifdef PIC
+ 	ldw	-32(%r30), %r19
+ #endif
++	ldw	-60(%r30), %ret1
+ 	bv	%r0(%r2)
+ 	ldwm	-64(%r30), %r3
+ L(pseudo_end):
+diff --git a/sysdeps/unix/sysv/linux/hppa/swapcontext.c b/sysdeps/unix/sysv/linux/hppa/swapcontext.c
+index 5cbe00f1e9..64adb9ee62 100644
+--- a/sysdeps/unix/sysv/linux/hppa/swapcontext.c
++++ b/sysdeps/unix/sysv/linux/hppa/swapcontext.c
+@@ -17,6 +17,7 @@
+    <https://www.gnu.org/licenses/>.  */
+ 
+ #include <ucontext.h>
++#include "ucontext_i.h"
+ 
+ extern int __getcontext (ucontext_t *ucp);
+ extern int __setcontext (const ucontext_t *ucp);
+@@ -24,17 +25,61 @@ extern int __setcontext (const ucontext_t *ucp);
+ int
+ __swapcontext (ucontext_t *oucp, const ucontext_t *ucp)
+ {
++  /* Save ucp in stack argument slot.  */
++  asm ("stw %r25,-40(%sp)");
++  asm (".cfi_offset 25, -40");
++
++  /* Save rp for debugger.  */
++  asm ("stw %rp,-20(%sp)");
++  asm (".cfi_offset 2, -20");
++
++  /* Copy rp to ret0 (r28).  */
++  asm ("copy %rp,%ret0");
++
++  /* Create a frame.  */
++  asm ("ldo 64(%sp),%sp");
++  asm (".cfi_def_cfa_offset -64");
++
+   /* Save the current machine context to oucp.  */
+-  __getcontext (oucp);
++  asm ("bl __getcontext,%rp");
++
++  /* Copy oucp to register ret1 (r29).  __getcontext saves and restores it
++     on a normal return.  It is restored from oR29 on reactivation.  */
++  asm ("copy %r26,%ret1");
++
++  /* Pop frame.  */
++  asm ("ldo -64(%sp),%sp");
++  asm (".cfi_def_cfa_offset 0");
++
++  /* Load return pointer from oR28.  */
++  asm ("ldw %0(%%ret1),%%rp" : : "i" (oR28));
++
++  /* Return if error.  */
++  asm ("or,= %r0,%ret0,%r0");
++  asm ("bv,n %r0(%rp)");
++
++  /* Load sc_sar flag.  */
++  asm ("ldw %0(%%ret1),%%r20" : : "i" (oSAR));
++
++  /* Return if oucp context has been reactivated.  */
++  asm ("or,= %r0,%r20,%r0");
++  asm ("bv,n %r0(%rp)");
++
++  /* Mark sc_sar flag.  */
++  asm ("1: ldi 1,%r20");
++  asm ("stw %%r20,%0(%%ret1)" : : "i" (oSAR));
++
++  /* Activate the machine context in ucp.  */
++  asm ("bl __setcontext,%rp");
++  asm ("ldw -40(%sp),%r26");
+ 
+-  /* mark sc_sar flag to skip the setcontext call on reactivation.  */
+-  if (oucp->uc_mcontext.sc_sar == 0) {
+-	oucp->uc_mcontext.sc_sar++;
++  /* Load return pointer.  */
++  asm ("ldw %0(%%ret1),%%rp" : : "i" (oR28));
+ 
+-	/* Restore the machine context in ucp.  */
+-	__setcontext (ucp);
+-  }
++  /* A successful call to setcontext does not return.  */
++  asm ("bv,n %r0(%rp)");
+ 
++  /* Make gcc happy.  */
+   return 0;
+ }
+ 
+-- 
+2.33.1
+

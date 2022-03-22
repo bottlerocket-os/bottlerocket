@@ -1,0 +1,31 @@
+From 3149f47b808288ccfbf4e56234bc07bdae139708 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Mon, 28 Feb 2022 11:50:41 +0100
+Subject: [PATCH 26/28] io: Add fsync call in tst-stat
+
+io/tst-stat and io/tst-stat-lfs fail sporadically on the Fedora
+builders, and this change hopefully helps to avoid the issue.
+
+(cherry picked from commit ae132284092edc5885315b44cd17d5ea91177e49)
+---
+ io/tst-stat.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/io/tst-stat.c b/io/tst-stat.c
+index 2b7975e162..237988203a 100644
+--- a/io/tst-stat.c
++++ b/io/tst-stat.c
+@@ -69,6 +69,10 @@ do_test (void)
+   TEST_VERIFY_EXIT (fd >= 0);
+   support_write_file_string (path, "abc");
+ 
++  /* This should help to prevent delayed allocation, which may result
++     in a spurious stx_blocks/st_blocks difference.  */
++  fsync (fd);
++
+   bool check_ns = support_stat_nanoseconds (path);
+   if (!check_ns)
+     printf ("warning: timestamp with nanoseconds not supported\n");
+-- 
+2.33.1
+

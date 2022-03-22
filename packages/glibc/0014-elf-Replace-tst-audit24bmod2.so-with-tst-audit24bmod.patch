@@ -1,0 +1,32 @@
+From e247a3b1188f6c4b623bbfbe19bb415153c66637 Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Sun, 6 Feb 2022 11:12:24 -0800
+Subject: [PATCH 14/28] elf: Replace tst-audit24bmod2.so with tst-audit24bmod2
+
+Replace tst-audit24bmod2.so with tst-audit24bmod2 to silence:
+
+make[2]: Entering directory '/export/gnu/import/git/gitlab/x86-glibc/elf'
+Makefile:2201: warning: overriding recipe for target '/export/build/gnu/tools-build/glibc-gitlab/build-x86_64-linux/elf/tst-audit24bmod2.so'
+../Makerules:765: warning: ignoring old recipe for target '/export/build/gnu/tools-build/glibc-gitlab/build-x86_64-linux/elf/tst-audit24bmod2.so'
+
+(cherry picked from commit fa7ad1df1915c8a62f50e3a5b7e10f9c7118cd7f)
+---
+ elf/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/elf/Makefile b/elf/Makefile
+index 5bdf0a383d..ac37159b89 100644
+--- a/elf/Makefile
++++ b/elf/Makefile
+@@ -943,7 +943,7 @@ extra-test-objs += $(addsuffix .os,$(strip $(modules-names)))
+ # filtmod1.so, tst-big-note-lib.so, tst-ro-dynamic-mod.so have special
+ # rules.
+ modules-names-nobuild := filtmod1 tst-big-note-lib tst-ro-dynamic-mod \
+-			 tst-audit24bmod1 tst-audit24bmod2.so
++			 tst-audit24bmod1 tst-audit24bmod2
+ 
+ tests += $(tests-static)
+ 
+-- 
+2.33.1
+

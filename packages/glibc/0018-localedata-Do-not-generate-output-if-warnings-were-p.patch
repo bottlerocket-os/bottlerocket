@@ -1,0 +1,70 @@
+From 732dd3a63d39c7ca77e817b462285c14551c8b49 Mon Sep 17 00:00:00 2001
+From: Carlos O'Donell <carlos@redhat.com>
+Date: Thu, 3 Feb 2022 16:01:52 -0500
+Subject: [PATCH 18/28] localedata: Do not generate output if warnings were
+ present.
+
+With LC_MONETARY parsing fixed we can now generate locales
+without forcing output with '-c'.
+
+Removing '-c' from localedef invocation is the equivalent of
+using -Werror for localedef.  The glibc locale sources should
+always be clean and free from warnings.
+
+We remove '-c' from both test locale generation and the targets
+used for installing locales e.g. install-locale-archive, and
+install-locale-files.
+
+Tested on x86_64 and i686 without regressions.
+Tested with install-locale-archive target.
+Tested with install-locale-files target.
+
+Reviewed-by: DJ Delorie <dj@redhat.com>
+(cherry picked from commit 1c7a34567d21fbd3b706c77cd794956b43daefe7)
+---
+ localedata/Makefile      |  4 ++--
+ localedata/gen-locale.sh | 10 ++++++++--
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/localedata/Makefile b/localedata/Makefile
+index 9ae2e5c161..7741ac3b5e 100644
+--- a/localedata/Makefile
++++ b/localedata/Makefile
+@@ -468,11 +468,11 @@ define build-one-locale
+ endef
+ 
+ $(INSTALL-SUPPORTED-LOCALE-ARCHIVE): install-locales-dir
+-	@flags="-c"; \
++	@flags=""; \
+ 	$(build-one-locale)
+ 
+ $(INSTALL-SUPPORTED-LOCALE-FILES): install-locales-dir
+-	@flags="-c --no-archive --no-hard-links"; \
++	@flags="--no-archive --no-hard-links"; \
+ 	$(build-one-locale)
+ 
+ tst-setlocale-ENV = LC_ALL=ja_JP.EUC-JP
+diff --git a/localedata/gen-locale.sh b/localedata/gen-locale.sh
+index 7fce35f212..8053c816a6 100644
+--- a/localedata/gen-locale.sh
++++ b/localedata/gen-locale.sh
+@@ -54,8 +54,14 @@ modifier=`echo $locfile|sed 's|[^.]*[.]\([^@ ]*\)\(@[^ ]*\)\?/LC_CTYPE|\2|'`
+ 
+ echo "Generating locale $locale.$charmap: this might take a while..."
+ 
+-# Run quietly and force output.
+-flags="--quiet -c"
++# Do not force output with '-c', all locales should compile without
++# warning or errors.  There is likewise no need to run quietly with
++# '--quiet' since all locales should compile without additional
++# diagnostics.  If there are messages printed then we want to see
++# them, fix them, and the associated error or warning.  During
++# development it may be beneficialy to put '--quiet -c' here to allow
++# you to develop in-progress locales.
++flags=""
+ 
+ # For SJIS the charmap is SHIFT_JIS. We just want the locale to have
+ # a slightly nicer name instead of using "*.SHIFT_SJIS", but that
+-- 
+2.33.1
+

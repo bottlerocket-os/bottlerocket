@@ -1,0 +1,38 @@
+From 676f85759c5cd1eeb081e8b1c1c05a4f0fa3b92b Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Fri, 18 Feb 2022 17:00:25 -0600
+Subject: [PATCH 11/28] x86: Fix TEST_NAME to make it a string in
+ tst-strncmp-rtm.c
+
+Previously TEST_NAME was passing a function pointer. This didn't fail
+because of the -Wno-error flag (to allow for overflow sizes passed
+to strncmp/wcsncmp)
+
+Reviewed-by: H.J. Lu <hjl.tools@gmail.com>
+(cherry picked from commit b98d0bbf747f39770e0caba7e984ce9f8f900330)
+---
+ sysdeps/x86/tst-strncmp-rtm.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/x86/tst-strncmp-rtm.c b/sysdeps/x86/tst-strncmp-rtm.c
+index b50c11e8d4..300bc8c281 100644
+--- a/sysdeps/x86/tst-strncmp-rtm.c
++++ b/sysdeps/x86/tst-strncmp-rtm.c
+@@ -23,12 +23,12 @@
+ # define CHAR wchar_t
+ # define MEMSET wmemset
+ # define STRNCMP wcsncmp
+-# define TEST_NAME wcsncmp
++# define TEST_NAME "wcsncmp"
+ #else /* !WIDE */
+ # define CHAR char
+ # define MEMSET memset
+ # define STRNCMP strncmp
+-# define TEST_NAME strncmp
++# define TEST_NAME "strncmp"
+ #endif /* !WIDE */
+ 
+ 
+-- 
+2.33.1
+
