@@ -1,0 +1,181 @@
+From 900784df999950c326e7aee3653b6063fa78ae4f Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Tue, 29 Mar 2022 21:15:52 +0000
+Subject: [PATCH 8/9] poststart-hook, hotdog-cc-hook: ensure hotpatch files are
+ injected appropriately
+
+Now the prestart hook will fail if any of the directories in the mount's
+target path isn't a directory.
+
+A sentry file was added inside the containers's bundle to indicate that the
+prestart hook successfully set up the container to execute the hot patch.
+
+The poststart hook won't attempt to execute any binary in the expected
+bundle directory if the sentry file created by the prestart hook
+doesn't exist.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Samuel Karp <skarp@amazon.com>
+---
+ cmd/hotdog-cc-hook/main.go        | 61 +++++++++++++++++++++++--------
+ cmd/hotdog-poststart-hook/main.go | 17 +++++++++
+ hotpatch.go                       | 16 ++++----
+ 3 files changed, 72 insertions(+), 22 deletions(-)
+
+diff --git a/cmd/hotdog-cc-hook/main.go b/cmd/hotdog-cc-hook/main.go
+index d091b83..dd8c6af 100644
+--- a/cmd/hotdog-cc-hook/main.go
++++ b/cmd/hotdog-cc-hook/main.go
+@@ -60,7 +60,7 @@ func reexeced_main() error {
+ 		return err
+ 	}
+ 
+-	hotdogBundleDir := filepath.Join(bundle, "hotdog")
++	hotdogBundleDir := filepath.Join(bundle, hotdog.HotdogBundleDir)
+ 	if err := os.Mkdir(hotdogBundleDir, 0755); err != nil {
+ 		return err
+ 	}
+@@ -73,28 +73,59 @@ func reexeced_main() error {
+ 	if err := cp(filepath.Join(hotdog.HostDir, hotdog.HotpatchBinary), filepath.Join(hotdogBundleDir, hotdog.HotpatchBinary), 0111); err != nil {
+ 		return err
+ 	}
+-
+-	mountTarget := filepath.Join(rootfs, hotdog.ContainerDir)
+-	if stat, err := os.Stat(mountTarget); err != nil {
+-		if _, ok := err.(*os.PathError); !ok {
+-			// cannot hotpatch
+-			return nil
+-		}
+-		if err := os.Mkdir(mountTarget, 0755); err != nil {
+-			// cannot hotpatch
+-			return nil
+-		}
+-	} else if !stat.IsDir() {
+-		// cannot hotpatch
++	// Attempt to create mount target, checking that each part of 'hotdog.ContainerDir'
++	// isn't a symlink
++	if err := preparePath(rootfs, hotdog.ContainerDir); err != nil {
+ 		return nil
+ 	}
++
++	mountTarget := filepath.Join(rootfs, hotdog.ContainerDir)
+ 	err = unix.Mount(hotdogBundleDir, mountTarget, "bind", unix.MS_BIND|unix.MS_NODEV|unix.MS_NOATIME|unix.MS_RELATIME, "")
+ 	if err != nil {
+ 		// cannot hotpatch
+ 		return nil
+ 	}
+ 	// remount readonly
+-	return unix.Mount(hotdogBundleDir, mountTarget, "bind", unix.MS_REMOUNT|unix.MS_BIND|unix.MS_RDONLY, "")
++	if err := unix.Mount(hotdogBundleDir, mountTarget, "bind", unix.MS_REMOUNT|unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
++		return err
++	}
++	// Create sentry file used by the poststart hook to check if the binaries
++	// were copied successfully
++	sentry, err := os.Create(filepath.Join(hotdogBundleDir, hotdog.PostStartHookSentry))
++	if err != nil {
++		return err
++	}
++	return sentry.Close()
++}
++
++// preparePath creates the last directory in `path` under `root`, it returns
++// an error if any of the parent parts in `path` are not directories, or if `path`
++// exists.
++func preparePath(root string, path string) error {
++	fullPath := filepath.Join(root, path)
++	// We use lstat(2) since `fullPath` could be a symlink. With this call
++	// we read information about the link itself instead of the file the
++	// link points to.
++	if _, err := os.Lstat(fullPath); err == nil {
++		// Don't use the path if it already exists
++		return fmt.Errorf("Path exists: '%s'", fullPath)
++	} else {
++		// Fail if err is not `PathError`
++		if _, ok := err.(*os.PathError); !ok {
++			return err
++		}
++	}
++
++	for parent := filepath.Dir(fullPath); parent != root; parent = filepath.Dir(parent) {
++		// os.Lstat returns an error if the path doesn't exist
++		if stat, err := os.Lstat(parent); err != nil {
++			return err
++		} else if !stat.IsDir() {
++			// Fail if any parent is a symlink
++			return fmt.Errorf("Path '%s' is not a directory", parent)
++		}
++	}
++	return os.Mkdir(fullPath, 0755)
+ }
+ 
+ func cp(in, out string, mode os.FileMode) error {
+diff --git a/cmd/hotdog-poststart-hook/main.go b/cmd/hotdog-poststart-hook/main.go
+index 116b6e1..dcf8930 100644
+--- a/cmd/hotdog-poststart-hook/main.go
++++ b/cmd/hotdog-poststart-hook/main.go
+@@ -2,6 +2,7 @@ package main
+ 
+ import (
+ 	"encoding/json"
++	"os"
+ 	"os/exec"
+ 	"path/filepath"
+ 	"runtime"
+@@ -35,6 +36,14 @@ func _main() error {
+ 		return err
+ 	}
+ 	targetPID := strconv.Itoa(state.Pid)
++
++	// Don't proceed if the prestart hook failed to copy the required
++	// artifacts so that we don't execute arbitrary binaries that could
++	// be inside the container's filesystem
++	if !sentryExists(state.Bundle) {
++		return nil
++	}
++
+ 	// Silently exit if:
+ 	// - An error occurred while fetching the container's seccomp profile
+ 	// - The process fails to constrain itself
+@@ -95,3 +104,11 @@ func constrainProcess(spec specs.Spec, targetPID string) error {
+ 	}
+ 	return nil
+ }
++
++// sentryExists returns true if the sentry file created in the prestart
++// hook in the container's bundle exists, and it is a regular file
++func sentryExists(bundle string) bool {
++	stat, err := os.Stat(filepath.Join(bundle, hotdog.HotdogBundleDir, hotdog.PostStartHookSentry))
++	// Treat any error as if the sentry file doesn't exist
++	return err == nil && stat.Mode().IsRegular()
++}
+diff --git a/hotpatch.go b/hotpatch.go
+index bcd9a6d..358759c 100644
+--- a/hotpatch.go
++++ b/hotpatch.go
+@@ -8,13 +8,15 @@ import (
+ )
+ 
+ var (
+-	HostDir          = "/usr/share/hotdog"
+-	ContainerDir     = "/dev/shm/.hotdog"
+-	JDK8Class        = "Log4jHotPatch"
+-	PatchPath        = "Log4jHotPatch.jar"
+-	HotpatchBinary   = "hotdog-hotpatch"
+-	EnvCapability    = "HOTDOG_CAPABILITIES"
+-	EnvSeccompFilter = "HOTDOG_SECCOMP_FILTER"
++	HostDir             = "/usr/share/hotdog"
++	ContainerDir        = "/dev/shm/.hotdog"
++	JDK8Class           = "Log4jHotPatch"
++	PatchPath           = "Log4jHotPatch.jar"
++	HotpatchBinary      = "hotdog-hotpatch"
++	EnvCapability       = "HOTDOG_CAPABILITIES"
++	EnvSeccompFilter    = "HOTDOG_SECCOMP_FILTER"
++	PostStartHookSentry = "hotdog-inject-success"
++	HotdogBundleDir     = "hotdog"
+ )
+ 
+ // GetFiltersFromEnv reads and parses the seccomp filters passed as an
+-- 
+2.33.1
+

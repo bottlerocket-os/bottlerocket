@@ -1,0 +1,54 @@
+From 34572fe18863a5788414cfa905763061a344277d Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Thu, 10 Feb 2022 02:20:02 +0000
+Subject: [PATCH 6/9] hotdog-cc-hook: change executable permissions
+
+Changes the permissions in the artifacts copied to the container's
+filesystem, so that child processes won't have the dumpable flag set
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Samuel Karp <skarp@amazon.com>
+---
+ cmd/hotdog-cc-hook/main.go | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/cmd/hotdog-cc-hook/main.go b/cmd/hotdog-cc-hook/main.go
+index a169eb1..d091b83 100644
+--- a/cmd/hotdog-cc-hook/main.go
++++ b/cmd/hotdog-cc-hook/main.go
+@@ -64,10 +64,13 @@ func reexeced_main() error {
+ 	if err := os.Mkdir(hotdogBundleDir, 0755); err != nil {
+ 		return err
+ 	}
+-	if err := cp(filepath.Join(hotdog.HostDir, hotdog.PatchPath), filepath.Join(hotdogBundleDir, hotdog.PatchPath)); err != nil {
++	// Copy the artifacts used in the poststart hook with the specified
++	// permissions, so that child processes won't have the dumpable flag
++	// set
++	if err := cp(filepath.Join(hotdog.HostDir, hotdog.PatchPath), filepath.Join(hotdogBundleDir, hotdog.PatchPath), 0444); err != nil {
+ 		return err
+ 	}
+-	if err := cp(filepath.Join(hotdog.HostDir, hotdog.HotpatchBinary), filepath.Join(hotdogBundleDir, hotdog.HotpatchBinary)); err != nil {
++	if err := cp(filepath.Join(hotdog.HostDir, hotdog.HotpatchBinary), filepath.Join(hotdogBundleDir, hotdog.HotpatchBinary), 0111); err != nil {
+ 		return err
+ 	}
+ 
+@@ -94,13 +97,13 @@ func reexeced_main() error {
+ 	return unix.Mount(hotdogBundleDir, mountTarget, "bind", unix.MS_REMOUNT|unix.MS_BIND|unix.MS_RDONLY, "")
+ }
+ 
+-func cp(in, out string) error {
++func cp(in, out string, mode os.FileMode) error {
+ 	inReader, err := os.OpenFile(in, os.O_RDONLY, 0)
+ 	if err != nil {
+ 		return err
+ 	}
+ 	defer inReader.Close()
+-	outWriter, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0755)
++	outWriter, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+ 	if err != nil {
+ 		return err
+ 	}
+-- 
+2.33.1
+
