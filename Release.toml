@@ -123,4 +123,5 @@ version = "1.7.2"
     "migrate_v1.8.0_etc-hosts.lz4",
     "migrate_v1.8.0_etc-hosts-metadata.lz4",
     "migrate_v1.8.0_cluster-dns-ip-list.lz4",
+    "migrate_v1.8.0_pki-affected-services.lz4"
 ]
