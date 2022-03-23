@@ -1,15 +1,15 @@
 Name: %{_cross_os}libglib
-Version: 2.71.1
+Version: 2.72.0
 Release: 1%{?dist}
 Summary: The GLib libraries
 # glib2 is LGPL-2.1-only
 # pcre is BSD-3-Clause
 License: LGPL-2.1-only AND BSD-3-Clause
 URL: https://www.gtk.org/
-Source0: https://download.gnome.org/sources/glib/2.70/glib-%{version}.tar.xz
+Source0: https://download.gnome.org/sources/glib/2.72/glib-%{version}.tar.xz
 # Note: the pcre version is specified in the glib archive in subprojects/libpcre.wrap
 Source1: https://downloads.sourceforge.net/pcre/pcre-8.37.tar.bz2
-Source2: https://wrapdb.mesonbuild.com/v2/pcre_8.37-2/get_patch#/pcre_8.37-2_patch.zip
+Source2: https://wrapdb.mesonbuild.com/v2/pcre_8.37-4/get_patch#/pcre_8.37-4_patch.zip
 BuildRequires: meson
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libffi-devel
