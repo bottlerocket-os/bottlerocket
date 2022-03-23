@@ -1,5 +1,5 @@
 Name: %{_cross_os}findutils
-Version: 4.8.0
+Version: 4.9.0
 Release: 1%{?dist}
 Summary: A set of GNU tools for finding
 License: GPL-3.0-or-later
