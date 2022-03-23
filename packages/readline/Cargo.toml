@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://ftp.gnu.org/gnu/readline"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.gnu.org/gnu/readline/readline-8.1.tar.gz"
-sha512 = "27790d0461da3093a7fee6e89a51dcab5dc61928ec42e9228ab36493b17220641d5e481ea3d8fee5ee0044c70bf960f55c7d3f1a704cf6b9c42e5c269b797e00"
+url = "https://ftp.gnu.org/gnu/readline/readline-8.1.2.tar.gz"
+sha512 = "b512275c8aa8b3b3178366c6d681f867676fc1c881e375134a88e9c860a448535e04ca43df727817fd0048261e48203e88bd1c086e86572022d1d65fb0350e4d"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
