@@ -700,6 +700,12 @@ func withDefaultMounts(containerID string, persistentDir string) oci.SpecOpts {
 			Destination: fmt.Sprintf("/etc/bottlerocket-release"),
 			Source:      fmt.Sprintf("/etc/os-release"),
 		},
+		// Bottlerocket RPM inventory available to the container
+		{
+			Options:     []string{"bind", "ro"},
+			Destination: fmt.Sprintf("/var/lib/bottlerocket/inventory/application.json"),
+			Source:      fmt.Sprintf("/usr/share/bottlerocket/application-inventory.json"),
+		},
 	}
 
 	// The `current` dir was added for easier referencing in Dockerfiles and scripts.

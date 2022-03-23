@@ -5,6 +5,7 @@ Version: 0.0.1
 Release: 1%{?dist}
 Summary: A login helper
 License: Apache-2.0 OR MIT
+URL: https://github.com/bottlerocket-os/bottlerocket
 Source0: login
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}bash

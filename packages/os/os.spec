@@ -9,6 +9,7 @@ Version: 0.0
 Release: 0%{?dist}
 Summary: Bottlerocket's first-party code
 License: Apache-2.0 OR MIT
+URL: https://github.com/bottlerocket-os/bottlerocket
 
 # sources < 100: misc
 Source2: api-sysusers.conf
