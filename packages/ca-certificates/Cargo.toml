@@ -12,5 +12,5 @@ path = "pkg.rs"
 releases-url = "https://curl.se/docs/caextract.html"
 
 [[package.metadata.build-package.external-files]]
-url = "https://curl.haxx.se/ca/cacert-2021-10-26.pem"
-sha512 = "bcc17f23eb54f943c13c6e8b3b0a7e8b72dc9971720249b3eb7a493a66db21d572ba7eedf4f96d8efd6243c3e89f3e258e59ebc9010bce01556b4112ec7d4a3b"
+url = "https://curl.haxx.se/ca/cacert-2022-03-18.pem"
+sha512 = "ef82868c7d0ea1ff708a4f63cd8f10158384931f39ba2300bbf1ffcc3ff3fea2282f8f78cf74a78d0b93d83297e2cfcabb7427a463d3199087b708b624aabc42"
