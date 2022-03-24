@@ -84,7 +84,9 @@ install -d %{buildroot}%{_cross_unitdir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/{drivers,ld.so.conf.d}
 
 KERNEL_VERSION=$(cat %{kernel_sources}/include/config/kernel.release)
-sed -e "s|__KERNEL_VERSION__|${KERNEL_VERSION}|" %{S:200} > nvidia.conf
+sed \
+  -e "s|__KERNEL_VERSION__|${KERNEL_VERSION}|" \
+  -e "s|__PREFIX__|%{_cross_prefix}|" %{S:200} > nvidia.conf
 install -p -m 0644 nvidia.conf %{buildroot}%{_cross_tmpfilesdir}
 
 # Install modules-load.d drop-in to autoload required kernel modules
