@@ -59,9 +59,6 @@ skip = [
     # older version used by clap 2.33.3, via cargo-readme and structopt
     { name = "strsim", version = "0.8.0" },
 
-    # older version used by hyper 0.14.2
-    { name = "socket2", version = "0.3.19" },
-
     # older version used by webpki-roots 0.21.1
     { name = "pem", version = "0.8.3" },
 
