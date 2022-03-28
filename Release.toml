@@ -1,4 +1,4 @@
-version = "1.6.2"
+version = "1.7.0"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -101,8 +101,8 @@ version = "1.6.2"
     "migrate_v1.6.0_public-control-container-v0-5-5.lz4",
 ]
 "(1.6.0, 1.6.1)" = []
-"(1.6.1, 1.6.2)" = [
-    "migrate_v1.6.2_add-cfsignal.lz4",
-    "migrate_v1.6.2_container-registry-credentials.lz4",
-    "migrate_v1.6.2_container-registry-credentials-metadata.lz4",
+"(1.6.1, 1.7.0)" = [
+    "migrate_v1.7.0_add-cfsignal.lz4",
+    "migrate_v1.7.0_container-registry-credentials.lz4",
+    "migrate_v1.7.0_container-registry-credentials-metadata.lz4",
 ]
