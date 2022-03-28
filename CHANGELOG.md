@@ -1,3 +1,39 @@
+# v1.7.0 (2022-03-30)
+
+## OS Changes
+
+* Include a default .link file for network interfaces [#1981]
+* Fix merge_config.sh invocation in kernel packages [#1985]
+* Update admin and control containers [#2014]
+
+## Build Changes
+
+* Update third-party packages [#1977] [#1983] [#1987] [#1992] [#2022]
+* Update Rust dependencies [#2019]
+* Update Go dependencies of `host-ctr` [#2016]
+* Makefile: lock tuftool version [#2009]
+* Fix tmpfilesd configuration for kmod-5.10-nvidia [#2020]
+
+## Documentation Changes
+
+* Fix tuftool download instruction in VMWare Quickstart [#1994]
+* Explain data partition extension [#2013]
+
+[#1977]: https://github.com/bottlerocket-os/bottlerocket/pull/1977
+[#1981]: https://github.com/bottlerocket-os/bottlerocket/pull/1981
+[#1983]: https://github.com/bottlerocket-os/bottlerocket/pull/1983
+[#1985]: https://github.com/bottlerocket-os/bottlerocket/pull/1985
+[#1987]: https://github.com/bottlerocket-os/bottlerocket/pull/1987
+[#1992]: https://github.com/bottlerocket-os/bottlerocket/pull/1992
+[#1994]: https://github.com/bottlerocket-os/bottlerocket/pull/1994
+[#2009]: https://github.com/bottlerocket-os/bottlerocket/pull/2009
+[#2013]: https://github.com/bottlerocket-os/bottlerocket/pull/2013
+[#2014]: https://github.com/bottlerocket-os/bottlerocket/pull/2014
+[#2016]: https://github.com/bottlerocket-os/bottlerocket/pull/2016
+[#2019]: https://github.com/bottlerocket-os/bottlerocket/pull/2019
+[#2020]: https://github.com/bottlerocket-os/bottlerocket/pull/2020
+[#2022]: https://github.com/bottlerocket-os/bottlerocket/pull/2022
+
 # v1.6.2 (2022-03-08)
 
 With this release, the vmware-k8s variants have graduated from preview status and are now generally available.
