@@ -2,9 +2,9 @@
 %global gorepo containerd
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.5.9
+%global gover 1.5.11
 %global rpmver %{gover}
-%global gitrev 1407cab509ff0d96baa4f0eb6ff9980270e6e620
+%global gitrev 3df54a852345ae127d1fa3092b95168e4a88e2f8
 
 %global _dwz_low_mem_die_limit 0
 
@@ -28,9 +28,6 @@ Source1000: clarify.toml
 
 # TODO: submit this upstream, including a unit test.
 Patch1001: 1001-cri-set-default-RLIMIT_NOFILE.patch
-
-# CVE-2022-23648
-Patch2001: Use-fs.RootPath-when-mounting-volumes-1.5.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel

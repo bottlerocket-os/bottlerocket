@@ -2,9 +2,9 @@
 %global agent_gorepo amazon-ecs-agent
 %global agent_goimport %{agent_goproject}/%{agent_gorepo}
 
-%global agent_gover 1.58.0
+%global agent_gover 1.60.0
 # git rev-parse --short=8
-%global agent_gitrev 80ad4ca4
+%global agent_gitrev f5ac255d
 
 %global ecscni_goproject github.com/aws
 %global ecscni_gorepo amazon-ecs-cni-plugins
@@ -70,6 +70,7 @@ Patch0005: 0005-bottlerocket-fix-procfs-path-on-host.patch
 # Bottlerocket-specific - add duplicate +build directives to support Go 1.16
 Patch0006: 0006-bottlerocket-Revert-removing-duplicate-build-tags.patch
 Patch0007: 0007-bottlerocket-Revert-Updating-the-go-build-tags-as-pa.patch
+Patch0008: 0008-bottlerocket-Add-missing-go-build-tags.patch
 
 # Bottlerocket-specific - filesystem location for ECS CNI plugins
 Patch1001: 1001-bottlerocket-default-filesystem-locations.patch

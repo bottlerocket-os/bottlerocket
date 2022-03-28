@@ -1,5 +1,5 @@
 Name: %{_cross_os}readline
-Version: 8.1
+Version: 8.1.2
 Release: 1%{?dist}
 Summary: A library for editing typed command lines
 License: GPL-3.0-or-later

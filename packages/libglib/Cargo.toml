@@ -12,17 +12,17 @@ path = "pkg.rs"
 releases-url = "https://download.gnome.org/sources/glib"
 
 [[package.metadata.build-package.external-files]]
-url = "https://download.gnome.org/sources/glib/2.71/glib-2.71.1.tar.xz"
-sha512 = "eda37d883d27f63eef38a811ce824783d39c6454712d7b7e48507da5d53ff0aebbd05bdf82a6ae5395c0c09d4cdee8ac5ec27ba3d4ff868f146043906876d967"
+url = "https://download.gnome.org/sources/glib/2.72/glib-2.72.0.tar.xz"
+sha512 = "351ff025d26348112584bed2c1052427150a8a2f8642c813dae1583fb105184528ad20e264cdf44bbca658a26c280e36acd0e642add112d29edc1b25dfc94fad"
 
 [[package.metadata.build-package.external-files]]
 url = "https://downloads.sourceforge.net/pcre/pcre-8.37.tar.bz2"
 sha512 = "19344c9add2ebbd26c528505d07d3b028d79bc3e6103d51453a449cebd76bc76f5bc7ddd9ef0de41f98c50be74a2d9a65db539ed60f1add1086d99bde8a81466"
 
 [[package.metadata.build-package.external-files]]
-url = "https://wrapdb.mesonbuild.com/v2/pcre_8.37-2/get_patch"
-path = "pcre_8.37-2_patch.zip"
-sha512 = "601790189ce5553b71931f6eec2bb167f74de53736e84b68fd5e1d8658661b3239782ac9c4cd1eb8c87fbbcdb49f5cd6954d6f48d47c6ef8895ee55bc70f15b8"
+url = "https://wrapdb.mesonbuild.com/v2/pcre_8.37-4/get_patch"
+path = "pcre_8.37-4_patch.zip"
+sha512 = "4cb2164d6a335594f64743cfc75fe16310618cb91ddd4c4fa0015b07a54390620ca379b05f1659e2224a2916b1b976b07d6d6efa4e2a1330d3957fbb9611fbc5"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
