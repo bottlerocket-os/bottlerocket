@@ -134,10 +134,10 @@ aws ssm start-session --target INSTANCE_ID
 
 With the [default control container](https://github.com/bottlerocket-os/bottlerocket-control-container), you can make [API calls](#api) to configure and manage your Bottlerocket host.
 To do even more, read the next section about the [admin container](#admin-container).
-If you've enabled the admin container, you can access it from the control container like this:
+You can access the admin container from the control container like this:
 
 ```
-apiclient exec admin bash
+enter-admin-container
 ```
 
 ### Admin container
@@ -160,13 +160,19 @@ If Bottlerocket is already running, you can enable the admin container from the 
 enable-admin-container
 ```
 
+Or you can start an interactive session immediately like this:
+
+```
+enter-admin-container
+```
+
 If you're using a custom control container, or want to make the API calls directly, you can enable the admin container like this instead:
 
 ```
 apiclient set host-containers.admin.enabled=true
 ```
 
-Once you've enabled the admin container, you can either access it through SSH or from the control container like this:
+Once you've enabled the admin container, you can either access it through SSH or execute commands from the control container like this:
 
 ```
 apiclient exec admin bash
@@ -508,8 +514,8 @@ These settings will configure the proxying behavior of the following services:
     * [ecs.service](packages/ecs-agent/ecs.service)
 
 * `settings.network.https-proxy`: The HTTPS proxy server to be used by services listed above.
-* `settings.network.no-proxy`: A list of hosts that are excluded from proxying.  
-   Example: 
+* `settings.network.no-proxy`: A list of hosts that are excluded from proxying.
+   Example:
    ```
    [settings.network]
    https-proxy = "1.2.3.4:8080"
