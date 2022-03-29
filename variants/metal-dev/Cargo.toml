@@ -19,6 +19,9 @@ kernel-parameters = [
     # Only reserve if there are at least 2GB
     "crashkernel=2G-:256M"
 ]
+grub-features = [
+    "set-private-var"
+]
 
 included-packages = [
 # core
