@@ -194,8 +194,15 @@ fn build_variant() -> Result<()> {
         let image_format = manifest.image_format();
         let image_layout = manifest.image_layout();
         let kernel_parameters = manifest.kernel_parameters();
-        VariantBuilder::build(&packages, image_format, image_layout, kernel_parameters)
-            .context(error::BuildAttemptSnafu)?;
+        let grub_features = manifest.grub_features();
+        VariantBuilder::build(
+            &packages,
+            image_format,
+            image_layout,
+            kernel_parameters,
+            grub_features,
+        )
+        .context(error::BuildAttemptSnafu)?;
     } else {
         println!("cargo:warning=No included packages in manifest. Skipping variant build.");
     }

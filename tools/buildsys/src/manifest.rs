@@ -112,6 +112,19 @@ The given parameters are inserted at the start of the command line.
 kernel-parameters = [
    "console=ttyS42",
 ]
+
+`grub-features` is a list of supported grub features.
+This list allows us to conditionally use or exclude certain grub features in specific variants.
+The only supported value at this time is `set-private-var`.
+This value means that the grub config for the current variant includes the command to find the
+BOTTLEROCKET_PRIVATE partition and set the appropriate `$private` variable for the grub to
+consume.
+Adding this value to `grub-features` enables the use of Boot Config.
+```
+[package.metadata.build-variant]
+grub-features = [
+   "set-private-var",
+]
 ```
 */
 
@@ -190,6 +203,11 @@ impl ManifestInfo {
             .and_then(|b| b.kernel_parameters.as_ref())
     }
 
+    /// Convenience method to return the GRUB features for this variant.
+    pub(crate) fn grub_features(&self) -> Option<&Vec<GrubFeature>> {
+        self.build_variant().and_then(|b| b.grub_features.as_ref())
+    }
+
     /// Helper methods to navigate the series of optional struct fields.
     fn build_package(&self) -> Option<&BuildPackage> {
         self.package
@@ -238,6 +256,7 @@ pub(crate) struct BuildVariant {
     pub(crate) image_layout: Option<ImageLayout>,
     pub(crate) supported_arches: Option<HashSet<SupportedArch>>,
     pub(crate) kernel_parameters: Option<Vec<String>>,
+    pub(crate) grub_features: Option<Vec<GrubFeature>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -309,6 +328,20 @@ impl SupportedArch {
         match self {
             SupportedArch::X86_64 => "amd64",
             SupportedArch::Aarch64 => "arm64",
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, PartialEq, Eq, Hash)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum GrubFeature {
+    SetPrivateVar,
+}
+
+impl fmt::Display for GrubFeature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            GrubFeature::SetPrivateVar => write!(f, "GRUB_SET_PRIVATE_VAR"),
         }
     }
 }
