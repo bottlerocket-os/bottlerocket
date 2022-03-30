@@ -647,6 +647,129 @@ mod test_sysctl_key {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+/// BootConfigKey represents a string that is a valid Kernel boot config key; each key word must
+/// contain only alphabets, numbers, dash (-) or underscore (_).
+/// BootConfigKey stores the original string and makes it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct BootConfigKey {
+    inner: String,
+}
+
+impl TryFrom<&str> for BootConfigKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        // Each individual keyword must be valid
+        let valid_key = input.split('.').all(|keyword| {
+            !keyword.is_empty()
+                && keyword
+                    .chars()
+                    .all(|c| (c.is_ascii() && c.is_alphanumeric()) || c == '-' || c == '_')
+        });
+        ensure!(valid_key, error::InvalidBootconfigKeySnafu { input });
+        Ok(BootConfigKey {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(BootConfigKey, "BootConfigKey");
+
+#[cfg(test)]
+mod test_bootconfig_key {
+    use super::BootConfigKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_bootconfig_key() {
+        for ok in &[
+            "keyword1.keyword2",
+            "-keyword1.keyword2",
+            "_keyword.1.2.3",
+            "key_word",
+            "key-word",
+            "keyword1",
+            "keyword1-",
+            "keyword2_",
+        ] {
+            BootConfigKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn invalid_bootconfig_key() {
+        for err in &[
+            "", "①", ".", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "\"", "'", "\\", "|",
+            "~", "`",
+        ] {
+            BootConfigKey::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// BootConfigValue represents a string that is a valid Kernel boot config value; each value only
+/// contains printable characters or spaces except for delimiters such as semicolon, newline, comma,
+/// hash, and closing brace. These delimiters are only usable if the value itself is quoted with
+/// single-quotes or double-quotes. Here we treat the value as if they're always quoted in the context
+/// of Bottlerocket settings. This means the value just has to be printable ASCII.
+/// BootConfigValue stores the original string and makes it accessible through standard traits.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct BootConfigValue {
+    inner: String,
+}
+
+impl TryFrom<&str> for BootConfigValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, error::Error> {
+        ensure!(
+            input.chars().all(|c| c.is_ascii() && !c.is_ascii_control())
+            // Values containing both single quotes and double quotes are inherently invalid since quotes
+            // cannot be escaped.
+                && !(input.contains('"') && input.contains("'")),
+            error::InvalidBootconfigValueSnafu { input }
+        );
+        Ok(BootConfigValue {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(BootConfigValue, "BootConfigValue");
+
+#[cfg(test)]
+mod test_bootconfig_value {
+    use super::BootConfigValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_bootconfig_value() {
+        for ok in &[
+            "plain",
+            "@yogurt@",
+            "\"abc",
+            " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}",
+            "1",
+            "value1",
+            "hello.goodbye",
+            "",
+        ] {
+            BootConfigValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn invalid_bootconfig_value() {
+        for err in &["'\"", "bottlerocket①", "💝", "Ï", "—"] {
+            BootConfigValue::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// Lockdown represents a string that is a valid Linux kernel lockdown mode name.  It stores the
 /// original string and makes it accessible through standard traits.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

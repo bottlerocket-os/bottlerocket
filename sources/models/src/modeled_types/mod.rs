@@ -29,6 +29,18 @@ pub mod error {
         ))]
         InvalidIdentifier { input: String },
 
+        #[snafu(display(
+            "Kernel boot config keywords may only contain ASCII alphanumerics plus hyphens and underscores, received '{}'",
+            input
+        ))]
+        InvalidBootconfigKey { input: String },
+
+        #[snafu(display(
+            "Kernel boot config values may only contain ASCII printable characters, received '{}'",
+            input
+        ))]
+        InvalidBootconfigValue { input: String },
+
         #[snafu(display("Given invalid URL '{}'", input))]
         InvalidUrl { input: String },
 

@@ -140,13 +140,14 @@ use std::net::IpAddr;
 
 use crate::de::{deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
-    BootstrapContainerMode, CpuManagerPolicy, DNSDomain, ECSAgentLogLevel, ECSAttributeKey,
-    ECSAttributeValue, FriendlyVersion, Identifier, KubernetesAuthenticationMode,
-    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterName,
-    KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
-    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey,
-    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
+    BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, DNSDomain,
+    ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, Identifier,
+    KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesCloudProvider,
+    KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
+    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
+    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, PemCertificateString,
+    SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64,
+    ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -286,6 +287,25 @@ struct KernelSettings {
     lockdown: Lockdown,
     // Values are almost always a single line and often just an integer... but not always.
     sysctl: HashMap<SysctlKey, String>,
+}
+
+// Kernel boot settings
+#[model]
+struct BootSettings {
+    #[serde(
+        alias = "kernel",
+        rename(serialize = "kernel"),
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    kernel_parameters: HashMap<BootConfigKey, Vec<BootConfigValue>>,
+    #[serde(
+        alias = "init",
+        rename(serialize = "init"),
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    init_parameters: HashMap<BootConfigKey, Vec<BootConfigValue>>,
 }
 
 // Platform-specific settings
