@@ -20,5 +20,5 @@ exclude = ["README.md"]
 [dependencies]
 lazy_static = "1.4.0"
 log = "0.4"
-pem = "0.8.1"
+pem = "1.0.2"
 webpki = "0.21.0"
