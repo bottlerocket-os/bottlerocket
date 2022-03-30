@@ -13,7 +13,7 @@ serde = { version = "1.0", features = ["derive"] }
 simplelog = "0.11"
 snafu = { version = "0.7" }
 toml = "0.5.1"
-tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }
+tokio = { version = "~1.17", default-features = false, features = ["macros", "rt-multi-thread"] }
 rusoto_core = { version = "0.47.0", default-features = false, features = ["rustls"] }
 rusoto_cloudformation = { version = "0.47.0", default-features = false, features = ["rustls"] }
 imdsclient = { path = "../imdsclient", version = "0.1.0" }

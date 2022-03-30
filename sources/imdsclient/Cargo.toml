@@ -15,7 +15,7 @@ log = "0.4"
 reqwest = { version = "0.11.1", default-features = false }
 serde_json = "1"
 snafu = "0.7"
-tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread", "time"] }  # LTS
+tokio = { version = "~1.17", default-features = false, features = ["macros", "rt-multi-thread", "time"] }  # LTS
 tokio-retry = "0.3"
 url = "2.1.1"
 

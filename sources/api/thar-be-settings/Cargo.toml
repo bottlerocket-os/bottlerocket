@@ -22,7 +22,7 @@ schnauzer = { path = "../schnauzer", version = "0.1.0" }
 serde_json = "1"
 simplelog = "0.11"
 snafu = "0.7"
-tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
+tokio = { version = "~1.17", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 
 [build-dependencies]
 cargo-readme = "3.1"
