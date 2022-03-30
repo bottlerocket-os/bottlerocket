@@ -1,0 +1,9 @@
+# Boot related settings
+
+[metadata.settings.boot]
+affected-services = ["bootconfig"]
+setting-generator = "/usr/bin/prairiedog generate-boot-settings"
+
+[services.bootconfig]
+configuration-files = []
+restart-commands = ["/usr/bin/prairiedog generate-boot-config"]
