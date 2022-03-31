@@ -7,7 +7,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
-async-trait = "0.1.36"
+async-trait = "0.1.53"
 chrono = "0.4"
 clap = "2.33"
 coldsnap = { version = "0.3", default-features = false, features = ["rusoto-rustls"]}

@@ -7,7 +7,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
-async-trait = "0.1.51"  
+async-trait = "0.1.53"  
 clap = "2.33"  
 hex = "0.4.0"
 log = "0.4.14"  
