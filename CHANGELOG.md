@@ -1,3 +1,16 @@
+# v1.7.1 (2022-04-05)
+
+## Security Fixes
+
+* Apply patch to hotdog for CVE-2022-0071 ([1a3f35b2fe8e][1a3f35b2fe8e])
+
+## OS Changes
+
+* Enable checkpoint restore (`CONFIG_CHECKPOINT_RESTORE`) for aarch64 ([6e3d6ed4b83e][6e3d6ed4b83e])
+
+[1a3f35b2fe8e]: https://github.com/bottlerocket-os/bottlerocket/commit/1a3f35b2fe8ed9a7078e43940545dc941c5de99f
+[6e3d6ed4b83e]: https://github.com/bottlerocket-os/bottlerocket/commit/6e3d6ed4b83ecefa5de5885f8c4a30cd9df8b689
+
 # v1.7.0 (2022-03-30)
 
 With this release, an inventory of software installed in Bottlerocket will now be reported to SSM if the control container is in use and inventorying has been enabled.
