@@ -22,11 +22,6 @@ Entries are sorted by filename, and later entries take precedence.
 
 The `#[model]` attribute on Settings and its sub-structs reduces duplication and adds some required metadata; see [its docs](model-derive/) for details.
 
-### aws-k8s-1.18: Kubernetes 1.18
-
-* [Model](src/aws-k8s-1.22/mod.rs)
-* [Default settings](src/aws-k8s-1.19/defaults.d/)
-
 ### aws-k8s-1.19: Kubernetes 1.19
 
 * [Model](src/aws-k8s-1.22/mod.rs)
