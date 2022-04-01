@@ -10,26 +10,12 @@
 %global gitrev 3f2ca9275fae8db87409c3a0999aa2c8a4bd44d1
 %global shortrev %(c=%{gitrev}; echo ${c:0:7})
 
-%global gosysrev 4abf325e0275e4ef0bdd441dcf497570f1419ab9
-%global gosysrevshort %(c=%{gosysrev}; echo ${c:0:7})
-
-%global runtimespec 1.0.2
-
-%global goselinux 1.10.0
-
-%global libcap 1.2.62
-
 Name: %{_cross_os}hotdog
 Version: 1.0.1
 Release: 1%{?dist}
 Summary: Tool with OCI hooks to run the Log4j Hot Patch in containers
 License: Apache-2.0
 URL: https://github.com/awslabs/oci-add-hooks
-Source0: https://%{goimport}/archive/%{gorev}/%{gorepo}-%{shortrev}.tar.gz
-Source1: https://github.com/opencontainers/runtime-spec/archive/v%{runtimespec}/runtime-spec-%{runtimespec}.tar.gz
-Source2: https://github.com/golang/sys/archive/%{gosysrev}/sys-%{gosysrevshort}.tar.gz
-Source3: https://github.com/opencontainers/selinux/archive/refs/tags/v%{goselinux}.tar.gz#/go-selinux-v%{goselinux}.tar.gz
-Source4: https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v%{libcap}.tar.gz#/libcap-v%{libcap}.tar.gz
 
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}log4j2-hotpatch
@@ -38,39 +24,19 @@ Requires: %{_cross_os}log4j2-hotpatch
 %{summary}.
 
 %prep
-%autosetup -Sgit -n %{gorepo}-%{gitrev} -p1
-%cross_go_setup %{gorepo}-%{gitrev} %{goproject} %{goimport}
-
-# We need to manage these third-party dependencies because the hotdog
-# "release" that we use doesn't include the `vendor` directory, unlike our other
-# go third party dependencies
-mkdir -p GOPATH/src/github.com/opencontainers/runtime-spec
-tar -C GOPATH/src/github.com/opencontainers/runtime-spec -xzf %{SOURCE1} --strip 1
-cp GOPATH/src/github.com/opencontainers/runtime-spec/LICENSE LICENSE.runtime-spec
-
-mkdir -p GOPATH/src/golang.org/x/sys
-tar -C GOPATH/src/golang.org/x/sys -xzf %{SOURCE2} --strip 1
-cp GOPATH/src/golang.org/x/sys/LICENSE LICENSE.golang-sys
-
-mkdir -p GOPATH/src/github.com/opencontainers/selinux
-tar -C GOPATH/src/github.com/opencontainers/selinux -xzf %{SOURCE3} --strip 1
-cp GOPATH/src/github.com/opencontainers/selinux/LICENSE LICENSE.go-selinux
-
-mkdir -p GOPATH/src/kernel.org/pub/linux/libs/security/libcap
-tar -C GOPATH/src/kernel.org/pub/linux/libs/security/libcap -xzf %{SOURCE4} --strip 2
-cp GOPATH/src/kernel.org/pub/linux/libs/security/libcap/License LICENSE.libcap
+%setup -T -c
+cp -r /home/builder/src/%{gorepo}-%{gitrev}/* .
 
 %build
-%cross_go_configure %{goimport}
+%set_cross_go_flags
 
 # Set CGO_ENABLED=0 to statically link hotdog-hotpath, since it runs inside containers that
 # may not have the glibc version used to compile it
-# Set `GO111MODULE=off` to force golang to look for the dependencies in the GOPATH
-CGO_ENABLED=0 GO111MODULE=off go build -installsuffix cgo -a -ldflags "-s" -o hotdog-hotpatch ./cmd/hotdog-hotpatch
+CGO_ENABLED=0 go build ${GOFLAGS} -installsuffix cgo -a -ldflags "-s" -o hotdog-hotpatch ./cmd/hotdog-hotpatch
 
 # The oci hooks commands can be compiled as we usually compile golang packages
 for cmd in hotdog-cc-hook hotdog-poststart-hook; do
-  GO111MODULE=off go build -buildmode=pie -ldflags "${GOLDFLAGS}" -o $cmd ./cmd/$cmd
+  go build ${GOFLAGS} -buildmode=pie -ldflags "${GOLDFLAGS}" -o $cmd ./cmd/$cmd
 done
 
 %install
@@ -83,9 +49,12 @@ for cmd in hotdog-cc-hook hotdog-poststart-hook; do
   install -p -m 0755 $cmd %{buildroot}%{_cross_libexecdir}/hotdog
 done
 
+%cross_scan_attribution go-vendor vendor
+
 %files
-%license LICENSE LICENSE.runtime-spec LICENSE.golang-sys LICENSE.go-selinux LICENSE.libcap
+%license LICENSE
 %{_cross_attribution_file}
+%{_cross_attribution_vendor_dir}
 %dir %{_cross_libexecdir}/hotdog
 %dir %{_cross_datadir}/hotdog
 %{_cross_libexecdir}/hotdog/hotdog-cc-hook

@@ -12,23 +12,10 @@ path = "pkg.rs"
 url = "https://github.com/bottlerocket-os/hotdog/archive/3f2ca9275fae8db87409c3a0999aa2c8a4bd44d1/hotdog-3f2ca92.tar.gz"
 sha512 = "ebf8f2f8f2c7b12443eae5eccdf0d37724637ac972874b9a88eb8d21d88cbe661b0b53680015ebb8c06e17bde708acf90f39fac82002a4c72266ecdac87c3fb5"
 
-[[package.metadata.build-package.external-files]]
-url = "https://github.com/opencontainers/runtime-spec/archive/v1.0.2/runtime-spec-1.0.2.tar.gz"
-sha512 = "96676b702d02409d33a5c81886c4db4bf45283c628933c6f0f4c2ed0d7cc44fafe95249151d7dc2d1fc5225944d172cdb45fc2f2f5f9bb87531e93421933b664"
-
-[[package.metadata.build-package.external-files]]
-url = "https://github.com/golang/sys/archive/4abf325e0275e4ef0bdd441dcf497570f1419ab9/sys-4abf325.tar.gz"
-sha512 = "74c51b1eb48a0a31443f9cb7ee4e2d7550f2477cbc89fad3909f973f042c8bc2bfc378582847c498ce157c3c28d14a3b22d69e9220539dc5dd87a77bb7b407e3"
-
-[[package.metadata.build-package.external-files]]
-path = "go-selinux-v1.10.0.tar.gz"
-url = "https://github.com/opencontainers/selinux/archive/refs/tags/v1.10.0.tar.gz"
-sha512 = "88c2591416aaea346bf438021c5f5095212ab6eec765c4b9ba149bd229cdc92a6baddc11f4aef7cfa7f0a5df6eb453e5670689679fd831848860eb28aca034a2"
-
-[[package.metadata.build-package.external-files]]
-path = "libcap-v1.2.62.tar.gz"
-url = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v1.2.62.tar.gz"
-sha512 = "d533563e4a2b4b9f910730286180d160c00e436e7f6970e124a67991ab2dcdeca4a6b07cb230d812cc6b4771935accc49ba0ed0465a581a571f0ddb4752284f7"
+[[package.metadata.build-package.go-mods]]
+input = "hotdog-3f2ca92.tar.gz"
+mod-dir = "hotdog-3f2ca9275fae8db87409c3a0999aa2c8a4bd44d1"
+output-dir = "src"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
