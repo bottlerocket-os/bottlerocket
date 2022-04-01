@@ -8,7 +8,7 @@ publish = false
 
 [dependencies]
 async-trait = "0.1.53"  
-clap = "2.33"  
+clap = "3.1"  
 hex = "0.4.0"
 log = "0.4.14"  
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
