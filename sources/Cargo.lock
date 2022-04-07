@@ -217,7 +217,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-autoscaling"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-cfsignal"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "add-pull-behavior"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
@@ -1139,6 +1153,7 @@ dependencies = [
  "cargo-readme",
  "constants",
  "log",
+ "models",
  "schnauzer",
  "serde",
  "serde_json",

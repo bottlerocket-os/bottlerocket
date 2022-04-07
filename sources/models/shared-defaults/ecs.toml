@@ -12,6 +12,7 @@ affected-services = ["ecs"]
 
 [settings.ecs]
 allow-privileged-containers = false
+image-pull-behavior = "default"
 logging-drivers = ["json-file", "awslogs", "none"]
 loglevel = "info"
 
@@ -26,3 +27,7 @@ affected-services = ["containerd", "docker", "ecs", "host-containerd", "host-con
 # Image registry credentials
 [metadata.settings.container-registry.credentials]
 affected-services = ["ecs", "host-containers", "bootstrap-containers"]
+
+# AutoScaling
+[settings.autoscaling]
+should-wait = false

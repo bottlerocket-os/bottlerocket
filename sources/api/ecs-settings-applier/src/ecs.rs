@@ -9,9 +9,11 @@ embedded lists.  The structure and names of fields in the document can be found
 */
 use constants;
 use log::debug;
+use model::modeled_types::ECSImagePullBehavior;
 use serde::Serialize;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{OptionExt, ResultExt};
+use std::convert::TryFrom;
 use std::fs;
 use std::path::Path;
 use std::{env, process};
@@ -36,6 +38,12 @@ struct ECSConfig {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     spot_instance_draining_enabled: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    warm_pools_support: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    image_pull_behavior: Option<u8>,
 
     #[serde(rename = "TaskIAMRoleEnabled")]
     task_iam_role_enabled: bool,
@@ -70,8 +78,8 @@ async fn run() -> Result<()> {
     let args = parse_args(env::args());
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::LoggerSnafu)?;
 
-    // Get all settings values for config file templates
-    debug!("Requesting settings values");
+    // Get all ecs and autoscaling settings values for config file templates
+    debug!("Requesting ecs and autoscaling settings values");
     let settings = schnauzer::get_settings(&args.socket_path)
         .await
         .context(error::SettingsSnafu)?;
@@ -79,19 +87,32 @@ async fn run() -> Result<()> {
     debug!("settings = {:#?}", settings.settings);
     let ecs = settings
         .settings
-        .and_then(|s| s.ecs)
+        .as_ref()
+        .and_then(|s| s.ecs.as_ref())
+        .context(error::ModelSnafu)?;
+
+    let autoscaling = settings
+        .settings
+        .as_ref()
+        .and_then(|s| s.autoscaling.as_ref())
         .context(error::ModelSnafu)?;
 
     let mut config = ECSConfig {
-        cluster: ecs.cluster,
+        cluster: ecs.cluster.clone(),
         privileged_disabled: ecs.allow_privileged_containers.map(|s| !s),
         available_logging_drivers: ecs
             .logging_drivers
+            .clone()
             .unwrap_or_default()
             .iter()
             .map(|s| s.to_string())
             .collect(),
         spot_instance_draining_enabled: ecs.enable_spot_instance_draining,
+        warm_pools_support: autoscaling.should_wait,
+        image_pull_behavior: ecs
+            .image_pull_behavior
+            .as_ref()
+            .map(|b| ECSImagePullBehavior::try_from(b.as_ref()).unwrap() as u8),
 
         // Task role support is always enabled
         task_iam_role_enabled: true,
@@ -115,7 +136,7 @@ async fn run() -> Result<()> {
             .instance_attributes
             .insert(VARIANT_ATTRIBUTE_NAME.to_string(), os.variant_id);
     }
-    if let Some(attributes) = ecs.instance_attributes {
+    if let Some(attributes) = &ecs.instance_attributes {
         for (key, value) in attributes {
             config
                 .instance_attributes

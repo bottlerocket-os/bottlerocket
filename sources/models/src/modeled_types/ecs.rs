@@ -228,3 +228,66 @@ mod test_ecs_agent_log_level {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// ECSAgentImagePullBehavior represents a string that contains a valid ECS Image Pull Behavior for the ECS agent.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct ECSAgentImagePullBehavior {
+    inner: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ECSImagePullBehavior {
+    Default = 0,
+    Always,
+    Once,
+    PreferCached,
+}
+
+impl TryFrom<&str> for ECSImagePullBehavior {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        let image_pull_behavior = serde_plain::from_str::<ECSImagePullBehavior>(&input).context(
+            error::InvalidPlainValueSnafu {
+                field: "ecs.image_pull_behavior",
+            },
+        )?;
+        Ok(image_pull_behavior)
+    }
+}
+
+string_impls_for!(ECSAgentImagePullBehavior, "ECSAgentImagePullBehavior");
+
+impl TryFrom<&str> for ECSAgentImagePullBehavior {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ECSImagePullBehavior::try_from(input)?;
+        Ok(ECSAgentImagePullBehavior {
+            inner: input.to_string(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod test_ecs_agent_image_pull_behavior {
+    use super::ECSAgentImagePullBehavior;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_vals() {
+        for val in &["default", "always", "once", "prefer-cached"] {
+            ECSAgentImagePullBehavior::try_from(*val).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_vals() {
+        for val in &["", "tomorrow", "never", " "] {
+            ECSAgentImagePullBehavior::try_from(*val).unwrap_err();
+        }
+    }
+}
