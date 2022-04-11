@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::manifest::{ImageFormat, ImageLayout, PartitionPlan, SupportedArch};
+use crate::manifest::{GrubFeature, ImageFormat, ImageLayout, PartitionPlan, SupportedArch};
 
 /*
 There's a bug in BuildKit that can lead to a build failure during parallel
@@ -118,6 +118,7 @@ impl VariantBuilder {
         image_format: Option<&ImageFormat>,
         image_layout: Option<&ImageLayout>,
         kernel_parameters: Option<&Vec<String>>,
+        grub_features: Option<&Vec<GrubFeature>>,
     ) -> Result<Self> {
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
 
@@ -164,6 +165,18 @@ impl VariantBuilder {
             "KERNEL_PARAMETERS",
             kernel_parameters
                 .map(|v| v.join(" "))
+                .unwrap_or_else(|| "".to_string()),
+        );
+
+        args.build_arg(
+            "GRUB_FEATURES",
+            grub_features
+                .map(|v| {
+                    v.iter()
+                        .map(|f| f.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                })
                 .unwrap_or_else(|| "".to_string()),
         );
 

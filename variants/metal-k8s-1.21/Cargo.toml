@@ -28,6 +28,9 @@ included-packages = [
     "kubelet-1.21",
     "release",
 ]
+grub-features = [
+    "set-private-var"
+]
 
 [lib]
 path = "lib.rs"
