@@ -13,7 +13,7 @@ use snafu::{ensure, OptionExt, ResultExt};
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 use tough::editor::RepositoryEditor;
 use tough::key_source::{KeySource, LocalKeySource};
 use tough::{ExpirationEnforcement, RepositoryLoader};

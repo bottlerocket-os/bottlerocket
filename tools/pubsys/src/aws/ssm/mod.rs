@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::iter::FromIterator;
 use std::path::PathBuf;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 
 /// Sets SSM parameters based on current build information
 #[derive(Debug, StructOpt)]

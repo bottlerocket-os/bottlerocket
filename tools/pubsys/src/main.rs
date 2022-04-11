@@ -32,7 +32,7 @@ use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::path::PathBuf;
 use std::process;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 use tokio::runtime::Runtime;
 
 fn run() -> Result<()> {

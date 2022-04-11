@@ -20,7 +20,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::iter::FromIterator;
 use std::path::PathBuf;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 
 /// Grants or revokes permissions to Bottlerocket AMIs
 #[derive(Debug, StructOpt)]

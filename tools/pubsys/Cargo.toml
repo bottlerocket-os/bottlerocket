@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 async-trait = "0.1.53"
 chrono = "0.4"
-clap = "2.33"
+clap = "3.1"
 coldsnap = { version = "0.3", default-features = false, features = ["rusoto-rustls"]}
 duct = "0.13.0"
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }

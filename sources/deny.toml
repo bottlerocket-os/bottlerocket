@@ -56,7 +56,7 @@ skip = [
     { name = "nix", version = "0.22.0" },
 
     # newer version used by model-derive and darling
-    # older version used by clap 2.33.3, via cargo-readme and structopt
+    # older version used by clap 2.34.0, via cargo-readme
     { name = "strsim", version = "0.8.0" },
 
     # older version used by webpki-roots 0.21.1
