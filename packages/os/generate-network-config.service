@@ -1,0 +1,15 @@
+[Unit]
+Description=Generate network configuration
+# Block manual interactions with this service, since it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/netdog generate-net-config
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=network-pre.target

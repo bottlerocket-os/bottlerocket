@@ -13,6 +13,8 @@ exclude = ["README.md"]
 kernel-parameters = [
     "console=tty0",
     "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
 ]
 included-packages = [
     "aws-iam-authenticator",
