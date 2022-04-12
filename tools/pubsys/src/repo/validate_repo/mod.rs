@@ -11,7 +11,7 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 use std::sync::mpsc;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 use tough::{Repository, RepositoryLoader};
 use url::Url;
 

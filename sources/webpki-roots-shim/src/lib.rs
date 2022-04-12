@@ -29,7 +29,13 @@ lazy_static::lazy_static! {
 fn tls_server_roots_pem() -> Vec<Pem> {
     match std::fs::read(&*CERT_PATH) {
         Ok(data) => {
-            let mut v = pem::parse_many(&data);
+            let mut v = match pem::parse_many(&data) {
+                Ok(v) => v,
+                Err(err) => {
+                    error!("failed to parse {}: {}", CERT_PATH.display(), err);
+                    Vec::new()
+                }
+            };
             v.shrink_to_fit();
             v
         }

@@ -12,7 +12,7 @@ use serde::Serialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fs;
 use std::path::PathBuf;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 use tempfile::NamedTempFile;
 use tinytemplate::TinyTemplate;
 

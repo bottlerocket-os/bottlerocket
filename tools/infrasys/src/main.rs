@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::{fs, process};
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 use tokio::runtime::Runtime;
 use url::Url;
 

@@ -7,10 +7,10 @@ edition = "2018"
 publish = false
 
 [dependencies]
-async-trait = "0.1.53"  
-clap = "2.33"  
+async-trait = "0.1.53"
+clap = "3.1"
 hex = "0.4.0"
-log = "0.4.14"  
+log = "0.4.14"
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 rusoto_cloudformation = { version = "0.47", default-features = false, features = ["rustls"] }
 rusoto_core = { version = "0.47", default-features = false, features = ["rustls"] }
@@ -18,10 +18,10 @@ rusoto_s3 = { version = "0.47", default-features = false, features = ["rustls"] 
 serde_json = "1.0.66"
 serde_yaml = "0.8.17"
 sha2 = "0.10"
-shell-words = "1.0.0" 
+shell-words = "1.0.0"
 simplelog = "0.11"
 snafu = "0.7"
-structopt = { version = "0.3", default-features = false }  
+structopt = { version = "0.3", default-features = false }
 tokio = { version = "~1.8", default-features = false, features = ["macros", "rt-multi-thread"] } # LTS
 toml = "0.5"
 url = "2.2.2"

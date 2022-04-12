@@ -12,7 +12,7 @@ use rusoto_ssm::SsmClient;
 use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 
 /// Copies sets of SSM parameters
 #[derive(Debug, StructOpt)]

@@ -24,7 +24,7 @@ use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::PathBuf;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 use wait::wait_for_ami;
 
 /// Builds Bottlerocket AMIs using latest build artifacts

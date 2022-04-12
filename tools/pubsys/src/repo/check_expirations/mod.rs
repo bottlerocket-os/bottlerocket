@@ -11,7 +11,7 @@ use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
-use structopt::StructOpt;
+use structopt::{clap, StructOpt};
 use tough::{ExpirationEnforcement, Repository, RepositoryLoader};
 use url::Url;
 
