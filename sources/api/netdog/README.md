@@ -14,6 +14,16 @@ It contains two subcommands meant for use as settings generators:
 
 The subcommand `set-hostname` sets the hostname for the system.
 
+The subcommand `generate-net-config` generates the network interface configuration for the host. If
+a `net.toml` file exists in `/var/lib/bottlerocket`, it is used to generate the configuration. If
+`net.toml` doesn't exist, the kernel command line `/proc/cmdline` is checked for the prefix
+`netdog.default-interface`.  If an interface is defined with that prefix, it is used to generate an
+interface configuration.  A single default interface may be defined on the kernel command line with
+the format: `netdog.default-interface=interface-name:option1,option2`.  "interface-name" is the
+name of the interface, and valid options are "dhcp4" and "dhcp6".  A "?" may be added to the option
+to signify that the lease for the protocol is optional and the system shouldn't wait for it.  A
+valid example: `netdog.default-interface=eno1:dhcp4,dhcp6?`.
+
 ## Colophon
 
 This text was generated using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/main.rs`.

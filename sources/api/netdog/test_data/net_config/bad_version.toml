@@ -1,0 +1,26 @@
+version = 50
+
+[eno1]
+dhcp4 = true
+
+[eno2]
+dhcp6 = true
+
+[eno3]
+dhcp4 = true
+dhcp6 = false
+
+[eno4]
+dhcp4 = false
+dhcp6 = true
+
+[eno5]
+dhcp4 = true
+dhcp6 = true
+
+[eno6.dhcp4]
+enabled = true
+route-metric = 100
+
+[eno6]
+dhcp6 = false
