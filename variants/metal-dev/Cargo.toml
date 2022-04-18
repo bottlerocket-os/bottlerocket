@@ -14,8 +14,6 @@ partition-plan = "unified"
 image-format = "raw"
 supported-arches = ["x86_64"]
 kernel-parameters = [
-    "console=tty0",
-    "console=ttyS1,115200n8",
     # Only reserve if there are at least 2GB
     "crashkernel=2G-:256M"
 ]

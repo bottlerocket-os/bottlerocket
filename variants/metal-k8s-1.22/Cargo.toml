@@ -16,8 +16,6 @@ partition-plan = "unified"
 [package.metadata.build-variant]
 image-format = "raw"
 kernel-parameters = [
-    "console=tty0",
-    "console=ttyS1,115200n8",
     # Only reserve if there are at least 2GB
     "crashkernel=2G-:256M"
 ]
