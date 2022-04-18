@@ -84,7 +84,7 @@ docker run --rm \
   --security-opt label:disable \
   ${DOCKER_RUN_ARGS} \
   -v "${GO_MOD_CACHE}":/tmp/go/pkg/mod \
-  -v "${GO_MODULE_PATH}":/usr/src/host-ctr \
-  -w /usr/src/host-ctr \
+  -v "${GO_MODULE_PATH}":/usr/src/module \
+  -w /usr/src/module \
   "${SDK_IMAGE}" \
     bash -c "${COMMAND}"
