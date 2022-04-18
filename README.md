@@ -55,6 +55,7 @@ The following variants support EKS, as described above:
 - `aws-k8s-1.20`
 - `aws-k8s-1.21`
 - `aws-k8s-1.21-nvidia`
+- `aws-k8s-1.22-nvidia`
 
 The following variant supports ECS:
 
@@ -739,6 +740,11 @@ There are a few important caveats about the provided kdump support:
 * Currently, only vmware variants have kdump support enabled
 * The system kernel will reserve 256MB for the crash kernel, only when the host has at least 2GB of memory; the reserved space won't be available for processes running in the host
 * The crash kernel will only be loaded when the `crashkernel` parameter is present in the kernel's cmdline and if there is memory reserved for it
+
+### NVIDIA GPUs Support
+Bottlerocket's `nvidia` variants include the required packages and configurations to leverage NVIDIA GPUs.
+The official AMIs for these variants can be used with EC2 GPU-equipped instance types such as: `p2`, `p3`, `p4`, `g4dn`, `g5` and `g5g`.
+Please see [QUICKSTART-EKS](QUICKSTART-EKS.md#aws-k8s--nvidia-variants) for further details about kubernetes variants.
 
 ## Details
 
