@@ -744,7 +744,7 @@ There are a few important caveats about the provided kdump support:
 ### NVIDIA GPUs Support
 Bottlerocket's `nvidia` variants include the required packages and configurations to leverage NVIDIA GPUs.
 The official AMIs for these variants can be used with EC2 GPU-equipped instance types such as: `p2`, `p3`, `p4`, `g4dn`, `g5` and `g5g`.
-Please see [QUICKSTART-EKS](QUICKSTART-EKS.md#aws-k8s--nvidia-variants) for further details about kubernetes variants.
+Please see [QUICKSTART-EKS](QUICKSTART-EKS.md#aws-k8s--nvidia-variants) for further details about Kubernetes variants.
 
 ## Details
 
