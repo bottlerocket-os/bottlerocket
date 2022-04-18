@@ -11,7 +11,26 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2021-08-31T18:22:52Z
+# This file was generated at 2022-02-15T18:47:49Z
+#
+# The regions queried were:
+# - ap-northeast-1
+# - ap-northeast-2
+# - ap-northeast-3
+# - ap-south-1
+# - ap-southeast-1
+# - ap-southeast-2
+# - ca-central-1
+# - eu-central-1
+# - eu-north-1
+# - eu-west-1
+# - eu-west-2
+# - eu-west-3
+# - sa-east-1
+# - us-east-1
+# - us-east-2
+# - us-west-1
+# - us-west-2
 #
 # Mapping is calculated from AWS EC2 API using the following formula:
 # * First IP on each ENI is not used for pods
@@ -82,6 +101,16 @@ c5n.9xlarge 234
 c5n.large 29
 c5n.metal 737
 c5n.xlarge 58
+c6a.12xlarge 234
+c6a.16xlarge 737
+c6a.24xlarge 737
+c6a.2xlarge 58
+c6a.32xlarge 737
+c6a.48xlarge 737
+c6a.4xlarge 234
+c6a.8xlarge 234
+c6a.large 29
+c6a.xlarge 58
 c6g.12xlarge 234
 c6g.16xlarge 737
 c6g.2xlarge 58
@@ -108,6 +137,16 @@ c6gn.8xlarge 234
 c6gn.large 29
 c6gn.medium 8
 c6gn.xlarge 58
+c6i.12xlarge 234
+c6i.16xlarge 737
+c6i.24xlarge 737
+c6i.2xlarge 58
+c6i.32xlarge 737
+c6i.4xlarge 234
+c6i.8xlarge 234
+c6i.large 29
+c6i.metal 737
+c6i.xlarge 58
 cc2.8xlarge 234
 cr1.8xlarge 234
 d2.2xlarge 58
@@ -124,6 +163,7 @@ d3en.4xlarge 38
 d3en.6xlarge 58
 d3en.8xlarge 78
 d3en.xlarge 10
+dl1.24xlarge 737
 f1.16xlarge 394
 f1.2xlarge 58
 f1.4xlarge 234
@@ -145,10 +185,25 @@ g4dn.4xlarge 29
 g4dn.8xlarge 58
 g4dn.metal 737
 g4dn.xlarge 29
+g5.12xlarge 737
+g5.16xlarge 234
+g5.24xlarge 737
+g5.2xlarge 58
+g5.48xlarge 737
+g5.4xlarge 234
+g5.8xlarge 234
+g5.xlarge 58
+g5g.16xlarge 737
+g5g.2xlarge 58
+g5g.4xlarge 234
+g5g.8xlarge 234
+g5g.metal 737
+g5g.xlarge 58
 h1.16xlarge 737
 h1.2xlarge 58
 h1.4xlarge 234
 h1.8xlarge 234
+hpc6a.48xlarge 100
 hs1.8xlarge 234
 i2.2xlarge 58
 i2.4xlarge 234
@@ -169,10 +224,22 @@ i3en.6xlarge 234
 i3en.large 29
 i3en.metal 737
 i3en.xlarge 58
+im4gn.16xlarge 737
+im4gn.2xlarge 58
+im4gn.4xlarge 234
+im4gn.8xlarge 234
+im4gn.large 29
+im4gn.xlarge 58
 inf1.24xlarge 321
 inf1.2xlarge 38
 inf1.6xlarge 234
 inf1.xlarge 38
+is4gen.2xlarge 58
+is4gen.4xlarge 234
+is4gen.8xlarge 234
+is4gen.large 29
+is4gen.medium 8
+is4gen.xlarge 58
 m1.large 29
 m1.medium 12
 m1.small 8
@@ -249,6 +316,16 @@ m5zn.6xlarge 234
 m5zn.large 29
 m5zn.metal 737
 m5zn.xlarge 58
+m6a.12xlarge 234
+m6a.16xlarge 737
+m6a.24xlarge 737
+m6a.2xlarge 58
+m6a.32xlarge 737
+m6a.48xlarge 737
+m6a.4xlarge 234
+m6a.8xlarge 234
+m6a.large 29
+m6a.xlarge 58
 m6g.12xlarge 234
 m6g.16xlarge 737
 m6g.2xlarge 58
@@ -275,6 +352,7 @@ m6i.32xlarge 737
 m6i.4xlarge 234
 m6i.8xlarge 234
 m6i.large 29
+m6i.metal 737
 m6i.xlarge 58
 mac1.metal 234
 p2.16xlarge 234
@@ -375,6 +453,16 @@ r6gd.large 29
 r6gd.medium 8
 r6gd.metal 737
 r6gd.xlarge 58
+r6i.12xlarge 234
+r6i.16xlarge 737
+r6i.24xlarge 737
+r6i.2xlarge 58
+r6i.32xlarge 737
+r6i.4xlarge 234
+r6i.8xlarge 234
+r6i.large 29
+r6i.metal 737
+r6i.xlarge 58
 t1.micro 4
 t2.2xlarge 44
 t2.large 35
@@ -408,11 +496,15 @@ u-12tb1.112xlarge 737
 u-12tb1.metal 147
 u-18tb1.metal 737
 u-24tb1.metal 737
+u-3tb1.56xlarge 234
 u-6tb1.112xlarge 737
 u-6tb1.56xlarge 737
 u-6tb1.metal 147
 u-9tb1.112xlarge 737
 u-9tb1.metal 147
+vt1.24xlarge 737
+vt1.3xlarge 58
+vt1.6xlarge 234
 x1.16xlarge 234
 x1.32xlarge 234
 x1e.16xlarge 234
@@ -430,6 +522,12 @@ x2gd.large 29
 x2gd.medium 8
 x2gd.metal 737
 x2gd.xlarge 58
+x2iezn.12xlarge 737
+x2iezn.2xlarge 58
+x2iezn.4xlarge 234
+x2iezn.6xlarge 234
+x2iezn.8xlarge 234
+x2iezn.metal 737
 z1d.12xlarge 737
 z1d.2xlarge 58
 z1d.3xlarge 234
