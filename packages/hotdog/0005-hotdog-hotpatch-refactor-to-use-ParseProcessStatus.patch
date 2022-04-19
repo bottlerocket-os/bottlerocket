@@ -1,0 +1,181 @@
+From a88b805ea5f4b41330e7c8473ee11cafc6a5c1c2 Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Fri, 4 Feb 2022 02:14:02 +0000
+Subject: [PATCH 5/9] hotdog-hotpatch: refactor to use ParseProcessStatus
+
+The `process` package already has a function to parse the
+`/proc/<pid>/status` file. The function was extended to store both the
+UID and the GID.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Samuel Karp <skarp@amazon.com>
+---
+ cmd/hotdog-hotpatch/main.go | 51 +++++--------------------------------
+ process/utils.go            | 30 +++++++++++++++++++---
+ 2 files changed, 33 insertions(+), 48 deletions(-)
+
+diff --git a/cmd/hotdog-hotpatch/main.go b/cmd/hotdog-hotpatch/main.go
+index 711eb62..c62109b 100644
+--- a/cmd/hotdog-hotpatch/main.go
++++ b/cmd/hotdog-hotpatch/main.go
+@@ -1,7 +1,6 @@
+ package main
+ 
+ import (
+-	"bufio"
+ 	"bytes"
+ 	"encoding/json"
+ 	"errors"
+@@ -18,6 +17,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/bottlerocket/hotdog"
++	"github.com/bottlerocket/hotdog/process"
+ 	"github.com/bottlerocket/hotdog/seccomp"
+ 
+ 	"github.com/opencontainers/runtime-spec/specs-go"
+@@ -219,11 +219,12 @@ func findJVMs() []*jvm {
+ 			logger.Printf("Failed to readlink for %d", pid)
+ 			continue
+ 		}
+-		euid, egid, err := findEUID(pid)
++		status, err := process.ParseProcessStatus(pid)
+ 		if err != nil {
+ 			logger.Printf("Failed to find EUID for %d: %v", pid, err)
++			continue
+ 		}
+-		versionOut, err := commandDroppedPrivs(exePath, []string{"-version"}, euid, egid, pid)
++		versionOut, err := commandDroppedPrivs(exePath, []string{"-version"}, status.Uid, status.Gid, pid)
+ 		if err != nil {
+ 			logger.Printf("Failed to execute %q for %d: %v, %q", "java -version", pid, err, string(versionOut))
+ 			continue
+@@ -231,8 +232,8 @@ func findJVMs() []*jvm {
+ 		jvms = append(jvms, &jvm{
+ 			pid:     pid,
+ 			path:    exePath,
+-			euid:    euid,
+-			egid:    egid,
++			euid:    status.Uid,
++			egid:    status.Gid,
+ 			version: string(versionOut),
+ 		})
+ 	}
+@@ -320,46 +321,6 @@ func commandDroppedPrivs(name string, arg []string, uid, gid, targetPID int) ([]
+ 	return versionOut, err
+ }
+ 
+-func findEUID(pid int) (int, int, error) {
+-	status, err := os.OpenFile(filepath.Join("/proc", strconv.Itoa(pid), "status"), os.O_RDONLY, 0)
+-	if err != nil {
+-		return 0, 0, err
+-	}
+-	defer status.Close()
+-	scanner := bufio.NewScanner(status)
+-	var (
+-		uidLine string
+-		gidLine string
+-	)
+-	for scanner.Scan() {
+-		if strings.HasPrefix(scanner.Text(), "Uid:") {
+-			uidLine = scanner.Text()
+-		}
+-		if strings.HasPrefix(scanner.Text(), "Gid:") {
+-			gidLine = scanner.Text()
+-		}
+-		if uidLine != "" && gidLine != "" {
+-			break
+-		}
+-	}
+-	if uidLine == "" || gidLine == "" {
+-		return 0, 0, errors.New("not found")
+-	}
+-	uidLine = strings.TrimPrefix(uidLine, "Uid:\t")
+-	uidStr := strings.SplitN(uidLine, "\t", 2)[0]
+-	uid, err := strconv.Atoi(uidStr)
+-	if err != nil {
+-		return 0, 0, err
+-	}
+-	gidLine = strings.TrimPrefix(gidLine, "Gid:\t")
+-	gidStr := strings.SplitN(gidLine, "\t", 2)[0]
+-	gid, err := strconv.Atoi(gidStr)
+-	if err != nil {
+-		return 0, 0, err
+-	}
+-	return uid, gid, nil
+-}
+-
+ func runHotpatch(j *jvm) error {
+ 	version, ok := findVersion(j)
+ 	if !ok {
+diff --git a/process/utils.go b/process/utils.go
+index dad4a7f..5f75807 100644
+--- a/process/utils.go
++++ b/process/utils.go
+@@ -11,12 +11,16 @@ import (
+ const (
+ 	seccompStatus  = "Seccomp:"
+ 	seccompFilters = "Seccomp_filters:"
++	uid            = "Uid:"
++	gid            = "Gid:"
+ )
+ 
+ // ProcessStatus represents a process status
+ type ProcessStatus struct {
+ 	State   int
+ 	Filters int
++	Uid     int
++	Gid     int
+ }
+ 
+ // ParseProcessStatus reads the '/proc/<pid>/status' file to retrieve
+@@ -28,7 +32,7 @@ func ParseProcessStatus(targetPID int) (*ProcessStatus, error) {
+ 	}
+ 	defer f.Close()
+ 	s := bufio.NewScanner(f)
+-	var filtersLine, stateLine string
++	var filtersLine, stateLine, uidLine, gidLine string
+ 
+ 	for s.Scan() {
+ 		text := s.Text()
+@@ -37,8 +41,12 @@ func ParseProcessStatus(targetPID int) (*ProcessStatus, error) {
+ 			stateLine = strings.TrimSpace(text[len(seccompStatus):])
+ 		case strings.Contains(text, seccompFilters):
+ 			filtersLine = strings.TrimSpace(text[len(seccompFilters):])
++		case strings.Contains(text, uid):
++			uidLine = text[len(uid):]
++		case strings.Contains(text, gid):
++			gidLine = text[len(gid):]
+ 		}
+-		if filtersLine != "" && stateLine != "" {
++		if filtersLine != "" && stateLine != "" && uidLine != "" && gidLine != "" {
+ 			break
+ 		}
+ 	}
+@@ -51,6 +59,22 @@ func ParseProcessStatus(targetPID int) (*ProcessStatus, error) {
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	puid, err := parseIdLine(uidLine)
++	if err != nil {
++		return nil, err
++	}
++	pgid, err := parseIdLine(gidLine)
++	if err != nil {
++		return nil, err
++	}
++
++	return &ProcessStatus{State: state, Filters: filters, Uid: puid, Gid: pgid}, nil
++}
+ 
+-	return &ProcessStatus{State: state, Filters: filters}, nil
++// parseIdLine parses "Id"-like lines, read from the file
++// `/proc/<pid>/status`
++func parseIdLine(line string) (int, error) {
++	line = strings.TrimSpace(line)
++	str := strings.SplitN(line, "\t", 2)[0]
++	return strconv.Atoi(str)
+ }
+-- 
+2.33.1
+

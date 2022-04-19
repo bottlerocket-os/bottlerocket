@@ -1,0 +1,52 @@
+From 71ac992149a17862a495552f38e747a6d297fb43 Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Thu, 3 Feb 2022 22:55:40 +0000
+Subject: [PATCH 3/9] poststart-hook: set `NO_NEW_PRIVS` in poststart process
+
+The `NO_NEW_PRIVS` flag will prevent the poststart process and its
+children from getting more privileges than what they were granted.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Reviewed-by: Ben Cressey <bcressey@amazon.com>
+Reviewed-by: Samuel Karp <skarp@amazon.com>
+---
+ cmd/hotdog-poststart-hook/main.go | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/cmd/hotdog-poststart-hook/main.go b/cmd/hotdog-poststart-hook/main.go
+index fc5d9d1..ac9d33c 100644
+--- a/cmd/hotdog-poststart-hook/main.go
++++ b/cmd/hotdog-poststart-hook/main.go
+@@ -13,6 +13,7 @@ import (
+ 
+ 	"github.com/opencontainers/runtime-spec/specs-go"
+ 	"github.com/opencontainers/selinux/go-selinux"
++	"golang.org/x/sys/unix"
+ )
+ 
+ func main() {
+@@ -57,8 +58,10 @@ func _main() error {
+ 	return nil
+ }
+ 
+-// constrainProcess sets the SELinux label of the running process, and changes
+-// its cgroups to be the same as the target container.
++// constrainProcess sets the SELinux label of the running process, changes
++// its cgroups to be the same as the target container, and sets the
++// `NO_NEW_PRIVS` flags to prevent the current process to get more
++// privileges.
+ func constrainProcess(spec specs.Spec, targetPID string) error {
+ 	if err := cgroups.EnterCgroups(targetPID); err != nil {
+ 		return err
+@@ -68,5 +71,8 @@ func constrainProcess(spec specs.Spec, targetPID string) error {
+ 			return err
+ 		}
+ 	}
++	if err := unix.Prctl(unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0); err != nil {
++		return err
++	}
+ 	return nil
+ }
+-- 
+2.33.1
+

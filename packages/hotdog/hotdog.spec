@@ -30,6 +30,15 @@ Source1: https://github.com/opencontainers/runtime-spec/archive/v%{runtimespec}/
 Source2: https://github.com/golang/sys/archive/%{gosysrev}/sys-%{gosysrevshort}.tar.gz
 Source3: https://github.com/opencontainers/selinux/archive/refs/tags/v%{goselinux}.tar.gz#/go-selinux-v%{goselinux}.tar.gz
 Source4: https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v%{libcap}.tar.gz#/libcap-v%{libcap}.tar.gz
+Patch0001: 0001-poststart-hook-silently-exit-under-certain-condition.patch
+Patch0002: 0002-poststart-hook-enter-container-s-cgroups.patch
+Patch0003: 0003-poststart-hook-set-NO_NEW_PRIVS-in-poststart-process.patch
+Patch0004: 0004-hotdog-hotpatch-set-seccomp-filter-for-child-process.patch
+Patch0005: 0005-hotdog-hotpatch-refactor-to-use-ParseProcessStatus.patch
+Patch0006: 0006-hotdog-cc-hook-change-executable-permissions.patch
+Patch0007: 0007-hotdog-hotpatch-constrain-hook-s-file-descriptors.patch
+Patch0008: 0008-poststart-hook-hotdog-cc-hook-ensure-hotpatch-files-.patch
+Patch0009: 0009-seccomp-read-all-filters-after-ptrace-interrupt.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}log4j2-hotpatch

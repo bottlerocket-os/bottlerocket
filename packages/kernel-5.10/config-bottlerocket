@@ -120,3 +120,6 @@ CONFIG_IPMI_HANDLER=m
 
 # Add support for bootconfig
 CONFIG_BOOT_CONFIG=y
+
+# Enables support for checkpoint/restore
+CONFIG_CHECKPOINT_RESTORE=y
