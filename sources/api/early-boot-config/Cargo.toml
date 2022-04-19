@@ -11,7 +11,7 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient", version = "0.1.0" }
-async-trait = "0.1.36"
+async-trait = "0.1.53"
 base64 = "0.13"
 constants = { path = "../../constants", version = "0.1.0" }
 flate2 = { version = "1.0", default-features = false, features = ["rust_backend"] }
