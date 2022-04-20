@@ -20,7 +20,6 @@ Source3: nvidia-oci-hooks-json
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}libnvidia-container
 Requires: %{_cross_os}shimpei
-Requires: %{_cross_os}nvidia-k8s-device-plugin
 
 %description
 %{summary}.

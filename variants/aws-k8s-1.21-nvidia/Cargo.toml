@@ -21,6 +21,7 @@ included-packages = [
     "kubelet-1.21",
     "release",
     "nvidia-container-toolkit",
+    "nvidia-k8s-device-plugin",
     "kmod-5.10-nvidia-tesla-470"
 ]
 kernel-parameters = [
@@ -39,4 +40,5 @@ kernel-5_10 = { path = "../../packages/kernel-5.10" }
 kubernetes-1_21 = { path = "../../packages/kubernetes-1.21" }
 release = { path = "../../packages/release" }
 nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
+nvidia-k8s-device-plugin = { path = "../../packages/nvidia-k8s-device-plugin" }
 kmod-5_10-nvidia = { path = "../../packages/kmod-5.10-nvidia" }
