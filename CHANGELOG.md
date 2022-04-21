@@ -1,3 +1,20 @@
+# v1.7.2 (2022-04-22)
+
+## Security Fixes
+
+* Update kernel-5.4 to patch CVE-2022-1015, CVE-2022-1016, CVE-2022-25636, CVE-2022-26490, CVE-2022-27666, CVE-2022-28356 ([a3b4674f7108][a3b4674f7108])
+* Update kernel-5.10 to patch CVE-2022-1015, CVE-2022-1016, CVE-2022-25636, CVE-2022-1048, CVE-2022-26490, CVE-2022-27666, CVE-2022-28356 ([37095415bab6][37095415bab6])
+
+## OS Changes
+
+* Update eni-max-pods with new instance types ([#2079])
+* Add support for AWS region ap-southeast-3: Jakarta ([#2080])
+
+[a3b4674f7108]: https://github.com/bottlerocket-os/bottlerocket/commit/a3b4674f7108a7f69f108a011042be2a5b91e563
+[37095415bab6]: https://github.com/bottlerocket-os/bottlerocket/commit/37095415bab67a24240d95b59c7bf20a112d7ae1
+[#2079]: https://github.com/bottlerocket-os/bottlerocket/pull/2079
+[#2080]: https://github.com/bottlerocket-os/bottlerocket/pull/2080
+
 # v1.7.1 (2022-04-05)
 
 ## Security Fixes
