@@ -1,5 +1,6 @@
 %global _cross_first_party 1
 %global _is_k8s_variant %(if echo %{_cross_variant} | grep -Fqw "k8s"; then echo 1; else echo 0; fi)
+%global _is_ecs_variant %(if echo %{_cross_variant} | grep -Fqw "ecs"; then echo 1; else echo 0; fi)
 %global _is_aws_variant %(if echo %{_cross_variant} | grep -Fqw "aws"; then echo 1; else echo 0; fi)
 %global _is_vendor_variant %(if echo %{_cross_variant} | grep -Fqw "nvidia"; then echo 1; else echo 0; fi)
 %undefine _debugsource_packages
@@ -94,7 +95,7 @@ Requires: %{_cross_os}shibaken
 Requires: %{_cross_os}cfsignal
 %endif
 
-%if "%{_cross_variant}" == "aws-ecs-1"
+%if %{_is_ecs_variant}
 Requires: %{_cross_os}ecs-settings-applier
 %endif
 
@@ -227,7 +228,7 @@ Summary: Bottlerocket certificates handler
 %description -n %{_cross_os}certdog
 %{summary}.
 
-%if "%{_cross_variant}" == "aws-ecs-1"
+%if %{_is_ecs_variant}
 %package -n %{_cross_os}ecs-settings-applier
 Summary: Settings generator for ECS
 %description -n %{_cross_os}ecs-settings-applier
@@ -340,7 +341,7 @@ echo "** Output from non-static builds:"
     -p prairiedog \
     -p certdog \
     -p shimpei \
-%if "%{_cross_variant}" == "aws-ecs-1"
+%if %{_is_ecs_variant}
     -p ecs-settings-applier \
 %endif
 %if %{_is_aws_variant}
@@ -377,7 +378,7 @@ for p in \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
   shimpei \
-%if "%{_cross_variant}" == "aws-ecs-1"
+%if %{_is_ecs_variant}
   ecs-settings-applier \
 %endif
 %if %{_is_aws_variant}
@@ -562,7 +563,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog
 
-%if "%{_cross_variant}" == "aws-ecs-1"
+%if %{_is_ecs_variant}
 %files -n %{_cross_os}ecs-settings-applier
 %{_cross_bindir}/ecs-settings-applier
 %endif

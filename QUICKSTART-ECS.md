@@ -220,3 +220,25 @@ aws ec2 run-instances --key-name YOUR_KEY_NAME \
 And remember, if you used a public subnet, add `--associate-public-ip-address` or attach an Elastic IP after launch.
 
 Once it launches, you should be able to run tasks on your Bottlerocket instance using the ECS API and console.
+
+
+### aws-ecs-*-nvidia variants
+
+The `aws-ecs-*-nvidia` variants include the required packages and configurations to leverage NVIDIA GPUs.
+They come with the [NVIDIA Tesla driver](https://docs.nvidia.com/datacenter/tesla/drivers/index.html) along with the libraries required by the [CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) included in your ECS tasks.
+In hosts with multiple GPUs (ex. EC2 `g4dn` instances) you can assign one or multiple GPUs per container by specifying the resource requirements in your container definitions as described in the [official ECS documentation](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-gpu.html):
+
+```json
+{
+  "containerDefinitions": [
+     {
+        "resourceRequirements" : [
+            {
+               "type" : "GPU",
+               "value" : "2"
+            }
+        ]
+     }
+  ]
+}
+```
