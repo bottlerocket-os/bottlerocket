@@ -23,6 +23,7 @@ members = [
     "api/migration/migrator",
     "api/migration/migration-helpers",
     "api/shibaken",
+    "api/prairiedog",
 
     # "api/migration/migrations/vX.Y.Z/..."
     "api/migration/migrations/v1.3.0/etc-hosts-service",
@@ -57,8 +58,6 @@ members = [
     "ghostdog",
 
     "growpart",
-
-    "prairiedog",
 
     "metricdog",
 

@@ -2,11 +2,15 @@
 
 Current version: 0.1.0
 
-  prairiedog is a tool to provide kdump support in Bottlerocket. It performs three operations:
+  prairiedog is a tool for providing kernel boot related support in Bottlerocket.
 
+It does the following:
   - _digs_ to find the active boot partition and mounts it in /boot
   - loads the crash kernel from /boot
   - creates memory dumps when the kernel panics
+  - generates kernel boot config from settings
+  - generates settings from the existing kernel boot config file
+
 
 ## Colophon
 

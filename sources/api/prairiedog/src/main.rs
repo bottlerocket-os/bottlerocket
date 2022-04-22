@@ -1,9 +1,13 @@
 /*!
-  prairiedog is a tool to provide kdump support in Bottlerocket. It performs three operations:
+  prairiedog is a tool for providing kernel boot related support in Bottlerocket.
 
+It does the following:
   - _digs_ to find the active boot partition and mounts it in /boot
   - loads the crash kernel from /boot
   - creates memory dumps when the kernel panics
+  - generates kernel boot config from settings
+  - generates settings from the existing kernel boot config file
+
 */
 
 #![deny(rust_2018_idioms)]
@@ -11,15 +15,19 @@
 #[macro_use]
 extern crate log;
 
+use crate::bootconfig::{generate_boot_config, generate_boot_settings};
+use crate::error::Result;
 use argh::FromArgs;
-use nix;
-use signpost;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger, WriteLogger};
 use snafu::{ensure, ResultExt};
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::path::Path;
 use std::process::{self, Command};
+
+mod bootconfig;
+mod error;
+mod initrd;
 
 // Kdump related binary paths
 const MAKEDUMPFILE_PATH: &str = "/sbin/makedumpfile";
@@ -49,9 +57,12 @@ const NONE: Option<&'static [u8]> = None;
 /// Stores arguments
 #[derive(FromArgs, PartialEq, Debug)]
 struct Args {
+    #[argh(option, default = "LevelFilter::Info", short = 'l')]
     /// log-level trace|debug|info|warn|error
-    #[argh(option)]
-    log_level: Option<LevelFilter>,
+    log_level: LevelFilter,
+    #[argh(option, default = "constants::API_SOCKET.to_string()", short = 's')]
+    /// socket-path path to apiserver socket
+    socket_path: String,
     #[argh(subcommand)]
     subcommand: Subcommand,
 }
@@ -63,6 +74,8 @@ enum Subcommand {
     PrepareBoot(PrepareBootArgs),
     CaptureDump(CaptureDumpArgs),
     LoadCrashKernel(LoadCrashKernelArgs),
+    GenerateBootConfig(GenerateBootConfigArgs),
+    GenerateBootSettings(GenerateBootSettingsArgs),
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -79,6 +92,16 @@ struct CaptureDumpArgs {}
 #[argh(subcommand, name = "load-crash-kernel")]
 /// Loads the crash kernel with kexec
 struct LoadCrashKernelArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "generate-boot-config")]
+/// Generate boot configuration from settings
+pub(crate) struct GenerateBootConfigArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "generate-boot-settings")]
+/// Generate boot settings from existing boot configuration
+pub(crate) struct GenerateBootSettingsArgs {}
 
 /// Wrapper around process::Command that adds error checking.
 fn command<I, S>(bin_path: &str, args: I) -> Result<()>
@@ -254,7 +277,6 @@ fn load_crash_kernel() -> Result<()> {
 }
 
 fn setup_logger(args: &Args) -> Result<()> {
-    let log_level = args.log_level.unwrap_or(LevelFilter::Info);
     match args.subcommand {
         // Write the logs to a file while capturing dumps, since the journal isn't available
         Subcommand::CaptureDump(_) => {
@@ -263,17 +285,19 @@ fn setup_logger(args: &Args) -> Result<()> {
                 path: log_file_path,
             })?;
 
-            WriteLogger::init(log_level, LogConfig::default(), log_file)
+            WriteLogger::init(args.log_level, LogConfig::default(), log_file)
                 .context(error::LoggerSnafu)?;
         }
         // SimpleLogger will send errors to stderr and anything less to stdout.
-        _ => SimpleLogger::init(log_level, LogConfig::default()).context(error::LoggerSnafu)?,
+        _ => {
+            SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?
+        }
     }
 
     Ok(())
 }
 
-fn run() -> Result<()> {
+async fn run() -> Result<()> {
     let args: Args = argh::from_env();
     setup_logger(&args)?;
 
@@ -281,76 +305,15 @@ fn run() -> Result<()> {
         Subcommand::CaptureDump(_) => capture_dump(),
         Subcommand::PrepareBoot(_) => prepare_boot(),
         Subcommand::LoadCrashKernel(_) => load_crash_kernel(),
+        Subcommand::GenerateBootConfig(_) => generate_boot_config(args.socket_path).await,
+        Subcommand::GenerateBootSettings(_) => generate_boot_settings().await,
     }
 }
 
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         error!("{}", e);
         process::exit(1);
     }
 }
-
-/// ＜コ：ミ くコ:彡 ＜コ：ミ くコ:彡 ＜コ：ミ くコ:彡 ＜コ：ミ くコ:彡 ＜コ：ミ くコ:彡 ＜コ：ミ くコ:彡
-mod error {
-    use nix;
-    use signpost::Error as SignpostError;
-    use snafu::Snafu;
-    use std::path::PathBuf;
-    use std::process::{Command, Output};
-
-    #[derive(Debug, Snafu)]
-    #[snafu(visibility(pub(super)))]
-    pub(super) enum Error {
-        #[snafu(display("'{}' failed - stderr: {}",
-                        bin_path, String::from_utf8_lossy(&output.stderr)))]
-        CommandFailure { bin_path: String, output: Output },
-
-        #[snafu(display("Failed to execute '{:?}': {}", command, source))]
-        ExecutionFailure {
-            command: Command,
-            source: std::io::Error,
-        },
-
-        #[snafu(display("Kexec load syscalls are disabled, please make sure the value of `kernel.kexec_load_disabled` is 0"))]
-        KexecLoadDisabled,
-
-        #[snafu(display("Failed to load partitions state: {}", source))]
-        LoadState { source: SignpostError },
-
-        #[snafu(display("Failed to setup logger: {}", source))]
-        Logger { source: log::SetLoggerError },
-
-        #[snafu(display("Invalid log level '{}'", log_level))]
-        LogLevel {
-            log_level: String,
-            source: log::ParseLevelError,
-        },
-
-        #[snafu(display("Failed to create mount '{}': '{}'", path, source))]
-        Mount { path: String, source: nix::Error },
-
-        #[snafu(display("Failed to delete file '{}': '{}'", path, source))]
-        RemoveFile {
-            path: String,
-            source: std::io::Error,
-        },
-
-        #[snafu(display("Failed to read from file '{}': {}", path.display(), source))]
-        ReadFile {
-            source: std::io::Error,
-            path: PathBuf,
-        },
-
-        #[snafu(display("Failed to setup mount '{}': '{}'", path, source))]
-        SetupMount { path: String, source: nix::Error },
-
-        #[snafu(display("Failed to write to file '{}': {}", path.display(), source))]
-        WriteFile {
-            source: std::io::Error,
-            path: PathBuf,
-        },
-    }
-}
-
-type Result<T> = std::result::Result<T, error::Error>;
