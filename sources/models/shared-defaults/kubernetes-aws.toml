@@ -13,7 +13,7 @@ affected-services = ["kubernetes"]
 
 [metadata.settings.kubernetes.pod-infra-container-image]
 setting-generator = "schnauzer settings.kubernetes.pod-infra-container-image"
-template = "{{ pause-prefix settings.aws.region }}/eks/pause-{{ goarch os.arch }}:3.1"
+template = "{{ pause-prefix settings.aws.region }}/eks/pause:3.1-eksbuild.1"
 affected-services = ["kubernetes", "containerd"]
 
 [settings.metrics]

@@ -68,3 +68,8 @@ skip-tree = [
 # Deny crates from unknown registries or git repositories.
 unknown-registry = "deny"
 unknown-git = "deny"
+
+allow-git = [
+    # rusoto is patched with an upstream commit to support ap-southeast-3
+    "https://github.com/rusoto/rusoto.git",
+]
