@@ -1466,8 +1466,7 @@ dependencies = [
 [[package]]
 name = "rusoto_cloudformation"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e00db4cfcfc14725c720d881443f2c17607bd80aa20fecd1382a5936cc2db05d"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1480,8 +1479,7 @@ dependencies = [
 [[package]]
 name = "rusoto_core"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b4f000e8934c1b4f70adde180056812e7ea6b1a247952db8ee98c94cd3116cc"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "base64",
@@ -1505,8 +1503,7 @@ dependencies = [
 [[package]]
 name = "rusoto_credential"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a46b67db7bb66f5541e44db22b0a02fed59c9603e146db3a9e633272d3bac2f"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1523,8 +1520,7 @@ dependencies = [
 [[package]]
 name = "rusoto_ebs"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "618ce34e8ec52dfd0f597608ec21049e4d7379d737b5f2cc339c92b61d096e0d"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1538,8 +1534,7 @@ dependencies = [
 [[package]]
 name = "rusoto_ec2"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92315363c2f2acda29029ce0ce0e58e1c32caf10c9719068a1ec102add3d4878"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1552,8 +1547,7 @@ dependencies = [
 [[package]]
 name = "rusoto_kms"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7892cd2cca7644d33bd6fafdb2236efd3659162fd7b73ca68d3877f0528399c"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1566,8 +1560,7 @@ dependencies = [
 [[package]]
 name = "rusoto_s3"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "048c2fe811a823ad5a9acc976e8bf4f1d910df719dcf44b15c3e96c5b7a51027"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1579,8 +1572,7 @@ dependencies = [
 [[package]]
 name = "rusoto_signature"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6264e93384b90a747758bcc82079711eacf2e755c3a8b5091687b5349d870bcc"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "base64",
  "bytes",
@@ -1605,8 +1597,7 @@ dependencies = [
 [[package]]
 name = "rusoto_ssm"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "050304a18997ab01994d4a452472199088dc0376e61d1f50e2d9675227a0fe0c"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1619,8 +1610,7 @@ dependencies = [
 [[package]]
 name = "rusoto_sts"
 version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e7edd42473ac006fd54105f619e480b0a94136e7f53cf3fb73541363678fd92"
+source = "git+https://github.com/rusoto/rusoto?rev=37bac105a0c16d2259f8390c1aeef068db713911#37bac105a0c16d2259f8390c1aeef068db713911"
 dependencies = [
  "async-trait",
  "bytes",
