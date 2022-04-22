@@ -51,6 +51,9 @@ struct ECSConfig {
 
     #[serde(rename = "TaskENIEnabled")]
     task_eni_enabled: bool,
+
+    #[serde(rename = "GPUSupportEnabled")]
+    gpu_support_enabled: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -103,6 +106,8 @@ async fn run() -> Result<()> {
 
         // awsvpc mode is always available
         task_eni_enabled: true,
+
+        gpu_support_enabled: cfg!(variant_type = "nvidia"),
         ..Default::default()
     };
     if let Some(os) = settings.os {
