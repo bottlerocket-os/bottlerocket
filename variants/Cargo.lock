@@ -93,6 +93,7 @@ dependencies = [
  "kmod-5_10-nvidia",
  "kubernetes-1_21",
  "nvidia-container-toolkit",
+ "nvidia-k8s-device-plugin",
  "release",
 ]
 
@@ -119,6 +120,7 @@ dependencies = [
  "kmod-5_10-nvidia",
  "kubernetes-1_22",
  "nvidia-container-toolkit",
+ "nvidia-k8s-device-plugin",
  "release",
 ]
 
@@ -719,7 +721,6 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libnvidia-container",
- "nvidia-k8s-device-plugin",
 ]
 
 [[package]]
