@@ -383,3 +383,20 @@ You can install them in your cluster by following the `helm install` instruction
 The [GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/getting-started.html#install-nvidia-gpu-operator) can also be used to install these tools.
 However, it is cumbersome to select the right subset of features to avoid conflicts with the software included in the variant.
 Therefore we recommend installing the tools individually if they are required.
+
+In hosts with multiple GPUs (ex. EC2 `g4dn` instances) you can assign a GPU per container by specifying the resource in the containers' spec as described in the [official kubernetes documentation](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/):
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+spec:
+  restartPolicy: OnFailure
+  containers:
+    - name: test
+      image: amazonlinux:2
+      resources:
+        limits:
+          nvidia.com/gpu: 1 # requesting 1 GPU
+```
