@@ -10,6 +10,7 @@ embedded lists.  The structure and names of fields in the document can be found
 use constants;
 use log::debug;
 use serde::Serialize;
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
@@ -64,6 +65,7 @@ pub(crate) async fn main() -> () {
 
 async fn run() -> Result<()> {
     let args = parse_args(env::args());
+    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::LoggerSnafu)?;
 
     // Get all settings values for config file templates
     debug!("Requesting settings values");
@@ -188,6 +190,11 @@ mod error {
         #[snafu(display("Failed to read settings: {}", source))]
         Settings {
             source: schnauzer::Error,
+        },
+
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger {
+            source: log::SetLoggerError,
         },
 
         Model,
