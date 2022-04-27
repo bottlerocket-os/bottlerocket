@@ -147,6 +147,15 @@ c6i.8xlarge 234
 c6i.large 29
 c6i.metal 737
 c6i.xlarge 58
+c7g.12xlarge 234
+c7g.16xlarge 737
+c7g.2xlarge 58
+c7g.4xlarge 234
+c7g.8xlarge 234
+c7g.large 29
+c7g.medium 8
+c7g.metal 737
+c7g.xlarge 58
 cc2.8xlarge 234
 cr1.8xlarge 234
 d2.2xlarge 58
