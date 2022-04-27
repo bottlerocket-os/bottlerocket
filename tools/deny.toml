@@ -60,16 +60,14 @@ skip-tree = [
     # temporarily using a different version of snafu
     { name = "parse-datetime", version = "0.1.0" },
 
-    # rusoto is using a different version of reqwest.
-    { name = "rusoto_core", version = "0.47.0" },
+    # rusoto_signature uses an older version of sha2
+    { name = "rusoto_signature" },
+
+    # reqwest uses an older rustls-pemfile
+    { name = "reqwest", version = "0.11.10" },
 ]
 
 [sources]
 # Deny crates from unknown registries or git repositories.
 unknown-registry = "deny"
 unknown-git = "deny"
-
-allow-git = [
-    # rusoto is patched with an upstream commit to support ap-southeast-3
-    "https://github.com/rusoto/rusoto.git",
-]
