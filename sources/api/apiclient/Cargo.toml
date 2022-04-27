@@ -15,7 +15,7 @@ datastore = { path = "../datastore", version = "0.1.0" }
 futures = { version = "0.3", default-features = false }
 futures-channel = { version = "0.3", default-features = false }
 http = "0.2"
-httparse = "1.5"
+httparse = "1.7"
 hyper = { version = "0.14.2", default-features = false, features = [ "client", "http1", "http2" ] }
 hyper-unix-connector = "0.2"
 libc = "0.2"
