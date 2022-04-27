@@ -578,19 +578,19 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_unitdir}/cfsignal.service
 %endif
 
+%if %{_is_vendor_variant}
+%files -n %{_cross_os}driverdog
+%{_cross_bindir}/driverdog
+%{_cross_unitdir}/link-kernel-modules.service
+%{_cross_unitdir}/load-kernel-modules.service
+%endif
+
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
-%endif
-
-%if %{_is_vendor_variant}
-%files -n %{_cross_os}driverdog
-%{_cross_bindir}/driverdog
-%{_cross_unitdir}/link-kernel-modules.service
-%{_cross_unitdir}/load-kernel-modules.service
 %endif
 
 %files -n %{_cross_os}static-pods
