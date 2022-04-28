@@ -16,7 +16,7 @@ serde = { version = "1.0.100", features = ["derive"] }
 simplelog = "0.11"
 snafu = { version = "0.7" }
 structopt = "0.3.17"
-toml = "0.5.1"
+toml = "0.5.9"
 url = "2.1.1"
 
 [build-dependencies]

@@ -22,7 +22,7 @@ serde_plain = "1.0"
 signpost = { path = "../signpost", version = "0.1.0" }
 simplelog = "0.11"
 snafu = "0.7"
-toml = "0.5.1"
+toml = "0.5.9"
 tough = { version = "0.12", features = ["http"] }
 update_metadata = { path = "../update_metadata", version = "0.1.0" }
 structopt = "0.3"
