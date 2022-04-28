@@ -91,11 +91,3 @@ debug = true
 # webpki-roots-shim/Cargo.toml for more information about using the right version number.
 [patch.crates-io.webpki-roots]
 path = "webpki-roots-shim"
-
-# This patches rusoto with an upstream commit to support ap-southeast-3
-[patch.crates-io]
-rusoto_cloudformation = { git = "https://github.com/rusoto/rusoto", rev = "37bac105a0c16d2259f8390c1aeef068db713911" }
-rusoto_core = { git = "https://github.com/rusoto/rusoto", rev = "37bac105a0c16d2259f8390c1aeef068db713911" }
-rusoto_credential = { git = "https://github.com/rusoto/rusoto", rev = "37bac105a0c16d2259f8390c1aeef068db713911" }
-rusoto_eks = { git = "https://github.com/rusoto/rusoto", rev = "37bac105a0c16d2259f8390c1aeef068db713911" }
-rusoto_signature = { git = "https://github.com/rusoto/rusoto", rev = "37bac105a0c16d2259f8390c1aeef068db713911" }
