@@ -13,7 +13,7 @@ pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
 sha2 = "0.10"
 shell-words = "1.0"
-simplelog = "0.11"
+simplelog = "0.12"
 snafu = "0.7"
 structopt = { version = "0.3", default-features = false  }
 tempfile = "3.1"

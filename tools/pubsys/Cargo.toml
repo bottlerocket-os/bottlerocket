@@ -30,7 +30,7 @@ rusoto_kms = { version = "0.48.0", default-features = false, features = ["rustls
 rusoto_signature = "0.48.0"
 rusoto_ssm = { version = "0.48.0", default-features = false, features = ["rustls"] }
 rusoto_sts = { version = "0.48.0", default-features = false, features = ["rustls"] }
-simplelog = "0.11"
+simplelog = "0.12"
 snafu = "0.7"
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"]  }
