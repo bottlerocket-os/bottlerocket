@@ -1,0 +1,12 @@
+[package]
+name = "testsys"
+version = "0.1.0"
+authors = ["Ethan Pullen <pullenep@amazon.com>", "Matt Briggs <brigmatt@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+
+[dependencies]
+clap = { version = "3", features = ["derive", "env"] }
+model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "4e3c03b" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs"] }

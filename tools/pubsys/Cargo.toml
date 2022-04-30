@@ -10,7 +10,7 @@ publish = false
 async-trait = "0.1.53"
 chrono = "0.4"
 clap = "3.1"
-coldsnap = { version = "0.3", default-features = false, features = ["rusoto-rustls"]}
+coldsnap = { version = "0.3.3", default-features = false, features = ["rusoto-rustls"]}
 duct = "0.13.0"
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 futures = "0.3.5"
@@ -37,12 +37,12 @@ serde = { version = "1.0", features = ["derive"]  }
 serde_json = "1.0"
 structopt = { version = "0.3", default-features = false  }
 tinytemplate = "1.1"
-tokio = { version = "~1.8", features = ["full"] }  # LTS
+tokio = { version = "1.8", features = ["full"] }  # LTS
 tokio-stream = { version = "0.1", features = ["time"] }
 toml = "0.5"
-tough = { version = "0.12", features = ["http"] }
-tough-kms = "0.3"
-tough-ssm = "0.6"
+tough = { version = "0.12.2", features = ["http"] }
+tough-kms = "0.3.6"
+tough-ssm = "0.6.6"
 update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1.0" }
 url = { version = "2.1.0", features = ["serde"] }
 tempfile = "3.1"

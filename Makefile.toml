@@ -1352,5 +1352,29 @@ rm -rf ${BUILDSYS_STATE_DIR}
 '''
 ]
 
+[tasks.install-testsys]
+dependencies = ["setup", "fetch-sources"]
+script = [
+    '''
+    cargo install \
+      ${CARGO_MAKE_CARGO_ARGS} \
+      --path tools/testsys \
+      --root tools \
+      --force \
+      --quiet
+    '''
+]
+
+[tasks.test]
+dependencies = ["install-testsys"]
+script = [
+    '''
+    set -eu
+    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+    testsys run integ
+    '''
+]
+
 [tasks.default]
 alias = "build"
