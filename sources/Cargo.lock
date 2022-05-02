@@ -1128,6 +1128,7 @@ dependencies = [
  "schnauzer",
  "serde",
  "serde_json",
+ "simplelog",
  "snafu",
  "tokio",
 ]

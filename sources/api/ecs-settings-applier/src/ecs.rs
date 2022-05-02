@@ -10,6 +10,7 @@ embedded lists.  The structure and names of fields in the document can be found
 use constants;
 use log::debug;
 use serde::Serialize;
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
@@ -50,6 +51,9 @@ struct ECSConfig {
 
     #[serde(rename = "TaskENIEnabled")]
     task_eni_enabled: bool,
+
+    #[serde(rename = "GPUSupportEnabled")]
+    gpu_support_enabled: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -64,6 +68,7 @@ pub(crate) async fn main() -> () {
 
 async fn run() -> Result<()> {
     let args = parse_args(env::args());
+    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::LoggerSnafu)?;
 
     // Get all settings values for config file templates
     debug!("Requesting settings values");
@@ -101,6 +106,8 @@ async fn run() -> Result<()> {
 
         // awsvpc mode is always available
         task_eni_enabled: true,
+
+        gpu_support_enabled: cfg!(variant_type = "nvidia"),
         ..Default::default()
     };
     if let Some(os) = settings.os {
@@ -188,6 +195,11 @@ mod error {
         #[snafu(display("Failed to read settings: {}", source))]
         Settings {
             source: schnauzer::Error,
+        },
+
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger {
+            source: log::SetLoggerError,
         },
 
         Model,
