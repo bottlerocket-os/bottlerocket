@@ -1,0 +1,16 @@
+[package]
+name = "ecs-gpu-init"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-package]
+source-groups = [ "ecs-gpu-init" ]
+
+[lib]
+path = "pkg.rs"
+
+# RPM BuildRequires
+[build-dependencies]
+glibc = { path = "../glibc" }
