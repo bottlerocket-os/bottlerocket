@@ -9,6 +9,7 @@ use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
+use std::net::IpAddr;
 use std::ops::Deref;
 use std::str::FromStr;
 use url::Host;
@@ -225,6 +226,149 @@ mod test_valid_linux_hostname {
             &long_segment, &long_segment, &long_segment, &long_segment
         );
         assert!(ValidLinuxHostname::try_from(long_name).is_err());
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// EtcHostsEntries represents a mapping of IP Address to hostname aliases that can apply to those
+/// addresses.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct EtcHostsEntries(
+    // Ordering matters in /etc/hosts, and this setting directly maps to that file and its behavior in glibc.
+    // Repeated IP Addresses have their host aliases merged to a single line, respecting the order as they appear in this list.
+    Vec<(IpAddr, Vec<ValidLinuxHostname>)>,
+);
+
+impl EtcHostsEntries {
+    pub fn iter_merged(&self) -> impl Iterator<Item = (IpAddr, Vec<ValidLinuxHostname>)> {
+        let mut merged = indexmap::IndexMap::with_capacity(self.0.len());
+
+        for (ip_address, aliases) in &self.0 {
+            merged
+                .entry(ip_address.clone())
+                .or_insert(vec![])
+                .append(&mut (aliases.clone()));
+        }
+
+        merged.into_iter()
+    }
+}
+
+#[cfg(test)]
+mod test_etc_hosts_entries {
+    use super::{EtcHostsEntries, ValidLinuxHostname};
+    use std::net::IpAddr;
+
+    #[test]
+    fn test_valid_etc_hosts_entries() {
+        assert!(serde_json::from_str::<EtcHostsEntries>(
+            r#"[
+            ["127.0.0.1", ["localhost", "localhost4"]],
+            ["::1", ["localhost", "localhost6"]]
+        ]"#
+        )
+        .is_ok());
+        assert!(serde_json::from_str::<EtcHostsEntries>(
+            r#"[
+            ["127.0.0.1", ["localhost", "localhost4"]],
+            ["::1", ["localhost", "localhost6"]],
+            ["127.0.0.1", ["test.example.com"]]
+        ]"#
+        )
+        .is_ok());
+        assert!(serde_json::from_str::<EtcHostsEntries>(
+            r#"[
+            ["::1", ["localhost", "localhost6"]],
+            ["0000:0000:0000:0000:0000:0000:0000:0001", ["test6.example.com"]]
+        ]"#
+        )
+        .is_ok());
+        assert!(serde_json::from_str::<EtcHostsEntries>(r#"[]"#).is_ok());
+    }
+
+    #[test]
+    fn test_invalid_etc_hosts_entries() {
+        assert!(
+            serde_json::from_str::<EtcHostsEntries>(r#"[["127.0.0.0/24", ["localhost"]]"#).is_err()
+        );
+        assert!(
+            serde_json::from_str::<EtcHostsEntries>(r#"[["not_an_ip", ["localhost"]]"#).is_err()
+        );
+        assert!(serde_json::from_str::<EtcHostsEntries>(
+            r#"[["127.0.0.1", ["not_a_valid_hostname!"]]"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn test_iter_merged() {
+        assert_eq!(
+            serde_json::from_str::<EtcHostsEntries>(
+                r#"[
+                    ["127.0.0.1", ["localhost", "localhost4"]],
+                    ["127.0.0.1", ["test.example.com"]]
+                ]"#,
+            )
+            .unwrap()
+            .iter_merged()
+            .collect::<Vec<(IpAddr, Vec<ValidLinuxHostname>)>>(),
+            serde_json::from_str::<EtcHostsEntries>(
+                r#"[
+                    ["127.0.0.1", ["localhost", "localhost4", "test.example.com"]]
+                ]"#,
+            )
+            .unwrap()
+            .0
+        );
+
+        assert_eq!(
+            serde_json::from_str::<EtcHostsEntries>(
+                r#"[
+                    ["127.0.0.1", ["localhost", "localhost4"]],
+                    ["127.0.0.3", ["test.example.com"]],
+                    ["127.0.0.2", ["test.example.com"]],
+                    ["127.0.0.1", ["test.example.com"]]
+                ]"#,
+            )
+            .unwrap()
+            .iter_merged()
+            .collect::<Vec<(IpAddr, Vec<ValidLinuxHostname>)>>(),
+            serde_json::from_str::<EtcHostsEntries>(
+                r#"[
+                    ["127.0.0.1", ["localhost", "localhost4", "test.example.com"]],
+                    ["127.0.0.3", ["test.example.com"]],
+                    ["127.0.0.2", ["test.example.com"]]
+                ]"#,
+            )
+            .unwrap()
+            .0
+        );
+
+        assert_eq!(
+            serde_json::from_str::<EtcHostsEntries>(
+                r#"[
+                    ["127.0.0.1", ["localhost", "localhost4"]],
+                    ["::1", ["localhost", "localhost6"]],
+                    ["127.0.0.1", ["test.example.com"]],
+                    ["0000:0000:0000:0000:0000:0000:0000:0001", ["test6.example.com"]],
+                    ["10.0.0.1", ["example.bottlerocket.aws"]]
+                ]"#,
+            )
+            .unwrap()
+            .iter_merged()
+            .collect::<Vec<(IpAddr, Vec<ValidLinuxHostname>)>>(),
+            serde_json::from_str::<EtcHostsEntries>(
+                r#"[
+                    ["127.0.0.1", ["localhost", "localhost4", "test.example.com"]],
+                    ["::1", ["localhost", "localhost6", "test6.example.com"]],
+                    ["10.0.0.1", ["example.bottlerocket.aws"]]
+                ]"#,
+            )
+            .unwrap()
+            .0
+        );
     }
 }
 

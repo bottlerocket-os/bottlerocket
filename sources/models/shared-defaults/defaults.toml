@@ -92,6 +92,9 @@ restart-commands = ["/bin/systemctl try-restart set-hostname.service"]
 path = "/etc/network/hostname.env"
 template-path = "/usr/share/templates/hostname-env"
 
+[metadata.settings.network.hosts]
+affected-services = ["hosts"]
+
 [services.hosts]
 configuration-files = ["hosts"]
 restart-commands = []

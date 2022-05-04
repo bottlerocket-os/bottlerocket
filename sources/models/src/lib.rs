@@ -142,12 +142,12 @@ use crate::de::{deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, DNSDomain,
     ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
-    FriendlyVersion, Identifier, KubernetesAuthenticationMode, KubernetesBootstrapToken,
-    KubernetesCloudProvider, KubernetesClusterName, KubernetesDurationValue,
-    KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue, KubernetesQuantityValue,
-    KubernetesReservedResourceKey, KubernetesTaintValue, KubernetesThresholdValue, Lockdown,
-    PemCertificateString, SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope,
-    Url, ValidBase64, ValidLinuxHostname,
+    EtcHostsEntries, FriendlyVersion, Identifier, KubernetesAuthenticationMode,
+    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterName,
+    KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
+    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
+    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey,
+    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -272,6 +272,7 @@ struct HostContainer {
 #[model]
 struct NetworkSettings {
     hostname: ValidLinuxHostname,
+    hosts: EtcHostsEntries,
     https_proxy: Url,
     // We allow some flexibility in NO_PROXY values because different services support different formats.
     no_proxy: Vec<SingleLineString>,
