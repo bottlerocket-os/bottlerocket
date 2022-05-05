@@ -40,6 +40,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-ecs-1-nvidia"
+version = "0.1.0"
+dependencies = [
+ "docker-cli",
+ "docker-engine",
+ "docker-init",
+ "docker-proxy",
+ "ecs-agent",
+ "ecs-gpu-init",
+ "kernel-5_10",
+ "kmod-5_10-nvidia",
+ "nvidia-container-toolkit",
+ "release",
+]
+
+[[package]]
 name = "aws-iam-authenticator"
 version = "0.1.0"
 dependencies = [
@@ -253,6 +269,13 @@ dependencies = [
 
 [[package]]
 name = "ecs-agent"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "ecs-gpu-init"
 version = "0.1.0"
 dependencies = [
  "glibc",
