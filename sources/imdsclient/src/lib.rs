@@ -99,6 +99,12 @@ impl ImdsClient {
         Ok(region)
     }
 
+    /// Returns the partition that the instance is in.
+    pub async fn fetch_partition(&mut self) -> Result<Option<String>> {
+        let partition_target = "meta-data/services/partition";
+        self.fetch_string(&partition_target).await
+    }
+
     /// Returns the list of network interface mac addresses.
     pub async fn fetch_mac_addresses(&mut self) -> Result<Option<Vec<String>>> {
         let macs_target = "meta-data/network/interfaces/macs";
