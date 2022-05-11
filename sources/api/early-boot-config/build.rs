@@ -1,33 +1,25 @@
 // Automatically generate README.md from rustdoc.
 
+use buildsys::{Variant, VARIANT_ENV};
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use std::process;
 
 fn main() {
-    // The code below emits `cfg` operators to conditionally compile this program based on the
-    // current variant.
-    // TODO: Replace this approach when the build system supports ideas like "variant
-    // tags": https://github.com/bottlerocket-os/bottlerocket/issues/1260
-    println!("cargo:rerun-if-env-changed=VARIANT");
-    if let Ok(variant) = env::var("VARIANT") {
-        if variant.starts_with("aws") {
-            println!("cargo:rustc-cfg=bottlerocket_platform=\"aws\"");
-        } else if variant.starts_with("vmware") {
-            println!("cargo:rustc-cfg=bottlerocket_platform=\"vmware\"");
-        } else if variant.starts_with("metal") {
-            println!("cargo:rustc-cfg=bottlerocket_platform=\"metal\"");
-        } else {
+    let variant = match Variant::from_env() {
+        Ok(variant) => variant,
+        Err(e) => {
             eprintln!(
-            "For local builds, you must set the 'VARIANT' environment variable so we know which data \
-            provider to build. Valid values are the directories in models/src/variants/, for \
-            example 'aws-ecs-1'."
+                "For local builds, you must set the '{}' environment variable so we know \
+                which data provider to build. Valid values are the directories in \
+                models/src/variants/, for example 'aws-ecs-1': {}",
+                VARIANT_ENV, e,
             );
-            process::exit(1);
+            std::process::exit(1);
         }
-    }
+    };
+    variant.emit_cfgs();
 
     // Check for environment variable "SKIP_README". If it is set,
     // skip README generation

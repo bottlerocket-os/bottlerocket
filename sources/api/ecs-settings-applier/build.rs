@@ -1,26 +1,15 @@
 // Automatically generate README.md from rustdoc.
 
+use buildsys::Variant;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
-    println!("cargo:rerun-if-env-changed=VARIANT");
-    if let Ok(variant) = env::var("VARIANT") {
-        println!("cargo:rustc-cfg=variant=\"{}\"", variant);
-        let parts = variant.split('-').collect::<Vec<&str>>();
-        println!(
-            "cargo:rustc-cfg=variant_family=\"{}\"",
-            parts[0..2].join("-")
-        );
-        let variant_type = if parts.len() > 3 {
-            parts[3]
-        } else {
-            "general_purpose"
-        };
-        println!("cargo:rustc-cfg=variant_type=\"{}\"", variant_type);
-    }
+    // This build has variant-specific logic.
+    let variant = Variant::from_env().unwrap();
+    variant.emit_cfgs();
 
     // Check for environment variable "SKIP_README". If it is set,
     // skip README generation

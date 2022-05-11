@@ -1,19 +1,15 @@
 // Automatically generate README.md from rustdoc.
 
+use buildsys::Variant;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
-    // TODO: Replace this approach when the build system supports ideas like "variant
-    // tags": https://github.com/bottlerocket-os/bottlerocket/issues/1260
-    println!("cargo:rerun-if-env-changed=VARIANT");
-    if let Ok(variant) = env::var("VARIANT") {
-        if variant.contains("k8s") {
-            println!("cargo:rustc-cfg=k8s_variant");
-        }
-    }
+    // This build has variant-specific logic.
+    let variant = Variant::from_env().unwrap();
+    variant.emit_cfgs();
 
     // Check for environment variable "SKIP_README". If it is set,
     // skip README generation

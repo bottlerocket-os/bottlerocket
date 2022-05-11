@@ -25,6 +25,7 @@ x509-parser = "0.13"
 url = "2.1"
 
 [build-dependencies]
+buildsys = { path = "../../tools/buildsys", version = "0.1.0" }
 cargo-readme = "3.1"
 filetime = "0.2"
 rand = "0.8"

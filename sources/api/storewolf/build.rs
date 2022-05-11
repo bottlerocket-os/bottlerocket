@@ -1,3 +1,4 @@
+use buildsys::Variant;
 /// This build script generates README.md from rustdoc, like our other crates, but also generates
 /// a unified TOML file representing the default settings for the system.  The contents of that
 /// file are used by storewolf to populate the defaults into the data store on a new system.
@@ -24,7 +25,7 @@ fn main() -> Result<()> {
     generate_defaults_toml()?;
 
     // Reflect that we need to rerun if variant has changed to pick up the new default settings.
-    println!("cargo:rerun-if-env-changed=VARIANT");
+    Variant::rerun_if_changed();
 
     Ok(())
 }

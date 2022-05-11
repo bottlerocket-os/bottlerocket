@@ -1,16 +1,16 @@
 #![deny(rust_2018_idioms)]
 
-#[cfg(k8s_variant)]
+#[cfg(variant_runtime = "k8s")]
 mod static_pods;
-#[cfg(k8s_variant)]
+#[cfg(variant_runtime = "k8s")]
 #[macro_use]
 extern crate log;
 
-#[cfg(k8s_variant)]
+#[cfg(variant_runtime = "k8s")]
 #[tokio::main]
 async fn main() {
     static_pods::main().await
 }
 
-#[cfg(not(k8s_variant))]
+#[cfg(not(variant_runtime = "k8s"))]
 fn main() {}

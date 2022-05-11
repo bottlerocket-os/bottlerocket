@@ -1,15 +1,11 @@
 // Automatically generate README.md from rustdoc and generate variant symlink
 
+use buildsys::{Variant, VARIANT_ENV};
 use std::fs::File;
 use std::io::Write;
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io, process};
-
-// The VARIANT variable is originally BUILDSYS_VARIANT, set in the top-level Makefile.toml,
-// and is passed through as VARIANT by the top-level Dockerfile.  It represents which OS
-// variant we're building, and therefore which API model to use.
-const ENV_VARIANT: &str = "VARIANT";
 
 /// Creates a file, `conf/current/logdog.conf` which is a symlink to a file with `logdog` commands
 /// for the current variant. Whatever the value of the `VARIANT` environment variable is, this
@@ -17,23 +13,26 @@ const ENV_VARIANT: &str = "VARIANT";
 /// symlink. For example, if the variant is `aws-ecs-1` then `conf/current/logdog.conf` will
 /// point to `conf/logdog.aws-ecs-1.conf`.
 fn symlink_variant() {
-    println!("cargo:rerun-if-env-changed={}", ENV_VARIANT);
-    let variant = env::var(ENV_VARIANT).unwrap_or_else(|_| {
-        eprintln!(
-            "For local builds, you must set the {} environment variable so we know which logdog \
-            commands to build. Valid values are the directories in models/src/variants/, for \
-            example 'aws-ecs-1'.",
-            ENV_VARIANT
-        );
-        process::exit(1);
-    });
+    Variant::rerun_if_changed();
+    let variant = match Variant::from_env() {
+        Ok(variant) => variant,
+        Err(e) => {
+            eprintln!(
+                "For local builds, you must set the '{}' environment variable so we know which \
+                logdog commands to build. Valid values are the directories in \
+                models/src/variants/, for example 'aws-ecs-1': {}",
+                VARIANT_ENV, e
+            );
+            std::process::exit(1);
+        }
+    };
     let variant_filename = format!("logdog.{}.conf", variant);
     if !PathBuf::from("conf").join(&variant_filename).is_file() {
         eprintln!(
             "There is no file named '{}' in the 'conf' directory for the current variant (given \
             by the '{}' environment variable) Each variant must have a file representing the \
             variant-specific commands that logdog will run.",
-            variant, ENV_VARIANT
+            variant, VARIANT_ENV
         );
         process::exit(1);
     }
