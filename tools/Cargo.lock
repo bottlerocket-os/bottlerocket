@@ -160,6 +160,7 @@ dependencies = [
 name = "buildsys"
 version = "0.1.0"
 dependencies = [
+ "cargo-readme",
  "duct",
  "hex",
  "lazy_static",
@@ -1132,7 +1133,7 @@ dependencies = [
 name = "parse-datetime"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "chrono",
  "snafu",
 ]

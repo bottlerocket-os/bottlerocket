@@ -28,4 +28,4 @@ x509-parser = "0.13"
 tempfile = "3.2.0"
 
 [build-dependencies]
-cargo-readme = "3.1"
+buildsys = { path = "../../../tools/buildsys", version = "0.1.0" }

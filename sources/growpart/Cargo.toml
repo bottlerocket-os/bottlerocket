@@ -16,4 +16,4 @@ block-party = { path = "../updater/block-party", version = "0.1.0" }
 inotify = "0.10"
 
 [build-dependencies]
-cargo-readme = "3.1"
+buildsys = { path = "../../tools/buildsys", version = "0.1.0" }

@@ -25,7 +25,7 @@ snafu = "0.7"
 tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 
 [build-dependencies]
-cargo-readme = "3.1"
+buildsys = { path = "../../../tools/buildsys", version = "0.1.0" }
 
 [dev-dependencies]
 maplit = "1.0"

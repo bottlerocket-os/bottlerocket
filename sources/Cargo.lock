@@ -298,7 +298,7 @@ checksum = "94a45b455c14666b85fc40a019e8ab9eb75e3a124e05494f5397122bc9eb06e0"
 name = "apiclient"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "constants",
  "datastore",
  "futures",
@@ -335,8 +335,8 @@ dependencies = [
  "actix-web",
  "actix-web-actors",
  "bottlerocket-release",
+ "buildsys",
  "bytes",
- "cargo-readme",
  "datastore",
  "fs2",
  "futures",
@@ -612,7 +612,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "base64",
- "cargo-readme",
+ "buildsys",
  "constants",
  "datastore",
  "http",
@@ -637,7 +637,7 @@ dependencies = [
 name = "bottlerocket-release"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "envy",
  "log",
  "semver",
@@ -660,6 +660,7 @@ dependencies = [
 name = "buildsys"
 version = "0.1.0"
 dependencies = [
+ "cargo-readme",
  "duct",
  "hex",
  "lazy_static",
@@ -737,7 +738,7 @@ dependencies = [
  "apiclient",
  "argh",
  "base64",
- "cargo-readme",
+ "buildsys",
  "constants",
  "http",
  "log",
@@ -761,7 +762,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "cfsignal"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "hyper",
  "imdsclient",
  "log",
@@ -807,7 +808,7 @@ dependencies = [
 name = "constants"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
 ]
 
 [[package]]
@@ -872,7 +873,7 @@ name = "corndog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
+ "buildsys",
  "constants",
  "http",
  "log",
@@ -1002,7 +1003,7 @@ checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 name = "datastore"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "libc",
  "log",
  "maplit",
@@ -1124,7 +1125,7 @@ name = "driverdog"
 version = "0.1.0"
 dependencies = [
  "argh",
- "cargo-readme",
+ "buildsys",
  "log",
  "serde",
  "simplelog",
@@ -1159,7 +1160,6 @@ dependencies = [
  "async-trait",
  "base64",
  "buildsys",
- "cargo-readme",
  "constants",
  "flate2",
  "hex-literal",
@@ -1184,7 +1184,6 @@ name = "ecs-settings-applier"
 version = "0.1.0"
 dependencies = [
  "buildsys",
- "cargo-readme",
  "constants",
  "log",
  "models",
@@ -1443,7 +1442,7 @@ name = "ghostdog"
 version = "0.1.0"
 dependencies = [
  "argh",
- "cargo-readme",
+ "buildsys",
  "gptman",
  "hex-literal",
  "lazy_static",
@@ -1494,7 +1493,7 @@ name = "growpart"
 version = "0.1.0"
 dependencies = [
  "block-party",
- "cargo-readme",
+ "buildsys",
  "gptman",
  "inotify",
  "libc",
@@ -1586,7 +1585,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "base64",
- "cargo-readme",
+ "buildsys",
  "constants",
  "http",
  "log",
@@ -1734,7 +1733,7 @@ dependencies = [
 name = "imdsclient"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "http",
  "httptest",
  "log",
@@ -1889,7 +1888,6 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "buildsys",
- "cargo-readme",
  "constants",
  "datastore",
  "flate2",
@@ -1977,7 +1975,7 @@ name = "metricdog"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "cargo-readme",
+ "buildsys",
  "httptest",
  "log",
  "reqwest",
@@ -2010,7 +2008,7 @@ name = "migrator"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "cargo-readme",
+ "buildsys",
  "chrono",
  "log",
  "lz4",
@@ -2089,7 +2087,7 @@ dependencies = [
 name = "model-derive"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "darling",
  "proc-macro2",
  "quote",
@@ -2103,7 +2101,6 @@ dependencies = [
  "base64",
  "bottlerocket-release",
  "buildsys",
- "cargo-readme",
  "filetime",
  "lazy_static",
  "libc",
@@ -2124,7 +2121,7 @@ name = "netdog"
 version = "0.1.0"
 dependencies = [
  "argh",
- "cargo-readme",
+ "buildsys",
  "dns-lookup",
  "envy",
  "indexmap",
@@ -2414,7 +2411,7 @@ dependencies = [
 name = "parse-datetime"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "chrono",
  "snafu",
 ]
@@ -2549,7 +2546,6 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "buildsys",
- "cargo-readme",
  "constants",
  "imdsclient",
  "models",
@@ -2571,8 +2567,8 @@ name = "prairiedog"
 version = "0.1.0"
 dependencies = [
  "argh",
+ "buildsys",
  "bytes",
- "cargo-readme",
  "constants",
  "log",
  "maplit",
@@ -2793,7 +2789,7 @@ dependencies = [
 name = "retry-read"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
 ]
 
 [[package]]
@@ -3007,7 +3003,7 @@ dependencies = [
  "apiclient",
  "base64",
  "bottlerocket-release",
- "cargo-readme",
+ "buildsys",
  "constants",
  "dns-lookup",
  "handlebars",
@@ -3141,7 +3137,7 @@ name = "servicedog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
+ "buildsys",
  "constants",
  "datastore",
  "http",
@@ -3159,7 +3155,7 @@ name = "settings-committer"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
+ "buildsys",
  "constants",
  "http",
  "log",
@@ -3251,7 +3247,7 @@ name = "shibaken"
 version = "0.1.0"
 dependencies = [
  "base64",
- "cargo-readme",
+ "buildsys",
  "imdsclient",
  "log",
  "serde",
@@ -3265,7 +3261,7 @@ dependencies = [
 name = "shimpei"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "buildsys",
  "log",
  "nix 0.23.1",
  "simplelog",
@@ -3380,7 +3376,6 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "buildsys",
- "cargo-readme",
  "constants",
  "log",
  "models",
@@ -3399,7 +3394,6 @@ version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
  "buildsys",
- "cargo-readme",
  "constants",
  "datastore",
  "log",
@@ -3460,7 +3454,7 @@ name = "sundog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
+ "buildsys",
  "constants",
  "datastore",
  "http",
@@ -3543,7 +3537,7 @@ name = "thar-be-settings"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
+ "buildsys",
  "constants",
  "handlebars",
  "http",
@@ -3565,7 +3559,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "bottlerocket-release",
- "cargo-readme",
+ "buildsys",
  "chrono",
  "constants",
  "fs2",

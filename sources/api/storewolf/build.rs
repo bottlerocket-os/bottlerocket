@@ -1,4 +1,4 @@
-use buildsys::Variant;
+use buildsys::{generate_readme, ReadmeSource, Variant};
 /// This build script generates README.md from rustdoc, like our other crates, but also generates
 /// a unified TOML file representing the default settings for the system.  The contents of that
 /// file are used by storewolf to populate the defaults into the data store on a new system.
@@ -9,10 +9,8 @@ use buildsys::Variant;
 /// merge later entries into earlier entries, so later files take precedence.
 use merge_toml::merge_values;
 use snafu::ResultExt;
-use std::env;
-use std::fs::{self, File};
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::fs;
+use std::path::Path;
 use toml::{map::Map, Value};
 use walkdir::WalkDir;
 
@@ -21,39 +19,13 @@ use walkdir::WalkDir;
 const DEFAULTS_DIR: &str = "../../models/src/variant/current/defaults.d";
 
 fn main() -> Result<()> {
-    generate_readme();
+    generate_readme(ReadmeSource::Main).unwrap();
     generate_defaults_toml()?;
 
     // Reflect that we need to rerun if variant has changed to pick up the new default settings.
     Variant::rerun_if_changed();
 
     Ok(())
-}
-
-fn generate_readme() {
-    // Check for environment variable "SKIP_README". If it is set,
-    // skip README generation
-    if env::var_os("SKIP_README").is_some() {
-        return;
-    }
-
-    let mut source = File::open("src/main.rs").unwrap();
-    let mut template = File::open("README.tpl").unwrap();
-
-    let content = cargo_readme::generate_readme(
-        &PathBuf::from("."), // root
-        &mut source,         // source
-        Some(&mut template), // template
-        // The "add x" arguments don't apply when using a template.
-        true,  // add title
-        false, // add badges
-        false, // add license
-        true,  // indent headings
-    )
-    .unwrap();
-
-    let mut readme = File::create("README.md").unwrap();
-    readme.write_all(content.as_bytes()).unwrap();
 }
 
 /// Merge the variant's default settings files into a single TOML value.  The result is serialized

@@ -27,4 +27,3 @@ walkdir = "2.3"
 
 [build-dependencies]
 buildsys = { path = "../../tools/buildsys", version = "0.1.0" }
-cargo-readme = "3.1"

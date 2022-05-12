@@ -28,4 +28,4 @@ toml = { version = "0.5", features = ["preserve_order"] }
 tempfile = "3.2.0"
 
 [build-dependencies]
-cargo-readme = "3.1"
+buildsys = { path = "../../../tools/buildsys", version = "0.1.0" }

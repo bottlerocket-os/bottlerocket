@@ -17,4 +17,4 @@ signpost = { path = "../updater/signpost", version = "0.1.0" }
 snafu = "0.7"
 
 [build-dependencies]
-cargo-readme = "3.1"
+buildsys = { path = "../../tools/buildsys", version = "0.1.0" }

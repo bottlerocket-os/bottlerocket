@@ -22,4 +22,3 @@ tokio = { version = "~1.14", default-features = false, features = ["macros", "rt
 
 [build-dependencies]
 buildsys = { path = "../../../tools/buildsys", version = "0.1.0" }
-cargo-readme = "3.1"

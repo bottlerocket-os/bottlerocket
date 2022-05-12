@@ -9,4 +9,4 @@ publish = false
 exclude = ["README.md"]
 
 [build-dependencies]
-cargo-readme = "3.1"
+buildsys = { path = "../../tools/buildsys", version = "0.1.0" }

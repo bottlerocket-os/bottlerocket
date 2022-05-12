@@ -3,5 +3,6 @@
 mod public;
 
 pub use public::{
-    Error, Result, Variant, DEFAULT_VARIANT_TYPE, DEFAULT_VARIANT_VERSION, VARIANT_ENV,
+    generate_readme, Error, ReadmeSource, Result, Variant, DEFAULT_VARIANT_TYPE,
+    DEFAULT_VARIANT_VERSION, VARIANT_ENV,
 };
