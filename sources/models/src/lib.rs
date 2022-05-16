@@ -196,6 +196,7 @@ struct KubernetesSettings {
     cpu_manager_reconcile_period: KubernetesDurationValue,
     topology_manager_scope: TopologyManagerScope,
     topology_manager_policy: TopologyManagerPolicy,
+    pod_pids_limit: i64,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

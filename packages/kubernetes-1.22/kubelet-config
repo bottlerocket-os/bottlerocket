@@ -86,6 +86,9 @@ topologyManagerScope: {{settings.kubernetes.topology-manager-scope}}
 {{#if settings.kubernetes.topology-manager-policy}}
 topologyManagerPolicy: {{settings.kubernetes.topology-manager-policy}}
 {{/if}}
+{{#if settings.kubernetes.pod-pids-limit includeZero=true}}
+podPidsLimit: {{settings.kubernetes.pod-pids-limit}}
+{{/if}}
 resolvConf: "/etc/resolv.conf"
 hairpinMode: hairpin-veth
 readOnlyPort: 0
