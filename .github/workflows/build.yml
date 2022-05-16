@@ -24,7 +24,7 @@ jobs:
     continue-on-error: ${{ matrix.supported }}
     strategy:
       matrix:
-        variant: [aws-k8s-1.19, aws-k8s-1.20, aws-k8s-1.21, aws-k8s-1.22, aws-ecs-1]
+        variant: [aws-k8s-1.19, aws-k8s-1.20, aws-k8s-1.21, aws-k8s-1.22, aws-k8s-1.23, aws-ecs-1]
         arch: [x86_64, aarch64]
         supported: [true]
         fetch-upstream: ["false"]

@@ -75,6 +75,13 @@ It also includes the required packages to configure containers to leverage NVIDI
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 This variant is compatible with Kubernetes 1.22, 1.23, and 1.24 clusters.
 
+### aws-k8s-1.23: Kubernetes 1.23 node
+
+The [aws-k8s-1.23](aws-k8s-1.23/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.23, 1.24, and 1.25 clusters.
+
 ### aws-ecs-1: Amazon ECS container instance
 
 The [aws-ecs-1](aws-ecs-1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)

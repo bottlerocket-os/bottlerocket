@@ -52,6 +52,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-k8s-1.22-nvidia/mod.rs)
 * [Default settings](src/aws-k8s-1.22-nvidia/defaults.d/)
 
+### aws-k8s-1.23: Kubernetes 1.23
+
+* [Model](src/aws-k8s-1.23/mod.rs)
+* [Default settings](src/aws-k8s-1.23/defaults.d/)
+
 ### aws-ecs-1: Amazon ECS
 
 * [Model](src/aws-ecs-1/mod.rs)
