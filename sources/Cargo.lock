@@ -579,6 +579,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "boot-setting"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "boot-setting-metadata"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "bootstrap-containers"
 version = "0.1.0"
 dependencies = [
@@ -2477,12 +2491,19 @@ name = "prairiedog"
 version = "0.1.0"
 dependencies = [
  "argh",
+ "bytes",
  "cargo-readme",
+ "constants",
  "log",
+ "maplit",
+ "models",
  "nix 0.23.1",
+ "schnauzer",
+ "serde_json",
  "signpost",
  "simplelog",
  "snafu",
+ "tokio",
 ]
 
 [[package]]

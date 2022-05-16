@@ -12,7 +12,6 @@ The output is collected and sent to a known Bottlerocket API server endpoint.
 #[macro_use]
 extern crate log;
 
-use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -113,6 +112,15 @@ mod error {
             source: serde_json::Error,
         },
 
+        #[snafu(display("Failed to get settings with prefixes '{:?}': '{}'", prefixes, source))]
+        GetPrefix {
+            prefixes: Vec<String>,
+            source: apiclient::get::Error,
+        },
+
+        #[snafu(display("Error interpreting JSON value as API model: {}", source))]
+        InterpretModel { source: serde_json::Error },
+
         #[snafu(display("Can't deserialize {} from command output '{}'", expected, input,))]
         CommandJsonType {
             expected: &'static str,
@@ -187,26 +195,17 @@ where
 
     let mut populated_settings = HashSet::new();
 
-    // Build the query string and the URI containing that query.
-    let query = to_query.join(",");
-    let uri = &format!("{}?keys={}", constants::API_SETTINGS_URI, query);
-
-    let (code, response_body) = apiclient::raw_request(socket_path.as_ref(), uri, "GET", None)
+    // Retrieve settings by querying the settings by prefix
+    let prefixes: Vec<String> = to_query.into_iter().map(|s| s.to_string()).collect();
+    let response = apiclient::get::get_prefixes(socket_path, prefixes.to_owned())
         .await
-        .context(error::APIRequestSnafu { method: "GET", uri })?;
-    ensure!(
-        code.is_success(),
-        error::APIResponseSnafu {
-            method: "GET",
-            uri,
-            code,
-            response_body,
-        }
-    );
+        .context(error::GetPrefixSnafu { prefixes })?;
+    debug!("API response model: {}", response.to_string());
 
     // Build a Settings struct from the response.
-    let settings: model::Settings = serde_json::from_str(&response_body)
-        .context(error::ResponseJsonSnafu { method: "GET", uri })?;
+    let settings = serde_json::from_value::<model::Model>(response)
+        .context(error::InterpretModelSnafu)?
+        .settings;
 
     // Serialize the Settings struct into key/value pairs. This builds the dotted
     // string representation of the setting
@@ -245,8 +244,18 @@ where
             key_type: KeyType::Data,
             key: &setting_str,
         })?;
+
         // Don't clobber settings that are already populated
-        if populated_settings.contains(&setting) {
+        // We're checking for prefix matches here because some generators are for settings that map
+        // to a top level struct that might have subfields. For example, a settings generator for
+        // `settings.boot` encompasses both `settings.boot.kernel` and `settings.boot.init`.
+        // TODO: We can optimize by using a prefix trie here. But there are no satisfactory trie
+        //  implementations I can find on crates.io. We can roll our own at some point if this
+        //  becomes a bottleneck
+        if populated_settings
+            .iter()
+            .any(|k| k.starts_with_segments(setting.segments()))
+        {
             debug!("Setting '{}' is already populated, skipping", setting);
             continue;
         }

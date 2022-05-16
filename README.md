@@ -561,6 +561,43 @@ Here are the metrics settings:
     "vm.max_map_count" = "262144"
     ```
 
+#### Boot-related settings
+
+*Please note that boot settings only exist for bare-metal variants at the moment*
+
+Specifying either of the following settings will generate a kernel boot config file to be loaded on subsequent boots:
+* `settings.boot.kernel-parameters`: This allows additional kernel parameters to be specified on the kernel command line during boot.
+* `settings.boot.init-parameters`: This allows additional init parameters to be specified on the kernel command line during boot.
+
+You can learn more about kernel boot configuration [here](https://www.kernel.org/doc/html/latest/admin-guide/bootconfig.html).
+
+Example user data for specifying boot settings:
+
+```toml
+[settings.boot.kernel-parameters]
+"console" = [
+  "tty0",
+  "ttyS1,115200n8",
+]
+"crashkernel" = [
+  "2G-:256M",
+]
+"slub_debug" = [
+  "options,slabs",
+]
+"usbcore.quirks" = [
+  "0781:5580:bk",
+  "0a5c:5834:gij",
+]
+
+[settings.boot.init-parameters]
+"log_level" = ["debug"]
+"splash" = []
+```
+
+If boot config data exists at `/proc/bootconfig`, it will be used to generate these API settings on first boot.
+Please note that Bottlerocket only supports boot configuration for `kernel` and `init`. If any other boot config key is specified, the settings generation will fail.
+
 #### Custom CA certificates settings
 
 By default, Bottlerocket ships with the Mozilla CA certificate store, but you can add self-signed certificates through the API using these settings:
