@@ -1,0 +1,1 @@
+<interface><name>eno7</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:dhcp><enabled>true</enabled></ipv4:dhcp><ipv6:dhcp><enabled>true</enabled><defer-timeout>1</defer-timeout><flags><optional></optional></flags></ipv6:dhcp></interface>

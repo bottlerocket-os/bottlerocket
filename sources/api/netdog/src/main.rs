@@ -10,6 +10,16 @@ It contains two subcommands meant for use as settings generators:
 * `generate-hostname`: returns the node's hostname in JSON format. If the lookup is unsuccessful, the IP of the node is used.
 
 The subcommand `set-hostname` sets the hostname for the system.
+
+The subcommand `generate-net-config` generates the network interface configuration for the host. If
+a `net.toml` file exists in `/var/lib/bottlerocket`, it is used to generate the configuration. If
+`net.toml` doesn't exist, the kernel command line `/proc/cmdline` is checked for the prefix
+`netdog.default-interface`.  If an interface is defined with that prefix, it is used to generate an
+interface configuration.  A single default interface may be defined on the kernel command line with
+the format: `netdog.default-interface=interface-name:option1,option2`.  "interface-name" is the
+name of the interface, and valid options are "dhcp4" and "dhcp6".  A "?" may be added to the option
+to signify that the lease for the protocol is optional and the system shouldn't wait for it.  A
+valid example: `netdog.default-interface=eno1:dhcp4,dhcp6?`.
 */
 
 #![deny(rust_2018_idioms)]
@@ -17,16 +27,21 @@ The subcommand `set-hostname` sets the hostname for the system.
 #[macro_use]
 extern crate serde_plain;
 
+mod interface_name;
+mod net_config;
+mod wicked;
+
 use argh::FromArgs;
 use dns_lookup::lookup_addr;
 use envy;
 use ipnet::IpNet;
 use lazy_static::lazy_static;
+use net_config::NetConfig;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
+use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeSet;
 use std::fmt::Write;
 use std::fs::{self, File};
@@ -35,10 +50,14 @@ use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::str::FromStr;
+use wicked::WickedInterface;
 
 static RESOLV_CONF: &str = "/etc/resolv.conf";
 static KERNEL_HOSTNAME: &str = "/proc/sys/kernel/hostname";
 static CURRENT_IP: &str = "/var/lib/netdog/current_ip";
+static KERNEL_CMDLINE: &str = "/proc/cmdline";
+static PRIMARY_INTERFACE: &str = "/var/lib/netdog/primary_interface";
+static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
 
 // Matches wicked's shell-like syntax for DHCP lease variables:
 //     FOO='BAR' -> key=FOO, val=BAR
@@ -62,12 +81,6 @@ struct LeaseInfo {
 
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum InterfaceName {
-    Eth0,
-}
-
-#[derive(Debug, PartialEq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
 enum InterfaceType {
     Dhcp,
 }
@@ -80,7 +93,6 @@ enum InterfaceFamily {
 }
 
 // Implement `from_str()` so argh can attempt to deserialize args into their proper types
-derive_fromstr_from_deserialize!(InterfaceName);
 derive_fromstr_from_deserialize!(InterfaceType);
 derive_fromstr_from_deserialize!(InterfaceFamily);
 
@@ -98,6 +110,7 @@ enum SubCommand {
     Remove(RemoveArgs),
     NodeIp(NodeIpArgs),
     GenerateHostname(GenerateHostnameArgs),
+    GenerateNetConfig(GenerateNetConfigArgs),
     SetHostname(SetHostnameArgs),
 }
 
@@ -107,7 +120,7 @@ enum SubCommand {
 struct InstallArgs {
     #[argh(option, short = 'i')]
     /// name of the network interface
-    interface_name: InterfaceName,
+    interface_name: String,
 
     #[argh(option, short = 't')]
     /// network interface type
@@ -136,7 +149,7 @@ struct InstallArgs {
 struct RemoveArgs {
     #[argh(option, short = 'i')]
     /// name of the network interface
-    interface_name: InterfaceName,
+    interface_name: String,
 
     #[argh(option, short = 't')]
     /// network interface type
@@ -156,6 +169,11 @@ struct NodeIpArgs {}
 #[argh(subcommand, name = "generate-hostname")]
 /// Generate hostname from DNS reverse lookup or use current IP
 struct GenerateHostnameArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "generate-net-config")]
+/// Generate wicked network configuration
+struct GenerateNetConfigArgs {}
 
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "set-hostname")]
@@ -220,12 +238,21 @@ fn write_current_ip(ip: &IpAddr) -> Result<()> {
 }
 
 fn install(args: InstallArgs) -> Result<()> {
-    match (
-        &args.interface_name,
-        &args.interface_type,
-        &args.interface_family,
-    ) {
-        (InterfaceName::Eth0, InterfaceType::Dhcp, InterfaceFamily::Ipv4) => {
+    // Wicked doesn't mangle interface names, but let's be defensive.
+    let install_interface = args.interface_name.trim().to_lowercase();
+    let primary_interface = fs::read_to_string(PRIMARY_INTERFACE)
+        .context(error::PrimaryInterfaceReadSnafu {
+            path: PRIMARY_INTERFACE,
+        })?
+        .trim()
+        .to_lowercase();
+
+    if install_interface != primary_interface {
+        return Ok(());
+    }
+
+    match (&args.interface_type, &args.interface_family) {
+        (InterfaceType::Dhcp, InterfaceFamily::Ipv4) => {
             let info = parse_lease_info(&args.data_file)?;
             // Randomize name server order, for libc implementations like musl that send
             // queries to the first N servers.
@@ -280,6 +307,51 @@ fn generate_hostname() -> Result<()> {
     Ok(print_json(hostname)?)
 }
 
+/// Generate configuration for network interfaces.
+fn generate_net_config() -> Result<()> {
+    let maybe_net_config = if Path::exists(Path::new(DEFAULT_NET_CONFIG_FILE)) {
+        NetConfig::from_path(DEFAULT_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
+            path: DEFAULT_NET_CONFIG_FILE,
+        })?
+    } else {
+        NetConfig::from_command_line(KERNEL_CMDLINE).context(error::NetConfigParseSnafu {
+            path: KERNEL_CMDLINE,
+        })?
+    };
+
+    // `maybe_net_config` could be `None` if no interfaces were defined
+    let net_config = match maybe_net_config {
+        Some(net_config) => net_config,
+        None => {
+            eprintln!("No network interfaces were configured");
+            return Ok(());
+        }
+    };
+    let primary_interface = net_config
+        .primary_interface()
+        .context(error::GetPrimaryInterfaceSnafu)?;
+    write_primary_interface(primary_interface)?;
+
+    for (name, config) in net_config.interfaces {
+        let wicked_interface = WickedInterface::from_config(name, config);
+        wicked_interface
+            .write_config_file()
+            .context(error::InterfaceConfigWriteSnafu)?;
+    }
+    Ok(())
+}
+
+/// Persist the primary interface name to file
+fn write_primary_interface<S>(interface: S) -> Result<()>
+where
+    S: AsRef<str>,
+{
+    let interface = interface.as_ref();
+    fs::write(PRIMARY_INTERFACE, interface).context(error::PrimaryInterfaceWriteSnafu {
+        path: PRIMARY_INTERFACE,
+    })
+}
+
 /// Helper function that serializes the input to JSON and prints it
 fn print_json<S>(val: S) -> Result<()>
 where
@@ -306,6 +378,7 @@ fn run() -> Result<()> {
         SubCommand::Remove(args) => remove(args)?,
         SubCommand::NodeIp(_) => node_ip()?,
         SubCommand::GenerateHostname(_) => generate_hostname()?,
+        SubCommand::GenerateNetConfig(_) => generate_net_config()?,
         SubCommand::SetHostname(args) => set_hostname(args)?,
     }
     Ok(())
@@ -323,6 +396,7 @@ fn main() {
 
 /// Potential errors during netdog execution
 mod error {
+    use crate::{net_config, wicked};
     use envy;
     use snafu::Snafu;
     use std::io;
@@ -364,6 +438,24 @@ mod error {
             output: String,
             source: serde_json::error::Error,
         },
+
+        #[snafu(display("Unable to read/parse network config from '{}': {}", path.display(), source))]
+        NetConfigParse {
+            path: PathBuf,
+            source: net_config::Error,
+        },
+
+        #[snafu(display("Failed to write network interface configuration: {}", source))]
+        InterfaceConfigWrite { source: wicked::Error },
+
+        #[snafu(display("Failed to write primary interface to '{}': {}", path.display(), source))]
+        PrimaryInterfaceWrite { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to read primary interface to '{}': {}", path.display(), source))]
+        PrimaryInterfaceRead { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to discern primary interface"))]
+        GetPrimaryInterface,
     }
 }
 

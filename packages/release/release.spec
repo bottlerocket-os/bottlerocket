@@ -18,7 +18,6 @@ Source201: proxy-env
 Source202: hostname-env
 Source203: hosts.template
 
-Source1000: eth0.xml
 Source1001: multi-user.target
 Source1002: configured.target
 Source1003: preconfigured.target
@@ -106,9 +105,6 @@ Requires: %{_cross_os}wicked
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -p -m 0644 %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
-install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
-install -p -m 0644 %{S:1000} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig
-
 install -d %{buildroot}%{_cross_libdir}/repart.d
 install -p -m 0644 %{S:96} %{buildroot}%{_cross_libdir}/repart.d/80-local.conf
 
@@ -172,7 +168,6 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
-%{_cross_factorydir}%{_cross_sysconfdir}/wicked/ifconfig/eth0.xml
 %{_cross_sysctldir}/80-release.conf
 %{_cross_tmpfilesdir}/release.conf
 %{_cross_libdir}/os-release

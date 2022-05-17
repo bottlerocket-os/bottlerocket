@@ -1,0 +1,1 @@
+<interface><name>eno2</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv6:dhcp><enabled>true</enabled></ipv6:dhcp></interface>

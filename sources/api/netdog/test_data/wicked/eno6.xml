@@ -1,0 +1,1 @@
+<interface><name>eno6</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:dhcp><enabled>true</enabled><route-priority>100</route-priority></ipv4:dhcp><ipv6:dhcp><enabled>false</enabled></ipv6:dhcp></interface>
