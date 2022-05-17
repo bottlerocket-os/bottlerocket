@@ -50,6 +50,7 @@ members = [
     "api/migration/migrations/v1.7.0/public-control-container-v0-6-0",
     "api/migration/migrations/v1.8.0/boot-setting",
     "api/migration/migrations/v1.8.0/boot-setting-metadata",
+    "api/migration/migrations/v1.8.0/kubelet-pod-pids-limit",
 
     "bottlerocket-release",
 
