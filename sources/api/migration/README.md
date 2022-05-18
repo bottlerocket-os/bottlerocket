@@ -3,30 +3,29 @@
 ## Overview
 
 We're not perfect, so we need the ability to fix problems in our design, but it's critical to maintain user configuration through those changes.
-To achieve both, we need the ability to migrate configuration between versions.
+To achieve both, the ability to migrate configuration between versions is required.
 
-The mechanism proposed is reminiscent of database migrations - individual bits of code that manipulate specific data, and that are labeled to indicate what version they apply to.
+The mechanism is reminiscent of database migrations - individual bits of code that manipulate specific data, and that are labeled to indicate what version they apply to.
 
 ## When to migrate data
 
-We will run migrations during the boot process when we detect that the on-disk data store doesn't match the version of the booting image.
+Migrations run during the boot process when it is detected that the on-disk data store doesn't match the version of the booting image.
 The system will download any missing, appropriate migrations before rebooting.
 
-One downside of this approach is that migration failure would require another reboot to flip back to a matching version.
+One downside of this approach is that migration failure requires another reboot to flip back to a matching version.
 
-In return, we get a consistent process where we always check and migrate the data store before it's used, and we have a simpler pre-reboot process.
-We can also handle some cases of unexpected version mismatches at boot, for example if something goes wrong during an update.
+In return, this provides a consistent process: always check and migrate the data store before it's used. Additionally, pre-reboot process is simpler.
+The process can also handle some cases of unexpected version mismatches at boot, for example if something goes wrong during an update.
 
 ### Offline migration
 
-Since we’re running migrations at boot, we may not yet have a network connection.
-This means we can’t check for fixes to migrations or download missing migrations.
+Since migrations run at boot the network connection may not be available yet.
+This means it is impossible to check for fixes to migrations or download missing migrations.
 
-When downloading an OS update, we necessarily download the TUF metadata describing that update.
-This metadata also describes the migrations necessary between various updates.
-During this update preparation process, we will also download all necessary migrations, and refuse to start an update otherwise.
+When downloading an OS update, the TUF metadata is retrieved for that particular variant and architecture. This metadata describes the migrations necessary between various updates.
+During this update preparation process, all necessary migrations are downloaded and an update will refuse to start otherwise.
 
-### Rejected options
+### Rejected designs
 
 * Before reboot - This would optimistically prepare the data store before rebooting into a new version.
     * Pro: The flip to the new format would still have to happen after the reboot, but would be fast and nearly trivial.
@@ -35,21 +34,18 @@ During this update preparation process, we will also download all necessary migr
 
 ## Integration with update system
 
-As mentioned above in [Offline Migration](#offline-migration), update metadata will list the migrations needed to move between versions.
-This metadata will be made available for the migrator to use later to verify the migrations.
+As mentioned above in [Offline Migration](#offline-migration), the updated metadata lists the migrations needed to move between versions.
+This metadata is made available for the migrator to use later to verify the migrations.
 
 There may be times when we discover issues with migrations after release and need to replace them.
-These fixed migrations can be listed in the update metadata and downloaded along with the image.
+These fixed migrations are listed in the updated metadata and downloaded along with the image.
 Since this metadata is the source of truth for the migration list, any old migrations will simply be ignored.
-
-Note: The tool downloading migrations does not have to be the same as the one downloading images, nor does it have to be part of the migrator.
-Its job is closest to the update downloader, though, and so should be described in further detail in the update system design.
 
 ## How to update and flip the data store
 
 To start, the migration system copies the data store, updates it by running migrations, and (when ready) flips symlinks to the new version.
-This duplicates the data, but at the start, we aren't expecting to store large quantities of data in the data store.
-Plus, new OS versions that have no data store changes are simply a new symlink rather than a copy.
+This duplicates the data but it isn't expected to be large quantities of data in the data store.
+New OS versions that have no data store changes are simply a new symlink rather than a copy.
 
 ### Data store symlink structure
 
@@ -64,15 +60,15 @@ Here's a full example setup for version 1.5:
    -> v1.5.2
    -> v1.5.2_0123456789abcdef
 ```
-The final level has a random identifier appended so we can track migration attempts and help prevent timing issues.
+The migration system appends a random identifier to a the final level so it can track migration attempts and help prevent timing issues.
 
 Old versions can be kept for quick rollbacks, but automated cleanup will be necessary to prevent filling the disk.
 
-Note that the version applies to both the `live` and `pending` trees, which both live inside the directory described above - we have to migrate both live and pending data or we could lose customer information.
+Note that the version applies to both the `live` and `pending` trees, which both live inside the directory described above. Both live and pending data is migrated to prevent user configuration information from being lost.
 
 ## How to run migrations
 
-The migration system will follow these steps.
+The migration system follows these steps:
 
 ### Find outgoing and incoming versions
 
@@ -81,26 +77,26 @@ The incoming version is listed in the file `/etc/os-release` in the incoming ima
 
 ### Find migrations
 
-Next we find the migration binaries that are applicable when moving from the outgoing version to the incoming version.
-Migration names include the version where they first apply, so we take any migrations applicable after the outgoing version, up to and including the incoming version.
+Next, the migration system finds applicable migration binaries for moving from the outgoing version to the incoming version.
+Migration names include the version where they first apply, so all applicable migrations after the outgoing version and up to and including the incoming version are used by the migration system.
 
-Migrations will be in a known location (e.g. `/var/lib/bottlerocket-migrations`) and all migrations will also be available on the update server for download.
-Migration lists (metadata) will be available from both sources to ensure we're not missing any migrations.
+Migrations are in a known location (e.g. `/var/lib/bottlerocket-migrations`) and all migrations are also available on the update server for download.
+Migration lists (metadata) are available from both sources to ensure no migrations are missing.
 
 ### Run migrations
 
 The migration system then runs the migrations in order.
-This can use a relatively simple numerical ordering of the migration binary filenames, because the names include the applicable version and a name for ordering multiple migrations within a version.
+This uses a relatively simple numerical ordering of the migration binary filenames, because the names include the applicable version and a name for ordering multiple migrations within a version.
 (See [Structure](#structure).)
 
 As mentioned above in [How to update and flip the data store](#how-to-update-and-flip-the-data-store), migrations are run on an in-memory copy of the current data store, and are run on the live and pending trees within the copy.
 
 ### Handling failure
 
-Upon failure of a migration, we don't need to run any rollbacks because we were operating on a copy of the data store.
+Upon failure of a migration, rollbacks aren't needed because the migration system is operating on a copy of the data store.
 
 If the migrator fails, boot services will be marked as failed, which means the current partition set won't be marked as successful.
-A reboot will automatically switch back to the other partition set containing the version that supports our current data store.
+A reboot will automatically switch back to the other partition set containing the version that supports the current data store.
 
 ## How to write migrations
 
@@ -109,28 +105,28 @@ A reboot will automatically switch back to the other partition set containing th
 Migrations are Rust code adhering to a Migration interface.
 This is defined in the `migration-helpers` library; see [Helpers](#helpers).
 
-The interface will require handling forward and backward migrations through specific methods.
+The interface requires handling forward and backward migrations through specific methods.
 Each method will give data and metadata maps as input, and require data and metadata maps as output.
-(These structures will be nested, rather than using dotted keys, to make it easier to handle sub-trees and reduce dependency on existing data store code.)
+(These structures are nested, rather than using dotted keys, to make it easier to handle sub-trees and reduce dependency on existing data store code.)
 
 Migration code should not assume that any given keys exist, because migrations will be run on live data (where all keys will likely exist) and on pending data (where none, some, or all keys may exist).
 Plus, different variants of Bottlerocket may not have the same keys.
 
-The migration system could deserialize the function outputs into the incoming model types to confirm that the structure is valid; we should prototype this idea because it would add safety.
+The migration system deserializes the function outputs into the incoming model types to confirm that the structure is valid.
 
 To write a migration, start a Rust project at `/migrations/<applicable version>/migrate-<name>/Cargo.toml`
 
-The filename of the migration will be used by the migration system to order migrations.
-The name will take the format `migrate_v<applicable version>_<name>`.
+The filename of the migration is used by the migration system to order migrations.
+The name takes the format `migrate_v<applicable version>_<name>`.
 Cargo does not allow naming binaries this way, so the migration build process renames them appropriately when installing them into the image.
 
 ### Helpers
 
-We have a standard structure for migration code that handles common things like argument parsing, so that we can have a common CLI interface for the migration system to run migrations.
+There is a standard structure for migration code that handles common things like argument parsing, this allows for a common CLI interface for the migration system.
 
-We also have a Rust module that handles common migration types, such as adding, removing, and replacing settings.
+There is also a Rust module that handles common migration types, such as adding, removing, and replacing settings.
 
-### Rejected options
+### Rejected designs
 
 Regarding ordering:
 
@@ -147,32 +143,32 @@ As mentioned in [Structure](#structure), migrations will be required to implemen
 Therefore, rollbacks can largely be treated the same way, just running the backward function instead.
 (Migration binaries using `migration-helpers` have a flag for direction.)
 
-If we're confident no user configuration has changed, or if the user wants to discard changes, we can do a quick rollback by flipping the symlink(s) back, as mentioned in [How to update and flip the data store](#how-to-update-and-flip-the-data-store).
+In situations where no user configuration has changed, or if the user wants to discard changes, a quick rollback can be accomplished by flipping the symlink(s) back, as mentioned in [How to update and flip the data store](#how-to-update-and-flip-the-data-store).
 
 ## Example use cases
 
 ### New application
 
-Say we add a new open-source application, like rngd.
-We can add data regarding settings, services, and configuration-files of the application to our data model.
+Say the project adds a new open-source application, like rngd.
+This requires adding data regarding settings, services, and configuration-files of the application to the data model.
 
-In this case, we can use the existing helper `AddSettingsMigration`.
+In this case, there is the existing helper `AddSettingsMigration`.
 It doesn't need to do anything on upgrade, because the new key will be populated by its default value.
 On downgrade, it removes the setting, so that the old data store model doesn't see an unexpected key and reject the data.
 
 ### Application version upgrade
 
-If we upgrade an important application, its available and required settings may change.
-This means we'd have to update the data model to include any new or changed settings, and we'd write migrations to transform data from the old settings to the new.
+If an important application is upgraded, its available and required settings may change.
+This means updating the data model to include any new or changed settings, and writing migrations to transform data from the old settings to the new.
 This can likely be handled by existing helpers `AddSettingsMigration`, `RemoveSettingsMigration`, `ReplaceStringMigration`, and `ReplaceTemplateMigration`.
+
+## Open questions
 
 ### Data store implementation change
 
 If we find that the filesystem data store implementation is insufficient, we may, for example, want to move to a database like SQLite, or to an improved filesystem data store implementation.
 If it can use the same symlink-flip system, we can handle it with a migration: make a migration that doesn't use the standard migration-helpers library, but uses custom code to affect the larger change.
 If it needs an entirely new structure, we need to add capabilities to the migrator first.
-
-## Open questions
 
 ### Saving old data
 
