@@ -14,6 +14,7 @@ members = [
     "metal-dev",
     "metal-k8s-1.21",
     "metal-k8s-1.22",
+    "metal-k8s-1.23",
     "vmware-dev",
     "vmware-k8s-1.20",
     "vmware-k8s-1.21",

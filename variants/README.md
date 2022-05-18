@@ -158,6 +158,13 @@ It supports self-hosted clusters.
 
 This variant is compatible with Kubernetes 1.22, 1.23, and 1.24 clusters.
 
+### metal-k8s-1.23: Metal Kubernetes 1.23 node
+
+The [metal-k8s-1.23](metal-k8s-1.23/Cargo.toml) variant includes the packages needed to run a Kubernetes node on bare metal.
+It supports self-hosted clusters.
+
+This variant is compatible with Kubernetes 1.23, 1.24, and 1.25 clusters.
+
 ### Deprecated variants
 
 #### aws-k8s-1.15: Kubernetes 1.15 node

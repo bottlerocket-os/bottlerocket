@@ -104,13 +104,18 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ### metal-k8s-1.21: Metal Kubernetes 1.21
 
-* [Model](src/metal-k8s-1.22/mod.rs)
+* [Model](src/metal-k8s-1.23/mod.rs)
 * [Default settings](src/metal-k8s-1.22/defaults.d/)
 
 ### metal-k8s-1.22: Metal Kubernetes 1.22
 
-* [Model](src/metal-k8s-1.22/mod.rs)
+* [Model](src/metal-k8s-1.23/mod.rs)
 * [Default settings](src/metal-k8s-1.22/defaults.d/)
+
+### metal-k8s-1.23: Metal Kubernetes 1.23
+
+* [Model](src/metal-k8s-1.23/mod.rs)
+* [Default settings](src/metal-k8s-1.23/defaults.d/)
 
 ## This directory
 
