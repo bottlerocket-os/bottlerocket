@@ -14,7 +14,8 @@ The system will download any missing, appropriate migrations before rebooting.
 
 One downside of this approach is that migration failure requires another reboot to flip back to a matching version.
 
-In return, this provides a consistent process: always check and migrate the data store before it's used. Additionally, pre-reboot process is simpler.
+In return, this provides a consistent process: always check and migrate the data store before it's used.
+Additionally, the pre-reboot process is simpler.
 The process can also handle some cases of unexpected version mismatches at boot, for example if something goes wrong during an update.
 
 ### Offline migration
@@ -22,7 +23,8 @@ The process can also handle some cases of unexpected version mismatches at boot,
 Since migrations run at boot the network connection may not be available yet.
 This means it is impossible to check for fixes to migrations or download missing migrations.
 
-When downloading an OS update, the TUF metadata is retrieved for that particular variant and architecture. This metadata describes the migrations necessary between various updates.
+When downloading an OS update, the TUF metadata and the Bottlerocket update manifest are retrieved for that particular variant and architecture.
+The manifest describes the migrations necessary between various updates and the TUF metadata ensures its integrity.
 During this update preparation process, all necessary migrations are downloaded and an update will refuse to start otherwise.
 
 ### Rejected designs
@@ -34,17 +36,17 @@ During this update preparation process, all necessary migrations are downloaded 
 
 ## Integration with update system
 
-As mentioned above in [Offline Migration](#offline-migration), the updated metadata lists the migrations needed to move between versions.
-This metadata is made available for the migrator to use later to verify the migrations.
+As mentioned above in [Offline Migration](#offline-migration), the manifest lists the migrations needed to move between versions.
+This manifest is made available for the migrator later along with TUF metadata to verify the migrations.
 
 There may be times when we discover issues with migrations after release and need to replace them.
-These fixed migrations are listed in the updated metadata and downloaded along with the image.
+These fixed migrations are listed in the manifest and downloaded along with the image.
 Since this metadata is the source of truth for the migration list, any old migrations will simply be ignored.
 
 ## How to update and flip the data store
 
 To start, the migration system copies the data store, updates it by running migrations, and (when ready) flips symlinks to the new version.
-This duplicates the data but it isn't expected to be large quantities of data in the data store.
+This duplicates the data, but currently the data store only contains a small amount of data.
 New OS versions that have no data store changes are simply a new symlink rather than a copy.
 
 ### Data store symlink structure
@@ -60,11 +62,12 @@ Here's a full example setup for version 1.5:
    -> v1.5.2
    -> v1.5.2_0123456789abcdef
 ```
-The migration system appends a random identifier to a the final level so it can track migration attempts and help prevent timing issues.
+The migration system appends a random identifier to the final level so it can track migration attempts and help prevent timing issues.
 
 Old versions can be kept for quick rollbacks, but automated cleanup will be necessary to prevent filling the disk.
 
-Note that the version applies to both the `live` and `pending` trees, which both live inside the directory described above. Both live and pending data is migrated to prevent user configuration information from being lost.
+Note that the version applies to both the `live` and `pending` trees, which both live inside the directory described above.
+Both live and pending data is migrated to prevent user configuration information from being lost.
 
 ## How to run migrations
 
@@ -112,17 +115,15 @@ Each method will give data and metadata maps as input, and require data and meta
 Migration code should not assume that any given keys exist, because migrations will be run on live data (where all keys will likely exist) and on pending data (where none, some, or all keys may exist).
 Plus, different variants of Bottlerocket may not have the same keys.
 
-The migration system deserializes the function outputs into the incoming model types to confirm that the structure is valid.
-
 To write a migration, start a Rust project at `/migrations/<applicable version>/migrate-<name>/Cargo.toml`
 
-The filename of the migration is used by the migration system to order migrations.
+Migrations run in the order that they are found in the manifest.
 The name takes the format `migrate_v<applicable version>_<name>`.
 Cargo does not allow naming binaries this way, so the migration build process renames them appropriately when installing them into the image.
 
 ### Helpers
 
-There is a standard structure for migration code that handles common things like argument parsing, this allows for a common CLI interface for the migration system.
+There is a standard structure for migration code that handles common things like argument parsing, which allows for a common CLI interface for the migration system.
 
 There is also a Rust module that handles common migration types, such as adding, removing, and replacing settings.
 
@@ -162,7 +163,7 @@ If an important application is upgraded, its available and required settings may
 This means updating the data model to include any new or changed settings, and writing migrations to transform data from the old settings to the new.
 This can likely be handled by existing helpers `AddSettingsMigration`, `RemoveSettingsMigration`, `ReplaceStringMigration`, and `ReplaceTemplateMigration`.
 
-## Open questions
+## Open questions and future directions
 
 ### Data store implementation change
 
@@ -189,3 +190,7 @@ The system does not currently have a provision for this, but we can imagine a fe
 Bottlerocket variants allow the creation of Bottlerocket images with varying system components.
 Do we want to support moving between variants?
 If so, and we want to maintain user settings through the transition, we need to understand how to define and order migrations between variants.
+
+### Migrations
+
+The migration system could deserialize the function outputs into the incoming model types to confirm that the structure is valid; we should prototype this idea because it would add safety.
