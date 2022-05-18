@@ -61,6 +61,10 @@ jobs:
             arch: x86_64
             supported: true
             fetch-upstream: "false"
+          - variant: vmware-k8s-1.23
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
           - variant: aws-k8s-1.21-nvidia
             arch: x86_64
             supported: true

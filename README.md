@@ -68,6 +68,7 @@ We also have variants that are designed to be Kubernetes worker nodes in VMware:
 - `vmware-k8s-1.20`
 - `vmware-k8s-1.21`
 - `vmware-k8s-1.22`
+- `vmware-k8s-1.23`
 
 The following variants are no longer supported.:
 
@@ -408,7 +409,7 @@ Static pods can be particularly useful when running in standalone mode.
 
 For Kubernetes variants in AWS and VMware, the following are set for you automatically, but you can override them if you know what you're doing!
 In AWS, [pluto](sources/api/) sets these based on runtime instance information.
-In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on [default values](sources/models/src/vmware-k8s-1.22/defaults.d/).
+In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on [default values](sources/models/src/vmware-k8s-1.23/defaults.d).
 * `settings.kubernetes.node-ip`: The IP address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 * `settings.kubernetes.kube-reserved`: Resources reserved for node components.
