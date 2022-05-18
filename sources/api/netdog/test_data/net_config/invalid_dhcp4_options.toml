@@ -1,0 +1,10 @@
+version = 1
+
+[eno1]
+dhcp4 = true
+
+[eno2.dhcp4]
+optional = true
+route-metric = 100
+# `foo` is not a valid key
+foo = bar

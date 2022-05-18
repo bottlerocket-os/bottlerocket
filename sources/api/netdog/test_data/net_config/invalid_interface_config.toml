@@ -1,0 +1,9 @@
+version = 1
+
+[eno1]
+dhcp4 = true
+
+[eno2]
+dhcp4 = true
+# `optional` is a dhcp4 option, not an interface option
+optional = true
