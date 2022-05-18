@@ -10,6 +10,7 @@ members = [
     "aws-k8s-1.22",
     "aws-k8s-1.22-nvidia",
     "aws-k8s-1.23",
+    "aws-k8s-1.23-nvidia",
     "metal-dev",
     "metal-k8s-1.21",
     "metal-k8s-1.22",
