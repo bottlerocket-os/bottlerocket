@@ -39,6 +39,7 @@ pub(crate) struct NetConfig {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct NetInterface {
     // Use this interface as the primary interface for the system
     pub(crate) primary: Option<bool>,
@@ -54,6 +55,7 @@ pub(crate) enum Dhcp4Config {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct Dhcp4Options {
     pub(crate) enabled: Option<bool>,
     pub(crate) optional: Option<bool>,
@@ -69,6 +71,7 @@ pub(crate) enum Dhcp6Config {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct Dhcp6Options {
     pub(crate) enabled: Option<bool>,
     pub(crate) optional: Option<bool>,
@@ -443,6 +446,24 @@ mod tests {
     fn ok_config() {
         let ok = net_config().join("net_config.toml");
         assert!(NetConfig::from_path(ok).is_ok())
+    }
+
+    #[test]
+    fn invalid_interface_config() {
+        let bad = net_config().join("invalid_interface_config.toml");
+        assert!(NetConfig::from_path(bad).is_err())
+    }
+
+    #[test]
+    fn invalid_dhcp4_config() {
+        let bad = net_config().join("invalid_dhcp4_config.toml");
+        assert!(NetConfig::from_path(bad).is_err())
+    }
+
+    #[test]
+    fn invalid_dhcp6_config() {
+        let bad = net_config().join("invalid_dhcp6_config.toml");
+        assert!(NetConfig::from_path(bad).is_err())
     }
 
     #[test]

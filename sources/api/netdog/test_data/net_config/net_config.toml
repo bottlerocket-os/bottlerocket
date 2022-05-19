@@ -25,3 +25,26 @@ route-metric = 100
 
 [eno6]
 dhcp6 = false
+
+[eno7]
+dhcp4 = true
+
+[eno7.dhcp6]
+enabled = true
+optional = true
+
+[eno8.dhcp4]
+enabled = true
+optional = true
+
+[eno8.dhcp6]
+enabled = true
+optional = true
+
+[eno9.dhcp4]
+enabled = true
+optional = true
+
+[eno10.dhcp6]
+enabled = true
+optional = true

@@ -1,0 +1,9 @@
+version = 1
+
+[eno1]
+dhcp4 = true
+
+[eno2.dhcp6]
+optional = true
+# `route-metric` is not a valid `dhcp6` option
+route-metric = 100
