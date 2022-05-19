@@ -57,7 +57,7 @@ pub(crate) enum Dhcp4Config {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Dhcp4Options {
-    pub(crate) enabled: Option<bool>,
+    pub(crate) enabled: bool,
     pub(crate) optional: Option<bool>,
     #[serde(rename = "route-metric")]
     pub(crate) route_metric: Option<u32>,
@@ -73,7 +73,7 @@ pub(crate) enum Dhcp6Config {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Dhcp6Options {
-    pub(crate) enabled: Option<bool>,
+    pub(crate) enabled: bool,
     pub(crate) optional: Option<bool>,
 }
 
@@ -255,7 +255,7 @@ impl FromStr for Dhcp4Config {
         }
 
         let dhcp4_options = Dhcp4Options {
-            enabled: Some(true),
+            enabled: true,
             optional,
             route_metric: None,
         };
@@ -293,7 +293,7 @@ impl FromStr for Dhcp6Config {
         }
 
         let dhcp6_options = Dhcp6Options {
-            enabled: Some(true),
+            enabled: true,
             optional,
         };
         Ok(Dhcp6Config::WithOptions(dhcp6_options))
@@ -470,6 +470,18 @@ mod tests {
     fn invalid_dhcp_config() {
         let ok = net_config().join("invalid_dhcp_config.toml");
         assert!(NetConfig::from_path(ok).is_err())
+    }
+
+    #[test]
+    fn dhcp4_missing_enable() {
+        let bad = net_config().join("dhcp4_missing_enabled.toml");
+        assert!(NetConfig::from_path(bad).is_err())
+    }
+
+    #[test]
+    fn dhcp6_missing_enable() {
+        let bad = net_config().join("dhcp6_missing_enabled.toml");
+        assert!(NetConfig::from_path(bad).is_err())
     }
 
     #[test]

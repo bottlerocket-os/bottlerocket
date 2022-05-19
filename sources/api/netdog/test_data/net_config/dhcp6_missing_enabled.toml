@@ -1,0 +1,4 @@
+version = 1
+
+[eno1.dhcp6]
+optional = true
