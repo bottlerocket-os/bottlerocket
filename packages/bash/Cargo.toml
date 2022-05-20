@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://ftp.gnu.org/gnu/bash"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz"
-sha512 = "bb4519f06e278f271d08722b531e49d2e842cc3e0b02a6b3eee422e2efcb5b6226111af43f5e5eae56beb85ac8bfebcd6a4aacbabb8f609e529aa4d571890864"
+url = "https://ftp.gnu.org/gnu/bash/bash-5.1.16.tar.gz"
+sha512 = "a32a343b6dde9a18eb6217602655f72c4098b0d90f04cf4e686fb21b81fc4ef26ade30f7226929fbb7c207cde34617dbad2c44f6103161d1141122bb31dc6c80"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

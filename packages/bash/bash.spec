@@ -1,14 +1,10 @@
 Name: %{_cross_os}bash
-Version: 5.0
+Version: 5.1.16
 Release: 1%{?dist}
 Summary: The GNU Bourne Again shell
 License: GPL-3.0-or-later
 URL: https://www.gnu.org/software/bash
 Source0: https://ftp.gnu.org/gnu/bash/bash-%{version}.tar.gz
-
-# Official upstream patches
-Patch1: bash-5.0-patch-1.patch
-Patch2: bash-5.0-patch-2.patch
 
 # Disable loadable builtin examples
 Patch127: bash-4.4-no-loadable-builtins.patch
