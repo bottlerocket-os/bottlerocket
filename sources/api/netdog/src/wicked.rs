@@ -67,8 +67,7 @@ struct LinkDetection {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct WickedDhcp4 {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    enabled: Option<bool>,
+    enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     route_priority: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -82,7 +81,7 @@ pub(crate) struct WickedDhcp4 {
 impl Default for WickedDhcp4 {
     fn default() -> Self {
         WickedDhcp4 {
-            enabled: Some(true),
+            enabled: true,
             route_priority: None,
             defer_timeout: None,
             flags: None,
@@ -94,8 +93,7 @@ impl Default for WickedDhcp4 {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct WickedDhcp6 {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    enabled: Option<bool>,
+    enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     defer_timeout: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -107,7 +105,7 @@ pub(crate) struct WickedDhcp6 {
 impl Default for WickedDhcp6 {
     fn default() -> Self {
         WickedDhcp6 {
-            enabled: Some(true),
+            enabled: true,
             defer_timeout: None,
             flags: None,
             _f: (),
@@ -128,7 +126,7 @@ impl From<Dhcp4Config> for WickedDhcp4 {
     fn from(dhcp4: Dhcp4Config) -> Self {
         match dhcp4 {
             Dhcp4Config::DhcpEnabled(b) => WickedDhcp4 {
-                enabled: Some(b),
+                enabled: b,
                 _f: (),
                 ..Default::default()
             },
@@ -161,7 +159,7 @@ impl From<Dhcp6Config> for WickedDhcp6 {
     fn from(dhcp6: Dhcp6Config) -> Self {
         match dhcp6 {
             Dhcp6Config::DhcpEnabled(b) => WickedDhcp6 {
-                enabled: Some(b),
+                enabled: b,
                 _f: (),
                 ..Default::default()
             },
