@@ -2079,6 +2079,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "snafu",
+ "tempfile",
  "toml",
 ]
 

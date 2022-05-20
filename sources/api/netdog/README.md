@@ -24,6 +24,9 @@ name of the interface, and valid options are "dhcp4" and "dhcp6".  A "?" may be 
 to signify that the lease for the protocol is optional and the system shouldn't wait for it.  A
 valid example: `netdog.default-interface=eno1:dhcp4,dhcp6?`.
 
+The subcommand `prepare-primary-interface` writes the default sysctls for the primary interface to
+file in `/etc/sysctl.d`, and then executes `systemd-sysctl` to apply them.
+
 ## Colophon
 
 This text was generated using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/main.rs`.
