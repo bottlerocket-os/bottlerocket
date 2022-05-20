@@ -116,6 +116,9 @@ DOCKER_BUILDKIT = "1"
 # write AMI information to specifically named files.
 AMI_DATA_FILE_SUFFIX = "amis.json"
 
+# The type of testsys test that should be run. `integ` will run all available tests.
+TESTSYS_TEST = "quick"
+
 [env.development]
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
@@ -1365,14 +1368,41 @@ script = [
     '''
 ]
 
+[tasks.setup-testsys-cluster]
+dependencies = ["setup", "fetch-sources"]
+script = [
+    '''
+    set -eu
+    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+    testsys install
+    '''
+]
+
+# This task is used to test bottlerocket artifacts. By default the region first listed in infra.toml
+# is used for testing; however, `TESTSYS_REGION` can be used to test a different region.
 [tasks.test]
 dependencies = ["install-testsys"]
 script = [
     '''
     set -eu
     export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+    ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+    if [ ! -s "${ami_input}" ]; then
+      echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
+      exit 1
+    fi
+    testsys run ${TESTSYS_TEST} \
+      --ami-input "${ami_input}" \
+    '''
+]
 
-    testsys run integ
+# This task will clear all tests and resources from the testsys cluster.
+[tasks.clear-test-cluster]
+dependencies = ["install-testsys"]
+script = [
+    '''
+    set -eu
+    testsys delete
     '''
 ]
 

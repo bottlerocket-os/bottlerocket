@@ -7,6 +7,18 @@ edition = "2021"
 publish = false
 
 [dependencies]
+anyhow = "1.0"
+bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "cf5c765", version = "0.1"}
+buildsys = { path = "../../tools/buildsys", version = "0.1.0" }
 clap = { version = "3", features = ["derive", "env"] }
-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "4e3c03b" }
+futures = "0.3.8"
+k8s-openapi = { version = "0.14", features = ["v1_20", "api"], default-features = false }
+maplit = "1.0.2"
+model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "cf5c765", version = "0.1"}
+pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_plain = "1"
+terminal_size = "0.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs"] }
+unescape = "0.1.0"

@@ -1,12 +1,29 @@
-use clap::{Args, Parser, Subcommand};
+use anyhow::{Context, Result};
+use clap::{Parser, Subcommand};
+use delete::Delete;
+use install::Install;
+use logs::Logs;
+use model::test_manager::TestManager;
+use restart_test::RestartTest;
+use run::Run;
+use status::Status;
 use std::path::PathBuf;
 
-/// A program for running and controlling Bottlerocket tests through in a TestSys Kubernetes
-/// cluster.
+mod aws_resources;
+mod delete;
+mod install;
+mod logs;
+mod restart_test;
+mod run;
+mod status;
+
+/// A program for running and controlling Bottlerocket tests in a Kubernetes cluster using
+/// https://github.com/bottlerocket-os/bottlerocket-test-system
 #[derive(Parser, Debug)]
 #[clap(about, long_about = None)]
 struct TestsysArgs {
-    /// Path to the kubeconfig file. Can also be passed with the KUBECONFIG environment variable.
+    /// Path to the kubeconfig file for the testsys cluster. Can also be passed with the KUBECONFIG
+    /// environment variable.
     #[clap(long)]
     kubeconfig: Option<PathBuf>,
 
@@ -15,66 +32,46 @@ struct TestsysArgs {
 }
 
 impl TestsysArgs {
-    fn run(self) -> std::result::Result<(), ()> {
+    async fn run(self) -> Result<()> {
+        let client = match self.kubeconfig {
+            Some(path) => TestManager::new_from_kubeconfig_path(&path)
+                .await
+                .context(format!(
+                    "Unable to create testsys client using kubeconfig '{}'",
+                    path.display()
+                ))?,
+            None => TestManager::new().await.context(
+                "Unable to create testsys client using KUBECONFIG variable or default kubeconfig",
+            )?,
+        };
         match self.command {
-            Command::Run(run_command_shim) => match run_command_shim.command {
-                RunCommand::Integ(integ_args) => integ_args.run(),
-            },
-        }
+            Command::Run(run) => run.run(client).await?,
+            Command::Install(install) => install.run(client).await?,
+            Command::Delete(delete) => delete.run(client).await?,
+            Command::Status(status) => status.run(client).await?,
+            Command::Logs(logs) => logs.run(client).await?,
+            Command::RestartTest(restart_test) => restart_test.run(client).await?,
+        };
+        Ok(())
     }
 }
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    Run(RunCommandShim),
-}
-
-// This struct appears to be necessary: https://github.com/clap-rs/clap/issues/2005
-#[derive(Args, Debug)]
-struct RunCommandShim {
-    #[clap(subcommand)]
-    command: RunCommand,
-}
-
-/// Run a test or resource provider.
-#[derive(Subcommand, Debug)]
-enum RunCommand {
-    Integ(IntegArgs),
-}
-
-#[derive(Args, Debug)]
-struct IntegArgs {
-    /// The build ID. This is typically the git commit short sha plus a `-dirty` suffix if there are
-    /// uncommitted changes.
-    #[clap(long, env = "BUILDSYS_VERSION_BUILD")]
-    version_build: String,
-
-    /// The Bottlerocket variant name.
-    #[clap(long, env = "BUILDSYS_VARIANT")]
-    variant: String,
-
-    /// The Bottlerocket image's architecture..
-    #[clap(long, env = "BUILDSYS_ARCH")]
-    arch: String,
-
-    /// The Bottlerocket image ID (for `aws` variants) or image filepath (e.v. OVA file). This will
-    /// be derived from variant and arch if not provided.
-    #[clap(long)]
-    image_id: Option<String>,
-}
-
-impl IntegArgs {
-    fn run(self) -> std::result::Result<(), ()> {
-        println!("TODO - run the tests!");
-        Ok(())
-    }
+    Install(Install),
+    Run(Box<Run>),
+    Delete(Delete),
+    Status(Status),
+    Logs(Logs),
+    RestartTest(RestartTest),
 }
 
 #[tokio::main]
 async fn main() {
     let args = TestsysArgs::parse();
     println!("{:?}", args);
-    if let Err(_) = args.run() {
+    if let Err(e) = args.run().await {
+        eprintln!("{}", e);
         std::process::exit(1);
     }
 }
