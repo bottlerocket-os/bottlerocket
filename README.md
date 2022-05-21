@@ -432,13 +432,17 @@ These settings can be changed at any time.
 * `settings.ecs.loglevel`: The level of verbosity for the ECS agent's logs.
   Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
 * `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
-
+* `settings.ecs.image-pull-behavior`: The behavior used to customize the [pull image process](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-agent-config.html#ecs-agent-availparam) for your container instances.
+  Supported values are `default`, `always`, `once`, `prefer-cached`, and the default is `default`.
 #### CloudFormation signal helper settings
 
 For AWS variants, these settings allow you to set up CloudFormation signaling to indicate whether Bottlerocket hosts running in EC2 have been successfully created or updated:
 * `settings.cloudformation.should-signal`: Whether to check status and send signal. Defaults to `false`. If set to `true`, both `stack-name` and `logical-resource-id` need to be specified.
 * `settings.cloudformation.stack-name`: Name of the CloudFormation Stack to signal.
 * `settings.cloudformation.logical-resource-id`: The logical ID of the AutoScalingGroup resource that you want to signal.
+
+#### Auto Scaling group settings
+* `settings.autoscaling.should-wait`: Whether to wait for the instance to reach the `InService` state before the orchestrator agent joins the cluster. Defaults to `false`. Set this to `true` only if the instance is part of an Auto Scaling group, or will be attached to one later.
 
 #### OCI Hooks settings
 

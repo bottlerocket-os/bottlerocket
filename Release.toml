@@ -118,4 +118,6 @@ version = "1.7.2"
     "migrate_v1.8.0_boot-setting.lz4",
     "migrate_v1.8.0_boot-setting-metadata.lz4",
     "migrate_v1.8.0_kubelet-pod-pids-limit.lz4",
+    "migrate_v1.8.0_add-pull-behavior.lz4",
+    "migrate_v1.8.0_add-autoscaling.lz4",
 ]

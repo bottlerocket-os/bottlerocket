@@ -141,13 +141,13 @@ use std::net::IpAddr;
 use crate::de::{deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, DNSDomain,
-    ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue, FriendlyVersion, Identifier,
-    KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesCloudProvider,
-    KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
-    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
-    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, PemCertificateString,
-    SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64,
-    ValidLinuxHostname,
+    ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
+    FriendlyVersion, Identifier, KubernetesAuthenticationMode, KubernetesBootstrapToken,
+    KubernetesCloudProvider, KubernetesClusterName, KubernetesDurationValue,
+    KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue, KubernetesQuantityValue,
+    KubernetesReservedResourceKey, KubernetesTaintValue, KubernetesThresholdValue, Lockdown,
+    PemCertificateString, SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope,
+    Url, ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -216,6 +216,7 @@ struct ECSSettings {
     logging_drivers: Vec<SingleLineString>,
     loglevel: ECSAgentLogLevel,
     enable_spot_instance_draining: bool,
+    image_pull_behavior: ECSAgentImagePullBehavior,
 }
 
 #[model]
@@ -329,6 +330,12 @@ struct CloudFormationSettings {
     should_signal: bool,
     stack_name: SingleLineString,
     logical_resource_id: SingleLineString,
+}
+
+// AutoScaling settings
+#[model]
+struct AutoScalingSettings {
+    should_wait: bool,
 }
 
 ///// Internal services
