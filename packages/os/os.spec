@@ -47,6 +47,7 @@ Source115: link-kernel-modules.service
 Source116: load-kernel-modules.service
 Source117: cfsignal.service
 Source118: generate-network-config.service
+Source119: prepare-primary-interface.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -446,7 +447,7 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
-  %{S:113} %{S:114} %{S:118} \
+  %{S:113} %{S:114} %{S:118} %{S:119} \
 %if %{_is_vendor_variant}
   %{S:115} %{S:116} \
 %endif
@@ -490,6 +491,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_bindir}/netdog
 %{_cross_tmpfilesdir}/netdog.conf
 %{_cross_unitdir}/generate-network-config.service
+%{_cross_unitdir}/prepare-primary-interface.service
 
 %files -n %{_cross_os}corndog
 %{_cross_bindir}/corndog

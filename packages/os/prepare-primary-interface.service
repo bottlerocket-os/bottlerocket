@@ -1,0 +1,17 @@
+[Unit]
+Description=Prepare primary interface
+After=generate-network-config.service
+Requires=generate-network-config.service
+# Block manual interactions with this service, since it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/netdog prepare-primary-interface
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=network-pre.target

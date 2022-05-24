@@ -8,7 +8,7 @@ Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
 URL: https://www.freedesktop.org/wiki/Software/systemd
 Source0: https://github.com/systemd/systemd-stable/archive/v%{version}/systemd-stable-%{version}.tar.gz
-Source1: var-run-tmpfiles.conf
+Source1: systemd-tmpfiles.conf
 Source2: systemd-modules-load.conf
 Source3: journald.conf
 Source4: issue
@@ -234,7 +234,7 @@ CONFIGURE_OPTS=(
 %cross_meson_install
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/var-run.conf
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/systemd-tmpfiles.conf
 
 install -d %{buildroot}%{_cross_libdir}/modules-load.d
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_libdir}/modules-load.d/nf_conntrack.conf

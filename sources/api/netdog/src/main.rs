@@ -20,6 +20,9 @@ the format: `netdog.default-interface=interface-name:option1,option2`.  "interfa
 name of the interface, and valid options are "dhcp4" and "dhcp6".  A "?" may be added to the option
 to signify that the lease for the protocol is optional and the system shouldn't wait for it.  A
 valid example: `netdog.default-interface=eno1:dhcp4,dhcp6?`.
+
+The subcommand `prepare-primary-interface` writes the default sysctls for the primary interface to
+file in `/etc/sysctl.d`, and then executes `systemd-sysctl` to apply them.
 */
 
 #![deny(rust_2018_idioms)]
@@ -41,14 +44,14 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::BTreeSet;
 use std::fmt::Write;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
-use std::process;
+use std::process::{self, Command};
 use std::str::FromStr;
 use wicked::WickedInterface;
 
@@ -58,6 +61,8 @@ static CURRENT_IP: &str = "/var/lib/netdog/current_ip";
 static KERNEL_CMDLINE: &str = "/proc/cmdline";
 static PRIMARY_INTERFACE: &str = "/var/lib/netdog/primary_interface";
 static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
+static PRIMARY_SYSCTL_CONF: &str = "/etc/sysctl.d/90-primary_interface.conf";
+static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
 
 // Matches wicked's shell-like syntax for DHCP lease variables:
 //     FOO='BAR' -> key=FOO, val=BAR
@@ -112,6 +117,7 @@ enum SubCommand {
     GenerateHostname(GenerateHostnameArgs),
     GenerateNetConfig(GenerateNetConfigArgs),
     SetHostname(SetHostnameArgs),
+    PreparePrimaryInterface(PreparePrimaryInterfaceArgs),
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -183,6 +189,11 @@ struct SetHostnameArgs {
     /// hostname for the system
     hostname: String,
 }
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "prepare-primary-interface")]
+/// Sets the default sysctls for the primary interface
+struct PreparePrimaryInterfaceArgs {}
 
 /// Parse lease data file into a LeaseInfo structure.
 fn parse_lease_info<P>(lease_file: P) -> Result<LeaseInfo>
@@ -371,6 +382,53 @@ fn set_hostname(args: SetHostnameArgs) -> Result<()> {
     Ok(())
 }
 
+/// Set and apply default sysctls for the primary network interface
+fn prepare_primary_interface() -> Result<()> {
+    let primary_interface =
+        fs::read_to_string(PRIMARY_INTERFACE).context(error::PrimaryInterfaceReadSnafu {
+            path: PRIMARY_INTERFACE,
+        })?;
+    write_interface_sysctl(primary_interface, PRIMARY_SYSCTL_CONF)?;
+
+    // Execute `systemd-sysctl` with our configuration file to set the sysctls
+    let systemd_sysctl_result = Command::new(SYSTEMD_SYSCTL)
+        .arg(PRIMARY_SYSCTL_CONF)
+        .output()
+        .context(error::SystemdSysctlExecutionSnafu)?;
+    ensure!(
+        systemd_sysctl_result.status.success(),
+        error::FailedSystemdSysctlSnafu {
+            stderr: String::from_utf8_lossy(&systemd_sysctl_result.stderr)
+        }
+    );
+    Ok(())
+}
+
+/// Write the default sysctls for a given interface to a given path
+fn write_interface_sysctl<S, P>(interface: S, path: P) -> Result<()>
+where
+    S: AsRef<str>,
+    P: AsRef<Path>,
+{
+    let interface = interface.as_ref();
+    let path = path.as_ref();
+    // TODO if we accumulate more of these we should have a better way to create than format!()
+    // Note: The dash (-) preceeding the "net..." variable assignment below is important; it
+    // ensures failure to set the variable for any reason will be logged, but not cause the sysctl
+    // service to fail
+    // Accept router advertisement (RA) packets even if IPv6 forwarding is enabled on interface
+    let ipv6_accept_ra = format!("-net.ipv6.conf.{}.accept_ra = 2", interface);
+    // Enable loose mode for reverse path filter
+    let ipv4_rp_filter = format!("-net.ipv4.conf.{}.rp_filter = 2", interface);
+
+    let mut output = String::new();
+    writeln!(output, "{}", ipv6_accept_ra).context(error::SysctlConfBuildSnafu)?;
+    writeln!(output, "{}", ipv4_rp_filter).context(error::SysctlConfBuildSnafu)?;
+
+    fs::write(path, output).context(error::SysctlConfWriteSnafu { path })?;
+    Ok(())
+}
+
 fn run() -> Result<()> {
     let args: Args = argh::from_env();
     match args.subcommand {
@@ -380,6 +438,7 @@ fn run() -> Result<()> {
         SubCommand::GenerateHostname(_) => generate_hostname()?,
         SubCommand::GenerateNetConfig(_) => generate_net_config()?,
         SubCommand::SetHostname(args) => set_hostname(args)?,
+        SubCommand::PreparePrimaryInterface(_) => prepare_primary_interface()?,
     }
     Ok(())
 }
@@ -391,6 +450,20 @@ fn main() {
     if let Err(e) = run() {
         eprintln!("{}", e);
         process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_sysctls() {
+        let interface = "eno1";
+        let fake_file = tempfile::NamedTempFile::new().unwrap();
+        let expected = "-net.ipv6.conf.eno1.accept_ra = 2\n-net.ipv4.conf.eno1.rp_filter = 2\n";
+        write_interface_sysctl(interface, &fake_file).unwrap();
+        assert_eq!(std::fs::read_to_string(&fake_file).unwrap(), expected);
     }
 }
 
@@ -451,11 +524,23 @@ mod error {
         #[snafu(display("Failed to write primary interface to '{}': {}", path.display(), source))]
         PrimaryInterfaceWrite { path: PathBuf, source: io::Error },
 
-        #[snafu(display("Failed to read primary interface to '{}': {}", path.display(), source))]
+        #[snafu(display("Failed to read primary interface from '{}': {}", path.display(), source))]
         PrimaryInterfaceRead { path: PathBuf, source: io::Error },
 
         #[snafu(display("Failed to discern primary interface"))]
         GetPrimaryInterface,
+
+        #[snafu(display("Failed to build sysctl config: {}", source))]
+        SysctlConfBuild { source: std::fmt::Error },
+
+        #[snafu(display("Failed to write sysctl config to '{}': {}", path.display(), source))]
+        SysctlConfWrite { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Failed to run 'systemd-sysctl': {}", source))]
+        SystemdSysctlExecution { source: io::Error },
+
+        #[snafu(display("'systemd-sysctl' failed: {}", stderr))]
+        FailedSystemdSysctl { stderr: String },
     }
 }
 
