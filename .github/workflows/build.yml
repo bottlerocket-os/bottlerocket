@@ -88,8 +88,8 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
-      - run: rustup toolchain install 1.58.1 && rustup default 1.58.1
-      - run: cargo install --version 0.35.8 cargo-make
+      - run: rustup default 1.61.0
+      - run: cargo install --version 0.35.12 cargo-make
       - if: contains(matrix.variant, 'nvidia')
         run: |
           cat <<-EOF > Licenses.toml
