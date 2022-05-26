@@ -28,7 +28,7 @@ BUILDSYS_PRETTY_NAME = "Bottlerocket OS"
 # SDK name used for building
 BUILDSYS_SDK_NAME="bottlerocket"
 # SDK version used for building
-BUILDSYS_SDK_VERSION="v0.25.1"
+BUILDSYS_SDK_VERSION="v0.26.0"
 # Site for fetching the SDK
 BUILDSYS_REGISTRY="public.ecr.aws/bottlerocket"
 
