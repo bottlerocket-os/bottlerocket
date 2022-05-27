@@ -288,6 +288,7 @@ EOF
 
 # BOTTLEROCKET-BOOT-A
 mkdir -p "${BOOT_MOUNT}/lost+found"
+chmod -R go-rwx "${BOOT_MOUNT}"
 BOOT_LABELS=$(setfiles -n -d -F -m -r "${BOOT_MOUNT}" \
     "${SELINUX_FILE_CONTEXTS}" "${BOOT_MOUNT}" \
   | awk -v root="${BOOT_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_set", $1, "security.selinux", $4}')
