@@ -5,7 +5,7 @@ This quickstart will walk through joining a Bottlerocket VM guest to an existing
 ## Prerequisites
 
 You must be able to access vSphere, via webUI or some type of client.
-We will use the CLI tool [`govc`](https://github.com/vmware/govmomi/tree/master/govc) to communicate with vSphere in this quide.
+We will use the CLI tool [`govc`](https://github.com/vmware/govmomi/tree/master/govc) to communicate with vSphere in this guide.
 `govc` can use [environment variables or take arguments](https://github.com/vmware/govmomi/tree/master/govc#usage) to specify needed parameters.
 For the purposes of this guide we will assume that the following environment variables are set to the proper values in your environment:
 ```
