@@ -1368,7 +1368,7 @@ script = [
     '''
 ]
 
-[tasks.setup-testsys-cluster]
+[tasks.setup-testsys]
 dependencies = ["setup", "fetch-sources"]
 script = [
     '''
@@ -1385,14 +1385,14 @@ dependencies = ["install-testsys"]
 script = [
     '''
     set -eu
-    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
     ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
     if [ ! -s "${ami_input}" ]; then
       echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
       exit 1
     fi
-    testsys run ${TESTSYS_TEST} \
+    "${BUILDSYS_TOOLS_DIR}/bin/testsys" run ${TESTSYS_TEST} \
       --ami-input "${ami_input}" \
+      ${TESTSYS_AWS_SECRET_NAME:+--secret ${TESTSYS_AWS_SECRET_NAME}} \
     '''
 ]
 

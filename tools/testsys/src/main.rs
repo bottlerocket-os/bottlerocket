@@ -6,6 +6,7 @@ use logs::Logs;
 use model::test_manager::TestManager;
 use restart_test::RestartTest;
 use run::Run;
+use secret::Add;
 use status::Status;
 use std::path::PathBuf;
 
@@ -15,6 +16,7 @@ mod install;
 mod logs;
 mod restart_test;
 mod run;
+mod secret;
 mod status;
 
 /// A program for running and controlling Bottlerocket tests in a Kubernetes cluster using
@@ -51,6 +53,7 @@ impl TestsysArgs {
             Command::Status(status) => status.run(client).await?,
             Command::Logs(logs) => logs.run(client).await?,
             Command::RestartTest(restart_test) => restart_test.run(client).await?,
+            Command::Add(add) => add.run(client).await?,
         };
         Ok(())
     }
@@ -64,6 +67,7 @@ enum Command {
     Status(Status),
     Logs(Logs),
     RestartTest(RestartTest),
+    Add(Add),
 }
 
 #[tokio::main]
