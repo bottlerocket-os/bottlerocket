@@ -1,7 +1,7 @@
-From 3c020b5accc81650da518f61f86b789cab4fed75 Mon Sep 17 00:00:00 2001
+From 95824ee80743b604e4b1757818f1ea7bf2971462 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 3 Jan 2022 21:57:11 +0000
-Subject: [PATCH 9003/9007] machine-id-setup: generate stable ID under Xen and
+Subject: [PATCH 9003/9010] machine-id-setup: generate stable ID under Xen and
  VMware
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
@@ -38,5 +38,5 @@ index e483675..809f1bc 100644
                          /* If we are not running in a container, see if we are running in a VM that provides
                           * a system UUID via the SMBIOS/DMI interfaces.  Such environments include QEMU/KVM
 -- 
-2.33.1
+2.36.1
 

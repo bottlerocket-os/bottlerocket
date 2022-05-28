@@ -1,0 +1,40 @@
+From 5a822486905915396d27da85b336f0877e612532 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sat, 28 May 2022 03:49:46 +0000
+Subject: [PATCH 9005/9010] mount-setup: apply noexec to more mounts
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/shared/mount-setup.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/shared/mount-setup.c b/src/shared/mount-setup.c
+index 7917968..debc043 100644
+--- a/src/shared/mount-setup.c
++++ b/src/shared/mount-setup.c
+@@ -73,18 +73,18 @@ static const MountPoint mount_table[] = {
+ #if ENABLE_SMACK
+         { "smackfs",     "/sys/fs/smackfs",           "smackfs",    "smackfsdef=*",                            MS_NOSUID|MS_NOEXEC|MS_NODEV,
+           mac_smack_use, MNT_FATAL                  },
+-        { "tmpfs",       "/dev/shm",                  "tmpfs",      "mode=1777,smackfsroot=*",                 MS_NOSUID|MS_NODEV|MS_STRICTATIME,
++        { "tmpfs",       "/dev/shm",                  "tmpfs",      "mode=1777,smackfsroot=*",                 MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_STRICTATIME,
+           mac_smack_use, MNT_FATAL                  },
+ #endif
+-        { "tmpfs",       "/dev/shm",                  "tmpfs",      "mode=1777",                               MS_NOSUID|MS_NODEV|MS_STRICTATIME,
++        { "tmpfs",       "/dev/shm",                  "tmpfs",      "mode=1777",                               MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_STRICTATIME,
+           NULL,          MNT_FATAL|MNT_IN_CONTAINER },
+         { "devpts",      "/dev/pts",                  "devpts",     "mode=620,gid=" STRINGIFY(TTY_GID),        MS_NOSUID|MS_NOEXEC,
+           NULL,          MNT_IN_CONTAINER           },
+ #if ENABLE_SMACK
+-        { "tmpfs",       "/run",                      "tmpfs",      "mode=755,smackfsroot=*" TMPFS_LIMITS_RUN, MS_NOSUID|MS_NODEV|MS_STRICTATIME,
++        { "tmpfs",       "/run",                      "tmpfs",      "mode=755,smackfsroot=*" TMPFS_LIMITS_RUN, MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_STRICTATIME,
+           mac_smack_use, MNT_FATAL                  },
+ #endif
+-        { "tmpfs",       "/run",                      "tmpfs",      "mode=755" TMPFS_LIMITS_RUN,               MS_NOSUID|MS_NODEV|MS_STRICTATIME,
++        { "tmpfs",       "/run",                      "tmpfs",      "mode=755" TMPFS_LIMITS_RUN,               MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_STRICTATIME,
+           NULL,          MNT_FATAL|MNT_IN_CONTAINER },
+         { "cgroup2",     "/sys/fs/cgroup",            "cgroup2",    "nsdelegate,memory_recursiveprot",         MS_NOSUID|MS_NOEXEC|MS_NODEV,
+           cg_is_unified_wanted, MNT_IN_CONTAINER|MNT_CHECK_WRITABLE },
+-- 
+2.36.1
+

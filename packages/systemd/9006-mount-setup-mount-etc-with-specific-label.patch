@@ -1,0 +1,38 @@
+From 2e871585a26b1f107db88a0ec0d9951735a6ec49 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Thu, 9 Jul 2020 20:00:36 +0000
+Subject: [PATCH 9006/9010] mount-setup: mount /etc with specific label
+
+The filesystem is mounted after we load the SELinux policy, so we can
+apply the label we need to restrict access.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/shared/mount-setup.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/shared/mount-setup.c b/src/shared/mount-setup.c
+index debc043..a9c00b3 100644
+--- a/src/shared/mount-setup.c
++++ b/src/shared/mount-setup.c
+@@ -61,6 +61,8 @@ typedef struct MountPoint {
+ #define N_EARLY_MOUNT 4
+ #endif
+ 
++#define ETC_CONTEXT ",context=system_u:object_r:etc_t:s0"
++
+ static const MountPoint mount_table[] = {
+         { "proc",        "/proc",                     "proc",       NULL,                                      MS_NOSUID|MS_NOEXEC|MS_NODEV,
+           NULL,          MNT_FATAL|MNT_IN_CONTAINER|MNT_FOLLOW_SYMLINK },
+@@ -110,6 +112,8 @@ static const MountPoint mount_table[] = {
+ #endif
+         { "bpf",         "/sys/fs/bpf",               "bpf",        "mode=700",                                MS_NOSUID|MS_NOEXEC|MS_NODEV,
+           NULL,          MNT_NONE,                  },
++        { "tmpfs",       "/etc",                      "tmpfs",      "mode=755" ETC_CONTEXT,                    MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_NOATIME,
++          NULL,          MNT_FATAL|MNT_IN_CONTAINER },
+ };
+ 
+ bool mount_point_is_api(const char *path) {
+-- 
+2.36.1
+
