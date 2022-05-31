@@ -101,7 +101,9 @@ cgroupRoot: "/"
 runtimeRequestTimeout: 15m
 featureGates:
   RotateKubeletServerCertificate: true
-  CSIMigration: false
+  CSIMigration: true
+  CSIMigrationAWS: true
+  CSIMigrationvSphere: true
 protectKernelDefaults: true
 serializeImagePulls: false
 serverTLSBootstrap: {{settings.kubernetes.server-tls-bootstrap}}
