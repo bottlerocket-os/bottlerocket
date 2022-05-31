@@ -15,6 +15,7 @@ partition-plan = "unified"
 
 [package.metadata.build-variant]
 image-format = "raw"
+supported-arches = ["x86_64"]
 kernel-parameters = [
     # Only reserve if there are at least 2GB
     "crashkernel=2G-:256M"
