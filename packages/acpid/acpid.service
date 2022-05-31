@@ -4,6 +4,8 @@ Description=ACPI event daemon
 [Service]
 Type=forking
 ExecStart=/usr/sbin/acpid -c /usr/lib/acpid/events
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=preconfigured.target

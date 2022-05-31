@@ -6,6 +6,8 @@ Requires=storewolf.service migrator.service
 [Service]
 Type=notify
 ExecStart=/usr/bin/apiserver --datastore-path /var/lib/bottlerocket/datastore/current --socket-gid 274
+Restart=always
+RestartSec=5
 StandardError=journal+console
 
 [Install]
