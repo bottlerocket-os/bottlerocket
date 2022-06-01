@@ -96,7 +96,7 @@ cargo make -e BUILDSYS_ARCH=my-arch-here
 
 Most packages will include license files extracted from upstream source archives.
 However, in some rare cases there are multiple licenses that could apply to a package.
-Bottlerocket's build system uses the `Licenses.toml` file in conjuction with the `licenses` directory to configure the licenses used for such special packages.
+Bottlerocket's build system uses the `Licenses.toml` file in conjunction with the `licenses` directory to configure the licenses used for such special packages.
 Here is an example of a simple `Licenses.toml` configuration file:
 
 ```toml
