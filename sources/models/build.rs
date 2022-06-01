@@ -7,10 +7,10 @@
 use filetime::{set_symlink_file_times, FileTime};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::env;
-use std::fs::{self, File};
-use std::io::{self, Write};
+use std::fs;
+use std::io;
 use std::os::unix::fs::symlink;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process;
 
 /// The name of the environment variable that tells us the current variant; we need to rebuild if
@@ -97,29 +97,7 @@ fn link_current_variant() {
 }
 
 fn generate_readme() {
-    // Check for environment variable "SKIP_README". If it is set,
-    // skip README generation
-    if env::var_os("SKIP_README").is_some() {
-        return;
-    }
-
-    let mut lib = File::open("src/lib.rs").unwrap();
-    let mut template = File::open("README.tpl").unwrap();
-
-    let content = cargo_readme::generate_readme(
-        &PathBuf::from("."), // root
-        &mut lib,            // source
-        Some(&mut template), // template
-        // The "add x" arguments don't apply when using a template.
-        true,  // add title
-        false, // add badges
-        false, // add license
-        true,  // indent headings
-    )
-    .unwrap();
-
-    let mut readme = File::create("README.md").unwrap();
-    readme.write_all(content.as_bytes()).unwrap();
+    generate_readme::from_lib().unwrap();
 }
 
 // Creates the requested symlink through an atomic swap, so it doesn't matter if the link path

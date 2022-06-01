@@ -13,4 +13,4 @@ chrono = "0.4.11"
 snafu = { version = "0.7", features = ["backtraces-impl-backtrace-crate"] }
 
 [build-dependencies]
-cargo-readme = "3.1"
+generate-readme = { version = "0.1", path = "../generate-readme" }

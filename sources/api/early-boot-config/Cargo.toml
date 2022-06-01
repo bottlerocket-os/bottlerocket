@@ -33,7 +33,7 @@ toml = "0.5"
 vmw_backdoor = "0.2"
 
 [build-dependencies]
-cargo-readme = "3.1"
+generate-readme = { version = "0.1", path = "../../generate-readme" }
 
 [dev-dependencies]
 hex-literal = "0.3"

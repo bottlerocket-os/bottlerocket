@@ -25,7 +25,7 @@ x509-parser = "0.13"
 url = "2.1"
 
 [build-dependencies]
-cargo-readme = "3.1"
+generate-readme = { version = "0.1", path = "../generate-readme" }
 filetime = "0.2"
 rand = "0.8"
 

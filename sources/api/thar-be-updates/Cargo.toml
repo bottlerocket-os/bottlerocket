@@ -33,4 +33,4 @@ tokio = { version = "~1.14", default-features = false, features = ["macros", "rt
 update_metadata = { path = "../../updater/update_metadata", version = "0.1.0" }
 
 [build-dependencies]
-cargo-readme = "3.1"
+generate-readme = { version = "0.1", path = "../../generate-readme" }

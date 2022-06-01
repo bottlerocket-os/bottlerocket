@@ -604,6 +604,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "generate-readme"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+ "snafu",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1132,8 +1140,8 @@ dependencies = [
 name = "parse-datetime"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
  "chrono",
+ "generate-readme",
  "snafu",
 ]
 

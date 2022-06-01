@@ -26,4 +26,4 @@ tokio = { version = "~1.14", default-features = false, features = ["macros", "rt
 maplit = "1.0"
 
 [build-dependencies]
-cargo-readme = "3.1"
+generate-readme = { version = "0.1", path = "../../generate-readme" }

@@ -37,4 +37,4 @@ unindent = "0.1"
 url = "2.2.1"
 
 [build-dependencies]
-cargo-readme = "3.1"
+generate-readme = { version = "0.1", path = "../../generate-readme" }
