@@ -101,7 +101,6 @@ featureGates:
 protectKernelDefaults: true
 serializeImagePulls: false
 serverTLSBootstrap: {{settings.kubernetes.server-tls-bootstrap}}
-configMapAndSecretChangeDetectionStrategy: Cache
 tlsCipherSuites:
 - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 volumePluginDir: "/var/lib/kubelet/plugins/volume/exec"
