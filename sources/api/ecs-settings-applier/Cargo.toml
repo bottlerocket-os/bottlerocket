@@ -21,4 +21,5 @@ snafu = "0.7"
 tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 
 [build-dependencies]
+bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../../generate-readme" }

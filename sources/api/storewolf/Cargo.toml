@@ -22,6 +22,7 @@ snafu = "0.7"
 toml = "0.5"
 
 [build-dependencies]
+bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../../generate-readme" }
 merge-toml = { path = "merge-toml", version = "0.1.0" }
 # We have a models build-dep because we read default settings from the models

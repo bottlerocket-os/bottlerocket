@@ -646,6 +646,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bottlerocket-variant"
+version = "0.1.0"
+dependencies = [
+ "generate-readme",
+ "serde",
+ "snafu",
+]
+
+[[package]]
 name = "bstr"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1126,6 +1135,7 @@ dependencies = [
  "apiclient",
  "async-trait",
  "base64",
+ "bottlerocket-variant",
  "constants",
  "flate2",
  "generate-readme",
@@ -1150,6 +1160,7 @@ dependencies = [
 name = "ecs-settings-applier"
 version = "0.1.0"
 dependencies = [
+ "bottlerocket-variant",
  "constants",
  "generate-readme",
  "log",
@@ -1862,6 +1873,7 @@ name = "logdog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
+ "bottlerocket-variant",
  "constants",
  "datastore",
  "flate2",
@@ -2075,6 +2087,7 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "bottlerocket-release",
+ "bottlerocket-variant",
  "filetime",
  "generate-readme",
  "lazy_static",
@@ -2504,6 +2517,7 @@ name = "pluto"
 version = "0.1.0"
 dependencies = [
  "apiclient",
+ "bottlerocket-variant",
  "constants",
  "generate-readme",
  "imdsclient",
@@ -3313,6 +3327,7 @@ name = "static-pods"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "bottlerocket-variant",
  "constants",
  "generate-readme",
  "log",
@@ -3331,6 +3346,7 @@ name = "storewolf"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
+ "bottlerocket-variant",
  "constants",
  "datastore",
  "generate-readme",

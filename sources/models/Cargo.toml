@@ -25,6 +25,7 @@ x509-parser = "0.13"
 url = "2.1"
 
 [build-dependencies]
+bottlerocket-variant = { version = "0.1", path = "../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../generate-readme" }
 filetime = "0.2"
 rand = "0.8"

@@ -4,18 +4,14 @@
 //
 // See README.md to understand the symlink setup.
 
+use bottlerocket_variant::{Variant, VARIANT_ENV};
 use filetime::{set_symlink_file_times, FileTime};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use std::env;
 use std::fs;
 use std::io;
 use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process;
-
-/// The name of the environment variable that tells us the current variant; we need to rebuild if
-/// this changes.
-const VARIANT_ENV: &str = "VARIANT";
 
 /// We create a link from 'current' to the variant selected by the environment variable above.
 const VARIANT_LINK: &str = "src/variant/current";
@@ -30,25 +26,32 @@ const MOD_LINK: &str = "src/variant/mod.rs";
 const MOD_LINK_TARGET: &str = "../variant_mod.rs";
 
 fn main() {
+    // The VARIANT variable is originally BUILDSYS_VARIANT, set in the top-level Makefile.toml,
+    // and is passed through as VARIANT by the top-level Dockerfile. It represents which OS variant
+    // we're building, and therefore which API model to use.
+    let variant = match Variant::from_env() {
+        Ok(variant) => variant,
+        Err(e) => {
+            eprintln!(
+                "For local builds, you must set the '{}' environment variable so we know which API \
+                model to build against. Valid values are the directories in variants/, for example \
+                'aws-ecs-1': {}",
+                VARIANT_ENV, e
+            );
+            std::process::exit(1);
+        }
+    };
     // Tell cargo when we have to rerun; we always want variant links to be correct, especially
     // after changing the variant we're building for.
-    println!("cargo:rerun-if-env-changed={}", VARIANT_ENV);
+    Variant::rerun_if_changed();
     println!("cargo:rerun-if-changed={}", VARIANT_LINK);
     println!("cargo:rerun-if-changed={}", MOD_LINK);
 
-    generate_readme();
-    link_current_variant();
+    generate_readme::from_lib().unwrap();
+    link_current_variant(variant);
 }
 
-fn link_current_variant() {
-    // The VARIANT variable is originally BUILDSYS_VARIANT, set in the top-level Makefile.toml,
-    // and is passed through as VARIANT by the top-level Dockerfile.  It represents which OS
-    // variant we're building, and therefore which API model to use.
-    let variant = env::var(VARIANT_ENV).unwrap_or_else(|_| {
-        eprintln!("For local builds, you must set the {} environment variable so we know which API model to build against.  Valid values are the directories in variants/, for example \"aws-ecs-1\".", VARIANT_ENV);
-        process::exit(1);
-    });
-
+fn link_current_variant(variant: Variant) {
     // Point to the source for the requested variant
     let variant_target = format!("../{}", variant);
 
@@ -94,10 +97,6 @@ fn link_current_variant() {
             );
         }
     }
-}
-
-fn generate_readme() {
-    generate_readme::from_lib().unwrap();
 }
 
 // Creates the requested symlink through an atomic swap, so it doesn't matter if the link path

@@ -33,6 +33,7 @@ toml = "0.5"
 vmw_backdoor = "0.2"
 
 [build-dependencies]
+bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../../generate-readme" }
 
 [dev-dependencies]

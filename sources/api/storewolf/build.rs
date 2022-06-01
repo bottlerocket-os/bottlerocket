@@ -6,6 +6,7 @@
 /// groups of default settings, without having to ship those files in the OS image.  Specifically,
 /// we read any number of files from a defaults.d directory in the variant's model directory and
 /// merge later entries into earlier entries, so later files take precedence.
+use bottlerocket_variant::Variant;
 use merge_toml::merge_values;
 use snafu::ResultExt;
 use std::fs;
@@ -22,7 +23,7 @@ fn main() -> Result<()> {
     generate_defaults_toml()?;
 
     // Reflect that we need to rerun if variant has changed to pick up the new default settings.
-    println!("cargo:rerun-if-env-changed=VARIANT");
+    Variant::rerun_if_changed();
 
     Ok(())
 }

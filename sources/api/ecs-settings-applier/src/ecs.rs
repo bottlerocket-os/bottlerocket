@@ -128,7 +128,7 @@ async fn run() -> Result<()> {
         // awsvpc mode is always available
         task_eni_enabled: true,
 
-        gpu_support_enabled: cfg!(variant_type = "nvidia"),
+        gpu_support_enabled: cfg!(variant_flavor = "nvidia"),
         ..Default::default()
     };
     if let Some(os) = settings.os {
