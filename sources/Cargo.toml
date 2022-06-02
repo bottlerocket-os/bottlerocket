@@ -56,9 +56,13 @@ members = [
 
     "bottlerocket-release",
 
+    "bottlerocket-variant",
+
     "imdsclient",
 
     "driverdog",
+
+    "generate-readme",
 
     "ghostdog",
 

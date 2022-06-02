@@ -5,19 +5,19 @@ use async_trait::async_trait;
 
 mod local_file;
 
-#[cfg(bottlerocket_platform = "aws")]
+#[cfg(variant_platform = "aws")]
 mod aws;
-#[cfg(bottlerocket_platform = "aws")]
+#[cfg(variant_platform = "aws")]
 pub(crate) use aws::AwsDataProvider as Platform;
 
-#[cfg(bottlerocket_platform = "vmware")]
+#[cfg(variant_platform = "vmware")]
 mod vmware;
-#[cfg(bottlerocket_platform = "vmware")]
+#[cfg(variant_platform = "vmware")]
 pub(crate) use vmware::VmwareDataProvider as Platform;
 
-#[cfg(bottlerocket_platform = "metal")]
+#[cfg(variant_platform = "metal")]
 mod metal;
-#[cfg(bottlerocket_platform = "metal")]
+#[cfg(variant_platform = "metal")]
 pub(crate) use metal::MetalDataProvider as Platform;
 
 /// Support for new platforms can be added by implementing this trait.

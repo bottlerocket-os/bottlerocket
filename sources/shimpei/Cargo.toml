@@ -15,4 +15,4 @@ snafu = "0.7"
 nix = "0.23"
 
 [build-dependencies]
-cargo-readme = "3.1"
+generate-readme = { version = "0.1", path = "../generate-readme" }

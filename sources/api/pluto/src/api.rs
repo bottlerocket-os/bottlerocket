@@ -12,8 +12,7 @@ pub(crate) struct AwsK8sInfo {
 
 /// This code is the 'actual' implementation compiled when the `sources` workspace is being compiled
 /// for `aws-k8s-*` variants.
-// TODO - find a better way https://github.com/bottlerocket-os/bottlerocket/issues/1260
-#[cfg(aws_k8s_variant)]
+#[cfg(variant_family = "aws-k8s")]
 mod inner {
     use super::*;
     use constants;
@@ -62,8 +61,7 @@ mod inner {
 
 /// This dummy code is compiled when the `sources` workspace is being compiled for non `aws-k8s-*`
 /// variants.
-// TODO - find a better way https://github.com/bottlerocket-os/bottlerocket/issues/1260
-#[cfg(not(aws_k8s_variant))]
+#[cfg(not(variant_family = "aws-k8s"))]
 mod inner {
     use super::*;
     use snafu::Snafu;

@@ -298,11 +298,11 @@ checksum = "94a45b455c14666b85fc40a019e8ab9eb75e3a124e05494f5397122bc9eb06e0"
 name = "apiclient"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
  "constants",
  "datastore",
  "futures",
  "futures-channel",
+ "generate-readme",
  "http",
  "httparse",
  "hyper",
@@ -336,10 +336,10 @@ dependencies = [
  "actix-web-actors",
  "bottlerocket-release",
  "bytes",
- "cargo-readme",
  "datastore",
  "fs2",
  "futures",
+ "generate-readme",
  "http",
  "libc",
  "log",
@@ -612,9 +612,9 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "base64",
- "cargo-readme",
  "constants",
  "datastore",
+ "generate-readme",
  "http",
  "log",
  "models",
@@ -637,10 +637,19 @@ dependencies = [
 name = "bottlerocket-release"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
  "envy",
+ "generate-readme",
  "log",
  "semver",
+ "serde",
+ "snafu",
+]
+
+[[package]]
+name = "bottlerocket-variant"
+version = "0.1.0"
+dependencies = [
+ "generate-readme",
  "serde",
  "snafu",
 ]
@@ -717,8 +726,8 @@ dependencies = [
  "apiclient",
  "argh",
  "base64",
- "cargo-readme",
  "constants",
+ "generate-readme",
  "http",
  "log",
  "models",
@@ -741,7 +750,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "cfsignal"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "generate-readme",
  "hyper",
  "imdsclient",
  "log",
@@ -787,7 +796,7 @@ dependencies = [
 name = "constants"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "generate-readme",
 ]
 
 [[package]]
@@ -852,8 +861,8 @@ name = "corndog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
  "constants",
+ "generate-readme",
  "http",
  "log",
  "models",
@@ -981,7 +990,7 @@ checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 name = "datastore"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "generate-readme",
  "libc",
  "log",
  "maplit",
@@ -1104,7 +1113,7 @@ name = "driverdog"
 version = "0.1.0"
 dependencies = [
  "argh",
- "cargo-readme",
+ "generate-readme",
  "log",
  "serde",
  "simplelog",
@@ -1126,9 +1135,10 @@ dependencies = [
  "apiclient",
  "async-trait",
  "base64",
- "cargo-readme",
+ "bottlerocket-variant",
  "constants",
  "flate2",
+ "generate-readme",
  "hex-literal",
  "http",
  "imdsclient",
@@ -1150,8 +1160,9 @@ dependencies = [
 name = "ecs-settings-applier"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "bottlerocket-variant",
  "constants",
+ "generate-readme",
  "log",
  "models",
  "schnauzer",
@@ -1375,6 +1386,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "generate-readme"
+version = "0.1.0"
+dependencies = [
+ "cargo-readme",
+ "snafu",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1409,7 +1428,7 @@ name = "ghostdog"
 version = "0.1.0"
 dependencies = [
  "argh",
- "cargo-readme",
+ "generate-readme",
  "gptman",
  "hex-literal",
  "lazy_static",
@@ -1460,7 +1479,7 @@ name = "growpart"
 version = "0.1.0"
 dependencies = [
  "block-party",
- "cargo-readme",
+ "generate-readme",
  "gptman",
  "inotify",
  "libc",
@@ -1552,8 +1571,8 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "base64",
- "cargo-readme",
  "constants",
+ "generate-readme",
  "http",
  "log",
  "models",
@@ -1700,7 +1719,7 @@ dependencies = [
 name = "imdsclient"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "generate-readme",
  "http",
  "httptest",
  "log",
@@ -1854,10 +1873,11 @@ name = "logdog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
+ "bottlerocket-variant",
  "constants",
  "datastore",
  "flate2",
+ "generate-readme",
  "glob",
  "models",
  "reqwest",
@@ -1942,7 +1962,7 @@ name = "metricdog"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "cargo-readme",
+ "generate-readme",
  "httptest",
  "log",
  "reqwest",
@@ -1975,8 +1995,8 @@ name = "migrator"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "cargo-readme",
  "chrono",
+ "generate-readme",
  "log",
  "lz4",
  "nix 0.23.1",
@@ -2054,8 +2074,8 @@ dependencies = [
 name = "model-derive"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
  "darling",
+ "generate-readme",
  "proc-macro2",
  "quote",
  "syn",
@@ -2067,8 +2087,9 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "bottlerocket-release",
- "cargo-readme",
+ "bottlerocket-variant",
  "filetime",
+ "generate-readme",
  "lazy_static",
  "libc",
  "model-derive",
@@ -2088,9 +2109,9 @@ name = "netdog"
 version = "0.1.0"
 dependencies = [
  "argh",
- "cargo-readme",
  "dns-lookup",
  "envy",
+ "generate-readme",
  "indexmap",
  "ipnet",
  "lazy_static",
@@ -2362,8 +2383,8 @@ dependencies = [
 name = "parse-datetime"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
  "chrono",
+ "generate-readme",
  "snafu",
 ]
 
@@ -2496,8 +2517,9 @@ name = "pluto"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
+ "bottlerocket-variant",
  "constants",
+ "generate-readme",
  "imdsclient",
  "models",
  "rusoto_core",
@@ -2519,8 +2541,8 @@ version = "0.1.0"
 dependencies = [
  "argh",
  "bytes",
- "cargo-readme",
  "constants",
+ "generate-readme",
  "log",
  "maplit",
  "models",
@@ -2740,7 +2762,7 @@ dependencies = [
 name = "retry-read"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "generate-readme",
 ]
 
 [[package]]
@@ -2954,9 +2976,9 @@ dependencies = [
  "apiclient",
  "base64",
  "bottlerocket-release",
- "cargo-readme",
  "constants",
  "dns-lookup",
+ "generate-readme",
  "handlebars",
  "http",
  "lazy_static",
@@ -3088,9 +3110,9 @@ name = "servicedog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
  "constants",
  "datastore",
+ "generate-readme",
  "http",
  "log",
  "models",
@@ -3106,8 +3128,8 @@ name = "settings-committer"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
  "constants",
+ "generate-readme",
  "http",
  "log",
  "serde",
@@ -3177,7 +3199,7 @@ name = "shibaken"
 version = "0.1.0"
 dependencies = [
  "base64",
- "cargo-readme",
+ "generate-readme",
  "imdsclient",
  "log",
  "serde",
@@ -3191,7 +3213,7 @@ dependencies = [
 name = "shimpei"
 version = "0.1.0"
 dependencies = [
- "cargo-readme",
+ "generate-readme",
  "log",
  "nix 0.23.1",
  "simplelog",
@@ -3305,8 +3327,9 @@ name = "static-pods"
 version = "0.1.0"
 dependencies = [
  "base64",
- "cargo-readme",
+ "bottlerocket-variant",
  "constants",
+ "generate-readme",
  "log",
  "models",
  "schnauzer",
@@ -3323,9 +3346,10 @@ name = "storewolf"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "cargo-readme",
+ "bottlerocket-variant",
  "constants",
  "datastore",
+ "generate-readme",
  "log",
  "merge-toml",
  "models",
@@ -3384,9 +3408,9 @@ name = "sundog"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
  "constants",
  "datastore",
+ "generate-readme",
  "http",
  "log",
  "models",
@@ -3467,8 +3491,8 @@ name = "thar-be-settings"
 version = "0.1.0"
 dependencies = [
  "apiclient",
- "cargo-readme",
  "constants",
+ "generate-readme",
  "handlebars",
  "http",
  "itertools",
@@ -3489,10 +3513,10 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "bottlerocket-release",
- "cargo-readme",
  "chrono",
  "constants",
  "fs2",
+ "generate-readme",
  "http",
  "log",
  "models",
