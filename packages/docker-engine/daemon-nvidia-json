@@ -5,7 +5,7 @@
   "storage-driver": "overlay2",
   "exec-opts": ["native.cgroupdriver=cgroupfs"],
   "data-root": "/var/lib/docker",
-  "default-runtime": "nvidia",
+  "default-runtime": "shimpei",
   "runtimes": { "shimpei": { "path": "shimpei" }, "nvidia": { "path": "nvidia-oci" } },
   "selinux-enabled": true,
   "default-ulimits": { "nofile": { "Name": "nofile", "Soft": 1024, "Hard": 4096 } }
