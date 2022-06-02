@@ -10,7 +10,7 @@ disabled_plugins = [
 ]
 
 [grpc]
-address = "/run/dockershim.sock"
+address = "/run/containerd/containerd.sock"
 
 [plugins."io.containerd.grpc.v1.cri"]
 enable_selinux = true

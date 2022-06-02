@@ -12,8 +12,8 @@ ExecStart=/usr/bin/kubelet \
 {{/unless}}
     --config /etc/kubernetes/kubelet/config \
     --container-runtime=remote \
-    --container-runtime-endpoint=unix:///run/dockershim.sock \
-    --containerd=/run/dockershim.sock \
+    --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
+    --containerd=/run/containerd/containerd.sock\
     --network-plugin cni \
     --root-dir /var/lib/kubelet \
     --cert-dir /var/lib/kubelet/pki \

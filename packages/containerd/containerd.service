@@ -8,6 +8,8 @@ Wants=network-online.target configured.target
 Slice=runtime.slice
 EnvironmentFile=/etc/network/proxy.env
 EnvironmentFile=-/etc/containerd/nvidia.env
+# We symlink the containerd socket for IPAMD which looks for dockershim.sock
+ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
 ExecStart=/usr/bin/containerd
 Type=notify
 Delegate=yes
