@@ -278,7 +278,8 @@ menuentry "${PRETTY_NAME} ${VERSION_ID}" {
        random.trust_cpu=on selinux=1 enforcing=1 \\
        dm_verity.max_bios=-1 dm_verity.dev_wait=1 \\
        dm-mod.create="root,,,ro,0 $VERITY_DATA_512B_BLOCKS verity $VERITY_VERSION PARTUUID=\$boot_uuid/PARTNROFF=1 PARTUUID=\$boot_uuid/PARTNROFF=2 \\
-       $VERITY_DATA_BLOCK_SIZE $VERITY_HASH_BLOCK_SIZE $VERITY_DATA_4K_BLOCKS 1 $VERITY_HASH_ALGORITHM $VERITY_ROOT_HASH $VERITY_SALT 1 restart_on_corruption" \\
+       $VERITY_DATA_BLOCK_SIZE $VERITY_HASH_BLOCK_SIZE $VERITY_DATA_4K_BLOCKS 1 $VERITY_HASH_ALGORITHM $VERITY_ROOT_HASH $VERITY_SALT \\
+       2 restart_on_corruption ignore_zero_blocks" \\
        -- \\
        systemd.log_target=journal-or-kmsg systemd.log_color=0
    ${INITRD}
