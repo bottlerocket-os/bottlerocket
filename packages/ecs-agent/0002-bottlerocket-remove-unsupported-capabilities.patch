@@ -1,4 +1,4 @@
-From ab4d702e78c1730f96deb7662201630f60b77e8c Mon Sep 17 00:00:00 2001
+From 331c76247d4c4c0f8fb968e21db85e28b991b716 Mon Sep 17 00:00:00 2001
 From: "Sean P. Kelly" <seankell@amazon.com>
 Date: Wed, 1 Dec 2021 19:19:52 +0000
 Subject: [PATCH 2/5] bottlerocket: remove unsupported capabilities
@@ -8,10 +8,10 @@ Subject: [PATCH 2/5] bottlerocket: remove unsupported capabilities
  1 file changed, 10 insertions(+), 10 deletions(-)
 
 diff --git a/agent/app/agent_capability.go b/agent/app/agent_capability.go
-index cc90dc8..a6a5891 100644
+index 5febc49..48cf468 100644
 --- a/agent/app/agent_capability.go
 +++ b/agent/app/agent_capability.go
-@@ -231,36 +231,36 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+@@ -233,36 +233,36 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
  	capabilities = agent.appendPIDAndIPCNamespaceSharingCapabilities(capabilities)
  
  	// ecs agent version 1.26.0 supports aws-appmesh cni plugin
