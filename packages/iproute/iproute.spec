@@ -1,5 +1,5 @@
 Name: %{_cross_os}iproute
-Version: 5.9.0
+Version: 5.18.0
 Release: 1%{?dist}
 Summary: Tools for advanced IP routing and network device configuration
 License: GPL-2.0-or-later AND GPL-2.0-only
@@ -38,7 +38,7 @@ export PKG_CONFIG_PATH='%{_cross_pkgconfigdir}' \\\
 %build
 %set_env
 %set_cross_build_flags
-./configure
+./configure --libdir '%{_cross_libdir}'
 %make_build
 
 %install
@@ -58,23 +58,22 @@ done
 %{_cross_attribution_file}
 %{_cross_sbindir}/bridge
 %{_cross_sbindir}/ctstat
+%{_cross_sbindir}/dcb
 %{_cross_sbindir}/devlink
 %{_cross_sbindir}/genl
-%{_cross_sbindir}/ifcfg
 %{_cross_sbindir}/ifstat
 %{_cross_sbindir}/ip
 %{_cross_sbindir}/lnstat
 %{_cross_sbindir}/nstat
 %{_cross_sbindir}/rdma
-%{_cross_sbindir}/routef
 %{_cross_sbindir}/routel
 %{_cross_sbindir}/rtacct
 %{_cross_sbindir}/rtmon
-%{_cross_sbindir}/rtpr
 %{_cross_sbindir}/rtstat
 %{_cross_sbindir}/ss
 %{_cross_sbindir}/tc
 %{_cross_sbindir}/tipc
+%{_cross_sbindir}/vdpa
 %dir %{_cross_libdir}/tc
 %{_cross_libdir}/tc/*
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/iproute2
