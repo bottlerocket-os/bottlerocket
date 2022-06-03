@@ -1,0 +1,61 @@
+version = 2
+root = "/var/lib/containerd"
+state = "/run/containerd"
+disabled_plugins = [
+    "io.containerd.internal.v1.opt",
+    "io.containerd.snapshotter.v1.aufs",
+    "io.containerd.snapshotter.v1.devmapper",
+    "io.containerd.snapshotter.v1.native",
+    "io.containerd.snapshotter.v1.zfs",
+]
+
+[grpc]
+address = "/run/containerd/containerd.sock"
+
+[plugins."io.containerd.grpc.v1.cri"]
+enable_selinux = true
+# Pause container image is specified here, shares the same image as kubelet's pod-infra-container-image
+sandbox_image = "{{settings.kubernetes.pod-infra-container-image}}"
+
+[plugins."io.containerd.grpc.v1.cri".containerd]
+default_runtime_name = "nvidia"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
+runtime_type = "io.containerd.runc.v2"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
+SystemdCgroup = true
+BinaryName = "nvidia-oci"
+
+[plugins."io.containerd.grpc.v1.cri".cni]
+bin_dir = "/opt/cni/bin"
+conf_dir = "/etc/cni/net.d"
+
+{{#if settings.container-registry.mirrors}}
+{{#each settings.container-registry.mirrors}}
+[plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{registry}}"]
+endpoint = [{{join_array ", " endpoint }}]
+{{/each}}
+{{/if}}
+
+{{#if settings.container-registry.credentials}}
+{{#each settings.container-registry.credentials}}
+{{#if (eq registry "docker.io" )~}}
+[plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
+{{else}}
+[plugins."io.containerd.grpc.v1.cri".registry.configs."{{registry}}".auth]
+{{/if}}
+{{#if username}}
+username = "{{{username}}}"
+{{/if}}
+{{#if password}}
+password = "{{{password}}}"
+{{/if}}
+{{#if auth}}
+auth = "{{{auth}}}"
+{{/if}}
+{{#if identitytoken}}
+identitytoken = "{{{identitytoken}}}"
+{{/if}}
+{{/each}}
+{{/if}}

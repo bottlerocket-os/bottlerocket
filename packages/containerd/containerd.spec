@@ -21,6 +21,11 @@ Source3: containerd-config-toml_basic
 Source4: containerd-config-toml_k8s_nvidia
 Source5: containerd-tmpfiles.conf
 
+# For newer K8s variants (>=1.23) that uses `containerd.sock` as the container runtime socket
+# TODO: remove once we converge all k8s variants and deprecate dockershim.sock
+Source20: containerd-config-toml_k8s_containerd_sock
+Source21: containerd-config-toml_k8s_nvidia_containerd_sock
+
 # Mount for writing containerd configuration
 Source100: etc-containerd.mount
 
@@ -77,7 +82,7 @@ install -p -m 0644 %{S:1} %{S:100} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
-install -p -m 0644 %{S:2} %{S:3} %{S:4} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:2} %{S:3} %{S:4} %{S:20} %{S:21} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
