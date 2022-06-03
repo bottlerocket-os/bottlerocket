@@ -1,5 +1,6 @@
 use crate::aws_resources::AwsK8s;
 use anyhow::{anyhow, ensure, Context, Result};
+use bottlerocket_types::agent_config::TufRepoConfig;
 use buildsys::Variant;
 use clap::Parser;
 use model::test_manager::TestManager;
@@ -28,6 +29,10 @@ pub(crate) struct Run {
     /// The path to `Infra.toml`
     #[clap(long, env = "PUBLISH_INFRA_CONFIG_PATH", parse(from_os_str))]
     infra_config_path: PathBuf,
+
+    /// Use this named repo infrastructure from Infra.toml for upgrade/downgrade testing.
+    #[clap(long, env = "PUBLISH_REPO", default_value = "default")]
+    repo: String,
 
     /// The path to `amis.json`
     #[clap(long)]
@@ -64,6 +69,22 @@ pub(crate) struct Run {
 
     #[clap(flatten)]
     agent_images: TestsysImages,
+
+    // Migrations
+    /// Override the ami used for migrations. The ami will be pulled from ssm parameters for aws
+    /// variants if no override is provided.
+    #[clap(long, env = "TESTSYS_STARTING_IMAGE_ID")]
+    starting_image_id: Option<String>,
+
+    /// The starting version of bottlerocket migrations. This is required for all migrations tests.
+    /// This is the version that will be created and migrated to `migration_ending_version`.
+    #[clap(long, env = "TESTSYS_STARTING_VERSION")]
+    migration_starting_version: Option<String>,
+
+    /// The target version of bottlerocket migrations. This is required for all migration
+    /// tests. This is the version that will be migrated to.
+    #[clap(long, env = "BUILDSYS_VERSION_IMAGE")]
+    migration_target_version: Option<String>,
 }
 
 impl Run {
@@ -92,6 +113,26 @@ impl Run {
                 .context("No region was provided and no regions found in infra config")?
         };
 
+        let repo_config = infra_config
+            .repo
+            .unwrap_or_default()
+            .get(&self.repo)
+            .and_then(|repo| {
+                if let (Some(metadata_base_url), Some(targets_url)) =
+                    (&repo.metadata_base_url, &repo.targets_url)
+                {
+                    Some(TufRepoConfig {
+                        metadata_url: format!(
+                            "{}{}/{}",
+                            metadata_base_url, &self.variant, &self.arch
+                        ),
+                        targets_url: targets_url.to_string(),
+                    })
+                } else {
+                    None
+                }
+            });
+
         match variant.family() {
             "aws-k8s" => {
                 let file = File::open(&self.ami_input).context("Unable to open amis.json")?;
@@ -112,8 +153,15 @@ impl Run {
                     secrets,
                     kube_conformance_image: self.kube_conformance_image,
                     target_cluster_name: self.target_cluster_name,
+                    tuf_repo: repo_config,
+                    starting_version: self.migration_starting_version,
+                    starting_image_id: self.starting_image_id,
+                    migrate_to_version: self.migration_target_version,
+                    capabilities: None,
                 };
-                let crds = aws_k8s.create_crds(self.test_flavor, &self.agent_images)?;
+                let crds = aws_k8s
+                    .create_crds(self.test_flavor, &self.agent_images)
+                    .await?;
                 for crd in crds {
                     let crd = client
                         .create_object(crd)
@@ -149,6 +197,8 @@ pub(crate) enum TestType {
     Conformance,
     /// Run a quick test on a given arch and variant
     Quick,
+    /// Run an upgrade downgrade test on a given arch and variant
+    Migration,
 }
 
 derive_fromstr_from_deserialize!(TestType);
@@ -185,6 +235,14 @@ pub(crate) struct TestsysImages {
         default_value = "public.ecr.aws/bottlerocket-test/sonobuoy-test-agent:v0.0.1"
     )]
     pub(crate) sonobuoy_test: String,
+
+    /// Migration test agent uri. If not provided the latest released test agent will be used.
+    #[clap(
+        long = "migration-test-agent-image",
+        env = "TESTSYS_MIGRATION_TEST_AGENT_IMAGE",
+        default_value = "public.ecr.aws/bottlerocket-test/migration-test-agent:v0.0.1"
+    )]
+    pub(crate) migration_test: String,
 
     /// Images pull secret. This is the name of a Kubernetes secret that will be used to
     /// pull the container image from a private registry. For example, if you created a pull secret
