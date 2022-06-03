@@ -1,15 +1,16 @@
-From 072eb5f273434e577025caa9b076b3eec01931bb Mon Sep 17 00:00:00 2001
+From 140991051a106d66170eee7847ad7ee0f36cc106 Mon Sep 17 00:00:00 2001
 From: Zac Mrowicki <mrowicki@amazon.com>
 Date: Thu, 12 Aug 2021 22:48:44 +0000
-Subject: [PATCH 1001/1002] cri: set default RLIMIT_NOFILE
+Subject: [PATCH] cri: set default RLIMIT_NOFILE
 
 The `cri` plugin currently inherits the limit from the default OCI spec
 or the containerd process.  This change sets the default hard
 RLIMIT_NOFILE to 1048576 and the soft limit to 65536 in the OCI spec for
 any container spawned using `cri`.
 
-[ported to containerd 1.5]
+[ported to containerd 1.6]
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
+Signed-off-by: Sean P. Kelly <seankell@amazon.com>
 ---
  pkg/cri/config/config.go                 |  6 ++++++
  pkg/cri/config/config_unix.go            |  2 ++
@@ -18,13 +19,13 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  4 files changed, 30 insertions(+)
 
 diff --git a/pkg/cri/config/config.go b/pkg/cri/config/config.go
-index e6f13f9..b10fe06 100644
+index 9a986ef..d58cefe 100644
 --- a/pkg/cri/config/config.go
 +++ b/pkg/cri/config/config.go
-@@ -266,6 +266,12 @@ type PluginConfig struct {
- 	// of being placed under the hardcoded directory /var/run/netns. Changing this setting requires
- 	// that all containers are deleted.
- 	NetNSMountsUnderStateDir bool `toml:"netns_mounts_under_state_dir" json:"netnsMountsUnderStateDir"`
+@@ -302,6 +302,12 @@ type PluginConfig struct {
+ 	// and if it is not overwritten by PodSandboxConfig
+ 	// Note that currently default is set to disabled but target change it in future together with EnableUnprivilegedPorts
+ 	EnableUnprivilegedICMP bool `toml:"enable_unprivileged_icmp" json:"enableUnprivilegedICMP"`
 +	// ProcessRLimitNoFileSoft sets the soft limit of maximum file
 +	// descriptors each container process can use.
 +	ProcessRLimitNoFileSoft int `toml:"process_rlimit_no_file_soft" json:"process_rlimit_no_file_soft"`
@@ -35,10 +36,10 @@ index e6f13f9..b10fe06 100644
  
  // X509KeyPairStreaming contains the x509 configuration for streaming
 diff --git a/pkg/cri/config/config_unix.go b/pkg/cri/config/config_unix.go
-index 3ca1232..b0e0395 100644
+index ed75bb4..8cc7e8d 100644
 --- a/pkg/cri/config/config_unix.go
 +++ b/pkg/cri/config/config_unix.go
-@@ -103,5 +103,7 @@ func DefaultConfig() PluginConfig {
+@@ -104,5 +104,7 @@ func DefaultConfig() PluginConfig {
  		ImageDecryption: ImageDecryption{
  			KeyModel: KeyModelNode,
  		},
@@ -47,10 +48,10 @@ index 3ca1232..b0e0395 100644
  	}
  }
 diff --git a/pkg/cri/opts/spec_linux.go b/pkg/cri/opts/spec_linux.go
-index c5ec3df..282307a 100644
+index 9306d42..48ce258 100644
 --- a/pkg/cri/opts/spec_linux.go
 +++ b/pkg/cri/opts/spec_linux.go
-@@ -43,6 +43,17 @@ import (
+@@ -42,6 +42,17 @@ import (
  	osinterface "github.com/containerd/containerd/pkg/os"
  )
  
@@ -69,16 +70,16 @@ index c5ec3df..282307a 100644
  // /etc/groups file of the image's root filesystem to the OCI spec's additionalGids array.
  func WithAdditionalGIDs(userstr string) oci.SpecOpts {
 diff --git a/pkg/cri/server/container_create_linux.go b/pkg/cri/server/container_create_linux.go
-index 26386e9..a05f16d 100644
+index 8fb41e2..06d5702 100644
 --- a/pkg/cri/server/container_create_linux.go
 +++ b/pkg/cri/server/container_create_linux.go
-@@ -137,6 +137,17 @@ func (c *criService) containerSpec(
+@@ -141,6 +141,17 @@ func (c *criService) containerSpec(
  		// this will be set based on the security context below
  		oci.WithNewPrivileges,
  	)
 +
 +	// Override the default oci.Spec RLIMIT_NOFILE
-+	var rlimits = []runtimespec.POSIXRlimit {
++	var rlimits = []runtimespec.POSIXRlimit{
 +		{
 +			Type: "RLIMIT_NOFILE",
 +			Hard: uint64(c.config.PluginConfig.ProcessRLimitNoFileHard),
@@ -91,5 +92,5 @@ index 26386e9..a05f16d 100644
  		specOpts = append(specOpts, oci.WithProcessCwd(config.GetWorkingDir()))
  	} else if imageConfig.WorkingDir != "" {
 -- 
-2.21.3
+2.32.0
 
