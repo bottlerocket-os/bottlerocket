@@ -133,10 +133,8 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
         "kube_reserve_memory",
         Box::new(helpers::kube_reserve_memory),
     );
-    template_registry.register_helper(
-        "add_unresolvable_hostname",
-        Box::new(helpers::add_unresolvable_hostname),
-    );
+    template_registry.register_helper("localhost_aliases", Box::new(helpers::localhost_aliases));
+    template_registry.register_helper("etc_hosts_entries", Box::new(helpers::etc_hosts_entries));
 
     Ok(template_registry)
 }

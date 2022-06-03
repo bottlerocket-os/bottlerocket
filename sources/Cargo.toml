@@ -53,6 +53,8 @@ members = [
     "api/migration/migrations/v1.8.0/kubelet-pod-pids-limit",
     "api/migration/migrations/v1.8.0/add-pull-behavior",
     "api/migration/migrations/v1.8.0/add-autoscaling",
+    "api/migration/migrations/v1.8.0/etc-hosts",
+    "api/migration/migrations/v1.8.0/etc-hosts-metadata",
 
     "bottlerocket-release",
 

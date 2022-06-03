@@ -144,6 +144,9 @@ mod error {
         #[snafu(display("Internal error: {}", msg))]
         Internal { msg: String },
 
+        #[snafu(display("Internal error: Missing param after confirming that it existed."))]
+        ParamUnwrap {},
+
         // handlebars::JsonValue is a serde_json::Value, which implements
         // the 'Display' trait and should provide valuable context
         #[snafu(display(
@@ -153,6 +156,20 @@ mod error {
             template
         ))]
         InvalidTemplateValue {
+            expected: &'static str,
+            value: handlebars::JsonValue,
+            template: String,
+        },
+
+        #[snafu(display(
+            "Unable to parse template value, expected {}, got '{}' in template {}: '{}'",
+            expected,
+            value,
+            template,
+            source,
+        ))]
+        UnparseableTemplateValue {
+            source: serde_json::Error,
             expected: &'static str,
             value: handlebars::JsonValue,
             template: String,
@@ -269,9 +286,7 @@ pub fn base64_decode(
     let base64_value = helper
         .param(0)
         .map(|v| v.value())
-        .context(error::InternalSnafu {
-            msg: "Found no params after confirming there is one param",
-        })?;
+        .context(error::ParamUnwrapSnafu {})?;
     trace!("Base64 value from template: {}", base64_value);
 
     // Create an &str from the serde_json::Value
@@ -969,9 +984,15 @@ pub fn kube_reserve_cpu(
     Ok(())
 }
 
-/// Attempts to resolve the current hostname in DNS.  If unsuccessful, returns an entry formatted
-/// for `/etc/hosts` that aliases the hostname to both the IPV4/6 localhost addresses.
-pub fn add_unresolvable_hostname(
+/// Completes `localhost` alias lines in /etc/hosts by returning a series of space-delimited host aliases.
+///
+/// This helper reconciles `settings.network.hostname` and `settings.network.hosts` references to loopback.
+/// * `hostname`: Attempts to resolve the current configured hostname in DNS. If unsuccessful, the return
+///   includes an alias for the hostname to be included for the given IP version.
+/// * `hosts`: For any static `/etc/hosts` mappings which refer to loopback, this includes aliases in the
+///   same order specified in `settings.network.hosts`. These settings take the lowest precedence for
+///   loopback aliases.
+pub fn localhost_aliases(
     helper: &Helper<'_, '_>,
     _: &Handlebars,
     _: &Context,
@@ -979,64 +1000,172 @@ pub fn add_unresolvable_hostname(
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     // To give context to our errors, get the template name, if available.
-    trace!("Starting base64_decode helper");
+    trace!("Starting localhost_aliases helper");
     let template_name = template_name(renderctx);
     trace!("Template name: {}", &template_name);
 
-    // Check number of parameters, must be exactly one
+    // Check number of parameters, must be exactly three (IP version, hostname, hosts overrides)
     trace!("Number of params: {}", helper.params().len());
-    check_param_count(helper, template_name, 1)?;
+    check_param_count(helper, template_name, 3)?;
 
-    // Get the resolved key out of the template (param(0)). value() returns
-    // a serde_json::Value
-    let hostname_value = helper
+    // Get the resolved keys out of the template. value() returns a serde_json::Value
+    let ip_version_value = helper
         .param(0)
         .map(|v| v.value())
-        .context(error::InternalSnafu {
-            msg: "Found no params after confirming there is one param",
-        })?;
+        .context(error::ParamUnwrapSnafu {})?;
+    trace!("IP version value from template: {}", ip_version_value);
+
+    let hostname_value = helper
+        .param(1)
+        .map(|v| v.value())
+        .context(error::ParamUnwrapSnafu {})?;
     trace!("Hostname value from template: {}", hostname_value);
 
-    // Create an &str from the serde_json::Value
-    let hostname_str = hostname_value
+    let hosts_value = helper
+        .param(2)
+        .map(|v| v.value())
+        .context(error::ParamUnwrapSnafu {})?;
+    trace!("Hosts value from template: {}", hosts_value);
+
+    // Extract our variables from their serde_json::Value objects
+    let ip_version = ip_version_value
+        .as_str()
+        .context(error::InvalidTemplateValueSnafu {
+            expected: "string",
+            value: ip_version_value.to_owned(),
+            template: template_name.to_owned(),
+        })?;
+    trace!("IP version string from template: {}", ip_version);
+
+    let localhost_comparator = match ip_version {
+        "ipv4" => IPV4_LOCALHOST,
+        "ipv6" => IPV6_LOCALHOST,
+        _ => {
+            return Err(error::TemplateHelperError::InvalidTemplateValue {
+                expected: r#"one of ("ipv4", "ipv6")"#,
+                value: ip_version_value.to_owned(),
+                template: template_name.to_owned(),
+            }
+            .into());
+        }
+    };
+
+    let hostname = hostname_value
         .as_str()
         .context(error::InvalidTemplateValueSnafu {
             expected: "string",
             value: hostname_value.to_owned(),
             template: template_name.to_owned(),
         })?;
-    trace!("Hostname string from template: {}", hostname_str);
+    trace!("Hostname string from template: {}", hostname);
 
-    // Attempt to resolve the hostname
-    let hostname_resolveable = match lookup_host(hostname_str) {
-        Ok(ip_list) => {
-            // If the list of IPs is empty or resolves to localhost, consider the hostname
-            // unresolvable
-            let resolves_to_localhost = ip_list
-                .iter()
-                .any(|ip| ip == &IPV4_LOCALHOST || ip == &IPV6_LOCALHOST);
-            if ip_list.is_empty() || resolves_to_localhost {
-                false
-            } else {
-                true
-            }
+    let mut results: Vec<String> = vec![];
+
+    let hosts: Option<model::modeled_types::EtcHostsEntries> = (!hosts_value.is_null())
+        .then(|| {
+            serde_json::from_value(hosts_value.clone()).context(
+                error::UnparseableTemplateValueSnafu {
+                    expected: "EtcHostsEntries",
+                    value: hosts_value.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            )
+        })
+        .transpose()?;
+    trace!("Hosts from template: {:?}", hosts);
+
+    // If our hostname isn't resolveable, add it to the alias list.
+    if hostname.len() > 0 && !hostname_resolveable(hostname, hosts.as_ref()) {
+        results.push(hostname.to_owned());
+    }
+
+    // If hosts are specified and any overrides exist for loopback, add them.
+    if let Some(hosts) = hosts {
+        // If any static mappings in `settings.network.hosts` are for localhost, add them as well.
+        if let Some((_, aliases)) = hosts
+            .iter_merged()
+            .find(|(ip_address, _)| *ip_address == localhost_comparator)
+        {
+            // Downcast our hostnames into Strings and append to the results
+            let mut hostname_aliases: Vec<String> = aliases
+                .into_iter()
+                .map(|a| a.as_ref().to_string())
+                .collect();
+            results.append(&mut hostname_aliases);
         }
-        Err(e) => {
-            trace!("DNS hostname lookup failed: {},", e);
-            false
-        }
-    };
+    }
 
-    // Only write an entry to the template if the hostname is unresolvable
-    if !hostname_resolveable {
-        let ipv4_entry = format!("{} {}", IPV4_LOCALHOST, hostname_str);
-        let ipv6_entry = format!("{} {}", IPV6_LOCALHOST, hostname_str);
-        let entries = format!("{}\n{}", ipv4_entry, ipv6_entry);
-
-        out.write(&entries).context(error::TemplateWriteSnafu {
+    // Write out our localhost aliases.
+    let localhost_aliases = results.join(" ");
+    out.write(&localhost_aliases)
+        .context(error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
+
+    Ok(())
+}
+
+/// This helper writes out /etc/hosts lines based on `network.settings.hosts`.
+///
+/// The map of <IpAddr => Vec<HostAlias>> is written as newline-delimited text lines.
+/// Any entries which reference localhost are ignored, as these are intended to be merged
+/// with the existing localhost entries via `localhost_aliases`.
+pub fn etc_hosts_entries(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    // To give context to our errors, get the template name, if available.
+    trace!("Starting etc_hosts_entries helper");
+    let template_name = template_name(renderctx);
+    trace!("Template name: {}", &template_name);
+
+    // Check number of parameters, must be exactly one (hosts overrides)
+    trace!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 1)?;
+
+    // Get the resolved keys out of the template. value() returns a serde_json::Value
+    let hosts_value = helper
+        .param(0)
+        .map(|v| v.value())
+        .context(error::ParamUnwrapSnafu {})?;
+    trace!("Hosts value from template: {}", hosts_value);
+
+    if hosts_value.is_null() {
+        // If hosts aren't set, just exit.
+        return Ok(());
     }
+    // Otherwise we need to generate /etc/hosts lines, ignoring loopback.
+    let mut result_lines: Vec<String> = Vec::new();
+
+    let hosts: model::modeled_types::EtcHostsEntries = serde_json::from_value(hosts_value.clone())
+        .context(error::UnparseableTemplateValueSnafu {
+            expected: "EtcHostsEntries",
+            value: hosts_value.to_owned(),
+            template: template_name.to_owned(),
+        })?;
+    trace!("Hosts from template: {:?}", hosts);
+
+    hosts
+        .iter_merged()
+        .filter(|(ip_address, _)| {
+            // Localhost aliases are handled by the `localhost_aliases` helper, so we disregard them here.
+            *ip_address != IPV4_LOCALHOST && *ip_address != IPV6_LOCALHOST
+        })
+        .for_each(|(ip_address, aliases)| {
+            // Downcast hostnames to Strings and render the /etc/hosts line.
+            let alias_strs: Vec<String> = aliases.iter().map(|a| a.as_ref().into()).collect();
+
+            result_lines.push(format!("{} {}", ip_address, alias_strs.join(" ")));
+        });
+
+    out.write(&result_lines.join("\n"))
+        .context(error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
+
     Ok(())
 }
 
@@ -1126,6 +1255,41 @@ fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError> {
         cpu_to_reserve.floor().to_string(),
         millicores_unit
     ))
+}
+
+/// Returns whether or not a hostname resolves to a non-loopback IP address.
+///
+/// If `configured_hosts` is set, the hostname will be considered resolvable if it is listed as an alias for any given IP address.
+fn hostname_resolveable(
+    hostname: &str,
+    configured_hosts: Option<&model::modeled_types::EtcHostsEntries>,
+) -> bool {
+    // If the hostname is in our configured hosts, then it *will* be resolvable when /etc/hosts is rendered.
+    // Note that DNS search paths in /etc/resolv.conf are not relevant here, as they are not checked when searching /etc/hosts.
+    if let Some(etc_hosts_entries) = configured_hosts {
+        for (_, alias_list) in etc_hosts_entries.iter_merged() {
+            if alias_list.iter().any(|alias| alias.to_string() == hostname) {
+                return true;
+            }
+        }
+    }
+
+    // Attempt to resolve the hostname
+    match lookup_host(hostname) {
+        Ok(ip_list) => {
+            // If the list of IPs is empty or resolves to localhost, consider the hostname
+            // unresolvable
+            let resolves_to_localhost = ip_list
+                .iter()
+                .any(|ip| ip == &IPV4_LOCALHOST || ip == &IPV6_LOCALHOST);
+
+            !(ip_list.is_empty() || resolves_to_localhost)
+        }
+        Err(e) => {
+            trace!("DNS hostname lookup failed: {},", e);
+            false
+        }
+    }
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -1841,7 +2005,7 @@ mod test_kube_cpu_helper {
 }
 
 #[cfg(test)]
-mod test_add_unresolvable_hostname {
+mod test_etc_hosts_helpers {
     use super::*;
     use handlebars::RenderError;
     use serde::Serialize;
@@ -1854,35 +2018,122 @@ mod test_add_unresolvable_hostname {
         T: Serialize,
     {
         let mut registry = Handlebars::new();
-        registry.register_helper(
-            "add_unresolvable_hostname",
-            Box::new(add_unresolvable_hostname),
-        );
+        registry.register_helper("localhost_aliases", Box::new(localhost_aliases));
+        registry.register_helper("etc_hosts_entries", Box::new(etc_hosts_entries));
 
         registry.render_template(tmpl, data)
     }
 
     #[test]
+    fn test_hostname_resolvable_respects_etc_hosts() {
+        assert!(hostname_resolveable(
+            "unresolveable.irrelevanthostname.tld",
+            Some(
+                &serde_json::from_str::<model::modeled_types::EtcHostsEntries>(
+                    r#"[["10.0.0.1", ["unresolveable.irrelevanthostname.tld"]]]"#
+                )
+                .unwrap()
+            )
+        ));
+    }
+
+    #[test]
     fn resolves_to_localhost_renders_entries() {
+        // Given a configured hostname that does not resolve in DNS,
+        // When /etc/hosts is rendered,
+        // Then an additional alias shall be rendered pointing the configured hostname to localhost.
         let result = setup_and_render_template(
-            "{{add_unresolvable_hostname name}}",
-            &json!({"name": "localhost"}),
+            r#"{{localhost_aliases "ipv4" hostname hosts}}"#,
+            &json!({"hostname": "localhost"}),
         )
         .unwrap();
-        assert_eq!(
-            result,
-            "127.0.0.1 localhost
-::1 localhost"
+        assert_eq!(result, "localhost")
+    }
+
+    #[test]
+    fn hostname_resolves_to_static_mapping() {
+        // Given a configured hostname that does not resolve in DNS
+        // and an /etc/hosts configuration that contains that hostname as an alias to an IP address,
+        // When /etc/hosts is rendered,
+        // Then an additional alias *shall not* be rendered pointing the hostname to localhost.
+        let result = setup_and_render_template(
+            r#"{{localhost_aliases "ipv4" hostname hosts}}"#,
+            &json!({"hostname": "noresolve.bottlerocket.aws", "hosts": [["10.0.0.1", ["irrelevant", "noresolve.bottlerocket.aws"]]]}),
         )
+        .unwrap();
+        assert_eq!(result, "")
     }
 
     #[test]
     fn resolvable_hostname_renders_nothing() {
         let result = setup_and_render_template(
-            "{{add_unresolvable_hostname name}}",
-            &json!({"name": "amazon.com"}),
+            r#"{{localhost_aliases "ipv6" hostname hosts}}"#,
+            &json!({"hostname": "amazon.com", "hosts": []}),
         )
         .unwrap();
+        assert_eq!(result, "")
+    }
+
+    #[test]
+    fn static_localhost_mappings_render() {
+        let result = setup_and_render_template(
+            r#"127.0.0.1 localhost {{localhost_aliases "ipv4" hostname hosts}}"#,
+            &json!({"hostname": "", "hosts": [["127.0.0.1", ["test.example.com", "test"]]]}),
+        )
+        .unwrap();
+        assert_eq!(result, "127.0.0.1 localhost test.example.com test")
+    }
+
+    #[test]
+    fn static_localhost_mappings_low_precedence() {
+        let result = setup_and_render_template(
+            r#"::1 localhost {{localhost_aliases "ipv6" hostname hosts}}"#,
+            &json!({"hostname": "unresolvable.bottlerocket.aws", "hosts": [["::1", ["test.example.com", "test"]]]}),
+        )
+        .unwrap();
+        assert_eq!(
+            result,
+            "::1 localhost unresolvable.bottlerocket.aws test.example.com test"
+        )
+    }
+
+    #[test]
+    fn hosts_unset_works() {
+        let result = setup_and_render_template(
+            r#"{{localhost_aliases "ipv4" hostname hosts}}"#,
+            &json!({"hostname": "localhost"}),
+        )
+        .unwrap();
+        assert_eq!(result, "localhost")
+    }
+
+    #[test]
+    fn etc_hosts_entries_works() {
+        let result = setup_and_render_template(
+            r#"{{etc_hosts_entries hosts}}"#,
+            &json!({"hosts": [["10.0.0.1", ["test.example.com", "test"]], ["10.0.0.2", ["test.example.com"]]]}),
+        )
+        .unwrap();
+        assert_eq!(
+            result,
+            "10.0.0.1 test.example.com test\n10.0.0.2 test.example.com"
+        )
+    }
+
+    #[test]
+    fn etc_hosts_entries_ignores_localhost() {
+        let result = setup_and_render_template(
+            r#"{{etc_hosts_entries hosts}}"#,
+            &json!({"hosts": [["10.0.0.1", ["test.example.com", "test"]], ["127.0.0.1", ["test.example.com"]], ["::1", ["test.example.com"]]]}),
+        )
+        .unwrap();
+        assert_eq!(result, "10.0.0.1 test.example.com test")
+    }
+
+    #[test]
+    fn etc_hosts_works_with_empty_hosts() {
+        let result =
+            setup_and_render_template(r#"{{etc_hosts_entries hosts}}"#, &json!({})).unwrap();
         assert_eq!(result, "")
     }
 }

@@ -508,9 +508,44 @@ In addition to the container runtime daemons, these credential settings will als
 * `settings.network.hostname`: The desired hostname of the system.
   **Important note for all Kubernetes variants:** Changing this setting at runtime (not via user data) can cause issues with kubelet registration, as hostname is closely tied to the identity of the system for both registration and certificates/authorization purposes.
 
-Most users don't need to change this setting as the following defaults work for the majority of use cases.
-If this setting isn't set we attempt to use DNS reverse lookup for the hostname.
-If the lookup is unsuccessful, the IP of the node is used.
+  Most users don't need to change this setting as the following defaults work for the majority of use cases.
+  If this setting isn't set we attempt to use DNS reverse lookup for the hostname.
+  If the lookup is unsuccessful, the IP of the node is used.
+
+* `settings.network.hosts`: A mapping of IP addresses to domain names which should resolve to those IP addresses.
+   This setting results in modifications to the `/etc/hosts` file  for Bottlerocket.
+   Note that this setting does not typically impact name resolution for containers, which usually rely on orchestrator-specific mechanisms for configuring static resolution.
+   (See [ECS](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_HostEntry.html) and [Kubernetes](https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/) documentation for those mechanisms.)
+   
+   Example:
+   ```toml
+   [settings.network]
+   hosts = [
+    ["10.0.0.0", ["test.example.com", "test1.example.com"]],
+    ["10.1.1.1", ["test2.example.com"]]
+   ]
+   ```
+   This example would result in an `/etc/hosts` file entries like so:
+   ```
+   10.0.0.0 test.example.com test1.example.com
+   10.1.1.1 test2.example.com
+   ```
+   Repeated entries are merged (including loopback entries), with the first aliases listed taking precedence. e.g.:
+
+   ```toml
+   [settings.network]
+   hosts = [
+    ["10.0.0.0", ["test.example.com", "test1.example.com"]],
+    ["10.1.1.1", ["test2.example.com"]],
+    ["10.0.0.0", ["test3.example.com"]],
+   ]
+   ```
+   Would result in `/etc/hosts` entries like so:
+   ```
+   10.0.0.0 test.example.com test1.example.com test3.example.com
+   10.1.1.1 test2.example.com
+   ```
+
 
 ##### Proxy settings
 

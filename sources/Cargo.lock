@@ -1219,6 +1219,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "etc-hosts"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "etc-hosts-metadata"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "etc-hosts-service"
 version = "0.1.0"
 dependencies = [
@@ -2090,6 +2104,7 @@ dependencies = [
  "bottlerocket-variant",
  "filetime",
  "generate-readme",
+ "indexmap",
  "lazy_static",
  "libc",
  "model-derive",
@@ -2097,6 +2112,7 @@ dependencies = [
  "regex",
  "semver",
  "serde",
+ "serde_json",
  "serde_plain",
  "snafu",
  "toml",
