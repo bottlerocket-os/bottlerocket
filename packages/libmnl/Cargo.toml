@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "http://netfilter.org/projects/libmnl/files"
 
 [[package.metadata.build-package.external-files]]
-url = "http://netfilter.org/projects/libmnl/files/libmnl-1.0.4.tar.bz2"
-sha512 = "e2bbfb688fe41913d53c74ba7ec95b4e88ee2c52b556b8608185f2fcbd629665423a3b37f877f84426ba257cf6040fa701539d67166b00b8e3e2dfde6831a2f9"
+url = "http://netfilter.org/projects/libmnl/files/libmnl-1.0.5.tar.bz2"
+sha512 = "16fa48e74c9da7724a85c655dfb0abd8369392627934639d65de951543e1447ac3e048d231248f1ce8861443c2ef62654a85a81feeedbbffaf2e5744f6cf4c9f"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
