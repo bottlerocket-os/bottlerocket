@@ -329,6 +329,19 @@ For Kubernetes variants in AWS, you must also specify:
 
 For Kubernetes variants in VMware, you must specify:
 * `settings.kubernetes.cluster-dns-ip`: The IP of the DNS service running in the cluster.
+
+  This value can be set as a string containing a single IP address, or as a list containing multiple IP addresses.
+  Examples:
+  ```
+  # Valid, single IP
+  [settings.kubernetes]
+  "cluster-dns-ip" = "10.0.0.1"
+
+  # Also valid, multiple nameserver IPs
+  [settings.kubernetes]
+  "cluster-dns-ip" = ["10.0.0.1", "10.0.0.2"]
+  ```
+
 * `settings.kubernetes.bootstrap-token`: The token used for [TLS bootstrapping](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/).
 
 The following settings can be optionally set to customize the node labels and taints. Remember to quote keys (since they often contain ".") and to quote all values.
