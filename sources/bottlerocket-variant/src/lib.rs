@@ -61,7 +61,7 @@ pub mod error {
 /// - aws-k8s-1.21-nvidia
 ///
 /// The `platform` and `runtime` values are required. `variant_version` and `variant_flavor` values
-/// are optional and will default to `"undefined"` and `"general_purpose"` respectively.
+/// are optional and will default to `"0"` and `"none"` respectively.
 ///
 /// In a `build.rs` file, you may use the function `emit_cfgs()` if you need to conditionally
 /// compile code based on variant characteristics.
