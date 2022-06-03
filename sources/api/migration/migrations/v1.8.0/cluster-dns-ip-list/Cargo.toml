@@ -1,0 +1,13 @@
+[package]
+name = "cluster-dns-ip-list"
+version = "0.1.0"
+authors = ["Sean P. Kelly <seankell@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
+
+[dev-dependencies]
+serde_json = "1"
