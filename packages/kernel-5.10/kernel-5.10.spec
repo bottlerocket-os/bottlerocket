@@ -146,6 +146,9 @@ sed -i \
   -e 's,$(CONFIG_SYSTEM_TRUSTED_KEYRING),n,g' \
   scripts/Makefile
 
+# Restrict permissions on System.map.
+chmod 600 System.map
+
 (
   find * \
     -type f \
