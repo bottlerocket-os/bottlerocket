@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://netfilter.org/projects/libnetfilter_cthelper/files"
 
 [[package.metadata.build-package.external-files]]
-url = "https://netfilter.org/projects/libnetfilter_cthelper/files/libnetfilter_cthelper-1.0.0.tar.bz2"
-sha512 = "f0372daee0edbf4c27ee80eadd4ce786a4b67b39c0b9d22e88bc9adcbdffd6676eb9df01b933ee64d2fcea9c05a9ca9070c94e907277d69acbd22ae9a3c74e45"
+url = "https://netfilter.org/projects/libnetfilter_cthelper/files/libnetfilter_cthelper-1.0.1.tar.bz2"
+sha512 = "f0591edd579aee92b62446e2b8fef6af9c404848c42c8da76850bb01aec3567442612f53cf8d3af6ba4d6d920487bff310a4e547bccf595478b1f96b4280eada"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
