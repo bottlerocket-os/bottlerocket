@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://netfilter.org/projects/libnetfilter_cttimeout/files"
 
 [[package.metadata.build-package.external-files]]
-url = "https://netfilter.org/projects/libnetfilter_cttimeout/files/libnetfilter_cttimeout-1.0.0.tar.bz2"
-sha512 = "d64f592be022d02b6e6627470f9aed75114b0c7177012d31d868ee7eb39fca330a7638c9a209ff489d4a8c0549b8fcfd33582c6d36ee519b920cf27429301c85"
+url = "https://netfilter.org/projects/libnetfilter_cttimeout/files/libnetfilter_cttimeout-1.0.1.tar.bz2"
+sha512 = "3f7886b2b8c67fb45d9f6d03f8a327d0f04072abf75ec0fa310f4a321a1749607e79b48f47c8b8488f9833734689419264afada0cbc1f0360a5ae9e17d4a1100"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
