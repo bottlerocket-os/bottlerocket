@@ -22,7 +22,7 @@ shell-words = "1.0.0"
 simplelog = "0.12"
 snafu = "0.7"
 structopt = { version = "0.3", default-features = false }
-tokio = { version = "~1.8", default-features = false, features = ["macros", "rt-multi-thread"] } # LTS
+tokio = { version = "1", default-features = false, features = ["macros", "rt-multi-thread"] }
 toml = "0.5"
 url = "2.2.2"
 
