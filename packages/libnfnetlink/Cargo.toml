@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "http://netfilter.org/projects/libnfnetlink/files"
 
 [[package.metadata.build-package.external-files]]
-url = "http://netfilter.org/projects/libnfnetlink/files/libnfnetlink-1.0.1.tar.bz2"
-sha512 = "2ec2cd389c04e21c8a02fb3f6d6f326fc33ca9589577f1739c23d883fe2ee9feaa16e83b6ed09063ad886432e49565dc3256277d035260aca5aab17954b46104"
+url = "http://netfilter.org/projects/libnfnetlink/files/libnfnetlink-1.0.2.tar.bz2"
+sha512 = "a5e9ae22831f1d17703f83953f3b0ef898e8b3fa7f0f771b038db51816ddae3158574380ac4d45c09fb8fbb8677e2ccdcc5c4736e3b09de06eac99f899130854"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

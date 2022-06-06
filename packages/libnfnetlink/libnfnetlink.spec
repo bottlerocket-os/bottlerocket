@@ -1,5 +1,5 @@
 Name: %{_cross_os}libnfnetlink
-Version: 1.0.1
+Version: 1.0.2
 Release: 1%{?dist}
 Summary: Library for netfilter netlink
 License: GPL-2.0-only
