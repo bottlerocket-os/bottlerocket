@@ -40,6 +40,7 @@
 
 ; Label entry points.
 (filecon "/.*/usr/lib/systemd/systemd" file init_exec)
+(filecon "/.*/usr/bin/mount" file mount_exec)
 (filecon "/.*/usr/bin/apiserver" file api_exec)
 (filecon "/.*/usr/bin/early-boot-config" file api_exec)
 (filecon "/.*/usr/bin/migrator" file api_exec)
