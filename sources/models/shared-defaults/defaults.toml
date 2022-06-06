@@ -149,6 +149,3 @@ affected-services = ["bootstrap-containers"]
 [services.pki]
 configuration-files = []
 restart-commands = ["/usr/bin/certdog"]
-
-[metadata.settings.pki]
-affected-services = ["pki"]
