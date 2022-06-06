@@ -29,7 +29,11 @@ authorization:
 clusterDomain: {{settings.kubernetes.cluster-domain}}
 {{#if settings.kubernetes.cluster-dns-ip}}
 clusterDNS:
+{{#each settings.kubernetes.cluster-dns-ip}}
+- {{this}}
+{{else}}
 - {{settings.kubernetes.cluster-dns-ip}}
+{{/each}}
 {{/if}}
 {{#if settings.kubernetes.eviction-hard}}
 evictionHard:

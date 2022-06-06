@@ -8,6 +8,7 @@ use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
+use std::net::IpAddr;
 use std::ops::Deref;
 
 /// KubernetesName represents a string that contains a valid Kubernetes resource name.  It stores
@@ -992,5 +993,121 @@ mod test_topology_manager_policy {
         for err in &["", "bad", "100", &"a".repeat(64)] {
             TopologyManagerPolicy::try_from(*err).unwrap_err();
         }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesClusterDnsIp represents the --cluster-dns settings for kubelet.
+///
+/// This model allows the value to be either a list of IPs, or a single IP string
+/// for backwards compatibility.
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum KubernetesClusterDnsIp {
+    Scalar(IpAddr),
+    Vector(Vec<IpAddr>),
+}
+
+impl KubernetesClusterDnsIp {
+    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = &'a IpAddr> + 'a> {
+        match self {
+            Self::Scalar(inner) => Box::new(std::iter::once(inner)),
+            Self::Vector(inner) => Box::new(inner.iter()),
+        }
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item = IpAddr> {
+        match self {
+            Self::Scalar(inner) => vec![inner],
+            Self::Vector(inner) => inner,
+        }
+        .into_iter()
+    }
+}
+
+#[cfg(test)]
+mod test_cluster_dns_ip {
+    use super::KubernetesClusterDnsIp;
+    use std::net::IpAddr;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_parse_cluster_dns_ip_from_str() {
+        assert_eq!(
+            serde_json::from_str::<KubernetesClusterDnsIp>(r#""127.0.0.1""#).unwrap(),
+            KubernetesClusterDnsIp::Scalar(IpAddr::from_str("127.0.0.1").unwrap())
+        );
+        assert_eq!(
+            serde_json::from_str::<KubernetesClusterDnsIp>(r#""::1""#).unwrap(),
+            KubernetesClusterDnsIp::Scalar(IpAddr::from_str("::1").unwrap())
+        );
+    }
+
+    #[test]
+    fn test_parse_cluster_dns_ip_from_list() {
+        assert_eq!(
+            serde_json::from_str::<KubernetesClusterDnsIp>(r#"[]"#).unwrap(),
+            KubernetesClusterDnsIp::Vector(vec![])
+        );
+        assert_eq!(
+            serde_json::from_str::<KubernetesClusterDnsIp>(r#"["127.0.0.1", "::1"]"#).unwrap(),
+            KubernetesClusterDnsIp::Vector(vec![
+                IpAddr::from_str("127.0.0.1").unwrap(),
+                IpAddr::from_str("::1").unwrap()
+            ])
+        );
+    }
+
+    #[test]
+    fn test_iter_cluster_dns_ips() {
+        assert_eq!(
+            KubernetesClusterDnsIp::Vector(vec![])
+                .iter()
+                .collect::<Vec<&IpAddr>>(),
+            Vec::<&IpAddr>::new(),
+        );
+
+        assert_eq!(
+            KubernetesClusterDnsIp::Vector(vec![
+                IpAddr::from_str("127.0.0.1").unwrap(),
+                IpAddr::from_str("::1").unwrap()
+            ])
+            .iter()
+            .collect::<Vec<&IpAddr>>(),
+            vec![
+                &IpAddr::from_str("127.0.0.1").unwrap(),
+                &IpAddr::from_str("::1").unwrap()
+            ]
+        );
+
+        assert_eq!(
+            KubernetesClusterDnsIp::Scalar(IpAddr::from_str("127.0.0.1").unwrap())
+                .iter()
+                .collect::<Vec<&IpAddr>>(),
+            vec![&IpAddr::from_str("127.0.0.1").unwrap()],
+        );
+    }
+
+    #[test]
+    fn test_first_cluster_dns_ips() {
+        assert_eq!(KubernetesClusterDnsIp::Vector(vec![]).iter().next(), None);
+
+        assert_eq!(
+            KubernetesClusterDnsIp::Vector(vec![
+                IpAddr::from_str("127.0.0.1").unwrap(),
+                IpAddr::from_str("::1").unwrap()
+            ])
+            .iter()
+            .next(),
+            Some(&IpAddr::from_str("127.0.0.1").unwrap())
+        );
+
+        assert_eq!(
+            KubernetesClusterDnsIp::Scalar(IpAddr::from_str("127.0.0.1").unwrap())
+                .iter()
+                .next(),
+            Some(&IpAddr::from_str("127.0.0.1").unwrap())
+        );
     }
 }

@@ -143,11 +143,12 @@ use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, DNSDomain,
     ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     EtcHostsEntries, FriendlyVersion, Identifier, KubernetesAuthenticationMode,
-    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterName,
-    KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
-    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey,
-    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
+    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterDnsIp,
+    KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
+    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
+    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, PemCertificateString,
+    SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64,
+    ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -201,7 +202,7 @@ struct KubernetesSettings {
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
     max_pods: u32,
-    cluster_dns_ip: IpAddr,
+    cluster_dns_ip: KubernetesClusterDnsIp,
     cluster_domain: DNSDomain,
     node_ip: IpAddr,
     pod_infra_container_image: SingleLineString,

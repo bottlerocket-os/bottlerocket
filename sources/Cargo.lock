@@ -793,6 +793,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cluster-dns-ip-list"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
 name = "constants"
 version = "0.1.0"
 dependencies = [

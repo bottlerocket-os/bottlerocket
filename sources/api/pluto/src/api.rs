@@ -1,5 +1,4 @@
 pub(super) use inner::{get_aws_k8s_info, Error};
-use std::net::IpAddr;
 
 /// The result type for the [`api`] module.
 pub(super) type Result<T> = std::result::Result<T, Error>;
@@ -7,7 +6,7 @@ pub(super) type Result<T> = std::result::Result<T, Error>;
 pub(crate) struct AwsK8sInfo {
     pub(crate) region: Option<String>,
     pub(crate) cluster_name: Option<String>,
-    pub(crate) cluster_dns_ip: Option<IpAddr>,
+    pub(crate) cluster_dns_ip: Option<model::modeled_types::KubernetesClusterDnsIp>,
 }
 
 /// This code is the 'actual' implementation compiled when the `sources` workspace is being compiled
@@ -15,7 +14,6 @@ pub(crate) struct AwsK8sInfo {
 #[cfg(variant_family = "aws-k8s")]
 mod inner {
     use super::*;
-    use constants;
     use snafu::{ResultExt, Snafu};
 
     #[derive(Debug, Snafu)]
@@ -51,10 +49,7 @@ mod inner {
                 .as_ref()
                 .and_then(|k| k.cluster_name.clone())
                 .map(|s| s.into()),
-            cluster_dns_ip: settings
-                .kubernetes
-                .and_then(|k| k.cluster_dns_ip)
-                .map(|s| s.into()),
+            cluster_dns_ip: settings.kubernetes.and_then(|k| k.cluster_dns_ip),
         })
     }
 }

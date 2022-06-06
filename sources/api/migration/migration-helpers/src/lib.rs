@@ -60,7 +60,7 @@ pub type Metadata = HashMap<String, Value>;
 /// MigrationData holds all data that can be migrated in a migration, and serves as the input and
 /// output format of migrations.  A serde Value type is used to hold the arbitrary data of each
 /// key because we can't represent types when they could change in the migration.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MigrationData {
     /// Mapping of data key names to their arbitrary values.
     pub data: HashMap<String, Value>,

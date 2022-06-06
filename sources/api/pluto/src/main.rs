@@ -257,7 +257,11 @@ async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
     // Retrieve the user specified cluster DNS IP if it's specified, otherwise use the pluto-generated
     // cluster DNS IP
     let aws_k8s_info = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
-    let cluster_dns_ip = if let Some(ip) = aws_k8s_info.cluster_dns_ip {
+    let configured_cluster_dns_ip = aws_k8s_info
+        .cluster_dns_ip
+        .and_then(|cluster_ip| cluster_ip.iter().next().cloned());
+
+    let cluster_dns_ip = if let Some(ip) = configured_cluster_dns_ip {
         ip.to_owned()
     } else {
         let ip = get_cluster_dns_ip(client).await?;
