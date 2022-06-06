@@ -85,6 +85,3 @@ CONFIG_MOUSE_PS2=m
 
 # Enables support for checkpoint/restore
 CONFIG_CHECKPOINT_RESTORE=y
-
-# Enables support for LSI Logic's SAS based RAID controllers
-CONFIG_MEGARAID_SAS=y
