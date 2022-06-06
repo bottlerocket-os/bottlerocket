@@ -147,7 +147,7 @@ license-files = [
 [clarify.tokio-macros]
 expression = "MIT"
 license-files = [
-    { path = "LICENSE", hash = 0x28d2b8db },
+    { path = "LICENSE", hash = 0xfa2cf349 },
 ]
 
 [clarify.vmw_backdoor]

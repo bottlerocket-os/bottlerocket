@@ -17,7 +17,7 @@ log = "0.4"
 models = { path = "../../models", version = "0.1.0" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 semver = "1.0"
-simplelog = "0.11"
+simplelog = "0.12"
 snafu = "0.7"
 toml = "0.5"
 

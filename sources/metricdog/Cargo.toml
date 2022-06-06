@@ -13,7 +13,7 @@ bottlerocket-release = { path = "../bottlerocket-release", version = "0.1.0" }
 log = "0.4"
 reqwest = { version = "0.11.1", default-features = false, features = ["blocking", "rustls-tls"] }
 serde = { version = "1.0.100", features = ["derive"] }
-simplelog = "0.11"
+simplelog = "0.12"
 snafu = { version = "0.7" }
 structopt = "0.3.17"
 toml = "0.5.1"

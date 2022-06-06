@@ -20,7 +20,7 @@ serde = { version = "1.0.100", features = ["derive"] }
 serde_json = "1.0.40"
 serde_plain = "1.0"
 signpost = { path = "../signpost", version = "0.1.0" }
-simplelog = "0.11"
+simplelog = "0.12"
 snafu = "0.7"
 toml = "0.5.1"
 tough = { version = "0.12", features = ["http"] }
