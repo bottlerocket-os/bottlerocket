@@ -51,6 +51,9 @@ CONFIG_VIRTIO_PCI=y
 # LSI Logic's SAS based RAID controllers
 CONFIG_MEGARAID_SAS=y
 
+# Microsemi PQI controllers
+CONFIG_SCSI_SMARTPQI=y
+
 # dm-verity and enabling it on the kernel command line
 CONFIG_BLK_DEV_DM=y
 CONFIG_DAX=y
