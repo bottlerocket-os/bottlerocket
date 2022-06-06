@@ -26,6 +26,8 @@ Source100: etc-containerd.mount
 
 Source1000: clarify.toml
 
+Patch0001: 0001-release-1.6-Limit-the-response-size-of-ExecSync-16mib.patch
+
 # TODO: submit this upstream, including a unit test.
 Patch1001: 1001-cri-set-default-RLIMIT_NOFILE.patch
 
