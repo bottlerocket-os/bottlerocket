@@ -30,7 +30,7 @@ use tokio::time::{timeout, Duration};
 use tokio_retry::{strategy::FibonacciBackoff, Retry};
 
 const BASE_URI: &str = "http://169.254.169.254";
-const PINNED_SCHEMA: &str = "2021-01-03";
+const PINNED_SCHEMA: &str = "2021-07-15";
 
 // Currently only able to get fetch session tokens from `latest`.
 const SESSION_TARGET: &str = "latest/api/token";
@@ -146,8 +146,7 @@ impl ImdsClient {
         let ipv6_address = self
             .fetch_string(&ipv6_address_target)
             .await?
-            .map(|ipv6_addresses| ipv6_addresses.lines().next().map(|s| s.to_string()))
-            .flatten();
+            .and_then(|ipv6_addresses| ipv6_addresses.lines().next().map(|s| s.to_string()));
         Ok(ipv6_address)
     }
 
