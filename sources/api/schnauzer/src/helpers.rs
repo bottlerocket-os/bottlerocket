@@ -5,7 +5,6 @@
 use dns_lookup::lookup_host;
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError};
 use lazy_static::lazy_static;
-use num_cpus;
 use serde_json::value::Value;
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
@@ -38,10 +37,10 @@ lazy_static! {
         m.insert("sa-east-1", "328549459982");
         m.insert("us-east-1", "328549459982");
         m.insert("us-east-2", "328549459982");
+        m.insert("us-gov-east-1", "388230364387");
+        m.insert("us-gov-west-1", "347163068887");
         m.insert("us-west-1", "328549459982");
         m.insert("us-west-2", "328549459982");
-        m.insert("us-gov-west-1", "347163068887");
-        m.insert("us-gov-east-1", "388230364387");
         m
     };
 }
@@ -592,7 +591,7 @@ pub fn default(
         Value::Number(n) => n.to_string(),
         Value::String(s) => s.to_string(),
         // If no value is set, use the given default.
-        Value::Null => default.to_string(),
+        Value::Null => default,
         // composite types unsupported
         Value::Array(_) | Value::Object(_) => {
             return Err(RenderError::from(
@@ -748,7 +747,7 @@ pub fn host(
     let url_host = url.host_str().context(error::UrlHostSnafu { url_str })?;
 
     // write it to the template
-    out.write(&url_host)
+    out.write(url_host)
         .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
@@ -794,7 +793,7 @@ pub fn goarch(
     };
 
     // write it to the template
-    out.write(&goarch)
+    out.write(goarch)
         .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
@@ -918,7 +917,9 @@ pub fn kube_reserve_memory(
         Value::Number(n) => n.to_string(),
         Value::String(s) => s.to_string(),
         // If no value is set, use the given default.
-        Value::Null => { format!("{}Mi", (max_num_pods * 11 + 255).to_string()) }.to_string(),
+        Value::Null => {
+            format!("{}Mi", (max_num_pods * 11 + 255))
+        }
         // composite types unsupported
         _ => {
             return Err(RenderError::from(
@@ -1075,7 +1076,7 @@ pub fn localhost_aliases(
     trace!("Hosts from template: {:?}", hosts);
 
     // If our hostname isn't resolveable, add it to the alias list.
-    if hostname.len() > 0 && !hostname_resolveable(hostname, hosts.as_ref()) {
+    if !hostname.is_empty() && !hostname_resolveable(hostname, hosts.as_ref()) {
         results.push(hostname.to_owned());
     }
 
@@ -1250,11 +1251,7 @@ fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError> {
             KUBE_RESERVE_4_CORES + ((num_cores - 4.0) * KUBE_RESERVE_ADDITIONAL)
         }
     };
-    Ok(format!(
-        "{}{}",
-        cpu_to_reserve.floor().to_string(),
-        millicores_unit
-    ))
+    Ok(format!("{}{}", cpu_to_reserve.floor(), millicores_unit))
 }
 
 /// Returns whether or not a hostname resolves to a non-loopback IP address.
@@ -1268,7 +1265,7 @@ fn hostname_resolveable(
     // Note that DNS search paths in /etc/resolv.conf are not relevant here, as they are not checked when searching /etc/hosts.
     if let Some(etc_hosts_entries) = configured_hosts {
         for (_, alias_list) in etc_hosts_entries.iter_merged() {
-            if alias_list.iter().any(|alias| alias.to_string() == hostname) {
+            if alias_list.iter().any(|alias| alias == hostname) {
                 return true;
             }
         }
@@ -1966,8 +1963,7 @@ mod test_kube_reserve_cpu {
 
     #[test]
     fn kube_reserve_cpu_ok() {
-        setup_and_render_template(TEMPLATE, &json!({"not-the-setting": "hi"})).unwrap();
-        assert!(true);
+        assert!(setup_and_render_template(TEMPLATE, &json!({"not-the-setting": "hi"})).is_ok());
     }
 
     #[test]
