@@ -58,6 +58,9 @@ pub mod error {
         #[snafu(display("{} given invalid input: {}", thing, input))]
         BigPattern { thing: String, input: String },
 
+        #[snafu(display("Invalid Kubernetes cloud provider '{}'", input))]
+        InvalidCloudProvider { input: String },
+
         #[snafu(display("Invalid Kubernetes authentication mode '{}'", input))]
         InvalidAuthenticationMode { input: String },
 

@@ -740,12 +740,16 @@ impl TryFrom<&str> for KubernetesCloudProvider {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, error::Error> {
+        // Kubelet expects the empty string to be double-quoted when be passed to `--cloud-provider`
+        let cloud_provider = if input.is_empty() { "\"\"" } else { input };
         ensure!(
-            matches!(input, "aws" | "external"),
-            error::InvalidAuthenticationModeSnafu { input }
+            matches!(cloud_provider, "aws" | "external" | "\"\""),
+            error::InvalidCloudProviderSnafu {
+                input: cloud_provider
+            }
         );
         Ok(KubernetesCloudProvider {
-            inner: input.to_string(),
+            inner: cloud_provider.to_string(),
         })
     }
 }
@@ -758,15 +762,15 @@ mod test_kubernetes_cloud_provider {
     use std::convert::TryFrom;
 
     #[test]
-    fn good_modes() {
-        for ok in &["aws", "external"] {
+    fn allowed_providers() {
+        for ok in &["aws", "external", "\"\"", ""] {
             KubernetesCloudProvider::try_from(*ok).unwrap();
         }
     }
 
     #[test]
-    fn bad_modes() {
-        for err in &["", "internal"] {
+    fn disallowed_providers() {
+        for err in &["internal"] {
             KubernetesCloudProvider::try_from(*err).unwrap_err();
         }
     }
