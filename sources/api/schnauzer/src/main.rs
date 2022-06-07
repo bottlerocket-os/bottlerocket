@@ -15,7 +15,6 @@ If the returned value is "baz", our generated value will be "foo-baz".
 
 #![deny(rust_2018_idioms)]
 
-use constants;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::string::String;
@@ -135,7 +134,7 @@ fn usage() -> ! {
 
 /// Parses args for the setting key name.
 fn parse_args(mut args: env::Args) -> String {
-    let arg = args.nth(1).unwrap_or_else(|| usage());
+    let arg = args.nth(1).unwrap_or_else(|| "--help".to_string());
     if arg == "--help" || arg == "-h" {
         usage()
     }

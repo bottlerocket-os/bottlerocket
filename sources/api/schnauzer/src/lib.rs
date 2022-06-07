@@ -164,7 +164,7 @@ LIST_UPPER=a1,a2,x,y,b1,.c1
 list_lower=a1,a2,x,y,b1,.c1
         "###;
 
-        let result = registry.render_template(&tmpl, &data).unwrap();
+        let result = registry.render_template(tmpl, &data).unwrap();
         assert_eq!(result, expected);
     }
 
@@ -178,7 +178,7 @@ y"###;
         let expected = "x
 y";
 
-        let result = registry.render_template(&tmpl, &data).unwrap();
+        let result = registry.render_template(tmpl, &data).unwrap();
         assert_eq!(result, expected);
     }
 }
