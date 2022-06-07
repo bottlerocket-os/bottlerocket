@@ -1,5 +1,5 @@
 Name: %{_cross_os}makedumpfile
-Version: 1.7.0
+Version: 1.7.1
 Release: 1%{?dist}
 Summary: Tool to create dumps from kernel memory images
 License: GPL-2.0-or-later AND GPL-2.0-only

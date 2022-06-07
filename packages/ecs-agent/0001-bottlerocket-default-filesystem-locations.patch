@@ -1,17 +1,19 @@
-From c6cbf43d62a587b7a7672b726c4513005c9b77e8 Mon Sep 17 00:00:00 2001
+From 9c29e409e68789b2bae933e5be4f0c8828a3f59a Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Wed, 8 Jul 2020 11:18:35 -0700
 Subject: [PATCH 1/5] bottlerocket: default filesystem locations
 
+Signed-off-by: Sean P. Kelly <seankell@amazon.com>
 ---
- agent/config/config.go      | 6 +++---
- agent/config/config_unix.go | 4 ++--
- agent/ecscni/plugin.go      | 2 +-
- agent/utils/license.go      | 6 +++---
- 4 files changed, 9 insertions(+), 9 deletions(-)
+ agent/config/config.go             | 6 +++---
+ agent/config/config_unix.go        | 6 +++---
+ agent/ecscni/plugin_linux.go       | 2 +-
+ agent/ecscni/plugin_unsupported.go | 2 +-
+ agent/utils/license.go             | 6 +++---
+ 5 files changed, 11 insertions(+), 11 deletions(-)
 
 diff --git a/agent/config/config.go b/agent/config/config.go
-index 3178c63f2..810eb31b4 100644
+index 4b308bb..5d0aa36 100644
 --- a/agent/config/config.go
 +++ b/agent/config/config.go
 @@ -51,7 +51,7 @@ const (
@@ -40,10 +42,10 @@ index 3178c63f2..810eb31b4 100644
  	// DefaultTaskMetadataSteadyStateRate is set as 40. This is arrived from our benchmarking
  	// results where task endpoint can handle 4000 rps effectively. Here, 100 containers
 diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
-index 080f18c4d..ef14970ce 100644
+index 8f6b801..b8e7f93 100644
 --- a/agent/config/config_unix.go
 +++ b/agent/config/config_unix.go
-@@ -27,10 +27,10 @@ const (
+@@ -29,10 +29,10 @@ const (
  	// AgentCredentialsAddress is used to serve the credentials for tasks.
  	AgentCredentialsAddress = "" // this is left blank right now for net=bridge
  	// defaultAuditLogFile specifies the default audit log filename
@@ -54,9 +56,9 @@ index 080f18c4d..ef14970ce 100644
 -	defaultRuntimeStatsLogFile = `/log/agent-runtime-stats.log`
 +	defaultRuntimeStatsLogFile = `/var/log/ecs/agent-runtime-stats.log`
  
- 	// DefaultTaskCgroupPrefix is default cgroup prefix for ECS tasks
- 	DefaultTaskCgroupPrefix = "/ecs"
-@@ -56,7 +56,7 @@ func DefaultConfig() Config {
+ 	// DefaultTaskCgroupV1Prefix is default cgroup v1 prefix for ECS tasks
+ 	DefaultTaskCgroupV1Prefix = "/ecs"
+@@ -63,7 +63,7 @@ func DefaultConfig() Config {
  		DockerEndpoint:                      "unix:///var/run/docker.sock",
  		ReservedPorts:                       []uint16{SSHPort, DockerReservedPort, DockerReservedSSLPort, AgentIntrospectionPort, AgentCredentialsPort},
  		ReservedPortsUDP:                    []uint16{},
@@ -66,10 +68,10 @@ index 080f18c4d..ef14970ce 100644
  		DisableMetrics:                      BooleanDefaultFalse{Value: ExplicitlyDisabled},
  		ReservedMemory:                      0,
 diff --git a/agent/ecscni/plugin_linux.go b/agent/ecscni/plugin_linux.go
-index 6fc0111d..d3ef6641 100644
+index aa56d0a..e8f71b4 100644
 --- a/agent/ecscni/plugin_linux.go
 +++ b/agent/ecscni/plugin_linux.go
-@@ -32,7 +32,7 @@ import (
+@@ -33,7 +33,7 @@ import (
  const (
  	vpcCNIPluginInterfaceType = "vlan"
  	// vpcCNIPluginPath is the path of the cni plugin's log file.
@@ -79,10 +81,10 @@ index 6fc0111d..d3ef6641 100644
  
  // newCNIGuard returns a new instance of CNI guard for the CNI client.
 diff --git a/agent/ecscni/plugin_unsupported.go b/agent/ecscni/plugin_unsupported.go
-index 6289877a..fcebedfe 100644
+index e156b75..55d1a3c 100644
 --- a/agent/ecscni/plugin_unsupported.go
 +++ b/agent/ecscni/plugin_unsupported.go
-@@ -25,7 +25,7 @@ import (
+@@ -26,7 +26,7 @@ import (
  
  const (
  	// vpcCNIPluginPath is the path of the cni plugin's log file.
@@ -92,7 +94,7 @@ index 6289877a..fcebedfe 100644
  
  // newCNIGuard returns a new instance of CNI guard for the CNI client.
 diff --git a/agent/utils/license.go b/agent/utils/license.go
-index 6eccff6ac..324307cd3 100644
+index 6eccff6..324307c 100644
 --- a/agent/utils/license.go
 +++ b/agent/utils/license.go
 @@ -24,9 +24,9 @@ type LicenseProvider interface {

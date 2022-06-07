@@ -9,11 +9,12 @@ build = "build.rs"
 path = "pkg.rs"
 
 [package.metadata.build-package]
-releases-url = "https://sites.google.com/site/fullycapable/release-notes-for-libcap"
+releases-url = "https://cdn.kernel.org/pub/linux/libs/security/linux-privs/libcap2/"
+# Changelog can be found here: https://sites.google.com/site/fullycapable/release-notes-for-libcap
 
 [[package.metadata.build-package.external-files]]
-url = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-2.63.tar.gz"
-sha512 = "0db42bc9079c75b539fd7511531a2088ba37f8d4fe75799606976a3f36bc240c4b7c87402c4b71b9c455daed098a3ddaa31687d70ed45168d471df131e2898f1"
+url = "https://cdn.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.64.tar.gz"
+sha512 = "628ba25c2736e5fe6469c3e1d9b28855f5d2e7e75c91d5d46cc0c01e539f3cccd00356937acffde518eb83f55e5d6124eefd53199aba705fedd520982db48652"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

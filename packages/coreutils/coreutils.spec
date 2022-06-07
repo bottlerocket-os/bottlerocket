@@ -1,5 +1,5 @@
 Name: %{_cross_os}coreutils
-Version: 9.0
+Version: 9.1
 Release: 1%{?dist}
 Summary: A set of basic GNU tools
 License: GPL-3.0-or-later
@@ -16,6 +16,9 @@ Requires: %{_cross_os}libattr
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libxcrypt
+
+# Include patch from Fedora 37, fix for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=55029
+Patch1001: 1001-gnulib-simple-backup-fix.patch
 
 %description
 %{summary}.

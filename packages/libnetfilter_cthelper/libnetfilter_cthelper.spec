@@ -1,5 +1,5 @@
 Name: %{_cross_os}libnetfilter_cthelper
-Version: 1.0.0
+Version: 1.0.1
 Release: 1%{?dist}
 Summary: Library for netfilter cthelper
 License: GPL-2.0-or-later

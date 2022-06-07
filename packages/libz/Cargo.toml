@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://www.zlib.net"
 
 [[package.metadata.build-package.external-files]]
-url = "https://www.zlib.net/zlib-1.2.11.tar.xz"
-sha512 = "b7f50ada138c7f93eb7eb1631efccd1d9f03a5e77b6c13c8b757017b2d462e19d2d3e01c50fad60a4ae1bc86d431f6f94c72c11ff410c25121e571953017cb67"
+url = "https://www.zlib.net/zlib-1.2.12.tar.xz"
+sha512 = "12940e81e988f7661da52fa20bdc333314ae86a621fdb748804a20840b065a1d6d984430f2d41f3a057de0effc6ff9bcf42f9ee9510b88219085f59cbbd082bd"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

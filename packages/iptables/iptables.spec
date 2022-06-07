@@ -1,5 +1,5 @@
 Name: %{_cross_os}iptables
-Version: 1.8.7
+Version: 1.8.8
 Release: 1%{?dist}
 Summary: Tools for managing Linux kernel packet filtering capabilities
 License: GPL-2.0-or-later AND GPL-2.0-only
@@ -15,6 +15,8 @@ Requires: %{_cross_os}libmnl
 Requires: %{_cross_os}libnfnetlink
 Requires: %{_cross_os}libnftnl
 Requires: %{_cross_os}libnetfilter_conntrack
+
+Patch1001: 1001-xshared-Fix-build-for-Werror-format-security.patch
 
 %description
 %{summary}.

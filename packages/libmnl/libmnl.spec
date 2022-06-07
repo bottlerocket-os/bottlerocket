@@ -1,5 +1,5 @@
 Name: %{_cross_os}libmnl
-Version: 1.0.4
+Version: 1.0.5
 Release: 1%{?dist}
 Summary: Library for netlink
 License: LGPL-2.1-or-later

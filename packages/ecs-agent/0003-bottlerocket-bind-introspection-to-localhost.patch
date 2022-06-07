@@ -1,4 +1,4 @@
-From b1b730a48bfb2164b08ffa4a862f2c7621b44b28 Mon Sep 17 00:00:00 2001
+From 709aa50f6cefbb860fdc38894d1d82907444343f Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 21 Aug 2020 11:07:32 -0700
 Subject: [PATCH 3/5] bottlerocket: bind introspection to localhost
@@ -8,7 +8,7 @@ Subject: [PATCH 3/5] bottlerocket: bind introspection to localhost
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/agent/handlers/introspection_server_setup.go b/agent/handlers/introspection_server_setup.go
-index 3ca0ecc7..b7f70e92 100644
+index 3ca0ecc..b7f70e9 100644
 --- a/agent/handlers/introspection_server_setup.go
 +++ b/agent/handlers/introspection_server_setup.go
 @@ -88,7 +88,7 @@ func introspectionServerSetup(containerInstanceArn *string, taskEngine handlersu

@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "http://www.netfilter.org/projects/iptables/files"
 
 [[package.metadata.build-package.external-files]]
-url = "http://www.netfilter.org/projects/iptables/files/iptables-1.8.7.tar.bz2"
-sha512 = "c0a33fafbf1139157a9f52860938ebedc282a1394a68dcbd58981159379eb525919f999b25925f2cb4d6b18089bd99a94b00b3e73cff5cb0a0e47bdff174ed75"
+url = "http://www.netfilter.org/projects/iptables/files/iptables-1.8.8.tar.bz2"
+sha512 = "f21df23279a77531a23f3fcb1b8f0f8ec0c726bda236dd0e33af74b06753baff6ce3f26fb9fcceb6fada560656ba901e68fc6452eb840ac1b206bc4654950f59"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
