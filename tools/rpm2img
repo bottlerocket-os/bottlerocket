@@ -301,7 +301,7 @@ dd if="${BOOT_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[BOOT-A
 
 # Copy the empty bootconfig file into the image so grub doesn't pause and print
 # an error that the file doesn't exist
-cp /host/tools/empty-bootconfig.data "${PRIVATE_MOUNT}/bootconfig.data"
+cp /host/tools/bootconfig/empty-bootconfig.data "${PRIVATE_MOUNT}/bootconfig.data"
 # Targeted toward the current API server implementation.
 # Relative to the ext4 defaults, we:
 # - adjust the inode ratio since we expect lots of small files
