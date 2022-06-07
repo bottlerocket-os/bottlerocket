@@ -417,7 +417,7 @@ fn parse_ok() {
     ];
 
     for test in tests {
-        let parsed = Variant::new(test.input.clone()).unwrap();
+        let parsed = Variant::new(test.input).unwrap();
         assert_eq!(parsed, test.input);
         assert_eq!(test.input, parsed);
         assert_eq!(parsed.platform(), test.platform.to_string());
