@@ -112,8 +112,8 @@ make -s\\\
 %kmake %{?_smp_mflags} modules
 
 %install
-%kmake headers_install
-%kmake modules_install
+%kmake %{?_smp_mflags} headers_install
+%kmake %{?_smp_mflags} modules_install
 
 install -d %{buildroot}/boot
 install -T -m 0755 arch/%{_cross_karch}/boot/%{_cross_kimage} %{buildroot}/boot/vmlinuz
