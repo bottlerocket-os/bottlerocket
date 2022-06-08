@@ -52,8 +52,9 @@ multiple-versions = "deny"
 wildcards = "deny"
 
 skip = [
-    # older version used by gptman 0.8.2
-    { name = "nix", version = "0.22.0" },
+    # newer version used by snafu-derive
+    # older version used by argh_derive and structopt-derive
+    { name = "heck", version = "0.3.3" },
 
     # newer version used by model-derive and darling
     # older version used by clap 2.34.0, via cargo-readme
