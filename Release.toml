@@ -124,5 +124,9 @@ version = "1.7.2"
     "migrate_v1.8.0_etc-hosts-metadata.lz4",
     "migrate_v1.8.0_cluster-dns-ip-list.lz4",
     "migrate_v1.8.0_pki-affected-services.lz4",
-    "migrate_v1.8.0_kubelet-provider-id.lz4"
+    "migrate_v1.8.0_kubelet-provider-id.lz4",
+    "migrate_v1.8.0_aws-admin-container-v0-9-0.lz4",
+    "migrate_v1.8.0_aws-control-container-v0-6-1.lz4",
+    "migrate_v1.8.0_public-admin-container-v0-9-0.lz4",
+    "migrate_v1.8.0_public-control-container-v0-6-1.lz4",
 ]

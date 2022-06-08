@@ -58,6 +58,10 @@ members = [
     "api/migration/migrations/v1.8.0/cluster-dns-ip-list",
     "api/migration/migrations/v1.8.0/pki-affected-services",
     "api/migration/migrations/v1.8.0/kubelet-provider-id",
+    "api/migration/migrations/v1.8.0/aws-admin-container-v0-9-0",
+    "api/migration/migrations/v1.8.0/aws-control-container-v0-6-1",
+    "api/migration/migrations/v1.8.0/public-admin-container-v0-9-0",
+    "api/migration/migrations/v1.8.0/public-control-container-v0-6-1",
 
     "bottlerocket-release",
 
