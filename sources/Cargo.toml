@@ -57,6 +57,7 @@ members = [
     "api/migration/migrations/v1.8.0/etc-hosts-metadata",
     "api/migration/migrations/v1.8.0/cluster-dns-ip-list",
     "api/migration/migrations/v1.8.0/pki-affected-services",
+    "api/migration/migrations/v1.8.0/kubelet-provider-id",
 
     "bottlerocket-release",
 
