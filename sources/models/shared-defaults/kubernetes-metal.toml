@@ -4,7 +4,7 @@ standalone-mode = false
 authentication-mode = "tls"
 pod-infra-container-image = "public.ecr.aws/eks-distro/kubernetes/pause:3.5"
 server-tls-bootstrap = false
-cloud-provider = "external"
+cloud-provider = ""
 
 [metadata.settings.kubernetes]
 node-ip.setting-generator = "netdog node-ip"
