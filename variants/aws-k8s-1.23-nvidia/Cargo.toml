@@ -1,0 +1,49 @@
+[package]
+# This is the aws-k8s-1.23-nvidia variant.  "." is not allowed in crate names, but we
+# don't use this crate name anywhere.
+name = "aws-k8s-1_23-nvidia"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 4
+
+[package.metadata.build-variant]
+included-packages = [
+    "aws-iam-authenticator",
+    "cni",
+    "cni-plugins",
+    "kernel-5.10",
+    "kubelet-1.23",
+    "release",
+    "nvidia-container-toolkit",
+    "nvidia-k8s-device-plugin",
+    "kmod-5.10-nvidia-tesla-470"
+]
+grub-features = [
+    "set-private-var"
+]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+]
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
+cni = { path = "../../packages/cni" }
+cni-plugins = { path = "../../packages/cni-plugins" }
+kernel-5_10 = { path = "../../packages/kernel-5.10" }
+kubernetes-1_23 = { path = "../../packages/kubernetes-1.23" }
+release = { path = "../../packages/release" }
+nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
+nvidia-k8s-device-plugin = { path = "../../packages/nvidia-k8s-device-plugin" }
+kmod-5_10-nvidia = { path = "../../packages/kmod-5.10-nvidia" }
