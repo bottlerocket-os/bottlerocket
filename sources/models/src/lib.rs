@@ -218,6 +218,7 @@ struct KubernetesSettings {
     topology_manager_scope: TopologyManagerScope,
     topology_manager_policy: TopologyManagerPolicy,
     pod_pids_limit: i64,
+    provider_id: Url,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
