@@ -5,6 +5,7 @@ Welcome to Bottlerocket!
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
 
 If you’re ready to jump right in, read one of our setup guides for running Bottlerocket in [Amazon EKS](QUICKSTART-EKS.md), [Amazon ECS](QUICKSTART-ECS.md), or [VMware](QUICKSTART-VMWARE.md).
+If you're interested in running Bottlerocket on bare metal servers, please refer to the [provisioning guide](PROVISIONING-METAL.md) to get started.
 
 Bottlerocket focuses on security and maintainability, providing a reliable, consistent, and safe platform for container-based workloads.
 This is a reflection of what we've learned building operating systems and services at Amazon.
@@ -70,7 +71,13 @@ We also have variants that are designed to be Kubernetes worker nodes in VMware:
 - `vmware-k8s-1.22`
 - `vmware-k8s-1.23`
 
-The following variants are no longer supported.:
+The following variants are designed to be Kubernetes worker nodes on bare metal:
+
+- `metal-k8s-1.21`
+- `metal-k8s-1.22`
+- `metal-k8s-1.23`
+
+The following variants are no longer supported:
 
 - `aws-k8s-1.15`
 - `aws-k8s-1.16`
@@ -94,6 +101,8 @@ To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
 These guides describe:
 * how to set up a cluster with the orchestrator, so your Bottlerocket instance can run containers
 * how to launch a Bottlerocket instance in EC2 or VMware
+
+To see how to provision Bottlerocket on bare metal, see [PROVISIONING-METAL](PROVISIONING-METAL.md).
 
 To build your own Bottlerocket images, please see [BUILDING](BUILDING.md).
 It describes:
@@ -410,7 +419,8 @@ Static pods can be particularly useful when running in standalone mode.
 
 For Kubernetes variants in AWS and VMware, the following are set for you automatically, but you can override them if you know what you're doing!
 In AWS, [pluto](sources/api/) sets these based on runtime instance information.
-In VMware, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on [default values](sources/models/src/vmware-k8s-1.23/defaults.d).
+In VMware and on bare metal, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on default values.
+(See the [VMware defaults](sources/models/src/vmware-k8s-1.23/defaults.d) or [bare metal defaults](sources/models/src/metal-k8s-1.23/defaults.d)).
 * `settings.kubernetes.node-ip`: The IP address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 * `settings.kubernetes.kube-reserved`: Resources reserved for node components.
