@@ -43,7 +43,7 @@
 ## Documentation Changes
 * Standardize README generation in buildsys ([#2134])
 * Clarify migration README ([#2141])
-* Fix typos in BUILDING.md and QUICKSTART-VMWARE.md ([#2159], thanks, @ryanrussel!)
+* Fix typos in BUILDING.md and QUICKSTART-VMWARE.md ([#2159], thanks, @ryanrussell!)
 * Add additional documentation for using GPUs with Kubernetes variants ([#2078])
 * Document examples for using `enter-admin-container` ([#2028])
 
