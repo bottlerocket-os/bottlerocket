@@ -1,3 +1,108 @@
+# v1.8.0 (2022-06-08)
+
+## OS Changes
+
+### General
+* Update admin and control containers ([#2191])
+* Update to containerd 1.6.x ([#2158])
+* Restart container runtimes when certificates store changes ([#2076])
+* Add support for providing kernel parameters via Boot Configuration ([#1980])
+* Restart long-running systemd services on exit ([#2162])
+* Ignore zero blocks on dm-verity root ([#2169])
+* Add support for static DNS mappings in `/etc/hosts` ([#2129])
+* Enable network configuration generation via `netdog` ([#2066])
+* Add support for non-`eth0` default interfaces ([#2144])
+* Update to IMDS schema `2021-07-15` ([#2190])
+
+### Kubernetes
+* Add support for Kubernetes 1.23 variants ([#2188])
+* Improve Kubernetes pod start times by unsetting `configMapAndSecretChangeDetectionStrategy` in kubelet config ([#2166])
+* Add new setting for configuring kubelet's `provider-id` configuration ([#2192])
+* Add new setting for configuring kubelet's `podPidsLimit` configuration ([#2138])
+* Allow a list of IP addresses in `settings.kubernetes.cluster-dns-ip` ([#2176])
+* Set the default for `settings.kubernetes.cloud-provider` on metal variants to an empty string ([#2188])
+* Add c7g instance data for max pods calculation in AWS variants ([#2107], thanks, @lizthegrey!)
+
+### ECS
+* Add aws-ecs-1-nvidia variant with Nvidia driver support ([#2128], [#2100], [#2098], [#2167], [#2097], [#2090], [#2099])
+* Add support for ECS ImagePullBehavior and WarmPoolsSupport ([#2063], thanks, @mello7tre!)
+
+### Hardware
+* Build smartpqi driver for Microchip Smart Storage devices into 5.10 kernel ([#2184])
+* Add support for Broadcom ethernet cards in 5.10 kernel ([#2143])
+* Add support for MegaRAID SAS in 5.10 kernel ([#2133])
+
+## Build Changes
+* Remove aws-k8s-1.18 variant ([#2044], [#2092])
+* Update third-party packages ([#2178], [#2187], [#2145])
+* Update Rust and Go dependencies ([#2183], [#2181], [#2180], [#2085], [#2110], [#2068], [#2075], [#2074], [#2048], [#2059], [#2049], [#2036], [#2033])
+* Update Bottlerocket SDK to 0.26.0 ([#2157])
+* Speed up kernel builds by installing headers and modules in parallel ([#2185])
+* Removed unused patch from Docker CLI ([#2030], thanks, @thaJeztah!)
+
+## Documentation Changes
+* Standardize README generation in buildsys ([#2134])
+* Clarify migration README ([#2141])
+* Fix typos in BUILDING.md and QUICKSTART-VMWARE.md ([#2159], thanks, @ryanrussel!)
+* Add additional documentation for using GPUs with Kubernetes variants ([#2078])
+* Document examples for using `enter-admin-container` ([#2028])
+
+[#1980]: https://github.com/bottlerocket-os/bottlerocket/pull/1980
+[#2028]: https://github.com/bottlerocket-os/bottlerocket/pull/2028
+[#2030]: https://github.com/bottlerocket-os/bottlerocket/pull/2030
+[#2033]: https://github.com/bottlerocket-os/bottlerocket/pull/2033
+[#2036]: https://github.com/bottlerocket-os/bottlerocket/pull/2036
+[#2044]: https://github.com/bottlerocket-os/bottlerocket/pull/2044
+[#2048]: https://github.com/bottlerocket-os/bottlerocket/pull/2048
+[#2049]: https://github.com/bottlerocket-os/bottlerocket/pull/2049
+[#2059]: https://github.com/bottlerocket-os/bottlerocket/pull/2059
+[#2063]: https://github.com/bottlerocket-os/bottlerocket/pull/2063
+[#2066]: https://github.com/bottlerocket-os/bottlerocket/pull/2066
+[#2068]: https://github.com/bottlerocket-os/bottlerocket/pull/2068
+[#2074]: https://github.com/bottlerocket-os/bottlerocket/pull/2074
+[#2075]: https://github.com/bottlerocket-os/bottlerocket/pull/2075
+[#2076]: https://github.com/bottlerocket-os/bottlerocket/pull/2076
+[#2078]: https://github.com/bottlerocket-os/bottlerocket/pull/2078
+[#2085]: https://github.com/bottlerocket-os/bottlerocket/pull/2085
+[#2090]: https://github.com/bottlerocket-os/bottlerocket/pull/2090
+[#2092]: https://github.com/bottlerocket-os/bottlerocket/pull/2092
+[#2097]: https://github.com/bottlerocket-os/bottlerocket/pull/2097
+[#2098]: https://github.com/bottlerocket-os/bottlerocket/pull/2098
+[#2099]: https://github.com/bottlerocket-os/bottlerocket/pull/2099
+[#2100]: https://github.com/bottlerocket-os/bottlerocket/pull/2100
+[#2107]: https://github.com/bottlerocket-os/bottlerocket/pull/2107
+[#2110]: https://github.com/bottlerocket-os/bottlerocket/pull/2110
+[#2128]: https://github.com/bottlerocket-os/bottlerocket/pull/2128
+[#2129]: https://github.com/bottlerocket-os/bottlerocket/pull/2129
+[#2133]: https://github.com/bottlerocket-os/bottlerocket/pull/2133
+[#2134]: https://github.com/bottlerocket-os/bottlerocket/pull/2134
+[#2138]: https://github.com/bottlerocket-os/bottlerocket/pull/2138
+[#2141]: https://github.com/bottlerocket-os/bottlerocket/pull/2141
+[#2142]: https://github.com/bottlerocket-os/bottlerocket/pull/2142
+[#2143]: https://github.com/bottlerocket-os/bottlerocket/pull/2143
+[#2144]: https://github.com/bottlerocket-os/bottlerocket/pull/2144
+[#2145]: https://github.com/bottlerocket-os/bottlerocket/pull/2145
+[#2146]: https://github.com/bottlerocket-os/bottlerocket/pull/2146
+[#2157]: https://github.com/bottlerocket-os/bottlerocket/pull/2157
+[#2158]: https://github.com/bottlerocket-os/bottlerocket/pull/2158
+[#2159]: https://github.com/bottlerocket-os/bottlerocket/pull/2159
+[#2162]: https://github.com/bottlerocket-os/bottlerocket/pull/2162
+[#2166]: https://github.com/bottlerocket-os/bottlerocket/pull/2166
+[#2167]: https://github.com/bottlerocket-os/bottlerocket/pull/2167
+[#2169]: https://github.com/bottlerocket-os/bottlerocket/pull/2169
+[#2176]: https://github.com/bottlerocket-os/bottlerocket/pull/2176
+[#2178]: https://github.com/bottlerocket-os/bottlerocket/pull/2178
+[#2180]: https://github.com/bottlerocket-os/bottlerocket/pull/2180
+[#2181]: https://github.com/bottlerocket-os/bottlerocket/pull/2181
+[#2183]: https://github.com/bottlerocket-os/bottlerocket/pull/2183
+[#2184]: https://github.com/bottlerocket-os/bottlerocket/pull/2184
+[#2185]: https://github.com/bottlerocket-os/bottlerocket/pull/2185
+[#2187]: https://github.com/bottlerocket-os/bottlerocket/pull/2187
+[#2188]: https://github.com/bottlerocket-os/bottlerocket/pull/2188
+[#2190]: https://github.com/bottlerocket-os/bottlerocket/pull/2190
+[#2191]: https://github.com/bottlerocket-os/bottlerocket/pull/2191
+[#2192]: https://github.com/bottlerocket-os/bottlerocket/pull/2192
+
 # v1.7.2 (2022-04-22)
 
 ## Security Fixes
