@@ -204,6 +204,13 @@
 (neverallow untrusted_s all_s (files (relabel)))
 (neverallow untrusted_s unconstrained_o (files (relabel)))
 
+; Containers may copy or move files from constrained directories
+; into unconstrained ones, such as tmpfs mounts. If they attempt to
+; also copy the "security.selinux" xattr then this is treated as a
+; relabel operation and blocked. Since the operation is otherwise
+; successful, suppress this particular audit message.
+(dontaudit container_t any_t (file (relabelfrom)))
+
 ; No components are allowed to block access to files by using
 ; fanotify permission events. Fanotify only sends events for
 ; accesses from within the mount namespace, so it's unlikely to
