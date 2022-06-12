@@ -9,7 +9,7 @@ What=overlay
 Where=/opt/cni/bin
 Type=overlay
 # "noexec" omitted because containerd needs to execute CNI plugins
-Options=nosuid,nodev,noatime,lowerdir=/usr/libexec/cni/bin,upperdir=/var/lib/cni-plugins/.overlay/upper,workdir=/var/lib/cni-plugins/.overlay/work,context=system_u:object_r:local_t:s0
+Options=nosuid,nodev,noatime,lowerdir=/usr/libexec/cni/bin,upperdir=/var/lib/cni-plugins/.overlay/upper,workdir=/var/lib/cni-plugins/.overlay/work,context=system_u:object_r:cni_exec_t:s0
 
 [Install]
 WantedBy=preconfigured.target

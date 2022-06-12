@@ -44,6 +44,11 @@
 (roletype object_r mount_exec_t)
 (context mount_exec (system_u object_r mount_exec_t s0))
 
+; Executable CNI plugins.
+(type cni_exec_t)
+(roletype object_r cni_exec_t)
+(context cni_exec (system_u object_r cni_exec_t s0))
+
 ; Files under /proc.
 (type proc_t)
 (roletype object_r proc_t)
@@ -129,7 +134,7 @@
 
 ; Shared objects are files on local storage for containers.
 (typeattribute shared_o)
-(typeattributeset shared_o (local_t data_t))
+(typeattributeset shared_o (local_t data_t cni_exec_t))
 
 ; Constrained objects are files where MCS constraints apply.
 (typeattribute constrained_o)
@@ -168,7 +173,7 @@
 (typeattributeset all_o (
   os_t init_exec_t api_exec_t clock_exec_t
   network_exec_t bus_exec_t runtime_exec_t
-  mount_exec_t
+  mount_exec_t cni_exec_t
   any_t etc_t proc_t
   local_t data_t private_t secret_t cache_t
   lease_t measure_t state_t

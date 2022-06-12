@@ -87,6 +87,11 @@
 (rangetransition runtime_t cache_t process s0-s0)
 (rangetransition runtime_t secret_t process s0-s0)
 
+; Run CNI plugins as unprivileged containers.
+(typetransition runtime_t cni_exec_t process container_t)
+(rangetransition runtime_t cni_exec_t process s0)
+(allow container_t cni_exec_t (file (entrypoint)))
+
 ; Allow transitions to container labels for programs invoked by OCI
 ; hooks. There's no matching type or range transition since `runc`
 ; also needs to run other OS programs.
