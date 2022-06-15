@@ -64,6 +64,7 @@ members = [
     "api/migration/migrations/v1.9.0/ntp-affected-services",
     "api/migration/migrations/v1.9.0/shibaken-admin-userdata-semantics",
     "api/migration/migrations/v1.9.0/shibaken-send-metrics",
+    "api/migration/migrations/v1.9.0/image-gc-thresholds",
 
     "bottlerocket-release",
 

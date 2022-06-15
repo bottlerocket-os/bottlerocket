@@ -1744,6 +1744,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "image-gc-thresholds"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "imdsclient"
 version = "0.1.0"
 dependencies = [
