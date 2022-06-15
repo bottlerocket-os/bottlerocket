@@ -10,6 +10,10 @@ The setting we're generating is expected to have a metadata key already set: "te
 For example, if we're generating "settings.x" and we have template "foo-{{ settings.bar }}", we look up the value of "settings.bar" in the API.
 If the returned value is "baz", our generated value will be "foo-baz".
 
+When dealing with settings that should return a non-string value (ex. booleans), just specify the JSON data type by adding `--type <json-data-type>` to the setting-generator line.
+The resulting setting values will still be returned as stdout to sundog, but will not be wrapped in quotes.
+For example, "schnauzer settings.foo.bar --type bool" could return false and the value in the API would be a proper boolean.
+
 (The name "schnauzer" comes from the fact that Schnauzers are search and rescue dogs (similar to this search and replace task) and because they have mustaches.)
 */
 
@@ -53,6 +57,9 @@ mod error {
             output: String,
             source: serde_json::error::Error,
         },
+
+        #[snafu(display("Setting type '{}' not supported.", setting_type))]
+        SettingWrongType { setting_type: String },
 
         #[snafu(display("Missing metadata {} for key: {}", meta, key))]
         MissingMetadata { meta: String, key: String },
@@ -128,21 +135,72 @@ async fn get_metadata(key: &str, meta: &str) -> Result<String> {
 /// Print usage message.
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
-    eprintln!("Usage: {} SETTING_KEY", program_name);
+    eprintln!(
+        "Usage: {} SETTING_KEY [ --type JSON_DATA_TYPE ]",
+        program_name
+    );
     process::exit(2);
 }
 
-/// Parses args for the setting key name.
-fn parse_args(mut args: env::Args) -> String {
-    let arg = args.nth(1).unwrap_or_else(|| "--help".to_string());
-    if arg == "--help" || arg == "-h" {
-        usage()
+/// Struct to hold the specified setting information.
+struct Arguments {
+    setting_name: String,
+    setting_type: String,
+}
+
+/// Parses args for the setting information.
+fn parse_args(args: env::Args) -> Arguments {
+    let mut setting_name = None;
+    let mut setting_type = None;
+
+    let mut iter = args.skip(1);
+    while let Some(arg) = iter.next() {
+        match arg.as_ref() {
+            "--help" | "-h" => usage(),
+            "--type" => {
+                setting_type = Some(iter.next().unwrap_or_else(|| String::from("string")));
+            }
+            // Assume the argument not prefixed with '-' is the setting_name
+            s if !s.starts_with('-') => {
+                setting_name = Some(s.to_string());
+            }
+            _ => usage(),
+        }
     }
-    arg
+    #[allow(clippy::redundant_closure)]
+    Arguments {
+        setting_name: setting_name.unwrap_or_else(|| usage()),
+        setting_type: setting_type.unwrap_or_else(|| String::from("string")),
+    }
+}
+
+/// Parse JSON Value from output
+fn parse_output<S1: AsRef<str>, S2: AsRef<str>>(
+    setting_type: S1,
+    setting: S2,
+) -> Result<serde_json::Value> {
+    match setting_type.as_ref() {
+        "array" | "bool" | "number" | "object" => {
+            let setting_value: serde_json::Value =
+                serde_json::from_str(setting.as_ref()).context(error::SerializeOutputSnafu {
+                    output: setting.as_ref(),
+                })?;
+            Ok(setting_value)
+        }
+        "string" => Ok(serde_json::Value::String(setting.as_ref().into())),
+        _ => {
+            return error::SettingWrongTypeSnafu {
+                setting_type: setting_type.as_ref(),
+            }
+            .fail()
+        }
+    }
 }
 
 async fn run() -> Result<()> {
-    let setting_name = parse_args(env::args());
+    let arguments = parse_args(env::args());
+    let setting_name = arguments.setting_name;
+    let setting_type = arguments.setting_type;
 
     let registry =
         schnauzer::build_template_registry().context(error::BuildTemplateRegistrySnafu)?;
@@ -161,8 +219,7 @@ async fn run() -> Result<()> {
 
     // sundog expects JSON-serialized output so that many types can be represented, allowing the
     // API model to use more accurate types.
-    let output = serde_json::to_string(&setting)
-        .context(error::SerializeOutputSnafu { output: &setting })?;
+    let output = parse_output(setting_type, setting)?;
 
     println!("{}", output);
     Ok(())
@@ -176,5 +233,41 @@ async fn main() {
     if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+#[cfg(test)]
+mod test_output {
+    use super::*;
+
+    #[test]
+    fn valid_string() {
+        let output = parse_output(
+            "string",
+            "602401143452.dkr.ecr.eu-central-1.amazonaws.com/container:tag",
+        )
+        .unwrap();
+        assert_eq!(
+            output,
+            "602401143452.dkr.ecr.eu-central-1.amazonaws.com/container:tag"
+        )
+    }
+
+    #[test]
+    fn valid_bool() {
+        let output = parse_output("bool", "false").unwrap();
+        assert_eq!(output, false)
+    }
+
+    #[test]
+    fn invalid_bool() {
+        assert!(parse_output("bool", "hi").is_err())
+    }
+
+    #[test]
+    fn invalid_setting_type() {
+        assert!(parse_output("foo", "bar").is_err())
     }
 }
