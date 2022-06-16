@@ -627,11 +627,11 @@ func withSuperpowered() oci.SpecOpts {
 }
 
 // withBootstrap adds container options to grant read-write access to the underlying
-// root filesystem, as well as to manage the devices attached to the
-// host
+// root filesystem, as well as to manage the devices attached to the host
 func withBootstrap() oci.SpecOpts {
 	return oci.Compose(
 		withPrivilegedMounts(),
+		withStorageMounts(),
 		withRootFsShared(),
 		oci.WithSelinuxLabel("system_u:system_r:control_t:s0-s0:c0.c1023"),
 		// Bootstrap containers don't require all capabilities. We only add
@@ -763,6 +763,32 @@ func withPrivilegedMounts() oci.SpecOpts {
 			Type:        "bind",
 		},
 	})
+}
+
+// withStorageMounts adds options to share container storage mounts
+func withStorageMounts() oci.SpecOpts {
+	var mounts []runtimespec.Mount
+
+	storageDirs := []string{
+		"/var/lib/containerd",
+		"/var/lib/docker",
+		"/var/lib/kubelet",
+	}
+
+	for _, storageDir := range storageDirs {
+		if _, err := os.Stat(storageDir); !os.IsNotExist(err) {
+			mounts = append(mounts, runtimespec.Mount{
+				Options:     []string{"rbind", "rshared"},
+				Destination: fmt.Sprintf("/.bottlerocket/rootfs/%s", storageDir),
+				Source:      storageDir,
+				Type:        "bind",
+			})
+		}
+	}
+
+	// No need to call the `withMounts` helper since any mounts will have
+	// propagation settings defined in the options.
+	return oci.WithMounts(mounts)
 }
 
 // withMounts sets the mounts' propagations as rprivate only when the
