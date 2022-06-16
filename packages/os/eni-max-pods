@@ -11,7 +11,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2022-02-15T18:47:49Z
+# This file was generated at 2022-06-10T09:23:03-07:00
 #
 # The regions queried were:
 # - ap-northeast-1
@@ -110,6 +110,7 @@ c6a.48xlarge 737
 c6a.4xlarge 234
 c6a.8xlarge 234
 c6a.large 29
+c6a.metal 737
 c6a.xlarge 58
 c6g.12xlarge 234
 c6g.16xlarge 737
@@ -147,6 +148,16 @@ c6i.8xlarge 234
 c6i.large 29
 c6i.metal 737
 c6i.xlarge 58
+c6id.12xlarge 234
+c6id.16xlarge 737
+c6id.24xlarge 737
+c6id.2xlarge 58
+c6id.32xlarge 737
+c6id.4xlarge 234
+c6id.8xlarge 234
+c6id.large 29
+c6id.metal 737
+c6id.xlarge 58
 c7g.12xlarge 234
 c7g.16xlarge 737
 c7g.2xlarge 58
@@ -233,6 +244,14 @@ i3en.6xlarge 234
 i3en.large 29
 i3en.metal 737
 i3en.xlarge 58
+i4i.16xlarge 737
+i4i.2xlarge 58
+i4i.32xlarge 737
+i4i.4xlarge 234
+i4i.8xlarge 234
+i4i.large 29
+i4i.metal 737
+i4i.xlarge 58
 im4gn.16xlarge 737
 im4gn.2xlarge 58
 im4gn.4xlarge 234
@@ -334,6 +353,7 @@ m6a.48xlarge 737
 m6a.4xlarge 234
 m6a.8xlarge 234
 m6a.large 29
+m6a.metal 737
 m6a.xlarge 58
 m6g.12xlarge 234
 m6g.16xlarge 737
@@ -363,6 +383,16 @@ m6i.8xlarge 234
 m6i.large 29
 m6i.metal 737
 m6i.xlarge 58
+m6id.12xlarge 234
+m6id.16xlarge 737
+m6id.24xlarge 737
+m6id.2xlarge 58
+m6id.32xlarge 737
+m6id.4xlarge 234
+m6id.8xlarge 234
+m6id.large 29
+m6id.metal 737
+m6id.xlarge 58
 mac1.metal 234
 p2.16xlarge 234
 p2.8xlarge 234
@@ -472,6 +502,16 @@ r6i.8xlarge 234
 r6i.large 29
 r6i.metal 737
 r6i.xlarge 58
+r6id.12xlarge 234
+r6id.16xlarge 737
+r6id.24xlarge 737
+r6id.2xlarge 58
+r6id.32xlarge 737
+r6id.4xlarge 234
+r6id.8xlarge 234
+r6id.large 29
+r6id.metal 737
+r6id.xlarge 58
 t1.micro 4
 t2.2xlarge 44
 t2.large 35
@@ -531,6 +571,18 @@ x2gd.large 29
 x2gd.medium 8
 x2gd.metal 737
 x2gd.xlarge 58
+x2idn.16xlarge 737
+x2idn.24xlarge 737
+x2idn.32xlarge 737
+x2idn.metal 737
+x2iedn.16xlarge 737
+x2iedn.24xlarge 737
+x2iedn.2xlarge 58
+x2iedn.32xlarge 737
+x2iedn.4xlarge 234
+x2iedn.8xlarge 234
+x2iedn.metal 737
+x2iedn.xlarge 58
 x2iezn.12xlarge 737
 x2iezn.2xlarge 58
 x2iezn.4xlarge 234
