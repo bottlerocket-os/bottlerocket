@@ -2,8 +2,10 @@
 Description=Kernel Development Sources (Read-Only)
 DefaultDependencies=no
 Conflicts=umount.target
-RequiresMountsFor=/var
 Before=local-fs.target umount.target
+Wants=prepare-var.service
+After=prepare-var.service
+RequiresMountsFor=/var
 
 [Mount]
 What=PREFIX/share/bottlerocket/kernel-devel.squashfs

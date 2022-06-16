@@ -3,8 +3,7 @@ Description=Mnt Directory (/mnt)
 DefaultDependencies=no
 Conflicts=umount.target
 Before=local-fs.target umount.target
-Wants=prepare-local.service
-After=prepare-local.service
+RequiresMountsFor=/local
 
 [Mount]
 What=/local/mnt

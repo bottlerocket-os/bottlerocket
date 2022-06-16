@@ -1,0 +1,19 @@
+[Unit]
+Description=Prepare Opt Directory (/opt)
+DefaultDependencies=no
+RequiresMountsFor=/opt
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+
+# Create the directories for a read-write overlayfs for CNI plugins.
+ExecStart=/usr/bin/rm -rf /opt/cni
+ExecStart=/usr/bin/mkdir -p /opt/cni/bin
+
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=local-fs.target

@@ -3,8 +3,8 @@ Description=Kernel Modules (Read-Write)
 DefaultDependencies=no
 Conflicts=umount.target
 Before=local-fs.target umount.target
-Wants=prepare-local.service
-After=prepare-local.service
+Wants=prepare-var.service
+After=prepare-var.service
 RequiresMountsFor=/var
 
 [Mount]

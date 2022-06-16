@@ -2,8 +2,10 @@
 Description=CNI Plugin Directory (/opt/cni/bin)
 DefaultDependencies=no
 Conflicts=umount.target
-RequiresMountsFor=/var
 Before=local-fs.target umount.target
+Wants=prepare-opt.service prepare-var.service
+After=prepare-opt.service prepare-var.service
+RequiresMountsFor=/opt /var
 
 [Mount]
 What=overlay
