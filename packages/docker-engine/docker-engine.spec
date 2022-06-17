@@ -23,6 +23,10 @@ Source2: docker.socket
 Source3: docker-sysusers.conf
 Source4: daemon-json
 Source5: daemon-nvidia-json
+
+# Create container storage mount point.
+Source100: prepare-var-lib-docker.service
+
 Source1000: clarify.toml
 
 BuildRequires: git
@@ -62,7 +66,7 @@ install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 dockerd %{buildroot}%{_cross_bindir}
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/docker.service
+install -p -m 0644 %{S:1} %{S:100} %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_unitdir}/docker.socket
 
 install -d %{buildroot}%{_cross_sysusersdir}
@@ -80,6 +84,7 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/docker-daemon-nvidia
 %{_cross_bindir}/dockerd
 %{_cross_unitdir}/docker.service
 %{_cross_unitdir}/docker.socket
+%{_cross_unitdir}/prepare-var-lib-docker.service
 %{_cross_sysusersdir}/docker.conf
 %{_cross_templatedir}/docker-daemon-json
 %{_cross_templatedir}/docker-daemon-nvidia-json
