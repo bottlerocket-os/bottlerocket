@@ -125,7 +125,6 @@ make -s\\\
 install -d %{buildroot}/boot
 install -T -m 0755 arch/%{_cross_karch}/boot/%{_cross_kimage} %{buildroot}/boot/vmlinuz
 install -m 0644 .config %{buildroot}/boot/config
-install -m 0644 System.map %{buildroot}/boot/System.map
 
 find %{buildroot}%{_cross_prefix} \
    \( -name .install -o -name .check -o \
@@ -153,6 +152,9 @@ sed -i \
   -e 's,$(CONFIG_MODULE_SIG_FORMAT),n,g' \
   -e 's,$(CONFIG_SYSTEM_TRUSTED_KEYRING),n,g' \
   scripts/Makefile
+
+# Restrict permissions on System.map.
+chmod 600 System.map
 
 (
   find * \
@@ -231,7 +233,6 @@ ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
 %{_cross_attribution_file}
 /boot/vmlinuz
 /boot/config
-/boot/System.map
 
 %files modules
 %dir %{_cross_libdir}/modules
