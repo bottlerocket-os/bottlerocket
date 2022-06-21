@@ -1,0 +1,41 @@
+[package]
+name = "aws-ecs-1_1"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-variant]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+]
+included-packages = [
+# core
+    "release",
+    "kernel-5.15",
+# docker
+    "docker-cli",
+    "docker-engine",
+    "docker-init",
+    "docker-proxy",
+# ecs
+    "ecs-agent",
+]
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+# core
+release = { path = "../../packages/release" }
+kernel-5_15 = { path = "../../packages/kernel-5.15" }
+# docker
+docker-cli = { path = "../../packages/docker-cli" }
+docker-engine = { path = "../../packages/docker-engine" }
+docker-init = { path = "../../packages/docker-init" }
+docker-proxy = { path = "../../packages/docker-proxy" }
+# ecs
+ecs-agent = { path = "../../packages/ecs-agent" }

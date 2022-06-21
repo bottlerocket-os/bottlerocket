@@ -63,6 +63,7 @@ The following variants support EKS, as described above:
 The following variants support ECS:
 
 - `aws-ecs-1`
+- `aws-ecs-1.1`
 - `aws-ecs-1-nvidia`
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:

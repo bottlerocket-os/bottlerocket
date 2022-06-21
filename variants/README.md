@@ -94,6 +94,11 @@ This variant is compatible with Kubernetes 1.23, 1.24, and 1.25 clusters.
 The [aws-ecs-1](aws-ecs-1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
 container instance in AWS.
 
+### aws-ecs-1.1: Amazon ECS container instance
+
+The [aws-ecs-1.1](aws-ecs-1.1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
+container instance in AWS.
+
 ### aws-ecs-1-nvidia: Amazon ECS container instance
 
 The [aws-ecs-1-nvidia](aws-ecs-1-nvidia/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)

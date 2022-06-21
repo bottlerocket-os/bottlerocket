@@ -56,6 +56,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-ecs-1_1"
+version = "0.1.0"
+dependencies = [
+ "docker-cli",
+ "docker-engine",
+ "docker-init",
+ "docker-proxy",
+ "ecs-agent",
+ "kernel-5_15",
+ "release",
+]
+
+[[package]]
 name = "aws-iam-authenticator"
 version = "0.1.0"
 dependencies = [
