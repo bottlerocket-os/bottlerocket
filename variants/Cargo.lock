@@ -19,7 +19,7 @@ dependencies = [
  "docker-init",
  "docker-proxy",
  "iputils",
- "kernel-5_10",
+ "kernel-5_15",
  "login",
  "release",
  "strace",
@@ -391,6 +391,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kernel-5_15"
+version = "0.1.0"
+dependencies = [
+ "microcode",
+]
+
+[[package]]
 name = "kernel-5_4"
 version = "0.1.0"
 dependencies = [
@@ -732,7 +739,7 @@ dependencies = [
  "docker-init",
  "docker-proxy",
  "iputils",
- "kernel-5_10",
+ "kernel-5_15",
  "login",
  "release",
  "strace",
@@ -949,7 +956,7 @@ dependencies = [
  "docker-init",
  "docker-proxy",
  "iputils",
- "kernel-5_10",
+ "kernel-5_15",
  "login",
  "open-vm-tools",
  "release",
