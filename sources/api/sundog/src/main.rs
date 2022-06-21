@@ -221,6 +221,73 @@ where
     Ok(populated_settings)
 }
 
+// Builds the proxy environment variables to pass to settings generators
+async fn build_proxy_env<P>(socket_path: P) -> Result<HashMap<String, String>>
+where
+    P: AsRef<Path>,
+{
+    // Retrieve network proxy related settings.
+    let prefixes = vec!["settings.network".to_string()];
+    let response = apiclient::get::get_prefixes(&socket_path, prefixes.to_owned())
+        .await
+        .context(error::GetPrefixSnafu { prefixes })?;
+
+    let mut proxy_envs = HashMap::new();
+    if let Some(https_proxy) = response
+        .get("settings")
+        .and_then(|settings| settings.get("network"))
+        .and_then(|network_settings| network_settings.get("https-proxy"))
+        .and_then(|s| s.as_str())
+    {
+        proxy_envs.insert("https_proxy".to_string(), https_proxy.to_string());
+        proxy_envs.insert("HTTPS_PROXY".to_string(), https_proxy.to_string());
+    } else {
+        // If the https-proxy isn't set, we can return early since no-proxy has no effect.
+        return Ok(proxy_envs);
+    }
+
+    let mut no_proxy = vec!["localhost".to_string(), "127.0.0.1".to_string()];
+    // Append user-specified no-proxy setting to the no-proxy list
+    if let Some(np) = response
+        .get("settings")
+        .and_then(|settings| settings.get("network"))
+        .and_then(|network_settings| network_settings.get("no-proxy"))
+        .and_then(|v| v.as_array())
+    {
+        no_proxy.append(
+            &mut np
+                .iter()
+                .map(|s| s.as_str().unwrap_or_default().to_string())
+                .filter(|s| !s.is_empty())
+                .collect(),
+        );
+    }
+    // We potentially need to also no-proxy some K8s related domains for K8s variants
+    let prefixes = vec!["settings.kubernetes".to_string()];
+    let response = apiclient::get::get_prefixes(&socket_path, prefixes.to_owned())
+        .await
+        .context(error::GetPrefixSnafu { prefixes })?;
+
+    if let Some(k8s_settings) = response
+        .get("settings")
+        .and_then(|settings| settings.get("kubernetes"))
+    {
+        if let Some(k8s_apiserver) = k8s_settings.get("api-server").and_then(|s| s.as_str()) {
+            no_proxy.push(k8s_apiserver.to_string());
+        }
+        if let Some(k8s_cluster_domain) =
+            k8s_settings.get("cluster-domain").and_then(|s| s.as_str())
+        {
+            no_proxy.push(k8s_cluster_domain.to_string());
+        }
+    }
+    let no_proxy_value = no_proxy.join(",");
+    proxy_envs.insert("no_proxy".to_string(), no_proxy_value.to_owned());
+    proxy_envs.insert("NO_PROXY".to_string(), no_proxy_value);
+
+    Ok(proxy_envs)
+}
+
 /// Run the setting generators and collect the output
 async fn get_dynamic_settings<P>(
     socket_path: P,
@@ -237,6 +304,9 @@ where
     // format, i.e. "settings.kubernetes.node-ip"
     let settings_to_query: Vec<&str> = generators.keys().map(|s| s.as_ref()).collect();
     let populated_settings = get_populated_settings(&socket_path, settings_to_query).await?;
+
+    // Get the proxy envs for the settings generators
+    let proxy_envs = build_proxy_env(socket_path).await?;
 
     // For each generator, run it and capture the output
     for (setting_str, generator) in generators {
@@ -270,6 +340,7 @@ where
         })?;
 
         let result = process::Command::new(command)
+            .envs(&proxy_envs)
             .args(command_strings)
             .output()
             .context(error::CommandFailureSnafu {
