@@ -65,6 +65,7 @@ The following variants support ECS:
 - `aws-ecs-1`
 - `aws-ecs-1.1`
 - `aws-ecs-1-nvidia`
+- `aws-ecs-1.1-nvidia`
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
@@ -868,7 +869,15 @@ There are a few important caveats about the provided kdump support:
 
 ### NVIDIA GPUs Support
 Bottlerocket's `nvidia` variants include the required packages and configurations to leverage NVIDIA GPUs.
-The official AMIs for these variants can be used with EC2 GPU-equipped instance types such as: `p2`, `p3`, `p4`, `g4dn`, `g5` and `g5g`.
+Currently, the following NVIDIA driver versions are supported in Bottlerocket:
+
+* 470.X
+* 515.X
+
+The official AMIs for these variants can be used with EC2 GPU-equipped instance types such as: `p2`, `p3`, `p4`, `g3`, `g4dn`, `g5` and `g5g`.
+Some of these instance types are built with hardware that is no longer supported by the 515.X NVIDIA driver.
+You need to make sure you select the appropriate AMI depending on the instance type you are planning to use.
+
 Please see [QUICKSTART-EKS](QUICKSTART-EKS.md#aws-k8s--nvidia-variants) for further details about Kubernetes variants, and [QUICKSTART-ECS](QUICKSTART-ECS.md#aws-ecs--nvidia-variants) for ECS variants.
 
 ## Details

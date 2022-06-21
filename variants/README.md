@@ -105,6 +105,12 @@ The [aws-ecs-1-nvidia](aws-ecs-1-nvidia/Cargo.toml) variant includes the package
 container instance in AWS.
 It also includes the required packages to configure containers to leverage NVIDIA GPUs.
 
+### aws-ecs-1.1-nvidia: Amazon ECS container instance
+
+The [aws-ecs-1.1-nvidia](aws-ecs-1.1-nvidia/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
+container instance in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs.
+
 ### aws-dev: AWS development build
 
 The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local development of the OS.

@@ -1,0 +1,52 @@
+[package]
+name = "aws-ecs-1_1-nvidia"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 4
+
+[package.metadata.build-variant]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?"
+]
+included-packages = [
+# core
+    "release",
+    "kernel-5.15",
+# docker
+    "docker-cli",
+    "docker-engine",
+    "docker-init",
+    "docker-proxy",
+# ecs
+    "ecs-agent",
+# NVIDIA support
+    "ecs-gpu-init",
+    "nvidia-container-toolkit",
+    "kmod-5.15-nvidia-tesla-515"
+]
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+# core
+release = { path = "../../packages/release" }
+kernel-5_15 = { path = "../../packages/kernel-5.15" }
+# docker
+docker-cli = { path = "../../packages/docker-cli" }
+docker-engine = { path = "../../packages/docker-engine" }
+docker-init = { path = "../../packages/docker-init" }
+docker-proxy = { path = "../../packages/docker-proxy" }
+# ecs
+ecs-agent = { path = "../../packages/ecs-agent" }
+# NVIDIA
+ecs-gpu-init = { path = "../../packages/ecs-gpu-init" }
+nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
+kmod-5_15-nvidia = { path = "../../packages/kmod-5.15-nvidia" }
