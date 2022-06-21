@@ -1,0 +1,25 @@
+[Unit]
+Description=Mask Local Opt Directory (/local/opt)
+DefaultDependencies=no
+RequiresMountsFor=/local /opt
+BindsTo=opt.mount
+ConditionPathIsMountPoint=!/local/opt
+Conflicts=umount.target
+Before=umount.target
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+
+# Mask `/local/opt` to avoid confusion, since it will have most of the contents
+# of `/opt` but not any of the mounts.
+ExecStart=/usr/bin/mount --bind --options nosuid,nodev,noexec,private /srv /local/opt
+
+# If `/opt` is unmounted, this unit will stop because of `BindsTo` above. Try
+# to undo the mount since otherwise the empty directory could be bind-mounted
+# over `/opt` if `opt.mount` is restarted.
+ExecStop=-/usr/bin/umount /local/opt
+
+RemainAfterExit=true
+StandardError=journal+console

@@ -2,8 +2,8 @@
 Description=Var Directory (/var)
 DefaultDependencies=no
 Conflicts=umount.target
-Wants=prepare-var.service
-Before=local-fs.target umount.target prepare-var.service
+Wants=prepare-var.service mask-local-var.service
+Before=local-fs.target umount.target prepare-var.service mask-local-var.service
 RequiresMountsFor=/local
 
 [Mount]

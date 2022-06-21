@@ -2,8 +2,8 @@
 Description=Opt Directory (/opt)
 DefaultDependencies=no
 Conflicts=umount.target
-Wants=prepare-opt.service
-Before=local-fs.target umount.target prepare-opt.service
+Wants=prepare-opt.service mask-local-opt.service
+Before=local-fs.target umount.target prepare-opt.service mask-local-opt.service
 RequiresMountsFor=/local
 
 [Mount]
