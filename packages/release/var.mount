@@ -10,7 +10,7 @@ RequiresMountsFor=/local
 What=/local/var
 Where=/var
 Type=none
-Options=bind
+Options=rbind,rshared
 
 [Install]
 WantedBy=local-fs.target
