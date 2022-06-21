@@ -1,0 +1,20 @@
+[package]
+name = "kernel-5_15"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-package]
+package-name = "kernel-5.15"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+# Use latest-srpm-url.sh to get this.
+url = "https://cdn.amazonlinux.com/blobstore/14fac2ab958b3193693bea1691e23f27600ba44cb63009bdc6cc9368271227a5/kernel-5.15.43-20.123.amzn2.src.rpm"
+sha512 = "0d54742e3d4cf03dcfc398f0ebcd2c3294119683ec830efb79a0470e71f039a58d1669d1f84d21827be7d5a785225ffc15e4c0613c154ff7c54de2a208d77c5b"
+
+[build-dependencies]
+microcode = { path = "../microcode" }
