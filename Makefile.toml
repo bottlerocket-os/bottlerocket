@@ -159,6 +159,11 @@ BUILDSYS_OVF_TEMPLATE = "${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/templ
 # The default name of uploaded OVAs; override by setting VMWARE_VM_NAME
 VMWARE_VM_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 
+# Config file for Boot Configuration initrd generation
+BOOT_CONFIG_INPUT = "${BUILDSYS_ROOT_DIR}/bootconfig-input"
+# Boot Configuration initrd
+BOOT_CONFIG = "${BUILDSYS_ROOT_DIR}/bootconfig.data"
+
 [tasks.setup]
 script = [
 '''
@@ -425,6 +430,61 @@ if [ "${cargo_minor}" -lt "51" ] ; then
   echo "Error: Cargo 1.51.0 or greater is required, your version is ${cargo_version}" >&2
   exit 1
 fi
+'''
+]
+
+[tasks.boot-config]
+dependencies = ["fetch-sdk"]
+script_runner = "bash"
+script = [
+'''
+set -euo pipefail
+
+if [ ! -s "${BOOT_CONFIG_INPUT}" ]; then
+   echo "No boot configuration file exists, please create one at ${BOOT_CONFIG_INPUT}"
+   exit 1
+fi
+
+# If a Boot Config initrd already exists update it, otherwise create a new one
+boot_config_tmp=""
+boot_config=""
+if [ -s "${BOOT_CONFIG}" ]; then
+   echo "Boot config exists at '${BOOT_CONFIG}', updating it with input ${BOOT_CONFIG_INPUT}"
+   boot_config="${BOOT_CONFIG}"
+else
+   echo "Creating a new boot config from input ${BOOT_CONFIG_INPUT}"
+   boot_config_tmp=$(mktemp /tmp/bootconfig.data.XXXXX)
+   boot_config="${boot_config_tmp}"
+fi
+
+docker run --rm \
+   --network=none \
+   --user "$(id -u):$(id -g)" \
+   --security-opt label:disable \
+   -v "${BOOT_CONFIG_INPUT}":/tmp/bootconfig-input \
+   -v "${boot_config}":/tmp/bootconfig.data \
+   "${BUILDSYS_SDK_IMAGE}" \
+   bootconfig -a /tmp/bootconfig-input /tmp/bootconfig.data
+
+if [ -e "${boot_config_tmp}" ] ; then
+   mv "${boot_config_tmp}" "${BOOT_CONFIG}"
+fi
+echo "Boot configuration initrd may be found at ${BOOT_CONFIG}"
+'''
+]
+
+[tasks.validate-boot-config]
+dependencies = ["fetch-sdk"]
+script_runner = "bash"
+script = [
+'''
+docker run --rm \
+   --network=none \
+   --user "$(id -u):$(id -g)" \
+   --security-opt label:disable \
+   -v "${BOOT_CONFIG}":/tmp/bootconfig.data \
+   "${BUILDSYS_SDK_IMAGE}" \
+   bootconfig -l /tmp/bootconfig.data
 '''
 ]
 
