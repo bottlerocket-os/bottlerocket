@@ -1,10 +1,10 @@
+use std::str::FromStr;
+
 use crate::error::{self, Result};
+use aws_types::region::Region;
 use imdsclient::ImdsClient;
 use log::info;
-use rusoto_cloudformation::{CloudFormation, CloudFormationClient, SignalResourceInput};
-use rusoto_core::Region;
 use snafu::{OptionExt, ResultExt};
-use std::str::FromStr;
 
 /// Signals Cloudformation stack resource
 pub async fn signal_resource(
@@ -21,19 +21,22 @@ pub async fn signal_resource(
         "Region: {:?} - InstanceID: {:?} - Signal: {:?}",
         region, instance_id, status
     );
-
-    let client = CloudFormationClient::new(
-        Region::from_str(&region).context(error::RegionParseSnafu { region })?,
-    );
-    let signal_resource_input = SignalResourceInput {
-        stack_name,
-        logical_resource_id,
-        status,
-        unique_id: instance_id,
-    };
+    let config = aws_config::from_env()
+        .region(Region::new(region.to_owned()))
+        .load()
+        .await;
+    let client = aws_sdk_cloudformation::Client::new(&config);
 
     client
-        .signal_resource(signal_resource_input)
+        .signal_resource()
+        .stack_name(stack_name)
+        .logical_resource_id(logical_resource_id)
+        .status(
+            aws_sdk_cloudformation::model::ResourceSignalStatus::from_str(&status)
+                .context(error::ParseStatusSnafu)?,
+        )
+        .unique_id(instance_id)
+        .send()
         .await
         .context(error::SignalResourceSnafu)?;
 

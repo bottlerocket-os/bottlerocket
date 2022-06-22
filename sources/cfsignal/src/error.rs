@@ -35,12 +35,11 @@ pub enum Error {
 
     #[snafu(display("SignalResource request failed: {}", source))]
     SignalResource {
-        source: rusoto_core::RusotoError<rusoto_cloudformation::SignalResourceError>,
+        source: aws_sdk_cloudformation::types::SdkError<
+            aws_sdk_cloudformation::error::SignalResourceError,
+        >,
     },
 
-    #[snafu(display("Unable to parse '{}' as a region: {}", region, source))]
-    RegionParse {
-        region: String,
-        source: rusoto_core::region::ParseRegionError,
-    },
+    #[snafu(display("Failed to parse status: {}", source))]
+    ParseStatus { source: core::convert::Infallible },
 }
