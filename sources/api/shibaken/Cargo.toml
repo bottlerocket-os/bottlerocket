@@ -10,6 +10,7 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
+argh = "0.1.8"
 base64 = "0.13"
 imdsclient = { path = "../../imdsclient", version = "0.1.0" }
 log = "0.4"
