@@ -13,7 +13,6 @@ source-groups = [
     "metricdog",
     "parse-datetime",
     "ghostdog",
-    "growpart",
     "updater",
     "webpki-roots-shim",
     "logdog",

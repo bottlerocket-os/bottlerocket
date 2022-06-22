@@ -68,7 +68,6 @@ Requires: %{_cross_os}corndog
 Requires: %{_cross_os}certdog
 Requires: %{_cross_os}early-boot-config
 Requires: %{_cross_os}ghostdog
-Requires: %{_cross_os}growpart
 Requires: %{_cross_os}host-containers
 Requires: %{_cross_os}logdog
 Requires: %{_cross_os}metricdog
@@ -181,11 +180,6 @@ Summary: Commits settings from user data, defaults, and generators at boot
 %package -n %{_cross_os}ghostdog
 Summary: Tool to manage ephemeral disks
 %description -n %{_cross_os}ghostdog
-%{summary}.
-
-%package -n %{_cross_os}growpart
-Summary: Tool to grow partitions
-%description -n %{_cross_os}growpart
 %{summary}.
 
 %package -n %{_cross_os}signpost
@@ -331,7 +325,6 @@ echo "** Output from non-static builds:"
     -p logdog \
     -p metricdog \
     -p ghostdog \
-    -p growpart \
     -p corndog \
     -p bootstrap-containers \
     -p prairiedog \
@@ -396,11 +389,6 @@ done
 
 for p in apiclient ; do
   install -p -m 0755 ${HOME}/.cache/.static/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
-done
-
-install -d %{buildroot}%{_cross_sbindir}
-for p in growpart ; do
-  install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_sbindir}
 done
 
 install -d %{buildroot}%{_cross_datadir}/migrations
@@ -533,9 +521,6 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}ghostdog
 %{_cross_bindir}/ghostdog
 %{_cross_udevrulesdir}/80-ephemeral-storage.rules
-
-%files -n %{_cross_os}growpart
-%{_cross_sbindir}/growpart
 
 %files -n %{_cross_os}signpost
 %{_cross_bindir}/signpost

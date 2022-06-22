@@ -74,8 +74,6 @@ members = [
 
     "ghostdog",
 
-    "growpart",
-
     "metricdog",
 
     "cfsignal",
