@@ -330,7 +330,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		defer cancel()
 		err := container.Delete(cleanup, containerd.WithSnapshotCleanup)
 		if err != nil {
-			log.G(cleanup).WithError(err).Error("failed to cleanup container")
+			if !errdefs.IsNotFound(err) {
+				log.G(cleanup).WithError(err).Error("failed to cleanup container")
+			}
 		}
 	}()
 
@@ -387,7 +389,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		defer cancel()
 		_, err := task.Delete(cleanup)
 		if err != nil {
-			log.G(cleanup).WithError(err).Error("failed to delete container task")
+			if !errdefs.IsNotFound(err) {
+				log.G(cleanup).WithError(err).Error("failed to delete container task")
+			}
 		}
 	}()
 
