@@ -8,7 +8,8 @@ Before=local-fs.target umount.target
 What=overlay
 Where=PREFIX/src/kernels
 Type=overlay
-Options=noatime,nosuid,nodev,lowerdir=/var/lib/kernel-devel/.overlay/lower,upperdir=/var/lib/kernel-devel/.overlay/upper,workdir=/var/lib/kernel-devel/.overlay/work,context=system_u:object_r:state_t:s0
+# "noexec" omitted to allow objtool to run
+Options=nosuid,nodev,noatime,lowerdir=/var/lib/kernel-devel/.overlay/lower,upperdir=/var/lib/kernel-devel/.overlay/upper,workdir=/var/lib/kernel-devel/.overlay/work,context=system_u:object_r:state_t:s0
 
 [Install]
 WantedBy=preconfigured.target

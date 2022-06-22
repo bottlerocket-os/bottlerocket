@@ -10,7 +10,7 @@ RequiresMountsFor=/var
 What=overlay
 Where=PREFIX/lib/modules
 Type=overlay
-Options=noatime,nosuid,nodev,lowerdir=/lib/modules,upperdir=/var/lib/kernel-modules/.overlay/upper,workdir=/var/lib/kernel-modules/.overlay/work,context=system_u:object_r:state_t:s0
+Options=nosuid,nodev,noexec,noatime,lowerdir=/lib/modules,upperdir=/var/lib/kernel-modules/.overlay/upper,workdir=/var/lib/kernel-modules/.overlay/work,context=system_u:object_r:state_t:s0
 
 [Install]
 WantedBy=local-fs.target
