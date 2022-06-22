@@ -158,11 +158,6 @@ Summary: Dispatches Bottlerocket update commands
 %description -n %{_cross_os}thar-be-updates
 %{summary}.
 
-%package -n %{_cross_os}servicedog
-Summary: Manipulates systemd units based on setting changes
-%description -n %{_cross_os}servicedog
-%{summary}.
-
 %package -n %{_cross_os}host-containers
 Summary: Manages system- and user-defined host containers
 Requires: %{_cross_os}host-ctr
@@ -327,7 +322,6 @@ echo "** Output from non-static builds:"
     -p bork \
     -p thar-be-settings \
     -p thar-be-updates \
-    -p servicedog \
     -p host-containers \
     -p storewolf \
     -p settings-committer \
@@ -374,7 +368,7 @@ install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
   early-boot-config netdog sundog schnauzer bork corndog \
-  thar-be-settings thar-be-updates servicedog host-containers \
+  thar-be-settings thar-be-updates host-containers \
   storewolf settings-committer \
   migrator prairiedog certdog \
   signpost updog metricdog logdog \
@@ -513,9 +507,6 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}thar-be-updates
 %{_cross_bindir}/thar-be-updates
 %{_cross_tmpfilesdir}/thar-be-updates.conf
-
-%files -n %{_cross_os}servicedog
-%{_cross_bindir}/servicedog
 
 %files -n %{_cross_os}host-containers
 %{_cross_bindir}/host-containers

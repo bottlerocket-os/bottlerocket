@@ -3179,24 +3179,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "servicedog"
-version = "0.1.0"
-dependencies = [
- "apiclient",
- "constants",
- "datastore",
- "generate-readme",
- "http",
- "log",
- "models",
- "serde",
- "serde_json",
- "simplelog",
- "snafu",
- "tokio",
-]
-
-[[package]]
 name = "settings-committer"
 version = "0.1.0"
 dependencies = [

@@ -13,7 +13,6 @@ members = [
     "api/sundog",
     "api/schnauzer",
     "api/pluto",
-    "api/servicedog",
     "api/host-containers",
     "api/static-pods",
     "api/storewolf",
