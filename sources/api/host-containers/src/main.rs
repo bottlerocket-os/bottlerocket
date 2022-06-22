@@ -439,16 +439,6 @@ where
         };
     } else {
         systemd_unit.disable_and_stop()?;
-
-        // Ensure there's no lingering host-container after it's been disabled.
-        //
-        // We only attempt to do this only if host-containerd is active and running
-        if host_containerd_unit.is_active()? {
-            command(
-                constants::HOST_CTR_BIN,
-                &["clean-up", "--container-id", name],
-            )?;
-        }
     }
 
     Ok(())
