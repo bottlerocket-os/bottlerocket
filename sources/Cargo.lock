@@ -1509,18 +1509,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "growpart"
-version = "0.1.0"
-dependencies = [
- "block-party",
- "generate-readme",
- "gptman",
- "inotify",
- "libc",
- "snafu",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1781,28 +1769,6 @@ dependencies = [
  "autocfg",
  "hashbrown",
  "serde",
-]
-
-[[package]]
-name = "inotify"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abf888f9575c290197b2c948dc9e9ff10bd1a39ad1ea8585f734585fa6b9d3f9"
-dependencies = [
- "bitflags",
- "futures-core",
- "inotify-sys",
- "libc",
- "tokio",
-]
-
-[[package]]
-name = "inotify-sys"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e05c02b5e89bff3b946cedeca278abc628fe811e604f027c45a8aa3cf793d0eb"
-dependencies = [
- "libc",
 ]
 
 [[package]]
@@ -3176,24 +3142,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "servicedog"
-version = "0.1.0"
-dependencies = [
- "apiclient",
- "constants",
- "datastore",
- "generate-readme",
- "http",
- "log",
- "models",
- "serde",
- "serde_json",
- "simplelog",
- "snafu",
- "tokio",
 ]
 
 [[package]]
