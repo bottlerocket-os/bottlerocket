@@ -27,6 +27,8 @@ lazy_static! {
         m.insert("ap-southeast-2", "328549459982");
         m.insert("ap-southeast-3", "386774335080");
         m.insert("ca-central-1", "328549459982");
+        m.insert("cn-north-1", "183470599484");
+        m.insert("cn-northwest-1", "183901325759");
         m.insert("eu-central-1", "328549459982");
         m.insert("eu-north-1", "328549459982");
         m.insert("eu-south-1", "586180183710");
@@ -89,6 +91,21 @@ lazy_static! {
 /// region is created or being tested), then we will fall back to this.
 const PAUSE_FALLBACK_REGISTRY: &str = "602401143452";
 const PAUSE_FALLBACK_REGION: &str = "us-east-1";
+
+lazy_static! {
+    /// A map to tell us the partition for a given non-standard region.
+    static ref ALT_PARTITION_MAP: HashMap<&'static str, &'static str> = {
+        let mut m = HashMap::new();
+        m.insert("cn-north-1", "aws-cn");
+        m.insert("cn-northwest-1", "aws-cn");
+        m.insert("us-gov-east-1", "aws-us-gov");
+        m.insert("us-gov-west-1", "aws-us-gov");
+        m
+    };
+}
+
+/// The partition for standard AWS regions.
+const STANDARD_PARTITION: &str = "aws";
 
 /// The amount of CPU to reserve
 /// We are using these CPU ranges from GKE
@@ -1221,7 +1238,14 @@ fn ecr_registry<S: AsRef<str>>(region: S) -> String {
         None => (ECR_FALLBACK_REGION, ECR_FALLBACK_REGISTRY),
         Some(registry_id) => (region.as_ref(), *registry_id),
     };
-    format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region)
+    let partition = match ALT_PARTITION_MAP.borrow().get(region) {
+        None => (STANDARD_PARTITION),
+        Some(partition) => *partition,
+    };
+    match partition {
+        "aws-cn" => format!("{}.dkr.ecr.{}.amazonaws.com.cn", registry_id, region),
+        _ => format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region),
+    }
 }
 
 /// Constructs the fully qualified domain name for the pause container (pod infra
@@ -1232,7 +1256,14 @@ fn pause_registry<S: AsRef<str>>(region: S) -> String {
         None => (PAUSE_FALLBACK_REGION, PAUSE_FALLBACK_REGISTRY),
         Some(registry_id) => (region.as_ref(), *registry_id),
     };
-    format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region)
+    let partition = match ALT_PARTITION_MAP.borrow().get(region) {
+        None => (STANDARD_PARTITION),
+        Some(partition) => *partition,
+    };
+    match partition {
+        "aws-cn" => format!("{}.dkr.ecr.{}.amazonaws.com.cn", registry_id, region),
+        _ => format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region),
+    }
 }
 
 /// Calculates and returns the amount of CPU to reserve
@@ -1621,6 +1652,9 @@ mod test_ecr_registry {
     const EXPECTED_URL_XY_ZTOWN_1: &str =
         "328549459982.dkr.ecr.us-east-1.amazonaws.com/bottlerocket-admin:v0.5.1";
 
+    const EXPECTED_URL_CN_NORTH_1: &str =
+        "183470599484.dkr.ecr.cn-north-1.amazonaws.com.cn/bottlerocket-admin:v0.5.1";
+
     #[test]
     fn url_eu_central_1() {
         let result = setup_and_render_template(
@@ -1649,6 +1683,16 @@ mod test_ecr_registry {
         )
         .unwrap();
         assert_eq!(result, EXPECTED_URL_XY_ZTOWN_1);
+    }
+
+    #[test]
+    fn url_china() {
+        let result = setup_and_render_template(
+            ADMIN_CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "cn-north-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_CN_NORTH_1);
     }
 }
 
@@ -1682,6 +1726,9 @@ mod test_pause_registry {
     const EXPECTED_URL_XY_ZTOWN_1: &str =
         "602401143452.dkr.ecr.us-east-1.amazonaws.com/container:tag";
 
+    const EXPECTED_URL_CN_NORTH_1: &str =
+        "918309763551.dkr.ecr.cn-north-1.amazonaws.com.cn/container:tag";
+
     #[test]
     fn url_eu_central_1() {
         let result = setup_and_render_template(
@@ -1710,6 +1757,16 @@ mod test_pause_registry {
         )
         .unwrap();
         assert_eq!(result, EXPECTED_URL_XY_ZTOWN_1);
+    }
+
+    #[test]
+    fn url_china() {
+        let result = setup_and_render_template(
+            CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "cn-north-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_CN_NORTH_1);
     }
 }
 
