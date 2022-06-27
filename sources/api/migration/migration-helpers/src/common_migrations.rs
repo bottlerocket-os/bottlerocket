@@ -1145,3 +1145,227 @@ mod test_replace_metadata_list {
         .unwrap_err();
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// We use this migration when we need to replace a single metadata value;
+/// for example, what a release changes the `setting-generator` associated with a setting.
+// String is the only type we use today, and handling multiple value types is more complicated than
+// we need at the moment.  Allowing &[serde_json::Value] seems nice, but it would allow arbitrary
+// data transformations that the API model would then fail to load.
+
+#[derive(Debug, Clone)]
+pub struct MetadataReplacement {
+    pub setting: &'static str,
+    pub metadata: &'static str,
+    pub old_val: &'static str,
+    pub new_val: &'static str,
+}
+
+impl MetadataReplacement {
+    /// Executes the metadata replacement on given datastore.
+    ///
+    /// State which prevents the replacement from being performed results in messages to stdout.
+    /// Returns whether or not the migration performed changes.
+    fn perform_replacement(&self, input: &mut MigrationData) -> bool {
+        input
+            .metadata
+            .get_mut(self.setting)
+            .or_else(|| {
+                println!("Found no setting '{}'", self.setting);
+                None
+            })
+            .and_then(|found_metadata| {
+                let metadata_value = found_metadata.get_mut(self.metadata);
+                if metadata_value.is_none() {
+                    println!(
+                        "Found no metadata '{}' for setting '{}'",
+                        self.metadata, self.setting
+                    );
+                }
+                metadata_value
+            })
+            .and_then(|metadata| {
+                // If we have a matching string, replace it with our new value
+                match metadata {
+                    serde_json::Value::String(data) => {
+                        Some(data)
+                    },
+                    _ => {
+                        println!(
+                            "Metadata '{}' for setting '{}' is set to non-string value {}; ReplaceMetadataMigration only handles strings.",
+                            self.metadata, self.setting, metadata
+                        );
+                        None
+                    }
+                }
+            })
+            .and_then(|data| {
+                if data == self.old_val {
+                    *data = self.new_val.to_owned();
+                    println!(
+                        "Changed value of metadata '{}' for setting '{}' from '{}' to '{}'.",
+                        self.metadata,
+                        self.setting,
+                        self.old_val,
+                        self.new_val
+                    );
+                    Some(data)
+                } else {
+                    println!(
+                        "Metadata '{}' for setting '{}' is not set to {}, leaving alone",
+                        self.metadata, self.setting, self.old_val
+                    );
+                    None
+                }
+            })
+            .is_some()
+    }
+}
+
+pub struct ReplaceMetadataMigration(pub Vec<MetadataReplacement>);
+
+impl Migration for ReplaceMetadataMigration {
+    fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        self.0.iter().for_each(|replacement| {
+            replacement.perform_replacement(&mut input);
+        });
+        Ok(input)
+    }
+
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        self.0.iter().for_each(|replacement| {
+            // Invert our forward migrations, then run them against the data store.
+            let mut backwards_replacement = replacement.clone();
+            backwards_replacement.old_val = replacement.new_val;
+            backwards_replacement.new_val = replacement.old_val;
+
+            backwards_replacement.perform_replacement(&mut input);
+        });
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_replace_metadata {
+    use super::{MetadataReplacement, ReplaceMetadataMigration};
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_forward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hiking".into() => hashmap!{"setting-generator".into() => "weather-is-sunny".into()}
+            },
+        };
+        let result = ReplaceMetadataMigration(vec![MetadataReplacement {
+            setting: "hiking",
+            metadata: "setting-generator",
+            old_val: "weather-is-sunny",
+            new_val: "/bin/true",
+        }])
+        .forward(data)
+        .unwrap();
+
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "hiking".into() => hashmap!{"setting-generator".into() => "/bin/true".into()}
+            }
+        );
+    }
+
+    #[test]
+    fn test_backward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "favorite-dog-park".into() => hashmap!{"setting-generator".into() => "closest-lake".into()}
+            },
+        };
+        let result = ReplaceMetadataMigration(vec![MetadataReplacement {
+            setting: "favorite-dog-park",
+            metadata: "setting-generator",
+            old_val: "closest-beach",
+            new_val: "closest-lake",
+        }])
+        .backward(data)
+        .unwrap();
+
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "favorite-dog-park".into() => hashmap!{"setting-generator".into() => "closest-beach".into()}
+            }
+        );
+    }
+
+    #[test]
+    fn no_match() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi1".into() => hashmap!{"hello?".into() => "konichiwa".into()},
+                "hi2".into() => hashmap!{"goodbye?".into() => "spokoynoy nochi".into()},
+            },
+        };
+        let result = ReplaceMetadataMigration(vec![
+            MetadataReplacement {
+                setting: "hi1",
+                metadata: "not hello",
+                old_val: "hey?",
+                new_val: "whats up",
+            },
+            MetadataReplacement {
+                setting: "hi1",
+                metadata: "hello?",
+                old_val: "goodbye",
+                new_val: "whats up",
+            },
+            MetadataReplacement {
+                setting: "hi3",
+                metadata: "no",
+                old_val: "goodbye",
+                new_val: "whats up",
+            },
+        ])
+        .forward(data)
+        .unwrap();
+        // No change
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "hi1".into() => hashmap!{"hello?".into() => "konichiwa".into()},
+                "hi2".into() => hashmap!{"goodbye?".into() => "spokoynoy nochi".into()},
+            }
+        );
+    }
+
+    #[test]
+    fn not_string() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "dirtywave".into() => hashmap!{"qualities".into() => vec!["synthesizer", "sequencer"].into()}
+            },
+        };
+        let result = ReplaceMetadataMigration(vec![MetadataReplacement {
+            setting: "dirtywave",
+            metadata: "qualities",
+            old_val: "sequencer",
+            new_val: "tracker",
+        }])
+        .forward(data)
+        .unwrap();
+        // No change
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "dirtywave".into() => hashmap!{"qualities".into() => vec!["synthesizer", "sequencer"].into()}
+            }
+        );
+    }
+}

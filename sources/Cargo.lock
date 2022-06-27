@@ -3239,6 +3239,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "shibaken-admin-userdata-semantics"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "shimpei"
 version = "0.1.0"
 dependencies = [

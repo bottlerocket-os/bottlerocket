@@ -62,6 +62,7 @@ members = [
     "api/migration/migrations/v1.8.0/public-admin-container-v0-9-0",
     "api/migration/migrations/v1.8.0/public-control-container-v0-6-1",
     "api/migration/migrations/v1.9.0/ntp-affected-services",
+    "api/migration/migrations/v1.9.0/shibaken-admin-userdata-semantics",
 
     "bottlerocket-release",
 
