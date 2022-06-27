@@ -16,7 +16,6 @@ partition-plan = "unified"
 image-format = "vmdk"
 supported-arches = ["x86_64"]
 kernel-parameters = [
-    "console=ttyS0,115200n8",
     "console=tty1",
     # Only reserve if there are at least 2GB
     "crashkernel=2G-:256M",
