@@ -133,4 +133,5 @@ version = "1.8.0"
 "(1.8.0, 1.9.0)" = [
     "migrate_v1.9.0_ntp-affected-services.lz4",
     "migrate_v1.9.0_shibaken-admin-userdata-semantics.lz4",
+    "migrate_v1.9.0_shibaken-send-metrics.lz4",
 ]
