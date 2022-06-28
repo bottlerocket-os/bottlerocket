@@ -137,6 +137,8 @@ BUILDSYS_VERSION_FULL="${BUILDSYS_VERSION_IMAGE}-${BUILDSYS_VERSION_BUILD}"
 BUILDSYS_NAME_VARIANT="${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}"
 BUILDSYS_NAME_VERSION="${BUILDSYS_NAME}-${BUILDSYS_VERSION_FULL}"
 BUILDSYS_NAME_FULL="${BUILDSYS_NAME_VARIANT}-${BUILDSYS_VERSION_FULL}"
+# This name does not include the build short SHA
+BUILDSYS_NAME_FRIENDLY = "${BUILDSYS_NAME_VARIANT}-v${BUILDSYS_VERSION_IMAGE}"
 # Path to repo-specific root role.
 PUBLISH_REPO_ROOT_JSON = "${BUILDSYS_ROOT_DIR}/roles/${PUBLISH_REPO}.root.json"
 # If you don't specify a signing key in Infra.toml, we generate one at this path.
@@ -749,7 +751,8 @@ script = [
 for link in \
     ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}* \
     ${BUILDSYS_OUTPUT_DIR}/latest/*-kmod-kit-* \
-    ${BUILDSYS_OUTPUT_DIR}/latest/*.ova ; do
+    ${BUILDSYS_OUTPUT_DIR}/latest/*.ova \
+    ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}*; do
   if [ -L "${link}" ]; then
     rm ${link}
   fi
@@ -771,6 +774,15 @@ done
 ln -snf "../${BUILDSYS_NAME_FULL}-kmod-kit.tar.xz" "${BUILDSYS_KMOD_KIT_PATH}"
 if [ -s "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova" ] ; then
   ln -snf "../${BUILDSYS_NAME_FULL}.ova" "${BUILDSYS_OVA_PATH}"
+fi
+
+# Symlink the root and data disk images to a more friendly name.  All variants
+# will have an image, not all builds have a data disk image
+os_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+data_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+ln -snf "${os_disk_img}" "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}.img.lz4"
+if [ -s "${data_disk_img}" ]; then
+   ln -snf "${data_disk_img}" "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}-data.img.lz4"
 fi
 '''
 ]
@@ -880,15 +892,22 @@ done
 # modules for a given release.
 LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
 
-# Include the root and data disk images in the repo if they exist
+# Include the root and data disk images in the repo both with and without a
+# friendly name if they exist.  Check for the existence of the image and not
+# the friendly symlink to guard against the case where the link may not have
+# been created. `pubsys` will also fail if the friendly link does not exist
 os_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+os_disk_img_friendly="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}.img.lz4"
 if [ -s "${os_disk_img}" ] ; then
    LINK_REPO_TARGETS+=("--link-target ${os_disk_img}")
+   LINK_REPO_TARGETS+=("--link-target ${os_disk_img_friendly}")
 fi
 
 data_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+data_disk_img_friendly="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}-data.img.lz4"
 if [ -s "${data_disk_img}" ]; then
    LINK_REPO_TARGETS+=("--link-target ${data_disk_img}")
+   LINK_REPO_TARGETS+=("--link-target ${data_disk_img_friendly}")
 fi
 
 # Ensure we link an OVA if an OVF template exists (in which case we should have
