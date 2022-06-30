@@ -10,16 +10,16 @@ use std::ops::Deref;
 
 /// InterfaceName can only be created from a string that contains a valid network interface name.
 /// Validation is handled in the `TryFrom` implementation below.
-#[derive(Debug, Eq, PartialEq, Hash, Deserialize)]
-#[serde(try_from = "&str")]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize)]
+#[serde(try_from = "String")]
 pub(crate) struct InterfaceName {
     inner: String,
 }
 
-impl TryFrom<&str> for InterfaceName {
+impl TryFrom<String> for InterfaceName {
     type Error = error::Error;
 
-    fn try_from(input: &str) -> Result<Self> {
+    fn try_from(input: String) -> Result<Self> {
         // Rust does not treat all Unicode line terminators as starting a new line, so we check for
         // specific characters here, rather than just counting from lines().
         // https://en.wikipedia.org/wiki/Newline#Unicode
@@ -67,11 +67,11 @@ impl TryFrom<&str> for InterfaceName {
     }
 }
 
-impl TryFrom<String> for InterfaceName {
+impl TryFrom<&str> for InterfaceName {
     type Error = error::Error;
 
-    fn try_from(input: String) -> Result<Self> {
-        Self::try_from(input.as_ref())
+    fn try_from(input: &str) -> Result<Self> {
+        Self::try_from(input.to_string())
     }
 }
 
