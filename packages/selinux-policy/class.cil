@@ -124,6 +124,7 @@
 (classcommon qipcrtr_socket socket)
 (classcommon smc_socket socket)
 (classcommon xdp_socket socket)
+(classcommon mctp_socket socket)
 
 ; Add permissions specific to some socket classes.
 (class socket ())
@@ -186,6 +187,7 @@
 (class qipcrtr_socket ())
 (class smc_socket ())
 (class xdp_socket ())
+(class mctp_socket ())
 
 ; Add permissions for various network classes.
 (class node (recvfrom sendto))
@@ -259,7 +261,7 @@
   phonet_socket ieee802154_socket caif_socket alg_socket
   nfc_socket vsock_socket kcm_socket qipcrtr_socket smc_socket
   infiniband_pkey infiniband_endport bpf xdp_socket
-  perf_event lockdown))
+  mctp_socket perf_event lockdown))
 
 ; Add permissions for SELinux-aware applications.
 ; This includes systemd and dbus-broker.
