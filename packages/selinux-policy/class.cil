@@ -50,6 +50,7 @@
 (classcommon blk_file file)
 (classcommon sock_file file)
 (classcommon fifo_file file)
+(classcommon anon_inode file)
 
 ; Add permissions specific to some file classes.
 (class file (execute_no_trans entrypoint))
@@ -60,6 +61,7 @@
 (class blk_file ())
 (class sock_file ())
 (class fifo_file ())
+(class anon_inode ())
 
 ; Add permissions shared by all socket classes.
 (common socket (
@@ -261,7 +263,7 @@
   phonet_socket ieee802154_socket caif_socket alg_socket
   nfc_socket vsock_socket kcm_socket qipcrtr_socket smc_socket
   infiniband_pkey infiniband_endport bpf xdp_socket
-  mctp_socket perf_event lockdown))
+  mctp_socket perf_event lockdown anon_inode))
 
 ; Add permissions for SELinux-aware applications.
 ; This includes systemd and dbus-broker.
