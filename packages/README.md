@@ -228,7 +228,10 @@ $ rpmspec \
 ### Next Steps
 
 The variants workspace's `Cargo.lock` may be affected by adding a package.
-`cd` into the `variants` directory at the root of the repository and run `cargo generate-lockfile` to refresh `Cargo.lock`.
+
+1. `cd` into the `variants` directory at the root of the repository.
+2. Include the new package inside the `Cargo.toml` file of the variant you want to modify. 
+3. Run `cargo generate-lockfile` to refresh `Cargo.lock`.
 
 To build your package, run the following command in the top-level Bottlerocket directory.
 
