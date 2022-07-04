@@ -9,6 +9,7 @@ URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
 Source0: https://cdn.amazonlinux.com/blobstore/fd3a270843eca4874b201fd3554b484a79b18edc0d3b845ff3288dd9dd0d69a8/kernel-5.10.118-111.515.amzn2.src.rpm
 Source100: config-bottlerocket
+Source101: config-bottlerocket-metal
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
@@ -93,7 +94,8 @@ scripts/kconfig/merge_config.sh \
 %if "%{_cross_arch}" == "x86_64"
   ../config-microcode \
 %endif
-  %{SOURCE100}
+  %{SOURCE100} \
+  %{SOURCE101}
 rm -f ../config-* ../*.patch
 
 %global kmake \
