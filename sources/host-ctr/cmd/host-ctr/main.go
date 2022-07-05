@@ -634,10 +634,12 @@ func withBootstrap() oci.SpecOpts {
 		withPrivilegedMounts(),
 		withRootFsShared(),
 		oci.WithSelinuxLabel("system_u:system_r:control_t:s0-s0:c0.c1023"),
-		// Bootstrap containers don't require all "privileges", we only add the
-		// `CAP_SYS_ADMIN` capability. `WithDefaultProfile` will create the proper
-		// seccomp profile based on the container's capabilities.
-		oci.WithAddedCapabilities([]string{"CAP_SYS_ADMIN"}),
+		// Bootstrap containers don't require all capabilities. We only add
+		// `CAP_SYS_ADMIN` for mounting filesystems, and `CAP_NET_ADMIN` for
+		// managing iptables rules.
+		oci.WithAddedCapabilities([]string{"CAP_SYS_ADMIN", "CAP_NET_ADMIN"}),
+		// `WithDefaultProfile` creates the proper seccomp profile based on the
+		// container's capabilities.
 		seccomp.WithDefaultProfile(),
 		oci.WithAllDevicesAllowed,
 	)
