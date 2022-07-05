@@ -8,7 +8,8 @@ Before=local-fs.target umount.target
 What=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
 Where=/local
 Type=ext4
-Options=defaults,noatime,nosuid,nodev
+# "noexec" omitted to allow containers and migrations to run
+Options=defaults,nosuid,nodev,noatime
 
 [Install]
 WantedBy=preconfigured.target

@@ -13,4 +13,4 @@ Before=local-fs.target umount.target
 What=/dev/cdrom
 Where=/media/cdrom
 Type=iso9660
-Options=ro,defaults,noexec
+Options=ro,defaults,nosuid,nodev,noexec,noatime

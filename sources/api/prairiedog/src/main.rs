@@ -183,8 +183,9 @@ fn prepare_boot() -> Result<()> {
     // Get the current partitions state
     let state = signpost::State::load().context(error::LoadStateSnafu)?;
     let boot_partition_path = &state.active_set().boot;
-    let flags = nix::mount::MsFlags::MS_RELATIME
-        | nix::mount::MsFlags::MS_NOSUID
+    let flags = nix::mount::MsFlags::MS_NOSUID
+        | nix::mount::MsFlags::MS_NODEV
+        | nix::mount::MsFlags::MS_NOEXEC
         | nix::mount::MsFlags::MS_NOATIME
         | nix::mount::MsFlags::MS_RDONLY;
 

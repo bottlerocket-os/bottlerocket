@@ -1,0 +1,26 @@
+From 6f28750806a6e25e4f83784e7c29aca8e9c3903b Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Sat, 28 May 2022 04:12:07 +0000
+Subject: [PATCH 9010/9010] sysusers: set root shell to /sbin/nologin
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ sysusers.d/basic.conf.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sysusers.d/basic.conf.in b/sysusers.d/basic.conf.in
+index 7f1d052..93d15da 100644
+--- a/sysusers.d/basic.conf.in
++++ b/sysusers.d/basic.conf.in
+@@ -6,7 +6,7 @@
+ #  (at your option) any later version.
+ 
+ # The superuser
+-u root    0     "Super User" /root
++u root    0     "Super User" /root /usr/sbin/nologin
+ 
+ # The nobody user/group for NFS file systems
+ g {{NOBODY_GROUP_NAME}} 65534       -            -
+-- 
+2.36.1
+

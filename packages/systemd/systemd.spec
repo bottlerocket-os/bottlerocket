@@ -25,20 +25,29 @@ Patch9002: 9002-core-add-separate-timeout-for-system-shutdown.patch
 # the dom0 case first, where the UUID is all zeroes and hence not unique.
 Patch9003: 9003-machine-id-setup-generate-stable-ID-under-Xen-and-VM.patch
 
+# Local patch to mount /tmp with "noexec".
+Patch9004: 9004-units-mount-tmp-with-noexec.patch
+
+# Local patch to mount additional filesystems with "noexec".
+Patch9005: 9005-mount-setup-apply-noexec-to-more-mounts.patch
+
 # Local patch to handle mounting /etc with our SELinux label.
-Patch9004: 9004-mount-setup-mount-etc-with-specific-label.patch
+Patch9006: 9006-mount-setup-mount-etc-with-specific-label.patch
 
 # Local patch to disable the keyed hashes feature in the journal, which
 # makes it unreadable by older versions of systemd. Can be dropped once
 # there's sufficiently broad adoption of systemd >= 246.
-Patch9005: 9005-journal-disable-keyed-hashes-for-compatibility.patch
+Patch9007: 9007-journal-disable-keyed-hashes-for-compatibility.patch
 
 # We need `prefix` to be configurable for our own packaging so we can avoid
 # dependencies on the host OS.
-Patch9006: 9006-pkg-config-stop-hardcoding-prefix-to-usr.patch
+Patch9008: 9008-pkg-config-stop-hardcoding-prefix-to-usr.patch
 
 # Local patch to stop overriding rp_filter defaults with wildcard values.
-Patch9007: 9007-sysctl-do-not-set-rp_filter-via-wildcard.patch
+Patch9009: 9009-sysctl-do-not-set-rp_filter-via-wildcard.patch
+
+# Local patch to set root's shell to /sbin/nologin rather than /bin/sh.
+Patch9010: 9010-sysusers-set-root-shell-to-sbin-nologin.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
