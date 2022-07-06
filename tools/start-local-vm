@@ -1,0 +1,270 @@
+#!/usr/bin/env bash
+
+shopt -s nullglob
+
+arch=${BUILDSYS_ARCH}
+variant=${BUILDSYS_VARIANT}
+host_port_forwards=tcp::2222-:22
+vm_mem=4G
+vm_cpus=4
+force_extract=
+declare -A extra_files=()
+
+current_images=()
+boot_image=
+data_image=
+
+readonly repo_root=$(git rev-parse --show-toplevel)
+
+bail() {
+    >&2 echo "$@"
+    exit 1
+}
+
+show_usage() {
+    echo "\
+usage: ${0##*/} [--arch BUILDSYS_ARCH] [--variant BUILDSYS_VARIANT]
+                      [--host-port-forwards HOST_PORT_FWDS]
+                      [--vm-memory VM_MEMORY] [--vm-cpus VM_CPUS]
+                      [--inject-file LOCAL_PATH[:IMAGE_PATH]]...
+
+Launch a local virtual machine from a Bottlerocket image.
+
+Options:
+
+    --arch              architecture of the Bottlerocket image (must match the
+                        host architecture ($(uname -m)); may be omitted if the
+                        BUILDSYS_ARCH environment variable is set)
+    --variant           Bottlerocket variant to run (may be omitted if the
+                        BUILDSYS_VARIANT environment variable is set)
+    --host-port-forwards
+                        list of host ports to forward to the VM; HOST_PORT_FWDS
+                        must be a valid QEMU port forwarding specifier (default
+                        is ${host_port_forwards})
+    --vm-memory         amount of memory to assign to the VM; VM_MEMORY must be
+                        a valid QEMU memory specifier (default is ${vm_mem})
+    --vm-cpus           number of CPUs to spawn for VM (default is ${vm_cpus})
+    --force-extract     force recreation of the extracted Bottlerocket image,
+                        e.g. to force first boot behavior
+    --inject-file       adds a local file to the private partition of the
+                        Bottlerocket image before launching the virtual machine
+                        (may be given multiple times); existing data on the
+                        private partition will be lost
+    --help              shows this usage text
+
+By default, the virtual machine's port 22 (SSH) will be exposed via the local
+port 2222, i.e. if the Bottlerocket admin container has been enabled via
+user-data, it can be reached by running
+
+    ssh -p 2222 ec2-user@localhost
+
+from the host.
+
+Usage example:
+
+    ${0##*/} --arch $(uname -m) --variant metal-dev --inject-file net.toml
+"
+}
+
+usage_error() {
+    local error=$1
+
+    {
+        if [[ -n ${error} ]]; then
+            printf "%s\n\n" "${error}"
+        fi
+        show_usage
+    } >&2
+
+    exit 1
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_usage; exit 0 ;;
+            --arch)
+                shift; arch=$1 ;;
+            --variant)
+                shift; variant=$1 ;;
+            --host-port-forwards)
+                shift; host_port_forwards=$1 ;;
+            --vm-memory)
+                shift; vm_mem=$1 ;;
+            --vm-cpus)
+                shift; vm_cpus=$1 ;;
+            --force-extract)
+                force_extract=yes ;;
+            --inject-file)
+                shift; local file_spec=$1
+                if [[ ${file_spec} = *:* ]]; then
+                    local local_file=${file_spec%%:*}
+                    local image_file=${file_spec#*:}
+                else
+                    local local_file=${file_spec}
+                    local image_file=${file_spec##*/}
+                fi
+                extra_files[${local_file}]=${image_file}
+                ;;
+            *)
+                usage_error "unknown option '$1'" ;;
+        esac
+        shift
+    done
+
+    [[ -n ${arch} ]] || usage_error 'Architecture needs to be set via either --arch or BUILDSYS_ARCH.'
+    [[ -n ${variant} ]] || usage_error 'Variant needs to be set via either --variant or BUILDSYS_VARIANT.'
+
+    local host_arch=$(uname -m)
+    [[ ${arch} = ${host_arch} ]] || bail "Architecture needs to match host architecture (${host_arch}) for hardware virtualization."
+
+    for path in "${!extra_files[@]}"; do
+        [[ -e ${path} ]] || bail "Cannot find local file '${path}' to inject."
+    done
+}
+
+find_current_images() {
+    # BuildSys removes all but the latest build's compressed images
+    readonly current_images=( "${repo_root}/build/images/${arch}-${variant}"/*.img.lz4 )
+
+    if [[ ${#current_images[@]} -eq 0 ]]; then
+        bail 'No images found. Did the last build fail?'
+    fi
+}
+
+remove_old_images() {
+    # Any of the latest images can serve as our touchstone. Older images can go.
+    declare -r any_current_image=${current_images[0]}
+
+    for extracted_image in "${repo_root}/build/images/${arch}-${variant}"/*.img; do
+        if [[ ${extracted_image} -ot ${any_current_image} ]]; then
+            rm "${extracted_image}"
+        fi
+    done
+}
+
+extract_images() {
+    for compressed_image in "${current_images[@]}"; do
+        uncompressed_image=${compressed_image%*.lz4}
+        if [[ ${force_extract} = yes ]] || [[ ${compressed_image} -nt ${uncompressed_image} ]]; then
+            lz4 --decompress --force --keep "${compressed_image}"
+        fi
+    done
+}
+
+select_boot_image() {
+    for image in "${repo_root}/build/images/${arch}-${variant}/bottlerocket-${variant}-${arch}"-*.img; do
+        case ${image} in
+            *data*) readonly data_image=${image} ;;
+            *)      readonly boot_image=${image} ;;
+        esac
+    done
+}
+
+create_extra_files() {
+    # Explicitly instruct the kernel to send its output to the serial port on
+    # x86 via a bootconfig initrd. Passing in settings via user-data would be
+    # too late to get console output of the first boot.
+    if [[ ${arch} = x86_64 ]]; then
+        extra_files["${repo_root}/tools/bootconfig/qemu-x86-console-bootconfig.data"]=bootconfig.data
+    fi
+
+    # If the private partition needs to be recreated, ensure that any bootconfig
+    # data file is present, otherwise GRUB will notice the missing file and wait
+    # for a key press.
+    if [[ ${#extra_files[@]} -gt 0 ]]; then
+        local has_bootconfig=no
+        for image_file in "${extra_files[@]}"; do
+            if [[ ${image_file} = bootconfig.data ]]; then
+                has_bootconfig=yes
+                break
+            fi
+        done
+        if [[ ${has_bootconfig} = no ]]; then
+            extra_files["${repo_root}/tools/bootconfig/empty-bootconfig.data"]=bootconfig.data
+        fi
+    fi
+}
+
+inject_files() {
+    if [[ ${#extra_files[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    # We inject files into the boot image by replacing the private partition
+    # entirely. The new partition has to perfectly fit over the original one.
+    # Find the first and last sector, then calculate the partition's size. In
+    # absence of actual hardware, assume a traditional sector size of 512 bytes.
+    local private_first_sector private_last_sector
+    read -r private_first_sector private_last_sector < <(
+        fdisk --list-details "${boot_image}" \
+            | awk '/BOTTLEROCKET-PRIVATE/ { print $2, $3 }')
+    if [[ -z ${private_first_sector} ]] || [[ -z ${private_last_sector} ]]; then
+        bail "Failed to find the private partition in '${boot_image}'."
+    fi
+    local private_size_mib=$(( (private_last_sector - private_first_sector + 1) * 512 / 1024 / 1024 ))
+
+    local private_mount private_image
+    private_mount=$(mktemp -d)
+    private_image=$(mktemp)
+
+    for local_file in "${!extra_files[@]}"; do
+        local image_file=${extra_files[${local_file}]}
+        cp "${local_file}" "${private_mount}/${image_file}"
+    done
+
+    if ! mkfs.ext4 -d "${private_mount}" "${private_image}" "${private_size_mib}M" \
+    || ! dd if="${private_image}" of="${boot_image}" conv=notrunc bs=512 seek="${private_first_sector}"
+    then
+        rm -f "${private_image}"
+        rm -rf "${private_mount}"
+        bail "Failed to inject files into '${boot_image}'."
+    fi
+}
+
+launch_vm() {
+    local -a qemu_args=(
+        -nographic
+        -enable-kvm
+        -cpu host
+        -smp "${vm_cpus}"
+        -m "${vm_mem}"
+        -drive index=0,if=virtio,format=raw,file="${boot_image}"
+    )
+
+    # Plug the virtual primary NIC in as BDF 00:10.0 so udev will give it a
+    # consistent name we can know ahead of time--enp0s16 or ens16.
+    qemu_args+=(
+        -netdev user,id=net0,hostfwd="${host_port_forwards}"
+        -device virtio-net-pci,netdev=net0,addr=10.0
+    )
+
+    # Resolve the last bit of uncertainty by disabling ACPI-based PCI hot plug,
+    # causing udev to use the bus location when naming the NIC (enp0s16). Since
+    # QEMU does not support PCI hot plug via ACPI on Arm, turn it off for the
+    # emulated x86_64 chipset only to achieve parity.
+    if [[ ${arch} = x86_64 ]]; then
+        qemu_args+=( -global PIIX4_PM.acpi-root-pci-hotplug=off )
+    fi
+
+    if [[ ${arch} = aarch64 ]]; then
+        qemu_args+=( -machine virt )
+        qemu_args+=( -bios /usr/share/edk2/aarch64/QEMU_EFI.silent.fd )
+    fi
+
+    if [[ -n ${data_image} ]]; then
+        qemu_args+=( -drive index=1,if=virtio,format=raw,file="${data_image}" )
+    fi
+
+    qemu-system-"${arch}" "${qemu_args[@]}"
+}
+
+parse_args "$@"
+find_current_images
+remove_old_images
+extract_images
+select_boot_image
+create_extra_files
+inject_files
+launch_vm
