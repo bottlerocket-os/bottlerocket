@@ -1,4 +1,5 @@
 %global debug_package %{nil}
+%global _is_metal_variant %(if echo %{_cross_variant} | grep -Fqw "metal"; then echo 1; else echo 0; fi)
 
 Name: %{_cross_os}kernel-5.10
 Version: 5.10.118
@@ -95,7 +96,10 @@ scripts/kconfig/merge_config.sh \
   ../config-microcode \
 %endif
   %{SOURCE100} \
+%if %{_is_metal_variant}
   %{SOURCE101}
+%endif
+
 rm -f ../config-* ../*.patch
 
 %global kmake \
