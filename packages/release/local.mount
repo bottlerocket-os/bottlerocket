@@ -9,7 +9,7 @@ What=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
 Where=/local
 Type=ext4
 # "noexec" omitted to allow containers and migrations to run
-Options=defaults,nosuid,nodev,noatime
+Options=defaults,nosuid,nodev,noatime,private
 
 [Install]
 WantedBy=preconfigured.target

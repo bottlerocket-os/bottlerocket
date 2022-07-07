@@ -1,0 +1,40 @@
+[Unit]
+Description=Prepare Var Directory (/var)
+DefaultDependencies=no
+After=selinux-policy-files.service
+Wants=selinux-policy-files.service
+RequiresMountsFor=/var
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+
+# Create the directories we need to set up a read-write overlayfs for kernel
+# development sources, kernel modules, and CNI plugins.
+ExecStart=/usr/bin/rm -rf \
+    /var/lib/kernel-devel \
+    /var/lib/kernel-modules \
+    /var/lib/cni-plugins
+
+ExecStart=/usr/bin/mkdir -p \
+    /var/lib/kernel-devel/.overlay/lower \
+    /var/lib/kernel-devel/.overlay/upper \
+    /var/lib/kernel-devel/.overlay/work \
+    /var/lib/kernel-modules/.overlay/upper \
+    /var/lib/kernel-modules/.overlay/work \
+    /var/lib/cni-plugins/.overlay/upper \
+    /var/lib/cni-plugins/.overlay/work
+
+# Ensure the directories are labeled as expected.
+ExecStart=/usr/sbin/setfiles \
+    -F /etc/selinux/fortified/contexts/files/file_contexts \
+    /var/lib/kernel-devel \
+    /var/lib/kernel-modules \
+    /var/lib/cni-plugins
+
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=local-fs.target

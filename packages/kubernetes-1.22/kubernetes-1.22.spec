@@ -34,7 +34,12 @@ Source6: kubelet-exec-start-conf
 Source7: kubelet-bootstrap-kubeconfig
 Source8: kubernetes-tmpfiles.conf
 Source9: kubelet-sysctl.conf
-Source10: prestart-pull-pause-ctr.conf
+Source10: prepare-var-lib-kubelet.service
+
+# ExecStartPre drop-ins
+Source20: prestart-pull-pause-ctr.conf
+Source21: make-kubelet-dirs.conf
+
 Source1000: clarify.toml
 
 BuildRequires: git
@@ -80,10 +85,10 @@ install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 ${output}/kubelet %{buildroot}%{_cross_bindir}
 
 install -d %{buildroot}%{_cross_unitdir}
-install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}/kubelet.service
+install -p -m 0644 %{S:1} %{S:10} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/kubelet.service.d
-install -p -m 0644 %{S:10} %{buildroot}%{_cross_unitdir}/kubelet.service.d/prestart-pull-pause-ctr.conf
+install -p -m 0644 %{S:20} %{S:21} %{buildroot}%{_cross_unitdir}/kubelet.service.d
 
 mkdir -p %{buildroot}%{_cross_templatedir}
 install -m 0644 %{S:2} %{buildroot}%{_cross_templatedir}/kubelet-env
@@ -112,8 +117,10 @@ ln -rs \
 %{_cross_attribution_vendor_dir}
 %{_cross_bindir}/kubelet
 %{_cross_unitdir}/kubelet.service
+%{_cross_unitdir}/prepare-var-lib-kubelet.service
 %dir %{_cross_unitdir}/kubelet.service.d
-%{_cross_libdir}/systemd/system/kubelet.service.d/prestart-pull-pause-ctr.conf
+%{_cross_unitdir}/kubelet.service.d/prestart-pull-pause-ctr.conf
+%{_cross_unitdir}/kubelet.service.d/make-kubelet-dirs.conf
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/kubelet-env
 %{_cross_templatedir}/kubelet-config

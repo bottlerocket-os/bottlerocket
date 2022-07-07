@@ -2,15 +2,15 @@
 Description=Var Directory (/var)
 DefaultDependencies=no
 Conflicts=umount.target
-Before=local-fs.target umount.target
-Wants=prepare-local.service
-After=prepare-local.service
+Wants=prepare-var.service mask-local-var.service
+Before=local-fs.target umount.target prepare-var.service mask-local-var.service
+RequiresMountsFor=/local
 
 [Mount]
 What=/local/var
 Where=/var
 Type=none
-Options=bind
+Options=rbind,rshared
 
 [Install]
 WantedBy=local-fs.target

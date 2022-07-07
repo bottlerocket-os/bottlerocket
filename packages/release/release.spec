@@ -46,8 +46,12 @@ Source1023: lib-modules.mount.in
 
 # Mounts that require helper programs
 Source1040: prepare-boot.service
-Source1041: prepare-local.service
-Source1042: repart-local.service
+Source1041: prepare-opt.service
+Source1042: prepare-var.service
+Source1043: repart-local.service
+Source1044: mask-local-mnt.service
+Source1045: mask-local-opt.service
+Source1046: mask-local-var.service
 
 # Services for kdump support
 Source1060: capture-kernel-dump.service
@@ -129,7 +133,8 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} %{S:1006} %{S:1007} \
   %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} %{S:1013} %{S:1015} \
-  %{S:1040} %{S:1041} %{S:1042} %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
+  %{S:1040} %{S:1041} %{S:1042} %{S:1043} %{S:1044} %{S:1045} %{S:1046} \
+  %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
@@ -185,7 +190,8 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/capture-kernel-dump.service
 %{_cross_unitdir}/load-crash-kernel.service
 %{_cross_unitdir}/prepare-boot.service
-%{_cross_unitdir}/prepare-local.service
+%{_cross_unitdir}/prepare-opt.service
+%{_cross_unitdir}/prepare-var.service
 %{_cross_unitdir}/repart-local.service
 %{_cross_unitdir}/var.mount
 %{_cross_unitdir}/opt.mount
@@ -201,6 +207,9 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/*-modules.mount
 %{_cross_unitdir}/runtime.slice
 %{_cross_unitdir}/set-hostname.service
+%{_cross_unitdir}/mask-local-mnt.service
+%{_cross_unitdir}/mask-local-opt.service
+%{_cross_unitdir}/mask-local-var.service
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}

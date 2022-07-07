@@ -1,0 +1,23 @@
+[Unit]
+Description=Prepare Docker Directory (/var/lib/docker)
+DefaultDependencies=no
+RequiresMountsFor=/var
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+
+# Remove an existing symlink, if present. Intentionally not recursive!
+ExecStartPre=-/usr/bin/rm -f /var/lib/docker
+
+# Create /var/lib/docker so it is available for bind mounts.
+ExecStart=/usr/bin/mkdir -p /var/lib/docker
+
+# Suppress warning if directory exists.
+StandardError=null
+
+RemainAfterExit=true
+
+[Install]
+WantedBy=local-fs.target
