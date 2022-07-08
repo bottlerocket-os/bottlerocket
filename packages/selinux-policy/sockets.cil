@@ -118,6 +118,8 @@
   smc_socket (relabelfrom relabelto)))
 (classmapping sockets relabel (
   xdp_socket (relabelfrom relabelto)))
+(classmapping sockets relabel (
+  mctp_socket (relabelfrom relabelto)))
 
 ; Permission group for other socket actions.
 (classmapping sockets use (
@@ -236,3 +238,5 @@
   smc_socket (not (relabelfrom relabelto))))
 (classmapping sockets use (
   xdp_socket (not (relabelfrom relabelto))))
+(classmapping sockets use (
+  mctp_socket (not (relabelfrom relabelto))))

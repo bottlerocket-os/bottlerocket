@@ -9,6 +9,7 @@
 (classmapping files relabel relabel_blk_file)
 (classmapping files relabel relabel_sock_file)
 (classmapping files relabel relabel_fifo_file)
+(classmapping files relabel relabel_anon_inode)
 
 ; Permission group for mounts.
 (classmapping files mount mount_file)
@@ -19,6 +20,7 @@
 (classmapping files mount mount_sock_file)
 (classmapping files mount mount_fifo_file)
 (classmapping files mount mount_filesystem)
+(classmapping files mount mount_anon_inode)
 
 ; Permission group for relaxing security constraints on files.
 (classmapping files relax relax_file)
@@ -28,6 +30,7 @@
 (classmapping files relax relax_blk_file)
 (classmapping files relax relax_sock_file)
 (classmapping files relax relax_fifo_file)
+(classmapping files relax relax_anon_inode)
 
 ; Permission group for using files as entry points.
 (classmapping files enter enter_file)
@@ -41,6 +44,7 @@
 (classmapping files describe describe_sock_file)
 (classmapping files describe describe_fifo_file)
 (classmapping files describe describe_filesystem)
+(classmapping files describe describe_anon_inode)
 
 ; Permission group for reading files.
 (classmapping files load load_file)
@@ -52,6 +56,7 @@
 (classmapping files load load_fifo_file)
 (classmapping files load load_filesystem)
 (classmapping files load load_fd)
+(classmapping files load load_anon_inode)
 
 ; Permission group for executing files.
 (classmapping files execute execute_file)
@@ -70,6 +75,7 @@
 (classmapping files block block_blk_file)
 (classmapping files block block_sock_file)
 (classmapping files block block_fifo_file)
+(classmapping files block block_anon_inode)
 
 ; Permission group for mutating files.
 (classmapping files mutate mutate_file)
@@ -79,6 +85,7 @@
 (classmapping files mutate mutate_blk_file)
 (classmapping files mutate mutate_sock_file)
 (classmapping files mutate mutate_fifo_file)
+(classmapping files mutate mutate_anon_inode)
 
 ; Sets of permissions for relabeling file objects.
 (classpermission relabel_file)
@@ -88,6 +95,7 @@
 (classpermission relabel_blk_file)
 (classpermission relabel_sock_file)
 (classpermission relabel_fifo_file)
+(classpermission relabel_anon_inode)
 (classpermissionset relabel_file (
   file (relabelfrom relabelto)))
 (classpermissionset relabel_dir (
@@ -102,6 +110,8 @@
   sock_file (relabelfrom relabelto)))
 (classpermissionset relabel_fifo_file (
   fifo_file (relabelfrom relabelto)))
+(classpermissionset relabel_anon_inode(
+  anon_inode (relabelfrom relabelto)))
 
 ; Sets of permissions for mounts.
 (classpermission mount_file)
@@ -112,6 +122,7 @@
 (classpermission mount_sock_file)
 (classpermission mount_fifo_file)
 (classpermission mount_filesystem)
+(classpermission mount_anon_inode)
 (classpermissionset mount_file (
   file (mounton quotaon)))
 (classpermissionset mount_dir (
@@ -128,6 +139,8 @@
   fifo_file (mounton quotaon)))
 (classpermissionset mount_filesystem (
   filesystem (mount quotamod remount unmount)))
+(classpermissionset mount_anon_inode (
+  anon_inode (mounton quotaon)))
 
 ; Sets of permissions that relax security constraints for file objects.
 (classpermission relax_file)
@@ -137,6 +150,7 @@
 (classpermission relax_blk_file)
 (classpermission relax_sock_file)
 (classpermission relax_fifo_file)
+(classpermission relax_anon_inode)
 (classpermissionset relax_file (
   file (execmod)))
 (classpermissionset relax_dir (
@@ -151,6 +165,8 @@
   sock_file (execmod)))
 (classpermissionset relax_fifo_file (
   fifo_file (execmod)))
+(classpermissionset relax_anon_inode (
+  anon_inode (execmod)))
 
 ; Sets of permissions for using file objects as entry points.
 (classpermission enter_file)
@@ -166,6 +182,7 @@
 (classpermission describe_sock_file)
 (classpermission describe_fifo_file)
 (classpermission describe_filesystem)
+(classpermission describe_anon_inode)
 (classpermissionset describe_file (
   file (getattr)))
 (classpermissionset describe_dir (
@@ -182,6 +199,8 @@
   fifo_file (getattr)))
 (classpermissionset describe_filesystem (
   filesystem (getattr quotaget)))
+(classpermissionset describe_anon_inode (
+  anon_inode (getattr)))
 
 ; Sets of permissions for read-only actions that do not affect the
 ; integrity of file objects.
@@ -194,6 +213,7 @@
 (classpermission load_fifo_file)
 (classpermission load_filesystem)
 (classpermission load_fd)
+(classpermission load_anon_inode)
 (classpermissionset load_file (
   file (
     ioctl map open read watch watch_mount watch_reads watch_sb)))
@@ -219,6 +239,10 @@
   filesystem (watch)))
 (classpermissionset load_fd (
   fd (use)))
+(classpermissionset load_anon_inode (
+  anon_inode (
+    execute ioctl map open read
+    watch watch_mount watch_reads watch_sb)))
 
 ; Sets of permissions for execute actions on file objects.
 (classpermission execute_file)
@@ -251,6 +275,7 @@
 (classpermission block_blk_file)
 (classpermission block_sock_file)
 (classpermission block_fifo_file)
+(classpermission block_anon_inode)
 (classpermissionset block_file (
   file (watch_with_perm)))
 (classpermissionset block_dir (
@@ -265,6 +290,8 @@
   sock_file (watch_with_perm)))
 (classpermissionset block_fifo_file (
   fifo_file (watch_with_perm)))
+(classpermissionset block_anon_inode (
+  anon_inode (watch_with_perm)))
 
 ; Sets of permissions for mutating file objects, which includes all
 ; actions that are not covered by other policy restrictions.
@@ -275,6 +302,7 @@
 (classpermission mutate_blk_file)
 (classpermission mutate_sock_file)
 (classpermission mutate_fifo_file)
+(classpermission mutate_anon_inode)
 (classpermissionset mutate_file (
   file (not (
     entrypoint execute_no_trans
@@ -309,6 +337,11 @@
     watch watch_mount watch_reads watch_sb watch_with_perm))))
 (classpermissionset mutate_fifo_file (
   fifo_file (not (
+    execute ioctl getattr map open read execmod
+    relabelfrom relabelto mounton quotaon
+    watch watch_mount watch_reads watch_sb watch_with_perm))))
+(classpermissionset mutate_anon_inode (
+  anon_inode (not (
     execute ioctl getattr map open read execmod
     relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))

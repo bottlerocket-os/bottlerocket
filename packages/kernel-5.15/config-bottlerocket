@@ -1,0 +1,129 @@
+# Because Bottlerocket does not have an initramfs, modules required to mount
+# the root filesystem must be set to y.
+
+# The root filesystem is ext4
+CONFIG_EXT4_FS=y
+
+# NVMe support
+CONFIG_BLK_DEV_NVME=y
+CONFIG_NVME_CORE=y
+
+# Xen blkfront for Xen-based EC2 platforms
+CONFIG_XEN_BLKDEV_FRONTEND=y
+
+# virtio for local testing with QEMU
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_PCI=y
+
+# dm-verity and enabling it on the kernel command line
+CONFIG_BLK_DEV_DM=y
+CONFIG_DAX=y
+CONFIG_DM_INIT=y
+CONFIG_DM_VERITY=y
+
+# TCMU/LIO
+CONFIG_TCM_USER2=m
+
+# EFI
+CONFIG_EFI=y
+CONFIG_EFI_STUB=y
+CONFIG_EFI_MIXED=y
+
+# EFI video
+CONFIG_FB=y
+CONFIG_FB_EFI=y
+CONFIG_FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER=y
+
+# yama LSM for ptrace restrictions
+CONFIG_SECURITY_YAMA=y
+
+# Do not allow SELinux to be disabled at boot.
+CONFIG_SECURITY_SELINUX_BOOTPARAM=n
+
+# Do not allow SELinux to be disabled at runtime.
+CONFIG_SECURITY_SELINUX_DISABLE=n
+
+# Do not allow SELinux to use `enforcing=0` behavior.
+CONFIG_SECURITY_SELINUX_DEVELOP=n
+
+# Check the protection applied by the kernel for mmap and mprotect,
+# rather than the protection requested by userspace.
+CONFIG_SECURITY_SELINUX_CHECKREQPROT_VALUE=0
+
+# Enable support for the kernel lockdown security module.
+CONFIG_SECURITY_LOCKDOWN_LSM=y
+
+# Enable lockdown early so that if the option is present on the
+# kernel command line, it can be enforced.
+CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
+
+# Enable zstd compression for squashfs.
+CONFIG_SQUASHFS_ZSTD=y
+
+# enable /proc/config.gz
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+
+# kernel headers at /sys/kernel/kheaders.tar.xz
+CONFIG_IKHEADERS=y
+
+# BTF debug info at /sys/kernel/btf/vmlinux
+CONFIG_DEBUG_INFO_BTF=y
+
+# We don't want to extend the kernel command line with any upstream defaults;
+# Bottlerocket uses a fairly custom setup that needs tight control over it.
+CONFIG_CMDLINE_EXTEND=n
+
+# Enable ZSTD kernel image compression
+CONFIG_HAVE_KERNEL_ZSTD=y
+CONFIG_KERNEL_ZSTD=y
+CONFIG_ZSTD_COMPRESS=y
+CONFIG_ZSTD_DECOMPRESS=y
+CONFIG_DECOMPRESS_ZSTD=y
+
+# Load i8042 controller, keyboard, and mouse as modules, to avoid waiting for
+# them before mounting the root device.
+CONFIG_SERIO_I8042=m
+CONFIG_KEYBOARD_ATKBD=m
+CONFIG_MOUSE_PS2=m
+
+# Add support for IPMI drivers
+CONFIG_IPMI_HANDLER=m
+
+# Add support for bootconfig
+CONFIG_BOOT_CONFIG=y
+
+# Enables support for checkpoint/restore
+CONFIG_CHECKPOINT_RESTORE=y
+
+# Disable unused filesystems.
+CONFIG_AFS_FS=n
+CONFIG_CRAMFS=n
+CONFIG_ECRYPT_FS=n
+CONFIG_EXT2_FS=n
+CONFIG_EXT3_FS=n
+CONFIG_EXT4_USE_FOR_EXT2=y
+CONFIG_GFS2_FS=n
+CONFIG_HFS_FS=n
+CONFIG_HFSPLUS_FS=n
+CONFIG_JFS_FS=n
+CONFIG_JFFS2_FS=n
+CONFIG_NFS_V2=n
+CONFIG_NILFS2_FS=n
+CONFIG_NTFS_FS=n
+CONFIG_ROMFS_FS=n
+CONFIG_UFS_FS=n
+CONFIG_ZONEFS_FS=n
+CONFIG_NTFS3_FS=n
+
+# Disable unused network protocols.
+CONFIG_AF_RXRPC=n
+CONFIG_ATM=n
+CONFIG_CAN=n
+CONFIG_HSR=n
+CONFIG_IP_DCCP=n
+CONFIG_L2TP=n
+CONFIG_RDS=n
+CONFIG_RFKILL=n
+CONFIG_TIPC=n
