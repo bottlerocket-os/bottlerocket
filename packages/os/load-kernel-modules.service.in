@@ -1,5 +1,6 @@
 [Unit]
 Description=Load additional kernel modules
+RequiresMountsFor=PREFIX/lib/modules PREFIX/src/kernels
 After=link-kernel-modules.service
 Requires=link-kernel-modules.service
 # Disable manual restarts to prevent loading kernel modules

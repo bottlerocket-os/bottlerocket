@@ -1,5 +1,6 @@
 [Unit]
 Description=Link additional kernel modules
+RequiresMountsFor=PREFIX/lib/modules PREFIX/src/kernels
 # Rerunning this service after the system is fully loaded will override
 # the already linked kernel modules. This doesn't affect the running system,
 # since kernel modules are linked early in the boot sequence, but we still

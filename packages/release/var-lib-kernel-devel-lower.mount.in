@@ -2,9 +2,9 @@
 Description=Kernel Development Sources (Read-Only)
 DefaultDependencies=no
 Conflicts=umount.target
-Before=local-fs.target umount.target
+Before=umount.target
 Wants=prepare-var.service
-After=prepare-var.service
+After=prepare-var.service local-fs.target
 RequiresMountsFor=/var
 
 [Mount]

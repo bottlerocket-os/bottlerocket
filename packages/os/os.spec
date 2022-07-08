@@ -43,8 +43,8 @@ Source111: metricdog.service
 Source112: metricdog.timer
 Source113: send-boot-success.service
 Source114: bootstrap-containers@.service
-Source115: link-kernel-modules.service
-Source116: load-kernel-modules.service
+Source115: link-kernel-modules.service.in
+Source116: load-kernel-modules.service.in
 Source117: cfsignal.service
 Source118: generate-network-config.service
 Source119: prepare-primary-interface.service
@@ -430,10 +430,16 @@ install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
   %{S:113} %{S:114} %{S:118} %{S:119} \
-%if %{_is_vendor_variant}
-  %{S:115} %{S:116} \
-%endif
   %{buildroot}%{_cross_unitdir}
+
+%if %{_is_vendor_variant}
+sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:115} > link-kernel-modules.service
+sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:116} > load-kernel-modules.service
+install -p -m 0644 \
+  link-kernel-modules.service \
+  load-kernel-modules.service \
+  %{buildroot}%{_cross_unitdir}
+%endif
 
 %if %{_is_aws_variant}
 install -p -m 0644 %{S:9} %{buildroot}%{_cross_templatedir}
