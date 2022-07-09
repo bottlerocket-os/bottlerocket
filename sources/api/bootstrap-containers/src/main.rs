@@ -457,14 +457,21 @@ impl<'a> SystemdUnit<'a> {
 
     fn enable(&self) -> Result<()> {
         // Only enable the unit, since it will be started once systemd reaches the `preconfigured`
-        // target
-        command(constants::SYSTEMCTL_BIN, &["enable", &self.unit])
+        // target. There's an implied daemon-reload when the target changes, so defer the reload
+        // until then.
+        command(
+            constants::SYSTEMCTL_BIN,
+            &["enable", &self.unit, "--no-reload"],
+        )
     }
 
     fn disable(&self) -> Result<()> {
         // Bootstrap containers won't be up by the time the user sends configurations through
-        // `apiclient`, so there is no need to add `--now` to stop them
-        command(constants::SYSTEMCTL_BIN, &["disable", &self.unit])
+        // `apiclient`, so there is no need to add `--now` to stop them, and no need to reload.
+        command(
+            constants::SYSTEMCTL_BIN,
+            &["disable", &self.unit, "--no-reload"],
+        )
     }
 }
 

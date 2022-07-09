@@ -176,25 +176,8 @@ impl<'a> SystemdUnit<'a> {
         SystemdUnit { unit }
     }
 
-    fn is_enabled(&self) -> Result<bool> {
-        match command(constants::SYSTEMCTL_BIN, &["is-enabled", &self.unit]) {
-            Ok(_) => Ok(true),
-            Err(e) => {
-                // If the systemd unit is not enabled, then `systemctl is-enabled` will return a
-                // non-zero exit code.
-                match e {
-                    error::Error::CommandFailure { .. } => Ok(false),
-                    _ => {
-                        // Otherwise, we return the error
-                        Err(e)
-                    }
-                }
-            }
-        }
-    }
-
     fn is_active(&self) -> Result<bool> {
-        match command(constants::SYSTEMCTL_BIN, &["is-active", &self.unit]) {
+        match command(constants::SYSTEMCTL_BIN, &["is-active", self.unit]) {
             Ok(_) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not active(running), then `systemctl is-active` will
@@ -210,36 +193,43 @@ impl<'a> SystemdUnit<'a> {
         }
     }
 
+    fn stop(&self) -> Result<()> {
+        // This is intentionally blocking to simplify reasoning about the state
+        // of the system. The stop command might fail if the unit has just been
+        // created and we haven't done a `systemctl daemon-reload` yet.
+        let _ = command(constants::SYSTEMCTL_BIN, &["stop", self.unit]);
+        Ok(())
+    }
+
     fn enable(&self) -> Result<()> {
-        command(constants::SYSTEMCTL_BIN, &["enable", &self.unit])?;
-
+        command(
+            constants::SYSTEMCTL_BIN,
+            &["enable", self.unit, "--no-reload", "--no-block"],
+        )?;
         Ok(())
     }
 
-    fn enable_and_start(&self) -> Result<()> {
+    fn enable_now(&self) -> Result<()> {
         command(
             constants::SYSTEMCTL_BIN,
-            &["enable", &self.unit, "--now", "--no-block"],
+            &["enable", self.unit, "--now", "--no-block"],
         )?;
-
         Ok(())
     }
 
-    fn disable_and_stop(&self) -> Result<()> {
+    fn disable(&self) -> Result<()> {
         command(
             constants::SYSTEMCTL_BIN,
-            &["disable", &self.unit, "--now", "--no-block"],
+            &["disable", self.unit, "--no-reload", "--no-block"],
         )?;
-
         Ok(())
     }
 
-    fn try_reload_or_restart(&self) -> Result<()> {
+    fn disable_now(&self) -> Result<()> {
         command(
             constants::SYSTEMCTL_BIN,
-            &["try-reload-or-restart", &self.unit],
+            &["disable", self.unit, "--now", "--no-block"],
         )?;
-
         Ok(())
     }
 }
@@ -404,50 +394,46 @@ where
     let systemd_unit = SystemdUnit::new(&unit_name);
     let host_containerd_unit = SystemdUnit::new("host-containerd.service");
 
-    if enabled {
-        // If this particular host-container was previously disabled. Let's make sure there's no
-        // lingering container tasks left over previously that host-ctr might bind to.
-        // We want to ensure we're running the host-container with the latest configuration.
-        //
-        // We only attempt to do this only if host-containerd is active and running
-        if host_containerd_unit.is_active()? && !systemd_unit.is_enabled()? {
-            command(
-                constants::HOST_CTR_BIN,
-                &["clean-up", "--container-id", name],
-            )?;
+    // Unconditionally stop the container, and wait for it to complete. Don't worry about
+    // the enabled or disabled status for the unit yet - we'll fix that up later.
+    debug!("Stopping host container: '{}'", unit_name);
+    systemd_unit.stop()?;
+
+    // Let's make sure there's no lingering container tasks that host-ctr might bind to.
+    // We want to ensure the host container is running with its most recent configuration.
+    if host_containerd_unit.is_active()? {
+        debug!("Cleaning up host container: '{}'", unit_name);
+        command(
+            constants::HOST_CTR_BIN,
+            &["clean-up", "--container-id", name],
+        )?;
+    }
+
+    let systemd_target = command(constants::SYSTEMCTL_BIN, &["get-default"])?;
+
+    // What happens next depends on whether the system has finished booting, and whether the
+    // host container is enabled.
+    match (systemd_target.trim(), enabled) {
+        // If the systemd target is 'multi-user', then we've finished booting. The container
+        // should be running if it's enabled, and left stopped if it's disabled.
+        ("multi-user.target", true) => {
+            debug!("Immediately enabling host container: '{}'", unit_name);
+            systemd_unit.enable_now()?
+        }
+        ("multi-user.target", false) => {
+            debug!("Immediately disabling host container: '{}'", unit_name);
+            systemd_unit.disable_now()?;
         }
 
-        // Only start the host container if the systemd target is 'multi-user', otherwise
-        // it will start before the system is fully configured
-        match command(constants::SYSTEMCTL_BIN, &["get-default"])?
-            .trim()
-            .as_ref()
-        {
-            "multi-user.target" => {
-                if systemd_unit.is_active()? {
-                    debug!("Stopping and starting host container: '{}'", unit_name);
-                    systemd_unit.try_reload_or_restart()?
-                } else {
-                    debug!("Enabling and starting container: '{}'", unit_name);
-                    systemd_unit.enable_and_start()?
-                }
-            }
-            _ => {
-                debug!("Enabling: '{}'", unit_name);
-                systemd_unit.enable()?
-            }
-        };
-    } else {
-        systemd_unit.disable_and_stop()?;
-
-        // Ensure there's no lingering host-container after it's been disabled.
-        //
-        // We only attempt to do this only if host-containerd is active and running
-        if host_containerd_unit.is_active()? {
-            command(
-                constants::HOST_CTR_BIN,
-                &["clean-up", "--container-id", name],
-            )?;
+        // If it's any other target, then we haven't finished booting and the system may not
+        // be fully configured. The unit state should match the host container status.
+        (_, true) => {
+            debug!("Enabling host container: '{}'", unit_name);
+            systemd_unit.enable()?
+        }
+        (_, false) => {
+            debug!("Disabling host container: '{}'", unit_name);
+            systemd_unit.disable()?;
         }
     }
 
