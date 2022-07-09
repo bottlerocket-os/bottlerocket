@@ -13,7 +13,8 @@ kernel-parameters = [
     "console=tty0",
     "console=ttyS0,115200n8",
     "net.ifnames=0",
-    "netdog.default-interface=eth0:dhcp4,dhcp6?"
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
 ]
 included-packages = [
 # core
@@ -29,7 +30,7 @@ included-packages = [
 # NVIDIA support
     "ecs-gpu-init",
     "nvidia-container-toolkit",
-    "kmod-5.10-nvidia-tesla-470"
+    "kmod-5.10-nvidia-tesla-470",
 ]
 
 [lib]

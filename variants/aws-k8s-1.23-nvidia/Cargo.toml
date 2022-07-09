@@ -22,7 +22,7 @@ included-packages = [
     "release",
     "nvidia-container-toolkit",
     "nvidia-k8s-device-plugin",
-    "kmod-5.10-nvidia-tesla-470"
+    "kmod-5.10-nvidia-tesla-470",
 ]
 grub-features = [
     "set-private-var"
@@ -32,6 +32,7 @@ kernel-parameters = [
     "console=ttyS0,115200n8",
     "net.ifnames=0",
     "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
 ]
 
 [lib]

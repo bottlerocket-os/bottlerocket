@@ -18,6 +18,7 @@ kernel-parameters = [
     "crashkernel=2G-:256M",
     "net.ifnames=0",
     "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
 ]
 included-packages = [
     "cni",
