@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate log;
 
-use constants;
 use nix::unistd::{fork, ForkResult};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
@@ -142,7 +141,7 @@ async fn write_config_files(
             &name, &metadata.template_path
         );
         template_registry
-            .register_template_file(&name, metadata.template_path.as_ref())
+            .register_template_file(name, metadata.template_path.as_ref())
             .context(error::TemplateRegisterSnafu {
                 name: name.as_str(),
                 path: metadata.template_path.as_ref(),
@@ -163,7 +162,13 @@ async fn write_config_files(
 
     // If all the config renders properly, write it to disk
     info!("Writing config files to disk...");
-    config::write_config_files(rendered)?;
+    config::write_config_files(&rendered)?;
+
+    // If we're done with early boot and only working with specific services,
+    // then trigger a reload if necessary.
+    if let RunMode::SpecificKeys = &args.mode {
+        config::reload_config_files(&rendered)?;
+    }
 
     Ok(())
 }

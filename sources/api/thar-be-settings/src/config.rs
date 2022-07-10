@@ -1,10 +1,13 @@
 use crate::service::Services;
 use crate::{error, Result};
 use itertools::join;
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+
+const SYSTEMCTL_DAEMON_RELOAD: &str = "systemctl daemon-reload";
 
 /// Query the API for ConfigurationFile data
 #[allow(clippy::implicit_hasher)]
@@ -75,10 +78,47 @@ pub fn render_config_files(
 }
 
 /// Write all the configuration files to disk
-pub fn write_config_files(rendered_config: Vec<RenderedConfigFile>) -> Result<()> {
-    for cfg in rendered_config {
+pub fn write_config_files(rendered_configs: &[RenderedConfigFile]) -> Result<()> {
+    for cfg in rendered_configs {
         debug!("Writing {:?}", &cfg.path);
         cfg.write_to_disk()?;
+    }
+    Ok(())
+}
+
+/// Run `systemd daemon-reload` if any modified config file requires it.
+pub fn reload_config_files(rendered_configs: &[RenderedConfigFile]) -> Result<()> {
+    if rendered_configs
+        .iter()
+        .any(RenderedConfigFile::needs_reload)
+    {
+        let mut args = SYSTEMCTL_DAEMON_RELOAD.split(' ');
+        let program = args.next().expect("failed to split on space");
+        trace!("Command: {}", &program);
+        trace!("Args: {:?}", &args);
+
+        let result = Command::new(program).args(args).output().context(
+            error::CommandExecutionFailureSnafu {
+                command: SYSTEMCTL_DAEMON_RELOAD,
+            },
+        )?;
+
+        // If the reload command exited nonzero, call it a failure
+        ensure!(
+            result.status.success(),
+            error::FailedReloadCommandSnafu {
+                command: SYSTEMCTL_DAEMON_RELOAD,
+                stderr: String::from_utf8_lossy(&result.stderr),
+            }
+        );
+        trace!(
+            "Command stdout: {}",
+            String::from_utf8_lossy(&result.stdout)
+        );
+        trace!(
+            "Command stderr: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
     }
     Ok(())
 }
@@ -112,6 +152,11 @@ impl RenderedConfigFile {
             path: &self.path,
             pathtype: "file",
         })
+    }
+
+    /// Checks whether the config file needs `systemd` to reload.
+    fn needs_reload(&self) -> bool {
+        self.path.to_string_lossy().starts_with("/etc/systemd/")
     }
 }
 
