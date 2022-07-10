@@ -9,7 +9,6 @@ configuration-files = [
   "proxy-env",
 ]
 restart-commands = [
-  "/usr/bin/systemctl daemon-reload",
   "/usr/bin/systemctl try-restart kubelet.service"
 ]
 
