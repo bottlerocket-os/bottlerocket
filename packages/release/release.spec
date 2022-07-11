@@ -17,6 +17,7 @@ Source200: motd.template
 Source201: proxy-env
 Source202: hostname-env
 Source203: hosts.template
+Source204: modprobe-conf.template
 
 Source1001: multi-user.target
 Source1002: configured.target
@@ -165,6 +166,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/hostname-env
 install -p -m 0644 %{S:203} %{buildroot}%{_cross_templatedir}/hosts
+install -p -m 0644 %{S:204} %{buildroot}%{_cross_templatedir}/modprobe-conf
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
@@ -213,6 +215,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}
+%{_cross_templatedir}/modprobe-conf
 %{_cross_templatedir}/motd
 %{_cross_templatedir}/proxy-env
 %{_cross_templatedir}/hostname-env

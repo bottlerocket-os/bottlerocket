@@ -41,6 +41,12 @@ pub mod error {
         ))]
         InvalidBootconfigValue { input: String },
 
+        #[snafu(display(
+            "Kernel module keys may only contain ASCII alphanumerics plus hyphens and underscores, received '{}'",
+            input
+        ))]
+        InvalidKmodKey { input: String },
+
         #[snafu(display("Given invalid URL '{}'", input))]
         InvalidUrl { input: String },
 

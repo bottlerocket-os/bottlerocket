@@ -1,0 +1,7 @@
+{{#if settings.kernel.modules}}
+{{#each settings.kernel.modules}}
+{{#unless this.allowed }}
+install {{@key}} /bin/true
+{{/unless}}
+{{/each}}
+{{/if}}
