@@ -39,6 +39,11 @@ To send us a pull request, please:
 
 GitHub provides additional documentation on [forking a repository](https://help.github.com/articles/fork-a-repo/) and [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
+## Repo branch and tag structure 
+
+Active development occurs under the `develop` branch.
+
+Bottlerocket uses both tags and branches for release alignment. Numbered releases are always associated with [tags that mirror the full SemVer 3-digit version number](https://github.com/bottlerocket-os/bottlerocket/tags) (e.g. `1.7.2`). [Branches are for patching only](https://github.com/bottlerocket-os/bottlerocket/branches/all): if a patch is required, a branch will be cut for that minor release line (e.g. `1.7.x`). As a consequence, some previous minor versions may not have a branch if they never required a subsequent patch.
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on.
