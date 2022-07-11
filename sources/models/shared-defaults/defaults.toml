@@ -117,7 +117,7 @@ path = "/etc/chrony.conf"
 template-path = "/usr/share/templates/chrony-conf"
 
 [metadata.settings.ntp]
-affected-services = ["chronyd"]
+affected-services = ["ntp"]
 
 # Kernel
 

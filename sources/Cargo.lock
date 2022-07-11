@@ -2181,6 +2181,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ntp-affected-services"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "num"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
