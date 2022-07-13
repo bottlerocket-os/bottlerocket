@@ -60,6 +60,11 @@ skip = [
     # older version used by clap 2.34.0, via cargo-readme
     { name = "strsim", version = "0.8.0" },
 
+    # newer version used by clap 3.x in shibaken
+    # older version used by clap 2.34.0, via cargo-readme
+    { name = "textwrap", version = "0.11.0" },
+    { name = "clap", version = "2.34.0" },
+
     # older version used by chrono 0.4.19
     { name = "time", version = "0.1.43" },
 ]

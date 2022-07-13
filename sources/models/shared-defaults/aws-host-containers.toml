@@ -7,7 +7,7 @@ setting-generator = "schnauzer settings.host-containers.admin.source"
 template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.9.0"
 
 [metadata.settings.host-containers.admin.user-data]
-setting-generator = "shibaken"
+setting-generator = "shibaken generate-admin-userdata"
 
 [settings.host-containers.control]
 enabled = true

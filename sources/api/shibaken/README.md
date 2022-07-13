@@ -6,8 +6,11 @@ Current version: 0.1.0
 
 shibaken is called by sundog as a setting generator.
 
-shibaken will fetch and populate the admin container's user-data with authorized ssh keys from the
-AWS instance metadata service (IMDS).
+shibaken is used to fetch data from the instance metadata service (IMDS) in AWS.
+
+shibaken can:
+* Fetch and populate the admin container's user-data with authorized ssh keys from the IMDS.
+* Perform boolean queries about the AWS partition in which the host is located.
 
 (The name "shibaken" comes from the fact that Shiba are small, but agile, hunting dogs.)
 
