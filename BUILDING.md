@@ -174,7 +174,12 @@ cargo make -e PUBLISH_REGIONS=your-region-here -e BUILDSYS_VARIANT=my-variant-he
 
 ## Use your image
 
-See the [setup guide for Kubernetes](QUICKSTART-EKS.md) or the [setup guide for Amazon ECS](QUICKSTART-ECS.md) for information on running Bottlerocket images.
+See any of the setup guides tailored to the various execution environments for information on running Bottlerocket images:
+
+* [Setup guide for Kubernetes](QUICKSTART-EKS.md)
+* [Setup guide for Amazon ECS](QUICKSTART-ECS.md)
+* [Setup guide for VMware](QUICKSTART-VMWARE.md)
+* [Setup guide for QEMU/KVM](QUICKSTART-LOCAL.md)
 
 ## Publish your image
 
