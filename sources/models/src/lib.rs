@@ -162,13 +162,13 @@ use crate::de::{deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, DNSDomain,
     ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
-    EtcHostsEntries, FriendlyVersion, Identifier, KubernetesAuthenticationMode,
-    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterDnsIp,
-    KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
-    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
-    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, PemCertificateString,
-    SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64,
-    ValidLinuxHostname,
+    EtcHostsEntries, FriendlyVersion, Identifier, ImageGCHighThresholdPercent,
+    ImageGCLowThresholdPercent, KubernetesAuthenticationMode, KubernetesBootstrapToken,
+    KubernetesCloudProvider, KubernetesClusterDnsIp, KubernetesClusterName,
+    KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
+    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
+    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey,
+    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -218,6 +218,8 @@ struct KubernetesSettings {
     topology_manager_scope: TopologyManagerScope,
     topology_manager_policy: TopologyManagerPolicy,
     pod_pids_limit: i64,
+    image_gc_high_threshold_percent: ImageGCHighThresholdPercent,
+    image_gc_low_threshold_percent: ImageGCLowThresholdPercent,
     provider_id: Url,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a

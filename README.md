@@ -411,6 +411,8 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.topology-manager-policy`: Specifies the topology manager policy. Possible values are `none`, `restricted`, `best-effort`, and `single-numa-node`. Defaults to `none`.
 * `settings.kubernetes.topology-manager-scope`: Specifies the topology manager scope. Possible values are `container` and `pod`. Defaults to `container`. If you want to group all containers in a pod to a common set of NUMA nodes, you can set this setting to `pod`.
 * `settings.kubernetes.pod-pids-limit`: The maximum number of processes per pod.
+* `settings.kubernetes.image-gc-high-threshold-percent`: The percent of disk usage after which image garbage collection is always run.
+* `settings.kubernetes.image-gc-low-threshold-percent`: The percent of disk usage before which image garbage collection is never run.
 * `settings.kubernetes.provider-id`: This sets the unique ID of the instance that an external provider (i.e. cloudprovider) can use to identify a specific node.
 
 You can also optionally specify static pods for your node with the following settings.

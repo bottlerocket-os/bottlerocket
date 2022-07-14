@@ -128,6 +128,18 @@ pub mod error {
             input: String,
             source: serde_plain::Error,
         },
+
+        #[snafu(display("Invalid imageGCHighThresholdPercent '{}': {}", input, msg))]
+        InvalidImageGCHighThresholdPercent { input: String, msg: String },
+
+        #[snafu(display("Invalid imageGCLowThresholdPercent '{}': {}", input, msg))]
+        InvalidImageGCLowThresholdPercent { input: String, msg: String },
+
+        #[snafu(display("Could not parse '{}' as an integer", input))]
+        ParseInt {
+            input: String,
+            source: std::num::ParseIntError,
+        },
     }
 }
 
