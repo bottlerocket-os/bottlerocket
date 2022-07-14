@@ -137,7 +137,7 @@ If you run `cargo make test` for a variant that is not yet enabled, it will prin
 Check back here and follow the issues relevant to your variant of interest.
 
 - `aws-k8s` conformance testing is working!
-- `aws-ecs`: https://github.com/bottlerocket-os/bottlerocket/issues/2150
+- `aws-ecs`: quick and migration testing are working!
 - `vmware-k8s`: https://github.com/bottlerocket-os/bottlerocket/issues/2151
 - `metal-k8s`: https://github.com/bottlerocket-os/bottlerocket/issues/2152
 
@@ -153,18 +153,18 @@ You will need to delete the EKS cluster manually when you are done using it.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT=aws-k8s-1.21 \
+  -e BUILDSYS_VARIANT="aws-k8s-1.21" \
   -e BUILDSYS_ARCH="x86_64" \
   build
   
 cargo make \
-  -e BUILDSYS_VARIANT=aws-k8s-1.21 \
+  -e BUILDSYS_VARIANT="aws-k8s-1.21" \
   -e BUILDSYS_ARCH="x86_64" \
   -e PUBLISH_REGIONS="us-west-2"
   ami
  
 cargo make \
-  -e BUILDSYS_VARIANT=aws-k8s-1.21 \
+  -e BUILDSYS_VARIANT="aws-k8s-1.21" \
   -e BUILDSYS_ARCH="x86_64" \
   test
 ```
@@ -172,6 +172,37 @@ cargo make \
 ```shell
 cargo make watch-test
 ```
+
+### aws-ecs
+
+You need to [build](BUILDING.md) Bottlerocket and create an AMI before you can run a test. 
+The default instance type to be used is `m5.large` for `x86_64` and `m6g.large` for `aarch64`, but can be controlled by setting the environment variable `TESTSYS_INSTANCE_TYPE`.
+This is useful while testing NVIDIA variants, since they require instance types with support for NVIDIA GPUs.
+Change the commands below to the desired `aws-ecs` variant and AWS region:
+
+```shell
+cargo make \
+  -e BUILDSYS_VARIANT="aws-ecs-1" \
+  -e BUILDSYS_ARCH="x86_64" \
+  build
+  
+cargo make \
+  -e BUILDSYS_VARIANT="aws-ecs-1" \
+  -e BUILDSYS_ARCH="x86_64" \
+  -e PUBLISH_REGIONS="us-west-2"
+  ami
+ 
+cargo make \
+  -e BUILDSYS_VARIANT="aws-ecs-1" \
+  -e BUILDSYS_ARCH="x86_64" \
+  test
+```
+
+```shell
+cargo make watch-test
+```
+
+**Note:** For more information on publishing AMIs see [publishing](PUBLISHING.md).
 
 ## Migration Testing
 
@@ -219,7 +250,8 @@ WORKING_BRANCH="develop"
 git checkout "${WORKING_BRANCH}"
 ```
 
-Next, build Bottlerocket images and repos and sync TUF repos.
+Next, build Bottlerocket images and repos and sync TUF repos. 
+The architecture and variant can be configured with `BUILDSYS_ARCH` and `BUILDSYS_VARIANT`.
 
 ```shell
 cargo make
@@ -237,7 +269,8 @@ The previous steps set up the artifacts necessary to perform migration testing u
 Ensure all environment variables are still set and set them if they aren't.
 
 To run the migration test set `TESTSYS_TEST=migration` in the `cargo make test` call. 
-This will automatically determine the ami that should be used by finding the latest released version of bottlerocket and checking the user's AMIs to find the correct starting AMI ID.
+This will automatically determine the AMI that should be used by finding the latest released version of bottlerocket and checking the user's AMIs to find the correct starting AMI ID. 
+Remember to set the environment variables for the architecture and variant.
 
 ```shell
 cargo make -e TESTSYS_TEST=migration test
