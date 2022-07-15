@@ -1,0 +1,7 @@
+[metadata.settings.updates.targets-base-url]
+setting-generator = "schnauzer settings.updates.targets-base-url"
+template = "{{ tuf-prefix settings.aws.region }}/targets/"
+
+[metadata.settings.updates.metadata-base-url]
+setting-generator = "schnauzer settings.updates.metadata-base-url"
+template = "{{ tuf-prefix settings.aws.region }}{{ metadata-prefix settings.aws.region }}/2020-07-07/{{ os.variant_id }}/{{ os.arch }}/"

@@ -93,6 +93,18 @@ const PAUSE_FALLBACK_REGISTRY: &str = "602401143452";
 const PAUSE_FALLBACK_REGION: &str = "us-east-1";
 
 lazy_static! {
+    /// A map to tell us which endpoint to pull updates from for a given region.
+    static ref TUF_ENDPOINT_MAP: HashMap<&'static str, &'static str> = {
+        let mut m = HashMap::new();
+        m.insert("cn-north-1", "bottlerocket-updates-cn-north-1.s3.dualstack");
+        m.insert("cn-northwest-1", "bottlerocket-updates-cn-northwest-1.s3.dualstack");
+        m
+    };
+}
+
+const TUF_PUBLIC_REPOSITORY: &str = "https://updates.bottlerocket.aws";
+
+lazy_static! {
     /// A map to tell us the partition for a given non-standard region.
     static ref ALT_PARTITION_MAP: HashMap<&'static str, &'static str> = {
         let mut m = HashMap::new();
@@ -131,17 +143,17 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum TemplateHelperError {
+        #[snafu(display("Expected an AWS region, got '{}' in template {}", value, template))]
+        AwsRegion {
+            value: handlebars::JsonValue,
+            template: String,
+        },
+
         #[snafu(display(
             "Expected ecr helper to be called with either 'registry' or 'region', got '{}'",
             value,
         ))]
         EcrParam { value: String },
-
-        #[snafu(display("Expected an AWS region, got '{}' in template {}", value, template))]
-        EcrRegion {
-            value: handlebars::JsonValue,
-            template: String,
-        },
 
         #[snafu(display(
             "Incorrect number of params provided to helper '{}' in template '{}' - {} expected, {} received",
@@ -667,7 +679,7 @@ pub fn ecr_prefix(
     // get the region parameter, which is probably given by the template value
     // settings.aws.region. regardless, we expect it to be a string.
     let aws_region = get_param(helper, 0)?;
-    let aws_region = aws_region.as_str().with_context(|| error::EcrRegionSnafu {
+    let aws_region = aws_region.as_str().with_context(|| error::AwsRegionSnafu {
         value: aws_region.to_owned(),
         template: template_name,
     })?;
@@ -720,7 +732,7 @@ pub fn pause_prefix(
     // get the region parameter, which is probably given by the template value
     // settings.aws.region. regardless, we expect it to be a string.
     let aws_region = get_param(helper, 0)?;
-    let aws_region = aws_region.as_str().with_context(|| error::EcrRegionSnafu {
+    let aws_region = aws_region.as_str().with_context(|| error::AwsRegionSnafu {
         value: aws_region.to_owned(),
         template: template_name,
     })?;
@@ -730,6 +742,98 @@ pub fn pause_prefix(
 
     // write it to the template
     out.write(&pause_registry)
+        .with_context(|_| error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
+/// The `tuf-prefix` helper is used to map an AWS region to the correct TUF
+/// repository.
+///
+/// This helper takes the AWS region as its only parameter, and returns the
+/// fully qualified domain name to the correct TUF repository.
+///
+/// # Fallback
+///
+/// A map of region to TUF repository endpoint is maintained herein. But if we
+/// do not have the region in our map, a fallback repository is returned. This
+/// would allow a version of Bottlerocket to run in a new region before this map
+/// has been updated.
+///
+/// # Example
+///
+/// In this example the repository endpoint for the region will be returned.
+/// `{{ tuf-prefix settings.aws.region }}`
+///
+/// This would result in something like:
+/// `https://bottlerocket-updates-us-west-2.s3.dualstack.us-west-2.amazonaws.com/latest`
+pub fn tuf_prefix(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting tuf helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 1)?;
+
+    // get the region parameter, which is probably given by the template value
+    // settings.aws.region. regardless, we expect it to be a string.
+    let aws_region = get_param(helper, 0)?;
+    let aws_region = aws_region.as_str().with_context(|| error::AwsRegionSnafu {
+        value: aws_region.to_owned(),
+        template: template_name,
+    })?;
+
+    // construct the registry fqdn
+    let tuf_repository = tuf_repository(aws_region);
+
+    // write it to the template
+    out.write(&tuf_repository)
+        .with_context(|_| error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
+/// The `metadata-prefix` helper is used to map an AWS region to the correct
+/// metadata location inside of the TUF repository.
+///
+/// This helper takes the AWS region as its only parameter, and returns the
+/// prefix of the metadata.
+///
+pub fn metadata_prefix(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting tuf helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 1)?;
+
+    // get the region parameter, which is probably given by the template value
+    // settings.aws.region. regardless, we expect it to be a string.
+    let aws_region = get_param(helper, 0)?;
+    let aws_region = aws_region.as_str().with_context(|| error::AwsRegionSnafu {
+        value: aws_region.to_owned(),
+        template: template_name,
+    })?;
+
+    // construct the prefix
+    let metadata_location = if TUF_ENDPOINT_MAP.contains_key(aws_region) {
+        "/metadata"
+    } else {
+        ""
+    };
+
+    // write it to the template
+    out.write(metadata_location)
         .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
@@ -1266,6 +1370,24 @@ fn pause_registry<S: AsRef<str>>(region: S) -> String {
     }
 }
 
+/// Constructs the fully qualified domain name for the TUF repository for the
+/// given region. Returns a default if the region is not mapped.
+fn tuf_repository<S: AsRef<str>>(region: S) -> String {
+    // lookup the repository endpoint or fallback to the public url
+    let (region, endpoint) = match TUF_ENDPOINT_MAP.borrow().get(region.as_ref()) {
+        None => (return TUF_PUBLIC_REPOSITORY.to_string()),
+        Some(endpoint) => (region.as_ref(), *endpoint),
+    };
+    let partition = match ALT_PARTITION_MAP.borrow().get(region) {
+        None => (STANDARD_PARTITION),
+        Some(partition) => *partition,
+    };
+    match partition {
+        "aws-cn" => format!("https://{}.{}.amazonaws.com.cn/latest", endpoint, region),
+        _ => format!("https://{}.{}.amazonaws.com/latest", endpoint, region),
+    }
+}
+
 /// Calculates and returns the amount of CPU to reserve
 fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError> {
     let num_cores =
@@ -1763,6 +1885,67 @@ mod test_pause_registry {
     fn url_china() {
         let result = setup_and_render_template(
             CONTAINER_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "cn-north-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_CN_NORTH_1);
+    }
+}
+
+#[cfg(test)]
+mod test_tuf_repository {
+    use super::*;
+    use handlebars::RenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
+    where
+        T: Serialize,
+    {
+        let mut repository = Handlebars::new();
+        repository.register_helper("tuf-prefix", Box::new(tuf_prefix));
+        repository.register_helper("metadata-prefix", Box::new(metadata_prefix));
+
+        repository.render_template(tmpl, data)
+    }
+
+    const METADATA_TEMPLATE: &str =
+        "{{ tuf-prefix settings.aws.region }}{{ metadata-prefix settings.aws.region }}/2020-07-07/";
+
+    const EXPECTED_URL_AF_SOUTH_1: &str = "https://updates.bottlerocket.aws/2020-07-07/";
+
+    const EXPECTED_URL_XY_ZTOWN_1: &str = "https://updates.bottlerocket.aws/2020-07-07/";
+
+    const EXPECTED_URL_CN_NORTH_1: &str =
+        "https://bottlerocket-updates-cn-north-1.s3.dualstack.cn-north-1.amazonaws.com.cn/latest/metadata/2020-07-07/";
+
+    #[test]
+    fn url_af_south_1() {
+        let result = setup_and_render_template(
+            METADATA_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "af-south-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_AF_SOUTH_1);
+    }
+
+    #[test]
+    fn url_fallback() {
+        let result = setup_and_render_template(
+            METADATA_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "xy-ztown-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_XY_ZTOWN_1);
+    }
+
+    #[test]
+    fn url_cn_north_1() {
+        let result = setup_and_render_template(
+            METADATA_TEMPLATE,
             &json!({"settings": {"aws": {"region": "cn-north-1"}}}),
         )
         .unwrap();
