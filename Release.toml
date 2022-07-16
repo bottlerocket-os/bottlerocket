@@ -135,4 +135,5 @@ version = "1.8.0"
     "migrate_v1.9.0_shibaken-admin-userdata-semantics.lz4",
     "migrate_v1.9.0_shibaken-send-metrics.lz4",
     "migrate_v1.9.0_image-gc-thresholds.lz4",
+    "migrate_v1.9.0_kubelet-no-daemon-reload.lz4",
 ]

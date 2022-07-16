@@ -30,6 +30,9 @@ pub enum Error {
     #[snafu(display("Failed to run restart command - '{}': {}", command, source))]
     CommandExecutionFailure { command: String, source: io::Error },
 
+    #[snafu(display("Reload command failed - '{}': {}", command, stderr))]
+    FailedReloadCommand { command: String, stderr: String },
+
     #[snafu(display("Restart command failed - '{}': {}", command, stderr))]
     FailedRestartCommand { command: String, stderr: String },
 
