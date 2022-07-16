@@ -16,6 +16,7 @@ Bottlerocket-specific additions focus on reliable updates and on the API.
 Instead of making configuration changes manually, you can change settings with an API call, and these changes are automatically migrated through updates.
 
 Some notable features include:
+
 * [API access](#api) for configuring your system, with secure out-of-band [access methods](#exploration) when you need them.
 * [Updates](#updates) based on partition flips, for fast and reliable system updates.
 * [Modeled configuration](#settings) that's automatically migrated through updates.
@@ -51,39 +52,39 @@ For example, an `x86_64` build of the `aws-k8s-1.21` variant will produce an ima
 
 The following variants support EKS, as described above:
 
-- `aws-k8s-1.19`
-- `aws-k8s-1.20`
-- `aws-k8s-1.21`
-- `aws-k8s-1.22`
-- `aws-k8s-1.23`
-- `aws-k8s-1.21-nvidia`
-- `aws-k8s-1.22-nvidia`
-- `aws-k8s-1.23-nvidia`
+* `aws-k8s-1.19`
+* `aws-k8s-1.20`
+* `aws-k8s-1.21`
+* `aws-k8s-1.22`
+* `aws-k8s-1.23`
+* `aws-k8s-1.21-nvidia`
+* `aws-k8s-1.22-nvidia`
+* `aws-k8s-1.23-nvidia`
 
 The following variants support ECS:
 
-- `aws-ecs-1`
-- `aws-ecs-1-nvidia`
+* `aws-ecs-1`
+* `aws-ecs-1-nvidia`
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
-- `vmware-k8s-1.20`
-- `vmware-k8s-1.21`
-- `vmware-k8s-1.22`
-- `vmware-k8s-1.23`
+* `vmware-k8s-1.20`
+* `vmware-k8s-1.21`
+* `vmware-k8s-1.22`
+* `vmware-k8s-1.23`
 
 The following variants are designed to be Kubernetes worker nodes on bare metal:
 
-- `metal-k8s-1.21`
-- `metal-k8s-1.22`
-- `metal-k8s-1.23`
+* `metal-k8s-1.21`
+* `metal-k8s-1.22`
+* `metal-k8s-1.23`
 
 The following variants are no longer supported:
 
-- `aws-k8s-1.15`
-- `aws-k8s-1.16`
-- `aws-k8s-1.17`
-- `aws-k8s-1.18`
+* `aws-k8s-1.15`
+* `aws-k8s-1.16`
+* `aws-k8s-1.17`
+* `aws-k8s-1.18`
 
 We recommend users replace nodes running these variants with the [latest variant compatible with their cluster](variants/).
 
@@ -100,6 +101,7 @@ To get started with Kubernetes in Amazon EKS, please see [QUICKSTART-EKS](QUICKS
 To get started with Kubernetes in VMware, please see [QUICKSTART-VMWARE](QUICKSTART-VMWARE.md).
 To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
 These guides describe:
+
 * how to set up a cluster with the orchestrator, so your Bottlerocket instance can run containers
 * how to launch a Bottlerocket instance in EC2 or VMware
 
@@ -107,11 +109,13 @@ To see how to provision Bottlerocket on bare metal, see [PROVISIONING-METAL](PRO
 
 To build your own Bottlerocket images, please see [BUILDING](BUILDING.md).
 It describes:
+
 * how to build an image
 * how to register an EC2 AMI from an image
 
 To publish your built Bottlerocket images, please see [PUBLISHING](PUBLISHING.md).
 It describes:
+
 * how to make TUF repos including your image
 * how to copy your AMI across regions
 * how to mark your AMIs public or grant access to specific accounts
@@ -228,24 +232,29 @@ You can read more about the update APIs in our [update system documentation](sou
 apiclient knows how to handle those update APIs for you, and you can run it from the [control](#control-container) or [admin](#admin-container) containers.
 
 To see what updates are available:
+
 ```
 apiclient update check
 ```
+
 If an update is available, it will show up in the `chosen_update` field.
 The `available_updates` field will show the full list of available versions, including older versions, because Bottlerocket supports safely rolling back.
 
 To apply the latest update:
+
 ```
 apiclient update apply
 ```
 
 The next time you reboot, you'll start up in the new version, and system configuration will be automatically [migrated](sources/api/migration/).
 To reboot right away:
+
 ```
 apiclient reboot
 ```
 
 If you're confident about updating, the `apiclient update apply` command has `--check` and `--reboot` flags to combine the above actions, so you can accomplish all of the above steps like this:
+
 ```
 apiclient update apply --check --reboot
 ```
@@ -275,17 +284,20 @@ Here we'll describe the settings you can configure on your Bottlerocket instance
 #### Using the API client
 
 You can see the current settings with an API request:
+
 ```
 apiclient get settings
 ```
 
 This will return all of the current settings in JSON format.
 For example, here's an abbreviated response:
+
 ```
 {"motd":"...", {"kubernetes": ...}}
 ```
 
 You can change settings like this:
+
 ```
 apiclient set motd="hi there" kubernetes.node-labels.environment=test
 ```
@@ -335,17 +347,21 @@ For more details about running Bottlerocket as a Kubernetes worker node in VMwar
 
 The following settings must be specified in order to join a Kubernetes cluster.
 You should [specify them in user data](#using-user-data).
+
 * `settings.kubernetes.cluster-certificate`: This is the base64-encoded certificate authority of the cluster.
 * `settings.kubernetes.api-server`: This is the cluster's Kubernetes API endpoint.
 
 For Kubernetes variants in AWS, you must also specify:
+
 * `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART-EKS.md) uses "bottlerocket".
 
 For Kubernetes variants in VMware, you must specify:
+
 * `settings.kubernetes.cluster-dns-ip`: The IP of the DNS service running in the cluster.
 
   This value can be set as a string containing a single IP address, or as a list containing multiple IP addresses.
   Examples:
+
   ```
   # Valid, single IP
   [settings.kubernetes]
@@ -359,9 +375,11 @@ For Kubernetes variants in VMware, you must specify:
 * `settings.kubernetes.bootstrap-token`: The token used for [TLS bootstrapping](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/).
 
 The following settings can be optionally set to customize the node labels and taints. Remember to quote keys (since they often contain ".") and to quote all values.
+
 * `settings.kubernetes.node-labels`: [Labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) in the form of key, value pairs added when registering the node in the cluster.
 * `settings.kubernetes.node-taints`: [Taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) in the form of key, values and effects entries added when registering the node in the cluster.
   * Example user data for setting up labels and taints:
+
     ```
     [settings.kubernetes.node-labels]
     "label1" = "foo"
@@ -372,6 +390,7 @@ The following settings can be optionally set to customize the node labels and ta
     ```
 
 The following settings are optional and allow you to further configure your cluster.
+
 * `settings.kubernetes.cluster-domain`: The DNS domain for this cluster, allowing all Kubernetes-run containers to search this domain before the host's search domains.  Defaults to `cluster.local`.
 * `settings.kubernetes.standalone-mode`: Whether to run the kubelet in standalone mode, without connecting to an API server.  Defaults to `false`.
 * `settings.kubernetes.cloud-provider`: The cloud provider for this cluster. Defaults to `aws` for AWS variants, and `external` for other variants.
@@ -381,23 +400,29 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.eviction-hard`: The signals and thresholds that trigger pod eviction.
   Remember to quote signals (since they all contain ".") and to quote all values.
   * Example user data for setting up eviction hard:
+
     ```
     [settings.kubernetes.eviction-hard]
     "memory.available" = "15%"
     ```
+
 * `settings.kubernetes.allowed-unsafe-sysctls`: Enables specified list of unsafe sysctls.
   * Example user data for setting up allowed unsafe sysctls:
+
     ```
     allowed-unsafe-sysctls = ["net.core.somaxconn", "net.ipv4.ip_local_port_range"]
     ```
+
 * `settings.kubernetes.system-reserved`: Resources reserved for system components.
   * Example user data for setting up system reserved:
+
     ```
     [settings.kubernetes.system-reserved]
     cpu = "10m"
     memory = "100Mi"
     ephemeral-storage= "1Gi"
     ```
+
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
 * `settings.kubernetes.event-qps`: The maximum event creations per second.
@@ -415,6 +440,7 @@ The following settings are optional and allow you to further configure your clus
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.
+
 * `settings.kubernetes.static-pods.<custom identifier>.manifest`: A base64-encoded pod manifest.
 * `settings.kubernetes.static-pods.<custom identifier>.enabled`: Whether the static pod is enabled.
 
@@ -422,6 +448,7 @@ For Kubernetes variants in AWS and VMware, the following are set for you automat
 In AWS, [pluto](sources/api/) sets these based on runtime instance information.
 In VMware and on bare metal, Bottlerocket uses [netdog](sources/api/) (for `node-ip`) or relies on default values.
 (See the [VMware defaults](sources/models/src/vmware-k8s-1.23/defaults.d) or [bare metal defaults](sources/models/src/metal-k8s-1.23/defaults.d)).
+
 * `settings.kubernetes.node-ip`: The IP address of this node.
 * `settings.kubernetes.pod-infra-container-image`: The URI of the "pause" container.
 * `settings.kubernetes.kube-reserved`: Resources reserved for node components.
@@ -431,6 +458,7 @@ In VMware and on bare metal, Bottlerocket uses [netdog](sources/api/) (for `node
     * `ephemeral-storage`: defaults to `1Gi`.
 
 For Kubernetes variants in AWS, the following settings are set for you automatically by [pluto](sources/api/).
+
 * `settings.kubernetes.max-pods`: The maximum number of pods that can be scheduled on this node (limited by number of available IPv4 addresses)
 * `settings.kubernetes.cluster-dns-ip`: Derived from the EKS Service IP CIDR or the CIDR block of the primary network interface.
 
@@ -440,10 +468,12 @@ See the [setup guide](QUICKSTART-ECS.md) for much more detail on setting up Bott
 
 The following settings are optional and allow you to configure how your instance joins an ECS cluster.
 Since joining a cluster happens at startup, they need to be [specified in user data](#using-user-data).
+
 * `settings.ecs.cluster`: The name or [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) of your Amazon ECS cluster.
   If left unspecified, Bottlerocket will join your `default` cluster.
 * `settings.ecs.instance-attributes`: [Attributes](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-placement-constraints.html#attributes) in the form of key, value pairs added when registering the container instance in the cluster.
   * Example user data for setting up attributes:
+
     ```
     [settings.ecs.instance-attributes]
     attribute1 = "foo"
@@ -452,6 +482,7 @@ Since joining a cluster happens at startup, they need to be [specified in user d
 
 The following settings are optional and allow you to further configure your cluster.
 These settings can be changed at any time.
+
 * `settings.ecs.logging-drivers`: The list of logging drivers available on the container instance.
   The ECS agent running on a container instance must register available logging drivers before tasks that use those drivers are eligible to be placed on the instance.
   Bottlerocket enables the `json-file`, `awslogs`, and `none` drivers by default.
@@ -463,14 +494,17 @@ These settings can be changed at any time.
 * `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
 * `settings.ecs.image-pull-behavior`: The behavior used to customize the [pull image process](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-agent-config.html#ecs-agent-availparam) for your container instances.
   Supported values are `default`, `always`, `once`, `prefer-cached`, and the default is `default`.
+
 #### CloudFormation signal helper settings
 
 For AWS variants, these settings allow you to set up CloudFormation signaling to indicate whether Bottlerocket hosts running in EC2 have been successfully created or updated:
+
 * `settings.cloudformation.should-signal`: Whether to check status and send signal. Defaults to `false`. If set to `true`, both `stack-name` and `logical-resource-id` need to be specified.
 * `settings.cloudformation.stack-name`: Name of the CloudFormation Stack to signal.
 * `settings.cloudformation.logical-resource-id`: The logical ID of the AutoScalingGroup resource that you want to signal.
 
 #### Auto Scaling group settings
+
 * `settings.autoscaling.should-wait`: Whether to wait for the instance to reach the `InService` state before the orchestrator agent joins the cluster. Defaults to `false`. Set this to `true` only if the instance is part of an Auto Scaling group, or will be attached to one later.
 
 #### OCI Hooks settings
@@ -483,10 +517,12 @@ Once you opt-in to use additional OCI hooks, any new orchestrated containers wil
 #### Container image registry settings
 
 The following setting is optional and allows you to configure image registry mirrors and pull-through caches for your containers.
+
 * `settings.container-registry.mirrors`: An array of container image registry mirror settings.  Each element specifies the registry and the endpoints for said registry.
 When pulling an image from a registry, the container runtime will try the endpoints one by one and use the first working one.
   (Docker and containerd will still try the default registry URL if the mirrors fail.)
   * Example user data for setting up image registry mirrors:
+
   ```
   [[settings.container-registry.mirrors]]
   registry = "*"
@@ -496,15 +532,18 @@ When pulling an image from a registry, the container runtime will try the endpoi
   registry = "docker.io"
   endpoint = [ "https://<my-docker-hub-mirror-host>", "https://<my-docker-hub-mirror-host-2>"]
   ```
+
   If you use a Bottlerocket variant that uses Docker as the container runtime, like `aws-ecs-1`, you should be aware that Docker only supports pull-through caches for images from Docker Hub (docker.io).  Mirrors for other registries are ignored in this case.
 
 For [host-container](#host-containers-settings) and [bootstrap-container](#bootstrap-containers-settings) images from Amazon ECR private repositories, registry mirrors are currently unsupported.
 
 The following setting is optional and allows you to configure image registry credentials.
+
 * `settings.container-registry.credentials`: An array of container images registry credential settings. Each element specifies the registry and the credential information for said registry.
 The credential fields map to [containerd's registry credential fields](https://github.com/containerd/containerd/blob/v1.6.0/docs/cri/registry.md#configure-registry-credentials), which in turn map to the fields in `.docker/config.json`.
 It is recommended to programmatically set these settings via `apiclient` through the Bottlerocket control container and/or custom host-containers.
   * An example `apiclient` call to set registry credentials for `gcr.io` and `docker.io` looks like this:
+
   ```bash
   apiclient set --json '{
     "container-registry": {
@@ -522,6 +561,7 @@ It is recommended to programmatically set these settings via `apiclient` through
     }
   }'
   ```
+
 In addition to the container runtime daemons, these credential settings will also apply to [host-container](#host-containers-settings) and [bootstrap-container](#bootstrap-containers-settings) image pulls as well.
 
 #### Updates settings
@@ -545,8 +585,9 @@ In addition to the container runtime daemons, these credential settings will als
    This setting results in modifications to the `/etc/hosts` file  for Bottlerocket.
    Note that this setting does not typically impact name resolution for containers, which usually rely on orchestrator-specific mechanisms for configuring static resolution.
    (See [ECS](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_HostEntry.html) and [Kubernetes](https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/) documentation for those mechanisms.)
-   
+
    Example:
+
    ```toml
    [settings.network]
    hosts = [
@@ -554,11 +595,14 @@ In addition to the container runtime daemons, these credential settings will als
     ["10.1.1.1", ["test2.example.com"]]
    ]
    ```
+
    This example would result in an `/etc/hosts` file entries like so:
+
    ```
    10.0.0.0 test.example.com test1.example.com
    10.1.1.1 test2.example.com
    ```
+
    Repeated entries are merged (including loopback entries), with the first aliases listed taking precedence. e.g.:
 
    ```toml
@@ -569,28 +613,31 @@ In addition to the container runtime daemons, these credential settings will als
     ["10.0.0.0", ["test3.example.com"]],
    ]
    ```
+
    Would result in `/etc/hosts` entries like so:
+
    ```
    10.0.0.0 test.example.com test1.example.com test3.example.com
    10.1.1.1 test2.example.com
    ```
 
-
 ##### Proxy settings
 
 These settings will configure the proxying behavior of the following services:
+
 * For all variants:
-    * [containerd.service](packages/containerd/containerd.service)
-    * [host-containerd.service](packages/host-ctr/host-containerd.service)
+  * [containerd.service](packages/containerd/containerd.service)
+  * [host-containerd.service](packages/host-ctr/host-containerd.service)
 * For Kubernetes variants:
-    * [kubelet.service](packages/kubernetes-1.18/kubelet.service)
+  * [kubelet.service](packages/kubernetes-1.18/kubelet.service)
 * For the ECS variant:
-    * [docker.service](packages/docker-engine/docker.service)
-    * [ecs.service](packages/ecs-agent/ecs.service)
+  * [docker.service](packages/docker-engine/docker.service)
+  * [ecs.service](packages/ecs-agent/ecs.service)
 
 * `settings.network.https-proxy`: The HTTPS proxy server to be used by services listed above.
 * `settings.network.no-proxy`: A list of hosts that are excluded from proxying.
    Example:
+
    ```
    [settings.network]
    https-proxy = "1.2.3.4:8080"
@@ -624,6 +671,7 @@ Here are the metrics settings:
 * `settings.kernel.sysctl`: Key/value pairs representing Linux kernel parameters.
   Remember to quote keys (since they often contain ".") and to quote all values.
   * Example user data for setting up sysctl:
+
     ```
     [settings.kernel.sysctl]
     "user.max_user_namespaces" = "16384"
@@ -635,6 +683,7 @@ Here are the metrics settings:
 *Please note that boot settings only exist for bare-metal variants at the moment*
 
 Specifying either of the following settings will generate a kernel boot config file to be loaded on subsequent boots:
+
 * `settings.boot.kernel-parameters`: This allows additional kernel parameters to be specified on the kernel command line during boot.
 * `settings.boot.init-parameters`: This allows additional init parameters to be specified on the kernel command line during boot.
 
@@ -699,6 +748,7 @@ apiclient set \
 You can use this method from within a [bootstrap container](#bootstrap-containers-settings), if your user data is over the size limit of the platform.
 
 #### Host containers settings
+
 * `settings.host-containers.admin.source`: The URI of the [admin container](#admin-container).
 * `settings.host-containers.admin.enabled`: Whether the admin container is enabled.
 * `settings.host-containers.admin.superpowered`: Whether the admin container has high levels of access to the Bottlerocket host.
@@ -718,6 +768,7 @@ You can optionally define a `user-data` field with arbitrary base64-encoded data
 Keep in mind that the default admin container (since Bottlerocket v1.0.6) relies on `user-data` to store SSH keys.  You can set `user-data` to [customize the keys](https://github.com/bottlerocket-os/bottlerocket-admin-container/#authenticating-with-the-admin-container), or you can use it for your own purposes in a custom container.
 
 Here's an example of adding a custom host container with API calls:
+
 ```
 apiclient set \
    host-containers.custom.source=MY-CONTAINER-URI \
@@ -726,6 +777,7 @@ apiclient set \
 ```
 
 Here's the same example, but with the settings you'd add to user data:
+
 ```
 [settings.host-containers.custom]
 enabled = true
@@ -748,6 +800,7 @@ It's available at `/.bottlerocket/host-containers/$HOST_CONTAINER_NAME` and (sin
 The default `admin` host-container, for example, stores its SSH host keys under `/.bottlerocket/host-containers/admin/etc/ssh/`.
 
 There are a few important caveats to understand about host containers:
+
 * They're not orchestrated.  They only start or stop according to that `enabled` flag.
 * They run in a separate instance of containerd than the one used for orchestrated containers like Kubernetes pods.
 * They're not updated automatically.  You need to update the `source` and commit those changes.
@@ -759,6 +812,7 @@ We use them for the control container because it needs to be available early to 
 Be careful, and make sure you have a similar low-level use case before reaching for host containers.
 
 #### Bootstrap containers settings
+
 * `settings.bootstrap-containers.<name>.source`: the image for the container
 * `settings.bootstrap-containers.<name>.mode`: the mode of the container, it could be one of `off`, `once` or `always`. See below for a description of modes.
 * `settings.bootstrap-containers.<name>.essential`: whether or not the container should fail the boot process, defaults to `false`
@@ -802,6 +856,7 @@ essential = true
 ```
 
 ##### Mount propagations in bootstrap and superpowered containers
+
 Both bootstrap and superpowered host containers are configured with the `/.bottlerocket/rootfs/mnt` bind mount that points to `/mnt` in the host, which itself is a bind mount of `/local/mnt`.
 This bind mount is set up with shared propagations, so any new mount point created underneath `/.bottlerocket/rootfs/mnt` in any bootstrap or superpowered host container will propagate across mount namespaces.
 You can use this feature to configure ephemeral disks attached to your hosts that you may want to use on your workloads.
@@ -853,6 +908,7 @@ There are a few important caveats about the provided kdump support:
 * The crash kernel will only be loaded when the `crashkernel` parameter is present in the kernel's cmdline and if there is memory reserved for it
 
 ### NVIDIA GPUs Support
+
 Bottlerocket's `nvidia` variants include the required packages and configurations to leverage NVIDIA GPUs.
 The official AMIs for these variants can be used with EC2 GPU-equipped instance types such as: `p2`, `p3`, `p4`, `g4dn`, `g5` and `g5g`.
 Please see [QUICKSTART-EKS](QUICKSTART-EKS.md#aws-k8s--nvidia-variants) for further details about Kubernetes variants, and [QUICKSTART-ECS](QUICKSTART-ECS.md#aws-ecs--nvidia-variants) for ECS variants.
@@ -879,6 +935,7 @@ We use RPM package definitions to build and install individual packages into an 
 RPM itself is not in the image - it's just a common and convenient package definition format.
 
 We currently package the following major third-party components:
+
 * Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [packaging](packages/kernel-5.4/))
 * glibc ([background](https://www.gnu.org/software/libc/), [packaging](packages/glibc/))
 * Buildroot as build toolchain ([background](https://buildroot.org/), via the [SDK](https://github.com/bottlerocket-os/bottlerocket-sdk))
@@ -934,6 +991,7 @@ For more details, see the [API system documentation](sources/api/).
 ### Default Volumes
 
 Bottlerocket operates with two default storage volumes.
+
 * The root device, holds the active and passive [partition sets](#updates-1).
   It also contains the bootloader, the dm-verity hash tree for verifying the [immutable root filesystem](SECURITY_FEATURES.md#immutable-rootfs-backed-by-dm-verity), and the data store for the Bottlerocket API.
 * The data device is used as persistent storage for container images, container orchestration, [host-containers](#Custom-host-containers), and [bootstrap containers](#Bootstrap-containers-settings).
