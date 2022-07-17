@@ -39,6 +39,7 @@ Source10: prepare-var-lib-kubelet.service
 # ExecStartPre drop-ins
 Source20: prestart-pull-pause-ctr.conf
 Source21: make-kubelet-dirs.conf
+Source22: load-ipvs-modules.conf
 
 Source1000: clarify.toml
 
@@ -88,7 +89,7 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{S:10} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/kubelet.service.d
-install -p -m 0644 %{S:20} %{S:21} %{buildroot}%{_cross_unitdir}/kubelet.service.d
+install -p -m 0644 %{S:20} %{S:21} %{S:22} %{buildroot}%{_cross_unitdir}/kubelet.service.d
 
 mkdir -p %{buildroot}%{_cross_templatedir}
 install -m 0644 %{S:2} %{buildroot}%{_cross_templatedir}/kubelet-env
@@ -121,6 +122,7 @@ ln -rs \
 %dir %{_cross_unitdir}/kubelet.service.d
 %{_cross_unitdir}/kubelet.service.d/prestart-pull-pause-ctr.conf
 %{_cross_unitdir}/kubelet.service.d/make-kubelet-dirs.conf
+%{_cross_unitdir}/kubelet.service.d/load-ipvs-modules.conf
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/kubelet-env
 %{_cross_templatedir}/kubelet-config
