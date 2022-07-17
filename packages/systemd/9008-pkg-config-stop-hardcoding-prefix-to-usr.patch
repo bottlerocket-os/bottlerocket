@@ -1,7 +1,7 @@
 From dc6abce8797a6a2e63c4ae58218588327e73d4cb Mon Sep 17 00:00:00 2001
 From: Erikson Tung <etung@amazon.com>
 Date: Mon, 3 Jan 2022 22:07:25 +0000
-Subject: [PATCH 9008/9010] pkg-config: stop hardcoding prefix to /usr
+Subject: [PATCH 9008/9011] pkg-config: stop hardcoding prefix to /usr
 
 While we ensure /usr points to the sys-root at runtime, for Bottlerocket's
 packaging we need to be careful to avoid dependencies on the host OS so

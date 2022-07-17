@@ -1,7 +1,7 @@
 From 81808b8ed1259d4d05052b6825d9b560f93098e5 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 12 Nov 2020 16:18:15 +0000
-Subject: [PATCH 9007/9010] journal: disable keyed hashes for compatibility
+Subject: [PATCH 9007/9011] journal: disable keyed hashes for compatibility
 
 Otherwise the journal is not readable by older versions of systemd.
 

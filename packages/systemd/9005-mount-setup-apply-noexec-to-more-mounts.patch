@@ -1,7 +1,7 @@
 From 5a822486905915396d27da85b336f0877e612532 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 28 May 2022 03:49:46 +0000
-Subject: [PATCH 9005/9010] mount-setup: apply noexec to more mounts
+Subject: [PATCH 9005/9011] mount-setup: apply noexec to more mounts
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---

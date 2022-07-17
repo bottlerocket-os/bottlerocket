@@ -1,7 +1,7 @@
 From 2e871585a26b1f107db88a0ec0d9951735a6ec49 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 9 Jul 2020 20:00:36 +0000
-Subject: [PATCH 9006/9010] mount-setup: mount /etc with specific label
+Subject: [PATCH 9006/9011] mount-setup: mount /etc with specific label
 
 The filesystem is mounted after we load the SELinux policy, so we can
 apply the label we need to restrict access.
