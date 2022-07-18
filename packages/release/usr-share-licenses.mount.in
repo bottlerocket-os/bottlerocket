@@ -2,8 +2,8 @@
 Description=License files
 DefaultDependencies=no
 Conflicts=umount.target
-Before=local-fs.target umount.target
-After=local-fs-pre.target
+Before=umount.target
+After=local-fs.target
 
 [Mount]
 What=PREFIX/share/bottlerocket/licenses.squashfs

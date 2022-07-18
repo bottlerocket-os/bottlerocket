@@ -3,7 +3,8 @@ Description=Kernel Development Sources (Read-Write)
 DefaultDependencies=no
 Conflicts=umount.target
 RequiresMountsFor=/var/lib/kernel-devel/.overlay/lower
-Before=local-fs.target umount.target
+Before=umount.target
+After=local-fs.target
 
 [Mount]
 What=overlay
