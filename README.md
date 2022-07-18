@@ -623,6 +623,17 @@ Here are the metrics settings:
   May be set to "none" (the default in older [variants](variants/), up through aws-k8s-1.19), "integrity" (the default for newer [variants](variants/)), or "confidentiality".
   **Important note:** this setting cannot be lowered (toward 'none') at runtime.
   You must reboot for a change to a lower level to take effect.
+* `settings.kernel.modules.<name>.allowed`: Whether the named kernel module is allowed to be loaded.
+  **Important note:** this setting does not affect kernel modules that are already loaded.
+  You may need to reboot for a change to disallow a kernel module to take effect.
+  * Example user data for blocking kernel modules:
+    ```
+    [settings.kernel.modules.sctp]
+    allowed = false
+
+    [settings.kernel.modules.udf]
+    allowed = false
+    ```
 * `settings.kernel.sysctl`: Key/value pairs representing Linux kernel parameters.
   Remember to quote keys (since they often contain ".") and to quote all values.
   * Example user data for setting up sysctl:

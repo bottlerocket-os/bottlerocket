@@ -163,7 +163,7 @@ use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, DNSDomain,
     ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     EtcHostsEntries, FriendlyVersion, Identifier, ImageGCHighThresholdPercent,
-    ImageGCLowThresholdPercent, KubernetesAuthenticationMode, KubernetesBootstrapToken,
+    ImageGCLowThresholdPercent, KmodKey, KubernetesAuthenticationMode, KubernetesBootstrapToken,
     KubernetesCloudProvider, KubernetesClusterDnsIp, KubernetesClusterName,
     KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
     KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
@@ -312,8 +312,15 @@ struct NtpSettings {
 #[model]
 struct KernelSettings {
     lockdown: Lockdown,
+    modules: HashMap<KmodKey, KmodSetting>,
     // Values are almost always a single line and often just an integer... but not always.
     sysctl: HashMap<SysctlKey, String>,
+}
+
+// Kernel module settings
+#[model]
+struct KmodSetting {
+    allowed: bool,
 }
 
 // Kernel boot settings

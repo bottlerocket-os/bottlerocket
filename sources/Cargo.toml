@@ -65,6 +65,8 @@ members = [
     "api/migration/migrations/v1.9.0/shibaken-admin-userdata-semantics",
     "api/migration/migrations/v1.9.0/shibaken-send-metrics",
     "api/migration/migrations/v1.9.0/image-gc-thresholds",
+    "api/migration/migrations/v1.9.0/kernel-modules-setting",
+    "api/migration/migrations/v1.9.0/kernel-modules-setting-metadata",
     "api/migration/migrations/v1.9.0/kubelet-no-daemon-reload",
 
     "bottlerocket-release",

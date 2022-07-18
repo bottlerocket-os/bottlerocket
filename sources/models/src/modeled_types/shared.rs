@@ -1066,3 +1066,66 @@ mod test_valid_pem_certificate_string {
         .is_err())
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KmodKey can only be created by deserializing from a string that contains ASCII
+/// alphanumeric characters, plus hyphens, plus underscores. It stores the original
+/// form and makes it accessible through standard traits. Its purpose is to validate
+/// input that will be treated as a potential kernel module name.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KmodKey {
+    inner: String,
+}
+
+// This limit is based on the kernel definition, and assumes a 64-bit host.
+//   include/linux/module.h
+//     #define MODULE_NAME_LEN MAX_PARAM_PREFIX_LEN
+//   include/linux/moduleparam.h
+//     #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
+const KMOD_KEY_LENGTH: usize = 56;
+
+impl TryFrom<&str> for KmodKey {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        // The kernel allows modules to have any name that's a valid filename,
+        // but real module names seem to be limited to this character set.
+        let valid_key = input
+            .chars()
+            .all(|c| (c.is_ascii() && c.is_alphanumeric()) || c == '-' || c == '_')
+            && input.len() <= KMOD_KEY_LENGTH;
+        ensure!(valid_key, error::InvalidKmodKeySnafu { input });
+        Ok(KmodKey {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KmodKey, "KmodKey");
+
+#[cfg(test)]
+mod test_valid_kmod_key {
+    use super::{KmodKey, KMOD_KEY_LENGTH};
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_kmod_key() {
+        assert!(KmodKey::try_from("kmod").is_ok());
+        assert!(KmodKey::try_from("i8042").is_ok());
+        assert!(KmodKey::try_from("xt_XT").is_ok());
+        assert!(KmodKey::try_from("dm-block").is_ok());
+        assert!(KmodKey::try_from("blowfish-x86_64").is_ok());
+        assert!(KmodKey::try_from(vec!["a"; KMOD_KEY_LENGTH].join("")).is_ok());
+    }
+
+    #[test]
+    fn invalid_kmod_key() {
+        assert!(KmodKey::try_from("../").is_err());
+        assert!(KmodKey::try_from("{}").is_err());
+        assert!(KmodKey::try_from("kernel|Module").is_err());
+        assert!(KmodKey::try_from("kernel\nModule").is_err());
+        assert!(KmodKey::try_from("🐡").is_err());
+        assert!(KmodKey::try_from(vec!["z"; KMOD_KEY_LENGTH + 1].join("")).is_err());
+    }
+}
