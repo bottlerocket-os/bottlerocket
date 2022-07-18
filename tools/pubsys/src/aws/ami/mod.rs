@@ -100,10 +100,13 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let aws = infra_config.aws.unwrap_or_else(|| Default::default());
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
+    // If there is nothing in the config, use the user's default AWS region.
     let mut regions = if !ami_args.regions.is_empty() {
         ami_args.regions.clone()
-    } else {
+    } else if !aws.regions.is_empty() {
         aws.regions.clone().into()
+    } else {
+        vec![Region::default().name().to_string()]
     }
     .into_iter()
     .map(|name| region_from_string(&name, &aws).context(error::ParseRegionSnafu))

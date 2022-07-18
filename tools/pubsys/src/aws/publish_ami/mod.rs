@@ -93,11 +93,15 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     let aws = infra_config.aws.unwrap_or_else(Default::default);
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
+    // If there is nothing in the config, use the user's default AWS region.
     let regions = if !publish_args.regions.is_empty() {
         publish_args.regions.clone()
-    } else {
+    } else if !aws.regions.is_empty() {
         aws.regions.clone().into()
+    } else {
+        vec![Region::default().name().to_string()]
     };
+
     ensure!(
         !regions.is_empty(),
         error::MissingConfigSnafu {
