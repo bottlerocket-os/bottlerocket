@@ -6,6 +6,7 @@ publish = false
 build = "build.rs"
 
 [package.metadata.build-package]
+variant-sensitive = true
 package-name = "kernel-5.10"
 
 [lib]
