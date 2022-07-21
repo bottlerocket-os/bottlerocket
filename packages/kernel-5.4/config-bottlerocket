@@ -34,13 +34,13 @@ CONFIG_EFI_MIXED=y
 CONFIG_SECURITY_YAMA=y
 
 # Do not allow SELinux to be disabled at boot.
-CONFIG_SECURITY_SELINUX_BOOTPARAM=n
+# CONFIG_SECURITY_SELINUX_BOOTPARAM is not set
 
 # Do not allow SELinux to be disabled at runtime.
-CONFIG_SECURITY_SELINUX_DISABLE=n
+# CONFIG_SECURITY_SELINUX_DISABLE is not set
 
 # Do not allow SELinux to use `enforcing=0` behavior.
-CONFIG_SECURITY_SELINUX_DEVELOP=n
+# CONFIG_SECURITY_SELINUX_DEVELOP is not set
 
 # Check the protection applied by the kernel for mmap and mprotect,
 # rather than the protection requested by userspace.
@@ -68,7 +68,7 @@ CONFIG_DEBUG_INFO_BTF=y
 
 # We don't want to extend the kernel command line with any upstream defaults;
 # Bottlerocket uses a fairly custom setup that needs tight control over it.
-CONFIG_CMDLINE_EXTEND=n
+# CONFIG_CMDLINE_EXTEND is not set
 
 # Enable ZSTD kernel image compression
 CONFIG_HAVE_KERNEL_ZSTD=y
@@ -87,31 +87,31 @@ CONFIG_MOUSE_PS2=m
 CONFIG_CHECKPOINT_RESTORE=y
 
 # Disable unused filesystems.
-CONFIG_AFS_FS=n
-CONFIG_CRAMFS=n
-CONFIG_ECRYPT_FS=n
-CONFIG_EXT2_FS=n
-CONFIG_EXT3_FS=n
+# CONFIG_AFS_FS is not set
+# CONFIG_CRAMFS is not set
+# CONFIG_ECRYPT_FS is not set
+# CONFIG_EXT2_FS is not set
+# CONFIG_EXT3_FS is not set
 CONFIG_EXT4_USE_FOR_EXT2=y
-CONFIG_GFS2_FS=n
-CONFIG_HFS_FS=n
-CONFIG_HFSPLUS_FS=n
-CONFIG_JFS_FS=n
-CONFIG_JFFS2_FS=n
-CONFIG_NFS_V2=n
-CONFIG_NILFS2_FS=n
-CONFIG_NTFS_FS=n
-CONFIG_ROMFS_FS=n
-CONFIG_UFS_FS=n
-CONFIG_ZONEFS_FS=n
+# CONFIG_GFS2_FS is not set
+# CONFIG_HFS_FS is not set
+# CONFIG_HFSPLUS_FS is not set
+# CONFIG_JFS_FS is not set
+# CONFIG_JFFS2_FS is not set
+# CONFIG_NFS_V2 is not set
+# CONFIG_NILFS2_FS is not set
+# CONFIG_NTFS_FS is not set
+# CONFIG_ROMFS_FS is not set
+# CONFIG_UFS_FS is not set
+# CONFIG_ZONEFS_FS is not set
 
 # Disable unused network protocols.
-CONFIG_AF_RXRPC=n
-CONFIG_ATM=n
-CONFIG_CAN=n
-CONFIG_HSR=n
-CONFIG_IP_DCCP=n
-CONFIG_L2TP=n
-CONFIG_RDS=n
-CONFIG_RFKILL=n
-CONFIG_TIPC=n
+# CONFIG_AF_RXRPC is not set
+# CONFIG_ATM is not set
+# CONFIG_CAN is not set
+# CONFIG_HSR is not set
+# CONFIG_IP_DCCP is not set
+# CONFIG_L2TP is not set
+# CONFIG_RDS is not set
+# CONFIG_RFKILL is not set
+# CONFIG_TIPC is not set
