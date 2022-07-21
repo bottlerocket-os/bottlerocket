@@ -119,9 +119,20 @@ AMI_DATA_FILE_SUFFIX = "amis.json"
 # The type of testsys test that should be run.
 # `quick` will run a quick test which usually tests that the instances are reachable.
 # `conformance` will run a certified conformance test, these tests may take up to 3 hrs.
+# `migration` will run an upgrade downgrade test including:
+#    1: an initial `quick` test
+#    2: a migration from TESTSYS_STARTING_VERSION to BUILDSYS_FULL_VERSION
+#    3: a `quick` test on the migrated instances
+#    4: a migration from BUILDSYS_FULL_VERSION back to TESTSYS_STARTING_VERSION
+#    5: a final `quick` test on the downgraded instances
+# TESTSYS_STARTING_IMAGE_ID can be used to provide the correct starting image for migration tests.
 TESTSYS_TEST = "quick"
 # The path to the testsys cluster's kubeconfig file. This is used for all testsys calls.
 TESTSYS_KUBECONFIG_PATH = "${BUILDSYS_ROOT_DIR}/testsys.kubeconfig"
+# The last released version of bottlerocket.
+TESTSYS_STARTING_VERSION = { script = ["git tag --list --sort=version:refname 'v*' | tail -1"] }
+# The commit for the last release of bottlerocket.
+TESTSYS_STARTING_COMMIT = { script = ["git describe --tag ${TESTSYS_STARTING_VERSION} --always --exclude '*' || echo 00000000"] }
 
 [env.development]
 # Certain variables are defined here to allow us to override a component value

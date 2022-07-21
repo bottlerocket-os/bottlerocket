@@ -8,6 +8,8 @@ publish = false
 
 [dependencies]
 anyhow = "1.0"
+aws-config = "0.46"
+aws-sdk-ec2 = "0.16"
 bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "021e8d6", version = "0.1"}
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 clap = { version = "3", features = ["derive", "env"] }
