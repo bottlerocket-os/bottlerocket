@@ -77,6 +77,10 @@ CONFIG_ZSTD_COMPRESS=y
 CONFIG_ZSTD_DECOMPRESS=y
 CONFIG_DECOMPRESS_ZSTD=y
 
+# Enable ZSTD modules compression
+CONFIG_MODULE_COMPRESS=y
+CONFIG_MODULE_COMPRESS_ZSTD=y
+
 # Load i8042 controller, keyboard, and mouse as modules, to avoid waiting for
 # them before mounting the root device.
 CONFIG_SERIO_I8042=m
