@@ -674,6 +674,7 @@ Here are the metrics settings:
   **Important note:** this setting does not affect kernel modules that are already loaded.
   You may need to reboot for a change to disallow a kernel module to take effect.
   * Example user data for blocking kernel modules:
+
     ```
     [settings.kernel.modules.sctp]
     allowed = false
@@ -681,6 +682,7 @@ Here are the metrics settings:
     [settings.kernel.modules.udf]
     allowed = false
     ```
+
 * `settings.kernel.sysctl`: Key/value pairs representing Linux kernel parameters.
   Remember to quote keys (since they often contain ".") and to quote all values.
   * Example user data for setting up sysctl:
@@ -896,13 +898,14 @@ logdog
 ```
 
 This will write an archive of the logs to `/var/log/support/bottlerocket-logs.tar.gz`.
+This archive is accessible from host containers at `/.bottlerocket/support`.
 You can use SSH to retrieve the file.
 Once you have exited from the Bottlerocket host, run a command like:
 
 ```bash
 ssh -i YOUR_KEY_FILE \
     ec2-user@YOUR_HOST \
-    "cat /.bottlerocket/rootfs/var/log/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
+    "cat /.bottlerocket/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
 ```
 
 (If your instance isn't accessible through SSH, you can use [SSH over SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html).)
