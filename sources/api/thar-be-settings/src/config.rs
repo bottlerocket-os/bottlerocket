@@ -165,17 +165,17 @@ mod test {
     use super::*;
     use crate::service::Services;
     use maplit::{hashmap, hashset};
-    use std::convert::TryInto;
+    use model::modeled_types::SingleLineString;
 
     #[test]
     fn test_get_config_file_names() {
         let input_map = hashmap!(
             "foo".to_string() => model::Service {
-                configuration_files: vec!["file1".try_into().unwrap()],
+                configuration_files: vec![("file1").parse::<SingleLineString>().unwrap()],
                 restart_commands: vec!["echo hi".to_string()]
             },
             "bar".to_string() => model::Service {
-                configuration_files: vec!["file1".try_into().unwrap(), "file2".try_into().unwrap()],
+                configuration_files: vec![("file1").parse::<SingleLineString>().unwrap(), ("file2").parse::<SingleLineString>().unwrap()],
                 restart_commands: vec!["echo hi".to_string()]
             },
         );
