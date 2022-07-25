@@ -12,6 +12,9 @@ exclude = ["README.md"]
 [dependencies]
 apiclient = { path = "../apiclient", version = "0.1.0" }
 constants = { path = "../../constants", version = "0.1.0" }
+hyper = "0.14.2"
+hyper-proxy = {  version = "0.9", default-features = false, features = ["rustls"] }
+hyper-rustls = "0.23"
 imdsclient = { path = "../../imdsclient", version = "0.1.0" }
 models = { path = "../../models", version = "0.1.0" }
 rusoto_core = { version = "0.48.0", default-features = false, features = ["rustls"] }
