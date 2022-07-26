@@ -4071,6 +4071,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "updates-targets-base-url"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "updog"
 version = "0.1.0"
 dependencies = [

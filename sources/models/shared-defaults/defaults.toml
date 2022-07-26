@@ -38,13 +38,8 @@ restart-commands = ["/bin/systemctl try-restart host-containerd.service"]
 # Updates.
 
 [settings.updates]
-targets-base-url = "https://updates.bottlerocket.aws/targets/"
 version-lock = "latest"
 ignore-waves = false
-
-[metadata.settings.updates.metadata-base-url]
-setting-generator = "schnauzer settings.updates.metadata-base-url"
-template = "https://updates.bottlerocket.aws/2020-07-07/{{ os.variant_id }}/{{ os.arch }}/"
 
 [services.updog]
 configuration-files = ["updog-toml"]

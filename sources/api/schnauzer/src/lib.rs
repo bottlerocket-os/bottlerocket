@@ -125,6 +125,8 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("default", Box::new(helpers::default));
     template_registry.register_helper("ecr-prefix", Box::new(helpers::ecr_prefix));
     template_registry.register_helper("pause-prefix", Box::new(helpers::pause_prefix));
+    template_registry.register_helper("tuf-prefix", Box::new(helpers::tuf_prefix));
+    template_registry.register_helper("metadata-prefix", Box::new(helpers::metadata_prefix));
     template_registry.register_helper("host", Box::new(helpers::host));
     template_registry.register_helper("goarch", Box::new(helpers::goarch));
     template_registry.register_helper("join_array", Box::new(helpers::join_array));
