@@ -21,6 +21,9 @@ allow = [
     "Unlicense",
     "Zlib"
 ]
+exceptions = [
+    { name = "unicode-ident", version = "1.0.2", allow = ["MIT", "Apache-2.0", "Unicode-DFS-2016"] },
+]
 
 # https://github.com/hsivonen/encoding_rs The non-test code that isn't generated from the WHATWG data in this crate is
 # under Apache-2.0 OR MIT. Test code is under CC0.
@@ -55,6 +58,10 @@ skip = [
     # newer version used by snafu-derive
     # older version used by argh_derive and structopt-derive
     { name = "heck", version = "0.3.3" },
+
+    # newer version used by headers
+    # older version used by tungstenite
+    { name = "sha-1", version = "0.9.8" },
 
     # newer version used by model-derive and darling
     # older version used by clap 2.34.0, via cargo-readme

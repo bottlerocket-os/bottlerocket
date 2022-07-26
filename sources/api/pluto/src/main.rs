@@ -179,7 +179,7 @@ async fn get_cluster_dns_ip(client: &mut ImdsClient) -> Result<String> {
                 .context(error::EksSnafu)
             {
                 // Derive cluster-dns-ip from the service IPv4 CIDR
-                if let Some(ipv4_cidr) = config.service_ipv_4_cidr {
+                if let Some(ipv4_cidr) = config.service_ipv4_cidr {
                     if let Ok(dns_ip) = get_dns_from_ipv4_cidr(&ipv4_cidr) {
                         return Ok(dns_ip);
                     }

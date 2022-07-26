@@ -1,14 +1,11 @@
+use aws_sdk_eks::model::KubernetesNetworkConfigResponse;
+use aws_types::region::Region;
 use hyper::http::uri::InvalidUri;
 use hyper::Uri;
 use hyper_proxy::{Proxy, ProxyConnector};
 use hyper_rustls::HttpsConnectorBuilder;
-use rusoto_core::credential::ChainProvider;
-use rusoto_core::region::ParseRegionError;
-use rusoto_core::{Region, RusotoError};
-use rusoto_eks::{DescribeClusterError, Eks, EksClient, KubernetesNetworkConfigResponse};
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::env;
-use std::str::FromStr;
 
 pub(crate) type ClusterNetworkConfig = KubernetesNetworkConfigResponse;
 
@@ -16,17 +13,11 @@ pub(crate) type ClusterNetworkConfig = KubernetesNetworkConfigResponse;
 pub(super) enum Error {
     #[snafu(display("Error describing cluster: {}", source))]
     DescribeCluster {
-        source: RusotoError<DescribeClusterError>,
+        source: aws_sdk_eks::types::SdkError<aws_sdk_eks::error::DescribeClusterError>,
     },
 
     #[snafu(display("Missing field '{}' EKS response", field))]
     Missing { field: &'static str },
-
-    #[snafu(display("Unable to parse '{}' as a region: {}", region, source))]
-    RegionParse {
-        region: String,
-        source: ParseRegionError,
-    },
 
     #[snafu(display("Unable to parse '{}' as URI: {}", input, source))]
     UriParse { input: String, source: InvalidUri },
@@ -43,8 +34,6 @@ pub(super) async fn get_cluster_network_config(
     region: &str,
     cluster: &str,
 ) -> Result<ClusterNetworkConfig> {
-    let parsed_region = Region::from_str(region).context(RegionParseSnafu { region })?;
-
     // Respect proxy environment variables when making AWS EKS API requests
     let https_proxy = ["https_proxy", "HTTPS_PROXY"]
         .iter()
@@ -56,6 +45,11 @@ pub(super) async fn get_cluster_network_config(
         .map(env::var)
         .find(|env_var| *env_var != Err(env::VarError::NotPresent))
         .and_then(|s| s.ok());
+
+    let config = aws_config::from_env()
+        .region(Region::new(region.to_owned()))
+        .load()
+        .await;
 
     let client = if let Some(https_proxy) = https_proxy {
         // Determines whether a request of a given scheme, host and port should be proxied
@@ -104,17 +98,17 @@ pub(super) async fn get_cluster_network_config(
             .build();
         let proxy_connector =
             ProxyConnector::from_proxy(https_connector, proxy).context(ProxyConnectorSnafu)?;
-        let http_client = rusoto_core::request::HttpClient::from_connector(proxy_connector);
-        EksClient::new_with(http_client, ChainProvider::new(), parsed_region)
+        let http_client = aws_smithy_client::hyper_ext::Adapter::builder().build(proxy_connector);
+        let eks_config = aws_sdk_eks::config::Builder::from(&config).build();
+        aws_sdk_eks::Client::from_conf_conn(eks_config, http_client)
     } else {
-        EksClient::new(parsed_region)
-    };
-    let describe_cluster = rusoto_eks::DescribeClusterRequest {
-        name: cluster.to_owned(),
+        aws_sdk_eks::Client::new(&config)
     };
 
     client
-        .describe_cluster(describe_cluster)
+        .describe_cluster()
+        .name(cluster.to_owned())
+        .send()
         .await
         .context(DescribeClusterSnafu)?
         .cluster

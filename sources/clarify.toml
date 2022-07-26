@@ -150,6 +150,14 @@ license-files = [
     { path = "LICENSE", hash = 0xfa2cf349 },
 ]
 
+[clarify.unicode-ident]
+expression = "(MIT OR Apache-2.0) AND Unicode-DFS-2016"
+license-files = [
+    { path = "LICENSE-APACHE", hash = 0x24b54f4b },
+    { path = "LICENSE-MIT", hash = 0x386ca1bc },
+    { path = "LICENSE-UNICODE", hash = 0x9698cbbe },
+]
+
 [clarify.vmw_backdoor]
 expression = "MIT OR Apache-2.0"
 license-files = [
