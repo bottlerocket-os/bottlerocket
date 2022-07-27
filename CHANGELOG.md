@@ -1,3 +1,125 @@
+# v1.9.0 (2022-07-28)
+
+## OS Changes
+
+* SELinux policy now suppresses audit for tmpfs relabels ([#2222])
+* Restrict permissions for `/boot` and `System.map` ([#2223])
+* Remove unused crates `growpart` and `servicedog` ([#2238])
+* New mount in host containers for system logs ([#2295])
+* Apply strict mount options and enforce execution rules ([#2239])
+* Switch to a more commonly used syntax for disabling kernel config settings ([#2290])
+* Respect proxy settings when running setting generators ([#2227]) 
+* Add `NET_CAP_ADMIN` to bootstrap containers ([#2266])
+* Reduce log output for DHCP services ([#2260])
+* Fix invalid kernel config options ([#2269])
+* Improve support for container storage mounts ([#2240])
+* Disable uncommon filesystems and network protocols ([#2255])
+* Add support for blocking kernel modules ([#2274])
+* Fix `ntp` service restart when settings change ([#2270])
+* Add kernel 5.15 sources ([#2226])
+* Defer `squashfs` mounts to later in the boot process ([#2276])
+* Improve boot speed and rootfs size ([#2296])
+* Add "quiet" kernel parameter for some variants ([#2277])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Make new instance types available ([#2221] , thanks @cablespaghetti)
+* Update Kubernetes versions ([#2230], [#2232], [#2262], [#2263], thanks @kschumy)
+* Add kubelet image GC threshold settings ([#2219])
+
+### ECS
+
+* Add iptables rules for ECS introspection server ([#2267])
+
+## Platform Changes
+
+### AWS
+
+* Add support for AWS China regions ([#2224], [#2242], [#2247], [#2285])
+* Migrate to using `aws-sdk-rust` for first-party OS Rust packages ([#2300])
+
+### VMWare
+
+* Remove `console=ttyS0` from kernel params ([#2248])
+
+### Metal
+
+* Enable Mellanox modules in 5.10 kernel ([#2241])
+* Add bnxt module for Broadcom 10/25Gb network adapters in 5.10 kernel ([#2243])
+* Split out baremetal specific config options ([#2264])
+* Add driver support for Cisco UCS platforms ([#2271])
+* Only build baremetal variant specific drivers for baremetal variants ([#2279])
+* Enable the metal-dev build for the ARM architecture ([#2272])
+
+## Build Changes
+
+* Add Makefile targets to create and validate Boot Configuration ([#2189])
+* Create symlinks to images with friendly names ([#2215])
+* Add `start-local-vm` script ([#2194])
+* Add the testsys CLI and new cargo make tasks for testing aws-k8s variants ([#2165])
+* Update Rust and Go dependencies ([#2303], [#2299])
+* Update third-party packages ([#2309])
+
+## Documentation Changes
+
+* Add NVIDIA ECS variant to README ([#2244])
+* Add documentation for metal variants ([#2205])
+* Add missing step in building packages guide ([#2259])
+* Add quickstart for running Bottlerocket in QEMU/KVM VMs ([#2280])
+* Address lints in README markdown caught by `markdownlint` ([#2283])
+
+[#2165]: https://github.com/bottlerocket-os/bottlerocket/pull/2165
+[#2189]: https://github.com/bottlerocket-os/bottlerocket/pull/2189
+[#2194]: https://github.com/bottlerocket-os/bottlerocket/pull/2194
+[#2205]: https://github.com/bottlerocket-os/bottlerocket/pull/2205
+[#2215]: https://github.com/bottlerocket-os/bottlerocket/pull/2215
+[#2219]: https://github.com/bottlerocket-os/bottlerocket/pull/2219
+[#2221]: https://github.com/bottlerocket-os/bottlerocket/pull/2221
+[#2222]: https://github.com/bottlerocket-os/bottlerocket/pull/2222
+[#2223]: https://github.com/bottlerocket-os/bottlerocket/pull/2223
+[#2224]: https://github.com/bottlerocket-os/bottlerocket/pull/2224
+[#2226]: https://github.com/bottlerocket-os/bottlerocket/pull/2226
+[#2227]: https://github.com/bottlerocket-os/bottlerocket/pull/2227
+[#2230]: https://github.com/bottlerocket-os/bottlerocket/pull/2230
+[#2232]: https://github.com/bottlerocket-os/bottlerocket/pull/2232
+[#2238]: https://github.com/bottlerocket-os/bottlerocket/pull/2238
+[#2239]: https://github.com/bottlerocket-os/bottlerocket/pull/2239
+[#2240]: https://github.com/bottlerocket-os/bottlerocket/pull/2240
+[#2241]: https://github.com/bottlerocket-os/bottlerocket/pull/2241
+[#2242]: https://github.com/bottlerocket-os/bottlerocket/pull/2242
+[#2243]: https://github.com/bottlerocket-os/bottlerocket/pull/2243
+[#2244]: https://github.com/bottlerocket-os/bottlerocket/pull/2244
+[#2247]: https://github.com/bottlerocket-os/bottlerocket/pull/2247
+[#2248]: https://github.com/bottlerocket-os/bottlerocket/pull/2248
+[#2255]: https://github.com/bottlerocket-os/bottlerocket/pull/2255
+[#2259]: https://github.com/bottlerocket-os/bottlerocket/pull/2259
+[#2260]: https://github.com/bottlerocket-os/bottlerocket/pull/2260
+[#2262]: https://github.com/bottlerocket-os/bottlerocket/pull/2262
+[#2263]: https://github.com/bottlerocket-os/bottlerocket/pull/2263
+[#2264]: https://github.com/bottlerocket-os/bottlerocket/pull/2264
+[#2266]: https://github.com/bottlerocket-os/bottlerocket/pull/2266
+[#2267]: https://github.com/bottlerocket-os/bottlerocket/pull/2267
+[#2269]: https://github.com/bottlerocket-os/bottlerocket/pull/2269
+[#2270]: https://github.com/bottlerocket-os/bottlerocket/pull/2270
+[#2271]: https://github.com/bottlerocket-os/bottlerocket/pull/2271
+[#2272]: https://github.com/bottlerocket-os/bottlerocket/pull/2272
+[#2274]: https://github.com/bottlerocket-os/bottlerocket/pull/2274
+[#2276]: https://github.com/bottlerocket-os/bottlerocket/pull/2276
+[#2277]: https://github.com/bottlerocket-os/bottlerocket/pull/2277
+[#2279]: https://github.com/bottlerocket-os/bottlerocket/pull/2279
+[#2280]: https://github.com/bottlerocket-os/bottlerocket/pull/2280
+[#2283]: https://github.com/bottlerocket-os/bottlerocket/pull/2283
+[#2285]: https://github.com/bottlerocket-os/bottlerocket/pull/2285
+[#2290]: https://github.com/bottlerocket-os/bottlerocket/pull/2290
+[#2295]: https://github.com/bottlerocket-os/bottlerocket/pull/2295
+[#2296]: https://github.com/bottlerocket-os/bottlerocket/pull/2296
+[#2299]: https://github.com/bottlerocket-os/bottlerocket/pull/2299
+[#2300]: https://github.com/bottlerocket-os/bottlerocket/pull/2300
+[#2303]: https://github.com/bottlerocket-os/bottlerocket/pull/2303
+[#2309]: https://github.com/bottlerocket-os/bottlerocket/pull/2309
+
 # v1.8.0 (2022-06-08)
 
 ## OS Changes
