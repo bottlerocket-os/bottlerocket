@@ -7,17 +7,17 @@
 %global gorepo hotdog
 %global goimport %{goproject}/%{gorepo}
 
-%global gitrev 3f2ca9275fae8db87409c3a0999aa2c8a4bd44d1
+%global gitrev b85b75576adbbd7e133b54d71ebc11a28acf40db
 %global shortrev %(c=%{gitrev}; echo ${c:0:7})
 
-%global gosysrev 4abf325e0275e4ef0bdd441dcf497570f1419ab9
+%global gosysrev 8c9f86f7a55f5af45a9080f6ed3ac915382d369c
 %global gosysrevshort %(c=%{gosysrev}; echo ${c:0:7})
 
 %global runtimespec 1.0.2
 
-%global goselinux 1.10.0
+%global goselinux 1.10.1
 
-%global libcap 1.2.62
+%global libcap 1.2.63
 
 Name: %{_cross_os}hotdog
 Version: 1.0.1
@@ -30,15 +30,6 @@ Source1: https://github.com/opencontainers/runtime-spec/archive/v%{runtimespec}/
 Source2: https://github.com/golang/sys/archive/%{gosysrev}/sys-%{gosysrevshort}.tar.gz
 Source3: https://github.com/opencontainers/selinux/archive/refs/tags/v%{goselinux}.tar.gz#/go-selinux-v%{goselinux}.tar.gz
 Source4: https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v%{libcap}.tar.gz#/libcap-v%{libcap}.tar.gz
-Patch0001: 0001-poststart-hook-silently-exit-under-certain-condition.patch
-Patch0002: 0002-poststart-hook-enter-container-s-cgroups.patch
-Patch0003: 0003-poststart-hook-set-NO_NEW_PRIVS-in-poststart-process.patch
-Patch0004: 0004-hotdog-hotpatch-set-seccomp-filter-for-child-process.patch
-Patch0005: 0005-hotdog-hotpatch-refactor-to-use-ParseProcessStatus.patch
-Patch0006: 0006-hotdog-cc-hook-change-executable-permissions.patch
-Patch0007: 0007-hotdog-hotpatch-constrain-hook-s-file-descriptors.patch
-Patch0008: 0008-poststart-hook-hotdog-cc-hook-ensure-hotpatch-files-.patch
-Patch0009: 0009-seccomp-read-all-filters-after-ptrace-interrupt.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}log4j2-hotpatch
