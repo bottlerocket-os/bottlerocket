@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/docker/libnetwork/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/docker/libnetwork/archive/64b7a4574d1426139437d20e81c0b6d391130ec8/libnetwork-64b7a4574d1426139437d20e81c0b6d391130ec8.tar.gz"
-sha512 = "6a94fe23ce1bab0a428ee4bbe20089f5a4470e72c5da156b2b1a89de01cca803374fd9cdcd4c5b25b86af1c4e956c75a1a5ad7fb6639def7bcec69859a77c047"
+url = "https://github.com/docker/libnetwork/archive/f6ccccb1c082a432c2a5814aaedaca56af33d9ea/libnetwork-f6ccccb1c082a432c2a5814aaedaca56af33d9ea.tar.gz"
+sha512 = "d3d9888f39a9247b6e773b0bfe63e6d248c5c155e7032cdbdd5cfacf995cb6b4cf2f0fb51e09c4554a4b994e3c3d7fc9cd2fde6cf8dda34fba6aa07218ac959c"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
