@@ -13,3 +13,4 @@
 /Licenses.toml
 /licenses
 *.run
+*.code-workspace
