@@ -49,6 +49,9 @@ Patch9009: 9009-sysctl-do-not-set-rp_filter-via-wildcard.patch
 # Local patch to set root's shell to /sbin/nologin rather than /bin/sh.
 Patch9010: 9010-sysusers-set-root-shell-to-sbin-nologin.patch
 
+# Local patch to keep modprobe units running to avoid repeated log entries.
+Patch9011: 9011-units-keep-modprobe-service-units-running.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson

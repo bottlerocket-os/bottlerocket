@@ -1,7 +1,7 @@
 From 95824ee80743b604e4b1757818f1ea7bf2971462 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 3 Jan 2022 21:57:11 +0000
-Subject: [PATCH 9003/9010] machine-id-setup: generate stable ID under Xen and
+Subject: [PATCH 9003/9011] machine-id-setup: generate stable ID under Xen and
  VMware
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>

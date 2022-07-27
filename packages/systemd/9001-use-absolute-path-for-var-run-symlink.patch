@@ -1,7 +1,7 @@
 From 4582d854afd5b42fdc952fafd89d762dcb279da9 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 3 Jan 2022 20:22:17 +0000
-Subject: [PATCH 9001/9010] use absolute path for /var/run symlink
+Subject: [PATCH 9001/9011] use absolute path for /var/run symlink
 
 Otherwise the symlink may be broken if /var is a bind mount from
 somewhere else.

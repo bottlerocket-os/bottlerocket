@@ -1,7 +1,7 @@
 From 0aee69ee8b337ff50d4f7723e3c93f222bf239b1 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 21 Jun 2021 20:53:47 +0000
-Subject: [PATCH 9009/9010] sysctl: do not set rp_filter via wildcard
+Subject: [PATCH 9009/9011] sysctl: do not set rp_filter via wildcard
 
 The wildcard matches existing interfaces when `systemd-sysctl` runs
 at startup, but also applies to new interfaces when it is invoked by
