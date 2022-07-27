@@ -49,7 +49,7 @@ Bottlerocket uses both tags and branches for release alignment. Numbered release
 
 Bottlerocket follows a few basic filename case conventions:
 
-- All extensions are lowercase
+- All extensions are lowercase,
 - Build related configuration files always start with a capital letter (e.g. `Infra.toml`, `Release.toml`),
 - All caps is used for documents and licenses (e.g. `PUBLISHING.md`, `TRADEMARKS.md`),
 - All lower case is used for all other files (e.g. `sample-eksctl.yaml`, `main.rs`).
