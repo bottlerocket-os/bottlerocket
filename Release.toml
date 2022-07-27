@@ -1,4 +1,4 @@
-version = "1.8.0"
+version = "1.9.0"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
