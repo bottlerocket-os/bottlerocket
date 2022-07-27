@@ -2,13 +2,13 @@
 %global _is_metal_variant %(if echo %{_cross_variant} | grep -Fqw "metal"; then echo 1; else echo 0; fi)
 
 Name: %{_cross_os}kernel-5.10
-Version: 5.10.118
+Version: 5.10.130
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/fd3a270843eca4874b201fd3554b484a79b18edc0d3b845ff3288dd9dd0d69a8/kernel-5.10.118-111.515.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/04a89d2664b3be51cad04255bde6ff8ee1620a5281b0dc1f2f4707e1e6cfe150/kernel-5.10.130-118.517.amzn2.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-metal
 
