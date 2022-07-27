@@ -1,5 +1,5 @@
 Name: %{_cross_os}policycoreutils
-Version: 3.3
+Version: 3.4
 Release: 1%{?dist}
 Summary: A set of SELinux policy tools
 License: GPL-2.0-only
