@@ -13,8 +13,8 @@ releases-url = "https://cdn.kernel.org/pub/linux/libs/security/linux-privs/libca
 # Changelog can be found here: https://sites.google.com/site/fullycapable/release-notes-for-libcap
 
 [[package.metadata.build-package.external-files]]
-url = "https://cdn.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.64.tar.gz"
-sha512 = "628ba25c2736e5fe6469c3e1d9b28855f5d2e7e75c91d5d46cc0c01e539f3cccd00356937acffde518eb83f55e5d6124eefd53199aba705fedd520982db48652"
+url = "https://cdn.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.65.tar.gz"
+sha512 = "c1523d4b73bf12fee5c1518c424319d58181cab6d0436dc3d26818a906e4fe6942b476d6db7fa5e103e05b4ffcb159ac56cc7cb2fd0d89388cc375809e5289f4"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
