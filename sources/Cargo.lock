@@ -3077,9 +3077,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.2.15"
+version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "534cfe58d6a18cc17120fbf4635d53d14691c1fe4d951064df9bd326178d7d5a"
+checksum = "fb5a58c1855b4b6819d59012155603f0b22ad30cad752600aadfcb695265519a"
 dependencies = [
  "bitflags",
 ]
@@ -4044,9 +4044,9 @@ dependencies = [
 
 [[package]]
 name = "tough"
-version = "0.12.2"
+version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a72582c980b86ac5b86cd8deb4e6841b44efaed2db9efae9b486b98288d9de2"
+checksum = "e1a0aa977ae8d619536dfcf7c27848bc280030ee18d358fa5c3174ad094e189c"
 dependencies = [
  "chrono",
  "dyn-clone",

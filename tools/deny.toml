@@ -25,6 +25,7 @@ allow = [
 
 exceptions = [
     { name = "webpki-roots", allow = ["MPL-2.0"], version = "*" },
+    { name = "unicode-ident", allow = ["MIT", "Apache-2.0", "Unicode-DFS-2016"] },
 ]
 
 # https://github.com/hsivonen/encoding_rs The non-test code that isn't generated from the WHATWG data in this crate is
