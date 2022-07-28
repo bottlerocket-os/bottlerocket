@@ -45,6 +45,16 @@ Active development occurs under the `develop` branch.
 
 Bottlerocket uses both tags and branches for release alignment. Numbered releases are always associated with [tags that mirror the full SemVer 3-digit version number](https://github.com/bottlerocket-os/bottlerocket/tags) (e.g. `1.7.2`). [Branches are for patching only](https://github.com/bottlerocket-os/bottlerocket/branches/all): if a patch is required, a branch will be cut for that minor release line (e.g. `1.7.x`). As a consequence, some previous minor versions may not have a branch if they never required a subsequent patch.
 
+## Filename case conventions
+
+Bottlerocket follows a few basic filename case conventions:
+
+- All extensions are lowercase,
+- Build related configuration files always start with a capital letter (e.g. `Infra.toml`, `Release.toml`),
+- All caps is used for documents and licenses (e.g. `PUBLISHING.md`, `TRADEMARKS.md`),
+- All lower case is used for all other files (e.g. `sample-eksctl.yaml`, `main.rs`).
+
+
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on.
 As this repository uses GitHub issue [labels](https://github.com/bottlerocket-os/bottlerocket/labels), looking at any ['status/helpwelcome'](https://github.com/bottlerocket-os/bottlerocket/labels/status%2Fhelpwelcome) issues is a great place to start.
