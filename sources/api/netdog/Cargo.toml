@@ -15,12 +15,12 @@ ipnet = { version = "2.0", features = ["serde"] }
 indexmap = { version = "1.8", features = ["serde"]}
 envy = "0.4"
 lazy_static = "1.2"
+quick-xml = {version = "0.23", features = ["serialize"]}
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1.0"
-serde-xml-rs = "0.5"
 snafu = "0.7"
 toml = { version = "0.5", features = ["preserve_order"] }
 

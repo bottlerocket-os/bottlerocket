@@ -16,6 +16,7 @@ const WICKED_FILE_EXT: &str = "xml";
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(rename = "interface")]
 pub(crate) struct WickedInterface {
+    #[serde(rename = "$unflatten=name")]
     pub(crate) name: InterfaceName,
     pub(crate) control: WickedControl,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -30,17 +31,10 @@ pub(crate) struct WickedInterface {
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct WickedControl {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "$unflatten=mode")]
     mode: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     link_detection: Option<LinkDetection>,
-    // TODO: `serde_xml_rs` has a known issue with serializing nested structures, where it will
-    // insert additional tag with the structure name.  It has since been fixed but not released
-    // officially yet.  This struct member works around that issue.
-    // https://github.com/RReverser/serde-xml-rs/issues/126
-    // The workaround:
-    // https://stackoverflow.com/questions/70124048/how-to-create-xml-from-struct-in-rust
-    #[serde(flatten, skip)]
-    _f: (),
 }
 
 // We assume that all configured interfaces are wanted at boot and will require a link to
@@ -50,7 +44,6 @@ impl Default for WickedControl {
         WickedControl {
             mode: Some("boot".to_string()),
             link_detection: Some(LinkDetection::default()),
-            _f: (),
         }
     }
 }
@@ -59,23 +52,23 @@ impl Default for WickedControl {
 #[serde(rename_all = "kebab-case")]
 struct LinkDetection {
     // This will serialize to an empty tag
+    #[serde(rename = "$unflatten=require-link")]
     require_link: (),
-    #[serde(flatten, skip)]
-    _f: (),
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct WickedDhcp4 {
+    #[serde(rename = "$unflatten=enabled")]
     enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "$unflatten=route-priority")]
     route_priority: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "$unflatten=defer-timeout")]
     defer_timeout: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     flags: Option<AddrConfFlags>,
-    #[serde(flatten, skip)]
-    _f: (),
 }
 
 impl Default for WickedDhcp4 {
@@ -85,7 +78,6 @@ impl Default for WickedDhcp4 {
             route_priority: None,
             defer_timeout: None,
             flags: None,
-            _f: (),
         }
     }
 }
@@ -93,13 +85,13 @@ impl Default for WickedDhcp4 {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct WickedDhcp6 {
+    #[serde(rename = "$unflatten=enabled")]
     enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "$unflatten=defer-timeout")]
     defer_timeout: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     flags: Option<AddrConfFlags>,
-    #[serde(flatten, skip)]
-    _f: (),
 }
 
 impl Default for WickedDhcp6 {
@@ -108,7 +100,6 @@ impl Default for WickedDhcp6 {
             enabled: true,
             defer_timeout: None,
             flags: None,
-            _f: (),
         }
     }
 }
@@ -117,9 +108,8 @@ impl Default for WickedDhcp6 {
 // the user, a struct makes handling tags much simpler.
 #[derive(Default, Clone, Debug, Serialize, PartialEq)]
 struct AddrConfFlags {
+    #[serde(rename = "$unflatten=optional")]
     optional: (),
-    #[serde(flatten, skip)]
-    _f: (),
 }
 
 impl From<Dhcp4ConfigV1> for WickedDhcp4 {
@@ -127,7 +117,6 @@ impl From<Dhcp4ConfigV1> for WickedDhcp4 {
         match dhcp4 {
             Dhcp4ConfigV1::DhcpEnabled(b) => WickedDhcp4 {
                 enabled: b,
-                _f: (),
                 ..Default::default()
             },
             Dhcp4ConfigV1::WithOptions(o) => WickedDhcp4::from(o),
@@ -150,7 +139,6 @@ impl From<Dhcp4OptionsV1> for WickedDhcp4 {
             route_priority: options.route_metric,
             defer_timeout,
             flags,
-            _f: (),
         }
     }
 }
@@ -160,7 +148,6 @@ impl From<Dhcp6ConfigV1> for WickedDhcp6 {
         match dhcp6 {
             Dhcp6ConfigV1::DhcpEnabled(b) => WickedDhcp6 {
                 enabled: b,
-                _f: (),
                 ..Default::default()
             },
             Dhcp6ConfigV1::WithOptions(o) => WickedDhcp6::from(o),
@@ -182,7 +169,6 @@ impl From<Dhcp6OptionsV1> for WickedDhcp6 {
             enabled: options.enabled,
             defer_timeout,
             flags,
-            _f: (),
         }
     }
 }
@@ -193,11 +179,7 @@ impl WickedInterface {
         let mut cfg_path = Path::new(WICKED_CONFIG_DIR).join(self.name.to_string());
         cfg_path.set_extension(WICKED_FILE_EXT);
 
-        // TODO: pretty print these files.  `serde_xml_rs` doesn't support pretty printing;
-        // `quick_xml` does, however we require a few features that haven't been released yet to
-        // properly serialize the above data structures:
-        // https://github.com/tafia/quick-xml/issues/340#issuecomment-981093602
-        let xml = serde_xml_rs::to_string(&self).context(error::XmlSerializeSnafu {
+        let xml = quick_xml::se::to_string(&self).context(error::XmlSerializeSnafu {
             interface: self.name.to_string(),
         })?;
         fs::write(&cfg_path, xml).context(error::WickedConfigWriteSnafu { path: cfg_path })
@@ -218,7 +200,7 @@ mod error {
         #[snafu(display("Error serializing config for '{}' to XML: {}", interface, source))]
         XmlSerialize {
             interface: String,
-            source: serde_xml_rs::Error,
+            source: quick_xml::DeError,
         },
     }
 }
@@ -267,7 +249,7 @@ mod tests {
 
             let wicked_interfaces = net_config.into_wicked_interfaces();
             for interface in wicked_interfaces {
-                let generated = serde_xml_rs::to_string(&interface).unwrap();
+                let generated = quick_xml::se::to_string(&interface).unwrap();
 
                 let mut path = wicked_config().join(interface.name.to_string());
                 path.set_extension("xml");
@@ -289,8 +271,7 @@ mod tests {
             let mut path = wicked_config().join(interface.name.to_string());
             path.set_extension("xml");
             let expected = fs::read_to_string(path).unwrap();
-
-            let generated = serde_xml_rs::to_string(&interface).unwrap();
+            let generated = quick_xml::se::to_string(&interface).unwrap();
 
             assert_eq!(expected.trim(), generated)
         }
