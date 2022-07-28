@@ -22,20 +22,24 @@ Some notable features include:
 * [Modeled configuration](#settings) that's automatically migrated through updates.
 * [Security](#security) as a top priority.
 
+## Participate in the Community
+
+There are many ways to take part in the Bottlerocket community:
+
+- [Join on Meetup](https://www.meetup.com/bottlerocket-community/) to hear about the latest Bottlerocket (virtual/in-person) events and community meetings. The [next community meeting is August 24, 2022](https://www.meetup.com/bottlerocket-community/events/287425423/).
+- [Start or join a discussion](https://github.com/bottlerocket-os/bottlerocket/discussions) if you have questions about Bottlerocket.
+- If you're interested in contributing, thank you!
+Please see our [contributor's guide](CONTRIBUTING.md).
+
 ## Contact us
 
 If you find a security issue, please [contact our security team](https://github.com/bottlerocket-os/bottlerocket/security/policy) rather than opening an issue.
-
-If you're interested in contributing, thank you!
-Please see our [contributor's guide](CONTRIBUTING.md).
 
 We use GitHub issues to track other bug reports and feature requests.
 You can look at [existing issues](https://github.com/bottlerocket-os/bottlerocket/issues) to see whether your concern is already known.
 
 If not, you can select from a few templates and get some guidance on the type of information that would be most helpful.
 [Contact us with a new issue here.](https://github.com/bottlerocket-os/bottlerocket/issues/new/choose)
-
-If you just have questions about Bottlerocket, please feel free to [start or join a discussion](https://github.com/bottlerocket-os/bottlerocket/discussions).
 
 We don't have other communication channels set up quite yet, but don't worry about making an issue or a discussion thread!
 You can let us know about things that seem difficult, or even ways you might like to help.
