@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.5.7/aws-iam-authenticator-0.5.7.tar.gz"
-sha512 = "64d0959555a39f0fd1f55e689495507a3d1fd005ced4287ea853750915c1953a328f794a37799b4f0936fca2a009fa7d7fdb432be79468b643f5f967edaf8f9c"
+url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.5.9/aws-iam-authenticator-0.5.9.tar.gz"
+sha512 = "1e1750f2734faea5cae612debb8777891247f59c51ad98e4c466bc20925950b1b04dc407458cfb0db9c3d961d1d9d07639523619399c5037211e8e6f64794fca"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
