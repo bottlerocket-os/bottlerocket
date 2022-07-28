@@ -102,27 +102,32 @@ where
     }
 }
 
-/// Reads `/proc/bootconfig` and populates the Bottlerocket boot settings based on the existing boot config data
-pub(crate) async fn generate_boot_settings() -> Result<()> {
-    let proc_bootconfig = match tokio::fs::read_to_string(PROC_BOOTCONFIG).await {
-        Ok(s) => s,
+/// Reads `/proc/bootconfig`. Not having any boot config is ignored.
+async fn read_proc_bootconfig() -> Result<Option<String>> {
+    match tokio::fs::read_to_string(PROC_BOOTCONFIG).await {
+        Ok(s) => Ok(Some(s)),
         Err(e) => {
             // If there's no `/proc/bootconfig`, then the user hasn't provisioned any kernel boot configuration.
             if e.kind() == io::ErrorKind::NotFound {
-                // No work to be done
-                return Ok(());
+                Ok(None)
+            } else {
+                Err(e).context(error::ReadFileSnafu {
+                    path: PROC_BOOTCONFIG,
+                })
             }
-            return Err(e).context(error::ReadFileSnafu {
-                path: PROC_BOOTCONFIG,
-            });
         }
-    };
-    debug!(
-        "Generating kernel boot config settings from `{}`",
-        PROC_BOOTCONFIG
-    );
-    println!("{}", boot_config_to_boot_settings_json(&proc_bootconfig)?);
+    }
+}
 
+/// Reads `/proc/bootconfig` and populates the Bottlerocket boot settings based on the existing boot config data
+pub(crate) async fn generate_boot_settings() -> Result<()> {
+    if let Some(proc_bootconfig) = read_proc_bootconfig().await? {
+        debug!(
+            "Generating kernel boot config settings from `{}`",
+            PROC_BOOTCONFIG
+        );
+        println!("{}", boot_config_to_boot_settings_json(&proc_bootconfig)?);
+    }
     Ok(())
 }
 
