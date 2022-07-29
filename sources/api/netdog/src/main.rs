@@ -39,7 +39,6 @@ use dns_lookup::lookup_addr;
 use envy;
 use ipnet::IpNet;
 use lazy_static::lazy_static;
-use net_config::NetConfig;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use regex::Regex;
@@ -53,7 +52,6 @@ use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
-use wicked::WickedInterface;
 
 static RESOLV_CONF: &str = "/etc/resolv.conf";
 static KERNEL_HOSTNAME: &str = "/proc/sys/kernel/hostname";
@@ -321,11 +319,11 @@ fn generate_hostname() -> Result<()> {
 /// Generate configuration for network interfaces.
 fn generate_net_config() -> Result<()> {
     let maybe_net_config = if Path::exists(Path::new(DEFAULT_NET_CONFIG_FILE)) {
-        NetConfig::from_path(DEFAULT_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
+        net_config::from_path(DEFAULT_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
             path: DEFAULT_NET_CONFIG_FILE,
         })?
     } else {
-        NetConfig::from_command_line(KERNEL_CMDLINE).context(error::NetConfigParseSnafu {
+        net_config::from_command_line(KERNEL_CMDLINE).context(error::NetConfigParseSnafu {
             path: KERNEL_CMDLINE,
         })?
     };
@@ -338,14 +336,15 @@ fn generate_net_config() -> Result<()> {
             return Ok(());
         }
     };
+
     let primary_interface = net_config
         .primary_interface()
         .context(error::GetPrimaryInterfaceSnafu)?;
     write_primary_interface(primary_interface)?;
 
-    for (name, config) in net_config.interfaces {
-        let wicked_interface = WickedInterface::from_config(name, config);
-        wicked_interface
+    let wicked_interfaces = net_config.into_wicked_interfaces();
+    for interface in wicked_interfaces {
+        interface
             .write_config_file()
             .context(error::InterfaceConfigWriteSnafu)?;
     }
