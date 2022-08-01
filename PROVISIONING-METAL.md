@@ -36,10 +36,9 @@ Next, set your desired version and variant, and use `tuftool` to download the im
 To install `tuftool` you'll need to install Rust (via [rustup](https://rustup.rs/) or the official site), and then you can run `cargo install tuftool`.
 ```
 ARCH="x86_64"
-VERSION="1.8.0"
+VERSION="v1.9.0"
 VARIANT="metal-k8s-1.23"
-COMMIT="a6233c22"
-IMAGE="bottlerocket-${VARIANT}-${ARCH}-${VERSION}-${COMMIT}.img.lz4"
+IMAGE="bottlerocket-${VARIANT}-${ARCH}-${VERSION}.img.lz4"
 OUTDIR="${VARIANT}-${VERSION}"
 
 tuftool download "${OUTDIR}" --target-name "${IMAGE}" \
