@@ -6,7 +6,7 @@ Tips:
 
 **Issue number:**
 
-
+Closes #
 
 **Description of changes:**
 
