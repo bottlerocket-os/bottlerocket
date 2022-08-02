@@ -56,7 +56,6 @@ For example, an `x86_64` build of the `aws-k8s-1.21` variant will produce an ima
 
 The following variants support EKS, as described above:
 
-* `aws-k8s-1.19`
 * `aws-k8s-1.20`
 * `aws-k8s-1.21`
 * `aws-k8s-1.22`
@@ -89,6 +88,7 @@ The following variants are no longer supported:
 * `aws-k8s-1.16`
 * `aws-k8s-1.17`
 * `aws-k8s-1.18`
+* `aws-k8s-1.19`
 
 We recommend users replace nodes running these variants with the [latest variant compatible with their cluster](variants/).
 

@@ -33,13 +33,6 @@ For example, in a VMware variant, settings read from the guestinfo interface wil
 
 ## Variants
 
-### aws-k8s-1.19: Kubernetes 1.19 node
-
-The [aws-k8s-1.19](aws-k8s-1.19/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.19, 1.20, and 1.21 clusters.
-
 ### aws-k8s-1.20: Kubernetes 1.20 node
 
 The [aws-k8s-1.20](aws-k8s-1.20/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -207,6 +200,16 @@ This variant was compatible with Kubernetes 1.18, 1.19, and 1.20 clusters.
 It reached end-of-life on March 31st, 2022.
 
 Upstream support for Kubernetes 1.18 has ended and this variant will no longer be supported in Bottlerocket releases.
+
+### aws-k8s-1.19: Kubernetes 1.19 node
+
+The aws-k8s-1.19 variant included the packages needed to run a Kubernetes node in AWS.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.19, 1.20, and 1.21 clusters.
+It reached end-of-life on August 1st, 2022.
+
+Upstream support for Kubernetes 1.19 has ended and this variant will no longer be supported in Bottlerocket releases.
 
 ## Development
 
