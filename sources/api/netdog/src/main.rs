@@ -412,7 +412,7 @@ where
     let interface = interface.as_ref();
     let path = path.as_ref();
     // TODO if we accumulate more of these we should have a better way to create than format!()
-    // Note: The dash (-) preceeding the "net..." variable assignment below is important; it
+    // Note: The dash (-) preceding the "net..." variable assignment below is important; it
     // ensures failure to set the variable for any reason will be logged, but not cause the sysctl
     // service to fail
     // Accept router advertisement (RA) packets even if IPv6 forwarding is enabled on interface

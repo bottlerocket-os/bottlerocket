@@ -1,4 +1,4 @@
-//! The net_config module contains the strucures needed to deserialize a `net.toml` file.  It also
+//! The net_config module contains the structures needed to deserialize a `net.toml` file.  It also
 //! includes contains the `FromStr` implementations to create a `NetConfig` from string, like from
 //! the kernel command line.
 //!
