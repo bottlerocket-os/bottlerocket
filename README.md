@@ -671,7 +671,7 @@ Here are the metrics settings:
 #### Kernel settings
 
 * `settings.kernel.lockdown`: This allows further restrictions on what the Linux kernel will allow, for example preventing the loading of unsigned modules.
-  May be set to "none" (the default in older [variants](variants/), up through aws-k8s-1.19), "integrity" (the default for newer [variants](variants/)), or "confidentiality".
+  May be set to "none" (the default in `*-nvidia` and `*-dev` variants), "integrity" (the default for other variants), or "confidentiality".
   **Important note:** this setting cannot be lowered (toward 'none') at runtime.
   You must reboot for a change to a lower level to take effect.
 * `settings.kernel.modules.<name>.allowed`: Whether the named kernel module is allowed to be loaded.
