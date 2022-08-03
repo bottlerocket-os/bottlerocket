@@ -62,7 +62,7 @@ PUBLISH_UNIFIED_VOLUME_SIZE = "22"
 # tools/pubsys/policies/ssm/README.md for more information.
 PUBLISH_SSM_TEMPLATES_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/ssm/defaults.toml"
 
-# This can be overriden with -e to change the source path
+# This can be overridden with -e to change the source path
 # for the Licenses.toml file
 BUILDSYS_LICENSES_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Licenses.toml"
 
@@ -1515,7 +1515,7 @@ script = [
    '''
 ]
 
-# This task will retrieve testsys logs from a test. You can add `--follow` to continue to recieve
+# This task will retrieve testsys logs from a test. You can add `--follow` to continue to receive
 # logs as they come in.
 [tasks.log-test]
 dependencies = ["test-tools"]

@@ -31,7 +31,7 @@ If you have a recent `eksctl`, as mentioned above, most of Bottlerocket setup fo
 eksctl can use a configuration file to simplify setup.
 We have sample configuration files in the repo:
 * [`sample-eksctl.yaml`](sample-eksctl.yaml) - recommended for most setups.
-* [`sample-eksctl-ssh.yaml`](sample-eksctl-ssh.yaml) - for test clusters where you know you'll want SSH access.  Make sure to change the `publicKeyName` setting to the name of the SSH keypair you have registered with EC2.
+* [`sample-eksctl-ssh.yaml`](sample-eksctl-ssh.yaml) - for test clusters where you know you'll want SSH access.  Make sure to change the `publicKeyName` setting to the name of the SSH key pair you have registered with EC2.
 
 Pick the file most appropriate for you and make a copy, for example `my-eksctl.yaml`.
 In this file you can change your desired numbered of nodes and even set Bottlerocket settings in advance if you like.  The 'settings' section under 'bottlerocket' can include any [Bottlerocket settings](https://github.com/bottlerocket-os/bottlerocket/#description-of-settings).
@@ -346,7 +346,7 @@ If you chose a private subnet and you want to SSH in, you can do so from another
 Now we can launch a Bottlerocket instance in our cluster!
 
 There are a few values to make sure you change in this command:
-* YOUR_KEY_NAME: your SSH keypair name, as registered with EC2
+* YOUR_KEY_NAME: your SSH key pair name, as registered with EC2
 * SUBNET_ID: the subnet you selected earlier
   * If you chose a public subnet, either add `--associate-public-ip-address` to the command, or attach an Elastic IP afterward.
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier

@@ -99,7 +99,7 @@ pub(super) enum Error {
     ParentBootConfigKey,
 
     #[snafu(display(
-        "Encounted unbalanced quotes when processing array elements in '{}'",
+        "Encountered unbalanced quotes when processing array elements in '{}'",
         input
     ))]
     UnbalancedQuotes { input: String },
