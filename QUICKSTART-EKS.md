@@ -110,6 +110,8 @@ ap-southeast-1
 ap-southeast-2
 ap-southeast-3
 ca-central-1
+cn-north-1
+cn-northwest-1
 eu-central-1
 eu-north-1
 eu-south-1
