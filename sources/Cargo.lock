@@ -2493,10 +2493,10 @@ dependencies = [
  "indexmap",
  "ipnet",
  "lazy_static",
+ "quick-xml",
  "rand",
  "regex",
  "serde",
- "serde-xml-rs",
  "serde_json",
  "serde_plain",
  "snafu",
@@ -3034,6 +3034,16 @@ name = "public-control-container-v0-6-1"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9279fbdacaad3baf559d8cabe0acc3d06e30ea14931af31af79578ac0946decc"
+dependencies = [
+ "memchr",
+ "serde",
 ]
 
 [[package]]
