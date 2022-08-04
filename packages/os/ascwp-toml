@@ -1,0 +1,1 @@
+should_wait = {{settings.eks-autoscaling.should-wait}}

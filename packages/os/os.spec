@@ -29,6 +29,7 @@ Source6: metricdog-toml
 Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
+Source10: ascwp-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -48,6 +49,7 @@ Source116: load-kernel-modules.service.in
 Source117: cfsignal.service
 Source118: generate-network-config.service
 Source119: prepare-primary-interface.service
+Source120: ascwp.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -84,9 +86,11 @@ Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}updog
 Requires: %{_cross_os}shimpei
 
+
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
 Requires: %{_cross_os}pluto
+Requires: %{_cross_os}ascwp
 %endif
 Requires: %{_cross_os}static-pods
 %endif
@@ -232,6 +236,11 @@ Summary: Settings generator for ECS
 Summary: Dynamic setting generator for kubernetes
 %description -n %{_cross_os}pluto
 %{summary}.
+
+%package -n %{_cross_os}ascwp
+Summary: Autoscaling warmpool support
+%description -n %{_cross_os}ascwp
+%{summary}.
 %endif
 
 %package -n %{_cross_os}static-pods
@@ -340,6 +349,7 @@ echo "** Output from non-static builds:"
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
     -p pluto \
+    -p ascwp \
 %endif
     -p static-pods \
 %endif
@@ -377,6 +387,7 @@ for p in \
 %if %{_is_k8s_variant}
 %if %{_is_aws_variant}
   pluto \
+  ascwp \
 %endif
   static-pods \
 %endif
@@ -423,13 +434,13 @@ install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
 
 install -d %{buildroot}%{_cross_templatedir}
-install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{S:9} %{S:10} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
-  %{S:113} %{S:114} %{S:118} %{S:119} \
+  %{S:113} %{S:114} %{S:118} %{S:119} %{S:120} \
   %{buildroot}%{_cross_unitdir}
 
 %if %{_is_vendor_variant}
@@ -443,6 +454,7 @@ install -p -m 0644 \
 
 %if %{_is_aws_variant}
 install -p -m 0644 %{S:9} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:10} %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:117} %{buildroot}%{_cross_unitdir}
 %endif
 
@@ -546,6 +558,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_unitdir}/metricdog.timer
 %{_cross_unitdir}/send-boot-success.service
 
+
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog
 
@@ -578,6 +591,12 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_bindir}/pluto
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
+
+%files -n %{_cross_os}ascwp
+%{_cross_bindir}/ascwp
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/ascwp-toml
+%{_cross_unitdir}/ascwp.service
 %endif
 
 %files -n %{_cross_os}static-pods

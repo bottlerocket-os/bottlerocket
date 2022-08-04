@@ -21,3 +21,11 @@ service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kube
 
 [metadata.settings.network]
 affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]
+
+# AutoScaling
+[settings.eks-autoscaling]
+should-wait = false
+
+[configuration-files.ascwp-toml]
+path = "/etc/ascwp.toml"
+template-path = "/usr/share/templates/ascwp-toml"

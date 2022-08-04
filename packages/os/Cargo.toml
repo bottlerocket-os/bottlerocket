@@ -22,6 +22,7 @@ source-groups = [
     "shimpei",
     "driverdog",
     "cfsignal",
+    "ascwp",
 ]
 
 [lib]

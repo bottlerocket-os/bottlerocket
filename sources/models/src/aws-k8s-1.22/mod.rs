@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::modeled_types::Identifier;
 use crate::{
-    AwsSettings, BootstrapContainer, CloudFormationSettings, HostContainer, KernelSettings,
+    AutoScalingSettings, AwsSettings, BootstrapContainer, CloudFormationSettings, HostContainer, KernelSettings,
     KubernetesSettings, MetricsSettings, NetworkSettings, NtpSettings, OciHooks, PemCertificate,
     RegistrySettings, UpdatesSettings,
 };
@@ -27,4 +27,5 @@ struct Settings {
     container_registry: RegistrySettings,
     oci_hooks: OciHooks,
     cloudformation: CloudFormationSettings,
+    eks_autoscaling: AutoScalingSettings,
 }

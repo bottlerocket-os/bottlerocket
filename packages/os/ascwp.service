@@ -1,0 +1,15 @@
+[Unit]
+Description= Waits for host to be in-service before running kubelet if autoscaling.should_wait is true.
+After=network-online.target settings-applier.service
+Before=kubelet.service
+Requires=settings-applier.service
+# We only want to run once, at first boot. This file is created by ascwp
+# after a successful run.
+ConditionPathExists=!/var/lib/bottlerocket/ascwp.ran
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ascwp
+
+[Install]
+WantedBy=kubelet.service
