@@ -1,0 +1,24 @@
+[package]
+name = "ascwp"
+version = "0.1.0"
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+simplelog = "0.12"
+snafu = { version = "0.7" }
+toml = "0.5.1"
+tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }
+rusoto_core = { version = "0.48.0", default-features = false, features = ["rustls"] }
+rusoto_cloudformation = { version = "0.48.0", default-features = false, features = ["rustls"] }
+imdsclient = { path = "../imdsclient", version = "0.1.0" }
+hyper = "0.14.2"
+async-std = "1.12.0"
+
+[dev-dependencies]
+httptest = "0.15"
+tempfile = { version = "3.1.0", default-features = false }
