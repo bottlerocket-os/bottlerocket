@@ -1,0 +1,19 @@
+[package]
+name = "liblzma"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+releases-url = "https://tukaani.org/xz"
+
+[[package.metadata.build-package.external-files]]
+url = "https://tukaani.org/xz/xz-5.2.5.tar.xz"
+sha512 = "59266068a51cb616eb31b67cd8f07ffeb2288d1391c61665ae2ec6814465afac80fec69248f6a2f2db45b44475af001296a99af6a32287226a9c41419173ccbb"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
