@@ -217,6 +217,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-eks-autoscaling"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
