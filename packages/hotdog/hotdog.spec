@@ -24,7 +24,7 @@ Version: 1.0.1
 Release: 1%{?dist}
 Summary: Tool with OCI hooks to run the Log4j Hot Patch in containers
 License: Apache-2.0
-URL: https://github.com/awslabs/oci-add-hooks
+URL: https://github.com/bottlerocket-os/hotdog
 Source0: https://%{goimport}/archive/%{gorev}/%{gorepo}-%{shortrev}.tar.gz
 Source1: https://github.com/opencontainers/runtime-spec/archive/v%{runtimespec}/runtime-spec-%{runtimespec}.tar.gz
 Source2: https://github.com/golang/sys/archive/%{gosysrev}/sys-%{gosysrevshort}.tar.gz
