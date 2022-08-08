@@ -21,3 +21,11 @@ service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kube
 
 [metadata.settings.network]
 affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]
+
+# AutoScaling
+[settings.autoscaling]
+should-wait = false
+
+[configuration-files.hachiko-toml]
+path = "/etc/hachiko.toml"
+template-path = "/usr/share/templates/hachiko-toml"
