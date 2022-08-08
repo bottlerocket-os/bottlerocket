@@ -168,6 +168,12 @@ impl ImdsClient {
         self.fetch_string(&instance_type_target).await
     }
 
+    /// Get lifecycle state from instance metadata.
+    pub async fn fetch_lifecycle_state(&mut self) -> Result<Option<String>> {
+        let instance_type_target = "meta-data/autoscaling/target-lifecycle-state";
+        self.fetch_string(&instance_type_target).await
+    }
+
     /// Returns a list of public ssh keys skipping any keys that do not start with 'ssh'.
     pub async fn fetch_public_ssh_keys(&mut self) -> Result<Option<Vec<String>>> {
         info!("Fetching list of available public keys from IMDS");

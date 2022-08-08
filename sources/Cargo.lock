@@ -1701,6 +1701,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "hachiko"
+version = "0.1.0"
+dependencies = [
+ "imdsclient",
+ "log",
+ "serde",
+ "simplelog",
+ "snafu",
+ "tempfile",
+ "tokio",
+ "toml",
+]
+
+[[package]]
 name = "handlebars"
 version = "4.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -61,7 +61,9 @@ members = [
 
     "constants",
 
-    "shimpei"
+    "shimpei",
+
+    "hachiko"
 ]
 
 [profile.release]

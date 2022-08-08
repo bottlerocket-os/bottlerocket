@@ -1,0 +1,19 @@
+[package]
+name = "hachiko"
+version = "0.1.0"
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+simplelog = "0.12"
+snafu = { version = "0.7" }
+toml = "0.5.1"
+tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }
+imdsclient = { path = "../imdsclient", version = "0.1.0" }
+
+[dev-dependencies]
+tempfile = { version = "3.1.0", default-features = false }

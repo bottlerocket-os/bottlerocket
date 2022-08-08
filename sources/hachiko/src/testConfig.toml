@@ -1,0 +1,2 @@
+should_wait = true
+marker_path = "/var/lib/bottlerocket/hachiko.ran"
