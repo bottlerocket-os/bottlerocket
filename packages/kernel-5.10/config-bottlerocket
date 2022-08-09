@@ -130,3 +130,6 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 # CONFIG_RDS is not set
 # CONFIG_RFKILL is not set
 # CONFIG_TIPC is not set
+
+# Disable USB-attached network interfaces, unused in the cloud and on server-grade hardware.
+# CONFIG_USB_NET_DRIVERS is not set
