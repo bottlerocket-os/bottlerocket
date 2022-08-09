@@ -63,18 +63,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-k8s-1_19"
-version = "0.1.0"
-dependencies = [
- "aws-iam-authenticator",
- "cni",
- "cni-plugins",
- "kernel-5_4",
- "kubernetes-1_19",
- "release",
-]
-
-[[package]]
 name = "aws-k8s-1_20"
 version = "0.1.0"
 dependencies = [
@@ -398,13 +386,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kernel-5_4"
-version = "0.1.0"
-dependencies = [
- "microcode",
-]
-
-[[package]]
 name = "kexec-tools"
 version = "0.1.0"
 dependencies = [
@@ -426,13 +407,6 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "kernel-5_10",
-]
-
-[[package]]
-name = "kubernetes-1_19"
-version = "0.1.0"
-dependencies = [
- "glibc",
 ]
 
 [[package]]

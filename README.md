@@ -56,7 +56,6 @@ For example, an `x86_64` build of the `aws-k8s-1.21` variant will produce an ima
 
 The following variants support EKS, as described above:
 
-* `aws-k8s-1.19`
 * `aws-k8s-1.20`
 * `aws-k8s-1.21`
 * `aws-k8s-1.22`
@@ -89,6 +88,7 @@ The following variants are no longer supported:
 * `aws-k8s-1.16`
 * `aws-k8s-1.17`
 * `aws-k8s-1.18`
+* `aws-k8s-1.19`
 
 We recommend users replace nodes running these variants with the [latest variant compatible with their cluster](variants/).
 
@@ -671,7 +671,7 @@ Here are the metrics settings:
 #### Kernel settings
 
 * `settings.kernel.lockdown`: This allows further restrictions on what the Linux kernel will allow, for example preventing the loading of unsigned modules.
-  May be set to "none" (the default in older [variants](variants/), up through aws-k8s-1.19), "integrity" (the default for newer [variants](variants/)), or "confidentiality".
+  May be set to "none" (the default in `*-nvidia` and `*-dev` variants), "integrity" (the default for other variants), or "confidentiality".
   **Important note:** this setting cannot be lowered (toward 'none') at runtime.
   You must reboot for a change to a lower level to take effect.
 * `settings.kernel.modules.<name>.allowed`: Whether the named kernel module is allowed to be loaded.
