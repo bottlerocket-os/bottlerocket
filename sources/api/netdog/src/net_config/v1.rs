@@ -113,7 +113,7 @@ impl FromStr for NetConfigV1 {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let (name, options) = s
-            .split_once(":")
+            .split_once(':')
             .context(error::InvalidInterfaceDefSnafu { definition: s })?;
 
         if options.is_empty() || name.is_empty() {

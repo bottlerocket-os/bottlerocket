@@ -61,9 +61,7 @@ impl TryFrom<String> for InterfaceName {
             }
         );
 
-        Ok(Self {
-            inner: input.to_string(),
-        })
+        Ok(Self { inner: input })
     }
 }
 
