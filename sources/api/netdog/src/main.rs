@@ -31,23 +31,19 @@ file in `/etc/sysctl.d`, and then executes `systemd-sysctl` to apply them.
 extern crate serde_plain;
 
 mod interface_name;
+mod lease;
 mod net_config;
 mod wicked;
 
 use argh::FromArgs;
 use dns_lookup::lookup_addr;
-use envy;
-use ipnet::IpNet;
-use lazy_static::lazy_static;
+use lease::LeaseInfo;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
-use std::collections::BTreeSet;
 use std::fmt::Write;
-use std::fs::{self, File};
-use std::io::{BufRead, BufReader};
+use std::fs;
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command};
@@ -61,26 +57,6 @@ static PRIMARY_INTERFACE: &str = "/var/lib/netdog/primary_interface";
 static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
 static PRIMARY_SYSCTL_CONF: &str = "/etc/sysctl.d/90-primary_interface.conf";
 static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
-
-// Matches wicked's shell-like syntax for DHCP lease variables:
-//     FOO='BAR' -> key=FOO, val=BAR
-lazy_static! {
-    static ref LEASE_PARAM: Regex = Regex::new(r"^(?P<key>[A-Z]+)='(?P<val>.+)'$").unwrap();
-}
-
-/// Stores fields extracted from a DHCP lease.
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct LeaseInfo {
-    #[serde(rename = "ipaddr")]
-    ip_address: IpNet,
-    #[serde(rename = "dnsservers")]
-    dns_servers: BTreeSet<IpAddr>,
-    #[serde(rename = "dnsdomain")]
-    dns_domain: Option<String>,
-    #[serde(rename = "dnssearch")]
-    dns_search: Option<Vec<String>>,
-}
 
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -193,36 +169,6 @@ struct SetHostnameArgs {
 /// Sets the default sysctls for the primary interface
 struct PreparePrimaryInterfaceArgs {}
 
-/// Parse lease data file into a LeaseInfo structure.
-fn parse_lease_info<P>(lease_file: P) -> Result<LeaseInfo>
-where
-    P: AsRef<Path>,
-{
-    let lease_file = lease_file.as_ref();
-    let f = File::open(lease_file).context(error::LeaseReadFailedSnafu { path: lease_file })?;
-    let f = BufReader::new(f);
-
-    let mut env = Vec::new();
-    for line in f.lines() {
-        let line = line.context(error::LeaseReadFailedSnafu { path: lease_file })?;
-        // We ignore any line that does not match the regex.
-        for cap in LEASE_PARAM.captures_iter(&line) {
-            let key = cap.name("key").map(|k| k.as_str());
-            let val = cap.name("val").map(|v| v.as_str());
-            if let (Some(k), Some(v)) = (key, val) {
-                // If present, replace spaces with commas so Envy deserializes into a list.
-                env.push((k.to_string(), v.replace(" ", ",")))
-            }
-        }
-    }
-
-    // Envy implements a serde `Deserializer` for an iterator of key/value pairs. That lets us
-    // feed in the key/value pairs from the lease file and get a `LeaseInfo` struct. If not all
-    // expected values are present in the file, it will fail; any extra values are ignored.
-    Ok(envy::from_iter::<_, LeaseInfo>(env)
-        .context(error::LeaseParseFailedSnafu { path: lease_file })?)
-}
-
 /// Write resolver configuration for libc.
 fn write_resolv_conf(dns_servers: &[&IpAddr], dns_search: &Option<Vec<String>>) -> Result<()> {
     let mut output = String::new();
@@ -262,7 +208,10 @@ fn install(args: InstallArgs) -> Result<()> {
 
     match (&args.interface_type, &args.interface_family) {
         (InterfaceType::Dhcp, InterfaceFamily::Ipv4) => {
-            let info = parse_lease_info(&args.data_file)?;
+            let info =
+                LeaseInfo::from_lease(&args.data_file).context(error::LeaseParseFailedSnafu {
+                    path: &args.data_file,
+                })?;
             // Randomize name server order, for libc implementations like musl that send
             // queries to the first N servers.
             let mut dns_servers: Vec<_> = info.dns_servers.iter().collect();
@@ -468,8 +417,7 @@ mod tests {
 
 /// Potential errors during netdog execution
 mod error {
-    use crate::{net_config, wicked};
-    use envy;
+    use crate::{lease, net_config, wicked};
     use snafu::Snafu;
     use std::io;
     use std::path::PathBuf;
@@ -478,11 +426,8 @@ mod error {
     #[snafu(visibility(pub(super)))]
     #[allow(clippy::enum_variant_names)]
     pub(super) enum Error {
-        #[snafu(display("Failed to read lease data in '{}': {}", path.display(), source))]
-        LeaseReadFailed { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Failed to parse lease data in '{}': {}", path.display(), source))]
-        LeaseParseFailed { path: PathBuf, source: envy::Error },
+        #[snafu(display("Failed to read/parse lease data in '{}': {}", path.display(), source))]
+        LeaseParseFailed { path: PathBuf, source: lease::Error },
 
         #[snafu(display("Failed to build resolver configuration: {}", source))]
         ResolvConfBuildFailed { source: std::fmt::Error },
