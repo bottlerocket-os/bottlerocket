@@ -40,7 +40,7 @@
 * Add support for AWS China regions ([#2224], [#2242], [#2247], [#2285])
 * Migrate to using `aws-sdk-rust` for first-party OS Rust packages ([#2300])
 
-### VMWare
+### VMware
 
 * Remove `console=ttyS0` from kernel params ([#2248])
 
@@ -273,7 +273,7 @@ With this release, an inventory of software installed in Bottlerocket will now b
 
 ## Documentation Changes
 
-* Fix tuftool download instruction in VMWare Quickstart ([#1994])
+* Fix tuftool download instruction in VMware Quickstart ([#1994])
 * Explain data partition extension ([#2013])
 
 [#1977]: https://github.com/bottlerocket-os/bottlerocket/pull/1977
@@ -987,7 +987,7 @@ See [this issue](https://github.com/bottlerocket-os/bottlerocket/issues/1478) fo
 * Add compat symlink for kubelet volume plugins ([#1417])
 * Remove bottlerocket.version attribute from ECS agent settings ([#1395])
 * Make Kubernetes taint values optional ([#1406])
-* Add guestinfo to available VMWare user data retrieval methods ([#1393])
+* Add guestinfo to available VMware user data retrieval methods ([#1393])
 * Include source of invalid base64 data in error messages ([#1469])
 * Update eni-max-pods data file ([#1468])
 * Update default host container versions ([#1443], [#1441], [#1466])
@@ -1201,7 +1201,7 @@ Attempts to downgrade may result in inconsistencies between ECS and the Bottlero
 * Fix message in partition size check condition ([#1233], **thanks @pranavek!**)
 * Split the datastore module into its own crate ([#1249])
 * Update SDK to v0.15.0 ([#1263])
-* Update Github Actions to ignore changes that only include .md files ([#1274])
+* Update GitHub Actions to ignore changes that only include .md files ([#1274])
 
 ## Documentation Changes
 
