@@ -154,6 +154,10 @@ cargo make \
 
 To use the image in Amazon EC2, we need to register the image as an AMI.
 
+To do this, you'll need to have your AWS account credentials setup on your system.
+There are lots of ways to do this; one method is using [the `aws` CLI](https://aws.amazon.com/cli/) via its `configure` command with your user's access and secret keys.
+If you're using an EC2 instance, the [EC2 instance's IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) will be used automatically if available.
+
 For a simple start, pick an [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions), then run:
 
 ```

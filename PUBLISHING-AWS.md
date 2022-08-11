@@ -12,6 +12,11 @@ You can also specify this in your `Infra.toml` file:
 regions = ["us-west-2", "us-east-1", "us-east-2"]
 ```
 
+Note: several commands work with AWS services, so there's some shared configuration related to AWS accounts and AWS IAM roles.
+For example, you can specify a role to assume before any API calls are made, and a role to assume before any API calls in a specific region.
+This can be useful if you want to use roles to control access to the accounts that own AMIs, for example.
+See the commented [example Infra.toml](tools/pubsys/Infra.toml.example) for details.
+
 If you specify multiple regions, an AMI will be registered in the first region and then copied to the other regions.
 
 After putting this in `Infra.toml`, you can make an AMI more easily:
