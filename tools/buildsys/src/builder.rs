@@ -103,7 +103,7 @@ impl PackageBuilder {
             arch = arch,
         );
 
-        build(BuildType::Package, &package, &arch, args, &tag, &output_dir)?;
+        build(BuildType::Package, package, &arch, args, &tag, &output_dir)?;
 
         Ok(Self)
     }
@@ -231,10 +231,10 @@ fn build(
     let nocache = rand::thread_rng().gen::<u32>();
 
     // Create a directory for tracking outputs before we move them into position.
-    let build_dir = create_build_dir(&kind, &what, &arch)?;
+    let build_dir = create_build_dir(&kind, what, arch)?;
 
     // Clean up any previous outputs we have tracked.
-    clean_build_files(&build_dir, &output_dir)?;
+    clean_build_files(&build_dir, output_dir)?;
 
     let target = match kind {
         BuildType::Package => "package",
@@ -296,7 +296,7 @@ fn build(
     docker(&rmi, Retry::No)?;
 
     // Copy artifacts to the expected directory and write markers to track them.
-    copy_build_files(&build_dir, &output_dir)?;
+    copy_build_files(&build_dir, output_dir)?;
 
     Ok(())
 }
@@ -453,7 +453,7 @@ where
         .min_depth(1)
         .max_depth(1)
         .into_iter()
-        .filter_entry(move |e| filter(e))
+        .filter_entry(filter)
         .flat_map(|e| e.context(error::DirectoryWalkSnafu))
         .map(|e| e.into_path())
 }

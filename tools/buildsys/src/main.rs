@@ -108,6 +108,8 @@ fn main() {
 }
 
 fn run() -> Result<()> {
+    // Not actually redundant for a diverging function.
+    #[allow(clippy::redundant_closure)]
     let command_str = std::env::args().nth(1).unwrap_or_else(|| usage());
     let command = serde_plain::from_str::<Command>(&command_str).unwrap_or_else(|_| usage());
     match command {
@@ -140,7 +142,7 @@ fn build_package() -> Result<()> {
     }
 
     if let Some(files) = manifest.external_files() {
-        LookasideCache::fetch(&files).context(error::ExternalFileFetchSnafu)?;
+        LookasideCache::fetch(files).context(error::ExternalFileFetchSnafu)?;
     }
 
     if let Some(groups) = manifest.source_groups() {
@@ -196,7 +198,7 @@ fn build_variant() -> Result<()> {
         let kernel_parameters = manifest.kernel_parameters();
         let grub_features = manifest.grub_features();
         VariantBuilder::build(
-            &packages,
+            packages,
             image_format,
             image_layout,
             kernel_parameters,
@@ -222,7 +224,7 @@ fn supported_arch(manifest: &ManifestInfo) -> Result<()> {
             error::UnsupportedArchSnafu {
                 arch: &arch,
                 supported_arches: supported_arches
-                    .into_iter()
+                    .iter()
                     .map(|a| a.to_string())
                     .collect::<Vec<String>>()
             }

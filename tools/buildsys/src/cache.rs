@@ -29,7 +29,7 @@ impl LookasideCache {
     pub(crate) fn fetch(files: &[manifest::ExternalFile]) -> Result<Self> {
         for f in files {
             let url_file_name = Self::extract_file_name(&f.url)?;
-            let path = &f.path.as_ref().unwrap_or_else(|| &url_file_name);
+            let path = &f.path.as_ref().unwrap_or(&url_file_name);
             ensure!(
                 path.components().count() == 1,
                 error::ExternalFileNameSnafu { path }
@@ -50,7 +50,7 @@ impl LookasideCache {
             let tmp = PathBuf::from(format!(".{}", name));
 
             // first check the lookaside cache
-            let url = format!("{}/{}/{}/{}", LOOKASIDE_CACHE.to_string(), name, hash, name);
+            let url = format!("{}/{}/{}/{}", LOOKASIDE_CACHE, name, hash, name);
             match Self::fetch_file(&url, &tmp, hash) {
                 Ok(_) => {
                     fs::rename(&tmp, path)
