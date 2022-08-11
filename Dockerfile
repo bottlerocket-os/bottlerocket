@@ -86,6 +86,10 @@ COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${
 RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \
    && echo "%_cross_variant ${VARIANT}" >> .rpmmacros \
+   && echo "%_cross_variant_platform ${VARIANT_PLATFORM}" >> .rpmmacros \
+   && echo "%_cross_variant_runtime ${VARIANT_RUNTIME}" >> .rpmmacros \
+   && echo "%_cross_variant_family ${VARIANT_FAMILY}" >> .rpmmacros \
+   && echo "%_cross_variant_flavor ${VARIANT_FAMILY:-none}" >> .rpmmacros \
    && echo "%_cross_repo_root_json %{_builddir}/root.json" >> .rpmmacros \
    && echo "%_topdir /home/builder/rpmbuild" >> .rpmmacros \
    && rm ${ARCH} shared rust cargo \
