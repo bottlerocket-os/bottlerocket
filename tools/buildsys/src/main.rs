@@ -134,10 +134,27 @@ fn build_package() -> Result<()> {
     let manifest =
         ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParseSnafu)?;
 
-    // if manifest has package.metadata.build-package.variant-specific = true, then println rerun-if-env-changed
-    if let Some(sensitive) = manifest.variant_sensitive() {
-        if sensitive {
-            println!("cargo:rerun-if-env-changed=BUILDSYS_VARIANT");
+    // If manifest has package.metadata.build-package.variant-sensitive set, then track the
+    // appropriate environment variable for changes.
+    if let Some(sensitivity) = manifest.variant_sensitive() {
+        use manifest::{SensitivityType::*, VariantSensitivity::*};
+        fn emit_variant_env(suffix: Option<&str>) {
+            if let Some(suffix) = suffix {
+                println!(
+                    "cargo:rerun-if-env-changed=BUILDSYS_VARIANT_{}",
+                    suffix.to_uppercase()
+                );
+            } else {
+                println!("cargo:rerun-if-env-changed=BUILDSYS_VARIANT");
+            }
+        }
+        match sensitivity {
+            Any(false) => (),
+            Any(true) => emit_variant_env(None),
+            Specific(Platform) => emit_variant_env(Some("platform")),
+            Specific(Runtime) => emit_variant_env(Some("runtime")),
+            Specific(Family) => emit_variant_env(Some("family")),
+            Specific(Flavor) => emit_variant_env(Some("flavor")),
         }
     }
 
