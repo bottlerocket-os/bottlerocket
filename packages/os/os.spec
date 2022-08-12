@@ -1,8 +1,4 @@
 %global _cross_first_party 1
-%global _is_k8s_variant %(if echo %{_cross_variant} | grep -Fqw "k8s"; then echo 1; else echo 0; fi)
-%global _is_ecs_variant %(if echo %{_cross_variant} | grep -Fqw "ecs"; then echo 1; else echo 0; fi)
-%global _is_aws_variant %(if echo %{_cross_variant} | grep -Fqw "aws"; then echo 1; else echo 0; fi)
-%global _is_vendor_variant %(if echo %{_cross_variant} | grep -Fqw "nvidia"; then echo 1; else echo 0; fi)
 %undefine _debugsource_packages
 
 Name: %{_cross_os}os
@@ -84,23 +80,24 @@ Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}updog
 Requires: %{_cross_os}shimpei
 
-%if %{_is_k8s_variant}
-%if %{_is_aws_variant}
+%if %{with aws_k8s_family}
 Requires: %{_cross_os}pluto
 %endif
+
+%if %{with k8s_runtime}
 Requires: %{_cross_os}static-pods
 %endif
 
-%if %{_is_aws_variant}
+%if %{with aws_platform}
 Requires: %{_cross_os}shibaken
 Requires: %{_cross_os}cfsignal
 %endif
 
-%if %{_is_ecs_variant}
+%if %{with ecs_runtime}
 Requires: %{_cross_os}ecs-settings-applier
 %endif
 
-%if %{_is_vendor_variant}
+%if %{with nvidia_flavor}
 Requires: %{_cross_os}driverdog
 %endif
 
@@ -219,28 +216,28 @@ Summary: Bottlerocket certificates handler
 %description -n %{_cross_os}certdog
 %{summary}.
 
-%if %{_is_ecs_variant}
+%if %{with ecs_runtime}
 %package -n %{_cross_os}ecs-settings-applier
 Summary: Settings generator for ECS
 %description -n %{_cross_os}ecs-settings-applier
 %{summary}.
 %endif
 
-%if %{_is_k8s_variant}
-%if %{_is_aws_variant}
+%if %{with aws_k8s_family}
 %package -n %{_cross_os}pluto
 Summary: Dynamic setting generator for kubernetes
 %description -n %{_cross_os}pluto
 %{summary}.
 %endif
 
+%if %{with k8s_runtime}
 %package -n %{_cross_os}static-pods
 Summary: Manages user-defined K8S static pods
 %description -n %{_cross_os}static-pods
 %{summary}.
 %endif
 
-%if %{_is_aws_variant}
+%if %{with aws_platform}
 %package -n %{_cross_os}shibaken
 Summary: Setting generator for populating admin container user-data from IMDS.
 %description -n %{_cross_os}shibaken
@@ -259,7 +256,7 @@ Requires: %{_cross_os}hotdog
 %description -n %{_cross_os}shimpei
 %{summary}.
 
-%if %{_is_vendor_variant}
+%if %{with nvidia_flavor}
 %package -n %{_cross_os}driverdog
 Summary: Tool to load additional drivers
 Requires: %{_cross_os}binutils
@@ -330,22 +327,11 @@ echo "** Output from non-static builds:"
     -p prairiedog \
     -p certdog \
     -p shimpei \
-%if %{_is_ecs_variant}
-    -p ecs-settings-applier \
-%endif
-%if %{_is_aws_variant}
-    -p shibaken \
-    -p cfsignal \
-%endif
-%if %{_is_k8s_variant}
-%if %{_is_aws_variant}
-    -p pluto \
-%endif
-    -p static-pods \
-%endif
-%if %{_is_vendor_variant}
-    -p driverdog \
-%endif
+    %{?with_ecs_runtime: -p ecs-settings-applier} \
+    %{?with_aws_platform: -p shibaken -p cfsignal} \
+    %{?with_aws_k8s_family: -p pluto} \
+    %{?with_k8s_runtime: -p static-pods} \
+    %{?with_nvidia_flavor: -p driverdog} \
     %{nil}
 
 # Wait for static builds from the background, if they're not already done.
@@ -367,22 +353,11 @@ for p in \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
   shimpei \
-%if %{_is_ecs_variant}
-  ecs-settings-applier \
-%endif
-%if %{_is_aws_variant}
-  shibaken \
-  cfsignal \
-%endif
-%if %{_is_k8s_variant}
-%if %{_is_aws_variant}
-  pluto \
-%endif
-  static-pods \
-%endif
-%if %{_is_vendor_variant}
-  driverdog \
-%endif
+  %{?with_ecs_runtime: ecs-settings-applier} \
+  %{?with_aws_platform: shibaken cfsignal} \
+  %{?with_aws_k8s_family: pluto} \
+  %{?with_k8s_runtime: static-pods} \
+  %{?with_nvidia_flavor: driverdog} \
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
@@ -412,11 +387,9 @@ install -d %{buildroot}%{_cross_datadir}/bottlerocket
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysusersdir}/api.conf
 
-%if %{_is_k8s_variant}
-%if %{_is_aws_variant}
+%if %{with aws_k8s_family}
 install -d %{buildroot}%{_cross_datadir}/eks
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_datadir}/eks
-%endif
 %endif
 
 install -d %{buildroot}%{_cross_datadir}/updog
@@ -432,7 +405,7 @@ install -p -m 0644 \
   %{S:113} %{S:114} %{S:118} %{S:119} \
   %{buildroot}%{_cross_unitdir}
 
-%if %{_is_vendor_variant}
+%if %{with nvidia_flavor}
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:115} > link-kernel-modules.service
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:116} > load-kernel-modules.service
 install -p -m 0644 \
@@ -441,7 +414,7 @@ install -p -m 0644 \
   %{buildroot}%{_cross_unitdir}
 %endif
 
-%if %{_is_aws_variant}
+%if %{with aws_platform}
 install -p -m 0644 %{S:9} %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:117} %{buildroot}%{_cross_unitdir}
 %endif
@@ -549,12 +522,12 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog
 
-%if %{_is_ecs_variant}
+%if %{with ecs_runtime}
 %files -n %{_cross_os}ecs-settings-applier
 %{_cross_bindir}/ecs-settings-applier
 %endif
 
-%if %{_is_aws_variant}
+%if %{with aws_platform}
 %files -n %{_cross_os}shibaken
 %{_cross_bindir}/shibaken
 
@@ -565,21 +538,21 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %{_cross_unitdir}/cfsignal.service
 %endif
 
-%if %{_is_vendor_variant}
+%if %{with nvidia_flavor}
 %files -n %{_cross_os}driverdog
 %{_cross_bindir}/driverdog
 %{_cross_unitdir}/link-kernel-modules.service
 %{_cross_unitdir}/load-kernel-modules.service
 %endif
 
-%if %{_is_k8s_variant}
-%if %{_is_aws_variant}
+%if %{with aws_k8s_family}
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
 %endif
 
+%if %{with k8s_runtime}
 %files -n %{_cross_os}static-pods
 %{_cross_bindir}/static-pods
 %endif
