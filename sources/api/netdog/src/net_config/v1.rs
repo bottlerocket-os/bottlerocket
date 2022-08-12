@@ -50,7 +50,7 @@ impl Interfaces for NetConfigV1 {
         !self.interfaces.is_empty()
     }
 
-    fn into_wicked_interfaces(&self) -> Vec<WickedInterface> {
+    fn as_wicked_interfaces(&self) -> Vec<WickedInterface> {
         let mut wicked_interfaces = Vec::with_capacity(self.interfaces.len());
         for (name, config) in &self.interfaces {
             let wicked_dhcp4 = config.dhcp4.clone().map(WickedDhcp4::from);

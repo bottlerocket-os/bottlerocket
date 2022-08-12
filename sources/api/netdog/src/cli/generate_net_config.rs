@@ -35,7 +35,7 @@ pub(crate) fn run() -> Result<()> {
         .context(error::GetPrimaryInterfaceSnafu)?;
     write_primary_interface(primary_interface)?;
 
-    let wicked_interfaces = net_config.into_wicked_interfaces();
+    let wicked_interfaces = net_config.as_wicked_interfaces();
     for interface in wicked_interfaces {
         interface
             .write_config_file()

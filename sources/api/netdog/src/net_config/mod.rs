@@ -29,7 +29,7 @@ pub(crate) trait Interfaces {
 
     /// Converts the network config into a list of `WickedInterface` structs, suitable for writing
     /// to file
-    fn into_wicked_interfaces(&self) -> Vec<WickedInterface>;
+    fn as_wicked_interfaces(&self) -> Vec<WickedInterface>;
 }
 
 impl<I: Interfaces> Interfaces for Box<I> {
@@ -41,8 +41,8 @@ impl<I: Interfaces> Interfaces for Box<I> {
         (**self).has_interfaces()
     }
 
-    fn into_wicked_interfaces(&self) -> Vec<WickedInterface> {
-        (**self).into_wicked_interfaces()
+    fn as_wicked_interfaces(&self) -> Vec<WickedInterface> {
+        (**self).as_wicked_interfaces()
     }
 }
 
