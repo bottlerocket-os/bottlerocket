@@ -169,8 +169,78 @@ cargo make \
   test
 ```
 
-(`-r` tells testsys to also show the status of resources like the cluster and instances in addition to tests):
-
 ```shell
 cargo make watch-test
 ```
+
+## Migration Testing
+
+Migration testing is used to ensure Bottlerocket can update from one version to a new version and back.
+This involves launching Bottlerocket instances, upgrading them, and downgrading them.
+
+Migration testing launches instances of a starting Bottlerocket version, or a provided initial AMI and migrates instances to the target version.
+In order to accomplish this a few artifacts need to be created:
+* A publicly accessible TUF repository
+* A previous release of Bottlerocket signed with available keys
+* The AMI ID for the previous release
+* Image artifacts and local TUF repos of said artifacts for current changes
+
+### The setup
+
+#### Prepare `Infra.toml`
+
+We need the URL of an accessible TUF repo so the Bottlerocket instances know where to retrieve the update metadata and targets. 
+Follow our (publishing guide)[PUBLISHING.md#repo-location] to set up TUF repos.
+`Infra.toml` is used by testsys to determine TUF repo locations, so `metadata_base_url` and `targets_base_url` need to be set based on the repo that was just created. 
+The examples below also assume that the default repo is being used in `Infra.toml`, but any repo can be used by setting the `PUBLISH_REPO` environment variable.
+
+#### Starting Bottlerocket images
+
+In this example we will use `v1.9.0` as our starting Bottlerocket version, but any tag from Bottlerocket will work. 
+The following bash script will checkout the proper branch from git and create the build images and TUF repos for testing.
+
+```shell
+git checkout "v1.9.0"
+cargo make
+cargo make ami
+cargo make repo
+```
+
+Remember to sync your TUF repos with the new metadata and targets.
+
+#### Target Bottlerocket images
+
+Now, it's time to create the Bottlerocket artifacts that need to be upgraded to.
+
+Switch to the working git branch that should be built from.
+
+```shell
+WORKING_BRANCH="develop"
+git checkout "${WORKING_BRANCH}"
+```
+
+Next, build Bottlerocket images and repos and sync TUF repos.
+
+```shell
+cargo make
+cargo make ami
+cargo make repo
+```
+
+Now, sync your TUF repos with the new metadata and targets.
+
+This completes the setup and it is time to test migrations!
+
+### Testing Migrations
+
+The previous steps set up the artifacts necessary to perform migration testing using `testsys`.
+Ensure all environment variables are still set and set them if they aren't.
+
+To run the migration test set `TESTSYS_TEST=migration` in the `cargo make test` call. 
+This will automatically determine the ami that should be used by finding the latest released version of bottlerocket and checking the user's AMIs to find the correct starting AMI ID.
+
+```shell
+cargo make -e TESTSYS_TEST=migration test
+```
+
+To see the state of the tests as they run use `cargo make watch-test`.
