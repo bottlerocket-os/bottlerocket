@@ -50,7 +50,7 @@ impl Interfaces for NetConfigV1 {
         !self.interfaces.is_empty()
     }
 
-    fn into_wicked_interfaces(&self) -> Vec<WickedInterface> {
+    fn as_wicked_interfaces(&self) -> Vec<WickedInterface> {
         let mut wicked_interfaces = Vec::with_capacity(self.interfaces.len());
         for (name, config) in &self.interfaces {
             let wicked_dhcp4 = config.dhcp4.clone().map(WickedDhcp4::from);
@@ -113,7 +113,7 @@ impl FromStr for NetConfigV1 {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let (name, options) = s
-            .split_once(":")
+            .split_once(':')
             .context(error::InvalidInterfaceDefSnafu { definition: s })?;
 
         if options.is_empty() || name.is_empty() {

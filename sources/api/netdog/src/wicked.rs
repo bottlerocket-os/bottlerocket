@@ -247,7 +247,7 @@ mod tests {
         for ok_str in ok {
             let net_config = NetConfigV1::from_str(&ok_str).unwrap();
 
-            let wicked_interfaces = net_config.into_wicked_interfaces();
+            let wicked_interfaces = net_config.as_wicked_interfaces();
             for interface in wicked_interfaces {
                 let generated = quick_xml::se::to_string(&interface).unwrap();
 
@@ -266,7 +266,7 @@ mod tests {
         let net_config_path = net_config().join("net_config.toml");
         let net_config = net_config::from_path(&net_config_path).unwrap().unwrap();
 
-        let wicked_interfaces = net_config.into_wicked_interfaces();
+        let wicked_interfaces = net_config.as_wicked_interfaces();
         for interface in wicked_interfaces {
             let mut path = wicked_config().join(interface.name.to_string());
             path.set_extension("xml");
