@@ -23,18 +23,23 @@ lazy_static! {
         m.insert("ap-northeast-2", "328549459982");
         m.insert("ap-northeast-3", "328549459982");
         m.insert("ap-south-1", "328549459982");
+        m.insert("ap-south-2", "764716012617");
         m.insert("ap-southeast-1", "328549459982");
         m.insert("ap-southeast-2", "328549459982");
         m.insert("ap-southeast-3", "386774335080");
+        m.insert("ap-southeast-4", "731751899352");
         m.insert("ca-central-1", "328549459982");
         m.insert("cn-north-1", "183470599484");
         m.insert("cn-northwest-1", "183901325759");
         m.insert("eu-central-1", "328549459982");
+        m.insert("eu-central-2", "861738308508");
         m.insert("eu-north-1", "328549459982");
         m.insert("eu-south-1", "586180183710");
+        m.insert("eu-south-2", "620625777247");
         m.insert("eu-west-1", "328549459982");
         m.insert("eu-west-2", "328549459982");
         m.insert("eu-west-3", "328549459982");
+        m.insert("me-central-1", "553577323255");
         m.insert("me-south-1", "509306038620");
         m.insert("sa-east-1", "328549459982");
         m.insert("us-east-1", "328549459982");
@@ -1762,59 +1767,55 @@ mod test_ecr_registry {
         registry.render_template(tmpl, data)
     }
 
+    const ECR_REGISTRY_TESTS: &[(&str, &str)] = &[
+        (
+            "eu-central-1",
+            "328549459982.dkr.ecr.eu-central-1.amazonaws.com/bottlerocket-admin:v0.5.1",
+        ),
+        (
+            "af-south-1",
+            "917644944286.dkr.ecr.af-south-1.amazonaws.com/bottlerocket-admin:v0.5.1",
+        ),
+        // Test fallback url
+        (
+            "xy-ztown-1",
+            "328549459982.dkr.ecr.us-east-1.amazonaws.com/bottlerocket-admin:v0.5.1",
+        ),
+        (
+            "cn-north-1",
+            "183470599484.dkr.ecr.cn-north-1.amazonaws.com.cn/bottlerocket-admin:v0.5.1",
+        ),
+        (
+            "ap-south-2",
+            "764716012617.dkr.ecr.ap-south-2.amazonaws.com/bottlerocket-admin:v0.5.1",
+        ),
+        (
+            "ap-southeast-4",
+            "731751899352.dkr.ecr.ap-southeast-4.amazonaws.com/bottlerocket-admin:v0.5.1",
+        ),
+        (
+            "eu-central-2",
+            "861738308508.dkr.ecr.eu-central-2.amazonaws.com/bottlerocket-admin:v0.5.1",
+        ),
+        (
+            "eu-south-2",
+            "620625777247.dkr.ecr.eu-south-2.amazonaws.com/bottlerocket-admin:v0.5.1",
+        ),
+    ];
+
     const ADMIN_CONTAINER_TEMPLATE: &str =
         "{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.5.1";
 
-    const EXPECTED_URL_EU_CENTRAL_1: &str =
-        "328549459982.dkr.ecr.eu-central-1.amazonaws.com/bottlerocket-admin:v0.5.1";
-
-    const EXPECTED_URL_AF_SOUTH_1: &str =
-        "917644944286.dkr.ecr.af-south-1.amazonaws.com/bottlerocket-admin:v0.5.1";
-
-    const EXPECTED_URL_XY_ZTOWN_1: &str =
-        "328549459982.dkr.ecr.us-east-1.amazonaws.com/bottlerocket-admin:v0.5.1";
-
-    const EXPECTED_URL_CN_NORTH_1: &str =
-        "183470599484.dkr.ecr.cn-north-1.amazonaws.com.cn/bottlerocket-admin:v0.5.1";
-
     #[test]
-    fn url_eu_central_1() {
-        let result = setup_and_render_template(
-            ADMIN_CONTAINER_TEMPLATE,
-            &json!({"settings": {"aws": {"region": "eu-central-1"}}}),
-        )
-        .unwrap();
-        assert_eq!(result, EXPECTED_URL_EU_CENTRAL_1);
-    }
-
-    #[test]
-    fn url_af_south_1() {
-        let result = setup_and_render_template(
-            ADMIN_CONTAINER_TEMPLATE,
-            &json!({"settings": {"aws": {"region": "af-south-1"}}}),
-        )
-        .unwrap();
-        assert_eq!(result, EXPECTED_URL_AF_SOUTH_1);
-    }
-
-    #[test]
-    fn url_fallback() {
-        let result = setup_and_render_template(
-            ADMIN_CONTAINER_TEMPLATE,
-            &json!({"settings": {"aws": {"region": "xy-ztown-1"}}}),
-        )
-        .unwrap();
-        assert_eq!(result, EXPECTED_URL_XY_ZTOWN_1);
-    }
-
-    #[test]
-    fn url_china() {
-        let result = setup_and_render_template(
-            ADMIN_CONTAINER_TEMPLATE,
-            &json!({"settings": {"aws": {"region": "cn-north-1"}}}),
-        )
-        .unwrap();
-        assert_eq!(result, EXPECTED_URL_CN_NORTH_1);
+    fn registry_urls() {
+        for (region_name, expected_url) in ECR_REGISTRY_TESTS {
+            let result = setup_and_render_template(
+                ADMIN_CONTAINER_TEMPLATE,
+                &json!({"settings": {"aws": {"region": *region_name}}}),
+            )
+            .unwrap();
+            assert_eq!(result, *expected_url);
+        }
     }
 }
 
