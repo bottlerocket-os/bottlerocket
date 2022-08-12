@@ -154,7 +154,7 @@ pub(crate) async fn register_image(
     )
     .await;
 
-    if let Err(_) = register_result {
+    if register_result.is_err() {
         for snapshot_id in cleanup_snapshot_ids {
             let delete_request = DeleteSnapshotRequest {
                 snapshot_id: snapshot_id.clone(),

@@ -72,7 +72,7 @@ fn refresh_repo(
     // If the given metadata directory exists, throw an error.  We don't want to overwrite a user's
     // existing repository.
     ensure!(
-        !Path::exists(&metadata_out_dir),
+        !Path::exists(metadata_out_dir),
         repo_error::RepoExistsSnafu {
             path: metadata_out_dir
         }
@@ -102,7 +102,7 @@ fn refresh_repo(
     info!("Loaded TUF repo: {}", metadata_url);
 
     // Refresh the expiration dates of all non-root metadata files
-    set_expirations(&mut repo_editor, &expiration, *EXPIRATION_START_TIME)?;
+    set_expirations(&mut repo_editor, expiration, *EXPIRATION_START_TIME)?;
 
     // Refresh the versions of all non-root metadata files
     set_versions(&mut repo_editor)?;
@@ -172,7 +172,7 @@ pub(crate) fn run(args: &Args, refresh_repo_args: &RefreshRepoArgs) -> Result<()
             .context(repo_error::ConfigSnafu)?;
 
     let repo_urls = repo_urls(
-        &repo_config,
+        repo_config,
         &refresh_repo_args.variant,
         &refresh_repo_args.arch,
     )?
@@ -203,7 +203,10 @@ mod error {
     #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(context(false), display("{}", source))]
-        Repo { source: crate::repo::Error },
+        Repo {
+            #[snafu(source(from(crate::repo::Error, Box::new)))]
+            source: Box<crate::repo::Error>,
+        },
 
         #[snafu(display("Failed to refresh & re-sign metadata for: {:#?}", list_of_urls))]
         RepoRefresh { list_of_urls: Vec<Url> },

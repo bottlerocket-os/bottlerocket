@@ -27,7 +27,7 @@ const GOVC_RESOURCE_POOL: &str = "GOVC_RESOURCE_POOL";
 const GOVC_FOLDER: &str = "GOVC_FOLDER";
 
 /// VMware-specific infrastructure configuration
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct VmwareConfig {
     #[serde(default)]
@@ -42,7 +42,7 @@ pub struct VmwareConfig {
 /// Fields are optional here because this struct is used to gather environment variables, common
 /// config, and datacenter-specific configuration, each of which may not have the complete set of
 /// fields.  It is used to build a complete datacenter configuration (hence the "Builder" name).
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct DatacenterBuilder {
     pub vsphere_url: Option<String>,

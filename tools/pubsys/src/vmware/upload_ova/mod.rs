@@ -174,9 +174,8 @@ where
         mark_as_template,
     };
 
-    Ok(tt
-        .render(SPEC_TEMPLATE_NAME, &context)
-        .context(error::RenderTemplateSnafu)?)
+    tt.render(SPEC_TEMPLATE_NAME, &context)
+        .context(error::RenderTemplateSnafu)
 }
 
 mod error {

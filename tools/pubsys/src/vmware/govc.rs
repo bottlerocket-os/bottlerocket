@@ -81,7 +81,7 @@ impl Govc {
             "import.ova",
             &format!("-options={}", import_spec_container_path),
             "-name",
-            &name,
+            name,
             ova_container_path,
         ];
 

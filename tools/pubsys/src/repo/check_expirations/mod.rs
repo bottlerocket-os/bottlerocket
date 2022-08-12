@@ -146,7 +146,7 @@ pub(crate) fn run(args: &Args, check_expirations_args: &CheckExpirationsArgs) ->
         })?;
 
     let repo_urls = repo_urls(
-        &repo_config,
+        repo_config,
         &check_expirations_args.variant,
         &check_expirations_args.arch,
     )?
@@ -171,7 +171,10 @@ mod error {
     #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
         #[snafu(context(false), display("{}", source))]
-        Repo { source: crate::repo::Error },
+        Repo {
+            #[snafu(source(from(crate::repo::Error, Box::new)))]
+            source: Box<crate::repo::Error>,
+        },
 
         #[snafu(display("Found expiring/expired metadata in '{}'", metadata_url))]
         RepoExpirations { metadata_url: Url },
