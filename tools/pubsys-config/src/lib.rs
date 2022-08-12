@@ -178,7 +178,7 @@ impl TryFrom<SigningKeyConfig> for Url {
             // We don't support passing profiles to tough in the name of the key/parameter, so for
             // KMS and SSM we prepend a slash if there isn't one present.
             SigningKeyConfig::kms { key_id, .. } => {
-                let mut key_id = key_id.unwrap_or_else(Default::default);
+                let mut key_id = key_id.unwrap_or_default();
                 key_id = if key_id.starts_with('/') {
                     key_id.to_string()
                 } else {
@@ -188,7 +188,7 @@ impl TryFrom<SigningKeyConfig> for Url {
             }
             SigningKeyConfig::ssm { parameter } => {
                 let parameter = if parameter.starts_with('/') {
-                    parameter.to_string()
+                    parameter
                 } else {
                     format!("/{}", parameter)
                 };

@@ -66,7 +66,7 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
         })?;
 
     // Grab the StackOutputs to get the Bucketname and BucketURL
-    let output_array = shared::get_stack_outputs(&cfn_client, &stack_name, region).await?;
+    let output_array = shared::get_stack_outputs(&cfn_client, stack_name, region).await?;
     let bucket_name = output_array[0]
         .output_value
         .as_ref()
