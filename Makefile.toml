@@ -366,6 +366,27 @@ fi
 '''
 ]
 
+[tasks.check-lints]
+script = [
+'''
+rc=0
+
+# For rust first-party source code
+if ! cargo clippy \
+  --manifest-path ${BUILDSYS_TOOLS_DIR}/Cargo.toml \
+  --locked -- -D warnings --no-deps; then
+  rc=1
+fi
+
+# TODO: fix clippy lints in "sources" and check that too
+
+if [ "${rc}" -ne 0 ]; then
+  echo "Found lint warnings. First-party source code is checked with clippy." >&2
+  exit $rc
+fi
+'''
+]
+
 [tasks.build-tools]
 dependencies = ["fetch"]
 script = [
