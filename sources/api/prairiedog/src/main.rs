@@ -15,7 +15,7 @@ It does the following:
 #[macro_use]
 extern crate log;
 
-use crate::bootconfig::{generate_boot_config, generate_boot_settings};
+use crate::bootconfig::{generate_boot_config, generate_boot_settings, is_reboot_required};
 use crate::error::Result;
 use argh::FromArgs;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger, WriteLogger};
@@ -24,6 +24,8 @@ use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::path::Path;
 use std::process::{self, Command};
+use std::thread;
+use std::time::Duration;
 
 mod bootconfig;
 mod error;
@@ -76,6 +78,7 @@ enum Subcommand {
     LoadCrashKernel(LoadCrashKernelArgs),
     GenerateBootConfig(GenerateBootConfigArgs),
     GenerateBootSettings(GenerateBootSettingsArgs),
+    RebootIfRequired(RebootIfRequiredArgs),
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -102,6 +105,11 @@ pub(crate) struct GenerateBootConfigArgs {}
 #[argh(subcommand, name = "generate-boot-settings")]
 /// Generate boot settings from existing boot configuration
 pub(crate) struct GenerateBootSettingsArgs {}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "reboot-if-required")]
+/// Reboot the host if reboot-to-reconcile is set and the boot settings changed
+struct RebootIfRequiredArgs {}
 
 /// Wrapper around process::Command that adds error checking.
 fn command<I, S>(bin_path: &str, args: I) -> Result<()>
@@ -277,6 +285,35 @@ fn load_crash_kernel() -> Result<()> {
     Ok(())
 }
 
+async fn reboot_if_required<P>(socket_path: P) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    if is_reboot_required(socket_path).await? {
+        info!("Boot settings changed and require a reboot to take effect. Initiating reboot...");
+        command("/usr/bin/systemctl", &["reboot"])?;
+        // The "systemctl reboot" process will not block until the host does
+        // reboot, but return as soon as the request either failed or the job
+        // to start the systemd reboot.target and its dependencies have been
+        // enqueued. As the shutdown.target that is being pulled in conflicts
+        // with most anything else, the other jobs needed to boot the host
+        // will be cancelled and the boot will not proceed.
+        //
+        // The above is subtle, so slowly spin here until systemd kills this
+        // prairiedog process as part of the host shutting down by sending it
+        // SIGTERM. This serves as a more obvious line of defense against the
+        // boot proceeding past a required reboot.
+        loop {
+            thread::sleep(Duration::from_secs(5));
+            info!("Still waiting for the host to be rebooted...");
+        }
+    } else {
+        info!("No reboot required");
+    }
+
+    Ok(())
+}
+
 fn setup_logger(args: &Args) -> Result<()> {
     match args.subcommand {
         // Write the logs to a file while capturing dumps, since the journal isn't available
@@ -308,6 +345,7 @@ async fn run() -> Result<()> {
         Subcommand::LoadCrashKernel(_) => load_crash_kernel(),
         Subcommand::GenerateBootConfig(_) => generate_boot_config(args.socket_path).await,
         Subcommand::GenerateBootSettings(_) => generate_boot_settings().await,
+        Subcommand::RebootIfRequired(_) => reboot_if_required(args.socket_path).await,
     }
 }
 

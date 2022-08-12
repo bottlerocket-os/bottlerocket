@@ -16,6 +16,11 @@ const DEFAULT_BOOTCONFIG_STR: &str = r#"
     kernel = ""
     init = ""
 "#;
+const DEFAULT_BOOT_SETTINGS: BootSettings = BootSettings {
+    reboot_to_reconcile: None,
+    kernel_parameters: None,
+    init_parameters: None,
+};
 
 fn append_boot_config_value_list(values: &[BootConfigValue], output: &mut String) {
     for (i, v) in values.iter().enumerate() {
@@ -255,11 +260,63 @@ fn boot_config_to_boot_settings_json(bootconfig_str: &str) -> Result<String> {
     serde_json::to_string(&boot_settings).context(error::OutputJsonSnafu)
 }
 
+/// Decides whether the host should be rebooted to have its boot settings take effect
+pub(crate) async fn is_reboot_required<P>(socket_path: P) -> Result<bool>
+where
+    P: AsRef<Path>,
+{
+    let old_boot_settings = match read_proc_bootconfig().await? {
+        Some(proc_bootconfig) => parse_boot_config_to_boot_settings(&proc_bootconfig)?,
+        None => DEFAULT_BOOT_SETTINGS,
+    };
+
+    let new_boot_settings = get_boot_config_settings(socket_path)
+        .await?
+        .unwrap_or(DEFAULT_BOOT_SETTINGS);
+
+    let reboot_required = if new_boot_settings.reboot_to_reconcile.unwrap_or(false) {
+        boot_settings_change_requires_reboot(&old_boot_settings, &new_boot_settings)
+    } else {
+        false
+    };
+
+    Ok(reboot_required)
+}
+
+/// Check whether `model::BootSettings` changed in a way to warrant a reboot
+fn boot_settings_change_requires_reboot(
+    old_boot_settings: &BootSettings,
+    new_boot_settings: &BootSettings,
+) -> bool {
+    fn parameters_changed_materially(
+        old_params: &Option<HashMap<BootConfigKey, Vec<BootConfigValue>>>,
+        new_params: &Option<HashMap<BootConfigKey, Vec<BootConfigValue>>>,
+    ) -> bool {
+        // Consider a missing hash map equal to an empty one: There is no configuration in either case.
+        match (old_params, new_params) {
+            (None, None) => false,
+            (None, Some(new)) => !new.is_empty(),
+            (Some(old), None) => !old.is_empty(),
+            (Some(old), Some(new)) => old != new,
+        }
+    }
+
+    // Only reboot for changes actually requiring a reboot. Changing a Bottlerocket setting
+    // like boot.reboot-to-reconcile does not qualify as a reason to reboot.
+    parameters_changed_materially(
+        &old_boot_settings.kernel_parameters,
+        &new_boot_settings.kernel_parameters,
+    ) || parameters_changed_materially(
+        &old_boot_settings.init_parameters,
+        &new_boot_settings.init_parameters,
+    )
+}
+
 #[cfg(test)]
 mod boot_settings_tests {
     use crate::bootconfig::{
-        boot_config_to_boot_settings_json, serialize_boot_settings_to_boot_config,
-        DEFAULT_BOOTCONFIG_STR,
+        boot_config_to_boot_settings_json, boot_settings_change_requires_reboot,
+        serialize_boot_settings_to_boot_config, DEFAULT_BOOTCONFIG_STR,
     };
     use maplit::hashmap;
     use model::modeled_types::{BootConfigKey, BootConfigValue};
@@ -462,5 +519,75 @@ mod boot_settings_tests {
             )
             .unwrap()
         );
+    }
+
+    #[test]
+    fn test_unchanged_boot_settings_require_no_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        assert!(!boot_settings_change_requires_reboot(&a, &b));
+    }
+
+    #[test]
+    fn test_changed_boot_settings_require_a_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: to_boot_settings_params(hashmap! {
+                "debug" => vec![""],
+            }),
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        assert!(boot_settings_change_requires_reboot(&a, &b));
+    }
+
+    #[test]
+    fn test_missing_boot_settings_require_no_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {}),
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: to_boot_settings_params(hashmap! {}),
+            init_parameters: None,
+        };
+        assert!(!boot_settings_change_requires_reboot(&a, &b));
+    }
+
+    #[test]
+    fn test_changed_bottlerocket_boot_settings_require_no_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: None,
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: Some(true),
+            kernel_parameters: None,
+            init_parameters: None,
+        };
+        assert!(!boot_settings_change_requires_reboot(&a, &b));
     }
 }
