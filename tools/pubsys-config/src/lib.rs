@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use url::Url;
 
 /// Configuration needed to load and create repos
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct InfraConfig {
     // Repo subcommand config
@@ -105,7 +105,7 @@ impl InfraConfig {
 }
 
 /// S3-specific TUF infrastructure configuration
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct S3Config {
     pub region: Option<String>,
     #[serde(default)]
@@ -116,7 +116,7 @@ pub struct S3Config {
 }
 
 /// AWS-specific infrastructure configuration
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct AwsConfig {
     #[serde(default)]
@@ -130,7 +130,7 @@ pub struct AwsConfig {
 }
 
 /// AWS region-specific configuration
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct AwsRegionConfig {
     pub role: Option<String>,
@@ -141,7 +141,7 @@ pub struct AwsRegionConfig {
 // These variant names are lowercase because they have to match the text in Infra.toml, and it's
 // more common for TOML config to be lowercase.
 #[allow(non_camel_case_types)]
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub enum SigningKeyConfig {
     file {
@@ -158,7 +158,7 @@ pub enum SigningKeyConfig {
 }
 
 /// AWS region-specific configuration
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 //#[serde(deny_unknown_fields)]
 pub struct KMSKeyConfig {
     #[serde(default)]
@@ -178,7 +178,7 @@ impl TryFrom<SigningKeyConfig> for Url {
             // We don't support passing profiles to tough in the name of the key/parameter, so for
             // KMS and SSM we prepend a slash if there isn't one present.
             SigningKeyConfig::kms { key_id, .. } => {
-                let mut key_id = key_id.unwrap_or_else(Default::default);
+                let mut key_id = key_id.unwrap_or_default();
                 key_id = if key_id.starts_with('/') {
                     key_id.to_string()
                 } else {
@@ -188,7 +188,7 @@ impl TryFrom<SigningKeyConfig> for Url {
             }
             SigningKeyConfig::ssm { parameter } => {
                 let parameter = if parameter.starts_with('/') {
-                    parameter.to_string()
+                    parameter
                 } else {
                     format!("/{}", parameter)
                 };
@@ -199,7 +199,7 @@ impl TryFrom<SigningKeyConfig> for Url {
 }
 
 /// Represents a Bottlerocket repo's location and the metadata needed to update the repo
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct RepoConfig {
     pub root_role_url: Option<Url>,

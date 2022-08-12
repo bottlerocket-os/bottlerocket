@@ -1,6 +1,7 @@
 //! The ssm module owns the 'ssm' subcommand and controls the process of setting SSM parameters
 //! based on current build information
 
+#[allow(clippy::module_inception)]
 pub(crate) mod ssm;
 pub(crate) mod template;
 
@@ -60,8 +61,8 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     let infra_config = InfraConfig::from_path_or_lock(&args.infra_config_path, false)
         .context(error::ConfigSnafu)?;
     trace!("Parsed infra config: {:#?}", infra_config);
-    let aws = infra_config.aws.unwrap_or_else(Default::default);
-    let ssm_prefix = aws.ssm_prefix.as_deref().unwrap_or_else(|| "");
+    let aws = infra_config.aws.unwrap_or_default();
+    let ssm_prefix = aws.ssm_prefix.as_deref().unwrap_or("");
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
     let regions = if !ssm_args.regions.is_empty() {
@@ -77,12 +78,12 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     );
     let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegionSnafu)?;
 
-    let amis = parse_ami_input(&regions, &ssm_args, &aws)?;
+    let amis = parse_ami_input(&regions, ssm_args, &aws)?;
 
     let mut ssm_clients = HashMap::with_capacity(amis.len());
     for region in amis.keys() {
         let ssm_client =
-            build_client::<SsmClient>(&region, &base_region, &aws).context(error::ClientSnafu {
+            build_client::<SsmClient>(region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "SSM",
                 region: region.name(),
             })?;
@@ -237,7 +238,7 @@ fn parse_ami_input(
             .with_context(|| error::UnknownRegionsSnafu {
                 regions: vec![name.clone()],
             })?;
-        let region = region_from_string(&name, &aws).context(error::ParseRegionSnafu)?;
+        let region = region_from_string(name, aws).context(error::ParseRegionSnafu)?;
         amis.insert(region, image);
     }
 

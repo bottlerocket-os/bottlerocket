@@ -90,7 +90,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
         .context(error::ConfigSnafu)?;
     trace!("Using infra config: {:?}", infra_config);
 
-    let aws = infra_config.aws.unwrap_or_else(Default::default);
+    let aws = infra_config.aws.unwrap_or_default();
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
     let regions = if !publish_args.regions.is_empty() {
@@ -138,7 +138,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     let mut ec2_clients = HashMap::with_capacity(amis.len());
     for region in amis.keys() {
         let ec2_client =
-            build_client::<Ec2Client>(&region, &base_region, &aws).context(error::ClientSnafu {
+            build_client::<Ec2Client>(region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "EC2",
                 region: region.name(),
             })?;
@@ -150,7 +150,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     info!("Waiting for AMIs to be available...");
     let mut wait_requests = Vec::with_capacity(amis.len());
     for (region, image) in &amis {
-        let wait_future = wait_for_ami(&image.id, &region, &base_region, "available", 1, &aws);
+        let wait_future = wait_for_ami(&image.id, region, &base_region, "available", 1, &aws);
         // Store the region and ID so we can include it in errors
         let info_future = ready((region.clone(), image.id.clone()));
         wait_requests.push(join(info_future, wait_future));
@@ -372,6 +372,8 @@ pub(crate) async fn modify_regional_snapshots(
 
     // Send requests in parallel and wait for responses, collecting results into a list.
     let request_stream = stream::iter(requests).buffer_unordered(4);
+
+    #[allow(clippy::type_complexity)]
     let responses: Vec<((Region, Vec<String>), Result<()>)> = request_stream.collect().await;
 
     // Count up successes and failures so we can give a clear total in the final error message.

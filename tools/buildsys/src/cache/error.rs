@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(super)))]
+#[allow(clippy::enum_variant_names)]
 pub(crate) enum Error {
     #[snafu(display("Bad file name '{}'", path.display()))]
     ExternalFileName { path: PathBuf },

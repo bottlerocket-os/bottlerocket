@@ -97,7 +97,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         .context(error::ConfigSnafu)?;
     trace!("Using infra config: {:?}", infra_config);
 
-    let aws = infra_config.aws.unwrap_or_else(|| Default::default());
+    let aws = infra_config.aws.unwrap_or_default();
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
     let mut regions = if !ami_args.regions.is_empty() {
@@ -280,7 +280,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
     let mut ec2_clients = HashMap::with_capacity(regions.len());
     for region in regions.iter() {
         let ec2_client =
-            build_client::<Ec2Client>(&region, &base_region, &aws).context(error::ClientSnafu {
+            build_client::<Ec2Client>(region, &base_region, &aws).context(error::ClientSnafu {
                 client_type: "EC2",
                 region: region.name(),
             })?;
@@ -429,7 +429,7 @@ async fn get_account_ids(
     let mut sts_clients = HashMap::with_capacity(regions.len());
     for region in regions.iter() {
         let sts_client =
-            build_client::<StsClient>(&region, &base_region, &aws).context(error::ClientSnafu {
+            build_client::<StsClient>(region, base_region, aws).context(error::ClientSnafu {
                 client_type: "STS",
                 region: region.name(),
             })?;

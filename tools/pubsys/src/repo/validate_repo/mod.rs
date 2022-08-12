@@ -56,10 +56,10 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
     // create the channels through which our download results will be passed
     let (tx, rx) = mpsc::channel();
 
-    for target in targets.keys().cloned() {
+    for target in targets.keys() {
         let tx = tx.clone();
         let mut reader = repo
-            .read_target(&target)
+            .read_target(target)
             .with_context(|_| repo_error::ReadTargetSnafu {
                 target: target.raw(),
             })?
@@ -67,6 +67,7 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
                 target: target.raw(),
             })?;
         info!("Downloading target: {}", target.raw());
+        let target = target.clone();
         thread_pool.spawn(move || {
             tx.send({
                 // tough's `Read` implementation validates the target as it's being downloaded
@@ -138,7 +139,7 @@ pub(crate) fn run(args: &Args, validate_repo_args: &ValidateRepoArgs) -> Result<
         })?;
 
     let repo_urls = repo_urls(
-        &repo_config,
+        repo_config,
         &validate_repo_args.variant,
         &validate_repo_args.arch,
     )?
@@ -164,7 +165,10 @@ mod error {
         InvalidPercentage { percentage: u8 },
 
         #[snafu(context(false), display("{}", source))]
-        Repo { source: crate::repo::Error },
+        Repo {
+            #[snafu(source(from(crate::repo::Error, Box::new)))]
+            source: Box<crate::repo::Error>,
+        },
 
         #[snafu(display("Failed to download and write target '{}': {}", target, source))]
         TargetDownload { target: String, source: io::Error },

@@ -413,7 +413,7 @@ fn get_signing_key_source(signing_key_config: &SigningKeyConfig) -> Result<Box<d
                     .context(error::MissingConfigSnafu { missing: "key_id" })?;
                 config
                     .as_ref()
-                    .map_or(Ok(None), |config_val| get_client(&config_val, &key_id_val))?
+                    .map_or(Ok(None), |config_val| get_client(config_val, &key_id_val))?
             },
             signing_algorithm: KmsSigningAlgorithm::RsassaPssSha256,
         })),
@@ -481,11 +481,11 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     };
 
     // Build a repo editor and manifest, from an existing repo if available, otherwise fresh
-    let maybe_urls = repo_urls(&repo_config, &repo_args.variant, &repo_args.arch)?;
+    let maybe_urls = repo_urls(repo_config, &repo_args.variant, &repo_args.arch)?;
     let (mut editor, mut manifest) = if let Some((metadata_url, targets_url)) = maybe_urls.as_ref()
     {
         info!("Found metadata and target URLs, loading existing repository");
-        match load_editor_and_manifest(&repo_args.root_role_path, &metadata_url, &targets_url)? {
+        match load_editor_and_manifest(&repo_args.root_role_path, metadata_url, targets_url)? {
             Some((editor, manifest)) => (editor, manifest),
             None => {
                 warn!(
@@ -508,7 +508,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     };
 
     // Add update information to manifest
-    update_manifest(&repo_args, &mut manifest)?;
+    update_manifest(repo_args, &mut manifest)?;
     // Write manifest to tempfile so it can be copied in as target later
     let manifest_path = NamedTempFile::new()
         .context(error::TempFileSnafu)?
@@ -526,7 +526,7 @@ pub(crate) fn run(args: &Args, repo_args: &RepoArgs) -> Result<()> {
     ]);
     let all_targets = copy_targets.iter().chain(link_targets.clone());
 
-    update_editor(&repo_args, &mut editor, all_targets, &manifest_path)?;
+    update_editor(repo_args, &mut editor, all_targets, &manifest_path)?;
 
     // Sign repo   =^..^=   =^..^=   =^..^=   =^..^=
 

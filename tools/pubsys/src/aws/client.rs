@@ -67,7 +67,7 @@ pub(crate) fn build_client<T: NewWith>(
     let maybe_regional_role = aws.region.get(region.name()).and_then(|r| r.role.clone());
     let assume_roles = aws.role.iter().chain(maybe_regional_role.iter()).cloned();
     let provider = build_provider(
-        &sts_region,
+        sts_region,
         assume_roles.clone(),
         base_provider(&aws.profile)?,
     )?;

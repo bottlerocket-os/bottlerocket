@@ -55,6 +55,7 @@ where
 
     // Send requests in parallel and wait for responses, collecting results into a list.
     let request_stream = stream::iter(requests).buffer_unordered(4);
+    #[allow(clippy::type_complexity)]
     let responses: Vec<(
         (Region, usize),
         std::result::Result<GetParametersResult, RusotoError<GetParametersError>>,
@@ -197,7 +198,7 @@ pub(crate) async fn set_parameters(
         // Remove contexts from the list with drain; they get added back in if we retry the
         // request.
         for context in contexts.drain(..) {
-            let ssm_client = &ssm_clients[&context.region];
+            let ssm_client = &ssm_clients[context.region];
             let put_request = PutParameterRequest {
                 name: context.name.to_string(),
                 value: context.value.to_string(),
@@ -301,7 +302,7 @@ pub(crate) async fn validate_parameters(
 ) -> Result<()> {
     // Fetch the given parameter names
     let expected_parameter_names: Vec<&SsmKey> = expected_parameters.keys().collect();
-    let updated_parameters = get_parameters(&expected_parameter_names, &ssm_clients).await?;
+    let updated_parameters = get_parameters(&expected_parameter_names, ssm_clients).await?;
 
     // Walk through and check each value
     let mut success = true;

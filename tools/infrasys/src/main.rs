@@ -124,7 +124,7 @@ async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
         // Upload root.json.
         info!("Uploading root.json to S3 bucket...");
         s3::upload_file(
-            &repo_info.s3_region,
+            repo_info.s3_region,
             &bucket_name,
             &repo_info.prefix,
             root_role_path,
@@ -262,14 +262,14 @@ async fn create_repo_infrastructure(
     // Create S3 bucket
     info!("Creating S3 bucket...");
     let (s3_stack_arn, bucket_name, bucket_rdn) =
-        s3::create_s3_bucket(&repo_info.s3_region, &repo_info.s3_stack_name).await?;
+        s3::create_s3_bucket(repo_info.s3_region, &repo_info.s3_stack_name).await?;
 
     // Add Bucket Policy to newly created bucket
     s3::add_bucket_policy(
-        &repo_info.s3_region,
+        repo_info.s3_region,
         &bucket_name,
         &repo_info.prefix,
-        &repo_info.vpce_id,
+        repo_info.vpce_id,
     )
     .await?;
 

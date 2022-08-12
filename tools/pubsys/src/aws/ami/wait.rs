@@ -41,7 +41,7 @@ pub(crate) async fn wait_for_ami(
         // Use a new client each time so we have more confidence that different endpoints can see
         // the new AMI.
         let ec2_client =
-            build_client::<Ec2Client>(&region, &sts_region, &aws).context(error::ClientSnafu {
+            build_client::<Ec2Client>(region, sts_region, aws).context(error::ClientSnafu {
                 client_type: "EC2",
                 region: region.name(),
             })?;

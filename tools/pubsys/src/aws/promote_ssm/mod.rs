@@ -57,8 +57,8 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
         .context(error::ConfigSnafu)?;
 
     trace!("Parsed infra config: {:#?}", infra_config);
-    let aws = infra_config.aws.unwrap_or_else(Default::default);
-    let ssm_prefix = aws.ssm_prefix.as_deref().unwrap_or_else(|| "");
+    let aws = infra_config.aws.unwrap_or_default();
+    let ssm_prefix = aws.ssm_prefix.as_deref().unwrap_or("");
 
     // If the user gave an override list of regions, use that, otherwise use what's in the config.
     let regions = if !promote_args.regions.is_empty() {
@@ -81,7 +81,7 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     let mut ssm_clients = HashMap::with_capacity(regions.len());
     for region in &regions {
         let ssm_client =
-            build_client::<SsmClient>(region, &base_region, &aws).context(error::ClientSnafu {
+            build_client::<SsmClient>(region, base_region, &aws).context(error::ClientSnafu {
                 client_type: "SSM",
                 region: region.name(),
             })?;

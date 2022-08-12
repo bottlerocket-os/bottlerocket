@@ -43,21 +43,21 @@ fn run() -> Result<()> {
     SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     match args.subcommand {
-        SubCommand::Repo(ref repo_args) => repo::run(&args, &repo_args).context(error::RepoSnafu),
+        SubCommand::Repo(ref repo_args) => repo::run(&args, repo_args).context(error::RepoSnafu),
         SubCommand::ValidateRepo(ref validate_repo_args) => {
-            repo::validate_repo::run(&args, &validate_repo_args).context(error::ValidateRepoSnafu)
+            repo::validate_repo::run(&args, validate_repo_args).context(error::ValidateRepoSnafu)
         }
         SubCommand::CheckRepoExpirations(ref check_expirations_args) => {
-            repo::check_expirations::run(&args, &check_expirations_args)
+            repo::check_expirations::run(&args, check_expirations_args)
                 .context(error::CheckExpirationsSnafu)
         }
         SubCommand::RefreshRepo(ref refresh_repo_args) => {
-            repo::refresh_repo::run(&args, &refresh_repo_args).context(error::RefreshRepoSnafu)
+            repo::refresh_repo::run(&args, refresh_repo_args).context(error::RefreshRepoSnafu)
         }
         SubCommand::Ami(ref ami_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
-                aws::ami::run(&args, &ami_args)
+                aws::ami::run(&args, ami_args)
                     .await
                     .context(error::AmiSnafu)
             })
@@ -65,7 +65,7 @@ fn run() -> Result<()> {
         SubCommand::PublishAmi(ref publish_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
-                aws::publish_ami::run(&args, &publish_args)
+                aws::publish_ami::run(&args, publish_args)
                     .await
                     .context(error::PublishAmiSnafu)
             })
@@ -73,7 +73,7 @@ fn run() -> Result<()> {
         SubCommand::Ssm(ref ssm_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
-                aws::ssm::run(&args, &ssm_args)
+                aws::ssm::run(&args, ssm_args)
                     .await
                     .context(error::SsmSnafu)
             })
@@ -81,13 +81,13 @@ fn run() -> Result<()> {
         SubCommand::PromoteSsm(ref promote_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
-                aws::promote_ssm::run(&args, &promote_args)
+                aws::promote_ssm::run(&args, promote_args)
                     .await
                     .context(error::PromoteSsmSnafu)
             })
         }
         SubCommand::UploadOva(ref upload_args) => {
-            vmware::upload_ova::run(&args, &upload_args).context(error::UploadOvaSnafu)
+            vmware::upload_ova::run(&args, upload_args).context(error::UploadOvaSnafu)
         }
     }
 }
