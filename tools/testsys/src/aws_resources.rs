@@ -17,7 +17,6 @@ use model::{
     TestSpec,
 };
 use std::collections::BTreeMap;
-use std::convert::identity;
 
 pub(crate) struct AwsK8s {
     pub(crate) arch: String,
@@ -465,10 +464,7 @@ where
         .send()
         .await?
         .images;
-    let images: Vec<&Image> = describe_images
-        .iter()
-        .flat_map(|image| identity(image))
-        .collect();
+    let images: Vec<&Image> = describe_images.iter().flatten().collect();
     if images.len() > 1 {
         return Err(anyhow!("Multiple images were found"));
     };
