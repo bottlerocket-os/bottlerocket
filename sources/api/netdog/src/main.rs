@@ -48,6 +48,7 @@ static PRIMARY_INTERFACE: &str = "/var/lib/netdog/primary_interface";
 static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
 static PRIMARY_SYSCTL_CONF: &str = "/etc/sysctl.d/90-primary_interface.conf";
 static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
+static LEASE_DIR: &str = "/run/wicked";
 
 /// Stores user-supplied arguments.
 #[derive(FromArgs, PartialEq, Debug)]

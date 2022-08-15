@@ -1,4 +1,5 @@
 //! The lease module contains the struct and code needed to parse a wicked DHCP lease file
+use crate::LEASE_DIR;
 use ipnet::IpNet;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -8,7 +9,7 @@ use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::net::IpAddr;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 // Matches wicked's shell-like syntax for DHCP lease variables:
 //     FOO='BAR' -> key=FOO, val=BAR
@@ -59,6 +60,27 @@ impl LeaseInfo {
         // expected values are present in the file, it will fail; any extra values are ignored.
         envy::from_iter::<_, LeaseInfo>(env)
             .context(error::LeaseParseFailedSnafu { path: lease_file })
+    }
+}
+
+/// Return the path to a given interface's ipv4/ipv6 lease if it exists, favoring ipv4 if both
+/// ipv4 and ipv6 exist
+pub(crate) fn lease_path<S>(interface: S) -> Option<PathBuf>
+where
+    S: AsRef<str>,
+{
+    let interface = interface.as_ref();
+    let ipv4 = Path::new(LEASE_DIR).join(format!("leaseinfo.{}.dhcp.ipv4", interface));
+    let ipv6 = Path::new(LEASE_DIR).join(format!("leaseinfo.{}.dhcp.ipv6", interface));
+
+    // If both ipv4 and ipv6 leases exist, use the ipv4 lease for DNS settings
+    let ipv4_exists = Path::exists(&ipv4);
+    let ipv6_exists = Path::exists(&ipv6);
+    match (ipv4_exists, ipv6_exists) {
+        (true, true) => Some(ipv4),
+        (true, false) => Some(ipv4),
+        (false, true) => Some(ipv6),
+        (false, false) => None,
     }
 }
 

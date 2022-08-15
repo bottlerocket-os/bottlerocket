@@ -1,11 +1,9 @@
 use super::{error, InterfaceFamily, InterfaceType, Result};
-use crate::lease::LeaseInfo;
-use crate::{CURRENT_IP, PRIMARY_INTERFACE, RESOLV_CONF};
+use crate::dns::DnsSettings;
+use crate::lease::{lease_path, LeaseInfo};
+use crate::{CURRENT_IP, PRIMARY_INTERFACE};
 use argh::FromArgs;
-use rand::prelude::SliceRandom;
-use rand::thread_rng;
-use snafu::ResultExt;
-use std::fmt::Write;
+use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::net::IpAddr;
 use std::path::PathBuf;
@@ -52,37 +50,33 @@ pub(crate) fn run(args: InstallArgs) -> Result<()> {
     }
 
     match (&args.interface_type, &args.interface_family) {
-        (InterfaceType::Dhcp, InterfaceFamily::Ipv4) => {
-            let info =
-                LeaseInfo::from_lease(&args.data_file).context(error::LeaseParseFailedSnafu {
-                    path: &args.data_file,
+        (InterfaceType::Dhcp, InterfaceFamily::Ipv4 | InterfaceFamily::Ipv6) => {
+            // A lease should exist when using DHCP
+            let primary_lease_path =
+                lease_path(&primary_interface).context(error::MissingLeaseSnafu {
+                    interface: primary_interface,
                 })?;
-            // Randomize name server order, for libc implementations like musl that send
-            // queries to the first N servers.
-            let mut dns_servers: Vec<_> = info.dns_servers.iter().collect();
-            dns_servers.shuffle(&mut thread_rng());
-            write_resolv_conf(&dns_servers, &info.dns_search)?;
-            write_current_ip(&info.ip_address.addr())?;
+            if args.data_file != primary_lease_path {
+                return error::PrimaryLeaseConflictSnafu {
+                    wicked_path: args.data_file,
+                    generated_path: primary_lease_path,
+                }
+                .fail();
+            }
+
+            // Use DNS API settings if they exist, supplementing any missing settings with settings
+            // derived from the primary interface's DHCP lease
+            let lease =
+                LeaseInfo::from_lease(primary_lease_path).context(error::LeaseParseFailedSnafu)?;
+            let dns_settings = DnsSettings::from_config_or_lease(Some(&lease))
+                .context(error::GetDnsSettingsSnafu)?;
+            dns_settings
+                .write_resolv_conf()
+                .context(error::ResolvConfWriteFailedSnafu)?;
+
+            write_current_ip(&lease.ip_address.addr())?;
         }
-        _ => eprintln!("Unhandled 'install' command: {:?}", &args),
     }
-    Ok(())
-}
-
-/// Write resolver configuration for libc.
-fn write_resolv_conf(dns_servers: &[&IpAddr], dns_search: &Option<Vec<String>>) -> Result<()> {
-    let mut output = String::new();
-
-    if let Some(s) = dns_search {
-        writeln!(output, "search {}", s.join(" ")).context(error::ResolvConfBuildFailedSnafu)?;
-    }
-
-    for n in dns_servers {
-        writeln!(output, "nameserver {}", n).context(error::ResolvConfBuildFailedSnafu)?;
-    }
-
-    fs::write(RESOLV_CONF, output)
-        .context(error::ResolvConfWriteFailedSnafu { path: RESOLV_CONF })?;
     Ok(())
 }
 
