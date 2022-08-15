@@ -31,6 +31,7 @@ file in `/etc/sysctl.d`, and then executes `systemd-sysctl` to apply them.
 extern crate serde_plain;
 
 mod cli;
+mod dns;
 mod interface_name;
 mod lease;
 mod net_config;

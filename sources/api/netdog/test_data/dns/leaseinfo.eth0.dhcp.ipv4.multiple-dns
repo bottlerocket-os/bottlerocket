@@ -1,0 +1,20 @@
+# The following links are the code that formats the DNSSERVERS portion of the file
+# https://github.com/openSUSE/wicked/blob/1c2c048d9ca64cf08d2223a15cfa2a06442cb99d/src/leaseinfo.c#L411
+# https://github.com/openSUSE/wicked/blob/1c2c048d9ca64cf08d2223a15cfa2a06442cb99d/src/leaseinfo.c#L120
+INTERFACE='eth0'
+TYPE='dhcp'
+FAMILY='ipv4'
+IPADDR='192.168.19.153/19'
+NETMASK='255.255.224.0'
+NETWORK='192.168.0.0'
+BROADCAST='192.168.31.255'
+PREFIXLEN='19'
+GATEWAYS='192.168.0.1'
+DNSSERVERS='192.168.0.2 1.2.3.4'
+DNSSEARCH='us-west-2.compute.internal'
+SERVERID='192.168.0.1'
+ACQUIRED='1660234897'
+LEASETIME='3600'
+RENEWALTIME='1800'
+REBINDTIME='3150'
+MTU='9001'

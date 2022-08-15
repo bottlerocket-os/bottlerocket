@@ -1,0 +1,2 @@
+name-servers = ["1.2.3.4", "2.3.4.5"]
+search-list = ["us-west-2.compute.internal", "foo.bar.baz"]
