@@ -5,6 +5,7 @@ pub(crate) mod node_ip;
 pub(crate) mod prepare_primary_interface;
 pub(crate) mod remove;
 pub(crate) mod set_hostname;
+pub(crate) mod write_resolv_conf;
 
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
@@ -15,6 +16,7 @@ pub(crate) use remove::RemoveArgs;
 use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
 use snafu::ResultExt;
+pub(crate) use write_resolv_conf::WriteResolvConfArgs;
 
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -63,6 +65,9 @@ mod error {
 
         #[snafu(display("Unable to gather DNS settings: {}", source))]
         GetDnsSettings { source: dns::Error },
+
+        #[snafu(display("Failed to read/parse DNS settings from DHCP lease: {}", source))]
+        DnsFromLease { source: dns::Error },
 
         #[snafu(display("'systemd-sysctl' failed: {}", stderr))]
         FailedSystemdSysctl { stderr: String },
