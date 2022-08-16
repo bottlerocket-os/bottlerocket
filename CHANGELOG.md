@@ -1,3 +1,17 @@
+# v1.9.1 (2022-08-17)
+
+## OS Changes
+
+* Change kernel module compression from zstd to xz ([#2323])
+* Update ECR registry map for new AWS regions ([#2336])
+* Add new regions to pause registry map ([#2349])
+* Update `tough` to v0.8.1 ([#2338])
+
+[#2323]: https://github.com/bottlerocket-os/bottlerocket/pull/2323
+[#2336]: https://github.com/bottlerocket-os/bottlerocket/pull/2336
+[#2338]: https://github.com/bottlerocket-os/bottlerocket/pull/2338
+[#2349]: https://github.com/bottlerocket-os/bottlerocket/pull/2349
+
 # v1.9.0 (2022-07-28)
 
 ## OS Changes
