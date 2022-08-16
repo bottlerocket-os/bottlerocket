@@ -17,4 +17,5 @@ sha512 = "e2cd34e600a72e44710760dfda9364b790b8352a99eafbd43e683e4a06f37e6b5c0b5d
 
 [build-dependencies]
 glibc = { path = "../glibc" }
+liblzma = { path = "../liblzma" }
 libzstd = { path = "../libzstd" }
