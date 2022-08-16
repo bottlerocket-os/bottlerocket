@@ -25,7 +25,8 @@ members = [
     "api/prairiedog",
 
     # "api/migration/migrations/vX.Y.Z/..."
-    # (all migrations currently archived; replace this line with new ones)
+    "api/migration/migrations/v1.10.0/dns-settings",
+    "api/migration/migrations/v1.10.0/dns-settings-metadata",
 
     "bottlerocket-release",
 
