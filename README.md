@@ -631,6 +631,17 @@ In addition to the container runtime daemons, these credential settings will als
    10.1.1.1 test2.example.com
    ```
 
+The following allows for custom DNS settings, which are used to generate the `/etc/resolv.conf`.
+If either DNS setting is not populated, the system will use the DHCP lease of the primary interface to gather these setings.
+See the `resolv.conf` [man page](https://man7.org/linux/man-pages/man5/resolv.conf.5.html) for more detail.
+* `settings.dns.name-servers`: An array of IP address strings that represent the desired name server(s).
+* `settings.dns.search-list`: An array of domain strings that represent the desired domain search path(s).
+```
+[settings.dns]
+name-servers = ["1.2.3.4", "5.6.7.8"]
+search-list = ["foo.bar", "baz.foo"]
+```
+
 ##### Proxy settings
 
 These settings will configure the proxying behavior of the following services:
