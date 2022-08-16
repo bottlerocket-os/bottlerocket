@@ -4,9 +4,9 @@ use std::collections::HashMap;
 
 use crate::modeled_types::Identifier;
 use crate::{
-    AutoScalingSettings, AwsSettings, BootstrapContainer, CloudFormationSettings, ECSSettings,
-    HostContainer, KernelSettings, MetricsSettings, NetworkSettings, NtpSettings, OciHooks,
-    PemCertificate, RegistrySettings, UpdatesSettings,
+    AutoScalingSettings, AwsSettings, BootstrapContainer, CloudFormationSettings, DnsSettings,
+    ECSSettings, HostContainer, KernelSettings, MetricsSettings, NetworkSettings, NtpSettings,
+    OciHooks, PemCertificate, RegistrySettings, UpdatesSettings,
 };
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
@@ -28,4 +28,5 @@ struct Settings {
     oci_hooks: OciHooks,
     cloudformation: CloudFormationSettings,
     autoscaling: AutoScalingSettings,
+    dns: DnsSettings,
 }
