@@ -217,27 +217,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "add-autoscaling"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "add-cfsignal"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "add-pull-behavior"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -251,13 +230,6 @@ name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
-
-[[package]]
-name = "admin-container-v0-7-3"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
 
 [[package]]
 name = "ahash"
@@ -486,27 +458,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "aws-admin-container-v0-7-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-8-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-9-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "aws-config"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -531,27 +482,6 @@ dependencies = [
  "tower",
  "tracing",
  "zeroize",
-]
-
-[[package]]
-name = "aws-control-container-v0-5-5"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-6-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-6-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -923,20 +853,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "boot-setting"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "boot-setting-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "bootstrap-containers"
 version = "0.1.0"
 dependencies = [
@@ -1136,53 +1052,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "cluster-dns-ip-list"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
 name = "constants"
 version = "0.1.0"
 dependencies = [
  "generate-readme",
-]
-
-[[package]]
-name = "container-registry-credentials"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "container-registry-credentials-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "control-container-v0-5-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "control-container-v0-5-3"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "control-container-v0-5-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -1545,27 +1418,6 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
-]
-
-[[package]]
-name = "etc-hosts"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "etc-hosts-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "etc-hosts-service"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -1934,13 +1786,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hostname-affects-etc-hosts"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "http"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2115,13 +1960,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "image-gc-thresholds"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "imdsclient"
 version = "0.1.0"
 dependencies = [
@@ -2189,41 +2027,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "258451ab10b34f8af53416d1fdab72c22e805f0c92a1136d59470ec0b11138b2"
 dependencies = [
  "wasm-bindgen",
-]
-
-[[package]]
-name = "kernel-modules-setting"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kernel-modules-setting-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-no-daemon-reload"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-pod-pids-limit"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-provider-id"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -2541,15 +2344,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "node-taints-representation"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
- "snafu",
-]
-
-[[package]]
 name = "nom"
 version = "7.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2566,13 +2360,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c28774a7fd2fbb4f0babd8237ce554b73af68021b5f695a3cebd6c59bac0980f"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "ntp-affected-services"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -2688,20 +2475,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "21158b2c33aa6d4561f1c0a6ea283ca92bc54802a93b263e910746d679a7eb53"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "oci-hooks-setting"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "oci-hooks-setting-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -2930,14 +2703,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
-name = "pki-affected-services"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
 name = "pluto"
 version = "0.1.0"
 dependencies = [
@@ -3016,48 +2781,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c278e965f1d8cf32d6e0e96de3d3e79712178ae67986d9cf9151f51e95aac89b"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "public-admin-container-v0-7-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-8-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-9-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-5-5"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-6-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-6-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -3140,14 +2863,6 @@ name = "regex-syntax"
 version = "0.6.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3f87b73ce11b1619a3c6332f45341e0047173771e8b8b73f87bfeefb7b56244"
-
-[[package]]
-name = "registry-mirror-representation"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
 
 [[package]]
 name = "remove_dir_all"
@@ -3555,20 +3270,6 @@ dependencies = [
  "simplelog",
  "snafu",
  "tokio",
-]
-
-[[package]]
-name = "shibaken-admin-userdata-semantics"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "shibaken-send-metrics"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -4268,13 +3969,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "updates-targets-base-url"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "updog"
 version = "0.1.0"
 dependencies = [
@@ -4349,14 +4043,6 @@ dependencies = [
  "libc",
  "log",
  "thiserror",
-]
-
-[[package]]
-name = "vmware-host-containers"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
 ]
 
 [[package]]
