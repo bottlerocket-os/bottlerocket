@@ -25,6 +25,7 @@ Source6: metricdog-toml
 Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
+Source10: hachiko-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -44,6 +45,7 @@ Source116: load-kernel-modules.service.in
 Source117: cfsignal.service
 Source118: generate-network-config.service
 Source119: prepare-primary-interface.service
+Source120: hachiko.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -91,6 +93,7 @@ Requires: %{_cross_os}static-pods
 %if %{with aws_platform}
 Requires: %{_cross_os}shibaken
 Requires: %{_cross_os}cfsignal
+Requires: %{_cross_os}hachiko
 %endif
 
 %if %{with ecs_runtime}
@@ -247,6 +250,11 @@ Summary: Setting generator for populating admin container user-data from IMDS.
 Summary: Bottlerocket CloudFormation Stack signaler
 %description -n %{_cross_os}cfsignal
 %{summary}.
+
+%package -n %{_cross_os}hachiko
+Summary: Autoscaling warmpool support
+%description -n %{_cross_os}hachiko
+%{summary}.
 %endif
 
 %package -n %{_cross_os}shimpei
@@ -328,7 +336,7 @@ echo "** Output from non-static builds:"
     -p certdog \
     -p shimpei \
     %{?with_ecs_runtime: -p ecs-settings-applier} \
-    %{?with_aws_platform: -p shibaken -p cfsignal} \
+    %{?with_aws_platform: -p shibaken -p cfsignal -p hachiko} \
     %{?with_aws_k8s_family: -p pluto} \
     %{?with_k8s_runtime: -p static-pods} \
     %{?with_nvidia_flavor: -p driverdog} \
@@ -354,7 +362,7 @@ for p in \
   ghostdog bootstrap-containers \
   shimpei \
   %{?with_ecs_runtime: ecs-settings-applier} \
-  %{?with_aws_platform: shibaken cfsignal} \
+  %{?with_aws_platform: shibaken cfsignal hachiko} \
   %{?with_aws_k8s_family: pluto} \
   %{?with_k8s_runtime: static-pods} \
   %{?with_nvidia_flavor: driverdog} \
@@ -416,7 +424,9 @@ install -p -m 0644 \
 
 %if %{with aws_platform}
 install -p -m 0644 %{S:9} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:10} %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:117} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:120} %{buildroot}%{_cross_unitdir}
 %endif
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
@@ -536,6 +546,12 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/cfsignal-toml
 %{_cross_unitdir}/cfsignal.service
+
+%files -n %{_cross_os}hachiko
+%{_cross_bindir}/hachiko
+%dir %{_cross_templatedir}
+%{_cross_templatedir}/hachiko-toml
+%{_cross_unitdir}/hachiko.service
 %endif
 
 %if %{with nvidia_flavor}

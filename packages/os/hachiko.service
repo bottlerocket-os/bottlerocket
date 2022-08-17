@@ -1,0 +1,16 @@
+[Unit]
+Description=Autoscaling warm pools support
+After=network-online.target settings-applier.service
+Before=kubelet.service
+Requires=settings-applier.service network-online.target
+# We only want to run once, at first boot. This file is created by hachiko
+# after a successful run.
+ConditionPathExists=!/var/lib/bottlerocket/hachiko.ran
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hachiko
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
