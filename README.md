@@ -699,7 +699,7 @@ Here are the metrics settings:
 
 #### Boot-related settings
 
-*Please note that boot settings only exist for bare-metal variants at the moment*
+*Please note that boot settings currently only exist for the bare metal variants and \*-k8s-1.23 variants. Boot settings will be added to any future variant introduced after Bottlerocket v1.8.0.*
 
 Specifying either of the following settings will generate a kernel boot config file to be loaded on subsequent boots:
 
