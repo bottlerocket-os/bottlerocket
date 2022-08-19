@@ -5,6 +5,7 @@
 //! These structures are the user-facing options for configuring one or more network interfaces.
 mod dhcp;
 mod error;
+mod static_address;
 mod v1;
 
 use crate::wicked::WickedInterface;
@@ -12,6 +13,7 @@ pub(crate) use dhcp::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6Options
 pub(crate) use error::{Error, Result};
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
+pub(crate) use static_address::{RouteTo, RouteV1, StaticConfigV1};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;

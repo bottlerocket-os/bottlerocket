@@ -4,6 +4,7 @@
 //! The structures in this module are meant to be created from the user-facing structures in the
 //! `net_config` module.  `Default` implementations for WickedInterface exist here as well.
 mod dhcp;
+mod static_address;
 
 use crate::interface_name::InterfaceName;
 pub(crate) use dhcp::{WickedDhcp4, WickedDhcp6};
