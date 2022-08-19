@@ -1,0 +1,260 @@
+#!/usr/bin/env bash
+
+#
+# Common error handling
+#
+
+exit_trap_cmds=()
+
+on_exit() {
+    exit_trap_cmds+=( "$1" )
+}
+
+run_exit_trap_cmds() {
+    for cmd in "${exit_trap_cmds[@]}"; do
+        eval "${cmd}"
+    done
+}
+
+trap run_exit_trap_cmds EXIT
+
+bail() {
+    if [[ $# -gt 0 ]]; then
+        >&2 echo "Error: $*"
+    fi
+    exit 1
+}
+
+usage() {
+    cat <<EOF
+Usage: $0 -b GITREV_BEFORE -a GITREV_AFTER -o OUTPUT_DIR [-k KERNEL_VERSION] [-h]
+Compare kernel configurations before and after a series of commits.
+
+    -a, --after         new Git revision to compare from
+    -b, --before        baseline Git revision to compare against
+    -k, --kernel        kernel versions to compare configs for, may be given
+                        multiple times (optional, defaults to all kernels)
+    -o, --output-dir    path to the output directory; must not exist yet
+    -h, --help          show this help text
+
+Example invocation:
+
+    This compares the config changes for kernels 5.10 and 5.15 before and
+    after the most recent commit has been applied:
+
+        $0 -b HEAD^ -a HEAD -k 5.10 -k 5.15 -o configs
+
+Notes:
+
+    This compares the config changes for all combinations of aarch64/x86_64,
+    cloud/metal, and kernel versions. Combinations without a corresponding
+    Bottlerocket variant are skipped. Since this involves numerous full kernel
+    builds the comparison will take some time. Consider the working tree this
+    is invoked on busy while the script is running.
+
+EOF
+}
+
+usage_error() {
+    >&2 usage
+    bail "$1"
+}
+
+
+#
+# Parse arguments
+#
+
+kernel_versions=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -a|--after)
+            shift; gitrev_after_arg=$1 ;;
+        -b|--before)
+            shift; gitrev_before_arg=$1 ;;
+        -k|--kernel)
+            shift; kernel_versions+=( "$1" ) ;;
+        -o|--output-dir)
+            shift; output_dir=$1 ;;
+        -h|--help)
+            usage; exit 0 ;;
+        *)
+            usage_error "Invalid option '$1'" ;;
+    esac
+    shift
+done
+
+if [[ ${#kernel_versions[@]} -eq 0 ]]; then
+    kernel_versions=( 5.10 5.15 )
+else
+    for kver in "${kernel_versions[@]}"; do
+        case ${kver} in
+            5.10) continue ;;
+            5.15) continue ;;
+            *)    bail "Unknown kernel version '${kver}'" ;;
+        esac
+    done
+fi
+readonly kernel_versions
+
+[[ -n ${output_dir} ]] || usage_error 'require -o|--output-dir'
+[[ -e ${output_dir} ]] && bail "Output directory '${output_dir}' exists already, not touching it"
+readonly output_dir
+
+# Validate and resolve the given before and after Git revisions. Resolving
+# them now prevents relative references from moving around after the first
+# checkout.
+[[ -n ${gitrev_before_arg} ]] || usage_error 'require -b|--before'
+[[ -n ${gitrev_after_arg} ]] || usage_error 'require -a|--after'
+gitrev_before=$(git rev-parse --verify --end-of-options "${gitrev_before_arg}^{commit}")
+gitrev_after=$(git rev-parse --verify --end-of-options "${gitrev_after_arg}^{commit}")
+[[ -n ${gitrev_before} ]] || bail "Invalid Git revision '${gitrev_before_arg}'"
+[[ -n ${gitrev_after} ]] || bail "Invalid Git revision '${gitrev_after_arg}'"
+readonly gitrev_before
+readonly gitrev_after
+
+
+#
+# Prepare working tree
+#
+
+# We'll check out the before and after states to compare. For that the working
+# tree and the index need to be clean.
+if [[ -n $(git status --porcelain --untracked-files=no) ]]; then
+    bail 'The working tree or index of the repository are not clean. ' \
+         'Consider running "git stash" to temporarily stow away your changes.'
+fi
+
+# Restore current repository state whenever we exit (either a checked out
+# branch or the current detached head state).
+gitrev_original=$(git rev-parse --abbrev-ref HEAD)
+if [[ -z ${gitrev_original} ]]; then
+    gitrev_original=$(git rev-parse HEAD) || bail 'Cannot determine current repository HEAD.'
+fi
+readonly gitrev_original
+on_exit "git checkout --quiet '${gitrev_original}'"
+
+
+#
+# Iterate over all viable build configurations in before and after states
+#
+
+mkdir -p "${output_dir}" || bail "Failed to create output directory '${output_dir}'"
+
+for state in before after; do
+
+    gitrev_var=gitrev_${state}
+    git checkout --quiet "${!gitrev_var}" || bail "Cannot check out '${!gitrev_var}'."
+
+    for arch in aarch64 x86_64; do
+
+        for kver in "${kernel_versions[@]}"; do
+
+            variants=()
+            case ${kver} in
+                5.10)
+                    variants+=( 'aws-k8s-1.23' )
+                    if [[ ${arch} = x86_64 ]]; then
+                        variants+=( 'metal-k8s-1.23' )
+                    fi
+                    ;;
+                5.15)
+                    variants+=( 'aws-dev' 'metal-dev' )
+                    ;;
+                *)
+                    bail "No known variants build kernel ${kver}."
+                    ;;
+            esac
+
+            for variant in "${variants[@]}"; do
+
+                debug_id="state=${state} arch=${arch} variant=${variant}"
+
+                #
+                # Run build
+                #
+
+                cargo make \
+                        -e BUILDSYS_ARCH="${arch}" \
+                        -e BUILDSYS_VARIANT="${variant}" \
+                        -e PACKAGE="kernel-${kver/./_}" \
+                        build-package \
+                    || bail "Build failed for ${debug_id}"
+
+                #
+                # Find kernel RPM
+                #
+
+                shopt -s nullglob
+                kernel_rpms=(
+                    ./build/rpms/bottlerocket-"${arch}"-*kernel-"${kver}"-"${kver}".*.rpm
+                )
+                shopt -u nullglob
+
+                case ${#kernel_rpms[@]} in
+                    0) bail "No kernel RPM found for ${debug_id}" ;;
+                    1) kernel_rpm=${kernel_rpms[0]} ;;
+                    *) bail "More than one kernel RPM found for ${debug_id}" ;;
+                esac
+
+
+                #
+                # Extract kernel config
+                #
+
+                config_path=./${output_dir}/config-${arch}-${kver}-${variant}-${state}
+                rpm2cpio "${kernel_rpm}" \
+                    | cpio --quiet --extract --to-stdout ./boot/config >"${config_path}"
+                [[ -s "${config_path}" ]] || bail "Failed to extract config for ${debug_id}"
+
+            done  # variant
+
+        done  # kver
+
+    done  # arch
+
+done  # state
+
+
+#
+# Post-process the collected pairs of "before" and "after" configs (generate diffs, a report, a summary)
+#
+
+# Get the helpful diffconfig script from the kernel source tree. We package it
+# in the kernel-archive RPM from where it can be extracted. Here we extract the
+# latest version of the script, but any kernel version and arch will do.
+latest_kver=$(printf '%s\n' "${kernel_versions[@]}" | sort -V | tail -n1)
+latest_archive_rpms=( ./build/rpms/bottlerocket-aarch64-kernel-"${latest_kver}"-archive-*.rpm )
+diffconfig=$(mktemp --suffix -bottlerocket-diffconfig)
+on_exit "rm '${diffconfig}'"
+rpm2cpio "${latest_archive_rpms[0]}" \
+    | cpio --quiet --extract --to-stdout \
+    | tar --xz --extract --to-stdout kernel-devel/scripts/diffconfig >"${diffconfig}"
+[[ -s ${diffconfig} ]] || bail "Failed to extract diffconfig tool from '${latest_archive_rpms[0]}'."
+chmod +x "${diffconfig}"
+
+# Diff the before and after states for each collected pair
+for config_before in "${output_dir}"/config-*-before; do
+    config_after=${config_before/before/after}
+    config_diff=${config_before/before/diff}
+    "${diffconfig}" "${config_before}" "${config_after}" >"${config_diff}" \
+        || bail "Failed to diff '${config_before}' and '${config_after}'"
+done
+
+# Generate diff summary
+echo
+for config_diff in "${output_dir}"/config-*-diff; do
+    config_base=${config_diff##*/}
+    awk "
+        /^-/   { removed += 1 }
+        /^+/   { added   += 1 }
+        / -> / { changed += 1 }
+        END    { printf \"${config_base}:\t%3d removed, %3d added, %3d changed\n\", removed, added, changed }
+    " "${config_diff}"
+done | sort -V
+echo
+
+# Generate combined report of changes
+head -v -n 999999 "${output_dir}"/*-diff >"${output_dir}"/diff-report
+echo "A full report has been placed in '${output_dir}/diff-report'"
