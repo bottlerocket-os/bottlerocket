@@ -27,7 +27,6 @@ cp ninfod/COPYING COPYING.ninfod
 %build
 CONFIGURE_OPTS=(
  -DUSE_CAP=true
- -DUSE_CRYPTO=none
  -DUSE_GETTEXT=false
  -DUSE_IDN=false
 
@@ -39,8 +38,6 @@ CONFIGURE_OPTS=(
  -DBUILD_NINFOD=false
  -DBUILD_RARPD=false
  -DBUILD_RDISC=false
- -DBUILD_TFTPD=false
- -DBUILD_TRACEROUTE6=false
 
  -DBUILD_MANS=false
  -DBUILD_HTML_MANS=false
