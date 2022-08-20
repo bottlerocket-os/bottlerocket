@@ -166,6 +166,7 @@ RUN --mount=target=/host \
         -x '*-debugsource-*.rpm' \
         --no-database \
         /host/build/rpms \
+    && echo '%_dbpath %{_sharedstatedir}/rpm' >> /etc/rpm/macros \
     && dnf -y \
         --disablerepo '*' \
         --repofrompath repo,./rpmbuild/RPMS \
