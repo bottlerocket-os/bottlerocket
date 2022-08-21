@@ -126,7 +126,7 @@ pushd build
   --host="%{_cross_target}" \
   --build="%{_build}" \
   --with-headers="%{_cross_includedir}" \
-  --enable-kernel="5.4.0"
+  --enable-kernel="5.10.0"
 make %{?_smp_mflags} -O -r
 popd
 
