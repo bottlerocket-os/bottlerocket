@@ -1,0 +1,81 @@
+From 96d00b5c027fb97ad4ffa12af615d9508218628d Mon Sep 17 00:00:00 2001
+From: Rudi Heitbaum <rudi@heitbaum.com>
+Date: Sat, 23 Jul 2022 10:38:49 +0000
+Subject: [PATCH] glibc: Remove #include <linux/fs.h> to resolve
+ fsconfig_command/mount_attr conflict with glibc 2.36
+
+---
+ meson.build             | 13 ++++++++++++-
+ src/core/namespace.c    |  2 ++
+ src/shared/mount-util.c |  2 ++
+ 3 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index cb9936ee8b..0a03ec07cc 100644
+--- a/meson.build
++++ b/meson.build
+@@ -474,7 +474,6 @@ decl_headers = '''
+ #include <uchar.h>
+ #include <sys/mount.h>
+ #include <sys/stat.h>
+-#include <linux/fs.h>
+ '''
+ 
+ foreach decl : ['char16_t',
+@@ -486,6 +485,17 @@ foreach decl : ['char16_t',
+         # We get -1 if the size cannot be determined
+         have = cc.sizeof(decl, prefix : decl_headers, args : '-D_GNU_SOURCE') > 0
+ 
++        if decl == 'struct mount_attr'
++                if have
++                        want_linux_fs_h = false
++                else
++                        have = cc.sizeof(decl,
++                                         prefix : decl_headers + '#include <linux/fs.h>',
++                                         args : '-D_GNU_SOURCE') > 0
++                        want_linux_fs_h = have
++                endif
++        endif
++
+         if decl == 'struct statx'
+                 if have
+                         want_linux_stat_h = false
+@@ -501,6 +511,7 @@ foreach decl : ['char16_t',
+ endforeach
+ 
+ conf.set10('WANT_LINUX_STAT_H', want_linux_stat_h)
++conf.set10('WANT_LINUX_FS_H', want_linux_fs_h)
+ 
+ foreach ident : ['secure_getenv', '__secure_getenv']
+         conf.set10('HAVE_' + ident.to_upper(), cc.has_function(ident))
+diff --git a/src/core/namespace.c b/src/core/namespace.c
+index 9d53d98a16..c8ff5cda93 100644
+--- a/src/core/namespace.c
++++ b/src/core/namespace.c
+@@ -6,7 +6,9 @@
+ #include <stdio.h>
+ #include <sys/mount.h>
+ #include <unistd.h>
++#if WANT_LINUX_FS_H
+ #include <linux/fs.h>
++#endif
+ 
+ #include "alloc-util.h"
+ #include "base-filesystem.h"
+diff --git a/src/shared/mount-util.c b/src/shared/mount-util.c
+index fd6a5c09b5..af7b7bf52c 100644
+--- a/src/shared/mount-util.c
++++ b/src/shared/mount-util.c
+@@ -7,7 +7,9 @@
+ #include <sys/statvfs.h>
+ #include <unistd.h>
+ #include <linux/loop.h>
++#if WANT_LINUX_FS_H
+ #include <linux/fs.h>
++#endif
+ 
+ #include "alloc-util.h"
+ #include "chase-symlinks.h"
+-- 
+2.36.1
+
