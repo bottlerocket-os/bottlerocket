@@ -1,0 +1,321 @@
+From 5165080fec63a1f03aa1985b77bca300465bf570 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 31/39] nss_dns: Remove remnants of IPv6 address mapping
+
+res_use_inet6 always returns false since commit 3f8b44be0a658266adff5
+("resolv: Remove support for RES_USE_INET6 and the inet6 option").
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit a7fc30b522a0cd7c8c5e7e285b9531b704e02f04)
+---
+ resolv/README             |  3 --
+ resolv/mapv4v6addr.h      | 69 --------------------------------
+ resolv/mapv4v6hostent.h   | 84 ---------------------------------------
+ resolv/nss_dns/dns-host.c | 54 +++++--------------------
+ 4 files changed, 9 insertions(+), 201 deletions(-)
+ delete mode 100644 resolv/mapv4v6addr.h
+ delete mode 100644 resolv/mapv4v6hostent.h
+
+diff --git a/resolv/README b/resolv/README
+index 514e9bb617..2146bc3b27 100644
+--- a/resolv/README
++++ b/resolv/README
+@@ -146,6 +146,3 @@ res_libc.c is home-brewn, although parts of it are taken from res_data.c.
+ 
+ res_hconf.c and res_hconf.h were contributed by David Mosberger, and
+ do not come from BIND.
+-
+-The files gethnamaddr.c, mapv4v6addr.h and mapv4v6hostent.h are
+-leftovers from BIND 4.9.7.
+diff --git a/resolv/mapv4v6addr.h b/resolv/mapv4v6addr.h
+deleted file mode 100644
+index 7f85f7d5e3..0000000000
+--- a/resolv/mapv4v6addr.h
++++ /dev/null
+@@ -1,69 +0,0 @@
+-/*
+- * ++Copyright++ 1985, 1988, 1993
+- * -
+- * Copyright (c) 1985, 1988, 1993
+- *    The Regents of the University of California.  All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 4. Neither the name of the University nor the names of its contributors
+- *    may be used to endorse or promote products derived from this software
+- *    without specific prior written permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+- * SUCH DAMAGE.
+- * -
+- * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+- *
+- * Permission to use, copy, modify, and distribute this software for any
+- * purpose with or without fee is hereby granted, provided that the above
+- * copyright notice and this permission notice appear in all copies, and that
+- * the name of Digital Equipment Corporation not be used in advertising or
+- * publicity pertaining to distribution of the document or software without
+- * specific, written prior permission.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+- * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+- * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+- * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+- * SOFTWARE.
+- * -
+- * --Copyright--
+- */
+-
+-#include <string.h>
+-#include <arpa/nameser.h>
+-
+-static void
+-map_v4v6_address (const char *src, char *dst)
+-{
+-  u_char *p = (u_char *) dst;
+-  int i;
+-
+-  /* Move the IPv4 part to the right position.  */
+-  memcpy (dst + 12, src, INADDRSZ);
+-
+-  /* Mark this ipv6 addr as a mapped ipv4. */
+-  for (i = 0; i < 10; i++)
+-    *p++ = 0x00;
+-  *p++ = 0xff;
+-  *p = 0xff;
+-}
+diff --git a/resolv/mapv4v6hostent.h b/resolv/mapv4v6hostent.h
+deleted file mode 100644
+index c11038adf3..0000000000
+--- a/resolv/mapv4v6hostent.h
++++ /dev/null
+@@ -1,84 +0,0 @@
+-/*
+- * ++Copyright++ 1985, 1988, 1993
+- * -
+- * Copyright (c) 1985, 1988, 1993
+- *    The Regents of the University of California.  All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 4. Neither the name of the University nor the names of its contributors
+- *    may be used to endorse or promote products derived from this software
+- *    without specific prior written permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+- * SUCH DAMAGE.
+- * -
+- * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+- *
+- * Permission to use, copy, modify, and distribute this software for any
+- * purpose with or without fee is hereby granted, provided that the above
+- * copyright notice and this permission notice appear in all copies, and that
+- * the name of Digital Equipment Corporation not be used in advertising or
+- * publicity pertaining to distribution of the document or software without
+- * specific, written prior permission.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+- * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+- * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+- * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+- * SOFTWARE.
+- * -
+- * --Copyright--
+- */
+-
+-#include <arpa/nameser.h>
+-#include <sys/socket.h>
+-
+-typedef union {
+-    int32_t al;
+-    char ac;
+-} align;
+-
+-static int
+-map_v4v6_hostent (struct hostent *hp, char **bpp, int *lenp)
+-{
+-  char **ap;
+-
+-  if (hp->h_addrtype != AF_INET || hp->h_length != INADDRSZ)
+-    return 0;
+-  hp->h_addrtype = AF_INET6;
+-  hp->h_length = IN6ADDRSZ;
+-  for (ap = hp->h_addr_list; *ap; ap++)
+-    {
+-      int i = sizeof (align) - ((u_long) *bpp % sizeof (align));
+-
+-      if (*lenp < (i + IN6ADDRSZ))
+-	/* Out of memory.  */
+-	return 1;
+-      *bpp += i;
+-      *lenp -= i;
+-      map_v4v6_address (*ap, *bpp);
+-      *ap = *bpp;
+-      *bpp += IN6ADDRSZ;
+-      *lenp -= IN6ADDRSZ;
+-    }
+-  return 0;
+-}
+diff --git a/resolv/nss_dns/dns-host.c b/resolv/nss_dns/dns-host.c
+index cd26399b7e..8e38583e15 100644
+--- a/resolv/nss_dns/dns-host.c
++++ b/resolv/nss_dns/dns-host.c
+@@ -87,10 +87,6 @@
+ #include <resolv/resolv-internal.h>
+ #include <resolv/resolv_context.h>
+ 
+-/* Get implementations of some internal functions.  */
+-#include <resolv/mapv4v6addr.h>
+-#include <resolv/mapv4v6hostent.h>
+-
+ #define RESOLVSORT
+ 
+ #if PACKETSZ > 65536
+@@ -116,7 +112,7 @@ static enum nss_status getanswer_r (struct resolv_context *ctx,
+ 				    const char *qname, int qtype,
+ 				    struct hostent *result, char *buffer,
+ 				    size_t buflen, int *errnop, int *h_errnop,
+-				    int map, int32_t *ttlp, char **canonp);
++				    int32_t *ttlp, char **canonp);
+ static enum nss_status getanswer_ptr (unsigned char *packet, size_t packetlen,
+ 				      struct alloc_buffer *abuf,
+ 				      char **hnamep, int *errnop,
+@@ -197,7 +193,6 @@ gethostbyname3_context (struct resolv_context *ctx,
+   char tmp[NS_MAXDNAME];
+   int size, type, n;
+   const char *cp;
+-  int map = 0;
+   int olderr = errno;
+   enum nss_status status;
+ 
+@@ -258,32 +253,12 @@ gethostbyname3_context (struct resolv_context *ctx,
+ 	*errnop = EAGAIN;
+       else
+ 	__set_errno (olderr);
+-
+-      /* If we are looking for an IPv6 address and mapping is enabled
+-	 by having the RES_USE_INET6 bit in _res.options set, we try
+-	 another lookup.  */
+-      if (af == AF_INET6 && res_use_inet6 ())
+-	n = __res_context_search (ctx, name, C_IN, T_A, host_buffer.buf->buf,
+-				  host_buffer.buf != orig_host_buffer
+-				  ? MAXPACKET : 1024, &host_buffer.ptr,
+-				  NULL, NULL, NULL, NULL);
+-
+-      if (n < 0)
+-	{
+-	  if (host_buffer.buf != orig_host_buffer)
+-	    free (host_buffer.buf);
+-	  return status;
+-	}
+-
+-      map = 1;
+-
+-      result->h_addrtype = AF_INET;
+-      result->h_length = INADDRSZ;
+     }
++  else
++    status = getanswer_r
++      (ctx, host_buffer.buf, n, name, type, result, buffer, buflen,
++       errnop, h_errnop, ttlp, canonp);
+ 
+-  status = getanswer_r
+-    (ctx, host_buffer.buf, n, name, type, result, buffer, buflen,
+-     errnop, h_errnop, map, ttlp, canonp);
+   if (host_buffer.buf != orig_host_buffer)
+     free (host_buffer.buf);
+   return status;
+@@ -329,13 +304,8 @@ _nss_dns_gethostbyname_r (const char *name, struct hostent *result,
+       *h_errnop = NETDB_INTERNAL;
+       return NSS_STATUS_UNAVAIL;
+     }
+-  status = NSS_STATUS_NOTFOUND;
+-  if (res_use_inet6 ())
+-    status = gethostbyname3_context (ctx, name, AF_INET6, result, buffer,
+-				     buflen, errnop, h_errnop, NULL, NULL);
+-  if (status == NSS_STATUS_NOTFOUND)
+-    status = gethostbyname3_context (ctx, name, AF_INET, result, buffer,
+-				     buflen, errnop, h_errnop, NULL, NULL);
++  status = gethostbyname3_context (ctx, name, AF_INET, result, buffer,
++				   buflen, errnop, h_errnop, NULL, NULL);
+   __resolv_context_put (ctx);
+   return status;
+ }
+@@ -648,7 +618,7 @@ static enum nss_status
+ getanswer_r (struct resolv_context *ctx,
+ 	     const querybuf *answer, int anslen, const char *qname, int qtype,
+ 	     struct hostent *result, char *buffer, size_t buflen,
+-	     int *errnop, int *h_errnop, int map, int32_t *ttlp, char **canonp)
++	     int *errnop, int *h_errnop, int32_t *ttlp, char **canonp)
+ {
+   struct host_data
+   {
+@@ -664,7 +634,6 @@ getanswer_r (struct resolv_context *ctx,
+   char *bp, **ap, **hap;
+   char tbuf[MAXDNAME];
+   u_char packtmp[NS_MAXCDNAME];
+-  int have_to_map = 0;
+   uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct host_data);
+   buffer += pad;
+   buflen = buflen > pad ? buflen - pad : 0;
+@@ -845,9 +814,7 @@ getanswer_r (struct resolv_context *ctx,
+ 	  continue;
+ 	}
+ 
+-      if (type == T_A && qtype == T_AAAA && map)
+-	have_to_map = 1;
+-      else if (__glibc_unlikely (type != qtype))
++      if (__glibc_unlikely (type != qtype))
+ 	{
+ 	  cp += n;
+ 	  continue;			/* XXX - had_error++ ? */
+@@ -944,9 +911,6 @@ getanswer_r (struct resolv_context *ctx,
+ 	  linebuflen -= n;
+ 	}
+ 
+-      if (have_to_map)
+-	if (map_v4v6_hostent (result, &bp, &linebuflen))
+-	  goto too_small;
+       *h_errnop = NETDB_SUCCESS;
+       return NSS_STATUS_SUCCESS;
+     }
+-- 
+2.37.2
+

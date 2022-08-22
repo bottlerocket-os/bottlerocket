@@ -1,0 +1,571 @@
+From 78c8ef21fa54e994451d5b42ead6080d99a88a49 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 32/39] nss_dns: Rewrite getanswer_r to match getanswer_ptr
+ (bug 12154, bug 29305)
+
+Allocate the pointer arrays only at the end, when their sizes
+are known.  This addresses bug 29305.
+
+Skip over invalid names instead of failing lookups.  This partially
+fixes bug 12154 (for gethostbyname, fixing getaddrinfo requires
+different changes).
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit d101d836e7e4bd1d4e4972b0e0bd0a55c9b650fa)
+---
+ resolv/nss_dns/dns-host.c | 478 ++++++++++++++------------------------
+ 1 file changed, 180 insertions(+), 298 deletions(-)
+
+diff --git a/resolv/nss_dns/dns-host.c b/resolv/nss_dns/dns-host.c
+index 8e38583e15..b887e77e9c 100644
+--- a/resolv/nss_dns/dns-host.c
++++ b/resolv/nss_dns/dns-host.c
+@@ -107,12 +107,19 @@ typedef union querybuf
+   u_char buf[MAXPACKET];
+ } querybuf;
+ 
+-static enum nss_status getanswer_r (struct resolv_context *ctx,
+-				    const querybuf *answer, int anslen,
+-				    const char *qname, int qtype,
+-				    struct hostent *result, char *buffer,
+-				    size_t buflen, int *errnop, int *h_errnop,
+-				    int32_t *ttlp, char **canonp);
++/* For historic reasons, pointers to IP addresses are char *, so use a
++   single list type for addresses and host names.  */
++#define DYNARRAY_STRUCT ptrlist
++#define DYNARRAY_ELEMENT char *
++#define DYNARRAY_PREFIX ptrlist_
++#include <malloc/dynarray-skeleton.c>
++
++static enum nss_status getanswer_r (unsigned char *packet, size_t packetlen,
++				    uint16_t qtype, struct alloc_buffer *abuf,
++				    struct ptrlist *addresses,
++				    struct ptrlist *aliases,
++				    int *errnop, int *h_errnop, int32_t *ttlp);
++static void addrsort (struct resolv_context *ctx, char **ap, int num);
+ static enum nss_status getanswer_ptr (unsigned char *packet, size_t packetlen,
+ 				      struct alloc_buffer *abuf,
+ 				      char **hnamep, int *errnop,
+@@ -184,12 +191,6 @@ gethostbyname3_context (struct resolv_context *ctx,
+ 			char *buffer, size_t buflen, int *errnop,
+ 			int *h_errnop, int32_t *ttlp, char **canonp)
+ {
+-  union
+-  {
+-    querybuf *buf;
+-    u_char *ptr;
+-  } host_buffer;
+-  querybuf *orig_host_buffer;
+   char tmp[NS_MAXDNAME];
+   int size, type, n;
+   const char *cp;
+@@ -223,10 +224,12 @@ gethostbyname3_context (struct resolv_context *ctx,
+       && (cp = __res_context_hostalias (ctx, name, tmp, sizeof (tmp))) != NULL)
+     name = cp;
+ 
+-  host_buffer.buf = orig_host_buffer = (querybuf *) alloca (1024);
++  unsigned char dns_packet_buffer[1024];
++  unsigned char *alt_dns_packet_buffer = dns_packet_buffer;
+ 
+-  n = __res_context_search (ctx, name, C_IN, type, host_buffer.buf->buf,
+-			    1024, &host_buffer.ptr, NULL, NULL, NULL, NULL);
++  n = __res_context_search (ctx, name, C_IN, type,
++			    dns_packet_buffer, sizeof (dns_packet_buffer),
++			    &alt_dns_packet_buffer, NULL, NULL, NULL, NULL);
+   if (n < 0)
+     {
+       switch (errno)
+@@ -255,12 +258,77 @@ gethostbyname3_context (struct resolv_context *ctx,
+ 	__set_errno (olderr);
+     }
+   else
+-    status = getanswer_r
+-      (ctx, host_buffer.buf, n, name, type, result, buffer, buflen,
+-       errnop, h_errnop, ttlp, canonp);
++    {
++      struct alloc_buffer abuf = alloc_buffer_create (buffer, buflen);
+ 
+-  if (host_buffer.buf != orig_host_buffer)
+-    free (host_buffer.buf);
++      struct ptrlist addresses;
++      ptrlist_init (&addresses);
++      struct ptrlist aliases;
++      ptrlist_init (&aliases);
++
++      status = getanswer_r (alt_dns_packet_buffer, n, type,
++			    &abuf, &addresses, &aliases,
++			    errnop, h_errnop, ttlp);
++      if (status == NSS_STATUS_SUCCESS)
++	{
++	  if (ptrlist_has_failed (&addresses)
++	      || ptrlist_has_failed (&aliases))
++	    {
++	      /* malloc failure.  Do not retry using the ERANGE protocol.  */
++	      *errnop = ENOMEM;
++	      *h_errnop = NETDB_INTERNAL;
++	      status = NSS_STATUS_UNAVAIL;
++	    }
++
++	  /* Reserve the address and alias arrays in the result
++	     buffer.  Both are NULL-terminated, but the first element
++	     of the alias array is stored in h_name, so no extra space
++	     for the NULL terminator is needed there.  */
++	  result->h_addr_list
++	    = alloc_buffer_alloc_array (&abuf, char *,
++					ptrlist_size (&addresses) + 1);
++	  result->h_aliases
++	    = alloc_buffer_alloc_array (&abuf, char *,
++					ptrlist_size (&aliases));
++	  if (alloc_buffer_has_failed (&abuf))
++	    {
++	      /* Retry using the ERANGE protocol.  */
++	      *errnop = ERANGE;
++	      *h_errnop = NETDB_INTERNAL;
++	      status = NSS_STATUS_TRYAGAIN;
++	    }
++	  else
++	    {
++	      /* Copy the address list and NULL-terminate it.  */
++	      memcpy (result->h_addr_list, ptrlist_begin (&addresses),
++		      ptrlist_size (&addresses) * sizeof (char *));
++	      result->h_addr_list[ptrlist_size (&addresses)] = NULL;
++
++	      /* Sort the address list if requested.  */
++	      if (type == T_A && __resolv_context_sort_count (ctx) > 0)
++		addrsort (ctx, result->h_addr_list, ptrlist_size (&addresses));
++
++	      /* Copy the aliases,  excluding the last one. */
++	      memcpy (result->h_aliases, ptrlist_begin (&aliases),
++		      (ptrlist_size (&aliases) - 1) * sizeof (char *));
++	      result->h_aliases[ptrlist_size (&aliases) - 1] = NULL;
++
++	      /* The last alias goes into h_name.  */
++	      assert (ptrlist_size (&aliases) >= 1);
++	      result->h_name = ptrlist_end (&aliases)[-1];
++
++	      /* This is also the canonical name.  */
++	      if (canonp != NULL)
++		*canonp = result->h_name;
++	    }
++	}
++
++      ptrlist_free (&aliases);
++      ptrlist_free (&addresses);
++    }
++
++  if (alt_dns_packet_buffer != dns_packet_buffer)
++    free (alt_dns_packet_buffer);
+   return status;
+ }
+ 
+@@ -614,314 +682,128 @@ addrsort (struct resolv_context *ctx, char **ap, int num)
+ 	break;
+ }
+ 
+-static enum nss_status
+-getanswer_r (struct resolv_context *ctx,
+-	     const querybuf *answer, int anslen, const char *qname, int qtype,
+-	     struct hostent *result, char *buffer, size_t buflen,
+-	     int *errnop, int *h_errnop, int32_t *ttlp, char **canonp)
++/* Convert the uncompressed, binary domain name CDNAME into its
++   textual representation and add it to the end of ALIASES, allocating
++   space for a copy of the name from ABUF.  Skip adding the name if it
++   is not a valid host name, and return false in that case, otherwise
++   true.  */
++static bool
++getanswer_r_store_alias (const unsigned char *cdname,
++			 struct alloc_buffer *abuf,
++			 struct ptrlist *aliases)
+ {
+-  struct host_data
+-  {
+-    char *aliases[MAX_NR_ALIASES];
+-    unsigned char host_addr[16];	/* IPv4 or IPv6 */
+-    char *h_addr_ptrs[0];
+-  } *host_data;
+-  int linebuflen;
+-  const HEADER *hp;
+-  const u_char *end_of_message, *cp;
+-  int n, ancount, qdcount;
+-  int haveanswer, had_error;
+-  char *bp, **ap, **hap;
+-  char tbuf[MAXDNAME];
+-  u_char packtmp[NS_MAXCDNAME];
+-  uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct host_data);
+-  buffer += pad;
+-  buflen = buflen > pad ? buflen - pad : 0;
+-  if (__glibc_unlikely (buflen < sizeof (struct host_data)))
+-    {
+-      /* The buffer is too small.  */
+-    too_small:
+-      *errnop = ERANGE;
+-      *h_errnop = NETDB_INTERNAL;
+-      return NSS_STATUS_TRYAGAIN;
+-    }
+-  host_data = (struct host_data *) buffer;
+-  linebuflen = buflen - sizeof (struct host_data);
+-  if (buflen - sizeof (struct host_data) != linebuflen)
+-    linebuflen = INT_MAX;
+-
+-  result->h_name = NULL;
+-  end_of_message = answer->buf + anslen;
+-
+-  /*
+-   * find first satisfactory answer
+-   */
+-  hp = &answer->hdr;
+-  ancount = ntohs (hp->ancount);
+-  qdcount = ntohs (hp->qdcount);
+-  cp = answer->buf + HFIXEDSZ;
+-  if (__glibc_unlikely (qdcount != 1))
+-    {
+-      *h_errnop = NO_RECOVERY;
+-      return NSS_STATUS_UNAVAIL;
+-    }
+-  if (sizeof (struct host_data) + (ancount + 1) * sizeof (char *) >= buflen)
+-    goto too_small;
+-  bp = (char *) &host_data->h_addr_ptrs[ancount + 1];
+-  linebuflen -= (ancount + 1) * sizeof (char *);
+-
+-  n = __ns_name_unpack (answer->buf, end_of_message, cp,
+-			packtmp, sizeof packtmp);
+-  if (n != -1 && __ns_name_ntop (packtmp, bp, linebuflen) == -1)
+-    {
+-      if (__glibc_unlikely (errno == EMSGSIZE))
+-	goto too_small;
+-
+-      n = -1;
+-    }
++  /* Filter out domain names that are not host names.  */
++  if (!__res_binary_hnok (cdname))
++    return false;
++
++  /* Note: Not NS_MAXCDNAME, so that __ns_name_ntop implicitly checks
++     for length.  */
++  char dname[MAXHOSTNAMELEN + 1];
++  if (__ns_name_ntop (cdname, dname, sizeof (dname)) < 0)
++    return false;
++  /* Do not report an error on allocation failure, instead store NULL
++     or do nothing.  getanswer_r's caller will see NSS_STATUS_SUCCESS
++     and detect the memory allocation failure or buffer space
++     exhaustion, and report it accordingly.  */
++  ptrlist_add (aliases, alloc_buffer_copy_string (abuf, dname));
++  return true;
++}
+ 
+-  if (__glibc_unlikely (n < 0))
+-    {
+-      *errnop = errno;
+-      *h_errnop = NO_RECOVERY;
+-      return NSS_STATUS_UNAVAIL;
+-    }
+-  if (__glibc_unlikely (__libc_res_hnok (bp) == 0))
++static enum nss_status __attribute__ ((noinline))
++getanswer_r (unsigned char *packet, size_t packetlen, uint16_t qtype,
++	     struct alloc_buffer *abuf,
++	     struct ptrlist *addresses, struct ptrlist *aliases,
++	     int *errnop, int *h_errnop, int32_t *ttlp)
++{
++  struct ns_rr_cursor c;
++  if (!__ns_rr_cursor_init (&c, packet, packetlen))
+     {
+-      errno = EBADMSG;
+-      *errnop = EBADMSG;
++      /* This should not happen because __res_context_query already
++	 perfroms response validation.  */
+       *h_errnop = NO_RECOVERY;
+       return NSS_STATUS_UNAVAIL;
+     }
+-  cp += n + QFIXEDSZ;
+ 
+-  if (qtype == T_A || qtype == T_AAAA)
++  /* Treat the QNAME just like an alias.  Error out if it is not a
++     valid host name.  */
++  if (ns_rr_cursor_rcode (&c) == NXDOMAIN
++      || !getanswer_r_store_alias (ns_rr_cursor_qname (&c), abuf, aliases))
+     {
+-      /* res_send() has already verified that the query name is the
+-       * same as the one we sent; this just gets the expanded name
+-       * (i.e., with the succeeding search-domain tacked on).
+-       */
+-      n = strlen (bp) + 1;             /* for the \0 */
+-      if (n >= MAXHOSTNAMELEN)
+-	{
+-	  *h_errnop = NO_RECOVERY;
+-	  *errnop = ENOENT;
+-	  return NSS_STATUS_TRYAGAIN;
+-	}
+-      result->h_name = bp;
+-      bp += n;
+-      linebuflen -= n;
+-      if (linebuflen < 0)
+-	goto too_small;
+-      /* The qname can be abbreviated, but h_name is now absolute. */
+-      qname = result->h_name;
++      if (ttlp != NULL)
++	/* No negative caching.  */
++	*ttlp = 0;
++      *h_errnop = HOST_NOT_FOUND;
++      *errnop = ENOENT;
++      return NSS_STATUS_NOTFOUND;
+     }
+ 
+-  ap = host_data->aliases;
+-  *ap = NULL;
+-  result->h_aliases = host_data->aliases;
+-  hap = host_data->h_addr_ptrs;
+-  *hap = NULL;
+-  result->h_addr_list = host_data->h_addr_ptrs;
+-  haveanswer = 0;
+-  had_error = 0;
++  int ancount = ns_rr_cursor_ancount (&c);
++  const unsigned char *expected_name = ns_rr_cursor_qname (&c);
++  /* expected_name may be updated to point into this buffer.  */
++  unsigned char name_buffer[NS_MAXCDNAME];
+ 
+-  while (ancount-- > 0 && cp < end_of_message && had_error == 0)
++  for (; ancount > 0; --ancount)
+     {
+-      int type, class;
+-
+-      n = __ns_name_unpack (answer->buf, end_of_message, cp,
+-			    packtmp, sizeof packtmp);
+-      if (n != -1 && __ns_name_ntop (packtmp, bp, linebuflen) == -1)
+-	{
+-	  if (__glibc_unlikely (errno == EMSGSIZE))
+-	    goto too_small;
+-
+-	  n = -1;
+-	}
+-
+-      if (__glibc_unlikely (n < 0 || __libc_res_hnok (bp) == 0))
+-	{
+-	  ++had_error;
+-	  continue;
+-	}
+-      cp += n;				/* name */
+-
+-      if (__glibc_unlikely (cp + 10 > end_of_message))
++      struct ns_rr_wire rr;
++      if (!__ns_rr_cursor_next (&c, &rr))
+ 	{
+-	  ++had_error;
+-	  continue;
++	  *h_errnop = NO_RECOVERY;
++	  return NSS_STATUS_UNAVAIL;
+ 	}
+ 
+-      NS_GET16 (type, cp);
+-      NS_GET16 (class, cp);
+-      int32_t ttl;
+-      NS_GET32 (ttl, cp);
+-      NS_GET16 (n, cp);		/* RDATA length.  */
+-
+-      if (end_of_message - cp < n)
+-	{
+-	  /* RDATA extends beyond the end of the packet.  */
+-	  ++had_error;
+-	  continue;
+-	}
++      /* Skip over records with the wrong class.  */
++      if (rr.rclass != C_IN)
++	continue;
+ 
+-      if (__glibc_unlikely (class != C_IN))
+-	{
+-	  /* XXX - debug? syslog? */
+-	  cp += n;
+-	  continue;			/* XXX - had_error++ ? */
+-	}
++      /* Update TTL for recognized record types.  */
++      if ((rr.rtype == T_CNAME || rr.rtype == qtype)
++	  && ttlp != NULL && *ttlp > rr.ttl)
++	*ttlp = rr.ttl;
+ 
+-      if (type == T_CNAME)
++      if (rr.rtype == T_CNAME)
+ 	{
+-	  /* A CNAME could also have a TTL entry.  */
+-	  if (ttlp != NULL && ttl < *ttlp)
+-	      *ttlp = ttl;
+-
+-	  if (ap >= &host_data->aliases[MAX_NR_ALIASES - 1])
+-	    continue;
+-	  n = __libc_dn_expand (answer->buf, end_of_message, cp,
+-				tbuf, sizeof tbuf);
+-	  if (__glibc_unlikely (n < 0 || __libc_res_hnok (tbuf) == 0))
+-	    {
+-	      ++had_error;
+-	      continue;
+-	    }
+-	  cp += n;
+-	  /* Store alias.  */
+-	  *ap++ = bp;
+-	  n = strlen (bp) + 1;		/* For the \0.  */
+-	  if (__glibc_unlikely (n >= MAXHOSTNAMELEN))
+-	    {
+-	      ++had_error;
+-	      continue;
+-	    }
+-	  bp += n;
+-	  linebuflen -= n;
+-	  /* Get canonical name.  */
+-	  n = strlen (tbuf) + 1;	/* For the \0.  */
+-	  if (__glibc_unlikely (n > linebuflen))
+-	    goto too_small;
+-	  if (__glibc_unlikely (n >= MAXHOSTNAMELEN))
++	  /* NB: No check for owner name match, based on historic
++	     precedent.  Record the CNAME target as the new expected
++	     name.  */
++	  int n = __ns_name_unpack (c.begin, c.end, rr.rdata,
++				    name_buffer, sizeof (name_buffer));
++	  if (n < 0)
+ 	    {
+-	      ++had_error;
+-	      continue;
++	      *h_errnop = NO_RECOVERY;
++	      return NSS_STATUS_UNAVAIL;
+ 	    }
+-	  result->h_name = bp;
+-	  bp = __mempcpy (bp, tbuf, n);	/* Cannot overflow.  */
+-	  linebuflen -= n;
+-	  continue;
++	  /* And store the new name as an alias.  */
++	  getanswer_r_store_alias (name_buffer, abuf, aliases);
++	  expected_name = name_buffer;
+ 	}
+-
+-      if (__glibc_unlikely (type != qtype))
++      else if (rr.rtype == qtype
++	       && __ns_samebinaryname (rr.rname, expected_name)
++	       && rr.rdlength == rrtype_to_rdata_length (qtype))
+ 	{
+-	  cp += n;
+-	  continue;			/* XXX - had_error++ ? */
++	  /* Make a copy of the address and store it.  Increase the
++	     alignment to 4, in case there are applications out there
++	     that expect at least this level of address alignment.  */
++	  ptrlist_add (addresses, (char *) alloc_buffer_next (abuf, uint32_t));
++	  alloc_buffer_copy_bytes (abuf, rr.rdata, rr.rdlength);
+ 	}
+-
+-      switch (type)
+-	{
+-	case T_A:
+-	case T_AAAA:
+-	  if (__glibc_unlikely (__strcasecmp (result->h_name, bp) != 0))
+-	    {
+-	      cp += n;
+-	      continue;			/* XXX - had_error++ ? */
+-	    }
+-
+-	  /* Stop parsing at a record whose length is incorrect.  */
+-	  if (n != rrtype_to_rdata_length (type))
+-	    {
+-	      ++had_error;
+-	      break;
+-	    }
+-
+-	  /* Skip records of the wrong type.  */
+-	  if (n != result->h_length)
+-	    {
+-	      cp += n;
+-	      continue;
+-	    }
+-	  if (!haveanswer)
+-	    {
+-	      int nn;
+-
+-	      /* We compose a single hostent out of the entire chain of
+-	         entries, so the TTL of the hostent is essentially the lowest
+-		 TTL in the chain.  */
+-	      if (ttlp != NULL && ttl < *ttlp)
+-		*ttlp = ttl;
+-	      if (canonp != NULL)
+-		*canonp = bp;
+-	      result->h_name = bp;
+-	      nn = strlen (bp) + 1;	/* for the \0 */
+-	      bp += nn;
+-	      linebuflen -= nn;
+-	    }
+-
+-	  /* Provide sufficient alignment for both address
+-	     families.  */
+-	  enum { align = 4 };
+-	  _Static_assert ((align % __alignof__ (struct in_addr)) == 0,
+-			  "struct in_addr alignment");
+-	  _Static_assert ((align % __alignof__ (struct in6_addr)) == 0,
+-			  "struct in6_addr alignment");
+-	  {
+-	    char *new_bp = PTR_ALIGN_UP (bp, align);
+-	    linebuflen -= new_bp - bp;
+-	    bp = new_bp;
+-	  }
+-
+-	  if (__glibc_unlikely (n > linebuflen))
+-	    goto too_small;
+-	  bp = __mempcpy (*hap++ = bp, cp, n);
+-	  cp += n;
+-	  linebuflen -= n;
+-	  break;
+-	default:
+-	  abort ();
+-	}
+-      if (had_error == 0)
+-	++haveanswer;
+     }
+ 
+-  if (haveanswer > 0)
++  if (ptrlist_size (addresses) == 0)
+     {
+-      *ap = NULL;
+-      *hap = NULL;
+-      /*
+-       * Note: we sort even if host can take only one address
+-       * in its return structures - should give it the "best"
+-       * address in that case, not some random one
+-       */
+-      if (haveanswer > 1 && qtype == T_A
+-	  && __resolv_context_sort_count (ctx) > 0)
+-	addrsort (ctx, host_data->h_addr_ptrs, haveanswer);
+-
+-      if (result->h_name == NULL)
+-	{
+-	  n = strlen (qname) + 1;	/* For the \0.  */
+-	  if (n > linebuflen)
+-	    goto too_small;
+-	  if (n >= MAXHOSTNAMELEN)
+-	    goto no_recovery;
+-	  result->h_name = bp;
+-	  bp = __mempcpy (bp, qname, n);	/* Cannot overflow.  */
+-	  linebuflen -= n;
+-	}
++      /* No address record found.  */
++      if (ttlp != NULL)
++	/* No caching of negative responses.  */
++	*ttlp = 0;
+ 
++      *h_errnop = NO_RECOVERY;
++      *errnop = ENOENT;
++      return NSS_STATUS_TRYAGAIN;
++    }
++  else
++    {
+       *h_errnop = NETDB_SUCCESS;
+       return NSS_STATUS_SUCCESS;
+     }
+- no_recovery:
+-  *h_errnop = NO_RECOVERY;
+-  *errnop = ENOENT;
+-  /* Special case here: if the resolver sent a result but it only
+-     contains a CNAME while we are looking for a T_A or T_AAAA record,
+-     we fail with NOTFOUND instead of TRYAGAIN.  */
+-  return ((qtype == T_A || qtype == T_AAAA) && ap != host_data->aliases
+-	   ? NSS_STATUS_NOTFOUND : NSS_STATUS_TRYAGAIN);
+ }
+ 
+ static enum nss_status
+-- 
+2.37.2
+

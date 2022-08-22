@@ -1,0 +1,79 @@
+From df51334828f2af214105aad82042140ee3a6de0a Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 13 Sep 2022 19:57:43 +0200
+Subject: [PATCH 38/39] elf: Run tst-audit-tlsdesc, tst-audit-tlsdesc-dlopen
+ everywhere
+
+The test is valid for all TLS models, but we want to make a reasonable
+effort to test the GNU2 model specifically.  For example, aarch64
+defaults to GNU2, but does not have -mtls-dialect=gnu2, and the test
+was not run there.
+
+Suggested-by: Martin Coufal <mcoufal@redhat.com>
+(cherry picked from commit dd2315a866a4ac2b838ea1cb10c5ea1c35d51a2f)
+
+Fixes early backport commit 924e4f3eaa502ce82fccf8537f021a796d158771
+("elf: Call __libc_early_init for reused namespaces (bug 29528)");
+it had a wrong conflict resolution.
+---
+ elf/Makefile | 22 ++++++----------------
+ 1 file changed, 6 insertions(+), 16 deletions(-)
+
+diff --git a/elf/Makefile b/elf/Makefile
+index 43353a4b08..72178d33ff 100644
+--- a/elf/Makefile
++++ b/elf/Makefile
+@@ -374,6 +374,8 @@ tests += \
+   tst-align \
+   tst-align2 \
+   tst-align3 \
++  tst-audit-tlsdesc \
++  tst-audit-tlsdesc-dlopen \
+   tst-audit1 \
+   tst-audit2 \
+   tst-audit8 \
+@@ -766,6 +768,8 @@ modules-names += \
+   tst-alignmod3 \
+   tst-array2dep \
+   tst-array5dep \
++  tst-audit-tlsdesc-mod1 \
++  tst-audit-tlsdesc-mod2 \
+   tst-audit11mod1 \
+   tst-audit11mod2 \
+   tst-audit12mod1 \
+@@ -799,6 +803,7 @@ modules-names += \
+   tst-auditmanymod7 \
+   tst-auditmanymod8 \
+   tst-auditmanymod9 \
++  tst-auditmod-tlsdesc  \
+   tst-auditmod1 \
+   tst-auditmod9a \
+   tst-auditmod9b \
+@@ -993,23 +998,8 @@ modules-names += tst-gnu2-tls1mod
+ $(objpfx)tst-gnu2-tls1: $(objpfx)tst-gnu2-tls1mod.so
+ tst-gnu2-tls1mod.so-no-z-defs = yes
+ CFLAGS-tst-gnu2-tls1mod.c += -mtls-dialect=gnu2
++endif # $(have-mtls-dialect-gnu2)
+ 
+-tests += tst-audit-tlsdesc tst-audit-tlsdesc-dlopen
+-modules-names += tst-audit-tlsdesc-mod1 tst-audit-tlsdesc-mod2 tst-auditmod-tlsdesc
+-$(objpfx)tst-audit-tlsdesc: $(objpfx)tst-audit-tlsdesc-mod1.so \
+-			    $(objpfx)tst-audit-tlsdesc-mod2.so \
+-			    $(shared-thread-library)
+-CFLAGS-tst-audit-tlsdesc-mod1.c += -mtls-dialect=gnu2
+-CFLAGS-tst-audit-tlsdesc-mod2.c += -mtls-dialect=gnu2
+-$(objpfx)tst-audit-tlsdesc-dlopen: $(shared-thread-library)
+-$(objpfx)tst-audit-tlsdesc-dlopen.out: $(objpfx)tst-audit-tlsdesc-mod1.so \
+-				       $(objpfx)tst-audit-tlsdesc-mod2.so
+-$(objpfx)tst-audit-tlsdesc-mod1.so: $(objpfx)tst-audit-tlsdesc-mod2.so
+-$(objpfx)tst-audit-tlsdesc.out: $(objpfx)tst-auditmod-tlsdesc.so
+-tst-audit-tlsdesc-ENV = LD_AUDIT=$(objpfx)tst-auditmod-tlsdesc.so
+-$(objpfx)tst-audit-tlsdesc-dlopen.out: $(objpfx)tst-auditmod-tlsdesc.so
+-tst-audit-tlsdesc-dlopen-ENV = LD_AUDIT=$(objpfx)tst-auditmod-tlsdesc.so
+-endif
+ ifeq (yes,$(have-protected-data))
+ modules-names += tst-protected1moda tst-protected1modb
+ tests += tst-protected1a tst-protected1b
+-- 
+2.37.2
+

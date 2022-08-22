@@ -1,0 +1,596 @@
+From c5cdb39c20e96d9ac0d46fc7284b8276a537fd35 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 35/39] nss_dns: Rewrite _nss_dns_gethostbyname4_r using
+ current interfaces
+
+Introduce struct alloc_buffer to this function, and use it and
+struct ns_rr_cursor in gaih_getanswer_slice.  Adjust gaih_getanswer
+and gaih_getanswer_noaaaa accordingly.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 1d495912a746e2a1ffb780c9a81fd234ec2464e8)
+---
+ resolv/nss_dns/dns-host.c | 443 ++++++++++++++------------------------
+ 1 file changed, 162 insertions(+), 281 deletions(-)
+
+diff --git a/resolv/nss_dns/dns-host.c b/resolv/nss_dns/dns-host.c
+index bea505d697..9fa81f23c8 100644
+--- a/resolv/nss_dns/dns-host.c
++++ b/resolv/nss_dns/dns-host.c
+@@ -100,13 +100,6 @@
+ #endif
+ #define MAXHOSTNAMELEN 256
+ 
+-/* We need this time later.  */
+-typedef union querybuf
+-{
+-  HEADER hdr;
+-  u_char buf[MAXPACKET];
+-} querybuf;
+-
+ /* For historic reasons, pointers to IP addresses are char *, so use a
+    single list type for addresses and host names.  */
+ #define DYNARRAY_STRUCT ptrlist
+@@ -125,18 +118,18 @@ static enum nss_status getanswer_ptr (unsigned char *packet, size_t packetlen,
+ 				      char **hnamep, int *errnop,
+ 				      int *h_errnop, int32_t *ttlp);
+ 
+-static enum nss_status gaih_getanswer (const querybuf *answer1, int anslen1,
+-				       const querybuf *answer2, int anslen2,
+-				       const char *qname,
++static enum nss_status gaih_getanswer (unsigned char *packet1,
++				       size_t packet1len,
++				       unsigned char *packet2,
++				       size_t packet2len,
++				       struct alloc_buffer *abuf,
+ 				       struct gaih_addrtuple **pat,
+-				       char *buffer, size_t buflen,
+ 				       int *errnop, int *h_errnop,
+ 				       int32_t *ttlp);
+-static enum nss_status gaih_getanswer_noaaaa (const querybuf *answer1,
+-					      int anslen1,
+-					      const char *qname,
++static enum nss_status gaih_getanswer_noaaaa (unsigned char *packet,
++					      size_t packetlen,
++					      struct alloc_buffer *abuf,
+ 					      struct gaih_addrtuple **pat,
+-					      char *buffer, size_t buflen,
+ 					      int *errnop, int *h_errnop,
+ 					      int32_t *ttlp);
+ 
+@@ -408,17 +401,13 @@ _nss_dns_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
+ 	name = cp;
+     }
+ 
+-  union
+-  {
+-    querybuf *buf;
+-    u_char *ptr;
+-  } host_buffer;
+-  querybuf *orig_host_buffer;
+-  host_buffer.buf = orig_host_buffer = (querybuf *) alloca (2048);
++  unsigned char dns_packet_buffer[2048];
++  unsigned char *alt_dns_packet_buffer = dns_packet_buffer;
+   u_char *ans2p = NULL;
+   int nans2p = 0;
+   int resplen2 = 0;
+   int ans2p_malloced = 0;
++  struct alloc_buffer abuf = alloc_buffer_create (buffer, buflen);
+ 
+ 
+   int olderr = errno;
+@@ -427,22 +416,21 @@ _nss_dns_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
+   if ((ctx->resp->options & RES_NOAAAA) == 0)
+     {
+       n = __res_context_search (ctx, name, C_IN, T_QUERY_A_AND_AAAA,
+-				host_buffer.buf->buf, 2048, &host_buffer.ptr,
+-				&ans2p, &nans2p, &resplen2, &ans2p_malloced);
++				dns_packet_buffer, sizeof (dns_packet_buffer),
++				&alt_dns_packet_buffer, &ans2p, &nans2p,
++				&resplen2, &ans2p_malloced);
+       if (n >= 0)
+-	status = gaih_getanswer (host_buffer.buf, n, (const querybuf *) ans2p,
+-				 resplen2, name, pat, buffer, buflen,
+-				 errnop, herrnop, ttlp);
++	status = gaih_getanswer (alt_dns_packet_buffer, n, ans2p, resplen2,
++				 &abuf, pat, errnop, herrnop, ttlp);
+     }
+   else
+     {
+       n = __res_context_search (ctx, name, C_IN, T_A,
+-				host_buffer.buf->buf, 2048, NULL,
+-				NULL, NULL, NULL, NULL);
++				dns_packet_buffer, sizeof (dns_packet_buffer),
++				NULL, NULL, NULL, NULL, NULL);
+       if (n >= 0)
+-	status = gaih_getanswer_noaaaa (host_buffer.buf, n,
+-					name, pat, buffer, buflen,
+-					errnop, herrnop, ttlp);
++	status = gaih_getanswer_noaaaa (alt_dns_packet_buffer, n,
++					&abuf, pat, errnop, herrnop, ttlp);
+     }
+   if (n < 0)
+     {
+@@ -473,12 +461,20 @@ _nss_dns_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
+ 	__set_errno (olderr);
+     }
+ 
++  /* Implement the buffer resizing protocol.  */
++  if (alloc_buffer_has_failed (&abuf))
++    {
++      *errnop = ERANGE;
++      *herrnop = NETDB_INTERNAL;
++      status = NSS_STATUS_TRYAGAIN;
++    }
++
+   /* Check whether ans2p was separately allocated.  */
+   if (ans2p_malloced)
+     free (ans2p);
+ 
+-  if (host_buffer.buf != orig_host_buffer)
+-    free (host_buffer.buf);
++  if (alt_dns_packet_buffer != dns_packet_buffer)
++    free (alt_dns_packet_buffer);
+ 
+   __resolv_context_put (ctx);
+   return status;
+@@ -892,259 +888,152 @@ getanswer_ptr (unsigned char *packet, size_t packetlen,
+   return NSS_STATUS_TRYAGAIN;
+ }
+ 
++/* Parses DNS data found in PACKETLEN bytes at PACKET in struct
++   gaih_addrtuple address tuples.  The new address tuples are linked
++   from **TAILP, with backing store allocated from ABUF, and *TAILP is
++   updated to point where the next tuple pointer should be stored.  If
++   TTLP is not null, *TTLP is updated to reflect the minimum TTL.  If
++   STORE_CANON is true, the canonical name is stored as part of the
++   first address tuple being written.  */
+ static enum nss_status
+-gaih_getanswer_slice (const querybuf *answer, int anslen, const char *qname,
+-		      struct gaih_addrtuple ***patp,
+-		      char **bufferp, size_t *buflenp,
+-		      int *errnop, int *h_errnop, int32_t *ttlp, int *firstp)
++gaih_getanswer_slice (unsigned char *packet, size_t packetlen,
++		      struct alloc_buffer *abuf,
++		      struct gaih_addrtuple ***tailp,
++		      int *errnop, int *h_errnop, int32_t *ttlp,
++		      bool store_canon)
+ {
+-  char *buffer = *bufferp;
+-  size_t buflen = *buflenp;
+-
+-  struct gaih_addrtuple **pat = *patp;
+-  const HEADER *hp = &answer->hdr;
+-  int ancount = ntohs (hp->ancount);
+-  int qdcount = ntohs (hp->qdcount);
+-  const u_char *cp = answer->buf + HFIXEDSZ;
+-  const u_char *end_of_message = answer->buf + anslen;
+-  if (__glibc_unlikely (qdcount != 1))
+-    {
+-      *h_errnop = NO_RECOVERY;
+-      return NSS_STATUS_UNAVAIL;
+-    }
+-
+-  u_char packtmp[NS_MAXCDNAME];
+-  int n = __ns_name_unpack (answer->buf, end_of_message, cp,
+-			    packtmp, sizeof packtmp);
+-  /* We unpack the name to check it for validity.  But we do not need
+-     it later.  */
+-  if (n != -1 && __ns_name_ntop (packtmp, buffer, buflen) == -1)
+-    {
+-      if (__glibc_unlikely (errno == EMSGSIZE))
+-	{
+-	too_small:
+-	  *errnop = ERANGE;
+-	  *h_errnop = NETDB_INTERNAL;
+-	  return NSS_STATUS_TRYAGAIN;
+-	}
+-
+-      n = -1;
+-    }
+-
+-  if (__glibc_unlikely (n < 0))
+-    {
+-      *errnop = errno;
+-      *h_errnop = NO_RECOVERY;
+-      return NSS_STATUS_UNAVAIL;
+-    }
+-  if (__glibc_unlikely (__libc_res_hnok (buffer) == 0))
++  struct ns_rr_cursor c;
++  if (!__ns_rr_cursor_init (&c, packet, packetlen))
+     {
+-      errno = EBADMSG;
+-      *errnop = EBADMSG;
++      /* This should not happen because __res_context_query already
++	 perfroms response validation.  */
+       *h_errnop = NO_RECOVERY;
+       return NSS_STATUS_UNAVAIL;
+     }
+-  cp += n + QFIXEDSZ;
++  bool haveanswer = false; /* Set to true if at least one address.  */
++  uint16_t qtype = ns_rr_cursor_qtype (&c);
++  int ancount = ns_rr_cursor_ancount (&c);
++  const unsigned char *expected_name = ns_rr_cursor_qname (&c);
++  /* expected_name may be updated to point into this buffer.  */
++  unsigned char name_buffer[NS_MAXCDNAME];
+ 
+-  int haveanswer = 0;
+-  int had_error = 0;
+-  char *canon = NULL;
+-  char *h_name = NULL;
+-  int h_namelen = 0;
++  /* This is a pointer to a possibly-compressed name in the packet.
++     Eventually it is equivalent to the canonical name.  If needed, it
++     is uncompressed and translated to text form when the first
++     address tuple is encountered.  */
++  const unsigned char *compressed_alias_name = expected_name;
+ 
+-  if (ancount == 0)
++  if (ancount == 0 || !__res_binary_hnok (compressed_alias_name))
+     {
+       *h_errnop = HOST_NOT_FOUND;
+       return NSS_STATUS_NOTFOUND;
+     }
+ 
+-  while (ancount-- > 0 && cp < end_of_message && had_error == 0)
++  for (; ancount > -0; --ancount)
+     {
+-      n = __ns_name_unpack (answer->buf, end_of_message, cp,
+-			    packtmp, sizeof packtmp);
+-      if (n != -1 &&
+-	  (h_namelen = __ns_name_ntop (packtmp, buffer, buflen)) == -1)
+-	{
+-	  if (__glibc_unlikely (errno == EMSGSIZE))
+-	    goto too_small;
+-
+-	  n = -1;
+-	}
+-      if (__glibc_unlikely (n < 0))
+-	{
+-	  ++had_error;
+-	  continue;
+-	}
+-      if (*firstp && canon == NULL && __libc_res_hnok (buffer))
+-	{
+-	  h_name = buffer;
+-	  buffer += h_namelen;
+-	  buflen -= h_namelen;
+-	}
+-
+-      cp += n;				/* name */
+-
+-      if (__glibc_unlikely (cp + 10 > end_of_message))
+-	{
+-	  ++had_error;
+-	  continue;
+-	}
+-
+-      uint16_t type;
+-      NS_GET16 (type, cp);
+-      uint16_t class;
+-      NS_GET16 (class, cp);
+-      int32_t ttl;
+-      NS_GET32 (ttl, cp);
+-      NS_GET16 (n, cp);		/* RDATA length.  */
+-
+-      if (end_of_message - cp < n)
++      struct ns_rr_wire rr;
++      if (!__ns_rr_cursor_next (&c, &rr))
+ 	{
+-	  /* RDATA extends beyond the end of the packet.  */
+-	  ++had_error;
+-	  continue;
++	  *h_errnop = NO_RECOVERY;
++	  return NSS_STATUS_UNAVAIL;
+ 	}
+ 
+-      if (class != C_IN)
+-	{
+-	  cp += n;
+-	  continue;
+-	}
++      /* Update TTL for known record types.  */
++      if ((rr.rtype == T_CNAME || rr.rtype == qtype)
++	  && ttlp != NULL && *ttlp > rr.ttl)
++	*ttlp = rr.ttl;
+ 
+-      if (type == T_CNAME)
++      if (rr.rtype == T_CNAME)
+ 	{
+-	  char tbuf[MAXDNAME];
+-
+-	  /* A CNAME could also have a TTL entry.  */
+-	  if (ttlp != NULL && ttl < *ttlp)
+-	      *ttlp = ttl;
+-
+-	  n = __libc_dn_expand (answer->buf, end_of_message, cp,
+-				tbuf, sizeof tbuf);
+-	  if (__glibc_unlikely (n < 0))
+-	    {
+-	      ++had_error;
+-	      continue;
+-	    }
+-	  cp += n;
+-
+-	  if (*firstp && __libc_res_hnok (tbuf))
++	  /* NB: No check for owner name match, based on historic
++	     precedent.  Record the CNAME target as the new expected
++	     name.  */
++	  int n = __ns_name_unpack (c.begin, c.end, rr.rdata,
++				    name_buffer, sizeof (name_buffer));
++	  if (n < 0)
+ 	    {
+-	      /* Reclaim buffer space.  */
+-	      if (h_name + h_namelen == buffer)
+-		{
+-		  buffer = h_name;
+-		  buflen += h_namelen;
+-		}
+-
+-	      n = strlen (tbuf) + 1;
+-	      if (__glibc_unlikely (n > buflen))
+-		goto too_small;
+-	      if (__glibc_unlikely (n >= MAXHOSTNAMELEN))
+-		{
+-		  ++had_error;
+-		  continue;
+-		}
+-
+-	      canon = buffer;
+-	      buffer = __mempcpy (buffer, tbuf, n);
+-	      buflen -= n;
+-	      h_namelen = 0;
++	      *h_errnop = NO_RECOVERY;
++	      return NSS_STATUS_UNAVAIL;
+ 	    }
+-	  continue;
++	  expected_name = name_buffer;
++	  if (store_canon && __res_binary_hnok (name_buffer))
++	    /* This name can be used as a canonical name.  Do not
++	       translate to text form here to conserve buffer space.
++	       Point to the compressed name because name_buffer can be
++	       overwritten with an unusable name later.  */
++	    compressed_alias_name = rr.rdata;
+ 	}
+-
+-      /* Stop parsing if we encounter a record with incorrect RDATA
+-	 length.  */
+-      if (type == T_A || type == T_AAAA)
++      else if (rr.rtype == qtype
++	       && __ns_samebinaryname (rr.rname, expected_name)
++	       && rr.rdlength == rrtype_to_rdata_length (qtype))
+ 	{
+-	  if (n != rrtype_to_rdata_length (type))
++	  struct gaih_addrtuple *ntup
++	    = alloc_buffer_alloc (abuf, struct gaih_addrtuple);
++	  /* Delay error reporting to the callers (they implement the
++	     ERANGE buffer resizing handshake).  */
++	  if (ntup != NULL)
+ 	    {
+-	      ++had_error;
+-	      continue;
++	      ntup->next = NULL;
++	      if (store_canon && compressed_alias_name != NULL)
++		{
++		  /* This assumes that all the CNAME records come
++		     first.  Use MAXHOSTNAMELEN instead of
++		     NS_MAXCDNAME for additional length checking.
++		     However, these checks are not expected to fail
++		     because all size NS_MAXCDNAME names should into
++		     the hname buffer because no escaping is
++		     needed.  */
++		  char unsigned nbuf[NS_MAXCDNAME];
++		  char hname[MAXHOSTNAMELEN + 1];
++		  if (__ns_name_unpack (c.begin, c.end,
++					compressed_alias_name,
++					nbuf, sizeof (nbuf)) >= 0
++		      && __ns_name_ntop (nbuf, hname, sizeof (hname)) >= 0)
++		    /* Space checking is performed by the callers.  */
++		    ntup->name = alloc_buffer_copy_string (abuf, hname);
++		  store_canon = false;
++		}
++	      else
++		ntup->name = NULL;
++	      if (rr.rdlength == 4)
++		ntup->family = AF_INET;
++	      else
++		ntup->family = AF_INET6;
++	      memcpy (ntup->addr, rr.rdata, rr.rdlength);
++	      ntup->scopeid = 0;
++
++	      /* Link in the new tuple, and update the tail pointer to
++		 point to its next field.  */
++	      **tailp = ntup;
++	      *tailp = &ntup->next;
++
++	      haveanswer = true;
+ 	    }
+ 	}
+-      else
+-	{
+-	  /* Skip unknown records.  */
+-	  cp += n;
+-	  continue;
+-	}
+-
+-      assert (type == T_A || type == T_AAAA);
+-      if (*pat == NULL)
+-	{
+-	  uintptr_t pad = (-(uintptr_t) buffer
+-			   % __alignof__ (struct gaih_addrtuple));
+-	  buffer += pad;
+-	  buflen = buflen > pad ? buflen - pad : 0;
+-
+-	  if (__glibc_unlikely (buflen < sizeof (struct gaih_addrtuple)))
+-	    goto too_small;
+-
+-	  *pat = (struct gaih_addrtuple *) buffer;
+-	  buffer += sizeof (struct gaih_addrtuple);
+-	  buflen -= sizeof (struct gaih_addrtuple);
+-	}
+-
+-      (*pat)->name = NULL;
+-      (*pat)->next = NULL;
+-
+-      if (*firstp)
+-	{
+-	  /* We compose a single hostent out of the entire chain of
+-	     entries, so the TTL of the hostent is essentially the lowest
+-	     TTL in the chain.  */
+-	  if (ttlp != NULL && ttl < *ttlp)
+-	    *ttlp = ttl;
+-
+-	  (*pat)->name = canon ?: h_name;
+-
+-	  *firstp = 0;
+-	}
+-
+-      (*pat)->family = type == T_A ? AF_INET : AF_INET6;
+-      memcpy ((*pat)->addr, cp, n);
+-      cp += n;
+-      (*pat)->scopeid = 0;
+-
+-      pat = &((*pat)->next);
+-
+-      haveanswer = 1;
+     }
+ 
+   if (haveanswer)
+     {
+-      *patp = pat;
+-      *bufferp = buffer;
+-      *buflenp = buflen;
+-
+       *h_errnop = NETDB_SUCCESS;
+       return NSS_STATUS_SUCCESS;
+     }
+-
+-  /* Special case here: if the resolver sent a result but it only
+-     contains a CNAME while we are looking for a T_A or T_AAAA record,
+-     we fail with NOTFOUND instead of TRYAGAIN.  */
+-  if (canon != NULL)
++  else
+     {
++      /* Special case here: if the resolver sent a result but it only
++	 contains a CNAME while we are looking for a T_A or T_AAAA
++	 record, we fail with NOTFOUND.  */
+       *h_errnop = HOST_NOT_FOUND;
+       return NSS_STATUS_NOTFOUND;
+     }
+-
+-  *h_errnop = NETDB_INTERNAL;
+-  return NSS_STATUS_TRYAGAIN;
+ }
+ 
+ 
+ static enum nss_status
+-gaih_getanswer (const querybuf *answer1, int anslen1, const querybuf *answer2,
+-		int anslen2, const char *qname,
+-		struct gaih_addrtuple **pat, char *buffer, size_t buflen,
++gaih_getanswer (unsigned char *packet1, size_t packet1len,
++		unsigned char *packet2, size_t packet2len,
++		struct alloc_buffer *abuf, struct gaih_addrtuple **pat,
+ 		int *errnop, int *h_errnop, int32_t *ttlp)
+ {
+-  int first = 1;
+-
+   enum nss_status status = NSS_STATUS_NOTFOUND;
+ 
+   /* Combining the NSS status of two distinct queries requires some
+@@ -1156,7 +1045,10 @@ gaih_getanswer (const querybuf *answer1, int anslen1, const querybuf *answer2,
+      between TRYAGAIN (recoverable) and TRYAGAIN' (not-recoverable).
+      A recoverable TRYAGAIN is almost always due to buffer size issues
+      and returns ERANGE in errno and the caller is expected to retry
+-     with a larger buffer.
++     with a larger buffer.  (The caller, _nss_dns_gethostbyname4_r,
++     ignores the return status if it detects that the result buffer
++     has been exhausted and generates a TRYAGAIN failure with an
++     ERANGE code.)
+ 
+      Lastly, you may be tempted to make significant changes to the
+      conditions in this code to bring about symmetry between responses.
+@@ -1236,36 +1128,30 @@ gaih_getanswer (const querybuf *answer1, int anslen1, const querybuf *answer2,
+ 	 is a recoverable error we now return TRYAGIN even if the first
+ 	 response was SUCCESS.  */
+ 
+-  if (anslen1 > 0)
+-    status = gaih_getanswer_slice(answer1, anslen1, qname,
+-				  &pat, &buffer, &buflen,
+-				  errnop, h_errnop, ttlp,
+-				  &first);
+-
+-  if ((status == NSS_STATUS_SUCCESS || status == NSS_STATUS_NOTFOUND
+-       || (status == NSS_STATUS_TRYAGAIN
+-	   /* We want to look at the second answer in case of an
+-	      NSS_STATUS_TRYAGAIN only if the error is non-recoverable, i.e.
+-	      *h_errnop is NO_RECOVERY. If not, and if the failure was due to
+-	      an insufficient buffer (ERANGE), then we need to drop the results
+-	      and pass on the NSS_STATUS_TRYAGAIN to the caller so that it can
+-	      repeat the query with a larger buffer.  */
+-	   && (*errnop != ERANGE || *h_errnop == NO_RECOVERY)))
+-      && answer2 != NULL && anslen2 > 0)
++  if (packet1len > 0)
+     {
+-      enum nss_status status2 = gaih_getanswer_slice(answer2, anslen2, qname,
+-						     &pat, &buffer, &buflen,
+-						     errnop, h_errnop, ttlp,
+-						     &first);
++      status = gaih_getanswer_slice (packet1, packet1len,
++				     abuf, &pat, errnop, h_errnop, ttlp, true);
++      if (alloc_buffer_has_failed (abuf))
++	/* Do not try parsing the second packet if a larger result
++	   buffer is needed.  The caller implements the resizing
++	   protocol because *abuf has been exhausted.  */
++	return NSS_STATUS_TRYAGAIN; /* Ignored by the caller.  */
++    }
++
++  if ((status == NSS_STATUS_SUCCESS || status == NSS_STATUS_NOTFOUND)
++      && packet2 != NULL && packet2len > 0)
++    {
++      enum nss_status status2
++	= gaih_getanswer_slice (packet2, packet2len,
++				abuf, &pat, errnop, h_errnop, ttlp,
++				/* Success means that data with a
++				   canonical name has already been
++				   stored.  Do not store the name again.  */
++				status != NSS_STATUS_SUCCESS);
+       /* Use the second response status in some cases.  */
+       if (status != NSS_STATUS_SUCCESS && status2 != NSS_STATUS_NOTFOUND)
+ 	status = status2;
+-      /* Do not return a truncated second response (unless it was
+-	 unavoidable e.g. unrecoverable TRYAGAIN).  */
+-      if (status == NSS_STATUS_SUCCESS
+-	  && (status2 == NSS_STATUS_TRYAGAIN
+-	      && *errnop == ERANGE && *h_errnop != NO_RECOVERY))
+-	status = NSS_STATUS_TRYAGAIN;
+     }
+ 
+   return status;
+@@ -1273,18 +1159,13 @@ gaih_getanswer (const querybuf *answer1, int anslen1, const querybuf *answer2,
+ 
+ /* Variant of gaih_getanswer without a second (AAAA) response.  */
+ static enum nss_status
+-gaih_getanswer_noaaaa (const querybuf *answer1, int anslen1, const char *qname,
+-		       struct gaih_addrtuple **pat,
+-		       char *buffer, size_t buflen,
++gaih_getanswer_noaaaa (unsigned char *packet, size_t packetlen,
++		       struct alloc_buffer *abuf, struct gaih_addrtuple **pat,
+ 		       int *errnop, int *h_errnop, int32_t *ttlp)
+ {
+-  int first = 1;
+-
+   enum nss_status status = NSS_STATUS_NOTFOUND;
+-  if (anslen1 > 0)
+-    status = gaih_getanswer_slice (answer1, anslen1, qname,
+-				   &pat, &buffer, &buflen,
+-				   errnop, h_errnop, ttlp,
+-				   &first);
++  if (packetlen > 0)
++    status = gaih_getanswer_slice (packet, packetlen,
++				   abuf, &pat, errnop, h_errnop, ttlp, true);
+   return status;
+ }
+-- 
+2.37.2
+

@@ -1,0 +1,192 @@
+From 20ec40a51d3a8e9487f40dc9352d158def23ea8c Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 26/39] resolv: Add the __ns_samebinaryname function
+
+During packet parsing, only the binary name is available.  If the name
+equality check is performed before conversion to text, we can sometimes
+skip the last step.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 394085a34d25a51513019a4dc411acd3527fbd33)
+---
+ include/arpa/nameser.h         |  6 ++++
+ resolv/Makefile                |  5 +++
+ resolv/ns_samebinaryname.c     | 55 ++++++++++++++++++++++++++++++
+ resolv/tst-ns_samebinaryname.c | 62 ++++++++++++++++++++++++++++++++++
+ 4 files changed, 128 insertions(+)
+ create mode 100644 resolv/ns_samebinaryname.c
+ create mode 100644 resolv/tst-ns_samebinaryname.c
+
+diff --git a/include/arpa/nameser.h b/include/arpa/nameser.h
+index 53f1dbc7c3..bb1dede187 100644
+--- a/include/arpa/nameser.h
++++ b/include/arpa/nameser.h
+@@ -55,6 +55,12 @@ int __ns_name_ntop (const unsigned char *, char *, size_t) __THROW;
+ int __ns_name_unpack (const unsigned char *, const unsigned char *,
+ 		      const unsigned char *, unsigned char *, size_t) __THROW;
+ 
++/* Like ns_samename, but for uncompressed binary names.  Return true
++   if the two arguments compare are equal as case-insensitive domain
++   names.  */
++_Bool __ns_samebinaryname (const unsigned char *, const unsigned char *)
++  attribute_hidden;
++
+ #define ns_msg_getflag(handle, flag) \
+   (((handle)._flags & _ns_flagdata[flag].mask) >> _ns_flagdata[flag].shift)
+ 
+diff --git a/resolv/Makefile b/resolv/Makefile
+index 0038bb7028..ec61ad07bd 100644
+--- a/resolv/Makefile
++++ b/resolv/Makefile
+@@ -46,6 +46,7 @@ routines := \
+   ns_name_skip \
+   ns_name_uncompress \
+   ns_name_unpack \
++  ns_samebinaryname \
+   ns_samename \
+   nsap_addr \
+   nss_dns_functions \
+@@ -106,6 +107,10 @@ tests += \
+ tests-internal += tst-resolv-txnid-collision
+ tests-static += tst-resolv-txnid-collision
+ 
++# Likewise for __ns_samebinaryname.
++tests-internal += tst-ns_samebinaryname
++tests-static += tst-ns_samebinaryname
++
+ # These tests need libdl.
+ ifeq (yes,$(build-shared))
+ tests += \
+diff --git a/resolv/ns_samebinaryname.c b/resolv/ns_samebinaryname.c
+new file mode 100644
+index 0000000000..9a47d8e97a
+--- /dev/null
++++ b/resolv/ns_samebinaryname.c
+@@ -0,0 +1,55 @@
++/* Compare two binary domain names for quality.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <arpa/nameser.h>
++#include <stdbool.h>
++
++/* Convert ASCII letters to upper case.  */
++static inline int
++ascii_toupper (unsigned char ch)
++{
++  if (ch >= 'a' && ch <= 'z')
++    return ch - 'a' + 'A';
++  else
++    return ch;
++}
++
++bool
++__ns_samebinaryname (const unsigned char *a, const unsigned char *b)
++{
++  while (*a != 0 && *b != 0)
++    {
++      if (*a != *b)
++        /* Different label length.  */
++        return false;
++      int labellen = *a;
++      ++a;
++      ++b;
++      for (int i = 0; i < labellen; ++i)
++        {
++          if (*a != *b && ascii_toupper (*a) != ascii_toupper (*b))
++            /* Different character in label.  */
++            return false;
++          ++a;
++          ++b;
++        }
++    }
++
++  /* Match if both names are at the root label.  */
++  return *a == 0 && *b == 0;
++}
+diff --git a/resolv/tst-ns_samebinaryname.c b/resolv/tst-ns_samebinaryname.c
+new file mode 100644
+index 0000000000..b06ac610b4
+--- /dev/null
++++ b/resolv/tst-ns_samebinaryname.c
+@@ -0,0 +1,62 @@
++/* Test the __ns_samebinaryname function.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <arpa/nameser.h>
++#include <array_length.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <support/check.h>
++
++/* First character denotes the comparison group: All names with the
++   same first character are expected to compare equal.  */
++static const char *const cases[] =
++  {
++    " ",
++    "1\001a", "1\001A",
++    "2\002ab", "2\002aB", "2\002Ab", "2\002AB",
++    "3\001a\002ab", "3\001A\002ab",
++    "w\003www\007example\003com", "w\003Www\007Example\003Com",
++    "w\003WWW\007EXAMPLE\003COM",
++    "W\003WWW", "W\003www",
++  };
++
++static int
++do_test (void)
++{
++  for (int i = 0; i < array_length (cases); ++i)
++    for (int j = 0; j < array_length (cases); ++j)
++      {
++        unsigned char *a = (unsigned char *) &cases[i][1];
++        unsigned char *b = (unsigned char *) &cases[j][1];
++        bool actual = __ns_samebinaryname (a, b);
++        bool expected = cases[i][0] == cases[j][0];
++        if (actual != expected)
++          {
++            char a1[NS_MAXDNAME];
++            TEST_VERIFY (ns_name_ntop (a, a1, sizeof (a1)) > 0);
++            char b1[NS_MAXDNAME];
++            TEST_VERIFY (ns_name_ntop (b, b1, sizeof (b1)) > 0);
++            printf ("error: \"%s\" \"%s\": expected %s\n",
++                    a1, b1, expected ? "equal" : "unqueal");
++            support_record_failure ();
++          }
++      }
++  return 0;
++}
++
++#include <support/test-driver.c>
+-- 
+2.37.2
+

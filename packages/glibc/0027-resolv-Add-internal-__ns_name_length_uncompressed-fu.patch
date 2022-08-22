@@ -1,0 +1,283 @@
+From adb69f8ffe83db5d475868b42996bc70de8cff77 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 27/39] resolv: Add internal __ns_name_length_uncompressed
+ function
+
+This function is useful for checking that the question name is
+uncompressed (as it should be).
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 78b1a4f0e49064e5dfb686c7cd87bd4df2640b29)
+---
+ include/arpa/nameser.h                   |   8 ++
+ resolv/Makefile                          |   5 +
+ resolv/ns_name_length_uncompressed.c     |  72 ++++++++++++
+ resolv/tst-ns_name_length_uncompressed.c | 135 +++++++++++++++++++++++
+ 4 files changed, 220 insertions(+)
+ create mode 100644 resolv/ns_name_length_uncompressed.c
+ create mode 100644 resolv/tst-ns_name_length_uncompressed.c
+
+diff --git a/include/arpa/nameser.h b/include/arpa/nameser.h
+index bb1dede187..6e4808f00d 100644
+--- a/include/arpa/nameser.h
++++ b/include/arpa/nameser.h
+@@ -95,5 +95,13 @@ libc_hidden_proto (__ns_name_unpack)
+ extern __typeof (ns_samename) __libc_ns_samename;
+ libc_hidden_proto (__libc_ns_samename)
+ 
++/* Packet parser helper functions.  */
++
++/* Verify that P points to an uncompressed domain name in wire format.
++   On success, return the length of the encoded name, including the
++   terminating null byte.  On failure, return -1 and set errno.  EOM
++   must point one past the last byte in the packet.  */
++int __ns_name_length_uncompressed (const unsigned char *p,
++				   const unsigned char *eom) attribute_hidden;
+ # endif /* !_ISOMAC */
+ #endif
+diff --git a/resolv/Makefile b/resolv/Makefile
+index ec61ad07bd..bf28825f60 100644
+--- a/resolv/Makefile
++++ b/resolv/Makefile
+@@ -40,6 +40,7 @@ routines := \
+   inet_pton \
+   ns_makecanon \
+   ns_name_compress \
++  ns_name_length_uncompressed \
+   ns_name_ntop \
+   ns_name_pack \
+   ns_name_pton \
+@@ -111,6 +112,10 @@ tests-static += tst-resolv-txnid-collision
+ tests-internal += tst-ns_samebinaryname
+ tests-static += tst-ns_samebinaryname
+ 
++# Likewise for __ns_name_length_uncompressed.
++tests-internal += tst-ns_name_length_uncompressed
++tests-static += tst-ns_name_length_uncompressed
++
+ # These tests need libdl.
+ ifeq (yes,$(build-shared))
+ tests += \
+diff --git a/resolv/ns_name_length_uncompressed.c b/resolv/ns_name_length_uncompressed.c
+new file mode 100644
+index 0000000000..51296b47ef
+--- /dev/null
++++ b/resolv/ns_name_length_uncompressed.c
+@@ -0,0 +1,72 @@
++/* Skip over an uncompressed name in wire format.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <arpa/nameser.h>
++#include <errno.h>
++#include <stdbool.h>
++
++int
++__ns_name_length_uncompressed (const unsigned char *p,
++                                const unsigned char *eom)
++{
++  const unsigned char *start = p;
++
++  while (true)
++    {
++      if (p == eom)
++        {
++          /* Truncated packet: no room for label length.  */
++          __set_errno (EMSGSIZE);
++          return -1;
++        }
++
++      unsigned char b = *p;
++      ++p;
++      if (b == 0)
++        {
++          /* Root label.  */
++          size_t length = p - start;
++          if (length > NS_MAXCDNAME)
++            {
++              /* Domain name too long.  */
++              __set_errno (EMSGSIZE);
++              return -1;
++            }
++          return length;
++        }
++
++      if (b <= 63)
++        {
++          /* Regular label.  */
++          if (b <= eom - p)
++            p += b;
++          else
++            {
++              /* Truncated packet: label incomplete.  */
++              __set_errno (EMSGSIZE);
++              return -1;
++            }
++        }
++      else
++        {
++          /* Compression reference or corrupted label length.  */
++          __set_errno (EMSGSIZE);
++          return -1;
++        }
++    }
++}
+diff --git a/resolv/tst-ns_name_length_uncompressed.c b/resolv/tst-ns_name_length_uncompressed.c
+new file mode 100644
+index 0000000000..c4a2904db7
+--- /dev/null
++++ b/resolv/tst-ns_name_length_uncompressed.c
+@@ -0,0 +1,135 @@
++/* Test __ns_name_length_uncompressed.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <arpa/nameser.h>
++#include <array_length.h>
++#include <errno.h>
++#include <stdio.h>
++#include <support/check.h>
++#include <support/next_to_fault.h>
++
++/* Reference implementation based on other building blocks.  */
++static int
++reference_length (const unsigned char *p, const unsigned char *eom)
++{
++  unsigned char buf[NS_MAXCDNAME];
++  int n = __ns_name_unpack (p, eom, p, buf, sizeof (buf));
++  if (n < 0)
++    return n;
++  const unsigned char *q = buf;
++  if (__ns_name_skip (&q, array_end (buf)) < 0)
++    return -1;
++  if (q - buf != n)
++    /* Compressed name.  */
++    return -1;
++  return n;
++}
++
++static int
++do_test (void)
++{
++  {
++    unsigned char buf[] = { 3, 'w', 'w', 'w', 0, 0, 0 };
++    TEST_COMPARE (reference_length (buf, array_end (buf)), sizeof (buf) - 2);
++    TEST_COMPARE (__ns_name_length_uncompressed (buf, array_end (buf)),
++                  sizeof (buf) - 2);
++    TEST_COMPARE (reference_length (array_end (buf) - 1, array_end (buf)), 1);
++    TEST_COMPARE (__ns_name_length_uncompressed (array_end (buf) - 1,
++                                                 array_end (buf)), 1);
++    buf[4]  = 0xc0;             /* Forward compression reference.  */
++    buf[5]  = 0x06;
++    TEST_COMPARE (reference_length (buf, array_end (buf)), -1);
++    TEST_COMPARE (__ns_name_length_uncompressed (buf, array_end (buf)), -1);
++  }
++
++  struct support_next_to_fault ntf = support_next_to_fault_allocate (300);
++
++  /* Buffer region with all possible bytes at start and end.  */
++  for (int length = 1; length <= 300; ++length)
++    {
++      unsigned char *end = (unsigned char *) ntf.buffer + ntf.length;
++      unsigned char *start = end - length;
++      memset (start, 'X', length);
++      for (int first = 0; first <= 255; ++first)
++        {
++          *start = first;
++          for (int last = 0; last <= 255; ++last)
++            {
++              start[length - 1] = last;
++              TEST_COMPARE (reference_length (start, end),
++                            __ns_name_length_uncompressed (start, end));
++            }
++        }
++    }
++
++  /* Poor man's fuzz testing: patch two bytes.   */
++  {
++    unsigned char ref[] =
++      {
++        7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 3, 'n', 'e', 't', 0, 0, 0
++      };
++    TEST_COMPARE (reference_length (ref, array_end (ref)), 13);
++    TEST_COMPARE (__ns_name_length_uncompressed (ref, array_end (ref)), 13);
++
++    int good = 0;
++    int bad = 0;
++    for (int length = 1; length <= sizeof (ref); ++length)
++      {
++        unsigned char *end = (unsigned char *) ntf.buffer + ntf.length;
++        unsigned char *start = end - length;
++        memcpy (start, ref, length);
++
++        for (int patch1_pos = 0; patch1_pos < length; ++patch1_pos)
++          {
++            for (int patch1_value = 0; patch1_value <= 255; ++patch1_value)
++              {
++                start[patch1_pos] = patch1_value;
++                for (int patch2_pos = 0; patch2_pos < length; ++patch2_pos)
++                  {
++                    for (int patch2_value = 0; patch2_value <= 255;
++                         ++patch2_value)
++                      {
++                        start[patch2_pos] = patch2_value;
++                        int expected = reference_length (start, end);
++                        errno = EINVAL;
++                        int actual
++                          =  __ns_name_length_uncompressed (start, end);
++                        if (actual > 0)
++                          ++good;
++                        else
++                          {
++                            TEST_COMPARE (errno, EMSGSIZE);
++                            ++bad;
++                          }
++                        TEST_COMPARE (expected, actual);
++                      }
++                    start[patch2_pos] = ref[patch2_pos];
++                  }
++              }
++            start[patch1_pos] = ref[patch1_pos];
++          }
++      }
++    printf ("info: patched inputs with success: %d\n", good);
++    printf ("info: patched inputs with failure: %d\n", bad);
++  }
++
++  support_next_to_fault_free (&ntf);
++  return 0;
++}
++
++#include <support/test-driver.c>
+-- 
+2.37.2
+

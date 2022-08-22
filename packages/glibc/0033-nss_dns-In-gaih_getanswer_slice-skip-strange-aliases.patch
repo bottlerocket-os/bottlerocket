@@ -1,0 +1,57 @@
+From 7a236dc44a22dc4252e803d1ee1d3b970ec43805 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 33/39] nss_dns: In gaih_getanswer_slice, skip strange aliases
+ (bug 12154)
+
+If the name is not a host name, skip adding it to the result, instead
+of reporting query failure.  This fixes bug 12154 for getaddrinfo.
+
+This commit still keeps the old parsing code, and only adjusts when
+a host name is copied.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 32b599ac8c21c4c332cc3900a792a1395bca79c7)
+---
+ resolv/nss_dns/dns-host.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/resolv/nss_dns/dns-host.c b/resolv/nss_dns/dns-host.c
+index b887e77e9c..bea505d697 100644
+--- a/resolv/nss_dns/dns-host.c
++++ b/resolv/nss_dns/dns-host.c
+@@ -970,12 +970,12 @@ gaih_getanswer_slice (const querybuf *answer, int anslen, const char *qname,
+ 
+ 	  n = -1;
+ 	}
+-      if (__glibc_unlikely (n < 0 || __libc_res_hnok (buffer) == 0))
++      if (__glibc_unlikely (n < 0))
+ 	{
+ 	  ++had_error;
+ 	  continue;
+ 	}
+-      if (*firstp && canon == NULL)
++      if (*firstp && canon == NULL && __libc_res_hnok (buffer))
+ 	{
+ 	  h_name = buffer;
+ 	  buffer += h_namelen;
+@@ -1021,14 +1021,14 @@ gaih_getanswer_slice (const querybuf *answer, int anslen, const char *qname,
+ 
+ 	  n = __libc_dn_expand (answer->buf, end_of_message, cp,
+ 				tbuf, sizeof tbuf);
+-	  if (__glibc_unlikely (n < 0 || __libc_res_hnok (tbuf) == 0))
++	  if (__glibc_unlikely (n < 0))
+ 	    {
+ 	      ++had_error;
+ 	      continue;
+ 	    }
+ 	  cp += n;
+ 
+-	  if (*firstp)
++	  if (*firstp && __libc_res_hnok (tbuf))
+ 	    {
+ 	      /* Reclaim buffer space.  */
+ 	      if (h_name + h_namelen == buffer)
+-- 
+2.37.2
+

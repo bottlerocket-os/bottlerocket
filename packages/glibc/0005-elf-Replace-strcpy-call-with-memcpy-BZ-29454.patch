@@ -1,0 +1,34 @@
+From 302bc33bc53c787da6e74162a7092e9c0fb964a8 Mon Sep 17 00:00:00 2001
+From: Noah Goldstein <goldstein.w.n@gmail.com>
+Date: Mon, 8 Aug 2022 11:26:22 +0800
+Subject: [PATCH 05/39] elf: Replace `strcpy` call with `memcpy` [BZ #29454]
+
+GCC normally does this optimization for us in
+strlen_pass::handle_builtin_strcpy but only for optimized
+build. To avoid needing to include strcpy.S in the rtld build to
+support the debug build, just do the optimization by hand.
+
+(cherry picked from commit 483cfe1a6a33d6335b1901581b41040d2d412511)
+---
+ elf/dl-cache.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/elf/dl-cache.c b/elf/dl-cache.c
+index 8bbf110d02..b97c17b3a9 100644
+--- a/elf/dl-cache.c
++++ b/elf/dl-cache.c
+@@ -509,8 +509,9 @@ _dl_load_cache_lookup (const char *name)
+      we are accessing. Therefore we must make the copy of the
+      mapping data without using malloc.  */
+   char *temp;
+-  temp = alloca (strlen (best) + 1);
+-  strcpy (temp, best);
++  size_t best_len = strlen (best) + 1;
++  temp = alloca (best_len);
++  memcpy (temp, best, best_len);
+   return __strdup (temp);
+ }
+ 
+-- 
+2.37.2
+

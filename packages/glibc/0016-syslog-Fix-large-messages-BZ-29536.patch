@@ -1,0 +1,336 @@
+From b0e7888d1fa2dbd2d9e1645ec8c796abf78880b9 Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Sun, 28 Aug 2022 16:52:53 -0300
+Subject: [PATCH 16/39] syslog: Fix large messages (BZ#29536)
+
+The a583b6add407c17cd change did not handle large messages that
+would require a heap allocation correctly, where the message itself
+is not take in consideration.
+
+This patch fixes it and extend the tst-syslog to check for large
+messages as well.
+
+Checked on x86_64-linux-gnu.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 52a5be0df411ef3ff45c10c7c308cb92993d15b1)
+---
+ misc/syslog.c     |  18 +++---
+ misc/tst-syslog.c | 152 +++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 142 insertions(+), 28 deletions(-)
+
+diff --git a/misc/syslog.c b/misc/syslog.c
+index 554089bfc4..b88f66c835 100644
+--- a/misc/syslog.c
++++ b/misc/syslog.c
+@@ -193,28 +193,32 @@ __vsyslog_internal (int pri, const char *fmt, va_list ap,
+       int vl = __vsnprintf_internal (bufs + l, sizeof bufs - l, fmt, apc,
+                                      mode_flags);
+       if (0 <= vl && vl < sizeof bufs - l)
+-        {
+-          buf = bufs;
+-          bufsize = l + vl;
+-        }
++        buf = bufs;
++      bufsize = l + vl;
+ 
+       va_end (apc);
+     }
+ 
+   if (buf == NULL)
+     {
+-      buf = malloc (l * sizeof (char));
++      buf = malloc ((bufsize + 1) * sizeof (char));
+       if (buf != NULL)
+ 	{
+ 	  /* Tell the cancellation handler to free this buffer.  */
+ 	  clarg.buf = buf;
+ 
+ 	  if (has_ts)
+-	    __snprintf (bufs, sizeof bufs,
++	    __snprintf (buf, l + 1,
+ 			SYSLOG_HEADER (pri, timestamp, &msgoff, pid));
+ 	  else
+-	    __snprintf (bufs, sizeof bufs,
++	    __snprintf (buf, l + 1,
+ 			SYSLOG_HEADER_WITHOUT_TS (pri, &msgoff));
++
++	  va_list apc;
++	  va_copy (apc, ap);
++	  __vsnprintf_internal (buf + l, bufsize - l + 1, fmt, apc,
++				mode_flags);
++	  va_end (apc);
+ 	}
+       else
+         {
+diff --git a/misc/tst-syslog.c b/misc/tst-syslog.c
+index e550d15796..1d332ece53 100644
+--- a/misc/tst-syslog.c
++++ b/misc/tst-syslog.c
+@@ -68,21 +68,19 @@ static const int priorities[] =
+     LOG_DEBUG
+   };
+ 
+-enum
+-  {
+-    ident_length = 64,
+-    msg_length = 64
+-  };
++#define IDENT_LENGTH 64
++#define MSG_LENGTH   1024
+ 
+ #define SYSLOG_MSG_BASE "syslog_message"
+ #define OPENLOG_IDENT   "openlog_ident"
++static char large_message[MSG_LENGTH];
+ 
+ struct msg_t
+   {
+     int priority;
+     int facility;
+-    char ident[ident_length];
+-    char msg[msg_length];
++    char ident[IDENT_LENGTH];
++    char msg[MSG_LENGTH];
+     pid_t pid;
+   };
+ 
+@@ -147,6 +145,37 @@ check_syslog_message (const struct msg_t *msg, int msgnum, int options,
+   return true;
+ }
+ 
++static void
++send_syslog_large (int options)
++{
++  int facility = LOG_USER;
++  int priority = LOG_INFO;
++
++  syslog (facility | priority, "%s %d %d", large_message, facility,
++	  priority);
++}
++
++static void
++send_vsyslog_large (int options)
++{
++  int facility = LOG_USER;
++  int priority = LOG_INFO;
++
++  call_vsyslog (facility | priority, "%s %d %d", large_message, facility,
++		priority);
++}
++
++static bool
++check_syslog_message_large (const struct msg_t *msg, int msgnum, int options,
++			    pid_t pid)
++{
++  TEST_COMPARE (msg->facility, LOG_USER);
++  TEST_COMPARE (msg->priority, LOG_INFO);
++  TEST_COMPARE_STRING (msg->msg, large_message);
++
++  return false;
++}
++
+ static void
+ send_openlog (int options)
+ {
+@@ -179,6 +208,17 @@ send_openlog (int options)
+   closelog ();
+ }
+ 
++static void
++send_openlog_large (int options)
++{
++  /* Define a non-default IDENT and a not default facility.  */
++  openlog (OPENLOG_IDENT, options, LOG_LOCAL0);
++
++  syslog (LOG_INFO, "%s %d %d", large_message, LOG_LOCAL0, LOG_INFO);
++
++  closelog ();
++}
++
+ static bool
+ check_openlog_message (const struct msg_t *msg, int msgnum,
+                        int options, pid_t pid)
+@@ -189,7 +229,7 @@ check_openlog_message (const struct msg_t *msg, int msgnum,
+   int expected_priority = priorities[msgnum % array_length (priorities)];
+   TEST_COMPARE (msg->priority, expected_priority);
+ 
+-  char expected_ident[ident_length];
++  char expected_ident[IDENT_LENGTH];
+   snprintf (expected_ident, sizeof (expected_ident), "%s%s%.0d%s:",
+             OPENLOG_IDENT,
+             options & LOG_PID ? "[" : "",
+@@ -211,15 +251,38 @@ check_openlog_message (const struct msg_t *msg, int msgnum,
+   return true;
+ }
+ 
++static bool
++check_openlog_message_large (const struct msg_t *msg, int msgnum,
++			     int options, pid_t pid)
++{
++  char expected_ident[IDENT_LENGTH];
++  snprintf (expected_ident, sizeof (expected_ident), "%s%s%.0d%s:",
++            OPENLOG_IDENT,
++            options & LOG_PID ? "[" : "",
++            options & LOG_PID ? pid : 0,
++            options & LOG_PID ? "]" : "");
++
++  TEST_COMPARE_STRING (msg->ident, expected_ident);
++  TEST_COMPARE_STRING (msg->msg, large_message);
++  TEST_COMPARE (msg->priority, LOG_INFO);
++  TEST_COMPARE (msg->facility, LOG_LOCAL0);
++
++  return false;
++}
++
+ static struct msg_t
+ parse_syslog_msg (const char *msg)
+ {
+   struct msg_t r = { .pid = -1 };
+   int number;
+ 
++#define STRINPUT(size)  XSTRINPUT(size)
++#define XSTRINPUT(size) "%" # size "s"
++
+   /* The message in the form:
+-     <179>Apr  8 14:51:19 tst-syslog: syslog message 176 3  */
+-  int n = sscanf (msg, "<%3d>%*s %*d %*d:%*d:%*d %32s %64s %*d %*d",
++     <179>Apr  8 14:51:19  tst-syslog: message 176 3  */
++  int n = sscanf (msg, "<%3d>%*s %*d %*d:%*d:%*d " STRINPUT(IDENT_LENGTH)
++		       " " STRINPUT(MSG_LENGTH) " %*d %*d",
+                   &number, r.ident, r.msg);
+   TEST_COMPARE (n, 3);
+ 
+@@ -246,7 +309,7 @@ parse_syslog_console (const char *msg)
+ 
+   /* The message in the form:
+      openlog_ident: syslog_message 128 0  */
+-  int n = sscanf (msg, "%32s %64s %d %d",
++  int n = sscanf (msg, STRINPUT(IDENT_LENGTH) " " STRINPUT(MSG_LENGTH) " %d %d",
+       r.ident, r.msg, &facility, &priority);
+   TEST_COMPARE (n, 4);
+ 
+@@ -281,7 +344,7 @@ check_syslog_udp (void (*syslog_send)(int), int options,
+   int msgnum = 0;
+   while (1)
+     {
+-      char buf[512];
++      char buf[2048];
+       size_t l = xrecvfrom (server_udp, buf, sizeof (buf), 0,
+                             (struct sockaddr *) &addr, &addrlen);
+       buf[l] = '\0';
+@@ -325,7 +388,7 @@ check_syslog_tcp (void (*syslog_send)(int), int options,
+ 
+   int client_tcp = xaccept (server_tcp, NULL, NULL);
+ 
+-  char buf[512], *rb = buf;
++  char buf[2048], *rb = buf;
+   size_t rbl = sizeof (buf);
+   size_t prl = 0;  /* Track the size of the partial record.  */
+   int msgnum = 0;
+@@ -393,20 +456,34 @@ check_syslog_console_read (FILE *fp)
+ }
+ 
+ static void
+-check_syslog_console (void)
++check_syslog_console_read_large (FILE *fp)
++{
++  char buf[2048];
++  TEST_VERIFY (fgets (buf, sizeof (buf), fp) != NULL);
++  struct msg_t msg = parse_syslog_console (buf);
++
++  TEST_COMPARE_STRING (msg.ident, OPENLOG_IDENT ":");
++  TEST_COMPARE_STRING (msg.msg, large_message);
++  TEST_COMPARE (msg.priority, LOG_INFO);
++  TEST_COMPARE (msg.facility, LOG_LOCAL0);
++}
++
++static void
++check_syslog_console (void (*syslog_send)(int),
++		      void (*syslog_check)(FILE *fp))
+ {
+   xmkfifo (_PATH_CONSOLE, 0666);
+ 
+   pid_t sender_pid = xfork ();
+   if (sender_pid == 0)
+     {
+-      send_openlog (LOG_CONS);
++      syslog_send (LOG_CONS);
+       _exit (0);
+     }
+ 
+   {
+     FILE *fp = xfopen (_PATH_CONSOLE, "r+");
+-    check_syslog_console_read (fp);
++    syslog_check (fp);
+     xfclose (fp);
+   }
+ 
+@@ -425,16 +502,28 @@ send_openlog_callback (void *clousure)
+ }
+ 
+ static void
+-check_syslog_perror (void)
++send_openlog_callback_large (void *clousure)
++{
++  int options = *(int *) clousure;
++  send_openlog_large (options);
++}
++
++static void
++check_syslog_perror (bool large)
+ {
+   struct support_capture_subprocess result;
+-  result = support_capture_subprocess (send_openlog_callback,
++  result = support_capture_subprocess (large
++				       ? send_openlog_callback_large
++				       : send_openlog_callback,
+                                        &(int){LOG_PERROR});
+ 
+   FILE *mfp = fmemopen (result.err.buffer, result.err.length, "r");
+   if (mfp == NULL)
+     FAIL_EXIT1 ("fmemopen: %m");
+-  check_syslog_console_read (mfp);
++  if (large)
++    check_syslog_console_read_large (mfp);
++  else
++    check_syslog_console_read (mfp);
+   xfclose (mfp);
+ 
+   support_capture_subprocess_check (&result, "tst-openlog-child", 0,
+@@ -462,10 +551,31 @@ do_test (void)
+   check_syslog_tcp (send_openlog, LOG_PID, check_openlog_message);
+ 
+   /* Check the LOG_CONS option.  */
+-  check_syslog_console ();
++  check_syslog_console (send_openlog, check_syslog_console_read);
+ 
+   /* Check the LOG_PERROR option.  */
+-  check_syslog_perror ();
++  check_syslog_perror (false);
++
++  /* Similar tests as before, but with a large message to trigger the
++     syslog path that uses dynamically allocated memory.  */
++  memset (large_message, 'a', sizeof large_message - 1);
++  large_message[sizeof large_message - 1] = '\0';
++
++  check_syslog_udp (send_syslog_large, 0, check_syslog_message_large);
++  check_syslog_tcp (send_syslog_large, 0, check_syslog_message_large);
++
++  check_syslog_udp (send_vsyslog_large, 0, check_syslog_message_large);
++  check_syslog_tcp (send_vsyslog_large, 0, check_syslog_message_large);
++
++  check_syslog_udp (send_openlog_large, 0, check_openlog_message_large);
++  check_syslog_tcp (send_openlog_large, 0, check_openlog_message_large);
++
++  check_syslog_udp (send_openlog_large, LOG_PID, check_openlog_message_large);
++  check_syslog_tcp (send_openlog_large, LOG_PID, check_openlog_message_large);
++
++  check_syslog_console (send_openlog_large, check_syslog_console_read_large);
++
++  check_syslog_perror (true);
+ 
+   return 0;
+ }
+-- 
+2.37.2
+

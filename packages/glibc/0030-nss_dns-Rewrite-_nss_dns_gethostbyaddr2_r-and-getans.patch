@@ -1,0 +1,513 @@
+From 77f523c473878ec0051582ef15161c6982879095 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 30/39] nss_dns: Rewrite _nss_dns_gethostbyaddr2_r and
+ getanswer_ptr
+
+The simplification takes advantage of the split from getanswer_r.
+It fixes various aliases issues, and optimizes NSS buffer usage.
+The new DNS packet parsing helpers are used, too.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit e32547d661a43da63368e488b6cfa9c53b4dcf92)
+---
+ resolv/nss_dns/dns-host.c | 405 ++++++++++----------------------------
+ 1 file changed, 102 insertions(+), 303 deletions(-)
+
+diff --git a/resolv/nss_dns/dns-host.c b/resolv/nss_dns/dns-host.c
+index d384e1f82d..cd26399b7e 100644
+--- a/resolv/nss_dns/dns-host.c
++++ b/resolv/nss_dns/dns-host.c
+@@ -69,6 +69,7 @@
+  * --Copyright--
+  */
+ 
++#include <alloc_buffer.h>
+ #include <assert.h>
+ #include <ctype.h>
+ #include <errno.h>
+@@ -116,10 +117,9 @@ static enum nss_status getanswer_r (struct resolv_context *ctx,
+ 				    struct hostent *result, char *buffer,
+ 				    size_t buflen, int *errnop, int *h_errnop,
+ 				    int map, int32_t *ttlp, char **canonp);
+-static enum nss_status getanswer_ptr (const querybuf *answer, int anslen,
+-				      const char *qname,
+-				      struct hostent *result, char *buffer,
+-				      size_t buflen, int *errnop,
++static enum nss_status getanswer_ptr (unsigned char *packet, size_t packetlen,
++				      struct alloc_buffer *abuf,
++				      char **hnamep, int *errnop,
+ 				      int *h_errnop, int32_t *ttlp);
+ 
+ static enum nss_status gaih_getanswer (const querybuf *answer1, int anslen1,
+@@ -456,36 +456,21 @@ _nss_dns_gethostbyaddr2_r (const void *addr, socklen_t len, int af,
+   static const u_char tunnelled[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0,0 };
+   static const u_char v6local[] = { 0,0, 0,1 };
+   const u_char *uaddr = (const u_char *)addr;
+-  struct host_data
+-  {
+-    char *aliases[MAX_NR_ALIASES];
+-    unsigned char host_addr[16];	/* IPv4 or IPv6 */
+-    char *h_addr_ptrs[MAX_NR_ADDRS + 1];
+-    char linebuffer[0];
+-  } *host_data = (struct host_data *) buffer;
+-  union
+-  {
+-    querybuf *buf;
+-    u_char *ptr;
+-  } host_buffer;
+-  querybuf *orig_host_buffer;
+   char qbuf[MAXDNAME+1], *qp = NULL;
+   size_t size;
+   int n, status;
+   int olderr = errno;
+ 
+- uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct host_data);
+- buffer += pad;
+- buflen = buflen > pad ? buflen - pad : 0;
+-
+- if (__glibc_unlikely (buflen < sizeof (struct host_data)))
+-   {
+-     *errnop = ERANGE;
+-     *h_errnop = NETDB_INTERNAL;
+-     return NSS_STATUS_TRYAGAIN;
+-   }
+-
+- host_data = (struct host_data *) buffer;
++  /* Prepare the allocation buffer.  Store the pointer array first, to
++     benefit from buffer alignment.  */
++  struct alloc_buffer abuf = alloc_buffer_create (buffer, buflen);
++  char **address_array = alloc_buffer_alloc_array (&abuf, char *, 2);
++  if (address_array == NULL)
++    {
++      *errnop = ERANGE;
++      *h_errnop = NETDB_INTERNAL;
++      return NSS_STATUS_TRYAGAIN;
++    }
+ 
+   struct resolv_context *ctx = __resolv_context_get ();
+   if (ctx == NULL)
+@@ -529,8 +514,6 @@ _nss_dns_gethostbyaddr2_r (const void *addr, socklen_t len, int af,
+       return NSS_STATUS_UNAVAIL;
+     }
+ 
+-  host_buffer.buf = orig_host_buffer = (querybuf *) alloca (1024);
+-
+   switch (af)
+     {
+     case AF_INET:
+@@ -554,35 +537,52 @@ _nss_dns_gethostbyaddr2_r (const void *addr, socklen_t len, int af,
+       break;
+     }
+ 
+-  n = __res_context_query (ctx, qbuf, C_IN, T_PTR, host_buffer.buf->buf,
+-			   1024, &host_buffer.ptr, NULL, NULL, NULL, NULL);
++  unsigned char dns_packet_buffer[1024];
++  unsigned char *alt_dns_packet_buffer = dns_packet_buffer;
++  n = __res_context_query (ctx, qbuf, C_IN, T_PTR,
++			   dns_packet_buffer, sizeof (dns_packet_buffer),
++			   &alt_dns_packet_buffer,
++			   NULL, NULL, NULL, NULL);
+   if (n < 0)
+     {
+       *h_errnop = h_errno;
+       __set_errno (olderr);
+-      if (host_buffer.buf != orig_host_buffer)
+-	free (host_buffer.buf);
++      if (alt_dns_packet_buffer != dns_packet_buffer)
++	free (alt_dns_packet_buffer);
+       __resolv_context_put (ctx);
+       return errno == ECONNREFUSED ? NSS_STATUS_UNAVAIL : NSS_STATUS_NOTFOUND;
+     }
+ 
+-  status = getanswer_ptr (host_buffer.buf, n, qbuf, result,
+-			  buffer, buflen, errnop, h_errnop, ttlp);
+-  if (host_buffer.buf != orig_host_buffer)
+-    free (host_buffer.buf);
++  status = getanswer_ptr (alt_dns_packet_buffer, n,
++			  &abuf, &result->h_name, errnop, h_errnop, ttlp);
++
++  if (alt_dns_packet_buffer != dns_packet_buffer)
++    free (alt_dns_packet_buffer);
++  __resolv_context_put (ctx);
++
+   if (status != NSS_STATUS_SUCCESS)
+-    {
+-      __resolv_context_put (ctx);
+-      return status;
+-    }
++    return status;
+ 
++  /* result->h_name has already been set by getanswer_ptr.  */
+   result->h_addrtype = af;
+   result->h_length = len;
+-  memcpy (host_data->host_addr, addr, len);
+-  host_data->h_addr_ptrs[0] = (char *) host_data->host_addr;
+-  host_data->h_addr_ptrs[1] = NULL;
++  /* Increase the alignment to 4, in case there are applications out
++     there that expect at least this level of address alignment.  */
++  address_array[0] = (char *) alloc_buffer_next (&abuf, uint32_t);
++  alloc_buffer_copy_bytes (&abuf, uaddr, len);
++  address_array[1] = NULL;
++
++  /* This check also covers allocation failure in getanswer_ptr.  */
++  if (alloc_buffer_has_failed (&abuf))
++    {
++      *errnop = ERANGE;
++      *h_errnop = NETDB_INTERNAL;
++      return NSS_STATUS_TRYAGAIN;
++    }
++  result->h_addr_list = address_array;
++  result->h_aliases = &address_array[1]; /* Points to NULL.  */
++
+   *h_errnop = NETDB_SUCCESS;
+-  __resolv_context_put (ctx);
+   return NSS_STATUS_SUCCESS;
+ }
+ libc_hidden_def (_nss_dns_gethostbyaddr2_r)
+@@ -961,287 +961,86 @@ getanswer_r (struct resolv_context *ctx,
+ }
+ 
+ static enum nss_status
+-getanswer_ptr (const querybuf *answer, int anslen, const char *qname,
+-	       struct hostent *result, char *buffer, size_t buflen,
++getanswer_ptr (unsigned char *packet, size_t packetlen,
++	       struct alloc_buffer *abuf, char **hnamep,
+ 	       int *errnop, int *h_errnop, int32_t *ttlp)
+ {
+-  struct host_data
+-  {
+-    char *aliases[MAX_NR_ALIASES];
+-    unsigned char host_addr[16];	/* IPv4 or IPv6 */
+-    char *h_addr_ptrs[0];
+-  } *host_data;
+-  int linebuflen;
+-  const HEADER *hp;
+-  const u_char *end_of_message, *cp;
+-  int n, ancount, qdcount;
+-  int haveanswer, had_error;
+-  char *bp, **ap, **hap;
+-  char tbuf[MAXDNAME];
+-  const char *tname;
+-  u_char packtmp[NS_MAXCDNAME];
+-  uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct host_data);
+-  buffer += pad;
+-  buflen = buflen > pad ? buflen - pad : 0;
+-  if (__glibc_unlikely (buflen < sizeof (struct host_data)))
+-    {
+-      /* The buffer is too small.  */
+-    too_small:
+-      *errnop = ERANGE;
+-      *h_errnop = NETDB_INTERNAL;
+-      return NSS_STATUS_TRYAGAIN;
+-    }
+-  host_data = (struct host_data *) buffer;
+-  linebuflen = buflen - sizeof (struct host_data);
+-  if (buflen - sizeof (struct host_data) != linebuflen)
+-    linebuflen = INT_MAX;
+-
+-  tname = qname;
+-  result->h_name = NULL;
+-  end_of_message = answer->buf + anslen;
+-
+-  /*
+-   * find first satisfactory answer
+-   */
+-  hp = &answer->hdr;
+-  ancount = ntohs (hp->ancount);
+-  qdcount = ntohs (hp->qdcount);
+-  cp = answer->buf + HFIXEDSZ;
+-  if (__glibc_unlikely (qdcount != 1))
+-    {
+-      *h_errnop = NO_RECOVERY;
+-      return NSS_STATUS_UNAVAIL;
+-    }
+-  if (sizeof (struct host_data) + (ancount + 1) * sizeof (char *) >= buflen)
+-    goto too_small;
+-  bp = (char *) &host_data->h_addr_ptrs[ancount + 1];
+-  linebuflen -= (ancount + 1) * sizeof (char *);
+-
+-  n = __ns_name_unpack (answer->buf, end_of_message, cp,
+-			packtmp, sizeof packtmp);
+-  if (n != -1 && __ns_name_ntop (packtmp, bp, linebuflen) == -1)
++  struct ns_rr_cursor c;
++  if (!__ns_rr_cursor_init (&c, packet, packetlen))
+     {
+-      if (__glibc_unlikely (errno == EMSGSIZE))
+-	goto too_small;
+-
+-      n = -1;
+-    }
+-
+-  if (__glibc_unlikely (n < 0))
+-    {
+-      *errnop = errno;
+-      *h_errnop = NO_RECOVERY;
+-      return NSS_STATUS_UNAVAIL;
+-    }
+-  if (__glibc_unlikely (__libc_res_dnok (bp) == 0))
+-    {
+-      errno = EBADMSG;
+-      *errnop = EBADMSG;
++      /* This should not happen because __res_context_query already
++	 perfroms response validation.  */
+       *h_errnop = NO_RECOVERY;
+       return NSS_STATUS_UNAVAIL;
+     }
+-  cp += n + QFIXEDSZ;
++  int ancount = ns_rr_cursor_ancount (&c);
++  const unsigned char *expected_name = ns_rr_cursor_qname (&c);
++  /* expected_name may be updated to point into this buffer.  */
++  unsigned char name_buffer[NS_MAXCDNAME];
+ 
+-  ap = host_data->aliases;
+-  *ap = NULL;
+-  result->h_aliases = host_data->aliases;
+-  hap = host_data->h_addr_ptrs;
+-  *hap = NULL;
+-  result->h_addr_list = host_data->h_addr_ptrs;
+-  haveanswer = 0;
+-  had_error = 0;
+-
+-  while (ancount-- > 0 && cp < end_of_message && had_error == 0)
++  while (ancount > 0)
+     {
+-      int type, class;
+-
+-      n = __ns_name_unpack (answer->buf, end_of_message, cp,
+-			    packtmp, sizeof packtmp);
+-      if (n != -1 && __ns_name_ntop (packtmp, bp, linebuflen) == -1)
++      struct ns_rr_wire rr;
++      if (!__ns_rr_cursor_next (&c, &rr))
+ 	{
+-	  if (__glibc_unlikely (errno == EMSGSIZE))
+-	    goto too_small;
+-
+-	  n = -1;
+-	}
+-
+-      if (__glibc_unlikely (n < 0 || __libc_res_dnok (bp) == 0))
+-	{
+-	  ++had_error;
+-	  continue;
+-	}
+-      cp += n;				/* name */
+-
+-      if (__glibc_unlikely (cp + 10 > end_of_message))
+-	{
+-	  ++had_error;
+-	  continue;
++	  *h_errnop = NO_RECOVERY;
++	  return NSS_STATUS_UNAVAIL;
+ 	}
+ 
+-      NS_GET16 (type, cp);
+-      NS_GET16 (class, cp);
+-      int32_t ttl;
+-      NS_GET32 (ttl, cp);
+-      NS_GET16 (n, cp);		/* RDATA length.  */
++      /* Skip over records with the wrong class.  */
++      if (rr.rclass != C_IN)
++	continue;
+ 
+-      if (end_of_message - cp < n)
+-	{
+-	  /* RDATA extends beyond the end of the packet.  */
+-	  ++had_error;
+-	  continue;
+-	}
+-
+-      if (__glibc_unlikely (class != C_IN))
+-	{
+-	  /* XXX - debug? syslog? */
+-	  cp += n;
+-	  continue;			/* XXX - had_error++ ? */
+-	}
++      /* Update TTL for known record types.  */
++      if ((rr.rtype == T_CNAME || rr.rtype == T_PTR)
++	  && ttlp != NULL && *ttlp > rr.ttl)
++	*ttlp = rr.ttl;
+ 
+-      if (type == T_CNAME)
++      if (rr.rtype == T_CNAME)
+ 	{
+-	  /* A CNAME could also have a TTL entry.  */
+-	  if (ttlp != NULL && ttl < *ttlp)
+-	      *ttlp = ttl;
+-
+-	  n = __libc_dn_expand (answer->buf, end_of_message, cp,
+-				tbuf, sizeof tbuf);
+-	  if (__glibc_unlikely (n < 0 || __libc_res_dnok (tbuf) == 0))
+-	    {
+-	      ++had_error;
+-	      continue;
+-	    }
+-	  cp += n;
+-	  /* Get canonical name.  */
+-	  n = strlen (tbuf) + 1;   /* For the \0.  */
+-	  if (__glibc_unlikely (n > linebuflen))
+-	    goto too_small;
+-	  if (__glibc_unlikely (n >= MAXHOSTNAMELEN))
++	  /* NB: No check for owner name match, based on historic
++	     precedent.  Record the CNAME target as the new expected
++	     name.  */
++	  int n = __ns_name_unpack (c.begin, c.end, rr.rdata,
++				    name_buffer, sizeof (name_buffer));
++	  if (n < 0)
+ 	    {
+-	      ++had_error;
+-	      continue;
++	      *h_errnop = NO_RECOVERY;
++	      return NSS_STATUS_UNAVAIL;
+ 	    }
+-	  tname = bp;
+-	  bp = __mempcpy (bp, tbuf, n);	/* Cannot overflow.  */
+-	  linebuflen -= n;
+-	  continue;
++	  expected_name = name_buffer;
+ 	}
+-
+-      switch (type)
++      else if (rr.rtype == T_PTR
++	       && __ns_samebinaryname (rr.rname, expected_name))
+ 	{
+-	case T_PTR:
+-	  if (__glibc_unlikely (__strcasecmp (tname, bp) != 0))
+-	    {
+-	      cp += n;
+-	      continue;			/* XXX - had_error++ ? */
+-	    }
+-
+-	  n = __ns_name_unpack (answer->buf, end_of_message, cp,
+-				packtmp, sizeof packtmp);
+-	  if (n != -1 && __ns_name_ntop (packtmp, bp, linebuflen) == -1)
+-	    {
+-	      if (__glibc_unlikely (errno == EMSGSIZE))
+-		goto too_small;
+-
+-	      n = -1;
+-	    }
+-
+-	  if (__glibc_unlikely (n < 0 || __libc_res_hnok (bp) == 0))
++	  /* Decompress the target of the PTR record.  This is the
++	     host name we are looking for.  We can only use it if it
++	     is syntactically valid.  Historically, only one host name
++	     is returned here.  If the recursive resolver performs DNS
++	     record rotation, the returned host name is essentially
++	     random, which is why multiple PTR records are rarely
++	     used.  Use MAXHOSTNAMELEN instead of NS_MAXCDNAME for
++	     additional length checking.  */
++	  char hname[MAXHOSTNAMELEN + 1];
++	  if (__ns_name_unpack (c.begin, c.end, rr.rdata,
++				name_buffer, sizeof (name_buffer)) < 0
++	      || !__res_binary_hnok (expected_name)
++	      || __ns_name_ntop (name_buffer, hname, sizeof (hname)) < 0)
+ 	    {
+-	      ++had_error;
+-	      break;
++	      *h_errnop = NO_RECOVERY;
++	      return NSS_STATUS_UNAVAIL;
+ 	    }
+-	  if (ttlp != NULL && ttl < *ttlp)
+-	      *ttlp = ttl;
+-	  /* bind would put multiple PTR records as aliases, but we don't do
+-	     that.  */
+-	  result->h_name = bp;
+-	  *h_errnop = NETDB_SUCCESS;
++	  /* Successful allocation is checked by the caller.  */
++	  *hnamep = alloc_buffer_copy_string (abuf, hname);
+ 	  return NSS_STATUS_SUCCESS;
+-	case T_A:
+-	case T_AAAA:
+-	  if (__glibc_unlikely (__strcasecmp (result->h_name, bp) != 0))
+-	    {
+-	      cp += n;
+-	      continue;			/* XXX - had_error++ ? */
+-	    }
+-
+-	  /* Stop parsing at a record whose length is incorrect.  */
+-	  if (n != rrtype_to_rdata_length (type))
+-	    {
+-	      ++had_error;
+-	      break;
+-	    }
+-
+-	  /* Skip records of the wrong type.  */
+-	  if (n != result->h_length)
+-	    {
+-	      cp += n;
+-	      continue;
+-	    }
+-	  if (!haveanswer)
+-	    {
+-	      int nn;
+-
+-	      /* We compose a single hostent out of the entire chain of
+-	         entries, so the TTL of the hostent is essentially the lowest
+-		 TTL in the chain.  */
+-	      if (ttlp != NULL && ttl < *ttlp)
+-		*ttlp = ttl;
+-	      result->h_name = bp;
+-	      nn = strlen (bp) + 1;	/* for the \0 */
+-	      bp += nn;
+-	      linebuflen -= nn;
+-	    }
+-
+-	  /* Provide sufficient alignment for both address
+-	     families.  */
+-	  enum { align = 4 };
+-	  _Static_assert ((align % __alignof__ (struct in_addr)) == 0,
+-			  "struct in_addr alignment");
+-	  _Static_assert ((align % __alignof__ (struct in6_addr)) == 0,
+-			  "struct in6_addr alignment");
+-	  {
+-	    char *new_bp = PTR_ALIGN_UP (bp, align);
+-	    linebuflen -= new_bp - bp;
+-	    bp = new_bp;
+-	  }
+-
+-	  if (__glibc_unlikely (n > linebuflen))
+-	    goto too_small;
+-	  bp = __mempcpy (*hap++ = bp, cp, n);
+-	  cp += n;
+-	  linebuflen -= n;
+-	  break;
+-	default:
+-	  cp += n;
+-	  continue;			/* XXX - had_error++ ? */
+ 	}
+-      if (had_error == 0)
+-	++haveanswer;
+     }
+ 
+-  if (haveanswer > 0)
+-    {
+-      *ap = NULL;
+-      *hap = NULL;
+-
+-      if (result->h_name == NULL)
+-	{
+-	  n = strlen (qname) + 1;	/* For the \0.  */
+-	  if (n > linebuflen)
+-	    goto too_small;
+-	  if (n >= MAXHOSTNAMELEN)
+-	    goto no_recovery;
+-	  result->h_name = bp;
+-	  bp = __mempcpy (bp, qname, n);	/* Cannot overflow.  */
+-	  linebuflen -= n;
+-	}
++  /* No PTR record found.  */
++  if (ttlp != NULL)
++    /* No caching of negative responses.  */
++    *ttlp = 0;
+ 
+-      *h_errnop = NETDB_SUCCESS;
+-      return NSS_STATUS_SUCCESS;
+-    }
+- no_recovery:
+   *h_errnop = NO_RECOVERY;
+   *errnop = ENOENT;
+   return NSS_STATUS_TRYAGAIN;
+-- 
+2.37.2
+

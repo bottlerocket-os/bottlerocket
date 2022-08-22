@@ -1,0 +1,64 @@
+From 3c9b4004e2dccc9ca2ace078a0106f9d682fd1a0 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 25/39] resolv: Add internal __res_binary_hnok function
+
+During package parsing, only the binary representation is available,
+and it is convenient to check that directly for conformance with host
+name requirements.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit c79327bf00a4be6d60259227acc78ef80ead3622)
+---
+ include/resolv.h           |  3 +++
+ resolv/res-name-checking.c | 14 +++++++++-----
+ 2 files changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/include/resolv.h b/include/resolv.h
+index 3590b6f496..4dbbac3800 100644
+--- a/include/resolv.h
++++ b/include/resolv.h
+@@ -70,5 +70,8 @@ libc_hidden_proto (__libc_res_nameinquery)
+ extern __typeof (__res_queriesmatch) __libc_res_queriesmatch;
+ libc_hidden_proto (__libc_res_queriesmatch)
+ 
++/* Variant of res_hnok which operates on binary (but uncompressed) names.  */
++bool __res_binary_hnok (const unsigned char *dn) attribute_hidden;
++
+ # endif /* _RESOLV_H_ && !_ISOMAC */
+ #endif
+diff --git a/resolv/res-name-checking.c b/resolv/res-name-checking.c
+index 07a412d8ff..213edceaf3 100644
+--- a/resolv/res-name-checking.c
++++ b/resolv/res-name-checking.c
+@@ -138,6 +138,12 @@ binary_leading_dash (const unsigned char *dn)
+   return dn[0] > 0 && dn[1] == '-';
+ }
+ 
++bool
++__res_binary_hnok (const unsigned char *dn)
++{
++  return !binary_leading_dash (dn) && binary_hnok (dn);
++}
++
+ /* Return 1 if res_hnok is a valid host name.  Labels must only
+    contain [0-9a-zA-Z_-] characters, and the name must not start with
+    a '-'.  The latter is to avoid confusion with program options.  */
+@@ -145,11 +151,9 @@ int
+ ___res_hnok (const char *dn)
+ {
+   unsigned char buf[NS_MAXCDNAME];
+-  if (!printable_string (dn)
+-      || __ns_name_pton (dn, buf, sizeof (buf)) < 0
+-      || binary_leading_dash (buf))
+-    return 0;
+-  return binary_hnok (buf);
++  return (printable_string (dn)
++	  && __ns_name_pton (dn, buf, sizeof (buf)) >= 0
++	  && __res_binary_hnok (buf));
+ }
+ versioned_symbol (libc, ___res_hnok, res_hnok, GLIBC_2_34);
+ versioned_symbol (libc, ___res_hnok, __libc_res_hnok, GLIBC_PRIVATE);
+-- 
+2.37.2
+

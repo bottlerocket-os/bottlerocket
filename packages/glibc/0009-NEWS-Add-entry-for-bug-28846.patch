@@ -1,0 +1,24 @@
+From 5c62874f423af93e97b51bc9a57af228a546156f Mon Sep 17 00:00:00 2001
+From: Arjun Shankar <arjun@redhat.com>
+Date: Mon, 22 Aug 2022 18:21:14 +0200
+Subject: [PATCH 09/39] NEWS: Add entry for bug 28846
+
+---
+ NEWS | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/NEWS b/NEWS
+index becab3ade9..ae30900bbc 100644
+--- a/NEWS
++++ b/NEWS
+@@ -9,6 +9,7 @@ Version 2.36.1
+ 
+ The following bugs are resolved with this release:
+ 
++  [28846] CMSG_NXTHDR may trigger -Wstrict-overflow warning
+   [29446] _dlopen now ignores dl_caller argument in static mode
+   [29485] Linux: Terminate subprocess on late failure in tst-pidfd
+   [29490] alpha: New __brk_call implementation is broken
+-- 
+2.37.2
+

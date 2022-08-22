@@ -1,0 +1,425 @@
+From 3c791f2031ca8f6b99e96b774ed1c505ceb93595 Mon Sep 17 00:00:00 2001
+From: Raphael Moreira Zinsly <rzinsly@linux.ibm.com>
+Date: Wed, 24 Aug 2022 11:43:37 -0300
+Subject: [PATCH 18/39] Apply asm redirections in wchar.h before first use
+
+Similar to d0fa09a770, but for wchar.h.  Fixes [BZ #27087] by applying
+all long double related asm redirections before using functions in
+bits/wchar2.h.
+Moves the function declarations from wcsmbs/bits/wchar2.h to a new file
+wcsmbs/bits/wchar2-decl.h that will be included first in wcsmbs/wchar.h.
+
+Tested with build-many-glibcs.py.
+Reviewed-by: Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+
+(cherry picked from commit c7509d49c4e8fa494120c5ead21338559dad16f5)
+---
+ include/bits/wchar2-decl.h |   1 +
+ wcsmbs/Makefile            |   5 +-
+ wcsmbs/bits/wchar2-decl.h  | 124 +++++++++++++++++++++++++++++++++++++
+ wcsmbs/bits/wchar2.h       |  72 ---------------------
+ wcsmbs/wchar.h             |  11 +++-
+ 5 files changed, 137 insertions(+), 76 deletions(-)
+ create mode 100644 include/bits/wchar2-decl.h
+ create mode 100644 wcsmbs/bits/wchar2-decl.h
+
+diff --git a/include/bits/wchar2-decl.h b/include/bits/wchar2-decl.h
+new file mode 100644
+index 0000000000..00b1b93342
+--- /dev/null
++++ b/include/bits/wchar2-decl.h
+@@ -0,0 +1 @@
++#include <wcsmbs/bits/wchar2-decl.h>
+diff --git a/wcsmbs/Makefile b/wcsmbs/Makefile
+index 3d19d5556f..4af102a3f6 100644
+--- a/wcsmbs/Makefile
++++ b/wcsmbs/Makefile
+@@ -22,8 +22,9 @@ subdir	:= wcsmbs
+ 
+ include ../Makeconfig
+ 
+-headers	:= wchar.h bits/wchar.h bits/wchar2.h bits/wchar-ldbl.h uchar.h \
+-	   bits/types/__mbstate_t.h bits/types/mbstate_t.h bits/types/wint_t.h
++headers	:= wchar.h bits/wchar.h bits/wchar2.h bits/wchar2-decl.h \
++	   bits/wchar-ldbl.h uchar.h bits/types/__mbstate_t.h \
++	   bits/types/mbstate_t.h bits/types/wint_t.h
+ 
+ routines := wcscat wcschr wcscmp wcscpy wcscspn wcsdup wcslen wcsncat \
+ 	    wcsncmp wcsncpy wcspbrk wcsrchr wcsspn wcstok wcsstr wmemchr \
+diff --git a/wcsmbs/bits/wchar2-decl.h b/wcsmbs/bits/wchar2-decl.h
+new file mode 100644
+index 0000000000..8e1735c33b
+--- /dev/null
++++ b/wcsmbs/bits/wchar2-decl.h
+@@ -0,0 +1,124 @@
++/* Checking macros for wchar functions.  Declarations only.
++   Copyright (C) 2004-2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#ifndef _BITS_WCHAR2_DECL_H
++#define _BITS_WCHAR2_DECL_H 1
++
++#ifndef _WCHAR_H
++# error "Never include <bits/wchar2-decl.h> directly; use <wchar.h> instead."
++#endif
++
++
++extern wchar_t *__wmemcpy_chk (wchar_t *__restrict __s1,
++			       const wchar_t *__restrict __s2, size_t __n,
++			       size_t __ns1) __THROW;
++extern wchar_t *__wmemmove_chk (wchar_t *__s1, const wchar_t *__s2,
++				size_t __n, size_t __ns1) __THROW;
++
++
++#ifdef __USE_GNU
++
++extern wchar_t *__wmempcpy_chk (wchar_t *__restrict __s1,
++				const wchar_t *__restrict __s2, size_t __n,
++				size_t __ns1) __THROW;
++
++#endif
++
++
++extern wchar_t *__wmemset_chk (wchar_t *__s, wchar_t __c, size_t __n,
++			       size_t __ns) __THROW;
++extern wchar_t *__wcscpy_chk (wchar_t *__restrict __dest,
++			      const wchar_t *__restrict __src,
++			      size_t __n) __THROW;
++extern wchar_t *__wcpcpy_chk (wchar_t *__restrict __dest,
++			      const wchar_t *__restrict __src,
++			      size_t __destlen) __THROW;
++extern wchar_t *__wcsncpy_chk (wchar_t *__restrict __dest,
++			       const wchar_t *__restrict __src, size_t __n,
++			       size_t __destlen) __THROW;
++extern wchar_t *__wcpncpy_chk (wchar_t *__restrict __dest,
++			       const wchar_t *__restrict __src, size_t __n,
++			       size_t __destlen) __THROW;
++extern wchar_t *__wcscat_chk (wchar_t *__restrict __dest,
++			      const wchar_t *__restrict __src,
++			      size_t __destlen) __THROW;
++extern wchar_t *__wcsncat_chk (wchar_t *__restrict __dest,
++			       const wchar_t *__restrict __src,
++			       size_t __n, size_t __destlen) __THROW;
++extern int __swprintf_chk (wchar_t *__restrict __s, size_t __n,
++			   int __flag, size_t __s_len,
++			   const wchar_t *__restrict __format, ...)
++     __THROW /* __attribute__ ((__format__ (__wprintf__, 5, 6))) */;
++extern int __vswprintf_chk (wchar_t *__restrict __s, size_t __n,
++			    int __flag, size_t __s_len,
++			    const wchar_t *__restrict __format,
++			    __gnuc_va_list __arg)
++     __THROW /* __attribute__ ((__format__ (__wprintf__, 5, 0))) */;
++
++#if __USE_FORTIFY_LEVEL > 1
++
++extern int __fwprintf_chk (__FILE *__restrict __stream, int __flag,
++			   const wchar_t *__restrict __format, ...);
++extern int __wprintf_chk (int __flag, const wchar_t *__restrict __format,
++			  ...);
++extern int __vfwprintf_chk (__FILE *__restrict __stream, int __flag,
++			    const wchar_t *__restrict __format,
++			    __gnuc_va_list __ap);
++extern int __vwprintf_chk (int __flag, const wchar_t *__restrict __format,
++			   __gnuc_va_list __ap);
++
++#endif
++
++extern wchar_t *__fgetws_chk (wchar_t *__restrict __s, size_t __size, int __n,
++			      __FILE *__restrict __stream) __wur;
++
++#ifdef __USE_GNU
++
++extern wchar_t *__fgetws_unlocked_chk (wchar_t *__restrict __s, size_t __size,
++				       int __n, __FILE *__restrict __stream)
++       __wur;
++
++#endif
++
++extern size_t __wcrtomb_chk (char *__restrict __s, wchar_t __wchar,
++			     mbstate_t *__restrict __p,
++			     size_t __buflen) __THROW __wur;
++extern size_t __mbsrtowcs_chk (wchar_t *__restrict __dst,
++			       const char **__restrict __src,
++			       size_t __len, mbstate_t *__restrict __ps,
++			       size_t __dstlen) __THROW;
++extern size_t __wcsrtombs_chk (char *__restrict __dst,
++			       const wchar_t **__restrict __src,
++			       size_t __len, mbstate_t *__restrict __ps,
++			       size_t __dstlen) __THROW;
++
++#ifdef	__USE_XOPEN2K8
++
++extern size_t __mbsnrtowcs_chk (wchar_t *__restrict __dst,
++				const char **__restrict __src, size_t __nmc,
++				size_t __len, mbstate_t *__restrict __ps,
++				size_t __dstlen) __THROW;
++extern size_t __wcsnrtombs_chk (char *__restrict __dst,
++				const wchar_t **__restrict __src,
++				size_t __nwc, size_t __len,
++				mbstate_t *__restrict __ps, size_t __dstlen)
++       __THROW;
++
++#endif
++
++#endif /* bits/wchar2-decl.h.  */
+diff --git a/wcsmbs/bits/wchar2.h b/wcsmbs/bits/wchar2.h
+index 0e017f458b..3f110efe57 100644
+--- a/wcsmbs/bits/wchar2.h
++++ b/wcsmbs/bits/wchar2.h
+@@ -21,9 +21,6 @@
+ #endif
+ 
+ 
+-extern wchar_t *__wmemcpy_chk (wchar_t *__restrict __s1,
+-			       const wchar_t *__restrict __s2, size_t __n,
+-			       size_t __ns1) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wmemcpy_alias,
+ 				(wchar_t *__restrict __s1,
+ 				 const wchar_t *__restrict __s2, size_t __n),
+@@ -45,8 +42,6 @@ __NTH (wmemcpy (wchar_t *__restrict __s1, const wchar_t *__restrict __s2,
+ }
+ 
+ 
+-extern wchar_t *__wmemmove_chk (wchar_t *__s1, const wchar_t *__s2,
+-				size_t __n, size_t __ns1) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wmemmove_alias, (wchar_t *__s1,
+ 						   const wchar_t *__s2,
+ 						   size_t __n), wmemmove);
+@@ -66,9 +61,6 @@ __NTH (wmemmove (wchar_t *__s1, const wchar_t *__s2, size_t __n))
+ 
+ 
+ #ifdef __USE_GNU
+-extern wchar_t *__wmempcpy_chk (wchar_t *__restrict __s1,
+-				const wchar_t *__restrict __s2, size_t __n,
+-				size_t __ns1) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wmempcpy_alias,
+ 				(wchar_t *__restrict __s1,
+ 				 const wchar_t *__restrict __s2,
+@@ -91,8 +83,6 @@ __NTH (wmempcpy (wchar_t *__restrict __s1, const wchar_t *__restrict __s2,
+ #endif
+ 
+ 
+-extern wchar_t *__wmemset_chk (wchar_t *__s, wchar_t __c, size_t __n,
+-			       size_t __ns) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wmemset_alias, (wchar_t *__s, wchar_t __c,
+ 						  size_t __n), wmemset);
+ extern wchar_t *__REDIRECT_NTH (__wmemset_chk_warn,
+@@ -110,9 +100,6 @@ __NTH (wmemset (wchar_t *__s, wchar_t __c, size_t __n))
+ }
+ 
+ 
+-extern wchar_t *__wcscpy_chk (wchar_t *__restrict __dest,
+-			      const wchar_t *__restrict __src,
+-			      size_t __n) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wcscpy_alias,
+ 				(wchar_t *__restrict __dest,
+ 				 const wchar_t *__restrict __src), wcscpy);
+@@ -127,9 +114,6 @@ __NTH (wcscpy (wchar_t *__restrict __dest, const wchar_t *__restrict __src))
+ }
+ 
+ 
+-extern wchar_t *__wcpcpy_chk (wchar_t *__restrict __dest,
+-			      const wchar_t *__restrict __src,
+-			      size_t __destlen) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wcpcpy_alias,
+ 				(wchar_t *__restrict __dest,
+ 				 const wchar_t *__restrict __src), wcpcpy);
+@@ -144,9 +128,6 @@ __NTH (wcpcpy (wchar_t *__restrict __dest, const wchar_t *__restrict __src))
+ }
+ 
+ 
+-extern wchar_t *__wcsncpy_chk (wchar_t *__restrict __dest,
+-			       const wchar_t *__restrict __src, size_t __n,
+-			       size_t __destlen) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wcsncpy_alias,
+ 				(wchar_t *__restrict __dest,
+ 				 const wchar_t *__restrict __src,
+@@ -168,9 +149,6 @@ __NTH (wcsncpy (wchar_t *__restrict __dest, const wchar_t *__restrict __src,
+ }
+ 
+ 
+-extern wchar_t *__wcpncpy_chk (wchar_t *__restrict __dest,
+-			       const wchar_t *__restrict __src, size_t __n,
+-			       size_t __destlen) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wcpncpy_alias,
+ 				(wchar_t *__restrict __dest,
+ 				 const wchar_t *__restrict __src,
+@@ -192,9 +170,6 @@ __NTH (wcpncpy (wchar_t *__restrict __dest, const wchar_t *__restrict __src,
+ }
+ 
+ 
+-extern wchar_t *__wcscat_chk (wchar_t *__restrict __dest,
+-			      const wchar_t *__restrict __src,
+-			      size_t __destlen) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wcscat_alias,
+ 				(wchar_t *__restrict __dest,
+ 				 const wchar_t *__restrict __src), wcscat);
+@@ -209,9 +184,6 @@ __NTH (wcscat (wchar_t *__restrict __dest, const wchar_t *__restrict __src))
+ }
+ 
+ 
+-extern wchar_t *__wcsncat_chk (wchar_t *__restrict __dest,
+-			       const wchar_t *__restrict __src,
+-			       size_t __n, size_t __destlen) __THROW;
+ extern wchar_t *__REDIRECT_NTH (__wcsncat_alias,
+ 				(wchar_t *__restrict __dest,
+ 				 const wchar_t *__restrict __src,
+@@ -228,10 +200,6 @@ __NTH (wcsncat (wchar_t *__restrict __dest, const wchar_t *__restrict __src,
+ }
+ 
+ 
+-extern int __swprintf_chk (wchar_t *__restrict __s, size_t __n,
+-			   int __flag, size_t __s_len,
+-			   const wchar_t *__restrict __format, ...)
+-     __THROW /* __attribute__ ((__format__ (__wprintf__, 5, 6))) */;
+ 
+ extern int __REDIRECT_NTH_LDBL (__swprintf_alias,
+ 				(wchar_t *__restrict __s, size_t __n,
+@@ -258,11 +226,6 @@ __NTH (swprintf (wchar_t *__restrict __s, size_t __n,
+    : swprintf (s, n, __VA_ARGS__))
+ #endif
+ 
+-extern int __vswprintf_chk (wchar_t *__restrict __s, size_t __n,
+-			    int __flag, size_t __s_len,
+-			    const wchar_t *__restrict __format,
+-			    __gnuc_va_list __arg)
+-     __THROW /* __attribute__ ((__format__ (__wprintf__, 5, 0))) */;
+ 
+ extern int __REDIRECT_NTH_LDBL (__vswprintf_alias,
+ 				(wchar_t *__restrict __s, size_t __n,
+@@ -283,16 +246,6 @@ __NTH (vswprintf (wchar_t *__restrict __s, size_t __n,
+ 
+ #if __USE_FORTIFY_LEVEL > 1
+ 
+-extern int __fwprintf_chk (__FILE *__restrict __stream, int __flag,
+-			   const wchar_t *__restrict __format, ...);
+-extern int __wprintf_chk (int __flag, const wchar_t *__restrict __format,
+-			  ...);
+-extern int __vfwprintf_chk (__FILE *__restrict __stream, int __flag,
+-			    const wchar_t *__restrict __format,
+-			    __gnuc_va_list __ap);
+-extern int __vwprintf_chk (int __flag, const wchar_t *__restrict __format,
+-			   __gnuc_va_list __ap);
+-
+ # ifdef __va_arg_pack
+ __fortify_function int
+ wprintf (const wchar_t *__restrict __fmt, ...)
+@@ -328,8 +281,6 @@ vfwprintf (__FILE *__restrict __stream,
+ 
+ #endif
+ 
+-extern wchar_t *__fgetws_chk (wchar_t *__restrict __s, size_t __size, int __n,
+-			      __FILE *__restrict __stream) __wur;
+ extern wchar_t *__REDIRECT (__fgetws_alias,
+ 			    (wchar_t *__restrict __s, int __n,
+ 			     __FILE *__restrict __stream), fgetws) __wur;
+@@ -351,9 +302,6 @@ fgetws (wchar_t *__restrict __s, int __n, __FILE *__restrict __stream)
+ }
+ 
+ #ifdef __USE_GNU
+-extern wchar_t *__fgetws_unlocked_chk (wchar_t *__restrict __s, size_t __size,
+-				       int __n, __FILE *__restrict __stream)
+-  __wur;
+ extern wchar_t *__REDIRECT (__fgetws_unlocked_alias,
+ 			    (wchar_t *__restrict __s, int __n,
+ 			     __FILE *__restrict __stream), fgetws_unlocked)
+@@ -379,9 +327,6 @@ fgetws_unlocked (wchar_t *__restrict __s, int __n, __FILE *__restrict __stream)
+ #endif
+ 
+ 
+-extern size_t __wcrtomb_chk (char *__restrict __s, wchar_t __wchar,
+-			     mbstate_t *__restrict __p,
+-			     size_t __buflen) __THROW __wur;
+ extern size_t __REDIRECT_NTH (__wcrtomb_alias,
+ 			      (char *__restrict __s, wchar_t __wchar,
+ 			       mbstate_t *__restrict __ps), wcrtomb) __wur;
+@@ -404,10 +349,6 @@ __NTH (wcrtomb (char *__restrict __s, wchar_t __wchar,
+ }
+ 
+ 
+-extern size_t __mbsrtowcs_chk (wchar_t *__restrict __dst,
+-			       const char **__restrict __src,
+-			       size_t __len, mbstate_t *__restrict __ps,
+-			       size_t __dstlen) __THROW;
+ extern size_t __REDIRECT_NTH (__mbsrtowcs_alias,
+ 			      (wchar_t *__restrict __dst,
+ 			       const char **__restrict __src,
+@@ -431,10 +372,6 @@ __NTH (mbsrtowcs (wchar_t *__restrict __dst, const char **__restrict __src,
+ }
+ 
+ 
+-extern size_t __wcsrtombs_chk (char *__restrict __dst,
+-			       const wchar_t **__restrict __src,
+-			       size_t __len, mbstate_t *__restrict __ps,
+-			       size_t __dstlen) __THROW;
+ extern size_t __REDIRECT_NTH (__wcsrtombs_alias,
+ 			      (char *__restrict __dst,
+ 			       const wchar_t **__restrict __src,
+@@ -458,10 +395,6 @@ __NTH (wcsrtombs (char *__restrict __dst, const wchar_t **__restrict __src,
+ 
+ 
+ #ifdef	__USE_XOPEN2K8
+-extern size_t __mbsnrtowcs_chk (wchar_t *__restrict __dst,
+-				const char **__restrict __src, size_t __nmc,
+-				size_t __len, mbstate_t *__restrict __ps,
+-				size_t __dstlen) __THROW;
+ extern size_t __REDIRECT_NTH (__mbsnrtowcs_alias,
+ 			      (wchar_t *__restrict __dst,
+ 			       const char **__restrict __src, size_t __nmc,
+@@ -485,11 +418,6 @@ __NTH (mbsnrtowcs (wchar_t *__restrict __dst, const char **__restrict __src,
+ }
+ 
+ 
+-extern size_t __wcsnrtombs_chk (char *__restrict __dst,
+-				const wchar_t **__restrict __src,
+-				size_t __nwc, size_t __len,
+-				mbstate_t *__restrict __ps, size_t __dstlen)
+-     __THROW;
+ extern size_t __REDIRECT_NTH (__wcsnrtombs_alias,
+ 			      (char *__restrict __dst,
+ 			       const wchar_t **__restrict __src,
+diff --git a/wcsmbs/wchar.h b/wcsmbs/wchar.h
+index 5d6a40853d..c1321c7518 100644
+--- a/wcsmbs/wchar.h
++++ b/wcsmbs/wchar.h
+@@ -864,14 +864,21 @@ extern size_t wcsftime_l (wchar_t *__restrict __s, size_t __maxsize,
+ 
+ /* Define some macros helping to catch buffer overflows.  */
+ #if __USE_FORTIFY_LEVEL > 0 && defined __fortify_function
+-# include <bits/wchar2.h>
++/* Declare all functions from bits/wchar2-decl.h first.  */
++# include <bits/wchar2-decl.h>
+ #endif
+ 
+-#include <bits/floatn.h>
++/* The following headers provide asm redirections.  These redirections must
++   appear before the first usage of these functions, e.g. in bits/wchar.h.  */
+ #if defined __LDBL_COMPAT || __LDOUBLE_REDIRECTS_TO_FLOAT128_ABI == 1
+ # include <bits/wchar-ldbl.h>
+ #endif
+ 
++#if __USE_FORTIFY_LEVEL > 0 && defined __fortify_function
++/* Now include the function definitions and redirects too.  */
++# include <bits/wchar2.h>
++#endif
++
+ __END_DECLS
+ 
+ #endif /* wchar.h  */
+-- 
+2.37.2
+
