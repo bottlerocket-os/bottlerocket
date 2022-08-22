@@ -53,7 +53,7 @@ fn send_healthy_ping() {
         request::query(url_decoded(contains(("event", "health_ping")))),
         request::query(url_decoded(contains(("version", "0.4.0")))),
         request::query(url_decoded(contains(("variant", "aws-k8s-1.16")))),
-        request::query(url_decoded(contains(("arch", "x86_64")))),
+        request::query(url_decoded(contains(("arch", std::env::consts::ARCH)))),
         request::query(url_decoded(contains(("region", "us-east-1")))),
         request::query(url_decoded(contains(("seed", "2041")))),
         request::query(url_decoded(contains(("failed_services", "")))),
@@ -91,7 +91,7 @@ fn send_unhealthy_ping() {
         request::query(url_decoded(contains(("event", "health_ping")))),
         request::query(url_decoded(contains(("version", "0.4.0")))),
         request::query(url_decoded(contains(("variant", "aws-k8s-1.16")))),
-        request::query(url_decoded(contains(("arch", "x86_64")))),
+        request::query(url_decoded(contains(("arch", std::env::consts::ARCH)))),
         request::query(url_decoded(contains(("region", "us-east-1")))),
         request::query(url_decoded(contains(("seed", "2041")))),
         request::query(url_decoded(contains((
@@ -134,7 +134,7 @@ fn send_boot_success() {
         request::query(url_decoded(contains(("event", "boot_success")))),
         request::query(url_decoded(contains(("version", "0.4.0")))),
         request::query(url_decoded(contains(("variant", "aws-k8s-1.16")))),
-        request::query(url_decoded(contains(("arch", "x86_64")))),
+        request::query(url_decoded(contains(("arch", std::env::consts::ARCH)))),
         request::query(url_decoded(contains(("region", "us-east-1")))),
         request::query(url_decoded(contains(("seed", "2041")))),
     ];
