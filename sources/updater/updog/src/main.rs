@@ -700,8 +700,9 @@ mod tests {
 
     #[test]
     fn older_versions() {
-        // A manifest with two updates, both less than 0.1.3
-        let path = "tests/data/example_3.json";
+        // A manifest with two updates, both less than 0.1.3.
+        // Use a architecture specific JSON payload, otherwise updog will ignore the update
+        let path = format!("tests/data/example_3_{}.json", TARGET_ARCH);
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
@@ -736,10 +737,10 @@ mod tests {
     #[test]
     fn test_multiple() {
         // A manifest with four updates; two valid, one which exceeds the max
-        // version, and one which is for an aarch64 target. This asserts that
+        // version, and one which is for the opposite target architecture. This asserts that
         // upgrading from the version 1.10.0 results in updating to 1.15.0
         // instead of 1.13.0 (lower), 1.25.0 (too high), or 1.16.0 (wrong arch).
-        let path = "tests/data/multiple.json";
+        let path = format!("tests/data/multiple_{}.json", TARGET_ARCH);
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
@@ -778,10 +779,10 @@ mod tests {
     #[test]
     fn force_update_version() {
         // A manifest with four updates; two valid, one which exceeds the max
-        // version, and one which is for an aarch64 target. This tests forces
+        // version, and one which is for the opposite target architecture. This tests forces
         // a downgrade to 1.13.0, instead of 1.15.0 like it would be in the
         // above test, test_multiple.
-        let path = "tests/data/multiple.json";
+        let path = format!("tests/data/multiple_{}.json", TARGET_ARCH);
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),

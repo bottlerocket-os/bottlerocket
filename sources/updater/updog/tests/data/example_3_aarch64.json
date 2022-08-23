@@ -1,0 +1,35 @@
+{
+  "updates": [
+    {
+      "variant": "aws-k8s-1.15",
+      "arch": "aarch64",
+      "version": "0.1.1",
+      "max_version": "0.1.2",
+      "waves": {
+        "0": "2019-09-20T23:00:00Z",
+        "2047": "2019-09-20T23:00:00Z"
+      },
+      "images": {
+        "boot": "bottlerocket-aarch64-boot.ext4.lz4",
+        "root": "bottlerocket-aarch64-root.ext4.lz4",
+        "hash": "bottlerocket-aarch64-root.verity.lz4"
+      }
+    },
+    {
+      "variant": "aws-k8s-1.15",
+      "arch": "aarch64",
+      "version": "0.1.2",
+      "max_version": "0.1.2",
+      "waves": {
+        "0": "2019-09-27T17:55:03Z",
+        "2047": "2019-09-27T18:55:03Z"
+      },
+      "images": {
+        "boot": "bottlerocket-aarch64-0.2.1-boot.ext4.lz4",
+        "root": "bottlerocket-aarch64-0.2.1-root.ext4.lz4",
+        "hash": "bottlerocket-aarch64-0.2.1-root.verity.lz4"
+      }
+    }
+  ],
+  "migrations": {}
+}

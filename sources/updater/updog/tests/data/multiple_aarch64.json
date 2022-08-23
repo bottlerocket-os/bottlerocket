@@ -1,0 +1,69 @@
+{
+  "updates": [
+    {
+      "variant": "bottlerocket-aws-eks",
+      "arch": "aarch64",
+      "version": "1.13.0",
+      "status": "Ready",
+      "max_version": "1.20.0",
+      "waves": {
+        "0": "2019-10-06T15:00:00Z",
+        "858993459":"2019-10-07T15:00:00Z"
+      },
+      "images": {
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191006.img"
+      }
+    },
+    {
+      "variant": "bottlerocket-aws-eks",
+      "arch": "aarch64",
+      "version": "1.25.0",
+      "status": "Ready",
+      "max_version": "1.20.0",
+      "waves": {
+        "0": "2019-10-06T15:00:00Z",
+        "858993459":"2019-10-07T15:00:00Z"
+      },
+      "images": {
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.25-m1.20191015.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.25-m1.20191015.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.25-m1.20191015.img"
+    }
+    },
+    {
+      "variant": "bottlerocket-aws-eks",
+      "arch": "aarch64",
+      "version": "1.15.0",
+      "status": "Ready",
+      "max_version": "1.20.0",
+      "waves": {
+        "0": "2019-10-06T15:00:00Z",
+        "858993459":"2019-10-07T15:00:00Z"
+      },
+      "images": {
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.15-m1.20191009.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.15-m1.20191009.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.15-m1.20191009.img"
+    }
+    },
+    {
+      "variant": "bottlerocket-aws-eks",
+      "arch": "x86_64",
+      "version": "1.16.0",
+      "status": "Ready",
+      "max_version": "1.20.0",
+      "waves": {
+        "0": "2019-10-06T15:00:00Z",
+        "858993459":"2019-10-07T15:00:00Z"
+      },
+      "images": {
+        "boot": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191010.img",
+        "root": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191010.img",
+        "hash": "stuff-boot-bottlerocket-aws-eks-1.13-m1.20191010.img"
+    }
+    }
+  ],
+  "migrations": {}
+}
