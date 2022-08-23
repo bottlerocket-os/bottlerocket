@@ -60,6 +60,15 @@ struct LinkDetection {
 }
 
 impl WickedInterface {
+    pub(crate) fn new(name: InterfaceName) -> Self {
+        Self {
+            name,
+            control: WickedControl::default(),
+            ipv4_dhcp: None,
+            ipv6_dhcp: None,
+        }
+    }
+
     /// Serialize the interface's configuration file
     pub(crate) fn write_config_file(&self) -> Result<()> {
         let mut cfg_path = Path::new(WICKED_CONFIG_DIR).join(self.name.to_string());
