@@ -15,9 +15,12 @@
 pub(super) mod basic;
 #[cfg(test)]
 pub(super) mod dhcp;
+#[cfg(test)]
+pub(super) mod static_address;
 
 pub(super) use basic::basic_tests;
 pub(super) use dhcp::dhcp_tests;
+pub(super) use static_address::static_address_tests;
 
 /// gen_boilerplate!() is a convenience macro meant to be used inside of test macros to generate
 /// some generally useful boilerplate code.  It creates a `VERSION` constant in case the test

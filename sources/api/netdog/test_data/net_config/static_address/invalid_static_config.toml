@@ -1,0 +1,6 @@
+version = {{version}}
+
+[eno1.static4]
+addresses = ["1.2.3.4/24", "2.3.4.5/25"]
+# `route-metric` is not a valid static4 option
+route-metric = 100

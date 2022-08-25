@@ -1,0 +1,5 @@
+version = {{version}}
+
+[[eno1.route]]
+to = "4.5.6.7/24"
+via = "10.0.0.1"

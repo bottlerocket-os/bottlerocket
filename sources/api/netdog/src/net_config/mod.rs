@@ -7,6 +7,7 @@ mod dhcp;
 mod error;
 mod static_address;
 mod v1;
+mod v2;
 
 use crate::wicked::WickedInterface;
 pub(crate) use dhcp::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
@@ -95,7 +96,8 @@ fn deserialize_config(config_str: &str) -> Result<Box<dyn Interfaces>> {
     } = toml::from_str(config_str).context(error::NetConfigParseSnafu)?;
 
     let net_config: Box<dyn Interfaces> = match version {
-        1 => validate_config::<NetConfigV1>(interface_config)?,
+        1 => validate_config::<v1::NetConfigV1>(interface_config)?,
+        2 => validate_config::<v2::NetConfigV2>(interface_config)?,
         _ => {
             return error::InvalidNetConfigSnafu {
                 reason: format!("Unknown network config version: {}", version),

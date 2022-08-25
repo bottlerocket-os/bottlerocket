@@ -10,6 +10,7 @@ use crate::interface_name::InterfaceName;
 pub(crate) use dhcp::{WickedDhcp4, WickedDhcp6};
 use serde::Serialize;
 use snafu::ResultExt;
+pub(crate) use static_address::{WickedRoutes, WickedStaticAddress};
 use std::fs;
 use std::path::Path;
 
@@ -28,6 +29,12 @@ pub(crate) struct WickedInterface {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "ipv6:dhcp")]
     pub(crate) ipv6_dhcp: Option<WickedDhcp6>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "ipv4:static")]
+    pub(crate) ipv4_static: Option<WickedStaticAddress>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "ipv6:static")]
+    pub(crate) ipv6_static: Option<WickedStaticAddress>,
 }
 
 #[derive(Debug, Serialize, PartialEq)]
@@ -66,6 +73,8 @@ impl WickedInterface {
             control: WickedControl::default(),
             ipv4_dhcp: None,
             ipv6_dhcp: None,
+            ipv4_static: None,
+            ipv6_static: None,
         }
     }
 
