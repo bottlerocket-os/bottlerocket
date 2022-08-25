@@ -4,12 +4,13 @@ mod root;
 mod s3;
 mod shared;
 
+use aws_sdk_cloudformation::Region;
 use error::Result;
 use log::{error, info};
 use pubsys_config::{InfraConfig, RepoConfig, S3Config, SigningKeyConfig};
 use sha2::{Digest, Sha512};
 use shared::KeyRole;
-use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
+use simplelog::{CombinedLogger, Config as LogConfig, ConfigBuilder, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::num::NonZeroUsize;
@@ -62,7 +63,35 @@ fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
+    match args.log_level {
+        // Set log level for AWS SDK to error to reduce verbosity.
+        LevelFilter::Info => {
+            CombinedLogger::init(vec![
+                SimpleLogger::new(
+                    LevelFilter::Info,
+                    ConfigBuilder::new()
+                        .add_filter_ignore_str("aws_config")
+                        .add_filter_ignore_str("aws_smithy")
+                        .add_filter_ignore_str("tracing::span")
+                        .build(),
+                ),
+                SimpleLogger::new(
+                    LevelFilter::Warn,
+                    ConfigBuilder::new()
+                        .add_filter_allow_str("aws_config")
+                        .add_filter_allow_str("aws_smithy")
+                        .add_filter_allow_str("tracing::span")
+                        .build(),
+                ),
+            ])
+            .context(error::LoggerSnafu)?;
+        }
+
+        // Set the supplied log level across the whole crate.
+        _ => {
+            SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?
+        }
+    }
 
     match args.subcommand {
         SubCommand::CreateInfra(ref run_task_args) => {
@@ -124,7 +153,7 @@ async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
         // Upload root.json.
         info!("Uploading root.json to S3 bucket...");
         s3::upload_file(
-            repo_info.s3_region,
+            &repo_info.s3_region,
             &bucket_name,
             &repo_info.prefix,
             root_role_path,
@@ -187,7 +216,7 @@ struct ValidRepoInfo<'a> {
     root_key_threshold: &'a NonZeroUsize,
     root_keys: &'a mut SigningKeyConfig,
     root_role_url: &'a mut Option<Url>,
-    s3_region: &'a String,
+    s3_region: Region,
     s3_stack_name: String,
     signing_keys: &'a mut SigningKeyConfig,
     stack_arn: &'a mut Option<String>,
@@ -204,20 +233,22 @@ impl<'a> ValidRepoInfo<'a> {
         let s3_stack_name =
             repo_config
                 .file_hosting_config_name
-                .as_ref()
+                .to_owned()
                 .context(error::MissingConfigSnafu {
                     missing: "file_hosting_config_name",
                 })?;
         let s3_info = s3_info_map
-            .get_mut(s3_stack_name)
+            .get_mut(&s3_stack_name)
             .context(error::MissingConfigSnafu {
                 missing: format!("aws.s3 config with name {}", s3_stack_name),
             })?;
         Ok(ValidRepoInfo {
             s3_stack_name: s3_stack_name.to_string(),
-            s3_region: s3_info.region.as_ref().context(error::MissingConfigSnafu {
-                missing: format!("region for '{}' s3 config", s3_stack_name),
-            })?,
+            s3_region: Region::new(s3_info.region.as_ref().cloned().context(
+                error::MissingConfigSnafu {
+                    missing: format!("region for '{}' s3 config", s3_stack_name),
+                },
+            )?),
             bucket_name: &mut s3_info.bucket_name,
             stack_arn: &mut s3_info.stack_arn,
             vpce_id: s3_info
@@ -262,11 +293,11 @@ async fn create_repo_infrastructure(
     // Create S3 bucket
     info!("Creating S3 bucket...");
     let (s3_stack_arn, bucket_name, bucket_rdn) =
-        s3::create_s3_bucket(repo_info.s3_region, &repo_info.s3_stack_name).await?;
+        s3::create_s3_bucket(&repo_info.s3_region, &repo_info.s3_stack_name).await?;
 
     // Add Bucket Policy to newly created bucket
     s3::add_bucket_policy(
-        repo_info.s3_region,
+        &repo_info.s3_region,
         &bucket_name,
         &repo_info.prefix,
         repo_info.vpce_id,

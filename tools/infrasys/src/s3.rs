@@ -1,14 +1,10 @@
-use rusoto_cloudformation::{CloudFormation, CloudFormationClient, CreateStackInput};
-use rusoto_core::Region;
-use rusoto_s3::{
-    GetBucketPolicyRequest, PutBucketPolicyRequest, PutObjectRequest, S3Client, StreamingBody, S3,
-};
+use aws_sdk_cloudformation::{Client as CloudFormationClient, Region};
+use aws_sdk_s3::Client as S3Client;
 use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 
 use super::{error, shared, Result};
 
@@ -36,11 +32,17 @@ pub fn format_prefix(prefix: &str) -> String {
 /// Input: The region in which the bucket will be created and the name of the bucket
 /// Output: The stack_arn of the stack w/ the S3 bucket, the CFN allocated bucket name,
 /// and the bucket url (for the url fields in Infra.lock)
-pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String, String, String)> {
+pub async fn create_s3_bucket(
+    region: &Region,
+    stack_name: &str,
+) -> Result<(String, String, String)> {
     // TODO: Add support for accommodating pre-existing buckets (skip this creation process)
-    let cfn_client = CloudFormationClient::new(
-        Region::from_str(region).context(error::ParseRegionSnafu { what: region })?,
-    );
+    let config = aws_config::from_env()
+        .region(region.to_owned())
+        .load()
+        .await;
+    let cfn_client = CloudFormationClient::new(&config);
+
     let cfn_filepath: PathBuf = format!(
         "{}/infrasys/cloudformation-templates/s3_setup.yml",
         shared::getenv("BUILDSYS_TOOLS_DIR")?
@@ -48,14 +50,17 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
     .into();
     let cfn_template =
         fs::read_to_string(&cfn_filepath).context(error::FileReadSnafu { path: cfn_filepath })?;
+
     let stack_result = cfn_client
-        .create_stack(CreateStackInput {
-            stack_name: stack_name.to_string(),
-            template_body: Some(cfn_template.clone()),
-            ..Default::default()
-        })
+        .create_stack()
+        .stack_name(stack_name.to_string())
+        .template_body(cfn_template.clone())
+        .send()
         .await
-        .context(error::CreateStackSnafu { stack_name, region })?;
+        .context(error::CreateStackSnafu {
+            stack_name,
+            region: region.as_ref(),
+        })?;
     // We don't have to wait for successful stack creation to grab the stack ARN
     let stack_arn = stack_result
         .clone()
@@ -66,7 +71,7 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
         })?;
 
     // Grab the StackOutputs to get the Bucketname and BucketURL
-    let output_array = shared::get_stack_outputs(&cfn_client, stack_name, region).await?;
+    let output_array = shared::get_stack_outputs(&cfn_client, stack_name, region.as_ref()).await?;
     let bucket_name = output_array[0]
         .output_value
         .as_ref()
@@ -90,21 +95,23 @@ pub async fn create_s3_bucket(region: &str, stack_name: &str) -> Result<(String,
 /// Adds a BucketPolicy allowing GetObject access to a specified VPC
 /// Input: Region, Name of bucket, which prefix root.json should be put under, and vpcid
 /// Note that the prefix parameter must have the format "/<folder>/*" and the bucket name "<name>"
-/// Output: Doesn't need to save any metadata from this action  
+/// Output: Doesn't need to save any metadata from this action
 pub async fn add_bucket_policy(
-    region: &str,
+    region: &Region,
     bucket_name: &str,
     prefix: &str,
     vpcid: &str,
 ) -> Result<()> {
     // Get old policy
-    let s3_client =
-        S3Client::new(Region::from_str(region).context(error::ParseRegionSnafu { what: region })?);
+    let config = aws_config::from_env()
+        .region(region.to_owned())
+        .load()
+        .await;
+    let s3_client = S3Client::new(&config);
     let mut policy: serde_json::Value = match s3_client
-        .get_bucket_policy(GetBucketPolicyRequest {
-            bucket: bucket_name.to_string(),
-            expected_bucket_owner: None,
-        })
+        .get_bucket_policy()
+        .bucket(bucket_name.to_string())
+        .send()
         .await
     {
         Ok(output) => serde_json::from_str(&output.policy.context(error::ParseResponseSnafu {
@@ -153,13 +160,14 @@ pub async fn add_bucket_policy(
 
     // Push the new policy as a string
     s3_client
-        .put_bucket_policy(PutBucketPolicyRequest {
-            bucket: bucket_name.to_string(),
-            policy: serde_json::to_string(&policy).context(error::InvalidJsonSnafu {
+        .put_bucket_policy()
+        .bucket(bucket_name.to_string())
+        .policy(
+            serde_json::to_string(&policy).context(error::InvalidJsonSnafu {
                 what: format!("new bucket policy for {}", &bucket_name),
             })?,
-            ..Default::default()
-        })
+        )
+        .send()
         .await
         .context(error::PutPolicySnafu { bucket_name })?;
 
@@ -171,13 +179,16 @@ pub async fn add_bucket_policy(
 /// Note that the prefix parameter must have the format "/<folder>" and the bucket name "<name>"
 /// Output: Doesn't need to save any metadata from this action
 pub async fn upload_file(
-    region: &str,
+    region: &Region,
     bucket_name: &str,
     prefix: &str,
     file_path: &Path,
 ) -> Result<()> {
-    let s3_client =
-        S3Client::new(Region::from_str(region).context(error::ParseRegionSnafu { what: region })?);
+    let config = aws_config::from_env()
+        .region(region.to_owned())
+        .load()
+        .await;
+    let s3_client = S3Client::new(&config);
 
     // File --> Bytes
     let mut file = File::open(file_path).context(error::FileOpenSnafu { path: file_path })?;
@@ -186,12 +197,11 @@ pub async fn upload_file(
         .context(error::FileReadSnafu { path: file_path })?;
 
     s3_client
-        .put_object(PutObjectRequest {
-            bucket: format!("{}{}", bucket_name, prefix),
-            key: "root.json".to_string(),
-            body: Some(StreamingBody::from(buffer)),
-            ..Default::default()
-        })
+        .put_object()
+        .bucket(format!("{}{}", bucket_name, prefix))
+        .key("root.json".to_string())
+        .body(aws_sdk_s3::types::ByteStream::from(buffer))
+        .send()
         .await
         .context(error::PutObjectSnafu { bucket_name })?;
 
@@ -215,16 +225,13 @@ mod tests {
         let empty = "";
         let single_slash = "/";
 
-        assert_eq!("/prefix", format_prefix(&valid.to_string()));
-        assert_eq!("/prefix", format_prefix(&missing_slash.to_string()));
-        assert_eq!("/prefix", format_prefix(&excess_ending_1.to_string()));
-        assert_eq!("/prefix", format_prefix(&excess_ending_2.to_string()));
-        assert_eq!(
-            "/prefix",
-            format_prefix(&slash_and_excess_ending.to_string())
-        );
-        assert_eq!("", format_prefix(&empty.to_string()));
-        assert_eq!("", format_prefix(&single_slash.to_string()));
+        assert_eq!("/prefix", format_prefix(valid));
+        assert_eq!("/prefix", format_prefix(missing_slash));
+        assert_eq!("/prefix", format_prefix(excess_ending_1));
+        assert_eq!("/prefix", format_prefix(excess_ending_2));
+        assert_eq!("/prefix", format_prefix(slash_and_excess_ending));
+        assert_eq!("", format_prefix(empty));
+        assert_eq!("", format_prefix(single_slash));
     }
 
     #[test]
@@ -247,9 +254,7 @@ mod tests {
                      }}
                  }}
              }}"#,
-            "test-bucket-name".to_string(),
-            "/test-prefix".to_string(),
-            "testvpc123".to_string()
+            "test-bucket-name", "/test-prefix", "testvpc123"
         ))
         .unwrap();
 
@@ -317,9 +322,7 @@ mod tests {
                      }}
                  }}
              }}"#,
-            "test-bucket-name".to_string(),
-            "/test-prefix".to_string(),
-            "testvpc123".to_string()
+            "test-bucket-name", "/test-prefix", "testvpc123"
         ))
         .unwrap();
 
