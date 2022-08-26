@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use log::{debug, info};
 use model::test_manager::{SelectionParams, TestManager};
-use terminal_size::{Height, Width};
 
 /// Check the status of testsys objects.
 #[derive(Debug, Parser)]
@@ -45,10 +44,9 @@ impl Status {
                     .context("Could not create string from status.")?
             );
         } else {
-            let (terminal_size::Width(width), _) =
-                terminal_size::terminal_size().unwrap_or((Width(80), Height(0)));
+            let (width, _) = term_size::dimensions().unwrap_or((80, 0));
             debug!("Window width '{}'", width);
-            println!("{}", status.to_string(width as usize));
+            println!("{:width$}", status.to_string());
         }
         Ok(())
     }
