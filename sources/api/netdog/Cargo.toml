@@ -26,6 +26,7 @@ toml = { version = "0.5", features = ["preserve_order"] }
 
 [dev-dependencies]
 tempfile = "3.2.0"
+handlebars = "4.3"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../../generate-readme" }

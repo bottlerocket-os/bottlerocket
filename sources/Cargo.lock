@@ -2317,6 +2317,7 @@ dependencies = [
  "dns-lookup",
  "envy",
  "generate-readme",
+ "handlebars",
  "indexmap",
  "ipnet",
  "lazy_static",

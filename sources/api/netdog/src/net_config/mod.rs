@@ -147,6 +147,8 @@ where
 }
 
 #[cfg(test)]
+mod test_macros;
+#[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
