@@ -227,6 +227,7 @@ fn parse_boot_config_to_boot_settings(bootconfig: &str) -> Result<BootSettings> 
     }
 
     Ok(BootSettings {
+        reboot_to_reconcile: None,
         kernel_parameters: if kernel_params.is_empty() {
             None
         } else {
@@ -264,6 +265,7 @@ mod boot_settings_tests {
     #[test]
     fn boot_settings_to_string() {
         let boot_settings = BootSettings {
+            reboot_to_reconcile: None,
             kernel_parameters: Some(
                 hashmap! {
                     "console" => vec!["ttyS1,115200n8", "tty0"],
@@ -320,6 +322,7 @@ mod boot_settings_tests {
     #[test]
     fn none_boot_settings_to_string() {
         let boot_settings = BootSettings {
+            reboot_to_reconcile: None,
             kernel_parameters: None,
             init_parameters: None,
         };
@@ -329,6 +332,7 @@ mod boot_settings_tests {
         );
 
         let init_none_boot_settings = BootSettings {
+            reboot_to_reconcile: None,
             kernel_parameters: Some(
                 hashmap! {
                     "console" => vec!["ttyS1,115200n8", "tty0"],
@@ -370,6 +374,7 @@ mod boot_settings_tests {
     #[test]
     fn empty_map_boot_settings_to_string() {
         let boot_settings = BootSettings {
+            reboot_to_reconcile: None,
             kernel_parameters: Some(hashmap! {}),
             init_parameters: None,
         };
