@@ -26,10 +26,14 @@ Some notable features include:
 
 There are many ways to take part in the Bottlerocket community:
 
-- [Join on Meetup](https://www.meetup.com/bottlerocket-community/) to hear about the latest Bottlerocket (virtual/in-person) events and community meetings. The [next community meeting is August 24, 2022](https://www.meetup.com/bottlerocket-community/events/287425423/).
+- [Join us on Meetup](https://www.meetup.com/bottlerocket-community/) to hear about the latest Bottlerocket (virtual/in-person) events and community meetings.
+  Community meetings are typically every other week.
+
+  Details can be found under the [Events section on Meetup](https://www.meetup.com/bottlerocket-community/events/), and you will receive email notifications if you become a member of the Meetup group. (It's free to join!)
+
 - [Start or join a discussion](https://github.com/bottlerocket-os/bottlerocket/discussions) if you have questions about Bottlerocket.
 - If you're interested in contributing, thank you!
-Please see our [contributor's guide](CONTRIBUTING.md).
+  Please see our [contributor's guide](CONTRIBUTING.md).
 
 ## Contact us
 
