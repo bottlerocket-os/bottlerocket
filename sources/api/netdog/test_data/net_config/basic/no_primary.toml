@@ -1,4 +1,4 @@
-version = 1
+version = {{version}}
 
 [eno3]
 dhcp4 = true

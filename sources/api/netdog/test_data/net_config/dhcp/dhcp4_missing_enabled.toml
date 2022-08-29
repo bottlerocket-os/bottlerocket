@@ -1,4 +1,4 @@
-version = 1
+version = {{version}}
 
 [eno1.dhcp4]
 optional = true

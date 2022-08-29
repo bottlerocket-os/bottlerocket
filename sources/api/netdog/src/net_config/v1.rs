@@ -272,3 +272,51 @@ impl FromStr for Sigils {
         Ok(sigils)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::net_config::test_macros::basic_tests;
+    use crate::net_config::test_macros::dhcp_tests;
+
+    basic_tests!(1);
+    dhcp_tests!(1);
+
+    #[test]
+    fn ok_interface_from_str() {
+        let ok = &[
+            "eno1:dhcp4,dhcp6",
+            "eno1:dhcp4,dhcp6?",
+            "eno1:dhcp4?,dhcp6",
+            "eno1:dhcp4?,dhcp6?",
+            "eno1:dhcp6?,dhcp4?",
+            "eno1:dhcp4",
+            "eno1:dhcp4?",
+            "eno1:dhcp6",
+            "eno1:dhcp6?",
+        ];
+        for ok_str in ok {
+            assert!(NetConfigV1::from_str(ok_str).is_ok())
+        }
+    }
+
+    #[test]
+    fn invalid_interface_from_str() {
+        let bad = &[
+            "",
+            ":",
+            "eno1:",
+            ":dhcp4,dhcp6",
+            "dhcp4",
+            "eno1:dhc4",
+            "eno1:dhcp",
+            "eno1:dhcp4+",
+            "eno1:dhcp?",
+            "eno1:dhcp4?,dhcp4",
+            "ENO1:DHCP4?,DhCp6",
+        ];
+        for bad_str in bad {
+            assert!(NetConfigV1::from_str(bad_str).is_err())
+        }
+    }
+}
