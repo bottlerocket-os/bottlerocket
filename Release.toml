@@ -1,4 +1,4 @@
-version = "1.9.1"
+version = "1.9.2"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -140,5 +140,5 @@ version = "1.9.1"
     "migrate_v1.9.0_kubelet-no-daemon-reload.lz4",
     "migrate_v1.9.0_updates-targets-base-url.lz4",
 ]
-"(1.9.0, 1.9.1)" = [
-]
+"(1.9.0, 1.9.1)" = []
+"(1.9.1, 1.9.2)" = []
