@@ -1,3 +1,13 @@
+# v1.9.2 (2022-08-31)
+
+## Build Changes
+
+* Archive old migrations ([#2357])
+* Update `runc` to version 1.1.4 ([#2380])
+
+[#2357]: https://github.com/bottlerocket-os/bottlerocket/pull/2357
+[#2380]: https://github.com/bottlerocket-os/bottlerocket/pull/2380
+
 # v1.9.1 (2022-08-17)
 
 ## OS Changes
