@@ -330,6 +330,10 @@ done
 '''
 ]
 
+# A top level target for devs to ensure review and patch readiness
+[tasks.check]
+dependencies = ["check-cargo-version", "unit-tests", "check-fmt", "check-lints"]
+
 [tasks.check-fmt]
 script = [
 '''
