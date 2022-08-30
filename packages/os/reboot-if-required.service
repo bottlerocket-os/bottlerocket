@@ -1,0 +1,11 @@
+[Unit]
+Description=Reboot system if needed for configuration changes to take effect
+# Block manual interactions for now to prevent unplanned reboots.
+RefuseManualStart=true
+RefuseManualStop=true
+After=configured.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/prairiedog reboot-if-required
+StandardError=journal+console

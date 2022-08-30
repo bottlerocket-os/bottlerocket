@@ -1,7 +1,7 @@
 [Unit]
 Description=Isolates multi-user.target
-After=configured.target
-Requires=configured.target
+After=configured.target reboot-if-required.service
+Requires=configured.target reboot-if-required.service
 
 [Service]
 Type=oneshot
