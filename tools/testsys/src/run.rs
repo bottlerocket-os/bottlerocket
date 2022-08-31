@@ -1,4 +1,4 @@
-use crate::aws_resources::AwsK8s;
+use crate::aws_resources::{AwsEcs, AwsK8s};
 use anyhow::{anyhow, ensure, Context, Result};
 use bottlerocket_types::agent_config::TufRepoConfig;
 use bottlerocket_variant::Variant;
@@ -45,7 +45,7 @@ pub(crate) struct Run {
     #[clap(long, env = "TESTSYS_TARGET_REGION")]
     target_region: Option<String>,
 
-    /// The name of the cluster for resource agents (eks resource agent, ecs resource agent). Note:
+    /// The name of the cluster for resource agents (EKS resource agent, ECS resource agent). Note:
     /// This is not the name of the `testsys cluster` this is the name of the cluster that tests
     /// should be run on. If no cluster name is provided, the bottlerocket cluster
     /// naming convention `<arch>-<variant>` will be used.
@@ -64,7 +64,7 @@ pub(crate) struct Run {
 
     /// Specify the instance type that should be used. This is only applicable for aws-* variants.
     /// It can be omitted for non-aws variants and can be omitted to use default instance types.
-    #[clap(long)]
+    #[clap(long, env = "TESTSYS_INSTANCE_TYPE")]
     instance_type: Option<String>,
 
     /// Add secrets to the testsys agents (`--secret aws-credentials=my-secret`)
@@ -150,7 +150,7 @@ impl Run {
                 }
             });
 
-        match variant.family() {
+        let crds = match variant.family() {
             "aws-k8s" => {
                 debug!("Variant is in 'aws-k8s' family");
                 let bottlerocket_ami = ami(&self.ami_input, &region)?;
@@ -173,19 +173,34 @@ impl Run {
                     migrate_starting_commit: self.migration_starting_commit,
                 };
                 debug!("Creating crds for aws-k8s testing");
-                let crds = aws_k8s
+                aws_k8s
                     .create_crds(self.test_flavor, &self.agent_images)
-                    .await?;
-                debug!("Adding crds to testsys cluster");
-                for crd in crds {
-                    let crd = client
-                        .create_object(crd)
-                        .await
-                        .context("Unable to create object")?;
-                    if let Some(name) = crd.name() {
-                        info!("Successfully added '{}'", name)
-                    };
-                }
+                    .await?
+            }
+            "aws-ecs" => {
+                debug!("Variant is in 'aws-ecs' family");
+                let bottlerocket_ami = ami(&self.ami_input, &region)?;
+                debug!("Using ami '{}'", bottlerocket_ami);
+                let aws_ecs = AwsEcs {
+                    arch: self.arch,
+                    variant: self.variant,
+                    region,
+                    assume_role: self.assume_role,
+                    instance_type: self.instance_type,
+                    ami: bottlerocket_ami.to_string(),
+                    secrets,
+                    target_cluster_name: self.target_cluster_name,
+                    tuf_repo: repo_config,
+                    starting_version: self.migration_starting_version,
+                    starting_image_id: self.starting_image_id,
+                    migrate_starting_commit: self.migration_starting_commit,
+                    migrate_to_version: self.migration_target_version,
+                    capabilities: None,
+                };
+                debug!("Creating crds for aws-ecs testing");
+                aws_ecs
+                    .create_crds(self.test_flavor, &self.agent_images)
+                    .await?
             }
             other => {
                 return Err(anyhow!(
@@ -194,6 +209,15 @@ impl Run {
                 ))
             }
         };
+
+        debug!("Adding crds to testsys cluster");
+        for crd in crds {
+            let crd = client
+                .create_object(crd)
+                .await
+                .context("Unable to create object")?;
+            info!("Successfully added '{}'", crd.name().unwrap());
+        }
 
         Ok(())
     }
@@ -244,7 +268,7 @@ pub(crate) struct Image {
 
 #[derive(Debug, Parser)]
 pub(crate) struct TestsysImages {
-    /// Eks resource agent uri. If not provided the latest released resource agent will be used.
+    /// EKS resource agent URI. If not provided the latest released resource agent will be used.
     #[clap(
         long = "eks-resource-agent-image",
         env = "TESTSYS_EKS_RESOURCE_AGENT_IMAGE",
@@ -252,7 +276,15 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) eks_resource: String,
 
-    /// Ec2 resource agent uri. If not provided the latest released resource agent will be used.
+    /// ECS resource agent URI. If not provided the latest released resource agent will be used.
+    #[clap(
+        long = "ecs-resource-agent-image",
+        env = "TESTSYS_ECS_RESOURCE_AGENT_IMAGE",
+        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-resource-agent:v0.0.1"
+    )]
+    pub(crate) ecs_resource: String,
+
+    /// EC2 resource agent URI. If not provided the latest released resource agent will be used.
     #[clap(
         long = "ec2-resource-agent-image",
         env = "TESTSYS_EC2_RESOURCE_AGENT_IMAGE",
@@ -260,7 +292,7 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) ec2_resource: String,
 
-    /// Sonobuoy test agent uri. If not provided the latest released test agent will be used.
+    /// Sonobuoy test agent URI. If not provided the latest released test agent will be used.
     #[clap(
         long = "sonobuoy-test-agent-image",
         env = "TESTSYS_SONOBUOY_TEST_AGENT_IMAGE",
@@ -268,7 +300,15 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) sonobuoy_test: String,
 
-    /// Migration test agent uri. If not provided the latest released test agent will be used.
+    /// ECS test agent URI. If not provided the latest released test agent will be used.
+    #[clap(
+        long = "ecs-test-agent-image",
+        env = "TESTSYS_ECS_TEST_AGENT_IMAGE",
+        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-test-agent:v0.0.1"
+    )]
+    pub(crate) ecs_test: String,
+
+    /// Migration test agent URI. If not provided the latest released test agent will be used.
     #[clap(
         long = "migration-test-agent-image",
         env = "TESTSYS_MIGRATION_TEST_AGENT_IMAGE",
