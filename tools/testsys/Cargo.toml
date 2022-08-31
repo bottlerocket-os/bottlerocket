@@ -10,7 +10,7 @@ publish = false
 anyhow = "1.0"
 aws-config = "0.46"
 aws-sdk-ec2 = "0.16"
-bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "021e8d6", version = "0.1"}
+bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "07b9ae8", version = "0.0.1"}
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 clap = { version = "3", features = ["derive", "env"] }
 env_logger = "0.9"
@@ -18,11 +18,11 @@ futures = "0.3.8"
 k8s-openapi = { version = "0.15", features = ["v1_20", "api"], default-features = false }
 log = "0.4"
 maplit = "1.0.2"
-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "021e8d6", version = "0.1"}
+model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", rev = "07b9ae8", version = "0.0.1"}
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1"
-terminal_size = "0.1"
+term_size = "0.3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs"] }
 unescape = "0.1.0"

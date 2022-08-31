@@ -170,6 +170,7 @@ impl AwsK8s {
             },
             spec: ResourceSpec {
                 depends_on: None,
+                conflicts_with: None,
                 agent: Agent {
                     name: "eks-provider".to_string(),
                     image: testsys_images.eks_resource.clone(),
@@ -233,6 +234,7 @@ impl AwsK8s {
             },
             spec: ResourceSpec {
                 depends_on: Some(vec![cluster_name]),
+                conflicts_with: None,
                 agent: Agent {
                     name: "ec2-provider".to_string(),
                     image: testsys_images.ec2_resource.clone(),
@@ -284,6 +286,7 @@ impl AwsK8s {
                             mode: sonobuoy_mode,
                             kubernetes_version: None,
                             kube_conformance_image: self.kube_conformance_image.clone(),
+                            e2e_repo_config_base64: None,
                             assume_role: self.assume_role.clone(),
                         }
                         .into_map()
@@ -493,6 +496,7 @@ impl AwsEcs {
             },
             spec: ResourceSpec {
                 depends_on: None,
+                conflicts_with: None,
                 agent: Agent {
                     name: "ecs-provider".to_string(),
                     image: testsys_images.ecs_resource.clone(),
@@ -548,6 +552,7 @@ impl AwsEcs {
             },
             spec: ResourceSpec {
                 depends_on: Some(vec![cluster_name]),
+                conflicts_with: None,
                 agent: Agent {
                     name: "ec2-provider".to_string(),
                     image: testsys_images.ec2_resource.clone(),
