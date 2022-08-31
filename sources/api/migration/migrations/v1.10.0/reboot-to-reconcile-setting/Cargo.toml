@@ -1,0 +1,12 @@
+[package]
+name = "reboot-to-reconcile-setting"
+version = "0.1.0"
+edition = "2018"
+authors = ["Markus Boehme <markubo@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
