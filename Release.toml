@@ -160,4 +160,5 @@ version = "1.10.1"
     "migrate_v1.11.0_aws-config-settings.lz4",
     "migrate_v1.11.0_aws-creds.lz4",
     "migrate_v1.11.0_aws-creds-metadata.lz4",
+    "migrate_v1.11.0_credential-providers.lz4",
 ]

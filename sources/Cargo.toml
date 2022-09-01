@@ -30,6 +30,7 @@ members = [
     "api/migration/migrations/v1.11.0/aws-creds",
     "api/migration/migrations/v1.11.0/aws-creds-metadata",
     "api/migration/migrations/v1.11.0/aws-config-settings",
+    "api/migration/migrations/v1.11.0/credential-providers",
 
     "bottlerocket-release",
 

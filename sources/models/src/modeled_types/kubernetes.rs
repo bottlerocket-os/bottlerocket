@@ -11,6 +11,8 @@ use std::fmt;
 use std::net::IpAddr;
 use std::ops::Deref;
 
+use crate::SingleLineString;
+
 // Declare constant values usable by any type
 const IMAGE_GC_THRESHOLD_MAX: i32 = 100;
 const IMAGE_GC_THRESHOLD_MIN: i32 = 0;
@@ -1257,4 +1259,14 @@ mod test_cluster_dns_ip {
             Some(&IpAddr::from_str("127.0.0.1").unwrap())
         );
     }
+}
+
+/// CredentialProvider contains the settings for a credential provider for use
+/// in CredentialProviderConfig.
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct CredentialProvider {
+    enabled: bool,
+    image_patterns: Vec<SingleLineString>,
+    cache_duration: Option<KubernetesDurationValue>,
 }

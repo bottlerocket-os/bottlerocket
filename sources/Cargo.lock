@@ -1142,6 +1142,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "credential-providers"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
