@@ -21,13 +21,13 @@ lazy_static! {
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
 pub(crate) struct LeaseInfo {
-    // When multiple IP addresses exist for an interface, the second address's key will be
-    // `IPADDR_1`, `IPADDR_2`, and so on.  Parsing the lease in this way means we will always pick
-    // up the first configured IP address.
+    // When multiple IP addresses exist for an interface, the second address's key in the lease
+    // file will be `IPADDR_1`, `IPADDR_2`, and so on.  Parsing the lease for "ipaddr" means we
+    // will always pick up the first configured IP address.
     #[serde(rename = "ipaddr")]
     pub(crate) ip_address: IpNet,
     #[serde(rename = "dnsservers")]
-    pub(crate) dns_servers: BTreeSet<IpAddr>,
+    pub(crate) dns_servers: Option<BTreeSet<IpAddr>>,
     #[serde(rename = "dnsdomain")]
     pub(crate) dns_domain: Option<String>,
     #[serde(rename = "dnssearch")]

@@ -22,6 +22,7 @@ pub(crate) use write_resolv_conf::WriteResolvConfArgs;
 #[serde(rename_all = "kebab-case")]
 enum InterfaceType {
     Dhcp,
+    Static,
 }
 
 #[derive(Debug, PartialEq, Deserialize)]

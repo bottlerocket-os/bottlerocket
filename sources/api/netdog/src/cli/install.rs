@@ -1,12 +1,12 @@
 use super::{error, InterfaceFamily, InterfaceType, Result};
 use crate::dns::DnsSettings;
-use crate::lease::{lease_path, LeaseInfo};
+use crate::lease::{dhcp_lease_path, static_lease_path, LeaseInfo};
 use crate::{CURRENT_IP, PRIMARY_INTERFACE};
 use argh::FromArgs;
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::fs;
 use std::net::IpAddr;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "install")]
@@ -50,34 +50,55 @@ pub(crate) fn run(args: InstallArgs) -> Result<()> {
     }
 
     match (&args.interface_type, &args.interface_family) {
-        (InterfaceType::Dhcp, InterfaceFamily::Ipv4 | InterfaceFamily::Ipv6) => {
-            // A lease should exist when using DHCP
-            let primary_lease_path =
-                lease_path(&primary_interface).context(error::MissingLeaseSnafu {
-                    interface: primary_interface,
-                })?;
-            if args.data_file != primary_lease_path {
-                return error::PrimaryLeaseConflictSnafu {
-                    wicked_path: args.data_file,
-                    generated_path: primary_lease_path,
-                }
-                .fail();
-            }
-
-            // Use DNS API settings if they exist, supplementing any missing settings with settings
-            // derived from the primary interface's DHCP lease
-            let lease =
-                LeaseInfo::from_lease(primary_lease_path).context(error::LeaseParseFailedSnafu)?;
-            let dns_settings = DnsSettings::from_config_or_lease(Some(&lease))
-                .context(error::GetDnsSettingsSnafu)?;
-            dns_settings
-                .write_resolv_conf()
-                .context(error::ResolvConfWriteFailedSnafu)?;
-
+        (
+            interface_type @ (InterfaceType::Dhcp | InterfaceType::Static),
+            InterfaceFamily::Ipv4 | InterfaceFamily::Ipv6,
+        ) => {
+            let lease = fetch_lease(primary_interface, interface_type, args.data_file)?;
+            write_resolv_conf(&lease)?;
             write_current_ip(&lease.ip_address.addr())?;
         }
     }
     Ok(())
+}
+
+/// Given an interface, its type, and wicked's known location of the lease, compare our known lease
+/// location, parse and return a LeaseInfo.
+fn fetch_lease<S, P>(
+    interface: S,
+    interface_type: &InterfaceType,
+    data_file: P,
+) -> Result<LeaseInfo>
+where
+    S: AsRef<str>,
+    P: AsRef<Path>,
+{
+    let interface = interface.as_ref();
+    let data_file = data_file.as_ref();
+    let lease_path = match interface_type {
+        InterfaceType::Dhcp => dhcp_lease_path(interface),
+        InterfaceType::Static => static_lease_path(interface),
+    }
+    .context(error::MissingLeaseSnafu { interface })?;
+
+    ensure!(
+        data_file == lease_path,
+        error::PrimaryLeaseConflictSnafu {
+            wicked_path: data_file,
+            generated_path: lease_path,
+        }
+    );
+
+    LeaseInfo::from_lease(&lease_path).context(error::LeaseParseFailedSnafu)
+}
+
+/// Given a lease, fetch DNS settings from the lease and/or config and write the resolv.conf
+fn write_resolv_conf(lease: &LeaseInfo) -> Result<()> {
+    let dns_settings =
+        DnsSettings::from_config_or_lease(Some(lease)).context(error::GetDnsSettingsSnafu)?;
+    dns_settings
+        .write_resolv_conf()
+        .context(error::ResolvConfWriteFailedSnafu)
 }
 
 /// Persist the current IP address to file

@@ -1,6 +1,6 @@
 use super::{error, Result};
 use crate::dns::DnsSettings;
-use crate::lease::{lease_path, LeaseInfo};
+use crate::lease::{dhcp_lease_path, LeaseInfo};
 use crate::PRIMARY_INTERFACE;
 use argh::FromArgs;
 use snafu::ResultExt;
@@ -12,8 +12,9 @@ use std::fs;
 pub(crate) struct WriteResolvConfArgs {}
 
 pub(crate) fn run() -> Result<()> {
-    // Use DNS API settings if they exist, supplementing any missing settings with settings
-    // derived from the primary interface's DHCP lease if it exists
+    // Use DNS API settings if they exist, supplementing any missing settings with settings derived
+    // from the primary interface's DHCP lease if it exists.  Static leases don't contain any DNS
+    // data, so don't bother looking there.
     let primary_interface = fs::read_to_string(PRIMARY_INTERFACE)
         .context(error::PrimaryInterfaceReadSnafu {
             path: PRIMARY_INTERFACE,
@@ -21,7 +22,7 @@ pub(crate) fn run() -> Result<()> {
         .trim()
         .to_lowercase();
 
-    let primary_lease_path = lease_path(&primary_interface);
+    let primary_lease_path = dhcp_lease_path(&primary_interface);
     let dns_settings = if let Some(primary_lease_path) = primary_lease_path {
         let lease =
             LeaseInfo::from_lease(&primary_lease_path).context(error::LeaseParseFailedSnafu)?;
