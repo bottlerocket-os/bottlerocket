@@ -147,6 +147,8 @@ where
 }
 
 #[cfg(test)]
+mod test_macros;
+#[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
@@ -165,6 +167,18 @@ mod tests {
     }
 
     #[test]
+    fn ok_net_config() {
+        let ok = net_config().join("net_config.toml");
+        assert!(from_path(ok).unwrap().is_some())
+    }
+
+    #[test]
+    fn no_interfaces_net_config() {
+        let bad = net_config().join("no_interfaces.toml");
+        assert!(from_path(bad).unwrap().is_none())
+    }
+
+    #[test]
     fn ok_cmdline() {
         let cmdline = cmdline().join("ok");
         assert!(from_command_line(cmdline).unwrap().is_some());
@@ -180,124 +194,5 @@ mod tests {
     fn no_interfaces_cmdline() {
         let cmdline = cmdline().join("no_interfaces");
         assert!(from_command_line(cmdline).unwrap().is_none())
-    }
-
-    #[test]
-    fn invalid_version() {
-        let bad = net_config().join("bad_version.toml");
-        assert!(from_path(bad).is_err())
-    }
-
-    #[test]
-    fn ok_config() {
-        let ok = net_config().join("net_config.toml");
-        assert!(from_path(ok).is_ok())
-    }
-
-    #[test]
-    fn invalid_interface_config() {
-        let bad = net_config().join("invalid_interface_config.toml");
-        assert!(from_path(bad).is_err())
-    }
-
-    #[test]
-    fn invalid_dhcp4_config() {
-        let bad = net_config().join("invalid_dhcp4_config.toml");
-        assert!(from_path(bad).is_err())
-    }
-
-    #[test]
-    fn invalid_dhcp6_config() {
-        let bad = net_config().join("invalid_dhcp6_config.toml");
-        assert!(from_path(bad).is_err())
-    }
-
-    #[test]
-    fn invalid_dhcp_config() {
-        let ok = net_config().join("invalid_dhcp_config.toml");
-        assert!(from_path(ok).is_err())
-    }
-
-    #[test]
-    fn dhcp4_missing_enable() {
-        let bad = net_config().join("dhcp4_missing_enabled.toml");
-        assert!(from_path(bad).is_err())
-    }
-
-    #[test]
-    fn dhcp6_missing_enable() {
-        let bad = net_config().join("dhcp6_missing_enabled.toml");
-        assert!(from_path(bad).is_err())
-    }
-
-    #[test]
-    fn no_interfaces() {
-        let bad = net_config().join("no_interfaces.toml");
-        assert!(from_path(bad).unwrap().is_none())
-    }
-
-    #[test]
-    fn defined_primary_interface() {
-        let ok_path = net_config().join("net_config.toml");
-        let cfg = from_path(ok_path).unwrap().unwrap();
-
-        let expected = "eno2";
-        let actual = cfg.primary_interface().unwrap();
-        assert_eq!(expected, actual)
-    }
-
-    #[test]
-    fn undefined_primary_interface() {
-        let ok_path = net_config().join("no_primary.toml");
-        let cfg = from_path(ok_path).unwrap().unwrap();
-
-        let expected = "eno3";
-        let actual = cfg.primary_interface().unwrap();
-        println!("{}", &actual);
-        assert_eq!(expected, actual)
-    }
-
-    #[test]
-    fn multiple_primary_interfaces() {
-        let multiple = net_config().join("multiple_primary.toml");
-        assert!(from_path(multiple).is_err())
-    }
-
-    #[test]
-    fn ok_interface_from_str() {
-        let ok = &[
-            "eno1:dhcp4,dhcp6",
-            "eno1:dhcp4,dhcp6?",
-            "eno1:dhcp4?,dhcp6",
-            "eno1:dhcp4?,dhcp6?",
-            "eno1:dhcp6?,dhcp4?",
-            "eno1:dhcp4",
-            "eno1:dhcp4?",
-            "eno1:dhcp6",
-            "eno1:dhcp6?",
-        ];
-        for ok_str in ok {
-            assert!(NetConfigV1::from_str(ok_str).is_ok())
-        }
-    }
-
-    #[test]
-    fn invalid_interface_from_str() {
-        let bad = &[
-            "",
-            ":",
-            "eno1:",
-            ":dhcp4,dhcp6",
-            "dhcp4",
-            "eno1:dhc4",
-            "eno1:dhcp",
-            "eno1:dhcp4+",
-            "eno1:dhcp?",
-            "eno1:dhcp4?,dhcp4",
-            "ENO1:DHCP4?,DhCp6",
-        ];
-        for bad_str in bad {
-            assert!(NetConfigV1::from_str(bad_str).is_err())
-        }
     }
 }
