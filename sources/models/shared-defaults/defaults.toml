@@ -155,3 +155,15 @@ affected-services = ["bootstrap-containers"]
 [services.pki]
 configuration-files = []
 restart-commands = ["/usr/bin/certdog"]
+
+# DNS
+[metadata.settings.dns]
+affected-services = ["dns"]
+
+[services.dns]
+configuration-files = ["netdog-toml"]
+restart-commands = ["netdog write-resolv-conf"]
+
+[configuration-files.netdog-toml]
+path = "/etc/netdog.toml"
+template-path = "/usr/share/templates/netdog-toml"

@@ -303,6 +303,13 @@ struct NtpSettings {
     time_servers: Vec<Url>,
 }
 
+// DNS Settings
+#[model]
+struct DnsSettings {
+    name_servers: Vec<IpAddr>,
+    search_list: Vec<ValidLinuxHostname>,
+}
+
 // Kernel settings
 #[model]
 struct KernelSettings {

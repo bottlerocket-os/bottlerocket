@@ -27,6 +27,10 @@ valid example: `netdog.default-interface=eno1:dhcp4,dhcp6?`.
 The subcommand `prepare-primary-interface` writes the default sysctls for the primary interface to
 file in `/etc/sysctl.d`, and then executes `systemd-sysctl` to apply them.
 
+The subcommand `write-resolv-conf` writes the resolv.conf, favoring DNS API settings and
+supplementing any missing settings with DNS settings from the primary interface's DHCP lease.  It
+is meant to be used as a restart command for DNS API settings.
+
 ## Colophon
 
 This text was generated using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/main.rs`.

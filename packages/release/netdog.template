@@ -1,0 +1,6 @@
+{{#if settings.dns.name-servers}}
+name-servers = [{{join_array ", " settings.dns.name-servers }}]
+{{/if}}
+{{#if settings.dns.search-list}}
+search-list = [{{join_array ", " settings.dns.search-list }}]
+{{/if}}

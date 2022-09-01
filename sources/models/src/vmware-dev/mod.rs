@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 use crate::modeled_types::Identifier;
 use crate::{
-    BootstrapContainer, HostContainer, KernelSettings, MetricsSettings, NetworkSettings,
-    NtpSettings, OciHooks, PemCertificate, RegistrySettings, UpdatesSettings,
+    BootstrapContainer, DnsSettings, HostContainer, KernelSettings, MetricsSettings,
+    NetworkSettings, NtpSettings, OciHooks, PemCertificate, RegistrySettings, UpdatesSettings,
 };
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
@@ -23,4 +23,5 @@ struct Settings {
     pki: HashMap<Identifier, PemCertificate>,
     container_registry: RegistrySettings,
     oci_hooks: OciHooks,
+    dns: DnsSettings,
 }
