@@ -116,8 +116,12 @@ type Result<T> = std::result::Result<T, error::Error>;
 mod tests {
     use super::*;
     use crate::net_config::{self, Interfaces, NetConfigV1};
+    use handlebars::Handlebars;
+    use serde::Serialize;
     use std::path::PathBuf;
     use std::str::FromStr;
+
+    static NET_CONFIG_VERSIONS: &[u8] = &[1, 2];
 
     fn test_data() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_data")
@@ -125,10 +129,6 @@ mod tests {
 
     fn wicked_config() -> PathBuf {
         test_data().join("wicked")
-    }
-
-    fn net_config() -> PathBuf {
-        test_data().join("net_config")
     }
 
     // Test the end-to-end trip: "net config from cmdline -> wicked -> serialized XML"
@@ -167,17 +167,52 @@ mod tests {
     // Test the end to end trip: "net config -> wicked -> serialized XML"
     #[test]
     fn net_config_to_interface_config() {
-        let net_config_path = net_config().join("net_config.toml");
-        let net_config = net_config::from_path(&net_config_path).unwrap().unwrap();
+        let net_config_path = wicked_config().join("net_config.toml");
 
-        let wicked_interfaces = net_config.as_wicked_interfaces();
-        for interface in wicked_interfaces {
-            let mut path = wicked_config().join(interface.name.to_string());
-            path.set_extension("xml");
-            let expected = fs::read_to_string(path).unwrap();
-            let generated = quick_xml::se::to_string(&interface).unwrap();
+        for version in NET_CONFIG_VERSIONS {
+            let temp_config = tempfile::NamedTempFile::new().unwrap();
 
-            assert_eq!(expected.trim(), generated)
+            render_config_template(&net_config_path, &temp_config, &version);
+            let net_config = net_config::from_path(&temp_config).unwrap().unwrap();
+            let wicked_interfaces = net_config.as_wicked_interfaces();
+            for interface in wicked_interfaces {
+                let mut path = wicked_config().join(interface.name.to_string());
+                path.set_extension("xml");
+                let expected = fs::read_to_string(path).unwrap();
+                let generated = quick_xml::se::to_string(&interface).unwrap();
+                dbg!(&generated);
+
+                assert_eq!(
+                    expected.trim(),
+                    generated,
+                    "failed test for net config version: '{}', interface: '{}'",
+                    version,
+                    interface.name.to_string()
+                )
+            }
         }
+    }
+
+    fn render_config_template<P1, P2>(template_path: P1, output_path: P2, version: &u8)
+    where
+        P1: AsRef<Path>,
+        P2: AsRef<Path>,
+    {
+        #[derive(Serialize)]
+        struct Context {
+            version: u8,
+        }
+
+        let output_path = output_path.as_ref();
+        let template_path = template_path.as_ref();
+        let template_str = fs::read_to_string(template_path).unwrap();
+
+        let mut hb = Handlebars::new();
+        hb.register_template_string("template", &template_str)
+            .unwrap();
+
+        let context = Context { version: *version };
+        let rendered = hb.render("template", &context).unwrap();
+        fs::write(output_path, rendered).unwrap()
     }
 }

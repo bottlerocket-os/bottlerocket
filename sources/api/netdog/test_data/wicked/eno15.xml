@@ -1,0 +1,1 @@
+<interface><name>eno15</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv6:static><address><local>2001:cafe:face:beef::dead:dead/64</local></address></ipv6:static></interface>

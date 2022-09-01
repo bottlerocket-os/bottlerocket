@@ -1,0 +1,1 @@
+<interface><name>eno19</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv6:dhcp><enabled>true</enabled></ipv6:dhcp><ipv6:static><address><local>3001:f00f:f00f::2/64</local></address><address><local>3001:f00f:f00f::3/64</local></address></ipv6:static></interface>
