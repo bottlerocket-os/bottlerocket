@@ -11,14 +11,7 @@ path = "pkg.rs"
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/awslabs/oci-add-hooks/archive/ef29fe312d2e1858d5eb28ab0abe0cbee298a165/oci-add-hooks-ef29fe3.tar.gz"
 sha512 = "018b561f838172e768a70acdeb2c27939f931391ced019a23c5193eee6b8970bc02a3e5fa05917010ca2064d1876649ef139d7657700c42a3ddd6e2c174f27dc"
-
-[[package.metadata.build-package.external-files]]
-url = "https://github.com/bitly/go-simplejson/archive/v0.5.0/go-simplejson-0.5.0.tar.gz"
-sha512 = "39c0d85d6ee06a8a795c1e344f0669f5ae8371d1122f09a1b13e5ff7629dd7faf633f9fcb449e19aadab9ad3e42e93143205781a822a29f27758872cf7e09e18"
-
-[[package.metadata.build-package.external-files]]
-url = "https://github.com/joeshaw/json-lossless/archive/e0cd1ca6349bf167e33d44f28c14c728a277205f/json-lossless-e0cd1ca.tar.gz"
-sha512 = "b9eb6170f662a396370ae1e170d89e15efc0a96fee6046fbd749c7a65f09f808e08bc2cf91962db65fd86a2aac4dddf428412b568fe1d03a77a7de22ad0690aa"
+bundle-modules = [ "go" ]
 
 [build-dependencies]
 glibc = { path = "../glibc" }
