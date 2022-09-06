@@ -12,7 +12,9 @@ use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use k8s_openapi::serde_json::Value;
 use log::debug;
 use maplit::btreemap;
+use model::clients::{AllowNotFound, CrdClient};
 use model::constants::NAMESPACE;
+use model::test_manager::{SelectionParams, TestManager};
 use model::{
     Agent, Configuration, Crd, DestructionPolicy, Resource, ResourceSpec, SecretName, Test,
     TestSpec,
@@ -40,6 +42,7 @@ impl AwsK8s {
     /// Create the necessary test and resource crds for the specified test type.
     pub(crate) async fn create_crds(
         &self,
+        client: &TestManager,
         test: TestType,
         testsys_images: &TestsysImages,
     ) -> Result<Vec<Crd>> {
@@ -56,18 +59,56 @@ impl AwsK8s {
                 self.kube_arch(),
                 self.kube_variant(),
             )?;
+            // Check for existing cluster crd
+            let cluster_exists = client
+                .resource_client()
+                .get(&cluster_name)
+                .await
+                .allow_not_found(|_| ())?
+                .is_some();
+            if !cluster_exists {
+                debug!("Cluster crd does not exist");
+                crds.push(self.eks_crd(cluster_name, testsys_images, &test)?)
+            }
+            // Check for conflicting resources (ones that use the same cluster)
+            let conflicting_resources: Vec<String> = if cluster_exists {
+                client
+                    .list(&SelectionParams::Label(format!(
+                        "testsys/cluster={}, testsys/type=instances",
+                        cluster_name
+                    )))
+                    .await?
+                    .into_iter()
+                    // Retrieve the name from each resource
+                    .filter_map(|crd| crd.name())
+                    .collect()
+            } else {
+                Default::default()
+            };
+
             crds.append(&mut match &test {
                 TestType::Conformance => self.sonobuoy_test_crds(
+                    &test,
                     testsys_images,
                     SonobuoyMode::CertifiedConformance,
                     cluster_name,
+                    &conflicting_resources,
                 )?,
-                TestType::Quick => {
-                    self.sonobuoy_test_crds(testsys_images, SonobuoyMode::Quick, cluster_name)?
-                }
+                TestType::Quick => self.sonobuoy_test_crds(
+                    &test,
+                    testsys_images,
+                    SonobuoyMode::Quick,
+                    cluster_name,
+                    &conflicting_resources,
+                )?,
                 TestType::Migration => {
-                    self.migration_test_crds(cluster_name, testsys_images)
-                        .await?
+                    self.migration_test_crds(
+                        cluster_name,
+                        &test,
+                        &conflicting_resources,
+                        testsys_images,
+                    )
+                    .await?
                 }
             })
         }
@@ -76,14 +117,30 @@ impl AwsK8s {
 
     fn sonobuoy_test_crds(
         &self,
+        test_type: &TestType,
         testsys_images: &TestsysImages,
         sonobuoy_mode: SonobuoyMode,
         cluster_name: &str,
+        conflicting_resources: &[String],
     ) -> Result<Vec<Crd>> {
         let crds = vec![
-            self.eks_crd(cluster_name, testsys_images)?,
-            self.ec2_crd(cluster_name, testsys_images, None)?,
-            self.sonobuoy_crd("-test", cluster_name, sonobuoy_mode, None, testsys_images)?,
+            self.ec2_crd(
+                cluster_name,
+                "test",
+                test_type,
+                conflicting_resources,
+                testsys_images,
+                None,
+            )?,
+            self.sonobuoy_crd(
+                "-test",
+                cluster_name,
+                test_type,
+                "test",
+                sonobuoy_mode,
+                None,
+                testsys_images,
+            )?,
         ];
         Ok(crds)
     }
@@ -92,6 +149,8 @@ impl AwsK8s {
     async fn migration_test_crds(
         &self,
         cluster_name: &str,
+        test_type: &TestType,
+        conflicting_resources: &[String],
         testsys_images: &TestsysImages,
     ) -> Result<Vec<Crd>> {
         let ami = if let Some(ami) = self.starting_image_id.to_owned() {
@@ -106,8 +165,14 @@ impl AwsK8s {
                 )
                 .await?
         };
-        let eks = self.eks_crd(cluster_name, testsys_images)?;
-        let ec2 = self.ec2_crd(cluster_name, testsys_images, Some(ami))?;
+        let ec2 = self.ec2_crd(
+            cluster_name,
+            "migration",
+            test_type,
+            conflicting_resources,
+            testsys_images,
+            Some(ami),
+        )?;
         let instance_provider = ec2
             .name()
             .expect("The EC2 instance provider crd is missing a name.");
@@ -116,6 +181,8 @@ impl AwsK8s {
         let initial = self.sonobuoy_crd(
             "-1-initial",
             cluster_name,
+            test_type,
+            "migration",
             SonobuoyMode::Quick,
             None,
             testsys_images,
@@ -134,6 +201,8 @@ impl AwsK8s {
         let migrated = self.sonobuoy_crd(
             "-3-migrated",
             cluster_name,
+            test_type,
+            "migration",
             SonobuoyMode::Quick,
             Some(depends_on.clone()),
             testsys_images,
@@ -152,12 +221,13 @@ impl AwsK8s {
         let last = self.sonobuoy_crd(
             "-5-final",
             cluster_name,
+            test_type,
+            "migration",
             SonobuoyMode::Quick,
             Some(depends_on.clone()),
             testsys_images,
         )?;
         Ok(vec![
-            eks,
             ec2,
             initial,
             start_migrate,
@@ -168,10 +238,22 @@ impl AwsK8s {
     }
 
     /// Labels help filter test results with `testsys status`.
-    fn labels(&self) -> BTreeMap<String, String> {
+    fn labels<S1, S2>(
+        &self,
+        cluster_name: S1,
+        testsys_type: S2,
+        test_type: &TestType,
+    ) -> BTreeMap<String, String>
+    where
+        S1: Into<String>,
+        S2: Into<String>,
+    {
         btreemap! {
             "testsys/arch".to_string() => self.arch.to_string(),
             "testsys/variant".to_string() => self.variant.to_string(),
+            "testsys/cluster".to_string() => cluster_name.into(),
+            "testsys/type".to_string() => testsys_type.into(),
+            "testsys/test".to_string() => test_type.to_string(),
         }
     }
 
@@ -188,7 +270,12 @@ impl AwsK8s {
         format!("{}-{}", self.kube_arch(), self.kube_variant())
     }
 
-    fn eks_crd(&self, cluster_name: &str, testsys_images: &TestsysImages) -> Result<Crd> {
+    fn eks_crd(
+        &self,
+        cluster_name: &str,
+        testsys_images: &TestsysImages,
+        test_type: &TestType,
+    ) -> Result<Crd> {
         let cluster_version = K8sVersion::parse(
             Variant::new(&self.variant)
                 .context("The provided variant cannot be interpreted.")?
@@ -200,7 +287,7 @@ impl AwsK8s {
             metadata: ObjectMeta {
                 name: Some(cluster_name.to_string()),
                 namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels()),
+                labels: Some(self.labels(cluster_name, "cluster", test_type)),
                 ..Default::default()
             },
             spec: ResourceSpec {
@@ -240,6 +327,9 @@ impl AwsK8s {
     fn ec2_crd(
         &self,
         cluster_name: &str,
+        resource_name_suffix: &str,
+        test_type: &TestType,
+        conflicting_resources: &[String],
         testsys_images: &TestsysImages,
         override_ami: Option<String>,
     ) -> Result<Crd> {
@@ -269,14 +359,17 @@ impl AwsK8s {
 
         let ec2_resource = Resource {
             metadata: ObjectMeta {
-                name: Some(format!("{}-instances", cluster_name)),
+                name: Some(format!(
+                    "{}-instances-{}",
+                    cluster_name, resource_name_suffix
+                )),
                 namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels()),
+                labels: Some(self.labels(cluster_name, "instances", test_type)),
                 ..Default::default()
             },
             spec: ResourceSpec {
                 depends_on: Some(vec![cluster_name.to_string()]),
-                conflicts_with: None,
+                conflicts_with: Some(conflicting_resources.into()),
                 agent: Agent {
                     name: "ec2-provider".to_string(),
                     image: testsys_images
@@ -290,28 +383,31 @@ impl AwsK8s {
                     secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
-                destruction_policy: DestructionPolicy::OnDeletion,
+                destruction_policy: DestructionPolicy::OnTestSuccess,
             },
             status: None,
         };
         Ok(Crd::Resource(ec2_resource))
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn sonobuoy_crd(
         &self,
         test_name_suffix: &str,
         cluster_name: &str,
+        test_type: &TestType,
+        ec2_resource_name_suffix: &str,
         sonobuoy_mode: SonobuoyMode,
         depends_on: Option<Vec<String>>,
         testsys_images: &TestsysImages,
     ) -> Result<Crd> {
-        let ec2_resource_name = format!("{}-instances", cluster_name);
+        let ec2_resource_name = format!("{}-instances-{}", cluster_name, ec2_resource_name_suffix);
         let test_name = format!("{}{}", cluster_name, test_name_suffix);
         let sonobuoy = Test {
             metadata: ObjectMeta {
                 name: Some(test_name),
                 namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels()),
+                labels: Some(self.labels(cluster_name, "test", test_type)),
                 ..Default::default()
             },
             spec: TestSpec {
@@ -393,7 +489,8 @@ impl Migration for AwsK8s {
         btreemap! {
             "testsys/arch".to_string() => self.arch.to_string(),
             "testsys/variant".to_string() => self.variant.to_string(),
-            "testsys/flavor".to_string() => "updown".to_string(),
+            "testsys/type".to_string() => "test".to_string(),
+            "testsys/test".to_string() => TestType::Migration.to_string(),
         }
     }
 }
@@ -604,7 +701,7 @@ impl AwsEcs {
                     secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
-                destruction_policy: DestructionPolicy::Never,
+                destruction_policy: DestructionPolicy::OnTestSuccess,
             },
             status: None,
         };
@@ -658,7 +755,7 @@ impl AwsEcs {
                     secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
-                destruction_policy: DestructionPolicy::OnDeletion,
+                destruction_policy: DestructionPolicy::OnTestSuccess,
             },
             status: None,
         };
