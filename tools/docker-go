@@ -56,7 +56,7 @@ parse_args "${@}"
 
 # Pass through relevant Go variables, from the config or environment.
 go_env=( )
-for i in GOPROXY GONOPROXY GOPRIVATE ; do
+for i in GOPROXY GONOPROXY GOPRIVATE GOSUMDB ; do
   if command -v go >/dev/null 2>&1 ; then
     govar="$(go env ${i})"
     if [ -n "${govar}" ] ; then

@@ -33,6 +33,44 @@ url = "https://bar"
 sha512 = "123456"
 ```
 
+The `bundle-*` keys on `external-files` are a group of optional modifiers
+and are used to untar an upstream external file archive, vendor any dependent
+code, and produce an additional archive with those dependencies.
+Only `bundle-modules` is required when bundling an archive's dependences.
+
+`bundle-modules` is a list of module "paradigms" the external-file should
+be vendored through. For example, if a project contains a `go.mod` and `go.sum`
+file, adding "go" to the list will vendor the dependencies through go modules.
+Currently, only "go" is supported.
+
+`bundle-root-path` is an optional argument that provides the filepath
+within the archive that contains the module. By default, the first top level
+directory in the archive is used. So, for example, given a Go project that has
+the necessary `go.mod` and `go.sum` files in the archive located at the
+filepath `a/b/c`, this `bundle-root-path` value should be "a/b/c". Or, given an
+archive with a single directory that contains a Go project that has `go.mod`
+and `go.sum` files located in that top level directory, this option may be
+omitted since the single top-level directory will authomatically be used.
+
+`bundle-output-path` is an optional argument that provides the desired path of
+the output archive. By default, this will use the name of the existing archive,
+but pre-pended with "bundled-". For example, if "my-unique-archive-name.tar.gz"
+is entered as the value for `bundle-output-path`, then the output directory
+will be named `my-unique-archive-name.tar.gz`. Or, by default, given the name
+of some upstream archive is "my-package.tar.gz", the output archive would be
+named `bundled-my-package.tar.gz`. This output path may then be referenced
+within an RPM spec or when creating a package in order to access the vendored
+upstream dependencies during build time.
+```
+[[package.metadata.build-package.external-files]]
+path = "foo"
+url = "https://foo"
+sha512 = "abcdef"
+bundle-modules = [ "go" ]
+bundle-root-path = "path/to/module"
+bundle-output-path = "path/to/output.tar.gz"
+```
+
 `package-name` lets you override the package name in Cargo.toml; this is useful
 if you have a package with "." in its name, for example, which Cargo doesn't
 allow.  This means the directory name and spec file name can use your preferred
@@ -347,11 +385,20 @@ impl fmt::Display for GrubFeature {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum BundleModule {
+    Go,
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct ExternalFile {
     pub(crate) path: Option<PathBuf>,
     pub(crate) sha512: String,
     pub(crate) url: String,
+    pub(crate) bundle_modules: Option<Vec<BundleModule>>,
+    pub(crate) bundle_root_path: Option<PathBuf>,
+    pub(crate) bundle_output_path: Option<PathBuf>,
 }
 
 impl fmt::Display for SupportedArch {
