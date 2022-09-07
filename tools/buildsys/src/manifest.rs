@@ -82,11 +82,27 @@ package-name = "better.name"
 
 `variant-sensitive` lets you specify whether the package should be rebuilt when
 building a new variant, and defaults to false; set it to true if a package is
-using the variant to affect its build process.  (Typically this means that it
-reads BUILDSYS_VARIANT.)
+using the variant to affect its build process.
+
 ```
 [package.metadata.build-package]
 variant-sensitive = true
+```
+
+Some packages might only be sensitive to certain components of the variant
+tuple, such as the platform, runtime, or family. The `variant-sensitive` field
+can also take a string to indicate the source of the sensitivity.
+
+```
+[package.metadata.build-package]
+# sensitive to platform, like "metal" or "aws"
+variant-sensitive = "platform"
+
+# sensitive to runtime, like "k8s" or "ecs"
+variant-sensitive = "runtime"
+
+# sensitive to family, like "metal-k8s" or "aws-ecs"
+variant-sensitive = "family"
 ```
 
 `releases-url` is ignored by buildsys, but can be used by packager maintainers
@@ -209,8 +225,9 @@ impl ManifestInfo {
     }
 
     /// Convenience method to find whether the package is sensitive to variant changes.
-    pub(crate) fn variant_sensitive(&self) -> Option<bool> {
-        self.build_package().and_then(|b| b.variant_sensitive)
+    pub(crate) fn variant_sensitive(&self) -> Option<&VariantSensitivity> {
+        self.build_package()
+            .and_then(|b| b.variant_sensitive.as_ref())
     }
 
     /// Convenience method to return the list of included packages.
@@ -283,7 +300,24 @@ pub(crate) struct BuildPackage {
     pub(crate) package_name: Option<String>,
     pub(crate) releases_url: Option<String>,
     pub(crate) source_groups: Option<Vec<PathBuf>>,
-    pub(crate) variant_sensitive: Option<bool>,
+    pub(crate) variant_sensitive: Option<VariantSensitivity>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+#[serde(untagged)]
+pub(crate) enum VariantSensitivity {
+    Any(bool),
+    Specific(SensitivityType),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum SensitivityType {
+    Platform,
+    Runtime,
+    Family,
+    Flavor,
 }
 
 #[derive(Deserialize, Debug)]

@@ -80,22 +80,27 @@ impl PackageBuilder {
             .context(error::UnsupportedArchSnafu { arch: &arch })?
             .goarch();
 
-        // We do *not* want to rebuild most packages when the variant changes, because most aren't
-        // affected; packages that care about variant should "echo cargo:rerun-if-env-changed=VAR"
-        // themselves in the package's spec file.
-        let var = "BUILDSYS_VARIANT";
-        let variant = env::var(var).context(error::EnvironmentSnafu { var })?;
-        // Same for repo, which is used to determine the correct root.json, which is only included
-        // in the os package.
-        let var = "PUBLISH_REPO";
-        let repo = env::var(var).context(error::EnvironmentSnafu { var })?;
-
         let mut args = Vec::new();
         args.build_arg("PACKAGE", package);
         args.build_arg("ARCH", &arch);
         args.build_arg("GOARCH", &goarch);
-        args.build_arg("VARIANT", variant);
-        args.build_arg("REPO", repo);
+
+        // Pass certain environment variables into the build environment. These variables aren't
+        // automatically used to trigger rebuilds when they change, because most packages aren't
+        // affected. Packages that care should "echo cargo:rerun-if-env-changed=VAR" in their
+        // build.rs build script.
+        for (src_env_var, target_env_var) in [
+            ("BUILDSYS_VARIANT", "VARIANT"),
+            ("BUILDSYS_VARIANT_PLATFORM", "VARIANT_PLATFORM"),
+            ("BUILDSYS_VARIANT_RUNTIME", "VARIANT_RUNTIME"),
+            ("BUILDSYS_VARIANT_FAMILY", "VARIANT_FAMILY"),
+            ("BUILDSYS_VARIANT_FLAVOR", "VARIANT_FLAVOR"),
+            ("PUBLISH_REPO", "REPO"),
+        ] {
+            let src_env_val =
+                env::var(src_env_var).context(error::EnvironmentSnafu { var: src_env_var })?;
+            args.build_arg(target_env_var, src_env_val);
+        }
 
         let tag = format!(
             "buildsys-pkg-{package}-{arch}",

@@ -1,5 +1,4 @@
 %global debug_package %{nil}
-%global _is_metal_variant %(if echo %{_cross_variant} | grep -Fqw "metal"; then echo 1; else echo 0; fi)
 
 Name: %{_cross_os}kernel-5.15
 Version: 5.15.54
@@ -10,7 +9,9 @@ URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
 Source0: https://cdn.amazonlinux.com/blobstore/47fc1797c6cf0a9ee2cb4c2ccba9c73a47c0ff75bdb22bf19e939083029881dc/kernel-5.15.54-25.126.amzn2.src.rpm
 Source100: config-bottlerocket
-Source101: config-bottlerocket-metal
+Source101: config-bottlerocket-aws
+Source102: config-bottlerocket-metal
+Source103: config-bottlerocket-vmware
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
@@ -94,9 +95,7 @@ scripts/kconfig/merge_config.sh \
   ../config-microcode \
 %endif
   %{SOURCE100} \
-%if %{_is_metal_variant}
-  %{SOURCE101}
-%endif
+  %{_sourcedir}/config-bottlerocket-%{_cross_variant_platform}
 
 rm -f ../config-* ../*.patch
 

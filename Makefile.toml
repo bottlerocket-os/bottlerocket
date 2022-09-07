@@ -548,6 +548,13 @@ fi
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
+# Parse the variant into its components and set additional variables.
+eval $(bottlerocket-variant)
+export BUILDSYS_VARIANT_PLATFORM="${BUILDSYS_VARIANT_PLATFORM:?}"
+export BUILDSYS_VARIANT_RUNTIME="${BUILDSYS_VARIANT_RUNTIME:?}"
+export BUILDSYS_VARIANT_FAMILY="${BUILDSYS_VARIANT_FAMILY:?}"
+export BUILDSYS_VARIANT_FLAVOR="${BUILDSYS_VARIANT_FLAVOR}"
+
 # Save built artifacts for each architecture.  We don't set this everywhere
 # because we build host tools with cargo as well, like buildsys and pubsys.
 export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
@@ -565,6 +572,13 @@ dependencies = ["build-tools", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+# Parse the variant into its components and set additional variables.
+eval $(bottlerocket-variant)
+export BUILDSYS_VARIANT_PLATFORM="${BUILDSYS_VARIANT_PLATFORM:?}"
+export BUILDSYS_VARIANT_RUNTIME="${BUILDSYS_VARIANT_RUNTIME:?}"
+export BUILDSYS_VARIANT_FAMILY="${BUILDSYS_VARIANT_FAMILY:?}"
+export BUILDSYS_VARIANT_FLAVOR="${BUILDSYS_VARIANT_FLAVOR}"
 
 # Save built artifacts for each architecture.  We don't set this everywhere
 # because we build host tools with cargo as well, like buildsys and pubsys.

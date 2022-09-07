@@ -489,6 +489,7 @@ dependencies = [
 name = "buildsys"
 version = "0.1.0"
 dependencies = [
+ "bottlerocket-variant",
  "duct",
  "hex",
  "lazy_static",

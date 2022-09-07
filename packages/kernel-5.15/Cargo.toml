@@ -6,7 +6,7 @@ publish = false
 build = "build.rs"
 
 [package.metadata.build-package]
-variant-sensitive = true
+variant-sensitive = "platform"
 package-name = "kernel-5.15"
 
 [lib]

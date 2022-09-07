@@ -61,6 +61,10 @@ ARG PACKAGE
 ARG ARCH
 ARG NOCACHE
 ARG VARIANT
+ARG VARIANT_PLATFORM
+ARG VARIANT_RUNTIME
+ARG VARIANT_FAMILY
+ARG VARIANT_FLAVOR
 ARG REPO
 ENV VARIANT=${VARIANT}
 WORKDIR /home/builder
@@ -82,10 +86,18 @@ COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${
 RUN rpmdev-setuptree \
    && cat ${ARCH} shared rust cargo > .rpmmacros \
    && echo "%_cross_variant ${VARIANT}" >> .rpmmacros \
+   && echo "%_cross_variant_platform ${VARIANT_PLATFORM}" >> .rpmmacros \
+   && echo "%_cross_variant_runtime ${VARIANT_RUNTIME}" >> .rpmmacros \
+   && echo "%_cross_variant_family ${VARIANT_FAMILY}" >> .rpmmacros \
+   && echo "%_cross_variant_flavor ${VARIANT_FAMILY:-none}" >> .rpmmacros \
    && echo "%_cross_repo_root_json %{_builddir}/root.json" >> .rpmmacros \
    && echo "%_topdir /home/builder/rpmbuild" >> .rpmmacros \
    && rm ${ARCH} shared rust cargo \
-   && mv *.spec rpmbuild/SPECS \
+   && echo "%bcond_without $(V=${VARIANT_PLATFORM,,}; echo ${V//-/_})_platform" > .bconds \
+   && echo "%bcond_without $(V=${VARIANT_RUNTIME,,}; echo ${V//-/_})_runtime" >> .bconds \
+   && echo "%bcond_without $(V=${VARIANT_FAMILY,,}; echo ${V//-/_})_family" >> .bconds \
+   && echo "%bcond_without $(V=${VARIANT_FLAVOR:-no}; V=${V,,}; echo ${V//-/_})_flavor" >> .bconds \
+   && cat .bconds ${PACKAGE}.spec >> rpmbuild/SPECS/${PACKAGE}.spec \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
    && echo ${NOCACHE}
 
