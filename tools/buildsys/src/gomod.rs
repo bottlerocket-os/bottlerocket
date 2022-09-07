@@ -126,7 +126,7 @@ impl GoMod {
         let script_contents = GO_MOD_SCRIPT_TMPL
             .replace("__LOCAL_FILE_NAME__", &local_file_name.to_string_lossy())
             .replace("__MOD_DIR__", &mod_dir.to_string_lossy())
-            .replace("__OUTPUT__", &default_output_path.to_string_lossy());
+            .replace("__OUTPUT__", &output_path_arg.to_string_lossy());
         let script_path = format!(
             "{}/{}",
             package_dir.to_string_lossy(),
