@@ -262,43 +262,42 @@ mod boot_settings_tests {
         DEFAULT_BOOTCONFIG_STR,
     };
     use maplit::hashmap;
+    use model::modeled_types::{BootConfigKey, BootConfigValue};
     use model::BootSettings;
     use serde_json::json;
     use serde_json::value::Value;
+    use std::collections::HashMap;
     use std::convert::TryInto;
+
+    /// Convert a plain hash map into BootSettings parameters.
+    fn to_boot_settings_params(
+        params: HashMap<&str, Vec<&str>>,
+    ) -> Option<HashMap<BootConfigKey, Vec<BootConfigValue>>> {
+        Some(
+            params
+                .into_iter()
+                .map(|(k, v)| {
+                    (
+                        k.try_into().unwrap(),
+                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
+                    )
+                })
+                .collect(),
+        )
+    }
 
     #[test]
     fn boot_settings_to_string() {
         let boot_settings = BootSettings {
             reboot_to_reconcile: None,
-            kernel_parameters: Some(
-                hashmap! {
-                    "console" => vec!["ttyS1,115200n8", "tty0"],
-                }
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        k.try_into().unwrap(),
-                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
-                    )
-                })
-                .collect(),
-            ),
-            init_parameters: Some(
-                hashmap! {
-                    "systemd.log_level" => vec!["debug"],
-                    "splash" => vec![""],
-                    "weird" => vec!["'single'quotes'","\"double\"quotes\""],
-                }
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        k.try_into().unwrap(),
-                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
-                    )
-                })
-                .collect(),
-            ),
+            kernel_parameters: to_boot_settings_params(hashmap! {
+                "console" => vec!["ttyS1,115200n8", "tty0"],
+            }),
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+                "splash" => vec![""],
+                "weird" => vec!["'single'quotes'","\"double\"quotes\""],
+            }),
         };
         let output = serialize_boot_settings_to_boot_config(&boot_settings).unwrap();
         // Sort the entries alphabetically to keep results consistent
@@ -338,20 +337,10 @@ mod boot_settings_tests {
 
         let init_none_boot_settings = BootSettings {
             reboot_to_reconcile: None,
-            kernel_parameters: Some(
-                hashmap! {
-                    "console" => vec!["ttyS1,115200n8", "tty0"],
-                    "usbcore.quirks" => vec!["0781:5580:bk","0a5c:5834:gij"],
-                }
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        k.try_into().unwrap(),
-                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
-                    )
-                })
-                .collect(),
-            ),
+            kernel_parameters: to_boot_settings_params(hashmap! {
+                "console" => vec!["ttyS1,115200n8", "tty0"],
+                "usbcore.quirks" => vec!["0781:5580:bk","0a5c:5834:gij"],
+            }),
             init_parameters: None,
         };
         let output = serialize_boot_settings_to_boot_config(&init_none_boot_settings).unwrap();
