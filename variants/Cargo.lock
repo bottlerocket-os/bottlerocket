@@ -298,6 +298,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecr-credential-provider"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "ecs-agent"
 version = "0.1.0"
 dependencies = [
@@ -433,6 +440,7 @@ dependencies = [
 name = "kubernetes-1_21"
 version = "0.1.0"
 dependencies = [
+ "ecr-credential-provider",
  "glibc",
 ]
 
@@ -440,6 +448,7 @@ dependencies = [
 name = "kubernetes-1_22"
 version = "0.1.0"
 dependencies = [
+ "ecr-credential-provider",
  "glibc",
 ]
 
@@ -447,6 +456,7 @@ dependencies = [
 name = "kubernetes-1_23"
 version = "0.1.0"
 dependencies = [
+ "ecr-credential-provider",
  "glibc",
 ]
 
@@ -454,6 +464,7 @@ dependencies = [
 name = "kubernetes-1_24"
 version = "0.1.0"
 dependencies = [
+ "ecr-credential-provider",
  "glibc",
 ]
 

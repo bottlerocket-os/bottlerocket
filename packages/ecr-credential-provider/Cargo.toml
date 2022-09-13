@@ -1,0 +1,20 @@
+[package]
+name = "ecr-credential-provider"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/kubernetes/cloud-provider-aws/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/kubernetes/cloud-provider-aws/archive/v1.25.1/cloud-provider-aws-1.25.1.tar.gz"
+sha512 = "ceb80d66d9dedaebf8955477837652bde81b2bc3949e8efbc9c4b7b9722fe1c2bd2faa151aaa1a162e3c174424e92e2c2bee9f25f8123e74de2ee7eb7881d40e"
+bundle-modules = [ "go" ]
+
+[build-dependencies]
+glibc = { path = "../glibc" }
