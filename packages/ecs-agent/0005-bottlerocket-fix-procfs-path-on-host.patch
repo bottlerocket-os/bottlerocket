@@ -1,4 +1,4 @@
-From c8214dc68af21b4ea22c652f3e30caba5fdeef42 Mon Sep 17 00:00:00 2001
+From baf491ab24fb2dfc1c4a98c8492fc32769475cc6 Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 26 Mar 2021 17:48:28 -0700
 Subject: [PATCH 5/5] bottlerocket: fix procfs path on host
@@ -14,7 +14,7 @@ ECS agent in a container, the ECS agent can directly read the host's
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/agent/ecscni/types_linux.go b/agent/ecscni/types_linux.go
-index 2ad6583..118e6aa 100644
+index 729acac..74ac96c 100644
 --- a/agent/ecscni/types_linux.go
 +++ b/agent/ecscni/types_linux.go
 @@ -40,7 +40,7 @@ const (
@@ -23,9 +23,9 @@ index 2ad6583..118e6aa 100644
  	// NetnsFormat is used to construct the path to cotainer network namespace
 -	NetnsFormat = "/host/proc/%s/ns/net"
 +	NetnsFormat = "/proc/%s/ns/net"
- )
- 
- //IPAMNetworkConfig is the config format accepted by the plugin
+ 	// Starting with CNI plugin v0.8.0 (this PR https://github.com/containernetworking/cni/pull/698)
+ 	// NetworkName has to be non-empty field for network config.
+ 	// We do not actually make use of the field, hence passing in a placeholder string to fulfill the API spec
 -- 
-2.32.0
+2.25.1
 
