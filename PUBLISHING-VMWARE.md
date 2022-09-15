@@ -46,20 +46,20 @@ datacenters = ["foo", "bar"]
 Then you can easily upload your OVA, specifying the variant you wish to upload (currently only VMware variants).
 
 ```shell
-cargo make -e BUILDSYS_VARIANT=vmware-k8s-1.20 upload-ova
+cargo make -e BUILDSYS_VARIANT=vmware-k8s-1.24 upload-ova
 ```
 
 If you would like to upload your OVA as a VM template, you can do this in a single step:
 
 ```shell
-cargo make -e BUILDSYS_VARIANT=vmware-k8s-1.20 vmware-template
+cargo make -e BUILDSYS_VARIANT=vmware-k8s-1.24 vmware-template
 ```
 
 You can override the list of datacenters to upload to by specifying `VMWARE_DATACENTERS`:
 
 ```shell
 cargo make vmware-template \
-  -e BUILDSYS_VARIANT=vmware-k8s-1.20 \
+  -e BUILDSYS_VARIANT=vmware-k8s-1.24 \
   -e VMWARE_DATACENTERS="foo,bar"
 ```
 
@@ -70,6 +70,6 @@ Our [import spec template](tools/pubsys/support/vmware/import_spec.template) can
 
 ```shell
 cargo make vmware-template \
-  -e BUILDSYS_VARIANT=vmware-k8s-1.20 \
+  -e BUILDSYS_VARIANT=vmware-k8s-1.24 \
   -e VMWARE_IMPORT_SPEC_PATH=/path/to/my/spec.toml
 ```

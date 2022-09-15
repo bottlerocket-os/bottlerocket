@@ -33,13 +33,6 @@ For example, in a VMware variant, settings read from the guestinfo interface wil
 
 ## Variants
 
-### aws-k8s-1.20: Kubernetes 1.20 node
-
-The [aws-k8s-1.20](aws-k8s-1.20/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
-
 ### aws-k8s-1.21: Kubernetes 1.21 node
 
 The [aws-k8s-1.21](aws-k8s-1.21/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -117,13 +110,6 @@ User data will be read from IMDS.
 
 The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMware guest.
 It includes tools for troubleshooting as well as Docker for running containers.
-
-### vmware-k8s-1.20: VMware Kubernetes 1.20 node
-
-The [vmware-k8s-1.20](vmware-k8s-1.20/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
-It supports self-hosted clusters.
-
-This variant is compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
 
 ### vmware-k8s-1.21: VMware Kubernetes 1.21 node
 
@@ -238,6 +224,23 @@ This variant was compatible with Kubernetes 1.19, 1.20, and 1.21 clusters.
 It reached end-of-life on August 1st, 2022.
 
 Upstream support for Kubernetes 1.19 has ended and this variant will no longer be supported in Bottlerocket releases.
+
+### aws-k8s-1.20: Kubernetes 1.20 node
+
+The aws-k8s-1.20 variant included the packages needed to run a Kubernetes node in AWS.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
+It reached end-of-life on November 1st, 2022.
+
+Upstream support for Kubernetes 1.20 has ended and this variant will no longer be supported in Bottlerocket releases.
+
+### vmware-k8s-1.20: VMware Kubernetes 1.20 node
+
+The vmware-k8s-1.20 variant included the packages needed to run a Kubernetes worker node as a VMware guest.
+It supported self-hosted clusters.
+
+This variant was compatible with Kubernetes 1.20, 1.21, and 1.22 clusters.
 
 ## Development
 
