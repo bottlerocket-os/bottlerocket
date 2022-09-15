@@ -2,7 +2,7 @@
 skip_core_tasks = true
 
 [env]
-BUILDSYS_ARCH = { script = ["uname -m"] }
+BUILDSYS_ARCH = { script = ['echo "${BUILDSYS_ARCH:-$(uname -m)}"'] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
@@ -18,7 +18,7 @@ BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*
 BUILDSYS_RELEASE_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Release.toml"
 BUILDSYS_VERSION_IMAGE = { script = ["awk -F '[ =\"]+' '$1 == \"version\" {print $2}' ${BUILDSYS_RELEASE_CONFIG_PATH}"] }
 # This can be overridden with -e to build a different variant from the variants/ directory
-BUILDSYS_VARIANT = "aws-k8s-1.21"
+BUILDSYS_VARIANT = { script = ['echo "${BUILDSYS_VARIANT:-aws-k8s-1.21}"'] }
 # Product name used for file and directory naming
 BUILDSYS_NAME = "bottlerocket"
 # "Pretty" name used to identify OS in os-release, bootloader, etc.
