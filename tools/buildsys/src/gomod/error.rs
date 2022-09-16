@@ -28,6 +28,30 @@ pub(crate) enum Error {
         var: String,
         source: std::env::VarError,
     },
+
+    #[snafu(display("Failed to create '{}': {}", path.display(), source))]
+    CreateFile {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to set permissions on '{}': {}", path.display(), source))]
+    SetFilePermissions {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to write contents to '{}': {}", path.display(), source))]
+    WriteFile {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to remove '{}': {}", path.display(), source))]
+    RemoveFile {
+        path: PathBuf,
+        source: std::io::Error,
+    },
 }
 
 pub(super) type Result<T> = std::result::Result<T, Error>;

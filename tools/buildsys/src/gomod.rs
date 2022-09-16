@@ -132,14 +132,21 @@ impl GoMod {
             package_dir.to_string_lossy(),
             GO_MOD_DOCKER_SCRIPT_NAME
         );
+
+        // Drop the reference after writing the file to avoid a "text busy" error
+        // when attempting to execute it.
         {
-            let mut script_file = fs::File::create(&script_path).unwrap();
-            fs::set_permissions(&script_path, fs::Permissions::from_mode(0o777)).unwrap();
-            script_file.write_all(script_contents.as_bytes()).unwrap();
+            let mut script_file = fs::File::create(&script_path)
+                .context(error::CreateFileSnafu { path: &script_path })?;
+            fs::set_permissions(&script_path, fs::Permissions::from_mode(0o777))
+                .context(error::SetFilePermissionsSnafu { path: &script_path })?;
+            script_file
+                .write_all(script_contents.as_bytes())
+                .context(error::WriteFileSnafu { path: &script_path })?;
         }
 
         let res = docker_go(root_dir, &args);
-        fs::remove_file(script_path).unwrap();
+        fs::remove_file(&script_path).context(error::RemoveFileSnafu { path: &script_path })?;
         res
     }
 }
