@@ -67,6 +67,7 @@ popd
 
 tar czf __OUTPUT__ "${targetdir}"/vendor
 rm -rf "${targetdir}"
+touch -r __LOCAL_FILE_NAME__ __OUTPUT__
 "###;
 
 impl GoMod {
