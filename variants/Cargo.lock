@@ -804,6 +804,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "metal-k8s-1_24"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_24",
+ "release",
+]
+
+[[package]]
 name = "microcode"
 version = "0.1.0"
 
