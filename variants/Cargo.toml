@@ -21,6 +21,7 @@ members = [
     "vmware-k8s-1.21",
     "vmware-k8s-1.22",
     "vmware-k8s-1.23",
+    "vmware-k8s-1.24",
 ]
 
 [profile.dev]
