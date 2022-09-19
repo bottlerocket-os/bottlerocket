@@ -21,6 +21,9 @@ lazy_static! {
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
 pub(crate) struct LeaseInfo {
+    // When multiple IP addresses exist for an interface, the second address's key will be
+    // `IPADDR_1`, `IPADDR_2`, and so on.  Parsing the lease in this way means we will always pick
+    // up the first configured IP address.
     #[serde(rename = "ipaddr")]
     pub(crate) ip_address: IpNet,
     #[serde(rename = "dnsservers")]
@@ -63,15 +66,36 @@ impl LeaseInfo {
     }
 }
 
-/// Return the path to a given interface's ipv4/ipv6 lease if it exists, favoring ipv4 if both
+/// Return the path to a given interface's DHCP ipv4/ipv6 lease if it exists, favoring ipv4 if both
 /// ipv4 and ipv6 exist
-pub(crate) fn lease_path<S>(interface: S) -> Option<PathBuf>
+pub(crate) fn dhcp_lease_path<S>(interface: S) -> Option<PathBuf>
 where
     S: AsRef<str>,
 {
+    get_lease_path("dhcp", interface)
+}
+
+/// Return the path to a given interface's static ipv4/ipv6 lease if it exists, favoring ipv4 if
+/// both ipv4 and ipv6 exist
+pub(crate) fn static_lease_path<S>(interface: S) -> Option<PathBuf>
+where
+    S: AsRef<str>,
+{
+    get_lease_path("static", interface)
+}
+
+/// Given a lease type and interface, return the path to the ipv4/6 lease file if it exists,
+/// favoring ipv4 if both ipv4 and ipv6 exist
+fn get_lease_path<S1, S2>(lease_type: S1, interface: S2) -> Option<PathBuf>
+where
+    S1: AsRef<str>,
+    S2: AsRef<str>,
+{
+    let lease_type = lease_type.as_ref();
     let interface = interface.as_ref();
-    let ipv4 = Path::new(LEASE_DIR).join(format!("leaseinfo.{}.dhcp.ipv4", interface));
-    let ipv6 = Path::new(LEASE_DIR).join(format!("leaseinfo.{}.dhcp.ipv6", interface));
+
+    let ipv4 = Path::new(LEASE_DIR).join(format!("leaseinfo.{}.{}.ipv4", interface, lease_type));
+    let ipv6 = Path::new(LEASE_DIR).join(format!("leaseinfo.{}.{}.ipv6", interface, lease_type));
 
     // If both ipv4 and ipv6 leases exist, use the ipv4 lease for DNS settings
     let ipv4_exists = Path::exists(&ipv4);
