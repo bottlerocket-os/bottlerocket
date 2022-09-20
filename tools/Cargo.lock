@@ -102,9 +102,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.56"
+version = "0.1.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96cf8829f67d2eab0b2dfa42c5d0ef737e0724e4a82b01b3e292456202b19716"
+checksum = "76464446b8bc32758d7e88ee1a804d9914cd9b1cb264c029899680b0be29826f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -187,6 +187,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-ebs"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "702e6f505ce8d61f0bef4d2b2747f156dcbd6ba23b2a870ad9aa868830f026c5"
+dependencies = [
+ "aws-endpoint",
+ "aws-http",
+ "aws-sig-auth",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-http-tower",
+ "aws-smithy-json",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand",
+ "http",
+ "tokio-stream",
+ "tower",
+]
+
+[[package]]
 name = "aws-sdk-ec2"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -202,6 +225,51 @@ dependencies = [
  "aws-smithy-query",
  "aws-smithy-types",
  "aws-smithy-xml",
+ "aws-types",
+ "bytes",
+ "fastrand",
+ "http",
+ "tokio-stream",
+ "tower",
+]
+
+[[package]]
+name = "aws-sdk-kms"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fee45083be6f062676aaeab0fe16c931a4e188d2ddce6f2c8d17399c014dc81"
+dependencies = [
+ "aws-endpoint",
+ "aws-http",
+ "aws-sig-auth",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-http-tower",
+ "aws-smithy-json",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "http",
+ "tokio-stream",
+ "tower",
+]
+
+[[package]]
+name = "aws-sdk-ssm"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df79d41b62dcea814079c2f6540c465b6d45210b20a4e30efdcd24cc5dcf4aec"
+dependencies = [
+ "aws-endpoint",
+ "aws-http",
+ "aws-sig-auth",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-http-tower",
+ "aws-smithy-json",
+ "aws-smithy-types",
  "aws-types",
  "bytes",
  "fastrand",
@@ -633,22 +701,22 @@ dependencies = [
 
 [[package]]
 name = "coldsnap"
-version = "0.3.3"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "415be2bbdb84dd0d33de3099c74b9f96bd78157fe54c2073683c2b4c4811463d"
+checksum = "111badfcdc635ecbffc73bfa46ad0a83ae0c41bc01e09c4045ca3ffb1046c5c5"
 dependencies = [
  "argh",
  "async-trait",
+ "aws-config",
+ "aws-sdk-ebs",
+ "aws-sdk-ec2",
+ "aws-smithy-http",
+ "aws-types",
  "base64",
  "bytes",
  "futures",
  "indicatif",
  "nix",
- "rusoto_core",
- "rusoto_credential",
- "rusoto_ebs",
- "rusoto_ec2",
- "rusoto_signature",
  "sha2 0.10.2",
  "snafu",
  "tempfile",
@@ -1673,7 +1741,6 @@ dependencies = [
  "bitflags",
  "cfg-if",
  "libc",
- "memoffset",
 ]
 
 [[package]]
@@ -1984,11 +2051,21 @@ name = "pubsys"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "aws-config",
+ "aws-sdk-ebs",
+ "aws-sdk-ec2",
+ "aws-sdk-kms",
+ "aws-sdk-ssm",
+ "aws-sdk-sts",
+ "aws-smithy-types",
+ "aws-types",
  "chrono",
  "clap 3.2.15",
  "coldsnap",
  "duct",
+ "env_logger",
  "futures",
+ "http",
  "indicatif",
  "lazy_static",
  "log",
@@ -1997,18 +2074,9 @@ dependencies = [
  "pubsys-config",
  "rayon",
  "reqwest",
- "rusoto_core",
- "rusoto_credential",
- "rusoto_ebs",
- "rusoto_ec2",
- "rusoto_kms",
- "rusoto_signature",
- "rusoto_ssm",
- "rusoto_sts",
  "semver",
  "serde",
  "serde_json",
- "simplelog",
  "snafu",
  "structopt",
  "tempfile",
@@ -2278,49 +2346,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rusoto_ebs"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3ab3b70d6e2b9e8550bc50a42fd03e5cf43b1146b3a2a4f73fae867c08787b2"
-dependencies = [
- "async-trait",
- "bytes",
- "futures",
- "rusoto_core",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
-name = "rusoto_ec2"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "666c2f36b125e43229892f1a0d81ad28c0d0231d3b8b00ab0e8120975d6138ca"
-dependencies = [
- "async-trait",
- "bytes",
- "futures",
- "rusoto_core",
- "serde_urlencoded",
- "xml-rs",
-]
-
-[[package]]
-name = "rusoto_kms"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e1fc19cfcfd9f6b2f96e36d5b0dddda9004d2cbfc2d17543e3b9f10cc38fce8"
-dependencies = [
- "async-trait",
- "bytes",
- "futures",
- "rusoto_core",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "rusoto_s3"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2357,35 +2382,6 @@ dependencies = [
  "serde",
  "sha2 0.9.9",
  "tokio",
-]
-
-[[package]]
-name = "rusoto_ssm"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "166034bb4835e1e6a7ac1cc659c9798e751cd75d7244f37beeaa12f2bbdda30b"
-dependencies = [
- "async-trait",
- "bytes",
- "futures",
- "rusoto_core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "rusoto_sts"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1643f49aa67cb7cb895ebac5a2ff3f991c6dbdc58ad98b28158cd5706aecd1d"
-dependencies = [
- "async-trait",
- "bytes",
- "chrono",
- "futures",
- "rusoto_core",
- "serde_urlencoded",
- "xml-rs",
 ]
 
 [[package]]
@@ -3181,15 +3177,14 @@ dependencies = [
 
 [[package]]
 name = "tough-kms"
-version = "0.3.6"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baafc5e2a7f5207043f0a7e50f5c5163571c751c6a2d61a642bb8d3acdcc9659"
+checksum = "52e17edfb12e2c08c9ac3fe6ebb43fafc82fa9ffbfffbe50030b7623f8f42f34"
 dependencies = [
+ "aws-config",
+ "aws-sdk-kms",
  "pem",
  "ring",
- "rusoto_core",
- "rusoto_credential",
- "rusoto_kms",
  "snafu",
  "tokio",
  "tough",
@@ -3197,13 +3192,12 @@ dependencies = [
 
 [[package]]
 name = "tough-ssm"
-version = "0.6.6"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7a8be927f383be49de8e032532b72e82e7129f248c742bfa47247435bc7cdfb"
+checksum = "71e423321963b68b425bc844c01a16bfcab3b8300ab768dad46992201026421e"
 dependencies = [
- "rusoto_core",
- "rusoto_credential",
- "rusoto_ssm",
+ "aws-config",
+ "aws-sdk-ssm",
  "serde",
  "serde_json",
  "snafu",

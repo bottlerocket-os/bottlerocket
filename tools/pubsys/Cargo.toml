@@ -8,12 +8,22 @@ publish = false
 
 [dependencies]
 async-trait = "0.1.53"
+aws-config = "0.46.0"
+aws-sdk-ebs = "0.16.0"
+aws-sdk-ec2 = "0.16.0"
+aws-sdk-kms = "0.16.0"
+aws-sdk-ssm = "0.16.0"
+aws-sdk-sts = "0.16.0"
+aws-smithy-types = "0.46.0"
+aws-types = "0.46.0"
 chrono = "0.4"
 clap = "3.1"
-coldsnap = { version = "0.3", default-features = false, features = ["rusoto-rustls"]}
+coldsnap = { version = "0.4", default-features = false, features = ["aws-sdk-rust-rustls"] }
 duct = "0.13.0"
+env_logger = "0.9"
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 futures = "0.3.5"
+http = "0.2.8"
 indicatif = "0.16.0"
 lazy_static = "1.4"
 log = "0.4"
@@ -22,15 +32,6 @@ parse-datetime = { path = "../../sources/parse-datetime", version = "0.1.0" }
 rayon = "1"
 # Need to bring in reqwest with a TLS feature so tough can support TLS repos.
 reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
-rusoto_core = { version = "0.48.0", default-features = false, features = ["rustls"] }
-rusoto_credential = "0.48.0"
-rusoto_ebs = { version = "0.48.0", default-features = false, features = ["rustls"] }
-rusoto_ec2 = { version = "0.48.0", default-features = false, features = ["rustls"] }
-rusoto_kms = { version = "0.48.0", default-features = false, features = ["rustls"] }
-rusoto_signature = "0.48.0"
-rusoto_ssm = { version = "0.48.0", default-features = false, features = ["rustls"] }
-rusoto_sts = { version = "0.48.0", default-features = false, features = ["rustls"] }
-simplelog = "0.12"
 snafu = "0.7"
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"]  }
@@ -41,8 +42,8 @@ tokio = { version = "1", features = ["full"] }  # LTS
 tokio-stream = { version = "0.1", features = ["time"] }
 toml = "0.5"
 tough = { version = "0.12", features = ["http"] }
-tough-kms = "0.3"
-tough-ssm = "0.6"
+tough-kms = "0.4"
+tough-ssm = "0.7"
 update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1.0" }
 url = { version = "2.1.0", features = ["serde"] }
 tempfile = "3.1"

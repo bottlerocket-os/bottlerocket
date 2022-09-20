@@ -134,7 +134,6 @@ pub struct AwsConfig {
 #[serde(deny_unknown_fields)]
 pub struct AwsRegionConfig {
     pub role: Option<String>,
-    pub endpoint: Option<String>,
 }
 
 /// Location of signing keys

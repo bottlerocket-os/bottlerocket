@@ -27,8 +27,9 @@ mod aws;
 mod repo;
 mod vmware;
 
+use env_logger::Builder;
+use log::LevelFilter;
 use semver::Version;
-use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::path::PathBuf;
 use std::process;
@@ -39,8 +40,18 @@ fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
-    // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
+    match args.log_level {
+        // Set log level for AWS SDK to error to reduce verbosity.
+        LevelFilter::Info => Builder::new()
+            .filter_level(args.log_level)
+            .filter(Some("aws_config"), LevelFilter::Warn)
+            .filter(Some("aws_smithy"), LevelFilter::Warn)
+            .filter(Some("tracing::span"), LevelFilter::Warn)
+            .init(),
+
+        // Set the supplied log level across the whole crate.
+        _ => Builder::new().filter_level(args.log_level).init(),
+    }
 
     match args.subcommand {
         SubCommand::Repo(ref repo_args) => repo::run(&args, repo_args).context(error::RepoSnafu),
@@ -150,9 +161,6 @@ mod error {
     pub(super) enum Error {
         #[snafu(display("Failed to build AMI: {}", source))]
         Ami { source: crate::aws::ami::Error },
-
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
 
         #[snafu(display("Failed to publish AMI: {}", source))]
         PublishAmi {

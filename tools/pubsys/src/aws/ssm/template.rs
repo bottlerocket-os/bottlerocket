@@ -3,8 +3,8 @@
 
 use super::{BuildContext, SsmKey, SsmParameters};
 use crate::aws::ami::Image;
+use aws_sdk_ssm::Region;
 use log::trace;
-use rusoto_core::Region;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
@@ -95,7 +95,7 @@ pub(crate) fn render_parameters(
             image_id: &image.id,
             image_name: &image.name,
             image_version: build_context.image_version,
-            region: region.name(),
+            region: region.as_ref(),
         };
 
         for tp in &template_parameters.parameters {

@@ -1,14 +1,14 @@
 //! The promote_ssm module owns the 'promote-ssm' subcommand and controls the process of copying
 //! SSM parameters from one version to another
 
-use crate::aws::client::build_client;
+use crate::aws::client::build_client_config;
 use crate::aws::ssm::{key_difference, ssm, template, BuildContext, SsmKey};
 use crate::aws::{parse_arch, region_from_string};
 use crate::Args;
+use aws_sdk_ec2::model::ArchitectureValues;
+use aws_sdk_ssm::{Client as SsmClient, Region};
 use log::{info, trace};
 use pubsys_config::InfraConfig;
-use rusoto_core::Region;
-use rusoto_ssm::SsmClient;
 use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -20,7 +20,7 @@ use structopt::{clap, StructOpt};
 pub(crate) struct PromoteArgs {
     /// The architecture of the machine image
     #[structopt(long, parse(try_from_str = parse_arch))]
-    arch: String,
+    arch: ArchitectureValues,
 
     /// The variant name for the current build
     #[structopt(long)]
@@ -67,8 +67,8 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
         aws.regions.clone().into()
     }
     .into_iter()
-    .map(|name| region_from_string(&name, &aws).context(error::ParseRegionSnafu))
-    .collect::<Result<Vec<Region>>>()?;
+    .map(|name| region_from_string(&name))
+    .collect::<Vec<Region>>();
 
     ensure!(
         !regions.is_empty(),
@@ -80,11 +80,8 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
 
     let mut ssm_clients = HashMap::with_capacity(regions.len());
     for region in &regions {
-        let ssm_client =
-            build_client::<SsmClient>(region, base_region, &aws).context(error::ClientSnafu {
-                client_type: "SSM",
-                region: region.name(),
-            })?;
+        let client_config = build_client_config(region, base_region, &aws).await;
+        let ssm_client = SsmClient::new(&client_config);
         ssm_clients.insert(region.clone(), ssm_client);
     }
 
@@ -93,13 +90,13 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     // Non-image-specific context for building and rendering templates
     let source_build_context = BuildContext {
         variant: &promote_args.variant,
-        arch: &promote_args.arch,
+        arch: promote_args.arch.as_str(),
         image_version: &promote_args.source,
     };
 
     let target_build_context = BuildContext {
         variant: &promote_args.variant,
-        arch: &promote_args.arch,
+        arch: promote_args.arch.as_str(),
         image_version: &promote_args.target,
     };
 
@@ -220,20 +217,12 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
 }
 
 mod error {
-    use crate::aws;
     use crate::aws::ssm::{ssm, template};
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
-        #[snafu(display("Error creating {} client in {}: {}", client_type, region, source))]
-        Client {
-            client_type: String,
-            region: String,
-            source: aws::client::Error,
-        },
-
         #[snafu(display("Error reading config: {}", source))]
         Config {
             source: pubsys_config::Error,
@@ -257,10 +246,6 @@ mod error {
         #[snafu(display("Infra.toml is missing {}", missing))]
         MissingConfig {
             missing: String,
-        },
-
-        ParseRegion {
-            source: crate::aws::Error,
         },
 
         #[snafu(display("Failed to render templates: {}", source))]

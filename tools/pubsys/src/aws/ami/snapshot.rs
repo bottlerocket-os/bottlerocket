@@ -46,6 +46,7 @@ mod error {
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
+    #[allow(clippy::large_enum_variant)]
     pub(crate) enum Error {
         #[snafu(display("Invalid image path '{}'", path.display()))]
         InvalidImagePath { path: PathBuf },

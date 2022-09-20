@@ -1,14 +1,14 @@
 //! The ssm module owns the getting and setting of parameters in SSM.
 
 use super::{SsmKey, SsmParameters};
+use aws_sdk_ssm::error::{GetParametersError, PutParameterError};
+use aws_sdk_ssm::model::ParameterType;
+use aws_sdk_ssm::output::{GetParametersOutput, PutParameterOutput};
+use aws_sdk_ssm::types::SdkError;
+use aws_sdk_ssm::{Client as SsmClient, Region};
 use futures::future::{join, ready};
 use futures::stream::{self, StreamExt};
 use log::{debug, error, trace, warn};
-use rusoto_core::{Region, RusotoError};
-use rusoto_ssm::{
-    GetParametersError, GetParametersRequest, GetParametersResult, PutParameterError,
-    PutParameterRequest, PutParameterResult, Ssm, SsmClient,
-};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
@@ -38,14 +38,13 @@ where
     for (region, names) in regional_names {
         // At most 10 parameters can be requested at a time.
         for names_chunk in names.chunks(10) {
-            trace!("Requesting {:?} in {}", names_chunk, region.name());
+            trace!("Requesting {:?} in {}", names_chunk, region);
             let ssm_client = &clients[&region];
             let len = names_chunk.len();
-            let get_request = GetParametersRequest {
-                names: names_chunk.to_vec(),
-                ..Default::default()
-            };
-            let get_future = ssm_client.get_parameters(get_request);
+            let get_future = ssm_client
+                .get_parameters()
+                .set_names(Some(names_chunk.to_vec()))
+                .send();
 
             // Store the region so we can include it in errors and the output map
             let info_future = ready((region.clone(), len));
@@ -58,7 +57,7 @@ where
     #[allow(clippy::type_complexity)]
     let responses: Vec<(
         (Region, usize),
-        std::result::Result<GetParametersResult, RusotoError<GetParametersError>>,
+        std::result::Result<GetParametersOutput, SdkError<GetParametersError>>,
     )> = request_stream.collect().await;
 
     // If you're checking parameters in a region you haven't pushed to before, you can get an
@@ -78,11 +77,11 @@ where
             Err(e) => {
                 // Note: there's no structured error type for this so we have to string match.
                 if e.to_string().contains("is not a valid namespace") {
-                    new_regions.insert(region.name().to_string());
+                    new_regions.insert(region.clone());
                     continue;
                 } else {
                     return Err(e).context(error::GetParametersSnafu {
-                        region: region.name(),
+                        region: region.as_ref(),
                     });
                 }
             }
@@ -97,7 +96,7 @@ where
         ensure!(
             total_count == expected_len,
             error::MissingInResponseSnafu {
-                region: region.name(),
+                region: region.as_ref(),
                 request_type: "GetParameters",
                 missing: format!(
                     "parameters - got {}, expected {}",
@@ -111,12 +110,12 @@ where
             if !valid_parameters.is_empty() {
                 for parameter in valid_parameters {
                     let name = parameter.name.context(error::MissingInResponseSnafu {
-                        region: region.name(),
+                        region: region.as_ref(),
                         request_type: "GetParameters",
                         missing: "parameter name",
                     })?;
                     let value = parameter.value.context(error::MissingInResponseSnafu {
-                        region: region.name(),
+                        region: region.as_ref(),
                         request_type: "GetParameters",
                         missing: format!("value for parameter {}", name),
                     })?;
@@ -149,7 +148,7 @@ pub(crate) async fn set_parameters(
 
     // We run all requests in a batch, and any failed requests are added to the next batch for
     // retry
-    let mut failed_parameters: HashMap<Region, Vec<(String, RusotoError<_>)>> = HashMap::new();
+    let mut failed_parameters: HashMap<Region, Vec<(String, SdkError<_>)>> = HashMap::new();
     let max_failures = 5;
 
     /// Stores the values we need to be able to retry requests
@@ -199,14 +198,14 @@ pub(crate) async fn set_parameters(
         // request.
         for context in contexts.drain(..) {
             let ssm_client = &ssm_clients[context.region];
-            let put_request = PutParameterRequest {
-                name: context.name.to_string(),
-                value: context.value.to_string(),
-                overwrite: Some(true),
-                type_: Some("String".to_string()),
-                ..Default::default()
-            };
-            let put_future = ssm_client.put_parameter(put_request);
+
+            let put_future = ssm_client
+                .put_parameter()
+                .set_name(Some(context.name.to_string()))
+                .set_value(Some(context.value.to_string()))
+                .set_overwrite(Some(true))
+                .set_type(Some(ParameterType::String))
+                .send();
 
             let regional_list = regional_requests
                 .entry(context.region)
@@ -230,7 +229,7 @@ pub(crate) async fn set_parameters(
         let parallel_requests = stream::select_all(throttled_streams).buffer_unordered(4);
         let responses: Vec<(
             RequestContext<'_>,
-            std::result::Result<PutParameterResult, RusotoError<PutParameterError>>,
+            std::result::Result<PutParameterOutput, SdkError<PutParameterError>>,
         )> = parallel_requests.collect().await;
 
         // For each error response, check if we should retry or bail.
@@ -263,10 +262,7 @@ pub(crate) async fn set_parameters(
                     };
                     debug!(
                         "Request attempt {} of {} failed in {}: {}",
-                        context.failures,
-                        max_failures,
-                        context.region.name(),
-                        e
+                        context.failures, max_failures, context.region, e
                     );
                     contexts.push(context);
                 }
@@ -277,12 +273,7 @@ pub(crate) async fn set_parameters(
     if !failed_parameters.is_empty() {
         for (region, failures) in &failed_parameters {
             for (parameter, error) in failures {
-                error!(
-                    "Failed to set {} in {}: {}",
-                    parameter,
-                    region.name(),
-                    error
-                );
+                error!("Failed to set {} in {}: {}", parameter, region, error);
             }
         }
         return error::SetParametersSnafu {
@@ -315,18 +306,13 @@ pub(crate) async fn validate_parameters(
         // parameter wasn't updated / created.
         if let Some(updated_value) = updated_parameters.get(expected_key) {
             if updated_value != expected_value {
-                error!(
-                    "Failed to set {} in {}",
-                    expected_name,
-                    expected_region.name()
-                );
+                error!("Failed to set {} in {}", expected_name, expected_region);
                 success = false;
             }
         } else {
             error!(
                 "{} in {} still doesn't exist",
-                expected_name,
-                expected_region.name()
+                expected_name, expected_region
             );
             success = false;
         }
@@ -337,18 +323,19 @@ pub(crate) async fn validate_parameters(
 }
 
 mod error {
-    use rusoto_core::RusotoError;
-    use rusoto_ssm::GetParametersError;
+    use aws_sdk_ssm::error::GetParametersError;
+    use aws_sdk_ssm::types::SdkError;
     use snafu::Snafu;
     use std::time::Duration;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
+    #[allow(clippy::large_enum_variant)]
     pub(crate) enum Error {
         #[snafu(display("Failed to fetch SSM parameters in {}: {}", region, source))]
         GetParameters {
             region: String,
-            source: RusotoError<GetParametersError>,
+            source: SdkError<GetParametersError>,
         },
 
         #[snafu(display("Response to {} was missing {}", request_type, missing))]
