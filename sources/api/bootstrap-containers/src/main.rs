@@ -80,6 +80,7 @@ use datastore::{serialize_scalar, Key, KeyType};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::env;
 use std::ffi::OsStr;
 use std::fmt::Write;
@@ -242,8 +243,7 @@ fn parse_mark_bootstrap_args(args: Vec<String>) -> Result<Subcommand> {
     Ok(Subcommand::MarkBootstrap(MarkBootstrapArgs {
         container_id: container_id,
         // Fail if 'mode' is invalid
-        mode: mode
-            .parse::<BootstrapContainerMode>()
+        mode: BootstrapContainerMode::try_from(mode.to_string())
             .context(error::BootstrapContainerModeSnafu)?,
     }))
 }
