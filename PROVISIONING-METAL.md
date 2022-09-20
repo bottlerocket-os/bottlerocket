@@ -76,7 +76,7 @@ When these services fail, your machine will not connect to any cluster and will 
 #### `net.toml` structure
 
 The configuration file must be valid TOML and have the filename `net.toml`.
-The first and required top level key in the file is `version`, currently only `1` is supported.
+The first and required top level key in the file is `version`; the latest is version `2`.
 The rest of the file is a map of interface name to supported settings.
 Interface names are expected to be correct as per `udevd` naming, no interface naming or matching is supported.
 (See the note below regarding `udevd` interface naming.)
@@ -92,9 +92,22 @@ Interface names are expected to be correct as per `udevd` naming, no interface n
   * `enabled` (boolean, required): Enables DHCP6.
   * `optional` (boolean): the system will request a lease using this protocol, but will not wait for a valid lease to consider this interface configured.
 
+As of version `2` static addressing with simple routes is supported via the below settings.
+Please keep in mind that when using static addresses, DNS information must be supplied to the system via user data: [`settings.dns`](https://github.com/bottlerocket-os/bottlerocket#network-settings).
+* `static4` (map): IPv4 static address settings.
+  * `addresses` (list of quoted IPv4 address including prefix): The desired IPv4 IP addresses, including prefix i.e. `["192.168.14.2/24"]`.  The first IP in the list will be used as the primary IP which `kubelet` will use when joining the cluster.  If IPv4 and IPv6 static addresses exist, the first IPv4 address is used.
+* `static6` (map): IPv6 static address settings.
+  * `addresses` (list of quoted IPv6 address including prefix): The desired IPv6 IP addresses, including prefix i.e. `["2001:dead:beef::2/64"]`.  The first IP in the list will be used as the primary IP which `kubelet` will use when joining the cluster.  If IPv4 and IPv6 static addresses exist, the first IPv4 address is used.
+
+* `route` (map): Static route; multiple routes can be added. (cannot be used in conjuction with DHCP)
+  * `to` (`"default"` or IP address with prefix, required): Destination address.
+  * `from` (IP address): Source IP address.
+  * `via` (IP address): Gateway IP address.  If no gateway is provided, a scope of `link` is assumed.
+  * `route-metric` (integer): Relative route priority.
+
 Example `net.toml` with comments:
 ```toml
-version = 1
+version = 2
 
 # "eno1" is the interface name
 [eno1]
@@ -108,12 +121,35 @@ primary = true
 # `enabled` is a boolean and is a required key when
 # setting up DHCP this way
 enabled = true
-# Route metric may be supplied for ipv4
+# Route metric may be supplied for IPv4
 route-metric = 200
 
 [eno2.dhcp6]
 enabled = true
 optional = true
+
+[eno3.static4]
+addresses = ["10.0.0.10/24", "11.0.0.11/24"]
+
+# Multiple routes may be configured
+[[eno3.route]]
+to = "default"
+via = "10.0.0.1"
+route-metric = 100
+
+[[eno3.route]]
+to = "default"
+via = "11.0.0.1"
+route-metric = 200
+
+[eno4.static4]
+addresses = ["192.168.14.5/24"]
+
+# Using a source IP and non-default route
+[[eno4.route]]
+to = "10.10.10.0/24"
+from = "192.168.14.5"
+via = "192.168.14.25"
 ```
 
 **An additional note on network device names**
