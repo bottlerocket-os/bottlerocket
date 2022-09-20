@@ -9,6 +9,7 @@ use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
 use std::ops::Deref;
+use std::str::FromStr;
 
 /// ECSAttributeKey represents a string that contains a valid ECS attribute key.  It stores
 /// the original string and makes it accessible through standard traits.
@@ -30,10 +31,10 @@ lazy_static! {
     .unwrap();
 }
 
-impl TryFrom<&str> for ECSAttributeKey {
-    type Error = error::Error;
+impl FromStr for ECSAttributeKey {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         ensure!(
             ECS_ATTRIBUTE_KEY.is_match(input),
             error::BigPatternSnafu {
@@ -52,7 +53,6 @@ string_impls_for!(ECSAttributeKey, "ECSAttributeKey");
 #[cfg(test)]
 mod test_ecs_attribute_key {
     use super::ECSAttributeKey;
-    use std::convert::TryFrom;
 
     #[test]
     fn good_keys() {
@@ -67,7 +67,7 @@ mod test_ecs_attribute_key {
             ".leadingperiod",
             "trailingperiod.",
         ] {
-            ECSAttributeKey::try_from(*key).unwrap();
+            key.parse::<ECSAttributeKey>().unwrap();
         }
     }
 
@@ -82,7 +82,7 @@ mod test_ecs_attribute_key {
             ":",
             "no spaces allowed",
         ] {
-            ECSAttributeKey::try_from(*key).unwrap_err();
+            key.parse::<ECSAttributeKey>().unwrap_err();
         }
     }
 }
@@ -115,10 +115,10 @@ lazy_static! {
     .unwrap();
 }
 
-impl TryFrom<&str> for ECSAttributeValue {
-    type Error = error::Error;
+impl FromStr for ECSAttributeValue {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         ensure!(
             ECS_ATTRIBUTE_VALUE.is_match(input),
             error::BigPatternSnafu {
@@ -137,7 +137,6 @@ string_impls_for!(ECSAttributeValue, "ECSAttributeValue");
 #[cfg(test)]
 mod test_ecs_attribute_value {
     use super::ECSAttributeValue;
-    use std::convert::TryFrom;
 
     #[test]
     fn good_vals() {
@@ -157,7 +156,7 @@ mod test_ecs_attribute_value {
             "\\",
             "\\ \\",
         ] {
-            ECSAttributeValue::try_from(*val).unwrap();
+            val.parse::<ECSAttributeValue>().unwrap();
         }
     }
 
@@ -171,7 +170,7 @@ mod test_ecs_attribute_value {
             " leading space",
             "trailing space ",
         ] {
-            ECSAttributeValue::try_from(*val).unwrap_err();
+            val.parse::<ECSAttributeValue>().unwrap_err();
         }
     }
 }
@@ -196,11 +195,11 @@ enum ECSLogLevel {
 
 string_impls_for!(ECSAgentLogLevel, "ECSAgentLogLevel");
 
-impl TryFrom<&str> for ECSAgentLogLevel {
-    type Error = error::Error;
+impl FromStr for ECSAgentLogLevel {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ECSLogLevel>(&input).context(error::InvalidPlainValueSnafu {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        serde_plain::from_str::<ECSLogLevel>(input).context(error::InvalidPlainValueSnafu {
             field: "ecs.loglevel",
         })?;
         Ok(ECSAgentLogLevel {
@@ -212,19 +211,18 @@ impl TryFrom<&str> for ECSAgentLogLevel {
 #[cfg(test)]
 mod test_ecs_agent_log_level {
     use super::ECSAgentLogLevel;
-    use std::convert::TryFrom;
 
     #[test]
     fn good_vals() {
         for val in &["debug", "info", "warn"] {
-            ECSAgentLogLevel::try_from(*val).unwrap();
+            val.parse::<ECSAgentLogLevel>().unwrap();
         }
     }
 
     #[test]
     fn bad_vals() {
         for val in &["", "warning", "errors", " "] {
-            ECSAgentLogLevel::try_from(*val).unwrap_err();
+            val.parse::<ECSAgentLogLevel>().unwrap_err();
         }
     }
 }
@@ -246,11 +244,11 @@ pub enum ECSImagePullBehavior {
     PreferCached,
 }
 
-impl TryFrom<&str> for ECSImagePullBehavior {
-    type Error = error::Error;
+impl FromStr for ECSImagePullBehavior {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        let image_pull_behavior = serde_plain::from_str::<ECSImagePullBehavior>(&input).context(
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let image_pull_behavior = serde_plain::from_str::<ECSImagePullBehavior>(input).context(
             error::InvalidPlainValueSnafu {
                 field: "ecs.image_pull_behavior",
             },
@@ -261,11 +259,11 @@ impl TryFrom<&str> for ECSImagePullBehavior {
 
 string_impls_for!(ECSAgentImagePullBehavior, "ECSAgentImagePullBehavior");
 
-impl TryFrom<&str> for ECSAgentImagePullBehavior {
-    type Error = error::Error;
+impl FromStr for ECSAgentImagePullBehavior {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        ECSImagePullBehavior::try_from(input)?;
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        input.parse::<ECSImagePullBehavior>()?;
         Ok(ECSAgentImagePullBehavior {
             inner: input.to_string(),
         })
@@ -275,19 +273,18 @@ impl TryFrom<&str> for ECSAgentImagePullBehavior {
 #[cfg(test)]
 mod test_ecs_agent_image_pull_behavior {
     use super::ECSAgentImagePullBehavior;
-    use std::convert::TryFrom;
 
     #[test]
     fn good_vals() {
         for val in &["default", "always", "once", "prefer-cached"] {
-            ECSAgentImagePullBehavior::try_from(*val).unwrap();
+            val.parse::<ECSAgentImagePullBehavior>().unwrap();
         }
     }
 
     #[test]
     fn bad_vals() {
         for val in &["", "tomorrow", "never", " "] {
-            ECSAgentImagePullBehavior::try_from(*val).unwrap_err();
+            val.parse::<ECSAgentImagePullBehavior>().unwrap_err();
         }
     }
 }

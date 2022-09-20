@@ -26,10 +26,10 @@ pub struct ValidBase64 {
 }
 
 /// Validate base64 format before we accept the input.
-impl TryFrom<&str> for ValidBase64 {
-    type Error = error::Error;
+impl FromStr for ValidBase64 {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         base64::decode(&input).context(error::InvalidBase64Snafu)?;
         Ok(ValidBase64 {
             inner: input.to_string(),
@@ -42,11 +42,10 @@ string_impls_for!(ValidBase64, "ValidBase64");
 #[cfg(test)]
 mod test_valid_base64 {
     use super::ValidBase64;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_base64() {
-        let v = ValidBase64::try_from("aGk=").unwrap();
+        let v = ("aGk=").parse::<ValidBase64>().unwrap();
         let decoded_bytes = base64::decode(v.as_ref()).unwrap();
         let decoded = std::str::from_utf8(&decoded_bytes).unwrap();
         assert_eq!(decoded, "hi");
@@ -54,7 +53,7 @@ mod test_valid_base64 {
 
     #[test]
     fn invalid_base64() {
-        assert!(ValidBase64::try_from("invalid base64").is_err());
+        assert!(("invalid base64").parse::<ValidBase64>().is_err());
     }
 }
 
@@ -69,10 +68,10 @@ pub struct SingleLineString {
     inner: String,
 }
 
-impl TryFrom<&str> for SingleLineString {
-    type Error = error::Error;
+impl FromStr for SingleLineString {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         // Rust does not treat all Unicode line terminators as starting a new line, so we check for
         // specific characters here, rather than just counting from lines().
         // https://en.wikipedia.org/wiki/Newline#Unicode
@@ -102,30 +101,29 @@ string_impls_for!(SingleLineString, "SingleLineString");
 #[cfg(test)]
 mod test_single_line_string {
     use super::SingleLineString;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_single_line_string() {
-        assert!(SingleLineString::try_from("").is_ok());
-        assert!(SingleLineString::try_from("hi").is_ok());
+        assert!(("").parse::<SingleLineString>().is_ok());
+        assert!(("hi").parse::<SingleLineString>().is_ok());
         let long_string = std::iter::repeat(" ").take(9999).collect::<String>();
         let json_long_string = format!("{}", &long_string);
-        assert!(SingleLineString::try_from(json_long_string).is_ok());
+        assert!((&json_long_string).parse::<SingleLineString>().is_ok());
     }
 
     #[test]
     fn invalid_single_line_string() {
-        assert!(SingleLineString::try_from("Hello\nWorld").is_err());
+        assert!(("Hello\nWorld").parse::<SingleLineString>().is_err());
 
-        assert!(SingleLineString::try_from("\n").is_err());
-        assert!(SingleLineString::try_from("\r").is_err());
-        assert!(SingleLineString::try_from("\r\n").is_err());
+        assert!(("\n").parse::<SingleLineString>().is_err());
+        assert!(("\r").parse::<SingleLineString>().is_err());
+        assert!(("\r\n").parse::<SingleLineString>().is_err());
 
-        assert!(SingleLineString::try_from("\u{000B}").is_err()); // vertical tab
-        assert!(SingleLineString::try_from("\u{000C}").is_err()); // form feed
-        assert!(SingleLineString::try_from("\u{0085}").is_err()); // next line
-        assert!(SingleLineString::try_from("\u{2028}").is_err()); // line separator
-        assert!(SingleLineString::try_from("\u{2029}").is_err());
+        assert!(("\u{000B}").parse::<SingleLineString>().is_err()); // vertical tab
+        assert!(("\u{000C}").parse::<SingleLineString>().is_err()); // form feed
+        assert!(("\u{0085}").parse::<SingleLineString>().is_err()); // next line
+        assert!(("\u{2028}").parse::<SingleLineString>().is_err()); // line separator
+        assert!(("\u{2029}").parse::<SingleLineString>().is_err());
         // paragraph separator
     }
 }
@@ -146,10 +144,10 @@ lazy_static! {
     pub(crate) static ref VALID_LINUX_HOSTNAME: Regex = Regex::new(r"^[0-9a-z.-]{1,253}$").unwrap();
 }
 
-impl TryFrom<&str> for ValidLinuxHostname {
-    type Error = error::Error;
+impl FromStr for ValidLinuxHostname {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         ensure!(
             VALID_LINUX_HOSTNAME.is_match(input),
             error::InvalidLinuxHostnameSnafu {
@@ -191,41 +189,40 @@ string_impls_for!(ValidLinuxHostname, "ValidLinuxHostname");
 #[cfg(test)]
 mod test_valid_linux_hostname {
     use super::ValidLinuxHostname;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_linux_hostname() {
-        assert!(ValidLinuxHostname::try_from("hello").is_ok());
-        assert!(ValidLinuxHostname::try_from("hello1234567890").is_ok());
+        assert!(("hello").parse::<ValidLinuxHostname>().is_ok());
+        assert!(("hello1234567890").parse::<ValidLinuxHostname>().is_ok());
 
         let segment_limit = std::iter::repeat("a").take(63).collect::<String>();
-        assert!(ValidLinuxHostname::try_from(segment_limit.clone()).is_ok());
+        assert!(segment_limit.parse::<ValidLinuxHostname>().is_ok());
 
         let segment = std::iter::repeat("a").take(61).collect::<String>();
         let long_name = format!(
             "{}.{}.{}.{}",
             &segment_limit, &segment_limit, &segment_limit, &segment
         );
-        assert!(ValidLinuxHostname::try_from(long_name).is_ok());
+        assert!((&long_name).parse::<ValidLinuxHostname>().is_ok());
     }
 
     #[test]
     fn invalid_linux_hostname() {
-        assert!(ValidLinuxHostname::try_from(" ").is_err());
-        assert!(ValidLinuxHostname::try_from("-a").is_err());
-        assert!(ValidLinuxHostname::try_from(".a").is_err());
-        assert!(ValidLinuxHostname::try_from("@a").is_err());
-        assert!(ValidLinuxHostname::try_from("a..a").is_err());
-        assert!(ValidLinuxHostname::try_from("a.a.-a.a1234").is_err());
+        assert!((" ").parse::<ValidLinuxHostname>().is_err());
+        assert!(("-a").parse::<ValidLinuxHostname>().is_err());
+        assert!((".a").parse::<ValidLinuxHostname>().is_err());
+        assert!(("@a").parse::<ValidLinuxHostname>().is_err());
+        assert!(("a..a").parse::<ValidLinuxHostname>().is_err());
+        assert!(("a.a.-a.a1234").parse::<ValidLinuxHostname>().is_err());
 
         let long_segment = std::iter::repeat("a").take(64).collect::<String>();
-        assert!(ValidLinuxHostname::try_from(long_segment.clone()).is_err());
+        assert!(long_segment.parse::<ValidLinuxHostname>().is_err());
 
         let long_name = format!(
             "{}.{}.{}.{}",
             &long_segment, &long_segment, &long_segment, &long_segment
         );
-        assert!(ValidLinuxHostname::try_from(long_name).is_err());
+        assert!((&long_name).parse::<ValidLinuxHostname>().is_err());
     }
 }
 
@@ -386,10 +383,10 @@ pub struct Identifier {
 
 const CONTAINERD_ID_LENGTH: usize = 76;
 
-impl TryFrom<&str> for Identifier {
-    type Error = error::Error;
+impl FromStr for Identifier {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         let valid_identifier = input
             .chars()
             .all(|c| (c.is_ascii() && c.is_alphanumeric()) || c == '-')
@@ -406,29 +403,32 @@ string_impls_for!(Identifier, "Identifier");
 #[cfg(test)]
 mod test_valid_identifier {
     use super::{Identifier, CONTAINERD_ID_LENGTH};
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_identifier() {
-        assert!(Identifier::try_from("hello-world").is_ok());
-        assert!(Identifier::try_from("helloworld").is_ok());
-        assert!(Identifier::try_from("123321hello").is_ok());
-        assert!(Identifier::try_from("hello-1234").is_ok());
-        assert!(Identifier::try_from("--------").is_ok());
-        assert!(Identifier::try_from("11111111").is_ok());
-        assert!(Identifier::try_from(vec!["X"; CONTAINERD_ID_LENGTH].join("")).is_ok());
+        assert!(("hello-world").parse::<Identifier>().is_ok());
+        assert!(("helloworld").parse::<Identifier>().is_ok());
+        assert!(("123321hello").parse::<Identifier>().is_ok());
+        assert!(("hello-1234").parse::<Identifier>().is_ok());
+        assert!(("--------").parse::<Identifier>().is_ok());
+        assert!(("11111111").parse::<Identifier>().is_ok());
+        assert!((&vec!["X"; CONTAINERD_ID_LENGTH].join(""))
+            .parse::<Identifier>()
+            .is_ok());
     }
 
     #[test]
     fn invalid_identifier() {
-        assert!(Identifier::try_from("../").is_err());
-        assert!(Identifier::try_from("{}").is_err());
-        assert!(Identifier::try_from("hello|World").is_err());
-        assert!(Identifier::try_from("hello\nWorld").is_err());
-        assert!(Identifier::try_from("hello_world").is_err());
-        assert!(Identifier::try_from("タール").is_err());
-        assert!(Identifier::try_from("💝").is_err());
-        assert!(Identifier::try_from(vec!["X"; CONTAINERD_ID_LENGTH + 1].join("")).is_err());
+        assert!(("../").parse::<Identifier>().is_err());
+        assert!(("{}").parse::<Identifier>().is_err());
+        assert!(("hello|World").parse::<Identifier>().is_err());
+        assert!(("hello\nWorld").parse::<Identifier>().is_err());
+        assert!(("hello_world").parse::<Identifier>().is_err());
+        assert!(("タール").parse::<Identifier>().is_err());
+        assert!(("💝").parse::<Identifier>().is_err());
+        assert!((&vec!["X"; CONTAINERD_ID_LENGTH + 1].join(""))
+            .parse::<Identifier>()
+            .is_err());
     }
 }
 
@@ -443,10 +443,10 @@ pub struct Url {
     inner: String,
 }
 
-impl TryFrom<&str> for Url {
-    type Error = error::Error;
+impl FromStr for Url {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         if let Ok(_) = input.parse::<url::Url>() {
             return Ok(Url {
                 inner: input.to_string(),
@@ -470,7 +470,6 @@ string_impls_for!(Url, "Url");
 #[cfg(test)]
 mod test_url {
     use super::Url;
-    use std::convert::TryFrom;
 
     #[test]
     fn good_urls() {
@@ -491,14 +490,14 @@ mod test_url {
             ".internal",
             ".cluster.local",
         ] {
-            Url::try_from(*ok).unwrap();
+            ok.parse::<Url>().unwrap();
         }
     }
 
     #[test]
     fn bad_urls() {
         for err in &["how are you", "weird@"] {
-            Url::try_from(*err).unwrap_err();
+            err.parse::<Url>().unwrap_err();
         }
     }
 }
@@ -513,10 +512,10 @@ pub struct FriendlyVersion {
     inner: String,
 }
 
-impl TryFrom<&str> for FriendlyVersion {
-    type Error = error::Error;
+impl FromStr for FriendlyVersion {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         if input == "latest" {
             return Ok(FriendlyVersion {
                 inner: input.to_string(),
@@ -548,7 +547,7 @@ impl TryFrom<FriendlyVersion> for semver::Version {
         } else {
             &input.inner
         };
-        Version::from_str(version)
+        version.parse::<Version>()
     }
 }
 
@@ -574,7 +573,7 @@ mod test_version {
             "v1.1.0-rc.1.1",
             "latest",
         ] {
-            FriendlyVersion::try_from(*ok).unwrap();
+            ok.parse::<FriendlyVersion>().unwrap();
             // Test conversion to semver::Version
             if *ok != "latest" {
                 let _: Version = FriendlyVersion {
@@ -599,7 +598,7 @@ mod test_version {
             "1.0.3-beta.1.01",
             "v1.0.3-beta.1.01",
         ] {
-            FriendlyVersion::try_from(*err).unwrap_err();
+            err.parse::<FriendlyVersion>().unwrap_err();
             let res: Result<Version, semver::Error> = Version::try_from(FriendlyVersion {
                 inner: err.to_string(),
             });
@@ -619,10 +618,10 @@ pub struct DNSDomain {
     inner: String,
 }
 
-impl TryFrom<&str> for DNSDomain {
-    type Error = error::Error;
+impl FromStr for DNSDomain {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, error::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         ensure!(
             !input.starts_with('.'),
             error::InvalidDomainNameSnafu {
@@ -656,12 +655,11 @@ string_impls_for!(DNSDomain, "DNSDomain");
 #[cfg(test)]
 mod test_dns_domain {
     use super::DNSDomain;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_dns_domain() {
         for ok in &["cluster.local", "dev.eks", "stage.eks", "prod.eks"] {
-            assert!(DNSDomain::try_from(*ok).is_ok());
+            assert!(ok.parse::<DNSDomain>().is_ok());
         }
     }
 
@@ -673,7 +671,7 @@ mod test_dns_domain {
             "123.123.123.123",
             "[2001:db8::ff00:42:8329]",
         ] {
-            assert!(DNSDomain::try_from(*err).is_err());
+            assert!(err.parse::<DNSDomain>().is_err());
         }
     }
 }
@@ -694,10 +692,10 @@ lazy_static! {
     pub(crate) static ref SYSCTL_KEY: Regex = Regex::new(r"^[a-zA-Z0-9./_-]{1,128}$").unwrap();
 }
 
-impl TryFrom<&str> for SysctlKey {
-    type Error = error::Error;
+impl FromStr for SysctlKey {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, error::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         // Basic directory traversal checks; corndog also checks
         ensure!(
             !input.contains(".."),
@@ -731,7 +729,6 @@ string_impls_for!(SysctlKey, "SysctlKey");
 #[cfg(test)]
 mod test_sysctl_key {
     use super::SysctlKey;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_sysctl_key() {
@@ -751,7 +748,7 @@ mod test_sysctl_key {
             // All allowed characters
             "-./0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
         ] {
-            SysctlKey::try_from(*ok).unwrap();
+            ok.parse::<SysctlKey>().unwrap();
         }
     }
 
@@ -784,7 +781,7 @@ mod test_sysctl_key {
             "~",
             "`",
         ] {
-            SysctlKey::try_from(*err).unwrap_err();
+            err.parse::<SysctlKey>().unwrap_err();
         }
     }
 }
@@ -799,10 +796,10 @@ pub struct BootConfigKey {
     inner: String,
 }
 
-impl TryFrom<&str> for BootConfigKey {
-    type Error = error::Error;
+impl FromStr for BootConfigKey {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, error::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         // Each individual keyword must be valid
         let valid_key = input.split('.').all(|keyword| {
             !keyword.is_empty()
@@ -822,7 +819,6 @@ string_impls_for!(BootConfigKey, "BootConfigKey");
 #[cfg(test)]
 mod test_bootconfig_key {
     use super::BootConfigKey;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_bootconfig_key() {
@@ -836,7 +832,7 @@ mod test_bootconfig_key {
             "keyword1-",
             "keyword2_",
         ] {
-            BootConfigKey::try_from(*ok).unwrap();
+            ok.parse::<BootConfigKey>().unwrap();
         }
     }
 
@@ -846,7 +842,7 @@ mod test_bootconfig_key {
             "", "①", ".", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "\"", "'", "\\", "|",
             "~", "`",
         ] {
-            BootConfigKey::try_from(*err).unwrap_err();
+            err.parse::<BootConfigKey>().unwrap_err();
         }
     }
 }
@@ -864,10 +860,10 @@ pub struct BootConfigValue {
     inner: String,
 }
 
-impl TryFrom<&str> for BootConfigValue {
-    type Error = error::Error;
+impl FromStr for BootConfigValue {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, error::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         ensure!(
             input.chars().all(|c| c.is_ascii() && !c.is_ascii_control())
             // Values containing both single quotes and double quotes are inherently invalid since quotes
@@ -886,7 +882,6 @@ string_impls_for!(BootConfigValue, "BootConfigValue");
 #[cfg(test)]
 mod test_bootconfig_value {
     use super::BootConfigValue;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_bootconfig_value() {
@@ -900,14 +895,14 @@ mod test_bootconfig_value {
             "hello.goodbye",
             "",
         ] {
-            BootConfigValue::try_from(*ok).unwrap();
+            ok.parse::<BootConfigValue>().unwrap();
         }
     }
 
     #[test]
     fn invalid_bootconfig_value() {
         for err in &["'\"", "bottlerocket①", "💝", "Ï", "—"] {
-            BootConfigValue::try_from(*err).unwrap_err();
+            err.parse::<BootConfigValue>().unwrap_err();
         }
     }
 }
@@ -921,10 +916,10 @@ pub struct Lockdown {
     inner: String,
 }
 
-impl TryFrom<&str> for Lockdown {
-    type Error = error::Error;
+impl FromStr for Lockdown {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, error::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         ensure!(
             matches!(input, "none" | "integrity" | "confidentiality"),
             error::InvalidLockdownSnafu { input }
@@ -944,10 +939,10 @@ pub struct BootstrapContainerMode {
     inner: String,
 }
 
-impl TryFrom<&str> for BootstrapContainerMode {
-    type Error = error::Error;
+impl FromStr for BootstrapContainerMode {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, error::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         ensure!(
             matches!(input, "off" | "once" | "always"),
             error::InvalidBootstrapContainerModeSnafu { input }
@@ -971,18 +966,17 @@ string_impls_for!(BootstrapContainerMode, "BootstrapContainerMode");
 #[cfg(test)]
 mod test_valid_container_mode {
     use super::BootstrapContainerMode;
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_container_mode() {
         for ok in &["off", "once", "always"] {
-            assert!(BootstrapContainerMode::try_from(*ok).is_ok());
+            assert!(ok.parse::<BootstrapContainerMode>().is_ok());
         }
     }
 
     #[test]
     fn invalid_container_mode() {
-        assert!(BootstrapContainerMode::try_from("invalid").is_err());
+        assert!(("invalid").parse::<BootstrapContainerMode>().is_err());
     }
 }
 
@@ -992,10 +986,10 @@ pub struct PemCertificateString {
     inner: String,
 }
 
-impl TryFrom<&str> for PemCertificateString {
-    type Error = error::Error;
+impl FromStr for PemCertificateString {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, error::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         // Empty strings are valid to allow deleting bundles
         if input.trim().len() == 0 {
             return Ok(PemCertificateString {
@@ -1038,31 +1032,33 @@ string_impls_for!(PemCertificateString, "PemCertificateString");
 #[cfg(test)]
 mod test_valid_pem_certificate_string {
     use super::PemCertificateString;
-    use std::convert::TryFrom;
 
     static TEST_PEM: &str = include_str!("../../tests/data/test-pem");
     static TEST_INCOMPLETE_PEM: &str = include_str!("../../tests/data/test-incomplete-pem");
 
     #[test]
     fn valid_pem_certificate() {
-        assert!(PemCertificateString::try_from(TEST_PEM).is_ok());
-        assert!(PemCertificateString::try_from("").is_ok());
+        assert!((TEST_PEM).parse::<PemCertificateString>().is_ok());
+        assert!(("").parse::<PemCertificateString>().is_ok());
     }
 
     #[test]
     fn invalid_pem_certificate() {
         // PEM with valid markers but with invalid content
-        assert!(PemCertificateString::try_from(
-            "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tIGJhZCAtLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
-        )
-        .is_err());
+        assert!(
+            ("LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tIGJhZCAtLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==")
+                .parse::<PemCertificateString>()
+                .is_err()
+        );
         // PEM with valid content but without footer marker
-        assert!(PemCertificateString::try_from(TEST_INCOMPLETE_PEM).is_err());
+        assert!((TEST_INCOMPLETE_PEM)
+            .parse::<PemCertificateString>()
+            .is_err());
 
         // PEM without any valid certificate
-        assert!(PemCertificateString::try_from(
+        assert!((
             "77yc44Kz77ya44OfIOOBj+OCszrlvaEg77yc44Kz77ya44OfIOOBj+OCszrlvaEg77yc44Kz77ya44OfCg=="
-        )
+        ).parse::<PemCertificateString>()
         .is_err())
     }
 }
@@ -1085,10 +1081,10 @@ pub struct KmodKey {
 //     #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
 const KMOD_KEY_LENGTH: usize = 56;
 
-impl TryFrom<&str> for KmodKey {
-    type Error = error::Error;
+impl FromStr for KmodKey {
+    type Err = error::Error;
 
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         // The kernel allows modules to have any name that's a valid filename,
         // but real module names seem to be limited to this character set.
         let valid_key = input
@@ -1107,25 +1103,28 @@ string_impls_for!(KmodKey, "KmodKey");
 #[cfg(test)]
 mod test_valid_kmod_key {
     use super::{KmodKey, KMOD_KEY_LENGTH};
-    use std::convert::TryFrom;
 
     #[test]
     fn valid_kmod_key() {
-        assert!(KmodKey::try_from("kmod").is_ok());
-        assert!(KmodKey::try_from("i8042").is_ok());
-        assert!(KmodKey::try_from("xt_XT").is_ok());
-        assert!(KmodKey::try_from("dm-block").is_ok());
-        assert!(KmodKey::try_from("blowfish-x86_64").is_ok());
-        assert!(KmodKey::try_from(vec!["a"; KMOD_KEY_LENGTH].join("")).is_ok());
+        assert!(("kmod").parse::<KmodKey>().is_ok());
+        assert!(("i8042").parse::<KmodKey>().is_ok());
+        assert!(("xt_XT").parse::<KmodKey>().is_ok());
+        assert!(("dm-block").parse::<KmodKey>().is_ok());
+        assert!(("blowfish-x86_64").parse::<KmodKey>().is_ok());
+        assert!((&vec!["a"; KMOD_KEY_LENGTH].join(""))
+            .parse::<KmodKey>()
+            .is_ok());
     }
 
     #[test]
     fn invalid_kmod_key() {
-        assert!(KmodKey::try_from("../").is_err());
-        assert!(KmodKey::try_from("{}").is_err());
-        assert!(KmodKey::try_from("kernel|Module").is_err());
-        assert!(KmodKey::try_from("kernel\nModule").is_err());
-        assert!(KmodKey::try_from("🐡").is_err());
-        assert!(KmodKey::try_from(vec!["z"; KMOD_KEY_LENGTH + 1].join("")).is_err());
+        assert!(("../").parse::<KmodKey>().is_err());
+        assert!(("{}").parse::<KmodKey>().is_err());
+        assert!(("kernel|Module").parse::<KmodKey>().is_err());
+        assert!(("kernel\nModule").parse::<KmodKey>().is_err());
+        assert!(("🐡").parse::<KmodKey>().is_err());
+        assert!((&vec!["z"; KMOD_KEY_LENGTH + 1].join(""))
+            .parse::<KmodKey>()
+            .is_err());
     }
 }

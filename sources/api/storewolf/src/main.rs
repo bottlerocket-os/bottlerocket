@@ -15,7 +15,6 @@ use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
-use std::convert::TryFrom;
 use std::io;
 use std::path::Path;
 use std::str::FromStr;
@@ -186,10 +185,12 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
                 );
 
                 // Ensure the metadata/data keys don't contain newline chars
-                let md =
-                    SingleLineString::try_from(md_key).context(error::SingleLineStringSnafu)?;
-                let key =
-                    SingleLineString::try_from(data_key).context(error::SingleLineStringSnafu)?;
+                let md = md_key
+                    .parse::<SingleLineString>()
+                    .context(error::SingleLineStringSnafu)?;
+                let key = data_key
+                    .parse::<SingleLineString>()
+                    .context(error::SingleLineStringSnafu)?;
 
                 // Create the Metadata struct
                 def_metadatas.push(model::Metadata { key, md, val })

@@ -16,6 +16,7 @@ use snafu::{OptionExt, ResultExt};
 use std::convert::TryFrom;
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 use std::{env, process};
 
 const DEFAULT_ECS_CONFIG_PATH: &str = "/etc/ecs/ecs.config.json";
@@ -112,7 +113,7 @@ async fn run() -> Result<()> {
         image_pull_behavior: ecs
             .image_pull_behavior
             .as_ref()
-            .map(|b| ECSImagePullBehavior::try_from(b.as_ref()).unwrap() as u8),
+            .map(|b| b.parse::<ECSImagePullBehavior>().unwrap() as u8),
 
         // Task role support is always enabled
         task_iam_role_enabled: true,

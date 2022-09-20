@@ -17,7 +17,7 @@ use signal_hook::iterator::Signals;
 use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
 use std::fs::{self, File, OpenOptions};
 use std::io;
 use std::path::Path;
@@ -181,9 +181,11 @@ fn update_required<'a>(
     if version_lock != "latest" {
         // Make sure the version string from the config is a valid version string that might be prefixed with 'v'
         let friendly_version_lock =
-            FriendlyVersion::try_from(version_lock).context(error::BadVersionConfigSnafu {
-                version_str: version_lock,
-            })?;
+            version_lock
+                .parse::<FriendlyVersion>()
+                .context(error::BadVersionConfigSnafu {
+                    version_str: version_lock,
+                })?;
         // Convert back to semver::Version
         let semver_version_lock =
             friendly_version_lock
