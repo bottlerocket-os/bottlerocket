@@ -608,8 +608,8 @@ dependencies = [
 
 [[package]]
 name = "bottlerocket-types"
-version = "0.0.1"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?rev=07b9ae8#07b9ae8e902623842c334889517973d0c9d82691"
+version = "0.0.2"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.2#dfd5bc90a481beb05e7a64ac4b20c86fd2491d9d"
 dependencies = [
  "model",
  "serde",
@@ -1734,8 +1734,8 @@ dependencies = [
 
 [[package]]
 name = "model"
-version = "0.0.1"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?rev=07b9ae8#07b9ae8e902623842c334889517973d0c9d82691"
+version = "0.0.2"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.2#dfd5bc90a481beb05e7a64ac4b20c86fd2491d9d"
 dependencies = [
  "async-recursion",
  "async-trait",

@@ -46,7 +46,7 @@ impl Status {
         } else {
             let (width, _) = term_size::dimensions().unwrap_or((80, 0));
             debug!("Window width '{}'", width);
-            println!("{:width$}", status.to_string());
+            println!("{:width$}", status);
         }
         Ok(())
     }

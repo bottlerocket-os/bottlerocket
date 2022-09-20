@@ -272,7 +272,7 @@ pub(crate) struct TestsysImages {
     #[clap(
         long = "eks-resource-agent-image",
         env = "TESTSYS_EKS_RESOURCE_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/eks-resource-agent:v0.0.1"
+        default_value = "public.ecr.aws/bottlerocket-test-system/eks-resource-agent:v0.0.2"
     )]
     pub(crate) eks_resource: String,
 
@@ -280,7 +280,7 @@ pub(crate) struct TestsysImages {
     #[clap(
         long = "ecs-resource-agent-image",
         env = "TESTSYS_ECS_RESOURCE_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-resource-agent:v0.0.1"
+        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-resource-agent:v0.0.2"
     )]
     pub(crate) ecs_resource: String,
 
@@ -288,7 +288,7 @@ pub(crate) struct TestsysImages {
     #[clap(
         long = "ec2-resource-agent-image",
         env = "TESTSYS_EC2_RESOURCE_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/ec2-resource-agent:v0.0.1"
+        default_value = "public.ecr.aws/bottlerocket-test-system/ec2-resource-agent:v0.0.2"
     )]
     pub(crate) ec2_resource: String,
 
@@ -296,7 +296,7 @@ pub(crate) struct TestsysImages {
     #[clap(
         long = "sonobuoy-test-agent-image",
         env = "TESTSYS_SONOBUOY_TEST_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/sonobuoy-test-agent:v0.0.1"
+        default_value = "public.ecr.aws/bottlerocket-test-system/sonobuoy-test-agent:v0.0.2"
     )]
     pub(crate) sonobuoy_test: String,
 
@@ -304,7 +304,7 @@ pub(crate) struct TestsysImages {
     #[clap(
         long = "ecs-test-agent-image",
         env = "TESTSYS_ECS_TEST_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-test-agent:v0.0.1"
+        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-test-agent:v0.0.2"
     )]
     pub(crate) ecs_test: String,
 
@@ -312,7 +312,7 @@ pub(crate) struct TestsysImages {
     #[clap(
         long = "migration-test-agent-image",
         env = "TESTSYS_MIGRATION_TEST_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/migration-test-agent:v0.0.1"
+        default_value = "public.ecr.aws/bottlerocket-test-system/migration-test-agent:v0.0.2"
     )]
     pub(crate) migration_test: String,
 
