@@ -391,11 +391,9 @@ impl AwsEcs {
         testsys_images: &TestsysImages,
     ) -> Result<Vec<Crd>> {
         match test {
-            TestType::Conformance => {
-                return Err(anyhow!(
-                    "Conformance testing for ECS variants is not supported."
-                ))
-            }
+            TestType::Conformance => Err(anyhow!(
+                "Conformance testing for ECS variants is not supported."
+            )),
             TestType::Quick => self.ecs_test_crds(testsys_images),
             TestType::Migration => self.migration_test_crds(testsys_images).await,
         }
