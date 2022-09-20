@@ -221,7 +221,7 @@ In order to accomplish this a few artifacts need to be created:
 #### Prepare `Infra.toml`
 
 We need the URL of an accessible TUF repo so the Bottlerocket instances know where to retrieve the update metadata and targets. 
-Follow our (publishing guide)[PUBLISHING.md#repo-location] to set up TUF repos.
+Follow our [publishing guide](PUBLISHING.md#repo-location) to set up TUF repos.
 `Infra.toml` is used by testsys to determine TUF repo locations, so `metadata_base_url` and `targets_base_url` need to be set based on the repo that was just created. 
 The examples below also assume that the default repo is being used in `Infra.toml`, but any repo can be used by setting the `PUBLISH_REPO` environment variable.
 
