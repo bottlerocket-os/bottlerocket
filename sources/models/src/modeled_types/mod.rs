@@ -158,7 +158,7 @@ macro_rules! string_impls_for {
             type Error = $crate::modeled_types::error::Error;
 
             fn try_from(input: String) -> Result<Self, Self::Error> {
-                input.parse::<Self>()
+                Self::try_from(input.as_ref())
             }
         }
 
@@ -168,7 +168,7 @@ macro_rules! string_impls_for {
                 D: Deserializer<'de>,
             {
                 let original = String::deserialize(deserializer)?;
-                original.parse::<Self>().map_err(|e| {
+                Self::try_from(original).map_err(|e| {
                     D::Error::custom(format!("Unable to deserialize into {}: {}", $for_str, e))
                 })
             }

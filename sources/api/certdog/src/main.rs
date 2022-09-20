@@ -301,8 +301,8 @@ mod test_certdog {
     use model;
     use model::modeled_types::{Identifier, PemCertificateString};
     use std::collections::HashMap;
+    use std::convert::TryFrom;
     use std::fs::File;
-    use std::str::FromStr;
 
     static TEST_PEM: &str = include_str!("../../../models/tests/data/test-pem");
 
@@ -310,23 +310,23 @@ mod test_certdog {
     fn bundles_splitted() {
         let mut bundle = HashMap::new();
         bundle.insert(
-            ("trusted").parse::<Identifier>().unwrap(),
+            Identifier::try_from("trusted").unwrap(),
             model::PemCertificate {
-                data: Some(PemCertificateString::from_str(TEST_PEM).unwrap()),
+                data: Some(PemCertificateString::try_from(TEST_PEM).unwrap()),
                 trusted: Some(true),
             },
         );
         bundle.insert(
-            ("distrusted").parse::<Identifier>().unwrap(),
+            Identifier::try_from("distrusted").unwrap(),
             model::PemCertificate {
-                data: Some(PemCertificateString::from_str(TEST_PEM).unwrap()),
+                data: Some(PemCertificateString::try_from(TEST_PEM).unwrap()),
                 trusted: Some(false),
             },
         );
         bundle.insert(
-            ("distrusted-without-flag").parse::<Identifier>().unwrap(),
+            Identifier::try_from("distrusted-without-flag").unwrap(),
             model::PemCertificate {
-                data: Some(PemCertificateString::from_str(TEST_PEM).unwrap()),
+                data: Some(PemCertificateString::try_from(TEST_PEM).unwrap()),
                 trusted: None,
             },
         );

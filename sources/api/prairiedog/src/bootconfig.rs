@@ -5,8 +5,8 @@ use model::modeled_types::{BootConfigKey, BootConfigValue};
 use model::BootSettings;
 use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::path::Path;
-use std::str::FromStr;
 use tokio::io;
 
 // Boot config related consts
@@ -142,8 +142,7 @@ fn parse_value(input: &str) -> Result<BootConfigValue> {
     } else {
         input
     };
-    s.parse::<BootConfigValue>()
-        .context(error::ParseBootConfigValueSnafu)
+    s.try_into().context(error::ParseBootConfigValueSnafu)
 }
 
 /// Takes a string and parse it into a list of valid bootconfig values
@@ -194,29 +193,30 @@ fn parse_boot_config_to_boot_settings(bootconfig: &str) -> Result<BootSettings> 
     for line in bootconfig.trim().lines() {
         let mut kv = line.trim().split('=').map(|kv| kv.trim());
         // Ensure the key is a valid boot config key
-        let key: BootConfigKey = (kv.next().ok_or(error::Error::InvalidBootConfig)?)
-            .parse::<BootConfigKey>()
+        let key: BootConfigKey = kv
+            .next()
+            .ok_or(error::Error::InvalidBootConfig)?
+            .try_into()
             .context(error::ParseBootConfigKeySnafu)?;
         let values = parse_boot_config_values(kv.next().ok_or(error::Error::InvalidBootConfig)?)?;
 
         if key != "kernel" && key.starts_with("kernel") {
             kernel_params.insert(
-                (&key["kernel.".len()..])
-                    .parse::<BootConfigKey>()
+                key["kernel.".len()..]
+                    .try_into()
                     .context(error::ParseBootConfigKeySnafu)?,
                 values,
             );
         } else if key != "init" && key.starts_with("init") {
             init_params.insert(
-                (&key["init.".len()..])
-                    .parse::<BootConfigKey>()
+                key["init.".len()..]
+                    .try_into()
                     .context(error::ParseBootConfigKeySnafu)?,
                 values,
             );
         } else if key == "kernel" || key == "init" {
-            let empty_value_list: Vec<BootConfigValue> = vec![("")
-                .parse::<BootConfigValue>()
-                .context(error::ParseBootConfigValueSnafu)?];
+            let empty_value_list: Vec<BootConfigValue> =
+                vec!["".try_into().context(error::ParseBootConfigValueSnafu)?];
             // `BootSettings` does not support `kernel` or `init` as parent keys to non-null values.
             if values != empty_value_list {
                 return error::ParentBootConfigKeySnafu.fail();
@@ -256,11 +256,10 @@ mod boot_settings_tests {
         DEFAULT_BOOTCONFIG_STR,
     };
     use maplit::hashmap;
-    use model::modeled_types::{BootConfigKey, BootConfigValue};
     use model::BootSettings;
     use serde_json::json;
     use serde_json::value::Value;
-    use std::str::FromStr;
+    use std::convert::TryInto;
 
     #[test]
     fn boot_settings_to_string() {
@@ -272,10 +271,8 @@ mod boot_settings_tests {
                 .into_iter()
                 .map(|(k, v)| {
                     (
-                        k.parse::<BootConfigKey>().unwrap(),
-                        v.into_iter()
-                            .map(|s| s.parse::<BootConfigValue>().unwrap())
-                            .collect(),
+                        k.try_into().unwrap(),
+                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
                     )
                 })
                 .collect(),
@@ -289,10 +286,8 @@ mod boot_settings_tests {
                 .into_iter()
                 .map(|(k, v)| {
                     (
-                        k.parse::<BootConfigKey>().unwrap(),
-                        v.into_iter()
-                            .map(|s| s.parse::<BootConfigValue>().unwrap())
-                            .collect(),
+                        k.try_into().unwrap(),
+                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
                     )
                 })
                 .collect(),
@@ -342,10 +337,8 @@ mod boot_settings_tests {
                 .into_iter()
                 .map(|(k, v)| {
                     (
-                        k.parse::<BootConfigKey>().unwrap(),
-                        v.into_iter()
-                            .map(|s| s.parse::<BootConfigValue>().unwrap())
-                            .collect(),
+                        k.try_into().unwrap(),
+                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
                     )
                 })
                 .collect(),

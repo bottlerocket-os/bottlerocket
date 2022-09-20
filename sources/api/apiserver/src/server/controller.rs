@@ -563,9 +563,8 @@ mod test {
     use datastore::memory::MemoryDataStore;
     use datastore::{Committed, DataStore, Key, KeyType};
     use maplit::{hashmap, hashset};
-    use model::modeled_types::SingleLineString;
     use model::{ConfigurationFile, Service};
-    use std::str::FromStr;
+    use std::convert::TryInto;
 
     #[test]
     fn get_settings_works() {
@@ -580,10 +579,7 @@ mod test {
 
         // Retrieve with helper
         let settings = get_settings(&ds, &Committed::Live).unwrap();
-        assert_eq!(
-            settings.motd,
-            Some(("json string").parse::<String>().unwrap())
-        );
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
     }
 
     #[test]
@@ -601,19 +597,13 @@ mod test {
         let settings = get_settings_prefix(&ds, "settings.", &Committed::Live)
             .unwrap() // Result Ok
             .unwrap(); // got Some result
-        assert_eq!(
-            settings.motd,
-            Some(("json string").parse::<String>().unwrap())
-        );
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
 
         // Retrieve with more specific prefix OK
         let settings = get_settings_prefix(&ds, "settings.mot", &Committed::Live)
             .unwrap() // Result Ok
             .unwrap(); // got Some result
-        assert_eq!(
-            settings.motd,
-            Some(("json string").parse::<String>().unwrap())
-        );
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
 
         // No match should return None; the "view" layer of the API, in mod.rs, turns this into an
         // empty object if desired.
@@ -646,10 +636,7 @@ mod test {
         // Retrieve with helper
         let settings =
             get_settings_keys(&ds, &hashset!("settings.motd"), &Committed::Live).unwrap();
-        assert_eq!(
-            settings.motd,
-            Some(("json string 1").parse::<String>().unwrap())
-        );
+        assert_eq!(settings.motd, Some("json string 1".try_into().unwrap()));
         assert_eq!(settings.ntp, None);
     }
 
@@ -676,7 +663,7 @@ mod test {
         assert_eq!(
             services,
             hashmap!("foo".to_string() => Service {
-                configuration_files: vec![("file1").parse::<SingleLineString>().unwrap()],
+                configuration_files: vec!["file1".try_into().unwrap()],
                 restart_commands: vec!["echo hi".to_string()]
             })
         );
@@ -707,7 +694,7 @@ mod test {
         assert_eq!(
             services,
             hashmap!("foo".to_string() => Service {
-                configuration_files: vec![("file1").parse::<SingleLineString>().unwrap()],
+                configuration_files: vec!["file1".try_into().unwrap()],
                 restart_commands: vec!["echo hi".to_string()]
             })
         );
@@ -748,8 +735,8 @@ mod test {
         assert_eq!(
             configuration_files,
             hashmap!("foo".to_string() => ConfigurationFile {
-                path: ("file").parse::<SingleLineString>().unwrap(),
-                template_path: ("template").parse::<SingleLineString>().unwrap(),
+                path: "file".try_into().unwrap(),
+                template_path: "template".try_into().unwrap(),
             })
         );
 
@@ -767,7 +754,7 @@ mod test {
     #[test]
     fn set_settings_works() {
         let mut settings = Settings::default();
-        settings.motd = Some(("tz").parse::<String>().unwrap());
+        settings.motd = Some("tz".try_into().unwrap());
 
         // Set with helper
         let mut ds = MemoryDataStore::new();
@@ -845,10 +832,7 @@ mod test {
 
         // Confirm pending
         let settings = get_settings(&ds, &pending).unwrap();
-        assert_eq!(
-            settings.motd,
-            Some(("json string").parse::<String>().unwrap())
-        );
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
         // No live settings yet
         get_settings(&ds, &Committed::Live).unwrap_err();
 
@@ -859,9 +843,6 @@ mod test {
         get_settings(&ds, &pending).unwrap_err();
         // Confirm live
         let settings = get_settings(&ds, &Committed::Live).unwrap();
-        assert_eq!(
-            settings.motd,
-            Some(("json string").parse::<String>().unwrap())
-        );
+        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
     }
 }

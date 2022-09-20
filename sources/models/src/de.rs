@@ -3,6 +3,7 @@ use serde::de::value::SeqAccessDeserializer;
 use serde::de::{Error, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::fmt::Formatter;
 use toml::Value;
 
@@ -34,8 +35,7 @@ where
                     Value::String(taint_val) => {
                         node_taints.insert(
                             k,
-                            vec![taint_val
-                                .parse::<KubernetesTaintValue>()
+                            vec![KubernetesTaintValue::try_from(taint_val)
                                 .map_err(M::Error::custom)?],
                         );
                     }
@@ -65,6 +65,7 @@ where
 #[cfg(test)]
 mod node_taint_tests {
     use crate::{KubernetesSettings, KubernetesTaintValue};
+    use std::convert::TryFrom;
     static TEST_NODE_TAINT_LIST: &str = include_str!("../tests/data/node-taint-list-val");
     static TEST_NODE_TAINT_SINGLE: &str = include_str!("../tests/data/node-taint-single-val");
     static TEST_NODE_TAINT_EMPTY_LIST: &str = include_str!("../tests/data/node-taint-empty-list");
@@ -81,12 +82,8 @@ mod node_taint_tests {
                 .unwrap()
                 .to_owned(),
             vec![
-                ("value1:NoSchedule")
-                    .parse::<KubernetesTaintValue>()
-                    .unwrap(),
-                ("value1:NoExecute")
-                    .parse::<KubernetesTaintValue>()
-                    .unwrap()
+                KubernetesTaintValue::try_from("value1:NoSchedule").unwrap(),
+                KubernetesTaintValue::try_from("value1:NoExecute").unwrap()
             ]
         );
         assert_eq!(
@@ -97,9 +94,7 @@ mod node_taint_tests {
                 .get("key2")
                 .unwrap()
                 .to_owned(),
-            vec![("value2:NoSchedule")
-                .parse::<KubernetesTaintValue>()
-                .unwrap()]
+            vec![KubernetesTaintValue::try_from("value2:NoSchedule").unwrap()]
         );
     }
 
@@ -114,9 +109,7 @@ mod node_taint_tests {
                 .get("key1")
                 .unwrap()
                 .to_owned(),
-            vec![("value1:NoSchedule")
-                .parse::<KubernetesTaintValue>()
-                .unwrap()]
+            vec![KubernetesTaintValue::try_from("value1:NoSchedule").unwrap()]
         );
         assert_eq!(
             k8s_settings
@@ -126,9 +119,7 @@ mod node_taint_tests {
                 .get("key2")
                 .unwrap()
                 .to_owned(),
-            vec![("value2:NoExecute")
-                .parse::<KubernetesTaintValue>()
-                .unwrap()]
+            vec![KubernetesTaintValue::try_from("value2:NoExecute").unwrap()]
         );
     }
 

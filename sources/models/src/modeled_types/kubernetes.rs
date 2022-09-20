@@ -10,7 +10,6 @@ use std::convert::TryFrom;
 use std::fmt;
 use std::net::IpAddr;
 use std::ops::Deref;
-use std::str::FromStr;
 
 // Declare constant values usable by any type
 const IMAGE_GC_THRESHOLD_MAX: i32 = 100;
@@ -28,10 +27,10 @@ lazy_static! {
     pub(crate) static ref KUBERNETES_NAME: Regex = Regex::new(r"^[0-9a-z.-]{1,253}$").unwrap();
 }
 
-impl FromStr for KubernetesName {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesName {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_NAME.is_match(input),
             error::PatternSnafu {
@@ -51,18 +50,19 @@ string_impls_for!(KubernetesName, "KubernetesName");
 #[cfg(test)]
 mod test_kubernetes_name {
     use super::KubernetesName;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_names() {
         for ok in &["howdy", "42", "18-eighteen."] {
-            ok.parse::<KubernetesName>().unwrap();
+            KubernetesName::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_names() {
         for err in &["", "HOWDY", "@", "hi/there", &"a".repeat(254)] {
-            err.parse::<KubernetesName>().unwrap_err();
+            KubernetesName::try_from(*err).unwrap_err();
         }
     }
 }
@@ -93,10 +93,10 @@ lazy_static! {
     .unwrap();
 }
 
-impl FromStr for KubernetesLabelKey {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesLabelKey {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_LABEL_KEY.is_match(input),
             error::BigPatternSnafu {
@@ -115,6 +115,7 @@ string_impls_for!(KubernetesLabelKey, "KubernetesLabelKey");
 #[cfg(test)]
 mod test_kubernetes_label_key {
     use super::KubernetesLabelKey;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_keys() {
@@ -125,7 +126,7 @@ mod test_kubernetes_label_key {
             &"a".repeat(63),
             &format!("{}/{}", "a".repeat(253), "name"),
         ] {
-            ok.parse::<KubernetesLabelKey>().unwrap();
+            KubernetesLabelKey::try_from(*ok).unwrap();
         }
     }
 
@@ -137,7 +138,7 @@ mod test_kubernetes_label_key {
             &"a".repeat(64),
             &format!("{}/{}", "a".repeat(254), "name"),
         ] {
-            err.parse::<KubernetesLabelKey>().unwrap_err();
+            KubernetesLabelKey::try_from(*err).unwrap_err();
         }
     }
 }
@@ -168,10 +169,10 @@ lazy_static! {
     .unwrap();
 }
 
-impl FromStr for KubernetesLabelValue {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesLabelValue {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_LABEL_VALUE.is_match(input),
             error::BigPatternSnafu {
@@ -190,18 +191,19 @@ string_impls_for!(KubernetesLabelValue, "KubernetesLabelValue");
 #[cfg(test)]
 mod test_kubernetes_label_value {
     use super::KubernetesLabelValue;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_values() {
         for ok in &["", "more-chars_here.now", &"a".repeat(63)] {
-            ok.parse::<KubernetesLabelValue>().unwrap();
+            KubernetesLabelValue::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_values() {
         for err in &[".bad", "bad.", &"a".repeat(64)] {
-            err.parse::<KubernetesLabelValue>().unwrap_err();
+            KubernetesLabelValue::try_from(*err).unwrap_err();
         }
     }
 }
@@ -240,10 +242,10 @@ lazy_static! {
     .unwrap();
 }
 
-impl FromStr for KubernetesTaintValue {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesTaintValue {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_TAINT_VALUE.is_match(input),
             error::BigPatternSnafu {
@@ -262,6 +264,7 @@ string_impls_for!(KubernetesTaintValue, "KubernetesTaintValue");
 #[cfg(test)]
 mod test_kubernetes_taint_value {
     use super::KubernetesTaintValue;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_values() {
@@ -274,7 +277,7 @@ mod test_kubernetes_taint_value {
             "a:NoSchedule",
             "a-b:NoSchedule",
         ] {
-            ok.parse::<KubernetesTaintValue>().unwrap();
+            KubernetesTaintValue::try_from(*ok).unwrap();
         }
     }
 
@@ -289,7 +292,7 @@ mod test_kubernetes_taint_value {
             "-a:NoSchedule",
             "a-:NoSchedule",
         ] {
-            err.parse::<KubernetesTaintValue>().unwrap_err();
+            KubernetesTaintValue::try_from(*err).unwrap_err();
         }
     }
 }
@@ -306,10 +309,10 @@ pub struct KubernetesClusterName {
     inner: String,
 }
 
-impl FromStr for KubernetesClusterName {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesClusterName {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             !input.is_empty(),
             error::InvalidClusterNameSnafu {
@@ -318,7 +321,7 @@ impl FromStr for KubernetesClusterName {
             }
         );
         ensure!(
-            input.parse::<KubernetesLabelValue>().is_ok(),
+            KubernetesLabelValue::try_from(input).is_ok(),
             error::InvalidClusterNameSnafu {
                 name: input,
                 msg: "cluster names must be valid Kubernetes label values"
@@ -336,18 +339,19 @@ string_impls_for!(KubernetesClusterName, "KubernetesClusterName");
 #[cfg(test)]
 mod test_kubernetes_cluster_name {
     use super::KubernetesClusterName;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_cluster_names() {
         for ok in &["more-chars_here.now", &"a".repeat(63)] {
-            ok.parse::<KubernetesClusterName>().unwrap();
+            KubernetesClusterName::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_values() {
         for err in &["", ".bad", "bad.", &"a".repeat(64)] {
-            err.parse::<KubernetesClusterName>().unwrap_err();
+            KubernetesClusterName::try_from(*err).unwrap_err();
         }
     }
 }
@@ -361,10 +365,10 @@ pub struct KubernetesAuthenticationMode {
     inner: String,
 }
 
-impl FromStr for KubernetesAuthenticationMode {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesAuthenticationMode {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, error::Error> {
         ensure!(
             matches!(input, "aws" | "tls"),
             error::InvalidAuthenticationModeSnafu { input }
@@ -380,18 +384,19 @@ string_impls_for!(KubernetesAuthenticationMode, "KubernetesAuthenticationMode");
 #[cfg(test)]
 mod test_kubernetes_authentication_mode {
     use super::KubernetesAuthenticationMode;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_modes() {
         for ok in &["aws", "tls"] {
-            ok.parse::<KubernetesAuthenticationMode>().unwrap();
+            KubernetesAuthenticationMode::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_modes() {
         for err in &["", "anonymous"] {
-            err.parse::<KubernetesAuthenticationMode>().unwrap_err();
+            KubernetesAuthenticationMode::try_from(*err).unwrap_err();
         }
     }
 }
@@ -411,10 +416,10 @@ lazy_static! {
         Regex::new(r"^[a-z0-9]{6}\.[a-z0-9]{16}$").unwrap();
 }
 
-impl FromStr for KubernetesBootstrapToken {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesBootstrapToken {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_BOOTSTRAP_TOKEN.is_match(input),
             error::PatternSnafu {
@@ -434,18 +439,19 @@ string_impls_for!(KubernetesBootstrapToken, "KubernetesBootstrapToken");
 #[cfg(test)]
 mod test_kubernetes_bootstrap_token {
     use super::KubernetesBootstrapToken;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_tokens() {
         for ok in &["abcdef.0123456789abcdef", "07401b.f395accd246ae52d"] {
-            ok.parse::<KubernetesBootstrapToken>().unwrap();
+            KubernetesBootstrapToken::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_names() {
         for err in &["", "ABCDEF.0123456789ABCDEF", "secret", &"a".repeat(23)] {
-            err.parse::<KubernetesBootstrapToken>().unwrap_err();
+            KubernetesBootstrapToken::try_from(*err).unwrap_err();
         }
     }
 }
@@ -477,11 +483,11 @@ enum EvictionSignal {
     PidAvailable,
 }
 
-impl FromStr for KubernetesEvictionHardKey {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesEvictionHardKey {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        serde_plain::from_str::<EvictionSignal>(input).context(error::InvalidPlainValueSnafu {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<EvictionSignal>(&input).context(error::InvalidPlainValueSnafu {
             field: "Eviction Hard key",
         })?;
         Ok(KubernetesEvictionHardKey {
@@ -494,6 +500,7 @@ string_impls_for!(KubernetesEvictionHardKey, "KubernetesEvictionHardKey");
 #[cfg(test)]
 mod test_kubernetes_eviction_hard_key {
     use super::KubernetesEvictionHardKey;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_eviction_hard_key() {
@@ -505,14 +512,14 @@ mod test_kubernetes_eviction_hard_key {
             "imagefs.inodesFree",
             "pid.available",
         ] {
-            ok.parse::<KubernetesEvictionHardKey>().unwrap();
+            KubernetesEvictionHardKey::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_eviction_hard_key() {
         for err in &["", "storage.available", ".bad", "bad.", &"a".repeat(64)] {
-            err.parse::<KubernetesEvictionHardKey>().unwrap_err();
+            KubernetesEvictionHardKey::try_from(*err).unwrap_err();
         }
     }
 }
@@ -542,10 +549,10 @@ lazy_static! {
     .unwrap();
 }
 
-impl FromStr for KubernetesThresholdValue {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesThresholdValue {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         if input.ends_with("%") {
             let input_f32 = input[..input.len() - 1]
                 .parse::<f32>()
@@ -575,13 +582,14 @@ string_impls_for!(KubernetesThresholdValue, "KubernetesThresholdValue");
 #[cfg(test)]
 mod test_kubernetes_threshold_value {
     use super::KubernetesThresholdValue;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_kubernetes_threshold_value() {
         for ok in &[
             "10%", "129e6", "10Mi", "1024M", "1Gi", "120Ki", "1Ti", "1000n", "100m",
         ] {
-            ok.parse::<KubernetesThresholdValue>().unwrap();
+            KubernetesThresholdValue::try_from(*ok).unwrap();
         }
     }
 
@@ -597,7 +605,7 @@ mod test_kubernetes_threshold_value {
             "1000i",
             &"a".repeat(64),
         ] {
-            err.parse::<KubernetesThresholdValue>().unwrap_err();
+            KubernetesThresholdValue::try_from(*err).unwrap_err();
         }
     }
 }
@@ -622,11 +630,11 @@ enum ReservedResources {
     EphemeralStorage,
 }
 
-impl FromStr for KubernetesReservedResourceKey {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesReservedResourceKey {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        serde_plain::from_str::<ReservedResources>(input).context(
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ReservedResources>(&input).context(
             error::InvalidPlainValueSnafu {
                 field: "Reserved sources key",
             },
@@ -644,18 +652,19 @@ string_impls_for!(
 #[cfg(test)]
 mod test_reserved_resources_key {
     use super::KubernetesReservedResourceKey;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_reserved_resources_key() {
         for ok in &["cpu", "memory", "ephemeral-storage"] {
-            ok.parse::<KubernetesReservedResourceKey>().unwrap();
+            KubernetesReservedResourceKey::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_reserved_resources_key() {
         for err in &["", "cpa", ".bad", "bad.", &"a".repeat(64)] {
-            err.parse::<KubernetesReservedResourceKey>().unwrap_err();
+            KubernetesReservedResourceKey::try_from(*err).unwrap_err();
         }
     }
 }
@@ -670,10 +679,10 @@ pub struct KubernetesQuantityValue {
     inner: String,
 }
 
-impl FromStr for KubernetesQuantityValue {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesQuantityValue {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             KUBERNETES_QUANTITY.is_match(input),
             error::PatternSnafu {
@@ -693,13 +702,14 @@ string_impls_for!(KubernetesQuantityValue, "KubernetesQuantityValue");
 #[cfg(test)]
 mod test_kubernetes_quantity_value {
     use super::KubernetesQuantityValue;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_kubernetes_quantity_value() {
         for ok in &[
             "129e6", "10Mi", "1024M", "1Gi", "120Ki", "1Ti", "1000n", "100m",
         ] {
-            ok.parse::<KubernetesQuantityValue>().unwrap();
+            KubernetesQuantityValue::try_from(*ok).unwrap();
         }
     }
 
@@ -716,7 +726,7 @@ mod test_kubernetes_quantity_value {
             "1000i",
             &"a".repeat(64),
         ] {
-            err.parse::<KubernetesQuantityValue>().unwrap_err();
+            KubernetesQuantityValue::try_from(*err).unwrap_err();
         }
     }
 }
@@ -730,10 +740,10 @@ pub struct KubernetesCloudProvider {
     inner: String,
 }
 
-impl FromStr for KubernetesCloudProvider {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesCloudProvider {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, error::Error> {
         // Kubelet expects the empty string to be double-quoted when be passed to `--cloud-provider`
         let cloud_provider = if input.is_empty() { "\"\"" } else { input };
         ensure!(
@@ -753,18 +763,19 @@ string_impls_for!(KubernetesCloudProvider, "KubernetesCloudProvider");
 #[cfg(test)]
 mod test_kubernetes_cloud_provider {
     use super::KubernetesCloudProvider;
+    use std::convert::TryFrom;
 
     #[test]
     fn allowed_providers() {
         for ok in &["aws", "external", "\"\"", ""] {
-            ok.parse::<KubernetesCloudProvider>().unwrap();
+            KubernetesCloudProvider::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn disallowed_providers() {
         for err in &["internal"] {
-            err.parse::<KubernetesCloudProvider>().unwrap_err();
+            KubernetesCloudProvider::try_from(*err).unwrap_err();
         }
     }
 }
@@ -785,11 +796,11 @@ enum ValidCpuManagerPolicy {
     None,
 }
 
-impl FromStr for CpuManagerPolicy {
-    type Err = error::Error;
+impl TryFrom<&str> for CpuManagerPolicy {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        serde_plain::from_str::<ValidCpuManagerPolicy>(input)
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ValidCpuManagerPolicy>(&input)
             .context(error::InvalidCpuManagerPolicySnafu { input })?;
         Ok(CpuManagerPolicy {
             inner: input.to_string(),
@@ -801,18 +812,19 @@ string_impls_for!(CpuManagerPolicy, "CpuManagerPolicy");
 #[cfg(test)]
 mod test_cpu_manager_policy {
     use super::CpuManagerPolicy;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_cpu_manager_policy() {
         for ok in &["static", "none"] {
-            ok.parse::<CpuManagerPolicy>().unwrap();
+            CpuManagerPolicy::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_cpu_manager_policy() {
         for err in &["", "bad", "100", &"a".repeat(64)] {
-            err.parse::<CpuManagerPolicy>().unwrap_err();
+            CpuManagerPolicy::try_from(*err).unwrap_err();
         }
     }
 }
@@ -832,10 +844,10 @@ lazy_static! {
     .unwrap();
 }
 
-impl FromStr for KubernetesDurationValue {
-    type Err = error::Error;
+impl TryFrom<&str> for KubernetesDurationValue {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             !input.is_empty(),
             error::InvalidKubernetesDurationValueSnafu { input }
@@ -855,6 +867,7 @@ string_impls_for!(KubernetesDurationValue, "KubernetesDurationValue");
 #[cfg(test)]
 mod test_kubernetes_duration_value {
     use super::KubernetesDurationValue;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_tokens() {
@@ -868,7 +881,7 @@ mod test_kubernetes_duration_value {
             "2h3s10ms",
             "1.5h3.5m",
         ] {
-            ok.parse::<KubernetesDurationValue>().unwrap();
+            KubernetesDurationValue::try_from(*ok).unwrap();
         }
     }
 
@@ -884,7 +897,7 @@ mod test_kubernetes_duration_value {
             "9ns",
             &"a".repeat(23),
         ] {
-            err.parse::<KubernetesDurationValue>().unwrap_err();
+            KubernetesDurationValue::try_from(*err).unwrap_err();
         }
     }
 }
@@ -905,11 +918,11 @@ enum ValidTopologyManagerScope {
     Pod,
 }
 
-impl FromStr for TopologyManagerScope {
-    type Err = error::Error;
+impl TryFrom<&str> for TopologyManagerScope {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        serde_plain::from_str::<ValidTopologyManagerScope>(input)
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ValidTopologyManagerScope>(&input)
             .context(error::InvalidTopologyManagerScopeSnafu { input })?;
         Ok(TopologyManagerScope {
             inner: input.to_string(),
@@ -921,18 +934,19 @@ string_impls_for!(TopologyManagerScope, "TopologyManagerScope");
 #[cfg(test)]
 mod test_topology_manager_scope {
     use super::TopologyManagerScope;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_topology_manager_scope() {
         for ok in &["container", "pod"] {
-            ok.parse::<TopologyManagerScope>().unwrap();
+            TopologyManagerScope::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_topology_manager_scope() {
         for err in &["", "bad", "100", &"a".repeat(64)] {
-            err.parse::<TopologyManagerScope>().unwrap_err();
+            TopologyManagerScope::try_from(*err).unwrap_err();
         }
     }
 }
@@ -957,11 +971,11 @@ enum ValidTopologyManagerPolicy {
     SingleNumaNode,
 }
 
-impl FromStr for TopologyManagerPolicy {
-    type Err = error::Error;
+impl TryFrom<&str> for TopologyManagerPolicy {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        serde_plain::from_str::<ValidTopologyManagerPolicy>(input)
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        serde_plain::from_str::<ValidTopologyManagerPolicy>(&input)
             .context(error::InvalidTopologyManagerPolicySnafu { input })?;
         Ok(TopologyManagerPolicy {
             inner: input.to_string(),
@@ -973,18 +987,19 @@ string_impls_for!(TopologyManagerPolicy, "TopologyManagerPolicy");
 #[cfg(test)]
 mod test_topology_manager_policy {
     use super::TopologyManagerPolicy;
+    use std::convert::TryFrom;
 
     #[test]
     fn good_topology_manager_policy() {
         for ok in &["none", "restricted", "best-effort", "single-numa-node"] {
-            ok.parse::<TopologyManagerPolicy>().unwrap();
+            TopologyManagerPolicy::try_from(*ok).unwrap();
         }
     }
 
     #[test]
     fn bad_topology_manager_policy() {
         for err in &["", "bad", "100", &"a".repeat(64)] {
-            err.parse::<TopologyManagerPolicy>().unwrap_err();
+            TopologyManagerPolicy::try_from(*err).unwrap_err();
         }
     }
 }
@@ -1003,10 +1018,10 @@ pub struct ImageGCHighThresholdPercent {
     inner: String,
 }
 
-impl FromStr for ImageGCHighThresholdPercent {
-    type Err = error::Error;
+impl TryFrom<&str> for ImageGCHighThresholdPercent {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         let parsed_input: i32 = input
             .parse::<i32>()
             .context(error::ParseIntSnafu { input })?;
@@ -1035,25 +1050,26 @@ string_impls_for!(ImageGCHighThresholdPercent, "ImageGCHighThresholdPercent");
 #[cfg(test)]
 mod test_image_gc_high_threshold_percent {
     use super::ImageGCHighThresholdPercent;
+    use std::convert::TryFrom;
 
     // test 1: good values should succeed
     #[test]
     fn image_gc_high_threshold_percent_between_0_and_100_inclusive() {
         for ok in &["0", "1", "99", "100"] {
-            ok.parse::<ImageGCHighThresholdPercent>().unwrap();
+            ImageGCHighThresholdPercent::try_from(*ok).unwrap();
         }
     }
 
     // test 2: values too low should return Errors
     #[test]
     fn image_gc_high_threshold_percent_less_than_0_fails() {
-        ("-1").parse::<ImageGCHighThresholdPercent>().unwrap_err();
+        ImageGCHighThresholdPercent::try_from("-1").unwrap_err();
     }
 
     // test 3: values too high should return Errors
     #[test]
     fn image_gc_high_threshold_percent_greater_than_100_fails() {
-        ("101").parse::<ImageGCHighThresholdPercent>().unwrap_err();
+        ImageGCHighThresholdPercent::try_from("101").unwrap_err();
     }
 }
 
@@ -1072,10 +1088,10 @@ pub struct ImageGCLowThresholdPercent {
     inner: String,
 }
 
-impl FromStr for ImageGCLowThresholdPercent {
-    type Err = error::Error;
+impl TryFrom<&str> for ImageGCLowThresholdPercent {
+    type Error = error::Error;
 
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
         let parsed_input: i32 = input
             .parse::<i32>()
             .context(error::ParseIntSnafu { input })?;
@@ -1104,25 +1120,26 @@ string_impls_for!(ImageGCLowThresholdPercent, "ImageGCLowThresholdPercent");
 #[cfg(test)]
 mod test_image_gc_low_threshold_percent {
     use super::ImageGCLowThresholdPercent;
+    use std::convert::TryFrom;
 
     // test 1: good values should succeed
     #[test]
     fn image_gc_low_threshold_percent_between_0_and_100_inclusive() {
         for ok in &["0", "1", "99", "100"] {
-            ok.parse::<ImageGCLowThresholdPercent>().unwrap();
+            ImageGCLowThresholdPercent::try_from(*ok).unwrap();
         }
     }
 
     // test 2: values too low should return Errors
     #[test]
     fn image_gc_low_threshold_percent_less_than_0_fails() {
-        ("-1").parse::<ImageGCLowThresholdPercent>().unwrap_err();
+        ImageGCLowThresholdPercent::try_from("-1").unwrap_err();
     }
 
     // test 3: values too high should return Errors
     #[test]
     fn image_gc_low_threshold_percent_greater_than_100_fails() {
-        ("101").parse::<ImageGCLowThresholdPercent>().unwrap_err();
+        ImageGCLowThresholdPercent::try_from("101").unwrap_err();
     }
 }
 
