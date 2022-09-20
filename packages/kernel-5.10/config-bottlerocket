@@ -133,3 +133,10 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 
 # Disable USB-attached network interfaces, unused in the cloud and on server-grade hardware.
 # CONFIG_USB_NET_DRIVERS is not set
+
+# Disable obsolete NIC drivers
+# CONFIG_QLGE is not set
+
+# Disable unused qdiscs
+#   - sch_cake targets home routers and residential links
+# CONFIG_NET_SCH_CAKE is not set
