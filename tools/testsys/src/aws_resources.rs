@@ -1,4 +1,4 @@
-use crate::run::{TestType, TestsysImages};
+use crate::run::TestType;
 use anyhow::{anyhow, Context, Result};
 use bottlerocket_types::agent_config::{
     ClusterType, CreationPolicy, Ec2Config, EcsClusterConfig, EcsTestConfig, EksClusterConfig,
@@ -10,6 +10,7 @@ use aws_sdk_ec2::Region;
 use bottlerocket_variant::Variant;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use k8s_openapi::serde_json::Value;
+use log::debug;
 use maplit::btreemap;
 use model::constants::NAMESPACE;
 use model::{
@@ -17,17 +18,16 @@ use model::{
     TestSpec,
 };
 use std::collections::BTreeMap;
+use testsys_config::{
+    rendered_cluster_name, AwsEcsVariantConfig, AwsK8sVariantConfig, TestsysImages,
+};
 
 pub(crate) struct AwsK8s {
     pub(crate) arch: String,
     pub(crate) variant: String,
     pub(crate) region: String,
-    pub(crate) assume_role: Option<String>,
-    pub(crate) instance_type: Option<String>,
     pub(crate) ami: String,
-    pub(crate) secrets: Option<BTreeMap<String, SecretName>>,
-    pub(crate) kube_conformance_image: Option<String>,
-    pub(crate) target_cluster_name: Option<String>,
+    pub(crate) config: AwsK8sVariantConfig,
     pub(crate) tuf_repo: Option<TufRepoConfig>,
     pub(crate) starting_version: Option<String>,
     pub(crate) migrate_starting_commit: Option<String>,
@@ -43,30 +43,57 @@ impl AwsK8s {
         test: TestType,
         testsys_images: &TestsysImages,
     ) -> Result<Vec<Crd>> {
-        match test {
-            TestType::Conformance => {
-                self.sonobuoy_test_crds(testsys_images, SonobuoyMode::CertifiedConformance)
-            }
-            TestType::Quick => self.sonobuoy_test_crds(testsys_images, SonobuoyMode::Quick),
-            TestType::Migration => self.migration_test_crds(testsys_images).await,
+        let mut crds = Vec::new();
+        let target_cluster_names = if self.config.cluster_names.is_empty() {
+            debug!("No cluster names were provided using default name");
+            vec![self.default_cluster_name()]
+        } else {
+            self.config.cluster_names.clone()
+        };
+        for template_cluster_name in target_cluster_names {
+            let cluster_name = &rendered_cluster_name(
+                template_cluster_name,
+                self.kube_arch(),
+                self.kube_variant(),
+            )?;
+            crds.append(&mut match &test {
+                TestType::Conformance => self.sonobuoy_test_crds(
+                    testsys_images,
+                    SonobuoyMode::CertifiedConformance,
+                    cluster_name,
+                )?,
+                TestType::Quick => {
+                    self.sonobuoy_test_crds(testsys_images, SonobuoyMode::Quick, cluster_name)?
+                }
+                TestType::Migration => {
+                    self.migration_test_crds(cluster_name, testsys_images)
+                        .await?
+                }
+            })
         }
+        Ok(crds)
     }
 
     fn sonobuoy_test_crds(
         &self,
         testsys_images: &TestsysImages,
         sonobuoy_mode: SonobuoyMode,
+        cluster_name: &str,
     ) -> Result<Vec<Crd>> {
         let crds = vec![
-            self.eks_crd(testsys_images)?,
-            self.ec2_crd(testsys_images, None)?,
-            self.sonobuoy_crd("-test", sonobuoy_mode, None, testsys_images)?,
+            self.eks_crd(cluster_name, testsys_images)?,
+            self.ec2_crd(cluster_name, testsys_images, None)?,
+            self.sonobuoy_crd("-test", cluster_name, sonobuoy_mode, None, testsys_images)?,
         ];
         Ok(crds)
     }
 
     /// Creates `Test` crds for migration testing.
-    async fn migration_test_crds(&self, testsys_images: &TestsysImages) -> Result<Vec<Crd>> {
+    async fn migration_test_crds(
+        &self,
+        cluster_name: &str,
+        testsys_images: &TestsysImages,
+    ) -> Result<Vec<Crd>> {
         let ami = self
             .starting_image_id
             .as_ref()
@@ -81,15 +108,25 @@ impl AwsK8s {
                 .await?,
             )
             .to_string();
-        let eks = self.eks_crd(testsys_images)?;
-        let ec2 = self.ec2_crd(testsys_images, Some(ami))?;
+        let eks = self.eks_crd(cluster_name, testsys_images)?;
+        let ec2 = self.ec2_crd(cluster_name, testsys_images, Some(ami))?;
+        let instance_provider = ec2
+            .name()
+            .expect("The EC2 instance provider crd is missing a name.");
         let mut depends_on = Vec::new();
         // Start with a `quick` test to make sure instances launched properly
-        let initial = self.sonobuoy_crd("-1-initial", SonobuoyMode::Quick, None, testsys_images)?;
+        let initial = self.sonobuoy_crd(
+            "-1-initial",
+            cluster_name,
+            SonobuoyMode::Quick,
+            None,
+            testsys_images,
+        )?;
         depends_on.push(initial.name().context("Crd missing name")?);
         // Migrate instances to the target version
         let start_migrate = self.migration_crd(
-            format!("{}-2-migrate", self.cluster_name()),
+            format!("{}-2-migrate", cluster_name),
+            instance_provider.clone(),
             MigrationVersion::Migrated,
             Some(depends_on.clone()),
             testsys_images,
@@ -98,6 +135,7 @@ impl AwsK8s {
         depends_on.push(start_migrate.name().context("Crd missing name")?);
         let migrated = self.sonobuoy_crd(
             "-3-migrated",
+            cluster_name,
             SonobuoyMode::Quick,
             Some(depends_on.clone()),
             testsys_images,
@@ -105,7 +143,8 @@ impl AwsK8s {
         // Migrate instances to the starting version
         depends_on.push(migrated.name().context("Crd missing name")?);
         let end_migrate = self.migration_crd(
-            format!("{}-4-migrate", self.cluster_name()),
+            format!("{}-4-migrate", cluster_name),
+            instance_provider,
             MigrationVersion::Starting,
             Some(depends_on.clone()),
             testsys_images,
@@ -114,6 +153,7 @@ impl AwsK8s {
         depends_on.push(end_migrate.name().context("Crd missing name")?);
         let last = self.sonobuoy_crd(
             "-5-final",
+            cluster_name,
             SonobuoyMode::Quick,
             Some(depends_on.clone()),
             testsys_images,
@@ -146,13 +186,11 @@ impl AwsK8s {
     }
 
     /// Bottlerocket cluster naming convention.
-    fn cluster_name(&self) -> String {
-        self.target_cluster_name
-            .clone()
-            .unwrap_or_else(|| format!("{}-{}", self.kube_arch(), self.kube_variant()))
+    fn default_cluster_name(&self) -> String {
+        format!("{}-{}", self.kube_arch(), self.kube_variant())
     }
 
-    fn eks_crd(&self, testsys_images: &TestsysImages) -> Result<Crd> {
+    fn eks_crd(&self, cluster_name: &str, testsys_images: &TestsysImages) -> Result<Crd> {
         let cluster_version = K8sVersion::parse(
             Variant::new(&self.variant)
                 .context("The provided variant cannot be interpreted.")?
@@ -160,10 +198,9 @@ impl AwsK8s {
                 .context("aws-k8s variant is missing k8s version")?,
         )
         .map_err(|e| anyhow!(e))?;
-        let cluster_name = self.cluster_name();
         let eks_crd = Resource {
             metadata: ObjectMeta {
-                name: Some(cluster_name.clone()),
+                name: Some(cluster_name.to_string()),
                 namespace: Some(NAMESPACE.into()),
                 labels: Some(self.labels()),
                 ..Default::default()
@@ -173,23 +210,26 @@ impl AwsK8s {
                 conflicts_with: None,
                 agent: Agent {
                     name: "eks-provider".to_string(),
-                    image: testsys_images.eks_resource.clone(),
-                    pull_secret: testsys_images.secret.clone(),
+                    image: testsys_images
+                        .eks_resource_agent_image
+                        .to_owned()
+                        .expect("Missing default image for EKS resource agent"),
+                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
                     keep_running: false,
                     timeout: None,
                     configuration: Some(
                         EksClusterConfig {
-                            cluster_name,
+                            cluster_name: cluster_name.to_string(),
                             creation_policy: Some(CreationPolicy::IfNotExists),
                             region: Some(self.region.clone()),
                             zones: None,
                             version: Some(cluster_version),
-                            assume_role: self.assume_role.clone(),
+                            assume_role: self.config.assume_role.clone(),
                         }
                         .into_map()
                         .context("Unable to convert eks config to map")?,
                     ),
-                    secrets: self.secrets.clone(),
+                    secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
                 destruction_policy: DestructionPolicy::Never,
@@ -199,12 +239,16 @@ impl AwsK8s {
         Ok(Crd::Resource(eks_crd))
     }
 
-    fn ec2_crd(&self, testsys_images: &TestsysImages, override_ami: Option<String>) -> Result<Crd> {
-        let cluster_name = self.cluster_name();
+    fn ec2_crd(
+        &self,
+        cluster_name: &str,
+        testsys_images: &TestsysImages,
+        override_ami: Option<String>,
+    ) -> Result<Crd> {
         let mut ec2_config = Ec2Config {
             node_ami: override_ami.unwrap_or_else(|| self.ami.clone()),
             instance_count: Some(2),
-            instance_type: self.instance_type.clone(),
+            instance_type: self.config.instance_type.clone(),
             cluster_name: format!("${{{}.clusterName}}", cluster_name),
             region: format!("${{{}.region}}", cluster_name),
             instance_profile_arn: format!("${{{}.iamInstanceProfileArn}}", cluster_name),
@@ -214,7 +258,7 @@ impl AwsK8s {
             certificate: Some(format!("${{{}.certificate}}", cluster_name)),
             cluster_dns_ip: Some(format!("${{{}.clusterDnsIp}}", cluster_name)),
             security_groups: vec![],
-            assume_role: self.assume_role.clone(),
+            assume_role: self.config.assume_role.clone(),
         }
         .into_map()
         .context("Unable to create ec2 config")?;
@@ -233,16 +277,19 @@ impl AwsK8s {
                 ..Default::default()
             },
             spec: ResourceSpec {
-                depends_on: Some(vec![cluster_name]),
+                depends_on: Some(vec![cluster_name.to_string()]),
                 conflicts_with: None,
                 agent: Agent {
                     name: "ec2-provider".to_string(),
-                    image: testsys_images.ec2_resource.clone(),
-                    pull_secret: testsys_images.secret.clone(),
+                    image: testsys_images
+                        .ec2_resource_agent_image
+                        .to_owned()
+                        .expect("Missing default image for EC2 resource agent"),
+                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
                     keep_running: false,
                     timeout: None,
                     configuration: Some(ec2_config),
-                    secrets: self.secrets.clone(),
+                    secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
                 destruction_policy: DestructionPolicy::OnDeletion,
@@ -255,11 +302,11 @@ impl AwsK8s {
     fn sonobuoy_crd(
         &self,
         test_name_suffix: &str,
+        cluster_name: &str,
         sonobuoy_mode: SonobuoyMode,
         depends_on: Option<Vec<String>>,
         testsys_images: &TestsysImages,
     ) -> Result<Crd> {
-        let cluster_name = self.cluster_name();
         let ec2_resource_name = format!("{}-instances", cluster_name);
         let test_name = format!("{}{}", cluster_name, test_name_suffix);
         let sonobuoy = Test {
@@ -275,8 +322,11 @@ impl AwsK8s {
                 retries: Some(5),
                 agent: Agent {
                     name: "sonobuoy-test-agent".to_string(),
-                    image: testsys_images.sonobuoy_test.clone(),
-                    pull_secret: testsys_images.secret.clone(),
+                    image: testsys_images
+                        .sonobuoy_test_agent_image
+                        .to_owned()
+                        .expect("Missing default image for Sonobuoy test agent"),
+                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
                     keep_running: true,
                     timeout: None,
                     configuration: Some(
@@ -285,14 +335,28 @@ impl AwsK8s {
                             plugin: "e2e".to_string(),
                             mode: sonobuoy_mode,
                             kubernetes_version: None,
-                            kube_conformance_image: self.kube_conformance_image.clone(),
-                            e2e_repo_config_base64: None,
-                            assume_role: self.assume_role.clone(),
+                            kube_conformance_image: self.config.kube_conformance_image.clone(),
+                            e2e_repo_config_base64: self.config.e2e_repo_registry.as_ref().map(
+                                |e2e_registry| {
+                                    base64::encode(format!(
+                                        r#"buildImageRegistry: {e2e_registry}
+dockerGluster: {e2e_registry}
+dockerLibraryRegistry: {e2e_registry}
+e2eRegistry: {e2e_registry}
+e2eVolumeRegistry: {e2e_registry}
+gcRegistry: {e2e_registry}
+gcEtcdRegistry: {e2e_registry}
+promoterE2eRegistry: {e2e_registry}
+sigStorageRegistry: {e2e_registry}"#
+                                    ))
+                                },
+                            ),
+                            assume_role: self.config.assume_role.clone(),
                         }
                         .into_map()
                         .context("Unable to convert sonobuoy config to `Map`")?,
                     ),
-                    secrets: self.secrets.clone(),
+                    secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
             },
@@ -310,29 +374,21 @@ impl Migration for AwsK8s {
         Ok(MigrationsConfig {
             tuf_repo: self
                 .tuf_repo
-                .as_ref()
-                .context("Tuf repo metadata is required for upgrade downgrade testing.")?
-                .clone(),
+                .to_owned()
+                .context("Tuf repo metadata is required for upgrade downgrade testing.")?,
             starting_version: self
                 .starting_version
-                .as_ref()
-                .context("You must provide a starting version for upgrade downgrade testing.")?
-                .clone(),
+                .to_owned()
+                .context("You must provide a starting version for upgrade downgrade testing.")?,
             migrate_to_version: self
                 .migrate_to_version
-                .as_ref()
-                .context("You must provide a target version for upgrade downgrade testing.")?
-                .clone(),
+                .to_owned()
+                .context("You must provide a target version for upgrade downgrade testing.")?,
             region: self.region.to_string(),
-            secrets: self.secrets.clone(),
+            secrets: Some(self.config.secrets.clone()),
             capabilities: self.capabilities.clone(),
-            assume_role: self.assume_role.clone(),
+            assume_role: self.config.assume_role.clone(),
         })
-    }
-
-    fn instance_provider(&self) -> String {
-        let cluster_name = self.cluster_name();
-        format!("{}-instances", cluster_name)
     }
 
     fn migration_labels(&self) -> BTreeMap<String, String> {
@@ -355,17 +411,10 @@ pub(crate) struct AwsEcs {
     pub(crate) variant: String,
     /// The region testing should be performed in
     pub(crate) region: String,
-    /// The role that should be assumed by the agents
-    pub(crate) assume_role: Option<String>,
-    /// The desired instance type
-    pub(crate) instance_type: Option<String>,
+    /// Configuration for the variant
+    pub(crate) config: AwsEcsVariantConfig,
     /// The ami that should be used for quick testing
     pub(crate) ami: String,
-    /// Secrets that should be used by the agents
-    pub(crate) secrets: Option<BTreeMap<String, SecretName>>,
-    /// The name of the target ECS cluster. If no cluster is provided, `<arch>-<variant>` will be
-    /// used
-    pub(crate) target_cluster_name: Option<String>,
 
     // Migrations
     /// The TUF repos for migration testing. If no TUF repos are used, the default Bottlerocket
@@ -390,25 +439,54 @@ impl AwsEcs {
         test: TestType,
         testsys_images: &TestsysImages,
     ) -> Result<Vec<Crd>> {
-        match test {
-            TestType::Conformance => Err(anyhow!(
-                "Conformance testing for ECS variants is not supported."
-            )),
-            TestType::Quick => self.ecs_test_crds(testsys_images),
-            TestType::Migration => self.migration_test_crds(testsys_images).await,
+        let mut crds = Vec::new();
+        let target_cluster_names = if self.config.cluster_names.is_empty() {
+            debug!("No cluster names were provided using default name");
+            vec![self.default_cluster_name()]
+        } else {
+            self.config.cluster_names.clone()
+        };
+        for template_cluster_name in target_cluster_names {
+            let cluster_name = &rendered_cluster_name(
+                template_cluster_name,
+                self.kube_arch(),
+                self.kube_variant(),
+            )?;
+            crds.append(&mut match test {
+                TestType::Conformance => {
+                    return Err(anyhow!(
+                        "Conformance testing for ECS variants is not supported."
+                    ))
+                }
+                TestType::Quick => self.ecs_test_crds(cluster_name, testsys_images)?,
+                TestType::Migration => {
+                    self.migration_test_crds(cluster_name, testsys_images)
+                        .await?
+                }
+            });
         }
+
+        Ok(crds)
     }
 
-    fn ecs_test_crds(&self, testsys_images: &TestsysImages) -> Result<Vec<Crd>> {
+    fn ecs_test_crds(
+        &self,
+        cluster_name: &str,
+        testsys_images: &TestsysImages,
+    ) -> Result<Vec<Crd>> {
         let crds = vec![
-            self.ecs_crd(testsys_images)?,
-            self.ec2_crd(testsys_images, None)?,
-            self.ecs_test_crd("-test", None, testsys_images)?,
+            self.ecs_crd(cluster_name, testsys_images)?,
+            self.ec2_crd(cluster_name, testsys_images, None)?,
+            self.ecs_test_crd(cluster_name, "-test", None, testsys_images)?,
         ];
         Ok(crds)
     }
 
-    async fn migration_test_crds(&self, testsys_images: &TestsysImages) -> Result<Vec<Crd>> {
+    async fn migration_test_crds(
+        &self,
+        cluster_name: &str,
+        testsys_images: &TestsysImages,
+    ) -> Result<Vec<Crd>> {
         let ami = self
             .starting_image_id
             .as_ref()
@@ -426,29 +504,43 @@ impl AwsEcs {
                 .await?,
             )
             .to_string();
-        let ecs = self.ecs_crd(testsys_images)?;
-        let ec2 = self.ec2_crd(testsys_images, Some(ami))?;
+        let ecs = self.ecs_crd(cluster_name, testsys_images)?;
+        let ec2 = self.ec2_crd(cluster_name, testsys_images, Some(ami))?;
+        let instance_provider = ec2
+            .name()
+            .expect("The EC2 instance provider crd is missing a name.");
         let mut depends_on = Vec::new();
-        let initial = self.ecs_test_crd("-1-initial", None, testsys_images)?;
+        let initial = self.ecs_test_crd(cluster_name, "-1-initial", None, testsys_images)?;
         depends_on.push(initial.name().context("Crd missing name")?);
         let start_migrate = self.migration_crd(
-            format!("{}-2-migrate", self.cluster_name()),
+            format!("{}-2-migrate", cluster_name),
+            instance_provider.clone(),
             MigrationVersion::Migrated,
             Some(depends_on.clone()),
             testsys_images,
         )?;
         depends_on.push(start_migrate.name().context("Crd missing name")?);
-        let migrated =
-            self.ecs_test_crd("-3-migrated", Some(depends_on.clone()), testsys_images)?;
+        let migrated = self.ecs_test_crd(
+            cluster_name,
+            "-3-migrated",
+            Some(depends_on.clone()),
+            testsys_images,
+        )?;
         depends_on.push(migrated.name().context("Crd missing name")?);
         let end_migrate = self.migration_crd(
-            format!("{}-4-migrate", self.cluster_name()),
+            format!("{}-4-migrate", cluster_name),
+            instance_provider,
             MigrationVersion::Starting,
             Some(depends_on.clone()),
             testsys_images,
         )?;
         depends_on.push(end_migrate.name().context("Crd missing name")?);
-        let last = self.ecs_test_crd("-5-final", Some(depends_on.clone()), testsys_images)?;
+        let last = self.ecs_test_crd(
+            cluster_name,
+            "-5-final",
+            Some(depends_on.clone()),
+            testsys_images,
+        )?;
         Ok(vec![
             ecs,
             ec2,
@@ -476,18 +568,15 @@ impl AwsEcs {
         self.variant.replace('.', "")
     }
 
-    /// Bottlerocket cluster naming convention (<arch>-<variant>, for aws-ecs-1 on x86_64, x86-64-aws-ecs-1).
-    fn cluster_name(&self) -> String {
-        self.target_cluster_name
-            .clone()
-            .unwrap_or_else(|| format!("{}-{}", self.kube_arch(), self.kube_variant()))
+    /// Bottlerocket cluster naming convention.
+    fn default_cluster_name(&self) -> String {
+        format!("{}-{}", self.kube_arch(), self.kube_variant())
     }
 
-    fn ecs_crd(&self, testsys_images: &TestsysImages) -> Result<Crd> {
-        let cluster_name = self.cluster_name();
+    fn ecs_crd(&self, cluster_name: &str, testsys_images: &TestsysImages) -> Result<Crd> {
         let ecs_crd = Resource {
             metadata: ObjectMeta {
-                name: Some(cluster_name.clone()),
+                name: Some(cluster_name.to_string()),
                 namespace: Some(NAMESPACE.into()),
                 labels: Some(self.labels()),
                 ..Default::default()
@@ -497,21 +586,24 @@ impl AwsEcs {
                 conflicts_with: None,
                 agent: Agent {
                     name: "ecs-provider".to_string(),
-                    image: testsys_images.ecs_resource.clone(),
-                    pull_secret: testsys_images.secret.clone(),
+                    image: testsys_images
+                        .ecs_resource_agent_image
+                        .to_owned()
+                        .expect("Missing default image for ECS resource agent"),
+                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
                     keep_running: false,
                     timeout: None,
                     configuration: Some(
                         EcsClusterConfig {
-                            cluster_name,
+                            cluster_name: cluster_name.to_string(),
                             region: Some(self.region.clone()),
-                            assume_role: self.assume_role.clone(),
+                            assume_role: self.config.assume_role.clone(),
                             vpc: None,
                         }
                         .into_map()
                         .context("Unable to convert ECS config to map")?,
                     ),
-                    secrets: self.secrets.clone(),
+                    secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
                 destruction_policy: DestructionPolicy::Never,
@@ -521,12 +613,16 @@ impl AwsEcs {
         Ok(Crd::Resource(ecs_crd))
     }
 
-    fn ec2_crd(&self, testsys_images: &TestsysImages, override_ami: Option<String>) -> Result<Crd> {
-        let cluster_name = self.cluster_name();
+    fn ec2_crd(
+        &self,
+        cluster_name: &str,
+        testsys_images: &TestsysImages,
+        override_ami: Option<String>,
+    ) -> Result<Crd> {
         let ec2_config = Ec2Config {
             node_ami: override_ami.unwrap_or_else(|| self.ami.clone()),
             instance_count: Some(2),
-            instance_type: self.instance_type.clone(),
+            instance_type: self.config.instance_type.clone(),
             cluster_name: format!("${{{}.clusterName}}", cluster_name),
             region: format!("${{{}.region}}", cluster_name),
             instance_profile_arn: format!("${{{}.iamInstanceProfileArn}}", cluster_name),
@@ -536,7 +632,7 @@ impl AwsEcs {
             certificate: None,
             cluster_dns_ip: None,
             security_groups: vec![],
-            assume_role: self.assume_role.clone(),
+            assume_role: self.config.assume_role.clone(),
         }
         .into_map()
         .context("Unable to create EC2 config")?;
@@ -549,16 +645,19 @@ impl AwsEcs {
                 ..Default::default()
             },
             spec: ResourceSpec {
-                depends_on: Some(vec![cluster_name]),
+                depends_on: Some(vec![cluster_name.to_string()]),
                 conflicts_with: None,
                 agent: Agent {
                     name: "ec2-provider".to_string(),
-                    image: testsys_images.ec2_resource.clone(),
-                    pull_secret: testsys_images.secret.clone(),
+                    image: testsys_images
+                        .ec2_resource_agent_image
+                        .to_owned()
+                        .expect("Missing default image for EC2 resource agent"),
+                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
                     keep_running: false,
                     timeout: None,
                     configuration: Some(ec2_config),
-                    secrets: self.secrets.clone(),
+                    secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
                 destruction_policy: DestructionPolicy::OnDeletion,
@@ -570,11 +669,11 @@ impl AwsEcs {
 
     fn ecs_test_crd(
         &self,
+        cluster_name: &str,
         test_name_suffix: &str,
         depends_on: Option<Vec<String>>,
         testsys_images: &TestsysImages,
     ) -> Result<Crd> {
-        let cluster_name = self.cluster_name();
         let ec2_resource_name = format!("{}-instances", cluster_name);
         let test_name = format!("{}{}", cluster_name, test_name_suffix);
         let ecs_test = Test {
@@ -590,15 +689,18 @@ impl AwsEcs {
                 retries: Some(5),
                 agent: Agent {
                     name: "ecs-test-agent".to_string(),
-                    image: testsys_images.ecs_test.clone(),
-                    pull_secret: testsys_images.secret.clone(),
+                    image: testsys_images
+                        .ecs_test_agent_image
+                        .to_owned()
+                        .expect("Missing default image for ECS test agent"),
+                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
                     keep_running: true,
                     timeout: None,
                     configuration: Some(
                         EcsTestConfig {
-                            assume_role: self.assume_role.clone(),
+                            assume_role: self.config.assume_role.clone(),
                             region: Some(self.region.clone()),
-                            cluster_name: cluster_name.clone(),
+                            cluster_name: cluster_name.to_string(),
                             task_count: 1,
                             subnet: format!("${{{}.publicSubnetId}}", cluster_name),
                             task_definition_name_and_revision: None,
@@ -606,7 +708,7 @@ impl AwsEcs {
                         .into_map()
                         .context("Unable to convert sonobuoy config to `Map`")?,
                     ),
-                    secrets: self.secrets.clone(),
+                    secrets: Some(self.config.secrets.clone()),
                     capabilities: None,
                 },
             },
@@ -624,29 +726,21 @@ impl Migration for AwsEcs {
         Ok(MigrationsConfig {
             tuf_repo: self
                 .tuf_repo
-                .as_ref()
-                .context("Tuf repo metadata is required for upgrade downgrade testing.")?
-                .clone(),
+                .to_owned()
+                .context("Tuf repo metadata is required for upgrade downgrade testing.")?,
             starting_version: self
                 .starting_version
-                .as_ref()
-                .context("You must provide a starting version for upgrade downgrade testing.")?
-                .clone(),
+                .to_owned()
+                .context("You must provide a starting version for upgrade downgrade testing.")?,
             migrate_to_version: self
                 .migrate_to_version
-                .as_ref()
-                .context("You must provide a target version for upgrade downgrade testing.")?
-                .clone(),
+                .to_owned()
+                .context("You must provide a target version for upgrade downgrade testing.")?,
             region: self.region.to_string(),
-            secrets: self.secrets.clone(),
+            secrets: Some(self.config.secrets.clone()),
             capabilities: self.capabilities.clone(),
-            assume_role: self.assume_role.clone(),
+            assume_role: self.config.assume_role.clone(),
         })
-    }
-
-    fn instance_provider(&self) -> String {
-        let cluster_name = self.cluster_name();
-        format!("{}-instances", cluster_name)
     }
 
     fn migration_labels(&self) -> BTreeMap<String, String> {
@@ -687,14 +781,11 @@ trait Migration {
     /// Create the labels that should be used for the migration tests.
     fn migration_labels(&self) -> BTreeMap<String, String>;
 
-    /// Return the name of the instance provider that the migration agents should use to get the
-    /// instance ids.
-    fn instance_provider(&self) -> String;
-
     /// Create a migration test for a given arch/variant.
     fn migration_crd(
         &self,
         test_name: String,
+        instance_provider: String,
         migration_version: MigrationVersion,
         depends_on: Option<Vec<String>>,
         testsys_images: &TestsysImages,
@@ -720,7 +811,7 @@ trait Migration {
         .context("Unable to convert migration config to map")?;
         migration_config.insert(
             "instanceIds".to_string(),
-            Value::String(format!("${{{}.ids}}", self.instance_provider())),
+            Value::String(format!("${{{}.ids}}", instance_provider)),
         );
         Ok(Crd::Test(Test {
             metadata: ObjectMeta {
@@ -730,13 +821,16 @@ trait Migration {
                 ..Default::default()
             },
             spec: TestSpec {
-                resources: vec![self.instance_provider()],
+                resources: vec![instance_provider],
                 depends_on,
                 retries: None,
                 agent: Agent {
                     name: "migration-test-agent".to_string(),
-                    image: testsys_images.migration_test.to_string(),
-                    pull_secret: testsys_images.secret.clone(),
+                    image: testsys_images
+                        .migration_test_agent_image
+                        .to_owned()
+                        .expect("Missing default image for migration test agent"),
+                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
                     keep_running: true,
                     timeout: None,
                     configuration: Some(migration_config),

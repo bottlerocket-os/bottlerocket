@@ -6,6 +6,7 @@
 /.gomodcache
 /html
 /Infra.toml
+/Test.toml
 /testsys.kubeconfig
 /*.pem
 /keys

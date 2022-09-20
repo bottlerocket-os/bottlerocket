@@ -1,0 +1,21 @@
+[package]
+name = "testsys-config"
+version = "0.1.0"
+authors = ["Ethan Pullen <pullenep@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+
+[dependencies]
+bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
+handlebars = "4.3"
+home = "0.5"
+lazy_static = "1.4"
+log = "0.4"
+maplit="1.0"
+model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.2", tag = "v0.0.2"}
+serde = { version = "1.0", features = ["derive"]  }
+serde_yaml = "0.8.17"
+snafu = "0.7"
+toml = "0.5"
+url = { version = "2.1.0", features = ["serde"] }

@@ -6,4 +6,5 @@ members = [
     "pubsys-config",
     "pubsys-setup",
     "testsys",
+    "testsys-config",
 ]
