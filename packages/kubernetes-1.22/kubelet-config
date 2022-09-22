@@ -107,6 +107,7 @@ runtimeRequestTimeout: 15m
 featureGates:
   RotateKubeletServerCertificate: true
   CSIMigration: false
+  KubeletCredentialProviders: true
 protectKernelDefaults: true
 serializeImagePulls: false
 {{#if (and (default "" settings.kubernetes.server-certificate) (default "" settings.kubernetes.server-key))}}

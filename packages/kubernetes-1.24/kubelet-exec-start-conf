@@ -16,6 +16,12 @@ ExecStart=/usr/bin/kubelet \
     --containerd=/run/containerd/containerd.sock \
     --root-dir /var/lib/kubelet \
     --cert-dir /var/lib/kubelet/pki \
+{{#if settings.kubernetes.credential-providers}}
+{{#if (any_enabled settings.kubernetes.credential-providers)}}
+    --image-credential-provider-bin-dir /usr/libexec/kubernetes/kubelet/plugins \
+    --image-credential-provider-config /etc/kubernetes/kubelet/credential-provider-config.yaml \
+{{/if}}
+{{/if}}
     --node-ip ${NODE_IP} \
     --node-labels "${NODE_LABELS}" \
     --register-with-taints "${NODE_TAINTS}" \

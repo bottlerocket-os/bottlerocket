@@ -9,6 +9,7 @@ configuration-files = [
   "proxy-env",
   "kubelet-server-crt",
   "kubelet-server-key",
+  "credential-provider-config-yaml",
 ]
 restart-commands = [
   "/usr/bin/systemctl try-restart kubelet.service"
@@ -45,6 +46,10 @@ template-path = "/usr/share/templates/kubelet-server-key"
 [configuration-files.kubelet-exec-start-conf]
 path = "/etc/systemd/system/kubelet.service.d/exec-start.conf"
 template-path = "/usr/share/templates/kubelet-exec-start-conf"
+
+[configuration-files.credential-provider-config-yaml]
+path = "/etc/kubernetes/kubelet/credential-provider-config.yaml"
+template-path = "/usr/share/templates/credential-provider-config-yaml"
 
 [services.static-pods]
 configuration-files = []

@@ -10,6 +10,7 @@ use std::process;
 fn run() -> Result<()> {
     migrate(AddPrefixesMigration(vec![
         "settings.kubernetes.credential-providers",
+        "configuration-files.credential-provider-config-yaml",
     ]))
 }
 
