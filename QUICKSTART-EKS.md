@@ -189,10 +189,10 @@ This can include the configuration of the Kubernetes cluster we just created.
 Run this to generate the configuration file with the relevant cluster config, including the API endpoint and base64-encoded certificate authority.
 ```
 eksctl get cluster --region us-west-2 --name bottlerocket -o json \
-   | jq --raw-output '.[] | "[settings.kubernetes]\napi-server = \"" + .Endpoint + "\"\ncluster-certificate =\"" + .CertificateAuthority.Data + "\"\ncluster-name = \"bottlerocket\""' > userdata.toml
+   | jq --raw-output '.[] | "[settings.kubernetes]\napi-server = \"" + .Endpoint + "\"\ncluster-certificate =\"" + .CertificateAuthority.Data + "\"\ncluster-name = \"bottlerocket\""' > user-data.toml
 ```
 
-This will save the TOML-formatted configuration data into a file named `userdata.toml`.
+This will save the TOML-formatted configuration data into a file named `user-data.toml`.
 This will be used at the end, in the instance launch command.
 
 #### Subnet info
@@ -351,7 +351,7 @@ There are a few values to make sure you change in this command:
   * If you chose a public subnet, either add `--associate-public-ip-address` to the command, or attach an Elastic IP afterward.
 * SECURITY_GROUP_ID_1, SECURITY_GROUP_ID_2: the two security groups you found earlier
 * BOTTLEROCKET_AMI_ID: the ID of the AMI you registered, or an Amazon-provided AMI ID
-* userdata.toml: the path to the user data file you created earlier
+* user-data.toml: the path to the user data file you created earlier
 * INSTANCE_PROFILE_NAME: the instance profile created by `eksctl` for the cluster nodegroups.
 
 ```
@@ -362,7 +362,7 @@ aws ec2 run-instances --key-name YOUR_KEY_NAME \
    --instance-type c3.large \
    --region us-west-2 \
    --tag-specifications 'ResourceType=instance,Tags=[{Key=kubernetes.io/cluster/bottlerocket,Value=owned}]' \
-   --user-data file://userdata.toml \
+   --user-data file://user-data.toml \
    --iam-instance-profile Name=INSTANCE_PROFILE_NAME
 ```
 
