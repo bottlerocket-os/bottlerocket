@@ -3,8 +3,11 @@
 // text at render time.
 
 use dns_lookup::lookup_host;
-use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError};
+use handlebars::{
+    handlebars_helper, Context, Handlebars, Helper, Output, RenderContext, RenderError,
+};
 use lazy_static::lazy_static;
+use serde::Deserialize;
 use serde_json::value::Value;
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
@@ -1301,6 +1304,48 @@ pub fn etc_hosts_entries(
     Ok(())
 }
 
+// This helper checks if any objects have '"enabled": true' in their properties.
+//
+// any_enabled takes one argument that is expected to be an array of objects,
+// then checks if any of these objects have an "enabled" property set to true.
+// If the argument is not an array of objects, does not have an "enabled" property,
+// or does not include any objects with this property set to true, it evaluates
+// to be falsey.
+handlebars_helper!(any_enabled: |arg: Value| {
+    #[derive(Deserialize)]
+    struct EnablableObject {
+        enabled: bool,
+    }
+
+    let mut result = false;
+    match arg {
+        Value::Array(items) => {
+            for item in &items {
+                let res = serde_json::from_value::<EnablableObject>(item.clone());
+                if let Ok(eo) = res {
+                    if eo.enabled {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+        }
+        Value::Object(items) => {
+            for (_, item) in &items {
+                let res = serde_json::from_value::<EnablableObject>(item.clone());
+                if let Ok(eo) = res {
+                    if eo.enabled {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+        }
+        _ => ()
+    }
+    result
+});
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 // helpers to the helpers
 
@@ -2205,6 +2250,7 @@ mod test_kube_reserve_cpu {
         assert_eq!(result, "30m");
     }
 }
+
 #[cfg(test)]
 mod test_kube_cpu_helper {
     use crate::helpers::kube_cpu_helper;
@@ -2360,5 +2406,115 @@ mod test_etc_hosts_helpers {
         let result =
             setup_and_render_template(r#"{{etc_hosts_entries hosts}}"#, &json!({})).unwrap();
         assert_eq!(result, "")
+    }
+}
+
+#[cfg(test)]
+mod test_any_enabled {
+    use super::*;
+    use handlebars::RenderError;
+    use serde::Serialize;
+    use serde_json::json;
+    use std::collections::BTreeMap;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: T) -> Result<String, RenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("any_enabled", Box::new(any_enabled));
+
+        let mut input_data = BTreeMap::new();
+        input_data.insert("input", data);
+
+        registry.render_template(tmpl, &input_data)
+    }
+
+    const TEMPLATE: &str = r#"{{#if (any_enabled input)}}enabled{{else}}disabled{{/if}}"#;
+
+    #[test]
+    fn test_any_enabled_with_enabled_elements() {
+        let result =
+            setup_and_render_template(TEMPLATE, &json!([{"foo": [], "enabled": true}])).unwrap();
+        let expected = "enabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_with_enabled_elements_from_map() {
+        let result = setup_and_render_template(
+            TEMPLATE,
+            &json!({"foo": {"enabled": false}, "bar": {"enabled": true}}),
+        )
+        .unwrap();
+        let expected = "enabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_without_enabled_elements() {
+        let result = setup_and_render_template(TEMPLATE, &json!([{"enabled": false}])).unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_without_enabled_elements_from_map() {
+        let result = setup_and_render_template(
+            TEMPLATE,
+            &json!({"foo": {"enabled": false}, "bar": {"enabled": false}}),
+        )
+        .unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_with_empty_elements() {
+        let result = setup_and_render_template(TEMPLATE, &json!([])).unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_with_empty_map() {
+        let result = setup_and_render_template(TEMPLATE, &json!({})).unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_with_bool_flag_as_string() {
+        // Helper is only expected to work with boolean values
+        let result = setup_and_render_template(TEMPLATE, &json!([{"enabled": "true"}])).unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_with_different_type_array() {
+        // Validates no errors if a different kind of struct is passed in
+        let result = setup_and_render_template(TEMPLATE, &json!([{"name": "fred"}])).unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_with_different_type_map() {
+        // Validates no errors if a different kind of struct is passed in
+        let result =
+            setup_and_render_template(TEMPLATE, &json!({"test": {"name": "fred"}})).unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_any_enabled_with_different_type() {
+        // Validates no errors when a completely different JSON struct is passed
+        let result = setup_and_render_template(TEMPLATE, &json!({"state": "enabled"})).unwrap();
+        let expected = "disabled";
+        assert_eq!(result, expected);
     }
 }

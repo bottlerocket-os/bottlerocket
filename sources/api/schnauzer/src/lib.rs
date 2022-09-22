@@ -137,6 +137,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     );
     template_registry.register_helper("localhost_aliases", Box::new(helpers::localhost_aliases));
     template_registry.register_helper("etc_hosts_entries", Box::new(helpers::etc_hosts_entries));
+    template_registry.register_helper("any_enabled", Box::new(helpers::any_enabled));
 
     Ok(template_registry)
 }
