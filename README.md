@@ -716,16 +716,20 @@ Here are the metrics settings:
 
 *Please note that boot settings currently only exist for the bare metal variants and \*-k8s-1.23 variants. Boot settings will be added to any future variant introduced after Bottlerocket v1.8.0.*
 
-Specifying either of the following settings will generate a kernel boot config file to be loaded on subsequent boots:
+Specifying any of the following settings will generate a kernel boot config file to be loaded on subsequent boots:
 
 * `settings.boot.kernel-parameters`: This allows additional kernel parameters to be specified on the kernel command line during boot.
 * `settings.boot.init-parameters`: This allows additional init parameters to be specified on the kernel command line during boot.
+* `settings.boot.reboot-to-reconcile`: If set to `true`, Bottlerocket will automatically reboot again during boot if either the `settings.boot.kernel-parameters` or `settings.boot.init-parameters` were changed via user data or a bootstrap container so that these changes may take effect.
 
 You can learn more about kernel boot configuration [here](https://www.kernel.org/doc/html/latest/admin-guide/bootconfig.html).
 
 Example user data for specifying boot settings:
 
 ```toml
+[settings.boot]
+reboot-to-reconcile = true
+
 [settings.boot.kernel-parameters]
 "console" = [
   "tty0",

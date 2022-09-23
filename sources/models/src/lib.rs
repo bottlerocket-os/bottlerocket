@@ -328,6 +328,7 @@ struct KmodSetting {
 // Kernel boot settings
 #[model]
 struct BootSettings {
+    reboot_to_reconcile: bool,
     #[serde(
         alias = "kernel",
         rename(serialize = "kernel"),

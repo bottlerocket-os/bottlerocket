@@ -16,6 +16,11 @@ const DEFAULT_BOOTCONFIG_STR: &str = r#"
     kernel = ""
     init = ""
 "#;
+const DEFAULT_BOOT_SETTINGS: BootSettings = BootSettings {
+    reboot_to_reconcile: None,
+    kernel_parameters: None,
+    init_parameters: None,
+};
 
 fn append_boot_config_value_list(values: &[BootConfigValue], output: &mut String) {
     for (i, v) in values.iter().enumerate() {
@@ -102,27 +107,32 @@ where
     }
 }
 
-/// Reads `/proc/bootconfig` and populates the Bottlerocket boot settings based on the existing boot config data
-pub(crate) async fn generate_boot_settings() -> Result<()> {
-    let proc_bootconfig = match tokio::fs::read_to_string(PROC_BOOTCONFIG).await {
-        Ok(s) => s,
+/// Reads `/proc/bootconfig`. Not having any boot config is ignored.
+async fn read_proc_bootconfig() -> Result<Option<String>> {
+    match tokio::fs::read_to_string(PROC_BOOTCONFIG).await {
+        Ok(s) => Ok(Some(s)),
         Err(e) => {
             // If there's no `/proc/bootconfig`, then the user hasn't provisioned any kernel boot configuration.
             if e.kind() == io::ErrorKind::NotFound {
-                // No work to be done
-                return Ok(());
+                Ok(None)
+            } else {
+                Err(e).context(error::ReadFileSnafu {
+                    path: PROC_BOOTCONFIG,
+                })
             }
-            return Err(e).context(error::ReadFileSnafu {
-                path: PROC_BOOTCONFIG,
-            });
         }
-    };
-    debug!(
-        "Generating kernel boot config settings from `{}`",
-        PROC_BOOTCONFIG
-    );
-    println!("{}", boot_config_to_boot_settings_json(&proc_bootconfig)?);
+    }
+}
 
+/// Reads `/proc/bootconfig` and populates the Bottlerocket boot settings based on the existing boot config data
+pub(crate) async fn generate_boot_settings() -> Result<()> {
+    if let Some(proc_bootconfig) = read_proc_bootconfig().await? {
+        debug!(
+            "Generating kernel boot config settings from `{}`",
+            PROC_BOOTCONFIG
+        );
+        println!("{}", boot_config_to_boot_settings_json(&proc_bootconfig)?);
+    }
     Ok(())
 }
 
@@ -227,6 +237,7 @@ fn parse_boot_config_to_boot_settings(bootconfig: &str) -> Result<BootSettings> 
     }
 
     Ok(BootSettings {
+        reboot_to_reconcile: None,
         kernel_parameters: if kernel_params.is_empty() {
             None
         } else {
@@ -249,49 +260,101 @@ fn boot_config_to_boot_settings_json(bootconfig_str: &str) -> Result<String> {
     serde_json::to_string(&boot_settings).context(error::OutputJsonSnafu)
 }
 
+/// Decides whether the host should be rebooted to have its boot settings take effect
+pub(crate) async fn is_reboot_required<P>(socket_path: P) -> Result<bool>
+where
+    P: AsRef<Path>,
+{
+    let old_boot_settings = match read_proc_bootconfig().await? {
+        Some(proc_bootconfig) => parse_boot_config_to_boot_settings(&proc_bootconfig)?,
+        None => DEFAULT_BOOT_SETTINGS,
+    };
+
+    let new_boot_settings = get_boot_config_settings(socket_path)
+        .await?
+        .unwrap_or(DEFAULT_BOOT_SETTINGS);
+
+    let reboot_required = if new_boot_settings.reboot_to_reconcile.unwrap_or(false) {
+        boot_settings_change_requires_reboot(&old_boot_settings, &new_boot_settings)
+    } else {
+        false
+    };
+
+    Ok(reboot_required)
+}
+
+/// Check whether `model::BootSettings` changed in a way to warrant a reboot
+fn boot_settings_change_requires_reboot(
+    old_boot_settings: &BootSettings,
+    new_boot_settings: &BootSettings,
+) -> bool {
+    fn parameters_changed_materially(
+        old_params: &Option<HashMap<BootConfigKey, Vec<BootConfigValue>>>,
+        new_params: &Option<HashMap<BootConfigKey, Vec<BootConfigValue>>>,
+    ) -> bool {
+        // Consider a missing hash map equal to an empty one: There is no configuration in either case.
+        match (old_params, new_params) {
+            (None, None) => false,
+            (None, Some(new)) => !new.is_empty(),
+            (Some(old), None) => !old.is_empty(),
+            (Some(old), Some(new)) => old != new,
+        }
+    }
+
+    // Only reboot for changes actually requiring a reboot. Changing a Bottlerocket setting
+    // like boot.reboot-to-reconcile does not qualify as a reason to reboot.
+    parameters_changed_materially(
+        &old_boot_settings.kernel_parameters,
+        &new_boot_settings.kernel_parameters,
+    ) || parameters_changed_materially(
+        &old_boot_settings.init_parameters,
+        &new_boot_settings.init_parameters,
+    )
+}
+
 #[cfg(test)]
 mod boot_settings_tests {
     use crate::bootconfig::{
-        boot_config_to_boot_settings_json, serialize_boot_settings_to_boot_config,
-        DEFAULT_BOOTCONFIG_STR,
+        boot_config_to_boot_settings_json, boot_settings_change_requires_reboot,
+        serialize_boot_settings_to_boot_config, DEFAULT_BOOTCONFIG_STR,
     };
     use maplit::hashmap;
+    use model::modeled_types::{BootConfigKey, BootConfigValue};
     use model::BootSettings;
     use serde_json::json;
     use serde_json::value::Value;
+    use std::collections::HashMap;
     use std::convert::TryInto;
+
+    /// Convert a plain hash map into BootSettings parameters.
+    fn to_boot_settings_params(
+        params: HashMap<&str, Vec<&str>>,
+    ) -> Option<HashMap<BootConfigKey, Vec<BootConfigValue>>> {
+        Some(
+            params
+                .into_iter()
+                .map(|(k, v)| {
+                    (
+                        k.try_into().unwrap(),
+                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
+                    )
+                })
+                .collect(),
+        )
+    }
 
     #[test]
     fn boot_settings_to_string() {
         let boot_settings = BootSettings {
-            kernel_parameters: Some(
-                hashmap! {
-                    "console" => vec!["ttyS1,115200n8", "tty0"],
-                }
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        k.try_into().unwrap(),
-                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
-                    )
-                })
-                .collect(),
-            ),
-            init_parameters: Some(
-                hashmap! {
-                    "systemd.log_level" => vec!["debug"],
-                    "splash" => vec![""],
-                    "weird" => vec!["'single'quotes'","\"double\"quotes\""],
-                }
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        k.try_into().unwrap(),
-                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
-                    )
-                })
-                .collect(),
-            ),
+            reboot_to_reconcile: None,
+            kernel_parameters: to_boot_settings_params(hashmap! {
+                "console" => vec!["ttyS1,115200n8", "tty0"],
+            }),
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+                "splash" => vec![""],
+                "weird" => vec!["'single'quotes'","\"double\"quotes\""],
+            }),
         };
         let output = serialize_boot_settings_to_boot_config(&boot_settings).unwrap();
         // Sort the entries alphabetically to keep results consistent
@@ -320,6 +383,7 @@ mod boot_settings_tests {
     #[test]
     fn none_boot_settings_to_string() {
         let boot_settings = BootSettings {
+            reboot_to_reconcile: None,
             kernel_parameters: None,
             init_parameters: None,
         };
@@ -329,20 +393,11 @@ mod boot_settings_tests {
         );
 
         let init_none_boot_settings = BootSettings {
-            kernel_parameters: Some(
-                hashmap! {
-                    "console" => vec!["ttyS1,115200n8", "tty0"],
-                    "usbcore.quirks" => vec!["0781:5580:bk","0a5c:5834:gij"],
-                }
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        k.try_into().unwrap(),
-                        v.into_iter().map(|s| s.try_into().unwrap()).collect(),
-                    )
-                })
-                .collect(),
-            ),
+            reboot_to_reconcile: None,
+            kernel_parameters: to_boot_settings_params(hashmap! {
+                "console" => vec!["ttyS1,115200n8", "tty0"],
+                "usbcore.quirks" => vec!["0781:5580:bk","0a5c:5834:gij"],
+            }),
             init_parameters: None,
         };
         let output = serialize_boot_settings_to_boot_config(&init_none_boot_settings).unwrap();
@@ -370,6 +425,7 @@ mod boot_settings_tests {
     #[test]
     fn empty_map_boot_settings_to_string() {
         let boot_settings = BootSettings {
+            reboot_to_reconcile: None,
             kernel_parameters: Some(hashmap! {}),
             init_parameters: None,
         };
@@ -463,5 +519,75 @@ mod boot_settings_tests {
             )
             .unwrap()
         );
+    }
+
+    #[test]
+    fn test_unchanged_boot_settings_require_no_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        assert!(!boot_settings_change_requires_reboot(&a, &b));
+    }
+
+    #[test]
+    fn test_changed_boot_settings_require_a_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: to_boot_settings_params(hashmap! {
+                "debug" => vec![""],
+            }),
+            init_parameters: to_boot_settings_params(hashmap! {
+                "systemd.log_level" => vec!["debug"],
+            }),
+        };
+        assert!(boot_settings_change_requires_reboot(&a, &b));
+    }
+
+    #[test]
+    fn test_missing_boot_settings_require_no_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: to_boot_settings_params(hashmap! {}),
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: to_boot_settings_params(hashmap! {}),
+            init_parameters: None,
+        };
+        assert!(!boot_settings_change_requires_reboot(&a, &b));
+    }
+
+    #[test]
+    fn test_changed_bottlerocket_boot_settings_require_no_reboot() {
+        let a = BootSettings {
+            reboot_to_reconcile: None,
+            kernel_parameters: None,
+            init_parameters: None,
+        };
+        let b = BootSettings {
+            reboot_to_reconcile: Some(true),
+            kernel_parameters: None,
+            init_parameters: None,
+        };
+        assert!(!boot_settings_change_requires_reboot(&a, &b));
     }
 }

@@ -44,6 +44,7 @@ Source116: load-kernel-modules.service.in
 Source117: cfsignal.service
 Source118: generate-network-config.service
 Source119: prepare-primary-interface.service
+Source120: reboot-if-required.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -402,7 +403,7 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
-  %{S:113} %{S:114} %{S:118} %{S:119} \
+  %{S:113} %{S:114} %{S:118} %{S:119} %{S:120} \
   %{buildroot}%{_cross_unitdir}
 
 %if %{with nvidia_flavor}
@@ -563,6 +564,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 
 %files -n %{_cross_os}prairiedog
 %{_cross_bindir}/prairiedog
+%{_cross_unitdir}/reboot-if-required.service
 
 %files -n %{_cross_os}certdog
 %{_cross_bindir}/certdog

@@ -145,4 +145,5 @@ version = "1.10.0"
 "(1.9.2, 1.10.0)" = [
     "migrate_v1.10.0_dns-settings.lz4",
     "migrate_v1.10.0_dns-settings-metadata.lz4",
+    "migrate_v1.10.0_reboot-to-reconcile-setting.lz4",
 ]
