@@ -58,14 +58,17 @@ multiple-versions = "deny"
 wildcards = "deny"
 
 skip-tree = [
-    # temporarily using a different version of snafu
-    { name = "parse-datetime", version = "0.1.0" },
-
     # rusoto_signature uses an older version of sha2
     { name = "rusoto_signature" },
 
-    # reqwest uses an older rustls-pemfile
-    { name = "reqwest", version = "0.11.10" },
+    # argh_derive pulls in an older version of heck
+    { name = "argh_derive", version = "0.1.8" },
+
+    # structopt pulls in an older version of clap
+    { name = "structopt", version = "0.3.26" },
+
+    # aws-smithy-client uses an older hyper-rustls
+    { name = "aws-smithy-client", version = "0.46.0" },
 ]
 
 [sources]

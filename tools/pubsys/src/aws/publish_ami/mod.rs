@@ -3,18 +3,18 @@
 
 use crate::aws::ami::wait::{self, wait_for_ami};
 use crate::aws::ami::Image;
-use crate::aws::client::build_client;
+use crate::aws::client::build_client_config;
 use crate::aws::region_from_string;
 use crate::Args;
+use aws_sdk_ec2::error::{ModifyImageAttributeError, ModifySnapshotAttributeError};
+use aws_sdk_ec2::model::{ImageAttributeName, OperationType, SnapshotAttributeName};
+use aws_sdk_ec2::output::{ModifyImageAttributeOutput, ModifySnapshotAttributeOutput};
+use aws_sdk_ec2::types::SdkError;
+use aws_sdk_ec2::{Client as Ec2Client, Region};
 use futures::future::{join, ready};
 use futures::stream::{self, StreamExt};
 use log::{debug, error, info, trace};
 use pubsys_config::InfraConfig;
-use rusoto_core::{Region, RusotoError};
-use rusoto_ec2::{
-    DescribeImagesRequest, Ec2, Ec2Client, ModifyImageAttributeRequest,
-    ModifySnapshotAttributeError, ModifySnapshotAttributeRequest,
-};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -55,9 +55,9 @@ pub(crate) struct PublishArgs {
 /// Common entrypoint from main()
 pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     let (operation, description) = if publish_args.grant {
-        ("add".to_string(), "granting access")
+        (OperationType::Add, "granting access")
     } else if publish_args.revoke {
-        ("remove".to_string(), "revoking access")
+        (OperationType::Remove, "revoking access")
     } else {
         unreachable!("developer error: --grant and --revoke not required/exclusive");
     };
@@ -104,7 +104,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
             missing: "aws.regions"
         }
     );
-    let base_region = region_from_string(&regions[0], &aws).context(error::ParseRegionSnafu)?;
+    let base_region = region_from_string(&regions[0]);
 
     // Check that the requested regions are a subset of the regions we *could* publish from the AMI
     // input JSON.
@@ -120,7 +120,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
         }
     );
 
-    // Parse region names, adding endpoints from InfraConfig if specified
+    // Parse region names
     let mut amis = HashMap::with_capacity(regions.len());
     for name in regions {
         let image = ami_input
@@ -129,7 +129,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
             .with_context(|| error::UnknownRegionsSnafu {
                 regions: vec![name.clone()],
             })?;
-        let region = region_from_string(&name, &aws).context(error::ParseRegionSnafu)?;
+        let region = region_from_string(&name);
         amis.insert(region, image);
     }
 
@@ -137,11 +137,8 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     // live until the future is resolved.
     let mut ec2_clients = HashMap::with_capacity(amis.len());
     for region in amis.keys() {
-        let ec2_client =
-            build_client::<Ec2Client>(region, &base_region, &aws).context(error::ClientSnafu {
-                client_type: "EC2",
-                region: region.name(),
-            })?;
+        let client_config = build_client_config(region, &base_region, &aws).await;
+        let ec2_client = Ec2Client::new(&client_config);
         ec2_clients.insert(region.clone(), ec2_client);
     }
 
@@ -164,7 +161,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     for ((region, image_id), wait_response) in wait_responses {
         wait_response.context(error::WaitAmiSnafu {
             id: &image_id,
-            region: region.name(),
+            region: region.as_ref(),
         })?;
     }
 
@@ -204,14 +201,14 @@ pub(crate) async fn get_snapshots(
     region: &Region,
     ec2_client: &Ec2Client,
 ) -> Result<Vec<String>> {
-    let describe_request = DescribeImagesRequest {
-        image_ids: Some(vec![image_id.to_string()]),
-        ..Default::default()
-    };
-    let describe_response = ec2_client.describe_images(describe_request).await;
-    let describe_response = describe_response.context(error::DescribeImagesSnafu {
-        region: region.name(),
-    })?;
+    let describe_response = ec2_client
+        .describe_images()
+        .set_image_ids(Some(vec![image_id.to_string()]))
+        .send()
+        .await
+        .context(error::DescribeImagesSnafu {
+            region: region.as_ref(),
+        })?;
 
     // Get the image description, ensuring we only have one.
     let mut images = describe_response
@@ -223,14 +220,14 @@ pub(crate) async fn get_snapshots(
     ensure!(
         !images.is_empty(),
         error::MissingImageSnafu {
-            region: region.name(),
+            region: region.as_ref(),
             image_id: image_id.to_string(),
         }
     );
     ensure!(
         images.len() == 1,
         error::MultipleImagesSnafu {
-            region: region.name(),
+            region: region.as_ref(),
             images: images
                 .into_iter()
                 .map(|i| i.image_id.unwrap_or_else(|| "<missing>".to_string()))
@@ -305,22 +302,21 @@ async fn get_regional_snapshots(
 pub(crate) async fn modify_snapshots(
     user_ids: Option<Vec<String>>,
     group_names: Option<Vec<String>>,
-    operation: &str,
+    operation: &OperationType,
     snapshot_ids: &[String],
     ec2_client: &Ec2Client,
     region: &Region,
 ) -> Result<()> {
     let mut requests = Vec::new();
     for snapshot_id in snapshot_ids {
-        let request = ModifySnapshotAttributeRequest {
-            attribute: Some("createVolumePermission".to_string()),
-            user_ids: user_ids.clone(),
-            group_names: group_names.clone(),
-            operation_type: Some(operation.to_string()),
-            snapshot_id: snapshot_id.clone(),
-            ..Default::default()
-        };
-        let response_future = ec2_client.modify_snapshot_attribute(request);
+        let response_future = ec2_client
+            .modify_snapshot_attribute()
+            .set_attribute(Some(SnapshotAttributeName::CreateVolumePermission))
+            .set_user_ids(user_ids.clone())
+            .set_group_names(group_names.clone())
+            .set_operation_type(Some(operation.clone()))
+            .set_snapshot_id(Some(snapshot_id.clone()))
+            .send();
         // Store the snapshot_id so we can include it in any errors
         let info_future = ready(snapshot_id.to_string());
         requests.push(join(info_future, response_future));
@@ -330,14 +326,14 @@ pub(crate) async fn modify_snapshots(
     let request_stream = stream::iter(requests).buffer_unordered(4);
     let responses: Vec<(
         String,
-        std::result::Result<(), RusotoError<ModifySnapshotAttributeError>>,
+        std::result::Result<ModifySnapshotAttributeOutput, SdkError<ModifySnapshotAttributeError>>,
     )> = request_stream.collect().await;
 
     for (snapshot_id, response) in responses {
         response.context(error::ModifyImageAttributeSnafu {
             snapshot_id,
-            region: region.name(),
-        })?
+            region: region.as_ref(),
+        })?;
     }
 
     Ok(())
@@ -348,7 +344,7 @@ pub(crate) async fn modify_snapshots(
 pub(crate) async fn modify_regional_snapshots(
     user_ids: Option<Vec<String>>,
     group_names: Option<Vec<String>>,
-    operation: &str,
+    operation: &OperationType,
     snapshots: &HashMap<Region, Vec<String>>,
     clients: &HashMap<Region, Ec2Client>,
 ) -> Result<()> {
@@ -385,7 +381,7 @@ pub(crate) async fn modify_regional_snapshots(
                 success_count += 1;
                 debug!(
                     "Modified permissions in {} for snapshots [{}]",
-                    region.name(),
+                    region.as_ref(),
                     snapshot_ids.join(", "),
                 );
             }
@@ -393,7 +389,7 @@ pub(crate) async fn modify_regional_snapshots(
                 error_count += 1;
                 error!(
                     "Failed to modify permissions in {} for snapshots [{}]: {}",
-                    region.name(),
+                    region.as_ref(),
                     snapshot_ids.join(", "),
                     e
                 );
@@ -417,27 +413,21 @@ pub(crate) async fn modify_regional_snapshots(
 pub(crate) async fn modify_image(
     user_ids: Option<Vec<String>>,
     user_groups: Option<Vec<String>>,
-    operation: &str,
+    operation: &OperationType,
     image_id: &str,
     ec2_client: &Ec2Client,
-    region: &Region,
-) -> Result<()> {
-    // Build requests to modify image attributes.
-    let modify_image_request = ModifyImageAttributeRequest {
-        attribute: Some("launchPermission".to_string()),
-        user_ids: user_ids.clone(),
-        user_groups: user_groups.clone(),
-        operation_type: Some(operation.to_string()),
-        image_id: image_id.to_string(),
-        ..Default::default()
-    };
+) -> std::result::Result<ModifyImageAttributeOutput, SdkError<ModifyImageAttributeError>> {
     ec2_client
-        .modify_image_attribute(modify_image_request)
+        .modify_image_attribute()
+        .set_attribute(Some(
+            ImageAttributeName::LaunchPermission.as_ref().to_string(),
+        ))
+        .set_user_ids(user_ids.clone())
+        .set_user_groups(user_groups.clone())
+        .set_operation_type(Some(operation.clone()))
+        .set_image_id(Some(image_id.to_string()))
+        .send()
         .await
-        .context(error::ModifyImageAttributesSnafu {
-            image_id,
-            region: region.name(),
-        })
 }
 
 /// Modify launchPermission for the given users/groups, across all of the images in the given
@@ -445,7 +435,7 @@ pub(crate) async fn modify_image(
 pub(crate) async fn modify_regional_images(
     user_ids: Option<Vec<String>>,
     user_groups: Option<Vec<String>>,
-    operation: &str,
+    operation: &OperationType,
     images: &HashMap<Region, String>,
     clients: &HashMap<Region, Ec2Client>,
 ) -> Result<()> {
@@ -459,26 +449,29 @@ pub(crate) async fn modify_regional_images(
             operation,
             image_id,
             ec2_client,
-            region,
         );
 
         // Store the region and image ID so we can include it in errors
-        let info_future = ready((region.name().to_string(), image_id.clone()));
+        let info_future = ready((region.as_ref().to_string(), image_id.clone()));
         requests.push(join(info_future, modify_image_future));
     }
 
     // Send requests in parallel and wait for responses, collecting results into a list.
     let request_stream = stream::iter(requests).buffer_unordered(4);
-    let responses: Vec<((String, String), Result<()>)> = request_stream.collect().await;
+    #[allow(clippy::type_complexity)]
+    let responses: Vec<(
+        (String, String),
+        std::result::Result<ModifyImageAttributeOutput, SdkError<ModifyImageAttributeError>>,
+    )> = request_stream.collect().await;
 
     // Count up successes and failures so we can give a clear total in the final error message.
     let mut error_count = 0u16;
     let mut success_count = 0u16;
     for ((region, image_id), modify_image_response) in responses {
         match modify_image_response {
-            Ok(()) => {
+            Ok(_) => {
                 success_count += 1;
-                info!("Modified permissions of image {} in {}", image_id, region,);
+                info!("Modified permissions of image {} in {}", image_id, region);
             }
             Err(e) => {
                 error_count += 1;
@@ -502,9 +495,11 @@ pub(crate) async fn modify_regional_images(
 }
 
 mod error {
-    use crate::aws::{self, ami};
-    use rusoto_core::RusotoError;
-    use rusoto_ec2::{ModifyImageAttributeError, ModifySnapshotAttributeError};
+    use crate::aws::ami;
+    use aws_sdk_ec2::error::{
+        DescribeImagesError, ModifyImageAttributeError, ModifySnapshotAttributeError,
+    };
+    use aws_sdk_ec2::types::SdkError;
     use snafu::Snafu;
     use std::io;
     use std::path::PathBuf;
@@ -512,22 +507,13 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
-        #[snafu(display("Error creating {} client in {}: {}", client_type, region, source))]
-        Client {
-            client_type: String,
-            region: String,
-            source: aws::client::Error,
-        },
-
         #[snafu(display("Error reading config: {}", source))]
-        Config {
-            source: pubsys_config::Error,
-        },
+        Config { source: pubsys_config::Error },
 
         #[snafu(display("Failed to describe images in {}: {}", region, source))]
         DescribeImages {
             region: String,
-            source: rusoto_core::RusotoError<rusoto_ec2::DescribeImagesError>,
+            source: SdkError<DescribeImagesError>,
         },
 
         #[snafu(display("Failed to deserialize input from '{}': {}", path.display(), source))]
@@ -544,20 +530,13 @@ mod error {
         },
 
         #[snafu(display("Input '{}' is empty", path.display()))]
-        Input {
-            path: PathBuf,
-        },
+        Input { path: PathBuf },
 
         #[snafu(display("Infra.toml is missing {}", missing))]
-        MissingConfig {
-            missing: String,
-        },
+        MissingConfig { missing: String },
 
         #[snafu(display("Failed to find given AMI ID {} in {}", image_id, region))]
-        MissingImage {
-            region: String,
-            image_id: String,
-        },
+        MissingImage { region: String, image_id: String },
 
         #[snafu(display("Response to {} was missing {}", request_type, missing))]
         MissingInResponse {
@@ -574,7 +553,7 @@ mod error {
         ModifyImageAttribute {
             snapshot_id: String,
             region: String,
-            source: RusotoError<ModifySnapshotAttributeError>,
+            source: SdkError<ModifySnapshotAttributeError>,
         },
 
         #[snafu(display(
@@ -595,7 +574,7 @@ mod error {
         ModifyImageAttributes {
             image_id: String,
             region: String,
-            source: RusotoError<ModifyImageAttributeError>,
+            source: SdkError<ModifyImageAttributeError>,
         },
 
         #[snafu(display(
@@ -608,22 +587,13 @@ mod error {
         },
 
         #[snafu(display("DescribeImages in {} with unique filters returned multiple results: {}", region, images.join(", ")))]
-        MultipleImages {
-            region: String,
-            images: Vec<String>,
-        },
-
-        ParseRegion {
-            source: crate::aws::Error,
-        },
+        MultipleImages { region: String, images: Vec<String> },
 
         #[snafu(display(
             "Given region(s) in Infra.toml / regions argument that are not in --ami-input file: {}",
             regions.join(", ")
         ))]
-        UnknownRegions {
-            regions: Vec<String>,
-        },
+        UnknownRegions { regions: Vec<String> },
 
         #[snafu(display("AMI '{}' in {} did not become available: {}", id, region, source))]
         WaitAmi {

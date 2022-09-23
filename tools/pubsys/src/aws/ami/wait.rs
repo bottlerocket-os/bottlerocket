@@ -1,8 +1,8 @@
-use crate::aws::client::build_client;
+use crate::aws::client::build_client_config;
+use aws_sdk_ec2::model::ImageState;
+use aws_sdk_ec2::{Client as Ec2Client, Region};
 use log::info;
-use pubsys_config::AwsConfig;
-use rusoto_core::Region;
-use rusoto_ec2::{DescribeImagesRequest, Ec2, Ec2Client};
+use pubsys_config::AwsConfig as PubsysAwsConfig;
 use snafu::{ensure, ResultExt};
 use std::thread::sleep;
 use std::time::Duration;
@@ -15,7 +15,7 @@ pub(crate) async fn wait_for_ami(
     sts_region: &Region,
     state: &str,
     successes_required: u8,
-    aws: &AwsConfig,
+    pubsys_aws_config: &PubsysAwsConfig,
 ) -> Result<()> {
     let mut successes = 0;
     let max_attempts = 90;
@@ -30,39 +30,36 @@ pub(crate) async fn wait_for_ami(
             error::MaxAttemptsSnafu {
                 id,
                 max_attempts,
-                region: region.name()
+                region: region.as_ref(),
             }
         );
 
-        let describe_request = DescribeImagesRequest {
-            image_ids: Some(vec![id.to_string()]),
-            ..Default::default()
-        };
         // Use a new client each time so we have more confidence that different endpoints can see
         // the new AMI.
-        let ec2_client =
-            build_client::<Ec2Client>(region, sts_region, aws).context(error::ClientSnafu {
-                client_type: "EC2",
-                region: region.name(),
+        let client_config = build_client_config(region, sts_region, pubsys_aws_config).await;
+        let ec2_client = Ec2Client::new(&client_config);
+        let describe_response = ec2_client
+            .describe_images()
+            .set_image_ids(Some(vec![id.to_string()]))
+            .send()
+            .await
+            .context(error::DescribeImagesSnafu {
+                region: region.as_ref(),
             })?;
-        let describe_response = ec2_client.describe_images(describe_request).await.context(
-            error::DescribeImagesSnafu {
-                region: region.name(),
-            },
-        )?;
+
         // The response contains an Option<Vec<Image>>, so we have to check that we got a
         // list at all, and then that the list contains the ID in question.
         if let Some(images) = describe_response.images {
             let mut saw_it = false;
             for image in images {
-                if let Some(ref found_id) = image.image_id {
-                    if let Some(ref found_state) = image.state {
-                        if id == found_id && state == found_state {
+                if let Some(found_id) = image.image_id {
+                    if let Some(found_state) = image.state {
+                        if id == found_id && ImageState::from(state) == found_state {
                             // Success; check if we have enough to declare victory.
                             saw_it = true;
                             successes += 1;
                             if successes >= successes_required {
-                                info!("Found {} {} in {}", id, state, region.name());
+                                info!("Found {} {} in {}", id, state, region);
                                 return Ok(());
                             }
                             break;
@@ -70,16 +67,18 @@ pub(crate) async fn wait_for_ami(
                         // If the state shows us the AMI failed, we know we'll never hit the
                         // desired state.  (Unless they desired "error", which will be caught
                         // above.)
-                        ensure!(
-                            !["invalid", "deregistered", "failed", "error"]
-                                .iter()
-                                .any(|e| e == found_state),
-                            error::StateSnafu {
+                        match &found_state {
+                            ImageState::Invalid
+                            | ImageState::Deregistered
+                            | ImageState::Failed
+                            | ImageState::Error => error::StateSnafu {
                                 id,
-                                state: found_state,
-                                region: region.name()
+                                state: found_state.as_ref(),
+                                region: region.as_ref(),
                             }
-                        );
+                            .fail(),
+                            _ => Ok(()),
+                        }?;
                     }
                 }
             }
@@ -95,11 +94,7 @@ pub(crate) async fn wait_for_ami(
         if attempts % 5 == 1 {
             info!(
                 "Waiting for {} in {} to be {}... (attempt {} of {})",
-                id,
-                region.name(),
-                state,
-                attempts,
-                max_attempts
+                id, region, state, attempts, max_attempts
             );
         }
         sleep(Duration::from_secs(seconds_between_attempts));
@@ -107,23 +102,18 @@ pub(crate) async fn wait_for_ami(
 }
 
 mod error {
-    use crate::aws;
+    use aws_sdk_ec2::error::DescribeImagesError;
+    use aws_sdk_ec2::types::SdkError;
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
+    #[allow(clippy::large_enum_variant)]
     pub(crate) enum Error {
-        #[snafu(display("Error creating {} client in {}: {}", client_type, region, source))]
-        Client {
-            client_type: String,
-            region: String,
-            source: aws::client::Error,
-        },
-
         #[snafu(display("Failed to describe images in {}: {}", region, source))]
         DescribeImages {
             region: String,
-            source: rusoto_core::RusotoError<rusoto_ec2::DescribeImagesError>,
+            source: SdkError<DescribeImagesError>,
         },
 
         #[snafu(display(
