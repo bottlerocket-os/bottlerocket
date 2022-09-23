@@ -188,7 +188,7 @@ Note this down as the INSTANCE_PROFILE_NAME for the final launch command.
 
 For the instance to be able to communicate with ECS, we need to make sure to configure the instance with the name of the cluster.
 
-Create a file called `userdata.toml` with the following contents, where CLUSTER_NAME is the name of the cluster you created above (for example, "bottlerocket").
+Create a file called `user-data.toml` with the following contents, where CLUSTER_NAME is the name of the cluster you created above (for example, "bottlerocket").
 
 ```
 [settings.ecs]
@@ -206,7 +206,7 @@ There are a few values to make sure you change in this command:
 * SUBNET_ID: the subnet you selected earlier
   * If you chose a public subnet, either add `--associate-public-ip-address` to the command, or attach an Elastic IP afterward.
 * BOTTLEROCKET_AMI_ID: the Amazon-provided AMI ID you found above, or the ID of an AMI you registered
-* userdata.toml: the path to the user data file you created earlier
+* user-data.toml: the path to the user data file you created earlier
 * INSTANCE_PROFILE_NAME: the IAM instance profile you created, e.g. `ecsInstanceRole`
 
 ```
@@ -216,7 +216,7 @@ aws ec2 run-instances --key-name YOUR_KEY_NAME \
    --instance-type c3.large \
    --region us-west-2 \
    --tag-specifications 'ResourceType=instance,Tags=[{Key=bottlerocket,Value=quickstart}]' \
-   --user-data file://userdata.toml \
+   --user-data file://user-data.toml \
    --iam-instance-profile Name=INSTANCE_PROFILE_NAME
 ```
 

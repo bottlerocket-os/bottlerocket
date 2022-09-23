@@ -143,9 +143,9 @@ export CLUSTER_CERTIFICATE="$(kubectl config view --raw -o=jsonpath='{.clusters[
 In order to join Bottlerocket to your cluster, it must be configured via user data.
 There are multiple methods of passing user data to Bottlerocket in VMware; we will demonstrate all of them.
 
-Create a file called `userdata.toml` and populate it with the values you just retrieved.
+Create a file called `user-data.toml` and populate it with the values you just retrieved.
 ```
-cat <<EOF > userdata.toml
+cat <<EOF > user-data.toml
 [settings.kubernetes]
 api-server = "${API_SERVER}"
 cluster-dns-ip = "${CLUSTER_DNS_IP}"
@@ -163,12 +163,12 @@ You can use our [admin](https://github.com/bottlerocket-os/bottlerocket-admin-co
 #### Admin container
 If you would like to use the admin container, you will need to create some base64 encoded user data which will be passed to the container at runtime.
 Full details are covered in the [admin container documentation](https://github.com/bottlerocket-os/bottlerocket-admin-container#authenticating-with-the-admin-container).
-If we assume you have a public key at `${HOME}/.ssh/id_rsa.pub`, the below will add the correct user data to your `userdata.toml`.
+If we assume you have a public key at `${HOME}/.ssh/id_rsa.pub`, the below will add the correct user data to your `user-data.toml`.
 ```
 PUBKEY="${HOME}/.ssh/id_rsa.pub"
 ADMIN_USER_DATA="$(echo '{"ssh":{"authorized-keys":["'"$(cat ${PUBKEY})"'"]}}' | base64 -w 0)"
 
-cat <<EOF >>userdata.toml
+cat <<EOF >>user-data.toml
 [settings.host-containers.admin]
 enabled = true
 user-data = "${ADMIN_USER_DATA}"
@@ -222,7 +222,7 @@ SSM_ACTIVATION_ID="$(jq -r '.ActivationId' <<< ${SSM_ACTIVATION})"
 SSM_ACTIVATION_CODE="$(jq -r '.ActivationCode' <<< ${SSM_ACTIVATION})"
 CONTROL_USER_DATA="$(echo '{"ssm":{"activation-id":"'${SSM_ACTIVATION_ID}'","activation-code":"'${SSM_ACTIVATION_CODE}'","region":"us-west-2"}}' | base64 -w0)"
 
-cat <<EOF >>userdata.toml
+cat <<EOF >>user-data.toml
 [settings.host-containers.control]
 enabled = true
 user-data = "${CONTROL_USER_DATA}"
@@ -238,9 +238,9 @@ These extended attributes are `guestinfo.userdata` and `guestinfo.userdata.encod
 `guestinfo.userdata` may be passed as base64, gzipped base64, or (least desirable) raw TOML.
 Valid values for `guestinfo.userdata.encoding` are: `base64`, `b64`, `gzip+base64`, and `gz+b64`.
 
-Given the above file `userdata.toml`, base64 encode and set user data for your VM:
+Given the above file `user-data.toml`, base64 encode and set user data for your VM:
 ```
-export BR_USERDATA=$(base64 -w0 userdata.toml)
+export BR_USERDATA=$(base64 -w0 user-data.toml)
 
 for node in 1 2 3; do
   govc vm.change -vm "${VM_NAME}-${node}" \
