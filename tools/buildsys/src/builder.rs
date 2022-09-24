@@ -14,6 +14,7 @@ use rand::Rng;
 use regex::Regex;
 use sha2::{Digest, Sha512};
 use snafu::{ensure, OptionExt, ResultExt};
+use std::collections::HashSet;
 use std::env;
 use std::fs::{self, File};
 use std::num::NonZeroU16;
@@ -372,32 +373,41 @@ fn create_build_dir(kind: &BuildType, name: &str, arch: &str) -> Result<PathBuf>
 const MARKER_EXTENSION: &str = ".buildsys_marker";
 
 /// Copy build artifacts to the output directory.
-/// Currently we expect a "flat" structure where all files are in the same directory.
 /// Before we copy each file, we create a corresponding marker file to record its existence.
 fn copy_build_files<P>(build_dir: P, output_dir: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    fn is_artifact(entry: &DirEntry) -> bool {
-        entry.file_type().is_file()
+    fn has_artifacts(entry: &DirEntry) -> bool {
+        let is_dir = entry.path().is_dir();
+        let is_file = entry.file_type().is_file();
+        let is_not_marker = is_file
             && entry
                 .file_name()
                 .to_str()
                 .map(|s| !s.ends_with(MARKER_EXTENSION))
-                .unwrap_or(false)
+                .unwrap_or(false);
+        is_dir || is_not_marker
     }
 
-    for artifact_file in find_files(&build_dir, is_artifact) {
+    for artifact_file in find_files(&build_dir, has_artifacts) {
         let mut marker_file = artifact_file.clone().into_os_string();
         marker_file.push(MARKER_EXTENSION);
         File::create(&marker_file).context(error::FileCreateSnafu { path: &marker_file })?;
 
         let mut output_file: PathBuf = output_dir.as_ref().into();
-        output_file.push(
-            artifact_file
-                .file_name()
-                .context(error::BadFilenameSnafu { path: &output_file })?,
-        );
+        output_file.push(artifact_file.strip_prefix(&build_dir).context(
+            error::StripPathPrefixSnafu {
+                path: &marker_file,
+                prefix: build_dir.as_ref(),
+            },
+        )?);
+
+        let parent_dir = output_file
+            .parent()
+            .context(error::BadDirectorySnafu { path: &output_file })?;
+        fs::create_dir_all(&parent_dir)
+            .context(error::DirectoryCreateSnafu { path: &parent_dir })?;
 
         fs::rename(&artifact_file, &output_file).context(error::FileRenameSnafu {
             old_path: &artifact_file,
@@ -411,34 +421,77 @@ where
 /// Remove build artifacts from the output directory.
 /// Any marker file we find could have a corresponding file that should be cleaned up.
 /// We also clean up the marker files so they do not accumulate across builds.
+/// For the same reason, if a directory is empty after build artifacts, marker files, and other
+/// empty directories have been removed, then that directory will also be removed.
 fn clean_build_files<P>(build_dir: P, output_dir: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    fn is_marker(entry: &DirEntry) -> bool {
-        entry
-            .file_name()
-            .to_str()
-            .map(|s| s.ends_with(MARKER_EXTENSION))
-            .unwrap_or(false)
+    let build_dir = build_dir.as_ref();
+    let output_dir = output_dir.as_ref();
+
+    fn has_markers(entry: &DirEntry) -> bool {
+        let is_dir = entry.path().is_dir();
+        let is_file = entry.file_type().is_file();
+        let is_marker = is_file
+            && entry
+                .file_name()
+                .to_str()
+                .map(|s| s.ends_with(MARKER_EXTENSION))
+                .unwrap_or(false);
+        is_dir || is_marker
     }
 
-    for marker_file in find_files(&build_dir, is_marker) {
-        let mut output_file: PathBuf = output_dir.as_ref().into();
-        output_file.push(
-            marker_file
-                .file_name()
-                .context(error::BadFilenameSnafu { path: &marker_file })?,
-        );
-
-        output_file.set_extension("");
-        if output_file.exists() {
-            std::fs::remove_file(&output_file)
-                .context(error::FileRemoveSnafu { path: &output_file })?;
+    fn cleanup(path: &Path, top: &Path, dirs: &mut HashSet<PathBuf>) -> Result<()> {
+        if !path.exists() {
+            return Ok(());
         }
+        std::fs::remove_file(&path).context(error::FileRemoveSnafu { path })?;
+        let mut parent = path.parent();
+        while let Some(p) = parent {
+            if p == top || dirs.contains(p) {
+                break;
+            }
+            dirs.insert(p.into());
+            parent = p.parent()
+        }
+        Ok(())
+    }
 
-        std::fs::remove_file(&marker_file)
-            .context(error::FileRemoveSnafu { path: &marker_file })?;
+    fn is_empty_dir(path: &Path) -> Result<bool> {
+        Ok(path.is_dir()
+            && path
+                .read_dir()
+                .context(error::DirectoryReadSnafu { path })?
+                .next()
+                .is_none())
+    }
+
+    let mut clean_dirs: HashSet<PathBuf> = HashSet::new();
+
+    for marker_file in find_files(&build_dir, has_markers) {
+        let mut output_file: PathBuf = output_dir.into();
+        output_file.push(marker_file.strip_prefix(&build_dir).context(
+            error::StripPathPrefixSnafu {
+                path: &marker_file,
+                prefix: build_dir,
+            },
+        )?);
+        output_file.set_extension("");
+        cleanup(&output_file, output_dir, &mut clean_dirs)?;
+        cleanup(&marker_file, build_dir, &mut clean_dirs)?;
+    }
+
+    // Clean up directories in reverse order, so that empty child directories don't stop an
+    // otherwise empty parent directory from being removed.
+    let mut clean_dirs = clean_dirs.into_iter().collect::<Vec<PathBuf>>();
+    clean_dirs.sort_by(|a, b| b.cmp(a));
+
+    for clean_dir in clean_dirs {
+        if is_empty_dir(&clean_dir)? {
+            std::fs::remove_dir(&clean_dir)
+                .context(error::DirectoryRemoveSnafu { path: &clean_dir })?;
+        }
     }
 
     Ok(())
@@ -456,11 +509,11 @@ where
         .follow_links(false)
         .same_file_system(true)
         .min_depth(1)
-        .max_depth(1)
         .into_iter()
         .filter_entry(filter)
         .flat_map(|e| e.context(error::DirectoryWalkSnafu))
         .map(|e| e.into_path())
+        .filter(|e| e.is_file())
 }
 
 /// Retrieve a BUILDSYS_* variable that we expect to be set in the environment,

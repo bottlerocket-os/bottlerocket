@@ -16,11 +16,23 @@ pub(crate) enum Error {
         source: std::io::Error,
     },
 
-    #[snafu(display("Failed to get filename for '{}'", path.display()))]
-    BadFilename { path: PathBuf },
+    #[snafu(display("Failed to get parent directory for '{}'", path.display()))]
+    BadDirectory { path: PathBuf },
 
     #[snafu(display("Failed to create directory '{}': {}", path.display(), source))]
     DirectoryCreate {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to create directory '{}': {}", path.display(), source))]
+    DirectoryRemove {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(display("Failed to read directory '{}': {}", path.display(), source))]
+    DirectoryRead {
         path: PathBuf,
         source: std::io::Error,
     },
@@ -51,6 +63,13 @@ pub(crate) enum Error {
     Environment {
         var: String,
         source: std::env::VarError,
+    },
+
+    #[snafu(display("Failed to strip prefix '{}' from path '{}': {}", prefix.display(), path.display(), source))]
+    StripPathPrefix {
+        path: PathBuf,
+        prefix: PathBuf,
+        source: std::path::StripPrefixError,
     },
 
     #[snafu(display("Unsupported architecture '{}'", arch))]
