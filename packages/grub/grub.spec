@@ -63,7 +63,6 @@ BuildRequires: automake
 BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gettext-devel
-BuildRequires: %{_cross_os}glibc-devel
 
 %description
 %{summary}.
