@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 
 set -eu -o pipefail
 shopt -qs failglob
@@ -38,16 +39,39 @@ case "${PARTITION_PLAN}" in
     ;;
 esac
 
+# Store output artifacts in a versioned directory.
+OUTPUT_DIR="${OUTPUT_DIR}/${VERSION_ID}-${BUILD_ID}"
 mkdir -p "${OUTPUT_DIR}"
 
 FILENAME_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}"
+SYMLINK_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}"
+VERSIONED_SYMLINK_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-${VERSION_ID}"
+FRIENDLY_VERSIONED_SYMLINK_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-v${VERSION_ID}"
 
-OS_IMAGE_BASENAME="${FILENAME_PREFIX}"
-DATA_IMAGE_BASENAME="${FILENAME_PREFIX}-data"
+OS_IMAGE_NAME="${FILENAME_PREFIX}"
+OS_IMAGE_SYMLINK="${SYMLINK_PREFIX}"
+OS_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}"
+OS_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}"
+
+DATA_IMAGE_NAME="${FILENAME_PREFIX}-data"
+DATA_IMAGE_SYMLINK="${SYMLINK_PREFIX}-data"
+DATA_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-data"
+DATA_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-data"
 
 BOOT_IMAGE_NAME="${FILENAME_PREFIX}-boot.ext4.lz4"
+BOOT_IMAGE_SYMLINK="${SYMLINK_PREFIX}-boot.ext4.lz4"
+BOOT_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-boot.ext4.lz4"
+BOOT_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-boot.ext4.lz4"
+
 VERITY_IMAGE_NAME="${FILENAME_PREFIX}-root.verity.lz4"
+VERITY_IMAGE_SYMLINK="${SYMLINK_PREFIX}-root.verity.lz4"
+VERITY_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-root.verity.lz4"
+VERITY_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-root.verity.lz4"
+
 ROOT_IMAGE_NAME="${FILENAME_PREFIX}-root.ext4.lz4"
+ROOT_IMAGE_SYMLINK="${SYMLINK_PREFIX}-root.ext4.lz4"
+ROOT_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-root.ext4.lz4"
+ROOT_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-root.ext4.lz4"
 
 OS_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
@@ -332,27 +356,49 @@ esac
 sgdisk -v "${OS_IMAGE}"
 [ -s "${DATA_IMAGE}" ] && sgdisk -v "${DATA_IMAGE}"
 
+symlink_image() {
+  local ext what
+  ext="${1}"
+  what="${2}"
+  ext="${ext:+.$ext}"
+  target="${what^^}_NAME"
+  for link in symlink versioned_symlink friendly_versioned_symlink ; do
+    link="${what^^}_${link^^}"
+    ln -s "${!target}${ext}" "${OUTPUT_DIR}/${!link}${ext}"
+  done
+}
+
 if [[ ${OUTPUT_FMT} == "raw" ]]; then
-  lz4 -vc "${OS_IMAGE}" >"${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.img.lz4"
+  lz4 -vc "${OS_IMAGE}" >"${OUTPUT_DIR}/${OS_IMAGE_NAME}.img.lz4"
+  symlink_image "img.lz4" "os_image"
   if [ -s "${DATA_IMAGE}" ] ; then
-    lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+    lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_NAME}.img.lz4"
+    symlink_image "img.lz4" "data_image"
   fi
 elif [[ ${OUTPUT_FMT} == "qcow2" ]]; then
-  qemu-img convert -f raw -O qcow2 "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.qcow2"
+  qemu-img convert -f raw -O qcow2 "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_NAME}.qcow2"
+  symlink_image "qcow2" "os_image"
   if [ -s "${DATA_IMAGE}" ] ; then
-    qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.qcow2"
+    qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_NAME}.qcow2"
+    symlink_image "qcow2" "data_image"
   fi
 elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
   # Stream optimization is required for creating an Open Virtual Appliance (OVA)
-  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.vmdk"
+  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_NAME}.vmdk"
+  symlink_image "vmdk" "os_image"
   if [ -s "${DATA_IMAGE}" ] ; then
-    qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+    qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_NAME}.vmdk"
+    symlink_image "vmdk" "data_image"
   fi
 fi
 
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
 lz4 -9vc "${VERITY_IMAGE}" >"${OUTPUT_DIR}/${VERITY_IMAGE_NAME}"
 lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
+
+symlink_image "" "boot_image"
+symlink_image "" "verity_image"
+symlink_image "" "root_image"
 
 find "${OUTPUT_DIR}" -type f -print -exec chown 1000:1000 {} \;
 

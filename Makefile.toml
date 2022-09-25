@@ -157,6 +157,10 @@ BUILDSYS_NAME_VERSION="${BUILDSYS_NAME}-${BUILDSYS_VERSION_FULL}"
 BUILDSYS_NAME_FULL="${BUILDSYS_NAME_VARIANT}-${BUILDSYS_VERSION_FULL}"
 # This name does not include the build short SHA
 BUILDSYS_NAME_FRIENDLY = "${BUILDSYS_NAME_VARIANT}-v${BUILDSYS_VERSION_IMAGE}"
+
+# For variant build artifacts.
+BUILDSYS_VARIANT_DIR = "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_VERSION_FULL}"
+
 # Path to repo-specific root role.
 PUBLISH_REPO_ROOT_JSON = "${BUILDSYS_ROOT_DIR}/roles/${PUBLISH_REPO}.root.json"
 # If you don't specify a signing key in Infra.toml, we generate one at this path.
@@ -169,11 +173,11 @@ PUBLISH_AMI_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH
 
 # The name of the kmod kit archive, used to ease building out-of-tree kernel modules.
 BUILDSYS_KMOD_KIT = "${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-kmod-kit-v${BUILDSYS_VERSION_IMAGE}.tar.xz"
-BUILDSYS_KMOD_KIT_PATH = "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_KMOD_KIT}"
+BUILDSYS_KMOD_KIT_PATH = "${BUILDSYS_VARIANT_DIR}/${BUILDSYS_KMOD_KIT}"
 
 # The name of the OVA bundle that will be built if the current variant builds VMDK artifacts
 BUILDSYS_OVA = "${BUILDSYS_NAME_VARIANT}-v${BUILDSYS_VERSION_IMAGE}.ova"
-BUILDSYS_OVA_PATH = "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_OVA}"
+BUILDSYS_OVA_PATH = "${BUILDSYS_VARIANT_DIR}/${BUILDSYS_OVA}"
 BUILDSYS_OVF_TEMPLATE = "${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/template.ovf"
 
 # The default name of uploaded OVAs; override by setting VMWARE_VM_NAME
@@ -584,10 +588,12 @@ export BUILDSYS_VARIANT_FLAVOR="${BUILDSYS_VARIANT_FLAVOR}"
 # because we build host tools with cargo as well, like buildsys and pubsys.
 export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
 
+rm -rf "${BUILDSYS_OUTPUT_DIR}/latest"
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path variants/${BUILDSYS_VARIANT}/Cargo.toml
+ln -snf "${BUILDSYS_VERSION_FULL}" "${BUILDSYS_OUTPUT_DIR}/latest"
 '''
 ]
 
@@ -617,8 +623,8 @@ measure_image() {
       bash -c "set -o pipefail ; cd /tmp; qemu-img measure ${image} | awk '/required size/{print \$NF}'"
 }
 
-root_vmdk_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.vmdk"
-data_vmdk_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.vmdk"
+root_vmdk_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.vmdk"
+data_vmdk_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-data.vmdk"
 ova_tmp_dir="$(mktemp -d)"
 ovf="${BUILDSYS_NAME_FULL}.ovf"
 manifest="${BUILDSYS_NAME_FULL}.mf"
@@ -736,7 +742,8 @@ if [ "${is_split}" == "yes" ] ; then
    tar -rf "${ova_tmp_dir}/${BUILDSYS_OVA}" -C "${ova_tmp_dir}" "${data_vmdk_path##*/}"
 fi
 
-mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova"
+mv "${ova_tmp_dir}/${BUILDSYS_OVA}" "${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.ova"
+ln -snf "${BUILDSYS_NAME_FULL}.ova" "${BUILDSYS_OVA_PATH}"
 '''
 ]
 
@@ -800,58 +807,12 @@ docker run --rm \
 '''
 ]
 
-
-[tasks.link-clean]
-dependencies = ["fetch"]
-script = [
-'''
-for link in \
-    ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}* \
-    ${BUILDSYS_OUTPUT_DIR}/latest/*-kmod-kit-* \
-    ${BUILDSYS_OUTPUT_DIR}/latest/*.ova \
-    ${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}*; do
-  if [ -L "${link}" ]; then
-    rm ${link}
-  fi
-done
-'''
-]
-
-[tasks.link-variant]
-dependencies = ["build-variant"]
-script_runner = "bash"
-script = [
-'''
-mkdir -p ${BUILDSYS_OUTPUT_DIR}/latest
-for artifact in ${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}* ; do
-  file_name="${artifact##*/}"
-  link_name="${file_name/${BUILDSYS_NAME_FULL}/${BUILDSYS_NAME_VARIANT}}"
-  ln -snf "../${file_name}" "${BUILDSYS_OUTPUT_DIR}/latest/${link_name}"
-done
-ln -snf "../${BUILDSYS_NAME_FULL}-kmod-kit.tar.xz" "${BUILDSYS_KMOD_KIT_PATH}"
-if [ -s "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova" ] ; then
-  ln -snf "../${BUILDSYS_NAME_FULL}.ova" "${BUILDSYS_OVA_PATH}"
-fi
-
-# Symlink the root and data disk images to a more friendly name.  All variants
-# will have an image, not all builds have a data disk image
-os_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
-data_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
-ln -snf "${os_disk_img}" "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}.img.lz4"
-if [ -s "${data_disk_img}" ]; then
-   ln -snf "${data_disk_img}" "${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}-data.img.lz4"
-fi
-'''
-]
-
 [tasks.build]
 dependencies = [
-    "link-clean",
     "check-licenses",
     "fetch-licenses",
     "build-variant",
     "build-ova",
-    "link-variant",
 ]
 
 [tasks.tuftool]
@@ -927,9 +888,9 @@ trap 'cleanup' EXIT
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-bootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-boot.ext4.lz4"
-rootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.ext4.lz4"
-hashlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-root.verity.lz4"
+bootlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-boot.ext4.lz4"
+rootlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-root.ext4.lz4"
+hashlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-root.verity.lz4"
 if [ ! -s "${bootlz4}" ] || [ ! -s "${rootlz4}" ] || [ ! -s "${hashlz4}" ]; then
    echo "Image files don't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
    exit 1
@@ -939,7 +900,7 @@ COPY_REPO_TARGETS=()
 
 # TODO: only add migrations from Release.toml, not all
 MIGRATIONS_DIR="$(mktemp -d)"
-tar xpf "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-migrations.tar" -C "${MIGRATIONS_DIR}"
+tar xpf "${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-migrations.tar" -C "${MIGRATIONS_DIR}"
 for file in ${MIGRATIONS_DIR}/*; do
    [ -e "${file}" ] || continue
    COPY_REPO_TARGETS+=("--copy-target ${file}")
@@ -953,15 +914,15 @@ LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
 # friendly name if they exist.  Check for the existence of the image and not
 # the friendly symlink to guard against the case where the link may not have
 # been created. `pubsys` will also fail if the friendly link does not exist
-os_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
-os_disk_img_friendly="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}.img.lz4"
+os_disk_img="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+os_disk_img_friendly="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FRIENDLY}.img.lz4"
 if [ -s "${os_disk_img}" ] ; then
    LINK_REPO_TARGETS+=("--link-target ${os_disk_img}")
    LINK_REPO_TARGETS+=("--link-target ${os_disk_img_friendly}")
 fi
 
-data_disk_img="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
-data_disk_img_friendly="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_FRIENDLY}-data.img.lz4"
+data_disk_img="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+data_disk_img_friendly="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FRIENDLY}-data.img.lz4"
 if [ -s "${data_disk_img}" ]; then
    LINK_REPO_TARGETS+=("--link-target ${data_disk_img}")
    LINK_REPO_TARGETS+=("--link-target ${data_disk_img_friendly}")
@@ -1108,7 +1069,7 @@ cleanup() {
 trap 'cleanup' EXIT
 
 # Unlz4 the root image, and the data image if present
-rootlz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+rootlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
 root_image="${rootlz4%.lz4}"
 if [ ! -s "${rootlz4}" ]; then
    echo "Image file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
@@ -1116,7 +1077,7 @@ if [ ! -s "${rootlz4}" ]; then
 fi
 lz4 -df "${rootlz4}" "${root_image}"
 
-datalz4="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
+datalz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
 data_image="${datalz4%.lz4}"
 
 # We will only have a data image if the variant uses the "split" format.
@@ -1157,8 +1118,8 @@ else # unified
    root_volume_args+=(--root-volume-size "${PUBLISH_UNIFIED_VOLUME_SIZE}")
 fi
 
-ami_output="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-ami_output_latest="${BUILDSYS_OUTPUT_DIR}/latest/${BUILDSYS_NAME_VARIANT}-${AMI_DATA_FILE_SUFFIX}"
+ami_output="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+ami_output_latest="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_VARIANT}-${AMI_DATA_FILE_SUFFIX}"
 
 ami_name="${PUBLISH_AMI_NAME:-${PUBLISH_AMI_NAME_DEFAULT}}"
 
@@ -1179,7 +1140,7 @@ pubsys \
    ${NO_PROGRESS:+--no-progress} \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
 
-ln -snf "../${ami_output##*/}" "${ami_output_latest}"
+ln -snf "${ami_output##*/}" "${ami_output_latest}"
 '''
 ]
 
@@ -1195,7 +1156,7 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -1225,7 +1186,7 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -1260,7 +1221,7 @@ if [ -z "${GRANT_TO_USERS}" ] && [ -z "${GRANT_TO_GROUPS}" ]; then
    exit 1
 fi
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -1296,7 +1257,7 @@ if [ -z "${REVOKE_FROM_USERS}" ] && [ -z "${REVOKE_FROM_GROUPS}" ]; then
    exit 1
 fi
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -1327,7 +1288,7 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
 if [ ! -s "${ami_input}" ]; then
    echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
    exit 1
@@ -1393,7 +1354,7 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-ova_path="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}.ova"
+ova_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.ova"
 if [ ! -s "${ova_path}" ]; then
    echo "An OVA doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
    exit 1
@@ -1518,7 +1479,7 @@ dependencies = ["test-tools"]
 script = [
     '''
     set -eu
-    ami_input="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+    ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
     if [ ! -s "${ami_input}" ]; then
       echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
       exit 1

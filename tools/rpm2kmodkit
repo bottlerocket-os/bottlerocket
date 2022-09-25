@@ -12,11 +12,17 @@ for opt in "$@"; do
    esac
 done
 
+# Store output artifacts in a versioned directory.
+OUTPUT_DIR="${OUTPUT_DIR}/${VERSION_ID}-${BUILD_ID}"
+
 # Use a friendly name for the top-level directory inside the archive.
 KMOD_KIT="${VARIANT}-${ARCH}-kmod-kit-v${VERSION_ID}"
 
 # Use the build ID within the filename, to align with our build's expectations.
 KMOD_KIT_FULL="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}-kmod-kit"
+KMOD_KIT_VERSIONED_SYMLINK="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-kmod-kit"
+KMOD_KIT_FRIENDLY_VERSIONED_SYMLINK="bottlerocket-${VARIANT}-${ARCH}-v${VERSION_ID}-kmod-kit"
+KMOD_KIT_SYMLINK="bottlerocket-${VARIANT}-${ARCH}-kmod-kit"
 
 EXTRACT_DIR="$(mktemp -d)"
 KIT_DIR="$(mktemp -d)"
@@ -42,5 +48,11 @@ pushd "${KIT_DIR}" >/dev/null
 tar cf "${OUTPUT_DIR}/${KMOD_KIT_FULL}.tar" "${KMOD_KIT}"
 xz -T0 "${OUTPUT_DIR}/${KMOD_KIT_FULL}.tar"
 popd >/dev/null
+
+# Create friendly symlinks.
+ln -s "${KMOD_KIT_FULL}.tar.xz" "${OUTPUT_DIR}/${KMOD_KIT_FRIENDLY_VERSIONED_SYMLINK}.tar.xz"
+ln -s "${KMOD_KIT_FULL}.tar.xz" "${OUTPUT_DIR}/${KMOD_KIT_VERSIONED_SYMLINK}.tar.xz"
+ln -s "${KMOD_KIT_FULL}.tar.xz" "${OUTPUT_DIR}/${KMOD_KIT_SYMLINK}.tar.xz"
+ln -s "${KMOD_KIT_FULL}.tar.xz" "${OUTPUT_DIR}/${KMOD_KIT}.tar.xz"
 
 rm -rf "${EXTRACT_DIR}" "${KIT_DIR}"

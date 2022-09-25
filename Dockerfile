@@ -254,6 +254,6 @@ RUN --mount=target=/host \
 # Copies the build artifacts (Bottlerocket image files, migrations, and kmod kit) to their
 # expected location so that buildsys can find them and copy them out.
 FROM scratch AS variant
-COPY --from=imgbuild /local/output/* /output/
-COPY --from=migrationbuild /local/output/* /output/
-COPY --from=kmodkitbuild /local/output/* /output/
+COPY --from=imgbuild /local/output/. /output/
+COPY --from=migrationbuild /local/output/. /output/
+COPY --from=kmodkitbuild /local/output/. /output/
