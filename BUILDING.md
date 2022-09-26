@@ -138,7 +138,7 @@ licenses = [
 2. Fetch the licenses with this command:
 
 ```shell
-cargo make fetch-licenses -e BUILDSYS_UPSTREAM_LICENSE_FETCH=true
+cargo make -e BUILDSYS_UPSTREAM_LICENSE_FETCH=true fetch-licenses
 ```
 
 3. Build your image, setting the `BUILDSYS_UPSTREAM_SOURCE_FALLBACK` flag to `true`, if you haven't cached the driver's sources:
