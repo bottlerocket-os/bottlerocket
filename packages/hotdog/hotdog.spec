@@ -7,17 +7,14 @@
 %global gorepo hotdog
 %global goimport %{goproject}/%{gorepo}
 
-%global gitrev b85b75576adbbd7e133b54d71ebc11a28acf40db
-%global shortrev %(c=%{gitrev}; echo ${c:0:7})
-
 Name: %{_cross_os}hotdog
-Version: 1.0.1
+Version: 1.0.4
 Release: 1%{?dist}
 Summary: Tool with OCI hooks to run the Log4j Hot Patch in containers
 License: Apache-2.0
 URL: https://github.com/bottlerocket-os/hotdog
-Source0: %{gorepo}-%{shortrev}.tar.gz
-Source1: bundled-%{gorepo}-%{shortrev}.tar.gz
+Source0: %{gorepo}-%{version}.tar.gz
+Source1: bundled-%{gorepo}-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}log4j2-hotpatch
 
@@ -25,8 +22,8 @@ Requires: %{_cross_os}log4j2-hotpatch
 %{summary}.
 
 %prep
-%setup -n %{gorepo}-%{gitrev}
-%setup -T -D -n %{gorepo}-%{gitrev} -b 1
+%setup -n %{gorepo}-%{version}
+%setup -T -D -n %{gorepo}-%{version} -b 1
 
 %build
 %set_cross_go_flags
