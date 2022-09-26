@@ -62,7 +62,7 @@ skip-tree = [
     { name = "rusoto_signature" },
 
     # argh_derive pulls in an older version of heck
-    { name = "argh_derive", version = "0.1.8" },
+    { name = "argh_derive", version = "0.1.9" },
 
     # structopt pulls in an older version of clap
     { name = "structopt", version = "0.3.26" },
