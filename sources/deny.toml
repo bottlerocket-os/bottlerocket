@@ -9,20 +9,22 @@ default = "deny"
 # We want really high confidence when inferring licenses from text
 confidence-threshold = 0.93
 
+# Commented license types are allowed but not currently used
 allow = [
     "Apache-2.0",
-    #"BSD-2-Clause", # OK but currently unused; commenting to prevent warning
+    # "BSD-2-Clause",
     "BSD-3-Clause",
     "BSL-1.0",
-    #"CC0-1.0",  # OK but currently unused; commenting to prevent warning
+    # "CC0-1.0",
     "ISC",
     "MIT",
     "OpenSSL",
     "Unlicense",
-    "Zlib"
+    "Zlib",
 ]
+
 exceptions = [
-    { name = "unicode-ident", version = "1.0.2", allow = ["MIT", "Apache-2.0", "Unicode-DFS-2016"] },
+    { name = "unicode-ident", version = "1.0.4", allow = ["MIT", "Apache-2.0", "Unicode-DFS-2016"] },
 ]
 
 # https://github.com/hsivonen/encoding_rs The non-test code that isn't generated from the WHATWG data in this crate is
@@ -55,19 +57,6 @@ multiple-versions = "deny"
 wildcards = "deny"
 
 skip = [
-    # newer version used by snafu-derive
-    # older version used by argh_derive and structopt-derive
-    { name = "heck", version = "0.3.3" },
-
-    # newer version used by model-derive and darling
-    # older version used by clap 2.34.0, via cargo-readme
-    { name = "strsim", version = "0.8.0" },
-
-    # newer version used by clap 3.x in shibaken
-    # older version used by clap 2.34.0, via cargo-readme
-    { name = "textwrap", version = "0.11.0" },
-    { name = "clap", version = "2.34.0" },
-
     # older version used by chrono 0.4.22
     { name = "time", version = "0.1.44" },
 ]
@@ -79,6 +68,9 @@ skip-tree = [
     # actix-http uses older and newer versions of crates like rustc_version and
     # semver, for build vs. runtime dependencies.
     { name = "actix-http", version = "3.0.0-rc.1" },
+
+    # structopt pulls in an older version of clap
+    { name = "structopt", version = "0.3.26" },
 
     # reqwest uses an older rustls-pemfile
     { name = "reqwest", version = "0.11.10" },
