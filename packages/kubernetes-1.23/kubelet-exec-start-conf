@@ -20,4 +20,7 @@ ExecStart=/usr/bin/kubelet \
     --node-ip ${NODE_IP} \
     --node-labels "${NODE_LABELS}" \
     --register-with-taints "${NODE_TAINTS}" \
+{{#if settings.kubernetes.log-level includeZero=true}}
+    -v {{settings.kubernetes.log-level}} \
+{{/if}}
     --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}

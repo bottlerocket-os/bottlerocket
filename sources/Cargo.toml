@@ -28,6 +28,7 @@ members = [
     "api/migration/migrations/v1.10.0/dns-settings",
     "api/migration/migrations/v1.10.0/dns-settings-metadata",
     "api/migration/migrations/v1.10.0/reboot-to-reconcile-setting",
+    "api/migration/migrations/v1.10.0/kubelet-log-level",
 
     "bottlerocket-release",
 
