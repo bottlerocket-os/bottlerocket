@@ -27,9 +27,8 @@ mod aws;
 mod repo;
 mod vmware;
 
-use env_logger::Builder;
-use log::LevelFilter;
 use semver::Version;
+use simplelog::{CombinedLogger, Config as LogConfig, ConfigBuilder, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::path::PathBuf;
 use std::process;
@@ -40,17 +39,35 @@ fn run() -> Result<()> {
     // Parse and store the args passed to the program
     let args = Args::from_args();
 
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    // To reduce verbosity of messages related to the AWS SDK for Rust we need
+    // to spin up two loggers, setting different levels for each. This allows
+    // us to retain the mixed logging of stdout/stderr in simplelog.
     match args.log_level {
-        // Set log level for AWS SDK to error to reduce verbosity.
-        LevelFilter::Info => Builder::new()
-            .filter_level(args.log_level)
-            .filter(Some("aws_config"), LevelFilter::Warn)
-            .filter(Some("aws_smithy"), LevelFilter::Warn)
-            .filter(Some("tracing::span"), LevelFilter::Warn)
-            .init(),
-
-        // Set the supplied log level across the whole crate.
-        _ => Builder::new().filter_level(args.log_level).init(),
+        LevelFilter::Info => {
+            CombinedLogger::init(vec![
+                SimpleLogger::new(
+                    LevelFilter::Info,
+                    ConfigBuilder::new()
+                        .add_filter_ignore_str("aws_config")
+                        .add_filter_ignore_str("aws_smithy")
+                        .add_filter_ignore_str("tracing::span")
+                        .build(),
+                ),
+                SimpleLogger::new(
+                    LevelFilter::Warn,
+                    ConfigBuilder::new()
+                        .add_filter_allow_str("aws_config")
+                        .add_filter_allow_str("aws_smithy")
+                        .add_filter_allow_str("tracing::span")
+                        .build(),
+                ),
+            ])
+            .context(error::LoggerSnafu)?;
+        }
+        _ => {
+            SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?
+        }
     }
 
     match args.subcommand {
@@ -161,6 +178,9 @@ mod error {
     pub(super) enum Error {
         #[snafu(display("Failed to build AMI: {}", source))]
         Ami { source: crate::aws::ami::Error },
+
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: log::SetLoggerError },
 
         #[snafu(display("Failed to publish AMI: {}", source))]
         PublishAmi {
