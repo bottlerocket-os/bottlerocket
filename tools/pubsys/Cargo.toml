@@ -20,7 +20,6 @@ chrono = "0.4"
 clap = "3.1"
 coldsnap = { version = "0.4", default-features = false, features = ["aws-sdk-rust-rustls"] }
 duct = "0.13.0"
-pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 futures = "0.3.5"
 http = "0.2.8"
 indicatif = "0.16.0"
@@ -28,15 +27,17 @@ lazy_static = "1.4"
 log = "0.4"
 num_cpus = "1"
 parse-datetime = { path = "../../sources/parse-datetime", version = "0.1.0" }
+pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 rayon = "1"
 # Need to bring in reqwest with a TLS feature so tough can support TLS repos.
 reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
+semver = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 simplelog = "0.12"
 snafu = "0.7"
-semver = "1.0"
-serde = { version = "1.0", features = ["derive"]  }
-serde_json = "1.0"
-structopt = { version = "0.3", default-features = false  }
+structopt = { version = "0.3", default-features = false }
+tempfile = "3.1"
 tinytemplate = "1.1"
 tokio = { version = "1", features = ["full"] }  # LTS
 tokio-stream = { version = "0.1", features = ["time"] }
@@ -46,4 +47,3 @@ tough-kms = "0.4"
 tough-ssm = "0.7"
 update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1.0" }
 url = { version = "2.1.0", features = ["serde"] }
-tempfile = "3.1"
