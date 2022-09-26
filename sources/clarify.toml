@@ -38,7 +38,7 @@ license-files = [
 ]
 
 [clarify.crossbeam-queue]
-expression = "(MIT OR Apache-2.0) AND BSD-2-Clause-FreeBSD"
+expression = "MIT OR Apache-2.0"
 license-files = [
     { path = "LICENSE-APACHE", hash = 0x24b54f4b },
     { path = "LICENSE-MIT", hash = 0x386ca1bc },
@@ -46,7 +46,7 @@ license-files = [
 ]
 
 [clarify.crossbeam-channel]
-expression = "(MIT OR Apache-2.0) AND BSD-2-Clause-FreeBSD"
+expression = "MIT OR Apache-2.0"
 license-files = [
     { path = "LICENSE-APACHE", hash = 0x24b54f4b },
     { path = "LICENSE-MIT", hash = 0xbc436f08 },
