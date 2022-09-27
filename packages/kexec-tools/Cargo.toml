@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://kernel.org/pub/linux/utils/kernel/kexec"
 
 [[package.metadata.build-package.external-files]]
-url = "https://kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-2.0.24.tar.xz"
-sha512 = "ef7cf78246e2d729d81a3649791a5a23c385353cc75cbe8ef279616329fdaccc876d614c7f51e1456822a13a11520296070d9897467d24310399909e049c3822"
+url = "https://kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-2.0.25.tar.xz"
+sha512 = "6fd3fe11d428c5bb2ce318744146e03ddf752cc77632064bdd7418ef3ad355ad2e2db212d68a5bc73554d78f786901beb42d72bd62e2a4dae34fb224b667ec6b"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
