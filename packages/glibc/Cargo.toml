@@ -12,5 +12,5 @@ path = "pkg.rs"
 releases-url = "https://ftp.gnu.org/gnu/glibc"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.gnu.org/gnu/glibc/glibc-2.35.tar.xz"
-sha512 = "e7336ce27561be5d7c217832a1136fb327e057bd8d3f92925b35c97e3e9f9e486948b5a1e03e5e4090772ef06437a074d10b82e68f17f1ad8f22077ee39e1b66"
+url = "https://ftp.gnu.org/gnu/glibc/glibc-2.36.tar.xz"
+sha512 = "9ea0bbda32f83a85b7da0c34f169607fb8a102f0a11a914e6bf531be47d1bef4f5307128286cffa1e2dc5879f0e6ccaef527dd353486883fa332a0b44bde8b3e"

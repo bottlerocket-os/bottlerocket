@@ -1,0 +1,31 @@
+From 4dad97e2a2e510c6b53a0add29a2188714fcf4ab Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Wed, 10 Aug 2022 14:24:45 -0300
+Subject: [PATCH 12/39] linux: Mimic kernel defition for BLOCK_SIZE
+
+To avoid possible warnings if the kernel header is included before
+sys/mount.h.
+
+Reviewed-by: Florian Weimer <fweimer@redhat.com>
+(cherry picked from commit c68b6044bc7945716431f1adc091b17c39b80a06)
+---
+ sysdeps/unix/sysv/linux/sys/mount.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sysdeps/unix/sysv/linux/sys/mount.h b/sysdeps/unix/sysv/linux/sys/mount.h
+index f965986ba8..df6b0dbb42 100644
+--- a/sysdeps/unix/sysv/linux/sys/mount.h
++++ b/sysdeps/unix/sysv/linux/sys/mount.h
+@@ -27,8 +27,8 @@
+ #include <stddef.h>
+ #include <sys/ioctl.h>
+ 
+-#define BLOCK_SIZE	1024
+ #define BLOCK_SIZE_BITS	10
++#define BLOCK_SIZE	(1<<BLOCK_SIZE_BITS)
+ 
+ 
+ /* These are the fs-independent mount-flags: up to 16 flags are
+-- 
+2.37.2
+

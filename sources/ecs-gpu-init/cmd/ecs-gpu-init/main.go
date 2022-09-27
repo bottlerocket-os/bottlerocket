@@ -65,7 +65,8 @@ func getGPUDeviceIDs() ([]string, error) {
 
 // NvidiaInfo represents the configuration required by the ECS agent to assign GPUs to tasks
 // For reference:
-// 	https://github.com/aws/amazon-ecs-init/blob/master/ecs-init/gpu/nvidia_gpu_manager.go#L42
+//
+//	https://github.com/aws/amazon-ecs-init/blob/master/ecs-init/gpu/nvidia_gpu_manager.go#L42
 type NvidiaInfo struct {
 	DriverVersion string
 	GPUIDs        []string

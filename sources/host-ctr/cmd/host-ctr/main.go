@@ -922,7 +922,6 @@ func pullImage(ctx context.Context, source string, client *containerd.Client, re
 // Image tag logic derived from:
 //
 // https://github.com/containerd/containerd/blob/d80513ee8a6995bc7889c93e7858ddbbc51f063d/cmd/ctr/commands/images/tag.go#L67-L86
-//
 func tagImage(ctx context.Context, imageName string, newImageName string, client *containerd.Client) error {
 	log.G(ctx).WithField("img", newImageName).Info("tagging image")
 	// Retrieve image information

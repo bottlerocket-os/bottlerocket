@@ -1,0 +1,58 @@
+From 645d94808aaa90fb1b20a25ff70bb50d9eb1d55b Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Mon, 5 Sep 2022 09:34:39 -0300
+Subject: [PATCH 20/39] syslog: Remove extra whitespace between timestamp and
+ message (BZ#29544)
+
+The rfc3164 clear states that a single space character must follow
+the timestamp field.
+
+Checked on x86_64-linux-gnu.
+---
+ misc/syslog.c     | 2 +-
+ misc/tst-syslog.c | 9 ++++++---
+ 2 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/misc/syslog.c b/misc/syslog.c
+index b88f66c835..f67d4b58a4 100644
+--- a/misc/syslog.c
++++ b/misc/syslog.c
+@@ -167,7 +167,7 @@ __vsyslog_internal (int pri, const char *fmt, va_list ap,
+ 		  _nl_C_locobj_ptr);
+ 
+ #define SYSLOG_HEADER(__pri, __timestamp, __msgoff, pid) \
+-  "<%d>%s %n%s%s%.0d%s: ",                               \
++  "<%d>%s%n%s%s%.0d%s: ",                                \
+   __pri, __timestamp, __msgoff,                          \
+   LogTag == NULL ? __progname : LogTag,                  \
+   "[" + (pid == 0), pid, "]" + (pid == 0)
+diff --git a/misc/tst-syslog.c b/misc/tst-syslog.c
+index 1d332ece53..3560b518a2 100644
+--- a/misc/tst-syslog.c
++++ b/misc/tst-syslog.c
+@@ -275,16 +275,19 @@ parse_syslog_msg (const char *msg)
+ {
+   struct msg_t r = { .pid = -1 };
+   int number;
++  int wsb, wsa;
+ 
+ #define STRINPUT(size)  XSTRINPUT(size)
+ #define XSTRINPUT(size) "%" # size "s"
+ 
+   /* The message in the form:
+-     <179>Apr  8 14:51:19  tst-syslog: message 176 3  */
+-  int n = sscanf (msg, "<%3d>%*s %*d %*d:%*d:%*d " STRINPUT(IDENT_LENGTH)
++     <179>Apr  8 14:51:19 tst-syslog: message 176 3  */
++  int n = sscanf (msg, "<%3d>%*s %*d %*d:%*d:%*d%n %n" STRINPUT(IDENT_LENGTH)
+ 		       " " STRINPUT(MSG_LENGTH) " %*d %*d",
+-                  &number, r.ident, r.msg);
++                  &number, &wsb, &wsa, r.ident, r.msg);
+   TEST_COMPARE (n, 3);
++  /* It should only one space between timestamp and message.  */
++  TEST_COMPARE (wsa - wsb, 1);
+ 
+   r.facility = number & LOG_FACMASK;
+   r.priority = number & LOG_PRIMASK;
+-- 
+2.37.2
+

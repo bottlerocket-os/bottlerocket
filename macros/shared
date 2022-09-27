@@ -15,8 +15,8 @@
   '-fexceptions', '-fstack-clash-protection', '-fno-semantic-interposition' \
   %{nil}}
 %_cross_cxxflags %_cross_cflags
-%_cross_ldflags -Wl,-z,relro -Wl,-z,now
-%_cross_c_link_args '-Wl,-z,relro', '-Wl,-z,now'
+%_cross_ldflags -Wl,-z,relro -Wl,-z,now -Wl,-Bsymbolic-functions
+%_cross_c_link_args '-Wl,-z,relro', '-Wl,-z,now', '-Wl,-Bsymbolic-functions'
 
 %_cross_lib lib
 %_cross_rootdir /%{_cross_target}/sys-root

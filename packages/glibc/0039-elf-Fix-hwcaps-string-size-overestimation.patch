@@ -1,0 +1,60 @@
+From 4b95b6e8bbb5a2b6856f707bf3bc3308ebef595a Mon Sep 17 00:00:00 2001
+From: Javier Pello <devel@otheo.eu>
+Date: Mon, 5 Sep 2022 20:09:01 +0200
+Subject: [PATCH 39/39] elf: Fix hwcaps string size overestimation
+
+Commit dad90d528259b669342757c37dedefa8577e2636 added glibc-hwcaps
+support for LD_LIBRARY_PATH and, for this, it adjusted the total
+string size required in _dl_important_hwcaps. However, in doing so
+it inadvertently altered the calculation of the size required for
+the power set strings, as the computation of the power set string
+size depended on the first value assigned to the total variable,
+which is later shifted, resulting in overallocation of string
+space. Fix this now by using a different variable to hold the
+string size required for glibc-hwcaps.
+
+Signed-off-by: Javier Pello <devel@otheo.eu>
+(cherry picked from commit a23820f6052a740246fdc7dcd9c43ce8eed0c45a)
+---
+ elf/dl-hwcaps.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/elf/dl-hwcaps.c b/elf/dl-hwcaps.c
+index 6f161f6ad5..92eb53790e 100644
+--- a/elf/dl-hwcaps.c
++++ b/elf/dl-hwcaps.c
+@@ -193,7 +193,7 @@ _dl_important_hwcaps (const char *glibc_hwcaps_prepend,
+   /* Each hwcaps subdirectory has a GLIBC_HWCAPS_PREFIX string prefix
+      and a "/" suffix once stored in the result.  */
+   hwcaps_counts.maximum_length += strlen (GLIBC_HWCAPS_PREFIX) + 1;
+-  size_t total = (hwcaps_counts.count * (strlen (GLIBC_HWCAPS_PREFIX) + 1)
++  size_t hwcaps_sz = (hwcaps_counts.count * (strlen (GLIBC_HWCAPS_PREFIX) + 1)
+ 		  + hwcaps_counts.total_length);
+ 
+   /* Count the number of bits set in the masked value.  */
+@@ -229,11 +229,12 @@ _dl_important_hwcaps (const char *glibc_hwcaps_prepend,
+   assert (m == cnt);
+ 
+   /* Determine the total size of all strings together.  */
++  size_t total;
+   if (cnt == 1)
+-    total += temp[0].len + 1;
++    total = temp[0].len + 1;
+   else
+     {
+-      total += temp[0].len + temp[cnt - 1].len + 2;
++      total = temp[0].len + temp[cnt - 1].len + 2;
+       if (cnt > 2)
+ 	{
+ 	  total <<= 1;
+@@ -255,6 +256,7 @@ _dl_important_hwcaps (const char *glibc_hwcaps_prepend,
+   /* This is the overall result, including both glibc-hwcaps
+      subdirectories and the legacy hwcaps subdirectories using the
+      power set construction.  */
++  total += hwcaps_sz;
+   struct r_strlenpair *overall_result
+     = malloc (*sz * sizeof (*result) + total);
+   if (overall_result == NULL)
+-- 
+2.37.2
+

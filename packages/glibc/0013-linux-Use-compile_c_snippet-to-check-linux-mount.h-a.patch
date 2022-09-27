@@ -1,0 +1,33 @@
+From d48813227b63a0d92ea357ea0733229ed74e31ab Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Wed, 10 Aug 2022 14:24:46 -0300
+Subject: [PATCH 13/39] linux: Use compile_c_snippet to check linux/mount.h
+ availability
+
+Checked on x86_64-linux-gnu.
+
+Reviewed-by: Florian Weimer <fweimer@redhat.com>
+(cherry picked from commit e1226cdc6b209539a92d32d5b620ba53fd35abf3)
+---
+ sysdeps/unix/sysv/linux/tst-mount-consts.py | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/sysdeps/unix/sysv/linux/tst-mount-consts.py b/sysdeps/unix/sysv/linux/tst-mount-consts.py
+index a62f803123..be2ef2daf1 100755
+--- a/sysdeps/unix/sysv/linux/tst-mount-consts.py
++++ b/sysdeps/unix/sysv/linux/tst-mount-consts.py
+@@ -33,6 +33,11 @@ def main():
+                         help='C compiler (including options) to use')
+     args = parser.parse_args()
+ 
++    if glibcextract.compile_c_snippet(
++            '#include <linux/mount.h>',
++            args.cc).returncode != 0:
++        sys.exit (77)
++
+     linux_version_headers = glibcsyscalls.linux_kernel_version(args.cc)
+     # Constants in glibc were updated to match Linux v5.16.  When glibc
+     # constants are updated this value should be updated to match the
+-- 
+2.37.2
+

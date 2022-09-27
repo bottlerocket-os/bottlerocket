@@ -1,0 +1,252 @@
+From 924e4f3eaa502ce82fccf8537f021a796d158771 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Fri, 26 Aug 2022 21:15:43 +0200
+Subject: [PATCH 17/39] elf: Call __libc_early_init for reused namespaces (bug
+ 29528)
+
+libc_map is never reset to NULL, neither during dlclose nor on a
+dlopen call which reuses the namespace structure.  As a result, if a
+namespace is reused, its libc is not initialized properly.  The most
+visible result is a crash in the <ctype.h> functions.
+
+To prevent similar bugs on namespace reuse from surfacing,
+unconditionally initialize the chosen namespace to zero using memset.
+
+(cherry picked from commit d0e357ff45a75553dee3b17ed7d303bfa544f6fe)
+---
+ NEWS                         |  1 +
+ elf/Makefile                 | 25 ++++++++++++++++++
+ elf/dl-open.c                | 13 ++++++----
+ elf/tst-dlmopen-twice-mod1.c | 37 ++++++++++++++++++++++++++
+ elf/tst-dlmopen-twice-mod2.c | 50 ++++++++++++++++++++++++++++++++++++
+ elf/tst-dlmopen-twice.c      | 34 ++++++++++++++++++++++++
+ 6 files changed, 155 insertions(+), 5 deletions(-)
+ create mode 100644 elf/tst-dlmopen-twice-mod1.c
+ create mode 100644 elf/tst-dlmopen-twice-mod2.c
+ create mode 100644 elf/tst-dlmopen-twice.c
+
+diff --git a/NEWS b/NEWS
+index ae30900bbc..6d31e5abba 100644
+--- a/NEWS
++++ b/NEWS
+@@ -13,6 +13,7 @@ The following bugs are resolved with this release:
+   [29446] _dlopen now ignores dl_caller argument in static mode
+   [29485] Linux: Terminate subprocess on late failure in tst-pidfd
+   [29490] alpha: New __brk_call implementation is broken
++  [29528] elf: Call __libc_early_init for reused namespaces
+ 
+ 
+ Version 2.36
+diff --git a/elf/Makefile b/elf/Makefile
+index fd77d0c7c8..43353a4b08 100644
+--- a/elf/Makefile
++++ b/elf/Makefile
+@@ -408,6 +408,7 @@ tests += \
+   tst-dlmopen4 \
+   tst-dlmopen-dlerror \
+   tst-dlmopen-gethostbyname \
++  tst-dlmopen-twice \
+   tst-dlopenfail \
+   tst-dlopenfail-2 \
+   tst-dlopenrpath \
+@@ -834,6 +835,8 @@ modules-names += \
+   tst-dlmopen1mod \
+   tst-dlmopen-dlerror-mod \
+   tst-dlmopen-gethostbyname-mod \
++  tst-dlmopen-twice-mod1 \
++  tst-dlmopen-twice-mod2 \
+   tst-dlopenfaillinkmod \
+   tst-dlopenfailmod1 \
+   tst-dlopenfailmod2 \
+@@ -2967,3 +2970,25 @@ $(objpfx)tst-tls-allocation-failure-static-patched.out: \
+ 	grep -q '^Fatal glibc error: Cannot allocate TLS block$$' $@ \
+ 	  && grep -q '^status: 127$$' $@; \
+ 	  $(evaluate-test)
++
++$(objpfx)tst-audit-tlsdesc: $(objpfx)tst-audit-tlsdesc-mod1.so \
++			    $(objpfx)tst-audit-tlsdesc-mod2.so \
++			    $(shared-thread-library)
++ifeq (yes,$(have-mtls-dialect-gnu2))
++# The test is valid for all TLS types, but we want to exercise GNU2
++# TLS if possible.
++CFLAGS-tst-audit-tlsdesc-mod1.c += -mtls-dialect=gnu2
++CFLAGS-tst-audit-tlsdesc-mod2.c += -mtls-dialect=gnu2
++endif
++$(objpfx)tst-audit-tlsdesc-dlopen: $(shared-thread-library)
++$(objpfx)tst-audit-tlsdesc-dlopen.out: $(objpfx)tst-audit-tlsdesc-mod1.so \
++				       $(objpfx)tst-audit-tlsdesc-mod2.so
++$(objpfx)tst-audit-tlsdesc-mod1.so: $(objpfx)tst-audit-tlsdesc-mod2.so
++$(objpfx)tst-audit-tlsdesc.out: $(objpfx)tst-auditmod-tlsdesc.so
++tst-audit-tlsdesc-ENV = LD_AUDIT=$(objpfx)tst-auditmod-tlsdesc.so
++$(objpfx)tst-audit-tlsdesc-dlopen.out: $(objpfx)tst-auditmod-tlsdesc.so
++tst-audit-tlsdesc-dlopen-ENV = LD_AUDIT=$(objpfx)tst-auditmod-tlsdesc.so
++
++$(objpfx)tst-dlmopen-twice.out: \
++  $(objpfx)tst-dlmopen-twice-mod1.so \
++  $(objpfx)tst-dlmopen-twice-mod2.so
+diff --git a/elf/dl-open.c b/elf/dl-open.c
+index a23e65926b..46e8066fd8 100644
+--- a/elf/dl-open.c
++++ b/elf/dl-open.c
+@@ -844,11 +844,14 @@ _dl_open (const char *file, int mode, const void *caller_dlopen, Lmid_t nsid,
+ 	  _dl_signal_error (EINVAL, file, NULL, N_("\
+ no more namespaces available for dlmopen()"));
+ 	}
+-      else if (nsid == GL(dl_nns))
+-	{
+-	  __rtld_lock_initialize (GL(dl_ns)[nsid]._ns_unique_sym_table.lock);
+-	  ++GL(dl_nns);
+-	}
++
++      if (nsid == GL(dl_nns))
++	++GL(dl_nns);
++
++      /* Initialize the new namespace.  Most members are
++	 zero-initialized, only the lock needs special treatment.  */
++      memset (&GL(dl_ns)[nsid], 0, sizeof (GL(dl_ns)[nsid]));
++      __rtld_lock_initialize (GL(dl_ns)[nsid]._ns_unique_sym_table.lock);
+ 
+       _dl_debug_update (nsid)->r_state = RT_CONSISTENT;
+     }
+diff --git a/elf/tst-dlmopen-twice-mod1.c b/elf/tst-dlmopen-twice-mod1.c
+new file mode 100644
+index 0000000000..0eaf04948c
+--- /dev/null
++++ b/elf/tst-dlmopen-twice-mod1.c
+@@ -0,0 +1,37 @@
++/* Initialization of libc after dlmopen/dlclose/dlmopen (bug 29528).  Module 1.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <stdio.h>
++
++static void __attribute__ ((constructor))
++init (void)
++{
++  puts ("info: tst-dlmopen-twice-mod1.so loaded");
++  fflush (stdout);
++}
++
++static void __attribute__ ((destructor))
++fini (void)
++{
++  puts ("info: tst-dlmopen-twice-mod1.so about to be unloaded");
++  fflush (stdout);
++}
++
++/* Large allocation.  The second module does not have this, so it
++   should load libc at a different address.  */
++char large_allocate[16 * 1024 * 1024];
+diff --git a/elf/tst-dlmopen-twice-mod2.c b/elf/tst-dlmopen-twice-mod2.c
+new file mode 100644
+index 0000000000..40c6c01f96
+--- /dev/null
++++ b/elf/tst-dlmopen-twice-mod2.c
+@@ -0,0 +1,50 @@
++/* Initialization of libc after dlmopen/dlclose/dlmopen (bug 29528).  Module 2.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <ctype.h>
++#include <stdio.h>
++
++static void __attribute__ ((constructor))
++init (void)
++{
++  puts ("info: tst-dlmopen-twice-mod2.so loaded");
++  fflush (stdout);
++}
++
++static void __attribute__ ((destructor))
++fini (void)
++{
++  puts ("info: tst-dlmopen-twice-mod2.so about to be unloaded");
++  fflush (stdout);
++}
++
++int
++run_check (void)
++{
++  puts ("info: about to call isalpha");
++  fflush (stdout);
++
++  volatile char ch = 'a';
++  if (!isalpha (ch))
++    {
++      puts ("error: isalpha ('a') is not true");
++      fflush (stdout);
++      return 1;
++    }
++  return 0;
++}
+diff --git a/elf/tst-dlmopen-twice.c b/elf/tst-dlmopen-twice.c
+new file mode 100644
+index 0000000000..449f3c8fa9
+--- /dev/null
++++ b/elf/tst-dlmopen-twice.c
+@@ -0,0 +1,34 @@
++/* Initialization of libc after dlmopen/dlclose/dlmopen (bug 29528).  Main.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <support/xdlfcn.h>
++#include <support/check.h>
++
++static int
++do_test (void)
++{
++  void *handle = xdlmopen (LM_ID_NEWLM, "tst-dlmopen-twice-mod1.so", RTLD_NOW);
++  xdlclose (handle);
++  handle = xdlmopen (LM_ID_NEWLM, "tst-dlmopen-twice-mod2.so", RTLD_NOW);
++  int (*run_check) (void) = xdlsym (handle, "run_check");
++  TEST_COMPARE (run_check (), 0);
++  xdlclose (handle);
++  return 0;
++}
++
++#include <support/test-driver.c>
+-- 
+2.37.2
+

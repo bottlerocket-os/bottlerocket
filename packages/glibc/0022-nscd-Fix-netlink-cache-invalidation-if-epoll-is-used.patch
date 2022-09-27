@@ -1,0 +1,59 @@
+From c399271c10bd00714504e8d4dfbec8aebf996dd4 Mon Sep 17 00:00:00 2001
+From: Fabian Vogt <fvogt@suse.de>
+Date: Wed, 27 Jul 2022 11:44:07 +0200
+Subject: [PATCH 22/39] nscd: Fix netlink cache invalidation if epoll is used
+ [BZ #29415]
+
+Processes cache network interface information such as whether IPv4 or IPv6
+are enabled. This is only checked again if the "netlink timestamp" provided
+by nscd changed, which is triggered by netlink socket activity.
+
+However, in the epoll handler for the netlink socket, it was missed to
+assign the new timestamp to the nscd database. The handler for plain poll
+did that properly, copy that over.
+
+This bug caused that e.g. processes which started before network
+configuration got unusuable addresses from getaddrinfo, like IPv6 only even
+though only IPv4 is available:
+https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/issues/1041
+
+It's a bit hard to reproduce, so I verified this by checking the timestamp
+on calls to __check_pf manually. Without this patch it's stuck at 1, now
+it's increasing on network changes as expected.
+
+Signed-off-by: Fabian Vogt <fvogt@suse.de>
+(cherry picked from commit 02ca25fef2785974011e9c5beecc99b900b69fd7)
+---
+ NEWS               | 1 +
+ nscd/connections.c | 3 ++-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/NEWS b/NEWS
+index 10a7613f09..9360596fcc 100644
+--- a/NEWS
++++ b/NEWS
+@@ -17,6 +17,7 @@ Security related changes:
+ The following bugs are resolved with this release:
+ 
+   [28846] CMSG_NXTHDR may trigger -Wstrict-overflow warning
++  [29415] nscd: Fix netlink cache invalidation if epoll is used
+   [29446] _dlopen now ignores dl_caller argument in static mode
+   [29485] Linux: Terminate subprocess on late failure in tst-pidfd
+   [29490] alpha: New __brk_call implementation is broken
+diff --git a/nscd/connections.c b/nscd/connections.c
+index 61d1674eb4..531d2e83df 100644
+--- a/nscd/connections.c
++++ b/nscd/connections.c
+@@ -2284,7 +2284,8 @@ main_loop_epoll (int efd)
+ 					     sizeof (buf))) != -1)
+ 	      ;
+ 
+-	    __bump_nl_timestamp ();
++	    dbs[hstdb].head->extra_data[NSCD_HST_IDX_CONF_TIMESTAMP]
++	      = __bump_nl_timestamp ();
+ 	  }
+ # endif
+ 	else
+-- 
+2.37.2
+

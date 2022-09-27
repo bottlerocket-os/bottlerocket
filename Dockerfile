@@ -126,7 +126,9 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=type=cache,target=/home/builder/rpmbuild/BUILD/sources/models/src/variant,from=variantcache,source=/variantcache \
     --mount=type=cache,target=/home/builder/rpmbuild/BUILD/sources/logdog/conf/current,from=variantcache,source=/variantcache \
     --mount=source=sources,target=/home/builder/rpmbuild/BUILD/sources \
-    rpmbuild -ba --clean rpmbuild/SPECS/${PACKAGE}.spec
+    rpmbuild -ba --clean \
+      --undefine _auto_set_build_flags \
+      rpmbuild/SPECS/${PACKAGE}.spec
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
 # Copies RPM packages from the previous stage to their expected location so that buildsys
@@ -164,6 +166,7 @@ RUN --mount=target=/host \
         -x '*-debugsource-*.rpm' \
         --no-database \
         /host/build/rpms \
+    && echo '%_dbpath %{_sharedstatedir}/rpm' >> /etc/rpm/macros \
     && dnf -y \
         --disablerepo '*' \
         --repofrompath repo,./rpmbuild/RPMS \

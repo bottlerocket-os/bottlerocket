@@ -1,5 +1,5 @@
 Name: %{_cross_os}binutils
-Version: 2.35.2
+Version: 2.38
 Release: 1%{?dist}
 Summary: Tools for working with binaries
 URL: https://sourceware.org/binutils
@@ -31,7 +31,6 @@ Requires: %{name}
   --disable-gdb \
   --with-system-zlib \
   --without-gnu-as \
-  --disable-plugins \
   --disable-static
 %make_build MAKEINFO=true tooldir=%{_cross_prefix}
 
@@ -43,6 +42,8 @@ Requires: %{name}
 %{_cross_attribution_file}
 %{_cross_bindir}/ld
 %{_cross_bindir}/strip
+%dir %{_cross_libdir}/bfd-plugins
+%{_cross_libdir}/bfd-plugins/libdep.so
 %exclude %{_cross_infodir}
 %exclude %{_cross_mandir}
 %exclude %{_cross_localedir}

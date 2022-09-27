@@ -1,0 +1,46 @@
+From e982657073c4db21459ffd9e17bc505b1d64b876 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Mon, 15 Aug 2022 16:43:59 +0200
+Subject: [PATCH 06/39] Linux: Terminate subprocess on late failure in
+ tst-pidfd (bug 29485)
+
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit f82e05ebb295cadd35f7372f652c72264da810ad)
+---
+ NEWS                                | 1 +
+ sysdeps/unix/sysv/linux/tst-pidfd.c | 7 +++++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index 15f3dd2cdb..f8fb8db510 100644
+--- a/NEWS
++++ b/NEWS
+@@ -10,6 +10,7 @@ Version 2.36.1
+ The following bugs are resolved with this release:
+ 
+   [29446] _dlopen now ignores dl_caller argument in static mode
++  [29485] Linux: Terminate subprocess on late failure in tst-pidfd
+ 
+ 
+ Version 2.36
+diff --git a/sysdeps/unix/sysv/linux/tst-pidfd.c b/sysdeps/unix/sysv/linux/tst-pidfd.c
+index 037af22290..5711d1c312 100644
+--- a/sysdeps/unix/sysv/linux/tst-pidfd.c
++++ b/sysdeps/unix/sysv/linux/tst-pidfd.c
+@@ -147,8 +147,11 @@ do_test (void)
+        may be denied if the process doesn't have CAP_SYS_PTRACE or
+        if a LSM security_ptrace_access_check denies access.  */
+     if (fd == -1 && errno == EPERM)
+-      FAIL_UNSUPPORTED ("don't have permission to use pidfd_getfd on pidfd, "
+-			"skipping test");
++      {
++	TEST_COMPARE (pidfd_send_signal (pidfd, SIGKILL, NULL, 0), 0);
++	FAIL_UNSUPPORTED ("don't have permission to use pidfd_getfd on pidfd, "
++			  "skipping test");
++      }
+     TEST_VERIFY (fd > 0);
+ 
+     char *path = xasprintf ("/proc/%d/fd/%d", pid, remote_fd);
+-- 
+2.37.2
+

@@ -1,0 +1,49 @@
+From 8b139cd4f1074ae0d95d9bff60db283a1ed72734 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Mon, 22 Aug 2022 11:04:47 +0200
+Subject: [PATCH 07/39] alpha: Fix generic brk system call emulation in
+ __brk_call (bug 29490)
+
+The kernel special-cases the zero argument for alpha brk, and we can
+use that to restore the generic Linux error handling behavior.
+
+Fixes commit b57ab258c1140bc45464b4b9908713e3e0ee35aa ("Linux:
+Introduce __brk_call for invoking the brk system call").
+
+(cherry picked from commit e7ad26ee3cb74e61d0637c888f24dd478d77af58)
+---
+ NEWS                                     | 1 +
+ sysdeps/unix/sysv/linux/alpha/brk_call.h | 7 +++----
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index f8fb8db510..becab3ade9 100644
+--- a/NEWS
++++ b/NEWS
+@@ -11,6 +11,7 @@ The following bugs are resolved with this release:
+ 
+   [29446] _dlopen now ignores dl_caller argument in static mode
+   [29485] Linux: Terminate subprocess on late failure in tst-pidfd
++  [29490] alpha: New __brk_call implementation is broken
+ 
+ 
+ Version 2.36
+diff --git a/sysdeps/unix/sysv/linux/alpha/brk_call.h b/sysdeps/unix/sysv/linux/alpha/brk_call.h
+index b8088cf13f..0b851b6c86 100644
+--- a/sysdeps/unix/sysv/linux/alpha/brk_call.h
++++ b/sysdeps/unix/sysv/linux/alpha/brk_call.h
+@@ -21,8 +21,7 @@ __brk_call (void *addr)
+ {
+   unsigned long int result = INTERNAL_SYSCALL_CALL (brk, addr);
+   if (result == -ENOMEM)
+-    /* Mimic the default error reporting behavior.  */
+-    return addr;
+-  else
+-    return (void *) result;
++    /* Mimic the generic error reporting behavior.  */
++    result = INTERNAL_SYSCALL_CALL (brk, 0);
++  return (void *) result;
+ }
+-- 
+2.37.2
+

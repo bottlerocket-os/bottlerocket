@@ -1,5 +1,5 @@
 Name: %{_cross_os}dbus-broker
-Version: 29
+Version: 32
 Release: 1%{?dist}
 Summary: D-BUS message broker
 License: Apache-2.0
@@ -26,7 +26,9 @@ Requires: %{_cross_os}systemd
 
 %build
 CONFIGURE_OPTS=(
+ -Dapparmor=false
  -Daudit=false
+ -Ddocs=false
  -Dlauncher=true
  -Dselinux=true
 )

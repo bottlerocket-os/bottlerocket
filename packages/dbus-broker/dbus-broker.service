@@ -2,6 +2,7 @@
 Description=D-Bus System Message Bus
 Documentation=https://github.com/bus1/dbus-broker
 DefaultDependencies=false
+After=dbus.socket
 Before=basic.target shutdown.target
 Requires=dbus.socket
 Conflicts=shutdown.target

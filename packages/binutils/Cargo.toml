@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://ftp.gnu.org/gnu/binutils/binutils-2.35.2.tar.xz"
-sha512 = "9974ede5978d32e0d68fef23da48fa00bd06b0bff7ec45b00ca075c126d6bbe0cf2defc03ecc3f17bc6cc85b64271a13009c4049d7ba17de26e84e3a6e2c0348"
+url = "https://mirrors.kernel.org/gnu/binutils/binutils-2.38.tar.xz"
+sha512 = "8bf0b0d193c9c010e0518ee2b2e5a830898af206510992483b427477ed178396cd210235e85fd7bd99a96fc6d5eedbeccbd48317a10f752b7336ada8b2bb826d"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

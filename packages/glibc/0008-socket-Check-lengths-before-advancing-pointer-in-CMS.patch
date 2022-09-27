@@ -1,0 +1,448 @@
+From d13a7a6f100576b1e30dc044b2e0c4cbcb6196f6 Mon Sep 17 00:00:00 2001
+From: Arjun Shankar <arjun@redhat.com>
+Date: Tue, 2 Aug 2022 11:10:25 +0200
+Subject: [PATCH 08/39] socket: Check lengths before advancing pointer in
+ CMSG_NXTHDR
+
+The inline and library functions that the CMSG_NXTHDR macro may expand
+to increment the pointer to the header before checking the stride of
+the increment against available space.  Since C only allows incrementing
+pointers to one past the end of an array, the increment must be done
+after a length check.  This commit fixes that and includes a regression
+test for CMSG_FIRSTHDR and CMSG_NXTHDR.
+
+The Linux, Hurd, and generic headers are all changed.
+
+Tested on Linux on armv7hl, i686, x86_64, aarch64, ppc64le, and s390x.
+
+[BZ #28846]
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 9c443ac4559a47ed99859bd80d14dc4b6dd220a1)
+---
+ bits/socket.h                         | 40 ++++++++++--
+ socket/Makefile                       |  1 +
+ socket/tst-cmsghdr-skeleton.c         | 92 +++++++++++++++++++++++++++
+ socket/tst-cmsghdr.c                  | 56 ++++++++++++++++
+ sysdeps/mach/hurd/bits/socket.h       | 40 ++++++++++--
+ sysdeps/unix/sysv/linux/bits/socket.h | 40 ++++++++++--
+ sysdeps/unix/sysv/linux/cmsg_nxthdr.c | 36 ++++++++---
+ 7 files changed, 276 insertions(+), 29 deletions(-)
+ create mode 100644 socket/tst-cmsghdr-skeleton.c
+ create mode 100644 socket/tst-cmsghdr.c
+
+diff --git a/bits/socket.h b/bits/socket.h
+index 2b99dea33b..aac8c49b00 100644
+--- a/bits/socket.h
++++ b/bits/socket.h
+@@ -245,6 +245,12 @@ struct cmsghdr
+ 			 + CMSG_ALIGN (sizeof (struct cmsghdr)))
+ #define CMSG_LEN(len)   (CMSG_ALIGN (sizeof (struct cmsghdr)) + (len))
+ 
++/* Given a length, return the additional padding necessary such that
++   len + __CMSG_PADDING(len) == CMSG_ALIGN (len).  */
++#define __CMSG_PADDING(len) ((sizeof (size_t) \
++                              - ((len) & (sizeof (size_t) - 1))) \
++                             & (sizeof (size_t) - 1))
++
+ extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
+ 				      struct cmsghdr *__cmsg) __THROW;
+ #ifdef __USE_EXTERN_INLINES
+@@ -254,18 +260,38 @@ extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
+ _EXTERN_INLINE struct cmsghdr *
+ __NTH (__cmsg_nxthdr (struct msghdr *__mhdr, struct cmsghdr *__cmsg))
+ {
++  /* We may safely assume that __cmsg lies between __mhdr->msg_control and
++     __mhdr->msg_controllen because the user is required to obtain the first
++     cmsg via CMSG_FIRSTHDR, set its length, then obtain subsequent cmsgs
++     via CMSG_NXTHDR, setting lengths along the way.  However, we don't yet
++     trust the value of __cmsg->cmsg_len and therefore do not use it in any
++     pointer arithmetic until we check its value.  */
++
++  unsigned char * __msg_control_ptr = (unsigned char *) __mhdr->msg_control;
++  unsigned char * __cmsg_ptr = (unsigned char *) __cmsg;
++
++  size_t __size_needed = sizeof (struct cmsghdr)
++                         + __CMSG_PADDING (__cmsg->cmsg_len);
++
++  /* The current header is malformed, too small to be a full header.  */
+   if ((size_t) __cmsg->cmsg_len < sizeof (struct cmsghdr))
+-    /* The kernel header does this so there may be a reason.  */
+     return (struct cmsghdr *) 0;
+ 
++  /* There isn't enough space between __cmsg and the end of the buffer to
++  hold the current cmsg *and* the next one.  */
++  if (((size_t)
++         (__msg_control_ptr + __mhdr->msg_controllen - __cmsg_ptr)
++       < __size_needed)
++      || ((size_t)
++            (__msg_control_ptr + __mhdr->msg_controllen - __cmsg_ptr
++             - __size_needed)
++          < __cmsg->cmsg_len))
++
++    return (struct cmsghdr *) 0;
++
++  /* Now, we trust cmsg_len and can use it to find the next header.  */
+   __cmsg = (struct cmsghdr *) ((unsigned char *) __cmsg
+ 			       + CMSG_ALIGN (__cmsg->cmsg_len));
+-  if ((unsigned char *) (__cmsg + 1) > ((unsigned char *) __mhdr->msg_control
+-					+ __mhdr->msg_controllen)
+-      || ((unsigned char *) __cmsg + CMSG_ALIGN (__cmsg->cmsg_len)
+-	  > ((unsigned char *) __mhdr->msg_control + __mhdr->msg_controllen)))
+-    /* No more entries.  */
+-    return (struct cmsghdr *) 0;
+   return __cmsg;
+ }
+ #endif	/* Use `extern inline'.  */
+diff --git a/socket/Makefile b/socket/Makefile
+index 156eec6c85..2bde78387f 100644
+--- a/socket/Makefile
++++ b/socket/Makefile
+@@ -34,6 +34,7 @@ routines := accept bind connect getpeername getsockname getsockopt	\
+ tests := \
+   tst-accept4 \
+   tst-sockopt \
++  tst-cmsghdr \
+   # tests
+ 
+ tests-internal := \
+diff --git a/socket/tst-cmsghdr-skeleton.c b/socket/tst-cmsghdr-skeleton.c
+new file mode 100644
+index 0000000000..4c6898569b
+--- /dev/null
++++ b/socket/tst-cmsghdr-skeleton.c
+@@ -0,0 +1,92 @@
++/* Test ancillary data header creation.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++/* We use the preprocessor to generate the function/macro tests instead of
++   using indirection because having all the macro expansions alongside
++   each other lets the compiler warn us about suspicious pointer
++   arithmetic across subsequent CMSG_{FIRST,NXT}HDR expansions.  */
++
++#include <stdint.h>
++
++#define RUN_TEST_CONCAT(suffix) run_test_##suffix
++#define RUN_TEST_FUNCNAME(suffix) RUN_TEST_CONCAT (suffix)
++
++static void
++RUN_TEST_FUNCNAME (CMSG_NXTHDR_IMPL) (void)
++{
++  struct msghdr m = {0};
++  struct cmsghdr *cmsg;
++  char cmsgbuf[3 * CMSG_SPACE (sizeof (PAYLOAD))] = {0};
++
++  m.msg_control = cmsgbuf;
++  m.msg_controllen = sizeof (cmsgbuf);
++
++  /* First header should point to the start of the buffer.  */
++  cmsg = CMSG_FIRSTHDR (&m);
++  TEST_VERIFY_EXIT ((char *) cmsg == cmsgbuf);
++
++  /* If the first header length consumes the entire buffer, there is no
++     space remaining for additional headers.  */
++  cmsg->cmsg_len = sizeof (cmsgbuf);
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg == NULL);
++
++  /* The first header length is so big, using it would cause an overflow.  */
++  cmsg = CMSG_FIRSTHDR (&m);
++  TEST_VERIFY_EXIT ((char *) cmsg == cmsgbuf);
++  cmsg->cmsg_len = SIZE_MAX;
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg == NULL);
++
++  /* The first header leaves just enough space to hold another header.  */
++  cmsg = CMSG_FIRSTHDR (&m);
++  TEST_VERIFY_EXIT ((char *) cmsg == cmsgbuf);
++  cmsg->cmsg_len = sizeof (cmsgbuf) - sizeof (struct cmsghdr);
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg != NULL);
++
++  /* The first header leaves space but not enough for another header.  */
++  cmsg = CMSG_FIRSTHDR (&m);
++  TEST_VERIFY_EXIT ((char *) cmsg == cmsgbuf);
++  cmsg->cmsg_len ++;
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg == NULL);
++
++  /* The second header leaves just enough space to hold another header.  */
++  cmsg = CMSG_FIRSTHDR (&m);
++  TEST_VERIFY_EXIT ((char *) cmsg == cmsgbuf);
++  cmsg->cmsg_len = CMSG_LEN (sizeof (PAYLOAD));
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg != NULL);
++  cmsg->cmsg_len = sizeof (cmsgbuf)
++                   - CMSG_SPACE (sizeof (PAYLOAD)) /* First header.  */
++                   - sizeof (struct cmsghdr);
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg != NULL);
++
++  /* The second header leaves space but not enough for another header.  */
++  cmsg = CMSG_FIRSTHDR (&m);
++  TEST_VERIFY_EXIT ((char *) cmsg == cmsgbuf);
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg != NULL);
++  cmsg->cmsg_len ++;
++  cmsg = CMSG_NXTHDR_IMPL (&m, cmsg);
++  TEST_VERIFY_EXIT (cmsg == NULL);
++
++  return;
++}
+diff --git a/socket/tst-cmsghdr.c b/socket/tst-cmsghdr.c
+new file mode 100644
+index 0000000000..68c96d3c9d
+--- /dev/null
++++ b/socket/tst-cmsghdr.c
+@@ -0,0 +1,56 @@
++/* Test ancillary data header creation.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <sys/socket.h>
++#include <gnu/lib-names.h>
++#include <support/xdlfcn.h>
++#include <support/check.h>
++
++#define PAYLOAD "Hello, World!"
++
++/* CMSG_NXTHDR is a macro that calls an inline function defined in
++   bits/socket.h.  In case the function cannot be inlined, libc.so carries
++   a copy.  Both versions need to be tested.  */
++
++#define CMSG_NXTHDR_IMPL CMSG_NXTHDR
++#include "tst-cmsghdr-skeleton.c"
++#undef CMSG_NXTHDR_IMPL
++
++static struct cmsghdr * (* cmsg_nxthdr) (struct msghdr *, struct cmsghdr *);
++
++#define CMSG_NXTHDR_IMPL cmsg_nxthdr
++#include "tst-cmsghdr-skeleton.c"
++#undef CMSG_NXTHDR_IMPL
++
++static int
++do_test (void)
++{
++  static void *handle;
++
++  run_test_CMSG_NXTHDR ();
++
++  handle = xdlopen (LIBC_SO, RTLD_LAZY);
++  cmsg_nxthdr = (struct cmsghdr * (*) (struct msghdr *, struct cmsghdr *))
++                  xdlsym (handle, "__cmsg_nxthdr");
++
++  run_test_cmsg_nxthdr ();
++
++  return 0;
++}
++
++#include <support/test-driver.c>
+diff --git a/sysdeps/mach/hurd/bits/socket.h b/sysdeps/mach/hurd/bits/socket.h
+index 5b35ea81ec..70fce4fb27 100644
+--- a/sysdeps/mach/hurd/bits/socket.h
++++ b/sysdeps/mach/hurd/bits/socket.h
+@@ -249,6 +249,12 @@ struct cmsghdr
+ 			 + CMSG_ALIGN (sizeof (struct cmsghdr)))
+ #define CMSG_LEN(len)   (CMSG_ALIGN (sizeof (struct cmsghdr)) + (len))
+ 
++/* Given a length, return the additional padding necessary such that
++   len + __CMSG_PADDING(len) == CMSG_ALIGN (len).  */
++#define __CMSG_PADDING(len) ((sizeof (size_t) \
++                              - ((len) & (sizeof (size_t) - 1))) \
++                             & (sizeof (size_t) - 1))
++
+ extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
+ 				      struct cmsghdr *__cmsg) __THROW;
+ #ifdef __USE_EXTERN_INLINES
+@@ -258,18 +264,38 @@ extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
+ _EXTERN_INLINE struct cmsghdr *
+ __NTH (__cmsg_nxthdr (struct msghdr *__mhdr, struct cmsghdr *__cmsg))
+ {
++  /* We may safely assume that __cmsg lies between __mhdr->msg_control and
++     __mhdr->msg_controllen because the user is required to obtain the first
++     cmsg via CMSG_FIRSTHDR, set its length, then obtain subsequent cmsgs
++     via CMSG_NXTHDR, setting lengths along the way.  However, we don't yet
++     trust the value of __cmsg->cmsg_len and therefore do not use it in any
++     pointer arithmetic until we check its value.  */
++
++  unsigned char * __msg_control_ptr = (unsigned char *) __mhdr->msg_control;
++  unsigned char * __cmsg_ptr = (unsigned char *) __cmsg;
++
++  size_t __size_needed = sizeof (struct cmsghdr)
++                         + __CMSG_PADDING (__cmsg->cmsg_len);
++
++  /* The current header is malformed, too small to be a full header.  */
+   if ((size_t) __cmsg->cmsg_len < sizeof (struct cmsghdr))
+-    /* The kernel header does this so there may be a reason.  */
+     return (struct cmsghdr *) 0;
+ 
++  /* There isn't enough space between __cmsg and the end of the buffer to
++  hold the current cmsg *and* the next one.  */
++  if (((size_t)
++         (__msg_control_ptr + __mhdr->msg_controllen - __cmsg_ptr)
++       < __size_needed)
++      || ((size_t)
++            (__msg_control_ptr + __mhdr->msg_controllen - __cmsg_ptr
++             - __size_needed)
++          < __cmsg->cmsg_len))
++
++    return (struct cmsghdr *) 0;
++
++  /* Now, we trust cmsg_len and can use it to find the next header.  */
+   __cmsg = (struct cmsghdr *) ((unsigned char *) __cmsg
+ 			       + CMSG_ALIGN (__cmsg->cmsg_len));
+-  if ((unsigned char *) (__cmsg + 1) > ((unsigned char *) __mhdr->msg_control
+-					+ __mhdr->msg_controllen)
+-      || ((unsigned char *) __cmsg + CMSG_ALIGN (__cmsg->cmsg_len)
+-	  > ((unsigned char *) __mhdr->msg_control + __mhdr->msg_controllen)))
+-    /* No more entries.  */
+-    return (struct cmsghdr *) 0;
+   return __cmsg;
+ }
+ #endif	/* Use `extern inline'.  */
+diff --git a/sysdeps/unix/sysv/linux/bits/socket.h b/sysdeps/unix/sysv/linux/bits/socket.h
+index 4f1f810ea1..539b8d7716 100644
+--- a/sysdeps/unix/sysv/linux/bits/socket.h
++++ b/sysdeps/unix/sysv/linux/bits/socket.h
+@@ -307,6 +307,12 @@ struct cmsghdr
+ 			 + CMSG_ALIGN (sizeof (struct cmsghdr)))
+ #define CMSG_LEN(len)   (CMSG_ALIGN (sizeof (struct cmsghdr)) + (len))
+ 
++/* Given a length, return the additional padding necessary such that
++   len + __CMSG_PADDING(len) == CMSG_ALIGN (len).  */
++#define __CMSG_PADDING(len) ((sizeof (size_t) \
++                              - ((len) & (sizeof (size_t) - 1))) \
++                             & (sizeof (size_t) - 1))
++
+ extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
+ 				      struct cmsghdr *__cmsg) __THROW;
+ #ifdef __USE_EXTERN_INLINES
+@@ -316,18 +322,38 @@ extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
+ _EXTERN_INLINE struct cmsghdr *
+ __NTH (__cmsg_nxthdr (struct msghdr *__mhdr, struct cmsghdr *__cmsg))
+ {
++  /* We may safely assume that __cmsg lies between __mhdr->msg_control and
++     __mhdr->msg_controllen because the user is required to obtain the first
++     cmsg via CMSG_FIRSTHDR, set its length, then obtain subsequent cmsgs
++     via CMSG_NXTHDR, setting lengths along the way.  However, we don't yet
++     trust the value of __cmsg->cmsg_len and therefore do not use it in any
++     pointer arithmetic until we check its value.  */
++
++  unsigned char * __msg_control_ptr = (unsigned char *) __mhdr->msg_control;
++  unsigned char * __cmsg_ptr = (unsigned char *) __cmsg;
++
++  size_t __size_needed = sizeof (struct cmsghdr)
++                         + __CMSG_PADDING (__cmsg->cmsg_len);
++
++  /* The current header is malformed, too small to be a full header.  */
+   if ((size_t) __cmsg->cmsg_len < sizeof (struct cmsghdr))
+-    /* The kernel header does this so there may be a reason.  */
+     return (struct cmsghdr *) 0;
+ 
++  /* There isn't enough space between __cmsg and the end of the buffer to
++  hold the current cmsg *and* the next one.  */
++  if (((size_t)
++         (__msg_control_ptr + __mhdr->msg_controllen - __cmsg_ptr)
++       < __size_needed)
++      || ((size_t)
++            (__msg_control_ptr + __mhdr->msg_controllen - __cmsg_ptr
++             - __size_needed)
++          < __cmsg->cmsg_len))
++
++    return (struct cmsghdr *) 0;
++
++  /* Now, we trust cmsg_len and can use it to find the next header.  */
+   __cmsg = (struct cmsghdr *) ((unsigned char *) __cmsg
+ 			       + CMSG_ALIGN (__cmsg->cmsg_len));
+-  if ((unsigned char *) (__cmsg + 1) > ((unsigned char *) __mhdr->msg_control
+-					+ __mhdr->msg_controllen)
+-      || ((unsigned char *) __cmsg + CMSG_ALIGN (__cmsg->cmsg_len)
+-	  > ((unsigned char *) __mhdr->msg_control + __mhdr->msg_controllen)))
+-    /* No more entries.  */
+-    return (struct cmsghdr *) 0;
+   return __cmsg;
+ }
+ #endif	/* Use `extern inline'.  */
+diff --git a/sysdeps/unix/sysv/linux/cmsg_nxthdr.c b/sysdeps/unix/sysv/linux/cmsg_nxthdr.c
+index 15b7a3a925..24f72b797a 100644
+--- a/sysdeps/unix/sysv/linux/cmsg_nxthdr.c
++++ b/sysdeps/unix/sysv/linux/cmsg_nxthdr.c
+@@ -23,18 +23,38 @@
+ struct cmsghdr *
+ __cmsg_nxthdr (struct msghdr *mhdr, struct cmsghdr *cmsg)
+ {
++  /* We may safely assume that cmsg lies between mhdr->msg_control and
++     mhdr->msg_controllen because the user is required to obtain the first
++     cmsg via CMSG_FIRSTHDR, set its length, then obtain subsequent cmsgs
++     via CMSG_NXTHDR, setting lengths along the way.  However, we don't yet
++     trust the value of cmsg->cmsg_len and therefore do not use it in any
++     pointer arithmetic until we check its value.  */
++
++  unsigned char * msg_control_ptr = (unsigned char *) mhdr->msg_control;
++  unsigned char * cmsg_ptr = (unsigned char *) cmsg;
++
++  size_t size_needed = sizeof (struct cmsghdr)
++                       + __CMSG_PADDING (cmsg->cmsg_len);
++
++  /* The current header is malformed, too small to be a full header.  */
+   if ((size_t) cmsg->cmsg_len < sizeof (struct cmsghdr))
+-    /* The kernel header does this so there may be a reason.  */
+-    return NULL;
++    return (struct cmsghdr *) 0;
++
++  /* There isn't enough space between cmsg and the end of the buffer to
++  hold the current cmsg *and* the next one.  */
++  if (((size_t)
++         (msg_control_ptr + mhdr->msg_controllen - cmsg_ptr)
++       < size_needed)
++      || ((size_t)
++            (msg_control_ptr + mhdr->msg_controllen - cmsg_ptr
++             - size_needed)
++          < cmsg->cmsg_len))
++
++    return (struct cmsghdr *) 0;
+ 
++  /* Now, we trust cmsg_len and can use it to find the next header.  */
+   cmsg = (struct cmsghdr *) ((unsigned char *) cmsg
+ 			     + CMSG_ALIGN (cmsg->cmsg_len));
+-  if ((unsigned char *) (cmsg + 1) > ((unsigned char *) mhdr->msg_control
+-				      + mhdr->msg_controllen)
+-      || ((unsigned char *) cmsg + CMSG_ALIGN (cmsg->cmsg_len)
+-	  > ((unsigned char *) mhdr->msg_control + mhdr->msg_controllen)))
+-    /* No more entries.  */
+-    return NULL;
+   return cmsg;
+ }
+ libc_hidden_def (__cmsg_nxthdr)
+-- 
+2.37.2
+

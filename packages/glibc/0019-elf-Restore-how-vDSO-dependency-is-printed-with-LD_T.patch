@@ -1,0 +1,63 @@
+From b3736d1a3c60a3ec9959bf3b38794958546bf6a2 Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Tue, 30 Aug 2022 13:35:52 -0300
+Subject: [PATCH 19/39] elf: Restore how vDSO dependency is printed with
+ LD_TRACE_LOADED_OBJECTS (BZ #29539)
+
+The d7703d3176d225d5743b21811d888619eba39e82 changed how vDSO like
+dependencies are printed, instead of just the name and address it
+follows other libraries mode and prints 'name => path'.
+
+Unfortunately, this broke some ldd consumer that uses the output to
+filter out the program's dependencies.  For instance CMake
+bundleutilities module [1], where GetPrequirite uses the regex to filter
+out 'name => path' [2].
+
+This patch restore the previous way to print just the name and the
+mapping address.
+
+Checked on x86_64-linux-gnu.
+
+[1] https://github.com/Kitware/CMake/tree/master/Tests/BundleUtilities
+[2] https://github.com/Kitware/CMake/blob/master/Modules/GetPrerequisites.cmake#L733
+
+Reviewed-by: Florian Weimer <fweimer@redhat.com>
+(cherry picked from commit 1e903124cec4492463d075c6c061a2a772db77bf)
+---
+ NEWS       | 2 +-
+ elf/rtld.c | 6 ++++++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/NEWS b/NEWS
+index 6d31e5abba..757ded85e0 100644
+--- a/NEWS
++++ b/NEWS
+@@ -14,7 +14,7 @@ The following bugs are resolved with this release:
+   [29485] Linux: Terminate subprocess on late failure in tst-pidfd
+   [29490] alpha: New __brk_call implementation is broken
+   [29528] elf: Call __libc_early_init for reused namespaces
+-
++  [29539] libc: LD_TRACE_LOADED_OBJECTS changed how vDSO library are
+ 
+ Version 2.36
+ 
+diff --git a/elf/rtld.c b/elf/rtld.c
+index cbbaf4a331..3e771a93d8 100644
+--- a/elf/rtld.c
++++ b/elf/rtld.c
+@@ -2122,6 +2122,12 @@ dl_main (const ElfW(Phdr) *phdr,
+ 	    if (l->l_faked)
+ 	      /* The library was not found.  */
+ 	      _dl_printf ("\t%s => not found\n",  l->l_libname->name);
++	    else if (strcmp (l->l_libname->name, l->l_name) == 0)
++	      /* Print vDSO like libraries without duplicate name.  Some
++		 consumers depend of this format.  */
++	      _dl_printf ("\t%s (0x%0*Zx)\n", l->l_libname->name,
++			  (int) sizeof l->l_map_start * 2,
++			  (size_t) l->l_map_start);
+ 	    else
+ 	      _dl_printf ("\t%s => %s (0x%0*Zx)\n",
+ 			  DSO_FILENAME (l->l_libname->name),
+-- 
+2.37.2
+

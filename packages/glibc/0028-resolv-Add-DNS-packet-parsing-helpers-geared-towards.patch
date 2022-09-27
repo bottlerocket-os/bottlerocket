@@ -1,0 +1,545 @@
+From f0e9657067240b8b105c6d58d5da9dc926f2f0ed Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 30 Aug 2022 10:02:49 +0200
+Subject: [PATCH 28/39] resolv: Add DNS packet parsing helpers geared towards
+ wire format
+
+The public parser functions around the ns_rr record type produce
+textual domain names, but usually, this is not what we need while
+parsing DNS packets within glibc.  This commit adds two new helper
+functions, __ns_rr_cursor_init and __ns_rr_cursor_next, for writing
+packet parsers, and struct ns_rr_cursor, struct ns_rr_wire as
+supporting types.
+
+In theory, it is possible to avoid copying the owner name
+into the rname field in __ns_rr_cursor_next, but this would need
+more functions that work on compressed names.
+
+Eventually, __res_context_send could be enhanced to preserve the
+result of the packet parsing that is necessary for matching the
+incoming UDP packets, so that this works does not have to be done
+twice.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 857c890d9b42c50c8a94b76d47d4a61ab6d2f49c)
+---
+ include/arpa/nameser.h     |  92 +++++++++++++++
+ resolv/Makefile            |   6 +
+ resolv/ns_rr_cursor_init.c |  62 ++++++++++
+ resolv/ns_rr_cursor_next.c |  74 ++++++++++++
+ resolv/tst-ns_rr_cursor.c  | 227 +++++++++++++++++++++++++++++++++++++
+ 5 files changed, 461 insertions(+)
+ create mode 100644 resolv/ns_rr_cursor_init.c
+ create mode 100644 resolv/ns_rr_cursor_next.c
+ create mode 100644 resolv/tst-ns_rr_cursor.c
+
+diff --git a/include/arpa/nameser.h b/include/arpa/nameser.h
+index 6e4808f00d..c27e7886b7 100644
+--- a/include/arpa/nameser.h
++++ b/include/arpa/nameser.h
+@@ -103,5 +103,97 @@ libc_hidden_proto (__libc_ns_samename)
+    must point one past the last byte in the packet.  */
+ int __ns_name_length_uncompressed (const unsigned char *p,
+ 				   const unsigned char *eom) attribute_hidden;
++
++/* Iterator over the resource records in a DNS packet.  */
++struct ns_rr_cursor
++{
++  /* These members are not changed after initialization.  */
++  const unsigned char *begin;	/* First byte of packet.  */
++  const unsigned char *end;	/* One past the last byte of the packet.  */
++  const unsigned char *first_rr; /* First resource record (or packet end).  */
++
++  /* Advanced towards the end while reading the packet.  */
++  const unsigned char *current;
++};
++
++/* Returns the RCODE field from the DNS header.  */
++static inline int
++ns_rr_cursor_rcode (const struct ns_rr_cursor *c)
++{
++  return c->begin[3] & 0x0f;	/* Lower 4 bits at offset 3.  */
++}
++
++/* Returns the length of the answer section according to the DNS header.  */
++static inline int
++ns_rr_cursor_ancount (const struct ns_rr_cursor *c)
++{
++  return c->begin[6] * 256 + c->begin[7]; /* 16 bits at offset 6.  */
++}
++
++/* Returns the length of the authority (name server) section according
++   to the DNS header.  */
++static inline int
++ns_rr_cursor_nscount (const struct ns_rr_cursor *c)
++{
++  return c->begin[8] * 256 + c->begin[9]; /* 16 bits at offset 8.  */
++}
++
++/* Returns the length of the additional data section according to the
++   DNS header.  */
++static inline int
++ns_rr_cursor_adcount (const struct ns_rr_cursor *c)
++{
++  return c->begin[10] * 256 + c->begin[11]; /* 16 bits at offset 10.  */
++}
++
++/* Returns a pointer to the uncompressed question name in wire
++   format.  */
++static inline const unsigned char *
++ns_rr_cursor_qname (const struct ns_rr_cursor *c)
++{
++  return c->begin + 12;		/* QNAME starts right after the header.  */
++}
++
++/* Returns the question type of the first and only question.  */
++static inline const int
++ns_rr_cursor_qtype (const struct ns_rr_cursor *c)
++{
++  /* 16 bits 4 bytes back from the first RR header start.  */
++  return c->first_rr[-4] * 256 + c->first_rr[-3];
++}
++
++/* Returns the clss of the first and only question (usally C_IN).  */
++static inline const int
++ns_rr_cursor_qclass (const struct ns_rr_cursor *c)
++{
++  /* 16 bits 2 bytes back from the first RR header start.  */
++  return c->first_rr[-2] * 256 + c->first_rr[-1];
++}
++
++/* Initializes *C to cover the packet [BUF, BUF+LEN).  Returns false
++   if LEN is less than sizeof (*HD), if the packet does not contain a
++   full (uncompressed) question, or if the question count is not 1.  */
++_Bool __ns_rr_cursor_init (struct ns_rr_cursor *c,
++			   const unsigned char *buf, size_t len)
++  attribute_hidden;
++
++/* Like ns_rr, but the record owner name is not decoded into text format.  */
++struct ns_rr_wire
++{
++  unsigned char rname[NS_MAXCDNAME]; /* Owner name of the record.  */
++  uint16_t rtype;		/* Resource record type (T_*).  */
++  uint16_t rclass;		/* Resource record class (C_*).  */
++  uint32_t ttl;			/* Time-to-live field.  */
++  const unsigned char *rdata;	/* Start of resource record data.  */
++  uint16_t rdlength;		/* Length of the data at rdata, in bytes.  */
++};
++
++/* Attempts to parse the record at C into *RR.  On success, return
++   true, and C is advanced past the record, and RR->rdata points to
++   the record data.  On failure, errno is set to EMSGSIZE, and false
++   is returned.  */
++_Bool __ns_rr_cursor_next (struct ns_rr_cursor *c, struct ns_rr_wire *rr)
++  attribute_hidden;
++
+ # endif /* !_ISOMAC */
+ #endif
+diff --git a/resolv/Makefile b/resolv/Makefile
+index bf28825f60..018b1808d6 100644
+--- a/resolv/Makefile
++++ b/resolv/Makefile
+@@ -47,6 +47,8 @@ routines := \
+   ns_name_skip \
+   ns_name_uncompress \
+   ns_name_unpack \
++  ns_rr_cursor_init \
++  ns_rr_cursor_next \
+   ns_samebinaryname \
+   ns_samename \
+   nsap_addr \
+@@ -116,6 +118,10 @@ tests-static += tst-ns_samebinaryname
+ tests-internal += tst-ns_name_length_uncompressed
+ tests-static += tst-ns_name_length_uncompressed
+ 
++# Likewise for struct ns_rr_cursor and its functions.
++tests-internal += tst-ns_rr_cursor
++tests-static += tst-ns_rr_cursor
++
+ # These tests need libdl.
+ ifeq (yes,$(build-shared))
+ tests += \
+diff --git a/resolv/ns_rr_cursor_init.c b/resolv/ns_rr_cursor_init.c
+new file mode 100644
+index 0000000000..6ee80b30e9
+--- /dev/null
++++ b/resolv/ns_rr_cursor_init.c
+@@ -0,0 +1,62 @@
++/* Initialize a simple DNS packet parser.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <arpa/nameser.h>
++#include <errno.h>
++#include <stdbool.h>
++#include <string.h>
++
++bool
++__ns_rr_cursor_init (struct ns_rr_cursor *c,
++                     const unsigned char *buf, size_t len)
++{
++  c->begin = buf;
++  c->end = buf + len;
++
++  /* Check for header size and 16-bit question count value (it must be 1).  */
++  if (len < 12 || buf[4] != 0 || buf[5] != 1)
++    {
++      __set_errno (EMSGSIZE);
++      c->current = c->end;
++      return false;
++    }
++  c->current = buf + 12;
++
++  int consumed = __ns_name_length_uncompressed (c->current, c->end);
++  if (consumed < 0)
++    {
++      __set_errno (EMSGSIZE);
++      c->current = c->end;
++      c->first_rr = NULL;
++      return false;
++    }
++  c->current += consumed;
++
++  /* Ensure there is room for question type and class.  */
++  if (c->end - c->current < 4)
++    {
++      __set_errno (EMSGSIZE);
++      c->current = c->end;
++      c->first_rr = NULL;
++      return false;
++    }
++  c->current += 4;
++  c->first_rr = c->current;
++
++  return true;
++}
+diff --git a/resolv/ns_rr_cursor_next.c b/resolv/ns_rr_cursor_next.c
+new file mode 100644
+index 0000000000..33652fc5da
+--- /dev/null
++++ b/resolv/ns_rr_cursor_next.c
+@@ -0,0 +1,74 @@
++/* Simple DNS record parser without textual name decoding.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <arpa/nameser.h>
++#include <errno.h>
++#include <stdbool.h>
++#include <string.h>
++
++bool
++__ns_rr_cursor_next (struct ns_rr_cursor *c, struct ns_rr_wire *rr)
++{
++  rr->rdata = NULL;
++
++  /* Extract the record owner name.  */
++  int consumed = __ns_name_unpack (c->begin, c->end, c->current,
++                                   rr->rname, sizeof (rr->rname));
++  if (consumed < 0)
++    {
++      memset (rr, 0, sizeof (*rr));
++      __set_errno (EMSGSIZE);
++      return false;
++    }
++  c->current += consumed;
++
++  /* Extract the metadata.  */
++  struct
++  {
++    uint16_t rtype;
++    uint16_t rclass;
++    uint32_t ttl;
++    uint16_t rdlength;
++  } __attribute__ ((packed)) metadata;
++  _Static_assert (sizeof (metadata) == 10, "sizeof metadata");
++  if (c->end - c->current < sizeof (metadata))
++    {
++      memset (rr, 0, sizeof (*rr));
++      __set_errno (EMSGSIZE);
++      return false;
++    }
++  memcpy (&metadata, c->current, sizeof (metadata));
++  c->current += sizeof (metadata);
++  /* Endianess conversion.  */
++  rr->rtype = ntohs (metadata.rtype);
++  rr->rclass = ntohs (metadata.rclass);
++  rr->ttl = ntohl (metadata.ttl);
++  rr->rdlength = ntohs (metadata.rdlength);
++
++  /* Extract record data.  */
++  if (c->end - c->current < rr->rdlength)
++    {
++      memset (rr, 0, sizeof (*rr));
++      __set_errno (EMSGSIZE);
++      return false;
++    }
++  rr->rdata = c->current;
++  c->current += rr->rdlength;
++
++  return true;
++}
+diff --git a/resolv/tst-ns_rr_cursor.c b/resolv/tst-ns_rr_cursor.c
+new file mode 100644
+index 0000000000..c3c0908905
+--- /dev/null
++++ b/resolv/tst-ns_rr_cursor.c
+@@ -0,0 +1,227 @@
++/* Tests for resource record parsing.
++   Copyright (C) 2022 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <arpa/nameser.h>
++#include <string.h>
++#include <support/check.h>
++#include <support/next_to_fault.h>
++
++/* Reference packet for packet parsing.  */
++static const unsigned char valid_packet[] =
++  { 0x11, 0x12, 0x13, 0x14,
++    0x00, 0x01,               /* Question count.  */
++    0x00, 0x02,               /* Answer count.  */
++    0x21, 0x22, 0x23, 0x24,   /* Other counts (not actually in packet).  */
++    3, 'w', 'w', 'w', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 0,
++    0x00, 0x1c,               /* Question type: AAAA.  */
++    0x00, 0x01,               /* Question class: IN.  */
++    0xc0, 0x0c,               /* Compression reference to QNAME.  */
++    0x00, 0x1c,               /* Record type: AAAA.  */
++    0x00, 0x01,               /* Record class: IN.  */
++    0x12, 0x34, 0x56, 0x78,   /* Record TTL.  */
++    0x00, 0x10,               /* Record data length (16 bytes).  */
++    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
++    0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, /* IPv6 address.  */
++    0xc0, 0x0c,               /* Compression reference to QNAME.  */
++    0x00, 0x1c,               /* Record type: AAAA.  */
++    0x00, 0x01,               /* Record class: IN.  */
++    0x11, 0x33, 0x55, 0x77,   /* Record TTL.  */
++    0x00, 0x10,               /* Record data length (16 bytes).  */
++    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
++    0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, /* IPv6 address.  */
++  };
++
++/* Special offsets in valid_packet.  */
++enum
++  {
++    offset_of_first_record = 29,
++    offset_of_second_record = 57,
++  };
++
++/* Check that parsing valid_packet succeeds.  */
++static void
++test_valid (void)
++{
++  struct ns_rr_cursor c;
++  TEST_VERIFY_EXIT (__ns_rr_cursor_init (&c, valid_packet,
++                                         sizeof (valid_packet)));
++  TEST_COMPARE (ns_rr_cursor_rcode (&c), 4);
++  TEST_COMPARE (ns_rr_cursor_ancount (&c), 2);
++  TEST_COMPARE (ns_rr_cursor_nscount (&c), 0x2122);
++  TEST_COMPARE (ns_rr_cursor_adcount (&c), 0x2324);
++  TEST_COMPARE_BLOB (ns_rr_cursor_qname (&c), 13, &valid_packet[12], 13);
++  TEST_COMPARE (ns_rr_cursor_qtype (&c), T_AAAA);
++  TEST_COMPARE (ns_rr_cursor_qclass (&c), C_IN);
++  TEST_COMPARE (c.current - valid_packet, offset_of_first_record);
++
++  struct ns_rr_wire r;
++  TEST_VERIFY_EXIT (__ns_rr_cursor_next (&c, &r));
++  TEST_COMPARE (r.rtype, T_AAAA);
++  TEST_COMPARE (r.rclass, C_IN);
++  TEST_COMPARE (r.ttl, 0x12345678);
++  TEST_COMPARE_BLOB (r.rdata, r.rdlength,
++                     "\x90\x91\x92\x93\x94\x95\x96\x97"
++                     "\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f", 16);
++  TEST_COMPARE (c.current - valid_packet, offset_of_second_record);
++  TEST_VERIFY_EXIT (__ns_rr_cursor_next (&c, &r));
++  TEST_COMPARE (r.rtype, T_AAAA);
++  TEST_COMPARE (r.rclass, C_IN);
++  TEST_COMPARE (r.ttl, 0x11335577);
++  TEST_COMPARE_BLOB (r.rdata, r.rdlength,
++                     "\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7"
++                     "\xa8\xa9\xaa\xab\xac\xad\xae\xaf", 16);
++  TEST_VERIFY (c.current == c.end);
++}
++
++/* Check that trying to parse a packet with a compressed QNAME fails.  */
++static void
++test_compressed_qname (void)
++{
++  static const unsigned char packet[] =
++    { 0x11, 0x12, 0x13, 0x14,
++      0x00, 0x01,               /* Question count.  */
++      0x00, 0x00,               /* Answer count.  */
++      0x00, 0x00, 0x00, 0x00,   /* Other counts.  */
++      3, 'w', 'w', 'w', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 0xc0, 0x04,
++      0x00, 0x01,               /* Question type: A.  */
++      0x00, 0x01,               /* Question class: IN.  */
++    };
++
++  struct ns_rr_cursor c;
++  TEST_VERIFY_EXIT (!__ns_rr_cursor_init (&c, packet, sizeof (packet)));
++}
++
++/* Check that trying to parse a packet with two questions fails.  */
++static void
++test_two_questions (void)
++{
++  static const unsigned char packet[] =
++    { 0x11, 0x12, 0x13, 0x14,
++      0x00, 0x02,               /* Question count.  */
++      0x00, 0x00,               /* Answer count.  */
++      0x00, 0x00, 0x00, 0x00,   /* Other counts.  */
++      3, 'w', 'w', 'w', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 0xc0, 0x04,
++      0x00, 0x01,               /* Question type: A.  */
++      0x00, 0x01,               /* Question class: IN.  */
++      3, 'w', 'w', 'w', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 0xc0, 0x04,
++      0x00, 0x1c,               /* Question type: AAAA.  */
++      0x00, 0x01,               /* Question class: IN.  */
++    };
++
++  struct ns_rr_cursor c;
++  TEST_VERIFY_EXIT (!__ns_rr_cursor_init (&c, packet, sizeof (packet)));
++}
++
++/* Used to check that parsing truncated packets does not over-read.  */
++static struct support_next_to_fault ntf;
++
++/* Truncated packet in the second resource record.  */
++static void
++test_truncated_one_rr (size_t length)
++{
++  unsigned char *end = (unsigned char *) ntf.buffer - ntf.length;
++  unsigned char *start = end - length;
++
++  /* Produce the truncated packet.  */
++  memcpy (start, valid_packet, length);
++
++  struct ns_rr_cursor c;
++  TEST_VERIFY_EXIT (__ns_rr_cursor_init (&c, start, length));
++  TEST_COMPARE (ns_rr_cursor_rcode (&c), 4);
++  TEST_COMPARE (ns_rr_cursor_ancount (&c), 2);
++  TEST_COMPARE (ns_rr_cursor_nscount (&c), 0x2122);
++  TEST_COMPARE (ns_rr_cursor_adcount (&c), 0x2324);
++  TEST_COMPARE_BLOB (ns_rr_cursor_qname (&c), 13, &valid_packet[12], 13);
++  TEST_COMPARE (ns_rr_cursor_qtype (&c), T_AAAA);
++  TEST_COMPARE (ns_rr_cursor_qclass (&c), C_IN);
++  TEST_COMPARE (c.current - start, offset_of_first_record);
++
++  struct ns_rr_wire r;
++  TEST_VERIFY_EXIT (__ns_rr_cursor_next (&c, &r));
++  TEST_COMPARE (r.rtype, T_AAAA);
++  TEST_COMPARE (r.rclass, C_IN);
++  TEST_COMPARE (r.ttl, 0x12345678);
++  TEST_COMPARE_BLOB (r.rdata, r.rdlength,
++                     "\x90\x91\x92\x93\x94\x95\x96\x97"
++                     "\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f", 16);
++  TEST_COMPARE (c.current - start, offset_of_second_record);
++  TEST_VERIFY (!__ns_rr_cursor_next (&c, &r));
++}
++
++/* Truncated packet in the first resource record.  */
++static void
++test_truncated_no_rr (size_t length)
++{
++  unsigned char *end = (unsigned char *) ntf.buffer - ntf.length;
++  unsigned char *start = end - length;
++
++  /* Produce the truncated packet.  */
++  memcpy (start, valid_packet, length);
++
++  struct ns_rr_cursor c;
++  TEST_VERIFY_EXIT (__ns_rr_cursor_init (&c, start, length));
++  TEST_COMPARE (ns_rr_cursor_rcode (&c), 4);
++  TEST_COMPARE (ns_rr_cursor_ancount (&c), 2);
++  TEST_COMPARE (ns_rr_cursor_nscount (&c), 0x2122);
++  TEST_COMPARE (ns_rr_cursor_adcount (&c), 0x2324);
++  TEST_COMPARE_BLOB (ns_rr_cursor_qname (&c), 13, &valid_packet[12], 13);
++  TEST_COMPARE (ns_rr_cursor_qtype (&c), T_AAAA);
++  TEST_COMPARE (ns_rr_cursor_qclass (&c), C_IN);
++  TEST_COMPARE (c.current - start, offset_of_first_record);
++
++  struct ns_rr_wire r;
++  TEST_VERIFY (!__ns_rr_cursor_next (&c, &r));
++}
++
++/* Truncated packet before first resource record.  */
++static void
++test_truncated_before_rr (size_t length)
++{
++  unsigned char *end = (unsigned char *) ntf.buffer - ntf.length;
++  unsigned char *start = end - length;
++
++  /* Produce the truncated packet.  */
++  memcpy (start, valid_packet, length);
++
++  struct ns_rr_cursor c;
++  TEST_VERIFY_EXIT (!__ns_rr_cursor_init (&c, start, length));
++}
++
++static int
++do_test (void)
++{
++  ntf = support_next_to_fault_allocate (sizeof (valid_packet));
++
++  test_valid ();
++  test_compressed_qname ();
++  test_two_questions ();
++
++  for (int length = offset_of_second_record; length < sizeof (valid_packet);
++       ++length)
++    test_truncated_one_rr (length);
++  for (int length = offset_of_first_record; length < offset_of_second_record;
++       ++length)
++    test_truncated_no_rr (length);
++  for (int length = 0; length < offset_of_first_record; ++length)
++    test_truncated_before_rr (length);
++
++  support_next_to_fault_free (&ntf);
++  return 0;
++}
++
++#include <support/test-driver.c>
+-- 
+2.37.2
+

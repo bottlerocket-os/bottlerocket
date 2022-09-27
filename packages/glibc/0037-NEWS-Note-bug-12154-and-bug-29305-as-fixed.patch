@@ -1,0 +1,26 @@
+From 5d885617cec5713fdde42177398fe98acb66b7a2 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 13 Sep 2022 13:22:27 +0200
+Subject: [PATCH 37/39] NEWS: Note bug 12154 and bug 29305 as fixed
+
+---
+ NEWS | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/NEWS b/NEWS
+index 9360596fcc..03281e3ab4 100644
+--- a/NEWS
++++ b/NEWS
+@@ -16,7 +16,9 @@ Security related changes:
+ 
+ The following bugs are resolved with this release:
+ 
++  [12154] Do not fail DNS resolution for CNAMEs which are not host names
+   [28846] CMSG_NXTHDR may trigger -Wstrict-overflow warning
++  [29305] Conserve NSS buffer space during DNS packet parsing
+   [29415] nscd: Fix netlink cache invalidation if epoll is used
+   [29446] _dlopen now ignores dl_caller argument in static mode
+   [29485] Linux: Terminate subprocess on late failure in tst-pidfd
+-- 
+2.37.2
+

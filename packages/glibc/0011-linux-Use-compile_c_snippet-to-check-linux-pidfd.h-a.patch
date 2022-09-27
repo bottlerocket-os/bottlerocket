@@ -1,0 +1,41 @@
+From 1cc5513114e76083669cba1b11252aad35525e69 Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Wed, 10 Aug 2022 14:24:44 -0300
+Subject: [PATCH 11/39] linux: Use compile_c_snippet to check linux/pidfd.h
+ availability
+
+Instead of tying to a specific kernel version.
+
+Checked on x86_64-linux-gnu.
+
+Reviewed-by: Florian Weimer <fweimer@redhat.com>
+(cherry picked from commit 1542019b69b7ec7b2cd34357af035e406d153631)
+---
+ sysdeps/unix/sysv/linux/tst-pidfd-consts.py | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/tst-pidfd-consts.py b/sysdeps/unix/sysv/linux/tst-pidfd-consts.py
+index 90cbb9be64..d732173abd 100644
+--- a/sysdeps/unix/sysv/linux/tst-pidfd-consts.py
++++ b/sysdeps/unix/sysv/linux/tst-pidfd-consts.py
+@@ -33,11 +33,13 @@ def main():
+                         help='C compiler (including options) to use')
+     args = parser.parse_args()
+ 
+-    linux_version_headers = glibcsyscalls.linux_kernel_version(args.cc)
+-    # Linux started to provide pidfd.h with 5.10.
+-    if linux_version_headers < (5, 10):
++    if glibcextract.compile_c_snippet(
++            '#include <linux/pidfd.h>',
++            args.cc).returncode != 0:
+         sys.exit (77)
+-    linux_version_glibc = (5, 18)
++
++    linux_version_headers = glibcsyscalls.linux_kernel_version(args.cc)
++    linux_version_glibc = (5, 19)
+     sys.exit(glibcextract.compare_macro_consts(
+                 '#include <sys/pidfd.h>\n',
+                 '#include <asm/fcntl.h>\n'
+-- 
+2.37.2
+

@@ -1,0 +1,49 @@
+From c74bb93cfdb04d49155b0e30983a3c866167bbca Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Thu, 4 Aug 2022 17:54:48 +0200
+Subject: [PATCH 03/39] dlfcn: Pass caller pointer to static dlopen
+ implementation (bug 29446)
+
+Fixes commit 0c1c3a771eceec46e66ce1183cf988e2303bd373 ("dlfcn: Move
+dlopen into libc").
+
+(cherry picked from commit ed0185e4129130cbe081c221efb758fb400623ce)
+---
+ NEWS           | 7 +++++++
+ dlfcn/dlopen.c | 2 +-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/NEWS b/NEWS
+index f61e521fc8..15f3dd2cdb 100644
+--- a/NEWS
++++ b/NEWS
+@@ -4,6 +4,13 @@ See the end for copying conditions.
+ 
+ Please send GNU C library bug reports via <https://sourceware.org/bugzilla/>
+ using `glibc' in the "product" field.
++
++Version 2.36.1
++
++The following bugs are resolved with this release:
++
++  [29446] _dlopen now ignores dl_caller argument in static mode
++
+ 
+ Version 2.36
+ 
+diff --git a/dlfcn/dlopen.c b/dlfcn/dlopen.c
+index 2696dde4b1..9b07b4e132 100644
+--- a/dlfcn/dlopen.c
++++ b/dlfcn/dlopen.c
+@@ -90,7 +90,7 @@ compat_symbol (libdl, ___dlopen, dlopen, GLIBC_2_1);
+ void *
+ __dlopen (const char *file, int mode, void *dl_caller)
+ {
+-  return dlopen_implementation (file, mode, RETURN_ADDRESS (0));
++  return dlopen_implementation (file, mode, dl_caller);
+ }
+ 
+ void *
+-- 
+2.37.2
+

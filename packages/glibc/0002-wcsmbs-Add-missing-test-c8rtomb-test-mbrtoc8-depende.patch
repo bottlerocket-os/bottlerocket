@@ -1,0 +1,34 @@
+From 33f1b4c1452b33991e670f636ebe98b90a405e10 Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Fri, 29 Jul 2022 10:50:56 -0700
+Subject: [PATCH 02/39] wcsmbs: Add missing test-c8rtomb/test-mbrtoc8
+ dependency
+
+Make test-c8rtomb.out and test-mbrtoc8.out depend on $(gen-locales) for
+
+  xsetlocale (LC_ALL, "de_DE.UTF-8");
+  xsetlocale (LC_ALL, "zh_HK.BIG5-HKSCS");
+
+Reviewed-by: Sunil K Pandey <skpgkp2@gmail.com>
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit e03f5ccd6cc8f829416156eac75acee501626c1f)
+---
+ wcsmbs/Makefile | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/wcsmbs/Makefile b/wcsmbs/Makefile
+index e6b9e8743a..3d19d5556f 100644
+--- a/wcsmbs/Makefile
++++ b/wcsmbs/Makefile
+@@ -73,6 +73,8 @@ $(objpfx)tst-wcstol-locale.out: $(gen-locales)
+ $(objpfx)tst-wcstod-nan-locale.out: $(gen-locales)
+ $(objpfx)tst-c16-surrogate.out: $(gen-locales)
+ $(objpfx)tst-c32-state.out: $(gen-locales)
++$(objpfx)test-c8rtomb.out: $(gen-locales)
++$(objpfx)test-mbrtoc8.out: $(gen-locales)
+ endif
+ 
+ $(objpfx)tst-wcstod-round: $(libm)
+-- 
+2.37.2
+

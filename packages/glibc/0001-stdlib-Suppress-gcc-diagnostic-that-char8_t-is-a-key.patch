@@ -1,0 +1,51 @@
+From c3fda489cfdb2260f9fec706e6fd7259858c4467 Mon Sep 17 00:00:00 2001
+From: Tom Honermann <tom@honermann.net>
+Date: Sun, 24 Jul 2022 01:11:43 -0400
+Subject: [PATCH 01/39] stdlib: Suppress gcc diagnostic that char8_t is a
+ keyword in C++20 in uchar.h.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+gcc 13 issues the following diagnostic for the uchar.h header when the
+-Wc++20-compat option is enabled in C++ modes that do not enable char8_t
+as a builtin type (C++17 and earlier by default; subject to _GNU_SOURCE
+and the gcc -f[no-]char8_t option).
+  warning: identifier ‘char8_t’ is a keyword in C++20 [-Wc++20-compat]
+This change modifies the uchar.h header to suppress the diagnostic through
+the use of '#pragma GCC diagnostic' directives for gcc 10 and later (the
+-Wc++20-compat option was added in gcc version 10).  Unfortunately, a bug
+in gcc currently prevents those directives from having the intended effect
+as reported at https://gcc.gnu.org/PR106423.  A patch for that issue has
+been submitted and is available in the email thread archive linked below.
+  https://gcc.gnu.org/pipermail/gcc-patches/2022-July/598736.html
+
+(cherry picked from commit 825f84f133bd840347dc49229b6d831f07d04775)
+---
+ wcsmbs/uchar.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/wcsmbs/uchar.h b/wcsmbs/uchar.h
+index c37e8619a0..5f7139f279 100644
+--- a/wcsmbs/uchar.h
++++ b/wcsmbs/uchar.h
+@@ -34,8 +34,16 @@
+ /* Declare the C2x char8_t typedef in C2x modes, but only if the C++
+   __cpp_char8_t feature test macro is not defined.  */
+ #if __GLIBC_USE (ISOC2X) && !defined __cpp_char8_t
++#if __GNUC_PREREQ (10, 0) && defined __cplusplus
++/* Suppress the diagnostic regarding char8_t being a keyword in C++20.  */
++# pragma GCC diagnostic push
++# pragma GCC diagnostic ignored "-Wc++20-compat"
++#endif
+ /* Define the 8-bit character type.  */
+ typedef unsigned char char8_t;
++#if __GNUC_PREREQ (10, 0) && defined __cplusplus
++# pragma GCC diagnostic pop
++#endif
+ #endif
+ 
+ #ifndef __USE_ISOCXX11
+-- 
+2.37.2
+

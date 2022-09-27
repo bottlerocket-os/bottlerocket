@@ -1,5 +1,5 @@
 Name: %{_cross_os}glibc
-Version: 2.35
+Version: 2.36
 Release: 1%{?dist}
 Summary: The GNU libc libraries
 License: LGPL-2.1-or-later AND (LGPL-2.1-or-later WITH GCC-exception-2.0) AND GPL-2.0-or-later AND (GPL-2.0-or-later WITH GCC-exception-2.0) AND BSD-3-Clause AND ISC
@@ -13,39 +13,50 @@ Source3: ldconfig-service.conf
 # applied and reverted during the build.
 Source99: HACK-only-build-and-install-localedef.patch
 
-# Upstream patches from 2.35 release branch:
+# Upstream patches from 2.36 release branch:
 # ```
-# git checkout origin/release/2.35/master
-# git format-patch glibc-2.35..
+# git checkout origin/release/2.36/master
+# git format-patch glibc-2.36..
 # ```
-Patch0001: 0001-Regenerate-configure.patch
-Patch0002: 0002-posix-Fix-tst-spawn6-terminal-handling-BZ-28853.patch
-Patch0003: 0003-linux-__get_nprocs_sched-do-not-feed-CPU_COUNT_S-wit.patch
-Patch0004: 0004-linux-Fix-missing-__convert_scm_timestamps-BZ-28860.patch
-Patch0005: 0005-Add-BZ-28860-reference-on-NEWS.patch
-Patch0006: 0006-linux-fix-accuracy-of-get_nprocs-and-get_nprocs_conf.patch
-Patch0007: 0007-linux-Use-socket-constants-time64.h-on-tst-socket-ti.patch
-Patch0008: 0008-string-Add-a-testcase-for-wcsncmp-with-SIZE_MAX-BZ-2.patch
-Patch0009: 0009-x86-Fallback-str-wcs-cmp-RTM-in-the-ncmp-overflow-ca.patch
-Patch0010: 0010-x86-Test-wcscmp-RTM-in-the-wcsncmp-overflow-case-BZ-.patch
-Patch0011: 0011-x86-Fix-TEST_NAME-to-make-it-a-string-in-tst-strncmp.patch
-Patch0012: 0012-NEWS-Add-a-bug-fix-entry-for-BZ-28896.patch
-Patch0013: 0013-elf-Check-invalid-hole-in-PT_LOAD-segments-BZ-28838.patch
-Patch0014: 0014-elf-Replace-tst-audit24bmod2.so-with-tst-audit24bmod.patch
-Patch0015: 0015-resolv-Fix-tst-resolv-tests-for-2.35-ABIs-and-later.patch
-Patch0016: 0016-NEWS-Add-a-bug-fix-entry-for-BZ-28688.patch
-Patch0017: 0017-localedef-Update-LC_MONETARY-handling-Bug-28845.patch
-Patch0018: 0018-localedata-Do-not-generate-output-if-warnings-were-p.patch
-Patch0019: 0019-localedef-Handle-symbolic-links-when-generating-loca.patch
-Patch0020: 0020-hppa-Fix-bind-now-audit-BZ-28857.patch
-Patch0021: 0021-Fix-elf-tst-audit2-on-hppa.patch
-Patch0022: 0022-hppa-Fix-swapcontext.patch
-Patch0023: 0023-hppa-Revise-gettext-trampoline-design.patch
-Patch0024: 0024-hppa-Fix-warnings-from-_dl_lookup_address.patch
-Patch0025: 0025-nptl-Fix-cleanups-for-stack-grows-up-BZ-28899.patch
-Patch0026: 0026-io-Add-fsync-call-in-tst-stat.patch
-Patch0027: 0027-nss-Do-not-mention-NSS-test-modules-in-gnu-lib-names.patch
-Patch0028: 0028-nss-Protect-against-errno-changes-in-function-lookup.patch
+Patch0001: 0001-stdlib-Suppress-gcc-diagnostic-that-char8_t-is-a-key.patch
+Patch0002: 0002-wcsmbs-Add-missing-test-c8rtomb-test-mbrtoc8-depende.patch
+Patch0003: 0003-dlfcn-Pass-caller-pointer-to-static-dlopen-implement.patch
+Patch0004: 0004-Update-syscall-lists-for-Linux-5.19.patch
+Patch0005: 0005-elf-Replace-strcpy-call-with-memcpy-BZ-29454.patch
+Patch0006: 0006-Linux-Terminate-subprocess-on-late-failure-in-tst-pi.patch
+Patch0007: 0007-alpha-Fix-generic-brk-system-call-emulation-in-__brk.patch
+Patch0008: 0008-socket-Check-lengths-before-advancing-pointer-in-CMS.patch
+Patch0009: 0009-NEWS-Add-entry-for-bug-28846.patch
+Patch0010: 0010-glibcextract.py-Add-compile_c_snippet.patch
+Patch0011: 0011-linux-Use-compile_c_snippet-to-check-linux-pidfd.h-a.patch
+Patch0012: 0012-linux-Mimic-kernel-defition-for-BLOCK_SIZE.patch
+Patch0013: 0013-linux-Use-compile_c_snippet-to-check-linux-mount.h-a.patch
+Patch0014: 0014-linux-Fix-sys-mount.h-usage-with-kernel-headers.patch
+Patch0015: 0015-Linux-Fix-enum-fsconfig_command-detection-in-sys-mou.patch
+Patch0016: 0016-syslog-Fix-large-messages-BZ-29536.patch
+Patch0017: 0017-elf-Call-__libc_early_init-for-reused-namespaces-bug.patch
+Patch0018: 0018-Apply-asm-redirections-in-wchar.h-before-first-use.patch
+Patch0019: 0019-elf-Restore-how-vDSO-dependency-is-printed-with-LD_T.patch
+Patch0020: 0020-syslog-Remove-extra-whitespace-between-timestamp-and.patch
+Patch0021: 0021-Add-NEWS-entry-for-CVE-2022-39046.patch
+Patch0022: 0022-nscd-Fix-netlink-cache-invalidation-if-epoll-is-used.patch
+Patch0023: 0023-resolv-Add-tst-resolv-byaddr-for-testing-reverse-loo.patch
+Patch0024: 0024-resolv-Add-tst-resolv-aliases.patch
+Patch0025: 0025-resolv-Add-internal-__res_binary_hnok-function.patch
+Patch0026: 0026-resolv-Add-the-__ns_samebinaryname-function.patch
+Patch0027: 0027-resolv-Add-internal-__ns_name_length_uncompressed-fu.patch
+Patch0028: 0028-resolv-Add-DNS-packet-parsing-helpers-geared-towards.patch
+Patch0029: 0029-nss_dns-Split-getanswer_ptr-from-getanswer_r.patch
+Patch0030: 0030-nss_dns-Rewrite-_nss_dns_gethostbyaddr2_r-and-getans.patch
+Patch0031: 0031-nss_dns-Remove-remnants-of-IPv6-address-mapping.patch
+Patch0032: 0032-nss_dns-Rewrite-getanswer_r-to-match-getanswer_ptr-b.patch
+Patch0033: 0033-nss_dns-In-gaih_getanswer_slice-skip-strange-aliases.patch
+Patch0034: 0034-resolv-Add-new-tst-resolv-invalid-cname.patch
+Patch0035: 0035-nss_dns-Rewrite-_nss_dns_gethostbyname4_r-using-curr.patch
+Patch0036: 0036-resolv-Fix-building-tst-resolv-invalid-cname-for-ear.patch
+Patch0037: 0037-NEWS-Note-bug-12154-and-bug-29305-as-fixed.patch
+Patch0038: 0038-elf-Run-tst-audit-tlsdesc-tst-audit-tlsdesc-dlopen-e.patch
+Patch0039: 0039-elf-Fix-hwcaps-string-size-overestimation.patch
 
 # Fedora patches
 Patch1001: glibc-cs-path.patch
@@ -115,7 +126,7 @@ pushd build
   --host="%{_cross_target}" \
   --build="%{_build}" \
   --with-headers="%{_cross_includedir}" \
-  --enable-kernel="5.4.0"
+  --enable-kernel="5.10.0"
 make %{?_smp_mflags} -O -r
 popd
 

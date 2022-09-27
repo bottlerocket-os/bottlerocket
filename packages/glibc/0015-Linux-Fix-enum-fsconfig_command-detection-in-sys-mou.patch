@@ -1,0 +1,45 @@
+From 3bd3c612e98a53ce60ed972f5cd2b90628b3cba5 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 16 Aug 2022 09:25:23 +0200
+Subject: [PATCH 15/39] Linux: Fix enum fsconfig_command detection in
+ <sys/mount.h>
+
+The #ifdef FSOPEN_CLOEXEC check did not work because the macro
+was always defined in this header prior to the check, so that
+the <linux/mount.h> contents did not matter.
+
+Fixes commit 774058d72942249f71d74e7f2b639f77184160a6
+("linux: Fix sys/mount.h usage with kernel headers").
+
+(cherry picked from commit 2955ef4b7c9b56fcd7abfeddef7ee83c60abff98)
+---
+ sysdeps/unix/sysv/linux/sys/mount.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/sys/mount.h b/sysdeps/unix/sysv/linux/sys/mount.h
+index 2e3fd6a7fe..19841d0738 100644
+--- a/sysdeps/unix/sysv/linux/sys/mount.h
++++ b/sysdeps/unix/sysv/linux/sys/mount.h
+@@ -188,9 +188,6 @@ enum
+ };
+ 
+ 
+-/* fsopen flags.  */
+-#define FSOPEN_CLOEXEC          0x00000001
+-
+ /* fsmount flags.  */
+ #define FSMOUNT_CLOEXEC         0x00000001
+ 
+@@ -261,6 +258,9 @@ enum fsconfig_command
+ };
+ #endif
+ 
++/* fsopen flags.  */
++#define FSOPEN_CLOEXEC          0x00000001
++
+ /* open_tree flags.  */
+ #define OPEN_TREE_CLONE    1         /* Clone the target tree and attach the clone */
+ #define OPEN_TREE_CLOEXEC  O_CLOEXEC /* Close the file on execve() */
+-- 
+2.37.2
+

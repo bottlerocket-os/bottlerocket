@@ -1,0 +1,61 @@
+From ac47d8f6cf9744139adb12f540fb9cc610cac579 Mon Sep 17 00:00:00 2001
+From: Joseph Myers <joseph@codesourcery.com>
+Date: Tue, 2 Aug 2022 21:05:07 +0000
+Subject: [PATCH 04/39] Update syscall lists for Linux 5.19
+
+Linux 5.19 has no new syscalls, but enables memfd_secret in the uapi
+headers for RISC-V.  Update the version number in syscall-names.list
+to reflect that it is still current for 5.19 and regenerate the
+arch-syscall.h headers with build-many-glibcs.py update-syscalls.
+
+Tested with build-many-glibcs.py.
+
+(cherry picked from commit fccadcdf5bed7ee67a6cef4714e0b477d6c8472c)
+---
+ sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h | 1 +
+ sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h | 1 +
+ sysdeps/unix/sysv/linux/syscall-names.list        | 4 ++--
+ 3 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h b/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h
+index bf4be80f8d..202520ee25 100644
+--- a/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/riscv/rv32/arch-syscall.h
+@@ -122,6 +122,7 @@
+ #define __NR_mbind 235
+ #define __NR_membarrier 283
+ #define __NR_memfd_create 279
++#define __NR_memfd_secret 447
+ #define __NR_migrate_pages 238
+ #define __NR_mincore 232
+ #define __NR_mkdirat 34
+diff --git a/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h b/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h
+index d656aedcc2..4e65f337d4 100644
+--- a/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h
++++ b/sysdeps/unix/sysv/linux/riscv/rv64/arch-syscall.h
+@@ -127,6 +127,7 @@
+ #define __NR_mbind 235
+ #define __NR_membarrier 283
+ #define __NR_memfd_create 279
++#define __NR_memfd_secret 447
+ #define __NR_migrate_pages 238
+ #define __NR_mincore 232
+ #define __NR_mkdirat 34
+diff --git a/sysdeps/unix/sysv/linux/syscall-names.list b/sysdeps/unix/sysv/linux/syscall-names.list
+index 6c7b2f7011..028ad3107a 100644
+--- a/sysdeps/unix/sysv/linux/syscall-names.list
++++ b/sysdeps/unix/sysv/linux/syscall-names.list
+@@ -21,8 +21,8 @@
+ # This file can list all potential system calls.  The names are only
+ # used if the installed kernel headers also provide them.
+ 
+-# The list of system calls is current as of Linux 5.18.
+-kernel 5.18
++# The list of system calls is current as of Linux 5.19.
++kernel 5.19
+ 
+ FAST_atomic_update
+ FAST_cmpxchg
+-- 
+2.37.2
+
