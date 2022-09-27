@@ -1,7 +1,7 @@
-From b8d13cfc11a967385f18bfbdd74986a043665832 Mon Sep 17 00:00:00 2001
+From 0fbe931ffee3b95a7940fc749a6ee6c4ce894665 Mon Sep 17 00:00:00 2001
 From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 Date: Tue, 18 Jan 2022 23:57:24 +0000
-Subject: [PATCH 5/5] makefile: avoid ldconfig when cross-compiling
+Subject: [PATCH] makefile: avoid ldconfig when cross-compiling
 
 Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 ---
@@ -9,18 +9,18 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index 34fb136..1c3d9d2 100644
+index 60429d3..075dc9b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -242,7 +242,7 @@ install: all
- 	$(INSTALL) -m 644 $(LIB_STATIC) $(DESTDIR)$(libdir)
- 	$(INSTALL) -m 755 $(LIB_SHARED) $(DESTDIR)$(libdir)
- 	$(LN) -sf $(LIB_SONAME) $(DESTDIR)$(libdir)/$(LIB_SYMLINK)
+@@ -269,7 +269,7 @@ ifeq ($(WITH_NVCGO), yes)
+ 	$(INSTALL) -m 755 $(DEPS_DIR)$(libdir)/$(LIBGO_SHARED) $(DESTDIR)$(libdir)
+ 	$(LN) -sf $(LIBGO_SONAME) $(DESTDIR)$(libdir)/$(LIBGO_SYMLINK)
+ endif
 -	$(LDCONFIG) -n $(DESTDIR)$(libdir)
 +	$(LN) -sf $(LIB_SHARED) $(DESTDIR)$(libdir)/$(LIB_SONAME)
  	# Install configuration files
  	$(MAKE_DIR)/$(LIB_PKGCFG).in "$(strip $(VERSION))" "$(strip $(LIB_LDLIBS_SHARED))" > $(DESTDIR)$(pkgconfdir)/$(LIB_PKGCFG)
  	# Install binary files
 -- 
-2.33.1
+2.37.1
 

@@ -1,7 +1,7 @@
-From 334cf602d9ea6247d7b0baec1785d9ab4c0fe5d9 Mon Sep 17 00:00:00 2001
+From 831d6c71e30b8d533123600648bb12cbb225a100 Mon Sep 17 00:00:00 2001
 From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 Date: Mon, 1 Nov 2021 16:18:19 +0000
-Subject: [PATCH 4/5] Use NVIDIA_PATH to look up binaries
+Subject: [PATCH] Use NVIDIA_PATH to look up binaries
 
 Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/nvc_info.c b/src/nvc_info.c
-index 252dd5c..0697fba 100644
+index 55c3ba9..56dcbd2 100644
 --- a/src/nvc_info.c
 +++ b/src/nvc_info.c
-@@ -249,8 +249,8 @@ find_binary_paths(struct error *err, struct dxcore_context* dxcore, struct nvc_d
+@@ -251,8 +251,8 @@ find_binary_paths(struct error *err, struct dxcore_context* dxcore, struct nvc_d
          char path[PATH_MAX];
          int rv = -1;
  
@@ -24,5 +24,5 @@ index 252dd5c..0697fba 100644
          }
          if ((env = ptr = xstrdup(err, env)) == NULL)
 -- 
-2.33.1
+2.37.1
 

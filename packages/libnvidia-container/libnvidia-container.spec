@@ -1,14 +1,14 @@
 %global nvidia_modprobe_version 495.44
 
 Name: %{_cross_os}libnvidia-container
-Version: 1.7.0
+Version: 1.11.0
 Release: 1%{?dist}
 Summary: NVIDIA container runtime library
 # The COPYING and COPYING.LESSER files in the sources don't apply to libnvidia-container
 # they are there because they apply to libelf in elfutils
 License: Apache-2.0
 URL: https://github.com/NVIDIA/libnvidia-container
-Source0: https://github.com/NVIDIA/libnvidia-container/archive/v%{version}.tar.gz
+Source0: https://github.com/NVIDIA/libnvidia-container/archive/v%{version}/libnvidia-container-%{version}.tar.gz
 Source1: https://github.com/NVIDIA/nvidia-modprobe/archive/%{nvidia_modprobe_version}/nvidia-modprobe-%{nvidia_modprobe_version}.tar.gz
 
 # First party patches from 1 to 1000
@@ -54,6 +54,7 @@ export CFLAGS="${CFLAGS} -I%{_cross_includedir}/tirpc" \\\
 export WITH_LIBELF=yes \\\
 export WITH_SECCOMP=yes \\\
 export WITH_TIRPC=yes \\\
+export WITH_NVCGO=no \\\
 export prefix=%{_cross_prefix} \\\
 export DESTDIR=%{buildroot} \\\
 %{nil}
