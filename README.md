@@ -447,6 +447,8 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.image-gc-high-threshold-percent`: The percent of disk usage after which image garbage collection is always run.
 * `settings.kubernetes.image-gc-low-threshold-percent`: The percent of disk usage before which image garbage collection is never run.
 * `settings.kubernetes.provider-id`: This sets the unique ID of the instance that an external provider (i.e. cloudprovider) can use to identify a specific node.
+* `settings.kubernetes.log-level`: Adjust the logging verbosity of the `kubelet` process.
+  The default log level is 2, with higher numbers enabling more verbose logging.
 
 You can also optionally specify static pods for your node with the following settings.
 Static pods can be particularly useful when running in standalone mode.

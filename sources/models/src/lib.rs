@@ -216,6 +216,7 @@ struct KubernetesSettings {
     image_gc_high_threshold_percent: ImageGCHighThresholdPercent,
     image_gc_low_threshold_percent: ImageGCLowThresholdPercent,
     provider_id: Url,
+    kubelet_log_level: u8,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
