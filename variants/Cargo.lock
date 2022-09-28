@@ -515,6 +515,7 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libffi",
+ "libpcre",
  "libselinux",
  "libz",
  "util-linux",
