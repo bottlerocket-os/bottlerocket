@@ -25,7 +25,7 @@ allow = [
 
 exceptions = [
     { name = "webpki-roots", allow = ["MPL-2.0"], version = "*" },
-    { name = "unicode-ident", allow = ["MIT", "Apache-2.0", "Unicode-DFS-2016"] },
+    { name = "unicode-ident", version = "1.0.4", allow = ["MIT", "Apache-2.0", "Unicode-DFS-2016"] },
 ]
 
 # https://github.com/hsivonen/encoding_rs The non-test code that isn't generated from the WHATWG data in this crate is
@@ -57,12 +57,14 @@ license-files = [
 multiple-versions = "deny"
 wildcards = "deny"
 
+skip = [
+    # older version used by chrono 0.4.22
+    { name = "time", version = "0.1.44" },
+]
+
 skip-tree = [
     # rusoto_signature uses an older version of sha2
     { name = "rusoto_signature" },
-
-    # argh_derive pulls in an older version of heck
-    { name = "argh_derive", version = "0.1.8" },
 
     # structopt pulls in an older version of clap
     { name = "structopt", version = "0.3.26" },
