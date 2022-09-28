@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/libffi/libffi/releases/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/libffi/libffi/releases/download/v3.4.2/libffi-3.4.2.tar.gz"
-sha512 = "31bad35251bf5c0adb998c88ff065085ca6105cf22071b9bd4b5d5d69db4fadf16cadeec9baca944c4bb97b619b035bb8279de8794b922531fddeb0779eb7fb1"
+url = "https://github.com/libffi/libffi/releases/download/v3.4.3/libffi-3.4.3.tar.gz"
+sha512 = "6e3620d3842ae0f983c47c3268364be32b6eeb2fc708b23d141531730e9149abb035c618b295be834999eadef64fabfa39df21c955c40473f3bbc9fd3170bad8"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
