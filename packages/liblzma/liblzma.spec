@@ -1,5 +1,5 @@
 Name: %{_cross_os}liblzma
-Version: 5.2.5
+Version: 5.2.6
 Release: 1%{?dist}
 Summary: Library for XZ and LZMA compressed files
 URL: https://tukaani.org/xz
