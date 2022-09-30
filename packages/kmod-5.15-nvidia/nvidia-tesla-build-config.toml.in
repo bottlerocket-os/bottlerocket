@@ -1,0 +1,18 @@
+[nvidia-tesla]
+lib-modules-path = "kernel/drivers/extra/video/nvidia/tesla"
+objects-source = "__NVIDIA_MODULES__"
+
+[nvidia-tesla.object-files."nvidia.o"]
+link-objects = ["nv-interface.o", "nv-kernel.o"]
+
+[nvidia-tesla.kernel-modules."nvidia.ko"]
+link-objects = ["nvidia.o", "nvidia.mod.o"]
+
+[nvidia-tesla.object-files."nvidia-modeset.o"]
+link-objects = ["nv-modeset-interface.o", "nv-modeset-kernel.o"]
+
+[nvidia-tesla.kernel-modules."nvidia-modeset.ko"]
+link-objects = ["nvidia-modeset.o", "nvidia-modeset.mod.o"]
+
+[nvidia-tesla.kernel-modules."nvidia-uvm.ko"]
+link-objects = ["nvidia-uvm.o", "nvidia-uvm.mod.o"]

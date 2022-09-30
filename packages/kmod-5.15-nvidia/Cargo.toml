@@ -1,0 +1,25 @@
+[package]
+name = "kmod-5_15-nvidia"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+package-name = "kmod-5.15-nvidia"
+releases-url = "https://docs.nvidia.com/datacenter/tesla/"
+
+[[package.metadata.build-package.external-files]]
+url = "https://us.download.nvidia.com/tesla/515.65.01/NVIDIA-Linux-x86_64-515.65.01.run"
+sha512 = "5221a4ac071eb39a37a841f19cfe4983286dc35e918956b40604404ef36c122612475df7b9a391a9a70bd60f44e598c8a0e5ec54ccc3e90d51f01e1b2fbe5e33"
+
+[[package.metadata.build-package.external-files]]
+url = "https://us.download.nvidia.com/tesla/515.65.01/NVIDIA-Linux-aarch64-515.65.01.run"
+sha512 = "31ec7ba727bf14263eeadc3880bd8f2aaa0fe8c144aa216bb8af06a154dd1aa5f4a787fe386b20f5d739a49c80435bca5f6deba3010c593e1e54ecd29b4ab1b0"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+kernel-5_15 = { path = "../kernel-5.15" }
