@@ -5,13 +5,16 @@
 //! These structures are the user-facing options for configuring one or more network interfaces.
 mod dhcp;
 mod error;
+mod static_address;
 mod v1;
+mod v2;
 
 use crate::wicked::WickedInterface;
 pub(crate) use dhcp::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
 pub(crate) use error::{Error, Result};
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
+pub(crate) use static_address::{RouteTo, RouteV1, StaticConfigV1};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
@@ -93,7 +96,8 @@ fn deserialize_config(config_str: &str) -> Result<Box<dyn Interfaces>> {
     } = toml::from_str(config_str).context(error::NetConfigParseSnafu)?;
 
     let net_config: Box<dyn Interfaces> = match version {
-        1 => validate_config::<NetConfigV1>(interface_config)?,
+        1 => validate_config::<v1::NetConfigV1>(interface_config)?,
+        2 => validate_config::<v2::NetConfigV2>(interface_config)?,
         _ => {
             return error::InvalidNetConfigSnafu {
                 reason: format!("Unknown network config version: {}", version),

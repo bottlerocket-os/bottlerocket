@@ -1,0 +1,7 @@
+version = {{version}}
+
+[eno1]
+dhcp4 = true
+
+[eno1.static4]
+addresses = ["1.2.3.4/24", "2.3.4.5/25"]

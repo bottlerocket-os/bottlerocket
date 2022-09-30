@@ -1,0 +1,90 @@
+version = {{version}}
+
+# IPv4 static addresses/routes
+[eno11.static4]
+addresses = ["192.168.14.2/24"]
+
+[eno12.static4]
+addresses = ["10.0.0.9/24"]
+
+[[eno12.route]]
+to = "10.10.10.0/24"
+via = "10.0.0.1"
+
+[eno13.static4]
+addresses = ["192.168.14.2/24"]
+
+[[eno13.route]]
+to = "9.9.0.0/16"
+via = "192.168.1.1"
+
+[[eno13.route]]
+to = "10.10.10.0/24"
+via = "192.168.1.3"
+
+[eno14.static4]
+addresses = ["10.0.0.10/24", "11.0.0.11/24"]
+
+[[eno14.route]]
+to = "default"
+via = "10.0.0.1"
+route-metric = 100
+
+[[eno14.route]]
+to = "default"
+via = "11.0.0.1"
+route-metric = 200
+
+# IPv6 static addresses/routes
+[eno15.static6]
+addresses = ["2001:cafe:face:beef::dead:dead/64"]
+
+[eno16.static6]
+addresses = ["2001:dead:beef::2/64"]
+
+[[eno16.route]]
+to = "default"
+via = "2001:beef:beef::1"
+
+[eno17.static6]
+addresses = ["3001:f00f:f00f::2/64", "3001:f00f:f00f::3/64"]
+
+[[eno17.route]]
+to = "3001:dead:beef::2/64"
+via = "3001:beef:beef::1"
+route-metric = 100
+
+[[eno17.route]]
+to = "3001:dead:feed::2/64"
+via = "3001:beef:beef::2"
+route-metric = 200
+
+# DHCP4/6 and static addresses
+[eno18]
+dhcp4 = true
+
+[eno18.static4]
+addresses = ["10.0.0.10/24", "11.0.0.11/24"]
+
+[eno19]
+dhcp6 = true
+
+[eno19.static6]
+addresses = ["3001:f00f:f00f::2/64", "3001:f00f:f00f::3/64"]
+
+# Source IP
+[eno20.static4]
+addresses = ["192.168.14.5/24"]
+
+[[eno20.route]]
+to = "10.10.10.0/24"
+from = "192.168.14.5"
+via = "192.168.14.25"
+
+[eno21.static6]
+addresses = ["2001:dead:beef::2/64"]
+
+[[eno21.route]]
+to = "3001:dead:beef::2/64"
+from = "2001:dead:beef::2"
+via = "2001:beef:beef::1"

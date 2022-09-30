@@ -1,0 +1,1 @@
+<interface><name>eno18</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:dhcp><enabled>true</enabled></ipv4:dhcp><ipv4:static><address><local>10.0.0.10/24</local></address><address><local>11.0.0.11/24</local></address></ipv4:static></interface>

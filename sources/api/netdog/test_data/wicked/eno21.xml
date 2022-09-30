@@ -1,0 +1,1 @@
+<interface><name>eno21</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv6:static><address><local>2001:dead:beef::2/64</local></address><route><destination>3001:dead:beef::2/64</destination><pref-source>2001:dead:beef::2</pref-source><nexthop><gateway>2001:beef:beef::1</gateway></nexthop></route></ipv6:static></interface>

@@ -37,7 +37,7 @@ impl DnsSettings {
     /// Merge missing DNS settings into `self` using DHCP lease
     fn merge_lease(&mut self, lease: &LeaseInfo) {
         if self.nameservers.is_none() {
-            self.nameservers = Some(lease.dns_servers.clone());
+            self.nameservers = lease.dns_servers.clone();
         }
 
         if self.search.is_none() {

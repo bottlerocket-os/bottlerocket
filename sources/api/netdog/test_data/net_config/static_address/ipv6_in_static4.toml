@@ -1,0 +1,4 @@
+version = {{version}}
+
+[eno1.static4]
+addresses = ["2001:dead:beef::2/64", "10.0.0.10/24"]

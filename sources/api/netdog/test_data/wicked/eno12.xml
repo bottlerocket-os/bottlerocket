@@ -1,0 +1,1 @@
+<interface><name>eno12</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:static><address><local>10.0.0.9/24</local></address><route><destination>10.10.10.0/24</destination><nexthop><gateway>10.0.0.1</gateway></nexthop></route></ipv4:static></interface>

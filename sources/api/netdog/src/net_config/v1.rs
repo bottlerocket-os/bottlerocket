@@ -5,7 +5,7 @@ use super::{error, Dhcp4ConfigV1, Dhcp6ConfigV1, Error, Interfaces, Result, Vali
 use crate::{
     interface_name::InterfaceName,
     net_config::{Dhcp4OptionsV1, Dhcp6OptionsV1},
-    wicked::{WickedControl, WickedDhcp4, WickedDhcp6, WickedInterface},
+    wicked::{WickedDhcp4, WickedDhcp6, WickedInterface},
 };
 use indexmap::indexmap;
 use indexmap::IndexMap;
@@ -55,13 +55,11 @@ impl Interfaces for NetConfigV1 {
         for (name, config) in &self.interfaces {
             let wicked_dhcp4 = config.dhcp4.clone().map(WickedDhcp4::from);
             let wicked_dhcp6 = config.dhcp6.clone().map(WickedDhcp6::from);
-            let wicked_interface = WickedInterface {
-                name: name.clone(),
-                control: WickedControl::default(),
-                ipv4_dhcp: wicked_dhcp4,
-                ipv6_dhcp: wicked_dhcp6,
-            };
-            wicked_interfaces.push(wicked_interface)
+            let mut interface = WickedInterface::new(name.clone());
+            interface.ipv4_dhcp = wicked_dhcp4;
+            interface.ipv6_dhcp = wicked_dhcp6;
+
+            wicked_interfaces.push(interface)
         }
 
         wicked_interfaces
