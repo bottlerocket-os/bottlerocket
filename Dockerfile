@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.1.3-experimental
+# syntax=docker/dockerfile:1.4.3
 # This Dockerfile has two sections which are used to build rpm.spec packages and to create
 # Bottlerocket images, respectively. They are marked as Section 1 and Section 2. buildsys
 # uses Section 1 during build-package calls and Section 2 during build-variant calls.
