@@ -8,7 +8,7 @@ Before=local-fs.target umount.target
 What=tmpfs
 Where=/etc/cni
 Type=tmpfs
-Options=nosuid,nodev,noexec,noatime
+Options=nosuid,nodev,noexec,noatime,mode=0755
 
 [Install]
 WantedBy=preconfigured.target

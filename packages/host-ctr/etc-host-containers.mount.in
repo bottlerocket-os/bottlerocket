@@ -10,7 +10,7 @@ Wants=selinux-policy-files.service
 What=tmpfs
 Where=/etc/host-containers
 Type=tmpfs
-Options=nosuid,nodev,noexec,noatime,context=system_u:object_r:secret_t:s0
+Options=nosuid,nodev,noexec,noatime,mode=0750,context=system_u:object_r:secret_t:s0
 
 [Install]
 WantedBy=preconfigured.target
