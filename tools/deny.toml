@@ -70,7 +70,7 @@ skip-tree = [
     { name = "structopt", version = "0.3.26" },
 
     # aws-smithy-client uses an older hyper-rustls
-    { name = "aws-smithy-client", version = "0.46.0" },
+    { name = "aws-smithy-client", version = "0.48.0" },
 ]
 
 [sources]
