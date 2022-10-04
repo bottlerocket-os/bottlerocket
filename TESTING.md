@@ -79,7 +79,7 @@ kind get kubeconfig --name testsys > $TESTSYS_KUBECONFIG
 Install the testsys cluster components:
 
 ```shell
-cargo make setup-testsys
+cargo make setup-test
 ```
 
 Testsys containers will need AWS credentials.
