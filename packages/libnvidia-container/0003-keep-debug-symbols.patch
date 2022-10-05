@@ -1,7 +1,7 @@
-From b994aa569b2b84ed892e86b9610fb051286e0ab9 Mon Sep 17 00:00:00 2001
+From 864c7ab25cde5d8109e17798d5cf2041b559888e Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 21 Sep 2021 00:22:37 +0000
-Subject: [PATCH 3/5] keep debug symbols
+Subject: [PATCH] keep debug symbols
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
@@ -10,10 +10,10 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 10 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 9552ddd..34fb136 100644
+index 54bf0a0..60429d3 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -200,22 +200,14 @@ $(BIN_OBJS): %.o: %.c | shared
+@@ -221,22 +221,14 @@ $(BIN_OBJS): %.o: %.c | shared
  -include $(DEPENDENCIES)
  
  $(LIB_SHARED): $(LIB_OBJS)
@@ -36,9 +36,9 @@ index 9552ddd..34fb136 100644
  
  ##### Public rules #####
  
-@@ -251,8 +243,6 @@ install: all
- 	$(INSTALL) -m 755 $(LIB_SHARED) $(DESTDIR)$(libdir)
- 	$(LN) -sf $(LIB_SONAME) $(DESTDIR)$(libdir)/$(LIB_SYMLINK)
+@@ -278,8 +270,6 @@ ifeq ($(WITH_NVCGO), yes)
+ 	$(LN) -sf $(LIBGO_SONAME) $(DESTDIR)$(libdir)/$(LIBGO_SYMLINK)
+ endif
  	$(LDCONFIG) -n $(DESTDIR)$(libdir)
 -	# Install debugging symbols
 -	$(INSTALL) -m 644 $(DEBUG_DIR)/$(LIB_SONAME) $(DESTDIR)$(libdbgdir)
@@ -46,5 +46,5 @@ index 9552ddd..34fb136 100644
  	$(MAKE_DIR)/$(LIB_PKGCFG).in "$(strip $(VERSION))" "$(strip $(LIB_LDLIBS_SHARED))" > $(DESTDIR)$(pkgconfdir)/$(LIB_PKGCFG)
  	# Install binary files
 -- 
-2.33.1
+2.37.1
 

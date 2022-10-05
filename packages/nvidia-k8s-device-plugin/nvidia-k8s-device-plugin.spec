@@ -2,7 +2,7 @@
 %global gorepo k8s-device-plugin
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 0.10.0
+%global gover 0.12.3
 %global rpmver %{gover}
 
 Name: %{_cross_os}nvidia-k8s-device-plugin

@@ -1,7 +1,7 @@
-%global buildver 18557794
+%global buildver 20219665
 
 Name: %{_cross_os}open-vm-tools
-Version: 11.3.5
+Version: 12.1.0
 Release: 1%{?dist}
 Summary: Tools for VMware
 License: LGPL-2.1-or-later
@@ -44,6 +44,7 @@ autoreconf -fi
   --disable-servicediscovery \
   --disable-tests \
   --disable-vgauth \
+  --disable-containerinfo \
   --with-tirpc \
   --with-udev-rules-dir=%{_cross_udevrulesdir} \
   --without-dnet \

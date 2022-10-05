@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/vmware/open-vm-tools/releases/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/vmware/open-vm-tools/releases/download/stable-11.3.5/open-vm-tools-11.3.5-18557794.tar.gz"
-sha512 = "fa31f5615c9c90865ba9122f7fcd0831068d48defee30a5f5c620e744b76ccd5b7cc2de20cea4e37b596f99619ffb7bb47774de04e7c4bea666c7c0b6fa1560e"
+url = "https://github.com/vmware/open-vm-tools/releases/download/stable-12.1.0/open-vm-tools-12.1.0-20219665.tar.gz"
+sha512 = "00cd71a5fc25d854d0043b2ddfb7f759e3b3138acb9f33f7452641d7520e46bfa39ff784bde6c711de6e8aec24309720532100d7a8588fb1bebaa378b9566a2a"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

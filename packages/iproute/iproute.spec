@@ -1,10 +1,10 @@
 Name: %{_cross_os}iproute
-Version: 5.18.0
+Version: 5.19.0
 Release: 1%{?dist}
 Summary: Tools for advanced IP routing and network device configuration
 License: GPL-2.0-or-later AND GPL-2.0-only
-URL: http://kernel.org/pub/linux/utils/net/iproute2/
-Source0: http://kernel.org/pub/linux/utils/net/iproute2/iproute2-%{version}.tar.xz
+URL: https://kernel.org/pub/linux/utils/net/iproute2/
+Source0: https://kernel.org/pub/linux/utils/net/iproute2/iproute2-%{version}.tar.xz
 Patch1: 0001-skip-libelf-check.patch
 
 BuildRequires: %{_cross_os}glibc-devel

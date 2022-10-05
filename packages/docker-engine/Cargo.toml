@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/moby/moby/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/moby/moby/archive/v20.10.17/moby-20.10.17.tar.gz"
-sha512 = "1def92a4f87695b1889e482947f2bc49342ad868ee15425900b0c6f8954ba77aa2a9a8bd4fc500ba124218603aa8c7127daf7192140cace6e652a311391397c4"
+url = "https://github.com/moby/moby/archive/v20.10.18/moby-20.10.18.tar.gz"
+sha512 = "202f9f4d455329907e87bd95549aa433b6c773d3067cc89d0bd2e087bddfc66faddd6c2019843e42bf3fed6d6584ba4ab61d762f436f8bb164aa11e6280c91c5"
 
 # RPM BuildRequires
 [build-dependencies]

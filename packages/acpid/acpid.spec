@@ -1,10 +1,10 @@
 Name: %{_cross_os}acpid
-Version: 2.0.33
+Version: 2.0.34
 Release: 1%{?dist}
 Summary: ACPI event daemon
 License: GPL-2.0-or-later
 URL: http://sourceforge.net/projects/acpid2/
-Source0: http://downloads.sourceforge.net/acpid2/acpid-%{version}.tar.xz
+Source0: https://downloads.sourceforge.net/acpid2/acpid-%{version}.tar.xz
 Source1: acpid.service
 Source2: power.conf
 Patch1: 0001-Remove-shell-dependency-by-only-shutting-down.patch

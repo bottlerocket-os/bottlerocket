@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/thom311/libnl/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/thom311/libnl/archive/libnl3_5_0.tar.gz"
-sha512 = "2b762419a21b4560f7d488791a9d7aec0d1c6eac0cd2839ceec0bef5562f130ce44b826691276e1301b9e239f684063037959207474cefec4b46efc32039615d"
+url = "https://github.com/thom311/libnl/archive/libnl3_7_0.tar.gz"
+sha512 = "86d9a5e9471495d29ab54377937dc662be693de40266d54c5b3690dbae627ed93b1ca9266b722d7e86c741e6f9ed6ea5129eb839e633f10ccc77e69dfd4f816a"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

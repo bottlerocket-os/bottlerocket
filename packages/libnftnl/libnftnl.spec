@@ -1,10 +1,10 @@
 Name: %{_cross_os}libnftnl
-Version: 1.2.1
+Version: 1.2.3
 Release: 1%{?dist}
 Summary: Library for nftables netlink
 License: GPL-2.0-or-later AND GPL-2.0-only
 URL: http://netfilter.org/projects/libnftnl/
-Source0: http://netfilter.org/projects/libnftnl/files/libnftnl-%{version}.tar.bz2
+Source0: https://netfilter.org/projects/libnftnl/files/libnftnl-%{version}.tar.bz2
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
 Requires: %{_cross_os}libmnl

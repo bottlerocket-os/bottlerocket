@@ -1,10 +1,10 @@
 Name: %{_cross_os}libdbus
-Version: 1.12.22
+Version: 1.15.0
 Release: 1%{?dist}
 Summary: Library for a message bus
 License: AFL-2.1 OR GPL-2.0-or-later
 URL: http://www.freedesktop.org/Software/dbus/
-Source0: https://dbus.freedesktop.org/releases/dbus/dbus-%{version}.tar.gz
+Source0: https://dbus.freedesktop.org/releases/dbus/dbus-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
 BuildRequires: %{_cross_os}libexpat-devel

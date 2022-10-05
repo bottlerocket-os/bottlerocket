@@ -1,5 +1,5 @@
 Name: %{_cross_os}kexec-tools
-Version: 2.0.24
+Version: 2.0.25
 Release: 1%{?dist}
 Summary: Linux tool to load kernels from the running system
 License: GPL-2.0-or-later AND GPL-2.0-only

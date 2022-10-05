@@ -1,23 +1,21 @@
 Name: %{_cross_os}libglib
-Version: 2.72.0
+Version: 2.74.0
 Release: 1%{?dist}
 Summary: The GLib libraries
 # glib2 is LGPL-2.1-only
-# pcre is BSD-3-Clause
-License: LGPL-2.1-only AND BSD-3-Clause
+License: LGPL-2.1-only
 URL: https://www.gtk.org/
-Source0: https://download.gnome.org/sources/glib/2.72/glib-%{version}.tar.xz
-# Note: the pcre version is specified in the glib archive in subprojects/libpcre.wrap
-Source1: https://downloads.sourceforge.net/pcre/pcre-8.37.tar.bz2
-Source2: https://wrapdb.mesonbuild.com/v2/pcre_8.37-4/get_patch#/pcre_8.37-4_patch.zip
+Source0: https://download.gnome.org/sources/glib/2.74/glib-%{version}.tar.xz
 BuildRequires: meson
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libffi-devel
 BuildRequires: %{_cross_os}libmount-devel
+BuildRequires: %{_cross_os}libpcre-devel
 BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libz-devel
 Requires: %{_cross_os}libffi
 Requires: %{_cross_os}libmount
+Requires: %{_cross_os}libpcre
 Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libz
 
@@ -34,10 +32,6 @@ Requires: %{_cross_os}libffi-devel
 
 %prep
 %autosetup -n glib-%{version} -p1
-pushd subprojects >/dev/null
-tar xf %{S:1}
-unzip %{S:2}
-popd >/dev/null
 
 %build
 CONFIGURE_OPTS=(
@@ -61,6 +55,7 @@ CONFIGURE_OPTS=(
 %{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_datadir}
+%exclude %{_cross_libexecdir}
 
 %files devel
 %{_cross_bindir}/*

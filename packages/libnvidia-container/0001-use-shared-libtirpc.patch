@@ -1,7 +1,7 @@
-From 57c5b0010797280351d547e0f7c4cd6475868a0d Mon Sep 17 00:00:00 2001
+From 74a4c7432d8e8d5e336c30c6fe2fb8602bb6cc10 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 20 Sep 2021 23:41:28 +0000
-Subject: [PATCH 1/5] use shared libtirpc
+Subject: [PATCH] use shared libtirpc
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
@@ -10,10 +10,10 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 2 insertions(+), 9 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 92d6f6e..bb0a610 100644
+index 6fb6976..2c7cc93 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -148,9 +148,8 @@ else
+@@ -165,9 +165,8 @@ else
  LIB_LDLIBS_STATIC  += -l:libelf.a
  endif
  ifeq ($(WITH_TIRPC), yes)
@@ -25,17 +25,17 @@ index 92d6f6e..bb0a610 100644
  endif
  ifeq ($(WITH_SECCOMP), yes)
  LIB_CPPFLAGS       += -DWITH_SECCOMP $(shell pkg-config --cflags libseccomp)
-@@ -242,9 +241,6 @@ deps: $(LIB_RPC_SRCS) $(BUILD_DEFS)
+@@ -265,9 +264,6 @@ endif
  ifeq ($(WITH_LIBELF), no)
- 	$(MAKE) -f $(MAKE_DIR)/elftoolchain.mk install
+ 	$(MAKE) -f $(MAKE_DIR)/elftoolchain.mk DESTDIR=$(DEPS_DIR) install
  endif
 -ifeq ($(WITH_TIRPC), yes)
--	$(MAKE) -f $(MAKE_DIR)/libtirpc.mk install
+-	$(MAKE) -f $(MAKE_DIR)/libtirpc.mk DESTDIR=$(DEPS_DIR) install
 -endif
  
  install: all
  	$(INSTALL) -d -m 755 $(addprefix $(DESTDIR),$(includedir) $(bindir) $(libdir) $(docdir) $(libdbgdir) $(pkgconfdir))
-@@ -290,9 +286,6 @@ depsclean:
+@@ -323,9 +319,6 @@ endif
  ifeq ($(WITH_LIBELF), no)
  	-$(MAKE) -f $(MAKE_DIR)/elftoolchain.mk clean
  endif
@@ -46,5 +46,5 @@ index 92d6f6e..bb0a610 100644
  mostlyclean:
  	$(RM) $(LIB_OBJS) $(LIB_STATIC_OBJ) $(BIN_OBJS) $(DEPENDENCIES)
 -- 
-2.33.1
+2.37.1
 

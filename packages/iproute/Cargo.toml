@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "http://kernel.org/pub/linux/utils/net/iproute2"
 
 [[package.metadata.build-package.external-files]]
-url = "http://kernel.org/pub/linux/utils/net/iproute2/iproute2-5.18.0.tar.xz"
-sha512 = "7b43c89741a8ffe8fd529ac4ee19c8eab7dce2f064de494c160c75456ffb960fb5f1e78c868ab98360dafde28d5e2c4d58177135b6d380e80e06eba9e3eaf068"
+url = "https://kernel.org/pub/linux/utils/net/iproute2/iproute2-5.19.0.tar.xz"
+sha512 = "eb0fffb153f7cecc89b5573b7fc211d67fb1c06789fd3b0aec75ba5032521d53c51ccc52db7367e41397993df50244af84763b0b1d5a76d9dfccf013c010131b"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

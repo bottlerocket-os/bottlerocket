@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://download.tuxfamily.org/chrony"
 
 [[package.metadata.build-package.external-files]]
-url = "https://download.tuxfamily.org/chrony/chrony-4.2.tar.gz"
-sha512 = "7f946b27de605b3ebea62cf23916dfad77c99e8b2338ba239ede6b8216ce436b3d4d87770f371c8d8e006507c51d5c831b51f067957abd2935adfdec3f5aa67d"
+url = "https://download.tuxfamily.org/chrony/chrony-4.3.tar.gz"
+sha512 = "1394bac3ed684352fe89b7fef7da50e61f9f522abee807627ae1fc4c2dde891017bc8e5b13759fced028f3a1e875d5e4e5a4f85de65c63b5f83d0ca03bb4c5df"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

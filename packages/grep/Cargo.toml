@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://mirrors.kernel.org/gnu/grep"
 
 [[package.metadata.build-package.external-files]]
-url = "https://mirrors.kernel.org/gnu/grep/grep-3.7.tar.xz"
-sha512 = "e9e45dcd40af8367f819f2b93c5e1b4e98a251a9aa251841fa67a875380fae52cfa27c68c6dbdd6a4dde1b1017ee0f6b9833ef6dd6e419d32d71b6df5e972b82"
+url = "https://mirrors.kernel.org/gnu/grep/grep-3.8.tar.xz"
+sha512 = "2014519a80c6dcd799837e1bd7d9d5ebe8729ec54b0dc76981dac4755a9a8a9f200470cdcc911e2825bed8162e61da39e3dd60289f7393b48bf67314077d0c79"
 
 [dependencies]
 libpcre = { path = "../libpcre" }

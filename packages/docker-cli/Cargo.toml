@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/docker/cli/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/docker/cli/archive/v20.10.17/cli-20.10.17.tar.gz"
-sha512 = "9c2cff7e248272e234eac9febdfd7c5c844fc65ee4b08fd4ce0f526e4fed33f2d12682d0991ef28b42977b9de2c84d7ef9c6ddd6f31c4e8c34a3985c1cea3316"
+url = "https://github.com/docker/cli/archive/v20.10.18/cli-20.10.18.tar.gz"
+sha512 = "fe5359015041f99bacf7b674a99ab7772d9e71eb6c6fefd6acb28f2afee4321a7517a53497627ae9cae8c6e0c253971a53d0579a630a3d71986edd7300a0a8ab"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

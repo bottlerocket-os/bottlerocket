@@ -2,9 +2,9 @@
 %global agent_gorepo amazon-ecs-agent
 %global agent_goimport %{agent_goproject}/%{agent_gorepo}
 
-%global agent_gover 1.62.0
+%global agent_gover 1.63.1
 # git rev-parse --short=8
-%global agent_gitrev 3f73bab1
+%global agent_gitrev 637446af
 
 %global ecscni_goproject github.com/aws
 %global ecscni_gorepo amazon-ecs-cni-plugins
@@ -28,7 +28,7 @@ Release: 1%{?dist}
 Summary: Amazon Elastic Container Service agent
 License: Apache-2.0
 URL: https://%{agent_goimport}
-Source0: https://%{agent_goimport}/archive/v%{agent_gover}/%{agent_gorepo}-v%{agent_gover}.tar.gz
+Source0: https://%{agent_goimport}/archive/v%{agent_gover}/%{agent_gorepo}-%{agent_gover}.tar.gz
 Source1: https://%{ecscni_goimport}/archive/%{ecscni_gitrev}/%{ecscni_gorepo}.tar.gz
 Source2: https://%{vpccni_goimport}/archive/%{vpccni_gitrev}/%{vpccni_gorepo}.tar.gz
 Source101: ecs.service
