@@ -1,0 +1,5 @@
+# Support boot from IDE disks
+CONFIG_ATA=y
+CONFIG_ATA_PIIX=y
+CONFIG_SCSI=y
+CONFIG_BLK_DEV_SD=y
