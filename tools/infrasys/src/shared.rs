@@ -1,5 +1,6 @@
+use aws_sdk_cloudformation::model::{Output, Parameter};
+use aws_sdk_cloudformation::Client as CloudFormationClient;
 use log::info;
-use rusoto_cloudformation::{CloudFormation, CloudFormationClient, DescribeStacksInput, Parameter};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::{env, thread, time};
 use structopt::StructOpt;
@@ -19,11 +20,10 @@ pub fn getenv(var: &str) -> Result<String> {
 
 /// Generates a parameter type object used to specify parameters in CloudFormation templates
 pub fn create_parameter(key: String, val: String) -> Parameter {
-    Parameter {
-        parameter_key: Some(key),
-        parameter_value: Some(val),
-        ..Default::default()
-    }
+    Parameter::builder()
+        .parameter_key(key)
+        .parameter_value(val)
+        .build()
 }
 
 /// Polls cfn_client for stack_name in region until it's ready
@@ -32,23 +32,27 @@ pub async fn get_stack_outputs(
     cfn_client: &CloudFormationClient,
     stack_name: &str,
     region: &str,
-) -> Result<Vec<rusoto_cloudformation::Output>> {
+) -> Result<Vec<Output>> {
     let mut stack_outputs = cfn_client
-        .describe_stacks(DescribeStacksInput {
-            stack_name: Some(stack_name.to_string()),
-            ..Default::default()
-        })
+        .describe_stacks()
+        .stack_name(stack_name)
+        .send()
         .await
         .context(error::DescribeStackSnafu { stack_name, region })?
         .stacks
         .context(error::ParseResponseSnafu {
             what: "stacks",
             resource_name: stack_name,
-        })?[0]
+        })?
+        .first()
+        .context(error::MissingStackSnafu { stack_name, region })?
         .clone();
 
     // Checking that keys have been created so we can return updated outputs
-    let mut status = stack_outputs.stack_status;
+    let mut status = stack_outputs
+        .stack_status()
+        .context(error::ParseStatusSnafu)?
+        .as_str();
     // Max wait is 30 mins (90 attempts * 20s = 1800s = 30mins)
     let mut max_attempts: u32 = 90;
     while status != "CREATE_COMPLETE" {
@@ -66,19 +70,23 @@ pub async fn get_stack_outputs(
         );
         thread::sleep(time::Duration::from_secs(20));
         stack_outputs = cfn_client
-            .describe_stacks(DescribeStacksInput {
-                stack_name: Some(stack_name.to_string()),
-                ..Default::default()
-            })
+            .describe_stacks()
+            .stack_name(stack_name)
+            .send()
             .await
             .context(error::DescribeStackSnafu { stack_name, region })?
             .stacks
             .context(error::ParseResponseSnafu {
                 what: "stacks",
                 resource_name: stack_name,
-            })?[0]
+            })?
+            .first()
+            .context(error::MissingStackSnafu { stack_name, region })?
             .clone();
-        status = stack_outputs.stack_status;
+        status = stack_outputs
+            .stack_status()
+            .context(error::ParseStatusSnafu)?
+            .as_str();
         max_attempts -= 1;
     }
 

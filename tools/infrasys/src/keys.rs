@@ -1,10 +1,9 @@
 use async_trait::async_trait;
+use aws_sdk_cloudformation::Client as CloudFormationClient;
+use aws_types::region::Region;
 use pubsys_config::{KMSKeyConfig, SigningKeyConfig};
-use rusoto_cloudformation::{CloudFormation, CloudFormationClient, CreateStackInput};
-use rusoto_core::Region;
 use snafu::{OptionExt, ResultExt};
 use std::fs;
-use std::str::FromStr;
 
 use super::{error, shared, Result};
 
@@ -34,7 +33,7 @@ pub fn check_signing_key_config(signing_key_config: &SigningKeyConfig) -> Result
         SigningKeyConfig::file { .. } => (),
         SigningKeyConfig::kms { config, .. } => {
             let config = config.as_ref().context(error::MissingConfigSnafu {
-                missing: "config field for a kms key",
+                missing: "config field for kms keys",
             })?;
 
             match (
@@ -89,9 +88,13 @@ impl KMSKeyConfigExt for KMSKeyConfig {
                     missing: "key_alias",
                 })?
             );
-            let cfn_client = CloudFormationClient::new(
-                Region::from_str(region).context(error::ParseRegionSnafu { what: region })?,
-            );
+
+            let config = aws_config::from_env()
+                .region(Region::new(region.to_owned()))
+                .load()
+                .await;
+            let cfn_client = CloudFormationClient::new(&config);
+
             let cfn_filepath = format!(
                 "{}/infrasys/cloudformation-templates/kms_key_setup.yml",
                 shared::getenv("BUILDSYS_TOOLS_DIR")?
@@ -100,20 +103,19 @@ impl KMSKeyConfigExt for KMSKeyConfig {
                 .context(error::FileReadSnafu { path: cfn_filepath })?;
 
             let stack_result = cfn_client
-                .create_stack(CreateStackInput {
-                    parameters: Some(vec![shared::create_parameter(
-                        "Alias".to_string(),
-                        self.key_alias
-                            .as_ref()
-                            .context(error::KeyConfigSnafu {
-                                missing: "key_alias",
-                            })?
-                            .to_string(),
-                    )]),
-                    stack_name: stack_name.clone(),
-                    template_body: Some(cfn_template.clone()),
-                    ..Default::default()
-                })
+                .create_stack()
+                .parameters(shared::create_parameter(
+                    "Alias".to_string(),
+                    self.key_alias
+                        .as_ref()
+                        .context(error::KeyConfigSnafu {
+                            missing: "key_alias",
+                        })?
+                        .to_string(),
+                ))
+                .stack_name(stack_name.clone())
+                .template_body(cfn_template.clone())
+                .send()
                 .await
                 .context(error::CreateStackSnafu {
                     stack_name: &stack_name,

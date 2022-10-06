@@ -63,9 +63,6 @@ skip = [
 ]
 
 skip-tree = [
-    # rusoto_signature uses an older version of sha2
-    { name = "rusoto_signature" },
-
     # structopt pulls in an older version of clap
     { name = "structopt", version = "0.3.26" },
 

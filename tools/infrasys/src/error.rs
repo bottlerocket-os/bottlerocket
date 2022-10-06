@@ -1,3 +1,4 @@
+use aws_sdk_s3::types::SdkError;
 use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
@@ -14,7 +15,7 @@ pub enum Error {
     CreateStack {
         stack_name: String,
         region: String,
-        source: rusoto_core::RusotoError<rusoto_cloudformation::CreateStackError>,
+        source: SdkError<aws_sdk_cloudformation::error::CreateStackError>,
     },
 
     #[snafu(display(
@@ -40,6 +41,9 @@ pub enum Error {
     ))]
     CreateStackTimeout { stack_name: String, region: String },
 
+    #[snafu(display("No stack data returned for CFN stack '{}' in {}", stack_name, region))]
+    MissingStack { stack_name: String, region: String },
+
     #[snafu(display(
         "Failed to fetch stack details for CFN stack '{}' in '{}': {}",
         stack_name,
@@ -49,7 +53,7 @@ pub enum Error {
     DescribeStack {
         stack_name: String,
         region: String,
-        source: rusoto_core::RusotoError<rusoto_cloudformation::DescribeStacksError>,
+        source: SdkError<aws_sdk_cloudformation::error::DescribeStacksError>,
     },
 
     #[snafu(display("Missing environment variable '{}'", var))]
@@ -117,11 +121,11 @@ pub enum Error {
         source: std::num::ParseIntError,
     },
 
-    #[snafu(display("Failed to parse '{}' to a valid rusoto region: {}", what, source))]
-    ParseRegion {
-        what: String,
-        source: rusoto_core::region::ParseRegionError,
-    },
+    #[snafu(display("Failed to find default region"))]
+    DefaultRegion,
+
+    #[snafu(display("Unable to parse stack status"))]
+    ParseStatus,
 
     #[snafu(display(
         "Failed to find field '{}' after attempting to create resource '{}'",
@@ -139,7 +143,7 @@ pub enum Error {
     #[snafu(display("Failed to push object to bucket '{}': {}", bucket_name, source))]
     PutObject {
         bucket_name: String,
-        source: rusoto_core::RusotoError<rusoto_s3::PutObjectError>,
+        source: SdkError<aws_sdk_s3::error::PutObjectError>,
     },
 
     #[snafu(display(
@@ -149,7 +153,7 @@ pub enum Error {
     ))]
     PutPolicy {
         bucket_name: String,
-        source: rusoto_core::RusotoError<rusoto_s3::PutBucketPolicyError>,
+        source: SdkError<aws_sdk_s3::error::PutBucketPolicyError>,
     },
 
     #[snafu(display("Failed to create async runtime: {}", source))]
