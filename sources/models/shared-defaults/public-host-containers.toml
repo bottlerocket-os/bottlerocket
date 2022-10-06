@@ -11,4 +11,4 @@ source = "public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.2"
 [settings.host-containers.control]
 enabled = false
 superpowered = false
-source = "public.ecr.aws/bottlerocket/bottlerocket-control:v0.6.1"
+source = "public.ecr.aws/bottlerocket/bottlerocket-control:v0.6.3"
