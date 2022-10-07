@@ -5,7 +5,7 @@ mod register;
 mod snapshot;
 pub(crate) mod wait;
 
-use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots};
+use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots, ModifyOptions};
 use crate::aws::{client::build_client_config, parse_arch, region_from_string};
 use crate::Args;
 use aws_sdk_ebs::Client as EbsClient;
@@ -225,9 +225,15 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         info!("Granting access to target accounts so we can copy the AMI");
         let account_id_vec: Vec<_> = account_ids.into_iter().collect();
 
+        let modify_options = ModifyOptions {
+            user_ids: account_id_vec,
+            group_names: Vec::new(),
+            organization_arns: Vec::new(),
+            organizational_unit_arns: Vec::new(),
+        };
+
         modify_snapshots(
-            Some(account_id_vec.clone()),
-            None,
+            &modify_options,
             &OperationType::Add,
             &ids_of_image.snapshot_ids,
             &base_ec2_client,
@@ -240,8 +246,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         })?;
 
         modify_image(
-            Some(account_id_vec.clone()),
-            None,
+            &modify_options,
             &OperationType::Add,
             &ids_of_image.image_id,
             &base_ec2_client,

@@ -1099,8 +1099,8 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-if [ -z "${GRANT_TO_USERS}" ] && [ -z "${GRANT_TO_GROUPS}" ]; then
-   echo "GRANT_TO_USERS and/or GRANT_TO_GROUPS is mandatory for grant-ami; please give a comma-separated list of user IDs or group names" >&2
+if [ -z "${GRANT_TO_USERS}" ] && [ -z "${GRANT_TO_GROUPS}" ] && [ -z "${GRANT_TO_ORGS}" ] && [ -z "${GRANT_TO_ORG_UNITS}" ]; then
+   echo "GRANT_TO_USERS, GRANT_TO_GROUPS, GRANT_TO_ORGs, and/or GRANT_TO_ORG_UNITS is mandatory for grant-ami; please give a comma-separated list of user IDs, group names, organizations, or organizational units" >&2
    exit 1
 fi
 
@@ -1117,6 +1117,8 @@ pubsys \
    --grant \
    ${GRANT_TO_USERS:+--user-ids "${GRANT_TO_USERS}"} \
    ${GRANT_TO_GROUPS:+--group-names "${GRANT_TO_GROUPS}"} \
+   ${GRANT_TO_ORGS:+--organization-arns "${GRANT_TO_ORGS}"} \
+   ${GRANT_TO_ORG_UNITS:+--organizational-unit-arns "${GRANT_TO_ORG_UNITS}"} \
    \
    --ami-input "${ami_input}" \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
@@ -1135,8 +1137,8 @@ set -e
 
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
-if [ -z "${REVOKE_FROM_USERS}" ] && [ -z "${REVOKE_FROM_GROUPS}" ]; then
-   echo "REVOKE_FROM_USERS and/or REVOKE_FROM_GROUPS is mandatory for revoke-ami; please give a comma-separated list of user IDs or group names" >&2
+if [ -z "${REVOKE_FROM_USERS}" ] && [ -z "${REVOKE_FROM_GROUPS}" ] && [ -z "${REVOKE_FROM_ORGS}" ] && [ -z "${REVOKE_FROM_ORG_UNITS}" ]; then
+   echo "REVOKE_FROM_USERS, REVOKE_FROM_GROUPS, REVOKE_FROM_ORGS, and/or REVOKE_FROM_ORG_UNITS is mandatory for revoke-ami; please give a comma-separated list of user IDs, group names, organizations, or organizational units" >&2
    exit 1
 fi
 
@@ -1153,6 +1155,8 @@ pubsys \
    --revoke \
    ${REVOKE_FROM_USERS:+--user-ids "${REVOKE_FROM_USERS}"} \
    ${REVOKE_FROM_GROUPS:+--group-names "${REVOKE_FROM_GROUPS}"} \
+   ${REVOKE_FROM_ORGS:+--organization-arns "${REVOKE_FROM_ORGS}"} \
+   ${REVOKE_FROM_ORG_UNITS:+--organizational-unit-arns "${REVOKE_FROM_ORG_UNITS}"} \
    \
    --ami-input "${ami_input}" \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
