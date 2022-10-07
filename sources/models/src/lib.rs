@@ -340,6 +340,9 @@ struct BootSettings {
 #[model]
 struct AwsSettings {
     region: SingleLineString,
+    config: ValidBase64,
+    credentials: ValidBase64,
+    profile: SingleLineString,
 }
 
 // Metrics settings

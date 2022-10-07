@@ -156,3 +156,8 @@ version = "1.10.1"
     "migrate_v1.10.1_container-runtime.lz4",
     "migrate_v1.10.1_container-runtime-metadata.lz4"
 ]
+"(1.10.1, 1.11.0)" = [
+    "migrate_v1.11.0_aws-config-settings.lz4",
+    "migrate_v1.11.0_aws-creds.lz4",
+    "migrate_v1.11.0_aws-creds-metadata.lz4",
+]

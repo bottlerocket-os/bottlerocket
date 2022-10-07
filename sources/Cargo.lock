@@ -486,6 +486,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-config-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "aws-creds"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
+name = "aws-creds-metadata"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-endpoint"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

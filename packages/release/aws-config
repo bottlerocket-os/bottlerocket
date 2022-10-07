@@ -1,0 +1,3 @@
+{{~#if settings.aws.config~}}
+{{base64_decode settings.aws.config}}
+{{~/if~}}
