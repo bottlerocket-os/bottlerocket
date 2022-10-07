@@ -1,3 +1,143 @@
+# v1.10.0 (2022-10-10)
+
+## OS Changes
+* Add optional settings to reboot into new kernel command line parameters ([#2375])
+* Support for static IP addressing ([#2204], [#2330], [#2445])
+* Add support for NVIDIA driver version 515 ([#2455])
+* Set mode for tmpfs mounts ([#2473])
+* Increase inotify default limits ([#2335])
+* Align `vm.max_map_count` with the EKS Optimized AMI ([#2344])
+* Add support for configuring DNS settings ([#2353])
+* Migrate `netdog` from `serde_xml_rs` to `quick-xml` ([#2311])
+* Support versioning for `net.toml` ([#2281])
+* Update admin and control container ([#2471], [#2472])
+
+## Orchestrator Changes
+
+### ECS
+* Add `cargo make` tasks for testing ECS variants ([#2348])
+
+### Kubernetes
+
+* Add support for Kubernetes 1.24 variants ([#2437])
+* Remove Kubernetes aws-k8s-1.19 variants ([#2316])
+* Increase the kube-api-server QPS from 5/10 to 10/20 ([#2436], thanks @tzneal)
+* Update eni-max-pods with new instance types ([#2416])
+* Add setting to change `kubelet`'s log level ([#2460], [#2470])
+* Add `cargo make` tasks to perform migration testing for Kubernetes variants in AWS ([#2273])
+
+## Platform Changes
+
+### AWS
+* Disable drivers for USB-attached network interfaces ([#2328])
+
+### Metal
+* Add driver support for Solarflare, Pensando, Myricom, Huawei, Emulex, Chelsio, Broadcom, AMD and Intel 10G+ network cards ([#2379])
+
+## Build Changes
+* Extend `external-files` to vendor go modules ([#2378], [#2403], [#2430])
+* Make `net_config` unit tests reusable across versions ([#2385])
+* Add `diff-kernel-config` to identify kernel config changes ([#2368])
+* Extended support for variants in buildsys ([#2339])
+* Clarify crossbeam license ([#2447])
+* Honor `BUILDSYS_ARCH` and `BUILDSYS_VARIANT` env variables when set ([#2425])
+* Use architecture specific json payloads in unit tests ([#2367], [#2363])
+* Add unified `check` target in `Makefile.toml` for review readiness ([#2384])
+* Update Go dependencies of first-party go projects ([#2424], [#2440], [#2450], [#2452], [#2456])
+* Update Rust dependencies ([#2458], [#2476])
+* Update third-party packages ([#2397], [#2398], [#2464], [#2465], thanks @kschumy)
+* Update Bottlerocket SDK to 0.27.0 ([#2428])
+* Migrate `pubsys` and `infrasys` to the AWS SDK for Rust ([#2414], [#2415], [#2454])
+* Update `testsys` dependencies ([#2392])
+* Fix `hotdog`'s spec URL to the correct upstream link ([#2326])
+* Fix clippy warnings and enable lints on pull requests ([#2337], [#2346], [#2443])
+* Format issue field in PR template ([#2314])
+
+## Documentation Changes
+* Update checksum for new `root.json` ([#2405])
+* Mention that boot settings are available in Kubernetes 1.23 variants ([#2358])
+* Mention the need for AWS credentials in BUILDING.md and PUBLISHING-AWS.md ([#2334])
+* Add China to supported regions lists ([#2315])
+* Add community section to README.md ([#2305], [#2383])
+* Standardize `userdata.toml` as the filename used in different docs ([#2446])
+* Remove commit from image name in PROVISIONING-METAL.md ([#2312])
+* Add note to CONTRIBUTING.md that outlines filenames' casing ([#2306])
+* Fix typos in `Makefile.toml`, QUICKSTART-ECS.md, QUICKSTART-EKS.md, `netdog` and `prairiedog` ([#2318], thanks @kianmeng)
+* Fix casing for GitHub and VMware in CHANGELOG.md ([#2329])
+* Fix typo in test setup command ([#2477])
+* Fix TESTING.md link typo ([#2438])
+* Fix positional `fetch-license` argument ([#2457])
+
+[#2204]: https://github.com/bottlerocket-os/bottlerocket/pull/2204
+[#2273]: https://github.com/bottlerocket-os/bottlerocket/pull/2273
+[#2281]: https://github.com/bottlerocket-os/bottlerocket/pull/2281
+[#2305]: https://github.com/bottlerocket-os/bottlerocket/pull/2305
+[#2306]: https://github.com/bottlerocket-os/bottlerocket/pull/2306
+[#2311]: https://github.com/bottlerocket-os/bottlerocket/pull/2311
+[#2312]: https://github.com/bottlerocket-os/bottlerocket/pull/2312
+[#2314]: https://github.com/bottlerocket-os/bottlerocket/pull/2314
+[#2315]: https://github.com/bottlerocket-os/bottlerocket/pull/2315
+[#2316]: https://github.com/bottlerocket-os/bottlerocket/pull/2316
+[#2318]: https://github.com/bottlerocket-os/bottlerocket/pull/2318
+[#2326]: https://github.com/bottlerocket-os/bottlerocket/pull/2326
+[#2328]: https://github.com/bottlerocket-os/bottlerocket/pull/2328
+[#2329]: https://github.com/bottlerocket-os/bottlerocket/pull/2329
+[#2330]: https://github.com/bottlerocket-os/bottlerocket/pull/2330
+[#2334]: https://github.com/bottlerocket-os/bottlerocket/pull/2334
+[#2335]: https://github.com/bottlerocket-os/bottlerocket/pull/2335
+[#2337]: https://github.com/bottlerocket-os/bottlerocket/pull/2337
+[#2339]: https://github.com/bottlerocket-os/bottlerocket/pull/2339
+[#2344]: https://github.com/bottlerocket-os/bottlerocket/pull/2344
+[#2346]: https://github.com/bottlerocket-os/bottlerocket/pull/2346
+[#2348]: https://github.com/bottlerocket-os/bottlerocket/pull/2348
+[#2353]: https://github.com/bottlerocket-os/bottlerocket/pull/2353
+[#2358]: https://github.com/bottlerocket-os/bottlerocket/pull/2358
+[#2363]: https://github.com/bottlerocket-os/bottlerocket/pull/2363
+[#2367]: https://github.com/bottlerocket-os/bottlerocket/pull/2367
+[#2368]: https://github.com/bottlerocket-os/bottlerocket/pull/2368
+[#2375]: https://github.com/bottlerocket-os/bottlerocket/pull/2375
+[#2378]: https://github.com/bottlerocket-os/bottlerocket/pull/2378
+[#2379]: https://github.com/bottlerocket-os/bottlerocket/pull/2379
+[#2383]: https://github.com/bottlerocket-os/bottlerocket/pull/2383
+[#2384]: https://github.com/bottlerocket-os/bottlerocket/pull/2384
+[#2385]: https://github.com/bottlerocket-os/bottlerocket/pull/2385
+[#2392]: https://github.com/bottlerocket-os/bottlerocket/pull/2392
+[#2397]: https://github.com/bottlerocket-os/bottlerocket/pull/2397
+[#2398]: https://github.com/bottlerocket-os/bottlerocket/pull/2398
+[#2403]: https://github.com/bottlerocket-os/bottlerocket/pull/2403
+[#2405]: https://github.com/bottlerocket-os/bottlerocket/pull/2405
+[#2414]: https://github.com/bottlerocket-os/bottlerocket/pull/2414
+[#2415]: https://github.com/bottlerocket-os/bottlerocket/pull/2415
+[#2416]: https://github.com/bottlerocket-os/bottlerocket/pull/2416
+[#2424]: https://github.com/bottlerocket-os/bottlerocket/pull/2424
+[#2425]: https://github.com/bottlerocket-os/bottlerocket/pull/2425
+[#2428]: https://github.com/bottlerocket-os/bottlerocket/pull/2428
+[#2430]: https://github.com/bottlerocket-os/bottlerocket/pull/2430
+[#2436]: https://github.com/bottlerocket-os/bottlerocket/pull/2436
+[#2437]: https://github.com/bottlerocket-os/bottlerocket/pull/2437
+[#2438]: https://github.com/bottlerocket-os/bottlerocket/pull/2438
+[#2440]: https://github.com/bottlerocket-os/bottlerocket/pull/2440
+[#2443]: https://github.com/bottlerocket-os/bottlerocket/pull/2443
+[#2445]: https://github.com/bottlerocket-os/bottlerocket/pull/2445
+[#2446]: https://github.com/bottlerocket-os/bottlerocket/pull/2446
+[#2447]: https://github.com/bottlerocket-os/bottlerocket/pull/2447
+[#2450]: https://github.com/bottlerocket-os/bottlerocket/pull/2450
+[#2452]: https://github.com/bottlerocket-os/bottlerocket/pull/2452
+[#2454]: https://github.com/bottlerocket-os/bottlerocket/pull/2454
+[#2455]: https://github.com/bottlerocket-os/bottlerocket/pull/2455
+[#2456]: https://github.com/bottlerocket-os/bottlerocket/pull/2456
+[#2457]: https://github.com/bottlerocket-os/bottlerocket/pull/2457
+[#2458]: https://github.com/bottlerocket-os/bottlerocket/pull/2458
+[#2460]: https://github.com/bottlerocket-os/bottlerocket/pull/2460
+[#2464]: https://github.com/bottlerocket-os/bottlerocket/pull/2464
+[#2465]: https://github.com/bottlerocket-os/bottlerocket/pull/2465
+[#2470]: https://github.com/bottlerocket-os/bottlerocket/pull/2470
+[#2471]: https://github.com/bottlerocket-os/bottlerocket/pull/2471
+[#2472]: https://github.com/bottlerocket-os/bottlerocket/pull/2472
+[#2473]: https://github.com/bottlerocket-os/bottlerocket/pull/2473
+[#2476]: https://github.com/bottlerocket-os/bottlerocket/pull/2476
+[#2477]: https://github.com/bottlerocket-os/bottlerocket/pull/2477
+
 # v1.9.2 (2022-08-31)
 
 ## Build Changes
