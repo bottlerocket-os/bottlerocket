@@ -93,6 +93,14 @@ jobs:
             arch: aarch64
             supported: true
             fetch-upstream: "true"
+          - variant: aws-k8s-1.24-nvidia
+            arch: x86_64
+            supported: true
+            fetch-upstream: "true"
+          - variant: aws-k8s-1.24-nvidia
+            arch: aarch64
+            supported: true
+            fetch-upstream: "true"
           - variant: aws-ecs-1-nvidia
             arch: x86_64
             supported: true
