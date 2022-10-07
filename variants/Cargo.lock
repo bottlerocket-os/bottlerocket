@@ -156,6 +156,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_24"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_24",
+ "release",
+]
+
+[[package]]
+name = "aws-k8s-1_24-nvidia"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kmod-5_15-nvidia",
+ "kubernetes-1_24",
+ "nvidia-container-toolkit",
+ "nvidia-k8s-device-plugin",
+ "release",
+]
+
+[[package]]
 name = "bash"
 version = "0.1.0"
 dependencies = [
@@ -410,6 +437,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "kmod-5_15-nvidia"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "kernel-5_15",
+]
+
+[[package]]
 name = "kubernetes-1_20"
 version = "0.1.0"
 dependencies = [
@@ -432,6 +467,13 @@ dependencies = [
 
 [[package]]
 name = "kubernetes-1_23"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_24"
 version = "0.1.0"
 dependencies = [
  "glibc",
@@ -763,6 +805,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "metal-k8s-1_24"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_24",
+ "release",
+]
+
+[[package]]
 name = "microcode"
 version = "0.1.0"
 
@@ -991,6 +1044,18 @@ dependencies = [
  "cni-plugins",
  "kernel-5_10",
  "kubernetes-1_23",
+ "open-vm-tools",
+ "release",
+]
+
+[[package]]
+name = "vmware-k8s-1_24"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_24",
  "open-vm-tools",
  "release",
 ]
