@@ -10,6 +10,7 @@ shopt -qs failglob
 
 OUTPUT_FMT="raw"
 BUILDER_ARCH="$(uname -m)"
+OVF_TEMPLATE=""
 
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
@@ -19,7 +20,10 @@ for opt in "$@"; do
       --output-fmt=*) OUTPUT_FMT="${optarg}" ;;
       --os-image-size-gib=*) OS_IMAGE_SIZE_GIB="${optarg}" ;;
       --data-image-size-gib=*) DATA_IMAGE_SIZE_GIB="${optarg}" ;;
+      --os-image-publish-size-gib=*) OS_IMAGE_PUBLISH_SIZE_GIB="${optarg}" ;;
+      --data-image-publish-size-gib=*) DATA_IMAGE_PUBLISH_SIZE_GIB="${optarg}" ;;
       --partition-plan=*) PARTITION_PLAN="${optarg}" ;;
+      --ovf-template=*) OVF_TEMPLATE="${optarg}" ;;
    esac
 done
 
@@ -38,6 +42,28 @@ case "${PARTITION_PLAN}" in
     exit 1
     ;;
 esac
+
+# Fail fast if the OVF template doesn't exist, or doesn't match the layout.
+if [ "${OUTPUT_FMT}" == "vmdk" ] ; then
+  if [ ! -s "${OVF_TEMPLATE}" ] ; then
+    echo "required OVF template not found: ${OVF_TEMPLATE}" >&2
+    exit 1
+  fi
+
+  if [ "${PARTITION_PLAN}" == "split" ] ; then
+    if ! grep -Fq '{{DATA_DISK}}' "${OVF_TEMPLATE}" ; then
+      echo "Missing data disk in OVF template, which is required for 'split' layout." >&2
+      exit 1
+    fi
+  fi
+
+  if [ "${PARTITION_PLAN}" == "unified" ] ; then
+    if grep -Fq '{{DATA_DISK}}' "${OVF_TEMPLATE}" ; then
+      echo "Incorrect data disk in OVF template, which is not supported for 'unified' layout." >&2
+      exit 1
+    fi
+  fi
+fi
 
 # Store output artifacts in a versioned directory.
 OUTPUT_DIR="${OUTPUT_DIR}/${VERSION_ID}-${BUILD_ID}"
@@ -390,6 +416,57 @@ elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
     qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_NAME}.vmdk"
     symlink_image "vmdk" "data_image"
   fi
+fi
+
+# Now create the OVA if needed.
+if [ "${OUTPUT_FMT}" == "vmdk" ] ; then
+  os_vmdk="${OS_IMAGE_NAME}.vmdk"
+  data_vmdk="${DATA_IMAGE_NAME}.vmdk"
+  ovf="${OS_IMAGE_NAME}.ovf"
+  ova_dir="$(mktemp -d)"
+
+  # The manifest expects disk sizes in bytes.
+  bytes_in_gib="$((1024 * 1024 * 1024))"
+  os_disk_bytes="$((OS_IMAGE_PUBLISH_SIZE_GIB * bytes_in_gib))"
+  data_disk_bytes="$((DATA_IMAGE_PUBLISH_SIZE_GIB * bytes_in_gib))"
+  sed "${OVF_TEMPLATE}" \
+     -e "s/{{OS_DISK}}/${os_vmdk}/g" \
+     -e "s/{{DATA_DISK}}/${data_vmdk}/g" \
+     -e "s/{{OS_DISK_BYTES}}/${os_disk_bytes}/g" \
+     -e "s/{{DATA_DISK_BYTES}}/${data_disk_bytes}/g" \
+     > "${ova_dir}/${ovf}"
+
+  # Make sure we replaced all the '{{...}}' fields with real values.
+  if grep -F -e '{{' -e '}}' "${ova_dir}/${ovf}" ; then
+    echo "Failed to fully render the OVF template" >&2
+    exit 1
+  fi
+
+  # Create the manifest file with the hashes of the VMDKs and the OVF.
+  manifest="${OS_IMAGE_NAME}.mf"
+  pushd "${OUTPUT_DIR}" >/dev/null
+  sha256sum --tag "${os_vmdk}" > "${ova_dir}/${manifest}"
+  if [ -s "${DATA_IMAGE}" ] ; then
+    sha256sum --tag "${data_vmdk}" >> "${ova_dir}/${manifest}"
+  fi
+  popd >/dev/null
+  pushd "${ova_dir}" >/dev/null
+  sha256sum --tag "${ovf}" >> "${manifest}"
+  popd >/dev/null
+
+  # According to the OVF spec:
+  # https://www.dmtf.org/sites/default/files/standards/documents/DSP0243_2.1.1.pdf,
+  # the OVF must be first in the tar bundle.  Manifest is next, and then the
+  # files must fall in the same order as listed in the References section of the
+  # OVF file
+  ova="${OS_IMAGE_NAME}.ova"
+  tar -cf "${OUTPUT_DIR}/${ova}" -C "${ova_dir}" "${ovf}" "${manifest}"
+  tar -rf "${OUTPUT_DIR}/${ova}" -C "${OUTPUT_DIR}" "${os_vmdk}"
+  if [ -s "${DATA_IMAGE}" ] ; then
+     tar -rf "${OUTPUT_DIR}/${ova}" -C "${OUTPUT_DIR}" "${data_vmdk}"
+  fi
+
+  symlink_image "ova" "os_image"
 fi
 
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"

@@ -139,7 +139,11 @@ impl VariantBuilder {
             os_image_size_gib,
             data_image_size_gib,
             partition_plan,
+            ..
         } = image_layout;
+
+        let (os_image_publish_size_gib, data_image_publish_size_gib) =
+            image_layout.publish_image_sizes_gib();
 
         let mut args = Vec::new();
         args.build_arg("PACKAGES", packages.join(" "));
@@ -160,6 +164,14 @@ impl VariantBuilder {
         );
         args.build_arg("OS_IMAGE_SIZE_GIB", format!("{}", os_image_size_gib));
         args.build_arg("DATA_IMAGE_SIZE_GIB", format!("{}", data_image_size_gib));
+        args.build_arg(
+            "OS_IMAGE_PUBLISH_SIZE_GIB",
+            format!("{}", os_image_publish_size_gib),
+        );
+        args.build_arg(
+            "DATA_IMAGE_PUBLISH_SIZE_GIB",
+            format!("{}", data_image_publish_size_gib),
+        );
         args.build_arg(
             "PARTITION_PLAN",
             match partition_plan {

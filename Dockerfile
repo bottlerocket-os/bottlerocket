@@ -193,6 +193,8 @@ ARG IMAGE_FORMAT
 ARG OS_IMAGE_SIZE_GIB
 ARG DATA_IMAGE_SIZE_GIB
 ARG PARTITION_PLAN
+ARG OS_IMAGE_PUBLISH_SIZE_GIB
+ARG DATA_IMAGE_PUBLISH_SIZE_GIB
 ARG KERNEL_PARAMETERS
 ARG GRUB_FEATURES
 ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} \
@@ -208,7 +210,10 @@ RUN --mount=target=/host \
       --output-fmt="${IMAGE_FORMAT}" \
       --os-image-size-gib="${OS_IMAGE_SIZE_GIB}" \
       --data-image-size-gib="${DATA_IMAGE_SIZE_GIB}" \
+      --os-image-publish-size-gib="${OS_IMAGE_PUBLISH_SIZE_GIB}" \
+      --data-image-publish-size-gib="${DATA_IMAGE_PUBLISH_SIZE_GIB}" \
       --partition-plan="${PARTITION_PLAN}" \
+      --ovf-template="/host/variants/${VARIANT}/template.ovf" \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
