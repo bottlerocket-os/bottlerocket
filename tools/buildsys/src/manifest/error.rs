@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(super)))]
-pub(crate) enum Error {
+pub(super) enum Error {
     #[snafu(display("Failed to read manifest file '{}': {}", path.display(), source))]
     ManifestFileRead { path: PathBuf, source: io::Error },
 
@@ -14,5 +14,3 @@ pub(crate) enum Error {
         source: toml::de::Error,
     },
 }
-
-pub(super) type Result<T> = std::result::Result<T, Error>;

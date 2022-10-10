@@ -18,7 +18,7 @@ when the docker-go script is invoked.
 pub(crate) mod error;
 use error::Result;
 
-use super::manifest;
+use buildsys::manifest;
 use duct::cmd;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::io::Write;

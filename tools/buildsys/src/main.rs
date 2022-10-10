@@ -11,15 +11,13 @@ The implementation is closely tied to the top-level Dockerfile.
 mod builder;
 mod cache;
 mod gomod;
-mod manifest;
 mod project;
 mod spec;
 
-use crate::gomod::GoMod;
-use crate::manifest::BundleModule;
 use builder::{PackageBuilder, VariantBuilder};
+use buildsys::manifest::{BundleModule, ManifestInfo, SupportedArch};
 use cache::LookasideCache;
-use manifest::{ManifestInfo, SupportedArch};
+use gomod::GoMod;
 use project::ProjectInfo;
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
@@ -35,7 +33,7 @@ mod error {
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         ManifestParse {
-            source: super::manifest::error::Error,
+            source: buildsys::manifest::Error,
         },
 
         SpecParse {
@@ -144,7 +142,7 @@ fn build_package() -> Result<()> {
     // If manifest has package.metadata.build-package.variant-sensitive set, then track the
     // appropriate environment variable for changes.
     if let Some(sensitivity) = manifest.variant_sensitive() {
-        use manifest::{SensitivityType::*, VariantSensitivity::*};
+        use buildsys::manifest::{SensitivityType::*, VariantSensitivity::*};
         fn emit_variant_env(suffix: Option<&str>) {
             if let Some(suffix) = suffix {
                 println!(

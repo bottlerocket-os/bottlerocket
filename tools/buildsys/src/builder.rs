@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::manifest::{GrubFeature, ImageFormat, ImageLayout, PartitionPlan, SupportedArch};
+use buildsys::manifest::{GrubFeature, ImageFormat, ImageLayout, PartitionPlan, SupportedArch};
 
 /*
 There's a bug in BuildKit that can lead to a build failure during parallel

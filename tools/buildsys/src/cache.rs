@@ -13,7 +13,7 @@ It implements a two-tier approach to retrieval: files are first pulled from the
 pub(crate) mod error;
 use error::Result;
 
-use super::manifest;
+use buildsys::manifest;
 use sha2::{Digest, Sha512};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fs::{self, File};
