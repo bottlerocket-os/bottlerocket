@@ -4,6 +4,7 @@ use aws_sdk_ec2::model::{
     ArchitectureValues, BlockDeviceMapping, EbsBlockDevice, Filter, VolumeType,
 };
 use aws_sdk_ec2::{Client as Ec2Client, Region};
+use buildsys::manifest;
 use coldsnap::{SnapshotUploader, SnapshotWaiter};
 use log::{debug, info, warn};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -32,23 +33,37 @@ async fn _register_image(
     ec2_client: &Ec2Client,
     cleanup_snapshot_ids: &mut Vec<String>,
 ) -> Result<RegisteredIds> {
+    let variant_manifest = manifest::ManifestInfo::new(&ami_args.variant_manifest).context(
+        error::LoadVariantManifestSnafu {
+            path: &ami_args.variant_manifest,
+        },
+    )?;
+
+    let image_layout = variant_manifest
+        .image_layout()
+        .context(error::MissingImageLayoutSnafu {
+            path: &ami_args.variant_manifest,
+        })?;
+
+    let (os_volume_size, data_volume_size) = image_layout.publish_image_sizes_gib();
+
     debug!("Uploading images into EBS snapshots in {}", region);
     let uploader = SnapshotUploader::new(ebs_client);
-    let root_snapshot =
-        snapshot_from_image(&ami_args.root_image, &uploader, None, ami_args.no_progress)
+    let os_snapshot =
+        snapshot_from_image(&ami_args.os_image, &uploader, None, ami_args.no_progress)
             .await
             .context(error::SnapshotSnafu {
-                path: &ami_args.root_image,
+                path: &ami_args.os_image,
                 region: region.as_ref(),
             })?;
-    cleanup_snapshot_ids.push(root_snapshot.clone());
+    cleanup_snapshot_ids.push(os_snapshot.clone());
 
     let mut data_snapshot = None;
     if let Some(data_image) = &ami_args.data_image {
         let snapshot = snapshot_from_image(data_image, &uploader, None, ami_args.no_progress)
             .await
             .context(error::SnapshotSnafu {
-                path: &ami_args.root_image,
+                path: &ami_args.os_image,
                 region: region.as_ref(),
             })?;
         cleanup_snapshot_ids.push(snapshot.clone());
@@ -58,7 +73,7 @@ async fn _register_image(
     info!("Waiting for snapshots to become available in {}", region);
     let waiter = SnapshotWaiter::new(ec2_client.clone());
     waiter
-        .wait(&root_snapshot, Default::default())
+        .wait(&os_snapshot, Default::default())
         .await
         .context(error::WaitSnapshotSnafu {
             snapshot_type: "root",
@@ -74,30 +89,30 @@ async fn _register_image(
     }
 
     // Prepare parameters for AMI registration request
-    let root_bdm = BlockDeviceMapping::builder()
+    let os_bdm = BlockDeviceMapping::builder()
         .set_device_name(Some(ROOT_DEVICE_NAME.to_string()))
         .set_ebs(Some(
             EbsBlockDevice::builder()
                 .set_delete_on_termination(Some(true))
-                .set_snapshot_id(Some(root_snapshot.clone()))
+                .set_snapshot_id(Some(os_snapshot.clone()))
                 .set_volume_type(Some(VolumeType::from(VOLUME_TYPE)))
-                .set_volume_size(ami_args.root_volume_size)
+                .set_volume_size(Some(os_volume_size))
                 .build(),
         ))
         .build();
 
     let mut data_bdm = None;
     if let Some(ref data_snapshot) = data_snapshot {
-        let mut bdm = root_bdm.clone();
+        let mut bdm = os_bdm.clone();
         bdm.device_name = Some(DATA_DEVICE_NAME.to_string());
         if let Some(ebs) = bdm.ebs.as_mut() {
             ebs.snapshot_id = Some(data_snapshot.clone());
-            ebs.volume_size = ami_args.data_volume_size;
+            ebs.volume_size = Some(data_volume_size);
         }
         data_bdm = Some(bdm);
     }
 
-    let mut block_device_mappings = vec![root_bdm];
+    let mut block_device_mappings = vec![os_bdm];
     if let Some(data_bdm) = data_bdm {
         block_device_mappings.push(data_bdm);
     }
@@ -125,7 +140,7 @@ async fn _register_image(
             region: region.as_ref(),
         })?;
 
-    let mut snapshot_ids = vec![root_snapshot];
+    let mut snapshot_ids = vec![os_snapshot];
     if let Some(data_snapshot) = data_snapshot {
         snapshot_ids.push(data_snapshot);
     }
@@ -249,6 +264,15 @@ mod error {
             region: String,
             source: SdkError<DescribeImagesError>,
         },
+
+        #[snafu(display("Failed to load variant manifest from {}: {}", path.display(), source))]
+        LoadVariantManifest {
+            path: PathBuf,
+            source: buildsys::manifest::Error,
+        },
+
+        #[snafu(display("Could not find image layout for {}", path.display()))]
+        MissingImageLayout { path: PathBuf },
 
         #[snafu(display("Image response in {} did not include image ID", region))]
         MissingImageId { region: String },

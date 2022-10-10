@@ -46,16 +46,6 @@ PUBLISH_REPO = "default"
 # publishing-related steps
 PUBLISH_TUFTOOL_VERSION="0.8.1"
 
-# The size in GiB of the data volume in the block device mapping of registered
-# AMIs.  (You can also specify PUBLISH_ROOT_VOLUME_SIZE to override the root
-# volume size; by default it's the image size, rounded up.)
-PUBLISH_DATA_VOLUME_SIZE = "20"
-
-# For images using a "unified" layout where both OS and data partitions are in
-# the same image, the root / data distinction doesn't make sense, but we still
-# have an idea of how big the overall volume should be to have "enough" space.
-PUBLISH_UNIFIED_VOLUME_SIZE = "22"
-
 # This can be overridden with -e to change the path to the file containing SSM
 # parameter templates.  This file determines the parameter names and values
 # that will be published to SSM when you run `cargo make ssm`.  See
@@ -759,7 +749,7 @@ done
 # modules for a given release.
 LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
 
-# Include the root and data disk images in the repo both with and without a
+# Include the os and data disk images in the repo both with and without a
 # friendly name if they exist.  Check for the existence of the image and not
 # the friendly symlink to guard against the case where the link may not have
 # been created. `pubsys` will also fail if the friendly link does not exist
@@ -912,19 +902,19 @@ set -e
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
 cleanup() {
-   ([ -f "${root_image}" ] && rm -f "${root_image}") ||:
+   ([ -f "${os_image}" ] && rm -f "${os_image}") ||:
    ([ -f "${data_image}" ] && rm -f "${data_image}") ||:
 }
 trap 'cleanup' EXIT
 
-# Unlz4 the root image, and the data image if present
-rootlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
-root_image="${rootlz4%.lz4}"
-if [ ! -s "${rootlz4}" ]; then
+# Unlz4 the os image, and the data image if present
+oslz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
+os_image="${oslz4%.lz4}"
+if [ ! -s "${oslz4}" ]; then
    echo "Image file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
    exit 1
 fi
-lz4 -df "${rootlz4}" "${root_image}"
+lz4 -df "${oslz4}" "${os_image}"
 
 datalz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
 data_image="${datalz4%.lz4}"
@@ -936,35 +926,11 @@ if [ -s "${datalz4}" ] ; then
    is_split="yes"
 fi
 
-bytes_in_gib="$((1024 * 1024 * 1024))"
-root_image_size_gib="$(($(stat -c %s "${root_image}") / bytes_in_gib))"
-if [ "${is_split}" == "yes" ] ; then
-   # If an optional root volume size is given, it must be larger than the root image.
-   if [ -n "${PUBLISH_ROOT_VOLUME_SIZE}" ] && [ "${PUBLISH_ROOT_VOLUME_SIZE}" -lt "${root_image_size_gib}" ] ; then
-      echo "Root image is larger than the given volume size - pass '-e PUBLISH_ROOT_VOLUME_SIZE=${root_image_size_gib}' to fix" >&2
-      exit 1
-   fi
-   data_image_size_gib="$(($(stat -c %s "${data_image}") / bytes_in_gib))"
-   if [ "${PUBLISH_DATA_VOLUME_SIZE}" -lt "${data_image_size_gib}" ] ; then
-      echo "Data image is larger than the given volume size - pass '-e PUBLISH_DATA_VOLUME_SIZE=${data_image_size_gib}' to fix" >&2
-      exit 1
-   fi
-else # unified
-   if [ "${PUBLISH_UNIFIED_VOLUME_SIZE}" -lt "${root_image_size_gib}" ] ; then
-      echo "Unified image is larger than the given volume size - pass '-e PUBLISH_UNIFIED_VOLUME_SIZE=${root_image_size_gib}' to fix" >&2
-      exit 1
-   fi
-fi
-
-root_volume_args=(--root-image "${root_image}")
+os_volume_args=(--os-image "${os_image}")
 data_volume_args=()
 if [ "${is_split}" == "yes" ] ; then
-   # Pass the root volume size if specified, otherwise it defaults to the size of the image.
-   root_volume_args+=(${PUBLISH_ROOT_VOLUME_SIZE:+--root-volume-size "${PUBLISH_ROOT_VOLUME_SIZE}"})
-   # Pass the data image to register as a snapshot, and its desired size.
-   data_volume_args+=(--data-image "${data_image}" --data-volume-size "${PUBLISH_DATA_VOLUME_SIZE}")
-else # unified
-   root_volume_args+=(--root-volume-size "${PUBLISH_UNIFIED_VOLUME_SIZE}")
+   # Pass the data image to register as a snapshot.
+   data_volume_args+=(--data-image "${data_image}")
 fi
 
 ami_output="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
@@ -977,9 +943,10 @@ pubsys \
    \
    ami \
    \
-   "${root_volume_args[@]}" \
+   "${os_volume_args[@]}" \
    "${data_volume_args[@]}" \
    \
+   --variant-manifest "${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/Cargo.toml" \
    --arch "${BUILDSYS_ARCH}" \
    --name "${ami_name}" \
    --description "${PUBLISH_AMI_DESCRIPTION:-${ami_name}}" \

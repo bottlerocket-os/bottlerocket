@@ -2102,6 +2102,7 @@ dependencies = [
  "aws-sdk-sts",
  "aws-smithy-types",
  "aws-types",
+ "buildsys",
  "chrono",
  "clap 3.2.22",
  "coldsnap",
