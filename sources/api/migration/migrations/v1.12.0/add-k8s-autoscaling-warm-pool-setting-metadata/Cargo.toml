@@ -1,0 +1,15 @@
+[package]
+name = "add-k8s-autoscaling-warm-pool-setting-metadata"
+version = "0.1.0"
+authors = ["Tianhao Geng <tianhg@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
+
+[build-dependencies]
+bottlerocket-variant = { version = "0.1", path = "../../../../../bottlerocket-variant" }

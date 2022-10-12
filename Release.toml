@@ -173,4 +173,6 @@ version = "1.12.0"
 "(1.11.0, 1.11.1)" = []
 "(1.11.1, 1.12.0)" = [
     "migrate_v1.12.0_k8s-private-pki-path.lz4",
+    "migrate_v1.12.0_add-k8s-autoscaling-warm-pool-setting.lz4",
+    "migrate_v1.12.0_add-k8s-autoscaling-warm-pool-setting-metadata.lz4",
 ]
