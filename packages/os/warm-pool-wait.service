@@ -1,0 +1,17 @@
+[Unit]
+Description=Wait for the instance to be in service
+After=configured.target
+Wants=configured.target
+Before=kubelet.service
+# We only want to run once, at first boot. This file is created by shibaken
+# after a successful run.
+ConditionPathExists=!/var/lib/bottlerocket/warm-pool-wait.ran
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/shibaken warm-pool-wait
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
+RequiredBy=kubelet.service
