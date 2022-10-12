@@ -579,6 +579,12 @@ For AWS variants, these settings allow you to set up CloudFormation signaling to
 #### Auto Scaling group settings
 
 * `settings.autoscaling.should-wait`: Whether to wait for the instance to reach the `InService` state before the orchestrator agent joins the cluster. Defaults to `false`. Set this to `true` only if the instance is part of an Auto Scaling group, or will be attached to one later.
+  For example:
+
+  ```toml
+  [settings.autoscaling]
+  should-wait = true
+  ```
 
 #### OCI Hooks settings
 
