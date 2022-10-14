@@ -39,7 +39,7 @@ impl SettingsJson {
         S2: Into<String>,
     {
         let mut val: toml::Value =
-            toml::from_str(&data.as_ref()).context(error::TOMLUserDataParseSnafu)?;
+            toml::from_str(data.as_ref()).context(error::TOMLUserDataParseSnafu)?;
         let table = val
             .as_table_mut()
             .context(error::UserDataNotTomlTableSnafu)?;

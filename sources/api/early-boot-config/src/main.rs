@@ -15,7 +15,6 @@ Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be ta
 #[macro_use]
 extern crate log;
 
-use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, ResultExt};
 use std::fs;
@@ -92,7 +91,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
@@ -177,7 +176,7 @@ mod error {
         },
 
         #[snafu(display("Provider error: {}", source))]
-        ProviderError { source: Box<dyn std::error::Error> },
+        Provider { source: Box<dyn std::error::Error> },
 
         #[snafu(display("Error {} when {}ing '{}': {}", code, method, uri, response_body))]
         Response {
