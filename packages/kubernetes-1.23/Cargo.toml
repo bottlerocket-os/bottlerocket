@@ -14,8 +14,8 @@ path = "pkg.rs"
 package-name = "kubernetes-1.23"
 
 [[package.metadata.build-package.external-files]]
-url = "https://distro.eks.amazonaws.com/kubernetes-1-23/releases/5/artifacts/kubernetes/v1.23.9/kubernetes-src.tar.gz"
-sha512 = "730df4089fbc7ec52c9dc2bb886d010e56346d1475b46c471319f5e1a75f7c0b6767133d65ec8cd1afd0536dee649e964dbe32078e3cde099fddbc45efc90c47"
+url = "https://distro.eks.amazonaws.com/kubernetes-1-23/releases/6/artifacts/kubernetes/v1.23.12/kubernetes-src.tar.gz"
+sha512 = "503e7c54d50e71f9bc16ad1a338f50115cfa427e82ae80e4b74b3bce9cae2497508b97e596bbf26f8dd4705dba545ecd3a8746b506ec10ca8f549e609b026a65"
 
 # RPM BuildRequires
 [build-dependencies]
