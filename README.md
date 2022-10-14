@@ -580,6 +580,27 @@ It is recommended to programmatically set these settings via `apiclient` through
 
 In addition to the container runtime daemons, these credential settings will also apply to [host-container](#host-containers-settings) and [bootstrap-container](#bootstrap-containers-settings) image pulls as well.
 
+#### Container runtime settings
+
+Some behavior of the container runtime (currently `containerd`) can be modified with the following settings:
+
+* `settings.container-runtime.enable-unprivileged-icmp`: Allow unprivileged containers to open ICMP echo sockets.
+* `settings.container-runtime.enable-unprivileged-ports`: Allow unprivileged containers to bind to ports < 1024.
+* `settings.container-runtime.max-concurrent-downloads`: Restricts the number of concurrent layer downloads for each image.
+* `settings.container-runtime.max-container-log-line-size`: Controls how long container log messages can be.
+  If the log output is longer than the limit, the log message will be broken into multiple lines.
+
+Example container runtime settings:
+
+```toml
+[settings.container-runtime]
+# Set log line length to unlimited
+max-container-log-line-size = -1
+max-concurrent-downloads = 4
+enable-unprivileged-icmp = true
+enable-unprivileged-ports = true
+```
+
 #### Updates settings
 
 * `settings.updates.metadata-base-url`: The common portion of all URIs used to download update metadata.
