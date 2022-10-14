@@ -1,19 +1,25 @@
-From 0fceffa51b087c1f3f19f470f08e9378d71ddb2d Mon Sep 17 00:00:00 2001
+From 334b58a122bad34c7efa1b1ea6d58389477fd255 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Thu, 27 Nov 2014 16:34:21 -0800
 Subject: [PATCH] gpt: add search by partition label and uuid commands
 
 Builds on the existing filesystem search code. Only for GPT right now.
+
+[markubo: Update to grub-2.06-42.amzn2022. Search functions take a more
+general search_flags parameter now instead of a no_floppy flag.]
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+
 ---
  Makefile.util.def                      |  2 +
  grub-core/Makefile.core.def            | 10 +++
  grub-core/commands/search.c            | 49 +++++++++++++++
  grub-core/commands/search_part_label.c |  5 ++
  grub-core/commands/search_part_uuid.c  |  5 ++
- grub-core/commands/search_wrap.c       | 12 ++++
+ grub-core/commands/search_wrap.c       | 10 +++
  grub-core/lib/gpt.c                    | 64 ++++++++++++++++++++
  include/grub/gpt_partition.h           | 16 +++++
- include/grub/search.h                  |  4 ++
+ include/grub/search.h                  |  6 ++
  tests/gpt_unit_test.c                  | 84 ++++++++++++++++++++++++++
  10 files changed, 251 insertions(+)
  create mode 100644 grub-core/commands/search_part_label.c
@@ -33,10 +39,10 @@ index eb4bc90..8f74405 100644
    common = grub-core/kern/emu/hostfs.c;
    common = grub-core/lib/gpt.c;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 78c64a8..fb4b1a1 100644
+index 393aecd..3cde624 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -1136,6 +1136,16 @@ module = {
+@@ -1152,6 +1152,16 @@ module = {
    common = commands/search_label.c;
  };
  
@@ -54,7 +60,7 @@ index 78c64a8..fb4b1a1 100644
    name = setpci;
    common = commands/setpci.c;
 diff --git a/grub-core/commands/search.c b/grub-core/commands/search.c
-index ed090b3..4ad72c5 100644
+index 57d26ce..bb0c7cb 100644
 --- a/grub-core/commands/search.c
 +++ b/grub-core/commands/search.c
 @@ -30,6 +30,9 @@
@@ -67,7 +73,7 @@ index ed090b3..4ad72c5 100644
  
  GRUB_MOD_LICENSE ("GPLv3+");
  
-@@ -90,6 +93,44 @@ iterate_device (const char *name, void *data)
+@@ -109,6 +112,44 @@ iterate_device (const char *name, void *data)
  	}
        grub_free (buf);
      }
@@ -112,7 +118,7 @@ index ed090b3..4ad72c5 100644
  #else
      {
        /* SEARCH_FS_UUID or SEARCH_LABEL */
-@@ -313,6 +354,10 @@ static grub_command_t cmd;
+@@ -332,6 +373,10 @@ static grub_command_t cmd;
  
  #ifdef DO_SEARCH_FILE
  GRUB_MOD_INIT(search_fs_file)
@@ -123,7 +129,7 @@ index ed090b3..4ad72c5 100644
  #elif defined (DO_SEARCH_FS_UUID)
  GRUB_MOD_INIT(search_fs_uuid)
  #else
-@@ -327,6 +372,10 @@ GRUB_MOD_INIT(search_label)
+@@ -346,6 +391,10 @@ GRUB_MOD_INIT(search_label)
  
  #ifdef DO_SEARCH_FILE
  GRUB_MOD_FINI(search_fs_file)
@@ -157,7 +163,7 @@ index 0000000..2d1d3d0
 +#define HELP_MESSAGE N_("Search devices by partition UUID. If VARIABLE is specified, the first device found is set to a variable.")
 +#include "search.c"
 diff --git a/grub-core/commands/search_wrap.c b/grub-core/commands/search_wrap.c
-index 47fc8eb..d357454 100644
+index 0b62acf..82f8e63 100644
 --- a/grub-core/commands/search_wrap.c
 +++ b/grub-core/commands/search_wrap.c
 @@ -36,6 +36,10 @@ static const struct grub_arg_option options[] =
@@ -171,7 +177,7 @@ index 47fc8eb..d357454 100644
      {"set",		's', GRUB_ARG_OPTION_OPTIONAL,
       N_("Set a variable to the first device found."), N_("VARNAME"),
       ARG_TYPE_STRING},
-@@ -71,6 +75,8 @@ enum options
+@@ -72,6 +76,8 @@ enum options
      SEARCH_FILE,
      SEARCH_LABEL,
      SEARCH_FS_UUID,
@@ -179,20 +185,18 @@ index 47fc8eb..d357454 100644
 +    SEARCH_PART_UUID,
      SEARCH_SET,
      SEARCH_NO_FLOPPY,
-     SEARCH_HINT,
-@@ -186,6 +192,12 @@ grub_cmd_search (grub_extcmd_context_t ctxt, int argc, char **args)
+     SEARCH_EFIDISK_ONLY,
+@@ -193,6 +199,10 @@ grub_cmd_search (grub_extcmd_context_t ctxt, int argc, char **args)
+     grub_search_label (id, var, flags, hints, nhints);
    else if (state[SEARCH_FS_UUID].set)
-     grub_search_fs_uuid (id, var, state[SEARCH_NO_FLOPPY].set,
- 			 hints, nhints);
+     grub_search_fs_uuid (id, var, flags, hints, nhints);
 +  else if (state[SEARCH_PART_LABEL].set)
-+    grub_search_part_label (id, var, state[SEARCH_NO_FLOPPY].set,
-+			    hints, nhints);
++    grub_search_part_label (id, var, flags, hints, nhints);
 +  else if (state[SEARCH_PART_UUID].set)
-+    grub_search_part_uuid (id, var, state[SEARCH_NO_FLOPPY].set,
-+			   hints, nhints);
++    grub_search_part_uuid (id, var, flags, hints, nhints);
    else if (state[SEARCH_FILE].set)
-     grub_search_fs_file (id, var, state[SEARCH_NO_FLOPPY].set, 
- 			 hints, nhints);
+     grub_search_fs_file (id, var, flags, hints, nhints);
+   else
 diff --git a/grub-core/lib/gpt.c b/grub-core/lib/gpt.c
 index 9a1835b..10a4b85 100644
 --- a/grub-core/lib/gpt.c
@@ -309,16 +313,18 @@ index a44c0d5..7b04080 100644
 +
  #endif /* ! GRUB_GPT_PARTITION_HEADER */
 diff --git a/include/grub/search.h b/include/grub/search.h
-index d80347d..c2f40ab 100644
+index 4190aeb..66722a6 100644
 --- a/include/grub/search.h
 +++ b/include/grub/search.h
-@@ -25,5 +25,9 @@ void grub_search_fs_uuid (const char *key, const char *var, int no_floppy,
- 			  char **hints, unsigned nhints);
- void grub_search_label (const char *key, const char *var, int no_floppy,
+@@ -34,5 +34,11 @@ void grub_search_fs_uuid (const char *key, const char *var,
+ void grub_search_label (const char *key, const char *var,
+ 			enum search_flags flags,
  			char **hints, unsigned nhints);
-+void grub_search_part_uuid (const char *key, const char *var, int no_floppy,
++void grub_search_part_uuid (const char *key, const char *var,
++			    enum search_flags flags,
 +			    char **hints, unsigned nhints);
-+void grub_search_part_label (const char *key, const char *var, int no_floppy,
++void grub_search_part_label (const char *key, const char *var,
++			     enum search_flags flags,
 +			     char **hints, unsigned nhints);
  
  #endif
@@ -442,5 +448,5 @@ index 5692a5a..deb55a9 100644
    grub_fini_all ();
  }
 -- 
-2.21.3
+2.36.1
 
