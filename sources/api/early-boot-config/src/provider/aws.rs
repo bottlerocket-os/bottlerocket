@@ -16,6 +16,7 @@ pub(crate) struct AwsDataProvider;
 
 impl AwsDataProvider {
     const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/early-boot-config/identity-document";
+    const FALLBACK_REGION: &str = "us-east-1";
 
     /// Fetches user data, which is expected to be in TOML form and contain a `[settings]` section,
     /// returning a SettingsJson representing the inside of that section.
@@ -65,7 +66,7 @@ impl AwsDataProvider {
                 .fetch_region()
                 .await
                 .context(error::ImdsRequestSnafu)?
-                .context(error::ImdsMissingRegionSnafu)?
+                .unwrap_or_else(|| Self::FALLBACK_REGION.to_owned())
         };
         trace!(
             "Retrieved region from instance identity document: {}",
@@ -135,9 +136,6 @@ mod error {
 
         #[snafu(display("Unable to read input file '{}': {}", path.display(), source))]
         InputFileRead { path: PathBuf, source: io::Error },
-
-        #[snafu(display("IMDS request failed: missing region"))]
-        ImdsMissingRegion {},
 
         #[snafu(display("IMDS request failed: {}", source))]
         ImdsRequest { source: imdsclient::Error },
