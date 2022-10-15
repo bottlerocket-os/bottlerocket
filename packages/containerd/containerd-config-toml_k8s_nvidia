@@ -16,6 +16,18 @@ address = "/run/dockershim.sock"
 enable_selinux = true
 # Pause container image is specified here, shares the same image as kubelet's pod-infra-container-image
 sandbox_image = "{{settings.kubernetes.pod-infra-container-image}}"
+{{#if settings.container-runtime.max-container-log-line-size}}
+max_container_log_line_size = {{settings.container-runtime.max-container-log-line-size}}
+{{/if}}
+{{#if settings.container-runtime.max-concurrent-downloads}}
+max_concurrent_downloads = {{settings.container-runtime.max-concurrent-downloads}}
+{{/if}}
+{{#if settings.container-runtime.enable-unprivileged-ports}}
+enable_unprivileged_ports = {{settings.container-runtime.enable-unprivileged-ports}}
+{{/if}}
+{{#if settings.container-runtime.enable-unprivileged-icmp}}
+enable_unprivileged_icmp = {{settings.container-runtime.enable-unprivileged-icmp}}
+{{/if}}
 
 [plugins."io.containerd.grpc.v1.cri".containerd]
 default_runtime_name = "nvidia"
