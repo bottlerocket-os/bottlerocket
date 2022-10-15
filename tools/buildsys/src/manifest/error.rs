@@ -13,4 +13,7 @@ pub(super) enum Error {
         path: PathBuf,
         source: toml::de::Error,
     },
+
+    #[snafu(display("Invalid image size {}; must be between 1 and 1024", value))]
+    InvalidImageSize { value: i32 },
 }

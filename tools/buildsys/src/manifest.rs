@@ -141,6 +141,13 @@ overhead for the GPT labels and partition alignment. The data partition will be
 automatically resized to fill the disk on boot, so it is usually not necessary
 to increase this value.
 
+`publish-image-size-hint-gib` is the desired size of the published image in GiB.
+When the `split` layout is used, the "os" image volume will remain at the built
+size, and any additional space will be allocated to the "data" image volume.
+When the `unified` layout is used, this value will be used directly for the
+single "os" image volume. The hint will be ignored if the combined size of the
+"os" and "data" images exceeds the specified value.
+
 `partition-plan` is the desired strategy for image partitioning.
 This can be `split` (the default) for "os" and "data" images backed by separate
 volumes, or `unified` to have "os" and "data" share the same volume.
@@ -148,6 +155,7 @@ volumes, or `unified` to have "os" and "data" share the same volume.
 [package.metadata.build-variant.image-layout]
 os-image-size-gib = 2
 data-image-size-gib = 1
+publish-image-size-hint-gib = 22
 partition-plan = "split"
 ```
 
@@ -186,8 +194,10 @@ mod error;
 
 use serde::Deserialize;
 use snafu::{ResultExt, Snafu};
+use std::cmp::max;
 use std::collections::HashSet;
-use std::fmt;
+use std::convert::TryFrom;
+use std::fmt::{self, Display};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -248,7 +258,7 @@ impl ManifestInfo {
 
     /// Convenience method to return the image layout, if specified.
     pub fn image_layout(&self) -> Option<&ImageLayout> {
-        self.build_variant().and_then(|b| b.image_layout.as_ref())
+        self.build_variant().map(|b| &b.image_layout)
     }
 
     /// Convenience method to return the supported architectures for this variant.
@@ -330,7 +340,8 @@ pub enum SensitivityType {
 pub struct BuildVariant {
     pub included_packages: Option<Vec<String>>,
     pub image_format: Option<ImageFormat>,
-    pub image_layout: Option<ImageLayout>,
+    #[serde(default)]
+    pub image_layout: ImageLayout,
     pub supported_arches: Option<HashSet<SupportedArch>>,
     pub kernel_parameters: Option<Vec<String>>,
     pub grub_features: Option<Vec<GrubFeature>>,
@@ -345,33 +356,74 @@ pub enum ImageFormat {
 }
 
 #[derive(Deserialize, Debug, Copy, Clone)]
+/// Constrain specified image sizes to a plausible range, from 0 - 65535 GiB.
+pub struct ImageSize(u16);
+
+impl Display for ImageSize {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Deserialize, Debug, Copy, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct ImageLayout {
     #[serde(default = "ImageLayout::default_os_image_size_gib")]
-    pub os_image_size_gib: u32,
+    pub os_image_size_gib: ImageSize,
     #[serde(default = "ImageLayout::default_data_image_size_gib")]
-    pub data_image_size_gib: u32,
+    pub data_image_size_gib: ImageSize,
+    #[serde(default = "ImageLayout::default_publish_image_size_hint_gib")]
+    publish_image_size_hint_gib: ImageSize,
     #[serde(default = "ImageLayout::default_partition_plan")]
     pub partition_plan: PartitionPlan,
 }
 
 /// These are the historical defaults for all variants, before we added support
 /// for customizing these properties.
-static DEFAULT_OS_IMAGE_SIZE_GIB: u32 = 2;
-static DEFAULT_DATA_IMAGE_SIZE_GIB: u32 = 1;
+static DEFAULT_OS_IMAGE_SIZE_GIB: ImageSize = ImageSize(2);
+static DEFAULT_DATA_IMAGE_SIZE_GIB: ImageSize = ImageSize(1);
+static DEFAULT_PUBLISH_IMAGE_SIZE_HINT_GIB: ImageSize = ImageSize(22);
 static DEFAULT_PARTITION_PLAN: PartitionPlan = PartitionPlan::Split;
 
 impl ImageLayout {
-    fn default_os_image_size_gib() -> u32 {
+    fn default_os_image_size_gib() -> ImageSize {
         DEFAULT_OS_IMAGE_SIZE_GIB
     }
 
-    fn default_data_image_size_gib() -> u32 {
+    fn default_data_image_size_gib() -> ImageSize {
         DEFAULT_DATA_IMAGE_SIZE_GIB
+    }
+
+    fn default_publish_image_size_hint_gib() -> ImageSize {
+        DEFAULT_PUBLISH_IMAGE_SIZE_HINT_GIB
     }
 
     fn default_partition_plan() -> PartitionPlan {
         DEFAULT_PARTITION_PLAN
+    }
+
+    // At publish time we will need specific sizes for the OS image and the (optional) data image.
+    // The sizes returned by this function depend on the image layout, and whether the publish
+    // image hint is larger than the required minimum size.
+    pub fn publish_image_sizes_gib(&self) -> (i32, i32) {
+        let os_image_base_size_gib = self.os_image_size_gib.0;
+        let data_image_base_size_gib = self.data_image_size_gib.0;
+        let publish_image_size_hint_gib = self.publish_image_size_hint_gib.0;
+
+        let min_publish_image_size_gib = os_image_base_size_gib + data_image_base_size_gib;
+        let publish_image_size_gib = max(publish_image_size_hint_gib, min_publish_image_size_gib);
+
+        match self.partition_plan {
+            PartitionPlan::Split => {
+                let os_image_publish_size_gib = os_image_base_size_gib;
+                let data_image_publish_size_gib = publish_image_size_gib - os_image_base_size_gib;
+                (
+                    os_image_publish_size_gib.into(),
+                    data_image_publish_size_gib.into(),
+                )
+            }
+            PartitionPlan::Unified => (publish_image_size_gib.into(), -1),
+        }
     }
 }
 
@@ -380,6 +432,7 @@ impl Default for ImageLayout {
         Self {
             os_image_size_gib: Self::default_os_image_size_gib(),
             data_image_size_gib: Self::default_data_image_size_gib(),
+            publish_image_size_hint_gib: Self::default_publish_image_size_hint_gib(),
             partition_plan: Self::default_partition_plan(),
         }
     }
