@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::modeled_types::Identifier;
 use crate::{
-    BootstrapContainer, DnsSettings, HostContainer, KernelSettings, MetricsSettings,
+    BootSettings, BootstrapContainer, DnsSettings, HostContainer, KernelSettings, MetricsSettings,
     NetworkSettings, NtpSettings, OciHooks, PemCertificate, RegistrySettings, UpdatesSettings,
 };
 
@@ -19,6 +19,7 @@ struct Settings {
     ntp: NtpSettings,
     network: NetworkSettings,
     kernel: KernelSettings,
+    boot: BootSettings,
     metrics: MetricsSettings,
     pki: HashMap<Identifier, PemCertificate>,
     container_registry: RegistrySettings,

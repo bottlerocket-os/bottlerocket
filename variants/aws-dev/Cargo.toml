@@ -17,6 +17,9 @@ kernel-parameters = [
     "netdog.default-interface=eth0:dhcp4,dhcp6?",
     "quiet",
 ]
+grub-features = [
+    "set-private-var"
+]
 included-packages = [
 # core
     "release",
