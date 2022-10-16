@@ -7,6 +7,9 @@ build = "build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 
+[package.metadata.build-variant.image-layout]
+partition-plan = "unified"
+
 [package.metadata.build-variant]
 image-format = "vmdk"
 supported-arches = ["x86_64"]
