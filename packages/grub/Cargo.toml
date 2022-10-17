@@ -11,6 +11,3 @@ path = "pkg.rs"
 [[package.metadata.build-package.external-files]]
 url = "https://cdn.amazonlinux.com/blobstore/21d0df3b06c1c5cc9e5cf3bb559dad713335e782ac3a46b57c5d0097e22c0aec/grub2-2.06-9.amzn2.0.1.src.rpm"
 sha512 = "f27b4005e789ce1e0e792133f6adfbdbf221245c03b27c25285ff5b81e53065385536971934744f33c52a924022480aa15cd25e8d5ded9f4999c753e8394ae36"
-
-[build-dependencies]
-glibc = { path = "../glibc" }

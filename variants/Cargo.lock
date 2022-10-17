@@ -350,9 +350,6 @@ dependencies = [
 [[package]]
 name = "grub"
 version = "0.1.0"
-dependencies = [
- "glibc",
-]
 
 [[package]]
 name = "host-ctr"

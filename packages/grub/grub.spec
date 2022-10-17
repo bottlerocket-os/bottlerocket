@@ -63,7 +63,6 @@ BuildRequires: automake
 BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gettext-devel
-BuildRequires: %{_cross_os}glibc-devel
 
 %description
 %{summary}.
@@ -110,7 +109,6 @@ git commit -a -q -m "base"
 git am --whitespace=nowarn ../*.patch %{patches}
 
 ./bootstrap
-./autogen.sh
 
 %global grub_cflags -pipe -fno-stack-protector -fno-strict-aliasing
 %global grub_ldflags -static
