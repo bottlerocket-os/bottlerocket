@@ -374,6 +374,15 @@ struct AutoScalingSettings {
     should_wait: bool,
 }
 
+// Container runtime settings
+#[model]
+struct ContainerRuntimeSettings {
+    max_container_log_line_size: i32,
+    max_concurrent_downloads: i32,
+    enable_unprivileged_ports: bool,
+    enable_unprivileged_icmp: bool,
+}
+
 ///// Internal services
 
 // Note: Top-level objects that get returned from the API should have a "rename" attribute
