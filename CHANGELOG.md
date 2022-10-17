@@ -1,3 +1,14 @@
+# v1.10.1 (2022-10-19)
+
+## OS Changes
+* Support container runtime settings: enable-unprivileged-icmp, enable-unprivileged-ports, max-concurrent-downloads, max-container-log-line-size ([#2494])
+* Update EKS-D to 1.22-11 ([#2490])
+* Update EKS-D to 1.23-6 ([#2488])
+
+[#2488]: https://github.com/bottlerocket-os/bottlerocket/pull/2488
+[#2490]: https://github.com/bottlerocket-os/bottlerocket/pull/2490
+[#2494]: https://github.com/bottlerocket-os/bottlerocket/pull/2494
+
 # v1.10.0 (2022-10-10)
 
 ## OS Changes
