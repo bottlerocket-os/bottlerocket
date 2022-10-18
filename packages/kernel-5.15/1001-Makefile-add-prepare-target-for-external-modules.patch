@@ -1,7 +1,7 @@
-From 0f672709ce4e4dcce5e4f08e47169b9a18c0df08 Mon Sep 17 00:00:00 2001
+From fe8de462eb7edaccae54c31766dc5a2ffd254ab9 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 19 Apr 2021 18:46:04 +0000
-Subject: [PATCH 1001/1002] Makefile: add prepare target for external modules
+Subject: [PATCH] Makefile: add prepare target for external modules
 
 We need to ensure that native versions of programs like `objtool` are
 built before trying to build out-of-tree modules, or else the build
@@ -27,10 +27,10 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/Makefile b/Makefile
-index 6192e6be4..473594c61 100644
+index 86b6ca862e39..fbe9b66f4f27 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1736,6 +1736,15 @@ else # KBUILD_EXTMOD
+@@ -1766,6 +1766,15 @@ else # KBUILD_EXTMOD
  KBUILD_BUILTIN :=
  KBUILD_MODULES := 1
  
@@ -47,5 +47,5 @@ index 6192e6be4..473594c61 100644
  $(MODORDER): descend
  	@:
 -- 
-2.33.1
+2.37.2
 
