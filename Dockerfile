@@ -196,10 +196,10 @@ ARG PARTITION_PLAN
 ARG OS_IMAGE_PUBLISH_SIZE_GIB
 ARG DATA_IMAGE_PUBLISH_SIZE_GIB
 ARG KERNEL_PARAMETERS
-ARG GRUB_FEATURES
+ARG GRUB_SET_PRIVATE_VAR
 ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} \
     PRETTY_NAME=${PRETTY_NAME} IMAGE_NAME=${IMAGE_NAME} \
-    KERNEL_PARAMETERS=${KERNEL_PARAMETERS} GRUB_FEATURES=${GRUB_FEATURES}
+    KERNEL_PARAMETERS=${KERNEL_PARAMETERS}
 WORKDIR /root
 
 USER root
@@ -214,6 +214,7 @@ RUN --mount=target=/host \
       --data-image-publish-size-gib="${DATA_IMAGE_PUBLISH_SIZE_GIB}" \
       --partition-plan="${PARTITION_PLAN}" \
       --ovf-template="/host/variants/${VARIANT}/template.ovf" \
+      ${GRUB_SET_PRIVATE_VAR:+--with-grub-set-private-var=yes} \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=

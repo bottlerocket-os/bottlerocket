@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 use walkdir::{DirEntry, WalkDir};
 
-use buildsys::manifest::{GrubFeature, ImageFormat, ImageLayout, PartitionPlan, SupportedArch};
+use buildsys::manifest::{ImageFeature, ImageFormat, ImageLayout, PartitionPlan, SupportedArch};
 
 /*
 There's a bug in BuildKit that can lead to a build failure during parallel
@@ -124,7 +124,7 @@ impl VariantBuilder {
         image_format: Option<&ImageFormat>,
         image_layout: Option<&ImageLayout>,
         kernel_parameters: Option<&Vec<String>>,
-        grub_features: Option<&Vec<GrubFeature>>,
+        image_features: Option<Vec<&ImageFeature>>,
     ) -> Result<Self> {
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
 
@@ -186,17 +186,11 @@ impl VariantBuilder {
                 .unwrap_or_else(|| "".to_string()),
         );
 
-        args.build_arg(
-            "GRUB_FEATURES",
-            grub_features
-                .map(|v| {
-                    v.iter()
-                        .map(|f| f.to_string())
-                        .collect::<Vec<String>>()
-                        .join(" ")
-                })
-                .unwrap_or_else(|| "".to_string()),
-        );
+        if let Some(image_features) = image_features {
+            for image_feature in image_features.iter() {
+                args.build_arg(format!("{}", image_feature), "1");
+            }
+        }
 
         // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.

@@ -12,6 +12,8 @@ OUTPUT_FMT="raw"
 BUILDER_ARCH="$(uname -m)"
 OVF_TEMPLATE=""
 
+GRUB_SET_PRIVATE_VAR="no"
+
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
    case "${opt}" in
@@ -24,6 +26,7 @@ for opt in "$@"; do
       --data-image-publish-size-gib=*) DATA_IMAGE_PUBLISH_SIZE_GIB="${optarg}" ;;
       --partition-plan=*) PARTITION_PLAN="${optarg}" ;;
       --ovf-template=*) OVF_TEMPLATE="${optarg}" ;;
+      --with-grub-set-private-var=*) GRUB_SET_PRIVATE_VAR="${optarg}" ;;
    esac
 done
 
@@ -305,9 +308,8 @@ veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
 dd if="${VERITY_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[HASH-A]}"
 
 # write GRUB config
-GRUB_FEATURES_ARRAY=("${GRUB_FEATURES}")
 # If GRUB_SET_PRIVATE_VAR is set, include the parameters that support Boot Config
-if printf '%s\n' "${GRUB_FEATURES_ARRAY[@]}" | grep -Fxq 'GRUB_SET_PRIVATE_VAR' ; then
+if [ "${GRUB_SET_PRIVATE_VAR}" == "yes" ] ; then
    BOOTCONFIG='bootconfig'
    INITRD='initrd ($private)/bootconfig.data'
 else

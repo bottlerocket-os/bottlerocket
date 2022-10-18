@@ -13,6 +13,9 @@ exclude = ["README.md"]
 os-image-size-gib = 4
 partition-plan = "unified"
 
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
+
 [package.metadata.build-variant]
 image-format = "raw"
 supported-arches = ["x86_64"]
@@ -26,9 +29,6 @@ included-packages = [
     "kernel-5.10",
     "kubelet-1.21",
     "release",
-]
-grub-features = [
-    "set-private-var"
 ]
 
 [lib]

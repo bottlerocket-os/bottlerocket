@@ -175,18 +175,15 @@ kernel-parameters = [
    "console=ttyS42",
 ]
 
-`grub-features` is a list of supported grub features.
-This list allows us to conditionally use or exclude certain grub features in specific variants.
-The only supported value at this time is `set-private-var`.
-This value means that the grub config for the current variant includes the command to find the
-BOTTLEROCKET_PRIVATE partition and set the appropriate `$private` variable for the grub to
-consume.
-Adding this value to `grub-features` enables the use of Boot Config.
+`image-features` is a map of image feature flags, which can be enabled or disabled. This allows us
+to conditionally use or exclude certain firmware-level features in variants.
+
+`grub-set-private-var` means that the grub image for the current variant includes the command to
+find the BOTTLEROCKET_PRIVATE partition and set the appropriate `$private` variable for the grub
+config file to consume. This feature flag is a prerequisite for Boot Config support.
 ```
-[package.metadata.build-variant]
-grub-features = [
-   "set-private-var",
-]
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
 ```
 */
 
@@ -195,7 +192,7 @@ mod error;
 use serde::Deserialize;
 use snafu::{ResultExt, Snafu};
 use std::cmp::max;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::fmt::{self, Display};
 use std::fs;
@@ -273,9 +270,16 @@ impl ManifestInfo {
             .and_then(|b| b.kernel_parameters.as_ref())
     }
 
-    /// Convenience method to return the GRUB features for this variant.
-    pub fn grub_features(&self) -> Option<&Vec<GrubFeature>> {
-        self.build_variant().and_then(|b| b.grub_features.as_ref())
+    /// Convenience method to return the enabled image features for this variant.
+    pub fn image_features(&self) -> Option<Vec<&ImageFeature>> {
+        self.build_variant().and_then(|b| {
+            b.image_features.as_ref().and_then(|m| {
+                m.iter()
+                    .filter(|(_k, v)| **v)
+                    .map(|(k, _v)| Some(k))
+                    .collect()
+            })
+        })
     }
 
     /// Helper methods to navigate the series of optional struct fields.
@@ -344,7 +348,7 @@ pub struct BuildVariant {
     pub image_layout: ImageLayout,
     pub supported_arches: Option<HashSet<SupportedArch>>,
     pub kernel_parameters: Option<Vec<String>>,
-    pub grub_features: Option<Vec<GrubFeature>>,
+    pub image_features: Option<HashMap<ImageFeature, bool>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -463,15 +467,25 @@ impl SupportedArch {
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq, Hash)]
-#[serde(rename_all = "kebab-case")]
-pub enum GrubFeature {
-    SetPrivateVar,
+#[serde(try_from = "String")]
+pub enum ImageFeature {
+    GrubSetPrivateVar,
 }
 
-impl fmt::Display for GrubFeature {
+impl TryFrom<String> for ImageFeature {
+    type Error = Error;
+    fn try_from(s: String) -> Result<Self> {
+        match s.as_str() {
+            "grub-set-private-var" => Ok(ImageFeature::GrubSetPrivateVar),
+            _ => error::ParseImageFeatureSnafu { what: s }.fail()?,
+        }
+    }
+}
+
+impl fmt::Display for ImageFeature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            GrubFeature::SetPrivateVar => write!(f, "GRUB_SET_PRIVATE_VAR"),
+            ImageFeature::GrubSetPrivateVar => write!(f, "GRUB_SET_PRIVATE_VAR"),
         }
     }
 }

@@ -231,13 +231,13 @@ fn build_variant() -> Result<()> {
         let image_format = manifest.image_format();
         let image_layout = manifest.image_layout();
         let kernel_parameters = manifest.kernel_parameters();
-        let grub_features = manifest.grub_features();
+        let image_features = manifest.image_features();
         VariantBuilder::build(
             packages,
             image_format,
             image_layout,
             kernel_parameters,
-            grub_features,
+            image_features,
         )
         .context(error::BuildAttemptSnafu)?;
     } else {

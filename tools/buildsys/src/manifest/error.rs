@@ -14,6 +14,9 @@ pub(super) enum Error {
         source: toml::de::Error,
     },
 
+    #[snafu(display("Failed to parse image feature '{}'", what))]
+    ParseImageFeature { what: String },
+
     #[snafu(display("Invalid image size {}; must be between 1 and 1024", value))]
     InvalidImageSize { value: i32 },
 }
