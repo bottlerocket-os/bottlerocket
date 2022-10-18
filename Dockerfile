@@ -66,6 +66,7 @@ ARG VARIANT_RUNTIME
 ARG VARIANT_FAMILY
 ARG VARIANT_FLAVOR
 ARG REPO
+ARG GRUB_SET_PRIVATE_VAR
 ENV VARIANT=${VARIANT}
 WORKDIR /home/builder
 
@@ -97,6 +98,7 @@ RUN rpmdev-setuptree \
    && echo "%bcond_without $(V=${VARIANT_RUNTIME,,}; echo ${V//-/_})_runtime" >> .bconds \
    && echo "%bcond_without $(V=${VARIANT_FAMILY,,}; echo ${V//-/_})_family" >> .bconds \
    && echo "%bcond_without $(V=${VARIANT_FLAVOR:-no}; V=${V,,}; echo ${V//-/_})_flavor" >> .bconds \
+   && echo -e -n "${GRUB_SET_PRIVATE_VAR:+%bcond_without grub_set_private_var\n}" >> .bconds \
    && cat .bconds ${PACKAGE}.spec >> rpmbuild/SPECS/${PACKAGE}.spec \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
    && echo ${NOCACHE}

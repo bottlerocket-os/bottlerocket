@@ -131,9 +131,12 @@ fn build_package() -> Result<()> {
     let root_dir: PathBuf = getenv("BUILDSYS_ROOT_DIR")?.into();
     let variant = getenv("BUILDSYS_VARIANT")?;
     let variant_manifest_path = root_dir.join("variants").join(variant).join(manifest_file);
+    println!("cargo:rerun-if-changed={}", variant_manifest_path.display());
+
     let variant_manifest =
         ManifestInfo::new(variant_manifest_path).context(error::ManifestParseSnafu)?;
     supported_arch(&variant_manifest)?;
+    let image_features = variant_manifest.image_features();
 
     let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest =
@@ -212,7 +215,7 @@ fn build_package() -> Result<()> {
         println!("cargo:rerun-if-changed={}", f.display());
     }
 
-    PackageBuilder::build(&package).context(error::BuildAttemptSnafu)?;
+    PackageBuilder::build(&package, image_features).context(error::BuildAttemptSnafu)?;
 
     Ok(())
 }
