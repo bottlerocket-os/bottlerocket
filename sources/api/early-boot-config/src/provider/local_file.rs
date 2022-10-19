@@ -5,7 +5,7 @@ use crate::compression::expand_file_maybe;
 use snafu::ResultExt;
 use std::path::Path;
 
-pub(crate) const USER_DATA_FILE: &'static str = "/var/lib/bottlerocket/user-data.toml";
+pub(crate) const USER_DATA_FILE: &str = "/var/lib/bottlerocket/user-data.toml";
 
 pub(crate) fn local_file_user_data(
 ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
