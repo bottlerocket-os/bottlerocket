@@ -15,8 +15,8 @@ use crate::provider::local_file::{local_file_user_data, USER_DATA_FILE};
 pub(crate) struct AwsDataProvider;
 
 impl AwsDataProvider {
-    const IDENTITY_DOCUMENT_FILE: &str = "/etc/early-boot-config/identity-document";
-    const FALLBACK_REGION: &str = "us-east-1";
+    const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/early-boot-config/identity-document";
+    const FALLBACK_REGION: &'static str = "us-east-1";
 
     /// Fetches user data, which is expected to be in TOML form and contain a `[settings]` section,
     /// returning a SettingsJson representing the inside of that section.
