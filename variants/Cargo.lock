@@ -63,18 +63,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-k8s-1_20"
-version = "0.1.0"
-dependencies = [
- "aws-iam-authenticator",
- "cni",
- "cni-plugins",
- "kernel-5_10",
- "kubernetes-1_20",
- "release",
-]
-
-[[package]]
 name = "aws-k8s-1_21"
 version = "0.1.0"
 dependencies = [
@@ -439,13 +427,6 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "kernel-5_15",
-]
-
-[[package]]
-name = "kubernetes-1_20"
-version = "0.1.0"
-dependencies = [
- "glibc",
 ]
 
 [[package]]
@@ -995,18 +976,6 @@ dependencies = [
  "release",
  "strace",
  "tcpdump",
-]
-
-[[package]]
-name = "vmware-k8s-1_20"
-version = "0.1.0"
-dependencies = [
- "cni",
- "cni-plugins",
- "kernel-5_10",
- "kubernetes-1_20",
- "open-vm-tools",
- "release",
 ]
 
 [[package]]
