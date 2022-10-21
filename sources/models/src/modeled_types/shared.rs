@@ -1,10 +1,9 @@
+use super::error;
 use lazy_static::lazy_static;
 use regex::Regex;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-// Just need serde's Error in scope to get its trait methods
-use super::error;
 use semver::Version;
 use serde::de::Error as _;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
