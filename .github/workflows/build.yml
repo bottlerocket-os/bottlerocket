@@ -18,6 +18,10 @@ on:
       # Sample config files and OpenAPI docs
       - '**.yaml'
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: [self-hosted, linux, x64]
