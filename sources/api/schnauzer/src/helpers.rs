@@ -1353,7 +1353,7 @@ fn ecr_registry<S: AsRef<str>>(region: S) -> String {
         Some(registry_id) => (region.as_ref(), *registry_id),
     };
     let partition = match ALT_PARTITION_MAP.borrow().get(region) {
-        None => (STANDARD_PARTITION),
+        None => STANDARD_PARTITION,
         Some(partition) => *partition,
     };
     match partition {
@@ -1371,7 +1371,7 @@ fn pause_registry<S: AsRef<str>>(region: S) -> String {
         Some(registry_id) => (region.as_ref(), *registry_id),
     };
     let partition = match ALT_PARTITION_MAP.borrow().get(region) {
-        None => (STANDARD_PARTITION),
+        None => STANDARD_PARTITION,
         Some(partition) => *partition,
     };
     match partition {
@@ -1385,11 +1385,11 @@ fn pause_registry<S: AsRef<str>>(region: S) -> String {
 fn tuf_repository<S: AsRef<str>>(region: S) -> String {
     // lookup the repository endpoint or fallback to the public url
     let (region, endpoint) = match TUF_ENDPOINT_MAP.borrow().get(region.as_ref()) {
-        None => (return TUF_PUBLIC_REPOSITORY.to_string()),
+        None => return TUF_PUBLIC_REPOSITORY.to_string(),
         Some(endpoint) => (region.as_ref(), *endpoint),
     };
     let partition = match ALT_PARTITION_MAP.borrow().get(region) {
-        None => (STANDARD_PARTITION),
+        None => STANDARD_PARTITION,
         Some(partition) => *partition,
     };
     match partition {
