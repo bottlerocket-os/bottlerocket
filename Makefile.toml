@@ -127,8 +127,8 @@ AMI_DATA_FILE_SUFFIX = "amis.json"
 #    5: a final `quick` test on the downgraded instances
 # TESTSYS_STARTING_IMAGE_ID can be used to provide the correct starting image for migration tests.
 TESTSYS_TEST = "quick"
-# The path to the testsys cluster's kubeconfig file. This is used for all testsys calls.
-TESTSYS_KUBECONFIG_PATH = "${BUILDSYS_ROOT_DIR}/testsys.kubeconfig"
+# The default path to the testsys cluster's kubeconfig file. This is used for all testsys calls.
+CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH = "${BUILDSYS_ROOT_DIR}/testsys.kubeconfig"
 # The last released version of bottlerocket.
 TESTSYS_STARTING_VERSION = { script = ["git tag --list --sort=version:refname 'v*' | tail -1"] }
 # The commit for the last release of bottlerocket.
@@ -183,6 +183,23 @@ VMWARE_VM_NAME_DEFAULT = "${BUILDSYS_NAME}-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-
 BOOT_CONFIG_INPUT = "${BUILDSYS_ROOT_DIR}/bootconfig-input"
 # Boot Configuration initrd
 BOOT_CONFIG = "${BUILDSYS_ROOT_DIR}/bootconfig.data"
+
+# Determines the kubeconfig that should be used by testsys. If no kubeconfig was provided and the
+# default kubeconfig location does not exist, use the users default kubeconfig.
+CARGO_MAKE_TESTSYS_KUBECONFIG_ARG = {script = [
+'''
+if [ -n "${TESTSYS_KUBECONFIG}" ]; then
+   # If the user provides a kubeconfig path it should be used.
+   echo "--kubeconfig ${TESTSYS_KUBECONFIG}"
+elif [ -f "${CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH}" ]; then
+   # If the default kubeconfig exists it should be used.
+   echo "--kubeconfig ${CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH}"
+fi
+'''
+]}
+
+# Args that will be passed into all testsys invocations.
+CARGO_MAKE_TESTSYS_ARGS = "${CARGO_MAKE_TESTSYS_KUBECONFIG_ARG}"
 
 [tasks.setup]
 script = [
@@ -1507,7 +1524,7 @@ script = [
     '''
     set -eu
     export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    testsys --kubeconfig ${TESTSYS_KUBECONFIG_PATH} install
+    testsys ${CARGO_MAKE_TESTSYS_ARGS} install
     '''
 ]
 
@@ -1526,7 +1543,7 @@ script = [
     export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
     # The ami that is selected from `amis.json` is determined by `TESTSYS_REGION` if set; otherwise,
     # it is the first region listed in `Infra.toml` (for aws variants).
-    testsys --kubeconfig ${TESTSYS_KUBECONFIG_PATH} run ${TESTSYS_TEST} \
+    testsys ${CARGO_MAKE_TESTSYS_ARGS} run ${TESTSYS_TEST} \
       --ami-input "${ami_input}" \
       ${TESTSYS_AWS_SECRET_NAME:+--secret ${TESTSYS_AWS_SECRET_NAME}} \
     '''
@@ -1539,7 +1556,7 @@ script = [
     '''
     set -eu
     export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    testsys --kubeconfig ${TESTSYS_KUBECONFIG_PATH} delete
+    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete
     '''
 ]
 
@@ -1550,7 +1567,7 @@ script = [
    '''
    set -eu
    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   testsys --kubeconfig ${TESTSYS_KUBECONFIG_PATH} uninstall
+   testsys ${CARGO_MAKE_TESTSYS_ARGS} uninstall
    '''
 ]
 
@@ -1561,7 +1578,7 @@ script = [
    '''
    set -eu
    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   watch -- testsys --kubeconfig ${TESTSYS_KUBECONFIG_PATH} status ${@}
+   watch -- testsys ${CARGO_MAKE_TESTSYS_ARGS} status ${@}
    '''
 ]
 
@@ -1573,7 +1590,7 @@ script = [
    '''
    set -eu
    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   testsys --kubeconfig ${TESTSYS_KUBECONFIG_PATH} logs --test ${@}
+   testsys ${CARGO_MAKE_TESTSYS_ARGS} logs --test ${@}
    '''
 ]
 
@@ -1584,7 +1601,7 @@ script = [
    '''
    set -eu
    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   testsys --kubeconfig ${TESTSYS_KUBECONFIG_PATH} ${@}
+   testsys ${CARGO_MAKE_TESTSYS_ARGS} ${@}
    '''
 ]
 
