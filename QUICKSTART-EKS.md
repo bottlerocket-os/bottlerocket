@@ -34,7 +34,7 @@ We have sample configuration files in the repo:
 * [`sample-eksctl-ssh.yaml`](sample-eksctl-ssh.yaml) - for test clusters where you know you'll want SSH access.  Make sure to change the `publicKeyName` setting to the name of the SSH key pair you have registered with EC2.
 
 Pick the file most appropriate for you and make a copy, for example `my-eksctl.yaml`.
-In this file you can change your desired numbered of nodes and even set Bottlerocket settings in advance if you like.  The 'settings' section under 'bottlerocket' can include any [Bottlerocket settings](https://github.com/bottlerocket-os/bottlerocket/#description-of-settings).
+In this file you can change your desired numbered of nodes and even set Bottlerocket settings in advance if you like.  The 'settings' section under 'bottlerocket' can include any [Bottlerocket settings](https://github.com/bottlerocket-os/bottlerocket#description-of-settings).
 
 Note that the configuration file includes the AWS region, so change it from `us-west-2` if you operate in another region.
 
