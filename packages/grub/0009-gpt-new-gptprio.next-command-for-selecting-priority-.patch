@@ -1,4 +1,4 @@
-From ad528de92162a7aaa2666782c5cd18a9ab14d7e2 Mon Sep 17 00:00:00 2001
+From 06eff592def149c09fa42fee4e5d98b7abf00717 Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Mon, 3 Nov 2014 17:14:37 -0800
 Subject: [PATCH] gpt: new gptprio.next command for selecting priority based
@@ -42,10 +42,10 @@ index a2ca51d..eb4bc90 100644
    testcase;
    name = file_filter_test;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 72d485f..78c64a8 100644
+index c040652..393aecd 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -937,6 +937,11 @@ module = {
+@@ -947,6 +947,11 @@ module = {
    common = commands/gptrepair.c;
  };
  
@@ -525,5 +525,5 @@ index 0000000..f4aea0d
 +check_prio 2 3 0 0
 +check_prio 3 2 0 0
 -- 
-2.21.3
+2.36.1
 

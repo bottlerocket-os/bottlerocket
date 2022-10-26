@@ -1,4 +1,4 @@
-From 6635d2ce6f2b2a0be4049af3ce271cdab3fbd97b Mon Sep 17 00:00:00 2001
+From b0aec16d82a40c58ed47235c8b10612d07645eaa Mon Sep 17 00:00:00 2001
 From: Michael Marineau <michael.marineau@coreos.com>
 Date: Sun, 28 Sep 2014 21:26:21 -0700
 Subject: [PATCH] gpt: start new GPT module
@@ -47,10 +47,10 @@ index 3f191aa..c7efe17 100644
    name = grub-menulst2cfg;
    mansection = 1;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index 9cff83f..3443e9c 100644
+index 5212faf..e9cce06 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -932,6 +932,11 @@ module = {
+@@ -942,6 +942,11 @@ module = {
    common = commands/gptsync.c;
  };
  
@@ -919,5 +919,5 @@ index 0000000..a824cd9
 +  grub_fini_all ();
 +}
 -- 
-2.21.3
+2.36.1
 

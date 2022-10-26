@@ -6,7 +6,7 @@
 
 # This is specific to the upstream source RPM, and will likely need to be
 # updated for each new version.
-%global gnulib_fixes gnulib-fixes-0e9febb5e
+%global gnulib_version gnulib-9f48fb992a3d7e96610c4ce8be969cff2d61a01b
 
 Name: %{_cross_os}grub
 Version: 2.06
@@ -14,7 +14,7 @@ Release: 1%{?dist}
 Summary: Bootloader with support for Linux and more
 License: GPL-3.0-or-later AND Unicode-DFS-2015
 URL: https://www.gnu.org/software/grub/
-Source0: https://cdn.amazonlinux.com/blobstore/21d0df3b06c1c5cc9e5cf3bb559dad713335e782ac3a46b57c5d0097e22c0aec/grub2-2.06-9.amzn2.0.1.src.rpm
+Source0: https://al2022-repos-us-west-2-9761ab97.s3.dualstack.us-west-2.amazonaws.com/blobstore/aa41fdf9982b65a4c4dad5df5b49ba143b1710d60f82688221966f3c790c6c63/grub2-2.06-42.amzn2022.0.1.src.rpm
 Source1: bios.cfg
 Source2: efi.cfg
 Patch0001: 0001-setup-Add-root-device-argument-to-grub-setup.patch
@@ -83,7 +83,7 @@ Summary: Tools for the bootloader with support for Linux and more
 %prep
 rpm2cpio %{S:0} | cpio -iu grub-%{version}.tar.xz \
   bootstrap bootstrap.conf \
-  gitignore %{gnulib_fixes}.tar.gz \
+  gitignore %{gnulib_version}.tar.gz \
   "*.patch"
 
 # Mimic prep from upstream spec to prepare for patching.
@@ -91,12 +91,8 @@ tar -xof grub-%{version}.tar.xz; rm grub-%{version}.tar.xz
 %setup -TDn grub-%{version}
 mv ../bootstrap{,.conf} .
 mv ../gitignore .gitignore
-tar -xof ../%{gnulib_fixes}.tar.gz; rm ../%{gnulib_fixes}.tar.gz
-mv %{gnulib_fixes} gnulib
-pushd gnulib
-patch -p1 < ../../gnulib-amzn2-cflags.patch
-rm ../../gnulib-amzn2-cflags.patch
-popd
+tar -xof ../%{gnulib_version}.tar.gz; rm ../%{gnulib_version}.tar.gz
+mv %{gnulib_version} gnulib
 cp unicode/COPYING COPYING.unicode
 rm -f configure
 
@@ -107,6 +103,11 @@ git config user.name 'user'
 git add .
 git commit -a -q -m "base"
 git am --whitespace=nowarn ../*.patch %{patches}
+
+# Let bootstrap start from a clean slate and freshly copy in the relevant
+# parts from gnulib. In particular remove the configure macros that aren't
+# compatible with the copied in version of gnulib.
+rm -r build-aux m4
 
 ./bootstrap
 
