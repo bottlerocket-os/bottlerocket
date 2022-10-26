@@ -12,6 +12,7 @@ use serde_plain::derive_fromstr_from_deserialize;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
+use testsys_config::{AwsEcsVariantConfig, AwsK8sVariantConfig, GenericVariantConfig, TestConfig};
 
 /// Run a set of tests for a given arch and variant
 #[derive(Debug, Parser)]
@@ -31,9 +32,13 @@ pub(crate) struct Run {
     #[clap(long, env = "PUBLISH_INFRA_CONFIG_PATH", parse(from_os_str))]
     infra_config_path: PathBuf,
 
+    /// The path to `Test.toml`
+    #[clap(long, env = "TESTSYS_TEST_CONFIG_PATH", parse(from_os_str))]
+    test_config_path: PathBuf,
+
     /// Use this named repo infrastructure from Infra.toml for upgrade/downgrade testing.
-    #[clap(long, env = "PUBLISH_REPO", default_value = "default")]
-    repo: String,
+    #[clap(long, env = "PUBLISH_REPO")]
+    repo: Option<String>,
 
     /// The path to `amis.json`
     #[clap(long, env = "AMI_INPUT")]
@@ -45,34 +50,11 @@ pub(crate) struct Run {
     #[clap(long, env = "TESTSYS_TARGET_REGION")]
     target_region: Option<String>,
 
-    /// The name of the cluster for resource agents (EKS resource agent, ECS resource agent). Note:
-    /// This is not the name of the `testsys cluster` this is the name of the cluster that tests
-    /// should be run on. If no cluster name is provided, the bottlerocket cluster
-    /// naming convention `<arch>-<variant>` will be used.
-    #[clap(long, env = "TESTSYS_TARGET_CLUSTER_NAME")]
-    target_cluster_name: Option<String>,
-
-    /// The custom kube conformance image that should be used by sonobuoy. This is only applicable
-    /// for k8s variants. It can be omitted for non-k8s variants and it can be omitted to use the
-    /// default sonobuoy conformance image.
-    #[clap(long)]
-    kube_conformance_image: Option<String>,
-
-    /// The role that should be assumed by the agents
-    #[clap(long, env = "TESTSYS_ASSUME_ROLE")]
-    assume_role: Option<String>,
-
-    /// Specify the instance type that should be used. This is only applicable for aws-* variants.
-    /// It can be omitted for non-aws variants and can be omitted to use default instance types.
-    #[clap(long, env = "TESTSYS_INSTANCE_TYPE")]
-    instance_type: Option<String>,
-
-    /// Add secrets to the testsys agents (`--secret aws-credentials=my-secret`)
-    #[clap(long, short, parse(try_from_str = parse_key_val), number_of_values = 1)]
-    secret: Vec<(String, SecretName)>,
-
     #[clap(flatten)]
     agent_images: TestsysImages,
+
+    #[clap(flatten)]
+    config: CliConfig,
 
     // Migrations
     /// Override the starting image used for migrations. The image will be pulled from available
@@ -101,16 +83,65 @@ pub(crate) struct Run {
     migration_target_version: Option<String>,
 }
 
+/// This is a CLI parsable version of `testsys_config::GenericVariantConfig`.
+#[derive(Debug, Parser)]
+struct CliConfig {
+    /// The repo containing images necessary for conformance testing. It may be omitted to use the
+    /// default conformance image registry.
+    #[clap(long, env = "TESTSYS_CONFORMANCE_REGISTRY")]
+    conformance_registry: Option<String>,
+
+    /// The name of the cluster for resource agents (EKS resource agent, ECS resource agent). Note:
+    /// This is not the name of the `testsys cluster` this is the name of the cluster that tests
+    /// should be run on. If no cluster name is provided, the bottlerocket cluster
+    /// naming convention `{{arch}}-{{variant}}` will be used.
+    #[clap(long, env = "TESTSYS_TARGET_CLUSTER_NAME")]
+    target_cluster_name: Option<String>,
+
+    /// The image that should be used for conformance testing. It may be omitted to use the default
+    /// testing image.
+    #[clap(long, env = "TESTSYS_CONFORMANCE_IMAGE")]
+    conformance_image: Option<String>,
+
+    /// The role that should be assumed by the agents
+    #[clap(long, env = "TESTSYS_ASSUME_ROLE")]
+    assume_role: Option<String>,
+
+    /// Specify the instance type that should be used. This is only applicable for aws-* variants.
+    /// It can be omitted for non-aws variants and can be omitted to use default instance types.
+    #[clap(long, env = "TESTSYS_INSTANCE_TYPE")]
+    instance_type: Option<String>,
+
+    /// Add secrets to the testsys agents (`--secret aws-credentials=my-secret`)
+    #[clap(long, short, parse(try_from_str = parse_key_val), number_of_values = 1)]
+    secret: Vec<(String, SecretName)>,
+}
+
+impl From<CliConfig> for GenericVariantConfig {
+    fn from(val: CliConfig) -> Self {
+        GenericVariantConfig {
+            cluster_names: val.target_cluster_name.into_iter().collect(),
+            instance_type: val.instance_type,
+            secrets: val.secret.into_iter().collect(),
+            agent_role: val.assume_role,
+            conformance_image: val.conformance_image,
+            conformance_registry: val.conformance_registry,
+        }
+    }
+}
+
 impl Run {
     pub(crate) async fn run(self, client: TestManager) -> Result<()> {
         let variant =
             Variant::new(&self.variant).context("The provided variant cannot be interpreted.")?;
         debug!("Using variant '{}'", variant);
-        let secrets = if self.secret.is_empty() {
-            None
-        } else {
-            Some(self.secret.into_iter().collect())
-        };
+
+        // Use Test.toml or default
+        let test_config = TestConfig::from_path_or_default(&self.test_config_path)
+            .context("Unable to read test config")?;
+
+        let test_opts = test_config.test.as_ref().cloned().unwrap_or_default();
+
         // If a lock file exists, use that, otherwise use Infra.toml or default
         let infra_config = InfraConfig::from_path_or_lock(&self.infra_config_path, true)
             .context("Unable to read infra config")?;
@@ -133,7 +164,12 @@ impl Run {
         let repo_config = infra_config
             .repo
             .unwrap_or_default()
-            .get(&self.repo)
+            .get(
+                &self
+                    .repo
+                    .or(test_opts.repo)
+                    .unwrap_or_else(|| "default".to_string()),
+            )
             .and_then(|repo| {
                 if let (Some(metadata_base_url), Some(targets_url)) =
                     (&repo.metadata_base_url, &repo.targets_url)
@@ -150,21 +186,32 @@ impl Run {
                 }
             });
 
+        let images = vec![
+            Some(self.agent_images.into()),
+            Some(test_opts.testsys_images),
+            test_opts
+                .testsys_image_registry
+                .map(testsys_config::TestsysImages::new),
+            Some(testsys_config::TestsysImages::public_images()),
+        ]
+        .into_iter()
+        .flatten()
+        .fold(Default::default(), testsys_config::TestsysImages::merge);
+
         let crds = match variant.family() {
             "aws-k8s" => {
                 debug!("Variant is in 'aws-k8s' family");
                 let bottlerocket_ami = ami(&self.ami_input, &region)?;
                 debug!("Using ami '{}'", bottlerocket_ami);
+                let config: AwsK8sVariantConfig = test_config
+                    .reduced_config(&variant, &self.arch, Some(self.config.into()))
+                    .into();
                 let aws_k8s = AwsK8s {
                     arch: self.arch,
                     variant: self.variant,
                     region,
-                    assume_role: self.assume_role,
-                    instance_type: self.instance_type,
+                    config,
                     ami: bottlerocket_ami.to_string(),
-                    secrets,
-                    kube_conformance_image: self.kube_conformance_image,
-                    target_cluster_name: self.target_cluster_name,
                     tuf_repo: repo_config,
                     starting_version: self.migration_starting_version,
                     starting_image_id: self.starting_image_id,
@@ -173,23 +220,22 @@ impl Run {
                     migrate_starting_commit: self.migration_starting_commit,
                 };
                 debug!("Creating crds for aws-k8s testing");
-                aws_k8s
-                    .create_crds(self.test_flavor, &self.agent_images)
-                    .await?
+
+                aws_k8s.create_crds(self.test_flavor, &images).await?
             }
             "aws-ecs" => {
                 debug!("Variant is in 'aws-ecs' family");
                 let bottlerocket_ami = ami(&self.ami_input, &region)?;
                 debug!("Using ami '{}'", bottlerocket_ami);
+                let config: AwsEcsVariantConfig = test_config
+                    .reduced_config(&variant, &self.arch, Some(self.config.into()))
+                    .into();
                 let aws_ecs = AwsEcs {
                     arch: self.arch,
                     variant: self.variant,
                     region,
-                    assume_role: self.assume_role,
-                    instance_type: self.instance_type,
+                    config,
                     ami: bottlerocket_ami.to_string(),
-                    secrets,
-                    target_cluster_name: self.target_cluster_name,
                     tuf_repo: repo_config,
                     starting_version: self.migration_starting_version,
                     starting_image_id: self.starting_image_id,
@@ -198,9 +244,7 @@ impl Run {
                     capabilities: None,
                 };
                 debug!("Creating crds for aws-ecs testing");
-                aws_ecs
-                    .create_crds(self.test_flavor, &self.agent_images)
-                    .await?
+                aws_ecs.create_crds(self.test_flavor, &images).await?
             }
             other => {
                 return Err(anyhow!(
@@ -266,55 +310,47 @@ pub(crate) struct Image {
     pub(crate) id: String,
 }
 
+/// This is a CLI parsable version of `testsys_config::TestsysImages`
 #[derive(Debug, Parser)]
 pub(crate) struct TestsysImages {
     /// EKS resource agent URI. If not provided the latest released resource agent will be used.
     #[clap(
         long = "eks-resource-agent-image",
-        env = "TESTSYS_EKS_RESOURCE_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/eks-resource-agent:v0.0.1"
+        env = "TESTSYS_EKS_RESOURCE_AGENT_IMAGE"
     )]
-    pub(crate) eks_resource: String,
+    pub(crate) eks_resource: Option<String>,
 
     /// ECS resource agent URI. If not provided the latest released resource agent will be used.
     #[clap(
         long = "ecs-resource-agent-image",
-        env = "TESTSYS_ECS_RESOURCE_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-resource-agent:v0.0.1"
+        env = "TESTSYS_ECS_RESOURCE_AGENT_IMAGE"
     )]
-    pub(crate) ecs_resource: String,
+    pub(crate) ecs_resource: Option<String>,
 
     /// EC2 resource agent URI. If not provided the latest released resource agent will be used.
     #[clap(
         long = "ec2-resource-agent-image",
-        env = "TESTSYS_EC2_RESOURCE_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/ec2-resource-agent:v0.0.1"
+        env = "TESTSYS_EC2_RESOURCE_AGENT_IMAGE"
     )]
-    pub(crate) ec2_resource: String,
+    pub(crate) ec2_resource: Option<String>,
 
     /// Sonobuoy test agent URI. If not provided the latest released test agent will be used.
     #[clap(
         long = "sonobuoy-test-agent-image",
-        env = "TESTSYS_SONOBUOY_TEST_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/sonobuoy-test-agent:v0.0.1"
+        env = "TESTSYS_SONOBUOY_TEST_AGENT_IMAGE"
     )]
-    pub(crate) sonobuoy_test: String,
+    pub(crate) sonobuoy_test: Option<String>,
 
     /// ECS test agent URI. If not provided the latest released test agent will be used.
-    #[clap(
-        long = "ecs-test-agent-image",
-        env = "TESTSYS_ECS_TEST_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/ecs-test-agent:v0.0.1"
-    )]
-    pub(crate) ecs_test: String,
+    #[clap(long = "ecs-test-agent-image", env = "TESTSYS_ECS_TEST_AGENT_IMAGE")]
+    pub(crate) ecs_test: Option<String>,
 
     /// Migration test agent URI. If not provided the latest released test agent will be used.
     #[clap(
         long = "migration-test-agent-image",
-        env = "TESTSYS_MIGRATION_TEST_AGENT_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/migration-test-agent:v0.0.1"
+        env = "TESTSYS_MIGRATION_TEST_AGENT_IMAGE"
     )]
-    pub(crate) migration_test: String,
+    pub(crate) migration_test: Option<String>,
 
     /// Images pull secret. This is the name of a Kubernetes secret that will be used to
     /// pull the container image from a private registry. For example, if you created a pull secret
@@ -322,4 +358,18 @@ pub(crate) struct TestsysImages {
     /// `--images-pull-secret regcred`.
     #[clap(long = "images-pull-secret", env = "TESTSYS_IMAGES_PULL_SECRET")]
     pub(crate) secret: Option<String>,
+}
+
+impl From<TestsysImages> for testsys_config::TestsysImages {
+    fn from(val: TestsysImages) -> Self {
+        testsys_config::TestsysImages {
+            eks_resource_agent_image: val.eks_resource,
+            ecs_resource_agent_image: val.ecs_resource,
+            ec2_resource_agent_image: val.ec2_resource,
+            sonobuoy_test_agent_image: val.sonobuoy_test,
+            ecs_test_agent_image: val.ecs_test,
+            migration_test_agent_image: val.migration_test,
+            testsys_agent_pull_secret: val.secret,
+        }
+    }
 }

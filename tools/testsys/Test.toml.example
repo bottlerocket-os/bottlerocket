@@ -1,0 +1,119 @@
+# This is an example testing configuration for TestSys, the tool that is used to validate
+# Bottlerocket builds.
+
+# This section contains configuration details for all testing
+[test]
+
+# The repo from `Infra.toml` that should be used for Bottlerocket update images. It may be useful to
+# create a repo in `Infra.toml` that contains the infrastructure needed for testing
+repo = "default"
+
+# The registry containing alternate TestSys agent images
+testsys-images-registry = "public.ecr.aws/bottlerocket-test-system"
+
+# The URI for the EKS resource agent that should be used. An individual agent's provided URI will be
+# used even if `testsys-images-registry` is present.
+eks-resource-agent-image = "public.ecr.aws/bottlerocket-test-system/eks_resource_agent:v0.0.2"
+
+# Test Configurations
+#
+# Testing requirements tend to differ by variant and architecture. This configuration file provides
+# the ability to set values that apply generally to a broad group of similar variants, and to
+# override those values at a more granular level. For example, you can set a value for all `aws-k8s`
+# variants, then override that value for 'aws-k8s-nvidia' variants, and further override the value
+# for 'aws-k8s-nvidia'.aarch64 builds.
+#
+# The mechanism for resolving configuration values has the following order of precedence:
+#
+# '<VARIANT>'.ARCH
+# '<VARIANT>'
+# '<FAMILY>-<FLAVOR>'.ARCH
+# '<FAMILY>-<FLAVOR>'
+# '<FAMILY>'.ARCH
+# '<FAMILY>'
+# '<PLATFORM>-<FLAVOR>'.ARCH
+# '<PLATFORM>-<FLAVOR>'
+# '<PLATFORM>'.ARCH
+# '<PLATFORM>'
+#
+# For concrete example, given a variant such as `aws-k8s-1.23-nvidia` with the architecture
+# `x86_64`, configurations will have the following order of precedence:
+# ['aws-k8s-1.23-nvidia'.x86_64]
+# ['aws-k8s-1.23-nvidia']
+# ['aws-k8s-nvidia'.x86_64]
+# ['aws-k8s-nvidia']
+# ['aws-k8s'.x86_64]
+# ['aws-k8s']
+# ['aws-nvidia'.x86_64]
+# ['aws-nvidia']
+# ['aws'.x86_64]
+# ['aws']
+#
+# Note: values passed by command line argument will take precedence over those passed by environment
+# variable, and both take precedence over values set by `Test.toml`.
+
+# Example Configurations
+
+# Configuration for all variants with the `aws` platform.
+[aws]
+agent-role = "<AWS-TESTING-ROLE>"
+
+# Configuration for all nvidia AWS variants on x86_64 (platform-flavor level configuration)
+[aws-nvidia.x86_64]
+instance-type = "p3.2xlarge"
+
+# Configuration for all nvidia AWS variants on aarch64 (platform-flavor level configuration)
+[aws-nvidia.aarch64]
+instance-type = "g5g.2xlarge"
+
+# Configuration for all `aws-k8s` variants testing (family level configuration).
+[aws-k8s]
+# A single role can be assumed by agents to test all `aws-k8s` variants in a separate
+# testing account.
+agent-role = "arn:aws:iam::<ACCOUNT-ID>:role/<ROLE-NAME>"
+
+# The cluster name templating can be defined for all `aws-k8s` variants. To test on ipv4 and ipv6
+# clusters, the following templates could be used. Note: TestSys does not currently support creating
+# ipv6 clusters, so the ipv6 cluster must already exist.
+cluster-names = ["{{arch}}-{{variant}}", "{{arch}}-{{variant}}-ipv6"]
+
+# A custom conformance registry may be needed for testing if image pull reliability is a concern.
+conformance-registry = "<ACCOUNT>.dkr.ecr.cn-north-1.amazonaws.com.cn"
+
+# If testing using a kind cluster, AWS credentials need to be passed as a K8s secret.
+secrets = {"awsCreds" = "myAwsCredentials"}
+
+# Configuration for all nvidia AWS variants on x86_64 (family-flavor level configuration)
+[aws-ecs-nvidia.x86_64]
+instance-type = "p3.2xlarge"
+
+# Configuration for all nvidia AWS variants on aarch64 (family-flavor level configuration)
+[aws-ecs-nvidia.aarch64]
+instance-type = "g5g.2xlarge"
+
+# Configuration for only the `aws-k8s-1.21` variant (variant level configuration).
+["aws-k8s-1.21".aarch64]
+conformance-image = "<KUBERNETES-CONFORMANCE-IMAGE-URI>"
+
+# Configurable values:
+#
+# cluster-names: 
+#     All clusters the variant should be tested over. Cluster naming supports templated strings, and
+#     both `arch` and `variant` are provided as variables (`{{arch}}-{{variant}}`).
+#
+# instance-type:
+#     The instance type that should be used for testing.
+#
+# secrets:
+#     A map containing all secrets needed for resource creation and testing.
+#
+# agent-role:
+#     The role that should be assumed by each test and resource agent.
+#
+# conformance-image: (K8s only)
+#     Specify a custom image for conformance testing. For `aws-k8s` variants this will be used as a
+#     custom Kubernetes conformance image for Sonobuoy.
+#
+# conformance-registry: (K8s only)
+#     Specify a custom registry for conformance testing images.
+#     For `aws-k8s` variants this will be used as the Sonobuoy e2e registry.

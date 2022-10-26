@@ -118,6 +118,25 @@ The Bottlerocket components are found in the `testsys-bottlerocket-aws` Kubernet
 
 Now that you have the testsys cluster set up, it's time to run a Bottlerocket integration test!
 
+### Configuration
+
+There are many arguments that can be configured via environment variables with `cargo make`; however, it is possible to create a configuration file instead.
+Check out the [example config file](tools/testsys/Test.toml.example) for a sample `Test.toml` file.
+
+For example, the instance type can be specified based on variant requirements:
+
+```yaml
+[aws-k8s]
+# Set the default instance type for all `aws-k8s` variants
+instance-type = "m5.xlarge"
+
+[aws-k8s-nvidia]
+# Override the instance type for `nvidia` `aws-k8s` variants
+instance-type = "g5g.2xlarge"
+```
+
+Since `aws-k8s-nvidia` is a `<FAMILY>-<FLAVOR>` level configuration it will take precedence over `aws-k8s` which is `<FAMILY>` level configuration.
+
 ### Variants
 
 Different Bottlerocket variants require different implementations in the test system.

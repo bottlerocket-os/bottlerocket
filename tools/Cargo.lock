@@ -608,8 +608,8 @@ dependencies = [
 
 [[package]]
 name = "bottlerocket-types"
-version = "0.0.1"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?rev=07b9ae8#07b9ae8e902623842c334889517973d0c9d82691"
+version = "0.0.2"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.2#dfd5bc90a481beb05e7a64ac4b20c86fd2491d9d"
 dependencies = [
  "model",
  "serde",
@@ -1243,6 +1243,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "handlebars"
+version = "4.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56b224eaa4987c03c30b251de7ef0c15a6a59f34222905850dbc3026dfb24d5f"
+dependencies = [
+ "log",
+ "pest",
+ "pest_derive",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1734,8 +1748,8 @@ dependencies = [
 
 [[package]]
 name = "model"
-version = "0.0.1"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?rev=07b9ae8#07b9ae8e902623842c334889517973d0c9d82691"
+version = "0.0.2"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.2#dfd5bc90a481beb05e7a64ac4b20c86fd2491d9d"
 dependencies = [
  "async-recursion",
  "async-trait",
@@ -2011,6 +2025,50 @@ name = "percent-encoding"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
+
+[[package]]
+name = "pest"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb779fcf4bb850fbbb0edc96ff6cf34fd90c4b1a112ce042653280d9a7364048"
+dependencies = [
+ "thiserror",
+ "ucd-trie",
+]
+
+[[package]]
+name = "pest_derive"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "502b62a6d0245378b04ffe0a7fb4f4419a4815fce813bd8a0ec89a56e07d67b1"
+dependencies = [
+ "pest",
+ "pest_generator",
+]
+
+[[package]]
+name = "pest_generator"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "451e629bf49b750254da26132f1a5a9d11fd8a95a3df51d15c4abd1ba154cb6c"
+dependencies = [
+ "pest",
+ "pest_meta",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "pest_meta"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcec162c71c45e269dfc3fc2916eaeb97feab22993a21bcce4721d08cd7801a6"
+dependencies = [
+ "once_cell",
+ "pest",
+ "sha1",
+]
 
 [[package]]
 name = "pin-project"
@@ -2836,6 +2894,7 @@ dependencies = [
  "anyhow",
  "aws-config",
  "aws-sdk-ec2",
+ "base64",
  "bottlerocket-types",
  "bottlerocket-variant",
  "clap 3.2.22",
@@ -2850,8 +2909,27 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "term_size",
+ "testsys-config",
  "tokio",
  "unescape",
+]
+
+[[package]]
+name = "testsys-config"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "handlebars",
+ "home",
+ "lazy_static",
+ "log",
+ "maplit",
+ "model",
+ "serde",
+ "serde_yaml",
+ "snafu",
+ "toml",
+ "url",
 ]
 
 [[package]]
@@ -3246,6 +3324,12 @@ name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+
+[[package]]
+name = "ucd-trie"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e79c4d996edb816c91e4308506774452e55e95c3c9de07b6729e17e15a5ef81"
 
 [[package]]
 name = "unescape"

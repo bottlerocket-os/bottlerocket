@@ -133,6 +133,7 @@ CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH = "${BUILDSYS_ROOT_DIR}/testsys.kubec
 TESTSYS_STARTING_VERSION = { script = ["git tag --list --sort=version:refname 'v*' | tail -1"] }
 # The commit for the last release of bottlerocket.
 TESTSYS_STARTING_COMMIT = { script = ["git describe --tag ${TESTSYS_STARTING_VERSION} --always --exclude '*' || echo 00000000"] }
+TESTSYS_TEST_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Test.toml"
 
 [env.development]
 # Certain variables are defined here to allow us to override a component value
