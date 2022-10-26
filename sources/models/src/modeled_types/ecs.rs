@@ -291,3 +291,69 @@ mod test_ecs_agent_image_pull_behavior {
         }
     }
 }
+
+/// ECSDurationValue represents a string that contains a valid ECS duration value
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct ECSDurationValue {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref ECS_DURATION_VALUE: Regex =
+        Regex::new(r"^(([0-9]+\.)?[0-9]+h)?(([0-9]+\.)?[0-9]+m)?(([0-9]+\.)?[0-9]+s)?(([0-9]+\.)?[0-9]+ms)?(([0-9]+\.)?[0-9]+(u|µ)s)?(([0-9]+\.)?[0-9]+ns)?$").unwrap();
+}
+
+impl TryFrom<&str> for ECSDurationValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            !input.is_empty() && ECS_DURATION_VALUE.is_match(input),
+            error::InvalidECSDurationValueSnafu { input }
+        );
+        Ok(ECSDurationValue {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(ECSDurationValue, "ECSDurationValue");
+
+#[cfg(test)]
+mod test_ecs_duration_value {
+    use super::ECSDurationValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_values() {
+        for ok in &[
+            "99s",
+            "20m",
+            "1h",
+            "1h2m3s",
+            "4m5s",
+            "2h3s",
+            "1.5h3.5m",
+            "1ms1us1ns",
+            "1s1µs1ns",
+        ] {
+            ECSDurationValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn invalid_values() {
+        for err in &[
+            "",
+            "100",
+            "...3ms",
+            "1..5s",
+            "ten second",
+            "1m2h",
+            "1y2w",
+            &"a".repeat(23),
+        ] {
+            ECSDurationValue::try_from(*err).unwrap_err();
+        }
+    }
+}

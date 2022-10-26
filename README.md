@@ -533,6 +533,8 @@ These settings can be changed at any time.
 * `settings.ecs.allow-privileged-containers`: Whether launching privileged containers is allowed on the container instance.
   If this value is set to false, privileged containers are not permitted.
   Bottlerocket sets this value to false by default.
+* `settings.ecs.container-stop-timeout`: Time to wait for the task's containers to stop on their own before they are forcefully stopped.
+Valid time units include `s`, `m`, and `h`, e.g. `1h`, `1m1s`.
 * `settings.ecs.enable-spot-instance-draining`: If the instance receives a spot termination notice, the agent will set the instance's state to `DRAINING`, so the workload can be moved gracefully before the instance is removed. Defaults to `false`.
 * `settings.ecs.image-pull-behavior`: The behavior used to customize the [pull image process](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-agent-config.html#ecs-agent-availparam) for your container instances.
   Supported values are `default`, `always`, `once`, `prefer-cached`, and the default is `default`.
@@ -541,6 +543,13 @@ These settings can be changed at any time.
   Bottlerocket enables the `json-file`, `awslogs`, and `none` drivers by default.
 * `settings.ecs.loglevel`: The level of verbosity for the ECS agent's logs.
   Supported values are `debug`, `info`, `warn`, `error`, and `crit`, and the default is `info`.
+* `settings.ecs.metadata-service-rps`: The steady state rate limit of the throttling configurations set for the task metadata service.
+* `settings.ecs.metadata-service-burst`: The burst rate limit of the throttling configurations set for the task metadata service.
+* `settings.ecs.reserved-memory`: The amount of memory, in MiB, reserved for critical system processes.
+* `settings.ecs.task-cleanup-wait`: Time to wait before the task's containers are removed after they are stopped.
+Valid time units are `s`, `m`, and `h`, e.g. `1h`, `1m1s`.
+
+  **Note**: `metadata-service-rps` and `metadata-service-burst` directly map to the values set by the `ECS_TASK_METADATA_RPS_LIMIT` environment variable.
 
 #### CloudFormation signal helper settings
 

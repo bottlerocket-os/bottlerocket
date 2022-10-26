@@ -141,6 +141,9 @@ pub mod error {
         #[snafu(display("Invalid imageGCLowThresholdPercent '{}': {}", input, msg))]
         InvalidImageGCLowThresholdPercent { input: String, msg: String },
 
+        #[snafu(display("Invalid ECS duration value '{}'", input))]
+        InvalidECSDurationValue { input: String },
+
         #[snafu(display("Could not parse '{}' as an integer", input))]
         ParseInt {
             input: String,

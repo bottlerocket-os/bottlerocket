@@ -1368,6 +1368,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecs-additional-configurations"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "ecs-settings-applier"
 version = "0.1.0"
 dependencies = [

@@ -62,6 +62,21 @@ struct ECSConfig {
 
     #[serde(rename = "GPUSupportEnabled")]
     gpu_support_enabled: bool,
+
+    #[serde(
+        rename = "TaskMetadataSteadyStateRate",
+        skip_serializing_if = "Option::is_none"
+    )]
+    metadata_service_rps: Option<i64>,
+
+    #[serde(
+        rename = "TaskMetadataBurstRate",
+        skip_serializing_if = "Option::is_none"
+    )]
+    metadata_service_burst: Option<i64>,
+
+    #[serde(rename = "ReservedMemory", skip_serializing_if = "Option::is_none")]
+    reserved_memory: Option<u16>,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -129,6 +144,9 @@ async fn run() -> Result<()> {
         task_eni_enabled: true,
 
         gpu_support_enabled: cfg!(variant_flavor = "nvidia"),
+        reserved_memory: ecs.reserved_memory,
+        metadata_service_rps: ecs.metadata_service_rps,
+        metadata_service_burst: ecs.metadata_service_burst,
         ..Default::default()
     };
     if let Some(os) = settings.os {
