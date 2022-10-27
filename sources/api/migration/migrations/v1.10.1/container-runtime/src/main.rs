@@ -1,12 +1,12 @@
 #![deny(rust_2018_idioms)]
 
-use migration_helpers::common_migrations::AddSettingsMigration;
+use migration_helpers::common_migrations::AddPrefixesMigration;
 use migration_helpers::{migrate, Result};
 use std::process;
 
 /// We added a new setting for configuring container runtime (containerd) settings.
 fn run() -> Result<()> {
-    migrate(AddSettingsMigration(&["settings.container-runtime"]))
+    migrate(AddPrefixesMigration(vec!["settings.container-runtime"]))
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
