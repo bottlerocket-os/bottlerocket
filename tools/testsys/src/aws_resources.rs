@@ -94,20 +94,18 @@ impl AwsK8s {
         cluster_name: &str,
         testsys_images: &TestsysImages,
     ) -> Result<Vec<Crd>> {
-        let ami = self
-            .starting_image_id
-            .as_ref()
-            .unwrap_or(
-                &get_ami_id(
+        let ami = if let Some(ami) = self.starting_image_id.to_owned() {
+            ami
+        } else {
+            get_ami_id(
                     format!(
                         "bottlerocket-{}-{}-{}-{}",
                         self.variant, self.arch, self.starting_version.as_ref().context("The starting version must be provided for migration testing")?, self.migrate_starting_commit.as_ref().context("The commit for the starting version must be provided if the starting image id is not")?
                     ), & self.arch,
                     self.region.to_string(),
                 )
-                .await?,
-            )
-            .to_string();
+                .await?
+        };
         let eks = self.eks_crd(cluster_name, testsys_images)?;
         let ec2 = self.ec2_crd(cluster_name, testsys_images, Some(ami))?;
         let instance_provider = ec2

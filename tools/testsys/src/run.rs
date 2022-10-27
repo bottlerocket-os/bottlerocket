@@ -70,11 +70,7 @@ pub(crate) struct Run {
     /// The commit id of the starting version for migrations. This is required for all migrations
     /// tests unless `starting-image-id` is provided. This is the version that will be created and
     /// migrated to `migration-target-version`.
-    #[clap(
-        long,
-        env = "TESTSYS_STARTING_COMMIT",
-        conflicts_with = "starting-image-id"
-    )]
+    #[clap(long, env = "TESTSYS_STARTING_COMMIT")]
     migration_starting_commit: Option<String>,
 
     /// The target version for migrations. This is required for all migration tests. This is the
