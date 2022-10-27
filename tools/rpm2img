@@ -195,7 +195,7 @@ fi
 mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
 
 dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count="${partsize[EFI-A]}"
-mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((partsize[EFI-A] * 2048))
+mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((partsize[EFI-A] * 1024))
 mmd -i "${EFI_IMAGE}" ::/EFI
 mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
 mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT"/*.efi ::/EFI/BOOT
