@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck disable=SC2034  # Variables are used externally by rpm2img
 
 ###############################################################################
 # Section 1: partition type GUIDs
