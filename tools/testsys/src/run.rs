@@ -7,8 +7,8 @@ use log::{debug, info};
 use model::test_manager::TestManager;
 use model::SecretName;
 use pubsys_config::InfraConfig;
-use serde::Deserialize;
-use serde_plain::derive_fromstr_from_deserialize;
+use serde::{Deserialize, Serialize};
+use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
@@ -217,7 +217,9 @@ impl Run {
                 };
                 debug!("Creating crds for aws-k8s testing");
 
-                aws_k8s.create_crds(self.test_flavor, &images).await?
+                aws_k8s
+                    .create_crds(&client, self.test_flavor, &images)
+                    .await?
             }
             "aws-ecs" => {
                 debug!("Variant is in 'aws-ecs' family");
@@ -282,7 +284,7 @@ fn parse_key_val(s: &str) -> Result<(String, SecretName)> {
     Ok((key.to_string(), SecretName::new(value)?))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum TestType {
     /// Conformance testing is a full integration test that asserts that Bottlerocket is working for
@@ -300,6 +302,7 @@ pub(crate) enum TestType {
 }
 
 derive_fromstr_from_deserialize!(TestType);
+derive_display_from_serialize!(TestType);
 
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct Image {
