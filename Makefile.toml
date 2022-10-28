@@ -342,19 +342,56 @@ run_task = "run-twoliter"
 
 # A top level target for devs to ensure review and patch readiness
 [tasks.check]
+dependencies = ["check-shell"]
 run_task = "run-twoliter"
 
 [tasks.check-fmt]
 run_task = "run-twoliter"
 
 [tasks.check-lints]
+dependencies = ["check-shell"]
 run_task = "run-twoliter"
 
 [tasks.check-clippy]
 run_task = "run-twoliter"
 
 [tasks.check-shell]
-run_task = "run-twoliter"
+script = [
+'''
+rc=0
+
+# For bash first-party shell code
+if ! docker run --rm \
+  --network=none \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -v "${BUILDSYS_TOOLS_DIR}":/tmp/tools \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash -c \
+    'flagged_scripts=0 && \
+    cd /tmp/tools && \
+    for shell_script in $(grep -l --directories=skip --regexp="^#\!.*bash$" * ); do
+      if ! shellcheck \
+        --external-sources \
+        --source-path=SCRIPTDIR \
+        --format=gcc \
+        --severity=warning \
+        "${shell_script}"; then
+        ((++flagged_scripts))
+      fi
+    done && \
+    if [ "${flagged_scripts}" -ne 0 ]; then
+      exit 1
+    fi'; then
+  rc=1
+fi
+
+if [ "${rc}" -ne 0 ]; then
+  echo "Found lint warnings. First-party shell code is checked with ShellCheck." >&2
+  exit $rc
+fi
+'''
+]
 
 [tasks.check-golangci-lint]
 run_task = "run-twoliter"
