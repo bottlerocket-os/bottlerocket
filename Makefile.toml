@@ -332,7 +332,12 @@ done
 
 # A top level target for devs to ensure review and patch readiness
 [tasks.check]
-dependencies = ["check-cargo-version", "unit-tests", "check-fmt", "check-lints"]
+dependencies = [
+   "check-cargo-version",
+   "unit-tests",
+   "check-fmt",
+   "check-lints",
+   ]
 
 [tasks.check-fmt]
 script = [
@@ -382,6 +387,12 @@ fi
 ]
 
 [tasks.check-lints]
+dependencies = [
+   "check-clippy",
+   "check-shell",
+]
+
+[tasks.check-clippy]
 script = [
 '''
 rc=0
@@ -397,6 +408,44 @@ fi
 
 if [ "${rc}" -ne 0 ]; then
   echo "Found lint warnings. First-party source code is checked with clippy." >&2
+  exit $rc
+fi
+'''
+]
+
+[tasks.check-shell]
+script = [
+'''
+rc=0
+
+# For bash first-party shell code
+if ! docker run --rm \
+  --network=none \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -v "${BUILDSYS_TOOLS_DIR}":/tmp/tools \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash -c \
+    'flagged_scripts=0 && \
+    cd /tmp/tools && \
+    for shell_script in $(grep -l --directories=skip --regexp="^#\!.*bash$" * ); do
+      if ! shellcheck \
+        --external-sources \
+        --source-path=SCRIPTDIR \
+        --format=gcc \
+        --severity=warning \
+        "${shell_script}"; then
+        ((++flagged_scripts))
+      fi
+    done && \
+    if [ "${flagged_scripts}" -ne 0 ]; then
+      exit 1
+    fi'; then
+  rc=1
+fi
+
+if [ "${rc}" -ne 0 ]; then
+  echo "Found lint warnings. First-party shell code is checked with ShellCheck." >&2
   exit $rc
 fi
 '''
