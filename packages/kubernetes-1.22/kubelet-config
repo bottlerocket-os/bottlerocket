@@ -109,7 +109,12 @@ featureGates:
   CSIMigration: false
 protectKernelDefaults: true
 serializeImagePulls: false
+{{#if (and (default "" settings.kubernetes.server-certificate) (default "" settings.kubernetes.server-key))}}
+tlsCertFile: "/etc/kubernetes/pki/kubelet-server.crt"
+tlsPrivateKeyFile: "/etc/kubernetes/pki/kubelet-server.key"
+{{else}}
 serverTLSBootstrap: {{settings.kubernetes.server-tls-bootstrap}}
+{{/if}}
 tlsCipherSuites:
 - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 volumePluginDir: "/var/lib/kubelet/plugins/volume/exec"

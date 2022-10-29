@@ -7,6 +7,8 @@ configuration-files = [
   "kubelet-exec-start-conf",
   "kubernetes-ca-crt",
   "proxy-env",
+  "kubelet-server-crt",
+  "kubelet-server-key",
 ]
 restart-commands = [
   "/usr/bin/systemctl try-restart kubelet.service"
@@ -31,6 +33,14 @@ template-path = "/usr/share/templates/kubelet-bootstrap-kubeconfig"
 [configuration-files.kubernetes-ca-crt]
 path = "/etc/kubernetes/pki/ca.crt"
 template-path = "/usr/share/templates/kubernetes-ca-crt"
+
+[configuration-files.kubelet-server-crt]
+path = "/etc/kubernetes/pki/kubelet-server.crt"
+template-path = "/usr/share/templates/kubelet-server-crt"
+
+[configuration-files.kubelet-server-key]
+path = "/etc/kubernetes/pki/kubelet-server.key"
+template-path = "/usr/share/templates/kubelet-server-key"
 
 [configuration-files.kubelet-exec-start-conf]
 path = "/etc/systemd/system/kubelet.service.d/exec-start.conf"
