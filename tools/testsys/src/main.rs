@@ -1,7 +1,7 @@
-use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use delete::Delete;
 use env_logger::Builder;
+use error::Result;
 use install::Install;
 use log::{debug, error, LevelFilter};
 use logs::Logs;
@@ -13,13 +13,18 @@ use status::Status;
 use std::path::PathBuf;
 use uninstall::Uninstall;
 
+mod aws_ecs;
+mod aws_k8s;
 mod aws_resources;
+mod crds;
 mod delete;
+mod error;
 mod install;
 mod logs;
 mod restart_test;
 mod run;
 mod secret;
+mod sonobuoy;
 mod status;
 mod uninstall;
 
@@ -44,15 +49,8 @@ struct TestsysArgs {
 impl TestsysArgs {
     async fn run(self) -> Result<()> {
         let client = match self.kubeconfig {
-            Some(path) => TestManager::new_from_kubeconfig_path(&path)
-                .await
-                .context(format!(
-                    "Unable to create testsys client using kubeconfig '{}'",
-                    path.display()
-                ))?,
-            None => TestManager::new().await.context(
-                "Unable to create testsys client using KUBECONFIG variable or default kubeconfig",
-            )?,
+            Some(path) => TestManager::new_from_kubeconfig_path(&path).await?,
+            None => TestManager::new().await?,
         };
         match self.command {
             Command::Run(run) => run.run(client).await?,

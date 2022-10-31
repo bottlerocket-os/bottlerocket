@@ -1,954 +1,39 @@
-use crate::run::TestType;
-use anyhow::{anyhow, Context, Result};
-use bottlerocket_types::agent_config::{
-    ClusterType, CreationPolicy, Ec2Config, EcsClusterConfig, EcsTestConfig, EksClusterConfig,
-    EksctlConfig, K8sVersion, MigrationConfig, SonobuoyConfig, SonobuoyMode, TufRepoConfig,
-};
-
+use crate::crds::{BottlerocketInput, MigrationDirection, MigrationInput};
+use crate::error::{self, Result};
 use aws_sdk_ec2::model::{Filter, Image};
 use aws_sdk_ec2::Region;
-use bottlerocket_variant::Variant;
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
-use k8s_openapi::serde_json::Value;
-use log::debug;
+use bottlerocket_types::agent_config::{ClusterType, Ec2Config, MigrationConfig};
 use maplit::btreemap;
-use model::clients::{AllowNotFound, CrdClient};
-use model::constants::NAMESPACE;
-use model::test_manager::{SelectionParams, TestManager};
-use model::{
-    Agent, Configuration, Crd, DestructionPolicy, Resource, ResourceSpec, SecretName, Test,
-    TestSpec,
-};
-use std::collections::BTreeMap;
-use testsys_config::{
-    rendered_cluster_name, AwsEcsVariantConfig, AwsK8sVariantConfig, TestsysImages,
-};
+use model::{DestructionPolicy, Resource, Test};
+use serde::Deserialize;
+use snafu::{ensure, OptionExt, ResultExt};
+use std::collections::HashMap;
+use std::fs::File;
 
-pub(crate) struct AwsK8s {
-    pub(crate) arch: String,
-    pub(crate) variant: String,
-    pub(crate) region: String,
-    pub(crate) ami: String,
-    pub(crate) config: AwsK8sVariantConfig,
-    pub(crate) tuf_repo: Option<TufRepoConfig>,
-    pub(crate) starting_version: Option<String>,
-    pub(crate) migrate_starting_commit: Option<String>,
-    pub(crate) starting_image_id: Option<String>,
-    pub(crate) migrate_to_version: Option<String>,
-    pub(crate) capabilities: Option<Vec<String>>,
-}
-
-impl AwsK8s {
-    /// Create the necessary test and resource crds for the specified test type.
-    pub(crate) async fn create_crds(
-        &self,
-        client: &TestManager,
-        test: TestType,
-        testsys_images: &TestsysImages,
-    ) -> Result<Vec<Crd>> {
-        let mut crds = Vec::new();
-        let target_cluster_names = if self.config.cluster_names.is_empty() {
-            debug!("No cluster names were provided using default name");
-            vec![self.default_cluster_name()]
-        } else {
-            self.config.cluster_names.clone()
-        };
-        for template_cluster_name in target_cluster_names {
-            let cluster_name = &rendered_cluster_name(
-                template_cluster_name,
-                self.kube_arch(),
-                self.kube_variant(),
-            )?;
-            // Check for existing cluster crd
-            let cluster_exists = client
-                .resource_client()
-                .get(&cluster_name)
-                .await
-                .allow_not_found(|_| ())?
-                .is_some();
-            if !cluster_exists {
-                debug!("Cluster crd does not exist");
-                crds.push(self.eks_crd(cluster_name, testsys_images, &test)?)
-            }
-            // Check for conflicting resources (ones that use the same cluster)
-            let conflicting_resources: Vec<String> = if cluster_exists {
-                client
-                    .list(&SelectionParams::Label(format!(
-                        "testsys/cluster={}, testsys/type=instances",
-                        cluster_name
-                    )))
-                    .await?
-                    .into_iter()
-                    // Retrieve the name from each resource
-                    .filter_map(|crd| crd.name())
-                    .collect()
-            } else {
-                Default::default()
-            };
-
-            crds.append(&mut match &test {
-                TestType::Conformance => self.sonobuoy_test_crds(
-                    &test,
-                    testsys_images,
-                    SonobuoyMode::CertifiedConformance,
-                    cluster_name,
-                    &conflicting_resources,
-                )?,
-                TestType::Quick => self.sonobuoy_test_crds(
-                    &test,
-                    testsys_images,
-                    SonobuoyMode::Quick,
-                    cluster_name,
-                    &conflicting_resources,
-                )?,
-                TestType::Migration => {
-                    self.migration_test_crds(
-                        cluster_name,
-                        &test,
-                        &conflicting_resources,
-                        testsys_images,
-                    )
-                    .await?
-                }
-            })
+/// Get the AMI for the given `region` from the `ami_input` file.
+pub(crate) fn ami(ami_input: &str, region: &str) -> Result<String> {
+    let file = File::open(ami_input).context(error::IOSnafu {
+        what: "Unable to open amis.json",
+    })?;
+    // Convert the `ami_input` file to a `HashMap` that maps regions to AMI id.
+    let amis: HashMap<String, AmiImage> =
+        serde_json::from_reader(file).context(error::SerdeJsonSnafu {
+            what: format!("Unable to deserialize '{}'", ami_input),
+        })?;
+    // Make sure there are some AMIs present in the `ami_input` file.
+    ensure!(
+        !amis.is_empty(),
+        error::InvalidSnafu {
+            what: format!("{} is empty", ami_input)
         }
-        Ok(crds)
-    }
-
-    fn sonobuoy_test_crds(
-        &self,
-        test_type: &TestType,
-        testsys_images: &TestsysImages,
-        sonobuoy_mode: SonobuoyMode,
-        cluster_name: &str,
-        conflicting_resources: &[String],
-    ) -> Result<Vec<Crd>> {
-        let crds = vec![
-            self.ec2_crd(
-                cluster_name,
-                "test",
-                test_type,
-                conflicting_resources,
-                testsys_images,
-                None,
-            )?,
-            self.sonobuoy_crd(
-                "-test",
-                cluster_name,
-                test_type,
-                "test",
-                sonobuoy_mode,
-                None,
-                testsys_images,
-            )?,
-        ];
-        Ok(crds)
-    }
-
-    /// Creates `Test` crds for migration testing.
-    async fn migration_test_crds(
-        &self,
-        cluster_name: &str,
-        test_type: &TestType,
-        conflicting_resources: &[String],
-        testsys_images: &TestsysImages,
-    ) -> Result<Vec<Crd>> {
-        let ami = if let Some(ami) = self.starting_image_id.to_owned() {
-            ami
-        } else {
-            get_ami_id(
-                    format!(
-                        "bottlerocket-{}-{}-{}-{}",
-                        self.variant, self.arch, self.starting_version.as_ref().context("The starting version must be provided for migration testing")?, self.migrate_starting_commit.as_ref().context("The commit for the starting version must be provided if the starting image id is not")?
-                    ), & self.arch,
-                    self.region.to_string(),
-                )
-                .await?
-        };
-        let ec2 = self.ec2_crd(
-            cluster_name,
-            "migration",
-            test_type,
-            conflicting_resources,
-            testsys_images,
-            Some(ami),
-        )?;
-        let instance_provider = ec2
-            .name()
-            .expect("The EC2 instance provider crd is missing a name.");
-        let mut depends_on = Vec::new();
-        // Start with a `quick` test to make sure instances launched properly
-        let initial = self.sonobuoy_crd(
-            "-1-initial",
-            cluster_name,
-            test_type,
-            "migration",
-            SonobuoyMode::Quick,
-            None,
-            testsys_images,
-        )?;
-        depends_on.push(initial.name().context("Crd missing name")?);
-        // Migrate instances to the target version
-        let start_migrate = self.migration_crd(
-            format!("{}-2-migrate", cluster_name),
-            instance_provider.clone(),
-            MigrationVersion::Migrated,
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        // A `quick` test to validate the migration
-        depends_on.push(start_migrate.name().context("Crd missing name")?);
-        let migrated = self.sonobuoy_crd(
-            "-3-migrated",
-            cluster_name,
-            test_type,
-            "migration",
-            SonobuoyMode::Quick,
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        // Migrate instances to the starting version
-        depends_on.push(migrated.name().context("Crd missing name")?);
-        let end_migrate = self.migration_crd(
-            format!("{}-4-migrate", cluster_name),
-            instance_provider,
-            MigrationVersion::Starting,
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        // A final quick test to validate the migration back to the starting version
-        depends_on.push(end_migrate.name().context("Crd missing name")?);
-        let last = self.sonobuoy_crd(
-            "-5-final",
-            cluster_name,
-            test_type,
-            "migration",
-            SonobuoyMode::Quick,
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        Ok(vec![
-            ec2,
-            initial,
-            start_migrate,
-            migrated,
-            end_migrate,
-            last,
-        ])
-    }
-
-    /// Labels help filter test results with `testsys status`.
-    fn labels<S1, S2>(
-        &self,
-        cluster_name: S1,
-        testsys_type: S2,
-        test_type: &TestType,
-    ) -> BTreeMap<String, String>
-    where
-        S1: Into<String>,
-        S2: Into<String>,
-    {
-        btreemap! {
-            "testsys/arch".to_string() => self.arch.to_string(),
-            "testsys/variant".to_string() => self.variant.to_string(),
-            "testsys/cluster".to_string() => cluster_name.into(),
-            "testsys/type".to_string() => testsys_type.into(),
-            "testsys/test".to_string() => test_type.to_string(),
-        }
-    }
-
-    fn kube_arch(&self) -> String {
-        self.arch.replace('_', "-")
-    }
-
-    fn kube_variant(&self) -> String {
-        self.variant.replace('.', "")
-    }
-
-    /// Bottlerocket cluster naming convention.
-    fn default_cluster_name(&self) -> String {
-        format!("{}-{}", self.kube_arch(), self.kube_variant())
-    }
-
-    fn eks_crd(
-        &self,
-        cluster_name: &str,
-        testsys_images: &TestsysImages,
-        test_type: &TestType,
-    ) -> Result<Crd> {
-        let cluster_version = K8sVersion::parse(
-            Variant::new(&self.variant)
-                .context("The provided variant cannot be interpreted.")?
-                .version()
-                .context("aws-k8s variant is missing k8s version")?,
-        )
-        .map_err(|e| anyhow!(e))?;
-        let eks_crd = Resource {
-            metadata: ObjectMeta {
-                name: Some(cluster_name.to_string()),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels(cluster_name, "cluster", test_type)),
-                ..Default::default()
-            },
-            spec: ResourceSpec {
-                depends_on: None,
-                conflicts_with: None,
-                agent: Agent {
-                    name: "eks-provider".to_string(),
-                    image: testsys_images
-                        .eks_resource_agent_image
-                        .to_owned()
-                        .expect("Missing default image for EKS resource agent"),
-                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
-                    keep_running: false,
-                    timeout: None,
-                    configuration: Some(
-                        EksClusterConfig {
-                            creation_policy: Some(CreationPolicy::IfNotExists),
-                            assume_role: self.config.assume_role.clone(),
-                            config: EksctlConfig::Args {
-                                cluster_name: cluster_name.to_string(),
-                                region: Some(self.region.clone()),
-                                zones: None,
-                                version: Some(cluster_version),
-                            },
-                        }
-                        .into_map()
-                        .context("Unable to convert eks config to map")?,
-                    ),
-                    secrets: Some(self.config.secrets.clone()),
-                    ..Default::default()
-                },
-                destruction_policy: DestructionPolicy::Never,
-            },
-            status: None,
-        };
-        Ok(Crd::Resource(eks_crd))
-    }
-
-    fn ec2_crd(
-        &self,
-        cluster_name: &str,
-        resource_name_suffix: &str,
-        test_type: &TestType,
-        conflicting_resources: &[String],
-        testsys_images: &TestsysImages,
-        override_ami: Option<String>,
-    ) -> Result<Crd> {
-        let mut ec2_config = Ec2Config {
-            node_ami: override_ami.unwrap_or_else(|| self.ami.clone()),
-            instance_count: Some(2),
-            instance_types: self.config.instance_type.iter().cloned().collect(),
-            cluster_name: format!("${{{}.clusterName}}", cluster_name),
-            region: format!("${{{}.region}}", cluster_name),
-            instance_profile_arn: format!("${{{}.iamInstanceProfileArn}}", cluster_name),
-            subnet_ids: Default::default(),
-            cluster_type: ClusterType::Eks,
-            endpoint: Some(format!("${{{}.endpoint}}", cluster_name)),
-            certificate: Some(format!("${{{}.certificate}}", cluster_name)),
-            cluster_dns_ip: Some(format!("${{{}.clusterDnsIp}}", cluster_name)),
-            security_groups: vec![],
-            assume_role: self.config.assume_role.clone(),
-        }
-        .into_map()
-        .context("Unable to create ec2 config")?;
-
-        // TODO - we have change the raw map to reference/template a non string field.
-        ec2_config.insert(
-            "securityGroups".to_owned(),
-            Value::String(format!("${{{}.securityGroups}}", cluster_name)),
-        );
-
-        ec2_config.insert(
-            "subnetIds".to_owned(),
-            Value::String(format!("${{{}.privateSubnetIds}}", cluster_name)),
-        );
-
-        let ec2_resource = Resource {
-            metadata: ObjectMeta {
-                name: Some(format!(
-                    "{}-instances-{}",
-                    cluster_name, resource_name_suffix
-                )),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels(cluster_name, "instances", test_type)),
-                ..Default::default()
-            },
-            spec: ResourceSpec {
-                depends_on: Some(vec![cluster_name.to_string()]),
-                conflicts_with: Some(conflicting_resources.into()),
-                agent: Agent {
-                    name: "ec2-provider".to_string(),
-                    image: testsys_images
-                        .ec2_resource_agent_image
-                        .to_owned()
-                        .expect("Missing default image for EC2 resource agent"),
-                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
-                    keep_running: false,
-                    timeout: None,
-                    configuration: Some(ec2_config),
-                    secrets: Some(self.config.secrets.clone()),
-                    ..Default::default()
-                },
-                destruction_policy: DestructionPolicy::OnTestSuccess,
-            },
-            status: None,
-        };
-        Ok(Crd::Resource(ec2_resource))
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn sonobuoy_crd(
-        &self,
-        test_name_suffix: &str,
-        cluster_name: &str,
-        test_type: &TestType,
-        ec2_resource_name_suffix: &str,
-        sonobuoy_mode: SonobuoyMode,
-        depends_on: Option<Vec<String>>,
-        testsys_images: &TestsysImages,
-    ) -> Result<Crd> {
-        let ec2_resource_name = format!("{}-instances-{}", cluster_name, ec2_resource_name_suffix);
-        let test_name = format!("{}{}", cluster_name, test_name_suffix);
-        let sonobuoy = Test {
-            metadata: ObjectMeta {
-                name: Some(test_name),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels(cluster_name, "test", test_type)),
-                ..Default::default()
-            },
-            spec: TestSpec {
-                resources: vec![ec2_resource_name, cluster_name.to_string()],
-                depends_on,
-                retries: Some(5),
-                agent: Agent {
-                    name: "sonobuoy-test-agent".to_string(),
-                    image: testsys_images
-                        .sonobuoy_test_agent_image
-                        .to_owned()
-                        .expect("Missing default image for Sonobuoy test agent"),
-                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
-                    keep_running: true,
-                    timeout: None,
-                    configuration: Some(
-                        SonobuoyConfig {
-                            kubeconfig_base64: format!("${{{}.encodedKubeconfig}}", cluster_name),
-                            plugin: "e2e".to_string(),
-                            mode: sonobuoy_mode,
-                            kubernetes_version: None,
-                            kube_conformance_image: self.config.kube_conformance_image.clone(),
-                            e2e_repo_config_base64: self.config.e2e_repo_registry.as_ref().map(
-                                |e2e_registry| {
-                                    base64::encode(format!(
-                                        r#"buildImageRegistry: {e2e_registry}
-dockerGluster: {e2e_registry}
-dockerLibraryRegistry: {e2e_registry}
-e2eRegistry: {e2e_registry}
-e2eVolumeRegistry: {e2e_registry}
-gcRegistry: {e2e_registry}
-gcEtcdRegistry: {e2e_registry}
-promoterE2eRegistry: {e2e_registry}
-sigStorageRegistry: {e2e_registry}"#
-                                    ))
-                                },
-                            ),
-                            assume_role: self.config.assume_role.clone(),
-                        }
-                        .into_map()
-                        .context("Unable to convert sonobuoy config to `Map`")?,
-                    ),
-                    secrets: Some(self.config.secrets.clone()),
-                    ..Default::default()
-                },
-            },
-            status: None,
-        };
-
-        Ok(Crd::Test(sonobuoy))
-    }
-}
-
-/// In order to easily create migration tests for `aws-k8s` variants we need to implement
-/// `Migration` for it.
-impl Migration for AwsK8s {
-    fn migration_config(&self) -> Result<MigrationsConfig> {
-        Ok(MigrationsConfig {
-            tuf_repo: self
-                .tuf_repo
-                .to_owned()
-                .context("Tuf repo metadata is required for upgrade downgrade testing.")?,
-            starting_version: self
-                .starting_version
-                .to_owned()
-                .context("You must provide a starting version for upgrade downgrade testing.")?,
-            migrate_to_version: self
-                .migrate_to_version
-                .to_owned()
-                .context("You must provide a target version for upgrade downgrade testing.")?,
-            region: self.region.to_string(),
-            secrets: Some(self.config.secrets.clone()),
-            capabilities: self.capabilities.clone(),
-            assume_role: self.config.assume_role.clone(),
-        })
-    }
-
-    fn migration_labels(&self) -> BTreeMap<String, String> {
-        btreemap! {
-            "testsys/arch".to_string() => self.arch.to_string(),
-            "testsys/variant".to_string() => self.variant.to_string(),
-            "testsys/type".to_string() => "test".to_string(),
-            "testsys/test".to_string() => TestType::Migration.to_string(),
-        }
-    }
-}
-
-/// All information required to test ECS variants of Bottlerocket are captured in the `AwsEcs`
-/// struct for migration testing, either `starting_version` and `migration_starting_commit`, or
-/// `starting_image_id` must be set. TestSys supports `quick` and `migration` testing on ECS
-/// variants.
-pub(crate) struct AwsEcs {
-    /// The architecture to test (`x86_64`,`aarch64')
-    pub(crate) arch: String,
-    /// The variant to test (`aws-ecs-1`)
-    pub(crate) variant: String,
-    /// The region testing should be performed in
-    pub(crate) region: String,
-    /// Configuration for the variant
-    pub(crate) config: AwsEcsVariantConfig,
-    /// The ami that should be used for quick testing
-    pub(crate) ami: String,
-
-    // Migrations
-    /// The TUF repos for migration testing. If no TUF repos are used, the default Bottlerocket
-    /// repos will be used
-    pub(crate) tuf_repo: Option<TufRepoConfig>,
-    /// The starting version for migration testing
-    pub(crate) starting_version: Option<String>,
-    /// The AMI id of the starting version for migration testing
-    pub(crate) starting_image_id: Option<String>,
-    /// The short commit SHA of the starting version
-    pub(crate) migrate_starting_commit: Option<String>,
-    /// The target version for Bottlerocket migrations
-    pub(crate) migrate_to_version: Option<String>,
-    /// Additional capabilities that need to be enabled on the agent's pods
-    pub(crate) capabilities: Option<Vec<String>>,
-}
-
-impl AwsEcs {
-    /// Create the necessary test and resource crds for the specified test type.
-    pub(crate) async fn create_crds(
-        &self,
-        test: TestType,
-        testsys_images: &TestsysImages,
-    ) -> Result<Vec<Crd>> {
-        let mut crds = Vec::new();
-        let target_cluster_names = if self.config.cluster_names.is_empty() {
-            debug!("No cluster names were provided using default name");
-            vec![self.default_cluster_name()]
-        } else {
-            self.config.cluster_names.clone()
-        };
-        for template_cluster_name in target_cluster_names {
-            let cluster_name = &rendered_cluster_name(
-                template_cluster_name,
-                self.kube_arch(),
-                self.kube_variant(),
-            )?;
-            crds.append(&mut match test {
-                TestType::Conformance => {
-                    return Err(anyhow!(
-                        "Conformance testing for ECS variants is not supported."
-                    ))
-                }
-                TestType::Quick => self.ecs_test_crds(cluster_name, testsys_images)?,
-                TestType::Migration => {
-                    self.migration_test_crds(cluster_name, testsys_images)
-                        .await?
-                }
-            });
-        }
-
-        Ok(crds)
-    }
-
-    fn ecs_test_crds(
-        &self,
-        cluster_name: &str,
-        testsys_images: &TestsysImages,
-    ) -> Result<Vec<Crd>> {
-        let crds = vec![
-            self.ecs_crd(cluster_name, testsys_images)?,
-            self.ec2_crd(cluster_name, testsys_images, None)?,
-            self.ecs_test_crd(cluster_name, "-test", None, testsys_images)?,
-        ];
-        Ok(crds)
-    }
-
-    async fn migration_test_crds(
-        &self,
-        cluster_name: &str,
-        testsys_images: &TestsysImages,
-    ) -> Result<Vec<Crd>> {
-        let ami = self
-            .starting_image_id
-            .as_ref()
-            .unwrap_or(
-                &get_ami_id(
-                    format!(
-                        "bottlerocket-{}-{}-{}-{}",
-                        self.variant,
-                        self.arch,
-                        self.starting_version.as_ref().context("The starting version must be provided for migration testing")?, 
-                        self.migrate_starting_commit.as_ref().context("The commit for the starting version must be provided if the starting image id is not")?
-                    ), & self.arch,
-                    self.region.to_string(),
-                )
-                .await?,
-            )
-            .to_string();
-        let ecs = self.ecs_crd(cluster_name, testsys_images)?;
-        let ec2 = self.ec2_crd(cluster_name, testsys_images, Some(ami))?;
-        let instance_provider = ec2
-            .name()
-            .expect("The EC2 instance provider crd is missing a name.");
-        let mut depends_on = Vec::new();
-        let initial = self.ecs_test_crd(cluster_name, "-1-initial", None, testsys_images)?;
-        depends_on.push(initial.name().context("Crd missing name")?);
-        let start_migrate = self.migration_crd(
-            format!("{}-2-migrate", cluster_name),
-            instance_provider.clone(),
-            MigrationVersion::Migrated,
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        depends_on.push(start_migrate.name().context("Crd missing name")?);
-        let migrated = self.ecs_test_crd(
-            cluster_name,
-            "-3-migrated",
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        depends_on.push(migrated.name().context("Crd missing name")?);
-        let end_migrate = self.migration_crd(
-            format!("{}-4-migrate", cluster_name),
-            instance_provider,
-            MigrationVersion::Starting,
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        depends_on.push(end_migrate.name().context("Crd missing name")?);
-        let last = self.ecs_test_crd(
-            cluster_name,
-            "-5-final",
-            Some(depends_on.clone()),
-            testsys_images,
-        )?;
-        Ok(vec![
-            ecs,
-            ec2,
-            initial,
-            start_migrate,
-            migrated,
-            end_migrate,
-            last,
-        ])
-    }
-
-    /// Labels help filter test results with `testsys status`.
-    fn labels(&self) -> BTreeMap<String, String> {
-        btreemap! {
-            "testsys/arch".to_string() => self.arch.to_string(),
-            "testsys/variant".to_string() => self.variant.to_string(),
-        }
-    }
-
-    fn kube_arch(&self) -> String {
-        self.arch.replace('_', "-")
-    }
-
-    fn kube_variant(&self) -> String {
-        self.variant.replace('.', "")
-    }
-
-    /// Bottlerocket cluster naming convention.
-    fn default_cluster_name(&self) -> String {
-        format!("{}-{}", self.kube_arch(), self.kube_variant())
-    }
-
-    fn ecs_crd(&self, cluster_name: &str, testsys_images: &TestsysImages) -> Result<Crd> {
-        let ecs_crd = Resource {
-            metadata: ObjectMeta {
-                name: Some(cluster_name.to_string()),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels()),
-                ..Default::default()
-            },
-            spec: ResourceSpec {
-                depends_on: None,
-                conflicts_with: None,
-                agent: Agent {
-                    name: "ecs-provider".to_string(),
-                    image: testsys_images
-                        .ecs_resource_agent_image
-                        .to_owned()
-                        .expect("Missing default image for ECS resource agent"),
-                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
-                    keep_running: false,
-                    timeout: None,
-                    configuration: Some(
-                        EcsClusterConfig {
-                            cluster_name: cluster_name.to_string(),
-                            region: Some(self.region.clone()),
-                            assume_role: self.config.assume_role.clone(),
-                            vpc: None,
-                            iam_instance_profile_name: None,
-                        }
-                        .into_map()
-                        .context("Unable to convert ECS config to map")?,
-                    ),
-                    secrets: Some(self.config.secrets.clone()),
-                    ..Default::default()
-                },
-                destruction_policy: DestructionPolicy::OnTestSuccess,
-            },
-            status: None,
-        };
-        Ok(Crd::Resource(ecs_crd))
-    }
-
-    fn ec2_crd(
-        &self,
-        cluster_name: &str,
-        testsys_images: &TestsysImages,
-        override_ami: Option<String>,
-    ) -> Result<Crd> {
-        let mut ec2_config = Ec2Config {
-            node_ami: override_ami.unwrap_or_else(|| self.ami.clone()),
-            instance_count: Some(2),
-            instance_types: self.config.instance_type.iter().cloned().collect(),
-            cluster_name: format!("${{{}.clusterName}}", cluster_name),
-            region: format!("${{{}.region}}", cluster_name),
-            instance_profile_arn: format!("${{{}.iamInstanceProfileArn}}", cluster_name),
-            subnet_ids: Default::default(),
-            cluster_type: ClusterType::Ecs,
-            endpoint: None,
-            certificate: None,
-            cluster_dns_ip: None,
-            security_groups: vec![],
-            assume_role: self.config.assume_role.clone(),
-        }
-        .into_map()
-        .context("Unable to create EC2 config")?;
-
-        ec2_config.insert(
-            "subnetIds".to_owned(),
-            Value::String(format!("${{{}.privateSubnetIds}}", cluster_name)),
-        );
-
-        let ec2_resource = Resource {
-            metadata: ObjectMeta {
-                name: Some(format!("{}-instances", cluster_name)),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels()),
-                ..Default::default()
-            },
-            spec: ResourceSpec {
-                depends_on: Some(vec![cluster_name.to_string()]),
-                conflicts_with: None,
-                agent: Agent {
-                    name: "ec2-provider".to_string(),
-                    image: testsys_images
-                        .ec2_resource_agent_image
-                        .to_owned()
-                        .expect("Missing default image for EC2 resource agent"),
-                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
-                    keep_running: false,
-                    timeout: None,
-                    configuration: Some(ec2_config),
-                    secrets: Some(self.config.secrets.clone()),
-                    ..Default::default()
-                },
-                destruction_policy: DestructionPolicy::OnTestSuccess,
-            },
-            status: None,
-        };
-        Ok(Crd::Resource(ec2_resource))
-    }
-
-    fn ecs_test_crd(
-        &self,
-        cluster_name: &str,
-        test_name_suffix: &str,
-        depends_on: Option<Vec<String>>,
-        testsys_images: &TestsysImages,
-    ) -> Result<Crd> {
-        let ec2_resource_name = format!("{}-instances", cluster_name);
-        let test_name = format!("{}{}", cluster_name, test_name_suffix);
-        let ecs_test = Test {
-            metadata: ObjectMeta {
-                name: Some(test_name),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(self.labels()),
-                ..Default::default()
-            },
-            spec: TestSpec {
-                resources: vec![ec2_resource_name, cluster_name.to_string()],
-                depends_on,
-                retries: Some(5),
-                agent: Agent {
-                    name: "ecs-test-agent".to_string(),
-                    image: testsys_images
-                        .ecs_test_agent_image
-                        .to_owned()
-                        .expect("Missing default image for ECS test agent"),
-                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
-                    keep_running: true,
-                    timeout: None,
-                    configuration: Some(
-                        EcsTestConfig {
-                            assume_role: self.config.assume_role.clone(),
-                            region: Some(self.region.clone()),
-                            cluster_name: cluster_name.to_string(),
-                            task_count: 1,
-                            task_definition_name_and_revision: None,
-                        }
-                        .into_map()
-                        .context("Unable to convert sonobuoy config to `Map`")?,
-                    ),
-                    secrets: Some(self.config.secrets.clone()),
-                    ..Default::default()
-                },
-            },
-            status: None,
-        };
-
-        Ok(Crd::Test(ecs_test))
-    }
-}
-
-/// In order to easily create migration tests for `aws-ecs` variants we need to implement
-/// `Migration` for it.
-impl Migration for AwsEcs {
-    fn migration_config(&self) -> Result<MigrationsConfig> {
-        Ok(MigrationsConfig {
-            tuf_repo: self
-                .tuf_repo
-                .to_owned()
-                .context("Tuf repo metadata is required for upgrade downgrade testing.")?,
-            starting_version: self
-                .starting_version
-                .to_owned()
-                .context("You must provide a starting version for upgrade downgrade testing.")?,
-            migrate_to_version: self
-                .migrate_to_version
-                .to_owned()
-                .context("You must provide a target version for upgrade downgrade testing.")?,
-            region: self.region.to_string(),
-            secrets: Some(self.config.secrets.clone()),
-            capabilities: self.capabilities.clone(),
-            assume_role: self.config.assume_role.clone(),
-        })
-    }
-
-    fn migration_labels(&self) -> BTreeMap<String, String> {
-        btreemap! {
-            "testsys/arch".to_string() => self.arch.to_string(),
-            "testsys/variant".to_string() => self.variant.to_string(),
-            "testsys/flavor".to_string() => "updown".to_string(),
-        }
-    }
-}
-
-/// An enum to differentiate between upgrade and downgrade tests.
-enum MigrationVersion {
-    ///`MigrationVersion::Starting` will create a migration to the starting version.
-    Starting,
-    ///`MigrationVersion::Migrated` will create a migration to the target version.
-    Migrated,
-}
-
-/// A configuration containing all information needed to create a migration test for a given
-/// variant.
-struct MigrationsConfig {
-    tuf_repo: TufRepoConfig,
-    starting_version: String,
-    migrate_to_version: String,
-    region: String,
-    secrets: Option<BTreeMap<String, SecretName>>,
-    capabilities: Option<Vec<String>>,
-    assume_role: Option<String>,
-}
-
-/// Migration is a trait that should be implemented for all traits that use upgrade/downgrade
-/// testing. It provides the infrastructure to easily create migration tests.
-trait Migration {
-    /// Create a migration config that is used to create migration tests.
-    fn migration_config(&self) -> Result<MigrationsConfig>;
-
-    /// Create the labels that should be used for the migration tests.
-    fn migration_labels(&self) -> BTreeMap<String, String>;
-
-    /// Create a migration test for a given arch/variant.
-    fn migration_crd(
-        &self,
-        test_name: String,
-        instance_provider: String,
-        migration_version: MigrationVersion,
-        depends_on: Option<Vec<String>>,
-        testsys_images: &TestsysImages,
-    ) -> Result<Crd> {
-        // Get the migration configuration for the given type.
-        let migration = self.migration_config()?;
-
-        // Determine which version we are migrating to.
-        let version = match migration_version {
-            MigrationVersion::Starting => migration.starting_version,
-            MigrationVersion::Migrated => migration.migrate_to_version,
-        };
-
-        // Create the migration test crd.
-        let mut migration_config = MigrationConfig {
-            aws_region: migration.region,
-            instance_ids: Default::default(),
-            migrate_to_version: version,
-            tuf_repo: Some(migration.tuf_repo.clone()),
-            assume_role: migration.assume_role.clone(),
-        }
-        .into_map()
-        .context("Unable to convert migration config to map")?;
-        migration_config.insert(
-            "instanceIds".to_string(),
-            Value::String(format!("${{{}.ids}}", instance_provider)),
-        );
-        Ok(Crd::Test(Test {
-            metadata: ObjectMeta {
-                name: Some(test_name),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(self.migration_labels()),
-                ..Default::default()
-            },
-            spec: TestSpec {
-                resources: vec![instance_provider],
-                depends_on,
-                retries: None,
-                agent: Agent {
-                    name: "migration-test-agent".to_string(),
-                    image: testsys_images
-                        .migration_test_agent_image
-                        .to_owned()
-                        .expect("Missing default image for migration test agent"),
-                    pull_secret: testsys_images.testsys_agent_pull_secret.clone(),
-                    keep_running: true,
-                    timeout: None,
-                    configuration: Some(migration_config),
-                    secrets: migration.secrets.clone(),
-                    capabilities: migration.capabilities,
-                    ..Default::default()
-                },
-            },
-            status: None,
-        }))
-    }
+    );
+    Ok(amis
+        .get(region)
+        .context(error::InvalidSnafu {
+            what: format!("AMI not found for region '{}'", region),
+        })?
+        .id
+        .clone())
 }
 
 /// Queries EC2 for the given AMI name. If found, returns Ok(Some(id)), if not returns Ok(None).
@@ -958,11 +43,14 @@ where
     S2: Into<String>,
     S3: Into<String>,
 {
+    // Create the `aws_config` that will be used to search EC2 for AMIs.
+    // TODO: Follow chain of assumed roles for creating config like pubsys uses.
     let config = aws_config::from_env()
         .region(Region::new(region.into()))
         .load()
         .await;
     let ec2_client = aws_sdk_ec2::Client::new(&config);
+    // Find all images named `name` on `arch` in the `region`.
     let describe_images = ec2_client
         .describe_images()
         .owners("self")
@@ -984,12 +72,203 @@ where
         .await?
         .images;
     let images: Vec<&Image> = describe_images.iter().flatten().collect();
+    // Make sure there is exactly 1 image that matches the parameters.
     if images.len() > 1 {
-        return Err(anyhow!("Multiple images were found"));
+        return Err(error::Error::Invalid {
+            what: "Unable to determine AMI. Multiple images were found".to_string(),
+        });
     };
     if let Some(image) = images.last().as_ref() {
-        Ok(image.image_id().context("No image id for AMI")?.to_string())
+        Ok(image
+            .image_id()
+            .context(error::InvalidSnafu {
+                what: "No image id for AMI",
+            })?
+            .to_string())
     } else {
-        Err(anyhow!("No images were found"))
+        Err(error::Error::Invalid {
+            what: "Unable to determine AMI. No images were found".to_string(),
+        })
     }
+}
+
+/// Get the standard Bottlerocket AMI name.
+pub(crate) fn ami_name(arch: &str, variant: &str, version: &str, commit_id: &str) -> String {
+    format!(
+        "bottlerocket-{}-{}-{}-{}",
+        variant, arch, version, commit_id
+    )
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub(crate) struct AmiImage {
+    pub(crate) id: String,
+}
+
+/// Create a CRD to launch Bottlerocket instances on an EKS or ECS cluster.
+pub(crate) async fn ec2_crd<'a>(
+    bottlerocket_input: BottlerocketInput<'a>,
+    cluster_type: ClusterType,
+    region: &str,
+) -> Result<Resource> {
+    let cluster_name = bottlerocket_input
+        .cluster_crd_name
+        .as_ref()
+        .expect("A cluster provider is required");
+
+    // Create the labels for this EC2 provider.
+    let labels = bottlerocket_input.crd_input.labels(btreemap! {
+        "testsys/type".to_string() => "instances".to_string(),
+        "testsys/cluster".to_string() => cluster_name.to_string(),
+        "testsys/region".to_string() => region.to_string()
+    });
+
+    // Find all resources using the same cluster.
+    let conflicting_resources = bottlerocket_input
+        .crd_input
+        .existing_crds(
+            &labels,
+            &["testsys/cluster", "testsys/type", "testsys/region"],
+        )
+        .await?;
+
+    let mut ec2_builder = Ec2Config::builder();
+    ec2_builder
+        .node_ami(bottlerocket_input.image_id)
+        .instance_count(2)
+        .instance_types::<Vec<String>>(
+            bottlerocket_input
+                .crd_input
+                .config
+                .instance_type
+                .iter()
+                .cloned()
+                .collect(),
+        )
+        .cluster_name_template(cluster_name, "clusterName")
+        .region_template(cluster_name, "region")
+        .instance_profile_arn_template(cluster_name, "iamInstanceProfileArn")
+        .assume_role(bottlerocket_input.crd_input.config.agent_role.clone())
+        .cluster_type(cluster_type.clone())
+        .depends_on(cluster_name)
+        .image(
+            bottlerocket_input
+                .crd_input
+                .images
+                .ec2_resource_agent_image
+                .as_ref()
+                .expect("Missing default image for EC2 resource agent"),
+        )
+        .set_image_pull_secret(
+            bottlerocket_input
+                .crd_input
+                .images
+                .testsys_agent_pull_secret
+                .clone(),
+        )
+        .set_labels(Some(labels))
+        .set_conflicts_with(conflicting_resources.into())
+        .set_secrets(Some(bottlerocket_input.crd_input.config.secrets.clone()))
+        .destruction_policy(DestructionPolicy::OnTestSuccess);
+
+    // Add in the EKS specific configuration.
+    if cluster_type == ClusterType::Eks {
+        ec2_builder
+            .subnet_ids_template(cluster_name, "privateSubnetIds")
+            .endpoint_template(cluster_name, "endpoint")
+            .certificate_template(cluster_name, "certificate")
+            .cluster_dns_ip_template(cluster_name, "clusterDnsIp")
+            .security_groups_template(cluster_name, "securityGroups");
+    } else {
+        // The default VPC doesn't attach private subnets to an ECS cluster, so public subnet ids
+        // are used instead.
+        ec2_builder
+            .subnet_ids_template(cluster_name, "publicSubnetIds")
+            // TODO If this is not set, the crd cannot be serialized since it is a `Vec` not
+            // `Option<Vec>`.
+            .security_groups(Vec::new());
+    }
+
+    ec2_builder
+        .build(format!(
+            "{}-instances-{}",
+            cluster_name, bottlerocket_input.test_type
+        ))
+        .map_err(|e| error::Error::Build {
+            what: "EC2 instance provider CRD".to_string(),
+            error: e.to_string(),
+        })
+}
+
+/// Create a CRD for migrating Bottlerocket instances using SSM commands.
+pub(crate) fn migration_crd(migration_input: MigrationInput) -> Result<Test> {
+    let cluster_resource_name = migration_input
+        .cluster_crd_name
+        .as_ref()
+        .expect("A cluster name is required for migrations");
+    let bottlerocket_resource_name = migration_input
+        .bottlerocket_crd_name
+        .as_ref()
+        .expect("A cluster name is required for migrations");
+
+    let labels = migration_input.crd_input.labels(btreemap! {
+        "testsys/type".to_string() => "migration".to_string(),
+        "testsys/cluster".to_string() => cluster_resource_name.to_string(),
+    });
+
+    // Determine which version should be migrated to from `migration_input`.
+    let migration_version = match migration_input.migration_direction {
+        MigrationDirection::Upgrade => migration_input
+            .crd_input
+            .migrate_to_version
+            .as_ref()
+            .context(error::InvalidSnafu {
+                what: "The target migration version is required",
+            }),
+        MigrationDirection::Downgrade => migration_input
+            .crd_input
+            .starting_version
+            .as_ref()
+            .context(error::InvalidSnafu {
+                what: "The starting migration version is required",
+            }),
+    }?;
+
+    // Create the migration CRD.
+    MigrationConfig::builder()
+        .aws_region_template(cluster_resource_name, "region")
+        .instance_ids_template(bottlerocket_resource_name, "ids")
+        .migrate_to_version(migration_version)
+        .tuf_repo(migration_input.crd_input.tuf_metadata())
+        .assume_role(migration_input.crd_input.config.agent_role.clone())
+        .resources(bottlerocket_resource_name)
+        .resources(cluster_resource_name)
+        .set_depends_on(Some(migration_input.prev_tests))
+        .image(
+            migration_input
+                .crd_input
+                .images
+                .migration_test_agent_image
+                .as_ref()
+                .expect("Missing default image for migration test agent"),
+        )
+        .set_image_pull_secret(
+            migration_input
+                .crd_input
+                .images
+                .testsys_agent_pull_secret
+                .to_owned(),
+        )
+        .keep_running(true)
+        .set_secrets(Some(migration_input.crd_input.config.secrets.to_owned()))
+        .set_labels(Some(labels))
+        .build(format!(
+            "{}{}",
+            cluster_resource_name,
+            migration_input.name_suffix.unwrap_or_default()
+        ))
+        .map_err(|e| error::Error::Build {
+            what: "migration CRD".to_string(),
+            error: e.to_string(),
+        })
 }

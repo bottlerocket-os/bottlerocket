@@ -102,35 +102,6 @@ pub struct Test {
     pub testsys_image_registry: Option<String>,
 }
 
-#[derive(Debug, Default)]
-pub struct AwsK8sVariantConfig {
-    /// The names of all clusters this variant should be tested over. This is particularly useful
-    /// for testing Bottlerocket on ipv4 and ipv6 clusters.
-    pub cluster_names: Vec<String>,
-    /// The instance type that instances should be launched with
-    pub instance_type: Option<String>,
-    /// The secrets needed by the agents
-    pub secrets: BTreeMap<String, SecretName>,
-    /// The role that should be assumed for this particular variant
-    pub assume_role: Option<String>,
-    /// The kubernetes conformance image that should be used for this variant
-    pub kube_conformance_image: Option<String>,
-    /// The e2e repo containing sonobuoy images
-    pub e2e_repo_registry: Option<String>,
-}
-
-#[derive(Debug, Default)]
-pub struct AwsEcsVariantConfig {
-    /// The names of all clusters this variant should be tested over
-    pub cluster_names: Vec<String>,
-    /// The instance type that instances should be launched with
-    pub instance_type: Option<String>,
-    /// The secrets needed by the agents
-    pub secrets: BTreeMap<String, SecretName>,
-    /// The role that should be assumed for this particular variant
-    pub assume_role: Option<String>,
-}
-
 /// Create a vec of relevant keys for this variant ordered from most specific to least specific.
 fn config_keys(variant: &Variant) -> Vec<String> {
     let (family_flavor, platform_flavor) = variant
@@ -224,30 +195,6 @@ impl GenericVariantConfig {
             agent_role: self.agent_role.or(other.agent_role),
             conformance_image: self.conformance_image.or(other.conformance_image),
             conformance_registry: self.conformance_registry.or(other.conformance_registry),
-        }
-    }
-}
-
-impl From<GenericVariantConfig> for AwsK8sVariantConfig {
-    fn from(val: GenericVariantConfig) -> Self {
-        Self {
-            cluster_names: val.cluster_names,
-            instance_type: val.instance_type,
-            secrets: val.secrets,
-            assume_role: val.agent_role,
-            kube_conformance_image: val.conformance_image,
-            e2e_repo_registry: val.conformance_registry,
-        }
-    }
-}
-
-impl From<GenericVariantConfig> for AwsEcsVariantConfig {
-    fn from(val: GenericVariantConfig) -> Self {
-        Self {
-            cluster_names: val.cluster_names,
-            instance_type: val.instance_type,
-            secrets: val.secrets,
-            assume_role: val.agent_role,
         }
     }
 }
