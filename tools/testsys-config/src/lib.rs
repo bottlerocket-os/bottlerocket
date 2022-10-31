@@ -279,7 +279,7 @@ pub struct TestsysImages {
     pub testsys_agent_pull_secret: Option<String>,
 }
 
-const AGENT_VERSION: &str = "v0.0.2";
+const AGENT_VERSION: &str = "v0.0.3";
 
 impl TestsysImages {
     /// Create an images config for a specific registry.
