@@ -68,6 +68,9 @@ skip-tree = [
 
     # aws-smithy-client uses an older hyper-rustls
     { name = "aws-smithy-client", version = "0.48.0" },
+
+    # testsys v0.0.3 included wildcard deps will be fixed in v0.0.4
+    { name = "bottlerocket-types", version="0.0.3" },
 ]
 
 [sources]

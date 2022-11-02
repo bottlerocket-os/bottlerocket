@@ -2,7 +2,7 @@ use crate::run::TestType;
 use anyhow::{anyhow, Context, Result};
 use bottlerocket_types::agent_config::{
     ClusterType, CreationPolicy, Ec2Config, EcsClusterConfig, EcsTestConfig, EksClusterConfig,
-    K8sVersion, MigrationConfig, SonobuoyConfig, SonobuoyMode, TufRepoConfig,
+    EksctlConfig, K8sVersion, MigrationConfig, SonobuoyConfig, SonobuoyMode, TufRepoConfig,
 };
 
 use aws_sdk_ec2::model::{Filter, Image};
@@ -304,18 +304,20 @@ impl AwsK8s {
                     timeout: None,
                     configuration: Some(
                         EksClusterConfig {
-                            cluster_name: cluster_name.to_string(),
                             creation_policy: Some(CreationPolicy::IfNotExists),
-                            region: Some(self.region.clone()),
-                            zones: None,
-                            version: Some(cluster_version),
                             assume_role: self.config.assume_role.clone(),
+                            config: EksctlConfig::Args {
+                                cluster_name: cluster_name.to_string(),
+                                region: Some(self.region.clone()),
+                                zones: None,
+                                version: Some(cluster_version),
+                            },
                         }
                         .into_map()
                         .context("Unable to convert eks config to map")?,
                     ),
                     secrets: Some(self.config.secrets.clone()),
-                    capabilities: None,
+                    ..Default::default()
                 },
                 destruction_policy: DestructionPolicy::Never,
             },
@@ -336,11 +338,11 @@ impl AwsK8s {
         let mut ec2_config = Ec2Config {
             node_ami: override_ami.unwrap_or_else(|| self.ami.clone()),
             instance_count: Some(2),
-            instance_type: self.config.instance_type.clone(),
+            instance_types: self.config.instance_type.iter().cloned().collect(),
             cluster_name: format!("${{{}.clusterName}}", cluster_name),
             region: format!("${{{}.region}}", cluster_name),
             instance_profile_arn: format!("${{{}.iamInstanceProfileArn}}", cluster_name),
-            subnet_id: format!("${{{}.privateSubnetId}}", cluster_name),
+            subnet_ids: Default::default(),
             cluster_type: ClusterType::Eks,
             endpoint: Some(format!("${{{}.endpoint}}", cluster_name)),
             certificate: Some(format!("${{{}.certificate}}", cluster_name)),
@@ -355,6 +357,11 @@ impl AwsK8s {
         ec2_config.insert(
             "securityGroups".to_owned(),
             Value::String(format!("${{{}.securityGroups}}", cluster_name)),
+        );
+
+        ec2_config.insert(
+            "subnetIds".to_owned(),
+            Value::String(format!("${{{}.privateSubnetIds}}", cluster_name)),
         );
 
         let ec2_resource = Resource {
@@ -381,7 +388,7 @@ impl AwsK8s {
                     timeout: None,
                     configuration: Some(ec2_config),
                     secrets: Some(self.config.secrets.clone()),
-                    capabilities: None,
+                    ..Default::default()
                 },
                 destruction_policy: DestructionPolicy::OnTestSuccess,
             },
@@ -451,7 +458,7 @@ sigStorageRegistry: {e2e_registry}"#
                         .context("Unable to convert sonobuoy config to `Map`")?,
                     ),
                     secrets: Some(self.config.secrets.clone()),
-                    capabilities: None,
+                    ..Default::default()
                 },
             },
             status: None,
@@ -694,12 +701,13 @@ impl AwsEcs {
                             region: Some(self.region.clone()),
                             assume_role: self.config.assume_role.clone(),
                             vpc: None,
+                            iam_instance_profile_name: None,
                         }
                         .into_map()
                         .context("Unable to convert ECS config to map")?,
                     ),
                     secrets: Some(self.config.secrets.clone()),
-                    capabilities: None,
+                    ..Default::default()
                 },
                 destruction_policy: DestructionPolicy::OnTestSuccess,
             },
@@ -714,14 +722,14 @@ impl AwsEcs {
         testsys_images: &TestsysImages,
         override_ami: Option<String>,
     ) -> Result<Crd> {
-        let ec2_config = Ec2Config {
+        let mut ec2_config = Ec2Config {
             node_ami: override_ami.unwrap_or_else(|| self.ami.clone()),
             instance_count: Some(2),
-            instance_type: self.config.instance_type.clone(),
+            instance_types: self.config.instance_type.iter().cloned().collect(),
             cluster_name: format!("${{{}.clusterName}}", cluster_name),
             region: format!("${{{}.region}}", cluster_name),
             instance_profile_arn: format!("${{{}.iamInstanceProfileArn}}", cluster_name),
-            subnet_id: format!("${{{}.publicSubnetId}}", cluster_name),
+            subnet_ids: Default::default(),
             cluster_type: ClusterType::Ecs,
             endpoint: None,
             certificate: None,
@@ -731,6 +739,11 @@ impl AwsEcs {
         }
         .into_map()
         .context("Unable to create EC2 config")?;
+
+        ec2_config.insert(
+            "subnetIds".to_owned(),
+            Value::String(format!("${{{}.privateSubnetIds}}", cluster_name)),
+        );
 
         let ec2_resource = Resource {
             metadata: ObjectMeta {
@@ -753,7 +766,7 @@ impl AwsEcs {
                     timeout: None,
                     configuration: Some(ec2_config),
                     secrets: Some(self.config.secrets.clone()),
-                    capabilities: None,
+                    ..Default::default()
                 },
                 destruction_policy: DestructionPolicy::OnTestSuccess,
             },
@@ -797,14 +810,13 @@ impl AwsEcs {
                             region: Some(self.region.clone()),
                             cluster_name: cluster_name.to_string(),
                             task_count: 1,
-                            subnet: format!("${{{}.publicSubnetId}}", cluster_name),
                             task_definition_name_and_revision: None,
                         }
                         .into_map()
                         .context("Unable to convert sonobuoy config to `Map`")?,
                     ),
                     secrets: Some(self.config.secrets.clone()),
-                    capabilities: None,
+                    ..Default::default()
                 },
             },
             status: None,
@@ -931,6 +943,7 @@ trait Migration {
                     configuration: Some(migration_config),
                     secrets: migration.secrets.clone(),
                     capabilities: migration.capabilities,
+                    ..Default::default()
                 },
             },
             status: None,
