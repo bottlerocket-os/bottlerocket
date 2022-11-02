@@ -141,6 +141,13 @@ overhead for the GPT labels and partition alignment. The data partition will be
 automatically resized to fill the disk on boot, so it is usually not necessary
 to increase this value.
 
+`publish-image-size-hint-gib` is the desired size of the published image in GiB.
+When the `split` layout is used, the "os" image volume will remain at the built
+size, and any additional space will be allocated to the "data" image volume.
+When the `unified` layout is used, this value will be used directly for the
+single "os" image volume. The hint will be ignored if the combined size of the
+"os" and "data" images exceeds the specified value.
+
 `partition-plan` is the desired strategy for image partitioning.
 This can be `split` (the default) for "os" and "data" images backed by separate
 volumes, or `unified` to have "os" and "data" share the same volume.
@@ -148,6 +155,7 @@ volumes, or `unified` to have "os" and "data" share the same volume.
 [package.metadata.build-variant.image-layout]
 os-image-size-gib = 2
 data-image-size-gib = 1
+publish-image-size-hint-gib = 22
 partition-plan = "split"
 ```
 
@@ -167,100 +175,111 @@ kernel-parameters = [
    "console=ttyS42",
 ]
 
-`grub-features` is a list of supported grub features.
-This list allows us to conditionally use or exclude certain grub features in specific variants.
-The only supported value at this time is `set-private-var`.
-This value means that the grub config for the current variant includes the command to find the
-BOTTLEROCKET_PRIVATE partition and set the appropriate `$private` variable for the grub to
-consume.
-Adding this value to `grub-features` enables the use of Boot Config.
+`image-features` is a map of image feature flags, which can be enabled or disabled. This allows us
+to conditionally use or exclude certain firmware-level features in variants.
+
+`grub-set-private-var` means that the grub image for the current variant includes the command to
+find the BOTTLEROCKET_PRIVATE partition and set the appropriate `$private` variable for the grub
+config file to consume. This feature flag is a prerequisite for Boot Config support.
 ```
-[package.metadata.build-variant]
-grub-features = [
-   "set-private-var",
-]
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
 ```
 */
 
-pub(crate) mod error;
-use error::Result;
+mod error;
 
 use serde::Deserialize;
-use snafu::ResultExt;
-use std::collections::HashSet;
-use std::fmt;
+use snafu::{ResultExt, Snafu};
+use std::cmp::max;
+use std::collections::{HashMap, HashSet};
+use std::convert::TryFrom;
+use std::fmt::{self, Display};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+#[derive(Debug, Snafu)]
+pub struct Error(error::Error);
+type Result<T> = std::result::Result<T, Error>;
 
 /// The nested structures here are somewhat complex, but they make it trivial
 /// to deserialize the structure we expect to find in the manifest.
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) struct ManifestInfo {
+pub struct ManifestInfo {
     package: Package,
 }
 
 impl ManifestInfo {
     /// Extract the settings we understand from `Cargo.toml`.
-    pub(crate) fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         let manifest_data =
             fs::read_to_string(path).context(error::ManifestFileReadSnafu { path })?;
-        toml::from_str(&manifest_data).context(error::ManifestFileLoadSnafu { path })
+        let manifest =
+            toml::from_str(&manifest_data).context(error::ManifestFileLoadSnafu { path })?;
+        Ok(manifest)
     }
 
     /// Convenience method to return the list of source groups.
-    pub(crate) fn source_groups(&self) -> Option<&Vec<PathBuf>> {
+    pub fn source_groups(&self) -> Option<&Vec<PathBuf>> {
         self.build_package().and_then(|b| b.source_groups.as_ref())
     }
 
     /// Convenience method to return the list of external files.
-    pub(crate) fn external_files(&self) -> Option<&Vec<ExternalFile>> {
+    pub fn external_files(&self) -> Option<&Vec<ExternalFile>> {
         self.build_package().and_then(|b| b.external_files.as_ref())
     }
 
     /// Convenience method to return the package name override, if any.
-    pub(crate) fn package_name(&self) -> Option<&String> {
+    pub fn package_name(&self) -> Option<&String> {
         self.build_package().and_then(|b| b.package_name.as_ref())
     }
 
     /// Convenience method to find whether the package is sensitive to variant changes.
-    pub(crate) fn variant_sensitive(&self) -> Option<&VariantSensitivity> {
+    pub fn variant_sensitive(&self) -> Option<&VariantSensitivity> {
         self.build_package()
             .and_then(|b| b.variant_sensitive.as_ref())
     }
 
     /// Convenience method to return the list of included packages.
-    pub(crate) fn included_packages(&self) -> Option<&Vec<String>> {
+    pub fn included_packages(&self) -> Option<&Vec<String>> {
         self.build_variant()
             .and_then(|b| b.included_packages.as_ref())
     }
 
     /// Convenience method to return the image format override, if any.
-    pub(crate) fn image_format(&self) -> Option<&ImageFormat> {
+    pub fn image_format(&self) -> Option<&ImageFormat> {
         self.build_variant().and_then(|b| b.image_format.as_ref())
     }
 
     /// Convenience method to return the image layout, if specified.
-    pub(crate) fn image_layout(&self) -> Option<&ImageLayout> {
-        self.build_variant().and_then(|b| b.image_layout.as_ref())
+    pub fn image_layout(&self) -> Option<&ImageLayout> {
+        self.build_variant().map(|b| &b.image_layout)
     }
 
     /// Convenience method to return the supported architectures for this variant.
-    pub(crate) fn supported_arches(&self) -> Option<&HashSet<SupportedArch>> {
+    pub fn supported_arches(&self) -> Option<&HashSet<SupportedArch>> {
         self.build_variant()
             .and_then(|b| b.supported_arches.as_ref())
     }
 
     /// Convenience method to return the kernel parameters for this variant.
-    pub(crate) fn kernel_parameters(&self) -> Option<&Vec<String>> {
+    pub fn kernel_parameters(&self) -> Option<&Vec<String>> {
         self.build_variant()
             .and_then(|b| b.kernel_parameters.as_ref())
     }
 
-    /// Convenience method to return the GRUB features for this variant.
-    pub(crate) fn grub_features(&self) -> Option<&Vec<GrubFeature>> {
-        self.build_variant().and_then(|b| b.grub_features.as_ref())
+    /// Convenience method to return the enabled image features for this variant.
+    pub fn image_features(&self) -> Option<Vec<&ImageFeature>> {
+        self.build_variant().and_then(|b| {
+            b.image_features.as_ref().and_then(|m| {
+                m.iter()
+                    .filter(|(_k, v)| **v)
+                    .map(|(k, _v)| Some(k))
+                    .collect()
+            })
+        })
     }
 
     /// Helper methods to navigate the series of optional struct fields.
@@ -295,25 +314,25 @@ struct Metadata {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[allow(dead_code)]
-pub(crate) struct BuildPackage {
-    pub(crate) external_files: Option<Vec<ExternalFile>>,
-    pub(crate) package_name: Option<String>,
-    pub(crate) releases_url: Option<String>,
-    pub(crate) source_groups: Option<Vec<PathBuf>>,
-    pub(crate) variant_sensitive: Option<VariantSensitivity>,
+pub struct BuildPackage {
+    pub external_files: Option<Vec<ExternalFile>>,
+    pub package_name: Option<String>,
+    pub releases_url: Option<String>,
+    pub source_groups: Option<Vec<PathBuf>>,
+    pub variant_sensitive: Option<VariantSensitivity>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[serde(untagged)]
-pub(crate) enum VariantSensitivity {
+pub enum VariantSensitivity {
     Any(bool),
     Specific(SensitivityType),
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) enum SensitivityType {
+pub enum SensitivityType {
     Platform,
     Runtime,
     Family,
@@ -322,51 +341,93 @@ pub(crate) enum SensitivityType {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) struct BuildVariant {
-    pub(crate) included_packages: Option<Vec<String>>,
-    pub(crate) image_format: Option<ImageFormat>,
-    pub(crate) image_layout: Option<ImageLayout>,
-    pub(crate) supported_arches: Option<HashSet<SupportedArch>>,
-    pub(crate) kernel_parameters: Option<Vec<String>>,
-    pub(crate) grub_features: Option<Vec<GrubFeature>>,
+pub struct BuildVariant {
+    pub included_packages: Option<Vec<String>>,
+    pub image_format: Option<ImageFormat>,
+    #[serde(default)]
+    pub image_layout: ImageLayout,
+    pub supported_arches: Option<HashSet<SupportedArch>>,
+    pub kernel_parameters: Option<Vec<String>>,
+    pub image_features: Option<HashMap<ImageFeature, bool>>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum ImageFormat {
+pub enum ImageFormat {
     Qcow2,
     Raw,
     Vmdk,
 }
 
 #[derive(Deserialize, Debug, Copy, Clone)]
+/// Constrain specified image sizes to a plausible range, from 0 - 65535 GiB.
+pub struct ImageSize(u16);
+
+impl Display for ImageSize {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Deserialize, Debug, Copy, Clone)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) struct ImageLayout {
+pub struct ImageLayout {
     #[serde(default = "ImageLayout::default_os_image_size_gib")]
-    pub(crate) os_image_size_gib: u32,
+    pub os_image_size_gib: ImageSize,
     #[serde(default = "ImageLayout::default_data_image_size_gib")]
-    pub(crate) data_image_size_gib: u32,
+    pub data_image_size_gib: ImageSize,
+    #[serde(default = "ImageLayout::default_publish_image_size_hint_gib")]
+    publish_image_size_hint_gib: ImageSize,
     #[serde(default = "ImageLayout::default_partition_plan")]
-    pub(crate) partition_plan: PartitionPlan,
+    pub partition_plan: PartitionPlan,
 }
 
 /// These are the historical defaults for all variants, before we added support
 /// for customizing these properties.
-static DEFAULT_OS_IMAGE_SIZE_GIB: u32 = 2;
-static DEFAULT_DATA_IMAGE_SIZE_GIB: u32 = 1;
+static DEFAULT_OS_IMAGE_SIZE_GIB: ImageSize = ImageSize(2);
+static DEFAULT_DATA_IMAGE_SIZE_GIB: ImageSize = ImageSize(1);
+static DEFAULT_PUBLISH_IMAGE_SIZE_HINT_GIB: ImageSize = ImageSize(22);
 static DEFAULT_PARTITION_PLAN: PartitionPlan = PartitionPlan::Split;
 
 impl ImageLayout {
-    fn default_os_image_size_gib() -> u32 {
+    fn default_os_image_size_gib() -> ImageSize {
         DEFAULT_OS_IMAGE_SIZE_GIB
     }
 
-    fn default_data_image_size_gib() -> u32 {
+    fn default_data_image_size_gib() -> ImageSize {
         DEFAULT_DATA_IMAGE_SIZE_GIB
+    }
+
+    fn default_publish_image_size_hint_gib() -> ImageSize {
+        DEFAULT_PUBLISH_IMAGE_SIZE_HINT_GIB
     }
 
     fn default_partition_plan() -> PartitionPlan {
         DEFAULT_PARTITION_PLAN
+    }
+
+    // At publish time we will need specific sizes for the OS image and the (optional) data image.
+    // The sizes returned by this function depend on the image layout, and whether the publish
+    // image hint is larger than the required minimum size.
+    pub fn publish_image_sizes_gib(&self) -> (i32, i32) {
+        let os_image_base_size_gib = self.os_image_size_gib.0;
+        let data_image_base_size_gib = self.data_image_size_gib.0;
+        let publish_image_size_hint_gib = self.publish_image_size_hint_gib.0;
+
+        let min_publish_image_size_gib = os_image_base_size_gib + data_image_base_size_gib;
+        let publish_image_size_gib = max(publish_image_size_hint_gib, min_publish_image_size_gib);
+
+        match self.partition_plan {
+            PartitionPlan::Split => {
+                let os_image_publish_size_gib = os_image_base_size_gib;
+                let data_image_publish_size_gib = publish_image_size_gib - os_image_base_size_gib;
+                (
+                    os_image_publish_size_gib.into(),
+                    data_image_publish_size_gib.into(),
+                )
+            }
+            PartitionPlan::Unified => (publish_image_size_gib.into(), -1),
+        }
     }
 }
 
@@ -375,6 +436,7 @@ impl Default for ImageLayout {
         Self {
             os_image_size_gib: Self::default_os_image_size_gib(),
             data_image_size_gib: Self::default_data_image_size_gib(),
+            publish_image_size_hint_gib: Self::default_publish_image_size_hint_gib(),
             partition_plan: Self::default_partition_plan(),
         }
     }
@@ -382,21 +444,21 @@ impl Default for ImageLayout {
 
 #[derive(Deserialize, Debug, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum PartitionPlan {
+pub enum PartitionPlan {
     Split,
     Unified,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum SupportedArch {
+pub enum SupportedArch {
     X86_64,
     Aarch64,
 }
 
 /// Map a Linux architecture into the corresponding Docker architecture.
 impl SupportedArch {
-    pub(crate) fn goarch(&self) -> &'static str {
+    pub fn goarch(&self) -> &'static str {
         match self {
             SupportedArch::X86_64 => "amd64",
             SupportedArch::Aarch64 => "arm64",
@@ -405,34 +467,44 @@ impl SupportedArch {
 }
 
 #[derive(Deserialize, Debug, PartialEq, Eq, Hash)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum GrubFeature {
-    SetPrivateVar,
+#[serde(try_from = "String")]
+pub enum ImageFeature {
+    GrubSetPrivateVar,
 }
 
-impl fmt::Display for GrubFeature {
+impl TryFrom<String> for ImageFeature {
+    type Error = Error;
+    fn try_from(s: String) -> Result<Self> {
+        match s.as_str() {
+            "grub-set-private-var" => Ok(ImageFeature::GrubSetPrivateVar),
+            _ => error::ParseImageFeatureSnafu { what: s }.fail()?,
+        }
+    }
+}
+
+impl fmt::Display for ImageFeature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            GrubFeature::SetPrivateVar => write!(f, "GRUB_SET_PRIVATE_VAR"),
+            ImageFeature::GrubSetPrivateVar => write!(f, "GRUB_SET_PRIVATE_VAR"),
         }
     }
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum BundleModule {
+pub enum BundleModule {
     Go,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) struct ExternalFile {
-    pub(crate) path: Option<PathBuf>,
-    pub(crate) sha512: String,
-    pub(crate) url: String,
-    pub(crate) bundle_modules: Option<Vec<BundleModule>>,
-    pub(crate) bundle_root_path: Option<PathBuf>,
-    pub(crate) bundle_output_path: Option<PathBuf>,
+pub struct ExternalFile {
+    pub path: Option<PathBuf>,
+    pub sha512: String,
+    pub url: String,
+    pub bundle_modules: Option<Vec<BundleModule>>,
+    pub bundle_root_path: Option<PathBuf>,
+    pub bundle_output_path: Option<PathBuf>,
 }
 
 impl fmt::Display for SupportedArch {

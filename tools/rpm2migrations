@@ -11,9 +11,14 @@ for opt in "$@"; do
    esac
 done
 
+# Store output artifacts in a versioned directory.
+OUTPUT_DIR="${OUTPUT_DIR}/${VERSION_ID}-${BUILD_ID}"
 mkdir -p "${OUTPUT_DIR}"
 
 MIGRATIONS_ARCHIVE="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}-migrations.tar"
+MIGRATIONS_VERSIONED_SYMLINK="bottlerocket-${VARIANT}-${ARCH}-${VERSION_ID}-migrations.tar"
+MIGRATIONS_FRIENDLY_VERSIONED_SYMLINK="bottlerocket-${VARIANT}-${ARCH}-v${VERSION_ID}-migrations.tar"
+MIGRATIONS_SYMLINK="bottlerocket-${VARIANT}-${ARCH}-migrations.tar"
 ROOT_TEMP="$(mktemp -d)"
 SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
 MIGRATIONS_DIR="${ROOT_TEMP}/${SYS_ROOT}/usr/share/migrations"
@@ -42,5 +47,10 @@ else
   tar -cvf "${OUTPUT_DIR}/${MIGRATIONS_ARCHIVE}" --files-from /dev/null
 fi
 popd
+
+# Create friendly symlinks.
+ln -s "${MIGRATIONS_ARCHIVE}" "${OUTPUT_DIR}/${MIGRATIONS_FRIENDLY_VERSIONED_SYMLINK}"
+ln -s "${MIGRATIONS_ARCHIVE}" "${OUTPUT_DIR}/${MIGRATIONS_VERSIONED_SYMLINK}"
+ln -s "${MIGRATIONS_ARCHIVE}" "${OUTPUT_DIR}/${MIGRATIONS_SYMLINK}"
 
 rm -rf "${ROOT_TEMP}"

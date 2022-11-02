@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 
 set -eu -o pipefail
 shopt -qs failglob
@@ -9,6 +10,9 @@ shopt -qs failglob
 
 OUTPUT_FMT="raw"
 BUILDER_ARCH="$(uname -m)"
+OVF_TEMPLATE=""
+
+GRUB_SET_PRIVATE_VAR="no"
 
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
@@ -18,7 +22,11 @@ for opt in "$@"; do
       --output-fmt=*) OUTPUT_FMT="${optarg}" ;;
       --os-image-size-gib=*) OS_IMAGE_SIZE_GIB="${optarg}" ;;
       --data-image-size-gib=*) DATA_IMAGE_SIZE_GIB="${optarg}" ;;
+      --os-image-publish-size-gib=*) OS_IMAGE_PUBLISH_SIZE_GIB="${optarg}" ;;
+      --data-image-publish-size-gib=*) DATA_IMAGE_PUBLISH_SIZE_GIB="${optarg}" ;;
       --partition-plan=*) PARTITION_PLAN="${optarg}" ;;
+      --ovf-template=*) OVF_TEMPLATE="${optarg}" ;;
+      --with-grub-set-private-var=*) GRUB_SET_PRIVATE_VAR="${optarg}" ;;
    esac
 done
 
@@ -38,16 +46,61 @@ case "${PARTITION_PLAN}" in
     ;;
 esac
 
+# Fail fast if the OVF template doesn't exist, or doesn't match the layout.
+if [ "${OUTPUT_FMT}" == "vmdk" ] ; then
+  if [ ! -s "${OVF_TEMPLATE}" ] ; then
+    echo "required OVF template not found: ${OVF_TEMPLATE}" >&2
+    exit 1
+  fi
+
+  if [ "${PARTITION_PLAN}" == "split" ] ; then
+    if ! grep -Fq '{{DATA_DISK}}' "${OVF_TEMPLATE}" ; then
+      echo "Missing data disk in OVF template, which is required for 'split' layout." >&2
+      exit 1
+    fi
+  fi
+
+  if [ "${PARTITION_PLAN}" == "unified" ] ; then
+    if grep -Fq '{{DATA_DISK}}' "${OVF_TEMPLATE}" ; then
+      echo "Incorrect data disk in OVF template, which is not supported for 'unified' layout." >&2
+      exit 1
+    fi
+  fi
+fi
+
+# Store output artifacts in a versioned directory.
+OUTPUT_DIR="${OUTPUT_DIR}/${VERSION_ID}-${BUILD_ID}"
 mkdir -p "${OUTPUT_DIR}"
 
 FILENAME_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-${VERSION_ID}-${BUILD_ID}"
+SYMLINK_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}"
+VERSIONED_SYMLINK_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-${VERSION_ID}"
+FRIENDLY_VERSIONED_SYMLINK_PREFIX="${IMAGE_NAME}-${VARIANT}-${ARCH}-v${VERSION_ID}"
 
-OS_IMAGE_BASENAME="${FILENAME_PREFIX}"
-DATA_IMAGE_BASENAME="${FILENAME_PREFIX}-data"
+OS_IMAGE_NAME="${FILENAME_PREFIX}"
+OS_IMAGE_SYMLINK="${SYMLINK_PREFIX}"
+OS_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}"
+OS_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}"
+
+DATA_IMAGE_NAME="${FILENAME_PREFIX}-data"
+DATA_IMAGE_SYMLINK="${SYMLINK_PREFIX}-data"
+DATA_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-data"
+DATA_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-data"
 
 BOOT_IMAGE_NAME="${FILENAME_PREFIX}-boot.ext4.lz4"
+BOOT_IMAGE_SYMLINK="${SYMLINK_PREFIX}-boot.ext4.lz4"
+BOOT_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-boot.ext4.lz4"
+BOOT_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-boot.ext4.lz4"
+
 VERITY_IMAGE_NAME="${FILENAME_PREFIX}-root.verity.lz4"
+VERITY_IMAGE_SYMLINK="${SYMLINK_PREFIX}-root.verity.lz4"
+VERITY_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-root.verity.lz4"
+VERITY_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-root.verity.lz4"
+
 ROOT_IMAGE_NAME="${FILENAME_PREFIX}-root.ext4.lz4"
+ROOT_IMAGE_SYMLINK="${SYMLINK_PREFIX}-root.ext4.lz4"
+ROOT_IMAGE_VERSIONED_SYMLINK="${VERSIONED_SYMLINK_PREFIX}-root.ext4.lz4"
+ROOT_IMAGE_FRIENDLY_VERSIONED_SYMLINK="${FRIENDLY_VERSIONED_SYMLINK_PREFIX}-root.ext4.lz4"
 
 OS_IMAGE="$(mktemp)"
 BOOT_IMAGE="$(mktemp)"
@@ -255,9 +308,8 @@ veritysetup verify "${ROOT_IMAGE}" "${VERITY_IMAGE}" "${VERITY_ROOT_HASH}"
 dd if="${VERITY_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[HASH-A]}"
 
 # write GRUB config
-GRUB_FEATURES_ARRAY=("${GRUB_FEATURES}")
 # If GRUB_SET_PRIVATE_VAR is set, include the parameters that support Boot Config
-if printf '%s\n' "${GRUB_FEATURES_ARRAY[@]}" | grep -Fxq 'GRUB_SET_PRIVATE_VAR' ; then
+if [ "${GRUB_SET_PRIVATE_VAR}" == "yes" ] ; then
    BOOTCONFIG='bootconfig'
    INITRD='initrd ($private)/bootconfig.data'
 else
@@ -332,27 +384,100 @@ esac
 sgdisk -v "${OS_IMAGE}"
 [ -s "${DATA_IMAGE}" ] && sgdisk -v "${DATA_IMAGE}"
 
+symlink_image() {
+  local ext what
+  ext="${1}"
+  what="${2}"
+  ext="${ext:+.$ext}"
+  target="${what^^}_NAME"
+  for link in symlink versioned_symlink friendly_versioned_symlink ; do
+    link="${what^^}_${link^^}"
+    ln -s "${!target}${ext}" "${OUTPUT_DIR}/${!link}${ext}"
+  done
+}
+
 if [[ ${OUTPUT_FMT} == "raw" ]]; then
-  lz4 -vc "${OS_IMAGE}" >"${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.img.lz4"
+  lz4 -vc "${OS_IMAGE}" >"${OUTPUT_DIR}/${OS_IMAGE_NAME}.img.lz4"
+  symlink_image "img.lz4" "os_image"
   if [ -s "${DATA_IMAGE}" ] ; then
-    lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.img.lz4"
+    lz4 -vc "${DATA_IMAGE}" >"${OUTPUT_DIR}/${DATA_IMAGE_NAME}.img.lz4"
+    symlink_image "img.lz4" "data_image"
   fi
 elif [[ ${OUTPUT_FMT} == "qcow2" ]]; then
-  qemu-img convert -f raw -O qcow2 "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.qcow2"
+  qemu-img convert -f raw -O qcow2 "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_NAME}.qcow2"
+  symlink_image "qcow2" "os_image"
   if [ -s "${DATA_IMAGE}" ] ; then
-    qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.qcow2"
+    qemu-img convert -f raw -O qcow2 "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_NAME}.qcow2"
+    symlink_image "qcow2" "data_image"
   fi
 elif [[ ${OUTPUT_FMT} == "vmdk" ]]; then
   # Stream optimization is required for creating an Open Virtual Appliance (OVA)
-  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_BASENAME}.vmdk"
+  qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${OS_IMAGE}" "${OUTPUT_DIR}/${OS_IMAGE_NAME}.vmdk"
+  symlink_image "vmdk" "os_image"
   if [ -s "${DATA_IMAGE}" ] ; then
-    qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_BASENAME}.vmdk"
+    qemu-img convert -f raw -O vmdk -o subformat=streamOptimized "${DATA_IMAGE}" "${OUTPUT_DIR}/${DATA_IMAGE_NAME}.vmdk"
+    symlink_image "vmdk" "data_image"
   fi
+fi
+
+# Now create the OVA if needed.
+if [ "${OUTPUT_FMT}" == "vmdk" ] ; then
+  os_vmdk="${OS_IMAGE_NAME}.vmdk"
+  data_vmdk="${DATA_IMAGE_NAME}.vmdk"
+  ovf="${OS_IMAGE_NAME}.ovf"
+  ova_dir="$(mktemp -d)"
+
+  # The manifest expects disk sizes in bytes.
+  bytes_in_gib="$((1024 * 1024 * 1024))"
+  os_disk_bytes="$((OS_IMAGE_PUBLISH_SIZE_GIB * bytes_in_gib))"
+  data_disk_bytes="$((DATA_IMAGE_PUBLISH_SIZE_GIB * bytes_in_gib))"
+  sed "${OVF_TEMPLATE}" \
+     -e "s/{{OS_DISK}}/${os_vmdk}/g" \
+     -e "s/{{DATA_DISK}}/${data_vmdk}/g" \
+     -e "s/{{OS_DISK_BYTES}}/${os_disk_bytes}/g" \
+     -e "s/{{DATA_DISK_BYTES}}/${data_disk_bytes}/g" \
+     > "${ova_dir}/${ovf}"
+
+  # Make sure we replaced all the '{{...}}' fields with real values.
+  if grep -F -e '{{' -e '}}' "${ova_dir}/${ovf}" ; then
+    echo "Failed to fully render the OVF template" >&2
+    exit 1
+  fi
+
+  # Create the manifest file with the hashes of the VMDKs and the OVF.
+  manifest="${OS_IMAGE_NAME}.mf"
+  pushd "${OUTPUT_DIR}" >/dev/null
+  sha256sum --tag "${os_vmdk}" > "${ova_dir}/${manifest}"
+  if [ -s "${DATA_IMAGE}" ] ; then
+    sha256sum --tag "${data_vmdk}" >> "${ova_dir}/${manifest}"
+  fi
+  popd >/dev/null
+  pushd "${ova_dir}" >/dev/null
+  sha256sum --tag "${ovf}" >> "${manifest}"
+  popd >/dev/null
+
+  # According to the OVF spec:
+  # https://www.dmtf.org/sites/default/files/standards/documents/DSP0243_2.1.1.pdf,
+  # the OVF must be first in the tar bundle.  Manifest is next, and then the
+  # files must fall in the same order as listed in the References section of the
+  # OVF file
+  ova="${OS_IMAGE_NAME}.ova"
+  tar -cf "${OUTPUT_DIR}/${ova}" -C "${ova_dir}" "${ovf}" "${manifest}"
+  tar -rf "${OUTPUT_DIR}/${ova}" -C "${OUTPUT_DIR}" "${os_vmdk}"
+  if [ -s "${DATA_IMAGE}" ] ; then
+     tar -rf "${OUTPUT_DIR}/${ova}" -C "${OUTPUT_DIR}" "${data_vmdk}"
+  fi
+
+  symlink_image "ova" "os_image"
 fi
 
 lz4 -9vc "${BOOT_IMAGE}" >"${OUTPUT_DIR}/${BOOT_IMAGE_NAME}"
 lz4 -9vc "${VERITY_IMAGE}" >"${OUTPUT_DIR}/${VERITY_IMAGE_NAME}"
 lz4 -9vc "${ROOT_IMAGE}" >"${OUTPUT_DIR}/${ROOT_IMAGE_NAME}"
+
+symlink_image "" "boot_image"
+symlink_image "" "verity_image"
+symlink_image "" "root_image"
 
 find "${OUTPUT_DIR}" -type f -print -exec chown 1000:1000 {} \;
 

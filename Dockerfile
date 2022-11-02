@@ -66,6 +66,7 @@ ARG VARIANT_RUNTIME
 ARG VARIANT_FAMILY
 ARG VARIANT_FLAVOR
 ARG REPO
+ARG GRUB_SET_PRIVATE_VAR
 ENV VARIANT=${VARIANT}
 WORKDIR /home/builder
 
@@ -97,6 +98,7 @@ RUN rpmdev-setuptree \
    && echo "%bcond_without $(V=${VARIANT_RUNTIME,,}; echo ${V//-/_})_runtime" >> .bconds \
    && echo "%bcond_without $(V=${VARIANT_FAMILY,,}; echo ${V//-/_})_family" >> .bconds \
    && echo "%bcond_without $(V=${VARIANT_FLAVOR:-no}; V=${V,,}; echo ${V//-/_})_flavor" >> .bconds \
+   && echo -e -n "${GRUB_SET_PRIVATE_VAR:+%bcond_without grub_set_private_var\n}" >> .bconds \
    && cat .bconds ${PACKAGE}.spec >> rpmbuild/SPECS/${PACKAGE}.spec \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
    && echo ${NOCACHE}
@@ -150,16 +152,8 @@ WORKDIR /root
 
 USER root
 RUN --mount=target=/host \
-    mkdir -p /local/rpms /local/migrations /local/archives ./rpmbuild/RPMS \
+    mkdir -p /local/rpms ./rpmbuild/RPMS \
     && ln -s /host/build/rpms/*.rpm ./rpmbuild/RPMS \
-    && find /host/build/rpms/ -maxdepth 1 -type f \
-        -name "bottlerocket-${ARCH}-migrations-*.rpm" \
-        -not -iname '*debuginfo*' \
-        -exec cp '{}' '/local/migrations/' ';' \
-    && KERNEL="$(printf "%s\n" ${PACKAGES} | awk '/^kernel-/{print $1}')" \
-    && find /host/build/rpms/ -maxdepth 1 -type f \
-        -name "bottlerocket-${ARCH}-${KERNEL}-archive-*.rpm" \
-        -exec cp '{}' '/local/archives/' ';' \
     && createrepo_c \
         -o ./rpmbuild/RPMS \
         -x '*-debuginfo-*.rpm' \
@@ -193,11 +187,13 @@ ARG IMAGE_FORMAT
 ARG OS_IMAGE_SIZE_GIB
 ARG DATA_IMAGE_SIZE_GIB
 ARG PARTITION_PLAN
+ARG OS_IMAGE_PUBLISH_SIZE_GIB
+ARG DATA_IMAGE_PUBLISH_SIZE_GIB
 ARG KERNEL_PARAMETERS
-ARG GRUB_FEATURES
+ARG GRUB_SET_PRIVATE_VAR
 ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} \
     PRETTY_NAME=${PRETTY_NAME} IMAGE_NAME=${IMAGE_NAME} \
-    KERNEL_PARAMETERS=${KERNEL_PARAMETERS} GRUB_FEATURES=${GRUB_FEATURES}
+    KERNEL_PARAMETERS=${KERNEL_PARAMETERS}
 WORKDIR /root
 
 USER root
@@ -208,12 +204,16 @@ RUN --mount=target=/host \
       --output-fmt="${IMAGE_FORMAT}" \
       --os-image-size-gib="${OS_IMAGE_SIZE_GIB}" \
       --data-image-size-gib="${DATA_IMAGE_SIZE_GIB}" \
+      --os-image-publish-size-gib="${OS_IMAGE_PUBLISH_SIZE_GIB}" \
+      --data-image-publish-size-gib="${DATA_IMAGE_PUBLISH_SIZE_GIB}" \
       --partition-plan="${PARTITION_PLAN}" \
+      --ovf-template="/host/variants/${VARIANT}/template.ovf" \
+      ${GRUB_SET_PRIVATE_VAR:+--with-grub-set-private-var=yes} \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
 # Creates an archive of the datastore migrations.
-FROM repobuild as migrationbuild
+FROM sdk as migrationbuild
 ARG ARCH
 ARG VERSION_ID
 ARG BUILD_ID
@@ -224,14 +224,20 @@ WORKDIR /root
 
 USER root
 RUN --mount=target=/host \
-    /host/tools/rpm2migrations \
-      --package-dir=/local/migrations \
-      --output-dir=/local/output \
+    mkdir -p /local/migrations \
+    && find /host/build/rpms/ -maxdepth 1 -type f \
+        -name "bottlerocket-${ARCH}-migrations-*.rpm" \
+        -not -iname '*debuginfo*' \
+        -exec cp '{}' '/local/migrations/' ';' \
+    && /host/tools/rpm2migrations \
+        --package-dir=/local/migrations \
+        --output-dir=/local/output \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
 # Creates an archive of kernel development sources and toolchain.
 FROM repobuild as kmodkitbuild
+ARG PACKAGES
 ARG ARCH
 ARG VERSION_ID
 ARG BUILD_ID
@@ -244,16 +250,21 @@ COPY --from=toolchain /toolchain /local/toolchain
 
 WORKDIR /tmp
 RUN --mount=target=/host \
-    /host/tools/rpm2kmodkit \
-      --archive-dir=/local/archives \
-      --toolchain-dir=/local/toolchain \
-      --output-dir=/local/output \
+    mkdir -p /local/archives \
+    && KERNEL="$(printf "%s\n" ${PACKAGES} | awk '/^kernel-/{print $1}')" \
+    && find /host/build/rpms/ -maxdepth 1 -type f \
+        -name "bottlerocket-${ARCH}-${KERNEL}-archive-*.rpm" \
+        -exec cp '{}' '/local/archives/' ';' \
+    && /host/tools/rpm2kmodkit \
+        --archive-dir=/local/archives \
+        --toolchain-dir=/local/toolchain \
+        --output-dir=/local/output \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
 # Copies the build artifacts (Bottlerocket image files, migrations, and kmod kit) to their
 # expected location so that buildsys can find them and copy them out.
 FROM scratch AS variant
-COPY --from=imgbuild /local/output/* /output/
-COPY --from=migrationbuild /local/output/* /output/
-COPY --from=kmodkitbuild /local/output/* /output/
+COPY --from=imgbuild /local/output/. /output/
+COPY --from=migrationbuild /local/output/. /output/
+COPY --from=kmodkitbuild /local/output/. /output/

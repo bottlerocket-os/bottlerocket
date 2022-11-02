@@ -11,15 +11,13 @@ The implementation is closely tied to the top-level Dockerfile.
 mod builder;
 mod cache;
 mod gomod;
-mod manifest;
 mod project;
 mod spec;
 
-use crate::gomod::GoMod;
-use crate::manifest::BundleModule;
 use builder::{PackageBuilder, VariantBuilder};
+use buildsys::manifest::{BundleModule, ManifestInfo, SupportedArch};
 use cache::LookasideCache;
-use manifest::{ManifestInfo, SupportedArch};
+use gomod::GoMod;
 use project::ProjectInfo;
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
@@ -35,7 +33,7 @@ mod error {
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         ManifestParse {
-            source: super::manifest::error::Error,
+            source: buildsys::manifest::Error,
         },
 
         SpecParse {
@@ -133,9 +131,12 @@ fn build_package() -> Result<()> {
     let root_dir: PathBuf = getenv("BUILDSYS_ROOT_DIR")?.into();
     let variant = getenv("BUILDSYS_VARIANT")?;
     let variant_manifest_path = root_dir.join("variants").join(variant).join(manifest_file);
+    println!("cargo:rerun-if-changed={}", variant_manifest_path.display());
+
     let variant_manifest =
         ManifestInfo::new(variant_manifest_path).context(error::ManifestParseSnafu)?;
     supported_arch(&variant_manifest)?;
+    let image_features = variant_manifest.image_features();
 
     let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
     let manifest =
@@ -144,7 +145,7 @@ fn build_package() -> Result<()> {
     // If manifest has package.metadata.build-package.variant-sensitive set, then track the
     // appropriate environment variable for changes.
     if let Some(sensitivity) = manifest.variant_sensitive() {
-        use manifest::{SensitivityType::*, VariantSensitivity::*};
+        use buildsys::manifest::{SensitivityType::*, VariantSensitivity::*};
         fn emit_variant_env(suffix: Option<&str>) {
             if let Some(suffix) = suffix {
                 println!(
@@ -214,7 +215,7 @@ fn build_package() -> Result<()> {
         println!("cargo:rerun-if-changed={}", f.display());
     }
 
-    PackageBuilder::build(&package).context(error::BuildAttemptSnafu)?;
+    PackageBuilder::build(&package, image_features).context(error::BuildAttemptSnafu)?;
 
     Ok(())
 }
@@ -233,13 +234,13 @@ fn build_variant() -> Result<()> {
         let image_format = manifest.image_format();
         let image_layout = manifest.image_layout();
         let kernel_parameters = manifest.kernel_parameters();
-        let grub_features = manifest.grub_features();
+        let image_features = manifest.image_features();
         VariantBuilder::build(
             packages,
             image_format,
             image_layout,
             kernel_parameters,
-            grub_features,
+            image_features,
         )
         .context(error::BuildAttemptSnafu)?;
     } else {

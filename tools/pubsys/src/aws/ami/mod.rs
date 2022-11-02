@@ -34,21 +34,17 @@ use wait::wait_for_ami;
 #[derive(Debug, StructOpt)]
 #[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
 pub(crate) struct AmiArgs {
-    /// Path to the image containing the root volume
-    #[structopt(short = "r", long, parse(from_os_str))]
-    root_image: PathBuf,
+    /// Path to the image containing the os volume
+    #[structopt(short = "o", long, parse(from_os_str))]
+    os_image: PathBuf,
 
     /// Path to the image containing the data volume
     #[structopt(short = "d", long, parse(from_os_str))]
     data_image: Option<PathBuf>,
 
-    /// Desired root volume size in gibibytes
-    #[structopt(long)]
-    root_volume_size: Option<i32>,
-
-    /// Desired data volume size in gibibytes
-    #[structopt(long)]
-    data_volume_size: Option<i32>,
+    /// Path to the variant manifest
+    #[structopt(short = "v", long, parse(from_os_str))]
+    variant_manifest: PathBuf,
 
     /// The architecture of the machine image
     #[structopt(short = "a", long, parse(try_from_str = parse_arch))]
