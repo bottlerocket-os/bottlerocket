@@ -421,6 +421,26 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.container-log-max-size`: The maximum size of container log file before it is rotated.
 * `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`. If you want to allow pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node, you can set this setting to `static`. You should reboot if you change this setting after startup - try `apiclient reboot`.
 * `settings.kubernetes.cpu-manager-reconcile-period`: Specifies the CPU manager reconcile period, which controls how often updated CPU assignments are written to cgroupfs. The value is a duration like `30s` for 30 seconds or `1h5m` for 1 hour and 5 minutes.
+* `settings.kubernetes.credential-providers`: Contains a collection of Kubelet image credential provider settings.
+  Each name under `credential-providers` is the name of the plugin to configure.
+
+  Example user data for configuring the `ecr-credential-provider` credential provider plugin:
+
+  ```toml
+  [settings.kubernetes.credential-providers.ecr-credential-provider]
+  enabled = true
+  # (optional - defaults to "12h")
+  cache-duration = "30m"
+  image-patterns = [
+    # One or more URL paths to match an image prefix. Supports globbing of subdomains.
+    "*.dkr.ecr.us-east-2.amazonaws.com",
+    "*.dkr.ecr.us-west-2.amazonaws.com"
+  ]
+  ```
+
+  **Note:** `ecr-credential-provider` is currently the only supported provider.
+  To manage its AWS credentials, see the `settings.aws.config` and `settings.aws.credentials` settings.
+
 * `settings.kubernetes.event-burst`: The maximum size of a burst of event creations.
 * `settings.kubernetes.event-qps`: The maximum event creations per second.
 * `settings.kubernetes.eviction-hard`: The signals and thresholds that trigger pod eviction.

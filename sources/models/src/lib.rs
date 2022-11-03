@@ -145,8 +145,8 @@ use std::net::IpAddr;
 
 use crate::de::{deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
-    BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, DNSDomain,
-    ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
+    BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, CredentialProvider,
+    DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     EtcHostsEntries, FriendlyVersion, Identifier, ImageGCHighThresholdPercent,
     ImageGCLowThresholdPercent, KmodKey, KubernetesAuthenticationMode, KubernetesBootstrapToken,
     KubernetesCloudProvider, KubernetesClusterDnsIp, KubernetesClusterName,
@@ -207,6 +207,7 @@ struct KubernetesSettings {
     image_gc_low_threshold_percent: ImageGCLowThresholdPercent,
     provider_id: Url,
     log_level: u8,
+    credential_providers: HashMap<Identifier, CredentialProvider>,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
