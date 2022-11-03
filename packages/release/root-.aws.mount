@@ -1,0 +1,16 @@
+[Unit]
+Description=AWS configuration directory (/root/.aws)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+After=selinux-policy-files.service
+Wants=selinux-policy-files.service
+
+[Mount]
+What=tmpfs
+Where=/root/.aws
+Type=tmpfs
+Options=nosuid,nodev,noexec,noatime,context=system_u:object_r:secret_t:s0,mode=0700
+
+[Install]
+WantedBy=preconfigured.target

@@ -27,6 +27,9 @@ members = [
     # "api/migration/migrations/vX.Y.Z/..."
     "api/migration/migrations/v1.10.1/container-runtime",
     "api/migration/migrations/v1.10.1/container-runtime-metadata",
+    "api/migration/migrations/v1.11.0/aws-creds",
+    "api/migration/migrations/v1.11.0/aws-creds-metadata",
+    "api/migration/migrations/v1.11.0/aws-config-settings",
 
     "bottlerocket-release",
 

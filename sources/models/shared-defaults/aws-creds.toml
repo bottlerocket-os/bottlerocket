@@ -1,0 +1,20 @@
+[settings.aws]
+profile = "default"
+
+[services.aws]
+configuration-files = [
+  "aws-config",
+  "aws-credentials",
+]
+restart-commands = []
+
+[metadata.settings.aws]
+affected-services = ["aws"]
+
+[configuration-files.aws-config]
+path = "/root/.aws/config"
+template-path = "/usr/share/templates/aws-config"
+
+[configuration-files.aws-credentials]
+path = "/root/.aws/credentials"
+template-path = "/usr/share/templates/aws-credentials"

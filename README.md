@@ -951,9 +951,25 @@ They can be overridden for testing purposes in [the same way as other settings](
 
 ##### AWS-specific settings
 
-AWS-specific settings are automatically set based on calls to the Instance MetaData Service (IMDS).
+* `settings.aws.config`: The base64 encoded content to use for AWS configuration (e.g. `base64 -w0 ~/.aws/config`).
+* `settings.aws.credentials`: The base64 encoded content to use for AWS credentials (e.g. `base64 -w0 ~/.aws/credentials`).
+* `settings.aws.profile`: The profile name to use from the provided `config` and `credentials` settings.
+
+  For example:
+
+  ```toml
+  [settings.aws]
+  profile = "myprofile"
+  ```
+
+  **Note**: If `settings.aws.profile` is not set, the setting will fallback to the "default" profile.
+
+  **Note:** The `config`, `credentials`, and `profile` are optional and do not need to be set when using an Instance Profile when running on an AWS instance.
 
 * `settings.aws.region`: This is set to the AWS region in which the instance is running, for example `us-west-2`.
+
+  The `region` setting is automatically inferred based on calls to the Instance MetaData Service (IMDS) when running within AWS.
+  It does not need to be explicitly set unless you have a reason to override this default value.
 
 ### Logs
 

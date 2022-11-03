@@ -19,6 +19,8 @@ Source202: hostname-env
 Source203: hosts.template
 Source204: modprobe-conf.template
 Source205: netdog.template
+Source206: aws-config
+Source207: aws-credentials
 
 Source1001: multi-user.target
 Source1002: configured.target
@@ -35,6 +37,7 @@ Source1009: etc-cni.mount
 Source1010: mnt.mount
 Source1012: opt-cni-bin.mount
 Source1013: local.mount
+Source1014: root-.aws.mount
 
 # CD-ROM mount & associated udev rules
 Source1015: media-cdrom.mount
@@ -136,7 +139,7 @@ install -p -m 0644 \
   %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} %{S:1006} %{S:1007} \
   %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} %{S:1013} %{S:1015} \
   %{S:1040} %{S:1041} %{S:1042} %{S:1043} %{S:1044} %{S:1045} %{S:1046} \
-  %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
+  %{S:1060} %{S:1061} %{S:1062} %{S:1080} %{S:1014} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
@@ -169,6 +172,8 @@ install -p -m 0644 %{S:202} %{buildroot}%{_cross_templatedir}/hostname-env
 install -p -m 0644 %{S:203} %{buildroot}%{_cross_templatedir}/hosts
 install -p -m 0644 %{S:204} %{buildroot}%{_cross_templatedir}/modprobe-conf
 install -p -m 0644 %{S:205} %{buildroot}%{_cross_templatedir}/netdog-toml
+install -p -m 0644 %{S:206} %{buildroot}%{_cross_templatedir}/aws-config
+install -p -m 0644 %{S:207} %{buildroot}%{_cross_templatedir}/aws-credentials
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
@@ -214,6 +219,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/mask-local-mnt.service
 %{_cross_unitdir}/mask-local-opt.service
 %{_cross_unitdir}/mask-local-var.service
+%{_cross_unitdir}/root-.aws.mount
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}
@@ -223,6 +229,8 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_templatedir}/proxy-env
 %{_cross_templatedir}/hostname-env
 %{_cross_templatedir}/hosts
+%{_cross_templatedir}/aws-config
+%{_cross_templatedir}/aws-credentials
 %{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 %changelog
