@@ -64,6 +64,7 @@ Summary: Container cluster node agent
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}findutils
+Requires: %{_cross_os}ecr-credential-provider
 
 %description -n %{_cross_os}kubelet-1.24
 %{summary}.
