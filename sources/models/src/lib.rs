@@ -208,6 +208,8 @@ struct KubernetesSettings {
     provider_id: Url,
     log_level: u8,
     credential_providers: HashMap<Identifier, CredentialProvider>,
+    server_certificate: ValidBase64,
+    server_key: ValidBase64,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

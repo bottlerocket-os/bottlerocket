@@ -476,6 +476,8 @@ The following settings are optional and allow you to further configure your clus
   ephemeral-storage= "1Gi"
   ```
 
+* `settings.kubernetes.server-certificate`: The base64 encoded content of an x509 certificate for the Kubelet web server, which is used for retrieving logs and executing commands.
+* `settings.kubernetes.server-key`: The base64 encoded content of an x509 private key for the Kubelet web server.
 * `settings.kubernetes.topology-manager-policy`: Specifies the topology manager policy. Possible values are `none`, `restricted`, `best-effort`, and `single-numa-node`. Defaults to `none`.
 * `settings.kubernetes.topology-manager-scope`: Specifies the topology manager scope. Possible values are `container` and `pod`. Defaults to `container`. If you want to group all containers in a pod to a common set of NUMA nodes, you can set this setting to `pod`.
 
