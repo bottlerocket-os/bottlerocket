@@ -30,6 +30,7 @@ required_arg() {
    fi
 }
 
+# shellcheck disable=SC2124  # TODO: improve command interface (#2534)
 parse_args() {
   while [ ${#} -gt 0 ] ; do
     case "${1}" in
