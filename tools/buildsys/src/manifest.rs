@@ -105,6 +105,18 @@ variant-sensitive = "runtime"
 variant-sensitive = "family"
 ```
 
+`package-features` is a list of image features that the package tracks. This is
+useful when the way the package is built changes based on whether a particular
+image feature is enabled for the current variant, rather than when the variant
+tuple changes.
+
+```
+[package.metadata.build-package]
+package-features = [
+    "grub-set-private-var",
+]
+```
+
 `releases-url` is ignored by buildsys, but can be used by packager maintainers
 to indicate a good URL for checking whether the software has had a new release.
 ```
@@ -242,6 +254,12 @@ impl ManifestInfo {
             .and_then(|b| b.variant_sensitive.as_ref())
     }
 
+    /// Convenience method to return the image features tracked by this package.
+    pub fn package_features(&self) -> Option<HashSet<&ImageFeature>> {
+        self.build_package()
+            .and_then(|b| b.package_features.as_ref().map(|m| m.iter().collect()))
+    }
+
     /// Convenience method to return the list of included packages.
     pub fn included_packages(&self) -> Option<&Vec<String>> {
         self.build_variant()
@@ -271,14 +289,11 @@ impl ManifestInfo {
     }
 
     /// Convenience method to return the enabled image features for this variant.
-    pub fn image_features(&self) -> Option<Vec<&ImageFeature>> {
+    pub fn image_features(&self) -> Option<HashSet<&ImageFeature>> {
         self.build_variant().and_then(|b| {
-            b.image_features.as_ref().and_then(|m| {
-                m.iter()
-                    .filter(|(_k, v)| **v)
-                    .map(|(k, _v)| Some(k))
-                    .collect()
-            })
+            b.image_features
+                .as_ref()
+                .map(|m| m.iter().filter(|(_k, v)| **v).map(|(k, _v)| k).collect())
         })
     }
 
@@ -320,6 +335,7 @@ pub struct BuildPackage {
     pub releases_url: Option<String>,
     pub source_groups: Option<Vec<PathBuf>>,
     pub variant_sensitive: Option<VariantSensitivity>,
+    pub package_features: Option<Vec<ImageFeature>>,
 }
 
 #[derive(Deserialize, Debug)]

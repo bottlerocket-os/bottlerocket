@@ -74,7 +74,10 @@ pub(crate) struct PackageBuilder;
 
 impl PackageBuilder {
     /// Build RPMs for the specified package.
-    pub(crate) fn build(package: &str, image_features: Option<Vec<&ImageFeature>>) -> Result<Self> {
+    pub(crate) fn build(
+        package: &str,
+        image_features: Option<HashSet<&ImageFeature>>,
+    ) -> Result<Self> {
         let output_dir: PathBuf = getenv("BUILDSYS_PACKAGES_DIR")?.into();
         let arch = getenv("BUILDSYS_ARCH")?;
         let goarch = serde_plain::from_str::<SupportedArch>(&arch)
@@ -130,7 +133,7 @@ impl VariantBuilder {
         image_format: Option<&ImageFormat>,
         image_layout: Option<&ImageLayout>,
         kernel_parameters: Option<&Vec<String>>,
-        image_features: Option<Vec<&ImageFeature>>,
+        image_features: Option<HashSet<&ImageFeature>>,
     ) -> Result<Self> {
         let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
 
