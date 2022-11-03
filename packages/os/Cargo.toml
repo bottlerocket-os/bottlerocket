@@ -14,7 +14,6 @@ source-groups = [
     "parse-datetime",
     "ghostdog",
     "updater",
-    "webpki-roots-shim",
     "logdog",
     "models",
     "imdsclient",

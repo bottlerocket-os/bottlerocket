@@ -2873,6 +2873,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "rustls 0.20.6",
+ "rustls-native-certs 0.6.2",
  "rustls-pemfile",
  "serde",
  "serde_json",
@@ -2884,7 +2885,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "webpki-roots",
  "winreg",
 ]
 
@@ -4124,16 +4124,6 @@ checksum = "f095d78192e208183081cc07bc5515ef55216397af48b873e5edcd72637fa1bd"
 dependencies = [
  "ring",
  "untrusted",
-]
-
-[[package]]
-name = "webpki-roots"
-version = "0.22.2"
-dependencies = [
- "lazy_static",
- "log",
- "pem",
- "webpki 0.21.4",
 ]
 
 [[package]]
