@@ -642,6 +642,7 @@ func withBootstrap() oci.SpecOpts {
 		// container's capabilities.
 		seccomp.WithDefaultProfile(),
 		oci.WithAllDevicesAllowed,
+		withSwapManagement,
 	)
 }
 
@@ -837,6 +838,18 @@ func withRootFsShared() oci.SpecOpts {
 		}
 		return nil
 	}
+}
+
+// withSwapManagement allows the swapon and swapoff syscalls
+func withSwapManagement(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
+	if s.Linux != nil && s.Linux.Seccomp != nil && s.Linux.Seccomp.Syscalls != nil {
+		s.Linux.Seccomp.Syscalls = append(s.Linux.Seccomp.Syscalls, runtimespec.LinuxSyscall{
+			Names:  []string{"swapon", "swapoff"},
+			Action: runtimespec.ActAllow,
+			Args:   []runtimespec.LinuxSeccompArg{},
+		})
+	}
+	return nil
 }
 
 // withProxyEnv reads proxy environment variables and returns a spec option for passing said proxy environment variables
