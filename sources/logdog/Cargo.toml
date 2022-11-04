@@ -15,7 +15,7 @@ datastore = { path = "../api/datastore", version = "0.1.0" }
 flate2 = "1.0"
 glob = "0.3"
 models = { path = "../models", version = "0.1.0" }
-reqwest = { version = "0.11.1", default-features = false, features = ["blocking", "rustls-tls"] }
+reqwest = { version = "0.11.1", default-features = false, features = ["blocking", "rustls-tls-native-roots"] }
 serde_json = "1"
 shell-words = "1.0.0"
 snafu = { version = "0.7", features = ["backtraces-impl-backtrace-crate"] }
