@@ -24,6 +24,7 @@ glibc = { path = "../glibc" }
 
 # RPM Requires
 [dependencies]
+aws-signing-helper = { path = "../aws-signing-helper" }
 ecr-credential-provider = { path = "../ecr-credential-provider" }
 # `conntrack-tools`, `containerd` and `findutils` are only needed at runtime,
 # and are pulled in by `release`.

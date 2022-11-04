@@ -441,6 +441,23 @@ The following settings are optional and allow you to further configure your clus
   **Note:** `ecr-credential-provider` is currently the only supported provider.
   To manage its AWS credentials, see the `settings.aws.config` and `settings.aws.credentials` settings.
 
+  The `ecr-credential-provider` plugin can also be used for AWS IAM Roles Anywhere support.
+  IAM Roles Anywhere is configured using the `settings.aws.config` setting.
+  The content of that setting needs to configure the `credential_process` using the `aws_signing_helper` using your IAM Roles Anywhere settings, similar to the following:
+
+  ```ini
+  [default]
+  region = us-west-2
+  credential_process = aws_signing_helper credential-process \
+     --certificate /var/lib/kubelet/pki/kubelet-client-current.pem \
+     --private-key /var/lib/kubelet/pki/kubelet-client-current.pem \
+     --profile-arn [profile ARN]
+     --role-arn [role ARN]
+     --trust-anchor-arn [trust anchor ARN]
+  ```
+
+  See the [Roles Anywhere documentation](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/credential-helper.html) for more details on the `aws_signing_helper` arguments.
+
 * `settings.kubernetes.event-burst`: The maximum size of a burst of event creations.
 * `settings.kubernetes.event-qps`: The maximum event creations per second.
 * `settings.kubernetes.eviction-hard`: The signals and thresholds that trigger pod eviction.

@@ -1,0 +1,20 @@
+[package]
+name = "aws-signing-helper"
+version = "0.1.0"
+edition = "2018"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/aws/rolesanywhere-credential-helper/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/aws/rolesanywhere-credential-helper/archive/v1.0.2/rolesanywhere-credential-helper-v1.0.2.tar.gz"
+sha512 = "b364bf8f73f33e7ac1db6a1153880ffa2e4af52a3d8f7b224cc5a9a2e545432a9bf408191048a406fdb995a034b997cdeeb752b4dfcea8288be5baeca8e69b9a"
+bundle-modules = [ "go" ]
+
+[build-dependencies]
+glibc = { path = "../glibc" }
