@@ -171,6 +171,11 @@ for state in before after; do
 
                 debug_id="state=${state} arch=${arch} variant=${variant}"
 
+                IFS=- read -ra variant_parts <<<"${variant}"
+                variant_platform="${variant_parts[0]}"
+                variant_runtime="${variant_parts[1]}"
+                variant_family="${variant_platform}-${variant_runtime}"
+
                 #
                 # Run build
                 #
@@ -178,6 +183,9 @@ for state in before after; do
                 cargo make \
                         -e BUILDSYS_ARCH="${arch}" \
                         -e BUILDSYS_VARIANT="${variant}" \
+                        -e BUILDSYS_VARIANT_PLATFORM="${variant_platform}" \
+                        -e BUILDSYS_VARIANT_RUNTIME="${variant_runtime}" \
+                        -e BUILDSYS_VARIANT_FAMILY="${variant_family}" \
                         -e PACKAGE="kernel-${kver/./_}" \
                         build-package \
                     || bail "Build failed for ${debug_id}"
