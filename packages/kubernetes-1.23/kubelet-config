@@ -109,6 +109,7 @@ featureGates:
   CSIMigration: true
   CSIMigrationAWS: true
   CSIMigrationvSphere: true
+  KubeletCredentialProviders: true
 protectKernelDefaults: true
 serializeImagePulls: false
 {{#if (and (default "" settings.kubernetes.server-certificate) (default "" settings.kubernetes.server-key))}}

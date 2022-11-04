@@ -27,6 +27,7 @@ fn run() -> Result<()> {
             "proxy-env",
             "kubelet-server-crt",
             "kubelet-server-key",
+            "credential-provider-config-yaml",
         ],
     }]))
 }

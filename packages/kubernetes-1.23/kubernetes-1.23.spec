@@ -38,6 +38,7 @@ Source10: prepare-var-lib-kubelet.service
 Source11: kubelet-server-crt
 Source12: kubelet-server-key
 Source13: etc-kubernetes-pki.mount
+Source14: credential-provider-config-yaml
 
 # ExecStartPre drop-ins
 Source20: prestart-pull-pause-ctr.conf
@@ -105,6 +106,7 @@ install -m 0644 %{S:6} %{buildroot}%{_cross_templatedir}/kubelet-exec-start-conf
 install -m 0644 %{S:7} %{buildroot}%{_cross_templatedir}/kubelet-bootstrap-kubeconfig
 install -m 0644 %{S:11} %{buildroot}%{_cross_templatedir}/kubelet-server-crt
 install -m 0644 %{S:12} %{buildroot}%{_cross_templatedir}/kubelet-server-key
+install -m 0644 %{S:14} %{buildroot}%{_cross_templatedir}/credential-provider-config-yaml
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:8} %{buildroot}%{_cross_tmpfilesdir}/kubernetes.conf
@@ -141,6 +143,7 @@ ln -rs \
 %{_cross_templatedir}/kubernetes-ca-crt
 %{_cross_templatedir}/kubelet-server-crt
 %{_cross_templatedir}/kubelet-server-key
+%{_cross_templatedir}/credential-provider-config-yaml
 %{_cross_tmpfilesdir}/kubernetes.conf
 %{_cross_sysctldir}/90-kubelet.conf
 %dir %{_cross_libexecdir}/kubernetes
