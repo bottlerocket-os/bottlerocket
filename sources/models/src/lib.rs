@@ -147,7 +147,7 @@ use crate::de::{deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, CredentialProvider,
     DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
-    EtcHostsEntries, FriendlyVersion, Identifier, ImageGCHighThresholdPercent,
+    ECSDurationValue, EtcHostsEntries, FriendlyVersion, Identifier, ImageGCHighThresholdPercent,
     ImageGCLowThresholdPercent, KmodKey, KubernetesAuthenticationMode, KubernetesBootstrapToken,
     KubernetesCloudProvider, KubernetesClusterDnsIp, KubernetesClusterName,
     KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
@@ -230,6 +230,11 @@ struct ECSSettings {
     loglevel: ECSAgentLogLevel,
     enable_spot_instance_draining: bool,
     image_pull_behavior: ECSAgentImagePullBehavior,
+    container_stop_timeout: ECSDurationValue,
+    task_cleanup_wait: ECSDurationValue,
+    metadata_service_rps: i64,
+    metadata_service_burst: i64,
+    reserved_memory: u16,
 }
 
 #[model]
