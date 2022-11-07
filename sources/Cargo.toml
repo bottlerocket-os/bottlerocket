@@ -32,6 +32,7 @@ members = [
     "api/migration/migrations/v1.11.0/aws-config-settings",
     "api/migration/migrations/v1.11.0/credential-providers",
     "api/migration/migrations/v1.11.0/kubelet-tls-config",
+    "api/migration/migrations/v1.11.0/kubelet-tls-files",
     "api/migration/migrations/v1.11.0/kubelet-new-config-files",
     "api/migration/migrations/v1.11.0/ecs-additional-configurations",
 
