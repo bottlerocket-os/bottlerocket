@@ -1,0 +1,25 @@
+[package]
+name = "scalar-derive"
+version = "0.1.0"
+authors = ["Matt Briggs <brigmatt@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[lib]
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+darling = "0.14"
+proc-macro2 = "1"
+quote = "1"
+scalar = { path = "../scalar", version = "0.1.0" }
+serde = { version = "1", features = ["derive"] }
+syn = { version = "1", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
+
+[build-dependencies]
+generate-readme = { path = "../../generate-readme", version = "0.1.0" }
