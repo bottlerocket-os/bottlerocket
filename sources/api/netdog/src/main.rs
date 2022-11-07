@@ -50,6 +50,7 @@ static CURRENT_IP: &str = "/var/lib/netdog/current_ip";
 static KERNEL_CMDLINE: &str = "/proc/cmdline";
 static PRIMARY_INTERFACE: &str = "/var/lib/netdog/primary_interface";
 static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
+static OVERRIDE_NET_CONFIG_FILE: &str = "/var/lib/netdog/net.toml";
 static PRIMARY_SYSCTL_CONF: &str = "/etc/sysctl.d/90-primary_interface.conf";
 static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
 static LEASE_DIR: &str = "/run/wicked";
