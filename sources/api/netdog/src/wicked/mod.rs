@@ -149,7 +149,7 @@ mod tests {
             "eno8:dhcp4?,dhcp6?",
         ];
         for ok_str in ok {
-            let net_config = NetConfigV1::from_str(&ok_str).unwrap();
+            let net_config = NetConfigV1::from_str(ok_str).unwrap();
 
             let wicked_interfaces = net_config.as_wicked_interfaces();
             for interface in wicked_interfaces {
@@ -166,13 +166,14 @@ mod tests {
 
     // Test the end to end trip: "net config -> wicked -> serialized XML"
     #[test]
+    #[allow(clippy::to_string_in_format_args)]
     fn net_config_to_interface_config() {
         let net_config_path = wicked_config().join("net_config.toml");
 
         for version in NET_CONFIG_VERSIONS {
             let temp_config = tempfile::NamedTempFile::new().unwrap();
 
-            render_config_template(&net_config_path, &temp_config, &version);
+            render_config_template(&net_config_path, &temp_config, version);
             let net_config = net_config::from_path(&temp_config).unwrap().unwrap();
             let wicked_interfaces = net_config.as_wicked_interfaces();
             for interface in wicked_interfaces {
