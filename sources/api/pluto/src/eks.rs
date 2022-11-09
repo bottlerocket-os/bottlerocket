@@ -6,6 +6,10 @@ use hyper_proxy::{Proxy, ProxyConnector};
 use hyper_rustls::HttpsConnectorBuilder;
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::env;
+use std::time::Duration;
+
+// Limit the timeout for the EKS describe cluster API call to 5 minutes
+const EKS_DESCRIBE_CLUSTER_TIMEOUT: Duration = Duration::from_secs(300);
 
 pub(crate) type ClusterNetworkConfig = KubernetesNetworkConfigResponse;
 
@@ -15,6 +19,9 @@ pub(super) enum Error {
     DescribeCluster {
         source: aws_sdk_eks::types::SdkError<aws_sdk_eks::error::DescribeClusterError>,
     },
+
+    #[snafu(display("Timed-out waiting for EKS Describe Cluster API response: {}", source))]
+    DescribeClusterTimeout { source: tokio::time::error::Elapsed },
 
     #[snafu(display("Missing field '{}' EKS response", field))]
     Missing { field: &'static str },
@@ -105,16 +112,17 @@ pub(super) async fn get_cluster_network_config(
         aws_sdk_eks::Client::new(&config)
     };
 
-    client
-        .describe_cluster()
-        .name(cluster.to_owned())
-        .send()
-        .await
-        .context(DescribeClusterSnafu)?
-        .cluster
-        .context(MissingSnafu { field: "cluster" })?
-        .kubernetes_network_config
-        .context(MissingSnafu {
-            field: "kubernetes_network_config",
-        })
+    tokio::time::timeout(
+        EKS_DESCRIBE_CLUSTER_TIMEOUT,
+        client.describe_cluster().name(cluster.to_owned()).send(),
+    )
+    .await
+    .context(DescribeClusterTimeoutSnafu)?
+    .context(DescribeClusterSnafu)?
+    .cluster
+    .context(MissingSnafu { field: "cluster" })?
+    .kubernetes_network_config
+    .context(MissingSnafu {
+        field: "kubernetes_network_config",
+    })
 }
