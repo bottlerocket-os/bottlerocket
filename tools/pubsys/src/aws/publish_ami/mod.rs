@@ -22,6 +22,22 @@ use std::iter::FromIterator;
 use std::path::PathBuf;
 use structopt::{clap, StructOpt};
 
+#[derive(Debug, StructOpt)]
+pub(crate) struct ModifyOptions {
+    /// User IDs to give/remove access
+    #[structopt(long, use_delimiter = true, group = "who")]
+    pub(crate) user_ids: Vec<String>,
+    /// Group names to give/remove access
+    #[structopt(long, use_delimiter = true, group = "who")]
+    pub(crate) group_names: Vec<String>,
+    /// Organization arns to give/remove access
+    #[structopt(long, use_delimiter = true, group = "who")]
+    pub(crate) organization_arns: Vec<String>,
+    /// Organizational unit arns to give/remove access
+    #[structopt(long, use_delimiter = true, group = "who")]
+    pub(crate) organizational_unit_arns: Vec<String>,
+}
+
 /// Grants or revokes permissions to Bottlerocket AMIs
 #[derive(Debug, StructOpt)]
 #[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
@@ -44,12 +60,8 @@ pub(crate) struct PublishArgs {
     #[structopt(long, group = "mode")]
     revoke: bool,
 
-    /// User IDs to give/remove access
-    #[structopt(long, use_delimiter = true, group = "who")]
-    user_ids: Vec<String>,
-    /// Group names to give/remove access
-    #[structopt(long, use_delimiter = true, group = "who")]
-    group_names: Vec<String>,
+    #[structopt(flatten)]
+    modify_opts: ModifyOptions,
 }
 
 /// Common entrypoint from main()
@@ -170,8 +182,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
 
     info!("Updating snapshot permissions - {}", description);
     modify_regional_snapshots(
-        Some(publish_args.user_ids.clone()),
-        Some(publish_args.group_names.clone()),
+        &publish_args.modify_opts,
         &operation,
         &snapshots,
         &ec2_clients,
@@ -184,8 +195,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
         .map(|(region, image)| (region, image.id))
         .collect();
     modify_regional_images(
-        Some(publish_args.user_ids.clone()),
-        Some(publish_args.group_names.clone()),
+        &publish_args.modify_opts,
         &operation,
         &ami_ids,
         &ec2_clients,
@@ -300,8 +310,7 @@ async fn get_regional_snapshots(
 /// Modify createVolumePermission for the given users/groups on the given snapshots.  The
 /// `operation` should be "add" or "remove" to allow/deny permission.
 pub(crate) async fn modify_snapshots(
-    user_ids: Option<Vec<String>>,
-    group_names: Option<Vec<String>>,
+    modify_opts: &ModifyOptions,
     operation: &OperationType,
     snapshot_ids: &[String],
     ec2_client: &Ec2Client,
@@ -312,8 +321,8 @@ pub(crate) async fn modify_snapshots(
         let response_future = ec2_client
             .modify_snapshot_attribute()
             .set_attribute(Some(SnapshotAttributeName::CreateVolumePermission))
-            .set_user_ids(user_ids.clone())
-            .set_group_names(group_names.clone())
+            .set_user_ids(Some(modify_opts.user_ids.clone()))
+            .set_group_names(Some(modify_opts.group_names.clone()))
             .set_operation_type(Some(operation.clone()))
             .set_snapshot_id(Some(snapshot_id.clone()))
             .send();
@@ -342,8 +351,7 @@ pub(crate) async fn modify_snapshots(
 /// Modify createVolumePermission for the given users/groups, across all of the snapshots in the
 /// given regional mapping.  The `operation` should be "add" or "remove" to allow/deny permission.
 pub(crate) async fn modify_regional_snapshots(
-    user_ids: Option<Vec<String>>,
-    group_names: Option<Vec<String>>,
+    modify_opts: &ModifyOptions,
     operation: &OperationType,
     snapshots: &HashMap<Region, Vec<String>>,
     clients: &HashMap<Region, Ec2Client>,
@@ -352,14 +360,8 @@ pub(crate) async fn modify_regional_snapshots(
     let mut requests = Vec::new();
     for (region, snapshot_ids) in snapshots {
         let ec2_client = &clients[region];
-        let modify_snapshot_future = modify_snapshots(
-            user_ids.clone(),
-            group_names.clone(),
-            operation,
-            snapshot_ids,
-            ec2_client,
-            region,
-        );
+        let modify_snapshot_future =
+            modify_snapshots(modify_opts, operation, snapshot_ids, ec2_client, region);
 
         // Store the region and snapshot ID so we can include it in errors
         let info_future = ready((region.clone(), snapshot_ids.clone()));
@@ -411,8 +413,7 @@ pub(crate) async fn modify_regional_snapshots(
 /// Modify launchPermission for the given users/groups on the given images.  The `operation`
 /// should be "add" or "remove" to allow/deny permission.
 pub(crate) async fn modify_image(
-    user_ids: Option<Vec<String>>,
-    user_groups: Option<Vec<String>>,
+    modify_opts: &ModifyOptions,
     operation: &OperationType,
     image_id: &str,
     ec2_client: &Ec2Client,
@@ -422,8 +423,10 @@ pub(crate) async fn modify_image(
         .set_attribute(Some(
             ImageAttributeName::LaunchPermission.as_ref().to_string(),
         ))
-        .set_user_ids(user_ids.clone())
-        .set_user_groups(user_groups.clone())
+        .set_user_ids(Some(modify_opts.user_ids.clone()))
+        .set_user_groups(Some(modify_opts.group_names.clone()))
+        .set_organization_arns(Some(modify_opts.organization_arns.clone()))
+        .set_organizational_unit_arns(Some(modify_opts.organizational_unit_arns.clone()))
         .set_operation_type(Some(operation.clone()))
         .set_image_id(Some(image_id.to_string()))
         .send()
@@ -433,8 +436,7 @@ pub(crate) async fn modify_image(
 /// Modify launchPermission for the given users/groups, across all of the images in the given
 /// regional mapping.  The `operation` should be "add" or "remove" to allow/deny permission.
 pub(crate) async fn modify_regional_images(
-    user_ids: Option<Vec<String>>,
-    user_groups: Option<Vec<String>>,
+    modify_opts: &ModifyOptions,
     operation: &OperationType,
     images: &HashMap<Region, String>,
     clients: &HashMap<Region, Ec2Client>,
@@ -443,13 +445,7 @@ pub(crate) async fn modify_regional_images(
     for (region, image_id) in images {
         let ec2_client = &clients[region];
 
-        let modify_image_future = modify_image(
-            user_ids.clone(),
-            user_groups.clone(),
-            operation,
-            image_id,
-            ec2_client,
-        );
+        let modify_image_future = modify_image(modify_opts, operation, image_id, ec2_client);
 
         // Store the region and image ID so we can include it in errors
         let info_future = ready((region.as_ref().to_string(), image_id.clone()));
