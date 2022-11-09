@@ -25,13 +25,13 @@ const DEFAULT_BOOT_SETTINGS: BootSettings = BootSettings {
 fn append_boot_config_value_list(values: &[BootConfigValue], output: &mut String) {
     for (i, v) in values.iter().enumerate() {
         if i > 0 {
-            output.push_str(", ");
+            output.push(',');
         }
         // If the value itself has double quotes in it, then we wrap the value with single-quotes
         if v.contains('\"') {
-            output.push_str(&format!("\'{}\'", v));
+            output.push_str(&format!(" \'{}\'", v));
         } else {
-            output.push_str(&format!("\"{}\"", v));
+            output.push_str(&format!(" \"{}\"", v));
         }
     }
 }
@@ -44,15 +44,21 @@ fn serialize_boot_settings_to_boot_config(boot_settings: &BootSettings) -> Resul
     let mut output = String::with_capacity(128);
     if let Some(kernel_param) = &boot_settings.kernel_parameters {
         for (key, values) in kernel_param.iter() {
-            output.push_str(&format!("kernel.{} = ", key));
-            append_boot_config_value_list(values, &mut output);
+            output.push_str(&format!("kernel.{}", key));
+            if !values.is_empty() {
+                output.push_str(" =");
+                append_boot_config_value_list(values, &mut output);
+            }
             output.push('\n')
         }
     }
     if let Some(init_param) = &boot_settings.init_parameters {
         for (key, values) in init_param.iter() {
-            output.push_str(&format!("init.{} = ", key));
-            append_boot_config_value_list(values, &mut output);
+            output.push_str(&format!("init.{}", key));
+            if !values.is_empty() {
+                output.push_str(" =");
+                append_boot_config_value_list(values, &mut output);
+            }
             output.push('\n')
         }
     }
@@ -192,7 +198,10 @@ fn parse_boot_config_values(input: &str) -> Result<Vec<BootConfigValue>> {
     } else {
         &input[start_index..]
     };
-    elements.push(parse_value(last_ele)?);
+    // Value-less bootconfig keys are allowed
+    if !last_ele.is_empty() {
+        elements.push(parse_value(last_ele)?);
+    }
     Ok(elements)
 }
 
@@ -208,7 +217,12 @@ fn parse_boot_config_to_boot_settings(bootconfig: &str) -> Result<BootSettings> 
             .ok_or(error::Error::InvalidBootConfig)?
             .try_into()
             .context(error::ParseBootConfigKeySnafu)?;
-        let values = parse_boot_config_values(kv.next().ok_or(error::Error::InvalidBootConfig)?)?;
+        // Value-less boot config keys are acceptable, i.e. 'key =' or 'key'
+        // We represent the absence of a value with as an empty list
+        let values = match kv.next() {
+            Some(value) => parse_boot_config_values(value)?,
+            None => Vec::new(),
+        };
 
         if key != "kernel" && key.starts_with("kernel") {
             kernel_params.insert(
@@ -352,7 +366,7 @@ mod boot_settings_tests {
             }),
             init_parameters: to_boot_settings_params(hashmap! {
                 "systemd.log_level" => vec!["debug"],
-                "splash" => vec![""],
+                "splash" => vec![],
                 "weird" => vec!["'single'quotes'","\"double\"quotes\""],
             }),
         };
@@ -367,7 +381,7 @@ mod boot_settings_tests {
         assert_eq!(
             output,
             r#"
-            init.splash = ""
+            init.splash
             init.systemd.log_level = "debug"
             init.weird = "'single'quotes'", '"double"quotes"'
             kernel.console = "ttyS1,115200n8", "tty0"
@@ -437,14 +451,15 @@ mod boot_settings_tests {
 
     static STANDARD_BOOTCONFIG: &str = r#"
         kernel.console = "ttyS1,115200n8", "tty0"
+        init.splash
+        init.splash2 =
         init.systemd.log_level = "debug"
-        init.splash = ""
         "#;
 
     #[test]
     fn standard_boot_config_to_boot_settings_json() {
         assert_eq!(
-            json!({"kernel":{"console":["ttyS1,115200n8","tty0"]},"init":{"systemd.log_level":["debug"],"splash":[""]}}),
+            json!({"kernel":{"console":["ttyS1,115200n8","tty0"]},"init":{"systemd.log_level":["debug"],"splash":[],"splash2":[]}}),
             serde_json::from_str::<Value>(
                 &boot_config_to_boot_settings_json(STANDARD_BOOTCONFIG).unwrap()
             )

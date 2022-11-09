@@ -74,7 +74,9 @@ pub(super) enum Error {
     #[snafu(display("Failed to deserialize `BootSettings` from JSON value: {}", source))]
     BootSettingsFromJsonValue { source: serde_json::error::Error },
 
-    #[snafu(display("Invalid boot config file, expected key-value entries for each line"))]
+    #[snafu(display(
+        "Invalid boot config file, expected key-value, or key entries for each line"
+    ))]
     InvalidBootConfig,
 
     #[snafu(display("Failed to parse boot config key: {}", source))]
