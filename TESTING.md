@@ -102,6 +102,12 @@ cargo make testsys add secret map  \
  "secret-access-key=$(aws configure get aws_secret_access_key --profile ${PROFILE})"
 ```
 
+If you added a secret, you then need to pass the secret's name to testsys
+through an environment variable:
+```shell
+export TESTSYS_AWS_SECRET_NAME="awsCredentials=<Name of your secret>"
+```
+
 ### Conveniences
 
 All testsys commands can be run using cargo make to eliminate the chance of 2 different versions of
@@ -112,7 +118,7 @@ Testsys requires the controller and the agent images to be of the same testsys v
 cargo make testsys <arguments>
 ```
 
-The Bottlerocket components are found in the `testsys-bottlerocket-aws` Kubernetes namespace.
+The Bottlerocket components are found in the `testsys` Kubernetes namespace.
 
 ## Run
 

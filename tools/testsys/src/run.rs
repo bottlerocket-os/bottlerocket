@@ -108,7 +108,7 @@ struct CliConfig {
     #[clap(long, env = "TESTSYS_INSTANCE_TYPE")]
     instance_type: Option<String>,
 
-    /// Add secrets to the testsys agents (`--secret aws-credentials=my-secret`)
+    /// Add secrets to the testsys agents (`--secret awsCredentials=my-secret`)
     #[clap(long, short, parse(try_from_str = parse_key_val), number_of_values = 1)]
     secret: Vec<(String, SecretName)>,
 }
