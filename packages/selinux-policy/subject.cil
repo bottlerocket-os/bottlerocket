@@ -134,7 +134,7 @@
 
 ; Subjects that are allowed to manage network interfaces.
 (typeattribute network_s)
-(typeattributeset network_s (network_t system_t super_t))
+(typeattributeset network_s (network_t system_t super_t control_t))
 
 ; Subjects that are allowed to control system files.
 (typeattribute control_s)

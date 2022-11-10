@@ -1,5 +1,8 @@
 use super::{error, Result};
-use crate::{net_config, DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, PRIMARY_INTERFACE};
+use crate::{
+    net_config, DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, OVERRIDE_NET_CONFIG_FILE,
+    PRIMARY_INTERFACE,
+};
 use argh::FromArgs;
 use snafu::{OptionExt, ResultExt};
 use std::{fs, path::Path};
@@ -11,7 +14,11 @@ pub(crate) struct GenerateNetConfigArgs {}
 
 /// Generate configuration for network interfaces.
 pub(crate) fn run() -> Result<()> {
-    let maybe_net_config = if Path::exists(Path::new(DEFAULT_NET_CONFIG_FILE)) {
+    let maybe_net_config = if Path::exists(Path::new(OVERRIDE_NET_CONFIG_FILE)) {
+        net_config::from_path(OVERRIDE_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
+            path: OVERRIDE_NET_CONFIG_FILE,
+        })?
+    } else if Path::exists(Path::new(DEFAULT_NET_CONFIG_FILE)) {
         net_config::from_path(DEFAULT_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
             path: DEFAULT_NET_CONFIG_FILE,
         })?

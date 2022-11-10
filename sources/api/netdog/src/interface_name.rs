@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn invalid_interface_name() {
         let bad_str = [
-            &std::iter::repeat("a").take(16).collect::<String>(),
+            &"a".repeat(16),
             "",
             ".",
             "..",
@@ -132,13 +132,7 @@ mod tests {
 
     #[test]
     fn valid_interface_name() {
-        let ok_str = [
-            &std::iter::repeat("a").take(15).collect::<String>(),
-            "eno1",
-            "eth0",
-            "enp5s0",
-            "enx0eb36944b633",
-        ];
+        let ok_str = [&"a".repeat(15), "eno1", "eth0", "enp5s0", "enx0eb36944b633"];
         for ok in ok_str {
             assert!(InterfaceName::try_from(ok).is_ok())
         }
