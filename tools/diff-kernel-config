@@ -211,7 +211,7 @@ for state in before after; do
                 # Extract kernel config
                 #
 
-                config_path=./${output_dir}/config-${arch}-${kver}-${variant}-${state}
+                config_path=${output_dir}/config-${arch}-${kver}-${variant}-${state}
                 rpm2cpio "${kernel_rpm}" \
                     | cpio --quiet --extract --to-stdout ./boot/config >"${config_path}"
                 [[ -s "${config_path}" ]] || bail "Failed to extract config for ${debug_id}"
