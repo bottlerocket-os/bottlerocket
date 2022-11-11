@@ -1,0 +1,39 @@
+From acec9e1b2ece15c0c2cceeef3339dc41384373f3 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Tue, 25 Oct 2022 19:34:25 +0000
+Subject: [PATCH] server: discover hardware address of unconfigured interface
+
+When restarting wickedd while an interface is left unconfigured, its
+hardware address will not be discovered and hence the interface cannot
+be identified (and subsequently brought up) via its hardware address.
+
+During start, the server requests a dump of all interfaces from the
+kernel via netlink. Hardware addresses are queried for if the interface
+is marked ready. However, the interface will only be marked ready at a
+later point during start, when the interface state is discovered via
+calls to udev.
+
+Fix this by (re-)querying the hardware address when the interface state
+is discovered, not only when the kernel informs wicked about interface
+changes.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ server/main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/server/main.c b/server/main.c
+index 375a808..3e5c707 100644
+--- a/server/main.c
++++ b/server/main.c
+@@ -328,6 +328,7 @@ discover_udev_netdev_state(ni_netdev_t *dev)
+ 	 * flag (rules processed / already renamed by udev)
+ 	 * as ethtool is a query by ifname...
+ 	 */
++	__ni_system_ethernet_refresh(dev);
+ 	ni_system_ethtool_refresh(dev);
+ }
+ 
+-- 
+2.36.1
+

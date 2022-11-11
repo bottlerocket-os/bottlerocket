@@ -1,0 +1,109 @@
+From 63bd7bb45b45ef7a44afb4190a7f04bf83e841f5 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Tue, 25 Oct 2022 18:05:20 +0000
+Subject: [PATCH] client: validate ethernet namespace node
+
+Validate the ethernet namespace node in config files to identify
+interfaces via other means than their name, here via their hardware
+address. This restores a previously existing feature (see
+samples/wicked/eth0-identify.xml) that stopped working due to extra
+validation added at a later point.
+
+Fixes: ad7b47d0a ("client: Check for config priorities at reading stage")
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ client/read-config.c | 56 ++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 51 insertions(+), 5 deletions(-)
+
+diff --git a/client/read-config.c b/client/read-config.c
+index 231d656..8965848 100644
+--- a/client/read-config.c
++++ b/client/read-config.c
+@@ -327,19 +327,23 @@ __ifconfig_read_get_ifname(xml_node_t *ifnode, unsigned int *ifindex)
+ 	const char *namespace;
+ 	char *ifname = NULL;
+ 
+-	/* Check for   <name> node */
++	/* Check for <name> node */
+ 	nnode = xml_node_get_child(ifnode, "name");
+-	if (!nnode || ni_string_empty(nnode->cdata)) {
++	if (!nnode) {
+ 		ni_debug_ifconfig("cannot get interface name - "
+-			"config has no valid <name> node");
++			"config has no <name> node");
+ 		goto error;
+ 	}
+ 
+-	ifname = nnode->cdata;
+-
+ 	/* Resolve a namespace if specified */
+ 	namespace = xml_node_get_attr(nnode, "namespace");
+ 	if (ni_string_empty(namespace)) {
++		if (ni_string_empty(nnode->cdata)) {
++			ni_debug_ifconfig("config is missing an interface name in <name> node");
++			goto error;
++		}
++		ifname = nnode->cdata;
++
+ 		if (ifindex)
+ 			*ifindex = if_nametoindex(ifname);
+ 	}
+@@ -347,6 +351,12 @@ __ifconfig_read_get_ifname(xml_node_t *ifnode, unsigned int *ifindex)
+ 		unsigned int value;
+ 		char name_buf[IF_NAMESIZE+1];
+ 
++		if (ni_string_empty(nnode->cdata)) {
++			ni_debug_ifconfig("config is missing an interface name in <name> node");
++			goto error;
++		}
++		ifname = nnode->cdata;
++
+ 		if (ni_parse_uint(ifname, &value, 10) < 0) {
+ 			ni_debug_ifconfig("unable to parse ifindex value "
+ 				" specified via <name namespace=\"ifindex\">");
+@@ -366,6 +376,42 @@ __ifconfig_read_get_ifname(xml_node_t *ifnode, unsigned int *ifindex)
+ 		if (ifindex)
+ 			*ifindex = value;
+ 	}
++	else if (ni_string_eq(namespace, "ethernet")) {
++		xml_node_t *addrnode = NULL;
++		ni_string_array_t all_ifnames = NI_STRING_ARRAY_INIT;
++		unsigned int i;
++
++		addrnode = xml_node_get_child(nnode, "permanent-address");
++		if (!addrnode || ni_string_empty(addrnode->cdata)) {
++			ni_debug_ifconfig("cannot get interface name - "
++				"config has no valid <name> node");
++			goto error;
++		}
++
++		if (ni_scandir("/sys/class/net", NULL, &all_ifnames) <= 0) {
++			ni_debug_ifconfig("unable to enumerate network interfaces in sysfs");
++			goto error;
++		}
++
++		for (i = 0; i < all_ifnames.count; i++) {
++			const char *cur_ifname = all_ifnames.data[i];
++			char *cur_address = NULL;
++			ni_bool_t address_matches = FALSE;
++
++			if (ni_sysfs_netif_get_string(cur_ifname, "address", &cur_address) < 0)
++				continue;
++			cur_address = ni_string_strip_suffix(cur_address, "\n");
++
++			address_matches = ni_string_eq_nocase(cur_address, addrnode->cdata);
++			ni_string_free(&cur_address);
++			if (address_matches) {
++				ni_string_dup(&ifname, cur_ifname);
++				break;
++			}
++		}
++
++		ni_string_array_destroy(&all_ifnames);
++	}
+ 	else {
+ 		/* TODO: Implement other namespaces */;
+ 	}
+-- 
+2.36.1
+
