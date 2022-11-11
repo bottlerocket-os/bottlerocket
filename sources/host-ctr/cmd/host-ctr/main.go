@@ -288,6 +288,20 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 			oci.WithHostNamespace(runtimespec.NetworkNamespace),
 			oci.WithHostHostsFile,
 			oci.WithHostResolvconf,
+			// Unmask `/sys/firmware` by passing an alternate list of masked paths
+			// List is based on the DefaultUnixSpec's MaskedPaths for Linux
+			// (https://github.com/containerd/containerd/blob/e9af808/oci/spec.go#L164)
+			oci.WithMaskedPaths([]string{
+				"/proc/acpi",
+				"/proc/asound",
+				"/proc/kcore",
+				"/proc/keys",
+				"/proc/latency_stats",
+				"/proc/timer_list",
+				"/proc/timer_stats",
+				"/proc/sched_debug",
+				"/proc/scsi",
+			}),
 			// Pass proxy environment variables to this container
 			withProxyEnv(),
 			// Add a default set of mounts regardless of the container type
