@@ -3,6 +3,7 @@ field.nested_seq = "nested", "seq"
 field.nested_struct.double_nested = "double-nested"
 init.bark1 = "morning", "night"
 init.bark2 = "woof"
+init.splash
 init.silent = ""
 kernel.corn1 = "a", "b", "c"
 kernel.corn2 = "hello", "goodbye"
