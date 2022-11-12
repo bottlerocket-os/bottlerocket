@@ -97,7 +97,7 @@ conformance-image = "<KUBERNETES-CONFORMANCE-IMAGE-URI>"
 
 # Configurable values:
 #
-# cluster-names: 
+# cluster-names:
 #     All clusters the variant should be tested over. Cluster naming supports templated strings, and
 #     both `arch` and `variant` are provided as variables (`{{arch}}-{{variant}}`).
 #

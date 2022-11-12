@@ -1,6 +1,6 @@
 # bork
 
-```
+```shell
          - <(rng.gen_range(0, 2048))>
 `---^-  /
 |   |

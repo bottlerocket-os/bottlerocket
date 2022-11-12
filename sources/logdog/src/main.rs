@@ -5,7 +5,8 @@
 into a tarball for easy export.
 
 Usage example:
-```
+
+```shell
 $ logdog
 logs are at: /var/log/support/bottlerocket-logs.tar.gz
 ```

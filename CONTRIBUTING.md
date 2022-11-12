@@ -39,7 +39,7 @@ To send us a pull request, please:
 
 GitHub provides additional documentation on [forking a repository](https://help.github.com/articles/fork-a-repo/) and [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
-## Repo branch and tag structure 
+## Repo branch and tag structure
 
 Active development occurs under the `develop` branch.
 

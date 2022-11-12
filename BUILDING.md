@@ -25,13 +25,13 @@ Ensure the following OS packages are installed:
 
 ##### Ubuntu
 
-```
+```shell
 apt install build-essential openssl libssl-dev pkg-config liblz4-tool
 ```
 
 ##### Fedora
 
-```
+```shell
 yum install make automake gcc openssl openssl-devel pkg-config lz4 perl-FindBin perl-lib
 ```
 
@@ -45,7 +45,7 @@ Rust 1.51.0 or higher is required.
 To organize build tasks, we use [cargo-make](https://sagiegurari.github.io/cargo-make/).
 To get it, run:
 
-```
+```shell
 cargo install cargo-make
 ```
 
@@ -68,11 +68,11 @@ Docker's [post-installation steps for Linux](https://docs.docker.com/install/lin
 
 To build an image, run:
 
-```
+```shell
 cargo make
 ```
 
-This will build an image for the default variant, `aws-k8s-1.24`.
+This will build an image for the default variant (a recent `aws-k8s-*`, see the `BUILDSYS_VARIANT` variable in [Makefile.toml](Makefile.toml) to find the current default variant).
 All packages will be built in turn, and then compiled into an `img` file in the `build/images/` directory.
 
 The version number in [Release.toml](Release.toml) will be used in naming the file, and will be used inside the image as the release version.
@@ -80,14 +80,20 @@ If you're planning on [publishing your build](PUBLISHING.md), you may want to ch
 
 To build an image for a different variant, run:
 
-```
+```shell
 cargo make -e BUILDSYS_VARIANT=my-variant-here
 ```
 
 To build an image for a different architecture, run:
 
-```
+```shell
 cargo make -e BUILDSYS_ARCH=my-arch-here
+```
+
+If you want to limit the build concurrency, set `BUILDSYS_JOBS` (the default is `8`):
+
+```shell
+cargo make -e BUILDSYS_JOBS=4
 ```
 
 (You can use variant and arch arguments together, too.)
@@ -160,7 +166,7 @@ If you're using an EC2 instance, the [EC2 instance's IAM role](https://docs.aws.
 
 For a simple start, pick an [EC2 region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions), then run:
 
-```
+```shell
 cargo make -e PUBLISH_REGIONS=your-region-here ami
 ```
 
@@ -170,7 +176,7 @@ Your new AMI ID will be printed after it's registered.
 
 If you built your image for a different architecture or variant, just use the same arguments here:
 
-```
+```shell
 cargo make -e PUBLISH_REGIONS=your-region-here -e BUILDSYS_VARIANT=my-variant-here ami
 ```
 
@@ -200,19 +206,19 @@ kmod kits are included in the official Bottlerocket repos starting with Bottlero
 Let's say you want to download the kit for building x86_64 modules for v1.7.0 and variant aws-k8s-1.21.
 
 First, you need tuftool:
-```bash
+```shell
 cargo install tuftool
 ```
 
 Next, you need the Bottlerocket root role, which is used by tuftool to verify the kmod kit.
 This will download and verify the root role itself:
-```bash
+```shell
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"
 ```
 
 Next, set your desired parameters, and download the kmod kit:
-```bash
+```shell
 ARCH=x86_64
 VERSION=v1.7.0
 VARIANT=aws-k8s-1.21
@@ -227,11 +233,11 @@ tuftool download "${OUTDIR}" --target-name ${VARIANT}-${ARCH}-kmod-kit-${VERSION
 ### Using the kmod kit
 
 To use the kmod kit, extract it, and update your PATH to use its toolchain:
-```bash
+```shell
 tar xf "${VARIANT}-${ARCH}-kmod-kit-${VERSION}.tar.xz"
 
 export CROSS_COMPILE="${ARCH}-bottlerocket-linux-musl-"
-export KERNELDIR="${PWD}/${VARIANT}-${ARCH}-kmod-kit-${VERSION}/kernel-devel
+export KERNELDIR="${PWD}/${VARIANT}-${ARCH}-kmod-kit-${VERSION}/kernel-devel"
 export PATH="${PWD}/${VARIANT}-${ARCH}-kmod-kit-${VERSION}/toolchain/usr/bin:${PATH}"
 ```
 

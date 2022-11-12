@@ -276,7 +276,7 @@
 * New mount in host containers for system logs ([#2295])
 * Apply strict mount options and enforce execution rules ([#2239])
 * Switch to a more commonly used syntax for disabling kernel config settings ([#2290])
-* Respect proxy settings when running setting generators ([#2227]) 
+* Respect proxy settings when running setting generators ([#2227])
 * Add `NET_CAP_ADMIN` to bootstrap containers ([#2266])
 * Reduce log output for DHCP services ([#2260])
 * Fix invalid kernel config options ([#2269])

@@ -250,7 +250,7 @@ We recommend that you do not run containers as UID 0.
 These settings can passed as [user data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) on EC2 instance launch.
 They apply to any Bottlerocket variant.
 
-```
+```toml
 # Enable kernel lockdown in "integrity" mode.
 # This prevents modifications to the running kernel, even by privileged users.
 [settings.kernel]
@@ -273,7 +273,7 @@ enabled = false
 These settings can passed as [user data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) on EC2 instance launch.
 They are specific to the `aws-ecs-1` variant.
 
-```
+```toml
 # By default, this variant does not allow launching privileged containers.
 # The feature can also be disabled explicitly.
 [settings.ecs]
@@ -285,7 +285,7 @@ allow-privileged-containers = false
 The following [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) is based on our recommendations.
 It can be used as a starting point for your own policy.
 
-```
+```yaml
 ---
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy

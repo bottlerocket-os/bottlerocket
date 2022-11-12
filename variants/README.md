@@ -267,7 +267,7 @@ It has an empty `lib.rs` for the actual crate, since Cargo expects some Rust cod
 
 Our sample variant has the following manifest.
 
-```
+```toml
 [package]
 name = "my-variant"
 version = "0.1.0"
@@ -316,7 +316,7 @@ Be sure to include `publish = false` for all packages, as these are not standard
 
 We use the same build script for all variants.
 
-```
+```rust
 use std::process::{exit, Command};
 
 fn main() -> Result<(), std::io::Error> {
@@ -335,14 +335,14 @@ The `package.metadata` table can be extended with declarative elements that enab
 
 We use the same Rust code for all variants.
 
-```
+```rust
 // not used
 ```
 
 ### Next Steps
 
 To build your variant, run the following command in the top-level Bottlerocket directory.
-```
+```shell
 cargo make -e BUILDSYS_VARIANT=my-variant
 ```
 

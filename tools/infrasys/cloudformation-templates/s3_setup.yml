@@ -1,11 +1,11 @@
 Resources:
   TUFRepoBucket:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain 
+    DeletionPolicy: Retain
     Properties:
       VersioningConfiguration:
         Status: Enabled
-      AccessControl: LogDeliveryWrite 
+      AccessControl: LogDeliveryWrite
       MetricsConfigurations:
         - Id: BucketMetrics
       BucketEncryption:
@@ -17,8 +17,8 @@ Resources:
         BlockPublicPolicy: True
         IgnorePublicAcls: True
         RestrictPublicBuckets: True
-      
-Outputs: 
+
+Outputs:
   BucketName:
     Value: !Ref TUFRepoBucket
   RDN:

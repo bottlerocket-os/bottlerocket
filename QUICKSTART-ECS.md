@@ -24,7 +24,7 @@ For more information about clusters, see
 
 You can create a cluster with the AWS CLI as follows:
 
-```
+```shell
 aws ecs --region us-west-2 create-cluster --cluster-name bottlerocket
 ```
 
@@ -82,12 +82,13 @@ For example, to use the parameter above, you would pass this as the AMI ID in yo
 If you prefer to fetch the AMI ID yourself, you can use [aws-cli](https://aws.amazon.com/cli/) on the command line.
 To fetch the example parameter above, for the us-west-2 region, you could run this:
 
-```
+```shell
 aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_id" --query Parameter.Value --output text
 ```
 
-If you have `jq` and would like a bit more information, try this:
-```
+If you have `jq` installed and would like a bit more information, try this:
+
+```shell
 aws ssm get-parameters --region us-west-2 \
    --names "/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_id" \
            "/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_version" \
@@ -107,7 +108,7 @@ in your account.
 To find your default VPC, run this command.
 (If you use an AWS region other than "us-west-2", make sure to change that.)
 
-```
+```shell
 aws ec2 describe-vpcs \
    --region us-west-2 \
    --filters=Name=isDefault,Values=true \
@@ -118,7 +119,7 @@ If you want to use a different VPC you created, run this to get the ID for your 
 Make sure to change VPC_NAME to the name of the VPC you created.
 (If you use an EC2 region other than "us-west-2", make sure to change that too.)
 
-```
+```shell
 aws ec2 describe-vpcs \
    --region us-west-2 \
    --filters=Name=tag:Name,Values=VPC_NAME \
@@ -130,7 +131,7 @@ It will give you a list of the subnets and tell you whether each is public or pr
 Make sure to change VPC_ID to the value you received from the previous command.
 (If you use an EC2 region other than "us-west-2", make sure to change that too.)
 
-```
+```shell
 aws ec2 describe-subnets \
    --region us-west-2 \
    --filter=Name=vpc-id,Values=VPC_ID \
@@ -170,7 +171,7 @@ If you add SSM permissions, you can use Bottlerocket's default SSM agent to get 
 
 To attach the role policy for SSM permissions, run the following (replacing INSTANCE_ROLE_NAME with the name of your instance role):
 
-```
+```shell
 aws iam attach-role-policy \
    --role-name INSTANCE_ROLE_NAME \
    --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
@@ -178,7 +179,7 @@ aws iam attach-role-policy \
 
 Next, to retrieve the instance profile name used to launch instances, run this:
 
-```
+```shell
 aws iam list-instance-profiles-for-role --role-name INSTANCE_ROLE_NAME --query "InstanceProfiles[*].InstanceProfileName" --output text
 ```
 
@@ -190,7 +191,7 @@ For the instance to be able to communicate with ECS, we need to make sure to con
 
 Create a file called `user-data.toml` with the following contents, where CLUSTER_NAME is the name of the cluster you created above (for example, "bottlerocket").
 
-```
+```toml
 [settings.ecs]
 cluster = "CLUSTER_NAME"
 ```
@@ -209,7 +210,7 @@ There are a few values to make sure you change in this command:
 * user-data.toml: the path to the user data file you created earlier
 * INSTANCE_PROFILE_NAME: the IAM instance profile you created, e.g. `ecsInstanceRole`
 
-```
+```shell
 aws ec2 run-instances --key-name YOUR_KEY_NAME \
    --subnet-id SUBNET_ID \
    --image-id BOTTLEROCKET_AMI_ID \

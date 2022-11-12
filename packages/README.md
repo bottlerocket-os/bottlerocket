@@ -70,7 +70,7 @@ Finally, it includes a `spec` file that defines the RPM.
 
 Our sample package has the following manifest.
 
-```
+```toml
 [package]
 name = "libwoof"
 version = "0.1.0"
@@ -139,7 +139,7 @@ We want those libraries to be built first, and for this one to be rebuilt when t
 
 We use the same build script for all packages.
 
-```
+```rust
 use std::process::{exit, Command};
 
 fn main() -> Result<(), std::io::Error> {
@@ -158,7 +158,7 @@ The `package.metadata` table can be extended with declarative elements that enab
 
 We use the same Rust code for all packages.
 
-```
+```rust
 // not used
 ```
 
@@ -217,7 +217,7 @@ The definitions for most of these can be found in [macros](../macros).
 The definition for `%{_cross_variant}` is the Bottlerocket variant being built.
 
 When developing a package on an RPM-based system, you can expand the macros with a command like this.
-```
+```shell
 $ PKG=libwoof
 $ rpmspec \
   --macros "/usr/lib/rpm/macros:macros/$(uname -m):macros/shared:macros/rust:macros/cargo" \
@@ -230,12 +230,12 @@ $ rpmspec \
 The variants workspace's `Cargo.lock` may be affected by adding a package.
 
 1. `cd` into the `variants` directory at the root of the repository.
-2. Include the new package inside the `Cargo.toml` file of the variant you want to modify. 
+2. Include the new package inside the `Cargo.toml` file of the variant you want to modify.
 3. Run `cargo generate-lockfile` to refresh `Cargo.lock`.
 
 To build your package, run the following command in the top-level Bottlerocket directory.
 
-```sh
+```shell
 cargo make -e PACKAGE=libwoof build-package
 ```
 
