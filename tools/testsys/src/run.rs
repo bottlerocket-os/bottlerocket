@@ -78,6 +78,10 @@ pub(crate) struct Run {
     /// version that will be migrated to.
     #[clap(long, env = "BUILDSYS_VERSION_IMAGE")]
     migration_target_version: Option<String>,
+
+    /// The template file that should be used for custom testing.
+    #[clap(long = "template-file", short = 'f')]
+    custom_crd_template: Option<String>,
 }
 
 /// This is a CLI parsable version of `testsys_config::GenericVariantConfig`.
@@ -140,8 +144,12 @@ impl Run {
 
         let test_opts = test_config.test.to_owned().unwrap_or_default();
 
-        let variant_config =
-            test_config.reduced_config(&variant, &self.arch, Some(self.config.into()));
+        let variant_config = test_config.reduced_config(
+            &variant,
+            &self.arch,
+            Some(self.config.into()),
+            &self.test_flavor.to_string(),
+        );
 
         // If a lock file exists, use that, otherwise use Infra.toml or default
         let infra_config = InfraConfig::from_path_or_lock(&self.infra_config_path, true)?;
@@ -218,9 +226,22 @@ impl Run {
             images,
         };
 
-        let crds = crd_creator
-            .create_crds(self.test_flavor, &crd_input)
-            .await?;
+        let crds = match &self.test_flavor {
+            TestType::Known(test_type) => crd_creator.create_crds(test_type, &crd_input).await?,
+            TestType::Custom(test_type) => {
+                crd_creator
+                    .create_custom_crds(
+                        test_type,
+                        &crd_input,
+                        self.custom_crd_template
+                            .as_ref()
+                            .context(error::InvalidSnafu {
+                                what: "A crd template file is required for custom test types.",
+                            })?,
+                    )
+                    .await?
+            }
+        };
 
         debug!("Adding crds to testsys cluster");
         for crd in crds {
@@ -264,12 +285,12 @@ pub enum KnownTestType {
 }
 
 /// If a test type is one that is supported by TestSys it will be created as `Known(KnownTestType)`.
-/// All other test types will be stored as `Unknown(<TEST-TYPE>)`.
+/// All other test types will be stored as `Custom(<TEST-TYPE>)`.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum TestType {
     Known(KnownTestType),
-    Unknown(String),
+    Custom(String),
 }
 
 derive_fromstr_from_deserialize!(TestType);

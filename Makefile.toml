@@ -1377,6 +1377,7 @@ script = [
     testsys ${CARGO_MAKE_TESTSYS_ARGS} run ${TESTSYS_TEST} \
       --ami-input "${ami_input}" \
       ${TESTSYS_AWS_SECRET_NAME:+--secret ${TESTSYS_AWS_SECRET_NAME}} \
+      ${@}
     '''
 ]
 

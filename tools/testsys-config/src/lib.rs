@@ -61,6 +61,7 @@ impl TestConfig {
         variant: &Variant,
         arch: S,
         starting_config: Option<GenericVariantConfig>,
+        test_type: &str,
     ) -> GenericVariantConfig
     where
         S: Into<String>,
@@ -74,6 +75,8 @@ impl TestConfig {
             // Convert the iterator of keys to and iterator of Configs. If the key does not have a
             // configuration in the config file, remove it from the iterator.
             .filter_map(|key| self.configs.get(&key).cloned())
+            // Expand the `test_type` configuration
+            .flat_map(|config| vec![config.test(test_type), config])
             // Take the iterator of configurations and extract the arch specific config and the
             // non-arch specific config for each config. Then, convert them into a single iterator.
             .flat_map(|config| vec![config.for_arch(&arch), config.config])
@@ -134,6 +137,8 @@ pub struct GenericConfig {
     x86_64: GenericVariantConfig,
     #[serde(default, flatten)]
     config: GenericVariantConfig,
+    #[serde(default)]
+    configuration: HashMap<String, GenericConfig>,
 }
 
 impl GenericConfig {
@@ -147,6 +152,17 @@ impl GenericConfig {
             "aarch64" => self.aarch64.clone(),
             _ => Default::default(),
         }
+    }
+
+    /// Get the configuration for a specific test type.
+    pub fn test<S>(&self, test_type: S) -> GenericConfig
+    where
+        S: AsRef<str>,
+    {
+        self.configuration
+            .get(test_type.as_ref())
+            .cloned()
+            .unwrap_or_default()
     }
 }
 
