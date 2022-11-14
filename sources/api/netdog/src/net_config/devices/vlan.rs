@@ -1,6 +1,6 @@
 use super::validate_addressing;
 use super::{Dhcp4ConfigV1, Dhcp6ConfigV1, Result, Validate};
-use crate::interface_name::InterfaceName;
+use crate::interface_id::InterfaceName;
 use crate::net_config::devices::generate_addressing_validation;
 use crate::net_config::{RouteV1, StaticConfigV1};
 use serde::de::Error;

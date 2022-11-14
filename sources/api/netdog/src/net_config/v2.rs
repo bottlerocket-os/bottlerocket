@@ -2,7 +2,7 @@
 //! appropriate traits.
 
 use super::{error, Interfaces, Result, Validate};
-use crate::interface_name::InterfaceName;
+use crate::interface_id::InterfaceName;
 use crate::net_config::devices::interface::NetInterfaceV2;
 use crate::wicked::{
     wicked_from, WickedDhcp4, WickedDhcp6, WickedInterface, WickedRoutes, WickedStaticAddress,

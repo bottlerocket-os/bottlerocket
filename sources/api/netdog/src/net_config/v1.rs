@@ -3,7 +3,7 @@
 
 use super::{error, Dhcp4ConfigV1, Dhcp6ConfigV1, Error, Interfaces, Result, Validate};
 use crate::{
-    interface_name::InterfaceName,
+    interface_id::InterfaceName,
     net_config::{Dhcp4OptionsV1, Dhcp6OptionsV1},
     wicked::{WickedDhcp4, WickedDhcp6, WickedInterface},
 };

@@ -1,4 +1,4 @@
-use crate::interface_name;
+use crate::interface_id;
 use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
@@ -16,7 +16,7 @@ pub(crate) enum Error {
     InvalidInterfaceDef { definition: String },
 
     #[snafu(display("Invalid interface name: {}", source))]
-    InvalidInterfaceName { source: interface_name::Error },
+    InvalidInterfaceName { source: interface_id::Error },
 
     #[snafu(display(
         "Invalid interface option, expected 'dhcp4' or 'dhcp6', got '{}'",

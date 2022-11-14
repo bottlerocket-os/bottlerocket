@@ -3,7 +3,7 @@
 
 use super::devices::NetworkDeviceV1;
 use super::{error, Interfaces, Result, Validate};
-use crate::interface_name::InterfaceName;
+use crate::interface_id::InterfaceName;
 use crate::wicked::{WickedInterface, WickedLinkConfig};
 use indexmap::IndexMap;
 use serde::Deserialize;

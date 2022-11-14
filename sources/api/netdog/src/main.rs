@@ -33,7 +33,7 @@ extern crate serde_plain;
 
 mod cli;
 mod dns;
-mod interface_name;
+mod interface_id;
 mod lease;
 mod net_config;
 mod wicked;
