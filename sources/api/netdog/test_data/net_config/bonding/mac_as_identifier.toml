@@ -1,0 +1,12 @@
+version = {{version}}
+
+["f8:74:a4:d5:32:64"]
+kind = "bond"
+mode = "active-backup"
+interfaces = []
+dhcp4 = true
+
+["f8:74:a4:d5:32:64".monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 200
+miimon-downdelay-ms = 200

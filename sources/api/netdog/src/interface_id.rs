@@ -6,6 +6,7 @@
 use serde::{Deserialize, Serialize, Serializer};
 use snafu::{ensure, ResultExt};
 use std::convert::TryFrom;
+use std::fmt::Display;
 use std::ops::Deref;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Hash)]
@@ -24,6 +25,16 @@ impl From<InterfaceName> for InterfaceId {
 impl From<MacAddress> for InterfaceId {
     fn from(mac: MacAddress) -> Self {
         InterfaceId::MacAddress(mac)
+    }
+}
+
+#[allow(clippy::to_string_in_format_args)]
+impl Display for InterfaceId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InterfaceId::Name(name) => write!(f, "{}", name.to_string()),
+            InterfaceId::MacAddress(mac) => write!(f, "{}", mac.to_string()),
+        }
     }
 }
 

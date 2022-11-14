@@ -192,8 +192,11 @@ impl WickedInterface {
     }
 }
 
-impl From<(&InterfaceName, &NetworkDeviceV1)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetworkDeviceV1)) -> Self {
+impl<T> From<(&T, &NetworkDeviceV1)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetworkDeviceV1)) -> Self {
         match device_tup.1 {
             NetworkDeviceV1::Interface(i) => WickedInterface::from((device_tup.0, i)),
             NetworkDeviceV1::BondDevice(b) => WickedInterface::from((device_tup.0, b)),
@@ -202,16 +205,22 @@ impl From<(&InterfaceName, &NetworkDeviceV1)> for WickedInterface {
     }
 }
 
-impl From<(&InterfaceName, &NetInterfaceV2)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetInterfaceV2)) -> Self {
+impl<T> From<(&T, &NetInterfaceV2)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetInterfaceV2)) -> Self {
         let name = device_tup.0;
         let config = device_tup.1;
         wicked_from!(name, config)
     }
 }
 
-impl From<(&InterfaceName, &NetBondV1)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetBondV1)) -> Self {
+impl<T> From<(&T, &NetBondV1)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetBondV1)) -> Self {
         let name = device_tup.0;
         let config = device_tup.1;
         let mut wicked_interface = wicked_from!(name, config);
@@ -239,8 +248,11 @@ impl From<(&InterfaceName, &NetBondV1)> for WickedInterface {
     }
 }
 
-impl From<(&InterfaceName, &NetVlanV1)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetVlanV1)) -> Self {
+impl<T> From<(&T, &NetVlanV1)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetVlanV1)) -> Self {
         let name = device_tup.0;
         let config = device_tup.1;
         let mut wicked_interface = wicked_from!(name, config);
@@ -345,9 +357,9 @@ mod tests {
             for interface in wicked_interfaces {
                 let mut path = wicked_config().join(interface.name.to_string());
                 path.set_extension("xml");
-                let expected = fs::read_to_string(path).unwrap();
                 let generated = quick_xml::se::to_string(&interface).unwrap();
                 dbg!(&generated);
+                let expected = fs::read_to_string(path).unwrap();
 
                 assert_eq!(
                     expected.trim(),

@@ -75,6 +75,20 @@ macro_rules! bonding_tests {
                 let rendered = render_config_template(bad);
                 assert!(deserialize_config(&rendered).is_err())
             }
+
+            #[test]
+            fn mac_as_identifier() {
+                let bad = net_config().join("mac_as_identifier.toml");
+                let rendered = render_config_template(bad);
+                assert!(deserialize_config(&rendered).is_err())
+            }
+
+            #[test]
+            fn mac_in_interfaces_list() {
+                let bad = net_config().join("mac_in_interfaces.toml");
+                let rendered = render_config_template(bad);
+                assert!(deserialize_config(&rendered).is_err())
+            }
         }
     };
 }

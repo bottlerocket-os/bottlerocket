@@ -13,7 +13,7 @@ use std::collections::HashSet;
 #[derive(Debug, Deserialize)]
 pub(crate) struct NetConfigV3 {
     #[serde(flatten)]
-    pub(crate) net_devices: IndexMap<InterfaceName, NetworkDeviceV1>,
+    pub(crate) net_devices: IndexMap<InterfaceId, NetworkDeviceV1>,
 }
 
 impl Interfaces for NetConfigV3 {
@@ -22,7 +22,7 @@ impl Interfaces for NetConfigV3 {
             .iter()
             .find(|(_, v)| v.primary() == Some(true))
             .or_else(|| self.net_devices.first())
-            .map(|(n, _)| InterfaceId::from(n.clone()))
+            .map(|(n, _)| n.clone())
     }
 
     fn has_interfaces(&self) -> bool {
@@ -37,8 +37,10 @@ impl Interfaces for NetConfigV3 {
             // If config is a Bond, we will generate the interface configuration for interfaces in
             // that bond since we have all of the data and the bond consumes the device for other uses.
             // For each interface: call WickedInterface::new(name), configure it and add that to
-            // wicked_interfaces Vec
-            if let NetworkDeviceV1::BondDevice(b) = config {
+            // wicked_interfaces Vec.
+            // At this point we can be sure that bonds are being configured with a name rather than
+            // a MAC address since that validation happens during deserialize/validation.
+            if let (InterfaceId::Name(name), NetworkDeviceV1::BondDevice(b)) = (name, config) {
                 for device in &b.interfaces {
                     let mut wicked_sub_interface = WickedInterface::new(device.clone());
                     wicked_sub_interface.link = Some(WickedLinkConfig {
@@ -60,7 +62,14 @@ impl Interfaces for NetConfigV3 {
 impl Validate for NetConfigV3 {
     fn validate(&self) -> Result<()> {
         // Create HashSet of known device names for checking duplicates
-        let mut interface_names: HashSet<&InterfaceName> = self.net_devices.keys().collect();
+        let mut interface_names: HashSet<&InterfaceName> = self
+            .net_devices
+            .keys()
+            .filter_map(|i| match i {
+                InterfaceId::Name(name) => Some(name),
+                _ => None,
+            })
+            .collect();
         for (_name, device) in &self.net_devices {
             if let NetworkDeviceV1::VlanDevice(vlan) = device {
                 // It is valid to stack more than one vlan on a single device, but we need them all
@@ -70,11 +79,20 @@ impl Validate for NetConfigV3 {
         }
 
         for (name, device) in &self.net_devices {
+            // Bonds / vlans cannot be configured via MAC address as it is unsupported in wicked
+            if let NetworkDeviceV1::BondDevice(_) | NetworkDeviceV1::VlanDevice(_) = device {
+                ensure!(
+                    !matches!(name, InterfaceId::MacAddress(_)),
+                    error::InvalidNetConfigSnafu {
+                        reason: "bonds and vlans may not be configured using MAC address"
+                    }
+                )
+            };
+
             // Bonds create the interfaces automatically, specifying those interfaces would cause a
             // collision so this emits an error for any that are found
             if let NetworkDeviceV1::BondDevice(config) = device {
                 for interface in &config.interfaces {
-                    // This checks if the insert already found one, which would be a failure
                     if !interface_names.insert(interface) {
                         return error::InvalidNetConfigSnafu {
                             reason: format!(

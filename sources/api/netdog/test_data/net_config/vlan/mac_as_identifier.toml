@@ -1,0 +1,7 @@
+version = {{version}}
+
+["f8:74:a4:d5:32:64"]
+kind = "vlan"
+device = "eno1"
+id = 2
+dhcp4 = true
