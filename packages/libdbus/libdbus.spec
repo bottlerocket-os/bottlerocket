@@ -1,5 +1,5 @@
 Name: %{_cross_os}libdbus
-Version: 1.15.0
+Version: 1.15.2
 Release: 1%{?dist}
 Summary: Library for a message bus
 License: AFL-2.1 OR GPL-2.0-or-later

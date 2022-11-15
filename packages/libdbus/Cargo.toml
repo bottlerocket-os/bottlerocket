@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://dbus.freedesktop.org/releases/dbus"
 
 [[package.metadata.build-package.external-files]]
-url = "https://dbus.freedesktop.org/releases/dbus/dbus-1.15.0.tar.xz"
-sha512 = "6f7e1d4ff525ce13c5f671f1b045a089c379cbfb777662ce7a55ffe4893a8ab2aaf38877a7b8f261823067a20f3b336437449eb353a97d30699496375e00bf1a"
+url = "https://dbus.freedesktop.org/releases/dbus/dbus-1.15.2.tar.xz"
+sha512 = "486eab8c4f87d75e988558724bff1b0708c969341ecb62bcb9d0b0612a653ac2674aa7caa4d129dd81c00af7989b122ee7837599262c9a0c5c7f9335ed3dacaf"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
