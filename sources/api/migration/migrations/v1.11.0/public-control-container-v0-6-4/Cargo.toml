@@ -1,0 +1,12 @@
+[package]
+name = "public-control-container-v0-6-4"
+version = "0.1.0"
+authors = ["Patrick J.P. Culp <jpculp@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}

@@ -35,6 +35,10 @@ members = [
     "api/migration/migrations/v1.11.0/kubelet-tls-files",
     "api/migration/migrations/v1.11.0/kubelet-new-config-files",
     "api/migration/migrations/v1.11.0/ecs-additional-configurations",
+    "api/migration/migrations/v1.11.0/aws-admin-container-v0-9-3",
+    "api/migration/migrations/v1.11.0/public-admin-container-v0-9-3",
+    "api/migration/migrations/v1.11.0/aws-control-container-v0-6-4",
+    "api/migration/migrations/v1.11.0/public-control-container-v0-6-4",
 
     "bottlerocket-release",
 
