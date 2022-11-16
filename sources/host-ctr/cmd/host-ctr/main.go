@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -43,7 +43,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	// Dispatch logging output instead of writing all levels' messages to
 	// stderr.
-	log.L.Logger.SetOutput(ioutil.Discard)
+	log.L.Logger.SetOutput(io.Discard)
 	log.L.Logger.AddHook(&LogSplitHook{os.Stdout, []logrus.Level{
 		logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel}})
 	log.L.Logger.AddHook(&LogSplitHook{os.Stderr, []logrus.Level{
@@ -68,6 +68,7 @@ func App() *cli.App {
 		superpowered     bool
 		registryConfig   string
 		cType            string
+		useCachedImage   bool
 	)
 
 	app := cli.NewApp()
@@ -127,9 +128,15 @@ func App() *cli.App {
 					Destination: &cType,
 					Value:       "host",
 				},
+				&cli.BoolFlag{
+					Name:        "use-cached-image",
+					Usage:       "skips registry authentication and image pull if the image already exists in the image store",
+					Destination: &useCachedImage,
+					Value:       false,
+				},
 			},
 			Action: func(c *cli.Context) error {
-				return runCtr(containerdSocket, namespace, containerID, source, superpowered, registryConfig, containerType(cType))
+				return runCtr(containerdSocket, namespace, containerID, source, superpowered, registryConfig, containerType(cType), useCachedImage)
 			},
 		},
 		{
@@ -148,9 +155,15 @@ func App() *cli.App {
 					Usage:       "path to image registry configuration",
 					Destination: &registryConfig,
 				},
+				&cli.BoolFlag{
+					Name:        "skip-if-image-exists",
+					Usage:       "skips registry authentication and image pull if the image already exists in the image store",
+					Destination: &useCachedImage,
+					Value:       false,
+				},
 			},
 			Action: func(c *cli.Context) error {
-				return pullImageOnly(containerdSocket, namespace, source, registryConfig)
+				return pullImageOnly(containerdSocket, namespace, source, registryConfig, useCachedImage)
 			},
 		},
 		{
@@ -215,7 +228,7 @@ func (ct containerType) Prefix() string {
 	return ""
 }
 
-func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool, registryConfigPath string, cType containerType) error {
+func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool, registryConfigPath string, cType containerType, useCachedImage bool) error {
 	// Check if the containerType provided is valid
 	if !cType.IsValid() {
 		return errors.New("Invalid container type")
@@ -252,12 +265,12 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 	isECRImage := ecrRegex.MatchString(source)
 	var img containerd.Image
 	if isECRImage {
-		img, err = pullECRImage(ctx, source, client, registryConfigPath)
+		img, err = fetchECRImage(ctx, source, client, registryConfigPath, useCachedImage)
 		if err != nil {
 			return err
 		}
 	} else {
-		img, err = pullImage(ctx, source, client, registryConfigPath)
+		img, err = fetchImage(ctx, source, client, registryConfigPath, useCachedImage)
 		if err != nil {
 			log.G(ctx).WithField("ref", source).Error(err)
 			return err
@@ -482,7 +495,7 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 }
 
 // pullImageOnly pulls the specified container image
-func pullImageOnly(containerdSocket string, namespace string, source string, registryConfigPath string) error {
+func pullImageOnly(containerdSocket string, namespace string, source string, registryConfigPath string, useCachedImage bool) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = namespaces.WithNamespace(ctx, namespace)
@@ -497,12 +510,12 @@ func pullImageOnly(containerdSocket string, namespace string, source string, reg
 	isECRImage := ecrRegex.MatchString(source)
 	ref := source
 	if isECRImage {
-		_, err = pullECRImage(ctx, source, client, registryConfigPath)
+		_, err = fetchECRImage(ctx, source, client, registryConfigPath, useCachedImage)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = pullImage(ctx, ref, client, registryConfigPath)
+		_, err = fetchImage(ctx, ref, client, registryConfigPath, useCachedImage)
 		if err != nil {
 			log.G(ctx).WithField("ref", ref).Error(err)
 			return err
@@ -564,8 +577,8 @@ func cleanUp(containerdSocket string, namespace string, containerID string) erro
 	return nil
 }
 
-// pullECRImage does some additional conversions before resolving the image reference and pulls the image.
-func pullECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string) (containerd.Image, error) {
+// fetchECRImage does some additional conversions before resolving the image reference and fetches the image.
+func fetchECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, fetchCachedImageIfExist bool) (containerd.Image, error) {
 	ref := source
 	ecrRef, err := ecr.ParseImageURI(ref)
 	if err != nil {
@@ -579,7 +592,7 @@ func pullECRImage(ctx context.Context, source string, client *containerd.Client,
 		WithField("source", source).
 		Debug("parsed ECR reference from URI")
 
-	img, err := pullImage(ctx, ref, client, registryConfigPath)
+	img, err := fetchImage(ctx, ref, client, registryConfigPath, fetchCachedImageIfExist)
 	if err != nil {
 		log.G(ctx).WithField("ref", ref).Error(err)
 		return nil, err
@@ -880,6 +893,25 @@ func withProxyEnv() oci.SpecOpts {
 		withNoProxy = oci.WithEnv([]string{"NO_PROXY=" + noProxy, "no_proxy=" + noProxy})
 	}
 	return oci.Compose(withHttpsProxy, withNoProxy)
+}
+
+// fetchImage returns a `containerd.Image` given an image source.
+func fetchImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, useCachedImage bool) (containerd.Image, error) {
+	// Check the containerd image store to see if image exists
+	img, err := client.GetImage(ctx, source)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			log.G(ctx).WithField("ref", source).Info("Image does not exist, proceeding to pull image from source.")
+		} else {
+			log.G(ctx).WithField("ref", source).Error(err)
+			return nil, err
+		}
+	}
+	if img != nil && useCachedImage {
+		log.G(ctx).WithField("ref", source).Info("Image exists, fetching cached image from image store")
+		return img, err
+	}
+	return pullImage(ctx, source, client, registryConfigPath)
 }
 
 // pullImage pulls an image from the specified source.
