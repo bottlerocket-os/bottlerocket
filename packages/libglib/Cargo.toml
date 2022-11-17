@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://download.gnome.org/sources/glib"
 
 [[package.metadata.build-package.external-files]]
-url = "https://download.gnome.org/sources/glib/2.74/glib-2.74.0.tar.xz"
-sha512 = "5cdadd2f4568c0c3d45083b4d39699abf651e42e020f7bc880cce3ff33d28943118388d17a0632777e843f48009c1f97d5634fde3cb8c69c7c7f35b278ac8225"
+url = "https://download.gnome.org/sources/glib/2.75/glib-2.75.0.tar.xz"
+sha512 = "0402c063975680ff2385876f521b37aa4cc599d2570eb79976ad2a1b530e47a086d514fe122fd870b4a8f7358f48c926285694d153cc2c32cf6963ed2d5da9d9"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
