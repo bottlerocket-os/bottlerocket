@@ -1,5 +1,5 @@
 Name: %{_cross_os}conntrack-tools
-Version: 1.4.6
+Version: 1.4.7
 Release: 1%{?dist}
 Summary: Tools for managing Linux kernel connection tracking
 # src/utils.c contains GPLv2-only code from linux
