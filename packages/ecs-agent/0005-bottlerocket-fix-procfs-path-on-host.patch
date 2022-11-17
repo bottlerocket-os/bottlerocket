@@ -1,4 +1,4 @@
-From baf491ab24fb2dfc1c4a98c8492fc32769475cc6 Mon Sep 17 00:00:00 2001
+From a2d84c6d919ac637150ac36e0b5f104213f7dcc5 Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 26 Mar 2021 17:48:28 -0700
 Subject: [PATCH 5/5] bottlerocket: fix procfs path on host
@@ -14,12 +14,12 @@ ECS agent in a container, the ECS agent can directly read the host's
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/agent/ecscni/types_linux.go b/agent/ecscni/types_linux.go
-index 729acac..74ac96c 100644
+index 6d6ce353..1f2d0914 100644
 --- a/agent/ecscni/types_linux.go
 +++ b/agent/ecscni/types_linux.go
-@@ -40,7 +40,7 @@ const (
- 	// ECSBranchENIPluginName is the binary of the branch-eni plugin
- 	ECSBranchENIPluginName = "vpc-branch-eni"
+@@ -47,7 +47,7 @@ const (
+ 	// ECSServiceConnectPluginName is the binary of the service connect plugin
+ 	ECSServiceConnectPluginName = "ecs-serviceconnect"
  	// NetnsFormat is used to construct the path to cotainer network namespace
 -	NetnsFormat = "/host/proc/%s/ns/net"
 +	NetnsFormat = "/proc/%s/ns/net"
