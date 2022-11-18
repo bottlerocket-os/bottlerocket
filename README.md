@@ -475,7 +475,8 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.kube-api-burst`: The burst to allow while talking with kubernetes.
 * `settings.kubernetes.kube-api-qps`: The QPS to use while talking with kubernetes apiserver.
 * `settings.kubernetes.log-level`: Adjust the logging verbosity of the `kubelet` process.
-  The default log level is 2, with higher numbers enabling more verbose logging.
+  Valid values are 0-8 with higher numbers enabling more verbose logging.
+  The default log level is 2.
 * `settings.kubernetes.pod-pids-limit`: The maximum number of processes per pod.
 * `settings.kubernetes.provider-id`: This sets the unique ID of the instance that an external provider (i.e. cloudprovider) can use to identify a specific node.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.

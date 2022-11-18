@@ -148,12 +148,13 @@ use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, CredentialProvider,
     DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     ECSDurationValue, EtcHostsEntries, FriendlyVersion, Identifier, ImageGCHighThresholdPercent,
-    ImageGCLowThresholdPercent, KmodKey, KubernetesAuthenticationMode, KubernetesBootstrapToken,
-    KubernetesCloudProvider, KubernetesClusterDnsIp, KubernetesClusterName,
-    KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
-    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey,
-    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
+    ImageGCLowThresholdPercent, KmodKey, KubeletLogLevel, KubernetesAuthenticationMode,
+    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterDnsIp,
+    KubernetesClusterName, KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey,
+    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
+    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, PemCertificateString,
+    SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64,
+    ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -206,7 +207,7 @@ struct KubernetesSettings {
     image_gc_high_threshold_percent: ImageGCHighThresholdPercent,
     image_gc_low_threshold_percent: ImageGCLowThresholdPercent,
     provider_id: Url,
-    log_level: u8,
+    log_level: KubeletLogLevel,
     credential_providers: HashMap<Identifier, CredentialProvider>,
     server_certificate: ValidBase64,
     server_key: ValidBase64,

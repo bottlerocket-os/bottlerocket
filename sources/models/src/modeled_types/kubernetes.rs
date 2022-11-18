@@ -3,6 +3,9 @@ use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
 use super::error;
+use scalar::traits::{Scalar, Validate};
+use scalar::ValidationError;
+use scalar_derive::Scalar;
 use serde::de::Error as _;
 use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
@@ -1269,4 +1272,43 @@ pub struct CredentialProvider {
     enabled: bool,
     image_patterns: Vec<SingleLineString>,
     cache_duration: Option<KubernetesDurationValue>,
+}
+
+/// The kublet log level. Valid values are 0-8.
+#[derive(Debug, Default, PartialEq, Eq, Ord, PartialOrd, Scalar)]
+pub struct KubeletLogLevel(u8);
+
+impl Validate for KubeletLogLevel {
+    fn validate<T>(input: T) -> Result<KubeletLogLevel, ValidationError>
+    where
+        T: Into<u8>,
+    {
+        let input = input.into();
+        require!(
+            input <= 8,
+            ValidationError::new(format!(
+                "KubeletLogLevel value '{}' is invalid, should be 0-8",
+                input
+            ))
+        );
+        Ok(Self(input))
+    }
+}
+
+#[test]
+fn test_valid_kubelet_log_levels() {
+    let values: [&str; 9] = ["0", "1", "2", "3", "4", "5", "6", "7", "8"];
+    for (index, &s) in values.iter().enumerate() {
+        let actual: KubeletLogLevel = serde_json::from_str(s).unwrap();
+        assert_eq!(index as u8, actual);
+    }
+}
+
+#[test]
+fn test_invalid_kubelet_log_levels() {
+    let values: [&str; 4] = ["-1", "9", "10", "foo"];
+    for s in values {
+        let result = serde_json::from_str::<KubeletLogLevel>(s);
+        assert!(result.is_err())
+    }
 }
