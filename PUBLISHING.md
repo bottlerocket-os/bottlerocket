@@ -215,12 +215,12 @@ These default settings will be applied to your hosts at startup, meaning any hos
 
 The easiest way to change your repo URLs at run time is to include the settings changes in user data.
 This method is covered [in README](README.md#using-user-data).
-For example, if you built the `aws-k8s-1.21` variant for `x86_64` and uploaded to the public S3 bucket `my-bucket`, your URLs could look like:
+For example, if you built the `aws-k8s-1.24` variant for `x86_64` and uploaded to the public S3 bucket `my-bucket`, your URLs could look like:
 
 ```toml
 [settings.updates]
 targets-base-url = "https://my-bucket.s3-us-west-2.amazonaws.com/targets/"
-metadata-base-url = "https://my-bucket.s3-us-west-2.amazonaws.com/aws-k8s-1.21/x86_64/"
+metadata-base-url = "https://my-bucket.s3-us-west-2.amazonaws.com/aws-k8s-1.24/x86_64/"
 ```
 
 ### Waves

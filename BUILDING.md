@@ -72,7 +72,7 @@ To build an image, run:
 cargo make
 ```
 
-This will build an image for the default variant, `aws-k8s-1.21`.
+This will build an image for the default variant, `aws-k8s-1.24`.
 All packages will be built in turn, and then compiled into an `img` file in the `build/images/` directory.
 
 The version number in [Release.toml](Release.toml) will be used in naming the file, and will be used inside the image as the release version.
