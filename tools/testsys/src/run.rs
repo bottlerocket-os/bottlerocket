@@ -1,6 +1,8 @@
-use crate::aws_resources::{AwsEcs, AwsK8s};
-use anyhow::{anyhow, ensure, Context, Result};
-use bottlerocket_types::agent_config::TufRepoConfig;
+use crate::aws_ecs::AwsEcsCreator;
+use crate::aws_k8s::AwsK8sCreator;
+use crate::crds::{CrdCreator, CrdInput};
+use crate::error;
+use crate::error::Result;
 use bottlerocket_variant::Variant;
 use clap::Parser;
 use log::{debug, info};
@@ -9,10 +11,9 @@ use model::SecretName;
 use pubsys_config::InfraConfig;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
-use std::collections::HashMap;
-use std::fs::File;
+use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
-use testsys_config::{AwsEcsVariantConfig, AwsK8sVariantConfig, GenericVariantConfig, TestConfig};
+use testsys_config::{GenericVariantConfig, TestConfig};
 
 /// Run a set of tests for a given arch and variant
 #[derive(Debug, Parser)]
@@ -128,59 +129,33 @@ impl From<CliConfig> for GenericVariantConfig {
 
 impl Run {
     pub(crate) async fn run(self, client: TestManager) -> Result<()> {
-        let variant =
-            Variant::new(&self.variant).context("The provided variant cannot be interpreted.")?;
+        // agent config (eventually with configuration)
+        let variant = Variant::new(&self.variant).context(error::VariantSnafu {
+            variant: self.variant,
+        })?;
         debug!("Using variant '{}'", variant);
 
         // Use Test.toml or default
-        let test_config = TestConfig::from_path_or_default(&self.test_config_path)
-            .context("Unable to read test config")?;
+        let test_config = TestConfig::from_path_or_default(&self.test_config_path)?;
 
-        let test_opts = test_config.test.as_ref().cloned().unwrap_or_default();
+        let test_opts = test_config.test.to_owned().unwrap_or_default();
+
+        let variant_config =
+            test_config.reduced_config(&variant, &self.arch, Some(self.config.into()));
 
         // If a lock file exists, use that, otherwise use Infra.toml or default
-        let infra_config = InfraConfig::from_path_or_lock(&self.infra_config_path, true)
-            .context("Unable to read infra config")?;
-
-        let aws = infra_config.aws.unwrap_or_default();
-
-        // If the user gave an override region, use that, otherwise use the first region from the
-        // config.
-        let region = if let Some(region) = self.target_region {
-            debug!("Using provided region for testing");
-            region
-        } else {
-            debug!("No region was provided, determining region from `Infra.toml`");
-            aws.regions
-                .clone()
-                .pop_front()
-                .context("No region was provided and no regions found in infra config")?
-        };
+        let infra_config = InfraConfig::from_path_or_lock(&self.infra_config_path, true)?;
 
         let repo_config = infra_config
             .repo
             .unwrap_or_default()
-            .get(
+            .remove(
                 &self
                     .repo
                     .or(test_opts.repo)
                     .unwrap_or_else(|| "default".to_string()),
             )
-            .and_then(|repo| {
-                if let (Some(metadata_base_url), Some(targets_url)) =
-                    (&repo.metadata_base_url, &repo.targets_url)
-                {
-                    Some(TufRepoConfig {
-                        metadata_url: format!(
-                            "{}{}/{}",
-                            metadata_base_url, &self.variant, &self.arch
-                        ),
-                        targets_url: targets_url.to_string(),
-                    })
-                } else {
-                    None
-                }
-            });
+            .unwrap_or_default();
 
         let images = vec![
             Some(self.agent_images.into()),
@@ -194,70 +169,62 @@ impl Run {
         .flatten()
         .fold(Default::default(), testsys_config::TestsysImages::merge);
 
-        let crds = match variant.family() {
+        // The `CrdCreator` is responsible for creating crds for the given architecture and variant.
+        let crd_creator: Box<dyn CrdCreator> = match variant.family() {
             "aws-k8s" => {
-                debug!("Variant is in 'aws-k8s' family");
-                let bottlerocket_ami = ami(&self.ami_input, &region)?;
-                debug!("Using ami '{}'", bottlerocket_ami);
-                let config: AwsK8sVariantConfig = test_config
-                    .reduced_config(&variant, &self.arch, Some(self.config.into()))
-                    .into();
-                let aws_k8s = AwsK8s {
-                    arch: self.arch,
-                    variant: self.variant,
+                debug!("Using family 'aws-k8s'");
+                let aws_config = infra_config.aws.unwrap_or_default();
+                let region = aws_config
+                    .regions
+                    .front()
+                    .map(String::to_string)
+                    .unwrap_or_else(|| "us-west-2".to_string());
+                Box::new(AwsK8sCreator {
                     region,
-                    config,
-                    ami: bottlerocket_ami.to_string(),
-                    tuf_repo: repo_config,
-                    starting_version: self.migration_starting_version,
-                    starting_image_id: self.starting_image_id,
-                    migrate_to_version: self.migration_target_version,
-                    capabilities: None,
+                    ami_input: self.ami_input,
                     migrate_starting_commit: self.migration_starting_commit,
-                };
-                debug!("Creating crds for aws-k8s testing");
-
-                aws_k8s
-                    .create_crds(&client, self.test_flavor, &images)
-                    .await?
+                })
             }
             "aws-ecs" => {
-                debug!("Variant is in 'aws-ecs' family");
-                let bottlerocket_ami = ami(&self.ami_input, &region)?;
-                debug!("Using ami '{}'", bottlerocket_ami);
-                let config: AwsEcsVariantConfig = test_config
-                    .reduced_config(&variant, &self.arch, Some(self.config.into()))
-                    .into();
-                let aws_ecs = AwsEcs {
-                    arch: self.arch,
-                    variant: self.variant,
+                debug!("Using family 'aws-ecs'");
+                let aws_config = infra_config.aws.unwrap_or_default();
+                let region = aws_config
+                    .regions
+                    .front()
+                    .map(String::to_string)
+                    .unwrap_or_else(|| "us-west-2".to_string());
+                Box::new(AwsEcsCreator {
                     region,
-                    config,
-                    ami: bottlerocket_ami.to_string(),
-                    tuf_repo: repo_config,
-                    starting_version: self.migration_starting_version,
-                    starting_image_id: self.starting_image_id,
+                    ami_input: self.ami_input,
                     migrate_starting_commit: self.migration_starting_commit,
-                    migrate_to_version: self.migration_target_version,
-                    capabilities: None,
-                };
-                debug!("Creating crds for aws-ecs testing");
-                aws_ecs.create_crds(self.test_flavor, &images).await?
+                })
             }
-            other => {
-                return Err(anyhow!(
-                    "testsys has not yet added support for the '{}' variant family",
-                    other
-                ))
+            unsupported => {
+                return Err(error::Error::Unsupported {
+                    what: unsupported.to_string(),
+                })
             }
         };
 
+        let crd_input = CrdInput {
+            client: &client,
+            arch: self.arch,
+            variant,
+            config: variant_config,
+            repo_config,
+            starting_version: self.migration_starting_version,
+            migrate_to_version: self.migration_target_version,
+            starting_image_id: self.starting_image_id,
+            images,
+        };
+
+        let crds = crd_creator
+            .create_crds(self.test_flavor, &crd_input)
+            .await?;
+
         debug!("Adding crds to testsys cluster");
         for crd in crds {
-            let crd = client
-                .create_object(crd)
-                .await
-                .context("Unable to create object")?;
+            let crd = client.create_object(crd).await?;
             info!("Successfully added '{}'", crd.name().unwrap());
         }
 
@@ -265,28 +232,23 @@ impl Run {
     }
 }
 
-fn ami(ami_input: &str, region: &str) -> Result<String> {
-    let file = File::open(ami_input).context("Unable to open amis.json")?;
-    let ami_input: HashMap<String, Image> =
-        serde_json::from_reader(file).context(format!("Unable to deserialize '{}'", ami_input))?;
-    ensure!(!ami_input.is_empty(), "amis.json is empty");
-    Ok(ami_input
-        .get(region)
-        .context(format!("ami not found for region '{}'", region))?
-        .id
-        .clone())
-}
-
 fn parse_key_val(s: &str) -> Result<(String, SecretName)> {
     let mut iter = s.splitn(2, '=');
-    let key = iter.next().context("Key is missing")?;
-    let value = iter.next().context("Value is missing")?;
-    Ok((key.to_string(), SecretName::new(value)?))
+    let key = iter.next().context(error::InvalidSnafu {
+        what: "Key is missing",
+    })?;
+    let value = iter.next().context(error::InvalidSnafu {
+        what: "Value is missing",
+    })?;
+    Ok((
+        key.to_string(),
+        SecretName::new(value).context(error::SecretNameSnafu { secret_name: value })?,
+    ))
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum TestType {
+pub enum KnownTestType {
     /// Conformance testing is a full integration test that asserts that Bottlerocket is working for
     /// customer workloads. For k8s variants, for example, this will run the full suite of sonobuoy
     /// conformance tests.
@@ -301,13 +263,18 @@ pub(crate) enum TestType {
     Migration,
 }
 
+/// If a test type is one that is supported by TestSys it will be created as `Known(KnownTestType)`.
+/// All other test types will be stored as `Unknown(<TEST-TYPE>)`.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum TestType {
+    Known(KnownTestType),
+    Unknown(String),
+}
+
 derive_fromstr_from_deserialize!(TestType);
 derive_display_from_serialize!(TestType);
-
-#[derive(Clone, Debug, Deserialize)]
-pub(crate) struct Image {
-    pub(crate) id: String,
-}
+derive_display_from_serialize!(KnownTestType);
 
 /// This is a CLI parsable version of `testsys_config::TestsysImages`
 #[derive(Debug, Parser)]

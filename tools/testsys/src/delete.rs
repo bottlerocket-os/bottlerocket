@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::Result;
 use clap::Parser;
 use futures::TryStreamExt;
 use log::info;
@@ -10,13 +10,9 @@ pub(crate) struct Delete {}
 
 impl Delete {
     pub(crate) async fn run(self, client: TestManager) -> Result<()> {
-        let mut stream = client.delete_all().await.context("Unable to delete all")?;
+        let mut stream = client.delete_all().await?;
 
-        while let Some(delete) = stream
-            .try_next()
-            .await
-            .context("A deletion error occured")?
-        {
+        while let Some(delete) = stream.try_next().await? {
             match delete {
                 DeleteEvent::Starting(crd) => println!("Starting delete for {}", crd.name()),
                 DeleteEvent::Deleted(crd) => println!("Delete finished for {}", crd.name()),

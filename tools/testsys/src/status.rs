@@ -1,7 +1,8 @@
-use anyhow::{Context, Result};
+use crate::error::{self, Result};
 use clap::Parser;
 use log::{debug, info};
 use model::test_manager::{SelectionParams, TestManager};
+use snafu::ResultExt;
 
 /// Check the status of testsys objects.
 #[derive(Debug, Parser)]
@@ -34,14 +35,14 @@ impl Status {
         };
         let status = client
             .status(&SelectionParams::Label(labels.join(",")), self.controller)
-            .await
-            .context("Unable to get status")?;
+            .await?;
 
         if self.json {
             info!(
                 "{}",
-                serde_json::to_string_pretty(&status)
-                    .context("Could not create string from status.")?
+                serde_json::to_string_pretty(&status).context(error::SerdeJsonSnafu {
+                    what: "Could not create string from status."
+                })?
             );
         } else {
             let (width, _) = term_size::dimensions().unwrap_or((80, 0));

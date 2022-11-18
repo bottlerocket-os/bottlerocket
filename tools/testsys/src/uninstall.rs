@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::Result;
 use clap::Parser;
 use log::{info, trace};
 use model::test_manager::TestManager;
@@ -12,9 +12,7 @@ impl Uninstall {
     pub(crate) async fn run(self, client: TestManager) -> Result<()> {
         trace!("Uninstalling testsys");
 
-        client.uninstall().await.context(
-            "Unable to uninstall testsys from the cluster. (Some artifacts may be left behind)",
-        )?;
+        client.uninstall().await?;
 
         info!("testsys components were successfully uninstalled.");
 

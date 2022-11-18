@@ -1,7 +1,8 @@
-use anyhow::{Context, Result};
+use crate::error::{self, Result};
 use clap::Parser;
 use model::test_manager::TestManager;
 use model::SecretName;
+use snafu::OptionExt;
 
 /// Add a testsys object to the testsys cluster.
 #[derive(Debug, Parser)]
@@ -62,10 +63,7 @@ pub(crate) struct AddSecretMap {
 
 impl AddSecretMap {
     pub(crate) async fn run(self, client: TestManager) -> Result<()> {
-        client
-            .create_secret(&self.name, self.args)
-            .await
-            .context("Unable to create secret")?;
+        client.create_secret(&self.name, self.args).await?;
         println!("Successfully added '{}' to secrets.", self.name);
         Ok(())
     }
@@ -73,8 +71,12 @@ impl AddSecretMap {
 
 fn parse_key_val(s: &str) -> Result<(String, String)> {
     let mut iter = s.splitn(2, '=');
-    let key = iter.next().context("Key is missing")?;
-    let value = iter.next().context("Value is missing")?;
+    let key = iter.next().context(error::InvalidSnafu {
+        what: "Key is missing",
+    })?;
+    let value = iter.next().context(error::InvalidSnafu {
+        what: "Value is missing",
+    })?;
     Ok((key.to_string(), value.to_string()))
 }
 
@@ -107,8 +109,7 @@ impl AddSecretImage {
                 &self.pull_password,
                 &self.image_uri,
             )
-            .await
-            .context("Unable to create pull secret")?;
+            .await?;
 
         println!("The secret was added.");
 

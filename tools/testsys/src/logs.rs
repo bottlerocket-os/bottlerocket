@@ -1,7 +1,8 @@
-use anyhow::{Context, Error, Result};
+use crate::error::{self, Result};
 use clap::Parser;
 use futures::TryStreamExt;
 use model::test_manager::{ResourceState, TestManager};
+use snafu::{OptionExt, ResultExt};
 use unescape::unescape;
 
 /// Stream the logs of an object from a testsys cluster.
@@ -28,18 +29,18 @@ impl Logs {
     pub(crate) async fn run(self, client: TestManager) -> Result<()> {
         match (self.test, self.resource, self.resource_state) {
             (Some(test), None, None) => {
-                let mut logs = client.test_logs(test, self.follow).await.context("Unable to get logs.")?;
-                while let Some(line) = logs.try_next().await? {
-                    println!("{}", unescape(&String::from_utf8_lossy(&line)).context("Unable to unescape log string")?);
+                let mut logs = client.test_logs(test, self.follow).await?;
+                while let Some(line) = logs.try_next().await.context(error::KubeClientSnafu)? {
+                    println!("{}", unescape(&String::from_utf8_lossy(&line)).context(error::InvalidSnafu{what: "Unable to unescape log string"})?);
                 }
             }
             (None, Some(resource), Some(state)) => {
-                let mut logs = client.resource_logs(resource, state, self.follow).await.context("Unable to get logs.")?;
-                while let Some(line) = logs.try_next().await? {
-                    println!("{}", unescape(&String::from_utf8_lossy(&line)).context("Unable to unescape log string")?);
+                let mut logs = client.resource_logs(resource, state, self.follow).await?;
+                while let Some(line) = logs.try_next().await.context(error::KubeClientSnafu)? {
+                    println!("{}", unescape(&String::from_utf8_lossy(&line)).context(error::InvalidSnafu{what: "Unable to unescape log string"})?);
                 }
             }
-            _ => return Err(Error::msg("Invalid arguments were provided. Exactly one of `--test` or `--resource` must be given.")),
+            _ => return Err(error::Error::Invalid{what: "Invalid arguments were provided. Exactly one of `--test` or `--resource` must be given.".to_string()}),
         };
         Ok(())
     }

@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use crate::error::Result;
 use clap::Parser;
 use model::test_manager::TestManager;
 
@@ -13,9 +13,6 @@ pub(crate) struct RestartTest {
 
 impl RestartTest {
     pub(crate) async fn run(self, client: TestManager) -> Result<()> {
-        client
-            .restart_test(&self.test_name)
-            .await
-            .context(format!("Unable to restart test '{}'", self.test_name))
+        Ok(client.restart_test(&self.test_name).await?)
     }
 }
