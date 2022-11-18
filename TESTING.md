@@ -249,6 +249,64 @@ cargo make watch-test
 
 **Note:** For more information on publishing AMIs see [publishing](PUBLISHING.md).
 
+### vmware-k8s
+
+First, an initial management cluster needs to be created using [`EKS Anywhere`](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/vsphere-getstarted/#create-an-initial-cluster).
+You can then set `TESTSYS_MGMT_CLUSTER_KUBECONFIG` to the path to the management clusters kubeconfig.
+You need to [build](BUILDING.md) Bottlerocket and a publicly accessible [TUF repository](https://github.com/bottlerocket-os/bottlerocket/blob/develop/PUBLISHING.md#repo-location) to test VMware variants.
+Either `Infra.toml` or your environment need to be configured.
+If using environment variables make sure to set the following environment variables:
+- GOVC_URL
+- GOVC_USERNAME
+- GOVC_PASSWORD
+- GOVC_DATACENTER
+- GOVC_DATASTORE
+- GOVC_NETWORK
+- GOVC_RESOURCE_POOL
+- GOVC_FOLDER
+
+Testsys will use the data center specified in `Test.toml` first.
+If no data center is specified in `Test.toml`, testsys will use the first data center listed in `Infra.toml`
+VMware testing also requires a `control-plane-endpoint` to be set in `Test.toml` for vSphere K8s cluster creation.
+Change the commands below to the desired `vmware-k8s` variant:
+
+First, build the VMware variant you want to test.
+
+```shell
+cargo make \
+  -e BUILDSYS_VARIANT="vmware-k8s-1.23" \
+  -e BUILDSYS_ARCH="x86_64" \
+  build
+```
+
+Build the TUF repo containing the OVA templates.
+
+```shell
+cargo make \
+  -e BUILDSYS_VARIANT="vmware-k8s-1.23" \
+  -e BUILDSYS_ARCH="x86_64" \
+  repo
+```
+
+Sync TUF repos containing the VMware variant's metadata and targets.
+Make sure the TUF repos are accessible via unauthenticated HTTP or HTTPS and match the URLs in `Infra.toml`.
+
+Now, you can run the test.
+
+```shell
+cargo make \
+  -e BUILDSYS_VARIANT="vmware-k8s-1.23" \
+  -e BUILDSYS_ARCH="x86_64" \
+  test \
+  --mgmt-cluster-kubeconfig ${TESTSYS_MGMT_CLUSTER_KUBECONFIG}
+```
+
+You can monitor the tests with:
+
+```shell
+cargo make watch-test
+```
+
 ## Migration Testing
 
 Migration testing is used to ensure Bottlerocket can update from one version to a new version and back.

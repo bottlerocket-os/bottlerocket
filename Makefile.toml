@@ -1367,15 +1367,15 @@ script = [
     '''
     set -eu
     ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-    if [ ! -s "${ami_input}" ]; then
-      echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
-      exit 1
+    testsys_ami_input=""
+    if [ -s "${ami_input}" ]; then
+      testsys_ami_input="--ami-input ${ami_input}"
     fi
     export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
     # The ami that is selected from `amis.json` is determined by `TESTSYS_REGION` if set; otherwise,
     # it is the first region listed in `Infra.toml` (for aws variants).
     testsys ${CARGO_MAKE_TESTSYS_ARGS} run ${TESTSYS_TEST} \
-      --ami-input "${ami_input}" \
+      ${testsys_ami_input} \
       ${TESTSYS_AWS_SECRET_NAME:+--secret ${TESTSYS_AWS_SECRET_NAME}} \
       ${@}
     '''

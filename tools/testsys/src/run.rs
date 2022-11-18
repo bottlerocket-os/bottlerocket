@@ -3,15 +3,18 @@ use crate::aws_k8s::AwsK8sCreator;
 use crate::crds::{CrdCreator, CrdInput};
 use crate::error;
 use crate::error::Result;
+use crate::vmware_k8s::VmwareK8sCreator;
 use bottlerocket_variant::Variant;
 use clap::Parser;
 use log::{debug, info};
 use model::test_manager::TestManager;
 use model::SecretName;
+use pubsys_config::vmware::{Datacenter, DatacenterBuilder};
 use pubsys_config::InfraConfig;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use snafu::{OptionExt, ResultExt};
+use std::fs::read_to_string;
 use std::path::PathBuf;
 use testsys_config::{GenericVariantConfig, TestConfig};
 
@@ -37,13 +40,26 @@ pub(crate) struct Run {
     #[clap(long, env = "TESTSYS_TEST_CONFIG_PATH", parse(from_os_str))]
     test_config_path: PathBuf,
 
+    /// The path to the EKS-A management cluster kubeconfig for vSphere K8s cluster creation
+    #[clap(long, env = "TESTSYS_MGMT_CLUSTER_KUBECONFIG", parse(from_os_str))]
+    mgmt_cluster_kubeconfig: Option<PathBuf>,
+
     /// Use this named repo infrastructure from Infra.toml for upgrade/downgrade testing.
     #[clap(long, env = "PUBLISH_REPO")]
     repo: Option<String>,
 
+    /// The name of the vSphere data center in `Infra.toml` that should be used for testing
+    /// If no data center is provided, the first one in `vmware.datacenters` will be used
+    #[clap(long, env = "TESTSYS_DATACENTER")]
+    datacenter: Option<String>,
+
+    /// The name of the VMware OVA that should be used for testing
+    #[clap(long, env = "BUILDSYS_OVA")]
+    ova_name: Option<String>,
+
     /// The path to `amis.json`
     #[clap(long, env = "AMI_INPUT")]
-    ami_input: String,
+    ami_input: Option<String>,
 
     /// Override for the region the tests should be run in. If none is provided the first region in
     /// Infra.toml will be used. This is the region that the aws client is created with for testing
@@ -116,6 +132,10 @@ struct CliConfig {
     /// Add secrets to the testsys agents (`--secret awsCredentials=my-secret`)
     #[clap(long, short, parse(try_from_str = parse_key_val), number_of_values = 1)]
     secret: Vec<(String, SecretName)>,
+
+    /// The endpoint IP to reserve for the vSphere control plane VMs when creating a K8s cluster
+    #[clap(long, env = "TESTSYS_CONTROL_PLANE_ENDPOINT")]
+    pub control_plane_endpoint: Option<String>,
 }
 
 impl From<CliConfig> for GenericVariantConfig {
@@ -127,6 +147,7 @@ impl From<CliConfig> for GenericVariantConfig {
             agent_role: val.assume_role,
             conformance_image: val.conformance_image,
             conformance_registry: val.conformance_registry,
+            control_plane_endpoint: val.control_plane_endpoint,
         }
     }
 }
@@ -189,7 +210,9 @@ impl Run {
                     .unwrap_or_else(|| "us-west-2".to_string());
                 Box::new(AwsK8sCreator {
                     region,
-                    ami_input: self.ami_input,
+                    ami_input: self.ami_input.context(error::InvalidSnafu {
+                        what: "amis.json is required. You may need to run `cargo make ami`",
+                    })?,
                     migrate_starting_commit: self.migration_starting_commit,
                 })
             }
@@ -203,8 +226,52 @@ impl Run {
                     .unwrap_or_else(|| "us-west-2".to_string());
                 Box::new(AwsEcsCreator {
                     region,
-                    ami_input: self.ami_input,
+                    ami_input: self.ami_input.context(error::InvalidSnafu {
+                        what: "amis.json is required. You may need to run `cargo make ami`",
+                    })?,
                     migrate_starting_commit: self.migration_starting_commit,
+                })
+            }
+            "vmware-k8s" => {
+                debug!("Using family 'vmware-k8s'");
+                let aws_config = infra_config.aws.unwrap_or_default();
+                let region = aws_config
+                    .regions
+                    .front()
+                    .map(String::to_string)
+                    .unwrap_or_else(|| "us-west-2".to_string());
+                let vmware_config = infra_config.vmware.unwrap_or_default();
+                let dc_env = DatacenterBuilder::from_env();
+                let dc_common = vmware_config.common.as_ref();
+                let dc_config = self
+                    .datacenter
+                    .as_ref()
+                    .or_else(|| vmware_config.datacenters.first())
+                    .and_then(|datacenter| vmware_config.datacenter.get(datacenter));
+
+                let datacenter: Datacenter = dc_env
+                    .take_missing_from(dc_config)
+                    .take_missing_from(dc_common)
+                    .build()
+                    .context(error::DatacenterBuildSnafu)?;
+
+                let mgmt_cluster_kubeconfig =
+                    self.mgmt_cluster_kubeconfig.context(error::InvalidSnafu {
+                        what: "A management cluster kubeconfig is required for VMware testing",
+                    })?;
+                let encoded_kubeconfig = base64::encode(
+                    read_to_string(&mgmt_cluster_kubeconfig).context(error::FileSnafu {
+                        path: mgmt_cluster_kubeconfig,
+                    })?,
+                );
+
+                Box::new(VmwareK8sCreator {
+                    region,
+                    ova_name: self.ova_name.context(error::InvalidSnafu {
+                        what: "An OVA name is required for VMware testing.",
+                    })?,
+                    datacenter,
+                    encoded_mgmt_cluster_kubeconfig: encoded_kubeconfig,
                 })
             }
             unsupported => {
@@ -314,12 +381,26 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) ecs_resource: Option<String>,
 
+    /// vSphere cluster resource agent URI. If not provided the latest released resource agent will be used.
+    #[clap(
+        long = "vsphere-k8s-cluster-resource-agent-image",
+        env = "TESTSYS_VSPHERE_K8S_CLUSTER_RESOURCE_AGENT_IMAGE"
+    )]
+    pub(crate) vsphere_k8s_cluster_resource: Option<String>,
+
     /// EC2 resource agent URI. If not provided the latest released resource agent will be used.
     #[clap(
         long = "ec2-resource-agent-image",
         env = "TESTSYS_EC2_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) ec2_resource: Option<String>,
+
+    /// vSphere VM resource agent URI. If not provided the latest released resource agent will be used.
+    #[clap(
+        long = "vsphere-vm-resource-agent-image",
+        env = "TESTSYS_VSPHERE_VM_RESOURCE_AGENT_IMAGE"
+    )]
+    pub(crate) vsphere_vm_resource: Option<String>,
 
     /// Sonobuoy test agent URI. If not provided the latest released test agent will be used.
     #[clap(
@@ -352,7 +433,9 @@ impl From<TestsysImages> for testsys_config::TestsysImages {
         testsys_config::TestsysImages {
             eks_resource_agent_image: val.eks_resource,
             ecs_resource_agent_image: val.ecs_resource,
+            vsphere_k8s_cluster_resource_agent_image: val.vsphere_k8s_cluster_resource,
             ec2_resource_agent_image: val.ec2_resource,
+            vsphere_vm_resource_agent_image: val.vsphere_vm_resource,
             sonobuoy_test_agent_image: val.sonobuoy_test,
             ecs_test_agent_image: val.ecs_test,
             migration_test_agent_image: val.migration_test,
