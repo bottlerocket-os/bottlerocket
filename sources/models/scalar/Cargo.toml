@@ -1,0 +1,16 @@
+[package]
+name = "scalar"
+version = "0.1.0"
+authors = ["Matt Briggs <brigmatt@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+serde = "1"
+
+[build-dependencies]
+generate-readme = { path = "../../generate-readme", version = "0.1.0" }
