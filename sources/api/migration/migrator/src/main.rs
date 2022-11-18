@@ -31,7 +31,6 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use semver::Version;
 use simplelog::{Config as LogConfig, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
-use std::collections::HashSet;
 use std::convert::TryInto;
 use std::env;
 use std::fs::{self, File};
@@ -240,9 +239,10 @@ where
     // We create a new data store (below) to serve as the target of each migration.  (Start at
     // source just to have the right type; we know we have migrations at this point.)
     let mut target_datastore = source_datastore.to_owned();
-    // Any data stores we create that aren't the final one, i.e. intermediate data stores, will be
-    // removed at the end.  (If we fail and return early, they're left for debugging purposes.)
-    let mut intermediate_datastores = HashSet::new();
+    // The most recent, "good", datastore. We keep it around for debugging purposes in case we
+    // encounter an error before reaching the final one. Once we reach final we delete the last
+    // intermediate_datastore.
+    let mut intermediate_datastore = Option::default();
 
     for migration in migrations {
         let migration = migration.as_ref();
@@ -278,7 +278,6 @@ where
 
         // Create a new output location for this migration.
         target_datastore = new_datastore_location(&source_datastore, &new_version)?;
-        intermediate_datastores.insert(target_datastore.clone());
 
         command.args(&[
             "--target-datastore".to_string(),
@@ -309,29 +308,33 @@ where
             output.status.success(),
             error::MigrationFailureSnafu { output }
         );
+
+        // If an intermediate datastore exists from a previous loop, delete it.
+        if let Some(path) = &intermediate_datastore {
+            delete_intermediate_datastore(path);
+        }
+
+        // Remember the location of the target_datastore to delete it in the next loop iteration
+        // (i.e if it was an intermediate).
+        intermediate_datastore = Some(target_datastore.clone());
         source_datastore = &target_datastore;
     }
 
-    // Remove the intermediate data stores
-    intermediate_datastores.remove(&target_datastore);
-    for intermediate_datastore in intermediate_datastores {
-        // Even if we fail to remove an intermediate data store, we've still migrated
-        // successfully, and we don't want to fail the upgrade - just let someone know for
-        // later cleanup.
-        trace!(
-            "Removing intermediate data store at {}",
-            intermediate_datastore.display()
-        );
-        if let Err(e) = fs::remove_dir_all(&intermediate_datastore) {
-            error!(
-                "Failed to remove intermediate data store at '{}': {}",
-                intermediate_datastore.display(),
-                e
-            );
-        }
-    }
-
     Ok(target_datastore)
+}
+
+// Try to delete an intermediate datastore if it exists. If it fails to delete, print an error.
+fn delete_intermediate_datastore(path: &PathBuf) {
+    // Even if we fail to remove an intermediate data store, we don't want to fail the upgrade -
+    // just let someone know for later cleanup.
+    trace!("Removing intermediate data store at {}", path.display());
+    if let Err(e) = fs::remove_dir_all(&path) {
+        error!(
+            "Failed to remove intermediate data store at '{}': {}",
+            path.display(),
+            e
+        );
+    }
 }
 
 /// Atomically flips version symlinks to point to the given "to" datastore so that it becomes live.
