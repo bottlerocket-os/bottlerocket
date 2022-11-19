@@ -1,0 +1,17 @@
+version = {{version}}
+
+[bond0]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno51" , "eno52"]
+dhcp4 = true
+
+[bond0.monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 200
+miimon-downdelay-ms = 200
+
+[bond0.monitoring]
+arpmon-interval-ms = 200
+arpmon-validate = "all"
+arpmon-targets = ["192.168.1.1", "10.0.0.2"]

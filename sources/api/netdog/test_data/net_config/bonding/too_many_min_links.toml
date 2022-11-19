@@ -1,0 +1,13 @@
+version = {{version}}
+
+[bond0]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno51" , "eno52"]
+min-links = 3
+dhcp4 = true
+
+[bond0.monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 200
+miimon-downdelay-ms = 200

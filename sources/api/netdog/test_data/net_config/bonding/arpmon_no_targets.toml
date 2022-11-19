@@ -1,0 +1,10 @@
+[bond1]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno53", "eno54"]
+dhcp4 = true
+
+[bond1.monitoring]
+arpmon-interval-ms = 200
+arpmon-validate = "all"
+arpmon-targets = []

@@ -1,0 +1,1 @@
+<interface><name>eno54</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><link><master>bond1</master></link></interface>

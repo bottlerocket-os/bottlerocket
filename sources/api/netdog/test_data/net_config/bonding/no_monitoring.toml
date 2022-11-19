@@ -1,0 +1,8 @@
+version = {{version}}
+
+[bond0]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno51" , "eno52"]
+dhcp4 = true
+
