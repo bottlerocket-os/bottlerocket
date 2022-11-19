@@ -1,0 +1,1 @@
+<interface><name>mystaticvlan</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:static><address><local>192.168.1.100/24</local></address></ipv4:static><vlan><device>eno1000</device><tag>42</tag></vlan></interface>

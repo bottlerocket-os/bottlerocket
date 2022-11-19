@@ -1,0 +1,7 @@
+version = {{version}}
+
+[vlan6]
+kind = "vlan"
+device = "eno1"
+id = 5000
+dhcp4 = true
