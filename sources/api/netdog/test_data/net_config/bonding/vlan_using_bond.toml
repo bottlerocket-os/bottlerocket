@@ -1,0 +1,18 @@
+version = {{version}}
+
+[bond0]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno51" , "eno52"]
+dhcp4 = true
+
+[bond0.monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 200
+miimon-downdelay-ms = 200
+
+
+[vlan_using]
+kind = "vlan"
+id = 1234
+device = "eno51"
