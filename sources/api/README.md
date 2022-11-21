@@ -142,14 +142,14 @@ These commands create one in `/tmp`, but you can create it in a more permanent l
 
 From the `sources/api/storewolf` directory:
 
-```
+```shell
 cargo run -- --data-store-base-path /tmp/data-store --version 0.0.1
 ```
 
 Now you can start the API server.
 From the `sources/api/apiserver` directory:
 
-```
+```shell
 cargo run -- --datastore-path /tmp/data-store/current --socket-path /tmp/bottlerocket-api.sock --log-level debug
 ```
 
@@ -161,7 +161,7 @@ This is so we can commit all settings generated at startup at once.
 We can use settings-committer to do the same thing with our development data store.
 From the `sources/api/settings-committer` directory:
 
-```
+```shell
 cargo run -- --socket-path /tmp/bottlerocket-api.sock
 ```
 
@@ -178,7 +178,7 @@ Here's how you can test the feature locally.
 Follow the [setup steps above](#Setup) if you haven't already, then stop the apiserver, because we'll need to run it a different way.
 
 First, run a task in containerd locally.  Here's an example:
-```
+```shell
 sudo ctr i pull public.ecr.aws/amazonlinux/amazonlinux:latest
 sudo ctr run --rm -t public.ecr.aws/amazonlinux/amazonlinux:latest al bash
 ```
@@ -187,7 +187,7 @@ If you use a containerd socket other than the default `/run/containerd/container
 
 Next, run apiserver as root so it can talk to containerd.
 From the `sources` directory:
-```
+```shell
 sudo target/debug/apiserver --datastore-path /tmp/data-store/current --socket-path /tmp/bottlerocket-api.sock
 ```
 
@@ -195,6 +195,6 @@ If you use a containerd socket other than the default `/run/containerd/container
 
 Finally, use apiclient to start another program in your container task.
 From the `sources/api/apiclient` directory:
-```
+```shell
 cargo run -- --socket-path /tmp/bottlerocket-api.sock exec al bash
 ```

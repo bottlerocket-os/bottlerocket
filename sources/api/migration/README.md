@@ -55,7 +55,7 @@ Applications access the data store at `/var/lib/bottlerocket/datastore/current` 
 
 `current` is a link to the major version, which is a link to the minor version, etc.
 Here's a full example setup for version 1.5:
-```
+```shell
 /var/lib/bottlerocket/datastore/current
    -> v1
    -> v1.5

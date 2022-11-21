@@ -58,7 +58,7 @@ BIOS_MIB="4" # one per disk
 OVERHEAD_MIB="$((GPT_MIB * 2 + BIOS_MIB))"
 
 # The 'recommended' size for the EFI partition is 100MB but our EFI images are
-# under 1MB, so this will suffice for now. It would be possible to increase the
+# under 2MB, so this will suffice for now. It would be possible to increase the
 # EFI partition size by taking space from the "reserved" area below.
 EFI_MIB="5" # one per bank
 
@@ -71,7 +71,7 @@ EFI_MIB="5" # one per bank
 #
 # !!! WARNING !!!
 #
-# Increasing any of these constants is very likely break systems on update,
+# Increasing any of these constants is very likely to break systems on update,
 # since the corresponding partitions are adjacent on disk and have no room to
 # grow.
 BOOT_SCALE_FACTOR="20"
@@ -223,9 +223,9 @@ set_partition_types() {
   local typecode
   for part in BOOT ROOT HASH RESERVED ; do
     for bank in A B ; do
-        typecode="BOTTLEROCKET_${part}_TYPECODE"
-        typecode="${!typecode}"
-        pp_type["${part}-${bank}"]="${typecode}"
+      typecode="BOTTLEROCKET_${part}_TYPECODE"
+      typecode="${!typecode}"
+      pp_type["${part}-${bank}"]="${typecode}"
     done
   done
 }

@@ -5,7 +5,7 @@ You can pass a different directory to `pubsys` to use a different set of paramet
 
 The directory is expected to contain a file named `defaults.toml` with a table entry per parameter, like this:
 
-```
+```toml
 [[parameter]]
 name = "{variant}/{arch}/{image_version}/image_id"
 value = "{image_id}"
@@ -30,7 +30,7 @@ The parameter will only be populated if the current `variant` or `arch` matches 
 (If both `variant` and `arch` are listed, the build must match an entry from both lists.)
 
 For example, to add an extra parameter that's only set for "aarch64" builds of the "aws-ecs-1" variant:
-```
+```toml
 [[parameter]]
 arch = ["aarch64"]
 variant = ["aws-ecs-1"]

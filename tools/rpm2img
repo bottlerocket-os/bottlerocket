@@ -243,7 +243,7 @@ if [[ "${ARCH}" == "x86_64" ]]; then
 fi
 
 # We also need an EFI partition, formatted FAT32 with the
-# EFI binary at the correct path, eg /efi/boot. The grub
+# EFI binary at the correct path, e.g. /efi/boot. The grub
 # package has placed the image in /boot/efi/EFI/BOOT.
 mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
 

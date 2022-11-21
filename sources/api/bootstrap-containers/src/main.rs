@@ -34,7 +34,7 @@ ENTRYPOINT ["sh", "bootstrap-script"]
 
 And `bootstrap-script` as:
 
-```sh
+```shell
 #!/usr/bin/env sh
 # We'll read some data to be written out from given user-data.
 USER_DATA_DIR=/.bottlerocket/bootstrap-containers/current
@@ -65,7 +65,7 @@ You should see a new directory under `/var/lib` called `my_directory`, a file in
 directory called `bear.txt` and the following command should show `ʕ·͡ᴥ·ʔ` in the bootstrap
 containers logs:
 
-```sh
+```shell
 journalctl -u bootstrap-containers@bear.service
 ```
 */

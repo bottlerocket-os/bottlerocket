@@ -72,7 +72,7 @@ where
     })?;
     let mut template = File::open("README.tpl").context(error::ReadmeTemplateOpenSnafu)?;
 
-    let content = cargo_readme::generate_readme(
+    let mut content = cargo_readme::generate_readme(
         &PathBuf::from("."), // root
         &mut source,         // source
         Some(&mut template), // template
@@ -83,6 +83,11 @@ where
         true,  // indent headings
     )
     .map_err(|e| error::ReadmeGenerateSnafu { error: e }.build())?;
+
+    // Make sure the end of the file has a newline
+    if content.chars().last().unwrap_or_default() != '\n' {
+        content = content + "\n";
+    }
 
     let mut readme = File::create("README.md").context(error::ReadmeCreateSnafu)?;
     readme

@@ -16,7 +16,7 @@ Please refer to [`BUILDING.md`](https://github.com/bottlerocket-os/bottlerocket/
 
 The use of QEMU requires extra packages which you may install using this dnf invocation:
 
-```
+```shell
 sudo dnf install qemu
 ```
 
@@ -35,7 +35,7 @@ As an alternative, the `start-local-vm` wrapper script included in the `tools` d
 The `start-local-vm` wrapper configures QEMU to provide one virtual network interface to the VM.
 To enable this interface, create a file named `net.toml` containing the following TOML snippet:
 
-```
+```toml
 version = 1
 
 [enp0s16]
@@ -64,7 +64,7 @@ If you would like to use the admin container, you will need to create some base6
 Full details are covered in the [admin container documentation](https://github.com/bottlerocket-os/bottlerocket-admin-container#authenticating-with-the-admin-container).
 If we assume you have a public key at `${HOME}/.ssh/id_rsa.pub`, the below will add the correct user data to your `user-data.toml`.
 
-```
+```shell
 PUBKEY_FILE="${HOME}/.ssh/id_rsa.pub"
 PUBKEY=$(< "${PUBKEY_FILE}")
 ADMIN_USER_DATA="$(echo '{"ssh": {"authorized-keys": ["'"${PUBKEY}"'"]}}' | base64 -w 0)"
@@ -87,7 +87,7 @@ Full details can be found in the [control container documentation](https://githu
 You'll first need an AWS account, and AWS CLI installed.
 Then you'll create a service role in that account to [grant AWS STS trust to the AWS Systems Manager service](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-service-role.html).
 
-```
+```shell
 cat <<EOF > ssmservice-trust.json
 {
     "Version": "2012-10-17",
@@ -114,7 +114,7 @@ aws iam attach-role-policy \
 
 Once the above is created, we can use the role to create an activation code and ID.
 
-```
+```shell
 export SSM_ACTIVATION="$(aws ssm create-activation \
   --iam-role SSMServiceRole \
   --registration-limit 100 \
@@ -122,9 +122,9 @@ export SSM_ACTIVATION="$(aws ssm create-activation \
   --output json)"
 ```
 
-Using the above activation data we can create our user data to pass to the control container
+Using the above activation data we can create our user data to pass to the control container:
 
-```
+```shell
 SSM_ACTIVATION_ID="$(jq -r '.ActivationId' <<< ${SSM_ACTIVATION})"
 SSM_ACTIVATION_CODE="$(jq -r '.ActivationCode' <<< ${SSM_ACTIVATION})"
 CONTROL_USER_DATA="$(echo '{"ssm": {"activation-id": "'${SSM_ACTIVATION_ID}'", "activation-code": "'${SSM_ACTIVATION_CODE}'", "region": "us-west-2"}}' | base64 -w0)"
@@ -143,7 +143,7 @@ EOF
 We have now prepared all configuration we might need.
 Assuming you are in the root of the main Bottlerocket repository, you can run
 
-```
+```shell
 ./tools/start-local-vm --variant metal-dev --arch $(uname -m) --inject-file net.toml --inject-file user-data.toml
 ```
 
@@ -164,6 +164,6 @@ If you want to terminate the VM, you can either instruct it to `systemctl powero
 By default, the `start-local-vm` wrapper will forward the host's TCP port 2222 to the VM's port 22.
 If you enabled the admin host container, the SSH server running in it will therefore be available by connecting to localhost's port 2222:
 
-```
+```shell
 ssh -p 2222 ec2-user@localhost
 ```

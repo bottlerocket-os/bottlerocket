@@ -67,7 +67,7 @@ kind create cluster --name testsys
 
 If you want to store the kubeconfig file, set the `KUBECONFIG` variable to some path (there should be no pre-existing file there).
 It doesn't really matter where this is, since this is a throwaway cluster and then write the
-kubeconfig to that path. 
+kubeconfig to that path.
 The environment variable `TESTSYS_KUBECONFIG` is used by all testsys
 related cargo make tasks.
 
@@ -111,7 +111,7 @@ export TESTSYS_AWS_SECRET_NAME="awsCredentials=<Name of your secret>"
 ### Conveniences
 
 All testsys commands can be run using cargo make to eliminate the chance of 2 different versions of
-testsys bing used. 
+testsys being used.
 Testsys requires the controller and the agent images to be of the same testsys version.
 
 ```shell
@@ -131,7 +131,7 @@ Check out the [example config file](tools/testsys/Test.toml.example) for a sampl
 
 For example, the instance type can be specified based on variant requirements:
 
-```yaml
+```toml
 [aws-k8s]
 # Set the default instance type for all `aws-k8s` variants
 instance-type = "m5.xlarge"
@@ -181,13 +181,13 @@ cargo make \
   -e BUILDSYS_VARIANT="aws-k8s-1.21" \
   -e BUILDSYS_ARCH="x86_64" \
   build
-  
+
 cargo make \
   -e BUILDSYS_VARIANT="aws-k8s-1.21" \
   -e BUILDSYS_ARCH="x86_64" \
   -e PUBLISH_REGIONS="us-west-2"
   ami
- 
+
 cargo make \
   -e BUILDSYS_VARIANT="aws-k8s-1.21" \
   -e BUILDSYS_ARCH="x86_64" \
@@ -200,7 +200,7 @@ cargo make watch-test
 
 ### aws-ecs
 
-You need to [build](BUILDING.md) Bottlerocket and create an AMI before you can run a test. 
+You need to [build](BUILDING.md) Bottlerocket and create an AMI before you can run a test.
 The default instance type to be used is `m5.large` for `x86_64` and `m6g.large` for `aarch64`, but can be controlled by setting the environment variable `TESTSYS_INSTANCE_TYPE`.
 This is useful while testing NVIDIA variants, since they require instance types with support for NVIDIA GPUs.
 Change the commands below to the desired `aws-ecs` variant and AWS region:
@@ -210,13 +210,13 @@ cargo make \
   -e BUILDSYS_VARIANT="aws-ecs-1" \
   -e BUILDSYS_ARCH="x86_64" \
   build
-  
+
 cargo make \
   -e BUILDSYS_VARIANT="aws-ecs-1" \
   -e BUILDSYS_ARCH="x86_64" \
   -e PUBLISH_REGIONS="us-west-2"
   ami
- 
+
 cargo make \
   -e BUILDSYS_VARIANT="aws-ecs-1" \
   -e BUILDSYS_ARCH="x86_64" \
@@ -245,14 +245,14 @@ In order to accomplish this a few artifacts need to be created:
 
 #### Prepare `Infra.toml`
 
-We need the URL of an accessible TUF repo so the Bottlerocket instances know where to retrieve the update metadata and targets. 
+We need the URL of an accessible TUF repo so the Bottlerocket instances know where to retrieve the update metadata and targets.
 Follow our [publishing guide](PUBLISHING.md#repo-location) to set up TUF repos.
-`Infra.toml` is used by testsys to determine TUF repo locations, so `metadata_base_url` and `targets_base_url` need to be set based on the repo that was just created. 
+`Infra.toml` is used by testsys to determine TUF repo locations, so `metadata_base_url` and `targets_base_url` need to be set based on the repo that was just created.
 The examples below also assume that the default repo is being used in `Infra.toml`, but any repo can be used by setting the `PUBLISH_REPO` environment variable.
 
 #### Starting Bottlerocket images
 
-In this example we will use `v1.9.0` as our starting Bottlerocket version, but any tag from Bottlerocket will work. 
+In this example we will use `v1.9.0` as our starting Bottlerocket version, but any tag from Bottlerocket will work.
 The following bash script will checkout the proper branch from git and create the build images and TUF repos for testing.
 
 ```shell
@@ -275,7 +275,7 @@ WORKING_BRANCH="develop"
 git checkout "${WORKING_BRANCH}"
 ```
 
-Next, build Bottlerocket images and repos and sync TUF repos. 
+Next, build Bottlerocket images and repos and sync TUF repos.
 The architecture and variant can be configured with `BUILDSYS_ARCH` and `BUILDSYS_VARIANT`.
 
 ```shell
@@ -293,8 +293,8 @@ This completes the setup and it is time to test migrations!
 The previous steps set up the artifacts necessary to perform migration testing using `testsys`.
 Ensure all environment variables are still set and set them if they aren't.
 
-To run the migration test set `TESTSYS_TEST=migration` in the `cargo make test` call. 
-This will automatically determine the AMI that should be used by finding the latest released version of bottlerocket and checking the user's AMIs to find the correct starting AMI ID. 
+To run the migration test set `TESTSYS_TEST=migration` in the `cargo make test` call.
+This will automatically determine the AMI that should be used by finding the latest released version of bottlerocket and checking the user's AMIs to find the correct starting AMI ID.
 Remember to set the environment variables for the architecture and variant.
 
 ```shell

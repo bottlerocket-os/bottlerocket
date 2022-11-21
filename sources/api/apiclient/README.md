@@ -13,17 +13,17 @@ It can be pointed to another socket using `--socket-path`, for example for local
 
 The most important use is probably checking your current settings:
 
-```
+```shell
 apiclient get settings
 ```
 
 `get` will request all settings whose names start with the given prefix, so you can drill down into specific areas of interest:
-```
+```shell
 apiclient get settings.host-containers.admin
 ```
 
 Or, request some specific settings:
-```
+```shell
 apiclient get settings.motd settings.kernel.lockdown
 ```
 
@@ -39,20 +39,20 @@ For example, if you change an NTP setting, the NTP configuration will be updated
 There are two input methods.
 The simpler method looks like this:
 
-```
+```shell
 apiclient set settings.x.y.z=VALUE
 ```
 
 The "settings." prefix on the setting names is optional; this makes it easy to copy and paste settings from documentation, but you can skip the prefix when typing them manually.
 Here's an example call:
 
-```
+```shell
 apiclient set kernel.lockdown=integrity motd="hi there"
 ```
 
 If you're changing a setting whose name requires quoting, please quote the whole key=value argument, so the inner quotes aren't eaten by the shell:
 
-```
+```shell
 apiclient set 'kubernetes.node-labels."my.label"=hello'
 ```
 
@@ -61,7 +61,7 @@ apiclient set 'kubernetes.node-labels."my.label"=hello'
 This simpler key=value form is convenient for most changes, but sometimes you'll want to specify input in JSON form.
 This can be useful if you have multiple changes within a subsection:
 
-```
+```shell
 apiclient set --json '{"kernel": {"sysctl": {"vm.max_map_count": "262144", "user.max_user_namespaces": "16384"}}}'
 ```
 
@@ -71,7 +71,7 @@ For example, the "vm.max_map_count" value set above looks like an integer, but t
 As another example, if you want settings.motd to be "42", running `apiclient set motd=42` would fail because `42` is seen as an integer, and motd is a string.
 You can use JSON form to set it:
 
-```
+```shell
 apiclient set --json '{"motd": "42"}'
 ```
 
@@ -79,7 +79,7 @@ apiclient set --json '{"motd": "42"}'
 
 To start, you can check what updates are available:
 
-```
+```shell
 apiclient update check
 ```
 
@@ -87,7 +87,7 @@ This will show you the current state of the system along with any updates availa
 
 Assuming you want to accept the chosen update, you can apply it:
 
-```
+```shell
 apiclient update apply
 ```
 
@@ -96,7 +96,7 @@ The next time you reboot, for example with `apiclient reboot`, the update will t
 
 If you're confident that you want to update immediately to the latest version, you can do all of the above in one step:
 
-```
+```shell
 apiclient update apply --check --reboot
 ```
 
@@ -107,7 +107,7 @@ apiclient update apply --check --reboot
 This will reboot the system.
 You should use this after updating if you didn't specify the `--reboot` flag.
 
-```
+```shell
 apiclient reboot
 ```
 
@@ -120,12 +120,12 @@ You can think of it like a slim `ssh` that reuses the communication channel and 
 
 Just tell it the container to run in and the command you want to run.
 For example, if you used SSM to get into the control container and want to access the admin container:
-```
+```shell
 apiclient exec admin bash
 ```
 
 You can also run noninteractive commands, and redirect output, so you can use it to copy files between containers:
-```
+```shell
 apiclient exec admin cat /file > file
 ```
 
@@ -153,30 +153,30 @@ To see verbose response data, including the HTTP status code, use `-v` or `--ver
 
 To fetch the current settings:
 
-```
+```shell
 apiclient raw -u /settings
 ```
 
 This will return all of the current settings in JSON format.
 For example, here's an abbreviated response:
-```
+```text
 {"motd":"...", {"kubernetes": ...}}
 ```
 
 You can change settings by sending back the same type of JSON data in a PATCH request.
 This can include any number of settings changes.
-```
+```shell
 apiclient raw -m PATCH -u /settings -d '{"motd": "my own value!"}'
 ```
 
 This will *stage* the setting in a "pending" area - a transaction.
 You can see all your pending settings like this:
-```
+```shell
 apiclient raw -u /tx
 ```
 
 To *commit* the settings, and let the system apply them to any relevant configuration files or services, do this:
-```
+```shell
 apiclient raw -m POST -u /tx/commit_and_apply
 ```
 

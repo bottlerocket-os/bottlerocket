@@ -27,14 +27,15 @@ The Bottlerocket image for bare metal is signed and uploaded alongside the rest 
 You first need the Bottlerocket root role, which is used by `tuftool` to verify the image.
 The following will download and verify the root role itself:
 
-```
+```shell
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"
 ```
 
 Next, set your desired version and variant, and use `tuftool` to download the image:
 To install `tuftool` you'll need to install Rust (via [rustup](https://rustup.rs/) or the official site), and then you can run `cargo install tuftool`.
-```
+
+```shell
 ARCH="x86_64"
 VERSION="v1.9.0"
 VARIANT="metal-k8s-1.23"
@@ -106,6 +107,7 @@ Please keep in mind that when using static addresses, DNS information must be su
   * `route-metric` (integer): Relative route priority.
 
 Example `net.toml` with comments:
+
 ```toml
 version = 2
 
@@ -174,6 +176,7 @@ Settings prefixed with `init` are added to the kernel command line after the `--
 In the example below, two console devices are set up, and `systemd`'s log level is set to `debug`.
 
 Example Boot Configuration:
+
 ```
 kernel {
     console = tty0, "ttyS1,115200n8"
@@ -187,7 +190,8 @@ The Bottlerocket SDK provides the `bootconfig` CLI tool, which is used to create
 To create the Boot Configuration initrd, create a config file named `bootconfig-input` containing your desired key/value pair kernel and init arguments.
 
 Then run the following (you will need Docker installed):
-```
+
+```shell
 ARCH=$(uname -m)
 SDK_VERSION="v0.26.0"
 SDK_IMAGE="public.ecr.aws/bottlerocket/bottlerocket-sdk-${ARCH}:${SDK_VERSION}"
@@ -208,7 +212,8 @@ The above command will create the properly named initrd `bootconfig.data` in you
 This is the file you will write to disk during provisioning.
 
 You can list a `bootconfig.data`'s contents, which also validates its format, by running:
-```
+
+```shell
 ARCH=$(uname -m)
 SDK_VERSION="v0.26.0"
 SDK_IMAGE="public.ecr.aws/bottlerocket/bottlerocket-sdk-${ARCH}:${SDK_VERSION}"

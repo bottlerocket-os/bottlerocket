@@ -25,6 +25,6 @@ Resources:
       AliasName: !Sub "alias/${Alias}"
       TargetKeyId: !Ref KMSKey
 
-Outputs: 
+Outputs:
   KeyId:
      Value: !GetAtt KMSKey.Arn

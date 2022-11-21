@@ -141,13 +141,13 @@ There's nothing secret in a root role file, so if you have a way of storing it r
 The `signing_keys` portion above references a local file path.
 If you want to use an SSM or KMS key, you'd write it like this, instead:
 
-```
+```toml
 signing_keys = { kms = { key_id = "abc-def-123" } }
 ```
 
 ...or...
 
-```
+```toml
 signing_keys = { ssm = { parameter = "/my/parameter" } }
 ```
 

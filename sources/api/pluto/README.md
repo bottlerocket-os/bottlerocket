@@ -33,6 +33,6 @@ Pluto returns a special exit code of 2 to inform `sundog` that a setting should 
 example, if `max-pods` cannot be generated, we want `sundog` to skip it without failing since a
 reasonable default is available.
 
-## Colophon 
+## Colophon
 
 This text was generated using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/main.rs`.

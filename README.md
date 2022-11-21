@@ -164,7 +164,7 @@ Once the instance is started, you can start a session:
 If you prefer a command-line tool, you can start a session with a recent [AWS CLI](https://aws.amazon.com/cli/) and the [session-manager-plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
 Then you'd be able to start a session using only your instance ID, like this:
 
-```txt
+```shell
 aws ssm start-session --target INSTANCE_ID
 ```
 
@@ -172,7 +172,7 @@ With the [default control container](https://github.com/bottlerocket-os/bottlero
 To do even more, read the next section about the [admin container](#admin-container).
 You can access the admin container from the control container like this:
 
-```sh
+```shell
 enter-admin-container
 ```
 
@@ -192,25 +192,25 @@ enabled = true
 
 If Bottlerocket is already running, you can enable the admin container from the default [control container](#control-container) like this:
 
-```sh
+```shell
 enable-admin-container
 ```
 
 Or you can start an interactive session immediately like this:
 
-```sh
+```shell
 enter-admin-container
 ```
 
 If you're using a custom control container, or want to make the API calls directly, you can enable the admin container like this instead:
 
-```txt
+```shell
 apiclient set host-containers.admin.enabled=true
 ```
 
 Once you've enabled the admin container, you can either access it through SSH or execute commands from the control container like this:
 
-```txt
+```shell
 apiclient exec admin bash
 ```
 
@@ -245,7 +245,7 @@ apiclient knows how to handle those update APIs for you, and you can run it from
 
 To see what updates are available:
 
-```txt
+```shell
 apiclient update check
 ```
 
@@ -254,20 +254,20 @@ The `available_updates` field will show the full list of available versions, inc
 
 To apply the latest update:
 
-```txt
+```shell
 apiclient update apply
 ```
 
 The next time you reboot, you'll start up in the new version, and system configuration will be automatically [migrated](sources/api/migration/).
 To reboot right away:
 
-```txt
+```shell
 apiclient reboot
 ```
 
 If you're confident about updating, the `apiclient update apply` command has `--check` and `--reboot` flags to combine the above actions, so you can accomplish all of the above steps like this:
 
-```txt
+```shell
 apiclient update apply --check --reboot
 ```
 
@@ -278,7 +278,7 @@ See the [apiclient documentation](sources/api/apiclient/) for more details.
 The system will automatically roll back if it's unable to boot.
 If the update is not functional for a given container workload, you can do a manual rollback:
 
-```txt
+```shell
 signpost rollback-to-inactive
 reboot
 ```
@@ -297,7 +297,7 @@ Here we'll describe the settings you can configure on your Bottlerocket instance
 
 You can see the current settings with an API request:
 
-```txt
+```shell
 apiclient get settings
 ```
 
@@ -310,7 +310,7 @@ For example, here's an abbreviated response:
 
 You can change settings like this:
 
-```txt
+```shell
 apiclient set motd="hi there" kubernetes.node-labels.environment=test
 ```
 
@@ -619,7 +619,7 @@ It is recommended to programmatically set these settings via `apiclient` through
 
   An example `apiclient` call to set registry credentials for `gcr.io` and `docker.io` looks like this:
 
-  ```bash
+  ```shell
   apiclient set --json '{
     "container-registry": {
       "credentials": [
@@ -868,7 +868,7 @@ trusted=false
 
 Here's the same example but using API calls:
 
-```txt
+```shell
 apiclient set \
   pki.my-trusted-bundle.data="W3N..." \
   pki.my-trusted-bundle.trusted=true  \
@@ -900,11 +900,11 @@ Keep in mind that the default admin container (since Bottlerocket v1.0.6) relies
 
 Here's an example of adding a custom host container with API calls:
 
-```txt
+```shell
 apiclient set \
-   host-containers.custom.source=MY-CONTAINER-URI \
-   host-containers.custom.enabled=true \
-   host-containers.custom.superpowered=false
+  host-containers.custom.source=MY-CONTAINER-URI \
+  host-containers.custom.enabled=true \
+  host-containers.custom.superpowered=false
 ```
 
 Here's the same example, but with the settings you'd add to user data:
@@ -922,7 +922,7 @@ All host containers will have the `apiclient` binary available at `/usr/local/bi
 You can also use `apiclient` to run programs in other host containers.
 For example, to access the admin container:
 
-```txt
+```shell
 apiclient exec admin bash
 ```
 
@@ -970,11 +970,11 @@ Bootstrap containers have three different modes:
 
 Here's an example of adding a bootstrap container with API calls:
 
-```txt
+```shell
 apiclient set \
-   bootstrap-containers.bootstrap.source=MY-CONTAINER-URI \
-   bootstrap-containers.bootstrap.mode=once \
-   bootstrap-containers.bootstrap.essential=true
+  bootstrap-containers.bootstrap.source=MY-CONTAINER-URI \
+  bootstrap-containers.bootstrap.mode=once \
+  bootstrap-containers.bootstrap.essential=true
 ```
 
 Here's the same example, but with the settings you'd add to user data:
@@ -1024,7 +1024,7 @@ They can be overridden for testing purposes in [the same way as other settings](
 You can use `logdog` through the [admin container](#admin-container) to obtain an archive of log files from your Bottlerocket host.
 SSH to the Bottlerocket host or `apiclient exec admin bash` to access the admin container, then run:
 
-```bash
+```shell
 sudo sheltie
 logdog
 ```
@@ -1034,10 +1034,10 @@ This archive is accessible from host containers at `/.bottlerocket/support`.
 You can use SSH to retrieve the file.
 Once you have exited from the Bottlerocket host, run a command like:
 
-```bash
+```shell
 ssh -i YOUR_KEY_FILE \
-    ec2-user@YOUR_HOST \
-    "cat /.bottlerocket/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
+  ec2-user@YOUR_HOST \
+  "cat /.bottlerocket/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
 ```
 
 (If your instance isn't accessible through SSH, you can use [SSH over SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html).)

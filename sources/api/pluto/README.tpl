@@ -4,6 +4,6 @@ Current version: {{version}}
 
 {{readme}}
 
-## Colophon 
+## Colophon
 
 This text was generated using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/main.rs`.

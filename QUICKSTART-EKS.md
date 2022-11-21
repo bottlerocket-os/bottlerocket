@@ -44,7 +44,7 @@ To learn more about eksctl configuration files, you can look at the [full schema
 
 You can set up a new cluster like this, pointing to the file you created in the last step:
 
-```
+```shell
 eksctl create cluster --config-file ./my-eksctl.yaml
 ```
 
@@ -63,13 +63,13 @@ A walk-through of creating a storage class using the driver is available [here](
 By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Bottlerocket originally sets at boot.
 If you prefer to keep Bottlerocket's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
 
-```
+```shell
 kubectl edit -n kube-system daemonset kube-proxy
 ```
 
 Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments like so (a setting of 0 implies no change):
 
-```
+```yaml
       containers:
       - command:
         - kube-proxy
@@ -147,12 +147,13 @@ For example, to use the parameter above, you would pass this as the AMI ID in yo
 If you prefer to fetch the AMI ID yourself, you can use [aws-cli](https://aws.amazon.com/cli/) on the command line.
 To fetch the example parameter above, for the us-west-2 region, you could run this:
 
-```
+```shell
 aws ssm get-parameter --region us-west-2 --name "/aws/service/bottlerocket/aws-k8s-1.24/x86_64/latest/image_id" --query Parameter.Value --output text
 ```
 
-If you have `jq` and would like a bit more information, try this:
-```
+If you have `jq` installed and would like a bit more information, try this:
+
+```shell
 aws ssm get-parameters --region us-west-2 \
    --names "/aws/service/bottlerocket/aws-k8s-1.24/x86_64/latest/image_id" \
            "/aws/service/bottlerocket/aws-k8s-1.24/x86_64/latest/image_version" \
@@ -161,16 +162,14 @@ aws ssm get-parameters --region us-west-2 \
 
 ### Cluster setup
 
-*Note:* most commands will have a region argument; make sure to change it if you don't want to set up in us-west-2. 
-Also be aware that when operating in GovCloud the IAM ARNs will need to be updated to the following: `arn:aws-us-gov`.   
-For example:  
- `arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy`   
- will be updated to:  
- `arn:aws-us-gov:iam::aws:policy/AmazonEKSWorkerNodePolicy`.
+*Note:* most commands will have a region argument; make sure to change it if you don't want to set up in us-west-2.
+Also be aware that when operating in GovCloud the IAM ARNs will need to be updated to the following: `arn:aws-us-gov`.
+For example, `arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy` must be updated to
+`arn:aws-us-gov:iam::aws:policy/AmazonEKSWorkerNodePolicy`.
 
 You can set up a new cluster like this:
 
-```
+```shell
 eksctl create cluster --region us-west-2 --name bottlerocket
 ```
 
@@ -187,7 +186,8 @@ Bottlerocket uses a TOML-formatted configuration file as user data.
 This can include the configuration of the Kubernetes cluster we just created.
 
 Run this to generate the configuration file with the relevant cluster config, including the API endpoint and base64-encoded certificate authority.
-```
+
+```shell
 eksctl get cluster --region us-west-2 --name bottlerocket -o json \
    | jq --raw-output '.[] | "[settings.kubernetes]\napi-server = \"" + .Endpoint + "\"\ncluster-certificate =\"" + .CertificateAuthority.Data + "\"\ncluster-name = \"bottlerocket\""' > user-data.toml
 ```
@@ -201,7 +201,7 @@ Next, run this to get information about the subnets that eksctl created.
 It will give you a list of the subnets and tell you whether each is public or private.
 (If you use an EC2 region other than "us-west-2", make sure to change that.)
 
-```
+```shell
 aws ec2 describe-subnets \
    --subnet-ids $(eksctl get cluster --region us-west-2 --name bottlerocket -o json | jq --raw-output '.[].ResourcesVpcConfig.SubnetIds[]') \
    --region us-west-2 \
@@ -229,7 +229,7 @@ The instance we launch needs to be associated with an IAM role that allows for c
 
 The ARN of the IAM role can be retrieved with:
 
-```
+```shell
 eksctl get iamidentitymapping --region us-west-2 --cluster bottlerocket
 ```
 
@@ -248,7 +248,7 @@ If you add SSM permissions, you can use Bottlerocket's default SSM agent to get 
 
 To attach the role policy for SSM permissions, run the following:
 
-```
+```shell
 aws iam attach-role-policy \
    --role-name INSTANCE_ROLE_NAME \
    --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
@@ -264,29 +264,30 @@ Member must have length less than or equal to 64
 
 Next, to retrieve the instance profile name used to launch instances, run this:
 
-```
+```shell
 aws iam list-instance-profiles-for-role --role-name INSTANCE_ROLE_NAME --query "InstanceProfiles[*].InstanceProfileName" --output text
 ```
 
 There should only be one that looks like:
+
 ```
 eksctl-bottlerocket-nodegroup-ng-IDENTIFIER-NodeInstanceProfile-IDENTIFIER
 ```
 
-Note this down as the INSTANCE_PROFILE_NAME for the final launch command.
+Note this down as the `INSTANCE_PROFILE_NAME` for the final launch command.
 
 ### kube-proxy settings
 
 By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Bottlerocket originally sets at boot.
 If you prefer to keep Bottlerocket's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
 
-```
+```shell
 kubectl edit -n kube-system daemonset kube-proxy
 ```
 
 Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments like so (a setting of 0 implies no change):
 
-```
+```yaml
       containers:
       - command:
         - kube-proxy
@@ -303,7 +304,7 @@ For the instance to be able to communicate with the EKS cluster control plane an
 
 Run the following command:
 
-```
+```shell
 aws ec2 describe-security-groups --region us-west-2 \
   --filters 'Name=tag:Name,Values=*bottlerocket*' \
   --query "SecurityGroups[*].{Name:GroupName,ID:GroupId}"
@@ -314,7 +315,7 @@ You want to save the IDs for the `...ClusterSharedNodeSecurityGroup...` and `...
 
 Example:
 
-```
+```json
 [
     {
         "Name": "eksctl-bottlerocket-cluster-ClusterSharedNodeSecurityGroup-IDENTIFIER",
@@ -333,7 +334,8 @@ Example:
 
 If you chose a public subnet, and you plan to SSH to the instance (using the admin container), you'll also need to allow SSH traffic to your security group.
 You can do that with a command like this - just make sure to insert a security group from the last command, and your source network CIDR.
-```
+
+```shell
 aws ec2 authorize-security-group-ingress --region us-west-2 \
    --group-id SECURITY_GROUP_ID_1 --cidr YOUR_NETWORK_CIDR \
    --protocol tcp --port 22
@@ -354,7 +356,7 @@ There are a few values to make sure you change in this command:
 * user-data.toml: the path to the user data file you created earlier
 * INSTANCE_PROFILE_NAME: the instance profile created by `eksctl` for the cluster nodegroups.
 
-```
+```shell
 aws ec2 run-instances --key-name YOUR_KEY_NAME \
    --subnet-id SUBNET_ID \
    --security-group-ids SECURITY_GROUP_ID_1 SECURITY_GROUP_ID_2 \
