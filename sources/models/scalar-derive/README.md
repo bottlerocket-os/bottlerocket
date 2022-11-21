@@ -9,20 +9,27 @@ A convenience macro for Bottlerocket model types.
 
 The `Scalar` macro can be used for strings or numbers that need to be validated in the Bottlerocket
 model. It uses a trait, also named `Scalar`, to treat a `struct` as a thin wrapper around an
-internal scalar type.
+internal scalar type, or to treat an `enum` as "string-like".
 
-The macro expects your inner scalar type to implement `Display`, `PartialEq`, `Serialize` and
-`Deserialize`. It then implements these traits on the wrapper type by passing them through to
-the inner type.
+For structs, the macro expects your inner scalar type to implement `Display`, `PartialEq`,
+`Serialize` and `Deserialize`. It then implements these traits on the wrapper type by passing them
+through to the inner type.
 
-You are also expected to implement the `Validate` trait on your `Scalar` type (the wrapper, not
-the inner type). This macro will call `<YourType as Validate>::validate(some_value)` when
+You are also expected to implement the `Validate` trait on your `Scalar` struct types (the wrapper,
+not the inner type). This macro will call `<YourType as Validate>::validate(some_value)` when
 implementing `YourType::new`.
+
+Enums do not require a wrapping struct since it is assumed that the deserializtion of the enum
+serves as validation. When using the `Scalar` macro on an enum it expects the enum to implement
+`Serialize` and `Deserialize`. It also expects that your enum doesn't not contain any structures.
+That is, your enum should be representable with a simple string and compatible with `serde_plain`.
+The `Scalar` uses `serde_plain`, to implement `Display`, `FromStr` and `String` conversions for your
+enum.
 
 ### Parameters
 
-The macro can take the following input parameters (in most cases you will not need to use these; the
-defaults will "just work"):
+The macro can take the following input parameters when used with wrapper structs (in most cases you
+will not need to use these; the defaults will "just work"):
 - `as_ref_str: bool`: Set to `true` if need the macro to treat your inner type as a `String`.
    This will happen automatically if your inner type is named `String`.
 - `inner`: The name of the field that holds your `inner` type. Defaults to `inner`.
@@ -167,6 +174,36 @@ impl Validate for MyWrapper {
         Ok(Self{ some_field: input.into() })
     }
 }
+```
+
+### Enums
+
+When used with an enum, `Scalar` implements a few `String` conversions such as `Display` and
+`FromStr`.
+
+```rust
+use scalar_derive::Scalar;
+use serde::{Serialize, Deserialize};
+use std::convert::TryInto;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Scalar)]
+#[serde(rename_all = "snake_case")]
+enum Color {
+    Red,
+    Green,
+    Blue,
+}
+
+
+let value = Color::Blue;
+let to_string_val = value.to_string();
+assert_eq!(to_string_val, "blue");
+let from_str_val: Color = "blue".parse().unwrap();
+assert_eq!(value, from_str_val);
+let into_string_val: String = value.into();
+assert_eq!(into_string_val, "blue");
+let try_from_value: Color = "blue".try_into().unwrap();
+assert_eq!(Color::Blue, try_from_value);
 ```
 
 

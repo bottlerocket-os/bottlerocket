@@ -2972,6 +2972,7 @@ version = "0.1.0"
 dependencies = [
  "generate-readme",
  "serde",
+ "serde_plain",
 ]
 
 [[package]]
@@ -2984,6 +2985,7 @@ dependencies = [
  "quote",
  "scalar",
  "serde",
+ "serde_plain",
  "syn",
 ]
 

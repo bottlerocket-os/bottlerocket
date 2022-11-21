@@ -188,3 +188,9 @@ impl Error for ValidationError {
         self.source.as_ref().map(|e| e.as_ref() as &(dyn Error))
     }
 }
+
+impl From<serde_plain::Error> for ValidationError {
+    fn from(e: serde_plain::Error) -> Self {
+        ValidationError::new_with_cause("Unable to convert from string", e)
+    }
+}
