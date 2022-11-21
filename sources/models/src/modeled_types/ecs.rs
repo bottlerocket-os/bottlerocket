@@ -7,7 +7,7 @@ use scalar::traits::{Scalar, Validate};
 use scalar::ValidationError;
 use scalar_derive::Scalar;
 use serde::de::Error as _;
-use snafu::{ensure, ResultExt};
+use snafu::ensure;
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
@@ -174,34 +174,17 @@ mod test_ecs_attribute_value {
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 /// ECSAgentLogLevel represents a string that contains a valid ECS log level for the ECS agent.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct ECSAgentLogLevel {
-    inner: String,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
 #[serde(rename_all = "lowercase")]
-enum ECSLogLevel {
+pub enum ECSAgentLogLevel {
     Debug,
     Info,
     Warn,
-    Error,
+    // Rename needed due to #[deny(ambiguous_associated_items)]
+    // see https://github.com/rust-lang/rust/issues/57644
+    #[serde(rename = "error")]
+    ErrorLevel,
     Crit,
-}
-
-string_impls_for!(ECSAgentLogLevel, "ECSAgentLogLevel");
-
-impl TryFrom<&str> for ECSAgentLogLevel {
-    type Error = error::Error;
-
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ECSLogLevel>(&input).context(error::InvalidPlainValueSnafu {
-            field: "ecs.loglevel",
-        })?;
-        Ok(ECSAgentLogLevel {
-            inner: input.to_string(),
-        })
-    }
 }
 
 #[cfg(test)]
@@ -226,44 +209,20 @@ mod test_ecs_agent_log_level {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// ECSAgentImagePullBehavior represents a string that contains a valid ECS Image Pull Behavior for the ECS agent.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct ECSAgentImagePullBehavior {
-    inner: String,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+/// ECSAgentImagePullBehavior represents a valid ECS Image Pull Behavior for the ECS agent.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
 #[serde(rename_all = "kebab-case")]
-pub enum ECSImagePullBehavior {
+#[repr(u8)]
+pub enum ECSAgentImagePullBehavior {
     Default = 0,
     Always,
     Once,
     PreferCached,
 }
 
-impl TryFrom<&str> for ECSImagePullBehavior {
-    type Error = error::Error;
-
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        let image_pull_behavior = serde_plain::from_str::<ECSImagePullBehavior>(&input).context(
-            error::InvalidPlainValueSnafu {
-                field: "ecs.image_pull_behavior",
-            },
-        )?;
-        Ok(image_pull_behavior)
-    }
-}
-
-string_impls_for!(ECSAgentImagePullBehavior, "ECSAgentImagePullBehavior");
-
-impl TryFrom<&str> for ECSAgentImagePullBehavior {
-    type Error = error::Error;
-
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        ECSImagePullBehavior::try_from(input)?;
-        Ok(ECSAgentImagePullBehavior {
-            inner: input.to_string(),
-        })
+impl ECSAgentImagePullBehavior {
+    pub fn as_u8(&self) -> u8 {
+        *self as u8
     }
 }
 

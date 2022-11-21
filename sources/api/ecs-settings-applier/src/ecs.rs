@@ -9,11 +9,9 @@ embedded lists.  The structure and names of fields in the document can be found
 */
 use constants;
 use log::debug;
-use model::modeled_types::ECSImagePullBehavior;
 use serde::Serialize;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{OptionExt, ResultExt};
-use std::convert::TryFrom;
 use std::fs;
 use std::path::Path;
 use std::{env, process};
@@ -124,10 +122,7 @@ async fn run() -> Result<()> {
             .collect(),
         spot_instance_draining_enabled: ecs.enable_spot_instance_draining,
         warm_pools_support: autoscaling.should_wait,
-        image_pull_behavior: ecs
-            .image_pull_behavior
-            .as_ref()
-            .map(|b| ECSImagePullBehavior::try_from(b.as_ref()).unwrap() as u8),
+        image_pull_behavior: ecs.image_pull_behavior.as_ref().map(|b| b.as_u8()),
 
         // Task role support is always enabled
         task_iam_role_enabled: true,
