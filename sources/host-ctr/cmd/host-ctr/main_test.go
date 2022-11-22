@@ -1,9 +1,10 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // Test RegistryHosts with valid endpoints URLs

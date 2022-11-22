@@ -475,7 +475,7 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 
 	// Return error if container exists with non-zero status
 	if code != 0 {
-		return errors.New(fmt.Sprintf("Container %s exited with non-zero status", containerID))
+		return fmt.Errorf("Container %s exited with non-zero status", containerID)
 	}
 
 	return nil
@@ -714,14 +714,14 @@ func withDefaultMounts(containerID string, persistentDir string) oci.SpecOpts {
 		// Bottlerocket release information for the container
 		{
 			Options:     []string{"bind", "ro"},
-			Destination: fmt.Sprintf("/etc/bottlerocket-release"),
-			Source:      fmt.Sprintf("/etc/os-release"),
+			Destination: "/etc/bottlerocket-release",
+			Source:      "/etc/os-release",
 		},
 		// Bottlerocket RPM inventory available to the container
 		{
 			Options:     []string{"bind", "ro"},
-			Destination: fmt.Sprintf("/var/lib/bottlerocket/inventory/application.json"),
-			Source:      fmt.Sprintf("/usr/share/bottlerocket/application-inventory.json"),
+			Destination: "/var/lib/bottlerocket/inventory/application.json",
+			Source:      "/usr/share/bottlerocket/application-inventory.json",
 		},
 		// Bottlerocket logs
 		{
@@ -871,15 +871,15 @@ func withProxyEnv() oci.SpecOpts {
 	noOp := func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error { return nil }
 	httpsProxy, httpsProxySet := os.LookupEnv("HTTPS_PROXY")
 	noProxy, noProxySet := os.LookupEnv("NO_PROXY")
-	withHttpsProxy := noOp
+	withHTTPSProxy := noOp
 	withNoProxy := noOp
 	if httpsProxySet {
-		withHttpsProxy = oci.WithEnv([]string{"HTTPS_PROXY=" + httpsProxy, "https_proxy=" + httpsProxy})
+		withHTTPSProxy = oci.WithEnv([]string{"HTTPS_PROXY=" + httpsProxy, "https_proxy=" + httpsProxy})
 	}
 	if noProxySet {
 		withNoProxy = oci.WithEnv([]string{"NO_PROXY=" + noProxy, "no_proxy=" + noProxy})
 	}
-	return oci.Compose(withHttpsProxy, withNoProxy)
+	return oci.Compose(withHTTPSProxy, withNoProxy)
 }
 
 // pullImage pulls an image from the specified source.

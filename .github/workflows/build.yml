@@ -133,7 +133,9 @@ jobs:
           EOF
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-fmt
-      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-lints
+      # Avoid running Go lint check via `cargo make check-lints` since there's a separate golangci-lint workflow
+      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-clippy
+      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-shell
       - run: |
           cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} \
             -e BUILDSYS_ARCH=${{ matrix.arch }} \

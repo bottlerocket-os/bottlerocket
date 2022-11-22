@@ -1,0 +1,29 @@
+name: golangci-lint
+on:
+  pull_request:
+    branches: [develop]
+    # Only run this workflow if Go files have been modified
+    paths:
+      - '**.go'
+      - '*/go.mod'
+      - '*/go.sum'
+
+jobs:
+  golangci-lint:
+    name: lint
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      - uses: actions/checkout@v3
+      - name: lint-host-ctr
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          working-directory: sources/host-ctr
+      - name: lint-ecs-gpu-init
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          working-directory: sources/ecs-gpu-init

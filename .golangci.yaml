@@ -1,0 +1,17 @@
+linters:
+  enable:
+    - errcheck
+    - goimports
+    - ineffassign
+    - misspell
+    - revive
+    - staticcheck
+    - unconvert
+    - unused
+    - vet
+
+run:
+  timeout: 3m
+  skip-dirs:
+    - vendor
+    - .gomodcache
