@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
@@ -80,7 +79,7 @@ func writeGPUInfo(version string, gpuIDs []string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(NvidiaGPUInfoFilePath, nvidiaInfoJSON, 0700)
+	return os.WriteFile(NvidiaGPUInfoFilePath, nvidiaInfoJSON, 0700)
 }
 
 // getDeviceUUID returns the UUID for the GPU at index `id`

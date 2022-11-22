@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -43,7 +43,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	// Dispatch logging output instead of writing all levels' messages to
 	// stderr.
-	log.L.Logger.SetOutput(ioutil.Discard)
+	log.L.Logger.SetOutput(io.Discard)
 	log.L.Logger.AddHook(&LogSplitHook{os.Stdout, []logrus.Level{
 		logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel}})
 	log.L.Logger.AddHook(&LogSplitHook{os.Stderr, []logrus.Level{
