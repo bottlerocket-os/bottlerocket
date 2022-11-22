@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -36,7 +36,7 @@ type RegistryConfig struct {
 
 // NewRegistryConfig unmarshalls a registry configuration file and sets up a RegistryConfig
 func NewRegistryConfig(registryConfigFile string) (*RegistryConfig, error) {
-	raw, err := ioutil.ReadFile(registryConfigFile)
+	raw, err := os.ReadFile(registryConfigFile)
 	if err != nil {
 		return nil, err
 	}
