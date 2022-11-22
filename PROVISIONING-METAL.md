@@ -77,7 +77,7 @@ When these services fail, your machine will not connect to any cluster and will 
 #### `net.toml` structure
 
 The configuration file must be valid TOML and have the filename `net.toml`.
-The first and required top level key in the file is `version`; the latest is version `2`.
+The first and required top level key in the file is `version`; the latest is version `3`.
 The rest of the file is a map of interface name to supported settings.
 Interface names are expected to be correct as per `udevd` naming, no interface naming or matching is supported.
 (See the note below regarding `udevd` interface naming.)
@@ -95,6 +95,7 @@ Interface names are expected to be correct as per `udevd` naming, no interface n
 
 As of version `2` static addressing with simple routes is supported via the below settings.
 Please keep in mind that when using static addresses, DNS information must be supplied to the system via user data: [`settings.dns`](https://github.com/bottlerocket-os/bottlerocket#network-settings).
+
 * `static4` (map): IPv4 static address settings.
   * `addresses` (list of quoted IPv4 address including prefix): The desired IPv4 IP addresses, including prefix i.e. `["192.168.14.2/24"]`.  The first IP in the list will be used as the primary IP which `kubelet` will use when joining the cluster.  If IPv4 and IPv6 static addresses exist, the first IPv4 address is used.
 * `static6` (map): IPv6 static address settings.
@@ -106,10 +107,50 @@ Please keep in mind that when using static addresses, DNS information must be su
   * `via` (IP address): Gateway IP address.  If no gateway is provided, a scope of `link` is assumed.
   * `route-metric` (integer): Relative route priority.
 
-Example `net.toml` with comments:
+Version `3` adds in support for bonding and vlan tagging.
+The support is limited to mode `1` (`active-backup`) for [bonding](https://www.kernel.org/doc/Documentation/networking/bonding.txt).
+Future support may include other bonding options - pull requests are welcome!
+Version `3` adds the concept of virtual network devices in addition to interfaces.
+The default type of device is an interface and the syntax is the same as previous versions.
+The name of an interface must match an existing interface on the system such as `eno1` or `enp0s16`.
+For virtual network devices, a `kind` is required.
+If no `kind` is specified, it is assumed to be an interface.
+Currently, `bond` and `vlan` are the two supported `kind`s.
+Virtual network devices are created, and therefore a name has to be chosen.
+
+Names for virtual network devices must conform to kernel naming restrictions:
+* Names must not have line terminators in them
+* Names must be between 1-15 characters
+* Names must not contain `.`, `/` or whitespace
+
+Bonding configuration creates a virtual network device across several other devices:
+
+* Bonding configuration (map):
+  * `kind = "bond"`: This setting is required to specify a bond device. Required.
+  * `interfaces` (list of quoted strings of interfaces): Which interfaces should be added to the bond (i.e. `["eno1"]`). The first in the list is considered the default `primary`. These interfaces are "consumed" so no other configuration can refer to them. Required.
+  * `mode` (string): Currently `active-backup` is the only supported option. Required.
+  * `min-links` (integer): Number of links required to bring up the device
+  * `monitoring` (map): Values m ust all be of `miimon` or `arpmon` type.
+    The user must choose one type of monitoring and configure it fully in order for the bond to properly function.
+    See [section 7](https://www.kernel.org/doc/Documentation/networking/bonding.txt) for more background on what to choose.
+    * `miimon-frequency-ms` (integer): MII Monitoring frequency in milliseconds
+    * `miimon-updelay-ms` (integer): MII Monitoring delay before the link is enabled after link is detected in milliseconds
+    * `miimon-downdelay-ms` (integer): MII Monitoring delay before the link is disabled after link is no longer detected in milliseconds
+    * `arpmon-interval-ms` (integer): Number of milliseconds between intervals to determine link status, must be greater than 0
+    * `arpmon-validate` (one of `all`, `none`, `active`, or `backup`): What packets should be used to validate link
+    * `arpmon-targets` (list of quoted IPv4 address including prefix): List of targets to use for validating ARP. Min = 1, Max = 16
+
+Vlan tagging is configured as a new virtual network device stacked on another device:
+
+* Vlan configuration (map):
+  * `kind = "vlan"`: This setting is required to specify a vlan device.
+  * `device` (string for device): Defines the device the vlan should be configured on. If VLAN tagging is required, this device should recieve all IP address configuration instead of the underlying device.
+  * `id` (integer): Number between 0 and 4096 specifying the vlan tag on the device
+
+Example `net.toml` version `3` with comments:
 
 ```toml
-version = 2
+version = 3
 
 # "eno1" is the interface name
 [eno1]
@@ -152,12 +193,64 @@ addresses = ["192.168.14.5/24"]
 to = "10.10.10.0/24"
 from = "192.168.14.5"
 via = "192.168.14.25"
+
+# A bond is a network device that is of `kind` `bond`
+[bond0]
+kind = "bond"
+# Currently `active-backup` is the only supported option
+mode = "active-backup"
+# In this case, the vlan will have addressing, the bond is simply there for use in the vlan
+dhcp4 = false
+dhcp6 = false
+# The first interface in the array is considered `primary` by default
+interfaces = ["eno11", "eno12"]
+
+[bond0.monitoring]
+miimon-frequency-ms = 100 # 100 milliseconds
+miimon-updelay-ms = 200 # 200 milliseconds
+miimon-downdelay-ms = 200 # 200 milliseconds
+
+[bond1]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno51" , "eno52", "eno53"]
+min-links = 2 # Optional min-links 
+dhcp4 = true
+
+[bond1.monitoring]
+arpmon-interval-ms = 200 # 200 milliseconds
+arpmon-validate = "all"
+arpmon-targets = ["192.168.1.1", "10.0.0.2"]
+
+# A vlan is a network device that is of `kind` `vlan`
+# VLAN42 is the name of the device, can be anything that is a valid network interface name
+[VLAN42]
+kind = "vlan"
+device = "bond0"
+id = 42
+dhcp4 = true
+
+[internal_vlan]
+kind = "vlan"
+device = "eno2"
+id = 1234
+dhcp6 = true
 ```
 
-**An additional note on network device names**
+#### **An additional note on network device names**
 
 Interface name policies are [specified in this file](https://github.com/bottlerocket-os/bottlerocket/blob/develop/packages/release/80-release.link#L6); with name precedence in the following order: onboard, slot, path.
 Typically on-board devices are named `eno*`, hot-plug devices are named `ens*`, and if neither of those names are able to be generated, the “path” name is given, i.e `enp*s*f*`.
+
+#### Networking configuration versions and Releases
+
+Older networking configuration versions (such as `1` or `2`) are supported in newer releases. In order to use a newer version, the following table provides guidance on what release first enabled the version.
+
+| Network Configuration Version | First Release                                                                   |
+|-------------------------------|---------------------------------------------------------------------------------|
+| Version 1                     | [v1.9.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.9.0)   |
+| Version 2                     | [v1.10.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.10.0) |
+| Version 3                     | Unreleased                                                                      |
 
 ### Boot Configuration
 
