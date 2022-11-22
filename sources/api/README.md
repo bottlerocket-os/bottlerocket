@@ -28,6 +28,26 @@ It's available in Bottlerocket, whether you're accessing it through a control ch
 
 Rust code can use the `apiclient` library to make requests to the Unix-domain socket of the [apiserver](#apiserver).
 
+The API socket can be mounted and accessed from a privileged container.
+An example pod specification to expose API access would be similar to:
+
+```yaml
+containers:
+- name: my-api-access
+  image: my-api-access
+  volumeMounts:
+  - name: socket
+    mountPath: /run/api.sock
+  privileged: true
+volumes:
+- name: socket
+  hostPath:
+  path: /run/api.sock
+```
+
+**NOTE:** There are some security considerations that you should be aware of when running privileged containers.
+Refer to the [Security Guidance](https://github.com/bottlerocket-os/bottlerocket/blob/develop/SECURITY_GUIDANCE.md#restrict-access-to-the-host-api-socket) notes for more details.
+
 ## API system components
 
 ![API system boot diagram](api-system.png)
