@@ -1,3 +1,14 @@
+# v1.11.1 (2022-11-28)
+
+## Security Fixes
+
+* Update NVIDIA driver for 5.10 and 5.15 to include recent security fixes ([74d2c5c13ab0][64f3967373a5])
+* Apply patch to systemd for CVE-2022-3821 ([#2611])
+
+[74d2c5c13ab0]: https://github.com/bottlerocket-os/bottlerocket/commit/74d2c5c13ab0f6839b9849a9f058a70e82f6ffb8
+[64f3967373a5]: https://github.com/bottlerocket-os/bottlerocket/commit/64f3967373a53096219a73580fd81409c846266c
+[#2611]: https://github.com/bottlerocket-os/bottlerocket/pull/2611
+
 # v1.11.0 (2022-11-15)
 
 ## OS Changes
