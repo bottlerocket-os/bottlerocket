@@ -179,9 +179,14 @@ impl<'a> ser::Serializer for Serializer<'a> {
     // We just don't expect to need these, and we doesn't have a great way to represent them.
     fn serialize_unit(self) -> Result<()> { bad_type("unit") }
     fn serialize_unit_struct(self, _name: &'static str) -> Result<()> { bad_type("unit struct") }
-    fn serialize_unit_variant(self, _name: &'static str, _variant_index: u32, _variant: &'static str) -> Result<()> {
-        bad_type("unit variant")
+
+    // When we use "simple" enums (those that only have "unit" variants), we represent them as
+    // strings in the data model. As far as the API is concerned, these are string values, but in
+    // the model we constrain them using an enum.
+    fn serialize_unit_variant(self, _name: &'static str, _variant_index: u32, variant: &'static str) -> Result<()> {
+        self.serialize_str(variant)
     }
+
     fn serialize_newtype_struct<T>(self, _name: &'static str, _value: &T) -> Result<()> where T: ?Sized + Serialize {
         bad_type("newtype struct")
     }
@@ -492,5 +497,48 @@ mod test {
     fn concrete_fails() {
         let i = 42;
         to_pairs(&i).unwrap_err();
+    }
+
+    #[test]
+    fn string_values() {
+        let m = hashmap!(
+            key!("A") => hashmap!(
+                key!("id") => "apples",
+                key!("ie") => "oranges",
+            ),
+        );
+        let keys = to_pairs(&m).unwrap();
+        assert_eq!(
+            keys,
+            hashmap!(
+                key!("A.id") => "\"apples\"".to_string(),
+                key!("A.ie") => "\"oranges\"".to_string(),
+            )
+        );
+    }
+
+    #[derive(Serialize)]
+    #[serde(rename_all = "kebab-case")]
+    enum TestEnum {
+        Alpha,
+        Beta,
+    }
+
+    #[test]
+    fn enum_values() {
+        let m = hashmap!(
+            key!("A") => hashmap!(
+                key!("id") => TestEnum::Alpha,
+                key!("ie") => TestEnum::Beta,
+            ),
+        );
+        let keys = to_pairs(&m).unwrap();
+        assert_eq!(
+            keys,
+            hashmap!(
+                key!("A.id") => "\"alpha\"".to_string(),
+                key!("A.ie") => "\"beta\"".to_string(),
+            )
+        );
     }
 }
