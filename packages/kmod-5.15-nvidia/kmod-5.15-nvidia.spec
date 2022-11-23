@@ -1,4 +1,4 @@
-%global tesla_515 515.65.01
+%global tesla_515 515.86.01
 %global tesla_515_libdir %{_cross_libdir}/nvidia/tesla/%{tesla_515}
 %global tesla_515_bindir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_515}
 %global tesla_515_firmwaredir %{_cross_libdir}/firmware/nvidia/%{tesla_515}
