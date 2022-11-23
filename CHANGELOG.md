@@ -28,9 +28,9 @@
 * Add a timeout when calling EKS for configuration values ([#2566])
 * Enable IAM Roles Anywhere with the k8s `ecr-credential-provider` plugin ([#2377], [#2553])
 * Kubernetes EKS-D updates
-  * v1.24-13 ([#2582])
-  * v1.23-13 ([#2578], [#2578])
-  * v1.22-13 ([#2580], [#2490])
+  * v1.24.6 ([#2582])
+  * v1.23.13 ([#2578])
+  * v1.22.15 ([#2580], [#2490])
 
 ## Platform Changes
 
