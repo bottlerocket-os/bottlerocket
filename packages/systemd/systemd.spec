@@ -16,6 +16,9 @@ Source4: issue
 # Add fix for glibc 2.36+
 Patch0001: 0001-glibc-Remove-include-linux-fs.h-to-resolve-fsconfig_.patch
 
+# Upstream patch for CVE-2022-3821
+Patch0002: 0002-time-util-fix-buffer-over-run.patch
+
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
 Patch9001: 9001-use-absolute-path-for-var-run-symlink.patch
