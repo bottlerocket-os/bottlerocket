@@ -3,7 +3,7 @@
 
 use super::devices::NetworkDeviceV1;
 use super::{error, Interfaces, Result, Validate};
-use crate::interface_id::InterfaceName;
+use crate::interface_id::{InterfaceId, InterfaceName};
 use crate::wicked::{WickedInterface, WickedLinkConfig};
 use indexmap::IndexMap;
 use serde::Deserialize;
@@ -17,12 +17,12 @@ pub(crate) struct NetConfigV3 {
 }
 
 impl Interfaces for NetConfigV3 {
-    fn primary_interface(&self) -> Option<String> {
+    fn primary_interface(&self) -> Option<InterfaceId> {
         self.net_devices
             .iter()
             .find(|(_, v)| v.primary() == Some(true))
             .or_else(|| self.net_devices.first())
-            .map(|(n, _)| n.to_string())
+            .map(|(n, _)| InterfaceId::from(n.clone()))
     }
 
     fn has_interfaces(&self) -> bool {

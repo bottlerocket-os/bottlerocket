@@ -46,12 +46,14 @@ static KERNEL_HOSTNAME: &str = "/proc/sys/kernel/hostname";
 static CURRENT_IP: &str = "/var/lib/netdog/current_ip";
 static KERNEL_CMDLINE: &str = "/proc/cmdline";
 static PRIMARY_INTERFACE: &str = "/var/lib/netdog/primary_interface";
+static PRIMARY_MAC_ADDRESS: &str = "/var/lib/netdog/primary_mac_address";
 static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
 static OVERRIDE_NET_CONFIG_FILE: &str = "/var/lib/netdog/net.toml";
 static PRIMARY_SYSCTL_CONF: &str = "/etc/sysctl.d/90-primary_interface.conf";
 static SYSCTL_MARKER_FILE: &str = "/run/netdog/primary_sysctls_set";
 static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
 static LEASE_DIR: &str = "/run/wicked";
+static SYS_CLASS_NET: &str = "/sys/class/net";
 
 /// Stores user-supplied arguments.
 #[derive(FromArgs, PartialEq, Debug)]

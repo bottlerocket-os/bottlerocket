@@ -1,9 +1,7 @@
-use super::{error, InterfaceFamily, InterfaceType, Result};
+use super::{error, primary_interface_name, InterfaceFamily, InterfaceType, Result};
 use crate::dns::DnsSettings;
 use crate::lease::{dhcp_lease_path, static_lease_path, LeaseInfo};
-use crate::{
-    CURRENT_IP, PRIMARY_INTERFACE, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE, SYSTEMD_SYSCTL,
-};
+use crate::{CURRENT_IP, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE, SYSTEMD_SYSCTL};
 use argh::FromArgs;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fmt::Write;
@@ -42,12 +40,7 @@ pub(crate) struct InstallArgs {
 pub(crate) fn run(args: InstallArgs) -> Result<()> {
     // Wicked doesn't mangle interface names, but let's be defensive.
     let install_interface = args.interface_name.trim().to_lowercase();
-    let primary_interface = fs::read_to_string(PRIMARY_INTERFACE)
-        .context(error::PrimaryInterfaceReadSnafu {
-            path: PRIMARY_INTERFACE,
-        })?
-        .trim()
-        .to_lowercase();
+    let primary_interface = primary_interface_name()?;
 
     if install_interface != primary_interface {
         return Ok(());

@@ -12,6 +12,7 @@ mod v1;
 mod v2;
 mod v3;
 
+use crate::interface_id::InterfaceId;
 use crate::wicked::WickedInterface;
 pub(crate) use dhcp::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
 pub(crate) use error::{Error, Result};
@@ -28,7 +29,7 @@ static DEFAULT_INTERFACE_PREFIX: &str = "netdog.default-interface=";
 /// This trait must be implemented by each new version of network config
 pub(crate) trait Interfaces {
     /// Returns the primary network interface.
-    fn primary_interface(&self) -> Option<String>;
+    fn primary_interface(&self) -> Option<InterfaceId>;
 
     /// Does the config contain any interfaces?
     fn has_interfaces(&self) -> bool;
@@ -39,7 +40,7 @@ pub(crate) trait Interfaces {
 }
 
 impl<I: Interfaces> Interfaces for Box<I> {
-    fn primary_interface(&self) -> Option<String> {
+    fn primary_interface(&self) -> Option<InterfaceId> {
         (**self).primary_interface()
     }
 
