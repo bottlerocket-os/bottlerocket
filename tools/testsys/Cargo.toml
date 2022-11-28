@@ -16,6 +16,7 @@ bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-var
 clap = { version = "3", features = ["derive", "env"] }
 env_logger = "0.9"
 futures = "0.3.8"
+handlebars = "4.3"
 k8s-openapi = { version = "0.16", features = ["v1_20", "api"], default-features = false }
 kube-client = { version = "0.75"}
 log = "0.4"
@@ -25,6 +26,7 @@ pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1"
+serde_yaml = "0.8"
 snafu = "0.7"
 term_size = "0.3"
 testsys-config = { path = "../testsys-config/", version = "0.1.0" }

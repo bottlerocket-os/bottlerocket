@@ -13,6 +13,7 @@ use maplit::btreemap;
 use model::constants::NAMESPACE;
 use model::{Agent, Configuration, Crd, DestructionPolicy, Resource, ResourceSpec};
 use snafu::{OptionExt, ResultExt};
+use std::collections::BTreeMap;
 use std::str::FromStr;
 
 /// A `CrdCreator` responsible for creating crd related to `aws-k8s` variants.
@@ -153,5 +154,9 @@ impl CrdCreator for AwsK8sCreator {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(sonobuoy_crd(
             test_input,
         )?))))
+    }
+
+    fn additional_fields(&self, _test_type: &str) -> BTreeMap<String, String> {
+        btreemap! {"region".to_string() => self.region.clone()}
     }
 }

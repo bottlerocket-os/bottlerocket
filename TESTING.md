@@ -143,6 +143,26 @@ instance-type = "g5g.2xlarge"
 
 Since `aws-k8s-nvidia` is a `<FAMILY>-<FLAVOR>` level configuration it will take precedence over `aws-k8s` which is `<FAMILY>` level configuration.
 
+Tables can also be created for custom testing configurations. For a custom test type called `foo`, the config above can be updated: 
+
+```toml
+[aws-k8s]
+# Set the default instance type for all `aws-k8s` variants
+instance-type = "m5.xlarge"
+
+[aws-k8s.configuration.foo]
+# Set the default instance type for all `aws-k8s` variants when `TESTSYS_TEST=foo` is set
+instance-type = "m5.8xlarge"
+
+[aws-k8s-nvidia]
+# Override the instance type for `nvidia` `aws-k8s` variants
+instance-type = "g5g.2xlarge"
+
+[aws-k8s-nvidia.configuration.foo]
+# Override the instance type for `nvidia` `aws-k8s` variants when `TESTSYS_TEST=foo` is set
+instance-type = "g5g.8xlarge"
+```
+
 ### Variants
 
 Different Bottlerocket variants require different implementations in the test system.
@@ -302,3 +322,40 @@ cargo make -e TESTSYS_TEST=migration test
 ```
 
 To see the state of the tests as they run use `cargo make watch-test`.
+
+### Custom Test Types
+
+Custom tests can be run with TestSys by calling `cargo make -e TESTSYS_TEST=<CUSTOM-TEST-NAME> test -f <PATH-TO-TEMPLATED-YAML>`.
+
+First, a test agent needs to be constructed.
+The `test-agent-cli` provides an interface for creating bash based testing agents.
+Checkout the [runbook](https://github.com/bottlerocket-os/bottlerocket-test-system/blob/develop/agent/test-agent-cli/design/RUNBOOK.md) for instructions on creating an agent.
+
+Once an agent has been created, the yaml template can be created.
+Values from `Test.toml` can be inserted into a yaml manifest so that a single manifest can be used for all variants in a family.
+
+```yaml
+apiVersion: {{api-version}}
+kind: Test
+metadata:
+  # The name of the crd created is dependent on the arch and variant for 
+  # the test being run.
+  name: {{kube-arch}}-{{kube-variant}}-custom
+  namespace: {{namespace}}
+spec:
+  retries: 5
+  agent:
+    name: custom-test-agent
+    image: example-test-agent-cli:latest
+    keepRunning: false
+    configuration:
+      clusterName: {{cluster-name}}
+      instanceType: {{instance-type}}
+  resources: []
+  dependsOn: []
+  # The secrets will automatically be populated from the config file, 
+  # no template is needed.
+  secrets: {}
+```
+
+After the agent has been build and the yaml file is created, the test can be run using `cargo make -e TESTSYS_TEST=<CUSTOM-TEST-NAME> test -f <PATH-TO-YAML-FILE>` 

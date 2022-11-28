@@ -9,6 +9,7 @@ use log::debug;
 use maplit::btreemap;
 use model::{Crd, DestructionPolicy};
 use snafu::OptionExt;
+use std::collections::BTreeMap;
 
 /// A `CrdCreator` responsible for creating crd related to `aws-ecs` variants.
 pub(crate) struct AwsEcsCreator {
@@ -171,5 +172,9 @@ impl CrdCreator for AwsEcsCreator {
             })?;
 
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(test_crd))))
+    }
+
+    fn additional_fields(&self, _test_type: &str) -> BTreeMap<String, String> {
+        btreemap! {"region".to_string() => self.region.clone()}
     }
 }

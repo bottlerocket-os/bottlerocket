@@ -1,6 +1,7 @@
 use aws_sdk_ec2::error::DescribeImagesError;
 use aws_sdk_ec2::types::SdkError;
 use snafu::Snafu;
+use std::path::PathBuf;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -16,6 +17,21 @@ pub enum Error {
     DescribeImages {
         source: SdkError<DescribeImagesError>,
     },
+
+    #[snafu(display("Unable to read file '{}': {}", path.display(), source))]
+    File {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[snafu(context(false), display("Unable render templated yaml: {}", source))]
+    HandlebarsRender { source: handlebars::RenderError },
+
+    #[snafu(
+        context(false),
+        display("Unable create template from yaml: {}", source)
+    )]
+    HandlebarsTemplate { source: handlebars::TemplateError },
 
     #[snafu(display("Unable to create map from {}: {}", what, source))]
     IntoMap { what: String, source: model::Error },
@@ -51,6 +67,12 @@ pub enum Error {
     SerdeJson {
         what: String,
         source: serde_json::Error,
+    },
+
+    #[snafu(display("{}: {}", what, source))]
+    SerdeYaml {
+        what: String,
+        source: serde_yaml::Error,
     },
 
     #[snafu(context(false), display("{}", source))]

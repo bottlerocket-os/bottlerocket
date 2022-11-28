@@ -1,13 +1,16 @@
 use crate::error::{self, Result};
-use crate::run::{KnownTestType, TestType};
+use crate::run::KnownTestType;
 use bottlerocket_types::agent_config::TufRepoConfig;
 use bottlerocket_variant::Variant;
+use handlebars::Handlebars;
 use log::{debug, warn};
 use maplit::btreemap;
+use model::constants::{API_VERSION, NAMESPACE};
 use model::test_manager::{SelectionParams, TestManager};
 use model::Crd;
 use pubsys_config::RepoConfig;
-use snafu::OptionExt;
+use serde::Deserialize;
+use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use testsys_config::{rendered_cluster_name, GenericVariantConfig, TestsysImages};
 
@@ -127,6 +130,26 @@ impl<'a> CrdInput<'a> {
                 .collect::<Result<Vec<String>>>()?
         })
     }
+
+    /// Creates a `BTreeMap` of all configurable fields from this input
+    fn config_fields(&self, cluster_name: &str) -> BTreeMap<String, String> {
+        btreemap! {
+            "arch".to_string() => self.arch.clone(),
+            "variant".to_string() => self.variant.to_string(),
+            "kube-arch".to_string() => self.kube_arch(),
+            "kube-variant".to_string() => self.kube_variant(),
+            "cluster-name".to_string() => cluster_name.to_string(),
+            "instance-type".to_string() => some_or_null(&self.config.instance_type),
+            "agent-role".to_string() => some_or_null(&self.config.agent_role),
+            "conformance-image".to_string() => some_or_null(&self.config.conformance_image),
+            "conformance-registry".to_string() => some_or_null(&self.config.conformance_registry),
+        }
+    }
+}
+
+/// Take the value of the `Option` or `"null"` if the `Option` was `None`
+fn some_or_null(field: &Option<String>) -> String {
+    field.to_owned().unwrap_or_else(|| "null".to_string())
 }
 
 /// The `CrdCreator` trait is used to create CRDs. Each variant family should have a `CrdCreator`
@@ -159,161 +182,218 @@ pub(crate) trait CrdCreator: Sync {
     /// Create a testing CRD for this variant of Bottlerocket.
     async fn test_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput>;
 
+    /// Create a set of additional fields that may be used by an externally defined agent on top of
+    /// the ones in `CrdInput`
+    fn additional_fields(&self, _test_type: &str) -> BTreeMap<String, String> {
+        Default::default()
+    }
+
     /// Creates a set of CRDs for the specified variant and test type that can be added to a TestSys
     /// cluster.
-    async fn create_crds(&self, test_type: TestType, crd_input: &CrdInput) -> Result<Vec<Crd>> {
+    async fn create_crds(
+        &self,
+        test_type: &KnownTestType,
+        crd_input: &CrdInput,
+    ) -> Result<Vec<Crd>> {
         let mut crds = Vec::new();
         for cluster_name in &crd_input.cluster_names()? {
+            let cluster_output = self
+                .cluster_crd(ClusterInput {
+                    cluster_name,
+                    crd_input,
+                })
+                .await?;
+            let cluster_crd_name = cluster_output.crd_name();
+            if let Some(crd) = cluster_output.crd() {
+                debug!("Cluster crd was created for '{}'", cluster_name);
+                crds.push(crd)
+            }
             match &test_type {
-                TestType::Known(test_type) => {
-                    let cluster_output = self
-                        .cluster_crd(ClusterInput {
-                            cluster_name,
+                KnownTestType::Conformance | KnownTestType::Quick => {
+                    let bottlerocket_output = self
+                        .bottlerocket_crd(BottlerocketInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            image_id: self.image_id(crd_input)?,
+                            test_type,
                             crd_input,
                         })
                         .await?;
-                    let cluster_crd_name = cluster_output.crd_name();
-                    if let Some(crd) = cluster_output.crd() {
-                        debug!("Cluster crd was created for '{}'", cluster_name);
+                    let bottlerocket_crd_name = bottlerocket_output.crd_name();
+                    if let Some(crd) = bottlerocket_output.crd() {
+                        debug!("Bottlerocket crd was created for '{}'", cluster_name);
                         crds.push(crd)
                     }
-                    match &test_type {
-                        KnownTestType::Conformance | KnownTestType::Quick => {
-                            let bottlerocket_output = self
-                                .bottlerocket_crd(BottlerocketInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    image_id: self.image_id(crd_input)?,
-                                    test_type,
-                                    crd_input,
-                                })
-                                .await?;
-                            let bottlerocket_crd_name = bottlerocket_output.crd_name();
-                            if let Some(crd) = bottlerocket_output.crd() {
-                                debug!("Bottlerocket crd was created for '{}'", cluster_name);
-                                crds.push(crd)
-                            }
-                            let test_output = self
-                                .test_crd(TestInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    bottlerocket_crd_name: &bottlerocket_crd_name,
-                                    test_type,
-                                    crd_input,
-                                    prev_tests: Default::default(),
-                                    name_suffix: None,
-                                })
-                                .await?;
-                            if let Some(crd) = test_output.crd() {
-                                crds.push(crd)
-                            }
-                        }
-                        KnownTestType::Migration => {
-                            let image_id = if let Some(image_id) = &crd_input.starting_image_id {
-                                debug!("Using the provided starting image id for migration testing '{}'", image_id);
-                                image_id.to_string()
-                            } else {
-                                let image_id = self.starting_image_id(crd_input).await?;
-                                debug!("A starting image id was not provided, '{}' will be used instead.", image_id);
-                                image_id
-                            };
-                            let bottlerocket_output = self
-                                .bottlerocket_crd(BottlerocketInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    image_id,
-                                    test_type,
-                                    crd_input,
-                                })
-                                .await?;
-                            let bottlerocket_crd_name = bottlerocket_output.crd_name();
-                            if let Some(crd) = bottlerocket_output.crd() {
-                                debug!("Bottlerocket crd was created for '{}'", cluster_name);
-                                crds.push(crd)
-                            }
-                            let mut tests = Vec::new();
-                            let test_output = self
-                                .test_crd(TestInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    bottlerocket_crd_name: &bottlerocket_crd_name,
-                                    test_type,
-                                    crd_input,
-                                    prev_tests: tests.clone(),
-                                    name_suffix: "-1-initial".into(),
-                                })
-                                .await?;
-                            if let Some(name) = test_output.crd_name() {
-                                tests.push(name)
-                            }
-                            if let Some(crd) = test_output.crd() {
-                                crds.push(crd)
-                            }
-                            let migration_output = self
-                                .migration_crd(MigrationInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    bottlerocket_crd_name: &bottlerocket_crd_name,
-                                    crd_input,
-                                    prev_tests: tests.clone(),
-                                    name_suffix: "-2-migrate".into(),
-                                    migration_direction: MigrationDirection::Upgrade,
-                                })
-                                .await?;
-                            if let Some(name) = migration_output.crd_name() {
-                                tests.push(name)
-                            }
-                            if let Some(crd) = migration_output.crd() {
-                                crds.push(crd)
-                            }
-                            let test_output = self
-                                .test_crd(TestInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    bottlerocket_crd_name: &bottlerocket_crd_name,
-                                    test_type,
-                                    crd_input,
-                                    prev_tests: tests.clone(),
-                                    name_suffix: "-3-migrated".into(),
-                                })
-                                .await?;
-                            if let Some(name) = test_output.crd_name() {
-                                tests.push(name)
-                            }
-                            if let Some(crd) = test_output.crd() {
-                                crds.push(crd)
-                            }
-                            let migration_output = self
-                                .migration_crd(MigrationInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    bottlerocket_crd_name: &bottlerocket_crd_name,
-                                    crd_input,
-                                    prev_tests: tests.clone(),
-                                    name_suffix: "-4-migrate".into(),
-                                    migration_direction: MigrationDirection::Downgrade,
-                                })
-                                .await?;
-                            if let Some(name) = migration_output.crd_name() {
-                                tests.push(name)
-                            }
-                            if let Some(crd) = migration_output.crd() {
-                                crds.push(crd)
-                            }
-                            let test_output = self
-                                .test_crd(TestInput {
-                                    cluster_crd_name: &cluster_crd_name,
-                                    bottlerocket_crd_name: &bottlerocket_crd_name,
-                                    test_type,
-                                    crd_input,
-                                    prev_tests: tests,
-                                    name_suffix: "-5-final".into(),
-                                })
-                                .await?;
-                            if let Some(crd) = test_output.crd() {
-                                crds.push(crd)
-                            }
-                        }
+                    let test_output = self
+                        .test_crd(TestInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            bottlerocket_crd_name: &bottlerocket_crd_name,
+                            test_type,
+                            crd_input,
+                            prev_tests: Default::default(),
+                            name_suffix: None,
+                        })
+                        .await?;
+                    if let Some(crd) = test_output.crd() {
+                        crds.push(crd)
                     }
                 }
-                TestType::Unknown(_) => {
-                    return Err(error::Error::Unsupported {
-                        what: "Custom test types".to_string(),
-                    })
+                KnownTestType::Migration => {
+                    let image_id = if let Some(image_id) = &crd_input.starting_image_id {
+                        debug!(
+                            "Using the provided starting image id for migration testing '{}'",
+                            image_id
+                        );
+                        image_id.to_string()
+                    } else {
+                        let image_id = self.starting_image_id(crd_input).await?;
+                        debug!(
+                            "A starting image id was not provided, '{}' will be used instead.",
+                            image_id
+                        );
+                        image_id
+                    };
+                    let bottlerocket_output = self
+                        .bottlerocket_crd(BottlerocketInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            image_id,
+                            test_type,
+                            crd_input,
+                        })
+                        .await?;
+                    let bottlerocket_crd_name = bottlerocket_output.crd_name();
+                    if let Some(crd) = bottlerocket_output.crd() {
+                        debug!("Bottlerocket crd was created for '{}'", cluster_name);
+                        crds.push(crd)
+                    }
+                    let mut tests = Vec::new();
+                    let test_output = self
+                        .test_crd(TestInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            bottlerocket_crd_name: &bottlerocket_crd_name,
+                            test_type,
+                            crd_input,
+                            prev_tests: tests.clone(),
+                            name_suffix: "-1-initial".into(),
+                        })
+                        .await?;
+                    if let Some(name) = test_output.crd_name() {
+                        tests.push(name)
+                    }
+                    if let Some(crd) = test_output.crd() {
+                        crds.push(crd)
+                    }
+                    let migration_output = self
+                        .migration_crd(MigrationInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            bottlerocket_crd_name: &bottlerocket_crd_name,
+                            crd_input,
+                            prev_tests: tests.clone(),
+                            name_suffix: "-2-migrate".into(),
+                            migration_direction: MigrationDirection::Upgrade,
+                        })
+                        .await?;
+                    if let Some(name) = migration_output.crd_name() {
+                        tests.push(name)
+                    }
+                    if let Some(crd) = migration_output.crd() {
+                        crds.push(crd)
+                    }
+                    let test_output = self
+                        .test_crd(TestInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            bottlerocket_crd_name: &bottlerocket_crd_name,
+                            test_type,
+                            crd_input,
+                            prev_tests: tests.clone(),
+                            name_suffix: "-3-migrated".into(),
+                        })
+                        .await?;
+                    if let Some(name) = test_output.crd_name() {
+                        tests.push(name)
+                    }
+                    if let Some(crd) = test_output.crd() {
+                        crds.push(crd)
+                    }
+                    let migration_output = self
+                        .migration_crd(MigrationInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            bottlerocket_crd_name: &bottlerocket_crd_name,
+                            crd_input,
+                            prev_tests: tests.clone(),
+                            name_suffix: "-4-migrate".into(),
+                            migration_direction: MigrationDirection::Downgrade,
+                        })
+                        .await?;
+                    if let Some(name) = migration_output.crd_name() {
+                        tests.push(name)
+                    }
+                    if let Some(crd) = migration_output.crd() {
+                        crds.push(crd)
+                    }
+                    let test_output = self
+                        .test_crd(TestInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            bottlerocket_crd_name: &bottlerocket_crd_name,
+                            test_type,
+                            crd_input,
+                            prev_tests: tests,
+                            name_suffix: "-5-final".into(),
+                        })
+                        .await?;
+                    if let Some(crd) = test_output.crd() {
+                        crds.push(crd)
+                    }
                 }
+            }
+        }
+
+        Ok(crds)
+    }
+
+    /// Creates a set of CRDs for the specified variant and test type that can be added to a TestSys
+    /// cluster.
+    async fn create_custom_crds(
+        &self,
+        test_type: &str,
+        crd_input: &CrdInput,
+        crd_template_file_path: &str,
+    ) -> Result<Vec<Crd>> {
+        let mut crds = Vec::new();
+        for cluster_name in &crd_input.cluster_names()? {
+            let mut fields = crd_input.config_fields(cluster_name);
+            fields.insert("api-version".to_string(), API_VERSION.to_string());
+            fields.insert("namespace".to_string(), NAMESPACE.to_string());
+            fields.insert("image-id".to_string(), self.image_id(crd_input)?);
+            fields.append(&mut self.additional_fields(test_type));
+
+            let mut handlebars = Handlebars::new();
+            handlebars.set_strict_mode(true);
+            let rendered_manifest = handlebars.render_template(
+                &std::fs::read_to_string(crd_template_file_path).context(error::FileSnafu {
+                    path: crd_template_file_path,
+                })?,
+                &fields,
+            )?;
+
+            for crd_doc in serde_yaml::Deserializer::from_str(&rendered_manifest) {
+                let value =
+                    serde_yaml::Value::deserialize(crd_doc).context(error::SerdeYamlSnafu {
+                        what: "Unable to deserialize rendered manifest",
+                    })?;
+                let mut crd: Crd =
+                    serde_yaml::from_value(value).context(error::SerdeYamlSnafu {
+                        what: "The manifest did not match a `CRD`",
+                    })?;
+                // Add in the secrets from the config manually.
+                match &mut crd {
+                    Crd::Test(test) => {
+                        test.spec.agent.secrets = Some(crd_input.config.secrets.clone())
+                    }
+                    Crd::Resource(resource) => {
+                        resource.spec.agent.secrets = Some(crd_input.config.secrets.clone())
+                    }
+                }
+                crds.push(crd);
             }
         }
         Ok(crds)
