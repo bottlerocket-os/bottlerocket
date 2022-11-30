@@ -261,7 +261,7 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 	}
 	defer client.Close()
 
-	// Parse the source ref if it looks like an ECR ref.
+	// Check if the image source is an ECR image. If it is, then we need to handle it with the ECR resolver.
 	isECRImage := ecrRegex.MatchString(source)
 	var img containerd.Image
 	if isECRImage {
@@ -506,18 +506,17 @@ func pullImageOnly(containerdSocket string, namespace string, source string, reg
 	}
 	defer client.Close()
 
-	// Parse the source ref if it looks like an ECR ref.
+	// Check if the image source is an ECR image. If it is, then we need to handle it with the ECR resolver.
 	isECRImage := ecrRegex.MatchString(source)
-	ref := source
 	if isECRImage {
 		_, err = fetchECRImage(ctx, source, client, registryConfigPath, useCachedImage)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = fetchImage(ctx, ref, client, registryConfigPath, useCachedImage)
+		_, err = fetchImage(ctx, source, client, registryConfigPath, useCachedImage)
 		if err != nil {
-			log.G(ctx).WithField("ref", ref).Error(err)
+			log.G(ctx).WithField("ref", source).Error(err)
 			return err
 		}
 	}
