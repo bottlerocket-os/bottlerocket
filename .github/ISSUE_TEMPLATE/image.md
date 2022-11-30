@@ -1,6 +1,7 @@
 ---
 name: Bug report - Bottlerocket image
 about: Let us know about a problem with Bottlerocket
+labels: status/needs-triage, type/bug
 ---
 
 <!--

@@ -1,6 +1,7 @@
 ---
 name: Feature request
 about: Request a change to to the project
+labels: status/needs-triage, type/enhancement
 ---
 
 <!--
