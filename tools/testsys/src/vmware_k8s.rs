@@ -105,7 +105,7 @@ impl CrdCreator for VmwareK8sCreator {
             .tuf_repo(
                 cluster_input
                     .crd_input
-                    .tuf_metadata()
+                    .tuf_repo_config()
                     .context(error::InvalidSnafu {
                         what: "TUF repo information is required for VMware cluster creation.",
                     })?,
@@ -169,53 +169,52 @@ impl CrdCreator for VmwareK8sCreator {
             .existing_crds(&labels, &["testsys/type", "testsys/cluster"])
             .await?;
 
-        let vsphere_vm_crd =
-            VSphereVmConfig::builder()
-                .ova_name(self.image_id(bottlerocket_input.crd_input)?)
-                .tuf_repo(bottlerocket_input.crd_input.tuf_metadata().context(
-                    error::InvalidSnafu {
-                        what: "TUF repo information is required for Bottlerocket vSphere VM creation.",
-                    },
-                )?)
-                .vcenter_host_url(&self.datacenter.vsphere_url)
-                .vcenter_datacenter(&self.datacenter.datacenter)
-                .vcenter_datastore(&self.datacenter.datastore)
-                .vcenter_network(&self.datacenter.network)
-                .vcenter_resource_pool(&self.datacenter.resource_pool)
-                .vcenter_workload_folder(&self.datacenter.folder)
-                .cluster(VSphereK8sClusterInfo {
-                    name: format!("${{{}.clusterName}}", cluster_name),
-                    control_plane_endpoint_ip: format!("${{{}.endpoint}}", cluster_name),
-                    kubeconfig_base64: format!("${{{}.encodedKubeconfig}}", cluster_name),
-                })
-                .assume_role(bottlerocket_input.crd_input.config.agent_role.clone())
-                .set_conflicts_with(Some(existing_clusters))
-                .destruction_policy(DestructionPolicy::OnTestSuccess)
-                .image(
-                    bottlerocket_input
-                        .crd_input
-                        .images
-                        .vsphere_vm_resource_agent_image
-                        .as_ref()
-                        .expect("The default vSphere VM resource provider image URI is missing."),
-                )
-                .set_image_pull_secret(
-                    bottlerocket_input
-                        .crd_input
-                        .images
-                        .testsys_agent_pull_secret
-                        .to_owned(),
-                )
-                .set_secrets(Some(bottlerocket_input.crd_input.config.secrets.clone()))
-                .depends_on(cluster_name)
-                .build(format!(
-                    "{}-vms-{}",
-                    cluster_name, bottlerocket_input.test_type
-                ))
-                .map_err(|e| error::Error::Build {
-                    what: "vSphere VM CRD".to_string(),
-                    error: e.to_string(),
-                })?;
+        let vsphere_vm_crd = VSphereVmConfig::builder()
+            .ova_name(self.image_id(bottlerocket_input.crd_input)?)
+            .tuf_repo(bottlerocket_input.crd_input.tuf_repo_config().context(
+                error::InvalidSnafu {
+                    what: "TUF repo information is required for Bottlerocket vSphere VM creation.",
+                },
+            )?)
+            .vcenter_host_url(&self.datacenter.vsphere_url)
+            .vcenter_datacenter(&self.datacenter.datacenter)
+            .vcenter_datastore(&self.datacenter.datastore)
+            .vcenter_network(&self.datacenter.network)
+            .vcenter_resource_pool(&self.datacenter.resource_pool)
+            .vcenter_workload_folder(&self.datacenter.folder)
+            .cluster(VSphereK8sClusterInfo {
+                name: format!("${{{}.clusterName}}", cluster_name),
+                control_plane_endpoint_ip: format!("${{{}.endpoint}}", cluster_name),
+                kubeconfig_base64: format!("${{{}.encodedKubeconfig}}", cluster_name),
+            })
+            .assume_role(bottlerocket_input.crd_input.config.agent_role.clone())
+            .set_conflicts_with(Some(existing_clusters))
+            .destruction_policy(DestructionPolicy::OnTestSuccess)
+            .image(
+                bottlerocket_input
+                    .crd_input
+                    .images
+                    .vsphere_vm_resource_agent_image
+                    .as_ref()
+                    .expect("The default vSphere VM resource provider image URI is missing."),
+            )
+            .set_image_pull_secret(
+                bottlerocket_input
+                    .crd_input
+                    .images
+                    .testsys_agent_pull_secret
+                    .to_owned(),
+            )
+            .set_secrets(Some(bottlerocket_input.crd_input.config.secrets.clone()))
+            .depends_on(cluster_name)
+            .build(format!(
+                "{}-vms-{}",
+                cluster_name, bottlerocket_input.test_type
+            ))
+            .map_err(|e| error::Error::Build {
+                what: "vSphere VM CRD".to_string(),
+                error: e.to_string(),
+            })?;
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Resource(
             vsphere_vm_crd,
         ))))

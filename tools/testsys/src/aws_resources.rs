@@ -239,7 +239,7 @@ pub(crate) fn migration_crd(migration_input: MigrationInput) -> Result<Test> {
         .aws_region_template(cluster_resource_name, "region")
         .instance_ids_template(bottlerocket_resource_name, "ids")
         .migrate_to_version(migration_version)
-        .tuf_repo(migration_input.crd_input.tuf_metadata())
+        .tuf_repo(migration_input.crd_input.tuf_repo_config())
         .assume_role(migration_input.crd_input.config.agent_role.clone())
         .resources(bottlerocket_resource_name)
         .resources(cluster_resource_name)
