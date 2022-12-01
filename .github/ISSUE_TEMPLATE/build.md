@@ -1,6 +1,7 @@
 ---
 name: Bug report - build process
 about: Let us know about a problem with the build process
+labels: status/needs-triage, type/bug
 ---
 
 <!--
