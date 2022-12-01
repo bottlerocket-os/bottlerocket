@@ -1,4 +1,4 @@
-%global tesla_470 470.82.01
+%global tesla_470 470.161.03
 %global tesla_470_libdir %{_cross_libdir}/nvidia/tesla/%{tesla_470}
 %global tesla_470_bindir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_470}
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
@@ -226,11 +226,11 @@ popd
 # Compute libs
 %{tesla_470_libdir}/libcuda.so.%{tesla_470}
 %{tesla_470_libdir}/libcuda.so.1
-%{tesla_470_libdir}/libnvidia-opencl.so.470.82.01
+%{tesla_470_libdir}/libnvidia-opencl.so.%{tesla_470}
 %{tesla_470_libdir}/libnvidia-opencl.so.1
 %{tesla_470_libdir}/libnvidia-ptxjitcompiler.so.%{tesla_470}
 %{tesla_470_libdir}/libnvidia-ptxjitcompiler.so.1
-%{tesla_470_libdir}/libnvidia-allocator.so.470.82.01
+%{tesla_470_libdir}/libnvidia-allocator.so.%{tesla_470}
 %{tesla_470_libdir}/libnvidia-allocator.so.1
 %{tesla_470_libdir}/libOpenCL.so.1.0.0
 %{tesla_470_libdir}/libOpenCL.so.1
@@ -310,9 +310,9 @@ popd
 %exclude %{tesla_470_libdir}/libGLX.so.0
 %exclude %{tesla_470_libdir}/libGLdispatch.so.0
 %exclude %{tesla_470_libdir}/libOpenGL.so.0
-%exclude %{tesla_470_libdir}/libglxserver_nvidia.so.470.82.01
+%exclude %{tesla_470_libdir}/libglxserver_nvidia.so.%{tesla_470}
 %exclude %{tesla_470_libdir}/libnvidia-egl-wayland.so.1.1.7
-%exclude %{tesla_470_libdir}/libnvidia-gtk2.so.470.82.01
-%exclude %{tesla_470_libdir}/libnvidia-gtk3.so.470.82.01
+%exclude %{tesla_470_libdir}/libnvidia-gtk2.so.%{tesla_470}
+%exclude %{tesla_470_libdir}/libnvidia-gtk3.so.%{tesla_470}
 %exclude %{tesla_470_libdir}/nvidia_drv.so
 %exclude %{tesla_470_libdir}/libnvidia-egl-wayland.so.1
