@@ -349,7 +349,7 @@ dependencies = [
    "unit-tests",
    "check-fmt",
    "check-lints",
-   ]
+]
 
 [tasks.check-fmt]
 script = [
@@ -402,6 +402,7 @@ fi
 dependencies = [
    "check-clippy",
    "check-shell",
+   "check-golangci-lint",
 ]
 
 [tasks.check-clippy]
@@ -461,6 +462,25 @@ if [ "${rc}" -ne 0 ]; then
   exit $rc
 fi
 '''
+]
+
+[tasks.check-golangci-lint]
+script = [
+'''
+top_path=$(pwd)
+config_path="${top_path}/.golangci.yaml"
+
+for m in ${GO_MODULES}; do
+    cd "sources/${m}"
+    mod_name=$(pwd)
+    docker run --rm \
+        -v "${mod_name}":/"${mod_name}" \
+        -v "${config_path}":/"${config_path}" \
+        -w /"${mod_name}" \
+        golangci/golangci-lint \
+        golangci-lint run --config "${config_path}"
+    cd "${top_path}"
+done'''
 ]
 
 [tasks.build-tools]
