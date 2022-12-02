@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://sourceware.org/elfutils/ftp/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://sourceware.org/elfutils/ftp/0.187/elfutils-0.187.tar.bz2"
-sha512 = "a9b9e32b503b8b50a62d4e4001097ed2721d3475232a6380e6b9853bd1647aec016440c0ca7ceb950daf1144f8db9814ab43cf33cc0ebef7fc91e9e775c9e874"
+url = "https://sourceware.org/elfutils/ftp/0.188/elfutils-0.188.tar.bz2"
+sha512 = "585551b2d937d19d1becfc2f28935db1dd1a3d25571a62f322b70ac8da98c1a741a55d070327705df6c3e2ee026652e0b9a3c733b050a0b0ec5f2fc75d5b74b5"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
