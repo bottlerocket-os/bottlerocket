@@ -11,6 +11,7 @@ exclude = ["README.md"]
 
 [dependencies]
 serde = "1"
+serde_plain = "1"
 
 [build-dependencies]
 generate-readme = { path = "../../generate-readme", version = "0.1.0" }

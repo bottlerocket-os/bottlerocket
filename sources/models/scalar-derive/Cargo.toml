@@ -19,6 +19,7 @@ proc-macro2 = "1"
 quote = "1"
 scalar = { path = "../scalar", version = "0.1.0" }
 serde = { version = "1", features = ["derive"] }
+serde_plain = "1"
 syn = { version = "1", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
 
 [build-dependencies]

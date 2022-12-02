@@ -6,20 +6,27 @@ A convenience macro for Bottlerocket model types.
 
 The `Scalar` macro can be used for strings or numbers that need to be validated in the Bottlerocket
 model. It uses a trait, also named `Scalar`, to treat a `struct` as a thin wrapper around an
-internal scalar type.
+internal scalar type, or to treat an `enum` as "string-like".
 
-The macro expects your inner scalar type to implement `Display`, `PartialEq`, `Serialize` and
-`Deserialize`. It then implements these traits on the wrapper type by passing them through to
-the inner type.
+For structs, the macro expects your inner scalar type to implement `Display`, `PartialEq`,
+`Serialize` and `Deserialize`. It then implements these traits on the wrapper type by passing them
+through to the inner type.
 
-You are also expected to implement the `Validate` trait on your `Scalar` type (the wrapper, not
-the inner type). This macro will call `<YourType as Validate>::validate(some_value)` when
+You are also expected to implement the `Validate` trait on your `Scalar` struct types (the wrapper,
+not the inner type). This macro will call `<YourType as Validate>::validate(some_value)` when
 implementing `YourType::new`.
+
+Enums do not require a wrapping struct since it is assumed that the deserializtion of the enum
+serves as validation. When using the `Scalar` macro on an enum it expects the enum to implement
+`Serialize` and `Deserialize`. It also expects that your enum doesn't not contain any structures.
+That is, your enum should be representable with a simple string and compatible with `serde_plain`.
+The `Scalar` uses `serde_plain`, to implement `Display`, `FromStr` and `String` conversions for your
+enum.
 
 ## Parameters
 
-The macro can take the following input parameters (in most cases you will not need to use these; the
-defaults will "just work"):
+The macro can take the following input parameters when used with wrapper structs (in most cases you
+will not need to use these; the defaults will "just work"):
 - `as_ref_str: bool`: Set to `true` if need the macro to treat your inner type as a `String`.
    This will happen automatically if your inner type is named `String`.
 - `inner`: The name of the field that holds your `inner` type. Defaults to `inner`.
@@ -166,6 +173,36 @@ impl Validate for MyWrapper {
 }
 ```
 
+## Enums
+
+When used with an enum, `Scalar` implements a few `String` conversions such as `Display` and
+`FromStr`.
+
+```
+use scalar_derive::Scalar;
+use serde::{Serialize, Deserialize};
+use std::convert::TryInto;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Scalar)]
+#[serde(rename_all = "snake_case")]
+enum Color {
+    Red,
+    Green,
+    Blue,
+}
+
+
+let value = Color::Blue;
+let to_string_val = value.to_string();
+assert_eq!(to_string_val, "blue");
+let from_str_val: Color = "blue".parse().unwrap();
+assert_eq!(value, from_str_val);
+let into_string_val: String = value.into();
+assert_eq!(into_string_val, "blue");
+let try_from_value: Color = "blue".try_into().unwrap();
+assert_eq!(Color::Blue, try_from_value);
+```
+
 */
 
 use darling::FromAttributes;
@@ -173,7 +210,7 @@ use proc_macro::TokenStream;
 use quote::{format_ident, ToTokens};
 use quote::{quote, TokenStreamExt};
 use syn::__private::TokenStream2;
-use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields};
+use syn::{parse_macro_input, Data, DataEnum, DataStruct, DeriveInput, Fields};
 
 /// A convenience macro for implementing Bottlerocket model types. See description in the lib
 /// documentation or README.
@@ -181,15 +218,27 @@ use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields};
 pub fn scalar(input: TokenStream) -> TokenStream {
     // Parse the input tokens.
     let derive_input = parse_macro_input!(input as DeriveInput);
+    let name = (&derive_input.ident).to_string();
     let settings = RawSettings::from_attributes(derive_input.attrs.as_slice())
         .expect("Unable to parse `scalar` macro arguments");
 
-    // Further parse the input.
-    let struct_info = StructInfo::new(&derive_input, settings);
-
-    // Write impls.
+    // We will write syntax as tokens to this token stream.
     let mut ast2 = TokenStream2::new();
-    struct_info.write_impls(&mut ast2);
+
+    match &derive_input.data {
+        Data::Struct(s) => {
+            // Further parse the input.
+            let struct_info = StructInfo::new(&name, &s, settings);
+            struct_info.write_impls(&mut ast2);
+        }
+        Data::Enum(data_enum) => {
+            require_simple_enum(&name, data_enum);
+            write_string_impls_for_enum(&name, &mut ast2)
+        }
+        Data::Union(_) => panic!("A Scalar cannot be an union, it must be a struct or enum"),
+    }
+
+    // Convert
     ast2.into_token_stream().into()
 }
 
@@ -213,7 +262,7 @@ struct RawSettings {
 /// use during code generation.
 #[derive(Debug, Clone)]
 struct StructInfo {
-    /// The typename of the struct, that the `Scalar` derive macro was called on.
+    /// The typename of the struct or enum, that the `Scalar` derive macro was called on.
     scalar: String,
     /// The name of the field, inside the `scalar` struct, that holds the "inner" value.
     inner_field: String,
@@ -224,14 +273,9 @@ struct StructInfo {
 }
 
 impl StructInfo {
-    fn new(derive_input: &DeriveInput, settings: RawSettings) -> Self {
-        let scalar = derive_input.ident.to_string();
-
-        let (inner_field, inner_type) = match derive_input.data.clone() {
-            Data::Struct(s) => find_inner_field(s, settings.inner.as_ref().map(|s| s.as_str())),
-            Data::Enum(_) => panic!("A Scalar cannot be an enum, it must be a struct"),
-            Data::Union(_) => panic!("A Scalar cannot be an union, it must be a struct"),
-        };
+    fn new(name: &str, data: &DataStruct, settings: RawSettings) -> Self {
+        let (inner_field, inner_type) =
+            find_inner_field(data.clone(), settings.inner.as_ref().map(|s| s.as_str()));
 
         // Automatically impl AsRef<str> when unspecified by the user but the inner type is String.
         // Note, this might not work if String is not what we think it is. We assume that anything
@@ -240,7 +284,7 @@ impl StructInfo {
         let as_ref_str = settings.as_ref_str.unwrap_or(is_string(&inner_type));
 
         Self {
-            scalar,
+            scalar: name.to_owned(),
             inner_field,
             inner_type,
             as_ref_str,
@@ -508,6 +552,55 @@ fn find_inner_field(data_struct: DataStruct, field_name: Option<&str>) -> (Strin
             panic!(
                 "The Scalar derive macro does not work on 'unit' types, it should have one or more \
                 fields"
+            )
+        }
+    }
+}
+
+/// For enums we assume `Serialize` and `Deserialize` are implemented, and that the enum is "simple"
+/// (i.e. it de/serializes from/to a string). We use this to implement `Display` and conversions
+/// from strings.
+fn write_string_impls_for_enum(name: &str, ast: &mut TokenStream2) {
+    let scalar = format_ident!("{}", name);
+    let impls = quote!(
+        serde_plain::derive_display_from_serialize!(#scalar);
+        serde_plain::derive_fromstr_from_deserialize!(#scalar, scalar::ValidationError);
+
+        impl ::std::convert::From<#scalar> for String {
+            fn from(s: #scalar) -> Self {
+                s.to_string()
+            }
+        }
+
+        impl ::std::convert::TryFrom<&str> for #scalar {
+            type Error = scalar::ValidationError;
+
+            fn try_from(value: &str) -> Result<Self, Self::Error> {
+                value.parse()
+            }
+        }
+
+        impl ::std::convert::TryFrom<String> for #scalar {
+            type Error = scalar::ValidationError;
+
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+                value.as_str().parse()
+            }
+        }
+    );
+
+    ast.append_all(impls.into_iter());
+}
+
+/// Make sure all variants of the enum are empty of data. Otherwise we can't represent this enum
+/// as a simple string in the datastore.
+fn require_simple_enum(name: &str, e: &DataEnum) {
+    for variant in e.variants.iter() {
+        if !variant.fields.is_empty() {
+            panic!(
+                "The enum '{}' cannot be used with the Scalar derive macro because it has non unit \
+                variants. No variants in the enum should carry any data. The '{}' variant was \
+                found to have one or more fields.", name, variant.ident
             )
         }
     }
