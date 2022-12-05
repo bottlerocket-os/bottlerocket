@@ -49,7 +49,7 @@ struct Pizza {
     inner: String
 }
 
-// We must implement the `Validate` trait for out type.
+// We must implement the `Validate` trait for our type.
 impl Validate for Pizza {
     fn validate<S: Into<String>>(input: S) -> Result<Pizza, ValidationError> {
         let input: String = input.into();
@@ -171,6 +171,10 @@ impl Validate for MyWrapper {
         Ok(Self{ some_field: input.into() })
     }
 }
+
+let value = MyWrapper::new(WeirdType).unwrap();
+// This type can be compared with &str because we specified `as_ref_str = true`.
+assert!("i'm a weird type" == value);
 ```
 
 ## Enums
