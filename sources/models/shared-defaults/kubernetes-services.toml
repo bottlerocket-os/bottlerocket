@@ -40,7 +40,7 @@ path = "/etc/kubernetes/pki/kubelet-server.crt"
 template-path = "/usr/share/templates/kubelet-server-crt"
 
 [configuration-files.kubelet-server-key]
-path = "/etc/kubernetes/pki/kubelet-server.key"
+path = "/etc/kubernetes/pki/private/kubelet-server.key"
 template-path = "/usr/share/templates/kubelet-server-key"
 
 [configuration-files.kubelet-exec-start-conf]

@@ -112,7 +112,7 @@ protectKernelDefaults: true
 serializeImagePulls: false
 {{#if (and (default "" settings.kubernetes.server-certificate) (default "" settings.kubernetes.server-key))}}
 tlsCertFile: "/etc/kubernetes/pki/kubelet-server.crt"
-tlsPrivateKeyFile: "/etc/kubernetes/pki/kubelet-server.key"
+tlsPrivateKeyFile: "/etc/kubernetes/pki/private/kubelet-server.key"
 {{else}}
 serverTLSBootstrap: {{settings.kubernetes.server-tls-bootstrap}}
 {{/if}}
