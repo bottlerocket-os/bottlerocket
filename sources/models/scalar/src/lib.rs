@@ -59,7 +59,7 @@ pub mod traits {
         /// The traits bounds on the `Inner` type exist because the `Scalar` derive macro expects
         /// them to be there. Placing the trait bounds here makes error messages easier to interpret
         /// when using the `Scalar` derive macro. The macro also requires `Deserialize<'de>`, but it
-        /// it is unhelpful to add it to the trait bounds here because of the lifetime parameter.
+        /// is unhelpful to add it to the trait bounds here because of the lifetime parameter.
         type Inner: PartialEq + Display + Serialize;
 
         /// Creates a new instance of the `Scalar` object. Validates `input` and returns a
