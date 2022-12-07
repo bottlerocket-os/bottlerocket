@@ -228,6 +228,16 @@ func (ct containerType) Prefix() string {
 	return ""
 }
 
+// SliceContains returns true if a slice contains a string
+func SliceContains(s []string, v string) bool {
+	for _, n := range s {
+		if n == v {
+			return true
+		}
+	}
+	return false
+}
+
 func runCtr(containerdSocket string, namespace string, containerID string, source string, superpowered bool, registryConfigPath string, cType containerType, useCachedImage bool) error {
 	// Check if the containerType provided is valid
 	if !cType.IsValid() {
@@ -301,20 +311,9 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 			oci.WithHostNamespace(runtimespec.NetworkNamespace),
 			oci.WithHostHostsFile,
 			oci.WithHostResolvconf,
-			// Unmask `/sys/firmware` by passing an alternate list of masked paths
-			// List is based on the DefaultUnixSpec's MaskedPaths for Linux
-			// (https://github.com/containerd/containerd/blob/e9af808/oci/spec.go#L164)
-			oci.WithMaskedPaths([]string{
-				"/proc/acpi",
-				"/proc/asound",
-				"/proc/kcore",
-				"/proc/keys",
-				"/proc/latency_stats",
-				"/proc/timer_list",
-				"/proc/timer_stats",
-				"/proc/sched_debug",
-				"/proc/scsi",
-			}),
+			// Unmask `/sys/firmware` to provide extra insight into the hardware of the
+			// underlying host, such as the number of CPU sockets on aarch64 variants
+			withUnmaskedPaths([]string{"/sys/firmware"}),
 			// Pass proxy environment variables to this container
 			withProxyEnv(),
 			// Add a default set of mounts regardless of the container type
@@ -1083,5 +1082,23 @@ func withDynamicResolver(ctx context.Context, ref string, registryConfig *Regist
 	default:
 		// For all other registries
 		return defaultResolver
+	}
+}
+
+// withUnmaskedPaths sets an alternate list of masked paths, less the paths provided
+func withUnmaskedPaths(unmaskPaths []string) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error {
+		if s.Linux != nil && s.Linux.MaskedPaths != nil {
+			var maskedPaths []string
+			for _, path := range s.Linux.MaskedPaths {
+				if SliceContains(unmaskPaths, path) {
+					continue
+				}
+				maskedPaths = append(maskedPaths, path)
+			}
+			// Replace the default Linux.MaskedPaths with our own
+			s.Linux.MaskedPaths = maskedPaths
+		}
+		return nil
 	}
 }
