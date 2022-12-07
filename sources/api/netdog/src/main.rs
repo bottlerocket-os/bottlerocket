@@ -21,9 +21,6 @@ name of the interface, and valid options are "dhcp4" and "dhcp6".  A "?" may be 
 to signify that the lease for the protocol is optional and the system shouldn't wait for it.  A
 valid example: `netdog.default-interface=eno1:dhcp4,dhcp6?`.
 
-The subcommand `prepare-primary-interface` writes the default sysctls for the primary interface to
-file in `/etc/sysctl.d`, and then executes `systemd-sysctl` to apply them.
-
 The subcommand `write-resolv-conf` writes the resolv.conf, favoring DNS API settings and
 supplementing any missing settings with DNS settings from the primary interface's DHCP lease.  It
 is meant to be used as a restart command for DNS API settings.
@@ -52,6 +49,7 @@ static PRIMARY_INTERFACE: &str = "/var/lib/netdog/primary_interface";
 static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
 static OVERRIDE_NET_CONFIG_FILE: &str = "/var/lib/netdog/net.toml";
 static PRIMARY_SYSCTL_CONF: &str = "/etc/sysctl.d/90-primary_interface.conf";
+static SYSCTL_MARKER_FILE: &str = "/run/netdog/primary_sysctls_set";
 static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
 static LEASE_DIR: &str = "/run/wicked";
 
@@ -71,7 +69,6 @@ enum SubCommand {
     GenerateHostname(cli::GenerateHostnameArgs),
     GenerateNetConfig(cli::GenerateNetConfigArgs),
     SetHostname(cli::SetHostnameArgs),
-    PreparePrimaryInterface(cli::PreparePrimaryInterfaceArgs),
     WriteResolvConf(cli::WriteResolvConfArgs),
 }
 
@@ -84,7 +81,6 @@ fn run() -> cli::Result<()> {
         SubCommand::GenerateHostname(_) => cli::generate_hostname::run()?,
         SubCommand::GenerateNetConfig(_) => cli::generate_net_config::run()?,
         SubCommand::SetHostname(args) => cli::set_hostname::run(args)?,
-        SubCommand::PreparePrimaryInterface(_) => cli::prepare_primary_interface::run()?,
         SubCommand::WriteResolvConf(_) => cli::write_resolv_conf::run()?,
     }
     Ok(())
