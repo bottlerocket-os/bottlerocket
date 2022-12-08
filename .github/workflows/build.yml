@@ -24,7 +24,9 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: bottlerocket
+      labels: bottlerocket_ubuntu-latest_32-core
     continue-on-error: ${{ matrix.supported }}
     strategy:
       matrix:
@@ -120,7 +122,7 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
-      - run: rustup default 1.64.0
+      - run: rustup default 1.64.0 && rustup component add rustfmt && rustup component add clippy
       - run: cargo install --version 0.36.0 cargo-make
       - if: contains(matrix.variant, 'nvidia')
         run: |
