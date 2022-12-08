@@ -1973,6 +1973,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "k8s-private-pki-path"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
 name = "language-tags"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
