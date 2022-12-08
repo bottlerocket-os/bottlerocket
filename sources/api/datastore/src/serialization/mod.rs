@@ -34,7 +34,6 @@ fn bad_key<T>(typename: &str) -> Result<T> {
     error::BadMapKeySnafu { typename }.fail()
 }
 
-#[rustfmt::skip]
 impl ser::Serializer for &MapKeySerializer {
     type Ok = String;
     type Error = Error;
@@ -51,66 +50,158 @@ impl ser::Serializer for &MapKeySerializer {
 
     fn serialize_str(self, value: &str) -> Result<String> {
         // Make sure string is valid as a key.
-        let key = Key::from_segments(KeyType::Data, &[value])
-            .map_err(|e| {
-                debug!("MapKeySerializer got invalid key name: {}", value);
-                error::InvalidKeySnafu { msg: format!("{}", e) }.into_error(NoSource)
-            })?;
+        let key = Key::from_segments(KeyType::Data, &[value]).map_err(|e| {
+            debug!("MapKeySerializer got invalid key name: {}", value);
+            error::InvalidKeySnafu {
+                msg: format!("{}", e),
+            }
+            .into_error(NoSource)
+        })?;
         trace!("MapKeySerializer got OK key: {}", key);
         Ok(key.to_string())
     }
 
-    fn serialize_bool(self, _value: bool) -> Result<String> { bad_key("bool") }
-    fn serialize_i8(self, _value: i8) -> Result<String> { bad_key("i8") }
-    fn serialize_i16(self, _value: i16) -> Result<String> { bad_key("i16") }
-    fn serialize_i32(self, _value: i32) -> Result<String> { bad_key("i32") }
-    fn serialize_i64(self, _value: i64) -> Result<String> { bad_key("i64") }
-    fn serialize_u8(self, _value: u8) -> Result<String> { bad_key("u8") }
-    fn serialize_u16(self, _value: u16) -> Result<String> { bad_key("u16") }
-    fn serialize_u32(self, _value: u32) -> Result<String> { bad_key("u32") }
-    fn serialize_u64(self, _value: u64) -> Result<String> { bad_key("u64") }
-    fn serialize_f32(self, _value: f32) -> Result<String> { bad_key("f32") }
-    fn serialize_f64(self, _value: f64) -> Result<String> { bad_key("f64") }
-    fn serialize_char(self, _value: char) -> Result<String> { bad_key("char") }
-    fn serialize_bytes(self, _value: &[u8]) -> Result<String> { bad_key("bytes") }
-    fn serialize_unit(self) -> Result<String> { bad_key("unit") }
+    fn serialize_bool(self, _value: bool) -> Result<String> {
+        bad_key("bool")
+    }
+
+    fn serialize_i8(self, _value: i8) -> Result<String> {
+        bad_key("i8")
+    }
+
+    fn serialize_i16(self, _value: i16) -> Result<String> {
+        bad_key("i16")
+    }
+
+    fn serialize_i32(self, _value: i32) -> Result<String> {
+        bad_key("i32")
+    }
+
+    fn serialize_i64(self, _value: i64) -> Result<String> {
+        bad_key("i64")
+    }
+
+    fn serialize_u8(self, _value: u8) -> Result<String> {
+        bad_key("u8")
+    }
+
+    fn serialize_u16(self, _value: u16) -> Result<String> {
+        bad_key("u16")
+    }
+
+    fn serialize_u32(self, _value: u32) -> Result<String> {
+        bad_key("u32")
+    }
+
+    fn serialize_u64(self, _value: u64) -> Result<String> {
+        bad_key("u64")
+    }
+
+    fn serialize_f32(self, _value: f32) -> Result<String> {
+        bad_key("f32")
+    }
+
+    fn serialize_f64(self, _value: f64) -> Result<String> {
+        bad_key("f64")
+    }
+
+    fn serialize_char(self, _value: char) -> Result<String> {
+        bad_key("char")
+    }
+
+    fn serialize_bytes(self, _value: &[u8]) -> Result<String> {
+        bad_key("bytes")
+    }
+
+    fn serialize_unit(self) -> Result<String> {
+        bad_key("unit")
+    }
+
     fn serialize_unit_struct(self, _name: &'static str) -> Result<String> {
         bad_key("unit_struct")
     }
-    fn serialize_unit_variant( self, _name: &'static str, _variant_index: u32, _variant: &'static str) -> Result<String> {
+
+    fn serialize_unit_variant(
+        self,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+    ) -> Result<String> {
         bad_key("unit_variant")
     }
-    fn serialize_newtype_struct<T: ?Sized>(self, _name: &'static str, _value: &T) -> Result<String> where T: Serialize {
+
+    fn serialize_newtype_struct<T: ?Sized>(self, _name: &'static str, _value: &T) -> Result<String>
+    where
+        T: Serialize,
+    {
         bad_key("newtype_struct")
     }
-    fn serialize_newtype_variant<T: ?Sized>( self, _name: &'static str, _variant_index: u32, _variant: &'static str, _value: &T) -> Result<String> where T: Serialize {
+
+    fn serialize_newtype_variant<T: ?Sized>(
+        self,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _value: &T,
+    ) -> Result<String>
+    where
+        T: Serialize,
+    {
         bad_key("newtype_variant")
     }
+
     fn serialize_none(self) -> Result<String> {
         bad_key("none")
     }
-    fn serialize_some<T: ?Sized>(self, _value: &T) -> Result<String> where T: Serialize {
+
+    fn serialize_some<T: ?Sized>(self, _value: &T) -> Result<String>
+    where
+        T: Serialize,
+    {
         bad_key("some")
     }
+
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq> {
         bad_key("seq")
     }
+
     fn serialize_tuple(self, _len: usize) -> Result<Self::SerializeTuple> {
         bad_key("tuple")
     }
-    fn serialize_tuple_struct(self, _name: &'static str, _len: usize) -> Result<Self::SerializeTupleStruct> {
+
+    fn serialize_tuple_struct(
+        self,
+        _name: &'static str,
+        _len: usize,
+    ) -> Result<Self::SerializeTupleStruct> {
         bad_key("tuple struct")
     }
-    fn serialize_tuple_variant( self, _name: &'static str, _variant_index: u32, _variant: &'static str, _len: usize) -> Result<Self::SerializeTupleVariant> {
+
+    fn serialize_tuple_variant(
+        self,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
+    ) -> Result<Self::SerializeTupleVariant> {
         bad_key("tuple variant")
     }
+
     fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap> {
         bad_key("map")
     }
+
     fn serialize_struct(self, _name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
         bad_key("struct")
     }
-    fn serialize_struct_variant( self, _name: &'static str, _variant_index: u32, _variant: &'static str, _len: usize) -> Result<Self::SerializeStructVariant> {
+
+    fn serialize_struct_variant(
+        self,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
+    ) -> Result<Self::SerializeStructVariant> {
         bad_key("struct variant")
     }
 }
