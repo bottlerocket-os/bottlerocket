@@ -27,6 +27,7 @@ mod secret;
 mod sonobuoy;
 mod status;
 mod uninstall;
+mod vmware_k8s;
 
 /// A program for running and controlling Bottlerocket tests in a Kubernetes cluster using
 /// bottlerocket-test-system

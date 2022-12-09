@@ -41,7 +41,7 @@ impl<'a> CrdInput<'a> {
                 metadata_base_url, targets_url
             );
             Some(TufRepoConfig {
-                metadata_url: format!("{}{}/{}", metadata_base_url, &self.variant, &self.arch),
+                metadata_url: format!("{}{}/{}/", metadata_base_url, &self.variant, &self.arch),
                 targets_url: targets_url.to_string(),
             })
         } else {

@@ -97,6 +97,10 @@ pub struct Test {
     /// The name of the repo in `Infra.toml` that should be used for testing
     pub repo: Option<String>,
 
+    /// The name of the vSphere data center in `Infra.toml` that should be used for testing
+    /// If no data center is provided, the first one in `vmware.datacenters` will be used
+    pub datacenter: Option<String>,
+
     #[serde(flatten)]
     /// The URI of TestSys images
     pub testsys_images: TestsysImages,
@@ -187,6 +191,8 @@ pub struct GenericVariantConfig {
     pub conformance_image: Option<String>,
     /// The custom registry used for conformance testing
     pub conformance_registry: Option<String>,
+    /// The endpoint IP to reserve for the vSphere control plane VMs when creating a K8s cluster
+    pub control_plane_endpoint: Option<String>,
 }
 
 impl GenericVariantConfig {
@@ -211,6 +217,7 @@ impl GenericVariantConfig {
             agent_role: self.agent_role.or(other.agent_role),
             conformance_image: self.conformance_image.or(other.conformance_image),
             conformance_registry: self.conformance_registry.or(other.conformance_registry),
+            control_plane_endpoint: self.control_plane_endpoint.or(other.control_plane_endpoint),
         }
     }
 }
@@ -235,7 +242,9 @@ where
 pub struct TestsysImages {
     pub eks_resource_agent_image: Option<String>,
     pub ecs_resource_agent_image: Option<String>,
+    pub vsphere_k8s_cluster_resource_agent_image: Option<String>,
     pub ec2_resource_agent_image: Option<String>,
+    pub vsphere_vm_resource_agent_image: Option<String>,
     pub sonobuoy_test_agent_image: Option<String>,
     pub ecs_test_agent_image: Option<String>,
     pub migration_test_agent_image: Option<String>,
@@ -260,8 +269,16 @@ impl TestsysImages {
                 "{}/ecs-resource-agent:{AGENT_VERSION}",
                 registry
             )),
+            vsphere_k8s_cluster_resource_agent_image: Some(format!(
+                "{}/vsphere-k8s-cluster-resource-agent:{AGENT_VERSION}",
+                registry
+            )),
             ec2_resource_agent_image: Some(format!(
                 "{}/ec2-resource-agent:{AGENT_VERSION}",
+                registry
+            )),
+            vsphere_vm_resource_agent_image: Some(format!(
+                "{}/vsphere-vm-resource-agent:{AGENT_VERSION}",
                 registry
             )),
             sonobuoy_test_agent_image: Some(format!(
@@ -285,6 +302,12 @@ impl TestsysImages {
             ecs_resource_agent_image: self
                 .ecs_resource_agent_image
                 .or(other.ecs_resource_agent_image),
+            vsphere_k8s_cluster_resource_agent_image: self
+                .vsphere_k8s_cluster_resource_agent_image
+                .or(other.vsphere_k8s_cluster_resource_agent_image),
+            vsphere_vm_resource_agent_image: self
+                .vsphere_vm_resource_agent_image
+                .or(other.vsphere_vm_resource_agent_image),
             ec2_resource_agent_image: self
                 .ec2_resource_agent_image
                 .or(other.ec2_resource_agent_image),

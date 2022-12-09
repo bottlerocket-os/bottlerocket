@@ -13,6 +13,11 @@ pub enum Error {
     #[snafu(display("Unable to build '{}': {}", what, error))]
     Build { what: String, error: String },
 
+    #[snafu(display("Unable to build data center config: {}", source))]
+    DatacenterBuild {
+        source: pubsys_config::vmware::Error,
+    },
+
     #[snafu(context(false), display("{}", source))]
     DescribeImages {
         source: SdkError<DescribeImagesError>,
