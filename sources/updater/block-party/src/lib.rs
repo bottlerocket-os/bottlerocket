@@ -7,7 +7,6 @@
 //! * Getting the devices that are combined as a block device, e.g. a dm-verity device
 
 #![deny(missing_docs, rust_2018_idioms)]
-#![warn(clippy::pedantic)]
 
 use snafu::{ensure, OptionExt, ResultExt};
 use std::ffi::OsString;
@@ -140,7 +139,7 @@ impl BlockDevice {
         let metadata = fs::metadata(path).context(error::PathMetadataSnafu { path })?;
         let major = metadata.st_dev() >> 8;
         let minor = metadata.st_dev() & 0xff;
-        Ok(Self::from_major_minor(major, minor)?)
+        Self::from_major_minor(major, minor)
     }
 
     /// Creates a `BlockDevice` from a special block device node.
@@ -149,7 +148,7 @@ impl BlockDevice {
         let metadata = fs::metadata(&path).context(error::PathMetadataSnafu { path })?;
         let major = metadata.st_rdev() >> 8;
         let minor = metadata.st_rdev() & 0xff;
-        Ok(Self::from_major_minor(major, minor)?)
+        Self::from_major_minor(major, minor)
     }
 
     /// Creates a `BlockDevice` from the major:minor string from the file at `path`.
