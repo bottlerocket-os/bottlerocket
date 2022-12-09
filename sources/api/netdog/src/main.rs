@@ -75,13 +75,13 @@ enum SubCommand {
     WriteResolvConf(cli::WriteResolvConfArgs),
 }
 
-fn run() -> cli::Result<()> {
+async fn run() -> cli::Result<()> {
     let args: Args = argh::from_env();
     match args.subcommand {
         SubCommand::Install(args) => cli::install::run(args)?,
         SubCommand::Remove(args) => cli::remove::run(args)?,
         SubCommand::NodeIp(_) => cli::node_ip::run()?,
-        SubCommand::GenerateHostname(_) => cli::generate_hostname::run()?,
+        SubCommand::GenerateHostname(_) => cli::generate_hostname::run().await?,
         SubCommand::GenerateNetConfig(_) => cli::generate_net_config::run()?,
         SubCommand::SetHostname(args) => cli::set_hostname::run(args)?,
         SubCommand::PreparePrimaryInterface(_) => cli::prepare_primary_interface::run()?,
@@ -93,8 +93,9 @@ fn run() -> cli::Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
-    if let Err(e) = run() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);
     }

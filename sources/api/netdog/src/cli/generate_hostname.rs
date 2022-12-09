@@ -3,9 +3,21 @@ use crate::CURRENT_IP;
 use argh::FromArgs;
 use dns_lookup::lookup_addr;
 use snafu::ResultExt;
+use tokio::time::Duration;
+use tokio_retry::{
+    strategy::{jitter, FibonacciBackoff},
+    Retry,
+};
+
 use std::fs;
 use std::net::IpAddr;
 use std::str::FromStr;
+
+// Maximum number of retries for querying DNS for the hostname.
+const DNS_QUERY_MAX_RETRIES: usize = 3;
+// Starting retry interval for fibonacci backoff strategy.
+const DNS_QUERY_FIBONACCI_RETRY_INTERVAL: u64 = 50;
+// getnameinfo() takes about 5 seconds to time out - we add our own brief delay between retries.
 
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "generate-hostname")]
@@ -15,18 +27,77 @@ pub(crate) struct GenerateHostnameArgs {}
 /// Attempt to resolve assigned IP address, if unsuccessful use the IP as the hostname.
 ///
 /// The result is returned as JSON. (intended for use as a settings generator)
-pub(crate) fn run() -> Result<()> {
+pub(crate) async fn run() -> Result<()> {
     let ip_string = fs::read_to_string(CURRENT_IP)
         .context(error::CurrentIpReadFailedSnafu { path: CURRENT_IP })?;
     let ip = IpAddr::from_str(&ip_string).context(error::IpFromStringSnafu { ip: &ip_string })?;
-    let hostname = match lookup_addr(&ip) {
-        Ok(hostname) => hostname,
-        Err(e) => {
+
+    // First, attempt to lookup the hostname via DNS
+    let hostname: Option<String> = Retry::spawn(retry_strategy(), || async { lookup_addr(&ip) })
+        .await
+        .map_err(|e| {
             eprintln!("Reverse DNS lookup failed: {}", e);
-            ip_string
-        }
-    };
+            e
+        })
+        .ok();
+
+    // If the DNS lookup fails, try any platform-specific mechanisms that exist.
+    let hostname = if hostname.is_none() {
+        // The interaction between async and `Result.or_else()` chaining makes this the most ergonomic way to write this...
+        platform::query_platform_hostname()
+            .await
+            .map_err(|e| {
+                eprintln!("Failed to find hostname from platform: {}", e);
+                e
+            })
+            .ok()
+            .flatten()
+    } else {
+        hostname
+    }
+    // If no hostname has been determined we return the IP address of the host.
+    .unwrap_or(ip_string);
 
     // sundog expects JSON-serialized output
     print_json(hostname)
+}
+
+/// Returns an iterator of Durations to wait between retries of DNS queries.
+fn retry_strategy() -> impl Iterator<Item = Duration> {
+    FibonacciBackoff::from_millis(DNS_QUERY_FIBONACCI_RETRY_INTERVAL)
+        .map(jitter)
+        .take(DNS_QUERY_MAX_RETRIES)
+}
+
+mod platform {
+    use snafu::{ResultExt, Snafu};
+    use tokio::time::Duration;
+
+    const IMDS_RETRY_TIMEOUT: Duration = Duration::from_secs(3);
+
+    /// Query IMDS on AWS platforms to determine hostname.
+    #[cfg(variant_platform = "aws")]
+    pub(super) async fn query_platform_hostname() -> Result<Option<String>> {
+        let mut imdsclient = imdsclient::ImdsClient::new().with_timeout(IMDS_RETRY_TIMEOUT);
+        let imds_hostname = imdsclient.fetch_hostname().await.context(ImdsLookupSnafu)?;
+        Ok(imds_hostname)
+    }
+
+    #[cfg(not(variant_platform = "aws"))]
+    pub(super) async fn query_platform_hostname() -> Result<Option<String>> {
+        Ok(None)
+    }
+
+    /// Provide a Snafu error type for calling platform-specific hostname-fetching errors.
+    ///
+    /// This allows us to avoid conditionally compiling error cases into `crate::error::Error`.
+    #[derive(Debug, Snafu)]
+    #[snafu(visibility(pub(super)))]
+    pub(super) enum Error {
+        #[cfg(variant_platform = "aws")]
+        #[snafu(display("Failed to lookup hostname in imds: {}", source))]
+        ImdsLookup { source: imdsclient::Error },
+    }
+
+    pub(super) type Result<T> = std::result::Result<T, Error>;
 }
