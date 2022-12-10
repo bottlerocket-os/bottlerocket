@@ -120,6 +120,9 @@ Rust needs a `mod.rs` file to understand that a directory is part of the module 
 Note: all models share the same `Cargo.toml`.
 */
 
+// Clippy has a false positive in the presence of the Scalar macro.
+#![allow(clippy::derive_hash_xor_eq)]
+
 // "Modeled types" are types with special ser/de behavior used for validation.
 pub mod modeled_types;
 
