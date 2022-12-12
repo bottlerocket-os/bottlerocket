@@ -108,6 +108,9 @@ pub struct Test {
 
     /// A registry containing all TestSys images
     pub testsys_image_registry: Option<String>,
+
+    /// The tag that should be used for TestSys images
+    pub testsys_image_tag: Option<String>,
 }
 
 /// Create a vec of relevant keys for this variant ordered from most specific to least specific.
@@ -254,42 +257,27 @@ pub struct TestsysImages {
 
 impl TestsysImages {
     /// Create an images config for a specific registry.
-    pub fn new<S>(registry: S) -> Self
+    pub fn new<S>(registry: S, tag: Option<String>) -> Self
     where
         S: Into<String>,
     {
         let registry = registry.into();
-        let agent_version = format!("v{}", TESTSYS_VERSION);
+        let tag = tag.unwrap_or_else(|| format!("v{}", TESTSYS_VERSION));
         Self {
-            eks_resource_agent_image: Some(format!(
-                "{}/eks-resource-agent:{agent_version}",
-                registry
-            )),
-            ecs_resource_agent_image: Some(format!(
-                "{}/ecs-resource-agent:{agent_version}",
-                registry
-            )),
+            eks_resource_agent_image: Some(format!("{}/eks-resource-agent:{tag}", registry)),
+            ecs_resource_agent_image: Some(format!("{}/ecs-resource-agent:{tag}", registry)),
             vsphere_k8s_cluster_resource_agent_image: Some(format!(
-                "{}/vsphere-k8s-cluster-resource-agent:{agent_version}",
+                "{}/vsphere-k8s-cluster-resource-agent:{tag}",
                 registry
             )),
-            ec2_resource_agent_image: Some(format!(
-                "{}/ec2-resource-agent:{agent_version}",
-                registry
-            )),
+            ec2_resource_agent_image: Some(format!("{}/ec2-resource-agent:{tag}", registry)),
             vsphere_vm_resource_agent_image: Some(format!(
-                "{}/vsphere-vm-resource-agent:{agent_version}",
+                "{}/vsphere-vm-resource-agent:{tag}",
                 registry
             )),
-            sonobuoy_test_agent_image: Some(format!(
-                "{}/sonobuoy-test-agent:{agent_version}",
-                registry
-            )),
-            ecs_test_agent_image: Some(format!("{}/ecs-test-agent:{agent_version}", registry)),
-            migration_test_agent_image: Some(format!(
-                "{}/migration-test-agent:{agent_version}",
-                registry
-            )),
+            sonobuoy_test_agent_image: Some(format!("{}/sonobuoy-test-agent:{tag}", registry)),
+            ecs_test_agent_image: Some(format!("{}/ecs-test-agent:{tag}", registry)),
+            migration_test_agent_image: Some(format!("{}/migration-test-agent:{tag}", registry)),
             testsys_agent_pull_secret: None,
         }
     }
@@ -325,7 +313,7 @@ impl TestsysImages {
     }
 
     pub fn public_images() -> Self {
-        Self::new("public.ecr.aws/bottlerocket-test-system")
+        Self::new("public.ecr.aws/bottlerocket-test-system", None)
     }
 }
 
