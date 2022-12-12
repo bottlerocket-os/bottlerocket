@@ -3,6 +3,7 @@ pub use error::Error;
 use handlebars::Handlebars;
 use log::warn;
 use maplit::btreemap;
+use model::constants::TESTSYS_VERSION;
 use model::SecretName;
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
@@ -251,8 +252,6 @@ pub struct TestsysImages {
     pub testsys_agent_pull_secret: Option<String>,
 }
 
-const AGENT_VERSION: &str = "v0.0.3";
-
 impl TestsysImages {
     /// Create an images config for a specific registry.
     pub fn new<S>(registry: S) -> Self
@@ -260,34 +259,35 @@ impl TestsysImages {
         S: Into<String>,
     {
         let registry = registry.into();
+        let agent_version = format!("v{}", TESTSYS_VERSION);
         Self {
             eks_resource_agent_image: Some(format!(
-                "{}/eks-resource-agent:{AGENT_VERSION}",
+                "{}/eks-resource-agent:{agent_version}",
                 registry
             )),
             ecs_resource_agent_image: Some(format!(
-                "{}/ecs-resource-agent:{AGENT_VERSION}",
+                "{}/ecs-resource-agent:{agent_version}",
                 registry
             )),
             vsphere_k8s_cluster_resource_agent_image: Some(format!(
-                "{}/vsphere-k8s-cluster-resource-agent:{AGENT_VERSION}",
+                "{}/vsphere-k8s-cluster-resource-agent:{agent_version}",
                 registry
             )),
             ec2_resource_agent_image: Some(format!(
-                "{}/ec2-resource-agent:{AGENT_VERSION}",
+                "{}/ec2-resource-agent:{agent_version}",
                 registry
             )),
             vsphere_vm_resource_agent_image: Some(format!(
-                "{}/vsphere-vm-resource-agent:{AGENT_VERSION}",
+                "{}/vsphere-vm-resource-agent:{agent_version}",
                 registry
             )),
             sonobuoy_test_agent_image: Some(format!(
-                "{}/sonobuoy-test-agent:{AGENT_VERSION}",
+                "{}/sonobuoy-test-agent:{agent_version}",
                 registry
             )),
-            ecs_test_agent_image: Some(format!("{}/ecs-test-agent:{AGENT_VERSION}", registry)),
+            ecs_test_agent_image: Some(format!("{}/ecs-test-agent:{agent_version}", registry)),
             migration_test_agent_image: Some(format!(
-                "{}/migration-test-agent:{AGENT_VERSION}",
+                "{}/migration-test-agent:{agent_version}",
                 registry
             )),
             testsys_agent_pull_secret: None,
