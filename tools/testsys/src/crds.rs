@@ -30,8 +30,8 @@ pub struct CrdInput<'a> {
 }
 
 impl<'a> CrdInput<'a> {
-    /// Retrieve the TUF metadata from `Infra.toml`
-    pub fn tuf_metadata(&self) -> Option<TufRepoConfig> {
+    /// Retrieve the TUF repo information from `Infra.toml`
+    pub fn tuf_repo_config(&self) -> Option<TufRepoConfig> {
         if let (Some(metadata_base_url), Some(targets_url)) = (
             &self.repo_config.metadata_base_url,
             &self.repo_config.targets_url,
