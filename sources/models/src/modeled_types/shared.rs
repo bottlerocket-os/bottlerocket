@@ -148,6 +148,7 @@ lazy_static! {
 impl TryFrom<&str> for ValidLinuxHostname {
     type Error = error::Error;
 
+    #[allow(clippy::len_zero)]
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         ensure!(
             VALID_LINUX_HOSTNAME.is_match(input),
@@ -161,7 +162,7 @@ impl TryFrom<&str> for ValidLinuxHostname {
         // used as separators so starting with a separator would imply an empty domain, which isn't
         // allowed (must be at least one character).
         ensure!(
-            !input.starts_with("-") && !input.starts_with("."),
+            !input.starts_with('-') && !input.starts_with('.'),
             error::InvalidLinuxHostnameSnafu {
                 input,
                 msg: "must not start with '-' or '.'"
@@ -169,10 +170,11 @@ impl TryFrom<&str> for ValidLinuxHostname {
         );
 
         // Each segment must be from 1-63 chars long and shouldn't start with "-"
+
         ensure!(
             input
-                .split(".")
-                .all(|x| x.len() >= 1 && x.len() <= 63 && !x.starts_with("-")),
+                .split('.')
+                .all(|x| x.len() >= 1 && x.len() <= 63 && !x.starts_with('-')),
             error::InvalidLinuxHostnameSnafu {
                 input,
                 msg: "segment is less than 1 or greater than 63 chars"
@@ -246,7 +248,7 @@ impl EtcHostsEntries {
 
         for (ip_address, aliases) in &self.0 {
             merged
-                .entry(ip_address.clone())
+                .entry(*ip_address)
                 .or_insert(vec![])
                 .append(&mut (aliases.clone()));
         }
@@ -446,7 +448,7 @@ impl TryFrom<&str> for Url {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        if let Ok(_) = input.parse::<url::Url>() {
+        if input.parse::<url::Url>().is_ok() {
             return Ok(Url {
                 inner: input.to_string(),
             });
@@ -454,7 +456,7 @@ impl TryFrom<&str> for Url {
             // It's very common to specify URLs without a scheme, so we add one and see if that
             // fixes parsing.
             let prefixed = format!("http://{}", input);
-            if let Ok(_) = prefixed.parse::<url::Url>() {
+            if prefixed.parse::<url::Url>().is_ok() {
                 return Ok(Url {
                     inner: input.to_string(),
                 });
@@ -522,8 +524,8 @@ impl TryFrom<&str> for FriendlyVersion {
             });
         }
         // If the string begins with a 'v', skip it before checking if it is valid semver.
-        let version = if input.starts_with('v') {
-            &input[1..]
+        let version = if let Some(stripped) = input.strip_prefix('v') {
+            stripped
         } else {
             input
         };
@@ -625,21 +627,21 @@ impl TryFrom<&str> for DNSDomain {
         ensure!(
             !input.starts_with('.'),
             error::InvalidDomainNameSnafu {
-                input: input,
+                input,
                 msg: "must not start with '.'",
             }
         );
 
         let host = Host::parse(input).or_else(|e| {
             error::InvalidDomainNameSnafu {
-                input: input,
+                input,
                 msg: e.to_string(),
             }
             .fail()
         })?;
         match host {
             Host::Ipv4(_) | Host::Ipv6(_) => error::InvalidDomainNameSnafu {
-                input: input,
+                input,
                 msg: "IP address is not a valid domain name",
             }
             .fail(),
@@ -702,14 +704,14 @@ impl TryFrom<&str> for SysctlKey {
             !input.contains(".."),
             error::InvalidSysctlKeySnafu {
                 input,
-                msg: format!("must not contain '..'"),
+                msg: "must not contain '..'".to_string(),
             }
         );
         ensure!(
             !input.starts_with('.') && !input.starts_with('/'),
             error::InvalidSysctlKeySnafu {
                 input,
-                msg: format!("must not start with '.' or '/'"),
+                msg: "must not start with '.' or '/'".to_string(),
             }
         );
         ensure!(
@@ -871,7 +873,7 @@ impl TryFrom<&str> for BootConfigValue {
             input.chars().all(|c| c.is_ascii() && !c.is_ascii_control())
             // Values containing both single quotes and double quotes are inherently invalid since quotes
             // cannot be escaped.
-                && !(input.contains('"') && input.contains("'")),
+                && !(input.contains('"') && input.contains('\'')),
             error::InvalidBootconfigValueSnafu { input }
         );
         Ok(BootConfigValue {
@@ -996,7 +998,7 @@ impl TryFrom<&str> for PemCertificateString {
 
     fn try_from(input: &str) -> Result<Self, error::Error> {
         // Empty strings are valid to allow deleting bundles
-        if input.trim().len() == 0 {
+        if input.trim().is_empty() {
             return Ok(PemCertificateString {
                 inner: input.to_string(),
             });

@@ -328,7 +328,7 @@ impl StructInfo {
                     where
                         Self: Sized,
                     {
-                        Ok(<#scalar as scalar::traits::Validate>::validate(inner.into())?)
+                        <#scalar as scalar::traits::Validate>::validate(inner.into())
                     }
 
                     fn inner(&self) -> &Self::Inner { &self.#index }
@@ -347,7 +347,7 @@ impl StructInfo {
                     where
                         Self: Sized,
                     {
-                        Ok(<#scalar as scalar::traits::Validate>::validate(inner.into())?)
+                        <#scalar as scalar::traits::Validate>::validate(inner.into())
                     }
 
                     fn inner(&self) -> &Self::Inner { &self.#inner_field }

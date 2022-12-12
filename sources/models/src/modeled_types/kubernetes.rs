@@ -489,7 +489,7 @@ impl TryFrom<&str> for KubernetesEvictionHardKey {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<EvictionSignal>(&input).context(error::InvalidPlainValueSnafu {
+        serde_plain::from_str::<EvictionSignal>(input).context(error::InvalidPlainValueSnafu {
             field: "Eviction Hard key",
         })?;
         Ok(KubernetesEvictionHardKey {
@@ -555,14 +555,14 @@ impl TryFrom<&str> for KubernetesThresholdValue {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        if input.ends_with("%") {
-            let input_f32 = input[..input.len() - 1]
+        if let Some(stripped) = input.strip_suffix('%') {
+            let input_f32 = stripped
                 .parse::<f32>()
                 .context(error::InvalidPercentageSnafu { input })?;
             ensure!(
                 (0.0..100.0).contains(&input_f32),
                 error::InvalidThresholdPercentageSnafu { input }
-            )
+            );
         } else {
             ensure!(
                 KUBERNETES_QUANTITY.is_match(input),
@@ -572,8 +572,7 @@ impl TryFrom<&str> for KubernetesThresholdValue {
                     input
                 }
             );
-        };
-
+        }
         Ok(KubernetesThresholdValue {
             inner: input.to_string(),
         })
@@ -636,7 +635,7 @@ impl TryFrom<&str> for KubernetesReservedResourceKey {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ReservedResources>(&input).context(
+        serde_plain::from_str::<ReservedResources>(input).context(
             error::InvalidPlainValueSnafu {
                 field: "Reserved sources key",
             },
@@ -802,7 +801,7 @@ impl TryFrom<&str> for CpuManagerPolicy {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ValidCpuManagerPolicy>(&input)
+        serde_plain::from_str::<ValidCpuManagerPolicy>(input)
             .context(error::InvalidCpuManagerPolicySnafu { input })?;
         Ok(CpuManagerPolicy {
             inner: input.to_string(),
@@ -924,7 +923,7 @@ impl TryFrom<&str> for TopologyManagerScope {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ValidTopologyManagerScope>(&input)
+        serde_plain::from_str::<ValidTopologyManagerScope>(input)
             .context(error::InvalidTopologyManagerScopeSnafu { input })?;
         Ok(TopologyManagerScope {
             inner: input.to_string(),
@@ -977,7 +976,7 @@ impl TryFrom<&str> for TopologyManagerPolicy {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<ValidTopologyManagerPolicy>(&input)
+        serde_plain::from_str::<ValidTopologyManagerPolicy>(input)
             .context(error::InvalidTopologyManagerPolicySnafu { input })?;
         Ok(TopologyManagerPolicy {
             inner: input.to_string(),
@@ -1165,8 +1164,13 @@ impl KubernetesClusterDnsIp {
             Self::Vector(inner) => Box::new(inner.iter()),
         }
     }
+}
 
-    pub fn into_iter(self) -> impl Iterator<Item = IpAddr> {
+impl IntoIterator for KubernetesClusterDnsIp {
+    type Item = IpAddr;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
         match self {
             Self::Scalar(inner) => vec![inner],
             Self::Vector(inner) => inner,
