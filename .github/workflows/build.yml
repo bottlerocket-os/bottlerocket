@@ -121,9 +121,40 @@ jobs:
             fetch-upstream: "true"
       fail-fast: false
     steps:
+      - run: |
+          echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
       - uses: actions/checkout@v3
+      # Cache `cargo-make`, `cargo-cache`, `cargo-sweep`
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo
+          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
+      # Cache first-party rust code crate dependencies
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .cargo
+          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}
+      # Cache 'tools/' dependencies and build artifacts
+      - uses: actions/cache@v3
+        with:
+          path: |
+            tools/bin
+            tools/.crates.toml
+            tools/.crates2.json
+            tools/target
+          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
       - run: rustup default 1.64.0 && rustup component add rustfmt && rustup component add clippy
       - run: cargo install --version 0.36.0 cargo-make
+      - run: cargo install --version 0.6.2 cargo-sweep
+      - run: |
+          cargo sweep -i -r tools/
+          cargo sweep -t 7 -r tools/
       - if: contains(matrix.variant, 'nvidia')
         run: |
           cat <<-EOF > Licenses.toml
