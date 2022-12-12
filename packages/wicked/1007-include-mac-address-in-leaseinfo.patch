@@ -1,0 +1,31 @@
+diff --git a/src/leaseinfo.c b/src/leaseinfo.c
+index c47241f5..86265b45 100644
+--- a/src/leaseinfo.c
++++ b/src/leaseinfo.c
+@@ -692,7 +692,26 @@ __ni_leaseinfo_dump(FILE *out, const ni_addrconf_lease_t *lease,
+ {
+ 	unsigned int i;
+ 	char *key = NULL;
++	ni_netconfig_t *nc;
++	ni_netdev_t *dev;
+ 
++	/* Find the network device using the name, and print the MAC in the
++	 * lease file */
++	if (!(nc = ni_global_state_handle(0))) {
++		ni_warn("Unable to query global network interface state");
++		goto write_lease;
++	}
++
++	if (!(dev = ni_netdev_by_name(nc, ifname))) {
++		ni_warn("Unable to find interface with name %s", ifname);
++		goto write_lease;
++	}
++
++	__ni_leaseinfo_print_string(out, prefix, "MACADDR",
++			ni_link_address_print(&dev->link.hwaddr),
++			"", 0);
++
++write_lease:
+ 	__ni_leaseinfo_print_string(out, prefix, "INTERFACE", ifname, "", 0);
+ 
+ 	/* wicked specific vars */
