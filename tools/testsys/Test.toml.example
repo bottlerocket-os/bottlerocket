@@ -9,10 +9,10 @@
 repo = "default"
 
 # The registry containing alternate TestSys agent images
-testsys-images-registry = "public.ecr.aws/bottlerocket-test-system"
+testsys-image-registry = "public.ecr.aws/bottlerocket-test-system"
 
 # The URI for the EKS resource agent that should be used. An individual agent's provided URI will be
-# used even if `testsys-images-registry` is present.
+# used even if `testsys-image-registry` is present.
 eks-resource-agent-image = "public.ecr.aws/bottlerocket-test-system/eks_resource_agent:v0.0.2"
 
 # Test Configurations
@@ -48,6 +48,29 @@ eks-resource-agent-image = "public.ecr.aws/bottlerocket-test-system/eks_resource
 # ['aws-nvidia']
 # ['aws'.x86_64]
 # ['aws']
+#
+# Configurable values:
+#
+# cluster-names:
+#     All clusters the variant should be tested over. Cluster naming supports templated strings, and
+#     both `arch` and `variant` are provided as variables (`{{arch}}-{{variant}}`).
+#
+# instance-type:
+#     The instance type that should be used for testing.
+#
+# secrets:
+#     A map containing the names of all kubernetes secrets needed for resource creation and testing.
+#
+# agent-role:
+#     The role that should be assumed by each test and resource agent.
+#
+# conformance-image: (K8s only)
+#     Specify a custom image for conformance testing. For `aws-k8s` variants this will be used as a
+#     custom Kubernetes conformance image for Sonobuoy.
+#
+# conformance-registry: (K8s only)
+#     Specify a custom registry for conformance testing images.
+#     For `aws-k8s` variants this will be used as the Sonobuoy e2e registry.
 #
 # Note: values passed by command line argument will take precedence over those passed by environment
 # variable, and both take precedence over values set by `Test.toml`.
@@ -94,26 +117,3 @@ instance-type = "g5g.2xlarge"
 # Configuration for only the `aws-k8s-1.21` variant (variant level configuration).
 ["aws-k8s-1.21".aarch64]
 conformance-image = "<KUBERNETES-CONFORMANCE-IMAGE-URI>"
-
-# Configurable values:
-#
-# cluster-names:
-#     All clusters the variant should be tested over. Cluster naming supports templated strings, and
-#     both `arch` and `variant` are provided as variables (`{{arch}}-{{variant}}`).
-#
-# instance-type:
-#     The instance type that should be used for testing.
-#
-# secrets:
-#     A map containing all secrets needed for resource creation and testing.
-#
-# agent-role:
-#     The role that should be assumed by each test and resource agent.
-#
-# conformance-image: (K8s only)
-#     Specify a custom image for conformance testing. For `aws-k8s` variants this will be used as a
-#     custom Kubernetes conformance image for Sonobuoy.
-#
-# conformance-registry: (K8s only)
-#     Specify a custom registry for conformance testing images.
-#     For `aws-k8s` variants this will be used as the Sonobuoy e2e registry.
