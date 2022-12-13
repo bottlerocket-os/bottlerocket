@@ -4,6 +4,23 @@
 # The root filesystem is ext4
 CONFIG_EXT4_FS=y
 
+# Support for squashfs used to provide kernel headers with zstd compression
+CONFIG_SQUASHFS=m
+CONFIG_SQUASHFS_FILE_CACHE=y
+# CONFIG_SQUASHFS_FILE_DIRECT is not set
+CONFIG_SQUASHFS_DECOMP_SINGLE=y
+# CONFIG_SQUASHFS_DECOMP_MULTI is not set
+# CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU is not set
+CONFIG_SQUASHFS_XATTR=y
+CONFIG_SQUASHFS_ZLIB=y
+CONFIG_SQUASHFS_LZ4=y
+CONFIG_SQUASHFS_LZO=y
+CONFIG_SQUASHFS_XZ=y
+CONFIG_SQUASHFS_ZSTD=y
+# CONFIG_SQUASHFS_4K_DEVBLK_SIZE is not set
+# CONFIG_SQUASHFS_EMBEDDED is not set
+CONFIG_SQUASHFS_FRAGMENT_CACHE_SIZE=3
+
 # NVMe support
 CONFIG_BLK_DEV_NVME=y
 CONFIG_NVME_CORE=y
@@ -57,9 +74,6 @@ CONFIG_SECURITY_LOCKDOWN_LSM=y
 # Enable lockdown early so that if the option is present on the
 # kernel command line, it can be enforced.
 CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
-
-# Enable zstd compression for squashfs.
-CONFIG_SQUASHFS_ZSTD=y
 
 # enable /proc/config.gz
 CONFIG_IKCONFIG=y
