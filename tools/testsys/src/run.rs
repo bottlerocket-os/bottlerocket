@@ -189,9 +189,9 @@ impl Run {
         let images = vec![
             Some(self.agent_images.into()),
             Some(test_opts.testsys_images),
-            test_opts
-                .testsys_image_registry
-                .map(testsys_config::TestsysImages::new),
+            test_opts.testsys_image_registry.map(|registry| {
+                testsys_config::TestsysImages::new(registry, test_opts.testsys_image_tag)
+            }),
             Some(testsys_config::TestsysImages::public_images()),
         ]
         .into_iter()

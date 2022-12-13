@@ -11,6 +11,9 @@ repo = "default"
 # The registry containing alternate TestSys agent images
 testsys-image-registry = "public.ecr.aws/bottlerocket-test-system"
 
+# The tag that should be used with `testsys-images-registry` for image pulls
+testsys-images-registry = "latest"
+
 # The URI for the EKS resource agent that should be used. An individual agent's provided URI will be
 # used even if `testsys-image-registry` is present.
 eks-resource-agent-image = "public.ecr.aws/bottlerocket-test-system/eks_resource_agent:v0.0.2"
