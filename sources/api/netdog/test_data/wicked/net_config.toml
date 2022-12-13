@@ -139,3 +139,54 @@ to = "3001:dead:beef::2/64"
 from = "2001:dead:beef::2"
 via = "2001:beef:beef::1"
 {{/if}}
+
+{{#if (eq version 3)}}
+[myvlan]
+kind = "vlan"
+device = "eno1"
+id = 42
+dhcp4 = true
+
+[mystaticvlan]
+kind = "vlan"
+device = "eno1000"
+id = 42
+
+[mystaticvlan.static4]
+addresses = ["192.168.1.100/24"]
+
+[bond0]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno51" , "eno52"]
+dhcp4 = true
+
+[bond0.monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 200
+miimon-downdelay-ms = 200
+
+[bond1]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno53" , "eno54"]
+dhcp4 = true
+
+[bond1.monitoring]
+arpmon-interval-ms = 200
+arpmon-validate = "all"
+arpmon-targets = ["192.168.1.1", "10.0.0.2"]
+
+[bond2]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno55", "eno56", "eno57"]
+min-links = 2
+dhcp6 = true
+
+[bond2.monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 1000
+miimon-downdelay-ms = 1000
+
+{{/if}}

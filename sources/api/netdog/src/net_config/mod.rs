@@ -3,11 +3,14 @@
 //! the kernel command line.
 //!
 //! These structures are the user-facing options for configuring one or more network interfaces.
+
+pub(crate) mod devices;
 mod dhcp;
 mod error;
 mod static_address;
 mod v1;
 mod v2;
+mod v3;
 
 use crate::wicked::WickedInterface;
 pub(crate) use dhcp::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
@@ -98,11 +101,12 @@ fn deserialize_config(config_str: &str) -> Result<Box<dyn Interfaces>> {
     let net_config: Box<dyn Interfaces> = match version {
         1 => validate_config::<v1::NetConfigV1>(interface_config)?,
         2 => validate_config::<v2::NetConfigV2>(interface_config)?,
+        3 => validate_config::<v3::NetConfigV3>(interface_config)?,
         _ => {
             return error::InvalidNetConfigSnafu {
                 reason: format!("Unknown network config version: {}", version),
             }
-            .fail()
+            .fail();
         }
     };
 
@@ -152,6 +156,7 @@ where
 
 #[cfg(test)]
 mod test_macros;
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;

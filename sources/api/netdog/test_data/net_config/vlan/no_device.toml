@@ -1,0 +1,6 @@
+version = {{version}}
+
+[vlan42]
+kind = "vlan"
+id = 42
+dhcp4 = true

@@ -1,0 +1,6 @@
+version = {{version}}
+
+[vlan42]
+device = "eno1"
+id = 42
+dhcp4 = true

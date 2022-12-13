@@ -3,19 +3,60 @@
 //!
 //! The structures in this module are meant to be created from the user-facing structures in the
 //! `net_config` module.  `Default` implementations for WickedInterface exist here as well.
+mod bonding;
 mod dhcp;
 mod static_address;
+mod vlan;
 
 use crate::interface_name::InterfaceName;
+use crate::net_config::devices::bonding::{BondMonitoringConfig, NetBondV1};
+use crate::net_config::devices::interface::NetInterfaceV2;
+use crate::net_config::devices::vlan::NetVlanV1;
+use crate::net_config::devices::NetworkDeviceV1;
+use crate::wicked::bonding::{
+    WickedArpMonitoringConfig, WickedBondMode, WickedMiiMonitoringConfig,
+};
+use bonding::WickedBond;
 pub(crate) use dhcp::{WickedDhcp4, WickedDhcp6};
+pub(crate) use error::Error;
 use serde::Serialize;
 use snafu::ResultExt;
 pub(crate) use static_address::{WickedRoutes, WickedStaticAddress};
 use std::fs;
 use std::path::Path;
+use vlan::WickedVlanTag;
 
 const WICKED_CONFIG_DIR: &str = "/etc/wicked/ifconfig";
 const WICKED_FILE_EXT: &str = "xml";
+
+macro_rules! wicked_from {
+    ($name:ident, $config:ident) => {
+        ({
+            let mut wicked_interface = WickedInterface::new($name.clone());
+            wicked_interface.ipv4_dhcp = $config.dhcp4.clone().map(WickedDhcp4::from);
+            wicked_interface.ipv6_dhcp = $config.dhcp6.clone().map(WickedDhcp6::from);
+
+            // Based on the existence of static addresses and routes, create the ipv4/6_static
+            // struct members.  They must be `Option`s because we want to avoid serializing empty
+            // tags into the config file
+            let maybe_routes = $config.routes.clone().map(WickedRoutes::from);
+            let maybe_ipv4_static = WickedStaticAddress::maybe_new(
+                $config.static4.clone(),
+                maybe_routes.as_ref().and_then(|s| s.ipv4.clone()),
+            );
+            let maybe_ipv6_static = WickedStaticAddress::maybe_new(
+                $config.static6.clone(),
+                maybe_routes.as_ref().and_then(|s| s.ipv6.clone()),
+            );
+            wicked_interface.ipv4_static = maybe_ipv4_static;
+            wicked_interface.ipv6_static = maybe_ipv6_static;
+
+            wicked_interface
+        }) as WickedInterface
+    };
+}
+
+pub(crate) use wicked_from;
 
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(rename = "interface")]
@@ -35,6 +76,14 @@ pub(crate) struct WickedInterface {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "ipv6:static")]
     pub(crate) ipv6_static: Option<WickedStaticAddress>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "vlan")]
+    pub(crate) vlan_tag: Option<WickedVlanTag>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "bond")]
+    pub(crate) bond: Option<WickedBond>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) link: Option<WickedLinkConfig>,
 }
 
 #[derive(Debug, Serialize, PartialEq)]
@@ -75,6 +124,9 @@ impl WickedInterface {
             ipv6_dhcp: None,
             ipv4_static: None,
             ipv6_static: None,
+            vlan_tag: None,
+            bond: None,
+            link: None,
         }
     }
 
@@ -88,6 +140,71 @@ impl WickedInterface {
         })?;
         fs::write(&cfg_path, xml).context(error::WickedConfigWriteSnafu { path: cfg_path })
     }
+}
+
+impl From<(&InterfaceName, &NetworkDeviceV1)> for WickedInterface {
+    fn from(device_tup: (&InterfaceName, &NetworkDeviceV1)) -> Self {
+        match device_tup.1 {
+            NetworkDeviceV1::Interface(i) => WickedInterface::from((device_tup.0, i)),
+            NetworkDeviceV1::BondDevice(b) => WickedInterface::from((device_tup.0, b)),
+            NetworkDeviceV1::VlanDevice(v) => WickedInterface::from((device_tup.0, v)),
+        }
+    }
+}
+
+impl From<(&InterfaceName, &NetInterfaceV2)> for WickedInterface {
+    fn from(device_tup: (&InterfaceName, &NetInterfaceV2)) -> Self {
+        let name = device_tup.0;
+        let config = device_tup.1;
+        wicked_from!(name, config)
+    }
+}
+
+impl From<(&InterfaceName, &NetBondV1)> for WickedInterface {
+    fn from(device_tup: (&InterfaceName, &NetBondV1)) -> Self {
+        let name = device_tup.0;
+        let config = device_tup.1;
+        let mut wicked_interface = wicked_from!(name, config);
+
+        // Here is where bonding specific things begin
+        let mut wicked_bond = WickedBond::new(
+            WickedBondMode::from(config.mode.clone()),
+            config.interfaces.clone(),
+        );
+
+        wicked_bond.min_links = config.min_links;
+
+        match &config.monitoring_config {
+            BondMonitoringConfig::MiiMon(config) => {
+                wicked_bond.mii_monitoring = Some(WickedMiiMonitoringConfig::from(config.clone()))
+            }
+            BondMonitoringConfig::ArpMon(config) => {
+                wicked_bond.arp_monitoring = Some(WickedArpMonitoringConfig::from(config.clone()))
+            }
+        }
+
+        wicked_interface.bond = Some(wicked_bond);
+
+        wicked_interface
+    }
+}
+
+impl From<(&InterfaceName, &NetVlanV1)> for WickedInterface {
+    fn from(device_tup: (&InterfaceName, &NetVlanV1)) -> Self {
+        let name = device_tup.0;
+        let config = device_tup.1;
+        let mut wicked_interface = wicked_from!(name, config);
+
+        wicked_interface.vlan_tag = Some(WickedVlanTag::new(config.device.clone(), config.id));
+
+        wicked_interface
+    }
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub(crate) struct WickedLinkConfig {
+    #[serde(rename = "$unflatten=master")]
+    pub(crate) master: InterfaceName,
 }
 
 mod error {
@@ -109,7 +226,6 @@ mod error {
     }
 }
 
-pub(crate) use error::Error;
 type Result<T> = std::result::Result<T, error::Error>;
 
 #[cfg(test)]
@@ -121,7 +237,7 @@ mod tests {
     use std::path::PathBuf;
     use std::str::FromStr;
 
-    static NET_CONFIG_VERSIONS: &[u8] = &[1, 2];
+    static NET_CONFIG_VERSIONS: &[u8] = &[1, 2, 3];
 
     fn test_data() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_data")
