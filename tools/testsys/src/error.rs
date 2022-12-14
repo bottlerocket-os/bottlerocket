@@ -13,6 +13,11 @@ pub enum Error {
     #[snafu(display("Unable to build '{}': {}", what, error))]
     Build { what: String, error: String },
 
+    #[snafu(display("Unable to build datacenter credentials: {}", source))]
+    CredsBuild {
+        source: pubsys_config::vmware::Error,
+    },
+
     #[snafu(display("Unable to build data center config: {}", source))]
     DatacenterBuild {
         source: pubsys_config::vmware::Error,
@@ -93,5 +98,10 @@ pub enum Error {
     Variant {
         variant: String,
         source: bottlerocket_variant::error::Error,
+    },
+
+    #[snafu(display("Error reading config: {}", source))]
+    VmwareConfig {
+        source: pubsys_config::vmware::Error,
     },
 }

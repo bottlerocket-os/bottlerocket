@@ -9,7 +9,7 @@ use bottlerocket_types::agent_config::{
     CreationPolicy, K8sVersion, VSphereK8sClusterConfig, VSphereK8sClusterInfo, VSphereVmConfig,
 };
 use maplit::btreemap;
-use model::{Crd, DestructionPolicy};
+use model::{Crd, DestructionPolicy, SecretName};
 use pubsys_config::vmware::Datacenter;
 use snafu::OptionExt;
 use std::collections::BTreeMap;
@@ -19,6 +19,7 @@ use std::str::FromStr;
 pub(crate) struct VmwareK8sCreator {
     pub(crate) region: String,
     pub(crate) datacenter: Datacenter,
+    pub(crate) creds: Option<(String, SecretName)>,
     pub(crate) ova_name: String,
     pub(crate) encoded_mgmt_cluster_kubeconfig: String,
 }
@@ -136,7 +137,16 @@ impl CrdCreator for VmwareK8sCreator {
                     .testsys_agent_pull_secret
                     .to_owned(),
             )
-            .set_secrets(Some(cluster_input.crd_input.config.secrets.clone()))
+            .set_secrets(Some(
+                cluster_input
+                    .crd_input
+                    .config
+                    .secrets
+                    .clone()
+                    .into_iter()
+                    .chain(self.creds.clone())
+                    .collect(),
+            ))
             .privileged(true)
             .build(cluster_input.cluster_name)
             .map_err(|e| error::Error::Build {
@@ -205,7 +215,16 @@ impl CrdCreator for VmwareK8sCreator {
                     .testsys_agent_pull_secret
                     .to_owned(),
             )
-            .set_secrets(Some(bottlerocket_input.crd_input.config.secrets.clone()))
+            .set_secrets(Some(
+                bottlerocket_input
+                    .crd_input
+                    .config
+                    .secrets
+                    .clone()
+                    .into_iter()
+                    .chain(self.creds.clone())
+                    .collect(),
+            ))
             .depends_on(cluster_name)
             .build(format!(
                 "{}-vms-{}",

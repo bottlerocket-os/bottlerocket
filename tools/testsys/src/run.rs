@@ -9,7 +9,10 @@ use clap::Parser;
 use log::{debug, info};
 use model::test_manager::TestManager;
 use model::SecretName;
-use pubsys_config::vmware::{Datacenter, DatacenterBuilder};
+use pubsys_config::vmware::{
+    Datacenter, DatacenterBuilder, DatacenterCreds, DatacenterCredsBuilder, DatacenterCredsConfig,
+    VMWARE_CREDS_PATH,
+};
 use pubsys_config::InfraConfig;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
@@ -255,6 +258,48 @@ impl Run {
                     .build()
                     .context(error::DatacenterBuildSnafu)?;
 
+                let vsphere_secret = if !variant_config.secrets.contains_key("vsphereCredentials") {
+                    info!("Creating vSphere secret, 'vspherecreds'");
+                    let creds_env = DatacenterCredsBuilder::from_env();
+                    let creds_file = if let Some(ref creds_file) = *VMWARE_CREDS_PATH {
+                        if creds_file.exists() {
+                            info!("Using vSphere credentials file at {}", creds_file.display());
+                            DatacenterCredsConfig::from_path(creds_file)
+                                .context(error::VmwareConfigSnafu)?
+                        } else {
+                            info!(
+                            "vSphere credentials file not found, will attempt to use environment"
+                        );
+                            DatacenterCredsConfig::default()
+                        }
+                    } else {
+                        info!("Unable to determine vSphere credentials file location, will attempt to use environment");
+                        DatacenterCredsConfig::default()
+                    };
+                    let dc_creds = creds_file.datacenter.get(&datacenter.datacenter);
+                    let creds: DatacenterCreds = creds_env
+                        .take_missing_from(dc_creds)
+                        .build()
+                        .context(error::CredsBuildSnafu)?;
+
+                    let secret_name =
+                        SecretName::new("vspherecreds").context(error::SecretNameSnafu {
+                            secret_name: "vspherecreds",
+                        })?;
+                    client
+                        .create_secret(
+                            &secret_name,
+                            vec![
+                                ("username".to_string(), creds.username),
+                                ("password".to_string(), creds.password),
+                            ],
+                        )
+                        .await?;
+                    Some(("vsphereCredentials".to_string(), secret_name))
+                } else {
+                    None
+                };
+
                 let mgmt_cluster_kubeconfig =
                     self.mgmt_cluster_kubeconfig.context(error::InvalidSnafu {
                         what: "A management cluster kubeconfig is required for VMware testing",
@@ -272,6 +317,7 @@ impl Run {
                     })?,
                     datacenter,
                     encoded_mgmt_cluster_kubeconfig: encoded_kubeconfig,
+                    creds: vsphere_secret,
                 })
             }
             unsupported => {
