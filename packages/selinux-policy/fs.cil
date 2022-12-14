@@ -55,6 +55,7 @@
 (filecon "/.*/usr/bin/docker.*" file runtime_exec)
 (filecon "/.*/usr/bin/host-ctr" file runtime_exec)
 (filecon "/.*/usr/sbin/runc" file runtime_exec)
+(filecon "/.*/usr/bin/shibaken" file api_exec)
 
 ; Label local storage mounts.
 (filecon "/local" any local)

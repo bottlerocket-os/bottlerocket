@@ -1,3 +1,4 @@
+use crate::warmpool::error::WarmPoolCheckError;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
@@ -27,6 +28,9 @@ pub(crate) enum Error {
 
     #[snafu(display("Error serializing to JSON: {}", source))]
     SerializeJson { source: serde_json::error::Error },
+
+    #[snafu(display("Failed to check autoscaling warm pool: {}", source))]
+    WarmPoolCheckFailed { source: WarmPoolCheckError },
 }
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
