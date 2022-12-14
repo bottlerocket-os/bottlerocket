@@ -220,6 +220,12 @@ impl ImdsClient {
         Ok(Some(public_keys))
     }
 
+    /// Gets the hostname from instance metadata.
+    pub async fn fetch_hostname(&mut self) -> Result<Option<String>> {
+        let hostname_target = "meta-data/local-hostname";
+        self.fetch_string(&hostname_target).await
+    }
+
     /// Helper to fetch bytes from IMDS using the pinned schema version.
     async fn fetch_bytes<S>(&mut self, end_target: S) -> Result<Option<Vec<u8>>>
     where

@@ -350,7 +350,14 @@ where
         // Match on the generator's exit code. This code lays the foundation
         // for handling alternative exit codes from generators.
         match result.status.code() {
-            Some(0) => {}
+            Some(0) => {
+                if !result.stderr.is_empty() {
+                    let cmd_stderr = String::from_utf8_lossy(&result.stderr);
+                    for line in cmd_stderr.lines() {
+                        info!("Setting generator command '{}' stderr: {}", command, line);
+                    }
+                }
+            }
             Some(1) => {
                 return error::FailedSettingGeneratorSnafu {
                     program: generator.as_str(),

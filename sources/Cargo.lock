@@ -2253,10 +2253,12 @@ name = "netdog"
 version = "0.1.0"
 dependencies = [
  "argh",
+ "bottlerocket-variant",
  "dns-lookup",
  "envy",
  "generate-readme",
  "handlebars",
+ "imdsclient",
  "indexmap",
  "ipnet",
  "lazy_static",
@@ -2268,6 +2270,8 @@ dependencies = [
  "serde_plain",
  "snafu",
  "tempfile",
+ "tokio",
+ "tokio-retry",
  "toml",
 ]
 
