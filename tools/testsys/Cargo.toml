@@ -8,10 +8,10 @@ publish = false
 
 [dependencies]
 async-trait = "0.1"
-aws-config = "0.48"
-aws-sdk-ec2 = "0.18"
+aws-config = "0.49"
+aws-sdk-ec2 = "0.19"
 base64 = "0.13"
-bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.3", tag = "v0.0.3"}
+bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.4", tag = "v0.0.4"}
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 clap = { version = "3", features = ["derive", "env"] }
 env_logger = "0.9"
@@ -21,7 +21,7 @@ k8s-openapi = { version = "0.16", features = ["v1_20", "api"], default-features 
 kube-client = { version = "0.75"}
 log = "0.4"
 maplit = "1.0.2"
-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.3", tag = "v0.0.3"}
+model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.4", tag = "v0.0.4"}
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

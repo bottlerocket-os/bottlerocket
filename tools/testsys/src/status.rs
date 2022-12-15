@@ -34,7 +34,13 @@ impl Status {
             labels.push(format!("testsys/variant={}", variant))
         };
         let status = client
-            .status(&SelectionParams::Label(labels.join(",")), self.controller)
+            .status(
+                &SelectionParams {
+                    labels: Some(labels.join(",")),
+                    ..Default::default()
+                },
+                self.controller,
+            )
             .await?;
 
         if self.json {
