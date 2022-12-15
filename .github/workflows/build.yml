@@ -121,8 +121,10 @@ jobs:
             fetch-upstream: "true"
       fail-fast: false
     steps:
-      - run: |
+      - name: Preflight step to set up the runner
+        run: |
           echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
+          sudo apt -y install build-essential openssl libssl-dev pkg-config liblz4-tool
       - uses: actions/checkout@v3
       # Cache `cargo-make`, `cargo-cache`, `cargo-sweep`
       - uses: actions/cache@v3
