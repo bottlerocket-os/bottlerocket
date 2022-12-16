@@ -40,7 +40,7 @@ pub(crate) fn get_parameters(
     template_path: &Path,
     build_context: &BuildContext<'_>,
 ) -> Result<TemplateParameters> {
-    let templates_str = fs::read_to_string(&template_path).context(error::FileSnafu {
+    let templates_str = fs::read_to_string(template_path).context(error::FileSnafu {
         op: "read",
         path: &template_path,
     })?;

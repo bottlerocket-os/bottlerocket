@@ -244,7 +244,7 @@ where
     for target_path in targets {
         debug!("Adding target from path: {}", target_path.display());
         editor
-            .add_target_path(&target_path)
+            .add_target_path(target_path)
             .context(error::AddTargetSnafu { path: &target_path })?;
     }
 
