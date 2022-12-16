@@ -1311,12 +1311,11 @@ dependencies = [
 script_runner = "bash"
 script = [
 '''
-for ws in sources variants/* tools/{buildsys,pubsys}; do
+for ws in sources tools; do
   [ -d "${ws}" ] || continue
-  [ "${ws}" == "variants/shared" ] && continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
-rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
+rm -f ${BUILDSYS_TOOLS_DIR}/bin/*
 '''
 ]
 
