@@ -84,7 +84,10 @@ impl<'a> CrdInput<'a> {
         // Create a list of all CRD names that match all of the specified labels.
         Ok(self
             .client
-            .list(&SelectionParams::Label(checks))
+            .list(&SelectionParams {
+                labels: Some(checks),
+                ..Default::default()
+            })
             .await?
             .iter()
             .filter_map(Crd::name)
