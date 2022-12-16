@@ -33,7 +33,7 @@ impl Status {
         if let Some(variant) = self.variant {
             labels.push(format!("testsys/variant={}", variant))
         };
-        let status = client
+        let mut status = client
             .status(
                 &SelectionParams {
                     labels: Some(labels.join(",")),
@@ -42,6 +42,9 @@ impl Status {
                 self.controller,
             )
             .await?;
+        status.new_column("BUILD ID", |crd| {
+            crd.labels().get("testsys/build-id").cloned()
+        });
 
         if self.json {
             info!(
