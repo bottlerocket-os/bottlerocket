@@ -65,15 +65,15 @@ impl InfraConfig {
     /// Deserializes an InfraConfig from Infra.lock, if it exists, otherwise uses Infra.toml
     /// If the default flag is true, will create a default config if Infra.toml doesn't exist
     pub fn from_path_or_lock(path: &Path, default: bool) -> Result<Self> {
-        let lock_path = Self::compute_lock_path(&path)?;
+        let lock_path = Self::compute_lock_path(path)?;
         if lock_path.exists() {
             info!("Found infra config at path: {}", lock_path.display());
             Self::from_lock_path(lock_path)
         } else if default {
-            Self::from_path_or_default(&path)
+            Self::from_path_or_default(path)
         } else {
             info!("Found infra config at path: {}", path.display());
-            Self::from_path(&path)
+            Self::from_path(path)
         }
     }
 
