@@ -70,6 +70,9 @@ pub(crate) struct Run {
     #[clap(long, env = "TESTSYS_TARGET_REGION")]
     target_region: Option<String>,
 
+    #[clap(long, env = "BUILDSYS_VERSION_BUILD")]
+    build_id: Option<String>,
+
     #[clap(flatten)]
     agent_images: TestsysImages,
 
@@ -331,6 +334,7 @@ impl Run {
             client: &client,
             arch: self.arch,
             variant,
+            build_id: self.build_id,
             config: variant_config,
             repo_config,
             starting_version: self.migration_starting_version,
