@@ -340,6 +340,7 @@ impl Run {
             starting_version: self.migration_starting_version,
             migrate_to_version: self.migration_target_version,
             starting_image_id: self.starting_image_id,
+            test_type: self.test_flavor.clone(),
             images,
         };
 
@@ -384,7 +385,7 @@ fn parse_key_val(s: &str) -> Result<(String, SecretName)> {
     ))
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum KnownTestType {
     /// Conformance testing is a full integration test that asserts that Bottlerocket is working for
@@ -403,7 +404,7 @@ pub enum KnownTestType {
 
 /// If a test type is one that is supported by TestSys it will be created as `Known(KnownTestType)`.
 /// All other test types will be stored as `Custom(<TEST-TYPE>)`.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub(crate) enum TestType {
     Known(KnownTestType),
