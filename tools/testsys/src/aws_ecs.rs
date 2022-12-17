@@ -72,7 +72,7 @@ impl CrdCreator for AwsEcsCreator {
             .cluster_name(cluster_input.cluster_name)
             .region(Some(self.region.to_owned()))
             .assume_role(cluster_input.crd_input.config.agent_role.clone())
-            .destruction_policy(DestructionPolicy::OnTestSuccess)
+            .destruction_policy(DestructionPolicy::OnDeletion)
             .image(
                 cluster_input
                     .crd_input
