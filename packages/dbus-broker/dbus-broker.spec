@@ -18,6 +18,9 @@ Requires: %{_cross_os}libexpat
 Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}systemd
 
+# Work around an aliasing rules violation.
+Patch0001: 0001-c-utf8-disable-strict-aliasing-optimizations.patch
+
 %description
 %{summary}.
 

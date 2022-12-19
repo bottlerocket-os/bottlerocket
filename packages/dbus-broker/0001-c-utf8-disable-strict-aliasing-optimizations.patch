@@ -1,0 +1,32 @@
+From e3b30388140d3cd7cb53a2f28faae8847bb7490e Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Thu, 22 Dec 2022 17:21:23 +0000
+Subject: [PATCH] c-utf8: disable strict aliasing optimizations
+
+The current implementation of c_utf8_verify() violates aliasing rules
+when it calls into c_utf8_verify_ascii() with a type-punned pointer.
+
+Disable the strict aliasing optimization to prevent the compiler from
+optimizing the code under the assumption that accesses through the
+pointer are invalid, which breaks the function's contract.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ subprojects/libcutf8-1/src/meson.build | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/subprojects/libcutf8-1/src/meson.build b/subprojects/libcutf8-1/src/meson.build
+index baeecb7..ad38633 100644
+--- a/subprojects/libcutf8-1/src/meson.build
++++ b/subprojects/libcutf8-1/src/meson.build
+@@ -16,6 +16,7 @@ libcutf8_both = both_libraries(
+         c_args: [
+                 '-fvisibility=hidden',
+                 '-fno-common',
++                '-fno-strict-aliasing',
+         ],
+         dependencies: libcutf8_deps,
+         install: not meson.is_subproject(),
+-- 
+2.37.1
+
