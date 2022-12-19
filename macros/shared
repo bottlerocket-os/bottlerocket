@@ -237,3 +237,5 @@ CROSS_COMPILATION_CONF_EOF\
 %__arch_install_post \
   /usr/lib/rpm/check-buildroot \
   %cross_generate_attribution
+
+%source_date_epoch_from_changelog 0
