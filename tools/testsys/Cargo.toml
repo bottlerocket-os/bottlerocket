@@ -10,7 +10,7 @@ publish = false
 async-trait = "0.1"
 aws-config = "0.48"
 aws-sdk-ec2 = "0.18"
-base64 = "0.13"
+base64 = "0.20"
 bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.5", tag = "v0.0.5"}
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 clap = { version = "3", features = ["derive", "env"] }
