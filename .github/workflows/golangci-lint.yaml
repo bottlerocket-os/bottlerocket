@@ -2,16 +2,19 @@ name: golangci-lint
 on:
   pull_request:
     branches: [develop]
-    # Only run this workflow if Go files have been modified
+    # Only run this workflow if Go files or this workflow have been modified
     paths:
       - '**.go'
       - '*/go.mod'
       - '*/go.sum'
+      - '.github/workflows/golangci-lint.yaml'
 
 jobs:
   golangci-lint:
     name: lint
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+      group: bottlerocket
+      labels: bottlerocket_ubuntu-latest_8-core
     steps:
       - uses: actions/setup-go@v3
         with:
