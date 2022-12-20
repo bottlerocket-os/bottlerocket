@@ -1,15 +1,17 @@
 use crate::error::{self, Result};
 use clap::Parser;
 use log::{debug, info};
-use model::test_manager::{CrdState, CrdType, SelectionParams, TestManager};
+use model::test_manager::{CrdState, CrdType, SelectionParams, StatusProgress, TestManager};
+use serde::Deserialize;
+use serde_plain::derive_fromstr_from_deserialize;
 use snafu::ResultExt;
 
 /// Check the status of testsys objects.
 #[derive(Debug, Parser)]
 pub(crate) struct Status {
-    /// Output the results in JSON format.
-    #[clap(long = "json")]
-    json: bool,
+    /// Configure the output of the command (json, narrow, wide).
+    #[clap(long, short = 'o')]
+    output: Option<StatusOutput>,
 
     /// Check the status of the testsys controller
     #[clap(long, short = 'c')]
@@ -70,22 +72,50 @@ impl Status {
                 self.controller,
             )
             .await?;
-        status.new_column("BUILD ID", |crd| {
-            crd.labels().get("testsys/build-id").cloned()
-        });
 
-        if self.json {
-            info!(
-                "{}",
-                serde_json::to_string_pretty(&status).context(error::SerdeJsonSnafu {
-                    what: "Could not create string from status."
-                })?
-            );
-        } else {
-            let (width, _) = term_size::dimensions().unwrap_or((80, 0));
-            debug!("Window width '{}'", width);
-            println!("{:width$}", status);
-        }
+        match self.output {
+            Some(StatusOutput::Json) => {
+                info!(
+                    "{}",
+                    serde_json::to_string_pretty(&status).context(error::SerdeJsonSnafu {
+                        what: "Could not create string from status."
+                    })?
+                );
+                return Ok(());
+            }
+            Some(StatusOutput::Narrow) => (),
+            None => {
+                status.new_column("BUILD ID", |crd| {
+                    crd.labels().get("testsys/build-id").cloned()
+                });
+                status.with_time();
+            }
+            Some(StatusOutput::Wide) => {
+                status.new_column("BUILD ID", |crd| {
+                    crd.labels().get("testsys/build-id").cloned()
+                });
+                status.with_time();
+                status.with_progress(StatusProgress::WithTests);
+            }
+        };
+
+        let (width, _) = term_size::dimensions().unwrap_or((80, 0));
+        debug!("Window width '{}'", width);
+        println!("{:width$}", status);
+
         Ok(())
     }
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum StatusOutput {
+    /// Output the status in json
+    Json,
+    /// Show minimal columns in the status table
+    Narrow,
+    /// Show all columns in the status table
+    Wide,
+}
+
+derive_fromstr_from_deserialize!(StatusOutput);
