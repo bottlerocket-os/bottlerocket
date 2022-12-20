@@ -1401,14 +1401,28 @@ script = [
     '''
 ]
 
-# This task will clear all tests and resources from the testsys cluster.
+# This task will clear all tests from the testsys cluster.
+# To delete all passed tests use `cargo make clean-test --passed`
+# To delete all failed tests use `cargo make clean-test --failed`
+# To delete all incomplete tests use `cargo make clean-test --running`
 [tasks.clean-test]
 dependencies = ["test-tools"]
 script = [
     '''
     set -eu
     export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete
+    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete --test ${@}
+    '''
+]
+
+# This task will clear all tests and resources from the testsys cluster.
+[tasks.clean-test-all]
+dependencies = ["test-tools"]
+script = [
+    '''
+    set -eu
+    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete ${@}
     '''
 ]
 
