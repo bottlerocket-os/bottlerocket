@@ -24,7 +24,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_plain = "1.0"
 snafu = "0.7"
 toml = "0.5"
-x509-parser = "0.13"
+x509-parser = "0.14"
 url = "2.1"
 
 [build-dependencies]

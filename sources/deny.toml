@@ -57,23 +57,22 @@ multiple-versions = "deny"
 wildcards = "deny"
 
 skip = [
-    # older version used by chrono 0.4.22
-    { name = "time", version = "0.1.44" },
 ]
 
 skip-tree = [
-    # handlebars dependency, uses older versions of SHA-1 and its dependencies
-    { name = "pest_meta", version = "2.1.3" },
-
-    # actix-http uses older and newer versions of crates like rustc_version and
-    # semver, for build vs. runtime dependencies.
-    { name = "actix-http", version = "3.0.0-rc.1" },
-
-    # structopt pulls in an older version of clap
-    { name = "structopt", version = "0.3.26" },
-
-    # reqwest uses an older rustls-pemfile
-    { name = "reqwest", version = "0.11.10" },
+    # aws-sdk-rust is using an older hyper-rustls
+    { name = "hyper-rustls", version = "=0.22.1" },
+    # tungstenite is using an older sha-1
+    { name = "sha-1", version = "=0.9.8" },
+    # structopt is using an older clap and heck
+    { name = "structopt", version = "=0.3.26" },
+    # older version used by chrono
+    { name = "time", version = "=0.1.45" },
+    # windows-sys is not a direct dependency. mio and schannel
+    # are using different versions of windows-sys. we skip the
+    # dependency tree because windows-sys has many sub-crates
+    # that differ in major version.
+    { name = "windows-sys", version = "=0.36.1" }
 ]
 
 [sources]

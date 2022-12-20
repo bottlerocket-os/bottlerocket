@@ -22,7 +22,7 @@ retry-read = { path = "../../retry-read", version = "0.1.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1.0"
-serde-xml-rs = "0.5"
+serde-xml-rs = "0.6"
 simplelog = "0.12"
 snafu = "0.7"
 tokio = { version = "~1.14", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS

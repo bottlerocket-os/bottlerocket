@@ -16,7 +16,7 @@ imdsclient = { path = "../../imdsclient", version = "0.1.0" }
 indexmap = { version = "1.8", features = ["serde"]}
 envy = "0.4"
 lazy_static = "1.2"
-quick-xml = {version = "0.23", features = ["serialize"]}
+quick-xml = {version = "0.26", features = ["serialize"]}
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1.1"
 serde = { version = "1.0", features = ["derive"] }
