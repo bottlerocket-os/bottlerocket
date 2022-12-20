@@ -21,7 +21,7 @@ pub(crate) struct Install {
     #[clap(
         long = "controller-uri",
         env = "TESTSYS_CONTROLLER_IMAGE",
-        default_value = "public.ecr.aws/bottlerocket-test-system/controller:v0.0.4"
+        default_value = "public.ecr.aws/bottlerocket-test-system/controller:v0.0.5"
     )]
     controller_uri: String,
 }
