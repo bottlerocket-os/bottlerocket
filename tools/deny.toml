@@ -12,7 +12,7 @@ confidence-threshold = 0.93
 # Commented license types are allowed but not currently used
 allow = [
     "Apache-2.0",
-    # "BSD-2-Clause",
+    "BSD-2-Clause",
     "BSD-3-Clause",
     "BSL-1.0",
     # "CC0-1.0",

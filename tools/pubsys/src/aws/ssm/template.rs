@@ -70,13 +70,31 @@ pub(crate) fn get_parameters(
     Ok(template_parameters)
 }
 
+/// A value which stores rendered SSM parameters alongside metadata used to render their templates
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+pub(crate) struct RenderedParameter {
+    pub(crate) ami: Image,
+    pub(crate) ssm_key: SsmKey,
+    pub(crate) value: String,
+}
+
+impl RenderedParameter {
+    /// Creates an `SsmParameters` HashMap from a list of `RenderedParameter`
+    pub(crate) fn as_ssm_parameters(rendered_parameters: &[RenderedParameter]) -> SsmParameters {
+        rendered_parameters
+            .iter()
+            .map(|param| (param.ssm_key.clone(), param.value.clone()))
+            .collect()
+    }
+}
+
 /// Render the given template parameters using the data from the given AMIs
 pub(crate) fn render_parameters(
     template_parameters: TemplateParameters,
-    amis: HashMap<Region, Image>,
+    amis: &HashMap<Region, Image>,
     ssm_prefix: &str,
     build_context: &BuildContext<'_>,
-) -> Result<SsmParameters> {
+) -> Result<Vec<RenderedParameter>> {
     /// Values that we allow as template variables
     #[derive(Debug, Serialize)]
     struct TemplateContext<'a> {
@@ -87,7 +105,7 @@ pub(crate) fn render_parameters(
         image_version: &'a str,
         region: &'a str,
     }
-    let mut new_parameters = HashMap::new();
+    let mut new_parameters = Vec::new();
     for (region, image) in amis {
         let context = TemplateContext {
             variant: build_context.variant,
@@ -115,10 +133,11 @@ pub(crate) fn render_parameters(
                     template: &tp.value,
                 })?;
 
-            new_parameters.insert(
-                SsmKey::new(region.clone(), join_name(ssm_prefix, &name_suffix)),
+            new_parameters.push(RenderedParameter {
+                ami: image.clone(),
+                ssm_key: SsmKey::new(region.clone(), join_name(ssm_prefix, &name_suffix)),
                 value,
-            );
+            });
         }
     }
 
