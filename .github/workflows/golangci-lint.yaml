@@ -12,9 +12,7 @@ on:
 jobs:
   golangci-lint:
     name: lint
-    runs-on:
-      group: bottlerocket
-      labels: bottlerocket_ubuntu-latest_8-core
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v3
         with:
