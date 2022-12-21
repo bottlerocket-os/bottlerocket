@@ -1,9 +1,10 @@
-use crate::aws_resources::{ami, ami_name, ec2_crd, get_ami_id, migration_crd};
+use crate::aws_resources::{ami, ami_name, ec2_crd, get_ami_id};
 use crate::crds::{
     BottlerocketInput, ClusterInput, CrdCreator, CrdInput, CreateCrdOutput, MigrationInput,
     TestInput,
 };
 use crate::error::{self, Result};
+use crate::migration::migration_crd;
 use bottlerocket_types::agent_config::{ClusterType, EcsClusterConfig, EcsTestConfig};
 use log::debug;
 use maplit::btreemap;
@@ -115,6 +116,7 @@ impl CrdCreator for AwsEcsCreator {
     ) -> Result<CreateCrdOutput> {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(migration_crd(
             migration_input,
+            None,
         )?))))
     }
 

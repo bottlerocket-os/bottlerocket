@@ -21,6 +21,7 @@ mod delete;
 mod error;
 mod install;
 mod logs;
+mod migration;
 mod restart_test;
 mod run;
 mod secret;

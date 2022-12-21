@@ -1,9 +1,9 @@
-use crate::aws_resources;
 use crate::crds::{
     BottlerocketInput, ClusterInput, CrdCreator, CrdInput, CreateCrdOutput, MigrationInput,
     TestInput,
 };
 use crate::error::{self, Result};
+use crate::migration::migration_crd;
 use crate::sonobuoy::sonobuoy_crd;
 use bottlerocket_types::agent_config::{
     CreationPolicy, K8sVersion, VSphereK8sClusterConfig, VSphereK8sClusterInfo, VSphereVmConfig,
@@ -243,9 +243,12 @@ impl CrdCreator for VmwareK8sCreator {
         &self,
         migration_input: MigrationInput<'a>,
     ) -> Result<CreateCrdOutput> {
-        Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(
-            aws_resources::migration_crd(migration_input)?,
-        ))))
+        Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(migration_crd(
+            migration_input,
+            // Let the migration test's SSM RunDocuments and RunCommand invocations happen in 'us-west-2'
+            // FIXME: Do we need to allow this to be configurable?
+            Some("us-west-2".to_string()),
+        )?))))
     }
 
     async fn test_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
