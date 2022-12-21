@@ -1,6 +1,7 @@
 //! The ami module owns the 'ami' subcommand and controls the process of registering and copying
 //! EC2 AMIs.
 
+pub(crate) mod public;
 mod register;
 mod snapshot;
 pub(crate) mod wait;
@@ -370,7 +371,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 /// If JSON output was requested, we serialize out a mapping of region to AMI information; this
 /// struct holds the information we save about each AMI.  The `ssm` subcommand uses this
 /// information to populate templates representing SSM parameter names and values.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub(crate) struct Image {
     pub(crate) id: String,
     pub(crate) name: String,

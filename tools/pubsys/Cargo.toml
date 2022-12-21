@@ -22,10 +22,12 @@ clap = "3.1"
 coldsnap = { version = "0.4", default-features = false, features = ["aws-sdk-rust-rustls"] }
 duct = "0.13.0"
 futures = "0.3.5"
+governor = "0.5"
 http = "0.2.8"
 indicatif = "0.17.1"
 lazy_static = "1.4"
 log = "0.4"
+nonzero_ext = "0.3"
 num_cpus = "1"
 parse-datetime = { path = "../../sources/parse-datetime", version = "0.1.0" }
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }

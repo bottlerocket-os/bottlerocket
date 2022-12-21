@@ -5,18 +5,28 @@
 pub(crate) mod ssm;
 pub(crate) mod template;
 
-use crate::aws::{ami::Image, client::build_client_config, parse_arch, region_from_string};
+use self::template::RenderedParameter;
+use crate::aws::{
+    ami::public::ami_is_public, ami::Image, client::build_client_config, parse_arch,
+    region_from_string,
+};
 use crate::Args;
-use aws_sdk_ec2::model::ArchitectureValues;
+use aws_config::SdkConfig;
+use aws_sdk_ec2::{model::ArchitectureValues, Client as Ec2Client};
 use aws_sdk_ssm::{Client as SsmClient, Region};
-use log::{info, trace};
+use futures::stream::{StreamExt, TryStreamExt};
+use governor::{prelude::*, Quota, RateLimiter};
+use log::{error, info, trace};
+use nonzero_ext::nonzero;
 use pubsys_config::InfraConfig;
 use serde::Serialize;
 use snafu::{ensure, OptionExt, ResultExt};
-use std::collections::{HashMap, HashSet};
-use std::fs::File;
 use std::iter::FromIterator;
 use std::path::PathBuf;
+use std::{
+    collections::{HashMap, HashSet},
+    fs::File,
+};
 use structopt::{clap, StructOpt};
 
 /// Sets SSM parameters based on current build information
@@ -51,6 +61,17 @@ pub(crate) struct SsmArgs {
     /// Allows overwrite of existing parameters
     #[structopt(long)]
     allow_clobber: bool,
+
+    /// Allows publishing non-public images to the `/aws/` namespace
+    #[structopt(long)]
+    allow_private_images: bool,
+}
+
+/// Wrapper struct over parameter update and AWS clients needed to execute on it.
+#[derive(Debug, Clone)]
+struct SsmParamUpdateOp {
+    parameter: RenderedParameter,
+    ec2_client: Ec2Client,
 }
 
 /// Common entrypoint from main()
@@ -80,13 +101,6 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
 
     let amis = parse_ami_input(&regions, ssm_args)?;
 
-    let mut ssm_clients = HashMap::with_capacity(amis.len());
-    for region in amis.keys() {
-        let client_config = build_client_config(region, &base_region, &aws).await;
-        let ssm_client = SsmClient::new(&client_config);
-        ssm_clients.insert(region.clone(), ssm_client);
-    }
-
     // Template setup   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     // Non-image-specific context for building and rendering templates
@@ -112,21 +126,64 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     }
 
     let new_parameters =
-        template::render_parameters(template_parameters, amis, ssm_prefix, &build_context)
+        template::render_parameters(template_parameters, &amis, ssm_prefix, &build_context)
             .context(error::RenderTemplatesSnafu)?;
     trace!("Generated templated parameters: {:#?}", new_parameters);
+
+    // Generate AWS Clients to use for the updates.
+    let mut param_update_ops: Vec<SsmParamUpdateOp> = Vec::with_capacity(new_parameters.len());
+    let mut aws_sdk_configs: HashMap<Region, SdkConfig> = HashMap::with_capacity(regions.len());
+    let mut ssm_clients = HashMap::with_capacity(amis.len());
+
+    for parameter in new_parameters.iter() {
+        let region = &parameter.ssm_key.region;
+        // Store client configs so that we only have to create them once.
+        // The HashMap `entry` API doesn't play well with `async`, so we use a match here instead.
+        let client_config = match aws_sdk_configs.get(region) {
+            Some(client_config) => client_config.clone(),
+            None => {
+                let client_config = build_client_config(region, &base_region, &aws).await;
+                aws_sdk_configs.insert(region.clone(), client_config.clone());
+                client_config
+            }
+        };
+
+        let ssm_client = SsmClient::new(&client_config);
+        if ssm_clients.get(region).is_none() {
+            ssm_clients.insert(region.clone(), ssm_client);
+        }
+
+        let ec2_client = Ec2Client::new(&client_config);
+        param_update_ops.push(SsmParamUpdateOp {
+            parameter: parameter.clone(),
+            ec2_client,
+        });
+    }
+
+    // Unless overridden, only allow public images to be published to public parameters.
+    if !ssm_args.allow_private_images {
+        info!("Ensuring that only public images are published to public parameters.");
+        ensure!(
+            check_public_namespace_amis_are_public(param_update_ops.iter()).await?,
+            error::NoPrivateImagesSnafu
+        );
+    }
 
     // SSM get/compare   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     info!("Getting current SSM parameters");
-    let new_parameter_names: Vec<&SsmKey> = new_parameters.keys().collect();
+    let new_parameter_names: Vec<&SsmKey> =
+        new_parameters.iter().map(|param| &param.ssm_key).collect();
     let current_parameters = ssm::get_parameters(&new_parameter_names, &ssm_clients)
         .await
         .context(error::FetchSsmSnafu)?;
     trace!("Current SSM parameters: {:#?}", current_parameters);
 
     // Show the difference between source and target parameters in SSM.
-    let parameters_to_set = key_difference(&new_parameters, &current_parameters);
+    let parameters_to_set = key_difference(
+        &RenderedParameter::as_ssm_parameters(&new_parameters),
+        &current_parameters,
+    );
     if parameters_to_set.is_empty() {
         info!("No changes necessary.");
         return Ok(());
@@ -156,8 +213,60 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
     Ok(())
 }
 
+// Rate limits on the EC2 side use the TokenBucket method, and buckets refill at a rate of 20 tokens per second.
+// See https://docs.aws.amazon.com/AWSEC2/latest/APIReference/throttling.html#throttling-rate-based for more details.
+const DESCRIBE_IMAGES_RATE_LIMIT: Quota = Quota::per_second(nonzero!(20u32));
+const MAX_CONCURRENT_AMI_CHECKS: usize = 8;
+
+/// Given a set of SSM parameter updates, ensures all parameters in the public namespace refer to public AMIs.
+async fn check_public_namespace_amis_are_public(
+    parameter_updates: impl Iterator<Item = &SsmParamUpdateOp>,
+) -> Result<bool> {
+    let public_namespace_updates = parameter_updates
+        .filter(|update| update.parameter.ssm_key.is_in_public_namespace())
+        .cloned();
+
+    // Wrap `crate::aws::ami::public::ami_is_public()` in a future that returns the correct error type.
+    let check_ami_public = |update: SsmParamUpdateOp| async move {
+        let region = &update.parameter.ssm_key.region;
+        let ami_id = &update.parameter.ami.id;
+        let is_public = ami_is_public(&update.ec2_client, region.as_ref(), ami_id)
+            .await
+            .context(error::CheckAmiPublicSnafu {
+                ami_id: ami_id.to_string(),
+                region: region.to_string(),
+            });
+
+        if let Ok(false) = is_public {
+            error!(
+                "Attempted to set parameter '{}' in {} to '{}', based on AMI {}. That AMI is not marked public!",
+                update.parameter.ssm_key.name, region, update.parameter.value, ami_id
+            );
+        }
+
+        is_public
+    };
+
+    // Concurrently check our input parameter updates...
+    let rate_limiter = RateLimiter::direct(DESCRIBE_IMAGES_RATE_LIMIT);
+    let results: Vec<Result<bool>> = futures::stream::iter(public_namespace_updates)
+        .ratelimit_stream(&rate_limiter)
+        .then(|update| async move { Ok(check_ami_public(update)) })
+        .try_buffer_unordered(usize::min(num_cpus::get(), MAX_CONCURRENT_AMI_CHECKS))
+        .collect()
+        .await;
+
+    // `collect()` on `TryStreams` doesn't seem to happily invert a `Vec<Result<_>>` to a `Result<Vec<_>>`,
+    // so we use the usual `Iterator` methods to do it here.
+    Ok(results
+        .into_iter()
+        .collect::<Result<Vec<bool>>>()?
+        .into_iter()
+        .all(|is_public| is_public))
+}
+
 /// The key to a unique SSM parameter
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub(crate) struct SsmKey {
     pub(crate) region: Region,
     pub(crate) name: String,
@@ -166,6 +275,10 @@ pub(crate) struct SsmKey {
 impl SsmKey {
     pub(crate) fn new(region: Region, name: String) -> Self {
         Self { region, name }
+    }
+
+    pub(crate) fn is_in_public_namespace(&self) -> bool {
+        self.name.starts_with("/aws/")
     }
 }
 
@@ -296,6 +409,23 @@ mod error {
             source: pubsys_config::Error,
         },
 
+        #[snafu(display(
+            "Failed to check whether AMI {} in {} was public: {}",
+            ami_id,
+            region,
+            source
+        ))]
+        CheckAmiPublic {
+            ami_id: String,
+            region: String,
+            source: crate::aws::ami::public::Error,
+        },
+
+        #[snafu(display("Failed to create EC2 client for region {}", region))]
+        CreateEc2Client {
+            region: String,
+        },
+
         #[snafu(display("Failed to deserialize input from '{}': {}", path.display(), source))]
         Deserialize {
             path: PathBuf,
@@ -331,6 +461,9 @@ mod error {
 
         #[snafu(display("Cowardly refusing to overwrite parameters without ALLOW_CLOBBER"))]
         NoClobber,
+
+        #[snafu(display("Cowardly refusing to publish private image to public namespace without ALLOW_PRIVATE_IMAGES"))]
+        NoPrivateImages,
 
         #[snafu(display("Failed to render templates: {}", source))]
         RenderTemplates {

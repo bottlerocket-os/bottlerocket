@@ -97,7 +97,7 @@ fn refresh_repo(
     .context(repo_error::RepoLoadSnafu {
         metadata_base_url: metadata_url.clone(),
     })?;
-    let mut repo_editor = RepositoryEditor::from_repo(&root_role_path, repo)
+    let mut repo_editor = RepositoryEditor::from_repo(root_role_path, repo)
         .context(repo_error::EditorFromRepoSnafu)?;
     info!("Loaded TUF repo: {}", metadata_url);
 
@@ -114,11 +114,11 @@ fn refresh_repo(
 
     // Write out the metadata files for the repository
     info!("Writing repo metadata to: {}", metadata_out_dir.display());
-    fs::create_dir_all(&metadata_out_dir).context(repo_error::CreateDirSnafu {
+    fs::create_dir_all(metadata_out_dir).context(repo_error::CreateDirSnafu {
         path: &metadata_out_dir,
     })?;
     signed_repo
-        .write(&metadata_out_dir)
+        .write(metadata_out_dir)
         .context(repo_error::RepoWriteSnafu {
             path: &metadata_out_dir,
         })?;

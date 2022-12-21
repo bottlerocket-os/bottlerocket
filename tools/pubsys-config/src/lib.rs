@@ -65,15 +65,15 @@ impl InfraConfig {
     /// Deserializes an InfraConfig from Infra.lock, if it exists, otherwise uses Infra.toml
     /// If the default flag is true, will create a default config if Infra.toml doesn't exist
     pub fn from_path_or_lock(path: &Path, default: bool) -> Result<Self> {
-        let lock_path = Self::compute_lock_path(&path)?;
+        let lock_path = Self::compute_lock_path(path)?;
         if lock_path.exists() {
             info!("Found infra config at path: {}", lock_path.display());
             Self::from_lock_path(lock_path)
         } else if default {
-            Self::from_path_or_default(&path)
+            Self::from_path_or_default(path)
         } else {
             info!("Found infra config at path: {}", path.display());
-            Self::from_path(&path)
+            Self::from_path(path)
         }
     }
 
@@ -105,7 +105,7 @@ impl InfraConfig {
 }
 
 /// S3-specific TUF infrastructure configuration
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct S3Config {
     pub region: Option<String>,
     #[serde(default)]
@@ -116,7 +116,7 @@ pub struct S3Config {
 }
 
 /// AWS-specific infrastructure configuration
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct AwsConfig {
     #[serde(default)]
@@ -130,7 +130,7 @@ pub struct AwsConfig {
 }
 
 /// AWS region-specific configuration
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct AwsRegionConfig {
     pub role: Option<String>,
