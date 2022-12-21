@@ -149,6 +149,7 @@ impl CrdCreator for AwsK8sCreator {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(migration_crd(
             migration_input,
             None,
+            "ids",
         )?))))
     }
 

@@ -248,6 +248,7 @@ impl CrdCreator for VmwareK8sCreator {
             // Let the migration test's SSM RunDocuments and RunCommand invocations happen in 'us-west-2'
             // FIXME: Do we need to allow this to be configurable?
             Some("us-west-2".to_string()),
+            "instanceIds",
         )?))))
     }
 

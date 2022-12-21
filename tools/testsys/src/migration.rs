@@ -6,9 +6,12 @@ use model::Test;
 use snafu::OptionExt;
 
 /// Create a CRD for migrating Bottlerocket instances using SSM commands.
+/// `aws_region_override` allows the region that's normally derived from the cluster resource CRD to be overridden
+/// `instance_id_field_name` specifies the VM/Instance resource CRD field name for retrieving the instances IDs of the created instances
 pub(crate) fn migration_crd(
     migration_input: MigrationInput,
     aws_region_override: Option<String>,
+    instance_id_field_name: &str,
 ) -> Result<Test> {
     let cluster_resource_name = migration_input
         .cluster_crd_name
@@ -45,7 +48,7 @@ pub(crate) fn migration_crd(
     // Construct the migration CRD.
     let mut migration_config = MigrationConfig::builder();
 
-    // Use the specified aws-region for the migration test.
+    // Use the specified AWS region for the migration test.
     // If no region is specified, derive the appropriate region based on the region of the
     // cluster resource CRD (assuming it's an ECS or EKS cluster).
     if let Some(aws_region) = aws_region_override {
@@ -55,7 +58,7 @@ pub(crate) fn migration_crd(
     };
 
     migration_config
-        .instance_ids_template(bottlerocket_resource_name, "ids")
+        .instance_ids_template(bottlerocket_resource_name, instance_id_field_name)
         .migrate_to_version(migration_version)
         .tuf_repo(migration_input.crd_input.tuf_repo_config())
         .assume_role(migration_input.crd_input.config.agent_role.clone())
