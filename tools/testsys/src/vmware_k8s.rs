@@ -198,6 +198,7 @@ impl CrdCreator for VmwareK8sCreator {
                 kubeconfig_base64: format!("${{{}.encodedKubeconfig}}", cluster_name),
             })
             .assume_role(bottlerocket_input.crd_input.config.agent_role.clone())
+            .set_labels(Some(labels))
             .set_conflicts_with(Some(existing_clusters))
             .destruction_policy(DestructionPolicy::OnTestSuccess)
             .image(
