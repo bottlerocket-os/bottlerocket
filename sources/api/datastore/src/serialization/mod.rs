@@ -121,13 +121,14 @@ impl ser::Serializer for &MapKeySerializer {
         bad_key("unit_struct")
     }
 
+    /// A simple enum can be used as if it were a string, so we allow these to serve as map keys.
     fn serialize_unit_variant(
         self,
         _name: &'static str,
         _variant_index: u32,
-        _variant: &'static str,
+        variant: &'static str,
     ) -> Result<String> {
-        bad_key("unit_variant")
+        self.serialize_str(variant)
     }
 
     fn serialize_newtype_struct<T: ?Sized>(self, _name: &'static str, _value: &T) -> Result<String>
@@ -211,12 +212,34 @@ mod test {
     use super::MapKeySerializer;
     use serde::Serialize;
 
+    // This enum is fine because its variants are "simple", thus it can be represented as a simple
+    // string and can be used as a map key.
+    #[derive(Debug, Serialize)]
+    enum TestEnum {
+        Value,
+    }
+
+    // This enum cannot be used as a map key because it has a variant that can't be serialized as a
+    // simple string.
+    #[derive(Debug, Serialize)]
+    enum BadEnum {
+        Value(i32),
+    }
+
     #[test]
     fn ok_key() {
         let serializer = MapKeySerializer::new();
         let m = "A".to_string();
         let res = m.serialize(&serializer).unwrap();
         assert_eq!(res, "A");
+    }
+
+    #[test]
+    fn ok_enum_key() {
+        let serializer = MapKeySerializer::new();
+        let m = TestEnum::Value;
+        let res = m.serialize(&serializer).unwrap();
+        assert_eq!(res, "Value");
     }
 
     #[test]
@@ -230,5 +253,6 @@ mod test {
         [1u8].serialize(&serializer).unwrap_err();
         (None as Option<u8>).serialize(&serializer).unwrap_err();
         Some(42).serialize(&serializer).unwrap_err();
+        BadEnum::Value(1).serialize(&serializer).unwrap_err();
     }
 }
