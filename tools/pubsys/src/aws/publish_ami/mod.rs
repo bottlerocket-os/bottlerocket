@@ -156,7 +156,14 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
 
     // If AMIs aren't in "available" state, we can get a DescribeImages response that includes
     // most of the data we need, but not snapshot IDs.
-    info!("Waiting for AMIs to be available...");
+    if amis.len() == 1 {
+        info!("Waiting for AMI to be available before changing its permissions")
+    } else {
+        info!(
+            "Waiting for all {} AMIs to be available before changing any of their permissions",
+            amis.len(),
+        );
+    }
     let mut wait_requests = Vec::with_capacity(amis.len());
     for (region, image) in &amis {
         let wait_future = wait_for_ami(&image.id, region, &base_region, "available", 1, &aws);
@@ -180,7 +187,10 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     let snapshots = get_regional_snapshots(&amis, &ec2_clients).await?;
     trace!("Found snapshots: {:?}", snapshots);
 
-    info!("Updating snapshot permissions - {}", description);
+    info!(
+        "Updating all snapshot permissions before changing any AMI permissions - {}",
+        description
+    );
     modify_regional_snapshots(
         &publish_args.modify_opts,
         &operation,
@@ -189,7 +199,7 @@ pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
     )
     .await?;
 
-    info!("Updating image permissions - {}", description);
+    info!("Updating AMI permissions - {}", description);
     let ami_ids = amis
         .into_iter()
         .map(|(region, image)| (region, image.id))
@@ -597,6 +607,38 @@ mod error {
             region: String,
             source: ami::wait::Error,
         },
+    }
+
+    impl Error {
+        /// The number of AMIs that have had their permissions successfully changed.
+        pub(crate) fn amis_affected(&self) -> u16 {
+            match self {
+                // We list all of these variants so that future editors of the code will have to
+                // look at this and decide whether or not their new error variant might have
+                // modified any AMI permissions.
+                Error::Config { .. }
+                | Error::DescribeImages { .. }
+                | Error::Deserialize { .. }
+                | Error::File { .. }
+                | Error::Input { .. }
+                | Error::MissingConfig { .. }
+                | Error::MissingImage { .. }
+                | Error::MissingInResponse { .. }
+                | Error::ModifyImageAttribute { .. }
+                | Error::ModifyImageAttributes { .. }
+                | Error::ModifySnapshotAttributes { .. }
+                | Error::MultipleImages { .. }
+                | Error::UnknownRegions { .. }
+                | Error::WaitAmi { .. } => 0u16,
+
+                // If an error occurs during the modify AMI permissions loop, then some AMIs may
+                // have been affected.
+                Error::ModifyImagesAttributes {
+                    error_count: _,
+                    success_count,
+                } => *success_count,
+            }
+        }
     }
 }
 pub(crate) use error::Error;
