@@ -114,6 +114,7 @@ CONFIG_FCOE_FNIC=m
 CONFIG_SCSI_SNIC=m
 
 # LSI Logic's SAS based RAID controllers
+CONFIG_SCSI_MPT3SAS=y
 CONFIG_MEGARAID_SAS=y
 
 # Microsemi PQI controllers
