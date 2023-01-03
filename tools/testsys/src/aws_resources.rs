@@ -1,10 +1,10 @@
-use crate::crds::{BottlerocketInput, MigrationDirection, MigrationInput};
+use crate::crds::BottlerocketInput;
 use crate::error::{self, Result};
 use aws_sdk_ec2::model::{Filter, Image};
 use aws_sdk_ec2::Region;
-use bottlerocket_types::agent_config::{ClusterType, Ec2Config, MigrationConfig};
+use bottlerocket_types::agent_config::{ClusterType, Ec2Config};
 use maplit::btreemap;
-use model::{DestructionPolicy, Resource, Test};
+use model::{DestructionPolicy, Resource};
 use serde::Deserialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
@@ -196,79 +196,6 @@ pub(crate) async fn ec2_crd<'a>(
         ))
         .map_err(|e| error::Error::Build {
             what: "EC2 instance provider CRD".to_string(),
-            error: e.to_string(),
-        })
-}
-
-/// Create a CRD for migrating Bottlerocket instances using SSM commands.
-pub(crate) fn migration_crd(migration_input: MigrationInput) -> Result<Test> {
-    let cluster_resource_name = migration_input
-        .cluster_crd_name
-        .as_ref()
-        .expect("A cluster name is required for migrations");
-    let bottlerocket_resource_name = migration_input
-        .bottlerocket_crd_name
-        .as_ref()
-        .expect("A cluster name is required for migrations");
-
-    let labels = migration_input.crd_input.labels(btreemap! {
-        "testsys/type".to_string() => "migration".to_string(),
-        "testsys/cluster".to_string() => cluster_resource_name.to_string(),
-    });
-
-    // Determine which version should be migrated to from `migration_input`.
-    let migration_version = match migration_input.migration_direction {
-        MigrationDirection::Upgrade => migration_input
-            .crd_input
-            .migrate_to_version
-            .as_ref()
-            .context(error::InvalidSnafu {
-                what: "The target migration version is required",
-            }),
-        MigrationDirection::Downgrade => migration_input
-            .crd_input
-            .starting_version
-            .as_ref()
-            .context(error::InvalidSnafu {
-                what: "The starting migration version is required",
-            }),
-    }?;
-
-    // Create the migration CRD.
-    MigrationConfig::builder()
-        .aws_region_template(cluster_resource_name, "region")
-        .instance_ids_template(bottlerocket_resource_name, "ids")
-        .migrate_to_version(migration_version)
-        .tuf_repo(migration_input.crd_input.tuf_repo_config())
-        .assume_role(migration_input.crd_input.config.agent_role.clone())
-        .resources(bottlerocket_resource_name)
-        .resources(cluster_resource_name)
-        .set_depends_on(Some(migration_input.prev_tests))
-        .image(
-            migration_input
-                .crd_input
-                .images
-                .migration_test_agent_image
-                .as_ref()
-                .expect("Missing default image for migration test agent"),
-        )
-        .set_image_pull_secret(
-            migration_input
-                .crd_input
-                .images
-                .testsys_agent_pull_secret
-                .to_owned(),
-        )
-        .keep_running(true)
-        .set_secrets(Some(migration_input.crd_input.config.secrets.to_owned()))
-        .set_labels(Some(labels))
-        .build(format!(
-            "{}{}",
-            cluster_resource_name,
-            migration_input.name_suffix.unwrap_or_default()
-        ))
-        .map_err(|e| error::Error::Build {
-            what: "migration CRD".to_string(),
             error: e.to_string(),
         })
 }
