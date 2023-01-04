@@ -1036,6 +1036,11 @@ func withDynamicResolver(ctx context.Context, ref string, registryConfig *Regist
 		}
 	// For Amazon ECR Public registries, we should try and fetch credentials before resolving the image reference
 	case strings.HasPrefix(ref, "public.ecr.aws/"):
+		// ... not if the user has specified their own registry credentials for 'public.ecr.aws'; In that case we use the default resolver.
+		if _, found := registryConfig.Credentials["public.ecr.aws"]; found {
+			return defaultResolver
+		}
+
 		// Try to get credentials for authenticated pulls from ECR Public
 		session := session.Must(session.NewSession())
 		// The ECR Public API is only available in us-east-1 today
