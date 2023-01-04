@@ -25,7 +25,8 @@ members = [
     "api/prairiedog",
 
     # "api/migration/migrations/vX.Y.Z/..."
-    # (all migrations currently archived; replace this line with new ones)
+    # (all previous migrations archived; add new ones after this line)
+    "api/migration/migrations/v1.12.0/k8s-private-pki-path",
 
     "bottlerocket-release",
 
