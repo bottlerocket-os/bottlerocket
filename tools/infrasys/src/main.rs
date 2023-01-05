@@ -183,7 +183,7 @@ async fn create_infra(toml_path: &Path, root_role_path: &Path) -> Result<()> {
                 .context(error::ParseUrlSnafu { input: &bucket_rdn })?,
             );
         }
-        let root_role_data = fs::read_to_string(&root_role_path).context(error::FileReadSnafu {
+        let root_role_data = fs::read_to_string(root_role_path).context(error::FileReadSnafu {
             path: root_role_path,
         })?;
         let mut d = Sha512::new();
