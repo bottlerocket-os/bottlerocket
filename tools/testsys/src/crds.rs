@@ -352,6 +352,9 @@ pub(crate) trait CrdCreator: Sync {
     /// Create a testing CRD for this variant of Bottlerocket.
     async fn test_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput>;
 
+    /// Create a workload testing CRD for this variant of Bottlerocket.
+    async fn workload_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput>;
+
     /// Create a set of additional fields that may be used by an externally defined agent on top of
     /// the ones in `CrdInput`
     fn additional_fields(&self, _test_type: &str) -> BTreeMap<String, String> {
@@ -399,6 +402,34 @@ pub(crate) trait CrdCreator: Sync {
                     }
                     let test_output = self
                         .test_crd(TestInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            bottlerocket_crd_name: &bottlerocket_crd_name,
+                            test_type,
+                            crd_input,
+                            prev_tests: Default::default(),
+                            name_suffix: None,
+                        })
+                        .await?;
+                    if let Some(crd) = test_output.crd() {
+                        crds.push(crd)
+                    }
+                }
+                KnownTestType::Workload => {
+                    let bottlerocket_output = self
+                        .bottlerocket_crd(BottlerocketInput {
+                            cluster_crd_name: &cluster_crd_name,
+                            image_id: self.image_id(crd_input)?,
+                            test_type,
+                            crd_input,
+                        })
+                        .await?;
+                    let bottlerocket_crd_name = bottlerocket_output.crd_name();
+                    if let Some(crd) = bottlerocket_output.crd() {
+                        debug!("Bottlerocket crd was created for '{}'", cluster_name);
+                        crds.push(crd)
+                    }
+                    let test_output = self
+                        .workload_crd(TestInput {
                             cluster_crd_name: &cluster_crd_name,
                             bottlerocket_crd_name: &bottlerocket_crd_name,
                             test_type,

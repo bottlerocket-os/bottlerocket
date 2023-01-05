@@ -4,7 +4,7 @@ use crate::crds::{
 };
 use crate::error::{self, Result};
 use crate::migration::migration_crd;
-use crate::sonobuoy::sonobuoy_crd;
+use crate::sonobuoy::{sonobuoy_crd, workload_crd};
 use bottlerocket_types::agent_config::{
     CreationPolicy, CustomUserData, K8sVersion, VSphereK8sClusterConfig, VSphereK8sClusterInfo,
     VSphereVmConfig,
@@ -275,6 +275,12 @@ impl CrdCreator for VmwareK8sCreator {
 
     async fn test_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(sonobuoy_crd(
+            test_input,
+        )?))))
+    }
+
+    async fn workload_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
+        Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(workload_crd(
             test_input,
         )?))))
     }

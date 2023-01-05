@@ -381,6 +381,26 @@ cargo make -e TESTSYS_TEST=migration test
 
 To see the state of the tests as they run use `cargo make watch-test`.
 
+### Testing Workloads
+
+Workload tests are tests designed to run as an orchestrated container.
+A workload test is defined in `Test.toml` with a map named `workloads`.
+
+```toml
+[aws-nvidia]
+workloads = { <WORKLOAD-NAME> = "<WORKLOAD-IMAGE-URI>" }
+```
+
+To run the workload test set `TESTSYS_TEST=workload` in the `cargo make test` call.
+
+```shell
+cargo make -e TESTSYS_TEST=workload test
+```
+
+To see the state of the tests as they run use `cargo make watch-test`.
+
+For more information can be found in the [TestSys workload documentation](https://github.com/bottlerocket-os/bottlerocket-test-system/tree/develop/bottlerocket/tests/workload).
+
 ### Custom Test Types
 
 Custom tests can be run with TestSys by calling `cargo make -e TESTSYS_TEST=<CUSTOM-TEST-NAME> test -f <PATH-TO-TEMPLATED-YAML>`.

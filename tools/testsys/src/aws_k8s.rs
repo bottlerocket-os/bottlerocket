@@ -5,7 +5,7 @@ use crate::crds::{
 };
 use crate::error::{self, Result};
 use crate::migration::migration_crd;
-use crate::sonobuoy::sonobuoy_crd;
+use crate::sonobuoy::{sonobuoy_crd, workload_crd};
 use bottlerocket_types::agent_config::{
     ClusterType, CreationPolicy, EksClusterConfig, EksctlConfig, K8sVersion,
 };
@@ -165,6 +165,12 @@ impl CrdCreator for AwsK8sCreator {
 
     async fn test_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(sonobuoy_crd(
+            test_input,
+        )?))))
+    }
+
+    async fn workload_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
+        Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(workload_crd(
             test_input,
         )?))))
     }

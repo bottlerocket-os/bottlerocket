@@ -193,6 +193,12 @@ impl CrdCreator for AwsEcsCreator {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(test_crd))))
     }
 
+    async fn workload_crd<'a>(&self, _test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
+        Err(error::Error::Invalid {
+            what: "Workload testing is not supported for non-k8s variants".to_string(),
+        })
+    }
+
     fn additional_fields(&self, _test_type: &str) -> BTreeMap<String, String> {
         btreemap! {"region".to_string() => self.region.clone()}
     }

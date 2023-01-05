@@ -151,6 +151,10 @@ struct CliConfig {
     /// Specify the path to the userdata that should be added for Bottlerocket launch
     #[clap(long, env = "TESTSYS_USERDATA")]
     pub userdata: Option<String>,
+
+    /// A set of workloads that should be run for a workload test (--workload my-workload=<WORKLOAD-IMAGE>)
+    #[clap(long = "workload", parse(try_from_str = parse_workloads), number_of_values = 1)]
+    pub workloads: Vec<(String, String)>,
 }
 
 impl From<CliConfig> for GenericVariantConfig {
@@ -165,6 +169,7 @@ impl From<CliConfig> for GenericVariantConfig {
             control_plane_endpoint: val.control_plane_endpoint,
             userdata: val.userdata,
             dev: Default::default(),
+            workloads: val.workloads.into_iter().collect(),
         }
     }
 }
@@ -400,6 +405,17 @@ fn parse_key_val(s: &str) -> Result<(String, SecretName)> {
     ))
 }
 
+fn parse_workloads(s: &str) -> Result<(String, String)> {
+    let mut iter = s.splitn(2, '=');
+    let key = iter.next().context(error::InvalidSnafu {
+        what: "Key is missing",
+    })?;
+    let value = iter.next().context(error::InvalidSnafu {
+        what: "Value is missing",
+    })?;
+    Ok((key.to_string(), value.to_string()))
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum KnownTestType {
@@ -415,6 +431,8 @@ pub enum KnownTestType {
     /// be created at the starting version, migrated to the target version and back to the starting
     /// version with validation testing.
     Migration,
+    /// Workload testing is used to test specific workloads on a set of Bottlerocket nodes.
+    Workload,
 }
 
 /// If a test type is one that is supported by TestSys it will be created as `Known(KnownTestType)`.
@@ -486,6 +504,13 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) migration_test: Option<String>,
 
+    /// K8s workload agent URI. If not provided the latest released test agent will be used.
+    #[clap(
+        long = "k8s-workload-agent-image",
+        env = "TESTSYS_K8S_WORKLOAD_AGENT_IMAGE"
+    )]
+    pub(crate) k8s_workload: Option<String>,
+
     /// TestSys controller URI. If not provided the latest released controller will be used.
     #[clap(long = "controller-image", env = "TESTSYS_CONTROLLER_IMAGE")]
     pub(crate) controller_uri: Option<String>,
@@ -509,6 +534,7 @@ impl From<TestsysImages> for testsys_config::TestsysImages {
             sonobuoy_test_agent_image: val.sonobuoy_test,
             ecs_test_agent_image: val.ecs_test,
             migration_test_agent_image: val.migration_test,
+            k8s_workload_agent_image: val.k8s_workload,
             controller_image: val.controller_uri,
             testsys_agent_pull_secret: val.secret,
         }
