@@ -120,6 +120,6 @@ instance-type = "p3.2xlarge"
 [aws-ecs-nvidia.aarch64]
 instance-type = "g5g.2xlarge"
 
-# Configuration for only the `aws-k8s-1.21` variant (variant level configuration).
-["aws-k8s-1.21".aarch64]
+# Configuration for only the `aws-k8s-1.24` variant (variant level configuration).
+["aws-k8s-1.24".aarch64]
 conformance-image = "<KUBERNETES-CONFORMANCE-IMAGE-URI>"

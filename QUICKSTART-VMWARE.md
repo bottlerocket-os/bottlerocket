@@ -46,7 +46,7 @@ Next, set your desired version and variant, and download the OVA:
 
 ```shell
 VERSION="v1.6.1"
-VARIANT="vmware-k8s-1.21"
+VARIANT="vmware-k8s-1.24"
 OVA="bottlerocket-${VARIANT}-x86_64-${VERSION}.ova"
 OUTDIR="${VARIANT}-${VERSION}"
 

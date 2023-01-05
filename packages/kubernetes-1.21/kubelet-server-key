@@ -1,3 +1,0 @@
-{{~#if settings.kubernetes.server-key~}}
-{{base64_decode settings.kubernetes.server-key}}
-{{~/if~}}

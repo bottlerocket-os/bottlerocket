@@ -63,33 +63,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-k8s-1_21"
-version = "0.1.0"
-dependencies = [
- "aws-iam-authenticator",
- "cni",
- "cni-plugins",
- "kernel-5_10",
- "kubernetes-1_21",
- "release",
-]
-
-[[package]]
-name = "aws-k8s-1_21-nvidia"
-version = "0.1.0"
-dependencies = [
- "aws-iam-authenticator",
- "cni",
- "cni-plugins",
- "kernel-5_10",
- "kmod-5_10-nvidia",
- "kubernetes-1_21",
- "nvidia-container-toolkit",
- "nvidia-k8s-device-plugin",
- "release",
-]
-
-[[package]]
 name = "aws-k8s-1_22"
 version = "0.1.0"
 dependencies = [
@@ -471,15 +444,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kubernetes-1_21"
-version = "0.1.0"
-dependencies = [
- "aws-signing-helper",
- "ecr-credential-provider",
- "glibc",
-]
-
-[[package]]
 name = "kubernetes-1_22"
 version = "0.1.0"
 dependencies = [
@@ -815,17 +779,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "metal-k8s-1_21"
-version = "0.1.0"
-dependencies = [
- "cni",
- "cni-plugins",
- "kernel-5_10",
- "kubernetes-1_21",
- "release",
-]
-
-[[package]]
 name = "metal-k8s-1_22"
 version = "0.1.0"
 dependencies = [
@@ -1045,18 +998,6 @@ dependencies = [
  "release",
  "strace",
  "tcpdump",
-]
-
-[[package]]
-name = "vmware-k8s-1_21"
-version = "0.1.0"
-dependencies = [
- "cni",
- "cni-plugins",
- "kernel-5_10",
- "kubernetes-1_21",
- "open-vm-tools",
- "release",
 ]
 
 [[package]]
