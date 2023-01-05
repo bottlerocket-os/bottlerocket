@@ -11,7 +11,6 @@ vm_cpus=4
 force_extract=
 declare -A extra_files=()
 
-current_images=()
 boot_image=
 data_image=
 
@@ -130,42 +129,35 @@ parse_args() {
     done
 }
 
-find_current_images() {
-    # BuildSys removes all but the latest build's compressed images
-    readonly current_images=( "${repo_root}/build/images/${arch}-${variant}"/*.img.lz4 )
+extract_image() {
+    local -r compressed_image=$1
+    local -r uncompressed_image=$2
 
-    if [[ ${#current_images[@]} -eq 0 ]]; then
-        bail 'No images found. Did the last build fail?'
+    if [[ ${force_extract} = yes ]] || [[ ${compressed_image} -nt ${uncompressed_image} ]]; then
+        lz4 --decompress --force --keep "${compressed_image}" "${uncompressed_image}" \
+            || bail "Failed to extract '${compressed_image}'."
     fi
 }
 
-remove_old_images() {
-    # Any of the latest images can serve as our touchstone. Older images can go.
-    declare -r any_current_image=${current_images[0]}
+prepare_raw_images() {
+    local -r image_dir=build/images/${arch}-${variant}/latest
+    local -r compressed_boot_image=${image_dir}/bottlerocket-${variant}-${arch}.img.lz4
+    local -r compressed_data_image=${image_dir}/bottlerocket-${variant}-${arch}-data.img.lz4
 
-    for extracted_image in "${repo_root}/build/images/${arch}-${variant}"/*.img; do
-        if [[ ${extracted_image} -ot ${any_current_image} ]]; then
-            rm "${extracted_image}"
-        fi
-    done
-}
+    if [[ -e ${compressed_boot_image} ]]; then
+        readonly boot_image=${compressed_boot_image%*.lz4}
+        extract_image "${compressed_boot_image}" "${boot_image}"
+    else
+        bail 'Boot image not found. Did the last build fail?'
+    fi
 
-extract_images() {
-    for compressed_image in "${current_images[@]}"; do
-        uncompressed_image=${compressed_image%*.lz4}
-        if [[ ${force_extract} = yes ]] || [[ ${compressed_image} -nt ${uncompressed_image} ]]; then
-            lz4 --decompress --force --keep "${compressed_image}"
-        fi
-    done
-}
-
-select_boot_image() {
-    for image in "${repo_root}/build/images/${arch}-${variant}/bottlerocket-${variant}-${arch}"-*.img; do
-        case ${image} in
-            *data*) readonly data_image=${image} ;;
-            *)      readonly boot_image=${image} ;;
-        esac
-    done
+    if [[ -e ${compressed_data_image} ]]; then
+        readonly data_image=${compressed_data_image%*.lz4}
+        extract_image "${compressed_data_image}" "${data_image}"
+    else
+        # Missing data image is fine. This variant may not be a split build.
+        readonly data_image=
+    fi
 }
 
 create_extra_files() {
@@ -267,10 +259,7 @@ launch_vm() {
 }
 
 parse_args "$@"
-find_current_images
-remove_old_images
-extract_images
-select_boot_image
+prepare_raw_images
 create_extra_files
 inject_files
 launch_vm
