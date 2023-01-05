@@ -109,7 +109,7 @@ fn run() -> Result<()> {
             }
 
             let temp_root_role =
-                NamedTempFile::new_in(&role_dir).context(error::TempFileCreateSnafu {
+                NamedTempFile::new_in(role_dir).context(error::TempFileCreateSnafu {
                     purpose: "root role",
                 })?;
             let temp_root_role_path = temp_root_role.path().display();

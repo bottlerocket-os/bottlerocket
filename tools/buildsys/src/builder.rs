@@ -87,7 +87,7 @@ impl PackageBuilder {
         let mut args = Vec::new();
         args.build_arg("PACKAGE", package);
         args.build_arg("ARCH", &arch);
-        args.build_arg("GOARCH", &goarch);
+        args.build_arg("GOARCH", goarch);
 
         // Pass certain environment variables into the build environment. These variables aren't
         // automatically used to trigger rebuilds when they change, because most packages aren't
@@ -157,7 +157,7 @@ impl VariantBuilder {
         let mut args = Vec::new();
         args.build_arg("PACKAGES", packages.join(" "));
         args.build_arg("ARCH", &arch);
-        args.build_arg("GOARCH", &goarch);
+        args.build_arg("GOARCH", goarch);
         args.build_arg("VARIANT", &variant);
         args.build_arg("VERSION_ID", getenv("BUILDSYS_VERSION_IMAGE")?);
         args.build_arg("BUILD_ID", getenv("BUILDSYS_VERSION_BUILD")?);
@@ -422,7 +422,7 @@ where
         let parent_dir = output_file
             .parent()
             .context(error::BadDirectorySnafu { path: &output_file })?;
-        fs::create_dir_all(&parent_dir)
+        fs::create_dir_all(parent_dir)
             .context(error::DirectoryCreateSnafu { path: &parent_dir })?;
 
         fs::rename(&artifact_file, &output_file).context(error::FileRenameSnafu {
@@ -462,7 +462,7 @@ where
         if !path.exists() && !path.is_symlink() {
             return Ok(());
         }
-        std::fs::remove_file(&path).context(error::FileRemoveSnafu { path })?;
+        std::fs::remove_file(path).context(error::FileRemoveSnafu { path })?;
         let mut parent = path.parent();
         while let Some(p) = parent {
             if p == top || dirs.contains(p) {
@@ -487,7 +487,7 @@ where
 
     for marker_file in find_files(&build_dir, has_markers) {
         let mut output_file: PathBuf = output_dir.into();
-        output_file.push(marker_file.strip_prefix(&build_dir).context(
+        output_file.push(marker_file.strip_prefix(build_dir).context(
             error::StripPathPrefixSnafu {
                 path: &marker_file,
                 prefix: build_dir,
