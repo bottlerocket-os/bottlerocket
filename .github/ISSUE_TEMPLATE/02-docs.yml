@@ -1,0 +1,46 @@
+name: Documentation Bug
+labels: ["status/needs-triage", "type/documentation"]
+description: Report an issue with Bottlerocket's documentation.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This bug report form is for **docuemntation issues** related to Bottlerocket.
+
+        A few tips before submitting a new issue:
+        - Search for similar issues, including [closed issues](https://github.com/bottlerocket-os/bottlerocket/issues?q=is%3Aissue+is%3Aclosed),
+        - Check if this has been reported on the [project website repo](https://github.com/bottlerocket-os/project-website).
+
+  - type: dropdown
+    id: doctype
+    attributes:
+      label: I noticed this documentation problem when I was...
+      options:
+        - Using Bottlerocket
+        - Developing Bottlerocket
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL of the documentation
+      description: The location of the documentation you have an issue with
+      placeholder: https://github.com/bottlerocket-os/bottlerocket/blob/develop/README.md
+    validations:
+      required: false
+  - type: textarea
+    id: expect
+    attributes:
+      label: I expected to find documented
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What was actually documented
+      render: bash
+    validations:
+      required: true
+
+

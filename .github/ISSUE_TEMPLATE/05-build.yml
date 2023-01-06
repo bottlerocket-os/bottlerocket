@@ -1,0 +1,52 @@
+name: Build Process Bug
+labels: ["status/needs-triage", "type/bug"]
+description: Report a problem in the build process of Bottlerocket
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This bug report form is for **build process issues** with Bottlerocket. 
+        
+        A few tips before submitting a new issue:
+        - Search for similar issues, including [closed issues](https://github.com/bottlerocket-os/bottlerocket/issues?q=is%3Aissue+is%3Aclosed),
+        - Include details about the environment you're running in,
+        - Include any error messages you received, with any required context.
+  - type: dropdown
+    id: variant-family
+    attributes:
+      label: Variant family
+      options:
+        - aws-k8s
+        - aws-k8s (nvidia)
+        - aws-ecs
+        - aws-ecs (nvidia)
+        - vmware-k8s
+        - metal-k8s
+        - Custom variant
+  - type: input
+    id: variant-orchestrator-version
+    attributes:
+      label: Orchestrator version
+      description: For k8s variants, this is your version of Kubernetes. For ECS this is likely "1"
+  - type: textarea
+    id: expect
+    attributes:
+      label: I expected to happen
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce the problem
+      render: bash
+    validations:
+      required: true
+

@@ -1,0 +1,38 @@
+name: Feature Request
+labels: ["status/needs-triage", "type/enhancement"]
+description: Request a feature you'd like in Bottlerocket
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form is for **feature request** to Bottlerocket. 
+        
+        A few tips before submitting a new issue:
+        - Search for similar features requests, including in [closed issues](https://github.com/bottlerocket-os/bottlerocket/issues?q=is%3Aissue+is%3Aclosed),
+        - Search for similar features already on the [Bottlerocket roadmap](https://github.com/bottlerocket-os/bottlerocket/blob/develop/ROADMAP.md).
+  - type: textarea
+    id: like
+    attributes:
+      label: What I'd like
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Any alternatives you've considered
+      render: bash
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Participation
+      description: How would you like to participate in developing this feature?
+      multiple: false
+      options:
+        - I'm willing to fully contribute the code for this feature
+        - I'm willing to collaborate with the team for this feature
+        - I cannot contribute the code for this feature
+    validations:
+      required: true
+

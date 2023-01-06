@@ -1,11 +1,16 @@
-name: Bug Report
+name: Image Bug
 labels: ["status/needs-triage", "type/bug"]
-description: Let us know about a problem with Bottlerocket
+description: Report a problem with a Bottlerocket image
 body:
   - type: markdown
     attributes:
       value: |
-        This bug report form is for general issues with Bottlerocket. We also have an issue template for the build process and one for issues with individual images.
+        This bug report form is for **general issues** with Bottlerocket. 
+        
+        A few tips before submitting a new issue:
+        - Search for similar issues, including [closed issues](https://github.com/bottlerocket-os/bottlerocket/issues?q=is%3Aissue+is%3Aclosed),
+        - Include details about the environment you're running in,
+        - Include any error messages you received, with any required context.
   - type: dropdown
     id: variant-family
     attributes:
@@ -18,11 +23,10 @@ body:
         - vmware-k8s
         - metal-k8s
         - Custom variant
-        - N/A
   - type: input
     id: variant-orchestrator-version
     attributes:
-      label: Orchestrator Version
+      label: Orchestrator version
       description: For k8s variants, this is your version of Kubernetes. For ECS this is likely "1"
   - type: textarea
     id: expect
@@ -45,5 +49,12 @@ body:
       render: bash
     validations:
       required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: About your environment
+      render: bash
+    validations:
+      required: false
 
 
