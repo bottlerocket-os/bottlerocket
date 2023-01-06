@@ -20,6 +20,7 @@ Source2: containerd-config-toml_k8s
 Source3: containerd-config-toml_basic
 Source4: containerd-config-toml_k8s_nvidia
 Source5: containerd-tmpfiles.conf
+Source6: containerd-cri-base-json
 
 # For newer K8s variants (>=1.23) that uses `containerd.sock` as the container runtime socket
 # TODO: remove once we converge all k8s variants and deprecate dockershim.sock
@@ -33,9 +34,6 @@ Source100: etc-containerd.mount
 Source110: prepare-var-lib-containerd.service
 
 Source1000: clarify.toml
-
-# TODO: submit this upstream, including a unit test.
-Patch1001: 1001-cri-set-default-RLIMIT_NOFILE.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
@@ -85,7 +83,7 @@ install -p -m 0644 %{S:1} %{S:100} %{S:110} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/containerd
-install -p -m 0644 %{S:2} %{S:3} %{S:4} %{S:20} %{S:21} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:2} %{S:3} %{S:4} %{S:6} %{S:20} %{S:21} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
@@ -106,6 +104,7 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %{_cross_unitdir}/prepare-var-lib-containerd.service
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/containerd
 %{_cross_templatedir}/containerd-config-toml*
+%{_cross_templatedir}/containerd-cri-base-json
 %{_cross_tmpfilesdir}/containerd.conf
 
 %changelog

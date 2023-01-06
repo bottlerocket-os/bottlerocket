@@ -155,8 +155,9 @@ use crate::modeled_types::{
     KubernetesCloudProvider, KubernetesClusterDnsIp, KubernetesClusterName,
     KubernetesDurationValue, KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue,
     KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, Lockdown, PemCertificateString, SingleLineString, SysctlKey,
-    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
+    KubernetesThresholdValue, Lockdown, OciDefaultsCapability, OciDefaultsResourceLimitType,
+    PemCertificateString, SingleLineString, SysctlKey, TopologyManagerPolicy, TopologyManagerScope,
+    Url, ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -442,4 +443,18 @@ struct PemCertificate {
 #[model]
 struct OciHooks {
     log4j_hotpatch_enabled: bool,
+}
+
+///// OCI defaults specifies the default values that will be used in cri-base-json.
+#[model]
+struct OciDefaults {
+    capabilities: HashMap<OciDefaultsCapability, bool>,
+    resource_limits: HashMap<OciDefaultsResourceLimitType, OciDefaultsResourceLimit>,
+}
+
+///// The hard and soft limit values for an OCI defaults resource limit.
+#[model(add_option = false)]
+struct OciDefaultsResourceLimit {
+    hard_limit: u32,
+    soft_limit: u32,
 }

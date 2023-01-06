@@ -593,6 +593,75 @@ Once you opt-in to use additional OCI hooks, any new orchestrated containers wil
 
 * `settings.oci-hooks.log4j-hotpatch-enabled`: Enables the [hotdog OCI hooks](https://github.com/bottlerocket-os/hotdog), which are used to inject the [Log4j Hot Patch](https://github.com/corretto/hotpatch-for-apache-log4j2) into containers. Defaults to `false`.
 
+#### OCI Defaults settings
+
+Bottlerocket allows you to customize certain parts of the default [OCI spec](https://github.com/opencontainers/runtime-spec/blob/main/config.md) that is applied to workload containers.
+
+The following settings are available:
+
+##### OCI Defaults: Capabilities
+
+All of the `capabilities` settings below are boolean values (`true`/`false`).
+
+The full list of capabilities that can be configured in Bottlerocket are as follows:
+
+capability | setting | default value
+----- | ----- | -----
+`CAP_AUDIT_WRITE` | `settings.oci-defaults.capabilities.audit-write` | true
+`CAP_CHOWN` | `settings.oci-defaults.capabilities.chown` | true
+`CAP_DAC_OVERRIDE` | `settings.oci-defaults.capabilities.dac-override` | true
+`CAP_FOWNER` | `settings.oci-defaults.capabilities.fowner` | true
+`CAP_FSETID` | `settings.oci-defaults.capabilities.fsetid` | true
+`CAP_KILL` | `settings.oci-defaults.capabilities.kill` | true
+`CAP_MKNOD` | `settings.oci-defaults.capabilities.mknod` | true
+`CAP_NET_BIND_SERVICE` | `settings.oci-defaults.capabilities.net-bind-service` | true
+`CAP_SETGID` | `settings.oci-defaults.capabilities.setgid` | true
+`CAP_SETFCAP` | `settings.oci-defaults.capabilities.setfcap` | true
+`CAP_SETPCAP` | `settings.oci-defaults.capabilities.setpcap` | true
+`CAP_SETUID` | `settings.oci-defaults.capabilities.setuid` | true
+`CAP_SYS_CHROOT` | `settings.oci-defaults.capabilities.sys-chroot` | true
+`CAP_AUDIT_CONTROL` | `settings.oci-defaults.capabilities.audit-control` | -
+`CAP_AUDIT_READ` | `settings.oci-defaults.capabilities.audit-read` | -
+`CAP_BLOCK_SUSPEND` | `settings.oci-defaults.capabilities.block-suspend` | -
+`CAP_BPF` | `settings.oci-defaults.capabilities.bpf` | -
+`CAP_CHECKPOINT_RESTORE` | `settings.oci-defaults.capabilities.checkpoint-restore` | -
+`CAP_DAC_READ_SEARCH` | `settings.oci-defaults.capabilities.dac-read-search` | -
+`CAP_IPC_LOCK` | `settings.oci-defaults.capabilities.ipc-lock` | -
+`CAP_IPC_OWNER` | `settings.oci-defaults.capabilities.ipc-owner` | -
+`CAP_LEASE` | `settings.oci-defaults.capabilities.lease` | -
+`CAP_LINUX_IMMUTABLE` | `settings.oci-defaults.capabilities.linux-immutable` | -
+`CAP_MAC_ADMIN` | `settings.oci-defaults.capabilities.mac-admin` | -
+`CAP_MAC_OVERRIDE` | `settings.oci-defaults.capabilities.mac-override` | -
+`CAP_NET_ADMIN` | `settings.oci-defaults.capabilities.net-admin` | -
+`CAP_NET_BROADCAST` | `settings.oci-defaults.capabilities.net-broadcast` | -
+`CAP_NET_RAW` | `settings.oci-defaults.capabilities.net-raw` | -
+`CAP_PERFMON` | `settings.oci-defaults.capabilities.perfmon` | -
+`CAP_SYS_ADMIN` | `settings.oci-defaults.capabilities.sys-admin` | -
+`CAP_SYS_BOOT` | `settings.oci-defaults.capabilities.sys-boot` | -
+`CAP_SYS_MODULE` | `settings.oci-defaults.capabilities.sys-module` | -
+`CAP_SYS_NICE` | `settings.oci-defaults.capabilities.sys-nice` | -
+`CAP_SYS_PACCT` | `settings.oci-defaults.capabilities.sys-pacct` | -
+`CAP_SYS_PTRACE` | `settings.oci-defaults.capabilities.sys-ptrace` | -
+`CAP_SYS_RAWIO` | `settings.oci-defaults.capabilities.sys-rawio` | -
+`CAP_SYS_RESOURCE` | `settings.oci-defaults.capabilities.sys-resource` | -
+`CAP_SYS_TIME` | `settings.oci-defaults.capabilities.sys-time` | -
+`CAP_SYS_TTY_CONFIG` | `settings.oci-defaults.capabilities.sys-tty-config` | -
+`CAP_SYSLOG` | `settings.oci-defaults.capabilities.syslog` | -
+`CAP_WAKE_ALARM` | `settings.oci-defaults.capabilities.wake-alarm` | -
+
+##### OCI Defaults: Resource Limits
+
+Each of the `resource-limits` settings below contain two numeric fields: `hard-limit` and `soft-limit`, which are **32-bit unsigned integers**.
+
+Please see the [`getrlimit` linux manpage](https://man7.org/linux/man-pages/man7/capabilities.7.html) for meanings of `hard-limit` and `soft-limit`.
+
+The full list of resource limits that can be configured in Bottlerocket are:
+
+resource limit | setting | default value
+----- | ----- | -----
+`RLIMIT_NOFILE` | `settings.oci-defaults.resource-limits.max-open-files.hard-limit` | 1048576
+`RLIMIT_NOFILE` | `settings.oci-defaults.resource-limits.max-open-files.soft-limit` | 65536
+
 #### Container image registry settings
 
 The following setting is optional and allows you to configure image registry mirrors and pull-through caches for your containers.

@@ -7,13 +7,17 @@ use handlebars::{
     handlebars_helper, Context, Handlebars, Helper, Output, RenderContext, RenderError,
 };
 use lazy_static::lazy_static;
+use model::modeled_types::{OciDefaultsCapability, OciDefaultsResourceLimitType};
+use model::OciDefaultsResourceLimit;
 use serde::Deserialize;
 use serde_json::value::Value;
+use serde_plain::derive_fromstr_from_deserialize;
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::str::FromStr;
 use url::Url;
 
 lazy_static! {
@@ -188,6 +192,9 @@ mod error {
         #[snafu(display("Internal error: Missing param after confirming that it existed."))]
         ParamUnwrap {},
 
+        #[snafu(display("Invalid OCI spec section: {}", source))]
+        InvalidOciSpecSection { source: serde_plain::Error },
+
         // handlebars::JsonValue is a serde_json::Value, which implements
         // the 'Display' trait and should provide valuable context
         #[snafu(display(
@@ -230,6 +237,13 @@ mod error {
 
         #[snafu(display("Missing param {} for helper '{}'", index, helper_name))]
         MissingParam { index: usize, helper_name: String },
+
+        #[snafu(display(
+            "Missing parameter path for param {} for helper '{}'",
+            index,
+            helper_name
+        ))]
+        MissingParamPath { index: usize, helper_name: String },
 
         #[snafu(display(
             "Missing data and fail-if-missing was set; see given line/col in template '{}'",
@@ -1346,8 +1360,172 @@ handlebars_helper!(any_enabled: |arg: Value| {
     result
 });
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum OciSpecSection {
+    Capabilities,
+    ResourceLimits,
+}
+
+derive_fromstr_from_deserialize!(OciSpecSection);
+
+/// This helper writes out the default OCI runtime spec.
+///
+/// The calling pattern is `{{ oci_defaults settings.oci-defaults.resource-limits }}`,
+/// where `settings.oci-defaults.resource-limits` is a map of OCI defaults
+/// settings and their values, as defined in the model.
+/// See the following file for more details:
+/// * `sources/models/src/modeled_types/oci_defaults.rs`
+///
+/// This helper function extracts the setting name from the settings map
+/// parameter. Specific setting names are expected, or else this helper
+/// will return an error. The specific setting names are defined in the
+/// following file:
+/// * `sources/models/src/lib.rs`
+pub fn oci_defaults(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    // To give context to our errors, get the template name (e.g. what file we are rendering), if available.
+    debug!("Starting oci_defaults helper");
+    let template_name = template_name(renderctx);
+    debug!("Template name: {}", &template_name);
+
+    // Check number of parameters, must be exactly two (OCI spec section to render and settings values for the section)
+    debug!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 1)?;
+    debug!("params: {:?}", helper.params());
+
+    debug!("Getting the requested OCI spec section to render");
+    let oci_defaults_values = get_param(helper, 0)?;
+    // We want the settings path so we know which OCI spec section we are rendering.
+    // e.g. settings.oci-defaults.resource-limits
+    let settings_path = get_param_key_name(helper, 0)?;
+    // Extract the last part of the settings path, which is the OCI spec section we want to render.
+    let oci_spec_section = settings_path
+        .split('.')
+        .last()
+        .expect("did not find (got None for) an oci_spec_section");
+
+    // Render the requested OCI spec section
+    let section =
+        OciSpecSection::from_str(oci_spec_section).context(error::InvalidOciSpecSectionSnafu)?;
+    let result_lines = match section {
+        OciSpecSection::Capabilities => oci_spec_capabilities(oci_defaults_values)?,
+        OciSpecSection::ResourceLimits => oci_spec_resource_limits(oci_defaults_values)?,
+    };
+
+    // Write out the final values to the configuration file
+    out.write(result_lines.as_str())
+        .context(error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
+/// This helper writes out the capabilities section of the default
+/// OCI runtime spec that `containerd` will use.
+///
+/// This function is called by the `oci_defaults` helper function,
+/// specifically when matching over the `oci_spec_section` parameter
+/// to determine which section of the OCI spec to render.
+///
+/// This helper function generates the linux capabilities section of
+/// the OCI runtime spec from the provided `value` parameter, which is
+/// the settings data from the datastore (`settings.oci-defaults.capabilities`).
+fn oci_spec_capabilities(value: &Value) -> Result<String, RenderError> {
+    let oci_default_capabilities: HashMap<OciDefaultsCapability, bool> =
+        serde_json::from_value(value.clone())?;
+
+    // Output the capabilities that are enabled
+    let mut capabilities_lines: Vec<String> = oci_default_capabilities
+        .iter()
+        .filter(|(_, &capability_enabled)| capability_enabled)
+        .map(|(&capability, _)| format!("\"{}\"", capability.to_linux_string()))
+        .collect();
+
+    // Sort for consistency for human-readers of the OCI spec defaults file.
+    capabilities_lines.sort();
+    let capabilities_lines_joined = capabilities_lines.join(",\n");
+
+    let capabilities_section = format!(
+        concat!(
+            r#""bounding": ["#,
+            "{capabilities_bounding}",
+            "],\n",
+            r#""effective": ["#,
+            "{capabilities_effective}",
+            "],\n",
+            r#""permitted": ["#,
+            "{capabilities_permitted}",
+            "]\n",
+        ),
+        capabilities_bounding = capabilities_lines_joined,
+        capabilities_effective = capabilities_lines_joined,
+        capabilities_permitted = capabilities_lines_joined,
+    );
+
+    debug!("capabilities_section: \n{}", capabilities_section);
+
+    Ok(capabilities_section)
+}
+
+/// This helper writes out the resource limits section of the default
+/// OCI runtime spec that `containerd` will use.
+///
+/// This function is called by the `oci_defaults` helper function,
+/// specifically when matching over the `oci_spec_section` parameter
+/// to determine which section of the OCI spec to render.
+///
+/// This helper function generates the resource limits section of
+/// the OCI runtime spec from the provided `value` parameter, which is
+/// the settings data from the datastore (`settings.oci-defaults.resource-limits`).
+fn oci_spec_resource_limits(value: &Value) -> Result<String, RenderError> {
+    let oci_default_rlimits: HashMap<OciDefaultsResourceLimitType, OciDefaultsResourceLimit> =
+        serde_json::from_value(value.clone())?;
+
+    let result_lines = oci_default_rlimits
+        .iter()
+        .map(|(rlimit_type, values)| {
+            format!(
+                r#"{{ "type": "{}", "hard": {}, "soft": {} }}"#,
+                rlimit_type.to_linux_string(),
+                values.hard_limit,
+                values.soft_limit,
+            )
+        })
+        .collect::<Vec<String>>()
+        .join(",\n");
+
+    debug!("resource_limits result_lines: \n{}", result_lines);
+    Ok(result_lines)
+}
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 // helpers to the helpers
+
+/// Gets the key name (path) of the parameter at `index`. Returns an error if the param cannot be extracted.
+fn get_param_key_name<'a>(
+    helper: &'a Helper<'_, '_>,
+    index: usize,
+) -> Result<&'a String, RenderError> {
+    Ok(helper
+        .params()
+        .get(index)
+        .context(error::MissingParamSnafu {
+            index,
+            helper_name: helper.name(),
+        })?
+        .relative_path()
+        .context(error::MissingParamPathSnafu {
+            index,
+            helper_name: helper.name(),
+        })?)
+}
 
 /// Gets the value at `idx` and unwraps it. Returns an error if the param cannot be unwrapped.
 fn get_param<'a>(helper: &'a Helper<'_, '_>, idx: usize) -> Result<&'a Value, RenderError> {
@@ -2516,5 +2694,45 @@ mod test_any_enabled {
         let result = setup_and_render_template(TEMPLATE, &json!({"state": "enabled"})).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
+    }
+}
+
+#[cfg(test)]
+mod test_oci_spec {
+    use crate::helpers::*;
+    use serde_json::json;
+
+    #[test]
+    fn oci_spec_capabilities_test() {
+        let json = json!({
+            "kill": true,
+            "lease": false,
+            "mac-admin": true,
+            "mknod": true
+        });
+        let rendered = oci_spec_capabilities(&json).unwrap();
+        assert_eq!(
+            rendered,
+            r#""bounding": ["CAP_KILL",
+"CAP_MAC_ADMIN",
+"CAP_MKNOD"],
+"effective": ["CAP_KILL",
+"CAP_MAC_ADMIN",
+"CAP_MKNOD"],
+"permitted": ["CAP_KILL",
+"CAP_MAC_ADMIN",
+"CAP_MKNOD"]
+"#
+        );
+    }
+
+    #[test]
+    fn oci_spec_resource_limits_test() {
+        let json = json!({"max-open-files": {"hard-limit": 1, "soft-limit": 2}});
+        let rendered = oci_spec_resource_limits(&json).unwrap();
+        assert_eq!(
+            rendered,
+            r#"{ "type": "RLIMIT_NOFILE", "hard": 1, "soft": 2 }"#
+        );
     }
 }
