@@ -447,13 +447,16 @@ if [ "${OUTPUT_FMT}" == "vmdk" ] ; then
   # Create the manifest file with the hashes of the VMDKs and the OVF.
   manifest="${OS_IMAGE_NAME}.mf"
   pushd "${OUTPUT_DIR}" >/dev/null
-  sha256sum --tag "${os_vmdk}" > "${ova_dir}/${manifest}"
+  os_sha256="$(sha256sum ${os_vmdk} | awk '{print $1}')"
+  echo "SHA256(${os_vmdk})= ${os_sha256}" > "${ova_dir}/${manifest}"
   if [ -s "${DATA_IMAGE}" ] ; then
-    sha256sum --tag "${data_vmdk}" >> "${ova_dir}/${manifest}"
+    data_sha256="$(sha256sum ${data_vmdk} | awk '{print $1}')"
+    echo "SHA256(${data_vmdk})= ${data_sha256}" >> "${ova_dir}/${manifest}"
   fi
   popd >/dev/null
   pushd "${ova_dir}" >/dev/null
-  sha256sum --tag "${ovf}" >> "${manifest}"
+  ovf_sha256="$(sha256sum ${ovf} | awk '{print $1}')"
+  echo "SHA256(${ovf})= ${ovf_sha256}" >> "${manifest}"
   popd >/dev/null
 
   # According to the OVF spec:
