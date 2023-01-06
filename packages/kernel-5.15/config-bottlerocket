@@ -106,6 +106,10 @@ CONFIG_SERIO_I8042=m
 CONFIG_KEYBOARD_ATKBD=m
 CONFIG_MOUSE_PS2=m
 
+# Add virtio drivers for development setups running as guests in qemu
+CONFIG_VIRTIO_CONSOLE=m
+CONFIG_HW_RANDOM_VIRTIO=m
+
 # Add support for IPMI drivers
 CONFIG_IPMI_HANDLER=m
 
