@@ -1401,14 +1401,28 @@ script = [
     '''
 ]
 
-# This task will clear all tests and resources from the testsys cluster.
+# This task will clear all tests from the testsys cluster.
+# To delete all passed tests use `cargo make clean-test --passed`
+# To delete all failed tests use `cargo make clean-test --failed`
+# To delete all incomplete tests use `cargo make clean-test --running`
 [tasks.clean-test]
 dependencies = ["test-tools"]
 script = [
     '''
     set -eu
     export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete
+    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete --test ${@}
+    '''
+]
+
+# This task will clear all tests and resources from the testsys cluster.
+[tasks.reset-test]
+dependencies = ["test-tools"]
+script = [
+    '''
+    set -eu
+    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete ${@}
     '''
 ]
 
@@ -1423,8 +1437,28 @@ script = [
    '''
 ]
 
-# This task will call watch on the `status` testsys command to show the results of a test.
+# This task will clear all testsys components from the testsys cluster.
+[tasks.purge-test]
+dependencies = ["test-tools","reset-test","uninstall-test"]
+
+# This task will call watch on the `status` testsys command to show the results of all tests.
+# To see all passed tests use `cargo make watch-test --passed`
+# To see all failed tests use `cargo make watch-test --failed`
+# To see all incomplete tests use `cargo make watch-test --running`
 [tasks.watch-test]
+dependencies = ["test-tools"]
+script = [
+   '''
+   set -eu
+   export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+   watch -- testsys ${CARGO_MAKE_TESTSYS_ARGS} status --test ${@}
+   '''
+]
+
+# This task will call watch on the `status` testsys command to show the results of all tests and
+# resources.
+# To see all incomplete crds use `cargo make watch-test-all --running` 
+[tasks.watch-test-all]
 dependencies = ["test-tools"]
 script = [
    '''

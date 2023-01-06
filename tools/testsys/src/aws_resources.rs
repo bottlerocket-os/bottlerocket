@@ -9,6 +9,7 @@ use serde::Deserialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::fs::File;
+use std::iter::repeat_with;
 
 /// Get the AMI for the given `region` from the `ami_input` file.
 pub(crate) fn ami(ami_input: &str, region: &str) -> Result<String> {
@@ -189,11 +190,9 @@ pub(crate) async fn ec2_crd<'a>(
             .security_groups(Vec::new());
     }
 
+    let suffix: String = repeat_with(fastrand::lowercase).take(4).collect();
     ec2_builder
-        .build(format!(
-            "{}-instances-{}",
-            cluster_name, bottlerocket_input.test_type
-        ))
+        .build(format!("{}-instances-{}", cluster_name, suffix))
         .map_err(|e| error::Error::Build {
             what: "EC2 instance provider CRD".to_string(),
             error: e.to_string(),

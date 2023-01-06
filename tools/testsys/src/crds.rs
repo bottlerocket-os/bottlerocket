@@ -1,5 +1,5 @@
 use crate::error::{self, Result};
-use crate::run::KnownTestType;
+use crate::run::{KnownTestType, TestType};
 use bottlerocket_types::agent_config::TufRepoConfig;
 use bottlerocket_variant::Variant;
 use handlebars::Handlebars;
@@ -23,9 +23,11 @@ pub struct CrdInput<'a> {
     pub repo_config: RepoConfig,
     pub starting_version: Option<String>,
     pub migrate_to_version: Option<String>,
+    pub build_id: Option<String>,
     /// `CrdCreator::starting_image_id` function should be used instead of using this field, so
     /// it is not externally visible.
     pub(crate) starting_image_id: Option<String>,
+    pub(crate) test_type: TestType,
     pub images: TestsysImages,
 }
 
@@ -55,6 +57,8 @@ impl<'a> CrdInput<'a> {
         let mut labels = btreemap! {
             "testsys/arch".to_string() => self.arch.to_string(),
             "testsys/variant".to_string() => self.variant.to_string(),
+            "testsys/build-id".to_string() => self.build_id.to_owned().unwrap_or_default(),
+            "testsys/test-type".to_string() => self.test_type.to_string(),
         };
         let mut add_labels = additional_labels;
         labels.append(&mut add_labels);

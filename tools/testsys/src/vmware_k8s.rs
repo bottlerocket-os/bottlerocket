@@ -13,6 +13,7 @@ use model::{Crd, DestructionPolicy, SecretName};
 use pubsys_config::vmware::Datacenter;
 use snafu::OptionExt;
 use std::collections::BTreeMap;
+use std::iter::repeat_with;
 use std::str::FromStr;
 
 /// A `CrdCreator` responsible for creating crd related to `vmware-k8s` variants.
@@ -179,6 +180,7 @@ impl CrdCreator for VmwareK8sCreator {
             .existing_crds(&labels, &["testsys/type", "testsys/cluster"])
             .await?;
 
+        let suffix: String = repeat_with(fastrand::lowercase).take(4).collect();
         let vsphere_vm_crd = VSphereVmConfig::builder()
             .ova_name(self.image_id(bottlerocket_input.crd_input)?)
             .tuf_repo(bottlerocket_input.crd_input.tuf_repo_config().context(
@@ -227,10 +229,7 @@ impl CrdCreator for VmwareK8sCreator {
                     .collect(),
             ))
             .depends_on(cluster_name)
-            .build(format!(
-                "{}-vms-{}",
-                cluster_name, bottlerocket_input.test_type
-            ))
+            .build(format!("{}-vms-{}", cluster_name, suffix))
             .map_err(|e| error::Error::Build {
                 what: "vSphere VM CRD".to_string(),
                 error: e.to_string(),
