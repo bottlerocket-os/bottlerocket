@@ -1,5 +1,5 @@
 name: Bug Report
-labels: status/needs-triage, type/bug
+labels: ["status/needs-triage", "type/bug"]
 description: Let us know about a problem with Bottlerocket
 body:
   - type: markdown
