@@ -24,6 +24,7 @@ dependencies = [
  "release",
  "strace",
  "tcpdump",
+ "wicked",
 ]
 
 [[package]]
@@ -37,6 +38,7 @@ dependencies = [
  "ecs-agent",
  "kernel-5_10",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -53,6 +55,7 @@ dependencies = [
  "kmod-5_10-nvidia",
  "nvidia-container-toolkit",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -72,6 +75,7 @@ dependencies = [
  "kernel-5_10",
  "kubernetes-1_21",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -87,6 +91,7 @@ dependencies = [
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -99,6 +104,7 @@ dependencies = [
  "kernel-5_10",
  "kubernetes-1_22",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -114,6 +120,7 @@ dependencies = [
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -126,6 +133,7 @@ dependencies = [
  "kernel-5_10",
  "kubernetes-1_23",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -141,6 +149,7 @@ dependencies = [
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -153,6 +162,7 @@ dependencies = [
  "kernel-5_15",
  "kubernetes-1_24",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -168,6 +178,7 @@ dependencies = [
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -769,6 +780,7 @@ dependencies = [
  "release",
  "strace",
  "tcpdump",
+ "wicked",
 ]
 
 [[package]]
@@ -780,6 +792,7 @@ dependencies = [
  "kernel-5_10",
  "kubernetes-1_21",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -791,6 +804,7 @@ dependencies = [
  "kernel-5_10",
  "kubernetes-1_22",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -802,6 +816,7 @@ dependencies = [
  "kernel-5_10",
  "kubernetes-1_23",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -813,6 +828,7 @@ dependencies = [
  "kernel-5_15",
  "kubernetes-1_24",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -926,7 +942,6 @@ dependencies = [
  "selinux-policy",
  "systemd",
  "util-linux",
- "wicked",
 ]
 
 [[package]]
@@ -998,6 +1013,7 @@ dependencies = [
  "release",
  "strace",
  "tcpdump",
+ "wicked",
 ]
 
 [[package]]
@@ -1010,6 +1026,7 @@ dependencies = [
  "kubernetes-1_21",
  "open-vm-tools",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -1022,6 +1039,7 @@ dependencies = [
  "kubernetes-1_22",
  "open-vm-tools",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -1034,6 +1052,7 @@ dependencies = [
  "kubernetes-1_23",
  "open-vm-tools",
  "release",
+ "wicked",
 ]
 
 [[package]]
@@ -1046,6 +1065,7 @@ dependencies = [
  "kubernetes-1_24",
  "open-vm-tools",
  "release",
+ "wicked",
 ]
 
 [[package]]

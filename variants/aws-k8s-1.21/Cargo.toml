@@ -11,12 +11,14 @@ exclude = ["README.md"]
 
 [package.metadata.build-variant]
 included-packages = [
+# core
+    "kernel-5.10",
+    "release",
+# k8s
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
-    "kernel-5.10",
     "kubelet-1.21",
-    "release",
 ]
 kernel-parameters = [
     "console=tty0",
@@ -30,9 +32,11 @@ kernel-parameters = [
 path = "lib.rs"
 
 [build-dependencies]
+# core
+release = { path = "../../packages/release" }
+kernel-5_10 = { path = "../../packages/kernel-5.10" }
+# k8s
 aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
-kernel-5_10 = { path = "../../packages/kernel-5.10" }
 kubernetes-1_21 = { path = "../../packages/kubernetes-1.21" }
-release = { path = "../../packages/release" }

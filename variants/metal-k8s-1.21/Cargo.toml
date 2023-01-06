@@ -19,24 +19,29 @@ grub-set-private-var = true
 [package.metadata.build-variant]
 image-format = "raw"
 supported-arches = ["x86_64"]
+included-packages = [
+# core
+    "kernel-5.10",
+    "release",
+# k8s
+    "cni",
+    "cni-plugins",
+    "kubelet-1.21",
+]
 kernel-parameters = [
     # Only reserve if there are at least 2GB
     "crashkernel=2G-:256M"
-]
-included-packages = [
-    "cni",
-    "cni-plugins",
-    "kernel-5.10",
-    "kubelet-1.21",
-    "release",
 ]
 
 [lib]
 path = "lib.rs"
 
 [build-dependencies]
+# core
+kernel-5_10 = { path = "../../packages/kernel-5.10" }
+release = { path = "../../packages/release" }
+# k8s
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
-kernel-5_10 = { path = "../../packages/kernel-5.10" }
 kubernetes-1_21 = { path = "../../packages/kubernetes-1.21" }
-release = { path = "../../packages/release" }
+

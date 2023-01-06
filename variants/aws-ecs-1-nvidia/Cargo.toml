@@ -9,13 +9,6 @@ build = "build.rs"
 os-image-size-gib = 4
 
 [package.metadata.build-variant]
-kernel-parameters = [
-    "console=tty0",
-    "console=ttyS0,115200n8",
-    "net.ifnames=0",
-    "netdog.default-interface=eth0:dhcp4,dhcp6?",
-    "quiet",
-]
 included-packages = [
 # core
     "release",
@@ -31,6 +24,13 @@ included-packages = [
     "ecs-gpu-init",
     "nvidia-container-toolkit",
     "kmod-5.10-nvidia-tesla-470",
+]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
 ]
 
 [lib]

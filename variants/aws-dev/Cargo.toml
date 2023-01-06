@@ -11,15 +11,6 @@ exclude = ["README.md"]
 grub-set-private-var = true
 
 [package.metadata.build-variant]
-kernel-parameters = [
-    "console=tty0",
-    "console=ttyS0,115200n8",
-    # Only reserve if there are at least 2GB
-    "crashkernel=2G-:256M",
-    "net.ifnames=0",
-    "netdog.default-interface=eth0:dhcp4,dhcp6?",
-    "quiet",
-]
 included-packages = [
 # core
     "release",
@@ -35,6 +26,15 @@ included-packages = [
     "strace",
     "tcpdump",
     "chrony-tools",
+]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    # Only reserve if there are at least 2GB
+    "crashkernel=2G-:256M",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
 ]
 
 [lib]

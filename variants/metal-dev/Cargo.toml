@@ -15,10 +15,6 @@ grub-set-private-var = true
 
 [package.metadata.build-variant]
 image-format = "raw"
-kernel-parameters = [
-    # Only reserve if there are at least 2GB
-    "crashkernel=2G-:256M"
-]
 included-packages = [
 # core
     "release",
@@ -34,6 +30,10 @@ included-packages = [
     "strace",
     "tcpdump",
     "chrony-tools",
+]
+kernel-parameters = [
+    # Only reserve if there are at least 2GB
+    "crashkernel=2G-:256M"
 ]
 
 [lib]

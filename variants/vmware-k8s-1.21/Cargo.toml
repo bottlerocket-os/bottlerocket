@@ -12,6 +12,16 @@ exclude = ["README.md"]
 [package.metadata.build-variant]
 image-format = "vmdk"
 supported-arches = ["x86_64"]
+included-packages = [
+# core
+    "kernel-5.10",
+    "open-vm-tools",
+    "release",
+# k8s
+    "cni",
+    "cni-plugins",
+    "kubelet-1.21",
+]
 kernel-parameters = [
     "console=tty1",
     # Only reserve if there are at least 2GB
@@ -20,22 +30,17 @@ kernel-parameters = [
     "netdog.default-interface=eth0:dhcp4,dhcp6?",
     "quiet",
 ]
-included-packages = [
-    "cni",
-    "cni-plugins",
-    "kernel-5.10",
-    "kubelet-1.21",
-    "open-vm-tools",
-    "release",
-]
 
 [lib]
 path = "lib.rs"
 
 [build-dependencies]
-cni = { path = "../../packages/cni" }
-cni-plugins = { path = "../../packages/cni-plugins" }
+# core
 kernel-5_10 = { path = "../../packages/kernel-5.10" }
-kubernetes-1_21 = { path = "../../packages/kubernetes-1.21" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }
 release = { path = "../../packages/release" }
+# k8s
+cni = { path = "../../packages/cni" }
+cni-plugins = { path = "../../packages/cni-plugins" }
+kubernetes-1_21 = { path = "../../packages/kubernetes-1.21" }
+

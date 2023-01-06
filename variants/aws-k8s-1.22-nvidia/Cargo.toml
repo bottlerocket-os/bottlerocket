@@ -14,12 +14,15 @@ os-image-size-gib = 4
 
 [package.metadata.build-variant]
 included-packages = [
+# core
+    "kernel-5.10",
+    "release",
+# k8s
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
-    "kernel-5.10",
     "kubelet-1.22",
-    "release",
+# NVIDIA
     "nvidia-container-toolkit",
     "nvidia-k8s-device-plugin",
     "kmod-5.10-nvidia-tesla-470",
@@ -36,12 +39,15 @@ kernel-parameters = [
 path = "lib.rs"
 
 [build-dependencies]
+# core
+kernel-5_10 = { path = "../../packages/kernel-5.10" }
+release = { path = "../../packages/release" }
+# k8s
 aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
-kernel-5_10 = { path = "../../packages/kernel-5.10" }
 kubernetes-1_22 = { path = "../../packages/kubernetes-1.22" }
-release = { path = "../../packages/release" }
+# NVIDIA
 nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
 nvidia-k8s-device-plugin = { path = "../../packages/nvidia-k8s-device-plugin" }
 kmod-5_10-nvidia = { path = "../../packages/kmod-5.10-nvidia" }
