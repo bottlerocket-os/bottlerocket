@@ -4,6 +4,10 @@
 # The root filesystem is ext4
 CONFIG_EXT4_FS=y
 
+# btrfs support for compatibility
+CONFIG_BTRFS_FS=m
+CONFIG_BTRFS_FS_POSIX_ACL=y
+
 # Support for squashfs used to provide kernel headers with zstd compression
 CONFIG_SQUASHFS=m
 CONFIG_SQUASHFS_FILE_CACHE=y
