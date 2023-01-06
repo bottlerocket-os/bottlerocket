@@ -2519,6 +2519,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oci-defaults-setting"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
+name = "oci-defaults-setting-metadata"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
 name = "oid-registry"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

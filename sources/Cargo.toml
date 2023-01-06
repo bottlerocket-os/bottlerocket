@@ -29,6 +29,8 @@ members = [
     "api/migration/migrations/v1.12.0/k8s-private-pki-path",
     "api/migration/migrations/v1.12.0/add-k8s-autoscaling-warm-pool-setting",
     "api/migration/migrations/v1.12.0/add-k8s-autoscaling-warm-pool-setting-metadata",
+    "api/migration/migrations/v1.12.0/oci-defaults-setting",
+    "api/migration/migrations/v1.12.0/oci-defaults-setting-metadata",
 
     "bottlerocket-release",
 
