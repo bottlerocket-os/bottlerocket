@@ -29,6 +29,8 @@ included-packages = [
     "release",
     "kernel-5.15",
     "open-vm-tools",
+# networking
+    "wicked",
 # docker
     "docker-cli",
     "docker-engine",
@@ -50,6 +52,8 @@ path = "lib.rs"
 release = { path = "../../packages/release" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }
+# networking
+wicked = { path = "../../packages/wicked" }
 # docker
 docker-cli = { path = "../../packages/docker-cli" }
 docker-engine = { path = "../../packages/docker-engine" }

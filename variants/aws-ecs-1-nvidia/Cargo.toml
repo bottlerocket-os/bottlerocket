@@ -13,6 +13,8 @@ included-packages = [
 # core
     "release",
     "kernel-5.10",
+# networking
+    "wicked",
 # docker
     "docker-cli",
     "docker-engine",
@@ -40,6 +42,8 @@ path = "lib.rs"
 # core
 release = { path = "../../packages/release" }
 kernel-5_10 = { path = "../../packages/kernel-5.10" }
+# networking
+wicked = { path = "../../packages/wicked" }
 # docker
 docker-cli = { path = "../../packages/docker-cli" }
 docker-engine = { path = "../../packages/docker-engine" }

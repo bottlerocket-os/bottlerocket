@@ -17,6 +17,8 @@ included-packages = [
 # core
     "kernel-5.10",
     "release",
+# networking
+    "wicked",
 # k8s
     "aws-iam-authenticator",
     "cni",
@@ -42,6 +44,8 @@ path = "lib.rs"
 # core
 kernel-5_10 = { path = "../../packages/kernel-5.10" }
 release = { path = "../../packages/release" }
+# networking
+wicked = { path = "../../packages/wicked" }
 # k8s
 aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
 cni = { path = "../../packages/cni" }

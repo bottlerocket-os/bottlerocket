@@ -23,6 +23,8 @@ included-packages = [
 # core
     "kernel-5.10",
     "release",
+# networking
+    "wicked",
 # k8s
     "cni",
     "cni-plugins",
@@ -40,6 +42,8 @@ path = "lib.rs"
 # core
 kernel-5_10 = { path = "../../packages/kernel-5.10" }
 release = { path = "../../packages/release" }
+# networking
+wicked = { path = "../../packages/wicked" }
 # k8s
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
