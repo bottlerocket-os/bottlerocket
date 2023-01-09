@@ -12,22 +12,54 @@ body:
         - Include details about the environment you're running in,
         - Include any error messages you received, with any required context.
   - type: dropdown
-    id: variant-family
+    id: variant
     attributes:
-      label: Variant family
+      label: Variant
       options:
-        - aws-k8s
-        - aws-k8s (nvidia)
-        - aws-ecs
-        - aws-ecs (nvidia)
-        - vmware-k8s
-        - metal-k8s
-        - Custom variant
-  - type: input
-    id: variant-orchestrator-version
+        - aws-k8s-1.21
+        - aws-k8s-1.22
+        - aws-k8s-1.23
+        - aws-k8s-1.24
+        - aws-ecs-1
+        - vmware-k8s-1.21
+        - vmware-k8s-1.22
+        - vmware-k8s-1.23
+        - vmware-k8s-1.24
+        - metal-k8s-1.21
+        - metal-k8s-1.22
+        - metal-k8s-1.23
+        - metal-k8s-1.24
+        - Other variant (specify in 'I expected to happen')
+    validations:
+      required: true
+ - type: dropdown
+    id: version
     attributes:
-      label: Orchestrator version
-      description: For k8s variants, this is your version of Kubernetes. For ECS this is likely "1"
+      label: Bottlerocket version
+      options:
+        - 1.11.x
+        - 1.10.x
+        - 1.9.x
+        - 1.8.x
+        - 1.7.x
+        - 1.6.x
+        - 1.5.x
+        - 1.4.x
+        - 1.3.x
+        - 1.2.x
+        - 1.1.x
+        - 1.0.x
+    validations:
+      required: true
+ - type: dropdown
+    id: architecture
+    attributes:
+      label: Architecture
+      options:
+        - x86_64
+        - aarch64
+    validations:
+      required: true
   - type: textarea
     id: expect
     attributes:
