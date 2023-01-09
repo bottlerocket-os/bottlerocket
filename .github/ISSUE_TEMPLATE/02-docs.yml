@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        This bug report form is for **docuemntation issues** related to Bottlerocket.
+        This bug report form is for **documentation issues** related to Bottlerocket.
 
         A few tips before submitting a new issue:
         - Search for similar issues, including [closed issues](https://github.com/bottlerocket-os/bottlerocket/issues?q=is%3Aissue+is%3Aclosed),
