@@ -15,6 +15,7 @@ on:
       - 'tools/Cargo.lock'
 jobs:
   cache:
+    if: github.repository == 'bottlerocket-os/bottlerocket'
     runs-on:
       group: bottlerocket
       labels: bottlerocket_ubuntu-latest_16-core
