@@ -32,7 +32,7 @@ body:
         - Other variant (specify in 'I expected to happen')
     validations:
       required: true
- - type: dropdown
+  - type: dropdown
     id: version
     attributes:
       label: Bottlerocket version
@@ -51,7 +51,7 @@ body:
         - 1.0.x
     validations:
       required: true
- - type: dropdown
+  - type: dropdown
     id: architecture
     attributes:
       label: Architecture
@@ -88,5 +88,3 @@ body:
       render: bash
     validations:
       required: false
-
-
