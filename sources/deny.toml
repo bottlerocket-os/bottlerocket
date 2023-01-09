@@ -72,7 +72,9 @@ skip-tree = [
     # are using different versions of windows-sys. we skip the
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
-    { name = "windows-sys", version = "=0.36.1" }
+    { name = "windows-sys", version = "=0.36.1" },
+    # gptman is using an older version of nix
+    { name = "nix", version = "=0.24.3" },
 ]
 
 [sources]

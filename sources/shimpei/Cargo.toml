@@ -12,7 +12,7 @@ exclude = ["README.md"]
 log = "0.4"
 simplelog = "0.12"
 snafu = "0.7"
-nix = "0.24"
+nix = "0.26"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../generate-readme" }

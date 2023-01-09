@@ -23,7 +23,7 @@ http = "0.2.1"
 libc = "0.2"
 log = "0.4"
 models = { path = "../../models", version = "0.1.0" }
-nix = "0.24"
+nix = "0.26"
 num = "0.4"
 percent-encoding = "2.1"
 rand = "0.8"

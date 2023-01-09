@@ -12,6 +12,7 @@ The output is collected and sent to a known Bottlerocket API server endpoint.
 #[macro_use]
 extern crate log;
 
+use rayon::prelude::*;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -296,8 +297,6 @@ async fn get_dynamic_settings<P>(
 where
     P: AsRef<Path>,
 {
-    let mut settings = HashMap::new();
-
     // Build the list of settings to query from the datastore to see if they
     // are currently populated.
     // `generators` keys are setting names in the proper dotted
@@ -309,123 +308,132 @@ where
     let proxy_envs = build_proxy_env(socket_path).await?;
 
     // For each generator, run it and capture the output
-    for (setting_str, generator) in generators {
-        let setting = Key::new(KeyType::Data, &setting_str).context(error::InvalidKeySnafu {
-            key_type: KeyType::Data,
-            key: &setting_str,
-        })?;
+    let settings = generators
+        .par_iter()
+        .map(|(setting_str, generator)| {
+            let setting =
+                Key::new(KeyType::Data, &setting_str).context(error::InvalidKeySnafu {
+                    key_type: KeyType::Data,
+                    key: setting_str,
+                })?;
 
-        // Don't clobber settings that are already populated
-        // We're checking for prefix matches here because some generators are for settings that map
-        // to a top level struct that might have subfields. For example, a settings generator for
-        // `settings.boot` encompasses both `settings.boot.kernel` and `settings.boot.init`.
-        // TODO: We can optimize by using a prefix trie here. But there are no satisfactory trie
-        //  implementations I can find on crates.io. We can roll our own at some point if this
-        //  becomes a bottleneck
-        if populated_settings
-            .iter()
-            .any(|k| k.starts_with_segments(setting.segments()))
-        {
-            debug!("Setting '{}' is already populated, skipping", setting);
-            continue;
-        }
+            // Don't clobber settings that are already populated
+            // We're checking for prefix matches here because some generators are for settings that map
+            // to a top level struct that might have subfields. For example, a settings generator for
+            // `settings.boot` encompasses both `settings.boot.kernel` and `settings.boot.init`.
+            // TODO: We can optimize by using a prefix trie here. But there are no satisfactory trie
+            //  implementations I can find on crates.io. We can roll our own at some point if this
+            //  becomes a bottleneck
+            if populated_settings
+                .iter()
+                .any(|k| k.starts_with_segments(setting.segments()))
+            {
+                debug!("Setting '{}' is already populated, skipping", setting);
+                return Ok(None);
+            }
 
-        debug!("Running generator: '{}'", &generator);
+            debug!("Running generator: '{}'", &generator);
 
-        // Split on space, assume the first item is the command
-        // and the rest are args.
-        let mut command_strings = generator.split_whitespace();
-        let command = command_strings.next().context(error::InvalidCommandSnafu {
-            command: generator.as_str(),
-        })?;
-
-        let result = process::Command::new(command)
-            .envs(&proxy_envs)
-            .args(command_strings)
-            .output()
-            .context(error::CommandFailureSnafu {
-                program: generator.as_str(),
+            // Split on space, assume the first item is the command
+            // and the rest are args.
+            let mut command_strings = generator.split_whitespace();
+            let command = command_strings.next().context(error::InvalidCommandSnafu {
+                command: generator.as_str(),
             })?;
 
-        // Match on the generator's exit code. This code lays the foundation
-        // for handling alternative exit codes from generators.
-        match result.status.code() {
-            Some(0) => {
-                if !result.stderr.is_empty() {
-                    let cmd_stderr = String::from_utf8_lossy(&result.stderr);
-                    for line in cmd_stderr.lines() {
-                        info!("Setting generator command '{}' stderr: {}", command, line);
+            let result = process::Command::new(command)
+                .envs(&proxy_envs)
+                .args(command_strings)
+                .output()
+                .context(error::CommandFailureSnafu {
+                    program: generator.as_str(),
+                })?;
+
+            // Match on the generator's exit code. This code lays the foundation
+            // for handling alternative exit codes from generators.
+            match result.status.code() {
+                Some(0) => {
+                    if !result.stderr.is_empty() {
+                        let cmd_stderr = String::from_utf8_lossy(&result.stderr);
+                        for line in cmd_stderr.lines() {
+                            info!("Setting generator command '{}' stderr: {}", command, line);
+                        }
                     }
                 }
-            }
-            Some(1) => {
-                return error::FailedSettingGeneratorSnafu {
-                    program: generator.as_str(),
-                    code: 1.to_string(),
-                    stderr: String::from_utf8_lossy(&result.stderr),
+                Some(1) => {
+                    return error::FailedSettingGeneratorSnafu {
+                        program: generator.as_str(),
+                        code: 1.to_string(),
+                        stderr: String::from_utf8_lossy(&result.stderr),
+                    }
+                    .fail()
                 }
-                .fail()
-            }
-            Some(2) => {
-                warn!(
-                    "'{}' returned 2, not setting '{}', continuing with other generators",
-                    command, generator
-                );
-                continue;
-            }
-            Some(x) => {
-                return error::UnexpectedReturnCodeSnafu {
-                    program: generator.as_str(),
-                    code: x.to_string(),
-                    stderr: String::from_utf8_lossy(&result.stderr),
+                Some(2) => {
+                    warn!(
+                        "'{}' returned 2, not setting '{}', continuing with other generators",
+                        command, generator
+                    );
+                    return Ok(None);
                 }
-                .fail()
-            }
-            // A process will return None if terminated by a signal, regard this as
-            // a failure since we could have incomplete data
-            None => {
-                return error::FailedSettingGeneratorSnafu {
-                    program: generator.as_str(),
-                    code: "signal",
-                    stderr: String::from_utf8_lossy(&result.stderr),
+                Some(x) => {
+                    return error::UnexpectedReturnCodeSnafu {
+                        program: generator.as_str(),
+                        code: x.to_string(),
+                        stderr: String::from_utf8_lossy(&result.stderr),
+                    }
+                    .fail()
                 }
-                .fail()
+                // A process will return None if terminated by a signal, regard this as
+                // a failure since we could have incomplete data
+                None => {
+                    return error::FailedSettingGeneratorSnafu {
+                        program: generator.as_str(),
+                        code: "signal",
+                        stderr: String::from_utf8_lossy(&result.stderr),
+                    }
+                    .fail()
+                }
             }
-        }
 
-        // Sundog programs are expected to output JSON, which allows them to represent types other
-        // than strings, which in turn allows our API model to use types more accurate than strings
-        // for generated settings.
-        //
-        // First, we pull the raw string from the process output.
-        let output_raw = str::from_utf8(&result.stdout)
-            .context(error::GeneratorOutputSnafu {
-                program: generator.as_str(),
-            })?
-            .trim()
-            .to_string();
-        trace!("Generator '{}' output: {}", &generator, &output_raw);
+            // Sundog programs are expected to output JSON, which allows them to represent types other
+            // than strings, which in turn allows our API model to use types more accurate than strings
+            // for generated settings.
+            //
+            // First, we pull the raw string from the process output.
+            let output_raw = str::from_utf8(&result.stdout)
+                .context(error::GeneratorOutputSnafu {
+                    program: generator.as_str(),
+                })?
+                .trim()
+                .to_string();
+            trace!("Generator '{}' output: {}", &generator, &output_raw);
 
-        // Next, we deserialize the text into a Value that can represent any JSON type.
-        let output_value: serde_json::Value =
-            serde_json::from_str(&output_raw).context(error::CommandJsonSnafu {
-                generator: &generator,
-                input: &output_raw,
-            })?;
+            // Next, we deserialize the text into a Value that can represent any JSON type.
+            let output_value: serde_json::Value =
+                serde_json::from_str(&output_raw).context(error::CommandJsonSnafu {
+                    generator: generator,
+                    input: &output_raw,
+                })?;
 
-        // Finally, we re-serialize the command output; we intend to call the datastore-level
-        // construct `from_map` on it, which expects serialized values.
-        //
-        // We have to go through the round-trip of serialization because the data store
-        // serialization format may not be the same as the format we choose for sundog.
-        let serialized_output =
-            datastore::serialize_scalar(&output_value).context(error::SerializeScalarSnafu {
-                value: output_value,
-            })?;
-        trace!("Serialized output: {}", &serialized_output);
-
-        settings.insert(setting, serialized_output);
-    }
+            // Finally, we re-serialize the command output; we intend to call the datastore-level
+            // construct `from_map` on it, which expects serialized values.
+            //
+            // We have to go through the round-trip of serialization because the data store
+            // serialization format may not be the same as the format we choose for sundog.
+            let serialized_output = datastore::serialize_scalar(&output_value).context(
+                error::SerializeScalarSnafu {
+                    value: output_value,
+                },
+            )?;
+            trace!("Serialized output: {}", &serialized_output);
+            Ok(Some((setting, serialized_output)))
+        })
+        // Catch any errors encountered while gathering settings.
+        .collect::<Result<Vec<Option<(Key, String)>>>>()?
+        // Remove empty values and then pack into our HashMap.
+        .into_iter()
+        .filter_map(std::convert::identity)
+        .collect::<HashMap<Key, String>>();
 
     // The API takes a properly nested Settings struct, so deserialize our map to a Settings
     // and ensure it is correct

@@ -291,7 +291,7 @@ dependencies = [
  "libc",
  "log",
  "models",
- "nix",
+ "nix 0.26.1",
  "rand",
  "reqwest",
  "retry-read",
@@ -326,7 +326,7 @@ dependencies = [
  "log",
  "maplit",
  "models",
- "nix",
+ "nix 0.26.1",
  "num",
  "percent-encoding",
  "rand",
@@ -1126,6 +1126,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossbeam-deque"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "715e8152b692bba2d374b53d4875445368fdf21a94751410af607a5ac677d1fc"
+dependencies = [
+ "cfg-if",
+ "crossbeam-epoch",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-epoch"
+version = "0.9.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01a9af1f4c2ef74bb8aa1f7e19706bc72d03598c8a570bb5de72243c7a9d9d5a"
+dependencies = [
+ "autocfg",
+ "cfg-if",
+ "crossbeam-utils",
+ "memoffset 0.7.1",
+ "scopeguard",
+]
+
+[[package]]
 name = "crossbeam-utils"
 version = "0.8.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1659,7 +1683,7 @@ checksum = "6db844b8efc35d17ae7929747118d9e4450a448e662437db9751e3627fe2675c"
 dependencies = [
  "bincode",
  "crc",
- "nix",
+ "nix 0.24.3",
  "serde",
  "thiserror",
 ]
@@ -2173,6 +2197,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "memoffset"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "merge-toml"
 version = "0.1.0"
 dependencies = [
@@ -2222,7 +2255,7 @@ dependencies = [
  "generate-readme",
  "log",
  "lz4",
- "nix",
+ "nix 0.26.1",
  "pentacle",
  "rand",
  "regex",
@@ -2365,7 +2398,21 @@ dependencies = [
  "bitflags",
  "cfg-if",
  "libc",
- "memoffset",
+ "memoffset 0.6.5",
+]
+
+[[package]]
+name = "nix"
+version = "0.26.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46a58d1d356c6597d08cde02c2f09d785b09e28711837b1ed667dc652c08a694"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "libc",
+ "memoffset 0.7.1",
+ "pin-utils",
+ "static_assertions",
 ]
 
 [[package]]
@@ -2761,7 +2808,7 @@ dependencies = [
  "log",
  "maplit",
  "models",
- "nix",
+ "nix 0.26.1",
  "schnauzer",
  "serde_json",
  "signpost",
@@ -2850,6 +2897,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "rayon"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6db3a213adf02b3bcfd2d3846bb41cb22857d131789e01df434fb7e7bc0759b7"
+dependencies = [
+ "either",
+ "rayon-core",
+]
+
+[[package]]
+name = "rayon-core"
+version = "1.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cac410af5d00ab6884528b4ab69d1e8e146e8d471201800fa1b4524126de6ad3"
+dependencies = [
+ "crossbeam-channel",
+ "crossbeam-deque",
+ "crossbeam-utils",
+ "num_cpus",
 ]
 
 [[package]]
@@ -3304,7 +3373,7 @@ version = "0.1.0"
 dependencies = [
  "generate-readme",
  "log",
- "nix",
+ "nix 0.26.1",
  "simplelog",
  "snafu",
 ]
@@ -3428,6 +3497,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
 name = "storewolf"
 version = "0.1.0"
 dependencies = [
@@ -3494,6 +3569,7 @@ dependencies = [
  "http",
  "log",
  "models",
+ "rayon",
  "serde",
  "serde_json",
  "simplelog",
@@ -3579,7 +3655,7 @@ dependencies = [
  "log",
  "maplit",
  "models",
- "nix",
+ "nix 0.26.1",
  "schnauzer",
  "serde_json",
  "simplelog",
@@ -3600,7 +3676,7 @@ dependencies = [
  "http",
  "log",
  "models",
- "nix",
+ "nix 0.26.1",
  "num-derive",
  "num-traits",
  "semver",
