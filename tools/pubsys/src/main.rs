@@ -182,7 +182,11 @@ mod error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
-        #[snafu(display("Failed to publish AMI: {}", source))]
+        #[snafu(display(
+            "Error during publish-ami command: {}: {}",
+            publish_ami_message(source),
+            source
+        ))]
         PublishAmi {
             source: crate::aws::publish_ami::Error,
         },
@@ -220,6 +224,14 @@ mod error {
         UploadOva {
             source: crate::vmware::upload_ova::Error,
         },
+    }
+
+    fn publish_ami_message(error: &crate::aws::publish_ami::Error) -> String {
+        match error.amis_affected() {
+            0 => String::from("No AMI permissions were updated"),
+            1 => String::from("Permissions for 1 AMI were updated, the rest failed"),
+            n => format!("Permissions for {} AMIs were updated, the rest failed", n),
+        }
     }
 }
 type Result<T> = std::result::Result<T, error::Error>;
