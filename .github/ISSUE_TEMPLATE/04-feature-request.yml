@@ -20,7 +20,7 @@ body:
   - type: textarea
     id: alternatives
     attributes:
-      label: Any alternatives you've considered
+      label: Any alternatives I've considered
       render: bash
     validations:
       required: true
