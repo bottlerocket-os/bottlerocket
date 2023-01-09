@@ -783,6 +783,12 @@ func withPrivilegedMounts() oci.SpecOpts {
 		},
 		{
 			Options:     []string{"rbind"},
+			Destination: "/sys/firmware",
+			Source:      "/sys/firmware",
+			Type:        "bind",
+		},
+		{
+			Options:     []string{"rbind"},
 			Destination: "/sys/kernel/debug",
 			Source:      "/sys/kernel/debug",
 			Type:        "bind",
