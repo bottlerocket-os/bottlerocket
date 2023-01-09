@@ -52,7 +52,7 @@ body:
   - type: textarea
     id: environment
     attributes:
-      label: About your environment
+      label: About my environment
       render: bash
     validations:
       required: false
