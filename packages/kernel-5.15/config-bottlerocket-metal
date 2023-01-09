@@ -94,12 +94,37 @@ CONFIG_SFC_SRIOV=y
 CONFIG_SFC_MCDI_MON=y
 CONFIG_SFC_FALCON=m
 
+# QLogic network support
+CONFIG_NET_VENDOR_QLOGIC=y
+CONFIG_QED=m
+CONFIG_QED_SRIOV=y
+CONFIG_QEDE=m
+# CONFIG_INFINIBAND_QEDR is not set
+# CONFIG_QEDF is not set
+# CONFIG_QEDI is not set
+# CONFIG_QLA3XXX is not set
+CONFIG_QLCNIC=m
+CONFIG_QLCNIC_SRIOV=y
+# CONFIG_QLCNIC_DCB is not set
+# CONFIG_QLCNIC_HWMON is not set
+# CONFIG_NETXEN_NIC is not set
+
 # Cisco UCS HBA support
 CONFIG_FCOE_FNIC=m
 CONFIG_SCSI_SNIC=m
 
 # LSI Logic's SAS based RAID controllers
+CONFIG_SCSI_MPT3SAS=y
 CONFIG_MEGARAID_SAS=y
 
 # Microsemi PQI controllers
 CONFIG_SCSI_SMARTPQI=y
+
+# provide minimal iscsi via tcp support for initiator and target mode
+# initiator side
+CONFIG_ISCSI_TCP=m
+CONFIG_ISCSI_BOOT_SYSFS=m
+CONFIG_SCSI_ISCSI_ATTRS=m
+# target side
+CONFIG_ISCSI_TARGET=m
+# CONFIG_INFINIBAND_ISERT is not set

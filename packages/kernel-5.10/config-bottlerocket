@@ -140,3 +140,6 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 # Disable unused qdiscs
 #   - sch_cake targets home routers and residential links
 # CONFIG_NET_SCH_CAKE is not set
+
+# Disable unused MPI3MR driver AL carries as a backport
+# CONFIG_SCSI_MPI3MR is not set
