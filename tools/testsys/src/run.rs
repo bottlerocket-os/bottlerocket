@@ -471,6 +471,10 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) migration_test: Option<String>,
 
+    /// TestSys controller URI. If not provided the latest released controller will be used.
+    #[clap(long = "controller-image", env = "TESTSYS_CONTROLLER_IMAGE")]
+    pub(crate) controller_uri: Option<String>,
+
     /// Images pull secret. This is the name of a Kubernetes secret that will be used to
     /// pull the container image from a private registry. For example, if you created a pull secret
     /// with `kubectl create secret docker-registry regcred` then you would pass
@@ -490,6 +494,7 @@ impl From<TestsysImages> for testsys_config::TestsysImages {
             sonobuoy_test_agent_image: val.sonobuoy_test,
             ecs_test_agent_image: val.ecs_test,
             migration_test_agent_image: val.migration_test,
+            controller_image: val.controller_uri,
             testsys_agent_pull_secret: val.secret,
         }
     }
