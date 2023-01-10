@@ -2,7 +2,7 @@
 %global __brp_check_rpaths %{nil}
 
 Name: %{_cross_os}systemd
-Version: 250.4
+Version: 250.9
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
@@ -12,12 +12,6 @@ Source1: systemd-tmpfiles.conf
 Source2: systemd-modules-load.conf
 Source3: journald.conf
 Source4: issue
-
-# Add fix for glibc 2.36+
-Patch0001: 0001-glibc-Remove-include-linux-fs.h-to-resolve-fsconfig_.patch
-
-# Upstream patch for CVE-2022-3821
-Patch0002: 0002-time-util-fix-buffer-over-run.patch
 
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
