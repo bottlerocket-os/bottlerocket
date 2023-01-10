@@ -197,6 +197,8 @@ pub struct GenericVariantConfig {
     pub conformance_registry: Option<String>,
     /// The endpoint IP to reserve for the vSphere control plane VMs when creating a K8s cluster
     pub control_plane_endpoint: Option<String>,
+    /// The path to userdata that should be used for Bottlerocket launch
+    pub userdata: Option<String>,
 }
 
 impl GenericVariantConfig {
@@ -222,6 +224,7 @@ impl GenericVariantConfig {
             conformance_image: self.conformance_image.or(other.conformance_image),
             conformance_registry: self.conformance_registry.or(other.conformance_registry),
             control_plane_endpoint: self.control_plane_endpoint.or(other.control_plane_endpoint),
+            userdata: self.userdata.or(other.userdata),
         }
     }
 }

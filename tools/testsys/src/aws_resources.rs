@@ -2,7 +2,7 @@ use crate::crds::BottlerocketInput;
 use crate::error::{self, Result};
 use aws_sdk_ec2::model::{Filter, Image};
 use aws_sdk_ec2::Region;
-use bottlerocket_types::agent_config::{ClusterType, Ec2Config};
+use bottlerocket_types::agent_config::{ClusterType, CustomUserData, Ec2Config};
 use maplit::btreemap;
 use model::{DestructionPolicy, Resource};
 use serde::Deserialize;
@@ -145,6 +145,12 @@ pub(crate) async fn ec2_crd<'a>(
                 .iter()
                 .cloned()
                 .collect(),
+        )
+        .custom_user_data(
+            bottlerocket_input
+                .crd_input
+                .encoded_userdata()?
+                .map(|encoded_userdata| CustomUserData::Merge { encoded_userdata }),
         )
         .cluster_name_template(cluster_name, "clusterName")
         .region_template(cluster_name, "region")

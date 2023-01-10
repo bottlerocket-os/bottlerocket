@@ -6,7 +6,8 @@ use crate::error::{self, Result};
 use crate::migration::migration_crd;
 use crate::sonobuoy::sonobuoy_crd;
 use bottlerocket_types::agent_config::{
-    CreationPolicy, K8sVersion, VSphereK8sClusterConfig, VSphereK8sClusterInfo, VSphereVmConfig,
+    CreationPolicy, CustomUserData, K8sVersion, VSphereK8sClusterConfig, VSphereK8sClusterInfo,
+    VSphereVmConfig,
 };
 use maplit::btreemap;
 use model::{Crd, DestructionPolicy, SecretName};
@@ -199,6 +200,12 @@ impl CrdCreator for VmwareK8sCreator {
                 control_plane_endpoint_ip: format!("${{{}.endpoint}}", cluster_name),
                 kubeconfig_base64: format!("${{{}.encodedKubeconfig}}", cluster_name),
             })
+            .custom_user_data(
+                bottlerocket_input
+                    .crd_input
+                    .encoded_userdata()?
+                    .map(|encoded_userdata| CustomUserData::Merge { encoded_userdata }),
+            )
             .assume_role(bottlerocket_input.crd_input.config.agent_role.clone())
             .set_labels(Some(labels))
             .set_conflicts_with(Some(existing_clusters))
