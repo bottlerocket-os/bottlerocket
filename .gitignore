@@ -14,3 +14,4 @@
 /Licenses.toml
 /licenses
 *.run
+/tests
