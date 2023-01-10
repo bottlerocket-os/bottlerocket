@@ -123,6 +123,7 @@ CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH = "${BUILDSYS_ROOT_DIR}/testsys.kubec
 TESTSYS_STARTING_VERSION = { script = ["git tag --list --sort=version:refname 'v*' | tail -1"] }
 # The commit for the last release of bottlerocket.
 TESTSYS_STARTING_COMMIT = { script = ["git describe --tag ${TESTSYS_STARTING_VERSION} --always --exclude '*' || echo 00000000"] }
+TESTSYS_TESTS_DIR = "${BUILDSYS_ROOT_DIR}/tests"
 TESTSYS_TEST_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Test.toml"
 
 [env.development]
@@ -183,10 +184,17 @@ BOOT_CONFIG = "${BUILDSYS_ROOT_DIR}/bootconfig.data"
 # default kubeconfig location does not exist, use the users default kubeconfig.
 CARGO_MAKE_TESTSYS_KUBECONFIG_ARG = {script = [
 '''
+if ! [ -n "${TESTSYS_KUBECONFIG}" ] && [ -s "${TESTSYS_TESTS_DIR}/testsys.kubeconfig" ] && [ -s "${CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH}" ];then
+   echo "No kubeconfig was specified and a kubeconfig was found in 2 possible locations: '${TESTSYS_TESTS_DIR}/testsys.kubeconfig' and '${CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH}'"
+   exit 1
+fi
 if [ -n "${TESTSYS_KUBECONFIG}" ]; then
    # If the user provides a kubeconfig path it should be used.
    echo "--kubeconfig ${TESTSYS_KUBECONFIG}"
-elif [ -f "${CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH}" ]; then
+elif [ -s "${TESTSYS_TESTS_DIR}/testsys.kubeconfig" ]; then
+   # If the kubeconfig is in the TESTSYS_TESTS_DIR it should be used.
+   echo "--kubeconfig ${TESTSYS_TESTS_DIR}/testsys.kubeconfig"
+elif [ -s "${CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH}" ]; then
    # If the default kubeconfig exists it should be used.
    echo "--kubeconfig ${CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH}"
 fi
@@ -195,6 +203,24 @@ fi
 
 # Args that will be passed into all testsys invocations.
 CARGO_MAKE_TESTSYS_ARGS = "${CARGO_MAKE_TESTSYS_KUBECONFIG_ARG}"
+
+TESTSYS_TEST_CONFIG_PATH = { script = [
+'''
+if [ -s "${TESTSYS_TEST_CONFIG_PATH}" ] && [ -s "${TESTSYS_TESTS_DIR}/Test.toml" ];then
+   echo "There can only be 1 config file. 2 config files were found: '${TESTSYS_TEST_CONFIG_PATH}' and '${TESTSYS_TESTS_DIR}/Test.toml'"
+   exit 1
+fi
+if [ -s "${TESTSYS_TEST_CONFIG_PATH}" ]; then
+   # If the config path exists
+   echo "${TESTSYS_TEST_CONFIG_PATH}"
+elif [ -s "${TESTSYS_TESTS_DIR}/Test.toml" ]; then
+   # If the test config is in the TESTSYS_TESTS_DIR it should be used.
+   echo "${TESTSYS_TESTS_DIR}/Test.toml"
+else
+   echo "${TESTSYS_TEST_CONFIG_PATH}"
+fi
+'''
+] }
 
 [tasks.setup]
 script = [
