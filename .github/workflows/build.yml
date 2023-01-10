@@ -151,7 +151,7 @@ jobs:
           key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}-${{ hashFiles('.github/workflows/build.yml') }}
           restore-keys: |
             ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
-      - run: rustup default 1.64.0 && rustup component add rustfmt && rustup component add clippy
+      - run: rustup default 1.66.1 && rustup component add rustfmt && rustup component add clippy
       - run: cargo install --version 0.36.0 cargo-make
       - run: cargo install --version 0.6.2 cargo-sweep
       - run: |
