@@ -1708,12 +1708,9 @@ dependencies = [
  "base64 0.13.1",
  "bytes",
  "chrono",
- "http",
- "percent-encoding",
  "serde",
  "serde-value",
  "serde_json",
- "url",
 ]
 
 [[package]]
@@ -3120,7 +3117,6 @@ dependencies = [
  "fastrand",
  "futures",
  "handlebars",
- "k8s-openapi",
  "kube-client",
  "log",
  "maplit",

@@ -4,6 +4,7 @@ use crate::run::KnownTestType;
 use bottlerocket_types::agent_config::{SonobuoyConfig, SonobuoyMode};
 use maplit::btreemap;
 use model::Test;
+use snafu::ResultExt;
 use std::fmt::Display;
 
 /// Create a Sonobuoy CRD for K8s conformance and quick testing.
@@ -67,9 +68,8 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
             cluster_resource_name,
             test_input.name_suffix.unwrap_or("-test")
         ))
-        .map_err(|e| error::Error::Build {
-            what: "sonobuoy CRD".to_string(),
-            error: e.to_string(),
+        .context(error::BuildSnafu {
+            what: "Sonobuoy CRD",
         })
 }
 

@@ -9,7 +9,7 @@ use bottlerocket_types::agent_config::{ClusterType, EcsClusterConfig, EcsTestCon
 use log::debug;
 use maplit::btreemap;
 use model::{Crd, DestructionPolicy};
-use snafu::OptionExt;
+use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 
 /// A `CrdCreator` responsible for creating crd related to `aws-ecs` variants.
@@ -91,9 +91,8 @@ impl CrdCreator for AwsEcsCreator {
             )
             .set_secrets(Some(cluster_input.crd_input.config.secrets.clone()))
             .build(cluster_input.cluster_name)
-            .map_err(|e| error::Error::Build {
-                what: "ECS cluster CRD".to_string(),
-                error: e.to_string(),
+            .context(error::BuildSnafu {
+                what: "ECS cluster CRD",
             })?;
 
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Resource(ecs_crd))))
@@ -169,9 +168,8 @@ impl CrdCreator for AwsEcsCreator {
                 cluster_resource_name,
                 test_input.name_suffix.unwrap_or_default()
             ))
-            .map_err(|e| error::Error::Build {
-                what: "ECS test CRD".to_string(),
-                error: e.to_string(),
+            .context(error::BuildSnafu {
+                what: "ECS test CRD",
             })?;
 
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(test_crd))))
