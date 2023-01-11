@@ -9,8 +9,8 @@ build = "build.rs"
 path = "pkg.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/bottlerocket-os/hotdog/archive/v1.0.4/hotdog-1.0.4.tar.gz"
-sha512 = "fa6ae90ca7306e2d77cf7320cde773e08f3616e29cc44b6eda9a70d1270b30f9190707c40890146d023a417c13028ccf601a313ed8eb255ddc13072128ad7250"
+url = "https://github.com/bottlerocket-os/hotdog/archive/v1.0.5/hotdog-1.0.5.tar.gz"
+sha512 = "6bd4d2701b51e27cf39ef4fca5573d7343c1dc9def299f7f19deadb37cc38f5dc2576e54475c972ff2b590ed3293af4ca9a39eb4d202aec1be49e8c74cf52d29"
 bundle-modules = [ "go" ]
 
 [build-dependencies]

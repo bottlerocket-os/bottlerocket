@@ -8,7 +8,7 @@
 %global goimport %{goproject}/%{gorepo}
 
 Name: %{_cross_os}hotdog
-Version: 1.0.4
+Version: 1.0.5
 Release: 1%{?dist}
 Summary: Tool with OCI hooks to run the Log4j Hot Patch in containers
 License: Apache-2.0
