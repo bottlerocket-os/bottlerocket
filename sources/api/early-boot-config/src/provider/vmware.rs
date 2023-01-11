@@ -213,13 +213,14 @@ impl VmwareDataProvider {
     /// Request a key's value from guestinfo
     fn backdoor_get_bytes(key: &str) -> Result<Option<Vec<u8>>> {
         // Probe and access the VMware backdoor.  `kernel lockdown(7)` may block "privileged"
-        // mode because of its use of `iopl()`.  According the the bug report below, in theory
-        // "privileged" mode is more reliable than "unprivileged" but both provide access to
-        // the same data so we fall back to "unprivileged" if the first call fails.
-        // https://github.com/lucab/vmw_backdoor-rs/issues/6
+        // mode because of its use of `iopl()`; the 5.15 kernels have it disabled regardless
+        // of lockdown mode. If this fails, fall back to "unprivileged" access without first
+        // requesting access to the relevant IO ports. KVM and VMware both have them special-
+        // cased in their emulation to not raise an exception to the guest OS and things
+        // should work out.
         let mut backdoor = vmw_backdoor::probe_backdoor_privileged()
             .or_else(|e| {
-                warn!(
+                debug!(
                     "Unable to access guestinfo via privileged mode, using unprivileged: {}",
                     e
                 );
