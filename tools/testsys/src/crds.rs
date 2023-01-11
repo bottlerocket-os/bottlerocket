@@ -12,6 +12,7 @@ use pubsys_config::RepoConfig;
 use serde::Deserialize;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
+use std::fs;
 use std::path::PathBuf;
 use testsys_config::{rendered_cluster_name, GenericVariantConfig, TestsysImages};
 
@@ -161,6 +162,8 @@ impl<'a> CrdInput<'a> {
             "variant".to_string() => self.variant.to_string(),
             "kube-arch".to_string() => self.kube_arch(),
             "kube-variant".to_string() => self.kube_variant(),
+            "flavor".to_string() => some_or_null(&self.variant.variant_flavor().map(str::to_string)),
+            "version".to_string() => some_or_null(&self.variant.version().map(str::to_string)),
             "cluster-name".to_string() => cluster_name.to_string(),
             "instance-type".to_string() => some_or_null(&self.config.instance_type),
             "agent-role".to_string() => some_or_null(&self.config.agent_role),
@@ -199,6 +202,65 @@ impl<'a> CrdInput<'a> {
 
         // Find the first acceptable path that exists and return that.
         acceptable_paths.into_iter().find(|path| path.exists())
+    }
+
+    /// Find the cluster config file for the given cluster name and test type.
+    fn cluster_config_file_path(&self, cluster_name: &str) -> Option<PathBuf> {
+        let test_type = &self.test_type.to_string();
+        // List all acceptable paths to the custom crd to allow users some freedom in the way
+        // `tests` is organized.
+        let acceptable_paths = vec![
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join(test_type)
+                .join(cluster_name)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join("shared")
+                .join(cluster_name)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/cluster-config/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join("shared")
+                .join("cluster-config")
+                .join(cluster_name)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/clusters/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join("shared")
+                .join("cluster-config")
+                .join(cluster_name)
+                .with_extension("yaml"),
+        ];
+
+        // Find the first acceptable path that exists and return that.
+        acceptable_paths.into_iter().find(|path| path.exists())
+    }
+
+    /// Find the resolved cluster config file for the given cluster name and test type if it exists.
+    fn resolved_cluster_config(
+        &self,
+        cluster_name: &str,
+        additional_fields: &mut BTreeMap<String, String>,
+    ) -> Result<Option<String>> {
+        let path = match self.cluster_config_file_path(cluster_name) {
+            None => return Ok(None),
+            Some(path) => path,
+        };
+        info!("Using cluster config at {}", path.display());
+        let config = fs::read_to_string(&path).context(error::FileSnafu { path })?;
+
+        let mut fields = self.config_fields(cluster_name);
+        fields.insert("api-version".to_string(), API_VERSION.to_string());
+        fields.insert("namespace".to_string(), NAMESPACE.to_string());
+        fields.append(additional_fields);
+
+        let mut handlebars = Handlebars::new();
+        handlebars.set_strict_mode(true);
+        let rendered_config = handlebars.render_template(&config, &fields)?;
+
+        Ok(Some(rendered_config))
     }
 }
 
@@ -256,6 +318,10 @@ pub(crate) trait CrdCreator: Sync {
                 .cluster_crd(ClusterInput {
                     cluster_name,
                     crd_input,
+                    cluster_config: &crd_input.resolved_cluster_config(
+                        cluster_name,
+                        &mut self.additional_fields(&test_type.to_string()),
+                    )?,
                 })
                 .await?;
             let cluster_crd_name = cluster_output.crd_name();
@@ -471,6 +537,7 @@ pub(crate) trait CrdCreator: Sync {
 pub struct ClusterInput<'a> {
     pub cluster_name: &'a String,
     pub crd_input: &'a CrdInput<'a>,
+    pub cluster_config: &'a Option<String>,
 }
 
 /// The input used for bottlerocket crd creation
