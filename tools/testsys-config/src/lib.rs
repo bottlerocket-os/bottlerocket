@@ -252,6 +252,7 @@ pub struct TestsysImages {
     pub sonobuoy_test_agent_image: Option<String>,
     pub ecs_test_agent_image: Option<String>,
     pub migration_test_agent_image: Option<String>,
+    pub controller_image: Option<String>,
     pub testsys_agent_pull_secret: Option<String>,
 }
 
@@ -278,6 +279,7 @@ impl TestsysImages {
             sonobuoy_test_agent_image: Some(format!("{}/sonobuoy-test-agent:{tag}", registry)),
             ecs_test_agent_image: Some(format!("{}/ecs-test-agent:{tag}", registry)),
             migration_test_agent_image: Some(format!("{}/migration-test-agent:{tag}", registry)),
+            controller_image: Some(format!("{}/controller:{tag}", registry)),
             testsys_agent_pull_secret: None,
         }
     }
@@ -306,6 +308,7 @@ impl TestsysImages {
             migration_test_agent_image: self
                 .migration_test_agent_image
                 .or(other.migration_test_agent_image),
+            controller_image: self.controller_image.or(other.controller_image),
             testsys_agent_pull_secret: self
                 .testsys_agent_pull_secret
                 .or(other.testsys_agent_pull_secret),
