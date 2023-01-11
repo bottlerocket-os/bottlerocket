@@ -23,6 +23,7 @@ pub struct CrdInput<'a> {
     pub variant: Variant,
     pub config: GenericVariantConfig,
     pub repo_config: RepoConfig,
+    pub test_flavor: String,
     pub starting_version: Option<String>,
     pub migrate_to_version: Option<String>,
     pub build_id: Option<String>,
@@ -394,7 +395,7 @@ pub(crate) trait CrdCreator: Sync {
                             test_type,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-1-initial".into(),
+                            name_suffix: "1-initial".into(),
                         })
                         .await?;
                     if let Some(name) = test_output.crd_name() {
@@ -409,7 +410,7 @@ pub(crate) trait CrdCreator: Sync {
                             bottlerocket_crd_name: &bottlerocket_crd_name,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-2-migrate".into(),
+                            name_suffix: "2-migrate".into(),
                             migration_direction: MigrationDirection::Upgrade,
                         })
                         .await?;
@@ -426,7 +427,7 @@ pub(crate) trait CrdCreator: Sync {
                             test_type,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-3-migrated".into(),
+                            name_suffix: "3-migrated".into(),
                         })
                         .await?;
                     if let Some(name) = test_output.crd_name() {
@@ -441,7 +442,7 @@ pub(crate) trait CrdCreator: Sync {
                             bottlerocket_crd_name: &bottlerocket_crd_name,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-4-migrate".into(),
+                            name_suffix: "4-migrate".into(),
                             migration_direction: MigrationDirection::Downgrade,
                         })
                         .await?;
@@ -458,7 +459,7 @@ pub(crate) trait CrdCreator: Sync {
                             test_type,
                             crd_input,
                             prev_tests: tests,
-                            name_suffix: "-5-final".into(),
+                            name_suffix: "5-final".into(),
                         })
                         .await?;
                     if let Some(crd) = test_output.crd() {
@@ -479,6 +480,7 @@ pub(crate) trait CrdCreator: Sync {
         crd_input: &CrdInput,
         override_crd_template: Option<PathBuf>,
     ) -> Result<Vec<Crd>> {
+        debug!("Creating custom CRDs for '{}' test", test_type);
         let crd_template_file_path = &override_crd_template
             .or_else(|| crd_input.custom_crd_template_file_path())
             .context(error::InvalidSnafu {

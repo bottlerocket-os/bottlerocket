@@ -84,9 +84,11 @@ pub(crate) fn migration_crd(
         .set_secrets(Some(migration_input.crd_input.config.secrets.to_owned()))
         .set_labels(Some(labels))
         .build(format!(
-            "{}{}",
+            "{}-{}",
             cluster_resource_name,
-            migration_input.name_suffix.unwrap_or_default()
+            migration_input
+                .name_suffix
+                .unwrap_or(migration_input.crd_input.test_flavor.as_str())
         ))
         .context(error::BuildSnafu {
             what: "migration CRD",

@@ -24,6 +24,7 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
 
     let labels = test_input.crd_input.labels(btreemap! {
         "testsys/type".to_string() => test_input.test_type.to_string(),
+        "testsys/flavor".to_string() => test_input.crd_input.test_flavor.clone(),
         "testsys/cluster".to_string() => cluster_resource_name.to_string(),
     });
 
@@ -64,9 +65,11 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
         .set_secrets(Some(test_input.crd_input.config.secrets.to_owned()))
         .set_labels(Some(labels))
         .build(format!(
-            "{}{}",
+            "{}-{}",
             cluster_resource_name,
-            test_input.name_suffix.unwrap_or("-test")
+            test_input
+                .name_suffix
+                .unwrap_or(test_input.crd_input.test_flavor.as_str())
         ))
         .context(error::BuildSnafu {
             what: "Sonobuoy CRD",
