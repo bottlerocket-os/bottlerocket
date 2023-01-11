@@ -32,7 +32,16 @@ impl TestConfig {
     {
         let path = path.as_ref();
         let test_config_str = fs::read_to_string(path).context(error::FileSnafu { path })?;
-        toml::from_str(&test_config_str).context(error::InvalidTomlSnafu { path })
+        let mut config: Self =
+            toml::from_str(&test_config_str).context(error::InvalidTomlSnafu { path })?;
+        // Copy the GenericConfig from `test` to `configs`.
+        config.test.as_ref().and_then(|test| {
+            config
+                .configs
+                .insert("test".to_string(), test.config.clone())
+        });
+
+        Ok(config)
     }
 
     /// Deserializes a TestConfig from a given path, if it exists, otherwise builds a default
@@ -111,6 +120,10 @@ pub struct Test {
 
     /// The tag that should be used for TestSys images
     pub testsys_image_tag: Option<String>,
+
+    #[serde(flatten)]
+    /// Configuration values for all Bottlerocket variants
+    pub config: GenericConfig,
 }
 
 /// Create a vec of relevant keys for this variant ordered from most specific to least specific.
@@ -132,6 +145,7 @@ fn config_keys(variant: &Variant) -> Vec<String> {
         variant.family().to_string(),
         platform_flavor,
         variant.platform().to_string(),
+        "test".to_string(),
     ]
 }
 
