@@ -171,3 +171,12 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 # Disable unused qdiscs
 #   - sch_cake targets home routers and residential links
 # CONFIG_NET_SCH_CAKE is not set
+
+# Provide minimal iSCSI via TCP support for initiator and target mode
+# initiator side
+CONFIG_ISCSI_TCP=m
+CONFIG_ISCSI_BOOT_SYSFS=m
+CONFIG_SCSI_ISCSI_ATTRS=m
+# target side
+CONFIG_ISCSI_TARGET=m
+# CONFIG_INFINIBAND_ISERT is not set

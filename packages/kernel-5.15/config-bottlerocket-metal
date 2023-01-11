@@ -119,12 +119,3 @@ CONFIG_MEGARAID_SAS=y
 
 # Microsemi PQI controllers
 CONFIG_SCSI_SMARTPQI=y
-
-# provide minimal iscsi via tcp support for initiator and target mode
-# initiator side
-CONFIG_ISCSI_TCP=m
-CONFIG_ISCSI_BOOT_SYSFS=m
-CONFIG_SCSI_ISCSI_ATTRS=m
-# target side
-CONFIG_ISCSI_TARGET=m
-# CONFIG_INFINIBAND_ISERT is not set
