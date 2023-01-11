@@ -3,7 +3,7 @@ use crate::run::{KnownTestType, TestType};
 use bottlerocket_types::agent_config::TufRepoConfig;
 use bottlerocket_variant::Variant;
 use handlebars::Handlebars;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use maplit::btreemap;
 use model::constants::{API_VERSION, NAMESPACE};
 use model::test_manager::{SelectionParams, TestManager};
@@ -12,6 +12,7 @@ use pubsys_config::RepoConfig;
 use serde::Deserialize;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 use testsys_config::{rendered_cluster_name, GenericVariantConfig, TestsysImages};
 
 /// A type that is used for the creation of all CRDs.
@@ -28,6 +29,7 @@ pub struct CrdInput<'a> {
     /// it is not externally visible.
     pub(crate) starting_image_id: Option<String>,
     pub(crate) test_type: TestType,
+    pub(crate) tests_directory: PathBuf,
     pub images: TestsysImages,
 }
 
@@ -165,6 +167,38 @@ impl<'a> CrdInput<'a> {
             "conformance-image".to_string() => some_or_null(&self.config.conformance_image),
             "conformance-registry".to_string() => some_or_null(&self.config.conformance_registry),
         }
+    }
+
+    /// Find the crd template file for the given test type
+    fn custom_crd_template_file_path(&self) -> Option<PathBuf> {
+        let test_type = &self.test_type.to_string();
+        // List all acceptable paths to the custom crd to allow users some freedom in the way
+        // `tests` is organized.
+        let acceptable_paths = vec![
+            // Check for <TEST-TYPE>.yaml in the top level directory
+            PathBuf::new().join(test_type).with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<TEST-TYPE>.yaml
+            self.tests_directory
+                .join(test_type)
+                .join(test_type)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/crd.yaml
+            self.tests_directory.join(test_type).join("crd.yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/<TEST-TYPE>.yaml
+            self.tests_directory
+                .join("shared")
+                .join(test_type)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/tests/<TEST-TYPE>.yaml
+            self.tests_directory
+                .join("shared")
+                .join("tests")
+                .join(test_type)
+                .with_extension("yaml"),
+        ];
+
+        // Find the first acceptable path that exists and return that.
+        acceptable_paths.into_iter().find(|path| path.exists())
     }
 }
 
@@ -377,8 +411,20 @@ pub(crate) trait CrdCreator: Sync {
         &self,
         test_type: &str,
         crd_input: &CrdInput,
-        crd_template_file_path: &str,
+        override_crd_template: Option<PathBuf>,
     ) -> Result<Vec<Crd>> {
+        let crd_template_file_path = &override_crd_template
+            .or_else(|| crd_input.custom_crd_template_file_path())
+            .context(error::InvalidSnafu {
+                what: format!(
+                    "A custom yaml file could not be found for test type '{}'",
+                    test_type
+                ),
+            })?;
+        info!(
+            "Creating custom crd from '{}'",
+            crd_template_file_path.display()
+        );
         let mut crds = Vec::new();
         for cluster_name in &crd_input.cluster_names()? {
             let mut fields = crd_input.config_fields(cluster_name);

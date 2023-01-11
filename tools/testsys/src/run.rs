@@ -43,6 +43,10 @@ pub(crate) struct Run {
     #[clap(long, env = "TESTSYS_TEST_CONFIG_PATH", parse(from_os_str))]
     test_config_path: PathBuf,
 
+    /// The path to the `tests` directory
+    #[clap(long, env = "TESTSYS_FOLDER", parse(from_os_str))]
+    tests_directory: PathBuf,
+
     /// The path to the EKS-A management cluster kubeconfig for vSphere K8s cluster creation
     #[clap(long, env = "TESTSYS_MGMT_CLUSTER_KUBECONFIG", parse(from_os_str))]
     mgmt_cluster_kubeconfig: Option<PathBuf>,
@@ -102,8 +106,8 @@ pub(crate) struct Run {
     migration_target_version: Option<String>,
 
     /// The template file that should be used for custom testing.
-    #[clap(long = "template-file", short = 'f')]
-    custom_crd_template: Option<String>,
+    #[clap(long = "template-file", short = 'f', parse(from_os_str))]
+    custom_crd_template: Option<PathBuf>,
 }
 
 /// This is a CLI parsable version of `testsys_config::GenericVariantConfig`.
@@ -347,21 +351,14 @@ impl Run {
             starting_image_id: self.starting_image_id,
             test_type: self.test_flavor.clone(),
             images,
+            tests_directory: self.tests_directory,
         };
 
         let crds = match &self.test_flavor {
             TestType::Known(test_type) => crd_creator.create_crds(test_type, &crd_input).await?,
             TestType::Custom(test_type) => {
                 crd_creator
-                    .create_custom_crds(
-                        test_type,
-                        &crd_input,
-                        self.custom_crd_template
-                            .as_ref()
-                            .context(error::InvalidSnafu {
-                                what: "A crd template file is required for custom test types.",
-                            })?,
-                    )
+                    .create_custom_crds(test_type, &crd_input, self.custom_crd_template.to_owned())
                     .await?
             }
         };
