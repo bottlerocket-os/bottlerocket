@@ -28,7 +28,7 @@ BUILDSYS_PRETTY_NAME = "Bottlerocket OS"
 # SDK name used for building
 BUILDSYS_SDK_NAME="bottlerocket"
 # SDK version used for building
-BUILDSYS_SDK_VERSION="v0.28.0"
+BUILDSYS_SDK_VERSION="v0.29.0"
 # Site for fetching the SDK
 BUILDSYS_REGISTRY="public.ecr.aws/bottlerocket"
 
@@ -1311,12 +1311,11 @@ dependencies = [
 script_runner = "bash"
 script = [
 '''
-for ws in sources variants/* tools/{buildsys,pubsys}; do
+for ws in sources tools; do
   [ -d "${ws}" ] || continue
-  [ "${ws}" == "variants/shared" ] && continue
   cargo clean --manifest-path ${ws}/Cargo.toml
 done
-rm -f ${BUILDSYS_TOOLS_DIR}/bin/{buildsys,pubsys}
+rm -f ${BUILDSYS_TOOLS_DIR}/bin/*
 '''
 ]
 

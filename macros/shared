@@ -6,11 +6,14 @@
 %dist %{nil}
 
 %_cross_cflags %{shrink: \
-  -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS \
+  -O2 -g -pipe -Wall \
+  -Werror=format-security -Werror=strict-aliasing \
+  -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS \
   -fexceptions -fstack-clash-protection -fno-semantic-interposition \
   %{nil}}
 %_cross_c_args %{shrink: \
-  '-O2', '-g', '-pipe', '-Wall', '-Werror=format-security', \
+  '-O2', '-g', '-pipe', '-Wall', \
+  '-Werror=format-security', '-Werror=strict-aliasing', \
   '-Wp,-D_FORTIFY_SOURCE=2', '-Wp,-D_GLIBCXX_ASSERTIONS', \
   '-fexceptions', '-fstack-clash-protection', '-fno-semantic-interposition' \
   %{nil}}
@@ -237,3 +240,5 @@ CROSS_COMPILATION_CONF_EOF\
 %__arch_install_post \
   /usr/lib/rpm/check-buildroot \
   %cross_generate_attribution
+
+%source_date_epoch_from_changelog 0
