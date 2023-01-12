@@ -143,12 +143,16 @@ Some day we may need to make an earlier service (say, apiserver) configurable th
 This usage is scoped to the keys that have changed, updating relevant config files and restarting affected services.
 See [thar-be-settings](thar-be-settings/) docs.
 
-### configured.target
+## Boot stages
 
-This is a systemd target that depends on [settings-applier](#settings-applier) and represents the point at which the system is fully configured.
+Bottlerocket's boot sequence includes three systemd targets:
 
-Applications can depend on this in their service definition.
-Services like Kubernetes and containerd depend on this.
+- `preconfigured.target`: this is the target where all the aforementioned services run.
+Once all the dynamically generated configurations are created, the system transitions to the next target
+- `configured.target`: this is the target that represents the point at which the system is fully configured.
+[Bootstrap containers](../../bootstrap-containers-settings) will run at this stage to apply further configurations in the system.
+Once all bootstrap containers exit successfully, the system transitions to the next target
+- `multi-user.target`: this is the target where the kubelet or the ECS agent run, at this point no further configurations are required in the running system.
 
 ## Development
 
