@@ -189,4 +189,20 @@ miimon-frequency-ms = 100
 miimon-updelay-ms = 1000
 miimon-downdelay-ms = 1000
 
+["f8:74:a4:d5:32:64"]
+dhcp4 = true
+
+["f8-74-a4-d5-32-65"]
+dhcp4 = true
+
+["F8-74-A4-D5-32-66"]
+dhcp4 = true
+
+["c8:74:a4:d5:32:65".static4]
+addresses = ["192.168.14.5/24"]
+
+[["c8:74:a4:d5:32:65".route]]
+to = "10.10.10.0/24"
+from = "192.168.14.5"
+via = "192.168.14.25"
 {{/if}}

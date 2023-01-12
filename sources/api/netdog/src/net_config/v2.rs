@@ -2,7 +2,7 @@
 //! appropriate traits.
 
 use super::{error, Interfaces, Result, Validate};
-use crate::interface_name::InterfaceName;
+use crate::interface_id::{InterfaceId, InterfaceName};
 use crate::net_config::devices::interface::NetInterfaceV2;
 use crate::wicked::{
     wicked_from, WickedDhcp4, WickedDhcp6, WickedInterface, WickedRoutes, WickedStaticAddress,
@@ -18,12 +18,12 @@ pub(crate) struct NetConfigV2 {
 }
 
 impl Interfaces for NetConfigV2 {
-    fn primary_interface(&self) -> Option<String> {
+    fn primary_interface(&self) -> Option<InterfaceId> {
         self.interfaces
             .iter()
             .find(|(_, v)| v.primary == Some(true))
             .or_else(|| self.interfaces.first())
-            .map(|(n, _)| n.to_string())
+            .map(|(n, _)| InterfaceId::from(n.clone()))
     }
 
     fn has_interfaces(&self) -> bool {

@@ -1,4 +1,4 @@
-use crate::interface_name::InterfaceName;
+use crate::interface_id::InterfaceName;
 use crate::net_config::devices::bonding::{
     ArpMonitoringConfig, ArpValidate, BondMode, MiiMonitoringConfig,
 };

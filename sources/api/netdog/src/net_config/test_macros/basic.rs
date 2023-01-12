@@ -7,6 +7,8 @@
 macro_rules! basic_tests {
     ($version:expr) => {
         mod basic {
+            use std::convert::TryFrom;
+            use $crate::interface_id::{InterfaceId, InterfaceName};
             use $crate::net_config::deserialize_config;
             use $crate::net_config::test_macros::gen_boilerplate;
 
@@ -45,7 +47,7 @@ macro_rules! basic_tests {
                 let ok_path = net_config().join("net_config.toml");
                 let cfg = deserialize_config(&render_config_template(ok_path)).unwrap();
 
-                let expected = "eno2";
+                let expected = InterfaceId::from(InterfaceName::try_from("eno2").unwrap());
                 let actual = cfg.primary_interface().unwrap();
                 assert_eq!(expected, actual)
             }
@@ -55,7 +57,7 @@ macro_rules! basic_tests {
                 let ok_path = net_config().join("no_primary.toml");
                 let cfg = deserialize_config(&render_config_template(ok_path)).unwrap();
 
-                let expected = "eno3";
+                let expected = InterfaceId::from(InterfaceName::try_from("eno3").unwrap());
                 let actual = cfg.primary_interface().unwrap();
                 assert_eq!(expected, actual)
             }

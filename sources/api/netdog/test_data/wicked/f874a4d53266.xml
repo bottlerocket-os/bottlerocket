@@ -1,0 +1,1 @@
+<interface><name namespace="ethernet"><permanent-address>f8:74:a4:d5:32:66</permanent-address></name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:dhcp><enabled>true</enabled></ipv4:dhcp></interface>

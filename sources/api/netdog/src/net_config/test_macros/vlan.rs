@@ -40,6 +40,20 @@ macro_rules! vlan_tests {
                 let rendered = render_config_template(bad);
                 assert!(deserialize_config(&rendered).is_err())
             }
+
+            #[test]
+            fn mac_as_identifier() {
+                let bad = net_config().join("mac_as_identifier.toml");
+                let rendered = render_config_template(bad);
+                assert!(deserialize_config(&rendered).is_err())
+            }
+
+            #[test]
+            fn mac_in_device_field() {
+                let bad = net_config().join("mac_in_device.toml");
+                let rendered = render_config_template(bad);
+                assert!(deserialize_config(&rendered).is_err())
+            }
         }
     };
 }

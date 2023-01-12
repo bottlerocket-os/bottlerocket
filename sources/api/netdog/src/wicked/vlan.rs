@@ -1,4 +1,4 @@
-use crate::interface_name::InterfaceName;
+use crate::interface_id::InterfaceName;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

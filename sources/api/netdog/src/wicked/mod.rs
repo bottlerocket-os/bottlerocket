@@ -8,7 +8,7 @@ mod dhcp;
 mod static_address;
 mod vlan;
 
-use crate::interface_name::InterfaceName;
+use crate::interface_id::{InterfaceId, InterfaceName, MacAddress};
 use crate::net_config::devices::bonding::{BondMonitoringConfig, NetBondV1};
 use crate::net_config::devices::interface::NetInterfaceV2;
 use crate::net_config::devices::vlan::NetVlanV1;
@@ -22,6 +22,7 @@ pub(crate) use error::Error;
 use serde::Serialize;
 use snafu::ResultExt;
 pub(crate) use static_address::{WickedRoutes, WickedStaticAddress};
+use std::fmt::{self, Display};
 use std::fs;
 use std::path::Path;
 use vlan::WickedVlanTag;
@@ -61,8 +62,7 @@ pub(crate) use wicked_from;
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(rename = "interface")]
 pub(crate) struct WickedInterface {
-    #[serde(rename = "$unflatten=name")]
-    pub(crate) name: InterfaceName,
+    pub(crate) name: WickedName,
     pub(crate) control: WickedControl,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "ipv4:dhcp")]
@@ -84,6 +84,52 @@ pub(crate) struct WickedInterface {
     pub(crate) bond: Option<WickedBond>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) link: Option<WickedLinkConfig>,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+pub(crate) struct WickedName {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    namespace: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "$value")]
+    name_body: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "$unflatten=permanent-address")]
+    permanent_address: Option<MacAddress>,
+}
+
+impl WickedName {
+    pub(crate) fn new(id: InterfaceId) -> Self {
+        // When using a MAC address as an identifier, the resulting XML must be in a different
+        // format.
+        // When using a name, the resulting XML looks like:
+        // <name>eth0</name>
+        // Using a MAC address looks like:
+        // <name namespace="ethernet"><permanent-address>...</permanent-address></name>
+        match id {
+            InterfaceId::Name(name) => Self {
+                namespace: None,
+                name_body: Some(name.to_string()),
+                permanent_address: None,
+            },
+            InterfaceId::MacAddress(mac) => Self {
+                namespace: Some("ethernet".to_string()),
+                name_body: None,
+                permanent_address: Some(mac),
+            },
+        }
+    }
+}
+
+impl Display for WickedName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match (self.name_body.as_ref(), self.permanent_address.as_ref()) {
+            (Some(_), Some(_)) => Err(fmt::Error),
+            (Some(name), None) => write!(f, "{}", name),
+            (None, Some(mac)) => write!(f, "{}", mac.to_string().replace(':', "")),
+            (None, None) => Err(fmt::Error),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, PartialEq)]
@@ -116,9 +162,13 @@ struct LinkDetection {
 }
 
 impl WickedInterface {
-    pub(crate) fn new(name: InterfaceName) -> Self {
+    pub(crate) fn new<I>(id: I) -> Self
+    where
+        I: Into<InterfaceId>,
+    {
+        let name_node = WickedName::new(id.into());
         Self {
-            name,
+            name: name_node,
             control: WickedControl::default(),
             ipv4_dhcp: None,
             ipv6_dhcp: None,
@@ -142,8 +192,11 @@ impl WickedInterface {
     }
 }
 
-impl From<(&InterfaceName, &NetworkDeviceV1)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetworkDeviceV1)) -> Self {
+impl<T> From<(&T, &NetworkDeviceV1)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetworkDeviceV1)) -> Self {
         match device_tup.1 {
             NetworkDeviceV1::Interface(i) => WickedInterface::from((device_tup.0, i)),
             NetworkDeviceV1::BondDevice(b) => WickedInterface::from((device_tup.0, b)),
@@ -152,16 +205,22 @@ impl From<(&InterfaceName, &NetworkDeviceV1)> for WickedInterface {
     }
 }
 
-impl From<(&InterfaceName, &NetInterfaceV2)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetInterfaceV2)) -> Self {
+impl<T> From<(&T, &NetInterfaceV2)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetInterfaceV2)) -> Self {
         let name = device_tup.0;
         let config = device_tup.1;
         wicked_from!(name, config)
     }
 }
 
-impl From<(&InterfaceName, &NetBondV1)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetBondV1)) -> Self {
+impl<T> From<(&T, &NetBondV1)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetBondV1)) -> Self {
         let name = device_tup.0;
         let config = device_tup.1;
         let mut wicked_interface = wicked_from!(name, config);
@@ -189,8 +248,11 @@ impl From<(&InterfaceName, &NetBondV1)> for WickedInterface {
     }
 }
 
-impl From<(&InterfaceName, &NetVlanV1)> for WickedInterface {
-    fn from(device_tup: (&InterfaceName, &NetVlanV1)) -> Self {
+impl<T> From<(&T, &NetVlanV1)> for WickedInterface
+where
+    T: Into<InterfaceId> + Clone,
+{
+    fn from(device_tup: (&T, &NetVlanV1)) -> Self {
         let name = device_tup.0;
         let config = device_tup.1;
         let mut wicked_interface = wicked_from!(name, config);
@@ -295,9 +357,9 @@ mod tests {
             for interface in wicked_interfaces {
                 let mut path = wicked_config().join(interface.name.to_string());
                 path.set_extension("xml");
-                let expected = fs::read_to_string(path).unwrap();
                 let generated = quick_xml::se::to_string(&interface).unwrap();
                 dbg!(&generated);
+                let expected = fs::read_to_string(path).unwrap();
 
                 assert_eq!(
                     expected.trim(),

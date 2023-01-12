@@ -1,0 +1,7 @@
+version = {{version}}
+
+[vlan0]
+kind = "vlan"
+device = "f8:74:a4:d5:32:64"
+id = 2
+dhcp4 = true

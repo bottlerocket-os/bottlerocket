@@ -2,20 +2,20 @@ pub(crate) mod generate_hostname;
 pub(crate) mod generate_net_config;
 pub(crate) mod install;
 pub(crate) mod node_ip;
-pub(crate) mod prepare_primary_interface;
 pub(crate) mod remove;
 pub(crate) mod set_hostname;
 pub(crate) mod write_resolv_conf;
 
+use crate::{PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, SYS_CLASS_NET};
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
 pub(crate) use install::InstallArgs;
 pub(crate) use node_ip::NodeIpArgs;
-pub(crate) use prepare_primary_interface::PreparePrimaryInterfaceArgs;
 pub(crate) use remove::RemoveArgs;
 use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
-use snafu::ResultExt;
+use snafu::{OptionExt, ResultExt};
+use std::fs;
 pub(crate) use write_resolv_conf::WriteResolvConfArgs;
 
 #[derive(Debug, PartialEq, Deserialize)]
@@ -47,10 +47,54 @@ where
     Ok(())
 }
 
+/// Return the primary interface name
+// A primary_interface or primary_mac_address file should exist.  If the primary_interface file
+// exists use it, otherwise read the primary_mac_address file and crawl sysfs to find which
+// interface has the corresponding MAC, if any.
+fn primary_interface_name() -> Result<String> {
+    let clean = |s: String| s.trim().to_lowercase();
+
+    let maybe_name = fs::read_to_string(PRIMARY_INTERFACE).ok();
+    if let Some(name) = maybe_name {
+        return Ok(clean(name));
+    }
+
+    let primary_mac = clean(fs::read_to_string(PRIMARY_MAC_ADDRESS).context(
+        error::PathReadSnafu {
+            path: PRIMARY_MAC_ADDRESS,
+        },
+    )?);
+
+    // There should be directories for each of the interfaces, i.e /sys/class/net/eth0
+    let sysfs_net = fs::read_dir(SYS_CLASS_NET)
+        .context(error::PathReadSnafu {
+            path: SYS_CLASS_NET,
+        })?
+        .flatten()
+        .filter(|p| p.path().is_dir());
+
+    for interface in sysfs_net {
+        let mac_address_path = interface.path().join("address");
+
+        if let Ok(address) = fs::read_to_string(mac_address_path) {
+            if clean(address) == primary_mac {
+                return interface.file_name().into_string().ok().context(
+                    error::InterfaceNameUtf8Snafu {
+                        name: interface.file_name(),
+                    },
+                );
+            }
+        };
+    }
+
+    error::NonExistentMacSnafu { mac: primary_mac }.fail()
+}
+
 /// Potential errors during netdog execution
 mod error {
-    use crate::{dns, lease, net_config, wicked};
+    use crate::{dns, interface_id, lease, net_config, wicked};
     use snafu::Snafu;
+    use std::ffi::OsString;
     use std::io;
     use std::path::PathBuf;
 
@@ -73,6 +117,9 @@ mod error {
         #[snafu(display("'systemd-sysctl' failed: {}", stderr))]
         FailedSystemdSysctl { stderr: String },
 
+        #[snafu(display("Failed to remove '{}': {}", path.display(), source))]
+        FileRemove { path: PathBuf, source: io::Error },
+
         #[snafu(display("Failed to discern primary interface"))]
         GetPrimaryInterface,
 
@@ -81,6 +128,12 @@ mod error {
 
         #[snafu(display("Failed to write network interface configuration: {}", source))]
         InterfaceConfigWrite { source: wicked::Error },
+
+        #[snafu(display("Unable to determine interface name: {}", source))]
+        InterfaceName { source: interface_id::Error },
+
+        #[snafu(display("Non-UTF8 interface name '{:?}'", name.to_string_lossy()))]
+        InterfaceNameUtf8 { name: OsString },
 
         #[snafu(display("Invalid IP address '{}': {}", ip, source))]
         IpFromString {
@@ -104,6 +157,15 @@ mod error {
         NetConfigParse {
             path: PathBuf,
             source: net_config::Error,
+        },
+
+        #[snafu(display("Unable to find an interface with MAC address '{}'", mac))]
+        NonExistentMac { mac: String },
+
+        #[snafu(display("Unable to read '{}': {}", path.display(), source))]
+        PathRead {
+            path: PathBuf,
+            source: std::io::Error,
         },
 
         #[snafu(display("Failed to write primary interface to '{}': {}", path.display(), source))]

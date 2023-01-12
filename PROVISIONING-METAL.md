@@ -68,7 +68,6 @@ Full configuration details are covered in the [admin container documentation](ht
 ### Network interface configuration
 
 Bottlerocket for bare metal provides the means to configure the physical network interfaces in the system via TOML-formatted file `net.toml`.
-For now, simple DHCP4 and DHCP6 configuration is supported with plans to support additional configuration in the future.
 
 `net.toml` is read at boot time and generates the proper configuration files in the correct format for each interface described; no default configuration is provided.
 If no network configuration is provided, boot-time services like host containers, `containerd`, and `kubelet` will fail to start.
@@ -78,7 +77,7 @@ When these services fail, your machine will not connect to any cluster and will 
 
 The configuration file must be valid TOML and have the filename `net.toml`.
 The first and required top level key in the file is `version`; the latest is version `3`.
-The rest of the file is a map of interface name to supported settings.
+The rest of the file is a map of interface name or MAC address to supported settings.
 Interface names are expected to be correct as per `udevd` naming, no interface naming or matching is supported.
 (See the note below regarding `udevd` interface naming.)
 
@@ -107,8 +106,9 @@ Please keep in mind that when using static addresses, DNS information must be su
   * `via` (IP address): Gateway IP address.  If no gateway is provided, a scope of `link` is assumed.
   * `route-metric` (integer): Relative route priority.
 
-Version `3` adds in support for bonding and vlan tagging.
-The support is limited to mode `1` (`active-backup`) for [bonding](https://www.kernel.org/doc/Documentation/networking/bonding.txt).
+Version `3` adds support for bonding, vlan tagging, and the ability to use a MAC address (colon or dash separated) as the identifier for an interface.
+MAC address identification is limited to interface configuration *only* and may not be used in conjunction with bonds or vlans.
+[Bonding](https://www.kernel.org/doc/Documentation/networking/bonding.txt) support is limited to mode `1` (`active-backup`).
 Future support may include other bonding options - pull requests are welcome!
 Version `3` adds the concept of virtual network devices in addition to interfaces.
 The default type of device is an interface and the syntax is the same as previous versions.
@@ -127,7 +127,7 @@ Bonding configuration creates a virtual network device across several other devi
 
 * Bonding configuration (map):
   * `kind = "bond"`: This setting is required to specify a bond device. Required.
-  * `interfaces` (list of quoted strings of interfaces): Which interfaces should be added to the bond (i.e. `["eno1"]`). The first in the list is considered the default `primary`. These interfaces are "consumed" so no other configuration can refer to them. Required.
+  * `interfaces` (list of quoted strings of interface names, not MAC addresses): Which interfaces should be added to the bond (i.e. `["eno1"]`). The first in the list is considered the default `primary`. These interfaces are "consumed" so no other configuration can refer to them. Required.
   * `mode` (string): Currently `active-backup` is the only supported option. Required.
   * `min-links` (integer): Number of links required to bring up the device
   * `monitoring` (map): Values m ust all be of `miimon` or `arpmon` type.
@@ -144,7 +144,7 @@ Vlan tagging is configured as a new virtual network device stacked on another de
 
 * Vlan configuration (map):
   * `kind = "vlan"`: This setting is required to specify a vlan device.
-  * `device` (string for device): Defines the device the vlan should be configured on. If VLAN tagging is required, this device should recieve all IP address configuration instead of the underlying device.
+  * `device` (string for device name, not MAC address): Defines the device the vlan should be configured on. If VLAN tagging is required, this device should recieve all IP address configuration instead of the underlying device.
   * `id` (integer): Number between 0 and 4096 specifying the vlan tag on the device
 
 Example `net.toml` version `3` with comments:
@@ -194,6 +194,18 @@ to = "10.10.10.0/24"
 from = "192.168.14.5"
 via = "192.168.14.25"
 
+# Interfaces may be configured using their MAC address rather than the interface name.
+# The MAC address must be quoted and colon or dash separated
+["0e:b3:69:44:b6:33"]
+dhcp4 = true
+
+["3e:03:69:49:e6:31".static4]
+addresses = ["10.0.0.15/24"]
+
+[["3e:03:69:49:e6:31".route]]
+to = "default"
+via = "10.0.0.1"
+
 # A bond is a network device that is of `kind` `bond`
 [bond0]
 kind = "bond"
@@ -202,7 +214,7 @@ mode = "active-backup"
 # In this case, the vlan will have addressing, the bond is simply there for use in the vlan
 dhcp4 = false
 dhcp6 = false
-# The first interface in the array is considered `primary` by default
+# The first interface in the array is considered `primary` by default, this list may not contain MAC addresses.
 interfaces = ["eno11", "eno12"]
 
 [bond0.monitoring]
@@ -226,6 +238,7 @@ arpmon-targets = ["192.168.1.1", "10.0.0.2"]
 # VLAN42 is the name of the device, can be anything that is a valid network interface name
 [VLAN42]
 kind = "vlan"
+# `device` may not contain a MAC address.
 device = "bond0"
 id = 42
 dhcp4 = true
