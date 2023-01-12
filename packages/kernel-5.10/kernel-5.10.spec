@@ -15,6 +15,8 @@ Source103: config-bottlerocket-vmware
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
+# Enable INITRAMFS_FORCE config option for our use case.
+Patch1002: 1002-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 
 # Add zstd support for compressed kernel modules
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch

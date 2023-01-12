@@ -15,8 +15,10 @@ Source103: config-bottlerocket-vmware
 
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
-# Expose tools/* targets for out-of-tree module builds
+# Expose tools/* targets for out-of-tree module builds.
 Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
+# Enable INITRAMFS_FORCE config option for our use case.
+Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel

@@ -1,8 +1,8 @@
-From 3d31def7545ae4e6fc33a5b648610fa9c1e06e68 Mon Sep 17 00:00:00 2001
+From 33d06503d0b131ca4475d77383d28f1569002ce0 Mon Sep 17 00:00:00 2001
 From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 Date: Wed, 22 Jun 2022 19:26:43 +0000
-Subject: [PATCH 1002/1002] Revert "kbuild: hide tools/ build targets from
- external module builds"
+Subject: [PATCH] Revert "kbuild: hide tools/ build targets from external
+ module builds"
 
 This reverts commit 1bb0b18a06dceee1fdc32161a72e28eab6f011c4 in which
 the targets to build "tools/*" were hidden for external modules, but
@@ -15,10 +15,10 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 14 insertions(+), 13 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 473594c61..da4f000ef 100644
+index fbe9b66f4f27..81191e5bffcb 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1357,19 +1357,6 @@ ifneq ($(wildcard $(resolve_btfids_O)),)
+@@ -1387,19 +1387,6 @@ ifneq ($(wildcard $(resolve_btfids_O)),)
  	$(Q)$(MAKE) -sC $(srctree)/tools/bpf/resolve_btfids O=$(resolve_btfids_O) clean
  endif
  
@@ -38,7 +38,7 @@ index 473594c61..da4f000ef 100644
  # ---------------------------------------------------------------------------
  # Kernel selftest
  
-@@ -1989,6 +1976,20 @@ kernelversion:
+@@ -2019,6 +2006,20 @@ kernelversion:
  image_name:
  	@echo $(KBUILD_IMAGE)
  
@@ -60,5 +60,5 @@ index 473594c61..da4f000ef 100644
        cmd_rmfiles = rm -rf $(rm-files)
  
 -- 
-2.33.1
+2.37.2
 

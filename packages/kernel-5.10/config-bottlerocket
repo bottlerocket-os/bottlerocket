@@ -75,6 +75,15 @@ CONFIG_DEBUG_INFO_BTF=y
 # Bottlerocket uses a fairly custom setup that needs tight control over it.
 # CONFIG_CMDLINE_EXTEND is not set
 
+# We don't want to unpack the initramfs passed by the bootloader. The intent of
+# this option is to ensure that the built-in initramfs is used. Since we do not
+# have a built-in initramfs, in practice this means we will never unpack any
+# initramfs.
+#
+# We rely on `CONFIG_BLK_DEV_INITRD` for boot config support, so we can't just
+# disable the functionality altogether.
+CONFIG_INITRAMFS_FORCE=y
+
 # Enable ZSTD kernel image compression
 CONFIG_HAVE_KERNEL_ZSTD=y
 CONFIG_KERNEL_ZSTD=y
