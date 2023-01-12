@@ -9,10 +9,8 @@ use crate::sonobuoy::sonobuoy_crd;
 use bottlerocket_types::agent_config::{
     ClusterType, CreationPolicy, EksClusterConfig, EksctlConfig, K8sVersion,
 };
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use maplit::btreemap;
-use model::constants::NAMESPACE;
-use model::{Agent, Configuration, Crd, DestructionPolicy, Resource, ResourceSpec};
+use model::{Crd, DestructionPolicy};
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -80,54 +78,38 @@ impl CrdCreator for AwsK8sCreator {
                 version: cluster_input.crd_input.variant.to_string(),
             })?;
 
-        let eks_crd = Resource {
-            metadata: ObjectMeta {
-                name: Some(cluster_input.cluster_name.to_string()),
-                namespace: Some(NAMESPACE.into()),
-                labels: Some(labels),
-                ..Default::default()
-            },
-            spec: ResourceSpec {
-                depends_on: None,
-                conflicts_with: None,
-                agent: Agent {
-                    name: "eks-provider".to_string(),
-                    image: cluster_input
-                        .crd_input
-                        .images
-                        .eks_resource_agent_image
-                        .to_owned()
-                        .expect("Missing default image for EKS resource agent"),
-                    pull_secret: cluster_input
-                        .crd_input
-                        .images
-                        .testsys_agent_pull_secret
-                        .clone(),
-                    keep_running: false,
-                    timeout: None,
-                    configuration: Some(
-                        EksClusterConfig {
-                            creation_policy: Some(CreationPolicy::IfNotExists),
-                            assume_role: cluster_input.crd_input.config.agent_role.clone(),
-                            config: EksctlConfig::Args {
-                                cluster_name: cluster_input.cluster_name.to_string(),
-                                region: Some(self.region.clone()),
-                                zones: None,
-                                version: Some(cluster_version),
-                            },
-                        }
-                        .into_map()
-                        .context(error::IntoMapSnafu {
-                            what: "eks crd config".to_string(),
-                        })?,
-                    ),
-                    secrets: Some(cluster_input.crd_input.config.secrets.clone()),
-                    ..Default::default()
-                },
-                destruction_policy: DestructionPolicy::Never,
-            },
-            status: None,
-        };
+        let eks_crd = EksClusterConfig::builder()
+            .creation_policy(CreationPolicy::IfNotExists)
+            .assume_role(cluster_input.crd_input.config.agent_role.clone())
+            .config(EksctlConfig::Args {
+                cluster_name: cluster_input.cluster_name.to_string(),
+                region: Some(self.region.clone()),
+                zones: None,
+                version: Some(cluster_version),
+            })
+            .image(
+                cluster_input
+                    .crd_input
+                    .images
+                    .eks_resource_agent_image
+                    .to_owned()
+                    .expect("Missing default image for EKS resource agent"),
+            )
+            .set_image_pull_secret(
+                cluster_input
+                    .crd_input
+                    .images
+                    .testsys_agent_pull_secret
+                    .clone(),
+            )
+            .set_labels(Some(labels))
+            .set_secrets(Some(cluster_input.crd_input.config.secrets.clone()))
+            .destruction_policy(DestructionPolicy::Never)
+            .build(cluster_input.cluster_name.to_string())
+            .context(error::BuildSnafu {
+                what: "EKS cluster CRD",
+            })?;
+
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Resource(eks_crd))))
     }
 

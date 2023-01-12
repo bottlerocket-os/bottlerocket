@@ -193,8 +193,7 @@ pub(crate) async fn ec2_crd<'a>(
     let suffix: String = repeat_with(fastrand::lowercase).take(4).collect();
     ec2_builder
         .build(format!("{}-instances-{}", cluster_name, suffix))
-        .map_err(|e| error::Error::Build {
-            what: "EC2 instance provider CRD".to_string(),
-            error: e.to_string(),
+        .context(error::BuildSnafu {
+            what: "EC2 instance provider CRD",
         })
 }

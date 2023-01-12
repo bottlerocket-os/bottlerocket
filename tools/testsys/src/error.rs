@@ -10,8 +10,11 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     // `error` must be used instead of `source` because the build function returns
     // `std::error::Error` but not `std::error::Error + Sync + Send`.
-    #[snafu(display("Unable to build '{}': {}", what, error))]
-    Build { what: String, error: String },
+    #[snafu(display("Unable to build '{}': {}", what, source))]
+    Build {
+        what: String,
+        source: Box<dyn std::error::Error + Sync + Send>,
+    },
 
     #[snafu(display("Unable to build datacenter credentials: {}", source))]
     CredsBuild {

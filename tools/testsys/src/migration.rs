@@ -3,7 +3,7 @@ use crate::error::{self, Result};
 use bottlerocket_types::agent_config::MigrationConfig;
 use maplit::btreemap;
 use model::Test;
-use snafu::OptionExt;
+use snafu::{OptionExt, ResultExt};
 
 /// Create a CRD for migrating Bottlerocket instances using SSM commands.
 /// `aws_region_override` allows the region that's normally derived from the cluster resource CRD to be overridden
@@ -88,8 +88,7 @@ pub(crate) fn migration_crd(
             cluster_resource_name,
             migration_input.name_suffix.unwrap_or_default()
         ))
-        .map_err(|e| error::Error::Build {
-            what: "migration CRD".to_string(),
-            error: e.to_string(),
+        .context(error::BuildSnafu {
+            what: "migration CRD",
         })
 }

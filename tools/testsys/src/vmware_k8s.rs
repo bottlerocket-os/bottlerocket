@@ -11,7 +11,7 @@ use bottlerocket_types::agent_config::{
 use maplit::btreemap;
 use model::{Crd, DestructionPolicy, SecretName};
 use pubsys_config::vmware::Datacenter;
-use snafu::OptionExt;
+use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::iter::repeat_with;
 use std::str::FromStr;
@@ -150,9 +150,8 @@ impl CrdCreator for VmwareK8sCreator {
             ))
             .privileged(true)
             .build(cluster_input.cluster_name)
-            .map_err(|e| error::Error::Build {
-                what: "vSphere K8s cluster CRD".to_string(),
-                error: e.to_string(),
+            .context(error::BuildSnafu {
+                what: "vSphere K8s cluster CRD",
             })?;
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Resource(
             vsphere_k8s_crd,
@@ -230,9 +229,8 @@ impl CrdCreator for VmwareK8sCreator {
             ))
             .depends_on(cluster_name)
             .build(format!("{}-vms-{}", cluster_name, suffix))
-            .map_err(|e| error::Error::Build {
-                what: "vSphere VM CRD".to_string(),
-                error: e.to_string(),
+            .context(error::BuildSnafu {
+                what: "vSphere VM CRD",
             })?;
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Resource(
             vsphere_vm_crd,
