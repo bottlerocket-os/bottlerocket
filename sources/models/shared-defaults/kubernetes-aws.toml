@@ -21,3 +21,14 @@ service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kube
 
 [metadata.settings.network]
 affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]
+
+[services.autoscaling-warm-pool]
+configuration-files = ["warm-pool-wait-toml"]
+restart-commands = []
+
+[configuration-files.warm-pool-wait-toml]
+path = "/etc/warm-pool-wait.toml"
+template-path = "/usr/share/templates/warm-pool-wait-toml"
+
+[metadata.settings.autoscaling]
+affected-services = ["autoscaling-warm-pool"]

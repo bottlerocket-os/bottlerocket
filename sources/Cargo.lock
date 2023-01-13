@@ -217,6 +217,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-k8s-autoscaling-warm-pool-setting"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
+name = "add-k8s-autoscaling-warm-pool-setting-metadata"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3295,7 +3311,9 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu",
+ "tempfile",
  "tokio",
+ "toml",
 ]
 
 [[package]]

@@ -25,6 +25,7 @@ Source6: metricdog-toml
 Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
+Source10: warm-pool-wait-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -44,6 +45,7 @@ Source116: load-kernel-modules.service.in
 Source117: cfsignal.service
 Source118: generate-network-config.service
 Source119: reboot-if-required.service
+Source120: warm-pool-wait.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -239,7 +241,7 @@ Summary: Manages user-defined K8S static pods
 
 %if %{with aws_platform}
 %package -n %{_cross_os}shibaken
-Summary: Setting generator for populating admin container user-data from IMDS.
+Summary: Run tasks reliant on IMDS
 %description -n %{_cross_os}shibaken
 %{summary}.
 
@@ -415,6 +417,10 @@ install -p -m 0644 \
 %endif
 
 %if %{with aws_platform}
+%if %{with aws_k8s_family}
+install -p -m 0644 %{S:10} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:120} %{buildroot}%{_cross_unitdir}
+%endif
 install -p -m 0644 %{S:9} %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:117} %{buildroot}%{_cross_unitdir}
 %endif
@@ -529,6 +535,11 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %if %{with aws_platform}
 %files -n %{_cross_os}shibaken
 %{_cross_bindir}/shibaken
+%dir %{_cross_templatedir}
+%if %{with aws_k8s_family}
+%{_cross_templatedir}/warm-pool-wait-toml
+%{_cross_unitdir}/warm-pool-wait.service
+%endif
 
 %files -n %{_cross_os}cfsignal
 %{_cross_bindir}/cfsignal
