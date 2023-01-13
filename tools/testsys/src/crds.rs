@@ -98,6 +98,20 @@ impl<'a> CrdInput<'a> {
             .collect())
     }
 
+    /// Use the provided userdata path to create the encoded userdata.
+    pub fn encoded_userdata(&self) -> Result<Option<String>> {
+        let userdata_path = match self.config.userdata.as_ref() {
+            Some(path) => path,
+            None => return Ok(None),
+        };
+
+        let userdata = std::fs::read_to_string(userdata_path).context(error::FileSnafu {
+            path: userdata_path,
+        })?;
+
+        Ok(Some(base64::encode(userdata)))
+    }
+
     /// Fill in the templated cluster name with `arch` and `variant`.
     fn rendered_cluster_name(&self, raw_cluster_name: String) -> Result<String> {
         Ok(rendered_cluster_name(

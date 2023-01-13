@@ -142,6 +142,10 @@ struct CliConfig {
     /// The endpoint IP to reserve for the vSphere control plane VMs when creating a K8s cluster
     #[clap(long, env = "TESTSYS_CONTROL_PLANE_ENDPOINT")]
     pub control_plane_endpoint: Option<String>,
+
+    /// Specify the path to the userdata that should be added for Bottlerocket launch
+    #[clap(long, env = "TESTSYS_USERDATA")]
+    pub userdata: Option<String>,
 }
 
 impl From<CliConfig> for GenericVariantConfig {
@@ -154,6 +158,7 @@ impl From<CliConfig> for GenericVariantConfig {
             conformance_image: val.conformance_image,
             conformance_registry: val.conformance_registry,
             control_plane_endpoint: val.control_plane_endpoint,
+            userdata: val.userdata,
         }
     }
 }
