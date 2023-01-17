@@ -95,6 +95,12 @@ Requires: %{name}
 %description devel
 %{summary}.
 
+%package networkd
+Summary: Files for networkd
+
+%description networkd
+%{summary}.
+
 %prep
 %autosetup -n systemd-stable-%{version} -p1
 
@@ -139,7 +145,7 @@ CONFIGURE_OPTS=(
  -Dsysext=false
  -Duserdb=false
  -Dhomed=false
- -Dnetworkd=false
+ -Dnetworkd=true
  -Dtimedated=false
  -Dtimesyncd=false
  -Dremote=false
@@ -321,6 +327,12 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_libdir}/sysusers.d/*
 %{_cross_libdir}/systemd/*
 %{_cross_libdir}/udev/*
+%exclude %{_cross_libdir}/sysusers.d/systemd-network.conf
+%exclude %{_cross_libdir}/systemd/systemd-networkd
+%exclude %{_cross_libdir}/systemd/systemd-networkd-wait-online
+%exclude %{_cross_libdir}/systemd/system/systemd-networkd.service
+%exclude %{_cross_libdir}/systemd/system/systemd-networkd-wait-online.service
+%exclude %{_cross_libdir}/systemd/system/systemd-networkd.socket
 
 %{_cross_tmpfilesdir}/*
 %exclude %{_cross_tmpfilesdir}/x11.conf
@@ -332,6 +344,8 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 
 %{_cross_datadir}/dbus-1/*
 %exclude %{_cross_datadir}/polkit-1
+%exclude %{_cross_datadir}/dbus-1/system-services/org.freedesktop.network1.service
+%exclude %{_cross_datadir}/dbus-1/system.d/org.freedesktop.network1.conf
 
 %dir %{_cross_factorydir}
 %{_cross_factorydir}%{_cross_sysconfdir}/issue
@@ -396,5 +410,16 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_includedir}/systemd/*.h
 %{_cross_pkgconfigdir}/*.pc
 %exclude %{_cross_libdir}/rpm/macros.d
+
+%files networkd
+%{_cross_bindir}/networkctl
+%{_cross_libdir}/systemd/system/systemd-networkd.service
+%{_cross_libdir}/systemd/system/systemd-networkd-wait-online.service
+%{_cross_libdir}/systemd/system/systemd-networkd.socket
+%{_cross_libdir}/systemd/systemd-networkd
+%{_cross_libdir}/systemd/systemd-networkd-wait-online
+%{_cross_libdir}/sysusers.d/systemd-network.conf
+%{_cross_datadir}/dbus-1/system-services/org.freedesktop.network1.service
+%{_cross_datadir}/dbus-1/system.d/org.freedesktop.network1.conf
 
 %changelog
