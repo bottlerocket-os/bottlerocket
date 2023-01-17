@@ -270,9 +270,9 @@
 ; Protected object labels can be used on local storage.
 (allow protected_o local_t (filesystem (associate)))
 
-; The data object label can also be used, so that volume types like
+; Shared object labels can also be used, so that volume types like
 ; emptyDir can be relabeled on behalf of containers.
-(allow data_t local_t (filesystem (associate)))
+(allow shared_o local_t (filesystem (associate)))
 
 ; Containers are allowed to relax security constraints, since we
 ; don't control what code they run or how it's built.
