@@ -234,8 +234,10 @@
 ; Unprivileged components are not allowed to use the API socket.
 (neverallow unprivileged_s api_socket_t (files (mutate)))
 
-; Only trusted components are allowed to relabel all files.
+; Only trusted components are allowed to relabel all files, and to
+; override filesystem labels through "*context=" mount options.
 (allow trusted_s global (files (relabel)))
+(allow trusted_s global (filesystems (relabel)))
 
 ; Containers are allowed to "relabel" constrained files, but are
 ; governed by additional MCS constraints that require the old and
