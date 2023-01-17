@@ -34,6 +34,7 @@ default_runtime_name = "shimpei"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.shimpei]
 runtime_type = "io.containerd.runc.v2"
+base_runtime_spec = "/etc/containerd/cri-base.json"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.shimpei.options]
 SystemdCgroup = true

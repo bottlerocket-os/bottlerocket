@@ -34,6 +34,7 @@ default_runtime_name = "nvidia"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
 runtime_type = "io.containerd.runc.v2"
+base_runtime_spec = "/etc/containerd/cri-base.json"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
 SystemdCgroup = true

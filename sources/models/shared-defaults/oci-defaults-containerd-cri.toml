@@ -1,0 +1,10 @@
+[metadata.settings.oci-defaults]
+affected-services = ["oci-defaults", "containerd"]
+
+[services.oci-defaults]
+configuration-files = ["oci-defaults"]
+restart-commands = []
+
+[configuration-files.oci-defaults]
+path = "/etc/containerd/cri-base.json"
+template-path = "/usr/share/templates/containerd-cri-base-json"

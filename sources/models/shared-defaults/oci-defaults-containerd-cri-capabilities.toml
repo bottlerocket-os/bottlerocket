@@ -1,0 +1,17 @@
+[settings.oci-defaults.capabilities]
+# These values represent the default capabilities in the default 
+# OCI spec for containerd.
+audit-write = true
+chown = true
+dac-override = true
+fowner = true
+fsetid = true
+kill = true
+mknod = true
+net-bind-service = true
+net-raw = true
+setgid = true
+setfcap = true
+setpcap = true
+setuid = true
+sys-chroot = true
