@@ -244,9 +244,15 @@
 ; new labels to match exactly.
 (allow container_s constrained_o (files (relabel)))
 
-; Untrusted components are not allowed to relabel most files.
+; Containers are also allowed to "relabel" filesystems at mount time
+; using "*context=" options, but only to and from "local_t".
+(allow container_s local_t (filesystems (relabel)))
+
+; Untrusted components are not allowed to relabel most files, and
+; cannot use "*context=" options to impose arbitrary labels.
 (neverallow untrusted_s all_s (files (relabel)))
 (neverallow untrusted_s unconstrained_o (files (relabel)))
+(neverallow untrusted_s unshared_o (filesystems (relabel)))
 
 ; Containers may copy or move files from constrained directories
 ; into unconstrained ones, such as tmpfs mounts. If they attempt to
