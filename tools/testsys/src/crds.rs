@@ -105,15 +105,67 @@ impl<'a> CrdInput<'a> {
     /// Use the provided userdata path to create the encoded userdata.
     pub fn encoded_userdata(&self) -> Result<Option<String>> {
         let userdata_path = match self.config.userdata.as_ref() {
-            Some(path) => path,
+            Some(userdata) => self.custom_userdata_file_path(userdata)?,
             None => return Ok(None),
         };
 
-        let userdata = std::fs::read_to_string(userdata_path).context(error::FileSnafu {
+        info!("Using userdata at '{}'", userdata_path.display());
+
+        let userdata = std::fs::read_to_string(&userdata_path).context(error::FileSnafu {
             path: userdata_path,
         })?;
 
         Ok(Some(base64::encode(userdata)))
+    }
+
+    /// Find the userdata file for the test type
+    fn custom_userdata_file_path(&self, userdata: &str) -> Result<PathBuf> {
+        let test_type = &self.test_type.to_string();
+
+        // List all acceptable paths to the custom crd to allow users some freedom in the way
+        // `tests` is organized.
+        let acceptable_paths = vec![
+            // Check the absolute path
+            userdata.into(),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<USERDATA>
+            self.tests_directory.join(test_type).join(userdata),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<USERDATA>.toml
+            self.tests_directory
+                .join(test_type)
+                .join(userdata)
+                .with_extension("toml"),
+            // Check for <TESTSYS_FOLDER>/shared/<USERDATA>
+            self.tests_directory.join("shared").join(userdata),
+            // Check for <TESTSYS_FOLDER>/shared/<USERDATA>.toml
+            self.tests_directory
+                .join("shared")
+                .join(userdata)
+                .with_extension("toml"),
+            // Check for <TESTSYS_FOLDER>/shared/userdata/<USERDATA>
+            self.tests_directory
+                .join("shared")
+                .join("userdata")
+                .join(userdata),
+            // Check for <TESTSYS_FOLDER>/shared/userdata/<USERDATA>.toml
+            self.tests_directory
+                .join("shared")
+                .join("userdata")
+                .join(userdata)
+                .with_extension("toml"),
+            // Check for the path in the top level directory
+            PathBuf::new().join(userdata),
+        ];
+
+        // Find the first acceptable path that exists and return that.
+        acceptable_paths
+            .into_iter()
+            .find(|path| path.exists())
+            .context(error::InvalidSnafu {
+                what: format!(
+                    "Could not find userdata '{}' for test type '{}'",
+                    userdata, test_type
+                ),
+            })
     }
 
     /// Fill in the templated cluster name with `arch` and `variant`.
