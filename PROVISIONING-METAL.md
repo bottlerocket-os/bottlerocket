@@ -263,7 +263,7 @@ Older networking configuration versions (such as `1` or `2`) are supported in ne
 |-------------------------------|---------------------------------------------------------------------------------|
 | Version 1                     | [v1.9.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.9.0)   |
 | Version 2                     | [v1.10.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.10.0) |
-| Version 3                     | Unreleased                                                                      |
+| Version 3                     | [v1.12.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.12.0) |
 
 ### Boot Configuration
 
