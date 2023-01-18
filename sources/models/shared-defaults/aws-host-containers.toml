@@ -4,7 +4,7 @@ superpowered = true
 
 [metadata.settings.host-containers.admin.source]
 setting-generator = "schnauzer settings.host-containers.admin.source"
-template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.9.3"
+template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.9.4"
 
 [metadata.settings.host-containers.admin.user-data]
 setting-generator = "shibaken generate-admin-userdata"
