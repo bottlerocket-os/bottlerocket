@@ -177,4 +177,6 @@ version = "1.12.0"
     "migrate_v1.12.0_add-k8s-autoscaling-warm-pool-setting-metadata.lz4",
     "migrate_v1.12.0_oci-defaults-setting.lz4",
     "migrate_v1.12.0_oci-defaults-setting-metadata.lz4",
+    "migrate_v1.12.0_aws-admin-container-v0-9-4.lz4",
+    "migrate_v1.12.0_public-admin-container-v0-9-4.lz4",
 ]

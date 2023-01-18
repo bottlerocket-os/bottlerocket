@@ -31,6 +31,8 @@ members = [
     "api/migration/migrations/v1.12.0/add-k8s-autoscaling-warm-pool-setting-metadata",
     "api/migration/migrations/v1.12.0/oci-defaults-setting",
     "api/migration/migrations/v1.12.0/oci-defaults-setting-metadata",
+    "api/migration/migrations/v1.12.0/aws-admin-container-v0-9-4",
+    "api/migration/migrations/v1.12.0/public-admin-container-v0-9-4",
 
     "bottlerocket-release",
 
