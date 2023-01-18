@@ -136,6 +136,10 @@
 (typeattribute shared_o)
 (typeattributeset shared_o (local_t data_t cni_exec_t))
 
+; Unshared objects are all other files.
+(typeattribute unshared_o)
+(typeattributeset unshared_o (xor (all_o) (shared_o)))
+
 ; Constrained objects are files where MCS constraints apply.
 (typeattribute constrained_o)
 (typeattributeset constrained_o (data_t))

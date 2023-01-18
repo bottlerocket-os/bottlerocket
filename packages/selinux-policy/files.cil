@@ -345,3 +345,7 @@
     execute ioctl getattr map open read execmod
     relabelfrom relabelto mounton quotaon
     watch watch_mount watch_reads watch_sb watch_with_perm))))
+
+; Permission group for filesystems.
+(classmap filesystems (relabel))
+(classmapping filesystems relabel (filesystem (relabelfrom relabelto)))

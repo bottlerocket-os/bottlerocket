@@ -1,7 +1,7 @@
 ; Label inodes by using xattrs for supported filesystems.
-(fsuse xattr ext4 any)
-(fsuse xattr overlay any)
-(fsuse xattr xfs any)
+(fsuse xattr ext4 local)
+(fsuse xattr overlay local)
+(fsuse xattr xfs local)
 
 ; Label inodes by using the type of the creating task.
 (fsuse task eventpollfs any)
