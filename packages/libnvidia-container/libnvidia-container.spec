@@ -48,13 +48,14 @@ touch deps/src/nvidia-modprobe-%{nvidia_modprobe_version}/.download_stamp
 
 %global set_env \
 %set_cross_build_flags \\\
+%set_cross_go_flags \\\
 export CC=%{_cross_target}-gcc \\\
 export LD=%{_cross_target}-ld \\\
 export CFLAGS="${CFLAGS} -I%{_cross_includedir}/tirpc" \\\
 export WITH_LIBELF=yes \\\
 export WITH_SECCOMP=yes \\\
 export WITH_TIRPC=yes \\\
-export WITH_NVCGO=no \\\
+export WITH_NVCGO=yes \\\
 export prefix=%{_cross_prefix} \\\
 export DESTDIR=%{buildroot} \\\
 %{nil}
@@ -72,6 +73,8 @@ export DESTDIR=%{buildroot} \\\
 %{_cross_attribution_file}
 %{_cross_libdir}/libnvidia-container.so
 %{_cross_libdir}/libnvidia-container.so.*
+%{_cross_libdir}/libnvidia-container-go.so
+%{_cross_libdir}/libnvidia-container-go.so.*
 %{_cross_bindir}/nvidia-container-cli
 %exclude %{_cross_docdir}
 
