@@ -265,6 +265,38 @@ Older networking configuration versions (such as `1` or `2`) are supported in ne
 | Version 2                     | [v1.10.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.10.0) |
 | Version 3                     | [v1.12.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.12.0) |
 
+#### Validation network configuration
+
+There is a helper `make` target `netdog-parse` to help validate that network configuration files parse correctly.
+This target is intended to provide a way to ensure the provided file parses before attempting a boot.
+It won't guarantee that the generated configuration will work in a particular context, but is aimed at validation of format and structure.
+The command can be run by passing the absolute path to a `net.toml` file:
+```bash
+cargo make -e VARIANT=metal-dev -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/net_config.toml netdog-parse
+...
+[cargo-make] INFO - Running Task: netdog-parse
+eno2 found as primary interface
+Found eno1
+Found eno2
+Found eno3
+Found eno4
+Found eno5
+Found eno6
+Found eno7
+Found eno8
+Found eno9
+Found eno10
+net.toml file provided successfully parsed!
+Netdog parsed the provided file
+```
+Errors will also be detected and printed to standard out.
+```bash
+cargo make -e VARIANT=metal-dev -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/basic/bad_version.toml netdog-parse
+...
+Unable to read/parse network config from '/var/lib/bottlerocket/net.toml': Invalid network configuration: Unknown network config version: 50
+Netdog parsed the provided file
+```
+
 ### Boot Configuration
 
 Bottlerocket for bare metal uses a feature of the Linux kernel called [Boot Configuration](https://www.kernel.org/doc/html/latest/admin-guide/bootconfig.html), which allows a user to pass additional arguments to the kernel command line at runtime.
