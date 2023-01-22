@@ -154,7 +154,11 @@ mod error {
     #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed to commit combined settings to '{}': {}", uri, source))]
-        CommitApply { uri: String, source: crate::Error },
+        CommitApply {
+            uri: String,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
+        },
 
         #[snafu(display("Failed to read given file '{}': {}", input_source, source))]
         FileRead {
@@ -217,7 +221,8 @@ mod error {
             input_source: String,
             uri: String,
             method: String,
-            source: crate::Error,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
         },
 
         #[snafu(display("Failed {} request to '{}': {}", method, uri, source))]

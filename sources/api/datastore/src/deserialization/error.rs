@@ -28,13 +28,15 @@ pub enum Error {
     StripPrefix {
         prefix: String,
         name: String,
-        source: DataStoreError,
+        #[snafu(source(from(DataStoreError, Box::new)))]
+        source: Box<DataStoreError>,
     },
 
     #[snafu(display("Prefix '{}' is not a valid key: {}", prefix, source))]
     InvalidPrefix {
         prefix: String,
-        source: DataStoreError,
+        #[snafu(source(from(DataStoreError, Box::new)))]
+        source: Box<DataStoreError>,
     },
 }
 

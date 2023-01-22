@@ -77,7 +77,8 @@ mod error {
         APIRequest {
             method: String,
             uri: String,
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
         },
 
         #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
@@ -146,7 +147,8 @@ mod error {
         InvalidKey {
             key_type: KeyType,
             key: String,
-            source: datastore::Error,
+            #[snafu(source(from(datastore::Error, Box::new)))]
+            source: Box<datastore::Error>,
         },
 
         #[snafu(display("Logger setup error: {}", source))]

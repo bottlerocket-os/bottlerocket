@@ -73,13 +73,15 @@ pub(crate) enum Error {
     #[snafu(display("Invalid target name '{}': {}", target, source))]
     TargetName {
         target: String,
-        source: tough::error::Error,
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
     },
 
     #[snafu(display("Error loading migration '{}': {}", migration, source))]
     LoadMigration {
         migration: String,
-        source: tough::error::Error,
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
     },
 
     #[snafu(display("Failed to decode LZ4-compressed migration {}: {}", migration, source))]
@@ -89,7 +91,10 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Error loading manifest: {}", source))]
-    ManifestLoad { source: tough::error::Error },
+    ManifestLoad {
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
+    },
 
     #[snafu(display("Manifest not found in repository"))]
     ManifestNotFound,
@@ -112,7 +117,10 @@ pub(crate) enum Error {
     ReadMigrationEntry { source: io::Error },
 
     #[snafu(display("Failed to load TUF repo: {}", source))]
-    RepoLoad { source: tough::error::Error },
+    RepoLoad {
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
+    },
 
     #[snafu(display("Failed reading metadata of '{}': {}", path.display(), source))]
     PathMetadata { path: PathBuf, source: io::Error },

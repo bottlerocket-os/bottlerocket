@@ -48,7 +48,8 @@ mod error {
         APIRequest {
             method: String,
             uri: String,
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
         },
 
         #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]

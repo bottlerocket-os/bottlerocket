@@ -61,10 +61,16 @@ mod error {
         DefaultsMetadataUnexpectedFormat {},
 
         #[snafu(display("Error querying datastore for populated keys: {}", source))]
-        QueryData { source: datastore::Error },
+        QueryData {
+            #[snafu(source(from(datastore::Error, Box::new)))]
+            source: Box<datastore::Error>,
+        },
 
         #[snafu(display("Error querying datastore for populated metadata: {}", source))]
-        QueryMetadata { source: datastore::Error },
+        QueryMetadata {
+            #[snafu(source(from(datastore::Error, Box::new)))]
+            source: Box<datastore::Error>,
+        },
 
         #[snafu(display("Error serializing {}: {} ", given, source))]
         Serialization {
@@ -76,17 +82,24 @@ mod error {
         SerializeScalar { given: String, source: ScalarError },
 
         #[snafu(display("Unable to write keys to the datastore: {}", source))]
-        WriteKeys { source: datastore::Error },
+        WriteKeys {
+            #[snafu(source(from(datastore::Error, Box::new)))]
+            source: Box<datastore::Error>,
+        },
 
         #[snafu(display("Unable to create {:?} key '{}': {}", key_type, key, source))]
         InvalidKey {
             key_type: KeyType,
             key: String,
-            source: datastore::Error,
+            #[snafu(source(from(datastore::Error, Box::new)))]
+            source: Box<datastore::Error>,
         },
 
         #[snafu(display("Unable to write metadata to the datastore: {}", source))]
-        WriteMetadata { source: datastore::Error },
+        WriteMetadata {
+            #[snafu(source(from(datastore::Error, Box::new)))]
+            source: Box<datastore::Error>,
+        },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },

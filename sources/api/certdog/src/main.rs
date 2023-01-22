@@ -244,7 +244,8 @@ mod error {
         APIRequest {
             method: String,
             uri: String,
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
         },
 
         #[snafu(display("Unable to decode base64 from certificate '{}': {}", name, source))]

@@ -73,7 +73,8 @@ pub enum Error {
     #[snafu(display("Data store error during {}: {}", op, source))]
     DataStore {
         op: String,
-        source: datastore::Error,
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
     },
 
     #[snafu(display("Error deserializing {}: {} ", given, source))]
@@ -98,7 +99,8 @@ pub enum Error {
     NewKey {
         key_type: String,
         name: String,
-        source: datastore::Error,
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
     },
 
     #[snafu(display("Metadata '{}' is not valid JSON: {}", key, source))]

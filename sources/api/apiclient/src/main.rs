@@ -788,7 +788,8 @@ mod error {
         Request {
             method: String,
             uri: String,
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
         },
 
         #[snafu(display("Unable to serialize data: {}", source))]

@@ -13,7 +13,7 @@ pub enum Error {
     ))]
     ActiveNotInSet {
         active_partition: PathBuf,
-        sets: [PartitionSet; 2],
+        sets: Vec<PartitionSet>,
     },
 
     #[snafu(display("Failed to get block device from path {}: {}", device.display(), source))]

@@ -58,7 +58,8 @@ mod error {
         Request {
             method: String,
             uri: String,
-            source: crate::Error,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
         },
 
         #[snafu(display("Response contained invalid JSON '{}' - {}", body, source))]

@@ -335,7 +335,10 @@ mod error {
         },
 
         #[snafu(display("Failed getting update status: {}", source))]
-        GetStatus { source: crate::Error },
+        GetStatus {
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
+        },
 
         #[snafu(display("Unable to check initial update status, got code '{}': {}", code, body))]
         MissingStatus {
@@ -360,7 +363,8 @@ mod error {
         #[snafu(display("Failed to make {} request: {}", command_name, source))]
         Request {
             command_name: String,
-            source: crate::Error,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
         },
 
         #[snafu(display(
