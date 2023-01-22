@@ -165,7 +165,7 @@ impl WaveArgs {
         let waves: UpdateWaves =
             toml::from_str(&wave_str).context(error::ConfigParseSnafu { path: &wave_file })?;
 
-        let start_at = self.start_at.unwrap_or(Utc::now());
+        let start_at = self.start_at.unwrap_or_else(Utc::now);
         let num_matching = manifest.set_waves(
             self.variant,
             self.arch,
@@ -304,7 +304,7 @@ mod tests {
         let path = "tests/data/single_wave.json";
         let mut manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let wave_path = "tests/data/default_waves.toml";
-        let waves: UpdateWaves = toml::from_str(&fs::read_to_string(&wave_path).unwrap()).unwrap();
+        let waves: UpdateWaves = toml::from_str(&fs::read_to_string(wave_path).unwrap()).unwrap();
         let variant = manifest.updates[0].variant.clone();
         let arch = manifest.updates[0].arch.clone();
         let image_version = manifest.updates[0].version.clone();
@@ -313,7 +313,7 @@ mod tests {
             .set_waves(variant, arch, image_version, Utc::now(), &waves)
             .is_ok());
 
-        assert!(manifest.updates[0].waves.len() == 4)
+        assert!(manifest.updates[0].waves.len() == 4);
     }
 
     #[test]
@@ -323,7 +323,7 @@ mod tests {
         let temp_manifest = NamedTempFile::new().context(error::TmpFileCreateSnafu)?;
 
         // Create a new blank manifest
-        update_metadata::write_file(&temp_manifest.path(), &Manifest::default()).unwrap();
+        update_metadata::write_file(temp_manifest.path(), &Manifest::default()).unwrap();
 
         // Copy the migration data to the new manifest
         MigrationArgs {
@@ -334,8 +334,8 @@ mod tests {
         .unwrap();
 
         // Make sure the manifest has the correct releases
-        let manifest: Manifest = update_metadata::load_file(&temp_manifest.path()).unwrap();
-        let release_data = fs::read_to_string(&release_path).unwrap();
+        let manifest: Manifest = update_metadata::load_file(temp_manifest.path()).unwrap();
+        let release_data = fs::read_to_string(release_path).unwrap();
         let release: Release = toml::from_str(&release_data).unwrap();
         assert_eq!(manifest.migrations, release.migrations);
         Ok(())
@@ -350,8 +350,8 @@ mod tests {
         // Write example data to temp manifest so we dont' overwrite the file
         // when we call MigrationsArgs.set() below
         let temp_manifest = NamedTempFile::new().context(error::TmpFileCreateSnafu)?;
-        let example_data = fs::read_to_string(&example_manifest).unwrap();
-        fs::write(&temp_manifest, &example_data).unwrap();
+        let example_data = fs::read_to_string(example_manifest).unwrap();
+        fs::write(&temp_manifest, example_data).unwrap();
 
         // Copy the migration data to the existing manifest
         MigrationArgs {
@@ -364,7 +364,7 @@ mod tests {
         // Make sure the manifest has the correct releases
         let manifest: Manifest =
             update_metadata::load_file(Path::new(&temp_manifest.path())).unwrap();
-        let release_data = fs::read_to_string(&release_path).unwrap();
+        let release_data = fs::read_to_string(release_path).unwrap();
         let release: Release = toml::from_str(&release_data).unwrap();
         assert_eq!(manifest.migrations, release.migrations);
         Ok(())

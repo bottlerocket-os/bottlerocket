@@ -104,7 +104,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
             path: &args.datastore_path,
         })?;
 
-    let current_version = get_current_version(&datastore_dir)?;
+    let current_version = get_current_version(datastore_dir)?;
     let direction = Direction::from_versions(&current_version, &args.migrate_to_version)
         .unwrap_or_else(|| {
             info!(
@@ -176,7 +176,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
             &args.datastore_path,
             &args.migrate_to_version,
         )?;
-        flip_to_new_version(&args.migrate_to_version, &copy_path)?;
+        flip_to_new_version(&args.migrate_to_version, copy_path)?;
     }
     Ok(())
 }
@@ -277,7 +277,7 @@ where
         ]);
 
         // Create a new output location for this migration.
-        target_datastore = new_datastore_location(&source_datastore, &new_version)?;
+        target_datastore = new_datastore_location(source_datastore, new_version)?;
 
         command.args(&[
             "--target-datastore".to_string(),
@@ -328,7 +328,7 @@ fn delete_intermediate_datastore(path: &PathBuf) {
     // Even if we fail to remove an intermediate data store, we don't want to fail the upgrade -
     // just let someone know for later cleanup.
     trace!("Removing intermediate data store at {}", path.display());
-    if let Err(e) = fs::remove_dir_all(&path) {
+    if let Err(e) = fs::remove_dir_all(path) {
         error!(
             "Failed to remove intermediate data store at '{}': {}",
             path.display(),
@@ -424,7 +424,7 @@ where
     // Create a symlink from the patch version to the new data store.  We create it at a temporary
     // path so we can atomically swap it into the real path with a rename call.
     // This will point at, for example, /path/to/datastore/v1.5.2_0123456789abcdef
-    symlink(&to_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
+    symlink(to_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the patch version link points to the new data
     // store copy.
     fs::rename(&temp_link, &patch_version_link).context(error::LinkSwapSnafu {
@@ -441,7 +441,7 @@ where
 
     // Create a symlink from the minor version to the new patch version.
     // This will point at, for example, /path/to/datastore/v1.5.2
-    symlink(&patch_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
+    symlink(patch_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the minor version link points to the new patch
     // version.
     fs::rename(&temp_link, &minor_version_link).context(error::LinkSwapSnafu {
@@ -458,7 +458,7 @@ where
 
     // Create a symlink from the major version to the new minor version.
     // This will point at, for example, /path/to/datastore/v1.5
-    symlink(&minor_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
+    symlink(minor_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the major version link points to the new minor
     // version.
     fs::rename(&temp_link, &major_version_link).context(error::LinkSwapSnafu {
@@ -475,7 +475,7 @@ where
 
     // Create a symlink from 'current' to the new major version.
     // This will point at, for example, /path/to/datastore/v1
-    symlink(&major_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
+    symlink(major_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that 'current' points to the new major version.
     fs::rename(&temp_link, &current_version_link).context(error::LinkSwapSnafu {
         link: &current_version_link,

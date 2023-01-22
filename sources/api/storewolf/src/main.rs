@@ -26,8 +26,6 @@ use datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use model::modeled_types::SingleLineString;
 
-use constants;
-
 mod error {
     use std::io;
     use std::path::PathBuf;
@@ -170,11 +168,10 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
 
                 // Make sure that the path contains more than 1 item, i.e. ["settings", "motd"]
                 ensure!(
-                    path.len() >= 1,
+                    !path.is_empty(),
                     error::InternalSnafu {
-                        msg: format!(
-                            "Cannot create empty metadata data key - is root not a Table?"
-                        )
+                        msg: "Cannot create empty metadata data key - is root not a Table?"
+                            .to_string()
                     }
                 );
                 let data_key = path.join(".");
@@ -447,7 +444,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         data_store_base_path: data_store_base_path.unwrap_or_else(|| usage()),
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         version,
     }
 }

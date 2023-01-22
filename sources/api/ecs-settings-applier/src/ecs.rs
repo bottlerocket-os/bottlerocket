@@ -7,7 +7,6 @@ The configuration file for ECS is a JSON-formatted document with conditionally-d
 embedded lists.  The structure and names of fields in the document can be found
 [here](https://github.com/aws/amazon-ecs-agent/blob/a250409cf5eb4ad84a7b889023f1e4d2e274b7ab/agent/config/types.go).
 */
-use constants;
 use log::debug;
 use serde::Serialize;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
@@ -80,7 +79,7 @@ struct ECSConfig {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-pub(crate) async fn main() -> () {
+pub(crate) async fn main() {
     if let Err(e) = run().await {
         eprintln!("{}", e);
         process::exit(1);

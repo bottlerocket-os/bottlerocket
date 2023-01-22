@@ -116,7 +116,7 @@ fn parse_args(args: env::Args) -> Args {
     Args {
         daemon,
         mode,
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }

@@ -65,7 +65,7 @@ fn generate_defaults_toml() -> Result<()> {
     let data = toml::to_string(&defaults).context(error::TomlSerializeSnafu)?;
     let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR not set; are you not using cargo?");
     let path = Path::new(&out_dir).join("defaults.toml");
-    fs::write(&path, &data).context(error::FileSnafu { op: "write", path })?;
+    fs::write(&path, data).context(error::FileSnafu { op: "write", path })?;
 
     Ok(())
 }

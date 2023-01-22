@@ -100,11 +100,8 @@ impl From<ParsedArgs> for ModelHelper {
 impl VisitMut for ModelHelper {
     // Visit struct definitions.
     fn visit_item_struct_mut(&mut self, node: &mut ItemStruct) {
-        match node.vis {
-            // If unset, make pub.
-            Visibility::Inherited => node.vis = parse_quote!(pub),
-            // Leave alone anything the user set.
-            _ => {}
+        if let Visibility::Inherited = node.vis {
+            node.vis = parse_quote!(pub)
         }
 
         // Add our serde attribute, if the user hasn't set one
@@ -142,11 +139,8 @@ impl VisitMut for ModelHelper {
 
     // Visit field definitions in structs.
     fn visit_field_mut(&mut self, node: &mut Field) {
-        match node.vis {
-            // If unset, make pub.
-            Visibility::Inherited => node.vis = parse_quote!(pub),
-            // Leave alone anything the user set.
-            _ => {}
+        if let Visibility::Inherited = node.vis {
+            node.vis = parse_quote!(pub)
         }
 
         // Add our serde attribute, if the user hasn't set one
@@ -177,5 +171,5 @@ fn is_attr_set(attr_name: &'static str, attrs: &[Attribute]) -> bool {
             }
         }
     }
-    return false;
+    false
 }

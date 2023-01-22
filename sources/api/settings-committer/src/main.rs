@@ -13,7 +13,6 @@ The `--transaction` argument can be used to specify another transaction.
 #[macro_use]
 extern crate log;
 
-use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::str::FromStr;
@@ -193,7 +192,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         transaction: transaction.unwrap_or_else(|| constants::LAUNCH_TRANSACTION.to_string()),
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }

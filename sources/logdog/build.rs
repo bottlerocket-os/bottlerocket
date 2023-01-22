@@ -37,7 +37,7 @@ fn symlink_variant() {
     // create the symlink from conf/current/logdog.conf to the variant-specific file
     let target = format!("../{}", variant_filename);
     let link = "conf/current/logdog.conf";
-    symlink_force(&target, &link).unwrap_or_else(|e| {
+    symlink_force(&target, link).unwrap_or_else(|e| {
         eprintln!(
             "Failed to create symlink at '{}' pointing to '{}' - we need this to \
             support different logdog commands for variants.  Error: {}",

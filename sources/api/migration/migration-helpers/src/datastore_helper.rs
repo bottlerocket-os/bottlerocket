@@ -106,7 +106,7 @@ pub(crate) fn set_output_data<D: DataStore>(
             key_type: KeyType::Data,
             key: data_key_name,
         })?;
-        for (metadata_key_name, raw_value) in meta_map.into_iter() {
+        for (metadata_key_name, raw_value) in meta_map.iter() {
             let metadata_key =
                 Key::new(KeyType::Meta, metadata_key_name).context(error::InvalidKeySnafu {
                     key_type: KeyType::Meta,

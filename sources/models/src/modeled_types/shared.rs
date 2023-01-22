@@ -29,7 +29,7 @@ impl TryFrom<&str> for ValidBase64 {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        base64::decode(&input).context(error::InvalidBase64Snafu)?;
+        base64::decode(input).context(error::InvalidBase64Snafu)?;
         Ok(ValidBase64 {
             inner: input.to_string(),
         })
@@ -107,9 +107,8 @@ mod test_single_line_string {
     fn valid_single_line_string() {
         assert!(SingleLineString::try_from("").is_ok());
         assert!(SingleLineString::try_from("hi").is_ok());
-        let long_string = std::iter::repeat(" ").take(9999).collect::<String>();
-        let json_long_string = format!("{}", &long_string);
-        assert!(SingleLineString::try_from(json_long_string).is_ok());
+        let long_string = " ".repeat(9999);
+        assert!(SingleLineString::try_from(long_string).is_ok());
     }
 
     #[test]
@@ -199,10 +198,10 @@ mod test_valid_linux_hostname {
         assert!(ValidLinuxHostname::try_from("hello").is_ok());
         assert!(ValidLinuxHostname::try_from("hello1234567890").is_ok());
 
-        let segment_limit = std::iter::repeat("a").take(63).collect::<String>();
+        let segment_limit = "a".repeat(63);
         assert!(ValidLinuxHostname::try_from(segment_limit.clone()).is_ok());
 
-        let segment = std::iter::repeat("a").take(61).collect::<String>();
+        let segment = "a".repeat(61);
         let long_name = format!(
             "{}.{}.{}.{}",
             &segment_limit, &segment_limit, &segment_limit, &segment
@@ -219,7 +218,7 @@ mod test_valid_linux_hostname {
         assert!(ValidLinuxHostname::try_from("a..a").is_err());
         assert!(ValidLinuxHostname::try_from("a.a.-a.a1234").is_err());
 
-        let long_segment = std::iter::repeat("a").take(64).collect::<String>();
+        let long_segment = "a".repeat(64);
         assert!(ValidLinuxHostname::try_from(long_segment.clone()).is_err());
 
         let long_name = format!(
@@ -244,12 +243,13 @@ pub struct EtcHostsEntries(
 
 impl EtcHostsEntries {
     pub fn iter_merged(&self) -> impl Iterator<Item = (IpAddr, Vec<ValidLinuxHostname>)> {
-        let mut merged = indexmap::IndexMap::with_capacity(self.0.len());
+        let mut merged: indexmap::IndexMap<IpAddr, Vec<ValidLinuxHostname>> =
+            indexmap::IndexMap::with_capacity(self.0.len());
 
         for (ip_address, aliases) in &self.0 {
             merged
                 .entry(*ip_address)
-                .or_insert(vec![])
+                .or_default()
                 .append(&mut (aliases.clone()));
         }
 

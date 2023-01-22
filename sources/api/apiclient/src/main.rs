@@ -7,7 +7,6 @@
 // to the API, which is intended to be reusable by other crates.
 
 use apiclient::{apply, exec, get, reboot, set, update};
-use constants;
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
 use simplelog::{
@@ -247,13 +246,13 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
 
     match subcommand.as_deref() {
         // Default subcommand is 'raw'
-        None | Some("raw") => return (global_args, parse_raw_args(subcommand_args)),
-        Some("apply") => return (global_args, parse_apply_args(subcommand_args)),
-        Some("exec") => return (global_args, parse_exec_args(subcommand_args)),
-        Some("get") => return (global_args, parse_get_args(subcommand_args)),
-        Some("reboot") => return (global_args, parse_reboot_args(subcommand_args)),
-        Some("set") => return (global_args, parse_set_args(subcommand_args)),
-        Some("update") => return (global_args, parse_update_args(subcommand_args)),
+        None | Some("raw") => (global_args, parse_raw_args(subcommand_args)),
+        Some("apply") => (global_args, parse_apply_args(subcommand_args)),
+        Some("exec") => (global_args, parse_exec_args(subcommand_args)),
+        Some("get") => (global_args, parse_get_args(subcommand_args)),
+        Some("reboot") => (global_args, parse_reboot_args(subcommand_args)),
+        Some("set") => (global_args, parse_set_args(subcommand_args)),
+        Some("update") => (global_args, parse_update_args(subcommand_args)),
         _ => usage_msg("Missing or unknown subcommand"),
     }
 }
@@ -289,7 +288,7 @@ fn parse_raw_args(args: Vec<String>) -> Subcommand {
                 )
             }
 
-            x => usage_msg(&format!("Unknown argument '{}'", x)),
+            x => usage_msg(format!("Unknown argument '{}'", x)),
         }
     }
 
@@ -304,11 +303,10 @@ fn parse_raw_args(args: Vec<String>) -> Subcommand {
 fn parse_apply_args(args: Vec<String>) -> Subcommand {
     let mut input_sources = Vec::new();
 
-    let mut iter = args.into_iter();
-    while let Some(arg) = iter.next() {
+    for arg in args.into_iter() {
         match arg {
             // Allow "-" for stdin, but we have no other parameters.
-            x if x.starts_with("-") && x != "-" => {
+            x if x.starts_with('-') && x != "-" => {
                 usage_msg("apiclient apply takes no parameters, just a list of URIs.")
             }
 
@@ -330,8 +328,7 @@ fn parse_exec_args(args: Vec<String>) -> Subcommand {
     let mut target = None;
     let mut tty = None;
 
-    let mut iter = args.into_iter();
-    while let Some(arg) = iter.next() {
+    for arg in args.into_iter() {
         match arg.as_ref() {
             // Check for our own arguments, but stop once we start to see the user's command; we
             // don't want to intercept its own arguments.
@@ -342,7 +339,7 @@ fn parse_exec_args(args: Vec<String>) -> Subcommand {
                 tty = Some(false);
             }
             x if x.starts_with('-') && command.is_empty() => {
-                usage_msg(&format!("Unknown argument '{}'", x))
+                usage_msg(format!("Unknown argument '{}'", x))
             }
 
             // Target is the first arg we see.
@@ -370,10 +367,9 @@ fn parse_get_args(args: Vec<String>) -> Subcommand {
     let mut prefixes = vec![];
     let mut uri = None;
 
-    let mut iter = args.into_iter();
-    while let Some(arg) = iter.next() {
+    for arg in args.into_iter() {
         match &arg {
-            x if x.starts_with('-') => usage_msg(&format!("Unknown argument '{}'", x)),
+            x if x.starts_with('-') => usage_msg(format!("Unknown argument '{}'", x)),
 
             x if x.starts_with('/') => {
                 if let Some(_existing_val) = uri.replace(arg) {
@@ -408,7 +404,7 @@ fn parse_get_args(args: Vec<String>) -> Subcommand {
 /// Parses arguments for the 'reboot' subcommand.
 fn parse_reboot_args(args: Vec<String>) -> Subcommand {
     if !args.is_empty() {
-        usage_msg(&format!("Unknown arguments: {}", args.join(", ")));
+        usage_msg(format!("Unknown arguments: {}", args.join(", ")));
     }
     Subcommand::Reboot(RebootArgs {})
 }
@@ -438,7 +434,7 @@ fn parse_set_args(args: Vec<String>) -> Subcommand {
 
                 let input_val: serde_json::Value =
                     serde_json::from_str(&raw_json).unwrap_or_else(|e| {
-                        usage_msg(&format!("Couldn't parse given JSON input: {}", e))
+                        usage_msg(format!("Couldn't parse given JSON input: {}", e))
                     });
 
                 let mut input_map = match input_val {
@@ -461,12 +457,10 @@ fn parse_set_args(args: Vec<String>) -> Subcommand {
             }
 
             x if x.contains('=') => {
-                let mut split = x.splitn(2, '=');
-                let raw_key = split.next().unwrap();
-                let value = split.next().unwrap();
+                let (raw_key, value) = x.split_once('=').unwrap();
 
                 let mut key = Key::new(KeyType::Data, raw_key).unwrap_or_else(|_| {
-                    usage_msg(&format!("Given key '{}' is not a valid format", raw_key))
+                    usage_msg(format!("Given key '{}' is not a valid format", raw_key))
                 });
 
                 // Add "settings" prefix if the user didn't give a known prefix, to ease usage
@@ -481,7 +475,7 @@ fn parse_set_args(args: Vec<String>) -> Subcommand {
                 simple.insert(key, value.to_string());
             }
 
-            x => usage_msg(&format!("Unknown argument '{}'", x)),
+            x => usage_msg(format!("Unknown argument '{}'", x)),
         }
     }
 
@@ -501,8 +495,7 @@ fn parse_update_args(args: Vec<String>) -> Subcommand {
     let mut subcommand = None;
     let mut subcommand_args = Vec::new();
 
-    let mut iter = args.into_iter();
-    while let Some(arg) = iter.next() {
+    for arg in args.into_iter() {
         match arg.as_ref() {
             // Subcommands
             "check" | "apply" | "cancel" if subcommand.is_none() && !arg.starts_with('-') => {
@@ -527,7 +520,7 @@ fn parse_update_args(args: Vec<String>) -> Subcommand {
 /// Parses arguments for the 'update check' subcommand.
 fn parse_update_check_args(args: Vec<String>) -> UpdateSubcommand {
     if !args.is_empty() {
-        usage_msg(&format!("Unknown arguments: {}", args.join(", ")));
+        usage_msg(format!("Unknown arguments: {}", args.join(", ")));
     }
     UpdateSubcommand::Check(UpdateCheckArgs {})
 }
@@ -537,13 +530,12 @@ fn parse_update_apply_args(args: Vec<String>) -> UpdateSubcommand {
     let mut check = false;
     let mut reboot = false;
 
-    let mut iter = args.into_iter();
-    while let Some(arg) = iter.next() {
+    for arg in args.into_iter() {
         match arg.as_ref() {
             "-c" | "--check" => check = true,
             "-r" | "--reboot" => reboot = true,
 
-            x => usage_msg(&format!("Unknown argument '{}'", x)),
+            x => usage_msg(format!("Unknown argument '{}'", x)),
         }
     }
 
@@ -553,7 +545,7 @@ fn parse_update_apply_args(args: Vec<String>) -> UpdateSubcommand {
 /// Parses arguments for the 'update cancel' subcommand.
 fn parse_update_cancel_args(args: Vec<String>) -> UpdateSubcommand {
     if !args.is_empty() {
-        usage_msg(&format!("Unknown arguments: {}", args.join(", ")));
+        usage_msg(format!("Unknown arguments: {}", args.join(", ")));
     }
     UpdateSubcommand::Cancel(UpdateCancelArgs {})
 }
@@ -683,8 +675,7 @@ async fn run() -> Result<()> {
         }
 
         Subcommand::Set(set) => {
-            let settings: model::Settings;
-            match set {
+            let settings = match set {
                 SetArgs::Simple(input_map) => {
                     // For key=val, we need some type information to deserialize into a Settings.
                     trace!("Original key=value input: {:#?}", input_map);
@@ -693,13 +684,13 @@ async fn run() -> Result<()> {
 
                     // The data store deserialization code understands how to turn the key names
                     // (a.b.c) and serialized values into the nested Settings structure.
-                    settings = datastore::deserialization::from_map(&massaged_map)
-                        .context(error::DeserializeMapSnafu)?;
+                    datastore::deserialization::from_map(&massaged_map)
+                        .context(error::DeserializeMapSnafu)?
                 }
                 SetArgs::Json(json) => {
                     // No processing to do on JSON input; the format determines the types.  serde
                     // can turn a Value into the nested Settings structure itself.
-                    settings = serde_json::from_value(json).context(error::DeserializeJsonSnafu)?;
+                    serde_json::from_value(json).context(error::DeserializeJsonSnafu)?
                 }
             };
 

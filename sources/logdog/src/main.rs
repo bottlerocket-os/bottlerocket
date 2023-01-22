@@ -100,9 +100,9 @@ pub(crate) async fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: 
         println!("Running: {}", log_request);
         if let Err(e) = handle_log_request(log_request, &outdir).await {
             // ignore the error, but make note of it in the error file.
-            write!(
+            writeln!(
                 &mut error_file,
-                "Error running command '{}': '{}'\n",
+                "Error running command '{}': '{}'",
                 log_request, e
             )
             .context(error::ErrorWriteSnafu {
@@ -116,8 +116,8 @@ pub(crate) async fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: 
 /// Runs the bulk of the program's logic, main wraps this.
 async fn run(outfile: &Path, commands: &[&str]) -> Result<()> {
     let temp_dir = TempDir::new().context(error::TempDirCreateSnafu)?;
-    collect_logs(&commands, &temp_dir.path().to_path_buf()).await?;
-    create_tarball(&temp_dir.path().to_path_buf(), &outfile)?;
+    collect_logs(commands, &temp_dir.path().to_path_buf()).await?;
+    create_tarball(temp_dir.path(), outfile)?;
     println!("logs are at: {}", outfile.display());
     Ok(())
 }
@@ -166,9 +166,9 @@ mod tests {
             let mut entries = archive.entries().unwrap();
             let _found = entries
                 .find(|item| {
-                    let entry = item.as_ref().clone().unwrap();
+                    let entry = item.as_ref().unwrap();
                     let path = entry.path().unwrap();
-                    PathBuf::from(path) == PathBuf::from(path_to_find)
+                    path == *path_to_find
                 })
                 .unwrap()
                 .unwrap();

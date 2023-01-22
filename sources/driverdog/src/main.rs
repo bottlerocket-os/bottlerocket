@@ -111,11 +111,11 @@ fn link_modules_sets(
         let driver_config = modules_sets
             .get(&target)
             .context(error::MissingModuleSetSnafu { target })?;
-        link_modules(&driver_config, &kernel_version)?;
+        link_modules(driver_config, &kernel_version)?;
     } else {
         // Link all the modules sets if no target module was given
         for driver_config in modules_sets.values() {
-            link_modules(&driver_config, &kernel_version)?;
+            link_modules(driver_config, &kernel_version)?;
         }
     }
 
@@ -132,18 +132,18 @@ where
     let driver_path = Path::new(&driver_config.objects_source).to_path_buf();
     // Destination for the kernel modules
     let modules_path = Path::new(LIB_MODULES_PATH)
-        .join(&kernel_version)
+        .join(kernel_version)
         .join(&driver_config.lib_modules_path);
     // Directory to store temp artifacts
     let build_dir = tempfile::tempdir().context(error::TmpDirSnafu)?;
     // This script is used to link the kernel module
     let common_module_script = Path::new(KERNEL_SOURCES)
-        .join(&kernel_version)
+        .join(kernel_version)
         .join("scripts/module.lds");
 
     // First, link the object files, and store them in the temp directory
     for (name, object_file) in driver_config.object_files.iter() {
-        link_object_file(name, &object_file, &build_dir, &driver_path)?;
+        link_object_file(name, object_file, &build_dir, &driver_path)?;
     }
 
     // Next, link the kernel modules
@@ -214,7 +214,7 @@ where
     ];
     args.append(&mut dependencies_paths);
 
-    command(&LD_BIN_PATH, &args)?;
+    command(LD_BIN_PATH, &args)?;
     info!("Linked {}", name);
 
     Ok(())
@@ -257,13 +257,13 @@ where
     let mut args = vec!["-r".to_string(), "-o".to_string(), object_path.clone()];
     args.append(&mut dependencies);
 
-    command(&LD_BIN_PATH, &args)?;
+    command(LD_BIN_PATH, &args)?;
     info!("Linked object '{}'", name);
 
     // Strip the object file
     command(
-        &STRIP_BIN_PATH,
-        &[
+        STRIP_BIN_PATH,
+        [
             "-g",
             "--strip-unneeded",
             "--keep-symbol",
@@ -285,7 +285,7 @@ fn load_modules_sets(
 ) -> Result<()> {
     // Update the modules.dep before we attempt to load kernel modules
     let args: Vec<String> = Vec::new();
-    command(DEPMOD_BIN_PATH, &args)?;
+    command(DEPMOD_BIN_PATH, args)?;
     info!("Updated modules dependencies");
 
     // If the target module set was given, load the kernel modules in it
@@ -293,11 +293,11 @@ fn load_modules_sets(
         let driver_config = modules_sets
             .get(&target)
             .context(error::MissingModuleSetSnafu { target })?;
-        load_modules(&driver_config)?
+        load_modules(driver_config)?
     }
     // Load all the modules sets if no target module was given
     for driver_config in modules_sets.values() {
-        load_modules(&driver_config)?;
+        load_modules(driver_config)?;
     }
 
     Ok(())
@@ -321,7 +321,7 @@ fn load_modules(driver_config: &DriverConfig) -> Result<()> {
 
 /// Returns the kernel version
 fn get_kernel_version() -> Result<String> {
-    Ok(command(&UNAME_BIN_PATH, &["-r"])?.trim().to_string())
+    Ok(command(UNAME_BIN_PATH, ["-r"])?.trim().to_string())
 }
 
 /// Wrapper around process::Command that adds error checking.
@@ -359,20 +359,19 @@ fn run() -> Result<()> {
     let driver_config_path = Path::new(&args.driver_config_path);
     let mut all_modules_sets: HashMap<String, DriverConfig> = HashMap::new();
 
-    for entry in driver_config_path
+    for entry in (driver_config_path
         .read_dir()
         .context(error::ReadPathSnafu {
             path: driver_config_path,
-        })?
+        })?)
+    .flatten()
     {
-        if let Ok(entry) = entry {
-            let path = entry.path();
-            let modules_sets: HashMap<String, DriverConfig> =
-                toml::from_slice(&fs::read(&path).context(error::ReadPathSnafu { path: &path })?)
-                    .context(error::DeserializeSnafu { path: &path })?;
+        let path = entry.path();
+        let modules_sets: HashMap<String, DriverConfig> =
+            toml::from_slice(&fs::read(&path).context(error::ReadPathSnafu { path: &path })?)
+                .context(error::DeserializeSnafu { path: &path })?;
 
-            all_modules_sets.extend(modules_sets);
-        }
+        all_modules_sets.extend(modules_sets);
     }
 
     match args.subcommand {

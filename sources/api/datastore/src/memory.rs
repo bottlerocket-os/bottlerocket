@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 
 use super::{Committed, DataStore, Key, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MemoryDataStore {
     // Transaction name -> (key -> data)
     pending: HashMap<String, HashMap<Key, String>>,
@@ -20,11 +20,7 @@ pub struct MemoryDataStore {
 
 impl MemoryDataStore {
     pub fn new() -> Self {
-        Self {
-            pending: HashMap::new(),
-            live: HashMap::new(),
-            metadata: HashMap::new(),
-        }
+        Default::default()
     }
 
     fn dataset(&self, committed: &Committed) -> Option<&HashMap<Key, String>> {
@@ -75,7 +71,7 @@ impl DataStore for MemoryDataStore {
             }
 
             let mut meta_for_data = HashSet::new();
-            for (meta_key, _value) in meta_map {
+            for meta_key in meta_map.keys() {
                 // Confirm metadata key matches requested name, if any.
                 if let Some(name) = metadata_key_name {
                     if name.as_ref() != meta_key.name() {

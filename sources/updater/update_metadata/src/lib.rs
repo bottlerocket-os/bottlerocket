@@ -1,5 +1,3 @@
-#![warn(clippy::pedantic)]
-
 mod de;
 pub mod error;
 mod se;
@@ -48,14 +46,13 @@ impl Wave {
 
     pub fn has_passed(&self, time: DateTime<Utc>) -> bool {
         match self {
-            Self::Initial { end_time, .. } => *end_time <= time,
-            Self::General { end_time, .. } => *end_time <= time,
+            Self::General { end_time, .. } | Self::Initial { end_time, .. } => *end_time <= time,
             Self::Last { start_time, .. } => *start_time <= time,
         }
     }
 }
 
-/// UpdateWaves is provided for the specific purpose of deserializing
+/// `UpdateWaves` is provided for the specific purpose of deserializing
 /// update waves from TOML files
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateWaves {
@@ -63,7 +60,7 @@ pub struct UpdateWaves {
 }
 
 impl UpdateWaves {
-    /// Deserializes an UpdateWaves from a given path
+    /// Deserializes an `UpdateWaves` from a given path
     pub fn from_path<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
@@ -136,7 +133,7 @@ pub fn load_file(path: &Path) -> Result<Manifest> {
 
 pub fn write_file(path: &Path, manifest: &Manifest) -> Result<()> {
     let manifest = serde_json::to_string_pretty(&manifest).context(error::UpdateSerializeSnafu)?;
-    fs::write(path, &manifest).context(error::FileWriteSnafu { path })?;
+    fs::write(path, manifest).context(error::FileWriteSnafu { path })?;
     Ok(())
 }
 
@@ -167,8 +164,8 @@ impl Manifest {
         let update = Update {
             variant,
             arch,
-            version: image_version.clone(),
-            max_version: max_version.clone(),
+            version: image_version,
+            max_version,
             images,
             waves: BTreeMap::new(),
         };
@@ -291,7 +288,7 @@ impl Manifest {
 
                 // Get the appropriate seed from the percentage given
                 // First get the percentage as a decimal,
-                let percent = wave.fleet_percentage as f32 / 100 as f32;
+                let percent = wave.fleet_percentage as f32 / 100_f32;
                 // then, get seed from the percentage of MAX_SEED as a u32
                 seed = (percent * MAX_SEED as f32) as u32;
             }
@@ -369,23 +366,21 @@ impl Update {
                     start_seed,
                 } => Some((start_time, None, start_seed, MAX_SEED)),
             };
-            if let Some((start_time, maybe_end_time, start_seed, end_seed)) = bound {
-                if let Some(end_time) = maybe_end_time {
-                    // This host is not part of last wave
-                    // Determine the duration of this host's wave
-                    let wave_duration = end_time - start_time;
-                    let num_seeds_allocated_to_wave = (end_seed - start_seed) as i32;
-                    if num_seeds_allocated_to_wave == 0 {
-                        // Empty wave, no host should have been allocated to it
-                        return true;
-                    }
-                    let time_per_seed = wave_duration / num_seeds_allocated_to_wave;
-                    // Derive the target time position within the wave given the host's seed.
-                    let target_time = start_time + (time_per_seed * (seed as i32));
-                    // If the current time is past the target time position in the wave, the update is
-                    // marked available
-                    return time >= target_time;
+            if let Some((start_time, Some(end_time), start_seed, end_seed)) = bound {
+                // This host is not part of last wave
+                // Determine the duration of this host's wave
+                let wave_duration = end_time - start_time;
+                let num_seeds_allocated_to_wave = (end_seed - start_seed) as i32;
+                if num_seeds_allocated_to_wave == 0 {
+                    // Empty wave, no host should have been allocated to it
+                    return true;
                 }
+                let time_per_seed = wave_duration / num_seeds_allocated_to_wave;
+                // Derive the target time position within the wave given the host's seed.
+                let target_time = start_time + (time_per_seed * (seed as i32));
+                // If the current time is past the target time position in the wave, the update is
+                // marked available
+                return time >= target_time;
             }
         }
         // There are no waves, so we consider the update available
@@ -403,7 +398,7 @@ pub fn find_migrations(from: &Version, to: &Version, manifest: &Manifest) -> Res
         Ordering::Less | Ordering::Equal => (from, to, false),
         Ordering::Greater => (to, from, true),
     };
-    let mut migrations = find_migrations_forward(&lower, &higher, manifest)?;
+    let mut migrations = find_migrations_forward(lower, higher, manifest)?;
     // if the direction is backward, reverse the order of the migration list.
     if is_reversed {
         migrations = migrations.into_iter().rev().collect();
@@ -432,11 +427,11 @@ fn find_migrations_forward(
         //      (1.0.0, 1.1.0) => [...]
         //      (1.0.0, 1.2.0) => [...]
         // Choose one with the highest *to* version, <= our target
-        migrations.sort_unstable_by(|(_, a), (_, b)| b.cmp(&a));
+        migrations.sort_unstable_by(|(_, a), (_, b)| b.cmp(a));
         if let Some(transition) = migrations.first() {
             // If a transition doesn't require a migration the array will be empty
             if let Some(migrations) = manifest.migrations.get(transition) {
-                targets.extend_from_slice(&migrations);
+                targets.extend_from_slice(migrations);
             }
             version = &transition.1;
         } else {
@@ -458,7 +453,10 @@ mod tests {
     fn test_time() -> DateTime<Utc> {
         // DateTime for 1/1/2000 00:00:00
         DateTime::<Utc>::from_utc(
-            NaiveDate::from_ymd(2000, 1, 1).and_hms_milli(0, 0, 0, 0),
+            NaiveDate::from_ymd_opt(2000, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
             Utc,
         )
     }
@@ -500,11 +498,11 @@ mod tests {
         update.waves.insert(0, time);
         update
             .waves
-            .insert(MAX_SEED, time + Duration::milliseconds(MAX_SEED as i64));
+            .insert(MAX_SEED, time + Duration::milliseconds(i64::from(MAX_SEED)));
 
         for seed in (100..500).step_by(100) {
             assert!(
-                !update.update_ready(seed, time + Duration::milliseconds((seed as i64) - 1)),
+                !update.update_ready(seed, time + Duration::milliseconds(i64::from(seed) - 1)),
                 "seed: {}, time: {}, wave start time: {}, wave start seed: {}, {} milliseconds hasn't passed yet",
                 seed,
                 time,
@@ -513,7 +511,7 @@ mod tests {
                 seed
             );
             assert!(
-                update.update_ready(seed, time + Duration::milliseconds(seed as i64)),
+                update.update_ready(seed, time + Duration::milliseconds(i64::from(seed))),
                 "seed: {}, time: {}, wave start time: {}, wave start seed: {}, update should be ready",
                 seed,
                 time + Duration::milliseconds(100),
@@ -557,7 +555,7 @@ mod tests {
         for duration in (200..seed_time_position).step_by(2) {
             assert!(
                 !update.update_ready(
-                    seed, time + Duration::milliseconds(duration as i64)
+                    seed, time + Duration::milliseconds(i64::from(duration))
                 ),
                 "update should not be ready, it's the second wave but not at position within wave yet: {}", duration,
             );
@@ -568,7 +566,7 @@ mod tests {
                 update.update_ready(
                     seed,
                     time + Duration::milliseconds(200)
-                        + Duration::milliseconds(duration as i64)
+                        + Duration::milliseconds(i64::from(duration))
                 ),
                 "update should be ready now that we're passed the allocated time position within the second wave: {}", duration,
             );
@@ -576,7 +574,7 @@ mod tests {
 
         for duration in (1024..4096).step_by(8) {
             assert!(
-                update.update_ready(seed, time + Duration::milliseconds(duration as i64)),
+                update.update_ready(seed, time + Duration::milliseconds(i64::from(duration))),
                 "update should be ready after the third wave starts and onwards",
             );
         }
@@ -609,7 +607,7 @@ mod tests {
                 !update.update_ready(
                     seed,
                     time + Duration::milliseconds(200)
-                        + Duration::milliseconds(duration as i64)
+                        + Duration::milliseconds(i64::from(duration))
                 ),
                 "update should not be ready, it's the third wave but not at position within wave yet: {}", duration,
             );
@@ -620,7 +618,7 @@ mod tests {
                 update.update_ready(
                     seed,
                     time + Duration::milliseconds(1024 + 200)
-                        + Duration::milliseconds(duration as i64)
+                        + Duration::milliseconds(i64::from(duration))
                 ),
                 "update should be ready now that we're passed the allocated time position within the third wave: {}", duration,
             );
@@ -644,7 +642,10 @@ mod tests {
         let seed = 1024;
         // Construct a DateTime object for 1/1/2000 00:00:00
         let time = DateTime::<Utc>::from_utc(
-            NaiveDate::from_ymd(2000, 1, 1).and_hms_milli(0, 0, 0, 0),
+            NaiveDate::from_ymd_opt(2000, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
             Utc,
         );
 

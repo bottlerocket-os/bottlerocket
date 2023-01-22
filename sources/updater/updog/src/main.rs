@@ -253,16 +253,16 @@ fn retrieve_migrations(
     // the migrations required for foo to bar and bar to foo are
     // the same; we can pretend we're always upgrading from foo to
     // bar and use the same logic to obtain the migrations
-    let target = std::cmp::max(&update.version, &current_version);
-    let start = std::cmp::min(&update.version, &current_version);
+    let target = std::cmp::max(&update.version, current_version);
+    let start = std::cmp::min(&update.version, current_version);
 
     let dir = Path::new(MIGRATION_PATH);
     if !dir.exists() {
-        fs::create_dir(&dir).context(error::DirCreateSnafu { path: &dir })?;
+        fs::create_dir(dir).context(error::DirCreateSnafu { path: &dir })?;
     }
 
     // find the list of migrations in the manifest based on our from and to versions.
-    let mut targets = find_migrations(start, target, &manifest)?;
+    let mut targets = find_migrations(start, target, manifest)?;
 
     // we need to store the manifest so that migrator can independently and securely determine the
     // migration list. this is true even if there are no migrations.
@@ -315,11 +315,9 @@ fn set_common_query_params(
     query_params: &mut QueryParams,
     current_version: &Version,
     config: &Config,
-) -> Result<()> {
+) {
     query_params.add("version", current_version.to_string());
     query_params.add("seed", config.seed.to_string());
-
-    Ok(())
 }
 
 /// List any available update that matches the current variant
@@ -338,13 +336,14 @@ fn list_updates(
         );
     } else {
         for u in updates {
-            eprintln!("{}", &fmt_full_version(&u));
+            eprintln!("{}", &fmt_full_version(u));
         }
     }
     Ok(())
 }
 
 /// Struct to hold the specified command line argument values
+#[allow(clippy::struct_excessive_bools)]
 struct Arguments {
     subcommand: String,
     log_level: LevelFilter,
@@ -374,9 +373,10 @@ fn parse_args(args: std::env::Args) -> Arguments {
                 let log_level_str = iter
                     .next()
                     .unwrap_or_else(|| usage_msg("Did not give argument to --log-level"));
-                log_level = Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
-                    usage_msg(format!("Invalid log level '{}'", log_level_str))
-                }));
+                log_level =
+                    Some(LevelFilter::from_str(&log_level_str).unwrap_or_else(|_| {
+                        usage_msg(format!("Invalid log level '{log_level_str}'"))
+                    }));
             }
             "-i" | "--image" => match iter.next() {
                 Some(v) => match Version::parse(&v) {
@@ -416,7 +416,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
 
     Arguments {
         subcommand: subcommand.unwrap_or_else(|| usage()),
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         json,
         ignore_waves,
         force_version: update_version,
@@ -437,14 +437,14 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
             serde_json::to_string_pretty(&object).context(error::UpdateSerializeSnafu)?
         );
     } else {
-        println!("{}", string);
+        println!("{string}");
     }
     Ok(())
 }
 
 fn initiate_reboot() -> Result<()> {
     // Set up signal handler for termination signals
-    let mut signals = Signals::new(&[SIGTERM]).context(error::SignalSnafu)?;
+    let mut signals = Signals::new([SIGTERM]).context(error::SignalSnafu)?;
     let signals_handle = signals.handle();
     thread::spawn(move || {
         for _sig in signals.forever() {
@@ -465,21 +465,21 @@ fn initiate_reboot() -> Result<()> {
     Ok(())
 }
 
-/// Our underlying HTTP client, reqwest, supports proxies by reading the HTTPS_PROXY and NO_PROXY
+/// Our underlying HTTP client, reqwest, supports proxies by reading the `HTTPS_PROXY` and `NO_PROXY`
 /// environment variables. Bottlerocket services can source proxy.env before running, but updog is
 /// not a service, so we read these values from the config file and add them to the environment
 /// here.
 fn set_https_proxy_environment_variables(
     https_proxy: &Option<String>,
     no_proxy: &Option<Vec<String>>,
-) -> Result<()> {
+) {
     let proxy = match https_proxy {
-        Some(s) if !s.is_empty() => s.to_owned(),
+        Some(s) if !s.is_empty() => s.clone(),
         // without https_proxy, no_proxy does nothing, so we are done
-        _ => return Ok(()),
+        _ => return,
     };
 
-    std::env::set_var("HTTPS_PROXY", &proxy);
+    std::env::set_var("HTTPS_PROXY", proxy);
     if let Some(no_proxy) = no_proxy {
         if !no_proxy.is_empty() {
             let no_proxy_string = no_proxy.join(",");
@@ -487,7 +487,6 @@ fn set_https_proxy_environment_variables(
             std::env::set_var("NO_PROXY", &no_proxy_string);
         }
     }
-    Ok(())
 }
 
 #[allow(clippy::too_many_lines)]
@@ -502,14 +501,14 @@ fn main_inner() -> Result<()> {
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
     let config = load_config()?;
-    set_https_proxy_environment_variables(&config.https_proxy, &config.no_proxy)?;
+    set_https_proxy_environment_variables(&config.https_proxy, &config.no_proxy);
     let current_release = BottlerocketRelease::new().context(error::ReleaseVersionSnafu)?;
     let variant = arguments.variant.unwrap_or(current_release.variant_id);
     let transport = HttpQueryTransport::new();
     // get a shared pointer to the transport's query_params so we can add metrics information to
     // the transport's HTTP calls.
     let mut query_params = transport.query_params();
-    set_common_query_params(&mut query_params, &current_release.version_id, &config)?;
+    set_common_query_params(&mut query_params, &current_release.version_id, &config);
     let repository = load_repository(transport, &config)?;
     let manifest = load_manifest(&repository)?;
     let ignore_waves = arguments.ignore_waves || config.ignore_waves;
@@ -536,7 +535,7 @@ fn main_inner() -> Result<()> {
             )?
             .context(error::UpdateNotAvailableSnafu)?;
 
-            output(arguments.json, &update, &fmt_full_version(&update))?;
+            output(arguments.json, update, &fmt_full_version(update))?;
         }
         Command::Update | Command::UpdateImage => {
             if let Some(u) = update_required(
@@ -566,8 +565,8 @@ fn main_inner() -> Result<()> {
                 }
                 output(
                     arguments.json,
-                    &u,
-                    &format!("Update applied: {}", fmt_full_version(&u)),
+                    u,
+                    &format!("Update applied: {}", fmt_full_version(u)),
                 )?;
             } else {
                 eprintln!("No update required");
@@ -608,11 +607,11 @@ fn main() -> ! {
     std::process::exit(match main_inner() {
         Ok(()) => 0,
         Err(err) => {
-            eprintln!("{}", err);
+            eprintln!("{err}");
             if let Some(var) = std::env::var_os("RUST_BACKTRACE") {
                 if var != "0" {
                     if let Some(backtrace) = err.backtrace() {
-                        eprintln!("\n{:?}", backtrace);
+                        eprintln!("\n{backtrace:?}");
                     }
                 }
             }
@@ -639,11 +638,14 @@ mod tests {
         let path = "tests/data/example.json";
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         assert!(
-            manifest.updates.len() > 0,
+            !manifest.updates.is_empty(),
             "Failed to parse update manifest"
         );
 
-        assert!(manifest.migrations.len() > 0, "Failed to parse migrations");
+        assert!(
+            !manifest.migrations.is_empty(),
+            "Failed to parse migrations"
+        );
         let from = Version::parse("1.11.0").unwrap();
         let to = Version::parse("1.12.0").unwrap();
         assert!(manifest
@@ -659,7 +661,7 @@ mod tests {
         // image:datastore mappings
         let path = "tests/data/example_2.json";
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
-        assert!(manifest.updates.len() > 0);
+        assert!(!manifest.updates.is_empty());
     }
 
     #[test]
@@ -702,7 +704,7 @@ mod tests {
     fn older_versions() {
         // A manifest with two updates, both less than 0.1.3.
         // Use a architecture specific JSON payload, otherwise updog will ignore the update
-        let path = format!("tests/data/example_3_{}.json", TARGET_ARCH);
+        let path = format!("tests/data/example_3_{TARGET_ARCH}.json");
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
@@ -740,7 +742,7 @@ mod tests {
         // version, and one which is for the opposite target architecture. This asserts that
         // upgrading from the version 1.10.0 results in updating to 1.15.0
         // instead of 1.13.0 (lower), 1.25.0 (too high), or 1.16.0 (wrong arch).
-        let path = format!("tests/data/multiple_{}.json", TARGET_ARCH);
+        let path = format!("tests/data/multiple_{TARGET_ARCH}.json");
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
@@ -782,7 +784,7 @@ mod tests {
         // version, and one which is for the opposite target architecture. This tests forces
         // a downgrade to 1.13.0, instead of 1.15.0 like it would be in the
         // above test, test_multiple.
-        let path = format!("tests/data/multiple_{}.json", TARGET_ARCH);
+        let path = format!("tests/data/multiple_{TARGET_ARCH}.json");
         let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
@@ -847,7 +849,7 @@ mod tests {
     }
 
     #[test]
-    /// Make sure that update_required() doesn't return true unless the client's
+    /// Make sure that `update_required()` doesn't return true unless the client's
     /// wave is also ready.
     fn check_update_waves() {
         let mut manifest = Manifest::default();

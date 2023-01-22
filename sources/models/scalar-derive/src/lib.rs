@@ -222,7 +222,7 @@ use syn::{parse_macro_input, Data, DataEnum, DataStruct, DeriveInput, Fields};
 pub fn scalar(input: TokenStream) -> TokenStream {
     // Parse the input tokens.
     let derive_input = parse_macro_input!(input as DeriveInput);
-    let name = (&derive_input.ident).to_string();
+    let name = derive_input.ident.to_string();
     let settings = RawSettings::from_attributes(derive_input.attrs.as_slice())
         .expect("Unable to parse `scalar` macro arguments");
 
@@ -232,7 +232,7 @@ pub fn scalar(input: TokenStream) -> TokenStream {
     match &derive_input.data {
         Data::Struct(s) => {
             // Further parse the input.
-            let struct_info = StructInfo::new(&name, &s, settings);
+            let struct_info = StructInfo::new(&name, s, settings);
             struct_info.write_impls(&mut ast2);
         }
         Data::Enum(data_enum) => {
@@ -278,14 +278,15 @@ struct StructInfo {
 
 impl StructInfo {
     fn new(name: &str, data: &DataStruct, settings: RawSettings) -> Self {
-        let (inner_field, inner_type) =
-            find_inner_field(data.clone(), settings.inner.as_ref().map(|s| s.as_str()));
+        let (inner_field, inner_type) = find_inner_field(data.clone(), settings.inner.as_deref());
 
         // Automatically impl AsRef<str> when unspecified by the user but the inner type is String.
         // Note, this might not work if String is not what we think it is. We assume that anything
         // named `String`, `string::String`, or `std::string::String` is, in fact, a
         // `std::string::String`.
-        let as_ref_str = settings.as_ref_str.unwrap_or(is_string(&inner_type));
+        let as_ref_str = settings
+            .as_ref_str
+            .unwrap_or_else(|| is_string(&inner_type));
 
         Self {
             scalar: name.to_owned(),
@@ -303,7 +304,7 @@ impl StructInfo {
             if self.as_ref_str {
                 String::from("str")
             } else {
-                format!("{}", self.inner_type)
+                self.inner_type.to_string()
             }
         )
     }
@@ -525,7 +526,7 @@ fn find_inner_field(data_struct: DataStruct, field_name: Option<&str>) -> (Strin
             let field_name = field_name.unwrap_or("inner");
             for field in &named_fields.named {
                 if let Some(field_ident) = &field.ident {
-                    let field_ident: &syn::Ident = &field_ident;
+                    let field_ident: &syn::Ident = field_ident;
                     if field_ident == field_name {
                         return (field_name.to_string(), typename(&field.ty));
                     }

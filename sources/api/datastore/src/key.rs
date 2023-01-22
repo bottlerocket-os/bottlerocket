@@ -79,9 +79,9 @@ impl Key {
     where
         S: AsRef<str>,
     {
-        let name = Self::encode_name_segments(&segments)?;
+        let name = Self::encode_name_segments(segments)?;
 
-        Self::check_key(key_type, &name, &segments)?;
+        Self::check_key(key_type, &name, segments)?;
 
         Ok(Self {
             name,
@@ -208,7 +208,7 @@ impl Key {
         match key_type {
             KeyType::Data => {
                 ensure!(
-                    segments.len() >= 1,
+                    !segments.is_empty(),
                     error::InvalidKeySnafu {
                         name,
                         msg: "data keys must have at least one segment",
@@ -232,10 +232,7 @@ impl Key {
     /// Determines whether a character is acceptable within a segment of a key name.  This is
     /// separate from quoting; if a character isn't valid, it isn't valid quoted, either.
     fn valid_character(c: char) -> bool {
-        match c {
-            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '/' => true,
-            _ => false,
-        }
+        matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '/')
     }
 
     /// Given a key name, returns a list of its name segments, separated by KEY_SEPARATOR.

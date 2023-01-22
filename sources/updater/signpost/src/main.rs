@@ -40,7 +40,7 @@ fn main() {
 
     if let Err(err) = State::load().and_then(|mut state| {
         match command {
-            Command::Status => println!("{}", state),
+            Command::Status => println!("{state}"),
             Command::ClearInactive => {
                 state.clear_inactive();
                 state.write()?;
@@ -69,7 +69,7 @@ fn main() {
         }
         Ok(())
     }) {
-        eprintln!("{}", err);
+        eprintln!("{err}");
         std::process::exit(1)
     }
 }

@@ -130,7 +130,7 @@ impl VmwareDataProvider {
         }
 
         // Base64 decode the &str
-        let decoded_bytes = base64::decode(&base64_str).context(error::Base64DecodeSnafu {
+        let decoded_bytes = base64::decode(base64_str).context(error::Base64DecodeSnafu {
             what: "OVF user data",
         })?;
 
@@ -205,7 +205,7 @@ impl VmwareDataProvider {
             }
         };
 
-        let json = SettingsJson::from_toml_str(&user_data_string, "user data from guestinfo")
+        let json = SettingsJson::from_toml_str(user_data_string, "user data from guestinfo")
             .context(error::SettingsToJsonSnafu { from: "guestinfo" })?;
         Ok(Some(json))
     }

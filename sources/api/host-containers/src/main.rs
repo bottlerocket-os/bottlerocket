@@ -16,7 +16,6 @@ It queries the API for their settings, then configures the system by:
 #[macro_use]
 extern crate log;
 
-use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
@@ -91,7 +90,7 @@ mod error {
         },
 
         #[snafu(display("'{}' failed - stderr: {}",
-                        bin_path, std::str::from_utf8(&output.stderr).unwrap_or_else(|_| "<invalid UTF-8>")))]
+                        bin_path, std::str::from_utf8(&output.stderr).unwrap_or("<invalid UTF-8>")))]
         CommandFailure { bin_path: String, output: Output },
 
         #[snafu(display("Failed to manage {} of {} host containers", failed, tried))]
@@ -177,7 +176,7 @@ impl<'a> SystemdUnit<'a> {
     }
 
     fn is_active(&self) -> Result<bool> {
-        match command(constants::SYSTEMCTL_BIN, &["is-active", self.unit]) {
+        match command(constants::SYSTEMCTL_BIN, ["is-active", self.unit]) {
             Ok(_) => Ok(true),
             Err(e) => {
                 // If the systemd unit is not active(running), then `systemctl is-active` will
@@ -197,14 +196,14 @@ impl<'a> SystemdUnit<'a> {
         // This is intentionally blocking to simplify reasoning about the state
         // of the system. The stop command might fail if the unit has just been
         // created and we haven't done a `systemctl daemon-reload` yet.
-        let _ = command(constants::SYSTEMCTL_BIN, &["stop", self.unit]);
+        let _ = command(constants::SYSTEMCTL_BIN, ["stop", self.unit]);
         Ok(())
     }
 
     fn enable(&self) -> Result<()> {
         command(
             constants::SYSTEMCTL_BIN,
-            &["enable", self.unit, "--no-reload", "--no-block"],
+            ["enable", self.unit, "--no-reload", "--no-block"],
         )?;
         Ok(())
     }
@@ -212,7 +211,7 @@ impl<'a> SystemdUnit<'a> {
     fn enable_now(&self) -> Result<()> {
         command(
             constants::SYSTEMCTL_BIN,
-            &["enable", self.unit, "--now", "--no-block"],
+            ["enable", self.unit, "--now", "--no-block"],
         )?;
         Ok(())
     }
@@ -220,7 +219,7 @@ impl<'a> SystemdUnit<'a> {
     fn disable(&self) -> Result<()> {
         command(
             constants::SYSTEMCTL_BIN,
-            &["disable", self.unit, "--no-reload", "--no-block"],
+            ["disable", self.unit, "--no-reload", "--no-block"],
         )?;
         Ok(())
     }
@@ -228,7 +227,7 @@ impl<'a> SystemdUnit<'a> {
     fn disable_now(&self) -> Result<()> {
         command(
             constants::SYSTEMCTL_BIN,
-            &["disable", self.unit, "--now", "--no-block"],
+            ["disable", self.unit, "--now", "--no-block"],
         )?;
         Ok(())
     }
@@ -344,7 +343,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.into()),
     }
 }
@@ -405,11 +404,11 @@ where
         debug!("Cleaning up host container: '{}'", unit_name);
         command(
             constants::HOST_CTR_BIN,
-            &["clean-up", "--container-id", name],
+            ["clean-up", "--container-id", name],
         )?;
     }
 
-    let systemd_target = command(constants::SYSTEMCTL_BIN, &["get-default"])?;
+    let systemd_target = command(constants::SYSTEMCTL_BIN, ["get-default"])?;
 
     // What happens next depends on whether the system has finished booting, and whether the
     // host container is enabled.
@@ -458,7 +457,7 @@ fn is_container_affected(settings: &[&str], container_name: &str) -> bool {
             info!("Handling host container '{}' because it's directly affected by changed setting '{}' (and maybe others)", container_name, setting);
             return true;
         }
-        if !setting.starts_with(&setting_prefix) {
+        if !setting.starts_with(setting_prefix) {
             // if its some other setting, return true for all host-containers, example: network
             info!("Handling host container '{}' because it's indirectly affected by changed setting '{}' (and maybe others)", container_name, setting);
             return true;
@@ -468,13 +467,13 @@ fn is_container_affected(settings: &[&str], container_name: &str) -> bool {
         "Not handling host container '{}', no changed settings affect it",
         container_name
     );
-    return false;
+    false
 }
 
 async fn run() -> Result<()> {
     let args = parse_args(env::args());
     // this env var is passed by thar-be-settings
-    let changed_settings_env = env::var("CHANGED_SETTINGS").unwrap_or("".to_string());
+    let changed_settings_env = env::var("CHANGED_SETTINGS").unwrap_or_else(|_| "".to_string());
     let changed_settings: Vec<&str> = changed_settings_env.split_whitespace().collect();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.

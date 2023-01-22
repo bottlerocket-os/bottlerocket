@@ -138,7 +138,7 @@ impl Args {
         Self {
             datastore_path: datastore_path
                 .unwrap_or_else(|| usage_msg("--datastore-path must be specified")),
-            log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+            log_level: log_level.unwrap_or(LevelFilter::Info),
             migration_directory: migration_directory
                 .unwrap_or_else(|| usage_msg("--migration-directory must be specified")),
             migrate_to_version: migrate_to_version.unwrap_or_else(|| {

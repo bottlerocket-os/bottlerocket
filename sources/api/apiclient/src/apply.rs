@@ -35,7 +35,7 @@ where
     let mut changes = Vec::with_capacity(get_responses.len());
     for (input_source, get_response) in get_responses {
         let response = get_response?;
-        let json = format_change(&response, &input_source)?;
+        let json = format_change(&response, input_source)?;
         changes.push((input_source, json));
     }
 
@@ -113,7 +113,7 @@ where
 /// it to JSON for sending to the API.
 fn format_change(input: &str, input_source: &str) -> Result<String> {
     // Try to parse the input as (arbitrary) TOML.  If that fails, try to parse it as JSON.
-    let mut json_val = match toml::from_str::<toml::Value>(&input) {
+    let mut json_val = match toml::from_str::<toml::Value>(input) {
         Ok(toml_val) => {
             // We need JSON for the API.  serde lets us convert between Deserialize-able types by
             // reusing the deserializer.  Turn the TOML value into a JSON value.
@@ -123,7 +123,7 @@ fn format_change(input: &str, input_source: &str) -> Result<String> {
         Err(toml_err) => {
             // TOML failed, try JSON; include the toml parsing error, because if they intended to
             // give TOML we should still tell them what was wrong with it.
-            serde_json::from_str(&input).context(error::InputTypeSnafu {
+            serde_json::from_str(input).context(error::InputTypeSnafu {
                 input_source,
                 toml_err,
             })

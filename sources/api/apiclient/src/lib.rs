@@ -130,7 +130,7 @@ where
         .method(method)
         .uri(&uri)
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(request_data))
+        .body(request_data)
         .context(error::RequestSetupSnafu)?;
 
     // Send request.

@@ -131,7 +131,7 @@ fn response_field(
     field: impl IntoIterator<Item = &'static &'static str>,
     response_str: &str,
 ) -> Option<String> {
-    let response: serde_json::Value = match serde_json::from_str(&response_str) {
+    let response: serde_json::Value = match serde_json::from_str(response_str) {
         Ok(json) => json,
         Err(_) => return None,
     };
@@ -305,8 +305,7 @@ where
                         &["most_recent_command", "exit_status"],
                         &status_body
                     )
-                    .map(|s| s.parse().ok())
-                    .flatten()
+                    .and_then(|s| s.parse().ok())
                     .unwrap_or(-1),
                 }
             );

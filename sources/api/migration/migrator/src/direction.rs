@@ -26,7 +26,7 @@ impl Direction {
     /// Determines the migration direction, given the outgoing ("from') and incoming ("to")
     /// versions.
     pub(crate) fn from_versions(from: &Version, to: &Version) -> Option<Self> {
-        match from.cmp(&to) {
+        match from.cmp(to) {
             Ordering::Less => Some(Direction::Forward),
             Ordering::Greater => Some(Direction::Backward),
             Ordering::Equal => None,

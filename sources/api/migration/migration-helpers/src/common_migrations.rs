@@ -1,4 +1,4 @@
-use crate::{error, Metadata, Migration, MigrationData, Result};
+use crate::{error, Migration, MigrationData, Result};
 use serde::Serialize;
 use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
@@ -632,17 +632,14 @@ impl ReplaceTemplateMigration {
         incoming_template: &str,
         input: &mut MigrationData,
     ) -> Result<()> {
-        if let Some(template) = &self.get_setting_template(&input) {
+        if let Some(template) = &self.get_setting_template(input) {
             if template == outgoing_template {
                 println!(
                     "Changing template of '{}' from '{}' to '{}'",
                     self.setting, outgoing_template, incoming_template
                 );
                 // Update the setting's template
-                let metadata = input
-                    .metadata
-                    .entry(self.setting.to_string())
-                    .or_insert(Metadata::new());
+                let metadata = input.metadata.entry(self.setting.to_string()).or_default();
                 metadata.insert(
                     "template".to_string(),
                     serde_json::Value::String(incoming_template.to_string()),
@@ -703,6 +700,7 @@ impl Migration for ReplaceTemplateMigration {
             self.update_template_and_data(
                 // Clone the input string; we need to give the function mutable access to
                 // the structure that contains the string, so we can't pass a reference into the structure.
+                #[allow(clippy::unnecessary_to_owned)]
                 &data.to_owned(),
                 self.old_template,
                 self.new_template,
@@ -728,6 +726,7 @@ impl Migration for ReplaceTemplateMigration {
             self.update_template_and_data(
                 // Clone the input string; we need to give the function mutable access to
                 // the structure that contains the string, so we can't pass a reference into the structure.
+                #[allow(clippy::unnecessary_to_owned)]
                 &data.to_owned(),
                 self.new_template,
                 self.old_template,
@@ -815,7 +814,7 @@ mod test_add_metadata {
         assert_eq!(
             result.metadata,
             hashmap! {
-                "hi".into() => HashMap::new().into(),
+                "hi".into() => HashMap::new(),
             }
         );
     }

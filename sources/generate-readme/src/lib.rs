@@ -86,7 +86,7 @@ where
 
     // Make sure the end of the file has a newline
     if content.chars().last().unwrap_or_default() != '\n' {
-        content = content + "\n";
+        content += "\n";
     }
 
     let mut readme = File::create("README.md").context(error::ReadmeCreateSnafu)?;

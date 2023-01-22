@@ -101,7 +101,7 @@ impl ChildHandles {
         command.arg(exec_socket_path.as_ref());
 
         // Ask ctr to exec into an existing task, with a TTY if requested by the user.
-        command.args(&["task", "exec", "--exec-id", &exec_id]);
+        command.args(["task", "exec", "--exec-id", &exec_id]);
         if init.tty.is_some() {
             command.arg("--tty");
         }

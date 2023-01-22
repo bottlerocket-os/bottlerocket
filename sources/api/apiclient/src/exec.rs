@@ -600,7 +600,7 @@ impl HandleSignals {
         // Set up the signal handler; do this before starting a thread so we can die quickly on
         // failure.
         use signal::*;
-        let signals = Signals::new(&[SIGWINCH, SIGTERM, SIGINT, SIGQUIT])
+        let signals = Signals::new([SIGWINCH, SIGTERM, SIGINT, SIGQUIT])
             .context(error::HandleSignalsSnafu)?;
 
         debug!("Spawning thread to manage signals");

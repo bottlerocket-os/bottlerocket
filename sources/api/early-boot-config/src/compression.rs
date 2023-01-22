@@ -21,6 +21,7 @@ const GZ_MAGIC: [u8; 2] = [0x1f, 0x8b];
 
 /// This helper takes a slice of bytes representing UTF-8 text, which can optionally be
 /// compressed, and returns an uncompressed string.
+#[allow(dead_code)]
 pub fn expand_slice_maybe(input: &[u8]) -> Result<String> {
     let mut output = String::new();
     let mut reader = OptionalCompressionReader::new(Cursor::new(input));
@@ -35,7 +36,7 @@ where
     P: AsRef<Path>,
 {
     let path = path.as_ref();
-    let file = File::open(&path)?;
+    let file = File::open(path)?;
     let mut output = String::new();
     let mut reader = OptionalCompressionReader::new(BufReader::new(file));
     reader.read_to_string(&mut output)?;
@@ -64,7 +65,7 @@ enum CompressionType<R> {
     None(Peek<R>),
 
     /// We found gzip compression.
-    Gz(GzDecoder<Peek<R>>),
+    Gz(Box<GzDecoder<Peek<R>>>),
 }
 
 /// `Peek` lets us read the starting bytes (the "magic") of an input `Read` but maintain those
@@ -102,7 +103,7 @@ impl<R: Read> Read for OptionalCompressionReader<R> {
                 // Detect compression type based on the magic bytes.
                 if count == MAGIC_LEN && magic == GZ_MAGIC {
                     // Use a gzip decoder if gzip compressed.
-                    self.0 = CompressionType::Gz(GzDecoder::new(full_input))
+                    self.0 = CompressionType::Gz(Box::new(GzDecoder::new(full_input)))
                 } else {
                     // We couldn't detect any compression; just read the input.
                     self.0 = CompressionType::None(full_input)

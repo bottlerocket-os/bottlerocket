@@ -41,7 +41,7 @@ where
         tx: transaction.into(),
     };
     get_prefix(datastore, &pending, "settings.", None)
-        .map(|maybe_settings| maybe_settings.unwrap_or_else(Settings::default))
+        .map(|maybe_settings| maybe_settings.unwrap_or_default())
 }
 
 /// Deletes the transaction from the data store, removing any uncommitted settings under that
@@ -77,7 +77,7 @@ fn check_prefix<'a>(given: &'a str, expected: &'static str) -> Option<&'a str> {
     }
 
     // No overlap, we won't find any data and should return early.
-    return None;
+    None
 }
 
 /// Build a Settings based on the data in the datastore.  Errors if no settings are found.
@@ -101,7 +101,7 @@ pub(crate) fn get_settings_prefix<D: DataStore, S: AsRef<str>>(
         None => return Ok(None),
     };
 
-    get_prefix(datastore, committed, &prefix, None)
+    get_prefix(datastore, committed, prefix, None)
         .transpose()
         // None is OK here - they could ask for a prefix we don't have
         .unwrap_or_else(|| Ok(None))
@@ -124,7 +124,7 @@ where
 
     // Return early if the prefix can't match os data.  (This is important because get_model checks
     // all of our model types using the same given prefix.)
-    let prefix = match check_prefix(prefix.as_ref(), "os.") {
+    let prefix = match check_prefix(prefix, "os.") {
         Some(prefix) => prefix,
         None => return Ok(None),
     };
@@ -276,7 +276,7 @@ pub(crate) fn get_settings_keys<D: DataStore>(
     let mut data = HashMap::new();
     for key_str in keys {
         trace!("Pulling value from datastore for key: {}", key_str);
-        let key = Key::new(KeyType::Data, &key_str).context(error::NewKeySnafu {
+        let key = Key::new(KeyType::Data, key_str).context(error::NewKeySnafu {
             key_type: "data",
             name: *key_str,
         })?;
@@ -298,9 +298,9 @@ pub(crate) fn get_settings_keys<D: DataStore>(
 }
 
 /// Build a collection of Service items with the given names using data from the datastore.
-pub(crate) fn get_services_names<'a, D: DataStore>(
+pub(crate) fn get_services_names<D: DataStore>(
     datastore: &D,
-    names: &'a HashSet<&str>,
+    names: &HashSet<&str>,
     committed: &Committed,
 ) -> Result<Services> {
     get_map_from_prefix(datastore, "services.".to_string(), names, committed)
@@ -688,7 +688,7 @@ mod test {
 
         // Retrieve built service OK
         let prefix = "services.foo";
-        let services = get_services_prefix(&ds, &prefix)
+        let services = get_services_prefix(&ds, prefix)
             .unwrap() // Result Ok
             .unwrap(); // got Some result
         assert_eq!(
@@ -701,12 +701,12 @@ mod test {
 
         // No match returns None
         let prefix = "services.bar";
-        let services = get_services_prefix(&ds, &prefix).unwrap();
+        let services = get_services_prefix(&ds, prefix).unwrap();
         assert_eq!(services, None);
 
         // Unrelated prefix returns None
         let prefix = "settings";
-        let services = get_services_prefix(&ds, &prefix).unwrap();
+        let services = get_services_prefix(&ds, prefix).unwrap();
         assert_eq!(services, None);
     }
 
@@ -729,7 +729,7 @@ mod test {
 
         // Retrieve built configuration file OK
         let prefix = "configuration-files.foo";
-        let configuration_files = get_configuration_files_prefix(&ds, &prefix)
+        let configuration_files = get_configuration_files_prefix(&ds, prefix)
             .unwrap() // Result Ok
             .unwrap(); // got Some result
         assert_eq!(
@@ -742,19 +742,21 @@ mod test {
 
         // No match returns None
         let prefix = "configuration-files.bar";
-        let configuration_files = get_configuration_files_prefix(&ds, &prefix).unwrap();
+        let configuration_files = get_configuration_files_prefix(&ds, prefix).unwrap();
         assert_eq!(configuration_files, None);
 
         // Unrelated prefix returns None
         let prefix = "settings";
-        let configuration_files = get_configuration_files_prefix(&ds, &prefix).unwrap();
+        let configuration_files = get_configuration_files_prefix(&ds, prefix).unwrap();
         assert_eq!(configuration_files, None);
     }
 
     #[test]
     fn set_settings_works() {
-        let mut settings = Settings::default();
-        settings.motd = Some("tz".try_into().unwrap());
+        let settings = model::Settings {
+            motd: Some("tz".try_into().unwrap()),
+            ..Default::default()
+        };
 
         // Set with helper
         let mut ds = MemoryDataStore::new();
