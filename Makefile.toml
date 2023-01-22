@@ -410,6 +410,8 @@ script = [
 '''
 rc=0
 
+export VARIANT="${BUILDSYS_VARIANT}"
+
 # For rust first-party source code
 if ! cargo clippy \
   --manifest-path ${BUILDSYS_TOOLS_DIR}/Cargo.toml \
@@ -417,7 +419,11 @@ if ! cargo clippy \
   rc=1
 fi
 
-# TODO: fix clippy lints in "sources" and check that too
+if ! cargo clippy \
+  --manifest-path ${BUILDSYS_SOURCES_DIR}/Cargo.toml \
+  --locked -- -D warnings --no-deps; then
+  rc=1
+fi
 
 if [ "${rc}" -ne 0 ]; then
   echo "Found lint warnings. First-party source code is checked with clippy." >&2
