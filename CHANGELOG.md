@@ -1,3 +1,87 @@
+# v 1.12.0 (2022-01-24)
+
+## OS Changes
+
+* Disable strict aliasing for c-utf-8 library strict aliasing in dbus-broker ([#2730])
+* Add `/sys/firmware` to privileged mounts in host-ctr ([#2714])
+* Use user-provided registry credentials for public.ecr.aws in host-ctr ([#2676])
+* Build masked paths list dynamically in host-ctr ([#2637])
+* Enable EFI option in systemd ([#2714])
+* Allow simple enums as map keys in datastore ([#2687])
+* Improve reliability of `settings.network.hostname` generator ([#2647])
+* Add support for bonding and VLANS in `net.toml` ([#2596])
+* Keep only one intermediate datastore during migration ([#2589])
+* Widen access to filesystem relabel in SELinux policy ([#2738])
+* Update hotdog to 1.05 ([#2728])
+* Update systemd to 250.9 ([#2718])
+* Update third party packages and dependencies ([#2588], [#2717])
+* Update host containers ([#2739])
+* Update eksd ([#2690], [#2693], [#2694], thanks @rcrozean)
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Add support for Kubernetes 1.25 variants ([#2699])
+* Allow access to public kubelet certificates ([#2639])
+* During kubelet prestart, skip pause image pull if image exists ([#2587])
+* Delay kubelet.service until after warm-pool-wait service runs ([#2562])
+* Add OCI default spec and settings to containerd ([#2697])
+
+## Platform Changes
+
+### VMware
+
+* Downgrade iopl warning when fetching guestinfo in `early-boot-config` ([#2732])
+
+## Build Changes
+
+* Treat alias warning as errors ([#2730])
+* Suppress "missing changelog" warning in build ([#2730])
+* Update Bottlerocket SDK version to 0.29.0 ([#2730])
+* Improve error messages for publish-ami command ([#2695])
+* Disallow private AMIs in public SSM parameters ([#2680])
+* Rework `start-local-vm` image selection to use `latest` symlink ([#2696])
+* Improve integration testing through `cargo make test` ([#2560], [#2592], [#2618], [#2646], [#2653], [#2683], [#2674], [#2723], [#2724], [#2725])
+
+
+[#2560]: https://github.com/bottlerocket-os/bottlerocket/pull/2560
+[#2562]: https://github.com/bottlerocket-os/bottlerocket/pull/2562
+[#2587]: https://github.com/bottlerocket-os/bottlerocket/pull/2587
+[#2589]: https://github.com/bottlerocket-os/bottlerocket/pull/2589
+[#2592]: https://github.com/bottlerocket-os/bottlerocket/pull/2592
+[#2596]: https://github.com/bottlerocket-os/bottlerocket/pull/2596
+[#2618]: https://github.com/bottlerocket-os/bottlerocket/pull/2618
+[#2637]: https://github.com/bottlerocket-os/bottlerocket/pull/2637
+[#2639]: https://github.com/bottlerocket-os/bottlerocket/pull/2639
+[#2646]: https://github.com/bottlerocket-os/bottlerocket/pull/2646
+[#2647]: https://github.com/bottlerocket-os/bottlerocket/pull/2647
+[#2650]: https://github.com/bottlerocket-os/bottlerocket/pull/2650
+[#2653]: https://github.com/bottlerocket-os/bottlerocket/pull/2653
+[#2674]: https://github.com/bottlerocket-os/bottlerocket/pull/2674
+[#2676]: https://github.com/bottlerocket-os/bottlerocket/pull/2676
+[#2680]: https://github.com/bottlerocket-os/bottlerocket/pull/2680
+[#2683]: https://github.com/bottlerocket-os/bottlerocket/pull/2683
+[#2687]: https://github.com/bottlerocket-os/bottlerocket/pull/2687
+[#2690]: https://github.com/bottlerocket-os/bottlerocket/pull/2690
+[#2693]: https://github.com/bottlerocket-os/bottlerocket/pull/2693
+[#2694]: https://github.com/bottlerocket-os/bottlerocket/pull/2694
+[#2695]: https://github.com/bottlerocket-os/bottlerocket/pull/2695
+[#2696]: https://github.com/bottlerocket-os/bottlerocket/pull/2696
+[#2697]: https://github.com/bottlerocket-os/bottlerocket/pull/2697
+[#2699]: https://github.com/bottlerocket-os/bottlerocket/pull/2699
+[#2714]: https://github.com/bottlerocket-os/bottlerocket/pull/2714
+[#2717]: https://github.com/bottlerocket-os/bottlerocket/pull/2717
+[#2718]: https://github.com/bottlerocket-os/bottlerocket/pull/2718
+[#2723]: https://github.com/bottlerocket-os/bottlerocket/pull/2723
+[#2724]: https://github.com/bottlerocket-os/bottlerocket/pull/2724
+[#2725]: https://github.com/bottlerocket-os/bottlerocket/pull/2725
+[#2728]: https://github.com/bottlerocket-os/bottlerocket/pull/2728
+[#2730]: https://github.com/bottlerocket-os/bottlerocket/pull/2730
+[#2732]: https://github.com/bottlerocket-os/bottlerocket/pull/2732
+[#2738]: https://github.com/bottlerocket-os/bottlerocket/pull/2738
+[#2739]: https://github.com/bottlerocket-os/bottlerocket/pull/2739
+
 # v1.11.1 (2022-11-28)
 
 ## Security Fixes
