@@ -20,7 +20,8 @@ mod inner {
     pub(crate) enum Error {
         #[snafu(display("Error calling Bottlerocket API: {}", source))]
         ApiClient {
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
             uri: String,
         },
 

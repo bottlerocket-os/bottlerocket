@@ -3,9 +3,9 @@
 use migration_helpers::{migrate, Migration, MigrationData, Result};
 use std::process;
 
-const SETTING: &'static str = "configuration-files.kubelet-server-key.path";
-const OLD_VALUE: &'static str = "/etc/kubernetes/pki/kubelet-server.key";
-const NEW_VALUE: &'static str = "/etc/kubernetes/pki/private/kubelet-server.key";
+const SETTING: &str = "configuration-files.kubelet-server-key.path";
+const OLD_VALUE: &str = "/etc/kubernetes/pki/kubelet-server.key";
+const NEW_VALUE: &str = "/etc/kubernetes/pki/private/kubelet-server.key";
 
 /// We moved the render output location for the kubelet PKI private key to be in a restricted
 /// subdirectory. We need to update this output path in the stored configuration so updated nodes

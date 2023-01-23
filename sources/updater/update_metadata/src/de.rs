@@ -55,6 +55,7 @@ where
 }
 
 /// Converts the tuple keys to a `Version` before insertion and catches duplicates
+#[allow(clippy::type_complexity)]
 pub(crate) fn deserialize_migration<'de, D>(
     deserializer: D,
 ) -> Result<BTreeMap<(Version, Version), Vec<String>>, D::Error>
@@ -67,7 +68,7 @@ where
         let r = Regex::new(r"\((?P<from_ver>[^ ,]+),[ ]*(?P<to_ver>[^ ,]+)\)");
 
         if let Ok(regex) = r {
-            if let Some(captures) = regex.captures(&key) {
+            if let Some(captures) = regex.captures(key) {
                 if let (Some(from), Some(to)) = (captures.name("from_ver"), captures.name("to_ver"))
                 {
                     return Ok((from.as_str(), to.as_str()));
@@ -91,7 +92,7 @@ where
             );
         } else {
             return error::BadDataVersionsFromToSnafu {
-                key: format!("{}, {}", from, to),
+                key: format!("{from}, {to}"),
             }
             .fail();
         }

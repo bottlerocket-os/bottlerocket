@@ -42,14 +42,16 @@ pub enum Error {
     #[snafu(display("Configuration file '{}' failed to render: {}", template, source))]
     TemplateRender {
         template: String,
-        source: handlebars::RenderError,
+        #[snafu(source(from(handlebars::RenderError, Box::new)))]
+        source: Box<handlebars::RenderError>,
     },
 
     #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
     APIRequest {
         method: String,
         uri: String,
-        source: apiclient::Error,
+        #[snafu(source(from(apiclient::Error, Box::new)))]
+        source: Box<apiclient::Error>,
     },
 
     #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]

@@ -12,7 +12,7 @@ fn run() -> Result<()> {
             "settings.autoscaling",
             "services.autoscaling-warm-pool",
             "configuration-files.warm-pool-wait-toml",
-        ]));
+        ]))?;
     };
 
     Ok(())

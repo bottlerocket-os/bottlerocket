@@ -158,7 +158,7 @@ fn capture_dump() -> Result<()> {
     // --dump-dmesg generates a dump with only dmesg logs
     command(
         MAKEDUMPFILE_PATH,
-        &[
+        [
             "--dump-dmesg",
             "--message-level",
             "4",
@@ -172,7 +172,7 @@ fn capture_dump() -> Result<()> {
     // zlib compression
     command(
         MAKEDUMPFILE_PATH,
-        &[
+        [
             "-c",
             "--message-level",
             "4",
@@ -272,7 +272,7 @@ fn load_crash_kernel() -> Result<()> {
     // a specific systemd service instead of the default target.
     command(
         KEXEC_PATH,
-        &[
+        [
             "-ps",
             "--reuse-cmdline",
             "--append",
@@ -291,7 +291,7 @@ where
 {
     if is_reboot_required(socket_path).await? {
         info!("Boot settings changed and require a reboot to take effect. Initiating reboot...");
-        command("/usr/bin/systemctl", &["reboot"])?;
+        command("/usr/bin/systemctl", ["reboot"])?;
         // The "systemctl reboot" process will not block until the host does
         // reboot, but return as soon as the request either failed or the job
         // to start the systemd reboot.target and its dependencies have been

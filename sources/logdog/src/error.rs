@@ -9,10 +9,12 @@ use snafu::{Backtrace, Snafu};
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(crate)))]
+#[allow(clippy::enum_variant_names)]
 pub(crate) enum Error {
     #[snafu(display("Error calling Bottlerocket API '{}': {}", uri, source))]
     ApiClient {
-        source: apiclient::Error,
+        #[snafu(source(from(apiclient::Error, Box::new)))]
+        source: Box<apiclient::Error>,
         uri: String,
     },
 

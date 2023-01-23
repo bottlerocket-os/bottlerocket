@@ -13,11 +13,15 @@ pub enum Error {
     #[snafu(display("Unable to get {:?} data for migration: {}", committed, source))]
     GetData {
         committed: datastore::Committed,
-        source: datastore::Error,
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
     },
 
     #[snafu(display("Unable to get metadata for migration: {}", source))]
-    GetMetadata { source: datastore::Error },
+    GetMetadata {
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
+    },
 
     #[snafu(display("Unable to deserialize to Value from '{}': {}", input, source))]
     Deserialize {
@@ -34,12 +38,16 @@ pub enum Error {
     },
 
     #[snafu(display("Unable to write to data store: {}", source))]
-    DataStoreWrite { source: datastore::Error },
+    DataStoreWrite {
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
+    },
 
     #[snafu(display("Unable to remove key '{}' from data store: {}", key, source))]
     DataStoreRemove {
         key: String,
-        source: datastore::Error,
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
     },
 
     #[snafu(display("Migrated data failed validation: {}", msg))]
@@ -57,11 +65,15 @@ pub enum Error {
     InvalidKey {
         key_type: datastore::KeyType,
         key: String,
-        source: datastore::Error,
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
     },
 
     #[snafu(display("Unable to list transactions in data store: {}", source))]
-    ListTransactions { source: datastore::Error },
+    ListTransactions {
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
+    },
 
     #[snafu(display("Unable to build handlebar template registry: {}", source))]
     BuildTemplateRegistry { source: schnauzer::error::Error },
@@ -69,7 +81,8 @@ pub enum Error {
     #[snafu(display("Unable to render template string '{}': {}", template, source))]
     RenderTemplate {
         template: String,
-        source: handlebars::RenderError,
+        #[snafu(source(from(handlebars::RenderError, Box::new)))]
+        source: Box<handlebars::RenderError>,
     },
 
     #[snafu(display("'{}' is set to non-string value", setting))]

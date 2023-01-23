@@ -4,7 +4,7 @@ use crate::warmpool::error::{self, Result};
 use argh::FromArgs;
 use imdsclient::ImdsClient;
 use serde::Deserialize;
-use snafu::{OptionExt, ResultExt};
+use snafu::ResultExt;
 use std::fs;
 use std::path::Path;
 use tokio::time::{sleep, Duration};

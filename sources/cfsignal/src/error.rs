@@ -39,7 +39,4 @@ pub enum Error {
             aws_sdk_cloudformation::error::SignalResourceError,
         >,
     },
-
-    #[snafu(display("Failed to parse status: {}", source))]
-    ParseStatus { source: core::convert::Infallible },
 }

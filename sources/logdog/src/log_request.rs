@@ -246,7 +246,7 @@ where
 
 /// Uses the reqwest library to send a GET request to `URL` and returns the response.
 fn send_get_request(url: &str) -> Result<Response> {
-    let url = Url::parse(&url).context(error::HttpUrlParseSnafu { url })?;
+    let url = Url::parse(url).context(error::HttpUrlParseSnafu { url })?;
     let client = Client::builder()
         .build()
         .with_context(|_| error::HttpClientSnafu { url: url.clone() })?;
@@ -273,7 +273,7 @@ where
         }
     );
     let dest = tempdir.as_ref().join(request.filename);
-    let _ = fs::copy(&request.instructions, &dest).with_context(|_| error::FileCopySnafu {
+    let _ = fs::copy(request.instructions, &dest).with_context(|_| error::FileCopySnafu {
         request: request.to_string(),
         from: request.instructions,
         to: &dest,
@@ -291,20 +291,16 @@ where
     let glob_paths = glob(request.instructions).context(error::ParseGlobPatternSnafu {
         pattern: request.instructions,
     })?;
-    for entry in glob_paths {
-        if let Ok(path) = entry {
-            if path.is_dir() {
-                // iterate the directory and sub-directory to get all file paths
-                for candidate in WalkDir::new(&path) {
-                    if let Ok(e) = candidate {
-                        if e.path().is_file() {
-                            files.insert(e.into_path());
-                        }
-                    }
+    for path in glob_paths.flatten() {
+        if path.is_dir() {
+            // iterate the directory and sub-directory to get all file paths
+            for e in WalkDir::new(&path).into_iter().flatten() {
+                if e.path().is_file() {
+                    files.insert(e.into_path());
                 }
-            } else {
-                files.insert(path);
             }
+        } else {
+            files.insert(path);
         }
     }
     for src_filepath in &files {
@@ -320,7 +316,7 @@ where
         fs::create_dir_all(dest_dir_path).context(error::CreateOutputDirectorySnafu {
             path: dest_dir_path,
         })?;
-        let _ = fs::copy(&src_filepath, &dest_filepath).with_context(|_| error::FileCopySnafu {
+        let _ = fs::copy(src_filepath, &dest_filepath).with_context(|_| error::FileCopySnafu {
             request: request.to_string(),
             from: src_filepath.to_str().unwrap_or("<unknown>"),
             to: &dest_filepath,
@@ -347,7 +343,7 @@ mod test {
         // add files to temp directory
         for entry in filenames_content.iter() {
             let filepath = dir.path().join(entry.0);
-            write(&filepath, entry.1).unwrap();
+            write(filepath, entry.1).unwrap();
         }
 
         let subdir_name_depth1 = "depth1";
@@ -357,7 +353,7 @@ mod test {
         // Add files to sub directory
         for entry in filenames_content.iter() {
             let filepath = subdir_path_depth1.join(entry.0);
-            write(&filepath, entry.1).unwrap();
+            write(filepath, entry.1).unwrap();
         }
 
         let subdir_name_depth2 = "depth2";
@@ -367,7 +363,7 @@ mod test {
         // Add files to sub directory
         for entry in filenames_content.iter() {
             let filepath = subdir_path_depth2.join(entry.0);
-            write(&filepath, entry.1).unwrap();
+            write(filepath, entry.1).unwrap();
         }
     }
 
@@ -377,7 +373,7 @@ mod test {
 
     fn assert_file_match(dest_dir: &TempDir, filepath: PathBuf, want: &str) {
         let outfile = dest_dir.path().join(filepath);
-        let got = std::fs::read_to_string(&outfile).unwrap();
+        let got = std::fs::read_to_string(outfile).unwrap();
         assert_eq!(got, want);
     }
 
@@ -391,7 +387,7 @@ mod test {
         let outdir = TempDir::new().unwrap();
         handle_log_request(&request, outdir.path()).await.unwrap();
         let outfile = outdir.path().join("foo-bar");
-        let got = std::fs::read_to_string(&outfile).unwrap();
+        let got = std::fs::read_to_string(outfile).unwrap();
         assert_eq!(got, want);
     }
 
@@ -402,7 +398,7 @@ mod test {
         let outdir = TempDir::new().unwrap();
         handle_log_request(&request, outdir.path()).await.unwrap();
         let outfile = outdir.path().join("output-file.txt");
-        let got = std::fs::read_to_string(&outfile).unwrap();
+        let got = std::fs::read_to_string(outfile).unwrap();
         assert_eq!(got, want);
     }
 

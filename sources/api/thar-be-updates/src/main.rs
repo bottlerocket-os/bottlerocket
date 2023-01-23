@@ -16,7 +16,6 @@ thar-be-updates uses a lockfile to control read/write access to the disks and th
 
 */
 
-use constants;
 use fs2::FileExt;
 use log::{debug, warn};
 use nix::unistd::{fork, ForkResult};
@@ -112,7 +111,7 @@ fn parse_args(args: std::env::Args) -> Args {
 
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage()),
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
@@ -185,7 +184,7 @@ fn refresh(status: &mut UpdateStatus, socket_path: &str) -> Result<bool> {
     fork_and_return!({
         debug!("Spawning 'updog whats'");
         let output = Command::new("updog")
-            .args(&["whats", "--all", "--json"])
+            .args(["whats", "--all", "--json"])
             .output()
             .context(error::UpdogSnafu)?;
         status.set_recent_command_info(UpdateCommand::Refresh, &output);

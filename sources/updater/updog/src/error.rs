@@ -69,12 +69,14 @@ pub(crate) enum Error {
     #[snafu(display("Invalid target name '{}': {}", target, source))]
     TargetName {
         target: String,
-        source: tough::error::Error,
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
     },
 
     #[snafu(display("Manifest load error: {}", source))]
     ManifestLoad {
-        source: tough::error::Error,
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
         backtrace: Backtrace,
     },
 
@@ -89,7 +91,8 @@ pub(crate) enum Error {
 
     #[snafu(display("Metadata error: {}", source))]
     Metadata {
-        source: tough::error::Error,
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
         backtrace: Backtrace,
     },
 
@@ -195,7 +198,10 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Failed to store manifest and migrations: {}", source))]
-    RepoCacheMigrations { source: tough::error::Error },
+    RepoCacheMigrations {
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
+    },
 
     #[snafu(display("Unable to parse '{}' as a URL: {}", url, source))]
     UrlParse {

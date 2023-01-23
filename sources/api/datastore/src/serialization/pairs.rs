@@ -309,7 +309,7 @@ impl<'a> ser::Serializer for Serializer<'a> {
 /// Helper that combines the existing prefix, if any, with a separator and the new key.
 fn key_append_or_create(old_prefix: &Option<Key>, key: &Key) -> Result<Key> {
     if let Some(old_prefix) = old_prefix {
-        old_prefix.append_key(&key).map_err(|e| {
+        old_prefix.append_key(key).map_err(|e| {
             error::InvalidKeySnafu {
                 msg: format!(
                     "appending '{}' to '{}' is invalid as Key: {}",

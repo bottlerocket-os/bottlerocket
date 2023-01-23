@@ -355,7 +355,7 @@ pub fn base64_decode(
     trace!("Base64 string from template: {}", base64_str);
 
     // Base64 decode the &str
-    let decoded_bytes = base64::decode(&base64_str).context(error::Base64DecodeSnafu {
+    let decoded_bytes = base64::decode(base64_str).context(error::Base64DecodeSnafu {
         template: template_name.to_owned(),
     })?;
 

@@ -76,7 +76,7 @@ where
 }
 
 /// Print the device type in the environment key format udev expects.
-fn emit_device_type(device_type: &str) -> () {
+fn emit_device_type(device_type: &str) {
     println!("BOTTLEROCKET_DEVICE_TYPE={}", device_type);
 }
 

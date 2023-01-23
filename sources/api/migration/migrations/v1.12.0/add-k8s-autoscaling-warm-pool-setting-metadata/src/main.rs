@@ -10,7 +10,7 @@ fn run() -> Result<()> {
         migrate(AddMetadataMigration(&[SettingMetadata {
             metadata: &["affected-services"],
             setting: "settings.autoscaling",
-        }]));
+        }]))?;
     };
 
     Ok(())

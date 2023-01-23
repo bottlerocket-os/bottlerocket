@@ -104,8 +104,8 @@ pub enum Error {
     MigrationInvalidTarget {
         backtrace: Backtrace,
         name: String,
-        to: Version,
-        version: Version,
+        to: Box<Version>,
+        version: Box<Version>,
     },
 
     #[snafu(display(
@@ -116,8 +116,8 @@ pub enum Error {
     #[snafu(display("Unable to get mutable reference to ({},{}) migrations", from, to))]
     MigrationMutable {
         backtrace: Backtrace,
-        from: Version,
-        to: Version,
+        from: Box<Version>,
+        to: Box<Version>,
     },
 
     #[snafu(display(
@@ -127,8 +127,8 @@ pub enum Error {
     ))]
     MissingMigration {
         backtrace: Backtrace,
-        current: Version,
-        target: Version,
+        current: Box<Version>,
+        target: Box<Version>,
     },
 
     #[snafu(display("Failed to serialize update information: {}", source))]

@@ -447,7 +447,7 @@ impl DataStore for FilesystemDataStore {
 
     fn get_key(&self, key: &Key, committed: &Committed) -> Result<Option<String>> {
         let path = self.data_path(key, committed)?;
-        read_file_for_key(&key, &path)
+        read_file_for_key(key, &path)
     }
 
     fn set_key<S: AsRef<str>>(&mut self, key: &Key, value: S, committed: &Committed) -> Result<()> {
@@ -462,7 +462,7 @@ impl DataStore for FilesystemDataStore {
 
     fn get_metadata_raw(&self, metadata_key: &Key, data_key: &Key) -> Result<Option<String>> {
         let path = self.metadata_path(metadata_key, data_key, &Committed::Live)?;
-        read_file_for_key(&metadata_key, &path)
+        read_file_for_key(metadata_key, &path)
     }
 
     fn set_metadata<S: AsRef<str>>(
@@ -523,7 +523,7 @@ impl DataStore for FilesystemDataStore {
         let pending_data = self.get_prefix("settings.", &pending)?;
 
         // Pull out just the keys so we can log them and return them
-        let pending_keys = pending_data.into_iter().map(|(key, _val)| key).collect();
+        let pending_keys = pending_data.into_keys().collect();
         debug!("Found pending keys: {:?}", &pending_keys);
 
         // Delete pending from the filesystem, same as a commit

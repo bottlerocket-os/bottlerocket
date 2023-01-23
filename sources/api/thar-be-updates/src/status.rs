@@ -100,11 +100,9 @@ pub fn get_update_status(_lockfile: &File) -> Result<UpdateStatus> {
     let status_file = File::open(UPDATE_STATUS_FILE).context(error::NoStatusFileSnafu {
         path: UPDATE_STATUS_FILE,
     })?;
-    Ok(
-        serde_json::from_reader(status_file).context(error::StatusParseSnafu {
-            path: UPDATE_STATUS_FILE,
-        })?,
-    )
+    serde_json::from_reader(status_file).context(error::StatusParseSnafu {
+        path: UPDATE_STATUS_FILE,
+    })
 }
 
 /// Retrieves settings from the API.
@@ -150,14 +148,14 @@ impl UpdateStatus {
 
     pub fn chosen_update(&self) -> Option<&UpdateImage> {
         match &self.chosen_update {
-            Some(update) => Some(&update),
+            Some(update) => Some(update),
             None => None,
         }
     }
 
     pub fn staging_partition(&self) -> Option<&StagedImage> {
         match &self.staging_partition {
-            Some(partition_info) => Some(&partition_info),
+            Some(partition_info) => Some(partition_info),
             None => None,
         }
     }
@@ -279,7 +277,7 @@ impl UpdateStatus {
             setting: "/settings/updates/version-lock",
         })?;
 
-        if String::from(locked_version.to_owned()) == "latest" {
+        if locked_version == "latest" {
             // Set chosen_update to the latest version available
             if let Some(latest_update) = UpdateStatus::get_latest_update(updates)? {
                 self.chosen_update = Some(UpdateImage {

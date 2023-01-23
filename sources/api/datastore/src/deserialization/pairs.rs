@@ -253,7 +253,7 @@ where
             trace!("Keys before path strip: {:?}", self.keys);
             let mut new_keys = HashSet::new();
             for key in self.keys {
-                new_keys.insert(key.strip_prefix_segments(&path.segments()).context(
+                new_keys.insert(key.strip_prefix_segments(path.segments()).context(
                     error::StripPrefixSnafu {
                         prefix: path.name(),
                         name: key.name(),
@@ -342,7 +342,7 @@ where
                         keys
                     );
                     Some((
-                        struct_name.to_owned(),
+                        struct_name,
                         ValueDeserializer::Compound(CompoundDeserializer::new(
                             self.map,
                             keys,

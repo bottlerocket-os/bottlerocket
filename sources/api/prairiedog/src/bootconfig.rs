@@ -190,7 +190,7 @@ fn parse_boot_config_values(input: &str) -> Result<Vec<BootConfigValue>> {
             expect_delimiter = false;
         }
     }
-    ensure!(quote == None, error::UnbalancedQuotesSnafu { input });
+    ensure!(quote.is_none(), error::UnbalancedQuotesSnafu { input });
     // Push last element
     let last_ele = if &input[start_index..] == "," {
         // If it's just a comma, assume it's an empty value at the end

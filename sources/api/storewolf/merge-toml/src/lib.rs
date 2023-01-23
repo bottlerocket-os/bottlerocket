@@ -16,7 +16,7 @@ pub fn merge_values<'a>(merge_into: &'a mut Value, merge_from: &'a Value) -> Res
     // If the types of left and right don't match, we have inconsistent models, and shouldn't try
     // to merge them.
     ensure!(
-        merge_into.same_type(&merge_from),
+        merge_into.same_type(merge_from),
         error::DataTypeMismatchSnafu
     );
 

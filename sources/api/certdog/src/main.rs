@@ -10,7 +10,6 @@
 extern crate log;
 
 use argh::FromArgs;
-use constants;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::collections::HashMap;
@@ -20,7 +19,6 @@ use std::io::BufReader;
 use std::io::{BufRead, Seek};
 use std::path::Path;
 use std::process;
-use x509_parser;
 
 use model::modeled_types::Identifier;
 
@@ -140,7 +138,7 @@ where
     trusted_bundle.retain(|pem| !cert_bundle.distrusted_certs.contains(pem));
 
     // Write a PEM formatted bundle from trusted certificates
-    fs::write(&trusted_store, pems_to_string(&trusted_bundle)?)
+    fs::write(trusted_store, pems_to_string(&trusted_bundle)?)
         .context(error::UpdateTrustedStoreSnafu)?;
 
     Ok(())
@@ -175,7 +173,7 @@ fn pem_to_string(pem: &x509_parser::pem::Pem) -> Result<String> {
     let mut out = String::new();
 
     // A comment will be added before the PEM formatted string to identify the certificate.
-    if let Some(comment) = comment_for_pem(&pem)? {
+    if let Some(comment) = comment_for_pem(pem)? {
         writeln!(out, "# {}", comment).context(error::WritePemStringSnafu)?;
     }
 
@@ -204,9 +202,7 @@ fn comment_for_pem(pem: &x509_parser::pem::Pem) -> Result<Option<String>> {
         .chain(subject.iter_organization())
         .next();
 
-    Ok(comment
-        .and_then(|c| c.as_str().ok())
-        .and_then(|c| Some(c.to_string())))
+    Ok(comment.and_then(|c| c.as_str().ok()).map(|c| c.to_string()))
 }
 
 async fn run() -> Result<()> {
@@ -248,7 +244,8 @@ mod error {
         APIRequest {
             method: String,
             uri: String,
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
         },
 
         #[snafu(display("Unable to decode base64 from certificate '{}': {}", name, source))]
@@ -298,7 +295,6 @@ type Result<T> = std::result::Result<T, error::Error>;
 #[cfg(test)]
 mod test_certdog {
     use super::*;
-    use model;
     use model::modeled_types::{Identifier, PemCertificateString};
     use std::collections::HashMap;
     use std::convert::TryFrom;
@@ -344,8 +340,7 @@ mod test_certdog {
         let (_, pem) =
             x509_parser::pem::parse_x509_pem(&base64::decode(TEST_PEM.as_bytes()).unwrap())
                 .unwrap();
-        let mut trusted_certs: Vec<x509_parser::pem::Pem> = Vec::new();
-        trusted_certs.push(pem);
+        let trusted_certs: Vec<x509_parser::pem::Pem> = vec![pem];
         let certs_bundle = CertBundle {
             trusted_certs,
             distrusted_certs: Vec::new(),

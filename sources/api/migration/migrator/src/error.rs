@@ -55,7 +55,7 @@ pub(crate) enum Error {
                     output.status.code()
                         .map(|i| i.to_string()).unwrap_or_else(|| "signal".to_string()),
                     std::str::from_utf8(&output.stderr)
-                        .unwrap_or_else(|_e| "<invalid UTF-8>")))]
+                        .unwrap_or("<invalid UTF-8>")))]
     MigrationFailure { output: Output },
 
     #[snafu(display("Failed to create symlink for new version at {}: {}", path.display(), source))]
@@ -73,13 +73,15 @@ pub(crate) enum Error {
     #[snafu(display("Invalid target name '{}': {}", target, source))]
     TargetName {
         target: String,
-        source: tough::error::Error,
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
     },
 
     #[snafu(display("Error loading migration '{}': {}", migration, source))]
     LoadMigration {
         migration: String,
-        source: tough::error::Error,
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
     },
 
     #[snafu(display("Failed to decode LZ4-compressed migration {}: {}", migration, source))]
@@ -89,7 +91,10 @@ pub(crate) enum Error {
     },
 
     #[snafu(display("Error loading manifest: {}", source))]
-    ManifestLoad { source: tough::error::Error },
+    ManifestLoad {
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
+    },
 
     #[snafu(display("Manifest not found in repository"))]
     ManifestNotFound,
@@ -112,7 +117,10 @@ pub(crate) enum Error {
     ReadMigrationEntry { source: io::Error },
 
     #[snafu(display("Failed to load TUF repo: {}", source))]
-    RepoLoad { source: tough::error::Error },
+    RepoLoad {
+        #[snafu(source(from(tough::error::Error, Box::new)))]
+        source: Box<tough::error::Error>,
+    },
 
     #[snafu(display("Failed reading metadata of '{}': {}", path.display(), source))]
     PathMetadata { path: PathBuf, source: io::Error },

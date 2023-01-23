@@ -70,10 +70,13 @@ fn retry_strategy() -> impl Iterator<Item = Duration> {
 }
 
 mod platform {
-    use snafu::{ResultExt, Snafu};
-    use tokio::time::Duration;
+    use snafu::Snafu;
 
-    const IMDS_RETRY_TIMEOUT: Duration = Duration::from_secs(3);
+    #[cfg(variant_platform = "aws")]
+    use snafu::ResultExt;
+
+    #[cfg(variant_platform = "aws")]
+    const IMDS_RETRY_TIMEOUT: tokio::time::Duration = tokio::time::Duration::from_secs(3);
 
     /// Query IMDS on AWS platforms to determine hostname.
     #[cfg(variant_platform = "aws")]

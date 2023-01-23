@@ -258,7 +258,7 @@ async fn get_settings(
             prefix = &with_prefix;
         }
         controller::get_settings_prefix(&*datastore, prefix, &Committed::Live)
-            .map(|opt| opt.unwrap_or_else(|| Settings::default()))
+            .map(|opt| opt.unwrap_or_default())
     } else {
         controller::get_settings(&*datastore, &Committed::Live)
     }?;
@@ -397,7 +397,7 @@ async fn get_affected_services(
 
         Ok(MetadataResponse(resp))
     } else {
-        return error::MissingInputSnafu { input: "keys" }.fail();
+        error::MissingInputSnafu { input: "keys" }.fail()
     }
 }
 
@@ -420,7 +420,7 @@ async fn get_templates(
 
         Ok(MetadataResponse(resp))
     } else {
-        return error::MissingInputSnafu { input: "keys" }.fail();
+        error::MissingInputSnafu { input: "keys" }.fail()
     }
 }
 
@@ -445,8 +445,7 @@ async fn get_services(
         if !prefix.starts_with("services") {
             prefix = &with_prefix;
         }
-        controller::get_services_prefix(&*datastore, prefix)
-            .map(|opt| opt.unwrap_or_else(|| Services::default()))
+        controller::get_services_prefix(&*datastore, prefix).map(|opt| opt.unwrap_or_default())
     } else {
         controller::get_services(&*datastore)
     }?;
@@ -477,7 +476,7 @@ async fn get_configuration_files(
             prefix = &with_prefix;
         }
         controller::get_configuration_files_prefix(&*datastore, prefix)
-            .map(|opt| opt.unwrap_or_else(|| ConfigurationFiles::default()))
+            .map(|opt| opt.unwrap_or_default())
     } else {
         controller::get_configuration_files(&*datastore)
     }?;

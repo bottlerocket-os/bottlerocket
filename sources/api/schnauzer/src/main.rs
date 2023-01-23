@@ -34,7 +34,8 @@ mod error {
         APIRequest {
             method: String,
             uri: String,
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
         },
 
         #[snafu(display("Error {} when {}ing to '{}': {}", code, method, uri, response_body))]
@@ -79,7 +80,8 @@ mod error {
         RenderTemplate {
             setting_name: String,
             template: String,
-            source: handlebars::RenderError,
+            #[snafu(source(from(handlebars::RenderError, Box::new)))]
+            source: Box<handlebars::RenderError>,
         },
     }
 }

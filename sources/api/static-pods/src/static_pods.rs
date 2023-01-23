@@ -56,7 +56,7 @@ where
     let manifest = manifest.as_ref();
 
     let target_dir = Path::new(STATIC_POD_DIR);
-    fs::create_dir_all(&target_dir).context(error::MkdirSnafu { dir: &target_dir })?;
+    fs::create_dir_all(target_dir).context(error::MkdirSnafu { dir: &target_dir })?;
 
     // Create a temporary directory adjacent to the static pods directory. This directory will be
     // automatically cleaned-up as soon as it goes out of scope.
@@ -222,7 +222,7 @@ fn parse_args(args: env::Args) -> Result<Args> {
     }
 
     Ok(Args {
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.into()),
     })
 }
@@ -230,7 +230,7 @@ fn parse_args(args: env::Args) -> Result<Args> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-pub(crate) async fn main() -> () {
+pub(crate) async fn main() {
     if let Err(e) = run().await {
         match e {
             error::Error::Usage { .. } => {

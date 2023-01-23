@@ -7,7 +7,6 @@ It sets kernel-related settings, for example:
 
 #![deny(rust_2018_idioms)]
 
-use constants;
 use log::{debug, error, info, trace, warn};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
@@ -108,7 +107,7 @@ where
     for (key, value) in sysctls {
         let key = key.as_ref();
         let path = sysctl_path(key);
-        if let Err(e) = fs::write(&path, value) {
+        if let Err(e) = fs::write(path, value) {
             // We don't fail because sysctl keys can vary between kernel versions and depend on
             // loaded modules.  It wouldn't be possible to deploy settings to a mixed-kernel fleet
             // if newer sysctl values failed on your older kernels, for example, and we believe
@@ -227,7 +226,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage_msg("Must specify a subcommand.")),
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
@@ -257,7 +256,8 @@ mod error {
         APIRequest {
             method: String,
             uri: String,
-            source: apiclient::Error,
+            #[snafu(source(from(apiclient::Error, Box::new)))]
+            source: Box<apiclient::Error>,
         },
 
         #[snafu(display("Error {} when {}ing to {}: {}", code, method, uri, response_body))]

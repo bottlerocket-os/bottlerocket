@@ -35,7 +35,7 @@ where
     let mut changes = Vec::with_capacity(get_responses.len());
     for (input_source, get_response) in get_responses {
         let response = get_response?;
-        let json = format_change(&response, &input_source)?;
+        let json = format_change(&response, input_source)?;
         changes.push((input_source, json));
     }
 
@@ -113,7 +113,7 @@ where
 /// it to JSON for sending to the API.
 fn format_change(input: &str, input_source: &str) -> Result<String> {
     // Try to parse the input as (arbitrary) TOML.  If that fails, try to parse it as JSON.
-    let mut json_val = match toml::from_str::<toml::Value>(&input) {
+    let mut json_val = match toml::from_str::<toml::Value>(input) {
         Ok(toml_val) => {
             // We need JSON for the API.  serde lets us convert between Deserialize-able types by
             // reusing the deserializer.  Turn the TOML value into a JSON value.
@@ -123,7 +123,7 @@ fn format_change(input: &str, input_source: &str) -> Result<String> {
         Err(toml_err) => {
             // TOML failed, try JSON; include the toml parsing error, because if they intended to
             // give TOML we should still tell them what was wrong with it.
-            serde_json::from_str(&input).context(error::InputTypeSnafu {
+            serde_json::from_str(input).context(error::InputTypeSnafu {
                 input_source,
                 toml_err,
             })
@@ -154,7 +154,11 @@ mod error {
     #[snafu(visibility(pub(super)))]
     pub enum Error {
         #[snafu(display("Failed to commit combined settings to '{}': {}", uri, source))]
-        CommitApply { uri: String, source: crate::Error },
+        CommitApply {
+            uri: String,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
+        },
 
         #[snafu(display("Failed to read given file '{}': {}", input_source, source))]
         FileRead {
@@ -217,7 +221,8 @@ mod error {
             input_source: String,
             uri: String,
             method: String,
-            source: crate::Error,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
         },
 
         #[snafu(display("Failed {} request to '{}': {}", method, uri, source))]

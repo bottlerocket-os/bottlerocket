@@ -131,7 +131,7 @@ fn response_field(
     field: impl IntoIterator<Item = &'static &'static str>,
     response_str: &str,
 ) -> Option<String> {
-    let response: serde_json::Value = match serde_json::from_str(&response_str) {
+    let response: serde_json::Value = match serde_json::from_str(response_str) {
         Ok(json) => json,
         Err(_) => return None,
     };
@@ -305,8 +305,7 @@ where
                         &["most_recent_command", "exit_status"],
                         &status_body
                     )
-                    .map(|s| s.parse().ok())
-                    .flatten()
+                    .and_then(|s| s.parse().ok())
                     .unwrap_or(-1),
                 }
             );
@@ -336,7 +335,10 @@ mod error {
         },
 
         #[snafu(display("Failed getting update status: {}", source))]
-        GetStatus { source: crate::Error },
+        GetStatus {
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
+        },
 
         #[snafu(display("Unable to check initial update status, got code '{}': {}", code, body))]
         MissingStatus {
@@ -361,7 +363,8 @@ mod error {
         #[snafu(display("Failed to make {} request: {}", command_name, source))]
         Request {
             command_name: String,
-            source: crate::Error,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
         },
 
         #[snafu(display(

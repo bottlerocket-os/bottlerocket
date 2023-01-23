@@ -136,7 +136,7 @@ fn parse_args(args: env::Args) -> Args {
     Args {
         socket_gid,
         datastore_path: datastore_path.unwrap_or_else(|| usage()),
-        log_level: log_level.unwrap_or_else(|| LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Info),
         socket_path: socket_path.unwrap_or_else(|| DEFAULT_BIND_PATH.to_string()),
         exec_socket_path: exec_socket_path.unwrap_or_else(|| DEFAULT_EXEC_SOCKET.to_string()),
     }
