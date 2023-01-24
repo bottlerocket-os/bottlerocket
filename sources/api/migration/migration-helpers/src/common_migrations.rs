@@ -1369,3 +1369,25 @@ mod test_replace_metadata {
         );
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// When we add conditional migrations that can only run for specific variants, we need to run this
+/// migration helper for cases where the migration does NOT apply so migrator will still create a valid
+/// intermediary datastore that the host can transition to.
+#[derive(Debug)]
+pub struct NoOpMigration;
+
+impl Migration for NoOpMigration {
+    /// No work to do on forward migrations, copy the same datastore
+    fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        println!("NoOpMigration has no work to do on upgrade.",);
+        Ok(input)
+    }
+
+    /// No work to do on backward migrations, copy the same datastore
+    fn backward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        println!("NoOpMigration has no work to do on downgrade.",);
+        Ok(input)
+    }
+}
