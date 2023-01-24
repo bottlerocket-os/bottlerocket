@@ -1,6 +1,6 @@
 #![deny(rust_2018_idioms)]
 
-use migration_helpers::common_migrations::AddPrefixesMigration;
+use migration_helpers::common_migrations::{AddPrefixesMigration, NoOpMigration};
 use migration_helpers::{migrate, Result};
 use std::process;
 
@@ -13,7 +13,9 @@ fn run() -> Result<()> {
             "services.autoscaling-warm-pool",
             "configuration-files.warm-pool-wait-toml",
         ]))?;
-    };
+    } else {
+        migrate(NoOpMigration)?;
+    }
 
     Ok(())
 }
