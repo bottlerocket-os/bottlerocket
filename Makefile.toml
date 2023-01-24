@@ -624,39 +624,39 @@ docker run --rm \
 [tasks.netdog-tools]
 dependencies = ["setup", "fetch-sources"]
 script = [
-  '''
-  cargo install \
-    ${CARGO_MAKE_CARGO_ARGS} \
-    --path sources/api/netdog \
-    --root tools \
-    --force \
-    --quiet
-  '''
+'''
+cargo install \
+  ${CARGO_MAKE_CARGO_ARGS} \
+  --path sources/api/netdog \
+  --root tools \
+  --force \
+  --quiet
+'''
 ]
 
-[tasks.netdog-parse]
+[tasks.validate-net-config]
 dependencies = ["netdog-tools"]
 script_runner = "bash"
 script = [
-  '''
-  set -euo pipefail
+'''
+set -euo pipefail
 
-  if [ ! -s "${NET_CONFIG_INPUT}" ]; then
-     echo "No network config file exists, please create one at ${NET_CONFIG_INPUT}"
-     exit 1
-  fi
+if [ ! -s "${NET_CONFIG_INPUT}" ]; then
+   echo "No network config file exists, please create one at ${NET_CONFIG_INPUT}"
+   exit 1
+fi
 
-  docker run --rm \
-    --network=none \
-    --user "$(id -u):$(id -g)" \
-    --security-opt label:disable \
-    -v "${NET_CONFIG_INPUT}":/var/lib/bottlerocket/net.toml \
-    -v "${PWD}/tools/bin":/tmp/tools/bin \
-    "${BUILDSYS_SDK_IMAGE}" \
-    /tmp/tools/bin/netdog check-net-config
+docker run --rm \
+  --network=none \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -v "${NET_CONFIG_INPUT}":/var/lib/bottlerocket/net.toml \
+  -v "${PWD}/tools/bin":/tmp/tools/bin \
+  "${BUILDSYS_SDK_IMAGE}" \
+  /tmp/tools/bin/netdog check-net-config
 
-  echo "Netdog parsed the provided file"
-  '''
+echo "Netdog parsed the provided file"
+'''
 ]
 
 

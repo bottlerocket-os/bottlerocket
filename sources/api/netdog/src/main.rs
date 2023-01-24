@@ -21,8 +21,8 @@ name of the interface, and valid options are "dhcp4" and "dhcp6".  A "?" may be 
 to signify that the lease for the protocol is optional and the system shouldn't wait for it.  A
 valid example: `netdog.default-interface=eno1:dhcp4,dhcp6?`.
 
-The subcommand `check-net-config` follows the same logic as `generate-net-config` to find the
-network interface configuration for the host. Rather than generate the configuration, it prints very
+The subcommand `validate-net-config` takes a path to a network interface configuration file. Rather
+than generate the configuration like `generate-net-config`, it only parses the file and prints very
 basic information about the found configuration or the error found while attempting to parse the
 file. This command is intended to be run by a user to test network configuration files.
 
@@ -73,7 +73,7 @@ enum SubCommand {
     Install(cli::InstallArgs),
     Remove(cli::RemoveArgs),
     NodeIp(cli::NodeIpArgs),
-    CheckNetConfig(cli::CheckNetConfigArgs),
+    ValidateNetConfig(cli::ValidateNetConfigArgs),
     GenerateHostname(cli::GenerateHostnameArgs),
     GenerateNetConfig(cli::GenerateNetConfigArgs),
     SetHostname(cli::SetHostnameArgs),
@@ -86,7 +86,7 @@ async fn run() -> cli::Result<()> {
         SubCommand::Install(args) => cli::install::run(args)?,
         SubCommand::Remove(args) => cli::remove::run(args)?,
         SubCommand::NodeIp(_) => cli::node_ip::run()?,
-        SubCommand::CheckNetConfig(_) => cli::check_net_config::run()?,
+        SubCommand::ValidateNetConfig(args) => cli::validate_net_config::run(args)?,
         SubCommand::GenerateHostname(_) => cli::generate_hostname::run().await?,
         SubCommand::GenerateNetConfig(_) => cli::generate_net_config::run()?,
         SubCommand::SetHostname(args) => cli::set_hostname::run(args)?,

@@ -1,18 +1,13 @@
-pub(crate) mod check_net_config;
 pub(crate) mod generate_hostname;
 pub(crate) mod generate_net_config;
 pub(crate) mod install;
 pub(crate) mod node_ip;
 pub(crate) mod remove;
 pub(crate) mod set_hostname;
+pub(crate) mod validate_net_config;
 pub(crate) mod write_resolv_conf;
 
-use crate::net_config::Interfaces;
-use crate::{
-    net_config, DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, OVERRIDE_NET_CONFIG_FILE,
-    PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, SYS_CLASS_NET,
-};
-pub(crate) use check_net_config::CheckNetConfigArgs;
+use crate::{PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, SYS_CLASS_NET};
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
 pub(crate) use install::InstallArgs;
@@ -22,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
 use snafu::{OptionExt, ResultExt};
 use std::fs;
-use std::path::Path;
+pub(crate) use validate_net_config::ValidateNetConfigArgs;
 pub(crate) use write_resolv_conf::WriteResolvConfArgs;
 
 #[derive(Debug, PartialEq, Deserialize)]
@@ -52,25 +47,6 @@ where
     let output = serde_json::to_string(val).context(error::JsonSerializeSnafu { output: val })?;
     println!("{}", output);
     Ok(())
-}
-
-/// Search for the network configuration file and return the configuration if it parses successfully,
-/// otherwise return an error
-fn check_net_config() -> Result<Option<Box<dyn Interfaces>>> {
-    let maybe_net_config = if Path::exists(Path::new(OVERRIDE_NET_CONFIG_FILE)) {
-        net_config::from_path(OVERRIDE_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
-            path: OVERRIDE_NET_CONFIG_FILE,
-        })?
-    } else if Path::exists(Path::new(DEFAULT_NET_CONFIG_FILE)) {
-        net_config::from_path(DEFAULT_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
-            path: DEFAULT_NET_CONFIG_FILE,
-        })?
-    } else {
-        net_config::from_command_line(KERNEL_CMDLINE).context(error::NetConfigParseSnafu {
-            path: KERNEL_CMDLINE,
-        })?
-    };
-    Ok(maybe_net_config)
 }
 
 /// Return the primary interface name
