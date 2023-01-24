@@ -9,7 +9,7 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-chrono = { version = "0.4.9", features = ["serde"] }
+chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
 parse-datetime = { path = "../../parse-datetime", version = "0.1.0" }
 regex = "1.1"
 semver = { version = "1.0", features = ["serde"] }

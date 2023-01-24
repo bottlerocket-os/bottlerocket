@@ -9,7 +9,7 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-chrono = "0.4.11"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 snafu = { version = "0.7", features = ["backtraces-impl-backtrace-crate"] }
 
 [build-dependencies]
