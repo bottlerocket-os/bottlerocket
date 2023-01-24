@@ -197,6 +197,13 @@ config file to consume. This feature flag is a prerequisite for Boot Config supp
 [package.metadata.build-variant.image-features]
 grub-set-private-var = true
 ```
+
+`systemd-networkd` uses the `systemd-networkd` network backend in place of `wicked`.  This feature
+flag is meant primarily for development, and will be removed when development has completed.
+```
+[package.metadata.build-variant.image-features]
+systemd-networkd = true
+```
 */
 
 mod error;
@@ -486,6 +493,7 @@ impl SupportedArch {
 #[serde(try_from = "String")]
 pub enum ImageFeature {
     GrubSetPrivateVar,
+    SystemdNetworkd,
 }
 
 impl TryFrom<String> for ImageFeature {
@@ -493,6 +501,7 @@ impl TryFrom<String> for ImageFeature {
     fn try_from(s: String) -> Result<Self> {
         match s.as_str() {
             "grub-set-private-var" => Ok(ImageFeature::GrubSetPrivateVar),
+            "systemd-networkd" => Ok(ImageFeature::SystemdNetworkd),
             _ => error::ParseImageFeatureSnafu { what: s }.fail()?,
         }
     }
@@ -502,6 +511,7 @@ impl fmt::Display for ImageFeature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ImageFeature::GrubSetPrivateVar => write!(f, "GRUB_SET_PRIVATE_VAR"),
+            ImageFeature::SystemdNetworkd => write!(f, "SYSTEMD_NETWORKD"),
         }
     }
 }

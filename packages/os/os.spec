@@ -123,6 +123,11 @@ Summary: Bottlerocket userdata configuration system
 
 %package -n %{_cross_os}netdog
 Summary: Bottlerocket network configuration helper
+%if %{with systemd_networkd}
+Requires: %{_cross_os}systemd-networkd
+%else
+Requires: %{_cross_os}wicked
+%endif
 %description -n %{_cross_os}netdog
 %{summary}.
 
