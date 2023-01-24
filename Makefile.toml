@@ -625,6 +625,9 @@ docker run --rm \
 dependencies = ["setup", "fetch-sources"]
 script = [
 '''
+if [ ! -s "${VARIANT}" ]; then
+  export VARIANT=metal-dev
+fi
 cargo install \
   ${CARGO_MAKE_CARGO_ARGS} \
   --path sources/api/netdog \
@@ -650,10 +653,10 @@ docker run --rm \
   --network=none \
   --user "$(id -u):$(id -g)" \
   --security-opt label:disable \
-  -v "${NET_CONFIG_INPUT}":/var/lib/bottlerocket/net.toml \
+  -v "${NET_CONFIG_INPUT}":"${NET_CONFIG_INPUT}" \
   -v "${PWD}/tools/bin":/tmp/tools/bin \
   "${BUILDSYS_SDK_IMAGE}" \
-  /tmp/tools/bin/netdog check-net-config
+  /tmp/tools/bin/netdog validate-net-config -f "${NET_CONFIG_INPUT}"
 
 echo "Netdog parsed the provided file"
 '''

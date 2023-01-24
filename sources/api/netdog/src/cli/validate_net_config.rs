@@ -23,7 +23,7 @@ pub(crate) struct ValidateNetConfigArgs {
 pub(crate) fn run(args: ValidateNetConfigArgs) -> Result<()> {
     let network_file = Path::new(&args.network_file);
     // `maybe_net_config` could be `None` if no interfaces were defined
-    let maybe_net_config: Option<Box<dyn Interfaces>> = if Path::exists(network_file.as_ref()) {
+    let maybe_net_config: Option<Box<dyn Interfaces>> = if Path::exists(network_file) {
         net_config::from_path(network_file)
             .context(error::NetConfigParseSnafu { path: network_file })?
     } else {

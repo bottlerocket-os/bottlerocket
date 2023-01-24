@@ -271,7 +271,7 @@ There is a `make` target `netdog-parse` to validate that network configuration f
 This target is intended to validate the format and structure of the file, it will not guarantee the generated configuration will work in a particular context.
 The command can be run by passing the absolute path to a `net.toml` file:
 ```bash
-cargo make -e VARIANT=metal-dev -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/net_config.toml validate-net-config
+cargo make -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/net_config.toml validate-net-config
 ...
 [cargo-make] INFO - Running Task: netdog-parse
 eno2 found as primary interface
@@ -290,7 +290,7 @@ Netdog parsed the provided file
 ```
 Errors will also be detected and printed to standard out.
 ```bash
-cargo make -e VARIANT=metal-dev -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/basic/bad_version.toml validate-net-config
+cargo make -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/basic/bad_version.toml validate-net-config
 ...
 Unable to read/parse network config from '/var/lib/bottlerocket/net.toml': Invalid network configuration: Unknown network config version: 50
 Netdog parsed the provided file
