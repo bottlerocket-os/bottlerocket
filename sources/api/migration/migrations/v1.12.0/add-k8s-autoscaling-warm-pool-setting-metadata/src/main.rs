@@ -1,6 +1,6 @@
 #![deny(rust_2018_idioms)]
 
-use migration_helpers::common_migrations::{AddMetadataMigration, SettingMetadata};
+use migration_helpers::common_migrations::{AddMetadataMigration, NoOpMigration, SettingMetadata};
 use migration_helpers::{migrate, Result};
 use std::process;
 
@@ -10,8 +10,10 @@ fn run() -> Result<()> {
         migrate(AddMetadataMigration(&[SettingMetadata {
             metadata: &["affected-services"],
             setting: "settings.autoscaling",
-        }]));
-    };
+        }]))?;
+    } else {
+        migrate(NoOpMigration)?;
+    }
 
     Ok(())
 }
