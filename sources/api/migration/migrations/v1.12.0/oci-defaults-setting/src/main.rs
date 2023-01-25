@@ -1,6 +1,6 @@
 #![deny(rust_2018_idioms)]
 
-use migration_helpers::common_migrations;
+use migration_helpers::common_migrations::{AddPrefixesMigration, NoOpMigration};
 use migration_helpers::{migrate, Result};
 use std::process;
 
@@ -10,11 +10,13 @@ use std::process;
 /// `settings.oci-defaults.resource-limits`
 fn run() -> Result<()> {
     if cfg!(variant_runtime = "k8s") {
-        migrate(common_migrations::AddPrefixesMigration(vec![
+        migrate(AddPrefixesMigration(vec![
             "settings.oci-defaults",
             "services.oci-defaults",
             "configuration-files.oci-defaults",
         ]))?
+    } else {
+        migrate(NoOpMigration)?;
     }
 
     Ok(())
