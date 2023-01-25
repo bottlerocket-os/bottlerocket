@@ -210,7 +210,7 @@ where
         }
     );
 
-    info!(
+    debug!(
         "New data store is being built at work location {}",
         to.display()
     );
@@ -284,7 +284,8 @@ where
             target_datastore.display().to_string(),
         ]);
 
-        info!("Running migration command: {:?}", command);
+        info!("Running migration '{}'", migration.raw());
+        debug!("Migration command: {:?}", command);
 
         let output = command.output().context(error::StartMigrationSnafu)?;
 
@@ -415,7 +416,7 @@ where
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
-    info!(
+    debug!(
         "Flipping {} to point to {}",
         patch_version_link.display(),
         to_target.to_string_lossy(),
@@ -433,7 +434,7 @@ where
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
-    info!(
+    debug!(
         "Flipping {} to point to {}",
         minor_version_link.display(),
         patch_target.to_string_lossy(),
@@ -450,7 +451,7 @@ where
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
-    info!(
+    debug!(
         "Flipping {} to point to {}",
         major_version_link.display(),
         minor_target.to_string_lossy(),
@@ -467,7 +468,7 @@ where
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
-    info!(
+    debug!(
         "Flipping {} to point to {}",
         current_version_link.display(),
         major_target.to_string_lossy(),

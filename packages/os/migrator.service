@@ -12,6 +12,7 @@ ExecStart=/usr/bin/migrator \
   --metadata-directory /var/cache/bottlerocket-metadata \
   --migrate-to-version-from-os-release
 RemainAfterExit=true
+StandardOutput=journal+console
 StandardError=journal+console
 
 [Install]
